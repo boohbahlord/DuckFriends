@@ -1,24 +1,21 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Awaiting Input</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #111;
-      color: #ccc;
-      font-family: system-ui, sans-serif;
-    }
-    p { font-size: 1.25rem; letter-spacing: 0.05em; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Justin Man Games</title>
+<meta name="description" content="Agree or Disagree: a party game for friends on a voice call.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 24'%3E%3Crect x='1' y='1' width='8' height='22' rx='1.6' fill='%23ED1C24'/%3E%3Crect x='11' y='1' width='8' height='22' rx='1.6' fill='%23FFF200'/%3E%3Crect x='21' y='1' width='8' height='22' rx='1.6' fill='%2337D421'/%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/fredoka-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/lilita-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css?v=1">
 </head>
 <body>
-  <p>Awaiting input</p>
+<div id="shapes" aria-hidden="true"></div>
+<main id="app"></main>
+<div class="corner-tr"><button type="button" id="signin" class="btn ghost off" data-tip="Sign-in arrives with online play.">Sign in</button></div>
+<div id="clicks" aria-live="off"></div>
+<noscript><p style="padding:2rem;font-family:sans-serif">Agree or Disagree needs JavaScript turned on.</p></noscript>
+<script type="module" src="js/main.js?v=1"></script>
 </body>
 </html>
