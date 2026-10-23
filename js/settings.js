@@ -38,12 +38,17 @@ const PAGES = {
     <div class="sect"><h3>Reading</h3>
       <div class="row">${check('dyslexic', 'Dyslexic mode', 'Clear letters with more room between letters, words and lines.')}${check('colorblind', 'Colorblind mode', 'A board every kind of color sight tells apart, with marks in each column.')}</div>
       <div style="margin-top:.6rem">${slider('textSize', 'Text size', 80, 180, 5)}${slider('uiSize', 'UI size', 70, 140, 5)}</div></div>
+    <div class="sect"><h3>Chat</h3>${tiles('chatSide', [['left', 'Left'], ['bottom', 'Bottom'], ['right', 'Right'], ['hidden', 'Hidden']])}</div>
     <div class="sect"><h3>Clicks</h3><div class="row">${check('clicksSci', 'Scientific notation', '12,345 shows as 1.23 × 10⁴.')}${check('clicksHidden', 'Hide the click counter')}</div></div>`,
   controls: () => `
     <div class="sect"><h3>Your duck</h3><div class="row">${check('mouseMove', 'Mouse moves your duck', 'Click a column to walk your duck there.')}${check('multipleChoice', 'Show multiple choice', 'Buttons for the seven answers; choosing one jumps your duck there.')}</div></div>
     <div class="sect"><h3>Keys</h3><div class="keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span><span>Move your duck</span>
       <span><kbd>Space</kbd></span><span>Ready, or end your turn</span>
+      <span><kbd>T</kbd></span><span>Text chat</span>
+      <span><kbd>Shift</kbd>+<kbd>T</kbd></span><span>Command line</span>
+      <span><kbd>Tab</kbd> <kbd>↑</kbd> <kbd>↓</kbd></span><span>Complete in the chat; choose a suggestion</span>
+      <span><kbd>Shift</kbd>+<kbd>\\</kbd></span><span>Friends (outside a game)</span>
       <span><kbd>Esc</kbd></span><span>Pause menu, or close a window</span>
       <span><kbd>Enter</kbd></span><span>Send your question</span>
       <span>Right-click</span><span>A player card's options</span></div></div>`,

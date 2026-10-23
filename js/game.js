@@ -18,9 +18,11 @@ import { profile } from './store.js';
 import { openSettings } from './settings.js';
 import { openCustomize } from './customize.js';
 import { notesWidget, pickNote } from './notes.js';
+import { chatWidget } from './chat.js';
+import { openFriends } from './friends.js';
 import { sfx } from './sound.js';
 
-let R = null, S = null, off = null, raf = 0, tick = 0;
+let R = null, S = null, off = null, raf = 0, tick = 0, chat = null;
 let shown = '';            // which phase view is up (phase|round|question)
 const keys = new Set();
 let me = null;             // my duck here: { x, y, face }
@@ -221,13 +223,14 @@ function openPause() {
     <button type="button" class="btn green" data-a="resume">Resume</button>
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
+    <button type="button" class="btn ghost" data-a="friends">Friends</button>
     <button type="button" class="btn red" data-a="leave">Leave game</button></div>
     <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>`, {
     cls: 'win-small',
     onOpen: (w, close) => w.querySelector('.pause-list').onclick = e => {
       const a = e.target.closest('[data-a]'); if (!a) return;
       close();
-      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), leave: () => leaveTo('rooms', 'Leave the game in progress?') })[a.dataset.a]();
+      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), friends: () => openFriends(), leave: () => leaveTo('rooms', 'Leave the game in progress?') })[a.dataset.a]();
     },
   });
 }
@@ -266,7 +269,7 @@ register('game', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
-    if (off) off(); off = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; keys.clear();
+    if (off) off(); off = null; if (chat) chat.destroy(); chat = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; keys.clear();
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', drawDucks);
   },
   render(arg) {
@@ -275,7 +278,7 @@ register('game', {
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
         <div class="gbar-r"><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="gmain"></div><div class="gact"></div></section>`);
-    S.append(notesWidget());
+    S.append(notesWidget(), chat = chatWidget());
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a, b); return; }

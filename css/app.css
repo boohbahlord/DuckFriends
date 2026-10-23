@@ -362,3 +362,34 @@ html.mouse-move .board { cursor: pointer; }
   .results { grid-template-columns: 1fr; grid-template-rows: minmax(14rem, 1fr) auto; overflow: auto; }
   .statpanel { overflow: visible; }
 }
+
+/* ---------- text chat and the command line ---------- */
+.chat { --cb: 5.4rem; }
+.game .chat { --cb: 3.4rem; }
+.chat-btn { position: fixed; bottom: var(--cb); left: max(1rem, 2vw); z-index: 31; width: 3rem; height: 3rem; border-radius: 50%; border: .16rem solid var(--line); background: #fff; color: #1c1c28; font-weight: 700; font-size: .85rem; letter-spacing: .02em; cursor: pointer; box-shadow: 0 .18rem 0 var(--line); }
+.chat[data-side="right"] .chat-btn { left: auto; right: max(1rem, 2vw); }
+.chat[data-side="bottom"] .chat-btn { left: calc(50% + 5.5rem); bottom: max(.6rem, env(safe-area-inset-bottom)); }
+.chat-btn .bang { position: absolute; top: -.35rem; right: -.35rem; width: 1.3rem; height: 1.3rem; border-radius: 50%; background: var(--red); color: #fff; border: .12rem solid var(--line); display: grid; place-items: center; font-size: .8rem; animation: popin .2s; }
+.chat-panel { position: fixed; z-index: 32; left: max(1rem, 2vw); bottom: var(--cb); width: min(22rem, calc(100vw - 2rem)); height: min(26rem, 58dvh); display: flex; flex-direction: column; background: color-mix(in srgb, var(--panel) 94%, transparent); border: .18rem solid var(--line); border-radius: 1rem; box-shadow: 0 .3rem 0 var(--line); overflow: hidden; }
+.chat[data-side="right"] .chat-panel { left: auto; right: max(1rem, 2vw); }
+.chat[data-side="bottom"] .chat-panel { left: 50%; transform: translateX(-50%); width: min(40rem, calc(100vw - 2rem)); height: min(15rem, 40dvh); }
+.chat-panel header { display: flex; align-items: center; justify-content: space-between; padding: .45rem .6rem .3rem .8rem; border-bottom: .12rem solid var(--soft); }
+.chat-panel .chat-x { position: static; width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
+.chat-log { flex: 1; overflow: auto; padding: .4rem .8rem; display: flex; flex-direction: column; gap: .2rem; font-size: calc(.92rem * var(--ts)); overflow-wrap: anywhere; }
+.chat-log p { margin: 0; }
+.chat-log .sys { color: var(--dim); font-size: calc(.82rem * var(--ts)); }
+.chat-log .note { color: var(--purple); }
+.chat-log .priv { background: color-mix(in srgb, var(--purple) 14%, transparent); border-radius: .4rem; padding: 0 .3rem; }
+.chat-log .hit { background: color-mix(in srgb, var(--yellow) 40%, transparent); border-radius: .4rem; padding: 0 .3rem; }
+.chat-log .at { color: var(--blue); }
+.tag-priv { font-size: calc(.72rem * var(--ts)); font-weight: 700; color: var(--purple); }
+.chat-log .cmd-line { font-family: 'Cascadia Code', Consolas, monospace; font-weight: 200; white-space: pre-wrap; }
+.chat-log .cmd-line.echo { color: var(--dim); }
+.chat-sugg { list-style: none; margin: 0 .5rem; padding: .2rem; border: .12rem solid var(--line); border-radius: .6rem; background: var(--panel); max-height: 9rem; overflow: auto; }
+.chat-sugg li { padding: .15rem .5rem; border-radius: .4rem; cursor: pointer; font-family: 'Cascadia Code', Consolas, monospace; font-size: calc(.85rem * var(--ts)); }
+.chat-sugg li[aria-selected="true"] { background: var(--yellow); color: #1c1c28; }
+.chat-row { display: flex; gap: .4rem; padding: .45rem; align-items: center; }
+.chat-row .chat-in { flex: 1; min-width: 0; }
+.mode-btn { flex: none; width: 2.4rem; height: 2.4rem; border-radius: 50%; border: .14rem solid var(--line); cursor: pointer; font-weight: 700; background: #000; color: #33ff66; font-family: 'Cascadia Code', Consolas, monospace; font-size: 1.15rem; text-shadow: 0 0 .35rem #33ff6699; }
+.chat[data-mode="cmd"] .mode-btn { background: #fff; color: #1c1c28; font-family: var(--font); font-size: .75rem; text-shadow: none; }
+.chat[data-mode="cmd"] .chat-in { background: #000; color: #fff; border-color: #000; font-family: 'Cascadia Code', Consolas, monospace; caret-color: #33ff66; }

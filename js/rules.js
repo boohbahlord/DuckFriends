@@ -35,7 +35,7 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
     players: { [host.id]: { ...host, bot: false, ready: false } }, seat: [host.id],
     phase: 'lobby', at: 0, ends: 0, catchEnds: 0, round: 0,
     qs: [], qi: 0, lordTime: 0, pos: {}, done: {}, history: [], reviewVotes: {}, endVotes: {}, review: false, clicks: {},
-    log: [],
+    log: [], logN: 0,
   };
 }
 
@@ -50,7 +50,9 @@ function enter(s, phase, now) {
   const lim = phaseLimit(s); s.ends = lim ? now + lim * 1000 : 0;
   return s;
 }
-const say = (s, text) => { s.log.push({ t: Date.now(), sys: true, text }); if (s.log.length > 200) s.log.shift(); };
+/* the room's log (chat and notices); every line has a running number n, so new lines are easy to spot */
+const logLine = (s, line) => { s.logN = (s.logN || 0) + 1; s.log.push({ n: s.logN, t: Date.now(), ...line }); if (s.log.length > 200) s.log.shift(); };
+const say = (s, text) => logLine(s, { sys: true, text });
 
 /* the order of a round's questions: rotating (who goes first moves along each round) or random */
 function orderQuestions(s, subs) {
@@ -175,8 +177,9 @@ export function reduce(state, a, now = Date.now()) {
     case 'clicks': if (me) s.clicks[a.id] = a.n; return s;
     case 'chat': {
       if (!me) return s;
-      s.log.push({ t: now, from: a.id, to: a.to || null, text: String(a.text || '').slice(0, 300) });
-      if (s.log.length > 200) s.log.shift(); return s;
+      const text = String(a.text || '').trim().slice(0, 300); if (!text) return state;
+      if (a.to && !P[a.to]) return state;
+      logLine(s, { from: a.id, to: a.to || null, text }); return s;
     }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) { s.round = 0; s.history = []; s.subs = []; s.clicks = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
