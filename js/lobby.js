@@ -14,8 +14,9 @@ import { openCustomize, setName } from './customize.js';
 import { openStats } from './stats.js';
 import { sfx } from './sound.js';
 import { notesWidget } from './notes.js';
+import { chatWidget } from './chat.js';
 
-let R = null, off = null, lastCount = -1, lastSeat = 0;
+let R = null, off = null, lastCount = -1, lastSeat = 0, chat = null;
 
 const INFO = {
   type: 'Agree or Disagree: answer each other\'s questions on a seven-column board.',
@@ -145,7 +146,7 @@ const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
 register('lobby', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
-  leave() { if (off) off(); off = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
+  leave() { if (off) off(); off = null; if (chat) chat.destroy(); chat = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
@@ -165,9 +166,9 @@ register('lobby', {
         <p class="lmenu-info dim">${INFO.start}</p>
       </div>
       <aside class="party"><header><h2>Party</h2><span class="party-count dim"></span></header><div class="party-list"></div></aside>
-      <footer class="hints"><span><kbd>Space</kbd> Ready</span><span><kbd>Right-click</kbd> Player card options</span><span><kbd>Left click</kbd> Select</span></footer>
+      <footer class="hints"><span><kbd>Space</kbd> Ready</span><span><kbd>T</kbd> Text chat</span><span><kbd>Right-click</kbd> Player card options</span><span><kbd>Left click</kbd> Select</span></footer>
     </section>`);
-    S.append(notesWidget());
+    S.append(notesWidget(), chat = chatWidget());
     lastSeat = 0;
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
     const info = S.querySelector('.lmenu-info');
