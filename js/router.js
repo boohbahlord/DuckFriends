@@ -45,7 +45,9 @@ addEventListener('popstate', async e => {
     if (yes) { if (screens[cur].exit) screens[cur].exit(); go('rooms'); }
     return;
   }
+  const was = depth;
   depth = (e.state && e.state.depth) || 0;
+  if (screens[to] && screens[to].guard && !screens[to].guard()) { if (depth < was) history.back(); else history.forward(); return; }   // a room already left: keep going
   show(to);
 });
 addEventListener('beforeunload', e => { if (guarded()) { e.preventDefault(); e.returnValue = ''; } });

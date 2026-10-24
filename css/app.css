@@ -235,7 +235,8 @@ p.bad { color: var(--red); font-weight: 600; }
 .hints kbd:first-child { margin-left: 0; }
 @media (max-width: 860px) {
   .docked { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "main" "dl" "dr" "db" "bar"; grid-template-rows: auto minmax(0, 1fr) auto auto auto auto; }
-  .dock-l, .dock-r { width: auto; max-height: 38dvh; padding: .3rem .8rem; }
+  .dock-l, .dock-r { width: auto; padding: .3rem .8rem; }
+  .dock-l.open, .dock-r.open { height: min(38dvh, 22rem); }   /* a set height: the panels inside share it (it was 0 tall on phones) */
   .hints { display: none; }
   .bbar { grid-template-columns: 1fr auto; grid-template-areas: "c c" "l r"; row-gap: .4rem; }
   .bbar-c { grid-area: c; } .bbar-l { grid-area: l; } .bbar-r { grid-area: r; }
