@@ -1,7 +1,7 @@
 /* ---------- stats: a player's stat box and the View stats window ----------
    On the −3 (strongly disagree) … +3 (strongly agree) scale: what they chose most, the median, the average, and the
    jumps this game. */
-import { statsFor, COLS, signed, nameOfValue } from './rules.js';
+import { statsFor, COLS, signed, nameOfValue, wyrStats } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { openWindow, esc } from './ui.js';
@@ -22,11 +22,25 @@ export function statBoxHTML(s, id, round = null) {
     </dl></article>`;
 }
 
+/* Would You Rather, this game: their answers and the sides they took */
+function wyrBoxHTML(s, id) {
+  const p = s.players[id], w = wyrStats(s).per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 };
+  return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${w.answers} answer${w.answers === 1 ? '' : 's'}</div></div></header>
+    <dl><dt>With the bigger side</dt><dd>${w.maj}</dd><dt>With the smaller side</dt><dd>${w.min}</dd>
+      <dt>Their questions split the room</dt><dd>${w.written ? `${Math.round(w.split / w.written * 100)}% evenly` : '—'}</dd><dt>Jumps this game</dt><dd>${fmtJumps((s.jumps || {})[id] || 0)}</dd></dl></article>`;
+}
+
 /* all time, in one game mode: games, rounds, answers, what they chose most, their average, their jumps */
-function totalsHTML(p, t) {
+function totalsHTML(p, t, mode = 'aod') {
   if (!t) return '<p class="dim">No all-time stats from this player yet.</p>';
   const top = Math.max(...t.counts), most = top ? t.counts.map((k, c) => k === top ? c : -1).filter(c => c >= 0) : [];
   const avg = t.answers ? t.counts.reduce((a, k, c) => a + k * (c - 3), 0) / t.answers : null;
+  if (mode === 'wyr') {   // Would You Rather: the sides they took
+    const sided = t.majority + t.minority;
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Would You Rather</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
+        <dt>With the bigger side</dt><dd>${sided ? `${Math.round(t.majority / sided * 100)}%` : '—'}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time</div></div></header>
     <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
       <dt>Chose most</dt><dd>${most.length ? most.map(c => `<span class="chip c${c + 1}">${esc(COLS[c])}</span>`).join(' ') : '—'}</dd>
@@ -46,7 +60,7 @@ export function openStats(s, id, me) {
         w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
         mode.hidden = lastTab !== 'all'; mode.value = lastMode;
         const rounds = new Set(s.history.map(h => h.round)).size;
-        body.innerHTML = lastTab === 'game' ? statBoxHTML(s, id) : totalsHTML(p, all && all[lastMode]);
+        body.innerHTML = lastTab === 'game' ? (s.options.mode === 'wyr' ? wyrBoxHTML(s, id) : statBoxHTML(s, id)) : totalsHTML(p, all && all[lastMode], lastMode);
         note.textContent = lastTab === 'game' ? `This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.` : 'Across every game played (test rooms only add jumps).';
       };
       w.querySelector('.stat-tabs').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { lastTab = b.dataset.st; show(); } };

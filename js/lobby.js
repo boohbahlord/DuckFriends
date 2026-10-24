@@ -7,7 +7,8 @@ import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, contextMenu, onMenu, typing, windowOpen, toast, setHTML } from './ui.js';
 import { activeRoom } from './net.js';
 import { now } from './clock.js';
-import { gameArtSVG, symbolSVG } from './art.js';
+import { gameArtSVG, gameSymbol } from './art.js';
+import { MODES, modeOf } from './modes.js';
 import { cardHTML } from './card.js';
 import { netHTML } from './players.js';
 import { OPTIONS_DEFAULT } from './rules.js';
@@ -23,12 +24,22 @@ import { openFriends } from './friends.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
-  type: 'Agree or Disagree: answer each other\'s questions on a seven-column board.',
+  type: 'Which game: Agree or Disagree, or Would You Rather.',
   map: 'What the board looks like: The Board, Sky or Pixel.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
   friends: 'Invite your friends to this room, or add a friend by code.',
 };
+
+/* the Game type window: the host picks the game */
+function openTypes() {
+  const s = R.state, host = s.hostId === R.me, cur = s.options.mode || 'aod';
+  return openWindow(`<h2>Game type</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host picks the game.</p>'}
+    <div class="type-tiles">${MODES.map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')}</div>`, {
+    cls: 'win-settings',
+    onOpen: w => { if (host) w.querySelector('.type-tiles').onclick = e => { const b = e.target.closest('[data-mode]'); if (!b) return; R.send({ t: 'options', options: { mode: b.dataset.mode } }); w.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
+  });
+}
 
 /* the board as a small picture (the Map window) */
 /* the Map window: three maps, each with a little picture; the host picks */
@@ -142,8 +153,9 @@ function paint() {
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
   const fr = $('[data-m="friends"] .val', S);
   if (fr) fr.textContent = acct.uid ? `${Object.values(acct.friends).filter(f => f.on).length} online` : 'Sign in';
-  const art = $('.lobby-art', S), artSig = (s.options.map || 'board') + JSON.stringify(profile.duck);   // the picture shows the chosen map
-  if (art._sig !== artSig) { art._sig = artSig; art.innerHTML = gameArtSVG({ width: 480, duck: profile.duck, map: s.options.map || 'board', mapLabel: mapName(s.options.map) }); }
+  const mode = s.options.mode || 'aod', art = $('.lobby-art', S), artSig = (s.options.map || 'board') + mode + JSON.stringify(profile.duck);   // the picture shows the game and the map
+  if (art._sig !== artSig) { art._sig = artSig; art.innerHTML = gameArtSVG({ width: 480, duck: profile.duck, map: s.options.map || 'board', mapLabel: mapName(s.options.map), mode }); }
+  setHTML($('[data-m="type"] .val', S), `${gameSymbol(mode, 20)} ${esc(modeOf(mode).name)}`);
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $('.party-list', S);
   if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready, extra: R.online && !s.players[id].bot ? `<span class="pcard-net">${netHTML(s.players[id], true)}</span>` : '' })).join(''));
@@ -184,7 +196,7 @@ register('lobby', {
         <p class="lobby-sub dim"></p>
         <div class="lobby-status"></div>
         <div class="lmenu" role="menu">
-          <button type="button" role="menuitem" data-m="type" aria-disabled="true"><span>Game type</span><span class="val">${symbolSVG(20)} Agree or Disagree</span></button>
+          <button type="button" role="menuitem" data-m="type"><span>Game type</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="options"><span>Game options</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="start" class="start"><span>Start game</span><span class="val"></span></button>
@@ -204,7 +216,7 @@ register('lobby', {
     S.querySelector('.lmenu').onclick = e => {
       const b = e.target.closest('[data-m]'); if (!b) return;
       const m = b.dataset.m;
-      if (m === 'type') toast('Agree or Disagree is the only game for now.');
+      if (m === 'type') openTypes();
       if (m === 'map') openMaps();
       if (m === 'options') openOptions();
       if (m === 'start' && b.getAttribute('aria-disabled') !== 'true') R.send({ t: 'start' });

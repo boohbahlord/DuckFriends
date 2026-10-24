@@ -22,6 +22,7 @@ export const OPTIONS_DEFAULT = {
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -32,6 +33,13 @@ export const colOf = x => Math.max(0, Math.min(6, Math.floor(x * 7)));
 export const colX = c => (c + .5) / 7;
 /* the edges of a column, a little inside, for ducks kept in their column */
 export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
+/* the board by game mode: Agree or Disagree has its seven columns; Would You Rather two tiles, A on the left and B on the
+   right, with an OR strip between them where a duck has no answer (-1) */
+export const isWyr = s => s.options.mode === 'wyr';
+export const colAt = (s, x) => isWyr(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
+export const colXAt = (s, c) => isWyr(s) ? [.25, .75][c] ?? .5 : colX(c);
+export const colBoundsAt = (s, c) => isWyr(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
+export const startX = s => isWyr(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -91,15 +99,15 @@ function startQuestion(s, now) {
   const q = s.qs[s.qi];
   s.lordTime = q.time;
   s.pos = {}; s.lock = {};
-  s.seat.forEach((id, k) => { s.pos[id] = { x: colX(3), y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts on Neutral, lined up
+  s.seat.forEach((id, k) => { s.pos[id] = { x: startX(s), y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts on Neutral (or the OR strip), lined up
   return enter(s, 'answer', now);
 }
 
 /* everyone's answers to the current question go into the history */
 function recordAnswers(s) {
   const q = s.qs[s.qi], a = {};
-  for (const id of playing(s)) { const p = s.pos[id]; if (p && p.x >= 0) a[id] = colOf(p.x); }
-  s.history.push({ round: s.round, by: q.by, text: q.text, a });
+  for (const id of playing(s)) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) a[id] = c; }
+  s.history.push({ round: s.round, by: q.by, text: q.text, ...(q.b !== undefined ? { qa: q.a, qb: q.b } : {}), a });
   s.lock = { ...a };   // after answering, each duck stays in the column it chose
 }
 
@@ -109,8 +117,8 @@ function startResults(s, now) {
   // the board (it joined late) starts in Neutral
   s.lock = {};
   const off = [];
-  for (const id of s.seat) { const p = s.pos[id]; if (p && p.x >= 0) s.lock[id] = colOf(p.x); else { s.lock[id] = 3; off.push(id); } }
-  off.forEach((id, k) => { s.pos[id] = { x: colX(3), y: (k + 1) / (off.length + 1) }; });
+  for (const id of s.seat) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) s.lock[id] = c; else { s.lock[id] = isWyr(s) ? -1 : 3; off.push(id); } }
+  off.forEach((id, k) => { s.pos[id] = { x: startX(s), y: (k + 1) / (off.length + 1) }; });
   return enter(s, 'results', now);
 }
 
@@ -126,7 +134,7 @@ function advance(s, now) {
     case 'countdown': return s;
     case 'submit': {
       /* whatever someone had typed goes in as their question when time runs out (Send or "Don't submit one" ends it early) */
-      for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!s.done[id] && d && d.text) (s.subs = s.subs || []).push({ by: id, text: d.text, time: d.time }); }
+      for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!s.done[id] && d && d.text) (s.subs = s.subs || []).push({ by: id, ...d }); }
       delete s.drafts;
       const subs = {}; for (const q of s.subs || []) subs[q.by] = q;
       s.qs = orderQuestions(s, subs).map(id => subs[id]); s.qi = 0; delete s.subs;
@@ -156,7 +164,7 @@ export function reduce(state, a, now = Date.now()) {
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
       if (['answer', 'discuss', 'results'].includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage
-      if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: colX(3), y: Math.random() };
+      if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
     case 'leave': {
@@ -177,15 +185,14 @@ export function reduce(state, a, now = Date.now()) {
     case 'cancel': if (host && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
       if (!me || s.phase !== 'submit' || s.done[a.id]) return s;
-      const text = String(a.text || '').trim().slice(0, 200);
-      s.subs = (s.subs || []).filter(q => q.by !== a.id);
-      if (text) s.subs.push({ by: a.id, text, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime });
+      const q = question(s, a);
+      s.subs = (s.subs || []).filter(x => x.by !== a.id);
+      if (q) s.subs.push({ by: a.id, ...q, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime });
       s.done[a.id] = true; return advance(s, now);
     }
     case 'draft': {   // what a player has typed so far (kept by the host, sent in for them at the end)
       if (!me || s.phase !== 'submit' || s.done[a.id]) return state;
-      const text = String(a.text || '').trim().slice(0, 200);
-      s.drafts = { ...(s.drafts || {}), [a.id]: { text, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime } };
+      s.drafts = { ...(s.drafts || {}), [a.id]: { ...(question(s, a) || { text: '' }), time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime } };
       return s;
     }
     case 'move': {   // x, y on the board; j = when the current jump started (0 = on the ground)
@@ -194,10 +201,10 @@ export function reduce(state, a, now = Date.now()) {
       const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
-      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colOf(x) === colOf(was.x))) { x = was.x; y = was.y; }
+      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }
       if (s.phase !== 'answer' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam)
         const c = s.lock[a.id];
-        if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBounds(c); x = Math.max(lo, Math.min(hi, x)); }
+        if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
       s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp };   // q: squashed against l/r/u/d; sp: sprinting
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
@@ -205,7 +212,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
       if (!me || me.late || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
-      if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0)) return s;   // stand on a column first
+      if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       s.done[a.id] = a.v ?? !s.done[a.id];
       if (s.phase === 'answer' && !s.options.freeRoam) s.done[a.id] = true;   // free roam: ready can be taken back
@@ -328,6 +335,30 @@ function backToLobby(s, why) {
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;
+}
+
+/* a written question: one line of text, or in Would You Rather the two choices (A or B) */
+function question(s, a) {
+  if (isWyr(s)) {
+    const qa = String(a.a || '').trim().slice(0, 100), qb = String(a.b || '').trim().slice(0, 100);
+    return qa && qb ? { a: qa, b: qb, text: `Would you rather ${qa} or ${qb}?` } : null;
+  }
+  const text = String(a.text || '').trim().slice(0, 200);
+  return text ? { text } : null;
+}
+
+/* Would You Rather: how each question split the room, and each player's sides; round = null for the whole game */
+export function wyrStats(s, round = null) {
+  const per = {}, questions = [];
+  const P = id => (per[id] = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 });
+  for (const h of s.history.filter(h => round === null || h.round === round)) {
+    const votes = Object.values(h.a), A = votes.filter(c => c === 0).length, B = votes.filter(c => c === 1).length, n = A + B;
+    const split = n ? 1 - Math.abs(A - B) / n : null, major = A > B ? 0 : B > A ? 1 : null;   // split: 1 = an even split
+    questions.push({ by: h.by, text: h.text, A, B, split });
+    if (split !== null) { P(h.by).written++; P(h.by).split += split; }
+    for (const [id, c] of Object.entries(h.a)) { P(id).answers++; if (major !== null) { if (c === major) P(id).maj++; else P(id).min++; } }
+  }
+  return { per, questions };
 }
 
 /* ---------- stats: on the −3 (strongly disagree) … +3 (strongly agree) scale ---------- */

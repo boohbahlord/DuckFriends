@@ -3,7 +3,7 @@
    walks its duck to an answer (each computer leans one way) and ends its turn. Afterwards they follow the people: a
    computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
    has. Now and then one wanders a little or jumps. */
-import { colX } from './rules.js';
+import { colXAt, isWyr } from './rules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -16,6 +16,12 @@ export const BOT_QUESTIONS = [
   'Breakfast for dinner is the best dinner.', 'You can be friends with your ex.', 'Clowns are scary.', 'Robots will be our friends.',
 ];
 
+export const BOT_WYR = [
+  ['fight one horse-sized duck', 'a hundred duck-sized horses'], ['only eat pizza', 'never eat pizza again'], ['be able to fly', 'be invisible'],
+  ['always be ten minutes late', 'always be twenty minutes early'], ['live without music', 'live without movies'], ['talk to animals', 'speak every language'],
+  ['have a rewind button', 'have a pause button'], ['never use a phone again', 'never watch TV again'], ['be a famous singer', 'be a famous athlete'],
+  ['sweat syrup', 'cry maple syrup'], ['live on the moon', 'live under the sea'], ['have hiccups forever', 'always feel a sneeze coming'],
+];
 const plan = new Map();   // computer id + question → its chosen column
 const leanOf = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return ((h >>> 0) % 1000) / 1000 * 3 - 1.5; };
 const pick = (id, key) => {
@@ -40,11 +46,14 @@ export function botActions(s, now) {
       case 'lobby': case 'over':
         if (!s.players[id].ready) out.push({ t: 'ready', id, v: true }); break;
       case 'submit':
-        if (late && !s.done[id]) out.push({ t: 'submit', id, text: Math.random() < .9 ? BOT_QUESTIONS[Math.floor(Math.random() * BOT_QUESTIONS.length)] : '', time: 0 });
+        if (late && !s.done[id]) {
+          const pair = BOT_WYR[Math.floor(Math.random() * BOT_WYR.length)], skip = Math.random() >= .9;
+          out.push(isWyr(s) ? { t: 'submit', id, a: skip ? '' : pair[0], b: skip ? '' : pair[1], time: 0 } : { t: 'submit', id, text: skip ? '' : BOT_QUESTIONS[Math.floor(Math.random() * BOT_QUESTIONS.length)], time: 0 });
+        }
         break;
       case 'answer': {
         if (!late || s.done[id]) break;
-        const p = s.pos[id], want = colX(pick(id, s.round + ':' + s.qi));
+        const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
         const x = p.x, y = p.y, step = .035;
         if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });
