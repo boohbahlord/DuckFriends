@@ -7,6 +7,8 @@ import { botActions } from './bots.js';
 import { profile } from './store.js';
 import { HATS } from './hats.js';
 import { FACES } from './faces.js';
+import { EYES } from './eyes.js';
+import { BEAKS } from './beaks.js';
 import { now } from './clock.js';
 import { who } from './who.js';
 
@@ -62,7 +64,9 @@ function botPlayer(s) {
   let n = 1; while (used.has('Computer-' + n)) n++;
   return {
     id: 'b-' + uid(), name: 'Computer-' + n, bot: true,
-    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES).id } : null },
+    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES).id } : null,
+      eyes: Math.random() < .3 ? any(EYES).id : 'default', beak: Math.random() < .25 ? any(BEAKS).id : 'default',
+      build: Math.random() < .4 ? any([-1, -.5, .5, 1]) : 0, size: Math.random() < .3 ? any([-1, -.5, .5, 1]) : 0, muscle: Math.random() < .15 ? any([1, 2]) : 0 },
     card: { kind: 'color', color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', image: null },
     nameStyle: { font: 'fredoka', color: '', rainbow: Math.random() < .2 },
   };
