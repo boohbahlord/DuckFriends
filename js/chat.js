@@ -14,6 +14,7 @@ import { activeRoom } from './net.js';
 import { nameHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS } from './duck.js';
 import { HATS, hatById } from './hats.js';
+import { FACES, faceById } from './faces.js';
 import { CARD_PATTERNS } from './card.js';
 import { normHex } from './color.js';
 import { shareLook } from './customize.js';
@@ -49,6 +50,8 @@ const TREE = {
         'hat color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c1: c }; return `Hat color: ${c}`; } },
         'hat color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c2: c }; return `Hat second color: ${c}`; } },
         ketchup: { vals: ['on', 'off'], run: v => { const h = profile.duck.hat; if (!h || h.id !== 'hotdog') return '✗ Ketchup goes on the hotdog hat.'; if (!/^(on|off)$/i.test(v)) return bad(v); profile.duck.hat = { ...h, ketchup: /^on$/i.test(v) }; return `Ketchup: ${/^on$/i.test(v) ? 'on' : 'off'}`; } },
+        face: { vals: ['none', ...FACES.map(f => f.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.face = null; return 'Face: none'; } const f = faceById(k); if (!f) return bad(v); profile.duck.face = { ...(profile.duck.face && profile.duck.face.id === k ? profile.duck.face : {}), id: k }; return `Face: ${f.name}`; } },
+        'face color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), f = profile.duck.face; if (!f) return '✗ Nothing on the face. custom avatar face …'; if (!c) return bad(v); profile.duck.face = { ...f, c1: c }; return `Face color: ${c}`; } },
       } },
       card: { kids: {
         color: { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.card.color = c; return `Card color: ${c}`; } },

@@ -6,6 +6,7 @@ import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
 import { profile } from './store.js';
 import { HATS } from './hats.js';
+import { FACES } from './faces.js';
 import { now } from './clock.js';
 import { who } from './who.js';
 
@@ -61,7 +62,7 @@ function botPlayer(s) {
   let n = 1; while (used.has('Computer-' + n)) n++;
   return {
     id: 'b-' + uid(), name: 'Computer-' + n, bot: true,
-    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null },
+    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES).id } : null },
     card: { kind: 'color', color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', image: null },
     nameStyle: { font: 'fredoka', color: '', rainbow: Math.random() < .2 },
   };

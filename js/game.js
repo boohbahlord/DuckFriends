@@ -324,10 +324,10 @@ function say(text, small = false) {
 }
 function unsay() { const el = S && $('.topover .lord-say', S); if (!el || !el.textContent) return; el.classList.add('out'); sfx.fade(); }
 const pause = ms => new Promise(ok => setTimeout(ok, ms));
-/* a question starts: "Vote"; the votes are in: the news, then the question to talk over */
+/* a question starts: "Vote" once voting opens; the votes are in: the news, then the question to talk over */
 async function announce(phase) {
   const job = ++sayJob;
-  if (phase === 'answer') { await pause(250); if (job === sayJob) say('Vote'); return; }
+  if (phase === 'answer') { await pause(Math.max(250, graceLeftMs(R.state))); if (job === sayJob) say('Vote'); return; }
   if (phase !== 'discuss') return;
   sfx.boop();   // End turn is open
   await pause(350); if (job !== sayJob) return;
@@ -377,7 +377,8 @@ const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('G
     <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} question${s.history.length === 1 ? '' : 's'}</p>
     <div class="statboxes grid"></div></div>`;
 
-const graceLeft = s => s.phase === 'answer' ? Math.max(0, Math.ceil((s.at + VOTE_GRACE * 1000 - clockNow()) / 1000)) : 0;
+const graceLeftMs = s => s.phase === 'answer' ? Math.max(0, s.at + VOTE_GRACE * 1000 - clockNow()) : 0;
+const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const n = s.seat.length, d = s.seat.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
@@ -391,7 +392,7 @@ function actHTML(s) {
     const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
     const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
     const off = wait || !onBoard || (mine && !s.options.freeRoam);
-    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${s.options.freeRoam ? ' data-tip="Free roam: keep moving; where you stand when the turn ends is your vote."' : ''}>${label}${wait ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
+    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${s.options.freeRoam ? ' data-tip="Free roam: keep moving; where you stand when the turn ends is your vote."' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
   }
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
