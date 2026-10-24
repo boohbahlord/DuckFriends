@@ -25,7 +25,7 @@ export const OPTIONS_DEFAULT = {
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
-export const VOTE_GRACE = 10;   // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
+export const VOTE_GRACE = 5;    // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
 const clone = o => structuredClone(o);
 export const colOf = x => Math.max(0, Math.min(6, Math.floor(x * 7)));

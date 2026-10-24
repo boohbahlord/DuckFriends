@@ -678,3 +678,8 @@ html.map-on .game .gbar, html.map-on .game .bbar { background: color-mix(in srgb
 html.moving .gmain[data-phase="answer"] .cols { animation: boardglow 3.6s ease-in-out infinite; }
 @keyframes boardglow { 0%, 100% { box-shadow: 0 .3rem 0 var(--line), 0 0 .4rem #ffffff18; filter: brightness(1); } 50% { box-shadow: 0 .3rem 0 var(--line), 0 0 2.4rem #ffffff5c; filter: brightness(1.09); } }
 .cpick > .row .tile { width: 100%; }   /* Plain spans the grid too */
+
+/* the halo shines */
+.hat-glow { filter: drop-shadow(0 0 3px #ffe58a); }
+html.moving .hat-glow { animation: haloglow 2.2s ease-in-out infinite alternate; }
+@keyframes haloglow { from { opacity: .82; } to { opacity: 1; } }
