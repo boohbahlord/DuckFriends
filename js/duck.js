@@ -135,7 +135,7 @@ ${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" 
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
-${hat.back}${SL.back || ''}${SL.fluff && !(OF && OF.cloth) ? SL.fluff : ''}${OF ? OF.back : ''}
+${hat.back}${SL.back || ''}${OF ? OF.back : ''}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
 <g clip-path="url(#${id}c)">
@@ -150,8 +150,8 @@ ${hat.back}${SL.back || ''}${SL.fluff && !(OF && OF.cloth) ? SL.fluff : ''}${OF 
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
   <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
 </g>
-${st.fluffy && !(OF && OF.cloth) ? '' : `<path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? '#1c1c28a8' : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>`}
-<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="${st.fluffy ? 1.2 : 2.2}"/>
+<path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? '#1c1c28a8' : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
+<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
 <g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>

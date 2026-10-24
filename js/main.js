@@ -1,6 +1,6 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
 import { applySettings, askConnection } from './settings.js';
-import { backdropSVG } from './art.js';
+import { backdropHTML } from './art.js';
 import { profile } from './store.js';
 import { $, toast } from './ui.js';
 import { start, current } from './router.js';
@@ -18,7 +18,7 @@ applySettings();
 let lastBD = '';
 const drawShapes = () => {
   const k = [innerWidth, innerHeight, profile.settings.theme].join(); if (k === lastBD) return; lastBD = k;
-  $('#shapes').innerHTML = backdropSVG(innerWidth, innerHeight, profile.settings.theme === 'dark');
+  $('#shapes').innerHTML = backdropHTML(innerWidth, innerHeight, profile.settings.theme === 'dark');
 };
 document.addEventListener('settings', drawShapes);
 let rsT = null;

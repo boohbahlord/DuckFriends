@@ -65,7 +65,7 @@ const any = a => a[Math.floor(Math.random() * a.length)];
 function botStyle() {
   if (Math.random() > .3) return {};
   const st = any(STYLES.slice(1));
-  return { style: st.id, ...Object.fromEntries((st.colors || []).map(([k, , c]) => [k, c])), ...(st.beak ? { beak: st.beak } : {}) };
+  return { style: st.id, ...Object.fromEntries((st.colors || []).map(([k, , c]) => [k, c])), ...(st.match ? { beak: st.match } : {}) };
 }
 function botPlayer(s) {
   const used = new Set(s.seat.map(id => s.players[id].name));

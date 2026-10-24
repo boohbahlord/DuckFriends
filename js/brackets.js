@@ -58,8 +58,10 @@ export function topicHTML(s, me, who) {
       <p class="small dim">Everyone writes one, then you all vote on them. ${TOPIC_MAX} letters at most.</p>
       <input class="bb-in" maxlength="${TOPIC_MAX}" placeholder="Best snack" aria-label="Your topic" spellcheck="true">
       <p class="acts"><button type="submit" class="btn green">Send <kbd>Enter</kbd></button><button type="button" class="btn ghost" data-a="bbnone">Don't write one</button></p></form>`}
-    <div class="who">${who}</div></div>`;
+    <section class="bb-live"><h3>Everyone's topics</h3><div class="bb-turn bb-topic-live"></div></section></div>`;
 }
+/* the others' topics as they come in (typed so far, or sent ✓) */
+export const topicLiveHTML = (s, me) => liveCardsHTML(s, s.seat.filter(id => id !== me && s.players[id] && !s.players[id].late), 'No topic');
 export const tvoteHTML = (s, me) => `<div class="submit-wrap bb-wrap"><h2 class="bb-h">Pick the topic</h2>
     <div class="bb-topics">${topicsHTML(s, me)}</div>
     <p class="small dim">Click the topic you want; you can change your mind until the vote ends. A tie is a coin flip.</p></div>`;
@@ -76,30 +78,38 @@ export function topicsHTML(s, me) {
 export function seedsHTML(s, me) {
   const b = s.bb, mineNow = (b.per[me] || 0) > b.turn, p = player(s, me);
   const head = `<header class="bb-head panel"><span class="small dim">Topic</span><b style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</b>
-    <span class="small dim">Seed ${b.turn + 1} of ${b.turns}${mineNow ? '' : ' · you have no seed to write this turn'}</span></header>`;
+    <span class="small dim">Contender ${b.turn + 1} of ${b.turns}${mineNow ? '' : ' · you have no contender to write this turn'}</span></header>`;
   let mine = '';
-  if (mineNow && !s.done[me]) mine = `<form class="bb-write seed-form" autocomplete="off">${cardFor(p, `<input class="bb-in seed-in" maxlength="${SEED_MAX}" placeholder="Your seed" aria-label="Your seed">`, { size: 'big', cls: 'mine typing' })}
+  if (mineNow && !s.done[me]) mine = `<form class="bb-write seed-form" autocomplete="off">${cardFor(p, `<input class="bb-in seed-in" maxlength="${SEED_MAX}" placeholder="Your contender" aria-label="Your contender">`, { size: 'big', cls: 'mine typing' })}
       <p class="acts"><button type="submit" class="btn green">Send <kbd>Enter</kbd></button><button type="button" class="btn ghost" data-a="bbskip">Skip this one</button></p></form>`;
   else if (mineNow) { const sent = (s.subs || []).find(x => x.by === me); mine = cardFor(p, sent ? esc(sent.text) : '<span class="dim">Skipped</span>', { size: 'big', cls: 'mine sent', extra: '<span class="seed-ok">✓</span>' }); }
-  return `<div class="submit-wrap bb-wrap bb-seeds">${head}<div class="bb-turn">${mine}<div class="bb-others"></div></div>
+  return `<div class="submit-wrap bb-wrap bb-seeds">${head}<div class="bb-turn">${mine}<h3 class="bb-now">Writing now</h3><div class="bb-others"></div></div>
     <section class="bb-sofar"><h3></h3><div class="bb-grid"></div></section></div>`;
 }
-/* the others' cards this turn, as they type (sent ones get a ✓) */
-export function othersHTML(s, me) {
-  const b = s.bb;
-  return s.seat.filter(id => id !== me && (b.per[id] || 0) > b.turn && s.players[id]).map(id => {
+/* the others' cards this turn, as they type: still writing (lit up, "writing") or sent (✓) */
+export const othersHTML = (s, me) => liveCardsHTML(s, s.seat.filter(id => id !== me && (s.bb.per[id] || 0) > s.bb.turn && s.players[id]), 'Skipped');
+function liveCardsHTML(s, ids, none) {
+  return ids.map(id => {
     const sent = (s.subs || []).find(x => x.by === id), d = ((s.drafts || {})[id] || {}).text || '';
-    const body = sent ? esc(sent.text) : s.done[id] ? '<span class="dim">Skipped</span>' : d ? `${esc(d)}<i class="caret"></i>` : '<span class="dim">typing…</span>';
-    return cardFor(s.players[id], body, { cls: s.done[id] ? 'sent' : 'typing', extra: s.done[id] ? '<span class="seed-ok">✓</span>' : '' });
+    const body = sent ? esc(sent.text) : s.done[id] ? `<span class="dim">${none}</span>` : d ? `${esc(d)}<i class="caret"></i>` : '<span class="dim">thinking…</span>';
+    return cardFor(s.players[id], body, { cls: s.done[id] ? 'sent' : 'typing', extra: s.done[id] ? '<span class="seed-ok">✓</span>' : '<span class="seed-writing">✎ writing</span>' });
   }).join('');
 }
 export const sofarHTML = s => s.bb.seeds.map((x, i) => seedCardHTML(s, s.bb, i, { size: 'mini' })).join('');
 
 /* ---------- a match: the two seeds on the board ---------- */
+/* a match's two colors: different, picked at random for each match (the same on every screen) */
+const SIDE_COLORS = ['#2fa4ff', '#ff8c2b', '#ef3b3b', '#37d421', '#9b5de5', '#ffd23f', '#ff5fa2', '#16c7c7', '#6f7dff', '#ff6b3d', '#8bd13c', '#c45cff'];
+export function matchColors(s) {
+  let h = ((s.round + 1) * 2654435761 + (s.qi + 1) * 40503 + ((s.bb && s.bb.m) + 2) * 977) >>> 0;
+  const next = n => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return h % n; };
+  const a = next(SIDE_COLORS.length), b = (a + 1 + next(SIDE_COLORS.length - 1)) % SIDE_COLORS.length;
+  return [SIDE_COLORS[a], SIDE_COLORS[b]];
+}
 export function matchColsHTML(s) {
   const b = s.bb, m = bbMatch(s), fin = b.r === b.rounds.length - 1, done = s.phase === 'discuss' && m.w != null;
   const side = (c, i) => `<div class="col bb-side bb-${c ? 'b' : 'a'}${done ? (m.w === i ? ' won' : ' lost') : ''}" data-c="${c}">${seedCardHTML(s, b, i, { size: 'big', tier: fin ? (done && m.w === i ? 'gold' : 'silver') : '', out: done && m.w !== i })}</div>`;
-  return `<div class="cols bb-cols">${side(0, m.a)}<div class="bb-vs"><span>VS</span></div>${side(1, m.b)}</div>
+  return `<div class="cols bb-cols">${side(0, m.a)}<div class="bb-vs"><span>${s.phase === 'tie' ? 'TIE' : 'VS'}</span></div>${side(1, m.b)}</div>
     ${s.phase === 'answer' ? `<div class="bb-breathe" style="--h0:${(s.qi * 137 + s.round * 59) % 360}deg" aria-hidden="true"></div>` : ''}`;
 }
 /* over the board: the cloud, and beside it what the match is (voting) or the winner (talking it over) */
@@ -112,6 +122,8 @@ export function matchTopHTML(s) {
     return `<div class="topover bb-top">${cloudHTML(p, fin ? 'Champion' : 'Winner')}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
       <div class="bb-win-word">${rainbowHTML(fin ? 'Champion!' : 'Winner!')}</div>${m.coin ? '<p class="small dim">A tie: a coin flip decided it.</p>' : ''}</div></div>`;
   }
+  if (s.phase === 'tie' && b.tie) return `<div class="topover bb-top">${cloudHTML(null)}<div class="question bb-what">${topic}
+    <b class="bb-tie">Tied ${b.tie.va}–${b.tie.vb}!</b><span class="small dim">Vote again, or toss a coin? (Below.)</span></div></div>`;
   return `<div class="topover bb-top">${cloudHTML(null)}<div class="question bb-what">${topic}
     <span class="small dim">${esc(roundName(b, b.r))}${fin ? '' : ` · match ${k} of ${real.length}`}</span>
     ${fin ? `<div class="bb-final">${seedCardHTML(s, b, m.a, { size: 'mini', tier: 'silver' })}<b>vs</b>${seedCardHTML(s, b, m.b, { size: 'mini', tier: 'silver' })}</div>` : ''}</div></div>`;
@@ -165,9 +177,9 @@ function awardsHTML(s, per, scope) {
   const n = (v, one, many = one + 's') => `${v} ${v === 1 ? one : many}`;
   const jx = s.seat.map(id => [id, (s.jumps || {})[id] || 0]), jv = Math.max(0, ...jx.map(x => x[1]));
   return `${award('Most tournaments won', scope === 'game' ? top(p => p.titles) : null, v => n(v, 'tournament') + ' won.')}
-    ${award('Most wins with their seeds', top(p => p.wins), v => n(v, 'match', 'matches') + ' won.')}
+    ${award('Most wins with their contenders', top(p => p.wins), v => n(v, 'match', 'matches') + ' won.')}
     ${award('Most losses', top(p => p.losses), v => n(v, 'match', 'matches') + ' lost.')}
-    ${award('Fan of themselves', top(p => p.own), v => `Voted for their own seeds ${n(v, 'time')}.`)}
+    ${award('Fan of themselves', top(p => p.own), v => `Voted for their own contenders ${n(v, 'time')}.`)}
     ${award('Kingmaker', top(p => p.king), v => `Their vote decided ${n(v, 'one-vote match', 'one-vote matches')}.`)}
     ${award('Most jumps', jv ? { v: jv, who: jx.filter(x => x[1] === jv).map(x => x[0]) } : null, v => n(v, 'jump') + '.')}`;
 }
@@ -184,7 +196,7 @@ export function bbStatsHTML(s) {
 export function bbBoxHTML(s, id) {
   const p = player(s, id), w = bbStats(s.bbPast || [])[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 };
   return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${w.votes} vote${w.votes === 1 ? '' : 's'} in matches</div></div></header>
-    <dl><dt>Tournaments won</dt><dd>${w.titles}</dd><dt>Seed wins</dt><dd>${w.wins}</dd><dt>Seed losses</dt><dd>${w.losses}</dd><dt>Voted for their own</dt><dd>${w.own}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
+    <dl><dt>Tournaments won</dt><dd>${w.titles}</dd><dt>Contender wins</dt><dd>${w.wins}</dd><dt>Contender losses</dt><dd>${w.losses}</dd><dt>Voted for their own</dt><dd>${w.own}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }
 /* a player whose seeds are all out (for the Loser's X special) */
 export function allOut(s, id) {

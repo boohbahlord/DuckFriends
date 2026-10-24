@@ -19,7 +19,7 @@ export const OPTIONS_DEFAULT = {
   answerTime: 30,       // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15,          // 0 (off), 15, 30, 45: the rest's time once enough players are done (submit and answer)
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
-  botWait: 30,          // TEST rooms: seconds before computers act
+  botWait: 5,           // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
@@ -28,7 +28,7 @@ export const OPTIONS_DEFAULT = {
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
-  bbSpeed: 0,           // 1: 10-second match votes
+  bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -49,7 +49,7 @@ export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
 export const colBoundsAt = (s, c) => twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
 export const startX = s => twoSided(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 /* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead) */
-export const boardPhases = s => isBb(s) ? ['answer', 'discuss', 'bracket'] : ['answer', 'discuss', 'results'];
+export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -85,7 +85,9 @@ function phaseLimit(s) {
   return 0;
 }
 function enter(s, phase, now) {
+  const was = STAGE[s.phase];
   s.phase = phase; s.at = now; s.done = {}; s.catchEnds = 0;
+  countTurn(s, was);
   if (phase === 'submit') { s.drafts = {}; for (const id of s.seat) if (s.players[id]) delete s.players[id].late; }   // late joiners play from here
   const lim = phaseLimit(s); s.ends = lim ? now + lim * 1000 : 0;
   return s;
@@ -108,7 +110,7 @@ function orderQuestions(s, subs) {
 
 function startQuestion(s, now) {
   const q = s.qs[s.qi];
-  s.lordTime = q.time;
+  s.lordTime = s.options.answerOff ? 0 : q.time;   // (forgame can turn the answer timer off for the rest of the game)
   s.pos = {}; s.lock = {};
   s.seat.forEach((id, k) => { s.pos[id] = { x: startX(s), y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts on Neutral (or the OR strip), lined up
   return enter(s, 'answer', now);
@@ -137,10 +139,11 @@ function startResults(s, now) {
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
-  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase);
+  const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
+  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
-  const go = all || timeUp || (enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
+  const go = all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
   if (!go) return s;
   switch (s.phase) {
     case 'countdown': return s;
@@ -158,8 +161,9 @@ function advance(s, now) {
     case 'seeds': return endSeedTurn(s, now);
     case 'bracket': return s.bb.champ != null ? enter(s, 'podium', now) : nextMatch(s, now);
     case 'podium': return startResults(s, now);
+    case 'tie': return settleTie(s, now);
     case 'answer':
-      if (isBb(s)) { endMatch(s); return s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now); }
+      if (isBb(s)) return endMatch(s, now) ? (s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now)) : enter(s, 'tie', now);
       recordAnswers(s);
       if (!s.options.freeRoam) return enter(s, 'discuss', now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);   // free roam: straight to the next question
@@ -196,6 +200,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'look': if (me) Object.assign(me, a.look); return s;
     case 'ready': if (me && (s.phase === 'lobby' || s.phase === 'over')) me.ready = a.v ?? !me.ready; return s;
+    case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (host && n) s.name = n; return s; }
     case 'options': if (host && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
     case 'kick': if (host && P[a.who] && a.who !== s.hostId) { delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); } return s;
     case 'start':
@@ -232,7 +237,7 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
-      if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase)) return s;
+      if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       s.done[a.id] = a.v ?? !s.done[a.id];
@@ -247,7 +252,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
-      if (!me || !s.options.fun || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
+      if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
       if (a.kind === 'kill') { for (const id of who) P[id].dead = true; }
       logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
@@ -270,6 +275,11 @@ export function reduce(state, a, now = Date.now()) {
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now }];
       if (sp === 'handgun') s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, x0: p.x, y: p.y, dir: face, t: now, lx: p.x }];
       return s;
+    }
+    case 'tieVote': {   // Bicker Brackets, a tied match: vote again, or a coin toss (it can be changed until everyone has chosen)
+      if (!me || me.late || s.phase !== 'tie' || !['again', 'coin'].includes(a.v)) return state;
+      s.bb.tie = { ...s.bb.tie, votes: { ...(s.bb.tie || {}).votes, [a.id]: a.v } }; s.done[a.id] = true;
+      return advance(s, now);
     }
     case 'pick': {   // Bicker Brackets: my vote for a topic (it can be changed until the vote ends)
       if (!me || me.late || s.phase !== 'tvote' || !Number.isInteger(a.i) || !s.bb.topics[a.i]) return state;
@@ -298,12 +308,40 @@ export function reduce(state, a, now = Date.now()) {
       if (a.v) { v.yes[a.id] = true; delete v.no[a.id]; } else { v.no[a.id] = true; delete v.yes[a.id]; }
       return settleVote(s, now);
     }
-    case 'chat': {
+    case 'chat': {   // a message; from the command line (send) it carries the command (cmd) and may be a file
       if (!me) return s;
-      const text = String(a.text || '').trim().slice(0, 500); if (!text) return state;
+      if (denied(s, a.id, 'nochat') || (a.cmd && denied(s, a.id, 'nocmd'))) return state;
+      if (denied(s, a.id, 'slow') && now - ((s.lastChat || {})[a.id] || 0) < SLOW_MS) return state;   // one message every 15 s
+      const text = String(a.text || '').trim().slice(0, a.cmd ? 2000 : 500); if (!text) return state;
       if (a.to && !P[a.to]) return state;
-      logLine(s, { from: a.id, to: a.to || null, text }); return s;
+      s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
+      logLine(s, { from: a.id, to: a.to || null, text, ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}), ...(a.file ? { file: String(a.file).slice(0, 40) } : {}) }); return s;
     }
+    case 'usermod': {   // sudo: put a player in groups (add), take them out (remove), or give them exactly these (set)
+      const G = groupsOf0(s), list = (a.groups || []).map(String).filter(g => G[g]);
+      if (!me || !isSudo(s, a.id) || !P[a.target] || !list.length || !['add', 'remove', 'set'].includes(a.mode)) return state;
+      for (const [name, g] of Object.entries(G)) {
+        const has = g.members.includes(a.target);
+        let want = a.mode === 'set' ? list.includes(name) : list.includes(name) ? a.mode === 'add' : has;
+        if (name === 'sudo' && a.target === s.hostId) want = false;   // (the host is sudo without being listed, always)
+        if (want !== has) g.members = want ? [...g.members, a.target] : g.members.filter(x => x !== a.target);
+      }
+      say(s, `${me.name} changed ${P[a.target].name}'s groups: ${groupsOf(s, a.target).join(', ') || 'none'}.`);
+      return s;
+    }
+    case 'groupadd': {   // sudo: a new group with any of the restrictions
+      const name = String(a.name || '').toLowerCase(), G = groupsOf0(s);
+      if (!me || !isSudo(s, a.id) || !/^[a-z][a-z0-9_-]{0,19}$/.test(name) || G[name] || name.startsWith('superuser-') || Object.keys(G).length >= 20) return state;
+      G[name] = { perms: [...new Set((a.perms || []).filter(p => GROUP_PERMS.includes(p)))], members: [] };
+      say(s, `${me.name} made the group ${name}${G[name].perms.length ? ` (${G[name].perms.join(', ')})` : ''}.`);
+      return s;
+    }
+    case 'groupdel': {
+      const G = groupsOf0(s);
+      if (!me || !isSudo(s, a.id) || !G[a.name] || ['sudo', 'dumbasses'].includes(a.name)) return state;
+      delete G[a.name]; say(s, `${me.name} removed the group ${a.name}.`); return s;
+    }
+    case 'forgame': return forgame(s, a, now) || state;
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
@@ -320,6 +358,75 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 
+/* ---------- groups, permissions and forgame (the command line's sudo commands) ----------
+   sudo: may run usermod, groupadd, groupdel and forgame; the host is always in it. dumbasses: no silly commands, and one
+   chat message every 15 seconds. A group made with groupadd takes any of: nocmd (no command line), nochat (no text
+   chat), nofun (no silly commands), slow (one message every 15 seconds). */
+export const GROUP_PERMS = ['nocmd', 'nochat', 'nofun', 'slow'];
+const SLOW_MS = 15000;
+function groupsOf0(s) {   // the room's groups, made on first use
+  if (!s.groups) s.groups = { sudo: { perms: [], members: [] }, dumbasses: { perms: ['nofun', 'slow'], members: [] } };
+  return s.groups;
+}
+export const groupsOf = (s, id) => {
+  const out = id === s.hostId ? ['sudo'] : [];
+  for (const [name, g] of Object.entries(s.groups || { dumbasses: { perms: ['nofun', 'slow'], members: [] } })) if ((g.members || []).includes(id) && !out.includes(name)) out.push(name);
+  return out;
+};
+export const isSudo = (s, id) => groupsOf(s, id).includes('sudo');
+export const denied = (s, id, perm) => groupsOf(s, id).some(n => (((s.groups || {})[n] || {}).perms || []).includes(perm));
+/* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
+export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
+function countTurn(s, was) {
+  const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
+  const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
+}
+/* forgame: the game's timers and turn share mid-game, or mutes that everyone sees, for good, for a number of turns, or
+   in some stages (stage2 voting: the next two voting stages) */
+const TIME_OK = [0, 15, 30, 45, 60, 90, 120], SHARE_OK = [.5, .67, .75, 1], MUTE_KINDS = ['bubble', 'ping', 'text'];
+function forgame(s, a, now) {
+  const me = s.players[a.id]; if (!me || !isSudo(s, a.id) || s.phase === 'lobby') return null;
+  if (a.set) {
+    const o = {};
+    for (const [k, v] of Object.entries(a.set)) {
+      if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
+      if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
+      if (k === 'answerOff') o.answerOff = v ? 1 : 0;
+    }
+    if (!Object.keys(o).length) return null;
+    Object.assign(s.options, o);
+    if (o.catchUp === 0) s.catchEnds = 0;
+    if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
+    if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
+    say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => `${{ share: 'turn ends with', catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer', answerOff: 'answer timer' }[k]} ${k === 'share' ? (v === 1 ? 'everyone' : `${Math.round(v * 100)}%`) : k === 'answerOff' ? (v ? 'off' : 'on') : v ? v + ' s' : 'off'}`).join(', ')}.`);
+    return advance(s, now);
+  }
+  const m = a.mute; if (!m) return null;
+  const who = (m.who || []).filter(id => s.players[id]), kinds = (m.kinds || []).filter(k => MUTE_KINDS.includes(k));
+  const stages = (m.stages || []).filter(x => Object.values(STAGE).includes(x)), turns = Math.max(0, Math.min(99, m.turns | 0)), count = Math.max(0, Math.min(99, m.count | 0));
+  if (!who.length || !kinds.length) return null;
+  if (!m.on && !turns && !stages.length) s.gmutes = (s.gmutes || []).map(x => ({ ...x, who: x.who.filter(id => !who.includes(id)) })).filter(x => x.who.length);   // off for good: drop them
+  else s.gmutes = [...(s.gmutes || []), { who, kinds, on: !!m.on, turns, stages, count, t0: s.turnN || 0, s0: { ...(s.stageN || {}) }, cur: STAGE[s.phase] }].slice(-40);
+  say(s, `${me.name} ${m.on ? 'muted' : 'unmuted'} ${kinds.join(', ')} for ${who.map(id => s.players[id].name).join(', ')}${turns ? ` for ${turns} turn${turns > 1 ? 's' : ''}` : ''}${stages.length ? ` in ${count ? `the next ${count} ` : 'the '}${stages.join(', ')} stage${count === 1 && stages.length === 1 ? '' : 's'}` : ''}.`);
+  return s;
+}
+/* is this player's bubble, ping or text muted for everyone now (by forgame)? the newest mute that applies wins */
+export function gameMuted(s, id, kind) {
+  let out = false;
+  const st = STAGE[s.phase] || 'lobby';
+  for (const m of s.gmutes || []) {
+    if (!m.who.includes(id) || !m.kinds.includes(kind)) continue;
+    if (m.turns && (s.turnN || 0) - m.t0 >= m.turns) continue;
+    if (m.stages && m.stages.length) {
+      if (!m.stages.includes(st)) continue;
+      const k = ((s.stageN || {})[st] || 0) - ((m.s0 || {})[st] || 0) + (m.cur === st ? 1 : 0);
+      if (m.count && k > m.count) continue;
+    }
+    out = m.on;
+  }
+  return out;
+}
+
 /* the handgun's bullets: a duck on the ground that a bullet passes through plays dead (until it moves) */
 function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
@@ -332,7 +439,7 @@ function moveShots(s, now) {
       if (p.x >= lo && p.x <= hi && Math.abs(p.y - sh.y) < .08) P.dead = true;
     }
     sh.lx = x;
-    if (x > -.05 && x < 1.05 && boardPhases(s).includes(s.phase)) keep.push(sh);
+    if (x > -.3 && x < 1.3 && boardPhases(s).includes(s.phase)) keep.push(sh);   // (on past the board to the screen's edge)
   }
   s.shots = keep; return true;
 }
@@ -359,7 +466,7 @@ function settleVote(s, now) {
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
-  s.phase = 'lobby'; s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
+  const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
   s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
@@ -434,7 +541,10 @@ function endSeedTurn(s, now) {
    spread out so the bracket fills to a power of two */
 function buildBracket(s, now) {
   const b = s.bb, n = b.seeds.length;
-  if (n < 2) { say(s, `${n ? 'Only one seed' : 'No seeds'}: not enough for a bracket. A new tournament!`); s.round++; return startTourney(s, now); }
+  if (n < 2) {
+    if (!playing(s).length) return s;   // nobody left to play (a new tournament would loop forever)
+    say(s, `${n ? 'Only one contender' : 'No contenders'}: not enough for a bracket. A new tournament!`); s.round++; return startTourney(s, now);
+  }
   const order = shuffle(b.seeds.map((_, i) => i)), M = 2 ** Math.ceil(Math.log2(n)) / 2, byes = 2 * M - n;
   b.rounds = []; for (let k = M; k >= 1; k /= 2) b.rounds.push(Array.from({ length: k }, () => ({ a: null, b: null })));
   let q = 0;
@@ -447,8 +557,9 @@ function buildBracket(s, now) {
   return enterBracket(s, now);
 }
 const feed = (b, r, i) => { const nx = b.rounds[r + 1]; if (nx) nx[i >> 1][i % 2 ? 'b' : 'a'] = b.rounds[r][i].w; };   // the winner moves on
-function enterBracket(s, now) {
-  s.seat.forEach((id, k) => { if (!s.pos[id]) s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });
+function enterBracket(s, now) {   // ducks stand on the bracket (x, y across it), lined up by the round that's up next
+  const b = s.bb, col = b.champ != null ? b.rounds.length : b.r, x = Math.min(.97, (col + .45) / (b.rounds.length + 1));
+  s.seat.forEach((id, k) => { s.pos[id] = { x, y: (k + 1) / (s.seat.length + 1) }; });
   s.lock = {};
   return enter(s, 'bracket', now);
 }
@@ -461,22 +572,41 @@ function nextMatch(s, now) {
     else b.r++;
     return enterBracket(s, now);
   }
-  b.m = i; s.qi++; s.lordTime = s.options.bbSpeed ? 10 : s.options.answerTime;
+  b.m = i; s.qi++; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0; delete b.tie;
   s.pos = {}; s.lock = {};
   s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts between the two seeds
   return enter(s, 'answer', now);
 }
-/* the votes are in: the side with more ducks wins (a tie is a coin flip), and its seed moves on */
-function endMatch(s) {
+/* the votes are in: the side with more ducks wins and moves on; a tie goes to the room (vote again or a coin toss).
+   Returns false on a tie. */
+function endMatch(s, now) {
   const b = s.bb, m = b.rounds[b.r][b.m], who = {};
   for (const id of playing(s)) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) who[id] = c; }
-  const va = Object.values(who).filter(c => c === 0).length, vb = Object.values(who).length - va, tie = va === vb;
-  const side = tie ? (Math.random() < .5 ? 0 : 1) : va > vb ? 0 : 1;
-  Object.assign(m, { w: side ? m.b : m.a, va, vb, who }, tie ? { coin: true } : {});
+  const va = Object.values(who).filter(c => c === 0).length, vb = Object.values(who).length - va;
+  s.lock = { ...who };   // each duck stays on the side it chose while the room talks it over (or settles the tie)
+  if (va === vb) { b.tie = { va, vb, who, votes: {} }; say(s, `Tied ${va}–${vb}! Vote again, or toss a coin?`); return false; }
+  decide(s, va > vb ? 0 : 1, va, vb, who, false);
+  return true;
+}
+function decide(s, side, va, vb, who, coin) {
+  const b = s.bb, m = b.rounds[b.r][b.m];
+  Object.assign(m, { w: side ? m.b : m.a, va, vb, who }, coin ? { coin: true } : {});
   feed(b, b.r, b.m);
   const w = b.seeds[m.w];
-  say(s, tie ? `Tied ${va}–${vb}! A coin flip sends "${w.text}" through.` : `"${w.text}" wins ${Math.max(va, vb)}–${Math.min(va, vb)}.`);
-  s.lock = { ...who };   // each duck stays on the side it chose while the room talks it over
+  say(s, coin ? `The coin sends "${w.text}" through.` : `"${w.text}" wins ${Math.max(va, vb)}–${Math.min(va, vb)}.`);
+}
+/* the tie is settled: more for "vote again" runs the match again; else (or a tie again) the coin decides */
+function settleTie(s, now) {
+  const b = s.bb, t = b.tie, n = { again: 0, coin: 0 };
+  for (const [id, v] of Object.entries(t.votes || {})) if (s.players[id]) n[v]++;
+  if (n.again > n.coin) {
+    say(s, 'Voting again.'); delete b.tie;
+    s.qi++; s.pos = {}; s.lock = {}; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0;
+    s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });
+    return enter(s, 'answer', now);
+  }
+  decide(s, Math.random() < .5 ? 0 : 1, t.va, t.vb, t.who, true); delete b.tie;
+  return s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now);
 }
 /* a topic or a seed: sent (send) or typed so far (a draft, which everyone sees as it's typed) */
 function bbWrite(s, a, now, send) {

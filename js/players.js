@@ -4,7 +4,7 @@
    or Vote to kick. At the bottom you can start a vote to go back to the lobby (once a turn). A running vote shows as a
    box at the top for everyone who can vote in it. A player who hasn't touched a key, the mouse or the screen in two
    minutes shows Zs over their duck. */
-import { esc, el, confirmBox, contextMenu, toast } from './ui.js';
+import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
 import { cardHTML } from './card.js';
 import { voteNeeds, turnKey } from './rules.js';
 import { now as clockNow } from './clock.js';
@@ -64,14 +64,14 @@ export function mountPlayers(S, getR) {
   const render = () => {
     const R = getR(); if (!R || box.hidden) return;
     const s = R.state;
-    box.querySelector('.pm-list').innerHTML = s.seat.map(id => {
+    setHTML(box.querySelector('.pm-list'), s.seat.map(id => {   // (only when something in it changed: every move repaints the game)
       const p = s.players[id]; if (!p) return '';
       const tags = [p.idle ? '<span class="pm-tag idle">💤 Away</span>' : '', p.late ? '<span class="pm-tag">Plays from the next round</span>' : ''].join('');
       return `<div class="pm-row" data-pid="${esc(id)}" tabindex="0">${cardHTML(p, { host: id === s.hostId, me: id === R.me, size: 44 })}<div class="pm-side">${netHTML(p, R.online)}${tags}</div></div>`;
-    }).join('');
+    }).join(''));
     const no = whyNotVote(s, R.me, 'lobby'), running = s.vote && s.vote.kind === 'lobby';
-    box.querySelector('.pm-foot').innerHTML = `<button type="button" class="btn ghost" data-pa="lobbyvote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: back to the lobby' : 'Start a vote: back to the lobby'}</button>
-      <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span>`;
+    setHTML(box.querySelector('.pm-foot'), `<button type="button" class="btn ghost" data-pa="lobbyvote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: back to the lobby' : 'Start a vote: back to the lobby'}</button>
+      <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span>`);
   };
   const open = (stay = false) => { sticky = sticky || stay; box.hidden = false; render(); };
   const close = () => { sticky = false; box.hidden = true; };
@@ -95,7 +95,7 @@ export function mountPlayers(S, getR) {
     const R = getR(); if (!R) return;
     const v = R.state.vote;
     vbox.hidden = !v;
-    if (v) { vbox.innerHTML = voteHTML(R.state, R.me); if (v.n !== lastVote) { lastVote = v.n; sfx.boop(); } }
+    if (v) { setHTML(vbox, voteHTML(R.state, R.me)); if (v.n !== lastVote) { lastVote = v.n; sfx.boop(); } }
     render();
   };
   const tick = setInterval(() => { const R = getR(), t = vbox.querySelector('.vb-left'); if (R && R.state.vote && t) t.textContent = Math.max(0, Math.ceil((R.state.vote.ends - clockNow()) / 1000)); }, 500);

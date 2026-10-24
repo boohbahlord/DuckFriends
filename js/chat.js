@@ -8,11 +8,15 @@
    \permmute … (kept on this device), \show mute | permmute | players. A message over 250 characters folds under an
    arrow; each new message's bubble floats over its duck on the board.
 
-   Command line: customization only for now, e.g. custom username font "times new roman". Words are split by spaces, so a
-   choice with a space goes in quotes; Tab adds the quotes. */
+   Command line: a small bash (shell.js): files, pipes, stats, send, sudo and groups, forgame; and the customization,
+   e.g. custom username font "times new roman". Words are split by spaces, so a choice with a space goes in quotes; Tab
+   adds the quotes. ↑ and ↓ bring back earlier commands. A message sent from the command line shows the command in small
+   print over its output; a sent file shows only its name to anyone outside the sudo group. */
 import { el, esc, typing, windowOpen, setHTML, confirmBox } from './ui.js';
 import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
+import { boardPhases, denied, isSudo, gameMuted } from './rules.js';
+import { shellRun, shellSuggest, shellHistory } from './shell.js';
 import { nameHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from './duck.js';
 import { HATS, hatById } from './hats.js';
@@ -65,7 +69,7 @@ const TREE = {
         'beak color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor = c; return `Beak color: ${c}`; } },
         'beak color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor2 = c; return `Beak shade: ${c}`; } },
         outfit: { vals: ['none', ...OUTFITS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = OUTFITS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.outfit = x ? { id: x.id } : null; return `Outfit: ${x ? x.name : 'none'}`; } },
-        style: { vals: STYLES.map(x => x.id), run: v => pick(STYLES.map(x => x.id), v, x => { const st = STYLES.find(y => y.id === x); if (profile.duck.style !== x) for (const [c, , d] of st.colors || []) profile.duck[c] = d; profile.duck.style = x; }, 'Style') },
+        style: { vals: STYLES.map(x => x.id), run: v => pick(STYLES.map(x => x.id), v, x => { profile.duck.style = x; }, 'Style') },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
         special: { vals: ['none', ...SPECIALS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = SPECIALS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.special = x ? x.id : null; return `Special: ${x ? x.name : 'none'}`; } },
@@ -152,7 +156,8 @@ function runFun(node, args) {
   if (!r) return '✗ That works in a game.';
   const s = r.state;
   if (!s.options.fun) return '✗ The host turned the silly commands off.';
-  if (!['answer', 'discuss', 'results'].includes(s.phase)) return '✗ That works on the board.';
+  if (denied(s, r.me, 'nofun')) return '✗ Your group can\'t use the silly commands.';
+  if (!boardPhases(s).includes(s.phase)) return '✗ That works on the board.';
   const who = [];
   for (const a of args) {
     const id = byTag(s, a.replace(/^@/, ''));
@@ -214,7 +219,7 @@ const sessionMutes = () => { const r = activeRoom(), id = r ? r.state.id : ''; i
 export function isMuted(s, id, kind) {
   const p = s && s.players[id]; if (!p) return false;
   const a = sessionMutes(), b = perm();
-  return keysOfPlayer(p).some(k => (a[k] && a[k][kind]) || (b[k] && b[k][kind]));
+  return gameMuted(s, id, kind) || keysOfPlayer(p).some(k => (a[k] && a[k][kind]) || (b[k] && b[k][kind]));   // (forgame's mutes hide it for everyone)
 }
 /* \mute | \permmute: the kinds, then on or off, then the players */
 function setMutes(line, permanent, s, me) {
@@ -243,6 +248,37 @@ function showPlayers(s, online) {
   return s.seat.map(id => { const p = s.players[id]; return [`${p.name}${id === s.hostId ? ' (host)' : ''}`, p.bot ? 'computer' : online ? (p.ms == null ? '… ms' : p.ms + ' ms') : 'same device', p.idle ? 'away' : '', p.late ? 'plays next round' : ''].filter(Boolean).join(' · '); }).join('\n');
 }
 
+/* the chat's own commands (\togglesuggest, \show, \mute, \permmute), from the chat or the command line; null: not one */
+async function chatCommand(text, r) {
+  if (/^\\togglesuggest\s*$/i.test(text)) {
+    profile.settings.chatSuggest = profile.settings.chatSuggest === false; save();
+    return `Chat suggestions ${profile.settings.chatSuggest ? 'on' : 'off'}. \\togglesuggest switches them again.`;
+  }
+  if (!/^\\(show|mute|permmute|unmute|muteping|unmuteping)/i.test(text)) return null;
+  if (!r) return 'That works in a room.';
+  const sh = text.match(/^\\show\s+(\S+)\s*$/i);
+  if (sh) { const k = sh[1].toLowerCase(); return k === 'mute' ? showMutes(r.state, false) : k === 'permmute' ? showMutes(r.state, true) : k === 'players' ? showPlayers(r.state, r.online) : '\\show mute, \\show permmute or \\show players'; }
+  if (/^\\show\s*$/i.test(text)) return '\\show mute, \\show permmute or \\show players';
+  const old = text.match(/^\\(un)?(mute|muteping)@([\p{L}\p{N}_-]+)\s*$/iu);   // the old way still works: permanent, like before
+  if (old) return setMutes(`x ${old[2].toLowerCase() === 'mute' ? 'text' : 'ping'} ${old[1] ? 'off' : 'on'} @${old[3]}`, true, r.state, r.me);
+  const mu = text.match(/^\\(mute|permmute)\b/i);
+  if (!mu) return null;
+  const permanent = mu[1].toLowerCase() === 'permmute';
+  if (permanent && !/\s-f(\s|$)/i.test(text) && /\s@/.test(text) && !(await confirmBox('Mute for good?', 'This stays on this device until you undo it (\\permmute … off @name). -f skips this question.'))) return 'Nothing muted.';
+  return setMutes(text, permanent, r.state, r.me);
+}
+/* what the command line needs from here: the room, your name, these commands and the customization ones */
+function shellCtx() {
+  const r = activeRoom(), s = r && r.state, me = s && s.players[r.me];
+  return {
+    room: r, meName: tag(me ? me.name : profile.name),
+    chat: async text => (await chatCommand(text, r)) ?? `✗ ${text.split(' ')[0]}?`,
+    legacyHas: name => !!TREE[name] && name !== 'help' && name !== 'clear',
+    legacyTop: () => Object.keys(TREE).filter(k => k !== 'help' && k !== 'clear' && !(TREE[k].fun && !funOn())),
+    legacy: line => runCommand(line), legacySuggest: line => cmdSuggest(line),
+  };
+}
+
 /* ---------- the widget ---------- */
 const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '' };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages
 const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, '\\-')}|everyone)(?![\\p{L}\\p{N}_-])`, 'iu');
@@ -269,7 +305,7 @@ export function chatWidget() {
 
   const drawLog = () => {
     const r = room(), s = r && r.state;
-    if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help.</p>'); log.scrollTop = 1e9; return; }
+    if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help (man for more).</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
     const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes].sort((a, b) => a.t - b.t);
@@ -281,7 +317,13 @@ export function chatWidget() {
       const long = m.text.length > 250, open = long && ui.long.has(m.n);
       const text = esc(long && !open ? m.text.slice(0, 250).trimEnd() + '…' : m.text).replace(/(\\?)@([\p{L}\p{N}_-]+)/gu, (a, b, n) => `<b class="at">${b}@${n}</b>`);
       const fold = long ? `<button type="button" class="fold" data-n="${m.n}" aria-expanded="${open}" aria-label="${open ? 'Fold' : 'Show all'}">${open ? '▾' : '▸'}</button>${hit ? '<b class="fold-bang">!</b>' : ''} ` : '';
-      return `<p class="${m.to ? 'priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${m.to ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : '?'}` : 'private'}</span> ` : ''}${name(m.from)}: ${text}</p>`;
+      const priv = m.to ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : '?'}` : 'private'}</span> ` : '';
+      /* from the command line: the command in small print, then its output (a file: only sudo members see inside) */
+      if (m.cmd) {
+        const sealed = m.file && !isSudo(s, me) && m.from !== me;
+        return `<p class="from-cmd${m.to ? ' priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${priv}${name(m.from)} <span class="cmd-tag">from the command line: <code>$ ${m.file ? 'send ' : ''}${esc(m.cmd)}</code></span>${m.file ? `<span class="cmd-file">📄 ${esc(m.file)}${sealed ? ' <span class="dim">(only sudo can open it)</span>' : ''}</span>` : ''}${sealed ? '' : `<span class="cmd-out">${text}</span>`}</p>`;
+      }
+      return `<p class="${m.to ? 'priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${priv}${name(m.from)}: ${text}</p>`;
     }).join('');
     const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     setHTML(log, html || '<p class="dim small">Say hi. \\help lists what chat can do.</p>');
@@ -293,7 +335,7 @@ export function chatWidget() {
   };
   const refresh = () => {
     const r = room();
-    list = !inp.value ? [] : ui.mode === 'cmd' ? cmdSuggest(inp.value) : chatSuggest(inp.value, r && r.state, r && r.me);   // only once something is typed
+    list = !inp.value ? [] : ui.mode === 'cmd' ? shellSuggest(inp.value, shellCtx()) : chatSuggest(inp.value, r && r.state, r && r.me);   // only once something is typed
     sel = Math.min(sel, Math.max(0, list.length - 1)); drawSugg();
   };
   /* the round symbol shows the mode you are in: ABC on white for the chat, a green $ on black for the command line */
@@ -324,8 +366,14 @@ export function chatWidget() {
   inp.addEventListener('input', () => { sel = 0; refresh(); });
   inp.addEventListener('blur', () => setTimeout(drawSugg, 120));
   sugg.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); inp.value = list[+li.dataset.i].apply(); sel = 0; refresh(); });
+  let back = -1;   // the command line's ↑ ↓: how far back in its history
   inp.addEventListener('keydown', e => {
     if (e.key === 'Tab') { e.preventDefault(); if (list.length) { inp.value = list[sel].apply(); sel = 0; refresh(); } return; }
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && ui.mode === 'cmd' && !list.length) {
+      const h = shellHistory(); if (!h.length) return;
+      e.preventDefault(); back = e.key === 'ArrowUp' ? Math.min(h.length - 1, back + 1) : Math.max(-1, back - 1);
+      inp.value = back < 0 ? '' : h[h.length - 1 - back]; return;
+    }
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && list.length) { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + Math.min(8, list.length)) % Math.min(8, list.length); drawSugg(); return; }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePanel(); }
   });
@@ -335,30 +383,20 @@ export function chatWidget() {
     const text = inp.value.trim(); inp.value = ''; sel = 0;
     if (!text) { closePanel(); return; }
     if (ui.mode === 'cmd') {
-      ui.cmd.push('$ ' + text);
-      const res = runCommand(text);
+      ui.cmd.push('$ ' + text); back = -1;
+      const res = await shellRun(text, shellCtx());
       if (res === null) ui.cmd = []; else ui.cmd.push(...res);
-      if (ui.cmd.length > 200) ui.cmd.splice(0, ui.cmd.length - 200);
+      if (ui.cmd.length > 300) ui.cmd.splice(0, ui.cmd.length - 300);
       drawLog(); refresh(); return;
     }
     const r = room(), note = (...t) => { ui.notes.push(...t.map(text => ({ t: Date.now(), mine: true, text }))); drawLog(); refresh(); };
     if (/^\\help\b/i.test(text)) return note(...HELP);
-    if (/^\\togglesuggest\s*$/i.test(text)) {
-      profile.settings.chatSuggest = profile.settings.chatSuggest === false; save();
-      return note(`Chat suggestions ${profile.settings.chatSuggest ? 'on' : 'off'}. \\togglesuggest switches them again.`);
-    }
+    const said = await chatCommand(text, r);
+    if (said !== null) { drawLog(); return note(said); }
     if (!r) return note('Chat works in a room.');
-    const sh = text.match(/^\\show\s+(\S+)\s*$/i);
-    if (sh) { const k = sh[1].toLowerCase(); return note(k === 'mute' ? showMutes(r.state, false) : k === 'permmute' ? showMutes(r.state, true) : k === 'players' ? showPlayers(r.state, r.online) : '\\show mute, \\show permmute or \\show players'); }
-    if (/^\\show\s*$/i.test(text)) return note('\\show mute, \\show permmute or \\show players');
-    const old = text.match(/^\\(un)?(mute|muteping)@([\p{L}\p{N}_-]+)\s*$/iu);   // the old way still works: permanent, like before
-    if (old) { const res = setMutes(`x ${old[2].toLowerCase() === 'mute' ? 'text' : 'ping'} ${old[1] ? 'off' : 'on'} @${old[3]}`, true, r.state, r.me); drawLog(); return note(res); }
-    const mu = text.match(/^\\(mute|permmute)\b/i);
-    if (mu) {
-      const permanent = mu[1].toLowerCase() === 'permmute';
-      if (permanent && !/\s-f(\s|$)/i.test(text) && /\s@/.test(text) && !(await confirmBox('Mute for good?', 'This stays on this device until you undo it (\\permmute … off @name). -f skips this question.'))) return note('Nothing muted.');
-      const res = setMutes(text, permanent, r.state, r.me); drawLog(); return note(res);
-    }
+    if (denied(r.state, r.me, 'nochat')) return note('Your group can\'t chat.');
+    if (denied(r.state, r.me, 'slow') && Date.now() - (ui.lastSent || 0) < 15000) return note(`Slow down: one message every 15 seconds (${Math.ceil((15000 - (Date.now() - ui.lastSent)) / 1000)} s).`);
+    ui.lastSent = Date.now();
     const pm = text.match(/^\\@([\p{L}\p{N}_-]+)\s+(.+)$/u);
     if (pm) {
       const to = byTag(r.state, pm[1]);

@@ -3,7 +3,7 @@
    Each hat gives a front layer (drawn over the head) and, for a few, a back layer (drawn behind the duck: the afro). Hats
    that can be recolored name their colors in `colors` (c1, c2); the hotdog has ketchup; the crown takes a metal. A hat can
    also be a player card's pattern (small hats in a repeating tile). Ducks with hats get headroom above them. */
-import { METAL } from './duck.js';
+import { METAL, mix } from './duck.js';
 
 export const HATS = [
   { id: 'wizard', name: 'Wizard hat', colors: [['c1', 'Hat', '#6a3fb5']] },
@@ -24,7 +24,6 @@ export const HATS = [
   { id: 'cap', name: 'Baseball cap', colors: [['c1', 'Cap', '#2fa4ff']] },
   { id: 'birthday', name: 'Birthday hat', colors: [['c1', 'Hat', '#2fa4ff'], ['c2', 'Dots', '#ffd23f']] },
   { id: 'word', name: 'Hat', tip: 'The word itself, in an old copperplate hand.', colors: [['c1', 'Ink', '#2b1d0e']] },
-  { id: 'glove', name: 'Cartoon glove' },
   { id: 'horns', name: 'Devil horns' },
   { id: 'halo', name: 'Halo' },
   { id: 'antenna', name: 'Antenna', colors: [['c1', 'Bulb', '#ff4f9a']] },
@@ -149,22 +148,12 @@ const DRAW = {
     <path d="M-20-8C-14-6-8-4-3-1M20-8C14-6 8-4 3-1" stroke="${h.c2}" stroke-width="2.2" fill="none"/>
     <path d="M-3 1L-9 14L-4 12L-1 16Z M3 1L9 14L4 12L1 16Z" fill="${dk(h.c1, .15)}" ${O}/>
     <rect x="-4.5" y="-5" width="9" height="9" rx="3" fill="${h.c2}" ${O}/></g>`,
-  birthday: (h, id) => `<defs><clipPath id="${id}bd"><path d="M-15 1L2-40L17 1Z"/></clipPath></defs>
-    <path d="M-15 1L2-40L17 1Z" fill="${h.c1}" ${O}/>
+  birthday: (h, id) => `<defs><clipPath id="${id}bd"><path d="M-15 1L2-40L17 1Q1 4.5-15 1Z"/></clipPath></defs>
+    <path d="M-15 1L2-40L17 1Q1 4.5-15 1Z" fill="${h.c1}" ${O}/>
     <g clip-path="url(#${id}bd)" fill="${h.c2}">${[[-6, -6], [6, -4], [0, -16], [-1, -28], [8, -14], [-9, -2], [3, -25]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6"/>`).join('')}</g>
     <path d="M2-40L17 1L10 1Z" fill="#000" opacity=".1"/>
-    <ellipse cx="1" cy="1" rx="17" ry="3.4" fill="${dk(h.c1, .2)}" ${O}/>
     <g fill="${h.c2}" stroke="#1c1c28" stroke-width="1">${[0, 60, 120, 180, 240, 300].map(a => `<circle cx="${(2 + Math.cos(a * Math.PI / 180) * 3.6).toFixed(1)}" cy="${(-42 + Math.sin(a * Math.PI / 180) * 3.6).toFixed(1)}" r="3"/>`).join('')}<circle cx="2" cy="-42" r="3.2" stroke="none"/></g>`,
   word: h => `<g transform="translate(-32 -2) rotate(-4) scale(1.25)"><path d="M2.8 0Q1.6 0 0.8-0.5Q0-1.1 0-1.9Q0-2.6 0.5-2.9Q0.9-3.1 1.4-3.1Q1.6-3.1 1.9-3Q2.1-2.9 2.1-2.5Q2.1-2.2 1.8-2Q1.6-1.8 1.3-1.8Q1.1-1.8 0.9-1.8Q0.7-1.8 0.6-1.9L0.6-1.8Q0.6-1.2 1.2-0.8Q1.8-0.4 2.9-0.4Q3.5-0.4 4.1-0.5Q4.7-0.7 5.3-1Q6-1.4 6.9-2.1Q7.8-2.8 9-4.2Q10.3-5.5 12-7.7Q11.1-7.4 10.4-7.2Q8.8-6.6 7.3-5.7Q5.8-4.9 5-3.7Q4.9-3.5 4.8-3.5Q4.7-3.5 4.7-3.6Q4.7-3.7 4.7-3.7Q4.7-3.8 4.8-3.9Q5.1-4.4 5.6-4.9Q6.2-5.4 7-5.9Q7.7-6.4 8.2-6.7Q8.9-7 9.9-7.4Q10.9-7.7 12.4-8.1Q14.2-10.6 15.7-12.4Q17.3-14.1 18.2-15.1Q16.7-14.2 15.7-13.8Q14.7-13.5 14-13.5Q13.3-13.5 12.8-13.8Q12.3-14.2 12.3-14.9Q12.3-15.7 12.7-16.4Q13.1-17.1 14.3-18Q14.9-18.5 15-18.7Q15.2-18.9 15.2-19Q15.2-19.5 14.7-19.7Q14.3-20 13.3-20Q12.2-20 11.1-19.6Q10-19.2 9.1-18.4Q8.9-18.2 8.8-18.2Q8.6-18.2 8.6-18.4Q8.6-18.4 8.7-18.5Q8.8-18.6 8.9-18.7Q9.7-19.5 10.9-19.9Q12-20.3 13.3-20.3Q14.5-20.3 15.1-19.9Q15.8-19.4 15.8-18.6Q15.8-17.8 15.4-17Q14.9-16.3 13.6-15.4Q13.1-15.1 13-14.9Q12.8-14.8 12.8-14.6Q12.8-14.4 13.1-14.1Q13.4-13.9 14.2-13.9Q15.1-13.9 16.5-14.6Q17.9-15.2 19.3-16.5Q20.7-17.7 21.6-18.4Q22.5-19.2 23.1-19.6Q23.7-20.1 24.2-20.3Q24.4-20.4 24.6-20.5Q24.7-20.5 24.8-20.5Q25-20.5 25-20.4Q25-20.4 24.7-20.2Q24.5-20.1 24.3-20Q24.1-19.9 23.6-19.5Q22.1-18.3 20.4-16.1Q18.7-13.9 16.5-10.9Q16.1-10.3 15.7-9.8Q15.3-9.3 14.9-8.8Q16.1-9.1 17.5-9.5Q18.9-9.8 20.6-10.2Q20.7-10.4 20.9-10.7Q21.1-10.9 21.3-11.1Q22.9-13 24.8-14.8Q26.7-16.5 28.5-17.8Q30.3-19.1 31.8-19.9Q33.3-20.7 34.2-20.7Q34.8-20.7 35.2-20.4Q35.5-20.1 35.5-19.6Q35.5-18.9 34.6-17.7Q33.7-16.6 32-15.3Q30.4-14 28-12.7Q25.7-11.5 22.8-10.5Q21.2-8.6 20-6.9Q18.8-5.1 18-3.7Q17.3-2.4 17.3-1.7Q17.3-1 17.5-0.7Q17.8-0.3 18.5-0.3Q19.6-0.3 20.8-1.2Q21.9-2 23-3.5Q24-5 24.6-7Q24.7-7.5 24.9-7.5Q25.1-7.5 25.1-7Q25.2-6.4 24.8-5.5Q24.5-4.6 23.8-3.6Q23.2-2.7 22.3-1.8Q21.4-1 20.4-0.5Q19.4 0 18.4 0Q17.5 0 17-0.6Q16.5-1.2 16.5-1.9Q16.5-3.3 17.3-5.1Q18.1-7 20.2-9.8Q18.9-9.4 17.4-9Q15.9-8.7 14.5-8.3Q12.2-5.6 10.4-3.8Q8.5-2 6.8-1Q5.8-0.5 4.7-0.2Q3.7 0 2.8 0M23.2-11Q25.7-12 27.8-13.2Q30-14.5 31.6-15.8Q33.2-17.1 34.1-18.2Q35-19.3 35-19.8Q35-20.3 34.3-20.3Q33.4-20.3 32.2-19.6Q30.9-18.8 29.4-17.5Q27.9-16.1 26.3-14.5Q24.7-12.8 23.2-11M27.1 0Q26.1 0 25.7-0.5Q25.3-1 25.3-1.9Q25.3-2.9 25.7-4Q26.1-5.1 27.1-6.2Q29.1-8.5 30.8-9.3Q32.5-10 34-10Q34.8-10 35.3-9.7Q35.8-9.4 35.8-8.8Q35.8-8.4 35.7-8Q36.1-8.5 36.5-8.9Q36.8-9.4 37.1-9.7Q37.5-9.6 38-9.6Q38.2-9.6 38.5-9.6Q38.9-9.7 39.1-9.7L34.1-3.7Q33.2-2.6 32.8-1.9Q32.4-1.2 32.4-0.8Q32.4-0.4 32.8-0.4Q33.6-0.4 34.5-0.8Q35.3-1.3 36.1-2Q37-2.8 37.7-3.5Q38.4-4.3 38.9-5Q39.5-5.7 39.8-6L40.1-5.7Q39.8-5.4 39.2-4.7Q38.6-4 37.8-3.2Q37.1-2.4 36.2-1.6Q35.3-0.9 34.4-0.4Q33.5 0 32.6 0Q31.1 0 31.1-0.9Q31.1-1.2 31.3-1.6Q31.4-1.9 31.8-2.5Q32.2-3 32.9-3.9L32.8-4Q31-1.8 29.5-0.9Q27.9 0 27.1 0M27.1-0.4Q28.1-0.4 29.6-1.5Q31.2-2.6 33.3-5.1Q33.7-5.6 34-5.9Q34.3-6.3 34.5-6.6Q34.9-7.1 35.1-7.7Q35.4-8.2 35.4-8.7Q35.4-9.2 35.1-9.4Q34.8-9.6 34.4-9.6Q33.7-9.6 32.1-8.5Q30.5-7.5 28.5-5.2Q27.5-3.9 27-2.9Q26.5-1.9 26.5-1.2Q26.5-0.4 27.1-0.4M38.7 0Q37.9 0 37.5-0.3Q37.1-0.6 37.1-1.1Q37.1-1.5 37.2-1.9Q37.3-2.3 37.7-2.9Q38-3.5 38.7-4.5Q39.4-5.5 40.5-7.2L44.3-12.5L43.2-12.5Q42.7-12.5 42.7-12.7Q42.7-12.9 43.3-12.9L44.6-12.9L47.3-16.7Q47.5-16.7 47.8-16.7Q48.1-16.7 48.7-16.7Q49-16.7 49.4-16.7L46.5-12.9L50.3-12.9Q50.7-12.9 50.7-12.7Q50.7-12.5 50.4-12.5L46.2-12.5L42.3-7.3Q41-5.4 40.1-4.2Q39.3-3.1 38.9-2.4Q38.4-1.7 38.3-1.3Q38.1-1 38.1-0.8Q38.1-0.4 38.9-0.4Q39.9-0.4 40.9-1Q42-1.7 43-2.6Q44-3.6 44.8-4.5Q45.6-5.4 46-5.9L46.4-5.7Q45.9-5.2 45.1-4.3Q44.3-3.3 43.2-2.3Q42.2-1.3 41-0.7Q39.9 0 38.7 0" fill="${h.c1}" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke fill"/></g>`,
-  glove: () => { const W = 'fill="#fff" stroke="#1c1c28" stroke-width="1.5" stroke-linejoin="round"';
-    const fingers = [[-10.5, 16, -10], [-3.5, 21, -3], [3.5, 20, 4], [10.5, 15, 11]].map(([x, L, a]) =>
-      `<path d="M${x - 3.6} -12V${-12 - L + 3.6}A3.6 3.6 0 0 1 ${x + 3.6} ${-12 - L + 3.6}V-12Z" ${W} transform="rotate(${a} ${x} -12)"/>`).join('');
-    return `<g transform="rotate(4)">${fingers}
-    <path d="M14-7C19-9 23-14 25.5-19.5C27.5-24 34-22.5 33-17C31.5-10 25-4 16-1Z" ${W}/>
-    <path d="M-17-2C-19-8-18-13-15-14.5C-6-16.5 6-16.5 15-14.5C18-13 19-8 17-2Z" ${W}/>
-    <path d="M-6-5V-11M0-5V-12M6-5V-11" stroke="#1c1c28" stroke-width="1.2" stroke-linecap="round"/>
-    <path d="M-21 6L-18-3C-6-5.5 6-5.5 18-3L21 6C8 8.5-8 8.5-21 6Z" ${W}/>
-    <path d="M-19.5 2C-7 0 7 0 19.5 2" stroke="#1c1c28" stroke-width="1" fill="none"/></g>`; },
   horns: (h, id) => `<defs><linearGradient id="${id}hn" x1="0" y1="1" x2=".6" y2="0"><stop offset="0" stop-color="#8a0d14"/><stop offset=".5" stop-color="#e3242b"/><stop offset="1" stop-color="#ff7a6a"/></linearGradient></defs>
     <path d="M-7 3C-7-6-11-14-20-19C-17-12-16-5-16 3Z" fill="#a3121b" stroke="#3a0408" stroke-width="1.4" stroke-linejoin="round"/>
     <path d="M-10 0C-10-6-12-11-17-15" stroke="#fff" stroke-width="1" opacity=".3" fill="none" stroke-linecap="round"/>
@@ -229,11 +218,13 @@ const DRAW = {
     <path d="M-14-2L-14-24C-10-33-4-37 0-41C4-37 10-33 14-24L14-2Z" fill="#f2d98a" ${O}/>
     <path d="M-14-6H14" stroke="#c8102e" stroke-width="3.4"/><path d="M0-40V-6" stroke="#c8102e" stroke-width="3.4"/>
     <circle cx="0" cy="-22" r="2.6" fill="#2f80ed" stroke="#1c1c28" stroke-width=".8"/>`,
-  helmet: h => `<path d="M-25 3C-25-20-11-29 2-29C17-29 27-20 27 3C14 6-12 6-25 3Z" fill="${h.c1}" ${O}/>
-    <path d="M-25 3C-12 6 14 6 27 3" stroke="${dk(h.c1, .4)}" stroke-width="2.6" fill="none"/>
-    ${[[-14, -16], [-4, -22], [8, -21], [16, -12], [-8, -8], [4, -10], [12, -3], [-18, -4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" fill="${dk(h.c1, .3)}"/>`).join('')}
-    <ellipse cx="-8" cy="-19" rx="7" ry="3.4" fill="#fff" opacity=".22" transform="rotate(-25 -8 -19)"/>
-    <path d="M-15 4C-17 13-11 22 2 24" stroke="#6e5a2e" stroke-width="2" fill="none"/>`,
+  /* the 1940s army helmet: a deep round steel dome with a flared lip all the way round, matte paint, lit from the top left */
+  helmet: (h, id) => `<defs><radialGradient id="${id}am" cx=".32" cy=".25" r=".85"><stop offset="0" stop-color="${mix(h.c1, 255, .28)}"/><stop offset=".55" stop-color="${h.c1}"/><stop offset="1" stop-color="${dk(h.c1, .35)}"/></radialGradient></defs>
+    <path d="M-25 1C-26-19-12-30 2-30C18-30 29-19 27 1C13 4.5-11 4.5-25 1Z" fill="url(#${id}am)" ${O}/>
+    <path d="M-29 3.5C-14 8.5 16 8.5 31 3.5L28.6-.6C14 3.6-12 3.6-26.6-.6Z" fill="${dk(h.c1, .18)}" ${O}/>
+    <path d="M-26 2.6C-12 6.6 14 6.6 29 2.6" stroke="${mix(h.c1, 255, .25)}" stroke-width=".9" fill="none" opacity=".7"/>
+    <path d="M-20-14C-16-23-6-27 4-27" stroke="#fff" stroke-width="3" fill="none" opacity=".18" stroke-linecap="round"/>
+    <path d="M14-24C20-20 24-13 25-5" stroke="${dk(h.c1, .4)}" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>`,
   antennae: h => { const c = h.c1, d = dk(c, .35);
     const stalk = (x0, x1, y1, r, far) => { const p = `M${x0} 3C${x0} -8 ${x1 - 4} ${y1 + 14} ${x1} ${y1 + r - 1}`;
       return `<path d="${p}" stroke="${d}" stroke-width="${far ? 4.4 : 4.8}" fill="none" stroke-linecap="round"/><path d="${p}" stroke="${far ? dk(c, .14) : c}" stroke-width="${far ? 2.6 : 3}" fill="none" stroke-linecap="round"/>

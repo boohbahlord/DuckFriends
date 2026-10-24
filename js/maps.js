@@ -10,7 +10,7 @@
    The host picks the map in the lobby. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
-import { backdropSVG } from './art.js';
+import { backdropSVG, backdropHTML } from './art.js';
 
 export const MAPS = [
   ['board', 'Night Show', 'The carnival at night: string lights, bunting and breathing Twister dots.'],
@@ -180,7 +180,7 @@ function nightScene(layer) {
   const sc = document.createElement('div'); sc.className = 'scene night';
   layer.append(sc);
   let drawn = '';
-  const draw = () => { const k = layer.clientWidth + 'x' + layer.clientHeight; if (k === drawn || !layer.clientWidth) return; drawn = k; sc.innerHTML = backdropSVG(layer.clientWidth, layer.clientHeight, true); };
+  const draw = () => { const k = layer.clientWidth + 'x' + layer.clientHeight; if (k === drawn || !layer.clientWidth) return; drawn = k; sc.innerHTML = backdropHTML(layer.clientWidth, layer.clientHeight, true); };
   const ro = new ResizeObserver(draw); ro.observe(layer); draw();
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
 }

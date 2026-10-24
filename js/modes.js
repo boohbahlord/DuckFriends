@@ -7,7 +7,7 @@ import { esc } from './ui.js';
 export const MODES = [
   { id: 'aod', name: 'Agree or Disagree', tip: 'Everyone writes a statement; for each one, walk to how much you agree, then talk it over.' },
   { id: 'wyr', name: 'Would You Rather', tip: 'Everyone writes a "would you rather" with two choices, in secret; for each one, walk to the side you\'d pick.' },
-  { id: 'bb', name: 'Bicker Brackets', tip: 'A tournament: pick a topic, write the seeds together, then walk onto the seed you back, match by match, until one is the champion.' },
+  { id: 'bb', name: 'Bicker Brackets', tip: 'A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 
