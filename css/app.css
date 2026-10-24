@@ -292,6 +292,8 @@ p.bad { color: var(--red); font-weight: 600; }
 .ctx { position: fixed; z-index: 90; min-width: 11rem; background: var(--panel); border: .16rem solid var(--line); border-radius: .8rem; box-shadow: 0 .25rem 0 var(--line); padding: .3rem; display: flex; flex-direction: column; animation: popin .1s; }
 .ctx button { text-align: left; border: 0; background: transparent; padding: .45rem .7rem; border-radius: .5rem; font-weight: 600; cursor: pointer; }
 .ctx button:hover, .ctx button:focus-visible { background: var(--yellow); color: #1c1c28; outline: none; }
+.ctx-name { display: flex; flex-direction: column; gap: .2rem; padding: .45rem .5rem .35rem; border-top: .12rem solid var(--soft); margin-top: .25rem; }
+.ctx-name input { width: 100%; font-size: calc(.95rem * var(--ts)); padding: .3rem .5rem; }
 
 /* ---------- colors and Customize ---------- */
 .swatches { display: flex; flex-wrap: wrap; gap: .35rem; }
@@ -364,7 +366,15 @@ html.cb .cb-mark { display: block; font-size: 1.3em; letter-spacing: .05em; }
 .lord-sit .cloud-svg { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; filter: drop-shadow(0 .2rem .3rem #0003); }
 html.moving .lord-duck { animation: lordbob 3s ease-in-out infinite; }
 @keyframes lordbob { 50% { transform: translateX(-50%) translateY(-.25rem) rotate(-3deg); } }
-.lord-label { font-size: calc(1.1rem * var(--ts)); margin-top: -.15rem; }
+.lord-say { min-height: 1.6em; max-width: 15rem; margin-top: -.1rem; text-align: center; line-height: 1.15; font-family: var(--fun); font-size: calc(1.3rem * var(--ts)); color: #fff; text-shadow: 0 .12rem 0 #1c1c28, 0 0 .5rem #000a; }
+.lord-say.small { font-family: var(--font); font-weight: 700; font-size: calc(.98rem * var(--ts)); }
+.lord-say .w { display: inline-block; white-space: nowrap; }
+.lord-say .w > span { display: inline-block; opacity: 0; animation: letterin .5s ease-out forwards; }
+.lord-say.out .w > span { opacity: 1; animation: letterout .45s ease-in forwards; }
+@keyframes letterin { from { opacity: 0; transform: translateY(.4em) scale(.6); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes letterout { from { opacity: 1; } to { opacity: 0; transform: translateY(-.35em) scale(1.1); filter: blur(2px); } }
+html.still .lord-say .w > span { animation: none; opacity: 1; }
+html.still .lord-say.out .w > span { opacity: 0; }
 .lord-name { font-size: calc(.8rem * var(--ts)); background: color-mix(in srgb, var(--panel) 80%, transparent); border-radius: .4rem; padding: 0 .35rem; }
 
 /* the ducks on the board: a ground shadow, then the duck lifted by its jump */
@@ -654,3 +664,16 @@ html.lite *, html.lite *::before, html.lite *::after { font-family: system-ui, -
 /* a map behind the game: the top and bottom bars get a soft backing so they read over any sky */
 html.map-on .game .gbar, html.map-on .game .bbar { background: color-mix(in srgb, var(--bg) 62%, transparent); }
 @media (max-width: 760px) { .set-arm .arm-h, .armory .arm-menu > .arm-h { padding-right: 3rem; } }   /* room for the window's X */
+
+/* ---------- voting: the button wears the color of your column; End turn wears your theme; the board breathes ---------- */
+.vote-btn { background: var(--panel2); color: var(--ink); transition: background-color .25s, color .25s; }
+.vote-btn[data-col="0"] { background: var(--c1); color: var(--c1i); } .vote-btn[data-col="1"] { background: var(--c2); color: var(--c2i); }
+.vote-btn[data-col="2"] { background: var(--c3); color: var(--c3i); } .vote-btn[data-col="3"] { background: var(--c4); color: var(--c4i); }
+.vote-btn[data-col="4"] { background: var(--c5); color: var(--c5i); } .vote-btn[data-col="5"] { background: var(--c6); color: var(--c6i); }
+.vote-btn[data-col="6"] { background: var(--c7); color: var(--c7i); }
+.vote-btn:disabled { opacity: .72; cursor: default; }
+.vote-btn kbd, .theme-btn kbd { color: inherit; background: transparent; border-color: currentColor; }
+.theme-btn { background: var(--panel); color: var(--ink); }
+.theme-btn.done { opacity: .8; }
+html.moving .gmain[data-phase="answer"] .cols { animation: boardglow 3.6s ease-in-out infinite; }
+@keyframes boardglow { 0%, 100% { box-shadow: 0 .3rem 0 var(--line), 0 0 .4rem #ffffff18; filter: brightness(1); } 50% { box-shadow: 0 .3rem 0 var(--line), 0 0 2.4rem #ffffff5c; filter: brightness(1.09); } }

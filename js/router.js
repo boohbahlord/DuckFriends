@@ -7,6 +7,7 @@ import { confirmBox } from './ui.js';
 
 const screens = {};
 let cur = null, depth = 0, asking = false;
+const trail = [];   // the screen at each step of this page's history
 export const register = (name, s) => { screens[name] = s; };
 export const current = () => cur;
 const guarded = () => !!(cur && screens[cur].guard && screens[cur].guard());
@@ -24,9 +25,15 @@ function show(name, arg) {
 /* go to a screen (one step in the browser's history) */
 export function go(name, arg) {
   history.pushState({ screen: name, depth: ++depth }, '');
+  trail[depth] = name; trail.length = depth + 1;
   show(name, arg);
 }
-export function start(name) { history.replaceState({ screen: name, depth: 0 }, ''); show(name); }
+export function start(name) { history.replaceState({ screen: name, depth: 0 }, ''); trail[0] = name; trail.length = 1; show(name); }
+/* back to a screen in one step (skipping the rooms left on the way), or to it afresh */
+export function backTo(name) {
+  for (let i = depth - 1; i >= 0; i--) if (trail[i] === name) { history.go(i - depth); return; }
+  go(name);
+}
 
 /* the way out of a room: asks first when a game would be left */
 export async function leaveTo(name, question = 'Leave the room?') {
@@ -47,7 +54,7 @@ addEventListener('popstate', async e => {
   }
   const was = depth;
   depth = (e.state && e.state.depth) || 0;
-  if (screens[to] && screens[to].guard && !screens[to].guard()) { if (depth < was) history.back(); else history.forward(); return; }   // a room already left: keep going
+  if ((screens[to] && screens[to].guard && !screens[to].guard()) || (to === cur && to !== 'front')) { if (depth < was) history.back(); else history.forward(); return; }   // a room already left, or the screen already up: keep going
   show(to);
 });
 addEventListener('beforeunload', e => { if (guarded()) { e.preventDefault(); e.returnValue = ''; } });

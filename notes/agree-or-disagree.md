@@ -351,3 +351,16 @@ The other map names are fine.
 The settings should better resemble the idea we are going for in the UI, and on desktop, the "Duck Friends" title should be at the center top of the screen, through not too high.
 
 Ask me questions when need be. Also, the way that option are shown in three columns with rows based off of screenshot four is how the other options besides color will be.
+
+## Play-test notes, word for word (2026-10-24, with a screenshot of an online question: "Answer locked ✓ 1/2 done")
+"the game locked my asnwer becuz i impatiently clicked enter from the last game. There should be a ten second grace period that doesnt let people vote. 
+
+FURTHER MORE, the thing at the bottom should change colors BASED on where you are in the board, and it should say "Vote", when the player clicks enter, it locks their vote in and will not say end turn UNTIL everyone has voted, which it will say on the cloud in those letters that fade in as an announcement (so it no longer says round lord), and when it does, it will say "Votes are in" or maybe something more clear, then it will fade away and will ask why the players chose what they chose in the cloud in text, and there will be sounds effects for how words fade in or out on the cloud. The sound will have the boop sound indicate that people can vote to end their turn because the end turn button will say end turn and become themed in either the player's dark or light mode, based on what they have. IN the cloud, it should say "Vote". 
+When players are voting or in the vote phase, the board should breathe like a light slowly and slightly glow. 
+
+Make sure that WHEN a player is jumping that they can jump over other players. In the vote phase, if the timer runs out, it locks the players vote into the column they were standing on. 
+
+Jumping default speed is a lot faster, and low gravity mode should scale with it but still be slower then default as to feel low gravity."
+
+Also asked during request 4: chat suggestions only once something is typed; a 30 s answer time by default; the
+question box's example "Data breaching is the end of the world and everyone is IDIOTS for not talking about it! - J Man".

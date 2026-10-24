@@ -97,32 +97,24 @@ function openOptions() {
   });
 }
 
-/* ---------- a player card's options (right-click, or a long press) ---------- */
+/* ---------- a player card's options (a click, a right-click or a long press) ----------
+   Your own card: View stats, Customize, and your name in a box below them, to type a new one right there. */
 function cardMenu(pid, x, y) {
   const s = R.state, p = s.players[pid]; if (!p) return;
-  const mine = pid === R.me, items = [];
-  if (mine) items.push(['Customize', () => openCustomize()], ['Change name', () => renameInline()]);
-  items.push(['View stats', () => openStats(s, pid, R.me)]);
+  const mine = pid === R.me, items = [['View stats', () => openStats(s, pid, R.me)]];
+  if (mine) items.push(['Customize', () => openCustomize()]);
   if (s.hostId === R.me && p.bot && (s.phase === 'lobby' || s.phase === 'over')) items.push(['Remove computer', () => R.send({ t: 'kick', who: pid })]);
   if (canAdd(p)) items.push(['Add friend', async () => toast(await requestFriend(p.acct))]);
-  contextMenu(x, y, items);
-}
-
-/* click your own card: its name becomes a box */
-function renameInline() {
-  const card = $(`.party .pcard[data-pid="${R.me}"]`); if (!card || card.querySelector('input')) return;
-  const lab = card.querySelector('.pcard-label'), was = profile.name;
-  const inp = el(`<input class="rename" maxlength="20" spellcheck="false" aria-label="Your name">`); inp.value = was;
-  lab.replaceChildren(inp); inp.focus(); inp.select();
-  let done = false;
-  const finish = ok => {
-    if (done) return; done = true;
-    if (ok && inp.value !== was && !setName(inp.value)) toast('A name needs at least one letter or number.');
-    inp.remove(); $('.party-list', S)._html = ''; paint();
-  };
-  inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } };
-  inp.onkeydown = e => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') { e.stopPropagation(); finish(false); } };
-  inp.onblur = () => finish(true);
+  contextMenu(x, y, items, !mine ? {} : {
+    footer: `<label class="ctx-name"><span class="small dim">Name</span><input maxlength="20" spellcheck="false" value="${esc(profile.name)}" aria-label="Your name"></label>`,
+    onMount(m, close) {
+      const inp = m.querySelector('.ctx-name input'), was = profile.name;
+      const done = () => { if (inp.value !== was && !setName(inp.value)) toast('A name needs at least one letter or number.'); $('.party-list', S)._html = ''; paint(); };
+      inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } };
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); done(); close(); } if (e.key === 'Escape') { e.stopPropagation(); close(); } e.stopPropagation(); };
+      inp.onchange = done;
+    },
+  });
 }
 
 /* ---------- drawing ---------- */
@@ -222,7 +214,7 @@ register('lobby', {
       if (a && a.dataset.a === 'ready') toggleReady();
       if (a && a.dataset.a === 'cancel') R.send({ t: 'cancel' });
       const c = e.target.closest('.party .pcard');
-      if (c && c.dataset.pid === R.me && !e.target.closest('input')) renameInline();
+      if (c && !e.target.closest('input')) { const r = c.getBoundingClientRect(); cardMenu(c.dataset.pid, Math.min(e.clientX, r.right - 20), r.bottom - 6); }
     });
     onMenu(S.querySelector('.party'), (x, y, e) => { const c = e.target.closest && e.target.closest('.pcard'); if (c) cardMenu(c.dataset.pid, x, y); });
     off = R.on(onState); offAcct = onAccount(() => paint());

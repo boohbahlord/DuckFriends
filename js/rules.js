@@ -25,6 +25,7 @@ export const OPTIONS_DEFAULT = {
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
+export const VOTE_GRACE = 10;   // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
 const clone = o => structuredClone(o);
 export const colOf = x => Math.max(0, Math.min(6, Math.floor(x * 7)));
@@ -180,6 +181,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
       if (!me || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0)) return s;   // stand on a column first
+      if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       s.done[a.id] = a.v ?? !s.done[a.id];
       if (s.phase === 'answer' && !s.options.freeRoam) s.done[a.id] = true;   // free roam: ready can be taken back
       return advance(s, now);

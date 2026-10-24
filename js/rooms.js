@@ -1,7 +1,7 @@
 /* ---------- Play: create a room, and the rooms online beside it ----------
    An online room (open, or private with a passkey) is hosted by this browser through Firebase; anyone can join it from
    the list. A TEST room stays on this device, filled with computers; nothing in it counts toward stats. */
-import { register, go } from './router.js';
+import { register, go, backTo } from './router.js';
 import { el, esc, openWindow } from './ui.js';
 import { profile } from './store.js';
 import { createLocalRoom } from './net.js';
@@ -47,7 +47,7 @@ register('rooms', {
     </section>`);
     const f = s.querySelector('form'), pass = s.querySelector('.passkey'), msg = s.querySelector('.create-msg'), list = s.querySelector('.room-list');
     const say = (text, bad = true) => { msg.hidden = !text; msg.textContent = text || ''; msg.classList.toggle('bad', bad); };
-    s.querySelector('[data-a="back"]').onclick = () => history.back();
+    s.querySelector('[data-a="back"]').onclick = () => backTo('front');
     s.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
       s.querySelectorAll('[data-open]').forEach(x => x.setAttribute('aria-pressed', x === b));
       pass.hidden = b.dataset.open === '1'; if (!pass.hidden) pass.focus();
