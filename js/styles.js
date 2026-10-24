@@ -17,11 +17,11 @@ export const STYLES = [
   { id: 'rubber', name: 'Rubber duck' },
   { id: 'mallard', name: 'Mallard', fixed: true, body: '#bdb8ae', head: '#1f6b3a', tip: 'A mallard drake. Its colors are its own.' },
   { id: 'call', name: 'White call duck', fixed: true, body: '#f7f4ec', head: '#f7f4ec', tip: 'A little white call duck. Its colors are its own.' },
-  { id: 'raptor', name: 'Raptor', match: 'teeth', colors: [['color', 'Raptor body', '#6aa84f'], ['color2', 'Raptor stripes', '#2f5e2a'], ['color3', 'Raptor feathers', '#e0662f']], tip: 'A feathered velociraptor rubber duck. The beak with teeth goes with it.' },
-  { id: 'eagle', name: 'Eagle', match: 'eagle', head2: true, colors: [['color', 'Eagle body', '#5b3a1e'], ['color2', 'Eagle head', '#f5f2ea']], tip: 'A rubber duck shaped like an eagle. The eagle beak matches it.' },
-  { id: 'pelican', name: 'Pelican', match: 'pelican', colors: [['color', 'Pelican body', '#f2efe8'], ['color2', 'Pelican wings', '#9aa3b0']], tip: 'A rubber duck shaped like a pelican. The pelican beak matches it.' },
-  { id: 'blocks', name: 'Blocks', flat: true, match: 'blocks', tip: 'A duck built of blocks. The block beak matches it.' },
-  { id: 'geo', name: '2D shapes', flat: true, match: 'geo', tip: 'A duck of simple flat shapes. The flat beak matches it.' },
+  { id: 'raptor', name: 'Raptor', match: 'teeth', eyes: 'raptor', colors: [['color', 'Raptor body', '#6aa84f'], ['color2', 'Raptor stripes', '#2f5e2a'], ['color3', 'Raptor feathers', '#e0662f']], tip: 'A feathered velociraptor rubber duck. The beak with teeth and the raptor eye go with it.' },
+  { id: 'eagle', name: 'Eagle', match: 'eagle', eyes: 'eagle', head2: true, colors: [['color', 'Eagle body', '#5b3a1e'], ['color2', 'Eagle head', '#f5f2ea']], tip: 'A rubber duck shaped like an eagle. The eagle beak and eye match it.' },
+  { id: 'pelican', name: 'Pelican', match: 'pelican', eyes: 'pelican', colors: [['color', 'Pelican body', '#f2efe8'], ['color2', 'Pelican wings', '#9aa3b0']], tip: 'A rubber duck shaped like a pelican. The pelican beak and eye match it.' },
+  { id: 'blocks', name: 'Blocks', flat: true, match: 'blocks', eyes: 'block', tip: 'A duck built of blocks. The block beak and eye match it.' },
+  { id: 'geo', name: '2D shapes', flat: true, match: 'geo', eyes: 'flat', tip: 'A duck of simple flat shapes. The flat beak and eye match it.' },
 ];
 export const styleById = id => STYLES.find(s => s.id === id) || STYLES[0];
 /* a style's color: the look's own, or the style's default */
