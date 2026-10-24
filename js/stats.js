@@ -39,7 +39,7 @@ function totalsHTML(p, t, mode = 'aod') {
   if (mode === 'bb') {   // Bicker Brackets: their seeds' wins and losses, and the tournaments they won
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Bicker Brackets</div></div></header>
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Tournaments</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Tournaments won</dt><dd>${fmtJumps(t.titles)}</dd>
-        <dt>Seed wins</dt><dd>${fmtJumps(t.wins)}</dd><dt>Seed losses</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes in matches</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+        <dt>Contender wins</dt><dd>${fmtJumps(t.wins)}</dd><dt>Contender losses</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes in matches</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
   if (mode === 'wyr') {   // Would You Rather: the sides they took
     const sided = t.majority + t.minority;

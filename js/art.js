@@ -105,26 +105,25 @@ export const heroDuckSVG = () => duckSVG(DUCK_DEFAULT, { size: 300, shadow: fals
 
 /* the page's background: a little indoor carnival. Twister dots across the whole floor in perspective, breathing like
    lights, bunting (and, in the dark, glowing string lights) across the top, and a few ball-pit balls and bits of confetti
-   drifting. Drawn to the window's
-   size; redrawn when it changes or the theme does. */
-export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
-  const r = rnd(77), out = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
+   drifting. Drawn to the window's size; redrawn when it changes or the theme does.
+   backdropParts draws the pieces; backdropSVG puts them in one still picture (the small previews); backdropHTML lays
+   them out as layers for the page and the Night Show map: the still part as one picture, the dots and the bulbs as a
+   picture each that fades in and out, and each ball or confetti as its own small picture that drifts. Fading or moving a whole picture is cheap for the browser; redrawing a big animated drawing every frame
+   is not (it made scrolling lag). */
+function backdropParts(w, h, dark) {
+  const r = rnd(77), base = [], dots = [[], [], [], []], bulbs = [[], []], shapes = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
   const hz = h * .46, K = (h - hz) * 1.05, K2 = w * .16;
-  /* the floor: Twister dots in rows to the horizon and out past both edges; each row and color breathes (glows up and
-     fades) a little after the last, so the light rolls across the floor */
-  out.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
+  /* the floor: Twister dots in rows to the horizon and out past both edges */
+  base.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
   const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
-  let row = 0;
-  for (let z = .95; z < 9; z *= 1.24, row++) {
+  for (let z = .95; z < 9; z *= 1.24) {
     const rx = .42 * K2 / z, ry = rx * .42, y = py(z); if (y > h + ry) continue;
-    const groups = [[], [], [], []];
     for (let X = -60; X <= 60; X++) {
       const x = px(X + .5, z); if (x < -rx * 1.8 || x > w + rx * 1.8) continue;
       const c = ((X % 4) + 4) % 4;
-      groups[c].push(dark ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * 1.7).toFixed(1)}" ry="${(ry * 1.9).toFixed(1)}" fill="url(#bdg${c})"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`
+      dots[c].push(dark ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * 1.7).toFixed(1)}" ry="${(ry * 1.9).toFixed(1)}" fill="url(#bdg${c})"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`
         : `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`);
     }
-    groups.forEach((g, c) => { if (g.length) out.push(`<g class="dot" style="--dl:-${((row * .55 + c * 1.1) % 4.4).toFixed(2)}s">${g.join('')}</g>`); });
   }
   /* bunting along two sagging strings; bulbs between the flags glow in the dark */
   const string = (y1, y2, sag, n, k) => {
@@ -134,27 +133,46 @@ export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
     for (let i = 0; i < n; i++) {
       const [x, y] = pt((i + .5) / n), c = ['#ef3b3b', '#ffd23f', '#2fa4ff', '#37d421', '#9b5de5', '#ff8c2b'][(i + k) % 6], f = 15 + r() * 6;
       g += `<path d="M${(x - f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${(x + f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${x.toFixed(1)} ${(y + f * 1.25).toFixed(1)}Z" fill="${c}" opacity="${dark ? .55 : .8}"/>`;
-      if (dark) { const [bx, by] = pt((i + 1) / n); g += `<circle class="bulb" cx="${bx.toFixed(1)}" cy="${(by + 3).toFixed(1)}" r="3.6" fill="${['#ffe9a8', '#ffd0f0', '#c6f0ff'][(i + k) % 3]}" style="--dl:-${(r() * 3).toFixed(2)}s"/>`; }
+      if (dark) { const [bx, by] = pt((i + 1) / n); r(); bulbs[(i + k) % 2].push(`<circle cx="${bx.toFixed(1)}" cy="${(by + 3).toFixed(1)}" r="3.6" fill="${['#ffe9a8', '#ffd0f0', '#c6f0ff'][(i + k) % 3]}"/>`); }
     }
     return g;
   };
   const n = Math.max(8, Math.round(w / 90));
-  out.push(`<g${dark ? ' filter="url(#bdglow)"' : ''}>${string(h * .03, h * .08, h * .09, n, 0)}${string(h * .13, h * .06, h * .1, n + 1, 3)}</g>`);
+  base.push(`<g${dark ? ' filter="url(#bdglow)"' : ''}>${string(h * .03, h * .08, h * .09, n, 0)}${string(h * .13, h * .06, h * .1, n + 1, 3)}</g>`);
   /* drifting ball-pit balls and confetti, with white space between them */
   const placed = [];
   for (let k = 0, tries = 0; k < Math.round(Math.max(6, w * h / 160000)) && tries < 400; tries++) {
     const s = 12 + r() * 20, x = r() * w, y = h * .18 + r() * h * .55;
     if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < (p[2] + s) * 3)) continue;
     placed.push([x, y, s]); k++;
-    const c = cols[k % 4], v = `style="--d:${(12 + r() * 10).toFixed(1)}s;--dl:-${(r() * 10).toFixed(1)}s;--dx:${((r() - .5) * 26).toFixed(0)}px;--dy:${((r() - .5) * 30).toFixed(0)}px;--dr:${((r() - .5) * 30).toFixed(0)}deg"`;
-    out.push(k % 3
-      ? `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><g class="sh" ${v}><circle r="${s.toFixed(1)}" fill="${c}" opacity="${dark ? .5 : .55}"/><ellipse cx="${(-s * .35).toFixed(1)}" cy="${(-s * .38).toFixed(1)}" rx="${(s * .32).toFixed(1)}" ry="${(s * .2).toFixed(1)}" fill="#fff" opacity=".55" transform="rotate(-30 ${(-s * .35).toFixed(1)} ${(-s * .38).toFixed(1)})"/></g></g>`
-      : `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${(r() * 360).toFixed(0)})"><g class="sh" ${v}><rect x="${-s * .5}" y="${-s * .2}" width="${s}" height="${s * .4}" rx="2" fill="${c}" opacity="${dark ? .5 : .6}"/></g></g>`);
+    const c = cols[k % 4], vars = `--d:${(12 + r() * 10).toFixed(1)}s;--dl:-${(r() * 10).toFixed(1)}s;--dx:${((r() - .5) * 26).toFixed(0)}px;--dy:${((r() - .5) * 30).toFixed(0)}px;--dr:${((r() - .5) * 30).toFixed(0)}deg`;
+    const inner = k % 3
+      ? `<circle r="${s.toFixed(1)}" fill="${c}" opacity="${dark ? .5 : .55}"/><ellipse cx="${(-s * .35).toFixed(1)}" cy="${(-s * .38).toFixed(1)}" rx="${(s * .32).toFixed(1)}" ry="${(s * .2).toFixed(1)}" fill="#fff" opacity=".55" transform="rotate(-30 ${(-s * .35).toFixed(1)} ${(-s * .38).toFixed(1)})"/>`
+      : `<g transform="rotate(${(r() * 360).toFixed(0)})"><rect x="${-s * .5}" y="${-s * .2}" width="${s}" height="${s * .4}" rx="2" fill="${c}" opacity="${dark ? .5 : .6}"/></g>`;
+    shapes.push({ x, y, s, inner, vars });
   }
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs>
+  const defs = `<defs>
 <linearGradient id="bdsky" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#101225"/><stop offset=".46" stop-color="#1f1640"/>' : '<stop offset="0" stop-color="#e3f4ff"/><stop offset=".46" stop-color="#fff7fb"/>'}</linearGradient>
 <linearGradient id="bdfloor" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#191a33"/><stop offset="1" stop-color="#0d0e1c"/>' : '<stop offset="0" stop-color="#f4f1ff"/><stop offset="1" stop-color="#e8f3ff"/>'}</linearGradient>
 ${cols.map((c, k) => `<radialGradient id="bdg${k}"><stop offset=".35" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
 <filter id="bdglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-</defs><rect width="${w}" height="${h}" fill="url(#bdsky)"/>${out.join('')}</svg>`;
+</defs>`;
+  return { w, h, defs, base, dots, bulbs, shapes };
+}
+/* a drawing of some parts; y0, y1: only that band of the page (the fading layers stay small: the floor, the lights) */
+const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${y0.toFixed(1)} ${P.w} ${(y1 - y0).toFixed(1)}" width="${P.w}" height="${(y1 - y0).toFixed(0)}" preserveAspectRatio="none" aria-hidden="true">${P.defs}${sky ? `<rect width="${P.w}" height="${P.h}" fill="url(#bdsky)"/>` : ''}${body}</svg>`;
+/* the whole backdrop as one still drawing */
+export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
+  const P = backdropParts(w, h, dark);
+  return svgOf(P, P.base[0] + P.dots.map(d => `<g opacity=".5">${d.join('')}</g>`).join('') + P.base.slice(1).join('') + P.bulbs.flat().join('')
+    + P.shapes.map(x => `<g transform="translate(${x.x.toFixed(0)} ${x.y.toFixed(0)})">${x.inner}</g>`).join(''), true).replace(' xmlns="http://www.w3.org/2000/svg"', '');
+}
+/* the backdrop as layers that animate cheaply (see above) */
+export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
+  const P = backdropParts(w, h, dark), img = (svg, cls = '', style = '') => `<img class="bd-layer${cls ? ' ' + cls : ''}" alt="" draggable="false"${style ? ` style="${style}"` : ''} src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">`;
+  return img(svgOf(P, P.base[0], true))
+    + img(svgOf(P, P.dots.flat().join(''), false, h * .44, h), 'bd-dots', 'top:44%;height:56%')
+    + img(svgOf(P, P.base.slice(1).join('')))
+    + (P.bulbs.flat().length ? img(svgOf(P, `<g filter="url(#bdglow)">${P.bulbs.flat().join('')}</g>`, false, 0, h * .3), 'bd-bulbs', 'height:30%') : '')
+    + P.shapes.map(x => { const k = Math.ceil(x.s * 1.6); return `<div class="bd-sh" style="left:${(x.x / w * 100).toFixed(2)}%;top:${(x.y / h * 100).toFixed(2)}%;width:${k * 2}px;height:${k * 2}px;margin:-${k}px 0 0 -${k}px;${x.vars}"><svg viewBox="${-k} ${-k} ${k * 2} ${k * 2}" aria-hidden="true">${x.inner}</svg></div>`; }).join('');
 }

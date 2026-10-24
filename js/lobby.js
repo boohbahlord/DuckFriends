@@ -62,10 +62,10 @@ const OPT_TILES = [
 ];
 /* Bicker Brackets' own options (shown when it's the game) */
 const BB_TILES = [
-  ['bbSeeds', 'Seeds', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
+  ['bbSeeds', 'Contenders', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
   ['bbTopic', 'Topic', [['vote', 'Write and vote'], ['random', 'Random']]],
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
-  ['bbSpeed', 'Match votes', [[0, 'Answer timer'], [1, 'Speed: 10 s']]],
+  ['bbTimer', 'Match vote timer', [[0, 'None'], [10, '10 s'], [30, '30 s'], [60, '60 s']]],
 ];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
@@ -81,10 +81,10 @@ const OPT_TIPS = {
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
   fun: 'lightning, love, kill and hotdog in the command line.',
-  bbSeeds: 'How many seeds the bracket has: a number shared out among the players, or so many for each player.',
+  bbSeeds: 'How many contenders the bracket has: a number shared out among the players, or so many for each player.',
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
-  bbBlind: 'Hidden: a seed\'s writer stays a secret until the seed is knocked out or wins it all.',
-  bbSpeed: 'Speed: every match vote lasts 10 seconds.',
+  bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
+  bbTimer: 'None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
@@ -92,7 +92,7 @@ function openOptions() {
   const s = R.state, host = s.hostId === R.me, ro = host ? '' : ' aria-disabled="true"';
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host changes these.</p>'}
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && r[0] === 'order')), s, ro)}
+    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
     ${tileRows(MORE_TILES, s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
@@ -147,7 +147,8 @@ function paint() {
   if (!R || !S) return;
   const s = R.state, host = s.hostId === R.me, mine = s.players[R.me];
   if (!mine) return;
-  $('.lobby-title', S).textContent = s.name;
+  const title = $('.lobby-title', S);
+  if (!title.querySelector('input')) { title.textContent = s.name; title.classList.toggle('can-rename', host); if (host) title.dataset.tip = 'Click to rename the room'; else delete title.dataset.tip; }
   const bots = s.seat.filter(id => s.players[id].bot).length;
   $('.lobby-sub', S).textContent = [s.test ? 'TEST room' : s.open ? 'Open room' : R.passkey ? `Private room · passkey: ${R.passkey}` : 'Private room',
     bots ? `${bots} computer${bots === 1 ? '' : 's'}, acting after ${s.options.botWait} s` : '', host ? 'You are the host' : ''].filter(Boolean).join(' · ');
@@ -191,6 +192,16 @@ function key(e) {
   if (e.code === 'Space' && !e.repeat) { e.preventDefault(); toggleReady(); }
 }
 const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
+/* the host renames the room in place (Enter or clicking away keeps it, Esc doesn't) */
+function renameRoom() {
+  const title = $('.lobby-title', S); if (!title || title.querySelector('input')) return;
+  const inp = el(`<input class="room-rename" maxlength="32" spellcheck="false" aria-label="Room name">`);
+  inp.value = R.state.name; title.textContent = ''; title.append(inp); inp.focus(); inp.select();
+  let done = false;
+  const finish = keep => { if (done) return; done = true; const v = inp.value.trim(); inp.remove(); if (keep && v && v !== R.state.name) R.send({ t: 'roomName', name: v }); paint(); };
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); finish(true); } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); } };
+  inp.onblur = () => finish(true);
+}
 
 register('lobby', {
   guard: () => !!activeRoom(),
@@ -238,6 +249,7 @@ register('lobby', {
       const a = e.target.closest('[data-a]');
       if (a && a.dataset.a === 'ready') toggleReady();
       if (a && a.dataset.a === 'cancel') R.send({ t: 'cancel' });
+      if (e.target.closest('.lobby-title.can-rename') && !e.target.closest('input')) renameRoom();
       const c = e.target.closest('.party .pcard');
       if (c && !e.target.closest('input')) { const r = c.getBoundingClientRect(); cardMenu(c.dataset.pid, Math.min(e.clientX, r.right - 20), r.bottom - 6); }
     });

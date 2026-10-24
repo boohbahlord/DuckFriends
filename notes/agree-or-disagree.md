@@ -564,3 +564,81 @@ I want suggestions for different game modes, different ideas, different commands
 Make a plan with me and have me answer questions. Make your qestions good with context so i am not lost or thinking more hard then i should have to for something where i dont have to be. 
 
 Continue doing the other things you were supposed to do as well for the new content add ons you stopped."
+
+## Play-test notes on specials, styles and outfits, word for word (2026-10-24)
+
+whenever you click the long jump special it will keep replaying everytime you click every other special
+
+The gun is meant to shoot a bullet (like a little small object on the screen) that passes through the board and screen and hitting playing by caused the dead effect from the commands on them, all by pressing E
+
+The preview on customization on my screen shows the effects being really far from the ducks, like literally so far away from them it is ridiculous
+
+WHY THE FUCK DOES CLICKING A STYLE CHANGE THE BEAK OR OTHER ITEMS! IT SHOULDNT DO THAT! If the player wants the full set for a style, there can be a small little button below the style section and you can click the button to have things like eyes or beak come in to match, only then. 
+
+Remove the fluffy stuff you tried to do around the duck for the mallard and white call duck it failed, but keep the style it is rly good, just the small bumps gotta go
+
+SAME WITH COLORS OR ANYTHING ELSE! THE SYLE SHOULDNT CHANGE THOSE
+
+MUSCLE SHIRT DIDNT FUCK MEAN TO GIVE THE DUCK THE DUMBEST LOOKING MUSCLE I EVER SEEN! REMOVE IT BECUZ IT IS THAT BAD
+
+scrolling in the game needs to be more responsive
+
+scrolling feels laggy
+
+The army helmet straps duck look right and should be remove but the helmet can stay if it is improved
+
+the glove still looks like shit and must be removed by this poinnt because u cant seem to get it right
+
+the birthday hat should have the cyclinder drawn over the top of it at the bottom because u can see inside the hat dumbass. Fix the birthday hat by removing that bottom part becuz it is almost right and can be fixed
+
+In would you rather, the round Lord simply asks "Would you rather"
+That is all that shows in their text next to the cloud
+
+i became stuck on the right side in the would you rather game that should be fixed
+
+in the bracket game, a small list compiles on the left of the screen AND on a button that opens a window above for mobile during the bracket game so that players know the answers people have already submitted
+
+The answers are randomized against each other after
+
+actually no the box you write into is on the top and the ones people already submitted are below. You can write out your seeds that you are allocated while others think of theirs
+
+they shouldnt be called seeds but should be called something else
+
+fixing the gamemodes is priority because that is what you play
+
+players can also see eachother's topic suggestions below the box they write into as the come along
+
+actually the the setup i see rn for brackets is fine it just needs to be more obvious by highlighting the player cards of the ones actually writing to tell them apart from what was written
+
+This shows that players r in two very different positions here. One is a guest im playing as from my phone and the other is me on computer. I think it is pretty obv why, because it is using a similiar system from the agree or disagree game
+(with two screenshots of the bracket stage: the computer and the phone show the ducks over different parts of the bracket)
+
+WHEN there is a tie in the brackets, the players can vote to either make a vote on the choice happen again or do a coin toss
+
+The vote phase SHOULDNT have a timer by default because players have a chance to try and sway others to their side
+
+what is another solution to ties? Like maybe having them go to a different rank in the bracket to go agaisnt another option later?
+
+there should be a delay in being able to move the mouse AT ALL when you hold or click the tab button
+
+The rooms can be named before you create them too
+
+The bots deciding to vote should be set to five seconds on default in the test mode AND the game should stop you from being able to move when the bots move that is annoying
+
+using items like the guns or other and any special should just be left behind in use while the player is moving that is dumb
+
+the would u rather board should be as transparent AS the agree or disagree board, as any other board should be IF there is one
+
+the two different sides you vote on in the bracket should have their own different and random color changing
+
+clicking the tab button shouldnt jump around inside the browser, the tab button shouldnt be allowed to do that while duck players are playing the game
+
+at one point in would you rather the images become invisible and then reappeared the next round, as in the board.
+
+The board in would you rather should be just as transparent as it is in agree or disagree
+
+fixes to  maps and items first then slow down and let me see you plan after you do those and deploy them
+
+by items i mean specials
+
+the crash you discovered in the vote or anything like that becomes priority

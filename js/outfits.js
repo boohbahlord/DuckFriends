@@ -105,12 +105,9 @@ export const OUTFITS = [
     cloth: o => ALL(o.c1) + `<g fill="none" stroke="${o.c2}" stroke-width="1.2" opacity=".9"><circle cx="24" cy="72" r="3"/><circle cx="44" cy="68" r="3"/><circle cx="66" cy="72" r="3"/><circle cx="34" cy="96" r="3"/><circle cx="56" cy="98" r="3"/><circle cx="78" cy="96" r="3"/></g><g fill="${o.c2}"><circle cx="24" cy="72" r="1"/><circle cx="44" cy="68" r="1"/><circle cx="66" cy="72" r="1"/><circle cx="34" cy="96" r="1"/><circle cx="56" cy="98" r="1"/><circle cx="78" cy="96" r="1"/></g>`
       + `<path d="M0 84H120V88H0Z" fill="${dk(o.c1, .25)}"/><path d="M90 84C96 86 98 92 96 98L92 96C93 92 92 88 88 87Z" fill="${dk(o.c1, .15)}" stroke="${o.c2}" stroke-width=".8"/>`,
     sleeve: o => sleeve(o.c1) + `<circle cx="58" cy="82" r="2.4" fill="none" stroke="${o.c2}" stroke-width="1"/>` },
-  { id: 'muscle', name: 'Muscle shirt', tip: 'A white tank top, and a flexed wing.',
+  { id: 'muscle', name: 'Muscle shirt', tip: 'A white tank top.',
     cloth: () => TOP('#fbfbf7', 90) + `<path d="M0 89H120" stroke="#dcdcd4" stroke-width="1.4"/>` + `<path d="M62 60C70 66 84 66 94 60" stroke="#dcdcd4" stroke-width="1.6" fill="none"/>`,
-    /* the wing flexed like an arm: the upper arm along the body with a bicep, the forearm up, a fist on top */
-    sleeve: (o, T) => `<path d="M76 82C74 72 62 68 54 74C50 76 48 78 46 80C42 76 40 70 41 64C42 60 48 59 50 62C50 67 51 71 53 74C49 78 46 82 46 86C54 92 68 92 76 86Z" fill="${T.base}" stroke="${T.edge}" stroke-width="1.6" stroke-linejoin="round"/>
-      <circle cx="45.5" cy="60" r="5" fill="${T.base}" stroke="${T.edge}" stroke-width="1.6"/><path d="M42 58.4H48M42 61.4H48" stroke="${T.edge}" stroke-width=".9" opacity=".7"/>
-      <path d="M58 74C62 71 69 72 72 76" stroke="#fff" stroke-width="1.8" fill="none" opacity=".6" stroke-linecap="round"/><path d="M52 76C52 80 54 84 58 86" stroke="${T.edge}" stroke-width="1" fill="none" opacity=".55"/>` },
+    bare: true, sleeve: () => `<path d="M38 74C48 66 70 67 79 77" stroke="#dcdcd4" stroke-width="2.6" fill="none"/>` },
   { id: 'jeans', name: 'Blue jeans', tip: 'Just the jeans.',
     cloth: () => LOW('#3f63a8', 84) + `<rect y="83" width="120" height="3" fill="#2f4d86"/><g fill="none" stroke="#d9a441" stroke-width=".8" stroke-dasharray="1.6 1"><path d="M0 87.4H120"/><path d="M60 88V108"/><path d="M76 90C80 96 86 98 92 96"/></g><g fill="#2f4d86"><rect x="40" y="82" width="2.4" height="5"/><rect x="70" y="82" width="2.4" height="5"/></g><circle cx="94" cy="85" r="1.3" fill="#c9a24a"/>` },
   { id: 'doctor', name: 'Doctor\'s coat', tip: 'A white coat with a stethoscope. The head mirror (a hat) goes with it.',

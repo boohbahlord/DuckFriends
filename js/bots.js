@@ -50,7 +50,7 @@ const pick = (id, key) => {
 
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
-  const out = [], wait = (s.options.botWait ?? 30) * 1000;
+  const out = [], wait = (s.options.botWait ?? 5) * 1000;
   const bots = s.seat.filter(id => s.players[id] && s.players[id].bot);
   if (!bots.length) return out;
   const people = s.seat.filter(id => !s.players[id].bot);
@@ -73,6 +73,9 @@ export function botActions(s, now) {
         break;
       case 'bracket':
         if (late && !s.done[id] && people.some(h => s.done[h])) out.push({ t: 'end', id, v: true });
+        break;
+      case 'tie':
+        if (late && !s.done[id]) out.push({ t: 'tieVote', id, v: Math.random() < .5 ? 'again' : 'coin' });
         break;
       case 'submit':
         if (late && !s.done[id]) {

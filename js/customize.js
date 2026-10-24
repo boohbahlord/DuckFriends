@@ -7,7 +7,7 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast, onMenu, el } from './ui.js';
-import { SPECIALS, specialById, momentHTML, confettiRain, pressFX } from './specials.js';
+import { SPECIALS, specialById, momentHTML, confettiRain, pressFX, BULLET } from './specials.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
 import { HATS, hatById } from './hats.js';
@@ -75,18 +75,21 @@ export function openCustomize(page = lastPage) {
       /* the big duck; on the Specials page its moment special plays around its head */
       const stage = () => {
         const sp = lastPage === 'specials' && specialById(profile.duck.special);
-        duckBox.innerHTML = duckSVG(profile.duck, { size: 220, title: profile.name }) + (sp && sp.kind === 'moment' ? `<span class="sp-fx">${momentHTML(sp.id)}</span>` : '');
+        duckBox.innerHTML = `<span class="arm-pic">${duckSVG(profile.duck, { size: 220, title: profile.name })}${sp && sp.kind === 'moment' ? `<span class="sp-fx">${momentHTML(sp.id)}</span>` : ''}</span>`;   // (effects sit on the duck, not on the whole panel)
         cardBox.innerHTML = cardHTML(me(), { size: 52 });
       };
       /* a special, shown once on the big duck the way it works in a game */
       const preview = id => {
         const sp = specialById(id); if (!sp) return;
         if (id === 'confetti') confettiRain(3500);
-        if (id === 'longjump') { duckBox.classList.remove('hop'); void duckBox.offsetWidth; duckBox.classList.add('hop'); }
+        if (id === 'longjump') { duckBox.classList.remove('hop'); void duckBox.offsetWidth; duckBox.classList.add('hop'); clearTimeout(duckBox._hop); duckBox._hop = setTimeout(() => duckBox.classList.remove('hop'), 1200); }   // one hop, not one on every redraw after
         if (sp.kind === 'press') {
-          const svg = duckBox.querySelector('svg'), w = svg ? svg.getBoundingClientRect() : null, b = duckBox.getBoundingClientRect(); if (!w) return;
-          const els = pressFX(id, w.left - b.left + w.width * .5, w.bottom - b.top - w.width * .06, w.width, 1);
-          duckBox.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2200);
+          const pic = duckBox.querySelector('.arm-pic'), svg = pic && pic.querySelector('svg'); if (!svg) return;
+          const w = svg.getBoundingClientRect(), b = pic.getBoundingClientRect();
+          const x = w.left - b.left + w.width * .5, y = w.bottom - b.top - w.width * .06, els = pressFX(id, x, y, w.width, 1);
+          /* the handgun: its slow bullet crosses the whole preview */
+          if (id === 'handgun') els.push(el(`<div class="spe spe-shot" style="left:${(x + w.width * .62).toFixed(0)}px;top:${(y - w.width * .48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET}</div>`));
+          pic.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2400);
         }
       };
       const changed = (redraw = true) => { save(); stage(); shareLook(); if (redraw) show(lastPage, true); };
@@ -131,11 +134,13 @@ export function openCustomize(page = lastPage) {
           html = head('Outfit') + `<div class="arm-body">${grid('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none')}
             ${od ? `<p class="small dim">${esc(od.name)}${od.tip ? `: ${esc(od.tip)}` : '.'}${od.colors ? ' Its colors are under Colors.' : ''}</p>` : '<p class="small dim">An outfit goes over the body, whatever the style.</p>'}</div>`;
         } else if (k === 'style') {
-          /* each style in its own colors (a style you have on, in yours) */
-          const look = x => ({ ...D, image: null, style: x.id, ...(x.colors && D.style !== x.id ? Object.fromEntries(x.colors.map(([c, , v]) => [c, v])) : {}) });
-          const st = styleById(D.style), mb = st.match && st.match !== D.beak && beakById(st.match);
-          html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG(look(x), { size: 58, shadow: false }), x.name, x.tip]), st.id)}
-            ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${mb ? `<p><button type="button" class="btn ghost small" data-a="matchbeak">Use the ${esc(mb.name.toLowerCase())}</button></p>` : ''}
+          /* each style on your duck as it is: picking one changes nothing else; the button below brings in the style's
+             matching beak and colors, only when you want them */
+          const st = styleById(D.style), mb = st.match && beakById(st.match);
+          const matched = (!mb || D.beak === st.match) && (st.colors || []).every(([c, , v]) => (D[c] || '').toLowerCase() === v.toLowerCase());
+          const what = [mb ? `the ${mb.name.toLowerCase()}` : '', st.colors ? 'its colors' : ''].filter(Boolean).join(' and ');
+          html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG({ ...D, image: null, style: x.id }, { size: 58, shadow: false }), x.name, x.tip]), st.id)}
+            ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
         } else if (k === 'specials') {
           const cur = specialById(D.special);
@@ -212,7 +217,7 @@ export function openCustomize(page = lastPage) {
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
           if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
-          if (a.dataset.a === 'matchbeak') { D.beak = styleById(D.style).match; changed(); return; }
+          if (a.dataset.a === 'matchstyle') { const st = styleById(D.style); if (st.match) D.beak = st.match; for (const [c, , v] of st.colors || []) D[c] = v; if (st.colors) { D.metal = 'none'; D.image = null; } changed(); return; }
         }
         const t = e.target.closest('[data-g]'); if (!t) return;
         const v = t.dataset.v;
@@ -223,11 +228,7 @@ export function openCustomize(page = lastPage) {
           eyes: () => { D.eyes = v; },
           beak: () => { D.beak = v; },
           outfit: () => { D.outfit = v === 'none' ? null : { ...(D.outfit && D.outfit.id === v ? D.outfit : {}), id: v }; },
-          style: () => {   // a style with colors of its own starts in them; the raptor brings its beak with teeth
-            const st = styleById(v);
-            if (D.style !== v) { for (const [c, , def] of st.colors || []) D[c] = def; if (st.colors) { D.metal = 'none'; D.image = null; } if (st.beak) D.beak = st.beak; }
-            D.style = v;
-          },
+          style: () => { D.style = v; },   // (nothing else changes; Match the … look brings in the rest)
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },
           special: () => { D.special = v === 'none' ? null : v; setTimeout(() => preview(v), 60); },
