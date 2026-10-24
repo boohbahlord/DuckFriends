@@ -9,6 +9,7 @@ import { activeRoom } from './net.js';
 import { now } from './clock.js';
 import { gameArtSVG, symbolSVG } from './art.js';
 import { cardHTML } from './card.js';
+import { netHTML } from './players.js';
 import { OPTIONS_DEFAULT } from './rules.js';
 import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
@@ -145,7 +146,7 @@ function paint() {
   if (art._sig !== artSig) { art._sig = artSig; art.innerHTML = gameArtSVG({ width: 480, duck: profile.duck, map: s.options.map || 'board', mapLabel: mapName(s.options.map) }); }
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $('.party-list', S);
-  if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready })).join(''));
+  if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready, extra: R.online && !s.players[id].bot ? `<span class="pcard-net">${netHTML(s.players[id], true)}</span>` : '' })).join(''));
   if (s.seat.length > lastSeat && lastSeat) sfx.pop();
   lastSeat = s.seat.length;
 }

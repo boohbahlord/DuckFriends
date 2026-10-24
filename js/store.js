@@ -8,14 +8,26 @@ const KEY = 'jmg-profile-1';
 export const SETTINGS_DEFAULT = {
   v: 2, theme: 'dark', font: 'fredoka', textSize: 100, uiSize: 100, dyslexic: false, colorblind: false,
   motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, mouseMove: false, multipleChoice: false, touch: 'stick', jumpsSci: false, jumpsHidden: false, chatSide: 'left',
-  shapes: 'moving', sound: 100, sfx: 100, settingsTab: 'general', net: '0', netAsked: false,
+  shapes: 'moving', sound: 100, sfx: 100, settingsTab: 'general', net: '0', netAsked: false, hidePrivate: false,
 };
 export const PROFILE_DEFAULT = {
   name: 'Player 1', duck: { ...DUCK_DEFAULT },
   card: { kind: 'color', color: '#2fa4ff', pattern: 'none', patternColor: '#ffffff', layout: 'tiled', size: 'm', image: null },
   nameStyle: { font: 'fredoka', color: '', rainbow: false },   // color '' = the theme's text color
-  notes: [], jumps: 0, stats: { rounds: 0, answers: [] }, settings: { ...SETTINGS_DEFAULT },
+  notes: [], jumps: 0, stats: {}, settings: { ...SETTINGS_DEFAULT },
 };
+
+/* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
+   shared copy keeps only these numbers */
+export const STAT_MODES = [['aod', 'Agree or Disagree']];
+export function cleanStats(o) {
+  const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
+  for (const [m] of STAT_MODES) {
+    const x = (o && o[m]) || {};
+    out[m] = { games: n(x.games), rounds: n(x.rounds), answers: n(x.answers), jumps: n(x.jumps), counts: Array.from({ length: 7 }, (_, i) => n((x.counts || [])[i])) };
+  }
+  return out;
+}
 
 /* a name: letters, numbers, dashes and underscores, 1 to 20 of them */
 export const NAME_OK = /^[\p{L}\p{N}_\-]{1,20}$/u;
@@ -50,6 +62,7 @@ function normalize(p) {
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };
   if (out.nameStyle.color === '#1c1c28') out.nameStyle.color = '';   // the old default, unreadable in dark mode
   if (!NAME_OK.test(out.name)) out.name = 'Player 1';
+  out.stats = { ...cleanStats(p.stats), lastGame: String((p.stats || {}).lastGame || '') };   // lastGame: the game last counted
   return out;
 }
 

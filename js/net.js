@@ -4,7 +4,7 @@
    Firebase) have the same parts, so the screens never change. */
 import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
-import { profile } from './store.js';
+import { profile, cleanStats } from './store.js';
 import { HATS } from './hats.js';
 import { FACES } from './faces.js';
 import { EYES } from './eyes.js';
@@ -13,7 +13,7 @@ import { now } from './clock.js';
 import { who } from './who.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, net: +profile.settings.net || 0, ...(who.acct ? { acct: who.acct } : {}) });
+export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, net: +profile.settings.net || 0, stats: cleanStats(profile.stats), ...(who.acct ? { acct: who.acct } : {}) });
 
 let active = null;
 export const activeRoom = () => active;
