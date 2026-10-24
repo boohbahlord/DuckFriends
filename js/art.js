@@ -41,17 +41,41 @@ const cloud = (cx, cy, s, fill = '#ffffff', shade = '#d8ecff') => {
   return `<g>${c(8, shade)}${c(0, fill)}</g>`;
 };
 
-/* the game's art: sky, a cloud, the duck sitting on it, the title, the symbol at the top left (16 : 9) */
-export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT } = {}) {
+/* the game's art, which is also the lobby's picture of the chosen map (16 : 9): the map behind (The Board's columns, Sky's
+   clouds and sun, Pixel's sunset, islands and forest), the duck sitting on a cloud, the title, the map's name, and the
+   game's symbol at the top left */
+const BOARD7 = ['#880015', '#ED1C24', '#FF7F27', '#FFF200', '#75F94D', '#37D421', '#00A2E8'];
+function artBackdrop(map) {
+  const cols = (op, extra = '') => BOARD7.map((c, i) => `<rect x="${(i * 480 / 7).toFixed(1)}" y="0" width="${(480 / 7 + .5).toFixed(1)}" height="270" fill="${c}" opacity="${op}"${extra}/>`).join('');
+  if (map === 'sky') return `<defs><linearGradient id="artsky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab8f5"/><stop offset="1" stop-color="#ffd6a8"/></linearGradient></defs>
+<rect width="480" height="270" fill="url(#artsky2)"/><circle cx="392" cy="58" r="30" fill="#ffd84a"/><circle cx="392" cy="58" r="44" fill="#ffd84a" opacity=".25"/>
+${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc', '#ffffff66')}${cols(.45)}`;
+  if (map === 'pixel') {
+    const bands = ['#171a45', '#2b2a6b', '#5b3586', '#8a3f86', '#bb4f78', '#e2685e', '#f58e48', '#ffb44d'];
+    const r = rnd(9); let px = bands.map((c, i) => `<rect x="0" y="${i * 17}" width="480" height="18" fill="${c}"/>`).join('');
+    px += '<rect x="356" y="118" width="40" height="40" fill="#ffdf6b"/><rect x="350" y="112" width="52" height="52" fill="#ffdf6b" opacity=".3"/>';
+    const isle = (x, y, b, w) => {
+      let g = '';
+      for (let k = 0; k < w; k++) g += `<rect x="${x + k * b}" y="${y}" width="${b}" height="${b}" fill="#5fa83a"/><rect x="${x + k * b}" y="${y + b}" width="${b}" height="${b * 2}" fill="#8a5a33"/>`;
+      for (let row = 3, lo = 1, hi = w - 1; hi > lo; row++, lo++, hi--) for (let k = lo; k < hi; k++) g += `<rect x="${x + k * b}" y="${y + row * b}" width="${b}" height="${b}" fill="${(k + row) % 3 ? '#808080' : '#6a6a6a'}"/>`;
+      return g + `<rect x="${x + 2 * b}" y="${y - 3 * b}" width="${b}" height="${b * 3}" fill="#6b4a2a"/><rect x="${x + b}" y="${y - 6 * b}" width="${b * 3}" height="${b * 3}" fill="#3f8f2f"/>`;
+    };
+    px += isle(60, 60, 8, 8) + isle(250, 40, 6, 7);
+    for (let y = 136, b = 6; y < 270; y += b, b = Math.min(18, b + 2)) for (let x = 0; x < 480; x += b) px += `<rect x="${x}" y="${y}" width="${b}" height="${b}" fill="${['#2a5e22', '#2f6b26', '#3b7f2c', '#4a9433'][Math.floor(r() * 4)]}"/>`;
+    return `<g shape-rendering="crispEdges">${px}${cols(.42)}${BOARD7.map((c, i) => `<path d="M${(i * 480 / 7).toFixed(1)} 0V270" stroke="#000" stroke-opacity=".25"/>`).join('')}</g>`;
+  }
+  return `${cols(.88)}<rect width="480" height="270" fill="url(#artshade)"/>`;
+}
+export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '' } = {}) {
   const top = duck && duck.hat && !duck.image ? HAT_TOP : 0;   // room for a hat
-  return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="Agree or Disagree">
-<defs><linearGradient id="artsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd0ff"/><stop offset="1" stop-color="#d9f2ff"/></linearGradient></defs>
-<rect width="480" height="270" rx="18" fill="url(#artsky)"/>
-${cloud(380, 64, .45, '#ffffffcc', '#ffffff66')}${cloud(92, 210, .38, '#ffffffaa', '#ffffff55')}
+  return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="Agree or Disagree${mapLabel ? ': ' + mapLabel : ''}">
+<defs><clipPath id="artclip"><rect width="480" height="270" rx="18"/></clipPath><linearGradient id="artshade" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>
+<g clip-path="url(#artclip)">${artBackdrop(map)}</g>
 ${cloud(250, 200, 1.05)}
 <g transform="translate(176 ${(66 - 150 * top / 120).toFixed(1)})"><svg width="150" height="${(150 * (120 + top) / 120).toFixed(1)}" viewBox="0 ${-top} 120 ${120 + top}">${duckSVG(duck, { size: 120, shadow: false }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg></g>
 <text x="240" y="252" text-anchor="middle" font-family="'Lilita One', 'Fredoka', sans-serif" font-size="44" stroke="#1c1c28" stroke-width="5" stroke-linejoin="round" paint-order="stroke fill">${rainbowTSpans('Agree or Disagree')}</text>
 <g transform="translate(14 12)"><rect x="-4" y="-4" width="46" height="38" rx="8" fill="#ffffffd0" stroke="#1c1c28" stroke-width="2"/>${symbolSVG(38).replace('<svg ', '<svg x="0" y="0" ')}</g>
+${mapLabel ? `<g transform="translate(466 14)"><rect x="${-(mapLabel.length * 9.4 + 18)}" y="0" width="${mapLabel.length * 9.4 + 18}" height="28" rx="14" fill="#1c1c28d0"/><text x="${-(mapLabel.length * 9.4 + 18) / 2}" y="19.5" text-anchor="middle" font-family="'Fredoka', sans-serif" font-weight="600" font-size="16" fill="#fff">${esc(mapLabel)}</text></g>` : ''}
 </svg>`;
 }
 

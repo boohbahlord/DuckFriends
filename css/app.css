@@ -475,6 +475,7 @@ details.more[open] > summary { color: var(--ink); }
 .col { position: relative; z-index: 1; }
 .scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .map-sky .col, .map-pixel .col { border-right-color: #ffffff30; }
+.map-board .col { background: color-mix(in srgb, var(--c) 86%, transparent); }   /* The Board: a little see-through too */
 .map-sky .col { background: color-mix(in srgb, var(--c) 52%, transparent); transition: box-shadow 1.5s, background-color 1.5s; }
 .map-sky .cols.night .col { background: color-mix(in srgb, var(--c) 60%, transparent); box-shadow: inset 0 0 2.4rem color-mix(in srgb, var(--c) 70%, #fff), inset 0 -1rem 2rem color-mix(in srgb, var(--c) 80%, transparent); }
 .map-sky .cols.night .col-name { text-shadow: 0 0 .6rem var(--c), 0 0 .2rem #fff; }

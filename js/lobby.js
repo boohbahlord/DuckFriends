@@ -142,6 +142,8 @@ function paint() {
   $('.val', startRow).textContent = host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
+  const art = $('.lobby-art', S), artSig = (s.options.map || 'board') + JSON.stringify(profile.duck);   // the picture shows the chosen map
+  if (art._sig !== artSig) { art._sig = artSig; art.innerHTML = gameArtSVG({ width: 480, duck: profile.duck, map: s.options.map || 'board', mapLabel: mapName(s.options.map) }); }
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $('.party-list', S);
   if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready })).join(''));
