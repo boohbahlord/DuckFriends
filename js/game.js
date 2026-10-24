@@ -18,7 +18,7 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, colOf, colX, colBounds, needed, VOTE_GRACE } from './rules.js';
 import { duckSVG, duckRoom } from './duck.js';
-import { nameHTML } from './name.js';
+import { nameHTML, fontCSS } from './name.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile } from './store.js';
@@ -45,6 +45,7 @@ let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
+let draftT = 0;                  // my typed question waits a moment, then goes to the host as a draft
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -57,7 +58,7 @@ const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (n
 const boardHTML = s => `<div class="board">
   <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
   <div class="ducks"></div><div class="fxl"></div>
-  ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
+  ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
 
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
@@ -93,7 +94,7 @@ function drawDucks(now = clockNow()) {
     const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
     const sig = JSON.stringify([p.duck, p.name, p.nameStyle, !!p.dead]);   // a new look shows at once, mid-game too
@@ -122,6 +123,9 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('air', z > 1);
     d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
+    /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
+    const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colOf(pos.x) : -1;
+    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', `var(--c${bub + 1})`); }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
@@ -341,10 +345,12 @@ async function announce(phase) {
 }
 
 /* ---------- the views ---------- */
+/* a question shows in its writer's font */
+const writerFont = s => { const q = s.qs[s.qi], p = q && s.players[q.by]; return fontCSS(p && p.nameStyle && p.nameStyle.font); };
 function lordHTML(s) {
   const q = s.qs[s.qi], p = s.players[q.by];
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: p.name, dead: !!p.dead }) : ''}</div>
+    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) : ''}<span class="lord-tip" style="font-family:${esc(writerFont(s))}">Round Lord</span></div>
     <svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
       <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
       <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
@@ -358,7 +364,7 @@ function viewSubmit(s) {
   return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? 'Question sent ✓' : 'No question this round'}</h2>
       ${sent ? `<p class="q-echo">${esc(sent.text)}</p>` : ''}<p class="dim">Waiting for the others.</p></div>`
     : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
-      <textarea maxlength="200" rows="3" placeholder="Data breaching is the end of the world and everyone is IDIOTS for not talking about it!&#10;- J Man" aria-label="Your question"></textarea>
+      <textarea maxlength="200" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <div class="sect"><h3 data-tip="How long everyone gets to answer your question.">Answer time</h3><div class="row">${[[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']].map(([v, n]) =>
         `<button type="button" class="tile" data-time="${v}" aria-pressed="${v === s.options.answerTime}">${n}</button>`).join('')}</div></div>
@@ -458,11 +464,28 @@ function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
   if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), actHTML(s)); } }   // the Vote button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
-  if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; return; }
+  const meter = $('.tmeter', S);
+  if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
+  /* the meter fills as the time runs out; its color drifts slowly (css) */
+  const from = catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
+  if (meter) { meter.hidden = false; const w = (frac * 100).toFixed(1) + '%'; if (meter._w !== w) { meter._w = w; meter.firstChild.style.width = w; } meter.classList.toggle('low', left <= 5); }
+  if (s.phase === 'submit' && left <= 2 && draftT) sendDraft(true);   // the last words make it in
   t.textContent = `${catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   t.className = 'timer' + (catching ? ' catch' : '') + (left <= 5 ? ' low' : '');
   if (left <= 5 && left > 0 && left !== lastBeep) { lastBeep = left; sfx.tick(); }
+}
+
+/* what I've typed goes to the host after a short pause, so it's sent in for me if time runs out */
+function sendDraft(now = false) {
+  clearTimeout(draftT); draftT = 0;
+  const go = () => {
+    draftT = 0;
+    const f = S && $('form.submit-card', S); if (!f || !R || R.state.phase !== 'submit') return;
+    const t = f.querySelector('.tile[aria-pressed="true"]');
+    R.send({ t: 'draft', text: f.querySelector('textarea').value, time: t ? +t.dataset.time : R.state.options.answerTime });
+  };
+  if (now) go(); else draftT = setTimeout(go, 700);
 }
 
 /* ---------- the pause menu (top right, or Esc) ---------- */
@@ -529,7 +552,7 @@ register('game', {
     R = arg || activeRoom(); if (!R) return null;
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
-        <div class="gbar-r"><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
+        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(S, HINTS);
     hooks.resetDuck = resetDuck;
@@ -540,7 +563,7 @@ register('game', {
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
       const mc = e.target.closest('[data-col]'); if (mc) { jumpTo(+mc.dataset.col); return; }
       const tile = e.target.closest('.submit-card .tile[data-time]');
-      if (tile) $$('.submit-card .tile[data-time]', S).forEach(t => t.setAttribute('aria-pressed', t === tile));
+      if (tile) { $$('.submit-card .tile[data-time]', S).forEach(t => t.setAttribute('aria-pressed', t === tile)); sendDraft(); }
       boardClick(e);
     });
     S.addEventListener('submit', e => {
@@ -551,6 +574,7 @@ register('game', {
       const t = f.querySelector('.tile[aria-pressed="true"]');
       R.send({ t: 'submit', text, time: t ? +t.dataset.time : R.state.options.answerTime });
     });
+    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea')) sendDraft(); });
     S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line)
       if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });

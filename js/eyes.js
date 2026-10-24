@@ -12,7 +12,7 @@ export const EYES = [
   { id: 'human', name: 'Human eye' },
   { id: 'bug', name: 'Bug eyes', tip: 'Compound eyes, like a fly\'s.' },
   { id: 'bug2', name: 'Big bug eyes', tip: 'Big glossy insect eyes.' },
-  { id: 'alien', name: 'Alien eye' },
+  { id: 'alien', name: 'Alien eye', tip: 'A big, black, slanted alien eye.' },
   { id: 'demon', name: 'Demon eye' },
   { id: 'coins', name: 'Coins' },
   { id: 'many', name: 'Too many eyes' },
@@ -41,7 +41,10 @@ const DRAW = {
     <ellipse cx="82" cy="29.6" rx="2.6" ry="1.6" fill="#fff" opacity=".5"/>`,
   bug2: (L, id) => `<defs><radialGradient id="${id}b" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#7a5a9a"/><stop offset=".45" stop-color="#2a1a3a"/><stop offset="1" stop-color="#050308"/></radialGradient></defs>
     <ellipse cx="84" cy="32" rx="9.5" ry="10.5" fill="url(#${id}b)" stroke="${K}" stroke-width="1.2"/><ellipse cx="81" cy="27.6" rx="3.4" ry="2.2" fill="#fff" opacity=".7"/><circle cx="88.6" cy="37" r="1.2" fill="#fff" opacity=".5"/>`,
-  alien: () => `<path d="M77 31C80 28 88 27 91 30C91 36 86 40 81 39C77 37 76 34 77 31Z" fill="#050505"/><ellipse cx="85" cy="31" rx="2.4" ry="1.2" fill="#fff" opacity=".55" transform="rotate(-15 85 31)"/>`,
+  alien: (L, id) => `<defs><radialGradient id="${id}a" cx=".62" cy=".42" r=".75"><stop offset="0" stop-color="#16302a"/><stop offset=".45" stop-color="#050807"/><stop offset="1" stop-color="#000"/></radialGradient></defs>
+    <path d="M72.5 24.5C79 22 89.5 27 93 34.5C94.2 38.4 90.6 41.4 86.2 40.4C78.6 38.4 72.6 32 72.5 24.5Z" fill="url(#${id}a)" stroke="#5dffa0" stroke-opacity=".45" stroke-width="1.1"/>
+    <path d="M76 26.4C81 25.6 87.4 28.6 90 32.6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".55"/>
+    <ellipse cx="88.4" cy="37.4" rx="1.5" ry=".9" fill="#fff" opacity=".85" transform="rotate(30 88.4 37.4)"/>`,
   demon: (L, id) => `<defs><radialGradient id="${id}d" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ffe14a"/><stop offset=".6" stop-color="#ff6a00"/><stop offset="1" stop-color="#9a0a00"/></radialGradient></defs>
     <ellipse cx="83" cy="34" rx="5.6" ry="5" fill="url(#${id}d)" stroke="#3a0000" stroke-width="1"/><ellipse cx="83" cy="34" rx="1.1" ry="4.2" fill="#100"/>
     <path d="M76.5 29L89 31.5" stroke="#3a0000" stroke-width="2" stroke-linecap="round"/>`,

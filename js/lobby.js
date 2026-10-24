@@ -43,7 +43,7 @@ function openMaps() {
 /* ---------- Game options: the host edits them; everyone else sees them ---------- */
 /* the options most hosts want; the rest wait under Additional settings so a straightforward host never sees them */
 const OPT_TILES = [
-  ['order', 'Question order', [['rotate', 'Rotating'], ['random', 'Random']]],
+  ['order', 'Question order', [['random', 'Random'], ['rotate', 'Rotating']]],
   ['share', 'Turn ends when done', [[.5, 'Half'], [.67, '2 of 3'], [.75, '3 of 4'], [1, 'Everyone']]],
   ['catchUp', 'Catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s']]],
   ['answerTime', 'Answer timer', [[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],

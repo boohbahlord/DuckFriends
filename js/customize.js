@@ -62,6 +62,7 @@ export function openCustomize(page = lastPage) {
   return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage"><div class="arm-duck"></div><div class="arm-card"></div></div></div>`, {
     cls: 'win-armory',
     onOpen(w) {
+      openFolds.clear();
       const menu = w.querySelector('.arm-menu'), duckBox = w.querySelector('.arm-duck'), cardBox = w.querySelector('.arm-card');
       const me = () => ({ id: 'me', name: profile.name, duck: profile.duck, card: profile.card, nameStyle: profile.nameStyle });
       const stage = () => { duckBox.innerHTML = duckSVG(profile.duck, { size: 220, title: profile.name }); cardBox.innerHTML = cardHTML(me(), { size: 52 }); };
@@ -117,9 +118,9 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'card') {
           const pat = (v, layout = C.layout, size = C.size) => `<span class="pat-pic" style="${esc(`background:${v !== 'none' ? patternLayers(v, C.patternColor || '#ffffff', layout, size) + ', ' : ''}${C.color}`)}"></span>`;
           const cur = C.image ? '' : C.pattern, kind = k => CARD_PATTERNS.filter(([v]) => k ? v.startsWith(k + ':') : !v.includes(':'));
-          /* hat and face patterns fold away under their own arrows (open while one of them is on) */
-          const fold = (k, label) => `<details class="arm-fold" data-fold="${k}"${openFolds.has(k) || cur.startsWith(k + ':') ? ' open' : ''}><summary>${label}</summary>${grid('cpat', kind(k).map(([v, n]) => [v, pat(v), n]), cur)}</details>`;
-          html = head('Card') + `<div class="arm-body"><h3>Pattern</h3>${grid('cpat', kind('').map(([v, n]) => [v, pat(v), n]), cur)}${fold('hat', 'Hat patterns')}${fold('face', 'Face patterns')}
+          /* hat, face and ball patterns fold away under their own arrows, shut each time Customize opens */
+          const fold = (k, label) => `<details class="arm-fold" data-fold="${k}"${openFolds.has(k) ? ' open' : ''}><summary>${label}</summary>${grid('cpat', kind(k).map(([v, n]) => [v, pat(v), n]), cur)}</details>`;
+          html = head('Card') + `<div class="arm-body"><h3>Pattern</h3>${grid('cpat', kind('').map(([v, n]) => [v, pat(v), n]), cur)}${fold('ball', 'Ball patterns')}${fold('hat', 'Hat patterns')}${fold('face', 'Face patterns')}
             ${C.pattern !== 'none' && !C.image ? `<h3>How it sits</h3>${grid('clay', CARD_LAYOUTS.map(([v, n]) => [v, pat(C.pattern, v), n]), C.layout || 'tiled')}
             <h3>Size</h3><div class="row small-tiles">${CARD_SIZES.map(([v, n]) => `<button type="button" class="tile" data-g="csize" data-v="${v}" aria-pressed="${(C.size || 'm') === v}">${n}</button>`).join('')}</div>` : ''}
             <h3>Picture</h3><div class="arm-grid">${upload(C.image ? 'Change picture' : 'Your picture', 'card')}${C.image ? `<button type="button" class="arm-tile" data-a="nocard" aria-pressed="true"><img src="${esc(C.image)}" alt=""><span>Remove picture</span></button>` : ''}</div>

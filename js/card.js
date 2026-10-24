@@ -8,8 +8,17 @@ import { FACES, faceTile } from './faces.js';
 import { nameHTML } from './name.js';
 import { esc } from './ui.js';
 
+/* sport balls, drawn in their own colors in a 32 × 32 box */
+const BALLS = {
+  basketball: ['Basketball', `<circle cx="16" cy="16" r="11" fill="#e8742a" stroke="#1c1c28" stroke-width="1.4"/><path d="M5 16H27M16 5V27M8.5 8.5C12 12 12 20 8.5 23.5M23.5 8.5C20 12 20 20 23.5 23.5" stroke="#1c1c28" stroke-width="1.1" fill="none"/><ellipse cx="12" cy="11" rx="3.5" ry="2" fill="#fff" opacity=".3"/>`],
+  baseball: ['Baseball', `<circle cx="16" cy="16" r="11" fill="#fbfaf3" stroke="#1c1c28" stroke-width="1.4"/><path d="M9 7.5C12.5 11.5 12.5 20.5 9 24.5M23 7.5C19.5 11.5 19.5 20.5 23 24.5" stroke="#d7263d" stroke-width="1" fill="none"/><path d="M9.6 10.2l2-.8M10.8 13.2l2-.4M11 16.4h2M10.8 19.6l2 .4M9.6 22.4l2 .8M22.4 10.2l-2-.8M21.2 13.2l-2-.4M21 16.4h-2M21.2 19.6l-2 .4M22.4 22.4l-2 .8" stroke="#d7263d" stroke-width=".8"/>`],
+  football: ['Football', `<g transform="rotate(-30 16 16)"><ellipse cx="16" cy="16" rx="13" ry="8" fill="#8a4a22" stroke="#1c1c28" stroke-width="1.4"/><path d="M6.5 12.5C6 14.5 6 17.5 6.5 19.5M25.5 12.5C26 14.5 26 17.5 25.5 19.5" stroke="#fff" stroke-width="1.4" fill="none"/><path d="M11 16H21M12.5 14.4V17.6M14.5 14.4V17.6M16.5 14.4V17.6M18.5 14.4V17.6" stroke="#fff" stroke-width="1.1"/></g>`],
+  golf: ['Golf ball', `<circle cx="16" cy="16" r="10" fill="#fdfdfd" stroke="#1c1c28" stroke-width="1.3"/><g fill="#d3d8e2">${[[12, 11], [16, 10], [20, 11], [10, 15], [14, 14.5], [18, 14.5], [22, 15], [11, 19], [15, 18.5], [19, 18.5], [23, 19], [13, 22.5], [17, 22.5], [21, 22]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.1"/>`).join('')}</g><ellipse cx="12.5" cy="10.5" rx="3" ry="1.6" fill="#fff" opacity=".9"/>`],
+  soccer: ['Soccer ball', `<circle cx="16" cy="16" r="11" fill="#fff" stroke="#1c1c28" stroke-width="1.4"/><path d="M16 12l3.8 2.8-1.5 4.5h-4.6l-1.5-4.5z" fill="#1c1c28"/>${[0, 72, 144, 216, 288].map(a => `<g transform="rotate(${a} 16 16)"><path d="M16 12V8" stroke="#1c1c28" stroke-width=".9"/><path d="M13.6 5.6L16 5L18.4 5.6L17.6 8H14.4Z" fill="#1c1c28"/></g>`).join('')}`],
+};
 export const CARD_PATTERNS = [['none', 'Plain'], ['dots', 'Polka dots'], ['stripes', 'Stripes'], ['zigzag', 'Zigzag'],
   ['checks', 'Checks'], ['confetti', 'Confetti'], ['bubbles', 'Bubbles'], ['stars', 'Stars'],
+  ...Object.entries(BALLS).map(([id, [n]]) => [`ball:${id}`, n]),
   ...HATS.map(h => [`hat:${h.id}`, h.name]), ...FACES.map(f => [`face:${f.id}`, f.name])];
 /* how the pattern sits on the card: the pattern of the pattern */
 export const CARD_LAYOUTS = [['tiled', 'Tiled'], ['staggered', 'Staggered'], ['diagonal', 'Diagonal'], ['scattered', 'Scattered'],
@@ -20,6 +29,7 @@ export const CARD_SIZES = [['s', 'Small', .7], ['m', 'Medium', 1], ['l', 'Large'
 function motif(kind, col) {
   if (String(kind).startsWith('hat:')) return hatTile(kind.slice(4), col === '#ffffff' ? '' : col);
   if (String(kind).startsWith('face:')) return faceTile(kind.slice(5));
+  if (String(kind).startsWith('ball:')) return (BALLS[kind.slice(5)] || [])[1] || '';
   return {
     dots: `<circle cx="8" cy="8" r="3" fill="${col}"/><circle cx="24" cy="24" r="3" fill="${col}"/>`,
     stripes: `<path d="M-8 40L40 -8M-8 24L24 -8M8 40L40 8" stroke="${col}" stroke-width="5"/>`,
