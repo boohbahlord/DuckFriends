@@ -1,18 +1,18 @@
-/* ---------- Customize: your duck, your player card, your name ----------
-   One window with three tabs and your card at the top showing every change at once. Changes are kept on this device
-   and sent to the room you are in. */
+/* ---------- Customize: the Armory ----------
+   After Halo: Reach's Armory. On a computer: a window with the menu on the left and your duck on the right, standing over
+   your player card; on a phone the duck is on top. The menu runs down the duck: Hat, Face, then Skin; below a line come
+   Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
+   colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName } from './store.js';
 import { openWindow, esc, toast } from './ui.js';
-import { DUCK_COLORS, DUCK_PATTERNS, DUCK_METALS, pictureToSquare, duckSVG } from './duck.js';
-import { CARD_PATTERNS, cardHTML, patternTile } from './card.js';
+import { DUCK_PATTERNS, DUCK_METALS, pictureToSquare, duckSVG } from './duck.js';
+import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
 import { HATS, hatById } from './hats.js';
+import { FACES, faceById } from './faces.js';
 import { FONTS } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
 import { who } from './who.js';
-
-const TABS = [['duck', 'Duck'], ['card', 'Card'], ['name', 'Name']];
-let lastTab = 'duck';
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -26,101 +26,141 @@ export function setName(raw) {
   profile.name = n; save(true); shareLook(); return true;
 }
 
-/* a sliding bar of picture tiles that scrolls sideways; ▾ beside it opens it into a grid showing all of them */
-const barOpen = {};
-const slidebar = (group, items, cur) => `<div class="slidebar" data-open="${!!barOpen[group]}">
-  <div class="slide-strip" role="group">${items.map(([v, pic, label, tip]) => `<button type="button" class="tile slide-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>
-  <button type="button" class="slide-more" data-bar="${group}" aria-expanded="${!!barOpen[group]}" aria-label="Show them all" data-tip="${barOpen[group] ? 'Fold' : 'Show them all'}">${barOpen[group] ? '▴' : '▾'}</button></div>`;
-const tiles = (group, opts, cur) => `<div class="row">${opts.map(([v, label]) =>
-  `<button type="button" class="tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}">${esc(label)}</button>`).join('')}</div>`;
+/* the menu, top to bottom as on the duck; then the rest below a line */
+const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['colors', 'Colors']];
+const nameOf = (list, v, none = 'None') => { const f = list.find(x => x[0] === v); return f ? f[1] : none; };
+const valueOf = k => {
+  const D = profile.duck, C = profile.card;
+  return {
+    hat: D.hat && hatById(D.hat.id) ? hatById(D.hat.id).name : 'None',
+    face: D.face && faceById(D.face.id) ? faceById(D.face.id).name : 'None',
+    skin: D.image ? 'Your picture' : D.metal !== 'none' ? nameOf(DUCK_METALS, D.metal) : nameOf(DUCK_PATTERNS, D.pattern, 'Plain'),
+    name: profile.name,
+    card: C.image ? 'Your picture' : nameOf(CARD_PATTERNS, C.pattern, 'Plain'),
+    colors: '',
+  }[k];
+};
+/* a grid of picture tiles, three to a row */
+const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) =>
+  `<button type="button" class="arm-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>`;
+let lastPage = null, lastColor = 'duck';
 
-export function openCustomize(tab = lastTab) {
-  return openWindow(`<h2>Customize</h2><div class="cz-preview"></div>
-    <div class="tabs" role="tablist">${TABS.map(([k, n]) => `<button type="button" class="tab" data-tab="${k}">${n}</button>`).join('')}</div>
-    <div class="cz-page"></div>`, {
-    cls: 'win-settings win-cz',
+export function openCustomize(page = lastPage) {
+  if (page === 'duck') page = null;   // (the old tab name)
+  return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage"><div class="arm-duck"></div><div class="arm-card"></div></div></div>`, {
+    cls: 'win-armory',
     onOpen(w) {
-      const prev = w.querySelector('.cz-preview'), page = w.querySelector('.cz-page');
+      const menu = w.querySelector('.arm-menu'), duckBox = w.querySelector('.arm-duck'), cardBox = w.querySelector('.arm-card');
       const me = () => ({ id: 'me', name: profile.name, duck: profile.duck, card: profile.card, nameStyle: profile.nameStyle });
-      const paint = () => { prev.innerHTML = cardHTML(me(), { size: 64 }); };
-      const changed = () => { save(); paint(); shareLook(); };
-      const upload = (label, onPic) => {
-        const b = document.createElement('label'); b.className = 'btn ghost upload';
-        b.innerHTML = `${esc(label)}<input type="file" accept="image/*" hidden>`;
-        b.querySelector('input').onchange = async e => {
-          try { onPic(await pictureToSquare(e.target.files[0], 160)); changed(); show(lastTab); } catch (err) { toast(err.message); }
-        };
-        return b;
-      };
-      const section = (title, ...nodes) => { const s = document.createElement('div'); s.className = 'sect'; s.innerHTML = `<h3>${esc(title)}</h3>`; nodes.forEach(n => s.append(typeof n === 'string' ? document.createRange().createContextualFragment(n) : n)); page.append(s); return s; };
+      const stage = () => { duckBox.innerHTML = duckSVG(profile.duck, { size: 220, title: profile.name }); cardBox.innerHTML = cardHTML(me(), { size: 52 }); };
+      const changed = (redraw = true) => { save(); stage(); shareLook(); if (redraw) show(lastPage, true); };
+      const head = title => `<header class="arm-h">${lastPage ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
+      const upload = (label, onPic) => `<label class="arm-tile arm-up" data-tip="A square picture works best">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
 
-      const show = k => {
-        lastTab = k; page.replaceChildren();
-        w.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === k));
+      const show = (k, keep) => {
+        const scroll = keep ? (menu.querySelector('.arm-body') || {}).scrollTop || 0 : 0;
+        lastPage = k || null;
         const D = profile.duck, C = profile.card, N = profile.nameStyle;
-        if (k === 'duck') {
-          /* a metal replaces the color and the pattern, so with a metal on they show nothing chosen */
-          const metal = D.metal !== 'none';
-          section('Color', colorField(metal ? '' : D.color, c => { const was = D.metal; D.color = c; D.metal = 'none'; D.image = null; changed(); if (was !== 'none') show('duck'); }, { swatches: DUCK_COLORS.map(x => x[1]) })).classList.toggle('muted', metal);
-          section('Pattern', tiles('dpat', DUCK_PATTERNS, metal ? '' : D.pattern), colorField(D.patternColor, c => { D.patternColor = c; changed(); })).classList.toggle('muted', metal);
-          section('Metal', tiles('dmetal', DUCK_METALS, D.metal));
-          /* hats: a sliding bar of ducks wearing each hat, then the chosen hat's own choices */
+        let html = '';
+        if (!k) {
+          html = head('Customize') + `<div class="arm-body"><ul class="arm-list">${ROWS.map(r => r ? `<li><button type="button" class="arm-row" data-p="${r[0]}"><span>${esc(r[1])}…</span><span class="val">${esc(valueOf(r[0]) || '')}</span></button></li>` : '<li class="arm-line" aria-hidden="true"></li>').join('')}</ul></div>`;
+        } else if (k === 'hat') {
+          const pic = id => duckSVG({ ...D, image: null, face: null, hat: id ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id } : null }, { size: 58, shadow: false });
           const hd = D.hat && hatById(D.hat.id);
-          const hatPic = id => duckSVG({ ...D, image: null, hat: id ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id } : null }, { size: 46, shadow: false });
-          const hs = section('Hat', slidebar('hat', [['none', hatPic(null), 'No hat'], ...HATS.map(h => [h.id, hatPic(h.id), h.name, h.tip])], hd ? hd.id : 'none'));
-          if (D.image) hs.append(Object.assign(document.createElement('p'), { className: 'small dim', textContent: 'Hats show on the duck, not on a picture.' }));
-          if (hd) {
-            const opts = document.createElement('div'); opts.className = 'hat-opts';
-            for (const [k, label, def] of hd.colors || []) {
-              const row = document.createElement('div'); row.className = 'hat-color';
-              row.innerHTML = `<span class="lab">${esc(label)}</span>`;
-              row.append(colorField(D.hat[k] || def, c => { D.hat = { ...D.hat, [k]: c }; changed(); refreshHatPics(); }));
-              opts.append(row);
-            }
-            if (hd.ketchup) { const l = document.createElement('label'); l.className = 'check'; l.innerHTML = `<input type="checkbox"${D.hat.ketchup ? ' checked' : ''}>Ketchup`; l.querySelector('input').onchange = e => { D.hat = { ...D.hat, ketchup: e.target.checked }; changed(); refreshHatPics(); }; opts.append(l); }
-            if (hd.metal) { const m = document.createElement('div'); m.innerHTML = tiles('hmetal', DUCK_METALS.slice(1), D.hat.metal || 'gold'); opts.append(m.firstElementChild); }
-            if (hd.tip) opts.append(Object.assign(document.createElement('p'), { className: 'small dim', textContent: `${hd.name}: ${hd.tip}` }));
-            hs.append(opts);
-          }
-          const pic = section('Picture', upload(D.image ? 'Change picture' : 'Upload a square picture', d => { D.image = d; }));
-          if (D.image) { const x = document.createElement('button'); x.type = 'button'; x.className = 'btn ghost'; x.textContent = 'Back to the duck'; x.onclick = () => { D.image = null; changed(); show('duck'); }; pic.append(' ', x); }
+          html = head('Hat') + `<div class="arm-body">${grid('hat', [['none', pic(null), 'No hat'], ...HATS.map(h => [h.id, pic(h.id), h.name, h.tip])], hd ? hd.id : 'none')}
+            ${hd ? `<div class="arm-opts">${hd.ketchup ? `<label class="check"><input type="checkbox" data-o="ketchup"${D.hat.ketchup ? ' checked' : ''}>Ketchup</label>` : ''}
+              ${hd.metal ? `<div class="row small-tiles">${DUCK_METALS.slice(1).map(([v, n]) => `<button type="button" class="tile" data-g="hmetal" data-v="${v}" aria-pressed="${(D.hat.metal || 'gold') === v}">${esc(n)}</button>`).join('')}</div>` : ''}
+              ${hd.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}${hd.tip ? `<p class="small dim">${esc(hd.name)}: ${esc(hd.tip)}</p>` : ''}</div>` : ''}
+            ${D.image ? '<p class="small dim">Hats show on the duck, not on a picture.</p>' : ''}</div>`;
+        } else if (k === 'face') {
+          const pic = id => duckSVG({ ...D, image: null, face: id ? { id } : null }, { size: 58, shadow: false });
+          html = head('Face') + `<div class="arm-body">${grid('face', [['none', pic(null), 'Nothing'], ...FACES.map(f => [f.id, pic(f.id), f.name, f.tip])], D.face ? D.face.id : 'none')}
+            <p class="small dim">Face items go over the face, hat or no hat. More are coming.</p></div>`;
+        } else if (k === 'skin') {
+          const pic = look => duckSVG({ ...D, hat: null, face: null, image: null, ...look }, { size: 58, shadow: false });
+          const cur = D.image ? 'pic' : D.metal !== 'none' ? 'm:' + D.metal : 'p:' + D.pattern;
+          html = head('Skin') + `<div class="arm-body">${grid('skin', [
+            ...DUCK_PATTERNS.map(([v, n]) => ['p:' + v, pic({ pattern: v, metal: 'none' }), n]),
+            ...DUCK_METALS.slice(1).map(([v, n]) => ['m:' + v, pic({ metal: v }), n]),
+          ], cur).replace('</div>', `${upload(D.image ? 'Change picture' : 'Your picture', 'duck')}${D.image ? `<button type="button" class="arm-tile" data-a="nopic" aria-pressed="true"><img src="${esc(D.image)}" alt=""><span>Back to the duck</span></button>` : ''}</div>`)}
+            <p class="small dim">A metal or a picture takes the place of the duck's color. The pattern's color is under Colors.</p></div>`;
+        } else if (k === 'name') {
+          html = head('Name') + `<div class="arm-body"><div class="row"><input class="cz-name" maxlength="20" value="${esc(profile.name)}" spellcheck="false" aria-label="Name"></div>
+            <p class="small dim">Letters, numbers, - and _.</p>
+            ${grid('nfont', FONTS.map(f => [f.id, `<b class="font-pic" style="font-family:${esc(f.css)}">${esc(profile.name.slice(0, 8))}</b>`, f.name]), N.font)}
+            <label class="check"><input type="checkbox" data-o="rainbow"${N.rainbow ? ' checked' : ''}>Multicolored letters</label>
+            <p class="small dim">The name's color is under Colors.</p></div>`;
         } else if (k === 'card') {
-          section('Color', colorField(C.color, c => { C.color = c; changed(); }));
-          const patPic = v => `<span class="pat-pic" style="${esc(`background:${v === 'none' ? C.color : `${patternTile(v, C.patternColor || '#ffffff')} 0 0/${v.startsWith('hat:') ? 28 : 16}px, ${C.color}`}`)}"></span>`;
-          section('Pattern', slidebar('cpat', CARD_PATTERNS.map(([v, n]) => [v, patPic(v), n]), C.pattern), colorField(C.patternColor, c => { C.patternColor = c; changed(); }));
-          const pic = section('Picture', upload(C.image ? 'Change picture' : 'Upload a picture', d => { C.image = d; }));
-          if (C.image) { const x = document.createElement('button'); x.type = 'button'; x.className = 'btn ghost'; x.textContent = 'Remove picture'; x.onclick = () => { C.image = null; changed(); show('card'); }; pic.append(' ', x); }
-        } else {
-          const nm = section('Name', `<div class="row"><input class="cz-name" maxlength="20" value="${esc(profile.name)}" spellcheck="false" aria-label="Name"><span class="small dim">Letters, numbers, - and _</span></div>`);
-          const inp = nm.querySelector('input');
-          inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } if (c && setName(c)) paint(); };
-          section('Font', `<div class="tiles-font">${FONTS.map(f => `<button type="button" class="tile" data-g="nfont" data-v="${f.id}" aria-pressed="${f.id === N.font}" style="font-family:${esc(f.css)}">${esc(f.name)}</button>`).join('')}</div>`);
-          section('Color', `<div class="row"><button type="button" class="tile cz-auto" aria-pressed="${!N.color && !N.rainbow}" data-tip="Dark letters on light, light letters on dark.">Plain</button>
-            <label class="check"><input type="checkbox" class="cz-rainbow"${N.rainbow ? ' checked' : ''}>Multicolored letters</label></div>`,
-            colorField(N.color, c => { N.color = c; N.rainbow = false; page.querySelector('.cz-rainbow').checked = false; page.querySelector('.cz-auto').setAttribute('aria-pressed', 'false'); changed(); }));
-          page.querySelector('.cz-rainbow').onchange = e => { N.rainbow = e.target.checked; if (N.rainbow) page.querySelector('.cz-auto').setAttribute('aria-pressed', 'false'); changed(); };
-          page.querySelector('.cz-auto').onclick = () => { N.color = ''; N.rainbow = false; changed(); show('name'); };
+          const pat = (v, layout = C.layout, size = C.size) => `<span class="pat-pic" style="${esc(`background:${v !== 'none' ? patternLayers(v, C.patternColor || '#ffffff', layout, size) + ', ' : ''}${C.color}`)}"></span>`;
+          html = head('Card') + `<div class="arm-body"><h3>Pattern</h3>${grid('cpat', CARD_PATTERNS.map(([v, n]) => [v, pat(v), n]), C.image ? '' : C.pattern)}
+            ${C.pattern !== 'none' && !C.image ? `<h3>How it sits</h3>${grid('clay', CARD_LAYOUTS.map(([v, n]) => [v, pat(C.pattern, v), n]), C.layout || 'tiled')}
+            <h3>Size</h3><div class="row small-tiles">${CARD_SIZES.map(([v, n]) => `<button type="button" class="tile" data-g="csize" data-v="${v}" aria-pressed="${(C.size || 'm') === v}">${n}</button>`).join('')}</div>` : ''}
+            <h3>Picture</h3><div class="arm-grid">${upload(C.image ? 'Change picture' : 'Your picture', 'card')}${C.image ? `<button type="button" class="arm-tile" data-a="nocard" aria-pressed="true"><img src="${esc(C.image)}" alt=""><span>Remove picture</span></button>` : ''}</div>
+            <p class="small dim">The card's colors are under Colors.</p></div>`;
+        } else if (k === 'colors') {
+          const T = colorTargets(), cur = T.find(t => t[0] === lastColor) || T[0]; lastColor = cur[0];
+          html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${T.map(([id, label]) => `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>`).join('')}</ul>
+            <div class="cpick"><p class="small dim cnote">${esc(cur[4] || '')}</p></div></div>`;
+        }
+        menu.innerHTML = html;
+        const body = menu.querySelector('.arm-body'); if (body) body.scrollTop = scroll;
+        if (k === 'colors') {
+          const T = colorTargets(), cur = T.find(t => t[0] === lastColor);
+          const pick = menu.querySelector('.cpick');
+          if (cur[0] === 'name') pick.insertAdjacentHTML('afterbegin', `<div class="row"><button type="button" class="tile" data-a="plainname" aria-pressed="${!N.color && !N.rainbow}" data-tip="Dark letters on light, light letters on dark.">Plain</button></div>`);
+          pick.insertBefore(colorField(cur[2], c => { cur[3](c); changed(false); menu.querySelectorAll('[data-a="plainname"]').forEach(b => b.setAttribute('aria-pressed', 'false')); }, { grid: true }), pick.querySelector('.cnote'));
+        }
+        if (k === 'name') {
+          const inp = menu.querySelector('.cz-name');
+          inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } if (c && setName(c)) { stage(); menu.querySelectorAll('.font-pic').forEach(b => { b.textContent = c.slice(0, 8); }); } };
         }
       };
-      /* the hat bar's little ducks follow the duck's colors and the hat's own */
-      const refreshHatPics = () => page.querySelectorAll('.slide-tile[data-g="hat"]').forEach(b => {
-        const D = profile.duck, id = b.dataset.v === 'none' ? null : b.dataset.v;
-        b.querySelector('svg').outerHTML = duckSVG({ ...D, image: null, hat: id ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id } : null }, { size: 46, shadow: false });
-      });
-      page.addEventListener('click', e => {
-        const more = e.target.closest('.slide-more');
-        if (more) { const g = more.dataset.bar; barOpen[g] = !barOpen[g]; const bar = more.closest('.slidebar'); bar.dataset.open = barOpen[g]; more.setAttribute('aria-expanded', barOpen[g]); more.textContent = barOpen[g] ? '▴' : '▾'; more.dataset.tip = barOpen[g] ? 'Fold' : 'Show them all'; return; }
-        const t = e.target.closest('.tile[data-g]'); if (!t) return;
-        const v = t.dataset.v, D = profile.duck;
-        ({ dpat: () => { D.pattern = v; D.metal = 'none'; D.image = null; setTimeout(() => show('duck')); }, dmetal: () => { D.metal = v; D.image = null; setTimeout(() => show('duck')); },
-          hat: () => { D.hat = v === 'none' ? null : { ...(D.hat && D.hat.id === v ? D.hat : {}), id: v }; setTimeout(() => { const sc = page.querySelector('.slidebar[data-open] .slide-strip'), x = sc ? sc.scrollLeft : 0; show('duck'); const n = page.querySelector('.slide-strip'); if (n) n.scrollLeft = x; }); },
-          hmetal: () => { D.hat = { ...D.hat, metal: v }; setTimeout(refreshHatPics); },
-          cpat: () => { profile.card.pattern = v; }, nfont: () => { profile.nameStyle.font = v; } })[t.dataset.g]();
-        page.querySelectorAll(`.tile[data-g="${t.dataset.g}"]`).forEach(b => b.setAttribute('aria-pressed', b === t));
+      /* what can be colored now (a target shows only when it is in use) */
+      function colorTargets() {
+        const D = profile.duck, C = profile.card, N = profile.nameStyle, hd = D.hat && hatById(D.hat.id), out = [];
+        out.push(['duck', 'Duck', D.metal !== 'none' || D.image ? '' : D.color, c => { D.color = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.']);
+        if (D.pattern !== 'none' && D.metal === 'none' && !D.image) out.push(['dpat', 'Duck pattern', D.patternColor, c => { D.patternColor = c; }, 'The color of the pattern on your duck.']);
+        for (const [key, label, def] of (hd && hd.colors) || []) out.push(['hat-' + key, `${hd.name}: ${label}`, D.hat[key] || def, c => { D.hat = { ...D.hat, [key]: c }; }, '']);
+        out.push(['card', 'Card', C.color, c => { C.color = c; }, 'The color behind your card\'s pattern.']);
+        if (C.pattern !== 'none' && !C.image) out.push(['cpat', 'Card pattern', C.patternColor, c => { C.patternColor = c; }, 'The pattern\'s color (for a hat pattern, the hat\'s).']);
+        out.push(['name', 'Name', N.color, c => { N.color = c; N.rainbow = false; }, 'Plain fits light and dark.']);
+        return out;
+      }
+      menu.addEventListener('click', e => {
+        const D = profile.duck, C = profile.card, N = profile.nameStyle;
+        const row = e.target.closest('.arm-row[data-p]'); if (row) { show(row.dataset.p); return; }
+        const tgt = e.target.closest('.arm-row[data-c]'); if (tgt) { lastColor = tgt.dataset.c; show('colors', true); return; }
+        const a = e.target.closest('[data-a]');
+        if (a) {
+          if (a.dataset.a === 'back') { show(null); return; }
+          if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
+          if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
+          if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
+        }
+        const t = e.target.closest('[data-g]'); if (!t) return;
+        const v = t.dataset.v;
+        ({
+          hat: () => { D.hat = v === 'none' ? null : { ...(D.hat && D.hat.id === v ? D.hat : {}), id: v }; },
+          hmetal: () => { D.hat = { ...D.hat, metal: v }; },
+          face: () => { D.face = v === 'none' ? null : { id: v }; },
+          skin: () => { D.image = null; if (v.startsWith('m:')) D.metal = v.slice(2); else { D.metal = 'none'; D.pattern = v.slice(2); } },
+          nfont: () => { N.font = v; },
+          cpat: () => { C.pattern = v; C.image = null; },
+          clay: () => { C.layout = v; },
+          csize: () => { C.size = v; },
+        })[t.dataset.g]();
         changed();
       });
-      w.querySelector('.tabs').onclick = e => { const t = e.target.closest('.tab'); if (t) show(t.dataset.tab); };
-      paint(); show(tab);
+      menu.addEventListener('change', async e => {
+        const o = e.target.dataset.o, up = e.target.dataset.up;
+        if (o === 'ketchup') { profile.duck.hat = { ...profile.duck.hat, ketchup: e.target.checked }; changed(); }
+        if (o === 'rainbow') { profile.nameStyle.rainbow = e.target.checked; changed(); }
+        if (up) {
+          try { const d = await pictureToSquare(e.target.files[0], 160); if (up === 'duck') profile.duck.image = d; else profile.card.image = d; changed(); }
+          catch (err) { toast(err.message); }
+        }
+      });
+      stage(); show(page);
     },
   });
 }

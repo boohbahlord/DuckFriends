@@ -564,3 +564,58 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 .notice-acts { display: flex; gap: .4rem; }
 .notice-x { position: absolute; top: .35rem; right: .45rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: .12rem solid var(--line); background: var(--red); color: #fff; font-weight: 700; cursor: pointer; line-height: 1; }
 @keyframes noticein { from { opacity: 0; transform: translateY(.8rem); } }
+
+/* ---------- Customize: the Armory (menu on the left, the duck on the right over its card) ---------- */
+.win-armory { width: min(60rem, 100%); padding: 1rem; }
+.armory { display: grid; grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr); gap: 1rem; height: min(40rem, calc(100dvh - 5rem)); }
+.arm-menu { display: flex; flex-direction: column; min-height: 0; background: var(--panel2); border: .14rem solid var(--line); border-radius: 1rem; overflow: hidden; }
+.arm-h { display: flex; align-items: center; gap: .5rem; padding: .55rem .8rem; border-bottom: .12rem solid var(--soft); }
+.arm-h h2 { font-size: calc(1.15rem * var(--ts)); letter-spacing: .06em; text-transform: uppercase; margin: 0; }
+.arm-mark { color: var(--blue); font-size: 1.1rem; }
+.arm-back { width: 2rem; height: 2rem; border-radius: 50%; border: .12rem solid var(--line); background: var(--panel); font-size: 1.3rem; line-height: 1; cursor: pointer; font-weight: 700; }
+.arm-body { flex: 1; min-height: 0; overflow: auto; padding: .6rem .7rem .8rem; }
+.arm-body h3 { font-size: calc(.85rem * var(--ts)); text-transform: uppercase; letter-spacing: .05em; color: var(--dim); margin: .8rem 0 .35rem; }
+.arm-body h3:first-child { margin-top: 0; }
+.arm-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .15rem; }
+.arm-row { display: flex; justify-content: space-between; align-items: center; gap: .6rem; width: 100%; text-align: left; background: transparent; border: 0; border-left: .25rem solid transparent; border-radius: .3rem; padding: .45rem .6rem; font-size: calc(.95rem * var(--ts)); font-weight: 600; letter-spacing: .03em; text-transform: uppercase; cursor: pointer; color: var(--ink); }
+.arm-row:hover, .arm-row:focus-visible, .arm-row[aria-pressed="true"] { background: color-mix(in srgb, var(--blue) 18%, transparent); border-left-color: var(--blue); }
+.arm-row .val { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--dim); font-size: calc(.82rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+.arm-line { height: .12rem; background: var(--soft); margin: .4rem .3rem; }
+.arm-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+.arm-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .2rem; min-height: 5.6rem; padding: .3rem .25rem .35rem; background: var(--panel); border: .13rem solid var(--soft); border-radius: .6rem; cursor: pointer; font-size: calc(.72rem * var(--ts)); line-height: 1.1; text-align: center; color: var(--ink); }
+.arm-tile:hover { border-color: var(--line); }
+.arm-tile[aria-pressed="true"] { border-color: var(--blue); box-shadow: 0 0 0 .14rem var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--panel)); }
+.arm-tile svg { width: 3.6rem; height: auto; flex: 1 1 auto; max-height: 4.2rem; }
+.arm-tile img { width: 3.2rem; height: 3.2rem; object-fit: cover; border-radius: .4rem; }
+.arm-tile .pat-pic { width: 100%; height: 3.2rem; }
+.arm-up { justify-content: center; border-style: dashed; }
+.up-ico { font-size: 1.6rem; line-height: 1; }
+.font-pic { font-size: calc(1.05rem * var(--ts)); font-weight: 400; flex: 1; display: grid; place-items: center; overflow: hidden; max-width: 100%; white-space: nowrap; }
+.arm-opts { margin-top: .7rem; display: flex; flex-direction: column; gap: .4rem; }
+.small-tiles .tile { min-width: 0; padding: .25rem .6rem; font-size: calc(.8rem * var(--ts)); }
+.arm-body .check { margin-top: .6rem; }
+.arm-stage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .8rem; min-height: 0; padding: .6rem; border-radius: 1rem;
+  background: radial-gradient(ellipse 60% 55% at 50% 42%, color-mix(in srgb, var(--blue) 26%, transparent), transparent 70%), repeating-linear-gradient(60deg, #ffffff06 0 2px, transparent 2px 9px); }
+.arm-duck { flex: 1; min-height: 0; display: grid; place-items: center; width: 100%; }
+.arm-duck svg { width: min(15rem, 80%); height: auto; max-height: 100%; }
+.arm-card { width: min(24rem, 100%); }
+/* the Colors screen: what can be colored, beside the grid of swatches */
+.arm-colors { display: grid; grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr); gap: .6rem; align-items: start; }
+.ctargets .arm-row { font-size: calc(.8rem * var(--ts)); text-transform: none; letter-spacing: 0; padding: .35rem .45rem; }
+.cpick { display: flex; flex-direction: column; gap: .5rem; }
+.colors.grid3 .swatches { display: grid; grid-template-columns: repeat(3, 2.3rem); gap: .2rem; }
+.colors.grid3 .sw { width: 2.3rem; height: 1.55rem; border-radius: .25rem; border-width: .1rem; }
+.colors.grid3 .sw[aria-pressed="true"] { outline: .18rem solid var(--blue); outline-offset: .05rem; }
+.colors.grid3 .brush { grid-column: 1 / -1; width: 100%; height: 1.9rem; border-radius: .4rem; background: var(--panel); }
+.colors.grid3 .invent { margin-top: .4rem; }
+@media (max-width: 760px) {
+  .win-armory { padding: .7rem; }
+  .armory { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); height: calc(100dvh - 3.5rem); }
+  .arm-stage { order: -1; flex-direction: row; justify-content: center; padding: .3rem 2.8rem .3rem .3rem; }   /* room for the X */
+  .arm-duck { flex: none; width: 6.5rem; }
+  .arm-duck svg { width: 6.5rem; }
+  .arm-card { flex: 1; }
+  .arm-colors { grid-template-columns: minmax(0, 1fr); }
+  .ctargets { flex-direction: row !important; flex-wrap: wrap; }
+  .colors.grid3 .swatches { grid-template-columns: repeat(6, 2.3rem); }
+}

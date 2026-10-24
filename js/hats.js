@@ -17,7 +17,6 @@ export const HATS = [
   { id: 'sombrero', name: 'Sombrero' },
   { id: 'dunce', name: 'Dunce hat' },
   { id: 'crown', name: 'Crown', metal: true },
-  { id: 'robot', name: 'Cardboard robot' },
   { id: 'duckling', name: 'Rubber duck', colors: [['c1', 'Duck', '#ffd23f']] },
   { id: 'eye', name: 'Floating eye' },
   { id: 'mouse', name: 'Grey mouse' },
@@ -99,7 +98,6 @@ const DRAW = {
     <circle cx="-22" cy="-28" r="2" fill="${M[0]}" ${O}/><circle cx="0" cy="-32" r="2.2" fill="${M[0]}" ${O}/><circle cx="22" cy="-28" r="2" fill="${M[0]}" ${O}/>
     <path d="M-18-8L-16-2" stroke="#fff" stroke-width="1.4" opacity=".7"/>`;
   },
-  robot: () => '',   // drawn in the duck's own space below, over the whole head
   duckling: (h, id) => `<g transform="translate(-14 -24) scale(.3)">
     <path d="M30 62C24 60 18 56 12 49C11 60 13 72 18 81C23 98 40 106 60 106C82 106 98 98 100 82C101 72 96 64 88 60L60 60C48 60 38 62 30 62Z" fill="${h.c1}" stroke="#1c1c28" stroke-width="5"/>
     <circle cx="76" cy="40" r="23" fill="${h.c1}" stroke="#1c1c28" stroke-width="5"/>
@@ -126,7 +124,8 @@ const DRAW = {
     <path d="M0-21C-1-12-1-5 0 1M-12-17C-10-9-10-3-10 2M12-17C10-9 10-3 10 2" stroke="${dk(h.c1, .3)}" stroke-width="1" fill="none"/>
     <circle cx="0" cy="-21" r="2.4" fill="${dk(h.c1, .25)}" ${O}/><ellipse cx="-8" cy="-13" rx="6" ry="3" fill="#fff" opacity=".3" transform="rotate(-20 -8 -13)"/>`,
 };
-const ROBOT = `<path d="M46 14L104 14L114 6L58 6Z" fill="#d9b07a" ${O}/><path d="M104 14L114 6L114 60L104 68Z" fill="#a87b45" ${O}/>
+export const ROBOT = `   /* the cardboard box head (now a Face item, faces.js), in the duck's own space */
+  <path d="M46 14L104 14L114 6L58 6Z" fill="#d9b07a" ${O}/><path d="M104 14L114 6L114 60L104 68Z" fill="#a87b45" ${O}/>
   <rect x="46" y="14" width="58" height="54" fill="#c89b62" ${O}/>
   <rect x="56" y="26" width="13" height="10" rx="2" fill="#2b2b2b"/><rect x="80" y="26" width="13" height="10" rx="2" fill="#2b2b2b"/>
   <circle cx="62.5" cy="31" r="2.2" fill="#7df9ff"/><circle cx="86.5" cy="31" r="2.2" fill="#7df9ff"/>
@@ -140,7 +139,6 @@ export function hatLayers(hat) {
   const def = hat && hatById(hat.id); if (!def) return { back: '', front: '' };
   const h = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), ...hat, metal: hat.metal || 'gold' };
   const id = 'ht' + (++uid);
-  if (def.id === 'robot') return { back: '', front: ROBOT };
   const front = `<g transform="translate(76 18) rotate(-6)">${DRAW[def.id](h, id)}</g>`;
   const back = def.id === 'afro' ? DRAW.afroBack(h) : '';
   return { back, front };
@@ -152,7 +150,6 @@ export function hatTile(hatId, color) {
   const h = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), metal: 'gold', ketchup: true };
   if (color && def.colors) h.c1 = color;
   const id = 'hp' + (++uid);
-  if (def.id === 'robot') return `<g transform="translate(4 6) scale(.36) translate(-46 -6)">${ROBOT}</g>`;
   if (def.id === 'afro') return `<g transform="translate(16 18) scale(.42)">${DRAW.afroBack(h).replace(/cx="(\d+)" cy="(\d+)"/g, (m, x, y) => `cx="${x - 72}" cy="${y - 34}"`)}</g>`;
   if (def.id === 'eye') return `<g transform="translate(16 30) scale(.62)">${DRAW.eye(h, id).replace('class="hat-float" ', '')}</g>`;
   const tall = { wizard: 1, dunce: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8;

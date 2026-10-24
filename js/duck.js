@@ -5,6 +5,7 @@
    as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
    sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. */
 import { hatLayers, HAT_TOP } from './hats.js';
+import { faceLayer } from './faces.js';
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -17,13 +18,13 @@ export const DUCK_METALS = [['none', 'No metal'], ['gold', 'Gold'], ['silver', '
   ['rose', 'Rose gold'], ['chrome', 'Chrome']];
 /* each metal: sky (top reflection), light, mid, horizon (the dark band), floor (the lower reflection), edge */
 export const METAL = {
-  gold: ['#fffbe6', '#ffe27a', '#f0b528', '#8a5a00', '#ffd659', '#6b4500'],
-  silver: ['#ffffff', '#eef1f5', '#b9c0ca', '#565e69', '#d9dee5', '#3d434c'],
-  bronze: ['#ffe9d2', '#f2b27a', '#c27434', '#5c2d0c', '#e39a5a', '#4a230a'],
-  rose: ['#fff3f1', '#ffd0c9', '#e3998f', '#7d3f37', '#f2b5ac', '#5e2d27'],
-  chrome: ['#ffffff', '#e9f2ff', '#9fb0c6', '#1e2733', '#c6d3e4', '#141a22'],
+  gold: ['#fffdf0', '#ffe47a', '#e8a91c', '#5e3a00', '#ffd24a', '#4a2c00'],
+  silver: ['#ffffff', '#f1f4f8', '#a9b2be', '#3a414b', '#dfe5ec', '#262b33'],
+  bronze: ['#fff0dc', '#f6b97c', '#b8672a', '#3f1d06', '#eb9d55', '#331604'],
+  rose: ['#fff6f4', '#ffd3cb', '#d98b80', '#5a2a24', '#f7b8ae', '#40201b'],
+  chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
 };
-export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null };
+export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null };
 
 let uid = 0;
 export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
@@ -65,13 +66,14 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
   const M = L.metal !== 'none' && METAL[L.metal];
-  const hat = hatLayers(L.hat), top = hat.front ? HAT_TOP : 0;
+  const hat = hatLayers(L.hat), face = faceLayer(L.face), top = hat.front || face ? HAT_TOP : 0;
   const base = M ? M[2] : L.color, light = M ? M[1] : mix(L.color, 255, .5), dark = M ? M[5] : mix(L.color, 0, .32);
   const edge = M ? M[5] : mix(L.color, 0, .45);
   const pat = !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';
   /* fills: a soft ball of light for colors; banded reflections for metals */
+  /* a metal mirrors the room: a bright sky, a hard dark horizon, a lighter floor, and dark edges */
   const fill = (gid, cx, cy) => M
-    ? `<linearGradient id="${gid}" x1=".2" y1="0" x2=".45" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".28" stop-color="${M[1]}"/><stop offset=".47" stop-color="${M[2]}"/><stop offset=".53" stop-color="${M[3]}"/><stop offset=".62" stop-color="${M[2]}"/><stop offset=".8" stop-color="${M[4]}"/><stop offset="1" stop-color="${M[3]}"/></linearGradient>`
+    ? `<linearGradient id="${gid}" x1=".15" y1="0" x2=".42" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".2" stop-color="${M[0]}"/><stop offset=".34" stop-color="${M[1]}"/><stop offset=".46" stop-color="${M[2]}"/><stop offset=".5" stop-color="${M[3]}"/><stop offset=".57" stop-color="${M[3]}"/><stop offset=".61" stop-color="${M[2]}"/><stop offset=".72" stop-color="${M[4]}"/><stop offset=".84" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[5]}"/></linearGradient>`
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`;
   const eyes = dead
     ? `<path d="M78 30l8 8M86 30l-8 8" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>`
@@ -83,7 +85,9 @@ ${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
 ${pat}
 <clipPath id="${id}c"><path d="${BODY}"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
 <mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask>
-${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` : ''}
+${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="${id}env" x1="0" y1="0" x2="1" y2="0"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff" stop-opacity=".55"/><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#000" stop-opacity="0"/><stop offset=".66" stop-color="#000" stop-opacity=".28"/><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset=".86" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#fff" stop-opacity=".4"/><stop offset=".95" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<radialGradient id="${id}spec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".35" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` : ''}
 </defs>
 ${shadow ? `<ellipse cx="58" cy="109" rx="44" ry="7" fill="#000" opacity=".22"/>` : ''}
 ${hat.back}
@@ -95,7 +99,10 @@ ${hat.back}
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   <path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"/>
   <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"/>
-  ${M ? `<g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
+  ${M ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
+  <ellipse cx="64" cy="24" rx="13" ry="7" fill="url(#${id}spec)" transform="rotate(-25 64 24)"/><ellipse cx="34" cy="70" rx="17" ry="7" fill="url(#${id}spec)" transform="rotate(-14 34 70)"/>
+  <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
+  <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
 </g>
 <path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${edge}" stroke-width="2.2"/>
@@ -107,6 +114,7 @@ ${hat.back}
 <path d="M96.5 42.5C103 43.5 110 43.5 113 45.5C108 49.5 100.5 49.5 95.5 46.5Z" fill="#f07f0e" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
 <ellipse cx="104" cy="36.4" rx="4" ry="1.3" fill="#fff" opacity=".5"/>
 ${eyes}
+${face}
 ${hat.front}
 ${extra}
 </svg>`;
