@@ -999,3 +999,60 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .bb-champs { display: flex; flex-direction: column; gap: .3rem; }
 .bb-champs p { margin: 0; }
 .opt-h { margin: .2rem 0 .4rem; }
+
+/* ---------- Ether's Crossroads: the jester's dungeon ---------- */
+.scene.ec { background: #0b0705; }
+.ec-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, 177.78cqh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); }
+.ec-stage img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; user-select: none; }
+.ec-flame { position: absolute; display: block; }
+.ec-flame svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 .25rem #ffb34799); }
+.ecf { opacity: 0; } .ecf0 { opacity: 1; }
+html.moving .ecf { animation: ecflame var(--d, .8s) steps(1) infinite; }
+html.moving .ecf0 { animation-delay: 0s; } html.moving .ecf1 { animation-delay: calc(var(--d, .8s) / -3); } html.moving .ecf2 { animation-delay: calc(var(--d, .8s) / -1.5); }
+@keyframes ecflame { 0% { opacity: 1; } 33.3% { opacity: 0; } }
+.ec-glow { position: absolute; width: 7%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7a99, #ff9a3a40 45%, transparent); mix-blend-mode: screen; pointer-events: none; opacity: .75; }
+.ec-glow.big { width: 22%; background: radial-gradient(closest-side, #ffcf7a80, #ff9a3a33 40%, transparent); }
+html.moving .ec-glow { animation: ecglow 2.3s ease-in-out infinite; }
+@keyframes ecglow { 0%, 100% { opacity: .7; transform: translate(-50%, -50%) scale(1); } 18% { opacity: .9; transform: translate(-50%, -50%) scale(1.05); } 31% { opacity: .62; } 47% { opacity: .85; transform: translate(-50%, -50%) scale(.97); } 63% { opacity: .74; } 80% { opacity: .92; transform: translate(-50%, -50%) scale(1.03); } }
+.ec-static { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(.6px); opacity: .9; }
+.ec-scan { position: absolute; inset: 0; opacity: .45; background: repeating-linear-gradient(to bottom, transparent 0, transparent 2px, #00000029 3px, transparent 4px); }
+.ec-flash { position: absolute; inset: 0; background: #fff; opacity: 0; transition: opacity .05s; }
+.ec-flash.dark { background: #000; }
+html.lite .ec-static, html.lite .ec-flash { display: none; }
+.mm-ec { background: url(../assets/maps/ethers-crossroads.png) center / cover; image-rendering: pixelated; }
+.mm-ec::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, transparent 0 2px, #0000003a 2px 3px); }
+.mm-glow { position: absolute; width: calc(1.6rem * var(--k)); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7aaa, transparent); }
+.map-ec .col { background: color-mix(in srgb, var(--c) 42%, transparent); border-right-color: #00000040; }
+.map-ec .col-name { color: #f0d1a4; background: #120904cc; border-radius: .2rem; padding: .1rem .45rem; text-shadow: none; }
+.map-ec .wyr-cols .wyr-a { background: color-mix(in srgb, var(--wyr-a) 50%, transparent); } .map-ec .wyr-cols .wyr-b { background: color-mix(in srgb, var(--wyr-b) 50%, transparent); }
+.map-ec .wyr-or { background: #120904d0; }
+
+/* the Ether & Kenoma look while the map is played: burnt amber, Cascadia Code Extra Light, square corners, thin rules.
+   Player names, prompts and seeds keep each player's own font (they set it on themselves). */
+html.map-is-ec {
+  --bg: #150c06; --panel: #23150c; --panel2: #1b110a; --ink: #f0d1a4; --dim: #c49b70; --line: #8a5a2c; --soft: #5b3317;
+  --shadow: 0 0 .6rem #00000080; color-scheme: dark;
+}
+html.map-is-ec body { font-weight: 200; --font: 'Cascadia Code', Consolas, 'Courier New', monospace; --fun: 'Cascadia Code', Consolas, 'Courier New', monospace; }   /* (on body: the font setting sits on html) */
+html.map-is-ec .game h1, html.map-is-ec .game h2, html.map-is-ec .win h2 { color: #ff9a4a; text-shadow: 0 0 12px #c2581c80; font-weight: 400; }
+html.map-is-ec .game h3, html.map-is-ec .win h3 { color: #9cc7b9; font-weight: 400; }
+html.map-is-ec .btn { background: linear-gradient(#96461a, #6a2e0f); border: 1px solid #e8994d; color: #fbe4c4; border-radius: .2rem; box-shadow: 0 0 .5rem #c2581c40; text-shadow: none; font-weight: 400; }
+html.map-is-ec .btn:hover, html.map-is-ec .btn:focus-visible { background: linear-gradient(#ac531e, #7e3713); }
+html.map-is-ec .btn.ghost, html.map-is-ec .iconbtn { background: #140c06cc; border: 1px solid #78512e; color: var(--ink); }
+html.map-is-ec .btn.green, html.map-is-ec .btn.red, html.map-is-ec .btn.purple, html.map-is-ec .btn.yellow { border-color: #e8994d; }
+html.map-is-ec .btn:disabled { opacity: .5; }
+html.map-is-ec .panel, html.map-is-ec .question, html.map-is-ec .win, html.map-is-ec .dock-panel, html.map-is-ec .statbox, html.map-is-ec .award, html.map-is-ec .who-chip, html.map-is-ec .tile, html.map-is-ec .toast, html.map-is-ec .ctx, html.map-is-ec .jumps-slot, html.map-is-ec #jumps, html.map-is-ec .pmenu, html.map-is-ec .votebox, html.map-is-ec kbd {
+  border-width: 1px; border-color: #8a5a2c; border-radius: .2rem; box-shadow: 0 0 .7rem #00000099;
+}
+html.map-is-ec .panel, html.map-is-ec .question, html.map-is-ec .win, html.map-is-ec .dock-panel, html.map-is-ec .statbox { background: #23150cea; }
+html.map-is-ec .question::before { border-width: 1px; border-color: #8a5a2c; background: #23150c; }
+html.map-is-ec .cols { border-width: 1px; border-color: #8a5a2c; border-radius: .2rem; box-shadow: 0 0 1rem #000a; }
+html.map-is-ec .tile[aria-pressed="true"] { background: linear-gradient(#96461a, #6a2e0f); color: #fbe4c4; border-color: #e8994d; }
+html.map-is-ec .timer, html.map-is-ec .gbar .round, html.map-is-ec .gbar .phase { font-family: var(--font); }
+html.map-is-ec .gbar .phase { color: #ff9a4a; text-shadow: 0 0 10px #c2581c70; }
+html.map-is-ec .lord-say { font-weight: 400; text-shadow: 0 0 .5rem #000, 0 .1rem 0 #000; }
+html.map-is-ec .game .gbar, html.map-is-ec .game .bbar { background: #120904c4; border-color: #5b3317; }
+html.map-is-ec input:not([type]), html.map-is-ec input[type=text], html.map-is-ec textarea, html.map-is-ec select { background: #120904; border-width: 1px; border-color: #78512e; border-radius: .2rem; color: var(--ink); }
+html.map-is-ec .seed-box, html.map-is-ec .seed-disc { border-width: 1px; }
+html.map-is-ec .tmeter i { background: linear-gradient(90deg, #96461a, #e8994d); }
+html.map-is-ec .tmeter i { animation: none; }

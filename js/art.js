@@ -50,6 +50,9 @@ const cloud = (cx, cy, s, fill = '#ffffff', shade = '#d8ecff') => {
    game's symbol at the top left */
 /* the map's world behind the picture (no columns: the picture shows where the game is played) */
 function artBackdrop(map) {
+  if (map === 'ec') return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>
+<circle cx="268" cy="70" r="34" fill="#ffb347" opacity=".22"/><rect width="480" height="270" fill="url(#ecscan)" opacity=".5"/>
+<defs><pattern id="ecscan" width="4" height="4" patternUnits="userSpaceOnUse"><rect y="3" width="4" height="1" fill="#000" opacity=".35"/></pattern></defs>`;
   if (map === 'sky') return `<defs><linearGradient id="artsky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab8f5"/><stop offset="1" stop-color="#ffd6a8"/></linearGradient></defs>
 <rect width="480" height="270" fill="url(#artsky2)"/><circle cx="392" cy="58" r="30" fill="#ffd84a"/><circle cx="392" cy="58" r="44" fill="#ffd84a" opacity=".25"/>
 ${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc', '#ffffff66')}`;
