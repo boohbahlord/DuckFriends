@@ -31,8 +31,8 @@ export const styleColor = (L, st, key) => L[key] || ((st.colors || []).find(c =>
 /* ---------- the extra layers of the rubber-like styles ----------
    under: inside the duck's outline, before the shading (nh = the "not the head" mask's id); back: behind the duck;
    over: after the outline, before the beak and the eyes; wing: in place of the wing. A fluffy style has no smooth
-   outline: a band of overlapping round tufts sits behind the body and the back of the head, so only their outer
-   halves show, each with a darker rim. */
+   outline: a band of overlapping round tufts (fluff) sits behind the body and the back of the head, so only their
+   outer halves show, each with a darker rim (an outfit covers the body's tufts). */
 const fluff = (d, edge, fill, bt = '') => `<path d="${d}" fill="none" stroke="${edge}" stroke-width="8.6" stroke-dasharray=".1 4.9" stroke-linecap="round"${bt}/>
 <path d="${d}" fill="none" stroke="${fill}" stroke-width="6.2" stroke-dasharray=".1 4.9" stroke-linecap="round"${bt}/>`;
 const HEAD_BACK = 'M56.1 51.5A23 23 0 0 1 87.5 20.1';   // the back and top of the head, for fluff and crests
@@ -46,7 +46,7 @@ export function styleLayers(L, st, id, BODY, bt) {
         <g stroke="#00000022" stroke-width=".8" fill="none"${nh}${bt}><path d="M30 76q3-2 6 0t6 0t6 0M28 84q3-2 6 0t6 0t6 0t6 0M34 92q3-2 6 0t6 0t6 0t6 0"/></g>
         <ellipse cx="70" cy="28" rx="13" ry="7" fill="#6b5bd6" opacity=".25" transform="rotate(-25 70 28)"/>`,
       wing: `<path d="M40 77C50 70 68 71 76 79C69 90 52 93 41 87C38 84 38 80 40 77Z" fill="#8f877c"${bt}/><path d="M43 82L55 79L57 84L45 87Z" fill="#3456c9" stroke="#fff" stroke-width="1"${bt}/>`,
-      back: `${fluff(BODY, '#6e675d', '#c9c4ba', bt)}${fluff(HEAD_BACK, '#123d22', '#2a7d48')}`,
+      fluff: fluff(BODY, '#6e675d', '#c9c4ba', bt), back: fluff(HEAD_BACK, '#123d22', '#2a7d48'),
       over: `<path d="M18 54c-7-4-5-12 1-9" stroke="#1d1d1d" stroke-width="2.4" fill="none" stroke-linecap="round"${bt}/>
         <path d="M58 57C66 62.5 84 63.5 93 57" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>`,
     };
@@ -56,7 +56,7 @@ export function styleLayers(L, st, id, BODY, bt) {
         <circle cx="86" cy="48" r="5" fill="#ffd9d0" opacity=".35"/>`,
       wing: `<path d="M40 77C50 70 68 71 76 79C69 90 52 93 41 87C38 84 38 80 40 77Z" fill="#e3ddcf"${bt}/>
         <path d="M44 85q4 3 8 0M53 87q4 3 8 0" stroke="#cfc8b8" stroke-width="1.1" fill="none"${bt}/>`,
-      back: `${fluff(BODY, '#b7b0a0', '#fbf9f3', bt)}${fluff(HEAD_BACK, '#b7b0a0', '#fbf9f3')}`,
+      fluff: fluff(BODY, '#b7b0a0', '#fbf9f3', bt), back: fluff(HEAD_BACK, '#b7b0a0', '#fbf9f3'),
     };
     case 'raptor': {
       const c2 = styleColor(L, st, 'color2'), c3 = styleColor(L, st, 'color3'), e3 = mix(c3, 0, .4);
@@ -111,6 +111,7 @@ export function blocksBody(color) {
 }
 
 /* ---------- 2D shapes: a circle for the head, a half disc for the body, a triangle for the tail ---------- */
+export const GEO_BODY = 'M20 62H100A40 44 0 0 1 20 62ZM14 46L36 64L22 74Z';
 export function geoBody(color) {
   const edge = mix(color, 0, .5), wing = mix(color, 0, .18);
   return `<path d="M14 46L36 64L22 74Z" fill="${color}" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round"/>
