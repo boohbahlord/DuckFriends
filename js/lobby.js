@@ -24,7 +24,7 @@ import { openFriends } from './friends.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, or Would You Rather.',
+  type: 'Which game: Agree or Disagree, Would You Rather, or Bicker Brackets.',
   map: 'What the board looks like: The Board, Sky or Pixel.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
@@ -60,6 +60,13 @@ const OPT_TILES = [
   ['catchUp', 'Catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s']]],
   ['answerTime', 'Answer timer', [[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
 ];
+/* Bicker Brackets' own options (shown when it's the game) */
+const BB_TILES = [
+  ['bbSeeds', 'Seeds', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
+  ['bbTopic', 'Topic', [['vote', 'Write and vote'], ['random', 'Random']]],
+  ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
+  ['bbSpeed', 'Match votes', [[0, 'Answer timer'], [1, 'Speed: 10 s']]],
+];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
@@ -74,13 +81,18 @@ const OPT_TIPS = {
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
   fun: 'lightning, love, kill and hotdog in the command line.',
+  bbSeeds: 'How many seeds the bracket has: a number shared out among the players, or so many for each player.',
+  bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
+  bbBlind: 'Hidden: a seed\'s writer stays a secret until the seed is knocked out or wins it all.',
+  bbSpeed: 'Speed: every match vote lasts 10 seconds.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
 function openOptions() {
   const s = R.state, host = s.hostId === R.me, ro = host ? '' : ' aria-disabled="true"';
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host changes these.</p>'}
-    ${tileRows(OPT_TILES, s, ro)}
+    ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
+    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && r[0] === 'order')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
     ${tileRows(MORE_TILES, s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
@@ -97,7 +109,7 @@ function openOptions() {
       if (!host) return;
       w.addEventListener('click', e => {
         const t = e.target.closest('.tile[data-k]');
-        if (t) { R.send({ t: 'options', options: { [t.dataset.k]: t.dataset.k === 'order' ? t.dataset.v : +t.dataset.v } }); $$(`.tile[data-k="${t.dataset.k}"]`, w).forEach(b => b.setAttribute('aria-pressed', b === t)); }
+        if (t) { const v = t.dataset.v; R.send({ t: 'options', options: { [t.dataset.k]: v !== '' && !isNaN(v) ? +v : v } }); $$(`.tile[data-k="${t.dataset.k}"]`, w).forEach(b => b.setAttribute('aria-pressed', b === t)); }
         if (e.target.closest('[data-a="reset"]')) { R.send({ t: 'options', options: { ...OPTIONS_DEFAULT } }); close(); openOptions(); }
       });
       w.addEventListener('change', e => {

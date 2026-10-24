@@ -16,10 +16,11 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, colAt, colXAt, colBoundsAt, startX, wyrStats } from './rules.js';
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats } from './rules.js';
+import { cloudHTML, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
 import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
 import { isMuted } from './chat.js';
-import { specialById, pressSpecial, momentHTML, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
+import { pressSpecial, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontCSS } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -51,7 +52,8 @@ let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace
 let draftT = 0;
 let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
-let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }                  // my typed question waits a moment, then goes to the host as a draft
+let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
+let bbZoom = 0, losers = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -71,7 +73,11 @@ function wyrColsHTML(s) {
   const tile = (c, t) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt"${f}>${q ? esc(t) : c ? 'B' : 'A'}</span></div>`;
   return `<div class="cols wyr-cols">${tile(0, q && q.a)}<div class="wyr-or"><span>OR</span></div>${tile(1, q && q.b)}</div>`;
 }
-const boardHTML = s => `<div class="board">
+/* Bicker Brackets: a match's two seeds (no board drawn), or the bracket that ducks walk over */
+const bbBoardHTML = s => s.phase === 'bracket'
+  ? `<div class="board bb-board bb-bracket"><div class="cols bb-cols bb-none"></div><div class="bb-diagram">${bracketHTML(s)}</div>${bracketTopHTML(s)}<div class="ducks"></div><div class="fxl"></div></div>`
+  : `<div class="board bb-board">${matchColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${matchTopHTML(s)}</div>`;
+const boardHTML = s => isBb(s) ? bbBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
@@ -110,7 +116,7 @@ function drawDucks(now = clockNow()) {
     const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
     const sig = JSON.stringify([p.duck, p.name, p.nameStyle, !!p.dead]);   // a new look shows at once, mid-game too
@@ -140,12 +146,13 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
     d.classList.toggle('idle', !!p.idle);   // gone quiet: Zs float up
+    const lx = losers.has(id); if (d._lx !== lx) { d._lx = lx; d.classList.toggle('loser', lx); }   // the Loser's X special
     const say = bubbles[id], saying = !!say && now < say.until;   // their newest chat message, for a few seconds
     if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
     if (d._saying !== saying) { d._saying = saying; d.classList.toggle('saying', saying); }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colAt(s, pos.x) : -1;
-    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
+    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
@@ -183,6 +190,23 @@ function drawDucks(now = clockNow()) {
     const hit = boxes.some(b => b.r > L && b.l < L + r.width && b.b > T && b.t < T + r.height);
     o.classList.toggle('see-through', hit);
   }
+  if (s.phase === 'bracket') panTree(posOf(R.me));
+}
+/* the bracket follows my duck: walk right and it slides along to the later rounds, down and it shows the lower matches */
+const bracketZoom = (box, b) => { const { W, H } = treeSize(b); return { W, H, fit: Math.min(1, box.clientWidth / W, box.clientHeight / H) }; };
+function panTree(pos) {
+  const box = S.querySelector('.bb-diagram'), tree = box && box.firstElementChild; if (!tree || !geo) return;
+  const { W, H, fit } = bracketZoom(box, R.state.bb), z = bbZoom || Math.max(fit, .55), bw = box.clientWidth, bh = box.clientHeight;
+  const a = pos ? place(pos, 0, 1) : { left: geo.W / 2, top: geo.top0 + geo.H / 2 }, cl = v => Math.max(0, Math.min(1, v));
+  const fx = cl((a.left - geo.W * .1) / (geo.W * .8)), fy = cl((a.top - geo.top0 - geo.H * .1) / (geo.H * .8));
+  const ox = W * z <= bw ? (bw - W * z) / 2 : -(W * z - bw) * fx, oy = H * z <= bh ? (bh - H * z) / 2 : -(H * z - bh) * fy;
+  const tr = `translate(${ox.toFixed(1)}px, ${oy.toFixed(1)}px) scale(${z.toFixed(3)})`;
+  if (tree._tr !== tr) { tree._tr = tr; tree.style.transform = tr; }
+}
+function zoom(how) {
+  const box = S && S.querySelector('.bb-diagram'); if (!box) return;
+  const { fit } = bracketZoom(box, R.state.bb), z = bbZoom || Math.max(fit, .55);
+  bbZoom = how === 'fit' ? fit : Math.max(.2, Math.min(2.5, z * (how === 'in' ? 1.25 : .8)));
 }
 
 /* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
@@ -232,13 +256,14 @@ function playFx(f) {
 }
 
 /* ---------- my duck ---------- */
-const onBoardPhase = () => R && ['answer', 'discuss', 'results'].includes(R.state.phase);
+const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
 const locked = () => R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam;   // an ended turn holds its answer (not in free roam)
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-round: walks anywhere, plays from the next writing stage
-const canWalk = () => onBoardPhase() && !locked() && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined && !late());
+const roams = () => ['answer', 'bracket'].includes(R.state.phase) || late();   // anywhere on the board (else inside my column)
+const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined);
 function xBounds() {
   const s = R.state;
-  if (s.phase === 'answer' || late()) return [.03, .97];
+  if (roams()) return [.03, .97];
   return colBoundsAt(s, s.lock[R.me]);
 }
 function sendMove(force) {
@@ -324,7 +349,7 @@ function step(dt, now) {
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
 function resetDuck() {
   if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
-  const s = R.state, inCol = s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
+  const s = R.state, inCol = s.phase === 'bracket' ? null : s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
   const [lo, hi] = inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
   let x = me.x, y = me.y;
@@ -385,23 +410,13 @@ async function announce(phase) {
   await pause(2400); if (job !== sayJob) return;
   unsay();
   await pause(650); if (job !== sayJob) return;
-  say('Why did you choose what you chose?', true);
+  say(isBb(R.state) ? 'Why that one?' : 'Why did you choose what you chose?', true);
 }
 
 /* ---------- the views ---------- */
 /* a question shows in its writer's font */
 const writerFont = s => { const q = s.qs[s.qi], p = q && s.players[q.by]; return fontCSS(p && p.nameStyle && p.nameStyle.font); };
-function lordHTML(s) {
-  const q = s.qs[s.qi], p = s.players[q.by];
-  return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) : ''}${p && (specialById(p.duck && p.duck.special) || {}).kind === 'moment' ? `<span class="sp-fx">${momentHTML(p.duck.special)}</span>` : ''}<span class="lord-tip" style="font-family:${esc(writerFont(s))}">Round Lord</span></div>
-    <svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
-      <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
-      <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
-      <ellipse cx="84" cy="24" rx="16" ry="6" fill="#fff" opacity=".9"/></svg></div>
-    <div class="lord-say" aria-live="polite"></div>
-    <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : 'Gone'}</div></div>`;
-}
+const lordHTML = s => cloudHTML(s.players[s.qs[s.qi].by] || null);
 
 function viewSubmit(s) {
   const mineDone = s.done[R.me], sent = (s.subs || []).find(q => q.by === R.me);
@@ -458,7 +473,16 @@ const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('G
 function recordRound(s) {
   const key = `${s.id}:${s.startedAt}:${s.round}`; if (key === recorded) return; recorded = key;
   if (s.test) return;
-  const st = profile.stats[(s.options && s.options.mode) || 'aod'], mine = s.history.filter(h => h.round === s.round && h.a[R.me] !== undefined);
+  const st = profile.stats[(s.options && s.options.mode) || 'aod'];
+  if (isBb(s)) {   // Bicker Brackets: my votes in matches, my seeds' wins and losses, and a tournament won
+    const t = (s.bbPast || []).slice(-1), p = bbStats(t)[R.me];
+    if (!st || !p || !(p.votes || p.wins || p.losses)) return;
+    const game = `${s.id}:${s.startedAt}`;
+    if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
+    st.rounds++; st.answers += p.votes; st.wins += p.wins; st.losses += p.losses; st.titles += p.titles;
+    save(); shareLook(); return;
+  }
+  const mine = s.history.filter(h => h.round === s.round && h.a[R.me] !== undefined);
   if (!st || !mine.length) return;
   const game = `${s.id}:${s.startedAt}`;
   if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
@@ -489,15 +513,18 @@ const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
-  if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next writing stage. · ${d}/${n} done</span>`;
+  if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next ${isBb(s) ? 'tournament' : 'writing stage'}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
-  if (s.phase === 'submit') return count;
+  if (['submit', 'topic', 'tvote', 'seeds'].includes(s.phase)) return count;
+  if (s.phase === 'podium') return '';
+  if (s.phase === 'bracket') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : s.bb.champ != null ? 'On to the podium' : 'Next match'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'answer') {
     /* Vote: the button takes the color of the column you stand on; no voting in the first seconds; once locked it waits
        for everyone (End turn comes after, when the votes are in) */
     const onBoard = (me && me.x >= 0), wait = graceLeft(s), col = onBoard ? colAt(s, me.x) : -1;
     const votes = `<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>`;
-    const q = s.qs[s.qi], choices = isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : COLS.map((c, i) => [c, `c${i + 1}`]);
+    const q = s.qs[s.qi], m = bbMatch(s);
+    const choices = m ? [[s.bb.seeds[m.a].text, 'bb-a'], [s.bb.seeds[m.b].text, 'bb-b']] : isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : COLS.map((c, i) => [c, `c${i + 1}`]);
     const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${choices.map(([c, k], i) => `<button type="button" class="mc-b ${k}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
     const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
     const off = wait || !onBoard || col < 0 || (mine && !s.options.freeRoam);
@@ -506,7 +533,7 @@ function actHTML(s) {
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
     const rv = s.seat.filter(id => s.reviewVotes[id]).length, lv = s.vote && s.vote.kind === 'lobby';
-    return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next round'} <kbd>Enter</kbd></button>
+    return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : isBb(s) ? 'Next tournament' : 'Next round'} <kbd>Enter</kbd></button>
       ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ''}
       <button type="button" class="btn ${lv ? 'red' : 'ghost'}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ''}>${lv ? 'Vote yes: back to the lobby' : 'Vote: back to the lobby'}</button>${count}</div>`;
   }
@@ -514,7 +541,36 @@ function actHTML(s) {
   return '';
 }
 
-const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '' };
+const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', seeds: 'Write the seeds', bracket: 'The bracket', podium: 'The podium' };
+/* what the middle of the screen shows */
+function viewHTML(s) {
+  if (isBb(s)) switch (s.phase) {
+    case 'topic': return topicHTML(s, R.me, whoHTML(s));
+    case 'tvote': return tvoteHTML(s, R.me);
+    case 'seeds': return seedsHTML(s, R.me);
+    case 'podium': return podiumHTML(s);
+    case 'results': return '<div class="bb-results"><div class="statpanel bb-statpanel"></div></div>';
+  }
+  return s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
+}
+/* the moment specials that fire on their own: confetti over the screen for the Round Lord, a match's winner and the champion */
+function celebrate(s) {
+  let p = null;
+  if (s.phase === 'answer' && !isBb(s)) p = s.players[(s.qs[s.qi] || {}).by];
+  const m = isBb(s) && bbMatch(s);
+  if (s.phase === 'discuss' && m && m.w != null && !s.options.bbBlind) p = s.players[s.bb.seeds[m.w].by];
+  if (s.phase === 'podium' && s.bb && s.bb.champ != null) p = s.players[s.bb.seeds[s.bb.champ].by];
+  if (p && p.duck && p.duck.special === 'confetti') confettiRain();
+}
+/* Bicker Brackets: who wears the Loser's X (their seed just lost, or all of theirs are out), and the colors of the
+   match's two sides (the writers' cards) */
+function bbMarks(s) {
+  losers = new Set();
+  if (!isBb(s) || !s.bb) return;
+  const m = bbMatch(s), justLost = s.phase === 'discuss' && m && m.w != null ? s.bb.seeds[m.w === m.a ? m.b : m.a] : null;
+  for (const id of s.seat) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx' && ((justLost && justLost.by === id) || allOut(s, id))) losers.add(id); }
+  if (m) for (const [k, i] of [['a', m.a], ['b', m.b]]) { const w = s.bb.seeds[i], p = w && !s.options.bbBlind && s.players[w.by]; S.style.setProperty('--seed-' + k, (p && p.card && p.card.color) || (k === 'a' ? '#2fa4ff' : '#ff8c2b')); }
+}
 function paint(force) {
   if (!S || !R) return;
   const s = R.state, key = [s.phase, s.round, s.qi].join('|');
@@ -525,29 +581,37 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    S.classList.toggle('wyr', isWyr(s));
-    main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
+    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s));
+    bbMarks(s);
+    main.innerHTML = viewHTML(s);
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
-    if (s.phase === 'answer') { const lp = s.players[(s.qs[s.qi] || {}).by]; if (lp && lp.duck && lp.duck.special === 'confetti') confettiRain(); }   // the Round Lord's confetti
+    celebrate(s);
     scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
     }
-    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
+    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = TITLES[s.phase] || '';
     geo = null;
   }
-  if (s.phase === 'submit') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
+  if (s.phase === 'submit' || s.phase === 'topic') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
+  if (s.phase === 'tvote') setHTML($('.bb-topics', S), topicsHTML(s, R.me));
+  if (s.phase === 'seeds') {   // everyone's words as they type them, and the seeds so far
+    if (s.done[R.me] && $('form.bb-write', S)) paint(true);
+    setHTML($('.bb-others', S), othersHTML(s, R.me)); setHTML($('.bb-sofar .bb-grid', S), sofarHTML(s));
+    $('.bb-sofar h3', S).textContent = s.bb.seeds.length ? `The seeds so far (${s.bb.seeds.length})` : '';
+  }
+  if (isBb(s) && s.phase === 'discuss') bbMarks(s);
   // the host keeps my duck in bounds (an ended turn, the column after answering); take its word for where I am
   if (me && s.pos[R.me] && onBoardPhase()) {
     const p = s.pos[R.me];
-    if (locked() || (s.phase !== 'answer' && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
+    if (locked() || (!roams() && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
     if (s.phase === 'discuss' && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBoundsAt(s, s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }
   }
-  const lordSig = s.phase === 'answer' || s.phase === 'discuss' ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
+  const lordSig = !isBb(s) && (s.phase === 'answer' || s.phase === 'discuss') ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
   const lord = $('.topover .lord', S);
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
@@ -569,6 +633,7 @@ function paint(force) {
     if (s.review && !had) panel.querySelector('.all-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   if (s.phase === 'over') setHTML($('.over .statboxes', S), statsHTML(s));
+  if (isBb(s) && s.phase === 'results') { recordRound(s); setHTML($('.bb-statpanel', S), bbStatsHTML(s)); }
   showTimer();
 }
 
@@ -577,12 +642,13 @@ function showTimer() {
   if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), gactHTML(s)); } }   // the Vote button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   const meter = $('.tmeter', S);
-  if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
+  if (s.phase === 'podium') { const pl = $('.pod-left', S); if (pl) pl.textContent = `The stats in ${Math.max(0, Math.ceil((s.ends - now) / 1000))} s`; }
+  if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
   /* the meter fills as the time runs out; its color drifts slowly (css) */
   const from = catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
   if (meter) { meter.hidden = false; const w = (frac * 100).toFixed(1) + '%'; if (meter._w !== w) { meter._w = w; meter.firstChild.style.width = w; } meter.classList.toggle('low', left <= 5); }
-  if (s.phase === 'submit' && left <= 2 && draftT) sendDraft(true);   // the last words make it in
+  if (['submit', 'topic', 'seeds'].includes(s.phase) && left <= 2 && draftT) sendDraft(true);   // the last words make it in
   t.textContent = `${catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   t.className = 'timer' + (catching ? ' catch' : '') + (left <= 5 ? ' low' : '');
   if (left <= 5 && left > 0 && left !== lastBeep) { lastBeep = left; sfx.tick(); }
@@ -593,11 +659,12 @@ function sendDraft(now = false) {
   clearTimeout(draftT); draftT = 0;
   const go = () => {
     draftT = 0;
+    if (R && isBb(R.state)) { const inp = S && $('form.bb-write .bb-in', S); if (inp && ['topic', 'seeds'].includes(R.state.phase)) R.send({ t: 'draft', text: inp.value }); return; }   // (everyone sees a seed as it's typed)
     const f = S && $('form.submit-card', S); if (!f || !R || R.state.phase !== 'submit') return;
     const t = f.querySelector('.tile[aria-pressed="true"]'), time = t ? +t.dataset.time : R.state.options.answerTime, side = k => (f.querySelector(`.wyr-in[data-side="${k}"]`) || {}).value || '';
     R.send(isWyr(R.state) ? { t: 'draft', a: side('a'), b: side('b'), time } : { t: 'draft', text: f.querySelector('textarea').value, time });
   };
-  if (now) go(); else draftT = setTimeout(go, 700);
+  if (now) go(); else draftT = setTimeout(go, R && R.state.phase === 'seeds' ? 220 : 700);
 }
 
 /* ---------- the pause menu (top right, or Esc) ---------- */
@@ -629,6 +696,7 @@ function keydown(e) {
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
   if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); useSpecial(); return; }
+  if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
   if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
 }
 const keyup = e => { keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); };
@@ -642,8 +710,13 @@ async function act(a) {
     case 'end':
       if (s.phase === 'answer' && (!(me && me.x >= 0) || graceLeft(s))) return;
       if (s.phase === 'answer') sendMove(true);
-      if (['answer', 'discuss', 'results'].includes(s.phase)) R.send({ t: 'end' });
+      if ([...boardPhases(s), 'results'].includes(s.phase)) R.send({ t: 'end' });
       break;
+    case 'zoomin': zoom('in'); break;
+    case 'zoomout': zoom('out'); break;
+    case 'zoomfit': zoom('fit'); break;
+    case 'bbnone': if (await confirmBox('Are you sure?', 'No topic from you this time.')) R.send({ t: 'submit', text: '' }); break;
+    case 'bbskip': if (await confirmBox('Skip this seed?', 'You won\'t have a seed in this spot.')) R.send({ t: 'submit', text: '' }); break;
     case 'review': R.send({ t: 'voteReview' }); break;
     case 'lobbyvote': lobbyVote(R); break;
     case 'use': useSpecial(); break;
@@ -662,7 +735,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null;
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set();
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
@@ -680,11 +753,18 @@ register('game', {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
       const mc = e.target.closest('[data-col]'); if (mc) { jumpTo(+mc.dataset.col); return; }
+      const tc = e.target.closest('[data-topic]'); if (tc) { R.send({ t: 'pick', i: +tc.dataset.topic }); return; }
       const tile = e.target.closest('.submit-card .tile[data-time]');
       if (tile) { $$('.submit-card .tile[data-time]', S).forEach(t => t.setAttribute('aria-pressed', t === tile)); sendDraft(); }
       boardClick(e);
     });
     S.addEventListener('submit', e => {
+      if (e.target.matches('.bb-write')) {   // a topic or a seed
+        e.preventDefault();
+        const inp = e.target.querySelector('.bb-in'), text = inp.value.trim();
+        if (!text) { inp.focus(); return; }
+        clearTimeout(draftT); draftT = 0; R.send({ t: 'submit', text }); return;
+      }
       if (!e.target.matches('.submit-card')) return;
       e.preventDefault();
       const f = e.target, t = f.querySelector('.tile[aria-pressed="true"]'), time = t ? +t.dataset.time : R.state.options.answerTime;
@@ -697,7 +777,10 @@ register('game', {
       if (!text) { f.querySelector('textarea').focus(); return; }
       R.send({ t: 'submit', text, time });
     });
-    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea')) sendDraft(); });   // (both Would You Rather boxes too)
+    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea, .bb-in')) sendDraft(); });   // (both Would You Rather boxes too)
+    S.addEventListener('keydown', e => {   // a topic to vote for, picked with Enter or Space
+      if (e.target.matches('[data-topic]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); R.send({ t: 'pick', i: +e.target.dataset.topic }); }
+    });
     S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line)
       if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });

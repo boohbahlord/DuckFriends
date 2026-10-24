@@ -7,7 +7,9 @@
    vote to end the game.
 
    A phase ends when enough players have ended their turn (3 of 4 by default). In submit and answer, reaching that starts
-   the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too. */
+   the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
+
+   Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round. */
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -22,7 +24,11 @@ export const OPTIONS_DEFAULT = {
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets)
+  bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
+  bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
+  bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
+  bbSpeed: 0,           // 1: 10-second match votes
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -36,16 +42,20 @@ export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
 /* the board by game mode: Agree or Disagree has its seven columns; Would You Rather two tiles, A on the left and B on the
    right, with an OR strip between them where a duck has no answer (-1) */
 export const isWyr = s => s.options.mode === 'wyr';
-export const colAt = (s, x) => isWyr(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
-export const colXAt = (s, c) => isWyr(s) ? [.25, .75][c] ?? .5 : colX(c);
-export const colBoundsAt = (s, c) => isWyr(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
-export const startX = s => isWyr(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
+export const isBb = s => s.options.mode === 'bb';
+export const twoSided = s => isWyr(s) || isBb(s);   // a match in Bicker Brackets: seed A on the left, B on the right
+export const colAt = (s, x) => twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
+export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
+export const colBoundsAt = (s, c) => twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
+export const startX = s => twoSided(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
+/* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead) */
+export const boardPhases = s => isBb(s) ? ['answer', 'discuss', 'bracket'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
 export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
-export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : `${s.phase}${s.round}`;
+export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
 export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound'];   // the specials used with E
@@ -69,8 +79,9 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
 
 /* the time limit of the current phase (0 = none) */
 function phaseLimit(s) {
-  if (s.phase === 'submit') return s.options.submitTime;
+  if (['submit', 'topic', 'seeds'].includes(s.phase)) return s.options.submitTime;
   if (s.phase === 'answer') return s.lordTime;
+  if (s.phase === 'podium') return PODIUM;
   return 0;
 }
 function enter(s, phase, now) {
@@ -113,6 +124,7 @@ function recordAnswers(s) {
 
 function startResults(s, now) {
   s.reviewVotes = {}; s.review = false;
+  if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return enter(s, 'results', now); }   // the tournament joins the game's
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
@@ -125,7 +137,7 @@ function startResults(s, now) {
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
-  const timed = s.phase === 'submit' || s.phase === 'answer';
+  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase);
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
   const go = all || timeUp || (enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
@@ -141,15 +153,22 @@ function advance(s, now) {
       if (!s.qs.length) { say(s, 'No questions this round.'); s.round++; s.subs = []; return enter(s, 'submit', now); }
       return startQuestion(s, now);
     }
+    case 'topic': return endTopics(s, now);
+    case 'tvote': return pickTopic(s, now);
+    case 'seeds': return endSeedTurn(s, now);
+    case 'bracket': return s.bb.champ != null ? enter(s, 'podium', now) : nextMatch(s, now);
+    case 'podium': return startResults(s, now);
     case 'answer':
+      if (isBb(s)) { endMatch(s); return s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now); }
       recordAnswers(s);
       if (!s.options.freeRoam) return enter(s, 'discuss', now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);   // free roam: straight to the next question
       return startResults(s, now);
     case 'discuss':
+      if (isBb(s)) return nextMatch(s, now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
-    case 'results': s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now);
+    case 'results': s.round++; s.subs = []; s.qs = []; return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
   }
   return s;
 }
@@ -163,8 +182,8 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
-      if (['answer', 'discuss', 'results'].includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage
-      if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: startX(s), y: Math.random() };
+      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
+      if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
     case 'leave': {
@@ -184,6 +203,7 @@ export function reduce(state, a, now = Date.now()) {
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
     case 'cancel': if (host && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
+      if (isBb(s)) return bbWrite(s, a, now, true);
       if (!me || s.phase !== 'submit' || s.done[a.id]) return s;
       const q = question(s, a);
       s.subs = (s.subs || []).filter(x => x.by !== a.id);
@@ -191,18 +211,19 @@ export function reduce(state, a, now = Date.now()) {
       s.done[a.id] = true; return advance(s, now);
     }
     case 'draft': {   // what a player has typed so far (kept by the host, sent in for them at the end)
+      if (isBb(s)) return bbWrite(s, a, now, false) || state;
       if (!me || s.phase !== 'submit' || s.done[a.id]) return state;
       s.drafts = { ...(s.drafts || {}), [a.id]: { ...(question(s, a) || { text: '' }), time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime } };
       return s;
     }
     case 'move': {   // x, y on the board; j = when the current jump started (0 = on the ground)
       if (!me || !s.pos[a.id]) return state;
-      if (!['answer', 'discuss', 'results'].includes(s.phase)) return state;
+      if (!boardPhases(s).includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }
-      if (s.phase !== 'answer' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam)
+      if (s.phase !== 'answer' && s.phase !== 'bracket' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
@@ -211,7 +232,7 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
-      if (!me || me.late || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
+      if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase)) return s;
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       s.done[a.id] = a.v ?? !s.done[a.id];
@@ -241,7 +262,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'idle': if (!me || !!me.idle === !!a.v) return state; me.idle = !!a.v; return s;   // no key, click or touch in 2 minutes
     case 'use': {   // an E special on the board, seen by everyone; the handgun's bullet then crosses the board
       const sp = me && me.duck && me.duck.special, p = s.pos[a.id];
-      if (!me || !p || p.x < 0 || !['answer', 'discuss', 'results'].includes(s.phase) || !PRESS.includes(sp)) return state;
+      if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp)) return state;
       if (sp === 'handgun' && !s.options.fun) return state;   // the silly-commands switch covers it
       if (now - ((s.lastUse || {})[a.id] || 0) < (sp === 'handgun' ? 3000 : 1500)) return state;
       s.lastUse = { ...(s.lastUse || {}), [a.id]: now };
@@ -249,6 +270,11 @@ export function reduce(state, a, now = Date.now()) {
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now }];
       if (sp === 'handgun') s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, x0: p.x, y: p.y, dir: face, t: now, lx: p.x }];
       return s;
+    }
+    case 'pick': {   // Bicker Brackets: my vote for a topic (it can be changed until the vote ends)
+      if (!me || me.late || s.phase !== 'tvote' || !Number.isInteger(a.i) || !s.bb.topics[a.i]) return state;
+      s.bb.tvotes = { ...s.bb.tvotes, [a.id]: a.i }; s.done[a.id] = true;
+      return advance(s, now);
     }
     case 'voteStart': {   // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
       if (!me || me.bot || ['lobby', 'countdown', 'over'].includes(s.phase)) return state;
@@ -279,7 +305,10 @@ export function reduce(state, a, now = Date.now()) {
       logLine(s, { from: a.id, to: a.to || null, text }); return s;
     }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
-      if (s.phase === 'countdown' && now >= s.ends) { s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
+      if (s.phase === 'countdown' && now >= s.ends) {
+        s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
+        return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
+      }
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
       const shots = moveShots(s, now);
@@ -303,7 +332,7 @@ function moveShots(s, now) {
       if (p.x >= lo && p.x <= hi && Math.abs(p.y - sh.y) < .08) P.dead = true;
     }
     sh.lx = x;
-    if (x > -.05 && x < 1.05 && ['answer', 'discuss', 'results'].includes(s.phase)) keep.push(sh);
+    if (x > -.05 && x < 1.05 && boardPhases(s).includes(s.phase)) keep.push(sh);
   }
   s.shots = keep; return true;
 }
@@ -331,10 +360,168 @@ function settleVote(s, now) {
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
   s.phase = 'lobby'; s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {};
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;
+}
+
+/* ---------- Bicker Brackets ----------
+   A round is one tournament: everyone writes a topic (24 letters at most) and votes for one, or the room gets a random
+   topic → the seeds: each player has a few to write and types one a turn, everyone seeing everyone's words as they type
+   → the seeds are drawn into a bracket at random (byes fill it up to 4, 8, 16 …) and the bracket shows → match by match,
+   each duck walks onto the seed it backs and votes, then the room talks it over (the winner goes on the cloud; a tie is
+   a coin flip) → after each bracket round, the bracket again → the final (both seeds silver), the champion (gold), the
+   bracket one last time → the podium for ten seconds → the stats, until the room moves on to the next tournament. */
+export const PODIUM = 10;   // seconds
+export const BB_TOPICS = ['Best snack', 'Worst habit', 'Greatest movie villain', 'Most overrated thing', 'Best superpower', 'Worst chore', 'Best pizza topping', 'Most annoying sound'];
+export const TOPIC_MAX = 24, SEED_MAX = 32;
+const shuffle = xs => { for (let i = xs.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [xs[i], xs[j]] = [xs[j], xs[i]]; } return xs; };
+const oneLine = (v, n) => String(v || '').replace(/\s+/g, ' ').slice(0, n);
+const anyOf = xs => xs[Math.floor(Math.random() * xs.length)];
+
+function startTourney(s, now) {
+  for (const id of s.seat) if (s.players[id]) delete s.players[id].late;   // late joiners play from here
+  s.bb = { topic: '', topicBy: null, topics: [], tvotes: {}, seeds: [], per: {}, turn: 0, turns: 0, rounds: [], r: 0, m: -1, champ: null };
+  s.subs = []; s.drafts = {}; s.qi = 0; s.pos = {}; s.lock = {};
+  if (s.options.bbTopic === 'random') { s.bb.topic = anyOf(BB_TOPICS); say(s, `The topic: ${s.bb.topic}.`); return startSeeds(s, now); }
+  return enter(s, 'topic', now);
+}
+/* the topics are in: none → a random one; one → that one; more → a vote */
+function endTopics(s, now) {
+  for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!s.done[id] && d && d.text.trim()) s.subs.push({ by: id, text: d.text.trim() }); }
+  const tops = (s.subs || []).filter(t => s.players[t.by]); s.subs = []; s.drafts = {};
+  if (tops.length > 1) { s.bb.topics = shuffle(tops); s.bb.tvotes = {}; return enter(s, 'tvote', now); }
+  if (tops.length) { s.bb.topic = tops[0].text; s.bb.topicBy = tops[0].by; say(s, `The topic: ${s.bb.topic}.`); }
+  else { s.bb.topic = anyOf(BB_TOPICS); say(s, `No topics written, so a random one: ${s.bb.topic}.`); }
+  return startSeeds(s, now);
+}
+function pickTopic(s, now) {
+  const b = s.bb, n = b.topics.map(() => 0);
+  for (const [id, i] of Object.entries(b.tvotes || {})) if (s.players[id] && n[i] !== undefined) n[i]++;
+  const top = Math.max(...n), best = n.map((k, i) => k === top ? i : -1).filter(i => i >= 0), t = b.topics[anyOf(best)];
+  b.topic = t.text; b.topicBy = t.by; b.topicVotes = n;
+  say(s, best.length > 1 ? `A tie! A coin flip picked the topic: ${t.text}.` : `The topic: ${t.text}.`);
+  return startSeeds(s, now);
+}
+/* how many seeds each player writes: a total shared out (the extra ones to random players), or so many each */
+function startSeeds(s, now) {
+  const ids = playing(s), plan = String(s.options.bbSeeds || 't8'), k = Math.max(1, Math.min(32, +plan.slice(1) || 8)), per = {};
+  if (plan[0] === 'p') ids.forEach(id => { per[id] = Math.min(k, 8); });
+  else shuffle([...ids]).forEach((id, i) => { per[id] = Math.floor(k / ids.length) + (i < k % ids.length ? 1 : 0); });
+  s.bb.per = per; s.bb.turns = Math.max(0, ...Object.values(per)); s.bb.turn = 0;
+  return s.bb.turns ? seedTurn(s, now) : buildBracket(s, now);
+}
+function seedTurn(s, now) {
+  s.qi++; s.subs = []; s.drafts = {};
+  enter(s, 'seeds', now);
+  for (const id of s.seat) if (!((s.bb.per[id] || 0) > s.bb.turn)) s.done[id] = true;   // nothing left to write this turn
+  return s;
+}
+/* a typing turn ends: what each player sent (or had typed) becomes a seed */
+function endSeedTurn(s, now) {
+  const b = s.bb;
+  for (const id of s.seat) {
+    if ((b.per[id] || 0) <= b.turn) continue;
+    const sub = (s.subs || []).find(x => x.by === id), d = (s.drafts || {})[id];
+    const text = (sub ? sub.text : !s.done[id] && d ? d.text : '').trim();
+    if (text) b.seeds.push({ by: id, text });
+  }
+  s.subs = []; s.drafts = {};
+  return ++b.turn < b.turns ? seedTurn(s, now) : buildBracket(s, now);
+}
+/* the draw: the seeds in a random order, two to a match; byes (a seed with no one to face goes straight through) are
+   spread out so the bracket fills to a power of two */
+function buildBracket(s, now) {
+  const b = s.bb, n = b.seeds.length;
+  if (n < 2) { say(s, `${n ? 'Only one seed' : 'No seeds'}: not enough for a bracket. A new tournament!`); s.round++; return startTourney(s, now); }
+  const order = shuffle(b.seeds.map((_, i) => i)), M = 2 ** Math.ceil(Math.log2(n)) / 2, byes = 2 * M - n;
+  b.rounds = []; for (let k = M; k >= 1; k /= 2) b.rounds.push(Array.from({ length: k }, () => ({ a: null, b: null })));
+  let q = 0;
+  b.rounds[0].forEach((m, i) => {
+    m.a = order[q++];
+    if (Math.floor((i + 1) * byes / M) > Math.floor(i * byes / M)) { m.b = -1; m.w = m.a; } else m.b = order[q++];
+  });
+  b.rounds[0].forEach((m, i) => { if (m.w != null) feed(b, 0, i); });
+  b.r = 0; b.m = -1; b.champ = null;
+  return enterBracket(s, now);
+}
+const feed = (b, r, i) => { const nx = b.rounds[r + 1]; if (nx) nx[i >> 1][i % 2 ? 'b' : 'a'] = b.rounds[r][i].w; };   // the winner moves on
+function enterBracket(s, now) {
+  s.seat.forEach((id, k) => { if (!s.pos[id]) s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });
+  s.lock = {};
+  return enter(s, 'bracket', now);
+}
+/* the next match of this bracket round; with none left, the bracket shows (or the champion is crowned) */
+function nextMatch(s, now) {
+  const b = s.bb, round = b.rounds[b.r], i = round.findIndex(m => m.w == null);
+  if (i < 0) {
+    b.m = -1;
+    if (b.r === b.rounds.length - 1) { b.champ = round[0].w; say(s, `"${b.seeds[b.champ].text}" is the champion!`); }
+    else b.r++;
+    return enterBracket(s, now);
+  }
+  b.m = i; s.qi++; s.lordTime = s.options.bbSpeed ? 10 : s.options.answerTime;
+  s.pos = {}; s.lock = {};
+  s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts between the two seeds
+  return enter(s, 'answer', now);
+}
+/* the votes are in: the side with more ducks wins (a tie is a coin flip), and its seed moves on */
+function endMatch(s) {
+  const b = s.bb, m = b.rounds[b.r][b.m], who = {};
+  for (const id of playing(s)) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) who[id] = c; }
+  const va = Object.values(who).filter(c => c === 0).length, vb = Object.values(who).length - va, tie = va === vb;
+  const side = tie ? (Math.random() < .5 ? 0 : 1) : va > vb ? 0 : 1;
+  Object.assign(m, { w: side ? m.b : m.a, va, vb, who }, tie ? { coin: true } : {});
+  feed(b, b.r, b.m);
+  const w = b.seeds[m.w];
+  say(s, tie ? `Tied ${va}–${vb}! A coin flip sends "${w.text}" through.` : `"${w.text}" wins ${Math.max(va, vb)}–${Math.min(va, vb)}.`);
+  s.lock = { ...who };   // each duck stays on the side it chose while the room talks it over
+}
+/* a topic or a seed: sent (send) or typed so far (a draft, which everyone sees as it's typed) */
+function bbWrite(s, a, now, send) {
+  const me = s.players[a.id], seeds = s.phase === 'seeds';
+  if (!me || me.late || s.done[a.id] || !(s.phase === 'topic' || (seeds && (s.bb.per[a.id] || 0) > s.bb.turn))) return send ? s : null;
+  const text = oneLine(a.text, seeds ? SEED_MAX : TOPIC_MAX);
+  if (!send) { s.drafts = { ...(s.drafts || {}), [a.id]: { text } }; return s; }
+  s.subs = (s.subs || []).filter(x => x.by !== a.id);
+  if (text.trim()) s.subs.push({ by: a.id, text: text.trim() });
+  s.done[a.id] = true; return advance(s, now);
+}
+/* the match a bracket is on, its two seeds, and what a seed's writer is called (hidden in a blind bracket until the
+   seed is knocked out or wins it all) */
+export const bbMatch = s => s.bb && s.bb.m >= 0 ? s.bb.rounds[s.bb.r][s.bb.m] : null;
+export const roundName = (b, r) => { const left = b.rounds.length - r; return left === 1 ? 'The final' : left === 2 ? 'Semifinals' : left === 3 ? 'Quarterfinals' : `Round of ${b.rounds[r].length * 2}`; };
+export function seedOut(b, i) {   // knocked out: lost a match
+  for (const round of b.rounds) for (const m of round) if (m.w != null && m.b !== -1 && (m.a === i || m.b === i) && m.w !== i) return true;
+  return false;
+}
+export const writerShown = (s, b, i) => !s.options.bbBlind || b.champ === i || seedOut(b, i) || s.phase === 'results';
+/* the podium: 1st the champion's writer, 2nd the runner-up's, 3rd both semifinal losers' */
+export function podium(b) {
+  if (b.champ == null) return null;
+  const loser = m => m && m.w != null && m.b !== -1 ? (m.w === m.a ? m.b : m.a) : null, R = b.rounds.length;
+  const fin = b.rounds[R - 1][0], semis = R > 1 ? b.rounds[R - 2].map(loser).filter(x => x != null) : [];
+  return { first: b.champ, second: loser(fin), third: semis };
+}
+/* the numbers behind the stats, over a list of finished tournaments */
+export function bbStats(list) {
+  const per = {}, P = id => (per[id] = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 });
+  for (const t of list) {
+    if (t.champ != null && t.seeds[t.champ]) P(t.seeds[t.champ].by).titles++;
+    for (const round of t.rounds || []) for (const m of round) {
+      if (m.w == null || m.a == null || m.b == null || m.b === -1) continue;   // (a bye isn't a win)
+      const W = t.seeds[m.w], L = t.seeds[m.w === m.a ? m.b : m.a], wSide = m.w === m.a ? 0 : 1, close = Math.abs((m.va || 0) - (m.vb || 0)) === 1;
+      if (W) P(W.by).wins++;
+      if (L) P(L.by).losses++;
+      for (const [id, c] of Object.entries(m.who || {})) {
+        P(id).votes++;
+        const backed = t.seeds[c ? m.b : m.a]; if (backed && backed.by === id) P(id).own++;
+        if (close && c === wSide) P(id).king++;   // their vote decided a one-vote match
+      }
+    }
+  }
+  return per;
 }
 
 /* a written question: one line of text, or in Would You Rather the two choices (A or B) */
