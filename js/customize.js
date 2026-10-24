@@ -5,7 +5,8 @@
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
-import { openWindow, esc, toast } from './ui.js';
+import { openWindow, esc, toast, onMenu, el } from './ui.js';
+import { SPECIALS, specialById, momentHTML, confettiRain, pressFX } from './specials.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
 import { HATS, hatById } from './hats.js';
@@ -30,7 +31,7 @@ export function setName(raw) {
 }
 
 /* the menu, top to bottom as on the duck; then the rest below a line */
-const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['body', 'Body'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['colors', 'Colors']];
+const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['body', 'Body'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['specials', 'Specials'], ['colors', 'Colors']];
 const nameOf = (list, v, none = 'None') => { const f = list.find(x => x[0] === v); return f ? f[1] : none; };
 /* the body in words: only what is not normal */
 const bodyName = D => [[BUILDS, D.build], [SIZES, D.size]].filter(([, v]) => +v).map(([l, v]) => nameOf(l, +v, '')).filter(Boolean).join(', ') || 'Normal';
@@ -48,6 +49,7 @@ const valueOf = k => {
     skin: D.image ? 'Your picture' : D.metal !== 'none' ? nameOf(DUCK_METALS, D.metal) : nameOf(DUCK_PATTERNS, D.pattern, 'Plain'),
     name: profile.name,
     card: C.image ? 'Your picture' : nameOf(CARD_PATTERNS, C.pattern, 'Plain'),
+    specials: (specialById(D.special) || {}).name || 'None',
     colors: '',
   }[k];
 };
@@ -65,7 +67,23 @@ export function openCustomize(page = lastPage) {
       openFolds.clear();
       const menu = w.querySelector('.arm-menu'), duckBox = w.querySelector('.arm-duck'), cardBox = w.querySelector('.arm-card');
       const me = () => ({ id: 'me', name: profile.name, duck: profile.duck, card: profile.card, nameStyle: profile.nameStyle });
-      const stage = () => { duckBox.innerHTML = duckSVG(profile.duck, { size: 220, title: profile.name }); cardBox.innerHTML = cardHTML(me(), { size: 52 }); };
+      /* the big duck; on the Specials page its moment special plays around its head */
+      const stage = () => {
+        const sp = lastPage === 'specials' && specialById(profile.duck.special);
+        duckBox.innerHTML = duckSVG(profile.duck, { size: 220, title: profile.name }) + (sp && sp.kind === 'moment' ? `<span class="sp-fx">${momentHTML(sp.id)}</span>` : '');
+        cardBox.innerHTML = cardHTML(me(), { size: 52 });
+      };
+      /* a special, shown once on the big duck the way it works in a game */
+      const preview = id => {
+        const sp = specialById(id); if (!sp) return;
+        if (id === 'confetti') confettiRain(3500);
+        if (id === 'longjump') { duckBox.classList.remove('hop'); void duckBox.offsetWidth; duckBox.classList.add('hop'); }
+        if (sp.kind === 'press') {
+          const svg = duckBox.querySelector('svg'), w = svg ? svg.getBoundingClientRect() : null, b = duckBox.getBoundingClientRect(); if (!w) return;
+          const els = pressFX(id, w.left - b.left + w.width * .5, w.bottom - b.top - w.width * .06, w.width, 1);
+          duckBox.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2200);
+        }
+      };
       const changed = (redraw = true) => { save(); stage(); shareLook(); if (redraw) show(lastPage, true); };
       const head = title => `<header class="arm-h">${lastPage ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
       const upload = (label, onPic) => `<label class="arm-tile arm-up" data-tip="A square picture works best">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
@@ -73,6 +91,7 @@ export function openCustomize(page = lastPage) {
       const show = (k, keep) => {
         const scroll = keep ? (menu.querySelector('.arm-body') || {}).scrollTop || 0 : 0;
         lastPage = k || null;
+        if (!keep) stage();   // (the Specials page shows the special on the big duck)
         const D = profile.duck, C = profile.card, N = profile.nameStyle;
         let html = '';
         if (!k) {
@@ -101,6 +120,10 @@ export function openCustomize(page = lastPage) {
           html = head('Body') + `<div class="arm-body arm-bodies"><h3>Build</h3>${grid('build', BUILDS.map(([v, n]) => [String(v), pic({ build: v }), n]), String(+D.build || 0))}
             <h3>Size</h3>${grid('size', SIZES.map(([v, n]) => [String(v), pic({ size: v }), n]), String(+D.size || 0))}
             <p class="small dim">A bigger or fatter duck takes more room on the board; a small or skinny one slips by.</p></div>`;
+        } else if (k === 'specials') {
+          const cur = specialById(D.special);
+          html = head('Specials') + `<div class="arm-body">${grid('special', [['none', '<span class="sp-icon">—</span>', 'None', 'No special.'], ...SPECIALS.map(x => [x.id, `<span class="sp-icon">${x.icon}</span>`, x.name, x.tip])], cur ? cur.id : 'none')}
+            <p class="small dim sp-now">${cur ? `${esc(cur.name)}: ${esc(cur.tip)}` : 'One special at a time. Point at one (or hold it on a phone) to see how it works; pick it to see it on your duck.'}</p></div>`;
         } else if (k === 'skin') {
           const pic = look => duckSVG({ ...D, hat: null, face: null, image: null, ...look }, { size: 58, shadow: false });
           const cur = D.image ? 'pic' : D.metal !== 'none' ? 'm:' + D.metal : 'p:' + D.pattern;
@@ -179,6 +202,7 @@ export function openCustomize(page = lastPage) {
           beak: () => { D.beak = v; },
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },
+          special: () => { D.special = v === 'none' ? null : v; setTimeout(() => preview(v), 60); },
           skin: () => { D.image = null; if (v.startsWith('m:')) D.metal = v.slice(2); else { D.metal = 'none'; D.pattern = v.slice(2); } },
           nfont: () => { N.font = v; },
           cpat: () => { C.pattern = v; C.image = null; },
@@ -187,6 +211,16 @@ export function openCustomize(page = lastPage) {
         })[t.dataset.g]();
         changed();
       });
+      /* on a phone: hold a tile for its explanation */
+      onMenu(menu, (x, y, e) => {
+        const t = e.target.closest && e.target.closest('[data-tip]'); if (!t) return;
+        document.querySelectorAll('.tipbox').forEach(b => b.remove());
+        const box = el(`<div class="tipbox" role="tooltip">${esc(t.dataset.tip)}</div>`); document.body.append(box);
+        box.style.left = Math.max(8, Math.min(innerWidth - box.offsetWidth - 8, x - box.offsetWidth / 2)) + 'px';
+        box.style.top = Math.max(8, y - box.offsetHeight - 14) + 'px';
+        setTimeout(() => box.remove(), 2800);
+      });
+      duckBox.addEventListener('click', () => { if (lastPage === 'specials') preview(profile.duck.special); });
       menu.addEventListener('toggle', e => { const k = e.target.dataset && e.target.dataset.fold; if (k) e.target.open ? openFolds.add(k) : openFolds.delete(k); }, true);
       menu.addEventListener('change', async e => {
         const o = e.target.dataset.o, up = e.target.dataset.up;

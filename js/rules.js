@@ -39,6 +39,8 @@ export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.s
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
 export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : `${s.phase}${s.round}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
+export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
+const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound'];   // the specials used with E
 /* who votes, and how many yes votes pass it: a kick needs every other player; back to the lobby needs the usual share */
 export function voteNeeds(s, v = s.vote) {
   if (!v) return { voters: [], need: 0 };
@@ -230,6 +232,17 @@ export function reduce(state, a, now = Date.now()) {
       me.ms = ms; return s;
     }
     case 'idle': if (!me || !!me.idle === !!a.v) return state; me.idle = !!a.v; return s;   // no key, click or touch in 2 minutes
+    case 'use': {   // an E special on the board, seen by everyone; the handgun's bullet then crosses the board
+      const sp = me && me.duck && me.duck.special, p = s.pos[a.id];
+      if (!me || !p || p.x < 0 || !['answer', 'discuss', 'results'].includes(s.phase) || !PRESS.includes(sp)) return state;
+      if (sp === 'handgun' && !s.options.fun) return state;   // the silly-commands switch covers it
+      if (now - ((s.lastUse || {})[a.id] || 0) < (sp === 'handgun' ? 3000 : 1500)) return state;
+      s.lastUse = { ...(s.lastUse || {}), [a.id]: now };
+      const face = a.face < 0 ? -1 : 1;
+      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now }];
+      if (sp === 'handgun') s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, x0: p.x, y: p.y, dir: face, t: now, lx: p.x }];
+      return s;
+    }
     case 'voteStart': {   // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
       if (!me || me.bot || ['lobby', 'countdown', 'over'].includes(s.phase)) return state;
       if (s.vote) return state;
@@ -262,12 +275,30 @@ export function reduce(state, a, now = Date.now()) {
       if (s.phase === 'countdown' && now >= s.ends) { s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
+      const shots = moveShots(s, now);
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
-      return sig() === was ? state : s;
+      return sig() === was && !shots ? state : s;
     }
   }
   return s;
+}
+
+/* the handgun's bullets: a duck on the ground that a bullet passes through plays dead (until it moves) */
+function moveShots(s, now) {
+  if (!s.shots || !s.shots.length) return false;
+  const keep = [];
+  for (const sh of s.shots) {
+    const x = sh.x0 + sh.dir * SHOT_SPEED * (now - sh.t) / 1000, lo = Math.min(sh.lx, x) - .02, hi = Math.max(sh.lx, x) + .02;
+    for (const id of s.seat) {
+      const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead) continue;
+      if (p.j && now - p.j < 1300) continue;   // jumped over it
+      if (p.x >= lo && p.x <= hi && Math.abs(p.y - sh.y) < .08) P.dead = true;
+    }
+    sh.lx = x;
+    if (x > -.05 && x < 1.05 && ['answer', 'discuss', 'results'].includes(s.phase)) keep.push(sh);
+  }
+  s.shots = keep; return true;
 }
 
 /* a vote passes once enough say yes, and fails once it can't pass any more */
