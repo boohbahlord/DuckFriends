@@ -617,8 +617,8 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 .arm-colors { display: grid; grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr); gap: .6rem; align-items: start; }
 .ctargets .arm-row { font-size: calc(.8rem * var(--ts)); text-transform: none; letter-spacing: 0; padding: .35rem .45rem; }
 .cpick { display: flex; flex-direction: column; gap: .5rem; }
-.colors.grid3 .swatches { display: grid; grid-template-columns: repeat(3, 2.3rem); gap: .2rem; }
-.colors.grid3 .sw { width: 2.3rem; height: 1.55rem; border-radius: .25rem; border-width: .1rem; }
+.colors.grid3 .swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .22rem; }   /* the shades fill the panel's width */
+.colors.grid3 .sw { width: 100%; height: 1.7rem; border-radius: .3rem; border-width: .1rem; }
 .colors.grid3 .sw[aria-pressed="true"] { outline: .18rem solid var(--blue); outline-offset: .05rem; }
 .colors.grid3 .brush { grid-column: 1 / -1; width: 100%; height: 1.9rem; border-radius: .4rem; background: var(--panel); }
 .colors.grid3 .invent { margin-top: .4rem; }
@@ -631,7 +631,7 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
   .arm-card { flex: 1; }
   .arm-colors { grid-template-columns: minmax(0, 1fr); }
   .ctargets { flex-direction: row !important; flex-wrap: wrap; }
-  .colors.grid3 .swatches { grid-template-columns: repeat(6, 2.3rem); }
+  .colors.grid3 .swatches { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 
 /* ---------- a map's world fills the page during a game; the page's own background rests under it ---------- */
@@ -677,3 +677,4 @@ html.map-on .game .gbar, html.map-on .game .bbar { background: color-mix(in srgb
 .theme-btn.done { opacity: .8; }
 html.moving .gmain[data-phase="answer"] .cols { animation: boardglow 3.6s ease-in-out infinite; }
 @keyframes boardglow { 0%, 100% { box-shadow: 0 .3rem 0 var(--line), 0 0 .4rem #ffffff18; filter: brightness(1); } 50% { box-shadow: 0 .3rem 0 var(--line), 0 0 2.4rem #ffffff5c; filter: brightness(1.09); } }
+.cpick > .row .tile { width: 100%; }   /* Plain spans the grid too */
