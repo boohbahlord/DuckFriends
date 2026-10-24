@@ -16,6 +16,7 @@ let active = null;
 export const activeRoom = () => active;
 /* an online room (online.js) becomes the active one */
 export function setActive(room) { if (active && active !== room) active.close(); active = room; }
+export function dropActive(room) { if (active === room) active = null; }
 
 export function createLocalRoom({ name, test = true, computers = 3, max, options, open = true, passkey = '' }) {
   if (active) active.close();

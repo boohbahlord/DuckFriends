@@ -11,7 +11,7 @@
 import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
 import { NAME_OK } from './store.js';
-import { myPlayer, setActive } from './net.js';
+import { myPlayer, setActive, dropActive } from './net.js';
 import { clock, now } from './clock.js';
 import { go } from './router.js';
 import { toast } from './ui.js';
@@ -351,7 +351,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       subs.forEach(f => f()); clearInterval(watch);
       D.remove(path('on/' + me)).catch(() => {}); D.onDisconnect(path('on/' + me)).cancel();
       if (wasHost) D.onDisconnect(ref('lobby/' + rid)).cancel();
-      fns.clear();
+      fns.clear(); dropActive(room);
       dispatchEvent(new CustomEvent('duck-room', { detail: null }));
     },
   };
