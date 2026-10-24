@@ -26,7 +26,7 @@ drawShapes();
 /* the jump counter at the bottom middle */
 showJumps();
 
-/* ---------- Sign in (top right): profiles arrive with online play ---------- */
-$('#signin').onclick = () => toast('Sign-in arrives with online play.');
+/* ---------- Sign in (top right): accounts come later; online rooms work for guests ---------- */
+$('#signin').onclick = () => toast('Online rooms need no account: everyone plays as a guest. Accounts and friends come later.');
 
 start('front');

@@ -185,6 +185,8 @@ input.bad { border-color: var(--red); }
 /* ---------- top bars ---------- */
 .bar { display: flex; align-items: center; gap: 1rem; padding: .9rem max(1rem, 3vw); }
 .bar-title { display: flex; align-items: center; gap: .6rem; font-size: calc(1.5rem * var(--ts)); }
+body[data-screen=rooms] .bar { padding-right: 7.5rem; }   /* room for Sign in at the top right */
+@media (max-width: 760px) { .bar-title { font-size: calc(1.15rem * var(--ts)); } }
 
 /* ---------- Play: create a room, rooms online below ---------- */
 .rooms { display: flex; flex-direction: column; height: 100dvh; }
@@ -195,6 +197,15 @@ input.bad { border-color: var(--red); }
 .create-body .field { width: min(22rem, 100%); }
 .online { display: flex; flex-direction: column; min-height: 8rem; }
 .room-list { flex: 1; overflow: auto; margin-top: .5rem; }
+.room-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name n phase" "host n phase"; align-items: center; gap: 0 1rem; width: 100%; text-align: left; background: var(--panel); border: .14rem solid var(--line); border-radius: .8rem; padding: .55rem .9rem; margin-bottom: .45rem; box-shadow: 0 .18rem 0 var(--line); cursor: pointer; }
+.room-row:hover:not(:disabled) { filter: brightness(1.08); }
+.room-row:disabled { opacity: .55; cursor: default; }
+.rr-name { grid-area: name; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr-host { grid-area: host; font-size: calc(.85rem * var(--ts)); }
+.rr-n { grid-area: n; font-weight: 700; }
+.rr-phase { grid-area: phase; font-size: calc(.85rem * var(--ts)); min-width: 6.5rem; text-align: right; }
+.create-msg { margin: 0; max-width: 26rem; }
+p.bad { color: var(--red); font-weight: 600; }
 @media (max-width: 760px) { .create { grid-template-columns: 1fr; } .rooms { height: auto; min-height: 100dvh; } }
 
 /* ---------- docked screens (the lobby and the game) ----------

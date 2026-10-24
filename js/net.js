@@ -1,17 +1,20 @@
 /* ---------- the room connection ----------
    The game talks to a room through one small object: room.state, room.me, room.send(action), room.on(fn), room.close().
-   For now every room lives on this device (TEST rooms with computers); this device is the host and runs the rules.
-   Online rooms (Firebase) will be a second kind with the same five parts, so the screens never change. */
+   A TEST room lives on this device, with computers; this device is the host and runs the rules. Online rooms (online.js,
+   Firebase) have the same parts, so the screens never change. */
 import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
 import { profile } from './store.js';
 import { HATS } from './hats.js';
+import { now } from './clock.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false });
 
 let active = null;
 export const activeRoom = () => active;
+/* an online room (online.js) becomes the active one */
+export function setActive(room) { if (active && active !== room) active.close(); active = room; }
 
 export function createLocalRoom({ name, test = true, computers = 3, max, options, open = true, passkey = '' }) {
   if (active) active.close();
@@ -23,7 +26,7 @@ export function createLocalRoom({ name, test = true, computers = 3, max, options
     get state() { return state; },
     send(a) {
       if (!a.id) a.id = me;
-      const next = reduce(state, a);
+      const next = reduce(state, a, now());
       if (next === state) return;
       state = next; fns.forEach(f => f(state, a));
     },
@@ -38,9 +41,8 @@ export function createLocalRoom({ name, test = true, computers = 3, max, options
   };
   /* the host's heartbeat: timers and computers */
   const loop = setInterval(() => {
-    const now = Date.now();
     room.send({ t: 'tick', id: me });
-    for (const a of botActions(state, now)) room.send(a);
+    for (const a of botActions(state, now())) room.send(a);
   }, 200);
   active = room;
   if (test) room.setComputers(computers);
