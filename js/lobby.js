@@ -6,6 +6,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, contextMenu, onMenu, typing, windowOpen, toast, setHTML } from './ui.js';
 import { activeRoom } from './net.js';
+import { now } from './clock.js';
 import { gameArtSVG, symbolSVG } from './art.js';
 import { cardHTML } from './card.js';
 import { OPTIONS_DEFAULT } from './rules.js';
@@ -128,11 +129,11 @@ function paint() {
   if (!mine) return;
   $('.lobby-title', S).textContent = s.name;
   const bots = s.seat.filter(id => s.players[id].bot).length;
-  $('.lobby-sub', S).textContent = [s.test ? 'TEST room' : s.open ? 'Open room' : 'Private room',
+  $('.lobby-sub', S).textContent = [s.test ? 'TEST room' : s.open ? 'Open room' : R.passkey ? `Private room · passkey: ${R.passkey}` : 'Private room',
     bots ? `${bots} computer${bots === 1 ? '' : 's'}, acting after ${s.options.botWait} s` : '', host ? 'You are the host' : ''].filter(Boolean).join(' · ');
   const st = $('.lobby-status', S);
   if (s.phase === 'countdown') {
-    const left = Math.max(0, Math.ceil((s.ends - Date.now()) / 1000));
+    const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(st, `<span class="count">Starting in <b>${left}</b></span>${host ? '<button type="button" class="btn red" data-a="cancel">Cancel</button>' : ''}`);
   } else {
     setHTML(st, `<button type="button" class="ready-btn${mine.ready ? ' on' : ''}" data-a="ready" aria-pressed="${!!mine.ready}">${mine.ready ? 'Ready ✓' : 'Not ready'}</button>`);
@@ -155,7 +156,7 @@ function onState(s) {
   if (!S) return;
   if (!['lobby', 'countdown'].includes(s.phase)) { if (lastCount > 0) sfx.count(true); lastCount = -1; go('game', R); return; }   // the countdown's last tone, at zero
   if (s.phase === 'countdown') {
-    const left = Math.max(0, Math.ceil((s.ends - Date.now()) / 1000));
+    const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     if (left !== lastCount) { sfx.count(left === 0); lastCount = left; }
   } else lastCount = -1;
   paint();

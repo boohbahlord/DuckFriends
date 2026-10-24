@@ -32,6 +32,7 @@ import { sfx } from './sound.js';
 import { mountMap } from './maps.js';
 import { hooks } from './hooks.js';
 import { mountTouch, stick } from './touch.js';
+import { now as clockNow } from './clock.js';
 
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
 let shown = '';            // which phase view is up (phase|round|question)
@@ -81,7 +82,7 @@ function unplace(px, py) {   // the inverse, for clicks
 
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
 const SQ = { l: ['0% 100%', .8, 1.12], r: ['100% 100%', .8, 1.12], u: ['50% 0%', 1.12, .84], d: ['50% 100%', 1.14, .82] };
-function drawDucks(now = Date.now()) {
+function drawDucks(now = clockNow()) {
   const board = S && $('.board', S); if (!board || !R || !geo) return;
   const s = R.state, layer = $('.ducks', board), size = geo.size;
   const posOf = id => id === R.me && me ? me : s.pos[id];
@@ -152,7 +153,7 @@ function drawDucks(now = Date.now()) {
 const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
 function playFx(f) {
   const s = R.state, fxl = S && $('.fxl', S); if (!fxl || !geo) return;
-  const now = Date.now(), size = geo.size, posOf = id => id === R.me && me ? me : s.pos[id];
+  const now = clockNow(), size = geo.size, posOf = id => id === R.me && me ? me : s.pos[id];
   const spot = id => { const p = posOf(id); return p ? place(p.x < 0 ? { ...p, x: .5 } : p, 0, 1) : null; };
   if (f.kind === 'lightning') {
     const at = spot(f.who[0]); if (!at) return;
@@ -193,9 +194,9 @@ function xBounds() {
 }
 function sendMove(force) {
   if (!me) return;
-  const now = performance.now(), q = Date.now() - squash.t < 170 ? squash.q : '';
+  const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
   const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, q, sprinting && moving].join();
-  if (!force && (now - lastSend < 60 || msg === lastSent)) return;
+  if (!force && (now - lastSend < (R.online ? 90 : 60) || msg === lastSent)) return;   // online: a little less often
   lastSend = now; lastSent = msg;
   R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, q, sp: sprinting && moving });
 }
@@ -215,7 +216,7 @@ function loop(t) {
   raf = requestAnimationFrame(loop);
   const dt = Math.min(.05, (t - (lastT || t)) / 1000); lastT = t;
   if (!S || !R) return;
-  const now = Date.now();
+  const now = clockNow();
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
   if (scene) scene.update(now);
@@ -274,7 +275,7 @@ function resetDuck() {
   if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
   const s = R.state, inCol = s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colOf(me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
-  const [lo, hi] = inCol === null ? [.04, .96] : colBounds(inCol), now = Date.now();
+  const [lo, hi] = inCol === null ? [.04, .96] : colBounds(inCol), now = clockNow();
   let x = me.x, y = me.y;
   for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = Math.random(); if (!bumps(x, y, now)) break; }
   me.x = x; me.y = y; me.j = 0; target = null;
@@ -283,7 +284,7 @@ function resetDuck() {
 }
 function jump() {
   if (!me || !onBoardPhase() || me.j) return;
-  me.j = Date.now(); sendMove(true);
+  me.j = clockNow(); sendMove(true);
 }
 function jumpTo(c) {
   if (!canWalk() || R.state.phase !== 'answer') return;
@@ -292,7 +293,7 @@ function jumpTo(c) {
   sendMove(true);
 }
 function boardClick(e) {
-  if (!profile.settings.mouseMove || !canWalk() || !geo || Date.now() - touchedAt < 900) return;
+  if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900) return;
   const board = e.target.closest('.board'); if (!board || e.target.closest('.topover')) return;
   const r = board.getBoundingClientRect();
   target = unplace(e.clientX - r.left, e.clientY - r.top);
@@ -420,7 +421,7 @@ function paint(force) {
 
 function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
-  const now = Date.now(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
+  const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
   t.textContent = `${catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
@@ -497,7 +498,7 @@ register('game', {
     docks = mountDocks(S, HINTS);
     hooks.resetDuck = resetDuck;
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; } });
-    S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = Date.now(); }, true);
+    S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }

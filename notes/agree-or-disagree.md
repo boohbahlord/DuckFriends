@@ -253,7 +253,22 @@ Those kind of goofy commands like lightning of summoning hotdogs can be turned o
 
 ### Decided from request 2
 - The site is called **DuckFriends**. Dark mode is the default.
-- Guests play through Firebase's anonymous sign-in; the database goes in europe-west1 (Belgium), between Nigeria and the Americas.
+- Guests play through Firebase's anonymous sign-in. (The database ended up in us-central1; fine for the US and Nigeria.)
 - Space now jumps on the board (it still readies up in the lobby); Enter ends a turn.
 - Clicks became Jumps: only completed jumps (on landing) count.
 - The Nigerian hats: **Fila** (men's cap) and **Gele** (women's head tie).
+
+## Request 3 (2026-10-24): phone controls, countdown tone, Firebase
+- Phone controls: a floating see-through joystick by default (hold and drag; tap jumps; two flicks the same way sprint,
+  kept while the stick is held out). Settings → Controls → Touch screen → Tap to move: tap walks there (faint white
+  circle), double tap jumps on the way, fast swipe sprints.
+- The lobby countdown's last tone plays at zero.
+- The site moved to https://boohbahlord.github.io/DuckFriends/ when the repository was renamed DuckFriends.
+
+## Online play (how it works)
+- Firebase project duckfriends-bd795; config in js/online.js; rules in database.rules.json (pasted into Realtime
+  Database → Rules by the owner). Guests sign in anonymously, one guest per browser tab.
+- The host's browser runs the rules; players send actions (games/{g}/acts) and duck steps (games/{g}/mv) and read the
+  state (games/{g}/s). A host gone (or asleep) for ~6–16 s is replaced by the next player; a player away 30 s leaves.
+- Private rooms: the game's path is a hash of the room id and passkey, so only passkey holders can find it.
+- Tests: `?emu=127.0.0.1` points the site at local Firebase emulators.
