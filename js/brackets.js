@@ -100,11 +100,28 @@ export const sofarHTML = s => s.bb.seeds.map((x, i) => seedCardHTML(s, s.bb, i, 
 /* ---------- a match: the two seeds on the board ---------- */
 /* a match's two colors: different, picked at random for each match (the same on every screen) */
 const SIDE_COLORS = ['#2fa4ff', '#ff8c2b', '#ef3b3b', '#37d421', '#9b5de5', '#ffd23f', '#ff5fa2', '#16c7c7', '#6f7dff', '#ff6b3d', '#8bd13c', '#c45cff'];
-export function matchColors(s) {
+/* hex ↔ hue, saturation, lightness (0–360, 0–1, 0–1) */
+function toHsl(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  if (!d) return [0, 0, l];
+  const h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, d / (1 - Math.abs(2 * l - 1)), l];
+}
+function fromHsl(h, sat, l) {
+  h = (h % 360 + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * sat, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [R, G, B] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return '#' + [R, G, B].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+}
+/* the match's two side colors. shift turns both around the color wheel together while the match is voted on; they stay
+   at least a third of the wheel apart, so the sides never look alike */
+export function matchColors(s, shift = 0) {
   let h = ((s.round + 1) * 2654435761 + (s.qi + 1) * 40503 + ((s.bb && s.bb.m) + 2) * 977) >>> 0;
   const next = n => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return h % n; };
   const a = next(SIDE_COLORS.length), b = (a + 1 + next(SIDE_COLORS.length - 1)) % SIDE_COLORS.length;
-  return [SIDE_COLORS[a], SIDE_COLORS[b]];
+  const A = toHsl(SIDE_COLORS[a]), B = toHsl(SIDE_COLORS[b]), gap = ((B[0] - A[0]) % 360 + 360) % 360;
+  if (gap < 120 || gap > 240) B[0] = A[0] + (gap < 180 ? 120 : 240);
+  return [fromHsl(A[0] + shift, A[1], A[2]), fromHsl(B[0] + shift, B[1], B[2])];
 }
 export function matchColsHTML(s) {
   const b = s.bb, m = bbMatch(s), fin = b.r === b.rounds.length - 1, done = s.phase === 'discuss' && m.w != null;

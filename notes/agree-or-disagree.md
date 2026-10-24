@@ -649,3 +649,9 @@ the crash you discovered in the vote or anything like that becomes priority
 
 
 answer me and dont start anything, i started the project but im still confused ab what it is, your place in it, if your in it, or wtf is going on
+
+1. When the computers start voting and they walk to their coordinates, my duck cant move.
+2. the would you rather board vanished in the sky map. 
+3. sure ig but explain to me simply what that means with simple example or examples
+4. yes
+5. yeah read that and remember the UI UX notes and remember to be consistent with the artstyle and ask me for any super new ideas, some new ideas might be okay
