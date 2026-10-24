@@ -364,3 +364,34 @@ Jumping default speed is a lot faster, and low gravity mode should scale with it
 
 Also asked during request 4: chat suggestions only once something is typed; a 30 s answer time by default; the
 question box's example "Data breaching is the end of the world and everyone is IDIOTS for not talking about it! - J Man".
+
+## Art notes, word for word (2026-10-24, with screenshots of the nightcap, police hat and gele)
+"The nightgown hat has the part hanging down clipping with a line at the base of the hat. The police hat has the badge on the hat on the center instead of near the front of the cap. The gele has these dots on them that is a strange color and ought to have the dots removed.
+
+The bucket hat does NOT look like hunter S thompson's bucket hat that you would see in fear and loathing in las vegas.
+
+The baseball cap is not good enough becuz it's parts look like they float or even go off their object in the case of the three vertical lines in the design on the cap.
+
+The devil horns look terrible
+
+The motorcycle helmet doesnt look like a motorcycle helmet AND the visor isnt alligned to the right where the two eyes of the duck (the other eye unseen due to the 2d perspective. THe motorcycle helment is awful
+
+The aviator sunglasses look NOTHING like what hunter s thompson would wear in fear and loathing in las vegas
+
+The armored helmet has a similiar problem to the motorcycle helmet and must be redone
+
+The sky mask doesnt need the red line on it and should leave a hole for the beak ALREADY on the avatar. THe eye hole is nice tho, just make sure that the ski mask hides the other eyes that dont show in the eye hole
+
+Remove the cutout of the eye and the Zzzz from the sleeping eye mask and make it the color the pajamas will be
+
+Make the clown nose on the top of the front beaks.
+
+Make the fila look better
+
+Have a dropdown arrow for the patterns that are of the hats so they don't clutter the card customization section
+
+Have the eyelashes removed from the floating eye but keep it the same
+
+Improve the white cartoon glove it looks almost nothing like a glove, and the glove should only have FIVE fingers, not six, and the five fingers inlcudes a thumb as one of those fingers"
+
+Later: "The order of the customization options can be reordered eventually too, like the order the hats appear in or other things"

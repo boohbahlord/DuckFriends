@@ -17,7 +17,7 @@ import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
 import { COLS, SHORT, colOf, colX, colBounds, needed, VOTE_GRACE } from './rules.js';
-import { duckSVG } from './duck.js';
+import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML } from './name.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
@@ -202,14 +202,16 @@ function sendMove(force) {
   lastSend = now; lastSent = msg;
   R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, q, sp: sprinting && moving });
 }
-/* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) */
+/* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
+   fatter duck takes more room, a small or skinny one less. */
 function bumps(x, y, now) {
   if (!geo || jumpZ(me.j, now) > 0) return null;   // in the air: over everyone
-  const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2;
+  const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2, ka = duckRoom((s.players[R.me] || {}).duck);
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
     const o = s.pos[id]; if (jumpZ(o.j, now) > 0) continue;
-    const b = place(o, 0, 1), dx = (a.left - b.left) / (2 * rx), dy = (a.top - b.top) / (2 * ry);
+    const kb = duckRoom((s.players[id] || {}).duck);
+    const b = place(o, 0, 1), dx = (a.left - b.left) / (rx * (ka.x + kb.x)), dy = (a.top - b.top) / (ry * (ka.y + kb.y));
     if (dx * dx + dy * dy < 1) return b;
   }
   return null;

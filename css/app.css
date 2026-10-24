@@ -683,3 +683,5 @@ html.moving .gmain[data-phase="answer"] .cols { animation: boardglow 3.6s ease-i
 .hat-glow { filter: drop-shadow(0 0 3px #ffe58a); }
 html.moving .hat-glow { animation: haloglow 2.2s ease-in-out infinite alternate; }
 @keyframes haloglow { from { opacity: .82; } to { opacity: 1; } }
+
+svg.duck { overflow: visible; }   /* a big duck or a long beak may reach past the duck's box */

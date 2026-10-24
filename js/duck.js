@@ -6,6 +6,8 @@
    sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. */
 import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
+import { beakSVG } from './beaks.js';
+import { eyesSVG } from './eyes.js';
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -24,7 +26,15 @@ export const METAL = {
   rose: ['#fff6f4', '#ffd3cb', '#d98b80', '#5a2a24', '#f7b8ae', '#40201b'],
   chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
 };
-export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null };
+export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null,
+  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, muscle: 0 };
+/* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%), muscle 0, 1 (toned) or 2 (buff) */
+export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Chubby'], [1, 'Fat']];
+export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
+export const MUSCLES = [[0, 'None'], [1, 'Toned'], [2, 'Buff']];
+const clamp1 = v => Math.max(-1, Math.min(1, +v || 0));
+/* how much room a duck takes on the board, width and depth (1 = a normal duck) */
+export function duckRoom(look = {}) { const k = 1 + .1 * clamp1(look.size), f = clamp1(look.build); return { x: k * (1 + .16 * f), y: k * (1 + .08 * f) }; }
 
 let uid = 0;
 export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
@@ -53,8 +63,21 @@ function patternDef(id, kind, col) {
 }
 
 /* the duck, facing right; o.shadow draws its ground shadow; o.dead draws X eyes; look.hat puts a hat on it */
+/* a look from another player is drawn straight into the page: keep only plain words, colors and numbers (no quotes or
+   brackets), and the picture (escaped where it is used) */
+const PLAIN = /^[#\w .,()%-]{0,60}$/;
+function plainLook(o) {
+  const out = {};
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === 'string') { if (k === 'image' || PLAIN.test(v)) out[k] = v; }
+    else if (typeof v === 'number') { if (isFinite(v)) out[k] = v; }
+    else if (typeof v === 'boolean' || v === null) out[k] = v;
+    else if (typeof v === 'object' && (k === 'hat' || k === 'face')) out[k] = plainLook(v);
+  }
+  return out;
+}
 export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '', dead = false, extra = '' } = {}) {
-  const L = { ...DUCK_DEFAULT, ...(look || {}) }, id = 'dk' + (++uid);
+  const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) }, id = 'dk' + (++uid);
   if (L.image) {   // an uploaded square picture, standing like a card, with the same little shadow
     return `<svg class="duck" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Avatar')}">
 ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>` : ''}
@@ -75,47 +98,53 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
   const fill = (gid, cx, cy) => M
     ? `<linearGradient id="${gid}" x1=".15" y1="0" x2=".42" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".2" stop-color="${M[0]}"/><stop offset=".34" stop-color="${M[1]}"/><stop offset=".46" stop-color="${M[2]}"/><stop offset=".5" stop-color="${M[3]}"/><stop offset=".57" stop-color="${M[3]}"/><stop offset=".61" stop-color="${M[2]}"/><stop offset=".72" stop-color="${M[4]}"/><stop offset=".84" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[5]}"/></linearGradient>`
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`;
-  const eyes = dead
-    ? `<path d="M78 30l8 8M86 30l-8 8" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>`
-    : `<ellipse cx="83" cy="34" rx="4.3" ry="5.2" fill="#161616"/><circle cx="84.6" cy="32" r="1.7" fill="#fff"/><circle cx="82" cy="36.6" r=".8" fill="#fff" opacity=".7"/>`;
+  const eyes = eyesSVG(L, dead);
+  /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
+     little bigger or smaller; a toned wing or a flexed, buff one */
+  const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), mus = Math.max(0, Math.min(2, Math.round(+L.muscle || 0)));
+  const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
+  const wing = mus === 2
+    ? `<path d="M44 84C40 74 44 62 52 58C58 55 62 58 61 63C66 60 72 62 72 68C72 76 64 80 56 82C52 88 46 89 44 84Z" fill="${M ? M[2] : dark}" opacity="${M ? '.6' : '.42'}" stroke="${edge}" stroke-width="1.4" stroke-opacity=".55"${bt}/>
+  <path d="M52 60C56 63 58 67 58 72M62 64C64 68 66 72 64 76M84 66C88 70 90 76 88 82M90 64C93 68 95 72 95 77" stroke="${M ? M[5] : dark}" stroke-width="1.6" fill="none" opacity=".55"${bt}/>`
+    : `<path d="${mus ? 'M38 77C48 68 70 69 78 78C71 91 52 95 40 88C36 85 36 80 38 77Z' : WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : mus ? '.38' : '.32'}"${bt}/>
+  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>${mus ? `<path d="M50 82C56 84 62 84 68 82M88 68C91 72 92 76 91 80" stroke="${M ? M[5] : dark}" stroke-width="1.3" fill="none" opacity=".5"${bt}/>` : ''}`;
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
 <linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? '.25' : '.28'}"/></linearGradient>
 ${pat}
-<clipPath id="${id}c"><path d="${BODY}"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
+<clipPath id="${id}c"><path d="${BODY}"${bt}/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
 <mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask>
 ${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <linearGradient id="${id}env" x1="0" y1="0" x2="1" y2="0"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff" stop-opacity=".55"/><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#000" stop-opacity="0"/><stop offset=".66" stop-color="#000" stop-opacity=".28"/><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset=".86" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#fff" stop-opacity=".4"/><stop offset=".95" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <radialGradient id="${id}spec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".35" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` : ''}
 </defs>
-${shadow ? `<ellipse cx="58" cy="109" rx="44" ry="7" fill="#000" opacity=".22"/>` : ''}
+${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
+${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
 ${hat.back}
-<path d="${BODY}" fill="url(#${id}b)"/>
+<path d="${BODY}" fill="url(#${id}b)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ''}
-  <path d="${BODY}" fill="url(#${id}ao)"/>
+  <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
-  <path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"/>
-  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"/>
+  ${wing}
   ${M ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
   <ellipse cx="64" cy="24" rx="13" ry="7" fill="url(#${id}spec)" transform="rotate(-25 64 24)"/><ellipse cx="34" cy="70" rx="17" ry="7" fill="url(#${id}spec)" transform="rotate(-14 34 70)"/>
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
   <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
 </g>
-<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"/>
+<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${edge}" stroke-width="2.2"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
-<ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
-<ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/>
-<path d="M96 35C104 32 113 34 116 39C111 42.5 103 43.5 96.5 42.5Z" fill="#ff9a1f" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M96.5 42.5C103 43.5 110 43.5 113 45.5C108 49.5 100.5 49.5 95.5 46.5Z" fill="#f07f0e" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
-<ellipse cx="104" cy="36.4" rx="4" ry="1.3" fill="#fff" opacity=".5"/>
+<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
+<ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/></g>
+${beakSVG(L)}
 ${eyes}
 ${face}
 ${hat.front}
+${k !== 1 ? '</g>' : ''}
 ${extra}
 </svg>`;
 }
