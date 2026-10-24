@@ -16,7 +16,7 @@ import { clock, now } from './clock.js';
 import { go } from './router.js';
 import { toast } from './ui.js';
 
-const CONFIG = {
+export const CONFIG = {
   apiKey: 'AIzaSyDh4Jx2TnY1PBlPiYnMczqzGhg-4dBFajY',
   authDomain: 'duckfriends-bd795.firebaseapp.com',
   databaseURL: 'https://duckfriends-bd795-default-rtdb.firebaseio.com',
@@ -26,19 +26,24 @@ const CONFIG = {
   appId: '1:78303550939:web:880847e1d1799cb1761bfe',
 };
 const SDK = 'https://www.gstatic.com/firebasejs/13.1.0/';
-const EMU = new URLSearchParams(location.search).get('emu');   // tests: ?emu=127.0.0.1 talks to local emulators
+export const EMU = new URLSearchParams(location.search).get('emu');   // tests: ?emu=127.0.0.1 talks to local emulators
 const STALE = 75000;          // a room whose host hasn't checked in for this long is gone
 const AWAY = 30000;           // a player away this long leaves the room
 const HOST_GONE = 6000;       // the host away this long: the next player takes over
 const HOST_STILL = 10000;     // or the host's heartbeat stopped this long (a phone gone to sleep)
 
-/* ---------- connecting: the SDK, a guest sign-in, the server's clock ---------- */
+/* ---------- connecting: the SDK, a guest sign-in, the server's clock ----------
+   Rooms use their own guest sign-in, one per browser tab (two tabs are two players). A Google account (account.js) is a
+   second connection that keeps the profile and the friends. */
+let sdkP = null;
+export const sdk = () => sdkP || (sdkP = Promise.all(['app', 'auth', 'database'].map(m => import(`${SDK}firebase-${m}.js`)))
+  .then(([A, U, D]) => ({ A, U, D })).catch(e => { sdkP = null; throw e; }));
 let fb = null, connecting = null;
 export function connect() {
   return connecting || (connecting = (async () => {
-    const [A, U, D] = await Promise.all(['app', 'auth', 'database'].map(m => import(`${SDK}firebase-${m}.js`)));
-    const app = A.initializeApp(CONFIG), db = D.getDatabase(app);
-    const auth = U.initializeAuth(app, { persistence: U.browserSessionPersistence });   // one guest per tab: two tabs are two players
+    const { A, U, D } = await sdk();
+    const app = A.initializeApp(CONFIG, 'rooms'), db = D.getDatabase(app);
+    const auth = U.initializeAuth(app, { persistence: U.browserSessionPersistence });
     if (EMU) { U.connectAuthEmulator(auth, `http://${EMU}:9099`, { disableWarnings: true }); D.connectDatabaseEmulator(db, EMU, 9000); }
     await auth.authStateReady();
     if (!auth.currentUser) await U.signInAnonymously(auth);
@@ -50,7 +55,10 @@ export function connect() {
 /* what went wrong, in words the player (or the site's owner) can act on */
 export function whyNot(e) {
   const c = String((e && (e.code || e.message)) || e);
-  if (/operation-not-allowed|admin-restricted/i.test(c)) return 'Guest sign-in is off. In Firebase: Security → Authentication → Sign-in method → Anonymous → Enable.';
+  if (/popup-closed|cancelled-popup|user-cancelled/i.test(c)) return 'Sign-in was closed before it finished.';
+  if (/popup-blocked/i.test(c)) return 'The browser blocked the sign-in window. Allow pop-ups for this site and try again.';
+  if (/unauthorized-domain/i.test(c)) return 'This site isn\'t on Firebase\'s list: Authentication → Settings → Authorized domains → add boohbahlord.github.io.';
+  if (/operation-not-allowed|admin-restricted/i.test(c)) return 'That sign-in is off in Firebase: Security → Authentication → Sign-in method.';
   if (/permission[_ -]denied/i.test(c)) return 'The database turned this down. Its rules need pasting in Firebase: Realtime Database → Rules → Publish.';
   if (/network|offline|fetch|import|load/i.test(c)) return 'No connection to the online rooms. Check the internet and try again.';
   return 'Online rooms failed: ' + c;
@@ -90,7 +98,7 @@ export async function createOnlineRoom({ name, open, passkey = '', max, options 
   const enc = encode(state), up = { host: uid, rid, [`on/${uid}`]: true };
   for (const [k, v] of Object.entries(enc)) up['s/' + k] = v;
   await D.update(ref('games/' + g), up);
-  return startRoom({ g, rid, state, host: true, passkey: open ? '' : passkey.trim() });
+  return startRoom({ g, rid, name, open, state, host: true, passkey: open ? '' : passkey.trim() });
 }
 
 /* join a room from the list (a private one needs its passkey) */
@@ -99,7 +107,7 @@ export async function joinOnlineRoom(entry, passkey = '') {
   const g = entry.g || await privatePath(entry.rid, passkey);
   const snap = await D.get(ref(`games/${g}/host`)).catch(() => null);
   if (!snap || !snap.exists()) throw new Error(entry.g ? 'That room has closed.' : 'Wrong passkey.');
-  const room = startRoom({ g, rid: entry.rid, state: null, host: false, passkey: entry.g ? '' : passkey.trim() });
+  const room = startRoom({ g, rid: entry.rid, name: entry.name || '', open: entry.open !== false, state: null, host: false, passkey: passkey.trim() });
   return room.joined();
 }
 
@@ -131,13 +139,21 @@ const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
 const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'move', 'end', 'voteReview', 'voteEnd', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
-const LOOK = ['name', 'duck', 'card', 'nameStyle'];
+const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
   if (!a || typeof a !== 'object' || !REMOTE.has(a.t)) return null;
   a = { ...a, id: by };
-  if (a.t === 'join') { a.p = { duck: {}, card: {}, nameStyle: {}, ...pick(a.p, LOOK), id: by, bot: false }; if (!NAME_OK.test(a.p.name)) a.p.name = 'Player'; }
-  if (a.t === 'look') { a.look = pick(a.look, LOOK); if (a.look.name !== undefined && !NAME_OK.test(a.look.name)) delete a.look.name; }
+  if (a.t === 'join') {
+    a.p = { duck: {}, card: {}, nameStyle: {}, ...pick(a.p, LOOK), id: by, bot: false };
+    if (!NAME_OK.test(a.p.name)) a.p.name = 'Player';
+    const acct = a.p.acct; if (typeof acct === 'string' && acct.length < 129) a.p.acct = acct; else delete a.p.acct;
+  }
+  if (a.t === 'look') {
+    a.look = pick(a.look, LOOK);
+    if (a.look.name !== undefined && !NAME_OK.test(a.look.name)) delete a.look.name;
+    if (a.look.acct !== undefined && !(typeof a.look.acct === 'string' && a.look.acct.length < 129)) delete a.look.acct;
+  }
   return a;
 }
 /* a guess at my own action's result, shown until the host's answer comes back; the host alone ends phases */
@@ -148,7 +164,7 @@ function predict(s, a) {
 }
 
 /* ---------- a room: host or player, and the switch between them ---------- */
-function startRoom({ g, rid, state: first, host, passkey }) {
+function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   const { D, ref, uid: me } = fb, path = p => ref(`games/${g}/${p}`);
   const fns = new Set(), subs = [];
   let state = first, auth = first, mode = '', closed = false, hostUid = host ? me : null;
@@ -336,9 +352,11 @@ function startRoom({ g, rid, state: first, host, passkey }) {
       D.remove(path('on/' + me)).catch(() => {}); D.onDisconnect(path('on/' + me)).cancel();
       if (wasHost) D.onDisconnect(ref('lobby/' + rid)).cancel();
       fns.clear();
+      dispatchEvent(new CustomEvent('duck-room', { detail: null }));
     },
   };
   setActive(room);
   if (host) becomeHost(); else becomeClient();
+  dispatchEvent(new CustomEvent('duck-room', { detail: { rid, g, name, open } }));
   return room;
 }

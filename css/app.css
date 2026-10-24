@@ -535,3 +535,31 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 .mm-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 50%; background: repeating-linear-gradient(90deg, #2f6b26 0 .5rem, #3b7f2c .5rem 1rem); }
 .map-tiles { display: flex; flex-wrap: wrap; gap: .6rem; }
 .map-tile { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .5rem; }
+
+/* ---------- friends: the window, the badge, notices at the bottom middle ---------- */
+#signin .badge, .badge { display: inline-grid; place-items: center; min-width: 1.3rem; height: 1.3rem; padding: 0 .3rem; margin-left: .3rem; border-radius: .7rem; background: var(--red); color: #fff; font-size: .8rem; font-weight: 700; }
+.win-friends { width: min(34rem, 94vw); }
+.fr-code { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.fr-code .code { font-family: var(--mono, monospace); font-size: 1.15em; letter-spacing: .04em; background: var(--panel2, #0002); border-radius: .4rem; padding: .1rem .45rem; }
+.fr-add { display: flex; gap: .5rem; margin-top: .7rem; }
+.fr-add input { flex: 1; min-width: 0; text-transform: uppercase; }
+.fr-msg { min-height: 1.2em; margin: .35rem 0 0; }
+.fr h3 { margin: 1rem 0 .4rem; }
+.fr-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .4rem; }
+.fr-list li { display: flex; align-items: center; gap: .6rem; padding: .35rem .5rem; border: .12rem solid var(--line); border-radius: .7rem; }
+.fr-list li.off { opacity: .6; }
+.fr-duck { width: 38px; flex: none; } .fr-duck svg { display: block; width: 100%; height: auto; }
+.fr-who { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.fr-acts { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; justify-content: flex-end; }
+.fr-x { width: 1.7rem; height: 1.7rem; border-radius: 50%; border: .12rem solid var(--line); background: transparent; color: var(--dim); cursor: pointer; font-weight: 700; }
+.fr-x:hover { color: #fff; background: var(--red); }
+.fr-foot { margin-top: 1rem; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; font: inherit; }
+.btn.small { font-size: calc(.85rem * var(--ts)); padding: .3rem .7rem; }
+#notices { position: fixed; left: 50%; bottom: 6.5rem; transform: translateX(-50%); z-index: 9500; display: flex; flex-direction: column; gap: .5rem; width: min(30rem, calc(100vw - 2rem)); pointer-events: none; }
+.notice { pointer-events: auto; position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; background: var(--panel); border: .16rem solid var(--line); border-radius: .9rem; padding: .6rem 2.4rem .6rem .9rem; box-shadow: 0 .25rem 0 var(--line), 0 .6rem 1.4rem #0006; animation: noticein .25s ease-out; transition: opacity .3s, transform .3s; }
+.notice.out { opacity: 0; transform: translateY(.6rem); }
+.notice-text { flex: 1 1 12rem; }
+.notice-acts { display: flex; gap: .4rem; }
+.notice-x { position: absolute; top: .35rem; right: .45rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: .12rem solid var(--line); background: var(--red); color: #fff; font-weight: 700; cursor: pointer; line-height: 1; }
+@keyframes noticein { from { opacity: 0; transform: translateY(.8rem); } }

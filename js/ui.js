@@ -41,6 +41,20 @@ export function toast(text, ms = 3200) {
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 400); }, ms);
 }
 
+/* a notice at the bottom middle with buttons (an invite, a friend request); it stays a while, X closes it */
+export function notice(html, actions = [], ms = 25000) {
+  let box = $('#notices'); if (!box) { box = el('<div id="notices" aria-live="polite"></div>'); document.body.appendChild(box); }
+  const n = el(`<div class="notice"><div class="notice-text">${html}</div><div class="notice-acts"></div><button type="button" class="notice-x" aria-label="Close">×</button></div>`);
+  const close = () => { if (n.classList.contains('out')) return; n.classList.add('out'); setTimeout(() => n.remove(), 300); };
+  for (const [label, fn, cls = ''] of actions) {
+    const b = el(`<button type="button" class="btn small ${cls}">${esc(label)}</button>`);
+    b.onclick = () => { close(); fn(); }; n.querySelector('.notice-acts').appendChild(b);
+  }
+  n.querySelector('.notice-x').onclick = close;
+  box.appendChild(n); setTimeout(close, ms);
+  return close;
+}
+
 /* hover tips: data-tip on anything; about a second's wait; placed above or below so they never cover their subject */
 let tipT = null, tipEl = null;
 function hideTip() { clearTimeout(tipT); if (tipEl) { tipEl.remove(); tipEl = null; } }

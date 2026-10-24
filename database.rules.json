@@ -7,6 +7,48 @@
         ".validate": "newData.hasChildren(['host', 'name', 'at']) && newData.child('name').isString() && newData.child('name').val().length <= 40"
       }
     },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && auth.provider !== 'anonymous'"
+      }
+    },
+    "pub": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid && auth.provider !== 'anonymous'"
+      }
+    },
+    "codes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.provider !== 'anonymous' && !data.exists() && newData.val() === auth.uid"
+      }
+    },
+    "req": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".write": "auth != null && auth.provider !== 'anonymous' && (auth.uid === $to || (auth.uid === $from && $from !== $to))"
+        }
+      }
+    },
+    "friends": {
+      "$a": {
+        ".read": "auth != null && auth.uid === $a",
+        "$b": {
+          ".write": "auth != null && auth.provider !== 'anonymous' && (auth.uid === $a || (auth.uid === $b && (!newData.exists() || root.child('req/' + $b + '/' + $a).exists())))"
+        }
+      }
+    },
+    "inv": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$i": {
+          ".write": "auth != null && ((!data.exists() && newData.child('from').val() === auth.uid && root.child('friends/' + $to + '/' + auth.uid).exists()) || (auth.uid === $to && !newData.exists()))"
+        }
+      }
+    },
     "games": {
       "$g": {
         ".read": "auth != null",

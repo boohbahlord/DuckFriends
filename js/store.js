@@ -29,6 +29,13 @@ const cookie = {
 function load() {
   let p = {};
   try { p = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { p = {}; }
+  const out = normalize(p);
+  const c = cookie.get('jmg-name'); if (c && NAME_OK.test(c)) out.name = c;
+  if (!NAME_OK.test(out.name)) out.name = 'Player 1';
+  return out;
+}
+/* a saved profile (this device's or the account's) with every part filled in */
+function normalize(p) {
   const out = { ...structuredClone(PROFILE_DEFAULT), ...p };
   out.settings = { ...SETTINGS_DEFAULT, ...(p.settings || {}) };
   if ((p.settings || {}).v !== 2) {   // settings saved before DuckFriends: dark becomes the default; clicks became jumps
@@ -40,16 +47,30 @@ function load() {
   out.card = { ...PROFILE_DEFAULT.card, ...(p.card || {}) };
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };
   if (out.nameStyle.color === '#1c1c28') out.nameStyle.color = '';   // the old default, unreadable in dark mode
-  const c = cookie.get('jmg-name'); if (c && NAME_OK.test(c)) out.name = c;
   if (!NAME_OK.test(out.name)) out.name = 'Player 1';
   return out;
 }
 
 export const profile = load();
+export const onSave = new Set();   // others keeping a copy (the signed-in account, online)
 let saveT = null;
+const write = () => {
+  clearTimeout(saveT); saveT = null;
+  try { localStorage.setItem(KEY, JSON.stringify(profile)); } catch (e) { /* full or blocked: the game goes on */ }
+  cookie.set('jmg-name', profile.name); onSave.forEach(f => f());
+};
 export function save(now) {
   clearTimeout(saveT);
-  const write = () => { try { localStorage.setItem(KEY, JSON.stringify(profile)); } catch (e) { /* full or blocked: the game goes on */ } cookie.set('jmg-name', profile.name); };
+  profile.t = Date.now();   // when it last changed: the newer copy wins between devices
   if (now) write(); else saveT = setTimeout(write, 250);
 }
-addEventListener('pagehide', () => save(true));
+addEventListener('pagehide', () => { if (saveT) write(); });
+
+/* the account's copy comes in: it replaces this device's (keeping when it changed) */
+export function replaceProfile(p) {
+  const n = normalize(p);
+  for (const k of Object.keys(profile)) if (!(k in n)) delete profile[k];
+  Object.assign(profile, n);
+  try { localStorage.setItem(KEY, JSON.stringify(profile)); } catch (e) { /* the game goes on */ }
+  cookie.set('jmg-name', profile.name);
+}

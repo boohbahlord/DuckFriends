@@ -7,9 +7,10 @@ import { botActions } from './bots.js';
 import { profile } from './store.js';
 import { HATS } from './hats.js';
 import { now } from './clock.js';
+import { who } from './who.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false });
+export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, ...(who.acct ? { acct: who.acct } : {}) });
 
 let active = null;
 export const activeRoom = () => active;

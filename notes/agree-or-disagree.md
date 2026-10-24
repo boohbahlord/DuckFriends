@@ -272,3 +272,12 @@ Those kind of goofy commands like lightning of summoning hotdogs can be turned o
   state (games/{g}/s). A host gone (or asleep) for ~6–16 s is replaced by the next player; a player away 30 s leaves.
 - Private rooms: the game's path is a hash of the room id and passkey, so only passkey holders can find it.
 - Tests: `?emu=127.0.0.1` points the site at local Firebase emulators.
+
+## Accounts and friends (built 2026-10-24)
+- Sign in with Google (top right). The profile (name, duck, card, settings, notes, jumps, stats) lives in the account:
+  a device new to the account takes the account's copy; afterwards the newer copy wins. No email or Google name/picture
+  is stored. Rooms keep their own per-tab guest sign-in; the account is a second Firebase connection (account.js).
+- Friends (top right once signed in, lobby menu in online rooms, pause menu, Shift+\): friend code (e.g. QUACK-4821),
+  add by code, Add friend on a player's card (right-click or long-press), requests, list with online status and room,
+  Invite to my online room, Join theirs (a private room asks for its passkey unless invited). Invites and requests
+  arrive as notices at the bottom middle.
