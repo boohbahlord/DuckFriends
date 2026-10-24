@@ -18,7 +18,7 @@ register('rooms', {
   render() {
     const s = el(`<section class="screen rooms">
       <header class="bar"><button type="button" class="btn ghost" data-a="back">‹ Back</button>
-        <h1 class="bar-title">${symbolSVG(30)} Agree or Disagree</h1></header>
+        <h1 class="bar-title">${symbolSVG(30)} Rooms</h1></header>
       <div class="rooms-grid">
         <form class="panel create" autocomplete="off">
           <div class="art-wrap">${gameArtSVG({ width: 480, duck: profile.duck })}</div>

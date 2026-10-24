@@ -16,7 +16,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, colOf, colX, colBounds, needed, playing, VOTE_GRACE } from './rules.js';
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, colAt, colXAt, colBoundsAt, startX, wyrStats } from './rules.js';
 import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
 import { isMuted } from './chat.js';
 import { specialById, pressSpecial, momentHTML, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
@@ -65,8 +65,14 @@ const jumpCfg = (id = R && R.me) => {
 const jumpZ = (j, now, id) => { if (!j) return 0; const { T, H } = jumpCfg(id), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
 
 /* ---------- the board ---------- */
+/* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
+function wyrColsHTML(s) {
+  const q = ['answer', 'discuss'].includes(s.phase) ? s.qs[s.qi] : null, f = q ? ` style="font-family:${esc(writerFont(s))}"` : '';
+  const tile = (c, t) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt"${f}>${q ? esc(t) : c ? 'B' : 'A'}</span></div>`;
+  return `<div class="cols wyr-cols">${tile(0, q && q.a)}<div class="wyr-or"><span>OR</span></div>${tile(1, q && q.b)}</div>`;
+}
 const boardHTML = s => `<div class="board">
-  <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
+  ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
 
@@ -81,7 +87,7 @@ function measure() {
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
   const { W, H, top0, size, labelH } = geo;
-  if (p.x < 0) p = { ...p, x: colX(3) };   // (ducks start on Neutral; this only covers an old state)
+  if (p.x < 0) p = { ...p, x: startX(R.state) };   // (ducks start on the board; this only covers an old state)
   if (portrait()) return { left: W * (.1 + p.y * .8), top: top0 + H * (1 - p.x) + size * .45 };
   return { left: W * p.x, top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH) };
 }
@@ -138,8 +144,8 @@ function drawDucks(now = clockNow()) {
     if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
     if (d._saying !== saying) { d._saying = saying; d.classList.toggle('saying', saying); }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
-    const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colOf(pos.x) : -1;
-    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', `var(--c${bub + 1})`); }
+    const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colAt(s, pos.x) : -1;
+    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
@@ -168,7 +174,7 @@ function drawDucks(now = clockNow()) {
     h.el.classList.toggle('going', now > h.until - 900);
   }
   // the column under my duck lights up
-  const myCol = me && me.x >= 0 ? colOf(me.x) : -1;
+  const myCol = me && me.x >= 0 ? colAt(s, me.x) : -1;
   board.querySelectorAll('.col').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
   const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) vb.dataset.col = myCol;
   // the Round Lord and the question turn see-through over ducks
@@ -233,7 +239,7 @@ const canWalk = () => onBoardPhase() && !locked() && !(R.state.phase !== 'answer
 function xBounds() {
   const s = R.state;
   if (s.phase === 'answer' || late()) return [.03, .97];
-  return colBounds(s.lock[R.me]);
+  return colBoundsAt(s, s.lock[R.me]);
 }
 function sendMove(force) {
   if (!me) return;
@@ -318,9 +324,9 @@ function step(dt, now) {
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
 function resetDuck() {
   if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
-  const s = R.state, inCol = s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colOf(me.x) : null);
+  const s = R.state, inCol = s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
-  const [lo, hi] = inCol === null ? [.04, .96] : colBounds(inCol), now = clockNow();
+  const [lo, hi] = inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
   let x = me.x, y = me.y;
   for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = Math.random(); if (!bumps(x, y, now)) break; }
   me.x = x; me.y = y; me.j = 0; target = null;
@@ -333,8 +339,9 @@ function jump() {
 }
 function jumpTo(c) {
   if (!canWalk() || R.state.phase !== 'answer') return;
-  me.face = colX(c) >= (me.x < 0 ? .5 : me.x) ? 1 : -1;
-  me.x = colX(c); if (me.y === undefined || me.y < 0) me.y = .5; target = null;
+  const x = colXAt(R.state, c);
+  me.face = x >= (me.x < 0 ? .5 : me.x) ? 1 : -1;
+  me.x = x; if (me.y === undefined || me.y < 0) me.y = .5; target = null;
   sendMove(true);
 }
 function boardClick(e) {
@@ -401,7 +408,11 @@ function viewSubmit(s) {
   return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? 'Question sent ✓' : 'No question this round'}</h2>
       ${sent ? `<p class="q-echo">${esc(sent.text)}</p>` : ''}<p class="dim">Waiting for the others.</p></div>`
     : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
-      <textarea maxlength="200" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>
+      ${isWyr(s) ? `<p class="wyr-head">Would you rather…</p><div class="wyr-pair">
+        <textarea class="wyr-in" data-side="a" maxlength="100" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
+        <span class="wyr-or-word">OR</span>
+        <textarea class="wyr-in" data-side="b" maxlength="100" rows="3" placeholder="Admit Justin is right about data breaching" aria-label="The second choice"></textarea></div>`
+      : `<textarea maxlength="200" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>`}
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <div class="sect"><h3 data-tip="How long everyone gets to answer your question.">Answer time</h3><div class="row">${[[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']].map(([v, n]) =>
         `<button type="button" class="tile" data-time="${v}" aria-pressed="${v === s.options.answerTime}">${n}</button>`).join('')}</div></div>
@@ -412,10 +423,31 @@ const whoHTML = s => s.seat.map(id => `<span class="who-chip${s.done[id] ? ' don
 
 /* the stat boxes: this round's, then every round's once the review vote passes (redrawn as jumps and votes come in) */
 function statsHTML(s) {
+  if (isWyr(s)) return wyrStatsHTML(s);
   const boxes = r => s.seat.map(id => statBoxHTML(s, id, r)).join('');
   if (s.phase === 'over') return boxes(null);
   return `<h2>Round ${s.round + 1}</h2><div class="statboxes">${boxes(s.round)}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="statboxes">${boxes(null)}</div>` : ''}`;
+}
+/* Would You Rather's stats: the round's awards (ties named together), then each player's sides */
+function wyrStatsHTML(s) {
+  const nm = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : 'Gone';
+  const block = round => {
+    const { per, questions } = wyrStats(s, round), ids = Object.keys(per).filter(id => s.players[id]);
+    /* the best (or the least) of a number; everyone tied at the top is named */
+    const top = (f, low = false, ok = () => true) => { const xs = ids.filter(ok).map(id => [id, f(per[id])]); if (!xs.length) return null; const v = low ? Math.min(...xs.map(x => x[1])) : Math.max(...xs.map(x => x[1])); return { v, who: xs.filter(x => x[1] === v).map(x => x[0]) }; };
+    const writers = id => per[id].written > 0, avg = p => p.split / p.written;
+    const jx = s.seat.map(id => [id, (s.jumps || {})[id] || 0]), jv = Math.max(0, ...jx.map(x => x[1])), jumps = jv ? { v: jv, who: jx.filter(x => x[1] === jv).map(x => x[0]) } : null;
+    const award = (title, r, line) => r && r.who.length ? `<div class="award"><h3>${esc(title)}</h3><p>${r.who.map(nm).join(r.who.length > 2 ? ', ' : ' and ')}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ''}</p><p class="small dim">${line(r.v)}</p></div>` : '';
+    const most = top(avg, false, writers), least = top(avg, true, writers), contra = top(p => p.min), band = top(p => p.maj);
+    return `<div class="awards">${award('Started the most disagreement', most && most.v > 0 ? most : null, v => v >= .999 ? 'Their questions split the room right down the middle.' : `Their questions split the room the most evenly (${Math.round(v * 100)}% of an even split).`)}
+      ${award('Started the least disagreement', least && most && least.v !== most.v ? least : null, v => v === 0 ? 'Everyone picked the same side on their questions.' : `Their questions split the room the least (${Math.round(v * 100)}% of an even split).`)}
+      ${award('Contrarian', contra && contra.v ? contra : null, v => `On the smaller side ${v} time${v === 1 ? '' : 's'}.`)}
+      ${award('Bandwagoner', band && band.v ? band : null, v => `With the bigger side ${v} time${v === 1 ? '' : 's'}.`)}
+      ${award('Most jumps', jumps, v => `${v} jump${v === 1 ? '' : 's'}.`)}</div>
+      <div class="wyr-qs panel">${questions.map(q => `<p class="small"><span class="dim">${q.by && s.players[q.by] ? esc(s.players[q.by].name) : '?'}:</span> ${esc(q.text)} <b class="wyr-split"><span class="a">${q.A}</span> · <span class="b">${q.B}</span></b></p>`).join('')}</div>`;
+  };
+  return `<h2>Round ${s.round + 1}</h2>${block(s.round)}${s.review ? `<h2 class="all-h">All rounds</h2>${block(null)}` : ''}`;
 }
 const viewResults = s => `<div class="results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
 const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('Game over')}</h1>
@@ -430,7 +462,9 @@ function recordRound(s) {
   if (!st || !mine.length) return;
   const game = `${s.id}:${s.startedAt}`;
   if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
-  st.rounds++; st.answers += mine.length; for (const h of mine) st.counts[h.a[R.me]]++;
+  st.rounds++; st.answers += mine.length;
+  if (isWyr(s)) { const p = wyrStats(s, s.round).per[R.me] || {}; st.majority += p.maj || 0; st.minority += p.min || 0; }   // which side I was on
+  else for (const h of mine) st.counts[h.a[R.me]]++;
   save(); shareLook();
 }
 
@@ -461,11 +495,12 @@ function actHTML(s) {
   if (s.phase === 'answer') {
     /* Vote: the button takes the color of the column you stand on; no voting in the first seconds; once locked it waits
        for everyone (End turn comes after, when the votes are in) */
-    const onBoard = (me && me.x >= 0), wait = graceLeft(s), col = onBoard ? colOf(me.x) : -1;
+    const onBoard = (me && me.x >= 0), wait = graceLeft(s), col = onBoard ? colAt(s, me.x) : -1;
     const votes = `<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>`;
-    const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
+    const q = s.qs[s.qi], choices = isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : COLS.map((c, i) => [c, `c${i + 1}`]);
+    const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${choices.map(([c, k], i) => `<button type="button" class="mc-b ${k}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
     const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
-    const off = wait || !onBoard || (mine && !s.options.freeRoam);
+    const off = wait || !onBoard || col < 0 || (mine && !s.options.freeRoam);
     return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${s.options.freeRoam ? ' data-tip="Free roam: keep moving; where you stand when the turn ends is your vote."' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
   }
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
@@ -490,6 +525,7 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
+    S.classList.toggle('wyr', isWyr(s));
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
@@ -509,7 +545,7 @@ function paint(force) {
   if (me && s.pos[R.me] && onBoardPhase()) {
     const p = s.pos[R.me];
     if (locked() || (s.phase !== 'answer' && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
-    if (s.phase === 'discuss' && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBounds(s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }
+    if (s.phase === 'discuss' && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBoundsAt(s, s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }
   }
   const lordSig = s.phase === 'answer' || s.phase === 'discuss' ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
   const lord = $('.topover .lord', S);
@@ -558,8 +594,8 @@ function sendDraft(now = false) {
   const go = () => {
     draftT = 0;
     const f = S && $('form.submit-card', S); if (!f || !R || R.state.phase !== 'submit') return;
-    const t = f.querySelector('.tile[aria-pressed="true"]');
-    R.send({ t: 'draft', text: f.querySelector('textarea').value, time: t ? +t.dataset.time : R.state.options.answerTime });
+    const t = f.querySelector('.tile[aria-pressed="true"]'), time = t ? +t.dataset.time : R.state.options.answerTime, side = k => (f.querySelector(`.wyr-in[data-side="${k}"]`) || {}).value || '';
+    R.send(isWyr(R.state) ? { t: 'draft', a: side('a'), b: side('b'), time } : { t: 'draft', text: f.querySelector('textarea').value, time });
   };
   if (now) go(); else draftT = setTimeout(go, 700);
 }
@@ -651,12 +687,17 @@ register('game', {
     S.addEventListener('submit', e => {
       if (!e.target.matches('.submit-card')) return;
       e.preventDefault();
-      const f = e.target, text = f.querySelector('textarea').value.trim();
+      const f = e.target, t = f.querySelector('.tile[aria-pressed="true"]'), time = t ? +t.dataset.time : R.state.options.answerTime;
+      if (isWyr(R.state)) {   // both choices, or nothing
+        const [a, b] = ['a', 'b'].map(k => f.querySelector(`.wyr-in[data-side="${k}"]`));
+        const empty = [a, b].find(x => !x.value.trim()); if (empty) { empty.focus(); return; }
+        R.send({ t: 'submit', a: a.value.trim(), b: b.value.trim(), time }); return;
+      }
+      const text = f.querySelector('textarea').value.trim();
       if (!text) { f.querySelector('textarea').focus(); return; }
-      const t = f.querySelector('.tile[aria-pressed="true"]');
-      R.send({ t: 'submit', text, time: t ? +t.dataset.time : R.state.options.answerTime });
+      R.send({ t: 'submit', text, time });
     });
-    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea')) sendDraft(); });
+    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea')) sendDraft(); });   // (both Would You Rather boxes too)
     S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line)
       if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });

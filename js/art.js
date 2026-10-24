@@ -5,6 +5,7 @@
 import { duckSVG, DUCK_DEFAULT } from './duck.js';
 import { HAT_TOP } from './hats.js';
 import { esc } from './ui.js';
+import { modeOf, modeSymbol } from './modes.js';
 
 export const FRIDGE = ['#ef3b3b', '#ff8c2b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6'];
 const rnd = seed => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;   // the same "random" every time
@@ -16,6 +17,9 @@ export function symbolSVG(size = 32, title = 'Agree or Disagree') {
 <rect x="11" y="1" width="8" height="22" rx="1.6" fill="#FFF200" fill-opacity=".78" stroke="#b8ae00" stroke-width="1"/>
 <rect x="21" y="1" width="8" height="22" rx="1.6" fill="#37D421" fill-opacity=".78" stroke="#23931a" stroke-width="1"/></svg>`;
 }
+
+/* a game mode's symbol */
+export const gameSymbol = (mode, size = 32) => modeOf(mode).id === 'aod' ? symbolSVG(size) : modeSymbol(mode, size);
 
 /* multicolored letters as HTML: each letter its own fridge-magnet color, a little tilt; on any font */
 export function rainbowHTML(text, { font = '', seed = 7 } = {}) {
@@ -65,15 +69,15 @@ ${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc'
   }
   return backdropSVG(480, 270, true).replace('<svg ', '<svg width="480" height="270" ');   // Night Show
 }
-export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '' } = {}) {
-  const top = duck && duck.hat && !duck.image ? HAT_TOP : 0;   // room for a hat
-  return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="Agree or Disagree${mapLabel ? ': ' + mapLabel : ''}">
+export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '', mode = 'aod' } = {}) {
+  const top = duck && duck.hat && !duck.image ? HAT_TOP : 0, title = modeOf(mode).name;   // room for a hat
+  return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="${esc(title)}${mapLabel ? ': ' + esc(mapLabel) : ''}">
 <defs><clipPath id="artclip"><rect width="480" height="270" rx="18"/></clipPath><linearGradient id="artshade" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>
 <g clip-path="url(#artclip)">${artBackdrop(map)}</g>
 ${cloud(250, 200, 1.05)}
 <g transform="translate(176 ${(66 - 150 * top / 120).toFixed(1)})"><svg width="150" height="${(150 * (120 + top) / 120).toFixed(1)}" viewBox="0 ${-top} 120 ${120 + top}">${duckSVG(duck, { size: 120, shadow: false }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg></g>
-<text x="240" y="252" text-anchor="middle" font-family="'Lilita One', 'Fredoka', sans-serif" font-size="44" stroke="#1c1c28" stroke-width="5" stroke-linejoin="round" paint-order="stroke fill">${rainbowTSpans('Agree or Disagree')}</text>
-<g transform="translate(14 12)"><rect x="-4" y="-4" width="46" height="38" rx="8" fill="#ffffffd0" stroke="#1c1c28" stroke-width="2"/>${symbolSVG(38).replace('<svg ', '<svg x="0" y="0" ')}</g>
+<text x="240" y="252" text-anchor="middle" font-family="'Lilita One', 'Fredoka', sans-serif" font-size="44" stroke="#1c1c28" stroke-width="5" stroke-linejoin="round" paint-order="stroke fill">${rainbowTSpans(title)}</text>
+<g transform="translate(14 12)"><rect x="-4" y="-4" width="46" height="38" rx="8" fill="#ffffffd0" stroke="#1c1c28" stroke-width="2"/>${gameSymbol(mode, 38).replace('<svg ', '<svg x="0" y="0" ')}</g>
 ${mapLabel ? `<g transform="translate(466 14)"><rect x="${-(mapLabel.length * 9.4 + 18)}" y="0" width="${mapLabel.length * 9.4 + 18}" height="28" rx="14" fill="#1c1c28d0"/><text x="${-(mapLabel.length * 9.4 + 18) / 2}" y="19.5" text-anchor="middle" font-family="'Fredoka', sans-serif" font-weight="600" font-size="16" fill="#fff">${esc(mapLabel)}</text></g>` : ''}
 </svg>`;
 }
