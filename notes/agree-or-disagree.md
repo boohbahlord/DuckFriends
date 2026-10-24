@@ -655,3 +655,10 @@ answer me and dont start anything, i started the project but im still confused a
 3. sure ig but explain to me simply what that means with simple example or examples
 4. yes
 5. yeah read that and remember the UI UX notes and remember to be consistent with the artstyle and ask me for any super new ideas, some new ideas might be okay
+
+Whoever is in charge of the special, know this, the sound must be coming from the beak of the duck or player, not the head.
+The confetti gun should come out lower, from around the front chest or something below the duck like from the left side of the  image you see in first screenshot.
+
+the loser's X needs to be bigger and on the whole duck not above them
+
+the gun can also be a smidgen lower but u did a good job with that one it is funny

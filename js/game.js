@@ -169,7 +169,7 @@ function drawDucks(now = clockNow()) {
     live.add(String(sh.n));
     let b = fxl.querySelector(`.bullet[data-n="${sh.n}"]`);
     if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
-    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .45).toFixed(1)}px)`;
+    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .41 - 7).toFixed(1)}px)`;   // out of the gun's barrel (the bullet is 14px tall)
   }
   fxl.querySelectorAll('.bullet').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
   let mark = layer.querySelector('.touch-mark');

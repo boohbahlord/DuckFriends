@@ -848,8 +848,8 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .spe-drop { width: 6px; height: 6px; border-radius: 50%; background: #7fd0ff; box-shadow: 0 0 4px #bfe9ff; opacity: 0; animation: spshoot .7s ease-out forwards; }
 .spe-conf { width: 6px; height: 9px; border-radius: 1px; opacity: 0; animation: spshoot 1.1s cubic-bezier(.2, .8, .3, 1) forwards; }
 @keyframes spshoot { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r, 0deg)); } }
-.spe-ring { width: calc(var(--s) * .4); height: calc(var(--s) * .4); border-radius: 50%; border: 3px solid #fff; opacity: 0; animation: spring 1.1s ease-out forwards; }
-@keyframes spring { 0% { opacity: .9; transform: translate(-50%, -50%) scale(.3); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); } }
+.spe-ring { width: calc(var(--s) * .4); height: calc(var(--s) * .4); border-radius: 50%; border: 3px solid transparent; border-right-color: #fff; opacity: 0; animation: spring 1.1s ease-out forwards; }   /* sound waves out of the beak, the way the duck faces */
+@keyframes spring { 0% { opacity: .9; transform: translate(-50%, -50%) scale(calc(var(--f) * .3), .3); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--f) * 1.8), 1.8); } }
 .bullet { position: absolute; left: 0; top: 0; width: 34px; margin-left: -17px; pointer-events: none; z-index: 6; filter: drop-shadow(0 0 3px #ffd84a); }
 .bullet.left svg { transform: scaleX(-1); }
 .ebtn { padding-inline: .7rem; }
@@ -964,7 +964,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
 }
 
 /* the loser's X follows its duck */
-.gduck-x { display: none; position: absolute; left: 50%; bottom: 12%; width: 86%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 5.5; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
+.gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
 .gduck.loser .gduck-x { display: block; }
 
 /* the bracket: it slides the way my duck walks; − and + zoom it */

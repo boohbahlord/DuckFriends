@@ -57,7 +57,7 @@ const WGUN = '<svg viewBox="0 0 40 24"><path d="M4 8h24l4-3h5v8h-5l-2 2H18l-2 7h
 const PISTOL = '<svg viewBox="0 0 40 24"><path d="M4 5h30v6H17l-2 10H8l2-10H4Z" fill="#2b2d35" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>';
 const DOG = '<svg viewBox="0 0 40 20"><rect x="2" y="5" width="36" height="10" rx="5" fill="#eab36a" stroke="#1c1c28" stroke-width="1.4"/><rect x="5" y="7" width="30" height="6" rx="3" fill="#c0502b"/><path d="M7 9l3 2 3-2 3 2 3-2 3 2 3-2 3 2 3-2" stroke="#ffd23f" stroke-width="1.4" fill="none"/></svg>';
 export function pressFX(id, x, y, size, face) {
-  const head = { x: x + face * size * .2, y: y - size * .72 }, out = [];
+  const head = { x: x + face * size * .2, y: y - size * .72 }, beak = { x: x + face * size * .38, y: y - size * .6 }, out = [];
   const at = (cls, html, px, py, extra = '') => el(`<div class="spe ${cls}" style="left:${px.toFixed(0)}px;top:${py.toFixed(0)}px;--f:${face};--s:${size.toFixed(0)}px;${extra}">${html}</div>`);
   if (id === 'coffee') out.push(at('spe-mug', MUG, head.x + face * size * .28, head.y + size * .08));
   if (id === 'hotdog') {
@@ -65,15 +65,15 @@ export function pressFX(id, x, y, size, face) {
     for (let i = 0; i < 6; i++) out.push(at('spe-crumb', '', head.x + face * size * .3, head.y + size * .15, `--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(20 + Math.random() * 30).toFixed(0)}px;animation-delay:${(i * .18).toFixed(2)}s`));
   }
   if (id === 'watergun') {
-    out.push(at('spe-gun', WGUN, x + face * size * .45, y - size * .45));
-    for (let i = 0; i < 14; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .5, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s`));
+    out.push(at('spe-gun', WGUN, x + face * size * .45, y - size * .38));
+    for (let i = 0; i < 14; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .43, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s`));
   }
   if (id === 'confgun') {
     const colors = ['#ef3b3b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6'];
-    for (let i = 0; i < 22; i++) out.push(at('spe-conf', '', x + face * size * .45, y - size * .5, `background:${colors[i % 6]};--dx:${(face * (40 + Math.random() * 140)).toFixed(0)}px;--dy:${(-Math.random() * 120 + 20).toFixed(0)}px;--r:${Math.round(Math.random() * 540)}deg`));
+    for (let i = 0; i < 22; i++) out.push(at('spe-conf', '', x + face * size * .42, y - size * .28, `background:${colors[i % 6]};--dx:${(face * (40 + Math.random() * 140)).toFixed(0)}px;--dy:${(-Math.random() * 120 + 20).toFixed(0)}px;--r:${Math.round(Math.random() * 540)}deg`));
   }
-  if (id === 'handgun') out.push(at('spe-gun spe-pistol', PISTOL, x + face * size * .45, y - size * .45));
-  if (id === 'sound') for (let i = 0; i < 3; i++) out.push(at('spe-ring', '', head.x, head.y, `animation-delay:${(i * .25).toFixed(2)}s`));
+  if (id === 'handgun') out.push(at('spe-gun spe-pistol', PISTOL, x + face * size * .45, y - size * .38));
+  if (id === 'sound') for (let i = 0; i < 3; i++) out.push(at('spe-ring', '', beak.x, beak.y, `animation-delay:${(i * .25).toFixed(2)}s`));
   return out;
 }
 export const BULLET = '<svg viewBox="0 0 24 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2h5a3 3 0 0 1 0 6h-5Z" fill="#c9a24a" stroke="#5a4310" stroke-width="1"/></svg>';
