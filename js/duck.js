@@ -3,11 +3,13 @@
    or a square picture the player uploaded. The duck has a full round head on a boat-shaped body with its tail up. It is
    lit from the top left: a soft gradient, a darker belly, the head's shadow on the body, and bright highlights, so it reads
    as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
-   sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. */
+   sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. A style (styles.js) dresses the
+   same body as a mallard, a call duck, a raptor, an eagle or a pelican, or builds it of blocks or flat shapes. */
 import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
+import { styleById, styleColor, styleLayers, blocksBody, geoBody } from './styles.js';
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -27,7 +29,7 @@ export const METAL = {
   chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
 };
 export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null,
-  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, special: null };
+  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, special: null, style: 'rubber' };
 /* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%) */
 export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Fat'], [1, 'Chubby']];   // Chubby is the fattest
 export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
@@ -87,26 +89,36 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 <rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
-  const M = L.metal !== 'none' && METAL[L.metal];
-  const hat = hatLayers(L.hat), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
-  const base = M ? M[2] : L.color, light = M ? M[1] : mix(L.color, 255, .5), dark = M ? M[5] : mix(L.color, 0, .32);
-  const edge = M ? M[5] : mix(L.color, 0, .45);
-  const pat = !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';
+  const st = styleById(L.style), hat = hatLayers(L.hat), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
+  const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), eyes = eyesSVG(L, dead);
+  if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal
+    const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
+    return `<svg class="duck flat" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
+${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
+${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
+${hat.back}<g${bt}>${st.id === 'blocks' ? blocksBody(L.color) : geoBody(L.color)}</g>
+${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
+  }
+  const own = !st.fixed, M = own && L.metal !== 'none' && METAL[L.metal];
+  /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
+  const bodyC = st.fixed ? st.body : styleColor(L, st, 'color'), headC = st.fixed ? st.head : st.head2 ? styleColor(L, st, 'color2') : bodyC;
+  const tone = c => M ? { base: M[2], light: M[1], dark: M[5], edge: M[5] } : { base: c, light: mix(c, 255, .5), dark: mix(c, 0, .32), edge: mix(c, 0, .45) };
+  const TB = tone(bodyC), TH = tone(headC), dark = TB.dark, edge = TB.edge;
+  const pat = own && !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';
   /* fills: a soft ball of light for colors; banded reflections for metals */
   /* a metal mirrors the room: a bright sky, a hard dark horizon, a lighter floor, and dark edges */
-  const fill = (gid, cx, cy) => M
+  const fill = (gid, cx, cy, T) => M
     ? `<linearGradient id="${gid}" x1=".15" y1="0" x2=".42" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".2" stop-color="${M[0]}"/><stop offset=".34" stop-color="${M[1]}"/><stop offset=".46" stop-color="${M[2]}"/><stop offset=".5" stop-color="${M[3]}"/><stop offset=".57" stop-color="${M[3]}"/><stop offset=".61" stop-color="${M[2]}"/><stop offset=".72" stop-color="${M[4]}"/><stop offset=".84" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[5]}"/></linearGradient>`
-    : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`;
-  const eyes = eyesSVG(L, dead);
+    : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
      little bigger or smaller */
-  const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size);
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
-  const wing = `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
+  const SL = styleLayers(L, st, id, BODY, bt);
+  const wing = SL.wing || `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
   <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
-${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
+${fill(id + 'b', '.36', '.28', TB)}${fill(id + 'h', '.34', '.28', TH)}
 <linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? '.25' : '.28'}"/></linearGradient>
 ${pat}
 <clipPath id="${id}c"><path d="${BODY}"${bt}/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
@@ -117,11 +129,12 @@ ${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" 
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
-${hat.back}
+${hat.back}${SL.back || ''}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ''}
+  ${SL.under || ''}
   <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   ${wing}
@@ -130,12 +143,13 @@ ${hat.back}
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
   <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
 </g>
-<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
-<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${edge}" stroke-width="2.2"/>
+${st.fluffy ? '' : `<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>`}
+<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="${st.fluffy ? 1.2 : 2.2}"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
 <g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
 <ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/></g>
+${SL.over || ''}
 ${beakSVG(L)}
 ${eyes}
 ${face}

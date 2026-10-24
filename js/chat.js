@@ -19,6 +19,7 @@ import { HATS, hatById } from './hats.js';
 import { FACES, faceById } from './faces.js';
 import { EYES } from './eyes.js';
 import { BEAKS } from './beaks.js';
+import { STYLES } from './styles.js';
 import { SPECIALS } from './specials.js';
 import { CARD_PATTERNS } from './card.js';
 import { normHex } from './color.js';
@@ -62,6 +63,7 @@ const TREE = {
         beak: { vals: BEAKS.map(x => x.id), run: v => pick(BEAKS.map(x => x.id), v, x => { profile.duck.beak = x; }, 'Beak') },
         'beak color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor = c; return `Beak color: ${c}`; } },
         'beak color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor2 = c; return `Beak shade: ${c}`; } },
+        style: { vals: STYLES.map(x => x.id), run: v => pick(STYLES.map(x => x.id), v, x => { const st = STYLES.find(y => y.id === x); if (profile.duck.style !== x) for (const [c, , d] of st.colors || []) profile.duck[c] = d; profile.duck.style = x; }, 'Style') },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
         special: { vals: ['none', ...SPECIALS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = SPECIALS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.special = x ? x.id : null; return `Special: ${x ? x.name : 'none'}`; } },
