@@ -16,14 +16,17 @@ import { openStats } from './stats.js';
 import { sfx } from './sound.js';
 import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { MAPS, mapMini, mapName } from './maps.js';
+import { acct, onAccount, requestFriend, canAdd } from './account.js';
+import { openFriends } from './friends.js';
 
-let R = null, off = null, lastCount = -1, lastSeat = 0, docks = null;
+let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
   type: 'Agree or Disagree: answer each other\'s questions on a seven-column board.',
   map: 'What the board looks like: The Board, Sky or Pixel.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
+  friends: 'Invite your friends to this room, or add a friend by code.',
 };
 
 /* the board as a small picture (the Map window) */
@@ -101,6 +104,7 @@ function cardMenu(pid, x, y) {
   if (mine) items.push(['Customize', () => openCustomize()], ['Change name', () => renameInline()]);
   items.push(['View stats', () => openStats(s, pid, R.me)]);
   if (s.hostId === R.me && p.bot && (s.phase === 'lobby' || s.phase === 'over')) items.push(['Remove computer', () => R.send({ t: 'kick', who: pid })]);
+  if (canAdd(p)) items.push(['Add friend', async () => toast(await requestFriend(p.acct))]);
   contextMenu(x, y, items);
 }
 
@@ -143,6 +147,8 @@ function paint() {
   $('.val', startRow).textContent = host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
+  const fr = $('[data-m="friends"] .val', S);
+  if (fr) fr.textContent = acct.uid ? `${Object.values(acct.friends).filter(f => f.on).length} online` : 'Sign in';
   const art = $('.lobby-art', S), artSig = (s.options.map || 'board') + JSON.stringify(profile.duck);   // the picture shows the chosen map
   if (art._sig !== artSig) { art._sig = artSig; art.innerHTML = gameArtSVG({ width: 480, duck: profile.duck, map: s.options.map || 'board', mapLabel: mapName(s.options.map) }); }
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
@@ -172,7 +178,7 @@ const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
 register('lobby', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
-  leave() { if (off) off(); off = null; if (docks) docks.destroy(); docks = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
+  leave() { if (off) off(); off = null; if (offAcct) offAcct(); offAcct = null; if (docks) docks.destroy(); docks = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
@@ -189,6 +195,7 @@ register('lobby', {
           <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="options"><span>Game options</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="start" class="start"><span>Start game</span><span class="val"></span></button>
+          ${R.online ? '<button type="button" role="menuitem" data-m="friends"><span>Friends</span><span class="val"></span></button>' : ''}
         </div>
         <p class="lmenu-info dim">${INFO.start}</p>
       </div>
@@ -208,6 +215,7 @@ register('lobby', {
       if (m === 'map') openMaps();
       if (m === 'options') openOptions();
       if (m === 'start' && b.getAttribute('aria-disabled') !== 'true') R.send({ t: 'start' });
+      if (m === 'friends') openFriends();
     };
     S.addEventListener('click', e => {
       const a = e.target.closest('[data-a]');
@@ -217,7 +225,7 @@ register('lobby', {
       if (c && c.dataset.pid === R.me && !e.target.closest('input')) renameInline();
     });
     onMenu(S.querySelector('.party'), (x, y, e) => { const c = e.target.closest && e.target.closest('.pcard'); if (c) cardMenu(c.dataset.pid, x, y); });
-    off = R.on(onState);
+    off = R.on(onState); offAcct = onAccount(() => paint());
     addEventListener('keydown', key);
     S._tick = setInterval(() => { if (R && R.state.phase === 'countdown') onState(R.state); }, 250);
     queueMicrotask(paint);

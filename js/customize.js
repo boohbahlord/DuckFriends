@@ -9,6 +9,7 @@ import { HATS, hatById } from './hats.js';
 import { FONTS } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
+import { who } from './who.js';
 
 const TABS = [['duck', 'Duck'], ['card', 'Card'], ['name', 'Name']];
 let lastTab = 'duck';
@@ -16,7 +17,7 @@ let lastTab = 'duck';
 /* sends your look to the room you are in */
 export function shareLook() {
   const r = activeRoom(); if (!r) return;
-  r.send({ t: 'look', look: { name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle } } });
+  r.send({ t: 'look', look: { name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, ...(who.acct ? { acct: who.acct } : {}) } });
 }
 /* a new name: letters, numbers, dashes and underscores */
 export function setName(raw) {

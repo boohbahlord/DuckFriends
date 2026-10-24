@@ -26,6 +26,7 @@ import { openSettings } from './settings.js';
 import { openCustomize } from './customize.js';
 import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
+import { canAdd, requestFriend } from './account.js';
 import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
@@ -520,7 +521,8 @@ register('game', {
     });
     onMenu(S, (x, y, e) => {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;
-      contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)]]);
+      const p = R.state.players[d.dataset.pid];
+      contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)], ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : [])]);
     });
     off = R.on(s => {
       if (!S) return;
