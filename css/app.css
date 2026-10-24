@@ -55,6 +55,12 @@ p { margin: 0; }
 html.moving #shapes .sh { animation: drift var(--d, 18s) ease-in-out var(--dl, 0s) infinite alternate; }
 @keyframes drift { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(var(--dx, 10px), var(--dy, -14px)) rotate(var(--dr, 8deg)); } }
 html.moving #shapes .bulb { animation: twinkle 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
+#shapes .dot { opacity: .5; }
+html.moving #shapes .dot { animation: breathe 2.2s ease-in-out var(--dl, 0s) infinite alternate; }
+@keyframes breathe { from { opacity: .16; } to { opacity: .78; } }
+html:not(.dark) #shapes .dot { opacity: .4; }
+html.moving:not(.dark) #shapes .dot { animation-name: breathel; }
+@keyframes breathel { from { opacity: .14; } to { opacity: .5; } }
 @keyframes twinkle { from { opacity: 1; } to { opacity: .35; } }
 html.noshapes #shapes svg > :not(rect:first-of-type):not(defs) { display: none; }
 

@@ -73,24 +73,29 @@ export function pitSVG(part = 'front') {
 }
 export const heroDuckSVG = () => duckSVG(DUCK_DEFAULT, { size: 300, shadow: false, title: 'A rubber duck in a ball pit' });
 
-/* the page's background: a little indoor carnival. A Twister mat on the floor in perspective, bunting (and, in the dark,
-   glowing string lights) across the top, and a few ball-pit balls and bits of confetti drifting. Drawn to the window's
+/* the page's background: a little indoor carnival. Twister dots across the whole floor in perspective, breathing like
+   lights, bunting (and, in the dark, glowing string lights) across the top, and a few ball-pit balls and bits of confetti
+   drifting. Drawn to the window's
    size; redrawn when it changes or the theme does. */
 export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   const r = rnd(77), out = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
   const hz = h * .46, K = (h - hz) * 1.05, K2 = w * .16;
-  /* the floor and the mat */
+  /* the floor: Twister dots in rows to the horizon and out past both edges; each row and color breathes (glows up and
+     fades) a little after the last, so the light rolls across the floor */
   out.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
-  const zs = [1.05, 1.4, 1.85, 2.45, 3.2, 4.2, 5.5, 7.2], X = [-3.5, -2.5, -1.5, -.5, .5, 1.5, 2.5, 3.5];
   const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
-  const zf = zs[zs.length - 1] * 1.25, zn = .8;
-  out.push(`<path d="M${px(-4.3, zn)} ${py(zn)}L${px(4.3, zn)} ${py(zn)}L${px(4.3, zf)} ${py(zf)}L${px(-4.3, zf)} ${py(zf)}Z" fill="${dark ? '#1c1f38' : '#ffffff'}" opacity="${dark ? .9 : .85}"/>`);
-  const dots = [];
-  for (const z of zs) for (let i = 0; i < X.length; i++) {
-    const rx = .42 * K2 / z;
-    dots.push(`<ellipse cx="${px(X[i], z).toFixed(1)}" cy="${py(z).toFixed(1)}" rx="${rx.toFixed(1)}" ry="${(rx * .42).toFixed(1)}" fill="${cols[i % 4]}"/>`);
+  let row = 0;
+  for (let z = .95; z < 9; z *= 1.24, row++) {
+    const rx = .42 * K2 / z, ry = rx * .42, y = py(z); if (y > h + ry) continue;
+    const groups = [[], [], [], []];
+    for (let X = -60; X <= 60; X++) {
+      const x = px(X + .5, z); if (x < -rx * 1.8 || x > w + rx * 1.8) continue;
+      const c = ((X % 4) + 4) % 4;
+      groups[c].push(dark ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * 1.7).toFixed(1)}" ry="${(ry * 1.9).toFixed(1)}" fill="url(#bdg${c})"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`
+        : `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`);
+    }
+    groups.forEach((g, c) => { if (g.length) out.push(`<g class="dot" style="--dl:-${((row * .55 + c * 1.1) % 4.4).toFixed(2)}s">${g.join('')}</g>`); });
   }
-  out.push(`<g opacity="${dark ? .55 : .5}"${dark ? ' filter="url(#bdglow)"' : ''}>${dots.join('')}</g>`);
   /* bunting along two sagging strings; bulbs between the flags glow in the dark */
   const string = (y1, y2, sag, n, k) => {
     const pt = t => [-30 + (w + 60) * t, y1 + (y2 - y1) * t + sag * 4 * t * (1 - t)];
@@ -119,6 +124,7 @@ export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs>
 <linearGradient id="bdsky" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#101225"/><stop offset=".46" stop-color="#1f1640"/>' : '<stop offset="0" stop-color="#e3f4ff"/><stop offset=".46" stop-color="#fff7fb"/>'}</linearGradient>
 <linearGradient id="bdfloor" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#191a33"/><stop offset="1" stop-color="#0d0e1c"/>' : '<stop offset="0" stop-color="#f4f1ff"/><stop offset="1" stop-color="#e8f3ff"/>'}</linearGradient>
+${cols.map((c, k) => `<radialGradient id="bdg${k}"><stop offset=".35" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
 <filter id="bdglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs><rect width="${w}" height="${h}" fill="url(#bdsky)"/>${out.join('')}</svg>`;
 }
