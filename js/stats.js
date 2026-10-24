@@ -5,7 +5,7 @@ import { statsFor, COLS, signed, nameOfValue } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { openWindow, esc } from './ui.js';
-import { profile } from './store.js';
+import { profile, STAT_MODES } from './store.js';
 import { fmtJumps } from './format.js';
 
 export function statBoxHTML(s, id, round = null) {
@@ -22,9 +22,36 @@ export function statBoxHTML(s, id, round = null) {
     </dl></article>`;
 }
 
+/* all time, in one game mode: games, rounds, answers, what they chose most, their average, their jumps */
+function totalsHTML(p, t) {
+  if (!t) return '<p class="dim">No all-time stats from this player yet.</p>';
+  const top = Math.max(...t.counts), most = top ? t.counts.map((k, c) => k === top ? c : -1).filter(c => c >= 0) : [];
+  const avg = t.answers ? t.counts.reduce((a, k, c) => a + k * (c - 3), 0) / t.answers : null;
+  return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time</div></div></header>
+    <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
+      <dt>Chose most</dt><dd>${most.length ? most.map(c => `<span class="chip c${c + 1}">${esc(COLS[c])}</span>`).join(' ') : '—'}</dd>
+      <dt>Average</dt><dd>${avg === null ? '—' : `${signed(Math.round(avg * 10) / 10)} <span class="dim">${esc(nameOfValue(avg))}</span>`}</dd>
+      <dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+}
+let lastTab = 'game', lastMode = STAT_MODES[0][0];
 export function openStats(s, id, me) {
   const p = s.players[id]; if (!p) return;
-  const rounds = new Set(s.history.map(h => h.round)).size;
-  openWindow(`<h2>Stats</h2><div class="stats-one">${statBoxHTML(s, id)}</div>
-    <p class="small dim" style="margin-top:.7rem">This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.${id === me ? ` On this device: ${fmtJumps(profile.jumps)} jumps.` : ''}</p>`, { cls: 'win-small' });
+  const all = id === me ? profile.stats : p.stats;
+  openWindow(`<h2>Stats</h2><div class="row stat-tabs" role="tablist"><button type="button" class="tile" data-st="game">This game</button><button type="button" class="tile" data-st="all">All time</button>
+      <select class="stat-mode" aria-label="Game mode">${STAT_MODES.map(([m, n]) => `<option value="${m}">${esc(n)}</option>`).join('')}</select></div><div class="stats-one"></div><p class="small dim stat-note"></p>`, {
+    cls: 'win-small',
+    onOpen(w) {
+      const body = w.querySelector('.stats-one'), note = w.querySelector('.stat-note'), mode = w.querySelector('.stat-mode');
+      const show = () => {
+        w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
+        mode.hidden = lastTab !== 'all'; mode.value = lastMode;
+        const rounds = new Set(s.history.map(h => h.round)).size;
+        body.innerHTML = lastTab === 'game' ? statBoxHTML(s, id) : totalsHTML(p, all && all[lastMode]);
+        note.textContent = lastTab === 'game' ? `This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.` : 'Across every game played (test rooms only add jumps).';
+      };
+      w.querySelector('.stat-tabs').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { lastTab = b.dataset.st; show(); } };
+      mode.onchange = () => { lastMode = mode.value; show(); };
+      show();
+    },
+  });
 }

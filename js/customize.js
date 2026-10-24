@@ -4,7 +4,7 @@
    below a line come
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
-import { profile, save, NAME_OK, cleanName } from './store.js';
+import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast } from './ui.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
@@ -20,7 +20,7 @@ import { who } from './who.js';
 /* sends your look to the room you are in */
 export function shareLook() {
   const r = activeRoom(); if (!r) return;
-  r.send({ t: 'look', look: { name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, ...(who.acct ? { acct: who.acct } : {}) } });
+  r.send({ t: 'look', look: { name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, stats: cleanStats(profile.stats), ...(who.acct ? { acct: who.acct } : {}) } });
 }
 /* a new name: letters, numbers, dashes and underscores */
 export function setName(raw) {

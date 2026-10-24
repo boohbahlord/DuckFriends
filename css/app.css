@@ -650,7 +650,7 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 
 /* ---------- a map's world fills the page during a game; the page's own background rests under it ---------- */
 .map-layer { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; container-type: size; }
-.game > :not(.map-layer) { position: relative; z-index: 1; }
+.game > :not(.map-layer, .pmenu, .votebox) { position: relative; z-index: 1; }
 html.map-on #shapes { display: none; }
 .scene.night svg { width: 100%; height: 100%; display: block; }
 .mm-night { background: #0e1022; } .mm-night svg { width: 100%; height: 100%; display: block; }
@@ -735,3 +735,39 @@ html.lite .tmeter i, html.still .tmeter i { animation: none; }
 /* the front page's link to the other website: a button with a small subtitle */
 .site-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; text-decoration: none; line-height: 1.1; }
 .site-btn small { font-size: calc(.72rem * var(--ts)); font-weight: 600; opacity: .75; letter-spacing: .03em; }
+/* the player menu (hold Tab, or 👥): cards with connection bars and tags */
+.pmenu { position: fixed; left: 50%; top: 3.6rem; transform: translateX(-50%); z-index: 6500; width: min(34rem, calc(100% - 1.5rem)); max-height: calc(100dvh - 9rem);
+  display: flex; flex-direction: column; background: color-mix(in srgb, var(--panel) 94%, transparent); border: .16rem solid var(--line); border-radius: 1rem; box-shadow: 0 .6rem 1.6rem #0008; }
+.pmenu[hidden] { display: none; }
+.pmenu > header { display: flex; align-items: center; justify-content: space-between; padding: .6rem .8rem .3rem 1rem; }
+.pmenu > header .win-x { position: static; }
+.pm-list { overflow: auto; padding: .2rem .8rem; display: flex; flex-direction: column; gap: .45rem; }
+.pm-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .6rem; cursor: pointer; border-radius: .7rem; }
+.pm-row:hover .pcard, .pm-row:focus-visible .pcard { outline: .16rem solid var(--blue); }
+.pm-row .pcard { margin: 0; }
+.pm-side { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; font-size: calc(.8rem * var(--ts)); }
+.pm-tag { padding: .05rem .45rem; border-radius: .5rem; background: var(--soft); white-space: nowrap; }
+.pm-tag.idle { background: color-mix(in srgb, var(--blue) 30%, var(--soft)); }
+.pm-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .6rem 1rem .8rem; border-top: .12rem solid var(--soft); margin-top: .4rem; }
+.net { display: inline-flex; align-items: center; gap: .35rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.net .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: .9rem; }
+.net .bars i { width: 4px; background: #ffffff30; border-radius: 1px; }
+.net .bars i:nth-child(1) { height: 30%; } .net .bars i:nth-child(2) { height: 55%; } .net .bars i:nth-child(3) { height: 78%; } .net .bars i:nth-child(4) { height: 100%; }
+.net.b4 .bars i.on, .net.b3 .bars i.on { background: var(--green); } .net.b2 .bars i.on { background: var(--orange); } .net.b1 .bars i.on { background: var(--red); }
+/* a running vote, at the top for everyone */
+.votebox { position: fixed; left: 50%; top: 3.6rem; transform: translateX(-50%); z-index: 6400; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem .8rem;
+  max-width: calc(100% - 1.5rem); padding: .5rem .9rem; border-radius: .9rem; background: color-mix(in srgb, var(--panel) 92%, transparent); border: .16rem solid var(--orange); box-shadow: 0 .4rem 1rem #0007; }
+.votebox[hidden] { display: none; }
+.vb-acts { display: inline-flex; gap: .4rem; }
+.pmenu:not([hidden]) ~ .votebox { top: auto; bottom: 4.8rem; }
+/* gone quiet: Zs float up from the duck */
+.gduck-zz { display: none; position: absolute; left: 62%; bottom: 85%; pointer-events: none; font-family: var(--fun); font-weight: 700; color: #fff; text-shadow: 0 .1rem 0 #1c1c28, 0 0 .4rem #2fa4ff; }
+.gduck.idle .gduck-zz { display: block; }
+.gduck-zz i { position: absolute; font-style: normal; opacity: 0; animation: zfloat 3s ease-out infinite; }
+.gduck-zz i:nth-child(1) { font-size: .8rem; } .gduck-zz i:nth-child(2) { font-size: 1rem; animation-delay: 1s; } .gduck-zz i:nth-child(3) { font-size: 1.25rem; animation-delay: 2s; }
+@keyframes zfloat { 0% { transform: translate(0, 0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(1.2rem, -2.6rem) rotate(12deg); opacity: 0; } }
+html.still .gduck-zz i { animation: none; opacity: 1; }
+/* rooms: a game in progress, and the hide-private switch */
+.rr-phase.live { color: var(--green); font-weight: 700; }
+.online-h { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
+.pcard-net { position: absolute; right: 2.7rem; top: 50%; transform: translateY(-50%); font-size: calc(.72rem * var(--ts)); padding: .1rem .4rem; border-radius: .5rem; background: #0007; color: #fff; }

@@ -13,6 +13,8 @@ export function showJumps(root) {
 }
 export function countJump() {
   profile.jumps = (profile.jumps || 0) + 1; save(); showJumps();
-  const r = activeRoom(); if (r) r.send({ t: 'jumps', n: (r.state.jumps[r.me] || 0) + 1 });
+  const r = activeRoom(); if (!r) return;
+  r.send({ t: 'jumps', n: (r.state.jumps[r.me] || 0) + 1 });
+  const st = profile.stats[(r.state.options && r.state.options.mode) || 'aod']; if (st) st.jumps++;   // all-time, test rooms too
 }
 document.addEventListener('settings', showJumps);

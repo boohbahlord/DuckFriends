@@ -16,14 +16,15 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, colOf, colX, colBounds, needed, VOTE_GRACE } from './rules.js';
+import { COLS, SHORT, colOf, colX, colBounds, needed, playing, VOTE_GRACE } from './rules.js';
+import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontCSS } from './name.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
-import { profile } from './store.js';
+import { profile, save } from './store.js';
 import { openSettings, netLevel } from './settings.js';
-import { openCustomize } from './customize.js';
+import { openCustomize, shareLook } from './customize.js';
 import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
 import { canAdd, requestFriend } from './account.js';
@@ -45,7 +46,9 @@ let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
-let draftT = 0;                  // my typed question waits a moment, then goes to the host as a draft
+let draftT = 0;
+let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
+let recorded = '';               // the last round counted in my all-time stats                  // my typed question waits a moment, then goes to the host as a draft
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -94,7 +97,7 @@ function drawDucks(now = clockNow()) {
     const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
     const sig = JSON.stringify([p.duck, p.name, p.nameStyle, !!p.dead]);   // a new look shows at once, mid-game too
@@ -123,6 +126,7 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('air', z > 1);
     d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
+    d.classList.toggle('idle', !!p.idle);   // gone quiet: Zs float up
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colOf(pos.x) : -1;
     if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', `var(--c${bub + 1})`); }
@@ -192,10 +196,11 @@ function playFx(f) {
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && ['answer', 'discuss', 'results'].includes(R.state.phase);
 const locked = () => R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam;   // an ended turn holds its answer (not in free roam)
-const canWalk = () => onBoardPhase() && !locked() && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined);
+const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-round: walks anywhere, plays from the next writing stage
+const canWalk = () => onBoardPhase() && !locked() && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined && !late());
 function xBounds() {
   const s = R.state;
-  if (s.phase === 'answer') return [.03, .97];
+  if (s.phase === 'answer' || late()) return [.03, .97];
   return colBounds(s.lock[R.me]);
 }
 function sendMove(force) {
@@ -385,11 +390,24 @@ const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('G
     <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} question${s.history.length === 1 ? '' : 's'}</p>
     <div class="statboxes grid"></div></div>`;
 
+/* my all-time stats: a round counts once its stats are up (not in test rooms), a game with its first round I played */
+function recordRound(s) {
+  const key = `${s.id}:${s.startedAt}:${s.round}`; if (key === recorded) return; recorded = key;
+  if (s.test) return;
+  const st = profile.stats[(s.options && s.options.mode) || 'aod'], mine = s.history.filter(h => h.round === s.round && h.a[R.me] !== undefined);
+  if (!st || !mine.length) return;
+  const game = `${s.id}:${s.startedAt}`;
+  if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
+  st.rounds++; st.answers += mine.length; for (const h of mine) st.counts[h.a[R.me]]++;
+  save(); shareLook();
+}
+
 const graceLeftMs = s => s.phase === 'answer' ? Math.max(0, s.at + VOTE_GRACE * 1000 - clockNow()) : 0;
 const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
-  const n = s.seat.length, d = s.seat.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
+  const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
+  if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next writing stage. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (s.phase === 'submit') return count;
   if (s.phase === 'answer') {
@@ -404,10 +422,10 @@ function actHTML(s) {
   }
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
-    const rv = s.seat.filter(id => s.reviewVotes[id]).length, ev = s.seat.filter(id => s.endVotes[id]).length;
+    const rv = s.seat.filter(id => s.reviewVotes[id]).length, lv = s.vote && s.vote.kind === 'lobby';
     return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next round'} <kbd>Enter</kbd></button>
       ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ''}
-      <button type="button" class="btn ${s.endVotes[R.me] ? 'red' : 'ghost'}" data-a="endgame">${s.endVotes[R.me] ? 'Voted to end' : 'Vote to end the game'} ${ev}/${need}</button>${count}</div>`;
+      <button type="button" class="btn ${lv ? 'red' : 'ghost'}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ''}>${lv ? 'Vote yes: back to the lobby' : 'Vote: back to the lobby'}</button>${count}</div>`;
   }
   if (s.phase === 'over') return `<div class="act-row">${s.hostId === R.me ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
   return '';
@@ -449,9 +467,11 @@ function paint(force) {
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
   setHTML($('.gact', S), actHTML(s));
+  pm.paint();
   if (lastFx < 0) lastFx = s.fxN || 0;
   if ((s.fxN || 0) > lastFx) { const fresh = (s.fx || []).filter(f => f.n > lastFx); lastFx = s.fxN; if (onBoardPhase()) { if (!geo) measure(); fresh.forEach(playFx); } }
   if (s.phase === 'results') {
+    recordRound(s);
     const panel = $('.statpanel', S), had = panel._html && panel._html.includes('all-h');
     setHTML(panel, statsHTML(s));
     if (s.review && !had) panel.querySelector('.all-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -511,13 +531,14 @@ function openPause() {
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'];
 function keydown(e) {
   if (!S) return;
-  if (e.key === 'Escape' && !windowOpen() && !typing(e)) { e.preventDefault(); openPause(); return; }
+  if (e.key === 'Escape' && !windowOpen() && !typing(e)) { e.preventDefault(); if (pm.isOpen()) pm.close(); else openPause(); return; }
+  if (e.key === 'Tab' && !windowOpen() && !typing(e)) { pm.keydown(e); return; }   // hold Tab: the players
   if (typing(e) || windowOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
   if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
 }
-const keyup = e => keys.delete(e.code);
+const keyup = e => { keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); };
 const blur = () => keys.clear();
 const resized = () => { geo = null; };
 
@@ -531,7 +552,8 @@ async function act(a) {
       if (['answer', 'discuss', 'results'].includes(s.phase)) R.send({ t: 'end' });
       break;
     case 'review': R.send({ t: 'voteReview' }); break;
-    case 'endgame': R.send({ t: 'voteEnd' }); break;
+    case 'lobbyvote': lobbyVote(R); break;
+    case 'players': if (pm.isOpen()) pm.close(); else pm.open(true); break;
     case 'lobby': R.send({ t: 'toLobby' }); break;
     case 'leave': leaveTo('rooms', 'Leave the room?'); break;
     case 'notes': { const t = await pickNote(); const box = $('.submit-card textarea', S); if (t && box) { box.value = t; box.focus(); } break; }
@@ -545,6 +567,7 @@ register('game', {
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
+    if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null;
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null;
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
@@ -552,9 +575,10 @@ register('game', {
     R = arg || activeRoom(); if (!R) return null;
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
-        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
+        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(S, HINTS);
+    pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; } });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
@@ -581,7 +605,8 @@ register('game', {
     onMenu(S, (x, y, e) => {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;
       const p = R.state.players[d.dataset.pid];
-      contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)], ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : [])]);
+      contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)], ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : []),
+        ...(p && d.dataset.pid !== R.me && !p.bot ? [['Vote to kick', () => startKick(R, d.dataset.pid)]] : [])]);
     });
     off = R.on(s => {
       if (!S) return;

@@ -10,9 +10,10 @@
    enforce all this are in database.rules.json. The Firebase code loads only when online rooms are first used. */
 import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
-import { NAME_OK } from './store.js';
+import { NAME_OK, cleanStats } from './store.js';
 import { myPlayer, setActive, dropActive } from './net.js';
 import { clock, now } from './clock.js';
+import { who } from './who.js';
 import { go } from './router.js';
 import { toast } from './ui.js';
 
@@ -138,8 +139,8 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'move', 'end', 'voteReview', 'voteEnd', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
-const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net'];
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
+const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
   if (!a || typeof a !== 'object' || !REMOTE.has(a.t)) return null;
@@ -149,11 +150,13 @@ function clean(a, by) {
     if (!NAME_OK.test(a.p.name)) a.p.name = 'Player';
     const acct = a.p.acct; if (typeof acct === 'string' && acct.length < 129) a.p.acct = acct; else delete a.p.acct;
     a.p.net = [0, 1, 2].includes(a.p.net) ? a.p.net : 0;
+    a.p.stats = cleanStats(a.p.stats);
   }
   if (a.t === 'look') {
     a.look = pick(a.look, LOOK);
     if (a.look.name !== undefined && !NAME_OK.test(a.look.name)) delete a.look.name;
     if (a.look.acct !== undefined && !(typeof a.look.acct === 'string' && a.look.acct.length < 129)) delete a.look.acct;
+    if (a.look.stats !== undefined) a.look.stats = cleanStats(a.look.stats);
   }
   return a;
 }
@@ -255,7 +258,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       auth = decode(v); ackSeen = (v && v.ack) || {};
       if (!auth) return;
       if (auth.players[me]) seen = true;
-      else if (seen) { gone('You left the room: the host removed you, or you were away too long.'); return; }
+      else if (seen) { gone(auth.banned && auth.banned[me] ? 'You were voted out of the room until it goes back to the lobby.' : 'You left the room: the host removed you, or you were away too long.'); return; }
       rebuild();
     }, fail);
   }
@@ -289,6 +292,15 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     const next = auth.seat.find(id => can(id) && auth.players[id].net !== 2) || auth.seat.find(can);   // a good connection hosts first
     if (now() - hostGoneAt > HOST_GONE && next === me) D.set(path('host'), me).catch(() => { /* someone else took it first */ });
   }, 1000);
+  /* my connection: how long a small write takes to reach the server and come back, told to the room when it changes */
+  let lastMs = -999, msAt = 0;
+  const pinger = setInterval(async () => {
+    if (closed || !seen) return;
+    const t0 = performance.now();
+    try { await D.set(path('on/' + me), true); } catch (e) { return; }
+    const ms = Math.round(performance.now() - t0);
+    if (Math.abs(ms - lastMs) >= 15 || now() - msAt > 30000) { lastMs = ms; msAt = now(); room.send({ t: 'ping', ms }); }
+  }, 5000);
   /* here while connected; a reconnect says so again */
   subs.push(D.onValue(ref('.info/connected'), snap => {
     if (!snap.val() || closed) return;
@@ -325,8 +337,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
           if (closed) { clearInterval(t); no(new Error('Left.')); return; }
           if (seen) { clearInterval(t); ok(room); return; }
           if (Date.now() - t0 > 12000) {
-            clearInterval(t); const full = auth && auth.seat.length >= auth.max;
-            room.close(); no(new Error(full ? 'That room is full.' : 'The room didn\'t answer. Its host may be away.'));
+            clearInterval(t); const full = auth && auth.seat.length >= auth.max, out = auth && auth.banned && (auth.banned[me] || (who.acct && auth.banned['acct:' + who.acct]));
+            room.close(); no(new Error(out ? 'You were voted out of that room until it goes back to the lobby.' : full ? 'That room is full.' : 'The room didn\'t answer. Its host may be away.'));
           }
         }, 150);
       });
@@ -350,7 +362,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       }
       closed = true;
       if (clientOff) clientOff();
-      subs.forEach(f => f()); clearInterval(watch);
+      subs.forEach(f => f()); clearInterval(watch); clearInterval(pinger);
       D.remove(path('on/' + me)).catch(() => {}); D.onDisconnect(path('on/' + me)).cancel();
       if (wasHost) D.onDisconnect(ref('lobby/' + rid)).cancel();
       fns.clear(); dropActive(room);

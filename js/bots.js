@@ -61,8 +61,6 @@ export function botActions(s, now) {
         }
         if (s.phase === 'results') {
           if (s.round >= 1 && !s.reviewVotes[id] && people.some(h => s.reviewVotes[h])) out.push({ t: 'voteReview', id });
-          if (!s.endVotes[id] && people.some(h => s.endVotes[h])) out.push({ t: 'voteEnd', id });
-          if (s.endVotes[id] && !people.some(h => s.endVotes[h])) out.push({ t: 'voteEnd', id });   // a person took theirs back
         }
         break;
       }

@@ -3,7 +3,7 @@
    the list. A TEST room stays on this device, filled with computers; nothing in it counts toward stats. */
 import { register, go, backTo } from './router.js';
 import { el, esc, openWindow } from './ui.js';
-import { profile } from './store.js';
+import { profile, save } from './store.js';
 import { createLocalRoom } from './net.js';
 import { createOnlineRoom, joinOnlineRoom, watchRooms, whyNot } from './online.js';
 import { gameArtSVG, symbolSVG } from './art.js';
@@ -11,7 +11,7 @@ import { MAX_DEFAULT } from './rules.js';
 
 const last = { computers: 3, max: MAX_DEFAULT, test: false };
 let unwatch = null, busy = false;
-const PHASE = { lobby: 'In the lobby', countdown: 'Starting', over: 'Game over' };
+const PHASE = { lobby: 'In the lobby', countdown: 'Starting', over: 'Game over' };   // anything else: Game in progress (anyone can join)
 
 register('rooms', {
   leave() { if (unwatch) unwatch(); unwatch = null; },
@@ -40,7 +40,7 @@ register('rooms', {
           </div>
         </form>
         <section class="panel online">
-          <h2>Rooms online</h2>
+          <div class="online-h"><h2>Rooms online</h2><label class="check small"><input type="checkbox" class="hide-priv"${profile.settings.hidePrivate ? ' checked' : ''}>Hide private rooms</label></div>
           <div class="room-list"><p class="dim empty">Connecting…</p></div>
         </section>
       </div>
@@ -78,9 +78,11 @@ register('rooms', {
         <span class="rr-name">${r.open ? '' : '<span class="lock" aria-label="Private">🔒</span> '}${esc(r.name)}</span>
         <span class="rr-host dim">${esc(r.hostName || '')}</span>
         <span class="rr-n">${r.n}/${r.max}</span>
-        <span class="rr-phase dim">${full ? 'Full' : PHASE[r.phase] || 'Playing'}</span></button>`;
+        <span class="rr-phase${PHASE[r.phase] ? ' dim' : ' live'}">${full ? 'Full' : PHASE[r.phase] || 'Game in progress'}</span></button>`;
     };
-    const paintList = () => { list.innerHTML = rooms.length ? rooms.map(rowHTML).join('') : '<p class="dim empty">No rooms open right now. Create one and your friends will see it here.</p>'; };
+    const shownRooms = () => profile.settings.hidePrivate ? rooms.filter(r => r.open) : rooms;
+    const paintList = () => { const r = shownRooms(); list.innerHTML = r.length ? r.map(rowHTML).join('') : `<p class="dim empty">${rooms.length ? 'Only private rooms right now.' : 'No rooms open right now. Create one and your friends will see it here.'}</p>`; };
+    s.querySelector('.hide-priv').onchange = e => { profile.settings.hidePrivate = e.target.checked; save(); if (!busy) paintList(); };
     const join = async (r, passkey = '') => {
       if (busy) return; busy = true;
       const row = list.querySelector(`[data-rid="${r.rid}"] .rr-phase`); if (row) row.textContent = 'Joining…';

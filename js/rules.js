@@ -33,7 +33,18 @@ export const colX = c => (c + .5) / 7;
 /* the edges of a column, a little inside, for ducks kept in their column */
 export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
-export const needed = s => Math.max(1, Math.ceil(s.seat.length * s.options.share - 1e-9));
+/* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
+export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
+export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
+/* one turn: the writing stage, one question (its vote and talk), or the stat screen */
+export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : `${s.phase}${s.round}`;
+export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
+/* who votes, and how many yes votes pass it: a kick needs every other player; back to the lobby needs the usual share */
+export function voteNeeds(s, v = s.vote) {
+  if (!v) return { voters: [], need: 0 };
+  const voters = humanIds(s).filter(id => v.kind !== 'kick' || id !== v.target);
+  return { voters, need: v.kind === 'kick' ? voters.length : Math.max(1, Math.ceil(voters.length * s.options.share - 1e-9)) };
+}
 
 export function newRoom({ id, name, host, test = false, open = true, passkey = '', max = MAX_DEFAULT, options = {} }) {
   return {
@@ -41,7 +52,7 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
     options: { ...OPTIONS_DEFAULT, ...options },
     players: { [host.id]: { ...host, bot: false, ready: false } }, seat: [host.id],
     phase: 'lobby', at: 0, ends: 0, catchEnds: 0, round: 0,
-    qs: [], qi: 0, lordTime: 0, pos: {}, lock: {}, done: {}, fx: [], fxN: 0, history: [], reviewVotes: {}, endVotes: {}, review: false, jumps: {},
+    qs: [], qi: 0, lordTime: 0, pos: {}, lock: {}, done: {}, fx: [], fxN: 0, history: [], reviewVotes: {}, review: false, jumps: {},
     log: [], logN: 0,
   };
 }
@@ -54,7 +65,7 @@ function phaseLimit(s) {
 }
 function enter(s, phase, now) {
   s.phase = phase; s.at = now; s.done = {}; s.catchEnds = 0;
-  if (phase === 'submit') s.drafts = {};
+  if (phase === 'submit') { s.drafts = {}; for (const id of s.seat) if (s.players[id]) delete s.players[id].late; }   // late joiners play from here
   const lim = phaseLimit(s); s.ends = lim ? now + lim * 1000 : 0;
   return s;
 }
@@ -85,13 +96,13 @@ function startQuestion(s, now) {
 /* everyone's answers to the current question go into the history */
 function recordAnswers(s) {
   const q = s.qs[s.qi], a = {};
-  for (const id of s.seat) { const p = s.pos[id]; if (p && p.x >= 0) a[id] = colOf(p.x); }
+  for (const id of playing(s)) { const p = s.pos[id]; if (p && p.x >= 0) a[id] = colOf(p.x); }
   s.history.push({ round: s.round, by: q.by, text: q.text, a });
   s.lock = { ...a };   // after answering, each duck stays in the column it chose
 }
 
 function startResults(s, now) {
-  s.reviewVotes = {}; s.endVotes = {}; s.review = false;
+  s.reviewVotes = {}; s.review = false;
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
@@ -103,7 +114,7 @@ function startResults(s, now) {
 
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now) {
-  const n = s.seat.length, d = s.seat.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
+  const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   const timed = s.phase === 'submit' || s.phase === 'answer';
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
@@ -140,7 +151,9 @@ export function reduce(state, a, now = Date.now()) {
     case 'join': {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
       if (s.seat.length >= s.max) return s;
+      if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
+      if (['answer', 'discuss', 'results'].includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage
       if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: colX(3), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
@@ -149,6 +162,7 @@ export function reduce(state, a, now = Date.now()) {
       say(s, `${me.name} left.`);
       delete P[a.id]; s.seat = s.seat.filter(id => id !== a.id); delete s.pos[a.id]; delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
+      if (s.vote) settleVote(s, now);
       return s.phase === 'lobby' || s.phase === 'over' ? s : advance(s, now);
     }
     case 'look': if (me) Object.assign(me, a.look); return s;
@@ -179,7 +193,7 @@ export function reduce(state, a, now = Date.now()) {
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colOf(x) === colOf(was.x))) { x = was.x; y = was.y; }
-      if (s.phase !== 'answer') {   // after answering: inside your own column; no answer, no board
+      if (s.phase !== 'answer' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBounds(c); x = Math.max(lo, Math.min(hi, x)); }
       }
@@ -188,7 +202,7 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
-      if (!me || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
+      if (!me || me.late || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0)) return s;   // stand on a column first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       s.done[a.id] = a.v ?? !s.done[a.id];
@@ -200,10 +214,6 @@ export function reduce(state, a, now = Date.now()) {
       s.reviewVotes[a.id] = true;
       if (s.seat.filter(id => s.reviewVotes[id]).length >= needed(s)) s.review = true;
       return s;
-    case 'voteEnd':
-      if (!me || s.phase !== 'results') return s;
-      s.endVotes[a.id] = !s.endVotes[a.id];
-      return s.seat.filter(id => s.endVotes[id]).length >= needed(s) ? enter(s, 'over', now) : s;
     case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
@@ -213,6 +223,34 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'jumps': if (me) s.jumps[a.id] = Math.max(0, +a.n || 0); return s;   // completed jumps this game
+    case 'ping': {   // a player's connection: milliseconds to the game server and back
+      const ms = Math.max(0, Math.min(9999, Math.round(+a.ms || 0)));
+      if (!me || me.ms === ms) return state;
+      me.ms = ms; return s;
+    }
+    case 'idle': if (!me || !!me.idle === !!a.v) return state; me.idle = !!a.v; return s;   // no key, click or touch in 2 minutes
+    case 'voteStart': {   // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
+      if (!me || me.bot || ['lobby', 'countdown', 'over'].includes(s.phase)) return state;
+      if (s.vote) return state;
+      const used = (s.voteUsed || {})[a.id] || {};
+      if (a.kind === 'kick') {
+        if (!P[a.target] || a.target === a.id) return state;
+        if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
+      } else if (a.kind === 'lobby') {
+        if (used.lobby === turnKey(s)) return state;   // one back-to-lobby vote a turn
+      } else return state;
+      s.voteN = (s.voteN || 0) + 1;
+      s.vote = { n: s.voteN, kind: a.kind, target: a.kind === 'kick' ? a.target : null, by: a.id, yes: { [a.id]: true }, no: {}, ends: now + VOTE_TIME * 1000 };
+      s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : turnKey(s) } };
+      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : `${me.name} started a vote to go back to the lobby.`);
+      return settleVote(s, now);
+    }
+    case 'voteCast': {
+      const v = s.vote; if (!me || !v || v.n !== a.n) return state;
+      if (!voteNeeds(s).voters.includes(a.id)) return state;
+      if (a.v) { v.yes[a.id] = true; delete v.no[a.id]; } else { v.no[a.id] = true; delete v.yes[a.id]; }
+      return settleVote(s, now);
+    }
     case 'chat': {
       if (!me) return s;
       const text = String(a.text || '').trim().slice(0, 300); if (!text) return state;
@@ -220,13 +258,43 @@ export function reduce(state, a, now = Date.now()) {
       logLine(s, { from: a.id, to: a.to || null, text }); return s;
     }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
-      if (s.phase === 'countdown' && now >= s.ends) { s.round = 0; s.history = []; s.subs = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
+      if (s.phase === 'countdown' && now >= s.ends) { s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
+      if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
       return sig() === was ? state : s;
     }
   }
+  return s;
+}
+
+/* a vote passes once enough say yes, and fails once it can't pass any more */
+function settleVote(s, now) {
+  const v = s.vote; if (!v) return s;
+  const { voters, need } = voteNeeds(s, v), yes = voters.filter(id => v.yes[id]).length, no = voters.filter(id => v.no[id]).length;
+  if (v.kind === 'kick' && !s.players[v.target]) { s.vote = null; return s; }
+  if (yes >= need) {
+    s.vote = null;
+    if (v.kind === 'kick') {
+      const p = s.players[v.target];
+      s.banned = { ...(s.banned || {}), [v.target]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) };
+      say(s, `${p.name} was voted out until the room goes back to the lobby.`);
+      delete s.players[v.target]; s.seat = s.seat.filter(id => id !== v.target); delete s.pos[v.target]; delete s.done[v.target];
+      if (v.target === s.hostId) s.hostId = humanIds(s)[0] || null;
+      return advance(s, now);
+    }
+    return backToLobby(s, 'Everyone voted to go back to the lobby.');
+  }
+  if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
+  return s;
+}
+/* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
+function backToLobby(s, why) {
+  s.phase = 'lobby'; s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {};
+  for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
+  say(s, why);
   return s;
 }
 
