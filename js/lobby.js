@@ -153,7 +153,7 @@ function paint() {
 
 function onState(s) {
   if (!S) return;
-  if (!['lobby', 'countdown'].includes(s.phase)) { go('game', R); return; }
+  if (!['lobby', 'countdown'].includes(s.phase)) { if (lastCount > 0) sfx.count(true); lastCount = -1; go('game', R); return; }   // the countdown's last tone, at zero
   if (s.phase === 'countdown') {
     const left = Math.max(0, Math.ceil((s.ends - Date.now()) / 1000));
     if (left !== lastCount) { sfx.count(left === 0); lastCount = left; }

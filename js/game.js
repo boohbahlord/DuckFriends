@@ -9,10 +9,12 @@
    Your duck: WASD or the arrow keys walk (Shift sprints, with speed lines); Space jumps, slow and high, with a shadow left
    on the ground (low gravity makes it slower and higher; a jump counts when the duck lands); Enter ends your turn. With
    "Mouse moves your duck" a click walks it there; with "Show multiple choice" seven buttons put it on a column. Ducks
-   squash a little when they push against a wall or another duck. On a phone held upright the board turns: agree at the
-   top. Your duck moves on your screen at once and is sent to the room a few times a second; the others glide. */
+   squash a little when they push against a wall or another duck. On a touch screen a see-through joystick appears under
+   a held finger, or (Settings → Controls) a tap walks the duck there; see touch.js. On a phone held upright the board
+   turns: agree at the top. Your duck moves on your screen at once and is sent to the room a few times a second; the
+   others glide. */
 import { register, go, leaveTo } from './router.js';
-import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML } from './ui.js';
+import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
 import { COLS, SHORT, colOf, colX, colBounds, needed } from './rules.js';
 import { duckSVG } from './duck.js';
@@ -29,12 +31,14 @@ import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
 import { mountMap } from './maps.js';
 import { hooks } from './hooks.js';
+import { mountTouch, stick } from './touch.js';
 
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
 let shown = '';            // which phase view is up (phase|round|question)
 const keys = new Set();
 let me = null;             // my duck here: { x, y, j (jump start), face }
-let target = null;         // where a click asked my duck to walk
+let target = null;         // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
+let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
 let scene = null;                // the map behind the columns (Sky, Pixel)
@@ -119,6 +123,13 @@ function drawDucks(now = Date.now()) {
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
+  let mark = layer.querySelector('.touch-mark');
+  if (target && target.mark) {
+    if (!mark) { mark = el('<div class="touch-mark"></div>'); layer.prepend(mark); }
+    const a = place(target, 0, 1), tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px)`;
+    if (mark._tr !== tr) { mark._tr = tr; mark.style.transform = tr; }
+    mark.classList.remove('gone'); mark.classList.toggle('sprint', !!target.sprint);
+  } else if (mark) mark.classList.add('gone');
   // hotdogs hang around their duck, then fade
   hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
   for (const h of hotdogs) {
@@ -216,14 +227,18 @@ function step(dt, now) {
   if (me.j && (now - me.j) / 1000 >= jumpCfg().T) { me.j = 0; countJump(); sendMove(true); }
   const k = c => keys.has(c);
   const up = k('KeyW') || k('ArrowUp'), down = k('KeyS') || k('ArrowDown'), left = k('KeyA') || k('ArrowLeft'), right = k('KeyD') || k('ArrowRight');
-  sprinting = k('ShiftLeft') || k('ShiftRight');
   let hx = (right ? 1 : 0) - (left ? 1 : 0), vy = (down ? 1 : 0) - (up ? 1 : 0);   // on screen: right, down
+  if (!hx && !vy && (stick.x || stick.y)) { hx = stick.x; vy = stick.y; }       // the joystick: slower near its middle
   if (hx || vy) target = null;
+  sprinting = k('ShiftLeft') || k('ShiftRight') || stick.sprint || !!(target && target.sprint);
   let ax, ay;   // in board terms
   if (portrait()) { ax = -vy; ay = hx; } else { ax = hx; ay = vy; }
   if (target && me.x >= 0) {
+    const [lo, hi] = xBounds(); target.x = Math.max(lo, Math.min(hi, target.x));
     const dx = target.x - me.x, dy = target.y - me.y, dist = Math.hypot(dx, dy);
-    if (dist < .008) target = null; else { ax = dx / dist; ay = dy / dist; }
+    if (target.best === undefined || dist < target.best - .002) { target.best = dist; target.since = now; }
+    if (dist < .008 || now - target.since > 700) target = null;   // there, or held up by another duck
+    else { ax = dx / dist; ay = dy / dist; }
   }
   moving = !!(ax || ay) && canWalk();
   /* a jump can end inside another duck (in the air they pass over each other); on the ground they ease apart */
@@ -277,11 +292,23 @@ function jumpTo(c) {
   sendMove(true);
 }
 function boardClick(e) {
-  if (!profile.settings.mouseMove || !canWalk() || !geo) return;
+  if (!profile.settings.mouseMove || !canWalk() || !geo || Date.now() - touchedAt < 900) return;
   const board = e.target.closest('.board'); if (!board || e.target.closest('.topover')) return;
   const r = board.getBoundingClientRect();
   target = unplace(e.clientX - r.left, e.clientY - r.top);
   if (me.x < 0) { me.x = .5; me.y = .9; }
+}
+/* touch: walk to a spot on the screen (a faint white circle marks it), and where my duck is on the screen */
+function walkTo(cx, cy, sprint) {
+  if (!me || !canWalk()) return;
+  if (!geo) measure(); const board = S && $('.board', S); if (!board || !geo) return;
+  const r = board.getBoundingClientRect();
+  target = { ...unplace(cx - r.left, cy - r.top), sprint, mark: true };
+}
+function duckAt() {
+  const board = S && $('.board', S); if (!board || !geo || !me) return null;
+  const r = board.getBoundingClientRect(), a = place(me, 0, 1);
+  return { x: r.left + a.left, y: r.top + a.top };
 }
 
 /* ---------- the views ---------- */
@@ -360,6 +387,10 @@ function paint(force) {
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
     const board = $('.board', main); if (board) scene = mountMap(board, s);
     if (was && s.phase !== was.split('|')[0]) sfx.done();
+    if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
+      touchTold = true;
+      toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
+    }
     $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = TITLES[s.phase] || '';
     geo = null;
@@ -454,7 +485,7 @@ register('game', {
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
-    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null;
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; if (touchOff) touchOff(); touchOff = null;
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
@@ -465,6 +496,8 @@ register('game', {
       <div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(S, HINTS);
     hooks.resetDuck = resetDuck;
+    touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; } });
+    S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = Date.now(); }, true);
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
@@ -485,7 +518,7 @@ register('game', {
       if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });
     onMenu(S, (x, y, e) => {
-      const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d) return;
+      const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;
       contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)]]);
     });
     off = R.on(s => {

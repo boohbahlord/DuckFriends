@@ -368,6 +368,19 @@ html.moving .lord-duck { animation: lordbob 3s ease-in-out infinite; }
 .gduck.sprint.left .gduck-lift::before { right: auto; left: 88%; -webkit-mask: linear-gradient(270deg, transparent, #000); mask: linear-gradient(270deg, transparent, #000); }
 @keyframes zoomlines { from { opacity: .9; } to { opacity: .5; } }
 html.mouse-move .board { cursor: pointer; }
+/* touch: the board takes every finger (no page scroll or zoom); the joystick and the tap-to-move circle are faint and white */
+.game > .gmain[data-phase="answer"], .game > .gmain[data-phase="discuss"], .results .stage { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.stick { position: fixed; left: 0; top: 0; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none; z-index: 6000; opacity: 0; transition: opacity .12s;
+  background: radial-gradient(circle, #ffffff10 0 55%, #ffffff1c 100%); border: 2px solid #ffffff40; box-shadow: 0 0 0 1px #00000018; }
+.stick.on { opacity: 1; }
+.stick-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: #ffffff38; border: 2px solid #ffffff70; box-shadow: 0 0 0 1px #00000020; }
+.stick.sprint { border-color: #ffd23f80; }
+.stick.sprint .stick-knob { background: #ffd23f55; border-color: #ffd23fcc; box-shadow: 0 0 .9rem #ffd23f99; }
+.touch-mark { position: absolute; left: 0; top: 0; width: 1.7rem; height: 1.7rem; margin: -.85rem 0 0 -.85rem; border-radius: 50%; pointer-events: none;
+  background: #ffffff26; border: 2px solid #ffffff8c; box-shadow: 0 0 0 1px #00000014; transition: opacity .3s; animation: markin .25s ease-out; }
+.touch-mark.sprint { border-color: #ffd23fcc; }
+.touch-mark.gone { opacity: 0; animation: none; }
+@keyframes markin { from { scale: .4; opacity: 0; } }
 @media (orientation: portrait) and (max-width: 760px) {
   .cols { display: flex; flex-direction: column-reverse; }
   .col { flex: 1; padding: 0 0 0 .6rem; justify-content: flex-start; align-items: center; border-right: 0; border-top: .12rem solid #0002; }

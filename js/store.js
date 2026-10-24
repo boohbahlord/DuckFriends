@@ -7,7 +7,7 @@ import { DUCK_DEFAULT } from './duck.js';
 const KEY = 'jmg-profile-1';
 export const SETTINGS_DEFAULT = {
   v: 2, theme: 'dark', font: 'fredoka', textSize: 100, uiSize: 100, dyslexic: false, colorblind: false,
-  motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, mouseMove: false, multipleChoice: false, jumpsSci: false, jumpsHidden: false, chatSide: 'left',
+  motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, mouseMove: false, multipleChoice: false, touch: 'stick', jumpsSci: false, jumpsHidden: false, chatSide: 'left',
   shapes: 'moving', sound: 100, sfx: 100, settingsTab: 'general',
 };
 export const PROFILE_DEFAULT = {
