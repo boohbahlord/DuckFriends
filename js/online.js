@@ -139,7 +139,7 @@ const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
 const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'move', 'end', 'voteReview', 'voteEnd', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
-const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct'];
+const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
   if (!a || typeof a !== 'object' || !REMOTE.has(a.t)) return null;
@@ -148,6 +148,7 @@ function clean(a, by) {
     a.p = { duck: {}, card: {}, nameStyle: {}, ...pick(a.p, LOOK), id: by, bot: false };
     if (!NAME_OK.test(a.p.name)) a.p.name = 'Player';
     const acct = a.p.acct; if (typeof acct === 'string' && acct.length < 129) a.p.acct = acct; else delete a.p.acct;
+    a.p.net = [0, 1, 2].includes(a.p.net) ? a.p.net : 0;
   }
   if (a.t === 'look') {
     a.look = pick(a.look, LOOK);
@@ -212,7 +213,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       if (state.players[id].bot || id === me) continue;
       if (online.has(id)) { delete away[id]; continue; }
       away[id] = away[id] || t;
-      if (t - away[id] > AWAY) { delete away[id]; apply({ t: 'leave', id }); }
+      if (t - away[id] > (state.players[id].net === 2 ? AWAY * 3 : AWAY)) { delete away[id]; apply({ t: 'leave', id }); }   // more patience with a poor connection
     }
     if (t - beatAt > 30000 || beatSig !== [state.name, state.seat.length, state.max, state.phase].join('|')) beat();
     if (t - hbAt > 2000) { hbAt = t; D.set(path('hb'), D.serverTimestamp()).catch(quiet); }
@@ -284,7 +285,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     if (mode !== 'client' || !auth || !hostUid) return;
     if (online.has(hostUid) && !(hb && now() - hb > HOST_STILL)) { hostGoneAt = 0; return; }
     hostGoneAt = hostGoneAt || now();
-    const next = auth.seat.find(id => id !== hostUid && !auth.players[id].bot && online.has(id));
+    const can = id => id !== hostUid && !auth.players[id].bot && online.has(id);
+    const next = auth.seat.find(id => can(id) && auth.players[id].net !== 2) || auth.seat.find(can);   // a good connection hosts first
     if (now() - hostGoneAt > HOST_GONE && next === me) D.set(path('host'), me).catch(() => { /* someone else took it first */ });
   }, 1000);
   /* here while connected; a reconnect says so again */

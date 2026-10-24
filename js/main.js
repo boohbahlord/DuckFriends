@@ -1,5 +1,5 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
-import { applySettings } from './settings.js';
+import { applySettings, askConnection } from './settings.js';
 import { backdropSVG } from './art.js';
 import { profile } from './store.js';
 import { $, toast } from './ui.js';
@@ -51,4 +51,5 @@ addEventListener('duck-profile', () => {
 });
 
 start('front');
-setTimeout(accountStart, 300);   // a device that signed in before connects after the first screen is up
+setTimeout(accountStart, 300);
+setTimeout(askConnection, 600);   // once, on the first visit   // a device that signed in before connects after the first screen is up

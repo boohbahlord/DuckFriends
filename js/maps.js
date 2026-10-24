@@ -1,32 +1,32 @@
-/* ---------- maps: what the board looks like ----------
-   The Board: the seven solid columns. Sky: clouds everywhere behind see-through columns; the sun sinks for a minute,
-   then the moon comes down from the top and sinks for a minute, and the columns glow at night; one cloud carries a
-   random player's duck. Pixel: columns built of wool blocks, see-through to a blocky world behind: floating islands
-   (stone, two layers of dirt, grass, sometimes a tree) at different distances, a forest seen from above toward the bottom,
-   and a pixel sunset on the horizon that breathes. The host picks the map in the lobby. */
+/* ---------- maps: the world behind the board ----------
+   A map fills the whole page during a game, behind the see-through columns; the page's own background rests while it is
+   covered. Night Show: the carnival at night (bunting, glowing string lights, Twister dots breathing across the floor).
+   Sky: clouds everywhere; the sun sinks for a minute, then the moon comes down from the top and sinks for a minute, and
+   the columns glow at night; one cloud carries a random player's duck. Pixel: columns built of wool blocks over a blocky
+   world: floating islands (stone, two layers of dirt, grass, sometimes a tree) at different distances, a forest seen
+   from above toward the bottom, and a pixel sunset on the horizon that breathes. The host picks the map in the lobby. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
+import { backdropSVG } from './art.js';
 
 export const MAPS = [
-  ['board', 'The Board', 'Seven solid columns.'],
+  ['board', 'Night Show', 'The carnival at night: string lights, bunting and breathing Twister dots.'],
   ['sky', 'Sky', 'Clouds, a sun and a moon that take turns (a minute each), and columns that glow at night.'],
   ['pixel', 'Pixel', 'Wool-block columns over floating block islands, a forest below and a pixel sunset.'],
 ];
 export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
-const COLS7 = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)'];
 
-/* a small picture of each map for the Map window */
+/* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
-  const cols = COLS7.map(c => `<span style="background:${c}"></span>`).join('');
-  if (id === 'sky') return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i><div class="mm-cols">${cols}</div></div>`;
-  if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i><div class="mm-cols">${cols}</div></div>`;
-  return `<div class="mini-map"><div class="mm-cols solid">${cols}</div></div>`;
+  if (id === 'sky') return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
+  if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i></div>`;
+  return `<div class="mini-map mm-night">${backdropSVG(192, 106, true)}</div>`;
 }
 
 /* ---------- Sky ---------- */
 const CLOUD = '<svg viewBox="0 0 200 90" aria-hidden="true"><g fill="#fff"><circle cx="52" cy="56" r="28"/><circle cx="92" cy="42" r="34"/><circle cx="140" cy="50" r="30"/><circle cx="170" cy="64" r="20"/><circle cx="28" cy="66" r="18"/><rect x="28" y="56" width="146" height="28" rx="14"/></g></svg>';
 const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
-function skyScene(cols, s) {
+function skyScene(layer, s, cur) {
   const sc = document.createElement('div'); sc.className = 'scene sky';
   const rnd = (k => () => (k = (k * 9301 + 49297) % 233280) / 233280)(s.round * 31 + s.qi * 7 + 3);
   const n = 7, ids = s.seat.filter(id => s.players[id]), rider = ids.length ? ids[(s.round * 7 + s.qi * 3) % ids.length] : null;
@@ -38,7 +38,7 @@ function skyScene(cols, s) {
   sc.innerHTML = `<div class="sky-stars"></div><div class="sky-sun"></div><div class="sky-moon"></div>${clouds}`;
   const stars = sc.querySelector('.sky-stars');
   stars.innerHTML = Array.from({ length: 40 }, () => `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 70).toFixed(1)}%;animation-delay:-${(rnd() * 3).toFixed(1)}s"></i>`).join('');
-  cols.prepend(sc);
+  layer.append(sc);
   const sun = sc.querySelector('.sky-sun'), moon = sc.querySelector('.sky-moon');
   let last = '';
   return {
@@ -53,22 +53,22 @@ function skyScene(cols, s) {
       const bot = day ? (p < .6 ? '#d6f0ff' : mixHex('#d6f0ff', '#ffd08a', (p - .6) / .4)) : (p < .85 ? '#26305e' : mixHex('#26305e', '#8cc6f0', (p - .85) / .15));
       sc.style.background = `linear-gradient(${top}, ${bot})`;
       const night = !day || p > .9;
-      cols.classList.toggle('night', night);
+      if (cur.cols) cur.cols.classList.toggle('night', night);
       stars.style.opacity = day ? 0 : (p < .85 ? 1 : 1 - (p - .85) / .15);
     },
-    destroy() { sc.remove(); cols.classList.remove('night'); },
+    destroy() { sc.remove(); if (cur.cols) cur.cols.classList.remove('night'); },
   };
 }
 
 /* ---------- Pixel ---------- */
-function pixelScene(cols, s) {
+function pixelScene(layer) {
   const sc = document.createElement('div'); sc.className = 'scene pixel';
   sc.innerHTML = '<canvas class="pix-sky"></canvas><div class="pix-sun"></div><canvas class="pix-world"></canvas>';
-  cols.prepend(sc);
+  layer.append(sc);
   const skyC = sc.querySelector('.pix-sky'), worldC = sc.querySelector('.pix-world'), sun = sc.querySelector('.pix-sun');
   let drawn = '';
   const draw = () => {
-    const W = cols.clientWidth, H = cols.clientHeight; if (!W || !H) return;
+    const W = layer.clientWidth, H = layer.clientHeight; if (!W || !H) return;
     const key = W + 'x' + H; if (key === drawn) return; drawn = key;
     const u = Math.max(3, Math.round(H / 110)), cw = Math.ceil(W / u), ch = Math.ceil(H / u), hy = Math.round(ch * .5);
     let seed = 12345; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -116,16 +116,31 @@ function pixelScene(cols, s) {
     }
     sun.style.cssText = `left:${(cw * .68 * u).toFixed(0)}px;top:${(hy * u).toFixed(0)}px;width:${(u * 16).toFixed(0)}px;height:${(u * 16).toFixed(0)}px`;
   };
-  const ro = new ResizeObserver(draw); ro.observe(cols); draw();
+  const ro = new ResizeObserver(draw); ro.observe(layer); draw();
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
 }
 
-/* puts a map's scene behind the columns; returns { update(now), destroy() } */
-export function mountMap(board, s) {
-  const map = s.options.map || 'board', cols = board.querySelector('.cols');
-  board.classList.add('map-' + map);
-  if (map === 'sky') return skyScene(cols, s);
-  if (map === 'pixel') return pixelScene(cols, s);
-  return { update() {}, destroy() {} };
+/* ---------- Night Show: the carnival at night, drawn to the page ---------- */
+function nightScene(layer) {
+  const sc = document.createElement('div'); sc.className = 'scene night';
+  layer.append(sc);
+  let drawn = '';
+  const draw = () => { const k = layer.clientWidth + 'x' + layer.clientHeight; if (k === drawn || !layer.clientWidth) return; drawn = k; sc.innerHTML = backdropSVG(layer.clientWidth, layer.clientHeight, true); };
+  const ro = new ResizeObserver(draw); ro.observe(layer); draw();
+  return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
+}
+
+/* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
+   destroy() }: board() hands it the board, whose columns turn see-through for the map */
+export function mountMap(layer, s) {
+  const map = s.options.map || 'board', cur = { cols: null };
+  layer.className = 'map-layer map-' + map;
+  document.documentElement.classList.add('map-on');
+  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : nightScene(layer);
+  return {
+    update: now => scene.update(now),
+    board(board) { if (!board) { cur.cols = null; return; } board.classList.add('map-' + map); cur.cols = board.querySelector('.cols'); },
+    destroy() { scene.destroy(); layer.className = 'map-layer'; document.documentElement.classList.remove('map-on'); },
+  };
 }
 export const mapLabel = id => esc(mapName(id));

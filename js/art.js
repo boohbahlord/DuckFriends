@@ -44,12 +44,11 @@ const cloud = (cx, cy, s, fill = '#ffffff', shade = '#d8ecff') => {
 /* the game's art, which is also the lobby's picture of the chosen map (16 : 9): the map behind (The Board's columns, Sky's
    clouds and sun, Pixel's sunset, islands and forest), the duck sitting on a cloud, the title, the map's name, and the
    game's symbol at the top left */
-const BOARD7 = ['#880015', '#ED1C24', '#FF7F27', '#FFF200', '#75F94D', '#37D421', '#00A2E8'];
+/* the map's world behind the picture (no columns: the picture shows where the game is played) */
 function artBackdrop(map) {
-  const cols = (op, extra = '') => BOARD7.map((c, i) => `<rect x="${(i * 480 / 7).toFixed(1)}" y="0" width="${(480 / 7 + .5).toFixed(1)}" height="270" fill="${c}" opacity="${op}"${extra}/>`).join('');
   if (map === 'sky') return `<defs><linearGradient id="artsky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab8f5"/><stop offset="1" stop-color="#ffd6a8"/></linearGradient></defs>
 <rect width="480" height="270" fill="url(#artsky2)"/><circle cx="392" cy="58" r="30" fill="#ffd84a"/><circle cx="392" cy="58" r="44" fill="#ffd84a" opacity=".25"/>
-${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc', '#ffffff66')}${cols(.45)}`;
+${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc', '#ffffff66')}`;
   if (map === 'pixel') {
     const bands = ['#171a45', '#2b2a6b', '#5b3586', '#8a3f86', '#bb4f78', '#e2685e', '#f58e48', '#ffb44d'];
     const r = rnd(9); let px = bands.map((c, i) => `<rect x="0" y="${i * 17}" width="480" height="18" fill="${c}"/>`).join('');
@@ -62,9 +61,9 @@ ${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc'
     };
     px += isle(60, 60, 8, 8) + isle(250, 40, 6, 7);
     for (let y = 136, b = 6; y < 270; y += b, b = Math.min(18, b + 2)) for (let x = 0; x < 480; x += b) px += `<rect x="${x}" y="${y}" width="${b}" height="${b}" fill="${['#2a5e22', '#2f6b26', '#3b7f2c', '#4a9433'][Math.floor(r() * 4)]}"/>`;
-    return `<g shape-rendering="crispEdges">${px}${cols(.42)}${BOARD7.map((c, i) => `<path d="M${(i * 480 / 7).toFixed(1)} 0V270" stroke="#000" stroke-opacity=".25"/>`).join('')}</g>`;
+    return `<g shape-rendering="crispEdges">${px}</g>`;
   }
-  return `${cols(.88)}<rect width="480" height="270" fill="url(#artshade)"/>`;
+  return backdropSVG(480, 270, true).replace('<svg ', '<svg width="480" height="270" ');   // Night Show
 }
 export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '' } = {}) {
   const top = duck && duck.hat && !duck.image ? HAT_TOP : 0;   // room for a hat
