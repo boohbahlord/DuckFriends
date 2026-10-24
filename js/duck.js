@@ -9,7 +9,8 @@ import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
-import { styleById, styleColor, styleLayers, blocksBody, geoBody } from './styles.js';
+import { styleById, styleColor, styleLayers, blocksBody, geoBody, GEO_BODY } from './styles.js';
+import { outfitLayers } from './outfits.js';
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -29,7 +30,7 @@ export const METAL = {
   chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
 };
 export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null,
-  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, special: null, style: 'rubber' };
+  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, special: null, style: 'rubber', outfit: null };
 /* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%) */
 export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Fat'], [1, 'Chubby']];   // Chubby is the fattest
 export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
@@ -73,7 +74,7 @@ function plainLook(o) {
     if (typeof v === 'string') { if (k === 'image' || PLAIN.test(v)) out[k] = v; }
     else if (typeof v === 'number') { if (isFinite(v)) out[k] = v; }
     else if (typeof v === 'boolean' || v === null) out[k] = v;
-    else if (typeof v === 'object' && (k === 'hat' || k === 'face')) out[k] = plainLook(v);
+    else if (typeof v === 'object' && (k === 'hat' || k === 'face' || k === 'outfit')) out[k] = plainLook(v);
   }
   return out;
 }
@@ -91,12 +92,16 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
   }
   const st = styleById(L.style), hat = hatLayers(L.hat), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
   const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), eyes = eyesSVG(L, dead);
-  if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal
-    const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
+  const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
+  if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal; an outfit lies flat on the body
+    const OF = outfitLayers(L.outfit, { base: L.color, edge: mix(L.color, 0, .45) }), blocks = st.id === 'blocks';
+    const cloth = OF && OF.cloth ? `<defs><clipPath id="${id}fc"><path d="${blocks ? BODY : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
+<g mask="url(#${id}nh)"><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join('')}" stroke="#00000030" stroke-width="1"/>` : ''}</g></g></g>` : '';
     return `<svg class="duck flat" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
-${hat.back}<g${bt}>${st.id === 'blocks' ? blocksBody(L.color) : geoBody(L.color)}</g>
+${hat.back}${OF ? OF.back : ''}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
+${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ''}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ''}
 ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
   }
   const own = !st.fixed, M = own && L.metal !== 'none' && METAL[L.metal];
@@ -112,10 +117,11 @@ ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
      little bigger or smaller */
-  const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
-  const SL = styleLayers(L, st, id, BODY, bt);
-  const wing = SL.wing || `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
+  const SL = styleLayers(L, st, id, BODY, bt), OF = outfitLayers(L.outfit, TB);
+  const bare = SL.wing || `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
   <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
+  /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing) */
+  const wing = OF && OF.sleeve !== null ? (OF.bare ? bare : '') + `<g${bt}>${OF.sleeve}</g>` : bare;
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28', TB)}${fill(id + 'h', '.34', '.28', TH)}
@@ -129,12 +135,13 @@ ${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" 
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
-${hat.back}${SL.back || ''}
+${hat.back}${SL.back || ''}${SL.fluff && !(OF && OF.cloth) ? SL.fluff : ''}${OF ? OF.back : ''}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ''}
   ${SL.under || ''}
+  ${OF && OF.cloth ? `<g mask="url(#${id}nh)"><g${bt}>${OF.cloth}</g></g>` : ''}
   <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   ${wing}
@@ -143,13 +150,14 @@ ${hat.back}${SL.back || ''}
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
   <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
 </g>
-${st.fluffy ? '' : `<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>`}
+${st.fluffy && !(OF && OF.cloth) ? '' : `<path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? '#1c1c28a8' : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>`}
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="${st.fluffy ? 1.2 : 2.2}"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
 <g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
 <ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/></g>
 ${SL.over || ''}
+${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ''}
 ${beakSVG(L)}
 ${eyes}
 ${face}

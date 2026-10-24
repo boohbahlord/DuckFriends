@@ -1,7 +1,7 @@
 /* ---------- Customize: the Armory ----------
    After Halo: Reach's Armory. On a computer: a window with the menu on the left and your duck on the right, standing over
-   your player card; on a phone the duck is on top. The menu runs down the duck: Hat, Face, Eyes, Beak, Body, Style, then
-   Skin;
+   your player card; on a phone the duck is on top. The menu runs down the duck: Hat, Face, Eyes, Beak, Outfit, Body,
+   Style, then Skin;
    below a line come
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
@@ -15,6 +15,7 @@ import { FACES, faceById } from './faces.js';
 import { EYES, eyeById } from './eyes.js';
 import { BEAKS, beakById } from './beaks.js';
 import { STYLES, styleById } from './styles.js';
+import { OUTFITS, outfitById } from './outfits.js';
 import { FONTS } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
@@ -33,7 +34,7 @@ export function setName(raw) {
 }
 
 /* the menu, top to bottom as on the duck; then the rest below a line */
-const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['body', 'Body'], ['style', 'Style'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['specials', 'Specials'], ['colors', 'Colors']];
+const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['outfit', 'Outfit'], ['body', 'Body'], ['style', 'Style'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['specials', 'Specials'], ['colors', 'Colors']];
 const nameOf = (list, v, none = 'None') => { const f = list.find(x => x[0] === v); return f ? f[1] : none; };
 /* the body in words: only what is not normal */
 const bodyName = D => [[BUILDS, D.build], [SIZES, D.size]].filter(([, v]) => +v).map(([l, v]) => nameOf(l, +v, '')).filter(Boolean).join(', ') || 'Normal';
@@ -49,6 +50,7 @@ const valueOf = k => {
     beak: beakById(D.beak).name,
     body: bodyName(D),
     style: styleById(D.style).name,
+    outfit: D.outfit && outfitById(D.outfit.id) ? outfitById(D.outfit.id).name : 'None',
     skin: D.image ? 'Your picture' : D.metal !== 'none' ? nameOf(DUCK_METALS, D.metal) : nameOf(DUCK_PATTERNS, D.pattern, 'Plain'),
     name: profile.name,
     card: C.image ? 'Your picture' : nameOf(CARD_PATTERNS, C.pattern, 'Plain'),
@@ -123,6 +125,11 @@ export function openCustomize(page = lastPage) {
           html = head('Body') + `<div class="arm-body arm-bodies"><h3>Build</h3>${grid('build', BUILDS.map(([v, n]) => [String(v), pic({ build: v }), n]), String(+D.build || 0))}
             <h3>Size</h3>${grid('size', SIZES.map(([v, n]) => [String(v), pic({ size: v }), n]), String(+D.size || 0))}
             <p class="small dim">A bigger or fatter duck takes more room on the board; a small or skinny one slips by.</p></div>`;
+        } else if (k === 'outfit') {
+          const pic = id => duckSVG({ ...D, image: null, hat: null, face: null, outfit: id ? { ...(D.outfit && D.outfit.id === id ? D.outfit : {}), id } : null }, { size: 58, shadow: false });
+          const od = D.outfit && outfitById(D.outfit.id);
+          html = head('Outfit') + `<div class="arm-body">${grid('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none')}
+            ${od ? `<p class="small dim">${esc(od.name)}${od.tip ? `: ${esc(od.tip)}` : '.'}${od.colors ? ' Its colors are under Colors.' : ''}</p>` : '<p class="small dim">An outfit goes over the body, whatever the style.</p>'}</div>`;
         } else if (k === 'style') {
           /* each style in its own colors (a style you have on, in yours) */
           const look = x => ({ ...D, image: null, style: x.id, ...(x.colors && D.style !== x.id ? Object.fromEntries(x.colors.map(([c, , v]) => [c, v])) : {}) });
@@ -186,6 +193,8 @@ export function openCustomize(page = lastPage) {
         for (const [key, label, def] of (hd && hd.colors) || []) out.push(['hat-' + key, `${hd.name}: ${label}`, D.hat[key] || def, c => { D.hat = { ...D.hat, [key]: c }; }, '']);
         const bd = beakById(D.beak);
         for (const [key, label, def] of bd.colors || []) out.push([key, label, D[key] || def, c => { D[key] = c; }, '']);
+        const od = D.outfit && outfitById(D.outfit.id);
+        for (const [key, label, def] of (od && od.colors) || []) out.push(['outfit-' + key, `${od.name}: ${label}`, D.outfit[key] || def, c => { D.outfit = { ...D.outfit, [key]: c }; }, '']);
         const fd = D.face && faceById(D.face.id);
         for (const [key, label, def] of (fd && fd.colors) || []) out.push(['face-' + key, `${fd.name}: ${label}`, D.face[key] || def, c => { D.face = { ...D.face, [key]: c }; }, '']);
         out.push(['card', 'Card', C.color, c => { C.color = c; }, 'The color behind your card\'s pattern.']);
@@ -213,6 +222,7 @@ export function openCustomize(page = lastPage) {
           face: () => { D.face = v === 'none' ? null : { id: v }; },
           eyes: () => { D.eyes = v; },
           beak: () => { D.beak = v; },
+          outfit: () => { D.outfit = v === 'none' ? null : { ...(D.outfit && D.outfit.id === v ? D.outfit : {}), id: v }; },
           style: () => {   // a style with colors of its own starts in them; the raptor brings its beak with teeth
             const st = styleById(v);
             if (D.style !== v) { for (const [c, , def] of st.colors || []) D[c] = def; if (st.colors) { D.metal = 'none'; D.image = null; } if (st.beak) D.beak = st.beak; }
