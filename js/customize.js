@@ -52,8 +52,10 @@ export function openCustomize(tab = lastTab) {
         w.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === k));
         const D = profile.duck, C = profile.card, N = profile.nameStyle;
         if (k === 'duck') {
-          section('Color', colorField(D.color, c => { D.color = c; D.metal = 'none'; D.image = null; changed(); }, { swatches: DUCK_COLORS.map(x => x[1]) }));
-          section('Pattern', tiles('dpat', DUCK_PATTERNS, D.pattern), colorField(D.patternColor, c => { D.patternColor = c; changed(); }));
+          /* a metal replaces the color and the pattern, so with a metal on they show nothing chosen */
+          const metal = D.metal !== 'none';
+          section('Color', colorField(metal ? '' : D.color, c => { const was = D.metal; D.color = c; D.metal = 'none'; D.image = null; changed(); if (was !== 'none') show('duck'); }, { swatches: DUCK_COLORS.map(x => x[1]) })).classList.toggle('muted', metal);
+          section('Pattern', tiles('dpat', DUCK_PATTERNS, metal ? '' : D.pattern), colorField(D.patternColor, c => { D.patternColor = c; changed(); })).classList.toggle('muted', metal);
           section('Metal', tiles('dmetal', DUCK_METALS, D.metal));
           const pic = section('Picture', upload(D.image ? 'Change picture' : 'Upload a square picture', d => { D.image = d; }));
           if (D.image) { const x = document.createElement('button'); x.type = 'button'; x.className = 'btn ghost'; x.textContent = 'Back to the duck'; x.onclick = () => { D.image = null; changed(); show('duck'); }; pic.append(' ', x); }
@@ -77,7 +79,7 @@ export function openCustomize(tab = lastTab) {
       page.addEventListener('click', e => {
         const t = e.target.closest('.tile[data-g]'); if (!t) return;
         const v = t.dataset.v, D = profile.duck;
-        ({ dpat: () => { D.pattern = v; D.metal = 'none'; D.image = null; }, dmetal: () => { D.metal = v; D.image = null; },
+        ({ dpat: () => { D.pattern = v; D.metal = 'none'; D.image = null; setTimeout(() => show('duck')); }, dmetal: () => { D.metal = v; D.image = null; setTimeout(() => show('duck')); },
           cpat: () => { profile.card.pattern = v; }, nfont: () => { profile.nameStyle.font = v; } })[t.dataset.g]();
         page.querySelectorAll(`.tile[data-g="${t.dataset.g}"]`).forEach(b => b.setAttribute('aria-pressed', b === t));
         changed();

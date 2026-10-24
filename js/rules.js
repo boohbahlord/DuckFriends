@@ -18,6 +18,7 @@ export const OPTIONS_DEFAULT = {
   catchUp: 15,          // 0 (off), 15, 30, 45: the rest's time once enough players are done (submit and answer)
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
   botWait: 30,          // TEST rooms: seconds before computers act
+  lowGravity: 0,        // 1: jumps float, slower and higher
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -25,6 +26,8 @@ export const COUNTDOWN = 5;
 const clone = o => structuredClone(o);
 export const colOf = x => Math.max(0, Math.min(6, Math.floor(x * 7)));
 export const colX = c => (c + .5) / 7;
+/* the edges of a column, a little inside, for ducks kept in their column */
+export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 export const needed = s => Math.max(1, Math.ceil(s.seat.length * s.options.share - 1e-9));
 
@@ -34,7 +37,7 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
     options: { ...OPTIONS_DEFAULT, ...options },
     players: { [host.id]: { ...host, bot: false, ready: false } }, seat: [host.id],
     phase: 'lobby', at: 0, ends: 0, catchEnds: 0, round: 0,
-    qs: [], qi: 0, lordTime: 0, pos: {}, done: {}, history: [], reviewVotes: {}, endVotes: {}, review: false, clicks: {},
+    qs: [], qi: 0, lordTime: 0, pos: {}, lock: {}, done: {}, history: [], reviewVotes: {}, endVotes: {}, review: false, jumps: {},
     log: [], logN: 0,
   };
 }
@@ -69,7 +72,7 @@ function orderQuestions(s, subs) {
 function startQuestion(s, now) {
   const q = s.qs[s.qi];
   s.lordTime = q.time;
-  s.pos = {};
+  s.pos = {}; s.lock = {};
   for (const id of s.seat) s.pos[id] = { x: -1, y: .5 + (Math.random() - .5) * .5 };   // x < 0: not on the board yet
   return enter(s, 'answer', now);
 }
@@ -79,14 +82,17 @@ function recordAnswers(s) {
   const q = s.qs[s.qi], a = {};
   for (const id of s.seat) { const p = s.pos[id]; if (p && p.x >= 0) a[id] = colOf(p.x); }
   s.history.push({ round: s.round, by: q.by, text: q.text, a });
+  s.lock = { ...a };   // after answering, each duck stays in the column it chose
 }
 
 function startResults(s, now) {
   s.reviewVotes = {}; s.endVotes = {}; s.review = false;
-  // each duck stands in the column of its round average
-  for (const id of s.seat) {
-    const st = statsFor(s, id, s.round);
-    s.pos[id] = { x: st.n ? colX(Math.round(st.avg) + 3) : colX(3), y: .5 + (Math.random() - .5) * .5 };
+  // each duck stands in the column of its round average, and stays in it
+  s.lock = {};
+  for (const id of s.seat) { const st = statsFor(s, id, s.round); s.lock[id] = st.n ? Math.round(st.avg) + 3 : 3; }
+  for (let c = 0; c < 7; c++) {   // ducks sharing a column line up in it, not on top of each other
+    const ids = s.seat.filter(id => s.lock[id] === c);
+    ids.forEach((id, k) => { s.pos[id] = { x: colX(c), y: (k + 1) / (ids.length + 1) }; });
   }
   return enter(s, 'results', now);
 }
@@ -149,13 +155,19 @@ export function reduce(state, a, now = Date.now()) {
       if (text) s.subs.push({ by: a.id, text, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime });
       s.done[a.id] = true; return advance(s, now);
     }
-    case 'move': {
-      if (!me || !s.pos[a.id]) return s;
-      if (s.phase === 'answer' && s.done[a.id]) return s;   // an ended turn keeps its answer
-      if (!['answer', 'discuss', 'results'].includes(s.phase)) return s;
+    case 'move': {   // x, y on the board; j = when the current jump started (0 = on the ground)
+      if (!me || !s.pos[a.id]) return state;
+      if (!['answer', 'discuss', 'results'].includes(s.phase)) return state;
+      const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
-      if (s.phase === 'results') x = s.pos[a.id].x;   // results: only along your column
-      s.pos[a.id] = { x, y }; return s;
+      if (s.phase === 'answer' && s.done[a.id]) { x = was.x; y = was.y; }   // an ended turn keeps its answer (jumping still works)
+      if (s.phase !== 'answer') {   // after answering: inside your own column; no answer, no board
+        const c = s.lock[a.id];
+        if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBounds(c); x = Math.max(lo, Math.min(hi, x)); }
+      }
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp };   // q: squashed against l/r/u/d; sp: sprinting
+      if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
+      return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
       if (!me || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
@@ -173,8 +185,8 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || s.phase !== 'results') return s;
       s.endVotes[a.id] = !s.endVotes[a.id];
       return s.seat.filter(id => s.endVotes[id]).length >= needed(s) ? enter(s, 'over', now) : s;
-    case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.clicks = {}; for (const id of s.seat) P[id].ready = false; } return s;
-    case 'clicks': if (me) s.clicks[a.id] = a.n; return s;
+    case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+    case 'jumps': if (me) s.jumps[a.id] = Math.max(0, +a.n || 0); return s;   // completed jumps this game
     case 'chat': {
       if (!me) return s;
       const text = String(a.text || '').trim().slice(0, 300); if (!text) return state;
@@ -182,7 +194,7 @@ export function reduce(state, a, now = Date.now()) {
       logLine(s, { from: a.id, to: a.to || null, text }); return s;
     }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
-      if (s.phase === 'countdown' && now >= s.ends) { s.round = 0; s.history = []; s.subs = []; s.clicks = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
+      if (s.phase === 'countdown' && now >= s.ends) { s.round = 0; s.history = []; s.subs = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; return enter(s, 'submit', now); }
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
@@ -196,13 +208,13 @@ export function reduce(state, a, now = Date.now()) {
 export function statsFor(s, id, round = null) {
   const vals = s.history.filter(h => round === null || h.round === round).map(h => h.a[id]).filter(c => c !== undefined);
   const n = vals.length;
-  if (!n) return { n: 0, most: [], median: null, avg: null, clicks: s.clicks[id] || 0 };
+  if (!n) return { n: 0, most: [], median: null, avg: null, jumps: (s.jumps || {})[id] || 0 };
   const count = Array(7).fill(0); vals.forEach(c => count[c]++);
   const top = Math.max(...count), most = count.map((k, c) => k === top ? c : -1).filter(c => c >= 0);
   const sorted = vals.map(c => c - 3).sort((a, b) => a - b);
   const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
   const avg = sorted.reduce((a, b) => a + b, 0) / n;
-  return { n, most, median, avg, clicks: s.clicks[id] || 0 };
+  return { n, most, median, avg, jumps: (s.jumps || {})[id] || 0 };
 }
 export const signed = v => v === null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(Number.isInteger(v) ? 0 : 1);
 export const nameOfValue = v => v === null ? '' : COLS[Math.max(0, Math.min(6, Math.round(v) + 3))];

@@ -1,12 +1,12 @@
 /* ---------- stats: a player's stat box and the View stats window ----------
    On the −3 (strongly disagree) … +3 (strongly agree) scale: what they chose most, the median, the average, and the
-   clicks this game. */
+   jumps this game. */
 import { statsFor, COLS, signed, nameOfValue } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { openWindow, esc } from './ui.js';
 import { profile } from './store.js';
-import { fmtClicks } from './format.js';
+import { fmtJumps } from './format.js';
 
 export function statBoxHTML(s, id, round = null) {
   const p = s.players[id]; if (!p) return '';
@@ -18,7 +18,7 @@ export function statBoxHTML(s, id, round = null) {
       <dt>Chose most</dt><dd>${st.most.length ? st.most.map(c => `<span class="chip c${c + 1}">${esc(COLS[c])}</span>`).join(' ') : '—'}</dd>
       <dt>Median</dt><dd>${val(st.median)}</dd>
       <dt>Average</dt><dd>${val(st.avg)}</dd>
-      <dt>Clicks this game</dt><dd>${fmtClicks(st.clicks)}</dd>
+      <dt>Jumps this game</dt><dd>${fmtJumps(st.jumps)}</dd>
     </dl></article>`;
 }
 
@@ -26,5 +26,5 @@ export function openStats(s, id, me) {
   const p = s.players[id]; if (!p) return;
   const rounds = new Set(s.history.map(h => h.round)).size;
   openWindow(`<h2>Stats</h2><div class="stats-one">${statBoxHTML(s, id)}</div>
-    <p class="small dim" style="margin-top:.7rem">This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.${id === me ? ` On this device: ${fmtClicks(profile.clicks)} clicks.` : ''}</p>`, { cls: 'win-small' });
+    <p class="small dim" style="margin-top:.7rem">This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.${id === me ? ` On this device: ${fmtJumps(profile.jumps)} jumps.` : ''}</p>`, { cls: 'win-small' });
 }

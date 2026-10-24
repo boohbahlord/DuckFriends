@@ -18,10 +18,21 @@ function tone(freq, dur, { type = 'sine', gain = .2, at = 0, slide = 0, attack =
 }
 
 export const sfx = {
-  /* one bip of the countdown; last = the bright tone at zero */
+  /* the start countdown, after Halo: Reach's lobby: a short, soft electronic blip each second, then at zero one bright,
+     high, ringing tone (an octave and a fifth up) with a quick shimmer and a short echo */
   count(last) {
-    if (last) { tone(1046, .55, { type: 'triangle', gain: .22 }); tone(1568, .5, { type: 'sine', gain: .12, at: .02 }); return; }
-    tone(784, .12, { type: 'triangle', gain: .2 }); tone(1568, .08, { type: 'sine', gain: .05 });
+    if (last) {
+      const f = 1975;   // B6, bright and high
+      tone(f, 1.1, { type: 'sine', gain: .2, attack: .004 });
+      tone(f * 2, .55, { type: 'sine', gain: .05, attack: .004 });
+      tone(f * 1.003, 1.0, { type: 'triangle', gain: .07, attack: .004 });
+      tone(f, .8, { type: 'sine', gain: .06, at: .12 });   // the echo
+      tone(f, .6, { type: 'sine', gain: .03, at: .24 });
+      return;
+    }
+    tone(988, .09, { type: 'sine', gain: .17, attack: .003 });   // B5
+    tone(1976, .06, { type: 'sine', gain: .04, attack: .003 });
+    tone(988, .07, { type: 'sine', gain: .04, at: .09 });
   },
   ping() { tone(1318, .22, { gain: .12 }); tone(1760, .3, { gain: .09, at: .09 }); },
   pop() { tone(520, .1, { type: 'sine', gain: .15, slide: 1.8 }); },

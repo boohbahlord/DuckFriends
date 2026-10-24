@@ -1,6 +1,9 @@
 /* ---------- the rubber duck avatar ----------
-   One SVG, drawn from a look: a body color, a pattern over it, or a metal that shines (gold, silver…), or a square picture
-   the player uploaded. The duck is lit from the top left (a soft highlight, a darker belly) and casts a small shadow. */
+   One SVG, drawn from a look: a body color with a pattern over it, or a metal (which replaces the color and the pattern),
+   or a square picture the player uploaded. The duck has a full round head on a boat-shaped body with its tail up. It is
+   lit from the top left: a soft gradient, a darker belly, the head's shadow on the body, and bright highlights, so it reads
+   as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
+   sweeps across them now and then. */
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -11,63 +14,97 @@ export const DUCK_PATTERNS = [['none', 'Plain'], ['dots', 'Polka dots'], ['strip
   ['hearts', 'Hearts'], ['checks', 'Checks'], ['waves', 'Waves']];
 export const DUCK_METALS = [['none', 'No metal'], ['gold', 'Gold'], ['silver', 'Silver'], ['bronze', 'Bronze'],
   ['rose', 'Rose gold'], ['chrome', 'Chrome']];
-const METAL = {   // light, mid, dark, sheen
-  gold: ['#fff2a8', '#f2c230', '#9c6a06', '#fffbe0'], silver: ['#ffffff', '#c9ced6', '#6e7682', '#ffffff'],
-  bronze: ['#ffd2a0', '#c9803e', '#6e3a12', '#ffe6c8'], rose: ['#ffe1df', '#e8a29a', '#93554e', '#fff1ef'],
-  chrome: ['#ffffff', '#aeb8c4', '#3c4652', '#ffffff'],
+/* each metal: sky (top reflection), light, mid, horizon (the dark band), floor (the lower reflection), edge */
+export const METAL = {
+  gold: ['#fffbe6', '#ffe27a', '#f0b528', '#8a5a00', '#ffd659', '#6b4500'],
+  silver: ['#ffffff', '#eef1f5', '#b9c0ca', '#565e69', '#d9dee5', '#3d434c'],
+  bronze: ['#ffe9d2', '#f2b27a', '#c27434', '#5c2d0c', '#e39a5a', '#4a230a'],
+  rose: ['#fff3f1', '#ffd0c9', '#e3998f', '#7d3f37', '#f2b5ac', '#5e2d27'],
+  chrome: ['#ffffff', '#e9f2ff', '#9fb0c6', '#1e2733', '#c6d3e4', '#141a22'],
 };
 export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null };
 
 let uid = 0;
-const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
-  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (to - v) * t));
+export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
+  const n = parseInt(String(hex).slice(1), 16) || 0, c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (to - v) * t));
   return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/* the shapes (120 × 120, facing right, standing on y ≈ 106) */
+const BODY = 'M30 62C24 60 18 56 12 49C11 60 13 72 18 81C23 98 40 106 60 106C82 106 98 98 100 82C101 72 96 64 88 60L60 60C48 60 38 62 30 62Z';
+const HEAD = { cx: 76, cy: 40, r: 23 };
+const WING = 'M40 77C50 70 68 71 76 79C69 90 52 93 41 87C38 84 38 80 40 77Z';
+
+/* patterns: big, bold tiles with a thin dark edge so they read on any color */
 function patternDef(id, kind, col) {
+  const e = 'stroke="#00000033" stroke-width=".8"';
   const P = {
-    dots: `<circle cx="5" cy="5" r="2.2" fill="${col}"/>`,
-    stripes: `<rect width="10" height="4" fill="${col}"/>`,
-    stars: `<path d="M5 1.2l1.1 2.4 2.6.3-1.9 1.8.5 2.6L5 7.1 2.7 8.3l.5-2.6L1.3 3.9l2.6-.3z" fill="${col}"/>`,
-    hearts: `<path d="M5 8.2C2.2 6.3 1.4 4.8 1.9 3.5c.5-1.3 2.3-1.5 3.1-.2.8-1.3 2.6-1.1 3.1.2.5 1.3-.3 2.8-3.1 4.7z" fill="${col}"/>`,
-    checks: `<rect width="5" height="5" fill="${col}"/><rect x="5" y="5" width="5" height="5" fill="${col}"/>`,
-    waves: `<path d="M0 6c2.5-3 5 3 10 0" stroke="${col}" stroke-width="1.8" fill="none"/>`,
+    dots: `<circle cx="9" cy="9" r="4.2" fill="${col}" ${e}/>`,
+    stripes: `<rect y="0" width="18" height="6.5" fill="${col}" ${e}/>`,
+    stars: `<path d="M9 1.8l2.1 4.5 4.9.6-3.6 3.4 1 4.9L9 12.8l-4.4 2.4 1-4.9L2 6.9l4.9-.6z" fill="${col}" ${e}/>`,
+    hearts: `<path d="M9 15.4C3.4 11.6 1.8 8.6 2.8 6c1-2.6 4.6-3 6.2-.4 1.6-2.6 5.2-2.2 6.2.4 1 2.6-.6 5.6-6.2 9.4z" fill="${col}" ${e}/>`,
+    checks: `<rect width="9" height="9" fill="${col}"/><rect x="9" y="9" width="9" height="9" fill="${col}"/>`,
+    waves: `<path d="M0 11c4.5-6 9 6 18 0" stroke="${col}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`,
   }[kind];
-  return P ? `<pattern id="${id}p" width="10" height="10" patternUnits="userSpaceOnUse"${kind === 'stripes' ? ' patternTransform="rotate(-30)"' : ''}>${P}</pattern>` : '';
+  return P ? `<pattern id="${id}p" width="18" height="18" patternUnits="userSpaceOnUse"${kind === 'stripes' ? ' patternTransform="rotate(-28)"' : ''}>${P}</pattern>` : '';
 }
 
-/* the duck itself, in a 120 × 120 box, facing right */
-export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '' } = {}) {
+/* the duck, facing right; o.shadow draws its ground shadow; o.dead draws X eyes; o.hat (later) adds a hat */
+export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '', dead = false, extra = '' } = {}) {
   const L = { ...DUCK_DEFAULT, ...(look || {}) }, id = 'dk' + (++uid);
-  if (L.image) {   // an uploaded square picture, with the same little shadow
+  if (L.image) {   // an uploaded square picture, standing like a card, with the same little shadow
     return `<svg class="duck" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Avatar')}">
-${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".18"/>` : ''}
-<defs><clipPath id="${id}c"><rect x="14" y="10" width="92" height="92" rx="16"/></clipPath></defs>
+${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>` : ''}
+<defs><clipPath id="${id}c"><rect x="14" y="10" width="92" height="92" rx="16"/></clipPath>
+<linearGradient id="${id}gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
 <image href="${esc(L.image)}" x="14" y="10" width="92" height="92" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id}c)"/>
-<rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000022" stroke-width="2"/></svg>`;
+<rect x="14" y="10" width="92" height="92" rx="16" fill="url(#${id}gl)"/>
+<rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
+${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
   const M = L.metal !== 'none' && METAL[L.metal];
-  const base = M ? M[1] : L.color, light = M ? M[0] : mix(L.color, 255, .45), dark = M ? M[2] : mix(L.color, 0, .3);
-  const body = 'M18 70c0-14 12-24 30-24h20c4-10 2-18-2-24 9-3 22 1 27 12 5 9 3 19-3 25 9 2 14 9 14 18 0 18-20 32-46 32H48c-18 0-30-12-30-30z';
+  const base = M ? M[2] : L.color, light = M ? M[1] : mix(L.color, 255, .5), dark = M ? M[5] : mix(L.color, 0, .32);
+  const edge = M ? M[5] : mix(L.color, 0, .45);
   const pat = !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';
-  return `<svg class="duck" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Rubber duck')}">
+  /* fills: a soft ball of light for colors; banded reflections for metals */
+  const fill = (gid, cx, cy) => M
+    ? `<linearGradient id="${gid}" x1=".2" y1="0" x2=".45" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".28" stop-color="${M[1]}"/><stop offset=".47" stop-color="${M[2]}"/><stop offset=".53" stop-color="${M[3]}"/><stop offset=".62" stop-color="${M[2]}"/><stop offset=".8" stop-color="${M[4]}"/><stop offset="1" stop-color="${M[3]}"/></linearGradient>`
+    : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`;
+  const eyes = dead
+    ? `<path d="M78 30l8 8M86 30l-8 8" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>`
+    : `<ellipse cx="83" cy="34" rx="4.3" ry="5.2" fill="#161616"/><circle cx="84.6" cy="32" r="1.7" fill="#fff"/><circle cx="82" cy="36.6" r=".8" fill="#fff" opacity=".7"/>`;
+  return `<svg class="duck${M ? ' metal' : ''}" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
-<radialGradient id="${id}g" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>
+${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
+<linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? '.25' : '.28'}"/></linearGradient>
 ${pat}
-${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset=".25" stop-color="${M[3]}" stop-opacity="0"/><stop offset=".42" stop-color="${M[3]}" stop-opacity=".85"/><stop offset=".55" stop-color="${M[3]}" stop-opacity="0"/></linearGradient>` : ''}
-<clipPath id="${id}b"><path d="${body}"/></clipPath>
+<clipPath id="${id}c"><path d="${BODY}"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
+<mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask>
+${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` : ''}
 </defs>
-${shadow ? `<ellipse cx="60" cy="110" rx="42" ry="7" fill="#000" opacity=".2"/>` : ''}
-<path d="${body}" fill="url(#${id}g)" stroke="${dark}" stroke-width="2"/>
-${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" clip-path="url(#${id}b)" opacity=".85"/>` : ''}
-${M ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}s)" clip-path="url(#${id}b)"/>` : ''}
-<path d="M40 74c8 10 24 12 36 4-4 12-24 16-36-4z" fill="${dark}" opacity=".35"/>
-<ellipse cx="44" cy="58" rx="13" ry="6" fill="#fff" opacity=".35" transform="rotate(-18 44 58)"/>
-<ellipse cx="78" cy="28" rx="6" ry="3.5" fill="#fff" opacity=".45" transform="rotate(-25 78 28)"/>
-<path d="M95 38c8-2 16 0 19 4-3 4-10 6-19 5z" fill="#ff9a1f" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
-<path d="M95 43c6 1 12 0 17-1" stroke="#c45f00" stroke-width="1.2" fill="none"/>
-<circle cx="84" cy="32" r="4.6" fill="#1b1b1b"/><circle cx="85.6" cy="30.4" r="1.5" fill="#fff"/>
+${shadow ? `<ellipse cx="58" cy="109" rx="44" ry="7" fill="#000" opacity=".22"/>` : ''}
+<path d="${BODY}" fill="url(#${id}b)"/>
+<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
+<g clip-path="url(#${id}c)">
+  ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ''}
+  <path d="${BODY}" fill="url(#${id}ao)"/>
+  <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
+  <path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"/>
+  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"/>
+  ${M ? `<g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
+</g>
+<path d="${BODY}" fill="none" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"/>
+<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${edge}" stroke-width="2.2"/>
+<ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
+<circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
+<ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
+<ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/>
+<path d="M96 35C104 32 113 34 116 39C111 42.5 103 43.5 96.5 42.5Z" fill="#ff9a1f" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M96.5 42.5C103 43.5 110 43.5 113 45.5C108 49.5 100.5 49.5 95.5 46.5Z" fill="#f07f0e" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
+<ellipse cx="104" cy="36.4" rx="4" ry="1.3" fill="#fff" opacity=".5"/>
+${eyes}
+${extra}
 </svg>`;
 }
 
