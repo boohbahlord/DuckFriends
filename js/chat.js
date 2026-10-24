@@ -12,7 +12,7 @@ import { el, esc, typing, windowOpen, setHTML } from './ui.js';
 import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
 import { nameHTML, FONTS, findFont } from './name.js';
-import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, MUSCLES } from './duck.js';
+import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from './duck.js';
 import { HATS, hatById } from './hats.js';
 import { FACES, faceById } from './faces.js';
 import { EYES } from './eyes.js';
@@ -60,7 +60,6 @@ const TREE = {
         'beak color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor2 = c; return `Beak shade: ${c}`; } },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
-        muscle: { vals: keysOf(MUSCLES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(MUSCLES, 'muscle', v, 'Muscle') },
       } },
       card: { kids: {
         color: { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.card.color = c; return `Card color: ${c}`; } },
@@ -80,7 +79,7 @@ const TREE = {
   },
 };
 const bad = v => `✗ ${v || 'Nothing'} isn't one of the choices. Tab shows them.`;
-/* build, size and muscle go by name ("chubby", "a bit big") */
+/* build and size go by name ("chubby", "a bit big") */
 function body(list, key, v, label) { const f = list.find(([, n]) => n.toLowerCase() === String(v).toLowerCase().trim()); if (!f) return bad(v); profile.duck[key] = f[0]; return `${label}: ${f[1]}`; }
 function pick(list, v, set, label) { const x = list.find(k => k === String(v).toLowerCase()); if (!x) return bad(v); set(x); return `${label}: ${x}`; }
 

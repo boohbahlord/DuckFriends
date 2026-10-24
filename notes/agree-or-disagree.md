@@ -395,3 +395,5 @@ Have the eyelashes removed from the floating eye but keep it the same
 Improve the white cartoon glove it looks almost nothing like a glove, and the glove should only have FIVE fingers, not six, and the five fingers inlcudes a thumb as one of those fingers"
 
 Later: "The order of the customization options can be reordered eventually too, like the order the hats appear in or other things"
+
+Later: "we can remove the muscle selections in body type"

@@ -44,6 +44,7 @@ function normalize(p) {
     delete out.settings.clicksSci; delete out.settings.clicksHidden; delete out.clicks;
   }
   out.duck = { ...DUCK_DEFAULT, ...(p.duck || {}) };
+  delete out.duck.muscle;   // (muscles were tried and taken out)
   if (out.duck.hat && out.duck.hat.id === 'robot') { out.duck.face = { id: 'box' }; out.duck.hat = null; }   // the cardboard box became a Face item
   out.card = { ...PROFILE_DEFAULT.card, ...(p.card || {}) };
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };

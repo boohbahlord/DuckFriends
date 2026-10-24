@@ -6,7 +6,7 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName } from './store.js';
 import { openWindow, esc, toast } from './ui.js';
-import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, MUSCLES, pictureToSquare, duckSVG } from './duck.js';
+import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
 import { HATS, hatById } from './hats.js';
 import { FACES, faceById } from './faces.js';
@@ -33,7 +33,7 @@ export function setName(raw) {
 const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['body', 'Body'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['colors', 'Colors']];
 const nameOf = (list, v, none = 'None') => { const f = list.find(x => x[0] === v); return f ? f[1] : none; };
 /* the body in words: only what is not normal */
-const bodyName = D => [[BUILDS, D.build], [SIZES, D.size], [MUSCLES, D.muscle]].filter(([, v]) => +v).map(([l, v]) => nameOf(l, +v, '')).filter(Boolean).join(', ') || 'Normal';
+const bodyName = D => [[BUILDS, D.build], [SIZES, D.size]].filter(([, v]) => +v).map(([l, v]) => nameOf(l, +v, '')).filter(Boolean).join(', ') || 'Normal';
 /* a close look at the head, for eye and beak tiles */
 const headPic = look => duckSVG({ ...look, image: null, hat: null, face: null, size: 0 }, { size: 58, shadow: false })
   .replace(/viewBox="[^"]*" width="[^"]*" height="[^"]*"/, 'viewBox="54 9 77 58" width="64" height="48" style="overflow:hidden"');
@@ -99,7 +99,6 @@ export function openCustomize(page = lastPage) {
           const pic = look => duckSVG({ ...D, image: null, ...look }, { size: 58, shadow: false });
           html = head('Body') + `<div class="arm-body arm-bodies"><h3>Build</h3>${grid('build', BUILDS.map(([v, n]) => [String(v), pic({ build: v }), n]), String(+D.build || 0))}
             <h3>Size</h3>${grid('size', SIZES.map(([v, n]) => [String(v), pic({ size: v }), n]), String(+D.size || 0))}
-            <h3>Muscle</h3>${grid('muscle', MUSCLES.map(([v, n]) => [String(v), pic({ muscle: v }), n]), String(+D.muscle || 0))}
             <p class="small dim">A bigger or fatter duck takes more room on the board; a small or skinny one slips by.</p></div>`;
         } else if (k === 'skin') {
           const pic = look => duckSVG({ ...D, hat: null, face: null, image: null, ...look }, { size: 58, shadow: false });
@@ -179,7 +178,6 @@ export function openCustomize(page = lastPage) {
           beak: () => { D.beak = v; },
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },
-          muscle: () => { D.muscle = +v; },
           skin: () => { D.image = null; if (v.startsWith('m:')) D.metal = v.slice(2); else { D.metal = 'none'; D.pattern = v.slice(2); } },
           nfont: () => { N.font = v; },
           cpat: () => { C.pattern = v; C.image = null; },
