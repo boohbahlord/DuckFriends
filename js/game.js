@@ -22,7 +22,7 @@ import { nameHTML } from './name.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile } from './store.js';
-import { openSettings } from './settings.js';
+import { openSettings, netLevel } from './settings.js';
 import { openCustomize } from './customize.js';
 import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
@@ -43,7 +43,7 @@ let target = null;         // where a click or a tap asked my duck to walk: { x,
 let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
-let scene = null;                // the map behind the columns (Sky, Pixel)
+let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null;
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
@@ -197,7 +197,7 @@ function sendMove(force) {
   if (!me) return;
   const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
   const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, q, sprinting && moving].join();
-  if (!force && (now - lastSend < (R.online ? 90 : 60) || msg === lastSent)) return;   // online: a little less often
+  if (!force && (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) || msg === lastSent)) return;   // online: less often (Data saving, Poor connection: less still)
   lastSend = now; lastSent = msg;
   R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, q, sp: sprinting && moving });
 }
@@ -331,7 +331,7 @@ function viewSubmit(s) {
   return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? 'Question sent ✓' : 'No question this round'}</h2>
       ${sent ? `<p class="q-echo">${esc(sent.text)}</p>` : ''}<p class="dim">Waiting for the others.</p></div>`
     : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
-      <textarea maxlength="200" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your question"></textarea>
+      <textarea maxlength="200" rows="3" placeholder="Data breaching is the end of the world and everyone is IDIOTS for not talking about it!&#10;- J Man" aria-label="Your question"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <div class="sect"><h3 data-tip="How long everyone gets to answer your question.">Answer time</h3><div class="row">${[[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']].map(([v, n]) =>
         `<button type="button" class="tile" data-time="${v}" aria-pressed="${v === s.options.answerTime}">${n}</button>`).join('')}</div></div>
@@ -385,9 +385,9 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    if (scene) { scene.destroy(); scene = null; }
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
-    const board = $('.board', main); if (board) scene = mountMap(board, s);
+    if (!scene) scene = mountMap($('.map-layer', S), s);
+    scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0]) sfx.done();
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
@@ -495,7 +495,7 @@ register('game', {
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
         <div class="gbar-r"><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
-      <div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
+      <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(S, HINTS);
     hooks.resetDuck = resetDuck;
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; } });

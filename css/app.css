@@ -51,12 +51,12 @@ p { margin: 0; }
 /* the carnival behind everything (a Twister mat, bunting, string lights in the dark, drifting balls and confetti) */
 #shapes { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 #shapes svg { width: 100%; height: 100%; display: block; }
-#shapes .sh { transform-box: fill-box; transform-origin: center; }
-html.moving #shapes .sh { animation: drift var(--d, 18s) ease-in-out var(--dl, 0s) infinite alternate; }
+#shapes .sh, .scene.night .sh { transform-box: fill-box; transform-origin: center; }
+html.moving #shapes .sh, html.moving .scene.night .sh { animation: drift var(--d, 18s) ease-in-out var(--dl, 0s) infinite alternate; }
 @keyframes drift { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(var(--dx, 10px), var(--dy, -14px)) rotate(var(--dr, 8deg)); } }
-html.moving #shapes .bulb { animation: twinkle 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
-#shapes .dot { opacity: .5; }
-html.moving #shapes .dot { animation: breathe 2.2s ease-in-out var(--dl, 0s) infinite alternate; }
+html.moving #shapes .bulb, html.moving .scene.night .bulb { animation: twinkle 2.6s ease-in-out var(--dl, 0s) infinite alternate; }
+#shapes .dot, .scene.night .dot { opacity: .5; }
+html.moving #shapes .dot, html.moving .scene.night .dot { animation: breathe 2.2s ease-in-out var(--dl, 0s) infinite alternate; }
 @keyframes breathe { from { opacity: .16; } to { opacity: .78; } }
 html:not(.dark) #shapes .dot { opacity: .4; }
 html.moving:not(.dark) #shapes .dot { animation-name: breathel; }
@@ -111,6 +111,10 @@ body[data-screen=lobby] #jumps, body[data-screen=game] #jumps { display: none; }
 .front { position: relative; min-height: 100dvh; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 2rem max(2rem, 6vw) calc(var(--pit) + 1rem); --pit: clamp(9rem, 27vh, 17rem); }
 .front-left { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 1.4rem; width: min(26rem, 100%); }
 .brand { font-family: var(--fun); font-size: calc(2.6rem * var(--ts)); line-height: 1; }
+@media (min-width: 761px) {   /* a computer: the name at the top in the middle, not too high */
+  .front > .brand { position: absolute; top: clamp(2.4rem, 9vh, 5.5rem); left: 50%; transform: translateX(-50%); z-index: 4; font-size: calc(clamp(3rem, 5.4vw, 4.6rem) * var(--ts)); white-space: nowrap; }
+}
+@media (max-width: 760px) { .front > .brand { position: relative; z-index: 3; text-align: center; margin-bottom: 1.2rem; } }
 .front-btns { display: flex; flex-direction: column; gap: 1rem; width: min(18rem, 100%); }
 .front-btns .btn { width: 100%; }
 .front-line { font-size: calc(1.1rem * var(--ts)); color: var(--dim); font-weight: 600; }
@@ -500,8 +504,8 @@ details.more[open] > summary { color: var(--ink); }
 .col { position: relative; z-index: 1; }
 .scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .map-sky .col, .map-pixel .col { border-right-color: #ffffff30; }
-.map-board .col { background: color-mix(in srgb, var(--c) 86%, transparent); }   /* The Board: a little see-through too */
-.map-sky .col { background: color-mix(in srgb, var(--c) 52%, transparent); transition: box-shadow 1.5s, background-color 1.5s; }
+.map-board .col { background: color-mix(in srgb, var(--c) 76%, transparent); }   /* Night Show: the carnival shows through a little */
+.map-sky .col { background: color-mix(in srgb, var(--c) 45%, transparent); transition: box-shadow 1.5s, background-color 1.5s; }
 .map-sky .cols.night .col { background: color-mix(in srgb, var(--c) 60%, transparent); box-shadow: inset 0 0 2.4rem color-mix(in srgb, var(--c) 70%, #fff), inset 0 -1rem 2rem color-mix(in srgb, var(--c) 80%, transparent); }
 .map-sky .cols.night .col-name { text-shadow: 0 0 .6rem var(--c), 0 0 .2rem #fff; }
 .sky-sun, .sky-moon { position: absolute; left: 0; top: 0; width: 13cqh; height: 13cqh; margin: -6.5cqh 0 0 -6.5cqh; border-radius: 50%; will-change: transform; }
@@ -516,7 +520,7 @@ details.more[open] > summary { color: var(--ink); }
 .sky-rider svg { width: 100%; height: auto; display: block; }
 @keyframes cloudx { from { left: -25%; } to { left: 112%; } }
 html.still .sky-cloud { animation: none !important; left: var(--x, 30%); }
-.map-pixel .col { background: color-mix(in srgb, var(--c) 44%, transparent); image-rendering: pixelated; }
+.map-pixel .col { background: color-mix(in srgb, var(--c) 38%, transparent); image-rendering: pixelated; }
 .map-pixel .col::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='none' stroke='%23000' stroke-opacity='.16' stroke-width='.4'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' fill-opacity='.22'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3Crect x='2' y='5' width='2' height='1' fill='%23fff' fill-opacity='.16'/%3E%3Crect x='6' y='4' width='1' height='2' fill='%23000' fill-opacity='.12'/%3E%3Crect x='5' y='6' width='1' height='1' fill='%23fff' fill-opacity='.2'/%3E%3Crect x='1' y='6' width='1' height='1' fill='%23000' fill-opacity='.12'/%3E%3C/svg%3E"); background-size: 3rem 3rem; image-rendering: pixelated; pointer-events: none; opacity: .8; }
 .map-sky .col-name, .map-pixel .col-name { position: relative; color: #fff; background: #0000006b; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }   /* readable over any scene */
 .scene.pixel canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
@@ -619,3 +623,34 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
   .ctargets { flex-direction: row !important; flex-wrap: wrap; }
   .colors.grid3 .swatches { grid-template-columns: repeat(6, 2.3rem); }
 }
+
+/* ---------- a map's world fills the page during a game; the page's own background rests under it ---------- */
+.map-layer { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; container-type: size; }
+.game > :not(.map-layer) { position: relative; z-index: 1; }
+html.map-on #shapes { display: none; }
+.scene.night svg { width: 100%; height: 100%; display: block; }
+.mm-night { background: #0e1022; } .mm-night svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- Settings in the Armory's look ---------- */
+.set-arm { grid-template-columns: minmax(11rem, 14rem) minmax(0, 1fr); height: min(36rem, calc(100dvh - 5rem)); }
+.set-arm .arm-menu { align-self: start; }
+.set-tabs { padding: .5rem; }
+.arm-page { min-height: 0; overflow: auto; padding: .2rem 2.6rem .6rem .4rem; }
+.set-title { font-size: calc(1.15rem * var(--ts)); letter-spacing: .06em; text-transform: uppercase; margin: .3rem 0 .6rem; }
+.set-arm .sect { margin-bottom: 1rem; }
+.set-arm .sect h3 { font-size: calc(.82rem * var(--ts)); text-transform: uppercase; letter-spacing: .05em; color: var(--dim); margin: 0 0 .4rem; }
+.set-arm .tile { font-size: calc(.85rem * var(--ts)); padding: .28rem .65rem; min-width: 0; }
+.set-arm .keys { font-size: calc(.88rem * var(--ts)); }
+@media (max-width: 760px) {
+  .set-arm { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .set-tabs { flex-direction: row !important; flex-wrap: wrap; }
+  .set-tabs .arm-row { padding: .3rem .55rem; }
+  .arm-page { padding-right: .4rem; }
+}
+.net-pick { display: flex; flex-direction: column; gap: .5rem; margin-top: .8rem; }
+.net-tile { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; text-align: left; width: 100%; padding: .55rem .8rem; }
+/* Data saving and Poor connection: the device's own fonts (nothing to download), nothing moving */
+html.lite *, html.lite *::before, html.lite *::after { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important; }
+/* a map behind the game: the top and bottom bars get a soft backing so they read over any sky */
+html.map-on .game .gbar, html.map-on .game .bbar { background: color-mix(in srgb, var(--bg) 62%, transparent); }
+@media (max-width: 760px) { .set-arm .arm-h, .armory .arm-menu > .arm-h { padding-right: 3rem; } }   /* room for the window's X */
