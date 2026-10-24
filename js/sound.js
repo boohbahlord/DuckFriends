@@ -56,6 +56,7 @@ export const sfx = {
   tick() { tone(1200, .05, { type: 'square', gain: .04 }); },
   done() { tone(660, .09, { gain: .14 }); tone(990, .14, { gain: .12, at: .08 }); },
   /* the silly commands; the lightning is kept soft */
+  fire() { noise(.9, { gain: .08, type: 'bandpass', freq: 900, q: .4, slideTo: 2400 }); noise(1.4, { gain: .05, type: 'lowpass', freq: 500, at: .2, slideTo: 160 }); },
   zap() { noise(.18, { gain: .09, freq: 3200, q: .6 }); noise(.12, { gain: .06, freq: 2200, at: .08 }); noise(1.1, { gain: .07, type: 'lowpass', freq: 380, at: .12, slideTo: 90 }); },
   love() { tone(784, .25, { gain: .08 }); tone(988, .25, { gain: .07, at: .12 }); tone(1175, .45, { gain: .07, at: .24 }); },
   bonk() { tone(330, .18, { type: 'triangle', gain: .14, slide: .5 }); noise(.08, { gain: .05, freq: 900 }); },

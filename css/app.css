@@ -771,3 +771,25 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 .rr-phase.live { color: var(--green); font-weight: 700; }
 .online-h { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
 .pcard-net { position: absolute; right: 2.7rem; top: 50%; transform: translateY(-50%); font-size: calc(.72rem * var(--ts)); padding: .1rem .4rem; border-radius: .5rem; background: #0007; color: #fff; }
+
+/* chat bubbles over the ducks: see-through, fading */
+.gduck-say { position: absolute; left: 50%; bottom: calc(var(--sz) * 1.08); transform: translate(-50%, .3rem); width: max-content; max-width: min(14rem, 60vw);
+  padding: .25rem .6rem; border-radius: .8rem; background: #ffffffa8; color: #1c1c28d0; font-size: calc(.8rem * var(--ts)); font-weight: 600; line-height: 1.2;
+  text-align: center; overflow-wrap: anywhere; pointer-events: none; opacity: 0; transition: opacity .6s, transform .6s; box-shadow: 0 .15rem .4rem #0003; }
+.gduck-say::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: #ffffffa8; }
+.gduck.saying .gduck-say { opacity: 1; transform: translate(-50%, 0); }
+.gduck.idle .gduck-zz { bottom: 85%; } .gduck.saying .gduck-zz { display: none; }
+/* fire: flames for a moment, then a charred duck whose burns fade */
+.gduck-fire { display: none; position: absolute; left: 50%; bottom: 8%; width: 80%; height: 90%; transform: translateX(-50%); pointer-events: none; }
+.gduck.onfire .gduck-fire { display: block; }
+.gduck-fire i { position: absolute; bottom: 0; width: 40%; height: 70%; border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  background: radial-gradient(ellipse at 50% 70%, #fff2b0 0, #ffb347 35%, #ff5a1a 65%, #ff5a1a00 75%); mix-blend-mode: screen; animation: flick .32s ease-in-out infinite alternate; }
+.gduck-fire i:nth-child(1) { left: 0; height: 60%; } .gduck-fire i:nth-child(2) { left: 30%; height: 95%; animation-delay: .1s; } .gduck-fire i:nth-child(3) { left: 60%; height: 70%; animation-delay: .2s; }
+@keyframes flick { from { transform: scaleY(.85) translateY(4%); } to { transform: scaleY(1.12) translateY(-6%); } }
+.gduck.unburn .gduck-body { transition: filter 2.5s ease-in; }
+.gduck.burnt .gduck-body { filter: brightness(.3) saturate(.3) sepia(.5); transition: filter .3s; }
+.chat-log .sys.small { font-size: calc(.7rem * var(--ts)); opacity: .8; }
+/* a ping: a soft glow behind the line; a long message folds under an arrow */
+.chat-log .hit { box-shadow: 0 0 .7rem color-mix(in srgb, var(--yellow) 55%, transparent); }
+.chat-log .fold { border: 0; background: var(--soft); color: var(--ink); border-radius: .35rem; width: 1.3rem; height: 1.3rem; padding: 0; cursor: pointer; font-size: .8rem; line-height: 1; vertical-align: middle; }
+.chat-log .fold-bang { color: var(--red); margin-left: .15rem; }
