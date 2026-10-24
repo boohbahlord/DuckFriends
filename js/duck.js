@@ -89,7 +89,7 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
   const M = L.metal !== 'none' && METAL[L.metal];
-  const hat = hatLayers(L.hat), face = faceLayer(L.face), top = hat.front || face ? HAT_TOP : 0;
+  const hat = hatLayers(L.hat), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
   const base = M ? M[2] : L.color, light = M ? M[1] : mix(L.color, 255, .5), dark = M ? M[5] : mix(L.color, 0, .32);
   const edge = M ? M[5] : mix(L.color, 0, .45);
   const pat = !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';

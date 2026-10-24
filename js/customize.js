@@ -55,6 +55,7 @@ const valueOf = k => {
 const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) =>
   `<button type="button" class="arm-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>`;
 let lastPage = null, lastColor = 'duck';
+const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
   if (page === 'duck') page = null;   // (the old tab name)
@@ -116,7 +117,10 @@ export function openCustomize(page = lastPage) {
             <p class="small dim">The name's color is under Colors.</p></div>`;
         } else if (k === 'card') {
           const pat = (v, layout = C.layout, size = C.size) => `<span class="pat-pic" style="${esc(`background:${v !== 'none' ? patternLayers(v, C.patternColor || '#ffffff', layout, size) + ', ' : ''}${C.color}`)}"></span>`;
-          html = head('Card') + `<div class="arm-body"><h3>Pattern</h3>${grid('cpat', CARD_PATTERNS.map(([v, n]) => [v, pat(v), n]), C.image ? '' : C.pattern)}
+          const cur = C.image ? '' : C.pattern, kind = k => CARD_PATTERNS.filter(([v]) => k ? v.startsWith(k + ':') : !v.includes(':'));
+          /* hat and face patterns fold away under their own arrows (open while one of them is on) */
+          const fold = (k, label) => `<details class="arm-fold" data-fold="${k}"${openFolds.has(k) || cur.startsWith(k + ':') ? ' open' : ''}><summary>${label}</summary>${grid('cpat', kind(k).map(([v, n]) => [v, pat(v), n]), cur)}</details>`;
+          html = head('Card') + `<div class="arm-body"><h3>Pattern</h3>${grid('cpat', kind('').map(([v, n]) => [v, pat(v), n]), cur)}${fold('hat', 'Hat patterns')}${fold('face', 'Face patterns')}
             ${C.pattern !== 'none' && !C.image ? `<h3>How it sits</h3>${grid('clay', CARD_LAYOUTS.map(([v, n]) => [v, pat(C.pattern, v), n]), C.layout || 'tiled')}
             <h3>Size</h3><div class="row small-tiles">${CARD_SIZES.map(([v, n]) => `<button type="button" class="tile" data-g="csize" data-v="${v}" aria-pressed="${(C.size || 'm') === v}">${n}</button>`).join('')}</div>` : ''}
             <h3>Picture</h3><div class="arm-grid">${upload(C.image ? 'Change picture' : 'Your picture', 'card')}${C.image ? `<button type="button" class="arm-tile" data-a="nocard" aria-pressed="true"><img src="${esc(C.image)}" alt=""><span>Remove picture</span></button>` : ''}</div>
@@ -184,6 +188,7 @@ export function openCustomize(page = lastPage) {
         })[t.dataset.g]();
         changed();
       });
+      menu.addEventListener('toggle', e => { const k = e.target.dataset && e.target.dataset.fold; if (k) e.target.open ? openFolds.add(k) : openFolds.delete(k); }, true);
       menu.addEventListener('change', async e => {
         const o = e.target.dataset.o, up = e.target.dataset.up;
         if (o === 'ketchup') { profile.duck.hat = { ...profile.duck.hat, ketchup: e.target.checked }; changed(); }
