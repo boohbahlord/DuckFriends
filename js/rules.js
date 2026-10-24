@@ -217,8 +217,9 @@ export function reduce(state, a, now = Date.now()) {
     case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
-      if (!me || !s.options.fun || !who.length || !['lightning', 'love', 'kill', 'hotdog'].includes(a.kind)) return state;
+      if (!me || !s.options.fun || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
       if (a.kind === 'kill') { for (const id of who) P[id].dead = true; }
+      logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
       return s;
     }
@@ -253,7 +254,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'chat': {
       if (!me) return s;
-      const text = String(a.text || '').trim().slice(0, 300); if (!text) return state;
+      const text = String(a.text || '').trim().slice(0, 500); if (!text) return state;
       if (a.to && !P[a.to]) return state;
       logLine(s, { from: a.id, to: a.to || null, text }); return s;
     }

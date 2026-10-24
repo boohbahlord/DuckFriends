@@ -3,12 +3,14 @@
    the chat. Open, the symbol at its bottom left switches between the chat and the command line (a green "$" on black).
 
    Chat: @name pings that player (a soft sound and a "!" on the chat button); \@name sends a private message; \help lists
-   these. Suggestions show once something is typed; Tab completes (never leaving the page), the arrow keys move through
-   them.
+   these. Suggestions show once something is typed (\togglesuggest turns them off); Tab completes (never leaving the
+   page), the arrow keys move through them. Mutes: \mute bubble ping text on @name … (until you leave the room),
+   \permmute … (kept on this device), \show mute | permmute | players. A message over 250 characters folds under an
+   arrow; each new message's bubble floats over its duck on the board.
 
    Command line: customization only for now, e.g. custom username font "times new roman". Words are split by spaces, so a
    choice with a space goes in quotes; Tab adds the quotes. */
-import { el, esc, typing, windowOpen, setHTML } from './ui.js';
+import { el, esc, typing, windowOpen, setHTML, confirmBox } from './ui.js';
 import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
 import { nameHTML, FONTS, findFont } from './name.js';
@@ -39,6 +41,7 @@ const TREE = {
   love: fun('love', 2, 'Two players float up in a heart: love @name @name'),
   kill: fun('kill', 1, 'A player plays dead until they move: kill @name'),
   hotdog: fun('hotdog', 1, 'A hotdog hangs around a player for a while: hotdog @name'),
+  fire: fun('fire', 1, 'Sets a duck on fire; it stays burnt for a few seconds: fire @name'),
   reset: { info: 'Puts your duck somewhere random: reset duck (inside your column once you have voted).', kids: { duck: { exec: () => (hooks.resetDuck ? hooks.resetDuck() : '✗ That works on the board.') } } },
   custom: {
     info: 'Customize your duck, card or name.',
@@ -153,15 +156,22 @@ function runFun(node, args) {
   if (who.length < node.at) return `✗ ${node.info}`;
   r.send({ t: 'fx', kind: node.kind, who: who.slice(0, node.at) });
   const nm = who.slice(0, node.at).map(id => s.players[id].name).join(' and ');
-  return { lightning: `⚡ ${nm}`, love: `♥ ${nm}`, kill: `✖ ${nm} plays dead`, hotdog: `🌭 for ${nm}` }[node.kind];
+  return { lightning: `⚡ ${nm}`, love: `♥ ${nm}`, kill: `✖ ${nm} plays dead`, hotdog: `🌭 for ${nm}`, fire: `🔥 ${nm}` }[node.kind];
 }
 
 /* ---------- the chat's suggestions ---------- */
 /* chat commands: nothing shows before typing; typing narrows them (\\ shows every \\ command); names complete
    after @ and after each \\…@ */
-const CHAT_CMDS = ['\\help', '\\@', '\\mute@', '\\unmute@', '\\muteping@', '\\unmuteping@'];
+const CHAT_CMDS = ['\\help', '\\@', '\\mute', '\\permmute', '\\show', '\\togglesuggest'];
+const MUTE_WORDS = ['bubble', 'ping', 'text', 'all', 'on', 'off', '-f'], SHOW_WORDS = ['mute', 'permmute', 'players'];
 function chatSuggest(line, s, me) {
-  const m = line.match(/((?:\\(?:un)?(?:mute|muteping))?\\?@)([\p{L}\p{N}_-]*)$/u);
+  if (profile.settings.chatSuggest === false) return [];   // \togglesuggest
+  const mw = line.match(/^\\(mute|permmute|show)\s+(?:[^@]*\s)?([a-z-]*)$/i);   // \mute bubble ping on …
+  if (mw) {
+    const opts = mw[1].toLowerCase() === 'show' ? SHOW_WORDS : MUTE_WORDS.filter(w => w !== '-f' || mw[1].toLowerCase() === 'permmute'), p = mw[2].toLowerCase(), pre = line.slice(0, line.length - mw[2].length);
+    return opts.filter(o => o.startsWith(p) && o !== p).map(o => ({ label: o, apply: () => pre + o + ' ' }));
+  }
+  const m = line.match(/((?:\\(?:mute|permmute)\s[^@]*)?\\?@)([\p{L}\p{N}_-]*)$/u);
   if (m && s) {
     const p = m[2].toLowerCase(), pre = line.slice(0, line.length - m[0].length);
     const people = s.seat.filter(id => id !== me && tag(s.players[id].name).toLowerCase().startsWith(p)).map(id => tag(s.players[id].name));
@@ -174,14 +184,61 @@ function chatSuggest(line, s, me) {
   return [];
 }
 const HELP = ['@name: pings a player (a soft sound and a "!"); @everyone pings everyone', '\\@name message: a private message',
-  '\\mute@name: hide their messages · \\unmute@name', '\\muteping@name: their pings stay quiet · \\unmuteping@name',
-  'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
-/* who you muted, by name, kept on this device */
-const muted = () => (profile.muted = profile.muted || []);
-const quiet = () => (profile.mutedPings = profile.mutedPings || []);
+  '\\mute bubble ping text on @name @name2: mute what you list (all = everything; off undoes it) until you leave the room',
+  '\\permmute … the same, kept on this device (it asks first; -f skips the question)', '\\show mute · \\show permmute · \\show players',
+  '\\togglesuggest: suggestions in the chat on or off', 'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
+
+/* ---------- mutes: what you hide from a player (their text, their pings, their bubbles over the board) ----------
+   For this room only (gone when you leave it), or for good on this device (by their Google account if they're signed
+   in, else by name). The old \mute@name lists became permanent mutes. */
+const KINDS = ['text', 'ping', 'bubble'];
+const session = { room: '', by: {} };
+const perm = () => {
+  if (!profile.permMutes) {
+    profile.permMutes = {};
+    for (const n of profile.muted || []) profile.permMutes['name:' + n] = { ...profile.permMutes['name:' + n], text: true };
+    for (const n of profile.mutedPings || []) profile.permMutes['name:' + n] = { ...profile.permMutes['name:' + n], ping: true };
+    delete profile.muted; delete profile.mutedPings;
+  }
+  return profile.permMutes;
+};
+const keysOfPlayer = p => p ? [...(p.acct ? ['acct:' + p.acct] : []), 'name:' + tag(p.name).toLowerCase()] : [];
+const sessionMutes = () => { const r = activeRoom(), id = r ? r.state.id : ''; if (session.room !== id) { session.room = id; session.by = {}; } return session.by; };
+/* is this player's text, ping or bubble muted for me? */
+export function isMuted(s, id, kind) {
+  const p = s && s.players[id]; if (!p) return false;
+  const a = sessionMutes(), b = perm();
+  return keysOfPlayer(p).some(k => (a[k] && a[k][kind]) || (b[k] && b[k][kind]));
+}
+/* \mute | \permmute: the kinds, then on or off, then the players */
+function setMutes(line, permanent, s, me) {
+  const ws = line.trim().split(/\s+/).slice(1).filter(w => w !== '-f');
+  const kinds = ws.filter(w => [...KINDS, 'all'].includes(w.toLowerCase())).map(w => w.toLowerCase());
+  const onOff = ws.find(w => /^(on|off)$/i.test(w)), at = ws.filter(w => w.startsWith('@'));
+  if (!kinds.length || !onOff || !at.length) return `${permanent ? '\\permmute' : '\\mute'}: what (bubble, ping, text or all), on or off, then @names. Like \\mute bubble ping on @${tag(s.players[s.seat.find(i => i !== me) || me].name)}`;
+  const list = kinds.includes('all') ? KINDS : kinds, on = /^on$/i.test(onOff), store = permanent ? perm() : sessionMutes(), done = [];
+  for (const a of at) {
+    const id = byTag(s, a.slice(1)); if (!id || id === me) { done.push(`✗ ${a}?`); continue; }
+    const k = keysOfPlayer(s.players[id])[0];
+    store[k] = { ...store[k] }; for (const kind of list) { if (on) store[k][kind] = true; else delete store[k][kind]; }
+    if (!Object.keys(store[k]).length) delete store[k];
+    done.push(s.players[id].name);
+  }
+  if (permanent) save();
+  return `${on ? 'Muted' : 'Unmuted'} ${list.join(', ')}${permanent ? ' for good (this device)' : ' (until you leave the room)'}: ${done.join(', ')}.`;
+}
+function showMutes(s, permanent) {
+  const store = permanent ? perm() : sessionMutes(), rows = Object.entries(store);
+  if (!rows.length) return permanent ? 'No permanent mutes.' : 'No mutes in this room.';
+  const nameOf = k => { const id = s && s.seat.find(i => keysOfPlayer(s.players[i]).includes(k)); return id ? s.players[id].name : k.replace(/^(name|acct):/, k.startsWith('acct:') ? 'account ' : ''); };
+  return rows.map(([k, v]) => `${nameOf(k)}: ${Object.keys(v).join(', ')}`).join(' · ');
+}
+function showPlayers(s, online) {
+  return s.seat.map(id => { const p = s.players[id]; return [`${p.name}${id === s.hostId ? ' (host)' : ''}`, p.bot ? 'computer' : online ? (p.ms == null ? '… ms' : p.ms + ' ms') : 'same device', p.idle ? 'away' : '', p.late ? 'plays next round' : ''].filter(Boolean).join(' · '); }).join('\n');
+}
 
 /* ---------- the widget ---------- */
-const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [] };   // cmd: the command line's lines; notes: chat lines only you see
+const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '' };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages
 const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, '\\-')}|everyone)(?![\\p{L}\\p{N}_-])`, 'iu');
 
 /* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
@@ -195,7 +252,7 @@ export function chatWidget() {
       <ul class="chat-sugg" role="listbox" hidden></ul>
       <form class="chat-row" autocomplete="off">
         <button type="button" class="mode-btn mode-icon" aria-label="Chat mode; switch to the command line (Shift+T)" data-tip="Chat · click for the command line (Shift+T)"><span class="mi">ABC</span></button>
-        <input class="chat-in" maxlength="300" spellcheck="false" aria-label="Message">
+        <input class="chat-in" maxlength="500" spellcheck="false" aria-label="Message">
       </form>
     </section>`);
   const w = { btn, panel };
@@ -209,14 +266,16 @@ export function chatWidget() {
     if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help.</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
-    const hidden = new Set(muted()), nameOf = id => (s.players[id] ? tag(s.players[id].name).toLowerCase() : '');
-    const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && hidden.has(nameOf(m.from))))), ...ui.notes].sort((a, b) => a.t - b.t);
+    const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes].sort((a, b) => a.t - b.t);
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
-      if (m.sys) return `<p class="sys">${esc(m.text)}</p>`;
-      const meName = s.players[me] && s.players[me].name, hit = m.from !== me && meName && mentionRe(meName).test(m.text);
-      const text = esc(m.text).replace(/(\\?)@([\p{L}\p{N}_-]+)/gu, (a, b, n) => `<b class="at">${b}@${n}</b>`);
-      return `<p class="${m.to ? 'priv' : ''}${hit ? ' hit' : ''}">${m.to ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : '?'}` : 'private'}</span> ` : ''}${name(m.from)}: ${text}</p>`;
+      if (m.sys) return `<p class="sys${m.small ? ' small' : ''}">${esc(m.text)}</p>`;
+      const meName = s.players[me] && s.players[me].name, hit = m.from !== me && meName && (m.to === me || mentionRe(meName).test(m.text)) && !isMuted(s, m.from, 'ping');
+      /* over 250 characters: folded under an arrow (a ! beside it if it pings you), open until the chat closes */
+      const long = m.text.length > 250, open = long && ui.long.has(m.n);
+      const text = esc(long && !open ? m.text.slice(0, 250).trimEnd() + '…' : m.text).replace(/(\\?)@([\p{L}\p{N}_-]+)/gu, (a, b, n) => `<b class="at">${b}@${n}</b>`);
+      const fold = long ? `<button type="button" class="fold" data-n="${m.n}" aria-expanded="${open}" aria-label="${open ? 'Fold' : 'Show all'}">${open ? '▾' : '▸'}</button>${hit ? '<b class="fold-bang">!</b>' : ''} ` : '';
+      return `<p class="${m.to ? 'priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${m.to ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : '?'}` : 'private'}</span> ` : ''}${name(m.from)}: ${text}</p>`;
     }).join('');
     const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     setHTML(log, html || '<p class="dim small">Say hi. \\help lists what chat can do.</p>');
@@ -248,7 +307,7 @@ export function chatWidget() {
     if (w.onToggle) w.onToggle();   // the dock opens first, so the box can take the focus
     setMode(m || ui.mode); log.scrollTop = 1e9; inp.focus(); refresh();   // always open on the newest message
   };
-  const closePanel = () => { ui.open = false; panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
+  const closePanel = () => { ui.open = false; ui.long.clear(); panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
   w.openChat = openPanel;
 
   btn.onclick = () => ui.open ? closePanel() : openPanel();
@@ -264,7 +323,8 @@ export function chatWidget() {
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && list.length) { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + Math.min(8, list.length)) % Math.min(8, list.length); drawSugg(); return; }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePanel(); }
   });
-  panel.querySelector('form').onsubmit = e => {
+  log.addEventListener('click', e => { const b = e.target.closest('.fold'); if (!b) return; const n = +b.dataset.n; if (ui.long.has(n)) ui.long.delete(n); else ui.long.add(n); drawLog(); });
+  panel.querySelector('form').onsubmit = async e => {
     e.preventDefault();
     const text = inp.value.trim(); inp.value = ''; sel = 0;
     if (!text) { closePanel(); return; }
@@ -277,14 +337,22 @@ export function chatWidget() {
     }
     const r = room(), note = (...t) => { ui.notes.push(...t.map(text => ({ t: Date.now(), mine: true, text }))); drawLog(); refresh(); };
     if (/^\\help\b/i.test(text)) return note(...HELP);
-    const mc = text.match(/^\\(un)?(mute|muteping)@([\p{L}\p{N}_-]+)\s*$/iu);
-    if (mc) {
-      const list = mc[2].toLowerCase() === 'mute' ? muted() : quiet(), n = tag(mc[3]).toLowerCase(), had = list.includes(n);
-      if (mc[1]) { if (had) list.splice(list.indexOf(n), 1); } else if (!had) list.push(n);
-      save(); drawLog();
-      return note(`${mc[3]}: ${mc[2].toLowerCase() === 'mute' ? (mc[1] ? 'messages show again' : 'messages hidden') : (mc[1] ? 'pings sound again' : 'pings stay quiet')}.`);
+    if (/^\\togglesuggest\s*$/i.test(text)) {
+      profile.settings.chatSuggest = profile.settings.chatSuggest === false; save();
+      return note(`Chat suggestions ${profile.settings.chatSuggest ? 'on' : 'off'}. \\togglesuggest switches them again.`);
     }
     if (!r) return note('Chat works in a room.');
+    const sh = text.match(/^\\show\s+(\S+)\s*$/i);
+    if (sh) { const k = sh[1].toLowerCase(); return note(k === 'mute' ? showMutes(r.state, false) : k === 'permmute' ? showMutes(r.state, true) : k === 'players' ? showPlayers(r.state, r.online) : '\\show mute, \\show permmute or \\show players'); }
+    if (/^\\show\s*$/i.test(text)) return note('\\show mute, \\show permmute or \\show players');
+    const old = text.match(/^\\(un)?(mute|muteping)@([\p{L}\p{N}_-]+)\s*$/iu);   // the old way still works: permanent, like before
+    if (old) { const res = setMutes(`x ${old[2].toLowerCase() === 'mute' ? 'text' : 'ping'} ${old[1] ? 'off' : 'on'} @${old[3]}`, true, r.state, r.me); drawLog(); return note(res); }
+    const mu = text.match(/^\\(mute|permmute)\b/i);
+    if (mu) {
+      const permanent = mu[1].toLowerCase() === 'permmute';
+      if (permanent && !/\s-f(\s|$)/i.test(text) && /\s@/.test(text) && !(await confirmBox('Mute for good?', 'This stays on this device until you undo it (\\permmute … off @name). -f skips this question.'))) return note('Nothing muted.');
+      const res = setMutes(text, permanent, r.state, r.me); drawLog(); return note(res);
+    }
     const pm = text.match(/^\\@([\p{L}\p{N}_-]+)\s+(.+)$/u);
     if (pm) {
       const to = byTag(r.state, pm[1]);
@@ -298,12 +366,13 @@ export function chatWidget() {
   /* new messages: pings for @you; a "!" on the closed button */
   const onState = s => {
     const r = room(); if (!r) return;
+    const g = s.startedAt ? `${s.id}:${s.startedAt}` : '';   // each new game: a note on the chat's suggestions
+    if (g && g !== ui.game) { ui.game = g; ui.notes.push({ t: Date.now(), mine: true, text: `New game. \\togglesuggest turns the chat's suggestions ${profile.settings.chatSuggest === false ? 'back on' : 'off'}.` }); if (ui.mode === 'chat') drawLog(); }
     if ((s.logN || 0) !== lastN) {
       const fresh = s.log.filter(m => m.n > lastN);
       lastN = s.logN || 0;
       const meName = s.players[r.me] && s.players[r.me].name;
-      const off = new Set([...muted(), ...quiet()]), nm = id => (s.players[id] ? tag(s.players[id].name).toLowerCase() : '');
-      const hit = fresh.some(m => !m.sys && m.from !== r.me && !off.has(nm(m.from)) && (m.to === r.me || (meName && mentionRe(meName).test(m.text))));
+      const hit = fresh.some(m => !m.sys && m.from !== r.me && !isMuted(s, m.from, 'text') && !isMuted(s, m.from, 'ping') && (m.to === r.me || (meName && mentionRe(meName).test(m.text))));
       if (hit) { sfx.ping(); if (!ui.open) { ui.ping = true; btn.querySelector('.bang').hidden = false; } }
       if (ui.mode === 'chat') drawLog();
     }

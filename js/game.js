@@ -18,6 +18,7 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, colOf, colX, colBounds, needed, playing, VOTE_GRACE } from './rules.js';
 import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
+import { isMuted } from './chat.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontCSS } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -48,7 +49,8 @@ let scene = null;                // the map: its world fills the page behind the
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 let draftT = 0;
 let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
-let recorded = '';               // the last round counted in my all-time stats                  // my typed question waits a moment, then goes to the host as a draft
+let recorded = '';               // the last round counted in my all-time stats
+let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }                  // my typed question waits a moment, then goes to the host as a draft
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -97,7 +99,7 @@ function drawDucks(now = clockNow()) {
     const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
     const sig = JSON.stringify([p.duck, p.name, p.nameStyle, !!p.dead]);   // a new look shows at once, mid-game too
@@ -127,6 +129,9 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
     d.classList.toggle('idle', !!p.idle);   // gone quiet: Zs float up
+    const say = bubbles[id], saying = !!say && now < say.until;   // their newest chat message, for a few seconds
+    if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
+    if (d._saying !== saying) { d._saying = saying; d.classList.toggle('saying', saying); }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colOf(pos.x) : -1;
     if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', `var(--c${bub + 1})`); }
@@ -186,6 +191,13 @@ function playFx(f) {
     sfx.love();
   } else if (f.kind === 'kill') {
     sfx.bonk();
+  } else if (f.kind === 'fire') {   // flames for a moment, then charred; the burns fade in a few seconds
+    const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`); if (!dk) return;
+    clearTimeout(dk._fireT); clearTimeout(dk._burnT);
+    dk.classList.remove('burnt'); dk.classList.add('onfire');
+    dk._fireT = setTimeout(() => { dk.classList.remove('onfire'); dk.classList.add('burnt'); }, 1600);
+    dk._burnT = setTimeout(() => { dk.classList.remove('burnt'); dk.classList.add('unburn'); dk._burnT = setTimeout(() => dk.classList.remove('unburn'), 2600); }, 4000);
+    sfx.fire();
   } else if (f.kind === 'hotdog') {
     const node = el(`<div class="fx-hotdog" style="width:${(size * .8).toFixed(0)}px">${HOTDOG}</div>`);
     fxl.append(node); hotdogs.push({ id: f.who[0], el: node, until: now + 7000 });
@@ -468,6 +480,13 @@ function paint(force) {
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
   setHTML($('.gact', S), actHTML(s));
   pm.paint();
+  /* new chat messages float over their sender's duck (whispers only for the two of you; muted bubbles stay hidden) */
+  if (lastLog < 0) lastLog = s.logN || 0;
+  if ((s.logN || 0) > lastLog) {
+    for (const m of s.log) if (m.n > lastLog && !m.sys && s.players[m.from] && (!m.to || m.to === R.me || m.from === R.me) && !isMuted(s, m.from, 'bubble') && !isMuted(s, m.from, 'text'))
+      bubbles[m.from] = { text: m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };
+    lastLog = s.logN || 0;
+  }
   if (lastFx < 0) lastFx = s.fxN || 0;
   if ((s.fxN || 0) > lastFx) { const fresh = (s.fx || []).filter(f => f.n > lastFx); lastFx = s.fxN; if (onBoardPhase()) { if (!geo) measure(); fresh.forEach(playFx); } }
   if (s.phase === 'results') {
@@ -567,7 +586,7 @@ register('game', {
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
-    if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null;
+    if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null;
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
