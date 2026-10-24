@@ -339,7 +339,7 @@ html.cb .cb-mark { display: block; font-size: 1.3em; letter-spacing: .05em; }
 /* the Round Lord on a cloud over the middle of the board, the question beside it; see-through over a duck */
 .topover { position: absolute; top: .3rem; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; pointer-events: none; z-index: 3000; padding: 0 1rem; }
 .topover > * { transition: opacity .2s; }
-.topover .see-through { opacity: .3; }
+.topover .see-through { opacity: .62; }   /* see-through enough to spot the duck, still easy to read */
 .question { grid-column: 3; position: relative; justify-self: start; font-size: calc(1.35rem * var(--ts)); font-weight: 700; max-width: 34rem; background: var(--panel); border: .16rem solid var(--line); border-radius: 1rem; padding: .45rem .9rem; box-shadow: 0 .2rem 0 var(--line); overflow-wrap: anywhere; }
 .question::before { content: ''; position: absolute; left: -.62rem; top: 50%; width: 1rem; height: 1rem; background: var(--panel); border-left: .16rem solid var(--line); border-bottom: .16rem solid var(--line); transform: translateY(-50%) rotate(45deg); }
 .lord { grid-column: 2; display: flex; flex-direction: column; align-items: center; }
@@ -448,3 +448,25 @@ html.moving .hat-float { animation: hatfloat 2.4s ease-in-out infinite; transfor
 .hat-opts { display: flex; flex-direction: column; gap: .5rem; margin-top: .4rem; }
 .hat-color { display: flex; align-items: flex-start; gap: .6rem; flex-wrap: wrap; }
 .hat-color .lab { min-width: 5rem; padding-top: .4rem; }
+
+/* ---------- the silly commands on the board ---------- */
+.fxl { position: absolute; inset: 0; pointer-events: none; z-index: 3500; overflow: visible; }
+.fx-bolt { position: absolute; left: 0; top: 0; filter: drop-shadow(0 0 6px #fff7a8); animation: bolt .7s steps(1) forwards; }
+@keyframes bolt { 0% { opacity: 1; } 20% { opacity: .15; } 35% { opacity: 1; } 60% { opacity: .5; } 100% { opacity: 0; } }
+.fx-flash { position: absolute; inset: 0; background: #fff; border-radius: 1rem; animation: flash .45s ease-out forwards; }
+@keyframes flash { 0% { opacity: .38; } 100% { opacity: 0; } }
+.gduck.zapped .gduck-body { filter: brightness(.35) contrast(1.4); animation: shake .12s linear 8; }
+@keyframes shake { 25% { translate: -2px 0; } 75% { translate: 2px 0; } }
+.fx-heart { position: absolute; width: 7rem; margin-left: -3.5rem; margin-top: -3rem; animation: rise 4s ease-in forwards; }
+.fx-heart-bg { width: 100%; height: auto; display: block; filter: drop-shadow(0 .25rem .4rem #0005); }
+.fx-heart-ducks { position: absolute; left: 0; right: 0; top: 18%; display: flex; justify-content: center; gap: .1rem; }
+.fx-heart-ducks svg { width: 2.6rem; height: auto; }
+@keyframes rise { 0% { transform: translateY(0) scale(.4); opacity: 0; } 12% { transform: translateY(-10px) scale(1); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(var(--rise)) scale(1.05); opacity: 0; } }
+.fx-hotdog { position: absolute; left: 0; top: 0; margin-left: -.5rem; transition: opacity .8s; animation: hotdogbob 1.4s ease-in-out infinite; }
+.fx-hotdog svg { display: block; transform: rotate(-12deg); filter: drop-shadow(0 .2rem .2rem #0004); }
+.fx-hotdog.going { opacity: 0; }
+@keyframes hotdogbob { 50% { margin-top: -6px; } }
+html.still .fx-heart { animation-duration: 4s !important; animation-iteration-count: 1 !important; }
+details.more { margin-top: 1rem; border: .14rem solid var(--soft); border-radius: .8rem; padding: .3rem .8rem .7rem; }
+details.more > summary { cursor: pointer; font-weight: 700; padding: .3rem 0; color: var(--dim); }
+details.more[open] > summary { color: var(--ink); }

@@ -26,9 +26,15 @@ const COLORS = { red: '#ef3b3b', orange: '#ff8c2b', yellow: '#ffd23f', green: '#
 const colorOf = v => COLORS[String(v).toLowerCase()] || normHex(v);
 const COLOR_HINT = [...Object.keys(COLORS), '#hex'];
 const keysOf = list => list.map(x => x[0]);
+/* the silly commands: each names players with @; the host can turn them off (Game options → Additional settings) */
+const fun = (kind, count, what) => ({ info: what, at: count, fun: true, kind });
 const TREE = {
   help: { info: 'Lists the commands.' },
   clear: { info: 'Clears this window.' },
+  lightning: fun('lightning', 1, 'Strikes a player with lightning: lightning @name'),
+  love: fun('love', 2, 'Two players float up in a heart: love @name @name'),
+  kill: fun('kill', 1, 'A player plays dead until they move: kill @name'),
+  hotdog: fun('hotdog', 1, 'A hotdog hangs around a player for a while: hotdog @name'),
   custom: {
     info: 'Customize your duck, card or name.',
     kids: {
@@ -76,14 +82,20 @@ function words(line) {
 const quote = w => /\s/.test(w) ? `"${w}"` : w;
 
 /* what fits next on the command line */
+/* a name as it is typed after @: without its spaces ("Player 1" is @Player1) */
+export const tag = n => String(n || '').replace(/\s+/g, '');
+const byTag = (s, t) => s.seat.find(i => tag(s.players[i].name).toLowerCase() === tag(t).toLowerCase());
+const funOn = () => { const r = activeRoom(); return !r || !!r.state.options.fun; };
+const names = () => { const r = activeRoom(); return r ? r.state.seat.map(id => '@' + tag(r.state.players[id].name)) : []; };
 function cmdSuggest(line) {
   const { done, last, from } = words(line);
-  let node = { kids: TREE };
+  let node = { kids: TREE }, given = 0;
   for (const w of done) {
     if (node.kids) { node = node.kids[w.toLowerCase()]; if (!node) return []; }
+    else if (node.at && given < node.at - 1) given++;
     else return [];
   }
-  const opts = node.kids ? Object.keys(node.kids) : node.vals ? node.vals.filter(v => !v.startsWith('<') && v !== '#hex') : [];
+  const opts = node.kids ? Object.keys(node.kids).filter(k => !(node.kids[k].fun && !funOn())) : node.at ? names() : node.vals ? node.vals.filter(v => !v.startsWith('<') && v !== '#hex') : [];
   const p = last.toLowerCase();
   return opts.filter(o => o.toLowerCase().startsWith(p) && o.toLowerCase() !== p).map(o => ({ label: quote(o), apply: () => line.slice(0, from) + quote(o) + ' ' }));
 }
@@ -91,8 +103,9 @@ function runCommand(line) {
   const { done, last } = words(line.trim()); const w = last ? [...done, last] : done;
   if (!w.length) return [];
   const top = w[0].toLowerCase();
-  if (top === 'help') return ['Commands:', ...Object.entries(TREE).map(([k, n]) => `  ${k} · ${n.info}`), 'custom avatar · card · username, e.g. custom username font "times new roman"'];
+  if (top === 'help') return ['Commands:', ...Object.entries(TREE).filter(([, n]) => !(n.fun && !funOn())).map(([k, n]) => `  ${k} · ${n.info}`), 'custom avatar · card · username, e.g. custom username font "times new roman"'];
   if (top === 'clear') return null;
+  if (TREE[top] && TREE[top].fun) return [runFun(TREE[top], w.slice(1))];
   let node = { kids: TREE }, path = [];
   for (let i = 0; i < w.length; i++) {
     if (node.kids) {
@@ -108,24 +121,52 @@ function runCommand(line) {
   return [`${path.join(' ')}: ${(node.vals || []).map(quote).join(', ')}`];
 }
 
+/* a silly command: needs a room, the host's yes, the board, and its players by @name */
+function runFun(node, args) {
+  const r = activeRoom();
+  if (!r) return '✗ That works in a game.';
+  const s = r.state;
+  if (!s.options.fun) return '✗ The host turned the silly commands off.';
+  if (!['answer', 'discuss', 'results'].includes(s.phase)) return '✗ That works on the board.';
+  const who = [];
+  for (const a of args) {
+    const id = byTag(s, a.replace(/^@/, ''));
+    if (!id) return `✗ No player named ${a.replace(/^@/, '')}.`;
+    who.push(id);
+  }
+  if (who.length < node.at) return `✗ ${node.info}`;
+  r.send({ t: 'fx', kind: node.kind, who: who.slice(0, node.at) });
+  const nm = who.slice(0, node.at).map(id => s.players[id].name).join(' and ');
+  return { lightning: `⚡ ${nm}`, love: `♥ ${nm}`, kill: `✖ ${nm} plays dead`, hotdog: `🌭 for ${nm}` }[node.kind];
+}
+
 /* ---------- the chat's suggestions ---------- */
+/* chat commands: before typing only \\help and @ show; typing narrows them (\\ shows every \\ command); names complete
+   after @ and after each \\…@ */
+const CHAT_CMDS = ['\\help', '\\@', '\\mute@', '\\unmute@', '\\muteping@', '\\unmuteping@'];
 function chatSuggest(line, s, me) {
-  const m = line.match(/(\\?@)([\p{L}\p{N}_-]*)$/u);
+  const m = line.match(/((?:\\(?:un)?(?:mute|muteping))?\\?@)([\p{L}\p{N}_-]*)$/u);
   if (m && s) {
-    const p = m[2].toLowerCase();
-    return s.seat.filter(id => id !== me && s.players[id].name.toLowerCase().startsWith(p))
-      .map(id => ({ label: m[1] + s.players[id].name, apply: () => line.slice(0, line.length - m[0].length) + m[1] + s.players[id].name + ' ' }));
+    const p = m[2].toLowerCase(), pre = line.slice(0, line.length - m[0].length);
+    const people = s.seat.filter(id => id !== me && tag(s.players[id].name).toLowerCase().startsWith(p)).map(id => tag(s.players[id].name));
+    const opts = m[1] === '@' && 'everyone'.startsWith(p) ? ['everyone', ...people] : people;
+    const out = opts.map(n => ({ label: m[1] + n, apply: () => pre + m[1] + n + ' ' }));
+    return out.filter(o => o.label.toLowerCase() !== line.slice(pre.length).toLowerCase().trim());
   }
-  if (line === '' || (line.startsWith('\\') && !line.includes(' '))) {
-    return ['\\help', '\\@'].filter(c => c.startsWith(line) && c !== line).map(c => ({ label: c, apply: () => c }));
-  }
+  if (line === '') return ['\\help', '@'].map(c => ({ label: c, apply: () => c }));
+  if (line.startsWith('\\') && !line.includes(' ')) return CHAT_CMDS.filter(c => c.startsWith(line) && c !== line).map(c => ({ label: c, apply: () => c }));
   return [];
 }
-const HELP = ['@name: pings a player (a soft sound and a "!")', '\\@name message: a private message', 'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
+const HELP = ['@name: pings a player (a soft sound and a "!"); @everyone pings everyone', '\\@name message: a private message',
+  '\\mute@name: hide their messages · \\unmute@name', '\\muteping@name: their pings stay quiet · \\unmuteping@name',
+  'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
+/* who you muted, by name, kept on this device */
+const muted = () => (profile.muted = profile.muted || []);
+const quiet = () => (profile.mutedPings = profile.mutedPings || []);
 
 /* ---------- the widget ---------- */
 const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [] };   // cmd: the command line's lines; notes: chat lines only you see
-const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@${n.replace(/[-]/g, '\\-')}(?![\\p{L}\\p{N}_-])`, 'iu');
+const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, '\\-')}|everyone)(?![\\p{L}\\p{N}_-])`, 'iu');
 
 /* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
    side chosen in Settings, so it never covers anything) */
@@ -152,7 +193,8 @@ export function chatWidget() {
     if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help, or press Tab.</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
-    const lines = [...s.log.filter(m => m.sys || !m.to || m.to === me || m.from === me), ...ui.notes].sort((a, b) => a.t - b.t);
+    const hidden = new Set(muted()), nameOf = id => (s.players[id] ? tag(s.players[id].name).toLowerCase() : '');
+    const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && hidden.has(nameOf(m.from))))), ...ui.notes].sort((a, b) => a.t - b.t);
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
       if (m.sys) return `<p class="sys">${esc(m.text)}</p>`;
@@ -175,7 +217,7 @@ export function chatWidget() {
   };
   /* the round symbol shows the mode you are in: ABC on white for the chat, a green $ on black for the command line */
   const setMode = m => {
-    ui.mode = m; panel.dataset.mode = btn.dataset.mode = m;
+    ui.mode = m; panel.dataset.mode = btn.dataset.mode = modeBtn.dataset.mode = m;
     panel.querySelector('.chat-title').textContent = m === 'cmd' ? 'Command line' : 'Chat';
     for (const b of [modeBtn, btn]) b.querySelector('.mi').textContent = m === 'cmd' ? '$' : 'ABC';
     modeBtn.dataset.tip = m === 'cmd' ? 'Command line · click for the text chat (T)' : 'Chat · click for the command line (Shift+T)';
@@ -219,10 +261,17 @@ export function chatWidget() {
     }
     const r = room(), note = (...t) => { ui.notes.push(...t.map(text => ({ t: Date.now(), mine: true, text }))); drawLog(); refresh(); };
     if (/^\\help\b/i.test(text)) return note(...HELP);
+    const mc = text.match(/^\\(un)?(mute|muteping)@([\p{L}\p{N}_-]+)\s*$/iu);
+    if (mc) {
+      const list = mc[2].toLowerCase() === 'mute' ? muted() : quiet(), n = tag(mc[3]).toLowerCase(), had = list.includes(n);
+      if (mc[1]) { if (had) list.splice(list.indexOf(n), 1); } else if (!had) list.push(n);
+      save(); drawLog();
+      return note(`${mc[3]}: ${mc[2].toLowerCase() === 'mute' ? (mc[1] ? 'messages show again' : 'messages hidden') : (mc[1] ? 'pings sound again' : 'pings stay quiet')}.`);
+    }
     if (!r) return note('Chat works in a room.');
     const pm = text.match(/^\\@([\p{L}\p{N}_-]+)\s+(.+)$/u);
     if (pm) {
-      const to = r.state.seat.find(id => r.state.players[id].name.toLowerCase() === pm[1].toLowerCase());
+      const to = byTag(r.state, pm[1]);
       if (!to) return note(`No player named ${pm[1]}.`);
       r.send({ t: 'chat', to, text: pm[2] });
     } else if (/^\\@/.test(text)) return note('A private message: \\@name, a space, then the message.');
@@ -237,7 +286,8 @@ export function chatWidget() {
       const fresh = s.log.filter(m => m.n > lastN);
       lastN = s.logN || 0;
       const meName = s.players[r.me] && s.players[r.me].name;
-      const hit = fresh.some(m => !m.sys && m.from !== r.me && (m.to === r.me || (meName && mentionRe(meName).test(m.text))));
+      const off = new Set([...muted(), ...quiet()]), nm = id => (s.players[id] ? tag(s.players[id].name).toLowerCase() : '');
+      const hit = fresh.some(m => !m.sys && m.from !== r.me && !off.has(nm(m.from)) && (m.to === r.me || (meName && mentionRe(meName).test(m.text))));
       if (hit) { sfx.ping(); if (!ui.open) { ui.ping = true; btn.querySelector('.bang').hidden = false; } }
       if (ui.mode === 'chat') drawLog();
     }

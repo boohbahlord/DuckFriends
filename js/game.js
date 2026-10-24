@@ -34,6 +34,7 @@ const keys = new Set();
 let me = null;             // my duck here: { x, y, j (jump start), face }
 let target = null;         // where a click asked my duck to walk
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
+let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null;
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
@@ -46,21 +47,26 @@ const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (n
 /* ---------- the board ---------- */
 const boardHTML = s => `<div class="board">
   <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
-  <div class="lane"></div><div class="ducks"></div>
+  <div class="lane"></div><div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
 
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
   const board = S && $('.board', S); if (!board) { geo = null; return; }
-  const r = board.getBoundingClientRect(), cols = $('.cols', board), laneH = $('.lane', board).offsetHeight, H = cols.offsetHeight, top0 = cols.offsetTop;
-  const size = Math.max(34, Math.min(96, (portrait() ? H / 7 : r.width / 7) * .62));
+  const cols = $('.cols', board), lane = $('.lane', board);
+  let size = Math.max(34, Math.min(96, (portrait() ? cols.offsetHeight / 7 : board.offsetWidth / 7) * .62));
+  // the lane below the board holds a whole duck and its name, so a duck waiting there never covers the column names
+  const want = Math.round(size + 26) + 'px';
+  if (lane.style.height !== want) lane.style.height = want;
+  const r = board.getBoundingClientRect(), laneH = lane.offsetHeight, H = cols.offsetHeight, top0 = cols.offsetTop;
+  if (portrait()) size = Math.max(34, Math.min(96, H / 7 * .62));
   const label = board.querySelector('.col-name'), labelH = portrait() ? 0 : (label ? label.offsetHeight + 12 : 30);
   geo = { W: r.width, H, top0, laneH, size, labelH, left: r.left, top: r.top };
 }
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across; x < 0 = the lane below */
 function place(p, i, n) {
   const { W, H, top0, laneH, size, labelH } = geo;
-  if (p.x < 0) return { left: W * (i + 1) / (n + 1), top: top0 + H + laneH * .62 };
+  if (p.x < 0) return { left: W * (i + 1) / (n + 1), top: top0 + H + laneH - 24 };
   if (portrait()) return { left: W * (.1 + p.y * .8), top: top0 + H * (1 - p.x) + size * .45 };
   return { left: W * p.x, top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH) };
 }
@@ -99,7 +105,8 @@ function drawDucks(now = Date.now()) {
     const q = mine ? (now - squash.t < 170 ? squash.q : '') : (pos.q || '');
     const fx = portrait() ? 1 : d._face, mq = fx < 0 ? ({ l: 'r', r: 'l' }[q] || q) : q, [org, sx, sy] = SQ[mq] || ['50% 100%', 1, 1];
     const tr = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`, lift = `translateY(${(-z).toFixed(1)}px)`;
-    const body = `scaleX(${fx})`, squish = `scale(${sx}, ${sy})`, sh = (1 - Math.min(.6, z / (size * 3.2))).toFixed(3);
+    const deadPose = p.dead && !(p.duck && p.duck.image);
+    const body = `scaleX(${fx})${deadPose ? ' rotate(-100deg) translateY(-12%)' : ''}`, squish = `scale(${sx}, ${sy})`, sh = (1 - Math.min(.6, z / (size * 3.2))).toFixed(3);
     if (d._tr !== tr) { d._tr = tr; d.style.transform = tr; d.style.zIndex = Math.round(at.top); }
     if (d._sz !== size) { d._sz = size; d.style.setProperty('--sz', size + 'px'); }
     if (d._lift !== lift) { d._lift = lift; d.querySelector('.gduck-lift').style.transform = lift; }
@@ -114,6 +121,13 @@ function drawDucks(now = Date.now()) {
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
+  // hotdogs hang around their duck, then fade
+  hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
+  for (const h of hotdogs) {
+    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos.j, now) * size;
+    h.el.style.transform = `translate(${(at.left + size * .62).toFixed(1)}px, ${(at.top - size * .9 - z).toFixed(1)}px)`;
+    h.el.classList.toggle('going', now > h.until - 900);
+  }
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? colOf(me.x) : -1;
   board.querySelectorAll('.col').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
@@ -125,9 +139,44 @@ function drawDucks(now = Date.now()) {
   }
 }
 
+/* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
+const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
+function playFx(f) {
+  const s = R.state, fxl = S && $('.fxl', S); if (!fxl || !geo) return;
+  const now = Date.now(), size = geo.size, posOf = id => id === R.me && me ? me : s.pos[id];
+  const spot = id => { const p = posOf(id); return p ? place(p.x < 0 ? { ...p, x: .5 } : p, 0, 1) : null; };
+  if (f.kind === 'lightning') {
+    const at = spot(f.who[0]); if (!at) return;
+    let d = `M${at.left + (Math.random() - .5) * 40} 0`, y = 0;
+    const x0 = at.left, yEnd = at.top - size * .6;
+    while (y < yEnd - 30) { y += 24 + Math.random() * 30; d += `L${(x0 + (Math.random() - .5) * 46).toFixed(1)} ${Math.min(y, yEnd).toFixed(1)}`; }
+    d += `L${x0} ${yEnd}`;
+    const bolt = el(`<svg class="fx-bolt" width="${geo.W}" height="${geo.top0 + geo.H + geo.laneH}"><path d="${d}" stroke="#fff6b0" stroke-width="7" fill="none" stroke-linejoin="bevel" opacity=".55"/><path d="${d}" stroke="#ffffff" stroke-width="2.6" fill="none" stroke-linejoin="bevel"/></svg>`);
+    const flash = el('<div class="fx-flash"></div>');
+    fxl.append(bolt, flash); setTimeout(() => { bolt.remove(); flash.remove(); }, 700);
+    const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`); if (dk) { dk.classList.add('zapped'); setTimeout(() => dk.classList.remove('zapped'), 1400); }
+    sfx.zap();
+  } else if (f.kind === 'love') {
+    const a = spot(f.who[0]), b = spot(f.who[1]); if (!a || !b) return;
+    const pa = s.players[f.who[0]], pb = s.players[f.who[1]];
+    const x = (a.left + b.left) / 2, y = Math.min(a.top, b.top) - size * .4;
+    const heart = el(`<div class="fx-heart" style="left:${x}px;top:${y}px;--rise:${(-y - 40).toFixed(0)}px"><svg viewBox="0 0 100 90" class="fx-heart-bg"><path d="M50 86C14 60 2 42 4 26 6 10 20 2 32 3c8 1 14 6 18 13 4-7 10-12 18-13 12-1 26 7 28 23 2 16-10 34-46 60z" fill="#ff4f8b" stroke="#fff" stroke-width="3"/></svg>
+      <div class="fx-heart-ducks">${pa ? duckSVG(pa.duck, { size: 40, shadow: false, title: pa.name }) : ''}${pb ? duckSVG({ ...pb.duck }, { size: 40, shadow: false, title: pb.name }).replace('<svg ', '<svg style="transform:scaleX(-1)" ') : ''}</div></div>`);
+    fxl.append(heart); setTimeout(() => heart.remove(), 4200);
+    sfx.love();
+  } else if (f.kind === 'kill') {
+    sfx.bonk();
+  } else if (f.kind === 'hotdog') {
+    const node = el(`<div class="fx-hotdog" style="width:${(size * .8).toFixed(0)}px">${HOTDOG}</div>`);
+    fxl.append(node); hotdogs.push({ id: f.who[0], el: node, until: now + 7000 });
+    sfx.hotdog();
+  }
+}
+
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && ['answer', 'discuss', 'results'].includes(R.state.phase);
-const canWalk = () => onBoardPhase() && !(R.state.phase === 'answer' && R.state.done[R.me]) && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined);
+const locked = () => R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam;   // an ended turn holds its answer (not in free roam)
+const canWalk = () => onBoardPhase() && !locked() && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined);
 function xBounds() {
   const s = R.state;
   if (s.phase === 'answer') return [.03, .97];
@@ -261,7 +310,8 @@ function actHTML(s) {
   if (s.phase === 'submit') return count;
   if (s.phase === 'answer') {
     const onBoard = (me && me.x >= 0);
-    const mc = profile.settings.multipleChoice && !mine ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
+    const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
+    if (s.options.freeRoam) return `${mc}<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end"${onBoard ? '' : ' disabled'} data-tip="Free roam: keep moving; where you stand when the turn ends is your answer.">${mine ? 'Ready ✓' : 'Ready'} <kbd>Enter</kbd></button>${count}</div>`;
     return `${mc}<div class="act-row"><button type="button" class="btn green" data-a="end"${mine || !onBoard ? ' disabled' : ''}>${mine ? 'Answer locked ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   }
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next question'} <kbd>Enter</kbd></button>${count}</div>`;
@@ -296,7 +346,7 @@ function paint(force) {
   // the host keeps my duck in bounds (an ended turn, the column after answering); take its word for where I am
   if (me && s.pos[R.me] && onBoardPhase()) {
     const p = s.pos[R.me];
-    if ((s.phase === 'answer' && s.done[R.me]) || (s.phase !== 'answer' && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
+    if (locked() || (s.phase !== 'answer' && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
     if (s.phase === 'discuss' && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBounds(s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }
   }
   const lordSig = s.phase === 'answer' || s.phase === 'discuss' ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
@@ -304,6 +354,8 @@ function paint(force) {
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) lord.outerHTML = lordHTML(s);
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
   setHTML($('.gact', S), actHTML(s));
+  if (lastFx < 0) lastFx = s.fxN || 0;
+  if ((s.fxN || 0) > lastFx) { const fresh = (s.fx || []).filter(f => f.n > lastFx); lastFx = s.fxN; if (onBoardPhase()) { if (!geo) measure(); fresh.forEach(playFx); } }
   if (s.phase === 'results') {
     const panel = $('.statpanel', S), had = panel._html && panel._html.includes('all-h');
     setHTML(panel, statsHTML(s));
@@ -379,7 +431,7 @@ register('game', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
-    if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear();
+    if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {

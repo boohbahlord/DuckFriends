@@ -28,27 +28,39 @@ const INFO = {
 const boardMini = () => `<div class="mini-board">${COLS.map((c, i) => `<span class="c${i + 1}" title="${esc(c)}"></span>`).join('')}</div>`;
 
 /* ---------- Game options: the host edits them; everyone else sees them ---------- */
+/* the options most hosts want; the rest wait under Additional settings so a straightforward host never sees them */
 const OPT_TILES = [
   ['order', 'Question order', [['rotate', 'Rotating'], ['random', 'Random']]],
   ['share', 'Turn ends when done', [[.5, 'Half'], [.67, '2 of 3'], [.75, '3 of 4'], [1, 'Everyone']]],
   ['catchUp', 'Catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s']]],
   ['answerTime', 'Answer timer', [[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
+];
+const MORE_TILES = [
+  ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
   ['lowGravity', 'Jumps', [[0, 'Normal'], [1, 'Low gravity']]],
+  ['fun', 'Silly commands', [[1, 'On'], [0, 'Off']]],
 ];
+let moreOpen = false;
 const OPT_TIPS = {
   share: 'A phase ends once this many players have ended their turn.',
   catchUp: 'Once enough players are done, the rest get this long (writing questions and answering).',
   answerTime: 'The Round Lord\'s answer time unless they choose another.',
   submitTime: 'A time limit on writing questions.',
+  freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
+  fun: 'lightning, love, kill and hotdog in the command line.',
 };
+const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
+  `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
 function openOptions() {
   const s = R.state, host = s.hostId === R.me, ro = host ? '' : ' aria-disabled="true"';
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host changes these.</p>'}
-    ${OPT_TILES.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
-      `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('')}
+    ${tileRows(OPT_TILES, s, ro)}
+    <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
+    ${tileRows(MORE_TILES, s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
+    </details>
     <div class="sect"><h3>Room</h3><div class="row">
       <label class="numfield">Players up to <select data-k="max"${host ? '' : ' disabled'}>${[2, 3, 4, 5, 6, 7, 8, 10, 12, 16].filter(n => n >= s.seat.length).map(n => `<option${n === s.max ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       ${s.test ? `<label class="numfield">Computers <select data-k="computers"${host ? '' : ' disabled'}>${Array.from({ length: s.max }, (_, n) => n).filter(n => n <= s.max - 1).map(n => `<option${n === s.seat.filter(id => s.players[id].bot).length ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : ''}
@@ -56,6 +68,7 @@ function openOptions() {
     ${host ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ''}`, {
     cls: 'win-settings',
     onOpen(w, close) {
+      w.querySelector('details.more').addEventListener('toggle', e => { moreOpen = e.target.open; });
       if (!host) return;
       w.addEventListener('click', e => {
         const t = e.target.closest('.tile[data-k]');
