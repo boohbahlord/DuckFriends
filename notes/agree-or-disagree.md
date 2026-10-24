@@ -642,3 +642,10 @@ fixes to  maps and items first then slow down and let me see you plan after you 
 by items i mean specials
 
 the crash you discovered in the vote or anything like that becomes priority
+
+3. Idk because I feel like it should play against something it didnt tie against but i dont know how that works
+4. Yeah they can only shift during the voting phase IF IF IF you mean the colors that change... (????!?!?!?!?!?!)
+
+
+
+answer me and dont start anything, i started the project but im still confused ab what it is, your place in it, if your in it, or wtf is going on
