@@ -16,7 +16,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, colOf, colX, colBounds, needed } from './rules.js';
+import { COLS, SHORT, colOf, colX, colBounds, needed, VOTE_GRACE } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -44,12 +44,12 @@ let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
 let scene = null;                // the map: its world fills the page behind the game
-let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null;
+let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: .45, y: 1.0, px: .5, py: .85, sprint: 1.75 };
-const JUMP = { normal: { T: 1.3, H: 1.5 }, low: { T: 2.6, H: 2.3 } };   // seconds in the air; apex in duck heights
+const JUMP = { normal: { T: .62, H: 1.35 }, low: { T: 1.2, H: 2 } };   // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 const jumpCfg = () => JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
 const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
 
@@ -142,6 +142,7 @@ function drawDucks(now = clockNow()) {
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? colOf(me.x) : -1;
   board.querySelectorAll('.col').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
+  const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) vb.dataset.col = myCol;
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll('.topover .lord, .topover .question')) {
     const r = o.getBoundingClientRect(), L = r.left - geo.left, T = r.top - geo.top;
@@ -203,11 +204,11 @@ function sendMove(force) {
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) */
 function bumps(x, y, now) {
-  if (!geo || jumpZ(me.j, now) > geo.size * .3) return null;
+  if (!geo || jumpZ(me.j, now) > 0) return null;   // in the air: over everyone
   const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2;
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
-    const o = s.pos[id]; if (jumpZ(o.j, now) > geo.size * .3) continue;
+    const o = s.pos[id]; if (jumpZ(o.j, now) > 0) continue;
     const b = place(o, 0, 1), dx = (a.left - b.left) / (2 * rx), dy = (a.top - b.top) / (2 * ry);
     if (dx * dx + dy * dy < 1) return b;
   }
@@ -313,6 +314,30 @@ function duckAt() {
   return { x: r.left + a.left, y: r.top + a.top };
 }
 
+/* ---------- the cloud's words: letters that fade in (with a sparkle) and out (with a breath) ---------- */
+function say(text, small = false) {
+  const el = S && $('.topover .lord-say', S); if (!el) return;
+  let i = 0;
+  el.className = 'lord-say' + (small ? ' small' : '');
+  el.innerHTML = text.split(' ').map(w => `<span class="w">${[...w].map(ch => `<span style="animation-delay:${(i++ * 38)}ms">${esc(ch)}</span>`).join('')}</span>`).join(' ');
+  sfx.letters(text.length);
+}
+function unsay() { const el = S && $('.topover .lord-say', S); if (!el || !el.textContent) return; el.classList.add('out'); sfx.fade(); }
+const pause = ms => new Promise(ok => setTimeout(ok, ms));
+/* a question starts: "Vote"; the votes are in: the news, then the question to talk over */
+async function announce(phase) {
+  const job = ++sayJob;
+  if (phase === 'answer') { await pause(250); if (job === sayJob) say('Vote'); return; }
+  if (phase !== 'discuss') return;
+  sfx.boop();   // End turn is open
+  await pause(350); if (job !== sayJob) return;
+  say('The votes are in!');
+  await pause(2400); if (job !== sayJob) return;
+  unsay();
+  await pause(650); if (job !== sayJob) return;
+  say('Why did you choose what you chose?', true);
+}
+
 /* ---------- the views ---------- */
 function lordHTML(s) {
   const q = s.qs[s.qi], p = s.players[q.by];
@@ -322,7 +347,7 @@ function lordHTML(s) {
       <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
       <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
       <ellipse cx="84" cy="24" rx="16" ry="6" fill="#fff" opacity=".9"/></svg></div>
-    <div class="lord-label">${rainbowHTML('Round Lord')}</div>
+    <div class="lord-say" aria-live="polite"></div>
     <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : 'Gone'}</div></div>`;
 }
 
@@ -352,18 +377,23 @@ const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('G
     <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} question${s.history.length === 1 ? '' : 's'}</p>
     <div class="statboxes grid"></div></div>`;
 
+const graceLeft = s => s.phase === 'answer' ? Math.max(0, Math.ceil((s.at + VOTE_GRACE * 1000 - clockNow()) / 1000)) : 0;
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const n = s.seat.length, d = s.seat.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (s.phase === 'submit') return count;
   if (s.phase === 'answer') {
-    const onBoard = (me && me.x >= 0);
+    /* Vote: the button takes the color of the column you stand on; no voting in the first seconds; once locked it waits
+       for everyone (End turn comes after, when the votes are in) */
+    const onBoard = (me && me.x >= 0), wait = graceLeft(s), col = onBoard ? colOf(me.x) : -1;
+    const votes = `<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>`;
     const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
-    if (s.options.freeRoam) return `${mc}<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end"${onBoard ? '' : ' disabled'} data-tip="Free roam: keep moving; where you stand when the turn ends is your answer.">${mine ? 'Ready ✓' : 'Ready'} <kbd>Enter</kbd></button>${count}</div>`;
-    return `${mc}<div class="act-row"><button type="button" class="btn green" data-a="end"${mine || !onBoard ? ' disabled' : ''}>${mine ? 'Answer locked ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
+    const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
+    const off = wait || !onBoard || (mine && !s.options.freeRoam);
+    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${s.options.freeRoam ? ' data-tip="Free roam: keep moving; where you stand when the turn ends is your vote."' : ''}>${label}${wait ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
   }
-  if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next question'} <kbd>Enter</kbd></button>${count}</div>`;
+  if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
     const rv = s.seat.filter(id => s.reviewVotes[id]).length, ev = s.seat.filter(id => s.endVotes[id]).length;
     return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next round'} <kbd>Enter</kbd></button>
@@ -374,7 +404,7 @@ function actHTML(s) {
   return '';
 }
 
-const TITLES = { submit: 'Write a question', answer: 'Answer', discuss: 'Talk it over', results: 'Results', over: '' };
+const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '' };
 function paint(force) {
   if (!S || !R) return;
   const s = R.state, key = [s.phase, s.round, s.qi].join('|');
@@ -387,8 +417,9 @@ function paint(force) {
     main.dataset.phase = s.phase;
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
     if (!scene) scene = mountMap($('.map-layer', S), s);
+    announce(s.phase);
     scene.board($('.board', main));
-    if (was && s.phase !== was.split('|')[0]) sfx.done();
+    if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
@@ -406,7 +437,7 @@ function paint(force) {
   }
   const lordSig = s.phase === 'answer' || s.phase === 'discuss' ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
   const lord = $('.topover .lord', S);
-  if (lord && lord._sig !== undefined && lord._sig !== lordSig) lord.outerHTML = lordHTML(s);
+  if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
   setHTML($('.gact', S), actHTML(s));
   if (lastFx < 0) lastFx = s.fxN || 0;
@@ -422,6 +453,7 @@ function paint(force) {
 
 function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
+  if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), actHTML(s)); } }   // the Vote button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
@@ -468,7 +500,7 @@ async function act(a) {
   const s = R.state;
   switch (a) {
     case 'end':
-      if (s.phase === 'answer' && !(me && me.x >= 0)) return;
+      if (s.phase === 'answer' && (!(me && me.x >= 0) || graceLeft(s))) return;
       if (s.phase === 'answer') sendMove(true);
       if (['answer', 'discuss', 'results'].includes(s.phase)) R.send({ t: 'end' });
       break;
@@ -487,7 +519,7 @@ register('game', {
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
-    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; if (touchOff) touchOff(); touchOff = null;
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null;
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {

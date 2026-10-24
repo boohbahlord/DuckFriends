@@ -46,6 +46,11 @@ export const sfx = {
     tone(1976, .06, { type: 'sine', gain: .04, attack: .003 });
     tone(988, .07, { type: 'sine', gain: .04, at: .09 });
   },
+  /* the cloud's words: a soft rising sparkle as the letters fade in, a breath as they fade out */
+  letters(n) { const notes = [988, 1175, 1319, 1568, 1760, 1976]; for (let i = 0; i < Math.min(6, Math.ceil(n / 3)); i++) tone(notes[i], .16, { type: 'sine', gain: .05, at: i * .07, attack: .01 }); },
+  fade() { noise(.4, { gain: .025, type: 'bandpass', freq: 2600, q: .5, slideTo: 700 }); tone(784, .3, { type: 'sine', gain: .03, slide: .6 }); },
+  /* boop: ending your turn is open */
+  boop() { tone(620, .16, { type: 'sine', gain: .17, slide: .68, attack: .005 }); },
   ping() { tone(1318, .22, { gain: .12 }); tone(1760, .3, { gain: .09, at: .09 }); },
   pop() { tone(520, .1, { type: 'sine', gain: .15, slide: 1.8 }); },
   tick() { tone(1200, .05, { type: 'square', gain: .04 }); },

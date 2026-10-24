@@ -77,18 +77,19 @@ document.addEventListener('pointerdown', hideTip, true);
 export const typing = e => { const t = e && e.target; return !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)); };
 
 /* a small menu at the pointer (right-click, or a long press on a phone); items = [[label, fn, {disabled}]…] */
-export function contextMenu(x, y, items) {
+export function contextMenu(x, y, items, { footer = '', onMount } = {}) {   // footer: more below the items (onMount wires it)
   $$('.ctx').forEach(m => m.remove());
   const m = el(`<div class="ctx" role="menu">${items.map(([label, , o = {}], i) =>
-    `<button type="button" role="menuitem" data-i="${i}"${o.disabled ? ' disabled' : ''}>${esc(label)}</button>`).join('')}</div>`);
+    `<button type="button" role="menuitem" data-i="${i}"${o.disabled ? ' disabled' : ''}>${esc(label)}</button>`).join('')}${footer}</div>`);
   document.body.appendChild(m);
   m.style.left = Math.max(6, Math.min(innerWidth - m.offsetWidth - 6, x)) + 'px';
   m.style.top = Math.max(6, Math.min(innerHeight - m.offsetHeight - 6, y)) + 'px';
   const off = e => { if (!m.contains(e.target)) close(); };
   const key = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
   const close = () => { m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', key, true); };
-  m.onclick = e => { const b = e.target.closest('button'); if (!b) return; close(); items[+b.dataset.i][1](); };
+  m.onclick = e => { const b = e.target.closest('button[data-i]'); if (!b) return; close(); items[+b.dataset.i][1](); };
   setTimeout(() => { addEventListener('pointerdown', off, true); addEventListener('keydown', key, true); });
+  if (onMount) onMount(m, close);
   m.querySelector('button:not([disabled])')?.focus();
 }
 /* right-click on a computer, a long press on a phone */
