@@ -7,6 +7,7 @@ import { nameHTML } from './name.js';
 import { openWindow, esc } from './ui.js';
 import { profile, STAT_MODES } from './store.js';
 import { fmtJumps } from './format.js';
+import { bbBoxHTML } from './brackets.js';
 
 export function statBoxHTML(s, id, round = null) {
   const p = s.players[id]; if (!p) return '';
@@ -35,6 +36,11 @@ function totalsHTML(p, t, mode = 'aod') {
   if (!t) return '<p class="dim">No all-time stats from this player yet.</p>';
   const top = Math.max(...t.counts), most = top ? t.counts.map((k, c) => k === top ? c : -1).filter(c => c >= 0) : [];
   const avg = t.answers ? t.counts.reduce((a, k, c) => a + k * (c - 3), 0) / t.answers : null;
+  if (mode === 'bb') {   // Bicker Brackets: their seeds' wins and losses, and the tournaments they won
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Bicker Brackets</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Tournaments</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Tournaments won</dt><dd>${fmtJumps(t.titles)}</dd>
+        <dt>Seed wins</dt><dd>${fmtJumps(t.wins)}</dd><dt>Seed losses</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes in matches</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === 'wyr') {   // Would You Rather: the sides they took
     const sided = t.majority + t.minority;
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Would You Rather</div></div></header>
@@ -60,7 +66,7 @@ export function openStats(s, id, me) {
         w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
         mode.hidden = lastTab !== 'all'; mode.value = lastMode;
         const rounds = new Set(s.history.map(h => h.round)).size;
-        body.innerHTML = lastTab === 'game' ? (s.options.mode === 'wyr' ? wyrBoxHTML(s, id) : statBoxHTML(s, id)) : totalsHTML(p, all && all[lastMode], lastMode);
+        body.innerHTML = lastTab === 'game' ? ({ wyr: wyrBoxHTML, bb: bbBoxHTML }[s.options.mode] || statBoxHTML)(s, id) : totalsHTML(p, all && all[lastMode], lastMode);
         note.textContent = lastTab === 'game' ? `This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.` : 'Across every game played (test rooms only add jumps).';
       };
       w.querySelector('.stat-tabs').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { lastTab = b.dataset.st; show(); } };

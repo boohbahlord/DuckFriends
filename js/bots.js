@@ -2,8 +2,9 @@
    Each computer waits the room's "computers wait" time (30 s by default) after a phase starts, then acts: writes a question,
    walks its duck to an answer (each computer leans one way) and ends its turn. Afterwards they follow the people: a
    computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
-   has. Now and then one wanders a little or jumps. */
-import { colXAt, isWyr } from './rules.js';
+   has. Now and then one wanders a little or jumps. In Bicker Brackets they write a topic and vote for one, type their
+   seeds (for a ready-made topic, seeds that fit it) and back a side in each match. */
+import { colXAt, isWyr, isBb, BB_TOPICS } from './rules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -22,6 +23,19 @@ export const BOT_WYR = [
   ['have a rewind button', 'have a pause button'], ['never use a phone again', 'never watch TV again'], ['be a famous singer', 'be a famous athlete'],
   ['sweat syrup', 'cry maple syrup'], ['live on the moon', 'live under the sea'], ['have hiccups forever', 'always feel a sneeze coming'],
 ];
+/* seeds for the ready-made topics (in BB_TOPICS' order), and some for any topic */
+const BB_SEEDS = [
+  ['Nachos', 'Popcorn', 'Cookies', 'Pretzels', 'Cheese puffs', 'Fruit snacks', 'Ice cream', 'Cold pizza'],
+  ['Biting your nails', 'Being late', 'Snoozing the alarm', 'Doomscrolling', 'Interrupting', 'Leaving dishes out'],
+  ['Darth Vader', 'The Joker', 'Thanos', 'Hannibal Lecter', 'Voldemort', 'Scar', 'The Wicked Witch'],
+  ['Brunch', 'Avocado toast', 'Pumpkin spice', 'Sports cars', 'Fancy water', 'Reality TV'],
+  ['Flying', 'Teleporting', 'Invisibility', 'Time travel', 'Super strength', 'Reading minds'],
+  ['Folding laundry', 'Dishes', 'Taking out the trash', 'Scrubbing the toilet', 'Vacuuming', 'Making the bed'],
+  ['Pepperoni', 'Pineapple', 'Mushrooms', 'Extra cheese', 'Olives', 'Sausage', 'Jalapeños'],
+  ['Nails on a chalkboard', 'A dripping tap', 'Chewing loudly', 'An alarm clock', 'A car alarm', 'Snoring'],
+];
+const ANY_SEEDS = ['Rubber ducks', 'Grandma', 'Tacos', 'Naps', 'Dinosaurs', 'Socks', 'Wi-Fi', 'Pizza', 'Mondays', 'Cats', 'Glitter', 'The moon', 'Pickles', 'Bubble wrap'];
+const anyOf = xs => xs[Math.floor(Math.random() * xs.length)];
 const plan = new Map();   // computer id + question → its chosen column
 const leanOf = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return ((h >>> 0) % 1000) / 1000 * 3 - 1.5; };
 const pick = (id, key) => {
@@ -45,6 +59,21 @@ export function botActions(s, now) {
     switch (s.phase) {
       case 'lobby': case 'over':
         if (!s.players[id].ready) out.push({ t: 'ready', id, v: true }); break;
+      case 'topic':
+        if (late && !s.done[id]) out.push({ t: 'submit', id, text: Math.random() < .8 ? anyOf(BB_TOPICS) : '' });
+        break;
+      case 'tvote':
+        if (late && !s.done[id]) out.push({ t: 'pick', id, i: Math.floor(Math.random() * s.bb.topics.length) });
+        break;
+      case 'seeds':
+        if (late && !s.done[id]) {
+          const k = BB_TOPICS.indexOf(s.bb.topic), have = new Set(s.bb.seeds.map(x => x.text)), pool = [...(BB_SEEDS[k] || []), ...ANY_SEEDS].filter(x => !have.has(x));
+          out.push({ t: 'submit', id, text: anyOf(pool.length ? pool : ANY_SEEDS) });
+        }
+        break;
+      case 'bracket':
+        if (late && !s.done[id] && people.some(h => s.done[h])) out.push({ t: 'end', id, v: true });
+        break;
       case 'submit':
         if (late && !s.done[id]) {
           const pair = BOT_WYR[Math.floor(Math.random() * BOT_WYR.length)], skip = Math.random() >= .9;
@@ -53,7 +82,7 @@ export function botActions(s, now) {
         break;
       case 'answer': {
         if (!late || s.done[id]) break;
-        const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
+        const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) || isBb(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
         const x = p.x, y = p.y, step = .035;
         if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });
