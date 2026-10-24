@@ -27,11 +27,10 @@ export const METAL = {
   chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
 };
 export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null,
-  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0, muscle: 0 };
-/* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%), muscle 0, 1 (toned) or 2 (buff) */
+  eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0 };
+/* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%) */
 export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Chubby'], [1, 'Fat']];
 export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
-export const MUSCLES = [[0, 'None'], [1, 'Toned'], [2, 'Buff']];
 const clamp1 = v => Math.max(-1, Math.min(1, +v || 0));
 /* how much room a duck takes on the board, width and depth (1 = a normal duck) */
 export function duckRoom(look = {}) { const k = 1 + .1 * clamp1(look.size), f = clamp1(look.build); return { x: k * (1 + .16 * f), y: k * (1 + .08 * f) }; }
@@ -100,14 +99,11 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${light}"/><stop offset=".5" stop-color="${base}"/><stop offset="1" stop-color="${dark}"/></radialGradient>`;
   const eyes = eyesSVG(L, dead);
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
-     little bigger or smaller; a toned wing or a flexed, buff one */
-  const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), mus = Math.max(0, Math.min(2, Math.round(+L.muscle || 0)));
+     little bigger or smaller */
+  const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size);
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
-  const wing = mus === 2
-    ? `<path d="M44 84C40 74 44 62 52 58C58 55 62 58 61 63C66 60 72 62 72 68C72 76 64 80 56 82C52 88 46 89 44 84Z" fill="${M ? M[2] : dark}" opacity="${M ? '.6' : '.42'}" stroke="${edge}" stroke-width="1.4" stroke-opacity=".55"${bt}/>
-  <path d="M52 60C56 63 58 67 58 72M62 64C64 68 66 72 64 76M84 66C88 70 90 76 88 82M90 64C93 68 95 72 95 77" stroke="${M ? M[5] : dark}" stroke-width="1.6" fill="none" opacity=".55"${bt}/>`
-    : `<path d="${mus ? 'M38 77C48 68 70 69 78 78C71 91 52 95 40 88C36 85 36 80 38 77Z' : WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : mus ? '.38' : '.32'}"${bt}/>
-  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>${mus ? `<path d="M50 82C56 84 62 84 68 82M88 68C91 72 92 76 91 80" stroke="${M ? M[5] : dark}" stroke-width="1.3" fill="none" opacity=".5"${bt}/>` : ''}`;
+  const wing = `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
+  <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
