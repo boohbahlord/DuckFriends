@@ -21,6 +21,7 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
+  map: 'board',         // board | sky | pixel
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -75,7 +76,7 @@ function startQuestion(s, now) {
   const q = s.qs[s.qi];
   s.lordTime = q.time;
   s.pos = {}; s.lock = {};
-  for (const id of s.seat) s.pos[id] = { x: -1, y: .5 + (Math.random() - .5) * .5 };   // x < 0: not on the board yet
+  s.seat.forEach((id, k) => { s.pos[id] = { x: colX(3), y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts on Neutral, lined up
   return enter(s, 'answer', now);
 }
 
@@ -136,7 +137,7 @@ export function reduce(state, a, now = Date.now()) {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
       if (s.seat.length >= s.max) return s;
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
-      if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: -1, y: .5 };
+      if (s.phase === 'answer' || s.phase === 'discuss' || s.phase === 'results') s.pos[a.p.id] = { x: colX(3), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
     case 'leave': {
@@ -166,7 +167,8 @@ export function reduce(state, a, now = Date.now()) {
       if (!['answer', 'discuss', 'results'].includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
-      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam) { x = was.x; y = was.y; }   // an ended turn keeps its answer (jumping still works)
+      // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
+      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colOf(x) === colOf(was.x))) { x = was.x; y = was.y; }
       if (s.phase !== 'answer') {   // after answering: inside your own column; no answer, no board
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBounds(c); x = Math.max(lo, Math.min(hi, x)); }

@@ -1,0 +1,131 @@
+/* ---------- maps: what the board looks like ----------
+   The Board: the seven solid columns. Sky: clouds everywhere behind see-through columns; the sun sinks for a minute,
+   then the moon comes down from the top and sinks for a minute, and the columns glow at night; one cloud carries a
+   random player's duck. Pixel: columns built of wool blocks, see-through to a blocky world behind: floating islands
+   (stone, two layers of dirt, grass, sometimes a tree) at different distances, a forest seen from above toward the bottom,
+   and a pixel sunset on the horizon that breathes. The host picks the map in the lobby. */
+import { duckSVG } from './duck.js';
+import { esc } from './ui.js';
+
+export const MAPS = [
+  ['board', 'The Board', 'Seven solid columns.'],
+  ['sky', 'Sky', 'Clouds, a sun and a moon that take turns (a minute each), and columns that glow at night.'],
+  ['pixel', 'Pixel', 'Wool-block columns over floating block islands, a forest below and a pixel sunset.'],
+];
+export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
+const COLS7 = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)'];
+
+/* a small picture of each map for the Map window */
+export function mapMini(id) {
+  const cols = COLS7.map(c => `<span style="background:${c}"></span>`).join('');
+  if (id === 'sky') return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i><div class="mm-cols">${cols}</div></div>`;
+  if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i><div class="mm-cols">${cols}</div></div>`;
+  return `<div class="mini-map"><div class="mm-cols solid">${cols}</div></div>`;
+}
+
+/* ---------- Sky ---------- */
+const CLOUD = '<svg viewBox="0 0 200 90" aria-hidden="true"><g fill="#fff"><circle cx="52" cy="56" r="28"/><circle cx="92" cy="42" r="34"/><circle cx="140" cy="50" r="30"/><circle cx="170" cy="64" r="20"/><circle cx="28" cy="66" r="18"/><rect x="28" y="56" width="146" height="28" rx="14"/></g></svg>';
+const mixHex = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+function skyScene(cols, s) {
+  const sc = document.createElement('div'); sc.className = 'scene sky';
+  const rnd = (k => () => (k = (k * 9301 + 49297) % 233280) / 233280)(s.round * 31 + s.qi * 7 + 3);
+  const n = 7, ids = s.seat.filter(id => s.players[id]), rider = ids.length ? ids[(s.round * 7 + s.qi * 3) % ids.length] : null;
+  const clouds = Array.from({ length: n }, (_, i) => {
+    const w = 9 + rnd() * 10, top = 6 + rnd() * 74, dur = 70 + rnd() * 60, dl = -rnd() * dur, op = .55 + rnd() * .35;
+    const duck = i === 2 && rider ? `<div class="sky-rider">${duckSVG(s.players[rider].duck, { size: 60, shadow: false, title: s.players[rider].name })}</div>` : '';
+    return `<div class="sky-cloud${duck ? ' ridden' : ''}" style="width:${w.toFixed(1)}%;top:${top.toFixed(1)}%;opacity:${op.toFixed(2)};animation-duration:${dur.toFixed(0)}s;animation-delay:${dl.toFixed(1)}s">${duck}${CLOUD}</div>`;
+  }).join('');
+  sc.innerHTML = `<div class="sky-stars"></div><div class="sky-sun"></div><div class="sky-moon"></div>${clouds}`;
+  const stars = sc.querySelector('.sky-stars');
+  stars.innerHTML = Array.from({ length: 40 }, () => `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 70).toFixed(1)}%;animation-delay:-${(rnd() * 3).toFixed(1)}s"></i>`).join('');
+  cols.prepend(sc);
+  const sun = sc.querySelector('.sky-sun'), moon = sc.querySelector('.sky-moon');
+  let last = '';
+  return {
+    update(now) {
+      const t = (now % 120000) / 120000, day = t < .5, p = day ? t / .5 : (t - .5) / .5;   // a minute of sun, a minute of moon
+      const y = -12 + p * 118, x = 18 + p * 60;   // down from the top and set below the bottom
+      const key = Math.round(now / 200); if (key === last) return; last = key;
+      (day ? sun : moon).style.transform = `translate(${x.toFixed(1)}cqw, ${y.toFixed(1)}cqh)`;
+      (day ? moon : sun).style.transform = 'translate(0, -40cqh)';
+      // the sky: blue by day, warm as the sun sets, deep blue at night (and lighter again as the moon sets)
+      const top = day ? (p < .6 ? '#5ab8f5' : mixHex('#5ab8f5', '#f2885a', (p - .6) / .4)) : (p < .85 ? '#0e1433' : mixHex('#0e1433', '#3a5aa8', (p - .85) / .15));
+      const bot = day ? (p < .6 ? '#d6f0ff' : mixHex('#d6f0ff', '#ffd08a', (p - .6) / .4)) : (p < .85 ? '#26305e' : mixHex('#26305e', '#8cc6f0', (p - .85) / .15));
+      sc.style.background = `linear-gradient(${top}, ${bot})`;
+      const night = !day || p > .9;
+      cols.classList.toggle('night', night);
+      stars.style.opacity = day ? 0 : (p < .85 ? 1 : 1 - (p - .85) / .15);
+    },
+    destroy() { sc.remove(); cols.classList.remove('night'); },
+  };
+}
+
+/* ---------- Pixel ---------- */
+function pixelScene(cols, s) {
+  const sc = document.createElement('div'); sc.className = 'scene pixel';
+  sc.innerHTML = '<canvas class="pix-sky"></canvas><div class="pix-sun"></div><canvas class="pix-world"></canvas>';
+  cols.prepend(sc);
+  const skyC = sc.querySelector('.pix-sky'), worldC = sc.querySelector('.pix-world'), sun = sc.querySelector('.pix-sun');
+  let drawn = '';
+  const draw = () => {
+    const W = cols.clientWidth, H = cols.clientHeight; if (!W || !H) return;
+    const key = W + 'x' + H; if (key === drawn) return; drawn = key;
+    const u = Math.max(3, Math.round(H / 110)), cw = Math.ceil(W / u), ch = Math.ceil(H / u), hy = Math.round(ch * .5);
+    let seed = 12345; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (const c of [skyC, worldC]) { c.width = cw; c.height = ch; }
+    /* the sky: bands of a sunset with a dithered edge between each */
+    const g = skyC.getContext('2d'), bands = ['#171a45', '#24245f', '#3a2f7a', '#5b3586', '#8a3f86', '#bb4f78', '#e2685e', '#f58e48', '#ffb44d', '#ffd166'];
+    const bh = hy / bands.length;
+    for (let y = 0; y < hy + 2; y++) for (let x = 0; x < cw; x++) {
+      const f = y / bh, i = Math.min(bands.length - 1, Math.floor(f)), frac = f - i;
+      g.fillStyle = bands[frac > .75 && (x + y) % 2 && i < bands.length - 1 ? i + 1 : i]; g.fillRect(x, y, 1, 1);
+    }
+    /* the world: islands in the sky, the forest below the horizon */
+    const w = worldC.getContext('2d'); w.clearRect(0, 0, cw, ch);
+    const block = (x, y, b, col, edge) => { w.fillStyle = col; w.fillRect(x, y, b, b); if (edge && b > 2) { w.fillStyle = edge; w.fillRect(x, y, b, 1); } };
+    const island = (cx, cy, b, wid, haze) => {
+      w.globalAlpha = haze;
+      const half = Math.floor(wid / 2), x0 = cx - half * b;
+      if (r() < .6) {   // a tree
+        const tx = x0 + (1 + Math.floor(r() * (wid - 2))) * b;
+        for (let k = 1; k <= 3; k++) block(tx, cy - k * b, b, '#6b4a2a');
+        for (let lx = -1; lx <= 1; lx++) for (let ly = 4; ly <= 6; ly++) block(tx + lx * b, cy - ly * b, b, (lx + ly) % 2 ? '#3f8f2f' : '#4aa338', '#5fbf45');
+        block(tx, cy - 7 * b, b, '#4aa338', '#5fbf45');
+      }
+      for (let i = 0; i < wid; i++) block(x0 + i * b, cy, b, '#5fa83a', '#7fd14f');
+      for (let row = 1; row <= 2; row++) for (let i = 0; i < wid; i++) block(x0 + i * b, cy + row * b, b, r() < .2 ? '#7a4d2b' : '#8a5a33');
+      let lo = 0, hi = wid;
+      for (let row = 3; hi - lo > 0; row++) {
+        lo += r() < .7 ? 1 : 2; hi -= r() < .7 ? 1 : 2;
+        for (let i = lo; i < hi; i++) block(x0 + i * b, cy + row * b, b, r() < .25 ? '#6a6a6a' : '#808080');
+      }
+      w.globalAlpha = 1;
+    };
+    const isles = [[.14, .14, 1, 7, .6], [.76, .1, 1, 6, .6], [.44, .2, 2, 8, .8], [.86, .3, 2, 7, .85], [.24, .33, 3, 9, 1], [.6, .36, 3, 8, 1]];
+    for (const [fx, fy, sz, wid, hz] of isles) island(Math.round(cw * fx), Math.round(ch * fy), Math.max(1, Math.round(sz * ch / 110)), wid, hz);
+    /* the forest from above: tree tops getting bigger toward the bottom, hazy at the horizon */
+    for (let y = hy; y < ch;) {
+      const depth = (y - hy) / (ch - hy), b = Math.max(1, Math.round(1 + depth * 5));
+      for (let x = 0; x < cw; x += b) {
+        const c = ['#2a5e22', '#2f6b26', '#3b7f2c', '#4a9433', '#356f29'][Math.floor(r() * 5)];
+        w.fillStyle = c; w.fillRect(x, y, b, b);
+        if (b > 2 && r() < .3) { w.fillStyle = '#5aa83e'; w.fillRect(x, y, b - 1, 1); }
+      }
+      if (depth < .25) { w.fillStyle = `rgba(122, 70, 140, ${(.45 * (1 - depth / .25)).toFixed(2)})`; w.fillRect(0, y, cw, b); }
+      y += b;
+    }
+    sun.style.cssText = `left:${(cw * .68 * u).toFixed(0)}px;top:${(hy * u).toFixed(0)}px;width:${(u * 16).toFixed(0)}px;height:${(u * 16).toFixed(0)}px`;
+  };
+  const ro = new ResizeObserver(draw); ro.observe(cols); draw();
+  return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
+}
+
+/* puts a map's scene behind the columns; returns { update(now), destroy() } */
+export function mountMap(board, s) {
+  const map = s.options.map || 'board', cols = board.querySelector('.cols');
+  board.classList.add('map-' + map);
+  if (map === 'sky') return skyScene(cols, s);
+  if (map === 'pixel') return pixelScene(cols, s);
+  return { update() {}, destroy() {} };
+}
+export const mapLabel = id => esc(mapName(id));

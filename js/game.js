@@ -27,6 +27,8 @@ import { openFriends } from './friends.js';
 import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
+import { mountMap } from './maps.js';
+import { hooks } from './hooks.js';
 
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
 let shown = '';            // which phase view is up (phase|round|question)
@@ -35,6 +37,7 @@ let me = null;             // my duck here: { x, y, j (jump start), face }
 let target = null;         // where a click asked my duck to walk
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [];   // the silly commands seen so far; hotdogs following ducks
+let scene = null;                // the map behind the columns (Sky, Pixel)
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null;
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
@@ -47,26 +50,21 @@ const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (n
 /* ---------- the board ---------- */
 const boardHTML = s => `<div class="board">
   <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
-  <div class="lane"></div><div class="ducks"></div><div class="fxl"></div>
+  <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
 
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
   const board = S && $('.board', S); if (!board) { geo = null; return; }
-  const cols = $('.cols', board), lane = $('.lane', board);
-  let size = Math.max(34, Math.min(96, (portrait() ? cols.offsetHeight / 7 : board.offsetWidth / 7) * .62));
-  // the lane below the board holds a whole duck and its name, so a duck waiting there never covers the column names
-  const want = Math.round(size + 26) + 'px';
-  if (lane.style.height !== want) lane.style.height = want;
-  const r = board.getBoundingClientRect(), laneH = lane.offsetHeight, H = cols.offsetHeight, top0 = cols.offsetTop;
-  if (portrait()) size = Math.max(34, Math.min(96, H / 7 * .62));
+  const cols = $('.cols', board), r = board.getBoundingClientRect(), H = cols.offsetHeight, top0 = cols.offsetTop;
+  const size = Math.max(34, Math.min(100, (portrait() ? H / 7 : board.offsetWidth / 7) * .62));
   const label = board.querySelector('.col-name'), labelH = portrait() ? 0 : (label ? label.offsetHeight + 12 : 30);
-  geo = { W: r.width, H, top0, laneH, size, labelH, left: r.left, top: r.top };
+  geo = { W: r.width, H, top0, size, labelH, left: r.left, top: r.top };
 }
-/* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across; x < 0 = the lane below */
+/* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
-  const { W, H, top0, laneH, size, labelH } = geo;
-  if (p.x < 0) return { left: W * (i + 1) / (n + 1), top: top0 + H + laneH - 24 };
+  const { W, H, top0, size, labelH } = geo;
+  if (p.x < 0) p = { ...p, x: colX(3) };   // (ducks start on Neutral; this only covers an old state)
   if (portrait()) return { left: W * (.1 + p.y * .8), top: top0 + H * (1 - p.x) + size * .45 };
   return { left: W * p.x, top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH) };
 }
@@ -151,7 +149,7 @@ function playFx(f) {
     const x0 = at.left, yEnd = at.top - size * .6;
     while (y < yEnd - 30) { y += 24 + Math.random() * 30; d += `L${(x0 + (Math.random() - .5) * 46).toFixed(1)} ${Math.min(y, yEnd).toFixed(1)}`; }
     d += `L${x0} ${yEnd}`;
-    const bolt = el(`<svg class="fx-bolt" width="${geo.W}" height="${geo.top0 + geo.H + geo.laneH}"><path d="${d}" stroke="#fff6b0" stroke-width="7" fill="none" stroke-linejoin="bevel" opacity=".55"/><path d="${d}" stroke="#ffffff" stroke-width="2.6" fill="none" stroke-linejoin="bevel"/></svg>`);
+    const bolt = el(`<svg class="fx-bolt" width="${geo.W}" height="${geo.top0 + geo.H}"><path d="${d}" stroke="#fff6b0" stroke-width="7" fill="none" stroke-linejoin="bevel" opacity=".55"/><path d="${d}" stroke="#ffffff" stroke-width="2.6" fill="none" stroke-linejoin="bevel"/></svg>`);
     const flash = el('<div class="fx-flash"></div>');
     fxl.append(bolt, flash); setTimeout(() => { bolt.remove(); flash.remove(); }, 700);
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`); if (dk) { dk.classList.add('zapped'); setTimeout(() => dk.classList.remove('zapped'), 1400); }
@@ -209,6 +207,7 @@ function loop(t) {
   const now = Date.now();
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
+  if (scene) scene.update(now);
   drawDucks(now);
 }
 function step(dt, now) {
@@ -227,6 +226,15 @@ function step(dt, now) {
     if (dist < .008) target = null; else { ax = dx / dist; ay = dy / dist; }
   }
   moving = !!(ax || ay) && canWalk();
+  /* a jump can end inside another duck (in the air they pass over each other); on the ground they ease apart */
+  const other = canWalk() && bumps(me.x, me.y, now);
+  if (other && !moving) {
+    const a = place(me, 0, 1), dx = a.left - other.left || (Math.random() - .5), dy = a.top - other.top || (Math.random() - .5), d = Math.hypot(dx, dy);
+    const [lo0, hi0] = xBounds();
+    me.x = Math.max(lo0, Math.min(hi0, me.x + dx / d * .22 * dt));
+    me.y = Math.max(0, Math.min(1, me.y + dy / d * .55 * dt));
+    sendMove(); return;
+  }
   if (!moving) { sendMove(); return; }
   if (me.x < 0) { me.x = .5; me.y = Math.max(.75, me.y); }   // the first step onto the board starts at Neutral, near the front
   const mul = sprinting ? SPEED.sprint : 1, sx = (portrait() ? SPEED.px : SPEED.x) * mul, sy = (portrait() ? SPEED.py : SPEED.y) * mul;
@@ -245,6 +253,18 @@ function step(dt, now) {
   if (ax) me.face = Math.sign(ax);
   me.x = nx; me.y = ny;
   sendMove();
+}
+/* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
+function resetDuck() {
+  if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
+  const s = R.state, inCol = s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colOf(me.x) : null);
+  if (inCol === undefined) return '✗ No answer, no column to go back to.';
+  const [lo, hi] = inCol === null ? [.04, .96] : colBounds(inCol), now = Date.now();
+  let x = me.x, y = me.y;
+  for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = Math.random(); if (!bumps(x, y, now)) break; }
+  me.x = x; me.y = y; me.j = 0; target = null;
+  R.send({ t: 'move', x, y, j: 0, reset: true });
+  return inCol === null ? 'Duck reset: somewhere new.' : 'Duck reset: somewhere new in your column.';
 }
 function jump() {
   if (!me || !onBoardPhase() || me.j) return;
@@ -336,7 +356,9 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
+    if (scene) { scene.destroy(); scene = null; }
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
+    const board = $('.board', main); if (board) scene = mountMap(board, s);
     if (was && s.phase !== was.split('|')[0]) sfx.done();
     $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = TITLES[s.phase] || '';
@@ -432,6 +454,7 @@ register('game', {
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = [];
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null;
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
@@ -441,6 +464,7 @@ register('game', {
         <div class="gbar-r"><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(S, HINTS);
+    hooks.resetDuck = resetDuck;
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }

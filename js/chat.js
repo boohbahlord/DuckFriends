@@ -19,6 +19,7 @@ import { normHex } from './color.js';
 import { shareLook } from './customize.js';
 import { applySettings } from './settings.js';
 import { sfx } from './sound.js';
+import { hooks } from './hooks.js';
 
 /* ---------- the command line's commands ---------- */
 const COLORS = { red: '#ef3b3b', orange: '#ff8c2b', yellow: '#ffd23f', green: '#37d421', teal: '#14c6b4', blue: '#2fa4ff',
@@ -35,6 +36,7 @@ const TREE = {
   love: fun('love', 2, 'Two players float up in a heart: love @name @name'),
   kill: fun('kill', 1, 'A player plays dead until they move: kill @name'),
   hotdog: fun('hotdog', 1, 'A hotdog hangs around a player for a while: hotdog @name'),
+  reset: { info: 'Puts your duck somewhere random: reset duck (inside your column once you have voted).', kids: { duck: { exec: () => (hooks.resetDuck ? hooks.resetDuck() : '✗ That works on the board.') } } },
   custom: {
     info: 'Customize your duck, card or name.',
     kids: {
@@ -117,6 +119,7 @@ function runCommand(line) {
     if (!msg.startsWith('✗')) { save(); shareLook(); applySettings(); }
     return [msg];
   }
+  if (node.exec) return [node.exec()];
   if (node.kids) return [`${path.join(' ')}: ${Object.keys(node.kids).map(quote).join(', ')}`];
   return [`${path.join(' ')}: ${(node.vals || []).map(quote).join(', ')}`];
 }

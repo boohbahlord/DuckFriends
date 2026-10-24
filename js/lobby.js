@@ -8,24 +8,33 @@ import { el, esc, $, $$, openWindow, contextMenu, onMenu, typing, windowOpen, to
 import { activeRoom } from './net.js';
 import { gameArtSVG, symbolSVG } from './art.js';
 import { cardHTML } from './card.js';
-import { COLS, OPTIONS_DEFAULT } from './rules.js';
+import { OPTIONS_DEFAULT } from './rules.js';
 import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
 import { openStats } from './stats.js';
 import { sfx } from './sound.js';
 import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
+import { MAPS, mapMini, mapName } from './maps.js';
 
 let R = null, off = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
   type: 'Agree or Disagree: answer each other\'s questions on a seven-column board.',
-  map: 'The Board: seven columns, Strongly disagree to Strongly agree.',
+  map: 'What the board looks like: The Board, Sky or Pixel.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
 };
 
 /* the board as a small picture (the Map window) */
-const boardMini = () => `<div class="mini-board">${COLS.map((c, i) => `<span class="c${i + 1}" title="${esc(c)}"></span>`).join('')}</div>`;
+/* the Map window: three maps, each with a little picture; the host picks */
+function openMaps() {
+  const s = R.state, host = s.hostId === R.me, cur = s.options.map || 'board';
+  return openWindow(`<h2>Map</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host picks the map.</p>'}
+    <div class="map-tiles">${MAPS.map(([id, name, tip]) => `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? '' : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`).join('')}</div>`, {
+    cls: 'win-settings',
+    onOpen: w => { if (host) w.querySelector('.map-tiles').onclick = e => { const b = e.target.closest('[data-map]'); if (!b) return; R.send({ t: 'options', options: { map: b.dataset.map } }); w.querySelectorAll('[data-map]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
+  });
+}
 
 /* ---------- Game options: the host edits them; everyone else sees them ---------- */
 /* the options most hosts want; the rest wait under Additional settings so a straightforward host never sees them */
@@ -132,6 +141,7 @@ function paint() {
   startRow.setAttribute('aria-disabled', String(!host || s.phase === 'countdown'));
   $('.val', startRow).textContent = host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
+  $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $('.party-list', S);
   if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready })).join(''));
@@ -173,7 +183,7 @@ register('lobby', {
         <div class="lobby-status"></div>
         <div class="lmenu" role="menu">
           <button type="button" role="menuitem" data-m="type" aria-disabled="true"><span>Game type</span><span class="val">${symbolSVG(20)} Agree or Disagree</span></button>
-          <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val">The Board</span></button>
+          <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="options"><span>Game options</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="start" class="start"><span>Start game</span><span class="val"></span></button>
         </div>
@@ -192,7 +202,7 @@ register('lobby', {
       const b = e.target.closest('[data-m]'); if (!b) return;
       const m = b.dataset.m;
       if (m === 'type') toast('Agree or Disagree is the only game for now.');
-      if (m === 'map') openWindow(`<h2>Map</h2><button type="button" class="tile map-tile" aria-pressed="true">${boardMini()}<span>The Board</span></button>`, { cls: 'win-small' });
+      if (m === 'map') openMaps();
       if (m === 'options') openOptions();
       if (m === 'start' && b.getAttribute('aria-disabled') !== 'true') R.send({ t: 'start' });
     };
