@@ -1,15 +1,20 @@
 /* ---------- the game screen ----------
-   Write a question → for each question: the Round Lord's cloud above the board, everyone walks their duck onto a column
-   and ends their turn, then talks it over → the round's results (stat boxes; ducks move along their column) → the next
-   round, until the players vote to end the game.
+   Write a question → for each question: everyone walks their duck onto a column and ends their turn, then talks it over
+   (each duck now stays inside the column it chose) → the round's results (stat boxes; ducks stay in their column) → the
+   next round, until the players vote to end the game.
 
-   Ducks: WASD or the arrow keys walk your duck; with "Mouse moves your duck" a click walks it there; with "Show multiple
-   choice" seven buttons jump it to a column. On a phone held upright the board turns: agree at the top. Your own duck moves
-   on your screen at once and is sent to the room a few times a second; everyone else's glides to where they are. */
+   The board fills the screen. The Round Lord sits on a cloud over the top of the board with the question beside it; both
+   turn see-through when a duck walks under them.
+
+   Your duck: WASD or the arrow keys walk (Shift sprints, with speed lines); Space jumps, slow and high, with a shadow left
+   on the ground (low gravity makes it slower and higher; a jump counts when the duck lands); Enter ends your turn. With
+   "Mouse moves your duck" a click walks it there; with "Show multiple choice" seven buttons put it on a column. Ducks
+   squash a little when they push against a wall or another duck. On a phone held upright the board turns: agree at the
+   top. Your duck moves on your screen at once and is sent to the room a few times a second; the others glide. */
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, colOf, colX, needed } from './rules.js';
+import { COLS, SHORT, colOf, colX, colBounds, needed } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -17,112 +22,208 @@ import { statBoxHTML, openStats } from './stats.js';
 import { profile } from './store.js';
 import { openSettings } from './settings.js';
 import { openCustomize } from './customize.js';
-import { notesWidget, pickNote } from './notes.js';
-import { chatWidget } from './chat.js';
+import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
+import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
+import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
 
-let R = null, S = null, off = null, raf = 0, tick = 0, chat = null;
+let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
 let shown = '';            // which phase view is up (phase|round|question)
 const keys = new Set();
-let me = null;             // my duck here: { x, y, face }
+let me = null;             // my duck here: { x, y, j (jump start), face }
 let target = null;         // where a click asked my duck to walk
-let lastSend = 0, lastBeep = -1, lastT = 0;
+let squash = { q: '', t: 0 }, moving = false, sprinting = false;
+let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null;
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 
-/* ---------- the board ---------- */
-const boardHTML = () => `<div class="board">
-  <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
-  <div class="dock"></div><div class="ducks"></div></div>`;
+/* ---------- movement numbers (board widths or heights per second) ---------- */
+const SPEED = { x: .45, y: 1.0, px: .5, py: .85, sprint: 1.75 };
+const JUMP = { normal: { T: 1.3, H: 1.5 }, low: { T: 2.6, H: 2.3 } };   // seconds in the air; apex in duck heights
+const jumpCfg = () => JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
+const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
 
-/* where a duck stands on screen: x along the answers (0 strongly disagree … 1 strongly agree), y across */
-function place(p, i, n, rect, dockH, size) {
-  const W = rect.width, H = rect.height - dockH;
-  if (p.x < 0) return { left: W * (i + 1) / (n + 1), top: H + dockH * .82 };   // the dock: not on the board yet
-  if (portrait()) return { left: W * (.12 + p.y * .76), top: H * (1 - p.x) + size * .45 };
-  return { left: W * p.x, top: H * (.24 + p.y * .7) };
+/* ---------- the board ---------- */
+const boardHTML = s => `<div class="board">
+  <div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>
+  <div class="lane"></div><div class="ducks"></div>
+  ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${esc(s.qs[s.qi].text)}</p></div>` : ''}</div>`;
+
+/* the board's measurements, taken again when the window or the docks change */
+function measure() {
+  const board = S && $('.board', S); if (!board) { geo = null; return; }
+  const r = board.getBoundingClientRect(), cols = $('.cols', board), laneH = $('.lane', board).offsetHeight, H = cols.offsetHeight, top0 = cols.offsetTop;
+  const size = Math.max(34, Math.min(96, (portrait() ? H / 7 : r.width / 7) * .62));
+  const label = board.querySelector('.col-name'), labelH = portrait() ? 0 : (label ? label.offsetHeight + 12 : 30);
+  geo = { W: r.width, H, top0, laneH, size, labelH, left: r.left, top: r.top };
 }
-function drawDucks() {
-  const board = $('.board', S); if (!board || !R) return;
-  const s = R.state, layer = $('.ducks', board), rect = board.getBoundingClientRect(), dockH = $('.dock', board).offsetHeight;
-  const ids = s.seat.filter(id => s.pos[id]), docked = ids.filter(id => (id === R.me && me ? me : s.pos[id]).x < 0);
-  const size = Math.max(34, Math.min(72, (portrait() ? rect.height / 7 : rect.width / 7) * .62));
+/* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across; x < 0 = the lane below */
+function place(p, i, n) {
+  const { W, H, top0, laneH, size, labelH } = geo;
+  if (p.x < 0) return { left: W * (i + 1) / (n + 1), top: top0 + H + laneH * .62 };
+  if (portrait()) return { left: W * (.1 + p.y * .8), top: top0 + H * (1 - p.x) + size * .45 };
+  return { left: W * p.x, top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH) };
+}
+function unplace(px, py) {   // the inverse, for clicks
+  const { W, H, size, labelH } = geo, cl = v => Math.max(0, Math.min(1, v));
+  py -= geo.top0;
+  if (portrait()) return { x: cl(1 - (py - size * .45) / H), y: cl((px / W - .1) / .8) };
+  return { x: cl(px / W), y: cl((py - size * 1.08) / (H - size * 1.08 - labelH)) };
+}
+
+/* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
+const SQ = { l: ['0% 100%', .8, 1.12], r: ['100% 100%', .8, 1.12], u: ['50% 0%', 1.12, .84], d: ['50% 100%', 1.14, .82] };
+function drawDucks(now = Date.now()) {
+  const board = S && $('.board', S); if (!board || !R || !geo) return;
+  const s = R.state, layer = $('.ducks', board), size = geo.size;
+  const posOf = id => id === R.me && me ? me : s.pos[id];
+  const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
+  const boxes = [];
   for (const id of ids) {
-    const p = s.players[id], pos = id === R.me && me ? me : s.pos[id];
+    const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-body">${duckSVG(p.duck, { size: 64, title: p.name })}</div><span class="gduck-name">${nameHTML(p.name, p.nameStyle)}</span><span class="gduck-done" hidden>✓</span></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><div class="gduck-body"></div><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
-    d.style.setProperty('--sz', size + 'px');
-    const at = place(pos, docked.indexOf(id), docked.length, rect, dockH, size);
-    d.style.transform = `translate(${at.left}px, ${at.top}px)`;
-    const face = id === R.me && me ? me.face : (d._x !== undefined && pos.x !== d._x ? Math.sign(pos.x - d._x) : d._face || 1);
+    const sig = JSON.stringify([p.duck, p.name, p.nameStyle, !!p.dead]);   // a new look shows at once, mid-game too
+    if (d._sig !== sig) {
+      d._sig = sig;
+      d.querySelector('.gduck-body').innerHTML = duckSVG(p.duck, { size: 64, shadow: false, title: p.name, dead: !!p.dead });
+      d.querySelector('.gduck-name').innerHTML = nameHTML(p.name, p.nameStyle);
+    }
+    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos.j, now) * size;
+    const mine = id === R.me;
+    const face = mine && me ? me.face : (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
     d._face = face || 1; d._x = pos.x;
-    d.querySelector('.gduck-body').style.transform = `scaleX(${portrait() ? 1 : d._face})`;
+    const q = mine ? (now - squash.t < 170 ? squash.q : '') : (pos.q || '');
+    const fx = portrait() ? 1 : d._face, mq = fx < 0 ? ({ l: 'r', r: 'l' }[q] || q) : q, [org, sx, sy] = SQ[mq] || ['50% 100%', 1, 1];
+    const tr = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`, lift = `translateY(${(-z).toFixed(1)}px)`;
+    const body = `scaleX(${fx})`, squish = `scale(${sx}, ${sy})`, sh = (1 - Math.min(.6, z / (size * 3.2))).toFixed(3);
+    if (d._tr !== tr) { d._tr = tr; d.style.transform = tr; d.style.zIndex = Math.round(at.top); }
+    if (d._sz !== size) { d._sz = size; d.style.setProperty('--sz', size + 'px'); }
+    if (d._lift !== lift) { d._lift = lift; d.querySelector('.gduck-lift').style.transform = lift; }
+    if (d._sh !== sh) { d._sh = sh; d.querySelector('.gduck-shadow').style.transform = `translateX(-50%) scale(${sh})`; }
+    if (d._body !== body) { d._body = body; d.querySelector('.gduck-body').style.transform = body; }
+    const pic = d.querySelector('.gduck-body svg');
+    if (pic && pic._sq !== squish + org) { pic._sq = squish + org; pic.style.transformOrigin = org; pic.style.transform = squish; }
+    d.classList.toggle('sprint', mine ? sprinting && moving : !!pos.sp);
+    d.classList.toggle('air', z > 1);
+    d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
+    boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? colOf(me.x) : -1;
   board.querySelectorAll('.col').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
+  // the Round Lord and the question turn see-through over ducks
+  for (const o of board.querySelectorAll('.topover .lord, .topover .question')) {
+    const r = o.getBoundingClientRect(), L = r.left - geo.left, T = r.top - geo.top;
+    const hit = boxes.some(b => b.r > L && b.l < L + r.width && b.b > T && b.t < T + r.height);
+    o.classList.toggle('see-through', hit);
+  }
 }
 
-/* ---------- my duck: keys, a click, or the seven buttons ---------- */
-const canMove = () => R && ['answer', 'discuss', 'results'].includes(R.state.phase) && !(R.state.phase === 'answer' && R.state.done[R.me]);
+/* ---------- my duck ---------- */
+const onBoardPhase = () => R && ['answer', 'discuss', 'results'].includes(R.state.phase);
+const canWalk = () => onBoardPhase() && !(R.state.phase === 'answer' && R.state.done[R.me]) && !(R.state.phase !== 'answer' && R.state.lock[R.me] === undefined);
+function xBounds() {
+  const s = R.state;
+  if (s.phase === 'answer') return [.03, .97];
+  return colBounds(s.lock[R.me]);
+}
 function sendMove(force) {
-  const now = performance.now();
-  if (!force && now - lastSend < 60) return;
-  lastSend = now; R.send({ t: 'move', x: me.x, y: me.y });
+  if (!me) return;
+  const now = performance.now(), q = Date.now() - squash.t < 170 ? squash.q : '';
+  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, q, sprinting && moving].join();
+  if (!force && (now - lastSend < 60 || msg === lastSent)) return;
+  lastSend = now; lastSent = msg;
+  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, q, sp: sprinting && moving });
+}
+/* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) */
+function bumps(x, y, now) {
+  if (!geo || jumpZ(me.j, now) > geo.size * .3) return null;
+  const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2;
+  for (const id of s.seat) {
+    if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
+    const o = s.pos[id]; if (jumpZ(o.j, now) > geo.size * .3) continue;
+    const b = place(o, 0, 1), dx = (a.left - b.left) / (2 * rx), dy = (a.top - b.top) / (2 * ry);
+    if (dx * dx + dy * dy < 1) return b;
+  }
+  return null;
 }
 function loop(t) {
   raf = requestAnimationFrame(loop);
   const dt = Math.min(.05, (t - (lastT || t)) / 1000); lastT = t;
-  if (!S || !R || !me || !canMove()) return;
-  const s = R.state, results = s.phase === 'results';
-  let ax = 0, ay = 0;
+  if (!S || !R) return;
+  const now = Date.now();
+  if (!geo) measure();
+  if (me && onBoardPhase()) step(dt, now);
+  drawDucks(now);
+}
+function step(dt, now) {
+  const s = R.state;
+  // a jump lands: it counts now
+  if (me.j && (now - me.j) / 1000 >= jumpCfg().T) { me.j = 0; countJump(); sendMove(true); }
   const k = c => keys.has(c);
   const up = k('KeyW') || k('ArrowUp'), down = k('KeyS') || k('ArrowDown'), left = k('KeyA') || k('ArrowLeft'), right = k('KeyD') || k('ArrowRight');
-  if (portrait()) { ax = (up ? 1 : 0) - (down ? 1 : 0); ay = (right ? 1 : 0) - (left ? 1 : 0); }
-  else { ax = (right ? 1 : 0) - (left ? 1 : 0); ay = (down ? 1 : 0) - (up ? 1 : 0); }
-  if (results) ax = 0;   // results: only along your column (up and down; across on a phone held upright)
-  if (ax || ay) target = null;
-  if (target) {
-    const dx = target.x - (me.x < 0 ? .5 : me.x), dy = target.y - me.y, dist = Math.hypot(dx, dy);
-    if (dist < .01) target = null; else { ax = dx / dist; ay = dy / dist * 1.4; }
+  sprinting = k('ShiftLeft') || k('ShiftRight');
+  let hx = (right ? 1 : 0) - (left ? 1 : 0), vy = (down ? 1 : 0) - (up ? 1 : 0);   // on screen: right, down
+  if (hx || vy) target = null;
+  let ax, ay;   // in board terms
+  if (portrait()) { ax = -vy; ay = hx; } else { ax = hx; ay = vy; }
+  if (target && me.x >= 0) {
+    const dx = target.x - me.x, dy = target.y - me.y, dist = Math.hypot(dx, dy);
+    if (dist < .008) target = null; else { ax = dx / dist; ay = dy / dist; }
   }
-  if (!ax && !ay) return;
-  if (me.x < 0) me.x = .5;   // the first step onto the board starts at Neutral
-  const spd = target ? .7 : .55;
-  if (!results) me.x = Math.max(0, Math.min(1, me.x + ax * spd * dt));
-  me.y = Math.max(0, Math.min(1, me.y + ay * .9 * dt));
+  moving = !!(ax || ay) && canWalk();
+  if (!moving) { sendMove(); return; }
+  if (me.x < 0) { me.x = .5; me.y = Math.max(.75, me.y); }   // the first step onto the board starts at Neutral, near the front
+  const mul = sprinting ? SPEED.sprint : 1, sx = (portrait() ? SPEED.px : SPEED.x) * mul, sy = (portrait() ? SPEED.py : SPEED.y) * mul;
+  const [lo, hi] = xBounds();
+  let nx = me.x + ax * sx * dt, ny = me.y + ay * sy * dt, q = '';
+  const scr = (dx, dy) => portrait() ? (dx > 0 ? 'u' : dx < 0 ? 'd' : dy > 0 ? 'r' : 'l') : (dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u');
+  if (nx < lo || nx > hi) { q = scr(Math.sign(ax), 0); nx = Math.max(lo, Math.min(hi, nx)); }
+  if (ny < 0 || ny > 1) { q = q || scr(0, Math.sign(ay)); ny = Math.max(0, Math.min(1, ny)); }
+  // other ducks: try both steps, then each alone; a blocked step squashes against them
+  if (bumps(nx, ny, now)) {
+    if (!bumps(nx, me.y, now)) { q = q || scr(0, Math.sign(ay)); ny = me.y; }
+    else if (!bumps(me.x, ny, now)) { q = q || scr(Math.sign(ax), 0); nx = me.x; }
+    else { q = q || scr(Math.sign(ax), Math.sign(ay)); nx = me.x; ny = me.y; }
+  }
+  if (q) squash = { q, t: now };
   if (ax) me.face = Math.sign(ax);
-  drawDucks(); sendMove();
+  me.x = nx; me.y = ny;
+  sendMove();
+}
+function jump() {
+  if (!me || !onBoardPhase() || me.j) return;
+  me.j = Date.now(); sendMove(true);
 }
 function jumpTo(c) {
-  if (!canMove() || R.state.phase === 'results') return;
+  if (!canWalk() || R.state.phase !== 'answer') return;
   me.face = colX(c) >= (me.x < 0 ? .5 : me.x) ? 1 : -1;
-  me.x = colX(c); if (me.y === undefined) me.y = .5; target = null;
-  drawDucks(); sendMove(true);
+  me.x = colX(c); if (me.y === undefined || me.y < 0) me.y = .5; target = null;
+  sendMove(true);
 }
 function boardClick(e) {
-  if (!profile.settings.mouseMove || !canMove()) return;
-  const board = e.target.closest('.board'); if (!board) return;
-  const r = board.getBoundingClientRect(), dockH = $('.dock', board).offsetHeight, H = r.height - dockH;
-  const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / H;
-  if (portrait()) target = { x: Math.max(0, Math.min(1, 1 - py)), y: Math.max(0, Math.min(1, (px - .12) / .76)) };
-  else target = { x: Math.max(0, Math.min(1, px)), y: Math.max(0, Math.min(1, (py - .24) / .7)) };
-  if (R.state.phase === 'results') target.x = me.x;
+  if (!profile.settings.mouseMove || !canWalk() || !geo) return;
+  const board = e.target.closest('.board'); if (!board || e.target.closest('.topover')) return;
+  const r = board.getBoundingClientRect();
+  target = unplace(e.clientX - r.left, e.clientY - r.top);
+  if (me.x < 0) { me.x = .5; me.y = .9; }
 }
 
 /* ---------- the views ---------- */
 function lordHTML(s) {
   const q = s.qs[s.qi], p = s.players[q.by];
-  return `<div class="lord"><div class="lord-cloud">
-    <svg class="cloud-svg" viewBox="0 0 200 110" aria-hidden="true"><g fill="#fff" stroke="#c9dcef" stroke-width="3">
-      <circle cx="52" cy="66" r="34"/><circle cx="92" cy="46" r="40"/><circle cx="140" cy="58" r="36"/><circle cx="168" cy="76" r="24"/><circle cx="30" cy="82" r="20"/><rect x="30" y="66" width="140" height="34" rx="17"/></g>
-      <g fill="#fff"><circle cx="52" cy="66" r="31"/><circle cx="92" cy="46" r="37"/><circle cx="140" cy="58" r="33"/><circle cx="168" cy="76" r="21"/><circle cx="30" cy="82" r="17"/><rect x="32" y="68" width="136" height="30" rx="15"/></g></svg>
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 70, title: p.name }) : ''}</div></div>
+  return `<div class="lord"><div class="lord-sit">
+    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: p.name, dead: !!p.dead }) : ''}</div>
+    <svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
+      <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
+      <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
+      <ellipse cx="84" cy="24" rx="16" ry="6" fill="#fff" opacity=".9"/></svg></div>
     <div class="lord-label">${rainbowHTML('Round Lord')}</div>
     <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : 'Gone'}</div></div>`;
 }
@@ -141,36 +242,32 @@ function viewSubmit(s) {
 }
 const whoHTML = s => s.seat.map(id => `<span class="who-chip${s.done[id] ? ' done' : ''}">${duckSVG(s.players[id].duck, { size: 26, shadow: false })}${nameHTML(s.players[id].name, s.players[id].nameStyle)}${s.done[id] ? ' ✓' : ''}</span>`).join('');
 
-function viewBoard(s) {
-  const q = s.qs[s.qi];
-  return `<div class="stage">${s.phase === 'results' ? '' : `<div class="stage-top"><span></span>${lordHTML(s)}<p class="question">${esc(q.text)}</p></div>`}${boardHTML()}</div>`;
-}
-/* the stat boxes: this round's, then every round's once the review vote passes (redrawn as clicks and votes come in) */
+/* the stat boxes: this round's, then every round's once the review vote passes (redrawn as jumps and votes come in) */
 function statsHTML(s) {
   const boxes = r => s.seat.map(id => statBoxHTML(s, id, r)).join('');
   if (s.phase === 'over') return boxes(null);
   return `<h2>Round ${s.round + 1}</h2><div class="statboxes">${boxes(s.round)}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="statboxes">${boxes(null)}</div>` : ''}`;
 }
-const viewResults = s => `<div class="results">${viewBoard(s)}<aside class="statpanel"></aside></div>`;
+const viewResults = s => `<div class="results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
 const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('Game over')}</h1>
     <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} question${s.history.length === 1 ? '' : 's'}</p>
     <div class="statboxes grid"></div></div>`;
 
-/* the bar at the bottom: what you can do now, and how many are done */
+/* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const n = s.seat.length, d = s.seat.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (s.phase === 'submit') return count;
   if (s.phase === 'answer') {
     const onBoard = (me && me.x >= 0);
-    const mc = profile.settings.multipleChoice && !mine ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}" data-tip="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : '';
-    return `${mc}<div class="act-row"><button type="button" class="btn green" data-a="end"${mine || !onBoard ? ' disabled' : ''}>${mine ? 'Answer locked ✓' : 'End turn'} <kbd>Space</kbd></button>${count}</div>`;
+    const mc = profile.settings.multipleChoice && !mine ? `<div class="mc">${COLS.map((c, i) => `<button type="button" class="mc-b c${i + 1}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
+    return `${mc}<div class="act-row"><button type="button" class="btn green" data-a="end"${mine || !onBoard ? ' disabled' : ''}>${mine ? 'Answer locked ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   }
-  if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next question'} <kbd>Space</kbd></button>${count}</div>`;
+  if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next question'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
     const rv = s.seat.filter(id => s.reviewVotes[id]).length, ev = s.seat.filter(id => s.endVotes[id]).length;
-    return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next round'} <kbd>Space</kbd></button>
+    return `<div class="act-row"><button type="button" class="btn${mine ? ' yellow' : ' green'}" data-a="end">${mine ? 'Waiting ✓' : 'Next round'} <kbd>Enter</kbd></button>
       ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ''}
       <button type="button" class="btn ${s.endVotes[R.me] ? 'red' : 'ghost'}" data-a="endgame">${s.endVotes[R.me] ? 'Voted to end' : 'Vote to end the game'} ${ev}/${need}</button>${count}</div>`;
   }
@@ -184,18 +281,28 @@ function paint(force) {
   const s = R.state, key = [s.phase, s.round, s.qi].join('|');
   if (force || key !== shown) {
     const was = shown; shown = key;
-    if (s.phase === 'answer' || (s.phase === 'results' && !was.startsWith('results'))) me = s.pos[R.me] ? { ...s.pos[R.me], face: 1 } : null;
-    if (s.phase === 'discuss' && me === null && s.pos[R.me]) me = { ...s.pos[R.me], face: 1 };
-    if (s.phase === 'answer' || s.phase === 'results') target = null;
+    const fresh = s.pos[R.me] ? { ...s.pos[R.me], face: 1 } : null;
+    if (s.phase === 'answer' || s.phase === 'results' || !me) me = fresh && { ...fresh, j: me && me.j || 0 };
+    target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : viewBoard(s);
+    main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
     if (was && s.phase !== was.split('|')[0]) sfx.done();
     $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = TITLES[s.phase] || '';
+    geo = null;
   }
   if (s.phase === 'submit') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
-  if (s.phase === 'answer' && s.done[R.me] && me) { me.x = s.pos[R.me].x; me.y = s.pos[R.me].y; }
+  // the host keeps my duck in bounds (an ended turn, the column after answering); take its word for where I am
+  if (me && s.pos[R.me] && onBoardPhase()) {
+    const p = s.pos[R.me];
+    if ((s.phase === 'answer' && s.done[R.me]) || (s.phase !== 'answer' && (p.x !== me.x && Math.abs(p.x - me.x) > .02))) { me.x = p.x; me.y = p.y; }
+    if (s.phase === 'discuss' && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBounds(s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }
+  }
+  const lordSig = s.phase === 'answer' || s.phase === 'discuss' ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
+  const lord = $('.topover .lord', S);
+  if (lord && lord._sig !== undefined && lord._sig !== lordSig) lord.outerHTML = lordHTML(s);
+  if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
   setHTML($('.gact', S), actHTML(s));
   if (s.phase === 'results') {
     const panel = $('.statpanel', S), had = panel._html && panel._html.includes('all-h');
@@ -203,7 +310,7 @@ function paint(force) {
     if (s.review && !had) panel.querySelector('.all-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   if (s.phase === 'over') setHTML($('.over .statboxes', S), statsHTML(s));
-  drawDucks(); showTimer();
+  showTimer();
 }
 
 function showTimer() {
@@ -236,19 +343,21 @@ function openPause() {
 }
 
 /* ---------- keys ---------- */
-const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'];
 function keydown(e) {
   if (!S) return;
   if (e.key === 'Escape' && !windowOpen() && !typing(e)) { e.preventDefault(); openPause(); return; }
   if (typing(e) || windowOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (MOVE_KEYS.includes(e.code) && canMove()) { e.preventDefault(); keys.add(e.code); return; }
-  if (e.code === 'Space' && !e.repeat) { e.preventDefault(); act('end'); }
+  if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
+  if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
 }
 const keyup = e => keys.delete(e.code);
 const blur = () => keys.clear();
+const resized = () => { geo = null; };
 
 /* ---------- what the buttons do ---------- */
-async function act(a, el) {
+async function act(a) {
   const s = R.state;
   switch (a) {
     case 'end':
@@ -265,29 +374,31 @@ async function act(a, el) {
   }
 }
 
+const HINTS = '<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn';
 register('game', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
-    if (off) off(); off = null; if (chat) chat.destroy(); chat = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; keys.clear();
-    removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', drawDucks);
+    if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear();
+    removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
-    S = el(`<section class="screen game">
+    S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
         <div class="gbar-r"><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
-      <div class="gmain"></div><div class="gact"></div></section>`);
-    S.append(notesWidget(), chat = chatWidget());
+      <div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
+    docks = mountDocks(S, HINTS);
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
-      if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a, b); return; }
+      if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
       const mc = e.target.closest('[data-col]'); if (mc) { jumpTo(+mc.dataset.col); return; }
       const tile = e.target.closest('.submit-card .tile[data-time]');
       if (tile) $$('.submit-card .tile[data-time]', S).forEach(t => t.setAttribute('aria-pressed', t === tile));
       boardClick(e);
     });
     S.addEventListener('submit', e => {
+      if (!e.target.matches('.submit-card')) return;
       e.preventDefault();
       const f = e.target, text = f.querySelector('textarea').value.trim();
       if (!text) { f.querySelector('textarea').focus(); return; }
@@ -295,7 +406,7 @@ register('game', {
       R.send({ t: 'submit', text, time: t ? +t.dataset.time : R.state.options.answerTime });
     });
     S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line)
-      if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); }
+      if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });
     onMenu(S, (x, y, e) => {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d) return;
@@ -306,7 +417,7 @@ register('game', {
       if (s.phase === 'lobby' || s.phase === 'countdown') { go('lobby', R); return; }
       paint();
     });
-    addEventListener('keydown', keydown); addEventListener('keyup', keyup); addEventListener('blur', blur); addEventListener('resize', drawDucks);
+    addEventListener('keydown', keydown); addEventListener('keyup', keyup); addEventListener('blur', blur); addEventListener('resize', resized);
     raf = requestAnimationFrame(loop);
     tick = setInterval(showTimer, 250);
     requestAnimationFrame(() => paint(true));

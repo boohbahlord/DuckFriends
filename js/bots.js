@@ -1,7 +1,8 @@
 /* ---------- computers (TEST rooms) ----------
    Each computer waits the room's "computers wait" time (30 s by default) after a phase starts, then acts: writes a question,
-   walks its duck to an answer (each computer leans one way), ends its turn, gets ready for the next round. In votes they
-   follow the people: a computer votes for the review or the end of the game once a person has. */
+   walks its duck to an answer (each computer leans one way) and ends its turn. Afterwards they follow the people: a
+   computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
+   has. Now and then one wanders a little or jumps. */
 import { colX } from './rules.js';
 
 export const BOT_QUESTIONS = [
@@ -44,19 +45,27 @@ export function botActions(s, now) {
       case 'answer': {
         if (!late || s.done[id]) break;
         const p = s.pos[id], want = colX(pick(id, s.round + ':' + s.qi));
-        const x = p.x < 0 ? .5 : p.x, step = .05;
-        if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y: p.y }, { t: 'end', id });
-        else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y: p.y });
+        const x = p.x < 0 ? .5 : p.x, y = p.x < 0 ? .2 + (i * .23) % .7 : p.y, step = .035;   // each computer walks its own line
+        if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
+        else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });
         break;
       }
-      case 'discuss': case 'results':
-        if (late && !s.done[id]) out.push({ t: 'end', id, v: true });
+      case 'discuss': case 'results': {
+        // ready for what's next only once a person is (so the results stay up until people vote them off)
+        if (late && !s.done[id] && people.some(h => s.done[h])) out.push({ t: 'end', id, v: true });
+        // now and then a little wander inside their column, or a jump
+        const p = s.pos[id];
+        if (p && p.x >= 0 && Math.random() < .012) {
+          const jumpNow = !p.j && Math.random() < .35;
+          out.push({ t: 'move', id, x: p.x + (Math.random() - .5) * .04, y: Math.max(0, Math.min(1, p.y + (Math.random() - .5) * .2)), j: jumpNow ? now : (p.j && now - p.j < 1400 ? p.j : 0) });
+        }
         if (s.phase === 'results') {
           if (s.round >= 1 && !s.reviewVotes[id] && people.some(h => s.reviewVotes[h])) out.push({ t: 'voteReview', id });
           if (!s.endVotes[id] && people.some(h => s.endVotes[h])) out.push({ t: 'voteEnd', id });
           if (s.endVotes[id] && !people.some(h => s.endVotes[h])) out.push({ t: 'voteEnd', id });   // a person took theirs back
         }
         break;
+      }
     }
   });
   return out;

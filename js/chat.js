@@ -122,20 +122,23 @@ const HELP = ['@name: pings a player (a soft sound and a "!")', '\\@name message
 const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [] };   // cmd: the command line's lines; notes: chat lines only you see
 const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@${n.replace(/[-]/g, '\\-')}(?![\\p{L}\\p{N}_-])`, 'iu');
 
+/* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
+   side chosen in Settings, so it never covers anything) */
+let current = null;
 export function chatWidget() {
-  const w = el(`<div class="chat" data-side="${profile.settings.chatSide}">
-    <button type="button" class="chat-btn" aria-label="Text chat (T)" data-tip="Text chat (T)">ABC<span class="bang" hidden>!</span></button>
-    <section class="chat-panel" hidden>
+  const btn = el(`<button type="button" class="chat-btn mode-icon" aria-label="Text chat (T)" data-tip="Text chat (T)"><span class="mi">ABC</span><span class="bang" hidden>!</span></button>`);
+  const panel = el(`<section class="chat-panel dock-panel" hidden>
       <header><h3 class="chat-title">Chat</h3><button type="button" class="win-x chat-x" aria-label="Close the chat">×</button></header>
       <div class="chat-log" aria-live="polite"></div>
       <ul class="chat-sugg" role="listbox" hidden></ul>
       <form class="chat-row" autocomplete="off">
-        <button type="button" class="mode-btn" aria-label="Switch to the command line (Shift+T)" data-tip="Command line (Shift+T)">$</button>
+        <button type="button" class="mode-btn mode-icon" aria-label="Chat mode; switch to the command line (Shift+T)" data-tip="Chat · click for the command line (Shift+T)"><span class="mi">ABC</span></button>
         <input class="chat-in" maxlength="300" spellcheck="false" aria-label="Message">
       </form>
-    </section></div>`);
-  const panel = w.querySelector('.chat-panel'), log = w.querySelector('.chat-log'), inp = w.querySelector('.chat-in'), sugg = w.querySelector('.chat-sugg');
-  const btn = w.querySelector('.chat-btn'), modeBtn = w.querySelector('.mode-btn');
+    </section>`);
+  const w = { btn, panel };
+  const log = panel.querySelector('.chat-log'), inp = panel.querySelector('.chat-in'), sugg = panel.querySelector('.chat-sugg');
+  const modeBtn = panel.querySelector('.mode-btn');
   let sel = 0, list = [], lastN = 0;
   const room = () => activeRoom();
 
@@ -165,25 +168,27 @@ export function chatWidget() {
     list = ui.mode === 'cmd' ? cmdSuggest(inp.value) : chatSuggest(inp.value, r && r.state, r && r.me);
     sel = Math.min(sel, Math.max(0, list.length - 1)); drawSugg();
   };
+  /* the round symbol shows the mode you are in: ABC on white for the chat, a green $ on black for the command line */
   const setMode = m => {
-    ui.mode = m; w.dataset.mode = m;
-    w.querySelector('.chat-title').textContent = m === 'cmd' ? 'Command line' : 'Chat';
-    modeBtn.textContent = m === 'cmd' ? 'ABC' : '$';
-    modeBtn.dataset.tip = m === 'cmd' ? 'Text chat (T)' : 'Command line (Shift+T)';
-    modeBtn.setAttribute('aria-label', m === 'cmd' ? 'Switch to the text chat (T)' : 'Switch to the command line (Shift+T)');
+    ui.mode = m; panel.dataset.mode = btn.dataset.mode = m;
+    panel.querySelector('.chat-title').textContent = m === 'cmd' ? 'Command line' : 'Chat';
+    for (const b of [modeBtn, btn]) b.querySelector('.mi').textContent = m === 'cmd' ? '$' : 'ABC';
+    modeBtn.dataset.tip = m === 'cmd' ? 'Command line · click for the text chat (T)' : 'Chat · click for the command line (Shift+T)';
+    modeBtn.setAttribute('aria-label', m === 'cmd' ? 'Command line mode; switch to the text chat (T)' : 'Chat mode; switch to the command line (Shift+T)');
+    btn.dataset.tip = m === 'cmd' ? 'Command line (Shift+T)' : 'Text chat (T)';
     inp.setAttribute('aria-label', m === 'cmd' ? 'Command' : 'Message');
     drawLog(); refresh();
   };
   const openPanel = m => {
-    ui.open = true; panel.hidden = false; btn.hidden = true; w.dataset.open = 'true';
+    ui.open = true; panel.hidden = false; btn.setAttribute('aria-pressed', 'true');
     ui.ping = false; btn.querySelector('.bang').hidden = true;
-    setMode(m || ui.mode); inp.focus(); refresh();
+    setMode(m || ui.mode); inp.focus(); refresh(); if (w.onToggle) w.onToggle();
   };
-  const closePanel = () => { ui.open = false; panel.hidden = true; btn.hidden = profile.settings.chatSide === 'hidden'; w.dataset.open = 'false'; inp.blur(); };
+  const closePanel = () => { ui.open = false; panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
   w.openChat = openPanel;
 
-  btn.onclick = () => openPanel('chat');
-  w.querySelector('.chat-x').onclick = closePanel;
+  btn.onclick = () => ui.open ? closePanel() : openPanel();
+  panel.querySelector('.chat-x').onclick = closePanel;
   modeBtn.onclick = () => { setMode(ui.mode === 'cmd' ? 'chat' : 'cmd'); inp.focus(); };
   inp.addEventListener('focus', refresh);
   inp.addEventListener('click', refresh);
@@ -195,7 +200,7 @@ export function chatWidget() {
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && list.length) { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + Math.min(8, list.length)) % Math.min(8, list.length); drawSugg(); return; }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePanel(); }
   });
-  w.querySelector('form').onsubmit = e => {
+  panel.querySelector('form').onsubmit = e => {
     e.preventDefault();
     const text = inp.value.trim(); inp.value = ''; sel = 0;
     if (!text) { closePanel(); return; }
@@ -232,19 +237,19 @@ export function chatWidget() {
     }
   };
   const r0 = room(); if (r0) lastN = r0.state.logN || 0;
-  w.destroy = r0 ? r0.on(onState) : () => {};
-  const side = () => { w.dataset.side = profile.settings.chatSide; btn.hidden = ui.open || profile.settings.chatSide === 'hidden'; };
-  document.addEventListener('settings', side);
-  const destroy0 = w.destroy; w.destroy = () => { destroy0(); document.removeEventListener('settings', side); };
-  setMode(ui.mode); side();
-  if (ui.open) { panel.hidden = false; btn.hidden = true; w.dataset.open = 'true'; }
+  const unsub = r0 ? r0.on(onState) : () => {};
+  w.destroy = () => { unsub(); if (current === w) current = null; };
+  w.isOpen = () => ui.open;
+  setMode(ui.mode);
+  if (ui.open) { panel.hidden = false; btn.setAttribute('aria-pressed', 'true'); }
   if (ui.ping) btn.querySelector('.bang').hidden = false;
+  current = w;
   return w;
 }
 
 /* T opens the chat, Shift+T the command line (not while typing or with a window open) */
 addEventListener('keydown', e => {
   if (e.code !== 'KeyT' || e.ctrlKey || e.metaKey || e.altKey || typing(e) || windowOpen()) return;
-  const w = document.querySelector('.chat'); if (!w) return;
-  e.preventDefault(); w.openChat(e.shiftKey ? 'cmd' : 'chat');
+  if (!current) return;
+  e.preventDefault(); current.openChat(e.shiftKey ? 'cmd' : 'chat');
 });

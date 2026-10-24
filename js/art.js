@@ -53,47 +53,70 @@ ${cloud(250, 200, 1.05)}
 </svg>`;
 }
 
-/* the front page's duck: the classic yellow duck sitting in a ball pit */
-export function heroSVG() {
-  const r = rnd(42), back = [], front = [];
-  const ball = (x, y, s) => {
-    const c = FRIDGE[Math.floor(r() * FRIDGE.length)];
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${s}" fill="${c}" stroke="#1c1c28" stroke-width="2.2"/>
-<ellipse cx="${(x - s * .35).toFixed(1)}" cy="${(y - s * .38).toFixed(1)}" rx="${(s * .32).toFixed(1)}" ry="${(s * .2).toFixed(1)}" fill="#fff" opacity=".55" transform="rotate(-30 ${(x - s * .35).toFixed(1)} ${(y - s * .38).toFixed(1)})"/>`;
-  };
-  for (let row = 0; row < 4; row++) {
-    const y = 300 + row * 26, n = 12 + (row % 2);
-    for (let i = 0; i < n; i++) {
-      const x = 16 + i * 40 + (row % 2 ? -20 : 0) + (r() - .5) * 10, s = 19 + r() * 4;
-      (row < 1 ? back : front).push(ball(x, y + (r() - .5) * 8, s));
+/* the front page's ball pit: rows of glossy balls across the whole bottom of the page; the back rows go behind the duck,
+   the front rows in front of it, so the duck sits in the pit */
+export function pitSVG(part = 'front') {
+  const r = rnd(part === 'front' ? 42 : 7), out = [], W = 1600;
+  const rows = part === 'front' ? [[120, 30], [165, 33], [212, 36], [262, 38]] : [[70, 26], [96, 28]];
+  for (const [y, s0] of rows) {
+    const s = s0, step = s * 1.75, n = Math.ceil(W / step) + 2, off = (r() - .5) * step;
+    for (let i = -1; i < n; i++) {
+      const x = i * step + off + (r() - .5) * s * .5, yy = y + (r() - .5) * s * .4, rr = s * (.92 + r() * .16);
+      const c = FRIDGE[Math.floor(r() * FRIDGE.length)];
+      out.push(`<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="${rr.toFixed(1)}" fill="${c}" stroke="#1c1c28" stroke-width="2.4"/>`
+        + `<ellipse cx="${(x - rr * .35).toFixed(1)}" cy="${(yy - rr * .38).toFixed(1)}" rx="${(rr * .3).toFixed(1)}" ry="${(rr * .18).toFixed(1)}" fill="#fff" opacity=".6" transform="rotate(-30 ${(x - rr * .35).toFixed(1)} ${(yy - rr * .38).toFixed(1)})"/>`);
     }
   }
-  const duck = duckSVG(DUCK_DEFAULT, { size: 300, shadow: false }).replace(/^<svg[^>]*>|<\/svg>$/g, '');
-  return `<svg viewBox="0 0 480 400" role="img" aria-label="A rubber duck in a ball pit">
-<g>${back.join('')}</g>
-<g class="bob"><svg x="80" y="20" width="320" height="320" viewBox="0 0 120 120">${duck}</svg></g>
-<g>${front.join('')}</g></svg>`;
+  return `<svg class="pit-${part}" viewBox="0 0 ${W} 300" preserveAspectRatio="xMidYMin slice" aria-hidden="true">${part === 'front' ? '<rect x="0" y="190" width="1600" height="200" fill="#1c1c28" opacity=".12"/>' : ''}${out.join('')}</svg>`;
 }
+export const heroDuckSVG = () => duckSVG(DUCK_DEFAULT, { size: 300, shadow: false, title: 'A rubber duck in a ball pit' });
 
-/* the page's background: big simple shapes in the playground colors, spread out with white space between them */
-export function shapesSVG(w = innerWidth, h = innerHeight) {
-  const r = rnd(1234), cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421', '#ff8c2b', '#9b5de5'], out = [], placed = [];
-  const n = Math.round(Math.min(26, Math.max(9, w * h / 70000)));
-  for (let k = 0, tries = 0; k < n && tries < 600; tries++) {
-    const s = 34 + r() * 60, x = r() * w, y = r() * h;
-    if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < (p[2] + s) * 1.35)) continue;   // keep white space between shapes
-    placed.push([x, y, s]); k++;
-    const c = cols[k % cols.length], kind = Math.floor(r() * 5), rot = Math.round(r() * 360);
-    const v = `style="--d:${(14 + r() * 12).toFixed(1)}s;--dl:-${(r() * 10).toFixed(1)}s;--dx:${((r() - .5) * 30).toFixed(0)}px;--dy:${((r() - .5) * 30).toFixed(0)}px;--dr:${((r() - .5) * 24).toFixed(0)}deg"`;
-    const g = `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${rot})"><g class="sh" ${v} fill="${c}" opacity=".2">`;
-    const shape = [
-      `<circle r="${s}"/>`,
-      `<rect x="${-s}" y="${-s}" width="${2 * s}" height="${2 * s}" rx="${s * .18}"/>`,
-      `<path d="M0 ${-s * 1.1}L${s} ${s * .75}H${-s}z" stroke="${c}" stroke-width="${s * .2}" stroke-linejoin="round"/>`,
-      `<circle r="${s}" fill="none" stroke="${c}" stroke-width="${s * .34}"/>`,
-      `<path d="M${-s * .36} ${-s}h${s * .72}v${s * .64}h${s * .64}v${s * .72}h${-s * .64}v${s * .64}h${-s * .72}v${-s * .64}h${-s * .64}v${-s * .72}h${s * .64}z" stroke="${c}" stroke-width="${s * .12}" stroke-linejoin="round"/>`,
-    ][kind];
-    out.push(`${g}${shape}</g></g>`);
+/* the page's background: a little indoor carnival. A Twister mat on the floor in perspective, bunting (and, in the dark,
+   glowing string lights) across the top, and a few ball-pit balls and bits of confetti drifting. Drawn to the window's
+   size; redrawn when it changes or the theme does. */
+export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
+  const r = rnd(77), out = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
+  const hz = h * .46, K = (h - hz) * 1.05, K2 = w * .16;
+  /* the floor and the mat */
+  out.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
+  const zs = [1.05, 1.4, 1.85, 2.45, 3.2, 4.2, 5.5, 7.2], X = [-3.5, -2.5, -1.5, -.5, .5, 1.5, 2.5, 3.5];
+  const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
+  const zf = zs[zs.length - 1] * 1.25, zn = .8;
+  out.push(`<path d="M${px(-4.3, zn)} ${py(zn)}L${px(4.3, zn)} ${py(zn)}L${px(4.3, zf)} ${py(zf)}L${px(-4.3, zf)} ${py(zf)}Z" fill="${dark ? '#1c1f38' : '#ffffff'}" opacity="${dark ? .9 : .85}"/>`);
+  const dots = [];
+  for (const z of zs) for (let i = 0; i < X.length; i++) {
+    const rx = .42 * K2 / z;
+    dots.push(`<ellipse cx="${px(X[i], z).toFixed(1)}" cy="${py(z).toFixed(1)}" rx="${rx.toFixed(1)}" ry="${(rx * .42).toFixed(1)}" fill="${cols[i % 4]}"/>`);
   }
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${out.join('')}</svg>`;
+  out.push(`<g opacity="${dark ? .55 : .5}"${dark ? ' filter="url(#bdglow)"' : ''}>${dots.join('')}</g>`);
+  /* bunting along two sagging strings; bulbs between the flags glow in the dark */
+  const string = (y1, y2, sag, n, k) => {
+    const pt = t => [-30 + (w + 60) * t, y1 + (y2 - y1) * t + sag * 4 * t * (1 - t)];
+    const pts = Array.from({ length: n + 1 }, (_, i) => pt(i / n));
+    let g = `<path d="M${pts.map(p => p.map(v => v.toFixed(1)).join(' ')).join('L')}" stroke="${dark ? '#8a8fb5' : '#5d6072'}" stroke-width="1.5" fill="none" opacity=".6"/>`;
+    for (let i = 0; i < n; i++) {
+      const [x, y] = pt((i + .5) / n), c = ['#ef3b3b', '#ffd23f', '#2fa4ff', '#37d421', '#9b5de5', '#ff8c2b'][(i + k) % 6], f = 15 + r() * 6;
+      g += `<path d="M${(x - f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${(x + f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${x.toFixed(1)} ${(y + f * 1.25).toFixed(1)}Z" fill="${c}" opacity="${dark ? .55 : .8}"/>`;
+      if (dark) { const [bx, by] = pt((i + 1) / n); g += `<circle class="bulb" cx="${bx.toFixed(1)}" cy="${(by + 3).toFixed(1)}" r="3.6" fill="${['#ffe9a8', '#ffd0f0', '#c6f0ff'][(i + k) % 3]}" style="--dl:-${(r() * 3).toFixed(2)}s"/>`; }
+    }
+    return g;
+  };
+  const n = Math.max(8, Math.round(w / 90));
+  out.push(`<g${dark ? ' filter="url(#bdglow)"' : ''}>${string(h * .03, h * .08, h * .09, n, 0)}${string(h * .13, h * .06, h * .1, n + 1, 3)}</g>`);
+  /* drifting ball-pit balls and confetti, with white space between them */
+  const placed = [];
+  for (let k = 0, tries = 0; k < Math.round(Math.max(6, w * h / 160000)) && tries < 400; tries++) {
+    const s = 12 + r() * 20, x = r() * w, y = h * .18 + r() * h * .55;
+    if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < (p[2] + s) * 3)) continue;
+    placed.push([x, y, s]); k++;
+    const c = cols[k % 4], v = `style="--d:${(12 + r() * 10).toFixed(1)}s;--dl:-${(r() * 10).toFixed(1)}s;--dx:${((r() - .5) * 26).toFixed(0)}px;--dy:${((r() - .5) * 30).toFixed(0)}px;--dr:${((r() - .5) * 30).toFixed(0)}deg"`;
+    out.push(k % 3
+      ? `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)})"><g class="sh" ${v}><circle r="${s.toFixed(1)}" fill="${c}" opacity="${dark ? .5 : .55}"/><ellipse cx="${(-s * .35).toFixed(1)}" cy="${(-s * .38).toFixed(1)}" rx="${(s * .32).toFixed(1)}" ry="${(s * .2).toFixed(1)}" fill="#fff" opacity=".55" transform="rotate(-30 ${(-s * .35).toFixed(1)} ${(-s * .38).toFixed(1)})"/></g></g>`
+      : `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${(r() * 360).toFixed(0)})"><g class="sh" ${v}><rect x="${-s * .5}" y="${-s * .2}" width="${s}" height="${s * .4}" rx="2" fill="${c}" opacity="${dark ? .5 : .6}"/></g></g>`);
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs>
+<linearGradient id="bdsky" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#101225"/><stop offset=".46" stop-color="#1f1640"/>' : '<stop offset="0" stop-color="#e3f4ff"/><stop offset=".46" stop-color="#fff7fb"/>'}</linearGradient>
+<linearGradient id="bdfloor" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#191a33"/><stop offset="1" stop-color="#0d0e1c"/>' : '<stop offset="0" stop-color="#f4f1ff"/><stop offset="1" stop-color="#e8f3ff"/>'}</linearGradient>
+<filter id="bdglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs><rect width="${w}" height="${h}" fill="url(#bdsky)"/>${out.join('')}</svg>`;
 }

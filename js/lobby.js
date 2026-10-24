@@ -13,10 +13,9 @@ import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
 import { openStats } from './stats.js';
 import { sfx } from './sound.js';
-import { notesWidget } from './notes.js';
-import { chatWidget } from './chat.js';
+import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 
-let R = null, off = null, lastCount = -1, lastSeat = 0, chat = null;
+let R = null, off = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
   type: 'Agree or Disagree: answer each other\'s questions on a seven-column board.',
@@ -35,6 +34,7 @@ const OPT_TILES = [
   ['catchUp', 'Catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s']]],
   ['answerTime', 'Answer timer', [[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
+  ['lowGravity', 'Jumps', [[0, 'Normal'], [1, 'Low gravity']]],
 ];
 const OPT_TIPS = {
   share: 'A phase ends once this many players have ended their turn.',
@@ -146,12 +146,13 @@ const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
 register('lobby', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
-  leave() { if (off) off(); off = null; if (chat) chat.destroy(); chat = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
+  leave() { if (off) off(); off = null; if (docks) docks.destroy(); docks = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
-    S = el(`<section class="screen lobby">
-      <button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button>
+    S = el(`<section class="screen lobby docked">
+      <header class="lbar"><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <div class="gmain lmain">
       <div class="lobby-left">
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
         <h1 class="lobby-title"></h1>
@@ -166,9 +167,9 @@ register('lobby', {
         <p class="lmenu-info dim">${INFO.start}</p>
       </div>
       <aside class="party"><header><h2>Party</h2><span class="party-count dim"></span></header><div class="party-list"></div></aside>
-      <footer class="hints"><span><kbd>Space</kbd> Ready</span><span><kbd>T</kbd> Text chat</span><span><kbd>Right-click</kbd> Player card options</span><span><kbd>Left click</kbd> Select</span></footer>
+      </div>${DOCK_HTML}${BAR_HTML()}
     </section>`);
-    S.append(notesWidget(), chat = chatWidget());
+    docks = mountDocks(S, '<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options <kbd>Click</kbd> Select');
     lastSeat = 0;
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
     const info = S.querySelector('.lmenu-info');

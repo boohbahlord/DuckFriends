@@ -196,3 +196,64 @@ The command line should be simple and only have commands for customization for n
 The UI should be based on my UI/UX principles AND things I outlined here. Furthermore, consider things like dead space, alignment, font size, bold, underline, box size, and more. Similiar BASIC settings from ether's roads should be found in these settings and ordered similarly, like how settings have multiple tabs. There are other UI/UX princples i didnt mention because i have not much time to even scrap the ice on that here, you must know what i told you before thru thing u have written down or received. Ask me questions if need be with the multiple-choice boxes you do.
 
 In the second screenshot, that shows the map the players walk on, and they get their avatar lock into one of the colors based on their answers. BUT it is the most crude example possible, BECUZ it is rly the roughest estimate ever, like each part should be symmetrical AND a column, and NOT what you see in the picture, or more so shows the roughest idea of the colors from left to right in that second screenshot. Now BEFFORE the colors may have been been described dif in this text, but it is hard for me to go back and change that. When you take note for this sight based on this prompt before making a plan, you can rewrite how i described the colors of the map based on the image i sent in the seond screenshot.
+
+---
+
+## Request 2, word for word (2026-10-24)
+
+(three pictures with it: a cheese wedge for the cheese hat, Minecraft floating sky islands, a Minecraft forest seen from above)
+
+REAL QUICK BEOFRE ALL OF THIS! Can my friends play as guests when using firebase AND can my nigerian gf play with me using firebase? 
+
+It should be called DuckFriends
+
+The board should take up most of the screen by far, like a lot more. 
+Movement on the screen should be a little faster vertically (a little) and a little slower horizontally. Holding shift makes the duckies sprint. 
+The patterns on the ducks should be a little bigger, so they are easier to be seen. 
+The ducks don't have a full head. The image of the ducks should contract a little against the wall they walk into. The metals when selected should blank out the colors selected, and furthermore, the metals need to look more metal. 
+The ball pit on the menu screen should be covering the bottom of the index page. 
+The last click at zero before the game starts from the lobby in the countdown needs a high pitch last sound JUST LIKE Halo Reach has iconically. It needs to sound as much like it as possible. The patterns on the ducks need to be more visible.
+
+There should be hate for the ducks in customization, such as a wizard hat (can be colored), a pumpkin on the head (color cant be changed), a hotdog in a bun (color cant be changed but ketchup can be added to it), an afro (the hair color can be changed), an air jordan 1 can be worn on the head (the primary and secondary color of the shoe can be customized), there can be a cheese on the head that takes inspiration after the screenshot (cannot be recolored), there can be a traditional hat for nigeran men that can have colors changed and the hat has the name of the hat it is called in nigeria, a traditional hat for Nigerian women that can be changed (named after the hat and colors can be changed), there is a sombrero hat that cannot be changed in color, a dunce hat that cannot be changed in color, a crown that can have any metal option added to it, a cardboard robot head that goes over the duck that cannot be changed, a rubber duck on the head which can be customized simply without too much detail, and a simple floating eye symbol that floats over the duck that is transparent and cannot have colors added to it. The hats are in a sliding bar to fit all the hats, but a dropdown arrow exists beside them that can be expanded or collpased.
+
+AFTER all the ducks voted, they can ONLY sit in their box color they voted in, which is why the map needs to fill more and more of the screen.
+
+UI ELEMENTS CANT OVERLAP, like they do when you click the notes button OR when you are in the lobby and the buttons and such overlap with things. The button controls on the bottom left should be smaller. 
+
+Ducks also contract somewhat in their image when they walk into other ducks. Clicking space bar makes the duck jump in a way, and it is a slow and high jump that shows a circle on the ground as their shadow to indicate the jump. There is a low gravity setting for this jump. The cloud and prompt can be over the playing board and ducks can walk underneath the, which will make their UI somewhat enough transparent to tall players to see the duck. 
+
+The stat screen at the end of rounds should stay up unless they are voted off. 
+
+When you click the screen, the click in any reference to it should be called "Jumps" that count your jumps in game instead. This includes settings or stats or anything that mentions them.
+
+There is also a grey mouse hate that has a small mouse on the head of a duck. 
+
+You need to give the ducks a full head on the front page AND every other POSSIBLE instance.
+
+Maybe make the ducks look less 2d and more third dimensional too, by a little bit. Hats can be selected as a pattern in a title card now if they player wants; it will be added onto the patterns and work like the patters. 
+
+Jumps are only counted per jump completed, so if they click spacebar, then the jump will not count on the counter TILL they land on the ground to jump again, since it counts completed jumps, not spacebar taps. The ducks can have a little speedy look effect on them when they sprint. 
+
+A new hat is a ribbon bow thingy which goes on the ducks that can have multiple colors. There is a baseball cap hat with color options. 
+
+the autocomplete SHOULD show thhe @ symbol in chat as well. There is an @everyone command as well. There is a \muteping@ command to, which mutes pings, and also a \mute@ to hide messages from a player AND a \unmute@ and \unmuteping@
+The help button and @ are the only ones that show in the autocomplete before you type, and typing will also show these command in the suggestion box if they share characters, so like typing \ should show a few chat commands
+
+The new map make the background clouds everywhere while also have the map itself be a little transparent with a sun in the background, and whenever the sun sets the moon descends from the top of the screen and falls down and sets too, creating a cycle where the sun lasts for one minute and the moon for another, and one cloud in the background will have one random player's avatar. The map will have the tiles glow a little in the night when it gets dark for this new map version. The third map is a pixel map that looks a little like minecraft, where the colored columnas have the appearance of many minecraft whool blocks that build the column together, and they are transparent and show floating islands made out of blocks like u would see in Minecraft (stone blocks at the bottom, then thin two block layers of dirt blocks above that and then grass blocks at the top and maybe trees sometimes, and the second screenshot is a good example. The islands should be of differing distances, and the ground is seen from above near the bottom of the page and the horizon line with a pixel sunset that stays but breathes a little. The third screenshot shows what the ground should look like but a little more from above view please since the camera is quite low for what i imagine in that third screenshot, but it was the best i could find. 
+
+Put better effort into the page background for this game because it is not good enough. 
+
+There is also a setting where there is not answering section and ducks can move around freely on the board until the turn ends, this isnt default. 
+
+The text chat should show an ABC when you are in the chat mode and then the green dollar sign when you are in command mode. Changing customization while in the pause menu or command line should be able to change appearance mid game. There should be a command to strike a player with lightning that plays a sound effect not too loud please. Lightning @player2 for example. There should also be a command for love, where you basically do Love @player1 @player2 and that will make the two players have their ducks show up in a heart that float up to the top of the screen before fading away (it shouldn't glitch with an avatar that is an image). There should be a command to die, where it basically makes the duck have X over their eyes while the image is rotated and the duck looks dead, and the effect stops when they move kill @player4 for example, and it doesnt work on players with image avatars the same way, for them it just places a big X over their image until they move. There is a hotdog command that summons a hotdog on a player that hangs around them a little while before fading away, and you basically do hotdog @player5 
+
+Those kind of goofy commands like lightning of summoning hotdogs can be turned off by host under additional settings, which will try and hide a lot of the settings that make it harder for a host who wants something straight forward.
+
+(and, while that was being built:) dark mode should be the default color btw not light mode, because i discovered i like it better for my eyeballs at night
+
+### Decided from request 2
+- The site is called **DuckFriends**. Dark mode is the default.
+- Guests play through Firebase's anonymous sign-in; the database goes in europe-west1 (Belgium), between Nigeria and the Americas.
+- Space now jumps on the board (it still readies up in the lobby); Enter ends a turn.
+- Clicks became Jumps: only completed jumps (on landing) count.
+- The Nigerian hats: **Fila** (men's cap) and **Gele** (women's head tie).
