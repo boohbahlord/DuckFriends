@@ -4,13 +4,21 @@
 import { el, esc } from './ui.js';
 
 export const SWATCHES = ['#1c1c28', '#ffffff', '#ef3b3b', '#ff8c2b', '#ffd23f', '#37d421', '#14c6b4', '#2fa4ff', '#9b5de5', '#ff7eb6', '#8b5a2b', '#9aa0aa'];
+/* the Colors screen's grid, after Halo: Reach's: each row one color, dark to light */
+export const SHADES = [
+  ['#1c1c28', '#6b7078', '#ffffff'], ['#5a3a22', '#8b5a2b', '#c8996a'], ['#3f4a1f', '#6b7a2e', '#a8b860'],
+  ['#1f6b2a', '#37d421', '#9ef08a'], ['#0d5c57', '#14c6b4', '#8fe8de'], ['#1d4f7a', '#2fa4ff', '#9fd3ff'],
+  ['#2b2f7a', '#4a5ad8', '#a7b0f5'], ['#4b2479', '#9b5de5', '#d2b6f5'], ['#6b0f1e', '#ef3b3b', '#ff9a9a'],
+  ['#8a3a0c', '#ff8c2b', '#ffc38a'], ['#9a7a00', '#ffd23f', '#fff0a3'], ['#8a1f55', '#ff7eb6', '#ffc7df'],
+];
 const HEX_INFO = 'A hex color is # and six characters, each 0–9 or A–F: two for red, two for green, two for blue. 00 is none, FF is the most. #FF0000 is red, #00FF00 green, #FFFFFF white, #000000 black.';
 export const HEX_OK = /^#[0-9a-f]{6}$/i;
 export const normHex = s => { s = String(s || '').trim(); if (!s.startsWith('#')) s = '#' + s; if (/^#[0-9a-f]{3}$/i.test(s)) s = '#' + [...s.slice(1)].map(c => c + c).join(''); return HEX_OK.test(s) ? s.toLowerCase() : null; };
 
 /* a color field; onPick(hex) runs on every change */
-export function colorField(value, onPick, { swatches = SWATCHES } = {}) {
-  const box = el(`<div class="colors">
+export function colorField(value, onPick, { swatches = SWATCHES, grid = false } = {}) {
+  if (grid) swatches = SHADES.flat();
+  const box = el(`<div class="colors${grid ? ' grid3' : ''}">
     <div class="swatches">${swatches.map(c => `<button type="button" class="sw" style="background:${c}" data-c="${c}" aria-label="${c}" aria-pressed="${c === value}"></button>`).join('')}
       <button type="button" class="sw brush" aria-label="Invent a color" data-tip="Invent a color" aria-expanded="false">🖌</button></div>
     <div class="invent" hidden>

@@ -12,7 +12,7 @@ export const SETTINGS_DEFAULT = {
 };
 export const PROFILE_DEFAULT = {
   name: 'Player 1', duck: { ...DUCK_DEFAULT },
-  card: { kind: 'color', color: '#2fa4ff', pattern: 'none', patternColor: '#ffffff', image: null },
+  card: { kind: 'color', color: '#2fa4ff', pattern: 'none', patternColor: '#ffffff', layout: 'tiled', size: 'm', image: null },
   nameStyle: { font: 'fredoka', color: '', rainbow: false },   // color '' = the theme's text color
   notes: [], jumps: 0, stats: { rounds: 0, answers: [] }, settings: { ...SETTINGS_DEFAULT },
 };
@@ -44,6 +44,7 @@ function normalize(p) {
     delete out.settings.clicksSci; delete out.settings.clicksHidden; delete out.clicks;
   }
   out.duck = { ...DUCK_DEFAULT, ...(p.duck || {}) };
+  if (out.duck.hat && out.duck.hat.id === 'robot') { out.duck.face = { id: 'box' }; out.duck.hat = null; }   // the cardboard box became a Face item
   out.card = { ...PROFILE_DEFAULT.card, ...(p.card || {}) };
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };
   if (out.nameStyle.color === '#1c1c28') out.nameStyle.color = '';   // the old default, unreadable in dark mode

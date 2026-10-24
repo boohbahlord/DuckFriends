@@ -14,7 +14,7 @@ export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
 export const OPTIONS_DEFAULT = {
   order: 'rotate',      // rotate | random: the order of the round's questions
   share: 0.75,          // how many players must end their turn: .5, .67, .75, 1
-  answerTime: 0,        // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
+  answerTime: 30,       // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15,          // 0 (off), 15, 30, 45: the rest's time once enough players are done (submit and answer)
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
   botWait: 30,          // TEST rooms: seconds before computers act

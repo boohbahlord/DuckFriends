@@ -281,3 +281,73 @@ Those kind of goofy commands like lightning of summoning hotdogs can be turned o
   add by code, Add friend on a player's card (right-click or long-press), requests, list with online status and room,
   Invite to my online room, Join theirs (a private room asks for its passkey unless invited). Invites and requests
   arrive as notices at the bottom middle.
+
+## Request 4, word for word (2026-10-24)
+(Five pictures came with it: a gele (a large burgundy, pleated, shimmering head tie fanning out around the head), Halo:
+Reach's Armory menu (options on the left in a window, the Spartan preview on the right), its Colors screen (Armor
+Primary / Secondary / Emblem rows beside a grid of swatches), its Helmet screen (picture tiles of variants), and a white
+call duck.)
+
+* A new hat is a birthday hat
+* New hat: A word that says Hat in enlightenment era cursive
+* New hat: A white glove worn like a hat (like a cartoon white glove)
+* New hat: Devil Horns (it is an off bone white that cannot be changed in color
+* New hat: Halo (Like an angel's halo that shine, cannot be replaced.
+* New hat can be the little antenna that sticks up out of a duck's head.
+* Police officer's cap
+* Firefighter hat
+* Doctor's headwear
+* A pajama cap that points up and hangs down over the eyes
+* The bucket hat (like Hunter S Thompson might wear)
+* Hat to complete a wedding gown
+* Hat for catholic pope 
+* Hat for catholic bishop
+* Military helmet (like what a US soldier would wear, to go with the military outfit that should look like WW2)
+
+The afro needs to look more like an afro
+
+
+Face (they have their own section in the customization menu
+
+* Motorcycle helmet (like something kinda like for sport bikes)
+* Glasses
+* Round circle lens glasses
+* Aviator sunglasses (like what hunter s thompson wore )
+* Sunglasses
+* Blindfold
+* Bag over head
+* Ski mask
+* Pumpkin on the head (as opposed to the hat which puts it on the head)
+* Halo reach helmet (The helmet goes on the head of the duck and isn't called halo or halo reach but is just sci fi, like the halo reach body armor outfit that matches it)
+* Gas mask
+* Clown nose (like the little ball made to cover some part of the beak like a clown nose)
+* A blindfold for sleeping that can go with pajamas
+
+You can suggest other face items as an idea, these have their own menu apart from hats and both face items and hate can be worn together.
+
+The carboard box helmet needs to go to a face section along with ANYthing that covers the face substantially in the future.
+
+
+I sent a screenshot of what the gele should look like since it needs changed. 
+The metallic skins don't look metallic enough.
+The options in the customization menu should be smaller, AND on computer, when you see the customization menu, you see the options on the left in a window and a preview of your duck on the right; just like the second screenshot. The menu should be simple though in regard to not including info from the screenshot example IF similar info cannot be added.
+
+The board map SHOULD resemble it's map in the picture preview AND in the picture preview the colors for the columns shouldn't be visible at all for the map preview in the lobby. ALSO, in the maps, the board can be a smidgen more transparent AND the map should be contained in the whole visible page during the game not inside the board AND the background page default will be paused or cleared temporarily IF it is playing behind the image of the map, but only for the duration the image is covered. In the customization menu, the colors go in the bottom selection, like in the screenshot, and the card or "Card" goes above the color selection. The color selection menu looks like how it does in the third screenshot. The card selection doesn't have the color customization option, only the patterns AND how the player can now decide HOW the patterns appear on their card, like not just the item of the pattern but the pattern of the pattern per se. The top of the selection shows "Hat" on top, and selecting it shows a selection like you see in the fourth screenshot, but maybe the selections can be smaller and have three columns of selection to scroll through. 
+There will be an outfit selection the player can choose as well, face selection, customization of their beak, the style of their duck, a customization of the eyes of their duck, the size and weight of their duck.
+The beaks are in a selection like the hats, and there is a longer beak, a shorter beak, a taller beak, and a rounder beak, plus the default obv. The other beak options are a beak with teeth (like teeth of a reptile), a beak of an eagle, an elephant trunk, the beak super skinny and long beak of a pelican, a beak made of blocks, a beak made of simple 2d geometry, no beak, and a round hole in place of the beak. You can only change the color of the beak IF it is a block or 2d simple geometry beak, and those options to change their beak's colors are hidden from the color menu UNLESS they are selected.
+The style of their duck includes a mallard duck (fluffier looking becuz of feathers and cannot change its colors), a white call duck with orange beak AND white feathers implied into a fluffy design which can't have it's colors changed, a rubber duck that looks like a feather velociraptor (the beak with reptile teeth goes with this one), the form of a eagle in the shape of the rubber duck (this can be matched with the eagle beak by the player themselves), the form of a pelican (the beak of a pelican is meant to be matched with this one if the payer selects it themselves), a duck form made of blocks, and a duck made of simple 2d geometry. The duck forms all take the body form of a duck BUT can have slightly different looking heads and/or necks if they arent a duck IF the appearance design all still works the same on them, and only if. The animal species that arent a duck can sometimes have their colors changed in order of primary and secondary or even accent color IF their default look is available in the color section, but certain colors cannot be changed if not specified, and these are all still rubber ducks even if they aren't ducks, but the block one and 2d geometry isnt rubber obv.
+The eyes are all the eyes you would imagine that would fit the form or style of the ducks, including the lack of an eye option or just holes for eyes. There is also two different kind of bug eyes, an alien eye, a human like eye, a demon eye, coins for eyes, and multiple eyes (like too many).
+The size of a duck section has two options, the make a duck more fat or more skinny, and also a total duck size (which there isn't a lot of room for a duck to become bigger or smaller, so it isn't that big of a difference), the proportions or size of a duck will effect it's hitbox or how big it's space is on the map. Maybe there is duck muscle that can be added as well.
+Some outfits include: suit and tie, suit and bow tie, dress, wedding gown for women, catholic priest attire, catholic pope attire, catholic bishop attire, halo reach body armor (dont call it halo reach), military gear, wizard outfit, carboard robot outfit, basketball jersey (you can have it show Kareem's number and jersey, the classical basketball player, and their is a second jersey that has Larry Bird's team and his number too), a leather jacket, a royal robe that can be selected to go with the crown, a normal shirt, a hoodie, a traditional formal nigerian man wear that goes with the Fila, the female nigerian equivalent to go with the Gele, a muscle shirt (if that is possible to convey), blue jeans only, a doctor's outfit, a firefighters outfit, a police outfit, an outfit made of clouds, a pajama gown, a hawaiian shirt, and a disco outfit.
+
+The order of these selection in the customization, exlucding the bottom part for card and color, will be an an order based on the place they fall on a character from top to down, so hate first, face second, eyes third, beak fourth, outfit is fifth, duck body type is sixth, and duck style is seventh (like if a mallard duck for example).
+
+There should be a connection mode setting that can be made to help players on data OR poor connection, like the options in my other game.
+
+* The first map should be called "Night Show"
+
+The other map names are fine. 
+
+The settings should better resemble the idea we are going for in the UI, and on desktop, the "Duck Friends" title should be at the center top of the screen, through not too high.
+
+Ask me questions when need be. Also, the way that option are shown in three columns with rows based off of screenshot four is how the other options besides color will be.

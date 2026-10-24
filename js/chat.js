@@ -3,8 +3,8 @@
    the chat. Open, the symbol at its bottom left switches between the chat and the command line (a green "$" on black).
 
    Chat: @name pings that player (a soft sound and a "!" on the chat button); \@name sends a private message; \help lists
-   these. Tab completes (never leaving the page), the arrow keys move through the suggestions; clicking the empty box
-   suggests \help.
+   these. Suggestions show once something is typed; Tab completes (never leaving the page), the arrow keys move through
+   them.
 
    Command line: customization only for now, e.g. custom username font "times new roman". Words are split by spaces, so a
    choice with a space goes in quotes; Tab adds the quotes. */
@@ -144,7 +144,7 @@ function runFun(node, args) {
 }
 
 /* ---------- the chat's suggestions ---------- */
-/* chat commands: before typing only \\help and @ show; typing narrows them (\\ shows every \\ command); names complete
+/* chat commands: nothing shows before typing; typing narrows them (\\ shows every \\ command); names complete
    after @ and after each \\…@ */
 const CHAT_CMDS = ['\\help', '\\@', '\\mute@', '\\unmute@', '\\muteping@', '\\unmuteping@'];
 function chatSuggest(line, s, me) {
@@ -156,7 +156,7 @@ function chatSuggest(line, s, me) {
     const out = opts.map(n => ({ label: m[1] + n, apply: () => pre + m[1] + n + ' ' }));
     return out.filter(o => o.label.toLowerCase() !== line.slice(pre.length).toLowerCase().trim());
   }
-  if (line === '') return ['\\help', '@'].map(c => ({ label: c, apply: () => c }));
+  if (line === '') return [];   // nothing until something is typed
   if (line.startsWith('\\') && !line.includes(' ')) return CHAT_CMDS.filter(c => c.startsWith(line) && c !== line).map(c => ({ label: c, apply: () => c }));
   return [];
 }
@@ -193,7 +193,7 @@ export function chatWidget() {
 
   const drawLog = () => {
     const r = room(), s = r && r.state;
-    if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help, or press Tab.</p>'); log.scrollTop = 1e9; return; }
+    if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help.</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
     const hidden = new Set(muted()), nameOf = id => (s.players[id] ? tag(s.players[id].name).toLowerCase() : '');
@@ -215,7 +215,7 @@ export function chatWidget() {
   };
   const refresh = () => {
     const r = room();
-    list = ui.mode === 'cmd' ? cmdSuggest(inp.value) : chatSuggest(inp.value, r && r.state, r && r.me);
+    list = !inp.value ? [] : ui.mode === 'cmd' ? cmdSuggest(inp.value) : chatSuggest(inp.value, r && r.state, r && r.me);   // only once something is typed
     sel = Math.min(sel, Math.max(0, list.length - 1)); drawSugg();
   };
   /* the round symbol shows the mode you are in: ABC on white for the chat, a green $ on black for the command line */
