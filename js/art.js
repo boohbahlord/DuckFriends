@@ -3,6 +3,7 @@
    cloud with the title across it and the symbol at its top left), the front page's duck in a ball pit, and the page's
    Twister-like shapes. Nothing here is a file, so everything is sharp at any size and changes with the theme. */
 import { duckSVG, DUCK_DEFAULT } from './duck.js';
+import { HAT_TOP } from './hats.js';
 import { esc } from './ui.js';
 
 export const FRIDGE = ['#ef3b3b', '#ff8c2b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6'];
@@ -42,12 +43,13 @@ const cloud = (cx, cy, s, fill = '#ffffff', shade = '#d8ecff') => {
 
 /* the game's art: sky, a cloud, the duck sitting on it, the title, the symbol at the top left (16 : 9) */
 export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT } = {}) {
+  const top = duck && duck.hat && !duck.image ? HAT_TOP : 0;   // room for a hat
   return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="Agree or Disagree">
 <defs><linearGradient id="artsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd0ff"/><stop offset="1" stop-color="#d9f2ff"/></linearGradient></defs>
 <rect width="480" height="270" rx="18" fill="url(#artsky)"/>
 ${cloud(380, 64, .45, '#ffffffcc', '#ffffff66')}${cloud(92, 210, .38, '#ffffffaa', '#ffffff55')}
 ${cloud(250, 200, 1.05)}
-<g transform="translate(176 66)"><svg width="150" height="150" viewBox="0 0 120 120">${duckSVG(duck, { size: 120, shadow: false }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg></g>
+<g transform="translate(176 ${(66 - 150 * top / 120).toFixed(1)})"><svg width="150" height="${(150 * (120 + top) / 120).toFixed(1)}" viewBox="0 ${-top} 120 ${120 + top}">${duckSVG(duck, { size: 120, shadow: false }).replace(/^<svg[^>]*>|<\/svg>$/g, '')}</svg></g>
 <text x="240" y="252" text-anchor="middle" font-family="'Lilita One', 'Fredoka', sans-serif" font-size="44" stroke="#1c1c28" stroke-width="5" stroke-linejoin="round" paint-order="stroke fill">${rainbowTSpans('Agree or Disagree')}</text>
 <g transform="translate(14 12)"><rect x="-4" y="-4" width="46" height="38" rx="8" fill="#ffffffd0" stroke="#1c1c28" stroke-width="2"/>${symbolSVG(38).replace('<svg ', '<svg x="0" y="0" ')}</g>
 </svg>`;

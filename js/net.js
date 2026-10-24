@@ -5,6 +5,7 @@
 import { reduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
 import { profile } from './store.js';
+import { HATS } from './hats.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false });
@@ -56,7 +57,7 @@ function botPlayer(s) {
   let n = 1; while (used.has('Computer-' + n)) n++;
   return {
     id: 'b-' + uid(), name: 'Computer-' + n, bot: true,
-    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null },
+    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null },
     card: { kind: 'color', color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', image: null },
     nameStyle: { font: 'fredoka', color: '', rainbow: Math.random() < .2 },
   };

@@ -3,7 +3,8 @@
    or a square picture the player uploaded. The duck has a full round head on a boat-shaped body with its tail up. It is
    lit from the top left: a soft gradient, a darker belly, the head's shadow on the body, and bright highlights, so it reads
    as a little 3D toy. Metals use banded reflections (a bright sky, a dark horizon, a lighter floor) and a shine that
-   sweeps across them now and then. */
+   sweeps across them now and then. A hat (hats.js) adds headroom above the duck's box. */
+import { hatLayers, HAT_TOP } from './hats.js';
 
 export const DUCK_COLORS = [
   ['Classic yellow', '#ffd23f'], ['Tangerine', '#ff8c2b'], ['Cherry', '#ef3b3b'], ['Bubblegum', '#ff7eb6'],
@@ -22,7 +23,7 @@ export const METAL = {
   rose: ['#fff3f1', '#ffd0c9', '#e3998f', '#7d3f37', '#f2b5ac', '#5e2d27'],
   chrome: ['#ffffff', '#e9f2ff', '#9fb0c6', '#1e2733', '#c6d3e4', '#141a22'],
 };
-export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null };
+export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null };
 
 let uid = 0;
 export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
@@ -50,7 +51,7 @@ function patternDef(id, kind, col) {
   return P ? `<pattern id="${id}p" width="18" height="18" patternUnits="userSpaceOnUse"${kind === 'stripes' ? ' patternTransform="rotate(-28)"' : ''}>${P}</pattern>` : '';
 }
 
-/* the duck, facing right; o.shadow draws its ground shadow; o.dead draws X eyes; o.hat (later) adds a hat */
+/* the duck, facing right; o.shadow draws its ground shadow; o.dead draws X eyes; look.hat puts a hat on it */
 export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '', dead = false, extra = '' } = {}) {
   const L = { ...DUCK_DEFAULT, ...(look || {}) }, id = 'dk' + (++uid);
   if (L.image) {   // an uploaded square picture, standing like a card, with the same little shadow
@@ -64,6 +65,7 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
   const M = L.metal !== 'none' && METAL[L.metal];
+  const hat = hatLayers(L.hat), top = hat.front ? HAT_TOP : 0;
   const base = M ? M[2] : L.color, light = M ? M[1] : mix(L.color, 255, .5), dark = M ? M[5] : mix(L.color, 0, .32);
   const edge = M ? M[5] : mix(L.color, 0, .45);
   const pat = !M && L.pattern !== 'none' ? patternDef(id, L.pattern, L.patternColor || '#ffffff') : '';
@@ -74,7 +76,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
   const eyes = dead
     ? `<path d="M78 30l8 8M86 30l-8 8" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>`
     : `<ellipse cx="83" cy="34" rx="4.3" ry="5.2" fill="#161616"/><circle cx="84.6" cy="32" r="1.7" fill="#fff"/><circle cx="82" cy="36.6" r=".8" fill="#fff" opacity=".7"/>`;
-  return `<svg class="duck${M ? ' metal' : ''}" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Rubber duck')}">
+  return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28')}${fill(id + 'h', '.34', '.28')}
 <linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? '.25' : '.28'}"/></linearGradient>
@@ -84,6 +86,7 @@ ${pat}
 ${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>` : ''}
 </defs>
 ${shadow ? `<ellipse cx="58" cy="109" rx="44" ry="7" fill="#000" opacity=".22"/>` : ''}
+${hat.back}
 <path d="${BODY}" fill="url(#${id}b)"/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
 <g clip-path="url(#${id}c)">
@@ -104,6 +107,7 @@ ${shadow ? `<ellipse cx="58" cy="109" rx="44" ry="7" fill="#000" opacity=".22"/>
 <path d="M96.5 42.5C103 43.5 110 43.5 113 45.5C108 49.5 100.5 49.5 95.5 46.5Z" fill="#f07f0e" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
 <ellipse cx="104" cy="36.4" rx="4" ry="1.3" fill="#fff" opacity=".5"/>
 ${eyes}
+${hat.front}
 ${extra}
 </svg>`;
 }

@@ -427,3 +427,18 @@ html.mouse-move .board { cursor: pointer; }
 .chat-row .chat-in { flex: 1; min-width: 0; }
 .chat-panel[data-mode="cmd"] .chat-in { background: #000; color: #fff; border-color: #000; font-family: 'Cascadia Code', Consolas, monospace; caret-color: #33ff66; }
 .sect.muted .swatches, .sect.muted > .row { opacity: .45; }   /* a metal is on: the color and pattern show unchosen */
+html.moving .hat-float { animation: hatfloat 2.4s ease-in-out infinite; transform-box: fill-box; }
+@keyframes hatfloat { 50% { transform: translateY(-3px); } }
+
+/* ---------- sliding bars (hats, card patterns): one row that scrolls sideways; ▾ opens it into a grid ---------- */
+.slidebar { display: flex; align-items: flex-start; gap: .4rem; }
+.slide-strip { flex: 1; min-width: 0; display: flex; gap: .4rem; overflow-x: auto; padding: .2rem .1rem .45rem; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.slidebar[data-open="true"] .slide-strip { flex-wrap: wrap; overflow: visible; }
+.slide-tile { flex: none; width: 5.2rem; min-width: 0; padding: .3rem .25rem; display: flex; flex-direction: column; align-items: center; gap: .15rem; scroll-snap-align: start; font-size: calc(.72rem * var(--ts)); line-height: 1.1; }
+.slide-tile svg { width: 2.9rem; height: auto; }
+.slide-tile span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.slide-more { flex: none; width: 2rem; height: 2rem; margin-top: .9rem; border: .14rem solid var(--line); border-radius: 50%; background: var(--panel2); cursor: pointer; font-size: 1rem; line-height: 1; }
+.pat-pic { display: block; width: 2.9rem; height: 2rem; border-radius: .4rem; border: .1rem solid var(--line); }
+.hat-opts { display: flex; flex-direction: column; gap: .5rem; margin-top: .4rem; }
+.hat-color { display: flex; align-items: flex-start; gap: .6rem; flex-wrap: wrap; }
+.hat-color .lab { min-width: 5rem; padding-top: .4rem; }

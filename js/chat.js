@@ -13,6 +13,7 @@ import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
 import { nameHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS } from './duck.js';
+import { HATS, hatById } from './hats.js';
 import { CARD_PATTERNS } from './card.js';
 import { normHex } from './color.js';
 import { shareLook } from './customize.js';
@@ -36,6 +37,10 @@ const TREE = {
         pattern: { vals: keysOf(DUCK_PATTERNS), run: v => pick(keysOf(DUCK_PATTERNS), v, x => Object.assign(profile.duck, { pattern: x, metal: 'none', image: null }), 'Duck pattern') },
         'pattern color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.duck.patternColor = c; return `Duck pattern color: ${c}`; } },
         metal: { vals: keysOf(DUCK_METALS), run: v => pick(keysOf(DUCK_METALS), v, x => Object.assign(profile.duck, { metal: x, image: null }), 'Duck metal') },
+        hat: { vals: ['none', ...HATS.map(h => h.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.hat = null; return 'Hat: none'; } const h = hatById(k); if (!h) return bad(v); profile.duck.hat = { ...(profile.duck.hat && profile.duck.hat.id === k ? profile.duck.hat : {}), id: k }; return `Hat: ${h.name}`; } },
+        'hat color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c1: c }; return `Hat color: ${c}`; } },
+        'hat color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c2: c }; return `Hat second color: ${c}`; } },
+        ketchup: { vals: ['on', 'off'], run: v => { const h = profile.duck.hat; if (!h || h.id !== 'hotdog') return '✗ Ketchup goes on the hotdog hat.'; if (!/^(on|off)$/i.test(v)) return bad(v); profile.duck.hat = { ...h, ketchup: /^on$/i.test(v) }; return `Ketchup: ${/^on$/i.test(v) ? 'on' : 'off'}`; } },
       } },
       card: { kids: {
         color: { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.card.color = c; return `Card color: ${c}`; } },
@@ -182,7 +187,8 @@ export function chatWidget() {
   const openPanel = m => {
     ui.open = true; panel.hidden = false; btn.setAttribute('aria-pressed', 'true');
     ui.ping = false; btn.querySelector('.bang').hidden = true;
-    setMode(m || ui.mode); inp.focus(); refresh(); if (w.onToggle) w.onToggle();
+    if (w.onToggle) w.onToggle();   // the dock opens first, so the box can take the focus
+    setMode(m || ui.mode); inp.focus(); refresh();
   };
   const closePanel = () => { ui.open = false; panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
   w.openChat = openPanel;
