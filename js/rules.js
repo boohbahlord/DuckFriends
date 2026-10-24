@@ -12,7 +12,7 @@
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
 export const OPTIONS_DEFAULT = {
-  order: 'rotate',      // rotate | random: the order of the round's questions
+  order: 'random',      // random | rotate: the order of the round's questions
   share: 0.75,          // how many players must end their turn: .5, .67, .75, 1
   answerTime: 30,       // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15,          // 0 (off), 15, 30, 45: the rest's time once enough players are done (submit and answer)
@@ -54,6 +54,7 @@ function phaseLimit(s) {
 }
 function enter(s, phase, now) {
   s.phase = phase; s.at = now; s.done = {}; s.catchEnds = 0;
+  if (phase === 'submit') s.drafts = {};
   const lim = phaseLimit(s); s.ends = lim ? now + lim * 1000 : 0;
   return s;
 }
@@ -91,13 +92,12 @@ function recordAnswers(s) {
 
 function startResults(s, now) {
   s.reviewVotes = {}; s.endVotes = {}; s.review = false;
-  // each duck stands in the column of its round average, and stays in it
+  // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
+  // the board (it joined late) starts in Neutral
   s.lock = {};
-  for (const id of s.seat) { const st = statsFor(s, id, s.round); s.lock[id] = st.n ? Math.round(st.avg) + 3 : 3; }
-  for (let c = 0; c < 7; c++) {   // ducks sharing a column line up in it, not on top of each other
-    const ids = s.seat.filter(id => s.lock[id] === c);
-    ids.forEach((id, k) => { s.pos[id] = { x: colX(c), y: (k + 1) / (ids.length + 1) }; });
-  }
+  const off = [];
+  for (const id of s.seat) { const p = s.pos[id]; if (p && p.x >= 0) s.lock[id] = colOf(p.x); else { s.lock[id] = 3; off.push(id); } }
+  off.forEach((id, k) => { s.pos[id] = { x: colX(3), y: (k + 1) / (off.length + 1) }; });
   return enter(s, 'results', now);
 }
 
@@ -112,6 +112,9 @@ function advance(s, now) {
   switch (s.phase) {
     case 'countdown': return s;
     case 'submit': {
+      /* whatever someone had typed goes in as their question when time runs out (Send or "Don't submit one" ends it early) */
+      for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!s.done[id] && d && d.text) (s.subs = s.subs || []).push({ by: id, text: d.text, time: d.time }); }
+      delete s.drafts;
       const subs = {}; for (const q of s.subs || []) subs[q.by] = q;
       s.qs = orderQuestions(s, subs).map(id => subs[id]); s.qi = 0; delete s.subs;
       if (!s.qs.length) { say(s, 'No questions this round.'); s.round++; s.subs = []; return enter(s, 'submit', now); }
@@ -162,6 +165,12 @@ export function reduce(state, a, now = Date.now()) {
       s.subs = (s.subs || []).filter(q => q.by !== a.id);
       if (text) s.subs.push({ by: a.id, text, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime });
       s.done[a.id] = true; return advance(s, now);
+    }
+    case 'draft': {   // what a player has typed so far (kept by the host, sent in for them at the end)
+      if (!me || s.phase !== 'submit' || s.done[a.id]) return state;
+      const text = String(a.text || '').trim().slice(0, 200);
+      s.drafts = { ...(s.drafts || {}), [a.id]: { text, time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime } };
+      return s;
     }
     case 'move': {   // x, y on the board; j = when the current jump started (0 = on the ground)
       if (!me || !s.pos[a.id]) return state;

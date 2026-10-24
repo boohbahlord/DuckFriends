@@ -13,6 +13,13 @@ export const FONTS = [
   { id: 'times', name: 'Times New Roman', css: "'Times New Roman', Times, serif" },
   { id: 'comic', name: 'Comic Sans', css: "'Comic Sans MS', 'Comic Sans', 'Comic Neue', cursive" },
   { id: 'georgia', name: 'Georgia', css: "Georgia, 'Times New Roman', serif" },
+  { id: 'bangers', name: 'Bangers', css: "'Bangers', 'Impact', sans-serif" },
+  { id: 'pixel', name: 'Press Start 2P', css: "'Press Start 2P', 'Courier New', monospace" },
+  { id: 'pacifico', name: 'Pacifico', css: "'Pacifico', 'Brush Script MT', cursive" },
+  { id: 'marker', name: 'Permanent Marker', css: "'Permanent Marker', 'Comic Sans MS', cursive" },
+  { id: 'creepster', name: 'Creepster', css: "'Creepster', 'Chiller', fantasy" },
+  { id: 'orbitron', name: 'Orbitron', css: "'Orbitron', 'Eurostile', sans-serif" },
+  { id: 'typewriter', name: 'Special Elite', css: "'Special Elite', 'Courier New', monospace" },
 ];
 export const fontCSS = id => (FONTS.find(f => f.id === id) || FONTS[0]).css;
 /* a font from what a player typed ("times new roman", "Old English", "grenze"…) */

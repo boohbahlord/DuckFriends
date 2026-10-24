@@ -138,7 +138,7 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'move', 'end', 'voteReview', 'voteEnd', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'move', 'end', 'voteReview', 'voteEnd', 'fx', 'jumps', 'chat', 'options', 'kick', 'start', 'cancel', 'toLobby']);
 const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {

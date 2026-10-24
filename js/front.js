@@ -14,6 +14,7 @@ register('front', {
         <div class="front-btns">
           <button type="button" class="btn big green" data-a="play">Play</button>
           <button type="button" class="btn big ghost" data-a="settings">Settings</button>
+          <a class="btn big ghost site-btn" href="https://boohbahlord.github.io/Nous-Within-Kenoma/">My Other Website<small>Nous Within Kenoma</small></a>
         </div>
         <p class="front-line">Party games for friends on a voice call.</p>
       </div>

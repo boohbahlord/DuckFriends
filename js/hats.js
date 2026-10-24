@@ -28,6 +28,7 @@ export const HATS = [
   { id: 'horns', name: 'Devil horns' },
   { id: 'halo', name: 'Halo' },
   { id: 'antenna', name: 'Antenna', colors: [['c1', 'Bulb', '#ff4f9a']] },
+  { id: 'antennae', name: 'Antenna eyes', tip: 'Two alien eyes on stalks.', colors: [['c1', 'Stalks', '#7ad151']] },
   { id: 'police', name: 'Police cap' },
   { id: 'fire', name: 'Firefighter helmet' },
   { id: 'doctor', name: 'Doctor\'s head mirror' },
@@ -233,6 +234,12 @@ const DRAW = {
     ${[[-14, -16], [-4, -22], [8, -21], [16, -12], [-8, -8], [4, -10], [12, -3], [-18, -4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" fill="${dk(h.c1, .3)}"/>`).join('')}
     <ellipse cx="-8" cy="-19" rx="7" ry="3.4" fill="#fff" opacity=".22" transform="rotate(-25 -8 -19)"/>
     <path d="M-15 4C-17 13-11 22 2 24" stroke="#6e5a2e" stroke-width="2" fill="none"/>`,
+  antennae: h => { const c = h.c1, d = dk(c, .35);
+    const stalk = (x0, x1, y1, r, far) => { const p = `M${x0} 3C${x0} -8 ${x1 - 4} ${y1 + 14} ${x1} ${y1 + r - 1}`;
+      return `<path d="${p}" stroke="${d}" stroke-width="${far ? 4.4 : 4.8}" fill="none" stroke-linecap="round"/><path d="${p}" stroke="${far ? dk(c, .14) : c}" stroke-width="${far ? 2.6 : 3}" fill="none" stroke-linecap="round"/>
+      <circle cx="${x1}" cy="${y1}" r="${r}" fill="${far ? '#e4e4e4' : '#fff'}" ${O}/><circle cx="${x1 + r * .35}" cy="${y1 + .5}" r="${r * .52}" fill="${far ? dk(c, .45) : dk(c, .3)}"/>
+      <circle cx="${x1 + r * .46}" cy="${y1 + .5}" r="${r * .26}" fill="#111"/><circle cx="${x1 + r * .18}" cy="${y1 - r * .36}" r="${r * .18}" fill="#fff"/>`; };
+    return `<g class="hat-wobble">${stalk(-9, -16, -30, 5.5, true)}${stalk(5, 10, -36, 6.5, false)}</g>`; },
   cap: (h, id) => { const c = h.c1, d = dk(c, .3), crown = 'M-22 4C-24-12-12-24 1-24C15-24 25-13 23 4C10 1-9 1-22 4Z';
     return `<defs><clipPath id="${id}cp"><path d="${crown}"/></clipPath></defs>
     <path d="M15 1C25-2 36-1 42 4C40 7 30 8 17 6Z" fill="${dk(c, .18)}" ${O}/>

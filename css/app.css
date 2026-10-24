@@ -11,6 +11,13 @@
 @font-face { font-family: 'Lilita One'; src: url(../assets/fonts/lilita-one-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Grenze Gotisch'; src: url(../assets/fonts/grenze-gotisch-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Cascadia Code'; src: url(../assets/fonts/cascadia-code-latin-200-normal.woff2) format('woff2'); font-weight: 200; font-display: swap; }
+@font-face { font-family: 'Bangers'; src: url(../assets/fonts/bangers-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Press Start 2P'; src: url(../assets/fonts/press-start-2p-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Pacifico'; src: url(../assets/fonts/pacifico-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Permanent Marker'; src: url(../assets/fonts/permanent-marker-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Creepster'; src: url(../assets/fonts/creepster-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Orbitron'; src: url(../assets/fonts/orbitron-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Special Elite'; src: url(../assets/fonts/special-elite-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 
 /* ---------- tokens ---------- */
 :root {
@@ -692,3 +699,39 @@ html.moving .hat-glow { animation: haloglow 2.2s ease-in-out infinite alternate;
 @keyframes haloglow { from { opacity: .82; } to { opacity: 1; } }
 
 svg.duck { overflow: visible; }   /* a big duck or a long beak may reach past the duck's box */
+
+/* antenna eyes sway a little on their stalks */
+.hat-wobble { transform-box: fill-box; transform-origin: 50% 100%; animation: hat-wobble 3.2s ease-in-out infinite; }
+@keyframes hat-wobble { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+html.lite .hat-wobble { animation: none; }
+/* round window buttons look like little glossy balls: a light from the top left, a shadow underneath; the ✖ stays the same */
+.win-x, .notice-x, .fr-x, .arm-back, .slide-more, .iconbtn {
+  background-image: radial-gradient(circle at 34% 28%, #ffffffb0 0, #ffffff40 16%, #fff0 42%), radial-gradient(circle at 50% 115%, #00000070 0, #0000 58%);
+  box-shadow: inset 0 -.16rem .3rem #00000055, inset 0 .1rem .18rem #ffffff40, 0 .15rem 0 var(--line);
+}
+.win-x:active, .notice-x:active, .arm-back:active, .slide-more:active, .iconbtn:active { box-shadow: inset 0 -.08rem .2rem #00000055, inset 0 .1rem .18rem #ffffff40; }
+.fr-x { box-shadow: inset 0 -.16rem .3rem #00000040, inset 0 .1rem .18rem #ffffff30; }
+
+/* the Round Lord's name tag, in their font, when you point at the duck on the cloud */
+.lord-duck { pointer-events: auto; }
+.lord-tip { position: absolute; left: 50%; top: 100%; transform: translate(-50%, .3rem); white-space: nowrap; padding: .15rem .55rem; border-radius: .45rem;
+  background: color-mix(in srgb, var(--panel) 88%, transparent); border: .12rem solid var(--line); font-size: calc(.85rem * var(--ts)); font-weight: 700;
+  opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 2; }
+.lord-duck:hover .lord-tip { opacity: 1; }
+/* the timer's meter: fills as time runs out, its color drifting slowly */
+.tmeter { display: inline-block; width: clamp(3.5rem, 14vw, 8rem); height: .6rem; border-radius: 1rem; background: #0006; border: .12rem solid var(--line); overflow: hidden; }
+.tmeter[hidden] { display: none; }
+.tmeter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #39c6ff, #8a6bff); transition: width .4s linear; animation: tmeter-hue 45s linear infinite; }
+.tmeter.low i { background: linear-gradient(90deg, #ff9a3c, #ef3b3b); animation: none; }
+@keyframes tmeter-hue { to { filter: hue-rotate(360deg); } }
+html.lite .tmeter i, html.still .tmeter i { animation: none; }
+/* free roam: a see-through bubble over each duck, in its vote's color */
+.gduck-bubble { display: none; position: absolute; left: 50%; bottom: calc(var(--sz) * -.12); width: calc(var(--sz) * 1.18); height: calc(var(--sz) * 1.18);
+  transform: translateX(-50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 34% 28%, #ffffffb0 0, #ffffff30 10%, #fff0 26%), radial-gradient(circle, #0000 52%, color-mix(in srgb, var(--bub) 60%, transparent) 100%);
+  border: .14rem solid color-mix(in srgb, var(--bub) 80%, #fff); box-shadow: 0 0 .7rem color-mix(in srgb, var(--bub) 55%, transparent); }
+.gduck.bubbled .gduck-bubble { display: block; }
+
+/* the front page's link to the other website: a button with a small subtitle */
+.site-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .1rem; text-decoration: none; line-height: 1.1; }
+.site-btn small { font-size: calc(.72rem * var(--ts)); font-weight: 600; opacity: .75; letter-spacing: .03em; }

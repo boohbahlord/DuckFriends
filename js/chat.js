@@ -246,7 +246,7 @@ export function chatWidget() {
     ui.open = true; panel.hidden = false; btn.setAttribute('aria-pressed', 'true');
     ui.ping = false; btn.querySelector('.bang').hidden = true;
     if (w.onToggle) w.onToggle();   // the dock opens first, so the box can take the focus
-    setMode(m || ui.mode); inp.focus(); refresh();
+    setMode(m || ui.mode); log.scrollTop = 1e9; inp.focus(); refresh();   // always open on the newest message
   };
   const closePanel = () => { ui.open = false; panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
   w.openChat = openPanel;

@@ -29,7 +29,7 @@ export const METAL = {
 export const DUCK_DEFAULT = { color: '#ffd23f', pattern: 'none', patternColor: '#ffffff', metal: 'none', image: null, hat: null, face: null,
   eyes: 'default', beak: 'default', beakColor: '#ff9a1f', beakColor2: '#c45f00', build: 0, size: 0 };
 /* the body: build -1 (skinny) … 1 (fat), size -1 … 1 (a little smaller or bigger, ±10%) */
-export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Chubby'], [1, 'Fat']];
+export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Fat'], [1, 'Chubby']];   // Chubby is the fattest
 export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
 const clamp1 = v => Math.max(-1, Math.min(1, +v || 0));
 /* how much room a duck takes on the board, width and depth (1 = a normal duck) */

@@ -397,3 +397,170 @@ Improve the white cartoon glove it looks almost nothing like a glove, and the gl
 Later: "The order of the customization options can be reordered eventually too, like the order the hats appear in or other things"
 
 Later: "we can remove the muscle selections in body type"
+
+## Request 5, word for word (2026-10-24, with four pictures: an LS2 full-face motorcycle helmet from the side, Master
+## Chief in green Halo armor with a gold visor, the round red ✖ window button, and a small bracket diagram)
+"Fat should come before chubby, with chubby being the most fat
+
+The hat patterns should always be collapsed every time you open the menu and the player has to manually open it themselves.
+
+The alien eye doesnt look different enough or very alien
+
+There can be a new hat that is antenna eyes (kinda alien looking)
+
+The helmet should be seen from the side in a way that you find in the first picture im sending, like see how the visor is only half seen from the side? Also have it be more like this shape but the visor can be simple, and the helmet doesnt have to fit around the beak
+
+The hole for the beak in the ski mask has a line overlapping the beak that must be fixed
+
+The armor helmet based off halo should also better sit on the head of the duck in a way similiar to the picture of the motorcycle helmet. The second picture shows how the helmet should look for the armored helmet based on halo and how the armor that goes with it should look. You can ignore the gun they are holding in the image becuz that isnt included.
+
+Below all the special effects options is simple effects, like electricity shocking and moving on the head of the duck, moving flames, hearts that float around the duck head, a poison cloud, and music notes that float around the head of the duck. This is in the effects menu.
+
+There is an option to set a duck on fire in the command line, which will make them temporarily burnt until about five seconds makes the burns go away.
+
+There is a vote to kick option, where all players have to vote to kick player, seen in the player menu by holding tab. Holding tab only happens mid game to show the players, and it shows their avatars, their cards, and their names. If possible, it should also have a ping or accurate reading of their connection on their player card, and if they haven't touch their phone, keyboard, or mouse for 2 minutes, it should show Zs that float from their duck as an effect. There is an ability to click names WHILE holding tab to view stats, send friend request if they have an account, or vote to kick. The vote to kick shows a popup on screen. A player can only vote to kick one player once every two rounds. The vote to kick option asks the player if they are sure. (If the vote to kick option is too much then we can tag it on last.) Players should be able to join back private or open rooms in session and they show on the rooms section while they are in progress, and it will say "Game in progress" for games already happening. There is a button or checkmark a player can click to hide private rooms on the screen.
+
+The question order is random by default.
+
+When players are typing a statement in the write prompt part of the game, whatever that had last written into it will auto submit for the player without them having to click submit, since clicking submit or dont write a question simply makes it end their turn FOR that section, which can help get to the next part of the game where players vote. The timer on the top should have a meter that is filled with a color that very slowly changes colors while being inside a bar or meter that goes more and more until time is out, and this is for in game when a clock is ticking.
+
+In free roam mode, players have a sphere shape over their duck in the color of their vote.
+
+In the third screenshot, add shading to that X button to make it look like a ball, and keep the X on the button the same and do the same to any other window options that are round like that.
+
+The question example in the game can be this,
+"Data breaching is a serious problem, and IDIOTS don't understand what I am saying!"
+
+The stats on a player should show their total stats across all games (except for test mode, but you can still track jumps in test mode if you want). The players stats will show options for different game modes, and those game modes can be chosen accordingly to see their total stats of all time within those game modes.
+
+The next game mode is called "Bicker Brackets", and it basically will have the writing phase be where players submit their brackets in accordance to how many they have, and all their brackets will show up on screen together and show what they write into them in how they will appear in the game. The players write the brackets togeter. Before they write the brackets, there is a voting phase in the beginning, where players write one option each that declares the topic of the tournament, and then players click on the topic they want with the duck of the one who wrote it and their player name with the information (24 character limit). When players are done voting and the brackets now have a topic decided, each player gets a certain number of brackets for the game options in this mode BASED on if the host selects the total amount of seeds that players share (8, 12 maybe, 16, 32) OR the total is in an option that combines the total amount of seeds per player. The players can type in each of their seeds together one at a time and everyone can see each other typing together, all seeing each other's words in text box together, where everyone ending their turns will bring players into another round of typing until all are complete. THEN the seeds will be randomized against each other in a random order. When the seeds are complete and in a random order, the players will be on the map, where they can stand on the information in it's UI with the player's name and duck beside their ui element of info OR can walk over to the other side to vote for the other seed, and there is no visible board and the options are somewhat transparent. Their is a voting phases and the phase after where players discuss, just like usual. Furthermore, the players can walk anywhere on the screen almost, much like in the other game mode, the same really. During the voting phase, the screen has a very slight random color it starts on behind the UI elements and it slowly changes colors in a breathing manner, it is very transparent, and the two seeds that can be voted for glow slightly. When players finish voting, the place where the prompt is usually written will instead be the card of the seed with it's info and a multicolored word below it with an exclamation point at the end that says "Winner!" The card the other players were standing on gets an red X on it that is well done, and the option becomes a little more faded and becomes greyscale only.
+
+After each winner it keeps going. When the seeds are eliminated in the first round of seeds so to speak, if it can be like that, such as 16 option getting narrowed to 8, then the board becomes the results that shows the seeds on a diagram, and because mobile screens are small, the pinch and zoom button can be used to increase the size of this info on mobile and walking around with their duck moves the info on the screen in the direction of their duck. When players end their turn, the next sequence of vote ends. After that, the process repeats until the last vote, and the two last options on their cards become silver, and whoever wins has their card turn gold. If a card gets to the championship round, they become silver on the board and next to the cloud, and they become gold on the board and gold in the cloud when they win the championship. The bracket will then show one last time with the colors of silver versus gold on the related cards. Then the ducks can vote to move on from the final bracket showcase before a podium shows the player who won the championship in first place where the board isn't seen anymore, that podium shows for ten seconds before stats will fill up the whole screen. It will show which player won the tournament, which player had the most wins with their seeds, which player had the most losses, which player voted for their own seeds the most, and which player had the most jumps. You can suggest other stats and ask me questions about this game. The stats stay up until voted past, and players can also vote by round two or later during the stat screen to show all stats for the whole game, which would be, which player won the most tournaments this game, which players won the most seeds overall, and so on. If a player is tied, it will just say what two players tie. 
+
+The cards for the seeds (i think they are called seeds) in the bracket game will have a circle on the left which show their duck, the player card in the circle behind the duck, the name below the info in the card's info that extends right from the duck with info in the box (the box has it's rightmost corners rounded). The box can be the color of the player's card with it's patterns too, but the text inside it will have the dark or light theme behind it's letters so players can see it, and it's font will be the font the player chose on their card. 
+
+Prompts in the agree or disagree game NOW have the fonts of the player they selected and so does the info below the cloud for the round lord. A mouse hover over the duck on the cloud will call them the round lord in the font the player chose in a info box.
+
+At the end of every round, in the stat screen there is a vote to return to lobby button now, and also, there is a vote to return to lobby button ALSO in the overall game stat screen as well. A info box that is on the screen and not running off of it will reveal to players will their mouse hover over the return to lobby vote button that the chance to vote a return to lobby will ALSO be seen in the overall game stat screen, and the note of the info box is small and only shows up on the stat screen of the second round. If players don't vote to go back to lobby, then it will keep playing the rounds indefinitely. The players can vote in the tab menu for players at the bottom to start a return to lobby vote, and players can only do this once per turn. 
+
+There is a round that is total, as in, encompassing all the rounds and ends with stat screen(s), and then there is a round that refers to a part of a round where a vote happens or writing happens, things like that. 
+
+There should be sport ball patterns that can be seen as well in the pattern for player cards as well, specifically, basketball, baseball, football, golf balls, and soccer balls.
+
+This game mode will look a bit like the third screenshot with the lines connecting them and being a little transparent that show up in the top left of the map preview to indicate that it is the bracket game mode, and this game mode has the top box and right box as the same color to indicate a winner, and that it's color can be green, while the bottom left box can be dark red with a normal red X over it to indicate a loser.
+
+Give me suggestions about different seeds or bracket types, i assume each box and option in a tournament is called a seed. 
+
+The game type still shows the cloud and the multicolored word with the title of the gamemode on the cloud in the map preview. 
+
+A new map is the image of the jester background from my other game, and the flames from that image (like the torches or candles) moves a little and glows in this game as a new map, and it also gets the static and the lines through the image background like the game does. When that map is selected, some fonts become Cascadia code extra light and get the Ether's Kenoma UI appearance WHILE this map is being played only, furthermore, the map is called "Ether's Crossroads"
+
+Below the settings button is another button called "My Other Website" with a "Nous Within Kenoma" subtitle in it, and clicking it takes the player to the front page of my Nous Within Kenoma website. On the Nous within Kenoma website, under the games section, there is an option for "Duck Friends", and it's description says a party game for friends, and it has the normal UI of the front page, and clicking that takes the user to the Duck Friends front page.
+
+Add more fonts. 
+
+The third game mode is would you rather, and basically, all players write in secret their prompt, and the prompt box has two boxes, one on the left and one on the right. The top of the box has the word already written in the default font "Would you rather...", then it shows the left box empty and the right box empty below it, and in between it is the word "OR"
+The first box is "Lose every right ever and become data breached" and the second box is "Admit Justin is right about data breaching"
+This is just the faded text in the box as an example like we have done before. 
+The board is the text in the player's chosen font and they basically walk over to the tiles they vote for in the voting phase before getting locked in, so it has a very very similiar template to agree or disagree, and the cloud will have the "Would you rather {input 1} or {input 2}" visible.
+
+The stats are basically which players created the most disagreement between players, which player created the least amount of disagreement between players, and then which player jumped the most. I cant think of many stat ideas for this one but you can help me. 
+
+The tab menu in the middle of a game is the player menu, and it can be accessed thru a small button next to pause by mobile users, and when they click it once it stays up until the hit the X at the top right of it. 
+
+The chat menu should automatically scroll down to newest messages every time it is open. 
+
+There is a new command in chat menu called /togglesuggest and it basically toggles suggestion on or off, which will turn off autofill or suggestions in text chat (not command line), and when it is selected, every new game there will be a note at the top of text chat that says the player can toggle on or off suggestions in text chat with that. 
+
+In command line, there is a preview stats this round and preview stats this game command, like this: 
+roundstats
+gamestats
+totalstats
+
+Total stats read stats of all time, game stats read the stats for this game, and round stats outputs sats for this round before the stat screen (so not just the round of a prompt but all of the players prompts or so, and this includes the stats for a whole tournament). The stat in the command line can also have this as a command option:
+roundstats @player1 
+totalstats @player2 @player4 
+This will narrow the stats of only players selected. 
+These commands for stats will only show stats to the player in the command line. Output of command line info for stats can be done as such:
+send @everyone roundstats @player1 
+This will show that this was sent from the command line in small font, then it will show the input used, and then it will show the output in text chat. The command example shows that i can ping a player or players after the end button when sending it to the text chat, but I can also use the private message command from command line in the ping before send to then call out ONLY specific players, like this:
+send \@player2 totalstats @player3 
+When players use the silly command options, who used them will be shown in the text chat in a small amount of text.
+There is also the echo command in the command line online with a few basic and harmless bash commands. 
+There is a way to view ping or connection in command line too, which can also be narrowed down to specific players
+The chat messages show as chat bubbles over your duck now that show what they said, and they are transparent in text and bubble and fade away eventually. There is a new chat option for \mute bubble that can mute chat bubbles, and all the mute buttons can now have spaces, so that there is less clutter in the help section, so it will be like this:
+\mute bubble ping text on @player2 @player3
+This allows for an on or off command following mute and then the things being muted after, and the person or persons targeted on the last part. 
+Mute settings only last during a single lobby and reset after. I guess we can perma mute but saying: 
+\permmute 
+idk if it is too much work to include permanent mute, but it has a yes or no prompt to a player when they type it, and then they have to type this to get rid of the yes or no:
+-f
+as in:
+\permmute -f  bubble on @player5
+This is something that can be checked by using this command
+\show mute
+\show permmute
+\show players
+The command line can do all of these same commands but has to use the slashes for them, but using \@ doesnt work the same because it isnt a text chat.
+the host can grant sudo perms to player in command line by doing this:
+sudo usermod @player2
+
+There is a directory that commands different commands with their code written into them but inaccessible to all players in file, even the sudo users and host.
+
+The host is always sudo and cannot undo it. 
+
+There is a groupadd command and a usermod command
+the sudo permission is needed for these commands
+
+There is a sudo group that gets sudo commands, that the host and other sudo users can add people into
+
+Every user does their commands in the usr directory, and every command input and output is logged into a text file that exists only in the duration of that game. The files can be read with cat command or "cat"
+
+The -a and -G works as they ought to in bash.
+
+There is a group called dumbasses which revokes silly commands and allows the player to only send a message once every fifteen seconds. 
+
+groupadd can be made to create a new group with different permissions in the game for chatting or using commands. 
+There is a perm that denies command line for players.
+
+host can change in game settings from lobby mid game with these examples showing how:
+
+sudo forgame all-timer off 
+sudo forgame timer off catch-up
+sudo forgame timer off answer 
+sudo forgame turn-end everyone
+
+You can write how these should work
+
+There is a "man" command to show how things work and their flags (based on bash)
+
+In the command screen, sudo users can mute certain things from a player in the duration of the game (permamute isnt allowed), and they simply do a command called "forgame" like this
+forgame \mute on bubble ping @player7 @player2 
+They can also say for how many turns (turns can be said to represent the beginning of every vote phase before the last, an entire prompt writing stage until voting occurs, or during all stat screens until voting or write prompt stage comes in)
+forgame rounds8 \mute on bubble ping @player2
+They can also say if a player doesnt get to in a stage (writing prompts is it's own stage, voting is it's own stage, discussion is it's own stage, stats is it's own stage, and lobby is it's own stage)
+forgame stage voting lobby writing discussing stats \mute off all @player2
+(the all command takes all things that would of muted a player and turns it off) 
+they player can say for how many stages too 
+forgame stage2 voting \mute on ping @player2
+
+users can create text files too, like this:
+touch file1
+echo "hello world" > file1
+cat player1/notes/file1
+
+that means a player can do the send command based in the logic of how bash works to include a cat to then take the text output and send it to the chat, if not cat, then only the file itself sends, but you need sudo perms to read inside files
+
+there is a directory in every user's directory called this:
+perma-notes
+this is a place that sudo users cannot reach to read or manipulate it's files because it requires superuser-{playername} access, which is a group that cannot be modified by a player or themselves in permission, nor can it's directory, but with this group, you get the ability to edit notes in this perma-notes directory. The notes here are kept saved unless a player uses rm on the notes, but the directory itself cannot be deleted, though note contents can be put into cat and then manipulated with bash logic and commands to then send their contents to chat. Messages above 250 characters in length will be collapsed by an arrow option that has to be clicked to expand the text, and it manually has to be clicked every time the player wants to extend the text after reopening chat. The text should have a exclamation point to the right of the arrow when it is a ping.
+
+Pings should also have a background color glow almost behind the text when a player is pinged.
+
+There should be a list users in group bash command too like there is in bash, as well as other things like pipes, append commands, and all of those kind of manipulations brought over.
+
+I want suggestions for different game modes, different ideas, different commands, different settings of gamemode, and ALL of that. 
+
+Make a plan with me and have me answer questions. Make your qestions good with context so i am not lost or thinking more hard then i should have to for something where i dont have to be. 
+
+Continue doing the other things you were supposed to do as well for the new content add ons you stopped."
