@@ -19,6 +19,8 @@ export const OPTIONS_DEFAULT = {
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
   botWait: 30,          // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
+  fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
+  freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -37,7 +39,7 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
     options: { ...OPTIONS_DEFAULT, ...options },
     players: { [host.id]: { ...host, bot: false, ready: false } }, seat: [host.id],
     phase: 'lobby', at: 0, ends: 0, catchEnds: 0, round: 0,
-    qs: [], qi: 0, lordTime: 0, pos: {}, lock: {}, done: {}, history: [], reviewVotes: {}, endVotes: {}, review: false, jumps: {},
+    qs: [], qi: 0, lordTime: 0, pos: {}, lock: {}, done: {}, fx: [], fxN: 0, history: [], reviewVotes: {}, endVotes: {}, review: false, jumps: {},
     log: [], logN: 0,
   };
 }
@@ -113,7 +115,11 @@ function advance(s, now) {
       if (!s.qs.length) { say(s, 'No questions this round.'); s.round++; s.subs = []; return enter(s, 'submit', now); }
       return startQuestion(s, now);
     }
-    case 'answer': recordAnswers(s); return enter(s, 'discuss', now);
+    case 'answer':
+      recordAnswers(s);
+      if (!s.options.freeRoam) return enter(s, 'discuss', now);
+      if (++s.qi < s.qs.length) return startQuestion(s, now);   // free roam: straight to the next question
+      return startResults(s, now);
     case 'discuss':
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
@@ -160,7 +166,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!['answer', 'discuss', 'results'].includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
-      if (s.phase === 'answer' && s.done[a.id]) { x = was.x; y = was.y; }   // an ended turn keeps its answer (jumping still works)
+      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam) { x = was.x; y = was.y; }   // an ended turn keeps its answer (jumping still works)
       if (s.phase !== 'answer') {   // after answering: inside your own column; no answer, no board
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBounds(c); x = Math.max(lo, Math.min(hi, x)); }
@@ -173,7 +179,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || !['answer', 'discuss', 'results'].includes(s.phase)) return s;
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0)) return s;   // stand on a column first
       s.done[a.id] = a.v ?? !s.done[a.id];
-      if (s.phase === 'answer') s.done[a.id] = true;
+      if (s.phase === 'answer' && !s.options.freeRoam) s.done[a.id] = true;   // free roam: ready can be taken back
       return advance(s, now);
     }
     case 'voteReview':
@@ -186,6 +192,13 @@ export function reduce(state, a, now = Date.now()) {
       s.endVotes[a.id] = !s.endVotes[a.id];
       return s.seat.filter(id => s.endVotes[id]).length >= needed(s) ? enter(s, 'over', now) : s;
     case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+    case 'fx': {   // the silly commands, seen by everyone on the board
+      const who = (a.who || []).filter(id => P[id]);
+      if (!me || !s.options.fun || !who.length || !['lightning', 'love', 'kill', 'hotdog'].includes(a.kind)) return state;
+      if (a.kind === 'kill') { for (const id of who) P[id].dead = true; }
+      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
+      return s;
+    }
     case 'jumps': if (me) s.jumps[a.id] = Math.max(0, +a.n || 0); return s;   // completed jumps this game
     case 'chat': {
       if (!me) return s;
