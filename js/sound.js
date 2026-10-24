@@ -56,6 +56,13 @@ export const sfx = {
   tick() { tone(1200, .05, { type: 'square', gain: .04 }); },
   done() { tone(660, .09, { gain: .14 }); tone(990, .14, { gain: .12, at: .08 }); },
   /* the silly commands; the lightning is kept soft */
+  /* the E specials */
+  sip() { noise(.35, { gain: .05, type: 'bandpass', freq: 1400, q: 2, slideTo: 900 }); tone(330, .12, { gain: .06, at: .32, slide: 1.4 }); },
+  chomp() { for (let i = 0; i < 4; i++) noise(.07, { gain: .09, type: 'bandpass', freq: 700 + i * 80, q: 1.2, at: i * .2 }); },
+  splash() { noise(.8, { gain: .07, type: 'highpass', freq: 2600, slideTo: 5200 }); },
+  pop() { noise(.12, { gain: .12, type: 'bandpass', freq: 1800, q: .7 }); tone(880, .14, { gain: .06, at: .05, slide: 1.5 }); },
+  bang() { noise(.25, { gain: .2, type: 'lowpass', freq: 2200, slideTo: 200 }); tone(110, .3, { type: 'square', gain: .05, slide: .5 }); },
+  quack() { tone(520, .14, { type: 'sawtooth', gain: .07, slide: .7 }); tone(480, .18, { type: 'sawtooth', gain: .07, at: .18, slide: .6 }); },
   fire() { noise(.9, { gain: .08, type: 'bandpass', freq: 900, q: .4, slideTo: 2400 }); noise(1.4, { gain: .05, type: 'lowpass', freq: 500, at: .2, slideTo: 160 }); },
   zap() { noise(.18, { gain: .09, freq: 3200, q: .6 }); noise(.12, { gain: .06, freq: 2200, at: .08 }); noise(1.1, { gain: .07, type: 'lowpass', freq: 380, at: .12, slideTo: 90 }); },
   love() { tone(784, .25, { gain: .08 }); tone(988, .25, { gain: .07, at: .12 }); tone(1175, .45, { gain: .07, at: .24 }); },

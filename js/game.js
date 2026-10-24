@@ -19,6 +19,7 @@ import { activeRoom } from './net.js';
 import { COLS, SHORT, colOf, colX, colBounds, needed, playing, VOTE_GRACE } from './rules.js';
 import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
 import { isMuted } from './chat.js';
+import { specialById, pressSpecial, momentHTML, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontCSS } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -56,8 +57,12 @@ const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: .45, y: 1.0, px: .5, py: .85, sprint: 1.75 };
 const JUMP = { normal: { T: .62, H: 1.35 }, low: { T: 1.2, H: 2 } };   // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
-const jumpCfg = () => JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
-const jumpZ = (j, now) => { if (!j) return 0; const { T, H } = jumpCfg(), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
+/* a duck's jump: the Long jumps special floats longer and a little higher */
+const jumpCfg = (id = R && R.me) => {
+  const b = JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'], p = id && R && R.state.players[id];
+  return p && p.duck && p.duck.special === 'longjump' ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
+};
+const jumpZ = (j, now, id) => { if (!j) return 0; const { T, H } = jumpCfg(id), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
 
 /* ---------- the board ---------- */
 const boardHTML = s => `<div class="board">
@@ -108,7 +113,7 @@ function drawDucks(now = clockNow()) {
       d.querySelector('.gduck-body').innerHTML = duckSVG(p.duck, { size: 64, shadow: false, title: p.name, dead: !!p.dead });
       d.querySelector('.gduck-name').innerHTML = nameHTML(p.name, p.nameStyle);
     }
-    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos.j, now) * size;
+    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos.j, now, id) * size;
     const mine = id === R.me;
     const face = mine && me ? me.face : (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
     d._face = face || 1; d._x = pos.x;
@@ -138,6 +143,16 @@ function drawDucks(now = clockNow()) {
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
+  /* the handgun's bullets, flying across the board */
+  const fxl = $('.fxl', board), live = new Set();
+  for (const sh of s.shots || []) {
+    const x = sh.x0 + sh.dir * SHOT_SPEED * (now - sh.t) / 1000; if (x < -.05 || x > 1.05) continue;
+    live.add(String(sh.n));
+    let b = fxl.querySelector(`.bullet[data-n="${sh.n}"]`);
+    if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
+    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .45).toFixed(1)}px)`;
+  }
+  fxl.querySelectorAll('.bullet').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
   let mark = layer.querySelector('.touch-mark');
   if (target && target.mark) {
     if (!mark) { mark = el('<div class="touch-mark"></div>'); layer.prepend(mark); }
@@ -148,7 +163,7 @@ function drawDucks(now = clockNow()) {
   // hotdogs hang around their duck, then fade
   hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
   for (const h of hotdogs) {
-    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos.j, now) * size;
+    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos.j, now, h.id) * size;
     h.el.style.transform = `translate(${(at.left + size * .62).toFixed(1)}px, ${(at.top - size * .9 - z).toFixed(1)}px)`;
     h.el.classList.toggle('going', now > h.until - 900);
   }
@@ -191,6 +206,11 @@ function playFx(f) {
     sfx.love();
   } else if (f.kind === 'kill') {
     sfx.bonk();
+  } else if (f.kind === 'use') {   // an E special at its duck
+    const at = spot(f.by); if (!at) return;
+    const els = pressFX(f.what, at.left, at.top - jumpZ(posOf(f.by).j, now, f.by) * size, size, f.face || 1);
+    fxl.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2200);
+    ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, sound: sfx.quack })[f.what]?.();
   } else if (f.kind === 'fire') {   // flames for a moment, then charred; the burns fade in a few seconds
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`); if (!dk) return;
     clearTimeout(dk._fireT); clearTimeout(dk._burnT);
@@ -226,11 +246,11 @@ function sendMove(force) {
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
 function bumps(x, y, now) {
-  if (!geo || jumpZ(me.j, now) > 0) return null;   // in the air: over everyone
+  if (!geo || jumpZ(me.j, now, R.me) > 0) return null;   // in the air: over everyone
   const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2, ka = duckRoom((s.players[R.me] || {}).duck);
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
-    const o = s.pos[id]; if (jumpZ(o.j, now) > 0) continue;
+    const o = s.pos[id]; if (jumpZ(o.j, now, id) > 0) continue;
     const kb = duckRoom((s.players[id] || {}).duck);
     const b = place(o, 0, 1), dx = (a.left - b.left) / (rx * (ka.x + kb.x)), dy = (a.top - b.top) / (ry * (ka.y + kb.y));
     if (dx * dx + dy * dy < 1) return b;
@@ -367,7 +387,7 @@ const writerFont = s => { const q = s.qs[s.qi], p = q && s.players[q.by]; return
 function lordHTML(s) {
   const q = s.qs[s.qi], p = s.players[q.by];
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) : ''}<span class="lord-tip" style="font-family:${esc(writerFont(s))}">Round Lord</span></div>
+    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) : ''}${p && (specialById(p.duck && p.duck.special) || {}).kind === 'moment' ? `<span class="sp-fx">${momentHTML(p.duck.special)}</span>` : ''}<span class="lord-tip" style="font-family:${esc(writerFont(s))}">Round Lord</span></div>
     <svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
       <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
       <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
@@ -414,6 +434,22 @@ function recordRound(s) {
   save(); shareLook();
 }
 
+/* my E special's button (E on a keyboard) */
+function useHTML(s) {
+  const sp = pressSpecial(((s.players[R.me] || {}).duck || {}).special);
+  if (!sp || !onBoardPhase() || !(me && me.x >= 0)) return '';
+  return `<button type="button" class="btn ghost ebtn" data-a="use" data-tip="${esc(sp.name)}: ${esc(sp.tip)}">${sp.icon} <kbd>E</kbd></button>`;
+}
+/* the bottom bar's middle: what you can do now, with my E special's button at the start of the row */
+function gactHTML(s) {
+  const act = actHTML(s), use = useHTML(s), row = '<div class="act-row">';
+  return use && act.includes(row) ? act.replace(row, row + use) : act + use;
+}
+function useSpecial() {
+  const s = R.state; if (!me || me.x < 0 || !onBoardPhase() || !pressSpecial(((s.players[R.me] || {}).duck || {}).special)) return;
+  R.send({ t: 'use', face: portrait() ? 1 : (me.face || 1) });
+}
+
 const graceLeftMs = s => s.phase === 'answer' ? Math.max(0, s.at + VOTE_GRACE * 1000 - clockNow()) : 0;
 const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
@@ -457,6 +493,7 @@ function paint(force) {
     main.innerHTML = s.phase === 'submit' ? viewSubmit(s) : s.phase === 'results' ? viewResults(s) : s.phase === 'over' ? viewOver(s) : `<div class="stage">${boardHTML(s)}</div>`;
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
+    if (s.phase === 'answer') { const lp = s.players[(s.qs[s.qi] || {}).by]; if (lp && lp.duck && lp.duck.special === 'confetti') confettiRain(); }   // the Round Lord's confetti
     scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
@@ -478,7 +515,7 @@ function paint(force) {
   const lord = $('.topover .lord', S);
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
-  setHTML($('.gact', S), actHTML(s));
+  setHTML($('.gact', S), gactHTML(s));
   pm.paint();
   /* new chat messages float over their sender's duck (whispers only for the two of you; muted bubbles stay hidden) */
   if (lastLog < 0) lastLog = s.logN || 0;
@@ -501,7 +538,7 @@ function paint(force) {
 
 function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
-  if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), actHTML(s)); } }   // the Vote button counts down
+  if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), gactHTML(s)); } }   // the Vote button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   const meter = $('.tmeter', S);
   if (!end || !['submit', 'answer'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
@@ -555,6 +592,7 @@ function keydown(e) {
   if (typing(e) || windowOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
+  if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); useSpecial(); return; }
   if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
 }
 const keyup = e => { keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); };
@@ -572,6 +610,7 @@ async function act(a) {
       break;
     case 'review': R.send({ t: 'voteReview' }); break;
     case 'lobbyvote': lobbyVote(R); break;
+    case 'use': useSpecial(); break;
     case 'players': if (pm.isOpen()) pm.close(); else pm.open(true); break;
     case 'lobby': R.send({ t: 'toLobby' }); break;
     case 'leave': leaveTo('rooms', 'Leave the room?'); break;

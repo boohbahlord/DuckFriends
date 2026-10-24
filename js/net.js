@@ -66,7 +66,8 @@ function botPlayer(s) {
     id: 'b-' + uid(), name: 'Computer-' + n, bot: true,
     duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES).id } : null,
       eyes: Math.random() < .3 ? any(EYES).id : 'default', beak: Math.random() < .25 ? any(BEAKS).id : 'default',
-      build: Math.random() < .4 ? any([-1, -.5, .5, 1]) : 0, size: Math.random() < .3 ? any([-1, -.5, .5, 1]) : 0 },
+      build: Math.random() < .4 ? any([-1, -.5, .5, 1]) : 0, size: Math.random() < .3 ? any([-1, -.5, .5, 1]) : 0,
+      special: Math.random() < .35 ? any(['zap', 'flames', 'hearts', 'poison', 'notes', 'longjump']) : null },
     card: { kind: 'color', color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', image: null },
     nameStyle: { font: 'fredoka', color: '', rainbow: Math.random() < .2 },
   };
