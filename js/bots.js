@@ -45,7 +45,7 @@ export function botActions(s, now) {
       case 'answer': {
         if (!late || s.done[id]) break;
         const p = s.pos[id], want = colX(pick(id, s.round + ':' + s.qi));
-        const x = p.x < 0 ? .5 : p.x, y = p.x < 0 ? .2 + (i * .23) % .7 : p.y, step = .035;   // each computer walks its own line
+        const x = p.x, y = p.y, step = .035;
         if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });
         break;

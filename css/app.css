@@ -215,7 +215,7 @@ input.bad { border-color: var(--red); }
 .dock-panel[hidden] { display: none; }
 .dock-panel > header { display: flex; align-items: center; justify-content: space-between; padding: .4rem .5rem .3rem .8rem; border-bottom: .12rem solid var(--soft); }
 .dock-panel > header .win-x { position: static; width: 1.8rem; height: 1.8rem; font-size: 1.05rem; }
-.bbar { grid-area: bar; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: .8rem; padding: .4rem max(.8rem, 1.5vw) max(.5rem, env(safe-area-inset-bottom)); }
+.bbar { grid-area: bar; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: .8rem; padding: .25rem max(.6rem, 1vw) max(.35rem, env(safe-area-inset-bottom)); }
 .bbar-l { display: flex; align-items: center; gap: .5rem; min-width: 0; }
 .bbar-r { display: flex; justify-content: flex-end; align-items: center; gap: .5rem; }
 .bbar-c { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
@@ -304,7 +304,7 @@ input.bad { border-color: var(--red); }
 .note-pick .tile { width: 100%; text-align: left; }
 
 /* ---------- the game ---------- */
-.gbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .45rem max(.8rem, 1.5vw); }
+.gbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .3rem max(.6rem, 1vw); }
 .gbar-l { display: flex; align-items: baseline; gap: .9rem; flex-wrap: wrap; }
 .gbar-l .round { font-weight: 700; color: var(--dim); }
 .gbar-l .phase { font-weight: 700; font-size: calc(1.3rem * var(--ts)); }
@@ -313,7 +313,7 @@ input.bad { border-color: var(--red); }
 .timer { font-weight: 700; font-variant-numeric: tabular-nums; font-size: calc(1.2rem * var(--ts)); }
 .timer.catch { color: var(--orange); }
 .timer.low { color: var(--red); }
-.game > .gmain { display: flex; flex-direction: column; padding: 0 max(.8rem, 1.5vw); }
+.game > .gmain { display: flex; flex-direction: column; padding: 0 max(.5rem, 1vw) .3rem; }
 .gact { display: flex; flex-direction: column; align-items: center; gap: .4rem; }
 .act-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: center; }
 .progress { font-weight: 600; color: var(--dim); }
@@ -334,7 +334,6 @@ input.bad { border-color: var(--red); }
 .col-name { font-weight: 700; font-size: calc(clamp(.75rem, 1.15vw, 1.05rem) * var(--ts)); text-align: center; line-height: 1.1; padding: 0 .2rem; }
 .cb-mark { display: none; }
 html.cb .cb-mark { display: block; font-size: 1.3em; letter-spacing: .05em; }
-.lane { height: 4.8rem; flex: none; }
 .ducks { position: absolute; inset: 0; pointer-events: none; }
 /* the Round Lord on a cloud over the middle of the board, the question beside it; see-through over a duck */
 .topover { position: absolute; top: .3rem; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; pointer-events: none; z-index: 3000; padding: 0 1rem; }
@@ -470,3 +469,44 @@ html.still .fx-heart { animation-duration: 4s !important; animation-iteration-co
 details.more { margin-top: 1rem; border: .14rem solid var(--soft); border-radius: .8rem; padding: .3rem .8rem .7rem; }
 details.more > summary { cursor: pointer; font-weight: 700; padding: .3rem 0; color: var(--dim); }
 details.more[open] > summary { color: var(--ink); }
+
+/* ---------- maps: Sky and Pixel behind see-through columns ---------- */
+.cols { position: relative; container-type: size; }
+.col { position: relative; z-index: 1; }
+.scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.map-sky .col, .map-pixel .col { border-right-color: #ffffff30; }
+.map-sky .col { background: color-mix(in srgb, var(--c) 52%, transparent); transition: box-shadow 1.5s, background-color 1.5s; }
+.map-sky .cols.night .col { background: color-mix(in srgb, var(--c) 60%, transparent); box-shadow: inset 0 0 2.4rem color-mix(in srgb, var(--c) 70%, #fff), inset 0 -1rem 2rem color-mix(in srgb, var(--c) 80%, transparent); }
+.map-sky .cols.night .col-name { text-shadow: 0 0 .6rem var(--c), 0 0 .2rem #fff; }
+.sky-sun, .sky-moon { position: absolute; left: 0; top: 0; width: 13cqh; height: 13cqh; margin: -6.5cqh 0 0 -6.5cqh; border-radius: 50%; will-change: transform; }
+.sky-sun { background: radial-gradient(circle at 40% 40%, #fffbe0, #ffd84a 55%, #ffb12b); box-shadow: 0 0 3rem 1rem #ffd84a88, 0 0 8rem 3rem #ffb12b44; }
+.sky-moon { background: radial-gradient(circle at 35% 35%, #ffffff, #dfe6f5 60%, #b9c3da); box-shadow: 0 0 2.5rem .6rem #dfe9ff66; }
+.sky-moon::after { content: ''; position: absolute; width: 22%; height: 22%; left: 52%; top: 30%; border-radius: 50%; background: #b9c3da88; box-shadow: -2.2cqh 3.4cqh 0 -.4cqh #b9c3da77; }
+.sky-stars { position: absolute; inset: 0; transition: opacity 1.5s; }
+.sky-stars i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px #fff; animation: twinkle 2.4s ease-in-out infinite alternate; }
+.sky-cloud { position: absolute; left: -25%; animation: cloudx linear infinite; }
+.sky-cloud svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 .3rem .4rem #0002); }
+.sky-rider { position: absolute; left: 30%; bottom: 62%; width: 40%; }
+.sky-rider svg { width: 100%; height: auto; display: block; }
+@keyframes cloudx { from { left: -25%; } to { left: 112%; } }
+html.still .sky-cloud { animation: none !important; left: var(--x, 30%); }
+.map-pixel .col { background: color-mix(in srgb, var(--c) 44%, transparent); image-rendering: pixelated; }
+.map-pixel .col::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='none' stroke='%23000' stroke-opacity='.16' stroke-width='.4'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' fill-opacity='.22'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3Crect x='2' y='5' width='2' height='1' fill='%23fff' fill-opacity='.16'/%3E%3Crect x='6' y='4' width='1' height='2' fill='%23000' fill-opacity='.12'/%3E%3Crect x='5' y='6' width='1' height='1' fill='%23fff' fill-opacity='.2'/%3E%3Crect x='1' y='6' width='1' height='1' fill='%23000' fill-opacity='.12'/%3E%3C/svg%3E"); background-size: 3rem 3rem; image-rendering: pixelated; pointer-events: none; opacity: .8; }
+.map-sky .col-name, .map-pixel .col-name { position: relative; color: #fff; background: #0000006b; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }   /* readable over any scene */
+.scene.pixel canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.pix-sun { position: absolute; transform: translate(-50%, -50%); background: #ffdf6b; box-shadow: 0 0 0 .35rem #ffc24a, 0 0 2.5rem 1rem #ffb24a99; image-rendering: pixelated; }
+html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
+@keyframes sunbreathe { 50% { box-shadow: 0 0 0 .6rem #ffc24a, 0 0 4.5rem 2rem #ffb24acc; filter: brightness(1.12); } }
+/* the Map window's little pictures */
+.mini-map { position: relative; width: 12rem; height: 6.6rem; border: .14rem solid var(--line); border-radius: .6rem; overflow: hidden; background: #222; }
+.mm-cols { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(7, 1fr); }
+.mm-cols span { opacity: .55; } .mm-cols.solid span { opacity: 1; }
+.mm-sky { background: linear-gradient(#5ab8f5, #d6f0ff); }
+.mm-sun { position: absolute; left: 62%; top: 12%; width: 1.4rem; height: 1.4rem; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 .8rem #ffd84a; }
+.mm-cloud { position: absolute; width: 3rem; height: 1rem; border-radius: 1rem; background: #fff; box-shadow: .7rem -.4rem 0 -.1rem #fff, -.5rem -.25rem 0 -.2rem #fff; }
+.mm-pixel { background: linear-gradient(#24245f, #8a3f86 30%, #f58e48 50%, #2f6b26 50%, #3b7f2c); image-rendering: pixelated; }
+.mm-psun { position: absolute; left: 60%; top: 42%; width: 1.3rem; height: 1.3rem; background: #ffdf6b; box-shadow: 0 0 .7rem #ffb24a; }
+.mm-isle { position: absolute; width: 2.4rem; height: 1.2rem; background: linear-gradient(#5fa83a 0 25%, #8a5a33 25% 55%, #808080 55%); clip-path: polygon(0 0, 100% 0, 100% 55%, 70% 100%, 30% 100%, 0 55%); }
+.mm-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 50%; background: repeating-linear-gradient(90deg, #2f6b26 0 .5rem, #3b7f2c .5rem 1rem); }
+.map-tiles { display: flex; flex-wrap: wrap; gap: .6rem; }
+.map-tile { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .5rem; }
