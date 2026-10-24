@@ -18,7 +18,7 @@ export function notesWidget() {
     list.innerHTML = profile.notes.map((n, i) => `<li><span>${esc(n)}</span><button type="button" class="x" data-i="${i}" aria-label="Delete the note">×</button></li>`).join('')
       || '<li class="dim small">No notes yet.</li>';
   };
-  const toggle = open => { panel.hidden = !open; btn.setAttribute('aria-pressed', String(open)); if (open) inp.focus(); if (w.onToggle) w.onToggle(); };
+  const toggle = open => { panel.hidden = !open; btn.setAttribute('aria-pressed', String(open)); if (w.onToggle) w.onToggle(); if (open) inp.focus(); };
   btn.onclick = () => toggle(panel.hidden);
   panel.querySelector('.win-x').onclick = () => toggle(false);
   panel.querySelector('form').onsubmit = e => { e.preventDefault(); const t = inp.value.trim(); if (!t) return; profile.notes.push(t); save(); inp.value = ''; paint(); };
