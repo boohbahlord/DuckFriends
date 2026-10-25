@@ -16,7 +16,7 @@ import { EYES, EYE_GROUPS, eyeById } from './eyes.js';
 import { BEAKS, BEAK_GROUPS, beakById } from './beaks.js';
 import { STYLES, styleById } from './styles.js';
 import { OUTFITS, OUTFIT_GROUPS, outfitById } from './outfits.js';
-import { FONTS } from './name.js';
+import { FONTS, fontHTML } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
 import { who } from './who.js';
@@ -165,7 +165,7 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'name') {
           html = head('Name') + `<div class="arm-body"><div class="row"><input class="cz-name" maxlength="20" value="${esc(profile.name)}" spellcheck="false" aria-label="Name"></div>
             <p class="small dim">Letters, numbers, - and _.</p>
-            ${grid('nfont', FONTS.map(f => [f.id, `<b class="font-pic" style="font-family:${esc(f.css)}">${esc(profile.name.slice(0, 8))}</b>`, f.name]), N.font)}
+            ${grid('nfont', FONTS.map(f => [f.id, `<b class="font-pic">${fontHTML(f.id, esc(profile.name.slice(0, 8)))}</b>`, f.name]), N.font)}
             <label class="check"><input type="checkbox" data-o="rainbow"${N.rainbow ? ' checked' : ''}>Multicolored letters</label>
             <p class="small dim">The name's color is under Colors.</p></div>`;
         } else if (k === 'card') {
