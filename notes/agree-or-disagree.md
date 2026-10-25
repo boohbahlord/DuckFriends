@@ -812,3 +812,5 @@ This is for a game about ducks btw.
 when u put glow in, use dorian
 
 like i mean that glow goes in the game as dorian
+
+Jester's Stair is great too we can put that in the game for sure
