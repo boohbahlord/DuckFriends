@@ -957,9 +957,12 @@ html.still .spe-bone .bone-slide { animation: none; }
 .hk b { position: absolute; left: .12rem; top: 0; font-size: .55rem; line-height: 1.1; color: var(--dim); }
 .hk.empty b { position: static; font-size: .7rem; opacity: .7; }
 .hk i { font-style: normal; font-size: .85rem; line-height: 1; }
-.hk.on { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 30%, transparent); }
+.hk { transition: opacity .45s ease; }
+.hotbar.rest .hk:not(.on) { opacity: 0; }   /* (resting: only the keys kept on stay, in their places) */
+.hk.on { border-color: var(--green); background: color-mix(in srgb, var(--green) 38%, transparent); box-shadow: 0 0 .35rem color-mix(in srgb, var(--green) 70%, transparent); }
+.hk.on::after { content: ''; position: absolute; right: .12rem; top: .12rem; width: .3rem; height: .3rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 .25rem var(--green); }
 .hk.sel { border-color: var(--yellow); box-shadow: 0 0 .45rem .12rem color-mix(in srgb, var(--yellow) 65%, transparent); }
-@media (max-width: 1000px) { .hk.empty { display: none; } }
+@media (max-width: 1000px) { .hk { width: 1.3rem; height: 1.3rem; } .hk i { font-size: .72rem; } }
 @media (hover: none) and (pointer: coarse), (max-width: 760px) { .hotbar { display: none; } }   /* (a narrow window has no room for it in the top bar; its keys still work) */
 /* on a phone: the specials around a finger held still on the board */
 .sp-wheel { position: fixed; inset: 0; z-index: 80; touch-action: none; }
@@ -967,7 +970,7 @@ html.still .spe-bone .bone-slide { animation: none; }
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; animation: wheelin .18s ease-out; }
 .sp-wbtn i { font-style: normal; font-size: 1.4rem; line-height: 1; pointer-events: none; }
 .sp-wbtn b { position: absolute; right: -.2rem; bottom: -.2rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .15rem; border-radius: .3rem; background: var(--bg); color: var(--ink); font-size: .65rem; line-height: 1.05rem; text-align: center; pointer-events: none; }
-.sp-wbtn.on { border-color: var(--blue); box-shadow: 0 0 .5rem var(--blue); }
+.sp-wbtn.on { border-color: var(--green); box-shadow: 0 0 .5rem var(--green); }
 @keyframes wheelin { from { transform: scale(.4); opacity: 0; } }
 /* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
 .sp-keys { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: .25rem; }

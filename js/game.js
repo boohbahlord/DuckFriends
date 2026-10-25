@@ -55,7 +55,7 @@ let target = null;         // where a click or a tap asked my duck to walk: { x,
 let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
-let bar = null, lastKey = -1, onBoard = false;   // the specials' number keys: the row, the key last pressed (E presses it again), on the board now
+let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again)
 const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
@@ -956,10 +956,11 @@ function paint(force) {
     $('.phase', S).textContent = (isLaw(s) && LAW_TITLES[s.phase]) || TITLES[s.phase] || '';
     lastClose = s.law && s.law.close || 0;
     geo = null;
-    const ob = onBoardPhase(); if (ob !== onBoard) { onBoard = ob; if (bar) { if (ob) bar.show(); else bar.hide(); } }   // the specials' row shows as the board comes up, then slides away
+    if (bar) { if (onBoardPhase()) bar.show(); else bar.hide(); }   // the specials' row comes in with each stage on the board, then slides away
   }
   const round = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
   if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
+  if (bar) bar.refresh();   // (a key kept on, or kept off)
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
   if (isSc(s) && s.phase === 'write') {   // the line as it's typed (the writer sees their own straight from the box)
     if (scWriter(s) !== R.me) { const t = $('.sc-typing', S), was = t && t._html; setHTML(t, typingHTML(s)); if (t && t._html !== was) geo = null; }
@@ -1139,7 +1140,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (bar) bar.destroy(); bar = null; lastKey = -1; onBoard = false; kept.clear();
+    if (bar) bar.destroy(); bar = null; lastKey = -1; kept.clear();
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
     for (const t of ['pointerup', 'pointercancel']) removeEventListener(t, unpeek);
