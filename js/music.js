@@ -317,6 +317,108 @@ export const music = (function(){
       if(a===3||a===15||a===31)spring(t+E8*4.5,.055);if(a===23)spring(t+E8*6,.04);if(a===43)spring(t+E8*5,.045);
       // the quiet: a breath of air before it all comes back
       if(s==="quiet"&&a===27){on(send(1,.4));voice("air",hz(C.r+24+C.fifth),t+E8*4,E8*4,.03,1)}}};
+  /* Ducklings in a Row: a mother duck swims out across still water at dusk with a little waddle of a tune (felt piano),
+     and her ducklings copy her, two bars late and then four: a music box an octave up from the right ear, a harp two
+     octaves up from the left, a little wrong and a little cute, so the song is a round that ripples like a wake. One
+     stumbles and has to catch up. In the reeds it all goes hollow and muffled, a heartbeat under the water, and one
+     duckling sings alone; nobody answers. Then the mother comes back, the sighing C lifts to C#, and every voice follows
+     every other across the ears. They climb out up the bank, last in first out, and the music box is answered by the
+     piano: home. D Mixolydian, then D major. Straight time. */
+  const DK_SEC=[[0,"still"],[4,"mother"],[12,"row"],[24,"reeds"],[30,"found"],[42,"home"]];
+  const dkSec=a=>{let s="still";for(const [k,n] of DK_SEC)if(a>=k)s=n;return s};
+  let DK={};   // the mother's notes, bar by bar, for the ducklings to copy
+  const DUCKS={name:"Ducklings in a Row",bpm:84,trim:.85,bar:8,lead:"felt",leadV:.3,rel:1,leg:1,lp:3800,echo:.15,fb:.22,dly:.54,
+    dyn:.85,contrast:.8,hum:.008,rv:.38,ds:.15,rev:[5.5,.5],wow:[.0009,.25],
+    chords:chords("Dadd9 Dadd9 Dadd9 Dadd9 D C/D D C/D D C/D D C/D D C/D D C/D D C/D D C/D D C/D D C/D G Bm7 G Em7 Bm7 A7 D A/C# D A/C# D A/C# D A/C# D A/C# D A/C# D G/D D G/D D D"),
+    mel:mel(`A4:8:.7
+        r:8
+        F#4:4:.75 E4:4:.7
+        D4:6:.75 r:2
+        D4:1 E4:1 F#4:4 A4:2
+        G4:2 E4:2 D4:3 C4:1
+        D4:1 E4:1 F#4:2 A4:2 D5:2
+        C5:3 G4:1 E4:2 D4:2
+        D4:1 E4:1 F#4:4 A4:2
+        G4:2 E4:2 D4:3 C4:1
+        F#4:1 G4:1 A4:4 F#4:2
+        G4:2 E4:1 G4:1 C5:2 E4:2
+        D4:1 E4:1 F#4:2 A4:2 D5:2
+        C5:3 G4:1 E4:2 D4:2
+        F#4:1 G4:1 A4:4 F#4:2
+        G4:2 E4:1 G4:1 C5:2 E4:2
+        D5:3 A4:1 F#4:2 E4:2
+        E4:2 G4:2 C4:4
+        D4:1 E4:1 F#4:4 A4:2
+        G4:2 E4:2 D4:3 C4:1
+        D4:1 E4:1 F#4:2 A4:2 D5:2
+        C5:3 G4:1 E4:2 D4:2
+        D5:3 A4:1 F#4:2 E4:2
+        E4:2 G4:2 C4:4
+        r:8
+        D5:1 E5:1 F#5:4 r:2
+        G5:2 E5:2 D5:4
+        r:8
+        D5:1:.85 E5:1:.85 F#5:4:.85 r:2
+        G5:2:.85 E5:2:.85 C#5:4:.95
+        D4:1 E4:1 F#4:4 A4:2
+        A4:2 G4:1 E4:1 C#4:4
+        D4:1 E4:1 F#4:2 A4:2 D5:2
+        C#5:3 A4:1 E4:2 C#4:2
+        F#4:1 G4:1 A4:4 F#4:2
+        E4:2 C#4:1 E4:1 A4:2 E4:2
+        D5:3 A4:1 F#4:2 E4:2
+        E4:2 A4:2 C#5:4
+        D4:1 E4:1 F#4:2 A4:2 D5:2
+        C#5:3 A4:1 E4:2 C#4:2
+        D4:1 E4:1 F#4:4 A4:2
+        A4:2 G4:1 E4:1 C#4:4
+        D4:1:.8 E4:1:.8 F#4:4:.8 A4:2:.75
+        G4:2:.7 E4:2:.7 D4:4:.65
+        r:8
+        r:8
+        r:8
+        r:8`),
+    leadFor:a=>dkSec(a)==="reeds"?"softbox":"felt",leadVFor:a=>dkSec(a)==="reeds"?.22:.3,
+    // steady, breathing at the ends of the parts; slow in the reeds; slowing as they climb out
+    tempo:(b,i,a)=>{const s=dkSec(a);let v=s==="still"?.95:s==="reeds"?.92:s==="home"?.97-.03*(a-42):1;
+      if(i>=6&&[3,23,29,41].includes(a))v*=.86;return v*(.99+.02*h01(a+40))},
+    onNote:(e,t,E8,x)=>{const a=x.abs,s=dkSec(a),m=e.m;GL=null;if(m==null||Array.isArray(m))return;
+      (DK[a]=DK[a]||[]).push({p:e.s-a*8,l:e.l,m,v:e.vel});
+      // when everyone is found, soft strings sing along with the mother
+      if(s==="found"){on(send(.5,.2));voice("bow",hz(m),t,e.l*E8,.05*e.vel,.6)}},
+    onBar:x=>{const {t,abs:a,E8,C}=x,B=E8*8,s=dkSec(a);GL=null;if(a===0)DK={};
+      // each part has its own breath; the reeds close in over everything, and open again when she comes back
+      const swell={still:.7+.05*a,mother:.88+.03*(a%2),row:.82+.015*(a-12),reeds:.66,found:1.06+.04*(a%2)+(a>=38?.08:0),home:.9-.08*(a-42)}[s];
+      BUS.swl.gain.setTargetAtTime(swell,t,B*.35);
+      if(s==="reeds")BUS.lp.frequency.setTargetAtTime(a===29?2200:1100,t,B*.3);else BUS.lp.frequency.setTargetAtTime(3800,t,a===30?B*.5:B*.2);
+      BUS.leadPan.pan.setTargetAtTime(s==="reeds"?.4:s==="found"?0:-.25,t,B*.3);   // the mother a little to the left; the lonely duckling to the right
+      // the ducklings: the music box two bars behind her, the harp four; one stumbles (late), and one misses a bar
+      const sing=(src,ty,up,v,p)=>{for(const n of DK[src]||[]){let st=t+n.p*E8,d=n.l*E8;if(ty==="softbox"&&(a===18||a===19)){st+=E8*.5;d=Math.max(E8*.5,d-E8*.5)}
+        on(p);voice(ty,hz(n.m+up),st,d*.9,v*n.v,ty==="harp"?.8:.9)}};
+      const mb=a>=6&&a<=45&&s!=="reeds"&&!["reeds"].includes(dkSec(a-2))&&a!==22&&a!==43,hp=a>=16&&a<=41&&s!=="reeds"&&dkSec(a-4)!=="reeds";
+      if(mb){const p=s==="found"?panTo(-.6,.6,t,B*2,.5,.3):panTo(.5,.5,t,B,.5,.3);sing(a-2,"softbox",12,.085,p)}
+      if(hp){const p=s==="found"?panTo(.7,-.7,t,B*2,.5,.3):panTo(.6,-.6,t,B,.5,.3);sing(a-4,"harp",24,.065,p)}
+      // underneath: a bass note held in the still water; it walks once the row grows; a heartbeat in the reeds
+      on(send(.25,0,BUS.bass));
+      if(s==="still"||s==="home"){if(a%2===0)voice("mbass",hz(C.b-12),t,B*1.8,.22,.9)}
+      else if(s==="mother")voice("mbass",hz(C.b-12),t,B*.95,.2,.6);
+      else if(s==="row")[0,C.fifth,12,C.fifth].forEach((v,k)=>voice("mbass",hz(C.b-12+v),t+k*2*E8,E8*1.8,k?.15:.2,.4));
+      else if(s==="reeds"){voice("mbass",hz(C.b-12),t,E8*.8,.24,.3);voice("mbass",hz(C.b-12),t+E8*.75,E8*.8,.15,.4)}
+      else if(s==="found"){voice("mbass",hz(C.b-12),t,B*.95,.2,.6);voice("bow",hz(C.b-12),t,B*.98,.07,.5)}
+      // the pad, low and warm; fuller when everyone is found
+      const pd={still:.012,mother:.014,row:.018,reeds:.012,found:.03,home:.02-.003*(a-42)}[s];
+      if(pd>0){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pd,.8)}
+      // strings swell in as the row grows, and under everything when they are found
+      if(s==="row"&&a>=16||s==="found"){on(send(.7,.2,BUS.bass));const sv=s==="found"?.03:.012+.002*(a-16);voice("bow",hz(C.r+12+C.third),t,B*1.04,sv,.8);voice("bow",hz(C.r+12+C.fifth),t+.04,B*1.04,sv*.8,.8)}
+      // a choir: far off in the reeds, close when they are found
+      if(s==="reeds"&&a>=25||s==="found"){on(send(s==="reeds"?1.4:.7,.3));const cv=s==="reeds"?.03:.055;for(const v of C.iv.slice(0,3))voice("ooh",hz(C.r+12+v),t+.05,B*.98,cv,.7)}
+      // chimes on the downbeats when they are found, from either ear
+      if(s==="found"){on(panTo(a%2?.5:-.5,a%2?.3:-.3,t,B,1,.5));voice("glass",hz(C.r+24+(a%4<2?0:C.fifth)),t,E8*3,.024,1.2)}
+      // still water: the faintest ripple of air before she starts to swim
+      if(a===2){on(send(1,.4));voice("air",hz(C.r+24+C.fifth),t+E8*4,E8*4,.025,1)}
+      // home: the last music box note, and the piano answers
+      if(a===46){on(panTo(.4,.4,t,B,.8,.4));voice("softbox",hz(C.r+24+C.fifth),t+E8*2,E8*4,.12,1.4)}
+      if(a===47){on(send(.6,.3));voice("felt",hz(C.r+12),t+E8,E8*6,.22,1.6);voice("felt",hz(C.r),t+E8*1.1,E8*6,.14,1.6)}}};
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
        crisp and muted, warped a little, with a needle crackling */
@@ -351,7 +453,8 @@ export const music = (function(){
         voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.22*.24*e.vel,1.4);GL=null}},
     glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7"),
     JESTERS,
-    SPRING
+    SPRING,
+    DUCKS
   ];
   const BASE=.45;   // 100% music: loud, but under the game
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
