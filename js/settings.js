@@ -69,7 +69,7 @@ const PAGES = {
     <div class="sect"><h3>Connection</h3>${tiles('net', NET.map(([v, n]) => [v, n]))}<p class="small dim">They improve performance too. ${esc(NET[netLevel()][2])}</p></div>
     <div class="sect"><h3>Background shapes</h3>${tiles('shapes', [['moving', 'Moving'], ['still', 'Still'], ['off', 'Off']])}</div>
     <div class="sect"><h3>Movement</h3><div class="row">${check('motion', 'Animations', 'Ducks bob, windows pop, shapes drift. Off keeps everything still.')}</div></div>`,
-  audio: () => `<div class="sect"><h3>Volume</h3>${slider('sound', 'Volume', 0, 100, 5)}${slider('sfx', 'Sound effects', 0, 100, 5)}</div>`,
+  audio: () => `<div class="sect"><h3>Volume</h3>${slider('sound', 'Volume', 0, 100, 5)}${slider('sfx', 'Sound effects', 0, 100, 5)}${slider('music', 'Music', 0, 100, 5)}</div>`,
 };
 
 export function openSettings() {

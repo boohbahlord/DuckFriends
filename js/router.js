@@ -20,6 +20,7 @@ function show(name, arg) {
   root.replaceChildren(node);
   root.firstElementChild.dataset.screen = name; document.body.dataset.screen = name;
   scrollTo(0, 0);
+  document.dispatchEvent(new CustomEvent('screen'));   // the music starts in a room and stops outside one
 }
 
 /* go to a screen (one step in the browser's history) */
