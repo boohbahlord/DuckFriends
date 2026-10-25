@@ -634,6 +634,29 @@ html.moving .scene.rabbit.rh-plain { animation: rhspin 40s linear infinite; }
 .map-rabbit .col { background: color-mix(in srgb, var(--c) 45%, transparent); border-right-color: #ffffff38; box-shadow: inset 0 0 0 .14rem #ffffff40; }
 .map-rabbit .col-name { position: relative; color: #fff; background: #12061fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
 .map-rabbit .wyr-or, .map-rabbit .bb-vs { background: color-mix(in srgb, #12061f var(--board-a), transparent); }
+/* Starry Night: the sky turns slowly around a pole above the page; tiles as see-through as on Sky, names on pills */
+.scene.stars { background: linear-gradient(#020309, #050a1d 42%, #0a1534 78%, #13224b); }
+.st-dome { position: absolute; opacity: 0; transition: opacity 1.2s; }
+.scene.stars.ready .st-dome { opacity: 1; }
+.st-spin { position: absolute; inset: 0; will-change: transform; }
+html.moving .st-spin { animation: stspin 300s linear infinite; }
+@keyframes stspin { to { transform: rotate(-360deg); } }
+.st-spin canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.st-bright { position: absolute; inset: 0; }
+.st-b { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: radial-gradient(circle, #fff 0 12%, var(--c) 22%, color-mix(in srgb, var(--c) 30%, transparent) 42%, transparent 70%); }
+html.moving .st-b { animation: sttwinkle var(--d) ease-in-out var(--dl) infinite alternate; }
+@keyframes sttwinkle { to { opacity: .5; transform: scale(.8); } }
+.st-b.sp::before, .st-b.sp::after { content: ''; position: absolute; left: -100%; top: calc(50% - .5px); width: 300%; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 60%, #fff), transparent); opacity: .65; }
+.st-b.sp::after { transform: rotate(90deg); }
+.st-haze { position: absolute; inset: 0; background: linear-gradient(transparent 55%, #1b2c5c2e 82%, #2a3f7550); }   /* the air thickens toward the bottom */
+.st-met { position: absolute; width: 0; height: 0; transform: rotate(var(--a)); }
+.st-met i { position: absolute; right: 0; top: -1px; width: var(--len); height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent, #bcd0ff99 60%, #fff); transform-origin: 100% 50%; opacity: 0; animation: stmeteor var(--t) cubic-bezier(.3, .1, .7, 1) var(--dl) both; }
+.st-met i::after { content: ''; position: absolute; right: -2px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px #cfe0ff; }
+@keyframes stmeteor { 0% { opacity: 0; transform: translateX(0) scaleX(.3); } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translateX(var(--go)) scaleX(1); } }
+.map-stars { --board-a: 42%; }
+.map-stars .col { background: color-mix(in srgb, var(--c) 42%, transparent); border-right-color: #ffffff30; box-shadow: inset 0 0 0 .14rem #ffffff38; }
+.map-stars .col-name { position: relative; color: #fff; background: #070b1fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
+.map-stars .wyr-or, .map-stars .bb-vs, .map-stars .law-mid { background: color-mix(in srgb, #070b1f var(--board-a), transparent); }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival { background: #0d0722; }
 .scene.carnival > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -928,6 +951,12 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 .arm-duck.hop .arm-pic > svg.duck { animation: sphop 1.1s ease-out; }
 .spe-shot { width: 32px; animation: spshot 2.2s linear forwards; }
 .spe-shot svg { width: 100%; filter: drop-shadow(0 0 3px #ffd84a); }
+.spe-dthrow { animation: dthrowx 1.6s linear forwards; }
+.spe-dthrow b { display: block; animation: dthrowy 1.6s cubic-bezier(.3, 0, .7, 1) forwards; }
+.spe-dthrow i { display: block; width: calc(var(--s) * .3); animation: dspin .42s linear infinite; }
+.spe-dthrow svg { width: 100%; display: block; }
+@keyframes dthrowx { from { transform: translate(-50%, -50%); opacity: 1; } 85% { opacity: 1; } to { transform: translate(calc(-50% + var(--dx, 300px)), -50%); opacity: 0; } }
+@keyframes dthrowy { 0% { transform: translateY(0); animation-timing-function: ease-out; } 35% { transform: translateY(calc(var(--s) * -.35)); animation-timing-function: ease-in; } 100% { transform: translateY(calc(var(--s) * .9)); } }
 @keyframes spshot { from { transform: translate(-50%, -50%); } to { transform: translate(calc(-50% + var(--dx, 300px)), -50%); } }
 @keyframes sphop { 0% { transform: none; } 45% { transform: translateY(-38%); } 100% { transform: none; } }
 .tipbox { position: fixed; z-index: 95; max-width: min(18rem, 80vw); padding: .45rem .7rem; border-radius: .6rem; background: color-mix(in srgb, var(--panel) 80%, transparent);
@@ -948,7 +977,20 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
   animation: sppoison 3s ease-in-out infinite; animation-delay: calc(var(--i) * -.6s); left: calc(12% + var(--i) * 12%); top: calc(22% + (var(--i) * 7%) - (var(--i) * var(--i) * 1.5%)); }
 @keyframes sppoison { 0%, 100% { transform: translate(0, 0) scale(.85); opacity: .75; } 50% { transform: translate(.5em, -.6em) scale(1.15); opacity: 1; } }
 .spx-x svg { position: absolute; left: 10%; top: 0; width: 70%; height: 100%; stroke: var(--k1, #ef3b3b); stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #1c1c28); }
+/* the disco ball over the head, its colored beams and spots sweeping over the duck (see-through) */
+.spx-disco .disco-ball { position: absolute; left: 32%; top: -34%; width: 26%; filter: drop-shadow(0 .1rem .1rem #0006); animation: dball 1.6s ease-in-out infinite alternate; }
+.spx-disco .disco-string { position: absolute; left: calc(45% - 1px); top: -58%; width: 2px; height: 26%; background: color-mix(in srgb, var(--ink) 55%, transparent); }
+.spx-disco .disco-beams { position: absolute; left: -15%; top: -46%; width: 120%; height: 150%; transform-origin: 50% 20%; opacity: .32; background: conic-gradient(from 90deg at 50% 20%, var(--k1) 0 9deg, transparent 9deg 45deg, var(--k2) 45deg 54deg, transparent 54deg 90deg, var(--k3) 90deg 99deg, transparent 99deg 135deg, var(--k1) 135deg 144deg, transparent 144deg 180deg, transparent 180deg 360deg); -webkit-mask: radial-gradient(circle at 50% 20%, #000 0, #000 30%, transparent 62%); mask: radial-gradient(circle at 50% 20%, #000 0, #000 30%, transparent 62%); animation: dbeam 3s ease-in-out infinite alternate; }
+.spx-disco .disco-spot { position: absolute; top: calc(30% + var(--i) * 22%); width: 11%; aspect-ratio: 1; border-radius: 50%; background: var(--k1); opacity: 0; filter: blur(1px); animation: dspot 1.8s linear infinite; animation-delay: calc(var(--i) * -.37s); }
+.spx-disco .disco-spot:nth-of-type(3n+1) { background: var(--k2); } .spx-disco .disco-spot:nth-of-type(3n+2) { background: var(--k3); }
+@keyframes dball { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+@keyframes dbeam { from { transform: rotate(-35deg); } to { transform: rotate(35deg); } }
+@keyframes dspot { 0% { left: -10%; opacity: 0; } 15%, 85% { opacity: .75; } 100% { left: 95%; opacity: 0; } }
+/* ducklings in a still row behind the duck (in the menus; on the board they follow their duck) */
+.spx-ducklings i { position: absolute; bottom: -66%; left: calc(-14% - var(--i) * 21%); width: 21%; }
+.spx-ducklings svg { width: 100%; height: auto; display: block; }
 html.still .spx * { animation: none !important; opacity: 1; }
+html.still .spx-disco .disco-beams { opacity: .32; } html.still .spx-disco .disco-spot { display: none; }
 /* confetti over the screen */
 .confetti-rain { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
 .confetti-rain i { position: absolute; top: -4%; width: .55rem; height: .9rem; border-radius: 2px; animation: confall linear forwards; }
@@ -970,8 +1012,27 @@ html.still .spx * { animation: none !important; opacity: 1; }
 @keyframes spshoot { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r, 0deg)); } }
 .spe-ring { width: calc(var(--s) * .4); height: calc(var(--s) * .4); border-radius: 50%; border: 3px solid transparent; border-right-color: var(--k1, #fff); opacity: 0; animation: spring 1.1s ease-out forwards; }   /* sound waves out of the beak, the way the duck faces */
 @keyframes spring { 0% { opacity: .9; transform: translate(-50%, -50%) scale(calc(var(--f) * .3), .3); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--f) * 1.8), 1.8); } }
-.bullet { position: absolute; left: 0; top: 0; width: 34px; margin-left: -17px; pointer-events: none; z-index: 6; filter: drop-shadow(0 0 3px #ffd84a); }
-.bullet.left svg { transform: scaleX(-1); }
+.bullet { position: absolute; left: 0; top: 0; width: 34px; margin: -7px 0 0 -17px; pointer-events: none; z-index: 6; filter: drop-shadow(0 0 3px #ffd84a); }
+.bullet svg { transform: rotate(var(--ang, 0rad)); }
+/* the dagger, thrown: it spins on its way (backwards when thrown to the left) */
+.thrown, .held, .duckling { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.thrown { z-index: 6; }
+.thrown i { position: absolute; left: 0; top: 0; width: calc(var(--s) * .46); display: block; animation: dspin .42s linear infinite; filter: drop-shadow(0 .1rem .1rem #0006); }
+.thrown i.ccw { animation-direction: reverse; }
+.thrown svg, .held svg, .duckling svg { width: 100%; height: auto; display: block; }
+@keyframes dspin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* the handgun or the dagger in hand, around the duck, turned toward where it aims */
+.held { z-index: 6; animation: fadein .2s ease-out; }
+.held i { position: absolute; left: 0; top: 0; width: calc(var(--s) * .34); display: block; transform: translate(-50%, -50%); transition: opacity .15s; filter: drop-shadow(0 .08rem .08rem #0006); }
+.held[data-w="dagger"] i { width: calc(var(--s) * .4); }
+.held.thrown-now i { opacity: 0; }
+/* ducklings, following their duck */
+.duckling { animation: fadein .35s ease-out; }
+.duckling i { position: absolute; left: calc(var(--s) * -.15); bottom: 0; width: calc(var(--s) * .3); display: block; transform-origin: 50% 100%; }
+.duckling.walk i { animation: dwaddle .3s ease-in-out infinite alternate; animation-delay: calc(var(--i) * -.1s); }
+@keyframes dwaddle { from { transform: rotate(-8deg); } to { transform: rotate(8deg) translateY(-10%); } }
+html.still .thrown i, html.still .duckling i { animation: none; }
+html.still .thrown i { transform: translate(-50%, -50%); }
 /* items: the double jump's little cloud (see-through, left in the air) and the trombone, its mouthpiece at the beak */
 .spe-puff { opacity: 0; animation: sppuff .9s ease-out forwards; }
 .spe-puff svg { width: calc(var(--s) * .7); fill: var(--k1, #fff); }
@@ -998,7 +1059,8 @@ html.still .spe-bone .bone-slide { animation: none; }
 .hk.on::after { content: ''; position: absolute; right: .12rem; top: .12rem; width: .3rem; height: .3rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 .25rem var(--green); }
 .hk.sel { border-color: var(--yellow); box-shadow: 0 0 .45rem .12rem color-mix(in srgb, var(--yellow) 65%, transparent); }
 @media (max-width: 1000px) { .hk { width: 1.3rem; height: 1.3rem; } .hk i { font-size: .72rem; } }
-@media (hover: none) and (pointer: coarse), (max-width: 760px) { .hotbar { display: none; } }   /* (a narrow window has no room for it in the top bar; its keys still work) */
+@media not all and (any-pointer: fine) { html:not(.keyboard) .hotbar { display: none; } }   /* (a phone or tablet: no mouse or touchpad at all, and no number key pressed yet; a touchscreen laptop has its touchpad, so it keeps the row) */
+@media (max-width: 760px) { .hotbar { display: none; } }   /* (a narrow window has no room for it in the top bar; its keys still work) */
 /* on a phone: the specials around a finger held still on the board */
 .sp-wheel { position: fixed; inset: 0; z-index: 80; touch-action: none; }
 .sp-wbtn { position: absolute; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; display: grid; place-items: center; padding: 0; border-radius: 50%; border: .14rem solid var(--line); background: color-mix(in srgb, var(--panel) 82%, transparent); color: var(--ink);
@@ -1306,6 +1368,7 @@ html.moving .ec-glow { animation: ecglow 2.3s ease-in-out infinite; }
 html.lite .ec-static, html.lite .ec-flash { display: none; }
 .mm-ec { background: url(../assets/maps/ethers-crossroads.png) center / cover; image-rendering: pixelated; }
 .mm-rabbit { background: url(../assets/maps/rabbit-hole.jpg) center / cover; }
+.mm-stars { background: url(../assets/maps/starry-night.jpg) center / cover; }
 html.moving .mm-rabbit { animation: rhspin 40s linear infinite; }
 .mm-ec::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, transparent 0 2px, #0000003a 2px 3px); }
 .mm-glow { position: absolute; width: calc(1.6rem * var(--k)); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7aaa, transparent); }

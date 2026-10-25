@@ -1227,7 +1227,8 @@ export const music = (function(){
      are cut sooner (after they have faded to almost nothing), the faint layers are left out (shimmers an octave up,
      sub-octaves, the music box's halo and tine, detuned twins) and nothing has vibrato, so the music takes a fraction of
      the work and doesn't stutter; a computer plays everything in full */
-  const LITE=matchMedia("(hover: none) and (pointer: coarse)").matches,TL=LITE?.5:1;
+  // a phone or tablet has no mouse or touchpad at all (a laptop with a touch screen still has one, and gets the full songs)
+  const LITE=!matchMedia("(any-pointer: fine)").matches,TL=LITE?.5:1;
   let ac=null,out=null,bout=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
   /* a seeded chance, so a song written out sounds the same each time; in play it is new each time through */
   let SEED=1;const rnd=()=>{SEED=SEED+0x6D2B79F5|0;let t=Math.imul(SEED^SEED>>>15,1|SEED);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
@@ -1244,7 +1245,7 @@ export const music = (function(){
     const pre=gn(),swl=gn(),fdry=gn(),fwet=gn(0),fd=ac.createDelay(.05),ffb=gn(.55),fl=ac.createOscillator(),flg=gn(.0035);fd.delayTime.value=.0068;fl.frequency.value=.13;
     const wow=ac.createDelay(1);wow.delayTime.value=.03;const w1=ac.createOscillator(),wg1=gn(0),w2=ac.createOscillator(),wg2=gn(0);w1.frequency.value=.3;w2.frequency.value=.071;
     pre.connect(swl);swl.connect(fdry);swl.connect(fd);fd.connect(fwet);fd.connect(ffb);ffb.connect(fd);fl.connect(flg);flg.connect(fd.delayTime);
-    fdry.connect(wow);fwet.connect(wow);w1.connect(wg1);wg1.connect(wow.delayTime);w2.connect(wg2);wg2.connect(wow.delayTime);const trim=gn(),hp=biq("highpass",25,.6);wow.connect(trim);trim.connect(hp);hp.connect(out);fl.start();w1.start();w2.start();
+    fdry.connect(wow);fwet.connect(wow);w1.connect(wg1);wg1.connect(wow.delayTime);w2.connect(wg2);wg2.connect(wow.delayTime);const trim=gn(),hp=biq("highpass",25,.6),dip=biq("peaking",3200,.8);dip.gain.value=-3;wow.connect(trim);trim.connect(hp);hp.connect(dip);dip.connect(out);   // (a soft dip at 3 kHz, where shrill notes hurt)fl.start();w1.start();w2.start();
     const music=gn(),mdry=gn(),mpre=gn(2),ws=ac.createWaveShaper(),mlp=biq("lowpass",1400,.5),mwet=gn(0);ws.curve=fuzzCurve();ws.oversample="2x";
     music.connect(mdry);mdry.connect(pre);music.connect(mpre);mpre.connect(ws);ws.connect(mlp);mlp.connect(mwet);mwet.connect(pre);
     const lead=gn(),leadLP=biq("lowpass",20000,.5);const leadPan=ac.createStereoPanner();lead.connect(leadLP);leadLP.connect(leadPan);leadPan.connect(music);const bass=gn();bass.connect(music);
@@ -1269,6 +1270,11 @@ export const music = (function(){
   function pulseWave(){if(CACHE.pw)return CACHE.pw;const n=32,re=new Float32Array(n),im=new Float32Array(n);for(let k=1;k<n;k++)im[k]=2/(k*Math.PI)*Math.sin(k*Math.PI*.25);return CACHE.pw=ac.createPeriodicWave(re,im)}
   const env=(g,t,a,peak,hold,rel)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(0,t+Math.max(a,hold),rel)};
   // an oscillator; GL (when set) slides it in from another pitch, or lets it sag or rise as it sounds
+  /* played live, a note whose time has already gone by (the page was busy for a moment) starts now with its whole shape,
+     instead of jumping straight to full volume, which popped */
+  const lt=t=>RENDER||!ac?t:Math.max(t,ac.currentTime+.005);
+  /* a struck or plucked low note comes in a little slower, so its first push of air is a round "dum", not a pop */
+  const atk=f=>f<200?.016:f<400?.01:.004;
   const osc=(type,f,t,stop,dest)=>{const o=ac.createOscillator();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o._f=f;
     if(GL&&GL.r&&GL.r!==1){o.frequency.setValueAtTime(f*GL.r,t);o.frequency.exponentialRampToValueAtTime(f,t+GL.d)}else o.frequency.setValueAtTime(f,t);
     if(GL&&GL.fall)o.frequency.setTargetAtTime(f*GL.fall,t+(GL.ft||.1),GL.fd||.5);
@@ -1284,7 +1290,8 @@ export const music = (function(){
   /* instruments: the cartridge's waves, a music box, a church organ, glass, a metallic FM bell, a harpsichord pluck, a
      tremolo mandolin, an accordion, a filtered brass, a formant choir, a distorted lead; v59: a wisp, a soft music box, bowed
      strings, a sad slide, a muted crisp key, a falling breath, a swelling tremolo, a soft bell */
-  function voice(type,f,t,dur,peak,rel,vib_){const D=DST;
+  function voice(type,f,t,dur,peak,rel,vib_){t=lt(t);if(typeof f==="number"&&f>900)peak*=Math.pow(900/f,.35);   // high notes a touch softer: the ear hears them louder
+   const D=DST;
     if(type==="musicbox"){const g=gn();g.connect(D);env(g,t,.004,peak,.02,.55);osc("sine",f,t,t+2.6,g);
       const g2=gn();g2.connect(D);env(g2,t,.003,peak*.35,.01,.18);osc("sine",f*4.01,t,t+1,g2);
       const g3=gn();g3.connect(D);env(g3,t,.003,peak*.18,.01,.3);osc("sine",f*2.76,t,t+1.4,g3);return true}
@@ -1350,7 +1357,7 @@ export const music = (function(){
       // the hammer's thud: a breath of noise that swells in over 5 ms (one that started at full strength was heard as crackling)
       const nb=noiseSrc(t,.09),bp=biq("bandpass",1500,1.2),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*.1,t+.005);ng.gain.setTargetAtTime(0,t+.005,.012);nb.connect(bp).connect(ng).connect(D);
       return true}
-    if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
+    if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,atk(f),peak,.01,R);
       osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
     if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.7,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur,R);
@@ -1389,7 +1396,7 @@ export const music = (function(){
        each note speaks with a short tonal puff of its octave (no noise burst), and only a faint, dark breath of air at
        the pipe's own pitch rides under it, so nothing hisses or ticks. Every layer ends through one gate. */
     if(type==="panflute"){const a=Math.min(.07,Math.max(.035,dur*.1)),R=rel||.2,end=t+Math.max(dur,a+.03),stop=end+R*6*TL+.05,
-        q=gn(),g=gn(),lp=biq("lowpass",Math.min(3200,f*4),.5);lp.connect(g);g.connect(q);q.connect(D);
+        q=gn(),g=gn(),lp=biq("lowpass",Math.min(2600,f*3),.5);lp.connect(g);g.connect(q);q.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,Math.max(.2,dur*.5));g.gain.setTargetAtTime(0,end,R);
       const o1=osc("sine",f,t,stop,lp),k=gn(.1);k.connect(lp);const o2=osc("triangle",f,t,stop,k);
       if(!GL){for(const o of [o1,o2]){o.frequency.setValueAtTime(f*.992,t);o.frequency.exponentialRampToValueAtTime(f,t+a*1.5)}}   // it blows in a hair flat
@@ -1415,7 +1422,7 @@ export const music = (function(){
        own like a struck bar: dur hardly matters; rel scales the ring (1 = natural, .5 = damped, 1.8 = long). */
     if(type==="marimba"){const lo=Math.min(1,Math.max(0,(f-110)/900)),sc=rel&&rel>.2?Math.min(2,rel):1,tau=(.58-.4*lo)*sc,
         stop=t+tau*7*TL+.06,g=gn(),lp=biq("lowpass",Math.min(6500,f*11),.5),q=gn();lp.connect(g);g.connect(q);q.connect(D);
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.004);g.gain.setTargetAtTime(0,t+.006,tau);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+atk(f));g.gain.setTargetAtTime(0,t+atk(f)+.002,tau);
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);   // the gate
       osc("sine",f,t,stop,lp);
       if(f*3.9<7000){const g4=gn(0);g4.connect(q);g4.gain.setValueAtTime(0,t);g4.gain.linearRampToValueAtTime(peak*(.32-.18*lo),t+.003);g4.gain.setTargetAtTime(0,t+.004,Math.max(.025,tau*.16));osc("sine",f*3.94,t,stop,g4)}
@@ -1443,9 +1450,9 @@ export const music = (function(){
       c2n.connect(c2bp);c2bp.connect(c2ng);c2ng.connect(q);   // the felt hammer's tick
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);return true}
     if(type==="ocarina"){const R=rel||.15,a=Math.min(.09,Math.max(.04,dur*.12)),end=t+Math.max(dur,a+.03),stop=end+R*6*TL+.05,
-        q=gn(),g=gn(),lp=biq("lowpass",Math.min(5000,f*6),.5);lp.connect(g);g.connect(q);q.connect(D);
+        q=gn(),g=gn(),lp=biq("lowpass",Math.min(3400,f*4),.5);lp.connect(g);g.connect(q);q.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.85,t+a,Math.max(.15,dur*.4));g.gain.setTargetAtTime(0,end,R);
-      lp.frequency.setTargetAtTime(Math.min(3600,f*3.2),t+a,.12);   // the breath's first push is a little brighter
+      lp.frequency.setTargetAtTime(Math.min(2600,f*2.6),t+a,.12);   // the breath's first push is a little brighter
       const scoop=!GL,c2o1=osc("sine",f,t,stop,lp),c2k=gn(.2);c2k.connect(lp);const c2o2=osc("triangle",f,t,stop,c2k);
       if(scoop)for(const o of [c2o1,c2o2]){o.frequency.setValueAtTime(f*.988,t);o.frequency.exponentialRampToValueAtTime(f,t+a*1.3)}   // it blows in a hair flat
       let c2o3=null;if(!LITE){const c2h=gn(.05);c2h.connect(lp);c2o3=osc("sine",f*2,t,stop,c2h);if(scoop){c2o3.frequency.setValueAtTime(f*2*.988,t);c2o3.frequency.exponentialRampToValueAtTime(f*2,t+a*1.3)}}
@@ -1456,7 +1463,7 @@ export const music = (function(){
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);return true}
     /* the harp, as the game's harp sounds, with a gate after its envelope: on a phone (shorter tails) its fast ripples
        and chords never end in a tick */
-    if(type==="c2_harp"){const R=rel||.9,stop=t+R*6*TL+.05,q=gn(),g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(q);q.connect(D);env(g,t,.004,peak,.01,R);
+    if(type==="c2_harp"){const R=rel||.9,stop=t+R*6*TL+.05,q=gn(),g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(q);q.connect(D);env(g,t,atk(f),peak,.01,R);
       osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);return true}
     /* composer 3: a kalimba, a thumb on a metal tine over a little wooden box. A sine fundamental that settles a hair
@@ -1466,7 +1473,7 @@ export const music = (function(){
        ends through one gate, so a tail cut short can never click. */
     if(type==="kalimba"){const lo=Math.min(1,Math.max(0,(f-130)/1000)),sc=rel&&rel>.2?Math.min(2.2,rel):1,tau=(.42-.2*lo)*sc,
         stop=t+tau*7*TL+.08,q=gn(),g=gn(),lp=biq("lowpass",Math.min(6000,f*7),.5);lp.connect(g);g.connect(q);q.connect(D);
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.004);g.gain.setTargetAtTime(peak*.6,t+.005,.05);g.gain.setTargetAtTime(0,t+.09,tau);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+atk(f));g.gain.setTargetAtTime(peak*.6,t+atk(f)+.001,.05);g.gain.setTargetAtTime(0,t+.09,tau);
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);   // the gate
       lp.frequency.setTargetAtTime(Math.min(3000,f*3),t+.01,.12);   // the pluck's brightness fades into the wood
       const c3o=osc("sine",f,t,stop,lp);if(!GL){c3o.frequency.setValueAtTime(f*1.006,t);c3o.frequency.exponentialRampToValueAtTime(f,t+.045)}
@@ -1529,18 +1536,18 @@ export const music = (function(){
       bp.frequency.setValueAtTime(f*.7,t);bp.frequency.linearRampToValueAtTime(f*1.3,t+L);
       q.gain.setValueAtTime(1,stop-.03);q.gain.linearRampToValueAtTime(0,stop);return true}
     return false}
-  function note(type,f,t,dur,peak,rel,vib_){if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
+  function note(type,f,t,dur,peak,rel,vib_){t=lt(t);if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
     if(vib_){const l=ac.createOscillator(),lg=ac.createGain();l.frequency.value=5.2;lg.gain.value=f*.007;l.connect(lg).connect(o.frequency);l.start(t);l.stop(t+dur+.6)}
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.012);g.gain.setTargetAtTime(peak*.6,t+.05,.09);g.gain.setTargetAtTime(0,t+Math.max(.05,dur-.06),rel||.05);
     o.connect(g).connect(DST);o.start(t);o.stop(t+dur+.6)}
-  function pad(f,t,dur,peak){const o=ac.createOscillator(),g=ac.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t);o.detune.setValueAtTime(-6+Math.random()*12,t);
+  function pad(f,t,dur,peak){t=lt(t);const o=ac.createOscillator(),g=ac.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t);o.detune.setValueAtTime(-6+Math.random()*12,t);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+Math.min(.9,dur*.4));g.gain.setTargetAtTime(0,t+dur*.8,dur*.18);o.connect(g).connect(DST);o.start(t);o.stop(t+dur*1.6)}
-  function drip(t,f){const o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.5,t+.08);
+  function drip(t,f){t=lt(t);const o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.5,t+.08);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.005);g.gain.setTargetAtTime(0,t+.02,.07);o.connect(g).connect(DST);o.start(t);o.stop(t+.5)}
-  function clank(t){const b=ac.createBuffer(1,Math.floor(ac.sampleRate*.3),ac.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,6);
+  function clank(t){t=lt(t);const b=ac.createBuffer(1,Math.floor(ac.sampleRate*.3),ac.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,6);
     const s=ac.createBufferSource(),bp=ac.createBiquadFilter(),g=ac.createGain();bp.type="bandpass";bp.frequency.value=2600+Math.random()*1800;bp.Q.value=14;g.gain.value=.5;s.buffer=b;s.connect(bp).connect(g).connect(DST);s.start(t);
     const f=180+Math.random()*240;voice("fmbell",f,t,.3,.035,.2,false)}
-  function hit(t,kind){if(kind==="snare"||kind==="static"){const len=kind==="snare"?.2:1.3,b=ac.createBuffer(1,Math.floor(ac.sampleRate*len),ac.sampleRate),d=b.getChannelData(0);
+  function hit(t,kind){t=lt(t);if(kind==="snare"||kind==="static"){const len=kind==="snare"?.2:1.3,b=ac.createBuffer(1,Math.floor(ac.sampleRate*len),ac.sampleRate),d=b.getChannelData(0);
       for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*(kind==="snare"?Math.pow(1-k/d.length,4):Math.sin(Math.PI*k/d.length)*(.6+.4*Math.sin(k/900)));
       const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();f.type="bandpass";f.frequency.value=kind==="snare"?1800:3200;f.Q.value=kind==="snare"?.8:.6;g.gain.value=kind==="snare"?.22:.045;
       s.buffer=b;s.connect(f).connect(g).connect(DST);s.start(t);return}
@@ -1549,15 +1556,15 @@ export const music = (function(){
     const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();f.type=kind==="tick"?"highpass":"lowpass";f.frequency.value=kind==="tick"?2500:kind==="soft"?140:180;g.gain.value=kind==="kick"?.5:kind==="soft"?.3:.06;
     s.buffer=b;s.connect(f).connect(g).connect(DST);s.start(t)}
   /* v59 percussion and textures */
-  function thump(t,v,f,dec,a){const o=ac.createOscillator(),g=gn(0);o.frequency.setValueAtTime(f*(a?1.3:1.7),t);o.frequency.exponentialRampToValueAtTime(f,t+.07);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+(a||.006));g.gain.setTargetAtTime(0,t+.02,dec||.09);o.connect(g);g.connect(DST);o.start(t);o.stop(t+.8)}
+  function thump(t,v,f,dec,a){t=lt(t);const o=ac.createOscillator(),g=gn(0);o.frequency.setValueAtTime(f*(a?1.25:1.35),t);o.frequency.exponentialRampToValueAtTime(f,t+.07);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+Math.max(a||0,.016));g.gain.setTargetAtTime(0,t+.02,dec||.09);o.connect(g);g.connect(DST);o.start(t);o.stop(t+.8)}
   // a knock and a brush: they come in over a few milliseconds and fade out fully before their noise stops (a sharper edge crackled)
-  function wood(t,v){const s=noiseSrc(t,.09),b=biq("bandpass",1300+Math.random()*500,6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*2.4,t+.005);g.gain.setTargetAtTime(0,t+.006,.012);s.connect(b).connect(g).connect(DST)}
-  function brush(t,v){const s=noiseSrc(t,.5),b=biq("bandpass",3400,.6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.setTargetAtTime(0,t+.04,.07);s.connect(b).connect(g).connect(DST)}
+  function wood(t,v){t=lt(t);const s=noiseSrc(t,.09),b=biq("bandpass",1300+Math.random()*500,6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*2.4,t+.005);g.gain.setTargetAtTime(0,t+.006,.012);s.connect(b).connect(g).connect(DST)}
+  function brush(t,v){t=lt(t);const s=noiseSrc(t,.5),b=biq("bandpass",3400,.6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.setTargetAtTime(0,t+.04,.07);s.connect(b).connect(g).connect(DST)}
   /* a sound that travels from one ear to the other while it plays */
   function panTo(a,b,t,dur,rv,ds){const p=ac.createStereoPanner();p.pan.setValueAtTime(a,t);p.pan.linearRampToValueAtTime(b,t+dur);p.connect(send(rv,ds));return p}
   /* wind through an empty street, far off */
-  function wind(t,dur,v,p0,p1){const s=noiseSrc(t,dur+1),b=biq("bandpass",400,4),g=gn(0),p=ac.createStereoPanner();
+  function wind(t,dur,v,p0,p1){t=lt(t);const s=noiseSrc(t,dur+1),b=biq("bandpass",400,4),g=gn(0),p=ac.createStereoPanner();
     b.frequency.setValueAtTime(300+300*rnd(),t);b.frequency.linearRampToValueAtTime(700+500*rnd(),t+dur*.6);b.frequency.linearRampToValueAtTime(350,t+dur);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+dur*.5);g.gain.linearRampToValueAtTime(0,t+dur);p.pan.setValueAtTime(p0,t);p.pan.linearRampToValueAtTime(p1,t+dur);
     s.connect(b).connect(g).connect(p).connect(send(.8,.1))}

@@ -1324,3 +1324,58 @@ The keys and what they do are shown in an orderly fashion to the player
 
 (Piano keyboard mode: Space flats as well as Alt, C sharps as well as Shift, Escape gets up from the piano; a neat
 legend of the four rows and these keys shows on the keyboard on a computer.)
+
+## A starry night sky map, word for word (2026-10-25)
+
+Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.
+
+Yeah, i like these two new versions of the song a lot, now we can just add them to the game BUT make sure any high pitch notes or flutes arent too shriekish or ear piercing along with any other notes, like round the sound a little on some of those notes if need be too. THEN we NEED to deal with any popping noises still
+
+(Done: high notes in every voice are a touch softer, as the ear hears them louder; the pan flute and the ocarina are
+darker; the whole mix has a soft dip at 3 kHz, where shrill notes hurt. Every song measured 2.5 to 6.5 dB less shrill at
+its sharpest moment, at the same loudness. No hard clicks were found in any recording; the low notes of the kalimba,
+marimba and harps and the thump drum now come in a little slower, as a round "dum" instead of a pop, and a note played
+live whose moment has just gone by starts with its full soft shape. The owner was asked where they still hear pops.)
+
+## Specials: dagger, aiming, ducklings, disco ball (2026-10-25)
+
+dagger is one, and it throws a dagger that eventually curves down and falls off screen, causing the dead effect on every duck it hits. 
+
+ALSO NOW the direction of your mouse ON PC determines the direction the bullet or dagger goes into, and the dagger or gun moves around the duck when it is aimed. You can toggle the gun or dagger to keep it out and simply use left quick to use the weapon while it is out.
+
+Ducklings is a good idea for one
+
+disco ball is good
+
+Round lord doesnt play the effects anymore tbh.
+
+(Done: the Dagger is a new item. Its key throws it toward the mouse: it spins in a low arc, never over a duck's head, so
+every duck in its way plays dead until it moves, then it falls down off the screen. The handgun's bullet flies toward
+the mouse too. While aiming, the gun or the dagger turns around the duck to point at the mouse, and everyone sees it.
+Shift and the key keeps the weapon out (its key turns green); then a left click on the board shoots or throws, and Shift
+and the key puts it away. Both stay off when the host turns off the silly commands. Phones have no mouse: a weapon
+fires the way the duck faces. Ducklings: three little ducklings walk in a row behind you along your path. Disco ball: a
+disco ball spins over your head, its colored beams and spots sweeping over you. Both are effects (5 seconds, or kept on
+with Shift) and take Primary, Secondary and Accent colors; the Dagger takes three colors too. The Round Lord's cloud,
+the winner of a match and the podium no longer play the first effect on a duck's keys; effects only come from the keys.)
+
+## The host types sudo too (2026-10-25)
+
+the host should still have to use sudo btw
+
+Decision: the host stays in sudo for good (never "not in the sudoers file"), but like every sudo player types the word:
+`sudo groupadd …`, `sudo skip`, `sudo map sky`, `sudo song off Glow`. Without it, a sudo command answers "Permission
+denied (put sudo in front: sudo groupadd …)", and `sudo !!` fixes it. A group given a perm (canskip, canmute, cankick,
+cansettings) still types its command alone, since it isn't in sudo. The Help pages and man pages show sudo in front.
+
+## Specials: the number-key row on a touchscreen laptop (2026-10-25)
+
+i have a laptop with a stupid touchscreen built into the  laptop monitor i cant turn off, but maybe that is what is hiding the number key display for the specials
+
+(Yes: the row hid on any screen that told the page it was a touch screen, and a touchscreen laptop in Edge can say that.
+Now it hides only when there is no mouse or touchpad at all, and it shows anyway as soon as a key is pressed or a
+touchpad or mouse moves. Phones and tablets still have no row. Customize → Specials uses the same check for its words.)
+
+(From the specials thread, the owner: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
+turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
+phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)

@@ -61,6 +61,7 @@ export const sfx = {
   chomp() { for (let i = 0; i < 4; i++) noise(.07, { gain: .09, type: 'bandpass', freq: 700 + i * 80, q: 1.2, at: i * .2 }); },
   splash() { noise(.8, { gain: .07, type: 'highpass', freq: 2600, slideTo: 5200 }); },
   pop() { noise(.12, { gain: .12, type: 'bandpass', freq: 1800, q: .7 }); tone(880, .14, { gain: .06, at: .05, slide: 1.5 }); },
+  swish() { noise(.32, { gain: .07, type: 'bandpass', freq: 700, q: 1.4, slideTo: 3400 }); noise(.22, { gain: .04, type: 'bandpass', freq: 2600, q: 1, at: .16, slideTo: 900 }); },   // a dagger thrown, spinning away
   bang() { noise(.25, { gain: .2, type: 'lowpass', freq: 2200, slideTo: 200 }); tone(110, .3, { type: 'square', gain: .05, slide: .5 }); },
   fall() { tone(1500, 1.2, { type: 'sine', gain: .07, slide: .22, attack: .03 }); tone(1520, 1.2, { type: 'triangle', gain: .03, slide: .22, attack: .03 }); },   // a slide whistle, falling
   quack() { tone(520, .14, { type: 'sawtooth', gain: .07, slide: .7 }); tone(480, .18, { type: 'sawtooth', gain: .07, at: .18, slide: .6 }); },

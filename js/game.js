@@ -22,14 +22,14 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
-  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, isHang } from './rules.js';
+  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, isHang } from './rules.js';
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
-import { specialById, keysOf, hasKey, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
+import { specialById, keysOf, hasKey, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, heldHTML, daggerHTML, DUCKLING } from './specials.js';
 import { mountHotbar } from './hotbar.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontHTML } from './name.js';
@@ -63,6 +63,8 @@ let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again)
 const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
+let held = null, mouse = null;   // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
+let shows = {};                  // a handgun just fired, shown turned toward its aim for a moment: by player id
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 let draftT = 0;
@@ -202,6 +204,24 @@ function unplace(px, py) {   // the inverse, for clicks
   return { x: cl(px / W), y: cl((py - size * 1.08) / (H - size * 1.08 - labelH)) };
 }
 
+/* where a duck has walked (on the board, newest first), for its ducklings */
+function trail(d, pos) {
+  const path = d._trail || (d._trail = []), last = path[0];
+  if (pos.x < 0) return;
+  if (!last || Math.hypot(pos.x - last.x, (pos.y - last.y) * .4) > .004) { path.unshift({ x: pos.x, y: pos.y }); if (path.length > 60) path.length = 60; if (last) d._walk = clockNow(); }
+}
+/* the spot dist pixels back along a duck's path from its feet (at), and which way it faces there */
+function along(path, at, dist, face) {
+  let px = at.left, py = at.top, left = dist;
+  for (const p of path) {
+    const q = place(p, 0, 1), dx = q.left - px, dy = q.top - py, d = Math.hypot(dx, dy);
+    if (d < .5) continue;
+    if (d >= left) { const k = left / d; return { left: px + dx * k, top: py + dy * k, face: Math.abs(dx) > 1 ? (dx < 0 ? 1 : -1) : face }; }
+    left -= d; px = q.left; py = q.top; if (Math.abs(dx) > 1) face = dx < 0 ? 1 : -1;
+  }
+  return { left: px - face * left, top: py, face };   // (a short path: on behind, in a line)
+}
+
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
 const SQ = { l: ['0% 100%', .8, 1.12], r: ['100% 100%', .8, 1.12], u: ['50% 0%', 1.12, .84], d: ['50% 100%', 1.14, .82] };
 function drawDucks(now = clockNow()) {
@@ -213,7 +233,7 @@ function drawDucks(now = clockNow()) {
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
   const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
-  const boxes = [], puffs = [], wearsX = new Set();
+  const boxes = [], puffs = [], wearsX = new Set(), brood = [], arms = [];
   /* Who is the Quack?'s reveal keeps its news for the drumroll: who was voted out goes grey after it, the last duck plays dead after that */
   const wq = isQuack(s) && s.wq, rt = wq && s.phase === 'reveal' && wq.lastOut ? now - s.at : 1e9;
   const greyNow = id => wq && isGrey(s, id) && !(id === wq.lastOut && rt < 3200) && !((wq.dead || []).includes(id) && rt < 6100) && !(wq.result && wq.result.quacks.includes(id));
@@ -260,9 +280,12 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('idle', !!p.idle);   // gone quiet: Zs float up
     /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one */
     const auras = [];
-    for (const [k, u] of Object.entries((s.aura || {})[id] || {})) if (!u || u > now) { if (k === 'loserx') wearsX.add(id); else auras.push(k); }
+    for (const [k, u] of Object.entries((s.aura || {})[id] || {})) if (!u || u > now) { if (k === 'loserx') wearsX.add(id); else if (k === 'ducklings') brood.push([id, pos, at, p.duck]); else auras.push(k); }
     const au = auras.sort().join();
     if (d._aura !== au) { d._aura = au; const a = d.querySelector('.gduck-aura'); if (a) a.innerHTML = auras.map(k => momentHTML(k, p.duck)).join(''); }
+    trail(d, pos);   // (where it walked: the ducklings follow it)
+    const w = (mine ? held && hasKey(p.duck, held) && held : pos.w) || (shows[id] && now < shows[id].until && shows[id].what !== 'dagger' && shows[id].what);   // (a dagger thrown without keeping it out: only the one in the air)
+    if (w) arms.push([id, w, pos, p.duck, mine]);
     if (pos.dj && d._dj !== pos.dj) { d._dj = pos.dj; if (now - pos.dj < 700) puffs.push([at.left, at.top - z, (colorsOf(p.duck, 'double')[0])]); }   // a double jump: a little cloud where it began
     const lx = losers.has(id) || wearsX.has(id); if (d._lx !== lx) { d._lx = lx; d.classList.toggle('loser', lx); }   // the Loser's X special
     const gr = !!greyNow(id); if (d._gr !== gr) { d._gr = gr; d.classList.toggle('grey', gr); }   // Who is the Quack?: out this round
@@ -278,17 +301,55 @@ function drawDucks(now = clockNow()) {
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
-  /* the handgun's bullets, flying across the board */
+  /* the handgun's bullets and the thrown daggers, flying the way they were aimed */
   const fxl = $('.fxl', board), live = new Set();
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
   for (const sh of s.shots || []) {
-    const x = sh.x0 + sh.dir * SHOT_SPEED * (now - sh.t) / 1000; if (x < -.3 || x > 1.3) continue;   // (it flies on past the board)
+    if (!sh.k) continue;
+    const at = shotAt(sh, now - sh.t), a = place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;
+    if (a.left < -geo.W * .4 || a.left > geo.W * 1.4 || top > geo.top0 + geo.H + size * 6 || top < -geo.H) continue;   // (off the screen)
     live.add(String(sh.n));
-    let b = fxl.querySelector(`.bullet[data-n="${sh.n}"]`);
-    if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET(colorsOf((s.players[sh.by] || {}).duck, 'handgun')[2])}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
-    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .41 - 7).toFixed(1)}px)`;   // out of the gun's barrel (the bullet is 14px tall)
+    let b = fxl.querySelector(`[data-n="${sh.n}"]`);
+    if (!b) {
+      const duck = (s.players[sh.by] || {}).duck, [vx, vy] = toScreen(sh.vx, sh.vy);
+      b = sh.k === 'dagger' ? el(`<div class="thrown" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? 'ccw' : ''}">${daggerHTML(duck)}</i></div>`)
+        : el(`<div class="bullet" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, 'handgun')[2])}</div>`);
+      fxl.append(b);
+    }
+    b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
   }
-  fxl.querySelectorAll('.bullet').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
+  fxl.querySelectorAll('.bullet, .thrown').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
+  /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
+  const handed = new Set();
+  for (const [id, w, pos, duck, mine] of arms) {
+    const c = bodyAt(id, pos, now), sh = shows[id] && now < shows[id].until ? shows[id] : null;
+    let dir = null;
+    if (mine && mouse) { const r = board.getBoundingClientRect(); dir = [mouse.x - r.left - c.left, mouse.y - r.top - c.top]; }
+    else if (sh && (!pos.w || mine)) dir = toScreen(sh.ax, sh.ay);
+    else if (pos.ax !== undefined) dir = toScreen(pos.ax, pos.ay);
+    const dk = layer.querySelector(`[data-pid="${CSS.escape(id)}"]`), ang = dir && Math.hypot(dir[0], dir[1]) > 1 ? Math.atan2(dir[1], dir[0]) : dk && dk._face < 0 ? Math.PI : 0;
+    handed.add(id);
+    let h = fxl.querySelector(`.held[data-pid="${id}"]`);
+    if (!h || h.dataset.w !== w) { if (h) h.remove(); h = el(`<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${size.toFixed(0)}px"><i>${heldHTML(w, duck)}</i></div>`); fxl.append(h); }
+    const left = Math.cos(ang) < 0, tr = `translate(${c.left.toFixed(1)}px, ${c.top.toFixed(1)}px) rotate(${ang.toFixed(3)}rad) translateX(${(size * .42).toFixed(1)}px) scaleY(${left ? -1 : 1})`;
+    if (h._tr !== tr) { h._tr = tr; h.style.transform = tr; }
+    h.classList.toggle('thrown-now', w === 'dagger' && !!sh && now < sh.until - 500);   // (the dagger just thrown: a new one comes to hand)
+  }
+  fxl.querySelectorAll('.held').forEach(h => { if (!handed.has(h.dataset.pid)) h.remove(); });
+  /* ducklings: three in a row behind their duck, along the way it walked */
+  const kids = new Set();
+  for (const [id, pos, at, duck] of brood) {
+    const d = layer.querySelector(`[data-pid="${id}"]`), path = (d && d._trail) || [];
+    for (let i = 0; i < 3; i++) {
+      const spot = along(path, at, (i + 1) * size * .4, d ? d._face : 1), key = id + ' ' + i; kids.add(key);
+      let k = layer.querySelector(`.duckling[data-k="${CSS.escape(key)}"]`);
+      if (!k) { k = el(`<div class="duckling" data-k="${esc(key)}" style="--s:${size.toFixed(0)}px;--i:${i}"><i>${DUCKLING(colorsOf(duck, 'ducklings'))}</i></div>`); layer.append(k); }
+      const tr = `translate(${spot.left.toFixed(1)}px, ${spot.top.toFixed(1)}px) scaleX(${spot.face})`;
+      if (k._tr !== tr) { k._tr = tr; k.style.transform = tr; k.style.zIndex = Math.round(spot.top); }
+      k.classList.toggle('walk', !!(d && d._walk && now - d._walk < 200));
+    }
+  }
+  layer.querySelectorAll('.duckling').forEach(k => { if (!kids.has(k.dataset.k)) k.remove(); });
   let mark = layer.querySelector('.touch-mark');
   if (target && target.mark) {
     if (!mark) { mark = el('<div class="touch-mark"></div>'); layer.prepend(mark); }
@@ -414,6 +475,7 @@ function playFx(f) {
   } else if (f.kind === 'use') {   // an item at its duck, moving with it (drawDucks places it each frame)
     if (f.what === 'confetti') { confettiRain(4500); return; }   // confetti over everyone's screen
     if (!spot(f.by)) return;
+    if (WEAPONS.includes(f.what)) { shows[f.by] = { what: f.what, until: now + (f.what === 'dagger' ? 900 : 1400), ax: f.ax || f.face || 1, ay: f.ay || 0 }; (f.what === 'dagger' ? sfx.swish : sfx.bang)(); return; }   // (it turns toward the aim; the bullet or the dagger flies from the room's state)
     const wrap = el('<div class="spe-follow"></div>');
     wrap.append(...pressFX(f.what, 0, 0, size, f.face || 1, (s.players[f.by] || {}).duck));
     fxl.append(wrap); follows.push({ id: f.by, el: wrap, until: now + 2200 });
@@ -443,14 +505,42 @@ function xBounds() {
   if (roams()) return [.03, .97];
   return colBoundsAt(s, s.lock[R.me]);
 }
+/* aiming: the board's directions on the screen. place() is straight lines on the board, so two steps from the middle
+   give how far a step across (x) and a step down (y) the board moves on the screen */
+function axes() {
+  const o = place({ x: .5, y: .5 }, 0, 1), a = place({ x: .6, y: .5 }, 0, 1), b = place({ x: .5, y: .6 }, 0, 1);
+  return [(a.left - o.left) * 10, (a.top - o.top) * 10, (b.left - o.left) * 10, (b.top - o.top) * 10];
+}
+const toScreen = (ax, ay) => { const [xx, xy, yx, yy] = axes(); return [xx * ax + yx * ay, xy * ax + yy * ay]; };
+/* a direction on the screen, as a direction on the board one board width long (on this screen) */
+function toBoard(dx, dy) {
+  const [xx, xy, yx, yy] = axes(), det = xx * yy - yx * xy, d = Math.hypot(dx, dy); if (!det || !d) return null;
+  const k = geo.W / d, ax = (yy * dx - yx * dy) / det * k, ay = (-xy * dx + xx * dy) / det * k;
+  return [+ax.toFixed(3), +ay.toFixed(3)];
+}
+/* the middle of my duck on the screen (where a weapon turns around), and where it aims: at the mouse on a computer,
+   else the way it faces */
+function bodyAt(id, pos, now = clockNow()) {
+  const lane = R.state.seat.filter(i => R.state.pos[i] && (i === R.me && me ? me : R.state.pos[i]).x < 0);
+  const at = place(pos, lane.indexOf(id), lane.length); return { left: at.left, top: at.top - (jumpZ(pos, now) + .45) * geo.size };
+}
+function myAim() {
+  const face = turned() ? 1 : (me && me.face) || 1;
+  if (!geo || !me) return [face, 0];
+  if (!mouse) return toBoard(face, 0) || [face, 0];
+  const board = origin($('.board', S)); if (!board) return [face, 0];
+  const r = board.getBoundingClientRect(), c = bodyAt(R.me, me);
+  return toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top) || [face, 0];
+}
 function sendMove(force) {
   if (!me) return;
   const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
+  const w = held && hasKey(myDuck(), held) ? held : '', aim = w ? myAim() : null;   // a weapon kept out: where it aims, roughly
   const hz = world && isHang(R.state) ? { z: Math.round(me.z || 0), b: Math.round(me.b || 0) } : null;   // Hangout: how high its feet are, where its jump began
-  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, hz && hz.z, me.tb].join();
+  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, w, aim && Math.round(Math.atan2(aim[1], aim[0]) * 20), hz && hz.z, me.tb].join();
   if (!force && (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) || msg === lastSent)) return;   // online: less often (Data saving, Poor connection: less still)
   lastSend = now; lastSent = msg;
-  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), ...(me.j && me.tb ? { tb: me.tb } : {}), q, sp: sprinting && moving, ...hz });
+  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), ...(me.j && me.tb ? { tb: me.tb } : {}), q, sp: sprinting && moving, ...(w ? { w, ax: aim[0], ay: aim[1] } : {}), ...hz });
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
@@ -782,9 +872,9 @@ function recordRound(s) {
 
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the effects kept on for my duck (in the room's state), and the jumps kept on here */
+/* the effects kept on for my duck (in the room's state), and the jumps and the weapon kept on here */
 function keptNow() {
-  const out = new Set([...kept].filter(id => hasKey(myDuck(), id))), a = ((R && R.state.aura) || {})[R && R.me] || {};
+  const out = new Set([...kept, ...(held ? [held] : [])].filter(id => hasKey(myDuck(), id))), a = ((R && R.state.aura) || {})[R && R.me] || {};
   for (const [id, u] of Object.entries(a)) if (u === 0) out.add(id);
   return out;
 }
@@ -796,9 +886,17 @@ function useKey(i, keep) {
   lastKey = i;
   if (sp.kind === 'effect') R.send({ t: 'aura', what: id, keep: !!keep });
   else if (sp.kind === 'jump') { if (keep) { kept.has(id) ? kept.delete(id) : kept.add(id); } else jump(id === 'longjump' ? 'long' : 'double'); }
+  else if (WEAPONS.includes(id) && keep) { held = held === id ? null : id; sendMove(true); }   // the handgun or the dagger: kept out (a left click uses it) or put away
+  else if (WEAPONS.includes(id)) fire(id);
   else if (me && me.x >= 0) R.send({ t: 'use', what: id, face: turned() ? 1 : (me.face || 1) });   // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
+/* the handgun or the dagger, toward the mouse */
+function fire(id) {
+  if (!me || me.x < 0 || !R || !onBoardPhase()) return;
+  const [ax, ay] = myAim(); R.send({ t: 'use', what: id, face: ax < 0 ? -1 : 1, ax, ay });
+}
+const aimAt = e => { mouse = { x: e.clientX, y: e.clientY }; };   // (the handgun and the dagger aim at the mouse)
 const KEY_CODES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 const keyIndex = e => { const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code); return m ? KEY_CODES.indexOf(m[1]) : -1; };
 
@@ -1206,7 +1304,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; if (world) world.destroy(); world = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (bar) bar.destroy(); bar = null; if (mbarOff) mbarOff(); mbarOff = null; lastKey = -1; kept.clear();
+    if (bar) bar.destroy(); bar = null; if (mbarOff) mbarOff(); mbarOff = null; lastKey = -1; kept.clear(); held = null; shows = {}; mouse = null; removeEventListener('mousemove', aimAt);
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
     for (const t of ['pointerup', 'pointercancel']) removeEventListener(t, unpeek);
@@ -1221,6 +1319,7 @@ register('game', {
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey });
+    addEventListener('mousemove', aimAt);
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen() && !(world && world.grabbing()), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
     S.addEventListener('pointerdown', e => { if (e.target.closest('.wq-card.mine')) { e.preventDefault(); peek(true); } });
@@ -1228,6 +1327,7 @@ register('game', {
     S.addEventListener('click', e => {
       const b = e.target.closest('[data-a]');
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
+      if (held && hasKey(myDuck(), held) && e.button === 0 && onBoardPhase() && e.target.closest('.board') && !e.target.closest('button, a, input, textarea, .topover, .sc-write, .wq-card')) { fire(held); return; }   // a weapon kept out: a left click uses it
       const mc = e.target.closest('[data-col]'); if (mc) { jumpTo(+mc.dataset.col); return; }
       const tc = e.target.closest('[data-topic]'); if (tc) { R.send({ t: 'pick', i: +tc.dataset.topic }); return; }
       const lc = e.target.closest('.law-cand'); if (lc) { R.send({ t: 'counsel', role: lc.dataset.role, who: lc.dataset.who }); return; }

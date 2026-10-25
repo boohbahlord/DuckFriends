@@ -7,7 +7,7 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast, onMenu, el, navSig, refocus } from './ui.js';
-import { SPECIALS, KEYS, specialById, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET } from './specials.js';
+import { SPECIALS, KEYS, specialById, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, daggerHTML } from './specials.js';
 import { sfx } from './sound.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
@@ -108,8 +108,10 @@ export function openCustomize(page = lastPage) {
           const els = pressFX(id, x, y, w.width, 1, profile.duck);
           /* the handgun: its slow bullet crosses the whole preview */
           if (id === 'handgun') els.push(el(`<div class="spe spe-shot" style="left:${(x + w.width * .62).toFixed(0)}px;top:${(y - w.width * .48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(profile.duck, 'handgun')[2])}</div>`));
+          /* the dagger: thrown from the beak, it spins up and over and falls away */
+          if (id === 'dagger') els.push(el(`<div class="spe spe-dthrow" style="left:${(x + w.width * .4).toFixed(0)}px;top:${(y - w.width * .55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${daggerHTML(profile.duck)}</i></b></div>`));
           pic.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2400);
-          ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, sound: sfx.quack, trombone: sfx.trombone })[id]?.();
+          ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, dagger: sfx.swish, sound: sfx.quack, trombone: sfx.trombone })[id]?.();
         }
       };
       const changed = (redraw = true) => {
@@ -168,7 +170,7 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'specials') {
           /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
              special's tile opens a box for each key right under it */
-          const keys = keysOf(D), open = specialById(keyFor), phone = matchMedia('(hover: none) and (pointer: coarse)').matches;
+          const keys = keysOf(D), open = specialById(keyFor), phone = !matchMedia('(any-pointer: fine)').matches;   // (only a touch screen: a touchscreen laptop has a touchpad too)
           const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
           const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(x => {
             const at = keys.indexOf(x.id), opened = x.id === keyFor;
