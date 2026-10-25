@@ -982,7 +982,8 @@ perma-notes hold 100,000 characters in all and say so when full; finger names ha
 HelpHelp; `send @everyone` alone shows how to use it; and the 12 small ones (history, `tail -n -5`, group name errors,
 `adduser group player`, `sudo -v -h -i -u`, `sudo true`, /usr paths, `${#var}` `${var:-x}`, read, xargs, paste,
 `grep -r`, a redirect after a loop, `yes`, names without spaces, long lines say they were cut). A group with nosend
-can't use `write` either. Asked the owner whether aliases should stay on the device for good.
+can't use `write` either. Aliases stay on the device from game to game, like a .bashrc (the coordinator decided while
+the owner was asleep); HelpBash and man alias say so.
 
 ## Music: phones, the slider, quieter, crackling, Spring in a Box (2026-10-25)
 

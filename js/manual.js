@@ -19,7 +19,7 @@ export const MAN = {
   false: 'false: does nothing, and fails ($? is 1).',
   test: 'test expression, or [ expression ]: works (0) or fails (1). -f file, -d folder, -e either, -s not empty, -z word (empty), -n word (not empty), a = b, a != b, numbers with -eq -ne -lt -le -gt -ge, ! to flip, -a and -o for and, or. if [ -f plan ]; then cat plan; fi',
   '[': '[ expression ]: the same as test.',
-  alias: 'alias [name=\'words\']: your own short names for commands, kept on this device (alias zap=\'lightning\'); alias alone lists them.',
+  alias: 'alias [name=\'words\']: your own short names for commands, kept on this device from game to game, like a .bashrc (alias zap=\'lightning\'); alias alone lists them, unalias name forgets one.',
   unalias: 'unalias name (-a: all): forgets an alias.',
   type: 'type name: what a name is: an alias, a keyword, a builtin or a command in /bin.',
   which: 'which name: where a command lives (/bin; nobody can open it, not even the host).',

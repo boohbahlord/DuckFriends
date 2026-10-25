@@ -365,7 +365,7 @@ const PAGES = [
       ['… | xargs command', 'runs the command with the words that came in'],
       ['for …; done > file', 'a loop\'s output into a file'],
       ['if …; then …; else …; fi', 'one part or the other'],
-      ['alias name=\'words\'', 'your own short name for a command, kept on this device'],
+      ['alias name=\'words\'', 'your own short name for a command, kept on this device from game to game (alias lists them; unalias name forgets one, unalias -a all)'],
       ['source file', 'runs the commands written in a file, line by line'],
       ['# words', 'a note: the rest of the line is skipped'],
     ],
