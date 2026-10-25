@@ -1,43 +1,74 @@
 /* ---------- Specials ----------
-   One special per duck, picked under Customize → Specials (it travels with the duck's look):
-   - moment specials play around the duck's head while it's the Round Lord on the cloud (and, later, when it wins and on
-     the podium): electricity, flames, floating hearts, a poison cloud, music notes, confetti over the screen, or a red X
-     that follows a duck that loses in brackets;
-   - Long jumps: always on, more airtime;
-   - E specials: press E (or the E button) on the board: coffee, a water gun, a hotdog, a confetti gun, a handgun whose
-     slow bullet knocks ducks down (they play dead until they move), or a sound. */
+   Each special sits on a number key, 1 to 9 or 0, picked under Customize → Specials (the keys travel with the duck's look):
+   - effects (electricity, flames, hearts, a poison cloud, music notes, the Loser's X): their key shows them around the
+     duck's head for 5 seconds, seen by everyone; Shift and the key keeps one on until Shift and the key again. They also
+     play by themselves on the cloud while the duck is the Round Lord, when it wins and on the podium (the first effect on
+     the keys), and the Loser's X follows a duck that loses in brackets;
+   - jumps: the Long jump's key does a long jump (Shift and the key: every jump is long); the Double jump's key jumps
+     again in the air, once a jump, with a small see-through cloud (Shift and the key: Space does it too);
+   - items, used with their key: coffee, a water gun, a hotdog, a confetti gun, a handgun whose slow bullet knocks ducks
+     down (they play dead until they move), a sound, a trombone's sour note, or confetti over everyone's screen.
+   On a phone, holding still on the board brings the specials around the finger (see hotbar.js). Effects and items take
+   up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from './ui.js';
 export { SHOT_SPEED } from './rules.js';
 
+/* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
+const BONE = ([a, b]) => {
+  const tube = (d, w) => `<path d="${d}" fill="none" stroke="#5a3d00" stroke-width="${w + 1.4}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${a}" stroke-width="${w}" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 64 28"><path d="M0 12.6h3.4v4.8H0Z" fill="${b}" stroke="#5a3d00" stroke-width="1"/>${tube('M3 15H30M12 22H30', 1.8)}
+    <g class="bone-slide">${tube('M24 15H52a3.5 3.5 0 0 1 0 7H24', 2.4)}<path d="M40 15v7" stroke="#5a3d00" stroke-width="1.6"/></g>
+    ${tube('M12 22H8a3.5 3.5 0 0 1-3.5-3.5V9A3.5 3.5 0 0 1 8 5.5H22', 2.2)}
+    <path d="M21 4.2L36 .6V11.9L21 6.8Z" fill="${a}" stroke="#5a3d00" stroke-width="1" stroke-linejoin="round"/><ellipse cx="36" cy="6.25" rx="1.8" ry="5.9" fill="${b}" stroke="#5a3d00" stroke-width="1"/>
+    <path d="M24 4.6L33 2.4" stroke="#fff" stroke-width=".9" opacity=".6"/></svg>`;
+};
+const P = 'Primary', S2 = 'Secondary', A = 'Accent';
 export const SPECIALS = [
-  { id: 'zap', name: 'Electricity', kind: 'moment', icon: '⚡', tip: 'Sparks crackle over your head while you are the Round Lord, when you win, and on the podium.' },
-  { id: 'flames', name: 'Flames', kind: 'moment', icon: '🔥', tip: 'Your head burns with dancing flames while you are the Round Lord, when you win, and on the podium.' },
-  { id: 'hearts', name: 'Hearts', kind: 'moment', icon: '💕', tip: 'Hearts float around your head while you are the Round Lord, when you win, and on the podium.' },
-  { id: 'poison', name: 'Poison cloud', kind: 'moment', icon: '☠️', tip: 'A green cloud swirls around your head while you are the Round Lord, when you win, and on the podium.' },
-  { id: 'notes', name: 'Music notes', kind: 'moment', icon: '🎵', tip: 'Music notes float around your head while you are the Round Lord, when you win, and on the podium.' },
-  { id: 'confetti', name: 'Confetti rain', kind: 'moment', icon: '🎊', tip: 'Confetti rains over everyone\'s screen for a few seconds when your question comes up, when you win, and on the podium.' },
-  { id: 'loserx', name: 'Loser\'s X', kind: 'moment', icon: '❌', tip: 'Lose in Bicker Brackets and a big red X follows your duck around.' },
-  { id: 'longjump', name: 'Long jumps', kind: 'always', icon: '🦘', tip: 'Your jumps float longer and a little higher.' },
-  { id: 'coffee', name: 'Coffee', kind: 'press', icon: '☕', tip: 'Press E (or the E button) on the board: your duck sips coffee from a mug.' },
-  { id: 'watergun', name: 'Water gun', kind: 'press', icon: '💦', tip: 'Press E on the board: your duck sprays a water gun the way it faces.' },
-  { id: 'hotdog', name: 'Hotdog', kind: 'press', icon: '🌭', tip: 'Press E on the board: your duck munches a hotdog, crumbs flying.' },
-  { id: 'confgun', name: 'Confetti gun', kind: 'press', icon: '🎉', tip: 'Press E on the board: a burst of confetti the way your duck faces.' },
-  { id: 'handgun', name: 'Handgun', kind: 'press', icon: '🔫', tip: 'Press E on the board: a slow bullet crosses the board; any duck it passes through plays dead until it moves. (Off when the host turns off the silly commands.)' },
-  { id: 'sound', name: 'Sound', kind: 'press', icon: '🔊', tip: 'Press E on the board: everyone hears your sound.' },
+  { id: 'zap', name: 'Electricity', kind: 'effect', icon: '⚡', tip: 'Sparks crackle over your head.', colors: [['a', P, '#fff36a'], ['b', S2, '#2fa4ff'], ['c', A, '#7fd0ff']] },
+  { id: 'flames', name: 'Flames', kind: 'effect', icon: '🔥', tip: 'Your head burns with dancing flames.', colors: [['a', P, '#ff5a1a'], ['b', S2, '#ffb347'], ['c', A, '#fff2b0']] },
+  { id: 'hearts', name: 'Hearts', kind: 'effect', icon: '💕', tip: 'Hearts float around your head.', colors: [['a', P, '#ff4f8b']] },
+  { id: 'poison', name: 'Poison cloud', kind: 'effect', icon: '☠️', tip: 'A green cloud swirls around your head.', colors: [['a', P, '#8cff6a'], ['b', S2, '#3fae2a']] },
+  { id: 'notes', name: 'Music notes', kind: 'effect', icon: '🎵', tip: 'Music notes float around your head.', colors: [['a', P, '#ffffff'], ['b', S2, '#9b5de5']] },
+  { id: 'loserx', name: 'Loser\'s X', kind: 'effect', icon: '❌', tip: 'A big red X over your duck. It also follows you when you lose in Bicker Brackets.', colors: [['a', P, '#ef3b3b']] },
+  { id: 'longjump', name: 'Long jump', kind: 'jump', icon: '🦘', tip: 'Its key does a long jump: longer and a little higher. Shift and the key: every jump is long.' },
+  { id: 'double', name: 'Double jump', kind: 'jump', icon: '☁️', tip: 'In the air, its key jumps again off a little cloud, once a jump. Shift and the key: Space does it too.', colors: [['a', P, '#ffffff']] },
+  { id: 'coffee', name: 'Coffee', kind: 'item', icon: '☕', tip: 'Your duck sips coffee from a mug.', colors: [['a', P, '#f4f1ea'], ['b', S2, '#6b3e1e']] },
+  { id: 'watergun', name: 'Water gun', kind: 'item', icon: '💦', tip: 'Your duck sprays a water gun the way it faces.', colors: [['a', P, '#2fa4ff'], ['b', S2, '#ffd23f'], ['c', A, '#7fd0ff']] },
+  { id: 'hotdog', name: 'Hotdog', kind: 'item', icon: '🌭', tip: 'Your duck munches a hotdog, crumbs flying.' },
+  { id: 'confgun', name: 'Confetti gun', kind: 'item', icon: '🎉', tip: 'A burst of confetti the way your duck faces.' },
+  { id: 'handgun', name: 'Handgun', kind: 'item', icon: '🔫', tip: 'A slow bullet crosses the board; any duck it passes through plays dead until it moves. (Off when the host turns off the silly commands.)', colors: [['a', P, '#2b2d35'], ['b', S2, '#5a3a22'], ['c', A, '#c9a24a']] },
+  { id: 'sound', name: 'Sound', kind: 'item', icon: '🔊', tip: 'Everyone hears your sound.', colors: [['a', P, '#ffffff']] },
+  { id: 'trombone', name: 'Trombone', kind: 'item', icon: BONE(['#e8b73a', '#fff2b0']), tip: 'Your duck plays the trombone. Every note comes out wrong.', colors: [['a', P, '#e8b73a'], ['b', S2, '#fff2b0']] },
+  { id: 'confetti', name: 'Confetti rain', kind: 'item', icon: '🎊', tip: 'Confetti rains over everyone\'s screen. It also rains when your question comes up, when you win, and on the podium.' },
 ];
 export const specialById = id => SPECIALS.find(x => x.id === id) || null;
-export const pressSpecial = id => { const x = specialById(id); return x && x.kind === 'press' ? x : null; };
+export const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];   // the number keys, in the order of the row
+/* a duck's ten keys: a special's id or null on each (a duck from before the keys had one special: it is on key 1) */
+export function keysOf(duck) {
+  const d = duck || {}, k = Array.isArray(d.keys) ? d.keys : [d.special];
+  return KEYS.map((_, i) => specialById(k[i]) ? k[i] : null);
+}
+export const hasKey = (duck, id) => keysOf(duck).includes(id);
+/* the effect that plays by itself on the cloud, when winning and on the podium: the first one on the keys */
+export const firstEffect = duck => keysOf(duck).find(id => id && id !== 'loserx' && specialById(id).kind === 'effect') || null;   // (the Loser's X is for losing)
+/* a special's colors on a duck: [Primary, Secondary, Accent], each the duck's own or the special's */
+const HEX = /^#[0-9a-f]{3,8}$/i;
+export function colorsOf(duck, id) {
+  const sp = specialById(id), mine = ((duck || {}).spc || {})[id] || {};
+  return ((sp && sp.colors) || []).map(([k, , def]) => HEX.test(mine[k]) ? mine[k] : def);
+}
+const vars = c => c.map((v, i) => `--k${i + 1}:${v}`).join(';');
 
-/* a moment special around a duck's head (sits over the duck picture; the head is up and to the right) */
-export function momentHTML(id) {
-  const n = (k, f) => Array.from({ length: k }, (_, i) => f(i)).join('');
+/* an effect around a duck's head (sits over the duck picture; the head is up and to the right) */
+export function momentHTML(id, duck) {
+  const n = (k, f) => Array.from({ length: k }, (_, i) => f(i)).join(''), st = `style="${vars(colorsOf(duck, id))}"`;
   switch (id) {
-    case 'zap': return `<span class="spx spx-zap">${n(3, i => `<svg viewBox="0 0 40 60" style="--i:${i}"><path d="M22 0L8 30h12L12 60l22-36H20L30 0Z"/></svg>`)}</span>`;
-    case 'flames': return `<span class="spx spx-flames">${n(4, i => `<i style="--i:${i}"></i>`)}</span>`;
-    case 'hearts': return `<span class="spx spx-float">${n(5, i => `<i style="--i:${i}">♥</i>`)}</span>`;
-    case 'poison': return `<span class="spx spx-poison">${n(5, i => `<i style="--i:${i}"></i>`)}</span>`;
-    case 'notes': return `<span class="spx spx-float spx-notes">${n(5, i => `<i style="--i:${i}">${'♪♫♩♬♪'[i]}</i>`)}</span>`;
-    case 'loserx': return '<span class="spx spx-x"><svg viewBox="0 0 40 40"><path d="M8 8L32 32M32 8L8 32"/></svg></span>';
+    case 'zap': return `<span class="spx spx-zap" ${st}>${n(3, i => `<svg viewBox="0 0 40 60" style="--i:${i}"><path d="M22 0L8 30h12L12 60l22-36H20L30 0Z"/></svg>`)}</span>`;
+    case 'flames': return `<span class="spx spx-flames" ${st}>${n(4, i => `<i style="--i:${i}"></i>`)}</span>`;
+    case 'hearts': return `<span class="spx spx-float" ${st}>${n(5, i => `<i style="--i:${i}">♥</i>`)}</span>`;
+    case 'poison': return `<span class="spx spx-poison" ${st}>${n(5, i => `<i style="--i:${i}"></i>`)}</span>`;
+    case 'notes': return `<span class="spx spx-float spx-notes" ${st}>${n(5, i => `<i style="--i:${i}">${'♪♫♩♬♪'[i]}</i>`)}</span>`;
+    case 'loserx': return `<span class="spx spx-x" ${st}><svg viewBox="0 0 40 40"><path d="M8 8L32 32M32 8L8 32"/></svg></span>`;
     default: return '';
   }
 }
@@ -51,29 +82,40 @@ export function confettiRain(ms = 5000) {
   document.body.appendChild(node); setTimeout(() => node.remove(), ms);
 }
 
-/* an E special's moment, at a duck: x, y = its feet in pixels, size = the duck's size, face = 1 right or -1 left */
-const MUG = '<svg viewBox="0 0 30 30"><path d="M5 9h16v13a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5Z" fill="#f4f1ea" stroke="#1c1c28" stroke-width="1.6"/><path d="M21 12h3a3.5 3.5 0 0 1 0 7h-3" fill="none" stroke="#1c1c28" stroke-width="1.6"/><path d="M6.5 11h13" stroke="#6b3e1e" stroke-width="2.4"/><path d="M9 4c1 2-1 3 0 5M13 3c1 2-1 3 0 5M17 4c1 2-1 3 0 5" stroke="#fff" stroke-width="1.2" fill="none" opacity=".8"/></svg>';
-const WGUN = '<svg viewBox="0 0 40 24"><path d="M4 8h24l4-3h5v8h-5l-2 2H18l-2 7h-6l2-7H4Z" fill="#2fa4ff" stroke="#1c1c28" stroke-width="1.5" stroke-linejoin="round"/><rect x="12" y="2" width="9" height="6" rx="2" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.3"/></svg>';
-const PISTOL = '<svg viewBox="0 0 40 24"><path d="M4 5h30v6H17l-2 10H8l2-10H4Z" fill="#2b2d35" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>';
+/* the double jump's little cloud, left in the air where the second jump began: x, y = the duck's feet in pixels */
+export function puffHTML(x, y, size, color) {
+  return `<div class="spe spe-puff" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${size.toFixed(0)}px;--k1:${color}"><svg viewBox="0 0 60 30"><g><circle cx="16" cy="18" r="10"/><circle cx="30" cy="13" r="12"/><circle cx="44" cy="18" r="10"/><rect x="14" y="16" width="32" height="12" rx="6"/></g></svg></div>`;
+}
+
+/* an item's moment, at a duck: x, y = its feet in pixels, size = the duck's size, face = 1 right or -1 left, duck = its
+   look (for the item's colors) */
+const MUG = ([a, b]) => `<svg viewBox="0 0 30 30"><path d="M5 9h16v13a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5Z" fill="${a}" stroke="#1c1c28" stroke-width="1.6"/><path d="M21 12h3a3.5 3.5 0 0 1 0 7h-3" fill="none" stroke="#1c1c28" stroke-width="1.6"/><path d="M6.5 11h13" stroke="${b}" stroke-width="2.4"/><path d="M9 4c1 2-1 3 0 5M13 3c1 2-1 3 0 5M17 4c1 2-1 3 0 5" stroke="#fff" stroke-width="1.2" fill="none" opacity=".8"/></svg>`;
+const WGUN = ([a, b]) => `<svg viewBox="0 0 40 24"><path d="M4 8h24l4-3h5v8h-5l-2 2H18l-2 7h-6l2-7H4Z" fill="${a}" stroke="#1c1c28" stroke-width="1.5" stroke-linejoin="round"/><rect x="12" y="2" width="9" height="6" rx="2" fill="${b}" stroke="#1c1c28" stroke-width="1.3"/></svg>`;
+const PISTOL = ([a, b]) => `<svg viewBox="0 0 40 24"><path d="M17 11l-2 10H8l2-10Z" fill="${b}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 5h30v6H4Z" fill="${a}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>`;
 const DOG = '<svg viewBox="0 0 40 20"><rect x="2" y="5" width="36" height="10" rx="5" fill="#eab36a" stroke="#1c1c28" stroke-width="1.4"/><rect x="5" y="7" width="30" height="6" rx="3" fill="#c0502b"/><path d="M7 9l3 2 3-2 3 2 3-2 3 2 3-2 3 2 3-2" stroke="#ffd23f" stroke-width="1.4" fill="none"/></svg>';
-export function pressFX(id, x, y, size, face) {
-  const head = { x: x + face * size * .2, y: y - size * .72 }, beak = { x: x + face * size * .38, y: y - size * .6 }, out = [];
+export function pressFX(id, x, y, size, face, duck) {
+  const head = { x: x + face * size * .2, y: y - size * .72 }, beak = { x: x + face * size * .38, y: y - size * .6 }, out = [], c = colorsOf(duck, id);
   const at = (cls, html, px, py, extra = '') => el(`<div class="spe ${cls}" style="left:${px.toFixed(0)}px;top:${py.toFixed(0)}px;--f:${face};--s:${size.toFixed(0)}px;${extra}">${html}</div>`);
-  if (id === 'coffee') out.push(at('spe-mug', MUG, head.x + face * size * .28, head.y + size * .08));
+  if (id === 'coffee') out.push(at('spe-mug', MUG(c), head.x + face * size * .28, head.y + size * .08));
   if (id === 'hotdog') {
     out.push(at('spe-dog', DOG, head.x + face * size * .3, head.y + size * .12));
     for (let i = 0; i < 6; i++) out.push(at('spe-crumb', '', head.x + face * size * .3, head.y + size * .15, `--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(20 + Math.random() * 30).toFixed(0)}px;animation-delay:${(i * .18).toFixed(2)}s`));
   }
   if (id === 'watergun') {
-    out.push(at('spe-gun', WGUN, x + face * size * .45, y - size * .38));
-    for (let i = 0; i < 14; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .43, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s`));
+    out.push(at('spe-gun', WGUN(c), x + face * size * .45, y - size * .38));
+    for (let i = 0; i < 14; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .43, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s;--k1:${c[2]}`));
   }
   if (id === 'confgun') {
     const colors = ['#ef3b3b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6'];
     for (let i = 0; i < 22; i++) out.push(at('spe-conf', '', x + face * size * .42, y - size * .28, `background:${colors[i % 6]};--dx:${(face * (40 + Math.random() * 140)).toFixed(0)}px;--dy:${(-Math.random() * 120 + 20).toFixed(0)}px;--r:${Math.round(Math.random() * 540)}deg`));
   }
-  if (id === 'handgun') out.push(at('spe-gun spe-pistol', PISTOL, x + face * size * .45, y - size * .38));
-  if (id === 'sound') for (let i = 0; i < 3; i++) out.push(at('spe-ring', '', beak.x, beak.y, `animation-delay:${(i * .25).toFixed(2)}s`));
+  if (id === 'handgun') out.push(at('spe-gun spe-pistol', PISTOL(c), x + face * size * .45, y - size * .38));
+  if (id === 'sound') for (let i = 0; i < 3; i++) out.push(at('spe-ring', '', beak.x, beak.y, `animation-delay:${(i * .25).toFixed(2)}s;--k1:${c[0]}`));
+  if (id === 'trombone') {   // the mouthpiece at the beak's tip; a sour note wobbles out of the bell
+    out.push(at('spe-bone', BONE(c), x + face * size * .44, y - size * .58));
+    for (let i = 0; i < 3; i++) out.push(at('spe-sour', '♪', x + face * size * .78, y - size * .78, `animation-delay:${(.15 + i * .3).toFixed(2)}s;--dx:${(face * (18 + i * 10)).toFixed(0)}px`));
+  }
   return out;
 }
-export const BULLET = '<svg viewBox="0 0 24 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2h5a3 3 0 0 1 0 6h-5Z" fill="#c9a24a" stroke="#5a4310" stroke-width="1"/></svg>';
+/* the handgun's bullet, in the shooter's Accent color */
+export const BULLET = (c = '#c9a24a') => `<svg viewBox="0 0 24 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M14 2h5a3 3 0 0 1 0 6h-5Z" fill="${c}" stroke="#5a4310" stroke-width="1"/></svg>`;

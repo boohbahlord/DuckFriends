@@ -1064,3 +1064,35 @@ room chooses between voting and more clues, they get a tile and a Secret Card wi
 cards are dealt) and vote like everyone. Only while the room talks a turn over, or is in the middle of voting out a
 Quack, do they walk and chat until the next question, match, case or lap of clues, because a tile added mid-vote would
 move the tiles under everyone's feet.)
+
+## Specials on the number keys, word for word (2026-10-25)
+
+We need a new concept, there is a new map where ducks can just hangout without any game or winning.
+
+The camera stays centered on your duck as they walk around and the area is so big that it goes beyond the visual scree, much like in the writing mode where you can walk down to the secret word area, but now it is every direction.
+
+For the special's menu, the ducks can assign them to a number key, any one of them (1-9 & 0), and the ones that are an effect like fire ONLY show up for five seconds when clicked. The long jump is now simply a button on the number key where it is located, and ONLY clicking it there will turn on a long jump. Using the shift button and number key will toggle on the effects or long jump to keep them on. The number key row is small and only shows in a top left part that DOESN'T block any UI or game elements and is transparent even when buttons are clicked, but the slot selected and clicked by it's corresponding number key has a slight glow around it.. Not using it for a long enough time makes it disapear in 5 seconds, and that can make it fade away off the screen. Mobile can assign them to slots as well, and they access them by holding down on the screen (their equivalent of right click), which brings the options onto their screen to use. 
+
+On mobile, the screen has the number key row not existent on their ui screen. 
+
+Dont start the playground yet, but someone work on the specials menu. When the customization menu, the special choices will have a preview button, which shows them on your avatar, and then then clicking the tile normally and not the preview option inside of them brings up a box for each number key it can be assigned to, BUT the boxes do NOT open another window.
+
+IN THE COLORS MENU, there is a section for coloring certain specials, such as the different colors of the water gun (Primary, Secondary, or Accent), the gun, the flame effect, the electricity, and so on. The long jump doesn't have a color effect. 
+
+There is new special called double jump, and the double jump has a small cloud effect in midair when the second jump is spent, and it can't be used again till the players falls back down. The double jump effect can be colored too but is transparent enough to not block important things. 
+
+We also need more ideas for different specials.
+
+One special is a trombone, and it always plays it's sound as a note wrongfully played that is meant to sound silly.
+
+the trombone should be played at it's mouthpiece at the beak of the player
+
+(The hangout map waits. Plan shown for the specials: each special sits on a key, 1 to 9 or 0, and the old special moves
+to key 1. An effect shows around the duck for 5 seconds for everyone; Shift and its key keeps it on until Shift and the
+key again. The long jump's key does a long jump; Shift and the key keeps long jumps on. The double jump's key (or Space,
+kept on) jumps again in the air, once a jump, with a see-through cloud. Items are used with their key; E repeats the
+last key. On a computer the see-through row of keys sits top left, the pressed key glows, and the row slides away after
+5 seconds unused; phones have no row: holding still on the board brings the specials around the finger (tap to use,
+hold to keep on; holding a duck still opens its player menu). Customize → Specials: a preview button in each tile; the
+tile itself opens ten key boxes under it, inside the menu. Colors gets a Specials section. Sixteen more special ideas
+were offered for the owner to pick from.)

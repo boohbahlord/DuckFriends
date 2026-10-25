@@ -58,6 +58,9 @@ function normalize(p) {
   }
   out.duck = { ...DUCK_DEFAULT, ...(p.duck || {}) };
   delete out.duck.muscle;   // (muscles were tried and taken out)
+  if (!Array.isArray(out.duck.keys)) { out.duck.keys = Array(10).fill(null); if (out.duck.special) out.duck.keys[0] = out.duck.special; }   // the one special became key 1
+  out.duck.keys = Array.from({ length: 10 }, (_, i) => typeof out.duck.keys[i] === 'string' ? out.duck.keys[i] : null); out.duck.special = null;
+  if (!out.duck.spc || typeof out.duck.spc !== 'object') out.duck.spc = {};
   if (out.duck.hat && out.duck.hat.id === 'robot') { out.duck.face = { id: 'box' }; out.duck.hat = null; }   // the cardboard box became a Face item
   out.card = { ...PROFILE_DEFAULT.card, ...(p.card || {}) };
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };

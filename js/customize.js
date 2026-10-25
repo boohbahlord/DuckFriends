@@ -7,7 +7,8 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast, onMenu, el, navSig, refocus } from './ui.js';
-import { SPECIALS, specialById, momentHTML, confettiRain, pressFX, BULLET } from './specials.js';
+import { SPECIALS, KEYS, specialById, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET } from './specials.js';
+import { sfx } from './sound.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
 import { HATS, HAT_GROUPS, hatById } from './hats.js';
@@ -55,7 +56,7 @@ const valueOf = k => {
     skin: D.image ? 'Your picture' : D.metal !== 'none' ? nameOf(DUCK_METALS, D.metal) : nameOf(DUCK_PATTERNS, D.pattern, 'Plain'),
     name: profile.name,
     card: C.image ? 'Your picture' : nameOf(CARD_PATTERNS, C.pattern, 'Plain'),
-    specials: (specialById(D.special) || {}).name || 'None',
+    specials: (k => k.length === 1 ? specialById(k[0]).name : k.length ? `${k.length} on keys` : 'None')(keysOf(D).filter(Boolean)),
     colors: '',
   }[k];
 };
@@ -69,7 +70,7 @@ const grouped = (group, items, cur, groups) => {
   const rest = items.filter(i => !used.has(i[0]));
   return (none.length ? grid(group, none, cur) : '') + parts.join('') + (rest.length ? `<h3>More</h3>${grid(group, rest, cur)}` : '');
 };
-let lastPage = null, lastColor = 'duck';
+let lastPage = null, lastColor = 'duck', keyFor = null;   // keyFor: the special whose key boxes are open
 const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
@@ -77,30 +78,44 @@ export function openCustomize(page = lastPage) {
   return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`, {
     cls: 'win-armory',
     onOpen(w) {
-      openFolds.clear();
+      openFolds.clear(); keyFor = null;
       const menu = w.querySelector('.arm-menu'), duckBox = w.querySelector('.arm-duck'), cardBox = w.querySelector('.arm-card');
       const me = () => ({ id: 'me', name: profile.name, duck: profile.duck, card: profile.card, nameStyle: profile.nameStyle });
-      /* the big duck; on the Specials page its moment special plays around its head */
+      /* the big duck; while an effect's color is being picked, the effect plays around its head */
       const stage = () => {
-        const sp = lastPage === 'specials' && specialById(profile.duck.special);
-        duckBox.innerHTML = `<span class="arm-pic">${duckSVG(profile.duck, { size: 220, title: profile.name })}${sp && sp.kind === 'moment' ? `<span class="sp-fx">${momentHTML(sp.id)}</span>` : ''}</span>`;   // (effects sit on the duck, not on the whole panel)
+        const sp = colorSpecial();
+        duckBox.innerHTML = `<span class="arm-pic">${duckSVG(profile.duck, { size: 220, title: profile.name })}${sp && sp.kind === 'effect' ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ''}</span>`;   // (effects sit on the duck, not on the whole panel)
         cardBox.innerHTML = cardHTML(me(), { size: 52 });
       };
-      /* a special, shown once on the big duck the way it works in a game */
+      const colorSpecial = () => lastPage === 'colors' && lastColor.startsWith('sp-') ? specialById(lastColor.split('-')[1]) : null;
+      let prevT = 0;
+      /* a special, shown once on the big duck the way it works in a game (an effect for 5 seconds) */
       const preview = id => {
-        const sp = specialById(id); if (!sp) return;
-        if (id === 'confetti') confettiRain(3500);
-        if (id === 'longjump') { duckBox.classList.remove('hop'); void duckBox.offsetWidth; duckBox.classList.add('hop'); clearTimeout(duckBox._hop); duckBox._hop = setTimeout(() => duckBox.classList.remove('hop'), 1200); }   // one hop, not one on every redraw after
-        if (sp.kind === 'press') {
-          const pic = duckBox.querySelector('.arm-pic'), svg = pic && pic.querySelector('svg'); if (!svg) return;
-          const w = svg.getBoundingClientRect(), b = pic.getBoundingClientRect();
-          const x = w.left - b.left + w.width * .5, y = w.bottom - b.top - w.width * .06, els = pressFX(id, x, y, w.width, 1);
+        const sp = specialById(id), pic = duckBox.querySelector('.arm-pic'), svg = pic && pic.querySelector('svg'); if (!sp || !svg) return;
+        const w = svg.getBoundingClientRect(), b = pic.getBoundingClientRect();
+        const x = w.left - b.left + w.width * .5, y = w.bottom - b.top - w.width * .06;
+        if (sp.kind === 'effect') {
+          pic.querySelectorAll('.sp-prev-fx').forEach(e => e.remove());
+          const fx = el(`<span class="sp-fx sp-prev-fx">${momentHTML(id, profile.duck)}</span>`); pic.append(fx); setTimeout(() => fx.remove(), 5000);
+        }
+        if (sp.kind === 'jump') {   // one hop (two for the double jump, with its cloud), not one on every redraw after
+          const cls = id === 'double' ? 'hop2' : 'hop';
+          duckBox.classList.remove('hop', 'hop2'); void duckBox.offsetWidth; duckBox.classList.add(cls); clearTimeout(duckBox._hop); duckBox._hop = setTimeout(() => duckBox.classList.remove(cls), 1500);
+          if (id === 'double') setTimeout(() => { const pf = el(puffHTML(x, y - w.width * .42, w.width, colorsOf(profile.duck, 'double')[0])); pic.append(pf); sfx.puff(); setTimeout(() => pf.remove(), 1000); }, 480);
+        }
+        if (sp.kind === 'item') {
+          if (id === 'confetti') { confettiRain(3500); return; }
+          const els = pressFX(id, x, y, w.width, 1, profile.duck);
           /* the handgun: its slow bullet crosses the whole preview */
-          if (id === 'handgun') els.push(el(`<div class="spe spe-shot" style="left:${(x + w.width * .62).toFixed(0)}px;top:${(y - w.width * .48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET}</div>`));
+          if (id === 'handgun') els.push(el(`<div class="spe spe-shot" style="left:${(x + w.width * .62).toFixed(0)}px;top:${(y - w.width * .48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(profile.duck, 'handgun')[2])}</div>`));
           pic.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2400);
+          ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, sound: sfx.quack, trombone: sfx.trombone })[id]?.();
         }
       };
-      const changed = (redraw = true) => { save(); stage(); shareLook(); if (redraw) show(lastPage, true); };
+      const changed = (redraw = true) => {
+        save(); stage(); shareLook(); if (redraw) show(lastPage, true);
+        const sp = colorSpecial(); if (sp && sp.kind !== 'effect') { clearTimeout(prevT); prevT = setTimeout(() => preview(sp.id), 350); }   // an item's new color, shown on the duck
+      };
       const head = title => `<header class="arm-h">${lastPage ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
       const upload = (label, onPic) => `<label class="arm-tile arm-up" tabindex="0" data-up-for="${onPic}" data-tip="A square picture works best">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
 
@@ -151,9 +166,22 @@ export function openCustomize(page = lastPage) {
             ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
         } else if (k === 'specials') {
-          const cur = specialById(D.special);
-          html = head('Specials') + `<div class="arm-body">${grid('special', [['none', '<span class="sp-icon">—</span>', 'None', 'No special.'], ...SPECIALS.map(x => [x.id, `<span class="sp-icon">${x.icon}</span>`, x.name, x.tip])], cur ? cur.id : 'none')}
-            <p class="small dim sp-now">${cur ? `${esc(cur.name)}: ${esc(cur.tip)}` : 'One special at a time. Point at one (or hold it on a phone) to see how it works; pick it to see it on your duck.'}</p></div>`;
+          /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
+             special's tile opens a box for each key right under it */
+          const keys = keysOf(D), open = specialById(keyFor), phone = matchMedia('(hover: none) and (pointer: coarse)').matches;
+          const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
+          const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(x => {
+            const at = keys.indexOf(x.id), opened = x.id === keyFor;
+            return `<div class="sp-tile"><button type="button" class="arm-tile" data-g="special" data-v="${x.id}" aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(x.tip)}"><span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ''}</button>
+              <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}" aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button></div>
+              ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ''}"`)).join('')}</div>` : ''}`;
+          }).join('');
+          html = head('Specials') + `<div class="arm-body arm-specials"><h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join('')}</div>
+            <p class="small dim sp-now">${open ? `${esc(open.name)}: ${esc(open.tip)} Pick its key.` : phone ? 'Tap a special, then the key to put it on. In a game, hold still on the board to use them.' : 'Pick a special, then the key to put it on. In a game, press its key; Shift and the key keeps it on.'}</p>
+            <h3>Effects</h3><div class="arm-grid sp-grid">${tiles('effect')}</div>
+            <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles('jump')}</div>
+            <h3>Items</h3><div class="arm-grid sp-grid">${tiles('item')}</div>
+            <p class="small dim">Their colors are under Colors.</p></div>`;
         } else if (k === 'skin') {
           const pic = look => duckSVG({ ...D, hat: null, face: null, image: null, ...look }, { size: 58, shadow: false });
           const cur = D.image ? 'pic' : D.metal !== 'none' ? 'm:' + D.metal : 'p:' + D.pattern;
@@ -180,7 +208,7 @@ export function openCustomize(page = lastPage) {
             <p class="small dim">The card's colors are under Colors.</p></div>`;
         } else if (k === 'colors') {
           const T = colorTargets(), cur = T.find(t => t[0] === lastColor) || T[0]; lastColor = cur[0];
-          html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${T.map(([id, label]) => `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>`).join('')}</ul>
+          html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${T.map(([id, label]) => id ? `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>` : `<li class="arm-sub">${esc(label)}</li>`).join('')}</ul>
             <div class="cpick"><p class="small dim cnote">${esc(cur[4] || '')}</p></div></div>`;
         }
         const f = document.activeElement, had = menu.contains(f) && navSig(f), from = had && f.dataset.a === 'back' && prev;   // (the focus stays on the same tile, or the row just come back to)
@@ -196,6 +224,7 @@ export function openCustomize(page = lastPage) {
           const inp = menu.querySelector('.cz-name');
           inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } if (c && setName(c)) { stage(); menu.querySelectorAll('.font-pic').forEach(b => { b.textContent = c.slice(0, 8); }); } };
         }
+        if (k === 'specials' && keyFor && prev === 'specials') menu.querySelector('.sp-pick')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });   // a tile's key boxes, in sight
         if (from) menu.querySelector(`[data-p="${from}"]`)?.focus({ preventScroll: true });
         else if (had) refocus(menu, had, items(menu));
       };
@@ -216,15 +245,25 @@ export function openCustomize(page = lastPage) {
         out.push(['card', 'Card', C.color, c => { C.color = c; }, 'The color behind your card\'s pattern.']);
         if (C.pattern !== 'none' && !C.image) out.push(['cpat', 'Card pattern', C.patternColor, c => { C.patternColor = c; }, 'The pattern\'s color (for a hat pattern, the hat\'s).']);
         out.push(['name', 'Name', N.color, c => { N.color = c; N.rainbow = false; }, 'Plain fits light and dark.']);
+        /* the specials on your keys that take colors, under their own heading (the Long jump takes none) */
+        const sps = keysOf(D).filter(id => id && specialById(id).colors);
+        if (sps.length) out.push(['', 'Specials']);
+        for (const id of sps) {
+          const sp = specialById(id), now = colorsOf(D, id);
+          sp.colors.forEach(([key, label], j) => out.push([`sp-${id}-${key}`, `${sp.name}: ${label}`, now[j], c => { D.spc = { ...(D.spc || {}), [id]: { ...((D.spc || {})[id] || {}), [key]: c } }; }, id === 'double' ? 'The cloud stays see-through.' : '']));
+        }
         return out;
       }
       menu.addEventListener('click', e => {
         const D = profile.duck, C = profile.card, N = profile.nameStyle;
         const row = e.target.closest('.arm-row[data-p]'); if (row) { show(row.dataset.p); return; }
-        const tgt = e.target.closest('.arm-row[data-c]'); if (tgt) { lastColor = tgt.dataset.c; show('colors', true); return; }
+        const tgt = e.target.closest('.arm-row[data-c]'); if (tgt) { lastColor = tgt.dataset.c; show('colors', true); stage(); const sp = colorSpecial(); if (sp && sp.kind !== 'effect') preview(sp.id); return; }
         const a = e.target.closest('[data-a]');
         if (a) {
-          if (a.dataset.a === 'back') { show(null); return; }
+          if (a.dataset.a === 'back') { keyFor = null; show(null); return; }
+          if (a.dataset.a === 'preview') { preview(a.dataset.v); return; }
+          if (a.dataset.a === 'setkey') { const keys = keysOf(D), i = +a.dataset.i, was = keys.indexOf(keyFor); if (was >= 0) keys[was] = null; keys[i] = keyFor; D.keys = keys; keyFor = null; changed(); return; }   // (one key per special: it moves)
+          if (a.dataset.a === 'unkey') { const keys = keysOf(D); keys[+a.dataset.i] = null; D.keys = keys; changed(); return; }
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
           if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
@@ -242,7 +281,7 @@ export function openCustomize(page = lastPage) {
           style: () => { D.style = v; },   // (nothing else changes; Match the … look brings in the rest)
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },
-          special: () => { D.special = v === 'none' ? null : v; setTimeout(() => preview(v), 60); },
+          special: () => { keyFor = keyFor === v ? null : v; },   // its key boxes open (or shut) under it
           skin: () => { D.image = null; if (v.startsWith('m:')) D.metal = v.slice(2); else { D.metal = 'none'; D.pattern = v.slice(2); } },
           nfont: () => { N.font = v; },
           cpat: () => { C.pattern = v; C.image = null; },
@@ -260,7 +299,7 @@ export function openCustomize(page = lastPage) {
         box.style.top = Math.max(8, y - box.offsetHeight - 14) + 'px';
         setTimeout(() => box.remove(), 2800);
       });
-      duckBox.addEventListener('click', () => { if (lastPage === 'specials') preview(profile.duck.special); });
+      duckBox.addEventListener('click', () => { const sp = lastPage === 'specials' ? specialById(keyFor) : colorSpecial(); if (sp) preview(sp.id); });
       menu.addEventListener('toggle', e => { const k = e.target.dataset && e.target.dataset.fold; if (k) e.target.open ? openFolds.add(k) : openFolds.delete(k); }, true);
       menu.addEventListener('change', async e => {
         const o = e.target.dataset.o, up = e.target.dataset.up;

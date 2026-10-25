@@ -407,7 +407,7 @@ html.still .lord-say.out .w > span { opacity: 0; }
 .gduck.mine { transition: none; }
 .gduck-shadow { position: absolute; left: 50%; top: calc(var(--sz) * -.1); width: calc(var(--sz) * .78); height: calc(var(--sz) * .2); border-radius: 50%; background: #0005; transform-origin: 50% 50%; transform: translateX(-50%); }
 .gduck-lift { position: absolute; left: 0; bottom: 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
-.gduck-body { width: 100%; transform-origin: 50% 100%; }
+.gduck-body { position: relative; width: 100%; transform-origin: 50% 100%; }
 .gduck-body svg { transition: transform .1s ease-out; }
 .gduck-body svg { width: 100%; height: auto; display: block; margin-bottom: calc(var(--sz) * -.08); }
 .gduck-name { position: absolute; top: 100%; font-size: calc(.76rem * var(--ts)); opacity: .72; white-space: nowrap; background: color-mix(in srgb, var(--panel) 70%, transparent); border-radius: .4rem; padding: 0 .3rem; margin-top: .1rem; }
@@ -900,19 +900,19 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 /* moment specials, around a duck's head (the head sits up and to the right of the picture's middle) */
 .sp-fx { position: absolute; left: 30%; top: -18%; width: 80%; height: 75%; pointer-events: none; container-type: size; }   /* the head: about 42% across, 43% down, 24% wide */
 .spx { position: absolute; inset: 0; }
-.spx-zap svg { position: absolute; width: 26%; fill: #fff36a; stroke: #2fa4ff; stroke-width: 2; filter: drop-shadow(0 0 4px #7fd0ff); opacity: 0; animation: spzap .9s steps(1) infinite; animation-delay: calc(var(--i) * .3s); }
+.spx-zap svg { position: absolute; width: 26%; fill: var(--k1, #fff36a); stroke: var(--k2, #2fa4ff); stroke-width: 2; filter: drop-shadow(0 0 4px var(--k3, #7fd0ff)); opacity: 0; animation: spzap .9s steps(1) infinite; animation-delay: calc(var(--i) * .3s); }
 .spx-zap svg { width: 20%; } .spx-zap svg:nth-child(1) { left: 6%; top: 22%; transform: rotate(-25deg); } .spx-zap svg:nth-child(2) { left: 36%; top: 0; } .spx-zap svg:nth-child(3) { left: 66%; top: 26%; transform: rotate(25deg); }
 @keyframes spzap { 0% { opacity: 1; } 18% { opacity: 0; } 32% { opacity: .9; } 46% { opacity: 0; } }
-.spx-flames i { position: absolute; bottom: 50%; width: 17%; height: 42%; border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%; background: radial-gradient(ellipse at 50% 70%, #fff2b0 0, #ffb347 35%, #ff5a1a 65%, #ff5a1a00 75%);
+.spx-flames i { position: absolute; bottom: 50%; width: 17%; height: 42%; border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%; background: radial-gradient(ellipse at 50% 70%, var(--k3, #fff2b0) 0, var(--k2, #ffb347) 35%, var(--k1, #ff5a1a) 65%, transparent 75%);
   mix-blend-mode: screen; animation: flick .34s ease-in-out infinite alternate; animation-delay: calc(var(--i) * .09s); left: calc(24% + var(--i) * 9%); }
-.spx-float i { position: absolute; bottom: 38%; left: calc(10% + var(--i) * 15%); font-style: normal; font-size: 20cqw; line-height: 1; color: #ff4f8b; text-shadow: 0 0 .3rem #fff8; opacity: 0;
+.spx-float i { position: absolute; bottom: 38%; left: calc(10% + var(--i) * 15%); font-style: normal; font-size: 20cqw; line-height: 1; color: var(--k1, #ff4f8b); text-shadow: 0 0 .3rem #fff8; opacity: 0;
   animation: spfloat 2.6s ease-out infinite; animation-delay: calc(var(--i) * .5s); }
-.spx-notes i { color: #fff; text-shadow: 0 .1rem 0 #1c1c28, 0 0 .4rem #9b5de5; font-weight: 700; }
+.spx-notes i { color: var(--k1, #fff); text-shadow: 0 .1rem 0 #1c1c28, 0 0 .4rem var(--k2, #9b5de5); font-weight: 700; }
 @keyframes spfloat { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(.6em, -2.4em) scale(1.1) rotate(12deg); opacity: 0; } }
-.spx-poison i { position: absolute; width: 38%; height: 38%; border-radius: 50%; background: radial-gradient(circle, #8cff6acc 0, #3fae2a88 55%, #3fae2a00 72%); filter: blur(1px);
+.spx-poison i { position: absolute; width: 38%; height: 38%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--k1, #8cff6a) 80%, transparent) 0, color-mix(in srgb, var(--k2, #3fae2a) 53%, transparent) 55%, transparent 72%); filter: blur(1px);
   animation: sppoison 3s ease-in-out infinite; animation-delay: calc(var(--i) * -.6s); left: calc(12% + var(--i) * 12%); top: calc(22% + (var(--i) * 7%) - (var(--i) * var(--i) * 1.5%)); }
 @keyframes sppoison { 0%, 100% { transform: translate(0, 0) scale(.85); opacity: .75; } 50% { transform: translate(.5em, -.6em) scale(1.15); opacity: 1; } }
-.spx-x svg { position: absolute; left: 10%; top: 0; width: 70%; height: 100%; stroke: #ef3b3b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #1c1c28); }
+.spx-x svg { position: absolute; left: 10%; top: 0; width: 70%; height: 100%; stroke: var(--k1, #ef3b3b); stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #1c1c28); }
 html.still .spx * { animation: none !important; opacity: 1; }
 /* confetti over the screen */
 .confetti-rain { position: fixed; inset: 0; z-index: 70; pointer-events: none; overflow: hidden; }
@@ -930,14 +930,68 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .spe-gun { animation: spgun 1.9s ease-out forwards; }
 .spe-gun svg { transform: scaleX(var(--f)); }
 @keyframes spgun { 0% { opacity: 0; } 10%, 80% { opacity: 1; } 100% { opacity: 0; } }
-.spe-drop { width: 6px; height: 6px; border-radius: 50%; background: #7fd0ff; box-shadow: 0 0 4px #bfe9ff; opacity: 0; animation: spshoot .7s ease-out forwards; }
+.spe-drop { width: 6px; height: 6px; border-radius: 50%; background: var(--k1, #7fd0ff); box-shadow: 0 0 4px color-mix(in srgb, var(--k1, #7fd0ff) 50%, #fff); opacity: 0; animation: spshoot .7s ease-out forwards; }
 .spe-conf { width: 6px; height: 9px; border-radius: 1px; opacity: 0; animation: spshoot 1.1s cubic-bezier(.2, .8, .3, 1) forwards; }
 @keyframes spshoot { 0% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r, 0deg)); } }
-.spe-ring { width: calc(var(--s) * .4); height: calc(var(--s) * .4); border-radius: 50%; border: 3px solid transparent; border-right-color: #fff; opacity: 0; animation: spring 1.1s ease-out forwards; }   /* sound waves out of the beak, the way the duck faces */
+.spe-ring { width: calc(var(--s) * .4); height: calc(var(--s) * .4); border-radius: 50%; border: 3px solid transparent; border-right-color: var(--k1, #fff); opacity: 0; animation: spring 1.1s ease-out forwards; }   /* sound waves out of the beak, the way the duck faces */
 @keyframes spring { 0% { opacity: .9; transform: translate(-50%, -50%) scale(calc(var(--f) * .3), .3); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--f) * 1.8), 1.8); } }
 .bullet { position: absolute; left: 0; top: 0; width: 34px; margin-left: -17px; pointer-events: none; z-index: 6; filter: drop-shadow(0 0 3px #ffd84a); }
 .bullet.left svg { transform: scaleX(-1); }
-.ebtn { padding-inline: .7rem; }
+/* items: the double jump's little cloud (see-through, left in the air) and the trombone, its mouthpiece at the beak */
+.spe-puff { opacity: 0; animation: sppuff .9s ease-out forwards; }
+.spe-puff svg { width: calc(var(--s) * .7); fill: var(--k1, #fff); }
+@keyframes sppuff { 0% { opacity: .55; transform: translate(-50%, -30%) scale(.5); } 35% { opacity: .45; } 100% { opacity: 0; transform: translate(-50%, -10%) scale(1.25); } }
+.spe-bone { transform: translate(0, -50%) scaleX(var(--f)); transform-origin: 0 50%; animation: spbone 1.9s ease-out forwards; }
+.spe-bone svg { width: calc(var(--s) * .62); overflow: visible; }
+.spe-bone .bone-slide { animation: spslide .32s ease-in-out 4 alternate; }
+@keyframes spslide { from { transform: translateX(0); } to { transform: translateX(8px); } }
+@keyframes spbone { 0% { opacity: 0; } 10%, 82% { opacity: 1; } 100% { opacity: 0; } }
+.spe-sour { font-weight: 700; font-size: calc(var(--s) * .24); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; opacity: 0; animation: spsour 1.2s ease-out forwards; }
+@keyframes spsour { 0% { opacity: 0; transform: translate(-50%, -50%); } 20% { opacity: 1; transform: translate(-50%, -80%) rotate(18deg); } 45% { transform: translate(calc(-50% + var(--dx) * .4), -120%) rotate(-20deg); } 70% { transform: translate(calc(-50% + var(--dx) * .7), -150%) rotate(16deg); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -190%) rotate(-25deg); } }
+html.still .spe-bone .bone-slide { animation: none; }
+/* the specials' number keys: a small see-through row in the top bar, after the title (never on a touch screen); the key
+   just pressed glows, a key kept on wears a blue ring; unused for 5 seconds, it slides up off the screen */
+.hotbar { display: flex; gap: .2rem; margin-right: auto; pointer-events: none; opacity: .62; transition: transform .45s ease, opacity .45s ease; }
+.hotbar.gone { transform: translateY(-170%); opacity: 0; }
+.hk { position: relative; width: 1.55rem; height: 1.55rem; display: grid; place-items: center; border-radius: .35rem; border: .1rem solid color-mix(in srgb, var(--ink) 30%, transparent); background: color-mix(in srgb, var(--bg) 35%, transparent); }
+.hk b { position: absolute; left: .12rem; top: 0; font-size: .55rem; line-height: 1.1; color: var(--dim); }
+.hk.empty b { position: static; font-size: .7rem; opacity: .7; }
+.hk i { font-style: normal; font-size: .85rem; line-height: 1; }
+.hk.on { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 30%, transparent); }
+.hk.sel { border-color: var(--yellow); box-shadow: 0 0 .45rem .12rem color-mix(in srgb, var(--yellow) 65%, transparent); }
+@media (max-width: 1000px) { .hk.empty { display: none; } }
+@media (hover: none) and (pointer: coarse), (max-width: 760px) { .hotbar { display: none; } }   /* (a narrow window has no room for it in the top bar; its keys still work) */
+/* on a phone: the specials around a finger held still on the board */
+.sp-wheel { position: fixed; inset: 0; z-index: 80; touch-action: none; }
+.sp-wbtn { position: absolute; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; display: grid; place-items: center; padding: 0; border-radius: 50%; border: .14rem solid var(--line); background: color-mix(in srgb, var(--panel) 82%, transparent); color: var(--ink);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; animation: wheelin .18s ease-out; }
+.sp-wbtn i { font-style: normal; font-size: 1.4rem; line-height: 1; pointer-events: none; }
+.sp-wbtn b { position: absolute; right: -.2rem; bottom: -.2rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .15rem; border-radius: .3rem; background: var(--bg); color: var(--ink); font-size: .65rem; line-height: 1.05rem; text-align: center; pointer-events: none; }
+.sp-wbtn.on { border-color: var(--blue); box-shadow: 0 0 .5rem var(--blue); }
+@keyframes wheelin { from { transform: scale(.4); opacity: 0; } }
+/* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
+.sp-keys { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: .25rem; }
+.sp-key { position: relative; display: grid; place-items: center; aspect-ratio: 1; min-width: 0; padding: 0; border: .12rem dashed var(--line); border-radius: .45rem; background: transparent; color: var(--dim); cursor: pointer; font: inherit; }
+.sp-key.full { border-style: solid; border-color: var(--soft); background: var(--panel); color: var(--ink); }
+.sp-key b { font-size: calc(.8rem * var(--ts)); line-height: 1; }
+.sp-key.full b { position: absolute; left: .18rem; top: .1rem; font-size: calc(.6rem * var(--ts)); color: var(--dim); }
+.sp-key i { font-style: normal; font-size: 1.05rem; line-height: 1; }
+.sp-key[disabled] { cursor: default; opacity: .75; }
+.sp-key[aria-pressed="true"], .sp-mine .sp-key.full:hover, .sp-key:focus-visible { border-color: var(--blue); box-shadow: 0 0 0 .1rem var(--blue); }
+.sp-mine .sp-key.full:hover::after { content: '×'; position: absolute; right: .15rem; top: -.05rem; font-size: .8rem; color: var(--red); }
+.sp-grid { grid-auto-flow: row dense; }
+.sp-tile { position: relative; display: flex; min-width: 0; }
+.sp-tile > .arm-tile { flex: 1; min-width: 0; }
+.sp-tile .sp-icon { width: 2.8rem; height: 2.8rem; font-size: 1.6rem; }
+.sp-icon svg, .hk i svg, .sp-key i svg, .sp-wbtn i svg { width: 1.3em; height: auto; display: block; }   /* (the trombone's icon is its own picture) */
+.sp-prev { position: absolute; right: .3rem; top: .3rem; width: 1.6rem; height: 1.6rem; display: grid; place-items: center; padding: 0 0 0 .1rem; border-radius: 50%; border: .12rem solid var(--line); background: var(--bg); color: var(--ink); font-size: .65rem; cursor: pointer; }
+.sp-prev:hover, .sp-prev:focus-visible { border-color: var(--blue); color: var(--blue); }
+.sp-on { position: absolute; left: .3rem; top: .3rem; min-width: 1.2rem; height: 1.2rem; padding: 0 .2rem; border-radius: .3rem; background: var(--blue); color: #fff; font-size: calc(.7rem * var(--ts)); line-height: 1.2rem; }
+.sp-pick { grid-column: 1 / -1; padding: .4rem; border-radius: .6rem; border: .12rem solid var(--blue); background: color-mix(in srgb, var(--blue) 10%, var(--panel)); }
+.arm-duck.hop2 .arm-pic > svg.duck { animation: sphop2 1.3s ease-out; }
+@keyframes sphop2 { 0% { transform: none; } 35% { transform: translateY(-30%); } 42% { transform: translateY(-27%); } 72% { transform: translateY(-50%); } 100% { transform: none; } }
+.ctargets .arm-sub { flex-basis: 100%; margin: .55rem 0 .05rem; padding: 0 .45rem; font-size: calc(.72rem * var(--ts)); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+@media (max-width: 760px) { .sp-keys { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 /* ---------- Would You Rather: two tiles and an OR strip ---------- */
 :root { --wyr-a: #2fa4ff; --wyr-b: #ff8c2b; }
 .cols.wyr-cols { grid-template-columns: 46fr 8fr 46fr; }
@@ -1068,7 +1122,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .duel-falling[data-side="1"] .duel-in > svg { transform: scaleX(-1); }
 @media (orientation: portrait) and (max-width: 760px) { .lord.duel .lord-sit { width: 8.6rem; } .lord.duel .lord-duck { width: 3.2rem; bottom: 1.7rem; } }
 /* the loser's X follows its duck */
-.gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
+.gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: var(--xc, #e5262b); stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
 .gduck.loser .gduck-x { display: block; }
 
 /* the bracket: it slides the way my duck walks; − and + zoom it */

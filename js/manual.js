@@ -100,7 +100,7 @@ export const MAN = {
   who: 'who: who is in the room, with the host and sudo marked.',
   w: 'w: who is in the room and what they\'re doing: connection, away, and whether they have ended their turn.',
   users: 'users: the names in the room on one line.',
-  finger: 'finger [@name]: a player\'s card: duck, special, font, groups, Jumps and when they came in.',
+  finger: 'finger [@name]: a player\'s card: duck, specials, font, groups, Jumps and when they came in.',
   last: 'last: who came in, left or was removed this game, newest first.',
   write: 'write @name message: a private message, the same as \\@name in the chat. A group with nosend can\'t.',
   /* the room and the game */

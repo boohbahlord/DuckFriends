@@ -68,6 +68,27 @@ export const sfx = {
   zap() { noise(.18, { gain: .09, freq: 3200, q: .6 }); noise(.12, { gain: .06, freq: 2200, at: .08 }); noise(1.1, { gain: .07, type: 'lowpass', freq: 380, at: .12, slideTo: 90 }); },
   love() { tone(784, .25, { gain: .08 }); tone(988, .25, { gain: .07, at: .12 }); tone(1175, .45, { gain: .07, at: .24 }); },
   bonk() { tone(330, .18, { type: 'triangle', gain: .14, slide: .5 }); noise(.08, { gain: .05, freq: 900 }); },
+  /* the double jump: a soft puff of cloud */
+  puff() { noise(.28, { gain: .06, type: 'lowpass', freq: 1400, slideTo: 300 }); tone(660, .12, { type: 'sine', gain: .04, slide: 1.5 }); },
+  /* the trombone: always the wrong note. It scoops up into a note that's already flat, sags further while it wobbles, and
+     a second voice sits a sour quarter tone off, through a brassy filter that opens and closes */
+  trombone() {
+    const a = ac(), v = vol(); if (!a || !v) return;
+    const t = a.currentTime, f = [233.1, 207.7, 185, 155.6][Math.floor(Math.random() * 4)] * .97, end = t + 1.25;
+    const g = a.createGain(), flt = a.createBiquadFilter(), lfo = a.createOscillator(), depth = a.createGain();
+    flt.type = 'lowpass'; flt.Q.value = 3; flt.frequency.setValueAtTime(380, t); flt.frequency.linearRampToValueAtTime(1500, t + .09); flt.frequency.setValueAtTime(1300, t + .5); flt.frequency.exponentialRampToValueAtTime(420, end);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.16 * v, t + .06); g.gain.setValueAtTime(.12 * v, t + .55); g.gain.exponentialRampToValueAtTime(.0001, end);
+    lfo.frequency.setValueAtTime(4.5, t); lfo.frequency.linearRampToValueAtTime(7, end); depth.gain.setValueAtTime(f * .012, t); depth.gain.linearRampToValueAtTime(f * .045, end);
+    lfo.connect(depth);
+    for (const [cents, type] of [[0, 'sawtooth'], [45, 'sawtooth'], [-1200, 'square']]) {
+      const o = a.createOscillator(); o.type = type; o.detune.value = cents;
+      o.frequency.setValueAtTime(f * .84, t); o.frequency.exponentialRampToValueAtTime(f, t + .14);   // the scoop up
+      o.frequency.setValueAtTime(f, t + .5); o.frequency.exponentialRampToValueAtTime(f * .8, end);    // the sag
+      depth.connect(o.frequency); o.connect(flt); o.start(t); o.stop(end + .02);
+    }
+    flt.connect(g).connect(a.destination); lfo.start(t); lfo.stop(end + .02);
+    noise(.09, { gain: .05, type: 'bandpass', freq: 600, q: 1.5 });   // the blat as it starts
+  },
   hotdog() { tone(440, .08, { gain: .1, slide: 1.6 }); tone(700, .12, { gain: .08, at: .08, slide: 1.3 }); },
   /* Who is the Quack?: a snare roll that swells for two seconds, then a hit, before the news */
   drum() {
