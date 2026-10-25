@@ -141,12 +141,11 @@ export const outfitById = id => OUTFITS.find(o => o.id === id) || null;
 /* how Customize shows the outfits: in themed groups, each under a small heading */
 export const OUTFIT_GROUPS = [
   ['Everyday', ['shirt', 'hoodie', 'jeans', 'leather', 'hawaiian', 'muscle', 'pajamas']],
-  ['Dressed up', ['suit', 'tux', 'dress', 'gown', 'disco']],
+  ['Dressed up', ['suit', 'tux', 'agbada', 'dress', 'iro', 'gown', 'disco']],
   ['Church', ['priest', 'pope', 'bishop']],
   ['Jobs and uniforms', ['doctor', 'firefighter', 'police', 'military']],
   ['Sports', ['lakers', 'celtics']],
   ['Fantasy and sci-fi', ['royal', 'wizard', 'armor', 'robot', 'cloud']],
-  ['Nigerian', ['agbada', 'iro']],
 ];
 
 /* the outfit's layers for a duck: cloth (inside the body), sleeve (in place of the wing), over and back (past the
