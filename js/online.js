@@ -6,6 +6,8 @@
      games/{g}/s             the state, one JSON string per part (each player, each duck's spot, each chat line apart)
      games/{g}/acts          actions waiting for the host; games/{g}/mv/{player}: the latest step of each duck
      games/{g}/on/{player}   who is connected right now; games/{g}/hb: the host's heartbeat (a sleeping phone stops it)
+   Who is the Quack?'s secret word never goes into the state: each player's Secret Card goes in games/{g}/s/cards/{player},
+   locked so only that player can open it, and the picker's word comes to the host locked too (secret.js).
    A private room's path is made from its passkey, so only players who know the passkey can find it. The rules that
    enforce all this are in database.rules.json. The Firebase code loads only when online rooms are first used. */
 import { reduce, safeReduce, newRoom } from './rules.js';
@@ -16,6 +18,8 @@ import { clock, now } from './clock.js';
 import { who } from './who.js';
 import { go } from './router.js';
 import { toast } from './ui.js';
+import { ready, keyOk, seal, unseal } from './secret.js';
+import { cardOf } from './quackrules.js';
 
 export const CONFIG = {
   apiKey: 'AIzaSyDh4Jx2TnY1PBlPiYnMczqzGhg-4dBFajY',
@@ -46,7 +50,7 @@ export function connect() {
     const app = A.initializeApp(CONFIG, 'rooms'), db = D.getDatabase(app);
     const auth = U.initializeAuth(app, { persistence: U.browserSessionPersistence });
     if (EMU) { U.connectAuthEmulator(auth, `http://${EMU}:9099`, { disableWarnings: true }); D.connectDatabaseEmulator(db, EMU, 9000); }
-    await auth.authStateReady();
+    await Promise.all([auth.authStateReady(), ready()]);   // (and my key pair, for Secret Cards)
     if (!auth.currentUser) await U.signInAnonymously(auth);
     D.onValue(D.ref(db, '.info/serverTimeOffset'), s => { clock.offset = s.val() || 0; });
     fb = { D, db, uid: auth.currentUser.uid, ref: p => D.ref(db, p) };
@@ -113,11 +117,11 @@ export async function joinOnlineRoom(entry, passkey = '') {
 }
 
 /* ---------- the state in the database: one JSON string per part ---------- */
-const EACH = ['players', 'pos'];
+const EACH = ['players', 'pos', 'cards'];
 function encode(s) {
   const out = {};
   for (const [k, v] of Object.entries(s)) {
-    if (v === undefined) continue;
+    if (v === undefined || k === 'hidden') continue;   // (the host's secrets stay with the host)
     if (EACH.includes(k)) for (const [id, x] of Object.entries(v || {})) out[`${k}/${id}`] = JSON.stringify(x);
     else if (k === 'log') for (const line of v) out[`log/n${line.n}`] = JSON.stringify(line);
     else out[k] = JSON.stringify(v);
@@ -139,8 +143,8 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'tieVote', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby']);
-const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats'];
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'wqWord', 'tieVote', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby']);
+const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats', 'pk'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
   if (!a || typeof a !== 'object' || !REMOTE.has(a.t)) return null;
@@ -151,13 +155,16 @@ function clean(a, by) {
     const acct = a.p.acct; if (typeof acct === 'string' && acct.length < 129) a.p.acct = acct; else delete a.p.acct;
     a.p.net = [0, 1, 2].includes(a.p.net) ? a.p.net : 0;
     a.p.stats = cleanStats(a.p.stats);
+    if (!keyOk(a.p.pk)) delete a.p.pk; else a.p.pk = { x: a.p.pk.x, y: a.p.pk.y };
   }
   if (a.t === 'look') {
     a.look = pick(a.look, LOOK);
     if (a.look.name !== undefined && !NAME_OK.test(a.look.name)) delete a.look.name;
     if (a.look.acct !== undefined && !(typeof a.look.acct === 'string' && a.look.acct.length < 129)) delete a.look.acct;
     if (a.look.stats !== undefined) a.look.stats = cleanStats(a.look.stats);
+    if (a.look.pk !== undefined) { if (keyOk(a.look.pk)) a.look.pk = { x: a.look.pk.x, y: a.look.pk.y }; else delete a.look.pk; }
   }
+  if (a.t === 'wqWord') a = { t: a.t, id: by, word: String(a.word || '').slice(0, 60), cat: String(a.cat || '').slice(0, 60), draft: !!a.draft };
   return a;
 }
 /* a guess at my own action's result, shown until the host's answer comes back; the host alone ends phases */
@@ -174,6 +181,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   let state = first, auth = first, mode = '', closed = false, hostUid = host ? me : null;
   let written = first ? encode(first) : {}, extra = {}, flushT = 0, loop = 0, clientOff = null, hostOffs = [];
   let seq = 0, pending = [], lastMove = null, ackSeen = {}, seen = false, online = new Set(), hostGoneAt = 0, away = {}, beatAt = 0, beatSig = '', taking = false, hb = 0, hbAt = 0;
+  let sealed = { sig: '', cards: {} }, myBox = '', myCard = null;   // Who is the Quack?: the Secret Cards I locked (host), mine opened (player)
   const quiet = e => console.warn('DuckFriends online:', e && (e.code || e.message));   // a write turned down (the host role moved on)
   const emit = a => { if (state) fns.forEach(f => f(state, a)); };
   const fail = e => { if (!closed) toast(whyNot(e), 6000); };
@@ -186,9 +194,23 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     state = next; emit(a); dirty();
   };
   const dirty = () => { if (!flushT) flushT = setTimeout(flush, 40); };
+  /* the host locks each player's Secret Card for them (once a deal) */
+  async function cardsFor(s) {
+    const w = s.wq, ids = s.hidden && w && w.deal ? w.ids.filter(id => id !== me && s.players[id] && keyOk(s.players[id].pk)) : [];
+    const sig = ids.length ? w.deal + ':' + ids.map(id => id + s.players[id].pk.x).join() : '';
+    if (sig !== sealed.sig) {
+      const cards = {};
+      for (const id of ids) { const c = cardOf(s, id); if (c) cards[id] = await seal(s.players[id].pk, c).catch(() => null); }
+      sealed = { sig, cards };
+    }
+    return sealed.cards;
+  }
   async function flush() {
     flushT = 0; if (mode !== 'host' || !state) return;
+    const cards = await cardsFor(state).catch(() => ({}));
+    if (mode !== 'host' || !state) return;
     const enc = encode(state), up = extra; extra = {};
+    for (const [id, box] of Object.entries(cards)) if (box) enc['cards/' + id] = JSON.stringify(box);
     for (const [k, v] of Object.entries(enc)) if (written[k] !== v) up['s/' + k] = v;
     for (const k of Object.keys(written)) if (!(k in enc)) up['s/' + k] = null;
     written = enc;
@@ -238,7 +260,11 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       D.onChildAdded(path('acts'), snap => {
         const v = snap.val() || {};
         let a = null; try { a = JSON.parse(v.a); } catch (e) { /* not an action */ }
-        if (typeof v.by === 'string') { apply(clean(a, v.by)); if (v.q) extra['s/ack/' + v.by] = v.q; }
+        if (typeof v.by === 'string' && a && a.t === 'wqWord' && typeof a.box === 'string') {   // the secret word, locked for me: opened first
+          const p = state.players[v.by];
+          if (p && keyOk(p.pk)) unseal(p.pk, a.box).then(o => apply(clean({ t: 'wqWord', word: o.word, cat: o.cat, draft: a.draft }, v.by))).catch(quiet);
+          if (v.q) extra['s/ack/' + v.by] = v.q;
+        } else if (typeof v.by === 'string') { apply(clean(a, v.by)); if (v.q) extra['s/ack/' + v.by] = v.q; }
         extra['acts/' + snap.key] = null; dirty();
       }, fail),
       ...['onChildAdded', 'onChildChanged'].map(on => D[on](path('mv'), snap => {
@@ -270,6 +296,14 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     for (const p of pending) s = predict(s, p.a);
     if (lastMove && lastMove.k === keyOf(s)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
     state = s; emit();
+    openCard(s);
+  }
+  /* my Secret Card, locked for me by the host */
+  function openCard(s) {
+    const box = s.cards && s.cards[me], host = s.players[s.hostId];
+    if (!box || box === myBox || !host || !keyOk(host.pk)) return;
+    myBox = box;
+    unseal(host.pk, box).then(c => { if (myBox === box) { myCard = c; emit(); } }).catch(quiet);
   }
   function gone(msg) {
     if (closed) return;
@@ -315,6 +349,11 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       if (closed) return;
       a = { ...a, id: me };
       if (mode === 'host') { apply(a); return; }
+      if (a.t === 'wqWord') {   // the secret word goes to the host locked
+        const host = state && state.players[state.hostId]; if (!host || !keyOk(host.pk)) return;
+        seal(host.pk, { word: a.word, cat: a.cat }).then(box => { const q = ++seq; pending.push({ q, a: { t: 'wqWord', id: me, draft: !!a.draft } }); D.push(path('acts'), { by: me, q, a: JSON.stringify({ t: 'wqWord', draft: !!a.draft, box }) }).catch(quiet); }).catch(quiet);
+        return;
+      }
       if (a.t === 'move') {
         if (!state) return;
         a.k = keyOf(state); lastMove = a;
@@ -329,6 +368,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     },
     on(f) { fns.add(f); return () => fns.delete(f); },
     setComputers() { /* computers play in TEST rooms only */ },
+    /* my Secret Card for this deal (the host reads it straight from its own state) */
+    secretCard(s) { if (s.hidden) return cardOf(s, me); return myCard && s.wq && myCard.deal === s.wq.deal ? myCard : null; },
     /* resolves once the host has seated me */
     joined() {
       return new Promise((ok, no) => {
