@@ -10,14 +10,14 @@
    the way your duck walks; − and + zoom it), the podium and the stats. */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
-import { nameHTML, fontCSS } from './name.js';
+import { nameHTML, fontHTML } from './name.js';
 import { cardBackground } from './card.js';
 import { rainbowHTML } from './art.js';
 import { roundName, writerShown, bbMatch, podium, bbStats, seedOut, SEED_MAX, TOPIC_MAX } from './rules.js';
 import { specialById, momentHTML } from './specials.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
-const fontOf = p => fontCSS(p && p.nameStyle && p.nameStyle.font);
+const inFont = (p, html) => fontHTML(p && p.nameStyle && p.nameStyle.font, html);   // (a player's font, scaled to match)
 const moment = p => p && (specialById(p.duck && p.duck.special) || {}).kind === 'moment' ? `<span class="sp-fx">${momentHTML(p.duck.special)}</span>` : '';
 
 /* ---------- the cloud (shared with the Round Lord) ---------- */
@@ -28,7 +28,7 @@ export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidde
 /* a duck on the cloud (or an empty cloud): p = the player, tip = what hovering the duck calls them */
 export function cloudHTML(p, tip = 'Round Lord') {
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) + moment(p) + `<span class="lord-tip" style="font-family:${esc(fontOf(p))}">${esc(tip)}</span>` : ''}</div>
+    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) + moment(p) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ''}</div>
     ${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div>
     <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : ''}</div></div>`;
@@ -47,10 +47,10 @@ export function duelCloudHTML(pa, pb, o = {}) {
 /* ---------- the seed card ---------- */
 /* p = the writer (null: hidden), body = the words as HTML; o = { tier: 'silver' | 'gold', out, size: 'big' | 'mini', cls, attrs } */
 export function cardFor(p, body, o = {}) {
-  const bg = esc(cardBackground(p ? p.card : { color: '#8a8fa3' })), font = p ? fontOf(p) : '';
+  const bg = esc(cardBackground(p ? p.card : { color: '#8a8fa3' }));
   return `<div class="seed${o.tier ? ' ' + o.tier : ''}${o.out ? ' out' : ''}${o.size ? ' ' + o.size : ''}${o.cls ? ' ' + o.cls : ''}"${o.attrs || ''}>
     <div class="seed-disc" style="${bg}">${p ? duckSVG(p.duck, { size: 60, shadow: false, title: p.name }) : '<span class="seed-q">?</span>'}</div>
-    <div class="seed-box" style="${bg}"><span class="seed-txt"${font ? ` style="font-family:${esc(font)}"` : ''}>${body}</span><span class="seed-by">${p ? nameHTML(p.name, p.nameStyle) : 'A secret writer'}</span></div>
+    <div class="seed-box" style="${bg}"><span class="seed-txt">${p ? inFont(p, body) : body}</span><span class="seed-by">${p ? nameHTML(p.name, p.nameStyle) : 'A secret writer'}</span></div>
     ${o.out ? '<svg class="seed-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg>' : ''}${o.extra || ''}</div>`;
 }
 export function seedCardHTML(s, b, i, o = {}) {
@@ -87,7 +87,7 @@ export function topicsHTML(s, me) {
 /* ---------- typing the seeds: everyone's card for this turn, each filling in as its writer types ---------- */
 export function seedsHTML(s, me) {
   const b = s.bb, mineNow = (b.per[me] || 0) > b.turn, p = player(s, me);
-  const head = `<header class="bb-head panel"><span class="small dim">Topic</span><b style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</b>
+  const head = `<header class="bb-head panel"><span class="small dim">Topic</span><b>${inFont(s.players[b.topicBy], esc(b.topic))}</b>
     <span class="small dim">Contender ${b.turn + 1} of ${b.turns}${mineNow ? '' : ' · you have no contender to write this turn'}</span></header>`;
   let mine = '';
   if (mineNow && !s.done[me]) mine = `<form class="bb-write seed-form" autocomplete="off">${cardFor(p, `<input class="bb-in seed-in" maxlength="${SEED_MAX}" placeholder="Your contender" aria-label="Your contender">`, { size: 'big', cls: 'mine typing' })}
@@ -147,7 +147,7 @@ export function matchTopHTML(s, knocked = false) {
   const writer = i => b.seeds[i] && writerShown(s, b, i) ? player(s, b.seeds[i].by) : null;
   const duel = (o = {}) => duelCloudHTML(writer(m.a), writer(m.b), o);   // both writers on the cloud
   const real = round.filter(x => x.b !== -1), k = real.indexOf(m) + 1;
-  const topic = `<span class="bb-topic" style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</span>`;
+  const topic = `<span class="bb-topic">${inFont(s.players[b.topicBy], esc(b.topic))}</span>`;
   if (s.phase === 'discuss' && m.w != null) {
     return `<div class="topover bb-top">${duel({ winner: m.w === m.a ? 0 : 1, knocked: knocked || !fin })}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
       <div class="bb-win-word">${rainbowHTML(fin ? 'Champion!' : 'Winner!')}</div>${m.coin ? '<p class="small dim">A tie: a coin flip decided it.</p>' : ''}</div></div>`;
@@ -184,7 +184,7 @@ export function bracketHTML(s) {
 }
 export function bracketTopHTML(s) {
   const b = s.bb, upNext = b.champ != null ? 'The champion!' : `Up next: ${roundName(b, b.r)}`;
-  return `<div class="bb-label panel"><span class="bb-topic" style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</span><span class="small dim">${esc(upNext)}</span></div>
+  return `<div class="bb-label panel"><span class="bb-topic">${inFont(s.players[b.topicBy], esc(b.topic))}</span><span class="small dim">${esc(upNext)}</span></div>
     <div class="bb-zoom"><button type="button" class="btn ghost iconbtn" data-a="zoomout" aria-label="Zoom out">−</button><button type="button" class="btn ghost iconbtn" data-a="zoomfit" aria-label="Fit the bracket" data-tip="Fit the bracket">⤢</button><button type="button" class="btn ghost iconbtn" data-a="zoomin" aria-label="Zoom in">+</button></div>`;
 }
 

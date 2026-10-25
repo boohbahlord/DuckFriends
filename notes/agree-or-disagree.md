@@ -923,3 +923,10 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 (Decisions: every Help page starts with a "dumb version", then what it is, how to, flags and examples, each example a
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
+
+## Fonts the same size everywhere (2026-10-25)
+
+With how the player has dif fonts, make them all be the same size in chat or whatnot, they shouldnt have some bigger then others that is jst sloppy
+
+Decision: the Story Chain font scaling now applies wherever a player's font shows: names (chat, cards, over the ducks,
+the people list), the questions and choices they wrote, bracket topics and contenders, court cases, and the font picker.

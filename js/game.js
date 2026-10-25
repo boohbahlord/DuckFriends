@@ -26,7 +26,7 @@ import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
 import { pressSpecial, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
 import { duckSVG, duckRoom } from './duck.js';
-import { nameHTML, fontCSS } from './name.js';
+import { nameHTML, fontHTML } from './name.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile, save } from './store.js';
@@ -82,8 +82,8 @@ const jumpZ = (j, now, id) => { if (!j) return 0; const { T, H } = jumpCfg(id), 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
 function wyrColsHTML(s) {
-  const q = ['answer', 'discuss'].includes(s.phase) ? s.qs[s.qi] : null, f = q ? ` style="font-family:${esc(writerFont(s))}"` : '';
-  const tile = (c, t) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt"${f}>${q ? esc(t) : c ? 'B' : 'A'}</span></div>`;
+  const q = ['answer', 'discuss'].includes(s.phase) ? s.qs[s.qi] : null;
+  const tile = (c, t) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt">${q ? fontHTML(writerFont(s), esc(t)) : c ? 'B' : 'A'}</span></div>`;
   return `<div class="cols wyr-cols">${tile(0, q && q.a)}<div class="wyr-or"><span>OR</span></div>${tile(1, q && q.b)}</div>`;
 }
 /* Bicker Brackets: a match's two seeds (no board drawn), or the bracket that ducks walk over */
@@ -100,7 +100,7 @@ const quackBoard = s => `<div class="board wq-board${s.phase === 'reveal' && s.w
 const boardHTML = s => isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : isLaw(s) ? lawBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
-  ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text)}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
+  ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text))}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
 
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
@@ -575,7 +575,7 @@ async function announceQuack(s) {
 
 /* ---------- the views ---------- */
 /* a question shows in its writer's font */
-const writerFont = s => { const q = s.qs[s.qi], p = q && s.players[q.by]; return fontCSS(p && p.nameStyle && p.nameStyle.font); };
+const writerFont = s => { const q = s.qs[s.qi], p = q && s.players[q.by]; return p && p.nameStyle && p.nameStyle.font; };   // (its id)
 const lordHTML = s => cloudHTML(s.players[s.qs[s.qi].by] || null);
 
 function viewSubmit(s) {

@@ -22,14 +22,14 @@ export function symbolSVG(size = 32, title = 'Agree or Disagree') {
 export const gameSymbol = (mode, size = 32) => modeOf(mode).id === 'aod' ? symbolSVG(size) : modeSymbol(mode, size);
 
 /* multicolored letters as HTML: each letter its own fridge-magnet color, a little tilt; on any font */
-export function rainbowHTML(text, { font = '', seed = 7, from = 0 } = {}) {   // (from: the color to start on)
+export function rainbowHTML(text, { font = '', fk = 1, seed = 7, from = 0 } = {}) {   // (from: the color to start on; fk: a player font's scale)
   const r = rnd(seed); let i = from;
   const parts = [...String(text)].map(ch => {
     if (ch === ' ') return '<span class="sp"> </span>';
     const c = FRIDGE[i++ % FRIDGE.length], t = ((r() - .5) * 10).toFixed(1);
     return `<span style="color:${c};transform:rotate(${t}deg)">${esc(ch)}</span>`;
   });
-  return `<span class="rainbow"${font ? ` style="font-family:${esc(font)}"` : ''} aria-label="${esc(text)}">${parts.join('')}</span>`;
+  return `<span class="rainbow"${font ? ` style="font-family:${esc(font)};--fk:${+fk || 1}"` : ''} aria-label="${esc(text)}">${parts.join('')}</span>`;
 }
 
 /* the same letters inside an SVG */

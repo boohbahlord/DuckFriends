@@ -6,15 +6,14 @@
    each one lights up inside its line. The stats sit beside the three choices: continue, a new story, or the lobby. */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
-import { nameHTML, fontCSS, fontScale } from './name.js';
+import { nameHTML, fontStyle as styleOf } from './name.js';
 import { cardFor, cloudHTML } from './brackets.js';
 import { scZones, scLineOf, scStory, scPara, scWriter, scStats, wordAt, SC_NEXT, LINE_MAX, WORD_MAX } from './rules.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const player = (s, id) => s.players[id] || GONE;
-const fontOf = p => fontCSS(p && p.nameStyle && p.nameStyle.font);
 /* a player's font, scaled so every player's letters look the same size */
-const fontStyle = p => `font-family:${esc(fontOf(p))};--fk:${fontScale(p && p.nameStyle && p.nameStyle.font)}`;
+const fontStyle = p => styleOf(p && p.nameStyle && p.nameStyle.font);
 const cardColor = p => (p && p.card && p.card.color) || '#8a8fa3';
 const n = (v, one, many = one + 's') => `${v} ${v === 1 ? one : many}`;
 
