@@ -10,7 +10,7 @@
 
    The word and who the Quack is are in s.hidden, which only the host has: online.js never writes it, and each player's
    Secret Card goes to that player alone, locked (secret.js). Everyone else sees s.wq. */
-import { enter, say, playing, needed, backToLobby, VOTE_GRACE } from './rules.js';
+import { enter, say, playing, needed, backToLobby, VOTE_GRACE, seatLate } from './rules.js';
 
 export const CLUE_GRACE = 12;   // seconds before a clue turn can end
 export const WORD_MAX = 24, CAT_MAX = 20;
@@ -75,7 +75,7 @@ export function cardOf(s, id) {
 
 /* ---------- a round ---------- */
 export function startQuackRound(s, now) {
-  for (const id of s.seat) if (s.players[id]) delete s.players[id].late;   // late joiners play from here
+  seatLate(s);
   const ids = playing(s);
   s.pos = {}; s.lock = {}; s.qi = 0; s.subs = []; s.drafts = {}; delete s.cards;   // (online: an old host's locked cards)
   if (ids.length < 3) return backToLobby(s, 'Who is the Quack? needs at least 3 ducks.');
@@ -110,11 +110,12 @@ function toTiles(s) {
   const w = s.wq;
   for (const id of s.seat) {
     const k = w.ids.indexOf(id);
-    s.pos[id] = k >= 0 ? { ...tileCenter(s, k, .62), j: 0 } : { x: .1 + Math.random() * .8, y: Math.random(), j: 0 };   // (a late joiner: anywhere)
+    s.pos[id] = k >= 0 ? { ...tileCenter(s, k, .62), j: 0 } : { x: .1 + Math.random() * .8, y: Math.random(), j: 0 };   // (joined mid-vote: anywhere)
   }
 }
 /* a lap of clues, in a new random order (never a Quack first) */
 function startLap(s, now) {
+  for (const id of s.seat) if (s.players[id] && s.players[id].late) { delete s.players[id].late; if (!s.wq.ids.includes(id)) s.wq.ids.push(id); }   // joined mid-vote: a tile (and the word) from here
   const w = s.wq, qs = quacksOf(s), order = shuffle(stillIn(s));
   if (qs.includes(order[0])) { const k = order.findIndex(id => !qs.includes(id)); if (k > 0) [order[0], order[k]] = [order[k], order[0]]; }
   w.lap++; w.order = order; w.turn = -1; w.tie = null; w.lastOut = null;

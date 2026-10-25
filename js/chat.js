@@ -269,7 +269,7 @@ function showMutes(s, permanent) {
   return rows.map(([k, v]) => `${nameOf(k)}: ${Object.keys(v).join(', ')}`).join(' · ');
 }
 function showPlayers(s, online) {
-  return s.seat.map(id => { const p = s.players[id]; return [`${p.name}${id === s.hostId ? ' (host)' : ''}`, p.bot ? 'computer' : online ? (p.ms == null ? '… ms' : p.ms + ' ms') : 'same device', p.idle ? 'away' : '', p.late ? 'plays next round' : ''].filter(Boolean).join(' · '); }).join('\n');
+  return s.seat.map(id => { const p = s.players[id]; return [`${p.name}${id === s.hostId ? ' (host)' : ''}`, p.bot ? 'computer' : online ? (p.ms == null ? '… ms' : p.ms + ' ms') : 'same device', p.idle ? 'away' : '', p.late ? 'plays next turn' : ''].filter(Boolean).join(' · '); }).join('\n');
 }
 
 /* the chat's own commands (\togglesuggest, \show, \mute, \permmute), from the chat or the command line; null: not one */

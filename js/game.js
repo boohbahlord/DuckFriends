@@ -391,7 +391,7 @@ function playFx(f) {
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
 const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam && !isLaw(R.state)) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam; a juror may change their vote)
-const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-round: walks anywhere, plays from the next writing stage
+const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-turn: walks anywhere, plays from the next turn
 const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state);   // anywhere on the board (else inside my column)
 const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow());
 function xBounds() {
@@ -720,7 +720,7 @@ const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 function actHTML(s) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
-  if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next ${isBb(s) ? 'tournament' : 'writing stage'}. · ${d}/${n} done</span>`;
+  if (late()) return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? 'match' : isLaw(s) ? 'case' : 'question'}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (isSc(s)) return storyActHTML(s, d, n, need, count);
   if (['submit', 'topic', 'tvote', 'seeds', 'counsel'].includes(s.phase)) return count;
@@ -774,7 +774,7 @@ function lawActHTML(s) {
 function quackActHTML(s) {
   const w = s.wq, row = x => `<div class="act-row">${x}</div>`, P = id => esc((s.players[id] || {}).name || 'Gone');
   if (s.phase === 'wqpick') return `<span class="progress">${w.picker === R.me ? 'Only you see the word you pick.' : `${P(w.picker)} is picking the secret word.`}</span>`;
-  if (!w.ids.includes(R.me)) return `<span class="progress">You joined mid-round: walk around and chat. You play from the next round.</span>`;
+  if (!w.ids.includes(R.me)) return `<span class="progress">You joined mid-vote: walk around and chat. You play from the next ${w.result ? 'round' : 'lap of clues'}.</span>`;
   if (s.phase === 'reveal') {
     const on = playing(s), d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me], hold = frozen(s, R.me, clockNow());
     return row(`<button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end"${hold ? ' disabled' : ''}>${mine ? 'Waiting ✓' : w.result ? 'On to the stats' : 'More clues'} <kbd>Enter</kbd></button><span class="progress">${d}/${on.length} done${need < on.length ? ` · ${need} needed` : ''}</span>`);
@@ -919,11 +919,12 @@ function paint(force) {
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
     }
-    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = (isLaw(s) && LAW_TITLES[s.phase]) || TITLES[s.phase] || '';
     lastClose = s.law && s.law.close || 0;
     geo = null;
   }
+  const round = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
+  if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
   if (isSc(s) && s.phase === 'write') {   // the line as it's typed (the writer sees their own straight from the box)
     if (scWriter(s) !== R.me) { const t = $('.sc-typing', S), was = t && t._html; setHTML(t, typingHTML(s)); if (t && t._html !== was) geo = null; }
@@ -945,6 +946,8 @@ function paint(force) {
     if (close && close !== lastClose) { lastClose = close; announce('closing'); }
   }
   if (isQuack(s) && onBoardPhase()) {   // the tiles follow the ducks' looks; my Secret Card arrives (online: once it's opened)
+    const tiles = $('.wq-tiles', S);
+    if (tiles && tiles.children.length !== s.wq.ids.length) { tiles.closest('.cols').outerHTML = quackBoardHTML(s, R.me); geo = null; }   // someone joined: a tile for them
     refreshTiles(S, s, R.me);
     const c = myCard(s), box = $('.wq-card.mine', S), sig = JSON.stringify(c || null);
     if (box && box._sig !== undefined && box._sig !== sig) { const peeking = box.classList.contains('peek'); box.outerHTML = secretCardHTML(c); if (peeking) $('.wq-card.mine', S).classList.add('peek'); }

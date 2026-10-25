@@ -348,7 +348,7 @@ function psLines(s, all) {
   if (s.catchEnds && s.catchEnds > now) out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
   if (s.vote) out.push(`  5 vote     ${s.vote.kind} vote, ${Object.keys(s.vote.yes).length} yes · ${Object.keys(s.vote.no).length} no`);
   if (all) {
-    out.push('', table([['PLAYER', 'STATE'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id), [p.bot ? 'computer' : '', p.idle ? 'away' : '', p.late ? 'plays next round' : '', s.done && s.done[id] ? 'turn ended' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]));
+    out.push('', table([['PLAYER', 'STATE'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id), [p.bot ? 'computer' : '', p.idle ? 'away' : '', p.late ? 'plays next turn' : '', s.done && s.done[id] ? 'turn ended' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]));
   }
   return out.join('\n');
 }
@@ -542,7 +542,7 @@ const CMDS = {
   who: (a, i, x) => { const s = needRoom(x.ctx); return table(s.seat.map(id => [pname(s, id), [id === s.hostId ? 'host' : '', isSudo(s, id) ? 'sudo' : '', s.players[id].bot ? 'computer' : ''].filter(Boolean).join(', ')])); },
   w: (a, i, x) => {
     const s = needRoom(x.ctx), up = s.startedAt && s.phase !== 'lobby' ? Math.floor((Date.now() - s.startedAt) / 60000) : 0, st = STAGE[s.phase] || 'lobby';
-    return [` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}, ${s.seat.length} players, ${st}`, table([['PLAYER', 'PING', 'WHAT'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id) + (id === s.hostId ? '*' : ''), pingOf(x.ctx, p), [p.idle ? 'away' : '', p.late ? 'waits for the next round' : s.done && s.done[id] ? 'ended their turn' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]), '(* the host)'].join('\n');
+    return [` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}, ${s.seat.length} players, ${st}`, table([['PLAYER', 'PING', 'WHAT'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id) + (id === s.hostId ? '*' : ''), pingOf(x.ctx, p), [p.idle ? 'away' : '', p.late ? 'waits for the next turn' : s.done && s.done[id] ? 'ended their turn' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]), '(* the host)'].join('\n');
   },
   finger: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : [x.ctx.room.me]; return ids.map(id => finger(x.ctx, id)).join('\n\n'); },
   last: (a, i, x) => lastLines(needRoom(x.ctx)),

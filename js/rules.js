@@ -12,7 +12,7 @@
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
    that) writes a paragraph a round. Who is the Quack? has its own rules in quackrules.js. Lawyering (at the end) argues
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. */
-import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved } from './quackrules.js';
+import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -70,8 +70,9 @@ export const startX = s => twoSided(s) || isSc(s) ? .5 : colX(3);   // where duc
    Story Chain: ducks walk up and down the story) */
 export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : isLaw(s) ? ['answer', 'discuss'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
-/* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
+/* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
+export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delete s.players[id].late; };   // they play from here
 export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
 export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : s.phase === 'write' && s.sc ? `write${s.round}.${s.sc.turn}` : `${s.phase}${s.round}.${s.qi}`;
@@ -110,7 +111,8 @@ export function enter(s, phase, now) {
   const was = STAGE[s.phase];
   s.phase = phase; s.at = now; s.done = {}; s.catchEnds = 0;
   countTurn(s, was);
-  if (phase === 'submit') { s.drafts = {}; for (const id of s.seat) if (s.players[id]) delete s.players[id].late; }   // late joiners play from here
+  if (phase === 'submit') s.drafts = {};
+  if (phase === 'submit' || phase === 'results') seatLate(s);   // late joiners play from here
   const lim = phaseLimit(s); s.ends = lim ? now + lim * 1000 : 0;
   return s;
 }
@@ -131,6 +133,7 @@ function orderQuestions(s, subs) {
 }
 
 function startQuestion(s, now) {
+  seatLate(s);
   const q = s.qs[s.qi];
   s.lordTime = s.options.answerOff ? 0 : q.time;   // (forgame can turn the answer timer off for the rest of the game)
   s.pos = {}; s.lock = {};
@@ -206,6 +209,36 @@ function advance(s, now, force = false) {
   return s;
 }
 
+/* someone joins a game in progress and plays at once: they vote on the question, the match or the case, write a line
+   in Story Chain, get a tile in Who is the Quack?. While the room talks a turn over (or votes out a Quack) they walk
+   around and chat, and play from the next turn */
+function seatNewcomer(s, id) {
+  const me = s.players[id], ph = s.phase;
+  if (boardPhases(s).includes(ph)) s.pos[id] = { x: startX(s), y: Math.random() };
+  if (isQuack(s)) {   // (a tile mid-vote would move everyone's tiles under their feet: they get one at the next lap)
+    const w = s.wq;
+    if (!w || w.result || !['wqpick', 'clue', 'choice'].includes(ph)) { if (QUACK_PHASES.includes(ph)) me.late = true; return; }
+    w.ids.push(id);
+    if (ph === 'clue') s.pos[id] = { ...tileCenter(s, w.ids.length - 1, .62), j: 0 };
+    return;
+  }
+  if (isSc(s)) {   // a line of their own at the end of this paragraph, with a game word
+    const sc = s.sc, n = scZones(s, 'write').length;
+    if (ph === 'write' && sc && !sc.order.includes(id)) {
+      const used = new Set([...Object.values(sc.words), ...Object.values(sc.assign).map(x => x.word)].map(x => String(x).toLowerCase()));
+      sc.order.push(id); sc.assign[id] = { word: anyOf(SC_WORDS.filter(x => !used.has(x))) || anyOf(SC_WORDS), by: null };
+      s.pos[id] = { x: .1 + Math.random() * .8, y: (n - .98) / n };   // (just over the line being typed, like everyone)
+    }
+    if (ph === 'results') s.pos[id] = { x: .1 + Math.random() * .8, y: .125 };
+    return;
+  }
+  if (ph === 'discuss') { me.late = true; return; }
+  if (ph === 'seeds') s.done[id] = true;   // (the seeds were shared out: they vote on them)
+  if (ph === 'counsel') s.done[id] = counselDone(s, id);
+  if (ph === 'answer' && isLaw(s)) { const top = Math.random() < .5; s.pos[id] = { x: .45 + .1 * Math.random(), y: top ? .04 : .96 }; }   // with the jury, above or below the circle
+  if (ph === 'results' && !isBb(s) && !isLaw(s)) s.lock[id] = isWyr(s) ? -1 : 3;   // (like a duck that never stood on the board)
+}
+
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
   const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId, boss = !!me && isSudo(s, a.id);   // boss: the host, or anyone in sudo
@@ -215,8 +248,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false, joined: now }; s.seat.push(a.p.id);
-      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : isSc(s) ? SC_BOARD : isQuack(s) ? QUACK_PHASES : ['counsel', 'answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
-      if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
+      if (!['lobby', 'over', 'countdown'].includes(s.phase)) seatNewcomer(s, a.p.id);
       say(s, `${a.p.name} joined.`); return s;
     }
     case 'leave': {
@@ -644,7 +676,7 @@ const oneLine = (v, n) => String(v || '').replace(/\s+/g, ' ').slice(0, n);
 const anyOf = xs => xs[Math.floor(Math.random() * xs.length)];
 
 function startTourney(s, now) {
-  for (const id of s.seat) if (s.players[id]) delete s.players[id].late;   // late joiners play from here
+  seatLate(s);
   s.bb = { topic: '', topicBy: null, topics: [], tvotes: {}, seeds: [], per: {}, turn: 0, turns: 0, rounds: [], r: 0, m: -1, champ: null };
   s.subs = []; s.drafts = {}; s.qi = 0; s.pos = {}; s.lock = {};
   if (s.options.bbTopic === 'random') { s.bb.topic = anyOf(BB_TOPICS); say(s, `The topic: ${s.bb.topic}.`); return startSeeds(s, now); }
@@ -714,6 +746,7 @@ function buildBracket(s, now) {
 }
 const feed = (b, r, i) => { const nx = b.rounds[r + 1]; if (nx) nx[i >> 1][i % 2 ? 'b' : 'a'] = b.rounds[r][i].w; };   // the winner moves on
 function enterBracket(s, now) {   // ducks stand on the bracket (x, y across it), lined up by the round that's up next
+  seatLate(s);
   const b = s.bb, col = b.champ != null ? b.rounds.length : b.r, x = Math.min(.97, (col + .45) / (b.rounds.length + 1));
   s.seat.forEach((id, k) => { s.pos[id] = { x, y: (k + 1) / (s.seat.length + 1) }; });
   s.lock = {};
@@ -729,7 +762,7 @@ function nextMatch(s, now) {
     return enterBracket(s, now);
   }
   b.m = i; s.qi++; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0; delete b.tie;
-  s.pos = {}; s.lock = {};
+  s.pos = {}; s.lock = {}; seatLate(s);
   s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });   // everyone starts between the two seeds
   return enter(s, 'answer', now);
 }
@@ -757,7 +790,7 @@ function settleTie(s, now) {
   for (const [id, v] of Object.entries(t.votes || {})) if (s.players[id]) n[v]++;
   if (n.again > n.coin) {
     say(s, 'Voting again.'); delete b.tie;
-    s.qi++; s.pos = {}; s.lock = {}; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0;
+    s.qi++; s.pos = {}; s.lock = {}; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0; seatLate(s);
     s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });
     return enter(s, 'answer', now);
   }
@@ -870,7 +903,7 @@ function scRezone(s, from, to, alias = {}) {
 }
 /* a round: a new paragraph of the story (fresh: a new story) */
 function startStory(s, now, fresh) {
-  for (const id of s.seat) if (s.players[id]) delete s.players[id].late;   // late joiners play from here
+  seatLate(s);
   if (fresh || !s.sc.stories.length) s.sc.stories.push({ paras: [] });
   Object.assign(s.sc, { words: {}, order: [], turn: 0, assign: {}, next: {} });
   s.subs = []; s.drafts = {}; s.qi = 0; s.pos = {}; s.lock = {};
@@ -1065,6 +1098,7 @@ export function canGiveUp(s, id) {
 }
 const pickOne = xs => xs[Math.floor(Math.random() * xs.length)];
 function startCase(s, now) {
+  seatLate(s);
   const q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
   s.lordTime = 0; s.pos = {}; s.lock = {}; s.ends = 0;
   s.law = { def: null, off: null, how: {}, picks: { def: {}, off: {} }, votes: {}, flips: {}, close: 0, start: null, w: null, gave: null };

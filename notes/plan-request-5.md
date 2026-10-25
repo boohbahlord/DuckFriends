@@ -9,8 +9,9 @@ questions I'm asking you in the chat.
 - **Words:** a *Stage* is one thing: the lobby, writing, voting, discussing or stats. A *Turn* is what happens between
   presses of End turn. A vote doesn't end a turn, so voting and discussing one prompt make up one turn. A *Round* is
   the whole collection of stages and turns.
-- **Joining a game in progress:** anyone can join. They appear at once, walk and chat, and play from the next round's
-  writing stage.
+- **Joining a game in progress:** anyone can join, and they play at once (changed 2026-10-25, see the request log:
+  they vote on the question, match or case that's up, write a line, get a tile in Who is the Quack?). Only while the
+  room talks a turn over, or votes out a Quack, do they walk and chat until the next turn.
 - **Kick:** the player is out until the room goes back to the lobby.
 - **All-time stats:** kept on the device and in the Google account. Fakeable, and that's fine.
 - **Bracket sizes:** any count works, with byes.

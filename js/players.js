@@ -83,7 +83,7 @@ export function mountPlayers(S, getR) {
     const s = R.state;
     setHTML(box.querySelector('.pm-list'), s.seat.map(id => {   // (only when something in it changed: every move repaints the game)
       const p = s.players[id]; if (!p) return '';
-      const tags = [p.idle ? '<span class="pm-tag idle">💤 Away</span>' : '', p.late ? '<span class="pm-tag">Plays from the next round</span>' : ''].join('');
+      const tags = [p.idle ? '<span class="pm-tag idle">💤 Away</span>' : '', p.late ? '<span class="pm-tag">Plays from the next turn</span>' : ''].join('');
       return `<div class="pm-row" data-pid="${esc(id)}" tabindex="0">${cardHTML(p, { host: id === s.hostId, me: id === R.me, size: 44 })}<div class="pm-side">${netHTML(p, R.online)}${tags}</div></div>`;
     }).join(''));
     const btn = (kind, words) => {   // start the vote, or say yes to the one running
