@@ -26,7 +26,7 @@ import { musicBarHTML, mountMusicBar } from './musicbar.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, or Who is the Quack?',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering or Hangout.',
   map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Rabbit Hole of Ducklings or Ether\'s Crossroads.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
@@ -37,7 +37,7 @@ const INFO = {
 function openTypes() {
   const s = R.state, host = isSudo(s, R.me), cur = s.options.mode || 'aod';
   return openWindow(`<h2>Game type</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the game.</p>'}
-    <div class="type-tiles">${MODES.map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')}</div>`, {
+    <div class="type-tiles">${MODES.map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: m.id === 'hang' ? 'cabin' : s.options.map === 'cabin' ? 'board' : s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')}</div>`, {
     cls: 'win-settings',
     onOpen: w => { if (host) w.querySelector('.type-tiles').onclick = e => { const b = e.target.closest('[data-mode]'); if (!b) return; R.send({ t: 'options', options: { mode: b.dataset.mode } }); w.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
   });
@@ -124,9 +124,9 @@ function openOptions() {
     ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
     ${s.options.mode === 'quack' ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ''}
     ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
+    ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam')), s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>
@@ -198,6 +198,7 @@ function paint() {
   $('.val', startRow).textContent = few ? 'Needs 3 players' : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
+  $('[data-m="map"]', S).hidden = s.options.mode === 'hang';   // (Hangout is always in Duck Cabin)
   const fr = $('[data-m="friends"] .val', S);
   if (fr) fr.textContent = acct.uid ? `${Object.values(acct.friends).filter(f => f.on).length} online` : 'Sign in';
   const mode = s.options.mode || 'aod', art = $('.lobby-art', S), artSig = (s.options.map || 'board') + mode + JSON.stringify(profile.duck);   // the picture shows the game and the map

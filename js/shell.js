@@ -184,6 +184,7 @@ const left = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math
 /* ---------- the stats ---------- */
 function statLines(ctx, scope, args) {
   const s = needRoom(ctx), mi = args.indexOf('-m'), mode = mi >= 0 ? args[mi + 1] : (s.options.mode || 'aod'), at = args.filter(a => a.startsWith('@'));
+  if (mode === 'hang') fail('✗ Hangout keeps no stats of its own; try totalstats -m aod (or another game).');
   if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m ${STAT_MODES.map(([m]) => m).join(', ')}.`);
   const ids = at.length ? who(ctx, at) : s.seat.filter(id => !(s.players[id] || {}).late || scope === 'total');
   const nm = id => pname(s, id), out = [];
@@ -233,7 +234,7 @@ const SHARES = { everyone: 1, all: 1, half: .5, '2/3': .67, 'two-thirds': .67, '
 function forgameShow(s) {
   const o = s.options, t = v => v ? v + ' s' : 'off', sh = o.share === 1 ? 'everyone' : Object.keys(SHARES).find(k => SHARES[k] === o.share && k.includes('/')) || pct(o.share);
   const mutes = (s.gmutes || []).filter(m => m.on).map(m => `${m.who.filter(id => s.players[id]).map(id => pname(s, id)).join(', ')} (${m.kinds.join(', ')}${m.turns ? `, ${m.turns} turns` : ''}${m.stages && m.stages.length ? `, in ${m.stages.join(' ')}` : ''})`);
-  return [`${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ' (in the lobby)' : `, round ${s.round + 1}`}`,
+  return [`${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ' (in the lobby)' : o.mode === 'hang' ? ', hanging out' : `, round ${s.round + 1}`}`,
     `  timers:    writing ${t(o.submitTime)} · answer ${o.answerOff ? 'off' : t(o.answerTime)} · catch-up ${t(o.catchUp)}`,
     `  turn-end:  ${sh}`,
     `  order ${o.order} · freeroam ${o.freeRoam ? 'on' : 'off'} · gravity ${o.lowGravity ? 'low' : 'normal'} · silly ${o.fun ? 'on' : 'off'}`,
@@ -343,7 +344,7 @@ function cal(now = new Date()) {
 }
 function psLines(s, all) {
   const o = s.options, st = STAGE[s.phase] || 'lobby', now = Date.now(), n = s.seat.length, done = s.seat.filter(id => s.done && s.done[id]).length;
-  const out = ['PID WHAT     DOING', `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ', in the lobby' : `, round ${s.round + 1}`}`];
+  const out = ['PID WHAT     DOING', `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ', in the lobby' : o.mode === 'hang' ? ', hanging out' : `, round ${s.round + 1}`}`];
   if (s.phase !== 'lobby') out.push(`  2 ${st.padEnd(8)} ${['answer', 'discuss', 'results', 'bracket'].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ''}`);
   if (s.ends && s.ends > now) out.push(`  3 timer    ${left(s.ends - now)} left`);
   if (s.catchEnds && s.catchEnds > now) out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
@@ -639,7 +640,7 @@ const CMDS = {
   map: (args, i, x) => {
     const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')]));
     const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(`✗ map: no map ${args.join(' ')} (map lists them)`);
-    if (!isSudo(s, x.ctx.room.me)) fail('✗ map: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
+    if (!isSudo(s, x.ctx.room.me)) fail('✗ map: only the host or sudo.'); if (s.options.mode === 'hang') fail('✗ map: Hangout is always in Duck Cabin.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
     x.ctx.room.send({ t: 'options', options: { map: m[0] } }); return `Map: ${m[1]}.`;
   },
   mode: (args, i, x) => {
