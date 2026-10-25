@@ -831,3 +831,12 @@ Duckguise is the replacement for master of disguise, and it only shows up in gam
 game's; Wrongly Accused, voted out the most while innocent; Quick Quack, ended their own clue turn fastest on average;
 Duckguise, won the most as the Quack, then lasted the most clue laps as the Quack; those three in the whole game's
 stats only.)
+
+## Arrow keys in the menus, word for word (2026-10-25)
+
+using arrow keys should allow for navigation through the UI in the TAB menu, pause menu, and other menus, and clicking enter should select them and shift+enter right clicks them
+
+This way, tab menu is easier to navigate, this is shown only in lobby, customization, or below the tab player card.
+
+(Read as: the arrow keys work in every menu, and a small hint of the keys shows only in the lobby, in Customize, and
+under the player cards in the TAB menu. In a game the arrows still walk the duck unless a menu is open.)

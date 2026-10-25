@@ -1,7 +1,7 @@
 /* ---------- the player menu and the room's votes ----------
    In a game, hold Tab (or tap the 👥 button by the pause button; it stays up until its ✖) to see every player: their
    card with the duck and name, their connection, and whether they've gone quiet. Click a name for View stats, Add friend
-   or Vote to kick. At the bottom you can start a vote to go back to the lobby, to skip the turn (not in Bicker Brackets) or to skip the round (each once a turn). A running vote shows as a
+   or Vote to kick. The arrow keys move through it (and keep it up), Enter picks. At the bottom you can start a vote to go back to the lobby, to skip the turn (not in Bicker Brackets) or to skip the round (each once a turn). A running vote shows as a
    box at the top for everyone who can vote in it. A player who hasn't touched a key, the mouse or the screen in two
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
@@ -11,6 +11,7 @@ import { now as clockNow } from './clock.js';
 import { openStats } from './stats.js';
 import { canAdd, requestFriend } from './account.js';
 import { sfx } from './sound.js';
+import { NAV_HINTS } from './keynav.js';
 
 /* the connection as 1 to 4 bars and milliseconds */
 const bars = ms => ms == null ? 0 : ms < 90 ? 4 : ms < 180 ? 3 : ms < 350 ? 2 : 1;
@@ -90,7 +91,7 @@ export function mountPlayers(S, getR) {
       return `<button type="button" class="btn ghost" data-pa="${kind}vote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: ' : 'Start a vote: '}${words}</button>`;
     };
     setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${isBb(s) ? '' : btn('turn', 'skip this turn')}${btn('skip', 'skip this round')}</span>
-      <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span>`);
+      <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span><span class="hints pm-keys">${NAV_HINTS}</span>`);
   };
   const open = (stay = false) => { sticky = sticky || stay; box.hidden = false; render(); };
   const close = () => { sticky = false; box.hidden = true; };
@@ -100,14 +101,22 @@ export function mountPlayers(S, getR) {
     if (e.target.closest('[data-pa="lobbyvote"]')) { lobbyVote(R); return; }
     if (e.target.closest('[data-pa="skipvote"]')) { lobbyVote(R, 'skip'); return; }
     if (e.target.closest('[data-pa="turnvote"]')) { lobbyVote(R, 'turn'); return; }
-    const row = e.target.closest('.pm-row'); if (!row) return;
+    rowMenu(e);
+  });
+  /* a player's options: a click, a right-click, or Enter / Shift+Enter on the row */
+  const rowMenu = e => {
+    const R = getR(), row = e.target.closest('.pm-row'); if (!R || !row) return;
     const id = row.dataset.pid, p = R.state.players[id]; if (!p) return;
+    e.preventDefault();
     contextMenu(e.clientX, e.clientY, [
       ['View stats', () => openStats(R.state, id, R.me)],
       ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : []),
       ...kickItems(R, id),
     ]);
-  });
+  };
+  box.addEventListener('contextmenu', rowMenu);
+  /* moving through it with the arrow keys keeps it up after Tab is let go (until Esc or its ✖) */
+  box.addEventListener('focusin', e => { if (e.target.matches(':focus-visible')) sticky = true; });
   vbox.addEventListener('click', e => {
     const b = e.target.closest('[data-vote]'); const R = getR(); if (!b || !R || !R.state.vote) return;
     R.send({ t: 'voteCast', n: R.state.vote.n, v: b.dataset.vote === '1' });
