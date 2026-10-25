@@ -1235,3 +1235,7 @@ song at the same moment (online within about a tenth of a second), in the lobby 
 and, back in view, comes in where everyone is. Command line: `song` lists the songs (on or off, the one playing), `song
 off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
 all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
+
+## A starry night sky map, word for word (2026-10-25)
+
+Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.
