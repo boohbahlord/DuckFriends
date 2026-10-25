@@ -17,6 +17,7 @@
 import { profile, save, STAT_MODES } from './store.js';
 import { groupsOf, isSudo, denied, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, COLS, signed, nameOfValue } from './rules.js';
 import { modeOf } from './modes.js';
+import { quackStats } from './quackrules.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
 const fail = msg => { throw new Error(msg); };
@@ -150,7 +151,7 @@ const pct = v => `${Math.round(v * 100)}%`;
 /* ---------- the stats ---------- */
 function statLines(ctx, scope, args) {
   const s = needRoom(ctx), mi = args.indexOf('-m'), mode = mi >= 0 ? args[mi + 1] : (s.options.mode || 'aod'), at = args.filter(a => a.startsWith('@'));
-  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m aod, wyr or bb.`);
+  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m aod, wyr, bb or quack.`);
   const ids = at.length ? who(ctx, at) : s.seat.filter(id => !(s.players[id] || {}).late || scope === 'total');
   const nm = id => s.players[id].name, out = [];
   if (scope === 'total') {
@@ -160,6 +161,7 @@ function statLines(ctx, scope, args) {
       if (!st) { out.push(`${nm(id)}: no stats yet`); continue; }
       const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === 'bb' ? 'tournaments' : 'rounds'} · ${st.answers} ${mode === 'bb' ? 'votes' : 'answers'} · ${st.jumps} jumps`;
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
+      else if (mode === 'quack') out.push(`${base} · ${st.wins} rounds won · ${st.titles} won as the Quack · ${st.majority} votes for the real Quack`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
     }
@@ -168,7 +170,10 @@ function statLines(ctx, scope, args) {
   if (mode !== (s.options.mode || 'aod')) fail(`✗ This game is ${modeOf(s.options.mode).name}; -m works with totalstats.`);
   const round = scope === 'round' ? s.round : null, jumps = id => (s.jumps || {})[id] || 0;
   out.push(`${scope === 'round' ? `Round ${s.round + 1}` : 'This game'} · ${modeOf(mode).name}:`);
-  if (mode === 'bb') {
+  if (mode === 'quack') {
+    const past = s.wqPast || [], per = quackStats(scope === 'round' ? past.slice(-1) : past);
+    for (const id of ids) { const p = per[id] || { right: 0, votes: 0, quack: 0, quackWins: 0, wins: 0 }; out.push(`${nm(id)}: ${p.right} of ${p.votes} votes for the real Quack · ${p.wins} rounds won · ${p.quack} as the Quack (${p.quackWins} won) · ${jumps(id)} jumps`); }
+  } else if (mode === 'bb') {
     const past = s.bbPast || [], cur = s.bb && s.bb.rounds && s.bb.rounds.length && s.phase !== 'results' ? [s.bb] : [];
     const per = bbStats(scope === 'round' ? (cur.length ? cur : past.slice(-1)) : [...past, ...cur]);
     for (const id of ids) { const p = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 }; out.push(`${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} jumps`); }
@@ -382,7 +387,7 @@ export function shellSuggest(line, ctx) {
   else if (cmd === 'getent') opts = ['group'];
   else if (cmd === 'groupadd') opts = ['-p', ...GROUP_PERMS];
   else if (cmd === 'forgame') opts = ['all-timer', 'timer', 'turn-end', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'];
-  else if (['totalstats', 'gamestats', 'roundstats'].includes(cmd)) opts = ['-m', 'aod', 'wyr', 'bb'];
+  else if (['totalstats', 'gamestats', 'roundstats'].includes(cmd)) opts = ['-m', 'aod', 'wyr', 'bb', 'quack'];
   else if (['cat', 'ls', 'cd', 'rm', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq'].includes(cmd) || last.includes('/')) {
     const slash = last.lastIndexOf('/'), dirPart = last.slice(0, slash + 1), base = dirPart ? findPath(dirPart.replace(/\/$/, '') || '/') : fs.cwd;
     try { opts = kind(base) === 'dir' ? list(base).map(n => dirPart + n) : []; } catch { opts = []; }

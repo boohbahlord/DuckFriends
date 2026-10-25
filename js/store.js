@@ -18,8 +18,9 @@ export const PROFILE_DEFAULT = {
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
-   shared copy keeps only these numbers */
-export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets']];
+   shared copy keeps only these numbers (Who is the Quack? keeps its votes in answers, correct ones in majority, rounds won
+   in wins, lost in losses and won as the Quack in titles) */
+export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets'], ['quack', 'Who is the Quack?']];
 export function cleanStats(o) {
   const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
   for (const [m] of STAT_MODES) {

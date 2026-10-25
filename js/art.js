@@ -22,8 +22,8 @@ export function symbolSVG(size = 32, title = 'Agree or Disagree') {
 export const gameSymbol = (mode, size = 32) => modeOf(mode).id === 'aod' ? symbolSVG(size) : modeSymbol(mode, size);
 
 /* multicolored letters as HTML: each letter its own fridge-magnet color, a little tilt; on any font */
-export function rainbowHTML(text, { font = '', seed = 7 } = {}) {
-  const r = rnd(seed); let i = 0;
+export function rainbowHTML(text, { font = '', seed = 7, from = 0 } = {}) {   // (from: the color to start on)
+  const r = rnd(seed); let i = from;
   const parts = [...String(text)].map(ch => {
     if (ch === ' ') return '<span class="sp"> </span>';
     const c = FRIDGE[i++ % FRIDGE.length], t = ((r() - .5) * 10).toFixed(1);
