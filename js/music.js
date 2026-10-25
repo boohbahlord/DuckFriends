@@ -1272,7 +1272,7 @@ export const music = (function(){
   // an oscillator; GL (when set) slides it in from another pitch, or lets it sag or rise as it sounds
   /* played live, a note whose time has already gone by (the page was busy for a moment) starts now with its whole shape,
      instead of jumping straight to full volume, which popped */
-  const lt=t=>RENDER||!ac?t:Math.max(t,ac.currentTime+.005);
+  const lt=t=>RENDER||!ac?t:Math.max(t,ac.currentTime+.02);   // (a note set in the past skips its fade-in and clicks: Firefox's clock can be several ms behind)
   /* a struck or plucked low note comes in a little slower, so its first push of air is a round "dum", not a pop */
   const atk=f=>f<200?.016:f<400?.01:.004;
   const osc=(type,f,t,stop,dest)=>{const o=ac.createOscillator();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o._f=f;

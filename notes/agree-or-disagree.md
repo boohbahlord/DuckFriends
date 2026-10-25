@@ -1423,3 +1423,16 @@ the same perspective as its dots, lit from below by it, with soft shadows and fa
 window and moon stay, reflected in the floor too. A track crosses the floor, and a toy train (an engine with a duck
 driving, three open cars with two ducks each, glowing lights, a headlight, turning wheels, smoke) rolls in from the
 left and out to the right about every 26 seconds. Code: js/playroom.js.)
+
+## Sound: stop the pops, starting with the Hangout piano (2026-10-25)
+
+We need a worker or agent to look up a rubric on how to make our audio AI to STOP PRODUCING BAD AUDIO THAT FUCKING POPS ALL THE TIME! Like the new piano in hangout room for example
+
+Simply, look up how to make audio that claude code or opus or just claude to not create popping sounds that hurt the listener of audio, find the right way to look that question up, then find what people say they did to train their ai to solve the problem, and then find rubrics for this issue as well
+
+(Found in the piano: each key was set to start only 4 ms ahead. A note set to start in the past skips its fade-in and
+clicks, and in Chrome can even begin up to 30 times too loud for a moment; Firefox's clock only moves between tasks, so
+it is often a few ms behind. The piano's limiter also turns quiet sound up by itself, so 8 or more ringing notes went
+over the top and clipped. Now: keys start 20 ms ahead, every envelope starts from silence even if set late, and a soft
+ceiling keeps the piano under full scale. The sound rules went into CLAUDE.md ("Sound without pops"), and
+tools/clickcheck.js finds clicks in a rendered sound.)
