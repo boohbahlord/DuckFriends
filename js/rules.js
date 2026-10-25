@@ -24,7 +24,7 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: 'board',         // board | sky | pixel
+  map: 'board',         // board | sky | pixel | carnival | rabbit | ec
   mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
@@ -59,7 +59,7 @@ const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
 export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
-export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : `${s.phase}${s.round}.${s.qi}`;
+export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : s.phase === 'write' && s.sc ? `write${s.round}.${s.sc.turn}` : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
 export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound'];   // the specials used with E
@@ -142,14 +142,14 @@ function startResults(s, now) {
 }
 
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
-function advance(s, now) {
-  if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now);
+function advance(s, now, force = false) {
+  if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now, force);
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
   const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
-  const go = all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
+  const go = force || all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
   if (!go) return s;
   switch (s.phase) {
     case 'countdown': return s;
@@ -185,7 +185,7 @@ function advance(s, now) {
 
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
-  const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId;
+  const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId, boss = !!me && isSudo(s, a.id);   // boss: the host, or anyone in sudo
   switch (a.t) {
     case 'join': {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
@@ -206,13 +206,19 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'look': if (me) Object.assign(me, a.look); return s;
     case 'ready': if (me && (s.phase === 'lobby' || s.phase === 'over')) me.ready = a.v ?? !me.ready; return s;
-    case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (host && n) s.name = n; return s; }
-    case 'options': if (host && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
-    case 'kick': if (host && P[a.who] && a.who !== s.hostId) { delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); } return s;
+    case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
+    case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
+    case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
+      const p = P[a.who]; if (!boss || !p || a.who === s.hostId || a.who === a.id) return state;
+      if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
+      delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
+      if (s.vote) settleVote(s, now);
+      return s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown' ? s : advance(s, now);
+    }
     case 'start':
-      if (!host || !(s.phase === 'lobby' || s.phase === 'over')) return s;
+      if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
-    case 'cancel': if (host && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
+    case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
       if (isBb(s)) return bbWrite(s, a, now, true);
       if (isSc(s)) return scWrite(s, a, now, true) || state;
@@ -259,7 +265,7 @@ export function reduce(state, a, now = Date.now()) {
       s.reviewVotes[a.id] = true;
       if (s.seat.filter(id => s.reviewVotes[id]).length >= needed(s)) s.review = true;
       return s;
-    case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+    case 'toLobby': if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
@@ -302,14 +308,16 @@ export function reduce(state, a, now = Date.now()) {
       const used = (s.voteUsed || {})[a.id] || {};
       if (a.kind === 'kick') {
         if (!P[a.target] || a.target === a.id) return state;
+        if (humanIds(s).length <= 2) return state;   // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
-      } else if (a.kind === 'lobby') {
-        if (used.lobby === turnKey(s)) return state;   // one back-to-lobby vote a turn
+      } else if (a.kind === 'lobby' || a.kind === 'skip' || a.kind === 'turn') {
+        if (a.kind === 'turn' && isBb(s)) return state;   // (not in Bicker Brackets)
+        if (used[a.kind] === turnKey(s)) return state;   // one back-to-lobby (or skip) vote a turn
       } else return state;
       s.voteN = (s.voteN || 0) + 1;
       s.vote = { n: s.voteN, kind: a.kind, target: a.kind === 'kick' ? a.target : null, by: a.id, yes: { [a.id]: true }, no: {}, ends: now + VOTE_TIME * 1000 };
       s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : turnKey(s) } };
-      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : `${me.name} started a vote to go back to the lobby.`);
+      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : a.kind === 'skip' ? `${me.name} started a vote to skip this round.` : a.kind === 'turn' ? `${me.name} started a vote to skip this turn.` : `${me.name} started a vote to go back to the lobby.`);
       return settleVote(s, now);
     }
     case 'voteCast': {
@@ -352,6 +360,12 @@ export function reduce(state, a, now = Date.now()) {
       delete G[a.name]; say(s, `${me.name} removed the group ${a.name}.`); return s;
     }
     case 'forgame': return forgame(s, a, now) || state;
+    case 'skip': {   // the host (or sudo): end the current stage now, as if everyone were done
+      if (!boss || ['lobby', 'over'].includes(s.phase)) return state;
+      say(s, `${me.name} skipped ahead.`);
+      if (s.phase === 'countdown') { s.ends = now; return s; }   // the next tick starts the game
+      return advance(s, now, true);
+    }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
@@ -367,6 +381,18 @@ export function reduce(state, a, now = Date.now()) {
     }
   }
   return s;
+}
+
+/* the safety net: an action that throws is skipped (the room keeps going) and the room's log says so, once a minute at
+   most, so a broken action can't stop a game */
+export function safeReduce(state, a, now = Date.now()) {
+  try { return reduce(state, a, now); } catch (e) {
+    console.error('DuckFriends: an action failed and was skipped', a && a.t, e);
+    if (state.errAt && now - state.errAt < 60000) return state;
+    const s = clone(state); s.errAt = now;
+    say(s, `Something went wrong (${String(a && a.t).slice(0, 20)}), so it was skipped. If the game seems stuck, the host can type skip in the command line.`);
+    return s;
+  }
 }
 
 /* ---------- groups, permissions and forgame (the command line's sudo commands) ----------
@@ -460,6 +486,7 @@ function settleVote(s, now) {
   const v = s.vote; if (!v) return s;
   const { voters, need } = voteNeeds(s, v), yes = voters.filter(id => v.yes[id]).length, no = voters.filter(id => v.no[id]).length;
   if (v.kind === 'kick' && !s.players[v.target]) { s.vote = null; return s; }
+  if (v.kind === 'kick' && humanIds(s).length <= 2) { s.vote = null; say(s, 'Only two players left, so the kick vote ended.'); return s; }
   if (yes >= need) {
     s.vote = null;
     if (v.kind === 'kick') {
@@ -470,10 +497,24 @@ function settleVote(s, now) {
       if (v.target === s.hostId) s.hostId = humanIds(s)[0] || null;
       return advance(s, now);
     }
+    if (v.kind === 'skip') return skipRound(s, now);
+    if (v.kind === 'turn') { say(s, 'The room voted to skip this turn.'); return advance(s, now, true); }   // as if everyone were done
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
   return s;
+}
+/* a vote passed to skip the round: the rest of its questions (or the tournament) are dropped. Agree or Disagree and
+   Would You Rather go to the round's stats with what was answered; Bicker Brackets starts a new tournament; Story Chain
+   ends the paragraph with what was written (or draws new words, if none was written yet); on the stats
+   screen, the next round starts */
+function skipRound(s, now) {
+  say(s, 'The room voted to skip this round.');
+  if (s.phase === 'results') return advance(s, now, true);
+  if (isBb(s)) { s.round++; return startTourney(s, now); }
+  if (isSc(s)) { if (s.phase === 'words') { s.round++; return startStory(s, now, false); } return startNext(s, now); }   // Story Chain: the paragraph ends with what was written
+  if (s.phase === 'submit') { s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now); }   // nothing asked yet: on to the next round's writing
+  return startResults(s, now);
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
@@ -808,9 +849,9 @@ function scWrite(s, a, now, send) {
 }
 /* what ends a Story Chain phase: the words when enough are in (then the catch-up timer for the rest); a line when its
    writer is done, out of time or gone; a vote once enough have voted (no timer: there is time to sway each other) */
-function scAdvance(s, now) {
+function scAdvance(s, now, force = false) {   // force: the skip command or a skip vote, as if everyone were done
   const zs = SC_VOTES.includes(s.phase) ? scZones(s) : [], free = id => s.done[id] || (zs.length && !zs.some(z => scCanVote(s, id, z)));   // (nothing to vote for: only their own line or word left)
-  const on = playing(s), d = on.filter(free).length, timeUp = s.ends && now >= s.ends, enough = d >= needed(s);
+  const on = playing(s), d = force ? on.length : on.filter(free).length, timeUp = force || (s.ends && now >= s.ends), enough = force || d >= needed(s);
   switch (s.phase) {
     case 'words':
       if (enough && d < on.length && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
@@ -826,6 +867,7 @@ function scAdvance(s, now) {
       if (!enough) return s;
       const n = { cont: 0, new: 0, lobby: 0 };
       for (const [id, c] of Object.entries(s.sc.next)) if (s.players[id] && n[c] !== undefined) n[c]++;
+      if (force && !n.cont && !n.new && !n.lobby) n.cont = 1;   // skipped with no choices made: the story goes on
       const top = Math.max(...Object.values(n)), best = Object.keys(n).filter(k => n[k] === top), pick = anyOf(best), name = SC_NEXT.find(c => c[0] === pick)[1];
       say(s, best.length > 1 ? `A tie! A coin toss: ${name.toLowerCase()}.` : `${name}!`);
       if (pick === 'lobby') return backToLobby(s, 'Back to the lobby.');

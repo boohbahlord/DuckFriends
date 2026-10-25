@@ -20,7 +20,7 @@ import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardP
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX } from './rules.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
-import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
+import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
 import { pressSpecial, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
 import { duckSVG, duckRoom } from './duck.js';
@@ -37,6 +37,7 @@ import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
 import { mountMap } from './maps.js';
+import { knockOff } from './duel.js';
 import { hooks } from './hooks.js';
 import { mountTouch, stick } from './touch.js';
 import { now as clockNow } from './clock.js';
@@ -55,7 +56,8 @@ let draftT = 0;
 let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
-let bbZoom = 0, losers = new Set(), seedShift = 0;   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned
+let bbZoom = 0, losers = new Set(), seedShift = 0, knocked = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned;
+                                                                         // the matches whose loser is already bumped off the cloud
 let scY = 0, scT = 0, scWalk = 0, scZone = '';      // Story Chain: how far the story has scrolled, the last frame, when my duck last walked, the zone it stands in
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 /* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
@@ -82,7 +84,7 @@ function wyrColsHTML(s) {
 /* Bicker Brackets: a match's two seeds (no board drawn), or the bracket that ducks walk over */
 const bbBoardHTML = s => s.phase === 'bracket'
   ? `<div class="board bb-board bb-bracket"><div class="cols bb-cols bb-none"></div><div class="bb-diagram">${bracketHTML(s)}</div>${bracketTopHTML(s)}<div class="ducks"></div><div class="fxl"></div></div>`
-  : `<div class="board bb-board">${matchColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${matchTopHTML(s)}</div>`;
+  : `<div class="board bb-board">${matchColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${matchTopHTML(s, knocked.has(matchKey(s)))}</div>`;
 const boardHTML = s => isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
@@ -628,7 +630,7 @@ function actHTML(s) {
       ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ''}
       <button type="button" class="btn ${lv ? 'red' : 'ghost'}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ''}>${lv ? 'Vote yes: back to the lobby' : 'Vote: back to the lobby'}</button>${count}</div>`;
   }
-  if (s.phase === 'over') return `<div class="act-row">${s.hostId === R.me ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
+  if (s.phase === 'over') return `<div class="act-row">${isSudo(s, R.me) ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
   return '';
 }
 
@@ -685,6 +687,21 @@ function shiftSides(s, now) {
   if (deg === seedShift) return;
   seedShift = deg; bbMarks(s);
 }
+const matchKey = s => s.bb ? [s.startedAt, s.bb.r, s.bb.m].join() : '';
+/* Bicker Brackets: the votes are in, so the winner bumps the loser off the cloud (once per match) */
+function duel(s) {
+  const m = isBb(s) && s.phase === 'discuss' && bbMatch(s), key = matchKey(s);
+  if (!m || m.w == null || knocked.has(key)) return;
+  knocked.add(key);
+  const lord = S.querySelector('.bb-top .lord.duel');
+  setTimeout(() => { if (lord.isConnected) knockOff(lord, m.w === m.a ? 1 : 0); }, 900);
+}
+/* the colors of the most-voted tile (or tiles, when they tie), as the board shows them */
+function topColors(s) {
+  const n = {}; for (const id of s.seat) { const c = s.lock[id]; if (c >= 0) n[c] = (n[c] || 0) + 1; }
+  const most = Math.max(0, ...Object.values(n));
+  return Object.keys(n).filter(c => n[c] === most).map(c => { const t = S.querySelector(`.board .cols > .col[data-c="${c}"]`); return t ? getComputedStyle(t).getPropertyValue('--c').trim() : ''; }).filter(Boolean);
+}
 function paint(force) {
   if (!S || !R) return;
   const s = R.state, key = [s.phase, s.round, s.qi].join('|');
@@ -703,8 +720,10 @@ function paint(force) {
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
     celebrate(s);
+    duel(s);
     scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
+    if (was && was.split('|')[0] === 'answer' && s.phase === 'discuss') scene.cheer(topColors(s));   // the votes are in
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
@@ -871,7 +890,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); scY = 0; scT = 0; scZone = '';
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
@@ -941,7 +960,7 @@ register('game', {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;
       const p = R.state.players[d.dataset.pid];
       contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)], ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : []),
-        ...(p && d.dataset.pid !== R.me && !p.bot ? [['Vote to kick', () => startKick(R, d.dataset.pid)]] : [])]);
+        ...(p ? kickItems(R, d.dataset.pid) : [])]);
     });
     off = R.on(s => {
       if (!S) return;
