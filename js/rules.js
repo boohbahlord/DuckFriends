@@ -10,7 +10,8 @@
    the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
 
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
-   that) writes a paragraph a round. */
+   that) writes a paragraph a round. Who is the Quack? has its own rules in quackrules.js. */
+import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill } from './quackrules.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -25,11 +26,15 @@ export const OPTIONS_DEFAULT = {
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | rabbit | ec
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
   bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
+  wqPicker: 'player',   // Who is the Quack?: player (a random player picks the word) | list (the built-in words)
+  wqPickTime: 60,       // seconds to pick the word (then what they typed, or a word from the list)
+  wqQuacks: 1,          // 1 or 2 (2 only with 6 or more players)
+  wqTimer: 0,           // seconds a vote may take (0: none)
   scTime: 0,            // Story Chain: seconds to write a line (0: no timer)
 };
 export const MAX_DEFAULT = 8;
@@ -46,14 +51,14 @@ export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
 export const isWyr = s => s.options.mode === 'wyr';
 export const isBb = s => s.options.mode === 'bb';
 export const isSc = s => s.options.mode === 'sc';
-export const twoSided = s => isWyr(s) || isBb(s);   // a match in Bicker Brackets: seed A on the left, B on the right
+export const twoSided = s => isWyr(s) || isBb(s) || (isQuack(s) && s.phase === 'choice');   // a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues
 export const colAt = (s, x) => twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
 export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
 export const colBoundsAt = (s, c) => twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
 export const startX = s => twoSided(s) || isSc(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 /* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead;
    Story Chain: ducks walk up and down the story) */
-export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : ['answer', 'discuss', 'results'];
+export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -87,9 +92,11 @@ function phaseLimit(s) {
   if (['submit', 'topic', 'seeds'].includes(s.phase)) return s.options.submitTime;
   if (s.phase === 'answer') return s.lordTime;
   if (s.phase === 'podium') return PODIUM;
+  if (s.phase === 'wqpick') return s.options.wqPickTime;
+  if (s.phase === 'choice' || s.phase === 'accuse') return s.options.wqTimer;
   return 0;
 }
-function enter(s, phase, now) {
+export function enter(s, phase, now) {
   const was = STAGE[s.phase];
   s.phase = phase; s.at = now; s.done = {}; s.catchEnds = 0;
   countTurn(s, was);
@@ -99,7 +106,7 @@ function enter(s, phase, now) {
 }
 /* the room's log (chat and notices); every line has a running number n, so new lines are easy to spot */
 const logLine = (s, line) => { s.logN = (s.logN || 0) + 1; s.log.push({ n: s.logN, t: Date.now(), ...line }); if (s.log.length > 200) s.log.shift(); };
-const say = (s, text) => logLine(s, { sys: true, text });
+export const say = (s, text) => logLine(s, { sys: true, text });
 
 /* the order of a round's questions: rotating (who goes first moves along each round) or random */
 function orderQuestions(s, subs) {
@@ -131,6 +138,7 @@ function recordAnswers(s) {
 
 function startResults(s, now) {
   s.reviewVotes = {}; s.review = false;
+  if (isQuack(s)) return enter(s, 'results', now);
   if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return enter(s, 'results', now); }   // the tournament joins the game's
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
@@ -144,6 +152,7 @@ function startResults(s, now) {
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now, force = false) {
   if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now, force);
+  if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackAdvance(s, now, force);
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
   const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
@@ -178,7 +187,7 @@ function advance(s, now, force = false) {
       if (isBb(s)) return nextMatch(s, now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
-    case 'results': s.round++; s.subs = []; s.qs = []; return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
+    case 'results': s.round++; s.subs = []; s.qs = []; return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
   }
   return s;
 }
@@ -192,7 +201,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false, joined: now }; s.seat.push(a.p.id);
-      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : isSc(s) ? SC_BOARD : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
+      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : isSc(s) ? SC_BOARD : isQuack(s) ? QUACK_PHASES : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
       if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
@@ -202,6 +211,7 @@ export function reduce(state, a, now = Date.now()) {
       delete P[a.id]; s.seat = s.seat.filter(id => id !== a.id); delete s.pos[a.id]; delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
+      if (isQuack(s)) quackLeft(s, now);
       return s.phase === 'lobby' || s.phase === 'over' ? s : advance(s, now);
     }
     case 'look': if (me) Object.assign(me, a.look); return s;
@@ -217,6 +227,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'start':
       if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
+      if (isQuack(s) && s.seat.length < 3) return state;   // (the lobby says it needs 3)
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
     case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
@@ -239,11 +250,13 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || !s.pos[a.id]) return state;
       if (!boardPhases(s).includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
+      if (holdStill(s, a.id, now)) return state;   // Who is the Quack?: the last duck plays dead for a moment
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }
+      if (isQuack(s) && ['choice', 'accuse'].includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a vote holds its spot
       if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a story vote holds its spot
-      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
+      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late && !isQuack(s)) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
@@ -252,6 +265,7 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
+      if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackEnd(s, a, now) || state;
       if (isSc(s)) return scVote(s, a, now) || state;
       if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
@@ -297,6 +311,7 @@ export function reduce(state, a, now = Date.now()) {
       s.bb.tie = { ...s.bb.tie, votes: { ...(s.bb.tie || {}).votes, [a.id]: a.v } }; s.done[a.id] = true;
       return advance(s, now);
     }
+    case 'wqWord': return wqWord(s, a, now) || state;   // Who is the Quack?: the secret word, from its picker
     case 'pick': {   // Bicker Brackets: my vote for a topic (it can be changed until the vote ends)
       if (!me || me.late || s.phase !== 'tvote' || !Number.isInteger(a.i) || !s.bb.topics[a.i]) return state;
       s.bb.tvotes = { ...s.bb.tvotes, [a.id]: a.i }; s.done[a.id] = true;
@@ -378,10 +393,11 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
-        s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
+        s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; s.wqPast = []; s.wqScore = { quack: 0, room: 0 }; s.wqPickers = []; for (const id of s.seat) P[id].ready = false;
         if (isSc(s)) { s.sc = { stories: [] }; return startStory(s, now, true); }
-        return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
+        return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
       }
+      if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
       const shots = moveShots(s, now);
@@ -434,7 +450,7 @@ export function slowMs(s, id) {
 /* may this player open a file someone sent from the command line? its sender, sudo, its group (chmod g+r), or everyone (o+r) */
 export const canOpen = (s, id, m) => !m.file || m.from === id || isSudo(s, id) || !!m.pub || (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
-export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
+export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats', wqpick: 'writing', clue: 'discussing', choice: 'voting', accuse: 'voting', reveal: 'discussing' };
 function countTurn(s, was) {
   const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
   const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
@@ -542,6 +558,7 @@ function skipRound(s, now) {
   say(s, 'The room voted to skip this round.');
   if (s.phase === 'results') return advance(s, now, true);
   if (isBb(s)) { s.round++; return startTourney(s, now); }
+  if (isQuack(s)) return quackSkip(s, now);   // Who is the Quack?: no winner, the word shown
   if (isSc(s)) {   // Story Chain: the paragraph ends with what was written; with nothing written yet, new words are drawn
     const none = s.phase === 'words' || (s.phase === 'write' && !scPara(s).lines.length);
     if (s.phase === 'write' && none) scStory(s).paras.pop();   // (no empty paragraph left in the story)
@@ -552,9 +569,9 @@ function skipRound(s, now) {
   return startResults(s, now);
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
-function backToLobby(s, why) {
+export function backToLobby(s, why) {
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = []; s.sc = null;
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = []; s.sc = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;

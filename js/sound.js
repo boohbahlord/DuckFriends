@@ -69,6 +69,11 @@ export const sfx = {
   love() { tone(784, .25, { gain: .08 }); tone(988, .25, { gain: .07, at: .12 }); tone(1175, .45, { gain: .07, at: .24 }); },
   bonk() { tone(330, .18, { type: 'triangle', gain: .14, slide: .5 }); noise(.08, { gain: .05, freq: 900 }); },
   hotdog() { tone(440, .08, { gain: .1, slide: 1.6 }); tone(700, .12, { gain: .08, at: .08, slide: 1.3 }); },
+  /* Who is the Quack?: a snare roll that swells for two seconds, then a hit, before the news */
+  drum() {
+    for (let i = 0; i < 26; i++) noise(.06, { gain: .03 + .05 * i / 26, type: 'bandpass', freq: 2400, q: .7, at: i * .08 });
+    noise(.35, { gain: .14, type: 'lowpass', freq: 900, at: 2.1, slideTo: 120 }); tone(98, .4, { type: 'triangle', gain: .14, at: 2.1, slide: .6 });
+  },
 };
 /* browsers start sound only after the first touch or key */
 addEventListener('pointerdown', ac, { once: true });
