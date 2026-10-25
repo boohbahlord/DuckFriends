@@ -1227,7 +1227,8 @@ export const music = (function(){
      are cut sooner (after they have faded to almost nothing), the faint layers are left out (shimmers an octave up,
      sub-octaves, the music box's halo and tine, detuned twins) and nothing has vibrato, so the music takes a fraction of
      the work and doesn't stutter; a computer plays everything in full */
-  const LITE=matchMedia("(hover: none) and (pointer: coarse)").matches,TL=LITE?.5:1;
+  // a phone or tablet has no mouse or touchpad at all (a laptop with a touch screen still has one, and gets the full songs)
+  const LITE=!matchMedia("(any-pointer: fine)").matches,TL=LITE?.5:1;
   let ac=null,out=null,bout=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
   /* a seeded chance, so a song written out sounds the same each time; in play it is new each time through */
   let SEED=1;const rnd=()=>{SEED=SEED+0x6D2B79F5|0;let t=Math.imul(SEED^SEED>>>15,1|SEED);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
