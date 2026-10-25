@@ -14,9 +14,95 @@ export const music = (function(){
     return [ms.length>1?ms:ms[0],+l,v==null||v===""?1:+v,tag||""]});
   // chords: "Dm G/D Fmaj7 E7b5 Faug" -> {r: root midi (octave 3), b: bass, iv: the chord's notes above the root}
   const IV={"":[0,4,7],m:[0,3,7],dim:[0,3,6],aug:[0,4,8],maj7:[0,4,7,11],m7:[0,3,7,10],"7":[0,4,7,10],"7b5":[0,4,6,10],
-    sus4:[0,5,7],add9:[0,4,7,14],madd9:[0,3,7,14],"maj7#11":[0,4,7,11,18]};
+    sus4:[0,5,7],m7b5:[0,3,6,10],add9:[0,4,7,14],madd9:[0,3,7,14],"maj7#11":[0,4,7,11,18]};
   const chords=s=>s.trim().split(/\s+/).map(c=>{const m=/^([A-G][b#]?)([^/]*)(?:\/([A-G][b#]?))?$/.exec(c),r=48+N[m[1]],iv=IV[m[2]];
     let b=r;if(m[3]){b=48+N[m[3]];if(b>r)b-=12}return {r,b,iv,third:iv[1],fifth:iv[2]}});
+  /* Glow: Lantern in the Fog and Bubble Bath in the Sky put together, a felt piano like
+     Minecraft's, a harp and a muffled bass from Hollow Knight's caves, wind and a far, out-of-tune bell from an old foggy
+     town. It glows in slowly; bobs a little; puts its head down and walks off into the hollow; goes quiet; then everything
+     comes back in, one by one, and the tune it earned plays full, with chimes. In D Dorian (it can be heard in D Lydian too). */
+  const GLOW_MEL=`r:3 A4:.333 C#5:.333 E5:.334 G#5:4:.8
+        r:1 F#5:1:.3:a C#5:2:.2:a r:4
+        r:2 B4:.333 E5:.333 G#5:.334 B5:3:.8 r:2
+        A5:1:.3:a F#5:2:.2:a r:5
+        D5:3:.75 E5:1:.75 F#5:2:.8 A5:2:.85
+        G#5:4:.9 F#5:1 E5:1 C#5:2
+        D5:2 B4:1 F#4:1 A4:3 B4:1
+        C#5:5 r:1 E5:.5 F#5:1.5
+        A5:3 G#5:1 F#5:2 E5:1 D5:1
+        E5:1.5 F#5:.5 G#5:2 B5:3 r:1
+        G#5:1 E5:1 C#5:1.5 B4:.5 E5:3 r:1
+        C#6:2 B5:1 A5:1 E5:2 G#5:2
+        F#5:3 D5:1 B4:2 C#5:1 D5:1
+        E5:6 r:2
+        A5:.5 r:.5 F#5:.5 r:.5 A5:.5 r:.5 B5:1 A5:.5 F#5:.5 E5:.5 r:2.5
+        G#5:.5 r:.5 E5:.5 r:.5 G#5:.5 B5:.5 C#6:1 B5:.5 G#5:.5 r:3
+        F#5:.5 r:.5 D5:.5 r:.5 F#5:.5 A5:.5 B5:1.5 A5:.5 F#5:1 r:2
+        E5:.333 F#5:.333 G#5:.334 A5:.5 r:.5 G#5:.5 r:1.5 E5:.5:.7 r:3.5
+        E5:2:.8 C#5:1:.75 B4:1:.7 G#4:3:.7 r:1
+        B4:2:.65 A4:2:.6 F#4:2:.55 E4:2:.5
+        D4:3:.5 C#4:1:.45 B3:3:.4 r:1
+        r:2 E4:2:.3:a r:4
+        r:8
+        r:5 G#5:1:.22:a r:2
+        r:8
+        r:4 D5:1:.5 E5:1:.55 F#5:2:.6
+        A5:4:.65 r:4
+        C#5:2:.7 E5:1:.75 F#5:1:.8 G#5:3:.85 r:1
+        A5:2:.9 B5:1:.95 C#6:1 E6:4
+        D6:3 C#6:1 A5:2 F#5:2
+        G#5:3 A5:1 B5:2 E5:2
+        D6:2 B5:1 F#5:1 A5:3 B5:1
+        C#6:4 E6:1 C#6:1 A5:2
+        A5:2 B5:.5 C#6:.5 E6:1 F#6:3 E6:1
+        E6:2 C#6:1 B5:1 G#5:2 E5:2
+        C#6:3 B5:1 A5:2 G#5:1 A5:1
+        F#5:3 E5:1 D5:2 C#5:1 D5:1
+        E5:4 r:1 A5:.333 C#6:.333 E6:.334 G#6:2:.7
+        A5:6:.6 r:2
+        r:2 E6:1:.22:a D6:2:.16:a r:3`;
+  const toDorian=s=>s.replace(/(F|G|C)#(\d)/g,"$1$2");   // D Lydian (D E F# G# A B C#) -> D Dorian (D E F G A B C)
+  const GLOW_SEC=[[0,"intro"],[6,"theme"],[14,"bob"],[18,"walk"],[22,"quiet"],[25,"return"],[29,"full"]];
+  const glowSec=a=>{let s="intro";for(const [k,n] of GLOW_SEC)if(a>=k)s=n;return s};
+  const h01=n=>{const x=Math.sin(n*12.9898+4.1)*43758.5453;return x-Math.floor(x)};   // a fixed chance for each bar
+  const glow=(name,mode,ch)=>({name,bpm:66,trim:.5,bar:8,lead:"felt",leadV:.3,rel:1.1,leg:1.05,lp:3600,echo:.16,fb:.24,dly:.68,
+    dyn:.8,contrast:.85,hum:.012,rv:.4,ds:.16,rev:[6,.55],wow:[.0011,.23],bed:[.003,.022],
+    chords:chords(ch),mel:mel(mode==="dorian"?toDorian(GLOW_MEL):GLOW_MEL),
+    // never quite steady: it lilts as it bobs, drags as it walks away, breathes at a phrase's end, and no two bars match
+    tempo:(b,i,a)=>{const s=glowSec(a);let v=s==="intro"?.9:s==="bob"?(i%2?1.22:.84):s==="walk"?.97-.035*(a-18):s==="quiet"?.82:s==="return"?.88+.03*(a-25):1;
+      if(s!=="bob"&&i>=6&&[5,13,28,38,39].includes(a))v*=.86;return v*(.97+.06*h01(a))},
+    onNote:(e,t,E8,x)=>{const s=glowSec(x.abs);GL=null;
+      if(s==="bob"&&e.l<=1){on(send(.5,.3));voice("softbox",hz(e.m[0]+12),t,E8*.5,.07*e.vel,.6);return}   // a music box bobs along
+      if(e.l<3||rnd()>(s==="full"?.85:.5))return;const C=x.C,base=e.m[0],c=[...C.iv,12].map(v=>C.r+v+24).filter(m=>m>base&&m<=base+12);if(!c.length)return;
+      on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};   // a soft note floats up off a long one, as in Bubble Bath in the Sky
+      voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.055*e.vel,1.4);GL=null},
+    onBar:x=>{const {t,abs:a,E8,C}=x,B=E8*8,s=glowSec(a);GL=null;
+      // hollow <-> filled: how bright the tune is, and how loud the whole song swells
+      const open={intro:900+300*a,theme:a===11?4800:3300,bob:4200,walk:3000-650*(a-18),quiet:520,return:900+700*(a-25),full:a>=38?2400:6500}[s];
+      const swell={intro:.45+.1*a,theme:a>=10&&a<=12?1.05:.9,bob:.95,walk:.85-.08*(a-18),quiet:.5,return:.6+.1*(a-25),full:a>=33&&a<=36?1.12:1}[s];
+      BUS.leadLP.frequency.setTargetAtTime(open,t,B*.35);BUS.swl.gain.setTargetAtTime(swell,t,B*.4);
+      // the muffled bass: it bounces when the song bobs, fades as it walks away, holds one low note in the quiet
+      on(send(.15,0,BUS.bass));
+      if(s==="bob"){voice("mbass",hz(C.b-12),t,B*.3,.5,.25);voice("mbass",hz(C.b-12+C.fifth),t+B*.5,B*.25,.35,.25)}
+      else if(s==="quiet"){if(a===22)voice("mbass",hz(C.b-12),t,B*3,.3,1.5)}
+      else{const v=s==="intro"?.3+.04*a:s==="walk"?.42-.06*(a-18):s==="return"&&a===25?0:.48;if(v>0)voice("mbass",hz(C.b-12),t,B*.98,v,.6);
+        if(v>0&&(s==="full"||s==="theme"&&a%2))voice("mbass",hz(C.b-12+C.fifth),t+B*.625,B*.3,v*.5,.4)}
+      // wind and a hollow open fifth, far off (the start, walking away, the quiet)
+      if(s==="intro"&&a<4||s==="walk"&&a>=20||s==="quiet"){wind(t,B*1.3,s==="quiet"?.05:.03,h01(a)>.5?-.8:.8,h01(a)>.5?.8:-.8);
+        on(send(.9,.2,BUS.bass));voice("warm",hz(C.r),t,B*1.05,.022,1.2);voice("warm",hz(C.r+7),t+B*.2,B*.9,.016,1.2)}
+      // a far bell, a little out of tune, from one side
+      if([1,21,23].includes(a)||a===24&&h01(a)>.3){const st=t+B*(.3+.4*h01(a+3)),side=h01(a+7)>.5?-.7:.7;on(panTo(side,side*.6,st,B,1.4,.5));
+        voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.02,1.2)}
+      // the warm pad, under the tune
+      const pv={bob:.018,theme:a>=8?.028:0,return:a>=27?.024:0,full:a>=38?.03:.04}[s]||0;
+      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      // a harp runs from the left ear to the right (or back), its notes never quite in the same place
+      if(s==="theme"&&a>=8&&a%2===0||s==="return"&&a>=26||s==="full"&&a<38||s==="bob"&&a===16){const up=a%4!==2,p=panTo(up?-.85:.85,up?.85:-.85,t,B*.9,.5,.25);
+        const ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]],pos=[[0,1,1.5,3,4.5,5.5],[0,.5,2,3,3.5,5],[.5,1.5,2,3.5,4,6]][Math.floor(h01(a+11)*3)],hv=s==="full"?.11:.07;
+        pos.forEach((q,k)=>{on(p);voice("harp",hz(C.r+12+ns[up?k:ns.length-1-k]),t+q*E8,E8,hv*(.7+.3*Math.sin(Math.PI*k/pos.length)),.9)})}
+      // chimes with glee: a sparkle that runs up, across the ears
+      if(s==="full"&&a>=31&&a<=37||s==="bob"&&a===15||s==="return"&&a===28){const st=t+E8*(2+Math.floor(h01(a+5)*4)),dir=h01(a+9)>.5?1:-1,p=panTo(-.8*dir,.8*dir,st,E8*2,.7,.4);
+        [0,C.iv[1],C.iv[2],12,12+C.iv[1],24].forEach((v,k)=>{on(p);voice("softbox",hz(C.r+24+v),st+k*E8*.22,E8*.6,.05,1.2)})}}});
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
        crisp and muted, warped a little, with a needle crackling */
@@ -49,6 +135,7 @@ export const music = (function(){
       onNote:(e,t,E8,x)=>{if(e.l<4||rnd()>.6)return;const C=x.C,base=e.m[0],c=[...C.iv,12].map(v=>C.r+v+24).filter(m=>m>base&&m<=base+12);if(!c.length)return;
         on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};   // it floats up as it fades
         voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.22*.24*e.vel,1.4);GL=null}},
+    glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7")
   ];
   const BASE=.7;   // 100% music: loud on purpose
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
@@ -170,6 +257,22 @@ export const music = (function(){
       const l=ac.createOscillator(),lg=gn(.35);l.frequency.value=8.5+rnd()*2;l.connect(lg).connect(tr.gain);l.start(t);l.stop(stop);   // a soft tremolo: the mandolin's ghost
       osc("sawtooth",f,t,stop,tr);osc("triangle",f*1.004,t,stop,tr);
       lp.frequency.setValueAtTime(700,t);lp.frequency.linearRampToValueAtTime(1900,t+a);lp.frequency.setTargetAtTime(1100,t+a,Math.max(.1,dur*.6));return true}   // it opens as it swells
+    /* for the glowing songs: a felt piano, a harp, a muffled bass and a warm old pad */
+    if(type==="felt"){const R=rel||1.1,end=t+Math.max(dur,.25),stop=end+R*5,g=gn(),lp=biq("lowpass",Math.min(5200,f*6),.4);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.008);g.gain.setTargetAtTime(peak*.34,t+.012,.45);g.gain.setTargetAtTime(0,end,R);
+      lp.frequency.setTargetAtTime(Math.min(1700,f*2.4),t+.012,.3);   // the hammer's brightness fades into felt
+      osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h);
+      const nb=noiseSrc(t,.06),bp=biq("bandpass",2300,1.4),ng=gn(0);ng.gain.setValueAtTime(peak*.22,t);ng.gain.setTargetAtTime(0,t,.012);nb.connect(bp).connect(ng).connect(D);
+      return true}
+    if(type==="harp"){const R=rel||.9,stop=t+R*6,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
+      osc("triangle",f,t,stop,lp);const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h);lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
+    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.7,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur,R);
+      osc("sine",f,t,stop,lp);const k=gn(.45);k.connect(lp);osc("triangle",f*1.002,t,stop,k);return true}
+    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
+      osc("sawtooth",f,t,stop,lp);osc("sawtooth",f*1.0035,t,stop,lp);const k=gn(.6);k.connect(lp);osc("triangle",f*.5,t,stop,k);
+      lp.frequency.linearRampToValueAtTime(950,t+a);lp.frequency.setTargetAtTime(600,t+a,dur*.4);return true}
     return false}
   function note(type,f,t,dur,peak,rel,vib_){if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
     if(vib_){const l=ac.createOscillator(),lg=ac.createGain();l.frequency.value=5.2;lg.gain.value=f*.007;l.connect(lg).connect(o.frequency);l.start(t);l.stop(t+dur+.6)}
@@ -195,6 +298,13 @@ export const music = (function(){
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+(a||.006));g.gain.setTargetAtTime(0,t+.02,dec||.09);o.connect(g);g.connect(DST);o.start(t);o.stop(t+.8)}
   function wood(t,v){const s=noiseSrc(t,.06),b=biq("bandpass",1500+Math.random()*700,6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*3,t+.002);g.gain.setTargetAtTime(0,t+.004,.012);s.connect(b).connect(g).connect(DST)}
   function brush(t,v){const s=noiseSrc(t,.4),b=biq("bandpass",4200,.5),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.setTargetAtTime(0,t+.04,.07);s.connect(b).connect(g).connect(DST)}
+  /* a sound that travels from one ear to the other while it plays */
+  function panTo(a,b,t,dur,rv,ds){const p=ac.createStereoPanner();p.pan.setValueAtTime(a,t);p.pan.linearRampToValueAtTime(b,t+dur);p.connect(send(rv,ds));return p}
+  /* wind through an empty street, far off */
+  function wind(t,dur,v,p0,p1){const s=noiseSrc(t,dur+1),b=biq("bandpass",400,4),g=gn(0),p=ac.createStereoPanner();
+    b.frequency.setValueAtTime(300+300*rnd(),t);b.frequency.linearRampToValueAtTime(700+500*rnd(),t+dur*.6);b.frequency.linearRampToValueAtTime(350,t+dur);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+dur*.5);g.gain.linearRampToValueAtTime(0,t+dur);p.pan.setValueAtTime(p0,t);p.pan.linearRampToValueAtTime(p1,t+dur);
+    s.connect(b).connect(g).connect(p).connect(send(.8,.1))}
   // a bed of hiss and a needle's crackle under the whole song
   function stopBeds(){if(!ac)return;for(const s of BEDS)try{s.stop(ac.currentTime+.05)}catch(e){}BEDS=[]}
   function startBed(t,dur,[h,c]){const mk=(buf,ty,f,q,v)=>{if(!v)return;const s=ac.createBufferSource();s.buffer=buf;s.loop=true;const b=biq(ty,f,q),g=gn(0);s.connect(b);b.connect(g);g.connect(BUS.fx);
