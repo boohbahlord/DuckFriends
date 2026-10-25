@@ -177,7 +177,7 @@ function finish(s, win, why) {
   w.result = { win, why, word: h.word, quacks: [...h.quacks] };
   if (win) s.wqScore = { ...(s.wqScore || { quack: 0, room: 0 }), [win]: ((s.wqScore || {})[win] || 0) + 1 };
   s.wqPast = [...(s.wqPast || []), { round: s.round, word: h.word, cat: w.cat, picker: w.picker, quacks: [...h.quacks], ids: [...w.ids], win, why, votes: w.votes, laps: w.lap }];
-  say(s, why === 'caught' ? `The room caught the Quack! The word was ${h.word}.` : why === 'last' ? `The Quack wins! The word was ${h.word}.` : why === 'fled' ? `The Quack fled! The word was ${h.word}.` : `Not enough ducks left. The word was ${h.word}.`);
+  say(s, why === 'caught' ? `The room caught the Quack! The word was ${h.word}.` : why === 'last' ? `The Quack wins! The word was ${h.word}.` : why === 'fled' ? `The Quack fled! The word was ${h.word}.` : why === 'skip' ? `Round skipped. The word was ${h.word}.` : `Not enough ducks left. The word was ${h.word}.`);
 }
 
 /* ---------- the actions ---------- */
@@ -201,10 +201,10 @@ export function quackEnd(s, a, now) {
   return null;
 }
 /* what ends a phase of the round */
-export function quackAdvance(s, now) {
+export function quackAdvance(s, now, force = false) {   // force: the host's skip, or a vote to skip the turn (as if everyone were done)
   const w = s.wq; if (!w) return s;
   if (['clue', 'choice', 'accuse'].includes(s.phase)) { quackLeft(s, now); if (s.phase === 'reveal') return s; }   // (a Quack kicked or gone)
-  const inn = stillIn(s), timeUp = !!s.ends && now >= s.ends;
+  const inn = stillIn(s), timeUp = force || (!!s.ends && now >= s.ends);
   switch (s.phase) {
     case 'wqpick': {
       if (!timeUp && s.players[w.picker]) return s;
@@ -214,7 +214,7 @@ export function quackAdvance(s, now) {
     }
     case 'clue': {
       const sp = speakerOf(s);
-      if (!s.players[sp] || w.out[sp]) return nextClue(s, now);
+      if (!s.players[sp] || w.out[sp] || force) return nextClue(s, now);
       const others = inn.filter(id => id !== sp);
       if (others.length && others.every(id => s.done[id])) { say(s, `Everyone skipped ${s.players[sp].name}'s turn.`); return nextClue(s, now); }
       return s;
@@ -231,12 +231,19 @@ export function quackAdvance(s, now) {
       return endAccuse(s, now);
     case 'reveal': {
       const on = playing(s), d = on.filter(id => s.done[id]).length;
-      if (d < on.length && d < needed(s)) return s;
+      if (!force && d < on.length && d < needed(s)) return s;
       if (w.result) { for (const id of w.dead || []) if (s.players[id]) delete s.players[id].dead; return enter(s, 'results', now); }
       return startLap(s, now);
     }
   }
   return s;
+}
+/* a vote to skip the round: it ends with no winner, and the word is shown */
+export function quackSkip(s, now) {
+  if (!s.wq || s.phase === 'wqpick' || !s.hidden) return startQuackRound(s, now);   // (no word yet: a new picker)
+  if (!s.wq.result) finish(s, null, 'skip');
+  s.wq.lastOut = null; for (const id of s.wq.dead || []) if (s.players[id]) delete s.players[id].dead;
+  return enter(s, 'results', now);
 }
 /* someone left mid-round: a Quack gone, or too few left, ends it (a missing speaker or picker is passed over by advance) */
 export function quackLeft(s, now) {

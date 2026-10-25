@@ -60,7 +60,7 @@ export function quackTopHTML(s, side = '') {
   if (s.phase === 'accuse') return top(cloudHTML(null), `<div class="question wq-q"><b>Who is the Quack?</b>${w.tie ? `<span class="small">A tie! Vote again: ${list(w.tie.map(id => esc(player(s, id).name)))}.</span>` : '<span class="small dim">Walk onto their tile and vote.</span>'}${cat}</div>`);
   /* the reveal: who was voted out (on the cloud), and when the round is over, the word */
   const r = w.result, out = w.lastOut;
-  const line = r ? (r.why === 'caught' ? 'The room caught the Quack!' : r.why === 'last' ? 'The Quack wins!' : r.why === 'fled' ? 'The Quack fled!' : 'Not enough ducks left.')
+  const line = r ? (r.why === 'caught' ? 'The room caught the Quack!' : r.why === 'last' ? 'The Quack wins!' : r.why === 'fled' ? 'The Quack fled!' : r.why === 'skip' ? 'Round skipped.' : 'Not enough ducks left.')
     : out ? `${esc(player(s, out).name)} was not the Quack.` : 'Nobody was voted out.';
   return top(cloudHTML(out ? player(s, out) : null, out ? 'Voted out' : ''), `<div class="question wq-q${out ? ' wq-later' : ''}"><b>${line}</b>${r ? `<span>The word was <span class="wq-w"><b class="wq-word">${esc(r.word)}</b>.</span></span>` : `<span class="small dim">${stillIn(s).length} ducks left. The clues go on.</span>`}</div>`);
 }
@@ -122,13 +122,13 @@ function awardsHTML(s, per) {
 export function quackStatsHTML(s) {
   const past = s.wqPast || [], r = past[past.length - 1]; if (!r) return '';
   const sc = s.wqScore || { quack: 0, room: 0 };
-  const head = r.why === 'caught' ? 'The room caught the Quack!' : r.why === 'last' ? 'The Quack wins!' : r.why === 'fled' ? 'The Quack fled!' : 'Not enough ducks left.';
+  const head = r.why === 'caught' ? 'The room caught the Quack!' : r.why === 'last' ? 'The Quack wins!' : r.why === 'fled' ? 'The Quack fled!' : r.why === 'skip' ? 'Round skipped.' : 'Not enough ducks left.';
   const block = `<div class="wq-sum panel"><h3>${esc(head)}</h3>
       <p>${r.quacks.length > 1 ? 'The Quacks' : 'The Quack'}: ${list(r.quacks.map(id => nm(s, id)))} · The word: <b>${esc(r.word)}</b> <span class="dim">(${esc(r.cat)}${r.picker ? `, picked by ${esc(player(s, r.picker).name)}` : ''})</span></p>
       <p class="wq-score"><span class="q">Quacks ${sc.quack}</span> · <span class="r">Room ${sc.room}</span></p></div>
     <div class="awards">${awardsHTML(s, quackStats([r]))}</div>`;
   const all = s.review ? `<h2 class="all-h">The whole game</h2><div class="awards">${awardsHTML(s, quackStats(past))}</div>
-    <div class="panel wq-rounds">${past.map(x => `<p class="small"><span class="dim">Round ${x.round + 1} · ${esc(x.cat)}:</span> ${esc(x.word)} · ${x.quacks.map(id => esc(player(s, id).name)).join(' and ')} ${x.win === 'quack' ? 'won' : x.win === 'room' ? 'was caught' : x.why === 'fled' ? 'fled' : '(no winner)'}</p>`).join('')}</div>` : '';
+    <div class="panel wq-rounds">${past.map(x => `<p class="small"><span class="dim">Round ${x.round + 1} · ${esc(x.cat)}:</span> ${esc(x.word)} · ${x.quacks.map(id => esc(player(s, id).name)).join(' and ')} ${x.win === 'quack' ? 'won' : x.win === 'room' ? 'was caught' : x.why === 'fled' ? 'fled' : x.why === 'skip' ? '(skipped)' : '(no winner)'}</p>`).join('')}</div>` : '';
   return `<div class="bb-stats wq-stats"><h2>Round ${r.round + 1}</h2>${block}${all}</div>`;
 }
 /* a player's "This game" box in the View stats window */

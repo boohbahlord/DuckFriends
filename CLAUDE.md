@@ -15,9 +15,11 @@ serves `main`, so merging to `main` is deploying).
 - `js/rules.js` is the whole game as a reducer: `reduce(state, action, now)`. The host runs it. TEST rooms run it on the
   device (`js/net.js`, with computers from `js/bots.js`); online rooms run it in the host's browser over Firebase
   (`js/online.js`, rules in `database.rules.json`).
-- `js/game.js` draws the board, moves your duck and handles keys; `js/brackets.js` is Bicker Brackets; `js/maps.js` the
+- `js/game.js` draws the board, moves your duck and handles keys; `js/brackets.js` is Bicker Brackets; `js/story.js` is
+  Story Chain; `js/maps.js` the
   maps (Night Show, Sky, Pixel, Ether's Crossroads); `css/app.css` everything's look.
-- Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`).
+- Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
+  `notes/plan-story-chain.md`).
 
 ## Before each commit that touches css/ or js/
 Run `python3 tools/stamp.py`. It stamps a version on every file in `index.html`, so browsers never mix old and new files.
@@ -26,6 +28,7 @@ Run `python3 tools/stamp.py`. It stamps a version on every file in `index.html`,
 Serve the folder (`python3 -m http.server`) and drive it with Playwright. A TEST room can be started from the page:
 `(await import('./js/net.js')).createLocalRoom({ name: 'T', test: true, computers: 3 })`, then `router.go('lobby', room)`
 and `room.send({ t: 'start' })`. Check every map and both phone (portrait) and computer sizes.
+Online rooms with several players: `tools/online-test` (see its README) plays them against local Firebase emulators.
 
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.

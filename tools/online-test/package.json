@@ -1,0 +1,14 @@
+{
+  "name": "duckfriends-online-test",
+  "private": true,
+  "description": "Plays online rooms with several browsers against local Firebase emulators, to catch crashes",
+  "scripts": {
+    "emulators": "node -e \"require('fs').copyFileSync('../../database.rules.json', 'rules.json')\" && firebase emulators:start --only auth,database --project duckfriends-bd795",
+    "test": "node run.js"
+  },
+  "devDependencies": {
+    "firebase": "13.1.0",
+    "firebase-tools": "^15.0.0",
+    "playwright": "^1.50.0"
+  }
+}
