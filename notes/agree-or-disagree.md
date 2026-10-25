@@ -1291,6 +1291,14 @@ touchpad or mouse moves. Phones and tablets still have no row. Customize → Spe
 turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
 phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)
 
+## Music bar: the default line stays at 100% (2026-10-25)
+
+also the bar that shows where the default percent is has moved around into places not 100% volume
+
+(The music bar's slider box stretched to the song name's width, so its line sat past 100% when the name was long. Now
+the box is exactly the slider's width, and the line is on 100% for any song name; the Settings → Audio line was already
+on it. Checked in Chromium and Firefox, phone and computer.)
+
 ## Specials: cooldown bars on the number keys (2026-10-25)
 
 There is a cooldown bar that shows on the player's number keys UNTIL they can use certain items again, like the dagger or the gun and other things

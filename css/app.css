@@ -368,12 +368,12 @@ p.bad { color: var(--red); font-weight: 600; }
 .spk-x path { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
 .mbar-main { display: grid; align-items: center; min-width: 0; }
 .mbar-main > * { grid-area: 1 / 1; transition: opacity .15s, visibility .15s; }   /* the slider takes the name's place: the bar never changes size */
-.mbar-vol { position: relative; min-width: 6.6rem; height: 1.6rem; display: flex; align-items: center; visibility: hidden; opacity: 0; }
+.mbar-vol { position: relative; justify-self: start; width: 6.6rem; height: 1.6rem; display: flex; align-items: center; visibility: hidden; opacity: 0; }
 .mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-vol, .mbar:focus-within .mbar-vol, .mbar.open .mbar-vol { visibility: visible; opacity: 1; }
 .mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-song, .mbar:focus-within .mbar-song, .mbar.open .mbar-song { visibility: hidden; opacity: 0; }
 .mbar-vol input { width: 6.6rem; margin: 0; accent-color: var(--blue); cursor: pointer; }
 .mbar-def, .slide-def { position: absolute; top: 50%; width: .14rem; height: .95rem; margin: -.475rem 0 0 -.07rem; border-radius: .1rem; background: var(--ink); opacity: .75; pointer-events: none; }
-.mbar-def { left: 50%; }   /* the default (100%): the middle of the slider */
+.mbar-def { left: 50%; }   /* the default (100%): the middle of the slider (.mbar-vol is the slider's width, however long the song name) */
 .slide-in { position: relative; display: flex; align-items: center; }
 .slide-def { left: calc(.5rem + (100% - 1rem) * var(--at)); }
 .mbar-song { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; outline: none; }
