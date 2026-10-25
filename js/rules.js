@@ -523,7 +523,12 @@ function settleVote(s, now) {
       return advance(s, now);
     }
     if (v.kind === 'skip') return skipRound(s, now);
-    if (v.kind === 'turn') { say(s, 'The room voted to skip this turn.'); return advance(s, now, true); }   // as if everyone were done
+    if (v.kind === 'turn') {   // the whole turn, as if everyone were done: a question's voting and its talk
+      say(s, 'The room voted to skip this turn.');
+      const k = turnKey(s);
+      for (let i = 0; i < 3 && turnKey(s) === k && !['lobby', 'over'].includes(s.phase); i++) advance(s, now, true);
+      return s;
+    }
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
@@ -531,13 +536,18 @@ function settleVote(s, now) {
 }
 /* a vote passed to skip the round: the rest of its questions (or the tournament) are dropped. Agree or Disagree and
    Would You Rather go to the round's stats with what was answered; Bicker Brackets starts a new tournament; Story Chain
-   ends the paragraph with what was written (or draws new words, if none was written yet); on the stats
+   ends the paragraph with what was written (or draws new words, if no line was written yet); on the stats
    screen, the next round starts */
 function skipRound(s, now) {
   say(s, 'The room voted to skip this round.');
   if (s.phase === 'results') return advance(s, now, true);
   if (isBb(s)) { s.round++; return startTourney(s, now); }
-  if (isSc(s)) { if (s.phase === 'words') { s.round++; return startStory(s, now, false); } return startNext(s, now); }   // Story Chain: the paragraph ends with what was written
+  if (isSc(s)) {   // Story Chain: the paragraph ends with what was written; with nothing written yet, new words are drawn
+    const none = s.phase === 'words' || (s.phase === 'write' && !scPara(s).lines.length);
+    if (s.phase === 'write' && none) scStory(s).paras.pop();   // (no empty paragraph left in the story)
+    if (none) { s.round++; return startStory(s, now, false); }
+    return startNext(s, now);
+  }
   if (s.phase === 'submit') { s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now); }   // nothing asked yet: on to the next round's writing
   return startResults(s, now);
 }

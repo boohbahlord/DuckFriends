@@ -22,6 +22,26 @@ export const FONTS = [
   { id: 'typewriter', name: 'Special Elite', css: "'Special Elite', 'Courier New', monospace" },
 ];
 export const fontCSS = id => (FONTS.find(f => f.id === id) || FONTS[0]).css;
+/* how big a font is drawn so its letters look as big as Fredoka's (Story Chain lines, which sit side by side): from the
+   height of its x and H and the width of a sentence, measured on this device once the font is in (fonts on the
+   computer itself differ between devices), kept between 0.6 and 1.25 so a line stays easy to read */
+const SAMPLE = 'The duck sailed across the pond with a pineapple, and nobody asked why.';
+let sized = {}, pen = null;
+if (typeof document !== 'undefined' && document.fonts) document.fonts.addEventListener('loadingdone', () => { sized = {}; });
+const look = css => {
+  pen = pen || document.createElement('canvas').getContext('2d'); pen.font = `100px ${css}`;
+  const m = t => pen.measureText(t);
+  return (m('x').actualBoundingBoxAscent + m('H').actualBoundingBoxAscent) * m(SAMPLE).width;
+};
+export function fontScale(id) {
+  const f = FONTS.find(x => x.id === id) || FONTS[0];
+  if (f === FONTS[0] || typeof document === 'undefined' || !document.fonts) return 1;
+  if (sized[f.id]) return sized[f.id];
+  const loaded = [FONTS[0], f].every(x => document.fonts.check(`16px ${x.css}`, SAMPLE));
+  if (!loaded) { document.fonts.load(`16px ${f.css}`, SAMPLE).catch(() => {}); return 1; }
+  const k = Math.sqrt(look(FONTS[0].css) / (look(f.css) || 1));
+  return (sized[f.id] = Math.round(Math.min(1.25, Math.max(.6, k)) * 100) / 100);
+}
 /* a font from what a player typed ("times new roman", "Old English", "grenze"…) */
 export const findFont = s => {
   const k = String(s || '').toLowerCase().replace(/[^a-z]/g, '');
