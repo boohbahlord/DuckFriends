@@ -684,3 +684,11 @@ The cards the players are shown are called the "Secret Cards", and one player ra
 The stats should be which player voted correct the most times (only IF any did, then it says none)
 
 Give me some suggestions for the stats please
+
+The owner's answers to the five questions left, word for word (2026-10-25):
+
+1. Yeah, they see the category not the word. 
+2. No that doesnt even work because then if they guess right everyone knows it is them because the players dont need to guess a word they already know
+3. Yeah they win when only one is left, and when they win, the duck who ISNT the quack will have the dead effect from the silly commands and temporarily can't move as they and their tile turns greyscale and the player who was the quack gets their card flipped over, and it shows "You are the quack". The card shows only the category AND the sentence which reveals they are the quack. Also, the game should be called, "Who is the Quack?" 
+4. Yes
+5. No.
