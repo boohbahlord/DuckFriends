@@ -222,6 +222,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'leave': {
       if (!me) return s;
       say(s, `${me.name} left.`);
+      reopenMatch(s, a.id);
       delete P[a.id]; s.seat = s.seat.filter(id => id !== a.id); delete s.pos[a.id]; delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
@@ -235,6 +236,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;
       if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
+      reopenMatch(s, a.who);
       delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
       if (s.vote) settleVote(s, now);
       return s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown' ? s : advance(s, now);
@@ -573,6 +575,7 @@ function settleVote(s, now) {
       const p = s.players[v.target];
       s.banned = { ...(s.banned || {}), [v.target]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) };
       say(s, `${p.name} was voted out until the room goes back to the lobby.`);
+      reopenMatch(s, v.target);
       delete s.players[v.target]; s.seat = s.seat.filter(id => id !== v.target); delete s.pos[v.target]; delete s.done[v.target];
       if (v.target === s.hostId) s.hostId = humanIds(s)[0] || null;
       return advance(s, now);
@@ -588,6 +591,14 @@ function settleVote(s, now) {
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
   return s;
+}
+/* someone leaves (or is kicked) in the middle of a bracket match or its tie vote: the match isn't settled by them going.
+   The others' votes open again, so it waits for the players still here to end their turn (or for its own timer) */
+function reopenMatch(s, id) {
+  if (!isBb(s) || !['answer', 'tie'].includes(s.phase) || !s.players[id] || s.players[id].late) return;
+  if (!Object.keys(s.done).some(x => x !== id && s.done[x])) return;   // nobody else had voted yet: nothing to reopen
+  s.done = {};
+  say(s, 'The vote is open again: end your turn when you\'re ready.');
 }
 /* a vote passed to skip the round: the rest of its questions (or the tournament) are dropped. Agree or Disagree and
    Would You Rather go to the round's stats with what was answered; Bicker Brackets starts a new tournament; Story Chain
