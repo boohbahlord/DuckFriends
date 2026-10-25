@@ -1270,6 +1270,15 @@ disco ball spins over your head, its colored beams and spots sweeping over you. 
 with Shift) and take Primary, Secondary and Accent colors; the Dagger takes three colors too. The Round Lord's cloud,
 the winner of a match and the podium no longer play the first effect on a duck's keys; effects only come from the keys.)
 
+## The host types sudo too (2026-10-25)
+
+the host should still have to use sudo btw
+
+Decision: the host stays in sudo for good (never "not in the sudoers file"), but like every sudo player types the word:
+`sudo groupadd …`, `sudo skip`, `sudo map sky`, `sudo song off Glow`. Without it, a sudo command answers "Permission
+denied (put sudo in front: sudo groupadd …)", and `sudo !!` fixes it. A group given a perm (canskip, canmute, cankick,
+cansettings) still types its command alone, since it isn't in sudo. The Help pages and man pages show sudo in front.
+
 ## Specials: the number-key row on a touchscreen laptop (2026-10-25)
 
 i have a laptop with a stupid touchscreen built into the  laptop monitor i cant turn off, but maybe that is what is hiding the number key display for the specials
