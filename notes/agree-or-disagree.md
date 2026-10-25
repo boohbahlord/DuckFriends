@@ -780,3 +780,17 @@ The owner's answers to the five questions left, word for word (2026-10-25):
 3. Yeah they win when only one is left, and when they win, the duck who ISNT the quack will have the dead effect from the silly commands and temporarily can't move as they and their tile turns greyscale and the player who was the quack gets their card flipped over, and it shows "You are the quack". The card shows only the category AND the sentence which reveals they are the quack. Also, the game should be called, "Who is the Quack?" 
 4. Yes
 5. No.
+
+## Who is the Quack? stats, word for word (2026-10-25)
+
+Asked which of the suggested stats to add (Bloodhound, Master of Disguise, Wrongly Accused, Quick Quack and the rest):
+
+"InvestiDucker" is the replaced one for bloodhound and we can do that idea. 
+Wrongly accused doesnt show up in round stats but in game stats if that makes sense.
+Quick Quack only shows up on game stats not round stats.
+Duckguise is the replacement for master of disguise, and it only shows up in game stats not round stats. That is all
+
+(Built: InvestiDucker, first onto the real Quack's tile in a vote the most times, in the round's stats and the whole
+game's; Wrongly Accused, voted out the most while innocent; Quick Quack, ended their own clue turn fastest on average;
+Duckguise, won the most as the Quack, then lasted the most clue laps as the Quack; those three in the whole game's
+stats only.)
