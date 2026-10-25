@@ -721,6 +721,15 @@ show on the all-rounds review). The answer, word for word:
 
 that is good
 
+## Computers voting in brackets, word for word (2026-10-25)
+
+the ai in test needs a new thread for brackets to make it vote instead of walking back and forth without voting.  
+
+The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of the championship game
+
+Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
+every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
+
 ## Arrow keys in the menus, word for word (2026-10-25)
 
 using arrow keys should allow for navigation through the UI in the TAB menu, pause menu, and other menus, and clicking enter should select them and shift+enter right clicks them
