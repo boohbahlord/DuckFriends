@@ -817,3 +817,17 @@ Jester's Stair is great too we can put that in the game for sure
 
 Next is a spring box bouncy joville joyfully joying in joke joyously, like repetition swing swing and swinging, bouncy bouncy bouncy happy how could it be so happy so much major! it is flushed with fuzzy warmth in a sound like that, a little different timbre then the other songs, like a happy version of hollow knight, while still takinng inspiration from everything. Good timing, lots lots of dynamics, fuzzy wuzzy bliss like rubbing ur face while lovey. Every swells and sometimes even sings in soundful joy and praise of living, almost kinda so good it makes u cry kind of good, like an "omg..." it is like a kid's birthday not bad, no pain this time, just peace, maybe hope is okay to believe. The song can be called Spring in a Box
 It flowers also and dances a little, with time for things to quiet down before coming back again
+
+## Who is the Quack? stats, word for word (2026-10-25)
+
+Asked which of the suggested stats to add (Bloodhound, Master of Disguise, Wrongly Accused, Quick Quack and the rest):
+
+"InvestiDucker" is the replaced one for bloodhound and we can do that idea. 
+Wrongly accused doesnt show up in round stats but in game stats if that makes sense.
+Quick Quack only shows up on game stats not round stats.
+Duckguise is the replacement for master of disguise, and it only shows up in game stats not round stats. That is all
+
+(Built: InvestiDucker, first onto the real Quack's tile in a vote the most times, in the round's stats and the whole
+game's; Wrongly Accused, voted out the most while innocent; Quick Quack, ended their own clue turn fastest on average;
+Duckguise, won the most as the Quack, then lasted the most clue laps as the Quack; those three in the whole game's
+stats only.)
