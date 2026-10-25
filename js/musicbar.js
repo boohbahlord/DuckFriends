@@ -1,7 +1,7 @@
 /* ---------- the music bar: the song the room hears, a speaker and the music's volume ----------
-   In the game's top bar and the lobby's. The speaker mutes the music (for me only; the room's song goes on); hovering it
-   (on a phone, tapping it) shows the Music slider to its right, the same one as in Settings → Audio, with a line where
-   the default is. Between two songs it shows the next one, dimmed. */
+   In the game's top bar and the lobby's. The speaker mutes the music (for me only; the room's song goes on); hovering it (on a
+   phone, tapping the bar) shows the Music slider to the speaker's right, in the song name's place, so nothing moves:
+   the same slider as in Settings → Audio, with a line where the default is. Between two songs it shows the next one, dimmed. */
 import { profile, save, SETTINGS_DEFAULT } from './store.js';
 import { music } from './music.js';
 import { applySettings } from './settings.js';
@@ -22,8 +22,8 @@ const NOTE = '<svg class="mbar-note" viewBox="0 0 16 16" aria-hidden="true"><pat
 
 export const musicBarHTML = () => `<div class="mbar" hidden>
   <button type="button" class="mbar-spk" aria-label="Mute the music" data-tip="Music: mute · hover for its volume"></button>
-  <span class="mbar-vol"><input type="range" min="0" max="${MAX}" step="5" aria-label="Music volume"><i class="mbar-def" aria-hidden="true"></i></span>
-  <span class="mbar-song" tabindex="-1">${NOTE}<span class="mbar-name"></span></span>
+  <span class="mbar-main"><span class="mbar-song" tabindex="-1">${NOTE}<span class="mbar-name"></span></span>
+    <span class="mbar-vol"><input type="range" min="0" max="${MAX}" step="5" aria-label="Music volume"><i class="mbar-def" aria-hidden="true"></i></span></span>
 </div>`;
 
 /* wires up a bar made by musicBarHTML; returns its clean-up */

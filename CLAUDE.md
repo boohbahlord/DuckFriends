@@ -21,6 +21,8 @@ serves `main`, so merging to `main` is deploying).
 - `js/game.js` draws the board, moves your duck and handles keys (`js/keynav.js` moves through menus with the arrow keys); `js/brackets.js` is Bicker Brackets; `js/story.js` is
   Story Chain; `js/maps.js` the
   maps (Night Show, Sky, Pixel, Ether's Crossroads); `css/app.css` everything's look.
+- `js/music.js` makes the songs on the spot; the host keeps the room's song list in the state (`s.music`), so everyone hears the
+  same song at the same moment. `js/musicbar.js` is the now-playing bar (speaker, Music slider, song name).
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
   `notes/plan-story-chain.md`).
 

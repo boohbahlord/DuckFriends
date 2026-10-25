@@ -1600,6 +1600,7 @@ export const music = (function(){
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
       const E8=60/T.bpm/2/(T.tempo?T.tempo(bar,i,abs):1),x={t:next,bar,abs,i,E8,C,step};
+      try{   // (a song's own code that fails on one step must not stop the music)
       if(MUTE!=="rest"){
         if(step===0&&T.bed)startBed(next,EV.dur+1,T.bed);
         if(i===0&&T.swell){const P=T.swellP||4,ph=(abs%P)/P;BUS.swl.gain.setTargetAtTime(1-T.swell+T.swell*Math.sin(Math.PI*(ph+.5/P)),next,E8*T.bar*.5)}   // the whole song breathes
@@ -1626,6 +1627,7 @@ export const music = (function(){
         if(has("metal")&&(i===3||i===7)&&((step*11+bar*3)%5===0))clank(next);   // iron struck somewhere in the dark
         if(has("static")&&i===0&&(bar*7)%3===1)hit(next,"static");   // a radio that won't quite tune
         if(T.step)T.step(x);if(i===0&&T.onBar)T.onBar(x);GL=null}
+      }catch(err){if(!RENDER&&!tick.told){tick.told=1;console.warn("DuckFriends music:",T&&T.name,err)}}
       next+=E8;step++;
       if(step>=total){if(!RENDER)LIVE=false;return}}   // the song ends (the room's list says what comes after it)
   }
@@ -1688,14 +1690,16 @@ export const music = (function(){
     if(same(e,CUR)&&ANC&&Math.abs((ac.currentTime-ANC.ac)-(t-ANC.t)/1000)<.3)return;   // playing, and still in step with everyone
     if(CUR)drop(t<end(CUR));
     CUR=e;if(!e)return;
-    const dt=(e.at-t)/1000,r=REN.get(key(e));ANC={ac:ac.currentTime,t};   // dt: seconds until it starts (below 0: it began that long ago)
+    // dt: seconds until it starts (below 0: it began that long ago), less the time the sound takes to reach the speakers
+    const dt=(e.at-t)/1000-Math.min(.5,ac.outputLatency||ac.baseLatency||0),r=REN.get(key(e));ANC={ac:ac.currentTime,t};
     if(r&&r.buf)playBuf(r,ac.currentTime+Math.max(.1,dt),Math.max(0,-dt-.1));
-    else{load(idx(e.n),true,e.seed);seek(ac.currentTime+dt);LIVE=step<total}}
+    else{for(const [k,x] of REN)if(x.n===e.n&&!x.buf){x.cancel();REN.delete(k)}   // (a song can't be written out while it plays live: they'd share its parts)
+      load(idx(e.n),true,e.seed);seek(ac.currentTime+dt);LIVE=step<total}}
   /* stop the song this device plays: cut short, it fades away; ended, its last notes ring out */
   function drop(cut){if(BUF&&cut)fadeOut(BUF);BUF=null;if(LIVE)stopBeds();LIVE=false;CUR=null;ANC=null}
-  /* a song played live from part way: the notes already gone by are skipped */
+  /* a song played live from part way: the notes already gone by are skipped, and it comes in at the next bar */
   function seek(t0){next=t0;const lim=ac.currentTime+.1;
-    while(next<lim&&step<total){const abs=Math.floor(step/T.bar),bar=abs%T.chords.length;next+=60/T.bpm/2/(T.tempo?T.tempo(bar,step%T.bar,abs):1);step++}
+    while((next<lim||step%T.bar)&&step<total){const abs=Math.floor(step/T.bar),bar=abs%T.chords.length;next+=60/T.bpm/2/(T.tempo?T.tempo(bar,step%T.bar,abs):1);step++}
     while(ei<EV.length&&EV[ei].s<step-1e-6)ei++;
     if(step>0&&step<total&&T.bed)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
   function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
@@ -1721,14 +1725,14 @@ export const music = (function(){
      ones that haven't started, so a whole song of notes at once made it three times slower. Elsewhere (Firefox, which is
      quick anyway) they all go in first */
   function offline(i,fixed,lv,seed){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
-    const dur=durOf(i),len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
-    const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
+    const dur=durOf(i),len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine,off=false;
+    const run=(f,until)=>{if(off)return;const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
     run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true,seed);next=.05;playing=true},4);
     const p=(async()=>{if(o.suspend)for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s-2).then(()=>{try{run(null,u)}finally{o.resume()}})}
       else for(let s=4;s<len-6.5;s+=4){await new Promise(r=>setTimeout(r));run(null,Math.min(s+4,len-6.5))}
       const b=await o.startRendering(),n=Math.min(b.length,b.sampleRate);   // the last second fades to nothing: the recording ends without a tick
       for(let c=0;c<b.numberOfChannels;c++){const d=b.getChannelData(c),k0=d.length-n;for(let k=0;k<n;k++)d[k0+k]*=1-k/n}return b})();
-    return {p,dur:dur+.05}}
+    return {p,dur:dur+.05,cancel(){off=true}}}   // (cancelled: the rest is left silent)
   async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
   /* on a computer, while one song plays, the next on the room's list is written out, and then played from that recording:
      a recording takes almost no work to play, so another app busy on the computer can't make it crackle. A song joined
@@ -1737,9 +1741,9 @@ export const music = (function(){
   let BUF=null,ahead=!LITE&&!!window.OfflineAudioContext;
   const REN=new Map(),key=e=>e.n+"/"+e.seed;
   function render(e){const i=idx(e.n),k=key(e),t0=performance.now();let r=null;try{r=offline(i,false,1,e.seed)}catch(err){}if(!r){ahead=false;return}
-    const x={i,dur:r.dur};REN.set(k,x);
+    const x={i,n:e.n,dur:r.dur,cancel:r.cancel};REN.set(k,x);
     r.p.then(b=>{x.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;REN.delete(k)})}   // too slow to keep ahead: stay live
-  function ahead_(S){if(!ahead||!S)return;const e=S.b;if(!e||idx(e.n)<0||REN.has(key(e)))return;
+  function ahead_(S){if(!ahead||!S)return;const e=S.b;if(!e||idx(e.n)<0||REN.has(key(e))||LIVE&&CUR&&CUR.n===e.n)return;
     for(const k of [...REN.keys()])if(!CUR||k!==key(CUR))REN.delete(k);   // (only the song playing and the one after it are kept)
     render(e)}
   setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open

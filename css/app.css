@@ -356,7 +356,7 @@ p.bad { color: var(--red); font-weight: 600; }
 .timer { font-weight: 700; font-variant-numeric: tabular-nums; font-size: calc(1.2rem * var(--ts)); }
 
 /* the music bar (musicbar.js): a speaker, the Music slider it shows on hover, the song the room hears */
-.mbar { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; max-width: 100%; height: 2.1rem; padding: 0 .75rem 0 .15rem; border: .14rem solid var(--line); border-radius: 999px;
+.mbar { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; max-width: 100%; height: 2.1rem; padding: 0 .8rem 0 .15rem; border: .14rem solid var(--line); border-radius: 999px;
   background: color-mix(in srgb, var(--panel) 82%, transparent); box-shadow: 0 .14rem 0 var(--line); }
 .mbar[hidden] { display: none; }
 .gbar > .mbar { margin-left: auto; }   /* at the right, before the timer (the specials' keys follow the stage's name) */
@@ -366,11 +366,14 @@ p.bad { color: var(--red); font-weight: 600; }
 .spk-body path { fill: var(--yellow); stroke: var(--line); stroke-width: 1.5; stroke-linejoin: round; }
 .spk-waves path { fill: none; stroke: var(--blue); stroke-width: 1.9; stroke-linecap: round; }
 .spk-x path { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
-.mbar-vol { position: relative; flex: none; width: 0; height: 1.6rem; margin-left: -.3rem; overflow: hidden; display: flex; align-items: center; transition: width .18s ease-out, margin .18s ease-out; }
-.mbar:hover .mbar-vol, .mbar:focus-within .mbar-vol, .mbar.open .mbar-vol { width: 6.6rem; margin-left: 0; }
-.mbar-vol input { width: 6.2rem; margin: 0 .2rem; accent-color: var(--blue); cursor: pointer; }
+.mbar-main { display: grid; align-items: center; min-width: 0; }
+.mbar-main > * { grid-area: 1 / 1; transition: opacity .15s, visibility .15s; }   /* the slider takes the name's place: the bar never changes size */
+.mbar-vol { position: relative; min-width: 6.6rem; height: 1.6rem; display: flex; align-items: center; visibility: hidden; opacity: 0; }
+.mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-vol, .mbar:focus-within .mbar-vol, .mbar.open .mbar-vol { visibility: visible; opacity: 1; }
+.mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-song, .mbar:focus-within .mbar-song, .mbar.open .mbar-song { visibility: hidden; opacity: 0; }
+.mbar-vol input { width: 6.6rem; margin: 0; accent-color: var(--blue); cursor: pointer; }
 .mbar-def, .slide-def { position: absolute; top: 50%; width: .14rem; height: .95rem; margin: -.475rem 0 0 -.07rem; border-radius: .1rem; background: var(--ink); opacity: .75; pointer-events: none; }
-.mbar-def { left: calc(.2rem + .5rem + (6.2rem - 1rem) * .5); }   /* the default (100%): the middle of the slider's run */
+.mbar-def { left: 50%; }   /* the default (100%): the middle of the slider */
 .slide-in { position: relative; display: flex; align-items: center; }
 .slide-def { left: calc(.5rem + (100% - 1rem) * var(--at)); }
 .mbar-song { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; outline: none; }
@@ -474,7 +477,7 @@ html.mouse-move .board { cursor: pointer; }
   .gbar-l .phase { font-size: calc(1.1rem * var(--ts)); }
   .gbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l r" "m m"; row-gap: .2rem; }   /* the music bar gets its own short row */
   .gbar-l { grid-area: l; } .gbar-r { grid-area: r; }
-  .gbar > .mbar { grid-area: m; justify-self: start; height: 1.85rem; }
+  .gbar > .mbar { grid-area: m; justify-self: start; margin-left: 0; height: 1.85rem; }
   .mbar-name { max-width: none; }
   .mc { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

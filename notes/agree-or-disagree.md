@@ -1213,3 +1213,25 @@ with each new stage on the board and with any number key, and still slides away 
 with Shift turns green with a lit dot, and stays in its place while the rest of the row fades, so you can always see
 what's on. Only effects (like electricity) and the jumps keep on; items are just used. Phones still have no row: their
 ring of specials shows kept ones green.)
+
+## Music: the music bar, and everyone hears the same song (2026-10-25)
+
+(From the same message as the number-key row above; with a picture of the top bar, a small box drawn just after the
+stage's name and a big box over the play area.)
+
+I think there should be a bar in the small box i drew here OR somewhere small in the big box, and it should contain the song name that is playing for the song for the player. 
+
+ALL PLAYERS should hear the same songs at the same time, and maybe when they click off the tab in their browser the song only temporarily mutes before music audio is unmuted when the tab is clicked again. There should be a speaker symbol (not emoji) that can be clicked to mute the song or hovered over to show the volume slider revealed to it's right (basically kinda like a shortcut to the settings audio menu but for music), and it can be slid up or down to increase volume above default or below it. the default volume has a line in the meter to indicate default. The name of the song shows there. All players here the same song at the same time together when in a lobby ALWAYS because it is live and not player specific.
+
+[…] The commands allowed certain songs to be removed from the queue with a toggle on or off command for specific songs, and songs are named in quotes IF there is a white character or space in the title in the commands, as per the rules of bash.
+
+(Built: a small bar in the top bar and the lobby's: a drawn speaker, a music note and the song's name (between two
+songs, the next one, dimmed). The number-key row took the small box after the stage's name, so the bar sits at the right
+of the top bar, before the timer; on a phone it gets its own short row under the title. Clicking the speaker mutes the
+music for that player; hovering it shows the Music slider in the name's place, to the speaker's right (a tap on a phone),
+0 to 200% with a line at the default (100%). Settings → Audio's Music slider goes to 200% too, with the same line. The
+host's game picks the songs and keeps them in the room's state with a start time and a seed, so everyone hears the same
+song at the same moment (online within about a tenth of a second), in the lobby and in the game. A hidden tab goes quiet
+and, back in view, comes in where everyone is. Command line: `song` lists the songs (on or off, the one playing), `song
+off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
+all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
