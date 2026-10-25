@@ -283,8 +283,9 @@ function fill() {
     se.dataset.pia = '1'; se.classList.add('pia-sheet');
     if (!se.querySelector('.hg-staff')) se.innerHTML = staffColumn({ w: SHEET.w, h: SHEET.d + SHEET.h });
     const svg = se.querySelector('.hg-staff'), w = +svg.getAttribute('width'), h = +svg.getAttribute('height'), z = w < 170 ? 1.5 : 1;   // (a narrow column: the sheet drawn bigger and shrunk, so a line holds more notes)
+    const shown = BODY.y + BODY.d - 240 - (SHEET.y + SHEET.d - (h - 4)) - 30;   // (the part over the piano's top: the newest notes, at the bottom, show)
     se.insertAdjacentHTML('beforeend', sheetHTML());
-    Object.assign(se.querySelector('.pk-sheet').style, { left: '12px', top: '12px', width: (w - 24) * z + 'px', height: (h - 86) * z + 'px', transform: `scale(${1 / z})` });
+    Object.assign(se.querySelector('.pk-sheet').style, { left: '12px', top: '12px', width: (w - 24) * z + 'px', height: Math.min(h - 86, shown) * z + 'px', transform: `scale(${1 / z})` });
     sheetDirty = true;
   }
   if (se && sheetDirty && !se.hidden) { sheetDirty = false; drawSheet(se.querySelector('.pk-sheet'), sheetNotes); }
