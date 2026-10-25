@@ -1290,3 +1290,11 @@ touchpad or mouse moves. Phones and tablets still have no row. Customize → Spe
 (From the specials thread, the owner: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
 turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
 phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)
+
+## Specials: cooldown bars on the number keys (2026-10-25)
+
+There is a cooldown bar that shows on the player's number keys UNTIL they can use certain items again, like the dagger or the gun and other things
+
+(Done: every item waits a moment before its key works again: the handgun 3 seconds, the dagger 2, confetti rain 15, the
+others 1.5. While it waits, its key dims and a yellow bar along its bottom drains to nothing; the key stays on the screen
+until it is ready, even after the rest of the row slides away. A phone's ring of specials shows the same bar.)
