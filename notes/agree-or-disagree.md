@@ -730,6 +730,108 @@ The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of th
 Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
 every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
 
+## Story Chain: fonts the same size (2026-10-25)
+
+whoever the did the story game needs to make the fonts appear as the same size
+
+Decision: every player's font in Story Chain is scaled so its letters stand as tall as the others' (font-size-adjust,
+with a measured size for each font).
+
+## More bash in the command line, word for word (2026-10-25)
+
+remember to put a lot of bash that can work in it among implied nuances i talked about to first repo worker. First repo worker, work on giving them as much detail as possible if it isnt you working on that rn
+
+The code for bash needs to have a help command that has other types of help listed in it, which includes bash basics, using certain things like pipe, append, or many things like that, and even unique commands and how they work in this game. The basics must mention man commands
+
+things LIKE pipes and appending too since im not going to name them all here
+
+remember there is a lot of stuff i described for groups
+
+(Planned in the Claude Doc "Command line: more bash". Chose "Build sections 1 to 4": help topics, the bash
+operators, text and file tools, groups and new perms, people/room/game commands. Not now: emote, quack, poll, wall,
+nano.)
+
+## Imposter Duck, word for word (2026-10-25)
+
+From a longer message about lawyering and The Court (logged with that work):
+
+For imposter duck another thread can do that one too.
+
+The pitch it was started from: every duck gets the same secret word except one, who gets nothing. Each player gives one
+clue over voice, then the room walks to whoever they think is the imposter. The plan and the owner's answers are in
+`notes/plan-imposter.md`.
+
+The owner's answer to the first plan, word for word (2026-10-25):
+
+The tile should have the duck avatar on it, and it updates with any customization the player makes mid game, and players walk onto that tile to vote who is the imposter. The clue round has a 12 second grace period and players END THEIR OWN clue round, and if they dont end it, then every other player has to. The player whose turn it is gets their tile highlighted and they are seen in the clouds. The tile is the same color as the one in their player card. After every player has had a clue, the tile changes to two sides, either another round of clues (right side) or "Vote Out the Quack" (left side)
+
+When they choose to do another round of clues, things resume like usual. When one is voted out, their tile becomes a greyscale and so do their avatar temporarily and they can't give any clues or vote. 
+
+The cards the players are shown are called the "Secret Cards", and one player randomly decides the secret word secretly before players load into the game.
+
+The stats should be which player voted correct the most times (only IF any did, then it says none)
+
+Give me some suggestions for the stats please
+
+The owner's answers to the five questions left, word for word (2026-10-25):
+
+1. Yeah, they see the category not the word. 
+2. No that doesnt even work because then if they guess right everyone knows it is them because the players dont need to guess a word they already know
+3. Yeah they win when only one is left, and when they win, the duck who ISNT the quack will have the dead effect from the silly commands and temporarily can't move as they and their tile turns greyscale and the player who was the quack gets their card flipped over, and it shows "You are the quack". The card shows only the category AND the sentence which reveals they are the quack. Also, the game should be called, "Who is the Quack?" 
+4. Yes
+5. No.
+
+## Music (thread "Plan Duck Friends music", 2026-10-24/25)
+
+We are adding music to Duck Friends 
+
+1. (c)
+2. I think we can listen to my directions because i am going to be pulling from many different places at once and THEN directing you thru it with detailed instructions and maybe even getting songs from nous within kenoma and just changing their scale to see how it sounds because maybe it can be used for this game.
+3. No it doesnt have to be the case that music gets quieter, it can stay the same volume but it should be playing loudly anyways
+
+
+Dont make music yet but do bring song from nous within kenoma and let me play the song files here in chat and think of which ones can be repurposed and how
+
+(1 (c) = music in the lobby, a loop during rounds, and a win tune.)
+
+You can put Lantern in the Fog into the game as is right now. Song have 20 seconds of space between each time they play and will play randomly with the first most songs being the least likely to play again while also being random
+
+You can try and make candle vigil in major and another time in lydian and let me see how it sounds, let me know when it is done
+
+we can do the lydian version and call it "bubble bath in the sky" (with proper capitalization)
+Put it in the game code and we come up with some other ideas, just wait on me after u put this into game, dont deploy yet im not sayinng that tho
+
+Make something that sounds like those two combined plus a hint or reminder of hollow knight, minecraft, and maybe some very old silent hill stuff somewhat. Those ideas combine with those two songs we just added, and we make the rhythm not too boring or predictable. The timbre should be like Minecraft. It will be in lydian and another time in dorian. It will sound like bioluminescent soft crescendos like nostalgia and happy melancholy, the bass is muffled and the sound fades in and out from hollow to filled, with dynamics that make some instruments go quieter or softer while some sounds go in left ear and make their way to the right. The sound sometimes bobs a little before putting it's head down and walking away quietly in hollow, before the timing gives quiet and things begin to come in and return for play again, become full with earned melody and sounds chiming with glee.
+
+yeah put Glow into the game for the music very nice.
+
+Now we are going to make a song that pulls a little from halo 3 odst's "rain", and it wont have any weather sound effects like that song tho, none of that. It also pulls from everything i just told you AND this song. This next one is going to breathe like long leg circus jests who go up an infinite stair of blocks that grows further and further out, with each step of foot needing to go further, before it stops,  and fades in like a melancholy hollow in meaning but mimicking joy, until maybe a little warmth is found and earned, and then if starts to fall away, the sounds switching between left and right audio of headphones as it lowers in volumes slowly, the warmth still heard, but becoming holly and falling while becoming far, until it quiets. The song was in Lydain, then Major at the happy point, but now it comes in with minor, picking up faster, and then slowing again, taking some breathes, and speeding up again, all while convery a breathey melody convey of explanation about the loss, confusion, and sadness, with dynamics and muffle without harsh but desparation, all while trying to imitate joy as well, all the while looking happy, all the while it is trying to look as if it isnt a sad one who witnessed too much who is made to sounds cheery for a duck game that it knows it has to cheer up for. It does do it's job at being happy, but it is missing something. It begins to work it's way down, falling away too, but fading more so. It lets go and gives up, becomes false joy. 
+
+This is for a game about ducks btw.
+
+when u put glow in, use dorian
+
+like i mean that glow goes in the game as dorian
+
+Jester's Stair is great too we can put that in the game for sure
+
+Next is a spring box bouncy joville joyfully joying in joke joyously, like repetition swing swing and swinging, bouncy bouncy bouncy happy how could it be so happy so much major! it is flushed with fuzzy warmth in a sound like that, a little different timbre then the other songs, like a happy version of hollow knight, while still takinng inspiration from everything. Good timing, lots lots of dynamics, fuzzy wuzzy bliss like rubbing ur face while lovey. Every swells and sometimes even sings in soundful joy and praise of living, almost kinda so good it makes u cry kind of good, like an "omg..." it is like a kid's birthday not bad, no pain this time, just peace, maybe hope is okay to believe. The song can be called Spring in a Box
+It flowers also and dances a little, with time for things to quiet down before coming back again
+
+## Who is the Quack? stats, word for word (2026-10-25)
+
+Asked which of the suggested stats to add (Bloodhound, Master of Disguise, Wrongly Accused, Quick Quack and the rest):
+
+"InvestiDucker" is the replaced one for bloodhound and we can do that idea. 
+Wrongly accused doesnt show up in round stats but in game stats if that makes sense.
+Quick Quack only shows up on game stats not round stats.
+Duckguise is the replacement for master of disguise, and it only shows up in game stats not round stats. That is all
+
+(Built: InvestiDucker, first onto the real Quack's tile in a vote the most times, in the round's stats and the whole
+game's; Wrongly Accused, voted out the most while innocent; Quick Quack, ended their own clue turn fastest on average;
+Duckguise, won the most as the Quack, then lasted the most clue laps as the Quack; those three in the whole game's
+stats only.)
+
 ## Arrow keys in the menus, word for word (2026-10-25)
 
 using arrow keys should allow for navigation through the UI in the TAB menu, pause menu, and other menus, and clicking enter should select them and shift+enter right clicks them

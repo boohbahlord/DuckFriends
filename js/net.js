@@ -13,9 +13,10 @@ import { EYES } from './eyes.js';
 import { BEAKS } from './beaks.js';
 import { now } from './clock.js';
 import { who } from './who.js';
+import { publicKey } from './secret.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, net: +profile.settings.net || 0, stats: cleanStats(profile.stats), ...(who.acct ? { acct: who.acct } : {}) });
+export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, net: +profile.settings.net || 0, stats: cleanStats(profile.stats), ...(who.acct ? { acct: who.acct } : {}), ...(publicKey() ? { pk: publicKey() } : {}) });
 
 let active = null;
 export const activeRoom = () => active;

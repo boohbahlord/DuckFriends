@@ -25,7 +25,7 @@ import { NAV_HINTS } from './keynav.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, or Story Chain.',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, or Who is the Quack?',
   map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Rabbit Hole of Ducklings or Ether\'s Crossroads.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
@@ -72,6 +72,13 @@ const BB_TILES = [
 const SC_TILES = [
   ['scTime', 'Writing time', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
 ];
+/* Who is the Quack?'s own options */
+const QUACK_TILES = [
+  ['wqPicker', 'Secret word', [['player', 'A random player picks it'], ['list', 'From the built-in list']]],
+  ['wqPickTime', 'Time to pick the word', [[30, '30 s'], [60, '60 s'], [90, '90 s']]],
+  ['wqQuacks', 'Quacks', [[1, '1'], [2, '2 (6+ players)']]],
+  ['wqTimer', 'Vote timer', [[0, 'None'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
+];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
@@ -91,6 +98,10 @@ const OPT_TIPS = {
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
   bbTimer: 'None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.',
   scTime: 'How long each writer gets for their line. Off: as long as they need. When time runs out, whatever is typed is sent.',
+  wqPicker: 'Each round a random player (never the Quack) picks the secret word and its category, or the game picks one.',
+  wqPickTime: 'When time runs out, whatever the picker typed is used, or a word from the list.',
+  wqQuacks: 'Two Quacks only with 6 or more players.',
+  wqTimer: 'None: a vote waits for everyone, so players can argue it out.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
@@ -99,9 +110,10 @@ function openOptions() {
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) changes these.</p>'}
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
     ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'sc' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
+    ${s.options.mode === 'quack' ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ''}
+    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'sc' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0]))), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.filter(r => !(s.options.mode === 'sc' && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>
@@ -168,8 +180,9 @@ function paint() {
     setHTML(st, `<button type="button" class="ready-btn${mine.ready ? ' on' : ''}" data-a="ready" aria-pressed="${!!mine.ready}">${mine.ready ? 'Ready ✓' : 'Not ready'}</button>`);
   }
   const startRow = $('[data-m="start"]', S);
-  startRow.setAttribute('aria-disabled', String(!host || s.phase === 'countdown'));
-  $('.val', startRow).textContent = host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
+  const few = s.options.mode === 'quack' && s.seat.length < 3;   // Who is the Quack? needs 3 ducks
+  startRow.setAttribute('aria-disabled', String(!host || s.phase === 'countdown' || few));
+  $('.val', startRow).textContent = few ? 'Needs 3 players' : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
   const fr = $('[data-m="friends"] .val', S);

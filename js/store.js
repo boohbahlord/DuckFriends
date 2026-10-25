@@ -8,7 +8,7 @@ const KEY = 'jmg-profile-1';
 export const SETTINGS_DEFAULT = {
   v: 2, theme: 'dark', font: 'fredoka', textSize: 100, uiSize: 100, dyslexic: false, colorblind: false,
   motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, mouseMove: false, multipleChoice: false, touch: 'stick', jumpsSci: false, jumpsHidden: false, chatSide: 'left',
-  shapes: 'moving', sound: 100, sfx: 100, settingsTab: 'general', net: '0', netAsked: false, hidePrivate: false,
+  shapes: 'moving', sound: 100, sfx: 100, music: 100, settingsTab: 'general', net: '0', netAsked: false, hidePrivate: false,
 };
 export const PROFILE_DEFAULT = {
   name: 'Player 1', duck: { ...DUCK_DEFAULT },
@@ -18,8 +18,9 @@ export const PROFILE_DEFAULT = {
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
-   shared copy keeps only these numbers */
-export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets'], ['sc', 'Story Chain']];
+   shared copy keeps only these numbers (Who is the Quack? keeps its votes in answers, correct ones in majority, rounds won
+   in wins, lost in losses and won as the Quack in titles) */
+export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets'], ['sc', 'Story Chain'], ['quack', 'Who is the Quack?']];
 export function cleanStats(o) {
   const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
   for (const [m] of STAT_MODES) {

@@ -6,7 +6,7 @@
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
 import { cardHTML } from './card.js';
-import { voteNeeds, turnKey, isSudo, isBb } from './rules.js';
+import { voteNeeds, turnKey, isBb, may } from './rules.js';
 import { now as clockNow } from './clock.js';
 import { openStats } from './stats.js';
 import { canAdd, requestFriend } from './account.js';
@@ -40,7 +40,7 @@ export async function startKick(R, id) {
   if (await confirmBox(`Vote to kick ${p.name}?`, 'Everyone else has to vote yes. You can start one kick vote every two rounds.')) R.send({ t: 'voteStart', kind: 'kick', target: id });
 }
 /* the host (or sudo) removes a player at once, no vote */
-export const canKick = (s, me, id) => isSudo(s, me) && id !== me && id !== s.hostId && !!s.players[id];
+export const canKick = (s, me, id) => may(s, me, 'cankick') && id !== me && id !== s.hostId && !!s.players[id];
 export async function hostKick(R, id) {
   const p = R.state.players[id]; if (!p || !canKick(R.state, R.me, id)) return;
   if (await confirmBox(`Kick ${p.name}?`, p.bot ? 'The computer leaves the room.' : 'They leave right away, no vote, and can\'t come back until the room goes back to the lobby.')) R.send({ t: 'kick', who: id });
