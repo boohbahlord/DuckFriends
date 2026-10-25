@@ -1,7 +1,7 @@
 /* ---------- the specials on the number keys ----------
    On a computer: a small see-through row of the ten keys (1 … 9, 0) sits in the top bar, just after the title, so it
-   covers nothing; it lets every click through. It comes in with each new stage on the board and with each key pressed
-   (that key glowing); after 5 seconds unused it slides up off the screen. Keys kept on (Shift and the key) light up green
+   covers nothing; it lets every click through (a touchscreen laptop gets it too, once its keys or touchpad are used). It
+   comes in with each new stage on the board and with each key pressed (that key glowing); after 5 seconds unused it slides up off the screen. Keys kept on (Shift and the key) light up green
    and stay where they are while the rest fade, so you can always see what's on. Phones have no row: holding still on the
    board brings the specials around the finger (see touch.js); a tap uses one, holding one keeps it on, and lifting the
    holding finger over one uses it too. */
@@ -73,10 +73,13 @@ export function mountHotbar(S, api) {
     if (btn && wheel.contains(btn)) { const i = +btn.dataset.i; closeWheel(); api.use(i, false); }
   }
   addEventListener('pointerup', lifted);
+  /* a keyboard, a mouse or a touchpad (a touchscreen laptop can tell the page it is only a touch screen): the row shows */
+  const real = e => { if (e.type === 'keydown' || e.pointerType === 'mouse') { document.documentElement.classList.add('keyboard'); removeEventListener('keydown', real); removeEventListener('pointermove', real); } };
+  addEventListener('keydown', real); addEventListener('pointermove', real);
 
   return {
     show, hide, wheel: openWheel, closeWheel,
     refresh() { draw(); settle(); },
-    destroy() { hide(); bar.remove(); removeEventListener('pointerup', lifted); },
+    destroy() { hide(); bar.remove(); removeEventListener('pointerup', lifted); removeEventListener('keydown', real); removeEventListener('pointermove', real); },
   };
 }

@@ -170,7 +170,7 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'specials') {
           /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
              special's tile opens a box for each key right under it */
-          const keys = keysOf(D), open = specialById(keyFor), phone = matchMedia('(hover: none) and (pointer: coarse)').matches;
+          const keys = keysOf(D), open = specialById(keyFor), phone = !matchMedia('(any-pointer: fine)').matches;   // (only a touch screen: a touchscreen laptop has a touchpad too)
           const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
           const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(x => {
             const at = keys.indexOf(x.id), opened = x.id === keyFor;

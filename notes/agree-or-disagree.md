@@ -1269,3 +1269,11 @@ fires the way the duck faces. Ducklings: three little ducklings walk in a row be
 disco ball spins over your head, its colored beams and spots sweeping over you. Both are effects (5 seconds, or kept on
 with Shift) and take Primary, Secondary and Accent colors; the Dagger takes three colors too. The Round Lord's cloud,
 the winner of a match and the podium no longer play the first effect on a duck's keys; effects only come from the keys.)
+
+## Specials: the number-key row on a touchscreen laptop (2026-10-25)
+
+i have a laptop with a stupid touchscreen built into the  laptop monitor i cant turn off, but maybe that is what is hiding the number key display for the specials
+
+(Yes: the row hid on any screen that told the page it was a touch screen, and a touchscreen laptop in Edge can say that.
+Now it hides only when there is no mouse or touchpad at all, and it shows anyway as soon as a key is pressed or a
+touchpad or mouse moves. Phones and tablets still have no row. Customize → Specials uses the same check for its words.)
