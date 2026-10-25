@@ -1622,3 +1622,11 @@ html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; an
 .hp.off .lit-glow { opacity: 0; }
 .hp.hang-shimmer { opacity: .5; }
 html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alternate; }
+
+/* ---------- Hangout: the stage, the couches and logs, soccer (hangout/stage.js, seats.js, soccer.js) ----------
+   The stage is drawn in upright strips, each sorted on its own; a couch in two parts (the cushions, the back); the
+   ball and the goal's confetti stand in the world, sorted with the ducks. */
+.hang-strip { overflow: hidden; }
+.hang-strip-in { position: relative; height: 100%; }
+.hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
+.hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }

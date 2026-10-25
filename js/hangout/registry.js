@@ -17,7 +17,8 @@
      step(dt, now, ctx)          every frame, before drawing
      draw(now, ctx)              every frame, after the camera moved (ctx.toScreen places things)
      hold(ctx)                   → true while my duck can't walk (seated, playing); push(dx, dy, ctx) then gets the
-                                   direction pressed (once a press)
+                                   direction pressed (once a press); heldZ(ctx) → the height it is held at (a seat:
+                                   no falling), or null
      jump(ctx)                   → true when Space is taken (it gets the duck up instead of jumping)
      keydown(e, ctx) / keyup(e, ctx) → true when the key is taken (piano keys)
      pointer(kind, pt, e, ctx)   kind 'down' | 'move' | 'up', pt = world { x, y } on the ground; true on 'down' takes

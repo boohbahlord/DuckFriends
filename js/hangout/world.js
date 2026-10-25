@@ -267,6 +267,7 @@ export function mountWorld(board, api) {
         if (k && sig !== pushed) holder.push?.(k[0], k[1], ctx);
         pushed = sig; ax = ay = 0;
         x = me.x * L.W; y = me.y * L.H;   // (it may have moved my duck)
+        const hz = holder.heldZ?.(ctx); if (hz != null) { me.z = me.b = hz; me.vz = null; me.j = 0; return ev; }   // (seated: at the seat's height, no falling)
       } else pushed = '';
       if (me.j !== me._j) { me._j = me.j; me._za = undefined; if (me.j) me.vz = null; }
       const cfg = api.cfg(), Hpx = cfg.H * L.DUCK, G = 8 * Hpx / (cfg.T * cfg.T);

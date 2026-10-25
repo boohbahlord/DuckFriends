@@ -296,17 +296,19 @@ function drawDucks(now = clockNow()) {
     mark.classList.remove('gone'); mark.classList.toggle('sprint', !!target.sprint);
   } else if (mark) mark.classList.add('gone');
   // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
+  // (Hangout: sorted with their duck, so the stage or a couch covers them too)
+  const withDuck = (e, id, pos) => { if (e.parentNode !== layer) layer.append(e); const zi = world.key(id, pos) + 1; if (e._zi !== zi) { e._zi = zi; e.style.zIndex = zi; } };
   hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
   for (const h of hotdogs) {
     const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = liftOf(h.id, pos);
-    if (hang) h.el.style.visibility = world.hidden(h.id, pos) ? 'hidden' : '';
+    if (hang) { h.el.style.visibility = world.hidden(h.id, pos) ? 'hidden' : ''; withDuck(h.el, h.id, pos); }
     h.el.style.transform = `translate(${(at.left + size * .62).toFixed(1)}px, ${(at.top - size * .9 - z).toFixed(1)}px)`;
     h.el.classList.toggle('going', now > h.until - 900);
   }
   follows = follows.filter(f => { if (now > f.until || !s.pos[f.id]) { f.el.remove(); return false; } return true; });
   for (const f of follows) {
     const pos = posOf(f.id), at = place(pos, lane.indexOf(f.id), lane.length), z = liftOf(f.id, pos);
-    if (hang) f.el.style.visibility = world.hidden(f.id, pos) ? 'hidden' : '';
+    if (hang) { f.el.style.visibility = world.hidden(f.id, pos) ? 'hidden' : ''; withDuck(f.el, f.id, pos); }
     const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
     if (f.el._tr !== tr) { f.el._tr = tr; f.el.style.transform = tr; }
   }
