@@ -23,7 +23,7 @@ import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, wy
 import { modeOf, MODES } from './modes.js';
 import { MAPS, mapName } from './maps.js';
 import { FONTS } from './name.js';
-import { specialById } from './specials.js';
+import { specialById, keysOf, KEYS } from './specials.js';
 import { styleById } from './styles.js';
 import { hatById } from './hats.js';
 import { outfitById } from './outfits.js';
@@ -372,10 +372,10 @@ function lastLines(s) {
   return (rows.length ? table(rows) + '\n\n' : '') + `The room's log begins ${first ? clock(first.t) : 'now'}.`;
 }
 function finger(ctx, id) {
-  const s = ctx.room.state, p = s.players[id], d = p.duck || {}, c = p.card || {}, ns = p.nameStyle || {}, sp = d.special && specialById(d.special);
+  const s = ctx.room.state, p = s.players[id], d = p.duck || {}, c = p.card || {}, ns = p.nameStyle || {}, sp = keysOf(d).map((id, i) => id && `${KEYS[i]} ${specialById(id).name}`).filter(Boolean).join(', ');
   const pretty = v => v ? String(v).replace(/[-_]/g, ' ') : 'none';
   return [`Login: ${pname(s, id)}${id === s.hostId ? ' (host)' : isSudo(s, id) ? ' (sudo)' : ''}${p.bot ? ' (a computer)' : ''}`,
-    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${d.hat ? (hatById(d.hat.id || d.hat) || {}).name || pretty(d.hat.id || d.hat) : 'none'} · outfit ${d.outfit ? (outfitById(d.outfit.id || d.outfit) || {}).name || pretty(d.outfit.id || d.outfit) : 'none'} · special ${sp ? sp.name : 'none'}`,
+    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${d.hat ? (hatById(d.hat.id || d.hat) || {}).name || pretty(d.hat.id || d.hat) : 'none'} · outfit ${d.outfit ? (outfitById(d.outfit.id || d.outfit) || {}).name || pretty(d.outfit.id || d.outfit) : 'none'} · specials ${sp || 'none'}`,
     `Card:  ${c.kind === 'image' ? 'a picture' : `${c.color || '?'}, pattern ${pretty(c.pattern)}`}`,
     `Font:  ${(FONTS.find(f => f.id === ns.font) || FONTS[0]).name}${ns.rainbow ? ', rainbow' : ns.color ? ', ' + ns.color : ''}`,
     `Groups: ${[...groupsOf(s, id), 'superuser-' + pname(s, id)].join(', ')}`,

@@ -78,7 +78,10 @@ export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.s
 export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : s.phase === 'write' && s.sc ? `write${s.round}.${s.sc.turn}` : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
 export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
-const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound'];   // the specials used with E
+const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
+const EFFECTS = ['zap', 'flames', 'hearts', 'poison', 'notes', 'loserx'];   // the effects, shown around a duck's head
+/* is this special on one of the duck's number keys? (a duck from before the keys had one special) */
+const onKeys = (d, id) => !!d && (Array.isArray(d.keys) ? d.keys.slice(0, 10).includes(id) : d.special === id);
 /* who votes, and how many yes votes pass it: a kick needs every other player; back to the lobby needs the usual share */
 export function voteNeeds(s, v = s.vote) {
   if (!v) return { voters: [], need: 0 };
@@ -309,7 +312,8 @@ export function reduce(state, a, now = Date.now()) {
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
-      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp };   // q: squashed against l/r/u/d; sp: sprinting
+      const dj = j && +a.dj > j ? +a.dj : 0;   // a double jump: when the second jump began
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump
       quackMoved(s, a.id);   // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       return s;
@@ -346,15 +350,26 @@ export function reduce(state, a, now = Date.now()) {
       me.ms = ms; return s;
     }
     case 'idle': if (!me || !!me.idle === !!a.v) return state; me.idle = !!a.v; return s;   // no key, click or touch in 2 minutes
-    case 'use': {   // an E special on the board, seen by everyone; the handgun's bullet then crosses the board
-      const sp = me && me.duck && me.duck.special, p = s.pos[a.id];
-      if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp)) return state;
+    case 'use': {   // an item on the board, seen by everyone; the handgun's bullet then crosses the board
+      const sp = a.what || (me && me.duck && me.duck.special), p = s.pos[a.id];
+      if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
       if (sp === 'handgun' && !s.options.fun) return state;   // the silly-commands switch covers it
-      if (now - ((s.lastUse || {})[a.id] || 0) < (sp === 'handgun' ? 3000 : 1500)) return state;
-      s.lastUse = { ...(s.lastUse || {}), [a.id]: now };
+      const k = `${a.id} ${sp}`;   // (each item waits on its own)
+      if (now - ((s.lastUse || {})[k] || 0) < ({ handgun: 3000, confetti: 15000 }[sp] || 1500)) return state;
+      s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1;
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now }];
       if (sp === 'handgun') s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, x0: p.x, y: p.y, dir: face, t: now, lx: p.x }];
+      return s;
+    }
+    case 'aura': {   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
+      const what = a.what;
+      if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what)) return state;
+      const cur = (s.aura || {})[a.id] || {}, next = {};
+      for (const [k, u] of Object.entries(cur)) if (!u || u > now) next[k] = u;   // (0: kept on)
+      if (a.keep) { if (cur[what] === 0) delete next[what]; else next[what] = 0; }
+      else next[what] = now + 5000;   // (a kept one goes on for 5 more seconds)
+      s.aura = { ...(s.aura || {}), [a.id]: next };
       return s;
     }
     case 'tieVote': {   // Bicker Brackets, a tied match: vote again, or a coin toss (it can be changed until everyone has chosen)

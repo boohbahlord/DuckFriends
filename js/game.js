@@ -24,7 +24,8 @@ import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOver
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
-import { pressSpecial, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
+import { specialById, keysOf, hasKey, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
+import { mountHotbar } from './hotbar.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontHTML } from './name.js';
 import { rainbowHTML } from './art.js';
@@ -49,11 +50,13 @@ import { quackBoardHTML, quackTopHTML, refreshTiles, quackLines, secretCardHTML,
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
 let shown = '';            // which phase view is up (phase|round|question)
 const keys = new Set();
-let me = null;             // my duck here: { x, y, j (jump start), face }
+let me = null;             // my duck here: { x, y, j (jump start), lj (a long jump), dj (when a double jump began), face }
 let target = null;         // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
 let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
-let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and E specials following their ducks
+let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
+let bar = null, lastKey = -1, onBoard = false;   // the specials' number keys: the row, the key last pressed (E presses it again), on the board now
+const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 let draftT = 0;
@@ -72,12 +75,21 @@ let cam = null;   // the bracket's camera: the diagram's corner on the board (dx
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: .45, y: 1.0, px: .5, py: .85, sprint: 1.75 };
 const JUMP = { normal: { T: .62, H: 1.35 }, low: { T: 1.2, H: 2 } };   // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
-/* a duck's jump: the Long jumps special floats longer and a little higher */
-const jumpCfg = (id = R && R.me) => {
-  const b = JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'], p = id && R && R.state.players[id];
-  return p && p.duck && p.duck.special === 'longjump' ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
+/* a duck's jump: a long jump floats longer and a little higher; a double jump starts a second arc where the duck is, a
+   little lower than the first */
+const jumpCfg = pos => {
+  const b = JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
+  return pos && pos.lj ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
 };
-const jumpZ = (j, now, id) => { if (!j) return 0; const { T, H } = jumpCfg(id), t = (now - j) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
+const arc = (t0, now, T, H) => { const t = (now - t0) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
+const jumpZ = (pos, now) => {
+  if (!pos || !pos.j) return 0;
+  const { T, H } = jumpCfg(pos);
+  if (!pos.dj || now < pos.dj) return arc(pos.j, now, T, H);
+  const z0 = arc(pos.j, pos.dj, T, H), t = (now - pos.dj) / 1000 / T;   // the second arc: from where it began down to the ground
+  return t >= 1 ? 0 : z0 * (1 - t) + 4 * H * .8 * t * (1 - t);
+};
+const landsAt = pos => (pos.dj || pos.j) + jumpCfg(pos).T * 1000;
 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
@@ -188,7 +200,7 @@ function drawDucks(now = clockNow()) {
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
   const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
-  const boxes = [];
+  const boxes = [], puffs = [], wearsX = new Set();
   /* Who is the Quack?'s reveal keeps its news for the drumroll: who was voted out goes grey after it, the last duck plays dead after that */
   const wq = isQuack(s) && s.wq, rt = wq && s.phase === 'reveal' && wq.lastOut ? now - s.at : 1e9;
   const greyNow = id => wq && isGrey(s, id) && !(id === wq.lastOut && rt < 3200) && !((wq.dead || []).includes(id) && rt < 6100) && !(wq.result && wq.result.quacks.includes(id));
@@ -203,10 +215,11 @@ function drawDucks(now = clockNow()) {
     const dead = deadNow(id, p), sig = JSON.stringify([p.duck, p.name, p.nameStyle, dead]);   // a new look shows at once, mid-game too
     if (d._sig !== sig) {
       d._sig = sig;
-      d.querySelector('.gduck-body').innerHTML = duckSVG(p.duck, { size: 64, shadow: false, title: p.name, dead });
+      d.querySelector('.gduck-body').innerHTML = duckSVG(p.duck, { size: 64, shadow: false, title: p.name, dead }) + '<span class="sp-fx gduck-aura"></span>';
+      d._aura = null; d.style.setProperty('--xc', colorsOf(p.duck, 'loserx')[0]);
       d.querySelector('.gduck-name').innerHTML = nameHTML(p.name, p.nameStyle);
     }
-    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos.j, now, id) * size;
+    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos, now) * size;
     const mine = id === R.me;
     const face = mine && me ? me.face : (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
     d._face = face || 1; d._x = pos.x;
@@ -227,7 +240,13 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle('left', d._face < 0);
     d.querySelector('.gduck-done').hidden = !s.done[id];
     d.classList.toggle('idle', !!p.idle);   // gone quiet: Zs float up
-    const lx = losers.has(id); if (d._lx !== lx) { d._lx = lx; d.classList.toggle('loser', lx); }   // the Loser's X special
+    /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one */
+    const auras = [];
+    for (const [k, u] of Object.entries((s.aura || {})[id] || {})) if (!u || u > now) { if (k === 'loserx') wearsX.add(id); else auras.push(k); }
+    const au = auras.sort().join();
+    if (d._aura !== au) { d._aura = au; const a = d.querySelector('.gduck-aura'); if (a) a.innerHTML = auras.map(k => momentHTML(k, p.duck)).join(''); }
+    if (pos.dj && d._dj !== pos.dj) { d._dj = pos.dj; if (now - pos.dj < 700) puffs.push([at.left, at.top - z, (colorsOf(p.duck, 'double')[0])]); }   // a double jump: a little cloud where it began
+    const lx = losers.has(id) || wearsX.has(id); if (d._lx !== lx) { d._lx = lx; d.classList.toggle('loser', lx); }   // the Loser's X special
     const gr = !!greyNow(id); if (d._gr !== gr) { d._gr = gr; d.classList.toggle('grey', gr); }   // Who is the Quack?: out this round
     const say = bubbles[id], saying = !!say && now < say.until;   // their newest chat message, for a few seconds
     if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
@@ -243,11 +262,12 @@ function drawDucks(now = clockNow()) {
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
   /* the handgun's bullets, flying across the board */
   const fxl = $('.fxl', board), live = new Set();
+  for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
   for (const sh of s.shots || []) {
     const x = sh.x0 + sh.dir * SHOT_SPEED * (now - sh.t) / 1000; if (x < -.3 || x > 1.3) continue;   // (it flies on past the board)
     live.add(String(sh.n));
     let b = fxl.querySelector(`.bullet[data-n="${sh.n}"]`);
-    if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
+    if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET(colorsOf((s.players[sh.by] || {}).duck, 'handgun')[2])}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
     const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .41 - 7).toFixed(1)}px)`;   // out of the gun's barrel (the bullet is 14px tall)
   }
   fxl.querySelectorAll('.bullet').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
@@ -258,16 +278,16 @@ function drawDucks(now = clockNow()) {
     if (mark._tr !== tr) { mark._tr = tr; mark.style.transform = tr; }
     mark.classList.remove('gone'); mark.classList.toggle('sprint', !!target.sprint);
   } else if (mark) mark.classList.add('gone');
-  // hotdogs hang around their duck, then fade; an E special (mug, gun, spray) stays with its duck while it walks
+  // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
   hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
   for (const h of hotdogs) {
-    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos.j, now, h.id) * size;
+    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos, now) * size;
     h.el.style.transform = `translate(${(at.left + size * .62).toFixed(1)}px, ${(at.top - size * .9 - z).toFixed(1)}px)`;
     h.el.classList.toggle('going', now > h.until - 900);
   }
   follows = follows.filter(f => { if (now > f.until || !s.pos[f.id]) { f.el.remove(); return false; } return true; });
   for (const f of follows) {
-    const pos = posOf(f.id), at = place(pos, lane.indexOf(f.id), lane.length), z = jumpZ(pos.j, now, f.id) * size;
+    const pos = posOf(f.id), at = place(pos, lane.indexOf(f.id), lane.length), z = jumpZ(pos, now) * size;
     const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
     if (f.el._tr !== tr) { f.el._tr = tr; f.el.style.transform = tr; }
   }
@@ -275,7 +295,7 @@ function drawDucks(now = clockNow()) {
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? (isQuack(s) ? spotOf(s, me) : colAt(s, me.x)) : -1;
   board.querySelectorAll('.col, .wq-tile').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
-  const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) { vb.dataset.col = myCol; if (isLaw(s)) setHTML($('.gact', S), gactHTML(s)); }   // (Lawyering: Vote, Voted or Change vote)
+  const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) { vb.dataset.col = myCol; if (isLaw(s)) setHTML($('.gact', S), actHTML(s)); }   // (Lawyering: Vote, Voted or Change vote)
   placeRing(board);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll('.topover .lord, .topover .question, .topover .wq-sidecol')) {
@@ -320,7 +340,7 @@ function storyMarks(s, board) {
   scZone = z;
   const l = scLineOf(s, z), who = l ? l.line.by : /^W:/.test(z || '') ? z.slice(2) : null, p = who && s.players[who];
   S.style.setProperty('--vb', p ? (p.card && p.card.color) || '#8a8fa3' : ({ 'C:cont': 'var(--green)', 'C:new': 'var(--blue)', 'C:lobby': 'var(--orange)' })[z] || 'var(--green)');
-  if (vote) setHTML($('.gact', S), gactHTML(s));   // (your own line or word can't be voted for)
+  if (vote) setHTML($('.gact', S), actHTML(s));   // (your own line or word can't be voted for)
 }
 /* the ducks walk on the bracket itself (x, y across the whole bracket), so everyone sees them over the same matches; the
    bracket slides to keep my duck in view */
@@ -368,12 +388,13 @@ function playFx(f) {
     sfx.love();
   } else if (f.kind === 'kill') {
     sfx.bonk();
-  } else if (f.kind === 'use') {   // an E special at its duck, moving with it (drawDucks places it each frame)
+  } else if (f.kind === 'use') {   // an item at its duck, moving with it (drawDucks places it each frame)
+    if (f.what === 'confetti') { confettiRain(4500); return; }   // confetti over everyone's screen
     if (!spot(f.by)) return;
     const wrap = el('<div class="spe-follow"></div>');
-    wrap.append(...pressFX(f.what, 0, 0, size, f.face || 1));
+    wrap.append(...pressFX(f.what, 0, 0, size, f.face || 1, (s.players[f.by] || {}).duck));
     fxl.append(wrap); follows.push({ id: f.by, el: wrap, until: now + 2200 });
-    ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, sound: sfx.quack })[f.what]?.();
+    ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, sound: sfx.quack, trombone: sfx.trombone })[f.what]?.();
   } else if (f.kind === 'fire') {   // flames for a moment, then charred; the burns fade in a few seconds
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`); if (!dk) return;
     clearTimeout(dk._fireT); clearTimeout(dk._burnT);
@@ -402,10 +423,10 @@ function xBounds() {
 function sendMove(force) {
   if (!me) return;
   const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
-  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, q, sprinting && moving].join();
+  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving].join();
   if (!force && (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) || msg === lastSent)) return;   // online: less often (Data saving, Poor connection: less still)
   lastSend = now; lastSent = msg;
-  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, q, sp: sprinting && moving });
+  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), q, sp: sprinting && moving });
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
@@ -413,11 +434,11 @@ function bumps(x, y, now) { return crowd(x, y, now).b; }
 /* how far into other ducks my duck at (x, y) would be: d is 0 when clear, up to 1 when right on top of one */
 function crowd(x, y, now) {
   const out = { d: 0, b: null };
-  if (!geo || jumpZ(me.j, now, R.me) > 0) return out;   // in the air: over everyone
+  if (!geo || jumpZ(me, now) > 0) return out;   // in the air: over everyone
   const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2, ka = duckRoom((s.players[R.me] || {}).duck);
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
-    const o = s.pos[id]; if (jumpZ(o.j, now, id) > 0) continue;
+    const o = s.pos[id]; if (jumpZ(o, now) > 0) continue;
     const kb = duckRoom((s.players[id] || {}).duck);
     const b = place(o, 0, 1), dx = (a.left - b.left) / (rx * (ka.x + kb.x)), dy = (a.top - b.top) / (ry * (ka.y + kb.y)), d = 1 - (dx * dx + dy * dy);
     if (d > out.d) { out.d = d; out.b = b; }
@@ -438,7 +459,7 @@ function loop(t) {
 function step(dt, now) {
   const s = R.state;
   // a jump lands: it counts now
-  if (me.j && (now - me.j) / 1000 >= jumpCfg().T) { me.j = 0; countJump(); sendMove(true); }
+  if (me.j && now >= landsAt(me)) { const n = me.dj ? 2 : 1; me.j = 0; me.lj = false; me.dj = 0; for (let i = 0; i < n; i++) countJump(); sendMove(true); }   // (a double jump is two)
   const k = c => keys.has(c);
   const up = k('KeyW') || k('ArrowUp'), down = k('KeyS') || k('ArrowDown'), left = k('KeyA') || k('ArrowLeft'), right = k('KeyD') || k('ArrowRight');
   let hx = (right ? 1 : 0) - (left ? 1 : 0), vy = (down ? 1 : 0) - (up ? 1 : 0);   // on screen: right, down
@@ -498,13 +519,20 @@ function resetDuck() {
   const [lo, hi] = attorney() ? [.47, .53] : inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
   let x = me.x, y = me.y;
   for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = attorney() ? .4 + Math.random() * .2 : Math.random(); if (!bumps(x, y, now)) break; }
-  me.x = x; me.y = y; me.j = 0; target = null;
+  me.x = x; me.y = y; me.j = 0; me.lj = false; me.dj = 0; target = null;
   R.send({ t: 'move', x, y, j: 0, reset: true });
   return inCol === null ? 'Duck reset: somewhere new.' : 'Duck reset: somewhere new in your column.';
 }
-function jump() {
-  if (!me || !onBoardPhase() || me.j) return;
-  me.j = clockNow(); sendMove(true);
+/* how: 'long' (the Long jump's key), 'double' (the Double jump's key) or nothing (Space, a tap); kept-on jumps count too */
+function jump(how) {
+  if (!me || !onBoardPhase()) return;
+  const now = clockNow();
+  if (me.j) {   // in the air: the second jump, once a jump, if the Double jump is on a key
+    if (me.dj || !(how === 'double' || (kept.has('double') && hasKey(myDuck(), 'double'))) || jumpZ(me, now) <= 0) return;
+    me.dj = now; sendMove(true); sfx.puff(); return;
+  }
+  me.j = now; me.dj = 0; me.lj = how === 'long' || (kept.has('longjump') && hasKey(myDuck(), 'longjump'));
+  sendMove(true);
 }
 function jumpTo(c) {
   if (!canWalk() || R.state.phase !== 'answer') return;
@@ -696,21 +724,27 @@ function recordRound(s) {
   save(); shareLook();
 }
 
-/* my E special's button (E on a keyboard) */
-function useHTML(s) {
-  const sp = pressSpecial(((s.players[R.me] || {}).duck || {}).special);
-  if (!sp || !onBoardPhase() || !(me && me.x >= 0)) return '';
-  return `<button type="button" class="btn ghost ebtn" data-a="use" data-tip="${esc(sp.name)}: ${esc(sp.tip)}">${sp.icon} <kbd>E</kbd></button>`;
+/* ---------- the specials on the number keys ---------- */
+const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
+/* the effects kept on for my duck (in the room's state), and the jumps kept on here */
+function keptNow() {
+  const out = new Set([...kept].filter(id => hasKey(myDuck(), id))), a = ((R && R.state.aura) || {})[R && R.me] || {};
+  for (const [id, u] of Object.entries(a)) if (u === 0) out.add(id);
+  return out;
 }
-/* the bottom bar's middle: what you can do now, with my E special's button at the start of the row */
-function gactHTML(s) {
-  const act = actHTML(s), use = useHTML(s), row = '<div class="act-row">';
-  return use && act.includes(row) ? act.replace(row, row + use) : act + use;
+/* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
+function useKey(i, keep) {
+  if (!R || !onBoardPhase()) return;
+  if (bar) bar.show(i);
+  const id = keysOf(myDuck())[i], sp = specialById(id); if (!sp) return;
+  lastKey = i;
+  if (sp.kind === 'effect') R.send({ t: 'aura', what: id, keep: !!keep });
+  else if (sp.kind === 'jump') { if (keep) { kept.has(id) ? kept.delete(id) : kept.add(id); } else jump(id === 'longjump' ? 'long' : 'double'); }
+  else if (me && me.x >= 0) R.send({ t: 'use', what: id, face: turned() ? 1 : (me.face || 1) });   // (an item: Shift and its key use it the same way)
+  if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
-function useSpecial() {
-  const s = R.state; if (!me || me.x < 0 || !onBoardPhase() || !pressSpecial(((s.players[R.me] || {}).duck || {}).special)) return;
-  R.send({ t: 'use', face: turned() ? 1 : (me.face || 1) });
-}
+const KEY_CODES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+const keyIndex = e => { const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code); return m ? KEY_CODES.indexOf(m[1]) : -1; };
 
 /* the first seconds of a vote (no voting yet), or of a clue turn in Who is the Quack? (12 s before it can end) */
 const graceOf = s => s.phase === 'answer' || (isSc(s) && SC_VOTES.includes(s.phase)) || (isQuack(s) && ['choice', 'accuse'].includes(s.phase)) ? VOTE_GRACE : isQuack(s) && s.phase === 'clue' ? CLUE_GRACE : 0;
@@ -835,7 +869,7 @@ function celebrate(s) {
   if (isQuack(s)) {   // the round's winners (after the drumroll)
     const r = s.phase === 'reveal' && s.wq.result; if (!r || !r.win) return;
     const won = s.wq.ids.filter(id => (r.win === 'quack') === r.quacks.includes(id) && s.players[id]);
-    if (won.some(id => (s.players[id].duck || {}).special === 'confetti')) setTimeout(confettiRain, s.wq.lastOut ? 6100 : 600);
+    if (won.some(id => hasKey(s.players[id].duck, 'confetti'))) setTimeout(confettiRain, s.wq.lastOut ? 6100 : 600);
     return;
   }
   let p = null;
@@ -844,22 +878,22 @@ function celebrate(s) {
   const m = isBb(s) && bbMatch(s);
   if (s.phase === 'discuss' && m && m.w != null && !s.options.bbBlind) p = s.players[s.bb.seeds[m.w].by];
   if (s.phase === 'podium' && s.bb && s.bb.champ != null) p = s.players[s.bb.seeds[s.bb.champ].by];
-  if (p && p.duck && p.duck.special === 'confetti') confettiRain();
+  if (p && hasKey(p.duck, 'confetti')) confettiRain();
 }
 /* Bicker Brackets: who wears the Loser's X (their seed just lost, or all of theirs are out), and the colors of the
    match's two sides (the writers' cards) */
 function bbMarks(s) {
   losers = new Set();
-  if (isQuack(s) && s.wq && s.wq.result && s.wq.result.win === 'room') { for (const id of s.wq.result.quacks) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx') losers.add(id); } return; }   // a caught Quack
+  if (isQuack(s) && s.wq && s.wq.result && s.wq.result.win === 'room') { for (const id of s.wq.result.quacks) { const p = s.players[id]; if (p && hasKey(p.duck, 'loserx')) losers.add(id); } return; }   // a caught Quack
   if (isLaw(s) && s.law) {   // Lawyering: the losing attorney wears the Loser's X; the sides' colors are the attorneys' cards
     const L = s.law, lost = s.phase === 'discuss' && L.w != null ? (L.w === -1 ? [L.off, L.def] : [L.w ? L.off : L.def]) : [];
-    for (const id of lost) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx') losers.add(id); }
+    for (const id of lost) { const p = s.players[id]; if (p && hasKey(p.duck, 'loserx')) losers.add(id); }
     S.style.setProperty('--law-a', sideColor(s.players[L.off])); S.style.setProperty('--law-b', sideColor(s.players[L.def]));
     return;
   }
   if (!isBb(s) || !s.bb) return;
   const m = bbMatch(s), justLost = s.phase === 'discuss' && m && m.w != null ? s.bb.seeds[m.w === m.a ? m.b : m.a] : null;
-  for (const id of s.seat) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx' && ((justLost && justLost.by === id) || allOut(s, id))) losers.add(id); }
+  for (const id of s.seat) { const p = s.players[id]; if (p && hasKey(p.duck, 'loserx') && ((justLost && justLost.by === id) || allOut(s, id))) losers.add(id); }
   if (m) { const [ca, cb] = matchColors(s, seedShift); S.style.setProperty('--seed-a', ca); S.style.setProperty('--seed-b', cb); }
 }
 /* while a match is voted on, its two sides slowly turn through the colors (together, so they stay apart); when the vote
@@ -899,7 +933,7 @@ function paint(force) {
   if (force || key !== shown) {
     const was = shown; shown = key;
     const fresh = s.pos[R.me] ? { ...s.pos[R.me], face: 1 } : null;
-    if (s.phase === 'answer' || s.phase === 'results' || s.phase === 'bracket' || (isSc(s) && SC_BOARD.includes(s.phase)) || !me || (isQuack(s) && (!was || was.split('|')[0] !== s.phase))) me = fresh && { ...fresh, j: me && me.j || 0 };   // (Who is the Quack?: the host puts ducks on their tiles or the strip as a stage starts)
+    if (s.phase === 'answer' || s.phase === 'results' || s.phase === 'bracket' || (isSc(s) && SC_BOARD.includes(s.phase)) || !me || (isQuack(s) && (!was || was.split('|')[0] !== s.phase))) me = fresh && { ...fresh, j: me && me.j || 0, lj: !!(me && me.lj), dj: me && me.dj || 0 };   // (Who is the Quack?: the host puts ducks on their tiles or the strip as a stage starts)
     scZone = null;
     target = null;
     const main = $('.gmain', S);
@@ -922,6 +956,7 @@ function paint(force) {
     $('.phase', S).textContent = (isLaw(s) && LAW_TITLES[s.phase]) || TITLES[s.phase] || '';
     lastClose = s.law && s.law.close || 0;
     geo = null;
+    const ob = onBoardPhase(); if (ob !== onBoard) { onBoard = ob; if (bar) { if (ob) bar.show(); else bar.hide(); } }   // the specials' row shows as the board comes up, then slides away
   }
   const round = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
   if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
@@ -963,7 +998,7 @@ function paint(force) {
   const lord = $('.topover .lord', S);
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
-  setHTML($('.gact', S), gactHTML(s));
+  setHTML($('.gact', S), actHTML(s));
   pm.paint();
   /* new chat messages float over their sender's duck (whispers only for the two of you; muted bubbles stay hidden) */
   if (lastLog < 0) lastLog = s.logN || 0;
@@ -987,7 +1022,7 @@ function paint(force) {
 
 function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
-  if (graceOf(s)) { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), gactHTML(s)); } }   // the Vote (Done, Skip) button counts down
+  if (graceOf(s)) { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), actHTML(s)); } }   // the Vote (Done, Skip) button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   const meter = $('.tmeter', S);
   if (s.phase === 'podium') { const pl = $('.pod-left', S); if (pl) pl.textContent = `The stats in ${Math.max(0, Math.ceil((s.ends - now) / 1000))} s`; }
@@ -1055,7 +1090,8 @@ function keydown(e) {
   if (typing(e) || windowOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
-  if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); useSpecial(); return; }
+  if (keyIndex(e) >= 0 && onBoardPhase()) { e.preventDefault(); if (!e.repeat) useKey(keyIndex(e), e.shiftKey); return; }   // the specials' keys (Shift: keep it on)
+  if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E: the last key again
   if (e.code === 'KeyQ' && isQuack(R.state)) { e.preventDefault(); peek(true); return; }   // hold Q: peek at my Secret Card
   if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
   if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
@@ -1087,7 +1123,6 @@ async function act(a) {
     case 'bbskip': if (await confirmBox('Skip this one?', 'You won\'t have a contender in this spot.')) R.send({ t: 'submit', text: '' }); break;
     case 'review': R.send({ t: 'voteReview' }); break;
     case 'lobbyvote': lobbyVote(R); break;
-    case 'use': useSpecial(); break;
     case 'wqidea': { const f = $('form.wq-pick', S); if (!f) break; const { word, cat } = anyWord(); f.word.value = word; f.cat.value = cat; sendDraft(); break; }
     case 'players': if (pm.isOpen()) pm.close(); else pm.open(true); break;
     case 'lobby': R.send({ t: 'toLobby' }); break;
@@ -1104,6 +1139,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
+    if (bar) bar.destroy(); bar = null; lastKey = -1; onBoard = false; kept.clear();
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
     for (const t of ['pointerup', 'pointercancel']) removeEventListener(t, unpeek);
@@ -1117,7 +1153,8 @@ register('game', {
     docks = mountDocks(S, HINTS);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
-    touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; } });
+    bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey });
+    touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
     S.addEventListener('pointerdown', e => { if (e.target.closest('.wq-card.mine')) { e.preventDefault(); peek(true); } });
     for (const t of ['pointerup', 'pointercancel']) addEventListener(t, unpeek);

@@ -14,11 +14,11 @@ import { nameHTML, fontHTML } from './name.js';
 import { cardBackground } from './card.js';
 import { rainbowHTML } from './art.js';
 import { roundName, writerShown, bbMatch, podium, bbStats, seedOut, SEED_MAX, TOPIC_MAX } from './rules.js';
-import { specialById, momentHTML } from './specials.js';
+import { firstEffect, momentHTML } from './specials.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const inFont = (p, html) => fontHTML(p && p.nameStyle && p.nameStyle.font, html);   // (a player's font, scaled to match)
-const moment = p => p && (specialById(p.duck && p.duck.special) || {}).kind === 'moment' ? `<span class="sp-fx">${momentHTML(p.duck.special)}</span>` : '';
+const moment = p => { const id = p && firstEffect(p.duck); return id ? `<span class="sp-fx">${momentHTML(id, p.duck)}</span>` : ''; };   // (the first effect on the duck's keys)
 
 /* ---------- the cloud (shared with the Round Lord) ---------- */
 export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
