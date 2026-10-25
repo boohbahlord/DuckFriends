@@ -1064,3 +1064,23 @@ room chooses between voting and more clues, they get a tile and a Secret Card wi
 cards are dealt) and vote like everyone. Only while the room talks a turn over, or is in the middle of voting out a
 Quack, do they walk and chat until the next question, match, case or lap of clues, because a tile added mid-vote would
 move the tiles under everyone's feet.)
+
+## Music: Ducklings in a Row (2026-10-25)
+
+give me all the instructions i gave you and paste them down to another agent and have them come up with an idea for a song that is novel but builds off of these. Send them the primpts i wrote you not the songs, then let them write a song idea and ill look at it and consider if i want to send it back to u
+
+(Done: a fresh agent read only the owner's music requests, word for word, and wrote "Ducklings in a Row": a mother
+duck's waddle tune on felt piano copied as a round by her ducklings, a music box and a harp; D Mixolydian lifting to D
+major. In /mnt/project-files/music/song-ideas/.)
+
+where is the ducklings in a row song at?
+
+make it a song i thought u started on the song while i was sleeping
+
+yeah we can put this song in the game
+
+(Done: Ducklings in a Row is the sixth song. Still water, the mother leads, the row grows with a music box two bars
+behind and a harp four bars behind, the reeds (muffled, a heartbeat, one duckling unanswered), found (D major, strings,
+choir, chimes), and home.)
+
+After that, suggest to me some scales, modes, or rtythyms, and new timbres for the next song, and ill choose what i like before we send it off to the other agent to make a song idea
