@@ -265,6 +265,10 @@ p.bad { color: var(--red); font-weight: 600; }
   .bbar { grid-template-columns: 1fr auto; grid-template-areas: "c c" "l r"; row-gap: .4rem; }
   .bbar-c { grid-area: c; } .bbar-l { grid-area: l; } .bbar-r { grid-area: r; }
 }
+@media (orientation: landscape) and (max-height: 520px) {   /* a phone on its side: one short row at the bottom, so the board keeps the height */
+  .bbar { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "l c r"; align-items: center; }   /* (the middle takes what's left, so a wide row of buttons never runs under Notes) */
+  .bbar-c { flex-direction: row; justify-content: center; align-items: center; min-width: 0; }
+}
 
 /* ---------- the lobby (Halo: Reach's layout) ---------- */
 .lbar { display: flex; justify-content: flex-end; padding: .7rem max(.8rem, 1.5vw) 0; }
@@ -1432,4 +1436,24 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
   .wq-card { width: 3.9rem; } .wq-card.big { width: 4.2rem; }
   .wq-c-title, .wq-c-you { font-size: calc(.8rem * var(--ts)); } .wq-c-word { font-size: calc(.88rem * var(--ts)); } .wq-c-cat { font-size: calc(.56rem * var(--ts)); }
   .wq-back .small { display: none; }
+}
+/* a short screen on its side (a phone held sideways): a smaller cloud, card and question, so the tiles under them keep room */
+@media (orientation: landscape) and (max-height: 520px) {
+  .topover.wq-top { top: .1rem; right: auto; width: 15.5rem; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .3rem .5rem; padding: 0 .4rem; }   /* (a set width: the tiles start right of it) */
+  .wq-top .lord-say { max-width: 100%; }
+  .wq-top .wq-sidecol { grid-column: 1; grid-row: 1; justify-self: start; }
+  .wq-top .lord { grid-column: 2; grid-row: 1; }
+  .wq-top .question { grid-column: 1 / span 2; grid-row: 2; max-width: 11rem; justify-self: start; }
+  .wq-top .question::before { left: min(9.1rem, calc(100% - 1.8rem)); top: -.55rem; transform: rotate(135deg); }   /* (its point goes up, to the cloud) */
+  .wq-top .lord-sit { width: 6rem; height: 4.3rem; }
+  .wq-top .lord-duck { width: 3.4rem; bottom: 1.25rem; }
+  .wq-top .lord-say { font-size: calc(1rem * var(--ts)); min-height: 1.2em; }
+  .wq-top .question { font-size: calc(.85rem * var(--ts)); padding: .35rem .6rem; }
+  .wq-card { width: 3.4rem; } .wq-card.big { width: 3.6rem; }
+  .wq-c-title, .wq-c-you { font-size: calc(.72rem * var(--ts)); } .wq-c-word { font-size: calc(.8rem * var(--ts)); } .wq-c-cat { font-size: calc(.52rem * var(--ts)); }
+  .wq-back .small { display: none; }
+  .wq-tiles { gap: .3rem; }
+  .wq-tile { padding: .2rem .35rem; gap: .25rem; border-radius: .7rem; }
+  .wq-tduck { width: min(30%, 2.1rem); }
+  .wq-tname { margin-top: .3rem; font-size: calc(.78rem * var(--ts)); }
 }

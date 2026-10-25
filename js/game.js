@@ -43,7 +43,7 @@ import { knockOff, bothOff } from './duel.js';
 import { hooks } from './hooks.js';
 import { mountTouch, stick } from './touch.js';
 import { now as clockNow } from './clock.js';
-import { isQuack, QUACK_PHASES, spotOf, isGrey, speakerOf, frozen, cardOf, stillIn, canAccuse, anyWord, CLUE_GRACE } from './quackrules.js';
+import { isQuack, QUACK_PHASES, spotOf, isGrey, speakerOf, frozen, cardOf, stillIn, canAccuse, anyWord, CLUE_GRACE, gridOf } from './quackrules.js';
 import { quackBoardHTML, quackTopHTML, refreshTiles, quackLines, secretCardHTML, revealCardsHTML, pickHTML, quackStatsHTML } from './quack.js';
 
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
@@ -111,10 +111,19 @@ function measure() {
   const label = board.querySelector('.col-name'), labelH = turned() ? 0 : (label ? label.offsetHeight + 12 : 30);
   geo = { W: r.width, H, top0, size, labelH, left: r.left, top: r.top };
   /* Who is the Quack?'s tiles: the grid sits where the ducks' feet can reach, so a duck is on the tile it looks to be on */
-  const tiles = $('.wq-tiles', board);
+  const tiles = $('.wq-tiles', board), sides = $('.wq-sides', board), over = $('.wq-top', board);
+  const side = !turned() && over && matchMedia('(orientation: landscape) and (max-height: 520px)').matches;   // (a phone on its side: the cloud stands to the left, and the tiles or the two sides take the rest)
+  if (sides) sides.style.marginLeft = side ? `${over.offsetLeft + over.offsetWidth + 8}px` : '';
+  if (sides && side) { geo.size = Math.max(30, Math.min(size, H / 5)); geo.qp = { t: geo.size * 1.08, b: labelH, l: over.offsetLeft + over.offsetWidth + 8, r: 0 }; }
   if (tiles) {
-    const over = $('.topover', board), below = over ? over.offsetTop + over.offsetHeight + 6 - top0 : 0;   // (on a computer, the tiles start under the cloud)
-    const qp = turned() ? { t: size * 1.05, b: size * .15, l: r.width * .06, r: r.width * .06 } : { t: Math.max(size * 1.08, below), b: size * .25, l: 0, r: 0 };
+    const below = over ? over.offsetTop + over.offsetHeight + 6 - top0 : 0;   // (on a computer, the tiles start under the cloud)
+    if (side) {   // (a duck small enough to stand under its tile's name: it stands .62 down a tile, and the name takes the top ~26px)
+      const rows = gridOf(R.state.wq.ids.length).R;
+      geo.size = Math.max(30, Math.min(size, (.62 * H / rows - 26) / (1 + .825 / rows)));
+    }
+    const qp = turned() ? { t: size * 1.05, b: size * .15, l: r.width * .06, r: r.width * .06 }
+      : side ? { t: geo.size * 1.08, b: geo.size * .25, l: over.offsetLeft + over.offsetWidth + 8, r: 0 }
+      : { t: Math.max(size * 1.08, below), b: size * .25, l: 0, r: 0 };
     geo.qp = qp;
     tiles.style.inset = `${qp.t.toFixed(1)}px ${qp.r.toFixed(1)}px ${qp.b.toFixed(1)}px ${qp.l.toFixed(1)}px`;
   }

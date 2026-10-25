@@ -1035,3 +1035,11 @@ saving, players' names are no longer shrunk for their chosen font (they had drop
 cuts off a multicolored name that fits ("BoohbahL…"). From the bug tester, round 3: on a phone the cloud moves down a
 little when its duck wears a hat, so the hat never pokes into the title; on a phone the podium's steps show the places
 and the full contender cards line up under them.)
+
+(Bug report passed on by the coordinator: on a short landscape phone (844×390), the Who is the Quack? tiles get
+squashed into thin strips and the names overlap.)
+
+(Done: on a phone held sideways, the cloud, the Secret Card and the category stand in a column on the left, and the
+tiles, or the "Vote out the Quack" and "Another round of clues" sides, take the rest of the board at full height. The
+ducks are sized to stand under their tile's name. In every mode, the bottom bar on a sideways phone is one row, so the
+board keeps its height.)
