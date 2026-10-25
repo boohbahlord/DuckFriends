@@ -1132,3 +1132,16 @@ there is cackling in all of these songs.
 (Found: no clipping; the crackle is the little burst of noise at the start of notes, there to sound like a hammer, a
 mallet or a breath. The felt piano's hammer and the wood knock now swell in over 5 ms, softer and darker, and the brush
 is a little darker; the seven new songs' own instruments get the same in their thread.)
+
+## Specials: the number-key row (2026-10-25)
+
+(From a longer message; its music bar and song parts are logged with the music work.)
+
+The number key ui in the top left IS NOT SEEN YET and i wanna know why. Furthermore, using shift+number key SHOULD have the item have a visual representation on the number key that it is toggled, where only abilities like double jump, long jump, or electric become toggled.
+
+(Why: the row only came in for 5 seconds when the board first came up in a game, then waited for a number key, and a
+duck with no specials on its keys never got it at all. Now it shows its ten keys even when they're empty, comes in again
+with each new stage on the board and with any number key, and still slides away after 5 seconds unused. A key kept on
+with Shift turns green with a lit dot, and stays in its place while the rest of the row fades, so you can always see
+what's on. Only effects (like electricity) and the jumps keep on; items are just used. Phones still have no row: their
+ring of specials shows kept ones green.)

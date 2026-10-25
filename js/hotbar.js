@@ -1,7 +1,8 @@
 /* ---------- the specials on the number keys ----------
    On a computer: a small see-through row of the ten keys (1 … 9, 0) sits in the top bar, just after the title, so it
-   covers nothing; it lets every click through. Pressing a key shows it with that key glowing; after 5 seconds unused it
-   slides up off the screen. Keys kept on (Shift and the key) wear a ring. Phones have no row: holding still on the
+   covers nothing; it lets every click through. It comes in with each new stage on the board and with each key pressed
+   (that key glowing); after 5 seconds unused it slides up off the screen. Keys kept on (Shift and the key) light up green
+   and stay where they are while the rest fade, so you can always see what's on. Phones have no row: holding still on the
    board brings the specials around the finger (see touch.js); a tap uses one, holding one keeps it on, and lifting the
    holding finger over one uses it too. */
 import { esc } from './ui.js';
@@ -24,12 +25,15 @@ export function mountHotbar(S, api) {
       return `<span class="hk${sp ? '' : ' empty'}${i === sel ? ' sel' : ''}${sp && on.has(sp.id) ? ' on' : ''}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ''}</span>`; }).join('');
   };
   /* the row comes in (i: the key just pressed, glowing), then goes after 5 seconds unused */
+  let resting = true, away = false;
+  /* resting: only the keys kept on stay (none kept: the row is gone) */
+  const settle = () => { const kept = resting && api.kept().size > 0;
+    bar.classList.toggle('gone', away || (resting && !kept)); bar.classList.toggle('rest', !away && kept); };
   const show = (i = -1) => {
-    if (!api.keys().some(Boolean)) return;
-    sel = i; draw(); bar.classList.remove('gone');
-    clearTimeout(timer); timer = setTimeout(() => { bar.classList.add('gone'); }, LIFE);
+    sel = i; resting = false; away = false; draw(); settle();
+    clearTimeout(timer); timer = setTimeout(() => { sel = -1; resting = true; draw(); settle(); }, LIFE);
   };
-  const hide = () => { clearTimeout(timer); bar.classList.add('gone'); closeWheel(); };
+  const hide = () => { clearTimeout(timer); resting = true; away = true; settle(); closeWheel(); };
 
   /* ---------- phones: the specials around the finger ---------- */
   function closeWheel() { if (!wheel) return; clearTimeout(wheelT); wheel.remove(); wheel = null; }
@@ -72,7 +76,7 @@ export function mountHotbar(S, api) {
 
   return {
     show, hide, wheel: openWheel, closeWheel,
-    refresh() { if (!bar.classList.contains('gone')) draw(); },
+    refresh() { draw(); settle(); },
     destroy() { hide(); bar.remove(); removeEventListener('pointerup', lifted); },
   };
 }
