@@ -66,7 +66,7 @@ export const music = (function(){
   const glowSec=a=>{let s="intro";for(const [k,n] of GLOW_SEC)if(a>=k)s=n;return s};
   const h01=n=>{const x=Math.sin(n*12.9898+4.1)*43758.5453;return x-Math.floor(x)};   // a fixed chance for each bar
   const glow=(name,mode,ch)=>({name,bpm:66,trim:.5,bar:8,lead:"felt",leadV:.3,rel:1.1,leg:1.05,lp:3600,echo:.16,fb:.24,dly:.68,
-    dyn:.8,contrast:.85,hum:.012,rv:.4,ds:.16,rev:[6,.55],wow:[.0011,.23],bed:[.003,.022],
+    dyn:.8,contrast:.85,hum:.012,rv:.4,ds:.16,rev:[6,.55],wow:[.0011,.23],bed:.003,
     chords:chords(ch),mel:mel(mode==="dorian"?toDorian(GLOW_MEL):GLOW_MEL),
     // never quite steady: it lilts as it bobs, drags as it walks away, breathes at a phrase's end, and no two bars match
     tempo:(b,i,a)=>{const s=glowSec(a);let v=s==="intro"?.9:s==="bob"?(i%2?1.22:.84):s==="walk"?.97-.035*(a-18):s==="quiet"?.82:s==="return"?.88+.03*(a-25):1;
@@ -112,7 +112,7 @@ export const music = (function(){
   const jestSec=a=>{let s="stair";for(const [k,n] of JEST_SEC)if(a>=k)s=n;return s};
   let jestSide=1;
   const JESTERS={name:"Jester's Stair",bpm:80,trim:.6,bar:6,lead:"felt",leadV:.3,rel:1.1,leg:1.04,lp:3400,echo:.16,fb:.24,dly:.62,
-    dyn:.8,contrast:.85,hum:.014,rv:.42,ds:.16,rev:[6.5,.55],wow:[.0012,.21],bed:[.002,.015],
+    dyn:.8,contrast:.85,hum:.014,rv:.42,ds:.16,rev:[6.5,.55],wow:[.0012,.21],bed:.002,
     chords:chords("Dmaj7 Dmaj7 E/D E/D Dmaj7 Dmaj7 Amaj7 Dmaj7 Bm7 Dmaj7 Dmaj7 E/D Bm7 F#m7 Dmaj7 F#m7 C#m7 Bm7 G D/F# Em7 A D G Bm7 G D Em7 G D Dm Bb F C Dm Gm Bb A Dm Bb F C Gm Dm Bb A Dm F Gm A7 Dm Bb Gm A Dm Bb Gm A7 D D D"),
     mel:mel(`D4:1 E4:1.5 F#4:2 A4:1.5
         r:1 C#5:3 G#5:2
@@ -421,9 +421,9 @@ export const music = (function(){
       if(a===47){on(send(.6,.3));voice("felt",hz(C.r+12),t+E8,E8*6,.22,1.6);voice("felt",hz(C.r),t+E8*1.1,E8*6,.14,1.6)}}};
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
-       crisp and muted, warped a little, with a needle crackling */
+       crisp and muted, warped a little, with a soft hiss */
     {name:"Lantern in the Fog",bpm:60,trim:1.3,bar:8,lead:"crisp",leadV:.26,rel:.25,bass:"chordpad",drum:"",lp:2000,echo:.2,
-      dyn:.5,hum:.01,rv:.28,ds:.1,rev:[5,.45],wow:[.0012,.27],bed:[.004,.05],swell:.12,
+      dyn:.5,hum:.01,rv:.28,ds:.1,rev:[5,.45],wow:[.0012,.27],bed:.004,swell:.12,
       chords:chords("Fmaj7 G/F Am7 G/F Fmaj7 Em7 Dm7 G/F Cmaj7/E Fmaj7 G Am7 Fmaj7 G/F Em7 Fmaj7#11"),
       mel:mel(`C5:.5 E5:.5 B5:.5 A5:1.5 r:1.5 G5:1:.3:a E5:1.5:.2:a r:1
         D5:.333 B4:.333 G4:.334 A4:2 r:2 E5:1:.28:a C5:2:.18:a
@@ -514,9 +514,6 @@ export const music = (function(){
     for(const o of os){const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.setValueAtTime(0,t+(delay||0));g.gain.linearRampToValueAtTime(o._f*depth,t+(delay||0)+.45);l.connect(g);g.connect(o.frequency)}}
   function noiseBuf(){if(CACHE.nb)return CACHE.nb;const n=ac.sampleRate*3,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);for(let k=0;k<n;k++)d[k]=Math.random()*2-1;return CACHE.nb=b}
   function noiseSrc(t,dur){const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;s.start(t,Math.random()*2.5);s.stop(t+dur);return s}
-  function crackleBuf(){if(CACHE.cb)return CACHE.cb;const sr=ac.sampleRate,n=sr*4,b=ac.createBuffer(1,n,sr),d=b.getChannelData(0);let k=0;
-    while(k<n){k+=Math.floor(-Math.log(1-Math.random())*sr/14)+1;const a=(Math.random()<.85?.18:.6)*(Math.random()<.5?-1:1),L=3+Math.floor(Math.random()*28);
-      for(let j=0;j<L&&k+j<n;j++)d[k+j]+=a*Math.exp(-j/(L/3))*(j%2?-1:1)}return CACHE.cb=b}
   function distCurve(){if(CACHE.dc)return CACHE.dc;const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(x*5)}return CACHE.dc=c}
   function fuzzCurve(){if(CACHE.fz)return CACHE.fz;const n=2048,c=new Float32Array(n),b=.18,k=2.4,o=Math.tanh(k*b);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=(Math.tanh(k*(x+b))-o)/1.05}return CACHE.fz=c}   // soft and lopsided: fuzz, not a shriek
   function crushCurve(){if(CACHE.cc)return CACHE.cc;const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.round(x*7)/7}return CACHE.cc=c}   // a few steps: grain
@@ -639,11 +636,11 @@ export const music = (function(){
     b.frequency.setValueAtTime(300+300*rnd(),t);b.frequency.linearRampToValueAtTime(700+500*rnd(),t+dur*.6);b.frequency.linearRampToValueAtTime(350,t+dur);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+dur*.5);g.gain.linearRampToValueAtTime(0,t+dur);p.pan.setValueAtTime(p0,t);p.pan.linearRampToValueAtTime(p1,t+dur);
     s.connect(b).connect(g).connect(p).connect(send(.8,.1))}
-  // a bed of hiss and a needle's crackle under the whole song
-  function stopBeds(){if(!ac)return;for(const s of BEDS)try{s.stop(ac.currentTime+.05)}catch(e){}BEDS=[]}
-  function startBed(t,dur,[h,c]){const mk=(buf,ty,f,q,v)=>{if(!v)return;const s=ac.createBufferSource();s.buffer=buf;s.loop=true;const b=biq(ty,f,q),g=gn(0);s.connect(b);b.connect(g);g.connect(BUS.fx);
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+1.2);g.gain.setValueAtTime(v,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push(s)};
-    mk(noiseBuf(),"bandpass",3400,.45,h);mk(crackleBuf(),"highpass",900,.5,c)}
+  /* a bed of soft hiss under the whole song (there was a needle's crackle in it too, from Ether's Crossroads: in Duck
+     Friends it was heard as the music crackling, so it's gone) */
+  function stopBeds(){if(!ac)return;const t=ac.currentTime;for(const {s,g} of BEDS){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.08);try{s.stop(t+.6)}catch(e){}}BEDS=[]}
+  function startBed(t,dur,h){if(!h)return;const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;const b=biq("bandpass",3400,.45),g=gn(0);s.connect(b);b.connect(g);g.connect(BUS.fx);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(h,t+1.2);g.gain.setValueAtTime(h,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push({s,g})}
   /* a song's notes laid out in time, each with its own loudness: a phrase rises and falls, its last note fades, a higher
      note leans out a little, every other phrase may answer more softly (contrast) */
   function build(T){let s=0;const ev=[];for(const [m,l,v,tag] of T.mel){if(m!=null)ev.push({m:Array.isArray(m)?m:[m],s,l,v:v==null?1:v,tag:tag||"",vel:1,tail:false});s+=l}
@@ -713,8 +710,8 @@ export const music = (function(){
      minutes since it was last heard); never the same song twice in a row while there is another */
   const HKEY="duckfriends-music",names=TRACKS.map(t=>t.name);
   const heard=()=>{try{const h=JSON.parse(localStorage.getItem(HKEY)||"{}");return h&&typeof h==="object"&&!Array.isArray(h)?h:{}}catch(e){return {}}};
-  function pick(){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7;
-    let best=0,bk=-1;names.forEach((n,i)=>{if(names.length>1&&i===last)return;const k=Math.pow(Math.random(),1/Math.log(2+age(n)));if(k>bk){bk=k;best=i}});
+  function pick(skip){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7;
+    let best=0,bk=-1;names.forEach((n,i)=>{if(names.length>2&&(i===last||i===skip)||names.length>1&&i===last)return;const k=Math.pow(Math.random(),1/Math.log(2+age(n)));if(k>bk){bk=k;best=i}});
     h[names[best]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return best}
   /* stopped part way (the Music slider at 0, the page hidden, out of the room): starting again picks the same song up
      where it was, and a gap between songs keeps the rest of its quiet */
@@ -727,7 +724,7 @@ export const music = (function(){
     else{load(pick(),true);next=now+.15;prep()}
     paused=false;level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;paused=true;clearInterval(timer);timer=null;stopBeds();if(!ac)return;
-    left=Math.min(GAP,Math.max(0,next-ac.currentTime));if(BUF){BUF.at=ac.currentTime-BUF.t0;try{BUF.s.stop(ac.currentTime+1.5)}catch(e){}}level(.3,0)}
+    left=Math.min(GAP,Math.max(0,next-ac.currentTime));if(BUF){BUF.at=ac.currentTime-BUF.t0;fadeOut(BUF)}level(.3,0)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the sound up and the page in view
   const wanted=()=>LV()>0&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
@@ -744,12 +741,18 @@ export const music = (function(){
      computer, the next song ahead of time (new each time) */
   const ST=()=>[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF];
   const PUT=a=>{[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF]=a};
-  // the notes are set down in 4-second pieces, a moment apart, so the game never stops for long; then the song is written out
+  /* the notes are set down in 4-second pieces, so the game never stops for long. Where the browser can pause a recording
+     (Chrome), each piece goes in 2 seconds before the recording reaches it: Chrome works through every note it holds, even
+     ones that haven't started, so a whole song of notes at once made it three times slower. Elsewhere (Firefox, which is
+     quick anyway) they all go in first */
   function offline(i,fixed,lv){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
     const dur=build(TRACKS[i]).dur,len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
     const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
     run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true);next=.05;playing=true},4);
-    const p=(async()=>{for(let s=4;s<len-6.5;s+=4){await new Promise(r=>setTimeout(r));run(null,Math.min(s+4,len-6.5))}return o.startRendering()})();
+    const p=(async()=>{if(o.suspend)for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s-2).then(()=>{try{run(null,u)}finally{o.resume()}})}
+      else for(let s=4;s<len-6.5;s+=4){await new Promise(r=>setTimeout(r));run(null,Math.min(s+4,len-6.5))}
+      const b=await o.startRendering(),n=Math.min(b.length,b.sampleRate);   // the last second fades to nothing: the recording ends without a tick
+      for(let c=0;c<b.numberOfChannels;c++){const d=b.getChannelData(c),k0=d.length-n;for(let k=0;k<n;k++)d[k0+k]*=1-k/n}return b})();
     return {p,dur:dur+.05}}
   async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
   /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
@@ -758,10 +761,16 @@ export const music = (function(){
   let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!window.OfflineAudioContext;
   function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now();let r=null;try{r=offline(i,false,1)}catch(e){}if(!r){ahead=false;NX=null;return}
     nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
-  function playBuf(b,t,off){const s=ac.createBufferSource();s.buffer=b.buf;s.connect(bout);s.start(t,off);BUF={...b,s,t0:t-off,end:t-off+b.dur,at:0}}
-  // a song ends (after its quiet): the next one, from its recording when it's ready, else live
+  /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
+     it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
+  function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn();s.buffer=b.buf;s.connect(g);g.connect(bout);
+    if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,t0:t-off,end:t-off+b.dur,at:0}}
+  function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
+  /* a song ends (after its quiet): the next one, from its recording when it's ready. When it isn't, another song plays live
+     and the recording goes on, for the song after (writing it out again from the start, next to a song played live, was
+     the most work the music ever asked of a computer) */
   function nextSong(t){const nx=NX;NX=null;stopBeds();
-    if(nx&&nx.buf){T=TRACKS[nx.i];last=nx.i;playBuf(nx,t,0)}else{load(nx?nx.i:pick());next=t}
+    if(nx&&nx.buf){T=TRACKS[nx.i];last=nx.i;playBuf(nx,t,0)}else if(nx){NX=nx;load(pick(nx.i));next=t}else{load(pick());next=t}
     prep()}
   return {sync,renderSong,get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
 })();
