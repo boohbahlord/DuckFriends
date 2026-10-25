@@ -947,6 +947,22 @@ You decide
 left, so here's a new word." and the round starts over with a new word and a new Quack, the same way it does when a
 new host takes over. The round doesn't count in the stats.)
 
+## Fonts the same size everywhere (2026-10-25)
+
+With how the player has dif fonts, make them all be the same size in chat or whatnot, they shouldnt have some bigger then others that is jst sloppy
+
+Decision: the Story Chain font scaling now applies wherever a player's font shows: names (chat, cards, over the ducks,
+the people list), the questions and choices they wrote, bracket topics and contenders, court cases, and the font picker.
+
+## Story Chain: writing without voting (2026-10-25)
+
+The game can make it to where the writing game can continue without a voting round as a setting that is turned on by default when there is only two players and turned off by default when there are four players, that way the voting becomes meaningful.
+
+Decision: a Story Chain lobby option, Voting: Auto (the default) / On / Off. Auto skips the line and secret word votes
+with 2 players and votes with 3 or more (asked the owner about 3; voting kept on meanwhile). With no voting, a finished
+paragraph goes straight to the stats and the Continue / New story / Lobby choice, where the secret words show lit up in
+their lines.
+
 ## The host and sudo, again, word for word (2026-10-25)
 
 no u dont understand i typed sudo into a useradd command and it was saying i need to be apart of the sudo group to use that command! WHY THE FUCK R U SO STUPID

@@ -37,6 +37,7 @@ export const OPTIONS_DEFAULT = {
   wqQuacks: 1,          // 1 or 2 (2 only with 6 or more players)
   wqTimer: 0,           // seconds a vote may take (0: none)
   scTime: 0,            // Story Chain: seconds to write a line (0: no timer)
+  scVote: 'auto',       // … voting on lines and secret words: 1 | 0 | auto (none with 2 players, so a vote means something)
   lawDef: 'random',     // Lawyering: who picks the defense attorney: random | writer (the topic's writer) | vote (the room)
   lawOff: 'random',     // … and the offense attorney
   lawClose: 60,         // seconds of closing arguments when the jury is split: 30, 60, 120
@@ -900,9 +901,12 @@ function endTurn(s, now) {
   s.subs = []; s.drafts = {};
   if (++sc.turn < sc.order.length) return writeTurn(s, now);
   if (!para.lines.length) { say(s, 'No lines this time.'); scStory(s).paras.pop(); return startNext(s, now); }
+  if (!scVoting(s)) { para.noVote = true; return startNext(s, now); }   // no voting: on to the stats and what comes next
   scRezone(s, scZones(s, 'write'), scZones(s, 'lvote'));   // (a duck by the line being typed: onto the last line)
   return enter(s, 'lvote', now);
 }
+/* is there voting on this paragraph's lines and words (the lobby's Voting option)? */
+export const scVoting = s => s.options.scVote === 'auto' || s.options.scVote == null ? playing(s).length >= 3 : !!+s.options.scVote;
 /* the stats, with the three choices: everyone starts at the top of them */
 function startNext(s, now) {
   s.sc.next = {}; s.reviewVotes = {}; s.review = false;

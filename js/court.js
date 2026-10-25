@@ -6,7 +6,7 @@
    jury). Also: picking the attorneys, and the stats (the awards, each player's box and the round's cases). */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
-import { nameHTML, fontCSS } from './name.js';
+import { nameHTML, fontHTML } from './name.js';
 import { cardBackground, cardHTML } from './card.js';
 import { duelCloudHTML } from './brackets.js';
 import { lawStats } from './rules.js';
@@ -14,7 +14,7 @@ import { fmtJumps } from './format.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const player = (s, id) => (id && s.players[id]) || GONE;
-const fontOf = p => fontCSS(p && p.nameStyle && p.nameStyle.font);
+const inFont = (p, html) => fontHTML(p && p.nameStyle && p.nameStyle.font, html);   // (a player's font, scaled to match)
 const nm = p => nameHTML(p.name, p.nameStyle);
 /* an attorney's side color: their card's color */
 export const sideColor = p => (p && p.card && p.card.color) || '#8a8fa3';
@@ -45,7 +45,7 @@ export function lawTopHTML(s, knocked = false) {
   const won = done && L.w !== -1 ? (L.w ? def : off) : null, [o, d] = L.end || [0, 0];
   const verdict = !done ? '' : won ? `<span class="law-verdict">${nm(won)} wins${L.gave ? ': the other side gave up' : ` ${Math.max(o, d)}–${Math.min(o, d)}`}</span>` : `<span class="law-verdict">Hung jury ${o}–${d}: nobody wins</span>`;
   return `<div class="topover law-top">${cloud}<div class="question law-what">
-    <span class="small dim">The Court Case</span><span class="law-topic" style="font-family:${esc(fontOf(s.players[q.by]))}">${esc(q.text)}</span>
+    <span class="small dim">The Court Case</span><span class="law-topic">${inFont(s.players[q.by], esc(q.text))}</span>
     <span class="small law-names">${nm(def)} defends it · ${nm(off)} is against it</span>${verdict}</div></div>`;
 }
 /* closing arguments: a banner over the board (game.js shows it while they run) */
@@ -70,7 +70,7 @@ export function counselHTML(s, me, who) {
     return `<section class="law-pick panel"><h3>${title} <span class="small dim">${what}</span></h3>${body}</section>`;
   };
   return `<div class="submit-wrap law-counsel"><header class="bb-head panel"><span class="small dim">The Court Case</span>
-      <b style="font-family:${esc(fontOf(s.players[q.by]))}">${esc(q.text)}</b><span class="small dim">written by ${nm(writer)}</span></header>
+      <b>${inFont(s.players[q.by], esc(q.text))}</b><span class="small dim">written by ${nm(writer)}</span></header>
     <div class="law-picks">${role('def', 'Defense attorney', 'argues for it (never its writer)')}${role('off', 'Offense attorney', 'argues against it')}</div>
     <div class="who">${who}</div></div>`;
 }
@@ -81,7 +81,7 @@ export function lawCasesHTML(s, round = null) {
   if (!cases.length) return '<p class="dim">No cases this round.</p>';
   return `<div class="law-cases">${cases.map(h => {
     const c = h.law, off = player(s, c.off), def = player(s, c.def), [o, d] = c.end || [0, 0], w = c.w === -1 ? null : c.w ? def : off;
-    return `<article class="law-case panel"><p class="law-case-topic" style="font-family:${esc(fontOf(s.players[h.by]))}">${esc(h.text)}</p>
+    return `<article class="law-case panel"><p class="law-case-topic">${inFont(s.players[h.by], esc(h.text))}</p>
       <p class="law-case-vs"><span class="law-chip off" style="--c:${esc(sideColor(off))}">${duckSVG(off.duck, { size: 26, shadow: false, title: off.name })}${nm(off)}</span>
         <b class="law-score">${o} – ${d}</b><span class="law-chip def" style="--c:${esc(sideColor(def))}">${nm(def)}${duckSVG(def.duck, { size: 26, shadow: false, title: def.name })}</span></p>
       <p class="small">${w ? `${nm(w)} won${c.gave ? ` (${nm(player(s, c.gave))} gave up)` : ''}` : 'Hung jury: nobody won'}${c.start ? ` · closing arguments from ${c.start[0]}–${c.start[1]}` : ''}</p></article>`;

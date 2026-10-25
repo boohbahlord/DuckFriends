@@ -6,15 +6,14 @@
    each one lights up inside its line. The stats sit beside the three choices: continue, a new story, or the lobby. */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
-import { nameHTML, fontCSS, fontScale } from './name.js';
+import { nameHTML, fontStyle as styleOf } from './name.js';
 import { cardFor, cloudHTML } from './brackets.js';
 import { scZones, scLineOf, scStory, scPara, scWriter, scStats, wordAt, SC_NEXT, LINE_MAX, WORD_MAX } from './rules.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const player = (s, id) => s.players[id] || GONE;
-const fontOf = p => fontCSS(p && p.nameStyle && p.nameStyle.font);
 /* a player's font, scaled so every player's letters look the same size */
-const fontStyle = p => `font-family:${esc(fontOf(p))};--fk:${fontScale(p && p.nameStyle && p.nameStyle.font)}`;
+const fontStyle = p => styleOf(p && p.nameStyle && p.nameStyle.font);
 const cardColor = p => (p && p.card && p.card.color) || '#8a8fa3';
 const n = (v, one, many = one + 's') => `${v} ${v === 1 ? one : many}`;
 
@@ -100,7 +99,8 @@ const allParas = s => s.sc.stories.flatMap(st => st.paras);
 export function statsHTML(s) {
   const now = allParas(s).filter(p => p.round === s.round);
   const stories = s.sc.stories.filter(st => st.paras.length).map((st, i) => `<div class="panel sc-done"><h3>Story ${i + 1}</h3>${st.paras.map(p => `<p class="small">${p.lines.map(l => `<span class="sc-fk" style="${fontStyle(player(s, l.by))}">${esc(l.text)}</span>`).join(' ')}</p>`).join('')}</div>`).join('');
-  return `<h2>Round ${s.round + 1}</h2><div class="awards">${awardsHTML(s, scStats(now))}</div>
+  const words = now.filter(p => p.noVote).map(p => `<div class="panel sc-done"><h3>Secret words</h3><p class="small">${p.lines.map(l => `<span class="sc-fk" style="${fontStyle(player(s, l.by))}">${lineText(l, true)}</span>`).join(' ')}</p></div>`).join('');   // (no voting: the words show here)
+  return `<h2>Round ${s.round + 1}</h2>${words}<div class="awards">${awardsHTML(s, scStats(now))}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="awards">${awardsHTML(s, scStats(allParas(s)))}</div>${stories}` : ''}`;
 }
 /* a player's "This game" box in the View stats window */
