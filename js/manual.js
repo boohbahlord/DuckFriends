@@ -121,6 +121,8 @@ export const MAN = {
   skip: 'skip: ends the stage the game is on right now and moves on, like everyone ended their turn (the host, sudo, or a group with canskip). Handy if the game ever gets stuck.',
   kick: 'sudo kick @name: removes a player at once, no vote; they stay out until the room goes back to the lobby (the host, sudo, or a group with cankick).',
   map: 'sudo map <name>: the map, in the lobby (board, sky, pixel, carnival, stars, rabbit, ec). map alone lists them.',
+  song: 'song [list]: every song, on or off, and the one playing now (everyone in the room hears the same song at the same time). song now: the song playing. song off name…: takes songs off the room\'s list (the host, sudo, or a group with cansettings); song on name… puts them back; song on all, song off all. A name with a space goes in quotes, as in bash: song off "Jester\'s Stair" Glow. Turned off while it plays, a song stops and the next comes in 3 seconds. The speaker by the song\'s name mutes it for you only.',
+  songs: 'songs: every song, on or off (the same as song list).',
   mode: 'sudo mode <aod | wyr | bb | sc | quack | law>: the game type, in the lobby. mode alone lists them.',
   start: 'sudo start: starts the game from the lobby, like the Start button.',
   forgame: 'forgame show: the game\'s settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · gravity low|normal · silly on|off · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages).',

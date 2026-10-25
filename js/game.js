@@ -32,6 +32,7 @@ import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile, save } from './store.js';
 import { openSettings, netLevel } from './settings.js';
+import { musicBarHTML, mountMusicBar } from './musicbar.js';
 import { openCustomize, shareLook } from './customize.js';
 import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
@@ -55,12 +56,12 @@ let target = null;         // where a click or a tap asked my duck to walk: { x,
 let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
-let bar = null, lastKey = -1, onBoard = false;   // the specials' number keys: the row, the key last pressed (E presses it again), on the board now
+let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again)
 const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 let draftT = 0;
-let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
+let pm = null, idleOff = null, mbarOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
 let lastClose = 0;   // Lawyering: the closing arguments last announced
@@ -956,10 +957,11 @@ function paint(force) {
     $('.phase', S).textContent = (isLaw(s) && LAW_TITLES[s.phase]) || TITLES[s.phase] || '';
     lastClose = s.law && s.law.close || 0;
     geo = null;
-    const ob = onBoardPhase(); if (ob !== onBoard) { onBoard = ob; if (bar) { if (ob) bar.show(); else bar.hide(); } }   // the specials' row shows as the board comes up, then slides away
+    if (bar) { if (onBoardPhase()) bar.show(); else bar.hide(); }   // the specials' row comes in with each stage on the board, then slides away
   }
   const round = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
   if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
+  if (bar) bar.refresh();   // (a key kept on, or kept off)
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
   if (isSc(s) && s.phase === 'write') {   // the line as it's typed (the writer sees their own straight from the box)
     if (scWriter(s) !== R.me) { const t = $('.sc-typing', S), was = t && t._html; setHTML(t, typingHTML(s)); if (t && t._html !== was) geo = null; }
@@ -1139,7 +1141,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (bar) bar.destroy(); bar = null; lastKey = -1; onBoard = false; kept.clear();
+    if (bar) bar.destroy(); bar = null; if (mbarOff) mbarOff(); mbarOff = null; lastKey = -1; kept.clear();
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
     for (const t of ['pointerup', 'pointercancel']) removeEventListener(t, unpeek);
@@ -1147,10 +1149,10 @@ register('game', {
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     S = el(`<section class="screen game docked">
-      <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
+      <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
-    docks = mountDocks(S, HINTS);
+    docks = mountDocks(S, HINTS); mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey });

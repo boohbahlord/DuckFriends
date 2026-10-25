@@ -1127,6 +1127,115 @@ Crossroads, very faint); it's gone, the soft hiss stays. A real click was found 
 Each song's recording fades out at its very end, Chrome writes the next song out about 2.5 times faster (less work for
 the computer while a song plays), and a song not ready in time is no longer written out a second time.)
 
+there is cackling in all of these songs.
+
+(Found: no clipping; the crackle is the little burst of noise at the start of notes, there to sound like a hammer, a
+mallet or a breath. The felt piano's hammer and the wood knock now swell in over 5 ms, softer and darker, and the brush
+is a little darker; the seven new songs' own instruments get the same in their thread.)
+
+## Music: seven new songs from the owner's picks (2026-10-25)
+
+Offered: scales A1 major pentatonic, A2 whole tone, A3 Lydian dominant, A4 harmonic major, A5 Hirajoshi; rhythms B1
+3-3-2, B2 half time, B3 3 against 2, B4 waltz, B5 fast harp ripples over a slow tune; timbres C1 kalimba, C2 marimba,
+C3 celesta, C4 ocarina or soft flute, C5 glass harmonica, C6 water drops and bubbles, C7 tuned rubber duck squeaks.
+
+First song: named "Infinite Pond"
+A2
+B2 
+C5
+Breathey dynamics
+
+Second song: named "Outer Space Swim Commute"
+A3
+B5
+C3
+
+Third song: named "Waddle before you paddle"
+A4
+B4
+C1
+
+Fourth song: named "Bouncy Chicks"
+A1
+B3
+C2
+
+Fifth song: named "Pond-erful Ruffles"
+A5
+B1
+C4
+
+Sixth Song: named "What the duck?"
+Scale is like the main menu music of bioshock
+https://www.youtube.com/watch?v=cMjThJwdwo0
+It is horror themed and plays rarely, like only once in three rounds of all the songs, and it randomly comes in somewhere between those songs for the third round. No weather effects but it can be ambient and tense.
+
+The seventh song will take inspiration from pair bound from bioshock 2 soundtrack and then use a mixture of all these new instrumentals and take turns with them while each part of the song switches to very different modes, have key changes, but switches up between all the patterns of B1-5 without using the instrumens those rythyms mention. 
+
+The song needs multiple agents to work and and a coordinator to inform them of the task, since three agents will be working on songs at the same time. Another two agents will be writing scripts. One agent will be coordinating.
+
+(Started: a coordinator agent briefs two writers, who write the seven song ideas, and three composers, who build and
+render them; test renders go to the owner first. Song 6's rare-play rule is for when it goes into the game.)
+
+Is there any songs dont yet?
+
+HOW THE FUCK IS THEIR NOT EVEN ONE SONG DONE YET THIS IS RIDICOLOUS
+
+yes and u can continue working on the others after
+
+(Six songs were done by then and were posted for listening: Infinite Pond, Outer Space Swim Commute, Waddle before
+you paddle, Bouncy Chicks, Pond-erful Ruffles, What the duck?. Song 7 was still being composed.)
+
+there is cackling in all of these songs.
+
+The instrument needs to be changed into something different for ponderful ruffles ... 
+
+Give me instrument suggestions becuz the lead melody sucks until it is muffled in some parts, it can remain in the parts it is muffled in? maybe not. It can be another wind instrument maybe too
+
+im still looking thru the songs btw
+
+Make infinite pond have a different main instrument and make it into a type of lydian
+
+I liked feather bound btw and i think we can use all of these songs
+
+(The crackle was soft noise bursts at the start of notes (mallets, felt ticks, the ocarina's breath); they were made much
+softer and darker. Ruffles' lead: the owner was offered a bamboo flute (shakuhachi), clarinet, pan flute or koto.)
+
+## Specials: the number-key row (2026-10-25)
+
+(From a longer message; its music bar and song parts are logged with the music work.)
+
+The number key ui in the top left IS NOT SEEN YET and i wanna know why. Furthermore, using shift+number key SHOULD have the item have a visual representation on the number key that it is toggled, where only abilities like double jump, long jump, or electric become toggled.
+
+(Why: the row only came in for 5 seconds when the board first came up in a game, then waited for a number key, and a
+duck with no specials on its keys never got it at all. Now it shows its ten keys even when they're empty, comes in again
+with each new stage on the board and with any number key, and still slides away after 5 seconds unused. A key kept on
+with Shift turns green with a lit dot, and stays in its place while the rest of the row fades, so you can always see
+what's on. Only effects (like electricity) and the jumps keep on; items are just used. Phones still have no row: their
+ring of specials shows kept ones green.)
+
+## Music: the music bar, and everyone hears the same song (2026-10-25)
+
+(From the same message as the number-key row above; with a picture of the top bar, a small box drawn just after the
+stage's name and a big box over the play area.)
+
+I think there should be a bar in the small box i drew here OR somewhere small in the big box, and it should contain the song name that is playing for the song for the player. 
+
+ALL PLAYERS should hear the same songs at the same time, and maybe when they click off the tab in their browser the song only temporarily mutes before music audio is unmuted when the tab is clicked again. There should be a speaker symbol (not emoji) that can be clicked to mute the song or hovered over to show the volume slider revealed to it's right (basically kinda like a shortcut to the settings audio menu but for music), and it can be slid up or down to increase volume above default or below it. the default volume has a line in the meter to indicate default. The name of the song shows there. All players here the same song at the same time together when in a lobby ALWAYS because it is live and not player specific.
+
+[…] The commands allowed certain songs to be removed from the queue with a toggle on or off command for specific songs, and songs are named in quotes IF there is a white character or space in the title in the commands, as per the rules of bash.
+
+(Built: a small bar in the top bar and the lobby's: a drawn speaker, a music note and the song's name (between two
+songs, the next one, dimmed). The number-key row took the small box after the stage's name, so the bar sits at the right
+of the top bar, before the timer; on a phone it gets its own short row under the title. Clicking the speaker mutes the
+music for that player; hovering it shows the Music slider in the name's place, to the speaker's right (a tap on a phone),
+0 to 200% with a line at the default (100%). Settings → Audio's Music slider goes to 200% too, with the same line. The
+host's game picks the songs and keeps them in the room's state with a start time and a seed, so everyone hears the same
+song at the same moment (online within about a tenth of a second), in the lobby and in the game. A hidden tab goes quiet
+and, back in view, comes in where everyone is. Command line: `song` lists the songs (on or off, the one playing), `song
+off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
+all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
+
 ## A starry night sky map, word for word (2026-10-25)
 
 Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.

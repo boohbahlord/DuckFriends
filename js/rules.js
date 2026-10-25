@@ -479,6 +479,19 @@ export function reduce(state, a, now = Date.now()) {
       if (s.phase === 'countdown') { s.ends = now; return s; }   // the next tick starts the game
       return advance(s, now, true);
     }
+    case 'music': {   // (the host's own browser) the room's songs: the one now and the one after it, so everyone hears the same (music.js)
+      if (!host) return state;
+      const song = e => e && typeof e.n === 'string' && Number.isFinite(e.at) ? { n: e.n.slice(0, 60), at: +e.at, seed: (+e.seed || 0) >>> 0 } : null;
+      s.music = { a: song(a.a), b: song(a.b), off: (s.music && s.music.off) || [] }; return s;
+    }
+    case 'songs': {   // the host, sudo or cansettings: songs taken off the room's list (off) or put back (on); all: 'on' puts every song back
+      if (!may(s, a.id, 'cansettings')) return state;
+      const off = new Set((s.music && s.music.off) || []), names = v => (Array.isArray(v) ? v : []).filter(n => typeof n === 'string').map(n => n.slice(0, 60));
+      if (a.all === 'on') off.clear();
+      for (const n of names(a.off)) off.add(n);
+      for (const n of names(a.on)) off.delete(n);
+      s.music = { a: null, b: null, ...(s.music || {}), off: [...off].slice(0, 60) }; return s;
+    }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; s.wqPast = []; s.wqScore = { quack: 0, room: 0 }; s.wqPickers = []; for (const id of s.seat) P[id].ready = false;
