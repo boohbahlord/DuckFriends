@@ -663,6 +663,25 @@ the loser's X needs to be bigger and on the whole duck not above them
 
 the gun can also be a smidgen lower but u did a good job with that one it is funny
 
+3. We can do a map for carnival night next for a map
+
+(Chose "New map: Carnival Night" over upgrading Night Show: a Ferris wheel and string lights, a big top, marquee bulbs chasing around the tiles, fireworks when the votes are in.)
+
+FOR bracket game mode, make sure whoever in charge of it will later implement the two ducks on the cloud feature for that one, and then player's ducks will both be on the cloud, and the loser duck gets nudged off by the other duck, making the loser duck fall down to the bottom of the screen and through it with a falling sound effect. WHen they nudge the duck off the cloud, there is also a quack sound effect. That feature in the cloud is the same for this game mode called "The Court"
+
+map suggestions
+
+how about a psychedelic visual? like a fractal sort of, a very colorful and complex one I sent some examples. I want the fractal to be animated and moving, like your falling deeper into it as it morphs and feels recursive yet different the more you fall into it, and the colors all shifts and the textures drift as moving patterns of themselves that contain themselves. Do that for the map background and ask me questions if need be
+
+(Built as a new map, "Rabbit Hole": a Julia-set fractal zooming forever into its spiral center, with the shape slowly
+morphing and the colors turning. Drawn with WebGL; a turning color wheel where WebGL is missing.)
+
+1. "Rabbit Hole of Ducklings" is the name
+2. Keep it faster i assume, we'll see.
+3. The tiles should be as see through as usual unless it is a problem.
+
+(Renamed; the fall now goes 3× deeper every 7 s instead of 11 s; tiles at 45% like Sky and Carnival Night.)
+
 1. On the player bar have it to where the host can have a kick player option where they can kick without a vote and the player cannot cast a vote if there are only two players
 2. yes and the host can use the command line to create a skip event action whenever they want as well and the code should be simple to do it and mentioned in the help section. Also anyone with sudo perms can do what the host can including change lobby settings, choose, map, and change game mode in lobby. The sudo perms are granted thru command line. Bring this to your coordinator and have them decide to delegate this work to someone who is most fitting to do it. 
 3. yeah sure ig idk wat that means

@@ -33,6 +33,16 @@ export function cloudHTML(p, tip = 'Round Lord') {
     <div class="lord-say" aria-live="polite"></div>
     <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : ''}</div></div>`;
 }
+/* two ducks on one cloud (a match's two writers): pa on the left facing right, pb on the right facing left. o.winner = 0 or
+   1 once it's decided (that duck wears its moment special); o.knocked = the loser is already off the cloud (knockOff in
+   duel.js plays the bump) */
+const MYSTERY = { duck: { color: '#b7bccb' } };
+export function duelCloudHTML(pa, pb, o = {}) {
+  const duck = (p, side) => `<div class="lord-duck duel-duck${o.winner === side ? ' won' : ''}" data-side="${side}"><div class="duel-in">${duckSVG((p || MYSTERY).duck, { size: 80, shadow: false, title: p ? p.name : 'A secret writer', dead: !!(p && p.dead) })}${o.winner === side ? moment(p) : ''}</div></div>`;
+  return `<div class="lord duel${o.winner != null ? ' decided' : ''}${o.knocked ? ' knocked' : ''}"><div class="lord-sit">
+    ${duck(pa, 0)}${duck(pb, 1)}${CLOUD_SVG}</div>
+    <div class="lord-say" aria-live="polite"></div><div class="lord-name"></div></div>`;
+}
 
 /* ---------- the seed card ---------- */
 /* p = the writer (null: hidden), body = the words as HTML; o = { tier: 'silver' | 'gold', out, size: 'big' | 'mini', cls, attrs } */
@@ -130,18 +140,19 @@ export function matchColsHTML(s) {
     ${s.phase === 'answer' ? `<div class="bb-breathe" style="--h0:${(s.qi * 137 + s.round * 59) % 360}deg" aria-hidden="true"></div>` : ''}`;
 }
 /* over the board: the cloud, and beside it what the match is (voting) or the winner (talking it over) */
-export function matchTopHTML(s) {
+export function matchTopHTML(s, knocked = false) {
   const b = s.bb, m = bbMatch(s), fin = b.r === b.rounds.length - 1, round = b.rounds[b.r];
+  const writer = i => b.seeds[i] && writerShown(s, b, i) ? player(s, b.seeds[i].by) : null;
+  const duel = (o = {}) => duelCloudHTML(writer(m.a), writer(m.b), o);   // both writers on the cloud
   const real = round.filter(x => x.b !== -1), k = real.indexOf(m) + 1;
   const topic = `<span class="bb-topic" style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</span>`;
   if (s.phase === 'discuss' && m.w != null) {
-    const w = b.seeds[m.w], shown = writerShown(s, b, m.w), p = shown ? s.players[w.by] : null;
-    return `<div class="topover bb-top">${cloudHTML(p, fin ? 'Champion' : 'Winner')}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
+    return `<div class="topover bb-top">${duel({ winner: m.w === m.a ? 0 : 1, knocked })}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
       <div class="bb-win-word">${rainbowHTML(fin ? 'Champion!' : 'Winner!')}</div>${m.coin ? '<p class="small dim">A tie: a coin flip decided it.</p>' : ''}</div></div>`;
   }
-  if (s.phase === 'tie' && b.tie) return `<div class="topover bb-top">${cloudHTML(null)}<div class="question bb-what">${topic}
+  if (s.phase === 'tie' && b.tie) return `<div class="topover bb-top">${duel()}<div class="question bb-what">${topic}
     <b class="bb-tie">Tied ${b.tie.va}–${b.tie.vb}!</b><span class="small dim">Vote again, or toss a coin? (Below.)</span></div></div>`;
-  return `<div class="topover bb-top">${cloudHTML(null)}<div class="question bb-what">${topic}
+  return `<div class="topover bb-top">${duel()}<div class="question bb-what">${topic}
     <span class="small dim">${esc(roundName(b, b.r))}${fin ? '' : ` · match ${k} of ${real.length}`}</span>
     ${fin ? `<div class="bb-final">${seedCardHTML(s, b, m.a, { size: 'mini', tier: 'silver' })}<b>vs</b>${seedCardHTML(s, b, m.b, { size: 'mini', tier: 'silver' })}</div>` : ''}</div></div>`;
 }
