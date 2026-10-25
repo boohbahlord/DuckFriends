@@ -17,7 +17,7 @@ import { gridOf, speakerOf, isGrey, stillIn, quackStats, WORD_MAX, CAT_MAX } fro
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const player = (s, id) => s.players[id] || GONE;
-const nm = (s, id) => { const p = player(s, id); return nameHTML(p.name, p.nameStyle); };
+const nm = (s, id) => { const p = player(s, id); return `<span class="wq-w">${nameHTML(p.name, p.nameStyle)}</span>`; };   // (a name never breaks across lines)
 const list = xs => xs.length > 2 ? xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1] : xs.join(' and ');
 
 /* ---------- the board ---------- */
@@ -109,14 +109,20 @@ export function pickHTML(s, me) {
 }
 
 /* ---------- the stats: the round's, then the whole game's once the review vote passes ---------- */
-function awardsHTML(s, per) {
+function awardsHTML(s, per, game = false) {   // game: the whole game's (Duckguise, Quick Quack and Wrongly Accused show only there)
   const ids = Object.keys(per).filter(id => s.players[id]);
   const top = f => { const xs = ids.map(id => [id, f(per[id])]); const v = Math.max(0, ...xs.map(x => x[1])); return v ? { v, who: xs.filter(x => x[1] === v).map(x => x[0]) } : null; };
   const award = (title, r, line, none) => r ? `<div class="award"><h3>${esc(title)}</h3><p>${list(r.who.map(id => nm(s, id)))}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ''}</p><p class="small dim">${line(r.v)}</p></div>`
     : none ? `<div class="award"><h3>${esc(title)}</h3><p class="dim">None</p><p class="small dim">${none}</p></div>` : '';
   const n = (v, one, many = one + 's') => `${v} ${v === 1 ? one : many}`;
   const jx = s.seat.map(id => [id, (s.jumps || {})[id] || 0]), jv = Math.max(0, ...jx.map(x => x[1]));
+  const quick = ids.filter(id => per[id].clues).map(id => [id, per[id].clueMs / per[id].clues]), qv = Math.min(...quick.map(x => x[1]));
+  const disguise = top(p => p.quackWins * 1000 + p.laps), dp = disguise && per[disguise.who[0]];
   return `${award('Sharpest Beak', top(p => p.right), v => `Voted for the real Quack ${n(v, 'time')}.`, 'Nobody voted for the real Quack.')}
+    ${award('InvestiDucker', top(p => p.first), v => `First onto the real Quack's tile in a vote ${n(v, 'time')}.`)}
+    ${game ? award('Duckguise', disguise, () => dp.quackWins ? `Won ${n(dp.quackWins, 'time')} as the Quack and lasted ${n(dp.laps, 'lap')} of clues.` : `Lasted ${n(dp.laps, 'lap')} of clues as the Quack.`) : ''}
+    ${game && quick.length ? award('Quick Quack', { v: qv, who: quick.filter(x => x[1] === qv).map(x => x[0]) }, v => `Ended their clue turn in ${(v / 1000).toFixed(1)} s on average.`) : ''}
+    ${game ? award('Wrongly Accused', top(p => p.outs), v => `Voted out while innocent ${n(v, 'time')}.`) : ''}
     ${award('Most jumps', jv ? { v: jv, who: jx.filter(x => x[1] === jv).map(x => x[0]) } : null, v => n(v, 'jump') + '.')}`;
 }
 export function quackStatsHTML(s) {
@@ -127,13 +133,13 @@ export function quackStatsHTML(s) {
       <p>${r.quacks.length > 1 ? 'The Quacks' : 'The Quack'}: ${list(r.quacks.map(id => nm(s, id)))} · The word: <b>${esc(r.word)}</b> <span class="dim">(${esc(r.cat)}${r.picker ? `, picked by ${esc(player(s, r.picker).name)}` : ''})</span></p>
       <p class="wq-score"><span class="q">Quacks ${sc.quack}</span> · <span class="r">Room ${sc.room}</span></p></div>
     <div class="awards">${awardsHTML(s, quackStats([r]))}</div>`;
-  const all = s.review ? `<h2 class="all-h">The whole game</h2><div class="awards">${awardsHTML(s, quackStats(past))}</div>
+  const all = s.review ? `<h2 class="all-h">The whole game</h2><div class="awards">${awardsHTML(s, quackStats(past), true)}</div>
     <div class="panel wq-rounds">${past.map(x => `<p class="small"><span class="dim">Round ${x.round + 1} · ${esc(x.cat)}:</span> ${esc(x.word)} · ${x.quacks.map(id => esc(player(s, id).name)).join(' and ')} ${x.win === 'quack' ? 'won' : x.win === 'room' ? 'was caught' : x.why === 'fled' ? 'fled' : x.why === 'skip' ? '(skipped)' : '(no winner)'}</p>`).join('')}</div>` : '';
   return `<div class="bb-stats wq-stats"><h2>Round ${r.round + 1}</h2>${block}${all}</div>`;
 }
 /* a player's "This game" box in the View stats window */
 export function quackBoxHTML(s, id) {
-  const p = player(s, id), w = quackStats(s.wqPast || [])[id] || { right: 0, votes: 0, quack: 0, quackWins: 0, wins: 0, losses: 0, outs: 0 };
+  const p = player(s, id), w = quackStats(s.wqPast || [])[id] || { right: 0, votes: 0, quack: 0, quackWins: 0, wins: 0, losses: 0, outs: 0, first: 0, laps: 0, clueMs: 0, clues: 0 };
   return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${w.votes} vote${w.votes === 1 ? '' : 's'}</div></div></header>
-    <dl><dt>Voted for the real Quack</dt><dd>${w.right}</dd><dt>Rounds won</dt><dd>${w.wins}</dd><dt>Rounds as the Quack</dt><dd>${w.quack}</dd><dt>Won as the Quack</dt><dd>${w.quackWins}</dd><dt>Voted out while innocent</dt><dd>${w.outs}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
+    <dl><dt>Voted for the real Quack</dt><dd>${w.right}</dd><dt>Rounds won</dt><dd>${w.wins}</dd><dt>Rounds as the Quack</dt><dd>${w.quack}</dd><dt>Won as the Quack</dt><dd>${w.quackWins}</dd><dt>Laps lasted as the Quack</dt><dd>${w.laps}</dd><dt>First onto the Quack's tile</dt><dd>${w.first}</dd><dt>Voted out while innocent</dt><dd>${w.outs}</dd><dt>Average clue turn</dt><dd>${w.clues ? `${(w.clueMs / w.clues / 1000).toFixed(1)} s` : '—'}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }
