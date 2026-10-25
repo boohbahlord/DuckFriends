@@ -153,6 +153,8 @@ html.moving .hero-duck.bob { animation: bob 3.2s ease-in-out infinite; }
 .rainbow { font-family: var(--fun); letter-spacing: .02em; }
 .rainbow span { display: inline-block; -webkit-text-stroke: .045em #1c1c28; paint-order: stroke fill; text-shadow: 0 .07em 0 #1c1c2833; }
 .rainbow .sp { width: .3em; }
+/* room for the tilted letters at both ends: Firefox counts their corners as spilling over and cuts a name that fits */
+.rainbow { padding-inline: .08em; }
 /* a player's font, scaled (--fk, js/name.js) so every player's letters look the same size; set on the element itself */
 @property --fk { syntax: '<number>'; inherits: false; initial-value: 1; }
 .pf, .pname, .rainbow { font-size: calc(1em * var(--fk, 1)); }
@@ -432,6 +434,7 @@ html.mouse-move .board { cursor: pointer; }
   .topover { position: static; order: -1; grid-template-columns: auto 1fr; gap: .5rem; padding: 0 0 .4rem; }
   .topover .lord { grid-column: 1; } .topover .question { grid-column: 2; }
   .lord-sit { width: 6.4rem; height: 4.6rem; } .lord-duck { width: 3.6rem; bottom: 1.3rem; }
+  .topover:has(.lord-duck svg.hatted) { padding-top: 1.05rem; }   /* room for a hat on the cloud's duck, so it never pokes into the title */
   .lord-say { font-size: calc(1rem * var(--ts)); max-width: 7.6rem; margin-top: .3rem; }   /* "The votes are in!" under the cloud, never on it or beside it */
   .lord-say.small { font-size: calc(.82rem * var(--ts)); }
   body:has(.game) #toasts { bottom: 8.2rem; }   /* in a game, tips sit above the bottom bar, never over Vote or Jumps */
@@ -1045,6 +1048,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
   html.map-is-ec .gbar-l { flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; line-height: 1.15; }
   html.map-is-ec .gbar-l .round { font-size: calc(.78rem * var(--ts)); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; }
+  html.map-is-ec .topover:has(.lord-duck svg.hatted) { padding-top: 1.3rem; }   /* (under the two-line title) */
 }
 
 /* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */
@@ -1094,7 +1098,20 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .pod-n { font-family: var(--fun); font-size: calc(1.6rem * var(--ts)); text-align: center; color: #fff; text-shadow: 0 .14rem 0 #1c1c28; }
 .pod-block .seed.mini { height: 2.8rem; }
 @keyframes podhop { 50% { transform: translateY(-.35rem); } }
-.pod-left { margin: 0; }
+.pod-left { margin: 0; position: relative; z-index: 1; }
+.pod-list { display: none; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .podium-wrap { justify-content: safe center; overflow-y: auto; gap: .7rem; padding: .6rem .4rem; }
+  .pod-duck { width: 3.4rem; } .pod-3 .pod-duck { width: 2.7rem; }
+  .pod-block > .seed { display: none; }
+  .pod-1 .pod-block { min-height: 5.2rem; } .pod-2 .pod-block { min-height: 3.9rem; } .pod-3 .pod-block { min-height: 2.9rem; }
+  .pod-block { padding: .4rem .3rem; } .pod-n { font-size: calc(1.3rem * var(--ts)); }
+  .pod-list { display: flex; flex-direction: column; gap: .5rem; width: min(26rem, 100%); }
+  .pod-row { display: flex; align-items: center; gap: .5rem; }
+  .pod-row .pod-n { flex: none; width: 2.6rem; font-size: calc(1.1rem * var(--ts)); }
+  .pod-row .seed { --h: 2.9rem; }
+  .pod-row .seed-txt { font-size: calc(.95rem * var(--ts)); }
+}
 
 /* the stats fill the screen */
 .bb-results { flex: 1; min-height: 0; display: flex; justify-content: center; }

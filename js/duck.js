@@ -97,7 +97,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
     const OF = outfitLayers(L.outfit, { base: L.color, edge: mix(L.color, 0, .45) }), blocks = st.id === 'blocks';
     const cloth = OF && OF.cloth ? `<defs><clipPath id="${id}fc"><path d="${blocks ? BODY : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
 <g mask="url(#${id}nh)"><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join('')}" stroke="#00000030" stroke-width="1"/>` : ''}</g></g></g>` : '';
-    return `<svg class="duck flat" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
+    return `<svg class="duck flat${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
 ${hat.back}${OF ? OF.back : ''}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
