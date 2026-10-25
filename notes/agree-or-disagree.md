@@ -672,3 +672,15 @@ For imposter duck another thread can do that one too.
 The pitch it was started from: every duck gets the same secret word except one, who gets nothing. Each player gives one
 clue over voice, then the room walks to whoever they think is the imposter. The plan and the owner's answers are in
 `notes/plan-imposter.md`.
+
+The owner's answer to the first plan, word for word (2026-10-25):
+
+The tile should have the duck avatar on it, and it updates with any customization the player makes mid game, and players walk onto that tile to vote who is the imposter. The clue round has a 12 second grace period and players END THEIR OWN clue round, and if they dont end it, then every other player has to. The player whose turn it is gets their tile highlighted and they are seen in the clouds. The tile is the same color as the one in their player card. After every player has had a clue, the tile changes to two sides, either another round of clues (right side) or "Vote Out the Quack" (left side)
+
+When they choose to do another round of clues, things resume like usual. When one is voted out, their tile becomes a greyscale and so do their avatar temporarily and they can't give any clues or vote. 
+
+The cards the players are shown are called the "Secret Cards", and one player randomly decides the secret word secretly before players load into the game.
+
+The stats should be which player voted correct the most times (only IF any did, then it says none)
+
+Give me some suggestions for the stats please
