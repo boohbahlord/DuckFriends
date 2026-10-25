@@ -662,3 +662,25 @@ The confetti gun should come out lower, from around the front chest or something
 the loser's X needs to be bigger and on the whole duck not above them
 
 the gun can also be a smidgen lower but u did a good job with that one it is funny
+
+## Music (thread "Plan Duck Friends music", 2026-10-24/25)
+
+We are adding music to Duck Friends 
+
+1. (c)
+2. I think we can listen to my directions because i am going to be pulling from many different places at once and THEN directing you thru it with detailed instructions and maybe even getting songs from nous within kenoma and just changing their scale to see how it sounds because maybe it can be used for this game.
+3. No it doesnt have to be the case that music gets quieter, it can stay the same volume but it should be playing loudly anyways
+
+
+Dont make music yet but do bring song from nous within kenoma and let me play the song files here in chat and think of which ones can be repurposed and how
+
+(1 (c) = music in the lobby, a loop during rounds, and a win tune.)
+
+You can put Lantern in the Fog into the game as is right now. Song have 20 seconds of space between each time they play and will play randomly with the first most songs being the least likely to play again while also being random
+
+You can try and make candle vigil in major and another time in lydian and let me see how it sounds, let me know when it is done
+
+we can do the lydian version and call it "bubble bath in the sky" (with proper capitalization)
+Put it in the game code and we come up with some other ideas, just wait on me after u put this into game, dont deploy yet im not sayinng that tho
+
+Make something that sounds like those two combined plus a hint or reminder of hollow knight, minecraft, and maybe some very old silent hill stuff somewhat. Those ideas combine with those two songs we just added, and we make the rhythm not too boring or predictable. The timbre should be like Minecraft. It will be in lydian and another time in dorian. It will sound like bioluminescent soft crescendos like nostalgia and happy melancholy, the bass is muffled and the sound fades in and out from hollow to filled, with dynamics that make some instruments go quieter or softer while some sounds go in left ear and make their way to the right. The sound sometimes bobs a little before putting it's head down and walking away quietly in hollow, before the timing gives quiet and things begin to come in and return for play again, become full with earned melody and sounds chiming with glee.
