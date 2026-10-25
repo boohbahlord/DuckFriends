@@ -120,7 +120,7 @@ export const MAN = {
   send: 'send @everyone | @name… | \\@name <command>: posts the command\'s output to the chat (\\@name: only to them); send @everyone cat file | grep duck sends what the whole pipe prints, and roundstats | send @everyone sends what comes through |. send @everyone file sends the file itself: only sudo can open it, unless chmod lets its group or everyone. 3 sends a line at most.',
   skip: 'skip: ends the stage the game is on right now and moves on, like everyone ended their turn (the host, sudo, or a group with canskip). Handy if the game ever gets stuck.',
   kick: 'sudo kick @name: removes a player at once, no vote; they stay out until the room goes back to the lobby (the host, sudo, or a group with cankick).',
-  map: 'sudo map <name>: the map, in the lobby (board, sky, pixel, carnival, rabbit, ec). map alone lists them.',
+  map: 'sudo map <name>: the map, in the lobby (board, sky, pixel, carnival, stars, rabbit, ec). map alone lists them.',
   mode: 'sudo mode <aod | wyr | bb | sc | quack | law>: the game type, in the lobby. mode alone lists them.',
   start: 'sudo start: starts the game from the lobby, like the Start button.',
   forgame: 'forgame show: the game\'s settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · gravity low|normal · silly on|off · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages).',

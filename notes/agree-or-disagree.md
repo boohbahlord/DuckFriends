@@ -1115,3 +1115,7 @@ last key. On a computer the see-through row of keys sits top left, the pressed k
 hold to keep on; holding a duck still opens its player menu). Customize → Specials: a preview button in each tile; the
 tile itself opens ten key boxes under it, inside the menu. Colors gets a Specials section. Sixteen more special ideas
 were offered for the owner to pick from.)
+
+## A starry night sky map, word for word (2026-10-25)
+
+Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.

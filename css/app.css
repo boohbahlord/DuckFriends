@@ -599,6 +599,29 @@ html.moving .scene.rabbit.rh-plain { animation: rhspin 40s linear infinite; }
 .map-rabbit .col { background: color-mix(in srgb, var(--c) 45%, transparent); border-right-color: #ffffff38; box-shadow: inset 0 0 0 .14rem #ffffff40; }
 .map-rabbit .col-name { position: relative; color: #fff; background: #12061fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
 .map-rabbit .wyr-or, .map-rabbit .bb-vs { background: color-mix(in srgb, #12061f var(--board-a), transparent); }
+/* Starry Night: the sky turns slowly around a pole above the page; tiles as see-through as on Sky, names on pills */
+.scene.stars { background: linear-gradient(#020309, #050a1d 42%, #0a1534 78%, #13224b); }
+.st-dome { position: absolute; opacity: 0; transition: opacity 1.2s; }
+.scene.stars.ready .st-dome { opacity: 1; }
+.st-spin { position: absolute; inset: 0; will-change: transform; }
+html.moving .st-spin { animation: stspin 300s linear infinite; }
+@keyframes stspin { to { transform: rotate(-360deg); } }
+.st-spin canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.st-bright { position: absolute; inset: 0; }
+.st-b { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2); border-radius: 50%; background: radial-gradient(circle, #fff 0 12%, var(--c) 22%, color-mix(in srgb, var(--c) 30%, transparent) 42%, transparent 70%); }
+html.moving .st-b { animation: sttwinkle var(--d) ease-in-out var(--dl) infinite alternate; }
+@keyframes sttwinkle { to { opacity: .5; transform: scale(.8); } }
+.st-b.sp::before, .st-b.sp::after { content: ''; position: absolute; left: -100%; top: calc(50% - .5px); width: 300%; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c) 60%, #fff), transparent); opacity: .65; }
+.st-b.sp::after { transform: rotate(90deg); }
+.st-haze { position: absolute; inset: 0; background: linear-gradient(transparent 55%, #1b2c5c2e 82%, #2a3f7550); }   /* the air thickens toward the bottom */
+.st-met { position: absolute; width: 0; height: 0; transform: rotate(var(--a)); }
+.st-met i { position: absolute; right: 0; top: -1px; width: var(--len); height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent, #bcd0ff99 60%, #fff); transform-origin: 100% 50%; opacity: 0; animation: stmeteor var(--t) cubic-bezier(.3, .1, .7, 1) var(--dl) both; }
+.st-met i::after { content: ''; position: absolute; right: -2px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px #cfe0ff; }
+@keyframes stmeteor { 0% { opacity: 0; transform: translateX(0) scaleX(.3); } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translateX(var(--go)) scaleX(1); } }
+.map-stars { --board-a: 42%; }
+.map-stars .col { background: color-mix(in srgb, var(--c) 42%, transparent); border-right-color: #ffffff30; box-shadow: inset 0 0 0 .14rem #ffffff38; }
+.map-stars .col-name { position: relative; color: #fff; background: #070b1fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
+.map-stars .wyr-or, .map-stars .bb-vs, .map-stars .law-mid { background: color-mix(in srgb, #070b1f var(--board-a), transparent); }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival { background: #0d0722; }
 .scene.carnival > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -1268,6 +1291,7 @@ html.moving .ec-glow { animation: ecglow 2.3s ease-in-out infinite; }
 html.lite .ec-static, html.lite .ec-flash { display: none; }
 .mm-ec { background: url(../assets/maps/ethers-crossroads.png) center / cover; image-rendering: pixelated; }
 .mm-rabbit { background: url(../assets/maps/rabbit-hole.jpg) center / cover; }
+.mm-stars { background: url(../assets/maps/starry-night.jpg) center / cover; }
 html.moving .mm-rabbit { animation: rhspin 40s linear infinite; }
 .mm-ec::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, transparent 0 2px, #0000003a 2px 3px); }
 .mm-glow { position: absolute; width: calc(1.6rem * var(--k)); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7aaa, transparent); }

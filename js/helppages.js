@@ -100,7 +100,7 @@ const GAME = [
     dumb: 'Pick where. Pick what. Press go. All typed.',
     what: ['In the lobby, the host and sudo can pick the map and the game type, rename the room and start, all from here. `map` and `mode` alone list the choices (anyone).'],
     flags: [
-      ['map / map <name>', 'the maps / picks one (board sky pixel carnival rabbit ec)'],
+      ['map / map <name>', 'the maps / picks one (board sky pixel carnival stars rabbit ec)'],
       ['mode / mode <type>', 'the game types / picks one (aod wyr bb sc quack law)'],
       ['sudo hostname "name"', 'renames the room'],
       ['start', 'starts the game, like the Start button'],
