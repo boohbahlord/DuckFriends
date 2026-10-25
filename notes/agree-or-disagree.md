@@ -930,3 +930,6 @@ i as host was said to not be in the sudo catgeory this is a glitch
 
 (Decision: the host and sudo never need to type the word sudo; groupadd works like sudo groupadd for them. Anyone else
 who tries is told only the host and sudo can.)
+(Also from the bug tester, through the coordinator: `usermod -a -G sudo @name` gave the usage message. Now usermod,
+gpasswd, adduser and deluser take names with or without @, and flags work split (-a -G), joined (-aG) or long
+(--append --groups), in every command.)

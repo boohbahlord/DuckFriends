@@ -150,6 +150,8 @@ const noSudo = ctx => `✗ ${ctx.meName} is not in the sudoers file. This incide
 /* sudo's commands: the host and sudo may leave out the word sudo; anyone else is told they aren't in sudo */
 const needSudo = (x, cmd) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail(x.sudo ? noSudo(x.ctx) : `✗ ${cmd}: Permission denied (only the host and sudo can)`); return s; };
 const needMay = (x, perm, what) => { const s = needRoom(x.ctx); if (!may(s, x.ctx.room.me, perm)) fail(`✗ ${what}: only the host, sudo, or a group with ${perm}.`); return s; };
+/* adduser and deluser: the player (with @, or else the first word) and the group */
+const userGroup = args => { const at = args.find(a => a.startsWith('@')) ?? args[0]; return [at, args.find(a => a !== at)]; };
 const pct = v => `${Math.round(v * 100)}%`;
 const roomGroups = s => s.groups || { sudo: { perms: [], members: [] }, dumbasses: { perms: ['nofun', 'slow'], members: [] } };
 const pname = (s, id) => tag(s.players[id].name);
@@ -535,23 +537,22 @@ const CMDS = {
     return `To ${pname(s, to)}, privately.`;
   },
   sudo: () => fail('✗ usage: sudo <command> (sudo -l: what sudo lets you do)'),
-  usermod: (args, i, x) => {
-    const s = needSudo(x, 'usermod'), { o, rest } = getopt(args, 'arG:', 'usermod'), at = rest.filter(a => a.startsWith('@'));
-    const gl = [o.G, ...rest.filter(a => !a.startsWith('@'))].filter(v => typeof v === 'string').join(',').split(',').filter(Boolean).map(g => g.toLowerCase());
+  usermod: (args, i, x) => {   // usermod [-a | -r] -G group[,group] name… (a name with or without @)
+    const s = needSudo(x, 'usermod'), { o, rest: at } = getopt(args, 'arG:', 'usermod');
     if (!at.length) fail(`✗ ${MAN.usermod}`);
-    const groups = o.G ? gl : ['sudo'], G = roomGroups(s);
+    const groups = o.G ? String(o.G).split(',').filter(Boolean).map(g => g.toLowerCase()) : ['sudo'], G = roomGroups(s);
     for (const g of groups) { if (g.startsWith('superuser-')) fail(`✗ usermod: ${g} can't be changed, not even by its player.`); if (!G[g]) fail(`✗ usermod: group '${g}' does not exist`); }
-    const mode = !o.G ? 'add' : o.r ? 'remove' : o.a ? 'add' : 'set';
-    for (const id of who(x.ctx, at)) { if (id === s.hostId && groups.includes('sudo') && mode !== 'add') fail('✗ usermod: the host is always in sudo, and that can\'t be undone.'); x.ctx.room.send({ t: 'usermod', target: id, groups, mode }); }
-    return `${mode === 'add' ? 'Added to' : mode === 'remove' ? 'Taken out of' : 'Set to'} ${groups.join(', ')}: ${at.map(a => a.slice(1)).join(', ')}`;
+    const mode = !o.G ? 'add' : o.r ? 'remove' : o.a ? 'add' : 'set', ids = who(x.ctx, at);
+    for (const id of ids) { if (id === s.hostId && groups.includes('sudo') && mode !== 'add') fail('✗ usermod: the host is always in sudo, and that can\'t be undone.'); x.ctx.room.send({ t: 'usermod', target: id, groups, mode }); }
+    return `${mode === 'add' ? 'Added to' : mode === 'remove' ? 'Taken out of' : 'Set to'} ${groups.join(', ')}: ${ids.map(id => pname(s, id)).join(', ')}`;
   },
-  gpasswd: (args, i, x) => {
-    needSudo(x, 'gpasswd'); const f = args[0], at = args[1], g = args[2];
-    if (!['-a', '-d'].includes(f) || !at || !g) fail(`✗ ${MAN.gpasswd}`);
-    return CMDS.usermod([f === '-a' ? '-aG' : '-rG', g, at], i, x);
+  gpasswd: (args, i, x) => {   // gpasswd -a name group, gpasswd -d name group
+    needSudo(x, 'gpasswd'); const { o, rest } = getopt(args, 'a:d:', 'gpasswd'), at = o.a ?? o.d, g = rest[0];
+    if (!at || !g || (o.a && o.d)) fail(`✗ ${MAN.gpasswd}`);
+    return CMDS.usermod([o.a ? '-aG' : '-rG', g, at], i, x);
   },
-  adduser: (args, i, x) => { needSudo(x, 'adduser'); const at = args.find(a => a.startsWith('@')), g = args.find(a => !a.startsWith('@')); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, x); },
-  deluser: (args, i, x) => { needSudo(x, 'deluser'); const at = args.find(a => a.startsWith('@')), g = args.find(a => !a.startsWith('@')); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, x); },
+  adduser: (args, i, x) => { needSudo(x, 'adduser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, x); },
+  deluser: (args, i, x) => { needSudo(x, 'deluser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, x); },
   groupadd: (args, i, x) => {
     const s = needSudo(x, 'groupadd'), { o, rest } = getopt(args, 'p:', 'groupadd'), perms = String(o.p || '').split(',').filter(Boolean), name = rest[0];
     if (!name || !/^[a-z][a-z0-9_-]{0,19}$/i.test(name) || name.toLowerCase().startsWith('superuser-')) fail(`✗ ${MAN.groupadd}`);
