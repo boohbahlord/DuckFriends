@@ -1028,7 +1028,7 @@ function openCase(s, now) {
   if (!L.def) L.def = pickOne(on.filter(id => id !== q.by));
   if (!L.off) L.off = pickOne(on.filter(id => id !== L.def));
   s.pos = {}; s.lock = {};
-  s.pos[L.off] = { x: .475, y: .46 }; s.pos[L.def] = { x: .525, y: .54 };   // (side by side on a phone held upright too)
+  s.pos[L.off] = { x: .47, y: .4 }; s.pos[L.def] = { x: .53, y: .6 };   // (apart, inside the circle, on a computer and on a phone held upright)
   const rest = s.seat.filter(id => !isCounsel(s, id)), half = Math.ceil(rest.length / 2);
   rest.forEach((id, k) => { const top = k < half, i = top ? k : k - half, n = top ? half : rest.length - half; s.pos[id] = { x: .44 + .12 * (i + 1) / (n + 1), y: top ? .04 : .96 }; });
   const D = s.players[L.def].name, O = s.players[L.off].name, t = q.text.trim();

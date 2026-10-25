@@ -255,20 +255,22 @@ function drawDucks(now = clockNow()) {
   }
 }
 /* ---------- Lawyering: the attorneys' circle ---------- */
-const ringR = () => (turned() ? geo.H : geo.W) * (LAW_MID[1] - LAW_MID[0]) * .46;   // it fills the strip between the sides
+/* its half width and half height: a circle filling the strip between the sides; on a phone held upright the strip runs
+   across the screen, so the circle stretches along it and both attorneys fit side by side */
+const ringR = () => turned() ? [geo.W * .8 * .26, geo.H * (LAW_MID[1] - LAW_MID[0]) * .46] : Array(2).fill(geo.W * (LAW_MID[1] - LAW_MID[0]) * .46);
 function placeRing(board) {
   const ring = board.querySelector('.law-ring'); if (!ring || !geo) return;
-  const c = place({ x: .5, y: .5 }, 0, 1), r = ringR(), st = `${(c.left - r).toFixed(1)},${(c.top - geo.size * .3 - r).toFixed(1)},${(2 * r).toFixed(1)}`;
+  const c = place({ x: .5, y: .5 }, 0, 1), [rx, ry] = ringR(), st = `${(c.left - rx).toFixed(1)},${(c.top - geo.size * .3 - ry).toFixed(1)},${(2 * rx).toFixed(1)},${(2 * ry).toFixed(1)}`;
   if (ring._st === st) return;
-  ring._st = st; const [l, t, w] = st.split(',');
-  Object.assign(ring.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: w + 'px' });
+  ring._st = st; const [l, t, w, h] = st.split(',');
+  Object.assign(ring.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: h + 'px' });
 }
 /* an attorney's feet stay inside the circle */
 function inRing(x, y) {
-  const c = place({ x: .5, y: .5 }, 0, 1), a = place({ x, y }, 0, 1), r = Math.max(4, ringR() - geo.size * .42);
-  const dx = a.left - c.left, dy = a.top - c.top, d = Math.hypot(dx, dy);
-  if (d <= r) return [x, y];
-  const u = unplace(c.left + dx / d * r, c.top + dy / d * r); return [u.x, u.y];
+  const c = place({ x: .5, y: .5 }, 0, 1), a = place({ x, y }, 0, 1), [rx, ry] = ringR().map(r => Math.max(4, r - geo.size * (turned() ? .42 : .3)));
+  const dx = a.left - c.left, dy = a.top - c.top, k = Math.hypot(dx / rx, dy / ry);
+  if (k <= 1) return [x, y];
+  const u = unplace(c.left + dx / k, c.top + dy / k); return [u.x, u.y];
 }
 const attorney = () => isLaw(R.state) && !!R.state.law && isCounsel(R.state, R.me) && ['answer', 'discuss'].includes(R.state.phase);
 /* a juror's ring: 'a' or 'b' (the side), with ' faint' until they've voted for that side */

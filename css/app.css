@@ -1246,6 +1246,7 @@ html.moving .law-banner.on b { animation: lawpulse 1.6s ease-in-out infinite; }
 .law-top .question.law-what { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; }
 .law-topic { font-size: calc(1.25rem * var(--ts)); font-weight: 700; }
 .law-names { font-weight: 600; }
+.law-what .rainbow, .law-what .pname { white-space: nowrap; }   /* a name never breaks in the middle */
 .law-verdict { font-family: var(--fun); font-size: calc(1.15rem * var(--ts)); color: #ffd23f; text-shadow: 0 .1rem 0 #1c1c28; }
 /* a juror's ring on the ground: their side's color, faint until they vote for it */
 .gduck-ring { display: none; position: absolute; left: 50%; top: calc(var(--sz) * -.2); width: calc(var(--sz) * 1.15); height: calc(var(--sz) * .4); transform: translateX(-50%);
@@ -1286,4 +1287,5 @@ html.moving .law-banner.on b { animation: lawpulse 1.6s ease-in-out infinite; }
   .law-banner { bottom: 2.2rem; padding: .25rem .7rem; gap: .3rem; }
   .law-banner b { font-size: calc(1.05rem * var(--ts)); } .law-banner span { font-size: calc(.82rem * var(--ts)); }
   .law-def .law-who { top: .5rem; bottom: auto; }   /* (the defense is on top: its name away from the circle) */
+  .law-top .lord-say { max-width: 8.6rem; margin-top: .3rem; font-size: calc(1rem * var(--ts)); }   /* the verdict fits under the cloud */
 }
