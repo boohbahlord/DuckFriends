@@ -352,7 +352,7 @@ function cal(now = new Date()) {
 function psLines(s, all) {
   const o = s.options, st = STAGE[s.phase] || 'lobby', now = Date.now(), n = s.seat.length, done = s.seat.filter(id => s.done && s.done[id]).length;
   const out = ['PID WHAT     DOING', `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ', in the lobby' : o.mode === 'hang' ? ', hanging out' : `, round ${s.round + 1}`}`];
-  if (s.phase !== 'lobby') out.push(`  2 ${st.padEnd(8)} ${['answer', 'discuss', 'results', 'bracket'].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ''}`);
+  if (s.phase !== 'lobby' && !(o.mode === 'hang' && s.phase === 'hang')) out.push(`  2 ${st.padEnd(8)} ${['answer', 'discuss', 'results', 'bracket'].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ''}`);
   if (s.ends && s.ends > now) out.push(`  3 timer    ${left(s.ends - now)} left`);
   if (s.catchEnds && s.catchEnds > now) out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
   if (s.vote) out.push(`  5 vote     ${s.vote.kind} vote, ${Object.keys(s.vote.yes).length} yes · ${Object.keys(s.vote.no).length} no`);
@@ -637,7 +637,7 @@ const CMDS = {
   flip: () => Math.random() < .5 ? 'Heads' : 'Tails',
   ducksay: (args, stdin) => ducksay(args.length ? args.join(' ') : stdin.trim() || 'Quack.'),
   fortune: () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)],
-  skip: (args, i, x) => { const s = needMay(x, 'canskip', 'skip'); if (['lobby', 'over'].includes(s.phase)) fail('✗ skip works during a game.'); x.ctx.room.send({ t: 'skip' }); return 'Skipped ahead.'; },
+  skip: (args, i, x) => { const s = needMay(x, 'canskip', 'skip'); if (['lobby', 'over'].includes(s.phase)) fail('✗ skip works during a game.'); if (s.options.mode === 'hang') fail('✗ skip: Hangout has nothing to skip. The pause menu takes everyone back to the lobby.'); x.ctx.room.send({ t: 'skip' }); return 'Skipped ahead.'; },
   kick: (args, i, x) => {
     const s = needMay(x, 'cankick', 'kick'); if (!args.length) fail(`✗ ${MAN.kick}`);
     const out = [];
@@ -646,7 +646,7 @@ const CMDS = {
   },
   map: (args, i, x) => {
     const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')])) + `\nHangout brings its own: Duck Cabin${s.options.map === 'cabin' ? '  (now)' : ''}`;
-    const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(`✗ map: no map ${args.join(' ')} (map lists them)`);
+    const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(/^(cabin|duck cabin)$/.test(id) ? '✗ map: Duck Cabin comes with Hangout: sudo mode hang' : `✗ map: no map ${args.join(' ')} (map lists them)`);
     needSudo(x, 'map'); if (s.options.mode === 'hang') fail('✗ map: Hangout is always in Duck Cabin.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
     x.ctx.room.send({ t: 'options', options: { map: m[0] } }); return `Map: ${m[1]}.`;
   },
