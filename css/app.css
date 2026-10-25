@@ -1056,8 +1056,13 @@ html.still .spe-bone .bone-slide { animation: none; }
 .hk.empty b { position: static; font-size: .7rem; opacity: .7; }
 .hk i { font-style: normal; font-size: .85rem; line-height: 1; }
 .hk { transition: opacity .45s ease; }
-.hotbar.rest .hk:not(.on) { opacity: 0; }   /* (resting: only the keys kept on stay, in their places) */
+.hotbar.rest .hk:not(.on):not(.cool) { opacity: 0; }   /* (resting: only the keys kept on stay, in their places) */
 .hk.on { border-color: var(--green); background: color-mix(in srgb, var(--green) 38%, transparent); box-shadow: 0 0 .35rem color-mix(in srgb, var(--green) 70%, transparent); }
+/* an item waiting to work again: dimmed, with a bar draining along the bottom of its key */
+.hk.cool i, .sp-wbtn.cool i { opacity: .45; }
+.cooldown { position: absolute; left: .14rem; right: .14rem; bottom: .1rem; height: .2rem; border-radius: 1rem; background: var(--yellow); box-shadow: 0 0 .25rem color-mix(in srgb, var(--yellow) 70%, transparent); transform-origin: 0 50%; animation: cdrain var(--full) linear forwards; animation-delay: calc(var(--el) * -1); pointer-events: none; }
+.sp-wbtn .cooldown { left: 24%; right: 24%; bottom: 16%; height: .26rem; }
+@keyframes cdrain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .hk.on::after { content: ''; position: absolute; right: .12rem; top: .12rem; width: .3rem; height: .3rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 .25rem var(--green); }
 .hk.sel { border-color: var(--yellow); box-shadow: 0 0 .45rem .12rem color-mix(in srgb, var(--yellow) 65%, transparent); }
 @media (max-width: 1000px) { .hk { width: 1.3rem; height: 1.3rem; } .hk i { font-size: .72rem; } }
