@@ -9,6 +9,7 @@ import './front.js';
 import './rooms.js';
 import './lobby.js';
 import './game.js';
+import './music.js';
 import { acct, onAccount, accountStart, signIn } from './account.js';
 import { openFriends } from './friends.js';
 

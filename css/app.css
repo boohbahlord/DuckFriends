@@ -428,6 +428,9 @@ html.mouse-move .board { cursor: pointer; }
   .topover { position: static; order: -1; grid-template-columns: auto 1fr; gap: .5rem; padding: 0 0 .4rem; }
   .topover .lord { grid-column: 1; } .topover .question { grid-column: 2; }
   .lord-sit { width: 6.4rem; height: 4.6rem; } .lord-duck { width: 3.6rem; bottom: 1.3rem; }
+  .lord-say { font-size: calc(1rem * var(--ts)); max-width: 7.6rem; margin-top: .3rem; }   /* "The votes are in!" under the cloud, never on it or beside it */
+  .lord-say.small { font-size: calc(.82rem * var(--ts)); }
+  body:has(.game) #toasts { bottom: 8.2rem; }   /* in a game, tips sit above the bottom bar, never over Vote or Jumps */
   .question { font-size: calc(1rem * var(--ts)); }
   .gbar-l .phase { font-size: calc(1.1rem * var(--ts)); }
   .mc { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -926,7 +929,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .seed-disc svg { width: 86%; height: auto; overflow: hidden; }
 .seed-q { font-family: var(--fun); font-size: calc(var(--h) * .5); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
 .seed-box { flex: 1; min-width: 0; margin-left: calc(var(--h) * -.3); padding: .3rem .8rem .3rem calc(var(--h) * .42); border: .16rem solid var(--line); border-left: 0; border-radius: 0 1rem 1rem 0; min-height: calc(var(--h) * .82); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: .1rem; }
-.seed-txt { background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--ink); border-radius: .45rem; padding: .05rem .45rem; font-weight: 700; font-size: calc(1.05rem * var(--ts)); line-height: 1.2; overflow-wrap: anywhere; max-width: 100%; }
+.seed-txt { background: color-mix(in srgb, var(--panel) 88%, transparent); color: var(--ink); border-radius: .45rem; padding: .05rem .45rem; font-weight: 700; font-size: calc(1.05rem * var(--ts)); line-height: 1.2; overflow-wrap: break-word; max-width: 100%; }   /* a word splits only if it can't fit at all */
 .seed-by { font-size: calc(.72rem * var(--ts)); background: color-mix(in srgb, var(--panel) 78%, transparent); border-radius: .4rem; padding: 0 .4rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seed.big { --h: clamp(4rem, 9vw, 6.4rem); max-width: 30rem; }
 .seed.big .seed-txt { font-size: calc(clamp(1.1rem, 2.2vw, 1.8rem) * var(--ts)); }
@@ -1001,11 +1004,15 @@ html.still .spx * { animation: none !important; opacity: 1; }
   .bb-side { padding: .5rem 1rem; }
   .cols.bb-cols > :nth-child(3) { padding-top: 7.5rem; }
   .bb-top .question.bb-winner { min-width: 0; }
+  .bb-winner .seed { --h: 2.8rem; } .bb-winner .seed-txt { font-size: calc(.92rem * var(--ts)); }
+  html.map-is-ec .gbar-l { flex-wrap: nowrap; gap: .5rem; min-width: 0; }   /* the typewriter font is wide: one line, the round shortened if it must */
+  html.map-is-ec .gbar-l .round { font-size: calc(.82rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; flex: none; }
 }
 
 /* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */
 .lord.duel .lord-sit { width: 12.5rem; }
-.lord.duel .lord-duck { width: 4.6rem; transition: left .6s ease-in-out; }
+.lord.duel .lord-duck { width: 4.6rem; bottom: 2.6rem; transition: left .6s ease-in-out; }   /* the wider cloud is taller: they sit on it, not in it */
 .lord.duel .duel-duck[data-side="0"] { left: 28%; } .lord.duel .duel-duck[data-side="1"] { left: 72%; }
 .duel-duck[data-side="1"] .duel-in > svg { transform: scaleX(-1); }   /* the right one faces left, toward the other */
 .duel-in { position: relative; }
@@ -1014,7 +1021,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .duel-falling { position: fixed; z-index: 60; pointer-events: none; margin: 0; transform-origin: 50% 60%; }
 .duel-falling svg { width: 100%; height: auto; display: block; }
 .duel-falling[data-side="1"] .duel-in > svg { transform: scaleX(-1); }
-@media (orientation: portrait) and (max-width: 760px) { .lord.duel .lord-sit { width: 8.6rem; } .lord.duel .lord-duck { width: 3.2rem; } }
+@media (orientation: portrait) and (max-width: 760px) { .lord.duel .lord-sit { width: 8.6rem; } .lord.duel .lord-duck { width: 3.2rem; bottom: 1.7rem; } }
 /* the loser's X follows its duck */
 .gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
 .gduck.loser .gduck-x { display: block; }
