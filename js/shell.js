@@ -10,7 +10,8 @@
    The room's commands go through the host: sudo runs a command as a member of the sudo group (the host always is);
    usermod, groupadd and groupdel need it, and so does forgame (the game's timers and turn share mid-game, and mutes that
    everyone sees). A group can take away the command line (nocmd), the chat (nochat), the silly commands (nofun) or slow
-   the chat to one message every 15 seconds (slow); dumbasses has nofun and slow.
+   the chat to one message every 15 seconds (slow); dumbasses has nofun and slow. Anyone in sudo can run the room like the
+   host (lobby settings, map, game type, start, kick) and skip the stage the game is on.
 
    send posts a command's output to the chat (send @everyone roundstats, send \@name totalstats @name2); sending a file
    by itself shows its name, and only sudo members can open it. The chat's \mute, \permmute and \show work here too. */
@@ -54,6 +55,7 @@ const MAN = {
   usermod: 'sudo usermod [-a | -r] -G group[,group] @name: -aG adds to groups, -rG takes out of them, -G alone sets exactly these. sudo usermod @name adds to sudo.',
   groupadd: `sudo groupadd [-p perm,perm] name: a new group. Perms take something away: ${GROUP_PERMS.join(', ')} (nocmd: no command line, nochat: no chat, nofun: no silly commands, slow: one message every 15 s).`,
   groupdel: 'sudo groupdel name: removes a group (not sudo or dumbasses).',
+  skip: 'skip: ends the stage the game is on right now and moves on, like everyone ended their turn (the host, or anyone in sudo; no sudo word needed). Handy if the game ever gets stuck.',
   forgame: 'sudo forgame all-timer off|on · timer off|on catch-up|answer|writing · turn-end everyone|half|2/3|3/4 · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages).',
   roundstats: 'roundstats [@names] [-m mode]: this round\'s stats (in Bicker Brackets the whole tournament), only for you to see.',
   gamestats: 'gamestats [@names] [-m mode]: this game\'s stats.',
@@ -216,7 +218,7 @@ function forgame(ctx, args, sudo) {
 
 /* ---------- the commands: (args, stdin, ctx, sudo) → the output ---------- */
 const CMDS = {
-  help: () => ['The commands (man <command> for more):', MINE.filter(k => k !== 'help').join(' '), 'and the chat\'s \\mute \\permmute \\show; ' + 'custom, reset and the silly commands (lightning love kill hotdog fire): help them with man custom.', 'Pipes |, and > or >> into a file. ↑ ↓ bring back earlier commands.'].join('\n'),
+  help: () => ['The commands (man <command> for more):', MINE.filter(k => k !== 'help').join(' '), 'and the chat\'s \\mute \\permmute \\show; ' + 'custom, reset and the silly commands (lightning love kill hotdog fire): help them with man custom.', 'Pipes |, and > or >> into a file. ↑ ↓ bring back earlier commands.', 'Host (or sudo): skip moves the game on to the next stage. sudo usermod @name gives someone sudo, so they can run the room too.'].join('\n'),
   man: args => args[0] ? (MAN[args[0]] || (args[0] === 'custom' ? 'custom avatar | card | username …: customize your duck, card or name (Tab shows the choices).' : fail(`✗ No manual entry for ${args[0]}`))) : MAN.man,
   echo: args => (args[0] === '-n' ? args.slice(1) : args).join(' '),
   pwd: () => fs.cwd,
@@ -282,6 +284,11 @@ const CMDS = {
   },
   groupdel: (args, i, ctx, sudo) => { needSudo(ctx, sudo); const g = (args[0] || '').toLowerCase(); if (['sudo', 'dumbasses'].includes(g)) fail(`✗ ${g} stays.`); if (!(ctx.room.state.groups || {})[g]) fail(`✗ No group ${g}.`); ctx.room.send({ t: 'groupdel', name: g }); return `Removed ${g}.`; },
   forgame: (args, i, ctx) => forgame(ctx, args),
+  skip: (args, i, ctx) => {
+    const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail('✗ Only the host (or sudo) can skip.');
+    if (['lobby', 'over'].includes(s.phase)) fail('✗ skip works during a game.');
+    ctx.room.send({ t: 'skip' }); return 'Skipped ahead.';
+  },
   roundstats: (args, i, ctx) => statLines(ctx, 'round', args),
   gamestats: (args, i, ctx) => statLines(ctx, 'game', args),
   totalstats: (args, i, ctx) => statLines(ctx, 'total', args),
