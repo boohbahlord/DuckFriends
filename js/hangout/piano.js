@@ -213,9 +213,10 @@ function closeKeys() {
   seatK = -1;
   if (!pk) return;
   ro.disconnect(); ro = null; removeEventListener('resize', place);
-  const p = pk; pk = null; p.destroy();   // (its held notes are let go: those go to the room too)
+  const p = pk, el = panel; pk = null; panel = null; panelTop = 0;
+  p.destroy();   // (its held notes are let go: those go to the room too)
   flush();
-  panel.remove(); panel = null; panelTop = 0;
+  el.remove();
 }
 /* computer: along the bottom of the board, under my duck; a phone held upright: the lower part of the screen */
 function place() {
@@ -234,7 +235,7 @@ function place() {
 function getUp() {
   if (!C) return;
   const mine = pianoOf(C.state()).seats[myId()];
-  closeKeys(); leaving = true;   // (until the room says so, my old spot doesn't seat me again)
+  leaving = true; closeKeys();   // (until the room says so, my old spot doesn't seat me again: not even as my last notes go)
   if (mine) C.send({ t: 'hang', k: 'piano', w: 'up' });
 }
 
