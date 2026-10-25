@@ -41,13 +41,12 @@ export const HATS = [
 export const hatById = id => HATS.find(h => h.id === id) || null;
 /* how Customize shows the hats: in themed groups, each under a small heading */
 export const HAT_GROUPS = [
-  ['Fun', ['birthday', 'bow', 'dunce', 'sombrero', 'word', 'duckling', 'mouse', 'eye', 'antenna', 'antennae']],
+  ['Fun', ['birthday', 'bow', 'dunce', 'word', 'duckling', 'mouse', 'eye', 'antenna', 'antennae']],
   ['Food', ['pumpkin', 'hotdog', 'cheese']],
-  ['Hair and caps', ['afro', 'cap', 'bucket', 'nightcap', 'jordan']],
+  ['Hair, hats and caps', ['afro', 'cap', 'bucket', 'fila', 'gele', 'sombrero', 'nightcap', 'jordan']],
   ['Fantasy', ['wizard', 'crown', 'halo', 'horns']],
   ['Jobs and uniforms', ['police', 'fire', 'doctor', 'helmet']],
   ['Weddings and church', ['veil', 'pope', 'bishop']],
-  ['Nigerian', ['fila', 'gele']],
 ];
 export const HAT_TOP = 32;   // the headroom (in duck units) a hat needs above the duck's box
 const dk = (hex, t) => { const n = parseInt(String(hex).slice(1), 16) || 0, c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * (1 - t))); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
