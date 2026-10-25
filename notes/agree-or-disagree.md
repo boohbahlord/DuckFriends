@@ -814,3 +814,6 @@ when u put glow in, use dorian
 like i mean that glow goes in the game as dorian
 
 Jester's Stair is great too we can put that in the game for sure
+
+Next is a spring box bouncy joville joyfully joying in joke joyously, like repetition swing swing and swinging, bouncy bouncy bouncy happy how could it be so happy so much major! it is flushed with fuzzy warmth in a sound like that, a little different timbre then the other songs, like a happy version of hollow knight, while still takinng inspiration from everything. Good timing, lots lots of dynamics, fuzzy wuzzy bliss like rubbing ur face while lovey. Every swells and sometimes even sings in soundful joy and praise of living, almost kinda so good it makes u cry kind of good, like an "omg..." it is like a kid's birthday not bad, no pain this time, just peace, maybe hope is okay to believe. The song can be called Spring in a Box
+It flowers also and dances a little, with time for things to quiet down before coming back again
