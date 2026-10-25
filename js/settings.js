@@ -36,8 +36,10 @@ export function applySettings() {
 const tiles = (key, opts, cls = '') => `<div class="row ${cls}" role="group">${opts.map(([v, label, style]) =>
   `<button type="button" class="tile" data-k="${key}" data-v="${esc(v)}" aria-pressed="${S()[key] === v}"${style ? ` style="${esc(style)}"` : ''}>${esc(label)}</button>`).join('')}</div>`;
 const check = (key, label, tip) => `<label class="check"${tip ? ` data-tip="${esc(tip)}"` : ''}><input type="checkbox" data-k="${key}"${S()[key] ? ' checked' : ''}>${esc(label)}</label>`;
-const slider = (key, label, min, max, step, unit = '%') => `<div class="slide"><label for="set-${key}">${esc(label)}</label>
-  <input id="set-${key}" type="range" data-k="${key}" min="${min}" max="${max}" step="${step}" value="${S()[key]}"><output>${S()[key]}${unit}</output></div>`;
+/* mark: a line on the slider where the default is (the music can go above it as well as below) */
+const slider = (key, label, min, max, step, unit = '%', mark) => { const i = `<input id="set-${key}" type="range" data-k="${key}" min="${min}" max="${max}" step="${step}" value="${S()[key]}">`;
+  return `<div class="slide"><label for="set-${key}">${esc(label)}</label>
+  ${mark == null ? i : `<span class="slide-in">${i}<i class="slide-def" style="--at:${(mark - min) / (max - min)}" aria-hidden="true"></i></span>`}<output>${S()[key]}${unit}</output></div>`; };
 
 const PAGES = {
   general: () => `
@@ -69,7 +71,7 @@ const PAGES = {
     <div class="sect"><h3>Connection</h3>${tiles('net', NET.map(([v, n]) => [v, n]))}<p class="small dim">They improve performance too. ${esc(NET[netLevel()][2])}</p></div>
     <div class="sect"><h3>Background shapes</h3>${tiles('shapes', [['moving', 'Moving'], ['still', 'Still'], ['off', 'Off']])}</div>
     <div class="sect"><h3>Movement</h3><div class="row">${check('motion', 'Animations', 'Ducks bob, windows pop, shapes drift. Off keeps everything still.')}</div></div>`,
-  audio: () => `<div class="sect"><h3>Volume</h3>${slider('sound', 'Volume', 0, 100, 5)}${slider('sfx', 'Sound effects', 0, 100, 5)}${slider('music', 'Music', 0, 100, 5)}</div>`,
+  audio: () => `<div class="sect"><h3>Volume</h3>${slider('sound', 'Volume', 0, 100, 5)}${slider('sfx', 'Sound effects', 0, 100, 5)}${slider('music', 'Music', 0, 200, 5, '%', 100)}</div>`,
 };
 
 export function openSettings() {
@@ -96,7 +98,7 @@ export function openSettings() {
       page.addEventListener('input', e => {
         const i = e.target; if (!i.dataset.k) return;
         if (i.type === 'checkbox') S()[i.dataset.k] = i.checked;
-        else if (i.type === 'range') { S()[i.dataset.k] = +i.value; i.nextElementSibling.textContent = i.value + '%'; }
+        else if (i.type === 'range') { S()[i.dataset.k] = +i.value; i.closest('.slide').querySelector('output').textContent = i.value + '%'; if (i.dataset.k === 'music') S().musicMute = false; }
         save(); applySettings();
       });
       show(S().settingsTab);

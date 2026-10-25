@@ -21,8 +21,9 @@ import { MAPS, mapMini, mapName } from './maps.js';
 import { acct, onAccount, requestFriend, canAdd } from './account.js';
 import { openFriends } from './friends.js';
 import { NAV_HINTS } from './keynav.js';
+import { musicBarHTML, mountMusicBar } from './musicbar.js';
 
-let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
+let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
   type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, or Who is the Quack?',
@@ -239,12 +240,12 @@ function renameRoom() {
 register('lobby', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
-  leave() { if (off) off(); off = null; if (offAcct) offAcct(); offAcct = null; if (docks) docks.destroy(); docks = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
+  leave() { if (off) off(); off = null; if (mbarOff) mbarOff(); mbarOff = null; if (offAcct) offAcct(); offAcct = null; if (docks) docks.destroy(); docks = null; clearInterval(S && S._tick); S = null; removeEventListener('keydown', key); },
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
     S = el(`<section class="screen lobby docked">
-      <header class="lbar"><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <header class="lbar">${musicBarHTML()}<button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
@@ -264,7 +265,7 @@ register('lobby', {
       </div>${DOCK_HTML}${BAR_HTML()}
     </section>`);
     docks = mountDocks(S, `<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options ${NAV_HINTS}`);
-    lastSeat = 0;
+    lastSeat = 0; mbarOff = mountMusicBar(S);
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
     const info = S.querySelector('.lmenu-info');
     S.querySelector('.lmenu').addEventListener('pointerover', e => { const b = e.target.closest('[data-m]'); if (b) info.textContent = INFO[b.dataset.m]; });

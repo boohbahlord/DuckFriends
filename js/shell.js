@@ -32,6 +32,7 @@ import { TEXT, getopt, lines } from './textutils.js';
 import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
+import { music } from './music.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
 const fail = (msg, code = 1) => { throw Object.assign(new Error(msg), { code }); };
@@ -649,6 +650,8 @@ const CMDS = {
   },
   start: (a, i, x) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail('✗ start: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ start: the game is already going.'); x.ctx.room.send({ t: 'start' }); return 'Starting…'; },
   forgame: (args, i, x) => forgame(x.ctx, args),
+  song: (args, i, x) => songs(x, args),
+  songs: (args, i, x) => songs(x, []),
   roundstats: (args, i, x) => statLines(x.ctx, 'round', args),
   gamestats: (args, i, x) => statLines(x.ctx, 'game', args),
   totalstats: (args, i, x) => statLines(x.ctx, 'total', args),
@@ -658,6 +661,34 @@ CMDS.logout = CMDS.exit;
 /* the commands in /bin: everything with a manual page */
 const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo').sort();
 
+/* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them
+   back. A name with a space (or ' or ?) goes in quotes, as in bash: song off "Jester's Stair" */
+const qn = n => /[\s'"?*\[\]$`\\|&;<>()]/.test(n) ? `"${n}"` : n;
+function songs(x, args) {
+  const s = needRoom(x.ctx), off = new Set((s.music && s.music.off) || []), np = music.nowPlaying(), names = music.tracks;
+  const [sub, ...rest] = args;
+  if (!sub || sub === 'list' || sub === '-l') return table(names.map(n => [qn(n), off.has(n) ? 'off' : 'on', np && np.name === n ? (np.next ? '(next)' : '(playing now)') : '']));
+  if (sub === 'now') return np && np.name ? `${np.next ? `Next, in ${np.in} s` : 'Playing now'}: ${np.name}` : 'No song is on.';
+  if (sub !== 'on' && sub !== 'off') fail(`✗ song: usage: song [list] · song now · song on|off name… · song on|off all (man song)`);
+  if (!may(s, x.ctx.room.me, 'cansettings')) fail(`✗ song ${sub}: only the host, sudo, or a group with cansettings.`);
+  if (!rest.length) fail(`✗ song ${sub}: which song? song lists them. A name with spaces goes in quotes: song ${sub} "Jester's Stair"`);
+  if (rest.length === 1 && rest[0].toLowerCase() === 'all') {
+    x.ctx.room.send(sub === 'on' ? { t: 'songs', all: 'on' } : { t: 'songs', off: names });
+    return sub === 'on' ? 'Every song is on.' : 'Every song is off: no music until song on.';
+  }
+  const found = [];
+  for (const w of rest) {
+    const n = names.find(v => v.toLowerCase() === w.toLowerCase());
+    if (n) { if (!found.includes(n)) found.push(n); continue; }
+    const whole = names.find(v => v.toLowerCase() === rest.join(' ').toLowerCase()) || names.find(v => v.toLowerCase().startsWith(rest.join(' ').toLowerCase()));
+    fail(whole && rest.length > 1 ? `✗ song: no song named ${w}. A name with spaces goes in quotes, as in bash: song ${sub} ${qn(whole)}`
+      : `✗ song: no song named ${qn(w)} (song lists them)`);
+  }
+  x.ctx.room.send({ t: 'songs', [sub]: found });
+  const playing = np && np.name && !np.next && found.includes(np.name);
+  return `${sub === 'off' ? 'Off' : 'On'}: ${found.join(', ')}${/[.?!]$/.test(found[found.length - 1]) ? '' : '.'}${sub === 'off' && playing ? ' It stops now; the next song comes in 3 seconds.' : ''}${sub === 'off' && names.every(n => off.has(n) || found.includes(n)) ? ' Every song is off now.' : ''}`;
+}
+
 /* what sudo lets you do */
 function sudoList(ctx) {
   const s = needRoom(ctx), me = ctx.room.me;
@@ -665,7 +696,7 @@ function sudoList(ctx) {
     const gives = Object.keys(PERMS_GIVE).filter(p => may(s, me, p));
     return { out: `${noSudo(ctx).slice(2)}${gives.length ? `\nYour groups give you: ${gives.map(p => `${p} (${PERMS_GIVE[p]})`).join(', ')}.` : ''}`, code: 1 };
   }
-  return [`${ctx.meName} may run, as sudo:`, '  usermod useradd gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start', '(The word sudo is optional for you.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
+  return [`${ctx.meName} may run, as sudo:`, '  usermod useradd gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start, song on|off', '(The word sudo is optional for you.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
 }
 
 /* ---------- running a command ---------- */
@@ -769,7 +800,7 @@ const FILE_CMDS = ['cat', 'less', 'more', 'ls', 'cd', 'rm', 'rmdir', 'head', 'ta
 const WORDS = {
   help: ['all', ...HELP_NAMES.map(n => n.slice(4).toLowerCase())],
   forgame: ['show', 'all-timer', 'timer', 'turn-end', 'order', 'freeroam', 'gravity', 'silly', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'random', 'rotate', 'low', 'normal', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'],
-  map: MAPS.map(m => m[0]), mode: MODES.map(m => m.id),
+  map: MAPS.map(m => m[0]), mode: MODES.map(m => m.id), song: ['list', 'now', 'on', 'off', 'all', ...music.tracks.map(qn)],
   chmod: ['g+r', 'g-r', 'o+r', 'o-r', 'a+r', 'a-r', '640', '644', '600'],
   totalstats: ['-m', ...STAT_MODES.map(([m]) => m)], gamestats: ['-m'], roundstats: ['-m'],
   ps: ['aux'], uname: ['-a'], sudo: ['-l'], gpasswd: ['-a', '-d'], groupmod: ['-n', '-p'], getent: ['group'], history: ['-c'], ls: ['-l', '-a', '-la', '-R'],

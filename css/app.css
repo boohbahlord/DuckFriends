@@ -354,6 +354,37 @@ p.bad { color: var(--red); font-weight: 600; }
 .gbar-r { display: flex; align-items: center; gap: .8rem; }
 .gbar .iconbtn { width: 2.3rem; height: 2.3rem; }
 .timer { font-weight: 700; font-variant-numeric: tabular-nums; font-size: calc(1.2rem * var(--ts)); }
+
+/* the music bar (musicbar.js): a speaker, the Music slider it shows on hover, the song the room hears */
+.mbar { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; max-width: 100%; height: 2.1rem; padding: 0 .8rem 0 .15rem; border: .14rem solid var(--line); border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent); box-shadow: 0 .14rem 0 var(--line); }
+.mbar[hidden] { display: none; }
+.gbar > .mbar { margin-left: auto; }   /* at the right, before the timer (the specials' keys follow the stage's name) */
+.mbar-spk { flex: none; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; }
+.mbar-spk:hover, .mbar-spk:focus-visible { background: color-mix(in srgb, var(--ink) 12%, transparent); }
+.mbar-spk svg { width: 1.45rem; height: 1.45rem; overflow: visible; filter: drop-shadow(0 .08rem 0 #0006); }
+.spk-body path { fill: var(--yellow); stroke: var(--line); stroke-width: 1.5; stroke-linejoin: round; }
+.spk-waves path { fill: none; stroke: var(--blue); stroke-width: 1.9; stroke-linecap: round; }
+.spk-x path { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
+.mbar-main { display: grid; align-items: center; min-width: 0; }
+.mbar-main > * { grid-area: 1 / 1; transition: opacity .15s, visibility .15s; }   /* the slider takes the name's place: the bar never changes size */
+.mbar-vol { position: relative; min-width: 6.6rem; height: 1.6rem; display: flex; align-items: center; visibility: hidden; opacity: 0; }
+.mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-vol, .mbar:focus-within .mbar-vol, .mbar.open .mbar-vol { visibility: visible; opacity: 1; }
+.mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-song, .mbar:focus-within .mbar-song, .mbar.open .mbar-song { visibility: hidden; opacity: 0; }
+.mbar-vol input { width: 6.6rem; margin: 0; accent-color: var(--blue); cursor: pointer; }
+.mbar-def, .slide-def { position: absolute; top: 50%; width: .14rem; height: .95rem; margin: -.475rem 0 0 -.07rem; border-radius: .1rem; background: var(--ink); opacity: .75; pointer-events: none; }
+.mbar-def { left: 50%; }   /* the default (100%): the middle of the slider */
+.slide-in { position: relative; display: flex; align-items: center; }
+.slide-def { left: calc(.5rem + (100% - 1rem) * var(--at)); }
+.mbar-song { display: inline-flex; align-items: center; gap: .3rem; min-width: 0; outline: none; }
+.mbar-note { flex: none; width: 1rem; height: 1rem; overflow: visible; }
+.mbar-note path { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+.mbar-note ellipse { fill: var(--pink); stroke: var(--line); stroke-width: 1.1; }
+.mbar-name { font-weight: 600; font-size: calc(.88rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 17rem; }
+.mbar-song.next .mbar-name, .mbar-song.none .mbar-name { color: var(--dim); }
+.mbar-song.next .mbar-note ellipse { fill: var(--soft); }
+.mbar-up { font-size: calc(.7rem * var(--ts)); text-transform: uppercase; letter-spacing: .05em; }
+.lbar { align-items: center; gap: .7rem; }
 .timer.catch { color: var(--orange); }
 .timer.low { color: var(--red); }
 .game > .gmain { display: flex; flex-direction: column; padding: 0 max(.5rem, 1vw) .3rem; }
@@ -444,6 +475,10 @@ html.mouse-move .board { cursor: pointer; }
   body:has(.game) #toasts { bottom: 8.2rem; }   /* in a game, tips sit above the bottom bar, never over Vote or Jumps */
   .question { font-size: calc(1rem * var(--ts)); }
   .gbar-l .phase { font-size: calc(1.1rem * var(--ts)); }
+  .gbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l r" "m m"; row-gap: .2rem; }   /* the music bar gets its own short row */
+  .gbar-l { grid-area: l; } .gbar-r { grid-area: r; }
+  .gbar > .mbar { grid-area: m; justify-self: start; margin-left: 0; height: 1.85rem; }
+  .mbar-name { max-width: none; }
   .mc { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
@@ -1290,6 +1325,7 @@ html.map-is-ec .game h3, html.map-is-ec .win h3 { color: #9cc7b9; font-weight: 4
 html.map-is-ec .btn { background: linear-gradient(#96461a, #6a2e0f); border: 1px solid #e8994d; color: #fbe4c4; border-radius: .2rem; box-shadow: 0 0 .5rem #c2581c40; text-shadow: none; font-weight: 400; }
 html.map-is-ec .btn:hover, html.map-is-ec .btn:focus-visible { background: linear-gradient(#ac531e, #7e3713); }
 html.map-is-ec .btn.ghost, html.map-is-ec .iconbtn { background: #140c06cc; border: 1px solid #78512e; color: var(--ink); }
+html.map-is-ec .mbar { background: #140c06cc; border: 1px solid #78512e; box-shadow: none; }
 html.map-is-ec .btn.green, html.map-is-ec .btn.red, html.map-is-ec .btn.purple, html.map-is-ec .btn.yellow { border-color: #e8994d; }
 html.map-is-ec .btn:disabled { opacity: .5; }
 html.map-is-ec .panel, html.map-is-ec .question, html.map-is-ec .win, html.map-is-ec .dock-panel, html.map-is-ec .statbox, html.map-is-ec .award, html.map-is-ec .who-chip, html.map-is-ec .tile, html.map-is-ec .toast, html.map-is-ec .ctx, html.map-is-ec .jumps-slot, html.map-is-ec #jumps, html.map-is-ec .pmenu, html.map-is-ec .votebox, html.map-is-ec kbd {
