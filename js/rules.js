@@ -498,7 +498,12 @@ function settleVote(s, now) {
       return advance(s, now);
     }
     if (v.kind === 'skip') return skipRound(s, now);
-    if (v.kind === 'turn') { say(s, 'The room voted to skip this turn.'); return advance(s, now, true); }   // as if everyone were done
+    if (v.kind === 'turn') {   // the whole turn, as if everyone were done: a question's voting and its talk
+      say(s, 'The room voted to skip this turn.');
+      const k = turnKey(s);
+      for (let i = 0; i < 3 && turnKey(s) === k && !['lobby', 'over'].includes(s.phase); i++) advance(s, now, true);
+      return s;
+    }
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
