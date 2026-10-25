@@ -1035,9 +1035,10 @@ html.still .spx * { animation: none !important; opacity: 1; }
   .cols.bb-cols > :nth-child(3) { padding-top: 7.5rem; }
   .bb-top .question.bb-winner { min-width: 0; }
   .bb-winner .seed { --h: 2.8rem; } .bb-winner .seed-txt { font-size: calc(.92rem * var(--ts)); }
-  html.map-is-ec .gbar-l { flex-wrap: nowrap; gap: .5rem; min-width: 0; }   /* the typewriter font is wide: one line, the round shortened if it must */
-  html.map-is-ec .gbar-l .round { font-size: calc(.82rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; flex: none; }
+  /* the typewriter font is wide: the round sits small on its own line over the stage, each kept whole */
+  html.map-is-ec .gbar-l { flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; line-height: 1.15; }
+  html.map-is-ec .gbar-l .round { font-size: calc(.78rem * var(--ts)); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; }
 }
 
 /* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */
