@@ -243,7 +243,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'start':
       if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
-      if (isQuack(s) && s.seat.length < 3) return state;   // (the lobby says it needs 3)
+      if ((isQuack(s) || isLaw(s)) && s.seat.length < 3) return state;   // (the lobby says it needs 3)
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
     case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
@@ -1066,7 +1066,8 @@ function startCase(s, now) {
   const q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
   s.lordTime = 0; s.pos = {}; s.lock = {}; s.ends = 0;
   s.law = { def: null, off: null, how: {}, picks: { def: {}, off: {} }, votes: {}, flips: {}, close: 0, start: null, w: null, gave: null };
-  if (on.length < 3) { say(s, `Not enough players for a jury, so "${q.text}" is dismissed.`); return nextCase(s, now); }
+  if (s.seat.length < 3) { s.law = null; return backToLobby(s, 'Lawyering needs at least 3 players: two attorneys and a jury.'); }
+  if (on.length < 3) { say(s, `Not enough players for a jury, so "${q.text}" is dismissed.`); return nextCase(s, now); }   // (the rest joined mid-round)
   const writer = s.players[q.by] && on.includes(q.by) ? q.by : null, how = { def: s.options.lawDef, off: s.options.lawOff };
   for (const k of ['def', 'off']) if (how[k] === 'writer' && !writer) how[k] = 'random';   // (the writer left: random)
   s.law.how = Object.fromEntries(Object.entries(how).filter(([, v]) => v === 'writer' || v === 'vote'));
@@ -1106,7 +1107,7 @@ function openCase(s, now) {
   if (!L.def) L.def = pickOne(on.filter(id => id !== q.by));
   if (!L.off) L.off = pickOne(on.filter(id => id !== L.def));
   s.pos = {}; s.lock = {};
-  s.pos[L.off] = { x: .47, y: .4 }; s.pos[L.def] = { x: .53, y: .6 };   // (apart, inside the circle, on a computer and on a phone held upright)
+  s.pos[L.off] = { x: .47, y: .39 }; s.pos[L.def] = { x: .53, y: .61 };   // (apart, inside the circle, on a computer and on a phone held upright)
   const rest = s.seat.filter(id => !isCounsel(s, id)), half = Math.ceil(rest.length / 2);
   rest.forEach((id, k) => { const top = k < half, i = top ? k : k - half, n = top ? half : rest.length - half; s.pos[id] = { x: .44 + .12 * (i + 1) / (n + 1), y: top ? .04 : .96 }; });
   const D = s.players[L.def].name, O = s.players[L.off].name, t = q.text.trim();
@@ -1129,7 +1130,7 @@ function lawCheck(s, now, force) {
   const hereO = !!s.players[L.off], hereD = !!s.players[L.def];
   if (!hereO || !hereD) {
     if (!hereO && !hereD) { say(s, 'Both attorneys left, so the case is dismissed.'); return nextCase(s, now); }
-    say(s, `${hereO ? 'The defense' : 'The offense'} attorney left the courtroom.`); return verdict(s, hereO ? 0 : 1, now);
+    L.left = hereO ? L.def : L.off; return verdict(s, hereO ? 0 : 1, now);
   }
   const j = jury(s), [o, d] = lawTally(s);
   if (!j.length) { say(s, 'Nobody is left on the jury, so the case is dismissed.'); return nextCase(s, now); }
@@ -1149,9 +1150,11 @@ function verdict(s, side, now) {
   const L = s.law, q = s.qs[s.qi], [o, d] = lawTally(s), votes = {};
   for (const id of jury(s)) if (L.votes[id] !== undefined) votes[id] = L.votes[id];
   L.w = side; L.end = [o, d]; s.ends = 0;
-  s.history.push({ round: s.round, by: q.by, text: q.text, law: { def: L.def, off: L.off, votes, flips: { ...L.flips }, w: side, start: L.start, end: [o, d], gave: L.gave } });
+  s.history.push({ round: s.round, by: q.by, text: q.text, law: { def: L.def, off: L.off, votes, flips: { ...L.flips }, w: side, start: L.start, end: [o, d], gave: L.gave, left: L.left || null } });
   const W = side === 0 ? L.off : side === 1 ? L.def : null;
-  if (!L.gave) say(s, W ? `${s.players[W] ? s.players[W].name : 'The ' + (side ? 'defense' : 'offense')} wins the case ${Math.max(o, d)}–${Math.min(o, d)}.` : `A hung jury: ${o}–${d}. Nobody wins the case.`);
+  const wn = s.players[W] ? s.players[W].name : 'The ' + (side ? 'defense' : 'offense');
+  if (L.left) say(s, `The ${side ? 'offense' : 'defense'} attorney left the courtroom, so ${wn} wins the case.`);
+  else if (!L.gave) say(s, W ? `${wn} wins the case ${Math.max(o, d)}–${Math.min(o, d)}.` : `A hung jury: ${o}–${d}. Nobody wins the case.`);
   s.lock = { ...votes, [L.off]: -1, [L.def]: -1 };
   for (const id of s.seat) if (s.lock[id] === undefined && s.pos[id]) { const c = colAt(s, s.pos[id].x); s.lock[id] = c; }
   return enter(s, 'discuss', now);
@@ -1164,7 +1167,7 @@ export function lawStats(s, round = null) {
   const P = id => (per[id] = per[id] || { argued: 0, won: 0, lost: 0, wonDef: 0, wonOff: 0, gave: 0, ownWin: 0, votes: 0, flips: 0 });
   for (const h of s.history.filter(h => h.law && (round === null || h.round === round))) {
     const c = h.law, [o, d] = c.end || [0, 0];
-    cases.push({ by: h.by, text: h.text, off: c.off, def: c.def, o, d, w: c.w, gave: c.gave });
+    cases.push({ by: h.by, text: h.text, off: c.off, def: c.def, o, d, w: c.w, gave: c.gave, left: c.left });
     P(c.off).argued++; P(c.def).argued++;
     if (c.w === 0 || c.w === 1) {
       const W = c.w ? c.def : c.off, L = c.w ? c.off : c.def;

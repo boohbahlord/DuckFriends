@@ -192,7 +192,7 @@ function paint() {
     setHTML(st, `<button type="button" class="ready-btn${mine.ready ? ' on' : ''}" data-a="ready" aria-pressed="${!!mine.ready}">${mine.ready ? 'Ready ✓' : 'Not ready'}</button>`);
   }
   const startRow = $('[data-m="start"]', S);
-  const few = s.options.mode === 'quack' && s.seat.length < 3;   // Who is the Quack? needs 3 ducks
+  const few = ['quack', 'law'].includes(s.options.mode) && s.seat.length < 3;   // Who is the Quack? and Lawyering need 3 ducks
   startRow.setAttribute('aria-disabled', String(!host || s.phase === 'countdown' || few));
   $('.val', startRow).textContent = few ? 'Needs 3 players' : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';

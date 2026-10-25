@@ -143,7 +143,7 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'wqWord', 'tieVote', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby']);
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'wqWord', 'tieVote', 'counsel', 'giveUp', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby']);
 const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats', 'pk'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {

@@ -278,7 +278,7 @@ function drawDucks(now = clockNow()) {
 /* ---------- Lawyering: the attorneys' circle ---------- */
 /* its half width and half height: a circle filling the strip between the sides; on a phone held upright the strip runs
    across the screen, so the circle stretches along it and both attorneys fit side by side */
-const ringR = () => turned() ? [geo.W * .8 * .26, geo.H * (LAW_MID[1] - LAW_MID[0]) * .46] : Array(2).fill(geo.W * (LAW_MID[1] - LAW_MID[0]) * .46);
+const ringR = () => turned() ? [geo.W * .8 * .3, geo.H * (LAW_MID[1] - LAW_MID[0]) * .46] : Array(2).fill(geo.W * (LAW_MID[1] - LAW_MID[0]) * .46);
 function placeRing(board) {
   const ring = board.querySelector('.law-ring'); if (!ring || !geo) return;
   const c = place({ x: .5, y: .5 }, 0, 1), [rx, ry] = ringR(), st = `${(c.left - rx).toFixed(1)},${(c.top - geo.size * .3 - ry).toFixed(1)},${(2 * rx).toFixed(1)},${(2 * ry).toFixed(1)}`;
@@ -288,7 +288,7 @@ function placeRing(board) {
 }
 /* an attorney's feet stay inside the circle */
 function inRing(x, y) {
-  const c = place({ x: .5, y: .5 }, 0, 1), a = place({ x, y }, 0, 1), [rx, ry] = ringR().map(r => Math.max(4, r - geo.size * (turned() ? .42 : .3)));
+  const c = place({ x: .5, y: .5 }, 0, 1), a = place({ x, y }, 0, 1), [rx, ry] = ringR().map(r => Math.max(4, r - geo.size * (turned() ? .42 : .2)));
   const dx = a.left - c.left, dy = a.top - c.top, k = Math.hypot(dx / rx, dy / ry);
   if (k <= 1) return [x, y];
   const u = unplace(c.left + dx / k, c.top + dy / k); return [u.x, u.y];
@@ -548,7 +548,8 @@ async function announce(phase) {
   await pause(350); if (job !== sayJob) return;
   if (isLaw(R.state)) {   // the verdict, then the winner bumps the loser off the cloud
     const L = R.state.law || {}, w = L.w === 0 ? L.off : L.w === 1 ? L.def : null, p = w && R.state.players[w];
-    say(L.w === -1 ? 'Hung jury!' : `${p ? p.name : 'The ' + (L.w ? 'defense' : 'offense')} convinced the jury!`);
+    const wn = p ? p.name : 'The ' + (L.w ? 'defense' : 'offense');
+    say(L.w === -1 ? 'Hung jury!' : L.left ? `${wn} wins: the other side left!` : L.gave ? `${wn} wins: the other side gave up!` : `${wn} convinced the jury!`);
     await pause(3200); if (job !== sayJob) return;
     unsay(); await pause(650); if (job !== sayJob) return;
     say('Who argued it best?', true); return;
