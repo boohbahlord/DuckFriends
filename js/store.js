@@ -19,7 +19,7 @@ export const PROFILE_DEFAULT = {
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
    shared copy keeps only these numbers */
-export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets']];
+export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets'], ['sc', 'Story Chain']];
 export function cleanStats(o) {
   const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
   for (const [m] of STAT_MODES) {

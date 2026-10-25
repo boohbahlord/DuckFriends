@@ -1011,6 +1011,70 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .bb-champs p { margin: 0; }
 .opt-h { margin: .2rem 0 .4rem; }
 
+/* ---------- Story Chain ---------- */
+/* the story: a see-through column over the map, one row a line, that slides up and down with my duck */
+.sc-board { gap: .4rem; }
+.sc-board .topover { position: static; padding: 0; }
+.sc-view { position: relative; flex: 1; min-height: 10rem; overflow: hidden; border: .2rem solid var(--line); border-radius: 1rem; box-shadow: 0 .3rem 0 var(--line); background: color-mix(in srgb, var(--panel) var(--board-a, 76%), transparent); }
+.sc-rows { position: relative; padding: 3.4rem 0 2.6rem; will-change: transform; }
+.sc-results .sc-rows { position: absolute; inset: 0; padding-bottom: 0; display: flex; flex-direction: column; }
+.sc-results .sc-choice { flex: 1; }
+.sc-view .ducks { z-index: 2; }
+/* more of the story above or below: the edge fades */
+.sc-view::before, .sc-view::after { content: ''; position: absolute; left: 0; right: 0; z-index: 3; height: 2.4rem; pointer-events: none; opacity: 0; transition: opacity .3s; background: linear-gradient(color-mix(in srgb, var(--panel) 85%, transparent), transparent); }
+.sc-view::before { top: 0; }
+.sc-view::after { bottom: 0; background: linear-gradient(transparent, color-mix(in srgb, var(--panel) 85%, transparent)); }
+.sc-view.more-up::before, .sc-view.more-down::after { opacity: .9; }
+.sc-row { position: relative; padding: .45rem 1.2rem .3rem; border-top: .1rem solid color-mix(in srgb, var(--ink) 12%, transparent); transition: background-color .2s, box-shadow .2s; }
+.sc-row:first-child { border-top: 0; }
+.sc-row.here { background: color-mix(in srgb, var(--vb, var(--green)) 24%, transparent); box-shadow: inset .35rem 0 0 var(--vb, var(--green)); }
+.sc-row.here.nope { background: color-mix(in srgb, var(--ink) 8%, transparent); box-shadow: inset .35rem 0 0 color-mix(in srgb, var(--ink) 35%, transparent); }
+.sc-row.sc-old { opacity: .62; }
+.sc-row.sc-para { margin-top: 1.1rem; border-top-width: .2rem; }
+.sc-line { margin: 0; max-width: 62rem; font-size: calc(clamp(1rem, 1.7vw, 1.4rem) * var(--ts)); font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; text-shadow: 0 .06rem .35rem color-mix(in srgb, var(--bg) 75%, transparent); }
+.sc-txt { text-decoration: underline; text-decoration-color: var(--u, var(--soft)); text-decoration-thickness: .16em; text-underline-offset: .3em; text-decoration-skip-ink: none; }
+.sc-by { display: flex; align-items: center; gap: .45rem; min-height: 1.8rem; margin-top: .1rem; }
+.sc-mini svg { width: 1.65rem; height: auto; display: block; overflow: hidden; }
+.sc-votes { display: flex; gap: .1rem; }
+.sc-votes:not(:empty) { margin-left: .2rem; padding-left: .5rem; border-left: .12rem solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.sc-votes svg { width: 1.3rem; height: auto; overflow: hidden; }
+.sc-writing { color: var(--dim); }
+.sc-typing { padding-top: 1.8rem; box-shadow: inset 0 0 1.4rem #ffffff2a; }   /* (room for the names of the ducks standing over it) */
+.sc-typing .sc-txt { text-shadow: 0 0 .7rem #ffffff70; }
+html.moving .sc-typing { animation: scglow 2.2s ease-in-out infinite; }
+@keyframes scglow { 50% { box-shadow: inset 0 0 2.4rem #ffffff50; } }
+.sc-mark { background: #ffd23f; color: #1c1c28; border-radius: .3em; padding: 0 .12em; box-shadow: 0 0 .6rem #ffd23f99; }
+/* the secret words (below the story) and the three choices */
+.sc-wrow { display: flex; justify-content: center; padding: .7rem 1rem; }
+.sc-wrow .seed { max-width: 24rem; }
+.sc-head { min-height: 2.6rem; }
+.sc-choice { display: grid; place-items: center; min-height: 6rem; padding: 1rem; background: color-mix(in srgb, var(--cc) var(--board-a, 76%), transparent); }
+.sc-choice span { font-family: var(--fun); font-size: calc(clamp(1.3rem, 2.4vw, 1.9rem) * var(--ts)); color: #fff; text-shadow: 0 .14rem 0 #1c1c28, 0 0 .5rem #0006; text-align: center; }
+.sc-cont { --cc: var(--green); } .sc-new { --cc: var(--blue); } .sc-lobby { --cc: var(--orange); }
+.sc .vote-btn:not(:disabled) { background: var(--vb, var(--green)); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
+/* the writer's window, under the story */
+.sc-write { display: flex; flex-direction: column; gap: .45rem; padding: .6rem .8rem; touch-action: auto; -webkit-user-select: text; user-select: text; }
+.sc-secret { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; }
+.sc-secret-w { font-family: var(--font); font-size: calc(1.3rem * var(--ts)); background: #ffd23f; color: #1c1c28; border-radius: .5rem; padding: 0 .55rem; }
+.sc-in { width: 100%; resize: none; font-size: calc(1.15rem * var(--ts)); line-height: 1.4; border: .14rem solid var(--soft); border-radius: .7rem; padding: .4rem .6rem; background: var(--panel2); color: var(--ink); }
+.sc-in:focus { outline: .15rem solid var(--blue); }
+.sc-foot { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .8rem; }
+.sc-left { margin-right: auto; font-variant-numeric: tabular-nums; }
+.sc-need { display: inline-block; font-weight: 600; color: var(--orange); }
+.sc-need.ok { color: var(--green); }
+.game > .gmain[data-phase="write"], .game > .gmain[data-phase="lvote"], .game > .gmain[data-phase="wvote"] { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* the stats */
+.sc-quote { margin: .2rem 0; font-weight: 600; overflow-wrap: anywhere; }
+.sc-qword { display: inline-block; background: #ffd23f; color: #1c1c28; border-radius: .4rem; padding: 0 .4rem; }
+.sc-done { padding: .5rem .8rem; margin-bottom: .6rem; }
+.sc-done h3 { margin: 0 0 .3rem; }
+.sc-done p { margin: 0 0 .4rem; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .sc-row { padding: .4rem .7rem .25rem; }
+  .sc-line { font-size: calc(1rem * var(--ts)); }
+  .sc-choice { min-height: 4.5rem; }
+}
+
 /* ---------- Ether's Crossroads: the jester's dungeon ---------- */
 .scene.ec { background: #0b0705; }
 .ec-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, 177.78cqh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); }

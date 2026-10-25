@@ -9,7 +9,8 @@
    A phase ends when enough players have ended their turn (3 of 4 by default). In submit and answer, reaching that starts
    the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
 
-   Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round. */
+   Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
+   that) writes a paragraph a round. */
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -24,11 +25,12 @@ export const OPTIONS_DEFAULT = {
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
   bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
+  scTime: 0,            // Story Chain: seconds to write a line (0: no timer)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -43,13 +45,15 @@ export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
    right, with an OR strip between them where a duck has no answer (-1) */
 export const isWyr = s => s.options.mode === 'wyr';
 export const isBb = s => s.options.mode === 'bb';
+export const isSc = s => s.options.mode === 'sc';
 export const twoSided = s => isWyr(s) || isBb(s);   // a match in Bicker Brackets: seed A on the left, B on the right
 export const colAt = (s, x) => twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
 export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
 export const colBoundsAt = (s, c) => twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
-export const startX = s => twoSided(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
-/* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead) */
-export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : ['answer', 'discuss', 'results'];
+export const startX = s => twoSided(s) || isSc(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
+/* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead;
+   Story Chain: ducks walk up and down the story) */
+export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -79,6 +83,7 @@ export function newRoom({ id, name, host, test = false, open = true, passkey = '
 
 /* the time limit of the current phase (0 = none) */
 function phaseLimit(s) {
+  if (s.phase === 'write') return +s.options.scTime || 0;
   if (['submit', 'topic', 'seeds'].includes(s.phase)) return s.options.submitTime;
   if (s.phase === 'answer') return s.lordTime;
   if (s.phase === 'podium') return PODIUM;
@@ -138,6 +143,7 @@ function startResults(s, now) {
 
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now) {
+  if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now);
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
   const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
@@ -186,7 +192,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
-      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
+      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : isSc(s) ? SC_BOARD : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
       if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
@@ -209,6 +215,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'cancel': if (host && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
       if (isBb(s)) return bbWrite(s, a, now, true);
+      if (isSc(s)) return scWrite(s, a, now, true) || state;
       if (!me || s.phase !== 'submit' || s.done[a.id]) return s;
       const q = question(s, a);
       s.subs = (s.subs || []).filter(x => x.by !== a.id);
@@ -217,6 +224,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'draft': {   // what a player has typed so far (kept by the host, sent in for them at the end)
       if (isBb(s)) return bbWrite(s, a, now, false) || state;
+      if (isSc(s)) return scWrite(s, a, now, false) || state;
       if (!me || s.phase !== 'submit' || s.done[a.id]) return state;
       s.drafts = { ...(s.drafts || {}), [a.id]: { ...(question(s, a) || { text: '' }), time: [0, 30, 60, 90].includes(a.time) ? a.time : s.options.answerTime } };
       return s;
@@ -228,7 +236,8 @@ export function reduce(state, a, now = Date.now()) {
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }
-      if (s.phase !== 'answer' && s.phase !== 'bracket' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
+      if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a story vote holds its spot
+      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
@@ -237,6 +246,7 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     }
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
+      if (isSc(s)) return scVote(s, a, now) || state;
       if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
@@ -345,6 +355,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
+        if (isSc(s)) { s.sc = { stories: [] }; return startStory(s, now, true); }
         return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
       }
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
@@ -376,7 +387,7 @@ export const groupsOf = (s, id) => {
 export const isSudo = (s, id) => groupsOf(s, id).includes('sudo');
 export const denied = (s, id, perm) => groupsOf(s, id).some(n => (((s.groups || {})[n] || {}).perms || []).includes(perm));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
-export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
+export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
 function countTurn(s, was) {
   const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
   const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
@@ -467,7 +478,7 @@ function settleVote(s, now) {
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = [];
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = []; s.sc = null;
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;
@@ -650,6 +661,193 @@ export function bbStats(list) {
         if (close && c === wSide) P(id).king++;   // their vote decided a one-vote match
       }
     }
+  }
+  return per;
+}
+
+/* ---------- Story Chain ----------
+   A round is one paragraph: everyone writes a secret word → the words are shared out so nobody gets their own, and a
+   random order of writers is drawn → one at a time, each writer adds a sentence (160 letters at most) with their secret
+   word in it, everyone watching it typed → everyone walks onto their favorite line and votes (not their own) → the secret
+   words show below the story, each lit up in its line, and everyone votes for their favorite (not their own) → the stats,
+   where everyone walks to what's next: continue the story (a new paragraph), a new story, or back to the lobby.
+
+   The board is a column of zones, one under the other: the story's lines (and the line being typed), the word boxes, or
+   the three choices. A duck's y covers the zones evenly (zone k is k/n to (k + 1)/n), so it stands on the same line on
+   every screen however the lines wrap. */
+export const SC_PHASES = ['words', 'write', 'lvote', 'wvote', 'results'];
+export const SC_BOARD = ['write', 'lvote', 'wvote', 'results'];
+export const SC_VOTES = ['lvote', 'wvote', 'results'];
+export const LINE_MAX = 160, WORD_MAX = 20;
+export const SC_NEXT = [['cont', 'Continue the story'], ['new', 'A new story'], ['lobby', 'Back to the lobby']];
+/* a secret word for a writer nobody else wrote one for */
+export const SC_WORDS = ['pineapple', 'kazoo', 'sunglasses', 'crumbs', 'trampoline', 'mustache', 'volcano', 'spaghetti', 'penguin', 'glitter', 'toaster', 'pickle', 'unicorn', 'noodle', 'bathtub', 'banana'];
+export const cleanWord = v => (String(v || '').trim().split(/\s+/)[0] || '').replace(/[^\p{L}\p{N}'-]/gu, '').slice(0, WORD_MAX);
+/* where the word sits in a line (any capitals, inside a longer word too), or -1 */
+export const wordAt = (text, word) => word ? String(text).toLowerCase().indexOf(String(word).toLowerCase()) : -1;
+export const scStory = s => s.sc && s.sc.stories[s.sc.stories.length - 1];
+export const scPara = s => { const st = scStory(s); return st && st.paras[st.paras.length - 1]; };
+export const scWriter = s => s.sc && s.sc.order[s.sc.turn];
+/* the board's zones in a phase: "p.i" line i of paragraph p, T the line being typed, W:id the word id wrote, H the top of
+   the choices, C:cont / C:new / C:lobby the choices */
+export function scZones(s, phase = s.phase) {
+  const st = scStory(s); if (!st) return [];
+  if (phase === 'results') return ['H', ...SC_NEXT.map(c => 'C:' + c[0])];
+  const z = [];
+  st.paras.forEach((p, i) => p.lines.forEach((l, j) => z.push(i + '.' + j)));
+  if (phase === 'write') z.push('T');
+  if (phase === 'wvote') for (const l of scPara(s).lines) if (l.wordBy && s.players[l.wordBy] && !z.includes('W:' + l.wordBy)) z.push('W:' + l.wordBy);
+  return z;
+}
+export const zoneAt = (s, y, zones = scZones(s)) => zones.length ? zones[Math.max(0, Math.min(zones.length - 1, Math.floor(y * zones.length)))] : null;
+/* the line a zone holds: { p, i, line } (current paragraph or not) */
+export function scLineOf(s, z) {
+  const m = /^(\d+)\.(\d+)$/.exec(z || ''), st = scStory(s); if (!m || !st) return null;
+  const p = +m[1], i = +m[2], para = st.paras[p], line = para && para.lines[i];
+  return line ? { p, i, line, now: p === st.paras.length - 1 } : null;
+}
+/* can this player vote for what's in this zone? (their own line or word: no) */
+export function scCanVote(s, id, z, phase = s.phase) {
+  if (phase === 'lvote') { const l = scLineOf(s, z); return !!(l && l.now && l.line.by !== id); }
+  if (phase === 'wvote') return /^W:/.test(z || '') && z.slice(2) !== id;
+  if (phase === 'results') return /^C:/.test(z || '');
+  return false;
+}
+/* ducks keep their zone when the zones change (a line is added, the word boxes come): from, to = the zones before and
+   after; alias names where a zone went (the line being typed became a line) */
+function scRezone(s, from, to, alias = {}) {
+  if (!to.length) return;
+  for (const p of Object.values(s.pos)) {
+    const u = Math.max(0, Math.min(.9999, p.y)) * Math.max(1, from.length), k = Math.floor(u), f = u - k, key = alias[from[k]] ?? from[k];
+    let j = to.indexOf(key); if (j < 0) j = Math.min(k, to.length - 1);
+    p.y = (j + f) / to.length;
+  }
+}
+/* a round: a new paragraph of the story (fresh: a new story) */
+function startStory(s, now, fresh) {
+  for (const id of s.seat) if (s.players[id]) delete s.players[id].late;   // late joiners play from here
+  if (fresh || !s.sc.stories.length) s.sc.stories.push({ paras: [] });
+  Object.assign(s.sc, { words: {}, order: [], turn: 0, assign: {}, next: {} });
+  s.subs = []; s.drafts = {}; s.qi = 0; s.pos = {}; s.lock = {};
+  return enter(s, 'words', now);
+}
+/* the words are in: shared out so nobody writes with their own (a game word for anyone left over), the writers drawn in
+   a random order, and the first one starts the paragraph */
+function endWords(s, now) {
+  const sc = s.sc;
+  for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!sc.words[id] && d && cleanWord(d.text)) sc.words[id] = cleanWord(d.text); }
+  s.drafts = {};
+  const order = shuffle(playing(s)), authors = Object.keys(sc.words).filter(id => s.players[id]);
+  if (!order.length) return s;
+  let best = null;
+  for (let k = 0; k < 40 && !(best && best.left === 0); k++) {   // a few random tries; the one with the fewest game words wins
+    const pool = shuffle([...authors]), out = {}; let left = 0;
+    for (const w of order) { const i = pool.findIndex(a => a !== w); if (i < 0) { left++; continue; } out[w] = pool.splice(i, 1)[0]; }
+    if (!best || left < best.left) best = { out, left };
+  }
+  const spare = shuffle(SC_WORDS.filter(w => !Object.values(sc.words).some(x => x.toLowerCase() === w)));
+  sc.order = order; sc.turn = 0;
+  sc.assign = Object.fromEntries(order.map((w, i) => { const by = best.out[w]; return [w, by ? { word: sc.words[by], by } : { word: spare[i % spare.length] || anyOf(SC_WORDS), by: null }]; }));
+  scStory(s).paras.push({ round: s.round, lines: [], votes: {}, wvotes: {} });
+  const n = scZones(s, 'write').length;
+  s.seat.forEach((id, k) => { s.pos[id] = { x: (k + 1) / (s.seat.length + 1), y: (n - .98) / n }; });   // everyone starts just over the line being typed, so it shows
+  return writeTurn(s, now);
+}
+function writeTurn(s, now) {
+  s.qi++; s.subs = []; s.drafts = {};
+  return enter(s, 'write', now);
+}
+/* a writer is done (sent it, ran out of time, or left): their line joins the story, and the next writer goes */
+function endTurn(s, now) {
+  const sc = s.sc, w = scWriter(s), para = scPara(s), sub = (s.subs || []).find(x => x.by === w), d = (s.drafts || {})[w];
+  const text = oneLine(sub ? sub.text : d ? d.text : '', LINE_MAX).trim(), from = scZones(s, 'write');
+  if (text && s.players[w]) {
+    const as = sc.assign[w] || {};
+    para.lines.push({ by: w, text, word: as.word || '', wordBy: as.by || null, ms: Math.max(0, now - s.at) });
+    scRezone(s, from, scZones(s, 'write'), { T: (scStory(s).paras.length - 1) + '.' + (para.lines.length - 1) });
+  } else if (s.players[w]) say(s, `${s.players[w].name} skipped their line.`);
+  s.subs = []; s.drafts = {};
+  if (++sc.turn < sc.order.length) return writeTurn(s, now);
+  if (!para.lines.length) { say(s, 'No lines this time.'); scStory(s).paras.pop(); return startNext(s, now); }
+  scRezone(s, scZones(s, 'write'), scZones(s, 'lvote'));   // (a duck by the line being typed: onto the last line)
+  return enter(s, 'lvote', now);
+}
+/* the stats, with the three choices: everyone starts at the top of them */
+function startNext(s, now) {
+  s.sc.next = {}; s.reviewVotes = {}; s.review = false;
+  s.seat.forEach((id, k) => { s.pos[id] = { x: (k + 1) / (s.seat.length + 1), y: .125 }; });
+  return enter(s, 'results', now);
+}
+/* a vote: stand on a line, a word or a choice and end your turn; it can't be taken back */
+function scVote(s, a, now) {
+  const me = s.players[a.id];
+  if (!me || me.late || !SC_VOTES.includes(s.phase) || s.done[a.id] || !s.pos[a.id] || now < s.at + VOTE_GRACE * 1000) return null;
+  if (typeof a.y === 'number' && isFinite(a.y)) s.pos[a.id].y = Math.max(0, Math.min(1, +a.y));   // (where I stood when I voted)
+  const z = zoneAt(s, s.pos[a.id].y); if (!scCanVote(s, a.id, z)) return null;
+  const para = scPara(s);
+  if (s.phase === 'lvote') para.votes[a.id] = scLineOf(s, z).i;
+  if (s.phase === 'wvote') para.wvotes[a.id] = z.slice(2);
+  if (s.phase === 'results') s.sc.next[a.id] = z.slice(2);
+  s.done[a.id] = true;
+  return advance(s, now);
+}
+/* a secret word or a line: sent (send) or typed so far (a draft; everyone sees a line as it's typed) */
+function scWrite(s, a, now, send) {
+  const me = s.players[a.id]; if (!me || me.late || s.done[a.id]) return null;
+  if (s.phase === 'words') {
+    if (!send) { s.drafts = { ...(s.drafts || {}), [a.id]: { text: cleanWord(a.text) } }; return s; }
+    const w = cleanWord(a.text); if (w) s.sc.words[a.id] = w; else delete s.sc.words[a.id];
+    s.done[a.id] = true; return advance(s, now);
+  }
+  if (s.phase !== 'write' || scWriter(s) !== a.id) return null;
+  const text = oneLine(a.text, LINE_MAX);
+  if (!send) { s.drafts = { [a.id]: { text } }; return s; }
+  if (!text.trim() || wordAt(text, (s.sc.assign[a.id] || {}).word) < 0) return null;   // the secret word has to be in it
+  s.subs = [{ by: a.id, text: text.trim() }]; s.done[a.id] = true;
+  return advance(s, now);
+}
+/* what ends a Story Chain phase: the words when enough are in (then the catch-up timer for the rest); a line when its
+   writer is done, out of time or gone; a vote once enough have voted (no timer: there is time to sway each other) */
+function scAdvance(s, now) {
+  const zs = SC_VOTES.includes(s.phase) ? scZones(s) : [], free = id => s.done[id] || (zs.length && !zs.some(z => scCanVote(s, id, z)));   // (nothing to vote for: only their own line or word left)
+  const on = playing(s), d = on.filter(free).length, timeUp = s.ends && now >= s.ends, enough = d >= needed(s);
+  switch (s.phase) {
+    case 'words':
+      if (enough && d < on.length && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
+      return d >= on.length || timeUp || (enough && (!s.options.catchUp || now >= s.catchEnds)) ? endWords(s, now) : s;
+    case 'write': { const w = scWriter(s); return !s.players[w] || s.done[w] || timeUp ? endTurn(s, now) : s; }
+    case 'lvote':
+      if (!enough) return s;
+      if (!scPara(s).lines.some(l => l.wordBy && s.players[l.wordBy])) return startNext(s, now);   // no words to vote on
+      { const from = scZones(s); s.phase = 'wvote'; const to = scZones(s); s.phase = 'lvote'; scRezone(s, from, to); }
+      return enter(s, 'wvote', now);
+    case 'wvote': return enough ? startNext(s, now) : s;
+    case 'results': {
+      if (!enough) return s;
+      const n = { cont: 0, new: 0, lobby: 0 };
+      for (const [id, c] of Object.entries(s.sc.next)) if (s.players[id] && n[c] !== undefined) n[c]++;
+      const top = Math.max(...Object.values(n)), best = Object.keys(n).filter(k => n[k] === top), pick = anyOf(best), name = SC_NEXT.find(c => c[0] === pick)[1];
+      say(s, best.length > 1 ? `A tie! A coin toss: ${name.toLowerCase()}.` : `${name}!`);
+      if (pick === 'lobby') return backToLobby(s, 'Back to the lobby.');
+      s.round++;
+      return startStory(s, now, pick === 'new');
+    }
+  }
+  return s;
+}
+/* the numbers behind the stats, over a list of paragraphs: votes for each player's lines and words, time spent writing */
+export function scStats(paras) {
+  const per = {}, P = id => (per[id] = per[id] || { lines: 0, lvotes: 0, wvotes: 0, ms: 0, best: null, bestN: 0, word: '', wordN: 0 });
+  for (const para of paras) {
+    const ln = para.lines.map(() => 0), wn = {};
+    for (const i of Object.values(para.votes || {})) if (ln[i] !== undefined) ln[i]++;
+    for (const by of Object.values(para.wvotes || {})) wn[by] = (wn[by] || 0) + 1;
+    para.lines.forEach((l, i) => {
+      const p = P(l.by); p.lines++; p.lvotes += ln[i]; p.ms += l.ms || 0;
+      if (ln[i] > p.bestN) { p.best = l.text; p.bestN = ln[i]; }
+      if (l.wordBy) { const q = P(l.wordBy), k = wn[l.wordBy] || 0; if (k > q.wordN || !q.word) { q.word = l.word; q.wordN = Math.max(q.wordN, k); } }
+    });
+    for (const [by, k] of Object.entries(wn)) P(by).wvotes += k;
   }
   return per;
 }

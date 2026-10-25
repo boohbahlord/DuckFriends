@@ -684,3 +684,10 @@ The answers:
 Ducks can walk around on screen while it is being typed, but the game shows a window to the player writing that they have to submit an answer for with the secret word showed in the window as well. The font of the secret word is NOT the font of the player that wrote it only WHEN it is revealed to the player who will write it, BUT the WHOLE sentence the player writes WILL be in their font. 
 
 Stats include who got the most votes for their sentences, the most votes for their word, who took the longest writing, and the most jumps.
+
+Asked (not the owner's words): the 160-letter limit with example sentences, and six small questions with suggestions
+(the word must be in the line; the words show after the line vote; votes end by the usual share; what next is three
+spots with a coin toss for a tie; one word up to 20 letters; old paragraphs stay above, faded, and finished stories
+show on the all-rounds review). The answer, word for word:
+
+that is good
