@@ -64,6 +64,12 @@ p { margin: 0; }
 html.moving .bd-dots { animation: breathe 2.2s ease-in-out var(--dl, 0s) infinite alternate; will-change: opacity; }
 html:not(.dark) #shapes .bd-dots { opacity: .4; }
 html.moving:not(.dark) #shapes .bd-dots { animation-name: breathel; }
+/* the playground's lights run along their strings; the blocks' letters take four colors in turn, one set after another */
+html.moving .bd-pgb { animation: pgchase 1.6s ease-in-out var(--dl, 0s) infinite; will-change: opacity; }
+@keyframes pgchase { 0%, 50%, 100% { opacity: .3; } 25% { opacity: 1; } }
+.bd-bk { opacity: 0; } .bd-bk0 { opacity: 1; }
+html.moving .bd-bk { animation: bkcolor 6s linear var(--dl, 0s) infinite; will-change: opacity; }
+@keyframes bkcolor { 0% { opacity: 0; } 5%, 25% { opacity: 1; } 30%, 100% { opacity: 0; } }
 html.moving .bd-bulbs { animation: twinkle 2.6s ease-in-out var(--dl, 0s) infinite alternate; will-change: opacity; }
 .bd-sh { position: absolute; pointer-events: none; }
 .bd-sh svg { width: 100%; height: 100%; display: block; overflow: visible; }

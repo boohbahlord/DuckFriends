@@ -1315,3 +1315,13 @@ The night show map and the background on the Duck Friends screen should have the
 each row of dots of one color is its own small picture again, each a little after the last, so the light rolls across
 the floor in diagonal waves like before; the string lights twinkle in three sets instead of all together. Same on the
 title screen and the Night Show map; still smooth (60 frames a second) on a slowed-down phone and in Firefox.)
+
+## Night Show: a glowing playroom on the back wall (2026-10-25)
+
+The night show needs the background to have something feeling up it's empty space. How about a very colorful indoor playground that glows and wrapped in lights with wooden block letters stacked and changing colors, colors that glow in more patterns, and there is a window casting a waxing crescent with a tree seen from outside
+
+(Built, waiting for the owner's look: on the back wall, between the bunting and the floor, a glowing playground on each
+side (two towers, a tube with round windows, a slide, a climbing wall) wrapped in string lights whose light runs along
+them; two piles of wooden letter blocks (DUCK, FUN, GO and ABC, XY, Z) whose letters take four colors in turn, each
+block a little after the next; and a window in the middle with a waxing crescent moon, stars and a tree outside, its
+moonlight falling on the floor. A phone gets one tower and slide on each side. Same on the title screen.)
