@@ -990,5 +990,6 @@ second detuned saw) are left out, about half the work; a computer plays everythi
 back (or leaving the room and coming back) picks the same song up where it was. All music is a little quieter at 100%
 (about 4 dB); saved slider settings are kept. Against crackling: the music asks the browser for a roomier sound buffer,
 and on a computer each next song is written out ahead while the one before plays, then played from that recording,
-which takes almost no work (the first song, and any song not ready in time, play live). Spring in a Box is being
+which takes almost no work. The first song is written out as soon as the page opens, and the lobby waits for it (15
+seconds at most); a song not ready in time plays live. Spring in a Box is being
 reworked with straight time and more Hollow Knight; not in the game until the owner says so.

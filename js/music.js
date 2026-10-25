@@ -457,6 +457,7 @@ export const music = (function(){
     if(T.onNote)T.onNote(e,t,E8,x)}
   let RENDER=false,FIXED=false;
   function tick(until){if(!playing||!ac)return;
+    if(WAIT&&!RENDER){if(NX&&!NX.buf&&ac.currentTime<WAIT)return;WAIT=0;nextSong(ac.currentTime+.15);if(BUF)return}
     if(BUF&&!RENDER){if(ac.currentTime<BUF.end)return;const e=BUF.end;BUF=null;nextSong(e+GAP);if(BUF)return}
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
@@ -505,6 +506,7 @@ export const music = (function(){
     const now=ac.currentTime;
     if(paused&&BUF){const a=BUF.at;playBuf(BUF,a<0?now+Math.max(.15,-a):now+.15,Math.max(0,a))}
     else if(paused&&T){next=now+Math.max(.15,left);if(T.bed&&step>0&&step<total)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
+    else if(NX)WAIT=now+15;   // the first song has been written out since the page opened: wait for it (15 seconds at most)
     else{load(pick(),true);next=now+.15;prep()}
     paused=false;level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;paused=true;clearInterval(timer);timer=null;stopBeds();if(!ac)return;
@@ -515,6 +517,7 @@ export const music = (function(){
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
+  setTimeout(()=>{if(LV()>0)prep()},1500);   // on a computer, the first song is written out as soon as the page is open
   addEventListener("pointerdown",wake,true);
   addEventListener("keydown",wake,true);
   document.addEventListener("visibilitychange",sync);
@@ -535,7 +538,7 @@ export const music = (function(){
   /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
      takes almost no work to play, so another app busy on the computer can't make it crackle. The first song, a song
      not ready in time, and every song on a phone (too much memory there) are played live, note by note */
-  let NX=null,BUF=null,ahead=!LITE&&!!(window.OfflineAudioContext||window.webkitOfflineAudioContext);
+  let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!(window.OfflineAudioContext||window.webkitOfflineAudioContext);
   function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now(),r=offline(i,false,1);if(!r){ahead=false;NX=null;return}
     nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
   function playBuf(b,t,off){const s=ac.createBufferSource();s.buffer=b.buf;s.connect(bout);s.start(t,off);BUF={...b,s,t0:t-off,end:t-off+b.dur,at:0}}
