@@ -68,6 +68,10 @@ export const sfx = {
   zap() { noise(.18, { gain: .09, freq: 3200, q: .6 }); noise(.12, { gain: .06, freq: 2200, at: .08 }); noise(1.1, { gain: .07, type: 'lowpass', freq: 380, at: .12, slideTo: 90 }); },
   love() { tone(784, .25, { gain: .08 }); tone(988, .25, { gain: .07, at: .12 }); tone(1175, .45, { gain: .07, at: .24 }); },
   bonk() { tone(330, .18, { type: 'triangle', gain: .14, slide: .5 }); noise(.08, { gain: .05, freq: 900 }); },
+  /* Hangout: into the pool (k: 0 a toe in … 1 a cannonball), off the trampoline (k: how high), a pat on the beach ball */
+  plunge(k = 1) { noise(.25 + .35 * k, { gain: .03 + .06 * k, type: 'lowpass', freq: 1600, slideTo: 260 }); tone(420 - 120 * k, .22, { type: 'sine', gain: .03 + .04 * k, slide: .45, attack: .01 }); noise(.4 + .3 * k, { gain: .015 + .025 * k, type: 'highpass', freq: 3000, at: .06, slideTo: 5200 }); },
+  boing(k = 1) { tone(150 + 40 * k, .32, { type: 'sine', gain: .08, slide: 2.2, attack: .006 }); tone(300 + 80 * k, .22, { type: 'triangle', gain: .025, slide: 1.8, attack: .006 }); },
+  pat() { tone(240, .1, { type: 'sine', gain: .08, slide: .7, attack: .004 }); noise(.06, { gain: .03, type: 'lowpass', freq: 700 }); },
   /* the double jump: a soft puff of cloud */
   puff() { noise(.28, { gain: .06, type: 'lowpass', freq: 1400, slideTo: 300 }); tone(660, .12, { type: 'sine', gain: .04, slide: 1.5 }); },
   /* the trombone: always the wrong note. It scoops up into a note that's already flat, sags further while it wobbles, and

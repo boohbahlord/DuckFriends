@@ -1630,3 +1630,28 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-strip-in { position: relative; height: 100%; }
 .hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
 .hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }
+
+/* ---------- Hangout: the pool, the beach ball, the rubber ducks, the trampoline, long falls (hangout/pool.js) ---------- */
+.hang-water { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }   /* the ripples: over the water, under every duck and prop */
+.hang-splash, .hang-dust { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; pointer-events: none; }
+.hang-splash svg { position: absolute; overflow: visible; }
+.hang-dust svg { position: absolute; left: -90px; top: -60px; overflow: visible; }
+.hs-foam { fill: #e8fdff; opacity: .5; }
+.hs-tongue { fill: #bdf3ff; fill-opacity: .88; stroke: #1c1c28; stroke-width: 2; stroke-linejoin: round; }
+.hs-drop { fill: #e2fdff; stroke: #1c1c28; stroke-width: 1.4; }
+.hd-bit { fill: #8d7d68; stroke: #1c1c28; stroke-width: 1.6; }
+.gduck.hang-swim .gduck-shadow { display: none; }
+.gduck.hang-swim .gduck-name { margin-top: calc(var(--sz) * .13); }
+.hang-wl { display: none; position: absolute; left: 50%; top: 0; width: calc(var(--sz) * .96); height: calc(var(--sz) * .27); transform: translate(-50%, -50%); pointer-events: none; }
+.gduck.hang-swim .hang-wl { display: block; }
+.hang-wl svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wl-front { fill: #7fe6ff3d; stroke: #e2fdff; stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wl-shine { fill: none; stroke: #ffffffaa; stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.hang-ball, .hang-rduck, .hang-tramp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+.hang-ball svg, .hang-rduck svg, .hang-tramp svg { display: block; overflow: visible; }
+.hang-rduck > svg { transform-origin: 50% 83%; }
+.hang-ballsh { position: absolute; left: -22px; top: -6px; width: 44px; height: 12px; border-radius: 50%; background: #000; transform-origin: 22px 6px; pointer-events: none; }
+.hang-dent { position: absolute; left: -60px; top: -22px; width: 120px; height: 44px; transform-origin: 60px 22px; pointer-events: none; }
+.hang-dent svg { display: block; overflow: visible; }
+.gduck.hang-flail .gduck-body { transform-origin: 50% 58%; animation: hang-flail .34s ease-in-out infinite alternate; }   /* (html.still stops it) */
+@keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }

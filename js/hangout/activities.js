@@ -4,3 +4,4 @@ import './lamp.js';
 import './stage.js';
 import './seats.js';
 import './soccer.js';
+import './pool.js';
