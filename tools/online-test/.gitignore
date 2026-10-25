@@ -1,0 +1,4 @@
+node_modules/
+*.log
+shots/
+rules.json

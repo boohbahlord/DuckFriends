@@ -2,7 +2,7 @@
    The game talks to a room through one small object: room.state, room.me, room.send(action), room.on(fn), room.close().
    A TEST room lives on this device, with computers; this device is the host and runs the rules. Online rooms (online.js,
    Firebase) have the same parts, so the screens never change. */
-import { reduce, newRoom } from './rules.js';
+import { safeReduce, newRoom } from './rules.js';
 import { STYLES } from './styles.js';
 import { OUTFITS } from './outfits.js';
 import { botActions } from './bots.js';
@@ -33,7 +33,7 @@ export function createLocalRoom({ name, test = true, computers = 3, max, options
     get state() { return state; },
     send(a) {
       if (!a.id) a.id = me;
-      const next = reduce(state, a, now());
+      const next = safeReduce(state, a, now());
       if (next === state) return;
       state = next; fns.forEach(f => f(state, a));
     },
