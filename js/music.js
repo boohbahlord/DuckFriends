@@ -5,6 +5,8 @@
    random, and the songs heard most recently are the least likely to come again. When each song was last heard is kept on
    this device ("duckfriends-music"). Browsers only start sound after a click or a key. */
 import { profile } from './store.js';
+import { activeRoom } from './net.js';
+import { now as clockNow } from './clock.js';
 export const music = (function(){
   const N={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
   // "A4:2 F4:1:.5 r:2 D5+E5:1 G5:2::a …" (lengths in eighths, may be fractions; then a loudness and tags: a = a falling
@@ -1576,7 +1578,7 @@ export const music = (function(){
       e.vel=e.v*(1-c+c*shape*contour*fall*jit)*alt})});
     let dur=0;for(let st=0;st<total;st++){const ab=Math.floor(st/T.bar);dur+=60/T.bpm/2/(T.tempo?T.tempo(ab%T.chords.length,st%T.bar,ab):1)}
     ev.total=total;ev.dur=dur;return ev}
-  function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=FIXED?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
+  function load(i,now,seed){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=seed!=null?seed>>>0:FIXED?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
   /* one note of the melody, played: its loudness, a slide from the last note, a sag when the song falls apart, a breath
      that falls away; its own send into the room and the delay (more at a phrase's end, so the end floats off) */
   function playLead(e,t,E8,x){t=Math.max(t,ac.currentTime);const air=e.tag.includes("a"),ty=air?"air":T.leadFor?T.leadFor(x.abs):T.lead;let d=e.l*E8*(T.leg||.93),cut=false;
@@ -1594,8 +1596,7 @@ export const music = (function(){
     if(T.onNote)T.onNote(e,t,E8,x)}
   let RENDER=false,FIXED=false;
   function tick(until){if(!playing||!ac)return;
-    if(WAIT&&!RENDER){if(NX&&!NX.buf&&ac.currentTime<WAIT)return;WAIT=0;nextSong(ac.currentTime+.15);if(BUF)return}
-    if(BUF&&!RENDER){if(ac.currentTime<BUF.end)return;const e=BUF.end;BUF=null;nextSong(e+GAP);if(BUF)return}
+    if(!RENDER){follow();if(!LIVE)return}
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
       const E8=60/T.bpm/2/(T.tempo?T.tempo(bar,i,abs):1),x={t:next,bar,abs,i,E8,C,step};
@@ -1626,42 +1627,86 @@ export const music = (function(){
         if(has("static")&&i===0&&(bar*7)%3===1)hit(next,"static");   // a radio that won't quite tune
         if(T.step)T.step(x);if(i===0&&T.onBar)T.onBar(x);GL=null}
       next+=E8;step++;
-      if(step>=total){if(RENDER)return;nextSong(next+GAP);if(BUF)return}}   // the song ends: 20 seconds of quiet, then the next one
+      if(step>=total){if(!RENDER)LIVE=false;return}}   // the song ends (the room's list says what comes after it)
   }
   const GAP=20;
   /* the next song: a random pick that leans away from the songs heard most recently (each song's chance grows with the
-     minutes since it was last heard); never the same song twice in a row while there is another */
-  const HKEY="duckfriends-music",names=TRACKS.map(t=>t.name);
+     minutes since it was last heard); never the same song twice in a row while there is another, and never a song the
+     room turned off (song off on the command line) */
+  const HKEY="duckfriends-music",names=TRACKS.map(t=>t.name),idx=n=>names.indexOf(n);
   const heard=()=>{try{const h=JSON.parse(localStorage.getItem(HKEY)||"{}");return h&&typeof h==="object"&&!Array.isArray(h)?h:{}}catch(e){return {}}};
   /* What the duck? is the rare one: once in three rounds of all the other songs, between two songs of the third round */
   const RARE=names.indexOf("What the duck?"),RKEY="duckfriends-music-rare",RN=names.length-1,
     rare=()=>{let r=null;try{r=JSON.parse(localStorage.getItem(RKEY)||"null")}catch(e){}return r&&typeof r.n==="number"&&typeof r.at==="number"?r:{n:0,at:2*RN+1+Math.floor(Math.random()*Math.max(1,RN-1))}},
     keepRare=r=>{try{localStorage.setItem(RKEY,JSON.stringify(r))}catch(e){}};
-  function pick(skip){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7;
-    if(RARE>=0){const r=rare();
-      if(r.n>=r.at&&last!==RARE&&skip!==RARE){keepRare({n:0,at:2*RN+1+Math.floor(Math.random()*Math.max(1,RN-1))});h[names[RARE]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return RARE}
+  function pick(avoid,off){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7,on=i=>!(off&&off.has(names[i]));
+    const keep=i=>{h[names[i]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return i};
+    if(RARE>=0&&on(RARE)){const r=rare();
+      if(r.n>=r.at&&avoid!==RARE){keepRare({n:0,at:2*RN+1+Math.floor(Math.random()*Math.max(1,RN-1))});return keep(RARE)}
       r.n++;keepRare(r)}
-    let best=0,bk=-1;names.forEach((n,i)=>{if(i===RARE||names.length>2&&(i===last||i===skip)||names.length>1&&i===last)return;const k=Math.pow(Math.random(),1/Math.log(2+age(n)));if(k>bk){bk=k;best=i}});
-    h[names[best]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return best}
-  /* stopped part way (the Music slider at 0, the page hidden, out of the room): starting again picks the same song up
-     where it was, and a gap between songs keeps the rest of its quiet */
-  let paused=false,left=0;
+    const pool=names.map((n,i)=>i).filter(i=>i!==RARE&&on(i));if(!pool.length)return RARE>=0&&on(RARE)?keep(RARE):-1;   // (only the rare one left on: it plays)
+    let best=-1,bk=-1;for(const i of pool){if(pool.length>1&&i===avoid)continue;const k=Math.pow(Math.random(),1/Math.log(2+age(names[i])));if(k>bk){bk=k;best=i}}
+    return keep(best)}
+  const newSeed=()=>(Math.random()*4294967296)>>>0;
+  /* how long a song is (the same on every device: its notes and its tempo, nothing left to chance) */
+  const DUR={};
+  function durOf(i){if(DUR[i]==null){const k=SEED;DUR[i]=build(TRACKS[i]).dur;SEED=k}return DUR[i]}
+
+  /* ---------- everyone in a room hears the same song at the same moment ----------
+     The host keeps the room's songs in the state (s.music): the song now (a) and the one after it (b), each a name, its
+     start in the server's time (clock.js) and a seed, so its little chances (a note's loudness, a harp's run) come out
+     the same everywhere. b starts 20 seconds after a ends; once b has begun, it becomes a and the host picks a new b.
+     Every device plays whichever song should be sounding, from where it should be by now: so a page hidden or muted for a
+     while comes back to the song where everyone else is, not where it left off. A song turned off stops at once and the
+     next one comes in 3 seconds. A room whose host has no song list (an older page) plays this device's own picks. */
+  let LOC=null,noListAt=0,PRE=null;
+  const end=e=>e.at+durOf(idx(e.n))*1000;
+  function plan(S,t){const off=new Set(S&&S.off||[]),ok=n=>idx(n)>=0&&!off.has(n);
+    let a=S&&S.a||null,b=S&&S.b||null;const was=JSON.stringify([a,b]);
+    if(a&&idx(a.n)<0)a=null;
+    if(a&&!ok(a.n)&&t<end(a)){a=null;if(b)b={...b,at:Math.min(b.at,t+3000)}}
+    if(b&&!ok(b.n))b=null;
+    if(b&&(!a||t>=b.at)){a=b;b=null}
+    if(!a){if(PRE&&ok(PRE.n))a={n:PRE.n,at:t+1500,seed:PRE.seed};else{const i=pick(-1,off);if(i>=0)a={n:names[i],at:t+1500,seed:newSeed()}}PRE=null}   // the first song: the one written out since the page opened
+    if(a&&!b){const i=pick(idx(a.n),off);if(i>=0)b={n:names[i],at:Math.round(Math.max(end(a),t)+GAP*1000),seed:newSeed()}}
+    return JSON.stringify([a,b])===was?null:{a,b}}
+  function list(){const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
+  /* the host keeps the list going (every second, whether or not it plays music itself) */
+  function conduct(){const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
+    if(s.hostId===r.me){const m=plan(s.music,t);if(m)r.send({t:"music",a:m.a,b:m.b});LOC=null}
+    else if(s.music){LOC=null;noListAt=0}
+    else{if(!noListAt)noListAt=t;if(t-noListAt>4000){const m=plan(LOC,t);if(m)LOC={...m,off:[]}}}
+    if(LV()>0&&!profile.settings.musicMute)ahead_(list())}
+  setInterval(conduct,1000);
+  /* the song that should be sounding now: the first on the list that hasn't ended (it may not have begun) */
+  function wantOf(S,t){for(const e of [S.a,S.b])if(e&&idx(e.n)>=0&&t<end(e))return e;return null}
+  const same=(x,y)=>!!x&&!!y&&x.n===y.n&&x.at===y.at&&x.seed===y.seed;
+  let CUR=null,LIVE=false,ANC=null;   // the song this device plays, whether it is played live, and when it began (in both clocks)
+  function follow(){const S=list();if(!S)return;
+    if(ac.state!=="running"){if(CUR)drop(true);return}   // (a sleeping audio clock doesn't move: start again once it runs)
+    const t=clockNow(),e=wantOf(S,t);
+    if(same(e,CUR)&&ANC&&Math.abs((ac.currentTime-ANC.ac)-(t-ANC.t)/1000)<.3)return;   // playing, and still in step with everyone
+    if(CUR)drop(t<end(CUR));
+    CUR=e;if(!e)return;
+    const dt=(e.at-t)/1000,r=REN.get(key(e));ANC={ac:ac.currentTime,t};   // dt: seconds until it starts (below 0: it began that long ago)
+    if(r&&r.buf)playBuf(r,ac.currentTime+Math.max(.1,dt),Math.max(0,-dt-.1));
+    else{load(idx(e.n),true,e.seed);seek(ac.currentTime+dt);LIVE=step<total}}
+  /* stop the song this device plays: cut short, it fades away; ended, its last notes ring out */
+  function drop(cut){if(BUF&&cut)fadeOut(BUF);BUF=null;if(LIVE)stopBeds();LIVE=false;CUR=null;ANC=null}
+  /* a song played live from part way: the notes already gone by are skipped */
+  function seek(t0){next=t0;const lim=ac.currentTime+.1;
+    while(next<lim&&step<total){const abs=Math.floor(step/T.bar),bar=abs%T.chords.length;next+=60/T.bpm/2/(T.tempo?T.tempo(bar,step%T.bar,abs):1);step++}
+    while(ei<EV.length&&EV[ei].s<step-1e-6)ei++;
+    if(step>0&&step<total&&T.bed)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
   function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
-    const now=ac.currentTime;
-    if(paused&&BUF){const a=BUF.at;playBuf(BUF,a<0?now+Math.max(.15,-a):now+.15,Math.max(0,a))}
-    else if(paused&&T){next=now+Math.max(.15,left);if(T.bed&&step>0&&step<total)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
-    else if(NX)WAIT=now+15;   // the first song has been written out since the page opened: wait for it (15 seconds at most)
-    else{load(pick(),true);next=now+.15;prep()}
-    paused=false;level(.8);timer=setInterval(tick,90);tick()}
-  function stop(){if(!playing)return;playing=false;paused=true;clearInterval(timer);timer=null;stopBeds();if(!ac)return;
-    left=Math.min(GAP,Math.max(0,next-ac.currentTime));if(BUF){BUF.at=ac.currentTime-BUF.t0;fadeOut(BUF)}level(.3,0)}
+    level(.8);timer=setInterval(tick,90);tick()}
+  function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
-  // in a room (the lobby or the game), with the sound up and the page in view
-  const wanted=()=>LV()>0&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
+  // in a room (the lobby or the game), with the music on and the page in view
+  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
-  setTimeout(()=>{if(LV()>0)prep()},1500);   // on a computer, the first song is written out as soon as the page is open
   addEventListener("pointerdown",wake,true);
   addEventListener("keydown",wake,true);
   document.addEventListener("visibilitychange",sync);
@@ -1675,32 +1720,36 @@ export const music = (function(){
      (Chrome), each piece goes in 2 seconds before the recording reaches it: Chrome works through every note it holds, even
      ones that haven't started, so a whole song of notes at once made it three times slower. Elsewhere (Firefox, which is
      quick anyway) they all go in first */
-  function offline(i,fixed,lv){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
-    const dur=build(TRACKS[i]).dur,len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
+  function offline(i,fixed,lv,seed){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
+    const dur=durOf(i),len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
     const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
-    run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true);next=.05;playing=true},4);
+    run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true,seed);next=.05;playing=true},4);
     const p=(async()=>{if(o.suspend)for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s-2).then(()=>{try{run(null,u)}finally{o.resume()}})}
       else for(let s=4;s<len-6.5;s+=4){await new Promise(r=>setTimeout(r));run(null,Math.min(s+4,len-6.5))}
       const b=await o.startRendering(),n=Math.min(b.length,b.sampleRate);   // the last second fades to nothing: the recording ends without a tick
       for(let c=0;c<b.numberOfChannels;c++){const d=b.getChannelData(c),k0=d.length-n;for(let k=0;k<n;k++)d[k0+k]*=1-k/n}return b})();
     return {p,dur:dur+.05}}
   async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
-  /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
-     takes almost no work to play, so another app busy on the computer can't make it crackle. The first song, a song
-     not ready in time, and every song on a phone (too much memory there) are played live, note by note */
-  let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!window.OfflineAudioContext;
-  function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now();let r=null;try{r=offline(i,false,1)}catch(e){}if(!r){ahead=false;NX=null;return}
-    nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
+  /* on a computer, while one song plays, the next on the room's list is written out, and then played from that recording:
+     a recording takes almost no work to play, so another app busy on the computer can't make it crackle. A song joined
+     part way that isn't written out yet, a song not ready in time, and every song on a phone (too much memory there) are
+     played live, note by note */
+  let BUF=null,ahead=!LITE&&!!window.OfflineAudioContext;
+  const REN=new Map(),key=e=>e.n+"/"+e.seed;
+  function render(e){const i=idx(e.n),k=key(e),t0=performance.now();let r=null;try{r=offline(i,false,1,e.seed)}catch(err){}if(!r){ahead=false;return}
+    const x={i,dur:r.dur};REN.set(k,x);
+    r.p.then(b=>{x.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;REN.delete(k)})}   // too slow to keep ahead: stay live
+  function ahead_(S){if(!ahead||!S)return;const e=S.b;if(!e||idx(e.n)<0||REN.has(key(e)))return;
+    for(const k of [...REN.keys()])if(!CUR||k!==key(CUR))REN.delete(k);   // (only the song playing and the one after it are kept)
+    render(e)}
+  setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
   /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
      it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
   function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn();s.buffer=b.buf;s.connect(g);g.connect(bout);
     if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,t0:t-off,end:t-off+b.dur,at:0}}
   function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
-  /* a song ends (after its quiet): the next one, from its recording when it's ready. When it isn't, another song plays live
-     and the recording goes on, for the song after (writing it out again from the start, next to a song played live, was
-     the most work the music ever asked of a computer) */
-  function nextSong(t){const nx=NX;NX=null;stopBeds();
-    if(nx&&nx.buf){T=TRACKS[nx.i];last=nx.i;playBuf(nx,t,0)}else if(nx){NX=nx;load(pick(nx.i));next=t}else{load(pick());next=t}
-    prep()}
-  return {sync,renderSong,get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
+  /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
+  function nowPlaying(){const S=list();if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
+    return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
+  return {sync,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
 })();

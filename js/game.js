@@ -32,6 +32,7 @@ import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile, save } from './store.js';
 import { openSettings, netLevel } from './settings.js';
+import { musicBarHTML, mountMusicBar } from './musicbar.js';
 import { openCustomize, shareLook } from './customize.js';
 import { pickNote } from './notes.js';
 import { openFriends } from './friends.js';
@@ -60,7 +61,7 @@ const kept = new Set();          // the jumps kept on here (Shift and the key); 
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
 let draftT = 0;
-let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
+let pm = null, idleOff = null, mbarOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
 let lastClose = 0;   // Lawyering: the closing arguments last announced
@@ -1139,7 +1140,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (bar) bar.destroy(); bar = null; lastKey = -1; onBoard = false; kept.clear();
+    if (bar) bar.destroy(); bar = null; if (mbarOff) mbarOff(); mbarOff = null; lastKey = -1; onBoard = false; kept.clear();
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
     for (const t of ['pointerup', 'pointercancel']) removeEventListener(t, unpeek);
@@ -1147,10 +1148,10 @@ register('game', {
   render(arg) {
     R = arg || activeRoom(); if (!R) return null;
     S = el(`<section class="screen game docked">
-      <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>
+      <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
-    docks = mountDocks(S, HINTS);
+    docks = mountDocks(S, HINTS); mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey });
