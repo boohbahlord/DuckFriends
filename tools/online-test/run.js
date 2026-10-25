@@ -1,6 +1,6 @@
 /* ---------- the online test: several players in one online room, on this computer ----------
    Opens a few browsers (each its own guest player), makes an online room against the local Firebase emulators, and lets
-   every player play like a computer would while they start kick and back-to-lobby votes, and the host (or sudo) kicks
+   every player play like a computer would while they start kick, back-to-lobby and skip-the-round votes, and the host (or sudo) kicks
    and skips. Any error in any browser is printed at the end. See README.md for setting it up.
 
      node run.js [mode] [players] [seconds] [scenario]
@@ -9,7 +9,7 @@
        seconds   how long to play                                 (120)
        scenario  none | mixed | storm | kick | lobby | boss        (mixed)
                  none: no votes · mixed: now and then · storm: votes all the time · kick: kick votes that mostly pass ·
-                 lobby: back-to-lobby votes only · boss: the host gives sudo, and sudo players kick and skip
+                 lobby: back-to-lobby and skip-the-round votes only · boss: the host gives sudo, and sudo players kick and skip
      QUIT=1 node run.js …   also closes the host's browser in the middle of votes, so another player takes over */
 const { chromium } = require('playwright');
 const http = require('http');
@@ -64,7 +64,7 @@ const PLAYER = scen => {
           if (voters.includes(me) && !v.yes[me] && !v.no[me] && Math.random() < .15) R.send({ t: 'voteCast', n: v.n, v: Math.random() < (scen === 'kick' ? .8 : .45) });
         } else if (Math.random() < (scen === 'storm' ? .05 : .006)) {
           if (scen !== 'lobby' && others.length && Math.random() < .6) { const t = others[Math.floor(Math.random() * others.length)]; if (!pm.whyNotVote(s, me, 'kick')) R.send({ t: 'voteStart', kind: 'kick', target: t }); }
-          else if (!pm.whyNotVote(s, me, 'lobby')) pm.lobbyVote(R);
+          else { const kind = Math.random() < .5 ? 'skip' : 'lobby'; if (!pm.whyNotVote(s, me, kind)) pm.lobbyVote(R, kind); }
         }
       } catch (e) { console.error('TEST', e && e.stack || e); }
     }, 300);

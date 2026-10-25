@@ -757,6 +757,7 @@ html.lite .tmeter i, html.still .tmeter i { animation: none; }
 .pm-side { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; font-size: calc(.8rem * var(--ts)); }
 .pm-tag { padding: .05rem .45rem; border-radius: .5rem; background: var(--soft); white-space: nowrap; }
 .pm-tag.idle { background: color-mix(in srgb, var(--blue) 30%, var(--soft)); }
+.pm-votes { display: flex; flex-wrap: wrap; gap: .5rem; }
 .pm-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .6rem 1rem .8rem; border-top: .12rem solid var(--soft); margin-top: .4rem; }
 .net { display: inline-flex; align-items: center; gap: .35rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .net .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: .9rem; }

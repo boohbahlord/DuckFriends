@@ -666,3 +666,5 @@ the gun can also be a smidgen lower but u did a good job with that one it is fun
 1. On the player bar have it to where the host can have a kick player option where they can kick without a vote and the player cannot cast a vote if there are only two players
 2. yes and the host can use the command line to create a skip event action whenever they want as well and the code should be simple to do it and mentioned in the help section. Also anyone with sudo perms can do what the host can including change lobby settings, choose, map, and change game mode in lobby. The sudo perms are granted thru command line. Bring this to your coordinator and have them decide to delegate this work to someone who is most fitting to do it. 
 3. yeah sure ig idk wat that means
+
+Someone should be in charge of making a new feature to vote skip a round that is found below or next to vote back to lobby in the TAB menu or player list menu that u can bring up. 

@@ -300,13 +300,13 @@ export function reduce(state, a, now = Date.now()) {
         if (!P[a.target] || a.target === a.id) return state;
         if (humanIds(s).length <= 2) return state;   // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
-      } else if (a.kind === 'lobby') {
-        if (used.lobby === turnKey(s)) return state;   // one back-to-lobby vote a turn
+      } else if (a.kind === 'lobby' || a.kind === 'skip') {
+        if (used[a.kind] === turnKey(s)) return state;   // one back-to-lobby (or skip) vote a turn
       } else return state;
       s.voteN = (s.voteN || 0) + 1;
       s.vote = { n: s.voteN, kind: a.kind, target: a.kind === 'kick' ? a.target : null, by: a.id, yes: { [a.id]: true }, no: {}, ends: now + VOTE_TIME * 1000 };
       s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : turnKey(s) } };
-      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : `${me.name} started a vote to go back to the lobby.`);
+      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : a.kind === 'skip' ? `${me.name} started a vote to skip this round.` : `${me.name} started a vote to go back to the lobby.`);
       return settleVote(s, now);
     }
     case 'voteCast': {
@@ -485,10 +485,21 @@ function settleVote(s, now) {
       if (v.target === s.hostId) s.hostId = humanIds(s)[0] || null;
       return advance(s, now);
     }
+    if (v.kind === 'skip') return skipRound(s, now);
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
   return s;
+}
+/* a vote passed to skip the round: the rest of its questions (or the tournament) are dropped. Agree or Disagree and
+   Would You Rather go to the round's stats with what was answered; Bicker Brackets starts a new tournament; on the stats
+   screen, the next round starts */
+function skipRound(s, now) {
+  say(s, 'The room voted to skip this round.');
+  if (s.phase === 'results') return advance(s, now, true);
+  if (isBb(s)) { s.round++; return startTourney(s, now); }
+  if (s.phase === 'submit') { s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now); }   // nothing asked yet: on to the next round's writing
+  return startResults(s, now);
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
