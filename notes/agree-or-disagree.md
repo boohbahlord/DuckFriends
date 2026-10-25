@@ -1132,3 +1132,71 @@ there is cackling in all of these songs.
 (Found: no clipping; the crackle is the little burst of noise at the start of notes, there to sound like a hammer, a
 mallet or a breath. The felt piano's hammer and the wood knock now swell in over 5 ms, softer and darker, and the brush
 is a little darker; the seven new songs' own instruments get the same in their thread.)
+
+## Music: seven new songs from the owner's picks (2026-10-25)
+
+Offered: scales A1 major pentatonic, A2 whole tone, A3 Lydian dominant, A4 harmonic major, A5 Hirajoshi; rhythms B1
+3-3-2, B2 half time, B3 3 against 2, B4 waltz, B5 fast harp ripples over a slow tune; timbres C1 kalimba, C2 marimba,
+C3 celesta, C4 ocarina or soft flute, C5 glass harmonica, C6 water drops and bubbles, C7 tuned rubber duck squeaks.
+
+First song: named "Infinite Pond"
+A2
+B2 
+C5
+Breathey dynamics
+
+Second song: named "Outer Space Swim Commute"
+A3
+B5
+C3
+
+Third song: named "Waddle before you paddle"
+A4
+B4
+C1
+
+Fourth song: named "Bouncy Chicks"
+A1
+B3
+C2
+
+Fifth song: named "Pond-erful Ruffles"
+A5
+B1
+C4
+
+Sixth Song: named "What the duck?"
+Scale is like the main menu music of bioshock
+https://www.youtube.com/watch?v=cMjThJwdwo0
+It is horror themed and plays rarely, like only once in three rounds of all the songs, and it randomly comes in somewhere between those songs for the third round. No weather effects but it can be ambient and tense.
+
+The seventh song will take inspiration from pair bound from bioshock 2 soundtrack and then use a mixture of all these new instrumentals and take turns with them while each part of the song switches to very different modes, have key changes, but switches up between all the patterns of B1-5 without using the instrumens those rythyms mention. 
+
+The song needs multiple agents to work and and a coordinator to inform them of the task, since three agents will be working on songs at the same time. Another two agents will be writing scripts. One agent will be coordinating.
+
+(Started: a coordinator agent briefs two writers, who write the seven song ideas, and three composers, who build and
+render them; test renders go to the owner first. Song 6's rare-play rule is for when it goes into the game.)
+
+Is there any songs dont yet?
+
+HOW THE FUCK IS THEIR NOT EVEN ONE SONG DONE YET THIS IS RIDICOLOUS
+
+yes and u can continue working on the others after
+
+(Six songs were done by then and were posted for listening: Infinite Pond, Outer Space Swim Commute, Waddle before
+you paddle, Bouncy Chicks, Pond-erful Ruffles, What the duck?. Song 7 was still being composed.)
+
+there is cackling in all of these songs.
+
+The instrument needs to be changed into something different for ponderful ruffles ... 
+
+Give me instrument suggestions becuz the lead melody sucks until it is muffled in some parts, it can remain in the parts it is muffled in? maybe not. It can be another wind instrument maybe too
+
+im still looking thru the songs btw
+
+Make infinite pond have a different main instrument and make it into a type of lydian
+
+I liked feather bound btw and i think we can use all of these songs
+
+(The crackle was soft noise bursts at the start of notes (mallets, felt ticks, the ocarina's breath); they were made much
+softer and darker. Ruffles' lead: the owner was offered a bamboo flute (shakuhachi), clarinet, pan flute or koto.)
