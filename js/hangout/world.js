@@ -247,7 +247,8 @@ export function mountWorld(board, api) {
       inside = L.inCabin(me.x * L.W, me.y * L.H);
       for (const id of s.seat) if (id !== r.me && s.pos[id]) glide(id, s.pos[id], dt, now);
       for (const id of [...sm.keys()]) if (!s.pos[id]) sm.delete(id);
-      const tx = me.x * L.W, ty = me.y * L.H - (me.j ? me.b : me.z);
+      let shift = 0; for (const a of acts()) shift += a.view?.(ctx) || 0;   // (an activity's panel covers the bottom: my duck shows higher)
+      const tx = me.x * L.W, ty = me.y * L.H - (me.j ? me.b : me.z) + shift / cam.sc;
       if (!cam.set) { cam.x = tx; cam.y = ty; cam.set = true; } else { const k = 1 - Math.exp(-dt * 7); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; }
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);

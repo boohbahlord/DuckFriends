@@ -22,6 +22,8 @@
      keydown(e, ctx) / keyup(e, ctx) → true when the key is taken (piano keys)
      pointer(kind, pt, e, ctx)   kind 'down' | 'move' | 'up', pt = world { x, y } on the ground; true on 'down' takes
                                    the pointer until 'up' (no walking, no joystick meanwhile)
+     view(ctx)                   → px to move the camera down, so my duck shows that much higher (the piano's keys
+                                   cover the bottom of the screen)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s)              → false turns a prop's light off
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, board, propEl(id)). */

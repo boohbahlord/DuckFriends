@@ -1708,8 +1708,14 @@ export const music = (function(){
     level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
-  // in a room (the lobby or the game), with the music on and the page in view
-  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
+  // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
+  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["lobby","game"].includes(document.body.dataset.screen);
+  /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
+     unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
+  let HUSH=null,hushT=0;
+  function hush(why){why=why||null;if(why===HUSH)return;HUSH=why;clearTimeout(hushT);
+    if(why){if(ac&&playing){level(.6,0);hushT=setTimeout(()=>{if(HUSH)stop()},2600)}return}
+    if(!wanted())stop();else if(ac||started){start();if(ac&&playing)level(1.2)}}
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
@@ -1755,7 +1761,7 @@ export const music = (function(){
     if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,t0:t-off,end:t-off+b.dur,at:0}}
   function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
-  function nowPlaying(){const S=list();if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
+  function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
-  return {sync,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
+  return {sync,hush,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();
