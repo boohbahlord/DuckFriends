@@ -52,7 +52,7 @@ activity({
   },
   unmount() { for (const p of els) p.e.remove(); els = []; },
   draw(now, ctx) {
-    const W = ctx.world, sc = W.sc, scs = sc.toFixed(4), shown = W.inside, vw = W.board.clientWidth, vh = W.board.clientHeight;
+    const W = ctx.world, sc = W.sc, scs = sc.toFixed(4), shown = W.inside, vw = W.vw, vh = W.vh;
     for (const p of els) {
       const a = W.toScreen(p.l, p.t), vis = shown && a.left < vw + 30 && a.left + p.w * sc > -30 && a.top < vh + 30 && a.top + p.h * sc > -30;
       if (p.e.hidden !== !vis) p.e.hidden = !vis;

@@ -94,7 +94,7 @@ wallX(1650, 3500, C.x1, C.inner, IN);                                       // b
 /* the great room */
 const FLOOR = { layer: 'floor', z: 0, ...IN };
 add('fireplace', 2180, 612, 240, 90, 220, { solid: true, ...IN, light: { x: 2300, y: 730, r: 460, c: HOT, k: .5, flick: 1 } });
-add('rug', 1900, 1150, 800, 500, 0, FLOOR);
+add('rug', 2040, 1200, 860, 450, 0, FLOOR);   // (under the couches, clear of the chalk floor and the eraser)
 add('couch', 2050, 1350, 500, 100, 70, { solid: true, ...IN, seats: 3 });
 add('couch', 2590, 1350, 300, 100, 70, { solid: true, ...IN, seats: 2 });
 add('lamp', 1960, 1366, 44, 30, 150, { solid: true, ...IN, light: { x: 1982, y: 1420, r: 300, c: WARM, k: .45 } });

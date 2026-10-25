@@ -306,7 +306,8 @@ function drawDucks(now = clockNow()) {
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
-    const at = shotAt(sh, now - sh.t), a = place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;
+    const at = shotAt(sh, now - sh.t), a = hang ? world.place(at, sh.hz) : place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;   // (Hangout: at the height it was fired from)
+    if (hang && world.hidden('', at)) continue;   // (on the other side of the cabin's walls)
     if (a.left < -geo.W * .4 || a.left > geo.W * 1.4 || top > geo.top0 + geo.H + size * 6 || top < -geo.H) continue;   // (off the screen)
     live.add(String(sh.n));
     let b = fxl.querySelector(`[data-n="${sh.n}"]`);
@@ -1263,7 +1264,7 @@ function keydown(e) {
   if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E: the last key again
   if (e.code === 'KeyQ' && isQuack(R.state)) { e.preventDefault(); peek(true); return; }   // hold Q: peek at my Secret Card
   if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
-  if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat) { e.preventDefault(); act('end'); }
 }
 const keyup = e => { if (world) world.keyup(e); keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); if (e.code === 'KeyQ') peek(false); };
 const blur = () => { keys.clear(); peek(false); };

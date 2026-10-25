@@ -6,8 +6,9 @@
    s.hang.seats ({ 'couch1:0': [id, since] }), checks every sit and frees a seat when its duck leaves, resets or walks off.
 
    Drawn sitting: the duck stands on the cushion at the seat's height and depth, between the couch's two parts (art.js'
-   couch pair: the cushions behind it, the couch back in front), so the back covers its lower part; on a log, the log's
-   top covers its feet. The couches and logs are drawn here (the world's placeholders are marked layer 'none'). */
+   couch pair: the cushions behind it, the couch back in front), so the back covers its lower part and its head shows
+   over it; on a log, the log's top covers its feet. A seated duck's name is over its head (class hang-sat). The couches
+   and logs are drawn here (the world's placeholders are marked layer 'none'). */
 import { rule, activity } from './registry.js';
 import { PROPS, W, H, heightAt, standable, STEP } from './layout.js';
 import * as A from './art.js';
@@ -23,7 +24,7 @@ for (const p of PROPS.filter(q => KINDS.includes(q.kind))) {
   const n = p.seats || 2, couch = p.kind === 'couch';
   for (let i = 0; i < n; i++) {
     const x = couch ? p.x + 30 + (i + .5) * (p.w - 60) / n : p.x + p.w * (i ? .74 : .26);
-    const y = couch ? p.y + p.d * .55 : p.y + p.d / 2, z = p.z + (couch ? 30 : 46);
+    const y = couch ? p.y + p.d * .55 : p.y + p.d / 2, z = p.z + 46;   // (on a couch a little higher than its cushion: the head shows over the backrest)
     const north = p.y - 26, south = p.y + p.d + 26, fireSouth = FIRE && p.y + p.d / 2 < FIRE.y + FIRE.d / 2;
     SEATS.push({ id: p.id + ':' + i, p, i, n, x, y, z, up: couch || !fireSouth ? [north, south] : [south, north] });
   }
@@ -74,7 +75,7 @@ rule('sit', {
 });
 
 /* ---------- on the screen ---------- */
-let parts = [], placed = null;   // the drawings; the seat my duck was put on here (until the room agrees)
+let parts = [], placed = null, satSig = '', satAt = 0;   // the drawings; the seat my duck was put on here (until the room agrees); the ducks marked seated
 function put(ctx, x, y, z) { const me = ctx.duck(); if (!me) return; Object.assign(me, { x: x / W, y: y / H, z, b: z, j: 0, lj: false, dj: 0, vz: null, _za: undefined }); }
 function sit(ctx, q) {
   ctx.send({ t: 'hang', k: 'sit', seat: q.id });
@@ -104,9 +105,9 @@ activity({
       }
     }
   },
-  unmount() { for (const q of parts) q.e.remove(); parts = []; placed = null; },
+  unmount() { for (const q of parts) q.e.remove(); parts = []; placed = null; satSig = ''; },
   draw(now, ctx) {
-    const Wd = ctx.world, sc = Wd.sc, scs = sc.toFixed(4), vw = Wd.board.clientWidth, vh = Wd.board.clientHeight;
+    const Wd = ctx.world, sc = Wd.sc, scs = sc.toFixed(4), vw = Wd.vw, vh = Wd.vh;
     for (const q of parts) {
       const a = Wd.toScreen(q.l, q.t), vis = (q.p.only !== 'in') !== Wd.inside && a.left < vw + 30 && a.left + q.w * sc > -30 && a.top < vh + 30 && a.top + q.h * sc > -30;
       if (q.e.hidden !== !vis) q.e.hidden = !vis;
@@ -114,6 +115,11 @@ activity({
       const tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px) scale(${scs})`;
       if (q.e._tr !== tr) { q.e._tr = tr; q.e.style.transform = tr; }
     }
+    // a seated duck has its name over its head (under it, the couch back or the log would hide it); now and then: a duck drawn anew
+    const layer = Wd.board.querySelector('.ducks'), on = Object.values(seatsOf(ctx.state())).filter(Boolean).map(v => v[0]);
+    const sig = on.join(); if (!layer || (sig === satSig && now - satAt < 1000)) return;
+    satSig = sig; satAt = now;
+    for (const d of layer.querySelectorAll('.gduck')) { const sat = on.includes(d.dataset.pid); if (d.classList.contains('hang-sat') !== sat) d.classList.toggle('hang-sat', sat); }
   },
   /* the button: Get up while seated; Sit beside a couch or a log with a free seat */
   near(pos, ctx) {

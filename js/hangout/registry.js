@@ -30,8 +30,8 @@
                                    cover the bottom of the screen)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s)              → false turns a prop's light off
-   ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, board, propEl(id), at(id) → where a duck
-   is drawn { x, y, z } in world px, or null). */
+   ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
+   browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null). */
 export const RULES = new Map();   // k → its rules
 export const ACTS = new Map();    // id → its screen part
 export const rule = (k, r) => { RULES.set(k, r); };

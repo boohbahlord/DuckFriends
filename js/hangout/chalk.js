@@ -239,7 +239,7 @@ activity({
   },
   draw(now, ctx) {
     if (!v) return;
-    const w = ctx.world, a = w.toScreen(SL.x0, SL.y0), sc = w.sc, bw = w.board.clientWidth, bh = w.board.clientHeight;
+    const w = ctx.world, a = w.toScreen(SL.x0, SL.y0), sc = w.sc, bw = w.vw, bh = w.vh;
     const vis = w.inside && a.left < bw && a.top < bh && a.left + SL.w * sc > 0 && a.top + SL.h * sc > 0;
     if (v.cv.hidden === vis) v.cv.hidden = !vis;
     const pen = vis && holding(ctx); if (v.pen !== pen) { v.pen = pen; w.board.classList.toggle('hang-pen', pen); }   // (holding chalk: a pen for the mouse)
