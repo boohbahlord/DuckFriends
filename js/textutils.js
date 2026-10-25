@@ -17,7 +17,7 @@ const LONG = { all: 'a', append: 'a', groups: 'G', remove: 'r', recursive: 'r', 
   number: 'n', delimiter: 'd', fields: 'f', characters: 'c', separator: 's', width: 'w', 'in-place': 'i', expression: 'e',
   'head-count': 'n', echo: 'e', 'input-range': 'i', 'equal-width': 'w', 'new-name': 'n', perms: 'p', add: 'a', delete: 'd',
   table: 't', spaces: 's', 'mathlib': 'l', 'squeeze-repeats': 's', 'no-newline': 'n', 'only-delimited': 's' };
-const LONG_FOR = { wc: { lines: 'l', bytes: 'c' }, uniq: { count: 'c', repeated: 'd', unique: 'u' }, cut: { bytes: 'c' }, tr: { delete: 'd' } };
+const LONG_FOR = { wc: { lines: 'l', bytes: 'c' }, uniq: { count: 'c', repeated: 'd', unique: 'u' }, cut: { bytes: 'c' }, tr: { delete: 'd' }, paste: { serial: 's', delimiters: 'd' } };
 export function getopt(args, spec, name) {
   const o = {}, rest = []; let i = 0;
   args = args.flatMap(a => {   // --word and --word=value: the short flag
@@ -41,6 +41,8 @@ export function getopt(args, spec, name) {
   rest.push(...args.slice(i));
   return { o, rest };
 }
+/* head -5 is head -n 5 (but not the -5 in head -n -5) */
+const countArgs = args => args.flatMap((x, i) => /^-\d+$/.test(x) && !/^-[nc]$/.test(args[i - 1] || '') ? ['-n', x.slice(1)] : [x]);
 const num = (v, name, what = 'number') => { if (!/^[-+]?\d+$/.test(String(v))) fail(`✗ ${name}: ${v}: not a ${what}`); return +v; };
 /* 1,3 and 2-4 and 3- (columns or characters) */
 function ranges(spec, name) {
@@ -254,16 +256,16 @@ export const TEXT = {
     return o.n ? L.map((l, i) => `${String(i + 1).padStart(6)}\t${l}`).join('\n') : io.input(rest, stdin).replace(/\n$/, '');
   },
   head: (args, stdin, io) => {
-    const a = args.map(x => /^-\d+$/.test(x) ? ['-n', x.slice(1)] : [x]).flat(), { o, rest } = getopt(a, 'n:c:', 'head'), t = io.input(rest, stdin);
+    const { o, rest } = getopt(countArgs(args), 'n:c:', 'head'), t = io.input(rest, stdin);
     if (o.c) return { out: t.slice(0, num(o.c, 'head')), raw: true };
-    return lines(t).slice(0, num(o.n ?? 10, 'head')).join('\n');
+    return lines(t).slice(0, num(o.n ?? 10, 'head')).join('\n');   // -n -5: all but the last 5
   },
   tail: (args, stdin, io) => {
-    const a = args.map(x => /^-\d+$/.test(x) ? ['-n', x.slice(1)] : [x]).flat(), { o, rest } = getopt(a, 'n:c:', 'tail'), t = io.input(rest, stdin), L = lines(t);
-    if (o.c) return { out: t.slice(-num(o.c, 'tail')), raw: true };
+    const { o, rest } = getopt(countArgs(args), 'n:c:', 'tail'), t = io.input(rest, stdin), L = lines(t);
+    if (o.c) { const k = Math.abs(num(o.c, 'tail')); return { out: k ? t.slice(-k) : '', raw: true }; }
     const n = String(o.n ?? 10);
     if (n.startsWith('+')) return L.slice(Math.max(0, num(n.slice(1), 'tail') - 1)).join('\n');
-    const k = num(n, 'tail'); return k === 0 ? '' : L.slice(-k).join('\n');
+    const k = Math.abs(num(n, 'tail')); return k === 0 ? '' : L.slice(-k).join('\n');   // -n 5 and -n -5 are the same
   },
   wc: (args, stdin, io) => {
     const { o, rest } = getopt(args, 'lwcm', 'wc'), t = io.input(rest, stdin), n = { l: (t.match(/\n/g) || []).length + (t && !t.endsWith('\n') ? 1 : 0), w: t.split(/\s+/).filter(Boolean).length, c: t.length };
@@ -287,11 +289,12 @@ export const TEXT = {
     return runs.filter(([, n]) => (o.d ? n > 1 : o.u ? n === 1 : true)).map(([l, n]) => (o.c ? `${String(n).padStart(7)} ${l}` : l)).join('\n');
   },
   grep: (args, stdin, io) => {
-    const { o, rest } = getopt(args, 'ivcnwoEFqhle:', 'grep');
-    const pat = o.e ?? rest.shift(); if (pat === undefined) fail('✗ grep: usage: grep [-ivcnwo] pattern [file…]');
+    const { o, rest: rest0 } = getopt(args, 'ivcnwoEFqhlrRe:', 'grep');
+    const pat = o.e ?? rest0.shift(); if (pat === undefined) fail('✗ grep: usage: grep [-ivcnwor] pattern [file…]');
+    const rest = o.r || o.R ? (rest0.length ? rest0 : ['.']).flatMap(f => io.files(f)) : rest0;   // -r: every file in the folders
     let src = o.F ? pat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : pat; if (o.w) src = `\\b(?:${src})\\b`;
     let re; try { re = new RegExp(src, o.i ? 'gi' : 'g'); } catch { fail(`✗ grep: ${pat}: not a pattern`); }
-    const files = rest.length ? rest : [null], many = files.length > 1 && !o.h, out = []; let count = 0;
+    const files = rest.length ? rest : o.r || o.R ? [] : [null], many = (files.length > 1 || o.r || o.R) && !o.h, out = []; let count = 0;
     for (const f of files) {
       let k = 0;
       lines(f === null ? stdin : io.read(f)).forEach((l, n) => {
@@ -399,7 +402,14 @@ export const TEXT = {
   },
   basename: args => { if (!args[0]) fail('✗ basename: usage: basename path [ending]'); let b = args[0].replace(/\/+$/, '').split('/').pop() || '/'; if (args[1] && b.endsWith(args[1]) && b !== args[1]) b = b.slice(0, -args[1].length); return b; },
   dirname: args => { if (!args[0]) fail('✗ dirname: usage: dirname path'); const p = args[0].replace(/\/+$/, ''), k = p.lastIndexOf('/'); return k < 0 ? '.' : k === 0 ? '/' : p.slice(0, k); },
-  yes: args => ({ out: Array(100).fill(args.length ? args.join(' ') : 'y').join('\n') + '\n(yes stops at 100 lines here)', code: 0 }),
+  yes: args => ({ out: Array(100).fill(args.length ? args.join(' ') : 'y').join('\n'), err: '(yes stops at 100 lines here)', code: 0 }),
+  paste: (args, stdin, io) => {   // paste [-s] [-d chars] files: their lines side by side (- is what came in)
+    const { o, rest } = getopt(args, 'sd:', 'paste'), d = o.d === undefined ? '\t' : String(o.d).replace(/\\t/g, '\t').replace(/\\n/g, '\n') || '', files = rest.length ? rest : ['-'];
+    const cols = files.map(f => lines(f === '-' ? stdin : io.read(f))), join = row => row.reduce((a, w, k) => k ? a + (d ? d[(k - 1) % d.length] : '') + w : w, '');
+    if (o.s) return cols.map(join).join('\n');
+    const n = Math.max(0, ...cols.map(c => c.length));
+    return Array.from({ length: n }, (_, r) => join(cols.map(c => c[r] ?? ''))).join('\n');
+  },
   tee: (args, stdin, io) => { const { o, rest } = getopt(args, 'a', 'tee'); for (const f of rest) io.write(f, stdin, !!o.a); return { out: stdin, raw: true }; },
 };
 TEXT.less = TEXT.more = TEXT.cat;

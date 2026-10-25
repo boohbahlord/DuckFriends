@@ -7,10 +7,10 @@ import { esc } from './ui.js';
 /* the kinds of command, each with its own color (css: .k-<kind>) */
 export const KINDS = {
   help: ['help', 'man', 'apropos'],
-  bash: ['echo', 'printf', 'history', 'alias', 'unalias', 'type', 'which', 'export', 'unset', 'env', 'printenv', 'source', '.', 'eval', 'true', 'false', 'test', '[', ':', 'sleep', 'clear', 'exit', 'logout',
+  bash: ['echo', 'printf', 'history', 'alias', 'unalias', 'type', 'which', 'export', 'unset', 'env', 'printenv', 'source', '.', 'eval', 'read', 'xargs', 'true', 'false', 'test', '[', ':', 'sleep', 'clear', 'exit', 'logout',
     'for', 'in', 'do', 'done', 'if', 'then', 'else', 'elif', 'fi', 'while', 'until'],
   file: ['ls', 'cd', 'pwd', 'cat', 'less', 'more', 'touch', 'mkdir', 'rmdir', 'rm', 'cp', 'mv', 'tree', 'find', 'stat', 'file', 'chmod', 'chgrp', 'tee', 'basename', 'dirname'],
-  text: ['head', 'tail', 'wc', 'sort', 'uniq', 'grep', 'cut', 'tr', 'sed', 'awk', 'rev', 'tac', 'nl', 'fold', 'column', 'seq', 'shuf', 'expr', 'bc', 'diff', 'yes'],
+  text: ['head', 'tail', 'wc', 'sort', 'uniq', 'grep', 'cut', 'tr', 'sed', 'awk', 'rev', 'tac', 'nl', 'fold', 'column', 'seq', 'shuf', 'expr', 'bc', 'diff', 'yes', 'paste'],
   group: ['sudo', 'whoami', 'id', 'groups', 'members', 'getent', 'usermod', 'useradd', 'userdel', 'gpasswd', 'adduser', 'deluser', 'groupadd', 'groupmod', 'groupdel', 'newgrp', 'visudo', 'su', 'passwd'],
   people: ['who', 'w', 'users', 'finger', 'last', 'write', 'ps', 'top', 'hostname', 'uname', 'date', 'cal', 'uptime', 'jumps', 'ping'],
   game: ['send', 'skip', 'kick', 'map', 'mode', 'start', 'forgame', 'roundstats', 'gamestats', 'totalstats', 'custom', 'reset'],
@@ -353,6 +353,7 @@ const PAGES = [
     flags: [
       ['name=value', 'sets a variable (export name=value too); unset name forgets it'],
       ['$name  ${name}', 'its value; "$name" keeps it one word; \'$name\' keeps the $ as it is'],
+      ['${#name}  ${name:-word}', 'how many letters it has / word when it is empty (${name:=word} also sets it)'],
       ['$((6 * 7))', 'arithmetic: + - * / % ** and ( )'],
       ['$(command)', 'what a command printed, inside another command'],
       ['$?', '0 if the last command worked, more if it failed'],
@@ -360,6 +361,9 @@ const PAGES = [
       ['~', 'your home, /usr/<you>'],
       ['for … in …; do …; done', 'repeats for each word'],
       ['while …; do …; done', 'repeats while it works (until: until it works)'],
+      ['… | while read x; do …; done', 'one line at a time (read puts a line in x)'],
+      ['… | xargs command', 'runs the command with the words that came in'],
+      ['for …; done > file', 'a loop\'s output into a file'],
       ['if …; then …; else …; fi', 'one part or the other'],
       ['alias name=\'words\'', 'your own short name for a command, kept on this device'],
       ['source file', 'runs the commands written in a file, line by line'],
@@ -480,7 +484,8 @@ const PAGES = [
       ['awk \'{print $2}\'', 'the second column'],
       ['tr a-z A-Z', 'swaps characters (here: capitals)'],
       ['sed \'s/old/new/g\'', 'replaces words'],
-      ['rev tac nl fold column', 'backwards, last line first, numbers, wrap, neat columns'],
+      ['grep -r word', 'the lines with word in every file in this folder and the ones in it'],
+      ['rev tac nl fold column paste', 'backwards, last line first, numbers, wrap, neat columns, side by side'],
       ['seq shuf printf expr bc diff yes', 'count, shuffle, print with a pattern, math, compare, repeat'],
     ],
     ex: [

@@ -970,3 +970,16 @@ no u dont understand i typed sudo into a useradd command and it was saying i nee
 (Cause: online, when the host's phone sleeps or the tab goes quiet for about 16 seconds, the next player takes over as
 host, and the first host was left with no sudo. Decision: a host who loses the role that way keeps sudo, and the chat
 says so. useradd -G group name now works (like usermod -aG), and userdel says how to remove a duck.)
+
+## The command line bug test (2026-10-25)
+
+(From the coordinator, after a full bug test of the command line; the report is bugtest/2026-10-25-command-line.md in the
+project files.) The command line bug test is done. Please fix all of it in a PR on top of #57 and hold it for my batch.
+Also fix the 12 low ones in the report.
+
+Decision: the backslash now stays in front of a letter or @ (`send \@name`, `\mute`, `forgame \mute …`, `man \mute`);
+perma-notes hold 100,000 characters in all and say so when full; finger names hats and outfits; `help help` opens
+HelpHelp; `send @everyone` alone shows how to use it; and the 12 small ones (history, `tail -n -5`, group name errors,
+`adduser group player`, `sudo -v -h -i -u`, `sudo true`, /usr paths, `${#var}` `${var:-x}`, read, xargs, paste,
+`grep -r`, a redirect after a loop, `yes`, names without spaces, long lines say they were cut). A group with nosend
+can't use `write` either. Asked the owner whether aliases should stay on the device for good.

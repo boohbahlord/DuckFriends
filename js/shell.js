@@ -25,6 +25,8 @@ import { MAPS, mapName } from './maps.js';
 import { FONTS } from './name.js';
 import { specialById } from './specials.js';
 import { styleById } from './styles.js';
+import { hatById } from './hats.js';
+import { outfitById } from './outfits.js';
 import { runLine, expandHistory, globRe, BUILTIN_NAMES } from './bash.js';
 import { TEXT, getopt, lines } from './textutils.js';
 import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
@@ -73,6 +75,7 @@ function guard(path, write) {
   const parts = path.split('/').filter(Boolean), h = fs.home;
   if (parts[0] === 'bin') fail(`✗ ${path}: Permission denied (no one can open the commands, not even the host).`);
   if (parts[0] === 'usr' && parts[1] && path.slice(0, h.length + 1) !== h + '/' && path !== h) {
+    if (!fs.people.includes(parts[1])) fail(write ? `✗ ${path}: Permission denied (you can write in ${h}/notes and ${h}/perma-notes).` : `✗ ${path}: No such file or directory`);
     if (parts[2] === 'perma-notes') fail(`✗ ${path}: Permission denied (only superuser-${parts[1]} can open it).`);
     fail(`✗ ${path}: Permission denied (that is on ${parts[1]}'s own device).`);
   }
@@ -97,7 +100,11 @@ function writeFile(p, text, append) {
   const name = path.split('/').pop(); if (!/^[\w.-]{1,40}$/.test(name)) fail(`✗ ${name}: a file name is letters, numbers, ., - and _ (40 at most).`);
   const total = Object.values(fs.files).reduce((a, t) => a + t.length, 0); if (total + text.length > 200000) fail('✗ Your notes are full (200,000 characters this game).');
   fs.meta[path] = { ...(fs.meta[path] || {}), t: Date.now() };
-  if (isPerma(path)) { const P = perma(); P[name] = (append && P[name] ? P[name] : '') + text; save(); return; }
+  if (isPerma(path)) {   // kept on this device: 100,000 characters in all, so the profile still saves
+    const P = perma(), next = (append && P[name] ? P[name] : '') + text, all = Object.entries(P).reduce((a, [k, t]) => a + (k === name ? 0 : t.length), 0);
+    if (all + next.length > 100000) fail(`✗ ${name}: perma-notes are full (100,000 characters in all, ${Math.max(0, 100000 - all - (next.length - text.length)).toLocaleString('en-US')} left). rm a file there to make room.`);
+    P[name] = next; save(); return;
+  }
   fs.files[path] = (append && fs.files[path] ? fs.files[path] : '') + text;
 }
 function removePath(p) {
@@ -139,7 +146,16 @@ function longRow(path, name) {
 
 /* ---------- helpers for the commands ---------- */
 const input = (rest, stdin) => rest.length ? rest.map(f => { const t = readFile(f); return t && !t.endsWith('\n') ? t + '\n' : t; }).join('') : stdin;
-const IO = { read: readFile, write: writeFile, input };
+/* grep -r: a file, or every file in a folder and the folders in it (yours only) */
+function files(p) {
+  const path = p === '.' ? fs.cwd : findPath(p), k = kind(path); guard(path, false);
+  if (!k) fail(`✗ ${p}: No such file or directory`);
+  if (k === 'file') return [p];
+  const out = [], walk = (dir, shown) => { for (const n of list(dir)) { const b = n.replace(/\/$/, ''), sub = `${dir === '/' ? '' : dir}/${b}`, sh = shown === '.' ? b : `${shown.replace(/\/$/, '')}/${b}`; if (sub.startsWith('/usr/') && !sub.startsWith(fs.home + '/') && sub !== fs.home) continue; if (sub.startsWith('/bin')) continue; if (n.endsWith('/')) walk(sub, sh); else out.push(sh); } };
+  walk(path, p);
+  return out;
+}
+const IO = { read: readFile, write: writeFile, input, files };
 const who = (ctx, names) => {
   const s = ctx.room.state, ids = [];
   for (const n of names) { const id = s.seat.find(i => tag(s.players[i].name).toLowerCase() === n.replace(/^\\?@/, '').toLowerCase()); if (!id) fail(`✗ No player named ${n.replace(/^\\?@/, '')}.`); ids.push(id); }
@@ -150,8 +166,10 @@ const noSudo = ctx => `✗ ${ctx.meName} is not in the sudoers file. This incide
 /* sudo's commands: the host and sudo may leave out the word sudo; anyone else is told they aren't in sudo */
 const needSudo = (x, cmd) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail(x.sudo ? noSudo(x.ctx) : `✗ ${cmd}: Permission denied (only the host and sudo can)`); return s; };
 const needMay = (x, perm, what) => { const s = needRoom(x.ctx); if (!may(s, x.ctx.room.me, perm)) fail(`✗ ${what}: only the host, sudo, or a group with ${perm}.`); return s; };
-/* adduser and deluser: the player (with @, or else the first word) and the group */
-const userGroup = args => { const at = args.find(a => a.startsWith('@')) ?? args[0]; return [at, args.find(a => a !== at)]; };
+/* adduser and deluser: the player and the group, in either order (the @ or the group's name tells them apart) */
+const userGroup = (args, s) => { const G = roomGroups(s), g = args.find(a => !a.startsWith('@') && G[a.toLowerCase()]) ?? args.findLast(a => !a.startsWith('@')), at = args.find(a => a !== g); return [at, at === undefined ? undefined : g]; };
+/* what is wrong with a new group's name, if anything */
+const groupNameWrong = n => n.length > 20 ? 'is too long (20 letters at most)' : /^superuser-/i.test(n) ? 'starts with superuser-, which belongs to each player' : !/^[a-z]/i.test(n) ? 'must start with a letter (a to z)' : !/^[a-z0-9_-]+$/i.test(n) ? 'can only have letters a to z, numbers, - and _' : '';
 const pct = v => `${Math.round(v * 100)}%`;
 const roomGroups = s => s.groups || { sudo: { perms: [], members: [] }, dumbasses: { perms: ['nofun', 'slow'], members: [] } };
 const pname = (s, id) => tag(s.players[id].name);
@@ -167,7 +185,7 @@ function statLines(ctx, scope, args) {
   const s = needRoom(ctx), mi = args.indexOf('-m'), mode = mi >= 0 ? args[mi + 1] : (s.options.mode || 'aod'), at = args.filter(a => a.startsWith('@'));
   if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m ${STAT_MODES.map(([m]) => m).join(', ')}.`);
   const ids = at.length ? who(ctx, at) : s.seat.filter(id => !(s.players[id] || {}).late || scope === 'total');
-  const nm = id => s.players[id].name, out = [];
+  const nm = id => pname(s, id), out = [];
   if (scope === 'total') {
     out.push(`All time · ${modeOf(mode).name}:`);
     for (const id of ids) {
@@ -272,6 +290,7 @@ async function send(args, stdin, x) {
   if (pubIds.length) who(ctx, pubIds);
   /* a file by itself: its name goes, and its words (only sudo, its group or everyone can open them, as chmod says) */
   let body, file = null, cmd, extra = {};
+  if (!toks.length && !stdin && !/\|\s*send\b/.test(meta.pipeRaw || '') && !/<|<<</.test(meta.raw || '')) fail(`✗ send: nothing to send. ${MAN.send}`);
   if (!toks.length) { body = stdin; cmd = (meta.pipeRaw || '').replace(/\|\s*send\b[^|]*$/, '').trim() || 'send'; }
   else if (toks.length === 1 && !isCommand(toks[0], ctx) && kind(findPath(toks[0])) === 'file') {
     const path = findPath(toks[0]), m = fs.meta[path] || {};
@@ -281,7 +300,7 @@ async function send(args, stdin, x) {
   else {
     const r = await one(toks, stdin, meta, ctx, rs);
     body = r && typeof r === 'object' ? r.out || '' : r ?? '';
-    cmd = (meta.raw || '').replace(/^\s*send(\s+\\?@\S+)+\s*/, '') || toks.join(' ');
+    cmd = (meta.raw || '').replace(/^\s*(?:sudo\s+)?send(\s+\\*@\S+)+\s*/, '') || toks.join(' ');
   }
   body = String(body).replace(/\n+$/, '');
   if (!body.trim()) body = file ? '(empty)' : '(no output)';
@@ -356,7 +375,7 @@ function finger(ctx, id) {
   const s = ctx.room.state, p = s.players[id], d = p.duck || {}, c = p.card || {}, ns = p.nameStyle || {}, sp = d.special && specialById(d.special);
   const pretty = v => v ? String(v).replace(/[-_]/g, ' ') : 'none';
   return [`Login: ${pname(s, id)}${id === s.hostId ? ' (host)' : isSudo(s, id) ? ' (sudo)' : ''}${p.bot ? ' (a computer)' : ''}`,
-    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${pretty(d.hat)} · outfit ${pretty(d.outfit)} · special ${sp ? sp.name : 'none'}`,
+    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${d.hat ? (hatById(d.hat.id || d.hat) || {}).name || pretty(d.hat.id || d.hat) : 'none'} · outfit ${d.outfit ? (outfitById(d.outfit.id || d.outfit) || {}).name || pretty(d.outfit.id || d.outfit) : 'none'} · special ${sp ? sp.name : 'none'}`,
     `Card:  ${c.kind === 'image' ? 'a picture' : `${c.color || '?'}, pattern ${pretty(c.pattern)}`}`,
     `Font:  ${(FONTS.find(f => f.id === ns.font) || FONTS[0]).name}${ns.rainbow ? ', rainbow' : ns.color ? ', ' + ns.color : ''}`,
     `Groups: ${[...groupsOf(s, id), 'superuser-' + pname(s, id)].join(', ')}`,
@@ -369,7 +388,7 @@ const CMDS = {
     const t = args.join('-').toLowerCase();
     if (!t) return helpIndex();
     if (t === 'all') return `Every command (man <command> for one):\n${[...new Set([...MINE, ...BUILTIN_NAMES])].sort().join(' ')}\nand the chat's \\mute \\permmute \\show.\nThe Help pages: ${HELP_NAMES.join(' ')}`;
-    const p = helpPage(t); if (p) return p;
+    const p = (t === 'help' && helpPage('help-help')) || helpPage(t); if (p) return p;
     if (MAN[args[0]] || MAN[args[0].toLowerCase()]) return MAN[args[0]] || MAN[args[0].toLowerCase()];
     fail(`✗ help: no page ${args.join(' ')}. help lists them.`);
   },
@@ -531,6 +550,7 @@ const CMDS = {
     const s = needRoom(x.ctx), me = x.ctx.room.me; if (!args[0] || !args[0].startsWith('@') || args.length < 2) fail('✗ write: usage: write @name message');
     const [to] = who(x.ctx, [args[0]]);
     if (denied(s, me, 'nochat')) fail('✗ write: your group can\'t chat.');
+    if (denied(s, me, 'nosend')) fail('✗ write: your group can\'t send from the command line.');
     const w = x.ctx.slowLeft(); if (w > 0) fail(`✗ write: slow down (${Math.ceil(w / 1000)} s).`);
     if (++x.rs.sends > 3) fail('✗ write: 3 sends a line at most.');
     x.ctx.room.send({ t: 'chat', to, text: args.slice(1).join(' ').slice(0, 500) }); x.ctx.sent();
@@ -538,30 +558,31 @@ const CMDS = {
   },
   sudo: () => fail('✗ usage: sudo <command> (sudo -l: what sudo lets you do)'),
   usermod: (args, i, x) => {   // usermod [-a | -r] -G group[,group] name… (a name with or without @)
-    const s = needSudo(x, 'usermod'), { o, rest: at } = getopt(args, 'arG:', 'usermod');
+    const as = x.as || 'usermod', s = needSudo(x, as), { o, rest: at } = getopt(args, 'arG:', 'usermod');
     if (!at.length) fail(`✗ ${MAN.usermod}`);
     const groups = o.G ? String(o.G).split(',').filter(Boolean).map(g => g.toLowerCase()) : ['sudo'], G = roomGroups(s);
-    for (const g of groups) { if (g.startsWith('superuser-')) fail(`✗ usermod: ${g} can't be changed, not even by its player.`); if (!G[g]) fail(`✗ usermod: group '${g}' does not exist`); }
+    for (const g of groups) { if (g.startsWith('superuser-')) fail(`✗ ${as}: ${g} can't be changed, not even by its player.`); if (!G[g]) fail(`✗ ${as}: group '${g}' does not exist (getent group lists them)`); }
     const mode = !o.G ? 'add' : o.r ? 'remove' : o.a ? 'add' : 'set', ids = who(x.ctx, at);
-    for (const id of ids) { if (id === s.hostId && groups.includes('sudo') && mode !== 'add') fail('✗ usermod: the host is always in sudo, and that can\'t be undone.'); x.ctx.room.send({ t: 'usermod', target: id, groups, mode }); }
+    for (const id of ids) { if (id === s.hostId && groups.includes('sudo') && mode !== 'add') fail(`✗ ${as}: the host is always in sudo, and that can't be undone.`); x.ctx.room.send({ t: 'usermod', target: id, groups, mode }); }
     return `${mode === 'add' ? 'Added to' : mode === 'remove' ? 'Taken out of' : 'Set to'} ${groups.join(', ')}: ${ids.map(id => pname(s, id)).join(', ')}`;
   },
   gpasswd: (args, i, x) => {   // gpasswd -a name group, gpasswd -d name group
     needSudo(x, 'gpasswd'); const { o, rest } = getopt(args, 'a:d:', 'gpasswd'), at = o.a ?? o.d, g = rest[0];
     if (!at || !g || (o.a && o.d)) fail(`✗ ${MAN.gpasswd}`);
-    return CMDS.usermod([o.a ? '-aG' : '-rG', g, at], i, x);
+    return CMDS.usermod([o.a ? '-aG' : '-rG', g, at], i, { ...x, as: 'gpasswd' });
   },
-  adduser: (args, i, x) => { needSudo(x, 'adduser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, x); },
-  deluser: (args, i, x) => { needSudo(x, 'deluser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, x); },
+  adduser: (args, i, x) => { const s = needSudo(x, 'adduser'), [at, g] = userGroup(args, s); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, { ...x, as: 'adduser' }); },
+  deluser: (args, i, x) => { const s = needSudo(x, 'deluser'), [at, g] = userGroup(args, s); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, { ...x, as: 'deluser' }); },
   useradd: (args, i, x) => {   // the ducks are already here: useradd -G puts one in groups, like usermod -aG
     needSudo(x, 'useradd'); const { o, rest } = getopt(args, 'G:m', 'useradd');
     if (!o.G || !rest.length) fail(`✗ ${MAN.useradd}`);
-    return CMDS.usermod(['-aG', o.G, ...rest], i, x);
+    return CMDS.usermod(['-aG', o.G, ...rest], i, { ...x, as: 'useradd' });
   },
   userdel: (args, i, x) => { needSudo(x, 'userdel'); fail('✗ userdel: ducks can\'t be deleted. kick @name removes one from the room; usermod -rG group @name takes one out of a group.'); },
   groupadd: (args, i, x) => {
     const s = needSudo(x, 'groupadd'), { o, rest } = getopt(args, 'p:', 'groupadd'), perms = String(o.p || '').split(',').filter(Boolean), name = rest[0];
-    if (!name || !/^[a-z][a-z0-9_-]{0,19}$/i.test(name) || name.toLowerCase().startsWith('superuser-')) fail(`✗ ${MAN.groupadd}`);
+    if (!name) fail(`✗ ${MAN.groupadd}`);
+    const why = groupNameWrong(name); if (why) fail(`✗ groupadd: '${name}' ${why}`);
     const bad = perms.filter(p => !permOk(p)); if (bad.length) fail(`✗ groupadd: ${bad.join(', ')}? Perms: ${GROUP_PERMS.join(', ')}, slow30`);
     if (roomGroups(s)[name.toLowerCase()]) fail(`✗ groupadd: group '${name}' already exists`);
     if (Object.keys(roomGroups(s)).length >= 20) fail('✗ groupadd: 20 groups at most');
@@ -573,11 +594,11 @@ const CMDS = {
     if (g.startsWith('superuser-')) fail(`✗ groupmod: ${g} can't be changed, not even by its player.`);
     if (!G[g]) fail(`✗ groupmod: group '${g}' does not exist`);
     if (['sudo', 'dumbasses'].includes(g)) fail(`✗ groupmod: ${g} stays as it is.`);
-    if (o.n !== undefined) { const to = String(o.n).toLowerCase(); if (!/^[a-z][a-z0-9_-]{0,19}$/.test(to) || to.startsWith('superuser-')) fail(`✗ groupmod: '${o.n}' is not a valid group name`); if (G[to]) fail(`✗ groupmod: group '${to}' already exists`); x.ctx.room.send({ t: 'groupmod', name: g, newName: to }); return `Renamed ${g} to ${to}.`; }
+    if (o.n !== undefined) { const to = String(o.n).toLowerCase(); const why = groupNameWrong(to); if (why) fail(`✗ groupmod: '${o.n}' ${why}`); if (G[to]) fail(`✗ groupmod: group '${to}' already exists`); x.ctx.room.send({ t: 'groupmod', name: g, newName: to }); return `Renamed ${g} to ${to}.`; }
     const perms = String(o.p).split(',').filter(Boolean), bad = perms.filter(p => !permOk(p)); if (bad.length) fail(`✗ groupmod: ${bad.join(', ')}? Perms: ${GROUP_PERMS.join(', ')}, slow30`);
     x.ctx.room.send({ t: 'groupmod', name: g, perms }); return `${g}'s perms: ${perms.join(', ') || 'none'}.`;
   },
-  groupdel: (args, i, x) => { const s = needSudo(x, 'groupdel'), g = (args[0] || '').toLowerCase(); if (['sudo', 'dumbasses'].includes(g)) fail(`✗ groupdel: ${g} stays.`); if (g.startsWith('superuser-')) fail(`✗ groupdel: ${g} can't be removed.`); if (!roomGroups(s)[g]) fail(`✗ groupdel: group '${g}' does not exist`); x.ctx.room.send({ t: 'groupdel', name: g }); return `Removed ${g}.`; },
+  groupdel: (args, i, x) => { const s = needSudo(x, 'groupdel'), g = (args[0] || '').toLowerCase(); if (!g) fail('✗ groupdel: usage: sudo groupdel group (getent group lists them)'); if (['sudo', 'dumbasses'].includes(g)) fail(`✗ groupdel: ${g} stays.`); if (g.startsWith('superuser-')) fail(`✗ groupdel: ${g} can't be removed.`); if (!roomGroups(s)[g]) fail(`✗ groupdel: group '${g}' does not exist`); x.ctx.room.send({ t: 'groupdel', name: g }); return `Removed ${g}.`; },
   newgrp: () => MAN.newgrp.split(': ')[1],
   visudo: () => fail(`✗ visudo: ${MAN.visudo.split(': ')[1]}`),
   su: () => fail(`✗ su: ${MAN.su.split(': ')[1]}`),
@@ -602,7 +623,7 @@ const CMDS = {
     return topLines(ctx);
   },
   jumps: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : [x.ctx.room.me]; return ids.map(id => `${pname(s, id)}: ${(s.jumps || {})[id] || 0} Jumps this game · ${allJumps(id === x.ctx.room.me ? profile.stats : s.players[id].stats) + ((s.jumps || {})[id] || 0)} of all time`).join('\n'); },
-  ping: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : s.seat; return ids.map(id => `${s.players[id].name}: ${pingOf(x.ctx, s.players[id])}`).join('\n'); },
+  ping: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : s.seat; return ids.map(id => `${pname(s, id)}: ${pingOf(x.ctx, s.players[id])}`).join('\n'); },
   roll: args => { const m = (args[0] || '1d6').match(/^(\d{0,2})d(\d{1,3})$/i); if (!m) fail('✗ roll NdM, like roll 2d6'); const n = Math.min(20, +m[1] || 1), k = Math.max(2, +m[2]), r = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * k)); return n > 1 ? `${r.join(' + ')} = ${r.reduce((a, b) => a + b, 0)}` : String(r[0]); },
   flip: () => Math.random() < .5 ? 'Heads' : 'Tails',
   ducksay: (args, stdin) => ducksay(args.length ? args.join(' ') : stdin.trim() || 'Quack.'),
@@ -654,7 +675,14 @@ const dq = w => /\s/.test(w) ? `"${w}"` : w;
 async function one(argv, stdin, meta, ctx, rs) {
   let sudo = false, words = argv;
   if (words[0] === 'sudo') {
-    if (words[1] === '-l') return sudoList(ctx);
+    const f = words[1] || '';
+    if (f === '-l' || f === '--list') return sudoList(ctx);
+    if (f === '-h' || f === '--help') return MAN.sudo;
+    if (f === '-v' || f === '--validate') { if (!isSudo(needRoom(ctx), ctx.room.me)) fail(noSudo(ctx)); return ''; }
+    if (f === '-k' || f === '-K') return '';
+    if (/^-[is]$|^--(login|shell)$/.test(f)) fail('✗ sudo: there is no sudo shell here. Put sudo in front of each command (sudo -l lists them).');
+    if (/^-u|^--user/.test(f)) fail('✗ sudo: -u: there is nobody else to be here. sudo <command> runs it as sudo.');
+    if (f.startsWith('-')) fail(`✗ sudo: invalid option '${f}' (sudo -l, sudo -v, sudo -h, or sudo <command>)`);
     sudo = true; words = words.slice(1); if (!words.length) fail('✗ usage: sudo <command>');
     const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail(noSudo(ctx));
   }
@@ -705,7 +733,7 @@ function env(ctx, rs) {
     exec: (argv, stdin, meta) => one(argv, stdin, meta, ctx, rs),
     has: n => isCommand(n, ctx),
     getVar: n => gameVar(n, ctx) ?? fs.vars[n],
-    setVar: (n, v) => { if (GAME_VARS.includes(n)) fail(`✗ ${n}: readonly variable (the game keeps it)`); if (Object.keys(fs.vars).length >= 100 && !(n in fs.vars)) fail('✗ 100 variables at most'); fs.vars[n] = String(v).slice(0, 5000); },
+    setVar: (n, v) => { if (GAME_VARS.includes(n)) fail(`✗ ${n}: readonly variable (the game keeps it)`); if (Object.keys(fs.vars).length >= 100 && !(n in fs.vars)) fail('✗ 100 variables at most'); v = String(v); if (v.length > 5000) fail(`✗ ${n}: a variable holds 5,000 characters at most (this was ${v.length.toLocaleString('en-US')}). Put it in a file: > notes/file`); fs.vars[n] = v; },
     unsetVar: n => { if (GAME_VARS.includes(n)) fail(`✗ unset: ${n}: cannot unset: readonly variable`); delete fs.vars[n]; },
     listVars: () => [...GAME_VARS.map(n => [n, gameVar(n, ctx)]), ...Object.entries(fs.vars)],
     aliases: (profile.aliases = profile.aliases || {}),
@@ -722,7 +750,7 @@ export async function shellRun(text, ctx) {
   let line = text;
   const res = [];
   try { line = expandHistory(text, fs.hist); if (line !== text) res.push(line); }   // bash shows what !! became
-  catch (e) { fs.hist.push(text); return { lines: [e.message], cleared: false }; }
+  catch (e) { return { lines: [e.message], cleared: false }; }   // (bash doesn't keep a line whose !! failed)
   fs.hist.push(line); if (fs.hist.length > 200) fs.hist.shift();
   const s = ctx.room && ctx.room.state;
   if (s && denied(s, ctx.room.me, 'nocmd')) return { lines: ['✗ Your group can\'t use the command line.'], cleared: false };
