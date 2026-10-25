@@ -643,6 +643,26 @@ by items i mean specials
 
 the crash you discovered in the vote or anything like that becomes priority
 
+3. Idk because I feel like it should play against something it didnt tie against but i dont know how that works
+4. Yeah they can only shift during the voting phase IF IF IF you mean the colors that change... (????!?!?!?!?!?!)
+
+
+
+answer me and dont start anything, i started the project but im still confused ab what it is, your place in it, if your in it, or wtf is going on
+
+1. When the computers start voting and they walk to their coordinates, my duck cant move.
+2. the would you rather board vanished in the sky map. 
+3. sure ig but explain to me simply what that means with simple example or examples
+4. yes
+5. yeah read that and remember the UI UX notes and remember to be consistent with the artstyle and ask me for any super new ideas, some new ideas might be okay
+
+Whoever is in charge of the special, know this, the sound must be coming from the beak of the duck or player, not the head.
+The confetti gun should come out lower, from around the front chest or something below the duck like from the left side of the  image you see in first screenshot.
+
+the loser's X needs to be bigger and on the whole duck not above them
+
+the gun can also be a smidgen lower but u did a good job with that one it is funny
+
 1. On the player bar have it to where the host can have a kick player option where they can kick without a vote and the player cannot cast a vote if there are only two players
 2. yes and the host can use the command line to create a skip event action whenever they want as well and the code should be simple to do it and mentioned in the help section. Also anyone with sudo perms can do what the host can including change lobby settings, choose, map, and change game mode in lobby. The sudo perms are granted thru command line. Bring this to your coordinator and have them decide to delegate this work to someone who is most fitting to do it. 
 3. yeah sure ig idk wat that means

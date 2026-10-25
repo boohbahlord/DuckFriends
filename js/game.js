@@ -53,7 +53,7 @@ let draftT = 0;
 let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
-let bbZoom = 0, losers = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X
+let bbZoom = 0, losers = new Set(), seedShift = 0;   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 /* on a phone held upright the board turns (agree at the top); the bracket doesn't: it keeps its own layout */
 const turned = () => portrait() && !(R && R.state.phase === 'bracket');
@@ -169,7 +169,7 @@ function drawDucks(now = clockNow()) {
     live.add(String(sh.n));
     let b = fxl.querySelector(`.bullet[data-n="${sh.n}"]`);
     if (!b) { b = el(`<div class="bullet" data-n="${sh.n}">${BULLET}</div>`); if (sh.dir < 0) b.classList.add('left'); fxl.append(b); }
-    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .45).toFixed(1)}px)`;
+    const a = place({ x, y: sh.y }, 0, 1); b.style.transform = `translate(${a.left.toFixed(1)}px, ${(a.top - size * .41 - 7).toFixed(1)}px)`;   // out of the gun's barrel (the bullet is 14px tall)
   }
   fxl.querySelectorAll('.bullet').forEach(b => { if (!live.has(b.dataset.n)) b.remove(); });
   let mark = layer.querySelector('.touch-mark');
@@ -290,17 +290,20 @@ function sendMove(force) {
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
-function bumps(x, y, now) {
-  if (!geo || jumpZ(me.j, now, R.me) > 0) return null;   // in the air: over everyone
+function bumps(x, y, now) { return crowd(x, y, now).b; }
+/* how far into other ducks my duck at (x, y) would be: d is 0 when clear, up to 1 when right on top of one */
+function crowd(x, y, now) {
+  const out = { d: 0, b: null };
+  if (!geo || jumpZ(me.j, now, R.me) > 0) return out;   // in the air: over everyone
   const s = R.state, a = place({ x, y }, 0, 1), rx = geo.size * .44, ry = geo.size * .2, ka = duckRoom((s.players[R.me] || {}).duck);
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
     const o = s.pos[id]; if (jumpZ(o.j, now, id) > 0) continue;
     const kb = duckRoom((s.players[id] || {}).duck);
-    const b = place(o, 0, 1), dx = (a.left - b.left) / (rx * (ka.x + kb.x)), dy = (a.top - b.top) / (ry * (ka.y + kb.y));
-    if (dx * dx + dy * dy < 1) return b;
+    const b = place(o, 0, 1), dx = (a.left - b.left) / (rx * (ka.x + kb.x)), dy = (a.top - b.top) / (ry * (ka.y + kb.y)), d = 1 - (dx * dx + dy * dy);
+    if (d > out.d) { out.d = d; out.b = b; }
   }
-  return null;
+  return out;
 }
 function loop(t) {
   raf = requestAnimationFrame(loop);
@@ -310,6 +313,7 @@ function loop(t) {
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
   if (scene) scene.update(now);
+  shiftSides(R.state, now);
   drawDucks(now);
 }
 function step(dt, now) {
@@ -350,10 +354,12 @@ function step(dt, now) {
   const scr = (dx, dy) => turned() ? (dx > 0 ? 'u' : dx < 0 ? 'd' : dy > 0 ? 'r' : 'l') : (dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u');
   if (nx < lo || nx > hi) { q = scr(Math.sign(ax), 0); nx = Math.max(lo, Math.min(hi, nx)); }
   if (ny < 0 || ny > 1) { q = q || scr(0, Math.sign(ay)); ny = Math.max(0, Math.min(1, ny)); }
-  // other ducks: try both steps, then each alone; a blocked step squashes against them
-  if (bumps(nx, ny, now)) {
-    if (!bumps(nx, me.y, now)) { q = q || scr(0, Math.sign(ay)); ny = me.y; }
-    else if (!bumps(me.x, ny, now)) { q = q || scr(Math.sign(ax), 0); nx = me.x; }
+  // other ducks: try both steps, then each alone; a blocked step squashes against them. A step is blocked only when it
+  // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it
+  const here = crowd(me.x, me.y, now).d, into = (x, y) => { const d = crowd(x, y, now).d; return d > 0 && d > here - 1e-6; };
+  if (into(nx, ny)) {
+    if (!into(nx, me.y)) { q = q || scr(0, Math.sign(ay)); ny = me.y; }
+    else if (!into(me.x, ny)) { q = q || scr(Math.sign(ax), 0); nx = me.x; }
     else { q = q || scr(Math.sign(ax), Math.sign(ay)); nx = me.x; ny = me.y; }
   }
   if (q) squash = { q, t: now };
@@ -589,7 +595,15 @@ function bbMarks(s) {
   if (!isBb(s) || !s.bb) return;
   const m = bbMatch(s), justLost = s.phase === 'discuss' && m && m.w != null ? s.bb.seeds[m.w === m.a ? m.b : m.a] : null;
   for (const id of s.seat) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx' && ((justLost && justLost.by === id) || allOut(s, id))) losers.add(id); }
-  if (m) { const [ca, cb] = matchColors(s); S.style.setProperty('--seed-a', ca); S.style.setProperty('--seed-b', cb); }
+  if (m) { const [ca, cb] = matchColors(s, seedShift); S.style.setProperty('--seed-a', ca); S.style.setProperty('--seed-b', cb); }
+}
+/* while a match is voted on, its two sides slowly turn through the colors (together, so they stay apart); when the vote
+   ends they keep the colors they stopped on */
+function shiftSides(s, now) {
+  if (!isBb(s) || s.phase !== 'answer' || !bbMatch(s) || !document.documentElement.classList.contains('moving')) return;
+  const deg = Math.round(Math.max(0, now - s.at) / 1000 * 4) % 360;   // 4° a second: once around in a minute and a half
+  if (deg === seedShift) return;
+  seedShift = deg; bbMarks(s);
 }
 function paint(force) {
   if (!S || !R) return;
@@ -602,6 +616,7 @@ function paint(force) {
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
     S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s));
+    if (s.phase === 'answer') seedShift = 0;   // a vote starts on the match's own colors
     bbMarks(s);
     main.innerHTML = viewHTML(s);
     if (!scene) scene = mountMap($('.map-layer', S), s);

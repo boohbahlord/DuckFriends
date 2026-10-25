@@ -21,6 +21,13 @@ export const BEAKS = [
   { id: 'hole', name: 'A round hole' },
 ];
 export const beakById = id => BEAKS.find(b => b.id === id) || BEAKS[0];
+/* how Customize shows the beaks: in groups, each under a small heading */
+export const BEAK_GROUPS = [
+  ['Duck beaks', ['default', 'long', 'short', 'tall', 'round']],
+  ['Other animals', ['teeth', 'eagle', 'pelican', 'trunk']],
+  ['To match a style', ['blocks', 'geo']],
+  ['Odd', ['hole']],
+];
 
 /* a duck-beak shape: from the face at x0, upper half up to `top`, tip at x1 (y tipY), lower half down to `bot` */
 const duckBeak = ({ x0 = 96, x1 = 116, top = 33, tipY = 39, mid = 42.5, bot = 49, hl = true } = {}) => {

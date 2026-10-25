@@ -18,8 +18,20 @@ export const EYES = [
   { id: 'many', name: 'Too many eyes' },
   { id: 'holes', name: 'Holes' },
   { id: 'none', name: 'No eyes' },
+  { id: 'raptor', name: 'Raptor eye', tip: 'A yellow reptile eye with a slit. Matches the raptor.' },
+  { id: 'eagle', name: 'Eagle eye', tip: 'A fierce golden eye. Matches the eagle.' },
+  { id: 'pelican', name: 'Pelican eye', tip: 'A pale eye in a pink ring. Matches the pelican.' },
+  { id: 'block', name: 'Block eye', tip: 'One square block. Matches the block duck.' },
+  { id: 'flat', name: 'Flat eye', tip: 'A plain flat dot. Matches the 2D duck.' },
 ];
 export const eyeById = id => EYES.find(e => e.id === id) || EYES[0];
+/* how Customize shows the eyes: in groups, each under a small heading */
+export const EYE_GROUPS = [
+  ['Duck eyes', ['default', 'happy', 'sleepy', 'angry', 'googly']],
+  ['Shiny', ['star', 'heart', 'coins']],
+  ['Strange', ['human', 'bug', 'bug2', 'alien', 'demon', 'many', 'holes']],
+  ['To match a style', ['raptor', 'eagle', 'pelican', 'block', 'flat']],
+];
 
 const K = '#161616';
 const DRAW = {
@@ -56,6 +68,15 @@ const DRAW = {
   holes: (L, id) => `<defs><radialGradient id="${id}o" cx=".45" cy=".45" r=".6"><stop offset="0" stop-color="#000"/><stop offset=".75" stop-color="#121218"/><stop offset="1" stop-color="#2b2b38"/></radialGradient></defs>
     <ellipse cx="83" cy="34" rx="4.6" ry="5.4" fill="url(#${id}o)"/>`,
   none: () => '',
+  raptor: () => `<path d="M77 34C79.5 29.6 87 29.4 89.6 34C87 38.4 79.5 38.4 77 34Z" fill="#f2c218" stroke="#3a2a06" stroke-width="1"/>
+    <ellipse cx="83.6" cy="34" rx="1.1" ry="3.9" fill="${K}"/><circle cx="85.6" cy="32.4" r=".8" fill="#fff" opacity=".8"/>
+    <path d="M76 30.6C79.6 28 86.4 28 90.4 30.4" stroke="#2a1f10" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  eagle: () => `<circle cx="83.4" cy="34.4" r="4.6" fill="#e8a317" stroke="#3a2406" stroke-width="1"/><circle cx="83.8" cy="34.6" r="2.2" fill="${K}"/>
+    <circle cx="85" cy="33.2" r=".8" fill="#fff"/><path d="M77 30.6L90 31.4L89 29.4C85 28.4 80 28.6 77 30.6Z" fill="#2b1c0c"/>`,
+  pelican: () => `<circle cx="83" cy="34" r="4.6" fill="#f6b2b8" stroke="#8a4a50" stroke-width=".8"/><circle cx="83" cy="34" r="3" fill="#fbf2c8"/>
+    <circle cx="83.2" cy="34" r="1.3" fill="${K}"/><circle cx="84.2" cy="33" r=".6" fill="#fff"/>`,
+  block: () => `<g shape-rendering="crispEdges"><rect x="78" y="30" width="7" height="7" fill="${K}"/><rect x="82" y="31" width="2" height="2" fill="#fff"/></g>`,
+  flat: () => `<circle cx="83" cy="34" r="4.4" fill="${K}"/><circle cx="84.4" cy="32.6" r="1.4" fill="#fff"/>`,
 };
 let uid = 0;
 export function eyesSVG(L, dead) {

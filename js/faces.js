@@ -27,6 +27,13 @@ export const FACES = [
   { id: 'vr', name: 'VR headset' },
 ];
 export const faceById = id => FACES.find(f => f.id === id) || null;
+/* how Customize shows the face items: in themed groups, each under a small heading */
+export const FACE_GROUPS = [
+  ['Glasses', ['glasses', 'round', 'aviators', 'shades', 'monocle']],
+  ['Helmets and masks', ['moto', 'scifi', 'gasmask', 'ski', 'hero', 'vr']],
+  ['Over the eyes', ['blindfold', 'sleep', 'patch']],
+  ['Silly', ['bag', 'pumpkin', 'box', 'clown']],
+];
 
 const O = 'stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"';
 const dk = (hex, t) => { const n = parseInt(String(hex).slice(1), 16) || 0, c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * (1 - t))); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
