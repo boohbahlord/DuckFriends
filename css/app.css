@@ -851,7 +851,11 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 /* rooms: a game in progress, and the hide-private switch */
 .rr-phase.live { color: var(--green); font-weight: 700; }
 .online-h { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
-.pcard-net { position: absolute; right: 2.7rem; top: 50%; transform: translateY(-50%); font-size: calc(.72rem * var(--ts)); padding: .1rem .4rem; border-radius: .5rem; background: #0007; color: #fff; }
+/* the ping: a small pill beside the Host and You tags, so it never covers them */
+.pcard-net { font-size: calc(.62rem * var(--ts)); padding: .05rem .35rem; border-radius: .5rem; background: #0007; color: #fff; }
+.pcard-net .net { gap: .25rem; }
+.pcard-net .bars { height: .7rem; }
+.pcard-net .bars i { width: 3px; }
 
 /* chat bubbles over the ducks: see-through, fading */
 .gduck-say { position: absolute; left: 50%; bottom: calc(var(--sz) * 1.08); transform: translate(-50%, .3rem); width: max-content; max-width: min(14rem, 60vw);
@@ -1034,9 +1038,10 @@ html.still .spx * { animation: none !important; opacity: 1; }
   .cols.bb-cols > :nth-child(3) { padding-top: 7.5rem; }
   .bb-top .question.bb-winner { min-width: 0; }
   .bb-winner .seed { --h: 2.8rem; } .bb-winner .seed-txt { font-size: calc(.92rem * var(--ts)); }
-  html.map-is-ec .gbar-l { flex-wrap: nowrap; gap: .5rem; min-width: 0; }   /* the typewriter font is wide: one line, the round shortened if it must */
-  html.map-is-ec .gbar-l .round { font-size: calc(.82rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; flex: none; }
+  /* the typewriter font is wide: the round sits small on its own line over the stage, each kept whole */
+  html.map-is-ec .gbar-l { flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; line-height: 1.15; }
+  html.map-is-ec .gbar-l .round { font-size: calc(.78rem * var(--ts)); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  html.map-is-ec .gbar-l .phase { font-size: calc(1rem * var(--ts)); white-space: nowrap; }
 }
 
 /* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */

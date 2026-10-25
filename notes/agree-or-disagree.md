@@ -924,6 +924,29 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
 
+## Lobby note, word for word (2026-10-25)
+"the game has the ping stat cover the "You" tag on the lobby screen. Maybe make the ping stat smaller"
+
+## The host and sudo, word for word (2026-10-25)
+
+i as host was said to not be in the sudo catgeory this is a glitch
+
+(Decision: the host and sudo never need to type the word sudo; groupadd works like sudo groupadd for them. Anyone else
+who tries is told only the host and sudo can.)
+(Also from the bug tester, through the coordinator: `usermod -a -G sudo @name` gave the usage message. Now usermod,
+gpasswd, adduser and deluser take names with or without @, and flags work split (-a -G), joined (-aG) or long
+(--append --groups), in every command.)
+
+## Who is the Quack?: the Quack kicked or leaving, word for word (2026-10-25)
+
+Asked "Should a kick end the round like that, or just remove them quietly and draw a new word?":
+
+You decide
+
+(Decided: when a Quack is kicked or leaves mid-round, nobody learns who it was or the word. The cloud says "A duck
+left, so here's a new word." and the round starts over with a new word and a new Quack, the same way it does when a
+new host takes over. The round doesn't count in the stats.)
+
 ## Fonts the same size everywhere (2026-10-25)
 
 With how the player has dif fonts, make them all be the same size in chat or whatnot, they shouldnt have some bigger then others that is jst sloppy
