@@ -923,3 +923,13 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 (Decisions: every Help page starts with a "dumb version", then what it is, how to, flags and examples, each example a
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
+
+## Who is the Quack?: the Quack kicked or leaving, word for word (2026-10-25)
+
+Asked "Should a kick end the round like that, or just remove them quietly and draw a new word?":
+
+You decide
+
+(Decided: when a Quack is kicked or leaves mid-round, nobody learns who it was or the word. The cloud says "A duck
+left, so here's a new word." and the round starts over with a new word and a new Quack, the same way it does when a
+new host takes over. The round doesn't count in the stats.)

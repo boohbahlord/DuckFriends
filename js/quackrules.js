@@ -204,7 +204,8 @@ export function quackEnd(s, a, now) {
 /* what ends a phase of the round */
 export function quackAdvance(s, now, force = false) {   // force: the host's skip, or a vote to skip the turn (as if everyone were done)
   const w = s.wq; if (!w) return s;
-  if (['clue', 'choice', 'accuse'].includes(s.phase)) { quackLeft(s, now); if (s.phase === 'reveal') return s; }   // (a Quack kicked or gone)
+  if (['clue', 'choice', 'accuse'].includes(s.phase) && (quackLeft(s, now) || s.phase === 'reveal')) return s;   // (a Quack kicked or gone: a new round; too few left: the reveal)
+  if (s.phase === 'reveal' && !w.result && quackLeft(s, now)) return s;
   const inn = stillIn(s), timeUp = force || (!!s.ends && now >= s.ends);
   switch (s.phase) {
     case 'wqpick': {
@@ -247,10 +248,15 @@ export function quackSkip(s, now) {
   return enter(s, 'results', now);
 }
 /* someone left mid-round: a Quack gone, or too few left, ends it (a missing speaker or picker is passed over by advance) */
-export function quackLeft(s, now) {
-  if (!s.wq || !QUACK_PHASES.includes(s.phase) || s.phase === 'wqpick' || s.wq.result) return;
+export function quackLeft(s, now) {   // true: the round started over
+  if (!s.wq || !QUACK_PHASES.includes(s.phase) || s.phase === 'wqpick' || s.wq.result) return false;
+  if (s.hidden && quacksOf(s).some(id => !s.players[id])) {   // a Quack kicked or gone: no reveal, no stats, a new word and a new Quack
+    say(s, 'A duck left, so here\'s a new word.');
+    startQuackRound(s, now); return true;
+  }
   checkEnd(s, now, false);
   if (s.wq.result && s.phase !== 'reveal') { s.wq.lastOut = null; enter(s, 'reveal', now); }
+  return false;
 }
 /* a moved duck: the last duck playing dead can't move for a moment */
 export const holdStill = (s, id, now) => isQuack(s) && frozen(s, id, now);
