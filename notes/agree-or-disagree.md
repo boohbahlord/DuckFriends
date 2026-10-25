@@ -1317,3 +1317,10 @@ lights against a dark blue night.)
 and it is sourrounded by forest trees
 
 (The forest rings the whole map: trees on every side, thick at the edges, where the world ends.)
+
+Make the space bar flat and C is sharp AS WELL and then to escape the piano click Escape.
+
+The keys and what they do are shown in an orderly fashion to the player
+
+(Piano keyboard mode: Space flats as well as Alt, C sharps as well as Shift, Escape gets up from the piano; a neat
+legend of the four rows and these keys shows on the keyboard on a computer.)

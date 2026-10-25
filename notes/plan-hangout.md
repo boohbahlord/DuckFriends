@@ -106,7 +106,8 @@ Read them first, word for word; this file is how we build it. Reference pictures
   - Four octaves of white keys (C D E F G A B), lowest to highest: `1 2 3 4 5 6 7`, `q w e r t y u`,
     `g h j k l ; '`, `v b n m , . /`. Shift + key sharps it a half step, Alt + key flats it; black keys are played only
     that way on a computer. Read keys by `e.code` so Shift and Alt don't change them; stop the browser's own use of the
-    keys while playing (but never fight Ctrl/Cmd shortcuts).
+    keys while playing (but never fight Ctrl/Cmd shortcuts). Also: Space flats as well as Alt, C sharps as well as
+    Shift, Escape gets up; a neat legend of the rows and these keys shows on the keyboard on a computer.
   - Each key glows as it is played, on the screen and on the big piano that everyone sees. The glow's color is the
     interval from the previous note (the note still held, else the last one played): the twelve half-step intervals
     take twelve colors around the rainbow (minor 2nd, major 2nd, … major 7th; the same note or an octave white). A
