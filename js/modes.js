@@ -13,7 +13,7 @@ export const MODES = [
   { id: 'bb', name: 'Bicker Brackets', tip: 'A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.' },
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
   { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
-  { id: 'law', name: 'Lawyering', tip: 'Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them.' },
+  { id: 'law', name: 'Lawyering', tip: 'Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 

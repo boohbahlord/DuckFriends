@@ -467,6 +467,7 @@ html.mouse-move .board { cursor: pointer; }
 @media (max-width: 860px) {
   .results { grid-template-columns: 1fr; grid-template-rows: minmax(16rem, 1fr) auto; overflow: auto; }
   .statpanel { overflow: visible; }
+  .bb-results > .statpanel { overflow: auto; }   /* (a full-screen stats panel scrolls inside its own space, never under the buttons) */
 }
 
 /* ---------- text chat and the command line (the button in the bottom bar; the panel in a dock) ----------
@@ -948,6 +949,7 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .awards { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .6rem; margin-bottom: .8rem; }
 .award { background: var(--panel2, var(--panel)); border: .14rem solid var(--line); border-radius: .8rem; padding: .5rem .7rem; }
 .award h3 { font-size: calc(.8rem * var(--ts)); text-transform: uppercase; letter-spacing: .04em; color: var(--dim); margin-bottom: .2rem; }
+.award .pname, .award .rainbow { white-space: nowrap; }   /* a name never breaks in the middle */
 .wyr-split .a { color: var(--wyr-a); } .wyr-split .b { color: var(--wyr-b); }
 .type-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .7rem; }
 .type-tile { display: flex; flex-direction: column; gap: .3rem; align-items: center; text-align: center; padding: .6rem; }
@@ -1330,6 +1332,7 @@ html.moving .law-banner.on b { animation: lawpulse 1.6s ease-in-out infinite; }
   .law-banner b { font-size: calc(1.05rem * var(--ts)); } .law-banner span { font-size: calc(.82rem * var(--ts)); }
   .law-def .law-who { top: .5rem; bottom: auto; }   /* (the defense is on top: its name away from the circle) */
   .law-top .lord-say { max-width: 8.6rem; margin-top: .3rem; font-size: calc(1rem * var(--ts)); }   /* the verdict fits under the cloud */
+}
 /* Who is the Quack?: a tile for each duck in the round, in its player's card (see-through over the map), their duck and name */
 .cols.wq-cols { display: block; border: 0; box-shadow: none; background: transparent; overflow: visible; }
 .wq-tiles { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--C), minmax(0, 1fr)); grid-template-rows: repeat(var(--R), minmax(0, 1fr)); gap: .5rem; }

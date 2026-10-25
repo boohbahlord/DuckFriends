@@ -43,7 +43,7 @@ export function lawTopHTML(s, knocked = false) {
   const off = player(s, L.off), def = player(s, L.def), done = s.phase === 'discuss' && L.w != null;
   const cloud = duelCloudHTML(s.players[L.off] || GONE, s.players[L.def] || GONE, done ? (L.w === -1 ? { both: true, knocked } : { winner: L.w, knocked }) : {});
   const won = done && L.w !== -1 ? (L.w ? def : off) : null, [o, d] = L.end || [0, 0];
-  const verdict = !done ? '' : won ? `<span class="law-verdict">${nm(won)} wins${L.gave ? ': the other side gave up' : ` ${Math.max(o, d)}–${Math.min(o, d)}`}</span>` : `<span class="law-verdict">Hung jury ${o}–${d}: nobody wins</span>`;
+  const verdict = !done ? '' : won ? `<span class="law-verdict">${nm(won)} wins${L.gave ? ': the other side gave up' : L.left ? ': the other side left' : ` ${Math.max(o, d)}–${Math.min(o, d)}`}</span>` : `<span class="law-verdict">Hung jury ${o}–${d}: nobody wins</span>`;
   return `<div class="topover law-top">${cloud}<div class="question law-what">
     <span class="small dim">The Court Case</span><span class="law-topic">${inFont(s.players[q.by], esc(q.text))}</span>
     <span class="small law-names">${nm(def)} defends it · ${nm(off)} is against it</span>${verdict}</div></div>`;
@@ -83,8 +83,8 @@ export function lawCasesHTML(s, round = null) {
     const c = h.law, off = player(s, c.off), def = player(s, c.def), [o, d] = c.end || [0, 0], w = c.w === -1 ? null : c.w ? def : off;
     return `<article class="law-case panel"><p class="law-case-topic">${inFont(s.players[h.by], esc(h.text))}</p>
       <p class="law-case-vs"><span class="law-chip off" style="--c:${esc(sideColor(off))}">${duckSVG(off.duck, { size: 26, shadow: false, title: off.name })}${nm(off)}</span>
-        <b class="law-score">${o} – ${d}</b><span class="law-chip def" style="--c:${esc(sideColor(def))}">${nm(def)}${duckSVG(def.duck, { size: 26, shadow: false, title: def.name })}</span></p>
-      <p class="small">${w ? `${nm(w)} won${c.gave ? ` (${nm(player(s, c.gave))} gave up)` : ''}` : 'Hung jury: nobody won'}${c.start ? ` · closing arguments from ${c.start[0]}–${c.start[1]}` : ''}</p></article>`;
+        <b class="law-score">${c.left ? '–' : `${o} – ${d}`}</b><span class="law-chip def" style="--c:${esc(sideColor(def))}">${nm(def)}${duckSVG(def.duck, { size: 26, shadow: false, title: def.name })}</span></p>
+      <p class="small">${w ? `${nm(w)} won${c.gave ? ` (${nm(player(s, c.gave))} gave up)` : c.left ? ` (${nm(player(s, c.left))} left)` : ''}` : 'Hung jury: nobody won'}${c.start ? ` · closing arguments from ${c.start[0]}–${c.start[1]}` : ''}</p></article>`;
   }).join('')}</div>`;
 }
 /* ---------- the stats: the awards, each player's box, then the cases ---------- */
@@ -99,9 +99,9 @@ function awardsHTML(s, round) {
   const best = top(p => p.won), flip = top(p => p.flips), jx = s.seat.map(id => [id, (s.jumps || {})[id] || 0]), jv = Math.max(0, ...jx.map(x => x[1]));
   const firm = ids.filter(id => per[id].votes && !per[id].flips), own = ids.filter(id => per[id].ownWin);
   /* Landslide: the biggest winning margin (a case given up doesn't count); Hard Topic: the closest vote */
-  const won = cases.filter(c => c.w >= 0 && !c.gave && Math.abs(c.o - c.d) > 0), big = Math.max(0, ...won.map(c => Math.abs(c.o - c.d)));
+  const won = cases.filter(c => c.w >= 0 && !c.gave && !c.left && Math.abs(c.o - c.d) > 0), big = Math.max(0, ...won.map(c => Math.abs(c.o - c.d)));
   const slides = won.filter(c => Math.abs(c.o - c.d) === big), slideWho = [...new Set(slides.map(c => c.w ? c.def : c.off))].filter(id => s.players[id]);
-  const voted = cases.filter(c => c.o + c.d > 0), gap = c => Math.abs(c.o - c.d) / (c.o + c.d), close = Math.min(1, ...voted.map(gap));
+  const voted = cases.filter(c => c.o + c.d > 0 && !c.left), gap = c => Math.abs(c.o - c.d) / (c.o + c.d), close = Math.min(1, ...voted.map(gap));
   const hard = voted.filter(c => gap(c) === close), hardWho = [...new Set(hard.map(c => c.by))].filter(id => s.players[id]);
   return `<div class="awards">
     ${award('Best Lawyer', best && best.who, best ? `Won ${plural(best.v, 'case')}.` : '')}
