@@ -1116,6 +1116,17 @@ hold to keep on; holding a duck still opens its player menu). Customize → Spec
 tile itself opens ten key boxes under it, inside the menu. Colors gets a Specials section. Sixteen more special ideas
 were offered for the owner to pick from.)
 
+## Music: faint crackles (2026-10-25)
+
+there is cackles in some songs in the computer game that are faint but bothersome, like it should be checked out by another agent maybe if possible, if not i understand
+
+(Done: every song was written out and searched for clicks in Chromium and Firefox. The songs themselves were clean
+apart from the needle crackle that Lantern in the Fog, Glow and Jester's Stair carried under them (from Ether's
+Crossroads, very faint); it's gone, the soft hiss stays. A real click was found and fixed: hiding the page for a moment
+(another tab or window) and coming back made the song click and play twice for a second; now it fades out and back in.
+Each song's recording fades out at its very end, Chrome writes the next song out about 2.5 times faster (less work for
+the computer while a song plays), and a song not ready in time is no longer written out a second time.)
+
 ## A starry night sky map, word for word (2026-10-25)
 
 Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.
