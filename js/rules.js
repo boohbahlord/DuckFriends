@@ -89,6 +89,10 @@ export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a 
 export const DAGGER_SPEED = .45, DAGGER_Z = .45, DAGGER_UP = 1.2, DAGGER_G = 2.2, DAGGER_LIFE = 4500;   // (it never flies over a duck's head: everything in its way is hit)
 export const daggerZ = t => DAGGER_Z + DAGGER_UP * t - DAGGER_G * t * t / 2;   // (t in seconds)
 const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'dagger', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
+/* how long an item waits before its key works again (ms); the key shows a bar draining meanwhile */
+const COOLDOWN = { handgun: 3000, dagger: 2000, confetti: 15000 };
+export const coolFor = sp => COOLDOWN[sp] || 1500;
+export const coolEnds = (s, id, sp) => ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp);   // (a time on the room's clock)
 export const WEAPONS = ['handgun', 'dagger'];   // aimed (with the mouse), and kept out with Shift and their key
 const EFFECTS = ['zap', 'flames', 'hearts', 'poison', 'notes', 'loserx', 'ducklings', 'disco'];   // the effects, shown around a duck
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
@@ -378,7 +382,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
       if (WEAPONS.includes(sp) && !s.options.fun) return state;   // the silly-commands switch covers them
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
-      if (now - ((s.lastUse || {})[k] || 0) < ({ handgun: 3000, dagger: 2000, confetti: 15000 }[sp] || 1500)) return state;
+      if (now < coolEnds(s, a.id, sp)) return state;
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1, aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}) }];

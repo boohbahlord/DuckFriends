@@ -1379,3 +1379,28 @@ touchpad or mouse moves. Phones and tablets still have no row. Customize → Spe
 (From the specials thread, the owner: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
 turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
 phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)
+
+## Music bar: the default line stays at 100% (2026-10-25)
+
+also the bar that shows where the default percent is has moved around into places not 100% volume
+
+(The music bar's slider box stretched to the song name's width, so its line sat past 100% when the name was long. Now
+the box is exactly the slider's width, and the line is on 100% for any song name; the Settings → Audio line was already
+on it. Checked in Chromium and Firefox, phone and computer.)
+
+## Specials: cooldown bars on the number keys (2026-10-25)
+
+There is a cooldown bar that shows on the player's number keys UNTIL they can use certain items again, like the dagger or the gun and other things
+
+(Done: every item waits a moment before its key works again: the handgun 3 seconds, the dagger 2, confetti rain 15, the
+others 1.5. While it waits, its key dims and a yellow bar along its bottom drains to nothing; the key stays on the screen
+until it is ready, even after the rest of the row slides away. A phone's ring of specials shows the same bar.)
+
+## Night Show: the rolling lights come back (2026-10-25)
+
+The night show map and the background on the Duck Friends screen should have the lights rolling in a diagnal fashion, where each individual light breathes but they breath in patterns to make larger patterns that mesmerize, like they use to before they were changed
+
+(A speed-up for the background had drawn all the floor's dots as one picture, so the whole floor breathed at once. Now
+each row of dots of one color is its own small picture again, each a little after the last, so the light rolls across
+the floor in diagonal waves like before; the string lights twinkle in three sets instead of all together. Same on the
+title screen and the Night Show map; still smooth (60 frames a second) on a slowed-down phone and in Firefox.)

@@ -9,25 +9,32 @@ import { esc } from './ui.js';
 import { KEYS, specialById } from './specials.js';
 
 const LIFE = 5000;   // how long the row (or the ring of specials) stays after its last use
-const HOLD = 450;    // on a phone: holding a special this long keeps it on
+const HOLD = 450;
+/* an item's wait: a bar that drains from full to nothing (c = [ends, how long, now]) */
+const drain = c => c ? `<s class="cooldown" style="--full:${c[1]}ms;--el:${Math.max(0, c[1] - (c[0] - c[2])).toFixed(0)}ms"></s>` : '';    // on a phone: holding a special this long keeps it on
 
-/* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep) */
+/* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or
+   [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then) */
 export function mountHotbar(S, api) {
   const bar = document.createElement('div');
   bar.className = 'hotbar gone'; bar.setAttribute('aria-hidden', 'true');
   S.querySelector('.gbar-l').after(bar);
-  let timer = 0, sel = -1, sig = '', wheel = null, wheelT = 0;
+  let timer = 0, sel = -1, sig = '', wheel = null, wheelT = 0, coolT = 0, cools = [];
 
   const draw = () => {
-    const k = api.keys(), on = api.kept(), now = JSON.stringify([k, [...on], sel]);
+    const k = api.keys(), on = api.kept(), cd = api.cool ? api.cool() : []; cools = cd;
+    const now = JSON.stringify([k, [...on], sel, cd.map(c => c && c[0])]);
     if (now === sig) return; sig = now;
     bar.innerHTML = KEYS.map((n, i) => { const sp = specialById(k[i]);
-      return `<span class="hk${sp ? '' : ' empty'}${i === sel ? ' sel' : ''}${sp && on.has(sp.id) ? ' on' : ''}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ''}</span>`; }).join('');
+      return `<span class="hk${sp ? '' : ' empty'}${i === sel ? ' sel' : ''}${sp && on.has(sp.id) ? ' on' : ''}${cd[i] ? ' cool' : ''}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ''}${drain(cd[i])}</span>`; }).join('');
+    /* when the next one is ready again, its bar goes */
+    const left = cd.filter(Boolean).map(([end, , t]) => end - t);
+    clearTimeout(coolT); if (left.length) coolT = setTimeout(() => { draw(); settle(); }, Math.min(...left) + 40);
   };
   /* the row comes in (i: the key just pressed, glowing), then goes after 5 seconds unused */
   let resting = true, away = false;
   /* resting: only the keys kept on stay (none kept: the row is gone) */
-  const settle = () => { const kept = resting && api.kept().size > 0;
+  const settle = () => { const kept = resting && (api.kept().size > 0 || cools.some(Boolean));   // (and the items still waiting)
     bar.classList.toggle('gone', away || (resting && !kept)); bar.classList.toggle('rest', !away && kept); };
   const show = (i = -1) => {
     sel = i; resting = false; away = false; draw(); settle();
@@ -39,7 +46,7 @@ export function mountHotbar(S, api) {
   function closeWheel() { if (!wheel) return; clearTimeout(wheelT); wheel.remove(); wheel = null; }
   function openWheel(x, y) {
     closeWheel();
-    const k = api.keys(), on = api.kept(), slots = k.map((id, i) => [id, i]).filter(([id]) => id);
+    const k = api.keys(), on = api.kept(), cd = api.cool ? api.cool() : [], slots = k.map((id, i) => [id, i]).filter(([id]) => id);
     if (!slots.length) return false;
     const n = slots.length, r = n < 4 ? 64 : 64 + (n - 4) * 9, half = r + 30;
     const cx = Math.max(half + 6, Math.min(innerWidth - half - 6, x)), cy = Math.max(half + 6, Math.min(innerHeight - half - 6, y));
@@ -47,7 +54,7 @@ export function mountHotbar(S, api) {
     wheel.className = 'sp-wheel';
     wheel.innerHTML = slots.map(([id, i], j) => {
       const a = -Math.PI / 2 + (j / n) * Math.PI * 2, sp = specialById(id);
-      return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}" data-i="${i}" style="left:${(cx + Math.cos(a) * r).toFixed(0)}px;top:${(cy + Math.sin(a) * r).toFixed(0)}px" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b></button>`;
+      return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}" data-i="${i}" style="left:${(cx + Math.cos(a) * r).toFixed(0)}px;top:${(cy + Math.sin(a) * r).toFixed(0)}px" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}</button>`;
     }).join('');
     wheel.opened = performance.now();
     document.body.append(wheel);
@@ -80,6 +87,6 @@ export function mountHotbar(S, api) {
   return {
     show, hide, wheel: openWheel, closeWheel,
     refresh() { draw(); settle(); },
-    destroy() { hide(); bar.remove(); removeEventListener('pointerup', lifted); removeEventListener('keydown', real); removeEventListener('pointermove', real); },
+    destroy() { clearTimeout(coolT); hide(); bar.remove(); removeEventListener('pointerup', lifted); removeEventListener('keydown', real); removeEventListener('pointermove', real); },
   };
 }
