@@ -162,7 +162,8 @@ for (const [len, at] of [[W, (t, k) => [t, k]], [W, (t, k) => [t, H - k]], [H, (
   for (let row = 0; row < 2; row++) for (let t = row * 65; t < len; t += 120 + rng() * 40) {
     const [x, y] = at(t + rng() * 30, row ? 140 + rng() * 120 : 30 + rng() * 70);
     if (x < 0 || y < 0 || x > W || y > H) continue;
-    tree(x, y, .85 + rng() * .4);
+    const sz = .85 + rng() * .4; if (x > FIELD.x1 - 80 && x < W - 120 && y > 900 && y < 1800) continue;   // (the inner row stops beside the soccer net, so the net shows)
+    tree(x, y, sz);
   }
 const KEEP_OUT = [[1150, 250, 4450, 2350], [2100, 2150, 4650, 3050], [2800, 2950, 5000, 4100], [4380, 280, 5900, 1920], [250, 360, 2200, 700], [1100, 3050, 1900, 3550], [4900, 2750, 5500, 3200], [350, 300, 900, 700]];
 for (let k = 0; k < 400 && PROPS.filter(p => p.kind === 'tree').length < 420; k++) {
@@ -188,10 +189,13 @@ export function standable(x, y, z, up = STEP, from = null) {
   if (heightAt(x, y) > z + up + 1e-6) return false;
   return !solidsAt(x, y, z).some(b => !(from && hits(b, from[0], from[1])));
 }
-/* where a duck's feet are drawn in depth: its foot y; on the stage (or its stairs) in front of the stage itself */
+/* where a duck's feet are drawn in depth: its foot y; on the stage (or the stairs' upper steps) in front of the whole
+   stage (its strips sort by its front edge, at most cy + r) and among themselves by depth, squeezed into the 40 steps
+   after it (z-indexes are whole numbers); the stairs' lower steps from there on, at their own depth */
+const BAND = 40, BACK = STAGE.cy - STAGE.r, LOW = STAGE.cy + STAGE.r + BAND;
 export function sortY(x, y, z) {
-  if ((onStage(x, y) || onStageStairs(x, y)) && z >= heightAt(x, y) - 1) return STAGE.cy + STAGE.r + 1 + (y - STAGE.cy + STAGE.r) * .002;
-  return y;
+  if (!(onStage(x, y) || onStageStairs(x, y)) || z < heightAt(x, y) - 1 || y >= LOW) return y;
+  return STAGE.cy + STAGE.r + 1 + (y - BACK) / (LOW - BACK) * (BAND - 1);
 }
 /* where someone arrives: outside the front door (k: the k-th of n, spread out; a free spot) */
 export function spawnAt(k = 0, n = 1) {

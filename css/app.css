@@ -1612,3 +1612,11 @@ html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; an
 .hang-btn.idle { visibility: hidden; }
 .gmain[data-phase="hang"] { touch-action: none; }
 .scene.cabin { background: radial-gradient(1.5px 1.5px at 12% 18%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 34% 8%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 58% 22%, #fffa 50%, transparent 51%), radial-gradient(1px 1px at 76% 12%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 90% 30%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 22% 40%, #fff6 50%, transparent 51%), radial-gradient(1px 1px at 66% 44%, #fff6 50%, transparent 51%), radial-gradient(60px 60px at 86% 10%, #fff4cf 40%, #fff4cf22 55%, transparent 70%), linear-gradient(#0b1030, #1d2a55 70%, #14301f); }
+
+/* ---------- Hangout: the stage, the couches and logs, soccer (hangout/stage.js, seats.js, soccer.js) ----------
+   The stage is drawn in upright strips, each sorted on its own; a couch in two parts (the cushions, the back); the
+   ball and the goal's confetti stand in the world, sorted with the ducks. */
+.hang-strip { overflow: hidden; }
+.hang-strip-in { position: relative; height: 100%; }
+.hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
+.hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }
