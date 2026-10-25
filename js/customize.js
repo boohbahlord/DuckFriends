@@ -10,12 +10,12 @@ import { openWindow, esc, toast, onMenu, el } from './ui.js';
 import { SPECIALS, specialById, momentHTML, confettiRain, pressFX, BULLET } from './specials.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
-import { HATS, hatById } from './hats.js';
-import { FACES, faceById } from './faces.js';
-import { EYES, eyeById } from './eyes.js';
-import { BEAKS, beakById } from './beaks.js';
+import { HATS, HAT_GROUPS, hatById } from './hats.js';
+import { FACES, FACE_GROUPS, faceById } from './faces.js';
+import { EYES, EYE_GROUPS, eyeById } from './eyes.js';
+import { BEAKS, BEAK_GROUPS, beakById } from './beaks.js';
 import { STYLES, styleById } from './styles.js';
-import { OUTFITS, outfitById } from './outfits.js';
+import { OUTFITS, OUTFIT_GROUPS, outfitById } from './outfits.js';
 import { FONTS } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
@@ -61,6 +61,13 @@ const valueOf = k => {
 /* a grid of picture tiles, three to a row */
 const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) =>
   `<button type="button" class="arm-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>`;
+/* a grid split into themed groups under small headings; "none" (if there) comes first, anything ungrouped last */
+const grouped = (group, items, cur, groups) => {
+  const by = new Map(items.map(i => [i[0], i])), used = new Set(['none']), none = items.filter(i => i[0] === 'none');
+  const parts = groups.map(([label, ids]) => { const its = ids.map(id => by.get(id)).filter(Boolean); its.forEach(i => used.add(i[0])); return its.length ? `<h3>${esc(label)}</h3>${grid(group, its, cur)}` : ''; });
+  const rest = items.filter(i => !used.has(i[0]));
+  return (none.length ? grid(group, none, cur) : '') + parts.join('') + (rest.length ? `<h3>More</h3>${grid(group, rest, cur)}` : '');
+};
 let lastPage = null, lastColor = 'duck';
 const openFolds = new Set();
 
@@ -107,21 +114,21 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'hat') {
           const pic = id => duckSVG({ ...D, image: null, face: null, hat: id ? { ...(D.hat && D.hat.id === id ? D.hat : {}), id } : null }, { size: 58, shadow: false });
           const hd = D.hat && hatById(D.hat.id);
-          html = head('Hat') + `<div class="arm-body">${grid('hat', [['none', pic(null), 'No hat'], ...HATS.map(h => [h.id, pic(h.id), h.name, h.tip])], hd ? hd.id : 'none')}
+          html = head('Hat') + `<div class="arm-body">${grouped('hat', [['none', pic(null), 'No hat'], ...HATS.map(h => [h.id, pic(h.id), h.name, h.tip])], hd ? hd.id : 'none', HAT_GROUPS)}
             ${hd ? `<div class="arm-opts">${hd.ketchup ? `<label class="check"><input type="checkbox" data-o="ketchup"${D.hat.ketchup ? ' checked' : ''}>Ketchup</label>` : ''}
               ${hd.metal ? `<div class="row small-tiles">${DUCK_METALS.slice(1).map(([v, n]) => `<button type="button" class="tile" data-g="hmetal" data-v="${v}" aria-pressed="${(D.hat.metal || 'gold') === v}">${esc(n)}</button>`).join('')}</div>` : ''}
               ${hd.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}${hd.tip ? `<p class="small dim">${esc(hd.name)}: ${esc(hd.tip)}</p>` : ''}</div>` : ''}
             ${D.image ? '<p class="small dim">Hats show on the duck, not on a picture.</p>' : ''}</div>`;
         } else if (k === 'face') {
           const pic = id => duckSVG({ ...D, image: null, face: id ? { id } : null }, { size: 58, shadow: false });
-          html = head('Face') + `<div class="arm-body">${grid('face', [['none', pic(null), 'Nothing'], ...FACES.map(f => [f.id, pic(f.id), f.name, f.tip])], D.face ? D.face.id : 'none')}
+          html = head('Face') + `<div class="arm-body">${grouped('face', [['none', pic(null), 'Nothing'], ...FACES.map(f => [f.id, pic(f.id), f.name, f.tip])], D.face ? D.face.id : 'none', FACE_GROUPS)}
             <p class="small dim">Face items go over the face, hat or no hat. More are coming.</p></div>`;
         } else if (k === 'eyes') {
-          html = head('Eyes') + `<div class="arm-body">${grid('eyes', EYES.map(x => [x.id, headPic({ ...D, eyes: x.id }), x.name, x.tip]), eyeById(D.eyes).id)}
+          html = head('Eyes') + `<div class="arm-body">${grouped('eyes', EYES.map(x => [x.id, headPic({ ...D, eyes: x.id }), x.name, x.tip]), eyeById(D.eyes).id, EYE_GROUPS)}
             <p class="small dim">A face item over the eyes hides them.</p></div>`;
         } else if (k === 'beak') {
           const bd = beakById(D.beak);
-          html = head('Beak') + `<div class="arm-body">${grid('beak', BEAKS.map(x => [x.id, headPic({ ...D, beak: x.id }), x.name, x.tip]), bd.id)}
+          html = head('Beak') + `<div class="arm-body">${grouped('beak', BEAKS.map(x => [x.id, headPic({ ...D, beak: x.id }), x.name, x.tip]), bd.id, BEAK_GROUPS)}
             ${bd.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
         } else if (k === 'body') {
           const pic = look => duckSVG({ ...D, image: null, ...look }, { size: 58, shadow: false });
@@ -131,14 +138,14 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'outfit') {
           const pic = id => duckSVG({ ...D, image: null, hat: null, face: null, outfit: id ? { ...(D.outfit && D.outfit.id === id ? D.outfit : {}), id } : null }, { size: 58, shadow: false });
           const od = D.outfit && outfitById(D.outfit.id);
-          html = head('Outfit') + `<div class="arm-body">${grid('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none')}
+          html = head('Outfit') + `<div class="arm-body">${grouped('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none', OUTFIT_GROUPS)}
             ${od ? `<p class="small dim">${esc(od.name)}${od.tip ? `: ${esc(od.tip)}` : '.'}${od.colors ? ' Its colors are under Colors.' : ''}</p>` : '<p class="small dim">An outfit goes over the body, whatever the style.</p>'}</div>`;
         } else if (k === 'style') {
           /* each style on your duck as it is: picking one changes nothing else; the button below brings in the style's
-             matching beak and colors, only when you want them */
-          const st = styleById(D.style), mb = st.match && beakById(st.match);
-          const matched = (!mb || D.beak === st.match) && (st.colors || []).every(([c, , v]) => (D[c] || '').toLowerCase() === v.toLowerCase());
-          const what = [mb ? `the ${mb.name.toLowerCase()}` : '', st.colors ? 'its colors' : ''].filter(Boolean).join(' and ');
+             matching beak, eyes and colors, only when you want them */
+          const st = styleById(D.style), mb = st.match && beakById(st.match), me = st.eyes && eyeById(st.eyes);
+          const matched = (!mb || D.beak === st.match) && (!me || D.eyes === st.eyes) && (st.colors || []).every(([c, , v]) => (D[c] || '').toLowerCase() === v.toLowerCase());
+          const what = [mb ? `the ${mb.name.toLowerCase()}` : '', me ? `the ${me.name.toLowerCase()}` : '', st.colors ? 'its colors' : ''].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1');
           html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG({ ...D, image: null, style: x.id }, { size: 58, shadow: false }), x.name, x.tip]), st.id)}
             ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
@@ -217,7 +224,7 @@ export function openCustomize(page = lastPage) {
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
           if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
-          if (a.dataset.a === 'matchstyle') { const st = styleById(D.style); if (st.match) D.beak = st.match; for (const [c, , v] of st.colors || []) D[c] = v; if (st.colors) { D.metal = 'none'; D.image = null; } changed(); return; }
+          if (a.dataset.a === 'matchstyle') { const st = styleById(D.style); if (st.match) D.beak = st.match; if (st.eyes) D.eyes = st.eyes; for (const [c, , v] of st.colors || []) D[c] = v; if (st.colors) { D.metal = 'none'; D.image = null; } changed(); return; }
         }
         const t = e.target.closest('[data-g]'); if (!t) return;
         const v = t.dataset.v;

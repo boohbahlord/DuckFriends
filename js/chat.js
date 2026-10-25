@@ -23,10 +23,10 @@ import { HATS, hatById } from './hats.js';
 import { FACES, faceById } from './faces.js';
 import { EYES } from './eyes.js';
 import { BEAKS } from './beaks.js';
-import { STYLES } from './styles.js';
-import { OUTFITS } from './outfits.js';
+import { STYLES, styleById } from './styles.js';
+import { OUTFITS, outfitById } from './outfits.js';
 import { SPECIALS } from './specials.js';
-import { CARD_PATTERNS } from './card.js';
+import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES } from './card.js';
 import { normHex } from './color.js';
 import { shareLook } from './customize.js';
 import { applySettings } from './settings.js';
@@ -61,6 +61,7 @@ const TREE = {
         hat: { vals: ['none', ...HATS.map(h => h.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.hat = null; return 'Hat: none'; } const h = hatById(k); if (!h) return bad(v); profile.duck.hat = { ...(profile.duck.hat && profile.duck.hat.id === k ? profile.duck.hat : {}), id: k }; return `Hat: ${h.name}`; } },
         'hat color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c1: c }; return `Hat color: ${c}`; } },
         'hat color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c2: c }; return `Hat second color: ${c}`; } },
+        'hat metal': { vals: keysOf(DUCK_METALS.slice(1)), run: v => { const h = profile.duck.hat; if (!h || !(hatById(h.id) || {}).metal) return '✗ Only the crown takes a metal.'; return pick(keysOf(DUCK_METALS.slice(1)), v, x => { profile.duck.hat = { ...h, metal: x }; }, 'Hat metal'); } },
         ketchup: { vals: ['on', 'off'], run: v => { const h = profile.duck.hat; if (!h || h.id !== 'hotdog') return '✗ Ketchup goes on the hotdog hat.'; if (!/^(on|off)$/i.test(v)) return bad(v); profile.duck.hat = { ...h, ketchup: /^on$/i.test(v) }; return `Ketchup: ${/^on$/i.test(v) ? 'on' : 'off'}`; } },
         face: { vals: ['none', ...FACES.map(f => f.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.face = null; return 'Face: none'; } const f = faceById(k); if (!f) return bad(v); profile.duck.face = { ...(profile.duck.face && profile.duck.face.id === k ? profile.duck.face : {}), id: k }; return `Face: ${f.name}`; } },
         'face color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), f = profile.duck.face; if (!f) return '✗ Nothing on the face. custom avatar face …'; if (!c) return bad(v); profile.duck.face = { ...f, c1: c }; return `Face color: ${c}`; } },
@@ -69,7 +70,11 @@ const TREE = {
         'beak color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor = c; return `Beak color: ${c}`; } },
         'beak color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor2 = c; return `Beak shade: ${c}`; } },
         outfit: { vals: ['none', ...OUTFITS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = OUTFITS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.outfit = x ? { id: x.id } : null; return `Outfit: ${x ? x.name : 'none'}`; } },
+        'outfit color': { vals: COLOR_HINT, run: v => part('outfit', outfitById, 0, v, 'outfit') },
+        'outfit color 2': { vals: COLOR_HINT, run: v => part('outfit', outfitById, 1, v, 'outfit') },
         style: { vals: STYLES.map(x => x.id), run: v => pick(STYLES.map(x => x.id), v, x => { profile.duck.style = x; }, 'Style') },
+        'style color 2': { vals: COLOR_HINT, run: v => styleTone('color2', v) },
+        'style color 3': { vals: COLOR_HINT, run: v => styleTone('color3', v) },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
         special: { vals: ['none', ...SPECIALS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = SPECIALS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.special = x ? x.id : null; return `Special: ${x ? x.name : 'none'}`; } },
@@ -78,6 +83,8 @@ const TREE = {
         color: { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.card.color = c; return `Card color: ${c}`; } },
         pattern: { vals: keysOf(CARD_PATTERNS), run: v => pick(keysOf(CARD_PATTERNS), v, x => { profile.card.pattern = x; }, 'Card pattern') },
         'pattern color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.card.patternColor = c; return `Card pattern color: ${c}`; } },
+        layout: { vals: keysOf(CARD_LAYOUTS), run: v => pick(keysOf(CARD_LAYOUTS), v, x => { profile.card.layout = x; }, 'Card pattern layout') },
+        size: { vals: CARD_SIZES.map(([, n]) => n.toLowerCase()), run: v => { const f = CARD_SIZES.find(([, n]) => n.toLowerCase() === String(v).toLowerCase().trim()); if (!f) return bad(v); profile.card.size = f[0]; return `Card pattern size: ${f[1]}`; } },
       } },
       username: { kids: {
         name: { vals: ['<name>'], run: v => { const n = cleanName(v); if (!NAME_OK.test(n)) return '✗ A name: letters, numbers, - and _.'; profile.name = n; return `Name: ${n}`; } },
@@ -94,6 +101,19 @@ const TREE = {
 const bad = v => `✗ ${v || 'Nothing'} isn't one of the choices. Tab shows them.`;
 /* build and size go by name ("chubby", "a bit big") */
 function body(list, key, v, label) { const f = list.find(([, n]) => n.toLowerCase() === String(v).toLowerCase().trim()); if (!f) return bad(v); profile.duck[key] = f[0]; return `${label}: ${f[1]}`; }
+/* an outfit's own colors (c1, c2), by their place in its list */
+function part(key, byId, n, v, what) {
+  const on = profile.duck[key], d = on && byId(on.id), col = d && (d.colors || [])[n], c = colorOf(v);
+  if (!on) return `✗ No ${what} on. custom avatar ${what} …`;
+  if (!col) return `✗ ${d.name} has no ${n ? "second " : ""}color to change.`;
+  if (!c) return bad(v); profile.duck[key] = { ...on, [col[0]]: c }; return `${d.name}: ${col[1]}: ${c}`;
+}
+/* a style's second or third color (its first is the duck's color) */
+function styleTone(key, v) {
+  const st = styleById(profile.duck.style), col = (st.colors || []).find(x => x[0] === key), c = colorOf(v);
+  if (!col) return `✗ The ${st.name.toLowerCase()} has no color like that.`;
+  if (!c) return bad(v); Object.assign(profile.duck, { [key]: c, metal: 'none', image: null }); return `${col[1]}: ${c}`;
+}
 function pick(list, v, set, label) { const x = list.find(k => k === String(v).toLowerCase()); if (!x) return bad(v); set(x); return `${label}: ${x}`; }
 
 /* splits a line into words ("two words" in quotes stay one); last = the word being typed, from = where it starts */

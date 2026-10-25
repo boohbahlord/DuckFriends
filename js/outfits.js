@@ -138,6 +138,16 @@ export const OUTFITS = [
     sleeve: o => sleeve(o.c1) + `<circle cx="52" cy="80" r=".9" fill="${lt(o.c1, .6)}"/><circle cx="60" cy="84" r=".9" fill="${lt(o.c1, .6)}"/>` },
 ];
 export const outfitById = id => OUTFITS.find(o => o.id === id) || null;
+/* how Customize shows the outfits: in themed groups, each under a small heading */
+export const OUTFIT_GROUPS = [
+  ['Everyday', ['shirt', 'hoodie', 'jeans', 'leather', 'hawaiian', 'muscle', 'pajamas']],
+  ['Dressed up', ['suit', 'tux', 'dress', 'gown', 'disco']],
+  ['Church', ['priest', 'pope', 'bishop']],
+  ['Jobs and uniforms', ['doctor', 'firefighter', 'police', 'military']],
+  ['Sports', ['lakers', 'celtics']],
+  ['Fantasy and sci-fi', ['royal', 'wizard', 'armor', 'robot', 'cloud']],
+  ['Nigerian', ['agbada', 'iro']],
+];
 
 /* the outfit's layers for a duck: cloth (inside the body), sleeve (in place of the wing), over and back (past the
    outline); colors filled in from the look or the defaults */
