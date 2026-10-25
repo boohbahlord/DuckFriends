@@ -5,7 +5,8 @@
    Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it.
    Who is the Quack?: everyone's Secret Card has the same word except one duck's; clues out loud, then walk onto a duck.
    Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
-   Hangout: no rounds; everyone walks around Duck Cabin together until the room goes back to the lobby. */
+   Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
+   guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby. */
 import { esc } from './ui.js';
 
 export const MODES = [
@@ -15,7 +16,7 @@ export const MODES = [
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
   { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
   { id: 'law', name: 'Lawyering', tip: 'Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.' },
-  { id: 'hang', name: 'Hangout', tip: 'No rounds, no votes: walk around Duck Cabin together, inside and out, until you all go back to the lobby.' },
+  { id: 'hang', name: 'Hangout', tip: 'No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 

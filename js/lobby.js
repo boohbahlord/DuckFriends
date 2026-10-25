@@ -1,8 +1,9 @@
 /* ---------- the lobby, laid out like Halo: Reach's custom game lobby ----------
-   Left: the game's art, the room's name, who can join, Ready, then Game type (locked), Map (one for now), Game options
-   (the host edits them) and Start game, with a line under them saying what the row under the pointer does. Right: the
-   party, one player card per row; click your own to rename it; right-click any card for its options. Bottom left: the
-   keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at the top right leaves the room. */
+   Left: the game's art, the room's name, who can join, Ready, then Game type (locked), Map (hidden for Hangout, always in
+   Duck Cabin), Game options (the host edits them) and Start game, with a line under them saying what the row under the
+   pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
+   options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
+   the top right leaves the room. */
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, contextMenu, onMenu, typing, windowOpen, toast, setHTML } from './ui.js';
 import { activeRoom } from './net.js';
@@ -26,7 +27,7 @@ import { musicBarHTML, mountMusicBar } from './musicbar.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering or Hangout.',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering or Hangout (in its own Duck Cabin).',
   map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole of Ducklings or Ether\'s Crossroads.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',

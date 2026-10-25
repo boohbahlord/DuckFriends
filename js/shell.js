@@ -645,7 +645,7 @@ const CMDS = {
     return `Removed ${out.join(', ')}.`;
   },
   map: (args, i, x) => {
-    const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')]));
+    const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')])) + `\nHangout brings its own: Duck Cabin${s.options.map === 'cabin' ? '  (now)' : ''}`;
     const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(`✗ map: no map ${args.join(' ')} (map lists them)`);
     needSudo(x, 'map'); if (s.options.mode === 'hang') fail('✗ map: Hangout is always in Duck Cabin.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
     x.ctx.room.send({ t: 'options', options: { map: m[0] } }); return `Map: ${m[1]}.`;

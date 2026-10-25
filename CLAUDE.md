@@ -20,11 +20,26 @@ serves `main`, so merging to `main` is deploying).
   `js/helppages.js`.
 - `js/game.js` draws the board, moves your duck and handles keys (`js/keynav.js` moves through menus with the arrow keys); `js/brackets.js` is Bicker Brackets; `js/story.js` is
   Story Chain; `js/maps.js` the
-  maps (Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole, Ether's Crossroads); `css/app.css` everything's look.
+  maps (Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole, Ether's Crossroads, and Duck Cabin, Hangout's
+  own); `css/app.css` everything's look.
+- `js/hangout/` is Hangout, on Duck Cabin (game.js keeps only a thin branch, `isHang(s)`):
+  - `layout.js`: the world's numbers (regions, heights, walls, doors, where every prop stands); no drawing.
+  - `world.js`: the camera, the ground, heights, walls and falls, inside or outside, depth sorting, the context button.
+  - `shapes.js`: places `art.js`' drawings where `layout.js` says; `art.js`: every prop as SVG, at night (preview:
+    `tools/hangout-art.html`).
+  - `registry.js`: how an activity adds its rules and its screen part; `activities.js` imports them all;
+    `rules.js`: `s.hang` and the `{ t: 'hang', k }` action, called from `js/rules.js`.
+  - `lamp.js` the lamps (the example activity); `stage.js` the stage and its mic; `seats.js` the couches and the
+    campfire's logs; `soccer.js` the soccer ball and net; `chalk.js` the chalk floor and eraser; `book.js` the guestbook.
+  - `piano.js` the floor piano, Play and the music fade; `pianokeys.js` its keyboard mode, sound and music sheet (test
+    page: `tools/piano-test.html`).
+  - `pool.js` imports the water and the bouncing: `water.js` floating, ripples, splashes; `beachball.js`;
+    `rubberducks.js`; `trampoline.js`; `falls.js` falling off the deck.
 - `js/music.js` makes the songs on the spot; the host keeps the room's song list in the state (`s.music`), so everyone hears the
   same song at the same moment. `js/musicbar.js` is the now-playing bar (speaker, Music slider, song name).
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
-  `notes/plan-story-chain.md`).
+  `notes/plan-story-chain.md`), Who is the Quack? (`quack`, plan in `notes/plan-imposter.md`), Lawyering (`law`), Hangout
+  (`hang`, plan in `notes/plan-hangout.md`: no rounds, no stats, always on its own map, Duck Cabin, `cabin`).
 
 ## Before each commit that touches css/ or js/
 Run `python3 tools/stamp.py`. It stamps a version on every file in `index.html`, so browsers never mix old and new files.

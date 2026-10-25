@@ -59,7 +59,8 @@ const PAGES = {
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span><span>Move your duck</span>
       <span><kbd>Shift</kbd></span><span>Sprint (hold)</span>
       <span><kbd>Space</kbd></span><span>Jump; Ready in the lobby</span>
-      <span><kbd>Enter</kbd></span><span>End your turn</span>
+      <span><kbd>Enter</kbd></span><span>End your turn; in Hangout, Sit, Play, Read …</span>
+      <span>Hangout's piano</span><span>1–7, Q–U, G–', V–/: four octaves. Shift or C: sharp. Space or Alt: flat. Esc: get up.</span>
       <span><kbd>T</kbd></span><span>Text chat</span>
       <span><kbd>Shift</kbd>+<kbd>T</kbd></span><span>Command line</span>
       <span><kbd>Tab</kbd> <kbd>↑</kbd> <kbd>↓</kbd></span><span>Complete in the chat; choose a suggestion</span>
