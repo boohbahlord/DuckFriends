@@ -2,9 +2,10 @@
    Three lists, all in "screen-world" px (world px with heights already taken off: a thing at world (x, y) standing on
    height z draws at (x, y − z)), so a box here is where a drawing goes before the camera moves and scales it:
 
-   GROUND   the flat, still pieces under everything: the grass, the darker slope, the downhill, the forest floor, the dirt
+   GROUND() the flat, still pieces under everything: the grass, the darker slope, the downhill, the forest floor, the dirt
             path, the soccer field's lines, the pavers, the pool's water and its lane rope, the cabin's floors and rugs,
-            the deck's boards and its stairs' steps, the shadows of the trees and the jeep. world.js paints them once
+            the deck's boards and its stairs' steps, the shadows of the trees and the jeep, the forest past the ring in
+            the north, west and east. { svg, x, y, w, h } (or raw: SVG in screen-world px). world.js paints them once
             into tiles of a canvas (cheap to move) and lays the night's light pools over them every frame.
    DRAW     kind → (prop) → its parts: the drawings that stand up, each its own element sorted with the ducks by its own
             foot (key), so one prop can be a back part and a front part (the couch's seat behind a sitting duck, its
@@ -13,8 +14,9 @@
             browser, cheap to move; no hooks, nothing moves inside it), part ('back' | 'front') }. svg may be a function
             (made when the part first comes into view). A kind may also return a plain SVG string: one part filling
             the prop's own box (the old placeholder way). An empty list draws nothing (the prop still blocks walking).
-   DECOR    parts no prop owns: the forest bands past the ring of trees, the deck's railing and lattice, the chimney's
-            smoke, the pool's moving light. { ...part, only: 'in' | 'out' }.
+   DECOR()  parts no prop owns: the forest past the ring in the south (in front of everything), the deck's railing and
+            lattice, the chimney's smoke, the pool's moving light. { ...part, only: 'in' | 'out', cls, style }.
+   (Both are made the first time the cabin opens: the game's other modes never pay for them.)
 
    Interactive props keep their ids and their parts stay inline SVG, so the activities find them (ctx.world.propEl(id)
    is the front or only part; propEls(id) all of them); their glowing bits carry class "lit" (a lamp switched off dims

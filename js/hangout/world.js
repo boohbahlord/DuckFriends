@@ -83,28 +83,25 @@ export function mountWorld(board, api) {
     img.decode().then(() => { done(); if (k === tk && !dead) ready.push([t, img, px]); }, () => { done(); t.queued = false; });
   }
   function copyTile([t, img, px]) { const c = document.createElement('canvas'); c.width = c.height = px; c.getContext('2d').drawImage(img, 0, 0, px, px); t.c = c; }
-  function drawGround(now, s) {
+  function drawGround(now, s, gx, gy) {   // (gx, gy: where the camera is heading, my duck: its tiles come first)
     const { sc, vw, vh, dpr } = cam; fno++;
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
-    const vx0 = cam.x - vw / 2 / sc, vx1 = cam.x + vw / 2 / sc, vy0 = cam.y - vh / 2 / sc, vy1 = cam.y + vh / 2 / sc;
+    const hw = vw / 2 / sc, hh = vh / 2 / sc, vx0 = cam.x - hw, vx1 = cam.x + hw, vy0 = cam.y - hh, vy1 = cam.y + hh;
     const see = (x0, y0, x1, y1) => x1 > vx0 - 20 && x0 < vx1 + 20 && y1 > vy0 - 20 && y0 < vy1 + 20;
     const DX = x => Math.round(((x - cam.x) * sc + vw / 2) * dpr), DY = y => Math.round(((y - cam.y) * sc + vh / 2) * dpr);
-    const i0 = Math.floor(vx0 / TILE), i1 = Math.floor(vx1 / TILE), j0 = Math.floor(vy0 / TILE), j1 = Math.floor(vy1 / TILE), want = [];
-    const missing = () => { for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const t = tiles.get(i + ',' + j); if (!t || !t.c) return true; } return false; };
-    if (ready.length) { ready.sort((a, b) => Math.hypot((a[0].i + .5) * TILE - cam.x, (a[0].j + .5) * TILE - cam.y) - Math.hypot((b[0].i + .5) * TILE - cam.x, (b[0].j + .5) * TILE - cam.y)); for (let n = missing() ? 3 : 1; n > 0 && ready.length; n--) copyTile(ready.shift()); }
-    for (let j = j0 - 1; j <= j1 + 1; j++) for (let i = i0 - 1; i <= i1 + 1; i++) {
-      const id = i + ',' + j; let t = tiles.get(id);
-      if (!t) { t = { i, j, c: null, queued: false, used: 0 }; tiles.set(id, t); }
-      t.used = fno;
-      const inView = i >= i0 && i <= i1 && j >= j0 && j <= j1;
-      if (!t.c && !t.queued) want.push([inView ? 0 : 1, Math.hypot((i + .5) * TILE - cam.x, (j + .5) * TILE - cam.y), t]);
-      if (!inView) continue;
-      const x0 = DX(i * TILE), x1 = DX((i + 1) * TILE), y0 = DY(j * TILE), y1 = DY((j + 1) * TILE);
+    const tile = (i, j) => { const id = i + ',' + j; let t = tiles.get(id); if (!t) { t = { i, j, c: null, queued: false, used: 0 }; tiles.set(id, t); } t.used = fno; return t; };
+    const near = t => Math.hypot((t.i + .5) * TILE - gx, (t.j + .5) * TILE - gy), want = [];
+    const span = (x0, x1, y0, y1, pri) => { for (let j = Math.floor(y0 / TILE); j <= Math.floor(y1 / TILE); j++) for (let i = Math.floor(x0 / TILE); i <= Math.floor(x1 / TILE); i++) { const t = tile(i, j); if (!t.c && !t.queued) want.push([pri, near(t), t]); } };
+    span(gx - hw, gx + hw, gy - hh, gy + hh, 0); span(vx0, vx1, vy0, vy1, 1); span(vx0 - TILE, vx1 + TILE, vy0 - TILE, vy1 + TILE, 2);
+    let missing = false;
+    for (let j = Math.floor(vy0 / TILE); j <= Math.floor(vy1 / TILE); j++) for (let i = Math.floor(vx0 / TILE); i <= Math.floor(vx1 / TILE); i++) {
+      const t = tile(i, j), x0 = DX(i * TILE), x1 = DX((i + 1) * TILE), y0 = DY(j * TILE), y1 = DY((j + 1) * TILE);
       if (t.c) g.drawImage(t.c, x0, y0, x1 - x0, y1 - y0);
-      else { g.fillStyle = groundColor((j + .5) * TILE); g.fillRect(x0, y0, x1 - x0, y1 - y0); }
+      else { missing = true; g.fillStyle = groundColor((j + .5) * TILE); g.fillRect(x0, y0, x1 - x0, y1 - y0); }
     }
+    if (ready.length) { ready.sort((a, b) => near(a[0]) - near(b[0])); for (let n = missing ? 3 : 1; n > 0 && ready.length; n--) copyTile(ready.shift()); }
     want.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    for (const [, , t] of want) { if (busy >= 4) break; paintTile(t); }
+    for (const [, , t] of want) { if (busy >= 4) break; if (!t.queued) paintTile(t); }
     if (tiles.size > MAXT) for (const [id, t] of [...tiles].sort((a, b) => a[1].used - b[1].used)) { if (tiles.size <= MAXT * .8 || t.used === fno) break; tiles.delete(id); }
     // night: warm pools of light (the lamps, the windows, the fire, the posts)
     g.setTransform(sc * dpr, 0, 0, sc * dpr, (vw / 2 - cam.x * sc) * dpr, (vh / 2 - cam.y * sc) * dpr);
@@ -238,7 +235,7 @@ export function mountWorld(board, api) {
       if (!cam.set) { cam.x = tx; cam.y = ty; cam.set = true; } else { const k = 1 - Math.exp(-dt * 7); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; }
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
-      drawGround(now, s);
+      drawGround(now, s, tx, ty);
       const size = L.DUCK * cam.sc, f = toScreen(tx, me.y * L.H, L.heightAt(tx, me.y * L.H)), lift = Math.max(0, me.z - L.heightAt(tx, me.y * L.H)) * cam.sc;
       drawProps(me, L.sortY(tx, me.y * L.H, me.z), { l: f.left - size * .4, r: f.left + size * .4, t: f.top - lift - size * .9, b: f.top - lift });
       shade.hidden = !inside;
