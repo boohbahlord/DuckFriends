@@ -720,3 +720,10 @@ spots with a coin toss for a tie; one word up to 20 letters; old paragraphs stay
 show on the all-rounds review). The answer, word for word:
 
 that is good
+
+## Story Chain: fonts the same size (2026-10-25)
+
+whoever the did the story game needs to make the fonts appear as the same size
+
+Decision: every player's font in Story Chain is scaled so its letters stand as tall as the others' (font-size-adjust,
+with a measured size for each font).

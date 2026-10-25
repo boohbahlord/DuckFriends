@@ -6,13 +6,15 @@
    each one lights up inside its line. The stats sit beside the three choices: continue, a new story, or the lobby. */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
-import { nameHTML, fontCSS } from './name.js';
+import { nameHTML, fontCSS, fontScale } from './name.js';
 import { cardFor, cloudHTML } from './brackets.js';
 import { scZones, scLineOf, scStory, scPara, scWriter, scStats, wordAt, SC_NEXT, LINE_MAX, WORD_MAX } from './rules.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const player = (s, id) => s.players[id] || GONE;
 const fontOf = p => fontCSS(p && p.nameStyle && p.nameStyle.font);
+/* a player's font, scaled so every player's letters look the same size */
+const fontStyle = p => `font-family:${esc(fontOf(p))};--fk:${fontScale(p && p.nameStyle && p.nameStyle.font)}`;
 const cardColor = p => (p && p.card && p.card.color) || '#8a8fa3';
 const n = (v, one, many = one + 's') => `${v} ${v === 1 ? one : many}`;
 
@@ -60,14 +62,14 @@ export function rowsHTML(s, me) {
     }
     const l = scLineOf(s, z), p = player(s, l.line.by), old = l.p < last;
     return `<div class="sc-row${old ? ' sc-old' : ''}${l.i === 0 && l.p > 0 ? ' sc-para' : ''}" data-z="${k}">
-      <p class="sc-line"><span class="sc-txt" style="font-family:${esc(fontOf(p))};--u:${esc(cardColor(p))}">${lineText(l.line, lit && !old)}</span></p>
+      <p class="sc-line"><span class="sc-txt" style="${fontStyle(p)};--u:${esc(cardColor(p))}">${lineText(l.line, lit && !old)}</span></p>
       <div class="sc-by"><span class="sc-mini">${duckSVG(p.duck, { size: 26, shadow: false, title: p.name })}</span>${lit && !old ? `<span class="sc-votes">${voters(l.i)}</span>` : ''}</div></div>`;
   }).join('');
 }
 /* the line being typed, as far as it goes */
 export function typingHTML(s) {
   const w = scWriter(s), p = player(s, w), d = ((s.drafts || {})[w] || {}).text || '';
-  return `<p class="sc-line"><span class="sc-txt" style="font-family:${esc(fontOf(p))};--u:${esc(cardColor(p))}">${d ? esc(d) : '<span class="dim">thinking…</span>'}<i class="caret"></i></span></p>
+  return `<p class="sc-line"><span class="sc-txt" style="${fontStyle(p)};--u:${esc(cardColor(p))}">${d ? esc(d) : '<span class="dim">thinking…</span>'}<i class="caret"></i></span></p>
     <div class="sc-by"><span class="sc-mini">${duckSVG(p.duck, { size: 26, shadow: false, title: p.name })}</span><span class="sc-writing small">✎ writing</span></div>`;
 }
 /* the writer's window: their secret word and the box */
@@ -76,7 +78,7 @@ function writeHTML(s, me) {
   const word = (s.sc.assign[me] || {}).word || '', p = player(s, me), first = !scPara(s).lines.length;
   return `<form class="sc-write panel" autocomplete="off">
     <div class="sc-secret"><span class="small dim">Your secret word</span><b class="sc-secret-w">${esc(word)}</b></div>
-    <textarea class="sc-in" maxlength="${LINE_MAX}" rows="2" style="font-family:${esc(fontOf(p))}" placeholder="${first ? 'Once upon a time…' : 'And then…'}" aria-label="Your line" spellcheck="true"></textarea>
+    <textarea class="sc-in" maxlength="${LINE_MAX}" rows="2" style="${fontStyle(p)}" placeholder="${first ? 'Once upon a time…' : 'And then…'}" aria-label="Your line" spellcheck="true"></textarea>
     <div class="sc-foot"><span class="sc-left small dim">${LINE_MAX} left</span><span class="sc-need small">Put your secret word in it</span><button type="submit" class="btn green" disabled>Send <kbd>Enter</kbd></button></div></form>`;
 }
 export const boardHTML = (s, me) => `<div class="board sc-board">${headHTML(s, me)}
@@ -87,7 +89,7 @@ function awardsHTML(s, per) {
   const ids = Object.keys(per).filter(id => s.players[id]), nm = id => nameHTML(s.players[id].name, s.players[id].nameStyle);
   const top = f => { const xs = ids.map(id => [id, f(per[id])]); const v = Math.max(0, ...xs.map(x => x[1])); return v ? { v, who: xs.filter(x => x[1] === v).map(x => x[0]) } : null; };
   const award = (title, r, line) => r ? `<div class="award"><h3>${esc(title)}</h3><p>${r.who.map(nm).join(r.who.length > 2 ? ', ' : ' and ')}${r.who.length > 1 ? ' <span class="dim">(tie)</span>' : ''}</p>${line(r)}</div>` : '';
-  const quote = (r, f, cls = '') => r.who.length === 1 && f(per[r.who[0]]) ? `<p class="sc-quote${cls}" style="font-family:${esc(fontOf(s.players[r.who[0]]))}">${esc(f(per[r.who[0]]))}</p>` : '';
+  const quote = (r, f, cls = '') => r.who.length === 1 && f(per[r.who[0]]) ? `<p class="sc-quote${cls}" style="${fontStyle(s.players[r.who[0]])}">${esc(f(per[r.who[0]]))}</p>` : '';
   const jx = s.seat.map(id => [id, (s.jumps || {})[id] || 0]), jv = Math.max(0, ...jx.map(x => x[1]));
   return `${award('Most votes for their lines', top(p => p.lvotes), r => `${quote(r, p => p.best)}<p class="small dim">${n(r.v, 'vote')}.</p>`)}
     ${award('Most votes for their secret word', top(p => p.wvotes), r => `${quote(r, p => p.word, ' sc-qword')}<p class="small dim">${n(r.v, 'vote')}.</p>`)}
@@ -97,7 +99,7 @@ function awardsHTML(s, per) {
 const allParas = s => s.sc.stories.flatMap(st => st.paras);
 export function statsHTML(s) {
   const now = allParas(s).filter(p => p.round === s.round);
-  const stories = s.sc.stories.filter(st => st.paras.length).map((st, i) => `<div class="panel sc-done"><h3>Story ${i + 1}</h3>${st.paras.map(p => `<p class="small">${p.lines.map(l => `<span style="font-family:${esc(fontOf(player(s, l.by)))}">${esc(l.text)}</span>`).join(' ')}</p>`).join('')}</div>`).join('');
+  const stories = s.sc.stories.filter(st => st.paras.length).map((st, i) => `<div class="panel sc-done"><h3>Story ${i + 1}</h3>${st.paras.map(p => `<p class="small">${p.lines.map(l => `<span class="sc-fk" style="${fontStyle(player(s, l.by))}">${esc(l.text)}</span>`).join(' ')}</p>`).join('')}</div>`).join('');
   return `<h2>Round ${s.round + 1}</h2><div class="awards">${awardsHTML(s, scStats(now))}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="awards">${awardsHTML(s, scStats(allParas(s)))}</div>${stories}` : ''}`;
 }
