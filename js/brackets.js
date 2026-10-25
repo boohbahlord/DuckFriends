@@ -35,11 +35,11 @@ export function cloudHTML(p, tip = 'Round Lord') {
 }
 /* two ducks on one cloud (a match's two writers): pa on the left facing right, pb on the right facing left. o.winner = 0 or
    1 once it's decided (that duck wears its moment special); o.knocked = the loser is already off the cloud (knockOff in
-   duel.js plays the bump) */
+   duel.js plays the bump); o.both = nobody won, so both jump off (bothOff), and o.knocked then means they're gone */
 const MYSTERY = { duck: { color: '#b7bccb' } };
 export function duelCloudHTML(pa, pb, o = {}) {
   const duck = (p, side) => `<div class="lord-duck duel-duck${o.winner === side ? ' won' : ''}" data-side="${side}"><div class="duel-in">${duckSVG((p || MYSTERY).duck, { size: 80, shadow: false, title: p ? p.name : 'A secret writer', dead: !!(p && p.dead) })}${o.winner === side ? moment(p) : ''}</div></div>`;
-  return `<div class="lord duel${o.winner != null ? ' decided' : ''}${o.knocked ? ' knocked' : ''}"><div class="lord-sit">
+  return `<div class="lord duel${o.winner != null ? ' decided' : ''}${o.both ? ' bothoff' : ''}${o.knocked ? ' knocked' : ''}"><div class="lord-sit">
     ${duck(pa, 0)}${duck(pb, 1)}${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div><div class="lord-name"></div></div>`;
 }

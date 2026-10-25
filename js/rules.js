@@ -9,7 +9,8 @@
    A phase ends when enough players have ended their turn (3 of 4 by default). In submit and answer, reaching that starts
    the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
 
-   Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round. */
+   Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round. Lawyering (at the
+   end) argues each topic out: two attorneys in the middle, the jury walks to the one who convinced them. */
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -24,11 +25,14 @@ export const OPTIONS_DEFAULT = {
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | ec
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | law (Lawyering)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
   bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
+  lawDef: 'random',     // Lawyering: who picks the defense attorney: random | writer (the topic's writer) | vote (the room)
+  lawOff: 'random',     // … and the offense attorney
+  lawClose: 60,         // seconds of closing arguments when the jury is split: 30, 60, 120
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -43,13 +47,17 @@ export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
    right, with an OR strip between them where a duck has no answer (-1) */
 export const isWyr = s => s.options.mode === 'wyr';
 export const isBb = s => s.options.mode === 'bb';
-export const twoSided = s => isWyr(s) || isBb(s);   // a match in Bicker Brackets: seed A on the left, B on the right
-export const colAt = (s, x) => twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
+export const isLaw = s => s.options.mode === 'law';
+/* a match in Bicker Brackets: seed A on the left, B on the right; Lawyering: the offense (sword) on the left, the defense
+   (shield) on the right, and between them a wider strip with the attorneys' circle */
+export const twoSided = s => isWyr(s) || isBb(s) || isLaw(s);
+export const LAW_MID = [.42, .58];
+export const colAt = (s, x) => isLaw(s) ? (x < LAW_MID[0] ? 0 : x > LAW_MID[1] ? 1 : -1) : twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
 export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
-export const colBoundsAt = (s, c) => twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
+export const colBoundsAt = (s, c) => isLaw(s) ? ([[.03, .4], [.6, .97]][c] || [.44, .56]) : twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
 export const startX = s => twoSided(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 /* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead) */
-export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : ['answer', 'discuss', 'results'];
+export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isLaw(s) ? ['answer', 'discuss'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays this round: a player who joined mid-game watches and walks around until the next writing stage */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -127,6 +135,7 @@ function recordAnswers(s) {
 function startResults(s, now) {
   s.reviewVotes = {}; s.review = false;
   if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return enter(s, 'results', now); }   // the tournament joins the game's
+  if (isLaw(s)) { s.law = null; s.lock = {}; return enter(s, 'results', now); }   // (the stats fill the screen)
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
@@ -139,8 +148,9 @@ function startResults(s, now) {
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
 function advance(s, now) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
+  if (isLaw(s) && s.phase === 'answer') return lawCheck(s, now);   // a case waits for the jury (and closing arguments)
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
-  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
+  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds', 'counsel'].includes(s.phase) && !sway;
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
   const go = all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
@@ -153,12 +163,13 @@ function advance(s, now) {
       delete s.drafts;
       const subs = {}; for (const q of s.subs || []) subs[q.by] = q;
       s.qs = orderQuestions(s, subs).map(id => subs[id]); s.qi = 0; delete s.subs;
-      if (!s.qs.length) { say(s, 'No questions this round.'); s.round++; s.subs = []; return enter(s, 'submit', now); }
-      return startQuestion(s, now);
+      if (!s.qs.length) { say(s, isLaw(s) ? 'No topics this round.' : 'No questions this round.'); s.round++; s.subs = []; return enter(s, 'submit', now); }
+      return isLaw(s) ? startCase(s, now) : startQuestion(s, now);
     }
     case 'topic': return endTopics(s, now);
     case 'tvote': return pickTopic(s, now);
     case 'seeds': return endSeedTurn(s, now);
+    case 'counsel': return endCounsel(s, now);
     case 'bracket': return s.bb.champ != null ? enter(s, 'podium', now) : nextMatch(s, now);
     case 'podium': return startResults(s, now);
     case 'tie': return settleTie(s, now);
@@ -170,6 +181,7 @@ function advance(s, now) {
       return startResults(s, now);
     case 'discuss':
       if (isBb(s)) return nextMatch(s, now);
+      if (isLaw(s)) return nextCase(s, now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
     case 'results': s.round++; s.subs = []; s.qs = []; return isBb(s) ? startTourney(s, now) : enter(s, 'submit', now);
@@ -186,7 +198,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
-      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
+      if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : ['counsel', 'answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
       if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
     }
@@ -227,7 +239,8 @@ export function reduce(state, a, now = Date.now()) {
       const was = s.pos[a.id], j = +a.j || 0;
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
-      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }
+      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !isLaw(s) && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }   // (a juror may walk over and change their vote)
+      if (s.phase === 'answer' && isLaw(s) && isCounsel(s, a.id)) { const [lo, hi] = colBoundsAt(s, -1); x = Math.max(lo, Math.min(hi, x)); }   // the attorneys argue from the circle
       if (s.phase !== 'answer' && s.phase !== 'bracket' && !me.late) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
@@ -240,6 +253,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
+      if (s.phase === 'answer' && isLaw(s)) return lawVote(s, a, now) || state;
       s.done[a.id] = a.v ?? !s.done[a.id];
       if (s.phase === 'answer' && !s.options.freeRoam) s.done[a.id] = true;   // free roam: ready can be taken back
       return advance(s, now);
@@ -280,6 +294,19 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || me.late || s.phase !== 'tie' || !['again', 'coin'].includes(a.v)) return state;
       s.bb.tie = { ...s.bb.tie, votes: { ...(s.bb.tie || {}).votes, [a.id]: a.v } }; s.done[a.id] = true;
       return advance(s, now);
+    }
+    case 'counsel': {   // Lawyering: my pick (as the writer) or my vote (the room) for an attorney; it can change until the picking ends
+      const L = s.law, how = L && L.how && L.how[a.role];
+      if (!me || me.late || s.phase !== 'counsel' || !how || (how === 'writer' && a.id !== s.qs[s.qi].by) || !counselOk(s, a.role, a.who)) return state;
+      L.picks[a.role] = { ...L.picks[a.role], [a.id]: a.who };
+      s.done[a.id] = counselDone(s, a.id);
+      return advance(s, now);
+    }
+    case 'giveUp': {   // Lawyering: an attorney who isn't ahead in closing arguments gives the case to the other side
+      const L = s.law;
+      if (!me || !isLaw(s) || s.phase !== 'answer' || !L || !L.close || !canGiveUp(s, a.id)) return state;
+      L.gave = a.id; say(s, `${me.name} gave up the case.`);
+      return verdict(s, a.id === L.off ? 1 : 0, now);
     }
     case 'pick': {   // Bicker Brackets: my vote for a topic (it can be changed until the vote ends)
       if (!me || me.late || s.phase !== 'tvote' || !Number.isInteger(a.i) || !s.bb.topics[a.i]) return state;
@@ -376,7 +403,7 @@ export const groupsOf = (s, id) => {
 export const isSudo = (s, id) => groupsOf(s, id).includes('sudo');
 export const denied = (s, id, perm) => groupsOf(s, id).some(n => (((s.groups || {})[n] || {}).perms || []).includes(perm));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
-export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
+export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', counsel: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
 function countTurn(s, was) {
   const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
   const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
@@ -467,7 +494,7 @@ function settleVote(s, now) {
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 function backToLobby(s, why) {
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = [];
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = []; s.law = null;
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;
@@ -692,3 +719,141 @@ export function statsFor(s, id, round = null) {
 }
 export const signed = v => v === null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(Number.isInteger(v) ? 0 : 1);
 export const nameOfValue = v => v === null ? '' : COLS[Math.max(0, Math.min(6, Math.round(v) + 3))];
+
+/* ---------- Lawyering ----------
+   Everyone writes a topic in secret; each topic is a court case. Its attorneys: the defense (argues for it; never its
+   writer) and the offense (argues against it; may be its writer), picked at random, by the writer or by a vote of the
+   room (the host's choice, for each) → the attorneys stand in the circle in the middle and argue over voice while the
+   jury (everyone else) walks to a side and votes: left with the offense, right with the defense. A vote can change at
+   any time. No timer until every juror has voted: all on one side ends the case at once; a split jury gets closing
+   arguments (a minute by default), and when it runs out the bigger side wins (a tie: nobody does). In closing arguments
+   an attorney who isn't ahead may give up. → the verdict, talked over → the next case → the round's stats. */
+export const LAW_TOPIC_MAX = 200;
+export const isCounsel = (s, id) => !!(s.law && (s.law.def === id || s.law.off === id));
+/* the jury: everyone playing but the two attorneys */
+export const jury = s => playing(s).filter(id => s.players[id] && !isCounsel(s, id));
+/* the jury's votes: [offense, defense] */
+export function lawTally(s) {
+  const n = [0, 0]; for (const id of jury(s)) { const v = (s.law.votes || {})[id]; if (v === 0 || v === 1) n[v]++; }
+  return n;
+}
+/* in closing arguments, an attorney may give up while their side isn't ahead */
+export function canGiveUp(s, id) {
+  const L = s.law; if (!L || !L.close || L.w != null || !isCounsel(s, id)) return false;
+  const [o, d] = lawTally(s);
+  return id === L.off ? o <= d : d <= o;
+}
+const pickOne = xs => xs[Math.floor(Math.random() * xs.length)];
+function startCase(s, now) {
+  const q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
+  s.lordTime = 0; s.pos = {}; s.lock = {}; s.ends = 0;
+  s.law = { def: null, off: null, how: {}, picks: { def: {}, off: {} }, votes: {}, flips: {}, close: 0, start: null, w: null, gave: null };
+  if (on.length < 3) { say(s, `Not enough players for a jury, so "${q.text}" is dismissed.`); return nextCase(s, now); }
+  const writer = s.players[q.by] && on.includes(q.by) ? q.by : null, how = { def: s.options.lawDef, off: s.options.lawOff };
+  for (const k of ['def', 'off']) if (how[k] === 'writer' && !writer) how[k] = 'random';   // (the writer left: random)
+  s.law.how = Object.fromEntries(Object.entries(how).filter(([, v]) => v === 'writer' || v === 'vote'));
+  if (!Object.keys(s.law.how).length) return openCase(s, now);
+  enter(s, 'counsel', now);
+  for (const id of on) s.done[id] = counselDone(s, id);
+  return s;
+}
+function nextCase(s, now) {
+  if (++s.qi < s.qs.length) return startCase(s, now);
+  return startResults(s, now);
+}
+/* who can be picked: the defense never the writer; the offense never the defense (once it's known) */
+function counselOk(s, role, who) {
+  const q = s.qs[s.qi]; if (!playing(s).includes(who) || !s.players[who]) return false;
+  return role === 'def' ? who !== q.by : who !== s.law.def;
+}
+/* has this player picked everything they're asked to? */
+function counselDone(s, id) {
+  const q = s.qs[s.qi];
+  return Object.entries(s.law.how).every(([role, how]) => (how === 'writer' && id !== q.by) || s.law.picks[role][id] !== undefined);
+}
+/* the picking is over: the defense first, then the offense (a pick that clashes falls to the next best, then to chance) */
+function endCounsel(s, now) {
+  const L = s.law, q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
+  for (const role of ['def', 'off']) {
+    const ok = id => role === 'def' ? id !== q.by : id !== L.def, n = {};
+    for (const [voter, who] of Object.entries(L.picks[role] || {})) if (s.players[voter] && on.includes(who) && ok(who)) n[who] = (n[who] || 0) + 1;
+    const top = Math.max(0, ...Object.values(n)), best = Object.keys(n).filter(id => n[id] === top && top > 0);
+    L[role] = best.length ? pickOne(best) : pickOne(on.filter(ok));
+  }
+  return openCase(s, now);
+}
+/* the case opens: random attorneys where nobody picks; the attorneys in the circle, the jury lined up above and below it */
+function openCase(s, now) {
+  const L = s.law, q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
+  if (!L.def) L.def = pickOne(on.filter(id => id !== q.by));
+  if (!L.off) L.off = pickOne(on.filter(id => id !== L.def));
+  s.pos = {}; s.lock = {};
+  s.pos[L.off] = { x: .475, y: .46 }; s.pos[L.def] = { x: .525, y: .54 };   // (side by side on a phone held upright too)
+  const rest = s.seat.filter(id => !isCounsel(s, id)), half = Math.ceil(rest.length / 2);
+  rest.forEach((id, k) => { const top = k < half, i = top ? k : k - half, n = top ? half : rest.length - half; s.pos[id] = { x: .44 + .12 * (i + 1) / (n + 1), y: top ? .04 : .96 }; });
+  const D = s.players[L.def].name, O = s.players[L.off].name, t = q.text.trim();
+  say(s, `The Court Case, ${D} is defending this idea: ${t}${/[.!?…]$/.test(t) ? '' : '.'} ${O} is against it.`);
+  return enter(s, 'answer', now);
+}
+/* a juror votes for the side they stand on (again, to change it) */
+function lawVote(s, a, now) {
+  const L = s.law, p = s.pos[a.id]; if (!L || L.w != null || isCounsel(s, a.id) || !jury(s).includes(a.id)) return null;
+  const c = colAt(s, p.x); if (c < 0) return null;
+  const was = L.votes[a.id]; if (was === c) return null;
+  if (was !== undefined) L.flips = { ...L.flips, [a.id]: (L.flips[a.id] || 0) + 1 };
+  L.votes = { ...L.votes, [a.id]: c }; s.done[a.id] = true;
+  return lawCheck(s, now);
+}
+/* the case goes on until the jury has voted: all on one side wins at once; a split starts closing arguments, and when
+   they run out the bigger side wins. An attorney who leaves loses the case. */
+function lawCheck(s, now) {
+  const L = s.law; if (!L || L.w != null) return s;
+  const hereO = !!s.players[L.off], hereD = !!s.players[L.def];
+  if (!hereO || !hereD) {
+    if (!hereO && !hereD) { say(s, 'Both attorneys left, so the case is dismissed.'); return nextCase(s, now); }
+    say(s, `${hereO ? 'The defense' : 'The offense'} attorney left the courtroom.`); return verdict(s, hereO ? 0 : 1, now);
+  }
+  const j = jury(s), [o, d] = lawTally(s);
+  if (!j.length) { say(s, 'Nobody is left on the jury, so the case is dismissed.'); return nextCase(s, now); }
+  if (!L.close) {
+    if (j.some(id => L.votes[id] === undefined)) return s;
+    if (!o || !d) return verdict(s, d ? 1 : 0, now);
+    L.close = now + (+s.options.lawClose || 60) * 1000; L.start = [o, d]; s.ends = L.close;
+    say(s, `Closing arguments! The jury is split ${o}–${d}: last chance to win them over.`);
+    return s;
+  }
+  if (now < L.close) return s;
+  return verdict(s, o > d ? 0 : d > o ? 1 : -1, now);
+}
+/* the verdict: side 0 (offense), 1 (defense) or -1 (a tie); the case joins the game's history, then the room talks it over */
+function verdict(s, side, now) {
+  const L = s.law, q = s.qs[s.qi], [o, d] = lawTally(s), votes = {};
+  for (const id of jury(s)) if (L.votes[id] !== undefined) votes[id] = L.votes[id];
+  L.w = side; L.end = [o, d]; s.ends = 0;
+  s.history.push({ round: s.round, by: q.by, text: q.text, law: { def: L.def, off: L.off, votes, flips: { ...L.flips }, w: side, start: L.start, end: [o, d], gave: L.gave } });
+  const W = side === 0 ? L.off : side === 1 ? L.def : null;
+  if (!L.gave) say(s, W ? `${s.players[W] ? s.players[W].name : 'The ' + (side ? 'defense' : 'offense')} wins the case ${Math.max(o, d)}–${Math.min(o, d)}.` : `A hung jury: ${o}–${d}. Nobody wins the case.`);
+  s.lock = { ...votes, [L.off]: -1, [L.def]: -1 };
+  for (const id of s.seat) if (s.lock[id] === undefined && s.pos[id]) { const c = colAt(s, s.pos[id].x); s.lock[id] = c; }
+  return enter(s, 'discuss', now);
+}
+/* the numbers behind Lawyering's stats: each player's cases (argued, won, lost, by side, given up, won against their own
+   topic) and jury votes (and how often they switched sides), and every case's score; round = null for the whole game.
+   A hung jury is neither a win nor a loss. */
+export function lawStats(s, round = null) {
+  const per = {}, cases = [];
+  const P = id => (per[id] = per[id] || { argued: 0, won: 0, lost: 0, wonDef: 0, wonOff: 0, gave: 0, ownWin: 0, votes: 0, flips: 0 });
+  for (const h of s.history.filter(h => h.law && (round === null || h.round === round))) {
+    const c = h.law, [o, d] = c.end || [0, 0];
+    cases.push({ by: h.by, text: h.text, off: c.off, def: c.def, o, d, w: c.w, gave: c.gave });
+    P(c.off).argued++; P(c.def).argued++;
+    if (c.w === 0 || c.w === 1) {
+      const W = c.w ? c.def : c.off, L = c.w ? c.off : c.def;
+      P(W).won++; P(W)[c.w ? 'wonDef' : 'wonOff']++; P(L).lost++;
+      if (!c.w && c.off === h.by) P(W).ownWin++;   // argued against their own topic, and won
+    }
+    if (c.gave) P(c.gave).gave++;
+    for (const id of Object.keys(c.votes || {})) { P(id).votes++; P(id).flips += (c.flips || {})[id] || 0; }
+  }
+  return { per, cases };
+}

@@ -67,6 +67,12 @@ const BB_TILES = [
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
   ['bbTimer', 'Match vote timer', [[0, 'None'], [10, '10 s'], [30, '30 s'], [60, '60 s']]],
 ];
+/* Lawyering's own options */
+const LAW_TILES = [
+  ['lawDef', 'Defense attorney', [['random', 'Random'], ['writer', 'Writer picks'], ['vote', 'Room votes']]],
+  ['lawOff', 'Offense attorney', [['random', 'Random'], ['writer', 'Writer picks'], ['vote', 'Room votes']]],
+  ['lawClose', 'Closing arguments', [[30, '30 s'], [60, '1 min'], [120, '2 min']]],
+];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
@@ -85,6 +91,9 @@ const OPT_TIPS = {
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
   bbTimer: 'None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.',
+  lawDef: 'Who argues for each topic: anyone but its writer, picked at random, by the writer, or by a vote of the room.',
+  lawOff: 'Who argues against each topic (it can be the writer): picked at random, by the writer, or by a vote of the room.',
+  lawClose: 'When the jury is split, the attorneys get this long to win them over; then the bigger side wins.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
@@ -92,9 +101,10 @@ function openOptions() {
   const s = R.state, host = s.hostId === R.me, ro = host ? '' : ' aria-disabled="true"';
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host changes these.</p>'}
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
+    ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
+    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES, s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(s.options.mode === 'law' && r[0] === 'freeRoam')), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

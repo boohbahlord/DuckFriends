@@ -8,6 +8,7 @@ import { openWindow, esc } from './ui.js';
 import { profile, STAT_MODES } from './store.js';
 import { fmtJumps } from './format.js';
 import { bbBoxHTML } from './brackets.js';
+import { lawBoxHTML } from './court.js';
 
 export function statBoxHTML(s, id, round = null) {
   const p = s.players[id]; if (!p) return '';
@@ -41,6 +42,11 @@ function totalsHTML(p, t, mode = 'aod') {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Tournaments</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Tournaments won</dt><dd>${fmtJumps(t.titles)}</dd>
         <dt>Contender wins</dt><dd>${fmtJumps(t.wins)}</dd><dt>Contender losses</dt><dd>${fmtJumps(t.losses)}</dd><dt>Votes in matches</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === 'law') {   // Lawyering: their cases and their jury votes
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Lawyering</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Cases argued</dt><dd>${fmtJumps(t.argued)}</dd><dt>Cases won</dt><dd>${fmtJumps(t.wins)}</dd>
+        <dt>Cases lost</dt><dd>${fmtJumps(t.losses)}</dd><dt>Gave up</dt><dd>${fmtJumps(t.gave)}</dd><dt>Jury votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === 'wyr') {   // Would You Rather: the sides they took
     const sided = t.majority + t.minority;
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Would You Rather</div></div></header>
@@ -66,7 +72,7 @@ export function openStats(s, id, me) {
         w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
         mode.hidden = lastTab !== 'all'; mode.value = lastMode;
         const rounds = new Set(s.history.map(h => h.round)).size;
-        body.innerHTML = lastTab === 'game' ? ({ wyr: wyrBoxHTML, bb: bbBoxHTML }[s.options.mode] || statBoxHTML)(s, id) : totalsHTML(p, all && all[lastMode], lastMode);
+        body.innerHTML = lastTab === 'game' ? ({ wyr: wyrBoxHTML, bb: bbBoxHTML, law: lawBoxHTML }[s.options.mode] || statBoxHTML)(s, id) : totalsHTML(p, all && all[lastMode], lastMode);
         note.textContent = lastTab === 'game' ? `This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.` : 'Across every game played (test rooms only add jumps).';
       };
       w.querySelector('.stat-tabs').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { lastTab = b.dataset.st; show(); } };

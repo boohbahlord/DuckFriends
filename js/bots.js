@@ -3,8 +3,10 @@
    walks its duck to an answer (each computer leans one way) and ends its turn. Afterwards they follow the people: a
    computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
    has. Now and then one wanders a little or jumps. In Bicker Brackets they write a topic and vote for one, type their
-   seeds (for a ready-made topic, seeds that fit it) and back a side in each match. */
-import { colXAt, isWyr, isBb, BB_TOPICS } from './rules.js';
+   seeds (for a ready-made topic, seeds that fit it) and back a side in each match. In Lawyering they pick or vote for
+   attorneys, vote as jurors (now and then changing their minds in closing arguments) and, as an attorney behind in
+   closing arguments, sometimes give up. */
+import { colXAt, isWyr, isBb, isLaw, isCounsel, jury, canGiveUp, BB_TOPICS } from './rules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -48,6 +50,22 @@ const pick = (id, key) => {
   return plan.get(k);
 };
 
+/* Lawyering: a juror walks to the side it leans to and votes; in closing arguments it may be talked round (it walks over
+   and votes again). An attorney stays in the circle, and behind in closing arguments may give up. */
+const swayed = new Map();   // computer id + case → the side it was talked round to
+function lawBot(s, id, late, now, out) {
+  const L = s.law; if (!L || L.w != null || !late) return;
+  if (isCounsel(s, id)) { if (canGiveUp(s, id) && now - (L.close - (+s.options.lawClose || 60) * 1000) > 8000 && Math.random() < .004) out.push({ t: 'giveUp', id }); return; }
+  if (!jury(s).includes(id)) return;
+  const key = `${id}|${s.round}:${s.qi}`;
+  if (L.close && L.votes[id] !== undefined && !swayed.has(key) && Math.random() < .003) { swayed.set(key, 1 - L.votes[id]); if (swayed.size > 300) swayed.delete(swayed.keys().next().value); }
+  const side = swayed.has(key) ? swayed.get(key) : L.votes[id] !== undefined ? L.votes[id] : (pick(id, s.round + ':' + s.qi) < 3 || (pick(id, s.round + ':' + s.qi) === 3 && Math.random() < .5) ? 0 : 1);
+  if (L.votes[id] === side) return;
+  const p = s.pos[id], want = colXAt(s, side), step = .035;
+  if (Math.abs(p.x - want) <= step) out.push({ t: 'move', id, x: want, y: p.y, j: p.j || 0 }, { t: 'end', id });
+  else out.push({ t: 'move', id, x: p.x + Math.sign(want - p.x) * step, y: p.y, j: p.j || 0 });
+}
+
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [], wait = (s.options.botWait ?? 5) * 1000;
@@ -83,7 +101,18 @@ export function botActions(s, now) {
           out.push(isWyr(s) ? { t: 'submit', id, a: skip ? '' : pair[0], b: skip ? '' : pair[1], time: 0 } : { t: 'submit', id, text: skip ? '' : BOT_QUESTIONS[Math.floor(Math.random() * BOT_QUESTIONS.length)], time: 0 });
         }
         break;
+      case 'counsel': {
+        if (!late || s.done[id]) break;
+        const q = s.qs[s.qi], on = s.seat.filter(x => s.players[x] && !s.players[x].late);
+        for (const role of ['def', 'off']) {
+          const how = s.law.how[role]; if (!how || (how === 'writer' && id !== q.by) || s.law.picks[role][id] !== undefined) continue;
+          const can = on.filter(x => role === 'def' ? x !== q.by : x !== s.law.def);
+          if (can.length) out.push({ t: 'counsel', id, role, who: anyOf(can) });
+        }
+        break;
+      }
       case 'answer': {
+        if (isLaw(s)) { lawBot(s, id, late, now, out); break; }
         if (!late || s.done[id]) break;
         const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) || isBb(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
         const x = p.x, y = p.y, step = .035;

@@ -675,3 +675,45 @@ how about a psychedelic visual? like a fractal sort of, a very colorful and comp
 
 (Built as a new map, "Rabbit Hole": a Julia-set fractal zooming forever into its spiral center, with the shape slowly
 morphing and the colors turning. Drawn with WebGL; a turning color wheel where WebGL is missing.)
+
+what are some gamemode ideas in the likeness of these ones rn ? like for convo
+
+we can do something a little different from these maybe, maybe some convo, maybe something to stir arguments or debates, and even ideas that are more gamey or fun
+
+For assigned sides, that game will be called lawyering.
+FOR THAT ONE, players write topics they want defended AND another player is randomly assigned to defend it. The lobby settings allow a host to decide IF the player chooses an attorney for their topic or if players vote for their attorney, but the default is it is randomly assigned. Then the offense attorney is randomly assigned by default WHICH could also be the person who wrote the prompt, then the cloud will say "Who will convince?"
+The two disagreeing will be in a circle in the center that changes colors, and the offense attorney will be on the side with the sword (left) and the defense attorney will be on the side with the shield. The players can walk either left or right to choose who is right. The defense side is colored after the defendant's player card and has their pattern on the board (which is transparent as always), and the other player has their side with their player card color and pattern, and players stand on their side if they agree with the offense attorney. Players can stand on either side and vote, and it takes as long as needed for players to vote, and only players voting and not debating can vote. The players that vote can then have a timer go off, and their vote can still change and it will say "reconsider?" as a timer counts down. The game will say with a banner that this is their last chance to convince in a way better worded then that, and this timer only happens IF the majority of players ARENT on one side, and then the losing side can have a "Give Up" option with the vote button if they are losing when that one minute timer goes off on the end, which ends that round and the player who won the debate is declared a winner and shown in the clouds while the loser player has a greyscale over their side of the board and it's color and pattern.
+
+FOR bracket game mode, make sure whoever in charge of it will later implement the two ducks on the cloud feature for that one, and then player's ducks will both be on the cloud, and the loser duck gets nudged off by the other duck, making the loser duck fall down to the bottom of the screen and through it with a falling sound effect. WHen they nudge the duck off the cloud, there is also a quack sound effect. That feature in the cloud is the same for this game mode called "The Court"
+
+The chat bubble will say, "The Court Case, {Player 1} is defending this idea: {input topic here}."
+Everyone gets to write a topic and doesnt see eachother's answers.
+
+Someone should be in charge of making a new feature to vote skip a round that is found below or next to vote back to lobby in the TAB menu or player list menu that u can bring up.
+
+Another threat will be in charge of the Story chain game. I want the thread to wait on my call and let me decide how things happen for that one.
+
+For imposter duck another thread can do that one too.
+
+The stats can be suggested to me before action last after most of your work and u can suggest ideas and ill suggest ones and well decide together on that one
+
+(Lawyering plan shown: https://claude.ai/artifact/KyJJNkC4FSt6EbxERffFec. The answers below go with its eight steps of "How a round plays".)
+
+1. Yes, but everyone gets to write something and every prompt gets a chance to be debated
+2. Yes
+3. Yes
+4. Yes they can move around while they vote and can go to the other side and change their vote at any time, which puts a circle of the color of the tile voted on AND the circle changes to the color of every revote, voting is done by clicking the vote button when on that side. Until they vote, the circle is faded out a little. The attorneys cannot vote BUT in the counter when all voted but there isnt a majority, one of the attorneys can vote "Give Up" in honor of the better argument or shame at their own.
+5. Yes
+6. Yes, so if an attorney starts winning only during this last minute, then they cannot give up.
+7. yes, unless they tie, then both ducks both jump off the cloud together and the whole tile becomes grey.
+8. Once every topic has it's case and stats are done then yes the next case, and stat screen still shows a vote to go back to lobby like ALL games should during the stat screen OR a button to show stats for the WHOLE game if it is the second round or more
+
+
+Help me do the stats now actually
+
+1.
+2.
+
+(Taken as: mode name Lawyering, each topic a Court Case; closing arguments whenever the jury is split; when the minute
+runs out the bigger side wins; Give Up is for the attorney who is not ahead; a tie at the end: both ducks jump off the
+cloud and the whole board goes grey. Stat ideas sent; the stats get built once picked.)

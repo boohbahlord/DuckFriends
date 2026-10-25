@@ -19,12 +19,12 @@ export const PROFILE_DEFAULT = {
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
    shared copy keeps only these numbers */
-export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets']];
+export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['bb', 'Bicker Brackets'], ['law', 'Lawyering']];
 export function cleanStats(o) {
   const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
   for (const [m] of STAT_MODES) {
     const x = (o && o[m]) || {};
-    out[m] = { games: n(x.games), rounds: n(x.rounds), answers: n(x.answers), jumps: n(x.jumps), counts: Array.from({ length: 7 }, (_, i) => n((x.counts || [])[i])), majority: n(x.majority), minority: n(x.minority), wins: n(x.wins), losses: n(x.losses), titles: n(x.titles) };
+    out[m] = { games: n(x.games), rounds: n(x.rounds), answers: n(x.answers), jumps: n(x.jumps), counts: Array.from({ length: 7 }, (_, i) => n((x.counts || [])[i])), majority: n(x.majority), minority: n(x.minority), wins: n(x.wins), losses: n(x.losses), titles: n(x.titles), argued: n(x.argued), gave: n(x.gave) };
   }
   return out;
 }

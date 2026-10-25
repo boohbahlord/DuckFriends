@@ -15,7 +15,7 @@
    send posts a command's output to the chat (send @everyone roundstats, send \@name totalstats @name2); sending a file
    by itself shows its name, and only sudo members can open it. The chat's \mute, \permmute and \show work here too. */
 import { profile, save, STAT_MODES } from './store.js';
-import { groupsOf, isSudo, denied, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, COLS, signed, nameOfValue } from './rules.js';
+import { groupsOf, isSudo, denied, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, lawStats, COLS, signed, nameOfValue } from './rules.js';
 import { modeOf } from './modes.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
@@ -150,7 +150,7 @@ const pct = v => `${Math.round(v * 100)}%`;
 /* ---------- the stats ---------- */
 function statLines(ctx, scope, args) {
   const s = needRoom(ctx), mi = args.indexOf('-m'), mode = mi >= 0 ? args[mi + 1] : (s.options.mode || 'aod'), at = args.filter(a => a.startsWith('@'));
-  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m aod, wyr or bb.`);
+  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m aod, wyr, bb or law.`);
   const ids = at.length ? who(ctx, at) : s.seat.filter(id => !(s.players[id] || {}).late || scope === 'total');
   const nm = id => s.players[id].name, out = [];
   if (scope === 'total') {
@@ -160,6 +160,7 @@ function statLines(ctx, scope, args) {
       if (!st) { out.push(`${nm(id)}: no stats yet`); continue; }
       const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === 'bb' ? 'tournaments' : 'rounds'} · ${st.answers} ${mode === 'bb' ? 'votes' : 'answers'} · ${st.jumps} jumps`;
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
+      else if (mode === 'law') out.push(`${base} · ${st.argued} cases argued · ${st.wins} won · ${st.losses} lost · gave up ${st.gave}`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
     }
@@ -172,6 +173,9 @@ function statLines(ctx, scope, args) {
     const past = s.bbPast || [], cur = s.bb && s.bb.rounds && s.bb.rounds.length && s.phase !== 'results' ? [s.bb] : [];
     const per = bbStats(scope === 'round' ? (cur.length ? cur : past.slice(-1)) : [...past, ...cur]);
     for (const id of ids) { const p = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 }; out.push(`${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} jumps`); }
+  } else if (mode === 'law') {
+    const per = lawStats(s, round).per;
+    for (const id of ids) { const p = per[id] || { argued: 0, won: 0, lost: 0, wonDef: 0, wonOff: 0, gave: 0, votes: 0, flips: 0 }; out.push(`${nm(id)}: ${p.argued} cases argued · ${p.won} won (${p.wonDef} as defense, ${p.wonOff} as offense) · ${p.lost} lost · gave up ${p.gave} · ${p.votes} jury votes · switched sides ${p.flips} · ${jumps(id)} jumps`); }
   } else if (mode === 'wyr') {
     const per = wyrStats(s, round).per;
     for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} jumps`); }
@@ -382,7 +386,7 @@ export function shellSuggest(line, ctx) {
   else if (cmd === 'getent') opts = ['group'];
   else if (cmd === 'groupadd') opts = ['-p', ...GROUP_PERMS];
   else if (cmd === 'forgame') opts = ['all-timer', 'timer', 'turn-end', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'];
-  else if (['totalstats', 'gamestats', 'roundstats'].includes(cmd)) opts = ['-m', 'aod', 'wyr', 'bb'];
+  else if (['totalstats', 'gamestats', 'roundstats'].includes(cmd)) opts = ['-m', 'aod', 'wyr', 'bb', 'law'];
   else if (['cat', 'ls', 'cd', 'rm', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq'].includes(cmd) || last.includes('/')) {
     const slash = last.lastIndexOf('/'), dirPart = last.slice(0, slash + 1), base = dirPart ? findPath(dirPart.replace(/\/$/, '') || '/') : fs.cwd;
     try { opts = kind(base) === 'dir' ? list(base).map(n => dirPart + n) : []; } catch { opts = []; }

@@ -1140,3 +1140,85 @@ html.map-is-ec .tmeter i { animation: none; }
 .lobby-title.can-rename:hover { background: var(--soft); }
 .room-rename { font: inherit; width: 100%; padding: .1rem .4rem; border-radius: .5rem; border: .14rem solid var(--blue); background: var(--panel, transparent); color: inherit; }
 .spe-follow { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+
+/* ---------- Lawyering: the offense's side (sword) and the defense's (shield), each in its attorney's card color and
+   pattern, see-through like every board; the dark strip between them holds the attorneys' circle, which turns slowly
+   through the colors. After the verdict the losing side goes grey (both, on a hung jury). ---------- */
+.cols.law-cols { grid-template-columns: 42fr 16fr 42fr; }
+.law-side { position: relative; align-items: center; justify-content: center; padding: 6.5rem 1rem 1rem; overflow: hidden; transition: filter .6s; }
+.law-side.law-def { border-right: 0; }
+.law-pat { position: absolute; inset: 0; opacity: .3; pointer-events: none; }
+.law-mark { position: relative; height: min(46%, 13rem); aspect-ratio: .62; display: grid; place-items: center; opacity: .72; filter: drop-shadow(0 .25rem 0 #1c1c2866); }
+.law-def .law-mark { aspect-ratio: .84; }
+.law-mark svg { width: 100%; height: 100%; }
+.law-off .law-mark svg { transform: rotate(-14deg); } .law-def .law-mark svg { transform: rotate(8deg); }
+.law-side.here .law-mark { opacity: .9; }
+.law-who { position: absolute; left: 50%; bottom: .5rem; transform: translateX(-50%); display: inline-flex; gap: .35rem; align-items: baseline; white-space: nowrap; max-width: 94%; overflow: hidden;
+  color: #fff; background: #1c1c28b0; border-radius: .5rem; padding: .1rem .55rem; font-size: calc(.9rem * var(--ts)); }
+.law-side.lost { filter: grayscale(1) brightness(.75); }
+.law-side.won .law-mark { opacity: .95; }
+.law-mid { background: color-mix(in srgb, #1c1c28 var(--board-a, 100%), transparent); }
+.cols.law-cols.hung .law-mid { filter: grayscale(1); }
+.map-rabbit .law-mid { background: color-mix(in srgb, #12061f var(--board-a), transparent); }
+.map-carnival .law-mid { background: color-mix(in srgb, #1a0b2e var(--board-a), transparent); }
+.map-ec .law-mid { background: color-mix(in srgb, #120904 var(--board-a), transparent); }
+.law-board .ducks { z-index: 2; }
+.law-ring { position: absolute; z-index: 1; border-radius: 50%; pointer-events: none; border: .32rem solid hsl(0 85% 62%);
+  background: radial-gradient(circle, #ffffff14 0 60%, #ffffff30 100%); box-shadow: 0 0 1.2rem #fff4, inset 0 0 1.2rem #0004; animation: lawring 12s linear infinite; }
+@keyframes lawring { to { filter: hue-rotate(360deg); } }
+html.still .law-ring, html.lite .law-ring { animation: none; border-color: #ffd23f; }
+.gmain[data-phase="discuss"] .law-ring { animation-play-state: paused; }
+.cols.law-cols.hung ~ .law-ring { filter: grayscale(1); animation: none; }
+/* closing arguments */
+.law-banner { position: absolute; left: 50%; bottom: 2.6rem; z-index: 2500; transform: translate(-50%, .6rem); opacity: 0; pointer-events: none; transition: opacity .35s, transform .35s;
+  display: flex; gap: .45rem; align-items: baseline; flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100% - 2rem);
+  background: color-mix(in srgb, var(--panel) 92%, transparent); border: .16rem solid var(--line); border-radius: 1rem; padding: .4rem 1rem; box-shadow: 0 .25rem 0 var(--line); text-align: center; }
+.law-banner b { font-family: var(--fun); font-weight: 400; font-size: calc(1.35rem * var(--ts)); color: #ffd23f; text-shadow: 0 .1rem 0 #1c1c28; }
+.law-banner.on { opacity: 1; transform: translate(-50%, 0); }
+html.moving .law-banner.on b { animation: lawpulse 1.6s ease-in-out infinite; }
+@keyframes lawpulse { 50% { color: #ff8c2b; } }
+/* the case beside the cloud */
+.law-top .question.law-what { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; }
+.law-topic { font-size: calc(1.25rem * var(--ts)); font-weight: 700; }
+.law-names { font-weight: 600; }
+.law-verdict { font-family: var(--fun); font-size: calc(1.15rem * var(--ts)); color: #ffd23f; text-shadow: 0 .1rem 0 #1c1c28; }
+/* a juror's ring on the ground: their side's color, faint until they vote for it */
+.gduck-ring { display: none; position: absolute; left: 50%; top: calc(var(--sz) * -.2); width: calc(var(--sz) * 1.15); height: calc(var(--sz) * .4); transform: translateX(-50%);
+  border-radius: 50%; border: .2rem solid var(--rc); background: color-mix(in srgb, var(--rc) 30%, transparent); box-shadow: 0 0 .6rem var(--rc); transition: opacity .25s; pointer-events: none; }
+.gduck[data-ring] .gduck-ring { display: block; }
+.gduck[data-ring^="a"] { --rc: var(--law-a); } .gduck[data-ring^="b"] { --rc: var(--law-b); }
+.gduck[data-ring$="faint"] .gduck-ring { opacity: .35; box-shadow: none; border-style: dashed; }
+.law .vote-btn[data-col="0"] { background: var(--law-a); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; } .law .vote-btn[data-col="1"] { background: var(--law-b); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
+.mc-b.law-a { background: var(--law-a); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; } .mc-b.law-b { background: var(--law-b); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
+.law-you { font-weight: 700; }
+/* picking the attorneys */
+.law-counsel-wrap { flex: 1; min-height: 0; display: flex; }
+.law-counsel .bb-head { display: flex; flex-direction: column; align-items: center; gap: .2rem; text-align: center; max-width: 40rem; }
+.law-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: .9rem; width: min(64rem, 100%); }
+.law-pick h3 { margin: 0 0 .6rem; display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.law-cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .5rem; }
+.law-cand { position: relative; padding: 0; border: 0; background: none; border-radius: 1rem; cursor: pointer; text-align: left; }
+.law-cand .pcard { margin: 0; pointer-events: none; }
+.law-cand[aria-pressed="true"] .pcard { outline: .25rem solid var(--green); outline-offset: .1rem; }
+.law-cand:hover .pcard, .law-cand:focus-visible .pcard { filter: brightness(1.08); }
+.law-cand .tc-votes { left: auto; right: .5rem; bottom: -.6rem; }
+/* the round's cases on the stats screen */
+.law-statpanel { width: min(56rem, 100%); }
+.law-cases { display: grid; gap: .6rem; }
+.law-case { padding: .6rem .9rem; }
+.law-case p { margin: .15rem 0; }
+.law-case-topic { font-size: calc(1.15rem * var(--ts)); font-weight: 700; }
+.law-case-vs { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.law-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .1rem .55rem .1rem .2rem; border-radius: 2rem; background: color-mix(in srgb, var(--c) 45%, var(--panel)); border: .12rem solid var(--c); }
+.law-chip.def { padding: .1rem .2rem .1rem .55rem; }
+.law-score { font-family: var(--fun); font-weight: 400; font-size: calc(1.2rem * var(--ts)); }
+.lord.duel.bothoff.knocked .duel-duck { visibility: hidden; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .cols.law-cols { display: grid; grid-template-columns: none; grid-template-rows: 42fr 16fr 42fr; }
+  .cols.law-cols > :nth-child(1) { order: 3; } .cols.law-cols > :nth-child(3) { order: 1; } .cols.law-cols > :nth-child(2) { order: 2; }
+  .law-side { padding: .5rem 1rem; }
+  .law-mark { height: 62%; }
+  .law-banner { bottom: 2.2rem; padding: .25rem .7rem; gap: .3rem; }
+  .law-banner b { font-size: calc(1.05rem * var(--ts)); } .law-banner span { font-size: calc(.82rem * var(--ts)); }
+  .law-def .law-who { top: .5rem; bottom: auto; }   /* (the defense is on top: its name away from the circle) */
+}
