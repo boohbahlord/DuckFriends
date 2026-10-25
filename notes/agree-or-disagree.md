@@ -1025,3 +1025,13 @@ yeah you can put that in the game
 
 (Follow-up from the coordinator: Firefox can't pause an offline render to add notes, so the notes are now set down in
 4-second pieces a moment apart before the render starts; Firefox plays recorded songs too.)
+
+## Bicker Brackets on a phone in Firefox, word for word (2026-10-25)
+
+WHAT THE FUCK IS THIS SHIT MY GIRLFRIEND IS EXPIERANCING ON HER FIREFOX
+
+(Her screenshots matched the Data saving setting, which draws everything in the phone's own fonts. Fixed: in Data
+saving, players' names are no longer shrunk for their chosen font (they had dropped to about 6px); Firefox no longer
+cuts off a multicolored name that fits ("BoohbahL…"). From the bug tester, round 3: on a phone the cloud moves down a
+little when its duck wears a hat, so the hat never pokes into the title; on a phone the podium's steps show the places
+and the full contender cards line up under them.)

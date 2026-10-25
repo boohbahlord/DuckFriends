@@ -194,8 +194,11 @@ export function podiumHTML(s) {
   const step = (place, seeds, label) => `<div class="pod pod-${place}">
     <div class="pod-ducks">${seeds.map(i => { const p = player(s, b.seeds[i].by); return `<span class="pod-duck">${duckSVG(p.duck, { size: 96, shadow: false, title: p.name })}${moment(p)}</span>`; }).join('')}</div>
     <div class="pod-block"><b class="pod-n">${label}</b>${seeds.map(i => seedCardHTML(s, b, i, { size: 'mini', tier: place === 1 ? 'gold' : place === 2 ? 'silver' : 'bronze' })).join('')}</div></div>`;
+  /* on a phone the steps are too narrow for the cards: they show the places, and the cards line up under them */
+  const row = (place, i, label) => `<div class="pod-row"><b class="pod-n">${label}</b>${seedCardHTML(s, b, i, { tier: place === 1 ? 'gold' : place === 2 ? 'silver' : 'bronze' })}</div>`;
   return `<div class="podium-wrap"><h1 class="pod-title">${rainbowHTML(b.topic)}</h1>
     <div class="podium">${pd.second != null ? step(2, [pd.second], '2nd') : ''}${step(1, [pd.first], '1st')}${pd.third.length ? step(3, pd.third, '3rd') : ''}</div>
+    <div class="pod-list">${row(1, pd.first, '1st')}${pd.second != null ? row(2, pd.second, '2nd') : ''}${pd.third.map(i => row(3, i, '3rd')).join('')}</div>
     <p class="dim pod-left"></p></div>`;
 }
 
