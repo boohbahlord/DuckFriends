@@ -924,6 +924,9 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
 
+## Lobby note, word for word (2026-10-25)
+"the game has the ping stat cover the "You" tag on the lobby screen. Maybe make the ping stat smaller"
+
 ## The host and sudo, word for word (2026-10-25)
 
 i as host was said to not be in the sudo catgeory this is a glitch
