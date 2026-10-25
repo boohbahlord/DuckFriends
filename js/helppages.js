@@ -101,7 +101,7 @@ const GAME = [
     what: ['In the lobby, the host and sudo can pick the map and the game type, rename the room and start, all from here. `map` and `mode` alone list the choices (anyone).'],
     flags: [
       ['map / map <name>', 'the maps / picks one (board sky pixel carnival rabbit ec)'],
-      ['mode / mode <type>', 'the game types / picks one (aod wyr bb sc quack)'],
+      ['mode / mode <type>', 'the game types / picks one (aod wyr bb sc quack law)'],
       ['sudo hostname "name"', 'renames the room'],
       ['start', 'starts the game, like the Start button'],
     ],
@@ -165,7 +165,7 @@ const GAME = [
     flags: [
       ['roundstats / gamestats / totalstats', 'this round / this game / all time'],
       ['… @name @name', 'only those players'],
-      ['… -m aod|wyr|bb|sc|quack', 'one game type'],
+      ['… -m aod|wyr|bb|sc|quack|law', 'one game type'],
       ['jumps [@names]', 'Jumps, this game and all time'],
     ],
     ex: [

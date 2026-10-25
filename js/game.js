@@ -16,9 +16,11 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
-  isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX } from './rules.js';
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
+  isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
+  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID } from './rules.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
+import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
@@ -37,7 +39,7 @@ import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { countJump } from './jumps.js';
 import { sfx } from './sound.js';
 import { mountMap } from './maps.js';
-import { knockOff } from './duel.js';
+import { knockOff, bothOff } from './duel.js';
 import { hooks } from './hooks.js';
 import { mountTouch, stick } from './touch.js';
 import { now as clockNow } from './clock.js';
@@ -58,6 +60,7 @@ let draftT = 0;
 let pm = null, idleOff = null;   // the player menu (Tab), and the away watch
 let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
+let lastClose = 0;   // Lawyering: the closing arguments last announced
 let bbZoom = 0, losers = new Set(), seedShift = 0, knocked = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned;
                                                                          // the matches whose loser is already bumped off the cloud
 let scY = 0, scT = 0, scWalk = 0, scZone = '';      // Story Chain: how far the story has scrolled, the last frame, when my duck last walked, the zone it stands in
@@ -87,11 +90,14 @@ function wyrColsHTML(s) {
 const bbBoardHTML = s => s.phase === 'bracket'
   ? `<div class="board bb-board bb-bracket"><div class="cols bb-cols bb-none"></div><div class="bb-diagram">${bracketHTML(s)}</div>${bracketTopHTML(s)}<div class="ducks"></div><div class="fxl"></div></div>`
   : `<div class="board bb-board">${matchColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${matchTopHTML(s, knocked.has(matchKey(s)))}</div>`;
+/* Lawyering: the offense's and the defense's sides, the attorneys' circle, both attorneys on the cloud */
+const lawBoardHTML = s => `<div class="board law-board">${lawColsHTML(s)}<div class="law-ring" aria-hidden="true"></div><div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
+  ${['answer', 'discuss'].includes(s.phase) ? lawTopHTML(s, knocked.has(caseKey(s))) : ''}</div>`;
 /* Who is the Quack?: the ducks' tiles (or the two sides), the cloud, my Secret Card, and at the end the Quack's card */
 const myCard = s => s.wq && s.wq.ids.includes(R.me) ? (s.hidden ? cardOf(s, R.me) : R.secretCard ? R.secretCard(s) : null) : undefined;
 const quackBoard = s => `<div class="board wq-board${s.phase === 'reveal' && s.wq.lastOut ? ' late' : ''}">${quackBoardHTML(s, R.me)}<div class="ducks"></div><div class="fxl"></div>
   ${quackTopHTML(s, s.phase === 'reveal' && s.wq.result ? revealCardsHTML(s) : myCard(s) !== undefined ? secretCardHTML(myCard(s)) : '')}</div>`;
-const boardHTML = s => isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : `<div class="board">
+const boardHTML = s => isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : isLaw(s) ? lawBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text)}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
@@ -182,7 +188,7 @@ function drawDucks(now = clockNow()) {
     const p = s.players[id], pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
-      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
       layer.append(d);
     }
     const dead = deadNow(id, p), sig = JSON.stringify([p.duck, p.name, p.nameStyle, dead]);   // a new look shows at once, mid-game too
@@ -220,6 +226,9 @@ function drawDucks(now = clockNow()) {
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colAt(s, pos.x) : -1;
     if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
+    /* Lawyering: a ring on the ground in the color of the side a juror stands on, faint until they vote for it */
+    const ring = lawRing(s, id, pos);
+    if (d._ring !== ring) { d._ring = ring; if (ring) d.dataset.ring = ring; else delete d.dataset.ring; }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
   layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
@@ -257,7 +266,8 @@ function drawDucks(now = clockNow()) {
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? (isQuack(s) ? spotOf(s, me) : colAt(s, me.x)) : -1;
   board.querySelectorAll('.col, .wq-tile').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
-  const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) vb.dataset.col = myCol;
+  const vb = S.querySelector('.vote-btn'); if (vb && vb.dataset.col !== String(myCol)) { vb.dataset.col = myCol; if (isLaw(s)) setHTML($('.gact', S), gactHTML(s)); }   // (Lawyering: Vote, Voted or Change vote)
+  placeRing(board);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll('.topover .lord, .topover .question, .topover .wq-sidecol')) {
     const r = o.getBoundingClientRect(), L = r.left - geo.left, T = r.top - geo.top;
@@ -265,6 +275,33 @@ function drawDucks(now = clockNow()) {
     o.classList.toggle('see-through', hit);
   }
 }
+/* ---------- Lawyering: the attorneys' circle ---------- */
+/* its half width and half height: a circle filling the strip between the sides; on a phone held upright the strip runs
+   across the screen, so the circle stretches along it and both attorneys fit side by side */
+const ringR = () => turned() ? [geo.W * .8 * .26, geo.H * (LAW_MID[1] - LAW_MID[0]) * .46] : Array(2).fill(geo.W * (LAW_MID[1] - LAW_MID[0]) * .46);
+function placeRing(board) {
+  const ring = board.querySelector('.law-ring'); if (!ring || !geo) return;
+  const c = place({ x: .5, y: .5 }, 0, 1), [rx, ry] = ringR(), st = `${(c.left - rx).toFixed(1)},${(c.top - geo.size * .3 - ry).toFixed(1)},${(2 * rx).toFixed(1)},${(2 * ry).toFixed(1)}`;
+  if (ring._st === st) return;
+  ring._st = st; const [l, t, w, h] = st.split(',');
+  Object.assign(ring.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: h + 'px' });
+}
+/* an attorney's feet stay inside the circle */
+function inRing(x, y) {
+  const c = place({ x: .5, y: .5 }, 0, 1), a = place({ x, y }, 0, 1), [rx, ry] = ringR().map(r => Math.max(4, r - geo.size * (turned() ? .42 : .3)));
+  const dx = a.left - c.left, dy = a.top - c.top, k = Math.hypot(dx / rx, dy / ry);
+  if (k <= 1) return [x, y];
+  const u = unplace(c.left + dx / k, c.top + dy / k); return [u.x, u.y];
+}
+const attorney = () => isLaw(R.state) && !!R.state.law && isCounsel(R.state, R.me) && ['answer', 'discuss'].includes(R.state.phase);
+/* a juror's ring: 'a' or 'b' (the side), with ' faint' until they've voted for that side */
+function lawRing(s, id, pos) {
+  const L = s.law; if (!isLaw(s) || !L || !['answer', 'discuss'].includes(s.phase) || isCounsel(s, id) || (s.players[id] || {}).late) return '';
+  const v = L.votes[id], c = s.phase === 'answer' ? (pos.x >= 0 ? colAt(s, pos.x) : -1) : v ?? -1;
+  return c < 0 ? '' : (c ? 'b' : 'a') + (v === c ? '' : ' faint');
+}
+const caseKey = s => [s.startedAt, s.round, s.qi].join();
+
 /* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
 function storyMarks(s, board) {
   const zones = scZones(s), z = me ? zoneAt(s, me.y, zones) : null, k = zones.indexOf(z), vote = SC_VOTES.includes(s.phase);
@@ -344,7 +381,7 @@ function playFx(f) {
 
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
-const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam)
+const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam && !isLaw(R.state)) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam; a juror may change their vote)
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-round: walks anywhere, plays from the next writing stage
 const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state);   // anywhere on the board (else inside my column)
 const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow());
@@ -429,6 +466,7 @@ function step(dt, now) {
   const scr = (dx, dy) => turned() ? (dx > 0 ? 'u' : dx < 0 ? 'd' : dy > 0 ? 'r' : 'l') : (dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u');
   if (nx < lo || nx > hi) { q = scr(Math.sign(ax), 0); nx = Math.max(lo, Math.min(hi, nx)); }
   if (ny < 0 || ny > 1) { q = q || scr(0, Math.sign(ay)); ny = Math.max(0, Math.min(1, ny)); }
+  if (attorney()) { const [rx, ry] = inRing(nx, ny); if (rx !== nx || ry !== ny) { q = q || scr(Math.sign(ax), Math.sign(ay)); nx = rx; ny = ry; } }   // the attorneys argue from the circle
   // other ducks: try both steps, then each alone; a blocked step squashes against them. A step is blocked only when it
   // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it
   const here = crowd(me.x, me.y, now).d, into = (x, y) => { const d = crowd(x, y, now).d; return d > 0 && d > here - 1e-6; };
@@ -448,9 +486,9 @@ function resetDuck() {
   if (isSc(R.state) && locked()) return '✗ Your vote holds your duck there.';
   const s = R.state, inCol = s.phase === 'bracket' || isSc(s) || isQuack(s) ? null : s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
-  const [lo, hi] = inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
+  const [lo, hi] = attorney() ? [.47, .53] : inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
   let x = me.x, y = me.y;
-  for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = Math.random(); if (!bumps(x, y, now)) break; }
+  for (let k = 0; k < 30; k++) { x = lo + Math.random() * (hi - lo); y = attorney() ? .4 + Math.random() * .2 : Math.random(); if (!bumps(x, y, now)) break; }
   me.x = x; me.y = y; me.j = 0; target = null;
   R.send({ t: 'move', x, y, j: 0, reset: true });
   return inCol === null ? 'Duck reset: somewhere new.' : 'Duck reset: somewhere new in your column.';
@@ -502,11 +540,19 @@ const pause = ms => new Promise(ok => setTimeout(ok, ms));
 async function announce(phase) {
   if (isQuack(R.state)) return announceQuack(R.state);
   const job = ++sayJob;
-  if (phase === 'answer' || (isSc(R.state) && ['lvote', 'wvote'].includes(phase))) { await pause(Math.max(250, graceLeftMs(R.state))); if (job === sayJob) say('Vote'); return; }
+  if (phase === 'answer' || (isSc(R.state) && ['lvote', 'wvote'].includes(phase))) { await pause(Math.max(250, graceLeftMs(R.state))); if (job === sayJob) say(isLaw(R.state) ? 'Who will convince?' : 'Vote'); return; }
+  if (phase === 'closing') { sfx.boop(); say('Reconsider?'); return; }
   if (phase === 'tie') { sfx.boop(); say('Tie!'); return; }
   if (phase !== 'discuss') return;
   sfx.boop();   // End turn is open
   await pause(350); if (job !== sayJob) return;
+  if (isLaw(R.state)) {   // the verdict, then the winner bumps the loser off the cloud
+    const L = R.state.law || {}, w = L.w === 0 ? L.off : L.w === 1 ? L.def : null, p = w && R.state.players[w];
+    say(L.w === -1 ? 'Hung jury!' : `${p ? p.name : 'The ' + (L.w ? 'defense' : 'offense')} convinced the jury!`);
+    await pause(3200); if (job !== sayJob) return;
+    unsay(); await pause(650); if (job !== sayJob) return;
+    say('Who argued it best?', true); return;
+  }
   say('The votes are in!');
   await pause(2400); if (job !== sayJob) return;
   unsay();
@@ -534,8 +580,14 @@ const lordHTML = s => cloudHTML(s.players[s.qs[s.qi].by] || null);
 
 function viewSubmit(s) {
   const mineDone = s.done[R.me], sent = (s.subs || []).find(q => q.by === R.me);
-  return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? 'Question sent ✓' : 'No question this round'}</h2>
+  const what = isLaw(s) ? 'topic' : 'question';
+  return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? `${isLaw(s) ? 'Topic' : 'Question'} sent ✓` : `No ${what} this round`}</h2>
       ${sent ? `<p class="q-echo">${esc(sent.text)}</p>` : ''}<p class="dim">Waiting for the others.</p></div>`
+    : isLaw(s) ? `<form class="panel submit-card" autocomplete="off"><h2>Your topic</h2>
+      <p class="small dim">Someone else will have to defend it, so make it worth arguing about. Nobody sees it until its case.</p>
+      <textarea maxlength="200" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
+      <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
+      <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
     : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
       ${isWyr(s) ? `<p class="wyr-head">Would you rather…</p><div class="wyr-pair">
         <textarea class="wyr-in" data-side="a" maxlength="100" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
@@ -555,6 +607,7 @@ function statsHTML(s) {
   if (isQuack(s)) return quackStatsHTML(s);
   if (isSc(s)) return storyStatsHTML(s);
   if (isWyr(s)) return wyrStatsHTML(s);
+  if (isLaw(s)) return s.phase === 'over' ? lawOverHTML(s) : lawStatsHTML(s);
   const boxes = r => s.seat.map(id => statBoxHTML(s, id, r)).join('');
   if (s.phase === 'over') return boxes(null);
   return `<h2>Round ${s.round + 1}</h2><div class="statboxes">${boxes(s.round)}</div>
@@ -582,7 +635,7 @@ function wyrStatsHTML(s) {
 }
 const viewResults = s => `<div class="results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
 const viewOver = s => `<div class="over"><h1 class="over-title">${rainbowHTML('Game over')}</h1>
-    <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} question${s.history.length === 1 ? '' : 's'}</p>
+    <p class="dim">${s.round + 1} round${s.round ? 's' : ''} · ${s.history.length} ${isLaw(s) ? 'case' : 'question'}${s.history.length === 1 ? '' : 's'}</p>
     <div class="statboxes grid"></div></div>`;
 
 /* my all-time stats: a round counts once its stats are up (not in test rooms), a game with its first round I played */
@@ -597,6 +650,14 @@ function recordRound(s) {
     const mine = r.votes.map(v => v.who[R.me]).filter(Boolean), q = r.quacks.includes(R.me);
     st.rounds++; st.answers += mine.length; st.majority += mine.filter(t => r.quacks.includes(t)).length;
     if (r.win) { if ((r.win === 'quack') === q) { st.wins++; if (q) st.titles++; } else st.losses++; }
+    save(); shareLook(); return;
+  }
+  if (isLaw(s)) {   // Lawyering: my cases argued, won, lost and given up, and my jury votes
+    const p = lawStats(s, s.round).per[R.me];
+    if (!st || !p || !(p.argued || p.votes)) return;
+    const game = `${s.id}:${s.startedAt}`;
+    if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
+    st.rounds++; st.answers += p.votes; st.argued += p.argued; st.wins += p.won; st.losses += p.lost; st.gave += p.gave;
     save(); shareLook(); return;
   }
   if (isSc(s)) {   // Story Chain: my lines, and the votes for my lines and my secret word
@@ -652,13 +713,14 @@ function actHTML(s) {
   if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next ${isBb(s) ? 'tournament' : 'writing stage'}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (isSc(s)) return storyActHTML(s, d, n, need, count);
-  if (['submit', 'topic', 'tvote', 'seeds'].includes(s.phase)) return count;
+  if (['submit', 'topic', 'tvote', 'seeds', 'counsel'].includes(s.phase)) return count;
   if (s.phase === 'podium') return '';
   if (s.phase === 'tie') {   // the tied match: vote again or toss a coin (a choice can change until everyone has chosen)
     const v = (s.bb.tie || {}).votes || {}, n = k => Object.values(v).filter(x => x === k).length, mineV = v[R.me];
     return `<div class="act-row"><button type="button" class="btn${mineV === 'again' ? ' green' : ' ghost'}" data-a="tieagain" aria-pressed="${mineV === 'again'}">Vote again · ${n('again')}</button><button type="button" class="btn${mineV === 'coin' ? ' yellow' : ' ghost'}" data-a="tiecoin" aria-pressed="${mineV === 'coin'}">Coin toss · ${n('coin')}</button>${count}</div>`;
   }
   if (s.phase === 'bracket') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : s.bb.champ != null ? 'On to the podium' : 'Next match'} <kbd>Enter</kbd></button>${count}</div>`;
+  if (s.phase === 'answer' && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === 'answer') {
     /* Vote: the button takes the color of the column you stand on; no voting in the first seconds; once locked it waits
        for everyone (End turn comes after, when the votes are in) */
@@ -682,6 +744,22 @@ function actHTML(s) {
   return '';
 }
 
+/* Lawyering: an attorney argues (and, behind in closing arguments, may give up); a juror votes for the side they stand on,
+   and can change it at any time */
+function lawActHTML(s) {
+  const L = s.law, j = jury(s), voted = j.filter(id => L.votes[id] !== undefined).length, [o, d] = lawTally(s);
+  const tally = L.close ? `<span class="progress">Offense ${o} · Defense ${d}</span>` : `<span class="progress">${voted}/${j.length} voted</span>`;
+  if (isCounsel(s, R.me)) {
+    const give = canGiveUp(s, R.me) ? '<button type="button" class="btn red" data-a="giveup" data-tip="In honor of the better argument (or in shame): the other side wins the case.">Give up</button>' : '';
+    return `<div class="act-row"><span class="law-you">You're the ${L.off === R.me ? 'offense' : 'defense'} attorney: convince them!</span>${give}${tally}</div>`;
+  }
+  const onBoard = me && me.x >= 0, wait = graceLeft(s), col = onBoard ? colAt(s, me.x) : -1, mine = L.votes[R.me];
+  const label = wait ? `Vote in ${wait}` : mine !== undefined && (col < 0 || mine === col) ? 'Voted ✓' : mine !== undefined ? 'Change vote' : 'Vote';
+  const off = !!wait || col < 0 || mine === col;
+  const names = [L.off, L.def].map(id => (s.players[id] || { name: '?' }).name);
+  const mc = profile.settings.multipleChoice ? `<div class="mc">${names.map((n, i) => `<button type="button" class="mc-b law-${i ? 'b' : 'a'}" data-col="${i}">${i ? 'Defense' : 'Offense'}: ${esc(n)}</button>`).join('')}</div>` : '';
+  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${tally}</div>`;
+}
 /* Who is the Quack?: Done (the speaker) or Skip (everyone else) in a clue turn; Vote; End turn after the reveal */
 function quackActHTML(s) {
   const w = s.wq, row = x => `<div class="act-row">${x}</div>`, P = id => esc((s.players[id] || {}).name || 'Gone');
@@ -719,8 +797,11 @@ function storyActHTML(s, d, n, need, count) {
 }
 const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', tie: 'A tie', seeds: 'Write the contenders', bracket: 'The bracket', podium: 'The podium', words: 'Write a secret word', write: 'Write the story', lvote: 'Favorite line', wvote: 'Favorite secret word',
   wqpick: 'The secret word', clue: 'Clues', choice: 'Vote or more clues?', accuse: 'Vote Out the Quack', reveal: 'The reveal' };
+const LAW_TITLES = { submit: 'Write a topic', counsel: 'Pick the attorneys', answer: 'Court is in session', discuss: 'The verdict' };
 /* what the middle of the screen shows */
 function viewHTML(s) {
+  if (isLaw(s) && s.phase === 'counsel') return '<div class="law-counsel-wrap"></div>';
+  if (isLaw(s) && s.phase === 'results') return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
   if (isQuack(s)) switch (s.phase) {
     case 'wqpick': return pickHTML(s, R.me);
     case 'results': return '<div class="bb-results"><div class="statpanel bb-statpanel"></div></div>';
@@ -748,7 +829,8 @@ function celebrate(s) {
     return;
   }
   let p = null;
-  if (s.phase === 'answer' && !isBb(s)) p = s.players[(s.qs[s.qi] || {}).by];
+  if (s.phase === 'answer' && !isBb(s) && !isLaw(s)) p = s.players[(s.qs[s.qi] || {}).by];
+  if (s.phase === 'discuss' && isLaw(s) && s.law && s.law.w >= 0) p = s.players[s.law.w ? s.law.def : s.law.off];
   const m = isBb(s) && bbMatch(s);
   if (s.phase === 'discuss' && m && m.w != null && !s.options.bbBlind) p = s.players[s.bb.seeds[m.w].by];
   if (s.phase === 'podium' && s.bb && s.bb.champ != null) p = s.players[s.bb.seeds[s.bb.champ].by];
@@ -759,6 +841,12 @@ function celebrate(s) {
 function bbMarks(s) {
   losers = new Set();
   if (isQuack(s) && s.wq && s.wq.result && s.wq.result.win === 'room') { for (const id of s.wq.result.quacks) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx') losers.add(id); } return; }   // a caught Quack
+  if (isLaw(s) && s.law) {   // Lawyering: the losing attorney wears the Loser's X; the sides' colors are the attorneys' cards
+    const L = s.law, lost = s.phase === 'discuss' && L.w != null ? (L.w === -1 ? [L.off, L.def] : [L.w ? L.off : L.def]) : [];
+    for (const id of lost) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx') losers.add(id); }
+    S.style.setProperty('--law-a', sideColor(s.players[L.off])); S.style.setProperty('--law-b', sideColor(s.players[L.def]));
+    return;
+  }
   if (!isBb(s) || !s.bb) return;
   const m = bbMatch(s), justLost = s.phase === 'discuss' && m && m.w != null ? s.bb.seeds[m.w === m.a ? m.b : m.a] : null;
   for (const id of s.seat) { const p = s.players[id]; if (p && p.duck && p.duck.special === 'loserx' && ((justLost && justLost.by === id) || allOut(s, id))) losers.add(id); }
@@ -775,6 +863,14 @@ function shiftSides(s, now) {
 const matchKey = s => s.bb ? [s.startedAt, s.bb.r, s.bb.m].join() : '';
 /* Bicker Brackets: the championship's votes are in, so the champion bumps the loser off the cloud (once) */
 function duel(s) {
+  if (isLaw(s)) {   // Lawyering: the winning attorney bumps the loser off; a hung jury: both jump
+    const L = s.law, key = caseKey(s);
+    if (s.phase !== 'discuss' || !L || L.w == null || knocked.has(key)) return;
+    knocked.add(key);
+    const lord = S.querySelector('.law-top .lord.duel');
+    setTimeout(() => { if (lord && lord.isConnected) (L.w === -1 ? bothOff(lord) : knockOff(lord, L.w ? 0 : 1)); }, 900);
+    return;
+  }
   const m = isBb(s) && s.phase === 'discuss' && s.bb.r === s.bb.rounds.length - 1 && bbMatch(s), key = matchKey(s);
   if (!m || m.w == null || knocked.has(key)) return;
   knocked.add(key);
@@ -798,7 +894,7 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s));
+    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s)); S.classList.toggle('law', isLaw(s));
     if (s.phase === 'answer') seedShift = 0;   // a vote starts on the match's own colors
     bbMarks(s);
     main.innerHTML = viewHTML(s);
@@ -813,8 +909,9 @@ function paint(force) {
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
     }
-    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
-    $('.phase', S).textContent = TITLES[s.phase] || '';
+    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
+    $('.phase', S).textContent = (isLaw(s) && LAW_TITLES[s.phase]) || TITLES[s.phase] || '';
+    lastClose = s.law && s.law.close || 0;
     geo = null;
   }
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
@@ -831,6 +928,12 @@ function paint(force) {
     $('.bb-now', S).hidden = !$('.bb-others', S).children.length;
   }
   if (isBb(s) && s.phase === 'discuss') bbMarks(s);
+  if (isLaw(s) && s.phase === 'counsel') setHTML($('.law-counsel-wrap', S), counselHTML(s, R.me, whoHTML(s)));
+  if (isLaw(s) && s.phase === 'answer' && s.law) {   // closing arguments: the banner, and the cloud asks the jury to reconsider
+    const close = s.law.close || 0, bn = $('.law-banner', S);
+    if (bn) bn.classList.toggle('on', !!close);
+    if (close && close !== lastClose) { lastClose = close; announce('closing'); }
+  }
   if (isQuack(s) && onBoardPhase()) {   // the tiles follow the ducks' looks; my Secret Card arrives (online: once it's opened)
     refreshTiles(S, s, R.me);
     const c = myCard(s), box = $('.wq-card.mine', S), sig = JSON.stringify(c || null);
@@ -843,7 +946,7 @@ function paint(force) {
     if (locked()) { me.x = p.x; me.y = p.y; }   // an ended turn holds its answer
     else if (!roams() && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBoundsAt(s, s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }   // inside my column (not back to where the host last saw me: online that pulled the duck back while it walked)
   }
-  const lordSig = !isBb(s) && (s.phase === 'answer' || s.phase === 'discuss') ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
+  const lordSig = !isBb(s) && !isLaw(s) && (s.phase === 'answer' || s.phase === 'discuss') ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
   const lord = $('.topover .lord', S);
   if (lord && lord._sig !== undefined && lord._sig !== lordSig) { const words = lord.querySelector('.lord-say'); lord.outerHTML = lordHTML(s); $('.topover .lord .lord-say', S).replaceWith(words); }
   if ($('.topover .lord', S)) $('.topover .lord', S)._sig = lordSig;
@@ -875,13 +978,13 @@ function showTimer() {
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   const meter = $('.tmeter', S);
   if (s.phase === 'podium') { const pl = $('.pod-left', S); if (pl) pl.textContent = `The stats in ${Math.max(0, Math.ceil((s.ends - now) / 1000))} s`; }
-  if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds', 'words', 'write', 'wqpick', 'choice', 'accuse'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
-  const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
+  if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds', 'words', 'write', 'wqpick', 'choice', 'accuse', 'counsel'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
+  const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds, closing = isLaw(s) && s.law && s.law.close && end === s.law.close;
   /* the meter fills as the time runs out; its color drifts slowly (css) */
-  const from = catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
+  const from = closing ? s.law.close - (+s.options.lawClose || 60) * 1000 : catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
   if (meter) { meter.hidden = false; const w = (frac * 100).toFixed(1) + '%'; if (meter._w !== w) { meter._w = w; meter.firstChild.style.width = w; } meter.classList.toggle('low', left <= 5); }
   if (['submit', 'topic', 'seeds', 'words', 'write', 'wqpick'].includes(s.phase) && left <= 2 && draftT) sendDraft(true);   // the last words make it in
-  t.textContent = `${catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  t.textContent = `${closing ? 'Closing ' : catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   t.className = 'timer' + (catching ? ' catch' : '') + (left <= 5 ? ' low' : '');
   if (left <= 5 && left > 0 && left !== lastBeep) { lastBeep = left; sfx.tick(); }
 }
@@ -962,6 +1065,7 @@ async function act(a) {
       if ([...boardPhases(s), 'results'].includes(s.phase)) R.send({ t: 'end' });
       break;
     case 'tieagain': R.send({ t: 'tieVote', v: 'again' }); break;
+    case 'giveup': if (await confirmBox('Give up the case?', 'The other side wins it.')) R.send({ t: 'giveUp' }); break;
     case 'tiecoin': R.send({ t: 'tieVote', v: 'coin' }); break;
     case 'zoomin': zoom('in'); break;
     case 'zoomout': zoom('out'); break;
@@ -1009,6 +1113,7 @@ register('game', {
       if (b && !b.disabled) { if (b.dataset.a === 'pause') openPause(); else act(b.dataset.a); return; }
       const mc = e.target.closest('[data-col]'); if (mc) { jumpTo(+mc.dataset.col); return; }
       const tc = e.target.closest('[data-topic]'); if (tc) { R.send({ t: 'pick', i: +tc.dataset.topic }); return; }
+      const lc = e.target.closest('.law-cand'); if (lc) { R.send({ t: 'counsel', role: lc.dataset.role, who: lc.dataset.who }); return; }
       const tile = e.target.closest('.submit-card .tile[data-time]');
       if (tile) { $$('.submit-card .tile[data-time]', S).forEach(t => t.setAttribute('aria-pressed', t === tile)); sendDraft(); }
       boardClick(e);
