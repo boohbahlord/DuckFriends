@@ -593,9 +593,11 @@ function settleVote(s, now) {
   return s;
 }
 /* someone leaves (or is kicked) in the middle of a bracket match or its tie vote: the match isn't settled by them going.
-   The others' votes open again, so it waits for the players still here to end their turn (or for its own timer) */
+   The others' votes open again, so it waits for the players still here to end their turn (or for its own timer). In the
+   tie vote the others keep their picks; only the one who left loses theirs */
 function reopenMatch(s, id) {
   if (!isBb(s) || !['answer', 'tie'].includes(s.phase) || !s.players[id] || s.players[id].late) return;
+  if (s.phase === 'tie') { const t = s.bb.tie; if (t && t.votes) { const { [id]: _, ...rest } = t.votes; t.votes = rest; } return; }
   if (!Object.keys(s.done).some(x => x !== id && s.done[x])) return;   // nobody else had voted yet: nothing to reopen
   s.done = {};
   say(s, 'The vote is open again: end your turn when you\'re ready.');

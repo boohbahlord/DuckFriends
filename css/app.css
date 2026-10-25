@@ -1240,6 +1240,7 @@ html.map-is-ec .panel, html.map-is-ec .question, html.map-is-ec .win, html.map-i
 }
 html.map-is-ec .panel, html.map-is-ec .question, html.map-is-ec .win, html.map-is-ec .dock-panel, html.map-is-ec .statbox { background: #23150cea; }
 html.map-is-ec .question::before { border-width: 1px; border-color: #8a5a2c; background: #23150c; }
+html.map-is-ec .pod-title { background: #23150cea; border: 1px solid #8a5a2c; border-radius: .2rem; padding: .15rem .9rem; box-shadow: 0 0 1rem #000a; max-width: 100%; }   /* the thin letters on a plate, off the bricks */
 html.map-is-ec .cols { border-width: 1px; border-color: #8a5a2c; border-radius: .2rem; box-shadow: 0 0 1rem #000a; }
 html.map-is-ec .tile[aria-pressed="true"] { background: linear-gradient(#96461a, #6a2e0f); color: #fbe4c4; border-color: #e8994d; }
 html.map-is-ec .timer, html.map-is-ec .gbar .round, html.map-is-ec .gbar .phase { font-family: var(--font); }
