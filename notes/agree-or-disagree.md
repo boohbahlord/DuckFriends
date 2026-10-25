@@ -983,3 +983,41 @@ HelpHelp; `send @everyone` alone shows how to use it; and the 12 small ones (his
 `adduser group player`, `sudo -v -h -i -u`, `sudo true`, /usr paths, `${#var}` `${var:-x}`, read, xargs, paste,
 `grep -r`, a redirect after a loop, `yes`, names without spaces, long lines say they were cut). A group with nosend
 can't use `write` either. Asked the owner whether aliases should stay on the device for good.
+
+## Music: phones, the slider, quieter, crackling, Spring in a Box (2026-10-25)
+
+Your timbre sounds like fart and shit, completely undo the thick level of fuzz, i didnt literally mean fuzz distortion, i meant fuzzy feeling. Tho muffle can lighly come in before leaving back and forth
+
+dont have crazy distortion all over it doesnt fit the game
+
+I assume ur impoving the last song? becuz it doesnt sound very good
+
+no u can do what u said ab the sounds files for phone, but make them only like that on phone version not pc
+
+just do away with the swing in spring in the box becuz i dont like that part and revamp it to take more inspiration from the songs we already made and more inspiration from hollow knight. It really needs to feel distinct tho and also have better flow and more meaningful sounds
+
+like do away with the odd meter i mean
+
+or the swing meter
+
+music can be less loud by default \
+
+whenever i opened discord app while on game lobby the music in the browser game become crackly rly bad sometimes idky
+
+(Also from the bug tester, through the coordinator: the Music slider at 0 and back started a new song.)
+
+Decisions: on a phone the notes' tails end sooner and a few faint layers (octave shimmers, the music box's halo, a
+second detuned saw) are left out, about half the work; a computer plays everything in full. The Music slider at 0 and
+back (or leaving the room and coming back) picks the same song up where it was. All music is a little quieter at 100%
+(about 4 dB); saved slider settings are kept. Against crackling: the music asks the browser for a roomier sound buffer,
+and on a computer each next song is written out ahead while the one before plays, then played from that recording,
+which takes almost no work. The first song is written out as soon as the page opens, and the lobby waits for it (15
+seconds at most); a song not ready in time plays live. Spring in a Box is being
+reworked with straight time and more Hollow Knight.
+
+Asked to listen to the new Spring in a Box (straight time, a bowed voice over a rippling harp, felt piano answers, a
+music box spring, a choir at the "omg"):
+
+yeah you can put that in the game
+
+(Done: Spring in a Box is the fifth song.)

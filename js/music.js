@@ -95,7 +95,7 @@ export const music = (function(){
         voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.02,1.2)}
       // the warm pad, under the tune
       const pv={bob:.018,theme:a>=8?.028:0,return:a>=27?.024:0,full:a>=38?.03:.04}[s]||0;
-      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      if(pv){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pv,.8)}
       // a harp runs from the left ear to the right (or back), its notes never quite in the same place
       if(s==="theme"&&a>=8&&a%2===0||s==="return"&&a>=26||s==="full"&&a<38||s==="bob"&&a===16){const up=a%4!==2,p=panTo(up?-.85:.85,up?.85:-.85,t,B*.9,.5,.25);
         const ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]],pos=[[0,1,1.5,3,4.5,5.5],[0,.5,2,3,3.5,5],[.5,1.5,2,3.5,4,6]][Math.floor(h01(a+11)*3)],hv=s==="full"?.11:.07;
@@ -202,7 +202,7 @@ export const music = (function(){
         if(s==="warm"||s==="joy"&&a%2)voice("mbass",hz(C.b-12+C.fifth),t+B*.5,B*.4,v*.5,.4)}
       // the warm pad, and Rain's strings where the warmth is
       const pv={joy:.022,warm:.04,fall:.035-.003*(a-22),minor:.018,down:.02-.002*(a-50),false:.014}[s]||0;
-      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      if(pv){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pv,.8)}
       if(s==="warm"||s==="fall"&&a<26||s==="minor"&&a>=42&&a<=46){on(send(.7,.2,BUS.bass));voice("viol",hz(C.r+12+C.third),t,B*1.05,.018,.8);voice("viol",hz(C.r+C.fifth),t+.05,B*1.05,.014,.8)}
       // a harp from the left ear to the right (or back)
       if(s==="joy"&&a%2===0||s==="warm"){const up=a%4!==2,p=panTo(up?-.8:.8,up?.8:-.8,t,B*.9,.5,.25),ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]];
@@ -215,6 +215,108 @@ export const music = (function(){
         tune.forEach((v,k)=>{on(p);GL={r:1,fall:Math.pow(2,-(10+25*k/6)/1200),ft:.15,fd:1};voice("softbox",hz(C.r+24+v),t+k*E8,E8*.8,.05-.008*(a-58),1.2);GL=null})}
       // a far bell, a little out of tune
       if([3,7,29,55].includes(a)){const st=t+B*.4,side=h01(a+7)>.5?-.7:.7;on(panTo(side,side*.6,st,B,1.4,.5));voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.018,1.2)}}};
+  /* Spring in a Box: a jack-in-the-box of joy, a happy Hollow Knight. A music box opens with the spring (a leap up and a
+     step back down). A harp ripples from ear to ear while a bowed voice sings the tune, Greenpath's harp and strings in
+     sunlight; the felt piano answers it. The felt piano takes the tune as it flowers, and dances on plucked strings and a
+     soft kit; it all quiets down to the music box; then the bowed voice brings it back, and it lifts a whole step into G,
+     where the choir sings with it (the "omg"); and the box closes in peace. F major, then G major, in straight time. */
+  const SPR_SEC=[[0,"open"],[4,"flow"],[12,"flower"],[16,"dance"],[24,"quiet"],[28,"back"],[32,"omg"],[40,"peace"]];
+  const sprSec=a=>{let s="open";for(const [k,n] of SPR_SEC)if(a>=k)s=n;return s};
+  const sprLead=a=>{const s=sprSec(a);return s==="open"||s==="quiet"||s==="peace"?"softbox":s==="flower"||s==="dance"?"felt":"bow"};
+  const SPRING={name:"Spring in a Box",bpm:88,trim:.7,bar:8,lead:"bow",leadV:.26,rel:.45,leg:1,lp:4200,echo:.14,fb:.22,dly:.68,
+    dyn:.85,contrast:.8,hum:.008,rv:.36,ds:.14,rev:[5,.5],wow:[.0008,.25],
+    chords:chords("F Bb/F F C F Dm7 Bbmaj7 C F/A Bb Gm7 C7 Fmaj7 Am7 Bbmaj7 C F C/E Dm7 Bb F C Bb C7 Fmaj7 Dm7 Bbmaj7 Bbm F Dm7 Bb D7 G Em7 Cmaj7 D G/B C Am7 D7 G Cmaj7 Em7 D G"),
+    mel:mel(`C5:1 F5:1 A5:1 C6:3 Bb5:1 A5:1
+        D6:3 C6:1 Bb5:2 F5:2
+        C5:1 F5:1 A5:1 C6:3 D6:1 C6:1
+        G5:4 r:4
+        C4:1 F4:1 A4:1 C5:3 Bb4:1 A4:1
+        A4:3 G4:1 F4:2 D4:2
+        D4:1 F4:1 A4:1 D5:3 C5:1 Bb4:1
+        C5:4 G4:2 E4:2
+        C4:1 F4:1 A4:1 C5:3 D5:1 E5:1
+        F5:3 D5:1 Bb4:2 C5:1 D5:1
+        C5:2 Bb4:1 A4:1 G4:2 F4:1 G4:1
+        E4:2 G4:2 Bb4:2 C5:2
+        A5:4 G5:1 F5:1 E5:2
+        C6:3 A5:1 G5:2 E5:2
+        D6:3 C6:1 Bb5:1 A5:1 F5:2
+        G5:6 r:2
+        F5:1 A5:1 C6:1 A5:1 F5:1 A5:1 C6:2
+        E5:1 G5:1 C6:1 G5:1 E5:1 G5:1 C6:2
+        D5:1 F5:1 A5:1 F5:1 C6:2 A5:2
+        Bb5:2 A5:1 G5:1 F5:2 D5:2
+        C5:1 F5:1 A5:1 C6:1 D6:2 C6:2
+        E5:1 G5:1 C6:1 E6:1 D6:2 C6:2
+        D6:3 C6:1 Bb5:1 A5:1 G5:1 F5:1
+        G5:3 E5:1 C5:2 r:2
+        C6:2:.7 r:2 A5:1:.6 C6:1:.6 r:2
+        A5:2:.6 r:2 F5:1:.55 A5:1:.55 r:2
+        D6:4:.6 r:4
+        Db6:3:.55 C6:1:.5 r:4
+        C4:1:.7 F4:1:.7 A4:1:.75 C5:3:.8 Bb4:1:.8 A4:1:.8
+        A4:3:.85 G4:1:.85 F4:2:.85 A4:2:.9
+        D4:1:.9 F4:1:.9 Bb4:1:.95 D5:3:1 E5:1 F5:1
+        F#5:4:1.05 E5:2 D5:1 C5:1
+        D4:1 G4:1 B4:1 D5:3 C5:1 B4:1
+        B4:3 A4:1 G4:2 E4:2
+        E4:1 G4:1 B4:1 E5:3 D5:1 C5:1
+        D5:4 A4:2 F#4:2
+        D4:1 G4:1 B4:1 D5:3 E5:1 F#5:1
+        G5:3 E5:1 C5:2 D5:1 E5:1
+        A5:4:1.1 G5:2 E5:2
+        F#5:3 E5:1 D5:2 C5:2
+        D5:1:.7 G5:1:.7 B5:1:.7 D6:3:.7 C6:1:.65 B5:1:.65
+        B5:4:.6 G5:2:.6 E5:2:.55
+        G5:3:.55 F#5:1:.5 E5:2:.5 B4:2:.5
+        A5:4:.5 F#5:2:.45 D5:2:.45
+        G5:8:.45`),
+    leadFor:sprLead,leadVFor:a=>({softbox:.21,felt:.3,bow:.25})[sprLead(a)],
+    // steady, but it breathes at the ends of phrases, opens slowly, and slows as the box closes
+    tempo:(b,i,a)=>{const s=sprSec(a);let v=s==="open"?.94:s==="quiet"?.9:s==="peace"?.96-.035*(a-40):s==="dance"?1.04:1;
+      if(i>=6&&[3,11,15,23,27,31].includes(a))v*=.88;if(a===39&&i>=4)v*=.86;return v*(.99+.02*h01(a+80))},
+    onNote:(e,t,E8,x)=>{const a=x.abs,s=sprSec(a),C=x.C,m=e.m;GL=null;if(m==null||Array.isArray(m))return;
+      // the felt piano answers the bowed voice's long notes: three notes of the chord, from the other ear
+      if(sprLead(a)==="bow"&&e.l>=3&&h01(a*13+e.s)<.75){const up=[...C.iv,12,12+C.iv[1],12+C.iv[2]].map(v=>C.r+12+v).filter(n=>n>m+2).slice(0,3);
+        const p=panTo(.45*(a%2?1:-1),.45*(a%2?1:-1),t,E8*4,.6,.3);up.forEach((n,k)=>{on(p);voice("felt",hz(n+12),t+E8*(1+k*.5),E8*1.5,.07*e.vel*(1-.15*k),.9)})}
+      // at the "omg" the felt piano sings along an octave up
+      if(s==="omg"){on(send(.5,.2));voice("felt",hz(m+12),t,e.l*E8,.09*e.vel,1)}
+      // and a soft bell answers the long notes in the flowering and the dance, as in Bubble Bath in the Sky
+      if((s==="flower"||s==="dance")&&e.l>=2&&h01(a*7+e.s)<.4){const c=[...C.iv,12].map(v=>C.r+v+24).filter(n=>n>m&&n<=m+12);if(c.length){on(send(.9,.5));voice("softbox",hz(c[0]),t+E8,E8*2,.045*e.vel,1.2)}}},
+    onBar:x=>{const {t,abs:a,E8,C}=x,B=E8*8,s=sprSec(a);GL=null;
+      // each section breathes in its own way; now and then a light muffle comes in and leaves again
+      const open={open:3200,flow:4200,flower:5600,dance:5000,quiet:2400,back:3000+600*(a-28),omg:6500,peace:3800-450*(a-40)}[s];
+      const swell={open:.6+.08*a,flow:.86+.05*(a%4),flower:.85+.07*(a-12),dance:a%2?1:.94,quiet:.6-.04*(a-24),back:.66+.11*(a-28),omg:a===38?1.15:1.02+.04*(a%2),peace:.85-.09*(a-40)}[s];
+      BUS.leadLP.frequency.setTargetAtTime(open,t,B*.3);BUS.swl.gain.setTargetAtTime(swell,t,B*.35);
+      if((s==="flow"||s==="back")&&a%4===2){BUS.leadLP.frequency.setTargetAtTime(Math.max(1400,open*.4),t+B*.3,B*.15);BUS.leadLP.frequency.setTargetAtTime(open,t+B*.7,B*.2)}
+      // the harp: eighths that ripple from one ear to the other, above the bowed voice and below the piano
+      const hv={flow:.065,flower:.055,back:.05+.01*(a-28),omg:.075}[s]||(s==="open"&&a>=2?.04:s==="peace"&&a<=42?.04-.008*(a-40):0);
+      if(hv){const dir=a%2?1:-1,p=panTo(-.6*dir,.6*dir,t,B,.5,.25),base=C.r+(s==="flower"?0:12),pat=[0,C.fifth,14,12+C.third,12+C.fifth,12+C.third,14,C.fifth],acc=[1,.7,.8,.75,.85,.7,.75,.65];
+        pat.forEach((v,k)=>{on(p);voice("harp",hz(base+v),t+k*E8,E8*2,hv*acc[k],.8)})}
+      // underneath: a cello holds the root where the tune is bowed; plucked strings walk in the dance
+      if(s==="flow"||s==="back"||s==="omg"){on(send(.3,0,BUS.bass));voice("bow",hz(C.b-12),t,B*.98,s==="omg"?.09:.07,.5);voice("mbass",hz(C.b-12),t,B*.95,.17,.6)}
+      else if(s==="dance"){on(send(.15,0,BUS.bass));[0,C.fifth,12,C.fifth].forEach((v,k)=>{voice("mbass",hz(C.b-12+v),t+k*2*E8,E8*1.6,k?.24:.3,.4);voice("harp",hz(C.b+v),t+k*2*E8,E8,.07*(k?.8:1),.35)})}
+      else if(s==="flower"){on(send(.3,0,BUS.bass));voice("mbass",hz(C.b-12),t,B*.95,.24,.7)}
+      else if(a%2===0){on(send(.3,0,BUS.bass));voice("mbass",hz(C.b-12),t,B*1.8,.2,.9)}
+      // the pad: warm, and fuller where it flowers and at the "omg"
+      const pd={flow:.016,flower:.03,dance:.02,quiet:.022,back:.018,omg:.034,peace:.024}[s]||0;
+      if(pd){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pd,.8)}
+      // strings swell under the flowering and the "omg"
+      if(s==="flower"||s==="omg"){on(send(.7,.2,BUS.bass));voice("bow",hz(C.r+12+C.third),t,B*1.04,.03,.8);voice("bow",hz(C.r+12+C.fifth),t+.04,B*1.04,.025,.8)}
+      // it flowers: glass on top, from either ear
+      if(s==="flower"||s==="omg"&&a%2===1){on(panTo(a%2?.5:-.5,a%2?-.3:.3,t,B,1,.5));voice("glass",hz(C.r+36+C.fifth),t+E8*4,E8*3,.022,1.2)}
+      // a soft kit in the dance and the "omg": a brush on 2 and 4, wood on some of the offbeats
+      if(s==="dance"||s==="omg"&&a>=34){on(BUS.perc);const pv=s==="omg"?.7:1;for(const k of [2,6])brush(t+k*E8,.022*pv);for(const k of [1,3,5,7])if(h01(a*8+k)<.5)wood(t+k*E8,.011*pv)}
+      // a birthday music box skips along in the dance, high up and from the other ear
+      if(s==="dance"&&a%2===0){const side=a%4?-.55:.55,p=panTo(side,-side,t,B,.5,.3),pat=[12,C.fifth+12,24,C.fifth+12,12+C.third,C.fifth+12,24,12];
+        pat.forEach((v,k)=>{if(h01(a*9+k)<.4)return;on(p);voice("softbox",hz(C.r+24+v),t+k*E8,E8*.6,.022,.6)})}
+      // it sings: a choir at the "omg", and a last breath of it as the box closes
+      if(s==="omg"||a===40||a===41){on(send(.7,.25));const cv=s==="omg"?.07:.04;for(const v of C.iv.slice(0,3))voice("ooh",hz(C.r+12+v),t+.05,B*.98,cv,.7)}
+      // the spring: a little run that leaps up across the ears, as the box opens, before each new part, and as it closes
+      const spring=(st,v)=>{const p=panTo(-.7,.7,st,E8*1.5,.7,.4);[0,C.iv[1],C.iv[2],12,12+C.iv[1],12+C.iv[2],24].forEach((n,k)=>{on(p);voice(k<4?"softbox":"glass",hz(C.r+24+n),st+k*E8*.16,E8*.8,v*(1-.05*k),1)})};
+      if(a===3||a===15||a===31)spring(t+E8*4.5,.055);if(a===23)spring(t+E8*6,.04);if(a===43)spring(t+E8*5,.045);
+      // the quiet: a breath of air before it all comes back
+      if(s==="quiet"&&a===27){on(send(1,.4));voice("air",hz(C.r+24+C.fifth),t+E8*4,E8*4,.03,1)}}};
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
        crisp and muted, warped a little, with a needle crackling */
@@ -248,12 +350,17 @@ export const music = (function(){
         on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};   // it floats up as it fades
         voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.22*.24*e.vel,1.4);GL=null}},
     glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7"),
-    JESTERS
+    JESTERS,
+    SPRING
   ];
-  const BASE=.7;   // 100% music: loud on purpose
+  const BASE=.45;   // 100% music: loud, but under the game
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
   const hz=m=>440*Math.pow(2,(m-69)/12);
-  let ac=null,out=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
+  /* on a phone the notes' tails are cut sooner (after they have faded to almost nothing) and a few faint layers are left
+     out (shimmers an octave up, the music box's halo, a second detuned saw), so the music takes less work to play and
+     doesn't stutter; a computer plays everything in full */
+  const LITE=matchMedia("(hover: none) and (pointer: coarse)").matches,TL=LITE?.6:1;
+  let ac=null,out=null,bout=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
   /* a seeded chance, so a song written out sounds the same each time; in play it is new each time through */
   let SEED=1;const rnd=()=>{SEED=SEED+0x6D2B79F5|0;let t=Math.imul(SEED^SEED>>>15,1|SEED);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
   const gn=v=>{const g=ac.createGain();g.gain.value=v==null?1:v;return g};
@@ -277,7 +384,7 @@ export const music = (function(){
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
     BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A();graph();return ac}
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A({latencyHint:"playback"});graph();bout=gn(0);bout.connect(ac.destination);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
@@ -338,18 +445,18 @@ export const music = (function(){
       return true}
     if(type==="dist"){const g=gn(),ws=ac.createWaveShaper(),lp=biq("lowpass",1700);ws.curve=distCurve();ws.connect(lp).connect(g);g.connect(D);env(g,t,.01,peak,dur-.04,.07);
       osc("sawtooth",f,t,t+dur+.4,ws);osc("sawtooth",f*.5,t,t+dur+.4,ws);return true}
-    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5,g=gn();g.connect(D);
+    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5*TL,g=gn();g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.62,t+a,Math.max(.2,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
       const o1=osc("sine",f,t,stop,g),o2=osc("sine",f*1.0026,t,stop,g);   // two, a hair apart: a slow, seasick beating
-      const h=gn(.07);h.connect(g);const o3=osc("triangle",f*2,t,stop,h);const s=gn(.16);s.connect(g);osc("sine",f*.5,t,stop,s);   // and a ghost an octave down
-      vib([o1,o2,o3],t,stop,4.4,.0045,.3);
+      let o3=null;if(!LITE){const h=gn(.07);h.connect(g);o3=osc("triangle",f*2,t,stop,h)}const s=gn(.16);s.connect(g);osc("sine",f*.5,t,stop,s);   // and a ghost an octave down
+      vib(o3?[o1,o2,o3]:[o1,o2],t,stop,4.4,.0045,.3);
       const nb=noiseSrc(t,dur+.4),bp=biq("bandpass",f*2,7),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*1.6,t+a*.6);ng.gain.setTargetAtTime(0,t+a,.18);nb.connect(bp).connect(ng).connect(D);   // breath
       return true}
     if(type==="softtri"){const R=rel||.3,g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.03);g.gain.setTargetAtTime(peak*.55,t+.04,.25);g.gain.setTargetAtTime(0,t+dur,R);osc("triangle",f,t,t+dur+R*5,g);return true}
     if(type==="softbox"){const R=rel||.9,end=t+Math.max(dur,.4),g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.018);g.gain.setTargetAtTime(peak*.4,t+.03,.35);g.gain.setTargetAtTime(0,end,R);
-      osc("sine",f,t,end+R*5,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
+      osc("sine",f,t,end+R*5*TL,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
       const g3=gn();g3.connect(D);env(g3,t,.01,peak*.05,.01,.12);osc("sine",f*3.98,t,t+.8,g3);   // the tine, much softer than the old box
-      const h=gn();h.connect(D);h.gain.setValueAtTime(0,t);h.gain.linearRampToValueAtTime(peak*.22,t+.35);h.gain.setTargetAtTime(0,end,R*1.4);osc("triangle",f,t,end+R*7,h);   // a halo that lingers
+      if(!LITE){const h=gn();h.connect(D);h.gain.setValueAtTime(0,t);h.gain.linearRampToValueAtTime(peak*.22,t+.35);h.gain.setTargetAtTime(0,end,R*1.4);osc("triangle",f,t,end+R*7,h)}   // a halo that lingers
       return true}
     if(type==="viol"||type==="lament"){const L=type==="lament",a=L?.2:.1,R=rel||(L?.5:.3),stop=t+dur+R*5,g=gn(),lp=biq("lowpass",L?1500:Math.min(5000,f*4+600),.7);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,Math.max(.1,dur*.6));g.gain.setTargetAtTime(0,t+dur,R);
@@ -371,21 +478,31 @@ export const music = (function(){
       osc("sawtooth",f,t,stop,tr);osc("triangle",f*1.004,t,stop,tr);
       lp.frequency.setValueAtTime(700,t);lp.frequency.linearRampToValueAtTime(1900,t+a);lp.frequency.setTargetAtTime(1100,t+a,Math.max(.1,dur*.6));return true}   // it opens as it swells
     /* for the glowing songs: a felt piano, a harp, a muffled bass and a warm old pad */
-    if(type==="felt"){const R=rel||1.1,end=t+Math.max(dur,.25),stop=end+R*5,g=gn(),lp=biq("lowpass",Math.min(5200,f*6),.4);lp.connect(g);g.connect(D);
+    if(type==="felt"){const R=rel||1.1,end=t+Math.max(dur,.25),stop=end+R*5*TL,g=gn(),lp=biq("lowpass",Math.min(5200,f*6),.4);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.008);g.gain.setTargetAtTime(peak*.34,t+.012,.45);g.gain.setTargetAtTime(0,end,R);
       lp.frequency.setTargetAtTime(Math.min(1700,f*2.4),t+.012,.3);   // the hammer's brightness fades into felt
-      osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h);
+      osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);if(!LITE){const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h)}
       const nb=noiseSrc(t,.06),bp=biq("bandpass",2300,1.4),ng=gn(0);ng.gain.setValueAtTime(peak*.22,t);ng.gain.setTargetAtTime(0,t,.012);nb.connect(bp).connect(ng).connect(D);
       return true}
-    if(type==="harp"){const R=rel||.9,stop=t+R*6,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
-      osc("triangle",f,t,stop,lp);const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h);lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
-    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
+    if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
+      osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
+    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.7,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur,R);
       osc("sine",f,t,stop,lp);const k=gn(.45);k.connect(lp);osc("triangle",f*1.002,t,stop,k);return true}
-    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
+    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
-      osc("sawtooth",f,t,stop,lp);osc("sawtooth",f*1.0035,t,stop,lp);const k=gn(.6);k.connect(lp);osc("triangle",f*.5,t,stop,k);
+      const k=gn(.6);k.connect(lp);for(const x of [].concat(f)){osc("sawtooth",x,t,stop,lp);if(!LITE)osc("sawtooth",x*1.0035,t,stop,lp);osc("triangle",x*.5,t,stop,k)}   // f may be a whole chord
       lp.frequency.linearRampToValueAtTime(950,t+a);lp.frequency.setTargetAtTime(600,t+a,dur*.4);return true}
+    /* a clean "ooh" of voices: no buzz, just round tones that swell and sway */
+    if(type==="ooh"){const a=Math.max(.25,dur*.3),R=rel||.7,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",1800,.5);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
+      const o1=osc("sine",f,t,stop,lp),o2=osc("sine",f*1.004,t,stop,lp),h=gn(.15);h.connect(lp);const o3=osc("sine",f*2,t,stop,h);vib([o1,o2,o3],t,stop,4.8,.006,.2);return true}
+    /* a bowed voice, a cello or a viola played softly: round, not buzzy (a triangle and a sine, a little saw for the bow) */
+    if(type==="bow"){const a=Math.min(.22,Math.max(.07,dur*.25)),R=rel||.4,stop=t+dur+R*5*TL,top=Math.min(2600,f*3+300),g=gn(),lp=biq("lowpass",Math.min(1800,f*2),.5);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.82,t+a,Math.max(.12,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
+      lp.frequency.setValueAtTime(Math.min(1800,f*2),t);lp.frequency.linearRampToValueAtTime(top,t+a);   // the bow digs in, then sings
+      const o1=osc("triangle",f,t,stop,lp),o2=osc("sine",f*1.0025,t,stop,lp),k=gn(.22);k.connect(lp);const o3=osc("sawtooth",f,t,stop,k);
+      vib([o1,o2,o3],t,stop,5.3,.0045,.22);return true}
     return false}
   function note(type,f,t,dur,peak,rel,vib_){if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
     if(vib_){const l=ac.createOscillator(),lg=ac.createGain();l.frequency.value=5.2;lg.gain.value=f*.007;l.connect(lg).connect(o.frequency);l.start(t);l.stop(t+dur+.6)}
@@ -435,7 +552,7 @@ export const music = (function(){
       e.vel=e.v*(1-c+c*shape*contour*fall*jit)*alt})});
     let dur=0;for(let st=0;st<total;st++){const ab=Math.floor(st/T.bar);dur+=60/T.bpm/2/(T.tempo?T.tempo(ab%T.chords.length,st%T.bar,ab):1)}
     ev.total=total;ev.dur=dur;return ev}
-  function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=RENDER?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
+  function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=FIXED?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
   /* one note of the melody, played: its loudness, a slide from the last note, a sag when the song falls apart, a breath
      that falls away; its own send into the room and the delay (more at a phrase's end, so the end floats off) */
   function playLead(e,t,E8,x){t=Math.max(t,ac.currentTime);const air=e.tag.includes("a"),ty=air?"air":T.leadFor?T.leadFor(x.abs):T.lead;let d=e.l*E8*(T.leg||.93),cut=false;
@@ -451,8 +568,10 @@ export const music = (function(){
     GL=null;if(e.m.length===1&&!air)prevF=hz(e.m[0]);
     if((T.swipe&&e.tag.includes("s"))||cut){const p=BUS.leadLP.frequency;p.setTargetAtTime(230,t+d*.6,.05);p.setTargetAtTime(16000,t+d+E8*(.8+rnd()),.3)}   // swept away, and back
     if(T.onNote)T.onNote(e,t,E8,x)}
-  let RENDER=false;
+  let RENDER=false,FIXED=false;
   function tick(until){if(!playing||!ac)return;
+    if(WAIT&&!RENDER){if(NX&&!NX.buf&&ac.currentTime<WAIT)return;WAIT=0;nextSong(ac.currentTime+.15);if(BUF)return}
+    if(BUF&&!RENDER){if(ac.currentTime<BUF.end)return;const e=BUF.end;BUF=null;nextSong(e+GAP);if(BUF)return}
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
       const E8=60/T.bpm/2/(T.tempo?T.tempo(bar,i,abs):1),x={t:next,bar,abs,i,E8,C,step};
@@ -483,7 +602,7 @@ export const music = (function(){
         if(has("static")&&i===0&&(bar*7)%3===1)hit(next,"static");   // a radio that won't quite tune
         if(T.step)T.step(x);if(i===0&&T.onBar)T.onBar(x);GL=null}
       next+=E8;step++;
-      if(step>=total){if(RENDER)return;next+=GAP;load(pick())}}   // the song ends: 20 seconds of quiet, then the next one
+      if(step>=total){if(RENDER)return;nextSong(next+GAP);if(BUF)return}}   // the song ends: 20 seconds of quiet, then the next one
   }
   const GAP=20;
   /* the next song: a random pick that leans away from the songs heard most recently (each song's chance grows with the
@@ -493,26 +612,52 @@ export const music = (function(){
   function pick(){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7;
     let best=0,bk=-1;names.forEach((n,i)=>{if(names.length>1&&i===last)return;const k=Math.pow(Math.random(),1/Math.log(2+age(n)));if(k>bk){bk=k;best=i}});
     h[names[best]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return best}
-  function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;load(pick(),true);next=ac.currentTime+.15;
-    out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(LV(),ac.currentTime,.8);timer=setInterval(tick,90);tick()}
-  function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;stopBeds();if(ac){out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(0,ac.currentTime,.3)}}
+  /* stopped part way (the Music slider at 0, the page hidden, out of the room): starting again picks the same song up
+     where it was, and a gap between songs keeps the rest of its quiet */
+  let paused=false,left=0;
+  function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
+    const now=ac.currentTime;
+    if(paused&&BUF){const a=BUF.at;playBuf(BUF,a<0?now+Math.max(.15,-a):now+.15,Math.max(0,a))}
+    else if(paused&&T){next=now+Math.max(.15,left);if(T.bed&&step>0&&step<total)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
+    else if(NX)WAIT=now+15;   // the first song has been written out since the page opened: wait for it (15 seconds at most)
+    else{load(pick(),true);next=now+.15;prep()}
+    paused=false;level(.8);timer=setInterval(tick,90);tick()}
+  function stop(){if(!playing)return;playing=false;paused=true;clearInterval(timer);timer=null;stopBeds();if(!ac)return;
+    left=Math.min(GAP,Math.max(0,next-ac.currentTime));if(BUF){BUF.at=ac.currentTime-BUF.t0;try{BUF.s.stop(ac.currentTime+1.5)}catch(e){}}level(.3,0)}
+  function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the sound up and the page in view
   const wanted=()=>LV()>0&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
-  function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing){out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(LV(),ac.currentTime,.15)}}
+  function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
+  setTimeout(()=>{if(LV()>0)prep()},1500);   // on a computer, the first song is written out as soon as the page is open
   addEventListener("pointerdown",wake,true);
   addEventListener("keydown",wake,true);
   document.addEventListener("visibilitychange",sync);
   document.addEventListener("settings",sync);
   document.addEventListener("screen",sync);
-  /* one song written out to an audio buffer (to listen to a song, or a new version of one, outside the game) */
-  async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
-    const keep=[ac,out,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE];
-    RENDER=true;let buf;
-    try{const len=build(TRACKS[i]).dur+7;ac=new OAC(2,Math.ceil(44100*len),44100);graph();out.gain.value=BASE;
-      load(i,true);next=.05;playing=true;tick(len-6.5);buf=await ac.startRendering()}
-    finally{RENDER=false;[ac,out,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE]=keep}
-    return buf}
-  return {sync,renderSong,get playing(){return playing},get track(){return T?T.name:null},tracks:names};
+  /* one song written out to an audio buffer: to listen to a song outside the game (fixed, the same each time), or, on a
+     computer, the next song ahead of time (new each time) */
+  const ST=()=>[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF];
+  const PUT=a=>{[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF]=a};
+  // the notes are written in 4-second pieces, each when the writing gets there, so the game never stops for a long moment
+  function offline(i,fixed,lv){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
+    const keep=ST(),dur=build(TRACKS[i]).dur,len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
+    const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
+    run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true);next=.05;playing=true},4);
+    if(!o.suspend)run(null,len-6.5);else for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s).then(()=>{run(null,u);o.resume()})}
+    PUT(keep);return {p:o.startRendering(),dur:dur+.05}}
+  async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
+  /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
+     takes almost no work to play, so another app busy on the computer can't make it crackle. The first song, a song
+     not ready in time, and every song on a phone (too much memory there) are played live, note by note */
+  let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!(window.OfflineAudioContext&&OfflineAudioContext.prototype.suspend);   // Firefox can't write in pieces: it stays live
+  function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now();let r=null;try{r=offline(i,false,1)}catch(e){}if(!r){ahead=false;NX=null;return}
+    nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
+  function playBuf(b,t,off){const s=ac.createBufferSource();s.buffer=b.buf;s.connect(bout);s.start(t,off);BUF={...b,s,t0:t-off,end:t-off+b.dur,at:0}}
+  // a song ends (after its quiet): the next one, from its recording when it's ready, else live
+  function nextSong(t){const nx=NX;NX=null;stopBeds();
+    if(nx&&nx.buf){T=TRACKS[nx.i];last=nx.i;playBuf(nx,t,0)}else{load(nx?nx.i:pick());next=t}
+    prep()}
+  return {sync,renderSong,get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
 })();
