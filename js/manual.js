@@ -82,6 +82,8 @@ export const MAN = {
   getent: 'getent group [group]: a group\'s line, group:x:members:perms; with no group, every group in the room.',
   sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it. sudo !! reruns the last command with sudo. sudo -l: what sudo lets you do. If you are in sudo, the word is optional (groupadd works like sudo groupadd).',
   usermod: 'sudo usermod [-a | -r] -G group[,group] @name: -aG adds to groups, -rG takes out of them, -G alone sets exactly these. sudo usermod @name adds to sudo. The @ is optional, and -a -G, -aG and --append --groups all work.',
+  useradd: 'sudo useradd -G group[,group] name: the ducks are already here, so this puts one in groups (the same as usermod -aG). The @ is optional.',
+  userdel: 'userdel: ducks can\'t be deleted; kick @name removes one from the room.',
   gpasswd: 'sudo gpasswd -a @name group | -d @name group: adds one player to a group, or takes them out (the @ is optional).',
   adduser: 'sudo adduser @name group: puts a player in a group.',
   deluser: 'sudo deluser @name group: takes a player out of a group.',

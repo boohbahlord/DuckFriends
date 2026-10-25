@@ -946,3 +946,11 @@ You decide
 (Decided: when a Quack is kicked or leaves mid-round, nobody learns who it was or the word. The cloud says "A duck
 left, so here's a new word." and the round starts over with a new word and a new Quack, the same way it does when a
 new host takes over. The round doesn't count in the stats.)
+
+## The host and sudo, again, word for word (2026-10-25)
+
+no u dont understand i typed sudo into a useradd command and it was saying i need to be apart of the sudo group to use that command! WHY THE FUCK R U SO STUPID
+
+(Cause: online, when the host's phone sleeps or the tab goes quiet for about 16 seconds, the next player takes over as
+host, and the first host was left with no sudo. Decision: a host who loses the role that way keeps sudo, and the chat
+says so. useradd -G group name now works (like usermod -aG), and userdel says how to remove a duck.)

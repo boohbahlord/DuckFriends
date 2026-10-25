@@ -553,6 +553,12 @@ const CMDS = {
   },
   adduser: (args, i, x) => { needSudo(x, 'adduser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, x); },
   deluser: (args, i, x) => { needSudo(x, 'deluser'); const [at, g] = userGroup(args); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, x); },
+  useradd: (args, i, x) => {   // the ducks are already here: useradd -G puts one in groups, like usermod -aG
+    needSudo(x, 'useradd'); const { o, rest } = getopt(args, 'G:m', 'useradd');
+    if (!o.G || !rest.length) fail(`✗ ${MAN.useradd}`);
+    return CMDS.usermod(['-aG', o.G, ...rest], i, x);
+  },
+  userdel: (args, i, x) => { needSudo(x, 'userdel'); fail('✗ userdel: ducks can\'t be deleted. kick @name removes one from the room; usermod -rG group @name takes one out of a group.'); },
   groupadd: (args, i, x) => {
     const s = needSudo(x, 'groupadd'), { o, rest } = getopt(args, 'p:', 'groupadd'), perms = String(o.p || '').split(',').filter(Boolean), name = rest[0];
     if (!name || !/^[a-z][a-z0-9_-]{0,19}$/i.test(name) || name.toLowerCase().startsWith('superuser-')) fail(`✗ ${MAN.groupadd}`);
@@ -638,7 +644,7 @@ function sudoList(ctx) {
     const gives = Object.keys(PERMS_GIVE).filter(p => may(s, me, p));
     return { out: `${noSudo(ctx).slice(2)}${gives.length ? `\nYour groups give you: ${gives.map(p => `${p} (${PERMS_GIVE[p]})`).join(', ')}.` : ''}`, code: 1 };
   }
-  return [`${ctx.meName} may run, as sudo:`, '  usermod gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start', '(The word sudo is optional for you.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
+  return [`${ctx.meName} may run, as sudo:`, '  usermod useradd gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start', '(The word sudo is optional for you.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
 }
 
 /* ---------- running a command ---------- */
