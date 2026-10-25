@@ -99,7 +99,8 @@ const allParas = s => s.sc.stories.flatMap(st => st.paras);
 export function statsHTML(s) {
   const now = allParas(s).filter(p => p.round === s.round);
   const stories = s.sc.stories.filter(st => st.paras.length).map((st, i) => `<div class="panel sc-done"><h3>Story ${i + 1}</h3>${st.paras.map(p => `<p class="small">${p.lines.map(l => `<span class="sc-fk" style="${fontStyle(player(s, l.by))}">${esc(l.text)}</span>`).join(' ')}</p>`).join('')}</div>`).join('');
-  return `<h2>Round ${s.round + 1}</h2><div class="awards">${awardsHTML(s, scStats(now))}</div>
+  const words = now.filter(p => p.noVote).map(p => `<div class="panel sc-done"><h3>Secret words</h3><p class="small">${p.lines.map(l => `<span class="sc-fk" style="${fontStyle(player(s, l.by))}">${lineText(l, true)}</span>`).join(' ')}</p></div>`).join('');   // (no voting: the words show here)
+  return `<h2>Round ${s.round + 1}</h2>${words}<div class="awards">${awardsHTML(s, scStats(now))}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="awards">${awardsHTML(s, scStats(allParas(s)))}</div>${stories}` : ''}`;
 }
 /* a player's "This game" box in the View stats window */
