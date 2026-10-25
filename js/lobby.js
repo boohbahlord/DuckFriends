@@ -2,7 +2,7 @@
    Left: the game's art, the room's name, who can join, Ready, then Game type (locked), Map (one for now), Game options
    (the host edits them) and Start game, with a line under them saying what the row under the pointer does. Right: the
    party, one player card per row; click your own to rename it; right-click any card for its options. Bottom left: the
-   keys. The X at the top right leaves the room. */
+   keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at the top right leaves the room. */
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, contextMenu, onMenu, typing, windowOpen, toast, setHTML } from './ui.js';
 import { activeRoom } from './net.js';
@@ -20,6 +20,7 @@ import { mountDocks, DOCK_HTML, BAR_HTML } from './dock.js';
 import { MAPS, mapMini, mapName } from './maps.js';
 import { acct, onAccount, requestFriend, canAdd } from './account.js';
 import { openFriends } from './friends.js';
+import { NAV_HINTS } from './keynav.js';
 
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
@@ -224,7 +225,7 @@ register('lobby', {
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
         <h1 class="lobby-title"></h1>
         <p class="lobby-sub dim"></p>
-        <div class="lobby-status"></div>
+        <div class="lobby-status" data-nav-start></div>
         <div class="lmenu" role="menu">
           <button type="button" role="menuitem" data-m="type"><span>Game type</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val"></span></button>
@@ -237,7 +238,7 @@ register('lobby', {
       <aside class="party"><header><h2>Party</h2><span class="party-count dim"></span></header><div class="party-list"></div></aside>
       </div>${DOCK_HTML}${BAR_HTML()}
     </section>`);
-    docks = mountDocks(S, '<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options <kbd>Click</kbd> Select');
+    docks = mountDocks(S, `<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options ${NAV_HINTS}`);
     lastSeat = 0;
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
     const info = S.querySelector('.lmenu-info');

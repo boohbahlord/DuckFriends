@@ -15,7 +15,7 @@ serves `main`, so merging to `main` is deploying).
 - `js/rules.js` is the whole game as a reducer: `reduce(state, action, now)`. The host runs it. TEST rooms run it on the
   device (`js/net.js`, with computers from `js/bots.js`); online rooms run it in the host's browser over Firebase
   (`js/online.js`, rules in `database.rules.json`).
-- `js/game.js` draws the board, moves your duck and handles keys; `js/brackets.js` is Bicker Brackets; `js/story.js` is
+- `js/game.js` draws the board, moves your duck and handles keys (`js/keynav.js` moves through menus with the arrow keys); `js/brackets.js` is Bicker Brackets; `js/story.js` is
   Story Chain; `js/maps.js` the
   maps (Night Show, Sky, Pixel, Ether's Crossroads); `css/app.css` everything's look.
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
