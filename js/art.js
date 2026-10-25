@@ -163,23 +163,27 @@ export const heroDuckSVG = () => duckSVG(DUCK_DEFAULT, { size: 300, shadow: fals
    lights, bunting (and, in the dark, glowing string lights) across the top, and a few ball-pit balls and bits of confetti
    drifting. Drawn to the window's size; redrawn when it changes or the theme does.
    backdropParts draws the pieces; backdropSVG puts them in one still picture (the small previews); backdropHTML lays
-   them out as layers for the page and the Night Show map: the still part as one picture, the dots and the bulbs as a
-   picture each that fades in and out, and each ball or confetti as its own small picture that drifts. Fading or moving a whole picture is cheap for the browser; redrawing a big animated drawing every frame
+   them out as layers for the page and the Night Show map: the still part as one picture, each row of dots of one color
+   and each set of bulbs as a small picture that fades in and out a little after the last (so the light rolls across the
+   floor in diagonal waves), and each ball or confetti as its own small picture that drifts. Fading or moving a whole picture is cheap for the browser; redrawing a big animated drawing every frame
    is not (it made scrolling lag). */
 function backdropParts(w, h, dark) {
-  const r = rnd(77), base = [], dots = [[], [], [], []], bulbs = [[], []], shapes = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
+  const r = rnd(77), base = [], dots = [], bulbs = [[], [], []], shapes = [], cols = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421'];
   const hz = h * .46, K = (h - hz) * 1.05, K2 = w * .16;
-  /* the floor: Twister dots in rows to the horizon and out past both edges */
+  /* the floor: Twister dots in rows to the horizon and out past both edges; each row and color breathes (glows up and
+     fades) a little after the last, so the light rolls across the floor */
   base.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
   const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
-  for (let z = .95; z < 9; z *= 1.24) {
+  for (let z = .95, row = 0; z < 9; z *= 1.24, row++) {
     const rx = .42 * K2 / z, ry = rx * .42, y = py(z); if (y > h + ry) continue;
+    const groups = cols.map((_, c) => ({ dl: (row * .55 + c * 1.1) % 4.4, y0: Math.max(hz, y - ry * 2), y1: Math.min(h, y + ry * 2), items: [] }));
     for (let X = -60; X <= 60; X++) {
       const x = px(X + .5, z); if (x < -rx * 1.8 || x > w + rx * 1.8) continue;
       const c = ((X % 4) + 4) % 4;
-      dots[c].push(dark ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * 1.7).toFixed(1)}" ry="${(ry * 1.9).toFixed(1)}" fill="url(#bdg${c})"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`
+      groups[c].items.push(dark ? `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(rx * 1.7).toFixed(1)}" ry="${(ry * 1.9).toFixed(1)}" fill="url(#bdg${c})"/><ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`
         : `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="${cols[c]}"/>`);
     }
+    dots.push(...groups.filter(g => g.items.length && g.y1 - g.y0 > 1));
   }
   /* bunting along two sagging strings; bulbs between the flags glow in the dark */
   const string = (y1, y2, sag, n, k) => {
@@ -189,7 +193,7 @@ function backdropParts(w, h, dark) {
     for (let i = 0; i < n; i++) {
       const [x, y] = pt((i + .5) / n), c = ['#ef3b3b', '#ffd23f', '#2fa4ff', '#37d421', '#9b5de5', '#ff8c2b'][(i + k) % 6], f = 15 + r() * 6;
       g += `<path d="M${(x - f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${(x + f * .7).toFixed(1)} ${(y - 2).toFixed(1)}L${x.toFixed(1)} ${(y + f * 1.25).toFixed(1)}Z" fill="${c}" opacity="${dark ? .55 : .8}"/>`;
-      if (dark) { const [bx, by] = pt((i + 1) / n); r(); bulbs[(i + k) % 2].push(`<circle cx="${bx.toFixed(1)}" cy="${(by + 3).toFixed(1)}" r="3.6" fill="${['#ffe9a8', '#ffd0f0', '#c6f0ff'][(i + k) % 3]}"/>`); }
+      if (dark) { const [bx, by] = pt((i + 1) / n); r(); bulbs[(i + k) % 3].push(`<circle cx="${bx.toFixed(1)}" cy="${(by + 3).toFixed(1)}" r="3.6" fill="${['#ffe9a8', '#ffd0f0', '#c6f0ff'][(i + k) % 3]}"/>`); }
     }
     return g;
   };
@@ -220,15 +224,15 @@ const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h) => `<svg xmlns="http://ww
 /* the whole backdrop as one still drawing */
 export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark);
-  return svgOf(P, P.base[0] + P.dots.map(d => `<g opacity=".5">${d.join('')}</g>`).join('') + P.base.slice(1).join('') + P.bulbs.flat().join('')
+  return svgOf(P, P.base[0] + `<g opacity=".5">${P.dots.map(d => d.items.join('')).join('')}</g>` + P.base.slice(1).join('') + P.bulbs.flat().join('')
     + P.shapes.map(x => `<g transform="translate(${x.x.toFixed(0)} ${x.y.toFixed(0)})">${x.inner}</g>`).join(''), true).replace(' xmlns="http://www.w3.org/2000/svg"', '');
 }
 /* the backdrop as layers that animate cheaply (see above) */
 export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark), img = (svg, cls = '', style = '') => `<img class="bd-layer${cls ? ' ' + cls : ''}" alt="" draggable="false"${style ? ` style="${style}"` : ''} src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">`;
   return img(svgOf(P, P.base[0], true))
-    + img(svgOf(P, P.dots.flat().join(''), false, h * .44, h), 'bd-dots', 'top:44%;height:56%')
+    + P.dots.map(d => img(svgOf(P, d.items.join(''), false, d.y0, d.y1), 'bd-dots', `top:${(d.y0 / h * 100).toFixed(3)}%;height:${((d.y1 - d.y0) / h * 100).toFixed(3)}%;--dl:-${d.dl.toFixed(2)}s`)).join('')
     + img(svgOf(P, P.base.slice(1).join('')))
-    + (P.bulbs.flat().length ? img(svgOf(P, `<g filter="url(#bdglow)">${P.bulbs.flat().join('')}</g>`, false, 0, h * .3), 'bd-bulbs', 'height:30%') : '')
+    + P.bulbs.map((b, k) => b.length ? img(svgOf(P, `<g filter="url(#bdglow)">${b.join('')}</g>`, false, 0, h * .3), 'bd-bulbs', `height:30%;--dl:-${(k * .87).toFixed(2)}s`) : '').join('')
     + P.shapes.map(x => { const k = Math.ceil(x.s * 1.6); return `<div class="bd-sh" style="left:${(x.x / w * 100).toFixed(2)}%;top:${(x.y / h * 100).toFixed(2)}%;width:${k * 2}px;height:${k * 2}px;margin:-${k}px 0 0 -${k}px;${x.vars}"><svg viewBox="${-k} ${-k} ${k * 2} ${k * 2}" aria-hidden="true">${x.inner}</svg></div>`; }).join('');
 }

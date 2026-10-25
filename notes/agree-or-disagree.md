@@ -1298,3 +1298,12 @@ also the bar that shows where the default percent is has moved around into place
 (The music bar's slider box stretched to the song name's width, so its line sat past 100% when the name was long. Now
 the box is exactly the slider's width, and the line is on 100% for any song name; the Settings → Audio line was already
 on it. Checked in Chromium and Firefox, phone and computer.)
+
+## Night Show: the rolling lights come back (2026-10-25)
+
+The night show map and the background on the Duck Friends screen should have the lights rolling in a diagnal fashion, where each individual light breathes but they breath in patterns to make larger patterns that mesmerize, like they use to before they were changed
+
+(A speed-up for the background had drawn all the floor's dots as one picture, so the whole floor breathed at once. Now
+each row of dots of one color is its own small picture again, each a little after the last, so the light rolls across
+the floor in diagonal waves like before; the string lights twinkle in three sets instead of all together. Same on the
+title screen and the Night Show map; still smooth (60 frames a second) on a slowed-down phone and in Firefox.)
