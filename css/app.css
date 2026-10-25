@@ -676,7 +676,7 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 .arm-pic > svg.duck { width: 100%; height: auto; display: block; }
 .arm-card { width: min(24rem, 100%); }
 /* the Colors screen: what can be colored, beside the grid of swatches */
-.arm-colors { display: grid; grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr); gap: .6rem; align-items: start; }
+.arm-colors { display: grid; grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr); gap: .6rem; align-items: start; align-content: start; }   /* rows keep their own height on a tall phone page */
 .ctargets .arm-row { font-size: calc(.8rem * var(--ts)); text-transform: none; letter-spacing: 0; padding: .35rem .45rem; }
 .cpick { display: flex; flex-direction: column; gap: .5rem; }
 .colors.grid3 .swatches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .22rem; }   /* the shades fill the panel's width */

@@ -140,6 +140,8 @@ export function matchColsHTML(s) {
     ${s.phase === 'answer' ? `<div class="bb-breathe" style="--h0:${(s.qi * 137 + s.round * 59) % 360}deg" aria-hidden="true"></div>` : ''}`;
 }
 /* over the board: the cloud, and beside it what the match is (voting) or the winner (talking it over) */
+/* knocked: the loser is already off the cloud. Only the final's loser gets bumped off; after any other match the winner
+   simply has the cloud */
 export function matchTopHTML(s, knocked = false) {
   const b = s.bb, m = bbMatch(s), fin = b.r === b.rounds.length - 1, round = b.rounds[b.r];
   const writer = i => b.seeds[i] && writerShown(s, b, i) ? player(s, b.seeds[i].by) : null;
@@ -147,7 +149,7 @@ export function matchTopHTML(s, knocked = false) {
   const real = round.filter(x => x.b !== -1), k = real.indexOf(m) + 1;
   const topic = `<span class="bb-topic" style="font-family:${esc(fontOf(s.players[b.topicBy]))}">${esc(b.topic)}</span>`;
   if (s.phase === 'discuss' && m.w != null) {
-    return `<div class="topover bb-top">${duel({ winner: m.w === m.a ? 0 : 1, knocked })}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
+    return `<div class="topover bb-top">${duel({ winner: m.w === m.a ? 0 : 1, knocked: knocked || !fin })}<div class="question bb-winner">${seedCardHTML(s, b, m.w, { tier: fin ? 'gold' : '' })}
       <div class="bb-win-word">${rainbowHTML(fin ? 'Champion!' : 'Winner!')}</div>${m.coin ? '<p class="small dim">A tie: a coin flip decided it.</p>' : ''}</div></div>`;
   }
   if (s.phase === 'tie' && b.tie) return `<div class="topover bb-top">${duel()}<div class="question bb-what">${topic}

@@ -721,6 +721,15 @@ show on the all-rounds review). The answer, word for word:
 
 that is good
 
+## Computers voting in brackets, word for word (2026-10-25)
+
+the ai in test needs a new thread for brackets to make it vote instead of walking back and forth without voting.  
+
+The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of the championship game
+
+Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
+every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
+
 ## Story Chain: fonts the same size (2026-10-25)
 
 whoever the did the story game needs to make the fonts appear as the same size
