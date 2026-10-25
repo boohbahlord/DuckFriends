@@ -1331,6 +1331,7 @@ html.moving .law-banner.on b { animation: lawpulse 1.6s ease-in-out infinite; }
   .law-banner b { font-size: calc(1.05rem * var(--ts)); } .law-banner span { font-size: calc(.82rem * var(--ts)); }
   .law-def .law-who { top: .5rem; bottom: auto; }   /* (the defense is on top: its name away from the circle) */
   .law-top .lord-say { max-width: 8.6rem; margin-top: .3rem; font-size: calc(1rem * var(--ts)); }   /* the verdict fits under the cloud */
+}
 /* Who is the Quack?: a tile for each duck in the round, in its player's card (see-through over the map), their duck and name */
 .cols.wq-cols { display: block; border: 0; box-shadow: none; background: transparent; overflow: visible; }
 .wq-tiles { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--C), minmax(0, 1fr)); grid-template-rows: repeat(var(--R), minmax(0, 1fr)); gap: .5rem; }
