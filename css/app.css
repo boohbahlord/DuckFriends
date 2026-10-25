@@ -1551,3 +1551,41 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
   .wq-tduck { width: min(30%, 2.1rem); }
   .wq-tname { margin-top: .3rem; font-size: calc(.78rem * var(--ts)); }
 }
+
+/* ---------- Hangout: the piano's keyboard mode (js/hangout/pianokeys.js) ----------
+   A toy piano in a panel: ivory keys and black keys with dark outlines and a little depth; a key glows in the color of
+   its interval from the note before, its compound interval written on it, both fading as the note rings out. The music
+   sheet is cream paper. Beside the keys on a computer or a phone held sideways (side), above them on a phone held
+   upright (top). The caller sizes the root; everything here fills it. */
+.pk { position: relative; width: 100%; height: 100%; display: flex; gap: .6rem; padding: .6rem; background: var(--panel); border: .16rem solid var(--line); border-radius: 1.1rem; box-shadow: 0 .3rem 0 var(--line); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overflow: hidden; }
+.pk[data-lay="side"] { flex-direction: row; }
+.pk[data-lay="top"] { flex-direction: column; padding: .5rem; gap: .5rem; }
+.pk-side { display: flex; gap: .5rem; min-width: 0; min-height: 0; flex: none; }
+.pk[data-lay="side"] .pk-side { flex-direction: column; width: 8.5rem; }
+.pk[data-lay="top"] .pk-side { flex-direction: row; height: clamp(5.5rem, 15vh, 8.5rem); align-items: center; }
+.pk-sheet { position: relative; flex: 1; align-self: stretch; min-width: 0; min-height: 0; overflow: hidden; background: #fbf4e2; border: .13rem solid var(--line); border-radius: .6rem; box-shadow: inset 0 .15rem 0 #0000001a; }
+.pk-sheet-svg { position: absolute; left: 0; bottom: 0; display: block; }
+.pk-close { flex: none; padding: .45rem .9rem; }
+.pk-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: .45rem; }
+.pk-keys { flex: none; display: flex; flex-direction: column-reverse; justify-content: center; gap: .4rem; touch-action: none; }
+.pk-row { position: relative; display: flex; flex: none; height: var(--rowh, 8rem); }
+.pk-w, .pk-b { cursor: pointer; touch-action: none; }
+.pk-w { position: relative; flex: 1; margin: 0 1px; background: linear-gradient(#f7f1e3, #e9dfc9); border: .12rem solid var(--line); border-radius: 0 0 .45rem .45rem; box-shadow: inset 0 -.35rem 0 #00000024, 0 .2rem 0 var(--line); transition: transform .05s, box-shadow .05s; }
+.pk-b { position: absolute; top: 0; z-index: 2; height: 62%; background: linear-gradient(#3c3c4a, #191921); border: .12rem solid var(--line); border-radius: 0 0 .35rem .35rem; box-shadow: inset 0 -.3rem 0 #ffffff17, 0 .15rem 0 var(--line); transition: transform .05s; }
+.pk-w.on { transform: translateY(.14rem); box-shadow: inset 0 -.15rem 0 #00000024, 0 .06rem 0 var(--line); }
+.pk-b.on { transform: translateY(.1rem); }
+.pk-gl { position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; box-shadow: 0 0 1.1rem .15rem var(--g, #fff), inset 0 0 0 .22rem var(--ring, transparent); display: flex; align-items: flex-end; justify-content: center; padding-bottom: .4rem; pointer-events: none; }
+.pk-b .pk-gl { padding-bottom: .3rem; }
+.pk .on > .pk-gl { opacity: 1; transition: opacity .03s; }
+.pk-lab { display: flex; flex-direction: column; align-items: center; line-height: 1.02; color: #1c1c28; font-weight: 700; font-size: min(.85rem, calc(var(--ww, 40px) * .3)); white-space: nowrap; }
+.pk-b .pk-lab { font-size: min(.7rem, calc(var(--ww, 40px) * .25)); }
+.pk-lab i { font-style: normal; font-weight: 600; font-size: .86em; }
+.pk-k { position: absolute; left: 0; right: 0; bottom: .45rem; z-index: 1; text-align: center; font-size: min(calc(.78rem * var(--ts)), calc(var(--ww, 40px) * .34)); font-weight: 600; line-height: 1; color: #1c1c2870; pointer-events: none; }
+.pk-k { transition: opacity .3s; }
+.pk-w.pk-labd .pk-k { opacity: 0; transition: none; }
+.pk-legend { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem .9rem; font-size: calc(.74rem * var(--ts)); color: var(--dim); }
+.pk-lg-i { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+.pk-lg-i b { color: var(--ink); font-weight: 600; }
+.pk-lg-i em { font-style: normal; }
+.pk-legend kbd { font: inherit; font-weight: 600; min-width: 1.3rem; padding: 0 .3rem; text-align: center; color: var(--ink); background: var(--panel2); border: .1rem solid var(--soft); border-bottom-width: .18rem; border-radius: .3rem; }
+.pk-lg-sep { width: .12rem; height: 1rem; border-radius: .1rem; background: var(--soft); }
