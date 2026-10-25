@@ -70,6 +70,17 @@ html.moving .bd-pgb { animation: pgchase 1.6s ease-in-out var(--dl, 0s) infinite
 .bd-bk { opacity: 0; } .bd-bk0 { opacity: 1; }
 html.moving .bd-bk { animation: bkcolor 6s linear var(--dl, 0s) infinite; will-change: opacity; }
 @keyframes bkcolor { 0% { opacity: 0; } 5%, 25% { opacity: 1; } 30%, 100% { opacity: 0; } }
+/* the toy train: parked in the middle when nothing moves; otherwise it rolls in from the left and out to the right */
+.pg-train { position: absolute; left: 0; pointer-events: none; transform: translateX(calc(var(--run) / 2 - 50%)); }
+html.moving .pg-train { animation: pgtrain var(--dur) linear -4s infinite; will-change: transform; }
+@keyframes pgtrain { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(var(--run)); } }
+.pg-body { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.pg-wheel { position: absolute; display: block; height: auto; aspect-ratio: 1; }
+html.moving .pg-wheel { animation: pgwheel var(--wd) linear infinite; }
+@keyframes pgwheel { to { transform: rotate(360deg); } }
+.pg-smoke { position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%; background: radial-gradient(#e9e4ffcc, #e9e4ff00 70%); opacity: 0; }
+html.moving .pg-smoke { animation: pgsmoke 2.4s ease-out var(--dl) infinite; }
+@keyframes pgsmoke { 0% { opacity: .8; transform: translate(0, 0) scale(.5); } 100% { opacity: 0; transform: translate(calc(var(--s) * -2.4), calc(var(--s) * -2.6)) scale(2.2); } }
 html.moving .bd-bulbs { animation: twinkle 2.6s ease-in-out var(--dl, 0s) infinite alternate; will-change: opacity; }
 .bd-sh { position: absolute; pointer-events: none; }
 .bd-sh svg { width: 100%; height: 100%; display: block; overflow: visible; }
@@ -141,6 +152,8 @@ body[data-screen=lobby] #jumps, body[data-screen=game] #jumps { display: none; }
 .front-btns { display: flex; flex-direction: column; gap: 1rem; width: min(18rem, 100%); }
 .front-btns .btn { width: 100%; }
 .front-line { font-size: calc(1.1rem * var(--ts)); color: var(--dim); font-weight: 600; }
+html.dark .front-line { text-shadow: 0 1px 3px #000c, 0 0 12px #000b; }   /* stays readable when the toy train rolls behind it */
+html:not(.dark) .front-line { text-shadow: 0 0 6px #fff, 0 0 12px #fffc; }
 .pit { position: absolute; left: 0; right: 0; bottom: 0; height: var(--pit); z-index: 1; pointer-events: none; }
 .pit > svg { position: absolute; left: 0; width: 100%; }
 .pit .pit-back { top: 0; height: 60%; }

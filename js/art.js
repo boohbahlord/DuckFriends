@@ -3,6 +3,7 @@
    cloud with the title across it and the symbol at its top left), the front page's duck in a ball pit, and the page's
    Twister-like shapes. Nothing here is a file, so everything is sharp at any size and changes with the theme. */
 import { duckSVG, DUCK_DEFAULT } from './duck.js';
+import { playroom } from './playroom.js';
 import { HAT_TOP } from './hats.js';
 import { esc } from './ui.js';
 import { modeOf, modeSymbol } from './modes.js';
@@ -174,7 +175,7 @@ function backdropParts(w, h, dark) {
      fades) a little after the last, so the light rolls across the floor */
   base.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
   const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
-  for (let z = .95, row = 0; z < 9; z *= 1.24, row++) {
+  for (let z = .95, row = 0; z < 16; z *= 1.24, row++) {
     const rx = .42 * K2 / z, ry = rx * .42, y = py(z); if (y > h + ry) continue;
     const groups = cols.map((_, c) => ({ dl: (row * .55 + c * 1.1) % 4.4, y0: Math.max(hz, y - ry * 2), y1: Math.min(h, y + ry * 2), items: [] }));
     for (let X = -60; X <= 60; X++) {
@@ -217,136 +218,41 @@ function backdropParts(w, h, dark) {
 ${cols.map((c, k) => `<radialGradient id="bdg${k}"><stop offset=".35" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
 <filter id="bdglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>`;
-  const room = playroomParts(w, h, dark);
+  const room = playroom(w, h, dark);
   return { w, h, defs: defs.replace('</defs>', room.defs + '</defs>'), base, dots, bulbs, shapes, room };
-}
-/* the back wall of the carnival: a glowing indoor playground on each side (towers, a tube, a slide) wrapped in string
-   lights, piles of wooden letter blocks whose letters change colors one after another, and in the middle a window with a
-   waxing crescent moon and a tree outside. Drawn between the bunting and the floor; u is the wall's height.
-   base: the still part; bulbs: four sets that light up in turn, so the light runs along the strings; letters[g][p]: the
-   letters of block set g in color p (the four colors take turns, each set a little after the last) */
-function playroomParts(w, h, dark) {
-  const r = rnd(91), hz = h * .46, top = h * .2, u = hz - top, cx = w / 2;
-  const PAL = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421', '#9b5de5', '#ff8c2b'], f = v => v.toFixed(1);
-  const base = [], bulbs = [[], [], [], []], letters = [[], [], [], []].map(() => [[], [], [], []]);
-  const glow = dark ? ' filter="url(#pgglow)"' : '';
-  /* the window */
-  const ww = Math.min(u * .78, w * .36), wh = u * .7, wx = cx - ww / 2, wy = hz - u * .14 - wh, ft = ww * .07;
-  const mr = ww * .1, mx = wx + ww * .7, my = wy + wh * .3;
-  let win = `<rect x="${f(wx)}" y="${f(wy)}" width="${f(ww)}" height="${f(wh)}" fill="url(#pgsky)"/>`;
-  for (let i = 0; i < 14; i++) win += `<circle cx="${f(wx + r() * ww)}" cy="${f(wy + r() * wh * .75)}" r="${f(.6 + r() * 1.1)}" fill="#fff" opacity="${(.4 + r() * .5).toFixed(2)}"/>`;
-  win += `<circle cx="${f(mx)}" cy="${f(my)}" r="${f(mr * 2.4)}" fill="url(#pgmoonhalo)"/><path d="M${f(mx)} ${f(my - mr)}A${f(mr)} ${f(mr)} 0 1 1 ${f(mx)} ${f(my + mr)}A${f(mr * .62)} ${f(mr)} 0 1 0 ${f(mx)} ${f(my - mr)}Z" fill="#fff3c4" transform="rotate(-18 ${f(mx)} ${f(my)})"/>`;
-  /* the tree outside: a trunk from the bottom left, a few branches and round clumps of leaves */
-  const tx = wx + ww * .26, ty = wy + wh, tc = dark ? '#0a1420' : '#3b6b4a', tl = dark ? '#10241f' : '#5f9a5c';
-  win += `<path d="M${f(tx - ww * .05)} ${f(ty)}C${f(tx - ww * .03)} ${f(ty - wh * .3)} ${f(tx - ww * .02)} ${f(ty - wh * .45)} ${f(tx + ww * .02)} ${f(ty - wh * .62)}L${f(tx + ww * .06)} ${f(ty - wh * .6)}C${f(tx + ww * .04)} ${f(ty - wh * .4)} ${f(tx + ww * .05)} ${f(ty - wh * .25)} ${f(tx + ww * .07)} ${f(ty)}Z" fill="${tc}"/>`
-    + `<path d="M${f(tx)} ${f(ty - wh * .42)}L${f(tx + ww * .2)} ${f(ty - wh * .55)}M${f(tx)} ${f(ty - wh * .5)}L${f(tx - ww * .16)} ${f(ty - wh * .66)}" stroke="${tc}" stroke-width="${f(ww * .025)}" stroke-linecap="round"/>`;
-  [[0, .7, .2], [-.15, .66, .14], [.17, .6, .15], [.06, .82, .15], [-.08, .86, .12], [.25, .74, .11], [-.2, .52, .11]].forEach(([dx, dy, rr]) => {
-    win += `<circle cx="${f(tx + dx * ww)}" cy="${f(ty - dy * wh)}" r="${f(rr * ww)}" fill="${tl}"/><circle cx="${f(tx + dx * ww + rr * ww * .3)}" cy="${f(ty - dy * wh - rr * ww * .3)}" r="${f(rr * ww * .55)}" fill="${dark ? '#1d3d36' : '#7cb874'}" opacity=".7"/>`;
-  });
-  base.push(`<defs><clipPath id="pgwin"><rect x="${f(wx)}" y="${f(wy)}" width="${f(ww)}" height="${f(wh)}"/></clipPath></defs>`
-    + (dark ? `<path d="M${f(wx)} ${f(wy + wh)}L${f(wx + ww)} ${f(wy + wh)}L${f(wx + ww * 1.6)} ${f(h * .62)}L${f(wx - ww * .35)} ${f(h * .62)}Z" fill="#9fc4ff" opacity=".07"/>` : '')
-    + `<g clip-path="url(#pgwin)">${win}</g>`
-    + `<g fill="none" stroke="${dark ? '#8a5a35' : '#c98a4b'}" stroke-width="${f(ft)}"><rect x="${f(wx)}" y="${f(wy)}" width="${f(ww)}" height="${f(wh)}" rx="${f(ft * .4)}"/><path d="M${f(cx)} ${f(wy)}V${f(wy + wh)}M${f(wx)} ${f(wy + wh * .5)}H${f(wx + ww)}" stroke-width="${f(ft * .55)}"/></g>`
-    + `<rect x="${f(wx - ft * 1.3)}" y="${f(wy + wh + ft * .3)}" width="${f(ww + ft * 2.6)}" height="${f(ft * .9)}" rx="${f(ft * .3)}" fill="${dark ? '#a06b3f' : '#dba06a'}"/>`);
-  /* a playground on each side: side -1 grows from the left edge, 1 from the right */
-  let bk = 0;
-  const bulbAlong = (pts, gap) => {
-    for (let i = 1, acc = 0, n = 0; i < pts.length; i++) {
-      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], d = Math.hypot(x1 - x0, y1 - y0);
-      for (; acc <= d; acc += gap, n++) { const t = acc / d, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-        bk = (bk + 1) % 4; bulbs[bk].push(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(Math.max(1.6, u * .012))}" fill="${['#ffe9a8', '#ff9de2', '#9be8ff', '#b8ff9c'][(bk + n) % 4]}"/>`); }
-      acc -= d;
-    }
-  };
-  /* its size: as tall as the wall under the high ends of the bunting, as wide as the room beside the window and blocks
-     allows; where that is narrow (a phone), only the first tower and its slide */
-  const avail = (w - ww) / 2 - Math.min(u * .15, (w - ww) / 2 / 5.2) * 4.4, compact = avail < hz * .3 * 1.25;
-  const sc = Math.max(u * .6, Math.min(hz - h * .11, compact ? (w - ww) / 2 / .8 : avail / 1.62));
-  const ground = side => {
-    const u = sc, X = dx => side < 0 ? dx * u : w - dx * u, P = (dx, dy) => [X(dx), hz - dy * u], pp = (...a) => a.map(([dx, dy]) => P(dx, dy).map(f).join(' ')).join('L');
-    const [cPost, cDeck, cRoof, cRoof2, cTube, cSlide] = side < 0 ? [PAL[0], PAL[1], PAL[2], PAL[0], PAL[3], PAL[2]] : [PAL[1], PAL[4], PAL[3], PAL[1], PAL[4], PAL[0]];
-    const sh = (d, c, extra = '') => `<path d="${d}" fill="${c}" fill-opacity="${dark ? .5 : .7}" stroke="${c}" stroke-width="${f(Math.max(1.5, u * .012))}" stroke-linejoin="round"${extra}/>`;
-    const box = (x0, y0, x1, y1) => `M${pp([x0, y0], [x1, y0], [x1, y1], [x0, y1])}Z`;
-    let g = '';
-    /* tower A: a climbing wall under the deck, posts, rails and a striped roof */
-    g += sh(box(.1, 0, .36, .4), cDeck);
-    for (let i = 0; i < 7; i++) { const [hx, hy] = P(.14 + r() * .18, .05 + r() * .3); g += `<circle cx="${f(hx)}" cy="${f(hy)}" r="${f(u * .018)}" fill="${PAL[(i + (side > 0 ? 2 : 0)) % 6]}"/>`; }
-    g += sh(box(.07, 0, .1, .78), cPost) + sh(box(.36, 0, .39, .78), cPost) + sh(box(.04, .4, .42, .45), cDeck);
-    g += `<path d="M${pp([.07, .58], [.39, .58])}M${pp([.07, .66], [.39, .66])}" stroke="${cPost}" stroke-width="${f(u * .014)}" opacity=".8"/>`;
-    g += sh(`M${pp([.02, .76], [.44, .76], [.23, .96])}Z`, cRoof) + sh(`M${pp([.13, .76], [.23, .96], [.33, .76])}Z`, cRoof2);
-    if (compact) {
-      const sl = [[.39, .44], [.5, .36], [.62, .14], [.76, .03]], sl2 = sl.map(([a, b]) => [a, b + .08]).reverse();
-      g += sh(`M${pp(...sl)}L${pp(...sl2)}Z`, cSlide);
-      bulbAlong([P(.02, .76), P(.23, .96), P(.44, .76)], u * .055);
-      bulbAlong(sl2.map(([a, b]) => P(a, b + .02)), u * .055);
-      for (const px of [.085, .375]) bulbAlong(Array.from({ length: 7 }, (_, i) => P(px + (i % 2 ? .025 : -.025), i * .11)), u * .05);
-      return g;
-    }
-    /* the tube across to tower B, with round windows */
-    g += sh(`M${pp([.39, .45], [.75, .45], [.75, .61], [.39, .61])}Z`, cTube);
-    for (let i = 0; i < 3; i++) { const [ox, oy] = P(.47 + i * .1, .53); g += `<circle cx="${f(ox)}" cy="${f(oy)}" r="${f(u * .035)}" fill="${dark ? '#0d0b22' : '#fff'}" opacity=".7" stroke="${cTube}" stroke-width="${f(u * .008)}"/>`; }
-    /* tower B: posts, a deck, a round roof, and the slide down toward the window */
-    g += sh(box(.75, 0, .78, .74), cPost) + sh(box(1.02, 0, 1.05, .74), cPost) + sh(box(.72, .4, 1.08, .45), cDeck);
-    const [dcx, dcy] = P(.9, .72); g += sh(`M${pp([.7, .72])}A${f(u * .2)} ${f(u * .17)} 0 0 ${side < 0 ? 1 : 0} ${P(1.1, .72).map(f).join(' ')}Z`, cRoof);
-    g += `<circle cx="${f(dcx)}" cy="${f(dcy - u * .17)}" r="${f(u * .025)}" fill="${cRoof2}"/>`;
-    const sl = [[1.05, .44], [1.22, .36], [1.4, .14], [1.58, .03]], sl2 = sl.map(([a, b]) => [a, b + .08]).reverse();
-    g += sh(`M${pp(...sl)}L${pp(...sl2)}Z`, cSlide);
-    /* the lights wrapped around it all */
-    bulbAlong([P(.02, .76), P(.23, .96), P(.44, .76)], u * .055);
-    bulbAlong([P(.39, .62), P(.75, .62)], u * .055);
-    bulbAlong([P(.7, .72), P(.76, .84), P(.9, .89), P(1.04, .84), P(1.1, .72)], u * .055);
-    bulbAlong(sl2.map(([a, b]) => P(a, b + .02)), u * .055);
-    for (const px of [.085, .375, .765, 1.035]) bulbAlong(Array.from({ length: 7 }, (_, i) => P(px + (i % 2 ? .025 : -.025), i * .11)), u * .05);
-    return g;
-  };
-  /* the wall glows in the playground's colors */
-  base.push(dark ? `<ellipse cx="${f(sc * .6)}" cy="${f(hz - sc * .45)}" rx="${f(sc * 1.1)}" ry="${f(sc * .6)}" fill="url(#pgwash0)"/><ellipse cx="${f(w - sc * .6)}" cy="${f(hz - sc * .45)}" rx="${f(sc * 1.1)}" ry="${f(sc * .6)}" fill="url(#pgwash1)"/>` : '');
-  base.push(`<g${glow}>${ground(-1)}${ground(1)}</g>`);
-  /* the letter blocks: a pile on each side of the window */
-  const b = Math.min(u * .15, (w - ww) / 2 / 5.2), td = b * .2;
-  const wood = dark ? ['#a8743f', '#c99257', '#7a5129', '#8d6034'] : ['#e0a865', '#f2c58a', '#b77d42', '#c98d52'];
-  const piles = [{ x1: wx - ft * 1.6 - b * .3, rows: ['DUCK', 'FUN', 'GO'] }, { x0: wx + ww + ft * 1.6 + b * .3, rows: ['ABC', 'XY', 'Z'] }];
-  let blocks = '', col = 0;
-  piles.forEach((pl, k) => pl.rows.forEach((word, row) => {
-    const n = word.length, x0 = pl.x0 !== undefined ? pl.x0 + row * b * .5 : pl.x1 - (piles[k].rows[0].length) * b + row * b * .5 - td;
-    [...word].forEach((ch, i) => {
-      const x = x0 + i * b + (r() - .5) * b * .08, y = hz + b * .25 - (row + 1) * b, rot = row ? (r() - .5) * 8 : (r() - .5) * 3;
-      const T = ` transform="rotate(${rot.toFixed(1)} ${f(x + b / 2)} ${f(y + b)})"`;
-      blocks += `<g${T}><path d="M${f(x)} ${f(y)}L${f(x + td)} ${f(y - td)}L${f(x + b + td)} ${f(y - td)}L${f(x + b)} ${f(y)}Z" fill="${wood[1]}"/><path d="M${f(x + b)} ${f(y)}L${f(x + b + td)} ${f(y - td)}L${f(x + b + td)} ${f(y + b - td)}L${f(x + b)} ${f(y + b)}Z" fill="${wood[2]}"/>`
-        + `<rect x="${f(x)}" y="${f(y)}" width="${f(b)}" height="${f(b)}" fill="${wood[0]}"/><path d="M${f(x + b * .1)} ${f(y + b * .3)}h${f(b * .8)}M${f(x + b * .05)} ${f(y + b * .72)}h${f(b * .7)}" stroke="${wood[3]}" stroke-width="${f(b * .03)}" opacity=".6"/></g>`;
-      const g = (col + row) % 4, c0 = (col * 5 + row * 2) % 6;
-      for (let p = 0; p < 4; p++) {
-        const c = PAL[(c0 + p) % 6];
-        letters[g][p].push(`<g${T}><rect x="${f(x + b * .08)}" y="${f(y + b * .08)}" width="${f(b * .84)}" height="${f(b * .84)}" rx="${f(b * .06)}" fill="none" stroke="${c}" stroke-width="${f(b * .07)}"/><text x="${f(x + b / 2)}" y="${f(y + b * .76)}" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="${f(b * .66)}" text-anchor="middle" fill="${c}">${ch}</text></g>`);
-      }
-      col++;
-    });
-  }));
-  base.push(blocks);
-  const ltop = hz + b * .25 - 3 * b - td * 2 - b * .25, lbot = hz + b * .5;
-  const defs = `<linearGradient id="pgsky" x1="0" y1="0" x2="0" y2="1">${dark ? '<stop offset="0" stop-color="#0a1238"/><stop offset="1" stop-color="#2a2f6e"/>' : '<stop offset="0" stop-color="#5b74c9"/><stop offset="1" stop-color="#f0a7c8"/>'}</linearGradient>
-<radialGradient id="pgwash0"><stop offset="0" stop-color="#ff5fa2" stop-opacity=".16"/><stop offset="1" stop-color="#ff5fa2" stop-opacity="0"/></radialGradient>
-<radialGradient id="pgwash1"><stop offset="0" stop-color="#4fb8ff" stop-opacity=".16"/><stop offset="1" stop-color="#4fb8ff" stop-opacity="0"/></radialGradient>
-<radialGradient id="pgmoonhalo"><stop offset=".3" stop-color="#fff3c4" stop-opacity=".35"/><stop offset="1" stop-color="#fff3c4" stop-opacity="0"/></radialGradient>
-<filter id="pgglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${f(Math.max(1.5, u * .012))}" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
-  return { defs, base, bulbs, letters, ltop, lbot, btop: Math.min(top, hz - sc) - sc * .06, bbot: hz + u * .04 };
 }
 /* a drawing of some parts; y0, y1: only that band of the page (the fading layers stay small: the floor, the lights) */
 const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${y0.toFixed(1)} ${P.w} ${(y1 - y0).toFixed(1)}" width="${P.w}" height="${(y1 - y0).toFixed(0)}" preserveAspectRatio="none" aria-hidden="true">${P.defs}${sky ? `<rect width="${P.w}" height="${P.h}" fill="url(#bdsky)"/>` : ''}${body}</svg>`;
 /* the whole backdrop as one still drawing */
 export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark);
-  return svgOf(P, P.base[0] + `<g opacity=".5">${P.dots.map(d => d.items.join('')).join('')}</g>` + P.room.base.join('') + P.room.bulbs.flat().join('') + P.room.letters.map(g => g[0].join('')).join('') + P.base.slice(1).join('') + P.bulbs.flat().join('')
+  return svgOf(P, P.base[0] + `<g opacity=".5">${P.dots.map(d => d.items.join('')).join('')}</g>` + P.room.still + P.room.bulbs.flat().join('') + P.room.letters.map(g => g[0].join('')).join('') + P.base.slice(1).join('') + P.bulbs.flat().join('')
     + P.shapes.map(x => `<g transform="translate(${x.x.toFixed(0)} ${x.y.toFixed(0)})">${x.inner}</g>`).join(''), true).replace(' xmlns="http://www.w3.org/2000/svg"', '');
+}
+/* the playroom's layers: the still part, the bulbs, the letters and the train (see playroom.js) */
+const pct = (y, h) => (y / h * 100).toFixed(3) + '%';
+function roomHTML(P, img, dark) {
+  const R = P.room, h = P.h, band = (y0, y1) => `top:${pct(y0, h)};height:${pct(y1 - y0, h)}`, T = R.train;
+  return img(svgOf(P, R.still, false, R.stillTop, R.stillBottom), '', band(R.stillTop, R.stillBottom))
+    + R.bulbs.map((b, k) => b.length ? img(svgOf(P, b.join(''), false, R.bulbTop, R.bulbBottom), 'bd-pgb', `${band(R.bulbTop, R.bulbBottom)};--dl:-${(k * .4).toFixed(1)}s`) : '').join('')
+    + R.letters.map((g, k) => g.map((L, c) => img(svgOf(P, `<g${dark ? ' filter="url(#pgglow)"' : ''}>${L.join('')}</g>`, false, R.letterTop, R.letterBottom), `bd-bk bd-bk${c}`, `${band(R.letterTop, R.letterBottom)};--dl:-${(c * 1.5 + k * .45).toFixed(2)}s`)).join('')).join('')
+    + trainHTML(T, P.w, h);
+}
+/* the train runs across in 60% of its 26 s and waits off the page for the rest; its wheels turn at its speed */
+function trainHTML(T, w, h) {
+  const dur = 26, speed = (w + T.W) / (dur * .6), src = svg => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return `<div class="pg-train" style="top:${pct(T.top, h)};width:${T.W.toFixed(0)}px;height:${T.H.toFixed(0)}px;--run:${w}px;--dur:${dur}s">`
+    + `<img class="pg-body" alt="" draggable="false" src="${src(T.svg)}">`
+    + T.wheels.map(q => `<img class="pg-wheel" alt="" draggable="false" style="left:${(q.x - q.r).toFixed(1)}px;top:${(q.y - q.r).toFixed(1)}px;width:${(q.r * 2).toFixed(1)}px;--wd:${(Math.PI * 2 * q.r / speed).toFixed(2)}s" src="${src(q.svg)}">`).join('')
+    + [0, 1, 2].map(k => `<span class="pg-smoke" style="left:${T.smoke.x.toFixed(0)}px;top:${T.smoke.y.toFixed(0)}px;--s:${(T.ut * .5).toFixed(0)}px;--dl:-${(k * .8).toFixed(1)}s"></span>`).join('')
+    + '</div>';
 }
 /* the backdrop as layers that animate cheaply (see above) */
 export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark), img = (svg, cls = '', style = '') => `<img class="bd-layer${cls ? ' ' + cls : ''}" alt="" draggable="false"${style ? ` style="${style}"` : ''} src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">`;
   return img(svgOf(P, P.base[0], true))
     + P.dots.map(d => img(svgOf(P, d.items.join(''), false, d.y0, d.y1), 'bd-dots', `top:${(d.y0 / h * 100).toFixed(3)}%;height:${((d.y1 - d.y0) / h * 100).toFixed(3)}%;--dl:-${d.dl.toFixed(2)}s`)).join('')
-    + img(svgOf(P, P.room.base.join(''), false, P.room.btop, h * .62), '', `top:${(P.room.btop / h * 100).toFixed(3)}%;height:${((h * .62 - P.room.btop) / h * 100).toFixed(3)}%`)
-    + P.room.bulbs.map((b, k) => img(svgOf(P, `<g filter="url(#pgglow)">${b.join('')}</g>`, false, P.room.btop, P.room.bbot), 'bd-pgb', `top:${(P.room.btop / h * 100).toFixed(3)}%;height:${((P.room.bbot - P.room.btop) / h * 100).toFixed(3)}%;--dl:-${(k * .4).toFixed(1)}s`)).join('')
-    + P.room.letters.map((g, k) => g.map((L, c) => img(svgOf(P, `<g${dark ? ' filter="url(#pgglow)"' : ''}>${L.join('')}</g>`, false, P.room.ltop, P.room.lbot), `bd-bk bd-bk${c}`, `top:${(P.room.ltop / h * 100).toFixed(3)}%;height:${((P.room.lbot - P.room.ltop) / h * 100).toFixed(3)}%;--dl:-${(c * 1.5 + k * .45).toFixed(2)}s`)).join('')).join('')
+    + roomHTML(P, img, dark)
     + img(svgOf(P, P.base.slice(1).join('')))
     + P.bulbs.map((b, k) => b.length ? img(svgOf(P, `<g filter="url(#bdglow)">${b.join('')}</g>`, false, 0, h * .3), 'bd-bulbs', `height:30%;--dl:-${(k * .87).toFixed(2)}s`) : '').join('')
     + P.shapes.map(x => { const k = Math.ceil(x.s * 1.6); return `<div class="bd-sh" style="left:${(x.x / w * 100).toFixed(2)}%;top:${(x.y / h * 100).toFixed(2)}%;width:${k * 2}px;height:${k * 2}px;margin:-${k}px 0 0 -${k}px;${x.vars}"><svg viewBox="${-k} ${-k} ${k * 2} ${k * 2}" aria-hidden="true">${x.inner}</svg></div>`; }).join('');

@@ -1320,8 +1320,17 @@ title screen and the Night Show map; still smooth (60 frames a second) on a slow
 
 The night show needs the background to have something feeling up it's empty space. How about a very colorful indoor playground that glows and wrapped in lights with wooden block letters stacked and changing colors, colors that glow in more patterns, and there is a window casting a waxing crescent with a tree seen from outside
 
-(Built, waiting for the owner's look: on the back wall, between the bunting and the floor, a glowing playground on each
-side (two towers, a tube with round windows, a slide, a climbing wall) wrapped in string lights whose light runs along
-them; two piles of wooden letter blocks (DUCK, FUN, GO and ABC, XY, Z) whose letters take four colors in turn, each
-block a little after the next; and a window in the middle with a waxing crescent moon, stars and a tree outside, its
-moonlight falling on the floor. A phone gets one tower and slide on each side. Same on the title screen.)
+(First try: a neon playground, letter blocks and a window drawn flat on the back wall. The owner, word for word:
+"everything added to the night show needs to be made better, more detailed and better blended into the page, it feels
+very post hawk and shoved in, and the playground just kinda floats... ewww" / "How about we make a detailed toy train run
+into the screen from the left and go thru into the right while glowing and carrying ducks on it" / "we can keep the window
+and moon" / "everything must look like they belong" / "maybe the lights on the floor IS the floor" / "and the window and
+everything can be adjusted to show as such".
+
+Second try, waiting for the owner's look: the light-up dots are the room's floor and reach the wall; a baseboard where
+the wall meets it, and the wall glows in the floor's colors near the bottom. The playgrounds (striped tent roofs, decks,
+climbing walls, nets, a tube, slides, all wrapped in running string lights) and the letter blocks stand on the floor in
+the same perspective as its dots, lit from below by it, with soft shadows and faint reflections in the shiny floor; the
+window and moon stay, reflected in the floor too. A track crosses the floor, and a toy train (an engine with a duck
+driving, three open cars with two ducks each, glowing lights, a headlight, turning wheels, smoke) rolls in from the
+left and out to the right about every 26 seconds. Code: js/playroom.js.)
