@@ -848,7 +848,11 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 /* rooms: a game in progress, and the hide-private switch */
 .rr-phase.live { color: var(--green); font-weight: 700; }
 .online-h { display: flex; align-items: center; justify-content: space-between; gap: .6rem; flex-wrap: wrap; }
-.pcard-net { position: absolute; right: 2.7rem; top: 50%; transform: translateY(-50%); font-size: calc(.72rem * var(--ts)); padding: .1rem .4rem; border-radius: .5rem; background: #0007; color: #fff; }
+/* the ping: a small pill beside the Host and You tags, so it never covers them */
+.pcard-net { font-size: calc(.62rem * var(--ts)); padding: .05rem .35rem; border-radius: .5rem; background: #0007; color: #fff; }
+.pcard-net .net { gap: .25rem; }
+.pcard-net .bars { height: .7rem; }
+.pcard-net .bars i { width: 3px; }
 
 /* chat bubbles over the ducks: see-through, fading */
 .gduck-say { position: absolute; left: 50%; bottom: calc(var(--sz) * 1.08); transform: translate(-50%, .3rem); width: max-content; max-width: min(14rem, 60vw);

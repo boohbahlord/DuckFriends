@@ -64,10 +64,10 @@ export function cardBackground(card = {}) {
   return `background:${pat ? `${pat}, ` : ''}${card.color || '#2fa4ff'}`;
 }
 
-/* p = a player; o = { host, me, ready, size, extra } */
+/* p = a player; o = { host, me, ready, size, net, extra } (net: the connection, shown small beside the tags) */
 export function cardHTML(p, o = {}) {
   const tags = [o.host ? '<span class="tag host" title="Host">Host</span>' : '', p.bot ? '<span class="tag bot">Computer</span>' : '',
-    o.me ? '<span class="tag me">You</span>' : ''].join('');
+    o.me ? '<span class="tag me">You</span>' : '', o.net ? `<span class="pcard-net">${o.net}</span>` : ''].join('');
   return `<div class="pcard${o.me ? ' mine' : ''}${o.ready ? ' ready' : ''}" data-pid="${esc(p.id)}" style="${esc(cardBackground(p.card))}" tabindex="0">
   <div class="pcard-duck">${duckSVG(p.duck, { size: o.size || 58, title: p.name })}</div>
   <div class="pcard-name"><span class="pcard-label">${nameHTML(p.name, p.nameStyle)}</span>${tags}</div>
