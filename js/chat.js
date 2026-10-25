@@ -19,6 +19,7 @@ import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
 import { boardPhases, denied, canOpen, gameMuted, slowMs } from './rules.js';
 import { shellRun, shellSuggest, shellHistory } from './shell.js';
+import { paint, isHelpName } from './helppages.js';
 import { nameHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from './duck.js';
 import { HATS, hatById } from './hats.js';
@@ -216,10 +217,10 @@ function chatSuggest(line, s, me) {
   if (line.startsWith('\\') && !line.includes(' ')) return CHAT_CMDS.filter(c => c.startsWith(line) && c !== line).map(c => ({ label: c, apply: () => c }));
   return [];
 }
-const HELP = ['@name: pings a player (a soft sound and a "!"); @everyone pings everyone', '\\@name message: a private message',
+const HELP = ['The chat\'s help (HelpChat in the command line tells more):', '@name: pings a player (a soft sound and a "!"); @everyone pings everyone', '\\@name message: a private message',
   '\\mute bubble ping text on @name @name2: mute what you list (all = everything; off undoes it) until you leave the room',
   '\\permmute … the same, kept on this device (it asks first; -f skips the question)', '\\show mute · \\show permmute · \\show players',
-  '\\togglesuggest: suggestions in the chat on or off', 'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
+  '\\togglesuggest: suggestions in the chat on or off', 'clear (or \\clear): clears the chat on your screen', 'Shift+T or the symbol at the bottom left: the command line', 'Tab: complete; ↑ ↓: choose'];
 
 /* ---------- mutes: what you hide from a player (their text, their pings, their bubbles over the board) ----------
    For this room only (gone when you leave it), or for good on this device (by their Google account if they're signed
@@ -306,7 +307,7 @@ function shellCtx() {
 }
 
 /* ---------- the widget ---------- */
-const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '', running: false, cancel: false, live: [] };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages
+const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '', running: false, cancel: false, live: [], chatFrom: 0 };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages; chatFrom: clear hides the chat before it, on your screen
 const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, '\\-')}|everyone)(?![\\p{L}\\p{N}_-])`, 'iu');
 
 /* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
@@ -331,10 +332,10 @@ export function chatWidget() {
 
   const drawLog = () => {
     const r = room(), s = r && r.state;
-    if (ui.mode === 'cmd') { setHTML(log, [...ui.cmd, ...ui.live].map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help (man for more).</p>'); log.scrollTop = 1e9; return; }
+    if (ui.mode === 'cmd') { setHTML(log, [...ui.cmd, ...ui.live].map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${paint(l)}</p>`).join('') || '<p class="dim small">Type help and press Enter. New to this? HelpCommandLine.</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
-    const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes].sort((a, b) => a.t - b.t);
+    const lines = [...s.log.filter(m => m.t >= ui.chatFrom).filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes.filter(m => m.t >= ui.chatFrom)].sort((a, b) => a.t - b.t);
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
       if (m.sys) return `<p class="sys${m.small ? ' small' : ''}">${esc(m.text)}</p>`;
@@ -423,10 +424,7 @@ export function chatWidget() {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePanel(); }
   });
   log.addEventListener('click', e => { const b = e.target.closest('.fold'); if (!b) return; const n = +b.dataset.n; if (ui.long.has(n)) ui.long.delete(n); else ui.long.add(n); drawLog(); });
-  panel.querySelector('form').onsubmit = async e => {
-    e.preventDefault();
-    const text = inp.value.trim(); inp.value = ''; sel = 0;
-    if (!text) { closePanel(); return; }
+  const submit = async text => {
     if (ui.mode === 'cmd') {
       if (ui.running) { ui.cmd.push('$ ' + text, '✗ A command is still running (Ctrl+C stops it).'); drawLog(); return; }
       ui.cmd.push('$ ' + text); back = -1; search = null;
@@ -439,7 +437,11 @@ export function chatWidget() {
       drawLog(); refresh(); return;
     }
     const r = room(), note = (...t) => { ui.notes.push(...t.map(text => ({ t: Date.now(), mine: true, text }))); drawLog(); refresh(); };
-    if (/^\\help\b/i.test(text)) return note(...HELP);
+    /* the command line's words, typed in the chat: clear clears the chat on your screen, help is the chat's help, and a
+       Help page opens in the command line */
+    if (/^\\?clear$/i.test(text)) { ui.chatFrom = Date.now(); return note('Chat cleared on your screen (everyone else still sees theirs).'); }
+    if (/^\\?help$/i.test(text) || /^\\help\b/i.test(text)) return note(...HELP);
+    if (isHelpName(text.split(/\s+/)[0])) { setMode('cmd'); return submit(text); }
     const said = await chatCommand(text, r);
     if (said !== null) { drawLog(); return note(said); }
     if (!r) return note('Chat works in a room.');
@@ -455,6 +457,12 @@ export function chatWidget() {
     } else if (/^\\@/.test(text)) return note('A private message: \\@name, a space, then the message.');
     else r.send({ t: 'chat', text });
     refresh();
+  };
+  panel.querySelector('form').onsubmit = e => {
+    e.preventDefault();
+    const text = inp.value.trim(); inp.value = ''; sel = 0;
+    if (!text) { closePanel(); return; }
+    return submit(text);
   };
 
   /* new messages: pings for @you; a "!" on the closed button */

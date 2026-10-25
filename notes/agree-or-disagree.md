@@ -812,3 +812,36 @@ This is for a game about ducks btw.
 when u put glow in, use dorian
 
 like i mean that glow goes in the game as dorian
+
+## The help command and clear, word for word (2026-10-25)
+
+the clear command isnt working and the help command is not a help command
+
+HELP COMMAND SHOULD FUCKING HELP! 
+
+When using help command, then it should show different things it can help you with. THEN every example should show different ways of using it. 
+
+Different commands should be highlighted differently to imply different kinds or types of commands.
+
+AGAIN, THE HELP LIST GIVES MORE COMMANDS FOR DIFFERENT TYPE OF HELP COMMANDS, such as 
+HelpChat
+HelpFile
+HelpSilly
+HelpBasics
+HelpGroups
+HelpSudo
+HelpOperators
+HelpCommandLine (for people who dont understand command lines)
+HelpDirectories
+HelpBash
+HelpOptions
+HelpMan
+HelpHelp
+HelpDescription (gives descriptions to every kind of help)
+HelpGame (shows how the command line can be used with sudo perms to manipulate the game meaningfully and purposely, has it's own commnads, such as HelpGame-How or HelpGame-Help)
+
+There needs to be sentences and descriptions, basic flags for practicality, how to, and examples. There can be a made stupid vers too at the top of every help
+
+(Decisions: every Help page starts with a "dumb version", then what it is, how to, flags and examples, each example a
+different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
+HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
