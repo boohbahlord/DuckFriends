@@ -26,6 +26,8 @@
      speed(pos, ctx)             → how fast my duck walks at pos { x, y, z } (world px): 1 as usual (the water: slower)
      after(me, ev, now, ctx)     after each step of my duck (me: x, y 0 … 1, z, j …; ev: world.step's events; set
                                  ev.force to send the move at once): the trampoline bounces it again
+     view(ctx)                   → px to move the camera down, so my duck shows that much higher (the piano's keys
+                                   cover the bottom of the screen)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s)              → false turns a prop's light off
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, board, propEl(id), at(id) → where a duck

@@ -5,3 +5,4 @@ import './stage.js';
 import './seats.js';
 import './soccer.js';
 import './pool.js';
+import './piano.js';

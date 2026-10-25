@@ -1655,3 +1655,19 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-dent svg { display: block; overflow: visible; }
 .gduck.hang-flail .gduck-body { transform-origin: 50% 58%; animation: hang-flail .34s ease-in-out infinite alternate; }   /* (html.still stops it) */
 @keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }
+
+/* ---------- Hangout: the piano in the cabin (hangout/piano.js) ---------- */
+.pia-panel, .game > .pia-panel { position: fixed; z-index: 21; }   /* keyboard mode: over the bottom of the board (a phone held upright: the lower part of the screen, over #jumps) */
+.pia-panel .pk { box-shadow: 0 .3rem 0 var(--line), 0 .6rem 1.6rem #0008; }
+.pia-big > svg { position: absolute; left: 0; top: 0; }
+.pia-big .pia-k { transition: fill 1.2s ease-out; stroke: #1c1c28; stroke-width: 1.6; }
+.pia-big .pia-w { fill: #f3efe4; }
+.pia-big .pia-b { fill: #23222b; }
+.pia-big .pia-k.on { fill: var(--g, #fff); transition: none; }
+.pia-big .pia-h { fill: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; }
+.pia-big .pia-h.on { opacity: .55; transition: none; }
+.pia-floor .hg-key > rect:first-child { transition: fill 1.2s ease-out; }
+.pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
+.pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
+.pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
+.pia-sheet .pk-sheet { position: absolute; transform-origin: 0 0; background: #f6ead0; border: 0; border-radius: 4px; box-shadow: none; }
