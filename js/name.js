@@ -38,6 +38,7 @@ export function fontScale(id) {
   const f = FONTS.find(x => x.id === id) || FONTS[0];
   if (f === FONTS[0]) return 1;
   if (typeof document === 'undefined' || !document.fonts) return f.k || 1;
+  if (document.documentElement.classList.contains('lite')) return 1;   // Data saving draws every font in the device's own
   if (sized[f.id]) return sized[f.id];
   const loaded = [FONTS[0], f].every(x => document.fonts.check(`16px ${x.css}`, SAMPLE));
   if (!loaded) { document.fonts.load(`16px ${f.css}`, SAMPLE).catch(() => {}); return f.k || 1; }
