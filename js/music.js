@@ -1689,9 +1689,11 @@ export const music = (function(){
     const t=clockNow(),e=wantOf(S,t);
     if(same(e,CUR)&&ANC&&Math.abs((ac.currentTime-ANC.ac)-(t-ANC.t)/1000)<.3)return;   // playing, and still in step with everyone
     if(CUR)drop(t<end(CUR));
-    CUR=e;if(!e)return;
+    if(!e)return;
     // dt: seconds until it starts (below 0: it began that long ago), less the time the sound takes to reach the speakers
-    const dt=(e.at-t)/1000-Math.min(.5,ac.outputLatency||ac.baseLatency||0),r=REN.get(key(e));ANC={ac:ac.currentTime,t};
+    const dt=(e.at-t)/1000-Math.min(.5,ac.outputLatency||ac.baseLatency||0),r=REN.get(key(e));
+    if(dt>1&&!(r&&r.buf))return;   // (in the quiet before it: its recording may still be on the way)
+    CUR=e;ANC={ac:ac.currentTime,t};
     if(r&&r.buf)playBuf(r,ac.currentTime+Math.max(.1,dt),Math.max(0,-dt-.1));
     else{for(const [k,x] of REN)if(x.n===e.n&&!x.buf){x.cancel();REN.delete(k)}   // (a song can't be written out while it plays live: they'd share its parts)
       load(idx(e.n),true,e.seed);seek(ac.currentTime+dt);LIVE=step<total}}
@@ -1755,5 +1757,5 @@ export const music = (function(){
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
   function nowPlaying(){const S=list();if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
-  return {sync,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
+  return {sync,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();
