@@ -1013,4 +1013,11 @@ back (or leaving the room and coming back) picks the same song up where it was. 
 and on a computer each next song is written out ahead while the one before plays, then played from that recording,
 which takes almost no work. The first song is written out as soon as the page opens, and the lobby waits for it (15
 seconds at most); a song not ready in time plays live. Spring in a Box is being
-reworked with straight time and more Hollow Knight; not in the game until the owner says so.
+reworked with straight time and more Hollow Knight.
+
+Asked to listen to the new Spring in a Box (straight time, a bowed voice over a rippling harp, felt piano answers, a
+music box spring, a choir at the "omg"):
+
+yeah you can put that in the game
+
+(Done: Spring in a Box is the fifth song.)

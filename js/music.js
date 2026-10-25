@@ -215,6 +215,108 @@ export const music = (function(){
         tune.forEach((v,k)=>{on(p);GL={r:1,fall:Math.pow(2,-(10+25*k/6)/1200),ft:.15,fd:1};voice("softbox",hz(C.r+24+v),t+k*E8,E8*.8,.05-.008*(a-58),1.2);GL=null})}
       // a far bell, a little out of tune
       if([3,7,29,55].includes(a)){const st=t+B*.4,side=h01(a+7)>.5?-.7:.7;on(panTo(side,side*.6,st,B,1.4,.5));voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.018,1.2)}}};
+  /* Spring in a Box: a jack-in-the-box of joy, a happy Hollow Knight. A music box opens with the spring (a leap up and a
+     step back down). A harp ripples from ear to ear while a bowed voice sings the tune, Greenpath's harp and strings in
+     sunlight; the felt piano answers it. The felt piano takes the tune as it flowers, and dances on plucked strings and a
+     soft kit; it all quiets down to the music box; then the bowed voice brings it back, and it lifts a whole step into G,
+     where the choir sings with it (the "omg"); and the box closes in peace. F major, then G major, in straight time. */
+  const SPR_SEC=[[0,"open"],[4,"flow"],[12,"flower"],[16,"dance"],[24,"quiet"],[28,"back"],[32,"omg"],[40,"peace"]];
+  const sprSec=a=>{let s="open";for(const [k,n] of SPR_SEC)if(a>=k)s=n;return s};
+  const sprLead=a=>{const s=sprSec(a);return s==="open"||s==="quiet"||s==="peace"?"softbox":s==="flower"||s==="dance"?"felt":"bow"};
+  const SPRING={name:"Spring in a Box",bpm:88,trim:.7,bar:8,lead:"bow",leadV:.26,rel:.45,leg:1,lp:4200,echo:.14,fb:.22,dly:.68,
+    dyn:.85,contrast:.8,hum:.008,rv:.36,ds:.14,rev:[5,.5],wow:[.0008,.25],
+    chords:chords("F Bb/F F C F Dm7 Bbmaj7 C F/A Bb Gm7 C7 Fmaj7 Am7 Bbmaj7 C F C/E Dm7 Bb F C Bb C7 Fmaj7 Dm7 Bbmaj7 Bbm F Dm7 Bb D7 G Em7 Cmaj7 D G/B C Am7 D7 G Cmaj7 Em7 D G"),
+    mel:mel(`C5:1 F5:1 A5:1 C6:3 Bb5:1 A5:1
+        D6:3 C6:1 Bb5:2 F5:2
+        C5:1 F5:1 A5:1 C6:3 D6:1 C6:1
+        G5:4 r:4
+        C4:1 F4:1 A4:1 C5:3 Bb4:1 A4:1
+        A4:3 G4:1 F4:2 D4:2
+        D4:1 F4:1 A4:1 D5:3 C5:1 Bb4:1
+        C5:4 G4:2 E4:2
+        C4:1 F4:1 A4:1 C5:3 D5:1 E5:1
+        F5:3 D5:1 Bb4:2 C5:1 D5:1
+        C5:2 Bb4:1 A4:1 G4:2 F4:1 G4:1
+        E4:2 G4:2 Bb4:2 C5:2
+        A5:4 G5:1 F5:1 E5:2
+        C6:3 A5:1 G5:2 E5:2
+        D6:3 C6:1 Bb5:1 A5:1 F5:2
+        G5:6 r:2
+        F5:1 A5:1 C6:1 A5:1 F5:1 A5:1 C6:2
+        E5:1 G5:1 C6:1 G5:1 E5:1 G5:1 C6:2
+        D5:1 F5:1 A5:1 F5:1 C6:2 A5:2
+        Bb5:2 A5:1 G5:1 F5:2 D5:2
+        C5:1 F5:1 A5:1 C6:1 D6:2 C6:2
+        E5:1 G5:1 C6:1 E6:1 D6:2 C6:2
+        D6:3 C6:1 Bb5:1 A5:1 G5:1 F5:1
+        G5:3 E5:1 C5:2 r:2
+        C6:2:.7 r:2 A5:1:.6 C6:1:.6 r:2
+        A5:2:.6 r:2 F5:1:.55 A5:1:.55 r:2
+        D6:4:.6 r:4
+        Db6:3:.55 C6:1:.5 r:4
+        C4:1:.7 F4:1:.7 A4:1:.75 C5:3:.8 Bb4:1:.8 A4:1:.8
+        A4:3:.85 G4:1:.85 F4:2:.85 A4:2:.9
+        D4:1:.9 F4:1:.9 Bb4:1:.95 D5:3:1 E5:1 F5:1
+        F#5:4:1.05 E5:2 D5:1 C5:1
+        D4:1 G4:1 B4:1 D5:3 C5:1 B4:1
+        B4:3 A4:1 G4:2 E4:2
+        E4:1 G4:1 B4:1 E5:3 D5:1 C5:1
+        D5:4 A4:2 F#4:2
+        D4:1 G4:1 B4:1 D5:3 E5:1 F#5:1
+        G5:3 E5:1 C5:2 D5:1 E5:1
+        A5:4:1.1 G5:2 E5:2
+        F#5:3 E5:1 D5:2 C5:2
+        D5:1:.7 G5:1:.7 B5:1:.7 D6:3:.7 C6:1:.65 B5:1:.65
+        B5:4:.6 G5:2:.6 E5:2:.55
+        G5:3:.55 F#5:1:.5 E5:2:.5 B4:2:.5
+        A5:4:.5 F#5:2:.45 D5:2:.45
+        G5:8:.45`),
+    leadFor:sprLead,leadVFor:a=>({softbox:.21,felt:.3,bow:.25})[sprLead(a)],
+    // steady, but it breathes at the ends of phrases, opens slowly, and slows as the box closes
+    tempo:(b,i,a)=>{const s=sprSec(a);let v=s==="open"?.94:s==="quiet"?.9:s==="peace"?.96-.035*(a-40):s==="dance"?1.04:1;
+      if(i>=6&&[3,11,15,23,27,31].includes(a))v*=.88;if(a===39&&i>=4)v*=.86;return v*(.99+.02*h01(a+80))},
+    onNote:(e,t,E8,x)=>{const a=x.abs,s=sprSec(a),C=x.C,m=e.m;GL=null;if(m==null||Array.isArray(m))return;
+      // the felt piano answers the bowed voice's long notes: three notes of the chord, from the other ear
+      if(sprLead(a)==="bow"&&e.l>=3&&h01(a*13+e.s)<.75){const up=[...C.iv,12,12+C.iv[1],12+C.iv[2]].map(v=>C.r+12+v).filter(n=>n>m+2).slice(0,3);
+        const p=panTo(.45*(a%2?1:-1),.45*(a%2?1:-1),t,E8*4,.6,.3);up.forEach((n,k)=>{on(p);voice("felt",hz(n+12),t+E8*(1+k*.5),E8*1.5,.07*e.vel*(1-.15*k),.9)})}
+      // at the "omg" the felt piano sings along an octave up
+      if(s==="omg"){on(send(.5,.2));voice("felt",hz(m+12),t,e.l*E8,.09*e.vel,1)}
+      // and a soft bell answers the long notes in the flowering and the dance, as in Bubble Bath in the Sky
+      if((s==="flower"||s==="dance")&&e.l>=2&&h01(a*7+e.s)<.4){const c=[...C.iv,12].map(v=>C.r+v+24).filter(n=>n>m&&n<=m+12);if(c.length){on(send(.9,.5));voice("softbox",hz(c[0]),t+E8,E8*2,.045*e.vel,1.2)}}},
+    onBar:x=>{const {t,abs:a,E8,C}=x,B=E8*8,s=sprSec(a);GL=null;
+      // each section breathes in its own way; now and then a light muffle comes in and leaves again
+      const open={open:3200,flow:4200,flower:5600,dance:5000,quiet:2400,back:3000+600*(a-28),omg:6500,peace:3800-450*(a-40)}[s];
+      const swell={open:.6+.08*a,flow:.86+.05*(a%4),flower:.85+.07*(a-12),dance:a%2?1:.94,quiet:.6-.04*(a-24),back:.66+.11*(a-28),omg:a===38?1.15:1.02+.04*(a%2),peace:.85-.09*(a-40)}[s];
+      BUS.leadLP.frequency.setTargetAtTime(open,t,B*.3);BUS.swl.gain.setTargetAtTime(swell,t,B*.35);
+      if((s==="flow"||s==="back")&&a%4===2){BUS.leadLP.frequency.setTargetAtTime(Math.max(1400,open*.4),t+B*.3,B*.15);BUS.leadLP.frequency.setTargetAtTime(open,t+B*.7,B*.2)}
+      // the harp: eighths that ripple from one ear to the other, above the bowed voice and below the piano
+      const hv={flow:.065,flower:.055,back:.05+.01*(a-28),omg:.075}[s]||(s==="open"&&a>=2?.04:s==="peace"&&a<=42?.04-.008*(a-40):0);
+      if(hv){const dir=a%2?1:-1,p=panTo(-.6*dir,.6*dir,t,B,.5,.25),base=C.r+(s==="flower"?0:12),pat=[0,C.fifth,14,12+C.third,12+C.fifth,12+C.third,14,C.fifth],acc=[1,.7,.8,.75,.85,.7,.75,.65];
+        pat.forEach((v,k)=>{on(p);voice("harp",hz(base+v),t+k*E8,E8*2,hv*acc[k],.8)})}
+      // underneath: a cello holds the root where the tune is bowed; plucked strings walk in the dance
+      if(s==="flow"||s==="back"||s==="omg"){on(send(.3,0,BUS.bass));voice("bow",hz(C.b-12),t,B*.98,s==="omg"?.09:.07,.5);voice("mbass",hz(C.b-12),t,B*.95,.17,.6)}
+      else if(s==="dance"){on(send(.15,0,BUS.bass));[0,C.fifth,12,C.fifth].forEach((v,k)=>{voice("mbass",hz(C.b-12+v),t+k*2*E8,E8*1.6,k?.24:.3,.4);voice("harp",hz(C.b+v),t+k*2*E8,E8,.07*(k?.8:1),.35)})}
+      else if(s==="flower"){on(send(.3,0,BUS.bass));voice("mbass",hz(C.b-12),t,B*.95,.24,.7)}
+      else if(a%2===0){on(send(.3,0,BUS.bass));voice("mbass",hz(C.b-12),t,B*1.8,.2,.9)}
+      // the pad: warm, and fuller where it flowers and at the "omg"
+      const pd={flow:.016,flower:.03,dance:.02,quiet:.022,back:.018,omg:.034,peace:.024}[s]||0;
+      if(pd){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pd,.8)}
+      // strings swell under the flowering and the "omg"
+      if(s==="flower"||s==="omg"){on(send(.7,.2,BUS.bass));voice("bow",hz(C.r+12+C.third),t,B*1.04,.03,.8);voice("bow",hz(C.r+12+C.fifth),t+.04,B*1.04,.025,.8)}
+      // it flowers: glass on top, from either ear
+      if(s==="flower"||s==="omg"&&a%2===1){on(panTo(a%2?.5:-.5,a%2?-.3:.3,t,B,1,.5));voice("glass",hz(C.r+36+C.fifth),t+E8*4,E8*3,.022,1.2)}
+      // a soft kit in the dance and the "omg": a brush on 2 and 4, wood on some of the offbeats
+      if(s==="dance"||s==="omg"&&a>=34){on(BUS.perc);const pv=s==="omg"?.7:1;for(const k of [2,6])brush(t+k*E8,.022*pv);for(const k of [1,3,5,7])if(h01(a*8+k)<.5)wood(t+k*E8,.011*pv)}
+      // a birthday music box skips along in the dance, high up and from the other ear
+      if(s==="dance"&&a%2===0){const side=a%4?-.55:.55,p=panTo(side,-side,t,B,.5,.3),pat=[12,C.fifth+12,24,C.fifth+12,12+C.third,C.fifth+12,24,12];
+        pat.forEach((v,k)=>{if(h01(a*9+k)<.4)return;on(p);voice("softbox",hz(C.r+24+v),t+k*E8,E8*.6,.022,.6)})}
+      // it sings: a choir at the "omg", and a last breath of it as the box closes
+      if(s==="omg"||a===40||a===41){on(send(.7,.25));const cv=s==="omg"?.07:.04;for(const v of C.iv.slice(0,3))voice("ooh",hz(C.r+12+v),t+.05,B*.98,cv,.7)}
+      // the spring: a little run that leaps up across the ears, as the box opens, before each new part, and as it closes
+      const spring=(st,v)=>{const p=panTo(-.7,.7,st,E8*1.5,.7,.4);[0,C.iv[1],C.iv[2],12,12+C.iv[1],12+C.iv[2],24].forEach((n,k)=>{on(p);voice(k<4?"softbox":"glass",hz(C.r+24+n),st+k*E8*.16,E8*.8,v*(1-.05*k),1)})};
+      if(a===3||a===15||a===31)spring(t+E8*4.5,.055);if(a===23)spring(t+E8*6,.04);if(a===43)spring(t+E8*5,.045);
+      // the quiet: a breath of air before it all comes back
+      if(s==="quiet"&&a===27){on(send(1,.4));voice("air",hz(C.r+24+C.fifth),t+E8*4,E8*4,.03,1)}}};
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
        crisp and muted, warped a little, with a needle crackling */
@@ -248,7 +350,8 @@ export const music = (function(){
         on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};   // it floats up as it fades
         voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.22*.24*e.vel,1.4);GL=null}},
     glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7"),
-    JESTERS
+    JESTERS,
+    SPRING
   ];
   const BASE=.45;   // 100% music: loud, but under the game
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
@@ -390,6 +493,16 @@ export const music = (function(){
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
       const k=gn(.6);k.connect(lp);for(const x of [].concat(f)){osc("sawtooth",x,t,stop,lp);if(!LITE)osc("sawtooth",x*1.0035,t,stop,lp);osc("triangle",x*.5,t,stop,k)}   // f may be a whole chord
       lp.frequency.linearRampToValueAtTime(950,t+a);lp.frequency.setTargetAtTime(600,t+a,dur*.4);return true}
+    /* a clean "ooh" of voices: no buzz, just round tones that swell and sway */
+    if(type==="ooh"){const a=Math.max(.25,dur*.3),R=rel||.7,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",1800,.5);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
+      const o1=osc("sine",f,t,stop,lp),o2=osc("sine",f*1.004,t,stop,lp),h=gn(.15);h.connect(lp);const o3=osc("sine",f*2,t,stop,h);vib([o1,o2,o3],t,stop,4.8,.006,.2);return true}
+    /* a bowed voice, a cello or a viola played softly: round, not buzzy (a triangle and a sine, a little saw for the bow) */
+    if(type==="bow"){const a=Math.min(.22,Math.max(.07,dur*.25)),R=rel||.4,stop=t+dur+R*5*TL,top=Math.min(2600,f*3+300),g=gn(),lp=biq("lowpass",Math.min(1800,f*2),.5);lp.connect(g);g.connect(D);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.82,t+a,Math.max(.12,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
+      lp.frequency.setValueAtTime(Math.min(1800,f*2),t);lp.frequency.linearRampToValueAtTime(top,t+a);   // the bow digs in, then sings
+      const o1=osc("triangle",f,t,stop,lp),o2=osc("sine",f*1.0025,t,stop,lp),k=gn(.22);k.connect(lp);const o3=osc("sawtooth",f,t,stop,k);
+      vib([o1,o2,o3],t,stop,5.3,.0045,.22);return true}
     return false}
   function note(type,f,t,dur,peak,rel,vib_){if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
     if(vib_){const l=ac.createOscillator(),lg=ac.createGain();l.frequency.value=5.2;lg.gain.value=f*.007;l.connect(lg).connect(o.frequency);l.start(t);l.stop(t+dur+.6)}
