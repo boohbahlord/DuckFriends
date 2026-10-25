@@ -325,7 +325,7 @@ export function reduce(state, a, now = Date.now()) {
       }
       const dj = j && +a.dj > j ? +a.dj : 0;   // a double jump: when the second jump began
       const hz = v => Math.max(-400, Math.min(1200, Math.round(+v || 0)));   // Hangout: z, the height of its feet; b, where its jump began (world px)
-      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(isHang(s) ? { z: hz(a.z), b: hz(a.b) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(isHang(s) ? { z: hz(a.z), b: hz(a.b), ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height (duck heights)
       quackMoved(s, a.id);   // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       return s;

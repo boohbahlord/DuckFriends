@@ -17,7 +17,8 @@ export const DECK = { x0: 2200, y0: 2200, x1: 4300, y1: 2600, rail: 40 };
 export const STAIRS = { x0: 4300, x1: 4500, y0: 2200, land: 2350, y1: 2900, n: 20 };   // the deck's stairs, down to the downhill
 export const SLOPE = { y0: 1900, y1: 2800, low: -240 };
 export const STAGE = { cx: 2950, cy: 1050, r: 250, h: 95, sx0: 2975, sx1: 3095, sy0: 1250, sy1: 1490, n: 8 };   // round; its stairs in front, down toward the front (room to walk between the stage and the hall wall)
-export const POOL = { x0: 3000, y0: 3100, x1: 4800, y1: 3900, h: -280, rope: 3900, steps: [3150, 3350] };
+export const POOL = { x0: 3000, y0: 3100, x1: 4800, y1: 3900, h: -280, rope: 3900, steps: [3110, 3410], step: 44 };   // (steps: 3 of them, 44 wide, along the west end from y 3110 to 3410, as art.js draws them)
+export const TRAMP = { cx: 5200, cy: 3000, rx: 150, ry: 100, h: 30 };   // the trampoline: its mat (an oval) stands 30 over the downhill
 export const FIELD = { x0: 4500, y0: 400, x1: 5800, y1: 1800 };
 export const PATH = { x0: 300, y0: 440, x1: 2080, y1: 590 };
 export const DOORS = { front: { x: 2000, y: 600 }, back: { x: 2800, y: 2200 } };
@@ -31,6 +32,7 @@ export const onStageStairs = (x, y) => x >= STAGE.sx0 && x < STAGE.sx1 && y >= S
 export const inCabin = (x, y) => x > CABIN.x0 && x < CABIN.x1 && y > CABIN.y0 && y < CABIN.y1;   // (the walls' middle lines)
 export const inDeck = (x, y) => inR(x, y, [DECK.x0, DECK.y0, DECK.x1, DECK.y1]);
 export const inPool = (x, y) => inR(x, y, [POOL.x0, POOL.y0, POOL.x1, POOL.y1]);
+export const onTramp = (x, y) => ((x - TRAMP.cx) / TRAMP.rx) ** 2 + ((y - TRAMP.cy) / TRAMP.ry) ** 2 <= 1;
 
 /* the height of whatever a duck stands on at (x, y) */
 export function heightAt(x, y) {
@@ -39,7 +41,8 @@ export function heightAt(x, y) {
   if ((x >= CABIN.x0 && x < CABIN.x1 && y >= CABIN.y0 && y < CABIN.y1) || inDeck(x, y)) return 0;
   if (x >= STAIRS.x0 && x < STAIRS.x1 && y >= STAIRS.y0 && y < STAIRS.y1)
     return y < STAIRS.land ? 0 : SLOPE.low / STAIRS.n * Math.min(STAIRS.n, Math.floor((y - STAIRS.land) / (STAIRS.y1 - STAIRS.land) * STAIRS.n) + 1);
-  if (inPool(x, y)) return x < POOL.x0 + 120 && y >= POOL.steps[0] && y < POOL.steps[1] ? SLOPE.low - 10 * (Math.floor((x - POOL.x0) / 40) + 1) : POOL.h;   // (the pool's steps, at its west end)
+  if (onTramp(x, y)) return terrainAt(y) + TRAMP.h;   // (a jump gets onto it; trampoline.js bounces it)
+  if (inPool(x, y)) return x < POOL.x0 + 3 * POOL.step && y >= POOL.steps[0] && y < POOL.steps[1] ? SLOPE.low - 10 * (Math.floor((x - POOL.x0) / POOL.step) + 1) : POOL.h;   // (the pool's steps, at its west end)
   return terrainAt(y);
 }
 
@@ -147,7 +150,7 @@ for (const [x, y] of [[950, 400], [1680, 400], [2900, 3020], [4880, 3020], [2900
   add('post', x - 15, y - 10, 30, 20, 230, { ...POST, light: { x, y: y + 30, r: 330, c: WARM, k: .5, flick: 1 } });
 add('campfire', 1440, 3260, 120, 80, 30, { solid: true, light: { x: 1500, y: 3300, r: 460, c: HOT, k: .6, flick: 1.6 } });
 for (const [x, y] of [[1260, 3170], [1620, 3170], [1260, 3400], [1620, 3400]]) add('log', x, y, 120, 40, 35, { solid: true, seats: 2 });
-add('trampoline', 5050, 2900, 300, 200, 0, { layer: 'floor' });
+add('trampoline', TRAMP.cx - TRAMP.rx, TRAMP.cy - TRAMP.ry, 2 * TRAMP.rx, 2 * TRAMP.ry, 0, { layer: 'none', z: terrainAt(TRAMP.cy) });   // (trampoline.js draws it: its mat dips under a landing; z: the ground under it)
 add('goal', 5640, 940, 130, 520, 120, { block: null, fade: true });
 for (const r of [[5636, 936, 5664, 964], [5636, 1436, 5664, 1464], [5740, 950, 5770, 1450], [5650, 944, 5760, 956], [5650, 1444, 5760, 1456]])
   add('goalpart', r[0], r[1], r[2] - r[0], r[3] - r[1], 0, { solid: true, block: r, layer: 'none' });   // (the goal's posts, back and sides: walls, not drawn)

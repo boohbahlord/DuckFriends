@@ -86,6 +86,7 @@ const JUMP = { normal: { T: .62, H: 1.35 }, low: { T: 1.2, H: 2 } };   // second
    little lower than the first */
 const jumpCfg = pos => {
   const b = JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
+  if (pos && pos.tb > 0) return { T: b.T * Math.sqrt(pos.tb / b.H), H: pos.tb };   // Hangout's trampoline: a bounce tb duck heights high
   return pos && pos.lj ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
 };
 const arc = (t0, now, T, H) => { const t = (now - t0) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
@@ -444,10 +445,10 @@ function sendMove(force) {
   if (!me) return;
   const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
   const hz = world && isHang(R.state) ? { z: Math.round(me.z || 0), b: Math.round(me.b || 0) } : null;   // Hangout: how high its feet are, where its jump began
-  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, hz && hz.z].join();
+  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, hz && hz.z, me.tb].join();
   if (!force && (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) || msg === lastSent)) return;   // online: less often (Data saving, Poor connection: less still)
   lastSend = now; lastSent = msg;
-  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), q, sp: sprinting && moving, ...hz });
+  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), ...(me.j && me.tb ? { tb: me.tb } : {}), q, sp: sprinting && moving, ...hz });
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
@@ -553,7 +554,7 @@ function hangStep(dt, now) {
   if (ax) me.face = Math.sign(ax);
   if (ev.whee) sfx.fall();        // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk();   // and the landing
-  sendMove(!!(ev.land || ev.thud));
+  sendMove(!!(ev.land || ev.thud || ev.force));
 }
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
 function resetDuck() {
