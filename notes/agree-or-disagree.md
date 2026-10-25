@@ -729,3 +729,10 @@ The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of th
 
 Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
 every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
+
+## Story Chain: fonts the same size (2026-10-25)
+
+whoever the did the story game needs to make the fonts appear as the same size
+
+Decision: every player's font in Story Chain is scaled so its letters stand as tall as the others' (font-size-adjust,
+with a measured size for each font).
