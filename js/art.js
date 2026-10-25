@@ -127,6 +127,17 @@ ${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc'
     return `<g shape-rendering="crispEdges">${px}</g>`;
   }
   if (map === 'carnival') return carnivalSVG().replace('<svg ', '<svg width="480" height="270" ');
+  if (map === 'cabin') {   // Duck Cabin at night: the moon, pines, the cabin with its warm windows, string lights on the deck
+    const r = rnd(5), stars = Array.from({ length: 40 }, () => `<circle cx="${(r() * 480).toFixed(0)}" cy="${(r() * 120).toFixed(0)}" r="${(.6 + r() * 1.2).toFixed(1)}" fill="#fff" opacity="${(.4 + r() * .5).toFixed(2)}"/>`).join('');
+    const pine = (x, y, k) => `<path d="M${x} ${y - 70 * k}L${x + 22 * k} ${y - 28 * k}H${x + 12 * k}L${x + 30 * k} ${y}H${x - 30 * k}L${x - 12 * k} ${y - 28 * k}H${x - 22 * k}Z" fill="#14301f" stroke="#0a1a10" stroke-width="2"/>`;
+    return `<defs><linearGradient id="artcabin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1030"/><stop offset="1" stop-color="#22305e"/></linearGradient></defs>
+<rect width="480" height="270" fill="url(#artcabin)"/>${stars}<circle cx="70" cy="52" r="22" fill="#fff4cf"/><circle cx="70" cy="52" r="36" fill="#fff4cf" opacity=".15"/>
+<rect y="196" width="480" height="74" fill="#1e3b2b"/>${pine(30, 210, 1.2)}${pine(450, 214, 1.3)}${pine(400, 205, .9)}${pine(96, 206, .8)}
+<path d="M300 196V130L360 92L420 130V196Z" fill="#8a4a20" stroke="#1c1c28" stroke-width="3" stroke-linejoin="round"/><path d="M290 134L360 84L430 134" fill="none" stroke="#5a2f14" stroke-width="10" stroke-linecap="round"/>
+<rect x="318" y="146" width="24" height="20" rx="3" fill="#ffc861" stroke="#1c1c28" stroke-width="2.5"/><rect x="380" y="146" width="24" height="20" rx="3" fill="#ffc861" stroke="#1c1c28" stroke-width="2.5"/><rect x="350" y="160" width="20" height="36" rx="3" fill="#5a2f14" stroke="#1c1c28" stroke-width="2.5"/>
+<ellipse cx="330" cy="200" rx="60" ry="10" fill="#ffc861" opacity=".18"/>
+<path d="M290 182Q330 194 360 182T430 182" fill="none" stroke="#1c1c28" stroke-width="1.5"/>${[300, 315, 330, 345, 375, 390, 405, 420].map((x, i) => `<circle cx="${x}" cy="${(185 + Math.sin(i * 1.3) * 3).toFixed(1)}" r="3" fill="${['#ffd23f', '#ff6b6b', '#5ce1ff', '#7dff7a'][i % 4]}"/>`).join('')}`;
+  }
   return backdropSVG(480, 270, true).replace('<svg ', '<svg width="480" height="270" ');   // Night Show
 }
 export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '', mode = 'aod' } = {}) {

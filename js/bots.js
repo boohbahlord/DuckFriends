@@ -8,8 +8,10 @@
    they pick a word from the list, "say" a clue in a chat bubble (they can't talk), skip a turn only once a person has, and
    vote for a random duck, leaning a little toward the real Quack (a TEST room's computers can see the host's secrets). In
    Lawyering they pick or vote for attorneys, vote as jurors (now and then changing their minds in closing arguments) and,
-   as an attorney behind in closing arguments, sometimes give up. */
-import { colXAt, isWyr, isSc, isLaw, twoSided, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
+   as an attorney behind in closing arguments, sometimes give up. In Hangout they wander about Duck Cabin, stopping now and
+   then, and jump once in a while (they never walk off an edge or up a wall). */
+import * as HL from './hangout/layout.js';
+import { colXAt, isHang, isWyr, isSc, isLaw, twoSided, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 import { anyWord, tileCenter, spotOf, speakerOf, stillIn, canAccuse, CLUE_GRACE } from './quackrules.js';
 
 export const BOT_QUESTIONS = [
@@ -102,6 +104,7 @@ export function botActions(s, now) {
   bots.forEach((id, i) => {
     const late = now - s.at >= wait + i * 700;   // they don't all move on the same instant
     if (isSc(s)) { storyBot(s, id, now, wait, late, people, out); return; }
+    if (isHang(s)) { if (s.phase === 'hang') hangBot(s, id, now, out); else if (s.phase === 'lobby' && !s.players[id].ready) out.push({ t: 'ready', id, v: true }); return; }
     switch (s.phase) {
       case 'lobby': case 'over':
         if (!s.players[id].ready) out.push({ t: 'ready', id, v: true }); break;
@@ -193,6 +196,29 @@ export function botActions(s, now) {
     }
   });
   return out;
+}
+/* a computer in Hangout: walks toward a spot near it (world px), a little at a time; stops there a while; picks another
+   spot when it gets there or something is in the way; now and then jumps */
+const roam = new Map();   // computer id → { x, y, rest (until when it stands still) }
+function hangBot(s, id, now, out) {
+  const p = s.pos[id]; if (!p) return;
+  const jumping = p.j && now - p.j < 1400;
+  let x = p.x * HL.W, y = p.y * HL.H, z = HL.heightAt(x, y), g = roam.get(id);
+  const there = g && Math.hypot(g.x - x, g.y - y) < 20;
+  if (there && !g.rest) g.rest = now + 1000 + Math.random() * 4000;   // there: it stands still a while
+  if (!g || (there && now > g.rest)) {
+    g = { x: Math.max(HL.EDGE, Math.min(HL.W - HL.EDGE, x + (Math.random() - .5) * 900)), y: Math.max(HL.EDGE, Math.min(HL.H - HL.EDGE, y + (Math.random() - .5) * 700)), rest: 0 };
+    roam.set(id, g); if (roam.size > 100) roam.delete(roam.keys().next().value);
+  }
+  const jump = !jumping && Math.random() < .006;
+  if (Math.hypot(g.x - x, g.y - y) < 20 && !jump) return;
+  const d = Math.hypot(g.x - x, g.y - y), n = Math.min(6, Math.ceil(d / 12)), ux = d ? (g.x - x) / d : 0, uy = d ? (g.y - y) / d : 0;
+  for (let i = 0; i < n; i++) {   // 12 px at a time: up or down a step at most, never through a wall
+    const nx = x + ux * Math.min(12, d - i * 12), ny = y + uy * Math.min(12, d - i * 12), nz = HL.heightAt(nx, ny);
+    if (Math.abs(nz - z) > HL.STEP || !HL.standable(nx, ny, z, HL.STEP, [x, y])) { g.x = x; g.y = y; g.rest = now + 800; break; }   // in the way: another spot soon
+    x = nx; y = ny; z = nz;
+  }
+  out.push({ t: 'move', id, x: +(x / HL.W).toFixed(5), y: +(y / HL.H).toFixed(5), j: jump ? now : jumping ? p.j : 0, z: Math.round(z), b: jump ? Math.round(z) : jumping ? p.b || 0 : Math.round(z) });
 }
 /* a computer in Story Chain */
 function storyBot(s, id, now, wait, late, people, out) {
