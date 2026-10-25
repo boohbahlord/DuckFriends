@@ -8,7 +8,7 @@
      games/{g}/on/{player}   who is connected right now; games/{g}/hb: the host's heartbeat (a sleeping phone stops it)
    A private room's path is made from its passkey, so only players who know the passkey can find it. The rules that
    enforce all this are in database.rules.json. The Firebase code loads only when online rooms are first used. */
-import { reduce, newRoom } from './rules.js';
+import { reduce, safeReduce, newRoom } from './rules.js';
 import { botActions } from './bots.js';
 import { NAME_OK, cleanStats } from './store.js';
 import { myPlayer, setActive, dropActive } from './net.js';
@@ -139,7 +139,7 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'tieVote', 'usermod', 'groupadd', 'groupdel', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'start', 'cancel', 'toLobby']);
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'tieVote', 'usermod', 'groupadd', 'groupdel', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby']);
 const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
@@ -163,7 +163,7 @@ function clean(a, by) {
 /* a guess at my own action's result, shown until the host's answer comes back; the host alone ends phases */
 function predict(s, a) {
   if (['chat', 'fx', 'join', 'leave'].includes(a.t)) return s;
-  const p = reduce(s, a, now());
+  let p; try { p = reduce(s, a, now()); } catch (e) { return s; }   // (the host has the last word anyway)
   return keyOf(p) === keyOf(s) ? p : { ...s, done: { ...s.done, [a.id]: true } };
 }
 
@@ -181,7 +181,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   /* the host: applies actions, runs the timers and the computers, writes what changed */
   const apply = a => {
     if (!a) return;
-    const next = reduce(state, a, now());
+    const next = safeReduce(state, a, now());   // (an action that throws is skipped, so the room keeps going)
     if (next === state) return;
     state = next; emit(a); dirty();
   };
@@ -258,7 +258,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       auth = decode(v); ackSeen = (v && v.ack) || {};
       if (!auth) return;
       if (auth.players[me]) seen = true;
-      else if (seen) { gone(auth.banned && auth.banned[me] ? 'You were voted out of the room until it goes back to the lobby.' : 'You left the room: the host removed you, or you were away too long.'); return; }
+      else if (seen) { gone(auth.banned && auth.banned[me] ? 'You were removed from the room until it goes back to the lobby.' : 'You left the room: the host removed you, or you were away too long.'); return; }
       rebuild();
     }, fail);
   }
@@ -268,7 +268,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     const ack = ackSeen[me] || 0;
     pending = pending.filter(p => p.q > ack);
     for (const p of pending) s = predict(s, p.a);
-    if (lastMove && lastMove.k === keyOf(s)) s = reduce(s, lastMove, now());
+    if (lastMove && lastMove.k === keyOf(s)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
     state = s; emit();
   }
   function gone(msg) {
@@ -319,7 +319,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
         if (!state) return;
         a.k = keyOf(state); lastMove = a;
         D.set(path('mv/' + me), JSON.stringify(a)).catch(quiet);
-        const next = reduce(state, a, now()); if (next !== state) { state = next; emit(a); }
+        let next = state; try { next = reduce(state, a, now()); } catch (e) { /* the host's state stands */ }
+        if (next !== state) { state = next; emit(a); }
         return;
       }
       const q = ++seq; pending.push({ q, a });
@@ -338,7 +339,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
           if (seen) { clearInterval(t); ok(room); return; }
           if (Date.now() - t0 > 12000) {
             clearInterval(t); const full = auth && auth.seat.length >= auth.max, out = auth && auth.banned && (auth.banned[me] || (who.acct && auth.banned['acct:' + who.acct]));
-            room.close(); no(new Error(out ? 'You were voted out of that room until it goes back to the lobby.' : full ? 'That room is full.' : 'The room didn\'t answer. Its host may be away.'));
+            room.close(); no(new Error(out ? 'You were removed from that room until it goes back to the lobby.' : full ? 'That room is full.' : 'The room didn\'t answer. Its host may be away.'));
           }
         }, 150);
       });

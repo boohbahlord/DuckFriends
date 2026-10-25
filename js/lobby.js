@@ -10,8 +10,8 @@ import { now } from './clock.js';
 import { gameArtSVG, gameSymbol } from './art.js';
 import { MODES, modeOf } from './modes.js';
 import { cardHTML } from './card.js';
-import { netHTML } from './players.js';
-import { OPTIONS_DEFAULT } from './rules.js';
+import { netHTML, kickItems } from './players.js';
+import { OPTIONS_DEFAULT, isSudo } from './rules.js';
 import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
 import { openStats } from './stats.js';
@@ -24,8 +24,8 @@ import { openFriends } from './friends.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, or Bicker Brackets.',
-  map: 'What the board looks like: Night Show, Sky, Pixel or Ether\'s Crossroads.',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, or Story Chain.',
+  map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Rabbit Hole of Ducklings or Ether\'s Crossroads.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
   friends: 'Invite your friends to this room, or add a friend by code.',
@@ -33,8 +33,8 @@ const INFO = {
 
 /* the Game type window: the host picks the game */
 function openTypes() {
-  const s = R.state, host = s.hostId === R.me, cur = s.options.mode || 'aod';
-  return openWindow(`<h2>Game type</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host picks the game.</p>'}
+  const s = R.state, host = isSudo(s, R.me), cur = s.options.mode || 'aod';
+  return openWindow(`<h2>Game type</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the game.</p>'}
     <div class="type-tiles">${MODES.map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')}</div>`, {
     cls: 'win-settings',
     onOpen: w => { if (host) w.querySelector('.type-tiles').onclick = e => { const b = e.target.closest('[data-mode]'); if (!b) return; R.send({ t: 'options', options: { mode: b.dataset.mode } }); w.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
@@ -44,8 +44,8 @@ function openTypes() {
 /* the board as a small picture (the Map window) */
 /* the Map window: three maps, each with a little picture; the host picks */
 function openMaps() {
-  const s = R.state, host = s.hostId === R.me, cur = s.options.map || 'board';
-  return openWindow(`<h2>Map</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host picks the map.</p>'}
+  const s = R.state, host = isSudo(s, R.me), cur = s.options.map || 'board';
+  return openWindow(`<h2>Map</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the map.</p>'}
     <div class="map-tiles">${MAPS.map(([id, name, tip]) => `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? '' : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`).join('')}</div>`, {
     cls: 'win-settings',
     onOpen: w => { if (host) w.querySelector('.map-tiles').onclick = e => { const b = e.target.closest('[data-map]'); if (!b) return; R.send({ t: 'options', options: { map: b.dataset.map } }); w.querySelectorAll('[data-map]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
@@ -67,6 +67,10 @@ const BB_TILES = [
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
   ['bbTimer', 'Match vote timer', [[0, 'None'], [10, '10 s'], [30, '30 s'], [60, '60 s']]],
 ];
+/* Story Chain's own option */
+const SC_TILES = [
+  ['scTime', 'Writing time', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
+];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
@@ -85,16 +89,18 @@ const OPT_TIPS = {
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
   bbTimer: 'None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.',
+  scTime: 'How long each writer gets for their line. Off: as long as they need. When time runs out, whatever is typed is sent.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
 function openOptions() {
-  const s = R.state, host = s.hostId === R.me, ro = host ? '' : ' aria-disabled="true"';
-  return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host changes these.</p>'}
+  const s = R.state, host = isSudo(s, R.me), ro = host ? '' : ' aria-disabled="true"';
+  return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) changes these.</p>'}
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
+    ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
+    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'sc' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES, s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(s.options.mode === 'sc' && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>
@@ -127,7 +133,8 @@ function cardMenu(pid, x, y) {
   const s = R.state, p = s.players[pid]; if (!p) return;
   const mine = pid === R.me, items = [['View stats', () => openStats(s, pid, R.me)]];
   if (mine) items.push(['Customize', () => openCustomize()]);
-  if (s.hostId === R.me && p.bot && (s.phase === 'lobby' || s.phase === 'over')) items.push(['Remove computer', () => R.send({ t: 'kick', who: pid })]);
+  if (isSudo(s, R.me) && p.bot && (s.phase === 'lobby' || s.phase === 'over')) items.push(['Remove computer', () => R.send({ t: 'kick', who: pid })]);
+  else if (!p.bot) items.push(...kickItems(R, pid));
   if (canAdd(p)) items.push(['Add friend', async () => toast(await requestFriend(p.acct))]);
   contextMenu(x, y, items, !mine ? {} : {
     footer: `<label class="ctx-name"><span class="small dim">Name</span><input maxlength="20" spellcheck="false" value="${esc(profile.name)}" aria-label="Your name"></label>`,
@@ -145,13 +152,13 @@ function cardMenu(pid, x, y) {
 let S = null;   // the screen
 function paint() {
   if (!R || !S) return;
-  const s = R.state, host = s.hostId === R.me, mine = s.players[R.me];
+  const s = R.state, host = isSudo(s, R.me), mine = s.players[R.me];
   if (!mine) return;
   const title = $('.lobby-title', S);
   if (!title.querySelector('input')) { title.textContent = s.name; title.classList.toggle('can-rename', host); if (host) title.dataset.tip = 'Click to rename the room'; else delete title.dataset.tip; }
   const bots = s.seat.filter(id => s.players[id].bot).length;
   $('.lobby-sub', S).textContent = [s.test ? 'TEST room' : s.open ? 'Open room' : R.passkey ? `Private room · passkey: ${R.passkey}` : 'Private room',
-    bots ? `${bots} computer${bots === 1 ? '' : 's'}, acting after ${s.options.botWait} s` : '', host ? 'You are the host' : ''].filter(Boolean).join(' · ');
+    bots ? `${bots} computer${bots === 1 ? '' : 's'}, acting after ${s.options.botWait} s` : '', s.hostId === R.me ? 'You are the host' : host ? 'You have sudo: you can run the room too' : ''].filter(Boolean).join(' · ');
   const st = $('.lobby-status', S);
   if (s.phase === 'countdown') {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));

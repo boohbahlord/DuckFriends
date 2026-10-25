@@ -548,6 +548,45 @@ html.still .sky-cloud { animation: none !important; left: var(--x, 30%); }
 .map-pixel .col { background: color-mix(in srgb, var(--c) 38%, transparent); image-rendering: pixelated; }
 .map-pixel .col::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='none' stroke='%23000' stroke-opacity='.16' stroke-width='.4'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' fill-opacity='.22'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3Crect x='2' y='5' width='2' height='1' fill='%23fff' fill-opacity='.16'/%3E%3Crect x='6' y='4' width='1' height='2' fill='%23000' fill-opacity='.12'/%3E%3Crect x='5' y='6' width='1' height='1' fill='%23fff' fill-opacity='.2'/%3E%3Crect x='1' y='6' width='1' height='1' fill='%23000' fill-opacity='.12'/%3E%3C/svg%3E"); background-size: 3rem 3rem; image-rendering: pixelated; pointer-events: none; opacity: .8; }
 .map-sky .col-name, .map-pixel .col-name { position: relative; color: #fff; background: #0000006b; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }   /* readable over any scene */
+/* Rabbit Hole of Ducklings: the fractal fills the page; the tiles are as see-through as on Sky, and names sit on pills */
+.scene.rabbit { background: #12061f; }
+.scene.rabbit canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scene.rabbit.rh-plain { background: conic-gradient(from 0deg, #ff4fd8, #7b5cff, #19d3ff, #4dff9a, #ffe14d, #ff7a3d, #ff4fd8); }
+html.moving .scene.rabbit.rh-plain { animation: rhspin 40s linear infinite; }
+@keyframes rhspin { to { filter: hue-rotate(360deg); } }
+.map-rabbit { --board-a: 45%; }
+.map-rabbit .col { background: color-mix(in srgb, var(--c) 45%, transparent); border-right-color: #ffffff38; box-shadow: inset 0 0 0 .14rem #ffffff40; }
+.map-rabbit .col-name { position: relative; color: #fff; background: #12061fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
+.map-rabbit .wyr-or, .map-rabbit .bb-vs { background: color-mix(in srgb, #12061f var(--board-a), transparent); }
+/* Carnival Night: the world, marquee tiles, fireworks */
+.scene.carnival { background: #0d0722; }
+.scene.carnival > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cn-wheel { transform-box: view-box; transform-origin: 330px 410px; }
+.cn-car { transform-box: view-box; transform-origin: 0 0; }
+html.moving .cn-wheel { animation: cnspin 90s linear infinite; }
+html.moving .cn-car { animation: cnspin 90s linear infinite reverse; }   /* the cars hang straight while the wheel turns */
+@keyframes cnspin { to { transform: rotate(360deg); } }
+html.moving .cn-bulb, html.moving .cn-star { animation: twinkle 2.6s ease-in-out infinite alternate; }
+.cn-flag { transform-box: fill-box; transform-origin: 0 50%; }
+html.moving .cn-flag { animation: cnflag 1.6s ease-in-out infinite alternate; }
+@keyframes cnflag { to { transform: scaleX(.8) skewY(-6deg); } }
+.map-carnival { --board-a: 45%; }
+.map-carnival .col { background: color-mix(in srgb, var(--c) 45%, transparent); border-right-color: #ffffff30; }
+.map-carnival .col-name { position: relative; color: #fff; background: #1a0b2ecc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
+.map-carnival .wyr-or, .map-carnival .bb-vs { background: color-mix(in srgb, #1a0b2e var(--board-a), transparent); }
+.marquee { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.marquee circle { fill: #fff1b8; } .marquee .mq-glow { fill: #ffd76a; opacity: .35; }
+.mq { opacity: .3; }
+html.moving .mq { animation: mqchase 1.2s steps(1) infinite; } html.moving .mq1 { animation-delay: -.8s; } html.moving .mq2 { animation-delay: -.4s; }
+html:not(.moving) .mq { opacity: .85; }
+@keyframes mqchase { 0% { opacity: 1; } 33.3% { opacity: .3; } }
+.cn-fw { position: absolute; inset: 0; container-type: size; pointer-events: none; }
+.fw { position: absolute; width: 0; height: 0; }
+.fw-rocket { position: absolute; left: -2px; top: 0; width: 4px; height: 14px; border-radius: 2px; background: linear-gradient(#fff, var(--c)); opacity: 0; animation: fwrise .7s ease-out var(--d) both; }
+@keyframes fwrise { 0% { opacity: 1; transform: translateY(var(--rise)); } 90% { opacity: 1; } 100% { opacity: 0; transform: translateY(0); } }
+.fw-spark { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 6px var(--c), 0 0 2px #fff; opacity: 0; animation: fwburst 1.5s cubic-bezier(.15, .7, .3, 1) calc(var(--d) + .7s) both; }
+@keyframes fwburst { 0% { opacity: 1; transform: rotate(var(--a)) translateX(0); } 70% { opacity: .9; } 100% { opacity: 0; transform: rotate(var(--a)) translateX(14cqh) translateY(3cqh); } }
+.mm-carnival svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .scene.pixel canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 .pix-sun { position: absolute; transform: translate(-50%, -50%); background: #ffdf6b; box-shadow: 0 0 0 .35rem #ffc24a, 0 0 2.5rem 1rem #ffb24a99; image-rendering: pixelated; }
 html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
@@ -757,6 +796,7 @@ html.lite .tmeter i, html.still .tmeter i { animation: none; }
 .pm-side { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; font-size: calc(.8rem * var(--ts)); }
 .pm-tag { padding: .05rem .45rem; border-radius: .5rem; background: var(--soft); white-space: nowrap; }
 .pm-tag.idle { background: color-mix(in srgb, var(--blue) 30%, var(--soft)); }
+.pm-votes { display: flex; flex-wrap: wrap; gap: .5rem; }
 .pm-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; padding: .6rem 1rem .8rem; border-top: .12rem solid var(--soft); margin-top: .4rem; }
 .net { display: inline-flex; align-items: center; gap: .35rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .net .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: .9rem; }
@@ -963,6 +1003,18 @@ html.still .spx * { animation: none !important; opacity: 1; }
   .bb-top .question.bb-winner { min-width: 0; }
 }
 
+/* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */
+.lord.duel .lord-sit { width: 12.5rem; }
+.lord.duel .lord-duck { width: 4.6rem; transition: left .6s ease-in-out; }
+.lord.duel .duel-duck[data-side="0"] { left: 28%; } .lord.duel .duel-duck[data-side="1"] { left: 72%; }
+.duel-duck[data-side="1"] .duel-in > svg { transform: scaleX(-1); }   /* the right one faces left, toward the other */
+.duel-in { position: relative; }
+.lord.duel.knocked .duel-duck.won { left: 50%; }
+.lord.duel.knocked .duel-duck:not(.won) { visibility: hidden; }
+.duel-falling { position: fixed; z-index: 60; pointer-events: none; margin: 0; transform-origin: 50% 60%; }
+.duel-falling svg { width: 100%; height: auto; display: block; }
+.duel-falling[data-side="1"] .duel-in > svg { transform: scaleX(-1); }
+@media (orientation: portrait) and (max-width: 760px) { .lord.duel .lord-sit { width: 8.6rem; } .lord.duel .lord-duck { width: 3.2rem; } }
 /* the loser's X follows its duck */
 .gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
 .gduck.loser .gduck-x { display: block; }
@@ -1011,6 +1063,70 @@ html.still .spx * { animation: none !important; opacity: 1; }
 .bb-champs p { margin: 0; }
 .opt-h { margin: .2rem 0 .4rem; }
 
+/* ---------- Story Chain ---------- */
+/* the story: a see-through column over the map, one row a line, that slides up and down with my duck */
+.sc-board { gap: .4rem; }
+.sc-board .topover { position: static; padding: 0; }
+.sc-view { position: relative; flex: 1; min-height: 10rem; overflow: hidden; border: .2rem solid var(--line); border-radius: 1rem; box-shadow: 0 .3rem 0 var(--line); background: color-mix(in srgb, var(--panel) var(--board-a, 76%), transparent); }
+.sc-rows { position: relative; padding: 3.4rem 0 2.6rem; will-change: transform; }
+.sc-results .sc-rows { position: absolute; inset: 0; padding-bottom: 0; display: flex; flex-direction: column; }
+.sc-results .sc-choice { flex: 1; }
+.sc-view .ducks { z-index: 2; }
+/* more of the story above or below: the edge fades */
+.sc-view::before, .sc-view::after { content: ''; position: absolute; left: 0; right: 0; z-index: 3; height: 2.4rem; pointer-events: none; opacity: 0; transition: opacity .3s; background: linear-gradient(color-mix(in srgb, var(--panel) 85%, transparent), transparent); }
+.sc-view::before { top: 0; }
+.sc-view::after { bottom: 0; background: linear-gradient(transparent, color-mix(in srgb, var(--panel) 85%, transparent)); }
+.sc-view.more-up::before, .sc-view.more-down::after { opacity: .9; }
+.sc-row { position: relative; padding: .45rem 1.2rem .3rem; border-top: .1rem solid color-mix(in srgb, var(--ink) 12%, transparent); transition: background-color .2s, box-shadow .2s; }
+.sc-row:first-child { border-top: 0; }
+.sc-row.here { background: color-mix(in srgb, var(--vb, var(--green)) 24%, transparent); box-shadow: inset .35rem 0 0 var(--vb, var(--green)); }
+.sc-row.here.nope { background: color-mix(in srgb, var(--ink) 8%, transparent); box-shadow: inset .35rem 0 0 color-mix(in srgb, var(--ink) 35%, transparent); }
+.sc-row.sc-old { opacity: .62; }
+.sc-row.sc-para { margin-top: 1.1rem; border-top-width: .2rem; }
+.sc-line { margin: 0; max-width: 62rem; font-size: calc(clamp(1rem, 1.7vw, 1.4rem) * var(--ts)); font-weight: 600; line-height: 1.55; overflow-wrap: anywhere; text-shadow: 0 .06rem .35rem color-mix(in srgb, var(--bg) 75%, transparent); }
+.sc-txt { text-decoration: underline; text-decoration-color: var(--u, var(--soft)); text-decoration-thickness: .16em; text-underline-offset: .3em; text-decoration-skip-ink: none; }
+.sc-by { display: flex; align-items: center; gap: .45rem; min-height: 1.8rem; margin-top: .1rem; }
+.sc-mini svg { width: 1.65rem; height: auto; display: block; overflow: hidden; }
+.sc-votes { display: flex; gap: .1rem; }
+.sc-votes:not(:empty) { margin-left: .2rem; padding-left: .5rem; border-left: .12rem solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.sc-votes svg { width: 1.3rem; height: auto; overflow: hidden; }
+.sc-writing { color: var(--dim); }
+.sc-typing { padding-top: 1.8rem; box-shadow: inset 0 0 1.4rem #ffffff2a; }   /* (room for the names of the ducks standing over it) */
+.sc-typing .sc-txt { text-shadow: 0 0 .7rem #ffffff70; }
+html.moving .sc-typing { animation: scglow 2.2s ease-in-out infinite; }
+@keyframes scglow { 50% { box-shadow: inset 0 0 2.4rem #ffffff50; } }
+.sc-mark { background: #ffd23f; color: #1c1c28; border-radius: .3em; padding: 0 .12em; box-shadow: 0 0 .6rem #ffd23f99; }
+/* the secret words (below the story) and the three choices */
+.sc-wrow { display: flex; justify-content: center; padding: .7rem 1rem; }
+.sc-wrow .seed { max-width: 24rem; }
+.sc-head { min-height: 2.6rem; }
+.sc-choice { display: grid; place-items: center; min-height: 6rem; padding: 1rem; background: color-mix(in srgb, var(--cc) var(--board-a, 76%), transparent); }
+.sc-choice span { font-family: var(--fun); font-size: calc(clamp(1.3rem, 2.4vw, 1.9rem) * var(--ts)); color: #fff; text-shadow: 0 .14rem 0 #1c1c28, 0 0 .5rem #0006; text-align: center; }
+.sc-cont { --cc: var(--green); } .sc-new { --cc: var(--blue); } .sc-lobby { --cc: var(--orange); }
+.sc .vote-btn:not(:disabled) { background: var(--vb, var(--green)); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
+/* the writer's window, under the story */
+.sc-write { display: flex; flex-direction: column; gap: .45rem; padding: .6rem .8rem; touch-action: auto; -webkit-user-select: text; user-select: text; }
+.sc-secret { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; }
+.sc-secret-w { font-family: var(--font); font-size: calc(1.3rem * var(--ts)); background: #ffd23f; color: #1c1c28; border-radius: .5rem; padding: 0 .55rem; }
+.sc-in { width: 100%; resize: none; font-size: calc(1.15rem * var(--ts)); line-height: 1.4; border: .14rem solid var(--soft); border-radius: .7rem; padding: .4rem .6rem; background: var(--panel2); color: var(--ink); }
+.sc-in:focus { outline: .15rem solid var(--blue); }
+.sc-foot { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .8rem; }
+.sc-left { margin-right: auto; font-variant-numeric: tabular-nums; }
+.sc-need { display: inline-block; font-weight: 600; color: var(--orange); }
+.sc-need.ok { color: var(--green); }
+.game > .gmain[data-phase="write"], .game > .gmain[data-phase="lvote"], .game > .gmain[data-phase="wvote"] { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+/* the stats */
+.sc-quote { margin: .2rem 0; font-weight: 600; overflow-wrap: anywhere; }
+.sc-qword { display: inline-block; background: #ffd23f; color: #1c1c28; border-radius: .4rem; padding: 0 .4rem; }
+.sc-done { padding: .5rem .8rem; margin-bottom: .6rem; }
+.sc-done h3 { margin: 0 0 .3rem; }
+.sc-done p { margin: 0 0 .4rem; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .sc-row { padding: .4rem .7rem .25rem; }
+  .sc-line { font-size: calc(1rem * var(--ts)); }
+  .sc-choice { min-height: 4.5rem; }
+}
+
 /* ---------- Ether's Crossroads: the jester's dungeon ---------- */
 .scene.ec { background: #0b0705; }
 .ec-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, 177.78cqh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); }
@@ -1031,6 +1147,8 @@ html.moving .ec-glow { animation: ecglow 2.3s ease-in-out infinite; }
 .ec-flash.dark { background: #000; }
 html.lite .ec-static, html.lite .ec-flash { display: none; }
 .mm-ec { background: url(../assets/maps/ethers-crossroads.png) center / cover; image-rendering: pixelated; }
+.mm-rabbit { background: url(../assets/maps/rabbit-hole.jpg) center / cover; }
+html.moving .mm-rabbit { animation: rhspin 40s linear infinite; }
 .mm-ec::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, transparent 0 2px, #0000003a 2px 3px); }
 .mm-glow { position: absolute; width: calc(1.6rem * var(--k)); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7aaa, transparent); }
 .map-ec .col { background: color-mix(in srgb, var(--c) 42%, transparent); border-right-color: #00000040; }
