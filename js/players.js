@@ -6,7 +6,7 @@
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
 import { cardHTML } from './card.js';
-import { voteNeeds, turnKey, isBb, may } from './rules.js';
+import { voteNeeds, voteKey, isBb, isHang, may } from './rules.js';
 import { now as clockNow } from './clock.js';
 import { openStats } from './stats.js';
 import { canAdd, requestFriend } from './account.js';
@@ -29,9 +29,10 @@ export function whyNotVote(s, me, kind) {
   if (s.vote) return 'A vote is already running.';
   const used = (s.voteUsed || {})[me] || {};
   if (kind === 'kick' && used.kick !== undefined && s.round - used.kick < 2) return 'You can start one kick vote every two rounds.';
-  if (kind === 'lobby' && used.lobby === turnKey(s)) return 'You already started a back-to-lobby vote this turn.';
-  if (kind === 'skip' && used.skip === turnKey(s)) return 'You already started a skip vote this turn.';
-  if (kind === 'turn' && used.turn === turnKey(s)) return 'You already started a vote to skip this turn.';
+  const tk = voteKey(s, clockNow());
+  if (kind === 'lobby' && used.lobby === tk) return isHang(s) ? 'You started a back-to-lobby vote a moment ago.' : 'You already started a back-to-lobby vote this turn.';
+  if (kind === 'skip' && used.skip === tk) return 'You already started a skip vote this turn.';
+  if (kind === 'turn' && used.turn === tk) return 'You already started a vote to skip this turn.';
   return '';
 }
 export async function startKick(R, id) {
@@ -90,7 +91,7 @@ export function mountPlayers(S, getR) {
       const no = whyNotVote(s, R.me, kind), running = s.vote && s.vote.kind === kind;
       return `<button type="button" class="btn ghost" data-pa="${kind}vote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: ' : 'Start a vote: '}${words}</button>`;
     };
-    setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${isBb(s) ? '' : btn('turn', 'skip this turn')}${btn('skip', 'skip this round')}</span>
+    setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${isBb(s) || isHang(s) ? '' : btn('turn', 'skip this turn')}${isHang(s) ? '' : btn('skip', 'skip this round')}</span>
       <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span><span class="hints pm-keys">${NAV_HINTS}</span>`);
   };
   const open = (stay = false) => { sticky = sticky || stay; box.hidden = false; render(); };

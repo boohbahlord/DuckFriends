@@ -1551,3 +1551,27 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
   .wq-tduck { width: min(30%, 2.1rem); }
   .wq-tname { margin-top: .3rem; font-size: calc(.78rem * var(--ts)); }
 }
+
+/* ---------- Hangout: Duck Cabin (hangout/world.js) ----------
+   The board is a window on the world: the ground is a canvas under everything; each prop is an element sorted with the
+   ducks by its front (z-index), all in the board's own stacking context; the shade darkens the outside while my duck is
+   inside; the specials (fxl) stay over all of it. */
+.hang-board { overflow: hidden; border-radius: 18px; box-shadow: 0 0 0 3px #1c1c28, 0 8px 28px #0009; isolation: isolate; background: #08120d; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hang-ground { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.hang-props { position: absolute; inset: 0; pointer-events: none; }
+.hp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; transition: opacity .25s; }
+.hp > svg { display: block; overflow: visible; }
+.hp.thru { opacity: .38; }
+.hp .lit { transition: filter .3s; }
+.hp.off .lit { filter: brightness(.32) saturate(.4); }
+html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; animation: hang-flick .45s ease-in-out infinite alternate; }
+@keyframes hang-flick { from { transform: scale(1, 1); } to { transform: scale(.9, 1.12); } }
+.hang-board .gduck { transition: none; }
+.gduck.hang-hid { visibility: hidden; }
+.hang-board .fxl { z-index: 30000; }
+.hang-shade { position: absolute; z-index: 20000; pointer-events: none; box-shadow: 0 0 0 4000px rgba(5, 8, 20, .72); }
+.hang-btn { background: var(--yellow, #ffd23f); color: #1c1c28; min-width: 9rem; }
+.hang-btn kbd { color: inherit; background: transparent; border-color: currentColor; }
+.hang-btn.idle { visibility: hidden; }
+.gmain[data-phase="hang"] { touch-action: none; }
+.scene.cabin { background: radial-gradient(1.5px 1.5px at 12% 18%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 34% 8%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 58% 22%, #fffa 50%, transparent 51%), radial-gradient(1px 1px at 76% 12%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 90% 30%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 22% 40%, #fff6 50%, transparent 51%), radial-gradient(1px 1px at 66% 44%, #fff6 50%, transparent 51%), radial-gradient(60px 60px at 86% 10%, #fff4cf 40%, #fff4cf22 55%, transparent 70%), linear-gradient(#0b1030, #1d2a55 70%, #14301f); }

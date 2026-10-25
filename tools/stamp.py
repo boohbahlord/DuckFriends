@@ -7,7 +7,8 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 v = time.strftime('%Y%m%d%H%M', time.gmtime())
 page = os.path.join(root, 'index.html')
 html = open(page, encoding='utf-8').read()
-mods = sorted(f for f in os.listdir(os.path.join(root, 'js')) if f.endswith('.js'))
+js = os.path.join(root, 'js')   # every module, in js/ and its folders (js/hangout/ …)
+mods = sorted(os.path.relpath(os.path.join(d, f), js).replace(os.sep, '/') for d, _, fs in os.walk(js) for f in fs if f.endswith('.js'))
 imap = {'imports': {f'./js/{m}': f'./js/{m}?v={v}' for m in mods}}
 block = '<script type="importmap">' + json.dumps(imap, separators=(',', ':')) + '</script>'
 if '<script type="importmap">' in html:

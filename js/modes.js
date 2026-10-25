@@ -4,7 +4,8 @@
    Bicker Brackets: a tournament a round; the room picks a topic, writes the seeds and votes match by match.
    Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it.
    Who is the Quack?: everyone's Secret Card has the same word except one duck's; clues out loud, then walk onto a duck.
-   Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side. */
+   Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
+   Hangout: no rounds; everyone walks around Duck Cabin together until the room goes back to the lobby. */
 import { esc } from './ui.js';
 
 export const MODES = [
@@ -14,11 +15,13 @@ export const MODES = [
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
   { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
   { id: 'law', name: 'Lawyering', tip: 'Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.' },
+  { id: 'hang', name: 'Hangout', tip: 'No rounds, no votes: walk around Duck Cabin together, inside and out, until you all go back to the lobby.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Story Chain's
-   three lines of writing, each underlined in a different card color; Lawyering's sword over a shield */
+   three lines of writing, each underlined in a different card color; Lawyering's sword over a shield; Hangout's little
+   A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
   if (m.id === 'wyr') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
@@ -38,5 +41,9 @@ ${[['#2fa4ff', 22, 4], ['#ff8c2b', 17, 10.5], ['#37d421', 20, 17]].map(([c, w, y
   if (m.id === 'quack') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 ${[[5, '#ffd23f'], [15, '#ffd23f'], [25, '#3b3f4a']].map(([x, c]) => `<g transform="translate(${x} 16)"><ellipse cx="0" cy="2.6" rx="4.3" ry="3" fill="${c}" stroke="#1c1c28" stroke-width="1"/><circle cx="1" cy="-1.6" r="2.4" fill="${c}" stroke="#1c1c28" stroke-width="1"/><path d="M3 -1.8l2.3 .5-2.2 .9z" fill="#ff8c2b" stroke="#1c1c28" stroke-width=".6"/><circle cx="1.6" cy="-2.2" r=".45" fill="#1c1c28"/></g>`).join('')}
 <text x="25.6" y="9" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8.5" fill="#ff3d6e" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`;
+  if (m.id === 'hang') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
+<circle cx="25" cy="5" r="3" fill="#ffe9a8" stroke="#1c1c28" stroke-width="1"/><rect x="2" y="20" width="26" height="3" rx="1.5" fill="#37a046" stroke="#1c1c28" stroke-width="1"/>
+<path d="M4 21L15 3L26 21Z" fill="#a85a26" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M8.5 21L15 9.5L21.5 21Z" fill="#6e3a17" stroke="#1c1c28" stroke-width="1"/>
+<rect x="12.6" y="14" width="4.8" height="7" rx="1" fill="#ffd23f" stroke="#1c1c28" stroke-width="1"/></svg>`;
   return '';   // (Agree or Disagree's symbol is art.js's symbolSVG)
 }
