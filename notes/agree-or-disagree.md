@@ -1278,3 +1278,11 @@ Decision: the host stays in sudo for good (never "not in the sudoers file"), but
 `sudo groupadd …`, `sudo skip`, `sudo map sky`, `sudo song off Glow`. Without it, a sudo command answers "Permission
 denied (put sudo in front: sudo groupadd …)", and `sudo !!` fixes it. A group given a perm (canskip, canmute, cankick,
 cansettings) still types its command alone, since it isn't in sudo. The Help pages and man pages show sudo in front.
+
+## Specials: the number-key row on a touchscreen laptop (2026-10-25)
+
+i have a laptop with a stupid touchscreen built into the  laptop monitor i cant turn off, but maybe that is what is hiding the number key display for the specials
+
+(Yes: the row hid on any screen that told the page it was a touch screen, and a touchscreen laptop in Edge can say that.
+Now it hides only when there is no mouse or touchpad at all, and it shows anyway as soon as a key is pressed or a
+touchpad or mouse moves. Phones and tablets still have no row. Customize → Specials uses the same check for its words.)
