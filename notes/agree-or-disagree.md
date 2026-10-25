@@ -1235,3 +1235,25 @@ song at the same moment (online within about a tenth of a second), in the lobby 
 and, back in view, comes in where everyone is. Command line: `song` lists the songs (on or off, the one playing), `song
 off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
 all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
+
+## Specials: dagger, aiming, ducklings, disco ball (2026-10-25)
+
+dagger is one, and it throws a dagger that eventually curves down and falls off screen, causing the dead effect on every duck it hits. 
+
+ALSO NOW the direction of your mouse ON PC determines the direction the bullet or dagger goes into, and the dagger or gun moves around the duck when it is aimed. You can toggle the gun or dagger to keep it out and simply use left quick to use the weapon while it is out.
+
+Ducklings is a good idea for one
+
+disco ball is good
+
+Round lord doesnt play the effects anymore tbh.
+
+(Done: the Dagger is a new item. Its key throws it toward the mouse: it spins in a low arc, never over a duck's head, so
+every duck in its way plays dead until it moves, then it falls down off the screen. The handgun's bullet flies toward
+the mouse too. While aiming, the gun or the dagger turns around the duck to point at the mouse, and everyone sees it.
+Shift and the key keeps the weapon out (its key turns green); then a left click on the board shoots or throws, and Shift
+and the key puts it away. Both stay off when the host turns off the silly commands. Phones have no mouse: a weapon
+fires the way the duck faces. Ducklings: three little ducklings walk in a row behind you along your path. Disco ball: a
+disco ball spins over your head, its colored beams and spots sweeping over you. Both are effects (5 seconds, or kept on
+with Shift) and take Primary, Secondary and Accent colors; the Dagger takes three colors too. The Round Lord's cloud,
+the winner of a match and the podium no longer play the first effect on a duck's keys; effects only come from the keys.)

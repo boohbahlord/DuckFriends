@@ -14,11 +14,9 @@ import { nameHTML, fontHTML } from './name.js';
 import { cardBackground } from './card.js';
 import { rainbowHTML } from './art.js';
 import { roundName, writerShown, bbMatch, podium, bbStats, seedOut, SEED_MAX, TOPIC_MAX } from './rules.js';
-import { firstEffect, momentHTML } from './specials.js';
 
 const GONE = { name: 'Gone', duck: { color: '#b7bccb' }, card: { color: '#8a8fa3' }, nameStyle: {} };
 const inFont = (p, html) => fontHTML(p && p.nameStyle && p.nameStyle.font, html);   // (a player's font, scaled to match)
-const moment = p => { const id = p && firstEffect(p.duck); return id ? `<span class="sp-fx">${momentHTML(id, p.duck)}</span>` : ''; };   // (the first effect on the duck's keys)
 
 /* ---------- the cloud (shared with the Round Lord) ---------- */
 export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidden="true">
@@ -28,17 +26,17 @@ export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidde
 /* a duck on the cloud (or an empty cloud): p = the player, tip = what hovering the duck calls them */
 export function cloudHTML(p, tip = 'Round Lord') {
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) + moment(p) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ''}</div>
+    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: '', dead: !!p.dead }) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ''}</div>
     ${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div>
     <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : ''}</div></div>`;
 }
 /* two ducks on one cloud (a match's two writers): pa on the left facing right, pb on the right facing left. o.winner = 0 or
-   1 once it's decided (that duck wears its moment special); o.knocked = the loser is already off the cloud (knockOff in
+   1 once it's decided; o.knocked = the loser is already off the cloud (knockOff in
    duel.js plays the bump); o.both = nobody won, so both jump off (bothOff), and o.knocked then means they're gone */
 const MYSTERY = { duck: { color: '#b7bccb' } };
 export function duelCloudHTML(pa, pb, o = {}) {
-  const duck = (p, side) => `<div class="lord-duck duel-duck${o.winner === side ? ' won' : ''}" data-side="${side}"><div class="duel-in">${duckSVG((p || MYSTERY).duck, { size: 80, shadow: false, title: p ? p.name : 'A secret writer', dead: !!(p && p.dead) })}${o.winner === side ? moment(p) : ''}</div></div>`;
+  const duck = (p, side) => `<div class="lord-duck duel-duck${o.winner === side ? ' won' : ''}" data-side="${side}"><div class="duel-in">${duckSVG((p || MYSTERY).duck, { size: 80, shadow: false, title: p ? p.name : 'A secret writer', dead: !!(p && p.dead) })}</div></div>`;
   return `<div class="lord duel${o.winner != null ? ' decided' : ''}${o.both ? ' bothoff' : ''}${o.knocked ? ' knocked' : ''}"><div class="lord-sit">
     ${duck(pa, 0)}${duck(pb, 1)}${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div><div class="lord-name"></div></div>`;
@@ -192,7 +190,7 @@ export function bracketTopHTML(s) {
 export function podiumHTML(s) {
   const b = s.bb, pd = podium(b); if (!pd) return '';
   const step = (place, seeds, label) => `<div class="pod pod-${place}">
-    <div class="pod-ducks">${seeds.map(i => { const p = player(s, b.seeds[i].by); return `<span class="pod-duck">${duckSVG(p.duck, { size: 96, shadow: false, title: p.name })}${moment(p)}</span>`; }).join('')}</div>
+    <div class="pod-ducks">${seeds.map(i => { const p = player(s, b.seeds[i].by); return `<span class="pod-duck">${duckSVG(p.duck, { size: 96, shadow: false, title: p.name })}</span>`; }).join('')}</div>
     <div class="pod-block"><b class="pod-n">${label}</b>${seeds.map(i => seedCardHTML(s, b, i, { size: 'mini', tier: place === 1 ? 'gold' : place === 2 ? 'silver' : 'bronze' })).join('')}</div></div>`;
   /* on a phone the steps are too narrow for the cards: they show the places, and the cards line up under them */
   const row = (place, i, label) => `<div class="pod-row"><b class="pod-n">${label}</b>${seedCardHTML(s, b, i, { tier: place === 1 ? 'gold' : place === 2 ? 'silver' : 'bronze' })}</div>`;
