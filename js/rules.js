@@ -26,7 +26,7 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: 'board',         // board | sky | pixel | carnival | rabbit | ec
+  map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec
   mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)

@@ -1236,6 +1236,18 @@ and, back in view, comes in where everyone is. Command line: `song` lists the so
 off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
 all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
 
+## A starry night sky map, word for word (2026-10-25)
+
+Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.
+
+Yeah, i like these two new versions of the song a lot, now we can just add them to the game BUT make sure any high pitch notes or flutes arent too shriekish or ear piercing along with any other notes, like round the sound a little on some of those notes if need be too. THEN we NEED to deal with any popping noises still
+
+(Done: high notes in every voice are a touch softer, as the ear hears them louder; the pan flute and the ocarina are
+darker; the whole mix has a soft dip at 3 kHz, where shrill notes hurt. Every song measured 2.5 to 6.5 dB less shrill at
+its sharpest moment, at the same loudness. No hard clicks were found in any recording; the low notes of the kalimba,
+marimba and harps and the thump drum now come in a little slower, as a round "dum" instead of a pop, and a note played
+live whose moment has just gone by starts with its full soft shape. The owner was asked where they still hear pops.)
+
 ## Specials: dagger, aiming, ducklings, disco ball (2026-10-25)
 
 dagger is one, and it throws a dagger that eventually curves down and falls off screen, causing the dead effect on every duck it hits. 
