@@ -3,6 +3,7 @@
    cloud with the title across it and the symbol at its top left), the front page's duck in a ball pit, and the page's
    Twister-like shapes. Nothing here is a file, so everything is sharp at any size and changes with the theme. */
 import { duckSVG, DUCK_DEFAULT } from './duck.js';
+import { playroom } from './playroom.js';
 import { HAT_TOP } from './hats.js';
 import { esc } from './ui.js';
 import { modeOf, modeSymbol } from './modes.js';
@@ -185,7 +186,7 @@ function backdropParts(w, h, dark) {
      fades) a little after the last, so the light rolls across the floor */
   base.push(`<rect y="${hz}" width="${w}" height="${h - hz}" fill="url(#bdfloor)"/>`);
   const px = (x, z) => w / 2 + x * K2 / z, py = z => hz + K / z;
-  for (let z = .95, row = 0; z < 9; z *= 1.24, row++) {
+  for (let z = .95, row = 0; z < 16; z *= 1.24, row++) {
     const rx = .42 * K2 / z, ry = rx * .42, y = py(z); if (y > h + ry) continue;
     const groups = cols.map((_, c) => ({ dl: (row * .55 + c * 1.1) % 4.4, y0: Math.max(hz, y - ry * 2), y1: Math.min(h, y + ry * 2), items: [] }));
     for (let X = -60; X <= 60; X++) {
@@ -228,21 +229,41 @@ function backdropParts(w, h, dark) {
 ${cols.map((c, k) => `<radialGradient id="bdg${k}"><stop offset=".35" stop-color="${c}" stop-opacity=".55"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
 <filter id="bdglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>`;
-  return { w, h, defs, base, dots, bulbs, shapes };
+  const room = playroom(w, h, dark);
+  return { w, h, defs: defs.replace('</defs>', room.defs + '</defs>'), base, dots, bulbs, shapes, room };
 }
 /* a drawing of some parts; y0, y1: only that band of the page (the fading layers stay small: the floor, the lights) */
 const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${y0.toFixed(1)} ${P.w} ${(y1 - y0).toFixed(1)}" width="${P.w}" height="${(y1 - y0).toFixed(0)}" preserveAspectRatio="none" aria-hidden="true">${P.defs}${sky ? `<rect width="${P.w}" height="${P.h}" fill="url(#bdsky)"/>` : ''}${body}</svg>`;
 /* the whole backdrop as one still drawing */
 export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark);
-  return svgOf(P, P.base[0] + `<g opacity=".5">${P.dots.map(d => d.items.join('')).join('')}</g>` + P.base.slice(1).join('') + P.bulbs.flat().join('')
+  return svgOf(P, P.base[0] + `<g opacity=".5">${P.dots.map(d => d.items.join('')).join('')}</g>` + P.room.still + P.room.bulbs.flat().join('') + P.room.letters.map(g => g[0].join('')).join('') + P.base.slice(1).join('') + P.bulbs.flat().join('')
     + P.shapes.map(x => `<g transform="translate(${x.x.toFixed(0)} ${x.y.toFixed(0)})">${x.inner}</g>`).join(''), true).replace(' xmlns="http://www.w3.org/2000/svg"', '');
+}
+/* the playroom's layers: the still part, the bulbs, the letters and the train (see playroom.js) */
+const pct = (y, h) => (y / h * 100).toFixed(3) + '%';
+function roomHTML(P, img, dark) {
+  const R = P.room, h = P.h, band = (y0, y1) => `top:${pct(y0, h)};height:${pct(y1 - y0, h)}`, T = R.train;
+  return img(svgOf(P, R.still, false, R.stillTop, R.stillBottom), '', band(R.stillTop, R.stillBottom))
+    + R.bulbs.map((b, k) => b.length ? img(svgOf(P, b.join(''), false, R.bulbTop, R.bulbBottom), 'bd-pgb', `${band(R.bulbTop, R.bulbBottom)};--dl:-${(k * .4).toFixed(1)}s`) : '').join('')
+    + R.letters.map((g, k) => g.map((L, c) => img(svgOf(P, `<g${dark ? ' filter="url(#pgglow)"' : ''}>${L.join('')}</g>`, false, R.letterTop, R.letterBottom), `bd-bk bd-bk${c}`, `${band(R.letterTop, R.letterBottom)};--dl:-${(c * 1.5 + k * .45).toFixed(2)}s`)).join('')).join('')
+    + trainHTML(T, P.w, h);
+}
+/* the train runs across in 60% of its 26 s and waits off the page for the rest; its wheels turn at its speed */
+function trainHTML(T, w, h) {
+  const dur = 26, speed = (w + T.W) / (dur * .6), src = svg => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return `<div class="pg-train" style="top:${pct(T.top, h)};width:${T.W.toFixed(0)}px;height:${T.H.toFixed(0)}px;--run:${w}px;--dur:${dur}s">`
+    + `<img class="pg-body" alt="" draggable="false" src="${src(T.svg)}">`
+    + T.wheels.map(q => `<img class="pg-wheel" alt="" draggable="false" style="left:${(q.x - q.r).toFixed(1)}px;top:${(q.y - q.r).toFixed(1)}px;width:${(q.r * 2).toFixed(1)}px;--wd:${(Math.PI * 2 * q.r / speed).toFixed(2)}s" src="${src(q.svg)}">`).join('')
+    + [0, 1, 2].map(k => `<span class="pg-smoke" style="left:${T.smoke.x.toFixed(0)}px;top:${T.smoke.y.toFixed(0)}px;--s:${(T.ut * .5).toFixed(0)}px;--dl:-${(k * .8).toFixed(1)}s"></span>`).join('')
+    + '</div>';
 }
 /* the backdrop as layers that animate cheaply (see above) */
 export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark), img = (svg, cls = '', style = '') => `<img class="bd-layer${cls ? ' ' + cls : ''}" alt="" draggable="false"${style ? ` style="${style}"` : ''} src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}">`;
   return img(svgOf(P, P.base[0], true))
     + P.dots.map(d => img(svgOf(P, d.items.join(''), false, d.y0, d.y1), 'bd-dots', `top:${(d.y0 / h * 100).toFixed(3)}%;height:${((d.y1 - d.y0) / h * 100).toFixed(3)}%;--dl:-${d.dl.toFixed(2)}s`)).join('')
+    + roomHTML(P, img, dark)
     + img(svgOf(P, P.base.slice(1).join('')))
     + P.bulbs.map((b, k) => b.length ? img(svgOf(P, `<g filter="url(#bdglow)">${b.join('')}</g>`, false, 0, h * .3), 'bd-bulbs', `height:30%;--dl:-${(k * .87).toFixed(2)}s`) : '').join('')
     + P.shapes.map(x => { const k = Math.ceil(x.s * 1.6); return `<div class="bd-sh" style="left:${(x.x / w * 100).toFixed(2)}%;top:${(x.y / h * 100).toFixed(2)}%;width:${k * 2}px;height:${k * 2}px;margin:-${k}px 0 0 -${k}px;${x.vars}"><svg viewBox="${-k} ${-k} ${k * 2} ${k * 2}" aria-hidden="true">${x.inner}</svg></div>`; }).join('');
