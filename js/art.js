@@ -103,6 +103,7 @@ ${legs}${wheel}${tent}${edge}
    game's symbol at the top left */
 /* the map's world behind the picture (no columns: the picture shows where the game is played) */
 function artBackdrop(map) {
+  if (map === 'rabbit') return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === 'ec') return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>
 <circle cx="268" cy="70" r="34" fill="#ffb347" opacity=".22"/><rect width="480" height="270" fill="url(#ecscan)" opacity=".5"/>
 <defs><pattern id="ecscan" width="4" height="4" patternUnits="userSpaceOnUse"><rect y="3" width="4" height="1" fill="#000" opacity=".35"/></pattern></defs>`;

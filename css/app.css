@@ -548,6 +548,16 @@ html.still .sky-cloud { animation: none !important; left: var(--x, 30%); }
 .map-pixel .col { background: color-mix(in srgb, var(--c) 38%, transparent); image-rendering: pixelated; }
 .map-pixel .col::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='none' stroke='%23000' stroke-opacity='.16' stroke-width='.4'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff' fill-opacity='.22'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%23000' fill-opacity='.14'/%3E%3Crect x='2' y='5' width='2' height='1' fill='%23fff' fill-opacity='.16'/%3E%3Crect x='6' y='4' width='1' height='2' fill='%23000' fill-opacity='.12'/%3E%3Crect x='5' y='6' width='1' height='1' fill='%23fff' fill-opacity='.2'/%3E%3Crect x='1' y='6' width='1' height='1' fill='%23000' fill-opacity='.12'/%3E%3C/svg%3E"); background-size: 3rem 3rem; image-rendering: pixelated; pointer-events: none; opacity: .8; }
 .map-sky .col-name, .map-pixel .col-name { position: relative; color: #fff; background: #0000006b; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }   /* readable over any scene */
+/* Rabbit Hole: the fractal fills the page; the tiles stay see-through but a little firmer, and names sit on pills */
+.scene.rabbit { background: #12061f; }
+.scene.rabbit canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scene.rabbit.rh-plain { background: conic-gradient(from 0deg, #ff4fd8, #7b5cff, #19d3ff, #4dff9a, #ffe14d, #ff7a3d, #ff4fd8); }
+html.moving .scene.rabbit.rh-plain { animation: rhspin 40s linear infinite; }
+@keyframes rhspin { to { filter: hue-rotate(360deg); } }
+.map-rabbit { --board-a: 58%; }
+.map-rabbit .col { background: color-mix(in srgb, var(--c) 58%, transparent); border-right-color: #ffffff38; box-shadow: inset 0 0 0 .14rem #ffffff40; }
+.map-rabbit .col-name { position: relative; color: #fff; background: #12061fcc; border-radius: .45rem; padding: .1rem .45rem; text-shadow: none; }
+.map-rabbit .wyr-or, .map-rabbit .bb-vs { background: color-mix(in srgb, #12061f var(--board-a), transparent); }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival { background: #0d0722; }
 .scene.carnival > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -1072,6 +1082,8 @@ html.moving .ec-glow { animation: ecglow 2.3s ease-in-out infinite; }
 .ec-flash.dark { background: #000; }
 html.lite .ec-static, html.lite .ec-flash { display: none; }
 .mm-ec { background: url(../assets/maps/ethers-crossroads.png) center / cover; image-rendering: pixelated; }
+.mm-rabbit { background: url(../assets/maps/rabbit-hole.jpg) center / cover; }
+html.moving .mm-rabbit { animation: rhspin 40s linear infinite; }
 .mm-ec::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, transparent 0 2px, #0000003a 2px 3px); }
 .mm-glow { position: absolute; width: calc(1.6rem * var(--k)); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, #ffcf7aaa, transparent); }
 .map-ec .col { background: color-mix(in srgb, var(--c) 42%, transparent); border-right-color: #00000040; }

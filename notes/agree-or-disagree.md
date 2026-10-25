@@ -668,3 +668,10 @@ the gun can also be a smidgen lower but u did a good job with that one it is fun
 (Chose "New map: Carnival Night" over upgrading Night Show: a Ferris wheel and string lights, a big top, marquee bulbs chasing around the tiles, fireworks when the votes are in.)
 
 FOR bracket game mode, make sure whoever in charge of it will later implement the two ducks on the cloud feature for that one, and then player's ducks will both be on the cloud, and the loser duck gets nudged off by the other duck, making the loser duck fall down to the bottom of the screen and through it with a falling sound effect. WHen they nudge the duck off the cloud, there is also a quack sound effect. That feature in the cloud is the same for this game mode called "The Court"
+
+map suggestions
+
+how about a psychedelic visual? like a fractal sort of, a very colorful and complex one I sent some examples. I want the fractal to be animated and moving, like your falling deeper into it as it morphs and feels recursive yet different the more you fall into it, and the colors all shifts and the textures drift as moving patterns of themselves that contain themselves. Do that for the map background and ask me questions if need be
+
+(Built as a new map, "Rabbit Hole": a Julia-set fractal zooming forever into its spiral center, with the shape slowly
+morphing and the colors turning. Drawn with WebGL; a turning color wheel where WebGL is missing.)

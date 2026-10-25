@@ -25,7 +25,7 @@ let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = 
 
 const INFO = {
   type: 'Which game: Agree or Disagree, Would You Rather, or Bicker Brackets.',
-  map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night or Ether\'s Crossroads.',
+  map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Rabbit Hole or Ether\'s Crossroads.',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
   friends: 'Invite your friends to this room, or add a friend by code.',
