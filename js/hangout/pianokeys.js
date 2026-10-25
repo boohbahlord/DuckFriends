@@ -95,12 +95,16 @@ export function makeTracker({ chordMs = 60 } = {}) {
    high ones first, so the note starts a little bright and settles warm), the lowest two doubled a hair apart so they
    breathe. Every partial swells in over 5-7 ms from silence and there is no noise at all at the start (a burst of noise
    at a note's start is heard as crackling). Letting go brings the damper down: a short, natural fade. Through a soft
-   treble cut, a small made room and a gentle limiter, so chords never clip. Volume and Sound effects in Settings
-   scale it, as for every sound. */
+   treble cut, a small made room, a gentle limiter and, last, a soft ceiling, so a crowd of notes never clips (the
+   limiter turns quiet sound up by itself, so many keys at once went over the top). Volume and Sound effects in
+   Settings scale it, as for every sound.
+   Every key is set to sound LEAD from now: a note set to start in the past skips its fade-in and clicks, or even starts
+   at full volume. Firefox's clock only moves between tasks, so "now" can already be several ms gone. */
 const COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
 const vol = () => (profile.settings.sound / 100) * (profile.settings.sfx / 100);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const damperTau = m => clamp(.32 - (m - 36) * .004, .11, .32);
+const LEAD = .02;
 
 function roomIR(ctx, sec) {
   const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate), pre = Math.floor(ctx.sampleRate * .012), fin = ctx.sampleRate * .01;
@@ -114,7 +118,11 @@ function chain(ctx, dest, lite) {
   const inp = ctx.createGain(), shelf = ctx.createBiquadFilter(), comp = ctx.createDynamicsCompressor();
   shelf.type = 'highshelf'; shelf.frequency.value = 2600; shelf.gain.value = -4;
   comp.threshold.value = -14; comp.knee.value = 10; comp.ratio.value = 3.5; comp.attack.value = .004; comp.release.value = .3;
-  inp.connect(shelf).connect(comp).connect(dest);
+  // the ceiling: straight up to .8, then rounding off below 1 (its input is halved, as a curve only reads -1..1)
+  const half = ctx.createGain(), cap = ctx.createWaveShaper(), curve = new Float32Array(1025);
+  for (let i = 0; i < curve.length; i++) { const x = 2 * (i / 512 - 1), a = Math.abs(x); curve[i] = Math.sign(x) * (a <= .8 ? a : .8 + .2 * Math.tanh((a - .8) / .2)); }
+  half.gain.value = .5; cap.curve = curve;
+  inp.connect(shelf).connect(comp).connect(half).connect(cap).connect(dest);
   const rev = ctx.createConvolver(), wet = ctx.createGain();
   rev.buffer = roomIR(ctx, lite ? 1.1 : 1.7); wet.gain.value = lite ? .12 : .17;
   inp.connect(rev); rev.connect(wet).connect(comp);
@@ -134,7 +142,8 @@ function strike(ctx, out, midi, t, vel, gain, lite) {
   const oscs = []; let end = t;
   amps.forEach((a, k) => {
     const n = k + 1, fn = f * n * Math.sqrt(1 + B * n * n), tn = tau1 / (1 + .55 * (n - 1)), att = n >= 4 ? .005 : .007;
-    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a * peak, t + att);
+    const g = ctx.createGain(); g.gain.value = 0;                          // (0 first: set late, it stays quiet, not loud)
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a * peak, t + att);
     g.gain.setTargetAtTime(a * peak * .42, t + att, tn * .18);            // the bright first moment
     g.gain.setTargetAtTime(0, t + att + tn * .5, tn);                      // the long ring after it
     g.connect(damper);
@@ -172,14 +181,14 @@ function ctx() {
 const MAX_VOICES = 28;
 export function noteOn(midi, { who = '', vel = .8 } = {}) {
   const a = ctx(), v = vol(); if (!a || !v) return;
-  const k = who + '|' + midi, t = a.currentTime + .004;
+  const k = who + '|' + midi, t = a.currentTime + LEAD;
   const old = live.get(k); if (old) old.release(t, .03);   // struck again: the old one stops quickly
   if (live.size >= MAX_VOICES) { const [ok, ov] = live.entries().next().value; ov.release(t, .05); live.delete(ok); }
   live.delete(k); live.set(k, strike(a, OUT, midi, t, vel * (.96 + Math.random() * .08), v, COARSE));
 }
 export function noteOff(midi, { who = '' } = {}) {
   const k = who + '|' + midi, vc = live.get(k); if (!vc || !AC) return;
-  live.delete(k); vc.release(AC.currentTime + .004, damperTau(midi));
+  live.delete(k); vc.release(AC.currentTime + LEAD, damperTau(midi));   // (the same lead: a quick tap still sounds)
 }
 export function allNotesOff(who) { for (const k of [...live.keys()]) if (who == null || k.startsWith(who + '|')) noteOff(+k.split('|')[1], { who: k.split('|')[0] }); }
 /* the voice written out, for tests: events [{ midi, t, d, vel }] in seconds */
