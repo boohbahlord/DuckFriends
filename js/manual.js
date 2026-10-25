@@ -83,7 +83,7 @@ export const MAN = {
   groups: 'groups [@name]: the groups someone is in (you, by default).',
   members: 'members <group>: who is in a group.',
   getent: 'getent group [group]: a group\'s line, group:x:members:perms; with no group, every group in the room.',
-  sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it. sudo !! reruns the last command with sudo. sudo -l: what sudo lets you do. sudo -v: checks that you are in sudo. sudo -h: this. If you are in sudo, the word is optional (groupadd works like sudo groupadd).',
+  sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it. sudo !! reruns the last command with sudo. sudo -l: what sudo lets you do. sudo -v: checks that you are in sudo. sudo -h: this. Everyone in sudo types the word, the host too (groupadd alone says Permission denied); a group given a perm like canskip types its command without it.',
   usermod: 'sudo usermod [-a | -r] -G group[,group] @name: -aG adds to groups, -rG takes out of them, -G alone sets exactly these. sudo usermod @name adds to sudo. The @ is optional, and -a -G, -aG and --append --groups all work.',
   useradd: 'sudo useradd -G group[,group] name: the ducks are already here, so this puts one in groups (the same as usermod -aG). The @ is optional.',
   userdel: 'userdel: ducks can\'t be deleted; kick @name removes one from the room.',

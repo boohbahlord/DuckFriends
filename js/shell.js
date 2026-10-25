@@ -164,9 +164,16 @@ const who = (ctx, names) => {
 };
 const needRoom = ctx => { if (!ctx.room) fail('✗ That works in a room.'); return ctx.room.state; };
 const noSudo = ctx => `✗ ${ctx.meName} is not in the sudoers file. This incident will be reported.`;
-/* sudo's commands: the host and sudo may leave out the word sudo; anyone else is told they aren't in sudo */
-const needSudo = (x, cmd) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail(x.sudo ? noSudo(x.ctx) : `✗ ${cmd}: Permission denied (only the host and sudo can)`); return s; };
-const needMay = (x, perm, what) => { const s = needRoom(x.ctx); if (!may(s, x.ctx.room.me, perm)) fail(`✗ ${what}: only the host, sudo, or a group with ${perm}.`); return s; };
+/* the host's job: sudo's powers take the word sudo, the host's too (sudo groupadd …); a group given the perm (canskip …)
+   runs its command without it; anyone else is told they aren't in sudo */
+const needPower = (x, cmd, perm) => {
+  const s = needRoom(x.ctx), me = x.ctx.room.me;
+  if (perm && denied(s, me, perm)) return s;
+  if (isSudo(s, me)) { if (!x.sudo) fail(`✗ ${cmd}: Permission denied (put sudo in front: sudo ${(x.meta && x.meta.raw || '').trim() || cmd + ' …'})`); return s; }
+  fail(x.sudo ? noSudo(x.ctx) : `✗ ${cmd}: Permission denied (only sudo${perm ? `, or a group with ${perm},` : ''} can)`);
+};
+const needSudo = (x, cmd) => needPower(x, cmd);
+const needMay = (x, perm, what) => needPower(x, what, perm);
 /* adduser and deluser: the player and the group, in either order (the @ or the group's name tells them apart) */
 const userGroup = (args, s) => { const G = roomGroups(s), g = args.find(a => !a.startsWith('@') && G[a.toLowerCase()]) ?? args.findLast(a => !a.startsWith('@')), at = args.find(a => a !== g); return [at, at === undefined ? undefined : g]; };
 /* what is wrong with a new group's name, if anything */
@@ -239,11 +246,11 @@ function forgameShow(s) {
     `  order ${o.order} · freeroam ${o.freeRoam ? 'on' : 'off'} · gravity ${o.lowGravity ? 'low' : 'normal'} · silly ${o.fun ? 'on' : 'off'}`,
     `  mutes for everyone: ${mutes.join('; ') || 'none'}`].join('\n');
 }
-function forgame(ctx, args) {
-  const s = needRoom(ctx), me = ctx.room.me, a0 = (args[0] || '').toLowerCase(), onOff = args.find(a => /^(on|off)$/i.test(a)), on = /^on$/i.test(onOff || '');
+function forgame(x, args) {
+  const ctx = x.ctx, s = needRoom(ctx), a0 = (args[0] || '').toLowerCase(), onOff = args.find(a => /^(on|off)$/i.test(a)), on = /^on$/i.test(onOff || '');
   if (a0 === 'show' || !args.length) return forgameShow(s);
   if (s.phase === 'lobby') fail('✗ forgame works during a game (in the lobby, the Game options do this).');
-  const set = v => { if (!may(s, me, 'cansettings')) fail('✗ forgame: only the host, sudo, or a group with cansettings.'); ctx.room.send({ t: 'forgame', set: v }); };
+  const set = v => { needMay(x, 'cansettings', 'forgame'); ctx.room.send({ t: 'forgame', set: v }); };
   if (a0 === 'all-timer') { if (!onOff) fail('✗ forgame all-timer off (or on)'); set(on ? { catchUp: 15, answerTime: 30, answerOff: 0 } : { catchUp: 0, answerTime: 0, submitTime: 0, answerOff: 1 }); return `Every timer ${on ? 'on' : 'off'} for the rest of the game.`; }
   if (a0 === 'timer') {
     const which = args.slice(1).find(a => !/^(on|off|\d+)$/i.test(a)), secs = +(args.find(a => /^\d+$/.test(a)) || 0);
@@ -257,7 +264,7 @@ function forgame(ctx, args) {
   if (['freeroam', 'silly'].includes(a0)) { if (!onOff) fail(`✗ forgame ${a0} on | off`); set({ [a0 === 'silly' ? 'fun' : 'freeRoam']: on ? 1 : 0 }); return `${a0 === 'silly' ? 'Silly commands' : 'Free roam'} ${on ? 'on' : 'off'}.`; }
   if (a0 === 'gravity') { const v = (args[1] || '').toLowerCase(); if (!['low', 'normal'].includes(v)) fail('✗ forgame gravity low | normal'); set({ lowGravity: v === 'low' ? 1 : 0 }); return `Gravity: ${v}.`; }
   const mi = args.findIndex(a => /^\\mute$/i.test(a)); if (mi < 0) fail(`✗ ${MAN.forgame}`);
-  if (!may(s, me, 'canmute')) fail('✗ forgame \\mute: only the host, sudo, or a group with canmute.');
+  needMay(x, 'canmute', 'forgame');
   const pre = args.slice(0, mi), post = args.slice(mi + 1), mute = { on: false, kinds: [], who: [], turns: 0, stages: [], count: 0 };
   for (let i = 0; i < pre.length; i++) {
     const w = pre[i].toLowerCase(), r = w.match(/^(?:rounds|turns)(\d+)$/), st = w.match(/^stage(\d*)$/);
@@ -607,7 +614,7 @@ const CMDS = {
   /* the room and the game */
   hostname: (args, i, x) => {
     const s = needRoom(x.ctx); if (!args.length) return s.name || 'DuckFriends';
-    if (!isSudo(s, x.ctx.room.me)) fail(x.sudo ? noSudo(x.ctx) : '✗ hostname: only the host and sudo can rename the room');
+    needSudo(x, 'hostname');
     const n = args.join(' ').replace(/\s+/g, ' ').trim().slice(0, 32); x.ctx.room.send({ t: 'roomName', name: n }); return `The room is now ${n}.`;
   },
   uname: (args, i, x) => { const s = x.ctx.room && x.ctx.room.state; if (!args.includes('-a')) return 'DuckFriends'; return `DuckFriends pond ${VERSION} ${s ? `${modeOf(s.options.mode).name} · ${mapName(s.options.map)}` : ''} duckbash`.replace(/\s+/g, ' '); },
@@ -639,17 +646,17 @@ const CMDS = {
   map: (args, i, x) => {
     const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')]));
     const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(`✗ map: no map ${args.join(' ')} (map lists them)`);
-    if (!isSudo(s, x.ctx.room.me)) fail('✗ map: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
+    needSudo(x, 'map'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
     x.ctx.room.send({ t: 'options', options: { map: m[0] } }); return `Map: ${m[1]}.`;
   },
   mode: (args, i, x) => {
     const s = needRoom(x.ctx); if (!args.length) return table(MODES.map(m => [m.id, m.name + (m.id === s.options.mode ? '  (now)' : '')]));
     const id = args.join(' ').toLowerCase(), m = MODES.find(v => v.id === id || v.name.toLowerCase() === id || v.name.toLowerCase().startsWith(id)); if (!m) fail(`✗ mode: no game type ${args.join(' ')} (mode lists them)`);
-    if (!isSudo(s, x.ctx.room.me)) fail('✗ mode: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ mode: in the lobby.');
+    needSudo(x, 'mode'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ mode: in the lobby.');
     x.ctx.room.send({ t: 'options', options: { mode: m.id } }); return `Game: ${m.name}.`;
   },
-  start: (a, i, x) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail('✗ start: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ start: the game is already going.'); x.ctx.room.send({ t: 'start' }); return 'Starting…'; },
-  forgame: (args, i, x) => forgame(x.ctx, args),
+  start: (a, i, x) => { const s = needSudo(x, 'start'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ start: the game is already going.'); x.ctx.room.send({ t: 'start' }); return 'Starting…'; },
+  forgame: (args, i, x) => forgame(x, args),
   song: (args, i, x) => songs(x, args),
   songs: (args, i, x) => songs(x, []),
   roundstats: (args, i, x) => statLines(x.ctx, 'round', args),
@@ -670,7 +677,7 @@ function songs(x, args) {
   if (!sub || sub === 'list' || sub === '-l') return table(names.map(n => [qn(n), off.has(n) ? 'off' : 'on', np && np.name === n ? (np.next ? '(next)' : '(playing now)') : '']));
   if (sub === 'now') return np && np.name ? `${np.next ? `Next, in ${np.in} s` : 'Playing now'}: ${np.name}` : 'No song is on.';
   if (sub !== 'on' && sub !== 'off') fail(`✗ song: usage: song [list] · song now · song on|off name… · song on|off all (man song)`);
-  if (!may(s, x.ctx.room.me, 'cansettings')) fail(`✗ song ${sub}: only the host, sudo, or a group with cansettings.`);
+  needMay(x, 'cansettings', `song ${sub}`);
   if (!rest.length) fail(`✗ song ${sub}: which song? song lists them. A name with spaces goes in quotes: song ${sub} "Jester's Stair"`);
   if (rest.length === 1 && rest[0].toLowerCase() === 'all') {
     x.ctx.room.send(sub === 'on' ? { t: 'songs', all: 'on' } : { t: 'songs', off: names });
@@ -696,7 +703,7 @@ function sudoList(ctx) {
     const gives = Object.keys(PERMS_GIVE).filter(p => may(s, me, p));
     return { out: `${noSudo(ctx).slice(2)}${gives.length ? `\nYour groups give you: ${gives.map(p => `${p} (${PERMS_GIVE[p]})`).join(', ')}.` : ''}`, code: 1 };
   }
-  return [`${ctx.meName} may run, as sudo:`, '  usermod useradd gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start, song on|off', '(The word sudo is optional for you.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
+  return [`${ctx.meName} may run, as sudo:`, '  usermod useradd gpasswd adduser deluser groupadd groupmod groupdel hostname', '  skip, kick, forgame, map, mode, start, song on|off', '(Type sudo first: sudo skip.)', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
 }
 
 /* ---------- running a command ---------- */
