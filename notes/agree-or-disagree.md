@@ -1298,3 +1298,11 @@ also the bar that shows where the default percent is has moved around into place
 (The music bar's slider box stretched to the song name's width, so its line sat past 100% when the name was long. Now
 the box is exactly the slider's width, and the line is on 100% for any song name; the Settings → Audio line was already
 on it. Checked in Chromium and Firefox, phone and computer.)
+
+## Specials: cooldown bars on the number keys (2026-10-25)
+
+There is a cooldown bar that shows on the player's number keys UNTIL they can use certain items again, like the dagger or the gun and other things
+
+(Done: every item waits a moment before its key works again: the handgun 3 seconds, the dagger 2, confetti rain 15, the
+others 1.5. While it waits, its key dims and a yellow bar along its bottom drains to nothing; the key stays on the screen
+until it is ready, even after the rest of the row slides away. A phone's ring of specials shows the same bar.)

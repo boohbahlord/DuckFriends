@@ -18,7 +18,7 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
-  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt } from './rules.js';
+  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds } from './rules.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
@@ -841,6 +841,12 @@ function fire(id) {
   if (!me || me.x < 0 || !R || !onBoardPhase()) return;
   const [ax, ay] = myAim(); R.send({ t: 'use', what: id, face: ax < 0 ? -1 : 1, ax, ay });
 }
+/* the items on my keys still waiting to work again: [ends (room clock), how long it waits, now] for each key, or null */
+function cool() {
+  if (!R) return [];
+  const now = clockNow();
+  return keysOf(myDuck()).map(id => { const sp = specialById(id); if (!sp || sp.kind !== 'item') return null; const end = coolEnds(R.state, R.me, id); return end > now ? [end, coolFor(id), now] : null; });
+}
 const aimAt = e => { mouse = { x: e.clientX, y: e.clientY }; };   // (the handgun and the dagger aim at the mouse)
 const KEY_CODES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 const keyIndex = e => { const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code); return m ? KEY_CODES.indexOf(m[1]) : -1; };
@@ -1253,7 +1259,7 @@ register('game', {
     docks = mountDocks(S, HINTS); mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
-    bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey });
+    bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey, cool });
     addEventListener('mousemove', aimAt);
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
