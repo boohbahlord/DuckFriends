@@ -1286,3 +1286,7 @@ i have a laptop with a stupid touchscreen built into the  laptop monitor i cant 
 (Yes: the row hid on any screen that told the page it was a touch screen, and a touchscreen laptop in Edge can say that.
 Now it hides only when there is no mouse or touchpad at all, and it shows anyway as soon as a key is pressed or a
 touchpad or mouse moves. Phones and tablets still have no row. Customize → Specials uses the same check for its words.)
+
+(From the specials thread, the owner: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
+turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
+phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)
