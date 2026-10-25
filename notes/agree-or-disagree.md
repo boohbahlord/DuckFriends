@@ -1049,3 +1049,18 @@ to 3.6 times their length to build. Phones now play the music at a sample rate o
 4.2 kHz anyway), with simpler heavy voices (one oscillator for the pads, the felt piano and the bass; no vibrato; no
 sub-octaves, tines or detuned twins) and shorter tails: the three heavy songs take about a fifth of the work they take
 on a computer. Computers are unchanged.)
+
+## Joining mid-game, word for word (2026-10-25)
+
+Someone make someone who joins mid game able to vote and play everyone else
+
+(Done: a player who joins a game in progress plays at once, in every mode, instead of waiting for the next round's
+writing stage. Agree or Disagree and Would You Rather: they vote on the question that's up (in the writing stage they
+write one; on the stats screen they can be ready). Bicker Brackets: they vote on the match that's up, or the next one
+(the seeds were already shared out, so they don't write one that tournament). Story Chain: they get a line at the end
+of the paragraph being written, with a game word, and vote on lines, words and what's next. Lawyering: they help pick
+the attorneys, or join the jury and vote. Who is the Quack?: while the word is picked, during the clues, or while the
+room chooses between voting and more clues, they get a tile and a Secret Card with the word (never the Quack, once the
+cards are dealt) and vote like everyone. Only while the room talks a turn over, or is in the middle of voting out a
+Quack, do they walk and chat until the next question, match, case or lap of clues, because a tile added mid-vote would
+move the tiles under everyone's feet.)
