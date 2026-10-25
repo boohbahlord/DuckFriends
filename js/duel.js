@@ -1,7 +1,8 @@
 /* ---------- the cloud duel: two ducks share the cloud, and the winner bumps the loser off ----------
    Bicker Brackets puts both contenders' writers on the cloud while a match is voted on; once the votes are in, the
    winner waddles over, bumps the loser (a quack) and the loser tumbles off the cloud and falls through the bottom of the
-   screen (a slide-whistle fall), while the winner settles in the middle. The Court will use it the same way.
+   screen (a slide-whistle fall), while the winner settles in the middle. Lawyering uses it the same way for its two
+   attorneys, and on a hung jury both jump off the cloud together (bothOff).
    The cloud itself comes from duelCloudHTML (brackets.js); knockOff plays the bump on it. */
 import { sfx } from './sound.js';
 
@@ -32,4 +33,29 @@ export function knockOff(lord, loser, done = () => {}) {
     setTimeout(() => sfx.fall(), 200);
     setTimeout(settle, 360);
   }, 360);
+}
+
+/* a falling copy of a duck on the cloud, fixed to the screen: it hops out to its side, then drops through the bottom */
+function drop(duck, dir, hop) {
+  const r = duck.getBoundingClientRect(), copy = duck.cloneNode(true);
+  copy.classList.remove('lord-duck'); copy.classList.add('duel-falling');
+  Object.assign(copy.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px' });
+  document.body.append(copy); duck.style.visibility = 'hidden';
+  const fall = innerHeight - r.top + r.height * 1.5;
+  copy.animate([
+    { transform: 'none' },
+    { transform: `translate(${dir * r.width * .7}px, ${-r.height * hop}px) rotate(${dir * 20}deg)`, offset: .24 },
+    { transform: `translate(${dir * r.width * 1.5}px, ${fall}px) rotate(${dir * 260}deg)` },
+  ], { duration: 1600, easing: 'cubic-bezier(.35, 0, .7, .4)' }).onfinish = () => copy.remove();
+}
+/* nobody won: both ducks jump off the cloud together, one to each side */
+export function bothOff(lord, done = () => {}) {
+  const ducks = [0, 1].map(k => lord && lord.querySelector(`.duel-duck[data-side="${k}"]`));
+  const settle = () => { lord.classList.add('knocked'); done(); };
+  if (!ducks[0] || !ducks[1]) { done(); return; }
+  if (html.classList.contains('still') || !ducks[0].animate) { settle(); return; }
+  sfx.quack();
+  ducks.forEach((d, k) => drop(d, k ? 1 : -1, .9));
+  setTimeout(() => sfx.fall(), 260);
+  setTimeout(settle, 400);
 }

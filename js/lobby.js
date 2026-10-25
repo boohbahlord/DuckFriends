@@ -79,6 +79,12 @@ const QUACK_TILES = [
   ['wqQuacks', 'Quacks', [[1, '1'], [2, '2 (6+ players)']]],
   ['wqTimer', 'Vote timer', [[0, 'None'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
 ];
+/* Lawyering's own options */
+const LAW_TILES = [
+  ['lawDef', 'Defense attorney', [['random', 'Random'], ['writer', 'Writer picks'], ['vote', 'Room votes']]],
+  ['lawOff', 'Offense attorney', [['random', 'Random'], ['writer', 'Writer picks'], ['vote', 'Room votes']]],
+  ['lawClose', 'Closing arguments', [[30, '30 s'], [60, '1 min'], [120, '2 min']]],
+];
 const MORE_TILES = [
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
@@ -102,6 +108,9 @@ const OPT_TIPS = {
   wqPickTime: 'When time runs out, whatever the picker typed is used, or a word from the list.',
   wqQuacks: 'Two Quacks only with 6 or more players.',
   wqTimer: 'None: a vote waits for everyone, so players can argue it out.',
+  lawDef: 'Who argues for each topic: anyone but its writer, picked at random, by the writer, or by a vote of the room.',
+  lawOff: 'Who argues against each topic (it can be the writer): picked at random, by the writer, or by a vote of the room.',
+  lawClose: 'When the jury is split, the attorneys get this long to win them over; then the bigger side wins.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
@@ -111,9 +120,10 @@ function openOptions() {
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
     ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
     ${s.options.mode === 'quack' ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ''}
-    ${tileRows(OPT_TILES.filter(r => !(s.options.mode === 'bb' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'sc' && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0]))), s, ro)}
+    ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
+    ${tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam')), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

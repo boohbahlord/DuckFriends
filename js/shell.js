@@ -19,7 +19,7 @@
    or everyone (o+r). The chat's \mute, \permmute and \show work here too. A line sends 3 times at most, and fires 3 silly
    commands at most, a second apart. */
 import { profile, save, STAT_MODES } from './store.js';
-import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, scStats, COLS, signed, nameOfValue, slowMs } from './rules.js';
+import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, scStats, lawStats, COLS, signed, nameOfValue, slowMs } from './rules.js';
 import { modeOf, MODES } from './modes.js';
 import { MAPS, mapName } from './maps.js';
 import { FONTS } from './name.js';
@@ -173,6 +173,7 @@ function statLines(ctx, scope, args) {
       const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === 'bb' ? 'tournaments' : 'rounds'} · ${st.answers} ${mode === 'bb' ? 'votes' : 'answers'} · ${st.jumps} Jumps`;
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
       else if (mode === 'quack') out.push(`${base} · ${st.wins} rounds won · ${st.titles} won as the Quack · ${st.majority} votes for the real Quack`);
+      else if (mode === 'law') out.push(`${base} · ${st.argued} cases argued · ${st.wins} won · ${st.losses} lost · gave up ${st.gave}`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else if (mode === 'aod' && st.counts) { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
       else out.push(base);
@@ -189,6 +190,9 @@ function statLines(ctx, scope, args) {
     const past = s.bbPast || [], cur = s.bb && s.bb.rounds && s.bb.rounds.length && s.phase !== 'results' ? [s.bb] : [];
     const per = bbStats(scope === 'round' ? (cur.length ? cur : past.slice(-1)) : [...past, ...cur]);
     for (const id of ids) { const p = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 }; out.push(`${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} Jumps`); }
+  } else if (mode === 'law') {
+    const per = lawStats(s, round).per;
+    for (const id of ids) { const p = per[id] || { argued: 0, won: 0, lost: 0, wonDef: 0, wonOff: 0, gave: 0, votes: 0, flips: 0 }; out.push(`${nm(id)}: ${p.argued} cases argued · ${p.won} won (${p.wonDef} as defense, ${p.wonOff} as offense) · ${p.lost} lost · gave up ${p.gave} · ${p.votes} jury votes · switched sides ${p.flips} · ${jumps(id)} Jumps`); }
   } else if (mode === 'wyr') {
     const per = wyrStats(s, round).per;
     for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} Jumps`); }
