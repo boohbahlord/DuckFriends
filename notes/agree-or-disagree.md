@@ -675,3 +675,9 @@ how about a psychedelic visual? like a fractal sort of, a very colorful and comp
 
 (Built as a new map, "Rabbit Hole": a Julia-set fractal zooming forever into its spiral center, with the shape slowly
 morphing and the colors turning. Drawn with WebGL; a turning color wheel where WebGL is missing.)
+
+1. "Rabbit Hole of Ducklings" is the name
+2. Keep it faster i assume, we'll see.
+3. The tiles should be as see through as usual unless it is a problem.
+
+(Renamed; the fall now goes 3× deeper every 7 s instead of 11 s; tiles at 45% like Sky and Carnival Night.)

@@ -9,7 +9,7 @@
    lines over the picture, and the interface takes on its Ether & Kenoma look (Cascadia Code) while the map is played.
    Carnival Night: a Ferris wheel turning on the left, a striped big top on the right, string lights twinkling over
    them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
-   Rabbit Hole: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
+   Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    The host picks the map in the lobby. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
@@ -20,7 +20,7 @@ export const MAPS = [
   ['sky', 'Sky', 'Clouds, a sun and a moon that take turns (a minute each), and columns that glow at night.'],
   ['pixel', 'Pixel', 'Wool-block columns over floating block islands, a forest below and a pixel sunset.'],
   ['carnival', 'Carnival Night', 'A Ferris wheel and a big top under string lights, marquee bulbs around the tiles, and fireworks when the votes are in.'],
-  ['rabbit', 'Rabbit Hole', 'A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.'],
+  ['rabbit', 'Rabbit Hole of Ducklings', 'A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.'],
   ['ec', 'Ether\'s Crossroads', 'The jester\'s dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it\'s played.'],
 ];
 export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
@@ -192,7 +192,7 @@ function nightScene(layer) {
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
 }
 
-/* ---------- Rabbit Hole ----------
+/* ---------- Rabbit Hole of Ducklings ----------
    A Julia set drawn by the graphics card (WebGL) at a reduced size and stretched. The view sits on the spot the whole
    set spirals around (the fixed point a = a² + c, whose spin λ = 2a is 1.15 long), and keeps zooming into it: every 8
    steps of z → z² + c grow the picture there by λ⁸, so after one zoom of λ⁸ the picture is itself again and the fall
@@ -208,7 +208,7 @@ float TH(float t) { return 2.2 + 1.1 * sin(t * .011) + .4 * sin(t * .027 + 1.); 
 void main() {
   vec2 uv = (gl_FragCoord.xy - .5 * uRes) / min(uRes.x, uRes.y);
   float t = uT, th = TH(t);
-  const float N = 8., SP = .09, D = 1.15;          // 8 steps a zoom, a zoom every 11 s
+  const float N = 8., SP = .14, D = 1.15;          // 8 steps a zoom, a zoom every 7 s
   vec2 L = D * vec2(cos(th), sin(th)), al = .5 * L, c = al - cm(al, al);
   // how far into this zoom (f), turned back by whole turns so the view spins at most half a turn each zoom
   float f = fract(t * SP), k = floor(N * TH(floor(t * SP) / SP) / 6.2832 + .5);
