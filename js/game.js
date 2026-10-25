@@ -605,6 +605,12 @@ function shiftSides(s, now) {
   if (deg === seedShift) return;
   seedShift = deg; bbMarks(s);
 }
+/* the colors of the most-voted tile (or tiles, when they tie), as the board shows them */
+function topColors(s) {
+  const n = {}; for (const id of s.seat) { const c = s.lock[id]; if (c >= 0) n[c] = (n[c] || 0) + 1; }
+  const most = Math.max(0, ...Object.values(n));
+  return Object.keys(n).filter(c => n[c] === most).map(c => { const t = S.querySelector(`.board .cols > .col[data-c="${c}"]`); return t ? getComputedStyle(t).getPropertyValue('--c').trim() : ''; }).filter(Boolean);
+}
 function paint(force) {
   if (!S || !R) return;
   const s = R.state, key = [s.phase, s.round, s.qi].join('|');
@@ -624,6 +630,7 @@ function paint(force) {
     celebrate(s);
     scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
+    if (was && was.split('|')[0] === 'answer' && s.phase === 'discuss') scene.cheer(topColors(s));   // the votes are in
     if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);

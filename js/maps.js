@@ -7,15 +7,18 @@
    from above toward the bottom, and a pixel sunset on the horizon that breathes. Ether's Crossroads: the jester's
    dungeon from the game of that name; the torch and the candles flicker and glow, with that game's static and scan
    lines over the picture, and the interface takes on its Ether & Kenoma look (Cascadia Code) while the map is played.
+   Carnival Night: a Ferris wheel turning on the left, a striped big top on the right, string lights twinkling over
+   them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
    The host picks the map in the lobby. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
-import { backdropSVG, backdropHTML } from './art.js';
+import { backdropSVG, backdropHTML, carnivalSVG } from './art.js';
 
 export const MAPS = [
   ['board', 'Night Show', 'The carnival at night: string lights, bunting and breathing Twister dots.'],
   ['sky', 'Sky', 'Clouds, a sun and a moon that take turns (a minute each), and columns that glow at night.'],
   ['pixel', 'Pixel', 'Wool-block columns over floating block islands, a forest below and a pixel sunset.'],
+  ['carnival', 'Carnival Night', 'A Ferris wheel and a big top under string lights, marquee bulbs around the tiles, and fireworks when the votes are in.'],
   ['ec', 'Ether\'s Crossroads', 'The jester\'s dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it\'s played.'],
 ];
 export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
@@ -24,6 +27,7 @@ export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
 export function mapMini(id) {
   if (id === 'sky') return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
   if (id === 'ec') return `<div class="mini-map mm-ec">${EC_FLAMES.map(([x, y, k]) => `<i class="mm-glow" style="left:${(x / 3.2).toFixed(1)}%;top:${(y / 1.8).toFixed(1)}%;--k:${k}"></i>`).join('')}</div>`;
+  if (id === 'carnival') return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i></div>`;
   return `<div class="mini-map mm-night">${backdropSVG(192, 106, true)}</div>`;
 }
@@ -185,17 +189,68 @@ function nightScene(layer) {
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
 }
 
+/* ---------- Carnival Night ---------- */
+function carnivalScene(layer) {
+  const sc = document.createElement('div'); sc.className = 'scene carnival';
+  sc.innerHTML = carnivalSVG(true);
+  layer.append(sc);
+  // a tall screen (a phone) sees a slice of the picture: the slice around the Ferris wheel
+  const svg = sc.firstElementChild, fit = () => {
+    const a = layer.clientWidth / (layer.clientHeight || 1), w = 900 * a;
+    svg.setAttribute('viewBox', a < 1.2 ? `${Math.max(0, Math.min(1600 - w, 330 - w / 2)).toFixed(0)} 0 ${w.toFixed(0)} 900` : '0 0 1600 900');
+  };
+  const ro = new ResizeObserver(fit); ro.observe(layer); fit();
+  return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
+}
+/* marquee bulbs around a tile's edges: three sets that light in turn, so they seem to chase around it */
+function marquee(col) {
+  const old = col.querySelector(':scope > .marquee'), w = col.clientWidth, h = col.clientHeight;
+  if (!w || !h) return;
+  if (old && old._k === w + 'x' + h) return;
+  const g = 22, inset = 9, nx = Math.max(1, Math.round((w - inset * 2) / g)), ny = Math.max(1, Math.round((h - inset * 2) / g)), sx = (w - inset * 2) / nx, sy = (h - inset * 2) / ny;
+  const pts = [];
+  for (let i = 0; i < nx; i++) pts.push([inset + i * sx, inset]);
+  for (let i = 0; i < ny; i++) pts.push([w - inset, inset + i * sy]);
+  for (let i = 0; i < nx; i++) pts.push([w - inset - i * sx, h - inset]);
+  for (let i = 0; i < ny; i++) pts.push([inset, h - inset - i * sy]);
+  const sets = [0, 1, 2].map(k => pts.filter((_, i) => i % 3 === k).map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="mq-glow"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`).join(''));
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'marquee'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.innerHTML = sets.map((x, k) => `<g class="mq mq${k}">${x}</g>`).join('');
+  svg._k = w + 'x' + h;
+  if (old) old.replaceWith(svg); else col.prepend(svg);
+}
+/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors */
+function fireworks(sc, colors) {
+  const html = document.documentElement;
+  if (!sc || html.classList.contains('still') || html.classList.contains('lite')) return;
+  const box = document.createElement('div'); box.className = 'cn-fw';
+  box.innerHTML = Array.from({ length: 5 }, (_, i) => {
+    const x = 12 + Math.random() * 76, y = 12 + Math.random() * 30, c = colors[i % colors.length], d = (i * .35 + Math.random() * .2).toFixed(2);
+    return `<div class="fw" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--c:${c};--d:${d}s;--rise:${(70 - y).toFixed(0)}cqh"><i class="fw-rocket"></i>${Array.from({ length: 16 }, (_, k) => `<i class="fw-spark" style="--a:${k * 22.5}deg"></i>`).join('')}</div>`;
+  }).join('');
+  sc.append(box); setTimeout(() => box.remove(), 4200);
+}
+
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
    destroy() }: board() hands it the board, whose columns turn see-through for the map */
 export function mountMap(layer, s) {
   const map = s.options.map || 'board', cur = { cols: null };
   layer.className = 'map-layer map-' + map;
   document.documentElement.classList.add('map-on', 'map-is-' + map);   // (map-is-ec: the Ether & Kenoma look)
-  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : nightScene(layer);
+  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : map === 'carnival' ? carnivalScene(layer) : nightScene(layer);
+  // Carnival Night: the tiles' marquee bulbs follow the tiles' size
+  const ro = map === 'carnival' ? new ResizeObserver(es => es.forEach(e => marquee(e.target))) : null;
   return {
     update: now => scene.update(now),
-    board(board) { if (!board) { cur.cols = null; return; } board.classList.add('map-' + map); cur.cols = board.querySelector('.cols'); },
-    destroy() { scene.destroy(); layer.className = 'map-layer'; document.documentElement.classList.remove('map-on', 'map-is-' + map); },
+    board(board) {
+      if (!board) { cur.cols = null; return; }
+      board.classList.add('map-' + map); cur.cols = board.querySelector('.cols');
+      if (ro) { ro.disconnect(); board.querySelectorAll('.cols > .col').forEach(c => { marquee(c); ro.observe(c); }); }
+    },
+    /* the votes are in: fireworks in these colors (Carnival Night only) */
+    cheer(colors) { if (map === 'carnival') fireworks(layer.querySelector('.scene'), colors.length ? colors : ['#ff4f6d', '#ffd23f', '#5ce1ff']); },
+    destroy() { if (ro) ro.disconnect(); scene.destroy(); layer.className = 'map-layer'; document.documentElement.classList.remove('map-on', 'map-is-' + map); },
   };
 }
 export const mapLabel = id => esc(mapName(id));

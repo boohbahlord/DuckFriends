@@ -662,3 +662,7 @@ The confetti gun should come out lower, from around the front chest or something
 the loser's X needs to be bigger and on the whole duck not above them
 
 the gun can also be a smidgen lower but u did a good job with that one it is funny
+
+3. We can do a map for carnival night next for a map
+
+(Chose "New map: Carnival Night" over upgrading Night Show: a Ferris wheel and string lights, a big top, marquee bulbs chasing around the tiles, fireworks when the votes are in.)
