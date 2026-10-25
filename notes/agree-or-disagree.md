@@ -662,3 +662,13 @@ The confetti gun should come out lower, from around the front chest or something
 the loser's X needs to be bigger and on the whole duck not above them
 
 the gun can also be a smidgen lower but u did a good job with that one it is funny
+
+## Imposter Duck, word for word (2026-10-25)
+
+From a longer message about lawyering and The Court (logged with that work):
+
+For imposter duck another thread can do that one too.
+
+The pitch it was started from: every duck gets the same secret word except one, who gets nothing. Each player gives one
+clue over voice, then the room walks to whoever they think is the imposter. The plan and the owner's answers are in
+`notes/plan-imposter.md`.
