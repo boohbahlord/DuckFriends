@@ -1043,3 +1043,9 @@ squashed into thin strips and the names overlap.)
 tiles, or the "Vote out the Quack" and "Another round of clues" sides, take the rest of the board at full height. The
 ducks are sized to stand under their tile's name. In every mode, the bottom bar on a sideways phone is one row, so the
 board keeps its height.)
+
+(Follow-up from the bug test, through the coordinator: on a slow machine Glow, Spring in a Box and Jester's Stair took 2
+to 3.6 times their length to build. Phones now play the music at a sample rate of 16 kHz (every song is filtered below
+4.2 kHz anyway), with simpler heavy voices (one oscillator for the pads, the felt piano and the bass; no vibrato; no
+sub-octaves, tines or detuned twins) and shorter tails: the three heavy songs take about a fifth of the work they take
+on a computer. Computers are unchanged.)
