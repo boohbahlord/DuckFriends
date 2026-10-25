@@ -268,7 +268,8 @@ p.bad { color: var(--red); font-weight: 600; }
 .lbar { display: flex; justify-content: flex-end; padding: .7rem max(.8rem, 1.5vw) 0; }
 .lobby-x { position: static; width: 2.5rem; height: 2.5rem; font-size: 1.5rem; }
 .lmain { overflow: auto; display: grid; grid-template-columns: minmax(18rem, 34rem) minmax(16rem, 30rem); justify-content: space-between; align-content: start; gap: 1.6rem 2rem; padding: 0 max(1.2rem, 3vw) 1rem; }
-.lobby-art > svg { width: 100%; height: auto; display: block; border-radius: 1rem; border: .18rem solid var(--line); box-shadow: 0 .3rem 0 var(--line); }
+/* the picture gives way on a short screen (a 1280×720 laptop), so Start game and its line fit above the bottom bar */
+.lobby-art > svg { width: 100%; max-width: max(16rem, calc((100dvh - 31rem) * 16 / 9)); height: auto; aspect-ratio: 16 / 9; display: block; border-radius: 1rem; border: .18rem solid var(--line); box-shadow: 0 .3rem 0 var(--line); }
 .lobby-title { margin-top: .9rem; font-size: calc(2.1rem * var(--ts)); font-weight: 700; overflow-wrap: anywhere; }
 .lobby-sub { margin-top: .2rem; }
 .lobby-status { margin: 1rem 0 .4rem; display: flex; align-items: center; gap: .8rem; min-height: 2.6rem; }
