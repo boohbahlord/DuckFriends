@@ -1258,7 +1258,7 @@ function keydown(e) {
   if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E: the last key again
   if (e.code === 'KeyQ' && isQuack(R.state)) { e.preventDefault(); peek(true); return; }   // hold Q: peek at my Secret Card
   if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
-  if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat) { e.preventDefault(); act('end'); }
 }
 const keyup = e => { if (world) world.keyup(e); keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); if (e.code === 'KeyQ') peek(false); };
 const blur = () => { keys.clear(); peek(false); };
