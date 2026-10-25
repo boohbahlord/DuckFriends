@@ -9,8 +9,24 @@ const fail = msg => { throw new Error(msg); };
 export const lines = t => t === '' || t == null ? [] : String(t).replace(/\n$/, '').split('\n');
 
 /* -abc, -n 5, -n5 and -- (the rest are words); spec: the letters, a : after one that takes a value */
+/* the long flags (--append), as the short one with the same meaning; some commands mean other letters by a word */
+const LONG = { all: 'a', append: 'a', groups: 'G', remove: 'r', recursive: 'r', force: 'f', parents: 'p', 'ignore-case': 'i',
+  'invert-match': 'v', count: 'c', 'line-number': 'n', 'word-regexp': 'w', 'only-matching': 'o', 'fixed-strings': 'F',
+  'files-with-matches': 'l', quiet: 'q', silent: 'q', 'extended-regexp': 'E', regexp: 'e', reverse: 'r', 'numeric-sort': 'n',
+  unique: 'u', 'random-sort': 'R', key: 'k', 'field-separator': 't', lines: 'n', bytes: 'c', words: 'w', chars: 'm',
+  number: 'n', delimiter: 'd', fields: 'f', characters: 'c', separator: 's', width: 'w', 'in-place': 'i', expression: 'e',
+  'head-count': 'n', echo: 'e', 'input-range': 'i', 'equal-width': 'w', 'new-name': 'n', perms: 'p', add: 'a', delete: 'd',
+  table: 't', spaces: 's', 'mathlib': 'l', 'squeeze-repeats': 's', 'no-newline': 'n', 'only-delimited': 's' };
+const LONG_FOR = { wc: { lines: 'l', bytes: 'c' }, uniq: { count: 'c', repeated: 'd', unique: 'u' }, cut: { bytes: 'c' }, tr: { delete: 'd' } };
 export function getopt(args, spec, name) {
   const o = {}, rest = []; let i = 0;
+  args = args.flatMap(a => {   // --word and --word=value: the short flag
+    const m = a.match(/^--([a-z][\w-]*)(?:=(.*))?$/); if (!m) return [a];
+    if (m[1] === 'color' || m[1] === 'colour') return [];   // (colors are always on here)
+    const c = (LONG_FOR[name] || {})[m[1]] || LONG[m[1]];
+    if (!c || !spec.includes(c)) fail(`✗ ${name}: unrecognized option '--${m[1]}' (man ${name} lists them)`);
+    return m[2] !== undefined ? ['-' + c, m[2]] : ['-' + c];
+  });
   for (; i < args.length; i++) {
     const a = args[i];
     if (a === '--') { i++; break; }
