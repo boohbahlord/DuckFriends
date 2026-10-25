@@ -103,6 +103,118 @@ export const music = (function(){
       // chimes with glee: a sparkle that runs up, across the ears
       if(s==="full"&&a>=31&&a<=37||s==="bob"&&a===15||s==="return"&&a===28){const st=t+E8*(2+Math.floor(h01(a+5)*4)),dir=h01(a+9)>.5?1:-1,p=panTo(-.8*dir,.8*dir,st,E8*2,.7,.4);
         [0,C.iv[1],C.iv[2],12,12+C.iv[1],24].forEach((v,k)=>{on(p);voice("softbox",hz(C.r+24+v),st+k*E8*.22,E8*.6,.05,1.2)})}}});
+  /* Jester's Stair: a little of Halo 3: ODST's "Rain", with everything of Glow. Long-legged jesters climb
+     a stair of blocks that grows further out, each step further than the last, until they stop; it fades in hollow,
+     mimicking joy, finds a little warmth (Lydian, then major), then falls away from ear to ear, far off. Then the minor:
+     a breathy voice rushes, slows to breathe, rushes again, explaining what it lost, while a music box and a circus bass
+     try to look happy. It works its way down, lets go, and ends on a false joy: a music box winding down, out of tune. */
+  const JEST_SEC=[[0,"stair"],[10,"joy"],[18,"warm"],[22,"fall"],[30,"minor"],[50,"down"],[58,"false"]];
+  const jestSec=a=>{let s="stair";for(const [k,n] of JEST_SEC)if(a>=k)s=n;return s};
+  let jestSide=1;
+  const JESTERS={name:"Jester's Stair",bpm:80,trim:.6,bar:6,lead:"felt",leadV:.3,rel:1.1,leg:1.04,lp:3400,echo:.16,fb:.24,dly:.62,
+    dyn:.8,contrast:.85,hum:.014,rv:.42,ds:.16,rev:[6.5,.55],wow:[.0012,.21],bed:[.002,.015],
+    chords:chords("Dmaj7 Dmaj7 E/D E/D Dmaj7 Dmaj7 Amaj7 Dmaj7 Bm7 Dmaj7 Dmaj7 E/D Bm7 F#m7 Dmaj7 F#m7 C#m7 Bm7 G D/F# Em7 A D G Bm7 G D Em7 G D Dm Bb F C Dm Gm Bb A Dm Bb F C Gm Dm Bb A Dm F Gm A7 Dm Bb Gm A Dm Bb Gm A7 D D D"),
+    mel:mel(`D4:1 E4:1.5 F#4:2 A4:1.5
+        r:1 C#5:3 G#5:2
+        r:2 E6:1.5 r:2.5
+        r:6
+        r:3 B5:1.5:.4:a G#5:1.5:.3:a
+        E4:1 F#4:1.5 A4:2 D5:1.5
+        r:1 A5:3.5 E6:1.5
+        r:6
+        r:2 C#6:1:.35:a A5:1:.28:a F#5:2:.2:a
+        r:6
+        A4:2:.7 D5:1:.7 F#5:2:.75 E5:1:.75
+        G#5:3:.8 F#5:1 E5:1 B4:1
+        D5:2 C#5:1 B4:2 F#4:1
+        A4:4 r:.5 C#5:.5 E5:1
+        F#5:2 A5:1 G#5:1.5 F#5:.5 E5:1
+        G#5:2 B5:1 A5:2 G#5:1
+        E5:3 C#5:1 B4:1 G#4:1
+        F#4:3 r:1 A4:.5 B4:.5 C#5:1
+        D5:2 G5:1 B5:2 A5:1
+        A5:3 F#5:1 D5:1 E5:1
+        G5:2 F#5:1 E5:2 D5:1
+        E5:1 F#5:1 G5:1 A5:3
+        F#5:3 E5:1 D5:2
+        B4:3 D5:1 G5:2
+        F#5:2 D5:1 B4:3
+        r:1 A4:1 B4:1 D5:3
+        F#4:3:.7 A4:1:.65 D5:2:.6
+        E5:2:.55 D5:1:.5 B4:3:.5
+        r:2 D5:2:.4:a B4:2:.3:a
+        r:3 A4:3:.25:a
+        A4:1 D5:1 F5:1 E5:1 D5:1 C5:1
+        D5:2 Bb4:1 A4:1 G4:1 F4:1
+        A4:1.5 C5:.5 F5:2 E5:1 F5:1
+        G5:3 r:3
+        F5:1 E5:1 D5:1 A5:2 G5:1
+        F5:1 D5:1 Bb4:2 r:2
+        D5:1 F5:1 Bb5:2 A5:.5 G5:.5 F5:1
+        E5:3 C#5:1 r:2
+        D5:3 F5:1.5 E5:1.5
+        D5:4 r:2
+        C5:2 A4:1 F4:3
+        r:3 G4:1 A4:1 C5:1
+        D5:1 G5:1 Bb5:1 A5:1 G5:1 F5:1
+        A5:2 F5:1 D5:1 E5:1 F5:1
+        G5:1.5 F5:.5 D5:2 F5:1 G5:1
+        A5:4:1.1 G5:1 E5:1
+        F5:2 E5:1 D5:2 C#5:1
+        D5:3 r:1 C5:1 A4:1
+        Bb4:2 A4:1 G4:2 F4:1
+        E4:3 G4:1 A4:2
+        F4:3:.7 E4:1:.65 D4:2:.6
+        r:1 D5:2:.55 Bb4:1:.5 A4:2:.5
+        G4:3:.45 F4:1:.4 D4:2:.4
+        E4:4:.35 r:2
+        r:2 A4:1:.3:a F4:3:.25:a
+        r:6
+        r:3 D5:3:.2:a
+        r:6
+        r:6
+        r:6
+        r:6`),
+    leadFor:a=>jestSec(a)==="minor"?"wisp":"felt",leadVFor:a=>jestSec(a)==="minor"?.2:.3,   // the minor is breathed, not played
+    // the minor rushes, slows to breathe, rushes again; the false joy winds down like a music box
+    tempo:(b,i,a)=>{const s=jestSec(a),k=a-30;let v=s==="stair"?.9:s==="joy"?.94:s==="warm"?1:s==="fall"?1-.02*(a-22):
+        s==="minor"?(k<8?1.08+.035*k:k<11?[1.05,.82,.78][k-8]:k<16?.95+.08*(k-11):1.3-.07*(k-15)):s==="down"?.9-.025*(a-50):.75-.06*((a-58)+i/6);
+      if((s==="minor"&&[33,35,39].includes(a)||a===13)&&i>=3)v*=.8;   // a breath
+      return v*(.97+.06*h01(a+50))},
+    onNote:(e,t,E8,x)=>{const a=x.abs,s=jestSec(a);GL=null;
+      if(s==="stair"){if(e.tag.includes("a"))return;on(BUS.perc);wood(t,.022+.01*rnd());on(send(.5,.2,BUS.bass));voice("harp",hz(e.m[0]-12),t,E8,.05*e.vel,.7);return}   // a long-legged step onto a block
+      if(s==="fall"||s==="down"){jestSide=-jestSide;BUS.leadPan.pan.setTargetAtTime(jestSide*(s==="fall"?.45+.04*(a-22):.7),t,.06)}   // from one ear to the other
+      else BUS.leadPan.pan.setTargetAtTime(s==="minor"?(rnd()-.5)*.4:0,t,.2);
+      if((s==="joy"||s==="warm")&&e.l>=2&&rnd()<.45){const C=x.C,base=e.m[0],c=[...C.iv,12].map(v=>C.r+v+24).filter(m=>m>base&&m<=base+12);if(!c.length)return;
+        on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.05*e.vel,1.4);GL=null}},
+    onBar:x=>{const {t,abs:a,E8,C}=x,B=E8*6,s=jestSec(a);GL=null;
+      // hollow <-> warm: how bright the tune is, and how loud the whole song swells
+      const open={stair:1400,joy:2400+250*(a-10),warm:5200,fall:4600-500*(a-22),minor:a===45?3000:1900+60*((a-30)%5),down:1700-150*(a-50),false:2600}[s];
+      const swell={stair:.55+.02*a,joy:.72+.03*(a-10),warm:1.05,fall:1-.07*(a-22),minor:a===45?1.08:.82+.04*((a-30)%4),down:.75-.06*(a-50),false:.45}[s];
+      BUS.leadLP.frequency.setTargetAtTime(open,t,B*.35);BUS.swl.gain.setTargetAtTime(swell,t,B*.45);
+      // the muffled bass: long slow legs on the stair, an oom-pah circus in the minor, trying
+      on(send(.15,0,BUS.bass));
+      if(s==="stair"){if(a%2===0)voice("mbass",hz(C.b-12),t,B*1.9,.32,.9)}
+      else if(s==="minor"){voice("mbass",hz(C.b-12),t,B*.25,.5,.2);voice("mbass",hz(C.b-12+C.fifth),t+B*.5,B*.22,.38,.2);
+        on(send(.3,.1));for(const q of [1,2,4,5])for(const v of C.iv.slice(1,3))voice("harp",hz(C.r+12+v),t+q*E8,E8*.5,.022,.25)}
+      else if(s==="false"){if(a===58)voice("mbass",hz(C.b-12),t,B*2.5,.22,1.5)}
+      else{const v=s==="down"?.42-.05*(a-50):s==="fall"?.46-.03*(a-22):.46;voice("mbass",hz(C.b-12),t,B*.98,v,.6);
+        if(s==="warm"||s==="joy"&&a%2)voice("mbass",hz(C.b-12+C.fifth),t+B*.5,B*.4,v*.5,.4)}
+      // the warm pad, and Rain's strings where the warmth is
+      const pv={joy:.022,warm:.04,fall:.035-.003*(a-22),minor:.018,down:.02-.002*(a-50),false:.014}[s]||0;
+      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      if(s==="warm"||s==="fall"&&a<26||s==="minor"&&a>=42&&a<=46){on(send(.7,.2,BUS.bass));voice("viol",hz(C.r+12+C.third),t,B*1.05,.018,.8);voice("viol",hz(C.r+C.fifth),t+.05,B*1.05,.014,.8)}
+      // a harp from the left ear to the right (or back)
+      if(s==="joy"&&a%2===0||s==="warm"){const up=a%4!==2,p=panTo(up?-.8:.8,up?.8:-.8,t,B*.9,.5,.25),ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]];
+        [0,1,2,3,4,5].forEach((q,k)=>{if(s==="joy"&&h01(a+k)<.25)return;on(p);voice("harp",hz(C.r+12+ns[up?k:5-k]),t+q*E8,E8,(s==="warm"?.1:.065)*(.7+.3*Math.sin(Math.PI*k/6)),.9)})}
+      // in the minor, a music box looks happy: a cheery run that hops from ear to ear
+      if(s==="minor"&&![33,35,39].includes(a)){const side=a%2?-.6:.6,p=panTo(side,-side,t,B,.6,.3),pat=[0,C.iv[1],C.iv[2],12,C.iv[2],C.iv[1]];
+        pat.forEach((v,k)=>{if(k%2&&h01(a*7+k)<.3)return;on(p);voice("softbox",hz(C.r+24+v),t+k*E8,E8*.7,.032,.7)})}
+      // false joy: the music box winds down, a little out of tune, far away
+      if(s==="false"){const p=panTo(a%2?-.5:.5,a%2?.5:-.5,t,B,1,.5),tune=[[4,7,12,7,4,7],[9,7,4,2,4,-3],[0]][a-58];
+        tune.forEach((v,k)=>{on(p);GL={r:1,fall:Math.pow(2,-(10+25*k/6)/1200),ft:.15,fd:1};voice("softbox",hz(C.r+24+v),t+k*E8,E8*.8,.05-.008*(a-58),1.2);GL=null})}
+      // a far bell, a little out of tune
+      if([3,7,29,55].includes(a)){const st=t+B*.4,side=h01(a+7)>.5?-.7:.7;on(panTo(side,side*.6,st,B,1.4,.5));voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.018,1.2)}}};
   const TRACKS=[
     /* v59: rewritten in F Lydian: clusters of notes, then a breath; in the quiet, notes fall away (the only air in it);
        crisp and muted, warped a little, with a needle crackling */
@@ -135,7 +247,8 @@ export const music = (function(){
       onNote:(e,t,E8,x)=>{if(e.l<4||rnd()>.6)return;const C=x.C,base=e.m[0],c=[...C.iv,12].map(v=>C.r+v+24).filter(m=>m>base&&m<=base+12);if(!c.length)return;
         on(send(1,.6));GL={r:1,fall:Math.pow(2,14/1200),ft:.2,fd:1.2};   // it floats up as it fades
         voice("softbox",hz(c[Math.floor(rnd()*c.length)]),t+E8*(1.5+rnd()*1.5),E8*2,.22*.24*e.vel,1.4);GL=null}},
-    glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7")
+    glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7"),
+    JESTERS
   ];
   const BASE=.7;   // 100% music: loud on purpose
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
@@ -159,11 +272,11 @@ export const music = (function(){
     fdry.connect(wow);fwet.connect(wow);w1.connect(wg1);wg1.connect(wow.delayTime);w2.connect(wg2);wg2.connect(wow.delayTime);const trim=gn(),hp=biq("highpass",25,.6);wow.connect(trim);trim.connect(hp);hp.connect(out);fl.start();w1.start();w2.start();
     const music=gn(),mdry=gn(),mpre=gn(2),ws=ac.createWaveShaper(),mlp=biq("lowpass",1400,.5),mwet=gn(0);ws.curve=fuzzCurve();ws.oversample="2x";
     music.connect(mdry);mdry.connect(pre);music.connect(mpre);mpre.connect(ws);ws.connect(mlp);mlp.connect(mwet);mwet.connect(pre);
-    const lead=gn(),leadLP=biq("lowpass",20000,.5);lead.connect(leadLP);leadLP.connect(music);const bass=gn();bass.connect(music);
+    const lead=gn(),leadLP=biq("lowpass",20000,.5);const leadPan=ac.createStereoPanner();lead.connect(leadLP);leadLP.connect(leadPan);leadPan.connect(music);const bass=gn();bass.connect(music);
     const perc=gn();perc.connect(pre);const fx=gn();fx.connect(pre);const revIn=gn(),revOut=gn(.9);revOut.connect(pre);
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
-    BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
+    BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
   function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A();graph();return ac}
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
@@ -173,7 +286,7 @@ export const music = (function(){
   /* each song sets its own room: how bright, how far the echo, how much fuzz, flanging and wobble */
   function room(now){if(!BUS||!T)return;const t=ac.currentTime,P=(p,v)=>{p.cancelScheduledValues(t);if(now)p.setValueAtTime(v,t);else p.setTargetAtTime(v,t,.4)};
     P(BUS.lp.frequency,T.lp||1600);P(BUS.dl.delayTime,T.dly||.42);P(BUS.fb.gain,T.fb||.22);P(BUS.wet.gain,T.echo||.28);
-    P(BUS.pre.gain,1);P(BUS.swl.gain,1);P(BUS.trim.gain,T.trim||1);P(BUS.lead.gain,1);P(BUS.bass.gain,T.bassV||1);P(BUS.leadLP.frequency,T.leadLp||20000);
+    P(BUS.pre.gain,1);P(BUS.swl.gain,1);P(BUS.trim.gain,T.trim||1);P(BUS.lead.gain,1);P(BUS.bass.gain,T.bassV||1);P(BUS.leadLP.frequency,T.leadLp||20000);P(BUS.leadPan.pan,0);
     const fz=T.fuzz||[0,1,1400];P(BUS.mwet.gain,fz[0]);P(BUS.mdry.gain,fz[1]);P(BUS.mlp.frequency,fz[2]);P(BUS.mpre.gain,2);
     P(BUS.fwet.gain,T.flange||0);const w=T.wow||[0,.3];P(BUS.wg1.gain,w[0]);P(BUS.w1.frequency,w[1]);P(BUS.wg2.gain,w[0]*.6);
     const dt=Math.min(1.5,T.dt||60/T.bpm*.75);P(BUS.d2a.delayTime,dt);P(BUS.d2b.delayTime,dt);setRev(T.rev||[3,.5])}
@@ -325,7 +438,7 @@ export const music = (function(){
   function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=RENDER?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
   /* one note of the melody, played: its loudness, a slide from the last note, a sag when the song falls apart, a breath
      that falls away; its own send into the room and the delay (more at a phrase's end, so the end floats off) */
-  function playLead(e,t,E8,x){t=Math.max(t,ac.currentTime);const air=e.tag.includes("a"),ty=air?"air":T.lead;let d=e.l*E8*(T.leg||.93),cut=false;
+  function playLead(e,t,E8,x){t=Math.max(t,ac.currentTime);const air=e.tag.includes("a"),ty=air?"air":T.leadFor?T.leadFor(x.abs):T.lead;let d=e.l*E8*(T.leg||.93),cut=false;
     if(T.cut&&!air&&e.l>=2&&rnd()<T.cut){d=E8*(.7+rnd()*.5);cut=true}   // broken off where you don't expect it
     const sag=T.drift?T.drift(x.bar):0;if(sag)d*=1.3;
     const rv=(T.rv||0)*(e.tail?1.8:1)*(air?2.4:1)*(sag?2:1),ds=(T.ds||0)*(e.tail||air?2.4:.3);
@@ -334,7 +447,7 @@ export const music = (function(){
       if(air)GL={r:1,fall:Math.pow(2,-(35+rnd()*60)/1200),ft:.12,fd:d*.5};
       else if(sag)GL={r:1,fall:Math.pow(2,-(sag*(.6+rnd()*.8))/1200),ft:.05,fd:d*.5};
       else if(T.glide&&prevF&&e.m.length===1){const st=12*Math.log2(f/prevF);GL={r:Math.abs(st)<=5?prevF/f:Math.pow(2,-25/1200),d:Math.min(.11,d*.3)}}
-      note(ty,f,t,d,T.leadV*e.vel,T.rel!=null?T.rel:.05,T.vib)}
+      note(ty,f,t,d,(T.leadVFor?T.leadVFor(x.abs):T.leadV)*e.vel,T.rel!=null?T.rel:.05,T.vib)}
     GL=null;if(e.m.length===1&&!air)prevF=hz(e.m[0]);
     if((T.swipe&&e.tag.includes("s"))||cut){const p=BUS.leadLP.frequency;p.setTargetAtTime(230,t+d*.6,.05);p.setTargetAtTime(16000,t+d+E8*(.8+rnd()),.3)}   // swept away, and back
     if(T.onNote)T.onNote(e,t,E8,x)}

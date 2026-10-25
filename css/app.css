@@ -482,6 +482,32 @@ html.mouse-move .board { cursor: pointer; }
 .tag-priv { font-size: calc(.72rem * var(--ts)); font-weight: 700; color: var(--purple); }
 .chat-log .cmd-line { font-family: 'Cascadia Code', Consolas, monospace; font-weight: 200; white-space: pre-wrap; }
 .chat-log .cmd-line.echo { color: var(--dim); }
+.chat-log .cmd-line.echo > .k-prompt { color: var(--dim); }
+/* the command line's colors: each kind of command its own (help · kindOf in helppages.js), then flags, operators … */
+:root { --k-help: #138a0c; --k-bash: #0b6fc2; --k-file: #087f74; --k-text: #9a6b00; --k-group: #7a3fd0; --k-people: #c2306e;
+  --k-game: #c25a00; --k-silly: #d01f1f; --k-chat: #5d6072; --k-flag: #6b6f85; --k-op: #1c1c28; --k-var: #8a3fb0; --k-str: #6d5a00; }
+html.dark, html.map-is-ec { --k-help: #4be03a; --k-bash: #4fb3ff; --k-file: #2fd8c4; --k-text: #ffd23f; --k-group: #b996f5; --k-people: #ff8cc0;
+  --k-game: #ff9a45; --k-silly: #ff5c5c; --k-chat: #b8bbcc; --k-flag: #a9acbf; --k-op: #ffffff; --k-var: #e2a8ff; --k-str: #f3e3a0; }
+.chat-log .k-help { color: var(--k-help); font-weight: 600; }
+.chat-log .k-bash { color: var(--k-bash); font-weight: 600; }
+.chat-log .k-file { color: var(--k-file); font-weight: 600; }
+.chat-log .k-text { color: var(--k-text); font-weight: 600; }
+.chat-log .k-group { color: var(--k-group); font-weight: 600; }
+.chat-log .k-people { color: var(--k-people); font-weight: 600; }
+.chat-log .k-game { color: var(--k-game); font-weight: 600; }
+.chat-log .k-silly { color: var(--k-silly); font-weight: 600; }
+.chat-log .k-chat { color: var(--k-chat); font-weight: 600; }
+.chat-log .k-flag { color: var(--k-flag); white-space: nowrap; }
+.chat-log .k-op { color: var(--k-op); font-weight: 700; }
+.chat-log .k-var { color: var(--k-var); }
+.chat-log .k-str { color: var(--k-str); }
+.chat-log .k-at { color: var(--blue); }
+.chat-log .k-ph, .chat-log .k-note { color: var(--dim); font-style: italic; }
+.chat-log .k-prompt { color: var(--k-help); }
+.chat-log .k-head { display: inline-block; margin-top: .2rem; font-weight: 700; letter-spacing: .06em; font-size: .85em; color: var(--ink); }
+.chat-log .k-title { font-weight: 700; color: var(--ink); }
+.chat-log .k-err { color: var(--k-silly); }
+.chat-log .cmd-line .ind { display: block; padding-left: calc(var(--i) * 1ch); }
 .chat-sugg { list-style: none; margin: 0 .5rem; padding: .2rem; border: .12rem solid var(--line); border-radius: .6rem; background: var(--panel); max-height: 9rem; overflow: auto; }
 .chat-sugg li { padding: .15rem .5rem; border-radius: .4rem; cursor: pointer; font-family: 'Cascadia Code', Consolas, monospace; font-size: calc(.85rem * var(--ts)); }
 .chat-sugg li[aria-selected="true"] { background: var(--yellow); color: #1c1c28; }

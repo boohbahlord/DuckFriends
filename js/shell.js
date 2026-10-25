@@ -27,7 +27,8 @@ import { specialById } from './specials.js';
 import { styleById } from './styles.js';
 import { runLine, expandHistory, globRe, BUILTIN_NAMES } from './bash.js';
 import { TEXT, getopt, lines } from './textutils.js';
-import { MAN, TOPICS, PERMS_TAKE, PERMS_GIVE } from './manual.js';
+import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
+import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
@@ -362,17 +363,17 @@ function finger(ctx, id) {
 /* ---------- the commands: (args, stdin, x) → the output; x: ctx, sudo, meta, rs (this line's counts) ---------- */
 const CMDS = {
   help: args => {
-    const t = (args[0] || '').toLowerCase();
-    if (!t) return ['help <topic> tells more (man <command> tells everything about one command):', '  basics     how a command is written, Tab, history, and man', '  pipes      | > >> < 2> and friends: where the output goes', '  chaining   ; && || $( ) loops and if', '  variables  NAME=value, $NAME, $((…)), the game\'s own, aliases', '  files      your home, notes, log, perma-notes, wildcards', '  text       grep, sed, awk, sort and the other text tools', '  groups     sudo, groups, perms, dumbasses', '  game       what only DuckFriends has: send, stats, forgame, skip…', '  silly      lightning, love, kill, hotdog, fire', '  all        every command'].join('\n');
-    if (t === 'all') return `Every command (man <command> for one):\n${[...new Set([...MINE, ...BUILTIN_NAMES])].sort().join(' ')}\nand the chat's \\mute \\permmute \\show.`;
-    if (TOPICS[t]) return TOPICS[t].join('\n');
-    if (MAN[t]) return MAN[t];
-    fail(`✗ help: no topic ${args[0]}. help lists them.`);
+    const t = args.join('-').toLowerCase();
+    if (!t) return helpIndex();
+    if (t === 'all') return `Every command (man <command> for one):\n${[...new Set([...MINE, ...BUILTIN_NAMES])].sort().join(' ')}\nand the chat's \\mute \\permmute \\show.\nThe Help pages: ${HELP_NAMES.join(' ')}`;
+    const p = helpPage(t); if (p) return p;
+    if (MAN[args[0]] || MAN[args[0].toLowerCase()]) return MAN[args[0]] || MAN[args[0].toLowerCase()];
+    fail(`✗ help: no page ${args.join(' ')}. help lists them.`);
   },
   man: args => {
     if (args[0] === '-k') { const w = (args[1] || '').toLowerCase(); if (!w) fail('✗ man -k word'); const hit = Object.entries(MAN).filter(([k, v]) => k.includes(w) || v.toLowerCase().includes(w)); return hit.length ? hit.map(([k, v]) => `${k.padEnd(11)} - ${v.split(': ').slice(1).join(': ').split('. ')[0]}`).join('\n') : { out: `${w}: nothing appropriate.`, code: 1 }; }
     if (!args[0]) return 'What manual page do you want? man <command> (help lists them; man -k word searches).';
-    return MAN[args[0]] || MAN[args[0].toLowerCase()] || fail(`✗ No manual entry for ${args[0]}`);
+    return MAN[args[0]] || MAN[args[0].toLowerCase()] || helpPage(args.join('-')) || fail(`✗ No manual entry for ${args[0]} (help lists the Help pages)`);
   },
   apropos: (args, i, x) => CMDS.man(['-k', ...args], i, x),
   clear: () => null,
@@ -640,7 +641,7 @@ function sudoList(ctx) {
 }
 
 /* ---------- running a command ---------- */
-const isCommand = (name, ctx) => !!(CMDS[name] || TEXT[name] || BUILTIN_NAMES.includes(name) || ctx.legacyHas(String(name).toLowerCase()) || name === 'sudo');
+const isCommand = (name, ctx) => !!(isHelpName(name) || CMDS[name] || TEXT[name] || BUILTIN_NAMES.includes(name) || ctx.legacyHas(String(name).toLowerCase()) || name === 'sudo');
 const dq = w => /\s/.test(w) ? `"${w}"` : w;
 /* one command, its words already expanded (sudo first if given) */
 async function one(argv, stdin, meta, ctx, rs) {
@@ -653,6 +654,8 @@ async function one(argv, stdin, meta, ctx, rs) {
   const [c, ...args] = words, low = c.toLowerCase();
   if (/^\\(mute|permmute|show|togglesuggest)$/i.test(c)) return ctx.chat(words.map(dq).join(' '));
   const x = { ctx, sudo, meta, rs };
+  if (isHelpName(c)) return helpPage([c, ...args].join('-')) || helpPage(c);   // HelpChat, HelpGame-How, HelpGame How
+  if (args.includes('--help') && MAN[low] && (CMDS[low] || TEXT[low])) return `${MAN[low]}\n(man ${low} shows the same; help lists the Help pages.)`;
   if (CMDS[c] || CMDS[low]) return CMDS[c] ? CMDS[c](args, stdin, x) : CMDS[low](args, stdin, x);
   if (TEXT[c] || TEXT[low]) return (TEXT[c] || TEXT[low])(args, stdin, IO);
   if (ctx.legacyHas(low)) {
@@ -729,7 +732,7 @@ export const shellHistory = () => fs.hist;
 /* ---------- suggestions: commands, then files, @names, groups and each command's own words ---------- */
 const FILE_CMDS = ['cat', 'less', 'more', 'ls', 'cd', 'rm', 'rmdir', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq', 'cp', 'mv', 'tree', 'find', 'stat', 'file', 'chmod', 'chgrp', 'source', '.', 'cut', 'tr', 'sed', 'awk', 'rev', 'tac', 'nl', 'fold', 'column', 'diff', 'tee', 'shuf', 'bc', 'mkdir', 'send'];
 const WORDS = {
-  help: Object.keys(TOPICS).concat('all'),
+  help: ['all', ...HELP_NAMES.map(n => n.slice(4).toLowerCase())],
   forgame: ['show', 'all-timer', 'timer', 'turn-end', 'order', 'freeroam', 'gravity', 'silly', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'random', 'rotate', 'low', 'normal', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'],
   map: MAPS.map(m => m[0]), mode: MODES.map(m => m.id),
   chmod: ['g+r', 'g-r', 'o+r', 'o-r', 'a+r', 'a-r', '640', '644', '600'],
@@ -744,7 +747,7 @@ export function shellSuggest(line, ctx) {
   const from = line.length - last.length, put = w => ({ label: w, apply: () => line.slice(0, from) + w + (w.endsWith('/') ? '' : ' ') });
   const s = ctx.room && ctx.room.state, G = s ? Object.keys(roomGroups(s)) : ['sudo', 'dumbasses'];
   let opts = [];
-  if (!words0.length) opts = [...MINE, ...BUILTIN_NAMES.filter(b => /^\w/.test(b)), ...ctx.legacyTop(), ...Object.keys(profile.aliases || {}), '\\mute', '\\permmute', '\\show'];
+  if (!words0.length) opts = [...HELP_NAMES, ...MINE, ...BUILTIN_NAMES.filter(b => /^\w/.test(b)), ...ctx.legacyTop(), ...Object.keys(profile.aliases || {}), '\\mute', '\\permmute', '\\show'];
   else if (ctx.legacyHas(cmd)) return ctx.legacySuggest(seg.replace(/^sudo\s+/, '')).map(x => ({ label: x.label, apply: () => pre + (done[0] === 'sudo' ? 'sudo ' : '') + x.apply() }));
   else if (last.startsWith('@') || last.startsWith('\\@')) { opts = s ? s.seat.map(id => (last.startsWith('\\') ? '\\@' : '@') + pname(s, id)) : []; if (cmd === 'send' && !last.startsWith('\\')) opts.unshift('@everyone'); }
   else if (last.startsWith('$')) opts = [...GAME_VARS, ...Object.keys(fs.vars)].map(v => '$' + v);

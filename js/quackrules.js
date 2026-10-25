@@ -79,7 +79,7 @@ export function startQuackRound(s, now) {
   const ids = playing(s);
   s.pos = {}; s.lock = {}; s.qi = 0; s.subs = []; s.drafts = {}; delete s.cards;   // (online: an old host's locked cards)
   if (ids.length < 3) return backToLobby(s, 'Who is the Quack? needs at least 3 ducks.');
-  s.wq = { ids, picker: null, cat: '', deal: 0, order: [], turn: 0, lap: 0, out: {}, dead: [], freeze: {}, tie: null, votes: [], result: null, lastOut: null };
+  s.wq = { ids, picker: null, cat: '', deal: 0, order: [], turn: 0, lap: 0, out: {}, dead: [], freeze: {}, tie: null, votes: [], clues: [], result: null, lastOut: null };
   s.hidden = { word: '', quacks: [], draft: null };
   s.seat.forEach((id, k) => { s.pos[id] = { x: .5, y: (k + 1) / (s.seat.length + 1) }; });
   if (s.options.wqPicker === 'list') return deal(s, anyWord(), now);
@@ -135,7 +135,7 @@ function startChoice(s, now) {
   return enter(s, 'choice', now);
 }
 function startAccuse(s, now) {
-  toTiles(s); s.qi++;
+  toTiles(s); s.qi++; if (s.hidden) s.hidden.first = null;
   return enter(s, 'accuse', now);
 }
 /* the votes are in: the duck with the most votes is out; a tie gets one revote between the tied ducks */
@@ -144,6 +144,7 @@ function endAccuse(s, now) {
   for (const id of stillIn(s)) { const k = spotOf(s, s.pos[id]), t = k >= 0 ? w.ids[k] : null; if (canAccuse(s, id, t)) { who[id] = t; n[t] = (n[t] || 0) + 1; } }
   const top = Math.max(0, ...Object.values(n)), best = Object.keys(n).filter(t => n[t] === top);
   w.votes.push({ lap: w.lap, who, out: top && best.length === 1 ? best[0] : null });
+  if (s.hidden) { (s.hidden.firsts = s.hidden.firsts || [])[w.votes.length - 1] = s.hidden.first || null; s.hidden.first = null; }   // (secret until the round ends: it points at the Quack)
   if (!top) { say(s, 'Nobody voted.'); return reveal(s, null, now); }
   if (best.length > 1) {
     if (!w.tie) { w.tie = best; say(s, `A tie! Vote again between ${best.map(id => s.players[id].name).join(' and ')}.`); s.qi++; return enter(s, 'accuse', now); }
@@ -176,7 +177,7 @@ function finish(s, win, why) {
   const w = s.wq, h = s.hidden;
   w.result = { win, why, word: h.word, quacks: [...h.quacks] };
   if (win) s.wqScore = { ...(s.wqScore || { quack: 0, room: 0 }), [win]: ((s.wqScore || {})[win] || 0) + 1 };
-  s.wqPast = [...(s.wqPast || []), { round: s.round, word: h.word, cat: w.cat, picker: w.picker, quacks: [...h.quacks], ids: [...w.ids], win, why, votes: w.votes, laps: w.lap }];
+  s.wqPast = [...(s.wqPast || []), { round: s.round, word: h.word, cat: w.cat, picker: w.picker, quacks: [...h.quacks], ids: [...w.ids], win, why, votes: w.votes.map((v, i) => ({ ...v, first: (h.firsts || [])[i] || null })), laps: w.lap, clues: w.clues || [] }];
   say(s, why === 'caught' ? `The room caught the Quack! The word was ${h.word}.` : why === 'last' ? `The Quack wins! The word was ${h.word}.` : why === 'fled' ? `The Quack fled! The word was ${h.word}.` : why === 'skip' ? `Round skipped. The word was ${h.word}.` : `Not enough ducks left. The word was ${h.word}.`);
 }
 
@@ -187,7 +188,7 @@ export function quackEnd(s, a, now) {
   const inRound = w.ids.includes(a.id) && !w.out[a.id];
   if (s.phase === 'clue') {
     if (!inRound || now < s.at + CLUE_GRACE * 1000) return null;
-    if (a.id === speakerOf(s)) return nextClue(s, now);
+    if (a.id === speakerOf(s)) { (w.clues = w.clues || []).push({ id: a.id, ms: now - s.at }); return nextClue(s, now); }   // (for Quick Quack)
     if (s.done[a.id]) return null;
     s.done[a.id] = true; return quackAdvance(s, now);
   }
@@ -253,16 +254,25 @@ export function quackLeft(s, now) {
 }
 /* a moved duck: the last duck playing dead can't move for a moment */
 export const holdStill = (s, id, now) => isQuack(s) && frozen(s, id, now);
+/* a duck moved in a vote out: the first one onto a real Quack's tile (InvestiDucker; not in a tie's revote, where ducks
+   already stand where they voted) */
+export function quackMoved(s, id) {
+  const w = s.wq, h = s.hidden;   // (kept with the host's secrets: it points at the Quack)
+  if (!isQuack(s) || s.phase !== 'accuse' || !w || !h || h.first || w.tie || !stillIn(s).includes(id) || h.quacks.includes(id)) return;
+  const k = spotOf(s, s.pos[id]); if (k >= 0 && h.quacks.includes(w.ids[k])) h.first = id;
+}
 
 /* ---------- stats ---------- */
 /* over a list of finished rounds: correct votes (for a real Quack), votes, rounds as the Quack and won as the Quack, rounds won */
 export function quackStats(list) {
-  const per = {}, P = id => (per[id] = per[id] || { right: 0, votes: 0, quack: 0, quackWins: 0, wins: 0, losses: 0, outs: 0 });
+  const per = {}, P = id => (per[id] = per[id] || { right: 0, votes: 0, quack: 0, quackWins: 0, wins: 0, losses: 0, outs: 0, first: 0, laps: 0, clueMs: 0, clues: 0 });
   for (const r of list) {
     for (const v of r.votes || []) for (const [id, t] of Object.entries(v.who || {})) { P(id).votes++; if (r.quacks.includes(t)) P(id).right++; }
     for (const v of r.votes || []) if (v.out && !r.quacks.includes(v.out)) P(v.out).outs++;
+    for (const v of r.votes || []) if (v.first) P(v.first).first++;
+    for (const c of r.clues || []) { P(c.id).clueMs += c.ms; P(c.id).clues++; }
     for (const id of r.ids || []) {
-      const q = r.quacks.includes(id); if (q) P(id).quack++;
+      const q = r.quacks.includes(id); if (q) { P(id).quack++; if (r.why !== 'fled') P(id).laps += r.laps || 0; }
       if (!r.win) continue;
       if ((r.win === 'quack') === q) { P(id).wins++; if (q) P(id).quackWins++; } else P(id).losses++;
     }

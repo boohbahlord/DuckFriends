@@ -35,7 +35,7 @@ register('rooms', {
             <label class="numfield">Computers <select name="computers">${[1, 2, 3, 4, 5, 6, 7].map(n => `<option${n === last.computers ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
             <label class="numfield">Players up to <select name="max">${[2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map(n => `<option${n === last.max ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
           </div>
-          <button type="submit" class="btn big green create-go">Create</button>
+          <button type="submit" class="btn big green create-go" data-nav-start>Create</button>
           <p class="create-msg small" role="status" hidden></p>
           </div>
         </form>
