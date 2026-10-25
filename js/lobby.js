@@ -192,7 +192,7 @@ function paint() {
   setHTML($('[data-m="type"] .val', S), `${gameSymbol(mode, 20)} ${esc(modeOf(mode).name)}`);
   $('.party-count', S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $('.party-list', S);
-  if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready, extra: R.online && !s.players[id].bot ? `<span class="pcard-net">${netHTML(s.players[id], true)}</span>` : '' })).join(''));
+  if (!list.querySelector('input.rename')) setHTML(list, s.seat.map(id => cardHTML(s.players[id], { me: id === R.me, host: id === s.hostId, ready: !!s.players[id].ready, net: R.online && !s.players[id].bot ? netHTML(s.players[id], true) : '' })).join(''));
   if (s.seat.length > lastSeat && lastSeat) sfx.pop();
   lastSeat = s.seat.length;
 }

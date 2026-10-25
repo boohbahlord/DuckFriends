@@ -873,3 +873,6 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 (Decisions: every Help page starts with a "dumb version", then what it is, how to, flags and examples, each example a
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
+
+## Lobby note, word for word (2026-10-25)
+"the game has the ping stat cover the "You" tag on the lobby screen. Maybe make the ping stat smaller"
