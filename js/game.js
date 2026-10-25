@@ -16,7 +16,9 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo } from './rules.js';
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo,
+  isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX } from './rules.js';
+import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
 import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
@@ -56,9 +58,10 @@ let recorded = '';               // the last round counted in my all-time stats
 let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { text, until, n } }
 let bbZoom = 0, losers = new Set(), seedShift = 0, knocked = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned;
                                                                          // the matches whose loser is already bumped off the cloud
+let scY = 0, scT = 0, scWalk = 0, scZone = '';      // Story Chain: how far the story has scrolled, the last frame, when my duck last walked, the zone it stands in
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
-/* on a phone held upright the board turns (agree at the top); the bracket doesn't: it keeps its own layout */
-const turned = () => portrait() && !(R && R.state.phase === 'bracket');
+/* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
+const turned = () => portrait() && !(R && (R.state.phase === 'bracket' || isSc(R.state)));
 let cam = null;   // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -82,7 +85,7 @@ function wyrColsHTML(s) {
 const bbBoardHTML = s => s.phase === 'bracket'
   ? `<div class="board bb-board bb-bracket"><div class="cols bb-cols bb-none"></div><div class="bb-diagram">${bracketHTML(s)}</div>${bracketTopHTML(s)}<div class="ducks"></div><div class="fxl"></div></div>`
   : `<div class="board bb-board">${matchColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${matchTopHTML(s, knocked.has(matchKey(s)))}</div>`;
-const boardHTML = s => isBb(s) ? bbBoardHTML(s) : `<div class="board">
+const boardHTML = s => isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question" style="font-family:${esc(writerFont(s))}">${esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text)}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
@@ -90,13 +93,42 @@ const boardHTML = s => isBb(s) ? bbBoardHTML(s) : `<div class="board">
 /* the board's measurements, taken again when the window or the docks change */
 function measure() {
   const board = S && $('.board', S); if (!board) { geo = null; return; }
+  if (isSc(R.state)) return measureStory(board);
   const cols = $('.cols', board), r = board.getBoundingClientRect(), H = cols.offsetHeight, top0 = cols.offsetTop;
   const size = Math.max(34, Math.min(100, (turned() ? H / 7 : board.offsetWidth / 7) * .62));
   const label = board.querySelector('.col-name'), labelH = turned() ? 0 : (label ? label.offsetHeight + 12 : 30);
   geo = { W: r.width, H, top0, size, labelH, left: r.left, top: r.top };
 }
+/* Story Chain: the rows' places in the story (its zones, in order) and the view over it */
+function measureStory(board) {
+  const view = $('.sc-view', board), list = $('.sc-rows', view); if (!view || !list) { geo = null; return; }
+  const r = view.getBoundingClientRect(), size = Math.max(30, Math.min(56, r.height / 7));
+  geo = { W: r.width, H: r.height, top0: 0, size, labelH: 0, left: r.left, top: r.top, sc: true, rows: [...list.children].map(e => ({ top: e.offsetTop, h: Math.max(1, e.offsetHeight) })), contentH: list.offsetHeight };
+}
+/* the story slides to keep my duck in view; while a line is typed and my duck stands still, it shows that line */
+function panStory(pos, now) {
+  const list = S.querySelector('.sc-rows'); if (!list || !geo || !geo.rows.length) return;
+  const dt = Math.min(.1, Math.max(0, (now - (scT || now)) / 1000)); scT = now;
+  const n = geo.rows.length, max = Math.max(0, geo.contentH - geo.H), last = geo.rows[n - 1];
+  let want;
+  if (R.state.phase === 'write' && now - scWalk > 2500) want = last.top + last.h - geo.H + geo.size * .9;   // (room for the names under the ducks)
+  else if (pos) { const u = Math.max(0, Math.min(.9999, pos.y)) * n, row = geo.rows[Math.floor(u)]; want = row.top + row.h * (u % 1) - geo.H * .55; }
+  else want = scY;
+  want = Math.max(0, Math.min(max, want));
+  scY = Math.abs(want - scY) < .5 ? want : scY + (want - scY) * Math.min(1, dt * 5);
+  const tr = `translateY(${(-scY).toFixed(1)}px)`;
+  if (list._tr !== tr) {
+    list._tr = tr; list.style.transform = tr;
+    const v = list.parentNode; v.classList.toggle('more-up', scY > 8); v.classList.toggle('more-down', scY < max - 8);   // more story above or below
+  }
+}
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
+  if (geo && geo.sc) {   // Story Chain: y runs down the rows, each row the same share of it
+    const k = geo.rows.length; if (!k) return { left: geo.W * p.x, top: geo.H / 2 };
+    const u = Math.max(0, Math.min(.9999, p.y)) * k, row = geo.rows[Math.floor(u)];
+    return { left: geo.W * p.x, top: row.top + row.h * (u % 1) - scY };
+  }
   if (cam && R.state.phase === 'bracket') return { left: cam.dx + cam.ox + p.x * cam.W * cam.z, top: cam.dy + cam.oy + p.y * cam.H * cam.z };   // on the bracket itself, the same spot on every screen
   const { W, H, top0, size, labelH } = geo;
   if (p.x < 0) p = { ...p, x: startX(R.state) };   // (ducks start on the board; this only covers an old state)
@@ -105,6 +137,11 @@ function place(p, i, n) {
 }
 function unplace(px, py) {   // the inverse, for clicks
   const { W, H, size, labelH } = geo, cl = v => Math.max(0, Math.min(1, v));
+  if (geo.sc) {
+    const y = py + scY, rows = geo.rows; if (!rows.length) return { x: cl(px / W), y: .5 };
+    let k = rows.findIndex(r => y < r.top + r.h); if (k < 0) k = rows.length - 1;
+    return { x: cl(px / W), y: cl((k + cl((y - rows[k].top) / rows[k].h) * .999) / rows.length) };
+  }
   if (cam && R.state.phase === 'bracket') return { x: cl((px - cam.dx - cam.ox) / (cam.W * cam.z)), y: cl((py - cam.dy - cam.oy) / (cam.H * cam.z)) };
   py -= geo.top0;
   if (turned()) return { x: cl(1 - (py - size * .45) / H), y: cl((px / W - .1) / .8) };
@@ -118,6 +155,7 @@ function drawDucks(now = clockNow()) {
   const s = R.state, layer = $('.ducks', board), size = geo.size;
   const posOf = id => id === R.me && me ? me : s.pos[id];
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
+  if (geo.sc) panStory(me, now);
   const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
   const boxes = [];
   for (const id of ids) {
@@ -194,6 +232,7 @@ function drawDucks(now = clockNow()) {
     const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
     if (f.el._tr !== tr) { f.el._tr = tr; f.el.style.transform = tr; }
   }
+  if (geo.sc) { storyMarks(s, board); return; }
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? colAt(s, me.x) : -1;
   board.querySelectorAll('.col').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
@@ -204,6 +243,17 @@ function drawDucks(now = clockNow()) {
     const hit = boxes.some(b => b.r > L && b.l < L + r.width && b.b > T && b.t < T + r.height);
     o.classList.toggle('see-through', hit);
   }
+}
+/* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
+function storyMarks(s, board) {
+  const zones = scZones(s), z = me ? zoneAt(s, me.y, zones) : null, k = zones.indexOf(z), vote = SC_VOTES.includes(s.phase);
+  const can = vote && scCanVote(s, R.me, z);   // (a row you can't vote for lights up grey)
+  board.querySelectorAll('.sc-row').forEach(r => { const on = vote && z !== 'H' && +r.dataset.z === k; r.classList.toggle('here', on); r.classList.toggle('nope', on && !can); });
+  if (z === scZone) return;
+  scZone = z;
+  const l = scLineOf(s, z), who = l ? l.line.by : /^W:/.test(z || '') ? z.slice(2) : null, p = who && s.players[who];
+  S.style.setProperty('--vb', p ? (p.card && p.card.color) || '#8a8fa3' : ({ 'C:cont': 'var(--green)', 'C:new': 'var(--blue)', 'C:lobby': 'var(--orange)' })[z] || 'var(--green)');
+  if (vote) setHTML($('.gact', S), gactHTML(s));   // (your own line or word can't be voted for)
 }
 /* the ducks walk on the bracket itself (x, y across the whole bracket), so everyone sees them over the same matches; the
    bracket slides to keep my duck in view */
@@ -273,9 +323,9 @@ function playFx(f) {
 
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
-const locked = () => R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam;   // an ended turn holds its answer (not in free roam)
+const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam;   // an ended turn holds its answer (not in free roam)
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-round: walks anywhere, plays from the next writing stage
-const roams = () => ['answer', 'bracket'].includes(R.state.phase) || late();   // anywhere on the board (else inside my column)
+const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late();   // anywhere on the board (else inside my column)
 const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined);
 function xBounds() {
   const s = R.state;
@@ -349,7 +399,9 @@ function step(dt, now) {
   }
   if (!moving) { sendMove(); return; }
   if (me.x < 0) { me.x = .5; me.y = Math.max(.75, me.y); }   // the first step onto the board starts at Neutral, near the front
-  const mul = sprinting ? SPEED.sprint : 1, onTree = cam && s.phase === 'bracket' ? [geo.W / (cam.W * cam.z), geo.H / (cam.H * cam.z)] : [1, 1];   // (on the bracket: the same speed on the screen)
+  let onTree = cam && s.phase === 'bracket' ? [geo.W / (cam.W * cam.z), geo.H / (cam.H * cam.z)] : [1, 1];   // (on the bracket: the same speed on the screen)
+  if (geo && geo.sc && geo.rows.length) { const k = geo.rows.length, row = geo.rows[Math.min(k - 1, Math.floor(Math.max(0, Math.min(.9999, me.y)) * k))]; onTree = [1, geo.H * .9 / SPEED.y / (row.h * k)]; scWalk = now; }   // (the story: the same speed on the screen in any row)
+  const mul = sprinting ? SPEED.sprint : 1;
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0], sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   const [lo, hi] = xBounds();
   let nx = me.x + ax * sx * dt, ny = me.y + ay * sy * dt, q = '';
@@ -372,7 +424,8 @@ function step(dt, now) {
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
 function resetDuck() {
   if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
-  const s = R.state, inCol = s.phase === 'bracket' ? null : s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
+  if (isSc(R.state) && locked()) return '✗ Your vote holds your duck there.';
+  const s = R.state, inCol = s.phase === 'bracket' || isSc(s) ? null : s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
   const [lo, hi] = inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
   let x = me.x, y = me.y;
@@ -392,9 +445,11 @@ function jumpTo(c) {
   me.x = x; if (me.y === undefined || me.y < 0) me.y = .5; target = null;
   sendMove(true);
 }
+/* what ducks stand in: the board, or the story's view */
+const origin = board => board && (isSc(R.state) ? $('.sc-view', board) : board);
 function boardClick(e) {
   if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900) return;
-  const board = e.target.closest('.board'); if (!board || e.target.closest('.topover')) return;
+  const board = origin(e.target.closest('.board')); if (!board || e.target.closest('.topover, .sc-write')) return;
   const r = board.getBoundingClientRect();
   target = unplace(e.clientX - r.left, e.clientY - r.top);
   if (me.x < 0) { me.x = .5; me.y = .9; }
@@ -402,12 +457,12 @@ function boardClick(e) {
 /* touch: walk to a spot on the screen (a faint white circle marks it), and where my duck is on the screen */
 function walkTo(cx, cy, sprint) {
   if (!me || !canWalk()) return;
-  if (!geo) measure(); const board = S && $('.board', S); if (!board || !geo) return;
+  if (!geo) measure(); const board = S && origin($('.board', S)); if (!board || !geo) return;
   const r = board.getBoundingClientRect();
   target = { ...unplace(cx - r.left, cy - r.top), sprint, mark: true };
 }
 function duckAt() {
-  const board = S && $('.board', S); if (!board || !geo || !me) return null;
+  const board = S && origin($('.board', S)); if (!board || !geo || !me) return null;
   const r = board.getBoundingClientRect(), a = place(me, 0, 1);
   return { x: r.left + a.left, y: r.top + a.top };
 }
@@ -425,7 +480,7 @@ const pause = ms => new Promise(ok => setTimeout(ok, ms));
 /* a question starts: "Vote" once voting opens; the votes are in: the news, then the question to talk over */
 async function announce(phase) {
   const job = ++sayJob;
-  if (phase === 'answer') { await pause(Math.max(250, graceLeftMs(R.state))); if (job === sayJob) say('Vote'); return; }
+  if (phase === 'answer' || (isSc(R.state) && ['lvote', 'wvote'].includes(phase))) { await pause(Math.max(250, graceLeftMs(R.state))); if (job === sayJob) say('Vote'); return; }
   if (phase === 'tie') { sfx.boop(); say('Tie!'); return; }
   if (phase !== 'discuss') return;
   sfx.boop();   // End turn is open
@@ -462,6 +517,7 @@ const whoHTML = s => s.seat.map(id => `<span class="who-chip${s.done[id] ? ' don
 
 /* the stat boxes: this round's, then every round's once the review vote passes (redrawn as jumps and votes come in) */
 function statsHTML(s) {
+  if (isSc(s)) return storyStatsHTML(s);
   if (isWyr(s)) return wyrStatsHTML(s);
   const boxes = r => s.seat.map(id => statBoxHTML(s, id, r)).join('');
   if (s.phase === 'over') return boxes(null);
@@ -498,6 +554,14 @@ function recordRound(s) {
   const key = `${s.id}:${s.startedAt}:${s.round}`; if (key === recorded) return; recorded = key;
   if (s.test) return;
   const st = profile.stats[(s.options && s.options.mode) || 'aod'];
+  if (isSc(s)) {   // Story Chain: my lines, and the votes for my lines and my secret word
+    const p = scStats(s.sc.stories.flatMap(x => x.paras).filter(x => x.round === s.round))[R.me];
+    if (!st || !p || !(p.lines || p.lvotes || p.wvotes)) return;
+    const game = `${s.id}:${s.startedAt}`;
+    if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
+    st.rounds++; st.answers += p.lines; st.wins += p.lvotes; st.titles += p.wvotes;
+    save(); shareLook(); return;
+  }
   if (isBb(s)) {   // Bicker Brackets: my votes in matches, my seeds' wins and losses, and a tournament won
     const t = (s.bbPast || []).slice(-1), p = bbStats(t)[R.me];
     if (!st || !p || !(p.votes || p.wins || p.losses)) return;
@@ -532,13 +596,14 @@ function useSpecial() {
   R.send({ t: 'use', face: turned() ? 1 : (me.face || 1) });
 }
 
-const graceLeftMs = s => s.phase === 'answer' ? Math.max(0, s.at + VOTE_GRACE * 1000 - clockNow()) : 0;
+const graceLeftMs = s => s.phase === 'answer' || (isSc(s) && SC_VOTES.includes(s.phase)) ? Math.max(0, s.at + VOTE_GRACE * 1000 - clockNow()) : 0;
 const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
   if (late() && s.phase !== 'submit') return `<span class="progress">You joined mid-round: walk around and chat. You play from the next ${isBb(s) ? 'tournament' : 'writing stage'}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
+  if (isSc(s)) return storyActHTML(s, d, n, need, count);
   if (['submit', 'topic', 'tvote', 'seeds'].includes(s.phase)) return count;
   if (s.phase === 'podium') return '';
   if (s.phase === 'tie') {   // the tied match: vote again or toss a coin (a choice can change until everyone has chosen)
@@ -569,9 +634,24 @@ function actHTML(s) {
   return '';
 }
 
-const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', tie: 'A tie', seeds: 'Write the contenders', bracket: 'The bracket', podium: 'The podium' };
+/* Story Chain: whose line it is, or Vote (stand on a line, a word or a choice; not your own) */
+function storyActHTML(s, d, n, need, count) {
+  if (s.phase === 'words') return count;
+  if (s.phase === 'write') return '';   // (the top bar says which line it is; the writer's window has Send)
+  const onBoard = me && me.x >= 0, wait = graceLeft(s), z = onBoard ? zoneAt(s, me.y) : null, mine = s.done[R.me], ok = !!z && scCanVote(s, R.me, z);
+  const l = scLineOf(s, z), own = !ok && (s.phase === 'lvote' ? l && l.now && l.line.by === R.me : s.phase === 'wvote' && z === 'W:' + R.me);
+  const label = wait ? `Vote in ${wait}` : mine ? 'Voted ✓' : own ? (s.phase === 'lvote' ? 'Your line' : 'Your word') : 'Vote', off = wait || !ok || mine;
+  const review = s.phase === 'results' && s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${s.seat.filter(id => s.reviewVotes[id]).length}/${need}</button>` : '';
+  return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? ' voted' : ''}" data-a="end"${off ? ' disabled' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button><span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>${review}</div>`;
+}
+const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', tie: 'A tie', seeds: 'Write the contenders', bracket: 'The bracket', podium: 'The podium', words: 'Write a secret word', write: 'Write the story', lvote: 'Favorite line', wvote: 'Favorite secret word' };
 /* what the middle of the screen shows */
 function viewHTML(s) {
+  if (isSc(s)) {
+    if (s.phase === 'words') return wordsHTML(s, R.me, whoHTML(s));
+    if (s.phase === 'results') return `<div class="results sc-results"><div class="stage">${boardHTML(s)}</div><aside class="statpanel"></aside></div>`;
+    if (SC_BOARD.includes(s.phase)) return `<div class="stage">${boardHTML(s)}</div>`;
+  }
   if (isBb(s)) switch (s.phase) {
     case 'topic': return topicHTML(s, R.me, whoHTML(s));
     case 'tvote': return tvoteHTML(s, R.me);
@@ -628,11 +708,12 @@ function paint(force) {
   if (force || key !== shown) {
     const was = shown; shown = key;
     const fresh = s.pos[R.me] ? { ...s.pos[R.me], face: 1 } : null;
-    if (s.phase === 'answer' || s.phase === 'results' || s.phase === 'bracket' || !me) me = fresh && { ...fresh, j: me && me.j || 0 };
+    if (s.phase === 'answer' || s.phase === 'results' || s.phase === 'bracket' || (isSc(s) && SC_BOARD.includes(s.phase)) || !me) me = fresh && { ...fresh, j: me && me.j || 0 };
+    scZone = null;
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s));
+    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s));
     if (s.phase === 'answer') seedShift = 0;   // a vote starts on the match's own colors
     bbMarks(s);
     main.innerHTML = viewHTML(s);
@@ -647,11 +728,15 @@ function paint(force) {
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
     }
-    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
+    $('.round', S).textContent = s.phase === 'over' ? '' : `Round ${s.round + 1}${isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss'].includes(s.phase) ? ` · Question ${s.qi + 1} of ${s.qs.length}` : ''}`;
     $('.phase', S).textContent = TITLES[s.phase] || '';
     geo = null;
   }
-  if (s.phase === 'submit' || s.phase === 'topic') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
+  if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
+  if (isSc(s) && s.phase === 'write') {   // the line as it's typed (the writer sees their own straight from the box)
+    if (scWriter(s) !== R.me) { const t = $('.sc-typing', S), was = t && t._html; setHTML(t, typingHTML(s)); if (t && t._html !== was) geo = null; }
+    else if (s.done[R.me] && $('form.sc-write', S)) paint(true);
+  }
   if (s.phase === 'topic') setHTML($('.bb-topic-live', S), topicLiveHTML(s, R.me));   // everyone's topics as they come
   if (s.phase === 'tvote') setHTML($('.bb-topics', S), topicsHTML(s, R.me));
   if (s.phase === 'seeds') {   // everyone's words as they type them, and the seeds so far
@@ -695,16 +780,16 @@ function paint(force) {
 
 function showTimer() {
   const s = R && R.state, t = S && $('.timer', S); if (!s || !t) return;
-  if (s.phase === 'answer') { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), gactHTML(s)); } }   // the Vote button counts down
+  if (s.phase === 'answer' || (isSc(s) && SC_VOTES.includes(s.phase))) { const g = graceLeft(s); if (g !== lastGrace) { lastGrace = g; setHTML($('.gact', S), gactHTML(s)); } }   // the Vote button counts down
   const now = clockNow(), ends = [s.ends, s.catchEnds].filter(Boolean), end = ends.length ? Math.min(...ends) : 0;
   const meter = $('.tmeter', S);
   if (s.phase === 'podium') { const pl = $('.pod-left', S); if (pl) pl.textContent = `The stats in ${Math.max(0, Math.ceil((s.ends - now) / 1000))} s`; }
-  if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
+  if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds', 'words', 'write'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds;
   /* the meter fills as the time runs out; its color drifts slowly (css) */
   const from = catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
   if (meter) { meter.hidden = false; const w = (frac * 100).toFixed(1) + '%'; if (meter._w !== w) { meter._w = w; meter.firstChild.style.width = w; } meter.classList.toggle('low', left <= 5); }
-  if (['submit', 'topic', 'seeds'].includes(s.phase) && left <= 2 && draftT) sendDraft(true);   // the last words make it in
+  if (['submit', 'topic', 'seeds', 'words', 'write'].includes(s.phase) && left <= 2 && draftT) sendDraft(true);   // the last words make it in
   t.textContent = `${catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   t.className = 'timer' + (catching ? ' catch' : '') + (left <= 5 ? ' low' : '');
   if (left <= 5 && left > 0 && left !== lastBeep) { lastBeep = left; sfx.tick(); }
@@ -715,12 +800,23 @@ function sendDraft(now = false) {
   clearTimeout(draftT); draftT = 0;
   const go = () => {
     draftT = 0;
+    if (R && isSc(R.state)) { const inp = S && $(R.state.phase === 'write' ? '.sc-in' : '.sc-win', S); if (inp && ['words', 'write'].includes(R.state.phase)) R.send({ t: 'draft', text: inp.value }); return; }   // (everyone sees a line as it's typed)
     if (R && isBb(R.state)) { const inp = S && $('form.bb-write .bb-in', S); if (inp && ['topic', 'seeds'].includes(R.state.phase)) R.send({ t: 'draft', text: inp.value }); return; }   // (everyone sees a seed as it's typed)
     const f = S && $('form.submit-card', S); if (!f || !R || R.state.phase !== 'submit') return;
     const t = f.querySelector('.tile[aria-pressed="true"]'), time = t ? +t.dataset.time : R.state.options.answerTime, side = k => (f.querySelector(`.wyr-in[data-side="${k}"]`) || {}).value || '';
     R.send(isWyr(R.state) ? { t: 'draft', a: side('a'), b: side('b'), time } : { t: 'draft', text: f.querySelector('textarea').value, time });
   };
-  if (now) go(); else draftT = setTimeout(go, R && ['seeds', 'topic'].includes(R.state.phase) ? 220 : 700);   // (the others see these as they're typed)
+  if (now) go(); else draftT = setTimeout(go, R && ['seeds', 'topic', 'write'].includes(R.state.phase) ? (R.state.phase === 'write' ? 180 : 220) : 700);   // (the others see these as they're typed)
+}
+
+/* the writer types: the letters left, Send once the secret word is in, and their line in the story at once */
+function storyTyped(box) {
+  if (/\n/.test(box.value)) box.value = box.value.replace(/\s*\n\s*/g, ' ');
+  const f = box.form, text = box.value, word = (R.state.sc.assign[R.me] || {}).word, has = wordAt(text, word) >= 0;
+  f.querySelector('.sc-left').textContent = `${LINE_MAX - text.length} left`;
+  const need = f.querySelector('.sc-need'); need.textContent = has ? '✓ Secret word in' : 'Put your secret word in it'; need.classList.toggle('ok', has);
+  f.querySelector('button[type="submit"]').disabled = !(has && text.trim());
+  const t = $('.sc-typing', S); if (t) { setHTML(t, typingHTML({ ...R.state, drafts: { [R.me]: { text } } })); geo = null; }
 }
 
 /* ---------- the pause menu (top right, or Esc) ---------- */
@@ -764,6 +860,7 @@ async function act(a) {
   const s = R.state;
   switch (a) {
     case 'end':
+      if (isSc(s)) { if (SC_VOTES.includes(s.phase) && me && me.x >= 0 && !graceLeft(s)) { sendMove(true); R.send({ t: 'end', y: me.y }); } break; }   // (where I stand is my vote)
       if (s.phase === 'answer' && (!(me && me.x >= 0) || graceLeft(s))) return;
       if (s.phase === 'answer') sendMove(true);
       if ([...boardPhases(s), 'results'].includes(s.phase)) R.send({ t: 'end' });
@@ -793,7 +890,7 @@ register('game', {
   leave() {
     if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
-    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set();
+    if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
     removeEventListener('keydown', keydown); removeEventListener('keyup', keyup); removeEventListener('blur', blur); removeEventListener('resize', resized);
   },
   render(arg) {
@@ -817,6 +914,18 @@ register('game', {
       boardClick(e);
     });
     S.addEventListener('submit', e => {
+      if (e.target.matches('.sc-wordform')) {   // a secret word
+        e.preventDefault();
+        const inp = e.target.querySelector('.sc-win'), w = cleanWord(inp.value);
+        if (!w) { inp.focus(); return; }
+        clearTimeout(draftT); draftT = 0; R.send({ t: 'submit', text: w }); return;
+      }
+      if (e.target.matches('.sc-write')) {   // a line, with the secret word in it
+        e.preventDefault();
+        const box = e.target.querySelector('.sc-in'), text = box.value.trim(), word = (R.state.sc.assign[R.me] || {}).word;
+        if (!text || wordAt(text, word) < 0) { box.focus(); const need = e.target.querySelector('.sc-need'); need.classList.remove('shake'); void need.offsetWidth; need.classList.add('shake'); return; }
+        clearTimeout(draftT); draftT = 0; R.send({ t: 'submit', text }); return;
+      }
       if (e.target.matches('.bb-write')) {   // a topic or a seed
         e.preventDefault();
         const inp = e.target.querySelector('.bb-in'), text = inp.value.trim();
@@ -835,12 +944,17 @@ register('game', {
       if (!text) { f.querySelector('textarea').focus(); return; }
       R.send({ t: 'submit', text, time });
     });
-    S.addEventListener('input', e => { if (e.target.matches('.submit-card textarea, .bb-in')) sendDraft(); });   // (both Would You Rather boxes too)
+    S.addEventListener('input', e => {
+      if (e.target.matches('.sc-in')) { storyTyped(e.target); sendDraft(); return; }
+      if (e.target.matches('.sc-win')) { const v = e.target.value.replace(/\s+/g, ''); if (v !== e.target.value) e.target.value = v; sendDraft(); return; }   // (one word)
+      if (e.target.matches('.submit-card textarea, .bb-in')) sendDraft();   // (both Would You Rather boxes too)
+    });
     S.addEventListener('keydown', e => {   // a topic to vote for, picked with Enter or Space
       if (e.target.matches('[data-topic]') && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); R.send({ t: 'pick', i: +e.target.dataset.topic }); }
     });
-    S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line)
+    S.addEventListener('keydown', e => {   // Enter sends the question (Shift+Enter for a new line) or the story's line (one line, so no new lines)
       if (e.target.matches('.submit-card textarea') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
+      if (e.target.matches('.sc-in') && e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); e.target.form.requestSubmit(); }
     });
     onMenu(S, (x, y, e) => {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;

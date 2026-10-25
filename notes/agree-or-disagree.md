@@ -691,3 +691,32 @@ Someone should be in charge of making a new feature to vote skip a round that is
 Yeah is this vote to skip a turn or round btw?
 
 add a vote to skip a turn feature that ISNT in the bracket tournament
+
+## Story Chain, word for word (2026-10-25)
+
+From the request that set up The Court: "Another threat will be in charge of the Story chain game. I want the thread to
+wait on my call and let me decide how things happen for that one."
+
+The idea as pitched: the group builds a story one line per player, each player has a secret word to sneak into their
+line, and at the end everyone walks onto their favorite line. Asked (not the owner's words): 1. where the secret words
+come from, 2. what a writer sees, 3. how it starts, 4. length and timer, 5. the ending, 6. voting for your own line.
+The answers:
+
+1. Players write the secret word yeah. 
+2. They see the whole story so far, and each line added by a player has a small version of their duck under the sentence with a line under the sentence in the color from their player card, and the sentences by a player are in their font. The sentences are typed in and all players can see them get typed in before the player hits send. It is not timed but the lobby has options to time it.
+3. A random player writes the opening line. Random players write the secret word that gets used once per sentence. At the end, the secret words are revealed at the end, by being in a player's box with their card design and the word inside with the dark or light theme ui behind the text so it is readable, all next to their ducks who wrote it below the story. The sentence getting typed glows a little. After every player gets a turn writing, and voting on the sentences and secret words revealed during the vote, then they can either vote to go back to lobby, vote to continue story (which starts a new paragraph with a random starting order of player turns AND random allocation of secret words again), or vote to write new story (they keep playing the same game and move to new round but with new story). No timer on any of this.
+4. The length is one sentence each with a character limit not too short. Tell me the character limit you choose and then write out examples of sentences that use the near max limit.
+5. The ending is player's walk up and down the screen (which scrolls up and down like it would on mobile) and stand on the sentence they like the most and vote on that sentence. AFTERWARD, they then vote on their favorite secret word. Each player is randomly assigned a secret word not their own. The Players ALL write the sentences, vote on the favorite sentences, vote on favorite secret words, look at stats, and THEN go back to writing the NEXT paragraph, since each new round is a new paragraph.
+6. You cannot vote for your own line no or your secret word. 
+
+
+Ducks can walk around on screen while it is being typed, but the game shows a window to the player writing that they have to submit an answer for with the secret word showed in the window as well. The font of the secret word is NOT the font of the player that wrote it only WHEN it is revealed to the player who will write it, BUT the WHOLE sentence the player writes WILL be in their font. 
+
+Stats include who got the most votes for their sentences, the most votes for their word, who took the longest writing, and the most jumps.
+
+Asked (not the owner's words): the 160-letter limit with example sentences, and six small questions with suggestions
+(the word must be in the line; the words show after the line vote; votes end by the usual share; what next is three
+spots with a coin toss for a tie; one word up to 20 letters; old paragraphs stay above, faded, and finished stories
+show on the all-rounds review). The answer, word for word:
+
+that is good

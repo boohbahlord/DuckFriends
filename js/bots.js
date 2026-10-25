@@ -3,8 +3,9 @@
    walks its duck to an answer (each computer leans one way) and ends its turn. Afterwards they follow the people: a
    computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
    has. Now and then one wanders a little or jumps. In Bicker Brackets they write a topic and vote for one, type their
-   seeds (for a ready-made topic, seeds that fit it) and back a side in each match. */
-import { colXAt, isWyr, isBb, BB_TOPICS } from './rules.js';
+   seeds (for a ready-made topic, seeds that fit it) and back a side in each match. In Story Chain they write a secret word,
+   type their line a few letters at a time (with their secret word in it), and vote once a person has. */
+import { colXAt, isWyr, isBb, isSc, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -35,7 +36,21 @@ const BB_SEEDS = [
   ['Nails on a chalkboard', 'A dripping tap', 'Chewing loudly', 'An alarm clock', 'A car alarm', 'Snoring'],
 ];
 const ANY_SEEDS = ['Rubber ducks', 'Grandma', 'Tacos', 'Naps', 'Dinosaurs', 'Socks', 'Wi-Fi', 'Pizza', 'Mondays', 'Cats', 'Glitter', 'The moon', 'Pickles', 'Bubble wrap'];
+/* Story Chain: lines with a place for the secret word */
+const SC_LINES = [
+  w => `Out of nowhere a ${w} appeared, and everyone agreed not to talk about it.`,
+  w => `The duck stared at the ${w} for a very long time, then quacked twice and walked away.`,
+  w => `It was a perfectly normal day, apart from the ${w} sitting on the roof.`,
+  w => `Grandma said the ${w} was hers, which explained a lot about last Thanksgiving.`,
+  w => `So they hid the ${w} under the bed and hoped nobody would ask any questions.`,
+  w => `Suddenly the lights went out, and someone in the dark whispered "${w}" very slowly.`,
+  w => `Nobody could explain why the ${w} was wet, but it definitely was.`,
+  w => `Then the mayor showed up holding a ${w}, looking extremely proud.`,
+  w => `It turns out the ${w} had been the real hero all along.`,
+  w => `They held a vote, and the ${w} won by a landslide.`,
+];
 const anyOf = xs => xs[Math.floor(Math.random() * xs.length)];
+const hash = k => { let h = 7; for (const c of k) h = (h * 31 + c.charCodeAt(0)) | 0; return h >>> 0; };
 const plan = new Map();   // computer id + question → its chosen column
 const leanOf = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return ((h >>> 0) % 1000) / 1000 * 3 - 1.5; };
 const pick = (id, key) => {
@@ -56,6 +71,7 @@ export function botActions(s, now) {
   const people = s.seat.filter(id => !s.players[id].bot);
   bots.forEach((id, i) => {
     const late = now - s.at >= wait + i * 700;   // they don't all move on the same instant
+    if (isSc(s)) { storyBot(s, id, now, wait, late, people, out); return; }
     switch (s.phase) {
       case 'lobby': case 'over':
         if (!s.players[id].ready) out.push({ t: 'ready', id, v: true }); break;
@@ -108,4 +124,32 @@ export function botActions(s, now) {
     }
   });
   return out;
+}
+/* a computer in Story Chain */
+function storyBot(s, id, now, wait, late, people, out) {
+  const p = s.pos[id], wander = () => {   // now and then a little walk, or a jump
+    if (p && Math.random() < .012) out.push({ t: 'move', id, x: Math.max(.03, Math.min(.97, p.x + (Math.random() - .5) * .1)), y: Math.max(0, Math.min(1, p.y + (Math.random() - .5) * .04)), j: !p.j && Math.random() < .35 ? now : (p.j && now - p.j < 1400 ? p.j : 0) });
+  };
+  switch (s.phase) {
+    case 'lobby': case 'over': if (!s.players[id].ready) out.push({ t: 'ready', id, v: true }); return;
+    case 'words': if (late && !s.done[id]) out.push({ t: 'submit', id, text: anyOf(SC_WORDS) }); return;
+    case 'write': {
+      if (scWriter(s) !== id) { wander(); return; }
+      if (!late || s.done[id]) return;
+      const word = (s.sc.assign[id] || {}).word || 'duck', line = SC_LINES[hash(id + s.round + ':' + s.sc.turn) % SC_LINES.length](word);
+      const k = Math.floor((now - s.at - wait) / 1000 * 16), have = ((s.drafts || {})[id] || {}).text || '';   // 16 letters a second
+      if (k >= line.length) out.push({ t: 'submit', id, text: line });
+      else if (k > have.length) out.push({ t: 'draft', id, text: line.slice(0, k) });
+      return;
+    }
+    case 'lvote': case 'wvote': case 'results': {
+      if (s.phase === 'results' && s.round >= 1 && !s.reviewVotes[id] && people.some(h => s.reviewVotes[h])) out.push({ t: 'voteReview', id });
+      if (!p || s.done[id] || !late || !people.some(h => s.done[h])) { wander(); return; }
+      const zones = scZones(s), ok = zones.map((z, j) => [z, j]).filter(([z]) => scCanVote(s, id, z)); if (!ok.length) return;
+      const pref = s.phase === 'results' && hash(id + s.round) % 10 < 7 ? ok.find(([z]) => z === 'C:cont') : null;
+      const [, j] = pref || ok[hash(id + s.phase + s.round) % ok.length], want = (j + .5) / zones.length, step = .5 / zones.length;
+      if (Math.abs(p.y - want) <= step) out.push({ t: 'move', id, x: p.x, y: want, j: p.j || 0 }, { t: 'end', id, y: want });
+      else out.push({ t: 'move', id, x: p.x, y: p.y + Math.sign(want - p.y) * step, j: p.j || 0 });
+    }
+  }
 }

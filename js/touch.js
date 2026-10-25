@@ -14,7 +14,7 @@ const TAP = { ms: 260, px: 12 };        // a tap: short and still
 const DOUBLE = { ms: 300, px: 70 };     // a double tap: the second tap this soon and this near
 const FLICK = { out: 450, gap: 380, ang: .9 };   // two flicks: each out for under .45 s, back for under .38 s, about the same way
 const SWIPE = { px: 40, ms: 350 };      // a swipe: this far, this fast
-const NOT_HERE = 'button, a, input, select, textarea, label, .statpanel, .mc, .gbar, .bbar, .dock-l, .dock-r, .dock-b';
+const NOT_HERE = 'button, a, input, select, textarea, label, .statpanel, .mc, .gbar, .bbar, .dock-l, .dock-r, .dock-b, .sc-write';
 const angDiff = (a, b) => Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
 
 /* api: active(), jump(), walkTo(clientX, clientY, sprint), duckAt() → {x, y} on screen, getTarget(), setTarget(t) */
