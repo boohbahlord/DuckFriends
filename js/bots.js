@@ -7,7 +7,7 @@
    type their line a few letters at a time (with their secret word in it), and vote once a person has. In Lawyering they
    pick or vote for attorneys, vote as jurors (now and then changing their minds in closing arguments) and, as an
    attorney behind in closing arguments, sometimes give up. */
-import { colXAt, isWyr, isBb, isSc, isLaw, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
+import { colXAt, isWyr, isSc, isLaw, twoSided, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -130,7 +130,8 @@ export function botActions(s, now) {
       case 'answer': {
         if (isLaw(s)) { lawBot(s, id, late, now, out); break; }
         if (!late || s.done[id]) break;
-        const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) || isBb(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
+        const key = s.round + ':' + s.qi, c = pick(id, key), p = s.pos[id];
+        const want = colXAt(s, twoSided(s) ? (c < 3 || (c === 3 && hash(id + key) % 2) ? 0 : 1) : c);   // (a neutral one picks a side once, not every step)
         const x = p.x, y = p.y, step = .035;
         if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });

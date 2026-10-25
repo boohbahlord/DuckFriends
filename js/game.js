@@ -777,7 +777,7 @@ function shiftSides(s, now) {
   seedShift = deg; bbMarks(s);
 }
 const matchKey = s => s.bb ? [s.startedAt, s.bb.r, s.bb.m].join() : '';
-/* Bicker Brackets: the votes are in, so the winner bumps the loser off the cloud (once per match) */
+/* Bicker Brackets: the championship's votes are in, so the champion bumps the loser off the cloud (once) */
 function duel(s) {
   if (isLaw(s)) {   // Lawyering: the winning attorney bumps the loser off; a hung jury: both jump
     const L = s.law, key = caseKey(s);
@@ -787,7 +787,7 @@ function duel(s) {
     setTimeout(() => { if (lord && lord.isConnected) (L.w === -1 ? bothOff(lord) : knockOff(lord, L.w ? 0 : 1)); }, 900);
     return;
   }
-  const m = isBb(s) && s.phase === 'discuss' && bbMatch(s), key = matchKey(s);
+  const m = isBb(s) && s.phase === 'discuss' && s.bb.r === s.bb.rounds.length - 1 && bbMatch(s), key = matchKey(s);
   if (!m || m.w == null || knocked.has(key)) return;
   knocked.add(key);
   const lord = S.querySelector('.bb-top .lord.duel');

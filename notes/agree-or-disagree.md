@@ -764,3 +764,18 @@ Help me do the stats now actually
 (Taken as: mode name Lawyering, each topic a Court Case; closing arguments whenever the jury is split; when the minute
 runs out the bigger side wins; Give Up is for the attorney who is not ahead; a tie at the end: both ducks jump off the
 cloud and the whole board goes grey. Stat ideas sent; the stats get built once picked.)
+
+1. Yes 2. No 3. No 4. No 5. Yes 6. No 7. Yes 8. Yes (Just call it "Unconvinced") 9. No 10. Yes (Call it "Hard Topic") 11. Yes 12. Yes
+
+(Stats built: Best Lawyer, Landslide, Flip-Flopper, Unconvinced, Hard Topic, Turned on Their Own Idea, Most Jumps.
+After the bug test: on a phone the attorneys start side by side in the circle, which stretches along its strip; the
+verdict fits under the cloud; names in the case bubble never break mid-word.)
+
+## Computers voting in brackets, word for word (2026-10-25)
+
+the ai in test needs a new thread for brackets to make it vote instead of walking back and forth without voting.  
+
+The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of the championship game
+
+Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
+every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
