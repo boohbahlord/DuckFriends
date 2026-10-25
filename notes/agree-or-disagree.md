@@ -1236,6 +1236,95 @@ and, back in view, comes in where everyone is. Command line: `song` lists the so
 off "Jester's Stair" Glow` and `song on …` (host, sudo or cansettings; names with spaces in quotes as in bash; `song on
 all`, `song off all`); a song turned off while it plays stops and the next comes in 3 seconds.)
 
+## Hangout on Duck Cabin, word for word (2026-10-25)
+
+For number one, there is a stage that a duck can get on with a mic there, and it overlapse the duck in perspective when they are behind it and disappears behind the parts of the duck that hides it when they are in front of it somehow (Such as jumping up from below the podium while not on it).
+
+There is a soccer ball that can be kicked around yeah, and there is one soccer net on the far right of the gamemode. Remember it is a large map that can be walked through.
+
+There is a chalk floor that is written into by using the fingers on touch screen OR the mouse on the game, by clicking and dragging mouse. The chalk board has an eraser next to it that if you stand on it and use the end turn or vote button, it will say "Erase", and clicking it erases whatever was on it. The board should have a chalk above the eraser that players click to start drawing. Players can write into it at the same time. 
+
+There are couches somewhere in the center of the room that the vote button will say "Sit" as an option, and clicking that allows the duck to be sitting on the sofa, and the sofa can hold up to as many ducks as the amount of cushions, and there is no movement on the sofa. Clicking or using movement just puts you onto another cushion of the sofa IF the adjacent cushion is unoccupied.
+
+there is piano keys somewhere which can be walked onto to play notes OR the player can go into keyboard mode. The keyboard mode has four octaves, and the controls are ctrl will flat a note by a half step and shift will sharp a note played by a half step. The black keys on keyboard can only be played IF you use this ctrl or shift button, and the keyboard on the screen will glow when tapped. Every interval of half step glows a different color (minor 2nd, major 3rd, augmented fourth) of the rainbow, and chords that play together base their color off of the previous note either currently played on the keyboard OR the last not played. The notes are player with these options:
+
+lowest octive: 1 2 3 4 5 6 7 
+second lowest (second availible octive): q w e r t y u 
+third octive: g h j k l ; ' 
+fourth octive: v b n m , . /
+
+When a note is an interval PLUS it's octive, then that notation can be written ON the key.
+
+The keyboard has a part that says play in the vote or end turn button, and clicking it will open up the piano mode. 
+
+ON MOBILE the player will have the four keys show up on their screen and show the colors and everything here and they just click the keys.
+
+Players cannot move when playing the piano on the board. It is a large piano that shows the notes to everyone. It also shows a column of a musical sheet above the piano that shows the notes being played there. 
+
+When a player is playing the piano, their duck teleports to be in front of the keyboard, out of the way of the Play Piano button, and each player has their own teleportation spot, and who teleports where while not being able to move when playing the piano is determined by which spot is unoccupied.
+
+There is a pool the ducks descend into somewhere with slight water physics, like splashing effects or water moving around when they move. There is a beach ball that stays in the pool or only outside of the pool if it was knocked out of it. The beach ball cannot go too far off from the pool. The pool is large and there is a little pull rope that splits the pool in half, and it doesn't effect ducks at all since they move past it, and it appears beneatht the ducks AND all their customization, skins, effects, clothes, and styles, not letting the pool rope go over them. Little small rubber ducks can be seen in the pool that stay in the pool, and they move with the water. 
+
+Ducks can also use a trampoline somewhere.
+
+This all takes place in a very large wood cabin with a fireplace somewhere in it. The board is based on the ground, and there is no visible map because the map AND game mode are one in this gamemode. The pool is outside of the wood cabin, there is a riased porch deck ducks go down to go to the pool, a campfire outside, trees in the forest at the outskirt of the cabin, and a red tj jeep from the early 2000s or whenever it came out in it's cult classic look parked on a dirt path somewhere outside the main entrance. The image shows more info. 
+
+A lot of good perspective work and good code will need to be done for this new board and gamemode for hanging out. AND there can be a book players share inside the cabin. 
+
+Maybe the cabin has bedrooms and a kitchen, as well as a bathroom. Maybe an upstairs? ???? 
+
+Multiple agents will need to work on this. 
+
+We can call the game mode "Hangout" and the map is "Duck Cabin"
+
+The music fades away and becomes muted as soon as someone clicks the play piano button, and instead the music bar that shows who is playing music simply becomes "Piano", and the music fades back in 10 seconds after someone gets up and off the piano.
+
+There is no stats or rounds.
+
+(Two drawings came with it, in notes/ref/hangout/: cabin-sketch.png, the cabin at night on a hill: a dark roof, warm
+orange windows, a door from the cabin onto a raised deck with warm lights; "Going inside the building reveals the
+inside, and going to the front or backdoor (the backdoor leads to the deck) will show the outside fittingly"; "There
+are some lightposts outside that flicker a little and have a warm orange glow to them in the dark outside, but scarcely
+placed"; "The jeep is on the highground and the front door doesn't need an stair to get to because it is level to the
+highground"; "The entrance is to the left behind this 2d view"; "The pool below that is downhill has lights in the pool
+under the water that makes it shine in contrast to the dark, and a few lights around the pool"; "Stairs lead downhill
+off the raised deck high above ground. Jumping off the deck makes a falling effect and the ducks fall for long time
+here"; "The darker green here is the decline where the ground goes downhill"; "The pool is found downhill away from the
+deck". And stage-sketch.png, a round raised stage with a mic stand and side stairs: "The duck and ALL of it's
+customization it wears, including effects, get covered by it when they are behind it"; "The mic is a prop and does
+nothing, it is for decoration"; "The stairs OR jumping are the only way onto the stage because it is a raised platform,
+and you need a certain amount of jump height and/or air time FROM the jump to get onto the raised platform of the
+stage.")
+
+delegate the tasks to many workers
+
+This cabin is good inspiration
+
+(Two photos of a log cabin came with it, notes/ref/hangout/cabin-photo-front.jpg and cabin-photo-deck.jpg: round
+orange-brown logs, a steep A-frame roof with a dark green shingle roof, a big triangle window over the door, a stone
+chimney, a wraparound deck with an orange wood railing and stairs down to the right, wooded hillside behind.)
+
+(Building with several workers; the plan and the parts are in notes/plan-hangout.md. Open questions taken with these
+picks until the owner says otherwise: one big floor first (living room, kitchen, two bedrooms, bathroom), upstairs
+later; the book is a guestbook; Shift sharps, Alt (Option) flats, since Ctrl+W/T/N belong to the browser and would
+close the game; each duck's chalk is its body color; the Sit/Play button turns to "Get up", and a jump gets up too.)
+
+remember it is night time in the map though
+
+(Duck Cabin is always night: the photos give the cabin's shapes and wood colors, lit warm by its windows, lamps and
+lights against a dark blue night.)
+
+and it is sourrounded by forest trees
+
+(The forest rings the whole map: trees on every side, thick at the edges, where the world ends.)
+
+Make the space bar flat and C is sharp AS WELL and then to escape the piano click Escape.
+
+The keys and what they do are shown in an orderly fashion to the player
+
+(Piano keyboard mode: Space flats as well as Alt, C sharps as well as Shift, Escape gets up from the piano; a neat
+legend of the four rows and these keys shows on the keyboard on a computer.)
+
 ## A starry night sky map, word for word (2026-10-25)
 
 Someone make a map of a starry night sky that is detailed and breathtaking as can be, and it rolls across the sky beautifully and moves. The map is just a very starry night sky.

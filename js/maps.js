@@ -11,7 +11,8 @@
    them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
    Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
-   The host picks the map in the lobby. */
+   The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
+   starry night sky, and it is not in the Map window. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
 import { backdropSVG, backdropHTML, carnivalSVG } from './art.js';
@@ -25,7 +26,7 @@ export const MAPS = [
   ['rabbit', 'Rabbit Hole of Ducklings', 'A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.'],
   ['ec', 'Ether\'s Crossroads', 'The jester\'s dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it\'s played.'],
 ];
-export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
+export const mapName = id => id === 'cabin' ? 'Duck Cabin' : (MAPS.find(m => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
@@ -193,6 +194,13 @@ function nightScene(layer) {
   const draw = () => { const k = layer.clientWidth + 'x' + layer.clientHeight; if (k === drawn || !layer.clientWidth) return; drawn = k; sc.innerHTML = backdropHTML(layer.clientWidth, layer.clientHeight, true); };
   const ro = new ResizeObserver(draw); ro.observe(layer); draw();
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
+}
+
+/* ---------- Duck Cabin: the night sky around Hangout's world (the world itself fills the board) ---------- */
+function cabinScene(layer) {
+  const sc = document.createElement('div'); sc.className = 'scene cabin';
+  layer.append(sc);
+  return { update() {}, destroy() { sc.remove(); } };
 }
 
 /* ---------- Rabbit Hole of Ducklings ----------
@@ -459,7 +467,7 @@ export function mountMap(layer, s) {
   const map = s.options.map || 'board', cur = { cols: null };
   layer.className = 'map-layer map-' + map;
   document.documentElement.classList.add('map-on', 'map-is-' + map);   // (map-is-ec: the Ether & Kenoma look)
-  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : map === 'carnival' ? carnivalScene(layer) : map === 'rabbit' ? rabbitScene(layer) : map === 'stars' ? starsScene(layer) : nightScene(layer);
+  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : map === 'carnival' ? carnivalScene(layer) : map === 'rabbit' ? rabbitScene(layer) : map === 'stars' ? starsScene(layer) : map === 'cabin' ? cabinScene(layer) : nightScene(layer);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro = map === 'carnival' ? new ResizeObserver(es => es.forEach(e => marquee(e.target))) : null;
   return {

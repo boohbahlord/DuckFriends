@@ -40,7 +40,7 @@ const GAME = [
       'How the host and sudo use the command line to run a game well: set it up in the lobby, watch it, change it while it runs, and fix it when it gets stuck. Each step names the command.',
     ],
     how: [
-      'In the lobby, pick the map and the game: `sudo map sky`, `sudo mode wyr`, then `sudo start`.',
+      'In the lobby, pick the map and the game: `sudo map sky`, `sudo mode wyr`, then `sudo start`. Hangout (`sudo mode hang`) brings its own map, Duck Cabin.',
       'Give a friend a hand: `sudo usermod @name` makes them sudo; or a group with only some powers: `sudo groupadd -p canskip,canmute refs` and `sudo usermod -aG refs @name`.',
       'Watch the game: `ps` (stage, turn, timers), `w` (who is still on their turn), `forgame show` (settings).',
       'Too slow? `sudo forgame turn-end 3/4` ends a turn when 3 of 4 players are done, or `sudo forgame timer on writing 45`.',
@@ -99,10 +99,10 @@ const GAME = [
   { name: 'Lobby', short: 'map, mode, start, hostname',
     title: 'HelpGame-Lobby · setting up in the lobby',
     dumb: 'Pick where. Pick what. Press go. All typed.',
-    what: ['In the lobby, the host and sudo can pick the map and the game type, rename the room and start, all from here. `map` and `mode` alone list the choices (anyone).'],
+    what: ['In the lobby, the host and sudo can pick the map and the game type, rename the room and start, all from here. `map` and `mode` alone list the choices (anyone). Hangout is always in Duck Cabin, so it has no map to pick.'],
     flags: [
       ['map / map <name>', 'the maps / picks one (board sky pixel carnival stars rabbit ec)'],
-      ['mode / mode <type>', 'the game types / picks one (aod wyr bb sc quack law)'],
+      ['mode / mode <type>', 'the game types / picks one (aod wyr bb sc quack law hang)'],
       ['sudo hostname "name"', 'renames the room'],
       ['sudo start', 'starts the game, like the Start button'],
     ],
@@ -110,6 +110,7 @@ const GAME = [
       ['map', 'the maps'],
       ['sudo map pixel', 'the Pixel map'],
       ['sudo mode bb', 'Bicker Brackets'],
+      ['sudo mode hang', 'Hangout: no rounds, just Duck Cabin'],
       ['sudo hostname "Duck Night"', 'a new room name'],
       ['sudo map sky && sudo mode wyr && sudo start', 'set up and go, in one line'],
     ],
@@ -187,7 +188,7 @@ const GAME = [
     flags: [
       ['roundstats / gamestats / totalstats', 'this round / this game / all time'],
       ['… @name @name', 'only those players'],
-      ['… -m aod|wyr|bb|sc|quack|law', 'one game type'],
+      ['… -m aod|wyr|bb|sc|quack|law', 'one game type (Hangout keeps no stats)'],
       ['jumps [@names]', 'Jumps, this game and all time'],
     ],
     ex: [

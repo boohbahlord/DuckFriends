@@ -80,6 +80,7 @@ export function openStats(s, id, me) {
     cls: 'win-small',
     onOpen(w) {
       const body = w.querySelector('.stats-one'), note = w.querySelector('.stat-note'), mode = w.querySelector('.stat-mode');
+      if (s.options.mode === 'hang') { lastTab = 'all'; w.querySelector('[data-st="game"]').hidden = true; }   // (Hangout keeps no stats of its own: all time only)
       const show = () => {
         w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
         mode.hidden = lastTab !== 'all'; mode.value = lastMode;

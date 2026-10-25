@@ -11,8 +11,11 @@
 
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
    that) writes a paragraph a round. Who is the Quack? has its own rules in quackrules.js. Lawyering (at the end) argues
-   each topic out: two attorneys in the middle, the jury walks to the one who convinced them. */
+   each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
+   room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
+import { hangStart, hangAction, hangTick, hangJoin, hangLeft } from './hangout/rules.js';
+import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -26,8 +29,8 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering)
+  map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -57,6 +60,7 @@ export const isWyr = s => s.options.mode === 'wyr';
 export const isBb = s => s.options.mode === 'bb';
 export const isSc = s => s.options.mode === 'sc';
 export const isLaw = s => s.options.mode === 'law';
+export const isHang = s => s.options.mode === 'hang';
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle */
@@ -68,13 +72,15 @@ export const colBoundsAt = (s, c) => isLaw(s) ? ([[.03, .4], [.6, .97]][c] || [.
 export const startX = s => twoSided(s) || isSc(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 /* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead;
    Story Chain: ducks walk up and down the story) */
-export const boardPhases = s => isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : isLaw(s) ? ['answer', 'discuss'] : ['answer', 'discuss', 'results'];
+export const boardPhases = s => isHang(s) ? ['hang'] : isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : isLaw(s) ? ['answer', 'discuss'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
 export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delete s.players[id].late; };   // they play from here
 export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
+/* the turn a back-to-lobby (or skip) vote belongs to; Hangout has no turns, so a couple of minutes instead */
+export const voteKey = (s, now) => isHang(s) ? 'hang' + Math.floor(now / 120000) : turnKey(s);
 export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : s.phase === 'write' && s.sc ? `write${s.round}.${s.sc.turn}` : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
 export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
@@ -182,6 +188,7 @@ function startResults(s, now) {
 function advance(s, now, force = false) {
   if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now, force);
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackAdvance(s, now, force);
+  if (isHang(s)) return s;   // (no turns: the cabin stays open until the room goes back to the lobby)
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   if (isLaw(s) && s.phase === 'answer') return lawCheck(s, now, force);   // a case waits for the jury (and closing arguments)
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
@@ -229,6 +236,7 @@ function advance(s, now, force = false) {
    around and chat, and play from the next turn */
 function seatNewcomer(s, id) {
   const me = s.players[id], ph = s.phase;
+  if (isHang(s)) { if (ph === 'hang') hangJoin(s, id); return; }   // Hangout: at the front door, at once
   if (boardPhases(s).includes(ph)) s.pos[id] = { x: startX(s), y: Math.random() };
   if (isQuack(s)) {   // (a tile mid-vote would move everyone's tiles under their feet: they get one at the next lap)
     const w = s.wq;
@@ -269,7 +277,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'leave': {
       if (!me) return s;
       say(s, `${me.name} left.`);
-      reopenMatch(s, a.id);
+      reopenMatch(s, a.id); if (isHang(s)) hangLeft(s, a.id);
       delete P[a.id]; s.seat = s.seat.filter(id => id !== a.id); delete s.pos[a.id]; delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
@@ -279,11 +287,14 @@ export function reduce(state, a, now = Date.now()) {
     case 'look': if (me) Object.assign(me, a.look); return s;
     case 'ready': if (me && (s.phase === 'lobby' || s.phase === 'over')) me.ready = a.v ?? !me.ready; return s;
     case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
-    case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
+    case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) {
+      Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max);
+      if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';   // Hangout and Duck Cabin are one
+    } return s;
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;
       if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
-      reopenMatch(s, a.who);
+      reopenMatch(s, a.who); if (isHang(s)) hangLeft(s, a.who);
       delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
       if (s.vote) settleVote(s, now);
       return s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown' ? s : advance(s, now);
@@ -291,6 +302,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'start':
       if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
       if ((isQuack(s) || isLaw(s)) && s.seat.length < 3) return state;   // (the lobby says it needs 3)
+      if (isHang(s) !== (s.options.map === 'cabin')) s.options.map = isHang(s) ? 'cabin' : 'board';   // (Hangout and Duck Cabin are one)
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
     case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
@@ -320,13 +332,14 @@ export function reduce(state, a, now = Date.now()) {
       if (s.phase === 'answer' && isLaw(s) && isCounsel(s, a.id)) { const [lo, hi] = colBoundsAt(s, -1); x = Math.max(lo, Math.min(hi, x)); }   // the attorneys argue from the circle
       if (isQuack(s) && ['choice', 'accuse'].includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a vote holds its spot
       if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a story vote holds its spot
-      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late && !isQuack(s)) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
+      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late && !isQuack(s) && !isHang(s)) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
       const dj = j && +a.dj > j ? +a.dj : 0;   // a double jump: when the second jump began
       const w = WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun ? a.w : '', [ax, ay] = w ? aimOf(a, 1) : [0, 0];   // a weapon kept out, and where it aims
-      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump
+      const hz = v => Math.max(-400, Math.min(1200, Math.round(+v || 0)));   // Hangout: z, the height of its feet; b, where its jump began (world px)
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}), ...(isHang(s) ? { z: hz(a.z), b: hz(a.b), ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height
       quackMoved(s, a.id);   // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       return s;
@@ -334,6 +347,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'end': {   // end your turn (answer, discuss) or be ready for the next round (results)
       if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackEnd(s, a, now) || state;
       if (isSc(s)) return scVote(s, a, now) || state;
+      if (isHang(s)) return state;   // (Hangout's button is its own action, below)
       if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
@@ -347,7 +361,8 @@ export function reduce(state, a, now = Date.now()) {
       s.reviewVotes[a.id] = true;
       if (s.seat.filter(id => s.reviewVotes[id]).length >= needed(s)) s.review = true;
       return s;
-    case 'toLobby': if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+    case 'toLobby': if (boss && isHang(s) && s.phase === 'hang') return backToLobby(s, `${me.name} took everyone back to the lobby.`);   // (Hangout: the host ends it whenever)
+      if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
@@ -372,7 +387,10 @@ export function reduce(state, a, now = Date.now()) {
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1, aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}) }];
-      if (aim) { const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED; s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y }]; }
+      if (aim) {
+        const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED, hang = isHang(s) ? { hz: Math.round(+p.z || 0), hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {};   // (Hangout: the height it flies at, and which side of the cabin's walls)
+        s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y, ...hang }];
+      }
       return s;
     }
     case 'aura': {   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
@@ -391,6 +409,7 @@ export function reduce(state, a, now = Date.now()) {
       return advance(s, now);
     }
     case 'wqWord': return wqWord(s, a, now) || state;   // Who is the Quack?: the secret word, from its picker
+    case 'hang': return me && isHang(s) && s.phase === 'hang' && hangAction(s, a, now) ? s : state;   // Hangout: an activity (k) did something
     case 'counsel': {   // Lawyering: my pick (as the writer) or my vote (the room) for an attorney; it can change until the picking ends
       const L = s.law, how = L && L.how && L.how[a.role];
       if (!me || me.late || s.phase !== 'counsel' || !how || (how === 'writer' && a.id !== s.qs[s.qi].by) || !counselOk(s, a.role, a.who)) return state;
@@ -412,18 +431,19 @@ export function reduce(state, a, now = Date.now()) {
     case 'voteStart': {   // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
       if (!me || me.bot || ['lobby', 'countdown', 'over'].includes(s.phase)) return state;
       if (s.vote) return state;
-      const used = (s.voteUsed || {})[a.id] || {};
+      const used = (s.voteUsed || {})[a.id] || {}, tk = voteKey(s, now);
       if (a.kind === 'kick') {
         if (!P[a.target] || a.target === a.id) return state;
         if (humanIds(s).length <= 2) return state;   // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
       } else if (a.kind === 'lobby' || a.kind === 'skip' || a.kind === 'turn') {
         if (a.kind === 'turn' && isBb(s)) return state;   // (not in Bicker Brackets)
-        if (used[a.kind] === turnKey(s)) return state;   // one back-to-lobby (or skip) vote a turn
+        if (a.kind !== 'lobby' && isHang(s)) return state;   // (Hangout has no turns or rounds to skip)
+        if (used[a.kind] === tk) return state;   // one back-to-lobby (or skip) vote a turn
       } else return state;
       s.voteN = (s.voteN || 0) + 1;
       s.vote = { n: s.voteN, kind: a.kind, target: a.kind === 'kick' ? a.target : null, by: a.id, yes: { [a.id]: true }, no: {}, ends: now + VOTE_TIME * 1000 };
-      s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : turnKey(s) } };
+      s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : tk } };
       say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : a.kind === 'skip' ? `${me.name} started a vote to skip this round.` : a.kind === 'turn' ? `${me.name} started a vote to skip this turn.` : `${me.name} started a vote to go back to the lobby.`);
       return settleVote(s, now);
     }
@@ -487,7 +507,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'forgame': return forgame(s, a, now) || state;
     case 'skip': {   // the host (or sudo): end the current stage now, as if everyone were done
-      if (!may(s, a.id, 'canskip') || ['lobby', 'over'].includes(s.phase)) return state;
+      if (!may(s, a.id, 'canskip') || ['lobby', 'over'].includes(s.phase) || s.phase === 'hang') return state;
       say(s, `${me.name} skipped ahead.`);
       if (s.phase === 'countdown') { s.ends = now; return s; }   // the next tick starts the game
       return advance(s, now, true);
@@ -509,15 +529,16 @@ export function reduce(state, a, now = Date.now()) {
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; s.wqPast = []; s.wqScore = { quack: 0, room: 0 }; s.wqPickers = []; for (const id of s.seat) P[id].ready = false;
         if (isSc(s)) { s.sc = { stories: [] }; return startStory(s, now, true); }
+        if (isHang(s)) { hangStart(s, now); return enter(s, 'hang', now); }
         return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
       }
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
-      const shots = moveShots(s, now);
+      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now);
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
-      return sig() === was && !shots ? state : s;
+      return sig() === was && !shots && !hung ? state : s;
     }
   }
   return s;
@@ -564,7 +585,7 @@ export function slowMs(s, id) {
 /* may this player open a file someone sent from the command line? its sender, sudo, its group (chmod g+r), or everyone (o+r) */
 export const canOpen = (s, id, m) => !m.file || m.from === id || isSudo(s, id) || !!m.pub || (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
-export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', counsel: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats', wqpick: 'writing', clue: 'discussing', choice: 'voting', accuse: 'voting', reveal: 'discussing' };
+export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', counsel: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats', wqpick: 'writing', clue: 'discussing', choice: 'voting', accuse: 'voting', reveal: 'discussing', hang: 'discussing' };
 function countTurn(s, was) {
   const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
   const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
@@ -622,23 +643,28 @@ export function gameMuted(s, id, kind) {
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({ x: sh.x0 + sh.vx * t / 1000, y: sh.y0 + sh.vy * t / 1000, z: sh.k === 'dagger' ? daggerZ(t / 1000) : .41 });
 /* the handgun's bullets and the thrown daggers: a duck on the ground that one passes through plays dead (until it
-   moves); a bullet flies on to the screen's edge, a dagger until it has fallen away */
+   moves); a bullet flies on to the screen's edge, a dagger until it has fallen away. In Hangout one flies at the height
+   it was fired from and hits only ducks standing about that high, on its side of the cabin's walls, and the walls stop
+   it */
 function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
   const keep = [];
   for (const sh of s.shots) {
     if (!sh.k) continue;   // (one fired before aiming: gone)
     const at = shotAt(sh, now - sh.t), x0 = sh.lx, y0 = sh.ly, dx = at.x - x0, dy = at.y - y0;
+    const walled = sh.hin !== undefined && (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;   // (Hangout: it hit the cabin's wall)
     if (at.z > -.15 && at.z < 1.05) for (const id of s.seat) {   // (a dagger over a duck's head, or already fallen, hits nobody)
       const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead) continue;
+      if (sh.hin !== undefined && ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin || Math.abs((+p.z || 0) - sh.hz) > 48)) continue;   // (the other side of the walls, or above or below it)
       if (p.j && now - p.j < 1300) continue;   // jumped over it
-      /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep) */
-      const ux = dx / .03, uy = dy / .08, px = (p.x - x0) / .03, py = (p.y - y0) / .08, len = ux * ux + uy * uy;
+      /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
+      const rx = isHang(s) ? .006 : .03, ry = isHang(s) ? .012 : .08;
+      const ux = dx / rx, uy = dy / ry, px = (p.x - x0) / rx, py = (p.y - y0) / ry, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
       if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
     }
     sh.lx = at.x; sh.ly = at.y;
-    const on = at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);
+    const on = !walled && at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);
     if (on && boardPhases(s).includes(s.phase)) keep.push(sh);   // (on past the board to the screen's edge)
   }
   s.shots = keep; return true;
@@ -656,7 +682,7 @@ function settleVote(s, now) {
       const p = s.players[v.target];
       s.banned = { ...(s.banned || {}), [v.target]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) };
       say(s, `${p.name} was voted out until the room goes back to the lobby.`);
-      reopenMatch(s, v.target);
+      reopenMatch(s, v.target); if (isHang(s)) hangLeft(s, v.target);
       delete s.players[v.target]; s.seat = s.seat.filter(id => id !== v.target); delete s.pos[v.target]; delete s.done[v.target];
       if (v.target === s.hostId) s.hostId = humanIds(s)[0] || null;
       return advance(s, now);
@@ -704,7 +730,7 @@ function skipRound(s, now) {
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.bb = null; s.bbPast = []; s.sc = null; s.law = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.hang = null; s.bb = null; s.bbPast = []; s.sc = null; s.law = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;

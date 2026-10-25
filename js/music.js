@@ -546,7 +546,7 @@ export const music = (function(){
   const SWIM_RIP={I:[0,7,10,14,16,18,19,21,22],II:[0,2,6,9,12,14,18,21,24],v:[-5,2,4,7,10,14,16,19,22],bVII:[-2,2,6,9,10,14,18,21,22],vi:[-3,4,7,9,12,16,18,19,21],II7:[2,6,9,12,14,16,18,21,24]};
   const SWIM_RT={"Eb7#11":"I","E7#11":"I","F/Eb":"II","F#/E":"II","Bbm6":"v","Bm6":"v","Dbmaj7#5":"bVII","Dmaj7#5":"bVII","Cm7":"vi","C#m7":"vi","F7":"II7"};
   const swimRip=bar=>{const r=SWIM_RIP[SWIM_RT[SWIM_CH[bar]]],k=63+(bar>=24&&bar<34?1:0);return [...r.slice(0,8),r[8],...r.slice(1,8).reverse()].map(v=>v+k)};
-  let SWIM_P=null;
+  let SWIM_P=null;   // this bar's travelling panners (made again when they belong to another audio context: a song written out)
   const SWIM={name:"Outer Space Swim Commute",bpm:66,trim:1.02,bar:8,lead:"celesta",leadV:.3,rel:.9,leg:1,lp:1200,echo:.1,fb:.2,dly:.68,
     dyn:.7,contrast:.85,hum:.006,rv:.4,ds:.12,rev:[6,.45],wow:[.0006,.2],
     chords:chords(SWIM_CH.join(" ")),
@@ -596,7 +596,7 @@ export const music = (function(){
       // on the ringed planet the long notes have a softer celesta an octave under them: full, still small
       if(s==="ring"&&e.l>=3){on(send(.5,.15,BUS.lead));voice("celesta",hz(m-12),t+.012,e.l*E8,.3*.32*e.vel,.9)}},
     step:x=>{const {t,i,E8,abs:a,bar}=x,s=swimSec(a);GL=null;
-      if(i===0){const dir=a%2?-1:1;SWIM_P={main:panTo(-.65*dir,.65*dir,t,E8*8,.5,.25),up:s==="ring"?panTo(.7*dir,-.7*dir,t,E8*8,.6,.3):null,
+      if(i===0||!SWIM_P||SWIM_P.ac!==ac){const dir=a%2?-1:1;SWIM_P={ac,main:panTo(-.65*dir,.65*dir,t,E8*8,.5,.25),up:s==="ring"?panTo(.7*dir,-.7*dir,t,E8*8,.6,.3):null,
           dark:s==="dark"?panTo(.6,.75,t,E8*8,.9,.3):null,rip:swimRip(bar)}}
       if(!SWIM_P)return;const R=SWIM_P.rip;
       // the harp ripples: sixteenths that rush past like the stars, well under the celesta
@@ -738,7 +738,7 @@ export const music = (function(){
   const chkSec=a=>{let s="eggs";for(const [k,n] of CHK_SEC)if(a>=k)s=n;return s};
   const CHK_A="D5:2 E5:2 G5:2 E5:2 D5:2 B4:2 A4:2 B4:2 D5:2 B4:2 G4:4 D5:2 E5:2 G5:2 A5:2 G5:2 E5:2 D5:2 B4:2 A4:2 G4:4 r:2";
   const CHK_B="G5:3 E5:3 D5:3 B4:2 D5:1 E5:3 G5:3 A5:6 B5:3 A5:3 G5:3 E5:2 G5:1 D5:3 E5:3";
-  let CHK_P={};   // this bar's travelling panners
+  let CHK_P={};   // this bar's travelling panners (made again when they belong to another audio context: a song written out)
   const CHICKS={name:"Bouncy Chicks",bpm:120,trim:1.02,bar:6,lead:"marimba",leadV:.3,rel:1,leg:1,lp:4300,echo:.1,fb:.2,dly:.75,
     dyn:.7,contrast:.85,hum:.005,rv:.28,ds:.1,rev:[3.8,.5],wow:[.0006,.25],
     chords:chords(`G G Em7 Em7 C C D D
@@ -770,7 +770,7 @@ export const music = (function(){
         for(let k=1;k<=n;k++){const q=k/n;voice("marimba",hz(m),t+k*E8*.5,E8*.5,v*(.32+.18*Math.sin(Math.PI*q))*(1-.4*q),.7)}}},
     // the paddlers, one eighth at a time so they follow every change of speed
     step:x=>{const {t,abs:a,i,E8,C}=x,s=chkSec(a);GL=null;
-      if(i===0){const B=E8*6;CHK_P={hop:panTo(-.65,.65,t,B,.4,.25),
+      if(i===0||CHK_P.ac!==ac){const B=E8*6;CHK_P={ac,hop:panTo(-.65,.65,t,B,.4,.25),
         mom:panTo(s==="call"?-.9+.3*(a-64):s==="step"?0:-.5,s==="call"?-.6+.3*(a-64):s==="step"?0:-.5,t,B,.25,.05),
         kid:panTo(s==="step"?0:.5,s==="step"?0:.5,t,B,.3,.1),brush:panTo(-.4,-.4,t,B,.3,0),wood:panTo(.4,.4,t,B,.3,0)}}
       const P=CHK_P;
@@ -1248,7 +1248,7 @@ export const music = (function(){
     fdry.connect(wow);fwet.connect(wow);w1.connect(wg1);wg1.connect(wow.delayTime);w2.connect(wg2);wg2.connect(wow.delayTime);const trim=gn(),hp=biq("highpass",25,.6),dip=biq("peaking",3200,.8);dip.gain.value=-3;wow.connect(trim);trim.connect(hp);hp.connect(dip);dip.connect(out);   // (a soft dip at 3 kHz, where shrill notes hurt)fl.start();w1.start();w2.start();
     const music=gn(),mdry=gn(),mpre=gn(2),ws=ac.createWaveShaper(),mlp=biq("lowpass",1400,.5),mwet=gn(0);ws.curve=fuzzCurve();ws.oversample="2x";
     music.connect(mdry);mdry.connect(pre);music.connect(mpre);mpre.connect(ws);ws.connect(mlp);mlp.connect(mwet);mwet.connect(pre);
-    const lead=gn(),leadLP=biq("lowpass",20000,.5);const leadPan=ac.createStereoPanner();lead.connect(leadLP);leadLP.connect(leadPan);leadPan.connect(music);const bass=gn();bass.connect(music);
+    const lead=gn(),leadLP=biq("lowpass",Math.min(20000,ac.sampleRate/2),.5);const leadPan=ac.createStereoPanner();lead.connect(leadLP);leadLP.connect(leadPan);leadPan.connect(music);const bass=gn();bass.connect(music);
     const perc=gn();perc.connect(pre);const fx=gn();fx.connect(pre);const revIn=gn(),revOut=gn(.9);revOut.connect(pre);
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
@@ -1262,7 +1262,7 @@ export const music = (function(){
   /* each song sets its own room: how bright, how far the echo, how much fuzz, flanging and wobble */
   function room(now){if(!BUS||!T)return;const t=ac.currentTime,P=(p,v)=>{p.cancelScheduledValues(t);if(now)p.setValueAtTime(v,t);else p.setTargetAtTime(v,t,.4)};
     P(BUS.lp.frequency,T.lp||1600);P(BUS.dl.delayTime,T.dly||.42);P(BUS.fb.gain,T.fb||.22);P(BUS.wet.gain,T.echo||.28);
-    P(BUS.pre.gain,1);P(BUS.swl.gain,1);P(BUS.trim.gain,T.trim||1);P(BUS.lead.gain,1);P(BUS.bass.gain,T.bassV||1);P(BUS.leadLP.frequency,T.leadLp||20000);P(BUS.leadPan.pan,0);
+    P(BUS.pre.gain,1);P(BUS.swl.gain,1);P(BUS.trim.gain,T.trim||1);P(BUS.lead.gain,1);P(BUS.bass.gain,T.bassV||1);P(BUS.leadLP.frequency,Math.min(T.leadLp||20000,ac.sampleRate/2));P(BUS.leadPan.pan,0);
     const fz=T.fuzz||[0,1,1400];P(BUS.mwet.gain,fz[0]);P(BUS.mdry.gain,fz[1]);P(BUS.mlp.frequency,fz[2]);P(BUS.mpre.gain,2);
     P(BUS.fwet.gain,T.flange||0);const w=T.wow||[0,.3];P(BUS.wg1.gain,w[0]);P(BUS.w1.frequency,w[1]);P(BUS.wg2.gain,w[0]*.6);
     const dt=Math.min(1.5,T.dt||60/T.bpm*.75);P(BUS.d2a.delayTime,dt);P(BUS.d2b.delayTime,dt);setRev(T.rev||[3,.5])}
@@ -1715,8 +1715,14 @@ export const music = (function(){
     level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
-  // in a room (the lobby or the game), with the music on and the page in view
-  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
+  // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
+  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["lobby","game"].includes(document.body.dataset.screen);
+  /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
+     unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
+  let HUSH=null,hushT=0;
+  function hush(why){why=why||null;if(why===HUSH)return;HUSH=why;clearTimeout(hushT);
+    if(why){if(ac&&playing){level(.6,0);hushT=setTimeout(()=>{if(HUSH)stop()},2600)}return}
+    if(!wanted())stop();else if(ac||started){start();if(ac&&playing)level(1.2)}}
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
@@ -1762,7 +1768,7 @@ export const music = (function(){
     if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,t0:t-off,end:t-off+b.dur,at:0}}
   function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
-  function nowPlaying(){const S=list();if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
+  function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
-  return {sync,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
+  return {sync,hush,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();

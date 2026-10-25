@@ -1621,3 +1621,151 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
   .wq-tduck { width: min(30%, 2.1rem); }
   .wq-tname { margin-top: .3rem; font-size: calc(.78rem * var(--ts)); }
 }
+
+/* ---------- Hangout: the piano's keyboard mode (js/hangout/pianokeys.js) ----------
+   A toy piano in a panel: ivory keys and black keys with dark outlines and a little depth; a key glows in the color of
+   its interval from the note before, its compound interval written on it, both fading as the note rings out. The music
+   sheet is cream paper. Beside the keys on a computer or a phone held sideways (side), above them on a phone held
+   upright (top). The caller sizes the root; everything here fills it. */
+.pk { position: relative; width: 100%; height: 100%; display: flex; gap: .6rem; padding: .6rem; background: var(--panel); border: .16rem solid var(--line); border-radius: 1.1rem; box-shadow: 0 .3rem 0 var(--line); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overflow: hidden; }
+.pk[data-lay="side"] { flex-direction: row; }
+.pk[data-lay="top"] { flex-direction: column; padding: .5rem; gap: .5rem; }
+.pk-side { display: flex; gap: .5rem; min-width: 0; min-height: 0; flex: none; }
+.pk[data-lay="side"] .pk-side { flex-direction: column; width: 8.5rem; }
+.pk[data-lay="top"] .pk-side { flex-direction: row; height: clamp(5.5rem, 15vh, 8.5rem); align-items: center; }
+.pk-sheet { position: relative; flex: 1; align-self: stretch; min-width: 0; min-height: 0; overflow: hidden; background: #fbf4e2; border: .13rem solid var(--line); border-radius: .6rem; box-shadow: inset 0 .15rem 0 #0000001a; }
+.pk-sheet-svg { position: absolute; left: 0; bottom: 0; display: block; }
+.pk-close { flex: none; padding: .45rem .9rem; }
+.pk-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: .45rem; }
+.pk-keys { flex: none; display: flex; flex-direction: column-reverse; justify-content: center; gap: .4rem; touch-action: none; }
+.pk-row { position: relative; display: flex; flex: none; height: var(--rowh, 8rem); }
+.pk-w, .pk-b { cursor: pointer; touch-action: none; }
+.pk-w { position: relative; flex: 1; margin: 0 1px; background: linear-gradient(#f7f1e3, #e9dfc9); border: .12rem solid var(--line); border-radius: 0 0 .45rem .45rem; box-shadow: inset 0 -.35rem 0 #00000024, 0 .2rem 0 var(--line); transition: transform .05s, box-shadow .05s; }
+.pk-b { position: absolute; top: 0; z-index: 2; height: 62%; background: linear-gradient(#3c3c4a, #191921); border: .12rem solid var(--line); border-radius: 0 0 .35rem .35rem; box-shadow: inset 0 -.3rem 0 #ffffff17, 0 .15rem 0 var(--line); transition: transform .05s; }
+.pk-w.on { transform: translateY(.14rem); box-shadow: inset 0 -.15rem 0 #00000024, 0 .06rem 0 var(--line); }
+.pk-b.on { transform: translateY(.1rem); }
+.pk-gl { position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; box-shadow: 0 0 1.1rem .15rem var(--g, #fff), inset 0 0 0 .22rem var(--ring, transparent); display: flex; align-items: flex-end; justify-content: center; padding-bottom: .4rem; pointer-events: none; }
+.pk-b .pk-gl { padding-bottom: .3rem; }
+.pk .on > .pk-gl { opacity: 1; transition: opacity .03s; }
+.pk-lab { display: flex; flex-direction: column; align-items: center; line-height: 1.02; color: #1c1c28; font-weight: 700; font-size: min(.85rem, calc(var(--ww, 40px) * .3)); white-space: nowrap; }
+.pk-b .pk-lab { font-size: min(.7rem, calc(var(--ww, 40px) * .25)); }
+.pk-lab i { font-style: normal; font-weight: 600; font-size: .86em; }
+.pk-k { position: absolute; left: 0; right: 0; bottom: .45rem; z-index: 1; text-align: center; font-size: min(calc(.78rem * var(--ts)), calc(var(--ww, 40px) * .34)); font-weight: 600; line-height: 1; color: #1c1c2870; pointer-events: none; }
+.pk-k { transition: opacity .3s; }
+.pk-w.pk-labd .pk-k { opacity: 0; transition: none; }
+.pk-legend { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem .9rem; font-size: calc(.74rem * var(--ts)); color: var(--dim); }
+.pk-lg-i { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
+.pk-lg-i b { color: var(--ink); font-weight: 600; }
+.pk-lg-i em { font-style: normal; }
+.pk-legend kbd { font: inherit; font-weight: 600; min-width: 1.3rem; padding: 0 .3rem; text-align: center; color: var(--ink); background: var(--panel2); border: .1rem solid var(--soft); border-bottom-width: .18rem; border-radius: .3rem; }
+.pk-lg-sep { width: .12rem; height: 1rem; border-radius: .1rem; background: var(--soft); }
+/* ---------- Hangout: Duck Cabin (hangout/world.js) ----------
+   The board is a window on the world: the ground is a canvas under everything; each prop is an element sorted with the
+   ducks by its front (z-index), all in the board's own stacking context; the shade darkens the outside while my duck is
+   inside; the specials (fxl) stay over all of it. */
+.hang-board { overflow: hidden; border-radius: 18px; box-shadow: 0 0 0 3px #1c1c28, 0 8px 28px #0009; isolation: isolate; background: #08120d; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hang-ground { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.hang-props { position: absolute; inset: 0; pointer-events: none; }
+.hp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; transition: opacity .25s; }
+.hp > svg { display: block; overflow: visible; }
+.hp.thru { opacity: .38; }
+.hp .lit { transition: filter .3s; }
+.hp.off .lit { filter: brightness(.32) saturate(.4); }
+html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; animation: hang-flick .45s ease-in-out infinite alternate; }
+@keyframes hang-flick { from { transform: scale(1, 1); } to { transform: scale(.9, 1.12); } }
+.hang-board .gduck { transition: none; }
+.gduck.hang-hid { visibility: hidden; }
+.hang-board .fxl { z-index: 30000; }
+.hang-shade { position: absolute; z-index: 20000; pointer-events: none; box-shadow: 0 0 0 4000px rgba(5, 8, 20, .72); }
+.hang-btn { background: var(--yellow, #ffd23f); color: #1c1c28; min-width: 9rem; }
+.hang-btn kbd { color: inherit; background: transparent; border-color: currentColor; }
+.hang-btn.idle { visibility: hidden; }
+.gmain[data-phase="hang"] { touch-action: none; }
+.scene.cabin { background: radial-gradient(1.5px 1.5px at 12% 18%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 34% 8%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 58% 22%, #fffa 50%, transparent 51%), radial-gradient(1px 1px at 76% 12%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 90% 30%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 22% 40%, #fff6 50%, transparent 51%), radial-gradient(1px 1px at 66% 44%, #fff6 50%, transparent 51%), radial-gradient(60px 60px at 86% 10%, #fff4cf 40%, #fff4cf22 55%, transparent 70%), linear-gradient(#0b1030, #1d2a55 70%, #14301f); }
+
+/* ---------- Hangout: Duck Cabin's art in the world (hangout/shapes.js) ----------
+   Each part is its own layer (the camera only moves it); its drawing fills its box; a lamp switched off loses its glow;
+   the pool's light on the water fades in and out as a whole picture. */
+.hp { will-change: transform; }
+.hp > svg, .hp > img { display: block; width: 100%; height: 100%; }
+.hp > img { user-select: none; -webkit-user-drag: none; }
+.hp.off .lit-glow { opacity: 0; }
+.hp.hang-shimmer { opacity: .5; }
+html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alternate; }
+
+/* ---------- Hangout: the stage, the couches and logs, soccer (hangout/stage.js, seats.js, soccer.js) ----------
+   The stage is drawn in upright strips, each sorted on its own; a couch in two parts (the cushions, the back); the
+   ball and the goal's confetti stand in the world, sorted with the ducks. */
+.hang-strip { overflow: hidden; }
+.hang-strip-in { position: relative; height: 100%; }
+.hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
+.gduck.hang-sat .gduck-name { top: auto; bottom: 100%; margin: 0 0 .1rem; opacity: .8; }   /* seated: the name over the head */
+.gduck.hang-sat .gduck-say { bottom: calc(var(--sz) * 1.08 + 1.3rem); }
+.hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }
+
+/* ---------- Hangout: the pool, the beach ball, the rubber ducks, the trampoline, long falls (hangout/pool.js) ---------- */
+.hang-water { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }   /* the ripples: over the water, under every duck and prop */
+.hang-splash, .hang-dust { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; pointer-events: none; }
+.hang-splash svg { position: absolute; overflow: visible; }
+.hang-dust svg { position: absolute; left: -90px; top: -60px; overflow: visible; }
+.hs-foam { fill: #e8fdff; opacity: .5; }
+.hs-tongue { fill: #bdf3ff; fill-opacity: .88; stroke: #1c1c28; stroke-width: 2; stroke-linejoin: round; }
+.hs-drop { fill: #e2fdff; stroke: #1c1c28; stroke-width: 1.4; }
+.hd-bit { fill: #8d7d68; stroke: #1c1c28; stroke-width: 1.6; }
+.gduck.hang-swim .gduck-shadow { display: none; }
+.gduck.hang-swim .gduck-name { margin-top: calc(var(--sz) * .13); }
+.hang-wl { display: none; position: absolute; left: 50%; top: 0; width: calc(var(--sz) * .96); height: calc(var(--sz) * .27); transform: translate(-50%, -50%); pointer-events: none; }
+.gduck.hang-swim .hang-wl { display: block; }
+.hang-wl svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.wl-front { fill: #7fe6ff3d; stroke: #e2fdff; stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wl-shine { fill: none; stroke: #ffffffaa; stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.hang-ball, .hang-rduck, .hang-tramp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+.hang-ball svg, .hang-rduck svg, .hang-tramp svg { display: block; overflow: visible; }
+.hang-rduck > svg { transform-origin: 50% 83%; }
+.hang-ballsh { position: absolute; left: -22px; top: -6px; width: 44px; height: 12px; border-radius: 50%; background: #000; transform-origin: 22px 6px; pointer-events: none; }
+.hang-dent { position: absolute; left: -60px; top: -22px; width: 120px; height: 44px; transform-origin: 60px 22px; pointer-events: none; }
+.hang-dent svg { display: block; overflow: visible; }
+.gduck.hang-flail .gduck-body { transform-origin: 50% 58%; animation: hang-flail .34s ease-in-out infinite alternate; }   /* (html.still stops it) */
+@keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }
+
+/* ---------- Hangout: the piano in the cabin (hangout/piano.js) ---------- */
+.pia-panel, .game > .pia-panel { position: fixed; z-index: 21; }   /* keyboard mode: over the bottom of the board (a phone held upright: the lower part of the screen, over #jumps) */
+.pia-panel .pk { box-shadow: 0 .3rem 0 var(--line), 0 .6rem 1.6rem #0008; }
+.pia-big > svg { position: absolute; left: 0; top: 0; }
+.pia-big .pia-k { transition: fill 1.2s ease-out; stroke: #1c1c28; stroke-width: 1.6; }
+.pia-big .pia-w { fill: #f3efe4; }
+.pia-big .pia-b { fill: #23222b; }
+.pia-big .pia-k.on { fill: var(--g, #fff); transition: none; }
+.pia-big .pia-h { fill: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; }
+.pia-big .pia-h.on { opacity: .55; transition: none; }
+.pia-floor .hg-key > rect:first-child { transition: fill 1.2s ease-out; }
+.pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
+.pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
+.pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
+.pia-sheet .pk-sheet { position: absolute; transform-origin: 0 0; background: #f6ead0; border: 0; border-radius: 4px; box-shadow: none; }
+
+/* ---------- Hangout: the chalk floor and the guestbook (hangout/chalk.js, hangout/book.js) ----------
+   The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
+   holding chalk carries a little stick of it at its beak. The guestbook is a page in the board (beside my duck on a
+   computer, over the top of the board on a phone held upright), the game's panel with ruled lines. */
+.hang-chalk-ink { position: absolute; left: 0; top: 0; z-index: 3; transform-origin: 0 0; pointer-events: none; opacity: .9; transition: opacity .35s ease-in; }
+.hang-chalk-ink.wipe { opacity: 0; }
+.hang-board.hang-pen { cursor: crosshair; }
+.hang-chalkstick { position: absolute; right: calc(var(--sz, 60px) * -.1); bottom: calc(var(--sz, 60px) * .26); width: calc(var(--sz, 60px) * .3); height: calc(var(--sz, 60px) * .09); min-height: 4px; border: max(1.5px, calc(var(--sz, 60px) * .025)) solid #1c1c28; border-radius: 99px; background: linear-gradient(90deg, var(--chalk, #f4f4f0) 72%, #fff 72%); box-shadow: inset 0 -.12em 0 #0002; transform: rotate(-32deg); pointer-events: none; }
+.gduck.left .hang-chalkstick { right: auto; left: calc(var(--sz, 60px) * -.1); transform: rotate(32deg); background: linear-gradient(270deg, var(--chalk, #f4f4f0) 72%, #fff 72%); }
+.hang-book { position: absolute; z-index: 30001; left: .6rem; top: .6rem; bottom: .6rem; width: min(25rem, 40%); display: flex; flex-direction: column; gap: .5rem; padding: .6rem .7rem .7rem; background: var(--panel); border: .16rem solid var(--line); border-radius: 1.1rem; box-shadow: 0 .3rem 0 var(--line); touch-action: auto; -webkit-user-select: text; user-select: text; animation: popin .16s ease-out; }
+.hang-book-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding-left: .3rem; }
+.hang-book-title { font-size: calc(1.4rem * var(--ts)); }
+.hang-book-x { position: static; flex: none; width: 2rem; height: 2rem; font-size: 1.2rem; }
+.hang-book-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: .15rem .7rem; list-style: none; line-height: 1.75rem; background: linear-gradient(transparent calc(1.75rem - 1px), var(--soft) 0) 0 .15rem / 100% 1.75rem local var(--panel2); border: .13rem solid var(--soft); border-radius: .7rem; font-size: calc(1rem * var(--ts)); }
+.hang-book-line { overflow-wrap: anywhere; }
+.hang-book-line > .pname, .hang-book-line > .rainbow { margin-right: .45rem; font-weight: 700; }
+.hang-book-line > .pname::after { content: ':'; color: var(--dim); }
+.hang-book-none { color: var(--dim); }
+.hang-book-write { display: flex; gap: .45rem; }
+.hang-book-in { flex: 1; min-width: 0; font-size: calc(1rem * var(--ts)); border: .14rem solid var(--soft); border-radius: .7rem; padding: .35rem .6rem; background: var(--panel2); color: var(--ink); }
+.hang-book-in:focus { outline: .15rem solid var(--blue); }
+.hang-book-write .btn { flex: none; }
+@media (orientation: portrait) {
+  .hang-book { left: .45rem; right: .45rem; top: .45rem; bottom: auto; width: auto; height: max(10rem, min(calc(50% - 5.2rem), 22rem)); }   /* (above my duck, which stands in the middle) */
+}

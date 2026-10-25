@@ -12,13 +12,18 @@
    squash a little when they push against a wall or another duck. On a touch screen a see-through joystick appears under
    a held finger, or (Settings → Controls) a tap walks the duck there; see touch.js. On a phone held upright the board
    turns: agree at the top. Your duck moves on your screen at once and is sent to the room a few times a second; the
-   others glide. */
+   others glide.
+
+   Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
+   camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
+   one context button where the Vote button goes. */
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
 import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
-  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds } from './rules.js';
+  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang } from './rules.js';
+import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
@@ -69,10 +74,11 @@ let lastLog = -1, bubbles = {};  // chat bubbles over the ducks: { [player]: { t
 let lastClose = 0;   // Lawyering: the closing arguments last announced
 let bbZoom = 0, losers = new Set(), seedShift = 0, knocked = new Set();   // Bicker Brackets: the bracket's zoom (0: automatic); ducks wearing the Loser's X; how far the sides' colors have turned;
                                                                          // the matches whose loser is already bumped off the cloud
+let world = null;   // Hangout: the cabin's world (its camera, its props, its activities)
 let scY = 0, scT = 0, scWalk = 0, scZone = '';      // Story Chain: how far the story has scrolled, the last frame, when my duck last walked, the zone it stands in
 const portrait = () => matchMedia('(orientation: portrait) and (max-width: 760px)').matches;
 /* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
-const turned = () => portrait() && !(R && (R.state.phase === 'bracket' || isSc(R.state)));
+const turned = () => portrait() && !(R && (R.state.phase === 'bracket' || isSc(R.state) || isHang(R.state)));
 let cam = null;   // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -82,6 +88,7 @@ const JUMP = { normal: { T: .62, H: 1.35 }, low: { T: 1.2, H: 2 } };   // second
    little lower than the first */
 const jumpCfg = pos => {
   const b = JUMP[R && R.state.options.lowGravity ? 'low' : 'normal'];
+  if (pos && pos.tb > 0) return { T: b.T * Math.sqrt(pos.tb / b.H), H: pos.tb };   // Hangout's trampoline: a bounce tb duck heights high
   return pos && pos.lj ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
 };
 const arc = (t0, now, T, H) => { const t = (now - t0) / 1000 / T; return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t); };
@@ -112,7 +119,7 @@ const lawBoardHTML = s => `<div class="board law-board">${lawColsHTML(s)}<div cl
 const myCard = s => s.wq && s.wq.ids.includes(R.me) ? (s.hidden ? cardOf(s, R.me) : R.secretCard ? R.secretCard(s) : null) : undefined;
 const quackBoard = s => `<div class="board wq-board${s.phase === 'reveal' && s.wq.lastOut ? ' late' : ''}">${quackBoardHTML(s, R.me)}<div class="ducks"></div><div class="fxl"></div>
   ${quackTopHTML(s, s.phase === 'reveal' && s.wq.result ? revealCardsHTML(s) : myCard(s) !== undefined ? secretCardHTML(myCard(s)) : '')}</div>`;
-const boardHTML = s => isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : isLaw(s) ? lawBoardHTML(s) : `<div class="board">
+const boardHTML = s => isHang(s) ? HANG_HTML : isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : isLaw(s) ? lawBoardHTML(s) : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text))}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
@@ -121,6 +128,7 @@ const boardHTML = s => isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me)
 function measure() {
   const board = S && $('.board', S); if (!board) { geo = null; return; }
   if (isSc(R.state)) return measureStory(board);
+  if (isHang(R.state)) { geo = world ? world.measure() : null; return; }   // (the world's camera)
   const cols = $('.cols', board), r = board.getBoundingClientRect(), H = cols.offsetHeight, top0 = cols.offsetTop;
   const size = Math.max(34, Math.min(100, (turned() ? H / 7 : board.offsetWidth / 7) * .62));
   const label = board.querySelector('.col-name'), labelH = turned() ? 0 : (label ? label.offsetHeight + 12 : 30);
@@ -168,6 +176,7 @@ function panStory(pos, now) {
 }
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
+  if (geo && geo.hang) return world.place(p);   // Hangout: through the camera
   if (geo && geo.sc) {   // Story Chain: y runs down the rows, each row the same share of it
     const k = geo.rows.length; if (!k) return { left: geo.W * p.x, top: geo.H / 2 };
     const u = Math.max(0, Math.min(.9999, p.y)) * k, row = geo.rows[Math.floor(u)];
@@ -181,6 +190,7 @@ function place(p, i, n) {
   return { left: W * p.x, top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH) };
 }
 function unplace(px, py) {   // the inverse, for clicks
+  if (geo.hang) return world.unplace(px, py);
   const { W, H, size, labelH, qp } = geo, cl = v => Math.max(0, Math.min(1, v));
   if (geo.sc) {
     const y = py + scY, rows = geo.rows; if (!rows.length) return { x: cl(px / W), y: .5 };
@@ -216,8 +226,10 @@ function along(path, at, dist, face) {
 const SQ = { l: ['0% 100%', .8, 1.12], r: ['100% 100%', .8, 1.12], u: ['50% 0%', 1.12, .84], d: ['50% 100%', 1.14, .82] };
 function drawDucks(now = clockNow()) {
   const board = S && $('.board', S); if (!board || !R || !geo) return;
-  const s = R.state, layer = $('.ducks', board), size = geo.size;
-  const posOf = id => id === R.me && me ? me : s.pos[id];
+  const s = R.state, layer = $('.ducks', board), size = geo.size, hang = !!geo.hang;
+  if (hang) world.frame(now);   // (the camera first: ducks stand in the world)
+  const posOf = id => id === R.me && me ? me : hang ? world.shown(id, s.pos[id]) : s.pos[id];
+  const liftOf = (id, pos) => hang ? world.lift(id, pos) : jumpZ(pos, now) * size;   // how high over its ground a duck is drawn
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
   const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
@@ -240,7 +252,7 @@ function drawDucks(now = clockNow()) {
       d._aura = null; d.style.setProperty('--xc', colorsOf(p.duck, 'loserx')[0]);
       d.querySelector('.gduck-name').innerHTML = nameHTML(p.name, p.nameStyle);
     }
-    const at = place(pos, lane.indexOf(id), lane.length), z = jumpZ(pos, now) * size;
+    const at = place(pos, lane.indexOf(id), lane.length), z = liftOf(id, pos);
     const mine = id === R.me;
     const face = mine && me ? me.face : (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
     d._face = face || 1; d._x = pos.x;
@@ -249,7 +261,12 @@ function drawDucks(now = clockNow()) {
     const tr = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`, lift = `translateY(${(-z).toFixed(1)}px)`;
     const deadPose = dead && !(p.duck && p.duck.image);
     const body = `scaleX(${fx})${deadPose ? ' rotate(-100deg) translateY(-12%)' : ''}`, squish = `scale(${sx}, ${sy})`, sh = (1 - Math.min(.6, z / (size * 3.2))).toFixed(3);
-    if (d._tr !== tr) { d._tr = tr; d.style.transform = tr; d.style.zIndex = Math.round(at.top); }
+    if (d._tr !== tr) { d._tr = tr; d.style.transform = tr; if (!hang) d.style.zIndex = Math.round(at.top); }
+    if (hang) {   // Hangout: in front of what it stands in front of; unseen through the cabin's walls
+      const zi = world.key(id, pos), hid = world.hidden(id, pos);
+      if (d._zi !== zi) { d._zi = zi; d.style.zIndex = zi; }
+      if (d._hid !== hid) { d._hid = hid; d.classList.toggle('hang-hid', hid); }
+    }
     if (d._sz !== size) { d._sz = size; d.style.setProperty('--sz', size + 'px'); }
     if (d._lift !== lift) { d._lift = lift; d.querySelector('.gduck-lift').style.transform = lift; }
     if (d._sh !== sh) { d._sh = sh; d.querySelector('.gduck-shadow').style.transform = `translateX(-50%) scale(${sh})`; }
@@ -289,7 +306,8 @@ function drawDucks(now = clockNow()) {
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
-    const at = shotAt(sh, now - sh.t), a = place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;
+    const at = shotAt(sh, now - sh.t), a = hang ? world.place(at, sh.hz) : place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;   // (Hangout: at the height it was fired from)
+    if (hang && world.hidden('', at)) continue;   // (on the other side of the cabin's walls)
     if (a.left < -geo.W * .4 || a.left > geo.W * 1.4 || top > geo.top0 + geo.H + size * 6 || top < -geo.H) continue;   // (off the screen)
     live.add(String(sh.n));
     let b = fxl.querySelector(`[data-n="${sh.n}"]`);
@@ -341,19 +359,24 @@ function drawDucks(now = clockNow()) {
     mark.classList.remove('gone'); mark.classList.toggle('sprint', !!target.sprint);
   } else if (mark) mark.classList.add('gone');
   // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
+  // (Hangout: sorted with their duck, so the stage or a couch covers them too)
+  const withDuck = (e, id, pos) => { if (e.parentNode !== layer) layer.append(e); const zi = world.key(id, pos) + 1; if (e._zi !== zi) { e._zi = zi; e.style.zIndex = zi; } };
   hotdogs = hotdogs.filter(h => { if (now > h.until || !s.pos[h.id]) { h.el.remove(); return false; } return true; });
   for (const h of hotdogs) {
-    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = jumpZ(pos, now) * size;
+    const pos = posOf(h.id), at = place(pos, lane.indexOf(h.id), lane.length), z = liftOf(h.id, pos);
+    if (hang) { h.el.style.visibility = world.hidden(h.id, pos) ? 'hidden' : ''; withDuck(h.el, h.id, pos); }
     h.el.style.transform = `translate(${(at.left + size * .62).toFixed(1)}px, ${(at.top - size * .9 - z).toFixed(1)}px)`;
     h.el.classList.toggle('going', now > h.until - 900);
   }
   follows = follows.filter(f => { if (now > f.until || !s.pos[f.id]) { f.el.remove(); return false; } return true; });
   for (const f of follows) {
-    const pos = posOf(f.id), at = place(pos, lane.indexOf(f.id), lane.length), z = jumpZ(pos, now) * size;
+    const pos = posOf(f.id), at = place(pos, lane.indexOf(f.id), lane.length), z = liftOf(f.id, pos);
+    if (hang) { f.el.style.visibility = world.hidden(f.id, pos) ? 'hidden' : ''; withDuck(f.el, f.id, pos); }
     const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
     if (f.el._tr !== tr) { f.el._tr = tr; f.el.style.transform = tr; }
   }
   if (geo.sc) { storyMarks(s, board); return; }
+  if (hang) return;   // (no columns, no cloud)
   // the column under my duck lights up
   const myCol = me && me.x >= 0 ? (isQuack(s) ? spotOf(s, me) : colAt(s, me.x)) : -1;
   board.querySelectorAll('.col, .wq-tile').forEach(c => c.classList.toggle('here', +c.dataset.c === myCol));
@@ -476,7 +499,7 @@ function playFx(f) {
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
 const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam && !isLaw(R.state)) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam; a juror may change their vote)
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-turn: walks anywhere, plays from the next turn
-const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state);   // anywhere on the board (else inside my column)
+const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state) || isHang(R.state);   // anywhere on the board (else inside my column)
 const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow());
 function xBounds() {
   const s = R.state;
@@ -514,10 +537,11 @@ function sendMove(force) {
   if (!me) return;
   const now = performance.now(), q = clockNow() - squash.t < 170 ? squash.q : '';
   const w = held && hasKey(myDuck(), held) ? held : '', aim = w ? myAim() : null;   // a weapon kept out: where it aims, roughly
-  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, w, aim && Math.round(Math.atan2(aim[1], aim[0]) * 20)].join();
+  const hz = world && isHang(R.state) ? { z: Math.round(me.z || 0), b: Math.round(me.b || 0) } : null;   // Hangout: how high its feet are, where its jump began
+  const msg = [me.x.toFixed(4), me.y.toFixed(4), me.j, me.lj, me.dj, q, sprinting && moving, w, aim && Math.round(Math.atan2(aim[1], aim[0]) * 20), hz && hz.z, me.tb].join();
   if (!force && (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) || msg === lastSent)) return;   // online: less often (Data saving, Poor connection: less still)
   lastSend = now; lastSent = msg;
-  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), q, sp: sprinting && moving, ...(w ? { w, ax: aim[0], ay: aim[1] } : {}) });
+  R.send({ t: 'move', x: me.x, y: me.y, j: me.j || 0, ...(me.j && me.lj ? { lj: true } : {}), ...(me.j && me.dj ? { dj: me.dj } : {}), ...(me.j && me.tb ? { tb: me.tb } : {}), q, sp: sprinting && moving, ...(w ? { w, ax: aim[0], ay: aim[1] } : {}), ...hz });
 }
 /* would my duck at (x, y) push into another duck on the ground? (both in the air or either in the air: no) A bigger or
    fatter duck takes more room, a small or skinny one less. */
@@ -548,6 +572,7 @@ function loop(t) {
   drawDucks(now);
 }
 function step(dt, now) {
+  if (isHang(R.state)) return hangStep(dt, now);
   const s = R.state;
   // a jump lands: it counts now
   if (me.j && now >= landsAt(me)) { const n = me.dj ? 2 : 1; me.j = 0; me.lj = false; me.dj = 0; for (let i = 0; i < n; i++) countJump(); sendMove(true); }   // (a double jump is two)
@@ -601,10 +626,39 @@ function step(dt, now) {
   me.x = nx; me.y = ny;
   sendMove();
 }
+/* Hangout: the keys, the stick or a tap say which way; the world walks my duck (walls, steps, edges, falls) */
+function hangStep(dt, now) {
+  if (!world || !geo) return;
+  const k = c => keys.has(c);
+  let ax = (k('KeyD') || k('ArrowRight') ? 1 : 0) - (k('KeyA') || k('ArrowLeft') ? 1 : 0), ay = (k('KeyS') || k('ArrowDown') ? 1 : 0) - (k('KeyW') || k('ArrowUp') ? 1 : 0);
+  if (!ax && !ay && (stick.x || stick.y)) { ax = stick.x; ay = stick.y; }
+  if (ax || ay) target = null;
+  sprinting = k('ShiftLeft') || k('ShiftRight') || stick.sprint || !!(target && target.sprint);
+  if (target) {   // a click or a tap: there, or held up by something
+    const a = world.aim(me, target);
+    if (target.best === undefined || a.d < target.best - 4) { target.best = a.d; target.since = now; }
+    if (a.d < 10 || now - target.since > 700) target = null; else { ax = a.ax; ay = a.ay; }
+  }
+  if (!canWalk()) ax = ay = 0;
+  const ev = world.step(me, ax, ay, sprinting, dt, now);
+  moving = ev.moved;
+  for (let i = 0; i < ev.land; i++) countJump();   // (a double jump is two)
+  if (ev.q) squash = { q: ev.q, t: now };
+  if (ax) me.face = Math.sign(ax);
+  if (ev.whee) sfx.fall();        // off the deck: a slide whistle
+  if (ev.thud > 90) sfx.bonk();   // and the landing
+  sendMove(!!(ev.land || ev.thud || ev.force));
+}
 /* reset duck: somewhere random on the board, or inside your column once you have voted (never inside another duck) */
 function resetDuck() {
   if (!me || !onBoardPhase() || !geo) return '✗ That works on the board.';
   if (isSc(R.state) && locked()) return '✗ Your vote holds your duck there.';
+  if (isHang(R.state)) {   // Hangout: back outside the front door
+    if (!world) return '✗ That works on the board.';
+    const p = world.spawn(); Object.assign(me, p, { j: 0, lj: false, dj: 0, b: p.z, vz: null }); target = null;
+    R.send({ t: 'move', x: p.x, y: p.y, j: 0, z: Math.round(p.z), b: Math.round(p.z), reset: true });
+    return 'Duck reset: back at the front door.';
+  }
   const s = R.state, inCol = s.phase === 'bracket' || isSc(s) || isQuack(s) ? null : s.phase !== 'answer' ? s.lock[R.me] : (s.done[R.me] && !s.options.freeRoam ? colAt(s, me.x) : null);
   if (inCol === undefined) return '✗ No answer, no column to go back to.';
   const [lo, hi] = attorney() ? [.47, .53] : inCol === null ? [.04, .96] : colBoundsAt(s, inCol), now = clockNow();
@@ -618,11 +672,13 @@ function resetDuck() {
 function jump(how) {
   if (!me || !onBoardPhase()) return;
   const now = clockNow();
+  if (world && isHang(R.state) && !world.canJump(me)) return;   // (an activity took Space, or my duck is falling)
   if (me.j) {   // in the air: the second jump, once a jump, if the Double jump is on a key
     if (me.dj || !(how === 'double' || (kept.has('double') && hasKey(myDuck(), 'double'))) || jumpZ(me, now) <= 0) return;
     me.dj = now; sendMove(true); sfx.puff(); return;
   }
   me.j = now; me.dj = 0; me.lj = how === 'long' || (kept.has('longjump') && hasKey(myDuck(), 'longjump'));
+  if (world && isHang(R.state)) world.started(me);   // (the arc starts from the height it stands on)
   sendMove(true);
 }
 function jumpTo(c) {
@@ -635,7 +691,7 @@ function jumpTo(c) {
 /* what ducks stand in: the board, or the story's view */
 const origin = board => board && (isSc(R.state) ? $('.sc-view', board) : board);
 function boardClick(e) {
-  if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900) return;
+  if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900 || (world && world.grabbing())) return;
   const board = origin(e.target.closest('.board')); if (!board || e.target.closest('.topover, .sc-write, .wq-card')) return;
   const r = board.getBoundingClientRect();
   target = unplace(e.clientX - r.left, e.clientY - r.top);
@@ -859,6 +915,7 @@ const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 function actHTML(s) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
+  if (isHang(s)) return world ? world.buttonHTML() : '';   // Hangout: the nearest activity's button (Light off …)
   if (late()) return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? 'match' : isLaw(s) ? 'case' : 'question'}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ''}</span>`;
   if (isSc(s)) return storyActHTML(s, d, n, need, count);
@@ -944,11 +1001,12 @@ function storyActHTML(s, d, n, need, count) {
   const review = s.phase === 'results' && s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${s.seat.filter(id => s.reviewVotes[id]).length}/${need}</button>` : '';
   return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? ' voted' : ''}" data-a="end"${off ? ' disabled' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button><span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>${review}</div>`;
 }
-const TITLES = { submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', tie: 'A tie', seeds: 'Write the contenders', bracket: 'The bracket', podium: 'The podium', words: 'Write a secret word', write: 'Write the story', lvote: 'Favorite line', wvote: 'Favorite secret word',
+const TITLES = { hang: 'Duck Cabin', submit: 'Write a question', answer: 'Vote', discuss: 'Talk it over', results: 'Results', over: '', topic: 'Write a topic', tvote: 'Pick the topic', tie: 'A tie', seeds: 'Write the contenders', bracket: 'The bracket', podium: 'The podium', words: 'Write a secret word', write: 'Write the story', lvote: 'Favorite line', wvote: 'Favorite secret word',
   wqpick: 'The secret word', clue: 'Clues', choice: 'Vote or more clues?', accuse: 'Vote Out the Quack', reveal: 'The reveal' };
 const LAW_TITLES = { submit: 'Write a topic', counsel: 'Pick the attorneys', answer: 'Court is in session', discuss: 'The verdict' };
 /* what the middle of the screen shows */
 function viewHTML(s) {
+  if (isHang(s)) return `<div class="stage hang-stage">${HANG_HTML}</div>`;
   if (isLaw(s) && s.phase === 'counsel') return '<div class="law-counsel-wrap"></div>';
   if (isLaw(s) && s.phase === 'results') return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
   if (isQuack(s)) switch (s.phase) {
@@ -1043,10 +1101,12 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s)); S.classList.toggle('law', isLaw(s));
+    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s)); S.classList.toggle('law', isLaw(s)); S.classList.toggle('hang', isHang(s));
     if (s.phase === 'answer') seedShift = 0;   // a vote starts on the match's own colors
     bbMarks(s);
+    if (world) { world.destroy(); world = null; }
     main.innerHTML = viewHTML(s);
+    if (isHang(s) && s.phase === 'hang') world = mountWorld($('.hang-board', main), { room: () => R, me: () => me, jumpZ, landsAt, cfg: () => jumpCfg(me), button: () => { if (S && R) setHTML($('.gact', S), actHTML(R.state)); } });
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
     celebrate(s);
@@ -1054,7 +1114,7 @@ function paint(force) {
     scene.board($('.board', main));
     if (was && s.phase !== was.split('|')[0] && s.phase !== 'discuss') sfx.done();
     if (was && was.split('|')[0] === 'answer' && s.phase === 'discuss') scene.cheer(topColors(s));   // the votes are in
-    if (s.phase === 'answer' && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
+    if ((s.phase === 'answer' || s.phase === 'hang') && !touchTold && matchMedia('(hover: none) and (pointer: coarse)').matches) {   // a touch screen: how to move, once
       touchTold = true;
       toast(profile.settings.touch === 'tap' ? 'Tap: walk there · Double tap: jump · Fast swipe: sprint' : 'Hold and drag: walk · Tap: jump · Flick twice: sprint', 5000);
     }
@@ -1063,7 +1123,8 @@ function paint(force) {
     geo = null;
     if (bar) { if (onBoardPhase()) bar.show(); else bar.hide(); }   // the specials' row comes in with each stage on the board, then slides away
   }
-  const round = s.phase === 'over' ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
+  if (world) world.state(s);   // (a lamp switched off …)
+  const round = s.phase === 'over' || isHang(s) ? '' : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : '') : isSc(s) ? (s.phase === 'write' ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : '') : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : '') : s.qs.length && ['answer', 'discuss', 'counsel'].includes(s.phase) ? ` · ${isLaw(s) ? 'Case' : 'Question'} ${s.qi + 1} of ${s.qs.length}` : ''}`;
   if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh();   // (a key kept on, or kept off)
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
@@ -1176,13 +1237,14 @@ function openPause() {
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
     <button type="button" class="btn ghost" data-a="friends">Friends</button>
+    ${R && isHang(R.state) && isSudo(R.state, R.me) ? '<button type="button" class="btn yellow" data-a="lobby">Everyone back to the lobby</button>' : ''}
     <button type="button" class="btn red" data-a="leave">Leave game</button></div>
     <p class="small dim" style="margin-top:.8rem">The game keeps going while this is open.</p>`, {
     cls: 'win-small',
     onOpen: (w, close) => w.querySelector('.pause-list').onclick = e => {
       const a = e.target.closest('[data-a]'); if (!a) return;
       close();
-      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), friends: () => openFriends(), leave: () => leaveTo('rooms', 'Leave the game in progress?') })[a.dataset.a]();
+      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), friends: () => openFriends(), lobby: () => R.send({ t: 'toLobby' }), leave: () => leaveTo('rooms', 'Leave the game in progress?') })[a.dataset.a]();
     },
   });
 }
@@ -1193,16 +1255,18 @@ function keydown(e) {
   if (!S) return;
   if (e.key === 'Escape' && !windowOpen() && !typing(e)) { e.preventDefault(); if (pm.isOpen()) pm.close(); else openPause(); return; }
   if (e.key === 'Tab') { e.preventDefault(); if (!windowOpen() && !typing(e)) pm.keydown(e); return; }   // hold Tab: the players (Tab never moves the browser's focus in a game)
-  if (typing(e) || windowOpen() || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (typing(e) || windowOpen()) return;
+  if (world && onBoardPhase() && world.keydown(e)) return;   // Hangout: an activity's keys first (the piano)
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
   if (keyIndex(e) >= 0 && onBoardPhase()) { e.preventDefault(); if (!e.repeat) useKey(keyIndex(e), e.shiftKey); return; }   // the specials' keys (Shift: keep it on)
   if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E: the last key again
   if (e.code === 'KeyQ' && isQuack(R.state)) { e.preventDefault(); peek(true); return; }   // hold Q: peek at my Secret Card
   if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
-  if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); act('end'); }
+  if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat) { e.preventDefault(); act('end'); }
 }
-const keyup = e => { keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); if (e.code === 'KeyQ') peek(false); };
+const keyup = e => { if (world) world.keyup(e); keys.delete(e.code); if (e.key === 'Tab' && pm) pm.keyup(e); if (e.code === 'KeyQ') peek(false); };
 const blur = () => { keys.clear(); peek(false); };
 /* my Secret Card turns face up while it's held (or Q is) */
 function peek(on) { const c = S && $('.wq-card.mine', S); if (c) c.classList.toggle('peek', on && !c.classList.contains('dealing')); }
@@ -1213,7 +1277,9 @@ const unpeek = () => peek(false);
 async function act(a) {
   const s = R.state;
   switch (a) {
+    case 'hang': if (world) world.press(); break;   // Hangout: the context button
     case 'end':
+      if (isHang(s)) { if (world) world.press(); break; }   // (Enter)
       if (isSc(s)) { if (SC_VOTES.includes(s.phase) && me && me.x >= 0 && !graceLeft(s)) { sendMove(true); R.send({ t: 'end', y: me.y }); } break; }   // (where I stand is my vote)
       if ((s.phase === 'answer' || (isQuack(s) && ['choice', 'accuse'].includes(s.phase))) && (!(me && me.x >= 0) || graceLeft(s))) return;
       if (s.phase === 'answer' || (isQuack(s) && ['choice', 'accuse'].includes(s.phase))) sendMove(true);
@@ -1243,7 +1309,7 @@ register('game', {
   guard: () => !!activeRoom(),
   exit() { const r = activeRoom(); if (r) { r.send({ t: 'leave' }); r.close(); } },
   leave() {
-    if (off) off(); off = null; if (docks) docks.destroy(); docks = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
+    if (off) off(); off = null; if (docks) docks.destroy(); docks = null; if (world) world.destroy(); world = null; cancelAnimationFrame(raf); clearInterval(tick); S = null; shown = ''; me = null; geo = null; keys.clear(); lastFx = -1; hotdogs = []; follows = [];
     if (pm) pm.destroy(); pm = null; if (idleOff) idleOff(); idleOff = null; lastLog = -1; bubbles = {};
     if (bar) bar.destroy(); bar = null; if (mbarOff) mbarOff(); mbarOff = null; lastKey = -1; kept.clear(); held = null; shows = {}; mouse = null; removeEventListener('mousemove', aimAt);
     if (scene) scene.destroy(); scene = null; hooks.resetDuck = null; sayJob++; lastGrace = -1; if (touchOff) touchOff(); touchOff = null; bbZoom = 0; losers = new Set(); knocked = new Set(); scY = 0; scT = 0; scZone = '';
@@ -1256,12 +1322,12 @@ register('game', {
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
-    docks = mountDocks(S, HINTS); mbarOff = mountMusicBar(S);
+    docks = mountDocks(S, isHang(R.state) ? HINTS.replace('End turn', 'Use') : HINTS); mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey, cool });
     addEventListener('mousemove', aimAt);
-    touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen(), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
+    touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen() && !(world && world.grabbing()), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
     S.addEventListener('pointerdown', e => { if (e.target.closest('.wq-card.mine')) { e.preventDefault(); peek(true); } });
     for (const t of ['pointerup', 'pointercancel']) addEventListener(t, unpeek);
