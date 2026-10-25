@@ -779,3 +779,24 @@ The kicking a duck off the cloud in brackets SHOULD ONLY happen at the end of th
 
 Decided: in a two-sided vote (brackets and Would You Rather) a computer with no strong lean picked a side at random on
 every step, so it paced around the middle; now it picks once per match and votes. (The cloud kick is another thread's.)
+
+## Story Chain: fonts the same size (2026-10-25)
+
+whoever the did the story game needs to make the fonts appear as the same size
+
+Decision: every player's font in Story Chain is scaled so its letters stand as tall as the others' (font-size-adjust,
+with a measured size for each font).
+
+## More bash in the command line, word for word (2026-10-25)
+
+remember to put a lot of bash that can work in it among implied nuances i talked about to first repo worker. First repo worker, work on giving them as much detail as possible if it isnt you working on that rn
+
+The code for bash needs to have a help command that has other types of help listed in it, which includes bash basics, using certain things like pipe, append, or many things like that, and even unique commands and how they work in this game. The basics must mention man commands
+
+things LIKE pipes and appending too since im not going to name them all here
+
+remember there is a lot of stuff i described for groups
+
+(Planned in the Claude Doc "Command line: more bash". Chose "Build sections 1 to 4": help topics, the bash
+operators, text and file tools, groups and new perms, people/room/game commands. Not now: emote, quack, poll, wall,
+nano.)
