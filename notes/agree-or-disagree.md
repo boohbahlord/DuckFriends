@@ -936,3 +936,13 @@ who tries is told only the host and sudo can.)
 (Also from the bug tester, through the coordinator: `usermod -a -G sudo @name` gave the usage message. Now usermod,
 gpasswd, adduser and deluser take names with or without @, and flags work split (-a -G), joined (-aG) or long
 (--append --groups), in every command.)
+
+## Who is the Quack?: the Quack kicked or leaving, word for word (2026-10-25)
+
+Asked "Should a kick end the round like that, or just remove them quietly and draw a new word?":
+
+You decide
+
+(Decided: when a Quack is kicked or leaves mid-round, nobody learns who it was or the word. The cloud says "A duck
+left, so here's a new word." and the round starts over with a new word and a new Quack, the same way it does when a
+new host takes over. The round doesn't count in the stats.)
