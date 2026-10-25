@@ -992,6 +992,18 @@ html.still .spx * { animation: none !important; opacity: 1; }
   .bb-top .question.bb-winner { min-width: 0; }
 }
 
+/* the cloud duel: both writers on the cloud; the winner bumps the loser off and settles in the middle */
+.lord.duel .lord-sit { width: 12.5rem; }
+.lord.duel .lord-duck { width: 4.6rem; transition: left .6s ease-in-out; }
+.lord.duel .duel-duck[data-side="0"] { left: 28%; } .lord.duel .duel-duck[data-side="1"] { left: 72%; }
+.duel-duck[data-side="1"] .duel-in > svg { transform: scaleX(-1); }   /* the right one faces left, toward the other */
+.duel-in { position: relative; }
+.lord.duel.knocked .duel-duck.won { left: 50%; }
+.lord.duel.knocked .duel-duck:not(.won) { visibility: hidden; }
+.duel-falling { position: fixed; z-index: 60; pointer-events: none; margin: 0; transform-origin: 50% 60%; }
+.duel-falling svg { width: 100%; height: auto; display: block; }
+.duel-falling[data-side="1"] .duel-in > svg { transform: scaleX(-1); }
+@media (orientation: portrait) and (max-width: 760px) { .lord.duel .lord-sit { width: 8.6rem; } .lord.duel .lord-duck { width: 3.2rem; } }
 /* the loser's X follows its duck */
 .gduck-x { display: none; position: absolute; left: 50%; bottom: -6%; width: 118%; transform: translateX(-50%); fill: none; stroke: #e5262b; stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 .1rem 0 #5a0b0e); pointer-events: none; z-index: 2; }
 .gduck.loser .gduck-x { display: block; }

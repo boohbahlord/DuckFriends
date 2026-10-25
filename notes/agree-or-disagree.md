@@ -666,3 +666,5 @@ the gun can also be a smidgen lower but u did a good job with that one it is fun
 3. We can do a map for carnival night next for a map
 
 (Chose "New map: Carnival Night" over upgrading Night Show: a Ferris wheel and string lights, a big top, marquee bulbs chasing around the tiles, fireworks when the votes are in.)
+
+FOR bracket game mode, make sure whoever in charge of it will later implement the two ducks on the cloud feature for that one, and then player's ducks will both be on the cloud, and the loser duck gets nudged off by the other duck, making the loser duck fall down to the bottom of the screen and through it with a falling sound effect. WHen they nudge the duck off the cloud, there is also a quack sound effect. That feature in the cloud is the same for this game mode called "The Court"
