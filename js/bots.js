@@ -7,7 +7,7 @@
    type their line a few letters at a time (with their secret word in it), and vote once a person has. In Who is the Quack?
    they pick a word from the list, "say" a clue in a chat bubble (they can't talk), skip a turn only once a person has, and
    vote for a random duck, leaning a little toward the real Quack (a TEST room's computers can see the host's secrets). */
-import { colXAt, isWyr, isBb, isSc, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
+import { colXAt, isWyr, isSc, twoSided, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 import { anyWord, tileCenter, spotOf, speakerOf, stillIn, canAccuse, CLUE_GRACE } from './quackrules.js';
 
 export const BOT_QUESTIONS = [
@@ -140,7 +140,8 @@ export function botActions(s, now) {
         break;
       case 'answer': {
         if (!late || s.done[id]) break;
-        const c = pick(id, s.round + ':' + s.qi), p = s.pos[id], want = colXAt(s, isWyr(s) || isBb(s) ? (c < 3 || (c === 3 && Math.random() < .5) ? 0 : 1) : c);
+        const key = s.round + ':' + s.qi, c = pick(id, key), p = s.pos[id];
+        const want = colXAt(s, twoSided(s) ? (c < 3 || (c === 3 && hash(id + key) % 2) ? 0 : 1) : c);   // (a neutral one picks a side once, not every step)
         const x = p.x, y = p.y, step = .035;
         if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });

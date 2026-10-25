@@ -8,14 +8,16 @@
    \permmute … (kept on this device), \show mute | permmute | players. A message over 250 characters folds under an
    arrow; each new message's bubble floats over its duck on the board.
 
-   Command line: a small bash (shell.js): files, pipes, stats, send, sudo and groups, forgame; and the customization,
-   e.g. custom username font "times new roman". Words are split by spaces, so a choice with a space goes in quotes; Tab
-   adds the quotes. ↑ and ↓ bring back earlier commands. A message sent from the command line shows the command in small
-   print over its output; a sent file shows only its name to anyone outside the sudo group. */
+   Command line: a small bash (shell.js, bash.js): files, pipes and the other operators, variables, loops, text tools,
+   stats, send, sudo and groups, forgame; and the customization, e.g. custom username font "times new roman". Words are
+   split by spaces, so a choice with a space goes in quotes; Tab adds the quotes. ↑ and ↓ bring back earlier commands,
+   Ctrl+R searches them, Ctrl+C stops a running command, Ctrl+L clears. A message sent from the command line shows the
+   command in small print over its output; a sent file shows only its name to anyone who may not open it (only sudo,
+   unless chmod let its group or everyone). */
 import { el, esc, typing, windowOpen, setHTML, confirmBox } from './ui.js';
 import { profile, save, cleanName, NAME_OK } from './store.js';
 import { activeRoom } from './net.js';
-import { boardPhases, denied, isSudo, gameMuted } from './rules.js';
+import { boardPhases, denied, canOpen, gameMuted, slowMs } from './rules.js';
 import { shellRun, shellSuggest, shellHistory } from './shell.js';
 import { nameHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from './duck.js';
@@ -283,6 +285,7 @@ async function chatCommand(text, r) {
   if (old) return setMutes(`x ${old[2].toLowerCase() === 'mute' ? 'text' : 'ping'} ${old[1] ? 'off' : 'on'} @${old[3]}`, true, r.state, r.me);
   const mu = text.match(/^\\(mute|permmute)\b/i);
   if (!mu) return null;
+  if (denied(r.state, r.me, 'nomute')) return 'Your group can\'t mute others.';
   const permanent = mu[1].toLowerCase() === 'permmute';
   if (permanent && !/\s-f(\s|$)/i.test(text) && /\s@/.test(text) && !(await confirmBox('Mute for good?', 'This stays on this device until you undo it (\\permmute … off @name). -f skips this question.'))) return 'Nothing muted.';
   return setMutes(text, permanent, r.state, r.me);
@@ -296,11 +299,14 @@ function shellCtx() {
     legacyHas: name => !!TREE[name] && name !== 'help' && name !== 'clear',
     legacyTop: () => Object.keys(TREE).filter(k => k !== 'help' && k !== 'clear' && !(TREE[k].fun && !funOn())),
     legacy: line => runCommand(line), legacySuggest: line => cmdSuggest(line),
+    /* while a command runs: Ctrl+C stops it, top shows its lines live, exit closes the window */
+    cancelled: () => ui.cancel, live: ls => { if (current && current.live) current.live(ls); }, close: () => { if (current && current.close) current.close(); },
+    slowLeft: () => { const ms = s ? slowMs(s, r.me) : 0; return ms ? ms - (Date.now() - (ui.lastSent || 0)) : 0; }, sent: () => { ui.lastSent = Date.now(); },
   };
 }
 
 /* ---------- the widget ---------- */
-const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '' };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages
+const ui = { open: false, mode: 'chat', ping: false, cmd: [], notes: [], long: new Set(), game: '', running: false, cancel: false, live: [] };   // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages
 const mentionRe = n => new RegExp(`(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, '\\-')}|everyone)(?![\\p{L}\\p{N}_-])`, 'iu');
 
 /* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
@@ -325,7 +331,7 @@ export function chatWidget() {
 
   const drawLog = () => {
     const r = room(), s = r && r.state;
-    if (ui.mode === 'cmd') { setHTML(log, ui.cmd.map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help (man for more).</p>'); log.scrollTop = 1e9; return; }
+    if (ui.mode === 'cmd') { setHTML(log, [...ui.cmd, ...ui.live].map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${esc(l)}</p>`).join('') || '<p class="dim small">Type help (man for more).</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
     const lines = [...s.log.filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes].sort((a, b) => a.t - b.t);
@@ -340,8 +346,8 @@ export function chatWidget() {
       const priv = m.to ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : '?'}` : 'private'}</span> ` : '';
       /* from the command line: the command in small print, then its output (a file: only sudo members see inside) */
       if (m.cmd) {
-        const sealed = m.file && !isSudo(s, me) && m.from !== me;
-        return `<p class="from-cmd${m.to ? ' priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${priv}${name(m.from)} <span class="cmd-tag">from the command line: <code>$ ${m.file ? 'send ' : ''}${esc(m.cmd)}</code></span>${m.file ? `<span class="cmd-file">📄 ${esc(m.file)}${sealed ? ' <span class="dim">(only sudo can open it)</span>' : ''}</span>` : ''}${sealed ? '' : `<span class="cmd-out">${text}</span>`}</p>`;
+        const sealed = !canOpen(s, me, m);
+        return `<p class="from-cmd${m.to ? ' priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${priv}${name(m.from)} <span class="cmd-tag">from the command line: <code>$ ${m.file ? 'send ' : ''}${esc(m.cmd)}</code></span>${m.file ? `<span class="cmd-file">📄 ${esc(m.file)}${sealed ? ` <span class="dim">(only sudo${m.grp ? ` and ${esc(m.grp)}` : ''} can open it)</span>` : ''}</span>` : ''}${sealed ? '' : `<span class="cmd-out">${text}</span>`}</p>`;
       }
       return `<p class="${m.to ? 'priv' : ''}${hit ? ' hit' : ''}${long ? ' long' : ''}">${fold}${priv}${name(m.from)}: ${text}</p>`;
     }).join('');
@@ -377,6 +383,9 @@ export function chatWidget() {
   };
   const closePanel = () => { ui.open = false; ui.long.clear(); panel.hidden = true; btn.setAttribute('aria-pressed', 'false'); inp.blur(); if (w.onToggle) w.onToggle(); };
   w.openChat = openPanel;
+  w.close = closePanel;
+  /* a command's live lines (top), shown under it until it ends */
+  w.live = ls => { ui.live = ls; if (ui.mode === 'cmd') drawLog(); };
 
   btn.onclick = () => ui.open ? closePanel() : openPanel();
   panel.querySelector('.chat-x').onclick = closePanel;
@@ -386,8 +395,24 @@ export function chatWidget() {
   inp.addEventListener('input', () => { sel = 0; refresh(); });
   inp.addEventListener('blur', () => setTimeout(drawSugg, 120));
   sugg.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); inp.value = list[+li.dataset.i].apply(); sel = 0; refresh(); });
-  let back = -1;   // the command line's ↑ ↓: how far back in its history
+  let back = -1, search = null;   // the command line's ↑ ↓: how far back in its history; Ctrl+R: what is searched for
   inp.addEventListener('keydown', e => {
+    if (ui.mode === 'cmd' && e.ctrlKey && !e.altKey && !e.metaKey) {
+      const k = e.key.toLowerCase();
+      if (k === 'c' && inp.selectionStart === inp.selectionEnd) {   // stop the running command, or drop the line (copying still works)
+        e.preventDefault();
+        if (ui.running) ui.cancel = true; else { ui.cmd.push('$ ' + inp.value + '^C'); inp.value = ''; drawLog(); refresh(); }
+        return;
+      }
+      if (k === 'l') { e.preventDefault(); ui.cmd = []; drawLog(); return; }
+      if (k === 'r') {   // each press goes further back through the commands that have the words typed
+        e.preventDefault();
+        const h = shellHistory(); if (search === null) search = { q: inp.value, at: h.length };
+        let i = search.at - 1; while (i >= 0 && !h[i].includes(search.q)) i--;
+        if (i >= 0) { search.at = i; inp.value = h[i]; } return;
+      }
+    }
+    if (e.key !== 'Control') search = null;
     if (e.key === 'Tab') { e.preventDefault(); if (list.length) { inp.value = list[sel].apply(); sel = 0; refresh(); } return; }
     if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && ui.mode === 'cmd' && !list.length) {
       const h = shellHistory(); if (!h.length) return;
@@ -403,9 +428,13 @@ export function chatWidget() {
     const text = inp.value.trim(); inp.value = ''; sel = 0;
     if (!text) { closePanel(); return; }
     if (ui.mode === 'cmd') {
-      ui.cmd.push('$ ' + text); back = -1;
-      const res = await shellRun(text, shellCtx());
-      if (res === null) ui.cmd = []; else ui.cmd.push(...res);
+      if (ui.running) { ui.cmd.push('$ ' + text, '✗ A command is still running (Ctrl+C stops it).'); drawLog(); return; }
+      ui.cmd.push('$ ' + text); back = -1; search = null;
+      ui.running = true; ui.cancel = false; drawLog();
+      const at = ui.cmd.length;   // its lines go right under it, above anything typed while it ran
+      let res;
+      try { res = await shellRun(text, shellCtx()); } finally { ui.running = false; ui.cancel = false; ui.live = []; }
+      if (res.cleared) ui.cmd = [...res.lines]; else ui.cmd.splice(Math.min(at, ui.cmd.length), 0, ...res.lines);
       if (ui.cmd.length > 300) ui.cmd.splice(0, ui.cmd.length - 300);
       drawLog(); refresh(); return;
     }
@@ -415,7 +444,8 @@ export function chatWidget() {
     if (said !== null) { drawLog(); return note(said); }
     if (!r) return note('Chat works in a room.');
     if (denied(r.state, r.me, 'nochat')) return note('Your group can\'t chat.');
-    if (denied(r.state, r.me, 'slow') && Date.now() - (ui.lastSent || 0) < 15000) return note(`Slow down: one message every 15 seconds (${Math.ceil((15000 - (Date.now() - ui.lastSent)) / 1000)} s).`);
+    const slow = slowMs(r.state, r.me);
+    if (slow && Date.now() - (ui.lastSent || 0) < slow) return note(`Slow down: one message every ${Math.round(slow / 1000)} seconds (${Math.ceil((slow - (Date.now() - ui.lastSent)) / 1000)} s).`);
     ui.lastSent = Date.now();
     const pm = text.match(/^\\@([\p{L}\p{N}_-]+)\s+(.+)$/u);
     if (pm) {
