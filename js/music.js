@@ -95,7 +95,7 @@ export const music = (function(){
         voice("fmbell",hz(C.r+24)*Math.pow(2,-28/1200),st,.4,.02,1.2)}
       // the warm pad, under the tune
       const pv={bob:.018,theme:a>=8?.028:0,return:a>=27?.024:0,full:a>=38?.03:.04}[s]||0;
-      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      if(pv){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pv,.8)}
       // a harp runs from the left ear to the right (or back), its notes never quite in the same place
       if(s==="theme"&&a>=8&&a%2===0||s==="return"&&a>=26||s==="full"&&a<38||s==="bob"&&a===16){const up=a%4!==2,p=panTo(up?-.85:.85,up?.85:-.85,t,B*.9,.5,.25);
         const ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]],pos=[[0,1,1.5,3,4.5,5.5],[0,.5,2,3,3.5,5],[.5,1.5,2,3.5,4,6]][Math.floor(h01(a+11)*3)],hv=s==="full"?.11:.07;
@@ -202,7 +202,7 @@ export const music = (function(){
         if(s==="warm"||s==="joy"&&a%2)voice("mbass",hz(C.b-12+C.fifth),t+B*.5,B*.4,v*.5,.4)}
       // the warm pad, and Rain's strings where the warmth is
       const pv={joy:.022,warm:.04,fall:.035-.003*(a-22),minor:.018,down:.02-.002*(a-50),false:.014}[s]||0;
-      if(pv){on(send(.6,.1,BUS.bass));for(const v of C.iv.slice(0,3))voice("warm",hz(C.r+v+12),t,B*1.02,pv,.8)}
+      if(pv){on(send(.6,.1,BUS.bass));voice("warm",C.iv.slice(0,3).map(v=>hz(C.r+v+12)),t,B*1.02,pv,.8)}
       if(s==="warm"||s==="fall"&&a<26||s==="minor"&&a>=42&&a<=46){on(send(.7,.2,BUS.bass));voice("viol",hz(C.r+12+C.third),t,B*1.05,.018,.8);voice("viol",hz(C.r+C.fifth),t+.05,B*1.05,.014,.8)}
       // a harp from the left ear to the right (or back)
       if(s==="joy"&&a%2===0||s==="warm"){const up=a%4!==2,p=panTo(up?-.8:.8,up?.8:-.8,t,B*.9,.5,.25),ns=[...C.iv.slice(0,3),12,12+C.iv[1],12+C.iv[2]];
@@ -250,10 +250,14 @@ export const music = (function(){
     glow("Glow","dorian","Dm7 Dm7 G/D Bm7b5 Dm7 Fmaj7 Bm7b5 Fmaj7 Dm7 Em7 Cmaj7 Am7 Bm7b5 G/D Dm7 G/D Bm7b5 Em7 Cmaj7 Bm7b5 Bm7b5 Em7 Dm7 Dm7 Dm7 Bm7b5 G/D Fmaj7 Am7 Dm7 G/D Bm7b5 Fmaj7 Dm7 Em7 Am7 Bm7b5 G/D Dmadd9 Dm7"),
     JESTERS
   ];
-  const BASE=.7;   // 100% music: loud on purpose
+  const BASE=.45;   // 100% music: loud, but under the game
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
   const hz=m=>440*Math.pow(2,(m-69)/12);
-  let ac=null,out=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
+  /* on a phone the notes' tails are cut sooner (after they have faded to almost nothing) and a few faint layers are left
+     out (shimmers an octave up, the music box's halo, a second detuned saw), so the music takes less work to play and
+     doesn't stutter; a computer plays everything in full */
+  const LITE=matchMedia("(hover: none) and (pointer: coarse)").matches,TL=LITE?.6:1;
+  let ac=null,out=null,bout=null,timer=null,playing=false,T=null,next=0,step=0,ei=0,EV=[],total=0,last=-1,BUS=null,CACHE={},DST=null,GL=null,prevF=null,BEDS=[],MUTE="";
   /* a seeded chance, so a song written out sounds the same each time; in play it is new each time through */
   let SEED=1;const rnd=()=>{SEED=SEED+0x6D2B79F5|0;let t=Math.imul(SEED^SEED>>>15,1|SEED);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
   const gn=v=>{const g=ac.createGain();g.gain.value=v==null?1:v;return g};
@@ -277,7 +281,7 @@ export const music = (function(){
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
     BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A();graph();return ac}
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A({latencyHint:"playback"});graph();bout=gn(0);bout.connect(ac.destination);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
@@ -338,18 +342,18 @@ export const music = (function(){
       return true}
     if(type==="dist"){const g=gn(),ws=ac.createWaveShaper(),lp=biq("lowpass",1700);ws.curve=distCurve();ws.connect(lp).connect(g);g.connect(D);env(g,t,.01,peak,dur-.04,.07);
       osc("sawtooth",f,t,t+dur+.4,ws);osc("sawtooth",f*.5,t,t+dur+.4,ws);return true}
-    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5,g=gn();g.connect(D);
+    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5*TL,g=gn();g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.62,t+a,Math.max(.2,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
       const o1=osc("sine",f,t,stop,g),o2=osc("sine",f*1.0026,t,stop,g);   // two, a hair apart: a slow, seasick beating
-      const h=gn(.07);h.connect(g);const o3=osc("triangle",f*2,t,stop,h);const s=gn(.16);s.connect(g);osc("sine",f*.5,t,stop,s);   // and a ghost an octave down
-      vib([o1,o2,o3],t,stop,4.4,.0045,.3);
+      let o3=null;if(!LITE){const h=gn(.07);h.connect(g);o3=osc("triangle",f*2,t,stop,h)}const s=gn(.16);s.connect(g);osc("sine",f*.5,t,stop,s);   // and a ghost an octave down
+      vib(o3?[o1,o2,o3]:[o1,o2],t,stop,4.4,.0045,.3);
       const nb=noiseSrc(t,dur+.4),bp=biq("bandpass",f*2,7),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*1.6,t+a*.6);ng.gain.setTargetAtTime(0,t+a,.18);nb.connect(bp).connect(ng).connect(D);   // breath
       return true}
     if(type==="softtri"){const R=rel||.3,g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.03);g.gain.setTargetAtTime(peak*.55,t+.04,.25);g.gain.setTargetAtTime(0,t+dur,R);osc("triangle",f,t,t+dur+R*5,g);return true}
     if(type==="softbox"){const R=rel||.9,end=t+Math.max(dur,.4),g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.018);g.gain.setTargetAtTime(peak*.4,t+.03,.35);g.gain.setTargetAtTime(0,end,R);
-      osc("sine",f,t,end+R*5,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
+      osc("sine",f,t,end+R*5*TL,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
       const g3=gn();g3.connect(D);env(g3,t,.01,peak*.05,.01,.12);osc("sine",f*3.98,t,t+.8,g3);   // the tine, much softer than the old box
-      const h=gn();h.connect(D);h.gain.setValueAtTime(0,t);h.gain.linearRampToValueAtTime(peak*.22,t+.35);h.gain.setTargetAtTime(0,end,R*1.4);osc("triangle",f,t,end+R*7,h);   // a halo that lingers
+      if(!LITE){const h=gn();h.connect(D);h.gain.setValueAtTime(0,t);h.gain.linearRampToValueAtTime(peak*.22,t+.35);h.gain.setTargetAtTime(0,end,R*1.4);osc("triangle",f,t,end+R*7,h)}   // a halo that lingers
       return true}
     if(type==="viol"||type==="lament"){const L=type==="lament",a=L?.2:.1,R=rel||(L?.5:.3),stop=t+dur+R*5,g=gn(),lp=biq("lowpass",L?1500:Math.min(5000,f*4+600),.7);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,Math.max(.1,dur*.6));g.gain.setTargetAtTime(0,t+dur,R);
@@ -371,20 +375,20 @@ export const music = (function(){
       osc("sawtooth",f,t,stop,tr);osc("triangle",f*1.004,t,stop,tr);
       lp.frequency.setValueAtTime(700,t);lp.frequency.linearRampToValueAtTime(1900,t+a);lp.frequency.setTargetAtTime(1100,t+a,Math.max(.1,dur*.6));return true}   // it opens as it swells
     /* for the glowing songs: a felt piano, a harp, a muffled bass and a warm old pad */
-    if(type==="felt"){const R=rel||1.1,end=t+Math.max(dur,.25),stop=end+R*5,g=gn(),lp=biq("lowpass",Math.min(5200,f*6),.4);lp.connect(g);g.connect(D);
+    if(type==="felt"){const R=rel||1.1,end=t+Math.max(dur,.25),stop=end+R*5*TL,g=gn(),lp=biq("lowpass",Math.min(5200,f*6),.4);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.008);g.gain.setTargetAtTime(peak*.34,t+.012,.45);g.gain.setTargetAtTime(0,end,R);
       lp.frequency.setTargetAtTime(Math.min(1700,f*2.4),t+.012,.3);   // the hammer's brightness fades into felt
-      osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h);
+      osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);if(!LITE){const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h)}
       const nb=noiseSrc(t,.06),bp=biq("bandpass",2300,1.4),ng=gn(0);ng.gain.setValueAtTime(peak*.22,t);ng.gain.setTargetAtTime(0,t,.012);nb.connect(bp).connect(ng).connect(D);
       return true}
-    if(type==="harp"){const R=rel||.9,stop=t+R*6,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
-      osc("triangle",f,t,stop,lp);const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h);lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
-    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
+    if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
+      osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
+    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.7,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur,R);
       osc("sine",f,t,stop,lp);const k=gn(.45);k.connect(lp);osc("triangle",f*1.002,t,stop,k);return true}
-    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
+    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
-      osc("sawtooth",f,t,stop,lp);osc("sawtooth",f*1.0035,t,stop,lp);const k=gn(.6);k.connect(lp);osc("triangle",f*.5,t,stop,k);
+      const k=gn(.6);k.connect(lp);for(const x of [].concat(f)){osc("sawtooth",x,t,stop,lp);if(!LITE)osc("sawtooth",x*1.0035,t,stop,lp);osc("triangle",x*.5,t,stop,k)}   // f may be a whole chord
       lp.frequency.linearRampToValueAtTime(950,t+a);lp.frequency.setTargetAtTime(600,t+a,dur*.4);return true}
     return false}
   function note(type,f,t,dur,peak,rel,vib_){if(voice(type,f,t,dur,peak,rel,vib_))return;const o=ac.createOscillator(),g=ac.createGain();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o.frequency.setValueAtTime(f,t);
@@ -435,7 +439,7 @@ export const music = (function(){
       e.vel=e.v*(1-c+c*shape*contour*fall*jit)*alt})});
     let dur=0;for(let st=0;st<total;st++){const ab=Math.floor(st/T.bar);dur+=60/T.bpm/2/(T.tempo?T.tempo(ab%T.chords.length,st%T.bar,ab):1)}
     ev.total=total;ev.dur=dur;return ev}
-  function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=RENDER?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
+  function load(i,now){T=TRACKS[i];last=i;step=0;ei=0;prevF=null;SEED=FIXED?7919*(i+1):(Math.random()*4294967296)>>>0;EV=build(T);total=EV.total;stopBeds();if(ac)room(now)}
   /* one note of the melody, played: its loudness, a slide from the last note, a sag when the song falls apart, a breath
      that falls away; its own send into the room and the delay (more at a phrase's end, so the end floats off) */
   function playLead(e,t,E8,x){t=Math.max(t,ac.currentTime);const air=e.tag.includes("a"),ty=air?"air":T.leadFor?T.leadFor(x.abs):T.lead;let d=e.l*E8*(T.leg||.93),cut=false;
@@ -451,8 +455,9 @@ export const music = (function(){
     GL=null;if(e.m.length===1&&!air)prevF=hz(e.m[0]);
     if((T.swipe&&e.tag.includes("s"))||cut){const p=BUS.leadLP.frequency;p.setTargetAtTime(230,t+d*.6,.05);p.setTargetAtTime(16000,t+d+E8*(.8+rnd()),.3)}   // swept away, and back
     if(T.onNote)T.onNote(e,t,E8,x)}
-  let RENDER=false;
+  let RENDER=false,FIXED=false;
   function tick(until){if(!playing||!ac)return;
+    if(BUF&&!RENDER){if(ac.currentTime<BUF.end)return;const e=BUF.end;BUF=null;nextSong(e+GAP);if(BUF)return}
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
       const E8=60/T.bpm/2/(T.tempo?T.tempo(bar,i,abs):1),x={t:next,bar,abs,i,E8,C,step};
@@ -483,7 +488,7 @@ export const music = (function(){
         if(has("static")&&i===0&&(bar*7)%3===1)hit(next,"static");   // a radio that won't quite tune
         if(T.step)T.step(x);if(i===0&&T.onBar)T.onBar(x);GL=null}
       next+=E8;step++;
-      if(step>=total){if(RENDER)return;next+=GAP;load(pick())}}   // the song ends: 20 seconds of quiet, then the next one
+      if(step>=total){if(RENDER)return;nextSong(next+GAP);if(BUF)return}}   // the song ends: 20 seconds of quiet, then the next one
   }
   const GAP=20;
   /* the next song: a random pick that leans away from the songs heard most recently (each song's chance grows with the
@@ -493,12 +498,21 @@ export const music = (function(){
   function pick(){const h=heard(),now=Date.now(),age=n=>h[n]?Math.max(1,(now-h[n])/60000):1e7;
     let best=0,bk=-1;names.forEach((n,i)=>{if(names.length>1&&i===last)return;const k=Math.pow(Math.random(),1/Math.log(2+age(n)));if(k>bk){bk=k;best=i}});
     h[names[best]]=now;try{localStorage.setItem(HKEY,JSON.stringify(h))}catch(e){}return best}
-  function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;load(pick(),true);next=ac.currentTime+.15;
-    out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(LV(),ac.currentTime,.8);timer=setInterval(tick,90);tick()}
-  function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;stopBeds();if(ac){out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(0,ac.currentTime,.3)}}
+  /* stopped part way (the Music slider at 0, the page hidden, out of the room): starting again picks the same song up
+     where it was, and a gap between songs keeps the rest of its quiet */
+  let paused=false,left=0;
+  function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
+    const now=ac.currentTime;
+    if(paused&&BUF){const a=BUF.at;playBuf(BUF,a<0?now+Math.max(.15,-a):now+.15,Math.max(0,a))}
+    else if(paused&&T){next=now+Math.max(.15,left);if(T.bed&&step>0&&step<total)startBed(next,Math.max(2,EV.dur*(1-step/total)+1),T.bed)}
+    else{load(pick(),true);next=now+.15;prep()}
+    paused=false;level(.8);timer=setInterval(tick,90);tick()}
+  function stop(){if(!playing)return;playing=false;paused=true;clearInterval(timer);timer=null;stopBeds();if(!ac)return;
+    left=Math.min(GAP,Math.max(0,next-ac.currentTime));if(BUF){BUF.at=ac.currentTime-BUF.t0;try{BUF.s.stop(ac.currentTime+1.5)}catch(e){}}level(.3,0)}
+  function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the sound up and the page in view
   const wanted=()=>LV()>0&&!document.hidden&&["lobby","game"].includes(document.body.dataset.screen);
-  function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing){out.gain.cancelScheduledValues(ac.currentTime);out.gain.setTargetAtTime(LV(),ac.currentTime,.15)}}
+  function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
   let started=false;   // a click or a key has happened, so the browser lets sound start
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
   addEventListener("pointerdown",wake,true);
@@ -506,13 +520,28 @@ export const music = (function(){
   document.addEventListener("visibilitychange",sync);
   document.addEventListener("settings",sync);
   document.addEventListener("screen",sync);
-  /* one song written out to an audio buffer (to listen to a song, or a new version of one, outside the game) */
-  async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
-    const keep=[ac,out,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE];
-    RENDER=true;let buf;
-    try{const len=build(TRACKS[i]).dur+7;ac=new OAC(2,Math.ceil(44100*len),44100);graph();out.gain.value=BASE;
-      load(i,true);next=.05;playing=true;tick(len-6.5);buf=await ac.startRendering()}
-    finally{RENDER=false;[ac,out,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE]=keep}
-    return buf}
-  return {sync,renderSong,get playing(){return playing},get track(){return T?T.name:null},tracks:names};
+  /* one song written out to an audio buffer: to listen to a song outside the game (fixed, the same each time), or, on a
+     computer, the next song ahead of time (new each time) */
+  const ST=()=>[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF];
+  const PUT=a=>{[ac,out,bout,BUS,CACHE,BEDS,DST,GL,T,last,step,ei,EV,total,next,playing,prevF,SEED,MUTE,BUF]=a};
+  // the notes are written in 4-second pieces, each when the writing gets there, so the game never stops for a long moment
+  function offline(i,fixed,lv){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
+    const keep=ST(),dur=build(TRACKS[i]).dur,len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
+    const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
+    run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true);next=.05;playing=true},4);
+    for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s).then(()=>{run(null,u);o.resume()})}
+    PUT(keep);return {p:o.startRendering(),dur:dur+.05}}
+  async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
+  /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
+     takes almost no work to play, so another app busy on the computer can't make it crackle. The first song, a song
+     not ready in time, and every song on a phone (too much memory there) are played live, note by note */
+  let NX=null,BUF=null,ahead=!LITE&&!!(window.OfflineAudioContext||window.webkitOfflineAudioContext);
+  function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now(),r=offline(i,false,1);if(!r){ahead=false;NX=null;return}
+    nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
+  function playBuf(b,t,off){const s=ac.createBufferSource();s.buffer=b.buf;s.connect(bout);s.start(t,off);BUF={...b,s,t0:t-off,end:t-off+b.dur,at:0}}
+  // a song ends (after its quiet): the next one, from its recording when it's ready, else live
+  function nextSong(t){const nx=NX;NX=null;stopBeds();
+    if(nx&&nx.buf){T=TRACKS[nx.i];last=nx.i;playBuf(nx,t,0)}else{load(nx?nx.i:pick());next=t}
+    prep()}
+  return {sync,renderSong,get playing(){return playing},get recorded(){return !!BUF},get track(){return T?T.name:null},tracks:names};
 })();

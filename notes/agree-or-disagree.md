@@ -962,3 +962,33 @@ Decision: a Story Chain lobby option, Voting: Auto (the default) / On / Off. Aut
 with 2 players and votes with 3 or more (asked the owner about 3; voting kept on meanwhile). With no voting, a finished
 paragraph goes straight to the stats and the Continue / New story / Lobby choice, where the secret words show lit up in
 their lines.
+
+## Music: phones, the slider, quieter, crackling, Spring in a Box (2026-10-25)
+
+Your timbre sounds like fart and shit, completely undo the thick level of fuzz, i didnt literally mean fuzz distortion, i meant fuzzy feeling. Tho muffle can lighly come in before leaving back and forth
+
+dont have crazy distortion all over it doesnt fit the game
+
+I assume ur impoving the last song? becuz it doesnt sound very good
+
+no u can do what u said ab the sounds files for phone, but make them only like that on phone version not pc
+
+just do away with the swing in spring in the box becuz i dont like that part and revamp it to take more inspiration from the songs we already made and more inspiration from hollow knight. It really needs to feel distinct tho and also have better flow and more meaningful sounds
+
+like do away with the odd meter i mean
+
+or the swing meter
+
+music can be less loud by default \
+
+whenever i opened discord app while on game lobby the music in the browser game become crackly rly bad sometimes idky
+
+(Also from the bug tester, through the coordinator: the Music slider at 0 and back started a new song.)
+
+Decisions: on a phone the notes' tails end sooner and a few faint layers (octave shimmers, the music box's halo, a
+second detuned saw) are left out, about half the work; a computer plays everything in full. The Music slider at 0 and
+back (or leaving the room and coming back) picks the same song up where it was. All music is a little quieter at 100%
+(about 4 dB); saved slider settings are kept. Against crackling: the music asks the browser for a roomier sound buffer,
+and on a computer each next song is written out ahead while the one before plays, then played from that recording,
+which takes almost no work (the first song, and any song not ready in time, play live). Spring in a Box is being
+reworked with straight time and more Hollow Knight; not in the game until the owner says so.
