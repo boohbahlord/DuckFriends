@@ -830,3 +830,35 @@ The owner's answers to the five questions left, word for word (2026-10-25):
 3. Yeah they win when only one is left, and when they win, the duck who ISNT the quack will have the dead effect from the silly commands and temporarily can't move as they and their tile turns greyscale and the player who was the quack gets their card flipped over, and it shows "You are the quack". The card shows only the category AND the sentence which reveals they are the quack. Also, the game should be called, "Who is the Quack?" 
 4. Yes
 5. No.
+
+## Music (thread "Plan Duck Friends music", 2026-10-24/25)
+
+We are adding music to Duck Friends 
+
+1. (c)
+2. I think we can listen to my directions because i am going to be pulling from many different places at once and THEN directing you thru it with detailed instructions and maybe even getting songs from nous within kenoma and just changing their scale to see how it sounds because maybe it can be used for this game.
+3. No it doesnt have to be the case that music gets quieter, it can stay the same volume but it should be playing loudly anyways
+
+
+Dont make music yet but do bring song from nous within kenoma and let me play the song files here in chat and think of which ones can be repurposed and how
+
+(1 (c) = music in the lobby, a loop during rounds, and a win tune.)
+
+You can put Lantern in the Fog into the game as is right now. Song have 20 seconds of space between each time they play and will play randomly with the first most songs being the least likely to play again while also being random
+
+You can try and make candle vigil in major and another time in lydian and let me see how it sounds, let me know when it is done
+
+we can do the lydian version and call it "bubble bath in the sky" (with proper capitalization)
+Put it in the game code and we come up with some other ideas, just wait on me after u put this into game, dont deploy yet im not sayinng that tho
+
+Make something that sounds like those two combined plus a hint or reminder of hollow knight, minecraft, and maybe some very old silent hill stuff somewhat. Those ideas combine with those two songs we just added, and we make the rhythm not too boring or predictable. The timbre should be like Minecraft. It will be in lydian and another time in dorian. It will sound like bioluminescent soft crescendos like nostalgia and happy melancholy, the bass is muffled and the sound fades in and out from hollow to filled, with dynamics that make some instruments go quieter or softer while some sounds go in left ear and make their way to the right. The sound sometimes bobs a little before putting it's head down and walking away quietly in hollow, before the timing gives quiet and things begin to come in and return for play again, become full with earned melody and sounds chiming with glee.
+
+yeah put Glow into the game for the music very nice.
+
+Now we are going to make a song that pulls a little from halo 3 odst's "rain", and it wont have any weather sound effects like that song tho, none of that. It also pulls from everything i just told you AND this song. This next one is going to breathe like long leg circus jests who go up an infinite stair of blocks that grows further and further out, with each step of foot needing to go further, before it stops,  and fades in like a melancholy hollow in meaning but mimicking joy, until maybe a little warmth is found and earned, and then if starts to fall away, the sounds switching between left and right audio of headphones as it lowers in volumes slowly, the warmth still heard, but becoming holly and falling while becoming far, until it quiets. The song was in Lydain, then Major at the happy point, but now it comes in with minor, picking up faster, and then slowing again, taking some breathes, and speeding up again, all while convery a breathey melody convey of explanation about the loss, confusion, and sadness, with dynamics and muffle without harsh but desparation, all while trying to imitate joy as well, all the while looking happy, all the while it is trying to look as if it isnt a sad one who witnessed too much who is made to sounds cheery for a duck game that it knows it has to cheer up for. It does do it's job at being happy, but it is missing something. It begins to work it's way down, falling away too, but fading more so. It lets go and gives up, becomes false joy. 
+
+This is for a game about ducks btw.
+
+when u put glow in, use dorian
+
+like i mean that glow goes in the game as dorian
