@@ -41,6 +41,7 @@ const COLORS = { red: '#ef3b3b', orange: '#ff8c2b', yellow: '#ffd23f', green: '#
   purple: '#9b5de5', pink: '#ff7eb6', brown: '#8b5a2b', gray: '#9aa0aa', black: '#1c1c28', white: '#ffffff' };
 const colorOf = v => COLORS[String(v).toLowerCase()] || normHex(v);
 const COLOR_HINT = [...Object.keys(COLORS), '#hex'];
+const CMD_MAX = 2000;   // the command line's longest line
 const keysOf = list => list.map(x => x[0]);
 /* the silly commands: each names players with @; the host can turn them off (Game options → Additional settings) */
 const fun = (kind, count, what) => ({ info: what, at: count, fun: true, kind });
@@ -374,6 +375,7 @@ export function chatWidget() {
     modeBtn.setAttribute('aria-label', m === 'cmd' ? 'Command line mode; switch to the text chat (T)' : 'Chat mode; switch to the command line (Shift+T)');
     btn.dataset.tip = m === 'cmd' ? 'Command line (Shift+T)' : 'Text chat (T)';
     inp.setAttribute('aria-label', m === 'cmd' ? 'Command' : 'Message');
+    inp.maxLength = m === 'cmd' ? CMD_MAX : 500;   // a command line can be longer than a chat message
     drawLog(); refresh();
   };
   const openPanel = m => {
@@ -394,6 +396,10 @@ export function chatWidget() {
   inp.addEventListener('focus', refresh);
   inp.addEventListener('click', refresh);
   inp.addEventListener('input', () => { sel = 0; refresh(); });
+  inp.addEventListener('paste', e => {   // a pasted line that is too long: say it was cut
+    const t = (e.clipboardData || {}).getData ? e.clipboardData.getData('text') : '', max = inp.maxLength;
+    if (max > 0 && inp.value.length - (inp.selectionEnd - inp.selectionStart) + t.length > max && ui.mode === 'cmd') { ui.cmd.push(`✗ That line is longer than ${max.toLocaleString('en-US')} characters, so its end was cut off.`); drawLog(); }
+  });
   inp.addEventListener('blur', () => setTimeout(drawSugg, 120));
   sugg.addEventListener('mousedown', e => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); inp.value = list[+li.dataset.i].apply(); sel = 0; refresh(); });
   let back = -1, search = null;   // the command line's ↑ ↓: how far back in its history; Ctrl+R: what is searched for

@@ -80,7 +80,12 @@ export function lex(src) {
       if (r[1] === '(' && src[j - 1] === ')') { const p = { t: 'ar', src: src.slice(i + 3, j - 1), q }; i = j + 1; return p; }
       const p = { t: 'sub', src: src.slice(i + 2, j), q }; i = j + 1; return p;
     }
-    if (r[0] === '{') { const j = src.indexOf('}', i); if (j < 0) fail('✗ unexpected end of line: a { isn\'t closed'); const name = src.slice(i + 2, j); if (!/^([A-Za-z_]\w*|\?)$/.test(name)) fail(`✗ \${${name}}: bad substitution`); i = j + 1; return { t: 'var', name, q }; }
+    if (r[0] === '{') {   // ${name}, ${#name} (its length), ${name:-word} ${name:=word} ${name:+word} (and without the :)
+      const j = src.indexOf('}', i); if (j < 0) fail('✗ unexpected end of line: a { isn\'t closed');
+      const body = src.slice(i + 2, j), m = body.match(/^(#?)([A-Za-z_]\w*|\?)(?:(:?[-=+])(.*))?$/s);
+      if (!m || (m[1] && m[3])) fail(`✗ \${${body}}: bad substitution`);
+      i = j + 1; return { t: 'var', name: m[2], q, len: !!m[1], op: m[3] || '', arg: m[4] ?? '' };
+    }
     const m = r.match(/^([A-Za-z_]\w*|\?|\$|#|\d)/);
     if (!m) return null;
     i += 1 + m[0].length; return { t: 'var', name: m[0], q };
@@ -91,7 +96,9 @@ export function lex(src) {
     if (c === ' ' || c === '\t') { endWord(); i++; continue; }
     if (c === '\n') { endWord(); toks.push({ k: 'op', v: ';', pos: i, end: i + 1 }); i++; continue; }
     if (c === '#' && !parts) { const j = src.indexOf('\n', i); if (j < 0) break; i = j; continue; }
-    if (c === '\\') { addLit(src[i + 1] ?? '', true); i += 2; continue; }
+    if (c === '\\') {   // \x keeps x as it is; before a letter or @ the \ stays too (the game's \@name and \mute)
+      const d = src[i + 1] ?? ''; addLit(/[A-Za-z@]/.test(d) ? '\\' + d : d, true); i += 2; continue;
+    }
     if (c === "'") {
       const j = src.indexOf("'", i + 1); if (j < 0) fail('✗ unexpected end of line: a \' quote isn\'t closed');
       begin(); if (j === i + 1) addPart({ t: 'lit', v: '', q: true }); else addLit(src.slice(i + 1, j), true);
@@ -155,23 +162,34 @@ export function parse(toks, src) {
     const last = toks[p - 1];
     return { k: 'pipe', cmds, neg, raw: t0 && last ? src.slice(t0.pos, last.end) : '' };
   }
+  /* > file and the others after done or fi: for …; done > file */
+  function redirsAfter() {
+    const out = [];
+    while (toks[p] && toks[p].k === 'op') {
+      const t = toks[p];
+      if (REDIRS.includes(t.v)) { const f = toks[p + 1]; if (!f || f.k !== 'w') fail(`✗ syntax error near unexpected token \`${tokText(f)}'`); out.push({ op: t.v, word: f }); p += 2; }
+      else if (t.v === '2>&1') { out.push({ op: '2>&1' }); p++; }
+      else break;
+    }
+    return out;
+  }
   function command() {
     if (kw('for')) {
       p++; const name = plain(toks[p]); if (!name || !/^[A-Za-z_]\w*$/.test(name)) fail(`✗ for: \`${tokText(toks[p])}': not a valid name`); p++;
       let items = null;
       if (kw('in')) { p++; items = []; while (p < toks.length && !isOp(';') && !kw('do')) { if (toks[p].k === 'op') fail(`✗ syntax error near unexpected token \`${toks[p].v}'`); items.push(toks[p++]); } }
       skipSemis(); want('do'); const body = list(['done']); want('done');
-      return { k: 'for', name, items, body };
+      return { k: 'for', name, items, body, redirs: redirsAfter() };
     }
     if (kw('if')) {
       p++; const arms = []; let els = null;
       do { if (arms.length) p++; const cond = list(['then']); want('then'); arms.push([cond, list(['elif', 'else', 'fi'])]); } while (kw('elif'));
       if (kw('else')) { p++; els = list(['fi']); }
-      want('fi'); return { k: 'if', arms, els };
+      want('fi'); return { k: 'if', arms, els, redirs: redirsAfter() };
     }
     if (kw('while') || kw('until')) {
       const until = kw('until'); p++; const cond = list(['do']); want('do'); const body = list(['done']); want('done');
-      return { k: 'while', until, cond, body };
+      return { k: 'while', until, cond, body, redirs: redirsAfter() };
     }
     const words = [], assigns = [], redirs = [], t0 = toks[p];
     while (p < toks.length) {
@@ -263,7 +281,7 @@ function braces(w) {
 }
 
 /* ---------- running ---------- */
-const quoteWord = w => /^[\w@\\%+=:,./-]+$/.test(w) ? w : `'${w.replace(/'/g, `'\\''`)}'`;
+const quoteWord = w => /^[\w@%+=:,./-]+$/.test(w) ? w : `'${w.replace(/'/g, `'\\''`)}'`;
 export { quoteWord };
 
 /* one word → the words it becomes */
@@ -284,7 +302,16 @@ async function expandWord(tok, st, { split = true, glob = true } = {}) {
       seg(v, !x.q); if (x.q) cur.quoted = true; continue;
     }
     let v;
-    if (x.t === 'var') v = x.name === '?' ? String(st.code) : x.name === '$' ? '4242' : x.name === '#' ? '0' : /^\d$/.test(x.name) ? (x.name === '0' ? 'duckbash' : '') : st.env.getVar(x.name) ?? '';
+    if (x.t === 'var') {
+      const raw = x.name === '?' ? String(st.code) : x.name === '$' ? '4242' : x.name === '#' ? '0' : /^\d$/.test(x.name) ? (x.name === '0' ? 'duckbash' : '') : st.env.getVar(x.name);
+      v = raw ?? '';
+      if (x.op) {   // the default (or the alternative), with its own $names filled in
+        const unset = x.op.startsWith(':') ? v === '' : raw === undefined, arg = () => x.arg.replace(/\$\{?([A-Za-z_]\w*)\}?/g, (a, n) => st.env.getVar(n) ?? '');
+        if (x.op.endsWith('+')) v = unset ? '' : arg();
+        else if (unset) { v = arg(); if (x.op.endsWith('=')) st.env.setVar(x.name, v); }
+      }
+      if (x.len) v = String([...v].length);
+    }
     else if (x.t === 'sub') v = (await capture(x.src, st)).replace(/\n+$/, '');
     else v = String(calc(x.src, n => st.env.getVar(n)));
     if (x.q || !split) { seg(v, false); cur.quoted = true; continue; }
@@ -352,7 +379,7 @@ async function execPipe(node, stdin, sink, st) {
     const last = k === cmds.length - 1; let out = '';
     const to = last ? sink : { out: t => { out += t; }, err: sink.err, screen: false };
     const c = cmds[k];
-    code = c.k === 'cmd' ? await execCmd(c, input, to, st, node.raw) : await execCompound(c, input, to, st);
+    code = c.k === 'cmd' ? await execCmd(c, input, to, st, node.raw) : await withRedirs(c.redirs, input, to, st, (i2, to2) => execCompound(c, i2, to2, st));
     input = out;
   }
   st.code = node.neg ? +!code : code;
@@ -398,11 +425,15 @@ async function execCmd(c, stdin, sink, st, pipeRaw) {
     }
   } catch (e) { if (e.fatal) throw e; sink.err(nl(e.message)); return (st.code = e.code ?? 1); }
   if (!argv.length && !c.redirs.length) return (st.code = 0);
-  /* the redirections, in order: where the output and the errors go */
+  return withRedirs(c.redirs, stdin, sink, st, (input, to) => runArgv(c, argv, input, to, st, pipeRaw));
+}
+/* the redirections, in order (where the input comes from, where the output and the errors go), around fn(input, to) */
+async function withRedirs(redirs, stdin, sink, st, fn) {
+  if (!redirs || !redirs.length) return fn(stdin, sink);
   let input = stdin, outT = null, errT = null;
   const files = [];
   try {
-    for (const r of c.redirs) {
+    for (const r of redirs) {
       if (r.op === '2>&1') { errT = outT || 'out'; continue; }
       const w = (await expandWord(r.word, st, { glob: false })).join(' ');
       if (r.op === '<') { input = w === '/dev/null' ? '' : await st.env.read(w); continue; }
@@ -418,6 +449,12 @@ async function execCmd(c, stdin, sink, st, pipeRaw) {
     err: errT === 'out' ? sink.out : errT ? t => { errT.buf += t; } : sink.err,
     screen: !outT && sink.screen,
   };
+  let code = await fn(input, to);
+  for (const f of files) if (f.path !== '/dev/null') { try { await st.env.write(f.path, f.buf, true); } catch (e) { sink.err(nl(e.message)); code = 1; } }
+  return (st.code = code);
+}
+/* one command's words, run: an alias, a builtin (sudo in front of one checks sudo first) or the game's command */
+async function runArgv(c, argv, input, to, st, pipeRaw) {
   let code = 0;
   if (argv.length) {
     const name = argv[0];
@@ -428,14 +465,15 @@ async function execCmd(c, stdin, sink, st, pipeRaw) {
       finally { st.aliasing.delete(name); }
     } else {
       try {
-        const b = BUILTINS[name], res = b ? await b(argv.slice(1), input, st, to) : await st.env.exec(argv, input, { raw: c.raw, pipeRaw, screen: to.screen, err: to.err });
+        let av = argv;
+        if (av[0] === 'sudo' && BUILTINS[av[1]]) { await st.env.exec(['sudo', '-v'], input, { raw: c.raw, pipeRaw, screen: to.screen, err: to.err }); av = av.slice(1); }
+        const b = BUILTINS[av[0]], res = b ? await b(av.slice(1), input, st, to) : await st.env.exec(av, input, { raw: c.raw, pipeRaw, screen: to.screen, err: to.err });
         if (res === null) { st.clear(); }
         else if (res && typeof res === 'object') { code = res.code ?? 0; if (res.out) to.out(res.raw ? res.out : nl(res.out)); if (res.err) to.err(nl(res.err)); }
         else if (res !== undefined && res !== '') to.out(nl(String(res)));
       } catch (e) { if (e.fatal) throw e; to.err(nl(e.message || String(e))); code = e.code ?? 1; }
     }
   }
-  for (const f of files) if (f.path !== '/dev/null') { try { await st.env.write(f.path, f.buf, true); } catch (e) { sink.err(nl(e.message)); code = 1; } }
   return (st.code = code);
 }
 
@@ -511,6 +549,28 @@ const BUILTINS = {
   },
   which: (a, i, st) => { const hit = a.filter(n => st.env.has(n) || BUILTINS[n]); return { out: hit.map(n => `/bin/${n}`).join('\n'), code: hit.length === a.length ? 0 : 1 }; },
 };
+/* read [-r] [-p prompt] [names…]: the next line of what came in, into variables (the last takes the rest) */
+BUILTINS.read = (a, input, st, to) => {
+  const names = []; for (let k = 0; k < a.length; k++) { if (a[k] === '-r') continue; if (a[k] === '-p') { to.out(a[++k] ?? ''); continue; } names.push(a[k]); }
+  if (!names.length) names.push('REPLY');
+  const at = st.reads.get(input) || 0; if (at >= input.length) return { code: 1 };
+  const end = input.indexOf('\n', at), line = input.slice(at, end < 0 ? input.length : end); st.reads.set(input, end < 0 ? input.length : end + 1);
+  const ws = line.trim().split(/\s+/);
+  names.forEach((n, k) => st.env.setVar(n, k === names.length - 1 ? ws.slice(k).join(' ') : ws[k] ?? ''));
+  return { code: 0 };
+};
+/* xargs [-n N] [command words…]: runs the command with the words that came in after its own (echo by default) */
+BUILTINS.xargs = async (a, input, st, to) => {
+  let n = 0, k = 0; if (a[0] === '-n') { n = +a[1]; if (!(n > 0)) fail('✗ xargs: -n needs a number'); k = 2; }
+  const cmd = a.slice(k).length ? a.slice(k) : ['echo'], words = input.split(/\s+/).filter(Boolean);
+  if (!words.length) return { code: 0 };
+  let code = 0;
+  for (let at = 0; at < words.length; at += n || words.length) {
+    const src = [...cmd, ...words.slice(at, at + (n || words.length))].map(quoteWord).join(' ');
+    code = await execList(parse(lex(src), src), '', to, st);
+  }
+  return { code };
+};
 BUILTINS['.'] = BUILTINS.source;
 export const BUILTIN_NAMES = Object.keys(BUILTINS);
 
@@ -520,7 +580,7 @@ export const BUILTIN_NAMES = Object.keys(BUILTINS);
 export async function runLine(src, env) {
   let screen = '', cleared = false;
   const sink = { out: t => { screen += t; }, err: t => { screen += t; }, screen: true };
-  const st = { env, steps: 0, code: env.code || 0, depth: 0, aliasing: new Set(), sink0: sink, clear: () => { screen = ''; cleared = true; } };
+  const st = { env, steps: 0, code: env.code || 0, depth: 0, aliasing: new Set(), reads: new Map(), sink0: sink, clear: () => { screen = ''; cleared = true; } };
   try { await execList(parse(lex(src), src), '', sink, st); }
   catch (e) { screen += nl(e.message || String(e)); st.code = e.code ?? 2; }
   return { text: screen, code: st.code, cleared };

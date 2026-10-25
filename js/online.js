@@ -255,7 +255,10 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     if (clientOff) { clientOff(); clientOff = null; }
     mode = 'host'; pending = []; lastMove = null; seen = true;
     written = encode(auth); state = auth;
-    if (state.hostId !== me) { state = structuredClone(state); state.hostId = me; }
+    if (state.hostId !== me) {   // taking over: the old host stays in sudo (hostMoved), else just the new host
+      const next = safeReduce(state, { t: 'hostMoved', id: me }, now());
+      if (next !== state) state = next; else { state = structuredClone(state); state.hostId = me; }
+    }
     hostOffs = [
       D.onChildAdded(path('acts'), snap => {
         const v = snap.val() || {};

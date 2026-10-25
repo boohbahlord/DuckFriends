@@ -532,14 +532,14 @@ export const music = (function(){
     const keep=ST(),dur=build(TRACKS[i]).dur,len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine;
     const run=(f,until)=>{const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
     run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true);next=.05;playing=true},4);
-    for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s).then(()=>{run(null,u);o.resume()})}
+    if(!o.suspend)run(null,len-6.5);else for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s).then(()=>{run(null,u);o.resume()})}
     PUT(keep);return {p:o.startRendering(),dur:dur+.05}}
   async function renderSong(i){if(typeof i==="string")i=TRACKS.findIndex(t=>t.name===i);const r=offline(i,true,BASE);return r?r.p:null}
   /* on a computer, while one song plays, the next is written out, and then played from that recording: a recording
      takes almost no work to play, so another app busy on the computer can't make it crackle. The first song, a song
      not ready in time, and every song on a phone (too much memory there) are played live, note by note */
-  let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!(window.OfflineAudioContext||window.webkitOfflineAudioContext);
-  function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now(),r=offline(i,false,1);if(!r){ahead=false;NX=null;return}
+  let NX=null,BUF=null,WAIT=0,ahead=!LITE&&!!(window.OfflineAudioContext&&OfflineAudioContext.prototype.suspend);   // Firefox can't write in pieces: it stays live
+  function prep(){if(!ahead||NX)return;const i=pick(),nx=NX={i},t0=performance.now();let r=null;try{r=offline(i,false,1)}catch(e){}if(!r){ahead=false;NX=null;return}
     nx.dur=r.dur;r.p.then(b=>{nx.buf=b;if((performance.now()-t0)/1000>r.dur+GAP)ahead=false},()=>{ahead=false;if(NX===nx)NX=null})}   // too slow to keep ahead: stay live
   function playBuf(b,t,off){const s=ac.createBufferSource();s.buffer=b.buf;s.connect(bout);s.start(t,off);BUF={...b,s,t0:t-off,end:t-off+b.dur,at:0}}
   // a song ends (after its quiet): the next one, from its recording when it's ready, else live

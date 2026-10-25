@@ -380,6 +380,15 @@ export function reduce(state, a, now = Date.now()) {
       s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
       logLine(s, { from: a.id, to: a.to || null, text, ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}), ...(a.file ? { file: String(a.file).slice(0, 40), ...(a.pub ? { pub: true } : {}), ...(a.grp && groupsOf0(s)[a.grp] ? { grp: String(a.grp) } : {}) } : {}) }); return s;
     }
+    case 'hostMoved': {   // (only the host's own browser applies it) the host went quiet and this player took over: the old host keeps sudo
+      if (!me || a.id === s.hostId) return state;
+      const old = s.hostId; s.hostId = a.id;
+      if (old && P[old]) {
+        const g = groupsOf0(s).sudo; if (!g.members.includes(old)) g.members = [...g.members, old];
+        say(s, `${P[old].name} went quiet, so ${me.name} hosts now. ${P[old].name} keeps sudo.`);
+      }
+      return s;
+    }
     case 'usermod': {   // sudo: put a player in groups (add), take them out (remove), or give them exactly these (set)
       const G = groupsOf0(s), list = (a.groups || []).map(String).filter(g => G[g]);
       if (!me || !isSudo(s, a.id) || !P[a.target] || !list.length || !['add', 'remove', 'set'].includes(a.mode)) return state;
