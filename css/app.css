@@ -1692,6 +1692,8 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-strip { overflow: hidden; }
 .hang-strip-in { position: relative; height: 100%; }
 .hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
+.gduck.hang-sat .gduck-name { top: auto; bottom: 100%; margin: 0 0 .1rem; opacity: .8; }   /* seated: the name over the head */
+.gduck.hang-sat .gduck-say { bottom: calc(var(--sz) * 1.08 + 1.3rem); }
 .hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }
 
 /* ---------- Hangout: the pool, the beach ball, the rubber ducks, the trampoline, long falls (hangout/pool.js) ---------- */
