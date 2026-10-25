@@ -107,7 +107,7 @@ activity({
   },
   unmount() { for (const q of parts) q.e.remove(); parts = []; placed = null; satSig = ''; },
   draw(now, ctx) {
-    const Wd = ctx.world, sc = Wd.sc, scs = sc.toFixed(4), vw = Wd.board.clientWidth, vh = Wd.board.clientHeight;
+    const Wd = ctx.world, sc = Wd.sc, scs = sc.toFixed(4), vw = Wd.vw, vh = Wd.vh;
     for (const q of parts) {
       const a = Wd.toScreen(q.l, q.t), vis = (q.p.only !== 'in') !== Wd.inside && a.left < vw + 30 && a.left + q.w * sc > -30 && a.top < vh + 30 && a.top + q.h * sc > -30;
       if (q.e.hidden !== !vis) q.e.hidden = !vis;

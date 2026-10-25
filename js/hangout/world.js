@@ -37,7 +37,7 @@ export function mountWorld(board, api) {
   const R = () => api.room();
   const toScreen = (x, y, h = 0) => ({ left: (x - cam.x) * cam.sc + cam.vw / 2, top: (y - h - cam.y) * cam.sc + cam.vh / 2 });
   const ctx = { state: () => R().state, get me() { return R().me; }, send: a => R().send(a), duck: () => api.me(),
-    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [],
+    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [],
       at: id => { const p = R().state.pos[id]; return p || mine(id) ? at(id, p || {}) : null; } } };
   useHangArtCSS();
   const acts = () => ACTS.values();

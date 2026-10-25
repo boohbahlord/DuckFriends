@@ -188,7 +188,7 @@ activity({
   },
   draw(now, ctx) {
     if (!ball || !shown) return;
-    const Wd = ctx.world, sc = Wd.sc, vw = Wd.board.clientWidth, vh = Wd.board.clientHeight;
+    const Wd = ctx.world, sc = Wd.sc, vw = Wd.vw, vh = Wd.vh;
     const a = Wd.toScreen(shown.x - BW / 2, shown.y - (BH - 3), heightAt(shown.x, shown.y));
     const vis = !Wd.inside && a.left < vw + 40 && a.left + BW * sc > -40 && a.top < vh + 40 && a.top + BH * sc > -40;
     if (ball.hidden !== !vis) ball.hidden = !vis;

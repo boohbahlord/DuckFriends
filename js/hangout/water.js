@@ -143,12 +143,14 @@ activity({
     }
     /* the ripples, on a canvas of their own over the water (under every duck and prop) */
     if (!water) return;
-    const vw = board.clientWidth, vh = board.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
-    if (water.width !== Math.round(vw * dpr) || water.height !== Math.round(vh * dpr)) { water.width = Math.round(vw * dpr); water.height = Math.round(vh * dpr); }
-    const g = wg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, water.width, water.height);
+    const vw = W.vw, vh = W.vh, dpr = Math.min(2, devicePixelRatio || 1);
     for (let i = ripples.length - 1; i >= 0; i--) if (now - ripples[i].t > ripples[i].life || now < ripples[i].t - 1000) ripples.splice(i, 1);
     const a0 = W.toScreen(BOX.x0, BOX.t), a1 = W.toScreen(BOX.x1, BOX.b);
-    if (W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh) return;
+    const off = W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh || (!ripples.length && ![...seen.values()].some(d => d.sw));
+    if (off && water._clear) return;   // (nothing on it, and nothing to draw: the canvas is left alone)
+    if (water.width !== Math.round(vw * dpr) || water.height !== Math.round(vh * dpr)) { water.width = Math.round(vw * dpr); water.height = Math.round(vh * dpr); }
+    const g = wg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, water.width, water.height);
+    water._clear = off; if (off) return;
     const o = W.toScreen(0, 0);
     g.setTransform(sc * dpr, 0, 0, sc * dpr, o.left * dpr, o.top * dpr);
     g.save(); g.beginPath(); g.rect(BOX.x0, BOX.t, BOX.x1 - BOX.x0, BOX.b - BOX.t); g.clip();
