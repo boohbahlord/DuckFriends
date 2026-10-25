@@ -583,7 +583,8 @@ export const music = (function(){
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.008);g.gain.setTargetAtTime(peak*.34,t+.012,.45);g.gain.setTargetAtTime(0,end,R);
       lp.frequency.setTargetAtTime(Math.min(1700,f*2.4),t+.012,.3);   // the hammer's brightness fades into felt
       if(LITE)osc("triangle",f,t,stop,lp);else{osc("sine",f,t,stop,lp);const k=gn(.65);k.connect(lp);osc("triangle",f*1.0018,t,stop,k);const h=gn(.1);h.connect(lp);osc("sine",f*2.002,t,stop,h)}
-      const nb=noiseSrc(t,.06),bp=biq("bandpass",2300,1.4),ng=gn(0);ng.gain.setValueAtTime(peak*.22,t);ng.gain.setTargetAtTime(0,t,.012);nb.connect(bp).connect(ng).connect(D);
+      // the hammer's thud: a breath of noise that swells in over 5 ms (one that started at full strength was heard as crackling)
+      const nb=noiseSrc(t,.09),bp=biq("bandpass",1500,1.2),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*.1,t+.005);ng.gain.setTargetAtTime(0,t+.005,.012);nb.connect(bp).connect(ng).connect(D);
       return true}
     if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,.004,peak,.01,R);
       osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
@@ -627,8 +628,9 @@ export const music = (function(){
   /* v59 percussion and textures */
   function thump(t,v,f,dec,a){const o=ac.createOscillator(),g=gn(0);o.frequency.setValueAtTime(f*(a?1.3:1.7),t);o.frequency.exponentialRampToValueAtTime(f,t+.07);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+(a||.006));g.gain.setTargetAtTime(0,t+.02,dec||.09);o.connect(g);g.connect(DST);o.start(t);o.stop(t+.8)}
-  function wood(t,v){const s=noiseSrc(t,.06),b=biq("bandpass",1500+Math.random()*700,6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*3,t+.002);g.gain.setTargetAtTime(0,t+.004,.012);s.connect(b).connect(g).connect(DST)}
-  function brush(t,v){const s=noiseSrc(t,.4),b=biq("bandpass",4200,.5),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.setTargetAtTime(0,t+.04,.07);s.connect(b).connect(g).connect(DST)}
+  // a knock and a brush: they come in over a few milliseconds and fade out fully before their noise stops (a sharper edge crackled)
+  function wood(t,v){const s=noiseSrc(t,.09),b=biq("bandpass",1300+Math.random()*500,6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v*2.4,t+.005);g.gain.setTargetAtTime(0,t+.006,.012);s.connect(b).connect(g).connect(DST)}
+  function brush(t,v){const s=noiseSrc(t,.5),b=biq("bandpass",3400,.6),g=gn(0);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.025);g.gain.setTargetAtTime(0,t+.04,.07);s.connect(b).connect(g).connect(DST)}
   /* a sound that travels from one ear to the other while it plays */
   function panTo(a,b,t,dur,rv,ds){const p=ac.createStereoPanner();p.pan.setValueAtTime(a,t);p.pan.linearRampToValueAtTime(b,t+dur);p.connect(send(rv,ds));return p}
   /* wind through an empty street, far off */

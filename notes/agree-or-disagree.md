@@ -1126,3 +1126,9 @@ Crossroads, very faint); it's gone, the soft hiss stays. A real click was found 
 (another tab or window) and coming back made the song click and play twice for a second; now it fades out and back in.
 Each song's recording fades out at its very end, Chrome writes the next song out about 2.5 times faster (less work for
 the computer while a song plays), and a song not ready in time is no longer written out a second time.)
+
+there is cackling in all of these songs.
+
+(Found: no clipping; the crackle is the little burst of noise at the start of notes, there to sound like a hammer, a
+mallet or a breath. The felt piano's hammer and the wood knock now swell in over 5 ms, softer and darker, and the brush
+is a little darker; the seven new songs' own instruments get the same in their thread.)
