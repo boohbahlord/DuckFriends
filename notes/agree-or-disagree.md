@@ -1021,3 +1021,6 @@ music box spring, a choir at the "omg"):
 yeah you can put that in the game
 
 (Done: Spring in a Box is the fifth song.)
+
+(Follow-up from the coordinator: Firefox can't pause an offline render to add notes, so the notes are now set down in
+4-second pieces a moment apart before the render starts; Firefox plays recorded songs too.)
