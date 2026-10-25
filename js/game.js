@@ -16,7 +16,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo,
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX } from './rules.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
@@ -688,9 +688,9 @@ function shiftSides(s, now) {
   seedShift = deg; bbMarks(s);
 }
 const matchKey = s => s.bb ? [s.startedAt, s.bb.r, s.bb.m].join() : '';
-/* Bicker Brackets: the votes are in, so the winner bumps the loser off the cloud (once per match) */
+/* Bicker Brackets: the championship's votes are in, so the champion bumps the loser off the cloud (once) */
 function duel(s) {
-  const m = isBb(s) && s.phase === 'discuss' && bbMatch(s), key = matchKey(s);
+  const m = isBb(s) && s.phase === 'discuss' && s.bb.r === s.bb.rounds.length - 1 && bbMatch(s), key = matchKey(s);
   if (!m || m.w == null || knocked.has(key)) return;
   knocked.add(key);
   const lord = S.querySelector('.bb-top .lord.duel');
@@ -762,7 +762,7 @@ function paint(force) {
   if (lastLog < 0) lastLog = s.logN || 0;
   if ((s.logN || 0) > lastLog) {
     for (const m of s.log) if (m.n > lastLog && !m.sys && s.players[m.from] && (!m.to || m.to === R.me || m.from === R.me) && !isMuted(s, m.from, 'bubble') && !isMuted(s, m.from, 'text'))
-      bubbles[m.from] = { text: m.file && !isSudo(s, R.me) && m.from !== R.me ? `📄 ${m.file}` : m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (a sent file opens only for sudo)
+      bubbles[m.from] = { text: !canOpen(s, R.me, m) ? `📄 ${m.file}` : m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (a sent file opens only for sudo, unless chmod let its group or everyone)
     lastLog = s.logN || 0;
   }
   if (lastFx < 0) lastFx = s.fxN || 0;

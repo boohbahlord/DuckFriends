@@ -191,7 +191,7 @@ export function reduce(state, a, now = Date.now()) {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
       if (s.seat.length >= s.max) return s;
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
-      P[a.p.id] = { ...a.p, ready: false }; s.seat.push(a.p.id);
+      P[a.p.id] = { ...a.p, ready: false, joined: now }; s.seat.push(a.p.id);
       if ((isBb(s) ? ['seeds', 'answer', 'discuss', 'bracket', 'podium', 'results'] : isSc(s) ? SC_BOARD : ['answer', 'discuss', 'results']).includes(s.phase)) P[a.p.id].late = true;   // mid-round: plays from the next writing stage (the next tournament)
       if (boardPhases(s).includes(s.phase)) s.pos[a.p.id] = { x: startX(s), y: Math.random() };
       say(s, `${a.p.name} joined.`); return s;
@@ -209,7 +209,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
     case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
-      const p = P[a.who]; if (!boss || !p || a.who === s.hostId || a.who === a.id) return state;
+      const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;
       if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
       delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
       if (s.vote) settleVote(s, now);
@@ -328,12 +328,12 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'chat': {   // a message; from the command line (send) it carries the command (cmd) and may be a file
       if (!me) return s;
-      if (denied(s, a.id, 'nochat') || (a.cmd && denied(s, a.id, 'nocmd'))) return state;
-      if (denied(s, a.id, 'slow') && now - ((s.lastChat || {})[a.id] || 0) < SLOW_MS) return state;   // one message every 15 s
+      if (denied(s, a.id, 'nochat') || (a.cmd && (denied(s, a.id, 'nocmd') || denied(s, a.id, 'nosend')))) return state;
+      if (now - ((s.lastChat || {})[a.id] || 0) < slowMs(s, a.id)) return state;   // slow: one message every 15 s (slow30: 30 s)
       const text = String(a.text || '').trim().slice(0, a.cmd ? 2000 : 500); if (!text) return state;
       if (a.to && !P[a.to]) return state;
       s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
-      logLine(s, { from: a.id, to: a.to || null, text, ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}), ...(a.file ? { file: String(a.file).slice(0, 40) } : {}) }); return s;
+      logLine(s, { from: a.id, to: a.to || null, text, ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}), ...(a.file ? { file: String(a.file).slice(0, 40), ...(a.pub ? { pub: true } : {}), ...(a.grp && groupsOf0(s)[a.grp] ? { grp: String(a.grp) } : {}) } : {}) }); return s;
     }
     case 'usermod': {   // sudo: put a player in groups (add), take them out (remove), or give them exactly these (set)
       const G = groupsOf0(s), list = (a.groups || []).map(String).filter(g => G[g]);
@@ -350,7 +350,7 @@ export function reduce(state, a, now = Date.now()) {
     case 'groupadd': {   // sudo: a new group with any of the restrictions
       const name = String(a.name || '').toLowerCase(), G = groupsOf0(s);
       if (!me || !isSudo(s, a.id) || !/^[a-z][a-z0-9_-]{0,19}$/.test(name) || G[name] || name.startsWith('superuser-') || Object.keys(G).length >= 20) return state;
-      G[name] = { perms: [...new Set((a.perms || []).filter(p => GROUP_PERMS.includes(p)))], members: [] };
+      G[name] = { perms: [...new Set((a.perms || []).filter(permOk))], members: [] };
       say(s, `${me.name} made the group ${name}${G[name].perms.length ? ` (${G[name].perms.join(', ')})` : ''}.`);
       return s;
     }
@@ -359,9 +359,19 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || !isSudo(s, a.id) || !G[a.name] || ['sudo', 'dumbasses'].includes(a.name)) return state;
       delete G[a.name]; say(s, `${me.name} removed the group ${a.name}.`); return s;
     }
+    case 'groupmod': {   // sudo: rename a group (newName), or set its perms (perms); not sudo, dumbasses or a superuser group
+      const G = groupsOf0(s), g = G[a.name], to = String(a.newName || '').toLowerCase();
+      if (!me || !isSudo(s, a.id) || !g || ['sudo', 'dumbasses'].includes(a.name)) return state;
+      if (a.newName !== undefined) {
+        if (!/^[a-z][a-z0-9_-]{0,19}$/.test(to) || G[to] || to.startsWith('superuser-')) return state;
+        delete G[a.name]; G[to] = g; say(s, `${me.name} renamed the group ${a.name} to ${to}.`); return s;
+      }
+      if (!Array.isArray(a.perms)) return state;
+      g.perms = [...new Set(a.perms.filter(permOk))]; say(s, `${me.name} set the group ${a.name}'s perms: ${g.perms.join(', ') || 'none'}.`); return s;
+    }
     case 'forgame': return forgame(s, a, now) || state;
     case 'skip': {   // the host (or sudo): end the current stage now, as if everyone were done
-      if (!boss || ['lobby', 'over'].includes(s.phase)) return state;
+      if (!may(s, a.id, 'canskip') || ['lobby', 'over'].includes(s.phase)) return state;
       say(s, `${me.name} skipped ahead.`);
       if (s.phase === 'countdown') { s.ends = now; return s; }   // the next tick starts the game
       return advance(s, now, true);
@@ -399,7 +409,8 @@ export function safeReduce(state, a, now = Date.now()) {
    sudo: may run usermod, groupadd, groupdel and forgame; the host is always in it. dumbasses: no silly commands, and one
    chat message every 15 seconds. A group made with groupadd takes any of: nocmd (no command line), nochat (no text
    chat), nofun (no silly commands), slow (one message every 15 seconds). */
-export const GROUP_PERMS = ['nocmd', 'nochat', 'nofun', 'slow'];
+export const GROUP_PERMS = ['nocmd', 'nochat', 'nosend', 'nofun', 'nomute', 'slow', 'canskip', 'canmute', 'cankick', 'cansettings'];
+export const permOk = p => GROUP_PERMS.includes(p) || /^slow([5-9]|[1-9]\d|[1-5]\d\d|600)$/.test(p);   // slow30: one message every 30 s (5 to 600)
 const SLOW_MS = 15000;
 function groupsOf0(s) {   // the room's groups, made on first use
   if (!s.groups) s.groups = { sudo: { perms: [], members: [] }, dumbasses: { perms: ['nofun', 'slow'], members: [] } };
@@ -412,6 +423,16 @@ export const groupsOf = (s, id) => {
 };
 export const isSudo = (s, id) => groupsOf(s, id).includes('sudo');
 export const denied = (s, id, perm) => groupsOf(s, id).some(n => (((s.groups || {})[n] || {}).perms || []).includes(perm));
+/* a perm that gives part of the host's job (canskip, canmute, cankick, cansettings): sudo has them all */
+export const may = (s, id, perm) => !!s.players[id] && (isSudo(s, id) || denied(s, id, perm));
+/* how long this player waits between chat messages (0: no wait) */
+export function slowMs(s, id) {
+  let ms = 0;
+  for (const n of groupsOf(s, id)) for (const p of ((s.groups || {})[n] || {}).perms || []) { const m = p.match(/^slow(\d*)$/); if (m) ms = Math.max(ms, m[1] ? +m[1] * 1000 : SLOW_MS); }
+  return ms;
+}
+/* may this player open a file someone sent from the command line? its sender, sudo, its group (chmod g+r), or everyone (o+r) */
+export const canOpen = (s, id, m) => !m.file || m.from === id || isSudo(s, id) || !!m.pub || (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
 export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats' };
 function countTurn(s, was) {
@@ -422,10 +443,13 @@ function countTurn(s, was) {
    in some stages (stage2 voting: the next two voting stages) */
 const TIME_OK = [0, 15, 30, 45, 60, 90, 120], SHARE_OK = [.5, .67, .75, 1], MUTE_KINDS = ['bubble', 'ping', 'text'];
 function forgame(s, a, now) {
-  const me = s.players[a.id]; if (!me || !isSudo(s, a.id) || s.phase === 'lobby') return null;
+  const me = s.players[a.id]; if (!me || s.phase === 'lobby') return null;
   if (a.set) {
+    if (!may(s, a.id, 'cansettings')) return null;
     const o = {};
     for (const [k, v] of Object.entries(a.set)) {
+      if (k === 'order' && ['random', 'rotate'].includes(v)) o.order = v;
+      if (['freeRoam', 'fun', 'lowGravity'].includes(k)) o[k] = v ? 1 : 0;
       if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
       if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
       if (k === 'answerOff') o.answerOff = v ? 1 : 0;
@@ -435,10 +459,11 @@ function forgame(s, a, now) {
     if (o.catchUp === 0) s.catchEnds = 0;
     if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
     if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
-    say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => `${{ share: 'turn ends with', catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer', answerOff: 'answer timer' }[k]} ${k === 'share' ? (v === 1 ? 'everyone' : `${Math.round(v * 100)}%`) : k === 'answerOff' ? (v ? 'off' : 'on') : v ? v + ' s' : 'off'}`).join(', ')}.`);
+    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
+    say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`);
     return advance(s, now);
   }
-  const m = a.mute; if (!m) return null;
+  const m = a.mute; if (!m || !may(s, a.id, 'canmute')) return null;
   const who = (m.who || []).filter(id => s.players[id]), kinds = (m.kinds || []).filter(k => MUTE_KINDS.includes(k));
   const stages = (m.stages || []).filter(x => Object.values(STAGE).includes(x)), turns = Math.max(0, Math.min(99, m.turns | 0)), count = Math.max(0, Math.min(99, m.count | 0));
   if (!who.length || !kinds.length) return null;
@@ -498,7 +523,12 @@ function settleVote(s, now) {
       return advance(s, now);
     }
     if (v.kind === 'skip') return skipRound(s, now);
-    if (v.kind === 'turn') { say(s, 'The room voted to skip this turn.'); return advance(s, now, true); }   // as if everyone were done
+    if (v.kind === 'turn') {   // the whole turn, as if everyone were done: a question's voting and its talk
+      say(s, 'The room voted to skip this turn.');
+      const k = turnKey(s);
+      for (let i = 0; i < 3 && turnKey(s) === k && !['lobby', 'over'].includes(s.phase); i++) advance(s, now, true);
+      return s;
+    }
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
@@ -506,13 +536,18 @@ function settleVote(s, now) {
 }
 /* a vote passed to skip the round: the rest of its questions (or the tournament) are dropped. Agree or Disagree and
    Would You Rather go to the round's stats with what was answered; Bicker Brackets starts a new tournament; Story Chain
-   ends the paragraph with what was written (or draws new words, if none was written yet); on the stats
+   ends the paragraph with what was written (or draws new words, if no line was written yet); on the stats
    screen, the next round starts */
 function skipRound(s, now) {
   say(s, 'The room voted to skip this round.');
   if (s.phase === 'results') return advance(s, now, true);
   if (isBb(s)) { s.round++; return startTourney(s, now); }
-  if (isSc(s)) { if (s.phase === 'words') { s.round++; return startStory(s, now, false); } return startNext(s, now); }   // Story Chain: the paragraph ends with what was written
+  if (isSc(s)) {   // Story Chain: the paragraph ends with what was written; with nothing written yet, new words are drawn
+    const none = s.phase === 'words' || (s.phase === 'write' && !scPara(s).lines.length);
+    if (s.phase === 'write' && none) scStory(s).paras.pop();   // (no empty paragraph left in the story)
+    if (none) { s.round++; return startStory(s, now, false); }
+    return startNext(s, now);
+  }
   if (s.phase === 'submit') { s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now); }   // nothing asked yet: on to the next round's writing
   return startResults(s, now);
 }

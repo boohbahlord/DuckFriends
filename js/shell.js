@@ -1,6 +1,7 @@
 /* ---------- the command line: a small bash ----------
-   Words split by spaces ("quotes" keep spaces), commands joined by | (the output of one is the input of the next), and
-   > or >> at the end write (or add) the output to a file.
+   The language itself (pipes, ; && ||, > >> < 2>, variables, $( ), wildcards, loops, aliases, !! history) is bash.js;
+   the text tools (grep, sed, awk, cut, sort …) are textutils.js; every command's page and help's topics are manual.js.
+   This file is the shell around them: the files, and the commands that know the game.
 
    The files: / holds bin (the commands; nobody can read them, not even the host) and usr; /usr/<you> is your home:
    notes/ (your files, for this game only), log (everything you ran this game and what came out, read-only) and
@@ -8,90 +9,59 @@
    the folder can't). Other players' homes show in /usr, but their files live on their own devices.
 
    The room's commands go through the host: sudo runs a command as a member of the sudo group (the host always is);
-   usermod, groupadd and groupdel need it, and so does forgame (the game's timers and turn share mid-game, and mutes that
-   everyone sees). A group can take away the command line (nocmd), the chat (nochat), the silly commands (nofun) or slow
-   the chat to one message every 15 seconds (slow); dumbasses has nofun and slow. Anyone in sudo can run the room like the
-   host (lobby settings, map, game type, start, kick) and skip the stage the game is on.
+   usermod, groupadd, groupmod and groupdel need it, and so does forgame (the game's settings mid-game, and mutes that
+   everyone sees). A group's perms take something away (nocmd, nochat, nosend, nofun, nomute, slow or slow30) or give part
+   of the host's job (canskip, canmute, cankick, cansettings); dumbasses has nofun and slow. Anyone in sudo can run the room
+   like the host (lobby settings, map, game type, start, kick) and skip the stage the game is on.
 
-   send posts a command's output to the chat (send @everyone roundstats, send \@name totalstats @name2); sending a file
-   by itself shows its name, and only sudo members can open it. The chat's \mute, \permmute and \show work here too. */
+   send posts a command's output to the chat (send @everyone roundstats, send \@name totalstats @name2, roundstats | send
+   @everyone); sending a file by itself shows its name, and only sudo members can open it, unless chmod let its group (g+r)
+   or everyone (o+r). The chat's \mute, \permmute and \show work here too. A line sends 3 times at most, and fires 3 silly
+   commands at most, a second apart. */
 import { profile, save, STAT_MODES } from './store.js';
-import { groupsOf, isSudo, denied, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, COLS, signed, nameOfValue } from './rules.js';
-import { modeOf } from './modes.js';
+import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, scStats, COLS, signed, nameOfValue, slowMs } from './rules.js';
+import { modeOf, MODES } from './modes.js';
+import { MAPS, mapName } from './maps.js';
+import { FONTS } from './name.js';
+import { specialById } from './specials.js';
+import { styleById } from './styles.js';
+import { runLine, expandHistory, globRe, BUILTIN_NAMES } from './bash.js';
+import { TEXT, getopt, lines } from './textutils.js';
+import { MAN, TOPICS, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
-const fail = msg => { throw new Error(msg); };
-
-/* ---------- the manual ---------- */
-const MAN = {
-  help: 'help: lists the commands. man <command> tells more about one.',
-  man: 'man <command>: how a command works and its flags.',
-  echo: 'echo [-n] words…: prints the words (-n: no new line). echo "hello world" > file1 writes a file.',
-  ls: 'ls [-a] [path]: what is in a folder (-a: hidden ones too).',
-  cd: 'cd [path]: go into a folder (cd alone: your home, /usr/<you>; cd .. goes up).',
-  pwd: 'pwd: the folder you are in.',
-  cat: 'cat [files…]: prints files one after another (with no file: what came through |).',
-  touch: 'touch files…: makes empty files (in your notes, or your perma-notes).',
-  mkdir: 'mkdir folder: a new folder in your notes.',
-  rm: 'rm [-r] paths…: removes files (-r: a folder and what is in it). The log and perma-notes/ itself stay.',
-  head: 'head [-n N] [file]: the first N lines (10).',
-  tail: 'tail [-n N] [file]: the last N lines (10).',
-  wc: 'wc [-l | -w | -c] [file]: counts lines, words and characters.',
-  sort: 'sort [-r] [-n] [file]: sorts lines (-r: backwards, -n: by number).',
-  grep: 'grep [-i] [-v] [-c] pattern [file]: the lines that match (-i: any case, -v: the ones that don\'t, -c: how many).',
-  uniq: 'uniq [file]: drops a line that repeats the one before it.',
-  history: 'history [-c]: what you ran (-c: forget it). ↑ and ↓ bring back earlier commands.',
-  clear: 'clear: clears this window.',
-  whoami: 'whoami: your name.',
-  id: 'id [@name]: a name and its groups.',
-  date: 'date: the date and time.',
-  uptime: 'uptime: how long this game has been going.',
-  roll: 'roll [NdM]: rolls dice, like roll 2d6 (one six-sided die by default).',
-  flip: 'flip: heads or tails.',
-  groups: 'groups [@name]: the groups someone is in (you, by default).',
-  members: 'members <group>: who is in a group. getent group <group> does the same.',
-  getent: 'getent group <group>: who is in a group.',
-  sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it.',
-  usermod: 'sudo usermod [-a | -r] -G group[,group] @name: -aG adds to groups, -rG takes out of them, -G alone sets exactly these. sudo usermod @name adds to sudo.',
-  groupadd: `sudo groupadd [-p perm,perm] name: a new group. Perms take something away: ${GROUP_PERMS.join(', ')} (nocmd: no command line, nochat: no chat, nofun: no silly commands, slow: one message every 15 s).`,
-  groupdel: 'sudo groupdel name: removes a group (not sudo or dumbasses).',
-  skip: 'skip: ends the stage the game is on right now and moves on, like everyone ended their turn (the host, or anyone in sudo; no sudo word needed). Handy if the game ever gets stuck.',
-  forgame: 'sudo forgame all-timer off|on · timer off|on catch-up|answer|writing · turn-end everyone|half|2/3|3/4 · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages).',
-  roundstats: 'roundstats [@names] [-m mode]: this round\'s stats (in Bicker Brackets the whole tournament), only for you to see.',
-  gamestats: 'gamestats [@names] [-m mode]: this game\'s stats.',
-  totalstats: 'totalstats [@names] [-m aod|wyr|bb]: all-time stats.',
-  ping: 'ping [@names]: the connection to the game server, in milliseconds.',
-  send: 'send @everyone | @name… | \\@name <command>: posts the command\'s output to the chat (\\@name: only to them). send @everyone file sends the file itself; only sudo members can open it.',
-  '\\mute': '\\mute bubble ping text all on|off @names: hides those from you until you leave the room.',
-  '\\permmute': '\\permmute [-f] … the same, kept on this device.',
-  '\\show': '\\show mute | permmute | players.',
-};
-const MINE = Object.keys(MAN).filter(k => !k.startsWith('\\'));
+const fail = (msg, code = 1) => { throw Object.assign(new Error(msg), { code }); };
+const FUN = ['lightning', 'love', 'kill', 'hotdog', 'fire'];
+const VERSION = (import.meta.url.match(/[?&]v=(\w+)/) || [])[1] || 'dev';
+const clock = t => new Date(t).toTimeString().slice(0, 5);
+const wait = (ms, ctx) => new Promise(done => { const t0 = Date.now(), k = setInterval(() => { if (Date.now() - t0 >= ms || ctx.cancelled()) { clearInterval(k); done(); } }, 50); });
 
 /* ---------- the files ---------- */
-const fs = { game: '', files: {}, dirs: new Set(), cwd: '', log: [], hist: [] };
+const fs = { game: '', files: {}, dirs: new Set(), meta: {}, cwd: '', old: '', log: [], hist: [], vars: {}, code: 0 };
 const perma = () => (profile.permaNotes = profile.permaNotes || {});
 function sync(ctx) {
   const s = ctx.room && ctx.room.state, me = ctx.meName, home = `/usr/${me}`;
   const game = s ? `${s.id}:${s.startedAt || 0}` : 'none';
-  if (fs.game !== game) { fs.game = game; fs.files = {}; fs.dirs = new Set(); fs.log = []; }   // notes and the log last one game
+  if (fs.game !== game) { fs.game = game; fs.files = {}; fs.dirs = new Set(); fs.meta = {}; fs.log = []; fs.vars = {}; }   // notes, the log and variables last one game
   if (!fs.cwd || !fs.cwd.startsWith('/')) fs.cwd = home + '/notes';
   fs.home = home;
   fs.people = s ? s.seat.map(id => tag(s.players[id].name)) : [me];
 }
 const norm = p => { const out = []; for (const part of p.split('/')) { if (!part || part === '.') continue; if (part === '..') out.pop(); else out.push(part); } return '/' + out.join('/'); };
 const resolve = p => norm(p === '~' ? fs.home : p.startsWith('~/') ? fs.home + p.slice(1) : p.startsWith('/') ? p : fs.cwd + '/' + p);
+const isPerma = path => path.startsWith(fs.home + '/perma-notes/');
 /* what a path is: a folder, a file, or nothing */
 function kind(path) {
   const h = fs.home, parts = path.split('/').filter(Boolean);
-  if (['/', '/usr', '/bin'].includes(path)) return 'dir';
+  if (['/', '/usr', '/bin', '/dev'].includes(path)) return 'dir';
+  if (path === '/dev/null') return 'file';
   if (parts[0] === 'bin') return MINE.includes(parts[1]) && parts.length === 2 ? 'file' : null;
   if (parts[0] !== 'usr' || !parts[1]) return null;
   if (!fs.people.includes(parts[1]) && path.slice(0, h.length) !== h) return null;
   if (parts.length === 2) return 'dir';
   if (path === h + '/log') return 'file';
   if (parts.length === 3 && ['notes', 'perma-notes'].includes(parts[2])) return 'dir';
-  if (path.startsWith(h + '/perma-notes/')) return parts.length === 4 && perma()[parts[3]] !== undefined ? 'file' : null;
+  if (isPerma(path)) return parts.length === 4 && perma()[parts[3]] !== undefined ? 'file' : null;
   if (path.startsWith(h + '/')) return fs.files[path] !== undefined ? 'file' : fs.dirs.has(path) ? 'dir' : null;
   return null;
 }
@@ -102,57 +72,95 @@ function guard(path, write) {
   if (parts[0] === 'bin') fail(`✗ ${path}: Permission denied (no one can open the commands, not even the host).`);
   if (parts[0] === 'usr' && parts[1] && path.slice(0, h.length + 1) !== h + '/' && path !== h) {
     if (parts[2] === 'perma-notes') fail(`✗ ${path}: Permission denied (only superuser-${parts[1]} can open it).`);
-    fail(`✗ ${path}: that is on ${parts[1]}'s own device.`);
+    fail(`✗ ${path}: Permission denied (that is on ${parts[1]}'s own device).`);
   }
-  if (write && path === h + '/log') fail('✗ The log is read-only.');
-  if (write && !path.startsWith(h + '/notes/') && !path.startsWith(h + '/perma-notes/')) fail(`✗ ${path}: you can write in ${h}/notes and ${h}/perma-notes.`);
+  if (write && path === h + '/log') fail('✗ log: Permission denied (the log is read-only).');
+  if (write && !path.startsWith(h + '/notes/') && !isPerma(path) && path !== '/dev/null') fail(`✗ ${path}: Permission denied (you can write in ${h}/notes and ${h}/perma-notes).`);
 }
 function readFile(p) {
+  if (p === '/dev/null' || p === '-') return '';
   const path = findPath(p), k = kind(path);
   guard(path, false);
   if (!k) fail(`✗ ${p}: No such file or directory`);
   if (k === 'dir') fail(`✗ ${p}: Is a directory`);
-  if (path === fs.home + '/log') return fs.log.join('\n');
-  if (path.startsWith(fs.home + '/perma-notes/')) return perma()[path.split('/').pop()];
+  if (path === fs.home + '/log') return fs.log.join('\n') + (fs.log.length ? '\n' : '');
+  if (isPerma(path)) return perma()[path.split('/').pop()];
   return fs.files[path];
 }
 function writeFile(p, text, append) {
+  if (p === '/dev/null') return;
   const path = resolve(p); guard(path, true);
   if (kind(path) === 'dir') fail(`✗ ${p}: Is a directory`);
-  const parent = path.slice(0, path.lastIndexOf('/')); if (kind(parent) !== 'dir') fail(`✗ ${p}: No such directory`);
-  const name = path.split('/').pop(); if (!/^[\w.-]{1,40}$/.test(name)) fail(`✗ ${name}: a file name is letters, numbers, ., - and _.`);
-  if (path.startsWith(fs.home + '/perma-notes/')) { const P = perma(); P[name] = (append && P[name] ? P[name] : '') + text; save(); return; }
+  const parent = path.slice(0, path.lastIndexOf('/')); if (kind(parent) !== 'dir') fail(`✗ ${p}: No such file or directory`);
+  const name = path.split('/').pop(); if (!/^[\w.-]{1,40}$/.test(name)) fail(`✗ ${name}: a file name is letters, numbers, ., - and _ (40 at most).`);
+  const total = Object.values(fs.files).reduce((a, t) => a + t.length, 0); if (total + text.length > 200000) fail('✗ Your notes are full (200,000 characters this game).');
+  fs.meta[path] = { ...(fs.meta[path] || {}), t: Date.now() };
+  if (isPerma(path)) { const P = perma(); P[name] = (append && P[name] ? P[name] : '') + text; save(); return; }
   fs.files[path] = (append && fs.files[path] ? fs.files[path] : '') + text;
 }
+function removePath(p) {
+  if (isPerma(p)) { delete perma()[p.split('/').pop()]; save(); return; }
+  for (const x of Object.keys(fs.files)) if (x === p || x.startsWith(p + '/')) delete fs.files[x];
+  for (const x of [...fs.dirs]) if (x === p || x.startsWith(p + '/')) fs.dirs.delete(x);
+}
 function list(path) {
-  const h = fs.home, under = pre => [...Object.keys(fs.files), ...fs.dirs].filter(f => f.startsWith(pre + '/') && !f.slice(pre.length + 1).includes('/')).map(f => f.slice(pre.length + 1) + (fs.dirs.has(f) ? '/' : ''));
-  if (path === '/') return ['bin/', 'usr/'];
+  const h = fs.home, under = pre => [...Object.keys(fs.files), ...fs.dirs].filter(f => f.startsWith(pre + '/') && !f.slice(pre.length + 1).includes('/')).map(f => f.slice(pre.length + 1) + (fs.dirs.has(f) ? '/' : '')).sort();
+  if (path === '/') return ['bin/', 'dev/', 'usr/'];
+  if (path === '/dev') return ['null'];
   if (path === '/usr') return fs.people.map(n => n + '/');
   if (path === '/bin') return MINE;
   if (path === h) return ['log', 'notes/', 'perma-notes/'];
-  if (path === h + '/perma-notes') return Object.keys(perma());
+  if (path === h + '/perma-notes') return Object.keys(perma()).sort();
   if (path.startsWith(h + '/')) return under(path);
   guard(path, false);
   return ['log', 'notes/', 'perma-notes/'];
 }
+/* file names that match a pattern (only the last part of a path may have * ? [ ]) */
+function glob(pat) {
+  const k = pat.lastIndexOf('/'), dirPart = pat.slice(0, k + 1), base = pat.slice(k + 1);
+  if (/[*?[]/.test(dirPart)) return [];
+  const dir = dirPart ? findPath(dirPart.replace(/\/$/, '') || '/') : fs.cwd;
+  try {
+    if (kind(dir) !== 'dir') return [];
+    const re = globRe(base);
+    return list(dir).map(n => n.replace(/\/$/, '')).filter(n => re.test(n) && (base.startsWith('.') || !n.startsWith('.'))).map(n => dirPart + n);
+  } catch { return []; }
+}
+const owner = path => (path.split('/')[2] || 'root');
+const size = path => { try { return kind(path) === 'file' ? readFile(path).length : 0; } catch { return 0; } };
+const stamp = t => t ? new Date(t).toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '') : '     -      ';
+function longRow(path, name) {
+  const k = kind(path), m = fs.meta[path] || {};
+  const perms = path.startsWith('/bin') ? '----x--x--x' : k === 'dir' ? 'drwx------' : path === fs.home + '/log' ? '-r--------' : `-rw-${m.g ? 'r' : '-'}--${m.o ? 'r' : '-'}--`;
+  return [perms, owner(path), m.grp || (isPerma(path) ? 'superuser-' + owner(path) : owner(path)), size(path), stamp(m.t), name];
+}
 
 /* ---------- helpers for the commands ---------- */
-const lines = t => t === '' ? [] : String(t).replace(/\n$/, '').split('\n');
-const flags = (args, known) => { const f = {}, rest = []; for (let i = 0; i < args.length; i++) { const a = args[i]; if (/^-[a-zA-Z]+$/.test(a) && [...a.slice(1)].every(c => known.includes(c))) { for (const c of a.slice(1)) f[c] = true; if (a.endsWith('n') && known.includes('n') && /^\d+$/.test(args[i + 1] || '')) f.N = +args[++i]; } else rest.push(a); } return { f, rest }; };
-const input = (rest, stdin) => rest.length ? rest.map(readFile).join('\n') : stdin;
+const input = (rest, stdin) => rest.length ? rest.map(f => { const t = readFile(f); return t && !t.endsWith('\n') ? t + '\n' : t; }).join('') : stdin;
+const IO = { read: readFile, write: writeFile, input };
 const who = (ctx, names) => {
   const s = ctx.room.state, ids = [];
   for (const n of names) { const id = s.seat.find(i => tag(s.players[i].name).toLowerCase() === n.replace(/^\\?@/, '').toLowerCase()); if (!id) fail(`✗ No player named ${n.replace(/^\\?@/, '')}.`); ids.push(id); }
   return ids;
 };
 const needRoom = ctx => { if (!ctx.room) fail('✗ That works in a room.'); return ctx.room.state; };
-const needSudo = (ctx, sudo) => { const s = needRoom(ctx); if (!sudo) fail(`✗ That needs sudo: sudo ${ctx.cmd}`); if (!isSudo(s, ctx.room.me)) fail(`✗ ${ctx.meName} is not in the sudoers file. This incident will be reported.`); return s; };
+const noSudo = ctx => `✗ ${ctx.meName} is not in the sudoers file. This incident will be reported.`;
+const needSudo = (x, cmd) => { const s = needRoom(x.ctx); if (!x.sudo) fail(`✗ ${cmd}: Permission denied (try: sudo ${cmd} …)`); if (!isSudo(s, x.ctx.room.me)) fail(noSudo(x.ctx)); return s; };
+const needMay = (x, perm, what) => { const s = needRoom(x.ctx); if (!may(s, x.ctx.room.me, perm)) fail(`✗ ${what}: only the host, sudo, or a group with ${perm}.`); return s; };
 const pct = v => `${Math.round(v * 100)}%`;
+const roomGroups = s => s.groups || { sudo: { perms: [], members: [] }, dumbasses: { perms: ['nofun', 'slow'], members: [] } };
+const pname = (s, id) => tag(s.players[id].name);
+/* rows lined up in columns, each as wide as its widest word (the window is narrow, so no wider); right: columns to the right */
+const table = (rows, right = []) => {
+  const w = []; for (const r of rows) r.forEach((c, i) => { w[i] = Math.max(w[i] || 0, String(c).length); });
+  return rows.map(r => r.map((c, i) => i === r.length - 1 && !right.includes(i) ? String(c) : right.includes(i) ? String(c).padStart(w[i]) : String(c).padEnd(w[i])).join('  ').trimEnd()).join('\n');
+};
+const left = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
 /* ---------- the stats ---------- */
 function statLines(ctx, scope, args) {
   const s = needRoom(ctx), mi = args.indexOf('-m'), mode = mi >= 0 ? args[mi + 1] : (s.options.mode || 'aod'), at = args.filter(a => a.startsWith('@'));
-  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m aod, wyr or bb.`);
+  if (!STAT_MODES.some(([m]) => m === mode)) fail(`✗ -m ${STAT_MODES.map(([m]) => m).join(', ')}.`);
   const ids = at.length ? who(ctx, at) : s.seat.filter(id => !(s.players[id] || {}).late || scope === 'total');
   const nm = id => s.players[id].name, out = [];
   if (scope === 'total') {
@@ -160,10 +168,11 @@ function statLines(ctx, scope, args) {
     for (const id of ids) {
       const st = (id === ctx.room.me ? profile.stats : s.players[id].stats || {})[mode];
       if (!st) { out.push(`${nm(id)}: no stats yet`); continue; }
-      const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === 'bb' ? 'tournaments' : 'rounds'} · ${st.answers} ${mode === 'bb' ? 'votes' : 'answers'} · ${st.jumps} jumps`;
+      const base = `${nm(id)}: ${st.games} games · ${st.rounds} ${mode === 'bb' ? 'tournaments' : 'rounds'} · ${st.answers} ${mode === 'bb' ? 'votes' : 'answers'} · ${st.jumps} Jumps`;
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
-      else { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
+      else if (mode === 'aod' && st.counts) { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
+      else out.push(base);
     }
     return out.join('\n');
   }
@@ -173,30 +182,50 @@ function statLines(ctx, scope, args) {
   if (mode === 'bb') {
     const past = s.bbPast || [], cur = s.bb && s.bb.rounds && s.bb.rounds.length && s.phase !== 'results' ? [s.bb] : [];
     const per = bbStats(scope === 'round' ? (cur.length ? cur : past.slice(-1)) : [...past, ...cur]);
-    for (const id of ids) { const p = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 }; out.push(`${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} jumps`); }
+    for (const id of ids) { const p = per[id] || { wins: 0, losses: 0, own: 0, votes: 0, king: 0, titles: 0 }; out.push(`${nm(id)}: ${p.titles} won · ${p.wins} contender wins · ${p.losses} losses · voted for their own ${p.own} · ${p.votes} votes · ${jumps(id)} Jumps`); }
   } else if (mode === 'wyr') {
     const per = wyrStats(s, round).per;
-    for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} jumps`); }
+    for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} Jumps`); }
+  } else if (mode === 'sc') {
+    const paras = s.sc ? s.sc.stories.flatMap(x => x.paras).filter(x => round === null || x.round === round) : [], per = scStats(paras);
+    for (const id of ids) { const p = per[id] || { lines: 0, lvotes: 0, wvotes: 0 }; out.push(`${nm(id)}: ${p.lines} lines · ${p.lvotes} votes for their lines · ${p.wvotes} for their words · ${jumps(id)} Jumps`); }
   } else {
-    for (const id of ids) { const st = statsFor(s, id, round); out.push(`${nm(id)}: ${st.n} answers · chose most ${st.most.length ? st.most.map(c => COLS[c]).join(', ') : '—'} · median ${signed(st.median)}${st.median !== null ? ` (${nameOfValue(st.median)})` : ''} · average ${st.avg === null ? '—' : signed(Math.round(st.avg * 10) / 10)} · ${jumps(id)} jumps`); }
+    for (const id of ids) { const st = statsFor(s, id, round); out.push(`${nm(id)}: ${st.n} answers · chose most ${st.most.length ? st.most.map(c => COLS[c]).join(', ') : '—'} · median ${signed(st.median)}${st.median !== null ? ` (${nameOfValue(st.median)})` : ''} · average ${st.avg === null ? '—' : signed(Math.round(st.avg * 10) / 10)} · ${jumps(id)} Jumps`); }
   }
   return out.join('\n');
 }
 
-/* forgame: settings, or mutes */
+/* forgame: show the settings, change them, or mute */
 const STAGES = [...new Set(Object.values(STAGE))];
-function forgame(ctx, args, sudo) {
-  const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail(`✗ ${ctx.meName} is not in the sudoers file. This incident will be reported.`);
-  if (s.phase === 'lobby') fail('✗ forgame works during a game.');
-  const a0 = (args[0] || '').toLowerCase(), onOff = args.find(a => /^(on|off)$/i.test(a)), on = /^on$/i.test(onOff || '');
-  if (a0 === 'all-timer') { if (!onOff) fail('✗ forgame all-timer off (or on)'); ctx.room.send({ t: 'forgame', set: on ? { catchUp: 15, answerTime: 30, answerOff: 0 } : { catchUp: 0, answerTime: 0, submitTime: 0, answerOff: 1 } }); return `Every timer ${on ? 'on' : 'off'} for the rest of the game.`; }
+const SHARES = { everyone: 1, all: 1, half: .5, '2/3': .67, 'two-thirds': .67, '3/4': .75, 'three-quarters': .75 };
+function forgameShow(s) {
+  const o = s.options, t = v => v ? v + ' s' : 'off', sh = o.share === 1 ? 'everyone' : Object.keys(SHARES).find(k => SHARES[k] === o.share && k.includes('/')) || pct(o.share);
+  const mutes = (s.gmutes || []).filter(m => m.on).map(m => `${m.who.filter(id => s.players[id]).map(id => pname(s, id)).join(', ')} (${m.kinds.join(', ')}${m.turns ? `, ${m.turns} turns` : ''}${m.stages && m.stages.length ? `, in ${m.stages.join(' ')}` : ''})`);
+  return [`${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ' (in the lobby)' : `, round ${s.round + 1}`}`,
+    `  timers:    writing ${t(o.submitTime)} · answer ${o.answerOff ? 'off' : t(o.answerTime)} · catch-up ${t(o.catchUp)}`,
+    `  turn-end:  ${sh}`,
+    `  order ${o.order} · freeroam ${o.freeRoam ? 'on' : 'off'} · gravity ${o.lowGravity ? 'low' : 'normal'} · silly ${o.fun ? 'on' : 'off'}`,
+    `  mutes for everyone: ${mutes.join('; ') || 'none'}`].join('\n');
+}
+function forgame(ctx, args) {
+  const s = needRoom(ctx), me = ctx.room.me, a0 = (args[0] || '').toLowerCase(), onOff = args.find(a => /^(on|off)$/i.test(a)), on = /^on$/i.test(onOff || '');
+  if (a0 === 'show' || !args.length) return forgameShow(s);
+  if (s.phase === 'lobby') fail('✗ forgame works during a game (in the lobby, the Game options do this).');
+  const set = v => { if (!may(s, me, 'cansettings')) fail(isSudo(s, me) ? noSudo(ctx) : '✗ forgame: only the host, sudo, or a group with cansettings.'); ctx.room.send({ t: 'forgame', set: v }); };
+  if (a0 === 'all-timer') { if (!onOff) fail('✗ forgame all-timer off (or on)'); set(on ? { catchUp: 15, answerTime: 30, answerOff: 0 } : { catchUp: 0, answerTime: 0, submitTime: 0, answerOff: 1 }); return `Every timer ${on ? 'on' : 'off'} for the rest of the game.`; }
   if (a0 === 'timer') {
-    const which = args.slice(1).find(a => !/^(on|off)$/i.test(a)); if (!onOff || !which) fail('✗ forgame timer off catch-up | answer | writing');
-    const set = { 'catch-up': { catchUp: on ? 15 : 0 }, answer: on ? { answerTime: 30, answerOff: 0 } : { answerTime: 0, answerOff: 1 }, writing: { submitTime: on ? 90 : 0 } }[which.toLowerCase()];
-    if (!set) fail('✗ catch-up, answer or writing'); ctx.room.send({ t: 'forgame', set }); return `The ${which} timer: ${on ? 'on' : 'off'}.`;
+    const which = args.slice(1).find(a => !/^(on|off|\d+)$/i.test(a)), secs = +(args.find(a => /^\d+$/.test(a)) || 0);
+    if (!onOff || !which) fail('✗ forgame timer off|on catch-up | answer | writing [seconds]');
+    if (secs && ![15, 30, 45, 60, 90, 120].includes(secs)) fail('✗ seconds: 15, 30, 45, 60, 90 or 120');
+    const v = { 'catch-up': { catchUp: on ? secs || 15 : 0 }, answer: on ? { answerTime: secs || 30, answerOff: 0 } : { answerTime: 0, answerOff: 1 }, writing: { submitTime: on ? secs || 90 : 0 } }[which.toLowerCase()];
+    if (!v) fail('✗ catch-up, answer or writing'); set(v); return `The ${which} timer: ${on ? `on${secs ? `, ${secs} s` : ''}` : 'off'}.`;
   }
-  if (a0 === 'turn-end') { const v = { everyone: 1, all: 1, half: .5, '2/3': .67, '3/4': .75 }[(args[1] || '').toLowerCase()]; if (!v) fail('✗ forgame turn-end everyone | half | 2/3 | 3/4'); ctx.room.send({ t: 'forgame', set: { share: v } }); return `A turn now ends when ${v === 1 ? 'everyone is' : `${args[1]} of the players are`} done.`; }
+  if (a0 === 'turn-end') { const v = SHARES[(args[1] || '').toLowerCase()]; if (!v) fail('✗ forgame turn-end everyone | half | 2/3 | 3/4'); set({ share: v }); return `A turn now ends when ${v === 1 ? 'everyone is' : `${args[1]} of the players are`} done.`; }
+  if (a0 === 'order') { const v = (args[1] || '').toLowerCase(); if (!['random', 'rotate'].includes(v)) fail('✗ forgame order random | rotate'); set({ order: v }); return `Questions now come in ${v === 'random' ? 'a random order' : 'turn'}.`; }
+  if (['freeroam', 'silly'].includes(a0)) { if (!onOff) fail(`✗ forgame ${a0} on | off`); set({ [a0 === 'silly' ? 'fun' : 'freeRoam']: on ? 1 : 0 }); return `${a0 === 'silly' ? 'Silly commands' : 'Free roam'} ${on ? 'on' : 'off'}.`; }
+  if (a0 === 'gravity') { const v = (args[1] || '').toLowerCase(); if (!['low', 'normal'].includes(v)) fail('✗ forgame gravity low | normal'); set({ lowGravity: v === 'low' ? 1 : 0 }); return `Gravity: ${v}.`; }
   const mi = args.findIndex(a => /^\\mute$/i.test(a)); if (mi < 0) fail(`✗ ${MAN.forgame}`);
+  if (!may(s, me, 'canmute')) fail('✗ forgame \\mute: only the host, sudo, or a group with canmute.');
   const pre = args.slice(0, mi), post = args.slice(mi + 1), mute = { on: false, kinds: [], who: [], turns: 0, stages: [], count: 0 };
   for (let i = 0; i < pre.length; i++) {
     const w = pre[i].toLowerCase(), r = w.match(/^(?:rounds|turns)(\d+)$/), st = w.match(/^stage(\d*)$/);
@@ -216,184 +245,508 @@ function forgame(ctx, args, sudo) {
   return `${mute.on ? 'Muted' : 'Unmuted'} ${[...new Set(mute.kinds)].join(', ')} for everyone${mute.turns ? `, for ${mute.turns} turns` : ''}${mute.stages.length ? `, in ${mute.count ? `the next ${mute.count} ` : 'the '}${mute.stages.join(', ')} stage${mute.count === 1 && mute.stages.length === 1 ? '' : 's'}` : ''}.`;
 }
 
-/* ---------- the commands: (args, stdin, ctx, sudo) → the output ---------- */
-const CMDS = {
-  help: () => ['The commands (man <command> for more):', MINE.filter(k => k !== 'help').join(' '), 'and the chat\'s \\mute \\permmute \\show; ' + 'custom, reset and the silly commands (lightning love kill hotdog fire): help them with man custom.', 'Pipes |, and > or >> into a file. ↑ ↓ bring back earlier commands.', 'Host (or sudo): skip moves the game on to the next stage. sudo usermod @name gives someone sudo, so they can run the room too.'].join('\n'),
-  man: args => args[0] ? (MAN[args[0]] || (args[0] === 'custom' ? 'custom avatar | card | username …: customize your duck, card or name (Tab shows the choices).' : fail(`✗ No manual entry for ${args[0]}`))) : MAN.man,
-  echo: args => (args[0] === '-n' ? args.slice(1) : args).join(' '),
-  pwd: () => fs.cwd,
-  cd: args => { const p = args[0] ? resolve(args[0]) : fs.home, k = kind(p); if (k !== 'dir') fail(`✗ cd: ${args[0]}: ${k ? 'Not a directory' : 'No such file or directory'}`); fs.cwd = p; return ''; },
-  ls: args => { const { f, rest } = flags(args, 'al'), p = rest[0] ? findPath(rest[0]) : fs.cwd, k = kind(p); if (!k) fail(`✗ ls: ${rest[0]}: No such file or directory`); if (k === 'file') return rest[0]; const out = list(p); return (f.a ? ['./', '../', ...out] : out).join('  '); },
-  cat: (args, stdin) => input(args, stdin),
-  touch: args => { if (!args.length) fail('✗ touch file'); for (const a of args) { const p = resolve(a); if (!kind(p)) writeFile(a, '', true); } return ''; },
-  mkdir: args => { if (!args.length) fail('✗ mkdir folder'); for (const a of args) { const p = resolve(a); guard(p, true); if (!p.startsWith(fs.home + '/notes/')) fail('✗ Folders go in your notes.'); if (kind(p)) fail(`✗ mkdir: ${a}: File exists`); fs.dirs.add(p); } return ''; },
-  rm: args => {
-    const { f, rest } = flags(args, 'rf'); if (!rest.length) fail('✗ rm file');
-    for (const a of rest) {
-      const p = findPath(a), k = kind(p);
-      if (p === fs.home + '/perma-notes' || p === fs.home + '/notes') fail(`✗ rm: ${a}: that folder stays.`);
-      guard(p, true);
-      if (!k) fail(`✗ rm: ${a}: No such file or directory`);
-      if (k === 'dir' && !f.r) fail(`✗ rm: ${a}: Is a directory (rm -r)`);
-      if (p.startsWith(fs.home + '/perma-notes/')) { delete perma()[p.split('/').pop()]; save(); continue; }
-      for (const x of Object.keys(fs.files)) if (x === p || x.startsWith(p + '/')) delete fs.files[x];
-      for (const x of [...fs.dirs]) if (x === p || x.startsWith(p + '/')) fs.dirs.delete(x);
-    }
-    return '';
-  },
-  head: (args, stdin) => { const { f, rest } = flags(args, 'n'); return lines(input(rest, stdin)).slice(0, f.N || 10).join('\n'); },
-  tail: (args, stdin) => { const { f, rest } = flags(args, 'n'); return lines(input(rest, stdin)).slice(-(f.N || 10)).join('\n'); },
-  wc: (args, stdin) => { const { f, rest } = flags(args, 'lwc'), t = input(rest, stdin), n = [lines(t).length, t.split(/\s+/).filter(Boolean).length, t.length]; return (f.l ? [n[0]] : f.w ? [n[1]] : f.c ? [n[2]] : n).join(' '); },
-  sort: (args, stdin) => { const { f, rest } = flags(args, 'rn'), ls = lines(input(rest, stdin)).sort((a, b) => f.n ? parseFloat(a) - parseFloat(b) : a.localeCompare(b)); return (f.r ? ls.reverse() : ls).join('\n'); },
-  uniq: (args, stdin) => lines(input(args, stdin)).filter((l, i, a) => i === 0 || l !== a[i - 1]).join('\n'),
-  grep: (args, stdin) => {
-    const { f, rest } = flags(args, 'ivc'); if (!rest.length) fail('✗ grep pattern [file]');
-    let re; try { re = new RegExp(rest[0], f.i ? 'i' : ''); } catch { fail(`✗ grep: ${rest[0]}: not a pattern`); }
-    const hit = lines(input(rest.slice(1), stdin)).filter(l => re.test(l) !== !!f.v); return f.c ? String(hit.length) : hit.join('\n');
-  },
-  history: args => { if (args[0] === '-c') { fs.hist = []; return ''; } return fs.hist.map((h, i) => `${String(i + 1).padStart(4)}  ${h}`).join('\n'); },
-  whoami: (a, i, ctx) => ctx.meName,
-  id: (args, i, ctx) => { const s = needRoom(ctx), [id] = args.length ? who(ctx, args) : [ctx.room.me], n = tag(s.players[id].name); return `uid=${n} groups=${[...groupsOf(s, id), 'superuser-' + n].join(',')}`; },
-  date: () => new Date().toString().replace(/ \(.*\)$/, ''),
-  uptime: (a, i, ctx) => { const s = needRoom(ctx); if (!s.startedAt || s.phase === 'lobby') return 'The game hasn\'t started.'; const m = Math.floor((Date.now() - s.startedAt) / 60000); return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}, ${s.seat.length} players, round ${s.round + 1}`; },
-  roll: args => { const m = (args[0] || '1d6').match(/^(\d{0,2})d(\d{1,3})$/i); if (!m) fail('✗ roll NdM, like roll 2d6'); const n = Math.min(20, +m[1] || 1), k = Math.max(2, +m[2]), r = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * k)); return n > 1 ? `${r.join(' + ')} = ${r.reduce((a, b) => a + b, 0)}` : String(r[0]); },
-  flip: () => Math.random() < .5 ? 'Heads' : 'Tails',
-  groups: (args, i, ctx) => { const s = needRoom(ctx), [id] = args.length ? who(ctx, args) : [ctx.room.me]; return [...groupsOf(s, id), 'superuser-' + tag(s.players[id].name)].join(' '); },
-  members: (args, i, ctx) => {
-    const s = needRoom(ctx), g = (args[0] || '').toLowerCase(); if (!g) fail('✗ members <group>');
-    if (g.startsWith('superuser-')) return g.slice(10);
-    const G = s.groups || {}; if (!G[g] && g !== 'sudo' && g !== 'dumbasses') fail(`✗ No group ${g}. groups lists yours.`);
-    return s.seat.filter(id => groupsOf(s, id).includes(g)).map(id => tag(s.players[id].name)).join(' ') || '(nobody)';
-  },
-  getent: (args, i, ctx) => { if ((args[0] || '') !== 'group' || !args[1]) fail('✗ getent group <group>'); return `${args[1]}:x:${CMDS.members([args[1]], i, ctx).replace(/ /g, ',')}`; },
-  usermod: (args, i, ctx, sudo) => {
-    needSudo(ctx, sudo); const { f, rest } = flags(args, 'arG'), at = rest.filter(a => a.startsWith('@')), gl = rest.filter(a => !a.startsWith('@')).join(',').split(',').filter(Boolean).map(g => g.toLowerCase());
-    if (!at.length) fail(`✗ ${MAN.usermod}`);
-    const groups = f.G ? gl : ['sudo'], G = ctx.room.state.groups || { sudo: 1, dumbasses: 1 };
-    for (const g of groups) if (!G[g]) fail(`✗ usermod: group '${g}' does not exist`);
-    const mode = !f.G ? 'add' : f.r ? 'remove' : f.a ? 'add' : 'set';
-    for (const id of who(ctx, at)) ctx.room.send({ t: 'usermod', target: id, groups, mode });
-    return `${mode === 'add' ? 'Added to' : mode === 'remove' ? 'Taken out of' : 'Set to'} ${groups.join(', ')}: ${at.map(a => a.slice(1)).join(', ')}`;
-  },
-  groupadd: (args, i, ctx, sudo) => {
-    needSudo(ctx, sudo); const pi = args.indexOf('-p'), perms = pi >= 0 ? (args[pi + 1] || '').split(',').filter(Boolean) : [], name = args.filter((a, k) => k !== pi && k !== pi + 1)[0];
-    if (!name || !/^[a-z][a-z0-9_-]{0,19}$/i.test(name)) fail(`✗ ${MAN.groupadd}`);
-    const bad = perms.filter(p => !GROUP_PERMS.includes(p)); if (bad.length) fail(`✗ ${bad.join(', ')}? Perms: ${GROUP_PERMS.join(', ')}`);
-    if ((ctx.room.state.groups || {})[name.toLowerCase()]) fail(`✗ groupadd: group '${name}' already exists`);
-    ctx.room.send({ t: 'groupadd', name: name.toLowerCase(), perms }); return `Group ${name.toLowerCase()}${perms.length ? ` (${perms.join(', ')})` : ''}. Add players: sudo usermod -aG ${name.toLowerCase()} @name`;
-  },
-  groupdel: (args, i, ctx, sudo) => { needSudo(ctx, sudo); const g = (args[0] || '').toLowerCase(); if (['sudo', 'dumbasses'].includes(g)) fail(`✗ ${g} stays.`); if (!(ctx.room.state.groups || {})[g]) fail(`✗ No group ${g}.`); ctx.room.send({ t: 'groupdel', name: g }); return `Removed ${g}.`; },
-  forgame: (args, i, ctx) => forgame(ctx, args),
-  skip: (args, i, ctx) => {
-    const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail('✗ Only the host (or sudo) can skip.');
-    if (['lobby', 'over'].includes(s.phase)) fail('✗ skip works during a game.');
-    ctx.room.send({ t: 'skip' }); return 'Skipped ahead.';
-  },
-  roundstats: (args, i, ctx) => statLines(ctx, 'round', args),
-  gamestats: (args, i, ctx) => statLines(ctx, 'game', args),
-  totalstats: (args, i, ctx) => statLines(ctx, 'total', args),
-  ping: (args, i, ctx) => { const s = needRoom(ctx), ids = args.length ? who(ctx, args) : s.seat; return ids.map(id => { const p = s.players[id]; return `${p.name}: ${p.bot ? 'computer' : !ctx.room.online ? 'same device' : p.ms == null ? '… ms' : p.ms + ' ms'}`; }).join('\n'); },
-};
-
-/* ---------- running a line ---------- */
-function lex(line) {
-  const out = []; let cur = '', q = '', any = false;
-  const push = () => { if (any) out.push({ w: cur }); cur = ''; any = false; };
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (q) { if (ch === q) q = ''; else cur += ch; continue; }
-    if (ch === '"' || ch === "'") { q = ch; any = true; continue; }
-    if (/\s/.test(ch)) { push(); continue; }
-    if (ch === '|') { push(); out.push({ op: '|' }); continue; }
-    if (ch === '>') { push(); if (line[i + 1] === '>') { out.push({ op: '>>' }); i++; } else out.push({ op: '>' }); continue; }
-    cur += ch; any = true;
-  }
-  if (q) fail('✗ A quote isn\'t closed.');
-  push(); return out;
-}
-/* one command (sudo first if given), with what came through the pipe */
-function one(words, stdin, ctx) {
-  let sudo = false;
-  if (words[0] === 'sudo') { sudo = true; words = words.slice(1); if (!words.length) fail('✗ sudo <command>'); const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail(`✗ ${ctx.meName} is not in the sudoers file. This incident will be reported.`); }
-  const [c, ...args] = words, name = c.toLowerCase();
-  ctx.cmd = words.join(' ');
-  if (/^\\(mute|permmute|show|togglesuggest)$/i.test(c)) return ctx.chat(words.join(' '));
-  if (CMDS[name]) return CMDS[name](args, stdin, ctx, sudo);
-  if (ctx.legacyHas(name)) { const out = ctx.legacy(words.join(' ')); return out === null ? null : out.join('\n'); }
-  fail(`✗ ${c}: command not found. help lists them.`);
-}
-async function pipeline(text, ctx) {
-  const toks = lex(text); if (!toks.length) return '';
-  let redirect = null;
-  const k = toks.findIndex(t => t.op === '>' || t.op === '>>');
-  if (k >= 0) { const f = toks[k + 1]; if (!f || f.op || toks.length > k + 2) fail('✗ > then a file name, at the end.'); redirect = { file: f.w, append: toks[k].op === '>>' }; toks.splice(k); }
-  const stages = [[]]; for (const t of toks) { if (t.op === '|') stages.push([]); else stages[stages.length - 1].push(t.w); }
-  if (stages.some(st => !st.length)) fail('✗ Nothing on one side of |.');
-  let out = '';
-  for (let i = 0; i < stages.length; i++) { out = await one(stages[i], out, ctx); if (out === null) return null; out = String(out ?? ''); }
-  if (redirect) { writeFile(redirect.file, out + (out && !out.endsWith('\n') ? '\n' : ''), redirect.append); return ''; }
-  return out;
-}
-/* send: posts a command's output (or a file) to the chat */
-async function send(text, ctx) {
-  const s = needRoom(ctx), toks = text.trim().split(/\s+/).slice(1), targets = [];
-  while (toks.length && /^\\?@/.test(toks[0])) targets.push(toks.shift());
-  if (!targets.length || !toks.length) fail(`✗ ${MAN.send}`);
-  if (denied(s, ctx.room.me, 'nochat')) fail('✗ Your group can\'t chat.');
-  const rest = text.trim().replace(/^send\s+/, '').split(/\s+/).slice(targets.length).join(' '), pub = targets.filter(t => t.startsWith('@')), priv = targets.filter(t => t.startsWith('\\@'));
+/* send: posts what a command prints (or a file, or what came through |) to the chat */
+async function send(args, stdin, x) {
+  const { ctx, meta, rs } = x, s = needRoom(ctx), me = ctx.room.me, targets = [];
+  const toks = [...args]; while (toks.length && /^\\?@/.test(toks[0])) targets.push(toks.shift());
+  if (!targets.length) fail(`✗ ${MAN.send}`);
+  if (denied(s, me, 'nochat')) fail('✗ send: your group can\'t chat.');
+  if (denied(s, me, 'nosend')) fail('✗ send: your group can\'t send from the command line.');
+  const wait = ctx.slowLeft(); if (wait > 0) fail(`✗ send: slow down: one message every ${Math.round(slowMs(s, me) / 1000)} seconds (${Math.ceil(wait / 1000)} s).`);
+  if (++rs.sends > 3) fail('✗ send: 3 sends a line at most.');
+  const pub = targets.filter(t => t.startsWith('@')), priv = targets.filter(t => t.startsWith('\\@'));
   const privIds = who(ctx, priv), pubIds = pub.filter(t => t.toLowerCase() !== '@everyone');
   if (pubIds.length) who(ctx, pubIds);
-  /* a file by itself: its name goes, and its words (only sudo members can open them) */
-  let body, file = null;
-  if (toks.length === 1 && !CMDS[toks[0].toLowerCase()] && !ctx.legacyHas(toks[0].toLowerCase()) && kind(findPath(toks[0])) === 'file') { body = readFile(toks[0]); file = toks[0].split('/').pop(); }
-  else if (toks.length === 1 && !CMDS[toks[0].toLowerCase()] && !ctx.legacyHas(toks[0].toLowerCase())) fail(`✗ ${toks[0]}: no such file or command (ls shows your files).`);
-  else { body = await pipeline(rest, ctx); if (body === null) body = ''; }
-  if (!String(body).trim()) body = file ? '(empty)' : '(no output)';
-  const msg = { t: 'chat', text: (pubIds.length ? pubIds.join(' ') + '\n' : '') + body, cmd: rest, ...(file ? { file } : {}) };
+  /* a file by itself: its name goes, and its words (only sudo, its group or everyone can open them, as chmod says) */
+  let body, file = null, cmd, extra = {};
+  if (!toks.length) { body = stdin; cmd = (meta.pipeRaw || '').replace(/\|\s*send\b[^|]*$/, '').trim() || 'send'; }
+  else if (toks.length === 1 && !isCommand(toks[0], ctx) && kind(findPath(toks[0])) === 'file') {
+    const path = findPath(toks[0]), m = fs.meta[path] || {};
+    body = readFile(toks[0]); file = toks[0].split('/').pop(); cmd = toks[0];
+    if (m.o) extra.pub = true; else if (m.g && m.grp) extra.grp = m.grp;
+  } else if (toks.length === 1 && !isCommand(toks[0], ctx)) fail(`✗ send: ${toks[0]}: no such file or command (ls shows your files).`);
+  else {
+    const r = await one(toks, stdin, meta, ctx, rs);
+    body = r && typeof r === 'object' ? r.out || '' : r ?? '';
+    cmd = (meta.raw || '').replace(/^\s*send(\s+\\?@\S+)+\s*/, '') || toks.join(' ');
+  }
+  body = String(body).replace(/\n+$/, '');
+  if (!body.trim()) body = file ? '(empty)' : '(no output)';
+  const msg = { t: 'chat', text: (pubIds.length ? pubIds.join(' ') + '\n' : '') + body, cmd, ...(file ? { file, ...extra } : {}) };
   if (pub.length) ctx.room.send(msg);
   for (const id of privIds) ctx.room.send({ ...msg, to: id });
+  ctx.sent();
   return `Sent to ${targets.join(' ')}.`;
 }
 
-/* runs what was typed; returns the lines to show (null: clear the window) */
+/* ---------- people, the room and the game ---------- */
+const FORTUNES = [
+  'A duck who quacks first quacks last.', 'Walk to the tile in your heart, not the tile with the most ducks.', 'Today\'s vote is tomorrow\'s argument.',
+  'Even a rubber duck makes waves.', 'The Round Lord is watching. Act natural.', 'Ending your turn early is a kind of courage.',
+  'Bread is temporary. Friendship is forever.', 'A jump a day keeps the lobby away.', 'Never trust a duck in a ski mask.',
+  'If you disagree loudly enough, it counts as two votes. (It does not.)', 'Behind every great bracket is a contender nobody expected.',
+  'Quack twice before you hit Enter.', 'The pond is wide, but the chat is wider.',
+];
+function ducksay(text) {
+  const words = String(text).split(/\s+/).filter(Boolean), rows = [];
+  let cur = '';
+  for (const w of words) { if (cur && (cur + ' ' + w).length > 36) { rows.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; }
+  if (cur || !rows.length) rows.push(cur);
+  const W = Math.max(...rows.map(r => r.length));
+  const box = rows.length === 1 ? [`< ${rows[0]} >`] : rows.map((r, i) => `${i === 0 ? '/' : i === rows.length - 1 ? '\\' : '|'} ${r.padEnd(W)} ${i === 0 ? '\\' : i === rows.length - 1 ? '/' : '|'}`);
+  return [' ' + '_'.repeat(W + 2), ...box, ' ' + '-'.repeat(W + 2), '        \\', '         \\    __', '          \\ <(o )___', '             ( ._> /', '              `---\''].join('\n');
+}
+function cal(now = new Date()) {
+  const y = now.getFullYear(), m = now.getMonth(), first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const title = now.toLocaleString('en-US', { month: 'long' }) + ' ' + y, out = [title.padStart(10 + Math.ceil(title.length / 2)).trimEnd(), 'Su Mo Tu We Th Fr Sa'];
+  let row = '   '.repeat(first);
+  for (let d = 1; d <= days; d++) {
+    row += String(d).padStart(2) + ' ';
+    if ((first + d) % 7 === 0) { out.push(row.trimEnd()); row = ''; }
+  }
+  if (row) out.push(row.trimEnd());
+  out.push(`Today: ${now.toLocaleString('en-US', { weekday: 'long' })} the ${now.getDate()}${[, 'st', 'nd', 'rd'][now.getDate() % 10 * (Math.floor(now.getDate() / 10) !== 1)] || 'th'}.`);
+  return out.join('\n');
+}
+function psLines(s, all) {
+  const o = s.options, st = STAGE[s.phase] || 'lobby', now = Date.now(), n = s.seat.length, done = s.seat.filter(id => s.done && s.done[id]).length;
+  const out = ['PID WHAT     DOING', `  1 game     ${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ', in the lobby' : `, round ${s.round + 1}`}`];
+  if (s.phase !== 'lobby') out.push(`  2 ${st.padEnd(8)} ${['answer', 'discuss', 'results', 'bracket'].includes(s.phase) || s.done ? `${done} of ${n} have ended their turn` : ''}`);
+  if (s.ends && s.ends > now) out.push(`  3 timer    ${left(s.ends - now)} left`);
+  if (s.catchEnds && s.catchEnds > now) out.push(`  4 catch-up ${left(s.catchEnds - now)} left for the rest`);
+  if (s.vote) out.push(`  5 vote     ${s.vote.kind} vote, ${Object.keys(s.vote.yes).length} yes · ${Object.keys(s.vote.no).length} no`);
+  if (all) {
+    out.push('', table([['PLAYER', 'STATE'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id), [p.bot ? 'computer' : '', p.idle ? 'away' : '', p.late ? 'plays next round' : '', s.done && s.done[id] ? 'turn ended' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]));
+  }
+  return out.join('\n');
+}
+const pingOf = (ctx, p) => p.bot ? 'computer' : !ctx.room.online ? 'same device' : p.ms == null ? '… ms' : p.ms + ' ms';
+const allJumps = st => Object.values(st || {}).reduce((a, m) => a + ((m && m.jumps) || 0), 0);
+function topLines(ctx) {
+  const s = needRoom(ctx), up = s.startedAt && s.phase !== 'lobby' ? Math.floor((Date.now() - s.startedAt) / 60000) : 0, J = s.jumps || {};
+  const ids = [...s.seat].sort((a, b) => (J[b] || 0) - (J[a] || 0));
+  return [`top - ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}, ${s.seat.length} players, ${STAGE[s.phase] || 'lobby'}`, '', table([['PLAYER', 'JUMPS', 'PING'], ...ids.map(id => [pname(s, id), J[id] || 0, pingOf(ctx, s.players[id]) + (s.players[id].idle ? ' · away' : '')])], [1])].join('\n');
+}
+function lastLines(s) {
+  const rows = [];
+  for (const m of [...(s.log || [])].reverse()) {
+    if (!m.sys) continue;
+    let r;
+    if ((r = m.text.match(/^(.+) joined\.$/))) rows.push([tag(r[1]), 'came in', clock(m.t)]);
+    else if ((r = m.text.match(/^(.+) left\.$/))) rows.push([tag(r[1]), 'left', clock(m.t)]);
+    else if ((r = m.text.match(/^.+ removed (.+) from the room\.$/))) rows.push([tag(r[1]), 'removed', clock(m.t)]);
+  }
+  const first = (s.log || [])[0];
+  return (rows.length ? table(rows) + '\n\n' : '') + `The room's log begins ${first ? clock(first.t) : 'now'}.`;
+}
+function finger(ctx, id) {
+  const s = ctx.room.state, p = s.players[id], d = p.duck || {}, c = p.card || {}, ns = p.nameStyle || {}, sp = d.special && specialById(d.special);
+  const pretty = v => v ? String(v).replace(/[-_]/g, ' ') : 'none';
+  return [`Login: ${pname(s, id)}${id === s.hostId ? ' (host)' : isSudo(s, id) ? ' (sudo)' : ''}${p.bot ? ' (a computer)' : ''}`,
+    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${pretty(d.hat)} · outfit ${pretty(d.outfit)} · special ${sp ? sp.name : 'none'}`,
+    `Card:  ${c.kind === 'image' ? 'a picture' : `${c.color || '?'}, pattern ${pretty(c.pattern)}`}`,
+    `Font:  ${(FONTS.find(f => f.id === ns.font) || FONTS[0]).name}${ns.rainbow ? ', rainbow' : ns.color ? ', ' + ns.color : ''}`,
+    `Groups: ${[...groupsOf(s, id), 'superuser-' + pname(s, id)].join(', ')}`,
+    `${p.joined ? `In the room since ${clock(p.joined)}` : 'In the room'} · ${(s.jumps || {})[id] || 0} Jumps this game · ${pingOf(ctx, p)}${p.idle ? ' · away' : ''}`].join('\n');
+}
+
+/* ---------- the commands: (args, stdin, x) → the output; x: ctx, sudo, meta, rs (this line's counts) ---------- */
+const CMDS = {
+  help: args => {
+    const t = (args[0] || '').toLowerCase();
+    if (!t) return ['help <topic> tells more (man <command> tells everything about one command):', '  basics     how a command is written, Tab, history, and man', '  pipes      | > >> < 2> and friends: where the output goes', '  chaining   ; && || $( ) loops and if', '  variables  NAME=value, $NAME, $((…)), the game\'s own, aliases', '  files      your home, notes, log, perma-notes, wildcards', '  text       grep, sed, awk, sort and the other text tools', '  groups     sudo, groups, perms, dumbasses', '  game       what only DuckFriends has: send, stats, forgame, skip…', '  silly      lightning, love, kill, hotdog, fire', '  all        every command'].join('\n');
+    if (t === 'all') return `Every command (man <command> for one):\n${[...new Set([...MINE, ...BUILTIN_NAMES])].sort().join(' ')}\nand the chat's \\mute \\permmute \\show.`;
+    if (TOPICS[t]) return TOPICS[t].join('\n');
+    if (MAN[t]) return MAN[t];
+    fail(`✗ help: no topic ${args[0]}. help lists them.`);
+  },
+  man: args => {
+    if (args[0] === '-k') { const w = (args[1] || '').toLowerCase(); if (!w) fail('✗ man -k word'); const hit = Object.entries(MAN).filter(([k, v]) => k.includes(w) || v.toLowerCase().includes(w)); return hit.length ? hit.map(([k, v]) => `${k.padEnd(11)} - ${v.split(': ').slice(1).join(': ').split('. ')[0]}`).join('\n') : { out: `${w}: nothing appropriate.`, code: 1 }; }
+    if (!args[0]) return 'What manual page do you want? man <command> (help lists them; man -k word searches).';
+    return MAN[args[0]] || MAN[args[0].toLowerCase()] || fail(`✗ No manual entry for ${args[0]}`);
+  },
+  apropos: (args, i, x) => CMDS.man(['-k', ...args], i, x),
+  clear: () => null,
+  exit: (a, i, x) => { x.ctx.close(); return ''; },
+  pwd: () => fs.cwd,
+  cd: args => {
+    const to = args[0] === '-' ? fs.old || fs.cwd : args[0] ? resolve(args[0]) : fs.home, k = kind(to);
+    if (k !== 'dir') fail(`✗ cd: ${args[0]}: ${k ? 'Not a directory' : 'No such file or directory'}`);
+    if (to.startsWith('/usr/') && to.split('/').length > 3 && !to.startsWith(fs.home)) guard(to, false);
+    fs.old = fs.cwd; fs.cwd = to; return args[0] === '-' ? to : '';
+  },
+  ls: args => {
+    const { o, rest } = getopt(args, 'al1R', 'ls'), paths = rest.length ? rest : ['.'], out = [];
+    const show = (p, label) => {
+      const path = p === '.' ? fs.cwd : findPath(p), k = kind(path);
+      if (!k) fail(`✗ ls: cannot access '${p}': No such file or directory`);
+      if (k === 'file') { out.push(o.l ? table([longRow(path, p)], [3]) : p); return; }
+      let names = list(path); if (o.a) names = ['./', '../', ...names];
+      if (label) out.push(`${label}:`);
+      if (o.l) { out.push(`total ${names.length}`); if (names.length) out.push(table(names.map(n => longRow(n.startsWith('.') ? path : `${path === '/' ? '' : path}/${n.replace(/\/$/, '')}`, n)), [3])); }
+      else out.push(names.join(o[1] ? '\n' : '  '));
+      if (o.R) for (const n of names.filter(n => n.endsWith('/') && !n.startsWith('.'))) { const sub = `${path === '/' ? '' : path}/${n.slice(0, -1)}`; try { out.push(''); show(sub, sub); } catch { /* not yours */ } }
+    };
+    paths.forEach(p => show(p, paths.length > 1 || o.R ? (p === '.' ? fs.cwd : p) : ''));
+    return out.join('\n');
+  },
+  touch: args => { if (!args.length) fail('✗ touch: missing file operand'); for (const a of args) { const p = resolve(a); if (!kind(p)) writeFile(a, '', true); else fs.meta[p] = { ...(fs.meta[p] || {}), t: Date.now() }; } return ''; },
+  mkdir: args => {
+    const { o, rest } = getopt(args, 'p', 'mkdir'); if (!rest.length) fail('✗ mkdir: missing operand');
+    for (const a of rest) {
+      const p = resolve(a); guard(p, true);
+      if (!p.startsWith(fs.home + '/notes/')) fail(`✗ mkdir: ${a}: folders go in your notes.`);
+      if (kind(p)) { if (o.p) continue; fail(`✗ mkdir: cannot create directory '${a}': File exists`); }
+      const parent = p.slice(0, p.lastIndexOf('/'));
+      if (kind(parent) !== 'dir') { if (!o.p) fail(`✗ mkdir: cannot create directory '${a}': No such file or directory`); let q = fs.home + '/notes'; for (const part of parent.slice(q.length + 1).split('/')) { q += '/' + part; if (kind(q) === 'file') fail(`✗ mkdir: ${q}: Not a directory`); fs.dirs.add(q); } }
+      fs.dirs.add(p); fs.meta[p] = { t: Date.now() };
+    }
+    return '';
+  },
+  rmdir: args => { for (const a of args) { const p = findPath(a); guard(p, true); if (kind(p) !== 'dir' || !fs.dirs.has(p)) fail(`✗ rmdir: ${a}: ${kind(p) ? 'that folder stays' : 'No such file or directory'}`); if (list(p).length) fail(`✗ rmdir: failed to remove '${a}': Directory not empty`); fs.dirs.delete(p); } return ''; },
+  rm: args => {
+    const { o, rest } = getopt(args, 'rRfi', 'rm'); if (!rest.length) fail('✗ rm: missing operand');
+    for (const a of rest) {
+      const p = findPath(a), k = kind(p);
+      if (p === fs.home + '/perma-notes' || p === fs.home + '/notes' || p === fs.home) fail(`✗ rm: ${a}: that folder stays.`);
+      if (!k) { if (o.f) continue; fail(`✗ rm: cannot remove '${a}': No such file or directory`); }
+      guard(p, true);
+      if (k === 'dir' && !o.r && !o.R) fail(`✗ rm: cannot remove '${a}': Is a directory (rm -r)`);
+      removePath(p);
+    }
+    return '';
+  },
+  cp: args => {
+    const { o, rest } = getopt(args, 'rRf', 'cp'); if (rest.length < 2) fail('✗ cp: usage: cp from to');
+    const dst = rest.pop(), dk = kind(resolve(dst));
+    if (rest.length > 1 && dk !== 'dir') fail(`✗ cp: target '${dst}' is not a directory`);
+    for (const src of rest) {
+      const sp = findPath(src), sk = kind(sp); guard(sp, false);
+      if (!sk) fail(`✗ cp: cannot stat '${src}': No such file or directory`);
+      const to = dk === 'dir' ? resolve(dst) + '/' + sp.split('/').pop() : resolve(dst);
+      if (sk === 'file') { writeFile(to, readFile(src), false); continue; }
+      if (!o.r && !o.R) fail(`✗ cp: -r not specified; omitting directory '${src}'`);
+      CMDS.mkdir(['-p', to]);
+      for (const f of Object.keys(fs.files).filter(f => f.startsWith(sp + '/'))) { const t = to + f.slice(sp.length); CMDS.mkdir(['-p', t.slice(0, t.lastIndexOf('/'))]); writeFile(t, fs.files[f], false); }
+      for (const d of [...fs.dirs].filter(d => d.startsWith(sp + '/'))) fs.dirs.add(to + d.slice(sp.length));
+    }
+    return '';
+  },
+  mv: args => {
+    const { rest } = getopt(args, 'f', 'mv'); if (rest.length < 2) fail('✗ mv: usage: mv from to');
+    const dst = rest.pop(), dk = kind(resolve(dst));
+    for (const src of rest) {
+      const sp = findPath(src); guard(sp, true);
+      if (sp === fs.home + '/log' || sp === fs.home + '/notes' || sp === fs.home + '/perma-notes') fail(`✗ mv: ${src}: that stays where it is.`);
+      if (!kind(sp)) fail(`✗ mv: cannot stat '${src}': No such file or directory`);
+      const to = dk === 'dir' ? resolve(dst) + '/' + sp.split('/').pop() : resolve(dst);
+      if (to === sp || to.startsWith(sp + '/')) fail(`✗ mv: cannot move '${src}' into itself`);
+      CMDS.cp(['-r', src, to]); fs.meta[to] = { ...(fs.meta[sp] || {}), t: Date.now() }; removePath(sp);
+    }
+    return '';
+  },
+  tree: args => {
+    const root = args[0] ? findPath(args[0]) : fs.cwd; if (kind(root) !== 'dir') fail(`✗ tree: ${args[0]}: not a folder`);
+    const out = [args[0] || '.']; let nd = 0, nf = 0;
+    const walk = (p, pre) => { let names; try { names = list(p); } catch { return; } names.forEach((n, i) => { const lastOne = i === names.length - 1, sub = `${p === '/' ? '' : p}/${n.replace(/\/$/, '')}`; out.push(pre + (lastOne ? '└── ' : '├── ') + n.replace(/\/$/, '')); if (n.endsWith('/')) { nd++; if (!sub.startsWith('/usr/') || sub.startsWith(fs.home)) walk(sub, pre + (lastOne ? '    ' : '│   ')); } else nf++; }); };
+    walk(root, '');
+    return out.join('\n') + `\n\n${nd} director${nd === 1 ? 'y' : 'ies'}, ${nf} file${nf === 1 ? '' : 's'}`;
+  },
+  find: args => {
+    const start = args[0] && !args[0].startsWith('-') ? args.shift() : '.', root = start === '.' ? fs.cwd : findPath(start);
+    let name = null, type = null;
+    for (let i = 0; i < args.length; i++) { if (args[i] === '-name' || args[i] === '-iname') { name = globRe(args[++i] || ''); if (args[i - 1] === '-iname') name = new RegExp(name.source, 'i'); } else if (args[i] === '-type') type = args[++i]; else fail(`✗ find: unknown predicate '${args[i]}'`); }
+    if (!kind(root)) fail(`✗ find: '${start}': No such file or directory`);
+    const out = [], ok = (p, k) => (!name || name.test(p.split('/').pop())) && (!type || (type === 'd' ? k === 'dir' : k === 'file'));
+    const walk = (p, shown) => { const k = kind(p); if (ok(p, k)) out.push(shown); if (k !== 'dir') return; let names; try { names = list(p); } catch { return; } for (const n of names) { const b = n.replace(/\/$/, ''), sub = `${p === '/' ? '' : p}/${b}`; if (sub.startsWith('/usr/') && sub.split('/').length > 3 && !sub.startsWith(fs.home)) continue; walk(sub, `${shown === '/' ? '' : shown}/${b}`); } };
+    walk(root, start);
+    return out.join('\n');
+  },
+  stat: args => {
+    if (!args.length) fail('✗ stat: missing operand');
+    return args.map(a => { const p = findPath(a), k = kind(p); if (!k) fail(`✗ stat: cannot stat '${a}': No such file or directory`); guard(p, false); const m = fs.meta[p] || {}, l = longRow(p, a); return [`  File: ${a}`, `  Size: ${size(p)}\t${k === 'dir' ? 'directory' : size(p) ? 'regular file' : 'regular empty file'}`, `Access: (${l[0]})  Owner: ${owner(p)}  Group: ${l[2]}`, `Modify: ${m.t ? new Date(m.t).toString().replace(/ \(.*\)$/, '') : '-'}`].join('\n'); }).join('\n');
+  },
+  file: args => args.map(a => { const p = findPath(a), k = kind(p); if (!k) return `${a}: cannot open (No such file or directory)`; if (p.startsWith('/bin/')) return `${a}: a DuckFriends command (nobody can open it)`; if (k === 'dir') return `${a}: directory`; guard(p, false); const t = readFile(a); return `${a}: ${t ? `text, ${lines(t).length} line${lines(t).length === 1 ? '' : 's'}` : 'empty'}`; }).join('\n'),
+  chmod: args => {
+    const [mode, ...files] = args; if (!mode || !files.length) fail(`✗ chmod: usage: ${MAN.chmod}`);
+    const set = {}, nm = mode.match(/^[0-7]?([67])([0-7])([0-7])$/);
+    if (nm) { set.g = +nm[2] >= 4; set.o = +nm[3] >= 4; }
+    else for (const part of mode.split(',')) { const m = part.match(/^([ugoa]*)([+-=])([rwx]+)$/); if (!m) fail(`✗ chmod: invalid mode: '${mode}'`); if (!m[3].includes('r')) continue; const on = m[2] !== '-', who = m[1] || 'a'; if (/[ga]/.test(who)) set.g = on; if (/[oa]/.test(who)) set.o = on; }
+    for (const f of files) { const p = findPath(f); guard(p, true); if (kind(p) !== 'file') fail(`✗ chmod: cannot access '${f}': No such file`); if (isPerma(p)) fail(`✗ chmod: ${f}: perma-notes stay private (only superuser-${owner(p)}).`); fs.meta[p] = { ...(fs.meta[p] || {}), ...set }; }
+    return '';
+  },
+  chgrp: (args, i, x) => {
+    const [g, ...files] = args, s = needRoom(x.ctx), me = x.ctx.room.me; if (!g || !files.length) fail('✗ chgrp: usage: chgrp group file');
+    const G = roomGroups(s); if (!G[g.toLowerCase()]) fail(`✗ chgrp: invalid group: '${g}'`);
+    if (!isSudo(s, me) && !groupsOf(s, me).includes(g.toLowerCase())) fail(`✗ chgrp: changing group of '${files[0]}': Operation not permitted (you aren't in ${g})`);
+    for (const f of files) { const p = findPath(f); guard(p, true); if (kind(p) !== 'file') fail(`✗ chgrp: cannot access '${f}': No such file`); if (isPerma(p)) fail(`✗ chgrp: ${f}: perma-notes stay in superuser-${owner(p)}.`); fs.meta[p] = { ...(fs.meta[p] || {}), grp: g.toLowerCase() }; }
+    return '';
+  },
+  history: args => { if (args[0] === '-c') { fs.hist = []; return ''; } const n = +args[0] || fs.hist.length, from = Math.max(0, fs.hist.length - n); return fs.hist.slice(from).map((h, i) => `${String(from + i + 1).padStart(4)}  ${h}`).join('\n'); },
+  sleep: async (args, i, x) => { const n = parseFloat(args[0]); if (!(n >= 0)) fail('✗ sleep: usage: sleep seconds'); if (n > 30) fail('✗ sleep: 30 seconds at most here'); await wait(n * 1000, x.ctx); if (x.ctx.cancelled()) fail('^C', 130); return ''; },
+  /* people */
+  whoami: (a, i, x) => x.ctx.meName,
+  id: (args, i, x) => {
+    const { o, rest } = getopt(args, 'gGnu', 'id'), s = needRoom(x.ctx), [id] = rest.length ? who(x.ctx, rest) : [x.ctx.room.me], n = pname(s, id), gs = [...groupsOf(s, id), 'superuser-' + n];
+    if (o.u) return n; if (o.g) return gs[0]; if (o.G) return gs.join(' ');
+    return `uid=${n} gid=${gs[0]} groups=${gs.join(',')}`;
+  },
+  groups: (args, i, x) => { const s = needRoom(x.ctx), [id] = args.length ? who(x.ctx, args) : [x.ctx.room.me]; return [...groupsOf(s, id), 'superuser-' + pname(s, id)].join(' '); },
+  members: (args, i, x) => {
+    const s = needRoom(x.ctx), g = (args[0] || '').toLowerCase(); if (!g) fail('✗ members <group>');
+    if (g.startsWith('superuser-')) return g.slice(10);
+    if (!roomGroups(s)[g]) fail(`✗ members: no group ${g}. getent group lists them.`);
+    return s.seat.filter(id => groupsOf(s, id).includes(g)).map(id => pname(s, id)).join(' ') || '(nobody)';
+  },
+  getent: (args, i, x) => {
+    if ((args[0] || '') !== 'group') fail('✗ getent group [group]');
+    const s = needRoom(x.ctx), G = roomGroups(s), line = g => `${g}:x:${s.seat.filter(id => groupsOf(s, id).includes(g)).map(id => pname(s, id)).join(',')}:${(G[g].perms || []).join(',')}`;
+    if (!args[1]) return Object.keys(G).map(line).join('\n');
+    const g = args[1].toLowerCase(); if (g.startsWith('superuser-')) return `${g}:x:${g.slice(10)}:`;
+    if (!G[g]) return { out: '', code: 2 };
+    return line(g);
+  },
+  users: (a, i, x) => { const s = needRoom(x.ctx); return s.seat.map(id => pname(s, id)).sort().join(' '); },
+  who: (a, i, x) => { const s = needRoom(x.ctx); return table(s.seat.map(id => [pname(s, id), [id === s.hostId ? 'host' : '', isSudo(s, id) ? 'sudo' : '', s.players[id].bot ? 'computer' : ''].filter(Boolean).join(', ')])); },
+  w: (a, i, x) => {
+    const s = needRoom(x.ctx), up = s.startedAt && s.phase !== 'lobby' ? Math.floor((Date.now() - s.startedAt) / 60000) : 0, st = STAGE[s.phase] || 'lobby';
+    return [` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(up / 60)}:${String(up % 60).padStart(2, '0')}, ${s.seat.length} players, ${st}`, table([['PLAYER', 'PING', 'WHAT'], ...s.seat.map(id => { const p = s.players[id]; return [pname(s, id) + (id === s.hostId ? '*' : ''), pingOf(x.ctx, p), [p.idle ? 'away' : '', p.late ? 'waits for the next round' : s.done && s.done[id] ? 'ended their turn' : s.phase === 'lobby' ? (p.ready ? 'ready' : 'not ready') : st].filter(Boolean).join(' · ')]; })]), '(* the host)'].join('\n');
+  },
+  finger: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : [x.ctx.room.me]; return ids.map(id => finger(x.ctx, id)).join('\n\n'); },
+  last: (a, i, x) => lastLines(needRoom(x.ctx)),
+  write: (args, i, x) => {
+    const s = needRoom(x.ctx), me = x.ctx.room.me; if (!args[0] || !args[0].startsWith('@') || args.length < 2) fail('✗ write: usage: write @name message');
+    const [to] = who(x.ctx, [args[0]]);
+    if (denied(s, me, 'nochat')) fail('✗ write: your group can\'t chat.');
+    const w = x.ctx.slowLeft(); if (w > 0) fail(`✗ write: slow down (${Math.ceil(w / 1000)} s).`);
+    if (++x.rs.sends > 3) fail('✗ write: 3 sends a line at most.');
+    x.ctx.room.send({ t: 'chat', to, text: args.slice(1).join(' ').slice(0, 500) }); x.ctx.sent();
+    return `To ${pname(s, to)}, privately.`;
+  },
+  sudo: () => fail('✗ usage: sudo <command> (sudo -l: what sudo lets you do)'),
+  usermod: (args, i, x) => {
+    const s = needSudo(x, 'usermod'), { o, rest } = getopt(args, 'arG:', 'usermod'), at = rest.filter(a => a.startsWith('@'));
+    const gl = [o.G, ...rest.filter(a => !a.startsWith('@'))].filter(v => typeof v === 'string').join(',').split(',').filter(Boolean).map(g => g.toLowerCase());
+    if (!at.length) fail(`✗ ${MAN.usermod}`);
+    const groups = o.G ? gl : ['sudo'], G = roomGroups(s);
+    for (const g of groups) { if (g.startsWith('superuser-')) fail(`✗ usermod: ${g} can't be changed, not even by its player.`); if (!G[g]) fail(`✗ usermod: group '${g}' does not exist`); }
+    const mode = !o.G ? 'add' : o.r ? 'remove' : o.a ? 'add' : 'set';
+    for (const id of who(x.ctx, at)) { if (id === s.hostId && groups.includes('sudo') && mode !== 'add') fail('✗ usermod: the host is always in sudo, and that can\'t be undone.'); x.ctx.room.send({ t: 'usermod', target: id, groups, mode }); }
+    return `${mode === 'add' ? 'Added to' : mode === 'remove' ? 'Taken out of' : 'Set to'} ${groups.join(', ')}: ${at.map(a => a.slice(1)).join(', ')}`;
+  },
+  gpasswd: (args, i, x) => {
+    needSudo(x, 'gpasswd'); const f = args[0], at = args[1], g = args[2];
+    if (!['-a', '-d'].includes(f) || !at || !g) fail(`✗ ${MAN.gpasswd}`);
+    return CMDS.usermod([f === '-a' ? '-aG' : '-rG', g, at], i, x);
+  },
+  adduser: (args, i, x) => { needSudo(x, 'adduser'); const at = args.find(a => a.startsWith('@')), g = args.find(a => !a.startsWith('@')); if (!at || !g) fail(`✗ ${MAN.adduser}`); return CMDS.usermod(['-aG', g, at], i, x); },
+  deluser: (args, i, x) => { needSudo(x, 'deluser'); const at = args.find(a => a.startsWith('@')), g = args.find(a => !a.startsWith('@')); if (!at || !g) fail(`✗ ${MAN.deluser}`); return CMDS.usermod(['-rG', g, at], i, x); },
+  groupadd: (args, i, x) => {
+    const s = needSudo(x, 'groupadd'), { o, rest } = getopt(args, 'p:', 'groupadd'), perms = String(o.p || '').split(',').filter(Boolean), name = rest[0];
+    if (!name || !/^[a-z][a-z0-9_-]{0,19}$/i.test(name) || name.toLowerCase().startsWith('superuser-')) fail(`✗ ${MAN.groupadd}`);
+    const bad = perms.filter(p => !permOk(p)); if (bad.length) fail(`✗ groupadd: ${bad.join(', ')}? Perms: ${GROUP_PERMS.join(', ')}, slow30`);
+    if (roomGroups(s)[name.toLowerCase()]) fail(`✗ groupadd: group '${name}' already exists`);
+    if (Object.keys(roomGroups(s)).length >= 20) fail('✗ groupadd: 20 groups at most');
+    x.ctx.room.send({ t: 'groupadd', name: name.toLowerCase(), perms }); return `Group ${name.toLowerCase()}${perms.length ? ` (${perms.join(', ')})` : ''}. Add players: sudo usermod -aG ${name.toLowerCase()} @name`;
+  },
+  groupmod: (args, i, x) => {
+    const s = needSudo(x, 'groupmod'), { o, rest } = getopt(args, 'n:p:', 'groupmod'), g = (rest[0] || '').toLowerCase(), G = roomGroups(s);
+    if (!g || (o.n === undefined && o.p === undefined)) fail(`✗ ${MAN.groupmod}`);
+    if (g.startsWith('superuser-')) fail(`✗ groupmod: ${g} can't be changed, not even by its player.`);
+    if (!G[g]) fail(`✗ groupmod: group '${g}' does not exist`);
+    if (['sudo', 'dumbasses'].includes(g)) fail(`✗ groupmod: ${g} stays as it is.`);
+    if (o.n !== undefined) { const to = String(o.n).toLowerCase(); if (!/^[a-z][a-z0-9_-]{0,19}$/.test(to) || to.startsWith('superuser-')) fail(`✗ groupmod: '${o.n}' is not a valid group name`); if (G[to]) fail(`✗ groupmod: group '${to}' already exists`); x.ctx.room.send({ t: 'groupmod', name: g, newName: to }); return `Renamed ${g} to ${to}.`; }
+    const perms = String(o.p).split(',').filter(Boolean), bad = perms.filter(p => !permOk(p)); if (bad.length) fail(`✗ groupmod: ${bad.join(', ')}? Perms: ${GROUP_PERMS.join(', ')}, slow30`);
+    x.ctx.room.send({ t: 'groupmod', name: g, perms }); return `${g}'s perms: ${perms.join(', ') || 'none'}.`;
+  },
+  groupdel: (args, i, x) => { const s = needSudo(x, 'groupdel'), g = (args[0] || '').toLowerCase(); if (['sudo', 'dumbasses'].includes(g)) fail(`✗ groupdel: ${g} stays.`); if (g.startsWith('superuser-')) fail(`✗ groupdel: ${g} can't be removed.`); if (!roomGroups(s)[g]) fail(`✗ groupdel: group '${g}' does not exist`); x.ctx.room.send({ t: 'groupdel', name: g }); return `Removed ${g}.`; },
+  newgrp: () => MAN.newgrp.split(': ')[1],
+  visudo: () => fail(`✗ visudo: ${MAN.visudo.split(': ')[1]}`),
+  su: () => fail(`✗ su: ${MAN.su.split(': ')[1]}`),
+  passwd: () => fail('✗ passwd: Ducks don\'t have passwords.'),
+  /* the room and the game */
+  hostname: (args, i, x) => {
+    const s = needRoom(x.ctx); if (!args.length) return s.name || 'DuckFriends';
+    if (!x.sudo) fail('✗ hostname: you must be root to change the host name (sudo hostname "new name")');
+    if (!isSudo(s, x.ctx.room.me)) fail(noSudo(x.ctx));
+    const n = args.join(' ').replace(/\s+/g, ' ').trim().slice(0, 32); x.ctx.room.send({ t: 'roomName', name: n }); return `The room is now ${n}.`;
+  },
+  uname: (args, i, x) => { const s = x.ctx.room && x.ctx.room.state; if (!args.includes('-a')) return 'DuckFriends'; return `DuckFriends pond ${VERSION} ${s ? `${modeOf(s.options.mode).name} · ${mapName(s.options.map)}` : ''} duckbash`.replace(/\s+/g, ' '); },
+  date: () => new Date().toString().replace(/ \(.*\)$/, ''),
+  cal: () => cal(),
+  uptime: (a, i, x) => { const s = needRoom(x.ctx); if (!s.startedAt || s.phase === 'lobby') return 'The game hasn\'t started.'; const m = Math.floor((Date.now() - s.startedAt) / 60000); return `up ${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}, ${s.seat.length} players, round ${s.round + 1}`; },
+  ps: (args, i, x) => psLines(needRoom(x.ctx), args.some(a => /a|u|x|-e/.test(a))),
+  top: async (a, i, x) => {
+    const { ctx } = x; needRoom(ctx);
+    if (!x.meta.screen) return topLines(ctx);   // into a pipe or a file: once
+    const t0 = Date.now();
+    while (!ctx.cancelled() && Date.now() - t0 < 60000) { ctx.live(lines(topLines(ctx) + '\n(Ctrl+C to stop)')); await wait(1000, ctx); }
+    ctx.live([]);
+    return topLines(ctx);
+  },
+  jumps: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : [x.ctx.room.me]; return ids.map(id => `${pname(s, id)}: ${(s.jumps || {})[id] || 0} Jumps this game · ${allJumps(id === x.ctx.room.me ? profile.stats : s.players[id].stats) + ((s.jumps || {})[id] || 0)} of all time`).join('\n'); },
+  ping: (args, i, x) => { const s = needRoom(x.ctx), ids = args.length ? who(x.ctx, args) : s.seat; return ids.map(id => `${s.players[id].name}: ${pingOf(x.ctx, s.players[id])}`).join('\n'); },
+  roll: args => { const m = (args[0] || '1d6').match(/^(\d{0,2})d(\d{1,3})$/i); if (!m) fail('✗ roll NdM, like roll 2d6'); const n = Math.min(20, +m[1] || 1), k = Math.max(2, +m[2]), r = Array.from({ length: n }, () => 1 + Math.floor(Math.random() * k)); return n > 1 ? `${r.join(' + ')} = ${r.reduce((a, b) => a + b, 0)}` : String(r[0]); },
+  flip: () => Math.random() < .5 ? 'Heads' : 'Tails',
+  ducksay: (args, stdin) => ducksay(args.length ? args.join(' ') : stdin.trim() || 'Quack.'),
+  fortune: () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)],
+  skip: (args, i, x) => { const s = needMay(x, 'canskip', 'skip'); if (['lobby', 'over'].includes(s.phase)) fail('✗ skip works during a game.'); x.ctx.room.send({ t: 'skip' }); return 'Skipped ahead.'; },
+  kick: (args, i, x) => {
+    const s = needMay(x, 'cankick', 'kick'); if (!args.length) fail(`✗ ${MAN.kick}`);
+    const out = [];
+    for (const id of who(x.ctx, args)) { if (id === s.hostId) fail('✗ kick: nobody can kick the host.'); if (id === x.ctx.room.me) fail('✗ kick: you can\'t kick yourself (leave from the pause menu).'); x.ctx.room.send({ t: 'kick', who: id }); out.push(pname(s, id)); }
+    return `Removed ${out.join(', ')}.`;
+  },
+  map: (args, i, x) => {
+    const s = needRoom(x.ctx); if (!args.length) return table(MAPS.map(m => [m[0], m[1] + (m[0] === s.options.map ? '  (now)' : '')]));
+    const id = args.join(' ').toLowerCase(), m = MAPS.find(v => v[0] === id || v[1].toLowerCase() === id || v[1].toLowerCase().startsWith(id)); if (!m) fail(`✗ map: no map ${args.join(' ')} (map lists them)`);
+    if (!isSudo(s, x.ctx.room.me)) fail('✗ map: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ map: in the lobby.');
+    x.ctx.room.send({ t: 'options', options: { map: m[0] } }); return `Map: ${m[1]}.`;
+  },
+  mode: (args, i, x) => {
+    const s = needRoom(x.ctx); if (!args.length) return table(MODES.map(m => [m.id, m.name + (m.id === s.options.mode ? '  (now)' : '')]));
+    const id = args.join(' ').toLowerCase(), m = MODES.find(v => v.id === id || v.name.toLowerCase() === id || v.name.toLowerCase().startsWith(id)); if (!m) fail(`✗ mode: no game type ${args.join(' ')} (mode lists them)`);
+    if (!isSudo(s, x.ctx.room.me)) fail('✗ mode: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ mode: in the lobby.');
+    x.ctx.room.send({ t: 'options', options: { mode: m.id } }); return `Game: ${m.name}.`;
+  },
+  start: (a, i, x) => { const s = needRoom(x.ctx); if (!isSudo(s, x.ctx.room.me)) fail('✗ start: only the host or sudo.'); if (!['lobby', 'over'].includes(s.phase)) fail('✗ start: the game is already going.'); x.ctx.room.send({ t: 'start' }); return 'Starting…'; },
+  forgame: (args, i, x) => forgame(x.ctx, args),
+  roundstats: (args, i, x) => statLines(x.ctx, 'round', args),
+  gamestats: (args, i, x) => statLines(x.ctx, 'game', args),
+  totalstats: (args, i, x) => statLines(x.ctx, 'total', args),
+  send: (args, stdin, x) => send(args, stdin, x),
+};
+CMDS.logout = CMDS.exit;
+/* the commands in /bin: everything with a manual page */
+const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo').sort();
+
+/* what sudo lets you do */
+function sudoList(ctx) {
+  const s = needRoom(ctx), me = ctx.room.me;
+  if (!isSudo(s, me)) {
+    const gives = Object.keys(PERMS_GIVE).filter(p => may(s, me, p));
+    return { out: `${noSudo(ctx).slice(2)}${gives.length ? `\nYour groups give you: ${gives.map(p => `${p} (${PERMS_GIVE[p]})`).join(', ')}.` : ''}`, code: 1 };
+  }
+  return [`${ctx.meName} may run, as sudo:`, '  usermod gpasswd adduser deluser groupadd groupmod groupdel hostname', '  and without the sudo word: skip, kick, forgame, map, mode, start', ...(me === s.hostId ? ['(You are the host: always in sudo.)'] : [])].join('\n');
+}
+
+/* ---------- running a command ---------- */
+const isCommand = (name, ctx) => !!(CMDS[name] || TEXT[name] || BUILTIN_NAMES.includes(name) || ctx.legacyHas(String(name).toLowerCase()) || name === 'sudo');
+const dq = w => /\s/.test(w) ? `"${w}"` : w;
+/* one command, its words already expanded (sudo first if given) */
+async function one(argv, stdin, meta, ctx, rs) {
+  let sudo = false, words = argv;
+  if (words[0] === 'sudo') {
+    if (words[1] === '-l') return sudoList(ctx);
+    sudo = true; words = words.slice(1); if (!words.length) fail('✗ usage: sudo <command>');
+    const s = needRoom(ctx); if (!isSudo(s, ctx.room.me)) fail(noSudo(ctx));
+  }
+  const [c, ...args] = words, low = c.toLowerCase();
+  if (/^\\(mute|permmute|show|togglesuggest)$/i.test(c)) return ctx.chat(words.map(dq).join(' '));
+  const x = { ctx, sudo, meta, rs };
+  if (CMDS[c] || CMDS[low]) return CMDS[c] ? CMDS[c](args, stdin, x) : CMDS[low](args, stdin, x);
+  if (TEXT[c] || TEXT[low]) return (TEXT[c] || TEXT[low])(args, stdin, IO);
+  if (ctx.legacyHas(low)) {
+    if (FUN.includes(low)) {   // the silly commands: 3 a line at most, a second apart
+      if (++rs.fun > 3) fail(`✗ ${low}: 3 silly commands a line at most.`);
+      const gap = 1000 - (Date.now() - rs.funAt); if (gap > 0) await wait(gap, ctx);
+      rs.funAt = Date.now();
+    }
+    const out = ctx.legacy([low, ...args].map(dq).join(' '));
+    if (out === null) return null;
+    const text = out.join('\n'); return { out: text, code: text.startsWith('✗') ? 1 : 0 };
+  }
+  if (BUILTIN_NAMES.includes(low)) return fail(`✗ ${c}: command not found (did you mean ${low}?)`, 127);
+  fail(`✗ ${c}: command not found. help lists them.`, 127);
+}
+
+/* the game's own variables, which can't be changed */
+function gameVar(name, ctx) {
+  const s = ctx.room && ctx.room.state;
+  switch (name) {
+    case 'USER': case 'LOGNAME': return ctx.meName;
+    case 'HOME': return fs.home;
+    case 'PWD': return fs.cwd;
+    case 'OLDPWD': return fs.old || '';
+    case 'SHELL': return '/bin/duckbash';
+    case 'RANDOM': return String(Math.floor(Math.random() * 32768));
+    case 'HOST': return s ? pname(s, s.hostId) : '';
+    case 'ROOM': return s ? s.name || '' : '';
+    case 'MODE': return s ? s.options.mode || 'aod' : '';
+    case 'MAP': return s ? s.options.map || 'board' : '';
+    case 'ROUND': return s ? String(s.round + 1) : '';
+    case 'STAGE': return s ? STAGE[s.phase] || 'lobby' : '';
+    case 'PLAYERS': return s ? s.seat.map(id => pname(s, id)).join(' ') : ctx.meName;
+  }
+  return undefined;
+}
+const GAME_VARS = ['USER', 'LOGNAME', 'HOME', 'PWD', 'OLDPWD', 'SHELL', 'RANDOM', 'HOST', 'ROOM', 'MODE', 'MAP', 'ROUND', 'STAGE', 'PLAYERS'];
+function env(ctx, rs) {
+  return {
+    exec: (argv, stdin, meta) => one(argv, stdin, meta, ctx, rs),
+    has: n => isCommand(n, ctx),
+    getVar: n => gameVar(n, ctx) ?? fs.vars[n],
+    setVar: (n, v) => { if (GAME_VARS.includes(n)) fail(`✗ ${n}: readonly variable (the game keeps it)`); if (Object.keys(fs.vars).length >= 100 && !(n in fs.vars)) fail('✗ 100 variables at most'); fs.vars[n] = String(v).slice(0, 5000); },
+    unsetVar: n => { if (GAME_VARS.includes(n)) fail(`✗ unset: ${n}: cannot unset: readonly variable`); delete fs.vars[n]; },
+    listVars: () => [...GAME_VARS.map(n => [n, gameVar(n, ctx)]), ...Object.entries(fs.vars)],
+    aliases: (profile.aliases = profile.aliases || {}),
+    saveAliases: () => save(),
+    read: p => readFile(p), write: (p, t, a) => writeFile(p, t, a), glob,
+    fileTest: (f, p) => { try { const path = findPath(p), k = kind(path); if (!k) return false; guard(path, false); return f === '-d' ? k === 'dir' : f === '-e' ? true : f === '-s' ? k === 'file' && readFile(p).length > 0 : k === 'file'; } catch { return false; } },
+    home: fs.home, cancelled: () => ctx.cancelled(), code: fs.code,
+  };
+}
+
+/* runs what was typed: the lines to show, and whether the window was cleared first */
 export async function shellRun(text, ctx) {
   sync(ctx);
-  fs.hist.push(text); if (fs.hist.length > 200) fs.hist.shift();
-  let out;
-  try {
-    const s = ctx.room && ctx.room.state;
-    if (s && denied(s, ctx.room.me, 'nocmd')) fail('✗ Your group can\'t use the command line.');
-    out = /^send(\s|$)/.test(text.trim()) ? await send(text, ctx) : await pipeline(text, ctx);
-  } catch (e) { out = e.message || String(e); }
-  if (out === null) return null;
-  const res = lines(out);
+  let line = text;
+  const res = [];
+  try { line = expandHistory(text, fs.hist); if (line !== text) res.push(line); }   // bash shows what !! became
+  catch (e) { fs.hist.push(text); return { lines: [e.message], cleared: false }; }
+  fs.hist.push(line); if (fs.hist.length > 200) fs.hist.shift();
+  const s = ctx.room && ctx.room.state;
+  if (s && denied(s, ctx.room.me, 'nocmd')) return { lines: ['✗ Your group can\'t use the command line.'], cleared: false };
+  const r = await runLine(line, env(ctx, { fun: 0, funAt: 0, sends: 0 }));
+  fs.code = r.code;
+  res.push(...lines(r.text));
+  if (res.length > 1000) res.splice(1000, res.length, `… (${res.length - 1000} more lines)`);
   fs.log.push('$ ' + text, ...res); if (fs.log.length > 2000) fs.log.splice(0, fs.log.length - 2000);
-  return res;
+  return { lines: res, cleared: r.cleared };
 }
-/* ↑ and ↓ */
+/* ↑ and ↓, and Ctrl+R */
 export const shellHistory = () => fs.hist;
 
-/* ---------- suggestions: commands, then files, @names, groups and forgame's words ---------- */
+/* ---------- suggestions: commands, then files, @names, groups and each command's own words ---------- */
+const FILE_CMDS = ['cat', 'less', 'more', 'ls', 'cd', 'rm', 'rmdir', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq', 'cp', 'mv', 'tree', 'find', 'stat', 'file', 'chmod', 'chgrp', 'source', '.', 'cut', 'tr', 'sed', 'awk', 'rev', 'tac', 'nl', 'fold', 'column', 'diff', 'tee', 'shuf', 'bc', 'mkdir', 'send'];
+const WORDS = {
+  help: Object.keys(TOPICS).concat('all'),
+  forgame: ['show', 'all-timer', 'timer', 'turn-end', 'order', 'freeroam', 'gravity', 'silly', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'random', 'rotate', 'low', 'normal', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'],
+  map: MAPS.map(m => m[0]), mode: MODES.map(m => m.id),
+  chmod: ['g+r', 'g-r', 'o+r', 'o-r', 'a+r', 'a-r', '640', '644', '600'],
+  totalstats: ['-m', ...STAT_MODES.map(([m]) => m)], gamestats: ['-m'], roundstats: ['-m'],
+  ps: ['aux'], uname: ['-a'], sudo: ['-l'], gpasswd: ['-a', '-d'], groupmod: ['-n', '-p'], getent: ['group'], history: ['-c'], ls: ['-l', '-a', '-la', '-R'],
+};
 export function shellSuggest(line, ctx) {
   sync(ctx);
-  const seg = line.split('|').pop().replace(/^\s+/, ''), pre = line.slice(0, line.length - seg.length);
+  const seg = line.split(/\||;|&&/).pop().replace(/^\s+/, ''), pre = line.slice(0, line.length - seg.length);
   const ws = seg.split(/\s+/), last = ws[ws.length - 1], done = ws.slice(0, -1).filter(Boolean);
   const words0 = done[0] === 'sudo' ? done.slice(1) : done, cmd = (words0[0] || '').toLowerCase();
   const from = line.length - last.length, put = w => ({ label: w, apply: () => line.slice(0, from) + w + (w.endsWith('/') ? '' : ' ') });
+  const s = ctx.room && ctx.room.state, G = s ? Object.keys(roomGroups(s)) : ['sudo', 'dumbasses'];
   let opts = [];
-  if (!words0.length) opts = [...MINE, ...ctx.legacyTop(), '\\mute', '\\permmute', '\\show'];
+  if (!words0.length) opts = [...MINE, ...BUILTIN_NAMES.filter(b => /^\w/.test(b)), ...ctx.legacyTop(), ...Object.keys(profile.aliases || {}), '\\mute', '\\permmute', '\\show'];
   else if (ctx.legacyHas(cmd)) return ctx.legacySuggest(seg.replace(/^sudo\s+/, '')).map(x => ({ label: x.label, apply: () => pre + (done[0] === 'sudo' ? 'sudo ' : '') + x.apply() }));
-  else if (last.startsWith('@') || last.startsWith('\\@')) { const s = ctx.room && ctx.room.state; opts = s ? s.seat.map(id => (last.startsWith('\\') ? '\\@' : '@') + tag(s.players[id].name)) : []; if (cmd === 'send' && !last.startsWith('\\')) opts.unshift('@everyone'); }
-  else if (cmd === 'man') opts = Object.keys(MAN);
-  else if (['usermod', 'members'].includes(cmd) || (cmd === 'getent' && done.length > 1)) opts = Object.keys((ctx.room && ctx.room.state.groups) || { sudo: 1, dumbasses: 1 });
-  else if (cmd === 'getent') opts = ['group'];
-  else if (cmd === 'groupadd') opts = ['-p', ...GROUP_PERMS];
-  else if (cmd === 'forgame') opts = ['all-timer', 'timer', 'turn-end', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'];
-  else if (['totalstats', 'gamestats', 'roundstats'].includes(cmd)) opts = ['-m', 'aod', 'wyr', 'bb'];
-  else if (['cat', 'ls', 'cd', 'rm', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq'].includes(cmd) || last.includes('/')) {
+  else if (last.startsWith('@') || last.startsWith('\\@')) { opts = s ? s.seat.map(id => (last.startsWith('\\') ? '\\@' : '@') + pname(s, id)) : []; if (cmd === 'send' && !last.startsWith('\\')) opts.unshift('@everyone'); }
+  else if (last.startsWith('$')) opts = [...GAME_VARS, ...Object.keys(fs.vars)].map(v => '$' + v);
+  else if (cmd === 'man' || cmd === 'type' || cmd === 'which') opts = Object.keys(MAN);
+  else if (['usermod', 'members', 'gpasswd', 'adduser', 'deluser', 'groupdel', 'chgrp'].includes(cmd) || (cmd === 'getent' && done.length > 1) || (cmd === 'groupmod' && done.length > 1 && !/^-[np]$/.test(done[done.length - 1]))) opts = [...(WORDS[cmd] || []), ...G];
+  else if (cmd === 'groupadd' || (cmd === 'groupmod' && done[done.length - 1] === '-p')) opts = ['-p', ...GROUP_PERMS, 'slow30'];
+  else if (WORDS[cmd] && !(FILE_CMDS.includes(cmd) && done.length > 1)) opts = WORDS[cmd];
+  if ((FILE_CMDS.includes(cmd) && !opts.length) || last.includes('/') || (cmd === 'ls' && last && !last.startsWith('-'))) {
     const slash = last.lastIndexOf('/'), dirPart = last.slice(0, slash + 1), base = dirPart ? findPath(dirPart.replace(/\/$/, '') || '/') : fs.cwd;
-    try { opts = kind(base) === 'dir' ? list(base).map(n => dirPart + n) : []; } catch { opts = []; }
+    try { opts = [...opts, ...(kind(base) === 'dir' ? list(base).map(n => dirPart + n) : [])]; } catch { /* not yours */ }
   }
   const p = last.toLowerCase();
-  return opts.filter(o => o.toLowerCase().startsWith(p) && o.toLowerCase() !== p).slice(0, 30).map(put);
+  return [...new Set(opts)].filter(o => o.toLowerCase().startsWith(p) && o.toLowerCase() !== p).slice(0, 30).map(put);
 }
