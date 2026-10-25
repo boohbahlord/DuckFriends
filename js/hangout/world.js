@@ -211,8 +211,8 @@ export function mountWorld(board, api) {
       for (const e of els.values()) e._tr = '';
       return { W: vw, H: vh, top0: 0, size: L.DUCK * cam.sc, labelH: 0, left: r.left, top: r.top, hang: true };
     },
-    /* a spot (x, y: 0 … 1) on the board, in px: its ground, at the height of whatever is there */
-    place(p) { const x = p.x * L.W, y = p.y * L.H; return toScreen(x, y, L.heightAt(x, y)); },
+    /* a spot (x, y: 0 … 1) on the board, in px: its ground, at the height of whatever is there (or at height h) */
+    place(p, h) { const x = p.x * L.W, y = p.y * L.H; return toScreen(x, y, h ?? L.heightAt(x, y)); },
     /* a point on the board (px) → the spot on the ground seen there (the front-most one, where heights overlap) */
     unplace(px, py) {
       const X = (px - cam.vw / 2) / cam.sc + cam.x, Y = (py - cam.vh / 2) / cam.sc + cam.y;

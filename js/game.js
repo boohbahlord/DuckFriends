@@ -306,7 +306,8 @@ function drawDucks(now = clockNow()) {
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
-    const at = shotAt(sh, now - sh.t), a = place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;
+    const at = shotAt(sh, now - sh.t), a = hang ? world.place(at, sh.hz) : place({ x: at.x, y: at.y }, 0, 1), top = a.top - at.z * size;   // (Hangout: at the height it was fired from)
+    if (hang && world.hidden('', at)) continue;   // (on the other side of the cabin's walls)
     if (a.left < -geo.W * .4 || a.left > geo.W * 1.4 || top > geo.top0 + geo.H + size * 6 || top < -geo.H) continue;   // (off the screen)
     live.add(String(sh.n));
     let b = fxl.querySelector(`[data-n="${sh.n}"]`);

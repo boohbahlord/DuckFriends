@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft } from './hangout/rules.js';
+import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -382,7 +383,10 @@ export function reduce(state, a, now = Date.now()) {
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1, aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}) }];
-      if (aim) { const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED; s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y }]; }
+      if (aim) {
+        const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED, hang = isHang(s) ? { hz: Math.round(+p.z || 0), hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {};   // (Hangout: the height it flies at, and which side of the cabin's walls)
+        s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y, ...hang }];
+      }
       return s;
     }
     case 'aura': {   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
@@ -635,15 +639,19 @@ export function gameMuted(s, id, kind) {
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({ x: sh.x0 + sh.vx * t / 1000, y: sh.y0 + sh.vy * t / 1000, z: sh.k === 'dagger' ? daggerZ(t / 1000) : .41 });
 /* the handgun's bullets and the thrown daggers: a duck on the ground that one passes through plays dead (until it
-   moves); a bullet flies on to the screen's edge, a dagger until it has fallen away */
+   moves); a bullet flies on to the screen's edge, a dagger until it has fallen away. In Hangout one flies at the height
+   it was fired from and hits only ducks standing about that high, on its side of the cabin's walls, and the walls stop
+   it */
 function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
   const keep = [];
   for (const sh of s.shots) {
     if (!sh.k) continue;   // (one fired before aiming: gone)
     const at = shotAt(sh, now - sh.t), x0 = sh.lx, y0 = sh.ly, dx = at.x - x0, dy = at.y - y0;
+    const walled = sh.hin !== undefined && (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;   // (Hangout: it hit the cabin's wall)
     if (at.z > -.15 && at.z < 1.05) for (const id of s.seat) {   // (a dagger over a duck's head, or already fallen, hits nobody)
       const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead) continue;
+      if (sh.hin !== undefined && ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin || Math.abs((+p.z || 0) - sh.hz) > 48)) continue;   // (the other side of the walls, or above or below it)
       if (p.j && now - p.j < 1300) continue;   // jumped over it
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
       const rx = isHang(s) ? .006 : .03, ry = isHang(s) ? .012 : .08;
@@ -652,7 +660,7 @@ function moveShots(s, now) {
       if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
     }
     sh.lx = at.x; sh.ly = at.y;
-    const on = at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);
+    const on = !walled && at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);
     if (on && boardPhases(s).includes(s.phase)) keep.push(sh);   // (on past the board to the screen's edge)
   }
   s.shots = keep; return true;
