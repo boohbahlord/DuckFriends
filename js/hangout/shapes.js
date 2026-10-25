@@ -1,110 +1,261 @@
-/* ---------- Duck Cabin's props, drawn: placeholders until art.js's drawings take their places ----------
-   DRAW[kind](prop) → an SVG string the size of the prop's box (prop.box: w × h world px, viewBox "0 0 w h"). In a box
-   with no box of its own, the prop's top is the band 0 … d and its front face d … d + h. Night colors: lit warm where
-   a light falls, dark blue-green elsewhere; simple shapes with dark outlines. Parts that glow carry class "lit" (a lamp
-   switched off dims them: .hp.off .lit) and flames class "flick" (they flicker). To use a new drawing for a kind, put it
-   in DRAW (world.js draws whatever DRAW says, when the prop first comes into view). */
-const INK = '#1c1c28';
-const svg = (p, body) => `<svg viewBox="0 0 ${p.box.w.toFixed(1)} ${p.box.h.toFixed(1)}" width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true">${body}</svg>`;
-const r = (x, y, w, h, fill, o = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${o}/>`;
-const ol = (sw = 3) => `stroke="${INK}" stroke-width="${sw}" stroke-linejoin="round"`;
-/* a box: its top face (0 … d) and its front face (d … d + h) */
-const box = (p, top, front, sw = 3, extra = '') => r(1.5, 1.5, p.w - 3, p.d - 1.5, top, ol(sw)) + (p.h > 0 ? r(1.5, p.d, p.w - 3, p.h - 1.5, front, ol(sw)) : '') + extra;
-const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0) % 1000 / 1000; };
-/* round orange-brown logs stacked on a face: x, y, w, h */
-const logs = (x, y, w, h, c = '#a65a26', line = '#6e3a17') => r(x, y, w, h, c) + Array.from({ length: Math.floor(h / 22) }, (_, i) => `<path d="M${x} ${y + 22 * (i + 1)}H${x + w}" stroke="${line}" stroke-width="2.5" opacity=".8"/>`).join('');
-const glowDot = (x, y, rr, c = '#ffcf70') => `<circle class="lit" cx="${x}" cy="${y}" r="${rr * 2.2}" fill="${c}" opacity=".25"/><circle class="lit" cx="${x}" cy="${y}" r="${rr}" fill="${c}" stroke="${INK}" stroke-width="1.5"/>`;
+/* ---------- Duck Cabin's props, drawn: art.js's drawings put where layout.js says ----------
+   Three lists, all in "screen-world" px (world px with heights already taken off: a thing at world (x, y) standing on
+   height z draws at (x, y − z)), so a box here is where a drawing goes before the camera moves and scales it:
 
+   GROUND   the flat, still pieces under everything: the grass, the darker slope, the downhill, the forest floor, the dirt
+            path, the soccer field's lines, the pavers, the pool's water and its lane rope, the cabin's floors and rugs,
+            the deck's boards and its stairs' steps, the shadows of the trees and the jeep. world.js paints them once
+            into tiles of a canvas (cheap to move) and lays the night's light pools over them every frame.
+   DRAW     kind → (prop) → its parts: the drawings that stand up, each its own element sorted with the ducks by its own
+            foot (key), so one prop can be a back part and a front part (the couch's seat behind a sitting duck, its
+            backrest in front). A part: { svg, box: { l, t, w, h }, key, layer ('floor': under every duck), fade (turns
+            see-through over my duck), hit (the box that counts for that), img (a still picture: drawn once by the
+            browser, cheap to move; no hooks, nothing moves inside it), part ('back' | 'front') }. svg may be a function
+            (made when the part first comes into view). A kind may also return a plain SVG string: one part filling
+            the prop's own box (the old placeholder way). An empty list draws nothing (the prop still blocks walking).
+   DECOR    parts no prop owns: the forest bands past the ring of trees, the deck's railing and lattice, the chimney's
+            smoke, the pool's moving light. { ...part, only: 'in' | 'out' }.
+
+   Interactive props keep their ids and their parts stay inline SVG, so the activities find them (ctx.world.propEl(id)
+   is the front or only part; propEls(id) all of them); their glowing bits carry class "lit" (a lamp switched off dims
+   them: .hp.off .lit) and the glow around a lamp "lit-glow" (it goes out). */
+import * as A from './art.js';
+import * as L from './layout.js';
+
+const C = L.CABIN, n1 = v => Math.round(v * 10) / 10;
+const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0) % 1000 / 1000; };
+const part = (svg, l, t, w, h, key, o = {}) => ({ svg, box: { l, t, w, h }, key, ...o });
+/* a pair from art.js (its box w × h) put with its box's left at l and its bottom at screen-world b; keys: the world y of
+   each foot (back: null = flat, into the ground instead), or given */
+function pairParts(pr, l, b, w, h, { backKey, frontKey, s = 1, z = 0, fade = false, hit } = {}) {
+  const t = b - h * s, out = [];
+  if (pr.backFoot != null || backKey != null) out.push(part(pr.back, l, t, w * s, h * s, backKey ?? t + pr.backFoot * s + z, { part: 'back' }));
+  out.push(part(pr.front, l, t, w * s, h * s, frontKey ?? t + pr.frontFoot * s + z, { part: 'front', fade, hit }));
+  return out;
+}
+const lit = (svg, glow = []) => svg.replace(/<(circle|ellipse|path|rect)([^>]*?)fill="([^"]+)"/g, (m, tag, a, f) => f.startsWith('url(') ? `<${tag} class="lit lit-glow"${a}fill="${f}"` : glow.includes(f) ? `<${tag} class="lit"${a}fill="${f}"` : m);
+const still = svg => svg.replace(/ class="hg-(?:flicker|twinkle|shimmer|smoke|spark)"/g, '');
+const calm = svg => svg.replace(/<rect [^>]*class="hg-shimmer"[^>]*\/>/g, '');   // (the pool without its light on the water: DECOR moves that)
+
+/* ---------- the walls: log walls cut away inside; outside, the cabin's own drawing covers them ---------- */
+const WALLS = L.PROPS.filter(p => p.kind === 'wall');
+const NORTH_WINDOWS = [[1520, 1660], [2640, 2780], [2980, 3120]];   // the north wall's windows (world x), looking out at the night
+function wallParts(p) {
+  if (p.only === 'out') return [];   // (the south wall outside: part of the cabin's drawing)
+  const z = p.z || 0, t = p.y - z - p.h;
+  if (p.w >= p.d) {   // east-west: the cut top, then its face looking south
+    const windows = p.side === 'n' ? NORTH_WINDOWS.filter(([a, b]) => a > p.x && b < p.x + p.w).map(([a, b]) => [a - p.x, b - p.x]) : [];
+    return [part(() => A.logWall({ w: p.w, wallH: p.h, t: p.d, windows }), p.x, t, p.w, p.d + p.h, p.key, { fade: p.fade, only: 'in' })];
+  }
+  /* north-south: a run of pieces; only the run's south end shows its log ends, the rest is the cut top */
+  const b = p.y + p.d - 12, end = !WALLS.some(q => q !== p && q.x === p.x && q.w < q.d && Math.abs(q.y + 12 - b) < 1 && (q.only || '') === (p.only || ''));
+  if (end) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: p.d + p.h, wallH: p.h }), p.x, t, p.w, p.d + p.h, p.key, { fade: p.fade, only: 'in' })];
+  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${p.d}" width="${p.w}" height="${p.d}" overflow="visible" aria-hidden="true"><rect x="0" y="-12" width="${p.w}" height="${p.d + 12}" fill="#c98a52"/><path d="M${p.w * .4} -9V${p.d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 -12V${p.d}M${p.w} -12V${p.d}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
+  return [part(top, p.x, t, p.w, p.d, p.key, { fade: p.fade, only: 'in' })];
+}
+
+/* ---------- the railings of the deck's stairs (the deck's own are in its drawing): orange wood, posts and balusters ---------- */
+function railParts(p) {
+  const onDeck = (p.w < p.d && Math.abs(p.x + 6 - L.DECK.x0) < 2) || (p.w > p.d && Math.abs(p.y + 6 - L.DECK.y1) < 2 && p.x < L.DECK.x1);
+  if (onDeck) return [];
+  const H = L.DECK.rail || 40;
+  if (p.w < p.d) {   // north-south, down the stairs: seen edge-on, a sloped bar on its posts
+    const S = L.STAIRS, sx = Math.min(S.x1 - 1, Math.max(S.x0 + 1, p.x + 6)), a = p.y, b = p.y + p.d, za = L.heightAt(sx, a + 1), zb = L.heightAt(sx, b - 1);
+    const t = a - za - H - 8, h = b - zb - t, w = 16;
+    const svg = () => `<svg class="hg hg-rail" viewBox="0 0 ${w} ${n1(h)}" width="${w}" height="${n1(h)}" overflow="visible" aria-hidden="true"><rect x="3" y="4" width="10" height="${n1(h - 4)}" fill="#d98a4a" stroke="#1c1c28" stroke-width="2.2"/><rect x="6" y="6" width="3" height="${n1(h - 10)}" fill="#f0b070" opacity=".5"/><rect x="0" y="0" width="16" height="12" fill="#a65a2c" stroke="#1c1c28" stroke-width="2"/></svg>`;
+    return [part(svg, p.x - 2, t, w, h, p.key)];
+  }
+  /* east-west: balusters under a top rail, posts at the ends */
+  const z = p.z, w = p.w, t = p.y + p.d / 2 - z - H - 8, h = H + 14;
+  let bal = ''; for (let x = 12; x < w - 8; x += 20) bal += `M${x} 10V${h - 4}`;
+  const svg = () => `<svg class="hg hg-rail" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true"><path d="${bal}" stroke="#1c1c28" stroke-width="8"/><path d="${bal}" stroke="#d07a35" stroke-width="4.5"/><rect x="0" y="${h - 10}" width="${w}" height="7" fill="#b8672c" stroke="#1c1c28" stroke-width="1.8"/><rect x="0" y="2" width="14" height="${h - 2}" fill="#c06d30" stroke="#1c1c28" stroke-width="2.2"/><rect x="${w - 14}" y="2" width="14" height="${h - 2}" fill="#c06d30" stroke="#1c1c28" stroke-width="2.2"/><rect x="-4" y="-4" width="${w + 8}" height="8" fill="#e8a060" stroke="#1c1c28" stroke-width="2.2"/><rect x="-4" y="4" width="${w + 8}" height="6" fill="#a65a2c" stroke="#1c1c28" stroke-width="1.8"/></svg>`;
+  return [part(svg, p.x, t, w, h, p.key)];
+}
+
+/* ---------- trees: a few drawings, each kept as a picture and used again and again ---------- */
+const TREE_PICK = [['pine', .3], ['fir', .25], ['spruce', .2], ['oak', .15], ['birch', .1]];
+const treeKind = id => { let k = hash(id + 'k'); for (const [kind, f] of TREE_PICK) { if (k < f) return kind; k -= f; } return 'pine'; };
+const TREE_URL = {};
+const treeURL = kind => TREE_URL[kind] || (TREE_URL[kind] = A.svgDataURL(A.tree({ kind }).front));
+const TREE_SCALE = 1.25;
+function treeBox(p) {
+  const kind = treeKind(p.id), [w0, h0] = A.TREE_KINDS[kind], s = (p.size || 1) * TREE_SCALE, w = w0 * s, h = h0 * s;
+  const cx = p.x + 18, cy = p.y + 12, sy = cy - p.z;
+  return { kind, cx, sy, w, h, l: cx - w / 2, t: sy - (h0 - 8) * s };
+}
+
+/* ---------- the props, kind by kind ---------- */
+const at = (p, w, h, foot = h, cx = p.x + p.w / 2) => ({ l: cx - w / 2, t: p.y + p.d - p.z - foot });   // a box whose foot (y = foot in it) is the prop's front, centered on it
+const one = (p, svg, w, h, foot = h, o = {}) => { const b = at(p, w, h, foot, o.cx); return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)]; };
+const COUCH = { couch1: '#a8382c', couch2: '#3d6e4f' };
 export const DRAW = {
-  wall(p) {
-    const out = p.side === 's', face = p.only === 'in' || p.side === 'n' ? '#8a5530' : '#a65a26';
-    let b = r(1.5, 1.5, p.w - 3, p.d, '#4a2e1a', ol()) + logs(1.5, p.d, p.w - 3, p.h - 1.5, face) + r(1.5, p.d, p.w - 3, p.h - 1.5, 'none', ol());
-    if (out) {
-      for (const wx of p.windows || []) { const x = wx - p.x - 70; b += r(x, p.d + 34, 140, 92, '#ffc45e', `class="lit" ${ol(4)}`) + `<path d="M${x + 70} ${p.d + 34}v92M${x} ${p.d + 80}h140" stroke="${INK}" stroke-width="4"/>`; }
-      for (let x = 40; x < p.w - 20; x += 64) b += glowDot(x, p.d + 14 + (Math.round(x / 64) % 2) * 6, 5, ['#ffcf70', '#ff9a4a', '#fff0b0'][Math.round(x / 64) % 3]);   // the string lights
-    }
-    return svg(p, b);
+  wall: wallParts,
+  stub: p => [part(() => A.logWall({ w: p.w, wallH: p.h, t: p.d }), p.x, p.y - p.h, p.w, p.d + p.h, p.key)],
+  doorway: () => [],
+  roof() {   // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
+    const w = C.x1 - C.x0, d = C.y1 - C.y0, h = d + 290;
+    return [part(() => A.cabinOutside({ w, d, h, wallH: C.wall, windows: [1550, 2080, 3300, 3700, 4080].map(x => x - C.x0), backDoor: L.DOORS.back.x - C.x0, frontDoor: L.DOORS.front.x - C.x0, chimney: 2300 - C.x0 }),
+      C.x0, C.y1 - h, w, h, C.y1 + 15, { img: true, fade: true, hit: { l: C.x0 - 10, t: C.y0 - C.wall - 60, r: C.x1 + 10, b: C.y1 } })];
   },
-  stub: p => svg(p, r(1.5, 1.5, p.w - 3, p.d + p.h - 3, '#5b3a22', ol(2))),
-  doorway: p => svg(p, r(1.5, 1.5, p.w - 3, p.d, '#4a2e1a', ol()) + logs(1.5, p.d, p.w - 3, 40) + r(14, p.d + 40, p.w - 28, p.h - 41, '#ffb24a', `class="lit" ${ol()}`) + `<path d="M14 ${p.d + p.h - 1}V${p.d + 40}H${p.w - 14}V${p.d + p.h - 1}" fill="none" ${ol(5)}/>`),
-  roof(p) {
-    const w = p.box.w, h = p.box.h, m = w / 2, top = 260, lo = 260;   // (C.rise: the ridge runs north–south down the middle)
-    const shingles = (x0, x1) => { let s = ''; for (let x = x0 + 50; x < x1; x += 50) { const k = (x - x0) / (x1 - x0), y0 = x0 ? k * top : top - k * top, y1 = h - (x0 ? lo - k * lo : k * lo); s += `<path d="M${x} ${y0.toFixed(1)}V${y1.toFixed(1)}" stroke="#16301f" stroke-width="3" opacity=".7"/>`; } return s; };
-    const gable = `<path d="M40 ${h - 40}L${m} ${h - 300}L${w - 40} ${h - 40}Z" fill="#a65a26" ${ol()}/>` + `<path d="M${m - 150} ${h - 60}L${m} ${h - 250}L${m + 150} ${h - 60}Z" class="lit" fill="#ffc45e" ${ol(4)}/><path d="M${m} ${h - 250}V${h - 60}M${m - 100} ${h - 110}H${m + 100}" stroke="${INK}" stroke-width="4"/>`;
-    const west = `<path d="M2 ${top}L${m} 2V${h - lo}L2 ${h - 2}Z" fill="#22402c" ${ol()}/>`, east = `<path d="M${m} 2L${w - 2} ${top}V${h - 2}L${m} ${h - lo}Z" fill="#2c5238" ${ol()}/>`;
-    const chim = `<rect x="1000" y="10" width="90" height="190" fill="#6b6f7a" ${ol()}/><path d="M1000 60h90M1000 110h90M1000 160h90M1045 10v50M1025 60v50M1065 110v50" stroke="#4d5059" stroke-width="3"/>`;
-    return svg(p, gable + west + shingles(0, m) + east + shingles(m, w) + `<path d="M${m} 2V${h - lo}" stroke="#16301f" stroke-width="8"/>` + chim);
+  fireplace(p) {
+    const wallH = 228, h = 72 + wallH, b = p.y + p.d;
+    return pairParts(A.fireplace({ w: p.w, wallH }), p.x, b, p.w, h);
   },
-  fireplace: p => svg(p, box(p, '#5d6170', '#6b6f7a') + r(p.w / 2 - 70, p.d + 60, 140, p.h - 62, '#2a1a12', ol()) + `<g class="flick"><path d="M${p.w / 2 - 50} ${p.d + p.h - 4}q20-70 50-90q-5 40 20 50q10-30 30-35q0 50-10 75z" fill="#ff8a2a" class="lit"/><path d="M${p.w / 2 - 20} ${p.d + p.h - 4}q15-40 25-50q5 30 20 50z" fill="#ffd23f" class="lit"/></g>`),
-  rug: p => svg(p, r(4, 4, p.w - 8, p.d - 8, p.id === 'rug1' ? '#6b2632' : '#2f3f6b', `rx="24" ${ol()}`) + r(28, 28, p.w - 56, p.d - 56, 'none', `rx="14" stroke="#e8c27a" stroke-width="4" opacity=".55"`)),
+  rug: () => [],   // (in the ground)
   couch(p) {
-    const n = p.seats || 3, cw = (p.w - 40) / n;
-    return svg(p, box(p, '#2f5d84', '#26496a') + Array.from({ length: n }, (_, i) => r(20 + i * cw + 4, 14, cw - 8, p.d - 30, '#3a72a0', `rx="10" ${ol(2)}`)).join('') + r(1.5, p.d - 18, p.w - 3, 18, '#21405e', ol(2)));
+    const h = 174, b = p.y + p.d;
+    return pairParts(A.couch({ w: p.w, h, seats: p.seats || 3, color: COUCH[p.id] || '#a8382c', facing: 'n', throwOn: p.id !== 'couch2' }), p.x, b, p.w, h);
   },
-  lamp: p => svg(p, `<path d="M${p.w / 2} ${p.d + p.h - 4}V30" stroke="${INK}" stroke-width="5"/><ellipse cx="${p.w / 2}" cy="${p.d + p.h - 4}" rx="${p.w / 2 - 2}" ry="7" fill="#3a2a1e" ${ol(2)}/><path d="M4 40L${p.w - 4} 40L${p.w - 12} 4L12 4Z" class="lit" fill="#ffd27a" ${ol(2.5)}/>`),
-  pianokeys(p) {
-    const n = 28, kw = p.w / n; let s = r(1.5, 1.5, p.w - 3, p.d - 3, '#f2efe6', ol());
-    for (let i = 1; i < n; i++) s += `<path d="M${(i * kw).toFixed(1)} 2V${p.d - 2}" stroke="${INK}" stroke-width="2"/>`;
-    for (let i = 0; i < n - 1; i++) if (![2, 6].includes(i % 7)) s += r(((i + 1) * kw - kw * .3).toFixed(1), 2, (kw * .6).toFixed(1), p.d * .58, '#22222c');
-    return svg(p, s);
+  lamp(p) {
+    if (p.h >= 140) return one(p, () => lit(A.floorLamp({ w: 70, h: 170 }), ['#ffcf73', '#fff0c2']), 70, 170, 164);
+    return one(p, () => lit(A.nightstand({ w: 48, h: 140 }), ['#ffcf73', '#fff0c2']), 48, 140, 140);
   },
-  piano: p => svg(p, box(p, '#2a2026', '#1e171b') + r(20, p.d + 18, p.w - 40, 10, '#f2efe6', ol(1.5))),
-  sheet: p => svg(p, r(p.w / 2 - 4, 30, 8, p.d + p.h - 32, '#3a2a1e', ol(2)) + r(6, 6, p.w - 12, p.h * .7, '#f4efe2', ol(2.5)) + Array.from({ length: 6 }, (_, i) => `<path d="M14 ${30 + i * 30}h${p.w - 28}M14 ${36 + i * 30}h${p.w - 28}M14 ${42 + i * 30}h${p.w - 28}" stroke="#8a8fa3" stroke-width="1.2"/>`).join('')),
+  pianokeys: p => [part(() => A.floorPiano({ w: p.w, h: p.d, octaves: 2 }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  piano(p) { const h = 240; return pairParts(A.pianoBody({ w: p.w, h }), p.x, p.y + p.d, p.w, h); },
+  sheet: p => one(p, () => A.staffColumn({ w: 130, h: p.d + p.h }), 130, p.d + p.h, p.d + p.h - 4, { fade: true }),
   stage(p) {
-    const R = p.w / 2, h = p.h;
-    return svg(p, `<path d="M1.5 ${R}A${R - 1.5} ${R - 1.5} 0 0 0 ${p.w - 1.5} ${R}V${R + h}A${R - 1.5} ${R - 1.5} 0 0 1 1.5 ${R + h}Z" fill="#5e3a1f" ${ol()}/>`
-      + Array.from({ length: 9 }, (_, i) => { const a = Math.PI * (i + 1) / 10, x = R - Math.cos(a) * (R - 2), y = R + Math.sin(a) * (R - 2); return `<path d="M${x.toFixed(1)} ${y.toFixed(1)}v${h}" stroke="#3e2512" stroke-width="3"/>`; }).join('')
-      + `<circle cx="${R}" cy="${R}" r="${R - 1.5}" fill="#9a6a3c" ${ol()}/>` + Array.from({ length: 7 }, (_, i) => `<path d="M${20 + i * 66} ${R - Math.sqrt(Math.max(0, R * R - (20 + i * 66 - R) ** 2)) + 8}V${R + Math.sqrt(Math.max(0, R * R - (20 + i * 66 - R) ** 2)) - 8}" stroke="#7a5230" stroke-width="2.5"/>`).join('')
-      + `<circle cx="${R}" cy="${R}" r="${R - 14}" fill="none" stroke="#c48a52" stroke-width="3" opacity=".6"/>`);
+    const S = L.STAGE, h = 2 * S.r + S.h;
+    return pairParts(A.stage({ w: 2 * S.r, d: 2 * S.r, z: S.h }), p.x, p.y + p.d, 2 * S.r, h);
   },
-  stagestairs(p) {   // down toward the front: step k's top at height h(1 − k/n), its riser in front of it
-    const n = 8, dd = p.d / n; let s = '';
-    for (let k = 0; k < n; k++) { const hk = p.h * (1 - k / n), y = k * dd + p.h - hk; s += r(1.5, y.toFixed(1), p.w - 3, dd.toFixed(1), '#9a6a3c', ol(2)) + r(1.5, (y + dd).toFixed(1), p.w - 3, hk.toFixed(1), '#5e3a1f', ol(2)); }
-    return svg(p, s);
+  stagestairs(p) {
+    const S = L.STAGE, h = p.d + S.h;
+    return pairParts(A.stageStairs({ w: p.w, d: p.d, z: S.h, steps: S.n, dir: 'n' }), p.x, p.y + p.d, p.w, h, { backKey: p.key, frontKey: p.y + p.d });
   },
-  mic: p => svg(p, `<path d="M${p.w / 2} ${p.d + p.h - 4}V24M${p.w / 2} 24l10-14" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><ellipse cx="${p.w / 2}" cy="${p.d + p.h - 4}" rx="16" ry="5" fill="#2a2a33" ${ol(2)}/><rect x="${p.w / 2 + 4}" y="2" width="12" height="18" rx="6" fill="#4a4d5a" ${ol(2)}/>`),
-  chalkfloor: p => svg(p, r(3, 3, p.w - 6, p.d - 6, '#23302a', `rx="8" stroke="#8a5530" stroke-width="10"`) + r(3, 3, p.w - 6, p.d - 6, 'none', `rx="8" ${ol()}`)),
-  chalk: p => svg(p, r(2, 2, p.w - 4, p.d - 4, '#6e4a2a', `rx="6" ${ol(2)}`) + r(14, p.d / 2 - 5, p.w - 28, 10, '#f4f4f0', `rx="4" ${ol(1.5)}`)),
-  eraser: p => svg(p, r(3, 3, p.w - 6, p.d - 6, '#c9b48a', `rx="8" ${ol(2)}`) + r(10, p.d - 26, p.w - 20, 16, '#3d3d48', `rx="4"`)),
-  book: p => svg(p, `<path d="M8 ${p.d + p.h - 2}L${p.w / 2} ${p.d}L${p.w - 8} ${p.d + p.h - 2}" fill="none" ${ol(3)}/>` + `<path d="M2 ${p.d + 6}L${p.w / 2} 0L${p.w - 2} ${p.d + 6}L${p.w / 2} ${p.d + 16}Z" fill="#f4efe2" ${ol(2)}/><path d="M${p.w / 2} 0V${p.d + 16}" stroke="#7a2a35" stroke-width="3"/>`),
-  counter: p => svg(p, box(p, '#cfc4b0', '#7a4a2a') + Array.from({ length: Math.floor(p.w / 60) }, (_, i) => r(10 + i * 60, p.d + 12, 48, p.h - 24, 'none', `rx="4" stroke="#4e2e18" stroke-width="2"`)).join('')),
-  stove: p => svg(p, box(p, '#3a3d48', '#2c2e37') + [[28, 22], [p.w - 28, 22], [28, p.d - 22], [p.w - 28, p.d - 22]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="14" fill="#1c1c28" stroke="#ff7a3a" stroke-width="2" opacity=".85"/>`).join('') + r(14, p.d + 16, p.w - 28, p.h - 32, '#1c1c28', `rx="6" stroke="#4d5059" stroke-width="2"`)),
-  fridge: p => svg(p, box(p, '#c4cad6', '#d8dde6') + `<path d="M4 ${p.d + p.h * .38}H${p.w - 4}M${p.w - 20} ${p.d + 16}v40M${p.w - 20} ${p.d + p.h * .38 + 14}v40" stroke="${INK}" stroke-width="3"/>`),
-  table: p => svg(p, `<path d="M14 ${p.d}V${p.d + p.h - 2}M${p.w - 14} ${p.d}V${p.d + p.h - 2}" stroke="${INK}" stroke-width="7"/>` + r(1.5, 1.5, p.w - 3, p.d, '#8a5530', ol()) + r(1.5, p.d, p.w - 3, 12, '#5e3a1f', ol(2))),
-  'deck-table': p => DRAW.table(p),
-  tub: p => svg(p, box(p, '#e8ecf2', '#d4d9e2') + r(14, 12, p.w - 28, p.d - 24, '#7ec8e3', `rx="16" ${ol(2)}`)),
-  sink: p => svg(p, box(p, '#e8ecf2', '#9aa2b2') + `<ellipse cx="${p.w / 2}" cy="${p.d / 2}" rx="${p.w / 2 - 16}" ry="${p.d / 2 - 10}" fill="#b8c4d4" ${ol(2)}/>`),
-  toilet: p => svg(p, r(10, 1.5, p.w - 20, 22, '#e8ecf2', ol(2)) + `<ellipse cx="${p.w / 2}" cy="${p.d - 18}" rx="${p.w / 2 - 4}" ry="${p.d / 2 - 12}" fill="#f4f6fa" ${ol(2)}/>` + r(14, p.d - 6, p.w - 28, p.h - 4, '#d4d9e2', ol(2))),
-  bed: p => svg(p, box(p, '#e8e2d4', '#6e4a2a') + r(14, 14, p.w - 28, 56, '#f8f6f0', `rx="14" ${ol(2)}`) + r(1.5, 90, p.w - 3, p.d - 91, p.id === 'bed1' ? '#7a3a8a' : '#2f7a6b', ol(2.5))),
-  rail(p) {
-    const ns = p.w < p.d; let s = r(1, 1, p.w - 2, p.d - 1, '#e08a3c', ol(2));
-    if (ns) s += r(1, p.d, p.w - 2, p.h - 1, '#c46f2a', ol(2));
-    else { s += r(1, p.d + p.h - 8, p.w - 2, 7, '#c46f2a', ol(1.5)); for (let x = 6; x < p.w - 2; x += 22) s += `<path d="M${x} ${p.d}V${p.d + p.h - 2}" stroke="#c46f2a" stroke-width="7"/><path d="M${x} ${p.d}V${p.d + p.h - 2}" stroke="${INK}" stroke-width="1.5" opacity=".5"/>`; }
-    return svg(p, s);
+  mic: p => { const fy = L.STAGE.cy - 40, sy = fy - L.STAGE.h; return [part(() => A.micStand({ w: 56, h: 120 }), L.STAGE.cx - 56 * .45, sy - 114, 56, 120, p.key)]; },
+  chalkfloor: p => [part(() => A.chalkFloor({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  chalk: p => [part(() => A.chalkTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  eraser: p => [part(() => A.eraserTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
+  counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 230),
+  stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
+  fridge: p => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
+  table: p => one(p, () => A.kitchenTable({ w: p.w, h: 240 }), p.w, 240, 230),
+  tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
+  sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
+  toilet: p => one(p, () => A.toilet({ w: 56, h: 140 }), 56, 140),
+  bed: p => one(p, () => A.bed({ w: p.w, h: 290, colors: p.id === 'bed1' ? undefined : ['#9b5de5', '#e0b04a', '#3e6d8c', '#c4573a'] }), p.w, 290),
+  rail: railParts,
+  rocker: p => one(p, () => A.rockingChair({ w: 70, h: 100, facing: p.id === 'rocker1' ? 'e' : 'w' }), 70, 100, 96),
+  'deck-table': p => one(p, () => A.smallTable({ w: 60, h: 130 }), 60, 130),
+  jeep(p) {   // the red jeep facing the cabin (east); its shadow is in the ground
+    const s = 1.1, pr = A.jeep({ facing: 'e' });
+    return [part(pr.front, p.x - 4, p.y + p.d - p.z - 214 * s, 292 * s, 214 * s, p.key, { part: 'front' })];
   },
-  rocker: p => svg(p, `<path d="M4 ${p.d + p.h - 6}Q${p.w / 2} ${p.d + p.h + 6} ${p.w - 4} ${p.d + p.h - 10}" fill="none" stroke="${INK}" stroke-width="6"/>` + r(8, p.d + 20, p.w - 16, 14, '#d0772f', ol(2)) + r(8, 2, p.w - 16, p.d + 22, '#e08a3c', ol(2)) + `<path d="M20 6v${p.d + 12}M${p.w / 2} 6v${p.d + 12}M${p.w - 20} 6v${p.d + 12}" stroke="#a85a20" stroke-width="3"/>`),
-  jeep(p) {   // the red jeep: boxy two-door, soft-top, round headlights at the front (east), the spare tire on the back
-    const b = p.d, w = p.w, h = p.h;
-    return svg(p, r(4, 6, w - 8, b - 10, '#c22a26', `rx="10" ${ol()}`) + r(18, 14, w * .48, b - 26, '#22222a', `rx="8" ${ol(2)}`) + r(w * .62, 18, w * .3, b - 34, '#a8201d', `rx="6" ${ol(2)}`)
-      + r(4, b - 6, w - 8, h - 30, '#d4302b', `rx="8" ${ol()}`) + r(18, b - 4, w * .48, h * .42, '#22222a', `rx="4" ${ol(2)}`) + `<path d="M${w * .58} ${b}V${b + h - 34}" stroke="${INK}" stroke-width="3"/>`
-      + [w * .2, w * .8].map(x => `<circle cx="${x}" cy="${b + h - 26}" r="24" fill="#1c1c22" ${ol()}/><circle cx="${x}" cy="${b + h - 26}" r="9" fill="#8a8fa3"/>`).join('')
-      + `<circle cx="10" cy="${b + 34}" r="20" fill="#1c1c22" ${ol(2)}/>` + glowDot(w - 12, b + 18, 9, '#fff3c0'));
+  post(p) {   // a lamppost: its pool of light is the ground's (it flickers there)
+    const cx = p.x + p.w / 2, fy = p.y + p.d - p.z, w = 140, h = 230;
+    return [part(() => A.lamppost({ w, h }).front, cx - w / 2, fy - (h - 14), w, h, p.key, { fade: true, hit: { l: cx - 18, t: fy - 216, r: cx + 18, b: fy } })];
   },
-  post: p => svg(p, `<path d="M${p.w / 2} ${p.d + p.h - 4}V40" stroke="${INK}" stroke-width="8"/><path d="M${p.w / 2} ${p.d + p.h - 4}V40" stroke="#3a3d48" stroke-width="4"/>` + r(3, 8, p.w - 6, 34, '#ffcf70', `class="lit flick" ${ol(2.5)}`) + `<path d="M0 8H${p.w}L${p.w / 2} -2Z" fill="#2a2a33"/>`),
-  campfire: p => svg(p, `<ellipse cx="${p.w / 2}" cy="${p.d + p.h - 18}" rx="${p.w / 2 - 4}" ry="${p.d / 2 - 4}" fill="#3a2a22" ${ol()}/>` + `<path d="M20 ${p.d + p.h - 20}L${p.w - 20} ${p.d + p.h - 34}M20 ${p.d + p.h - 34}L${p.w - 20} ${p.d + p.h - 20}" stroke="#6e4a2a" stroke-width="10" stroke-linecap="round"/>`
-    + `<g class="flick"><path d="M${p.w / 2 - 32} ${p.d + p.h - 26}q10-60 32-80q0 34 18 44q6-20 16-24q4 40-6 60z" fill="#ff8a2a" class="lit" ${ol(2)}/><path d="M${p.w / 2 - 12} ${p.d + p.h - 26}q6-30 14-40q6 24 14 40z" fill="#ffd23f" class="lit"/></g>`),
-  log: p => svg(p, r(2, 2, p.w - 4, p.d + p.h - 4, '#7a4a26', `rx="18" ${ol()}`) + `<ellipse cx="${p.w - 16}" cy="${(p.d + p.h) / 2}" rx="12" ry="${(p.d + p.h) / 2 - 6}" fill="#c48a52" ${ol(2)}/>`),
-  trampoline: p => svg(p, `<ellipse cx="${p.w / 2}" cy="${p.d / 2}" rx="${p.w / 2 - 4}" ry="${p.d / 2 - 4}" fill="#2f7ad8" ${ol()}/><ellipse cx="${p.w / 2}" cy="${p.d / 2}" rx="${p.w / 2 - 26}" ry="${p.d / 2 - 22}" fill="#1c1c28"/>`),
-  goal(p) {   // the soccer goal faces west: its posts at the mouth (left), the net running back (right)
-    const fy = p.d + p.h - 4, ny = 130, net = [];
-    for (let y = 20; y < fy - 10; y += 26) net.push(`M12 ${y}L${p.w - 14} ${y + 40}`);
-    for (let x = 30; x < p.w - 10; x += 26) net.push(`M${x} ${10 + x * .3}V${fy - (x * .5)}`);
-    return svg(p, `<path d="${net.join('')}" stroke="#e8ecf2" stroke-width="1.6" opacity=".55" fill="none"/><path d="M12 ${fy}V10M12 ${ny}V${ny - 120}M12 10V${p.box.h - 4}" stroke="#f4f6fa" stroke-width="8" stroke-linecap="round"/><path d="M${p.w - 14} 50V${fy}" stroke="#c4cad6" stroke-width="5"/>`);
+  campfire(p) {   // the ring around the light's middle
+    const w = 150, h = 260, cx = p.x + p.w / 2, cy = p.light.y - p.z;
+    return [part(() => A.campfire({ w, h }), cx - w / 2, cy - (h - w / 2), w, h, p.key)];
   },
+  log: p => one(p, () => A.logSeat({ w: p.w, h: 79, axis: 'x' }), p.w, 79),
+  trampoline(p) {
+    const z = 30, h = p.d + z;
+    return pairParts(A.trampoline({ w: p.w, d: p.d, z }), p.x, p.y + p.d - p.z, p.w, h, { backKey: p.y, frontKey: p.y + p.d });
+  },
+  goal(p) {   // the net: its mouth (the posts) on the field's goal line, the net running back east
+    const d = 500, z = 110, w = 120, y0 = p.y + 10, b = y0 + d - p.z, h = d + z;
+    return pairParts(A.soccerNet({ w, d, z, backZ: 70 }), p.x + 10, b, w, h, { backKey: y0, frontKey: y0 + d, fade: true, hit: { l: p.x, t: b - h, r: p.x + w + 20, b: b - 20 } });
+  },
+  goalpart: () => [],
   tree(p) {
-    const w = p.box.w, h = p.box.h, s = p.size || 1, k = hash(p.id), tone = [['#1d4a30', '#245a38', '#2e6b45'], ['#173d2a', '#1f4f34', '#2a5e3e'], ['#20452f', '#2a5838', '#33704a']][Math.floor(k * 3)];
-    const ty = h - 16 - 70 * s, cr = w * .3;
-    return svg(p, `<ellipse cx="${w / 2}" cy="${h - 10}" rx="${w * .3}" ry="10" fill="#000" opacity=".25"/>` + r(w / 2 - 11 * s, ty - 10, 22 * s, 70 * s + 18, '#4a2f1c', `rx="6" ${ol(2.5)}`)
-      + `<g ${ol(3)}><circle cx="${w / 2}" cy="${ty - cr * 1.2}" r="${cr * 1.25}" fill="${tone[0]}"/><circle cx="${w / 2 - cr * .7}" cy="${ty - cr * .55}" r="${cr}" fill="${tone[1]}"/><circle cx="${w / 2 + cr * .7}" cy="${ty - cr * .6}" r="${cr * .95}" fill="${tone[1]}"/><circle cx="${w / 2 + (k - .5) * cr}" cy="${ty - cr * 1.9}" r="${cr * .8}" fill="${tone[2]}"/></g>`);
+    const b = treeBox(p);
+    return [part(treeURL(b.kind), b.l, b.t, b.w, b.h, p.key, { img: true, fade: true, url: true, hit: { l: b.l + b.w * .14, t: b.t, r: b.l + b.w * .86, b: b.sy - 10 } })];
   },
 };
+
+/* ---------- the ground ---------- */
+const LO = -L.SLOPE.low;                       // how much lower the downhill draws (240)
+const LOWY = L.SLOPE.y1 + LO;                   // where the downhill starts on the screen
+const X0 = -260, X1 = L.W + 260, Y0 = -460, Y1 = L.H + LO + 260;
+const piece = (svg, x, y, w, h) => ({ svg, x, y, w, h });
+/* a patch of forest floor that fades into the grass toward `to` ('n' | 's' | 'e' | 'w': the open side) */
+let fid = 0;
+function forestFloor(w, h, to) {
+  const id = 'hgff' + (++fid), [x1, y1, x2, y2] = { s: [0, 0, 0, 1], n: [0, 1, 0, 0], e: [0, 0, 1, 0], w: [1, 0, 0, 0] }[to];
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible"><defs><linearGradient id="${id}g" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${id}m"><rect width="${w}" height="${h}" fill="url(#${id}g)"/></mask></defs><g mask="url(#${id}m)">${A.ground({ w, h, kind: 'forest', seed: fid })}<rect width="${w}" height="${h}" fill="#050d09" opacity=".35"/></g></svg>`;
+}
+/* a dark stone footing under the cabin's south wall, where the ground falls away from it */
+function footing(w, h) {
+  let s = `<rect width="${w}" height="${h}" fill="#3a3c44" stroke="#1c1c28" stroke-width="3"/>`;
+  for (let y = 3, r = 0; y < h - 4; y += 19, r++) for (let x = 3 - (r % 2) * 22, i = 0; x < w - 4; x += 46, i++) s += `<rect x="${Math.max(3, x)}" y="${y}" width="${Math.min(42, w - 3 - Math.max(3, x))}" height="${Math.min(16, h - 3 - y)}" rx="4" fill="${['#6c717b', '#7e838d', '#75706a'][(i + r) % 3]}"/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${s}<rect width="${w}" height="${h}" fill="#000" opacity=".25"/></svg>`;
+}
+function groundPieces() {
+  const G = [];
+  /* the three grounds: the highground's grass, the darker slope, the downhill */
+  G.push(piece(A.ground({ w: X1 - X0, h: L.SLOPE.y0 - Y0, kind: 'grass', seed: 2 }), X0, Y0, X1 - X0, L.SLOPE.y0 - Y0));
+  G.push(piece(A.ground({ w: X1 - X0, h: LOWY - L.SLOPE.y0, kind: 'slope', seed: 3 }), X0, L.SLOPE.y0, X1 - X0, LOWY - L.SLOPE.y0));
+  G.push(piece(A.ground({ w: X1 - X0, h: Y1 - LOWY, kind: 'downhill', seed: 4 }), X0, LOWY, X1 - X0, Y1 - LOWY));
+  /* the forest floor, thick at the edges */
+  const B = 360;
+  G.push(piece(forestFloor(X1 - X0, B - Y0, 's'), X0, Y0, X1 - X0, B - Y0));
+  G.push(piece(forestFloor(X1 - X0, Y1 - (L.H + LO - B), 'n'), X0, L.H + LO - B, X1 - X0, Y1 - (L.H + LO - B)));
+  G.push(piece(forestFloor(B - X0, Y1 - Y0, 'e'), X0, Y0, B - X0, Y1 - Y0));
+  G.push(piece(forestFloor(X1 - (L.W - B), Y1 - Y0, 'w'), L.W - B, Y0, X1 - (L.W - B), Y1 - Y0));
+  /* the dirt path from the forest to the front door */
+  const P = L.PATH, pw = P.y1 - P.y0, ph = pw + 80, py = (P.y0 + P.y1) / 2;
+  G.push(piece(A.dirtPath({ w: P.x1 + 100, h: ph, pts: [[0, ph / 2], [P.x1 + 100 - 75 - 40, ph / 2]], width: pw }), -100, py - ph / 2, P.x1 + 100, ph));
+  /* the soccer field's lines: its east goal line through the net's mouth, centered on the net */
+  const goal = L.PROPS.find(p => p.kind === 'goal'), fx1 = goal ? goal.x + 10 + 30 : L.FIELD.x1, fcy = goal ? goal.y + 10 + 250 : (L.FIELD.y0 + L.FIELD.y1) / 2, fh = 1300, fw = fx1 - L.FIELD.x0;
+  G.push(piece(A.soccerField({ w: fw, h: fh }), L.FIELD.x0, fcy - fh / 2, fw, fh));
+  /* the pool: pavers round it, then its coping, water and lights, the lane rope */
+  const PL = L.POOL, c = 30;
+  G.push(piece(A.ground({ w: PL.x1 - PL.x0 + 200, h: PL.y1 - PL.y0 + 160, kind: 'pavers', seed: 5 }), PL.x0 - 100, PL.y0 - 80 + LO, PL.x1 - PL.x0 + 200, PL.y1 - PL.y0 + 160));
+  const pw0 = PL.x1 - PL.x0 + 2 * c, pd0 = PL.y1 - PL.y0 + 2 * c;
+  G.push(piece(still(calm(A.pool({ w: pw0, d: pd0, depth: L.SLOPE.low - PL.h, c, lights: 5 }).back)), PL.x0 - c, PL.y0 - c + LO, pw0, pd0));
+  const ry0 = PL.y0 + LO + (L.SLOPE.low - PL.h), ry1 = PL.y1 + LO;
+  G.push(piece(A.laneRope({ w: 22, h: ry1 - ry0 }), PL.rope - 11, ry0, 22, ry1 - ry0));
+  /* the cabin: its stone footing on the slope, the floors (wood; the kitchen's tiles, the bathroom's), the rugs */
+  const fz = -L.terrainAt(C.y1);
+  G.push(piece(footing(L.DECK.x0 - C.x0 + 24, fz + 6), C.x0 - 12, C.y1 - 2, L.DECK.x0 - C.x0 + 24, fz + 6));
+  G.push(piece(A.ground({ w: C.x1 - C.x0, h: C.y1 - C.y0, kind: 'wood', seed: 6 }), C.x0, C.y0, C.x1 - C.x0, C.y1 - C.y0));
+  G.push(piece(A.ground({ w: C.x1 - 3500, h: 1100 - C.y0, kind: 'tile' }), 3500, C.y0, C.x1 - 3500, 1100 - C.y0));
+  G.push(piece(A.ground({ w: 400, h: 350, kind: 'bath' }), 3500, 1100, 400, 350));
+  const RUG = { rug1: { kind: 'oval' }, rug2: { kind: 'rect' }, rug3: { kind: 'rect', colors: ['#3e6d8c', '#e0b04a', '#a8402e', '#1c1c28'] } };
+  for (const p of L.PROPS.filter(q => q.kind === 'rug')) G.push(piece(A.rug({ w: p.w, h: p.d, ...(RUG[p.id] || {}) }), p.x, p.y, p.w, p.d));
+  /* the deck's boards (and its west railing), the stairs' landing, treads and risers */
+  const D = L.DECK, S = L.STAIRS, rail = 40, drop = -L.terrainAt(D.y1);
+  G.push(piece(A.deck({ w: D.x1 - D.x0, d: D.y1 - D.y0, rail, drop, gapE: [0, D.y1 - D.y0], lights: [] }).back, D.x0, D.y0 - rail, D.x1 - D.x0, D.y1 - D.y0 + rail + drop));
+  G.push(piece(A.deckStairs({ w: S.x1 - S.x0, d: S.y1 - S.y0, rise: LO, steps: S.n, landing: S.land - S.y0, rail }).back, S.x0, S.y0 - rail, S.x1 - S.x0, S.y1 - S.y0 + rail + LO));
+  /* shadows: the trees', the jeep's */
+  for (const p of L.PROPS.filter(q => q.kind === 'tree')) {
+    const b = treeBox(p), rx = b.w * .38, ry = b.w * .14;
+    G.push({ raw: `<ellipse cx="${n1(b.cx)}" cy="${n1(b.sy - 4)}" rx="${n1(rx)}" ry="${n1(ry)}" fill="#000" opacity=".33"/>`, x: b.cx - rx, y: b.sy - 4 - ry, w: 2 * rx, h: 2 * ry });
+  }
+  const jp = L.PROPS.find(p => p.kind === 'jeep');
+  if (jp) G.push(piece(A.jeep({ facing: 'e' }).back, jp.x - 4, jp.y + jp.d - jp.z - 214 * 1.1, 292 * 1.1, 214 * 1.1));
+  /* the forest past the ring of trees, behind everything: north, west and east, in small pieces (a tile paints the few
+     it touches) */
+  for (let x = X0, k = 0; x < X1; x += 256, k++) G.push(piece(A.forest({ w: 256, h: 420, top: 300, seed: 100 + k, floor: false }), x, -60 - 314, 256, 420));
+  for (let y = Y0 + 140, k = 0; y < Y1; y += 256, k++) for (const x of [-235, L.W - 25]) G.push(piece(A.forest({ w: 260, h: 556, top: 300, seed: 200 + k + x, density: .9, floor: false }), x, y - 300, 260, 556));
+  return G;
+}
+let ground = null;
+export const GROUND = () => ground || (ground = groundPieces());
+/* the ground's plain colors (before its tiles are painted): by screen-world y */
+export const groundColor = y => y < L.SLOPE.y0 ? '#24503d' : y < LOWY ? '#1a3a2e' : '#1f4636';
+
+/* ---------- decor: what no prop owns ---------- */
+function decor() {
+  const out = [];
+  /* the forest past the ring of trees in the south: in front of everything (nobody gets near enough to be behind it) */
+  for (let x = X0, k = 0; x < X1; x += 512, k++) out.push(part(() => A.forest({ w: 512, h: 420, top: 300, seed: 300 + k, floor: false }), x, L.H + LO + 120 - 314, 512, 420, 99999, { img: true }));
+  /* the deck: its railing on the south side, the lattice under it down to the slope */
+  const D = L.DECK, rail = 40, drop = -L.terrainAt(D.y1), dk = A.deck({ w: D.x1 - D.x0, d: D.y1 - D.y0, rail, drop, gapE: [0, D.y1 - D.y0], lights: [] });
+  out.push(part(dk.front, D.x0, D.y0 - rail, D.x1 - D.x0, D.y1 - D.y0 + rail + drop, D.y1, { img: true, part: 'front', only: 'out' }));
+  /* the chimney's smoke over the cabin (outside) */
+  out.push(part(`<svg class="hg" viewBox="0 0 80 60" width="80" height="60" overflow="visible" aria-hidden="true"><g class="hg-smoke" style="animation-delay:-1s"><circle cx="46" cy="44" r="20" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-3.4s"><circle cx="36" cy="44" r="16" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-5.6s"><circle cx="42" cy="44" r="18" fill="#c9cfdb"/></g></svg>`,
+    2300 - 40, C.y0 - 250 - 50, 80, 60, C.y1 + 16, { only: 'out' }));
+  /* the pool's light moving on the water (the whole picture fades in and out: cheap) */
+  const PL = L.POOL, wy = PL.y0 + LO + (L.SLOPE.low - PL.h), ww = PL.x1 - PL.x0, wh = PL.y1 + LO - wy;
+  for (const [k, sz, dl] of [['a', 140, 0], ['b', 180, 1.8]]) {
+    const pat = k === 'a' ? `<path d="M0 20Q35 4 70 20T140 20M0 55Q35 40 70 55T140 55M20 0Q30 35 15 70M95 0Q110 35 90 70" stroke="#c8fbff" stroke-width="2.2" fill="none" opacity=".35"/>` : `<path d="M0 30Q45 10 90 30T180 30M0 75Q45 55 90 75T180 75M50 0Q65 45 45 90" stroke="#e2fdff" stroke-width="1.8" fill="none" opacity=".3"/>`;
+    out.push(part(`<svg class="hg" viewBox="0 0 ${ww} ${wh}" width="${ww}" height="${wh}" aria-hidden="true"><defs><pattern id="hgpw${k}" width="${sz}" height="${sz / 2}" patternUnits="userSpaceOnUse"${k === 'b' ? ' patternTransform="translate(40 20)"' : ''}>${pat}</pattern></defs><rect width="${ww}" height="${wh}" fill="url(#hgpw${k})"/></svg>`,
+      PL.x0, wy, ww, wh, 0, { layer: 'floor', cls: 'hang-shimmer', style: `animation-delay:-${dl}s` }));
+  }
+  return out;
+}
+let deco = null;
+export const DECOR = () => deco || (deco = decor());

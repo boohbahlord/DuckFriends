@@ -11,7 +11,8 @@
    ducks glide to where the room says they are, and jump and fall from their own numbers (z: height, b: where the jump
    began). The activities (registry.js) add the context button, and whatever they draw. */
 import * as L from './layout.js';
-import { DRAW } from './shapes.js';
+import { DRAW, GROUND, DECOR, groundColor } from './shapes.js';
+import { svgDataURL, useHangArtCSS } from './art.js';
 import { ACTS } from './registry.js';
 import './activities.js';
 import { duckRoom } from '../duck.js';
@@ -23,23 +24,21 @@ const AIR_UP = 6;                    // in the air, ground this much above the f
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const dirOf = (dx, dy) => dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u';
 
-/* the grass tufts, and the floor's planks: the same every time */
-const rnd = (s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)(77);
-const TUFTS = Array.from({ length: 1400 }, () => [L.EDGE + rnd() * (L.W - 2 * L.EDGE), L.EDGE + rnd() * (L.H - 2 * L.EDGE)]).filter(([x, y]) => !(x > 1250 && x < 4350 && y > 550 && y < 2650) && !L.inPool(x, y) && !(y > L.PATH.y0 - 10 && y < L.PATH.y1 + 10 && x < L.PATH.x1));
-
 /* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; jumpZ(pos, now) (duck heights); landsAt(pos);
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it) */
 export function mountWorld(board, api) {
   const canvas = board.querySelector('.hang-ground'), g = canvas.getContext('2d'), propsBox = board.querySelector('.hang-props'), shade = board.querySelector('.hang-shade');
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
-  const els = new Map();     // prop id → its element (made the first time it comes into view)
+  const els = new Map();     // prop id → its element (the front or only part; made the first time it comes into view)
+  const all = new Map();     // prop id → all its parts' elements
   const cls = new Map();     // prop id → the class its activity gives it
   const sm = new Map();      // other ducks as drawn: { x, y, z } in world px, gliding after the room's numbers
-  let last = 0, inside = false, button = null, btnSig = null, pushed = '', grab = null, grabEnd = 0, seenState = null;
+  let dead = false, last = 0, inside = false, button = null, btnSig = null, pushed = '', grab = null, grabEnd = 0, seenState = null;
   const R = () => api.room();
   const toScreen = (x, y, h = 0) => ({ left: (x - cam.x) * cam.sc + cam.vw / 2, top: (y - h - cam.y) * cam.sc + cam.vh / 2 });
   const ctx = { state: () => R().state, get me() { return R().me; }, send: a => R().send(a), duck: () => api.me(),
-    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null } };
+    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [] } };
+  useHangArtCSS();
   const acts = () => ACTS.values();
   for (const a of acts()) a.mount?.(ctx);
 
@@ -64,83 +63,51 @@ export function mountWorld(board, api) {
     else o.z = gnd;   // on the ground: the ground under it as it glides
   }
 
-  /* ---------- the ground ---------- */
-  const GRASS = '#1e3b2b', SLOPE_A = '#1b3527', SLOPE_B = '#13281d', LOW = '#17301f';
+  /* ---------- the ground: art.js's flat pieces (shapes.js GROUND), painted once into tiles, then the night's light ----------
+     A tile is TILE screen-world px square, painted at the board's resolution (at most 1.5 px a world px on a phone, 2 on
+     a computer) from one SVG of the pieces it touches; a few at a time, nearest first, the ones around the view too. Until
+     a tile is ready its ground's plain color stands in. A decoded tile is copied into its canvas at most three a frame (one
+     when none in view is missing), so walking on never stutters. Every frame: the tiles in view, then the warm pools of
+     light. */
+  const TILE = 256, MAXT = 90;
+  const tiles = new Map(), ready = []; let tk = 0, busy = 0, fno = 0;
+  const pieces = GROUND();
+  function paintTile(t) {
+    busy++; t.queued = true;
+    const x = t.i * TILE, y = t.j * TILE, px = Math.ceil(TILE * tk), k = tk;
+    let body = '';
+    for (const p of pieces) if (p.x < x + TILE && p.x + p.w > x && p.y < y + TILE && p.y + p.h > y) body += p.raw || `<g transform="translate(${p.x} ${p.y})">${p.svg}</g>`;
+    const url = URL.createObjectURL(new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${TILE} ${TILE}" width="${px}" height="${px}">${body}</svg>`], { type: 'image/svg+xml' }));
+    const img = new Image(); img.src = url;
+    const done = () => { URL.revokeObjectURL(url); busy--; };
+    img.decode().then(() => { done(); if (k === tk && !dead) ready.push([t, img, px]); }, () => { done(); t.queued = false; });
+  }
+  function copyTile([t, img, px]) { const c = document.createElement('canvas'); c.width = c.height = px; c.getContext('2d').drawImage(img, 0, 0, px, px); t.c = c; }
   function drawGround(now, s) {
-    const { sc, vw, vh, dpr } = cam;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.globalCompositeOperation = 'source-over';
-    g.fillStyle = '#08120d'; g.fillRect(0, 0, vw, vh);
+    const { sc, vw, vh, dpr } = cam; fno++;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
+    const vx0 = cam.x - vw / 2 / sc, vx1 = cam.x + vw / 2 / sc, vy0 = cam.y - vh / 2 / sc, vy1 = cam.y + vh / 2 / sc;
+    const see = (x0, y0, x1, y1) => x1 > vx0 - 20 && x0 < vx1 + 20 && y1 > vy0 - 20 && y0 < vy1 + 20;
+    const DX = x => Math.round(((x - cam.x) * sc + vw / 2) * dpr), DY = y => Math.round(((y - cam.y) * sc + vh / 2) * dpr);
+    const i0 = Math.floor(vx0 / TILE), i1 = Math.floor(vx1 / TILE), j0 = Math.floor(vy0 / TILE), j1 = Math.floor(vy1 / TILE), want = [];
+    const missing = () => { for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const t = tiles.get(i + ',' + j); if (!t || !t.c) return true; } return false; };
+    if (ready.length) { ready.sort((a, b) => Math.hypot((a[0].i + .5) * TILE - cam.x, (a[0].j + .5) * TILE - cam.y) - Math.hypot((b[0].i + .5) * TILE - cam.x, (b[0].j + .5) * TILE - cam.y)); for (let n = missing() ? 3 : 1; n > 0 && ready.length; n--) copyTile(ready.shift()); }
+    for (let j = j0 - 1; j <= j1 + 1; j++) for (let i = i0 - 1; i <= i1 + 1; i++) {
+      const id = i + ',' + j; let t = tiles.get(id);
+      if (!t) { t = { i, j, c: null, queued: false, used: 0 }; tiles.set(id, t); }
+      t.used = fno;
+      const inView = i >= i0 && i <= i1 && j >= j0 && j <= j1;
+      if (!t.c && !t.queued) want.push([inView ? 0 : 1, Math.hypot((i + .5) * TILE - cam.x, (j + .5) * TILE - cam.y), t]);
+      if (!inView) continue;
+      const x0 = DX(i * TILE), x1 = DX((i + 1) * TILE), y0 = DY(j * TILE), y1 = DY((j + 1) * TILE);
+      if (t.c) g.drawImage(t.c, x0, y0, x1 - x0, y1 - y0);
+      else { g.fillStyle = groundColor((j + .5) * TILE); g.fillRect(x0, y0, x1 - x0, y1 - y0); }
+    }
+    want.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    for (const [, , t] of want) { if (busy >= 4) break; paintTile(t); }
+    if (tiles.size > MAXT) for (const [id, t] of [...tiles].sort((a, b) => a[1].used - b[1].used)) { if (tiles.size <= MAXT * .8 || t.used === fno) break; tiles.delete(id); }
+    // night: warm pools of light (the lamps, the windows, the fire, the posts)
     g.setTransform(sc * dpr, 0, 0, sc * dpr, (vw / 2 - cam.x * sc) * dpr, (vh / 2 - cam.y * sc) * dpr);
-    const vx0 = cam.x - vw / 2 / sc - 20, vx1 = cam.x + vw / 2 / sc + 20, vy0 = cam.y - vh / 2 / sc - 20, vy1 = cam.y + vh / 2 / sc + 20;
-    const see = (x0, y0, x1, y1) => x1 > vx0 && x0 < vx1 && y1 > vy0 && y0 < vy1;
-    const lowY = L.SLOPE.y1 - L.SLOPE.low;   // where the downhill starts on the screen
-    g.fillStyle = GRASS; g.fillRect(0, 0, L.W, L.SLOPE.y0);
-    const sg = g.createLinearGradient(0, L.SLOPE.y0, 0, lowY); sg.addColorStop(0, SLOPE_A); sg.addColorStop(1, SLOPE_B);
-    g.fillStyle = sg; g.fillRect(0, L.SLOPE.y0, L.W, lowY - L.SLOPE.y0);
-    g.fillStyle = LOW; g.fillRect(0, lowY, L.W, L.H - L.SLOPE.low - lowY);
-    // tufts of grass (where they are seen)
-    g.strokeStyle = '#2b5138'; g.lineWidth = 3; g.beginPath();
-    for (const [x, y] of TUFTS) { const yy = y - L.terrainAt(y); if (x < vx0 || x > vx1 || yy < vy0 || yy > vy1) continue; g.moveTo(x - 7, yy - 9); g.lineTo(x, yy); g.lineTo(x + 6, yy - 10); }
-    g.stroke();
-    // the soccer field: stripes and painted lines
-    const F = L.FIELD;
-    if (see(F.x0, F.y0, F.x1, F.y1)) {
-      for (let x = F.x0, k = 0; x < F.x1; x += 130, k++) { g.fillStyle = k % 2 ? '#24492f' : '#28512f'; g.fillRect(x, F.y0, Math.min(130, F.x1 - x), F.y1 - F.y0); }
-      g.strokeStyle = '#e8f0e8aa'; g.lineWidth = 7;
-      g.strokeRect(F.x0, F.y0, F.x1 - F.x0, F.y1 - F.y0); g.beginPath(); g.moveTo((F.x0 + F.x1) / 2, F.y0); g.lineTo((F.x0 + F.x1) / 2, F.y1); g.stroke();
-      g.beginPath(); g.arc((F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2, 160, 0, Math.PI * 2); g.stroke();
-      g.strokeRect(F.x1 - 330, 760, 330, 880); g.strokeRect(F.x1 - 140, 900, 140, 600);
-    }
-    // the dirt path to the front door
-    const P = L.PATH; g.fillStyle = '#4a3a2a'; g.beginPath(); g.roundRect(P.x0, P.y0, P.x1 - P.x0, P.y1 - P.y0, 60); g.fill();
-    g.strokeStyle = '#3a2c1f'; g.lineWidth = 6; g.beginPath(); g.moveTo(P.x0 + 60, P.y0 + 45); g.lineTo(P.x1 - 40, P.y0 + 45); g.moveTo(P.x0 + 60, P.y1 - 45); g.lineTo(P.x1 - 40, P.y1 - 45); g.stroke();
-    // the cabin: its stone footing where the ground falls away, its floors (wood, the kitchen's and bathroom's tiles, the bedrooms' carpet)
-    const C = L.CABIN;
-    if (see(C.x0, C.y0 - C.wall, C.x1, C.y1 + 90)) {
-      g.fillStyle = '#4d5059'; g.fillRect(C.x0, C.y1, C.x1 - C.x0, -L.terrainAt(C.y1) + 2);
-      g.fillStyle = '#6e4426'; g.fillRect(C.x0, C.y0, C.x1 - C.x0, C.y1 - C.y0);
-      g.strokeStyle = '#59361d'; g.lineWidth = 3; g.beginPath();
-      for (let y = C.y0 + 40; y < C.y1; y += 40) { g.moveTo(C.x0, y); g.lineTo(C.x1, y); }
-      g.stroke();
-      const tiles = (x0, y0, x1, y1, c, line, k) => { g.fillStyle = c; g.fillRect(x0, y0, x1 - x0, y1 - y0); g.strokeStyle = line; g.lineWidth = 2; g.beginPath(); for (let x = x0; x <= x1; x += k) { g.moveTo(x, y0); g.lineTo(x, y1); } for (let y = y0; y <= y1; y += k) { g.moveTo(x0, y); g.lineTo(x1, y); } g.stroke(); };
-      tiles(3500, C.y0, C.x1, 1100, '#7d828e', '#5f636e', 60); tiles(3500, 1100, 3900, 1450, '#5f8496', '#4a6a7a', 40);
-      g.fillStyle = '#4a3a5e'; g.fillRect(3900, 1100, 400, 550); g.fillStyle = '#34495e'; g.fillRect(3500, 1650, 800, 550);
-    }
-    // the deck: its boards, its front face down to the slope, its stairs
-    const D = L.DECK, S = L.STAIRS;
-    if (see(D.x0, D.y0, S.x1, S.y1 - L.SLOPE.low)) {
-      g.fillStyle = '#a85a26'; g.fillRect(D.x0, D.y0, D.x1 - D.x0, D.y1 - D.y0); g.fillRect(S.x0, S.y0, S.x1 - S.x0, S.land - S.y0);
-      g.strokeStyle = '#7a3f18'; g.lineWidth = 3; g.beginPath(); for (let y = D.y0 + 30; y < D.y1; y += 30) { g.moveTo(D.x0, y); g.lineTo(S.x1, y); } g.stroke();
-      const face = -L.terrainAt(D.y1);
-      g.fillStyle = '#5e3014'; g.fillRect(D.x0, D.y1, D.x1 - D.x0, face);
-      g.fillStyle = '#3e1f0c'; for (let x = D.x0 + 20; x < D.x1; x += 300) g.fillRect(x, D.y1, 34, face);
-      g.strokeStyle = '#1c1c28'; g.lineWidth = 4; g.strokeRect(D.x0, D.y1, D.x1 - D.x0, face);
-      const n = S.n, dy = (S.y1 - S.land) / n, k = -L.SLOPE.low / n;
-      for (let i = 0; i < n; i++) { const y = S.land + i * dy; g.fillStyle = '#6e3a17'; g.fillRect(S.x0, y + k * i, S.x1 - S.x0, k); g.fillStyle = i % 2 ? '#b0632c' : '#a85a26'; g.fillRect(S.x0, y + k * (i + 1), S.x1 - S.x0, dy); }
-    }
-    // the pool: the rim, the far wall inside, the water (lit from below), its steps, the lane rope, the near rim over the water's edge
-    const PL = L.POOL, lo = -L.SLOPE.low, wl = -PL.h;
-    if (see(PL.x0 - 40, PL.y0 + lo - 40, PL.x1 + 40, PL.y1 + wl + 40)) {
-      g.fillStyle = '#8f97a6'; g.fillRect(PL.x0 - 40, PL.y0 - 40 + lo, PL.x1 - PL.x0 + 80, PL.y1 - PL.y0 + 80);
-      g.fillStyle = '#2f6f8a'; g.fillRect(PL.x0, PL.y0 + lo, PL.x1 - PL.x0, wl - lo);
-      const wg = g.createLinearGradient(0, PL.y0 + wl, 0, PL.y1 + wl); wg.addColorStop(0, '#1690b8'); wg.addColorStop(1, '#0c5a7a');
-      g.fillStyle = wg; g.fillRect(PL.x0, PL.y0 + wl, PL.x1 - PL.x0, PL.y1 - PL.y0);
-      g.strokeStyle = '#7fe6ff55'; g.lineWidth = 4; g.beginPath();
-      for (let y = PL.y0 + wl + 60; y < PL.y1 + wl - 20; y += 90) for (let x = PL.x0 + 40; x < PL.x1 - 80; x += 260) { const o = Math.sin(now / 900 + x * .01 + y * .02) * 20; g.moveTo(x + o, y); g.quadraticCurveTo(x + 40 + o, y - 10, x + 80 + o, y); }
-      g.stroke();
-      for (let k = 0; k < 3; k++) { g.fillStyle = `rgba(190, 210, 225, ${.75 - k * .15})`; g.fillRect(PL.x0 + 40 * k, PL.steps[0] + lo + 10 * (k + 1), 40, PL.steps[1] - PL.steps[0]); }
-      g.lineWidth = 5; g.strokeStyle = '#f4f4f0'; g.beginPath(); g.moveTo(PL.rope, PL.y0 + wl); g.lineTo(PL.rope, PL.y1 + wl); g.stroke();
-      for (let y = PL.y0 + wl + 14; y < PL.y1 + wl - 40; y += 28) { g.fillStyle = Math.round(y / 28) % 2 ? '#e8463a' : '#f4f4f0'; g.beginPath(); g.ellipse(PL.rope, y, 9, 7, 0, 0, Math.PI * 2); g.fill(); }
-      g.fillStyle = '#8f97a6'; g.fillRect(PL.x0 - 40, PL.y1 + lo, PL.x1 - PL.x0 + 80, 40);
-      g.strokeStyle = '#1c1c28'; g.lineWidth = 4; g.strokeRect(PL.x0 - 40, PL.y0 - 40 + lo, PL.x1 - PL.x0 + 80, PL.y1 - PL.y0 + 80);
-    }
-    // the forest floor darkens toward the world's edge
-    for (const [x0, y0, x1, y1, gx0, gy0, gx1, gy1] of [[0, -400, L.W, 420, 0, 420, 0, 0], [0, L.H - 140, L.W, L.H + 700, 0, L.H - 140, 0, L.H - L.SLOPE.low], [-400, -400, 400, L.H + 700, 400, 0, 0, 0], [L.W - 400, -400, L.W + 400, L.H + 700, L.W - 400, 0, L.W, 0]]) {
-      if (!see(x0, y0, x1, y1)) continue;
-      const fg = g.createLinearGradient(gx0, gy0, gx1, gy1); fg.addColorStop(0, '#08120d00'); fg.addColorStop(1, '#08120dee');
-      g.fillStyle = fg; g.fillRect(x0, y0, x1 - x0, y1 - y0);
-    }
-    // night: warm pools of light (the lamps, the windows, the fire, the posts), the pool glowing from under the water
     g.globalCompositeOperation = 'lighter';
     for (const l of L.LIGHTS) {
       if (l.only && (l.only === 'in') !== inside) continue;
@@ -151,37 +118,56 @@ export function mountWorld(board, api) {
       const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl)); rg.addColorStop(1, hexA(l.c, 0));
       g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
     }
-    if (see(PL.x0, PL.y0 + wl, PL.x1, PL.y1 + wl)) for (let x = PL.x0 + 225; x < PL.x1; x += 450) for (const y of [PL.y0 + wl + 200, PL.y1 + wl - 200]) {
-      const rg = g.createRadialGradient(x, y, 0, x, y, 300); rg.addColorStop(0, '#3ad8ff55'); rg.addColorStop(1, '#3ad8ff00'); g.fillStyle = rg; g.fillRect(x - 300, y - 300, 600, 600);
-    }
     g.globalCompositeOperation = 'source-over';
   }
   const hexA = (c, a) => c + Math.round(cl(a, 0, 1) * 255).toString(16).padStart(2, '0');
   const lit = (p, s) => { for (const a of acts()) if (a.light && a.light(p, s) === false) return false; return true; };
 
-  /* ---------- the props ---------- */
-  function make(p) {
-    const e = document.createElement('div');
-    e.className = 'hp hp-' + p.kind; e.dataset.prop = p.id;
-    e.style.width = p.box.w + 'px'; e.style.height = p.box.h + 'px';
-    e.style.zIndex = p.layer === 'floor' ? 2 : Math.round(p.key) + 10;
-    e.innerHTML = (DRAW[p.kind] || (() => ''))(p);
-    if (cls.get(p.id)) e.classList.add(...cls.get(p.id).split(' '));
-    propsBox.append(e); els.set(p.id, e); return e;
+  /* ---------- the props: each part of each prop (shapes.js DRAW), and the decor, as an element sorted with the ducks ----------
+     Made the first time it comes near the view, then only moved (each is its own layer: moving it is cheap), hidden
+     when far. Its z-index is its foot's (key): a duck in front of it covers it, one behind it is covered. */
+  const items = [];
+  for (const p of L.PROPS) {
+    if (p.layer === 'none') continue;
+    let parts = DRAW[p.kind] ? DRAW[p.kind](p) : [];
+    if (typeof parts === 'string') { const svg = parts; parts = [{ svg, box: p.box, key: p.key, layer: p.layer, fade: p.fade }]; }
+    for (const pt of parts) items.push({ ...pt, p, only: pt.only || p.only });
+  }
+  for (const d of DECOR()) items.push({ ...d, p: null });
+  const NEAR = 160;   // (px past the view's edge: made and shown a little before it comes into view)
+  function make(it) {
+    const e = document.createElement('div'), p = it.p, b = it.box;
+    e.className = 'hp hp-' + (p ? p.kind : 'decor') + (it.cls ? ' ' + it.cls : '');
+    if (p) { e.dataset.prop = p.id; if (it.part) e.dataset.part = it.part; }
+    e.style.width = b.w + 'px'; e.style.height = b.h + 'px';
+    e.style.zIndex = it.layer === 'floor' ? 2 : Math.round(it.key) + 10;
+    if (it.style) e.style.cssText += it.style;
+    const svg = typeof it.svg === 'function' ? it.svg() : it.svg;
+    if (it.img) { const im = new Image(); im.alt = ''; im.draggable = false; im.src = it.url ? svg : svgDataURL(svg); e.append(im); }
+    else e.innerHTML = svg;
+    if (p) {
+      if (cls.get(p.id)) e.classList.add(...cls.get(p.id).split(' '));
+      if (!els.has(p.id) || it.part !== 'back') els.set(p.id, e);
+      if (!all.has(p.id)) all.set(p.id, []); all.get(p.id).push(e);
+    }
+    propsBox.append(e); it.el = e; return e;
   }
   function drawProps(me, myKey, myBox) {
     const { sc, vw, vh } = cam, scs = sc.toFixed(4);
-    for (const p of L.PROPS) {
-      if (p.layer === 'none') continue;
-      const b = p.box, sx = (b.l - cam.x) * sc + vw / 2, sy = (b.t - cam.y) * sc + vh / 2, sw = b.w * sc, sh = b.h * sc;
-      const vis = (!p.only || (p.only === 'in') === inside) && sx < vw + 30 && sx + sw > -30 && sy < vh + 30 && sy + sh > -30;
-      let e = els.get(p.id);
+    for (const it of items) {
+      const b = it.box, sx = (b.l - cam.x) * sc + vw / 2, sy = (b.t - cam.y) * sc + vh / 2, sw = b.w * sc, sh = b.h * sc;
+      const vis = (!it.only || (it.only === 'in') === inside) && sx < vw + NEAR && sx + sw > -NEAR && sy < vh + NEAR && sy + sh > -NEAR;
+      let e = it.el;
       if (!vis) { if (e && !e.hidden) e.hidden = true; continue; }
-      if (!e) e = make(p);
+      if (!e) e = make(it);
       if (e.hidden) e.hidden = false;
       const tr = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${scs})`;
       if (e._tr !== tr) { e._tr = tr; e.style.transform = tr; }
-      if (p.fade) { const thru = !!myBox && myKey < p.key && myBox.r > sx + sw * .12 && myBox.l < sx + sw * .88 && myBox.b > sy && myBox.t < sy + sh * (p.kind === 'tree' ? .82 : 1); if (e._thru !== thru) { e._thru = thru; e.classList.toggle('thru', thru); } }
+      if (it.fade) {
+        const h = it.hit || { l: b.l, t: b.t, r: b.l + b.w, b: b.t + b.h }, hl = (h.l - cam.x) * sc + vw / 2, hr = (h.r - cam.x) * sc + vw / 2, ht = (h.t - cam.y) * sc + vh / 2, hb = (h.b - cam.y) * sc + vh / 2;
+        const thru = !!myBox && myKey < it.key && myBox.r > hl && myBox.l < hr && myBox.b > ht && myBox.t < hb;
+        if (e._thru !== thru) { e._thru = thru; e.classList.toggle('thru', thru); }
+      }
     }
   }
 
@@ -223,6 +209,7 @@ export function mountWorld(board, api) {
       const across = vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + (vw - 500) / 600 * 780;
       cam.sc = Math.min(vw / across, vh / 380) || 1; cam.vw = vw; cam.vh = vh;
       cam.dpr = Math.min(2, devicePixelRatio || 1); canvas.width = Math.round(vw * cam.dpr); canvas.height = Math.round(vh * cam.dpr);
+      const k = Math.min(vw <= 500 ? 1.5 : 2, Math.round(cam.sc * cam.dpr * 4) / 4); if (k !== tk) { tk = k; tiles.clear(); ready.length = 0; }   // (the ground's tiles: painted again at a new size)
       for (const e of els.values()) e._tr = '';
       return { W: vw, H: vh, top0: 0, size: L.DUCK * cam.sc, labelH: 0, left: r.left, top: r.top, hang: true };
     },
@@ -267,7 +254,7 @@ export function mountWorld(board, api) {
         if (!a.propClass) continue;
         for (const p of L.PROPS) if (!a.kinds || a.kinds.includes(p.kind)) {
           const c = a.propClass(p, s) || '', was = cls.get(p.id) || ''; if (c === was) continue;
-          cls.set(p.id, c); const e = els.get(p.id); if (e) { if (was) e.classList.remove(...was.split(' ')); if (c) e.classList.add(...c.split(' ')); }
+          cls.set(p.id, c); for (const e of all.get(p.id) || []) { if (was) e.classList.remove(...was.split(' ')); if (c) e.classList.add(...c.split(' ')); }
         }
       }
     },
@@ -333,7 +320,7 @@ export function mountWorld(board, api) {
     destroy() {
       for (const a of acts()) a.unmount?.(ctx);
       board.removeEventListener('pointerdown', down); board.removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', up);
-      els.clear(); sm.clear();
+      dead = true; els.clear(); all.clear(); sm.clear(); tiles.clear(); ready.length = 0;
     },
   };
   /* pointers on the board go to an activity first (drawing on the chalk floor) */
