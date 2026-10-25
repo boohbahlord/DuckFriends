@@ -923,3 +923,10 @@ There needs to be sentences and descriptions, basic flags for practicality, how 
 (Decisions: every Help page starts with a "dumb version", then what it is, how to, flags and examples, each example a
 different way of using it. Commands are colored by their kind in the command line. HelpGame has its own pages:
 HelpGame-How, HelpGame-Help and more. clear also works when typed in the chat.)
+
+## The host and sudo, word for word (2026-10-25)
+
+i as host was said to not be in the sudo catgeory this is a glitch
+
+(Decision: the host and sudo never need to type the word sudo; groupadd works like sudo groupadd for them. Anyone else
+who tries is told only the host and sudo can.)

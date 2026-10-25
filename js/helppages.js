@@ -651,7 +651,7 @@ const PAGES = [
     dumb: 'sudo = "do it, I\'m the boss". The host is boss. The host can make more bosses.',
     what: [
       'sudo is the group that runs the room. The host is always in it, and can put others in it so they can help.',
-      'Put the word sudo in front of a command to run it as sudo: `sudo groupadd …`. Some commands (skip, kick, forgame, map, mode, start) work for sudo without the word.',
+      'Put the word sudo in front of a command to run it as sudo: `sudo groupadd …`. If you are in sudo (the host always is), the word is optional: `groupadd …` works too.',
       'sudo can also open any file sent to the chat. If you are not in sudo, sudo commands answer with a ✗.',
     ],
     how: [
@@ -667,15 +667,15 @@ const PAGES = [
       ['sudo usermod @name', 'gives sudo'],
       ['sudo usermod -rG sudo @name', 'takes it away'],
       ['sudo hostname "name"', 'renames the room'],
-      ['usermod gpasswd adduser deluser groupadd groupmod groupdel', 'need the word sudo'],
-      ['skip kick forgame map mode start', 'work for sudo without the word'],
+      ['usermod gpasswd adduser deluser groupadd groupmod groupdel hostname', 'only sudo'],
+      ['skip kick forgame map mode start', 'sudo, or groups given canskip, cankick, cansettings, canmute'],
     ],
     ex: [
       ['sudo -l', 'what you may do'],
       ['sudo usermod @name', 'a second boss'],
       ['sudo hostname "Pond Party"', 'renames the room'],
-      ['groupadd -p nofun quiet', 'without sudo: a ✗'],
-      ['sudo !!', 'the same, with sudo: it works'],
+      ['groupadd -p nofun quiet', 'the word sudo is optional when you are in sudo'],
+      ['sudo usermod -rG sudo @name', 'takes sudo back'],
       ['who', 'who is in sudo'],
     ],
     see: ['HelpGroups', 'HelpGame', 'HelpGame-How'] },

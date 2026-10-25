@@ -80,7 +80,7 @@ export const MAN = {
   groups: 'groups [@name]: the groups someone is in (you, by default).',
   members: 'members <group>: who is in a group.',
   getent: 'getent group [group]: a group\'s line, group:x:members:perms; with no group, every group in the room.',
-  sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it. sudo !! reruns the last command with sudo. sudo -l: what sudo lets you do.',
+  sudo: 'sudo <command>: runs a command as a member of the sudo group. The host is always in it. sudo !! reruns the last command with sudo. sudo -l: what sudo lets you do. If you are in sudo, the word is optional (groupadd works like sudo groupadd).',
   usermod: 'sudo usermod [-a | -r] -G group[,group] @name: -aG adds to groups, -rG takes out of them, -G alone sets exactly these. sudo usermod @name adds to sudo.',
   gpasswd: 'sudo gpasswd -a @name group | -d @name group: adds one player to a group, or takes them out.',
   adduser: 'sudo adduser @name group: puts a player in a group.',
