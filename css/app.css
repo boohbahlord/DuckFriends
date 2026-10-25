@@ -1206,3 +1206,86 @@ html.map-is-ec .tmeter i { animation: none; }
 .lobby-title.can-rename:hover { background: var(--soft); }
 .room-rename { font: inherit; width: 100%; padding: .1rem .4rem; border-radius: .5rem; border: .14rem solid var(--blue); background: var(--panel, transparent); color: inherit; }
 .spe-follow { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+
+/* Who is the Quack?: a tile for each duck in the round, in its player's card (see-through over the map), their duck and name */
+.cols.wq-cols { display: block; border: 0; box-shadow: none; background: transparent; overflow: visible; }
+.wq-tiles { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--C), minmax(0, 1fr)); grid-template-rows: repeat(var(--R), minmax(0, 1fr)); gap: .5rem; }
+.wq-tile { grid-column: var(--gc); grid-row: var(--gr); position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: row; align-items: flex-start; justify-content: flex-start; gap: .35rem; padding: .4rem .5rem;
+  border: .2rem solid var(--line); border-radius: 1rem; box-shadow: 0 .3rem 0 var(--line); overflow: hidden; transition: filter .3s, opacity .3s, box-shadow .2s; }
+.wq-bg { position: absolute; inset: 0; opacity: var(--board-a, 100%); }
+.map-sky .wq-tile { box-shadow: inset 0 0 0 .16rem #ffffff66, 0 .3rem 0 var(--line); }
+.wq-tduck { position: relative; flex: none; width: min(36%, 3.8rem); aspect-ratio: 1; opacity: .92; }
+.wq-tduck svg { width: 100%; height: 100%; display: block; }
+.wq-tname { position: relative; max-width: 60%; margin-top: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; background: #0000006b; border-radius: .45rem; padding: .05rem .5rem; font-weight: 700; font-size: calc(.95rem * var(--ts)); }
+.wq-tile.here { box-shadow: inset 0 0 0 .25rem #ffffffaa, 0 .3rem 0 var(--line); filter: brightness(1.1); }
+.wq-tile.speaker { box-shadow: 0 0 0 .25rem #ffd23f, 0 0 1.4rem #ffd23fcc, 0 .3rem 0 var(--line); }
+html.moving .wq-tile.speaker { animation: wqspeak 1.8s ease-in-out infinite; }
+@keyframes wqspeak { 50% { box-shadow: 0 0 0 .35rem #ffd23f, 0 0 2.2rem #ffd23f, 0 .3rem 0 var(--line); } }
+.wq-tile.out { filter: grayscale(1) brightness(.72); }
+.wq-tile.mine { opacity: .5; }
+.wq-tile.notie { opacity: .3; filter: saturate(.3); }
+.wq-tile.quack { animation: wqquack 1.1s ease-in-out infinite; }
+@keyframes wqquack { 0%, 100% { box-shadow: 0 0 0 .3rem #ff3d6e, 0 0 1.6rem #ff3d6e; } 50% { box-shadow: 0 0 0 .45rem #fff, 0 0 2.6rem #ff3d6e; } }
+/* the reveal keeps its news for the drumroll: the voted-out duck's tile after it, the last duck's after the next line */
+.wq-board.late .wq-tile.picked.out { filter: none; animation: wqgrey .6s 3.2s forwards; }
+.wq-board.late .wq-tile.dead { filter: none; animation: wqgrey .6s 6.1s forwards; }
+.wq-board.late .wq-tile.picked.quack { animation-delay: 3.2s; }
+.wq-board.late .wq-tile.quack:not(.picked) { animation-delay: 6.1s; }
+@keyframes wqgrey { to { filter: grayscale(1) brightness(.72); } }
+.wq-board.late .wq-q.wq-later { opacity: 0; animation: wqshow .4s 6.1s forwards; }
+@keyframes wqshow { to { opacity: 1; } }
+.gduck.grey .gduck-body { filter: grayscale(1) brightness(.8); }
+.wq-q { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; }
+.wq-cat { font-size: calc(1rem * var(--ts)); font-weight: 600; }
+.wq-word { color: #ffd23f; }
+.wq .vote-btn.wq-side-a { background: var(--wyr-a); color: #fff; } .wq .vote-btn.wq-side-b { background: var(--wyr-b); color: #fff; }
+
+/* the Secret Card: face down beside the cloud; held, it turns over. At the end the Quack's card turns over there for everyone */
+.wq-sidecol { grid-column: 1; grid-row: 1; justify-self: end; display: flex; gap: .6rem; pointer-events: auto; }
+.wq-card { position: relative; width: 5.6rem; aspect-ratio: 5 / 7; perspective: 40rem; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; -webkit-touch-callout: none; }
+.wq-card.big { width: 6.6rem; cursor: default; }
+.wq-flip { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .4s cubic-bezier(.3, 1.4, .5, 1); }
+.wq-card.peek .wq-flip { transform: rotateY(180deg); }
+.wq-side { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem; padding: .4rem;
+  text-align: center; border: .18rem solid #1c1c28; border-radius: .7rem; box-shadow: 0 .25rem 0 #1c1c28; }
+.wq-back { color: #fff; background: repeating-linear-gradient(45deg, #343a58 0 .5rem, #2a2f48 .5rem 1rem); }
+.wq-back .small { font-size: calc(.68rem * var(--ts)); opacity: .85; }
+.wq-front { transform: rotateY(180deg); background: #fffdf5; color: #1c1c28; }
+.wq-c-title { font-family: var(--fun); font-size: calc(1.05rem * var(--ts)); line-height: 1; text-shadow: 0 .1rem 0 #1c1c28; }
+.wq-c-title > span { display: block; white-space: nowrap; }
+.wq-w { display: inline-block; white-space: nowrap; }
+.wq-c-cat { font-size: calc(.66rem * var(--ts)); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6a6f85; overflow-wrap: anywhere; line-height: 1.1; }
+.wq-c-word { font-size: calc(1.1rem * var(--ts)); font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
+.wq-c-you { font-family: var(--fun); font-size: calc(1.05rem * var(--ts)); line-height: 1.05; text-shadow: 0 .1rem 0 #1c1c28; }
+.wq-card.dealing { opacity: .7; cursor: default; }
+.wq-rv { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+.wq-rv-who { font-size: calc(.85rem * var(--ts)); font-weight: 700; background: color-mix(in srgb, var(--panel) 85%, transparent); border-radius: .4rem; padding: 0 .4rem; max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wq-card.big .wq-flip { animation: wqflip .7s .5s cubic-bezier(.3, 1.4, .5, 1) both; }
+.wq-board.late .wq-card.big .wq-flip { animation-delay: 6.1s; }
+@keyframes wqflip { from { transform: rotateY(0); } to { transform: rotateY(180deg); } }
+html.moving .wq-card.big { animation: wqpop .5s .5s ease-out both; }
+html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
+@keyframes wqpop { 50% { scale: 1.18; } }
+
+/* picking the word; the others wait */
+.wq-field { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; }
+.wq-wait { align-items: center; text-align: center; }
+.wq-wait h2 { margin: 0; }
+.wq-stats .wq-sum { padding: .7rem 1rem; border-radius: 1rem; margin-bottom: .8rem; }
+.wq-sum h3 { margin: 0 0 .3rem; font-size: calc(1.3rem * var(--ts)); }
+.wq-sum p { margin: .2rem 0; }
+.wq-score { font-family: var(--fun); font-size: calc(1.2rem * var(--ts)); }
+.wq-score .q { color: #ff3d6e; } .wq-score .r { color: #37d421; }
+.wq-rounds { padding: .5rem .7rem; border-radius: .8rem; display: flex; flex-direction: column; gap: .35rem; }
+.wq-rounds p { margin: 0; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .wq-tiles { grid-template-columns: repeat(var(--R), minmax(0, 1fr)); grid-template-rows: repeat(var(--C), minmax(0, 1fr)); gap: .35rem; }
+  .wq-tile { grid-column: var(--gr); grid-row: var(--pc); padding: .3rem .35rem; gap: .25rem; }
+  .wq-tduck { width: min(30%, 2.8rem); }
+  .wq-tname { margin-top: .55rem; max-width: 64%; font-size: calc(.8rem * var(--ts)); }
+  .topover.wq-top { grid-template-columns: auto 1fr auto; }
+  .wq-top .wq-sidecol { grid-column: 3; justify-self: end; gap: .35rem; }
+  .wq-card { width: 3.9rem; } .wq-card.big { width: 4.2rem; }
+  .wq-c-title, .wq-c-you { font-size: calc(.8rem * var(--ts)); } .wq-c-word { font-size: calc(.88rem * var(--ts)); } .wq-c-cat { font-size: calc(.56rem * var(--ts)); }
+  .wq-back .small { display: none; }
+}

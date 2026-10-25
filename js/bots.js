@@ -4,8 +4,11 @@
    computer moves on to the next question or round, or votes for the review or the end of the game, only once a person
    has. Now and then one wanders a little or jumps. In Bicker Brackets they write a topic and vote for one, type their
    seeds (for a ready-made topic, seeds that fit it) and back a side in each match. In Story Chain they write a secret word,
-   type their line a few letters at a time (with their secret word in it), and vote once a person has. */
+   type their line a few letters at a time (with their secret word in it), and vote once a person has. In Who is the Quack?
+   they pick a word from the list, "say" a clue in a chat bubble (they can't talk), skip a turn only once a person has, and
+   vote for a random duck, leaning a little toward the real Quack (a TEST room's computers can see the host's secrets). */
 import { colXAt, isWyr, isSc, twoSided, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
+import { anyWord, tileCenter, spotOf, speakerOf, stillIn, canAccuse, CLUE_GRACE } from './quackrules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -51,6 +54,15 @@ const SC_LINES = [
 ];
 const anyOf = xs => xs[Math.floor(Math.random() * xs.length)];
 const hash = k => { let h = 7; for (const c of k) h = (h * 31 + c.charCodeAt(0)) | 0; return h >>> 0; };
+const CLUES = ['Hmm… you see it everywhere.', 'My uncle has strong feelings about it.', 'It shows up in stories.', 'Pretty famous.', 'Kids love it.',
+  'Not my favorite, honestly.', 'It can get messy.', 'Everybody knows one.', 'Better with friends.', 'I think about it way too much.', 'Sometimes loud.', 'Classic.'];
+const said = new Set();   // computer + clue turn: its clue is out
+/* a step of a computer's walk toward (x, y); then, there, what it does next */
+function walk(s, id, to, then, now) {
+  const p = s.pos[id], step = .035, dx = to.x - p.x, dy = to.y - p.y, d = Math.hypot(dx, dy);
+  if (d <= step) return [{ t: 'move', id, x: to.x, y: to.y, j: p.j && now - p.j < 1400 ? p.j : 0 }, ...then];
+  return [{ t: 'move', id, x: p.x + dx / d * step, y: p.y + dy / d * step, j: p.j && now - p.j < 1400 ? p.j : 0 }];
+}
 const plan = new Map();   // computer id + question → its chosen column
 const leanOf = id => { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0; return ((h >>> 0) % 1000) / 1000 * 3 - 1.5; };
 const pick = (id, key) => {
@@ -92,6 +104,33 @@ export function botActions(s, now) {
         break;
       case 'tie':
         if (late && !s.done[id]) out.push({ t: 'tieVote', id, v: Math.random() < .5 ? 'again' : 'coin' });
+        break;
+      case 'wqpick':
+        if (late && s.wq.picker === id) out.push({ t: 'wqWord', id, ...anyWord() });
+        break;
+      case 'clue': {
+        const w = s.wq, sp = speakerOf(s), key = id + '|' + s.round + '|' + s.qi; if (!w.ids.includes(id) || w.out[id]) break;
+        if (sp === id) {
+          if (now - s.at > 2500 && !said.has(key)) { said.add(key); if (said.size > 300) said.delete(said.values().next().value); out.push({ t: 'chat', id, text: anyOf(CLUES) }); }
+          if (now - s.at > Math.max(wait, CLUE_GRACE * 1000 + 1500)) out.push({ t: 'end', id });
+        } else if (!s.done[id] && now - s.at > CLUE_GRACE * 1000 && people.some(h => s.done[h])) out.push({ t: 'end', id });
+        break;
+      }
+      case 'choice': case 'accuse': {
+        const w = s.wq; if (!late || s.done[id] || !w.ids.includes(id) || w.out[id]) break;
+        let to;
+        if (s.phase === 'choice') { const c = pick(id, s.round + ':' + s.qi); to = { x: colXAt(s, (w.lap > 1 ? c < 5 : c < 3) ? 0 : 1), y: s.pos[id].y }; }
+        else {
+          const q = (s.hidden || { quacks: [] }).quacks, them = stillIn(s).filter(t => canAccuse(s, id, t)); if (!them.length) break;
+          const k = id + '|v|' + s.round + '|' + s.qi;
+          if (!plan.has(k)) plan.set(k, !q.includes(id) && Math.random() < .4 && them.some(t => q.includes(t)) ? them.find(t => q.includes(t)) : anyOf(them));
+          to = tileCenter(s, w.ids.indexOf(plan.get(k)));
+        }
+        out.push(...walk(s, id, to, spotOf(s, to) >= 0 ? [{ t: 'end', id }] : [], now));
+        break;
+      }
+      case 'reveal':
+        if (late && !s.done[id] && people.some(h => s.done[h])) out.push({ t: 'end', id, v: true });
         break;
       case 'submit':
         if (late && !s.done[id]) {

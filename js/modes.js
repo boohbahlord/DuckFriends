@@ -2,7 +2,8 @@
    Agree or Disagree: everyone writes a statement; the room stands on a seven-column scale for each one.
    Would You Rather: everyone writes a "would you rather" with two choices in secret; the room walks to a side.
    Bicker Brackets: a tournament a round; the room picks a topic, writes the seeds and votes match by match.
-   Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it. */
+   Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it.
+   Who is the Quack?: everyone's Secret Card has the same word except one duck's; clues out loud, then walk onto a duck. */
 import { esc } from './ui.js';
 
 export const MODES = [
@@ -10,6 +11,7 @@ export const MODES = [
   { id: 'wyr', name: 'Would You Rather', tip: 'Everyone writes a "would you rather" with two choices, in secret; for each one, walk to the side you\'d pick.' },
   { id: 'bb', name: 'Bicker Brackets', tip: 'A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.' },
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
+  { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 
@@ -28,5 +30,8 @@ export function modeSymbol(id, size = 32) {
   if (m.id === 'sc') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 <rect x="1" y="1" width="28" height="22" rx="3" fill="#ffffff" stroke="#1c1c28" stroke-width="1.2"/>
 ${[['#2fa4ff', 22, 4], ['#ff8c2b', 17, 10.5], ['#37d421', 20, 17]].map(([c, w, y]) => `<rect x="4" y="${y}" width="${w}" height="2.6" rx="1.3" fill="#1c1c28" opacity=".55"/><rect x="4" y="${y + 3.4}" width="${w}" height="1.5" rx=".75" fill="${c}"/>`).join('')}</svg>`;
+  if (m.id === 'quack') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
+${[[5, '#ffd23f'], [15, '#ffd23f'], [25, '#3b3f4a']].map(([x, c]) => `<g transform="translate(${x} 16)"><ellipse cx="0" cy="2.6" rx="4.3" ry="3" fill="${c}" stroke="#1c1c28" stroke-width="1"/><circle cx="1" cy="-1.6" r="2.4" fill="${c}" stroke="#1c1c28" stroke-width="1"/><path d="M3 -1.8l2.3 .5-2.2 .9z" fill="#ff8c2b" stroke="#1c1c28" stroke-width=".6"/><circle cx="1.6" cy="-2.2" r=".45" fill="#1c1c28"/></g>`).join('')}
+<text x="25.6" y="9" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="8.5" fill="#ff3d6e" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`;
   return '';   // (Agree or Disagree's symbol is art.js's symbolSVG)
 }

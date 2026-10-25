@@ -750,3 +750,33 @@ remember there is a lot of stuff i described for groups
 (Planned in the Claude Doc "Command line: more bash". Chose "Build sections 1 to 4": help topics, the bash
 operators, text and file tools, groups and new perms, people/room/game commands. Not now: emote, quack, poll, wall,
 nano.)
+
+## Imposter Duck, word for word (2026-10-25)
+
+From a longer message about lawyering and The Court (logged with that work):
+
+For imposter duck another thread can do that one too.
+
+The pitch it was started from: every duck gets the same secret word except one, who gets nothing. Each player gives one
+clue over voice, then the room walks to whoever they think is the imposter. The plan and the owner's answers are in
+`notes/plan-imposter.md`.
+
+The owner's answer to the first plan, word for word (2026-10-25):
+
+The tile should have the duck avatar on it, and it updates with any customization the player makes mid game, and players walk onto that tile to vote who is the imposter. The clue round has a 12 second grace period and players END THEIR OWN clue round, and if they dont end it, then every other player has to. The player whose turn it is gets their tile highlighted and they are seen in the clouds. The tile is the same color as the one in their player card. After every player has had a clue, the tile changes to two sides, either another round of clues (right side) or "Vote Out the Quack" (left side)
+
+When they choose to do another round of clues, things resume like usual. When one is voted out, their tile becomes a greyscale and so do their avatar temporarily and they can't give any clues or vote. 
+
+The cards the players are shown are called the "Secret Cards", and one player randomly decides the secret word secretly before players load into the game.
+
+The stats should be which player voted correct the most times (only IF any did, then it says none)
+
+Give me some suggestions for the stats please
+
+The owner's answers to the five questions left, word for word (2026-10-25):
+
+1. Yeah, they see the category not the word. 
+2. No that doesnt even work because then if they guess right everyone knows it is them because the players dont need to guess a word they already know
+3. Yeah they win when only one is left, and when they win, the duck who ISNT the quack will have the dead effect from the silly commands and temporarily can't move as they and their tile turns greyscale and the player who was the quack gets their card flipped over, and it shows "You are the quack". The card shows only the category AND the sentence which reveals they are the quack. Also, the game should be called, "Who is the Quack?" 
+4. Yes
+5. No.
