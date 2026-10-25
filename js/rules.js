@@ -78,8 +78,16 @@ export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.s
 export const turnKey = s => s.phase === 'submit' ? `w${s.round}` : ['answer', 'discuss'].includes(s.phase) ? `q${s.round}.${s.qi}` : s.phase === 'write' && s.sc ? `write${s.round}.${s.sc.turn}` : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30;   // seconds a kick or back-to-lobby vote stays open
 export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
-const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
-const EFFECTS = ['zap', 'flames', 'hearts', 'poison', 'notes', 'loserx'];   // the effects, shown around a duck's head
+/* the thrown dagger: across the board at DAGGER_SPEED (board widths a second) while its height (in duck sizes) rises
+   from the beak and falls: z = DAGGER_Z + DAGGER_UP·t − DAGGER_G·t²/2; it hits ducks only at their height, then falls
+   on down off the screen */
+export const DAGGER_SPEED = .45, DAGGER_Z = .45, DAGGER_UP = 1.2, DAGGER_G = 2.2, DAGGER_LIFE = 4500;   // (it never flies over a duck's head: everything in its way is hit)
+export const daggerZ = t => DAGGER_Z + DAGGER_UP * t - DAGGER_G * t * t / 2;   // (t in seconds)
+const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'dagger', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
+export const WEAPONS = ['handgun', 'dagger'];   // aimed (with the mouse), and kept out with Shift and their key
+const EFFECTS = ['zap', 'flames', 'hearts', 'poison', 'notes', 'loserx', 'ducklings', 'disco'];   // the effects, shown around a duck
+/* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
+const aimOf = (a, face) => { const ax = Math.max(-3, Math.min(3, +a.ax || 0)), ay = Math.max(-3, Math.min(3, +a.ay || 0)); return Math.hypot(ax, ay) > .05 ? [ax, ay] : [face, 0]; };
 /* is this special on one of the duck's number keys? (a duck from before the keys had one special) */
 const onKeys = (d, id) => !!d && (Array.isArray(d.keys) ? d.keys.slice(0, 10).includes(id) : d.special === id);
 /* who votes, and how many yes votes pass it: a kick needs every other player; back to the lobby needs the usual share */
@@ -313,7 +321,8 @@ export function reduce(state, a, now = Date.now()) {
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
       const dj = j && +a.dj > j ? +a.dj : 0;   // a double jump: when the second jump began
-      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump
+      const w = WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun ? a.w : '', [ax, ay] = w ? aimOf(a, 1) : [0, 0];   // a weapon kept out, and where it aims
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump
       quackMoved(s, a.id);   // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       return s;
@@ -350,16 +359,16 @@ export function reduce(state, a, now = Date.now()) {
       me.ms = ms; return s;
     }
     case 'idle': if (!me || !!me.idle === !!a.v) return state; me.idle = !!a.v; return s;   // no key, click or touch in 2 minutes
-    case 'use': {   // an item on the board, seen by everyone; the handgun's bullet then crosses the board
+    case 'use': {   // an item on the board, seen by everyone; the handgun's bullet or the dagger then flies the way it was aimed
       const sp = a.what || (me && me.duck && me.duck.special), p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
-      if (sp === 'handgun' && !s.options.fun) return state;   // the silly-commands switch covers it
+      if (WEAPONS.includes(sp) && !s.options.fun) return state;   // the silly-commands switch covers them
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
-      if (now - ((s.lastUse || {})[k] || 0) < ({ handgun: 3000, confetti: 15000 }[sp] || 1500)) return state;
+      if (now - ((s.lastUse || {})[k] || 0) < ({ handgun: 3000, dagger: 2000, confetti: 15000 }[sp] || 1500)) return state;
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
-      const face = a.face < 0 ? -1 : 1;
-      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now }];
-      if (sp === 'handgun') s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, x0: p.x, y: p.y, dir: face, t: now, lx: p.x }];
+      const face = a.face < 0 ? -1 : 1, aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
+      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}) }];
+      if (aim) { const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED; s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y }]; }
       return s;
     }
     case 'aura': {   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
@@ -606,19 +615,27 @@ export function gameMuted(s, id, kind) {
   return out;
 }
 
-/* the handgun's bullets: a duck on the ground that a bullet passes through plays dead (until it moves) */
+/* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
+export const shotAt = (sh, t) => ({ x: sh.x0 + sh.vx * t / 1000, y: sh.y0 + sh.vy * t / 1000, z: sh.k === 'dagger' ? daggerZ(t / 1000) : .41 });
+/* the handgun's bullets and the thrown daggers: a duck on the ground that one passes through plays dead (until it
+   moves); a bullet flies on to the screen's edge, a dagger until it has fallen away */
 function moveShots(s, now) {
   if (!s.shots || !s.shots.length) return false;
   const keep = [];
   for (const sh of s.shots) {
-    const x = sh.x0 + sh.dir * SHOT_SPEED * (now - sh.t) / 1000, lo = Math.min(sh.lx, x) - .02, hi = Math.max(sh.lx, x) + .02;
-    for (const id of s.seat) {
+    if (!sh.k) continue;   // (one fired before aiming: gone)
+    const at = shotAt(sh, now - sh.t), x0 = sh.lx, y0 = sh.ly, dx = at.x - x0, dy = at.y - y0;
+    if (at.z > -.15 && at.z < 1.05) for (const id of s.seat) {   // (a dagger over a duck's head, or already fallen, hits nobody)
       const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead) continue;
       if (p.j && now - p.j < 1300) continue;   // jumped over it
-      if (p.x >= lo && p.x <= hi && Math.abs(p.y - sh.y) < .08) P.dead = true;
+      /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep) */
+      const ux = dx / .03, uy = dy / .08, px = (p.x - x0) / .03, py = (p.y - y0) / .08, len = ux * ux + uy * uy;
+      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
     }
-    sh.lx = x;
-    if (x > -.3 && x < 1.3 && boardPhases(s).includes(s.phase)) keep.push(sh);   // (on past the board to the screen's edge)
+    sh.lx = at.x; sh.ly = at.y;
+    const on = at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);
+    if (on && boardPhases(s).includes(s.phase)) keep.push(sh);   // (on past the board to the screen's edge)
   }
   s.shots = keep; return true;
 }
