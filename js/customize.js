@@ -6,7 +6,7 @@
    Name, Card and Colors. Each opens a grid of small picture tiles, three to a row; Colors opens the list of what can be
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
-import { openWindow, esc, toast, onMenu, el } from './ui.js';
+import { openWindow, esc, toast, onMenu, el, navSig, refocus } from './ui.js';
 import { SPECIALS, specialById, momentHTML, confettiRain, pressFX, BULLET } from './specials.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
@@ -20,6 +20,7 @@ import { FONTS } from './name.js';
 import { colorField } from './color.js';
 import { activeRoom } from './net.js';
 import { who } from './who.js';
+import { NAV_HINTS, items } from './keynav.js';
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -73,7 +74,7 @@ const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
   if (page === 'duck') page = null;   // (the old tab name)
-  return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage"><div class="arm-duck"></div><div class="arm-card"></div></div></div>`, {
+  return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`, {
     cls: 'win-armory',
     onOpen(w) {
       openFolds.clear();
@@ -101,11 +102,11 @@ export function openCustomize(page = lastPage) {
       };
       const changed = (redraw = true) => { save(); stage(); shareLook(); if (redraw) show(lastPage, true); };
       const head = title => `<header class="arm-h">${lastPage ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
-      const upload = (label, onPic) => `<label class="arm-tile arm-up" data-tip="A square picture works best">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
+      const upload = (label, onPic) => `<label class="arm-tile arm-up" tabindex="0" data-up-for="${onPic}" data-tip="A square picture works best">${'<span class="up-ico">⇪</span>'}<span>${esc(label)}</span><input type="file" accept="image/*" hidden data-up="${onPic}"></label>`;
 
       const show = (k, keep) => {
         const scroll = keep ? (menu.querySelector('.arm-body') || {}).scrollTop || 0 : 0;
-        lastPage = k || null;
+        const prev = lastPage; lastPage = k || null;
         if (!keep) stage();   // (the Specials page shows the special on the big duck)
         const D = profile.duck, C = profile.card, N = profile.nameStyle;
         let html = '';
@@ -182,6 +183,7 @@ export function openCustomize(page = lastPage) {
           html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${T.map(([id, label]) => `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>`).join('')}</ul>
             <div class="cpick"><p class="small dim cnote">${esc(cur[4] || '')}</p></div></div>`;
         }
+        const f = document.activeElement, had = menu.contains(f) && navSig(f), from = had && f.dataset.a === 'back' && prev;   // (the focus stays on the same tile, or the row just come back to)
         menu.innerHTML = html;
         const body = menu.querySelector('.arm-body'); if (body) body.scrollTop = scroll;
         if (k === 'colors') {
@@ -194,6 +196,8 @@ export function openCustomize(page = lastPage) {
           const inp = menu.querySelector('.cz-name');
           inp.oninput = () => { const c = cleanName(inp.value); if (c !== inp.value) { inp.value = c; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 300); } if (c && setName(c)) { stage(); menu.querySelectorAll('.font-pic').forEach(b => { b.textContent = c.slice(0, 8); }); } };
         }
+        if (from) menu.querySelector(`[data-p="${from}"]`)?.focus({ preventScroll: true });
+        else if (had) refocus(menu, had, items(menu));
       };
       /* what can be colored now (a target shows only when it is in use) */
       function colorTargets() {

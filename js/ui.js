@@ -4,8 +4,24 @@
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-/* sets a part of the page only when it changed, so a click on it is never lost to a redraw */
-export function setHTML(node, html) { if (node && node._html !== html) { node._html = html; node.innerHTML = html; } }
+/* sets a part of the page only when it changed, so a click on it is never lost to a redraw (and the focus stays put) */
+export function setHTML(node, html) {
+  if (!node || node._html === html) return;
+  const f = document.activeElement, sig = f && f !== document.body && node.contains(f) ? navSig(f) : '';
+  node._html = html; node.innerHTML = html;
+  if (sig) refocus(node, sig);
+}
+/* what a button is, so its copy can be found after a redraw: its data-* (not its tip), else its words */
+export function navSig(b) {
+  const d = Object.entries(b.dataset || {}).filter(([k]) => k !== 'tip').map(kv => kv.join('=')).join(' ');
+  return `${b.tagName} ${d || (b.textContent || '').trim().slice(0, 40)}`;
+}
+/* the focus back on the copy of what had it (or, failing that, on the item chosen, or the first) */
+export function refocus(box, sig, list) {
+  const all = list || $$('button, a[href], input, select, textarea, summary, [tabindex]', box);
+  const b = all.find(x => navSig(x) === sig) || (list && (all.find(x => x.getAttribute('aria-pressed') === 'true') || all[0]));
+  if (b) b.focus({ preventScroll: !list });
+}
 export function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
 
 /* a window over the page; resolves with what it was closed with (the X and Esc close it with null) */
@@ -79,6 +95,7 @@ export const typing = e => { const t = e && e.target; return !!t && (t.isContent
 /* a small menu at the pointer (right-click, or a long press on a phone); items = [[label, fn, {disabled}]…] */
 export function contextMenu(x, y, items, { footer = '', onMount } = {}) {   // footer: more below the items (onMount wires it)
   $$('.ctx').forEach(m => m.remove());
+  const prev = document.activeElement;   // (the focus goes back there when the menu closes)
   const m = el(`<div class="ctx" role="menu">${items.map(([label, , o = {}], i) =>
     `<button type="button" role="menuitem" data-i="${i}"${o.disabled ? ' disabled' : ''}>${esc(label)}</button>`).join('')}${footer}</div>`);
   document.body.appendChild(m);
@@ -86,7 +103,11 @@ export function contextMenu(x, y, items, { footer = '', onMount } = {}) {   // f
   m.style.top = Math.max(6, Math.min(innerHeight - m.offsetHeight - 6, y)) + 'px';
   const off = e => { if (!m.contains(e.target)) close(); };
   const key = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
-  const close = () => { m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', key, true); };
+  const close = () => {
+    const had = m.contains(document.activeElement);
+    m.remove(); removeEventListener('pointerdown', off, true); removeEventListener('keydown', key, true);
+    if (had && prev && prev !== document.body && prev.isConnected) prev.focus({ preventScroll: true });
+  };
   m.onclick = e => { const b = e.target.closest('button[data-i]'); if (!b) return; close(); items[+b.dataset.i][1](); };
   setTimeout(() => { addEventListener('pointerdown', off, true); addEventListener('keydown', key, true); });
   if (onMount) onMount(m, close);
