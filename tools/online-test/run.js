@@ -64,7 +64,7 @@ const PLAYER = scen => {
           if (voters.includes(me) && !v.yes[me] && !v.no[me] && Math.random() < .15) R.send({ t: 'voteCast', n: v.n, v: Math.random() < (scen === 'kick' ? .8 : .45) });
         } else if (Math.random() < (scen === 'storm' ? .05 : .006)) {
           if (scen !== 'lobby' && others.length && Math.random() < .6) { const t = others[Math.floor(Math.random() * others.length)]; if (!pm.whyNotVote(s, me, 'kick')) R.send({ t: 'voteStart', kind: 'kick', target: t }); }
-          else { const kind = Math.random() < .5 ? 'skip' : 'lobby'; if (!pm.whyNotVote(s, me, kind)) pm.lobbyVote(R, kind); }
+          else { const kind = ['skip', 'lobby', 'turn'][Math.floor(Math.random() * 3)]; if (!pm.whyNotVote(s, me, kind)) pm.lobbyVote(R, kind); }
         }
       } catch (e) { console.error('TEST', e && e.stack || e); }
     }, 300);

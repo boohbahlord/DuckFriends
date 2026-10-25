@@ -1,12 +1,12 @@
 /* ---------- the player menu and the room's votes ----------
    In a game, hold Tab (or tap the 👥 button by the pause button; it stays up until its ✖) to see every player: their
    card with the duck and name, their connection, and whether they've gone quiet. Click a name for View stats, Add friend
-   or Vote to kick. At the bottom you can start a vote to go back to the lobby or to skip the round (each once a turn). A running vote shows as a
+   or Vote to kick. At the bottom you can start a vote to go back to the lobby, to skip the turn (not in Bicker Brackets) or to skip the round (each once a turn). A running vote shows as a
    box at the top for everyone who can vote in it. A player who hasn't touched a key, the mouse or the screen in two
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
 import { cardHTML } from './card.js';
-import { voteNeeds, turnKey, isSudo } from './rules.js';
+import { voteNeeds, turnKey, isSudo, isBb } from './rules.js';
 import { now as clockNow } from './clock.js';
 import { openStats } from './stats.js';
 import { canAdd, requestFriend } from './account.js';
@@ -30,6 +30,7 @@ export function whyNotVote(s, me, kind) {
   if (kind === 'kick' && used.kick !== undefined && s.round - used.kick < 2) return 'You can start one kick vote every two rounds.';
   if (kind === 'lobby' && used.lobby === turnKey(s)) return 'You already started a back-to-lobby vote this turn.';
   if (kind === 'skip' && used.skip === turnKey(s)) return 'You already started a skip vote this turn.';
+  if (kind === 'turn' && used.turn === turnKey(s)) return 'You already started a vote to skip this turn.';
   return '';
 }
 export async function startKick(R, id) {
@@ -62,7 +63,7 @@ export function voteHTML(s, me) {
   const v = s.vote; if (!v) return '';
   const { voters, need } = voteNeeds(s, v), yes = voters.filter(id => v.yes[id]).length, mine = v.yes[me] ? 'yes' : v.no[me] ? 'no' : '';
   const left = Math.max(0, Math.ceil((v.ends - clockNow()) / 1000)), who = s.players[v.by], target = s.players[v.target];
-  const q = v.kind === 'kick' ? `Kick ${target ? esc(target.name) : 'them'}?` : v.kind === 'skip' ? 'Skip this round?' : 'Go back to the lobby?';
+  const q = v.kind === 'kick' ? `Kick ${target ? esc(target.name) : 'them'}?` : v.kind === 'skip' ? 'Skip this round?' : v.kind === 'turn' ? 'Skip this turn?' : 'Go back to the lobby?';
   const can = voters.includes(me);
   return `<div class="vb-q"><b>${q}</b> <span class="dim small">${who ? `${esc(who.name)} asked · ` : ''}${yes}/${need} yes · <span class="vb-left">${left}</span> s</span></div>
     ${can ? (mine ? `<span class="small">You voted ${mine}.</span> ` : '') + `<span class="vb-acts"><button type="button" class="btn small green" data-vote="1"${mine === 'yes' ? ' disabled' : ''}>Yes</button><button type="button" class="btn small red" data-vote="0"${mine === 'no' ? ' disabled' : ''}>No</button></span>`
@@ -88,7 +89,7 @@ export function mountPlayers(S, getR) {
       const no = whyNotVote(s, R.me, kind), running = s.vote && s.vote.kind === kind;
       return `<button type="button" class="btn ghost" data-pa="${kind}vote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: ' : 'Start a vote: '}${words}</button>`;
     };
-    setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${btn('skip', 'skip this round')}</span>
+    setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${isBb(s) ? '' : btn('turn', 'skip this turn')}${btn('skip', 'skip this round')}</span>
       <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span>`);
   };
   const open = (stay = false) => { sticky = sticky || stay; box.hidden = false; render(); };
@@ -98,6 +99,7 @@ export function mountPlayers(S, getR) {
     const R = getR(); if (!R) return;
     if (e.target.closest('[data-pa="lobbyvote"]')) { lobbyVote(R); return; }
     if (e.target.closest('[data-pa="skipvote"]')) { lobbyVote(R, 'skip'); return; }
+    if (e.target.closest('[data-pa="turnvote"]')) { lobbyVote(R, 'turn'); return; }
     const row = e.target.closest('.pm-row'); if (!row) return;
     const id = row.dataset.pid, p = R.state.players[id]; if (!p) return;
     contextMenu(e.clientX, e.clientY, [

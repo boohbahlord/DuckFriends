@@ -668,3 +668,7 @@ the gun can also be a smidgen lower but u did a good job with that one it is fun
 3. yeah sure ig idk wat that means
 
 Someone should be in charge of making a new feature to vote skip a round that is found below or next to vote back to lobby in the TAB menu or player list menu that u can bring up. 
+
+Yeah is this vote to skip a turn or round btw?
+
+add a vote to skip a turn feature that ISNT in the bracket tournament

@@ -300,13 +300,14 @@ export function reduce(state, a, now = Date.now()) {
         if (!P[a.target] || a.target === a.id) return state;
         if (humanIds(s).length <= 2) return state;   // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
-      } else if (a.kind === 'lobby' || a.kind === 'skip') {
+      } else if (a.kind === 'lobby' || a.kind === 'skip' || a.kind === 'turn') {
+        if (a.kind === 'turn' && isBb(s)) return state;   // (not in Bicker Brackets)
         if (used[a.kind] === turnKey(s)) return state;   // one back-to-lobby (or skip) vote a turn
       } else return state;
       s.voteN = (s.voteN || 0) + 1;
       s.vote = { n: s.voteN, kind: a.kind, target: a.kind === 'kick' ? a.target : null, by: a.id, yes: { [a.id]: true }, no: {}, ends: now + VOTE_TIME * 1000 };
       s.voteUsed = { ...(s.voteUsed || {}), [a.id]: { ...used, [a.kind]: a.kind === 'kick' ? s.round : turnKey(s) } };
-      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : a.kind === 'skip' ? `${me.name} started a vote to skip this round.` : `${me.name} started a vote to go back to the lobby.`);
+      say(s, a.kind === 'kick' ? `${me.name} started a vote to kick ${P[a.target].name}.` : a.kind === 'skip' ? `${me.name} started a vote to skip this round.` : a.kind === 'turn' ? `${me.name} started a vote to skip this turn.` : `${me.name} started a vote to go back to the lobby.`);
       return settleVote(s, now);
     }
     case 'voteCast': {
@@ -486,6 +487,7 @@ function settleVote(s, now) {
       return advance(s, now);
     }
     if (v.kind === 'skip') return skipRound(s, now);
+    if (v.kind === 'turn') { say(s, 'The room voted to skip this turn.'); return advance(s, now, true); }   // as if everyone were done
     return backToLobby(s, 'Everyone voted to go back to the lobby.');
   }
   if (no > voters.length - need) { s.vote = null; say(s, 'The vote didn\'t pass.'); }
