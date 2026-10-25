@@ -137,13 +137,13 @@ function startResults(s, now) {
 }
 
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
-function advance(s, now) {
+function advance(s, now, force = false) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
   const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds'].includes(s.phase) && !sway;
   const timeUp = s.ends && now >= s.ends;
   if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
-  const go = all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
+  const go = force || all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
   if (!go) return s;
   switch (s.phase) {
     case 'countdown': return s;
@@ -179,7 +179,7 @@ function advance(s, now) {
 
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
-  const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId;
+  const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId, boss = !!me && isSudo(s, a.id);   // boss: the host, or anyone in sudo
   switch (a.t) {
     case 'join': {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
@@ -200,13 +200,19 @@ export function reduce(state, a, now = Date.now()) {
     }
     case 'look': if (me) Object.assign(me, a.look); return s;
     case 'ready': if (me && (s.phase === 'lobby' || s.phase === 'over')) me.ready = a.v ?? !me.ready; return s;
-    case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (host && n) s.name = n; return s; }
-    case 'options': if (host && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
-    case 'kick': if (host && P[a.who] && a.who !== s.hostId) { delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); } return s;
+    case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
+    case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) { Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max); } return s;
+    case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
+      const p = P[a.who]; if (!boss || !p || a.who === s.hostId || a.who === a.id) return state;
+      if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
+      delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
+      if (s.vote) settleVote(s, now);
+      return s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown' ? s : advance(s, now);
+    }
     case 'start':
-      if (!host || !(s.phase === 'lobby' || s.phase === 'over')) return s;
+      if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
-    case 'cancel': if (host && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
+    case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
     case 'submit': {
       if (isBb(s)) return bbWrite(s, a, now, true);
       if (!me || s.phase !== 'submit' || s.done[a.id]) return s;
@@ -249,7 +255,7 @@ export function reduce(state, a, now = Date.now()) {
       s.reviewVotes[a.id] = true;
       if (s.seat.filter(id => s.reviewVotes[id]).length >= needed(s)) s.review = true;
       return s;
-    case 'toLobby': if (host && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+    case 'toLobby': if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
@@ -292,6 +298,7 @@ export function reduce(state, a, now = Date.now()) {
       const used = (s.voteUsed || {})[a.id] || {};
       if (a.kind === 'kick') {
         if (!P[a.target] || a.target === a.id) return state;
+        if (humanIds(s).length <= 2) return state;   // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state;   // one kick vote every two rounds
       } else if (a.kind === 'lobby') {
         if (used.lobby === turnKey(s)) return state;   // one back-to-lobby vote a turn
@@ -342,6 +349,12 @@ export function reduce(state, a, now = Date.now()) {
       delete G[a.name]; say(s, `${me.name} removed the group ${a.name}.`); return s;
     }
     case 'forgame': return forgame(s, a, now) || state;
+    case 'skip': {   // the host (or sudo): end the current stage now, as if everyone were done
+      if (!boss || ['lobby', 'over'].includes(s.phase)) return state;
+      say(s, `${me.name} skipped ahead.`);
+      if (s.phase === 'countdown') { s.ends = now; return s; }   // the next tick starts the game
+      return advance(s, now, true);
+    }
     case 'tick': {   // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
       if (s.phase === 'countdown' && now >= s.ends) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; for (const id of s.seat) P[id].ready = false;
@@ -356,6 +369,18 @@ export function reduce(state, a, now = Date.now()) {
     }
   }
   return s;
+}
+
+/* the safety net: an action that throws is skipped (the room keeps going) and the room's log says so, once a minute at
+   most, so a broken action can't stop a game */
+export function safeReduce(state, a, now = Date.now()) {
+  try { return reduce(state, a, now); } catch (e) {
+    console.error('DuckFriends: an action failed and was skipped', a && a.t, e);
+    if (state.errAt && now - state.errAt < 60000) return state;
+    const s = clone(state); s.errAt = now;
+    say(s, `Something went wrong (${String(a && a.t).slice(0, 20)}), so it was skipped. If the game seems stuck, the host can type skip in the command line.`);
+    return s;
+  }
 }
 
 /* ---------- groups, permissions and forgame (the command line's sudo commands) ----------
@@ -449,6 +474,7 @@ function settleVote(s, now) {
   const v = s.vote; if (!v) return s;
   const { voters, need } = voteNeeds(s, v), yes = voters.filter(id => v.yes[id]).length, no = voters.filter(id => v.no[id]).length;
   if (v.kind === 'kick' && !s.players[v.target]) { s.vote = null; return s; }
+  if (v.kind === 'kick' && humanIds(s).length <= 2) { s.vote = null; say(s, 'Only two players left, so the kick vote ended.'); return s; }
   if (yes >= need) {
     s.vote = null;
     if (v.kind === 'kick') {

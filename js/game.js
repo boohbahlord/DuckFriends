@@ -18,7 +18,7 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo } from './rules.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
-import { mountPlayers, trackIdle, lobbyVote, startKick } from './players.js';
+import { mountPlayers, trackIdle, lobbyVote, kickItems } from './players.js';
 import { isMuted } from './chat.js';
 import { pressSpecial, confettiRain, pressFX, BULLET, SHOT_SPEED } from './specials.js';
 import { duckSVG, duckRoom } from './duck.js';
@@ -557,7 +557,7 @@ function actHTML(s) {
       ${s.round >= 1 && !s.review ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? ' disabled' : ''} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ''}
       <button type="button" class="btn ${lv ? 'red' : 'ghost'}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ''}>${lv ? 'Vote yes: back to the lobby' : 'Vote: back to the lobby'}</button>${count}</div>`;
   }
-  if (s.phase === 'over') return `<div class="act-row">${s.hostId === R.me ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
+  if (s.phase === 'over') return `<div class="act-row">${isSudo(s, R.me) ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
   return '';
 }
 
@@ -812,7 +812,7 @@ register('game', {
       const d = e.target.closest && e.target.closest('.gduck, .statbox'); if (!d || stick.shown) return;
       const p = R.state.players[d.dataset.pid];
       contextMenu(x, y, [['View stats', () => openStats(R.state, d.dataset.pid, R.me)], ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : []),
-        ...(p && d.dataset.pid !== R.me && !p.bot ? [['Vote to kick', () => startKick(R, d.dataset.pid)]] : [])]);
+        ...(p ? kickItems(R, d.dataset.pid) : [])]);
     });
     off = R.on(s => {
       if (!S) return;

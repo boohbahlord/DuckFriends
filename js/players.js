@@ -6,7 +6,7 @@
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from './ui.js';
 import { cardHTML } from './card.js';
-import { voteNeeds, turnKey } from './rules.js';
+import { voteNeeds, turnKey, isSudo } from './rules.js';
 import { now as clockNow } from './clock.js';
 import { openStats } from './stats.js';
 import { canAdd, requestFriend } from './account.js';
@@ -22,7 +22,9 @@ export function netHTML(p, online) {
 }
 
 /* may I start this vote now? (the reason if not) */
+const TWO = 'With only two players there are no kick votes.';
 export function whyNotVote(s, me, kind) {
+  if (kind === 'kick' && s.seat.filter(id => !s.players[id].bot).length <= 2) return TWO;
   if (s.vote) return 'A vote is already running.';
   const used = (s.voteUsed || {})[me] || {};
   if (kind === 'kick' && used.kick !== undefined && s.round - used.kick < 2) return 'You can start one kick vote every two rounds.';
@@ -33,6 +35,18 @@ export async function startKick(R, id) {
   const s = R.state, p = s.players[id]; if (!p) return;
   const no = whyNotVote(s, R.me, 'kick'); if (no) { toast(no); return; }
   if (await confirmBox(`Vote to kick ${p.name}?`, 'Everyone else has to vote yes. You can start one kick vote every two rounds.')) R.send({ t: 'voteStart', kind: 'kick', target: id });
+}
+/* the host (or sudo) removes a player at once, no vote */
+export const canKick = (s, me, id) => isSudo(s, me) && id !== me && id !== s.hostId && !!s.players[id];
+export async function hostKick(R, id) {
+  const p = R.state.players[id]; if (!p || !canKick(R.state, R.me, id)) return;
+  if (await confirmBox(`Kick ${p.name}?`, p.bot ? 'The computer leaves the room.' : 'They leave right away, no vote, and can\'t come back until the room goes back to the lobby.')) R.send({ t: 'kick', who: id });
+}
+/* the player menu's items for someone: kick (host or sudo) or a vote to kick (everyone else, with three people or more) */
+export function kickItems(R, id) {
+  const s = R.state, p = s.players[id]; if (!p || id === R.me) return [];
+  if (canKick(s, R.me, id)) return [['Kick', () => hostKick(R, id)]];
+  return p.bot || ['lobby', 'countdown', 'over'].includes(s.phase) || whyNotVote(s, R.me, 'kick') === TWO ? [] : [['Vote to kick', () => startKick(R, id)]];
 }
 /* Back to the lobby: starts the vote, or says yes to the one running */
 export function lobbyVote(R) {
@@ -84,7 +98,7 @@ export function mountPlayers(S, getR) {
     contextMenu(e.clientX, e.clientY, [
       ['View stats', () => openStats(R.state, id, R.me)],
       ...(canAdd(p) ? [['Add friend', async () => toast(await requestFriend(p.acct))]] : []),
-      ...(id !== R.me && !p.bot ? [['Vote to kick', () => startKick(R, id)]] : []),
+      ...kickItems(R, id),
     ]);
   });
   vbox.addEventListener('click', e => {
