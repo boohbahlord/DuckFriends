@@ -7,15 +7,20 @@
    from above toward the bottom, and a pixel sunset on the horizon that breathes. Ether's Crossroads: the jester's
    dungeon from the game of that name; the torch and the candles flicker and glow, with that game's static and scan
    lines over the picture, and the interface takes on its Ether & Kenoma look (Cascadia Code) while the map is played.
+   Carnival Night: a Ferris wheel turning on the left, a striped big top on the right, string lights twinkling over
+   them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
+   Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    The host picks the map in the lobby. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
-import { backdropSVG, backdropHTML } from './art.js';
+import { backdropSVG, backdropHTML, carnivalSVG } from './art.js';
 
 export const MAPS = [
   ['board', 'Night Show', 'The carnival at night: string lights, bunting and breathing Twister dots.'],
   ['sky', 'Sky', 'Clouds, a sun and a moon that take turns (a minute each), and columns that glow at night.'],
   ['pixel', 'Pixel', 'Wool-block columns over floating block islands, a forest below and a pixel sunset.'],
+  ['carnival', 'Carnival Night', 'A Ferris wheel and a big top under string lights, marquee bulbs around the tiles, and fireworks when the votes are in.'],
+  ['rabbit', 'Rabbit Hole of Ducklings', 'A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.'],
   ['ec', 'Ether\'s Crossroads', 'The jester\'s dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it\'s played.'],
 ];
 export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
@@ -24,6 +29,8 @@ export const mapName = id => (MAPS.find(m => m[0] === id) || MAPS[0])[1];
 export function mapMini(id) {
   if (id === 'sky') return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
   if (id === 'ec') return `<div class="mini-map mm-ec">${EC_FLAMES.map(([x, y, k]) => `<i class="mm-glow" style="left:${(x / 3.2).toFixed(1)}%;top:${(y / 1.8).toFixed(1)}%;--k:${k}"></i>`).join('')}</div>`;
+  if (id === 'carnival') return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
+  if (id === 'rabbit') return '<div class="mini-map mm-rabbit"></div>';
   if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i></div>`;
   return `<div class="mini-map mm-night">${backdropSVG(192, 106, true)}</div>`;
 }
@@ -185,17 +192,153 @@ function nightScene(layer) {
   return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
 }
 
+/* ---------- Rabbit Hole of Ducklings ----------
+   A Julia set drawn by the graphics card (WebGL) at a reduced size and stretched. The view sits on the spot the whole
+   set spirals around (the fixed point a = a² + c, whose spin λ = 2a is 1.15 long), and keeps zooming into it: every 8
+   steps of z → z² + c grow the picture there by λ⁸, so after one zoom of λ⁸ the picture is itself again and the fall
+   never ends, with no seam. Meanwhile c slides along the edge of the Mandelbrot set, so the spirals keep changing how
+   many arms they have, and the fall never repeats. Colors: escape bands that turn around the wheel, feathered by the
+   angle of each step (stripe average); points that never escape are dark, with drifting glowing threads (orbit trap).
+   Still backgrounds hold one frame; Data saving and slow devices draw fewer pixels. No WebGL: a turning color wheel. */
+const RH_FRAG = `precision highp float;
+uniform vec2 uRes; uniform float uT;
+vec2 cm(vec2 a, vec2 b) { return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
+vec3 pal(float t) { return clamp(abs(fract(t + vec3(0., .667, .333)) * 6. - 3.) - 1., 0., 1.); }   // a pure color, any hue
+float TH(float t) { return 2.2 + 1.1 * sin(t * .011) + .4 * sin(t * .027 + 1.); }                     // where c sits on the edge
+void main() {
+  vec2 uv = (gl_FragCoord.xy - .5 * uRes) / min(uRes.x, uRes.y);
+  float t = uT, th = TH(t);
+  const float N = 8., SP = .14, D = 1.15;          // 8 steps a zoom, a zoom every 7 s
+  vec2 L = D * vec2(cos(th), sin(th)), al = .5 * L, c = al - cm(al, al);
+  // how far into this zoom (f), turned back by whole turns so the view spins at most half a turn each zoom
+  float f = fract(t * SP), k = floor(N * TH(floor(t * SP) / SP) / 6.2832 + .5);
+  float lr = -N * f * log(D), la = (6.2832 * k - N * th) * f;
+  // near the fixed point, follow the offset e from it (e → λe + e²): plain floats would run out of digits
+  vec2 e = cm(1e-3 * exp(lr) * vec2(cos(la), sin(la)), uv);
+  float n = 0.;
+  for (int i = 0; i < 120; i++) { if (dot(e, e) > .0025) break; e = cm(L, e) + cm(e, e); n++; }
+  vec2 z = al + e, tp = .35 * vec2(sin(t * .07), cos(t * .053));
+  float sum = 0., prev = 0., wsum = 0., pw = 0., trap = 1e3; bool esc = false;
+  for (int i = 0; i < 160; i++) {
+    z = cm(z, z) + c; n++;
+    if (dot(z, z) > 1e4) { esc = true; break; }
+    float w = smoothstep(.08, .3, length(z - al));   // steps still close to the fixed point don't count
+    vec2 u = normalize(z), u2 = cm(u, u), u5 = cm(cm(u2, u2), u);   // u5.y = sin(5 × angle of z)
+    prev = sum; pw = wsum;
+    sum += w * (.5 + .5 * u5.y); wsum += w;
+    trap = min(trap, min(abs(z.x - tp.x), abs(z.y - tp.y)) + (1. - w));
+  }
+  vec3 col;
+  if (esc) {
+    float sm = clamp(log2(log(length(z)) / log(100.)), 0., 1.);
+    float mu = n + 1. - sm - N * f;                  // the zoom's steps taken off, so the bands match across zooms
+    float st = mix(sum / max(wsum, 1e-3), prev / max(pw, 1e-3), sm);
+    col = mix(vec3(1.), pal(mu * .045 + t * .03 + st * .3), .85) * (.1 + st);
+  } else {
+    float st = sum / max(wsum, 1e-3);
+    col = pal(t * .03 + .55 + st * .6) * (.08 + .55 * st * st) + pal(t * .03 + trap * 3.) * .45 * exp(-40. * trap);
+  }
+  gl_FragColor = vec4(col, 1.);
+}`;
+function rabbitScene(layer) {
+  const sc = document.createElement('div'); sc.className = 'scene rabbit';
+  const cv = document.createElement('canvas'); sc.append(cv); layer.append(sc);
+  const html = document.documentElement, gl = cv.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false });
+  const prog = gl && (() => {
+    const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return gl.getShaderParameter(x, gl.COMPILE_STATUS) ? x : null; };
+    const v = sh(gl.VERTEX_SHADER, 'attribute vec2 p; void main() { gl_Position = vec4(p, 0., 1.); }'), f = sh(gl.FRAGMENT_SHADER, RH_FRAG);
+    if (!v || !f) return null;
+    const pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr);
+    return gl.getProgramParameter(pr, gl.LINK_STATUS) ? pr : null;
+  })();
+  if (!prog) { sc.classList.add('rh-plain'); return { update() {}, destroy() { sc.remove(); } }; }
+  gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const ap = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
+  const uRes = gl.getUniformLocation(prog, 'uRes'), uT = gl.getUniformLocation(prog, 'uT');
+  let last = -1, drawnStill = false, scale = 1, slow = 0;
+  const t0 = performance.now() - Math.random() * 600000;   // everyone starts somewhere else in the fall
+  return {
+    update() {
+      const still = html.classList.contains('still'), lite = html.classList.contains('lite'), now = performance.now();
+      if (still && drawnStill) return;
+      if (now - last < (lite ? 66 : 33)) return;   // 30 frames a second (15 with Data saving)
+      // a device that can't keep up (frames 80 ms apart) gets fewer pixels, down to a quarter
+      if (last > 0 && !still) { slow = now - last > 80 ? slow + 1 : 0; if (slow > 10 && scale > .5) { scale *= .8; slow = 0; } }
+      last = now;
+      const k = (lite ? .3 : .5) * scale * Math.min(1.5, devicePixelRatio || 1), w = Math.max(1, Math.round(layer.clientWidth * k)), h = Math.max(1, Math.round(layer.clientHeight * k));
+      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
+      gl.uniform2f(uRes, w, h); gl.uniform1f(uT, (now - t0) / 1000);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      drawnStill = still;
+    },
+    destroy() { const x = gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); sc.remove(); },
+  };
+}
+
+/* ---------- Carnival Night ---------- */
+function carnivalScene(layer) {
+  const sc = document.createElement('div'); sc.className = 'scene carnival';
+  sc.innerHTML = carnivalSVG(true);
+  layer.append(sc);
+  // a tall screen (a phone) sees a slice of the picture: the slice around the Ferris wheel
+  const svg = sc.firstElementChild, fit = () => {
+    const a = layer.clientWidth / (layer.clientHeight || 1), w = 900 * a;
+    svg.setAttribute('viewBox', a < 1.2 ? `${Math.max(0, Math.min(1600 - w, 330 - w / 2)).toFixed(0)} 0 ${w.toFixed(0)} 900` : '0 0 1600 900');
+  };
+  const ro = new ResizeObserver(fit); ro.observe(layer); fit();
+  return { update() {}, destroy() { ro.disconnect(); sc.remove(); } };
+}
+/* marquee bulbs around a tile's edges: three sets that light in turn, so they seem to chase around it */
+function marquee(col) {
+  const old = col.querySelector(':scope > .marquee'), w = col.clientWidth, h = col.clientHeight;
+  if (!w || !h) return;
+  if (old && old._k === w + 'x' + h) return;
+  const g = 22, inset = 9, nx = Math.max(1, Math.round((w - inset * 2) / g)), ny = Math.max(1, Math.round((h - inset * 2) / g)), sx = (w - inset * 2) / nx, sy = (h - inset * 2) / ny;
+  const pts = [];
+  for (let i = 0; i < nx; i++) pts.push([inset + i * sx, inset]);
+  for (let i = 0; i < ny; i++) pts.push([w - inset, inset + i * sy]);
+  for (let i = 0; i < nx; i++) pts.push([w - inset - i * sx, h - inset]);
+  for (let i = 0; i < ny; i++) pts.push([inset, h - inset - i * sy]);
+  const sets = [0, 1, 2].map(k => pts.filter((_, i) => i % 3 === k).map(([x, y]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="mq-glow"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`).join(''));
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'marquee'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.innerHTML = sets.map((x, k) => `<g class="mq mq${k}">${x}</g>`).join('');
+  svg._k = w + 'x' + h;
+  if (old) old.replaceWith(svg); else col.prepend(svg);
+}
+/* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors */
+function fireworks(sc, colors) {
+  const html = document.documentElement;
+  if (!sc || html.classList.contains('still') || html.classList.contains('lite')) return;
+  const box = document.createElement('div'); box.className = 'cn-fw';
+  box.innerHTML = Array.from({ length: 5 }, (_, i) => {
+    const x = 12 + Math.random() * 76, y = 12 + Math.random() * 30, c = colors[i % colors.length], d = (i * .35 + Math.random() * .2).toFixed(2);
+    return `<div class="fw" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--c:${c};--d:${d}s;--rise:${(70 - y).toFixed(0)}cqh"><i class="fw-rocket"></i>${Array.from({ length: 16 }, (_, k) => `<i class="fw-spark" style="--a:${k * 22.5}deg"></i>`).join('')}</div>`;
+  }).join('');
+  sc.append(box); setTimeout(() => box.remove(), 4200);
+}
+
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
    destroy() }: board() hands it the board, whose columns turn see-through for the map */
 export function mountMap(layer, s) {
   const map = s.options.map || 'board', cur = { cols: null };
   layer.className = 'map-layer map-' + map;
   document.documentElement.classList.add('map-on', 'map-is-' + map);   // (map-is-ec: the Ether & Kenoma look)
-  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : nightScene(layer);
+  const scene = map === 'sky' ? skyScene(layer, s, cur) : map === 'pixel' ? pixelScene(layer) : map === 'ec' ? ecScene(layer) : map === 'carnival' ? carnivalScene(layer) : map === 'rabbit' ? rabbitScene(layer) : nightScene(layer);
+  // Carnival Night: the tiles' marquee bulbs follow the tiles' size
+  const ro = map === 'carnival' ? new ResizeObserver(es => es.forEach(e => marquee(e.target))) : null;
   return {
     update: now => scene.update(now),
-    board(board) { if (!board) { cur.cols = null; return; } board.classList.add('map-' + map); cur.cols = board.querySelector('.cols'); },
-    destroy() { scene.destroy(); layer.className = 'map-layer'; document.documentElement.classList.remove('map-on', 'map-is-' + map); },
+    board(board) {
+      if (!board) { cur.cols = null; return; }
+      board.classList.add('map-' + map); cur.cols = board.querySelector('.cols');
+      if (ro) { ro.disconnect(); board.querySelectorAll('.cols > .col').forEach(c => { marquee(c); ro.observe(c); }); }
+    },
+    /* the votes are in: fireworks in these colors (Carnival Night only) */
+    cheer(colors) { if (map === 'carnival') fireworks(layer.querySelector('.scene'), colors.length ? colors : ['#ff4f6d', '#ffd23f', '#5ce1ff']); },
+    destroy() { if (ro) ro.disconnect(); scene.destroy(); layer.className = 'map-layer'; document.documentElement.classList.remove('map-on', 'map-is-' + map); },
   };
 }
 export const mapLabel = id => esc(mapName(id));
