@@ -62,7 +62,7 @@ const DRAW = {
     <path d="M76.5 29L89 31.5" stroke="#3a0000" stroke-width="2" stroke-linecap="round"/>`,
   coins: (L, id) => `<defs><radialGradient id="${id}c" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#e2b22a"/><stop offset="1" stop-color="#8a6a0a"/></radialGradient></defs>
     <circle cx="83" cy="34" r="6.6" fill="url(#${id}c)" stroke="#6a4a0a" stroke-width="1"/><circle cx="83" cy="34" r="4.8" fill="none" stroke="#9a7a1a" stroke-width=".7"/>
-    <text x="83" y="36.8" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7.5" fill="#7a5a0a">$</text>`,
+    <text x="83" y="36.8" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="7.5" fill="#7a5a0a">$</text>`,
   many: () => [[83, 34, 4.3], [74, 28, 3], [90, 26, 2.6], [70, 38, 2.4], [79, 23, 2.2], [88, 44, 2.6], [66, 30, 2], [76, 45, 2]].map(([x, y, r]) =>
     `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${(r * 1.2).toFixed(1)}" fill="${K}"/><circle cx="${(x + r * .35).toFixed(1)}" cy="${(y - r * .45).toFixed(1)}" r="${(r * .38).toFixed(1)}" fill="#fff"/>`).join(''),
   holes: (L, id) => `<defs><radialGradient id="${id}o" cx=".45" cy=".45" r=".6"><stop offset="0" stop-color="#000"/><stop offset=".75" stop-color="#121218"/><stop offset="1" stop-color="#2b2b38"/></radialGradient></defs>

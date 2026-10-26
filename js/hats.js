@@ -126,7 +126,7 @@ const DRAW = {
     ${[-38, -27, -15, -3, 9, 21, 31].map((x, i) => `<circle cx="${x}" cy="${(8 - Math.abs(x + 3) / 9).toFixed(1)}" r="2.2" fill="${['#d7263d', '#2a9d8f', '#f4a261'][i % 3]}"/>`).join('')}`,
   dunce: () => `<path d="M-16 2L0-52L16 2Z" fill="#fbfbf6" ${O}/>
     <path d="M0-52L16 2L8 2Z" fill="#000" opacity=".08"/>
-    <text x="-1" y="-6" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="16" fill="#1c1c28">D</text>
+    <text x="-1" y="-6" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="16" fill="#1c1c28">D</text>
     <path d="M-16 2C-6 5 6 5 16 2" stroke="#1c1c28" stroke-width="1.6" fill="none"/>`,
   crown: (h, id) => {
     const M = METAL[h.metal] || METAL.gold;
@@ -187,7 +187,7 @@ const DRAW = {
     <path d="M-12-22C-6-28 8-28 14-22" stroke="#a8101c" stroke-width="4" fill="none"/>
     <path d="M-2-27C0-30 4-30 6-27" stroke="#f2c94c" stroke-width="3" fill="none"/>
     <path d="M7-20L18-20L19-6C16-2 12 0 12 0C12 0 8-2 6-6Z" fill="#f2c94c" stroke="#8a6a12" stroke-width="1.2"/>
-    <text x="12.6" y="-9" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7.5" fill="#a8101c">1</text>
+    <text x="12.6" y="-9" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="7.5" fill="#a8101c">1</text>
     <ellipse cx="-6" cy="-17" rx="6" ry="3" fill="#fff" opacity=".3" transform="rotate(-25 -6 -17)"/>`,
   doctor: (h, id) => `<defs><radialGradient id="${id}mr" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#cfd6de"/><stop offset="1" stop-color="#8a95a3"/></radialGradient></defs>
     <path d="M-22 4C-23-8 23-10 23 3" stroke="#2b2b2b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
