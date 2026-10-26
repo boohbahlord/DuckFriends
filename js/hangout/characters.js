@@ -5,20 +5,24 @@
    (s.hang.npcFx). Their words also go in the chat (npc.js). Doors open for them (doors.js addOpeners).
    Justin (justin.js) is a duck: E talks to him (or revives him), his gun shows while he's after someone, a hotdog when
    he eats, a glass when he drinks; bullets and daggers knock him down (rules.js asks targets and hit), and so does
-   kill @Justin. */
+   kill @Justin. The shadow duck (shadowduck.js) fades in and out (its record's o) with a whoosh, and whooshes away when
+   it gets Justin (it fades). */
 import { rule, activity } from './registry.js';
 import { npcTick, npcAct, npcHit, npcAt, BRAINS } from './npc.js';
 import { inCabin, sortY, W, H } from './layout.js';
 import { addOpeners } from './doors.js';
-import { catSVG, CATS, justinSVG, glassSVG, JUSTIN } from './npcart.js';
+import { catSVG, CATS, justinSVG, shadowSVG, glassSVG, JUSTIN } from './npcart.js';
 import { heldHTML, pressFX, BULLET } from '../specials.js';
 import { now as clockNow } from '../clock.js';
 import { play, loop, setListener } from './sounds.js';
 import './cats.js';
 import './justin.js';
+import './shadowduck.js';
 
 const PETS = { annabelle: 'Pet Annabelle', bubbles: 'Pet Bubbles' };   // who E can pet (Oreo and Opal won't have it)
-const DUCK = 64, FEET = (v => DUCK * (v[1] + v[3] - 10) / 120)(justinSVG({ size: DUCK }).match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (his glasses make it taller)
+const DUCK = 64, FADE = 1500;
+const feetOf = svg => (v => DUCK * (v[1] + v[3] - 10) / 120)(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
+const FEET = feetOf(justinSVG({ size: DUCK }));
 const REACH = 110, SAY = 4500, HOP = 320;
 const MEOWS = /^(M|Mew|Mrr)/;
 
@@ -40,9 +44,9 @@ function make(id) {
   el.innerHTML = '<div class="hang-npc-say"></div><div class="hang-npc-body"></div>';
   layer.append(el);
   const body = el.querySelector('.hang-npc-body'), k = CATS[id] ? CATS[id].tall / 63 : 1;   // (a cat's drawing: 100 × 80 units, its feet at 46, 74)
-  const [fx, fy] = duck ? [DUCK / 2, FEET] : [46 * k, 74 * k];
+  const feet = duck ? feetOf(svgFor(id, 'stand')) : 0, [fx, fy] = duck ? [DUCK / 2, feet] : [46 * k, 74 * k];
   body.style.left = (-fx).toFixed(1) + 'px'; body.style.top = (-fy).toFixed(1) + 'px'; body.style.transformOrigin = `${fx.toFixed(1)}px ${fy.toFixed(1)}px`; body.style.setProperty('--fy', fy.toFixed(1) + 'px');
-  return { el, body, k, duck, tall: duck ? FEET - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', dist: 0, sayN: 0 };
+  return { el, body, k, duck, tall: duck ? feet - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', dist: 0, sayN: 0 };
 }
 /* what's in Justin's hand: his gun, a glass */
 const HAND = { gun: () => `<span class="hang-npc-held gun">${heldHTML('handgun', JUSTIN)}</span>`, drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>` };
@@ -50,7 +54,7 @@ function svgFor(id, pose, step) {
   const b = BRAINS.get(id); if (!b) return '';
   if (b.kind === 'cat') return catSVG(id, { pose, step });
   if (id === 'justin') return justinSVG({ size: DUCK, shadow: pose !== 'dead', dead: pose === 'dead' }) + (HAND[pose] ? HAND[pose]() : '');
-  return '';
+  return shadowSVG({ size: DUCK });
 }
 /* a claw swipe over whoever got it, or a heart from a purr */
 function burst(kind, x, y, ctx) {
@@ -121,6 +125,11 @@ activity({
       }
       if (r.a === 'drink' && o.a !== 'drink' && o.seen) play('gulp', { x: o.x, y: o.y });
       o.a = r.a; o.seen = true;
+      if (r.o) {   // the shadow duck: fading in or out, with a whoosh close by
+        o.op = r.o.v ? Math.min(1, (now - r.o.t) / FADE) : Math.max(0, 1 - (now - r.o.t) / FADE);
+        if (o.fadeT !== undefined && o.fadeT !== r.o.t && now - r.o.t < 1000 && !ctx.world.inside) play('whoosh', { x: o.x, y: o.y });
+        o.fadeT = r.o.t;
+      }
       /* words: a bubble for a few seconds (and a meow, a purr or a hiss nearby) */
       if (r.say && r.say.n !== o.sayN) {
         const fresh = o.sayN && now - r.say.t < 2000; o.sayN = r.say.n; o.say.textContent = r.say.text; o.sayUntil = r.say.t + SAY;
@@ -141,15 +150,16 @@ activity({
       const at = s.players[f.who] ? ctx.world.at(f.who) : shown.get(f.who);
       if (!at || inCabin(at.x, at.y) !== ctx.world.inside) continue;
       if (f.kind === 'gun' || f.kind === 'miss') { shot(shown.get(f.by), at, f.kind === 'miss', ctx); continue; }
-      if (f.kind !== 'swipe' && f.kind !== 'purr') continue;   // (the shadow duck's are its own)
+      if (f.kind !== 'swipe' && f.kind !== 'purr') continue;
       burst(f.kind, at.x, at.y, ctx); if (f.kind === 'swipe') play('swipe', { x: at.x, y: at.y });
     }
   },
   draw(now, ctx) {
     const Wd = ctx.world, sc = Wd.sc;
     for (const o of shown.values()) {
-      const hide = inCabin(o.x, o.y) !== Wd.inside; if (o.el.hidden !== hide) o.el.hidden = hide;
+      const hide = inCabin(o.x, o.y) !== Wd.inside || o.op === 0; if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
+      if (o.op !== undefined && o.shownOp !== o.op) { o.shownOp = o.op; o.el.style.opacity = o.op.toFixed(3); }
       const f = Wd.toScreen(o.x, o.y, o.z);
       o.el.style.transform = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
       o.body.style.transform = `${o.bob ? `translateY(${(-o.bob * sc).toFixed(1)}px) ` : ''}scale(${(o.f < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})`;
