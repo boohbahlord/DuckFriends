@@ -61,7 +61,7 @@ let target = null;         // where a click or a tap asked my duck to walk: { x,
 let touchOff = null, touchedAt = 0, touchTold = false;
 let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
-let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again)
+let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again; R on Duck Cabin)
 const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
 let held = null, mouse = null;   // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 let shows = {};                  // a handgun just fired, shown turned toward its aim for a moment: by player id
@@ -1106,7 +1106,7 @@ function paint(force) {
     bbMarks(s);
     if (world) { world.destroy(); world = null; }
     main.innerHTML = viewHTML(s);
-    if (isHang(s) && s.phase === 'hang') world = mountWorld($('.hang-board', main), { room: () => R, me: () => me, jumpZ, landsAt, cfg: () => jumpCfg(me), button: () => { if (S && R) setHTML($('.gact', S), actHTML(R.state)); } });
+    if (isHang(s) && s.phase === 'hang') world = mountWorld($('.hang-board', main), { room: () => R, me: () => me, jumpZ, landsAt, cfg: () => jumpCfg(me), clickUse: () => !!profile.settings.clickUse, button: () => { if (S && R) setHTML($('.gact', S), actHTML(R.state)); } });
     if (!scene) scene = mountMap($('.map-layer', S), s);
     announce(s.phase);
     celebrate(s);
@@ -1261,7 +1261,8 @@ function keydown(e) {
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) { if (!e.code.startsWith('Shift')) e.preventDefault(); keys.add(e.code); return; }
   if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) jump(); return; }
   if (keyIndex(e) >= 0 && onBoardPhase()) { e.preventDefault(); if (!e.repeat) useKey(keyIndex(e), e.shiftKey); return; }   // the specials' keys (Shift: keep it on)
-  if (e.code === 'KeyE' && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E: the last key again
+  if (e.code === 'KeyE' && isHang(R.state) && onBoardPhase()) { e.preventDefault(); if (!e.repeat && world) world.press(); return; }   // Duck Cabin: E uses what's near (sit, play, read …)
+  if (e.code === (isHang(R.state) ? 'KeyR' : 'KeyE') && !e.repeat && onBoardPhase()) { e.preventDefault(); if (lastKey >= 0) useKey(lastKey, false); else if (bar) bar.show(); return; }   // E (R on Duck Cabin): the last key again
   if (e.code === 'KeyQ' && isQuack(R.state)) { e.preventDefault(); peek(true); return; }   // hold Q: peek at my Secret Card
   if ((e.code === 'Equal' || e.code === 'Minus') && R.state.phase === 'bracket') { e.preventDefault(); zoom(e.code === 'Equal' ? 'in' : 'out'); return; }
   if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !e.repeat) { e.preventDefault(); act('end'); }
@@ -1322,7 +1323,7 @@ register('game', {
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
-    docks = mountDocks(S, isHang(R.state) ? HINTS.replace('End turn', 'Use') : HINTS); mbarOff = mountMusicBar(S);
+    docks = mountDocks(S, isHang(R.state) ? HINTS.replace('<kbd>Enter</kbd> End turn', '<kbd>E</kbd> Use') : HINTS); mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey, cool });

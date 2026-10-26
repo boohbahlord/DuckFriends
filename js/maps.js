@@ -15,7 +15,7 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from './duck.js';
 import { esc } from './ui.js';
-import { backdropSVG, backdropHTML, carnivalSVG } from './art.js';
+import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from './art.js';
 
 export const MAPS = [
   ['board', 'Night Show', 'The carnival at night: string lights, bunting and breathing Twister dots.'],
@@ -35,6 +35,7 @@ export function mapMini(id) {
   if (id === 'carnival') return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === 'rabbit') return '<div class="mini-map mm-rabbit"></div>';
   if (id === 'stars') return '<div class="mini-map mm-stars"></div>';
+  if (id === 'cabin') return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${artBackdrop('cabin')}</svg></div>`;
   if (id === 'pixel') return `<div class="mini-map mm-pixel"><i class="mm-psun"></i><i class="mm-isle" style="left:14%;top:22%"></i><i class="mm-isle" style="left:62%;top:38%;transform:scale(.7)"></i><i class="mm-ground"></i></div>`;
   return `<div class="mini-map mm-night">${backdropSVG(192, 106, true)}</div>`;
 }

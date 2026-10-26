@@ -21,11 +21,13 @@ import { esc } from '../ui.js';
 export const BOARD_HTML = '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 const SPEED = 380, SPRINT = 1.75;   // world px a second
 const AIR_UP = 6;                    // in the air, ground this much above the feet still catches them
+const CLICK_REACH = 260;             // Click to interact: how far from my duck a click can use a thing
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const dirOf = (dx, dy) => dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u';
 
 /* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; jumpZ(pos, now) (duck heights); landsAt(pos);
-   cfg() → the jump's { T, H }; button() → the context button changed (redraw it) */
+   cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
+   my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const canvas = board.querySelector('.hang-ground'), g = canvas.getContext('2d'), propsBox = board.querySelector('.hang-props'), shade = board.querySelector('.hang-shade');
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
@@ -313,8 +315,8 @@ export function mountWorld(board, api) {
     grabbing: () => !!grab || performance.now() - grabEnd < 350,
     /* the context button, in the place of the Vote / End turn button (kept in its place, unseen, when nothing is near) */
     buttonHTML() {
-      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>Enter</kbd></button></div>`
-        : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>Enter</kbd></button></div>';
+      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>E</kbd></button></div>`
+        : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>E</kbd></button></div>';
     },
     press() { if (button && button.act) button.act(); },
     /* where someone lands, for reset duck */
@@ -327,7 +329,15 @@ export function mountWorld(board, api) {
   };
   /* pointers on the board go to an activity first (drawing on the chalk floor) */
   const pt = e => { const r = board.getBoundingClientRect(), u = world.unplace(e.clientX - r.left, e.clientY - r.top); return { x: u.x * L.W, y: u.y * L.H }; };
-  function down(e) { for (const a of acts()) if (a.pointer?.('down', pt(e), e, ctx)) { grab = a; e.stopPropagation(); return; } }
+  function down(e) {
+    for (const a of acts()) if (a.pointer?.('down', pt(e), e, ctx)) { grab = a; e.stopPropagation(); return; }
+    if (api.clickUse?.()) {   // Click to interact: what the button would offer standing at the click, if my duck is near it
+      const me = api.me(), p = pt(e); if (!me || Math.hypot(p.x - me.x * L.W, p.y - me.y * L.H) > CLICK_REACH) return;
+      let best = null;
+      for (const a of acts()) { const n = a.near?.({ x: p.x, y: p.y, z: me.z, inside }, ctx); if (n && n.label && n.act && (!best || (n.d ?? 0) < (best.d ?? 0))) best = n; }
+      if (best) { best.act(); grabEnd = performance.now(); e.stopPropagation(); }   // (no walking to the click)
+    }
+  }
   function move(e) { if (grab) grab.pointer('move', pt(e), e, ctx); }
   function up(e) { if (!grab) return; grab.pointer('up', pt(e), e, ctx); grab = null; grabEnd = performance.now(); }
   board.addEventListener('pointerdown', down); board.addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);

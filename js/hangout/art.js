@@ -368,6 +368,32 @@ export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], wind
   }
   return wrap(w, h, s, 'hg-wall', defs);
 }
+/* ---------- doors ---------- */
+/* a door's face, w × h: a frame, four sunk panels, a brass knob (knob: 'l' | 'r', the side away from the hinge). Foot: y = h. */
+export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
+  const pw = (w - 30) / 2, ph = (h - 34) / 2, kx = knob === 'l' ? 12 : w - 12;
+  let p = '';
+  for (const [x, y] of [[10, 10], [20 + pw, 10], [10, 24 + ph], [20 + pw, 24 + ph]]) p += R(x, y, pw, ph, '#9a5526', `rx="3" ${ln(1.6)}`) + R(x + 3, y + 3, pw - 6, 4, '#c98a52', 'opacity=".6"');
+  return wrap(w, h, R(0, 0, w, h, '#b06a35', `rx="3" ${ln(2.4)}`) + p + F`<circle cx="${kx}" cy="${h * .55}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
+}
+/* a closed door seen from above in a north-south wall's line: a plank len long (down the screen), t thick, a little
+   lighter than the wall's top, the knob's end marked. Box t × len. */
+export function doorTop({ len = 150, t = 14, knob = 'b' } = {}) {
+  const ky = knob === 'a' ? 10 : len - 10;
+  return wrap(t, len, R(0, 0, t, len, '#d9a066', ln(2.2)) + F`<path d="M${t / 2} 4V${len - 4}" stroke="#8a4f22" stroke-width="1.6" opacity=".7"/><circle cx="${t / 2}" cy="${ky}" r="3" fill="#e8b84a" ${ln(1)}/>`, 'hg-door');
+}
+/* a door swung open toward the viewer by ang degrees (from shut): its face turned, hinge on the left. Box
+   len·cos(ang) × (h + len·sin(ang)); the hinge's foot at (0, h), the open edge's at (w, box height). */
+export function doorAjar({ len = 150, h = 150, ang = 60 } = {}) {
+  const r = ang * Math.PI / 180, cx = len * Math.cos(r), sy = len * Math.sin(r), q = (u, v) => `${n1(u * cx)} ${n1(v * h + u * sy)}`;
+  return wrap(cx, h + sy, F`<path d="M${q(0, 0)}L${q(1, 0)}L${q(1, 1)}L${q(0, 1)}Z" fill="#b06a35" ${ln(2.4)}/><path d="M${q(.15, .08)}L${q(.85, .08)}L${q(.85, .45)}L${q(.15, .45)}ZM${q(.15, .55)}L${q(.85, .55)}L${q(.85, .92)}L${q(.15, .92)}Z" fill="#9a5526" ${ln(1.6)}/>`
+    + F`<circle cx="${n1(.9 * cx)}" cy="${n1(.55 * h + .9 * sy)}" r="4" fill="#e8b84a" ${ln(1.2)}/>`, 'hg-door');
+}
+/* an open doorway seen from outside: the warm room behind it. Box w × h. */
+export function doorway({ w = 64, h = 112 } = {}) {
+  const id = uid();
+  return wrap(w, h, R(0, 0, w, h, `url(#${id})`, ln(2)), 'hg-doorway', `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf7a"/><stop offset="1" stop-color="#c8662a"/></linearGradient>`);
+}
 /* the fireplace, against the north wall: a stone chimney breast with a warm, flickering fire and a mantel (with a little
    rubber duck on it); a raised stone hearth in front. w × (72 + wallH). back: the breast, foot y = 30 + wallH (its
    face); front: the hearth, foot y = h. */
@@ -577,16 +603,15 @@ export function stove({ w = 76, h = 150 } = {}) {
     + [.2, .4, .6, .8].map(t => F`<circle cx="${w * t}" cy="${Y - 3}" r="3.2" fill="#2b2b33" ${ln(1)}/>`).join('')
     + R(8, Y + 6, w - 16, 40, '#2b2b33', `rx="4" ${ln(2)}`) + R(14, Y + 12, w - 28, 22, '#ff9a3a', 'rx="3" opacity=".35"') + R(14, Y + 6, w - 28, 3, '#c9ced6', ln(1)) + R(2, Y + 50, w - 4, 8, '#3a3b44'), 'hg-stove');
 }
-/* the kitchen table with two chairs behind it, a lantern and plates on it. Footprint w × 150 (chairs 0 … 40, the table
-   40 … 140); box w × 240. Foot: y = h − 10 (the table's front). */
+/* the kitchen table with two chairs behind it, a lantern and plates on it; box w × 240. A pair: the chairs (foot y = 100,
+   so a duck sitting on one is in front of them) and the table (foot y = h − 10, the table's front). */
 export function kitchenTable({ w = 200, h = 240 } = {}) {
   const id = uid(), Y = h - 150, tx = 10, tw = w - 20;
   const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
-  return wrap(w, h, shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)
-    + R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
+  return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
     + R(tx, Y + 94, tw, 14, '#8a4a22', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#6e3a1a', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#6e3a1a', ln(1.8))
     + [w * .3, w * .7].map(x => F`<ellipse cx="${x}" cy="${Y + 30}" rx="18" ry="12" fill="#f1ecdf" ${ln(1.8)}/><ellipse cx="${x}" cy="${Y + 30}" rx="10" ry="6" fill="#e2dccb"/>`).join('')
-    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, 'hg-table', glowDef(id, '#ffb347', .45));
+    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
 }
 
 /* ---------- the bathroom ---------- */
@@ -911,9 +936,10 @@ export const ART = {
   floorPiano: [floorPiano, 900, 300, 'flat'], pianoBody: [pianoBody, 360, 240, 'pair: case at y = 205, keys at y = h'],
   stage: [stage, 500, 595, 'pair: top at y = 95, rim at y = h'], stageStairs: [stageStairs, 130, 245, 'pair: treads at y = 95, rail at y = h'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
   chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
-  counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'foot y = h − 10'],
+  counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
   tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 90, 120, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
+  doorFace: [doorFace, 150, 150, 'foot y = h'], doorTop: [doorTop, 14, 150, 'flat, in the wall line'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],

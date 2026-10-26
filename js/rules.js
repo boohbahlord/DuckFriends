@@ -289,7 +289,9 @@ export function reduce(state, a, now = Date.now()) {
     case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
     case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) {
       Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max);
-      if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';   // Hangout and Duck Cabin are one
+      if (a.options.map === 'cabin' && !a.options.mode) s.options.mode = 'hang';   // Hangout and Duck Cabin are one: picking either picks both,
+      else if (a.options.map && !a.options.mode && isHang(s)) s.options.mode = 'aod';   // and another map leaves Hangout
+      if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';
     } return s;
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;

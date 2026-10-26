@@ -8,3 +8,4 @@ import './pool.js';
 import './piano.js';
 import './chalk.js';
 import './book.js';
+import './doors.js';
