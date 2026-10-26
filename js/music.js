@@ -1241,7 +1241,8 @@ export const music = (function(){
      The melody and the bass pass a fuzz on the way (off unless a song wants it). The room and the delay come back in before the flanger. */
   function graph(){CACHE={};BEDS=[];
     out=gn(0);const lp=biq("lowpass",1600);const dl=ac.createDelay(1);dl.delayTime.value=.42;const fb=gn(.22),wet=gn(.28);
-    out.connect(lp);lp.connect(ac.destination);lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(ac.destination);
+    const sink=MF&&MF.a===ac?MF.inp:ac.destination;   // (the live music goes through the muffle; a song written out doesn't)
+    out.connect(lp);lp.connect(sink);lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(sink);
     const pre=gn(),swl=gn(),fdry=gn(),fwet=gn(0),fd=ac.createDelay(.05),ffb=gn(.55),fl=ac.createOscillator(),flg=gn(.0035);fd.delayTime.value=.0068;fl.frequency.value=.13;
     const wow=ac.createDelay(1);wow.delayTime.value=.03;const w1=ac.createOscillator(),wg1=gn(0),w2=ac.createOscillator(),wg2=gn(0);w1.frequency.value=.3;w2.frequency.value=.071;
     pre.connect(swl);swl.connect(fdry);swl.connect(fd);fd.connect(fwet);fd.connect(ffb);ffb.connect(fd);fl.connect(flg);flg.connect(fd.delayTime);
@@ -1253,7 +1254,7 @@ export const music = (function(){
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
     BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}graph();bout=gn(0);bout.connect(ac.destination);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ac.destination);if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
@@ -1722,6 +1723,16 @@ export const music = (function(){
   function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
     level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
+  /* the muffle: my own music as if heard from far off (Duck Cabin in the dark). A lowpass and a little less level; on, the
+     filter slides down to about 600 Hz over 1.5 s, off it opens again over about 1 s. Only glides (setTargetAtTime on the
+     filter's detune, in cents, so it slides evenly by ear, and on the level), each starting from wherever the last one has
+     got to, so turning it on and off quickly never jumps. Local only: nobody else hears a change */
+  let MF=null,MUF=false;const MUFF=600,MUFDB=-4;
+  function muffle(a,dest){const lp=a.createBiquadFilter(),g=a.createGain(),top=Math.min(20000,a.sampleRate*.45);
+    lp.type="lowpass";lp.Q.value=.6;lp.frequency.value=top;lp.detune.value=0;g.gain.value=1;lp.connect(g);g.connect(dest);return {a,inp:lp,lp,g,top}}
+  function muffleTo(m,on,lead,at){const t=at??m.a.currentTime+lead,c=on?-1200*Math.log2(m.top/MUFF):0;
+    m.lp.detune.setTargetAtTime(c,t,on?.42:.28);m.g.gain.setTargetAtTime(on?Math.pow(10,MUFDB/20):1,t,on?.42:.28)}
+  function setMuffle(on){on=!!on;if(on===MUF)return;MUF=on;if(MF)muffleTo(MF,on,.03)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
   const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["front","rooms","lobby","game"].includes(document.body.dataset.screen);
@@ -1784,5 +1795,5 @@ export const music = (function(){
   function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
     if(inMenu()&&!sounding()&&wanted())return {name:e.n,next:false,in:0,off:[],wait:true};   // (the browser still holds the sound: the bar asks for a tap)
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
-  return {sync,hush,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
+  return {sync,hush,setMuffle,muffle,muffleTo,get muffled(){return MUF},renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();
