@@ -98,11 +98,11 @@ export const tvScreenStrip = () => { const sc = A.tvScreen(); return [Math.floor
 function tvParts(p) {
   const l = L.TV.cx - 70, t = L.TV.cy + 62 - p.z - 240, [x0, x1] = tvScreenStrip();
   const cuts = [0, x0 / 3, x0 * 2 / 3, x0, x1, (x1 + 140) / 2, 140].map(Math.round);
-  const pic = A.tvSet();
+  const pic = A.tvSet(), hit = { l: l + 10, t: t + 45, r: l + 130, b: t + 237 };   // (the stand and the set, not the ears: a duck hidden behind them sees through the whole TV)
   return cuts.slice(1).map((b0, i) => {
     const a = cuts[i], b = Math.min(140, b0 + 1), key = Math.floor(Math.min(L.tvFront(l + a - TV_EXT), L.tvFront(l + b0 + TV_EXT)));   // (each a unit wider than its cut: no seam shows between them)
     const win = () => pic.replace(/viewBox="0 0 140 240" width="140"/, `viewBox="${a} 0 ${b - a} 240" width="${b - a}"`).replace('overflow="visible"', 'overflow="hidden"');
-    return part(win, l + a, t, b - a, 240, key, { img: true, ...(a === x0 ? { part: 'screen' } : {}) });
+    return part(win, l + a, t, b - a, 240, key, { img: true, fade: true, hit, ...(b > b0 ? { cls: 'tv-seam' } : {}), ...(a === x0 ? { part: 'screen' } : {}) });
   });
 }
 

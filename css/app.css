@@ -1724,6 +1724,7 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
 .hp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; transition: opacity .25s; }
 .hp > svg { display: block; overflow: visible; }
 .hp.thru { opacity: .38; }
+.hp.thru.tv-seam { clip-path: inset(0 1px 0 0); }   /* (the TV's strips overlap by a unit: see-through, the overlap would show as a line) */
 .hp .lit { transition: filter .3s; }
 .hp.off .lit { filter: brightness(.32) saturate(.4); }
 html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; animation: hang-flick .45s ease-in-out infinite alternate; }
