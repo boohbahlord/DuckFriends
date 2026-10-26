@@ -94,7 +94,7 @@ for (const [x0, x1] of [[C.x0, 2720], [2880, C.x1]]) {
 add('doorway', 2720, C.y1 - T, 160, 2 * T, C.wall, { only: 'out', z: 0 });   // the back door, open, warm light inside
 // inside: the great room | the hall | the kitchen, the bathroom, a nook, bedroom 1, bedroom 2 (doors are gaps)
 const IN = { only: 'in' };
-wallY(3300, C.y0, 1150, C.inner, IN); wallY(3300, 1550, C.y1, C.inner, IN);
+wallY(3300, C.y0, 1275, C.inner, IN); wallY(3300, 1425, C.y1, C.inner, IN);
 for (const [a, b] of [[C.y0, 790], [940, 1200], [1350, 1470], [1630, 1860], [2010, C.y1]]) wallY(3500, a, b, C.inner, IN);
 wallX(1100, 3500, C.x1, C.inner, IN);                                       // the kitchen's south wall
 wallY(3900, 1100, 1470, C.inner, IN); wallY(3900, 1630, 1650, C.inner, IN);  // the bathroom | bedroom 1 (its door from the nook)
@@ -106,8 +106,7 @@ wallX(1650, 3500, C.x1, C.inner, IN);                                       // b
 export const DOORWAYS = [
   { id: 'door-front', axis: 'x', at: C.y0, a: 1920, b: 2080, hinge: 'a', swing: 's', h: 150 },
   { id: 'door-back', axis: 'x', at: C.y1, a: 2720, b: 2880, hinge: 'a', swing: 's', h: 150 },
-  { id: 'door-great-n', axis: 'y', at: 3300, a: 1150, b: 1350, hinge: 'a', swing: 'w', h: 110 },
-  { id: 'door-great-s', axis: 'y', at: 3300, a: 1350, b: 1550, hinge: 'b', swing: 'w', h: 110 },
+  { id: 'door-great', axis: 'y', at: 3300, a: 1275, b: 1425, hinge: 'a', swing: 'w', h: 110 },
   { id: 'door-kitchen', axis: 'y', at: 3500, a: 790, b: 940, hinge: 'a', swing: 'e', h: 110 },
   { id: 'door-bath', axis: 'y', at: 3500, a: 1200, b: 1350, hinge: 'b', swing: 'e', h: 110 },
   { id: 'door-nook', axis: 'y', at: 3500, a: 1470, b: 1630, hinge: 'a', swing: 'e', h: 110 },
@@ -117,18 +116,33 @@ export const DOORWAYS = [
 for (const d of DOORWAYS) d.axis === 'y' ? add('door', d.at - T, d.a, 2 * T, d.b - d.a, d.h, { id: d.id, z: 0, door: d, key: d.a + 6 })
   : add('door', d.a, d.at - T, d.b - d.a, 2 * T, d.h, { id: d.id, z: 0, door: d, key: d.at + 6 });
 
-/* the great room: the piano against the north wall in the west, the guestbook by the front door, the fireplace; the
-   couches in an L on a rug, facing the TV's place on the north wall, a lamp at each end; the stage in the north-east
-   corner; the chalk floor in the south-west, with the chalk, the eraser and the white X beside it */
+/* the great room: along the north wall the piano, the coat rack, the front door with its mat and boots, the guestbook,
+   the fireplace with an armchair turned to it, a low bookshelf under two pictures, a clock; the stage in the north-east
+   corner; the card table in the middle; the chalk floor in the south-west, with the chalk, the eraser and the white X;
+   in the south-east corner the couches in an L on a rug, the end table between them, the coffee table, and the TV turned
+   to face them; plants in the empty corners */
 const FLOOR = { layer: 'floor', z: 0, ...IN };
 add('piano', 1340, 612, 540, 80, 150, { solid: true, ...IN, box: { l: 1340, t: 452, w: 540, h: 240 }, light: { x: 1610, y: 760, r: 330, c: WARM, k: .3, flick: .4 } });   // (art.js' pianoBody: 240 tall; its candles light the floor)
+add('coatrack', 1884, 698, 34, 30, 160, { solid: true, ...IN });
+add('mat', 1935, 614, 130, 64, 0, FLOOR);
+add('boots', 2090, 690, 54, 24, 40, { ...IN });
 add('book', 2095, 640, 60, 36, 60, { solid: true, ...IN });
 add('fireplace', 2180, 612, 240, 90, 220, { solid: true, ...IN, light: { x: 2300, y: 730, r: 460, c: HOT, k: .5, flick: 1 } });
-add('rug', 2350, 800, 620, 440, 0, FLOOR);
-add('couch', 2490, 1090, 450, 100, 70, { solid: true, ...IN, seats: 3 });                // (facing north: its back to us)
-add('couch', 2370, 830, 100, 360, 70, { solid: true, ...IN, seats: 2, facing: 'e' });   // (facing east, along the first one's west end)
-add('lamp', 2952, 1140, 44, 30, 150, { solid: true, ...IN, light: { x: 2974, y: 1190, r: 300, c: WARM, k: .45 } });
-add('lamp', 2398, 786, 44, 30, 150, { solid: true, ...IN, light: { x: 2420, y: 840, r: 300, c: WARM, k: .45 } });
+add('rug', 2820, 1700, 470, 470, 0, FLOOR);
+add('couch', 2895, 2078, 280, 100, 70, { solid: true, ...IN, seats: 2 });                // (against the south wall, facing north: its back to us)
+add('couch', 3182, 1690, 100, 380, 70, { solid: true, ...IN, seats: 3, facing: 'w' });   // (against the east wall, facing west)
+add('couch', 2448, 712, 100, 150, 70, { solid: true, ...IN, seats: 1, facing: 'w', color: '#c4803a' });   // (the armchair, turned to the fire)
+add('lamp', 3190, 2090, 84, 84, 50, { solid: true, ...IN, end: true, light: { x: 3232, y: 2110, r: 300, c: WARM, k: .45 } });   // (the end table, in the couches' corner)
+add('lamp', 3140, 1640, 44, 30, 150, { solid: true, ...IN, light: { x: 3162, y: 1690, r: 300, c: WARM, k: .45 } });
+add('coffee', 2965, 1850, 150, 100, 38, { solid: true, plat: true, ...IN });
+add('tv', 2745, 1640, 140, 124, 112, { solid: true, ...IN });   // (turned 45°, facing the couches)
+add('shelf', 2610, 612, 190, 40, 100, { solid: true, ...IN });
+add('picture', 2652, 612, 46, 2, 38, { z: 118, ...IN, art: 'duck' });
+add('picture', 2730, 612, 46, 2, 38, { z: 124, ...IN, art: 'hills' });
+add('clock', 2977, 612, 46, 2, 46, { z: 112, ...IN });
+add('table', 2200, 1250, 200, 100, 55, { solid: true, plat: true, ...IN, cards: true });   // (the card table; its two chairs sit, seats.js)
+add('plant', 1320, 2120, 50, 50, 90, { solid: true, ...IN });
+add('plant', 2650, 2120, 50, 50, 90, { solid: true, ...IN });
 add('stage', STAGE.cx - STAGE.rx, STAGE.cy - STAGE.ry, STAGE.rx, 2 * STAGE.ry, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.ry, light: { x: STAGE.cx - STAGE.rx * .45, y: STAGE.cy, r: 300, c: '#ffd9a0', k: .3 } });
 add('stagestairs', STAGE.sx0, STAGE.sy0, STAGE.sx1 - STAGE.sx0, STAGE.sy1 - STAGE.sy0, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.ry + 1 });   // (in front of the stage; a duck on it in front of both)
 add('mic', STAGE.cx - STAGE.rx + 25, STAGE.cy - 10, 40, 20, 90, { z: STAGE.h, ...IN });   // (at its left end)

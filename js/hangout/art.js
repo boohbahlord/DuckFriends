@@ -400,6 +400,14 @@ export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
   for (const [x, y] of [[10, 10], [20 + pw, 10], [10, 24 + ph], [20 + pw, 24 + ph]]) p += R(x, y, pw, ph, '#9a5526', `rx="3" ${ln(1.6)}`) + R(x + 3, y + 3, pw - 6, 4, '#c98a52', 'opacity=".6"');
   return wrap(w, h, R(0, 0, w, h, '#b06a35', `rx="3" ${ln(2.4)}`) + p + F`<circle cx="${kx}" cy="${h * .55}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
 }
+/* the inside doors copy the porch's door (cabinOutside's back door): an orange frame, a dark brown door, a lit window of
+   four panes in its upper half and a low panel; quad(u0, u1, v0, v1) and q(u, v) map the door's face (u along it, v up) */
+const porchGlassDef = '<linearGradient id="hg-porch-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#ffbd57"/><stop offset="1" stop-color="#f08a32"/></linearGradient>';
+function porchFace(quad, q, frame = true) {
+  return (frame ? F`<path d="${quad(-.06, 1.06, 0, 1.08)}" fill="#d98a4a" ${ln(2.4)}/>` : '')
+    + F`<path d="${quad(0, 1, 0, 1)}" fill="#8a4520" ${ln(2.2)}/><path d="${quad(.16, .84, .5, .88)}" fill="url(#hg-porch-glass)" ${ln(1.6)}/>`
+    + F`<path d="M${q(.5, .5)}L${q(.5, .88)}M${q(.16, .69)}L${q(.84, .69)}" stroke="#8a4a1f" stroke-width="3.4"/><path d="${quad(.16, .84, .1, .38)}" fill="#6e3a1a" ${ln(1.4)}/>`;
+}
 /* a shut door in a north-south wall, seen a little from its west side the way the deck's door is seen: its top edge in
    the wall's line (x = k), its face sloping down to its foot k to the west, so its panels and knob show; len long (down
    the screen), h high. Box (k + 8) × (len + h); the foot runs down x = 0 from y = h to h + len. knob: 'a' (north end) |
@@ -408,9 +416,18 @@ export function doorSide({ len = 150, h = 110, k = 60, knob = 'b' } = {}) {
   const q = (u, v) => `${n1(v * k)} ${n1((1 - v) * h + u * len)}`, quad = (u0, u1, v0, v1) => `M${q(u0, v0)}L${q(u1, v0)}L${q(u1, v1)}L${q(u0, v1)}Z`;
   const ku = knob === 'a' ? .1 : .9, kx = .48 * k, ky = (1 - .48) * h + ku * len;
   return wrap(k + 8, len + h, F`<path d="M${q(0, 0)}L${q(1, 0)}L${n1(8 + 14)} ${n1(h + len + 4)}L${n1(-6)} ${n1(h + len + 4)}Z" fill="#000" opacity=".28"/>`
-    + F`<path d="${quad(-.05, 1.05, 0, 1.06)}" fill="#5a2d14" ${ln(2.4)}/>`
-    + F`<path d="${quad(0, 1, 0, 1)}" fill="#b06a35" ${ln(2.4)}/><path d="${quad(.08, .46, .1, .45)}${quad(.54, .92, .1, .45)}${quad(.08, .46, .55, .9)}${quad(.54, .92, .55, .9)}" fill="#9a5526" ${ln(1.6)}/>`
-    + F`<circle cx="${n1(kx)}" cy="${n1(ky)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
+    + porchFace(quad, q) + F`<circle cx="${n1(kx)}" cy="${n1(ky)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door', porchGlassDef);
+}
+/* a door standing open in a north-south wall, swung part way into the room: an upright panel from its hinge (on the
+   floor at 0, 0) to its free end (dx, dy) on the floor, h high, drawn the way the deck's open door is: its face, panels,
+   knob and the free end's edge. Box |dx| + 8 × (|dy| + h); returns { svg, ox, oy }: the hinge's foot in the box. */
+export function doorSwing({ len = 150, h = 110, dx = -130, dy = 75 } = {}) {
+  const x0 = Math.min(0, dx) - 4, y0 = Math.min(0, dy) - h - 4, w = Math.abs(dx) + 8, bh = Math.abs(dy) + h + 8, ox = -x0, oy = -y0;
+  const q = (u, v) => `${n1(ox + u * dx)} ${n1(oy + u * dy - v * h)}`, quad = (u0, u1, v0, v1) => `M${q(u0, v0)}L${q(u1, v0)}L${q(u1, v1)}L${q(u0, v1)}Z`;
+  const svg = wrap(w, bh, F`<path d="M${q(0, 0)}L${q(1, 0)}L${n1(ox + dx + 10)} ${n1(oy + dy + 4)}L${n1(ox + 10)} ${n1(oy + 4)}Z" fill="#000" opacity=".22"/>`
+    + porchFace(quad, q, false) + F`<path d="M${q(1, 0)}L${q(1, 1)}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${q(1, 0)}L${q(1, 1)}" stroke="#c97a3e" stroke-width="2.6" stroke-linecap="round"/>`
+    + F`<circle cx="${n1(ox + .88 * dx)}" cy="${n1(oy + .88 * dy - .48 * h)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door', porchGlassDef);
+  return { svg, ox, oy, w, h: bh };
 }
 /* a door swung open toward the viewer by ang degrees (from shut): its face turned, hinge on the left. Box
    len·cos(ang) × (h + len·sin(ang)); the hinge's foot at (0, h), the open edge's at (w, box height). */
@@ -458,7 +475,7 @@ export function fireplace({ w = 280, h, wallH = 170 } = {}) {
    arm, foot y = h. A duck sits on
    cushion i at x = 62, y = 26 + (i + .5) × (len − 52) / seats, 32 high. */
 export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing = 'n', throwOn = true, len = 360 } = {}) {
-  if (facing === 'e') return sideCouch({ w, len, seats, color });
+  if (facing === 'e' || facing === 'w') return sideCouch({ w, len, seats, color, flip: facing === 'w' });
   const Y = h - 110, arm = 30, cw = (w - 2 * arm) / seats, hi = mix(color, 255, .2), lo = mix(color, 0, .3), lo2 = mix(color, 0, .45);
   const cushions = (y0, y1) => Array.from({ length: seats }, (_, i) => { const x = arm + i * cw + 3; return R(x, y0, cw - 6, y1 - y0, hi, `rx="12" ${ln(2.4)}`) + R(x + 8, y0 + 5, cw - 22, (y1 - y0) * .25, '#fff', 'rx="6" opacity=".14"') + F`<circle cx="${x + cw / 2 - 3}" cy="${(y0 + y1) / 2 + 4}" r="2.2" fill="${lo2}"/>`; }).join('');
   const arms = [0, w - arm].map(x => R(x, Y - 44, arm, 110, color, `rx="12" ${ln(2.4)}`) + R(x + 5, Y - 40, 8, 100, '#fff', 'rx="4" opacity=".12"')).join('');
@@ -478,7 +495,7 @@ export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing =
   return pair(w, h, [back], [front], Y, h);
 }
 
-function sideCouch({ w = 100, len = 360, seats = 2, color = '#3d6e4f' }) {
+function sideCouch({ w = 100, len = 360, seats = 2, color = '#3d6e4f', flip = false }) {
   const U = 64, h = len + U, Y = h - len, hi = mix(color, 255, .2), lo = mix(color, 0, .3), lo2 = mix(color, 0, .45), arm = 26, bw = 28, AH = 46, SH = 32;
   const top = (x0, x1, y0, y1, z, fill, more = '') => R(x0, y0 - z, x1 - x0, y1 - y0, fill, more);   // a top face at height z (footprint y0 … y1)
   /* back: the shadow, the seat and its cushions, the north arm; front: the backrest (it runs the whole length, so its
@@ -493,7 +510,111 @@ function sideCouch({ w = 100, len = 360, seats = 2, color = '#3d6e4f' }) {
   const front = top(0, bw, Y, h, U, color, `rx="8" ${ln(2.4)}`) + top(5, 12, Y + 6, h - 6, U, '#fff', 'rx="3" opacity=".12"') + R(0, h - U, bw, U, lo, ln(2.4))
     + top(bw, w, h - arm, h, AH, color, `rx="10" ${ln(2.4)}`) + top(bw + 6, w - 6, h - arm + 4, h - arm + 9, AH, '#fff', 'rx="2" opacity=".12"') + R(bw, h - AH, w - bw, AH, lo, ln(2.4))
     + F`<path d="M${bw + 6} ${h - 30}H${w - 8}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>` + [6, w - 18].map(x => R(x, h - 7, 12, 7, '#3b2414', ln(1.6))).join('');
-  return pair(w, h, [back], [front], Y, h);
+  const turn = b => flip ? F`<g transform="translate(${w} 0) scale(-1 1)">${b}</g>` : b;   // (facing west: the same couch, mirrored)
+  return pair(w, h, [turn(back)], [turn(front)], Y, h);
+}
+
+/* ---------- the living corner and the rest of the great room ---------- */
+/* a low coffee table on the rug, seen from above: its top (footprint w × d) at z, the apron and two front legs under it;
+   papers, a magazine, a mug of cocoa, a glass of juice and a can of soda on it. Box w × (d + z). Foot: y = h. */
+export function coffeeTable({ w = 150, d = 100, z = 38 } = {}) {
+  const h = d + z;
+  const paper = (x, y, a, c = '#f6f3ea') => F`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-17" y="-12" width="34" height="24" fill="${c}" ${ln(1.6)}/><path d="M-12 -6h22M-12 -1h18M-12 4h20" stroke="#9aa0aa" stroke-width="1.4"/></g>`;
+  const cup = (x, y, top, side, k = 1) => F`<rect x="${x - 7 * k}" y="${y - 12 * k}" width="${14 * k}" height="${12 * k}" fill="${side}" ${ln(1.6)}/><ellipse cx="${x}" cy="${y - 12 * k}" rx="${7 * k}" ry="${3.4 * k}" fill="${top}" ${ln(1.4)}/>`;
+  return wrap(w, h, shade(w / 2, h - 2, w / 2, 10, .3)
+    + R(10, d + 4, 10, z - 6, '#6e3a1a', ln(1.8)) + R(w - 20, d + 4, 10, z - 6, '#6e3a1a', ln(1.8)) + R(4, d - 2, w - 8, 12, '#8a4a22', ln(2))
+    + R(0, 0, w, d, '#b8743e', `rx="8" ${ln(2.6)}`) + R(7, 7, w - 14, d - 14, '#c98a52', `rx="5"`) + F`<path d="M12 ${d * .36}H${w - 12}M12 ${d * .68}H${w - 12}" stroke="#a8683a" stroke-width="1.6"/>`
+    + paper(w * .27, d * .38, -9) + paper(w * .33, d * .55, 7) + paper(w * .62, d * .7, -4, '#7fb7d8') + F`<path d="M${w * .62 - 10} ${d * .7 - 4}h20" stroke="#fff" stroke-width="3" opacity=".7"/>`
+    + F`<path d="M${w * .8 + 7} ${d * .33 - 8}q7 1 0 8" stroke="${O}" stroke-width="4" fill="none"/><path d="M${w * .8 + 7} ${d * .33 - 8}q7 1 0 8" stroke="#e8e2d0" stroke-width="2" fill="none"/>` + cup(w * .8, d * .33, '#6b3a1f', '#e8e2d0')
+    + cup(w * .58, d * .32, '#ffb347', '#ffe2b0aa', .9) + cup(w * .86, d * .66, '#c9ced6', '#d23b33', .8) + F`<path d="M${w * .86 - 4} ${d * .66 - 8}h7" stroke="#fff" stroke-width="2" opacity=".8"/>`, 'hg-coffee');
+}
+/* the end table in the couches' corner: a little square table with a drawer and a lamp on it. Box w × h; its top at
+   height 50. Foot: y = h. */
+export function endTable({ w = 76, h = 170 } = {}) {
+  const id = uid(), Y = h - 50, cx = w / 2, d = 56, t = Y - d;
+  return wrap(w, h, F`<circle cx="${cx}" cy="${t - 30}" r="${w * .9}" fill="url(#${id})"/>` + shade(cx, h - 3, w / 2, 6, .3)
+    + R(6, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(w - 14, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(2, Y - 2, w - 4, 22, '#9a5526', ln(2.2)) + R(cx - 14, Y + 4, 28, 10, '#b06a35', `rx="2" ${ln(1.4)}`) + R(cx - 4, Y + 8, 8, 3, '#d9a441')
+    + R(0, t, w, d, '#c47a3e', `rx="5" ${ln(2.4)}`) + R(5, t + 5, w - 10, d - 10, '#d08a4a', 'rx="3"')
+    + F`<ellipse cx="${cx}" cy="${t + d * .55}" rx="13" ry="5" fill="#3e6d8c" ${ln(1.6)}/><path d="M${cx} ${t + d * .55}v-26" stroke="${O}" stroke-width="3.4"/><path d="M${cx - 17} ${t + d * .55 - 26}h34l-8 -28h-18Z" fill="#ffcf73" ${ln(2.2)}/><path d="M${cx - 11} ${t + d * .55 - 28}h7l-3 -22h-2Z" fill="#fff0c2" opacity=".85"/>`
+    + F`<ellipse cx="${w * .22}" cy="${t + d * .7}" rx="8" ry="3.5" fill="#e8e2d0" ${ln(1.2)}/>`, 'hg-endtable', glowDef(id, '#ffb347', .5));
+}
+/* the TV on a low stand, both turned 45° to face the couches' corner (south-east of it): the stand's top, its south-west
+   end and its long south-east front; on it, the TV's foot, its end and its top, and the screen looking south-east.
+   Footprint 140 × 124 (the stand's corners inside it). Box 140 × (124 + 116). Foot: y = h. */
+export function tvSet({ on = false } = {}) {
+  const w = 140, fd = 124, top = 116, h = fd + top, c = [70, 62], k = Math.SQRT1_2, id = uid();
+  const pt = (s, t, z) => `${n1(c[0] + (s + t) * k)} ${n1(c[1] + (t - s) * k + top - z)}`;   // (s along the stand: to the north-east; t across it: to the south-east)
+  const quad = (a, b, c2, d2) => `M${a}L${b}L${c2}L${d2}Z`;
+  const box = (s0, s1, t0, t1, z0, z1, top_, sw, se, lw = 2.4) => F`<path d="${quad(pt(s0, t0, z0), pt(s0, t1, z0), pt(s0, t1, z1), pt(s0, t0, z1))}" fill="${sw}" ${ln(lw)}/>`
+    + F`<path d="${quad(pt(s0, t1, z0), pt(s1, t1, z0), pt(s1, t1, z1), pt(s0, t1, z1))}" fill="${se}" ${ln(lw)}/>` + F`<path d="${quad(pt(s0, t0, z1), pt(s1, t0, z1), pt(s1, t1, z1), pt(s0, t1, z1))}" fill="${top_}" ${ln(lw)}/>`;
+  const HS = 34, Z0 = HS + 12, Z1 = Z0 + 66;
+  return wrap(w, h, F`<ellipse cx="${c[0]}" cy="${c[1] + top}" rx="62" ry="34" fill="#000" opacity=".28"/>`
+    + box(-62, 62, -22, 22, 0, HS, '#c47a3e', '#7a3f1f', '#9a5526')
+    + F`<path d="${quad(pt(-50, 22, HS - 8), pt(-4, 22, HS - 8), pt(-4, 22, HS - 26), pt(-50, 22, HS - 26))}${quad(pt(4, 22, HS - 8), pt(50, 22, HS - 8), pt(50, 22, HS - 26), pt(4, 22, HS - 26))}" fill="#b06a35" ${ln(1.6)}/>`
+    + F`<path d="${quad(pt(-20, -18, HS), pt(20, -18, HS), pt(20, 0, HS), pt(-20, 0, HS))}" fill="#2b2b33" ${ln(1.8)}/>` + box(-6, 6, -12, -6, HS, Z0, '#3a3b44', '#2b2b33', '#3a3b44', 1.6)
+    + box(-56, 56, -14, -6, Z0, Z1, '#4a4c58', '#2b2b33', '#23242c')
+    + F`<path d="${quad(pt(-51, -6, Z0 + 5), pt(51, -6, Z0 + 5), pt(51, -6, Z1 - 5), pt(-51, -6, Z1 - 5))}" fill="url(#${id})" class="hg-tv-screen${on ? ' on' : ''}" ${ln(1.4)}/>`
+    + F`<path d="${quad(pt(-40, -6, Z1 - 10), pt(-22, -6, Z1 - 10), pt(-36, -6, Z0 + 10), pt(-50, -6, Z0 + 10))}" fill="#fff" opacity=".08"/>`
+    + F`<circle cx="${pt(46, -6, Z0 + 2).split(' ')[0]}" cy="${pt(46, -6, Z0 + 2).split(' ')[1]}" r="1.8" fill="#ff5a4a"/>`, 'hg-tv',
+    F`<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c4a66"/><stop offset=".6" stop-color="#18263a"/><stop offset="1" stop-color="#101824"/></linearGradient>`);
+}
+/* a low bookshelf against the north wall: two shelves of books (a few leaning), a little plant on top. Footprint w × 40,
+   100 high. Box w × 140. Foot: y = h. */
+export function bookshelf({ w = 190, h = 140 } = {}) {
+  const d = 40, H = h - d, r = rnd(w + 3), cols = ['#a8382c', '#3e6d8c', '#e0b04a', '#5f8a4a', '#9b5de5', '#c4573a', '#2f7a6a', '#d9cfb5'];
+  let books = '';
+  for (const [y0, y1] of [[d + 10, d + 46], [d + 54, H + d - 8]]) {
+    let x = 12;
+    while (x < w - 16) {
+      const bw = 7 + Math.floor(r() * 7), bh = (y1 - y0) * (.68 + r() * .3), c = cols[Math.floor(r() * cols.length)];
+      if (x > w - 34 && r() < .6) { books += F`<path d="M${x} ${y1}l${bh * .5} ${-bh * .86}l${bw} 3l${-bh * .5} ${bh * .86 - 3}Z" fill="${c}" ${ln(1.4)}/>`; break; }   // (one leaning)
+      books += R(x, y1 - bh, bw, bh, c, ln(1.4)) + R(x + 2, y1 - bh + 4, bw - 4, 2.4, '#fff', 'opacity=".35"');
+      x += bw + (r() < .15 ? 6 : 0);
+    }
+  }
+  return wrap(w, h, shade(w / 2, h - 2, w / 2, 7, .3) + R(0, 0, w, d, '#c47a3e', `rx="3" ${ln(2.4)}`) + R(0, d, w, H, '#7a3f1f', ln(2.6))
+    + R(8, d + 8, w - 16, 40, '#4a2412', ln(1.6)) + R(8, d + 52, w - 16, H - 58, '#4a2412', ln(1.6)) + books + R(4, d + 46, w - 8, 7, '#9a5526', ln(1.6)) + R(4, h - 8, w - 8, 8, '#9a5526', ln(1.6))
+    + F`<path d="M${w - 34} ${d * .62}l4 -16h18l4 16Z" fill="#c4683a" ${ln(1.6)}/><circle cx="${w - 30}" cy="${d * .62 - 22}" r="8" fill="#5f8a4a" ${ln(1.4)}/><circle cx="${w - 18}" cy="${d * .62 - 26}" r="9" fill="#6f9a52" ${ln(1.4)}/>`
+    + R(22, d * .2, 34, 12, '#e0b04a', ln(1.4)) + R(26, d * .2 - 9, 28, 10, '#3e6d8c', ln(1.4)), 'hg-shelf');
+}
+/* a little framed picture for a wall: a duck on a pond (kind 'duck') or hills under the moon (kind 'hills'). Box w × h.
+   Foot: y = h (its bottom edge). */
+export function picture({ w = 46, h = 38, kind = 'duck' } = {}) {
+  const art = kind === 'duck'
+    ? R(6, 6, w - 12, h - 12, '#7fb7d8') + R(6, h * .6, w - 12, h * .4 - 6, '#3e6d8c') + F`<path d="M${w / 2 - 8} ${h * .62}c-1 -5 2 -8 6 -7c0 -4 5 -6 7 -3c2 2 1 5 -1 6c5 -1 7 2 6 4Z" fill="#ffd23f" ${ln(1)}/>`
+    : R(6, 6, w - 12, h - 12, '#1f2e4a') + F`<circle cx="${w * .68}" cy="${h * .36}" r="4" fill="#ffe9a8"/><path d="M6 ${h - 6}l${w * .3} ${-h * .32}l${w * .2} ${h * .14}l${w * .22} ${-h * .2}l${w * .28 - 12} ${h * .3}V${h - 6}Z" fill="#3f7a52"/>`;
+  return wrap(w, h, R(0, 0, w, h, '#8a4a22', `rx="2" ${ln(2.2)}`) + art + R(6, 6, w - 12, h - 12, 'none', ln(1.4)), 'hg-picture');
+}
+/* a round wooden wall clock. Box 2r × 2r. Foot: y = h. */
+export function wallClock({ r = 24 } = {}) {
+  const c = r, ticks = Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return F`M${c + Math.sin(a) * (r - 7)} ${c - Math.cos(a) * (r - 7)}L${c + Math.sin(a) * (r - 10)} ${c - Math.cos(a) * (r - 10)}`; }).join('');
+  return wrap(2 * r, 2 * r, F`<circle cx="${c}" cy="${c}" r="${r}" fill="#8a4a22" ${ln(2.4)}/><circle cx="${c}" cy="${c}" r="${r - 5}" fill="#f6f0dc" ${ln(1.6)}/><path d="${ticks}" stroke="${O}" stroke-width="1.6"/>`
+    + F`<path d="M${c} ${c}L${c} ${c - r + 11}M${c} ${c}L${c + r * .38} ${c + 4}" stroke="${O}" stroke-width="2.6" stroke-linecap="round"/><circle cx="${c}" cy="${c}" r="2.4" fill="#d23b33"/>`, 'hg-clock');
+}
+/* a coat stand: a pole on a round foot, pegs, a red coat and a woolly hat hanging. Box 50 × 170. Foot: y = h. */
+export function coatRack({ w = 50, h = 170 } = {}) {
+  const cx = w / 2;
+  return wrap(w, h, shade(cx, h - 4, 18, 5, .3) + F`<ellipse cx="${cx}" cy="${h - 7}" rx="16" ry="5" fill="#5a2d14" ${ln(2)}/><rect x="${cx - 3}" y="10" width="6" height="${h - 18}" fill="#7a3f1f" ${ln(2)}/>`
+    + F`<path d="M${cx} 22l-14 -8M${cx} 22l14 -8M${cx} 34l-12 -4" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M${cx} 22l-14 -8M${cx} 22l14 -8M${cx} 34l-12 -4" stroke="#9a5526" stroke-width="2.6" stroke-linecap="round"/><circle cx="${cx}" cy="8" r="5" fill="#9a5526" ${ln(1.8)}/>`
+    + F`<path d="M${cx - 14} 18q-6 0 -8 10l-4 52q10 6 22 0l2 -46q0 -12 -12 -16Z" fill="#c4573a" ${ln(2.2)}/><path d="M${cx - 10} 30v44" stroke="#8a2f22" stroke-width="2"/>`
+    + F`<path d="M${cx + 6} 18q8 -14 18 0Z" fill="#3e6d8c" ${ln(1.8)}/><circle cx="${cx + 15}" cy="6" r="4" fill="#f4f2ec" ${ln(1.4)}/><path d="M${cx + 6} 18h18" stroke="#e0b04a" stroke-width="3"/>`, 'hg-coatrack');
+}
+/* a pair of yellow rain boots, side by side. Box 54 × 44. Foot: y = h. */
+export function boots({ w = 54, h = 44 } = {}) {
+  const boot = x => F`<path d="M${x} 6h14v26q10 0 12 8h-26Z" fill="#ffc23f" ${ln(2)}/><path d="M${x} 6h14v5h-14Z" fill="#e0a020" ${ln(1.4)}/><path d="M${x + 1} 40h25" stroke="#7a5212" stroke-width="3"/>`;
+  return wrap(w, h, shade(w / 2, h - 2, w / 2, 4, .3) + boot(3) + boot(25), 'hg-boots');
+}
+/* the welcome mat in front of the front door: a coir mat with a border and a duck's three-toed prints. Flat, w × h. */
+export function doorMat({ w = 130, h = 64 } = {}) {
+  const print = (x, y) => F`<path d="M${x} ${y}l-6 -8M${x} ${y}v-10M${x} ${y}l6 -8" stroke="#6e3a1a" stroke-width="3" stroke-linecap="round"/>`;
+  return wrap(w, h, R(0, 0, w, h, '#b8864e', `rx="5" ${ln(2.2)}`) + R(6, 6, w - 12, h - 12, 'none', 'stroke="#7a5230" stroke-width="3" stroke-dasharray="5 4"') + print(w * .32, h * .62) + print(w * .5, h * .46) + print(w * .68, h * .64), 'hg-mat');
+}
+/* a potted plant: a terracotta pot and a leafy bush. Box 60 × 100. Foot: y = h. */
+export function pottedPlant({ w = 60, h = 100 } = {}) {
+  const cx = w / 2, leaf = (x, y, a, c) => F`<path d="M${x} ${y}q${8 * Math.cos(a) - 6 * Math.sin(a)} ${8 * Math.sin(a) + 6 * Math.cos(a)} ${22 * Math.cos(a)} ${22 * Math.sin(a)}q${-14 * Math.cos(a) + 6 * Math.sin(a)} ${-14 * Math.sin(a) - 6 * Math.cos(a)} ${-22 * Math.cos(a)} ${-22 * Math.sin(a)}Z" fill="${c}" ${ln(1.6)}/>`;
+  let leaves = '';
+  for (let i = 0; i < 9; i++) { const a = -Math.PI / 2 + (i - 4) * .36; leaves += leaf(cx, h - 40, a, i % 2 ? '#5f8a4a' : '#3f7a52'); }
+  return wrap(w, h, shade(cx, h - 3, 20, 5, .3) + leaves + F`<path d="M${cx - 18} ${h - 42}h36l-5 38h-26Z" fill="#c4683a" ${ln(2.2)}/><path d="M${cx - 20} ${h - 44}h40v8h-40Z" fill="#d9824a" ${ln(2)}/>`, 'hg-plant');
 }
 
 /* ---------- the piano ---------- */
@@ -656,13 +777,28 @@ export function stove({ w = 76, h = 150 } = {}) {
 }
 /* the kitchen table with two chairs behind it, a lantern and plates on it; box w × 240. A pair: the chairs (foot y = 100,
    so a duck sitting on one is in front of them) and the table (foot y = h − 10, the table's front). */
-export function kitchenTable({ w = 200, h = 240 } = {}) {
+export function kitchenTable({ w = 200, h = 240, cards = false } = {}) {
+  if (cards) return cardTable({ w, h });
   const id = uid(), Y = h - 150, tx = 10, tw = w - 20;
   const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
   return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
     + R(tx, Y + 94, tw, 14, '#8a4a22', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#6e3a1a', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#6e3a1a', ln(1.8))
     + [w * .3, w * .7].map(x => F`<ellipse cx="${x}" cy="${Y + 30}" rx="18" ry="12" fill="#f1ecdf" ${ln(1.8)}/><ellipse cx="${x}" cy="${Y + 30}" rx="10" ry="6" fill="#e2dccb"/>`).join('')
     + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
+}
+
+/* the card table in the great room: the kitchen table's shape and chairs, a green felt top, a hand of cards at each
+   chair, the pile between them and a few stacks of chips. A pair, the same feet as kitchenTable. */
+function cardTable({ w = 200, h = 240 } = {}) {
+  const Y = h - 150, tx = 10, tw = w - 20;
+  const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
+  const card = (x, y, a, c = '#fbfaf6', mark = '') => F`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-7" y="-10" width="14" height="20" rx="2" fill="${c}" ${ln(1.4)}/>${mark}</g>`;
+  const hand = x => [-22, -8, 6, 20].map((a, i) => card(x + (i - 1.5) * 6, Y + 26, a, '#fbfaf6', F`<path d="M-3 -5l3 -3l3 3l-3 3Z" fill="${i % 2 ? '#d23b33' : O}"/>`)).join('');
+  const chips = (x, y, c, n) => Array.from({ length: n }, (_, i) => F`<ellipse cx="${x}" cy="${y - i * 3}" rx="7" ry="3.4" fill="${c}" ${ln(1.2)}/>`).join('');
+  return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#8a4a22', `rx="10" ${ln(2.6)}`) + R(tx + 8, Y + 2, tw - 16, 84, '#2f7a4a', `rx="6" ${ln(1.6)}`)
+    + R(tx, Y + 94, tw, 14, '#6e3a1a', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#5a2d14', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#5a2d14', ln(1.8))
+    + hand(w * .3) + hand(w * .7) + card(w / 2 - 4, Y + 56, -6, '#3e6d8c') + card(w / 2 + 3, Y + 55, 8, '#3e6d8c') + card(w / 2 + 16, Y + 62, 14, '#fbfaf6', F`<path d="M-3 -5l3 -3l3 3l-3 3Z" fill="#d23b33"/>`)
+    + chips(w * .2, Y + 72, '#d23b33', 4) + chips(w * .27, Y + 76, '#3e6d8c', 3) + chips(w * .78, Y + 74, '#e0b04a', 5), ''], Y + 10, h - 10);
 }
 
 /* ---------- the bathroom ---------- */
@@ -995,7 +1131,7 @@ export const ART = {
   counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
   tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 80, 130, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
-  doorFace: [doorFace, 150, 150, 'foot y = h'], doorSide: [doorSide, 42, 260, 'foot along x = 0 … 8'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
+  doorFace: [doorFace, 150, 150, 'foot y = h'], doorSide: [doorSide, 42, 260, 'foot along x = 0 … 8'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'], doorSwing: [o => doorSwing(o).svg, 138, 193, 'the hinge at (ox, oy)'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],

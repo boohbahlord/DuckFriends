@@ -52,7 +52,7 @@ function wallParts(p) {
   /* north-south: a run of pieces; only the run's south end shows its log ends, the rest is the cut top */
   const b = p.y + p.d - 12, end = !WALLS.some(q => q !== p && q.x === p.x && q.w < q.d && Math.abs(q.y + 12 - b) < 1 && (q.only || '') === (p.only || ''));
   const door = L.DOORWAYS.some(d => d.axis === 'y' && Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2);   // (at a door: its frame, no log ends)
-  const tee = WALLS.some(q => q.w > q.d && q.only === p.only && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w);   // (into an east-west wall: its face covers the end)
+  const tee = L.PROPS.some(q => (q.kind === 'wall' || q.kind === 'stub') && q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w);   // (into an east-west wall, or the south wall's low stub: no log ends there)
   if (end && !door && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: p.d + p.h, wallH: p.h }), p.x, t, p.w, p.d + p.h, p.key, { fade: p.fade, only: 'in' })];
   const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${p.d}" width="${p.w}" height="${p.d}" overflow="visible" aria-hidden="true"><rect x="0" y="-12" width="${p.w}" height="${p.d + 12}" fill="#c98a52"/><path d="M${p.w * .4} -9V${p.d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 -12V${p.d}M${p.w} -12V${p.d}" stroke="#1c1c28" stroke-width="2.6"/>${door ? `<rect x="-2" y="${p.d - 12}" width="${p.w + 4}" height="10" fill="#6e3a1a" stroke="#1c1c28" stroke-width="2"/>` : ''}</svg>`;
   return [part(top, p.x, t, p.w, p.d, p.key, { fade: p.fade, only: 'in' })];
@@ -91,6 +91,13 @@ function treeBox(p) {
 /* ---------- the props, kind by kind ---------- */
 const at = (p, w, h, foot = h, cx = p.x + p.w / 2) => ({ l: cx - w / 2, t: p.y + p.d - p.z - foot });   // a box whose foot (y = foot in it) is the prop's front, centered on it
 const one = (p, svg, w, h, foot = h, o = {}) => { const b = at(p, w, h, foot, o.cx); return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)]; };
+/* a door in a north-south wall, open: swung 60° from the wall into the room on its swing side, its free end toward the
+   doorway's other end (art.js' doorSwing), sorted by its nearer end */
+function swung(d, len, hy, o) {
+  const r = Math.PI / 3, dx = (d.swing === 'e' ? 1 : -1) * len * Math.sin(r), dy = (d.hinge === 'a' ? 1 : -1) * len * Math.cos(r);
+  const a = A.doorSwing({ len, h: d.h, dx, dy });
+  return part(() => a.svg, d.at - a.ox, hy - a.oy, a.w, a.h, Math.max(hy, hy + dy) + 4, { ...o, cls: 'door-open' });
+}
 const COUCH = { couch1: '#a8382c', couch2: '#3d6e4f' };
 export const DRAW = {
   wall: wallParts,
@@ -100,9 +107,9 @@ export const DRAW = {
   door(p) {
     const d = p.door, len = d.b - d.a, o = { only: 'in' };
     if (d.axis === 'y') {   // in a north-south wall: shut, a plank in the wall's line; open, its face standing across the room's side
-      const hy = d.hinge === 'a' ? d.a : d.b, x0 = d.swing === 'e' ? d.at : d.at - len;
+      const hy = d.hinge === 'a' ? d.a : d.b;
       return [part(() => A.doorSide({ len, h: d.h, knob: d.hinge === 'a' ? 'b' : 'a' }), d.at - 60, d.a - d.h, 68, len + d.h, d.b - 2, { ...o, cls: 'door-shut' }),
-        part(() => A.doorFace({ w: len, h: d.h, knob: (d.swing === 'e') === (d.hinge === 'a') ? 'r' : 'l' }), x0, hy - d.h, len, d.h, hy + (d.hinge === 'a' ? 6 : -6), { ...o, cls: 'door-open' })];
+        swung(d, len, hy, o)];
     }
     if (d.id === 'door-front') {   // in the north wall, seen from inside: a lintel of logs over it; shut, its face; open, swung in toward the room
       const top = d.at - T - C.wall;
@@ -132,6 +139,7 @@ export const DRAW = {
     return pairParts(A.couch({ w: p.w, h, seats: p.seats || 3, color: COUCH[p.id] || '#a8382c', facing: 'n', throwOn: p.id !== 'couch2' }), p.x, b, p.w, h);
   },
   lamp(p) {
+    if (p.end) return one(p, () => lit(A.endTable({ w: 76, h: 170 }), ['#ffcf73', '#fff0c2']), 76, 170);   // (the end table by the couches, its lamp on it)
     if (p.h >= 140) return one(p, () => lit(A.floorLamp({ w: 70, h: 170 }), ['#ffcf73', '#fff0c2']), 70, 170, 164);
     return one(p, () => lit(A.nightstand({ w: 48, h: 140 }), ['#ffcf73', '#fff0c2']), 48, 140, 140);
   },
@@ -142,10 +150,19 @@ export const DRAW = {
   eraser: p => [part(() => A.eraserTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   wipe: p => [part(() => A.wipeTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
+  coffee: p => one(p, () => A.coffeeTable({ w: p.w, d: p.d, z: p.h }), p.w, p.d + p.h),
+  tv: p => one(p, () => A.tvSet(), 140, 240),
+  shelf: p => one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
+  picture: p => one(p, () => A.picture({ w: p.w, h: p.h, kind: p.art }), p.w, p.h),
+  clock: p => one(p, () => A.wallClock({ r: p.w / 2 }), p.w, p.w),
+  coatrack: p => one(p, () => A.coatRack(), 50, 170),
+  boots: p => one(p, () => A.boots(), 54, 44),
+  mat: p => [part(() => A.doorMat({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  plant: p => one(p, () => A.pottedPlant(), 60, 100),
   counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 240),
   stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: p => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
-  table: p => pairParts(A.kitchenTable({ w: p.w, h: 240 }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
+  table: p => pairParts(A.kitchenTable({ w: p.w, h: 240, cards: p.cards }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
   tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
   sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
   toilet: p => one(p, () => A.toilet({ w: p.w, h: 130 }), p.w, 130),

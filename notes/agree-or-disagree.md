@@ -1857,3 +1857,20 @@ it fits; a duck's width between them at the corner for the end table. TV on a lo
 the L. Dead space: bookshelf and armchair by the fireplace; a sittable card table with 2 chairs in the middle; coat rack,
 boots and welcome mat by the front door; two potted plants; a wall clock and two small pictures on the north wall.
 No log-end rings at interior doorways; inside doors drawn to match the deck door.
+
+## Request (2026-10-26 05:58Z): the toilet's shape (four reference pictures)
+"The bottom of your toilet has a weird shape, just below the bowl in the neck of it that goes into the ground, look at
+these pictures for reference. Also, your back of the toilet goes way up high AND extends far below down past it's
+back...look at these pictures to see what i mean, esp the last one which you should nodel after."
+
+Decision: redrawn after the last picture (a plain line drawing): a shorter tank with a lid band, a button and a lever,
+right behind a closed round seat; a round bowl; a short foot widening to the floor.
+
+## Request (2026-10-26 06:09Z–06:11Z): the inside doors (a screenshot of the live great-room door, open)
+"THIS DOOR OPENING LIKE THIS IN THE LIVE VERSION I FOUND IS COMPLETELY UNACCEPTABLE"
+"THAT DOOR IN THE SCREENSHOT LOOKS LIKE AN ABSOLUTELY TERRIBLE AND INNACURATE SIDEWAYS DOOR! MANE IT ONE DOOR ONLY NOT
+TWO AND BORROW FROM THE ONE OUTSIDE FROM THE PORCH FOR INSPIRATION OR COPY" / "Make* not mane / Typo on my end"
+
+Decision: the great room's double door to the hall is one door (y 1275–1425). Every inside door copies the porch's door
+(orange frame, dark door, lit four-pane window, low panel, brass knob); shut, seen a little from its side; open, swung
+60° into the room like the porch door hanging open, not a flat face lying across the room.

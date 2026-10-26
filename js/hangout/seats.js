@@ -30,8 +30,9 @@ for (const p of PROPS.filter(q => SEAT_KINDS.includes(q.kind))) {
     for (let i = 0; i < n; i++) { const x = p.x + p.w * (i ? .7 : .3); SEATS.push({ id: p.id + ':' + i, p, i, n, x, y: p.y - 15, z: p.z + 32, face: 0, up: across(x, [p.y - 70, p.y - 110]) }); }
     continue;
   }
-  if (p.facing === 'e') {   // a couch turned east: its cushions down the screen; up, beside it to the east
-    for (let i = 0; i < n; i++) { const y = p.y + 26 + (i + .5) * (p.d - 52) / n; SEATS.push({ id: p.id + ':' + i, p, i, n, x: p.x + 62, y, z: p.z + 36, face: 1, up: down(y, [p.x + p.w + 30, p.x + p.w + 70]) }); }
+  if (p.facing === 'e' || p.facing === 'w') {   // a couch turned east (or west): its cushions down the screen; up, beside it on that side
+    const e = p.facing === 'e';
+    for (let i = 0; i < n; i++) { const y = p.y + 26 + (i + .5) * (p.d - 52) / n; SEATS.push({ id: p.id + ':' + i, p, i, n, x: e ? p.x + 62 : p.x + p.w - 62, y, z: p.z + 36, face: e ? 1 : -1, up: down(y, e ? [p.x + p.w + 30, p.x + p.w + 70] : [p.x - 30, p.x - 70]) }); }
     continue;
   }
   for (let i = 0; i < n; i++) {
@@ -107,8 +108,8 @@ activity({
     A.useHangArtCSS();
     const box = ctx.world.board.querySelector('.hang-props');
     for (const p of PROPS.filter(q => KINDS.includes(q.kind))) {
-      const side = p.facing === 'e', bh = side ? p.d + 64 : ART_H[p.kind], top = p.y + p.d - bh - p.z, list = [];
-      if (p.kind === 'couch') { const art = A.couch({ w: p.w, h: bh, len: p.d, seats: p.seats, color: COLORS[p.id] || '#a8382c', facing: side ? 'e' : 'n', throwOn: p.id !== 'couch2' }); list.push([art.back, p.y + p.d - bh + art.backFoot], [art.front, p.y + p.d]); }
+      const side = p.facing === 'e' || p.facing === 'w', bh = side ? p.d + 64 : ART_H[p.kind], top = p.y + p.d - bh - p.z, list = [];
+      if (p.kind === 'couch') { const art = A.couch({ w: p.w, h: bh, len: p.d, seats: p.seats, color: p.color || COLORS[p.id] || '#a8382c', facing: p.facing || 'n', throwOn: !side }); list.push([art.back, p.y + p.d - bh + art.backFoot], [art.front, p.y + p.d]); }
       else list.push([A.logSeat({ w: p.w, h: bh }), p.y + p.d]);
       for (const [html, key] of list) {
         const e = document.createElement('div');
@@ -152,8 +153,8 @@ activity({
   /* seated: no walking; my duck stays on its cushion, at the cushion's height */
   hold(ctx) { return this.heldZ(ctx) != null; },
   heldZ(ctx) { const q = seatOf(ctx.state(), ctx.me), me = ctx.duck(); return q && me && Math.hypot(me.x * W - q.x, me.y * H - q.y) < 60 ? q.z : null; },
-  push(dx, dy, ctx) {   // a hop to the next cushion that way (screen left is west; on a couch turned east, down is south), only if it is free
-    const q = seatOf(ctx.state(), ctx.me), side = q && q.p.facing === 'e', k = side ? Math.sign(dy) : Math.sign(dx); if (!q || !k) return;
+  push(dx, dy, ctx) {   // a hop to the next cushion that way (screen left is west; on a couch turned east or west, down is south), only if it is free
+    const q = seatOf(ctx.state(), ctx.me), side = q && (q.p.facing === 'e' || q.p.facing === 'w'), k = side ? Math.sign(dy) : Math.sign(dx); if (!q || !k) return;
     const to = BY.get(q.p.id + ':' + (q.i + k));
     if (to && free(ctx.state(), to, ctx.me)) { const me = ctx.duck(); if (me && !side) me.face = k; sit(ctx, to); }
   },
