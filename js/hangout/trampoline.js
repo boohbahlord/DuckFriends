@@ -32,6 +32,7 @@ activity({
   /* my duck on the mat: up again */
   after(me, ev, now) {
     const x = me.x * W, y = me.y * H;
+    if (ev.land && me.tb) ev.land = 0;   // (a landing that ends a bounce is never a Jump, wherever it comes down or even while falling on)
     if (!onTramp(x, y) || me.z > MAT + .5) {   // off it: a bounce that comes down on the ground ends there (no Jump for it)
       if (!me.j && me.tb) { if (ev.land) ev.land = 0; me.tb = 0; }
       return;
