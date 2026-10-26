@@ -1670,18 +1670,24 @@ export const music = (function(){
      next one comes in 3 seconds. A room whose host has no song list (an older page) plays this device's own picks. */
   let LOC=null,noListAt=0,PRE=null;
   const end=e=>e.at+durOf(idx(e.n))*1000;
-  function plan(S,t){const off=new Set(S&&S.off||[]),ok=n=>idx(n)>=0&&!off.has(n);
+  function plan(S,t,menu){const off=new Set(menu?SAD:S&&S.off||[]),ok=n=>idx(n)>=0&&!off.has(n),gap=menu?0:GAP;
     let a=S&&S.a||null,b=S&&S.b||null;const was=JSON.stringify([a,b]);
     if(a&&idx(a.n)<0)a=null;
     if(a&&!ok(a.n)&&t<end(a)){a=null;if(b)b={...b,at:Math.min(b.at,t+3000)}}
     if(b&&!ok(b.n))b=null;
     if(b&&(!a||t>=b.at)){a=b;b=null}
     if(!a){if(PRE&&ok(PRE.n))a={n:PRE.n,at:t+1500,seed:PRE.seed};else{const i=pick(-1,off);if(i>=0)a={n:names[i],at:t+1500,seed:newSeed()}}PRE=null}   // the first song: the one written out since the page opened
-    if(a&&!b){const i=pick(idx(a.n),off);if(i>=0)b={n:names[i],at:Math.round(Math.max(end(a),t)+GAP*1000),seed:newSeed()}}
+    if(a&&!b){const i=pick(idx(a.n),off);if(i>=0)b={n:names[i],at:Math.round(Math.max(end(a),t)+gap*1000),seed:newSeed()}}
     return JSON.stringify([a,b])===was?null:{a,b}}
-  function list(){const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
+  /* on the front page and the rooms page each player hears their own songs: only the happier ones, one straight after
+     another; joining a room, the menu's song fades out and the room's comes in */
+  const HAPPY=["Spring in a Box","Ducklings in a Row","Bouncy Chicks","Waddle before you paddle","Outer Space Swim Commute",
+    "Bubble Bath in the Sky","Pond-erful Ruffles","Infinite Pond","Glow"],SAD=names.filter(n=>!HAPPY.includes(n));
+  let MENU=null;const inMenu=()=>["front","rooms"].includes(document.body.dataset.screen);
+  function list(){if(inMenu())return MENU;const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
   /* the host keeps the list going (every second, whether or not it plays music itself) */
-  function conduct(){const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
+  function conduct(){if(inMenu()){if(!MENU&&!started)return;const m=plan(MENU,clockNow(),true);if(m)MENU={...m,off:[]};if(LV()>0&&!profile.settings.musicMute)ahead_(MENU);return}
+    const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
     if(s.hostId===r.me){const m=plan(s.music,t);if(m)r.send({t:"music",a:m.a,b:m.b});LOC=null}
     else if(s.music){LOC=null;noListAt=0}
     else{if(!noListAt)noListAt=t;if(t-noListAt>4000){const m=plan(LOC,t);if(m)LOC={...m,off:[]}}}
@@ -1716,7 +1722,7 @@ export const music = (function(){
   function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
-  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["lobby","game"].includes(document.body.dataset.screen);
+  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["front","rooms","lobby","game"].includes(document.body.dataset.screen);
   /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
      unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
   let HUSH=null,hushT=0;
@@ -1761,7 +1767,7 @@ export const music = (function(){
   function ahead_(S){if(!ahead||!S)return;const e=S.b;if(!e||idx(e.n)<0||REN.has(key(e))||LIVE&&CUR&&CUR.n===e.n)return;
     for(const k of [...REN.keys()])if(!CUR||k!==key(CUR))REN.delete(k);   // (only the song playing and the one after it are kept)
     render(e)}
-  setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
+  setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1,inMenu()?new Set(SAD):null);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
   /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
      it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
   function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn();s.buffer=b.buf;s.connect(g);g.connect(bout);

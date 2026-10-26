@@ -8,17 +8,18 @@ import { createLocalRoom } from './net.js';
 import { createOnlineRoom, joinOnlineRoom, watchRooms, whyNot } from './online.js';
 import { gameArtSVG, symbolSVG } from './art.js';
 import { MAX_DEFAULT } from './rules.js';
+import { mountCornerMusicBar } from './musicbar.js';
 
 const last = { computers: 3, max: MAX_DEFAULT, test: false };
-let unwatch = null, busy = false;
+let unwatch = null, busy = false, mbarOff = null;
 const PHASE = { lobby: 'In the lobby', countdown: 'Starting', over: 'Game over' };   // anything else: Game in progress (anyone can join)
 
 register('rooms', {
-  leave() { if (unwatch) unwatch(); unwatch = null; },
+  leave() { if (unwatch) unwatch(); unwatch = null; if (mbarOff) mbarOff(); mbarOff = null; },
   render() {
     const s = el(`<section class="screen rooms">
       <header class="bar"><button type="button" class="btn ghost" data-a="back">‹ Back</button>
-        <h1 class="bar-title">${symbolSVG(30)} Rooms</h1></header>
+        <h1 class="bar-title">${symbolSVG(30)} <span class="bar-word">Rooms</span></h1></header>
       <div class="rooms-grid">
         <form class="panel create" autocomplete="off">
           <div class="art-wrap">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
@@ -48,6 +49,7 @@ register('rooms', {
     const f = s.querySelector('form'), pass = s.querySelector('.passkey'), msg = s.querySelector('.create-msg'), list = s.querySelector('.room-list');
     const say = (text, bad = true) => { msg.hidden = !text; msg.textContent = text || ''; msg.classList.toggle('bad', bad); };
     s.querySelector('[data-a="back"]').onclick = () => backTo('front');
+    if (mbarOff) mbarOff(); mbarOff = mountCornerMusicBar();
     s.querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
       s.querySelectorAll('[data-open]').forEach(x => x.setAttribute('aria-pressed', x === b));
       pass.hidden = b.dataset.open === '1'; if (!pass.hidden) pass.focus();
