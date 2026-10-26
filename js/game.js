@@ -885,7 +885,7 @@ function keptNow() {
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
   if (bar) bar.show(i);
-  const id = keysOf(myDuck())[i], sp = specialById(id); if (!sp) return;
+  const id = keysOf(myDuck())[i], sp = specialById(id); if (!sp || sp.off) return;   // (a special that's off for now does nothing)
   lastKey = i;
   if (sp.kind === 'effect') R.send({ t: 'aura', what: id, keep: !!keep });
   else if (sp.kind === 'jump') { if (keep) { kept.has(id) ? kept.delete(id) : kept.add(id); } else jump(id === 'longjump' ? 'long' : 'double'); }

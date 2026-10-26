@@ -47,11 +47,13 @@ export const SPECIALS = [
   { id: 'confgun', name: 'Confetti gun', kind: 'item', icon: '🎉', tip: 'A burst of confetti the way your duck faces.' },
   { id: 'handgun', name: 'Handgun', kind: 'item', icon: '🔫', tip: 'A slow bullet flies toward your mouse; any duck it passes through plays dead until it moves. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)', colors: [['a', P, '#2b2d35'], ['b', S2, '#5a3a22'], ['c', A, '#c9a24a']] },
   { id: 'dagger', name: 'Dagger', kind: 'item', icon: DAGGER(['#d9dee8', '#6b3e1e', '#c9a24a']).replace('<svg ', '<svg style="transform:rotate(-40deg)" '), tip: 'Throw a dagger toward your mouse: it spins in an arc and falls off the screen, and every duck it hits plays dead until it moves. Shift and its key keeps it out: left click throws. (Off when the host turns off the silly commands.)', colors: [['a', P, '#d9dee8'], ['b', S2, '#6b3e1e'], ['c', A, '#c9a24a']] },
-  { id: 'sound', name: 'Sound', kind: 'item', icon: '🔊', tip: 'Everyone hears your sound.', colors: [['a', P, '#ffffff']] },
+  { id: 'sound', name: 'Sound', kind: 'item', off: true, icon: '🔊', tip: 'Everyone hears your sound.', colors: [['a', P, '#ffffff']] },
   { id: 'trombone', name: 'Trombone', kind: 'item', icon: BONE(['#e8b73a', '#fff2b0']), tip: 'Your duck plays the trombone. Every note comes out wrong.', colors: [['a', P, '#e8b73a'], ['b', S2, '#fff2b0']] },
   { id: 'confetti', name: 'Confetti rain', kind: 'item', icon: '🎊', tip: 'Confetti rains over everyone\'s screen. It also rains when your question comes up, when you win, and on the podium.' },
 ];
 export const specialById = id => SPECIALS.find(x => x.id === id) || null;
+/* a special that's off for now (faded everywhere, can't be picked or used; a duck that has it keeps it on its key) */
+export const isOff = id => !!(specialById(id) || {}).off;
 export const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];   // the number keys, in the order of the row
 /* a duck's ten keys: a special's id or null on each (a duck from before the keys had one special: it is on key 1) */
 export function keysOf(duck) {
