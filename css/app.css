@@ -381,6 +381,14 @@ p.bad { color: var(--red); font-weight: 600; }
   background: color-mix(in srgb, var(--panel) 82%, transparent); box-shadow: 0 .14rem 0 var(--line); }
 .mbar[hidden] { display: none; }
 .gbar > .mbar { margin-left: auto; }   /* at the right, before the timer (the specials' keys follow the stage's name) */
+.corner-tr > .mbar { max-width: min(16rem, 46vw); }   /* the front page and Rooms: left of Sign in */
+@media (max-width: 520px) {   /* a phone's Rooms: the duck sign stands for the word, so the bar fits between it and Sign in */
+  .rooms .bar-word { display: none; }
+  body[data-screen=rooms] .corner-tr { left: 10.6rem; justify-content: flex-end; pointer-events: none; }   /* starts past the sign; the bar shrinks */
+  body[data-screen=rooms] .corner-tr > * { pointer-events: auto; flex: none; }
+  body[data-screen=rooms] .corner-tr > .mbar { flex: 0 1 auto; max-width: none; }
+  body[data-screen=rooms] .corner-tr .mbar-vol { width: 4.8rem; }
+}
 .mbar-spk { flex: none; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; }
 .mbar-spk:hover, .mbar-spk:focus-visible { background: color-mix(in srgb, var(--ink) 12%, transparent); }
 .mbar-spk svg { width: 1.45rem; height: 1.45rem; overflow: visible; filter: drop-shadow(0 .08rem 0 #0006); }
