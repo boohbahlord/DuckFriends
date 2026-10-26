@@ -20,6 +20,15 @@
 @font-face { font-family: 'Creepster'; src: url(../assets/fonts/creepster-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Orbitron'; src: url(../assets/fonts/orbitron-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: swap; }
 @font-face { font-family: 'Special Elite'; src: url(../assets/fonts/special-elite-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+/* (stand-ins for the computer fonts a phone doesn't have, close in shape and width: Courier Prime for Courier New, Tinos for
+   Times New Roman, Gelasio for Georgia, Comic Neue above for Comic Sans) */
+@font-face { font-family: 'Courier Prime'; src: url(../assets/fonts/courier-prime-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Courier Prime'; src: url(../assets/fonts/courier-prime-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Tinos'; src: url(../assets/fonts/tinos-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Tinos'; src: url(../assets/fonts/tinos-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Gelasio'; src: url(../assets/fonts/gelasio-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Gelasio'; src: url(../assets/fonts/gelasio-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Gelasio'; src: url(../assets/fonts/gelasio-latin-700-italic.woff2) format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
 
 /* ---------- tokens ---------- */
 :root {
@@ -351,7 +360,7 @@ p.bad { color: var(--red); font-weight: 600; }
 .invent { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .5rem; }
 .invent [type=color] { width: 2.6rem; height: 2.2rem; border: .14rem solid var(--line); border-radius: .5rem; padding: 0; background: none; cursor: pointer; }
 .invent .hex { width: 7rem; font-family: 'Cascadia Code', Consolas, monospace; text-transform: uppercase; }
-.info { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: .14rem solid var(--line); background: var(--panel); font-weight: 700; font-style: italic; font-family: Georgia, serif; cursor: help; padding: 0; }
+.info { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: .14rem solid var(--line); background: var(--panel); font-weight: 700; font-style: italic; font-family: Georgia, 'Gelasio', serif; cursor: help; padding: 0; }
 .info-text { flex-basis: 100%; }
 .cz-preview { margin-bottom: .8rem; }
 .win-cz .sect > .colors { margin-top: .5rem; }
@@ -1418,7 +1427,7 @@ html.map-is-ec {
   --bg: #150c06; --panel: #23150c; --panel2: #1b110a; --ink: #f0d1a4; --dim: #c49b70; --line: #8a5a2c; --soft: #5b3317;
   --shadow: 0 0 .6rem #00000080; color-scheme: dark;
 }
-html.map-is-ec body { font-weight: 200; --font: 'Cascadia Code', Consolas, 'Courier New', monospace; --fun: 'Cascadia Code', Consolas, 'Courier New', monospace; }   /* (on body: the font setting sits on html) */
+html.map-is-ec body { font-weight: 200; --font: 'Cascadia Code', Consolas, 'Courier New', 'Courier Prime', monospace; --fun: 'Cascadia Code', Consolas, 'Courier New', 'Courier Prime', monospace; }   /* (on body: the font setting sits on html) */
 html.map-is-ec .game h1, html.map-is-ec .game h2, html.map-is-ec .win h2 { color: #ff9a4a; text-shadow: 0 0 12px #c2581c80; font-weight: 400; }
 html.map-is-ec .game h3, html.map-is-ec .win h3 { color: #9cc7b9; font-weight: 400; }
 html.map-is-ec .btn { background: linear-gradient(#96461a, #6a2e0f); border: 1px solid #e8994d; color: #fbe4c4; border-radius: .2rem; box-shadow: 0 0 .5rem #c2581c40; text-shadow: none; font-weight: 400; }
@@ -1751,7 +1760,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
   overflow-wrap: anywhere; opacity: 0; transition: opacity .6s, transform .6s; box-shadow: 0 .15rem .4rem #0003; }
 .hang-npc-say::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: #ffffffa8; }
 .hang-npc.saying .hang-npc-say { opacity: 1; transform: translate(-50%, 0); }
-.npc-justin .hang-npc-say, .chat-log p.npc-justin .npc-said { font-family: 'Comic Sans MS', 'Comic Sans', 'Comic Neue', cursive; }
+.npc-justin .hang-npc-say, .chat-log p.npc-justin .npc-said { font-family: 'Comic Sans MS', 'Comic Sans', 'Comic Neue', sans-serif; }
 .hang-npc-claw, .hang-npc-heart { position: absolute; width: 0; height: 0; pointer-events: none; }
 .hang-npc-claw svg { position: absolute; left: calc(-20px * var(--k)); top: calc(-20px * var(--k)); width: calc(40px * var(--k)); height: calc(40px * var(--k));
   filter: drop-shadow(0 0 3px #ff4d6d); animation: npc-claw 1s ease-out forwards; }
