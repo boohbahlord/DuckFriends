@@ -885,7 +885,7 @@ function keptNow() {
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
   if (bar) bar.show(i);
-  const id = keysOf(myDuck())[i], sp = specialById(id); if (!sp) return;
+  const id = keysOf(myDuck())[i], sp = specialById(id); if (!sp || sp.off) return;   // (a special that's off for now does nothing)
   lastKey = i;
   if (sp.kind === 'effect') R.send({ t: 'aura', what: id, keep: !!keep });
   else if (sp.kind === 'jump') { if (keep) { kept.has(id) ? kept.delete(id) : kept.add(id); } else jump(id === 'longjump' ? 'long' : 'double'); }
@@ -1329,6 +1329,7 @@ register('game', {
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey, cool });
+    docks.corner(bar.button);   // (phones: the Specials button, bottom right)
     addEventListener('mousemove', aimAt);
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen() && !(world && world.grabbing()), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);

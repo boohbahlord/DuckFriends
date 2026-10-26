@@ -385,6 +385,7 @@ export function reduce(state, a, now = Date.now()) {
       const sp = a.what || (me && me.duck && me.duck.special), p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
       if (WEAPONS.includes(sp) && !s.options.fun) return state;   // the silly-commands switch covers them
+      if (sp === 'sound') return state;   // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
