@@ -1976,3 +1976,9 @@ Old English, Cascadia, Bangers, Pacifico …) already load on every device.
 
 Decision: one number, 4 seconds: each line shows 4 seconds and the next comes 4 seconds after it, so one bubble is gone
 as the next shows (justin.js LINE).
+
+Follow-up (2026-10-26 ~15:05Z, a phone check of every wall end and of Justin seated, after the owner's "check what else
+a change touches"): the cabin's two outside corners on the south side still showed log-end rings (the corner's low line
+starts exactly at the wall, so it wasn't seen as "over the low line"); they're now the wall's own wood like the rest.
+Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
+not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).

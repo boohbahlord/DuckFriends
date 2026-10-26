@@ -52,13 +52,13 @@ function wallParts(p) {
   /* north-south: a run of pieces; only the run's south end shows its log ends, the rest is the cut top */
   const b = p.y + p.d - 12, end = !WALLS.some(q => q !== p && q.x === p.x && q.w < q.d && Math.abs(q.y + 12 - b) < 1 && (q.only || '') === (p.only || ''));
   const gap = L.OPENINGS.some(d => Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2);   // (at an open doorway)
-  const into = q => q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w;
+  const into = q => q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x <= p.x + 1 && q.x + q.w >= p.x + p.w - 1;   // (at a corner the east-west wall starts or ends with it)
   const tee = WALLS.some(into), low = !tee && L.PROPS.some(q => q.kind === 'stub' && into(q));   // (into an east-west wall: hidden behind its face; over the south wall's low line: its end shows)
   /* a run that starts at an east-west wall: its top starts at that wall's top's front edge (the east-west wall's top runs
      on over the corner; nothing sticks out over it) */
   const head = WALLS.some(q => q.w > q.d && q.only !== 'out' && Math.abs(q.y - p.y) < 1 && q.x <= p.x && q.x + q.w >= p.x + p.w) ? 24 : 0, o = head ? 0 : -12, d = p.d - head;
-  /* its south end showing (free, at a doorway, over the low line): the end down to the floor; plain logs at a doorway and
-     over the low line (no rings there) */
+  /* its south end showing (free, at a doorway, over the low line): the end down to the floor; at a doorway and over the
+     low line, the wall's own wood (no log ends) */
   if (end && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: d + p.h, wallH: p.h, plain: gap || low }), p.x, t + head, p.w, d + p.h, p.key, { fade: p.fade, only: 'in' })];
   const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o + 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
   return [part(top, p.x, t + head, p.w, d, p.key, { fade: p.fade, only: 'in' })];

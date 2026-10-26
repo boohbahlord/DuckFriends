@@ -1745,9 +1745,8 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-npc { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .hang-npc-body { position: absolute; }
 .hang-npc-name { left: 0; top: var(--nt, 0px); transform: translateX(-50%); }   /* (Justin's name: a player's .gduck-name, under his drawing) */
-.hang-npc.dead .hang-npc-name { opacity: .4; }
-.hang-npc.sat .hang-npc-name { top: auto; bottom: calc(var(--h, 30px) + .1rem); opacity: .8; }
-.hang-npc.sat .hang-npc-say { bottom: calc(var(--h, 30px) + 1.6rem); }
+.hang-npc.sat .hang-npc-name { top: auto; bottom: calc(var(--nb, 30px) + .1rem); opacity: .8; }   /* (seated: over his head, as .gduck.hang-sat .gduck-name) */
+.hang-npc.sat .hang-npc-say { bottom: calc(var(--nb, 30px) + 1.6rem); }
 .hang-npc-body svg { display: block; overflow: visible; }
 .hang-npc.dead .hang-npc-body svg { transform: rotate(180deg) translateY(-18%); }   /* (a cat knocked over: on its back) */
 .hang-npc.duck.dead .hang-npc-body svg { transform: rotate(-100deg) translateY(calc(var(--fy) * -.12)); transform-origin: 50% var(--fy); }   /* (Justin plays dead like the players) */
