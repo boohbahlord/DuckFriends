@@ -101,7 +101,6 @@ add('lamp', 1960, 1366, 44, 30, 150, { solid: true, ...IN, light: { x: 1982, y: 
 add('lamp', 1330, 1480, 44, 30, 150, { solid: true, ...IN, light: { x: 1352, y: 1530, r: 300, c: WARM, k: .45 } });
 add('pianokeys', 1400, 1850, 900, 300, 0, FLOOR);
 add('piano', 1400, 1760, 900, 80, 150, { solid: true, ...IN, box: { l: 1400, t: 1600, w: 900, h: 240 } });   // (art.js' pianoBody: 240 tall)
-add('sheet', 1750, 1690, 200, 60, 470, { solid: true, ...IN, fade: true });   // the music sheet's column, rising over the piano's middle
 add('stage', STAGE.cx - STAGE.r, STAGE.cy - STAGE.r, 2 * STAGE.r, 2 * STAGE.r, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.r, light: { x: STAGE.cx, y: STAGE.cy, r: 320, c: '#ffd9a0', k: .3 } });
 add('stagestairs', STAGE.sx0, STAGE.sy0, STAGE.sx1 - STAGE.sx0, STAGE.sy1 - STAGE.sy0, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.r + 1 });   // (in front of the stage; a duck on it in front of both)
 add('mic', STAGE.cx - 20, STAGE.cy - 60, 40, 20, 90, { z: STAGE.h, ...IN, key: STAGE.cy + STAGE.r + 2 });
@@ -117,7 +116,7 @@ add('fridge', 4150, 612, 120, 90, 160, { solid: true, ...IN });
 add('table', 3800, 850, 200, 100, 55, { solid: true, ...IN, light: { x: 3900, y: 900, r: 360, c: WARM, k: .32 } });
 add('tub', 3530, 1115, 210, 100, 45, { solid: true, ...IN });
 add('sink', 3770, 1115, 110, 60, 75, { solid: true, ...IN, light: { x: 3700, y: 1300, r: 240, c: '#ffe0b0', k: .25 } });
-add('toilet', 3810, 1345, 70, 75, 50, { solid: true, ...IN });
+add('toilet', 3800, 1262, 90, 56, 44, { solid: true, ...IN });   // (against the east wall, facing into the room)
 add('bed', 4060, 1130, 210, 270, 45, { solid: true, ...IN });
 add('rug', 3950, 1420, 300, 190, 0, FLOOR);
 add('lamp', 3960, 1112, 40, 30, 110, { solid: true, ...IN, light: { x: 3980, y: 1160, r: 260, c: WARM, k: .45 } });

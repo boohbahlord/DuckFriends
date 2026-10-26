@@ -114,7 +114,6 @@ export const DRAW = {
   },
   pianokeys: p => [part(() => A.floorPiano({ w: p.w, h: p.d, octaves: 2 }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   piano(p) { const h = 240; return pairParts(A.pianoBody({ w: p.w, h }), p.x, p.y + p.d, p.w, h); },
-  sheet: p => one(p, () => A.staffColumn({ w: 130, h: p.d + p.h }), 130, p.d + p.h, p.d + p.h - 4, { fade: true }),
   stage(p) {
     const S = L.STAGE, h = 2 * S.r + S.h;
     return pairParts(A.stage({ w: 2 * S.r, d: 2 * S.r, z: S.h }), p.x, p.y + p.d, 2 * S.r, h);
@@ -128,13 +127,13 @@ export const DRAW = {
   chalk: p => [part(() => A.chalkTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   eraser: p => [part(() => A.eraserTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
-  counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 230),
+  counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 240),
   stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: p => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
   table: p => one(p, () => A.kitchenTable({ w: p.w, h: 240 }), p.w, 240, 230),
   tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
   sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
-  toilet: p => one(p, () => A.toilet({ w: 56, h: 140 }), 56, 140),
+  toilet: p => one(p, () => A.toilet({ w: p.w, h: 120 }), p.w, 120),
   bed: p => one(p, () => A.bed({ w: p.w, h: 290, colors: p.id === 'bed1' ? undefined : ['#9b5de5', '#e0b04a', '#3e6d8c', '#c4573a'] }), p.w, 290),
   rail: railParts,
   rocker: p => one(p, () => A.rockingChair({ w: 70, h: 100, facing: p.id === 'rocker1' ? 'e' : 'w' }), 70, 100, 96),

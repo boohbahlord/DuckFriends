@@ -1761,7 +1761,6 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
 .pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
 .pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
-.pia-sheet .pk-sheet { position: absolute; transform-origin: 0 0; background: #f6ead0; border: 0; border-radius: 4px; box-shadow: none; }
 
 /* ---------- Hangout: the chalk floor and the guestbook (hangout/chalk.js, hangout/book.js) ----------
    The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
