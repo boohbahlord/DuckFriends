@@ -1436,3 +1436,10 @@ it is often a few ms behind. The piano's limiter also turns quiet sound up by it
 over the top and clipped. Now: keys start 20 ms ahead, every envelope starts from silence even if set late, and a soft
 ceiling keeps the piano under full scale. The sound rules went into CLAUDE.md ("Sound without pops"), and
 tools/clickcheck.js finds clicks in a rendered sound.)
+
+## Request (2026-10-26): Story Chain voting with 3 players
+
+> 3 player games in story chain do not vote i think i told them
+
+Decision: Story Chain's Voting option on Auto now turns voting on only with 4 or more players (it was 3). 2 and 3
+player games just keep writing. On and Off still force it either way. The lobby's tip says so.
