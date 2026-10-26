@@ -1983,6 +1983,31 @@ starts exactly at the wall, so it wasn't seen as "over the low line"); they're n
 Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
 not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).
 
+## Request (2026-10-26 15:17Z): Duck Cabin visual fixes, 16 phone screenshots (numbered 1-17, no 16)
+> 1/17: In screenshot 1/17 of what i sent, the door knob needs to be a little more alligned to the right so it isn't on the window.
+>
+> 2/17 There is a visual glitch visual from the balcony on mobile (where these screenshots are from).
+>
+> 3-7/17 In 3 to 7 of 7 screenshots, THERE IS NO DOOR OR EVEN LACK OF A DOOR! THERE IS A FUCKING WALL IN PLACE OF THE DOOR! I TOLD SOLOMON TO REMOVE THE DOORS AND HAVE OPEN PARTS OF WALLS THAT ARE EASY TO SEE AND HE FUCKING PUT WALLS WHERE THE FUCKING DOORWAYS PLAYERS WALK THROUGH ARE! The doorways shouldnt hide the player when they walk through them behind the lower wall because even tho that perspective makes since, it makes the visible opening of the doorway small and betrays a lot of common patterns in top down camera perspectives like this. This isn't speaking for walls this is speakingn for doorsways, like in screenshot 7, the long wall below being transparent is fine, but the doorway is extremely small AND puts you at the very bottom of the hallway to open it INSTEAD of the doorway being symmetrically availible through the center
+>
+> 8/17 THE DOOR ISN'T THE SAME SIZE OR ANYTHING AS THE OTHER DOOR AT ALL !
+>
+> iT SHOULD BE THE SIZE WITH A DOORWAY OR DOORFRAM SHAPE AND SIZE JUST LIKE THE FUCKING FRONT BALCONY DOOR BECAUSE THIS IS STUPID INCONSISTEN!
+>
+> 9/17 WTF IS THAT YELLOW LINE ON BOTH SIDES OF THE PIANO BELOW THE CANDLES?! REMOVE IT
+>
+> 10/17 HOW MANY DIFFERENT WAYS DID I SAY TO NOT LAZILY OVERLAP OBJECTS LIKE THIS!? IF OBJECTS MAKE UP A LARGER OBJECTS, THEN THEIR FUCKING DETAILS GET CREATED FOR THEIR CONTEXT LAST ! THE FUCKING LIGHT DO NOT CONINTUE UNDER THE FUCKING STAIRS! THEY BETTER END BEFORE THEY GET UNDER THE STAIRS IN A NATURAL WAY
+>
+> THE FUCKING BOOKS ARE NO CLIPPING FROM THE INSIDE RIGHT OF THE SHELF TO OVERLAP THE FUCKING SHELF!
+>
+> 12/17 This one isn't that bad, but, the bottom of  the stairs from the balcony should have little sqaure accents that indicate the stairs are being supported at their ends, further more, if we can very very naturally have the stairs get colored a slightly differe tone or color when it gets far away enough from the light to indicate it is getting darker on the way down the stairs, that would be nice, i think the stairs just need to be darker on the way down only slightly thouhg, please dont overdo.
+>
+> 13-14/17 WHY DO WE KEEP MAKING THE SAME MISTAKE WITH THE BOTTOM RIGHT TIRE!? DO WE NOT REMEMBER THE EXAMPLE I GAVE!? The tire on the back isnt round, which might be okay.. probably not, but, there are gaps in it's form because the cause didnt understand that adding cornering to sqaures in a box doesnt make the box shape itself the round form of a wheel. The headlights on the jeep wrangler here have a different size on on in compared to the other that is really bad, they can be the slightest different in size maybe, just make the larger lighter much closer to size as the smaller one in width on the front, while still keeping it bigger and of the same height on the front.
+>
+> 15/17 We can move the faucet down to the center left top of the tub, which means that it vertically moves down a few notches is all.
+>
+> 17/17 The tv has an invisible wall at the corners that must be removed because the ducks should be able to be in front of the TV or behind it. ALSO DID WE REALLY JUST IGNORE MY ENTIRE IDEA ABOUT THERE BEING THINGS THAT PLAY ON THAT TV? I WANTED IT TO BE CLICK TO INNTERACT TO CHANGE CHANNELS!
+
 ## 2026-10-26 15:27Z: piano rows (second part of a message with the mobile specials button)
 > FOR THE PIANO, the notes are now this for each row
 >

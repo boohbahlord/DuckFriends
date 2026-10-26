@@ -464,6 +464,9 @@ function fireworks(sc, colors) {
 
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
    destroy() }: board() hands it the board, whose columns turn see-through for the map */
+/* the maps' scenes on their own, for a small screen (Duck Cabin's TV): scene(layer) → { update(now), destroy() } */
+export const SCENES = { board: nightScene, rabbit: rabbitScene, stars: starsScene, ec: ecScene };
+
 export function mountMap(layer, s) {
   const map = s.options.map || 'board', cur = { cols: null };
   layer.className = 'map-layer map-' + map;
