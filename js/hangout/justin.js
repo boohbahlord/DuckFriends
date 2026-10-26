@@ -10,8 +10,8 @@
    - Knocked down (a shot, a dagger, a ball, kill @Justin): a death line; half the time he gets up and chases that duck
      until he's shot it. Otherwise he stays down until someone revives him with E.
    - Drinking (about once in 8 minutes): he drops; revived with E, he says the drinking line and drinks a glass.
-   - The shadow duck (shadowduck.js) can get him, only if they meet up close: revived, he says his four lines 5 seconds
-     apart, each bubble up 7 seconds, and E can't interrupt them (nor for 5 seconds after).
+   - The shadow duck (shadowduck.js) can get him, only if they meet up close: revived, he says his four lines 4 seconds
+     apart, each bubble up 4 seconds (gone as the next comes), and E can't interrupt them (nor for 4 seconds after).
    - With a gun he keeps his distance: he walks to where his gun reaches and shoots from there. A duck he shoots can't
      move for 6 seconds.
    The lines are the owner's, word for word: don't change them. */
@@ -121,7 +121,7 @@ const WALK = 300, SPRINT = 620;
 const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
 const SAY_EVERY = [45, 90], RANT_EVERY = [420, 780], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
 const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
-const STILL = 6000, LINE_GAP = 5000, LINE_SHOWS = 7000;   // a shot duck can't move (ms); the shadow lines, apart and shown
+const STILL = 6000, LINE = 4000;   // a shot duck can't move (ms); each shadow line: shown this long, and the next one this long after (never two bubbles at once)
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
 const HOME = (() => { const r = PROPS.filter(p => p.kind === 'rocker'); return r.length ? [Math.round((r[0].x + r[r.length - 1].x) / 2 + 40), Math.round(r[0].y + r[0].d + 70)] : [Math.round((DECK.x0 + DECK.x1) / 2), Math.round((DECK.y0 + DECK.y1) / 2)]; })();
@@ -177,8 +177,8 @@ brain('justin', {
   tick(me, c) {
     notes(c); const at = npcAt(me, c.now); if (!at) return false;
     let ch = false;
-    /* lines in a row (after the shadow duck got him): one every 2.5 seconds, nothing interrupts them */
-    if (mm.lines.length && c.now >= mm.lineAt) { c.say('justin', mm.lines.shift(), LINE_SHOWS); mm.lineAt = c.now + LINE_GAP; if (!mm.lines.length) mm.lock = c.now + LINE_SHOWS; ch = true; }
+    /* lines in a row (after the shadow duck got him): one every 4 seconds, nothing interrupts them */
+    if (mm.lines.length && c.now >= mm.lineAt) { c.say('justin', mm.lines.shift(), LINE); mm.lineAt = c.now + LINE; if (!mm.lines.length) mm.lock = c.now + LINE; ch = true; }
     /* a shot promised 4 seconds after an E */
     for (const sh of mm.shots.filter(q => c.now >= q.at)) {
       mm.shots = mm.shots.filter(q => q !== sh);
