@@ -1748,6 +1748,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }
 
 /* ---------- Hangout: the piano in the cabin (hangout/piano.js) ---------- */
+.hp-door.door-shut.open, .hp-door.door-open:not(.open) { visibility: hidden; }   /* Hangout's doors: shut or swung open */
 .pia-panel, .game > .pia-panel { position: fixed; z-index: 21; }   /* keyboard mode: over the bottom of the board (a phone held upright: the lower part of the screen, over #jumps) */
 .pia-panel .pk { box-shadow: 0 .3rem 0 var(--line), 0 .6rem 1.6rem #0008; }
 .pia-big > svg { position: absolute; left: 0; top: 0; }
@@ -1787,3 +1788,5 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @media (orientation: portrait) {
   .hang-book { left: .45rem; right: .45rem; top: .45rem; bottom: auto; width: auto; height: max(10rem, min(calc(50% - 5.2rem), 22rem)); }   /* (above my duck, which stands in the middle) */
 }
+.mm-all { display: grid; grid-template: 1fr 1fr / 1fr 1fr; }
+.mm-all > .mini-map { width: auto; height: auto; border: 0; border-radius: 0; }

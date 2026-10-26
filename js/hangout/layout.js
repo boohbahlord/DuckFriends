@@ -90,6 +90,22 @@ wallX(1100, 3500, C.x1, C.inner, IN);                                       // t
 wallY(3900, 1100, 1470, C.inner, IN); wallY(3900, 1630, 1650, C.inner, IN);  // the bathroom | bedroom 1 (its door from the nook)
 wallX(1450, 3500, 3900, C.inner, IN);                                       // the bathroom's south wall
 wallX(1650, 3500, C.x1, C.inner, IN);                                       // bedroom 2's north wall
+/* the doors, in the gaps: axis 'y' a door in a north-south wall at x = at, across y a … b; axis 'x' in an east-west wall at
+   y = at, across x a … b. hinge: the end it turns on; swing: the side it opens to (e w for 'y', n s for 'x'). They never
+   block walking: doors.js swings each open while a duck is near (drawn only, nothing in the room's state) */
+export const DOORWAYS = [
+  { id: 'door-front', axis: 'x', at: C.y0, a: 1920, b: 2080, hinge: 'a', swing: 's', h: 150 },
+  { id: 'door-back', axis: 'x', at: C.y1, a: 2720, b: 2880, hinge: 'a', swing: 's', h: 150 },
+  { id: 'door-great-n', axis: 'y', at: 3300, a: 1150, b: 1350, hinge: 'a', swing: 'w', h: 110 },
+  { id: 'door-great-s', axis: 'y', at: 3300, a: 1350, b: 1550, hinge: 'b', swing: 'w', h: 110 },
+  { id: 'door-kitchen', axis: 'y', at: 3500, a: 790, b: 940, hinge: 'a', swing: 'e', h: 110 },
+  { id: 'door-bath', axis: 'y', at: 3500, a: 1200, b: 1350, hinge: 'b', swing: 'e', h: 110 },
+  { id: 'door-nook', axis: 'y', at: 3500, a: 1470, b: 1630, hinge: 'a', swing: 'e', h: 110 },
+  { id: 'door-bed2', axis: 'y', at: 3500, a: 1860, b: 2010, hinge: 'a', swing: 'e', h: 110 },
+  { id: 'door-bed1', axis: 'y', at: 3900, a: 1470, b: 1630, hinge: 'a', swing: 'e', h: 110 },
+];
+for (const d of DOORWAYS) d.axis === 'y' ? add('door', d.at - T, d.a, 2 * T, d.b - d.a, d.h, { id: d.id, z: 0, door: d, key: d.a + 6 })
+  : add('door', d.a, d.at - T, d.b - d.a, 2 * T, d.h, { id: d.id, z: 0, door: d, key: d.at + 6 });
 
 /* the great room */
 const FLOOR = { layer: 'floor', z: 0, ...IN };
