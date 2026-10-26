@@ -1969,3 +1969,10 @@ Decisions: every font a phone lacks now has a close stand-in on the site (assets
 Times New Roman → Tinos, Georgia → Gelasio, Comic Sans → Comic Neue. No stack ends in `cursive` any more where the font
 isn't a script (Comic Sans, Permanent Marker, Justin's words end in sans-serif). The site's own fonts (Grenze Gotisch for
 Old English, Cascadia, Bangers, Pacifico …) already load on every device.
+
+## Request (2026-10-26 14:51Z, about Justin's lines after the shadow duck: 5 seconds apart, each bubble up 7 seconds)
+> THIS SOUNDS LIKE A MADE GLITCH! THE FUCKING UI COULD OVERLAP! ALSO 7 SECONDS IS WAY TOO LONG!
+> WHY CANT THE NUMBERS BE THE SAME?
+
+Decision: one number, 4 seconds: each line shows 4 seconds and the next comes 4 seconds after it, so one bubble is gone
+as the next shows (justin.js LINE).
