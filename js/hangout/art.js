@@ -111,6 +111,15 @@ const GROUND = {
 function groundTile(kind, r) {
   const tufts = (n, W, H, c) => { let p = ''; for (let i = 0; i < n; i++) { const x = 8 + r() * (W - 16), y = 14 + r() * (H - 20), l = 6 + r() * 4; p += F`M${x} ${y}l${-2.5 - r() * 2} ${-l}M${x} ${y}l${r()} ${-l - 2}M${x} ${y}l${2.5 + r() * 2} ${-l + 1}`; } return `<path d="${p}" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/>`; };
   const dots = (n, W, H, c, s, o) => { let p = ''; for (let i = 0; i < n; i++) p += F`<ellipse cx="${s + r() * (W - 2 * s)}" cy="${s + r() * (H - 2 * s)}" rx="${s * (.6 + r() * .8)}" ry="${s * (.4 + r() * .5)}" fill="${c}" opacity="${o}"/>`; return p; };
+  if (kind === 'grass' || kind === 'downhill') {   // a bigger tile, so it doesn't show a pattern: dark and light patches, tufts big and small
+    const G = GROUND[kind], W = 400, H = 400;
+    const blob = (n, c, s, o) => { let p = ''; for (let i = 0; i < n; i++) { const x = s + r() * (W - 2 * s), y = s + r() * (H - 2 * s), rx = s * (.7 + r() * .9), ry = rx * (.45 + r() * .2); p += F`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${c}" opacity="${o}"/><ellipse cx="${x + rx * .35}" cy="${y - ry * .2}" rx="${rx * .6}" ry="${ry * .7}" fill="${c}" opacity="${o * .8}"/>`; } return p; };
+    const tuftsAt = (n, c, k) => { let p = ''; for (let i = 0; i < n; i++) { const x = 10 + r() * (W - 20), y = 16 + r() * (H - 22), l = (5 + r() * 5) * k; p += F`M${x} ${y}l${-2.5 * k - r() * 2} ${-l}M${x} ${y}l${r()} ${-l - 2 * k}M${x} ${y}l${2.5 * k + r() * 2} ${-l + 1}`; } return `<path d="${p}" stroke="${c}" stroke-width="${k > 1 ? 2.4 : 1.8}" fill="none" stroke-linecap="round"/>`; };
+    let b = R(0, 0, W, H, G.base) + blob(5, G.dark, 40, .45) + blob(4, G.patch, 34, .55) + dots(26, W, H, G.dark, 3.5, .55)
+      + tuftsAt(26, G.dark, 1) + tuftsAt(30, G.tuft, 1) + tuftsAt(10, G.tuft, 1.4) + tuftsAt(8, '#4a8566', .9);
+    if (kind === 'grass') for (let i = 0; i < 5; i++) { const x = 20 + r() * (W - 40), y = 20 + r() * (H - 40); b += F`<g opacity=".7"><circle cx="${x}" cy="${y}" r="1.6" fill="#cfd8ff"/><circle cx="${x + 4}" cy="${y + 2}" r="1.3" fill="#cfd8ff"/><circle cx="${x + 1}" cy="${y + 4}" r="1.3" fill="#cfd8ff"/></g>`; }   // (little pale flowers, blue in the moonlight)
+    return [W, H, b];
+  }
   if (GROUND[kind]) {
     const G = GROUND[kind], W = 200, H = 200;
     let b = R(0, 0, W, H, G.base) + dots(4, W, H, G.patch, 26, .5) + dots(10, W, H, G.dark, 4, .6) + tufts(kind === 'slope' ? 8 : 15, W, H, G.tuft);

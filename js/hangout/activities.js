@@ -9,3 +9,4 @@ import './piano.js';
 import './chalk.js';
 import './book.js';
 import './doors.js';
+import './fireflies.js';

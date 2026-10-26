@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duck Cabin characters</title>
+<!-- The Duck Cabin characters (js/hangout/npcart.js): every cat in every pose, Justin and the shadow duck, each beside a
+     64-px duck for scale, on the cabin's wood floor and the night grass. Serve the folder (python3 -m http.server) and
+     open /tools/npc-art.html. ?big=3 draws them three times as big. -->
+<style>
+  body { margin: 0; background: #0b1022; color: #e8ecf6; font-family: system-ui, sans-serif; }
+  h1 { font-size: 22px; margin: 16px; } h2 { font-size: 16px; margin: 18px 16px 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 16px; }
+  .card { border: 2px solid #0b0b10; border-radius: 12px; padding: 10px 14px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .card.wood { background: linear-gradient(#7a4a26, #6a3e1f); } .card.grass { background: #1d4535; }
+  .pair { display: flex; align-items: flex-end; gap: 10px; min-height: 40px; }
+  .pair svg { display: block; }
+  .name { font: 600 12px system-ui; }
+</style>
+</head>
+<body>
+<h1>Duck Cabin characters</h1>
+<div id="out"></div>
+<script type="module">
+import { catSVG, CATS, justinSVG, shadowSVG, glassSVG } from '../js/hangout/npcart.js';
+import { duckSVG } from '../js/duck.js';
+const big = +(new URLSearchParams(location.search).get('big') || 1);
+const out = document.getElementById('out');
+const duck = () => duckSVG({ color: '#ffd23f' }, { size: 64 * big });
+const card = (label, svg, ground = 'wood', withDuck = true) => `<div class="card ${ground}"><div class="pair">${withDuck ? duck() : ''}${svg}</div><div class="name">${label}</div></div>`;
+let html = '<h2>The cats beside a duck</h2><div class="row">';
+for (const k of ['oreo', 'opal', 'annabelle', 'bubbles']) html += card(CATS[k].name, catSVG(k, { size: big }));
+html += '</div><h2>Poses</h2>';
+for (const k of ['oreo', 'opal', 'annabelle', 'bubbles']) {
+  html += '<div class="row">';
+  for (const [p, st] of [['stand', 0], ['walk', 1], ['walk', -1], ['sit', 0], ['loaf', 0], ['swipe', 0]]) html += card(`${CATS[k].name}: ${p}${p === 'walk' ? (st > 0 ? ' a' : ' b') : ''}`, catSVG(k, { pose: p, step: st, size: big * 1.6 }), 'wood', false);
+  html += '</div>';
+}
+html += '<h2>Outside</h2><div class="row">';
+html += card('Justin', justinSVG({ size: 64 * big }), 'grass', false);
+html += card('Justin, dead', justinSVG({ size: 64 * big, dead: true }), 'grass', false);
+html += card('Glass', glassSVG(), 'grass', false);
+html += card('Shadow duck', `<span style="opacity:.92">${shadowSVG({ size: 64 * big })}</span>`, 'grass');
+html += card('Annabelle out front', catSVG('annabelle', { size: big }), 'grass');
+html += '</div>';
+out.innerHTML = html;
+</script>
+</body>
+</html>
