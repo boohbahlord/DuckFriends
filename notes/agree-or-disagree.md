@@ -1994,3 +1994,8 @@ not the hat room above it). The extra dimming of his name while he's down is gon
 Decision: each row is one chromatic octave (12 keys from C), so black keys have their own keys; ShiftLeft is the first note
 of the top row and Space the last; the old Shift/C sharp and Space/Alt flat modifiers are gone; notes spelled with sharps;
 all 48 keys (Enter, Shift, Space too; the numpad's Enter as well) are kept from the game and the browser while the keyboard is open.
+
+## 2026-10-26 15:37Z: cowboy hat
+> Someone can add a cowboy hat to the game hats
+
+Decision: a recolorable Cowboy hat (hat and band colors) in the "Hair, hats and caps" group, in the same outlined style as the sombrero and bucket hat.
