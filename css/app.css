@@ -1109,6 +1109,7 @@ html.still .spe-bone .bone-slide { animation: none; }
 @media (max-width: 1000px) { .hk { width: 1.3rem; height: 1.3rem; } .hk i { font-size: .72rem; } }
 @media not all and (any-pointer: fine) { html:not(.keyboard) .hotbar { display: none; } }   /* (a phone or tablet: no mouse or touchpad at all, and no number key pressed yet; a touchscreen laptop has its touchpad, so it keeps the row) */
 @media (max-width: 760px) { .hotbar { display: none; } }   /* (a narrow window has no room for it in the top bar; its keys still work) */
+@media not all and (any-pointer: fine) { html:not(.keyboard) button kbd { display: none; } }   /* (a phone: no key hints inside buttons, like the hotbar; Enter, E ... still work) */
 /* on a phone: the specials around a finger held still on the board */
 .sp-wheel { position: fixed; inset: 0; z-index: 80; touch-action: none; }
 .sp-wbtn { position: absolute; width: 3rem; height: 3rem; margin: -1.5rem 0 0 -1.5rem; display: grid; place-items: center; padding: 0; border-radius: 50%; border: .14rem solid var(--line); background: color-mix(in srgb, var(--panel) 82%, transparent); color: var(--ink);
