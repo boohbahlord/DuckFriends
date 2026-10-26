@@ -31,3 +31,7 @@ export function hangTick(s, now) {
   let ch = false; for (const r of RULES.values()) if (r.tick && r.tick(s, now)) ch = true;
   return ch;
 }
+/* what a bullet or a dagger can knock down besides the players (Justin): [{ id, x, y, z }] in world px */
+export function hangTargets(s, now) { const out = []; if (s.hang) for (const r of RULES.values()) if (r.targets) out.push(...r.targets(s, now)); return out; }
+/* one of them was hit by player `by`: true when s.hang changed */
+export function hangHit(s, id, by, now) { let ch = false; if (s.hang) for (const r of RULES.values()) if (r.hit && r.hit(s, id, by, now)) ch = true; return ch; }

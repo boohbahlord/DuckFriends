@@ -1735,6 +1735,11 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-npc-body { position: absolute; }
 .hang-npc-body svg { display: block; overflow: visible; }
 .hang-npc.dead .hang-npc-body svg { transform: rotate(180deg) translateY(-18%); }   /* (a cat knocked over: on its back) */
+.hang-npc.duck.dead .hang-npc-body svg { transform: rotate(-100deg) translateY(calc(var(--fy) * -.12)); transform-origin: 50% var(--fy); }   /* (Justin plays dead like the players) */
+.hang-npc-held { position: absolute; display: block; pointer-events: none; }
+.hang-npc-held svg { display: block; width: 100%; height: auto; }
+.hang-npc-held.gun { left: 38px; top: 50px; width: 26px; }
+.hang-npc-held.glass { left: 44px; top: 42px; width: 11px; }
 .hang-npc-say { position: absolute; left: 0; bottom: calc(var(--h, 30px) + .3rem); transform: translate(-50%, .3rem); width: max-content; max-width: min(14rem, 60vw);
   padding: .25rem .6rem; border-radius: .8rem; background: #ffffffa8; color: #1c1c28d0; font-size: .8rem; font-weight: 600; line-height: 1.2; text-align: center;
   overflow-wrap: anywhere; opacity: 0; transition: opacity .6s, transform .6s; box-shadow: 0 .15rem .4rem #0003; }
