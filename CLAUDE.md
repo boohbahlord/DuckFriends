@@ -4,10 +4,12 @@ A browser party game for friends on a voice call: rubber ducks walk around a boa
 HTML, CSS and JavaScript modules, no build step. Live at https://boohbahlord.github.io/DuckFriends/ (GitHub Pages
 serves `main`, so merging to `main` is deploying).
 
-## Read first
-- `notes/agree-or-disagree.md`: every request the owner has made, word for word, with the decisions taken. Add each new
-  request to the end of it, word for word, before working on it.
-- `notes/plan-request-5.md`: the current plan and the owner's answers (words like Stage, Turn, Round; specials; joining).
+## Notes (search them, don't read them whole)
+- `notes/agree-or-disagree.md`: every request the owner has made, word for word, with the decisions taken. It is long:
+  search it for the request you're working on instead of reading it all. Add each new request to the end of it, word
+  for word, before working on it.
+- `notes/plan-request-5.md`: the older plan and the owner's answers (words like Stage, Turn, Round; specials; joining).
+  Read it only when working on those parts.
 - `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together
@@ -72,6 +74,23 @@ Serve the folder (`python3 -m http.server`) and drive it with Playwright. A TEST
 `(await import('./js/net.js')).createLocalRoom({ name: 'T', test: true, computers: 3 })`, then `router.go('lobby', room)`
 and `room.send({ t: 'start' })`. Check every map and both phone (portrait) and computer sizes.
 Online rooms with several players: `tools/online-test` (see its README) plays them against local Firebase emulators.
+
+Pick the test tier from the size of the change:
+- **Quick** (a tweak to one part: art, words, a bar, a small bug): the screen it touched, Chromium on phone and
+  computer. Firefox too only if it touches keys, sound or layout.
+- **Standard** (a new feature inside an existing mode): that mode in Chromium and Firefox, phone and computer. Online
+  with 2 players only if it changes what players share.
+- **Full** (a new mode or map, or a big rewrite): the whole tour (every map, both browsers, phone and computer, online)
+  once at the end; after its fixes, re-check only the spots that changed.
+Check with code before pictures (console errors, overlaps, the right element showing); keep screenshots to a handful.
+
+## Using limits well
+- Do only the ask. Say it back in one line; offer extras as one-line questions instead of doing them.
+- Medium effort by default. High effort only for new art, new music, game design and a bug that a first try at medium
+  didn't fix.
+- At most 2 helper agents per thread, on parts that don't share files, unless the owner asks for more.
+- One merge window: ready PRs wait, then merge together after one shared test and one deploy.
+- A quick question ("is it live?") gets a quick look, not a full test.
 
 ## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.
