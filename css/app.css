@@ -300,6 +300,8 @@ p.bad { color: var(--red); font-weight: 600; }
 @media (orientation: landscape) and (max-height: 520px) {   /* a phone on its side: one short row at the bottom, so the board keeps the height */
   .bbar { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "l c r"; align-items: center; }   /* (the middle takes what's left, so a wide row of buttons never runs under Notes) */
   .bbar-c { flex-direction: row; justify-content: center; align-items: center; min-width: 0; }
+  body:has(.game) #toasts { bottom: 4.8rem; }   /* tips sit above the short bottom row, never over the Sit / Vote button or Jumps */
+  body:has(.gact .hang-btn):has(.gact .vote-btn) #toasts { bottom: 8.4rem; }
 }
 
 /* ---------- the lobby (Halo: Reach's layout) ---------- */
@@ -513,6 +515,7 @@ html.mouse-move .board { cursor: pointer; }
   .lord-say { font-size: calc(1rem * var(--ts)); max-width: 7.6rem; margin-top: .3rem; }   /* "The votes are in!" under the cloud, never on it or beside it */
   .lord-say.small { font-size: calc(.82rem * var(--ts)); }
   body:has(.game) #toasts { bottom: 8.2rem; }   /* in a game, tips sit above the bottom bar, never over Vote or Jumps */
+  body:has(.gact .hang-btn):has(.gact .vote-btn) #toasts { bottom: 11.4rem; }
   .question { font-size: calc(1rem * var(--ts)); }
   .gbar-l .phase { font-size: calc(1.1rem * var(--ts)); }
   .gbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "l r" "m m"; row-gap: .2rem; }   /* the music bar gets its own short row */
@@ -1736,6 +1739,7 @@ html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; an
 .hang-btn { background: var(--yellow, #ffd23f); color: #1c1c28; min-width: 9rem; }
 .hang-btn kbd { color: inherit; background: transparent; border-color: currentColor; }
 .hang-btn.idle { visibility: hidden; }
+.gact .act-row:has(.hang-btn) { order: -1; }   /* (a Vote button, if one ever shows with it, stays under it) */
 .gmain[data-phase="hang"] { touch-action: none; }
 .scene.cabin { background: radial-gradient(1.5px 1.5px at 12% 18%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 34% 8%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 58% 22%, #fffa 50%, transparent 51%), radial-gradient(1px 1px at 76% 12%, #fff8 50%, transparent 51%), radial-gradient(1.5px 1.5px at 90% 30%, #fff9 50%, transparent 51%), radial-gradient(1px 1px at 22% 40%, #fff6 50%, transparent 51%), radial-gradient(1px 1px at 66% 44%, #fff6 50%, transparent 51%), radial-gradient(60px 60px at 86% 10%, #fff4cf 40%, #fff4cf22 55%, transparent 70%), linear-gradient(#0b1030, #1d2a55 70%, #14301f); }
 
