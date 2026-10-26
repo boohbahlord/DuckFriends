@@ -1874,3 +1874,25 @@ TWO AND BORROW FROM THE ONE OUTSIDE FROM THE PORCH FOR INSPIRATION OR COPY" / "M
 Decision: the great room's double door to the hall is one door (y 1275–1425). Every inside door copies the porch's door
 (orange frame, dark door, lit four-pane window, low panel, brass knob); shut, seen a little from its side; open, swung
 60° into the room like the porch door hanging open, not a flat face lying across the room.
+
+## Request (2026-10-26, live bugs from the phone, Chrome on Android)
+> Glitches when i walk around the trampoline on mobile that distorts it
+
+> IT SHOWS IM IN THE WATER BUT IM CLEARLY NOT! THIS IS AN OBVIOUS LAYERING ISSUE!
+
+> This light next to the pool doesnt look like it is centered on the light, maybe im just crazy
+
+> WHAT KIND OF LAZY BULLSHIT IS THIS!? WHY IS IT HANGING OVER THE WALL LIKE THIS?! LOOK AT THE CIRCLE I DREW OVER IT
+
+Decisions:
+- Trampoline: black noisy blocks over it on a phone. It was the only moving piece without a layer of its own (Chrome made
+  one for it only because it overlapped others). It, the beach ball, the rubber ducks and the mat's dip now have their own
+  layer, like every other prop.
+- Pool: the water's near strip (40 deep, as deep as the water is under the ground) is hidden under the near coping on the
+  screen, but a duck could swim into it and showed over the coping. Swimmers, the rubber ducks and the beach ball now stay
+  north of it; a duck dropping in from the south side stays at the coping's edge on the screen as it drops.
+- Lamp posts: their glow was on the ground in front of the post's foot, well under the lantern. It is now centered on the
+  lantern (160 over the ground).
+- Walls: a north-south wall that starts at an east-west wall (the bathroom | bedroom wall, the hall walls, the corners)
+  drew its top up past the other wall's top. It now starts at that top's front edge, so the east-west wall runs on over
+  the corner.

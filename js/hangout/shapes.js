@@ -54,8 +54,11 @@ function wallParts(p) {
   const door = L.DOORWAYS.some(d => d.axis === 'y' && Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2);   // (at a door: its frame, no log ends)
   const tee = L.PROPS.some(q => (q.kind === 'wall' || q.kind === 'stub') && q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w);   // (into an east-west wall, or the south wall's low stub: no log ends there)
   if (end && !door && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: p.d + p.h, wallH: p.h }), p.x, t, p.w, p.d + p.h, p.key, { fade: p.fade, only: 'in' })];
-  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${p.d}" width="${p.w}" height="${p.d}" overflow="visible" aria-hidden="true"><rect x="0" y="-12" width="${p.w}" height="${p.d + 12}" fill="#c98a52"/><path d="M${p.w * .4} -9V${p.d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 -12V${p.d}M${p.w} -12V${p.d}" stroke="#1c1c28" stroke-width="2.6"/>${door ? `<rect x="-2" y="${p.d - 12}" width="${p.w + 4}" height="10" fill="#6e3a1a" stroke="#1c1c28" stroke-width="2"/>` : ''}</svg>`;
-  return [part(top, p.x, t, p.w, p.d, p.key, { fade: p.fade, only: 'in' })];
+  /* a run that starts at an east-west wall: its top starts at that wall's top's front edge (the east-west wall's top runs
+     on over the corner; nothing sticks out over it) */
+  const head = WALLS.some(q => q.w > q.d && q.only !== 'out' && Math.abs(q.y - p.y) < 1 && q.x <= p.x && q.x + q.w >= p.x + p.w) ? 24 : 0, o = head ? 0 : -12, d = p.d - head;
+  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o + 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}" stroke="#1c1c28" stroke-width="2.6"/>${door ? `<rect x="-2" y="${d - 12}" width="${p.w + 4}" height="10" fill="#6e3a1a" stroke="#1c1c28" stroke-width="2"/>` : ''}</svg>`;
+  return [part(top, p.x, t + head, p.w, d, p.key, { fade: p.fade, only: 'in' })];
 }
 
 /* ---------- the railings of the deck's stairs (the deck's own are in its drawing): orange wood, posts and balusters ---------- */

@@ -189,7 +189,7 @@ for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: 
 add('jeep', 580, 495, 260, 125, 110, { solid: true });
 const POST = { solid: true, fade: true };
 for (const [x, y] of [[950, 400], [1680, 400], [2900, 3020], [4880, 3020], [2900, 3960], [4880, 3960]])
-  add('post', x - 15, y - 10, 30, 20, 230, { ...POST, light: { x, y: y + 30, r: 330, c: WARM, k: .5, flick: 1 } });
+  add('post', x - 15, y - 10, 30, 20, 230, { ...POST, light: { x, y, z: 160, r: 330, c: WARM, k: .5, flick: 1 } });   // (z: drawn round the lantern, 160 over the ground)
 add('campfire', 1440, 3260, 120, 80, 30, { solid: true, light: { x: 1500, y: 3300, r: 460, c: HOT, k: .6, flick: 1.6 } });
 for (const [x, y] of [[1260, 3170], [1620, 3170], [1260, 3400], [1620, 3400]]) add('log', x, y, 120, 40, 35, { solid: true, seats: 2 });
 add('trampoline', TRAMP.cx - TRAMP.rx, TRAMP.cy - TRAMP.ry, 2 * TRAMP.rx, 2 * TRAMP.ry, 0, { layer: 'none', z: terrainAt(TRAMP.cy) });   // (trampoline.js draws it: its mat dips under a landing; z: the ground under it)

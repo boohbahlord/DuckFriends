@@ -113,7 +113,7 @@ export function mountWorld(board, api) {
       if (l.only && (l.only === 'in') !== inside) continue;
       if (l.prop && !lit(l.prop, s)) continue;
       const fl = l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
-      const x = l.x, y = l.y - L.heightAt(l.x, l.y), r = l.r * fl;
+      const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r * fl;
       if (!see(x - r, y - r, x + r, y + r)) continue;
       const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl)); rg.addColorStop(1, hexA(l.c, 0));
       g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
