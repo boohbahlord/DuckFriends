@@ -1686,7 +1686,9 @@ export const music = (function(){
   let MENU=null;const inMenu=()=>["front","rooms"].includes(document.body.dataset.screen);
   function list(){if(inMenu())return MENU;const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
   /* the host keeps the list going (every second, whether or not it plays music itself) */
-  function conduct(){if(inMenu()){if(!MENU&&!started)return;const m=plan(MENU,clockNow(),true);if(m)MENU={...m,off:[]};if(LV()>0&&!profile.settings.musicMute)ahead_(MENU);return}
+  function conduct(){if(inMenu()){const t=clockNow(),m=plan(MENU,t,true);if(m)MENU={...m,off:[]};
+      if(!sounding()&&MENU&&MENU.a)MENU={a:{...MENU.a,at:t+400},b:null,off:[]};   // (until the sound may start, the first song waits at its start)
+      if(LV()>0&&!profile.settings.musicMute)ahead_(MENU);return}
     const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
     if(s.hostId===r.me){const m=plan(s.music,t);if(m)r.send({t:"music",a:m.a,b:m.b});LOC=null}
     else if(s.music){LOC=null;noListAt=0}
@@ -1730,10 +1732,15 @@ export const music = (function(){
     if(why){if(ac&&playing){level(.6,0);hushT=setTimeout(()=>{if(HUSH)stop()},2600)}return}
     if(!wanted())stop();else if(ac||started){start();if(ac&&playing)level(1.2)}}
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
-  let started=false;   // a click or a key has happened, so the browser lets sound start
+  let started=false;   // a tap, a mouse button or a key has happened, so the browser lets sound start
+  const sounding=()=>!!ac&&ac.state==="running"&&playing;
+  /* browsers hold all sound until the page is first used, and which event counts differs (a finger's tap only counts once
+     it lifts): so any of these, anywhere on the page, starts the music, or wakes a sound clock the browser kept asleep */
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
-  addEventListener("pointerdown",wake,true);
-  addEventListener("keydown",wake,true);
+  for(const k of ["pointerdown","pointerup","mousedown","touchend","click","keydown","keyup"])addEventListener(k,wake,true);
+  /* a browser that lets sound start on its own (one that knows the game): the music starts as soon as the page is up */
+  setTimeout(()=>{if(started||!wanted()||!ctx())return;const go=()=>{if(ac.state==="running"&&!started){started=true;if(wanted())start()}};
+    go();if(!started)ac.resume().then(go,()=>{})},700);
   document.addEventListener("visibilitychange",sync);
   document.addEventListener("settings",sync);
   document.addEventListener("screen",sync);
@@ -1775,6 +1782,7 @@ export const music = (function(){
   function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
   function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
+    if(inMenu()&&!sounding()&&wanted())return {name:e.n,next:false,in:0,off:[],wait:true};   // (the browser still holds the sound: the bar asks for a tap)
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
   return {sync,hush,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();
