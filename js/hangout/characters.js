@@ -41,7 +41,7 @@ const shown = new Map();   // id → { el, body, say, x, y, z, pose, f, hopFrom,
 let layer = null, fxl = null, lastFx = 0, mounted = false;
 function make(id) {
   const el = document.createElement('div'), duck = BRAINS.get(id)?.kind === 'duck'; el.className = 'hang-npc npc-' + id + (duck ? ' duck' : '');
-  el.innerHTML = '<div class="hang-npc-say"></div><div class="hang-npc-body"></div>';
+  el.innerHTML = '<div class="hang-npc-say"></div><div class="hang-npc-body"></div>' + (id === 'justin' ? '<span class="hang-npc-name">Justin</span>' : '');   // (his name under him, like a player's)
   layer.append(el);
   const body = el.querySelector('.hang-npc-body'), k = CATS[id] ? CATS[id].tall / 63 : 1;   // (a cat's drawing: 100 × 80 units, its feet at 46, 74)
   const feet = duck ? feetOf(svgFor(id, 'stand')) : 0, [fx, fy] = duck ? [DUCK / 2, feet] : [46 * k, 74 * k];
@@ -141,6 +141,7 @@ activity({
         }
       }
       o.el.classList.toggle('saying', now < (o.sayUntil || 0));
+      o.el.classList.toggle('sat', r.a === 'tv');   // (on a couch: his name over his head, as a seated player's)
     }
     for (const [id, o] of shown) if (!recs[id]) { o.el.remove(); shown.delete(id); }
     /* swipes and purrs */
