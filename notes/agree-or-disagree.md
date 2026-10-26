@@ -1982,3 +1982,15 @@ a change touches"): the cabin's two outside corners on the south side still show
 starts exactly at the wall, so it wasn't seen as "over the low line"); they're now the wall's own wood like the rest.
 Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
 not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).
+
+## 2026-10-26 15:27Z: piano rows (second part of a message with the mobile specials button)
+> FOR THE PIANO, the notes are now this for each row
+>
+> Low octive: 1234567890-=
+> Second lowest octive: qwertyuiop[]
+> Second highest octive: asdfghjkl;' (enter button)
+> Highest octive: (shift button) zxcvbnm,./ (space bar button)
+
+Decision: each row is one chromatic octave (12 keys from C), so black keys have their own keys; ShiftLeft is the first note
+of the top row and Space the last; the old Shift/C sharp and Space/Alt flat modifiers are gone; notes spelled with sharps;
+all 48 keys (Enter, Shift, Space too; the numpad's Enter as well) are kept from the game and the browser while the keyboard is open.
