@@ -143,6 +143,7 @@ const quote = w => /\s/.test(w) ? `"${w}"` : w;
 /* what fits next on the command line */
 /* a name as it is typed after @: without its spaces ("Player 1" is @Player1) */
 export const tag = n => String(n || '').replace(/\s+/g, '');
+const npcTag = (s, t) => ['justin', 'annabelle', 'bubbles', 'oreo', 'opal'].find(n => n === tag(t).toLowerCase() && s.hang.npc[n]);   // Duck Cabin's characters
 const byTag = (s, t) => s.seat.find(i => tag(s.players[i].name).toLowerCase() === tag(t).toLowerCase());
 const funOn = () => { const r = activeRoom(); return !r || !!r.state.options.fun; };
 const names = () => { const r = activeRoom(); return r ? r.state.seat.map(id => '@' + tag(r.state.players[id].name)) : []; };
@@ -191,7 +192,9 @@ function runFun(node, args) {
   if (!boardPhases(s).includes(s.phase)) return '✗ That works on the board.';
   const who = [];
   for (const a of args) {
-    const id = byTag(s, a.replace(/^@/, ''));
+    const id = byTag(s, a.replace(/^@/, '')), npc = !id && (s.hang || {}).npc && npcTag(s, a.replace(/^@/, ''));
+    if (npc === 'justin' && node.kind === 'kill') { r.send({ t: 'hang', k: 'npc', who: 'justin', do: 'kill' }); return '✖ Justin plays dead'; }   // (Duck Cabin's Justin: kill works on him)
+    if (npc) return npc === 'justin' ? `✗ ${node.kind} doesn't work on Justin.` : '✗ The cats don\'t listen to commands.';
     if (!id) return `✗ No player named ${a.replace(/^@/, '')}.`;
     who.push(id);
   }
