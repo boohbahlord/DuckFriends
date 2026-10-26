@@ -75,7 +75,7 @@ function ring(a, d, t, f, parts, { peak = .1, att = .012, tau = .2 } = {}) {
 }
 /* a switch's clack: a short dark tick and a little thunk, and the spring's softer one just after */
 function clack(a, d, t, k = 1) {
-  hiss(a, d, t, { f: 1200, q: 1.2, peak: .11 * k, att: .006, tau: .012 });
+  hiss(a, d, t, { f: 1100, q: 1.2, peak: .09 * k, att: .007, tau: .012 });
   tone(a, d, t, { f: 230, f2: 120, slide: .03, peak: .16 * k, att: .006, tau: .025 });
   hiss(a, d, t + .038, { f: 1600, q: 1.4, peak: .045 * k, att: .006, tau: .01 });
 }
@@ -158,6 +158,13 @@ const ONE = {
     hiss(a, d, t, { f: 760, f2: 520, slide: .25, q: .6, peak: .13, att: .06, dur: .14, tau: .07 });
     hiss(a, d, t + .17, { type: 'lowpass', f: 420, peak: .05, att: .01, tau: .04 });
   },
+  relight(a, d, t) {   // a match struck softly, then a small flame catching ("fff-whup") and settling
+    hiss(a, d, t, { f: 900, f2: 1350, slide: .1, q: 1, peak: .06, att: .015, dur: .07, tau: .03 });
+    const c = t + .13;
+    hiss(a, d, c, { type: 'lowpass', f: 700, f2: 380, slide: .3, q: .6, peak: .09, att: .03, dur: .1, tau: .12 });
+    tone(a, d, c, { f: 140, f2: 190, slide: .15, peak: .03, att: .03, tau: .1 });
+    hiss(a, d, c + .12, { type: 'lowpass', f: 480, q: .5, peak: .03, att: .08, dur: .25, tau: .15 });
+  },
   fireOut(a, d, t) {   // a whump, and a long hiss that settles
     hiss(a, d, t, { type: 'lowpass', f: 320, peak: .2, att: .016, tau: .14 });
     tone(a, d, t, { f: 72, f2: 44, slide: .25, peak: .14, att: .016, tau: .12 });
@@ -166,7 +173,7 @@ const ONE = {
   },
   tvClick(a, d, t) {   // the knob's clunk and a blip of static between channels
     tone(a, d, t, { f: 170, f2: 110, slide: .03, peak: .15, att: .006, tau: .03 });
-    hiss(a, d, t, { f: 1200, q: 1.1, peak: .1, att: .006, tau: .015 });
+    hiss(a, d, t, { f: 1000, q: 1.1, peak: .08, att: .007, tau: .015 });
     hiss(a, d, t + .02, { f: 1600, q: .7, peak: .04, att: .012, dur: .1, tau: .03 });
   },
   pingLow(a, d, t) {   // the blue wall: a dark, low "bonnng" (the ball's thud under it)

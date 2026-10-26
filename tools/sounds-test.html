@@ -53,7 +53,7 @@
   setListener(() => ({ x: 0, y: 0 }));
   const at = () => ({ x: +far.value, y: 0 });
   far.oninput = () => { farv.textContent = +far.value ? `${far.value} px to the right` : 'near'; for (const h of running.values()) h.move(+far.value, 0); };
-  const G3 = ['hum', 'switch', 'powerDown', 'powerUp', 'candleOut', 'fireOut', 'tvClick', 'static', 'pingLow', 'pingHigh'];
+  const G3 = ['hum', 'switch', 'powerDown', 'powerUp', 'candleOut', 'relight', 'lever', 'fireOut', 'tvClick', 'static', 'pingLow', 'pingHigh'];
   const running = new Map();
   for (const n of [...NAMES, ...LOOPS]) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + (LOOPS.includes(n) ? 'blue' : 'ghost');
