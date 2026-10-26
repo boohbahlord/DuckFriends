@@ -4,7 +4,9 @@
    comes in with each new stage on the board and with each key pressed (that key glowing); after 5 seconds unused it slides up off the screen. Keys kept on (Shift and the key) light up green
    and stay where they are while the rest fade, so you can always see what's on. Phones have no row: holding still on the
    board brings the specials around the finger (see touch.js); a tap uses one, holding one keeps it on, and lifting the
-   holding finger over one uses it too. */
+   holding finger over one uses it too. Phones also get a round Specials button in the bottom bar's right corner: it opens
+   a column of the same specials over it (a tap uses one; holding one brings a "Toggle on" box, Shift and its key on a
+   computer); the column stays until the button is tapped again or somewhere else is. */
 import { esc } from './ui.js';
 import { KEYS, specialById } from './specials.js';
 
@@ -20,9 +22,15 @@ export function mountHotbar(S, api) {
   bar.className = 'hotbar gone'; bar.setAttribute('aria-hidden', 'true');
   S.querySelector('.gbar-l').after(bar);
   let timer = 0, sel = -1, sig = '', wheel = null, wheelT = 0, coolT = 0, cools = [];
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'mode-icon sp-btn'; btn.setAttribute('aria-label', 'Specials'); btn.dataset.tip = 'Specials';
+  btn.innerHTML = '<span class="mi">✦</span>';
+  let col = null, colSig = '';
 
   const draw = () => {
     const k = api.keys(), on = api.kept(), cd = api.cool ? api.cool() : []; cools = cd;
+    btn.classList.toggle('none', !k.some(Boolean));
+    if (col) drawCol(k, on, cd);
     const now = JSON.stringify([k, [...on], sel, cd.map(c => c && c[0])]);
     if (now === sig) return; sig = now;
     bar.innerHTML = KEYS.map((n, i) => { const sp = specialById(k[i]);
@@ -40,7 +48,7 @@ export function mountHotbar(S, api) {
     sel = i; resting = false; away = false; draw(); settle();
     clearTimeout(timer); timer = setTimeout(() => { sel = -1; resting = true; draw(); settle(); }, LIFE);
   };
-  const hide = () => { clearTimeout(timer); resting = true; away = true; settle(); closeWheel(); };
+  const hide = () => { clearTimeout(timer); resting = true; away = true; settle(); closeWheel(); closeCol(); };
 
   /* ---------- phones: the specials around the finger ---------- */
   function closeWheel() { if (!wheel) return; clearTimeout(wheelT); wheel.remove(); wheel = null; }
@@ -72,6 +80,47 @@ export function mountHotbar(S, api) {
     wheelT = setTimeout(closeWheel, LIFE);
     return true;
   }
+  /* ---------- phones: the Specials button and its column ---------- */
+  const one = (id, i, on, cd) => { const sp = specialById(id); return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}" data-i="${i}" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}</button>`; };
+  function drawCol(k, on, cd) {
+    const now = JSON.stringify([k, [...on], cd.map(c => c && c[0])]); if (now === colSig) return; colSig = now;
+    const ask = col.querySelector('.sp-toggle'), askI = ask ? +ask.dataset.i : -1;
+    col.innerHTML = k.map((id, i) => id && specialById(id) ? one(id, i, on, cd) : '').join('');
+    if (askI >= 0) toggleBox(askI);
+  }
+  /* the box beside a held special: Toggle on (or off) */
+  function toggleBox(i) {
+    col.querySelector('.sp-toggle')?.remove();
+    const b = col.querySelector(`.sp-wbtn[data-i="${i}"]`); if (!b) return;
+    const box = document.createElement('button'); box.type = 'button'; box.className = 'sp-toggle'; box.dataset.i = i;
+    box.textContent = api.kept().has(api.keys()[i]) ? 'Toggle off' : 'Toggle on';
+    b.append(box);
+  }
+  const place = () => { if (!col) return; const r = btn.getBoundingClientRect(); col.style.right = Math.max(6, innerWidth - r.right).toFixed(0) + 'px'; col.style.bottom = (innerHeight - r.top + 8).toFixed(0) + 'px'; const top = (S.querySelector('.gbar') || btn).getBoundingClientRect().bottom; col.style.maxHeight = Math.max(60, r.top - top - 16).toFixed(0) + 'px'; };   // (under the top bar: more of them go in a second column)
+  function openCol() {
+    closeWheel(); col = document.createElement('div'); col.className = 'sp-col'; colSig = '';
+    document.body.append(col); place(); draw(); drawCol(api.keys(), api.kept(), api.cool ? api.cool() : []);
+    btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    col.tick = setInterval(() => col && drawCol(api.keys(), api.kept(), api.cool ? api.cool() : []), 400);   // (kept on, or off, by the room a moment later)
+    let press = null;
+    col.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      const t = e.target.closest('.sp-toggle');
+      if (t) { const i = +t.dataset.i; t.remove(); api.use(i, true); return; }
+      const b = e.target.closest('.sp-wbtn'); if (!b) return;
+      press = { i: +b.dataset.i, id: e.pointerId, t: setTimeout(() => { if (press) { toggleBox(press.i); press = null; } }, HOLD) };
+    });
+    col.addEventListener('pointerup', e => { if (!press || press.id !== e.pointerId) return; clearTimeout(press.t); const i = press.i; press = null; col.querySelector('.sp-toggle')?.remove(); api.use(i, false); });
+    col.addEventListener('pointercancel', () => { if (press) clearTimeout(press.t); press = null; });
+    col.addEventListener('contextmenu', e => e.preventDefault());
+  }
+  function closeCol() { if (!col) return; clearInterval(col.tick); col.remove(); col = null; btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+  btn.addEventListener('click', () => { if (col) closeCol(); else openCol(); });
+  /* a tap anywhere else closes it */
+  const outside = e => { if (col && !col.contains(e.target) && !btn.contains(e.target)) closeCol(); };
+  addEventListener('pointerdown', outside, true);
+  addEventListener('resize', place);
+
   /* the finger that brought the ring up, lifted over one of them: that one */
   function lifted(e) {
     if (!wheel || performance.now() - wheel.opened < 120) return;
@@ -85,8 +134,8 @@ export function mountHotbar(S, api) {
   addEventListener('keydown', real); addEventListener('pointermove', real);
 
   return {
-    show, hide, wheel: openWheel, closeWheel,
+    show, hide, wheel: openWheel, closeWheel, button: btn,
     refresh() { draw(); settle(); },
-    destroy() { clearTimeout(coolT); hide(); bar.remove(); removeEventListener('pointerup', lifted); removeEventListener('keydown', real); removeEventListener('pointermove', real); },
+    destroy() { clearTimeout(coolT); hide(); closeCol(); bar.remove(); btn.remove(); removeEventListener('pointerdown', outside, true); removeEventListener('resize', place); removeEventListener('pointerup', lifted); removeEventListener('keydown', real); removeEventListener('pointermove', real); },
   };
 }

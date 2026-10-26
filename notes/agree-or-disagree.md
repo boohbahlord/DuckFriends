@@ -1982,3 +1982,18 @@ a change touches"): the cabin's two outside corners on the south side still show
 starts exactly at the wall, so it wasn't seen as "over the low line"); they're now the wall's own wood like the rest.
 Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
 not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).
+
+## Request (2026-10-26 15:27Z): a Specials button for phones (the piano part went to another thread)
+
+> The bottom right of a mobile players screen should have a button they click to bring up a vertical column of all their specials they have selected, and they can use them from there, and holding down a special gives the box option to click "Toggle on", which works how it would for PC when you toggle it on obv, same feature, just a UI solution for mobile players.
+
+Decisions:
+- A round Specials button (✦, the Notes/chat button's style) in the bottom bar's right corner, only where the row of keys
+  is hidden (no mouse or touchpad, or a window under 760 px); no specials chosen, no button. Computers see no change.
+- Tapping it opens a column of your chosen specials over it, the same buttons as the finger-held ring (icons, key
+  numbers, cooldown bars, green when kept on); it stays open until the button is tapped again or anywhere else is. On a
+  short screen (a phone on its side) it goes into a second column instead of over the top bar.
+- A tap uses a special; holding one half a second shows a "Toggle on" box beside it ("Toggle off" when it's on), which
+  keeps it on like Shift and its key. The finger-held ring still works.
+- A handgun or dagger kept out (Toggle on) fires toward where you tap the board, the way a click does; nothing new was
+  built for it.

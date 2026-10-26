@@ -1329,6 +1329,7 @@ register('game', {
     pm = mountPlayers(S, () => R); idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     bar = mountHotbar(S, { keys: () => keysOf(myDuck()), kept: keptNow, use: useKey, cool });
+    docks.corner(bar.button);   // (phones: the Specials button, bottom right)
     addEventListener('mousemove', aimAt);
     touchOff = mountTouch(S, { active: () => onBoardPhase() && !windowOpen() && !(world && world.grabbing()), jump, walkTo, duckAt, getTarget: () => target, setTarget: t => { target = t; }, hold: (x, y) => !!bar && bar.wheel(x, y) });
     S.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') touchedAt = performance.now(); }, true);
