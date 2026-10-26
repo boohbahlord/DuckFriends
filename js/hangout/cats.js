@@ -67,7 +67,7 @@ const start = (rand, now) => { const p = roomSpot(rand) || [2400, 1000]; return 
 
 /* ---------- Annabelle ---------- */
 brain('annabelle', {
-  kind: 'cat',
+  kind: 'cat', name: 'Annabelle',
   init: (now, rand) => start(rand, now),
   tick(me, c) {
     const mm = M('annabelle', c.now, c.rand), at = npcAt(me, c.now); if (!at) return false;
@@ -123,7 +123,7 @@ brain('annabelle', {
 
 /* ---------- Bubbles ---------- */
 brain('bubbles', {
-  kind: 'cat',
+  kind: 'cat', name: 'Bubbles',
   init: (now, rand) => start(rand, now),
   tick(me, c) {
     const mm = M('bubbles', c.now, c.rand), at = npcAt(me, c.now); if (!at) return false;
@@ -167,7 +167,7 @@ brain('bubbles', {
 
 /* ---------- Oreo ---------- */
 brain('oreo', {
-  kind: 'cat',
+  kind: 'cat', name: 'Oreo',
   init: (now, rand) => start(rand, now),
   tick(me, c) {
     const mm = M('oreo', c.now, c.rand), at = npcAt(me, c.now); if (!at) return false;
@@ -229,7 +229,7 @@ brain('oreo', {
 
 /* ---------- Opal ---------- */
 brain('opal', {
-  kind: 'cat',
+  kind: 'cat', name: 'Opal',
   init: (now, rand) => start(rand, now),
   tick(me, c) {
     const mm = M('opal', c.now, c.rand), at = npcAt(me, c.now); if (!at) return false;

@@ -10,3 +10,4 @@ import './chalk.js';
 import './book.js';
 import './doors.js';
 import './fireflies.js';
+import './characters.js';

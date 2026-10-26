@@ -26,7 +26,7 @@ function behind(d, c) {
 const fade = (me, v, now) => { me.o = { v, t: now }; };
 
 brain('shadow', {
-  kind: 'duck',
+  kind: 'duck', name: '',
   init(now, rand) { const p = randomSpot(rand, edge, DRY) || [400, 3000]; return { w: { p: [p], t: now, v: 1 }, a: '', f: 1, o: { v: 0, t: now } }; },
   tick(me, c) {
     if (!mm) mm = { next: c.now + 2000, fade: c.now + sec(c.rand, FADE_EVERY), meet: c.now + sec(c.rand, MEET_EVERY), mode: 'lurk' };

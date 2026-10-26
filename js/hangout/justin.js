@@ -164,7 +164,7 @@ function chase(me, c, at, shout) {
 }
 
 brain('justin', {
-  kind: 'duck',
+  kind: 'duck', name: 'Justin',
   init: now => ({ w: { p: [HOME], t: now, v: 1 }, a: '', f: -1 }),
   tick(me, c) {
     notes(c); const at = npcAt(me, c.now); if (!at) return false;
