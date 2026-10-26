@@ -1807,3 +1807,16 @@ Pond-erful Ruffles, Infinite Pond, Glow), back to back with no gap. The music ba
 Sign in (on a phone's Rooms the word "Rooms" hides so it fits); the lobby and the game already had it. Entering a room
 fades the menu song out and the room's synced song in. The lobby gets a pause menu (Esc or the ☰ button): Resume,
 Customize, Settings, Friends, Leave room. A pause menu on the main menu is left for later.
+
+## Menu music only after Play, and a tap-to-start screen, word for word (2026-10-26)
+
+> miles is such a fucking idiot they had such a simple fucking job. So, the music DOESNT play on the menu of the index page UNLESS you click play! HOW THE FUCK DID THEY FUCK THAT UP !
+
+> The click to start should just be a duck on a cloud with the words in the multicolored look on letter blocks below the cloud, and clicking the screen makes the duck fall through the cloud with a falling sound effect that makes the screen go transparent until it fades, revealing the screen
+
+Decision: browsers hold all sound until the page is first used, so the page now opens on a start screen: your duck on a
+cloud, "TAP TO START" in the multicolored letters on wooden letter blocks. A tap, a click or a key anywhere drops the duck
+through the cloud with a soft puff and a falling slide whistle; the screen turns see-through and fades, showing the
+front page, and the menu music starts on that same tap. The music also wakes on any later tap, mouse button or key
+(a finger's tap only counts once it lifts), starts by itself in a browser that allows it, and until it can, the music
+bar shows "tap anywhere" before the song's name. The first menu song waits at its start until it can be heard.
