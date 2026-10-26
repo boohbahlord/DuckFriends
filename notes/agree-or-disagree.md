@@ -1954,3 +1954,10 @@ Decisions:
 
 Decision: a north-south wall's end at a doorway or over the south wall's low line is now the wall's own wood (the cut
 top's color and stripe) running on down to the floor, with no log texture.
+
+## Request (2026-10-26 14:33Z)
+> WHY is the player names UI spaced differently and look differently!?!? STOP RECREATING THE WHEEL AND USE THE CODE ALREADY MADE TO MAKE THE PLAYER NAME UI THE SAME BELOW THE DUCKS
+
+Decision: Justin's name is now the players' own name element (game.js' .gduck-name with name.js' nameHTML, same font,
+size and pill), placed under his drawing exactly as a player's is (measured: same font, same gap on phone and computer).
+It looks like any other player's name; your own has the blue ring because it's yours.
