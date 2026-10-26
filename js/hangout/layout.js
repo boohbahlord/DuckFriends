@@ -39,6 +39,8 @@ export const onTramp = (x, y) => ((x - TRAMP.cx) / TRAMP.rx) ** 2 + ((y - TRAMP.
 /* things a duck can jump onto and stand on (beds, tables): { x0, y0, x1, y1, top, key }, filled by add() */
 const PLATS = [];
 const platAt = (x, y) => PLATS.find(q => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1) || null;
+/* on top of a bed or a table (somewhere a duck jumps up to, never walks to) */
+export const onPlatform = (x, y) => !!platAt(x, y);
 /* the height of whatever a duck stands on at (x, y) */
 export function heightAt(x, y) {
   if (onStage(x, y)) return STAGE.h;
