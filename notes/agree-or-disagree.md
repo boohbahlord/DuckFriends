@@ -1828,3 +1828,32 @@ correct structure of a toilet"
 Decision: redrawn as a classic toilet seen from the front (tank on the wall with a flush handle, the lid up against it,
 the round seat with water, the bowl down to its foot), moved to the bathroom's north wall between the tub and the sink
 so it faces the room. Rides along with goal 2 (PR #99).
+
+## Request (2026-10-26 05:53Z): doors, log ends, couches, TV (two pictures: a screenshot with the log ends circled, a sketch)
+"I circled some of th3se, but these are NOT supposed to be there whenever a door is in between, check your work because
+those are door level and thus covered by doors, so there is no reason or way they would be showing from above like that,
+because it doesnt come out from the top like that, fix ever instance of that in the first screenshot i refer to.
+
+You can barely even see the doors inside either. Also i cant see the door but instead of screenshotting it, compare it to
+yhe standard of yhe door as seen from outside on the balcony, and see if it matches up in art.
+
+The sofas need a little distance from eachother and a coffee table on the rug in front of them. The TV needs to face
+them diagonally if they are arranged like that also. The sofa face the wall should be one cushion shorter, so it becomes
+a two seater. The sofas and it's rugs need to be somewhere away from the stage because the TV cant go in fron of yhe
+stage.
+
+The sofas can go in the bottom right of the room IF there is room for the door to the balcony.
+
+I send something in image 2 about the new plan for the couches, tv location, new coffee table, new end table, and where
+they all go together and how. Make sure to ask adam ab certain things"
+
+Sketch text: "The couches and the rug (represented by the red circle) should go to the bottom right here. The TVs location
+is roughly speaking and the Coffee table can experiment with different orientations. We need suggestions about how to
+fill up all the dead space of the room." Labels: "TV Here.", "Coffee table (Can be shaped differently, it should have
+papers and drinks on it)", "End table."
+
+Decisions (Adam): the couch seen from the back becomes the south couch, a 2-seater; the east couch faces west, 3 seats if
+it fits; a duck's width between them at the corner for the end table. TV on a low stand on the floor, turned 45° to face
+the L. Dead space: bookshelf and armchair by the fireplace; a sittable card table with 2 chairs in the middle; coat rack,
+boots and welcome mat by the front door; two potted plants; a wall clock and two small pictures on the north wall.
+No log-end rings at interior doorways; inside doors drawn to match the deck door.

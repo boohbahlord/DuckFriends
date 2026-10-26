@@ -400,11 +400,17 @@ export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
   for (const [x, y] of [[10, 10], [20 + pw, 10], [10, 24 + ph], [20 + pw, 24 + ph]]) p += R(x, y, pw, ph, '#9a5526', `rx="3" ${ln(1.6)}`) + R(x + 3, y + 3, pw - 6, 4, '#c98a52', 'opacity=".6"');
   return wrap(w, h, R(0, 0, w, h, '#b06a35', `rx="3" ${ln(2.4)}`) + p + F`<circle cx="${kx}" cy="${h * .55}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
 }
-/* a closed door seen from above in a north-south wall's line: a plank len long (down the screen), t thick, a little
-   lighter than the wall's top, the knob's end marked. Box t × len. */
-export function doorTop({ len = 150, t = 14, knob = 'b' } = {}) {
-  const ky = knob === 'a' ? 10 : len - 10;
-  return wrap(t, len, R(0, 0, t, len, '#d9a066', ln(2.2)) + F`<path d="M${t / 2} 4V${len - 4}" stroke="#8a4f22" stroke-width="1.6" opacity=".7"/><circle cx="${t / 2}" cy="${ky}" r="3" fill="#e8b84a" ${ln(1)}/>`, 'hg-door');
+/* a shut door in a north-south wall, seen a little from its west side the way the deck's door is seen: its top edge in
+   the wall's line (x = k), its face sloping down to its foot k to the west, so its panels and knob show; len long (down
+   the screen), h high. Box (k + 8) × (len + h); the foot runs down x = 0 from y = h to h + len. knob: 'a' (north end) |
+   'b' (south end). */
+export function doorSide({ len = 150, h = 110, k = 60, knob = 'b' } = {}) {
+  const q = (u, v) => `${n1(v * k)} ${n1((1 - v) * h + u * len)}`, quad = (u0, u1, v0, v1) => `M${q(u0, v0)}L${q(u1, v0)}L${q(u1, v1)}L${q(u0, v1)}Z`;
+  const ku = knob === 'a' ? .1 : .9, kx = .48 * k, ky = (1 - .48) * h + ku * len;
+  return wrap(k + 8, len + h, F`<path d="M${q(0, 0)}L${q(1, 0)}L${n1(8 + 14)} ${n1(h + len + 4)}L${n1(-6)} ${n1(h + len + 4)}Z" fill="#000" opacity=".28"/>`
+    + F`<path d="${quad(-.05, 1.05, 0, 1.06)}" fill="#5a2d14" ${ln(2.4)}/>`
+    + F`<path d="${quad(0, 1, 0, 1)}" fill="#b06a35" ${ln(2.4)}/><path d="${quad(.08, .46, .1, .45)}${quad(.54, .92, .1, .45)}${quad(.08, .46, .55, .9)}${quad(.54, .92, .55, .9)}" fill="#9a5526" ${ln(1.6)}/>`
+    + F`<circle cx="${n1(kx)}" cy="${n1(ky)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
 }
 /* a door swung open toward the viewer by ang degrees (from shut): its face turned, hinge on the left. Box
    len·cos(ang) × (h + len·sin(ang)); the hinge's foot at (0, h), the open edge's at (w, box height). */
@@ -680,18 +686,17 @@ export function sink({ w = 66, h = 196 } = {}) {
     + R(4, Y - 26, w - 8, 72, '#9a5526', ln(2.4)) + R(10, Y - 14, w - 20, 50, '#b06a35', `rx="3" ${ln(1.6)}`) + R(w / 2 - 6, Y + 6, 12, 4, '#d9a441', ln(1))
     + R(0, Y - 72, w, 46, '#e8e2d0', `rx="6" ${ln(2.4)}`) + F`<ellipse cx="${w / 2}" cy="${Y - 46}" rx="${w * .32}" ry="13" fill="#b9c3cb" ${ln(1.8)}/><path d="M${w / 2} ${Y - 66}v10h6" stroke="#c9ced6" stroke-width="4" fill="none" stroke-linecap="round"/>`, 'hg-sink', glowDef(id, '#ffe0b0', .5));
 }
-/* a toilet against the north wall, facing into the room: the tank on the wall with its lid on top and a flush handle,
-   the seat's lid up against it, the round seat and the water seen from above, the bowl curving down to its foot.
-   Footprint w × 70, the tank 80 high. Foot: y = h. */
-export function toilet({ w = 80, h = 170 } = {}) {
-  const Y = h, c = w / 2, sy = Y - 62;
-  return wrap(w, h, shade(c, Y - 4, 26, 7, .3)
-    + R(c - 30, Y - 150, 60, 82, '#e9e6de', `rx="6" ${ln(2.4)}`) + R(c - 34, Y - 158, 68, 14, '#f7f5ef', `rx="5" ${ln(2.4)}`)
-    + F`<path d="M${c - 24} ${Y - 132}h9" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${c - 24} ${Y - 132}h9" stroke="#c9ced6" stroke-width="3" stroke-linecap="round"/>`
-    + F`<ellipse cx="${c}" cy="${Y - 98}" rx="22" ry="30" fill="#f7f5ef" ${ln(2.4)}/><ellipse cx="${c}" cy="${Y - 98}" rx="15" ry="22" fill="none" stroke="#dcd8cf" stroke-width="2"/>`
-    + F`<path d="M${c - 26} ${sy}C${c - 26} ${Y - 30} ${c - 14} ${Y - 26} ${c - 13} ${Y - 18}L${c - 16} ${Y - 4}H${c + 16}L${c + 13} ${Y - 18}C${c + 14} ${Y - 26} ${c + 26} ${Y - 30} ${c + 26} ${sy}Z" fill="#e3e0d8" ${ln(2.4)}/>`
-    + F`<path d="M${c - 18} ${Y - 38}Q${c} ${Y - 30} ${c + 18} ${Y - 38}" stroke="#cbc7bd" stroke-width="2" fill="none"/>`
-    + F`<ellipse cx="${c}" cy="${sy}" rx="28" ry="17" fill="#f7f5ef" ${ln(2.4)}/><ellipse cx="${c}" cy="${sy + 1}" rx="17" ry="9.5" fill="#9fd6e8" ${ln(1.8)}/><path d="M${c - 8} ${sy - 2}q4 -3 9 -2" stroke="#fff" stroke-width="2" fill="none" opacity=".8" stroke-linecap="round"/>`, 'hg-toilet');
+/* a toilet against the north wall, facing into the room, drawn like the plain one everybody knows: the tank (a lid band,
+   a flush lever) just behind a closed round seat, the bowl's round belly, and a short foot that widens to the floor.
+   Footprint w × 70, the tank 120 high. Foot: y = h. */
+export function toilet({ w = 80, h = 130 } = {}) {
+  const Y = h, c = w / 2;
+  return wrap(w, h, shade(c, Y - 3, 24, 6, .3)
+    + R(c - 25, Y - 114, 50, 62, '#e9e6de', `rx="6" ${ln(2.4)}`) + R(c - 28, Y - 122, 56, 11, '#f7f5ef', `rx="4" ${ln(2.2)}`) + R(c - 3, Y - 125, 6, 4, '#c9ced6', `rx="1.5" ${ln(1.2)}`)
+    + F`<path d="M${c - 25} ${Y - 104}h-7" stroke="${O}" stroke-width="5.5" stroke-linecap="round"/><path d="M${c - 25} ${Y - 104}h-7" stroke="#c9ced6" stroke-width="2.6" stroke-linecap="round"/>`
+    + F`<path d="M${c - 30} ${Y - 56}C${c - 30} ${Y - 36} ${c - 21} ${Y - 28} ${c - 12} ${Y - 27}L${c - 15} ${Y - 3}H${c + 15}L${c + 12} ${Y - 27}C${c + 21} ${Y - 28} ${c + 30} ${Y - 36} ${c + 30} ${Y - 56}Z" fill="#ece9e2" ${ln(2.4)}/>`
+    + F`<path d="M${c - 12} ${Y - 27}H${c + 12}" stroke="#bdb9ae" stroke-width="1.6"/><path d="M${c + 18} ${Y - 47}Q${c + 22} ${Y - 38} ${c + 14} ${Y - 33}" stroke="#fff" stroke-width="2.4" fill="none" opacity=".8" stroke-linecap="round"/>`
+    + F`<ellipse cx="${c}" cy="${Y - 55}" rx="31" ry="12" fill="#dedad1" ${ln(2.2)}/><ellipse cx="${c}" cy="${Y - 59}" rx="29" ry="11" fill="#f7f5ef" ${ln(2.4)}/><path d="M${c - 14} ${Y - 63}q14 -5 28 0" stroke="#fff" stroke-width="2" fill="none" opacity=".9" stroke-linecap="round"/>`, 'hg-toilet');
 }
 
 /* ---------- the bedrooms ---------- */
@@ -988,9 +993,9 @@ export const ART = {
   stage: [stage, 250, 460, 'pair: top at y = 70, skirt at y = h'], stageStairs: [stageStairs, 80, 217, 'pair: treads at y = 70, nothing in front'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
   chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], wipeTile: [wipeTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
   counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
-  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 80, 170, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
+  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 80, 130, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
-  doorFace: [doorFace, 150, 150, 'foot y = h'], doorTop: [doorTop, 14, 150, 'flat, in the wall line'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
+  doorFace: [doorFace, 150, 150, 'foot y = h'], doorSide: [doorSide, 42, 260, 'foot along x = 0 … 8'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],
