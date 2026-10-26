@@ -2,7 +2,7 @@
    Play: near the piano the context button says "Play". Pressing it seats my duck at the first free spot on the bench in
    front of the keyboard (six spots, from the middle out; the host decides who sits where, in s.hang.piano) and opens
    keyboard mode (pianokeys.js) over the bottom of the screen (on a phone held upright, the lower part of the screen, in
-   four rows). Seated, my duck can't walk; the button says "Get up", and Get up, Escape, Enter or a jump (a tap on the
+   four rows). Seated, my duck can't walk; the button says "Get up", and Get up, Escape or a jump (a tap on the
    board on a phone) stands it up.
    Notes: mine go to the room in little batches (one every 110 ms at most while playing, each note with its time in the
    batch, so a quick run keeps its rhythm on the other screens); every other screen plays them (pianokeys' play() when

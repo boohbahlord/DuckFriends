@@ -15,6 +15,7 @@ export const HATS = [
   { id: 'fila', name: 'Fila', tip: 'The Yoruba cap Nigerian men wear (here a fila gobi, folded to one side).', colors: [['c1', 'Cap', '#6b2fa3'], ['c2', 'Stripes', '#f2c94c']] },
   { id: 'gele', name: 'Gele', tip: 'The Nigerian head tie women wear, wrapped and pleated high.', colors: [['c1', 'Gele', '#7a1f2b']] },
   { id: 'sombrero', name: 'Sombrero' },
+  { id: 'cowboy', name: 'Cowboy hat', colors: [['c1', 'Hat', '#8b5a2b'], ['c2', 'Band', '#3a2414']] },
   { id: 'dunce', name: 'Dunce hat' },
   { id: 'crown', name: 'Crown', metal: true },
   { id: 'duckling', name: 'Rubber duck', colors: [['c1', 'Duck', '#ffd23f']] },
@@ -43,7 +44,7 @@ export const hatById = id => HATS.find(h => h.id === id) || null;
 export const HAT_GROUPS = [
   ['Fun', ['birthday', 'bow', 'dunce', 'word', 'duckling', 'mouse', 'eye', 'antenna', 'antennae']],
   ['Food', ['pumpkin', 'hotdog', 'cheese']],
-  ['Hair, hats and caps', ['afro', 'cap', 'bucket', 'fila', 'gele', 'sombrero', 'nightcap', 'jordan']],
+  ['Hair, hats and caps', ['afro', 'cap', 'bucket', 'fila', 'gele', 'sombrero', 'cowboy', 'nightcap', 'jordan']],
   ['Fantasy', ['wizard', 'crown', 'halo', 'horns']],
   ['Jobs and uniforms', ['police', 'fire', 'doctor', 'helmet']],
   ['Weddings and church', ['veil', 'pope', 'bishop']],
@@ -124,6 +125,14 @@ const DRAW = {
     <path d="M-16-7C-6-9 6-9 16-7L16-2C6-4-6-4-16-2Z" fill="#d7263d"/>
     <path d="M-15-5l4-2 4 2 4-2 4 2 4-2 4 2 4-2" stroke="#2a9d8f" stroke-width="1.6" fill="none"/>
     ${[-38, -27, -15, -3, 9, 21, 31].map((x, i) => `<circle cx="${x}" cy="${(8 - Math.abs(x + 3) / 9).toFixed(1)}" r="2.2" fill="${['#d7263d', '#2a9d8f', '#f4a261'][i % 3]}"/>`).join('')}`,
+  cowboy: h => { const c = h.c1, d = dk(c, .3), l = lt(c, .25);
+    return `<path d="M-42-12C-40-1-26 6-8 6.5L8 6.5C26 6 40-1 42-12C38-6 31-3 22-2L-22-2C-31-3-38-6-42-12Z" fill="${dk(c, .1)}" ${O}/>
+    <path d="M-34-3C-26 1-14 3-3 3M34-3C26 1 14 3 3 3" stroke="${d}" stroke-width=".8" stroke-dasharray="1.6 1.4" fill="none"/>
+    <path d="M-18-1C-20-14-19-25-13-34C-10-36-6-33 0-29C6-33 10-36 13-34C19-25 20-14 18-1C8 2-8 2-18-1Z" fill="${c}" ${O}/>
+    <path d="M-1-28C-4-20-4-10-3-2M2-29C6-22 8-12 8-1" stroke="${d}" stroke-width="1" fill="none"/>
+    <path d="M-18-1C-8 2 8 2 18-1L17.4-8C8-5-8-5-17.4-8Z" fill="${h.c2}" ${O}/>
+    <rect x="-3.4" y="-7" width="6.8" height="5.6" rx="1.2" fill="#e9c46a" stroke="#1c1c28" stroke-width="1"/>
+    <path d="M-14-13C-15-19-14-25-11-30" stroke="${l}" stroke-width="2" opacity=".6" fill="none" stroke-linecap="round"/>`; },
   dunce: () => `<path d="M-16 2L0-52L16 2Z" fill="#fbfbf6" ${O}/>
     <path d="M0-52L16 2L8 2Z" fill="#000" opacity=".08"/>
     <text x="-1" y="-6" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="16" fill="#1c1c28">D</text>
@@ -280,6 +289,6 @@ export function hatTile(hatId, color) {
   const id = 'hp' + (++uid);
   if (def.id === 'afro') return `<g transform="translate(16 17) scale(.38) translate(-71 -28)">${DRAW.afroBack(h)}</g>`;
   if (def.id === 'eye') return `<g transform="translate(16 30) scale(.62)">${DRAW.eye(h, id).replace('class="hat-float" ', '')}</g>`;
-  const tall = { wizard: 1, dunce: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8;
-  return `<g transform="translate(16 ${def.id === 'sombrero' ? 22 : 27}) scale(${(def.id === 'sombrero' ? .32 : .48 / tall).toFixed(2)})">${DRAW[def.id](h, id)}</g>`;
+  const tall = { wizard: 1, dunce: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8, wide = def.id === 'sombrero' || def.id === 'cowboy';   // (a wide brim fits the tile by its width)
+  return `<g transform="translate(16 ${wide ? 22 : 27}) scale(${(def.id === 'sombrero' ? .32 : def.id === 'cowboy' ? .34 : .48 / tall).toFixed(2)})">${DRAW[def.id](h, id)}</g>`;
 }

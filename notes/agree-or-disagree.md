@@ -1983,6 +1983,23 @@ starts exactly at the wall, so it wasn't seen as "over the low line"); they're n
 Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
 not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).
 
+## 2026-10-26 15:27Z: piano rows (second part of a message with the mobile specials button)
+> FOR THE PIANO, the notes are now this for each row
+>
+> Low octive: 1234567890-=
+> Second lowest octive: qwertyuiop[]
+> Second highest octive: asdfghjkl;' (enter button)
+> Highest octive: (shift button) zxcvbnm,./ (space bar button)
+
+Decision: each row is one chromatic octave (12 keys from C), so black keys have their own keys; ShiftLeft is the first note
+of the top row and Space the last; the old Shift/C sharp and Space/Alt flat modifiers are gone; notes spelled with sharps;
+all 48 keys (Enter, Shift, Space too; the numpad's Enter as well) are kept from the game and the browser while the keyboard is open.
+
+## 2026-10-26 15:37Z: cowboy hat
+> Someone can add a cowboy hat to the game hats
+
+Decision: a recolorable Cowboy hat (hat and band colors) in the "Hair, hats and caps" group, in the same outlined style as the sombrero and bucket hat.
+
 ## Request (2026-10-26 15:27Z): a Specials button for phones (the piano part went to another thread)
 
 > The bottom right of a mobile players screen should have a button they click to bring up a vertical column of all their specials they have selected, and they can use them from there, and holding down a special gives the box option to click "Toggle on", which works how it would for PC when you toggle it on obv, same feature, just a UI solution for mobile players.
