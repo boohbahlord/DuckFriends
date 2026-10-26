@@ -23,35 +23,47 @@ import { acct, onAccount, requestFriend, canAdd } from './account.js';
 import { openFriends } from './friends.js';
 import { NAV_HINTS } from './keynav.js';
 import { musicBarHTML, mountMusicBar } from './musicbar.js';
+import { openSettings } from './settings.js';
 
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
   type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering or Hangout (in its own Duck Cabin).',
-  map: 'What the board looks like: Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole of Ducklings or Ether\'s Crossroads.',
+  map: 'What the board looks like: eight maps, from Night Show to Duck Cabin (Hangout\'s own).',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
   friends: 'Invite your friends to this room, or add a friend by code.',
 };
 
-/* the Game type window: the host picks the game */
+/* the Game type window: the host picks the game. Hangout and Duck Cabin are one: on Duck Cabin only Hangout shows, with
+   All games to see the rest (picking another game leaves Duck Cabin for Night Show) */
+const allTile = (label, cls) => `<button type="button" class="tile ${cls} tile-all" data-all="1"><b>${esc(label)}</b><span class="small dim">Show them all</span></button>`;
 function openTypes() {
   const s = R.state, host = isSudo(s, R.me), cur = s.options.mode || 'aod';
+  const tiles = all => MODES.filter(m => all || s.options.map !== 'cabin' || m.id === 'hang').map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: m.id === 'hang' ? 'cabin' : s.options.map === 'cabin' ? 'board' : s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')
+    + (all || s.options.map !== 'cabin' ? '' : allTile('All games', 'type-tile'));
   return openWindow(`<h2>Game type</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the game.</p>'}
-    <div class="type-tiles">${MODES.map(m => `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? '' : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: m.id === 'hang' ? 'cabin' : s.options.map === 'cabin' ? 'board' : s.options.map || 'board', mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`).join('')}</div>`, {
+    <div class="type-tiles">${tiles(false)}</div>`, {
     cls: 'win-settings',
-    onOpen: w => { if (host) w.querySelector('.type-tiles').onclick = e => { const b = e.target.closest('[data-mode]'); if (!b) return; R.send({ t: 'options', options: { mode: b.dataset.mode } }); w.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
+    onOpen: w => { const box = w.querySelector('.type-tiles'); box.onclick = e => {
+      if (e.target.closest('[data-all]')) { box.innerHTML = tiles(true); return; }
+      const b = host && e.target.closest('[data-mode]'); if (!b) return; R.send({ t: 'options', options: { mode: b.dataset.mode } }); w.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
   });
 }
 
-/* the board as a small picture (the Map window) */
-/* the Map window: three maps, each with a little picture; the host picks */
+/* the Map window: each map with a little picture; the host picks. In Hangout only Duck Cabin shows, with All maps to see
+   the rest (picking another map leaves Hangout) */
 function openMaps() {
-  const s = R.state, host = isSudo(s, R.me), cur = s.options.map || 'board';
+  const s = R.state, host = isSudo(s, R.me), cur = s.options.map || 'board', hang = s.options.mode === 'hang';
+  const tiles = all => [...MAPS, ['cabin', 'Duck Cabin', 'A log cabin at night with a deck, a pool and a campfire. Hangout\'s own: picking it picks Hangout.']].filter(([id]) => all ? true : hang ? id === 'cabin' : true)
+    .map(([id, name, tip]) => `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? '' : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`).join('')
+    + (all || !hang ? '' : `<button type="button" class="tile map-tile tile-all" data-all="1"><span class="mini-map mm-all">${MAPS.slice(0, 4).map(m => mapMini(m[0])).join('')}</span><span>All maps</span></button>`);
   return openWindow(`<h2>Map</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the map.</p>'}
-    <div class="map-tiles">${MAPS.map(([id, name, tip]) => `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? '' : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`).join('')}</div>`, {
+    <div class="map-tiles">${tiles(false)}</div>`, {
     cls: 'win-settings',
-    onOpen: w => { if (host) w.querySelector('.map-tiles').onclick = e => { const b = e.target.closest('[data-map]'); if (!b) return; R.send({ t: 'options', options: { map: b.dataset.map } }); w.querySelectorAll('[data-map]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
+    onOpen: w => { const box = w.querySelector('.map-tiles'); box.onclick = e => {
+      if (e.target.closest('[data-all]')) { box.innerHTML = tiles(true); return; }
+      const b = host && e.target.closest('[data-map]'); if (!b) return; R.send({ t: 'options', options: { map: b.dataset.map } }); w.querySelectorAll('[data-map]').forEach(x => x.setAttribute('aria-pressed', x === b)); }; },
   });
 }
 
@@ -199,7 +211,6 @@ function paint() {
   $('.val', startRow).textContent = few ? 'Needs 3 players' : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
-  $('[data-m="map"]', S).hidden = s.options.mode === 'hang';   // (Hangout is always in Duck Cabin)
   const fr = $('[data-m="friends"] .val', S);
   if (fr) fr.textContent = acct.uid ? `${Object.values(acct.friends).filter(f => f.on).length} online` : 'Sign in';
   const mode = s.options.mode || 'aod', art = $('.lobby-art', S), artSig = (s.options.map || 'board') + mode + JSON.stringify(profile.duck);   // the picture shows the game and the map
@@ -226,6 +237,24 @@ function onState(s) {
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
   if (e.code === 'Space' && !e.repeat) { e.preventDefault(); toggleReady(); }
+  if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); openPause(); }
+}
+/* the pause menu, as in a game (☰ at the top right, or Esc) */
+function openPause() {
+  if (windowOpen()) return;
+  openWindow(`<h2>Paused</h2><div class="pause-list">
+    <button type="button" class="btn green" data-a="resume">Resume</button>
+    <button type="button" class="btn ghost" data-a="custom">Customize</button>
+    <button type="button" class="btn ghost" data-a="settings">Settings</button>
+    <button type="button" class="btn ghost" data-a="friends">Friends</button>
+    <button type="button" class="btn red" data-a="leave">Leave room</button></div>`, {
+    cls: 'win-small',
+    onOpen: (w, close) => w.querySelector('.pause-list').onclick = e => {
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      close();
+      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), friends: () => openFriends(), leave: () => leaveTo('rooms') })[a.dataset.a]();
+    },
+  });
 }
 const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
 /* the host renames the room in place (Enter or clicking away keeps it, Esc doesn't) */
@@ -247,7 +276,7 @@ register('lobby', {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
     S = el(`<section class="screen lobby docked">
-      <header class="lbar">${musicBarHTML()}<button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <header class="lbar">${musicBarHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
@@ -269,6 +298,7 @@ register('lobby', {
     docks = mountDocks(S, `<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options ${NAV_HINTS}`);
     lastSeat = 0; mbarOff = mountMusicBar(S);
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
+    S.querySelector('.lobby-pause').onclick = () => openPause();
     const info = S.querySelector('.lmenu-info');
     S.querySelector('.lmenu').addEventListener('pointerover', e => { const b = e.target.closest('[data-m]'); if (b) info.textContent = INFO[b.dataset.m]; });
     S.querySelector('.lmenu').addEventListener('focusin', e => { const b = e.target.closest('[data-m]'); if (b) info.textContent = INFO[b.dataset.m]; });

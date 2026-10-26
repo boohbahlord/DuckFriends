@@ -103,7 +103,7 @@ ${legs}${wheel}${tent}${edge}
    clouds and sun, Pixel's sunset, islands and forest), the duck sitting on a cloud, the title, the map's name, and the
    game's symbol at the top left */
 /* the map's world behind the picture (no columns: the picture shows where the game is played) */
-function artBackdrop(map) {
+export function artBackdrop(map) {
   if (map === 'rabbit') return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === 'stars') return '<image href="assets/maps/starry-night.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === 'ec') return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>

@@ -9,20 +9,19 @@
    board on a phone) stands it up.
    Notes: mine go to the room in little batches (one every 110 ms at most while playing, each note with its time in the
    batch, so a quick run keeps its rhythm on the other screens); every other screen plays them (pianokeys' play() when
-   its own keyboard is open, else noteOn), lights them on the big piano everyone sees, with the interval colors, and
-   writes them on the music sheet column above it. The batches live in s.pn (outside s.hang, so a note never sends the
+   its own keyboard is open, else noteOn) and lights them on the big piano everyone sees, with the interval colors. The batches live in s.pn (outside s.hang, so a note never sends the
    rest of the cabin again), for a few seconds.
    Music: while anyone is seated at the piano the room's music fades away on every screen and the music bar says
    "Piano"; 10 seconds after the last one gets up (s.hang.piano.back) it fades back in, where the room's song is by now. */
 import { rule, activity } from './registry.js';
 import { PROPS, W, H, heightAt, inCabin } from './layout.js';
-import { mountPianoKeys, noteOn, noteOff, allNotesOff, makeTracker, sheetHTML, drawSheet, LOW } from './pianokeys.js';
-import { floorPiano, pianoBody, staffColumn, useHangArtCSS } from './art.js';
+import { mountPianoKeys, noteOn, noteOff, allNotesOff, makeTracker, LOW } from './pianokeys.js';
+import { floorPiano, pianoBody, useHangArtCSS } from './art.js';
 import { music } from '../music.js';
 import { now as clockNow } from '../clock.js';
 import { profile } from '../store.js';
 
-const BODY = PROPS.find(p => p.kind === 'piano'), FLOOR = PROPS.find(p => p.kind === 'pianokeys'), SHEET = PROPS.find(p => p.kind === 'sheet');
+const BODY = PROPS.find(p => p.kind === 'piano'), FLOOR = PROPS.find(p => p.kind === 'pianokeys');
 const WHITE = [0, 2, 4, 5, 7, 9, 11], BLACK = [[0, 1], [1, 3], [3, 6], [4, 8], [5, 10]];   // black keys: [after white key k, pitch class]
 const BACK_MS = 10000;   // the music comes back this long after the last player gets up
 const BATCH_MS = 110;    // my notes wait this long at most before they go to the room
@@ -113,14 +112,12 @@ let batch = null, batchT = 0, seen = 0, myKey = null, tap = null, lastTap = null
 const senders = new Map();    // player id → { L: how late their notes play here (ms), last }
 const timers = new Set();
 const bigTr = new Map(), floorTr = new Map(), held = new Map();   // trackers per player; held: 'b'|'f' + midi → the players holding it
-const sheetNotes = []; let sheetDirty = true;
 let bigEls = null, floorEls = null;   // midi → the key's elements on the big piano, on the floor
 
 const myId = () => C && C.me;
 const colorOf = id => { const s = C && C.state(); return ((s && s.players[id] || {}).duck || {}).color || ''; };
 const vel = () => { const d = C && C.duck(); return d && !inCabin(d.x * W, d.y * H) ? .35 : .8; };   // outside, the piano is heard through the walls
 const tracker = (map, id) => { if (!map.has(id)) map.set(id, makeTracker()); return map.get(id); };
-const isBlack = m => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
 
 /* a key lit (or let go) on the big piano or the floor; it stays lit while anyone holds it, then fades */
 function lightKey(kind, midi, id, color) {
@@ -132,12 +129,9 @@ function unlightKey(kind, midi, id) {
   const k = kind + midi, h = held.get(k); if (h) h.delete(id); if (h && h.size) return;
   const e = ((kind === 'b' ? bigEls : floorEls) || {})[midi]; if (e) for (const x of e) x.classList.remove('on');
 }
-function bigOn(id, midi, sp) {
+function bigOn(id, midi) {
   const iv = tracker(bigTr, id).on(midi);
   lightKey('b', midi, id, iv.color);
-  sheetNotes.push({ midi, sp: isBlack(midi) ? sp || (iv.from != null && iv.from > midi ? 'b' : '#') : '', c: iv.color, g: id + iv.g, t: Date.now() });
-  if (sheetNotes.length > 120) sheetNotes.splice(0, sheetNotes.length - 120);
-  sheetDirty = true;
 }
 function bigOff(id, midi) { tracker(bigTr, id).off(midi); unlightKey('b', midi, id); }
 function floorOn(id, midi) { const iv = tracker(floorTr, id).on(midi); lightKey('f', midi, id, iv.color); }
@@ -179,7 +173,7 @@ function play(by, [, midi, on, sp, f]) {
     return;
   }
   if (on) {
-    bigOn(by, midi, sp);
+    bigOn(by, midi);
     if (pk) pk.play(midi, { who: by, color: colorOf(by), sp, vel: vel() }); else noteOn(midi, { who: 'k' + by, vel: vel() });
   } else {
     bigOff(by, midi);
@@ -239,10 +233,10 @@ function getUp() {
   if (mine) C.send({ t: 'hang', k: 'piano', w: 'up' });
 }
 
-/* ---------- the drawings: the lit floor keys, the big piano's glowing keys, the music sheet ----------
+/* ---------- the drawings: the lit floor keys, the big piano's glowing keys ----------
    Each goes over world.js' own element for its prop (art.js' drawing; drawn here only where the world still has a
    placeholder): the floor piano's keys (hg-key, data-key w0 … b9), the piano body's front part (its keyboard shelf, 240
-   tall and the piano's width) and the staff column (a parchment 12 in from its sides and top, 86 short of its foot). */
+   tall and the piano's width). */
 function fill() {
   const W2 = C.world;
   const fe = W2.propEl(FLOOR.id);
@@ -279,17 +273,6 @@ function fill() {
     for (const e of be.querySelectorAll('.pia-keys [data-m]')) (bigEls[e.dataset.m] = bigEls[e.dataset.m] || []).push(e);
     for (const [k, hs] of held) if (k[0] === 'b' && hs.size) bigEls[+k.slice(1)]?.forEach(x => x.classList.add('on'));
   }
-  const se = W2.propEl(SHEET.id);
-  if (se && se.dataset.pia !== '1') {
-    se.dataset.pia = '1'; se.classList.add('pia-sheet');
-    if (!se.querySelector('.hg-staff')) se.innerHTML = staffColumn({ w: SHEET.w, h: SHEET.d + SHEET.h });
-    const svg = se.querySelector('.hg-staff'), w = +svg.getAttribute('width'), h = +svg.getAttribute('height'), z = w < 170 ? 1.5 : 1;   // (a narrow column: the sheet drawn bigger and shrunk, so a line holds more notes)
-    const shown = BODY.y + BODY.d - 240 - (SHEET.y + SHEET.d - (h - 4)) - 30;   // (the part over the piano's top: the newest notes, at the bottom, show)
-    se.insertAdjacentHTML('beforeend', sheetHTML());
-    Object.assign(se.querySelector('.pk-sheet').style, { left: '12px', top: '12px', width: (w - 24) * z + 'px', height: Math.min(h - 86, shown) * z + 'px', transform: `scale(${1 / z})` });
-    sheetDirty = true;
-  }
-  if (se && sheetDirty && !se.hidden) { sheetDirty = false; drawSheet(se.querySelector('.pk-sheet'), sheetNotes); }
 }
 
 activity({
@@ -302,7 +285,7 @@ activity({
     closeKeys(); flush();
     for (const t of timers) clearTimeout(t); timers.clear();
     allNotesOff(); music.hush(null);
-    senders.clear(); bigTr.clear(); floorTr.clear(); held.clear(); sheetNotes.length = 0;
+    senders.clear(); bigTr.clear(); floorTr.clear(); held.clear();
     bigEls = floorEls = null; myKey = null; tap = lastTap = null; batch = null; leaving = false; C = null;
   },
   near(pos, ctx) {

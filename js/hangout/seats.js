@@ -1,27 +1,31 @@
-/* ---------- the couches and the campfire's logs: sit down, hop over, get up ----------
-   Near a couch (or a log by the campfire) the context button says "Sit": the duck sits on the nearest free cushion (a
-   log has a seat at each end). Seated, it doesn't walk: a move key, a push of the stick or a tap to one side hops it to
+/* ---------- the couches, the campfire's logs and the kitchen chairs: sit down, hop over, get up ----------
+   Near a couch (or a log by the campfire, or the kitchen table) the context button says "Sit": the duck sits on the
+   nearest free cushion (a log has a seat at each end, the table a chair at each plate). Seated, it doesn't walk: a move key, a push of the stick or a tap to one side hops it to
    the next cushion that way, only if that one is free. "Get up" (or a jump) stands it up in front of the seat: on the
-   couch's sitting side, on a log's fire side. Each cushion holds one duck; the host keeps who sits where in
+   couch's sitting side, on a log's fire side, behind a kitchen chair. Each cushion holds one duck; the host keeps who sits where in
    s.hang.seats ({ 'couch1:0': [id, since] }), checks every sit and frees a seat when its duck leaves, resets or walks off.
 
    Drawn sitting: the duck stands on the cushion at the seat's height and depth, between the couch's two parts (art.js'
    couch pair: the cushions behind it, the couch back in front), so the back covers its lower part and its head shows
-   over it; on a log, the log's top covers its feet. A seated duck's name is over its head (class hang-sat). The couches
-   and logs are drawn here (the world's placeholders are marked layer 'none'). */
+   over it; on a log, the log's top covers its feet; at the table, the chair is behind it and the table hides its feet. A seated duck's name is over its head (class hang-sat). The couches
+   and logs are drawn here (the world's placeholders are marked layer 'none'); the table and its chairs by shapes.js. */
 import { rule, activity } from './registry.js';
 import { PROPS, W, H, heightAt, standable, STEP } from './layout.js';
 import * as A from './art.js';
 
-const KINDS = ['couch', 'log'], ART_H = { couch: 174, log: 79 }, COLORS = { couch1: '#a8382c', couch2: '#3d6e4f' };
+const KINDS = ['couch', 'log'], SEAT_KINDS = [...KINDS, 'table'], ART_H = { couch: 174, log: 79 }, COLORS = { couch1: '#a8382c', couch2: '#3d6e4f' };
 const REACH = 75;   // from a seat's footprint, the button shows
 for (const p of PROPS) if (KINDS.includes(p.kind)) p.layer = 'none';   // (drawn here)
 const FIRE = PROPS.find(p => p.kind === 'campfire');
 
 /* every seat: { id, p (its couch or log), i, x, y (its depth), z (the height the duck sits at), up: [where it stands] } */
 export const SEATS = [];
-for (const p of PROPS.filter(q => KINDS.includes(q.kind))) {
+for (const p of PROPS.filter(q => SEAT_KINDS.includes(q.kind))) {
   const n = p.seats || 2, couch = p.kind === 'couch';
+  if (p.kind === 'table') {   // a chair behind each plate (art.js' kitchenTable): sat on, the duck faces the room over the table
+    for (let i = 0; i < n; i++) SEATS.push({ id: p.id + ':' + i, p, i, n, x: p.x + p.w * (i ? .7 : .3), y: p.y - 15, z: p.z + 32, up: [p.y - 70, p.y - 110] });
+    continue;
+  }
   for (let i = 0; i < n; i++) {
     const x = couch ? p.x + 30 + (i + .5) * (p.w - 60) / n : p.x + p.w * (i ? .74 : .26);
     const y = couch ? p.y + p.d * .55 : p.y + p.d / 2, z = p.z + 46;   // (on a couch a little higher than its cushion: the head shows over the backrest)

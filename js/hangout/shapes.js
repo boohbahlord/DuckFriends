@@ -24,7 +24,7 @@
 import * as A from './art.js';
 import * as L from './layout.js';
 
-const C = L.CABIN, n1 = v => Math.round(v * 10) / 10;
+const C = L.CABIN, T = 12, r75 = 75 * Math.PI / 180, n1 = v => Math.round(v * 10) / 10;
 const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0) % 1000 / 1000; };
 const part = (svg, l, t, w, h, key, o = {}) => ({ svg, box: { l, t, w, h }, key, ...o });
 /* a pair from art.js (its box w × h) put with its box's left at l and its bottom at screen-world b; keys: the world y of
@@ -94,6 +94,27 @@ export const DRAW = {
   wall: wallParts,
   stub: p => [part(() => A.logWall({ w: p.w, wallH: p.h, t: p.d }), p.x, p.y - p.h, p.w, p.d + p.h, p.key)],
   doorway: () => [],
+  /* a door (layout.js' DOORWAYS): a shut part and an open one, doors.js shows one ("open" on the prop) */
+  door(p) {
+    const d = p.door, len = d.b - d.a, o = { only: 'in' };
+    if (d.axis === 'y') {   // in a north-south wall: shut, a plank in the wall's line; open, its face standing across the room's side
+      const hy = d.hinge === 'a' ? d.a : d.b, x0 = d.swing === 'e' ? d.at : d.at - len;
+      return [part(() => A.doorTop({ len, knob: d.hinge === 'a' ? 'b' : 'a' }), d.at - 7, d.a - d.h, 14, len, d.a + 6, { ...o, cls: 'door-shut' }),
+        part(() => A.doorFace({ w: len, h: d.h, knob: (d.swing === 'e') === (d.hinge === 'a') ? 'r' : 'l' }), x0, hy - d.h, len, d.h, hy + (d.hinge === 'a' ? 6 : -6), { ...o, cls: 'door-open' })];
+    }
+    if (d.id === 'door-front') {   // in the north wall, seen from inside: a lintel of logs over it; shut, its face; open, swung in toward the room
+      const top = d.at - T - C.wall;
+      return [part(() => A.logWall({ w: len, wallH: C.wall - d.h, t: 2 * T }), d.a, top, len, 2 * T + C.wall - d.h, d.at + 6, o),   // (shut, its face; open, swung in)
+        part(() => A.doorFace({ w: len - 8, h: d.h, knob: 'r' }), d.a + 4, d.at - d.h, len - 8, d.h, d.at + 6, { ...o, cls: 'door-shut' }),
+        part(() => A.doorAjar({ len, h: d.h, ang: 75 }), d.a, d.at - d.h, len * Math.cos(r75), d.h + len * Math.sin(r75), d.at + len * Math.sin(r75), { ...o, cls: 'door-open' })];   // (swung far, clear of a duck in the doorway)
+    }
+    /* the back door: inside, shut, a plank in the low wall's line (open, it has swung out onto the deck); outside, open,
+       the warm doorway in the cabin's drawing and the door swung out toward the deck (shut, the cabin's own drawing shows it) */
+    const gx = (d.a + d.b) / 2;
+    return [part(() => A.logWall({ w: len, wallH: 14, t: 2 * T }).replace(/#c98a52/g, '#d9a066'), d.a, d.at - T - 14, len, 2 * T + 14, d.at + 6, { ...o, cls: 'door-shut' }),
+      part(() => A.doorway({ w: 64, h: 112 }), gx - 32, d.at - 112, 64, 112, C.y1 + 16, { only: 'out', cls: 'door-open' }),
+      part(() => A.doorAjar({ len: 64, h: 112, ang: 60 }), gx - 32, d.at - 112, 32, 112 + 64 * Math.sin(Math.PI / 3), d.at + 64 * Math.sin(Math.PI / 3), { only: 'out', cls: 'door-open' })];
+  },
   roof() {   // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
     const w = C.x1 - C.x0, d = C.y1 - C.y0, h = d + 290;
     return [part(() => A.cabinOutside({ w, d, h, wallH: C.wall, windows: [1550, 2080, 3300, 3700, 4080].map(x => x - C.x0), backDoor: L.DOORS.back.x - C.x0, frontDoor: L.DOORS.front.x - C.x0, chimney: 2300 - C.x0 }),
@@ -114,7 +135,6 @@ export const DRAW = {
   },
   pianokeys: p => [part(() => A.floorPiano({ w: p.w, h: p.d, octaves: 2 }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   piano(p) { const h = 240; return pairParts(A.pianoBody({ w: p.w, h }), p.x, p.y + p.d, p.w, h); },
-  sheet: p => one(p, () => A.staffColumn({ w: 130, h: p.d + p.h }), 130, p.d + p.h, p.d + p.h - 4, { fade: true }),
   stage(p) {
     const S = L.STAGE, h = 2 * S.r + S.h;
     return pairParts(A.stage({ w: 2 * S.r, d: 2 * S.r, z: S.h }), p.x, p.y + p.d, 2 * S.r, h);
@@ -128,13 +148,13 @@ export const DRAW = {
   chalk: p => [part(() => A.chalkTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   eraser: p => [part(() => A.eraserTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
-  counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 230),
+  counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 240),
   stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: p => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
-  table: p => one(p, () => A.kitchenTable({ w: p.w, h: 240 }), p.w, 240, 230),
+  table: p => pairParts(A.kitchenTable({ w: p.w, h: 240 }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
   tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
   sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
-  toilet: p => one(p, () => A.toilet({ w: 56, h: 140 }), 56, 140),
+  toilet: p => one(p, () => A.toilet({ w: p.w, h: 120 }), p.w, 120),
   bed: p => one(p, () => A.bed({ w: p.w, h: 290, colors: p.id === 'bed1' ? undefined : ['#9b5de5', '#e0b04a', '#3e6d8c', '#c4573a'] }), p.w, 290),
   rail: railParts,
   rocker: p => one(p, () => A.rockingChair({ w: 70, h: 100, facing: p.id === 'rocker1' ? 'e' : 'w' }), 70, 100, 96),

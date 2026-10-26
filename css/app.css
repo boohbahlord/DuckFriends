@@ -381,6 +381,14 @@ p.bad { color: var(--red); font-weight: 600; }
   background: color-mix(in srgb, var(--panel) 82%, transparent); box-shadow: 0 .14rem 0 var(--line); }
 .mbar[hidden] { display: none; }
 .gbar > .mbar { margin-left: auto; }   /* at the right, before the timer (the specials' keys follow the stage's name) */
+.corner-tr > .mbar { max-width: min(16rem, 46vw); }   /* the front page and Rooms: left of Sign in */
+@media (max-width: 520px) {   /* a phone's Rooms: the duck sign stands for the word, so the bar fits between it and Sign in */
+  .rooms .bar-word { display: none; }
+  body[data-screen=rooms] .corner-tr { left: 10.6rem; justify-content: flex-end; pointer-events: none; }   /* starts past the sign; the bar shrinks */
+  body[data-screen=rooms] .corner-tr > * { pointer-events: auto; flex: none; }
+  body[data-screen=rooms] .corner-tr > .mbar { flex: 0 1 auto; max-width: none; }
+  body[data-screen=rooms] .corner-tr .mbar-vol { width: 4.8rem; }
+}
 .mbar-spk { flex: none; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; }
 .mbar-spk:hover, .mbar-spk:focus-visible { background: color-mix(in srgb, var(--ink) 12%, transparent); }
 .mbar-spk svg { width: 1.45rem; height: 1.45rem; overflow: visible; filter: drop-shadow(0 .08rem 0 #0006); }
@@ -1748,6 +1756,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }
 
 /* ---------- Hangout: the piano in the cabin (hangout/piano.js) ---------- */
+.hp-door.door-shut.open, .hp-door.door-open:not(.open) { visibility: hidden; }   /* Hangout's doors: shut or swung open */
 .pia-panel, .game > .pia-panel { position: fixed; z-index: 21; }   /* keyboard mode: over the bottom of the board (a phone held upright: the lower part of the screen, over #jumps) */
 .pia-panel .pk { box-shadow: 0 .3rem 0 var(--line), 0 .6rem 1.6rem #0008; }
 .pia-big > svg { position: absolute; left: 0; top: 0; }
@@ -1761,7 +1770,6 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
 .pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
 .pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
-.pia-sheet .pk-sheet { position: absolute; transform-origin: 0 0; background: #f6ead0; border: 0; border-radius: 4px; box-shadow: none; }
 
 /* ---------- Hangout: the chalk floor and the guestbook (hangout/chalk.js, hangout/book.js) ----------
    The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
@@ -1788,3 +1796,5 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @media (orientation: portrait) {
   .hang-book { left: .45rem; right: .45rem; top: .45rem; bottom: auto; width: auto; height: max(10rem, min(calc(50% - 5.2rem), 22rem)); }   /* (above my duck, which stands in the middle) */
 }
+.mm-all { display: grid; grid-template: 1fr 1fr / 1fr 1fr; }
+.mm-all > .mini-map { width: auto; height: auto; border: 0; border-radius: 0; }

@@ -368,6 +368,32 @@ export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], wind
   }
   return wrap(w, h, s, 'hg-wall', defs);
 }
+/* ---------- doors ---------- */
+/* a door's face, w × h: a frame, four sunk panels, a brass knob (knob: 'l' | 'r', the side away from the hinge). Foot: y = h. */
+export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
+  const pw = (w - 30) / 2, ph = (h - 34) / 2, kx = knob === 'l' ? 12 : w - 12;
+  let p = '';
+  for (const [x, y] of [[10, 10], [20 + pw, 10], [10, 24 + ph], [20 + pw, 24 + ph]]) p += R(x, y, pw, ph, '#9a5526', `rx="3" ${ln(1.6)}`) + R(x + 3, y + 3, pw - 6, 4, '#c98a52', 'opacity=".6"');
+  return wrap(w, h, R(0, 0, w, h, '#b06a35', `rx="3" ${ln(2.4)}`) + p + F`<circle cx="${kx}" cy="${h * .55}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
+}
+/* a closed door seen from above in a north-south wall's line: a plank len long (down the screen), t thick, a little
+   lighter than the wall's top, the knob's end marked. Box t × len. */
+export function doorTop({ len = 150, t = 14, knob = 'b' } = {}) {
+  const ky = knob === 'a' ? 10 : len - 10;
+  return wrap(t, len, R(0, 0, t, len, '#d9a066', ln(2.2)) + F`<path d="M${t / 2} 4V${len - 4}" stroke="#8a4f22" stroke-width="1.6" opacity=".7"/><circle cx="${t / 2}" cy="${ky}" r="3" fill="#e8b84a" ${ln(1)}/>`, 'hg-door');
+}
+/* a door swung open toward the viewer by ang degrees (from shut): its face turned, hinge on the left. Box
+   len·cos(ang) × (h + len·sin(ang)); the hinge's foot at (0, h), the open edge's at (w, box height). */
+export function doorAjar({ len = 150, h = 150, ang = 60 } = {}) {
+  const r = ang * Math.PI / 180, cx = len * Math.cos(r), sy = len * Math.sin(r), q = (u, v) => `${n1(u * cx)} ${n1(v * h + u * sy)}`;
+  return wrap(cx, h + sy, F`<path d="M${q(0, 0)}L${q(1, 0)}L${q(1, 1)}L${q(0, 1)}Z" fill="#b06a35" ${ln(2.4)}/><path d="M${q(.15, .08)}L${q(.85, .08)}L${q(.85, .45)}L${q(.15, .45)}ZM${q(.15, .55)}L${q(.85, .55)}L${q(.85, .92)}L${q(.15, .92)}Z" fill="#9a5526" ${ln(1.6)}/>`
+    + F`<circle cx="${n1(.9 * cx)}" cy="${n1(.55 * h + .9 * sy)}" r="4" fill="#e8b84a" ${ln(1.2)}/>`, 'hg-door');
+}
+/* an open doorway seen from outside: the warm room behind it. Box w × h. */
+export function doorway({ w = 64, h = 112 } = {}) {
+  const id = uid();
+  return wrap(w, h, R(0, 0, w, h, `url(#${id})`, ln(2)), 'hg-doorway', `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf7a"/><stop offset="1" stop-color="#c8662a"/></linearGradient>`);
+}
 /* the fireplace, against the north wall: a stone chimney breast with a warm, flickering fire and a mantel (with a little
    rubber duck on it); a raised stone hearth in front. w × (72 + wallH). back: the breast, foot y = 30 + wallH (its
    face); front: the hearth, foot y = h. */
@@ -400,16 +426,16 @@ export function fireplace({ w = 280, h, wallH = 170 } = {}) {
 export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing = 'n', throwOn = true } = {}) {
   const Y = h - 110, arm = 30, cw = (w - 2 * arm) / seats, hi = mix(color, 255, .2), lo = mix(color, 0, .3), lo2 = mix(color, 0, .45);
   const cushions = (y0, y1) => Array.from({ length: seats }, (_, i) => { const x = arm + i * cw + 3; return R(x, y0, cw - 6, y1 - y0, hi, `rx="12" ${ln(2.4)}`) + R(x + 8, y0 + 5, cw - 22, (y1 - y0) * .25, '#fff', 'rx="6" opacity=".14"') + F`<circle cx="${x + cw / 2 - 3}" cy="${(y0 + y1) / 2 + 4}" r="2.2" fill="${lo2}"/>`; }).join('');
-  const arms = [0, w - arm].map(x => R(x, Y + 66, arm, 44, lo, `rx="6" ${ln(2.4)}`) + R(x, Y - 44, arm, 110, color, `rx="12" ${ln(2.4)}`) + R(x + 5, Y - 40, 8, 100, '#fff', 'rx="4" opacity=".12"')).join('');
+  const arms = [0, w - arm].map(x => R(x, Y - 44, arm, 110, color, `rx="12" ${ln(2.4)}`) + R(x + 5, Y - 40, 8, 100, '#fff', 'rx="4" opacity=".12"')).join('');
   const feet = [8, w - 20].map(x => R(x, h - 7, 12, 7, '#3b2414', ln(1.6))).join('');
   let back, front;
   if (facing === 's') {
     back = shade(w / 2, Y + 60, w / 2, 50, .25) + R(arm - 4, Y - 64, w - 2 * arm + 8, 35, color, `rx="10" ${ln(2.4)}`) + R(arm - 4, Y - 29, w - 2 * arm + 8, 40, lo, ln(2.4))
       + Array.from({ length: seats }, (_, i) => R(arm + i * cw + 6, Y - 40, cw - 12, 46, hi, `rx="14" ${ln(2.2)}`)).join('') + R(arm, Y + 5, w - 2 * arm, 75, lo, ln(2.4)) + cushions(Y + 6, Y + 80);
-    front = R(arm, Y + 80, w - 2 * arm, 30, lo, ln(2.4)) + F`<path d="M${arm + 6} ${Y + 88}H${w - arm - 6}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>` + arms + feet;
+    front = R(0, Y + 66, w, 44, lo, `rx="6" ${ln(2.4)}`) + R(arm, Y + 80, w - 2 * arm, 30, lo, ln(2.4)) + F`<path d="M${arm + 6} ${Y + 88}H${w - arm - 6}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>` + arms + feet;
   } else {
     back = shade(w / 2, Y + 60, w / 2, 50, .25) + R(arm, Y - 30, w - 2 * arm, 76, lo, ln(2.4)) + cushions(Y - 28, Y + 44);
-    front = R(arm - 2, Y + 46, w - 2 * arm + 4, 64, lo, ln(2.4)) + F`<path d="M${arm + 6} ${Y + 56}H${w - arm - 6}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>`
+    front = R(0, Y + 46, w, 64, lo, `rx="6" ${ln(2.4)}`) + F`<path d="M${arm + 6} ${Y + 56}H${w - arm - 6}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>`
       + R(arm - 2, Y + 11, w - 2 * arm + 4, 35, color, `rx="12" ${ln(2.4)}`) + R(arm + 10, Y + 15, w - 2 * arm - 20, 8, '#fff', 'rx="4" opacity=".14"');
     if (throwOn) { const tx = w - arm - 110; front += F`<path d="M${tx} ${Y + 9}h76v${88}l-10 6l-10 -6l-10 6l-10 -6l-10 6l-10 -6l-10 6l-6 -6Z" fill="#e8c35a" ${ln(2.2)}/><path d="M${tx + 18} ${Y + 9}v88M${tx + 50} ${Y + 9}v90M${tx} ${Y + 34}h76M${tx} ${Y + 70}h76" stroke="#3d6f8c" stroke-width="5" opacity=".75"/>`; }
     front += arms + feet;
@@ -454,17 +480,6 @@ export function pianoBody({ w = 360, h = 240 } = {}) {
     + [-14, 0, 14].map(dx => R(w / 2 + dx - 4, Y + 76, 8, 12, '#d9a441', `rx="2" ${ln(1.4)}`)).join('');
   return pair(w, h, [back, glowDef(id, '#ffb347', .5)], [front], Y + 55, h);
 }
-/* the music sheet's column: a tall lit parchment on an easel, with empty staves (STAFF says where they are) for the
-   notes the piano draws. Foot: bottom (y = h − 4). */
-export const STAFF = { top: 40, gap: 64, line: 8, left: 22 };
-export function staffColumn({ w = 180, h = 440 } = {}) {
-  const id = uid(), bh = h - 70;
-  let lines = '';
-  for (let y = STAFF.top; y + 4 * STAFF.line < bh - 10; y += STAFF.gap) for (let k = 0; k < 5; k++) lines += F`M${STAFF.left} ${y + k * STAFF.line}H${w - STAFF.left}`;
-  return wrap(w, h, shade(w / 2, h - 4, w * .4, 8) + F`<path d="M${w * .25} ${bh - 10}L${w * .12} ${h - 4}M${w * .75} ${bh - 10}L${w * .88} ${h - 4}M${w / 2} ${bh}L${w / 2} ${h - 10}" stroke="${O}" stroke-width="11" stroke-linecap="round"/><path d="M${w * .25} ${bh - 10}L${w * .12} ${h - 4}M${w * .75} ${bh - 10}L${w * .88} ${h - 4}M${w / 2} ${bh}L${w / 2} ${h - 10}" stroke="#a65a2c" stroke-width="6" stroke-linecap="round"/>`
-    + F`<ellipse cx="${w / 2}" cy="${bh / 2}" rx="${w * .8}" ry="${bh * .6}" fill="url(#${id})"/>` + R(4, 4, w - 8, bh, '#c47a3e', `rx="8" ${ln(2.6)}`) + R(12, 12, w - 24, bh - 16, '#f6ead0', `rx="4" ${ln(1.6)}`)
-    + `<path d="${lines}" stroke="#7d6a52" stroke-width="1.6"/>` + R(0, bh - 2, w, 14, '#a65a2c', `rx="4" ${ln(2.2)}`), 'hg-staff', glowDef(id, '#ffb347', .35));
-}
 
 /* ---------- the stage ---------- */
 /* the stage: round (w × d footprint), raised z (+95), planks on top with a warm spotlight, a red skirt and footlights
@@ -491,7 +506,7 @@ export function stage({ w = 500, d, z = 95, h } = {}) {
 /* stairs up onto the stage, rising to z. dir 'n' (the default) climbs northward, its risers facing the viewer: the stage
    is beside its top step; dir 'w' climbs westward, the stage at its west end (its steps seen from above, their sides
    facing the viewer). Box w × (d + z). back: the treads (and risers), foot y = z (north edge); front: dir 'w' the steps'
-   south faces, dir 'n' a side rail, foot y = h. */
+   south faces, dir 'n' nothing (no rail), foot y = h. */
 export function stageStairs({ w = 130, d = 150, z = 95, steps = 5, dir = 'n', h } = {}) {
   h = h || d + z;
   const Y = h - d;
@@ -511,9 +526,7 @@ export function stageStairs({ w = 130, d = 150, z = 95, steps = 5, dir = 'n', h 
     back += R(4, y0 - (k + 1) * r, w - 8, sd, '#c9803f', ln(2.2)) + R(6, y0 - (k + 1) * r + 2, w - 12, 4, '#f0b070', 'opacity=".55"')
       + R(4, y0 + sd - (k + 1) * r, w - 8, r, '#8a4a22', ln(2.2));
   }
-  front = R(w - 10, Y - z - 40, 8, d + 40, '#d98a4a', ln(2)) + F`<path d="M${w - 6} ${Y + d - r - 40}L${w - 6} ${Y - z - 40}" stroke="#f0b070" stroke-width="2" opacity=".6"/>`
-    + R(w - 13, Y + d - r - 44, 14, 44 + r, '#a65a2c', ln(2)) + R(w - 13, Y - z - 46, 14, 50, '#a65a2c', ln(2));
-  return pair(w, h, [back], [front], Y, h);
+  return pair(w, h, [back], [''], Y, h);
 }
 /* the mic stand (decoration), side-on. Foot: bottom (y = h − 6). */
 export function micStand({ w = 56, h = 120 } = {}) {
@@ -559,59 +572,59 @@ export function bookStand({ w = 76, h = 136 } = {}) {
 /* a counter along a wall: cabinets with a butcher-block top; sink: x of a sink on it; upper: wall cabinets above.
    Footprint w × 60, 70 high; box w × 130 (w × 230 with upper). Foot: y = h. */
 export function counter({ w = 260, h, sink = null, upper = true } = {}) {
-  const d = 60, z = 70; h = h || d + (upper ? 170 : z);
+  const d = 60, z = 70; h = h || d + (upper ? 180 : z);
   const Y = h - d, n = Math.max(1, Math.round(w / 64)), cw = w / n;
   let s = '';
-  if (upper) {
-    s += R(0, Y - 170, w, 34, '#b8743e', ln(2.4)) + R(0, Y - 136, w, 62, '#8f4f24', ln(2.4));
-    for (let i = 0; i < n; i++) s += R(i * cw + 5, Y - 131, cw - 10, 52, '#a35d2c', `rx="3" ${ln(1.6)}`) + R(i * cw + cw / 2 - 2, Y - 92, 4, 10, '#d9a441', ln(1));
+  if (upper) {   // (on the wall above the counter, wall showing between: a shallow top, then the doors)
+    s += R(0, Y - 180, w, 14, '#b8743e', ln(2.4)) + R(0, Y - 166, w, 60, '#8f4f24', ln(2.4));
+    for (let i = 0; i < n; i++) s += R(i * cw + 5, Y - 161, cw - 10, 50, '#a35d2c', `rx="3" ${ln(1.6)}`) + R(i * cw + cw / 2 - 2, Y - 124, 4, 10, '#d9a441', ln(1));
   }
   s += R(0, Y - 10, w, 70, '#8f4f24', ln(2.4));
   for (let i = 0; i < n; i++) s += R(i * cw + 5, Y - 4, cw - 10, 50, '#a35d2c', `rx="3" ${ln(1.6)}`) + R(i * cw + cw / 2 - 6, Y + 4, 12, 4, '#d9a441', ln(1));
-  s += R(0, Y + 48, w, 12, '#3a1d0e', ln(2)) + R(-4, Y - 72, w + 8, 64, '#d39a5e', `rx="3" ${ln(2.4)}`) + F`<path d="M8 ${Y - 60}H${w - 8}M8 ${Y - 40}H${w - 8}M8 ${Y - 22}H${w - 8}" stroke="#b27740" stroke-width="1.6"/>` + R(-4, Y - 10, w + 8, 6, '#a86a34', ln(1.6));
+  s += R(0, Y + 48, w, 12, '#3a1d0e', ln(2)) + R(0, Y - 72, w, 64, '#d39a5e', `rx="3" ${ln(2.4)}`) + F`<path d="M8 ${Y - 60}H${w - 8}M8 ${Y - 40}H${w - 8}M8 ${Y - 22}H${w - 8}" stroke="#b27740" stroke-width="1.6"/>` + R(0, Y - 10, w, 6, '#a86a34', ln(1.6));
   if (sink != null) s += R(sink - 34, Y - 62, 68, 42, '#9aa3ad', `rx="8" ${ln(2.2)}`) + R(sink - 28, Y - 56, 56, 30, '#5d6670', 'rx="6"') + F`<ellipse cx="${sink}" cy="${Y - 40}" rx="14" ry="5" fill="#8fd3e8" opacity=".5"/><path d="M${sink + 22} ${Y - 64}V${Y - 92}Q${sink + 22} ${Y - 100} ${sink + 10} ${Y - 100}V${Y - 88}" stroke="${O}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M${sink + 22} ${Y - 64}V${Y - 92}Q${sink + 22} ${Y - 100} ${sink + 10} ${Y - 100}V${Y - 88}" stroke="#c9ced6" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
-  else s += F`<g transform="translate(${w * .3} ${Y - 46})"><path d="M-14 0h28l-4 14h-20Z" fill="#e8e2d0" ${ln(1.8)}/><circle cx="-6" cy="-3" r="7" fill="#ef3b3b" ${ln(1.6)}/><circle cx="6" cy="-4" r="6" fill="#ff8c2b" ${ln(1.6)}/><circle cx="0" cy="-8" r="6" fill="#8ee03c" ${ln(1.6)}/></g>`;
+  else s += F`<g transform="translate(${w * .3} ${Y - 46})"><ellipse cx="0" cy="0" rx="16" ry="5" fill="#b9b2a0" ${ln(1.8)}/><circle cx="0" cy="-5" r="6" fill="#8ee03c" ${ln(1.6)}/><circle cx="-6" cy="-1" r="7" fill="#ef3b3b" ${ln(1.6)}/><circle cx="6" cy="-1" r="6" fill="#ff8c2b" ${ln(1.6)}/><path d="M-16 0Q-15 13 -8 14H8Q15 13 16 0Q0 6 -16 0Z" fill="#e8e2d0" ${ln(1.8)}/></g>`;   // (the fruit in the bowl: the bowl's front over it)
   return wrap(w, h, s, 'hg-counter');
 }
 /* a rounded old fridge, with fridge magnets. Footprint w × 60, 150 high. Foot: y = h. */
 export function fridge({ w = 76, h = 196 } = {}) {
   const Y = h - 60, mags = ['#ef3b3b', '#ffd23f', '#2fa4ff', '#37d421', '#9b5de5'];
   return wrap(w, h, R(2, Y - 10, w - 4, 70, '#e2dccb', ln(2.4)) + F`<path d="M2 ${Y - 10}V${Y - 122}Q2 ${Y - 136} 16 ${Y - 136}H${w - 16}Q${w - 2} ${Y - 136} ${w - 2} ${Y - 122}V${Y - 10}Z" fill="#f1ecdf" ${ln(2.4)}/>`
-    + F`<path d="M2 ${Y - 94}H${w - 2}" stroke="${O}" stroke-width="2"/><rect x="${w - 14}" y="${Y - 124}" width="6" height="22" rx="3" fill="#c9ced6" ${ln(1.6)}/><rect x="${w - 14}" y="${Y - 84}" width="6" height="36" rx="3" fill="#c9ced6" ${ln(1.6)}/>`
+    + F`<path d="M2 ${Y - 94}H${w - 2}" stroke="${O}" stroke-width="2"/><rect x="${w - 14}" y="${Y - 84}" width="6" height="36" rx="3" fill="#c9ced6" ${ln(1.6)}/>`
     + R(8, Y - 132, 20, 108, '#fff', 'rx="6" opacity=".25"') + mags.map((c, i) => F`<rect x="${12 + (i % 3) * 14}" y="${Y - 80 + Math.floor(i / 3) * 16 + (i % 2) * 4}" width="9" height="9" rx="2" fill="${c}" ${ln(1.2)} transform="rotate(${(i * 23) % 30 - 15} ${16 + (i % 3) * 14} ${Y - 76 + Math.floor(i / 3) * 16})"/>`).join('')
-    + R(4, Y + 46, w - 8, 10, '#3a3b44', ln(1.6)), 'hg-fridge');
+    + F`<rect x="${w - 14}" y="${Y + 2}" width="6" height="30" rx="3" fill="#c9ced6" ${ln(1.6)}/>` + R(4, Y + 46, w - 8, 10, '#3a3b44', ln(1.6)), 'hg-fridge');
 }
 /* the stove: four burners, a red kettle, an oven window with a faint glow. Footprint w × 60, 70 high. Foot: y = h. */
 export function stove({ w = 76, h = 150 } = {}) {
   const Y = h - 60;
   return wrap(w, h, R(0, Y - 70, w, 20, '#e2dccb', ln(2.2)) + R(0, Y - 10, w, 70, '#e8e2d0', ln(2.4)) + R(0, Y - 50, w, 40, '#2b2b33', ln(2.4))
     + [[w * .28, Y - 40], [w * .72, Y - 40], [w * .28, Y - 22], [w * .72, Y - 22]].map(([x, y]) => F`<ellipse cx="${x}" cy="${y}" rx="11" ry="6" fill="none" stroke="#5a5b66" stroke-width="3"/>`).join('')
-    + F`<g transform="translate(${w * .7} ${Y - 26})"><path d="M-12 0C-14 -14 14 -14 12 0Z" fill="#d23b33" ${ln(1.8)}/><path d="M10 -6l8 -6" stroke="${O}" stroke-width="3"/><path d="M-6 -11q6 -8 12 0" stroke="${O}" stroke-width="2.4" fill="none"/></g>`
+    + F`<g transform="translate(${w * .72} ${Y - 36})"><path d="M-12 0C-14 -14 14 -14 12 0Z" fill="#d23b33" ${ln(1.8)}/><path d="M10 -6l8 -6" stroke="${O}" stroke-width="3"/><path d="M-6 -11q6 -8 12 0" stroke="${O}" stroke-width="2.4" fill="none"/></g>`
     + [.2, .4, .6, .8].map(t => F`<circle cx="${w * t}" cy="${Y - 3}" r="3.2" fill="#2b2b33" ${ln(1)}/>`).join('')
     + R(8, Y + 6, w - 16, 40, '#2b2b33', `rx="4" ${ln(2)}`) + R(14, Y + 12, w - 28, 22, '#ff9a3a', 'rx="3" opacity=".35"') + R(14, Y + 6, w - 28, 3, '#c9ced6', ln(1)) + R(2, Y + 50, w - 4, 8, '#3a3b44'), 'hg-stove');
 }
-/* the kitchen table with two chairs behind it, a lantern and plates on it. Footprint w × 150 (chairs 0 … 40, the table
-   40 … 140); box w × 240. Foot: y = h − 10 (the table's front). */
+/* the kitchen table with two chairs behind it, a lantern and plates on it; box w × 240. A pair: the chairs (foot y = 100,
+   so a duck sitting on one is in front of them) and the table (foot y = h − 10, the table's front). */
 export function kitchenTable({ w = 200, h = 240 } = {}) {
   const id = uid(), Y = h - 150, tx = 10, tw = w - 20;
-  const chair = x => R(x - 18, Y - 90, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 78, 6, 50, '#8a4a22', ln(1.6)) + R(x + 10, Y - 78, 6, 50, '#8a4a22', ln(1.6)) + R(x - 10, Y - 70, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 56, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
-  return wrap(w, h, shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)
-    + R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
+  const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
+  return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
     + R(tx, Y + 94, tw, 14, '#8a4a22', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#6e3a1a', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#6e3a1a', ln(1.8))
     + [w * .3, w * .7].map(x => F`<ellipse cx="${x}" cy="${Y + 30}" rx="18" ry="12" fill="#f1ecdf" ${ln(1.8)}/><ellipse cx="${x}" cy="${Y + 30}" rx="10" ry="6" fill="#e2dccb"/>`).join('')
-    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, 'hg-table', glowDef(id, '#ffb347', .45));
+    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
 }
 
 /* ---------- the bathroom ---------- */
-/* a clawfoot tub with bubbles and a tiny rubber duck. Footprint w × 84, 46 high. Foot: y = h. */
+/* a tub with bubbles and a tiny rubber duck, seen from above like the room: its rim, a sliver of its side under it and
+   two little feet. Footprint w × 84, 46 high. Foot: y = h. */
 export function tub({ w = 170, h = 130 } = {}) {
-  const Y = h - 84;
-  return wrap(w, h, shade(w / 2, Y + 78, w / 2, 10, .3) + F`<path d="M4 ${Y + 38}H${w - 4}Q${w - 10} ${Y + 76} ${w - 30} ${Y + 78}H30Q10 ${Y + 76} 4 ${Y + 38}Z" fill="#dcd8cf" ${ln(2.4)}/>`
-    + [24, w - 24].map(x => F`<path d="M${x - 7} ${Y + 74}l2 9h10l2 -9Z" fill="#d9a441" ${ln(1.6)}/>`).join('')
-    + R(4, Y - 46, w - 8, 84, '#f4f2ec', `rx="34" ${ln(2.6)}`) + R(14, Y - 36, w - 28, 64, '#7fcfe4', `rx="26" ${ln(1.8)}`)
-    + [[.3, .3], [.45, .5], [.62, .25], [.7, .6], [.36, .7], [.55, .72]].map(([fx, fy], i) => F`<circle cx="${14 + fx * (w - 28)}" cy="${Y - 36 + fy * 64}" r="${5 + (i % 3) * 2}" fill="#fff" opacity=".85" ${ln(1)}/>`).join('')
-    + F`<g transform="translate(${w * .74} ${Y - 2})"><path d="M-8 0C-9 -4 -8 -7 -5 -8C-5 -12 -1 -14 1.5 -12C4 -11 4 -7 2.5 -6C7 -7 9 -4 8 0Z" fill="#ffd23f" ${ln(1.3)}/><path d="M3.5 -11l4 1l-4 1Z" fill="#ff9a1f"/></g>`
-    + F`<path d="M14 ${Y - 30}v-14h12" stroke="${O}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M14 ${Y - 30}v-14h12" stroke="#d9a441" stroke-width="3" fill="none" stroke-linecap="round"/>`, 'hg-tub');
+  const Y = h - 84, t = Y - 26;
+  return wrap(w, h, shade(w / 2, Y + 74, w / 2 - 6, 9, .3) + [26, w - 26].map(x => F`<path d="M${x - 7} ${Y + 62}l2 9h10l2 -9Z" fill="#d9a441" ${ln(1.6)}/>`).join('')
+    + R(12, Y + 36, w - 24, 30, '#dcd8cf', `rx="14" ${ln(2.2)}`)
+    + R(4, t, w - 8, 84, '#f4f2ec', `rx="34" ${ln(2.6)}`) + R(14, t + 10, w - 28, 64, '#7fcfe4', `rx="26" ${ln(1.8)}`)
+    + [[.3, .3], [.45, .5], [.62, .25], [.7, .6], [.36, .7], [.55, .72]].map(([fx, fy], i) => F`<circle cx="${14 + fx * (w - 28)}" cy="${t + 10 + fy * 64}" r="${5 + (i % 3) * 2}" fill="#fff" opacity=".85" ${ln(1)}/>`).join('')
+    + F`<g transform="translate(${w * .74} ${t + 44}) scale(-1 1)"><path d="M-8 0C-9 -4 -8 -7 -5 -8C-5 -12 -1 -14 1.5 -12C4 -11 4 -7 2.5 -6C7 -7 9 -4 8 0Z" fill="#ffd23f" ${ln(1.3)}/><path d="M3.5 -11l4 1l-4 1Z" fill="#ff9a1f"/></g>`
+    + F`<path d="M14 ${t + 16}v-14h12" stroke="${O}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M14 ${t + 16}v-14h12" stroke="#d9a441" stroke-width="3" fill="none" stroke-linecap="round"/>`, 'hg-tub');
 }
 /* a washstand with a round mirror on the wall above it. Footprint w × 46, 72 high, the mirror up to 150. Foot: y = h. */
 export function sink({ w = 66, h = 196 } = {}) {
@@ -620,16 +633,18 @@ export function sink({ w = 66, h = 196 } = {}) {
     + R(4, Y - 26, w - 8, 72, '#9a5526', ln(2.4)) + R(10, Y - 14, w - 20, 50, '#b06a35', `rx="3" ${ln(1.6)}`) + R(w / 2 - 6, Y + 6, 12, 4, '#d9a441', ln(1))
     + R(0, Y - 72, w, 46, '#e8e2d0', `rx="6" ${ln(2.4)}`) + F`<ellipse cx="${w / 2}" cy="${Y - 46}" rx="${w * .32}" ry="13" fill="#b9c3cb" ${ln(1.8)}/><path d="M${w / 2} ${Y - 66}v10h6" stroke="#c9ced6" stroke-width="4" fill="none" stroke-linecap="round"/>`, 'hg-sink');
 }
-/* a toilet: the tank against the wall, the bowl and lid in front. Footprint w × 64, 76 high. Foot: y = h. */
-export function toilet({ w = 48, h = 140 } = {}) {
-  const Y = h - 64;
-  return wrap(w, h, shade(w / 2, Y + 58, w / 2, 7, .3) + R(2, Y - 76, w - 4, 18, '#f4f2ec', `rx="4" ${ln(2.2)}`) + R(2, Y - 58, w - 4, 36, '#e3e0d8', `rx="3" ${ln(2.2)}`) + R(w - 14, Y - 52, 8, 4, '#c9ced6', ln(1))
-    + F`<path d="M8 ${Y + 18}Q8 ${Y + 40} 14 ${Y + 46}V${Y + 62}H${w - 14}V${Y + 46}Q${w - 8} ${Y + 40} ${w - 8} ${Y + 18}Z" fill="#e3e0d8" ${ln(2.2)}/>`
-    + F`<ellipse cx="${w / 2}" cy="${Y}" rx="${w / 2 - 3}" ry="22" fill="#f4f2ec" ${ln(2.4)}/><ellipse cx="${w / 2}" cy="${Y + 2}" rx="${w / 2 - 10}" ry="14" fill="#fbfaf6" ${ln(1.4)}/>`, 'hg-toilet');
+/* a toilet against the east wall, facing west into the room: the tank on the wall side, the bowl and its seat seen
+   from above, the bowl's foot under it. Footprint w × 56 (the tank w − 22 … w), 44 high. Foot: y = h. */
+export function toilet({ w = 90, h = 120 } = {}) {
+  const Y = h - 56, bx = w - 46;
+  return wrap(w, h, shade(w / 2 + 4, Y + 52, w / 2 - 4, 8, .3)
+    + F`<path d="M${bx - 14} ${Y + 6}Q${bx - 14} ${Y + 30} ${bx - 8} ${Y + 34}V${Y + 52}H${bx + 12}V${Y + 34}Q${bx + 18} ${Y + 30} ${bx + 18} ${Y + 6}Z" fill="#e3e0d8" ${ln(2.2)}/>`
+    + F`<ellipse cx="${bx}" cy="${Y + 2}" rx="25" ry="17" fill="#f4f2ec" ${ln(2.4)}/><ellipse cx="${bx - 2}" cy="${Y + 2}" rx="15" ry="9" fill="#d6edf3" ${ln(1.4)}/>`
+    + R(w - 22, Y - 2, 20, 50, '#e3e0d8', `rx="3" ${ln(2.2)}`) + R(w - 26, Y - 30, 26, 30, '#f4f2ec', `rx="5" ${ln(2.2)}`) + R(w - 22, Y - 26, 18, 22, '#fbfaf6', 'rx="3"') + R(w - 16, Y - 20, 8, 4, '#c9ced6', `rx="2" ${ln(1)}`), 'hg-toilet');
 }
 
 /* ---------- the bedrooms ---------- */
-/* a bed with a log headboard, two pillows and a patchwork quilt. Footprint w × 210, the headboard 80 high. Foot: y = h. */
+/* a bed with a low log headboard, two pillows and a patchwork quilt. Footprint w × 210, the headboard 30 over it. Foot: y = h. */
 export function bed({ w = 150, h = 290, colors = ['#3e6d8c', '#c4573a', '#e0b04a', '#5f8a4a'] } = {}) {
   const Y = h - 210, q0 = Y + 34, q1 = Y + 168, n = 6, sq = (w - 12) / n;
   let quilt = '';
@@ -639,8 +654,8 @@ export function bed({ w = 150, h = 290, colors = ['#3e6d8c', '#c4573a', '#e0b04a
     + quilt + R(6, q0, w - 12, q1 + 22 - q0, 'none', `rx="6" ${ln(2.2)}`) + R(6, q0 - 10, w - 12, 14, '#fbfaf6', `rx="4" ${ln(2)}`)
     + F`<path d="M6 ${q0 + 4}H${w - 6}" stroke="#000" stroke-opacity=".15" stroke-width="4"/>`
     + R(0, Y + 186, w, 24, '#a65a2c', `rx="10" ${ln(2.4)}`) + R(4, Y + 190, w - 8, 5, '#d98d4e', 'rx="2" opacity=".6"')
-    + R(0, Y - 80, w, 14, '#c98a52', ln(2.4)) + R(0, Y - 66, w, 46, '#a65a2c', ln(2.4)) + F`<path d="M0 ${Y - 51}H${w}M0 ${Y - 36}H${w}" stroke="#5e2a10" stroke-width="2"/>`
-    + [0, w - 16].map(x => R(x, Y - 92, 16, 76, '#b8703a', `rx="8" ${ln(2.4)}`)).join(''), 'hg-bed');
+    + R(0, Y - 46, w, 10, '#c98a52', ln(2.4)) + R(0, Y - 36, w, 14, '#a65a2c', ln(2.4)) + F`<path d="M0 ${Y - 29}H${w}" stroke="#5e2a10" stroke-width="2"/>`
+    + [0, w - 16].map(x => R(x, Y - 54, 16, 36, '#b8703a', `rx="8" ${ln(2.4)}`)).join(''), 'hg-bed');
 }
 /* a nightstand with a glowing table lamp. Footprint w × 40, 44 high, the lamp up to 100. Foot: y = h. */
 export function nightstand({ w = 48, h = 140 } = {}) {
@@ -882,10 +897,11 @@ export function jeep({ w = 292, h = 214, facing = 'e', color = '#c42b2b' } = {})
   const g = (m, inner) => `<g transform="${m}">${inner}</g>`;
   const box = (x0, x1, d0, d1, h0, h1, ct, cs, ce, o = {}) => g(S(d1), R(x0, h0, x1 - x0, h1 - h0, cs, `rx="${o.r || 0}" ${ln(2)}`) + (o.s || '')) + g(E(x1), R(d0, h0, d1 - d0, h1 - h0, ce, `rx="${o.r || 0}" ${ln(2)}`) + (o.e || '')) + g(T(h1), R(x0, d0, x1 - x0, d1 - d0, ct, `rx="${o.r || 0}" ${ln(2)}`) + (o.t || ''));
   const wheel = (x, dep) => g(S(dep - 16), F`<circle cx="${x}" cy="21" r="21" fill="${blk2}" ${ln(2)}/>`) + g(S(dep), F`<circle cx="${x}" cy="21" r="21" fill="${blk}" ${ln(2.2)}/><circle cx="${x}" cy="21" r="12" fill="#8d949e" ${ln(1.6)}/><circle cx="${x}" cy="21" r="4.5" fill="#5d636c"/>${[0, 1, 2, 3, 4].map(i => F`<circle cx="${x + Math.cos(i * 1.2566) * 8}" cy="${21 + Math.sin(i * 1.2566) * 8}" r="1.6" fill="#3a3f46"/>`).join('')}`);
-  const flare = (x0, x1) => F`<path d="M${x0} 22C${x0 + 2} 58 ${x1 - 2} 58 ${x1} 22" stroke="${O}" stroke-width="13" fill="none"/><path d="M${x0} 22C${x0 + 2} 58 ${x1 - 2} 58 ${x1} 22" stroke="${blk}" stroke-width="9" fill="none"/>`;
+  const flare = (x0, x1) => F`<path d="M${x0} 24C${x0 + 2} 54 ${x1 - 2} 54 ${x1} 24" stroke="${O}" stroke-width="10" fill="none"/><path d="M${x0} 24C${x0 + 2} 54 ${x1 - 2} 54 ${x1} 24" stroke="${blk}" stroke-width="6" fill="none"/>`;
   let s = '';
-  s += wheel(45, 18) + wheel(160, 18);
-  s += box(132, 200, 0, 16, 46, 53, top, blk, blk);
+  /* the wheels and their flares stay inside the body's width (8 … 92), the front fenders only a little past it */
+  s += wheel(45, 22) + wheel(160, 22);
+  s += box(132, 200, 5, 16, 44, 50, top, blk, blk);
   /* the spare on the back */
   s += box(-20, -2, 26, 74, 36, 90, '#2c2c33', blk2, blk2, { r: 9, s: F`<path d="M-17 44h12M-17 54h12M-17 64h12M-17 74h12M-17 84h12" stroke="#3a3a42" stroke-width="2"/>` });
   s += box(-8, 6, 10, 90, 16, 26, '#3a3a42', blk, blk2);
@@ -900,10 +916,10 @@ export function jeep({ w = 292, h = 214, facing = 'e', color = '#c42b2b' } = {})
   s += box(141, 197, 14, 86, 30, 64, top, south, east, { e: slots + lamp(22) + lamp(78) + R(16, 30, 68, 3, dark), t: F`<path d="M146 22v56M190 22v56" stroke="${dark}" stroke-width="1.6" opacity=".7"/><rect x="186" y="44" width="6" height="12" rx="2" fill="${dark}"/>` });
   s += box(128, 136, 92, 100, 66, 78, blk, blk, blk);
   s += box(196, 206, 10, 90, 16, 26, '#3a3a42', blk, blk2);
-  s += box(132, 200, 84, 100, 46, 53, top, blk, blk);
-  s += wheel(45, 100) + wheel(160, 100);
-  s += g(S(100), flare(16, 76) + flare(128, 192) + F`<path d="M8 20H190" stroke="${blk}" stroke-width="6"/>`);
-  s += g(T(53), F`<path d="M134 88H198" stroke="#fff" stroke-width="2" opacity=".25"/>`) + g(T(64), F`<path d="M144 20H196" stroke="#fff" stroke-width="3" opacity=".3"/>`);
+  s += wheel(45, 94) + wheel(160, 94);
+  s += box(132, 200, 84, 95, 44, 50, top, blk, blk);
+  s += g(S(94), flare(20, 70) + flare(134, 186));
+  s += g(T(50), F`<path d="M134 90H198" stroke="#fff" stroke-width="2" opacity=".25"/>`) + g(T(64), F`<path d="M144 20H196" stroke="#fff" stroke-width="3" opacity=".3"/>`);
   const shadow = g(T(0), R(-26, -4, 248, 108, '#000', 'rx="26" opacity=".38"'));
   const flip = x => facing === 'w' ? F`<g transform="translate(${w} 0) scale(-1 1)">${x}</g>` : x;
   return pair(w, h, [flip(shadow)], [flip(s)], null, h);
@@ -917,12 +933,13 @@ export const ART = {
   lamppost: [lamppost, 140, 230, 'pair: light flat, post at y = h − 14'], floorLamp: [floorLamp, 70, 170, 'foot y = h − 6'],
   cabinOutside: [cabinOutside, 3000, 1890, 'foot y = h (the south wall)'], logWall: [logWall, 400, 64, 'foot y = h'],
   fireplace: [fireplace, 280, 242, 'pair: breast at y = 200, hearth at y = h'], couch: [couch, 500, 174, 'pair: seat at y = 64, back at y = h'],
-  floorPiano: [floorPiano, 900, 300, 'flat'], pianoBody: [pianoBody, 360, 240, 'pair: case at y = 205, keys at y = h'], staffColumn: [staffColumn, 180, 440, 'foot y = h − 4'],
+  floorPiano: [floorPiano, 900, 300, 'flat'], pianoBody: [pianoBody, 360, 240, 'pair: case at y = 205, keys at y = h'],
   stage: [stage, 500, 595, 'pair: top at y = 95, rim at y = h'], stageStairs: [stageStairs, 130, 245, 'pair: treads at y = 95, rail at y = h'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
   chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
-  counter: [counter, 260, 230, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'foot y = h − 10'],
-  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 48, 140, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
+  counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
+  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 90, 120, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
+  doorFace: [doorFace, 150, 150, 'foot y = h'], doorTop: [doorTop, 14, 150, 'flat, in the wall line'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],

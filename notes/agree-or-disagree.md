@@ -1443,3 +1443,367 @@ tools/clickcheck.js finds clicks in a rendered sound.)
 
 Decision: Story Chain's Voting option on Auto now turns voting on only with 4 or more players (it was 3). 2 and 3
 player games just keep writing. On and Off still force it either way. The lobby's tip says so.
+
+
+## Request (2026-10-26): Hangout fix-up ("project distill"), 15 pictures (11 screenshots, Wrangler photos, two stage sketches)
+
+> (2026-10-26 00:40Z)
+>
+> These pictures are for project distill. We need to rid of perspective issues or even outright mistakes in production. (My text is messing up so i cant reliably finish this message from a UI error I am having on my end that arises from all these screenshots in the message box. Will send the message for now but we aren't acting yet and this is a rough plan for MY OWN prompt. Do not think anything of it or mind.)
+>
+> The target is the new hangout game mode.
+>
+> 1. First, we are going over simple perspective issues.
+> Then we are going over solutions
+> 2. Second, we are going over production mistakes
+> Then we are talking about correction solutions for production mistakes
+> 3. Third, we are going after missing productions
+> Then we are adding those missing production pieces
+> 4. Fourth, we are talking about new ideas to add to the map
+
+> (2026-10-26 04:17Z)
+>
+> "1. First, we are going over simple perspective issues.
+> Then we are going over solutions"
+>
+> Goal number one (1) goes in two parts, the diagnosis and the treatment plan.
+>
+> These are the screenshots about what I caught, numbered by their fraction, such as {number} of eleven: 1/11, 2/11, 3/11, 4/11, 7/11, 8/11, 9/11, 10/11, 11/11
+>
+> These perspective issues either violate the logic of the perspective or the actual appearance of an object's substance itself, the former and latter could be said to be mixed though, not necessarily different or very distinct, but understanding this mixture might help. An example is 1/11 (or screenshot image one of eleven), where the refrigerator has a handle at the top of it. This violates both in a way that mixes the two, where it is as much an error in the form of an objects as it is an error in the perspective an object it references and mimicks in a failed robo-emmanation of it's maker birthed by human.
+>
+> The following is OR statements where multiple can be true.
+> Certain surfaces are not to be (like a square or other shape image part of a surface that makes up a component or surface of a component of a larger surface), or are of parts within them that might not to be, or of a disarray of surfaces, surfaces that are of too much length or width, or surfaces that overlap or hide behind other parts in a disorder that is not correctly portraying it's object, or objects or their parts are sitting in places they ought not to for the given perspective or logic of their form imitated, or duplicating parts or the whole from a differing perpsective.
+>
+> Those are examples of things to look for, roughly worded with some inspiration from greek metaphysics and ontology.
+>
+> 1/11: The top of the fridge has a handle where it should not be, and the bottom part of the fridge is missing a handle. An issue of perspective implied by the wrong application of a component.
+>
+> but the good thing is the little colored squares look like posted notes OR magnetized pictures for a fridge, very nice detail.
+>
+> 2/11: The tea kettle on the stove should be sitting directly on top of the stove burner, not off the back end of a burner. Misplacement is all with the tea kettle.
+>
+> The kitchen cabinets on top i think they are called, their top end is too long and back AND they sit right behind the counter INSTEAD of above them. Could be raised up higher like kitchen cabinets are when they are above kitchen counters.
+>
+> The fruits are not sitting inside of their bowl but are sitting in front of it, so the order of the overlap or which objects go behind another is messed up.
+>
+> The kitchen counter on the left doesn't overlap the stove, which might be fine, BUT it is inconsistent BECAUSE the one on the right DOES. The kitchen counter on the right and how it's edge overhangs a little should be changed to resemble the overhang on the left i am referring too.
+>
+> Make the back of the chairs stand up so long in height (the back being where a human rests their back. the design there is fine for the chairs, the back part above the seat is just too up high, do NOT make it too short in fix, be conservative). Allow chairs to be sat in.
+>
+> The kitchen needs a door that resembles all of the doors inside of the building (entrances and exits look different)
+>
+> 3/11 The couches are mostly fine, but the back of them at the bottom left and right corners have columns that are faded in the same design and format of the arms of the sofa, but on their back end, that must be corrected but having the corners resemble the other back part of the couch it ought to blend with, keeping the design and structure of the couch.
+>
+> (Do we want the carpet to look like that? Ill leave it up to Solomon)
+>
+> 4/11 The musical sheet the player plays into should be removed to keep things simple. It clips through and violates almost every rule, standing tall more like an interstate sign rather then anything possibly logical, much like a fever dream logic. Ugly at least, laughably horrendous at most.
+>
+> 7/11 The right side of the steps are missing a part of the rail, but my Microsoft paint drawing DID NOT even include a rail on the steps, if I dont recall. Just remove that part of the steps.
+>
+> 8/11 The lights clip into and under other components on the round end or round edges of the stage top or around it's corners, this is terrible. The solution is to have lights sit on top of these components, because objects should have their most simplest shapes done first, then any very simple texture, then deails or detail objects (detail objects are added onto a larger collection of simpler objects last), and they should be done in an order of operation (order of operation is very important phrase to remember with certain things when planning and executing anything with details or complexity enough) that preserves the perspective and artistic purpose through a preventative design system. For example, the details of an object are different then it's texture, and the detail object additions go last UNLESS it violates the higher order principles which say the form of an object IS NOT being achieved in perspective by this order of operation, which means context AND other hierarchy of principles can be used. Principles help simplify and bring order to a process while turning lead into gold. Note, Solomon can ask questions from Adam sometimes, but the extent of the number of questions is decided by Adam BECAUSE of the principles on plan usage, quality, time cost, and cost of work.
+>
+> 9/11 The bathtub is duplicated from two different perspectives, with the bottommost bathtub duplicated being the less desirable perspective. Items should conform to the perspective of the camera unless a reason or context says otherwise. The mini tiny rubber duck in the well-done topmost bath has it's beak facing the wrong way, make the beak come out from the left of the mini tiny rubber duck head not it's right. The topmost tub is alright but can be improved if need be, because it is hard to judge with the bottom tub duplicate in the way, but we can leave the decision up to Solomon.
+>
+> The toilet is terrible, like a dissociated drug experience of ketamine or other nmda antagonist, we must redo the toilet until it's parts look as it should from the camera's perspective, furthermore, the toilet is facing the wall it is up against... Which is so insane that most wouldn't even think of the idea.
+>
+> 10/11: The bed has it's backboard standing a little tall, especially from the given perspective it betrays, since the bed looks as if it is seen from a high up view, but the headboard looks as if it is from a front facing view, so yeah the headboard must be very short in height until it agrees in consistency with the rest of the bed's conveyed perspective. The bed should be able to be jumped onto btw, same with every bed and table, but not the kitchen counters.
+>
+> The duck against the wall is me, and it shows how walls become transparent when i touch them EVEN THOUGH nothing can hide behind them... Only walls that a player is hidden behind should become transparent to show their location, not every wall.
+>
+> 11/11: The bottom right perspective as seen from the camera shows a mix match of disorder in overlay or layers. The front end of a TJ Jeep wranger gets a slight bit narrower AS those small small overhang cover the wheels slightly, but they arent so wide and they dont come out further then the total width of the vehicle as seen here... The vehicles width should be mostly consistent to the front and back at the wheels and their slight small small overhang WHILE the front hood that houses the engine narrows only a little towards the front for a jeep wrangler tj. Lots of layering issues of objects though like i said and the vehicle has a random bar going over the side of the wheel when the image examples im sending and my friend's tj jeep wrangler doesnt have that.
+>
+> The Lights throughout the building seem scattered, and I dont like that. The stage completely ignored my request. I want the stage coming against one of the right walls and to have the stair parallel and up against that wall, so a rail isnt needed. I want the stage to have the mic to it's left end. The mic is only overlapped if a duck is in front of it. There is a fourth image that is a good instruction to what i want for the stage.
+>
+> The large piano on the ground before the piano should be removed, and only the actual piano should remain below the one on the ground that will be removed.
+>
+> The room should have the objects in other places more organized and the chalk board should have an eraser that can be clicked to erase only small parts AND the white X beside the chalk board will erase the whole board when used, replacing the old function of the eraser.
+>
+> Items inside the building should be in places that make more sense.
+>
+> The beach ball should be in the pool and only stay in the pool and cannot get out of it. If the beach ball hits the right wall or left wall of the swimming pool then it makes a pinging sound and becomes a glow of either dark blue on wall side and bright pink on the other.
+>
+> There should be a transformer outside that can be clicked enter on to cut power to ALL the lights in the map, and everything becomes very dark, but it can be turned back on in ten seconds with a cooldown that shows on the transformer. The transformer has the sound of a transformer turning off and it's switch being flipped down, and all the electric going off has a sound too that everyone can hear. The map should be a map separate from the game mode, but selecting either the map or the game mode ONLY shows the other as the only option and auto selects the other.  The trampoline has to not add to jump counter to prevent jump counter farming that isnt earned.
+>
+> Their should be a TV in front of the couches that can be changed, each channel having a different visual. One channel is TV static, another is the Night Show map, another is the fractal map, another is the starry night map, and another is the ether's crossroads map, and another is a duck in a bubble bath, and another is a pixel picture of a kitten. The videos or anything like that should be made to be compressed or any other method to make the map run better. Some lights outside flicker sometimes randomly, and some itty bitty lights on the porch that hang off of it will flicker sometimes too. There should be more decorations WITH good perspective. Doors are needed, and the front door near the jeep should be able to be seen from the inside and a top down perspective of the door needs to be seen for bother entrance and exit doors of the cabin for when players are on the other side of the door, AND it needs to be perspective consistent, as in, the top down perspective has a small difference from the wall line to indicate simple door, but the bottom side of the front door or the porch door still needs to have that perspective that the door at the porch has from the deck view WHEN below the door.
+>
+> The windows in the cabin on the north wall from the inside show the night sky instead of the grass of the ground.
+>
+> The chimney when your inside is right up against the wall, BUT when you go outside the front door where you can see the chimney come out of the roof, it is now further back, away from the wall it came from, this disobeys it's coordinates and must become consistent with it's origin from it's exit in coordinate.
+>
+> The floorboards are boring and need to look better.
+>
+> When the lights go off from the transformer, the candle lights, natural lantern lights, or fireplace are still on, but clicking E on this turns them off with a sound effect in proportion to its object. (E is for minor interaction, which will now be the button you click to interact with everything on this map, from the piano, book, transformer, taking a seat, and so on, BUT mobile can still use their turn or vote button UNLESS they enable the click to interact button in their control settings menu.
+>
+> The grass can look better and we can add occasional night bugs (the ones that glow in the dark or create light, fireflies maybe?)
+>
+> There can also be four cat NPCs, one named Bubbles, another named Annabelle, another named Opal, and another named Oreo. I'll send pictures of those cats if I can. They will wonder inside the house, but sometimes Annebelle will go outside the front door and wonder around the front before going back inside.
+>
+> Annabelle is friendly and will approach some ducks, and they will have an e to interact to pet them, which makes them purr. They meow also.
+>
+> Bubbles will be an orange and white cat, and he is shy and will choose one player randomly to bond with, and he will only be pet a little by the random player he chose to like before he walks away from them or gets scared by another player fast approaching. Slowly approaching bubbles can stop him from running away or have a 25% he stops moving. 50% chance that if players pet bubbles (even if bubbles likes the player) he runs away. Oreo will sprint sometimes randomly around and then sometimes meow before a swipe effect is seen on screen and a player gets a dead effect. Oreo will attack other cats too but never Annabelle, and if Annabelle sees Oreo attacking any other cat close enough then Annabelle will swipe at Oreo and give them dead effect. Bubbles never attacks but will attack Oreo if they get to close or try to swipe at them. Opal hides and runs away from everyone but Bubbles, and they like to follow bubbles when no one is close near by. Oreo is nicer to Opal. No one can give dead effect to the cats and trying to doesnt work. Commands cannot be used on cats. The cats are much smaller then the ducks. Oreo and Opal are smallest and of similar size, Bubbles and Annabelle are only slightly bigger. Annebelle sometimes sits on the couch or jumps onto tables, and so does Oreo.
+>
+> Outside, there is a shadow duck that is all black and hides in the dark or in the outskirt of the map, they randomly fade away and in again, stalking the players furthest out and away from the cabin.
+>
+> Outside there is a duck named Justin, and he wears Blue Jeans and glasses as a yellow duck, and he can be clicked with E to say random things, here are the things he can say:
+>
+> Shut up.
+>
+> Shut up!
+>
+> SHUT UP!
+>
+> Shut up, you stupid IDIOT!
+>
+> GOD, you're so STUPID!
+>
+> I don't care...
+>
+> I'M TURNING OFF MY XBOX!
+>
+> NOOOOOOOO!
+>
+> I DON'T GIVE A FLIP!
+>
+> I DON'T GIVE A HECK!
+>
+> YOU'RE SO STUPID!
+>
+> WHY DOES NOBODY CARE ABOUT DATA BREACHING!?
+>
+> I'm an engineer.
+>
+> I am a civil engineer.
+>
+> I am... wait for it, a civil engineer.
+>
+> I could buy your whole family.
+>
+> I love talking about data breaching.
+>
+> I hate EVERYTHING!
+>
+> Why should I care? I'm a civil engineer.
+>
+> You're just WRONG!
+>
+> You can think that--but you're still WRONG!
+>
+> You're such a stupid flipping IDIOT!
+>
+> What the FLIP!
+>
+> I am done.
+>
+> I can't do this anymore.
+>
+> Why am I here?
+>
+> I hate it here.
+>
+> God, you are so flipping stupid.
+>
+> Do you hear yourself talking right now? Why would you say that?
+>
+> You're so annoying.
+>
+> Stop being SO ANNOYING!
+>
+> Keep telling yourself that.
+>
+> Why are you telling me this? I am literally an ENGINEER!
+>
+> E N G I N E E R
+>
+> I am so rich.
+>
+> I love money.
+>
+> I love food.
+>
+> I don't talk to women.
+>
+> I am scared of women.
+>
+> Help me talk to women.
+>
+> I don't understand women.
+>
+> Why would I talk to a woman?
+>
+> I am still not plat in Siege! How!?
+>
+> WHY AM I NOT PLAT!?
+>
+> HOW AM I ONLY GOLD!
+>
+> Yes I am okay, no I am not angry. CAN YOU STOP ASKING ME THAT!
+>
+> Why did you ask me that?
+>
+> What is wrong with you?
+>
+> What is your opinion on data breaching?
+>
+> Let me explain to you why you are WRONG!
+>
+> I--don't--give--a--FLIIIIIP!
+>
+> ...
+>
+> I am going to bed.
+>
+> No.
+>
+> Just no.
+>
+> Get some help.
+>
+> I love motorcycles.
+>
+> I might be a little autistic.
+>
+> I accepted I am going to be alone in life.
+>
+> You're heckin' stupid.
+>
+> Yes, I know.
+>
+> Let me explain to you why you are wrong.
+>
+> You guys are being so stupid.
+>
+> You still don't understand why I am right.
+>
+> This is getting ridiculous, let me explain to you.
+>
+> I make more money than your whole family combined.
+>
+> Cheez-itz and rice.
+>
+> Play Realm of the Mad God with me.
+>
+> Play Siege with me.
+>
+> I love Echo drones.
+>
+> I hate flock cameras.
+>
+> The guy who made this game is so funny, smart, and good looking.
+>
+> I wish I had more to show besides money and three mansions.
+>
+> Why am I so funny?
+>
+> I am so unbelievably BASED!
+>
+> I couldn't care less.
+>
+> I am going to rotate.
+>
+> I'm LITERALLY A CIVIL ENGINEER!
+>
+> This bit isn't funny, just stop.
+>
+> ?
+>
+>
+>
+>
+>
+> Okay those are all his lines, and he is on the porch outside and his avatar will randomly eat a hotdog sometimes. ALSO, all his lines will go in random order and will only play once until all of them are played, like a randomized playlist, and at the end of each playlist, they play again. He can wonder around anywhere in the map but eventually comes back to the porch without getting stuck on anything. He also sometimes watches TV while sitting on the couch.
+>
+> The TV channels can be changed by click e to interact on the TV.
+>
+> The TV is a small box television like a lot of ppl had in the 90s or 2000s still.
+>
+> Sometimes the duck named Justin wonders to the red jeep and hangs around it. Justin sometimes tries to shoot his gun at a player randomly to kill them after four seconds of them clicking e to interact with him. Sometimes Justin will randomly say one of his words randomly without actually it effecting the playlist of words, and his random qoutes by himself apart from interaction are always random and not in a playlist, and smetimes when he says one of the shut up variations on his own, he will repeat it multiple times over and over before trying to kill everyone near him with a gun while chasing them until they are dead, and this event will have him saying shut up in all caps and an exclamation until a player is dead.
+>
+> We can also input an audio for Justin's voice but I haven't sent the audio of me for the voice acting yet.
+>
+> If you kill Justin, he will say one of these things
+>
+> WHAT THE FLIP!
+>
+> What the FLIIIIIP!
+>
+> STOP!
+>
+> WHAT!?
+>
+> NOOOOO!!!
+>
+> STOP! IT'S NOT FUNNY!!!
+>
+> STOP! IT'S NOT FUNNY!!! IT'S JUST NOT!
+>
+> WHYYYY!!?!?!?!
+>
+> STOOOOOOP!!!!!
+>
+> I am turning off my Xbox...
+>
+> I'M TURNING OFF MY XBOX!!!!
+>
+> This is so STUPID!
+>
+> You are such a stupid IDIOT!
+>
+> There is a 50% chance Justin will get up and chase you to shoot you if you knock him down.
+>
+> Justin sprints when he chases after players while he shoots at them when he is targeting them.
+>
+> There is a chance Justin randomly dies sometimes and then will remain dead until someone revives them, then he will say,
+>
+> I drank too much, but I swear it isn't a problem.
+>
+> When he says that, he will drink a glass of an unknown clear liquid.
+>
+> Justin randomly eats hotdogs.
+>
+> Justin never goes into the pool, if he gets too close to the pool he will say:
+>
+> Why would I go to the pool?! IT'S JUST WATER! I don't care!
+>
+> After he says that, he will walk away from the pool, and he says it when he is near it.
+>
+> Justin will sometimes chase the shadow duck if he is close enough and sees him, but will never kill the shadow duck, and the shadow duck will chase him and Justin dies when he is touched, and the shadow duck fades away again. Justin needs revived when he is killed by the shadow duck. When he is revived with an e to interact from dying from the shadow duck, he says these, and when he says them, it will be chat messages a few seconds apart and it will not be able to be interupted with an e to interact to make him talk until he is done saying these things with a 5 second grace period that follows after the last message until you can interact with him to make him talk like usual. THis is what he will say when revived from being killed from the shadow duck,
+>
+> I literally got killed by a black duck!
+>
+> WAIT!
+>
+> HE WAS LITERALLY BLACK!
+>
+> NOT RACIALLY OF COURSE!
+>
+> Justin will type in chat with all his messages that show in his chat bubble that all of his words will be seen in, and his character's font is comic sans.
+>
+> The cats can have their meows seen in text chat and chat bubbles too.
+>
+> The raw message here can be sent to Solomon and the different plans made by Adam. We can discuss making a new worker too.
+
+Decision: Adam's plan, "Hangout fix-up plans" (https://claude.ai/artifact/MNESfvTTB9pEgVxjEybW8g), the owner's go
+("Solomon can start when he wants"). Goal 1 (perspective fixes, art only) first, then goal 2 (stage, layout, lights,
+walls, chalk, chimney, windows, floor), goal 3a (E to interact, doors, map and mode pairing, chairs), goal 3b (TV,
+transformer, beach ball, flicker, decorations); goal 4 (cats, Justin, shadow duck, fireflies) by Noah. On Duck Cabin E
+is interact and R repeats the last special; hits use the existing plays-dead look.
+Goal 1, done: fridge handle off its top and onto its bottom door; kettle on a burner; upper cabinets shallower and
+raised over the counters; fruit in the bowl; counters without side overhangs; chair backs trimmed; couch bases run
+across the corners; the music sheet column removed (the keyboard mode's own sheet stays); the stage stairs' rail
+removed; one tub seen from above, its duck facing left; the toilet redrawn against the bathroom's east wall facing the
+room; a low headboard; the jeep without the bar over its wheels, its wheels and flares inside its width. The rug stays.
+## Menu music, the music bar everywhere, a pause menu in the lobby, word for word (2026-10-26)
+
+Miles Jr needs to have music also be able to play on the main menu and the room section menu just for that player alone, and it randomly plays the happier songs (happy doesnt only mean major) without any 20 second timer between songs, and the song names show up in the little meter too
+
+That song meter should also show in the lobby AND the pause menu needs to be in the lobby IF we can have someone offload the pause in main menu task either for someone free later OR we can have Miles Jr do it becuz why not
+
+the song bare is also everywhere else in the game is my point
+
+Decision: the main menu and Rooms play music for that player alone, picked at random from the happier songs (Spring in a
+Box, Ducklings in a Row, Bouncy Chicks, Waddle before you paddle, Outer Space Swim Commute, Bubble Bath in the Sky,
+Pond-erful Ruffles, Infinite Pond, Glow), back to back with no gap. The music bar shows there too, top right, left of
+Sign in (on a phone's Rooms the word "Rooms" hides so it fits); the lobby and the game already had it. Entering a room
+fades the menu song out and the room's synced song in. The lobby gets a pause menu (Esc or the ☰ button): Resume,
+Customize, Settings, Friends, Leave room. A pause menu on the main menu is left for later.
