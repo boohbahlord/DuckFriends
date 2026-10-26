@@ -1690,7 +1690,8 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
 .pk-lab i { font-style: normal; font-weight: 600; font-size: .86em; }
 .pk-k { position: absolute; left: 0; right: 0; bottom: .45rem; z-index: 1; text-align: center; font-size: min(calc(.78rem * var(--ts)), calc(var(--ww, 40px) * .34)); font-weight: 600; line-height: 1; color: #1c1c2870; pointer-events: none; }
 .pk-k { transition: opacity .3s; }
-.pk-w.pk-labd .pk-k { opacity: 0; transition: none; }
+.pk-b .pk-k { bottom: .3rem; font-size: min(calc(.7rem * var(--ts)), calc(var(--ww, 40px) * .3)); color: #ffffff9a; }
+.pk-w.pk-labd .pk-k, .pk-b.pk-labd .pk-k { opacity: 0; transition: none; }
 .pk-legend { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem .9rem; font-size: calc(.74rem * var(--ts)); color: var(--dim); }
 .pk-lg-i { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
 .pk-lg-i b { color: var(--ink); font-weight: 600; }
