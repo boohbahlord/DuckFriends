@@ -1820,3 +1820,11 @@ through the cloud with a soft puff and a falling slide whistle; the screen turns
 front page, and the menu music starts on that same tap. The music also wakes on any later tap, mouse button or key
 (a finger's tap only counts once it lifts), starts by itself in a browser that allows it, and until it can, the music
 bar shows "tap anywhere" before the song's name. The first menu song waits at its start until it can be heard.
+
+## Request (2026-10-26 05:38Z): the toilet
+"The toilet is not good enough, it looks awful" / "Like its noy even a toilet" / "Thats what i mean, its not even in the
+correct structure of a toilet"
+
+Decision: redrawn as a classic toilet seen from the front (tank on the wall with a flush handle, the lid up against it,
+the round seat with water, the bowl down to its foot), moved to the bathroom's north wall between the tub and the sink
+so it faces the room. Rides along with goal 2 (PR #99).

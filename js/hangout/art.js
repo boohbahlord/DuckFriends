@@ -680,14 +680,18 @@ export function sink({ w = 66, h = 196 } = {}) {
     + R(4, Y - 26, w - 8, 72, '#9a5526', ln(2.4)) + R(10, Y - 14, w - 20, 50, '#b06a35', `rx="3" ${ln(1.6)}`) + R(w / 2 - 6, Y + 6, 12, 4, '#d9a441', ln(1))
     + R(0, Y - 72, w, 46, '#e8e2d0', `rx="6" ${ln(2.4)}`) + F`<ellipse cx="${w / 2}" cy="${Y - 46}" rx="${w * .32}" ry="13" fill="#b9c3cb" ${ln(1.8)}/><path d="M${w / 2} ${Y - 66}v10h6" stroke="#c9ced6" stroke-width="4" fill="none" stroke-linecap="round"/>`, 'hg-sink', glowDef(id, '#ffe0b0', .5));
 }
-/* a toilet against the east wall, facing west into the room: the tank on the wall side, the bowl and its seat seen
-   from above, the bowl's foot under it. Footprint w × 56 (the tank w − 22 … w), 44 high. Foot: y = h. */
-export function toilet({ w = 90, h = 120 } = {}) {
-  const Y = h - 56, bx = w - 46;
-  return wrap(w, h, shade(w / 2 + 4, Y + 52, w / 2 - 4, 8, .3)
-    + F`<path d="M${bx - 14} ${Y + 6}Q${bx - 14} ${Y + 30} ${bx - 8} ${Y + 34}V${Y + 52}H${bx + 12}V${Y + 34}Q${bx + 18} ${Y + 30} ${bx + 18} ${Y + 6}Z" fill="#e3e0d8" ${ln(2.2)}/>`
-    + F`<ellipse cx="${bx}" cy="${Y + 2}" rx="25" ry="17" fill="#f4f2ec" ${ln(2.4)}/><ellipse cx="${bx - 2}" cy="${Y + 2}" rx="15" ry="9" fill="#d6edf3" ${ln(1.4)}/>`
-    + R(w - 22, Y - 2, 20, 50, '#e3e0d8', `rx="3" ${ln(2.2)}`) + R(w - 26, Y - 30, 26, 30, '#f4f2ec', `rx="5" ${ln(2.2)}`) + R(w - 22, Y - 26, 18, 22, '#fbfaf6', 'rx="3"') + R(w - 16, Y - 20, 8, 4, '#c9ced6', `rx="2" ${ln(1)}`), 'hg-toilet');
+/* a toilet against the north wall, facing into the room: the tank on the wall with its lid on top and a flush handle,
+   the seat's lid up against it, the round seat and the water seen from above, the bowl curving down to its foot.
+   Footprint w × 70, the tank 80 high. Foot: y = h. */
+export function toilet({ w = 80, h = 170 } = {}) {
+  const Y = h, c = w / 2, sy = Y - 62;
+  return wrap(w, h, shade(c, Y - 4, 26, 7, .3)
+    + R(c - 30, Y - 150, 60, 82, '#e9e6de', `rx="6" ${ln(2.4)}`) + R(c - 34, Y - 158, 68, 14, '#f7f5ef', `rx="5" ${ln(2.4)}`)
+    + F`<path d="M${c - 24} ${Y - 132}h9" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${c - 24} ${Y - 132}h9" stroke="#c9ced6" stroke-width="3" stroke-linecap="round"/>`
+    + F`<ellipse cx="${c}" cy="${Y - 98}" rx="22" ry="30" fill="#f7f5ef" ${ln(2.4)}/><ellipse cx="${c}" cy="${Y - 98}" rx="15" ry="22" fill="none" stroke="#dcd8cf" stroke-width="2"/>`
+    + F`<path d="M${c - 26} ${sy}C${c - 26} ${Y - 30} ${c - 14} ${Y - 26} ${c - 13} ${Y - 18}L${c - 16} ${Y - 4}H${c + 16}L${c + 13} ${Y - 18}C${c + 14} ${Y - 26} ${c + 26} ${Y - 30} ${c + 26} ${sy}Z" fill="#e3e0d8" ${ln(2.4)}/>`
+    + F`<path d="M${c - 18} ${Y - 38}Q${c} ${Y - 30} ${c + 18} ${Y - 38}" stroke="#cbc7bd" stroke-width="2" fill="none"/>`
+    + F`<ellipse cx="${c}" cy="${sy}" rx="28" ry="17" fill="#f7f5ef" ${ln(2.4)}/><ellipse cx="${c}" cy="${sy + 1}" rx="17" ry="9.5" fill="#9fd6e8" ${ln(1.8)}/><path d="M${c - 8} ${sy - 2}q4 -3 9 -2" stroke="#fff" stroke-width="2" fill="none" opacity=".8" stroke-linecap="round"/>`, 'hg-toilet');
 }
 
 /* ---------- the bedrooms ---------- */
@@ -984,7 +988,7 @@ export const ART = {
   stage: [stage, 250, 460, 'pair: top at y = 70, skirt at y = h'], stageStairs: [stageStairs, 80, 217, 'pair: treads at y = 70, nothing in front'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
   chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], wipeTile: [wipeTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
   counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
-  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 90, 120, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
+  tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 80, 170, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
   doorFace: [doorFace, 150, 150, 'foot y = h'], doorTop: [doorTop, 14, 150, 'flat, in the wall line'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],

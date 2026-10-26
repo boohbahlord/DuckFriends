@@ -143,9 +143,9 @@ add('stove', 3780, 612, 120, 78, 75, { solid: true, ...IN });
 add('counter', 3900, 612, 240, 78, 75, { solid: true, ...IN });
 add('fridge', 4150, 612, 120, 90, 160, { solid: true, ...IN });
 add('table', 3800, 850, 200, 100, 55, { solid: true, plat: true, ...IN, light: { x: 3900, y: 900, r: 360, c: WARM, k: .32 } });
-add('tub', 3530, 1115, 210, 100, 45, { solid: true, ...IN });
-add('sink', 3770, 1115, 110, 60, 75, { solid: true, ...IN, light: { x: 3805, y: 1230, r: 250, c: '#ffe0b0', k: .3 } });   // (the light over its mirror)
-add('toilet', 3800, 1262, 90, 56, 44, { solid: true, ...IN });   // (against the east wall, facing into the room)
+add('tub', 3515, 1115, 175, 100, 45, { solid: true, ...IN });
+add('sink', 3805, 1115, 80, 60, 75, { solid: true, ...IN, light: { x: 3845, y: 1230, r: 250, c: '#ffe0b0', k: .3 } });   // (the light over its mirror)
+add('toilet', 3712, 1112, 80, 70, 44, { solid: true, ...IN });   // (against the north wall, between the tub and the sink)
 add('bed', 4060, 1130, 210, 270, 45, { solid: true, plat: true, ...IN });
 add('rug', 3950, 1420, 300, 190, 0, FLOOR);
 add('lamp', 3960, 1112, 40, 30, 110, { solid: true, ...IN, light: { x: 3980, y: 1160, r: 260, c: WARM, k: .45 } });

@@ -146,7 +146,7 @@ export const DRAW = {
   table: p => pairParts(A.kitchenTable({ w: p.w, h: 240 }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
   tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
   sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
-  toilet: p => one(p, () => A.toilet({ w: p.w, h: 120 }), p.w, 120),
+  toilet: p => one(p, () => A.toilet({ w: p.w, h: 170 }), p.w, 170),
   bed: p => one(p, () => A.bed({ w: p.w, h: 290, colors: p.id === 'bed1' ? undefined : ['#9b5de5', '#e0b04a', '#3e6d8c', '#c4573a'] }), p.w, 290),
   rail: railParts,
   rocker: p => one(p, () => A.rockingChair({ w: 70, h: 100, facing: p.id === 'rocker1' ? 'e' : 'w' }), 70, 100, 96),
