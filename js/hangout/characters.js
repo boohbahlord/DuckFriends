@@ -24,7 +24,7 @@ const PETS = { annabelle: 'Pet Annabelle', bubbles: 'Pet Bubbles' };   // who E 
 const DUCK = 64, FADE = 1500, SEEN = .78;   // (the shadow duck at its most: a little see-through)
 const feetOf = svg => (v => DUCK * (v[1] + v[3] - 10) / 120)(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
 const FEET = feetOf(justinSVG({ size: DUCK }));
-const tallOf = svg => (v => DUCK * v[3] / v[2])(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // (its drawing's height, 64 px wide)
+const boxOf = svg => svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);   // (a drawing's viewBox: x, y, w, h)
 const REACH = 110, SAY = 4500, HOP = 320;
 const MEOWS = /^(M|Mew|Mrr)/;
 
@@ -48,7 +48,8 @@ function make(id) {
   const body = el.querySelector('.hang-npc-body'), k = CATS[id] ? CATS[id].tall / 63 : 1;   // (a cat's drawing: 100 × 80 units, its feet at 46, 74)
   const feet = duck ? feetOf(svgFor(id, 'stand')) : 0, [fx, fy] = duck ? [DUCK / 2, feet] : [46 * k, 74 * k];
   body.style.left = (-fx).toFixed(1) + 'px'; body.style.top = (-fy).toFixed(1) + 'px'; body.style.transformOrigin = `${fx.toFixed(1)}px ${fy.toFixed(1)}px`; body.style.setProperty('--fy', fy.toFixed(1) + 'px');
-  return { el, body, k, duck, fy, bh: duck ? tallOf(svgFor(id, 'stand')) : 0, tall: duck ? feet - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', dist: 0, sayN: 0 };
+  const vb = duck ? boxOf(svgFor(id, 'stand')) : [0, 0, 1, 0], head = DUCK * -vb[1] / vb[2];   // (a duck's drawing: room over its head for a hat, then the duck's own square, as a player's drawing)
+  return { el, body, k, duck, fy, bh: DUCK * vb[3] / vb[2], nb: fy - head, tall: duck ? feet - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', dist: 0, sayN: 0 };
 }
 /* what's in Justin's hand: his gun, a glass */
 const HAND = { gun: () => `<span class="hang-npc-held gun">${heldHTML('handgun', JUSTIN)}</span>`, drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>` };
@@ -166,9 +167,12 @@ activity({
       const f = Wd.toScreen(o.x, o.y, o.z);
       o.el.style.transform = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
       o.body.style.transform = `${o.bob ? `translateY(${(-o.bob * sc).toFixed(1)}px) ` : ''}scale(${(o.f < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})`;
-      if (o.sc !== sc) {   // (the bubble sits over its head; a duck's name just under its drawing, where a player's sits: its foot, less .08 of a duck)
+      if (o.sc !== sc) {   // (the bubble sits over its head)
         o.sc = sc; o.el.style.setProperty('--h', (o.tall * sc).toFixed(1) + 'px');
-        if (o.duck) o.el.style.setProperty('--nt', ((o.bh - o.fy - .08 * DUCK) * sc).toFixed(1) + 'px');
+        if (o.duck) {   // (its name where a player's goes: under its drawing, less .08 of a duck; seated, over the top of the duck's square)
+          o.el.style.setProperty('--nt', ((o.bh - o.fy - .08 * DUCK) * sc).toFixed(1) + 'px');
+          o.el.style.setProperty('--nb', (o.nb * sc).toFixed(1) + 'px');
+        }
       }
       o.el.style.zIndex = Math.round(o.z > 2 ? o.y + 80 : sortY(o.x, o.y, o.z)) + 10;   // (up on a couch or a table: in front of it)
     }
