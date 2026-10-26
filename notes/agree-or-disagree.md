@@ -2066,3 +2066,7 @@ Decision (Adam): the ball's walls are the pool's edges (it never leaves); the we
 ## 2026-10-26: the phone interact button on Duck Cabin (from Adam, owner in class)
 Asked: on phones only, the context button (Sit, Play, Read, Next channel) is its own button where the Vote button sits, shown only when something is in reach; with a Vote button showing it moves right above it with a clear gap; it never covers Vote, Specials, the controls hint, the music bar or Jumps. Computers don't change.
 Decision: the button already sits in the bar's Vote place and shows only in reach, so no new button or style. Hangout never shows a Vote button (it has no votes), so the stacking rule (`.act-row:has(.hang-btn)` first) is only a guard. Fixed the real collision: on a phone on its side the tip toast sat over the button; toasts now rise above the bar (and above the stack if both buttons show).
+
+## 2026-10-26: no key hints in buttons on phones (from Adam)
+Asked: on a phone with no keyboard, hide the key hints inside buttons (the "E" on Sit, the "Enter" on Vote), the way the hotbar hides on touch-only devices; computers and phones with a keyboard keep them.
+Decision: one CSS rule next to the hotbar's, with the same test (`any-pointer: fine`, and the `keyboard` class once a key or mouse is used).
