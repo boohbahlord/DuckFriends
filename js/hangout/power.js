@@ -9,8 +9,9 @@
    table's, the deck table's) and the fireflies. Beside one, the button puts it out (or lights it again) for everyone:
    s.hang.unlit = { its id: 1 } while it's out.
    Outside, the night is darker wherever no light reaches (a canvas over the world with the lights cut out of it; during
-   a blackout only the natural ones). Inside, a blackout dims the cabin but for its fires. My duck outside in the dark
-   for 7 seconds straight hears the music muffled (music.setMuffle), till it's back in the light or inside. */
+   a blackout only the natural ones), but for a faint glow round my own duck. Inside, a blackout dims the cabin but for
+   its fires. My duck outside in the dark for 7 seconds straight hears the music muffled (music.setMuffle), till it's
+   back in the light or inside. */
 import { rule, activity } from './registry.js';
 import { PROPS, LIGHTS, POWER, DECK, POOL, CABIN, W, H, heightAt, inDeck, inPool } from './layout.js';
 import { svgDataURL } from './art.js';
@@ -22,6 +23,7 @@ import { music } from '../music.js';
 const WAIT = 10000;          // ms before the power can go back on
 const REACH = 110;           // world px from the box (and from a flame's spot, past its bias)
 const DARK = .55, DARK_IN = .5, Q = .5;   // how dark outside, and inside in a blackout; the canvas' px per screen px
+const ME_GLOW = 120;         // world px: the soft glow round my own duck
 const MUFFLE_AFTER = 7000;   // ms in the dark before the music muffles
 export const powered = s => ((s && s.hang) || {}).power !== 0;
 const isOut = (s, id) => !!(((s && s.hang) || {}).unlit || {})[id];
@@ -105,6 +107,13 @@ function paint(now, ctx) {
     rg.addColorStop(0, `rgba(0,0,0,${k.toFixed(3)})`); rg.addColorStop(.45, `rgba(0,0,0,${(k * .85).toFixed(3)})`); rg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
   }
+  /* a faint glow round my own duck (only mine), so I can find myself in the dark */
+  const me = Wd.at(ctx.me);
+  if (me) {
+    const p = Wd.toScreen(me.x, me.y, me.z + 24), x = p.left * Q, y = p.top * Q, r = ME_GLOW * sc, rg = g.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, 'rgba(0,0,0,.5)'); rg.addColorStop(.4, 'rgba(0,0,0,.32)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
+  }
   g.globalCompositeOperation = 'source-over';
 }
 function setMuffle(on) { if (on === muffled) return; muffled = on; music.setMuffle?.(on); }
@@ -137,7 +146,11 @@ activity({
     const now = { on: powered(s), unlit: { ...((s.hang || {}).unlit || {}) } };
     if (was) {
       if (now.on !== was.on) { play('lever', POWER); play(now.on ? 'powerUp' : 'powerDown', POWER); }
-      for (const f of FLAMES) if (now.unlit[f.id] && !was.unlit[f.id]) play(f.w[2], { x: f.pts[0][0], y: f.pts[0][1] });
+      for (const f of FLAMES) {
+        const at = { x: f.pts[0][0], y: f.pts[0][1] };
+        if (now.unlit[f.id] && !was.unlit[f.id]) play(f.w[2], at);
+        else if (!now.unlit[f.id] && was.unlit[f.id]) play('relight', at);   // (lit again: a match; sounds.js plays nothing till it has one)
+      }
     }
     was = now;
     ctx.world.board.classList.toggle('blackout', !now.on);
