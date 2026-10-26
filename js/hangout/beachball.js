@@ -8,7 +8,7 @@
    place without the ball going over the network all the time. */
 import { rule, activity } from './registry.js';
 import { POOL, W, H, heightAt, solidsAt } from './layout.js';
-import { WATER, ripple, splash } from './water.js';
+import { WATER, SOUTH, ripple, splash } from './water.js';
 import { beachBall } from './art.js';
 import { sfx } from '../sound.js';
 
@@ -45,6 +45,7 @@ function step(b) {
     nx += f.ux * (f.d - FAR); ny += f.uy * (f.d - FAR);
     const out = -(b.vx * f.ux + b.vy * f.uy); if (out > 0) { b.vx += f.ux * out * 1.4; b.vy += f.uy * out * 1.4; }
   }
+  if (wet && b.z <= WATER + 2 && ny > SOUTH) { ny = SOUTH; if (b.vy > 0) b.vy = -b.vy * .5; }   // (afloat: never in the near strip, under the coping)
   b.x = nx; b.y = ny;
   if (low && Math.hypot(b.vx, b.vy) < 5 && (o.d === 0 || (hx && hy))) { b.vx = b.vy = 0; b.rest = 1; }   // (out of the pool it rolls on back, unless something holds it)
 }

@@ -18,19 +18,28 @@ const REACH = 75;   // from a seat's footprint, the button shows
 for (const p of PROPS) if (KINDS.includes(p.kind)) p.layer = 'none';   // (drawn here)
 const FIRE = PROPS.find(p => p.kind === 'campfire');
 
-/* every seat: { id, p (its couch or log), i, x, y (its depth), z (the height the duck sits at), up: [where it stands] } */
+/* the spots to stand up on: at each y (or x) in turn, straight out from the seat, then a little to each side */
+const across = (x, ys) => ys.flatMap(y => [[x, y], [x - 40, y], [x + 40, y]]);
+const down = (y, xs) => xs.flatMap(x => [[x, y], [x, y - 40], [x, y + 40]]);
+/* every seat: { id, p (its couch or log), i, x, y (its depth), z (the height the duck sits at), up: [[x, y], …] where it
+   stands up (the first free one), face: the way it looks seated (1 east, −1 west, 0 as it was) } */
 export const SEATS = [];
 for (const p of PROPS.filter(q => SEAT_KINDS.includes(q.kind))) {
   const n = p.seats || 2, couch = p.kind === 'couch';
   if (p.kind === 'table') {   // a chair behind each plate (art.js' kitchenTable): sat on, the duck faces the room over the table
-    for (let i = 0; i < n; i++) SEATS.push({ id: p.id + ':' + i, p, i, n, x: p.x + p.w * (i ? .7 : .3), y: p.y - 15, z: p.z + 32, up: [p.y - 70, p.y - 110] });
+    for (let i = 0; i < n; i++) { const x = p.x + p.w * (i ? .7 : .3); SEATS.push({ id: p.id + ':' + i, p, i, n, x, y: p.y - 15, z: p.z + 32, face: 0, up: across(x, [p.y - 70, p.y - 110]) }); }
+    continue;
+  }
+  if (p.facing === 'e' || p.facing === 'w') {   // a couch turned east (or west): its cushions down the screen; up, beside it on that side
+    const e = p.facing === 'e';
+    for (let i = 0; i < n; i++) { const y = p.y + 26 + (i + .5) * (p.d - 52) / n; SEATS.push({ id: p.id + ':' + i, p, i, n, x: e ? p.x + 62 : p.x + p.w - 62, y, z: p.z + 36, face: e ? 1 : -1, up: down(y, e ? [p.x + p.w + 30, p.x + p.w + 70] : [p.x - 30, p.x - 70]) }); }
     continue;
   }
   for (let i = 0; i < n; i++) {
     const x = couch ? p.x + 30 + (i + .5) * (p.w - 60) / n : p.x + p.w * (i ? .74 : .26);
     const y = couch ? p.y + p.d * .55 : p.y + p.d / 2, z = p.z + 46;   // (on a couch a little higher than its cushion: the head shows over the backrest)
     const north = p.y - 26, south = p.y + p.d + 26, fireSouth = FIRE && p.y + p.d / 2 < FIRE.y + FIRE.d / 2;
-    SEATS.push({ id: p.id + ':' + i, p, i, n, x, y, z, up: couch || !fireSouth ? [north, south] : [south, north] });
+    SEATS.push({ id: p.id + ':' + i, p, i, n, x, y, z, face: 0, up: across(x, couch || !fireSouth ? [north, south] : [south, north]) });
   }
 }
 const BY = new Map(SEATS.map(q => [q.id, q]));
@@ -39,8 +48,8 @@ export const seatOf = (s, id) => { for (const [k, v] of Object.entries(seatsOf(s
 const free = (s, q, id) => !seatsOf(s)[q.id] || seatsOf(s)[q.id][0] === id;
 /* where a duck stands up from a seat: in front of it (or behind, if that is blocked) */
 function standSpot(q) {
-  for (const y of q.up) for (const dx of [0, -40, 40]) { const x = q.x + dx, z = heightAt(x, y); if (standable(x, y, z, STEP)) return { x, y, z }; }
-  return { x: q.x, y: q.up[0], z: heightAt(q.x, q.up[0]) };
+  for (const [x, y] of q.up) { const z = heightAt(x, y); if (standable(x, y, z, STEP)) return { x, y, z }; }
+  const [x, y] = q.up[0]; return { x, y, z: heightAt(x, y) };
 }
 const posAt = (x, y, z) => ({ x: +(x / W).toFixed(5), y: +(y / H).toFixed(5), j: 0, q: '', sp: false, z: Math.round(z), b: Math.round(z) });
 /* how far (x, y) is from a prop's footprint */
@@ -86,6 +95,7 @@ function sit(ctx, q) {
   if (seatOf(ctx.state(), ctx.me) !== q) return;   // (taken meanwhile: the room said no)
   placed = q; put(ctx, q.x, q.y, q.z);
   const me = ctx.duck(); if (me && FIRE && q.p.kind === 'log') me.face = Math.sign(FIRE.x + FIRE.w / 2 - q.x) || 1;   // (on a log: toward the fire)
+  else if (me && q.face) me.face = q.face;
 }
 function getUp(ctx) {
   const q = seatOf(ctx.state(), ctx.me) || placed; if (!q) return;
@@ -98,8 +108,8 @@ activity({
     A.useHangArtCSS();
     const box = ctx.world.board.querySelector('.hang-props');
     for (const p of PROPS.filter(q => KINDS.includes(q.kind))) {
-      const bh = ART_H[p.kind], top = p.y + p.d - bh - p.z, list = [];
-      if (p.kind === 'couch') { const art = A.couch({ w: p.w, h: bh, seats: p.seats, color: COLORS[p.id] || '#a8382c', facing: 'n', throwOn: p.id !== 'couch2' }); list.push([art.back, p.y + p.d - bh + art.backFoot], [art.front, p.y + p.d]); }
+      const side = p.facing === 'e' || p.facing === 'w', bh = side ? p.d + 64 : ART_H[p.kind], top = p.y + p.d - bh - p.z, list = [];
+      if (p.kind === 'couch') { const art = A.couch({ w: p.w, h: bh, len: p.d, seats: p.seats, color: p.color || COLORS[p.id] || '#a8382c', facing: p.facing || 'n', throwOn: !side }); list.push([art.back, p.y + p.d - bh + art.backFoot], [art.front, p.y + p.d]); }
       else list.push([A.logSeat({ w: p.w, h: bh }), p.y + p.d]);
       for (const [html, key] of list) {
         const e = document.createElement('div');
@@ -143,10 +153,10 @@ activity({
   /* seated: no walking; my duck stays on its cushion, at the cushion's height */
   hold(ctx) { return this.heldZ(ctx) != null; },
   heldZ(ctx) { const q = seatOf(ctx.state(), ctx.me), me = ctx.duck(); return q && me && Math.hypot(me.x * W - q.x, me.y * H - q.y) < 60 ? q.z : null; },
-  push(dx, dy, ctx) {   // a hop to the next cushion that way (screen left is west), only if it is free
-    const q = seatOf(ctx.state(), ctx.me); if (!q || !dx) return;
-    const to = BY.get(q.p.id + ':' + (q.i + Math.sign(dx)));
-    if (to && free(ctx.state(), to, ctx.me)) { const me = ctx.duck(); if (me) me.face = Math.sign(dx); sit(ctx, to); }
+  push(dx, dy, ctx) {   // a hop to the next cushion that way (screen left is west; on a couch turned east or west, down is south), only if it is free
+    const q = seatOf(ctx.state(), ctx.me), side = q && (q.p.facing === 'e' || q.p.facing === 'w'), k = side ? Math.sign(dy) : Math.sign(dx); if (!q || !k) return;
+    const to = BY.get(q.p.id + ':' + (q.i + k));
+    if (to && free(ctx.state(), to, ctx.me)) { const me = ctx.duck(); if (me && !side) me.face = k; sit(ctx, to); }
   },
   jump(ctx) { if (!seatOf(ctx.state(), ctx.me)) return false; getUp(ctx); return true; },   // a jump gets up instead
   /* the room says my duck isn't seated (someone took the seat first, or the host freed it): it stands up */

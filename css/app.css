@@ -1770,11 +1770,11 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-wl svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .wl-front { fill: #7fe6ff3d; stroke: #e2fdff; stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .wl-shine { fill: none; stroke: #ffffffaa; stroke-width: 2; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.hang-ball, .hang-rduck, .hang-tramp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+.hang-ball, .hang-rduck, .hang-tramp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; will-change: transform; }   /* (a layer of its own, as every prop: moved, never painted again; on some phones a layer made only because it overlaps another showed black blocks) */
 .hang-ball svg, .hang-rduck svg, .hang-tramp svg { display: block; overflow: visible; }
 .hang-rduck > svg { transform-origin: 50% 83%; }
 .hang-ballsh { position: absolute; left: -22px; top: -6px; width: 44px; height: 12px; border-radius: 50%; background: #000; transform-origin: 22px 6px; pointer-events: none; }
-.hang-dent { position: absolute; left: -60px; top: -22px; width: 120px; height: 44px; transform-origin: 60px 22px; pointer-events: none; }
+.hang-dent { position: absolute; left: -60px; top: -22px; width: 120px; height: 44px; transform-origin: 60px 22px; pointer-events: none; will-change: transform, opacity; }
 .hang-dent svg { display: block; overflow: visible; }
 .gduck.hang-flail .gduck-body { transform-origin: 50% 58%; animation: hang-flail .34s ease-in-out infinite alternate; }   /* (html.still stops it) */
 @keyframes hang-flail { from { rotate: -26deg; scale: 1 1.06; } to { rotate: 22deg; scale: 1.05 .97; } }
@@ -1790,10 +1790,6 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .pia-big .pia-k.on { fill: var(--g, #fff); transition: none; }
 .pia-big .pia-h { fill: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; }
 .pia-big .pia-h.on { opacity: .55; transition: none; }
-.pia-floor .hg-key > rect:first-child { transition: fill 1.2s ease-out; }
-.pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
-.pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
-.pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
 
 /* ---------- Hangout: the chalk floor and the guestbook (hangout/chalk.js, hangout/book.js) ----------
    The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
@@ -1846,3 +1842,5 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @keyframes sp-fall { 0% { transform: translateX(-50%); } 100% { transform: translateX(-50%) translateY(150vh) rotate(200deg); } }
 .splash.falling .sp-cloud, .splash.falling .sp-blocks { transition: opacity .8s ease .5s, transform 1s ease .3s; opacity: 0; transform: scale(1.08); }
 @media (prefers-reduced-motion: reduce) { .sp-duck, .splash .sb-block { animation: none; } }
+.hang-chalkstick.rub { width: calc(var(--sz, 60px) * .26); height: calc(var(--sz, 60px) * .14); border-radius: max(2px, calc(var(--sz, 60px) * .03)); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); transform: rotate(-18deg); }
+.gduck.left .hang-chalkstick.rub { transform: rotate(18deg); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); }

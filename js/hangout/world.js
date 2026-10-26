@@ -113,7 +113,7 @@ export function mountWorld(board, api) {
       if (l.only && (l.only === 'in') !== inside) continue;
       if (l.prop && !lit(l.prop, s)) continue;
       const fl = l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
-      const x = l.x, y = l.y - L.heightAt(l.x, l.y), r = l.r * fl;
+      const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r * fl;
       if (!see(x - r, y - r, x + r, y + r)) continue;
       const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl)); rg.addColorStop(1, hexA(l.c, 0));
       g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
@@ -152,7 +152,20 @@ export function mountWorld(board, api) {
     }
     propsBox.append(e); it.el = e; return e;
   }
-  function drawProps(me, myKey, myBox) {
+  /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
+     while it hides one: a duck behind it with a good part of it covered) */
+  function duckBoxes(s) {
+    const size = L.DUCK * cam.sc, out = [];
+    for (const id of s.seat) {
+      if (!s.pos[id] && !mine(id)) continue;
+      const a = at(id, s.pos[id]); if (L.inCabin(a.x, a.y) !== inside) continue;
+      const g = L.heightAt(a.x, a.y), f = toScreen(a.x, a.y, g), lift = Math.max(0, a.z - g) * cam.sc;
+      out.push({ key: L.sortY(a.x, a.y, a.z), l: f.left - size * .4, r: f.left + size * .4, t: f.top - lift - size * .9, b: f.top - lift });
+    }
+    return out;
+  }
+  const HIDDEN = .3;   // this much of a duck's box covered: hidden
+  function drawProps(ducks) {
     const { sc, vw, vh } = cam, scs = sc.toFixed(4);
     for (const it of items) {
       const b = it.box, sx = (b.l - cam.x) * sc + vw / 2, sy = (b.t - cam.y) * sc + vh / 2, sw = b.w * sc, sh = b.h * sc;
@@ -165,7 +178,7 @@ export function mountWorld(board, api) {
       if (e._tr !== tr) { e._tr = tr; e.style.transform = tr; }
       if (it.fade) {
         const h = it.hit || { l: b.l, t: b.t, r: b.l + b.w, b: b.t + b.h }, hl = (h.l - cam.x) * sc + vw / 2, hr = (h.r - cam.x) * sc + vw / 2, ht = (h.t - cam.y) * sc + vh / 2, hb = (h.b - cam.y) * sc + vh / 2;
-        const thru = !!myBox && myKey < it.key && myBox.r > hl && myBox.l < hr && myBox.b > ht && myBox.t < hb;
+        const thru = ducks.some(d => d.key < it.key && (Math.min(d.r, hr) - Math.max(d.l, hl)) * (Math.min(d.b, hb) - Math.max(d.t, ht)) > HIDDEN * (d.r - d.l) * (d.b - d.t) && d.r > hl && d.l < hr && d.b > ht && d.t < hb);
         if (e._thru !== thru) { e._thru = thru; e.classList.toggle('thru', thru); }
       }
     }
@@ -240,8 +253,7 @@ export function mountWorld(board, api) {
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
-      const size = L.DUCK * cam.sc, f = toScreen(tx, me.y * L.H, L.heightAt(tx, me.y * L.H)), lift = Math.max(0, me.z - L.heightAt(tx, me.y * L.H)) * cam.sc;
-      drawProps(me, L.sortY(tx, me.y * L.H, me.z), { l: f.left - size * .4, r: f.left + size * .4, t: f.top - lift - size * .9, b: f.top - lift });
+      drawProps(duckBoxes(s));
       shade.hidden = !inside;
       if (inside) { const a = toScreen(L.CABIN.x0, L.CABIN.y0 - L.CABIN.wall - 30), b = toScreen(L.CABIN.x1, L.CABIN.y1 + 14); Object.assign(shade.style, { left: a.left + 'px', top: a.top + 'px', width: (b.left - a.left) + 'px', height: (b.top - a.top) + 'px' }); }
       for (const a of acts()) a.draw?.(now, ctx);

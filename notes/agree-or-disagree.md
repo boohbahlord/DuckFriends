@@ -1820,3 +1820,79 @@ through the cloud with a soft puff and a falling slide whistle; the screen turns
 front page, and the menu music starts on that same tap. The music also wakes on any later tap, mouse button or key
 (a finger's tap only counts once it lifts), starts by itself in a browser that allows it, and until it can, the music
 bar shows "tap anywhere" before the song's name. The first menu song waits at its start until it can be heard.
+
+## Request (2026-10-26 05:38Z): the toilet
+"The toilet is not good enough, it looks awful" / "Like its noy even a toilet" / "Thats what i mean, its not even in the
+correct structure of a toilet"
+
+Decision: redrawn as a classic toilet seen from the front (tank on the wall with a flush handle, the lid up against it,
+the round seat with water, the bowl down to its foot), moved to the bathroom's north wall between the tub and the sink
+so it faces the room. Rides along with goal 2 (PR #99).
+
+## Request (2026-10-26 05:53Z): doors, log ends, couches, TV (two pictures: a screenshot with the log ends circled, a sketch)
+"I circled some of th3se, but these are NOT supposed to be there whenever a door is in between, check your work because
+those are door level and thus covered by doors, so there is no reason or way they would be showing from above like that,
+because it doesnt come out from the top like that, fix ever instance of that in the first screenshot i refer to.
+
+You can barely even see the doors inside either. Also i cant see the door but instead of screenshotting it, compare it to
+yhe standard of yhe door as seen from outside on the balcony, and see if it matches up in art.
+
+The sofas need a little distance from eachother and a coffee table on the rug in front of them. The TV needs to face
+them diagonally if they are arranged like that also. The sofa face the wall should be one cushion shorter, so it becomes
+a two seater. The sofas and it's rugs need to be somewhere away from the stage because the TV cant go in fron of yhe
+stage.
+
+The sofas can go in the bottom right of the room IF there is room for the door to the balcony.
+
+I send something in image 2 about the new plan for the couches, tv location, new coffee table, new end table, and where
+they all go together and how. Make sure to ask adam ab certain things"
+
+Sketch text: "The couches and the rug (represented by the red circle) should go to the bottom right here. The TVs location
+is roughly speaking and the Coffee table can experiment with different orientations. We need suggestions about how to
+fill up all the dead space of the room." Labels: "TV Here.", "Coffee table (Can be shaped differently, it should have
+papers and drinks on it)", "End table."
+
+Decisions (Adam): the couch seen from the back becomes the south couch, a 2-seater; the east couch faces west, 3 seats if
+it fits; a duck's width between them at the corner for the end table. TV on a low stand on the floor, turned 45° to face
+the L. Dead space: bookshelf and armchair by the fireplace; a sittable card table with 2 chairs in the middle; coat rack,
+boots and welcome mat by the front door; two potted plants; a wall clock and two small pictures on the north wall.
+No log-end rings at interior doorways; inside doors drawn to match the deck door.
+
+## Request (2026-10-26 05:58Z): the toilet's shape (four reference pictures)
+"The bottom of your toilet has a weird shape, just below the bowl in the neck of it that goes into the ground, look at
+these pictures for reference. Also, your back of the toilet goes way up high AND extends far below down past it's
+back...look at these pictures to see what i mean, esp the last one which you should nodel after."
+
+Decision: redrawn after the last picture (a plain line drawing): a shorter tank with a lid band, a button and a lever,
+right behind a closed round seat; a round bowl; a short foot widening to the floor.
+
+## Request (2026-10-26 06:09Z–06:11Z): the inside doors (a screenshot of the live great-room door, open)
+"THIS DOOR OPENING LIKE THIS IN THE LIVE VERSION I FOUND IS COMPLETELY UNACCEPTABLE"
+"THAT DOOR IN THE SCREENSHOT LOOKS LIKE AN ABSOLUTELY TERRIBLE AND INNACURATE SIDEWAYS DOOR! MANE IT ONE DOOR ONLY NOT
+TWO AND BORROW FROM THE ONE OUTSIDE FROM THE PORCH FOR INSPIRATION OR COPY" / "Make* not mane / Typo on my end"
+
+Decision: the great room's double door to the hall is one door (y 1275–1425). Every inside door copies the porch's door
+(orange frame, dark door, lit four-pane window, low panel, brass knob); shut, seen a little from its side; open, swung
+60° into the room like the porch door hanging open, not a flat face lying across the room.
+
+## Request (2026-10-26, live bugs from the phone, Chrome on Android)
+> Glitches when i walk around the trampoline on mobile that distorts it
+
+> IT SHOWS IM IN THE WATER BUT IM CLEARLY NOT! THIS IS AN OBVIOUS LAYERING ISSUE!
+
+> This light next to the pool doesnt look like it is centered on the light, maybe im just crazy
+
+> WHAT KIND OF LAZY BULLSHIT IS THIS!? WHY IS IT HANGING OVER THE WALL LIKE THIS?! LOOK AT THE CIRCLE I DREW OVER IT
+
+Decisions:
+- Trampoline: black noisy blocks over it on a phone. It was the only moving piece without a layer of its own (Chrome made
+  one for it only because it overlapped others). It, the beach ball, the rubber ducks and the mat's dip now have their own
+  layer, like every other prop.
+- Pool: the water's near strip (40 deep, as deep as the water is under the ground) is hidden under the near coping on the
+  screen, but a duck could swim into it and showed over the coping. Swimmers, the rubber ducks and the beach ball now stay
+  north of it; a duck dropping in from the south side stays at the coping's edge on the screen as it drops.
+- Lamp posts: their glow was on the ground in front of the post's foot, well under the lantern. It is now centered on the
+  lantern (160 over the ground).
+- Walls: a north-south wall that starts at an east-west wall (the bathroom | bedroom wall, the hall walls, the corners)
+  drew its top up past the other wall's top. It now starts at that top's front edge, so the east-west wall runs on over
+  the corner.

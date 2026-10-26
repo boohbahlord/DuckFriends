@@ -9,7 +9,7 @@
         -1 left), z a height of their own (on a couch or a table; none: the ground), say { text, t } their last words.
    Paths: a grid of 40-px cells over the world, built once from layout.js (standable), so moved props and new doors are
    found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
-import { W, H, EDGE, STEP, heightAt, standable, inCabin, inPool, POOL, DOORS, CABIN } from './layout.js';
+import { W, H, EDGE, STEP, heightAt, standable, onPlatform, inCabin, inPool, POOL, DOORS, CABIN } from './layout.js';
 
 export const CELL = 40;
 const GW = Math.ceil(W / CELL), GH = Math.ceil(H / CELL);
@@ -24,7 +24,7 @@ export function walkGrid() {
   grid = new Uint8Array(GW * GH); hts = new Float32Array(GW * GH);
   for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
     const [x, y] = mid(i, j), z = heightAt(x, y); hts[idx(i, j)] = z;
-    grid[idx(i, j)] = standable(x, y, z, 0) ? 1 : 0;
+    grid[idx(i, j)] = standable(x, y, z, 0) && !onPlatform(x, y) ? 1 : 0;   // (beds and tables: hopped onto, not walked)
   }
   return grid;
 }

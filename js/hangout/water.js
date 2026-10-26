@@ -8,7 +8,7 @@
    everything a duck wears or shows; a splash is drawn just in front of its own duck.
    Other things in the water use it too: ripple(x, y, k) and splash(x, y, k) at a spot on the water (world px). */
 import { activity } from './registry.js';
-import { POOL, SLOPE, DUCK, heightAt, inPool } from './layout.js';
+import { POOL, SLOPE, DUCK, W as BW, H as BH, heightAt, inPool } from './layout.js';
 import { sfx } from '../sound.js';
 
 export const WATER = POOL.h;   // the water's surface: a duck floats with its feet there
@@ -16,6 +16,10 @@ const SINK = 16;               // how far into the water a floating duck sits (w
 const SLOW = .55;              // swimming speed, of walking speed
 /* a duck at (x, y) with its feet at z is in the water (not on the steps) */
 export const swimming = (x, y, z) => inPool(x, y) && heightAt(x, y) === WATER && z <= WATER + 4;
+/* the water's near strip (as deep as the water is under the ground) is hidden under the near coping on the screen: what
+   floats keeps north of SOUTH, at the coping's edge on the screen */
+const NEAR = SLOPE.low - WATER;
+export const SOUTH = POOL.y1 - NEAR - 12;
 /* the water seen on the screen (world px, as drawn: a spot on the water at y is drawn at y − WATER): the near edge hides
    behind the near coping, which stands on the ground in front of it */
 const BOX = { x0: POOL.x0, x1: POOL.x1, t: POOL.y0 - WATER, b: POOL.y1 - SLOPE.low };
@@ -97,6 +101,14 @@ activity({
     splashes.length = ripples.length = 0; seen.clear(); layer = null;
   },
   speed: pos => swimming(pos.x, pos.y, pos.z) ? SLOW : 1,
+  /* my duck under the ground in the near strip (dropping in, or swimming up to the near edge) keeps north of it by as much
+     as it is under the ground: on the screen it stays at the coping's edge, never over the coping */
+  after(me) {
+    const x = me.x * BW, y = me.y * BH, under = SLOPE.low - me.z;
+    if (under <= 0 || !inPool(x, y)) return;
+    const lim = POOL.y1 - Math.min(1, under / NEAR) * (POOL.y1 - SOUTH);
+    if (y > lim) me.y = lim / BH;
+  },
   step(dt, now, ctx) {
     T = now;
     const s = ctx.state(), me = ctx.me, here = ctx.world.at(me);

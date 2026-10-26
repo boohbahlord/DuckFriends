@@ -33,7 +33,7 @@ serves `main`, so merging to `main` is deploying).
     `rules.js`: `s.hang` and the `{ t: 'hang', k }` action, called from `js/rules.js`.
   - `lamp.js` the lamps (the example activity); `stage.js` the stage and its mic; `seats.js` the couches and the
     campfire's logs; `soccer.js` the soccer ball and net; `chalk.js` the chalk floor and eraser; `book.js` the guestbook.
-  - `piano.js` the floor piano, Play and the music fade; `pianokeys.js` its keyboard mode, sound and music sheet (test
+  - `piano.js` the piano, Play and the music fade; `pianokeys.js` its keyboard mode, sound and music sheet (test
     page: `tools/piano-test.html`).
   - `pool.js` imports the water and the bouncing: `water.js` floating, ripples, splashes; `beachball.js`;
     `rubberducks.js`; `trampoline.js`; `falls.js` falling off the deck.
