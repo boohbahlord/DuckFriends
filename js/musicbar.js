@@ -63,3 +63,11 @@ export function mountMusicBar(root) {
   paintSpk(); paintSong();
   return () => { clearInterval(t); clearTimeout(openT); document.removeEventListener('settings', paintSpk); };
 }
+
+/* the front page and Rooms: the bar sits in the top-right corner, left of Sign in, so the two never overlap; returns its clean-up */
+export function mountCornerMusicBar() {
+  const corner = document.querySelector('.corner-tr'); if (!corner) return () => {};
+  const t = document.createElement('template'); t.innerHTML = musicBarHTML(); const bar = t.content.firstElementChild;
+  corner.prepend(bar); const off = mountMusicBar(corner);
+  return () => { off(); bar.remove(); };
+}

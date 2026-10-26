@@ -23,6 +23,7 @@ import { acct, onAccount, requestFriend, canAdd } from './account.js';
 import { openFriends } from './friends.js';
 import { NAV_HINTS } from './keynav.js';
 import { musicBarHTML, mountMusicBar } from './musicbar.js';
+import { openSettings } from './settings.js';
 
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
@@ -226,6 +227,24 @@ function onState(s) {
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
   if (e.code === 'Space' && !e.repeat) { e.preventDefault(); toggleReady(); }
+  if (e.key === 'Escape' && !e.repeat) { e.preventDefault(); openPause(); }
+}
+/* the pause menu, as in a game (☰ at the top right, or Esc) */
+function openPause() {
+  if (windowOpen()) return;
+  openWindow(`<h2>Paused</h2><div class="pause-list">
+    <button type="button" class="btn green" data-a="resume">Resume</button>
+    <button type="button" class="btn ghost" data-a="custom">Customize</button>
+    <button type="button" class="btn ghost" data-a="settings">Settings</button>
+    <button type="button" class="btn ghost" data-a="friends">Friends</button>
+    <button type="button" class="btn red" data-a="leave">Leave room</button></div>`, {
+    cls: 'win-small',
+    onOpen: (w, close) => w.querySelector('.pause-list').onclick = e => {
+      const a = e.target.closest('[data-a]'); if (!a) return;
+      close();
+      ({ resume() {}, custom: () => openCustomize(), settings: () => openSettings(), friends: () => openFriends(), leave: () => leaveTo('rooms') })[a.dataset.a]();
+    },
+  });
 }
 const toggleReady = () => { R.send({ t: 'ready' }); sfx.tick(); };
 /* the host renames the room in place (Enter or clicking away keeps it, Esc doesn't) */
@@ -247,7 +266,7 @@ register('lobby', {
     R = arg || activeRoom(); if (!R) return null;
     if (!['lobby', 'countdown'].includes(R.state.phase)) { setTimeout(() => go('game', R)); }
     S = el(`<section class="screen lobby docked">
-      <header class="lbar">${musicBarHTML()}<button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <header class="lbar">${musicBarHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
@@ -269,6 +288,7 @@ register('lobby', {
     docks = mountDocks(S, `<kbd>Space</kbd> Ready <kbd>T</kbd> Chat <kbd>Right-click</kbd> Card options ${NAV_HINTS}`);
     lastSeat = 0; mbarOff = mountMusicBar(S);
     S.querySelector('.lobby-x').onclick = () => leaveTo('rooms');
+    S.querySelector('.lobby-pause').onclick = () => openPause();
     const info = S.querySelector('.lmenu-info');
     S.querySelector('.lmenu').addEventListener('pointerover', e => { const b = e.target.closest('[data-m]'); if (b) info.textContent = INFO[b.dataset.m]; });
     S.querySelector('.lmenu').addEventListener('focusin', e => { const b = e.target.closest('[data-m]'); if (b) info.textContent = INFO[b.dataset.m]; });

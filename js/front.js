@@ -5,8 +5,12 @@ import { register, go } from './router.js';
 import { el } from './ui.js';
 import { pitSVG, heroDuckSVG, rainbowHTML } from './art.js';
 import { openSettings } from './settings.js';
+import { mountCornerMusicBar } from './musicbar.js';
+
+let mbarOff = null;
 
 register('front', {
+  leave() { if (mbarOff) mbarOff(); mbarOff = null; },
   render() {
     const s = el(`<section class="screen front">
       <h1 class="brand">${rainbowHTML('DuckFriends')}</h1>
@@ -22,6 +26,7 @@ register('front', {
     </section>`);
     s.querySelector('[data-a="play"]').onclick = () => go('rooms');
     s.querySelector('[data-a="settings"]').onclick = () => openSettings();
+    if (mbarOff) mbarOff(); mbarOff = mountCornerMusicBar();
     return s;
   },
 });

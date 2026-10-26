@@ -1793,3 +1793,17 @@ raised over the counters; fruit in the bowl; counters without side overhangs; ch
 across the corners; the music sheet column removed (the keyboard mode's own sheet stays); the stage stairs' rail
 removed; one tub seen from above, its duck facing left; the toilet redrawn against the bathroom's east wall facing the
 room; a low headboard; the jeep without the bar over its wheels, its wheels and flares inside its width. The rug stays.
+## Menu music, the music bar everywhere, a pause menu in the lobby, word for word (2026-10-26)
+
+Miles Jr needs to have music also be able to play on the main menu and the room section menu just for that player alone, and it randomly plays the happier songs (happy doesnt only mean major) without any 20 second timer between songs, and the song names show up in the little meter too
+
+That song meter should also show in the lobby AND the pause menu needs to be in the lobby IF we can have someone offload the pause in main menu task either for someone free later OR we can have Miles Jr do it becuz why not
+
+the song bare is also everywhere else in the game is my point
+
+Decision: the main menu and Rooms play music for that player alone, picked at random from the happier songs (Spring in a
+Box, Ducklings in a Row, Bouncy Chicks, Waddle before you paddle, Outer Space Swim Commute, Bubble Bath in the Sky,
+Pond-erful Ruffles, Infinite Pond, Glow), back to back with no gap. The music bar shows there too, top right, left of
+Sign in (on a phone's Rooms the word "Rooms" hides so it fits); the lobby and the game already had it. Entering a room
+fades the menu song out and the room's synced song in. The lobby gets a pause menu (Esc or the ☰ button): Resume,
+Customize, Settings, Friends, Leave room. A pause menu on the main menu is left for later.
