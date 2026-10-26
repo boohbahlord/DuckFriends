@@ -5,7 +5,7 @@
 import { npcTick, npcAct, npcHit, npcAt, findPath, randomSpot, walkAt, walkable, BRAINS } from '../js/hangout/npc.js';
 import '../js/hangout/cats.js';
 import '../js/hangout/justin.js';
-import '../js/hangout/shadowduck.js';
+import { inLight } from '../js/hangout/shadowduck.js';
 import { W, H, inPool, inCabin } from '../js/hangout/layout.js';
 
 const MIN = +(process.argv[2] || 10), NP = +(process.argv[3] || 3);
@@ -44,6 +44,7 @@ for (let now = T0; now < END; now += 200) {
   worst = Math.max(worst, ms); if (ms > 30) slow++;
   bigState = Math.max(bigState, JSON.stringify({ npc: s.hang.npc, fx: s.hang.npcFx }).length);
   for (const m of s.log) if (m.n > lastLog) { bump(`${m.npc} says`); if (m.npc === 'justin') bump('  Justin: ' + m.text.slice(0, 40)); lastLog = Math.max(lastLog, m.n); }
+  for (const f of s.hang.npcFx || []) if (f.n > lastFx && (f.kind === 'gun' || f.kind === 'miss') && s.pos[f.who]) { const j = npcAt(s.hang.npc.justin, now), d = Math.hypot(j.x - s.pos[f.who].x * W, j.y - s.pos[f.who].y * H); bump(`(Justin shot from ${d < 150 ? 'under 150' : d < 250 ? '150-250' : 'over 250'} px)`); }
   for (const f of s.hang.npcFx || []) if (f.n > lastFx) { bump(`fx ${f.kind} ${f.by}→${s.players[f.who] ? 'a duck' : f.who}`); lastFx = Math.max(lastFx, f.n); }
   for (const [id, r] of Object.entries(s.hang.npc || {})) {
     const a = npcAt(r, now); if (!a) continue;
@@ -51,6 +52,7 @@ for (let now = T0; now < END; now += 200) {
     if (id !== 'justin' && id !== 'shadow' && !inCabin(a.x, a.y)) { bump(`${id} outside the cabin`); if (process.env.OUT === id && (count.outp = (count.outp || 0) + 1) < 6) console.log(id, Math.round(a.x), Math.round(a.y), r.a, JSON.stringify(r.w).slice(0, 150)); }
     if (!r.z && inPool(a.x, a.y)) bad.push(`${id} in the pool at ${Math.round(a.x)},${Math.round(a.y)}`);
     if (!r.z && !walkable(a.x, a.y)) { bump(`(${id} off the walking grid a moment)`); if (process.env.OFF === id && (count.offp = (count.offp || 0) + 1) < 15) console.log(id, Math.round(a.x), Math.round(a.y), r.a, a.moving, JSON.stringify(r.w.p).slice(0, 80)); }
+    if (id === 'shadow' && r.o && r.o.v && inLight(a.x, a.y, s)) bump('(shadow seen in the light)');
     if (id === 'shadow' && r.o && r.o.t === now) bump(`shadow ${r.o.v ? 'fades in' : 'fades out'}`);
     const key = Math.round(a.x) + ',' + Math.round(a.y) + r.a;
     if (!still[id] || still[id].key !== key) still[id] = { key, t: now };

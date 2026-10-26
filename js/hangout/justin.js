@@ -10,8 +10,10 @@
    - Knocked down (a shot, a dagger, a ball, kill @Justin): a death line; half the time he gets up and chases that duck
      until he's shot it. Otherwise he stays down until someone revives him with E.
    - Drinking (about once in 8 minutes): he drops; revived with E, he says the drinking line and drinks a glass.
-   - The shadow duck (shadowduck.js) can get him: revived, he says his four lines a few seconds apart, and E can't
-     interrupt them (nor for 5 seconds after).
+   - The shadow duck (shadowduck.js) can get him, only if they meet up close: revived, he says his four lines 5 seconds
+     apart, each bubble up 7 seconds, and E can't interrupt them (nor for 5 seconds after).
+   - With a gun he keeps his distance: he walks to where his gun reaches and shoots from there. A duck he shoots can't
+     move for 6 seconds.
    The lines are the owner's, word for word: don't change them. */
 import { brain, npcAt, randomSpot, nearestOpen, POOL, DOORS } from './npc.js';
 import { PROPS, DECK, inPool } from './layout.js';
@@ -118,7 +120,8 @@ const RANT_SHOUT = 'SHUT UP!';
 const WALK = 300, SPRINT = 620;
 const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
 const SAY_EVERY = [45, 90], RANT_EVERY = [420, 780], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
-const RANGE = 360, AIM = 1100;                         // how far his gun reaches; between his shots (ms)
+const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
+const STILL = 6000, LINE_GAP = 5000, LINE_SHOWS = 7000;   // a shot duck can't move (ms); the shadow lines, apart and shown
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
 const HOME = (() => { const r = PROPS.filter(p => p.kind === 'rocker'); return r.length ? [Math.round((r[0].x + r[r.length - 1].x) / 2 + 40), Math.round(r[0].y + r[0].d + 70)] : [Math.round((DECK.x0 + DECK.x1) / 2), Math.round((DECK.y0 + DECK.y1) / 2)]; })();
@@ -156,10 +159,15 @@ function chase(me, c, at, shout) {
   const dist = c.dist(at, d);
   if (dist < RANGE && c.now > (mm.aim || 0)) {
     mm.aim = c.now + AIM; me.f = d.x > at.x ? 1 : -1;
-    if (c.rand() < .6) c.kill('justin', d.id, 'gun'); else c.fx('justin', d.id, 'miss');
+    if (c.rand() < .6) c.kill('justin', d.id, 'gun', STILL); else c.fx('justin', d.id, 'miss');
     ch = true;
   }
-  if (c.now > (mm.chase || 0) && dist > 120) { mm.chase = c.now + 600; if (c.go(me, d.x, d.y, SPRINT, DRY)) { me.a = 'gun'; ch = true; } }
+  /* never up close: to where his gun reaches, then he stands and shoots */
+  if (dist < RANGE * .85) { if (at.moving) { c.stop(me); me.a = 'gun'; ch = true; } }
+  else if (c.now > (mm.chase || 0)) {
+    mm.chase = c.now + 600; const k = KEEP / dist, to = nearestOpen(d.x + (at.x - d.x) * k, d.y + (at.y - d.y) * k, DRY, 4) || [d.x, d.y];
+    if (c.go(me, to[0], to[1], SPRINT, DRY)) { me.a = 'gun'; ch = true; }
+  }
   return ch;
 }
 
@@ -170,12 +178,12 @@ brain('justin', {
     notes(c); const at = npcAt(me, c.now); if (!at) return false;
     let ch = false;
     /* lines in a row (after the shadow duck got him): one every 2.5 seconds, nothing interrupts them */
-    if (mm.lines.length && c.now >= mm.lineAt) { c.say('justin', mm.lines.shift()); mm.lineAt = c.now + 2500; if (!mm.lines.length) mm.lock = c.now + 5000; ch = true; }
+    if (mm.lines.length && c.now >= mm.lineAt) { c.say('justin', mm.lines.shift(), LINE_SHOWS); mm.lineAt = c.now + LINE_GAP; if (!mm.lines.length) mm.lock = c.now + LINE_SHOWS; ch = true; }
     /* a shot promised 4 seconds after an E */
     for (const sh of mm.shots.filter(q => c.now >= q.at)) {
       mm.shots = mm.shots.filter(q => q !== sh);
       const d = c.ducks.find(q => q.id === sh.who);
-      if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun'); mm.gunDown = c.now + 1500; ch = true; }
+      if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun', STILL); mm.gunDown = c.now + 1500; ch = true; }
     }
     if (me.a === 'gun' && mm.mode !== 'chase' && mm.mode !== 'rant' && c.now > (mm.gunDown || 0)) { me.a = ''; ch = true; }
     if (mm.mode === 'dead') {
@@ -249,7 +257,7 @@ brain('justin', {
   },
 });
 /* for the shadow duck: is he up and about outside, and get him */
-export const justinFree = () => !!mm && !['dead', 'rant', 'chase', 'shadow', 'drinking'].includes(mm.mode) && !mm.lines.length;
+export const justinFree = () => !!mm && !['dead', 'rant', 'chase', 'shadow', 'shadowChase', 'drinking', 'tv', 'toTv'].includes(mm.mode) && !mm.lines.length;
 export function justinGot(me, c) { notes(c); down(me, c, 'shadow'); c.say('justin', DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]); }
 export function justinSees(me, c, x, y) { notes(c); if (!justinFree()) return false; mm.mode = 'shadowChase'; return c.go(me, x, y, SPRINT, DRY); }
 export { DOORS };

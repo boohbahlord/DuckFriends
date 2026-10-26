@@ -8,6 +8,8 @@
 @font-face { font-family: 'Fredoka'; src: url(../assets/fonts/fredoka-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Fredoka'; src: url(../assets/fonts/fredoka-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: swap; }
 @font-face { font-family: 'Fredoka'; src: url(../assets/fonts/fredoka-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Comic Neue'; src: url(../assets/fonts/comic-neue-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }   /* (Justin's words where there's no Comic Sans: phones) */
+@font-face { font-family: 'Comic Neue'; src: url(../assets/fonts/comic-neue-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'Lilita One'; src: url(../assets/fonts/lilita-one-latin-400-normal.woff2) format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Grenze Gotisch'; src: url(../assets/fonts/grenze-gotisch-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Cascadia Code'; src: url(../assets/fonts/cascadia-code-latin-200-normal.woff2) format('woff2'); font-weight: 200; font-display: swap; }
@@ -1745,7 +1747,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
   overflow-wrap: anywhere; opacity: 0; transition: opacity .6s, transform .6s; box-shadow: 0 .15rem .4rem #0003; }
 .hang-npc-say::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: #ffffffa8; }
 .hang-npc.saying .hang-npc-say { opacity: 1; transform: translate(-50%, 0); }
-.npc-justin .hang-npc-say, .chat-log p.npc-justin .npc-said { font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Comic Neue', cursive; }
+.npc-justin .hang-npc-say, .chat-log p.npc-justin .npc-said { font-family: 'Comic Sans MS', 'Comic Sans', 'Comic Neue', cursive; }
 .hang-npc-claw, .hang-npc-heart { position: absolute; width: 0; height: 0; pointer-events: none; }
 .hang-npc-claw svg { position: absolute; left: calc(-20px * var(--k)); top: calc(-20px * var(--k)); width: calc(40px * var(--k)); height: calc(40px * var(--k));
   filter: drop-shadow(0 0 3px #ff4d6d); animation: npc-claw 1s ease-out forwards; }

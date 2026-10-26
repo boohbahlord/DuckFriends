@@ -20,7 +20,7 @@ import './justin.js';
 import './shadowduck.js';
 
 const PETS = { annabelle: 'Pet Annabelle', bubbles: 'Pet Bubbles' };   // who E can pet (Oreo and Opal won't have it)
-const DUCK = 64, FADE = 1500;
+const DUCK = 64, FADE = 1500, SEEN = .78;   // (the shadow duck at its most: a little see-through)
 const feetOf = svg => (v => DUCK * (v[1] + v[3] - 10) / 120)(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
 const FEET = feetOf(justinSVG({ size: DUCK }));
 const REACH = 110, SAY = 4500, HOP = 320;
@@ -126,13 +126,13 @@ activity({
       if (r.a === 'drink' && o.a !== 'drink' && o.seen) play('gulp', { x: o.x, y: o.y });
       o.a = r.a; o.seen = true;
       if (r.o) {   // the shadow duck: fading in or out, with a whoosh close by
-        o.op = r.o.v ? Math.min(1, (now - r.o.t) / FADE) : Math.max(0, 1 - (now - r.o.t) / FADE);
+        o.op = SEEN * (r.o.v ? Math.min(1, (now - r.o.t) / FADE) : Math.max(0, 1 - (now - r.o.t) / FADE));   // (never quite solid)
         if (o.fadeT !== undefined && o.fadeT !== r.o.t && now - r.o.t < 1000 && !ctx.world.inside) play('whoosh', { x: o.x, y: o.y });
         o.fadeT = r.o.t;
       }
       /* words: a bubble for a few seconds (and a meow, a purr or a hiss nearby) */
       if (r.say && r.say.n !== o.sayN) {
-        const fresh = o.sayN && now - r.say.t < 2000; o.sayN = r.say.n; o.say.textContent = r.say.text; o.sayUntil = r.say.t + SAY;
+        const fresh = o.sayN && now - r.say.t < 2000; o.sayN = r.say.n; o.say.textContent = r.say.text; o.sayUntil = r.say.t + (r.say.d || SAY);
         if (fresh && inCabin(o.x, o.y) === ctx.world.inside) {   // (sounds fade with distance by themselves)
           const t = r.say.text;
           if (t.startsWith('Purr')) { const pl = loop('purr', { x: o.x, y: o.y }); setTimeout(() => pl.stop(), 3200); }
