@@ -356,9 +356,9 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
 /* ---------- the cabin, inside ---------- */
 /* a log wall cut away. axis 'x' runs east-west, w long: box w × (t + wallH): the cut top (t deep), then the face that
    looks south; doors are gaps [from, to] along it, windows [from, to] look out at the grass. axis 'y' runs north-south:
-   w = t, box t × (length + wallH): the cut top, then the south end's log ends; doors are gaps [from, to] along y.
+   w = t, box t × (length + wallH): the cut top, then the south end's log ends (plain: a plain log face); doors are gaps [from, to] along y.
    Foot: y = h (an 'x' wall); a 'y' wall is long in depth, so give it a foot per gap-free piece or keep it low. */
-export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], windows = [] } = {}) {
+export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], windows = [], plain = false } = {}) {
   w = axis === 'x' ? w || 400 : t;
   const id = uid(), len = axis === 'x' ? w : (h || 400 + wallH) - wallH;
   h = axis === 'x' ? t + wallH : len + wallH;
@@ -386,6 +386,7 @@ export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], wind
   } else {
     for (const [a, b] of segs) {
       s += R(0, a, w, b - a, '#c98a52', ln(2.6)) + F`<path d="M${w * .4} ${a + 3}V${b - 3}" stroke="#e8b27a" stroke-width="3" opacity=".7"/>`;
+      if (plain) { s += R(0, b, w, wallH, `url(#${id})`, ln(2.6)); continue; }   // (its end as a plain log face, no rings: by an open doorway, over the south wall's low line)
       s += R(0, b, w, wallH, '#8f4c22', ln(2.6));
       for (let y = b + wallH - 8.5; y > b + 4; y -= 17) s += F`<ellipse cx="${w / 2}" cy="${y}" rx="${w / 2 - 1.5}" ry="8" fill="#dca36a" stroke="#5e2a10" stroke-width="1.4"/><ellipse cx="${w / 2}" cy="${y}" rx="${w / 4}" ry="4" fill="none" stroke="#a0602c" stroke-width="1.2"/>`;
     }
@@ -399,35 +400,6 @@ export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
   let p = '';
   for (const [x, y] of [[10, 10], [20 + pw, 10], [10, 24 + ph], [20 + pw, 24 + ph]]) p += R(x, y, pw, ph, '#9a5526', `rx="3" ${ln(1.6)}`) + R(x + 3, y + 3, pw - 6, 4, '#c98a52', 'opacity=".6"');
   return wrap(w, h, R(0, 0, w, h, '#b06a35', `rx="3" ${ln(2.4)}`) + p + F`<circle cx="${kx}" cy="${h * .55}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door');
-}
-/* the inside doors copy the porch's door (cabinOutside's back door): an orange frame, a dark brown door, a lit window of
-   four panes in its upper half and a low panel; quad(u0, u1, v0, v1) and q(u, v) map the door's face (u along it, v up) */
-const porchGlassDef = '<linearGradient id="hg-porch-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#ffbd57"/><stop offset="1" stop-color="#f08a32"/></linearGradient>';
-function porchFace(quad, q, frame = true) {
-  return (frame ? F`<path d="${quad(-.06, 1.06, 0, 1.08)}" fill="#d98a4a" ${ln(2.4)}/>` : '')
-    + F`<path d="${quad(0, 1, 0, 1)}" fill="#8a4520" ${ln(2.2)}/><path d="${quad(.16, .84, .5, .88)}" fill="url(#hg-porch-glass)" ${ln(1.6)}/>`
-    + F`<path d="M${q(.5, .5)}L${q(.5, .88)}M${q(.16, .69)}L${q(.84, .69)}" stroke="#8a4a1f" stroke-width="3.4"/><path d="${quad(.16, .84, .1, .38)}" fill="#6e3a1a" ${ln(1.4)}/>`;
-}
-/* a shut door in a north-south wall, seen a little from its west side the way the deck's door is seen: its top edge in
-   the wall's line (x = k), its face sloping down to its foot k to the west, so its panels and knob show; len long (down
-   the screen), h high. Box (k + 8) × (len + h); the foot runs down x = 0 from y = h to h + len. knob: 'a' (north end) |
-   'b' (south end). */
-export function doorSide({ len = 150, h = 110, k = 60, knob = 'b' } = {}) {
-  const q = (u, v) => `${n1(v * k)} ${n1((1 - v) * h + u * len)}`, quad = (u0, u1, v0, v1) => `M${q(u0, v0)}L${q(u1, v0)}L${q(u1, v1)}L${q(u0, v1)}Z`;
-  const ku = knob === 'a' ? .1 : .9, kx = .48 * k, ky = (1 - .48) * h + ku * len;
-  return wrap(k + 8, len + h, F`<path d="M${q(0, 0)}L${q(1, 0)}L${n1(8 + 14)} ${n1(h + len + 4)}L${n1(-6)} ${n1(h + len + 4)}Z" fill="#000" opacity=".28"/>`
-    + porchFace(quad, q) + F`<circle cx="${n1(kx)}" cy="${n1(ky)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door', porchGlassDef);
-}
-/* a door standing open in a north-south wall, swung part way into the room: an upright panel from its hinge (on the
-   floor at 0, 0) to its free end (dx, dy) on the floor, h high, drawn the way the deck's open door is: its face, panels,
-   knob and the free end's edge. Box |dx| + 8 × (|dy| + h); returns { svg, ox, oy }: the hinge's foot in the box. */
-export function doorSwing({ len = 150, h = 110, dx = -130, dy = 75 } = {}) {
-  const x0 = Math.min(0, dx) - 4, y0 = Math.min(0, dy) - h - 4, w = Math.abs(dx) + 8, bh = Math.abs(dy) + h + 8, ox = -x0, oy = -y0;
-  const q = (u, v) => `${n1(ox + u * dx)} ${n1(oy + u * dy - v * h)}`, quad = (u0, u1, v0, v1) => `M${q(u0, v0)}L${q(u1, v0)}L${q(u1, v1)}L${q(u0, v1)}Z`;
-  const svg = wrap(w, bh, F`<path d="M${q(0, 0)}L${q(1, 0)}L${n1(ox + dx + 10)} ${n1(oy + dy + 4)}L${n1(ox + 10)} ${n1(oy + 4)}Z" fill="#000" opacity=".22"/>`
-    + porchFace(quad, q, false) + F`<path d="M${q(1, 0)}L${q(1, 1)}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${q(1, 0)}L${q(1, 1)}" stroke="#c97a3e" stroke-width="2.6" stroke-linecap="round"/>`
-    + F`<circle cx="${n1(ox + .88 * dx)}" cy="${n1(oy + .88 * dy - .48 * h)}" r="4.5" fill="#e8b84a" ${ln(1.4)}/>`, 'hg-door', porchGlassDef);
-  return { svg, ox, oy, w, h: bh };
 }
 /* a door swung open toward the viewer by ang degrees (from shut): its face turned, hinge on the left. Box
    len·cos(ang) × (h + len·sin(ang)); the hinge's foot at (0, h), the open edge's at (w, box height). */
@@ -533,7 +505,7 @@ export function coffeeTable({ w = 150, d = 100, z = 38 } = {}) {
 export function endTable({ w = 76, h = 170 } = {}) {
   const id = uid(), Y = h - 50, cx = w / 2, d = 56, t = Y - d;
   return wrap(w, h, F`<circle cx="${cx}" cy="${t - 30}" r="${w * .9}" fill="url(#${id})"/>` + shade(cx, h - 3, w / 2, 6, .3)
-    + R(6, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(w - 14, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(2, Y - 2, w - 4, 22, '#9a5526', ln(2.2)) + R(cx - 14, Y + 4, 28, 10, '#b06a35', `rx="2" ${ln(1.4)}`) + R(cx - 4, Y + 8, 8, 3, '#d9a441')
+    + R(6, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(w - 14, Y, 8, 50, '#6e3a1a', ln(1.8)) + R(2, Y - 2, w - 4, 22, '#9a5526', ln(2.2))
     + R(0, t, w, d, '#c47a3e', `rx="5" ${ln(2.4)}`) + R(5, t + 5, w - 10, d - 10, '#d08a4a', 'rx="3"')
     + F`<ellipse cx="${cx}" cy="${t + d * .55}" rx="13" ry="5" fill="#3e6d8c" ${ln(1.6)}/><path d="M${cx} ${t + d * .55}v-26" stroke="${O}" stroke-width="3.4"/><path d="M${cx - 17} ${t + d * .55 - 26}h34l-8 -28h-18Z" fill="#ffcf73" ${ln(2.2)}/><path d="M${cx - 11} ${t + d * .55 - 28}h7l-3 -22h-2Z" fill="#fff0c2" opacity=".85"/>`
     + F`<ellipse cx="${w * .22}" cy="${t + d * .7}" rx="8" ry="3.5" fill="#e8e2d0" ${ln(1.2)}/>`, 'hg-endtable', glowDef(id, '#ffb347', .5));
@@ -1131,7 +1103,7 @@ export const ART = {
   counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
   tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 80, 130, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
-  doorFace: [doorFace, 150, 150, 'foot y = h'], doorSide: [doorSide, 42, 260, 'foot along x = 0 … 8'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'], doorSwing: [o => doorSwing(o).svg, 138, 193, 'the hinge at (ox, oy)'], coffeeTable: [coffeeTable, 150, 138, 'foot y = h'], endTable: [endTable, 76, 170, 'foot y = h'], tvSet: [tvSet, 140, 240, 'foot y = h'], bookshelf: [bookshelf, 190, 140, 'foot y = h'], picture: [picture, 46, 38, 'on a wall'], wallClock: [wallClock, 48, 48, 'on a wall'], coatRack: [coatRack, 50, 170, 'foot y = h'], boots: [boots, 54, 44, 'foot y = h'], doorMat: [doorMat, 130, 64, 'flat'], pottedPlant: [pottedPlant, 60, 100, 'foot y = h'],
+  doorFace: [doorFace, 150, 150, 'foot y = h'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'], coffeeTable: [coffeeTable, 150, 138, 'foot y = h'], endTable: [endTable, 76, 170, 'foot y = h'], tvSet: [tvSet, 140, 240, 'foot y = h'], bookshelf: [bookshelf, 190, 140, 'foot y = h'], picture: [picture, 46, 38, 'on a wall'], wallClock: [wallClock, 48, 48, 'on a wall'], coatRack: [coatRack, 50, 170, 'foot y = h'], boots: [boots, 54, 44, 'foot y = h'], doorMat: [doorMat, 130, 64, 'flat'], pottedPlant: [pottedPlant, 60, 100, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],

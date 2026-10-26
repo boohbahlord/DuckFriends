@@ -51,13 +51,16 @@ function wallParts(p) {
   }
   /* north-south: a run of pieces; only the run's south end shows its log ends, the rest is the cut top */
   const b = p.y + p.d - 12, end = !WALLS.some(q => q !== p && q.x === p.x && q.w < q.d && Math.abs(q.y + 12 - b) < 1 && (q.only || '') === (p.only || ''));
-  const door = L.DOORWAYS.some(d => d.axis === 'y' && Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2);   // (at a door: its frame, no log ends)
-  const tee = L.PROPS.some(q => (q.kind === 'wall' || q.kind === 'stub') && q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w);   // (into an east-west wall, or the south wall's low stub: no log ends there)
-  if (end && !door && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: p.d + p.h, wallH: p.h }), p.x, t, p.w, p.d + p.h, p.key, { fade: p.fade, only: 'in' })];
+  const gap = L.OPENINGS.some(d => Math.abs(d.at - (p.x + p.w / 2)) < 2 && Math.abs(d.a - b) < 2);   // (at an open doorway)
+  const into = q => q.w > q.d && (q.only || 'in') === (p.only || 'in') && Math.abs(q.y + 12 - b) < 2 && q.x < p.x && q.x + q.w > p.x + p.w;
+  const tee = WALLS.some(into), low = !tee && L.PROPS.some(q => q.kind === 'stub' && into(q));   // (into an east-west wall: hidden behind its face; over the south wall's low line: its end shows)
   /* a run that starts at an east-west wall: its top starts at that wall's top's front edge (the east-west wall's top runs
      on over the corner; nothing sticks out over it) */
   const head = WALLS.some(q => q.w > q.d && q.only !== 'out' && Math.abs(q.y - p.y) < 1 && q.x <= p.x && q.x + q.w >= p.x + p.w) ? 24 : 0, o = head ? 0 : -12, d = p.d - head;
-  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o + 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}" stroke="#1c1c28" stroke-width="2.6"/>${door ? `<rect x="-2" y="${d - 12}" width="${p.w + 4}" height="10" fill="#6e3a1a" stroke="#1c1c28" stroke-width="2"/>` : ''}</svg>`;
+  /* its south end showing (free, at a doorway, over the low line): the end down to the floor; plain logs at a doorway and
+     over the low line (no rings there) */
+  if (end && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: d + p.h, wallH: p.h, plain: gap || low }), p.x, t + head, p.w, d + p.h, p.key, { fade: p.fade, only: 'in' })];
+  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o + 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
   return [part(top, p.x, t + head, p.w, d, p.key, { fade: p.fade, only: 'in' })];
 }
 
@@ -94,26 +97,14 @@ function treeBox(p) {
 /* ---------- the props, kind by kind ---------- */
 const at = (p, w, h, foot = h, cx = p.x + p.w / 2) => ({ l: cx - w / 2, t: p.y + p.d - p.z - foot });   // a box whose foot (y = foot in it) is the prop's front, centered on it
 const one = (p, svg, w, h, foot = h, o = {}) => { const b = at(p, w, h, foot, o.cx); return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)]; };
-/* a door in a north-south wall, open: swung 60° from the wall into the room on its swing side, its free end toward the
-   doorway's other end (art.js' doorSwing), sorted by its nearer end */
-function swung(d, len, hy, o) {
-  const r = Math.PI / 3, dx = (d.swing === 'e' ? 1 : -1) * len * Math.sin(r), dy = (d.hinge === 'a' ? 1 : -1) * len * Math.cos(r);
-  const a = A.doorSwing({ len, h: d.h, dx, dy });
-  return part(() => a.svg, d.at - a.ox, hy - a.oy, a.w, a.h, Math.max(hy, hy + dy) + 4, { ...o, cls: 'door-open' });
-}
 const COUCH = { couch1: '#a8382c', couch2: '#3d6e4f' };
 export const DRAW = {
   wall: wallParts,
   stub: p => [part(() => A.logWall({ w: p.w, wallH: p.h, t: p.d }), p.x, p.y - p.h, p.w, p.d + p.h, p.key)],
   doorway: () => [],
-  /* a door (layout.js' DOORWAYS): a shut part and an open one, doors.js shows one ("open" on the prop) */
+  /* a door (layout.js' DOORWAYS: the front door, the back door): a shut part and an open one, doors.js shows one ("open" on the prop) */
   door(p) {
     const d = p.door, len = d.b - d.a, o = { only: 'in' };
-    if (d.axis === 'y') {   // in a north-south wall: shut, a plank in the wall's line; open, its face standing across the room's side
-      const hy = d.hinge === 'a' ? d.a : d.b;
-      return [part(() => A.doorSide({ len, h: d.h, knob: d.hinge === 'a' ? 'b' : 'a' }), d.at - 60, d.a - d.h, 68, len + d.h, d.b - 2, { ...o, cls: 'door-shut' }),
-        swung(d, len, hy, o)];
-    }
     if (d.id === 'door-front') {   // in the north wall, seen from inside: a lintel of logs over it; shut, its face; open, swung in toward the room
       const top = d.at - T - C.wall;
       return [part(() => A.logWall({ w: len, wallH: C.wall - d.h, t: 2 * T }), d.a, top, len, 2 * T + C.wall - d.h, d.at + 6, o),   // (shut, its face; open, swung in)

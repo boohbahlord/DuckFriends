@@ -1930,3 +1930,19 @@ Decisions:
 - The shadow duck never goes into the cabin, onto the deck, or into the light of a lamppost, a window or the campfire
   (its paths are blocked there; a put-out fire would be s.hang.fire === 0, there's no way to put it out yet). It's a
   little see-through (78% at most). A duck that runs away from it isn't followed: it fades away.
+
+## Request (2026-10-26 06:52Z)
+> WHO THE FUCK WOULD EVER GIVE U A PASS ON THOSE DOORS!?! THOSE DOORS ARENT EVEN FUCKING STANDING! YK WAT JUST REMOVE THE DOORS INSIDE ITS NOT EVEN WORTH IT BECAUSE U CANT EVEN! ONLY LEAVE THE DOOR TO THE FRONT ENTRANC3 AND TO THE BALCONY!
+>
+> Also, justin should have his thing say his name under his duck like he is another player.
+>
+> I have a screenshot, u are missing a wall here it looks like in the corner AND the end table has a little cabinet drawer that shouldnt be showing because i dont want it there. The reason i dont want it there, if ur wondering, is because it is on the wrong side, which means its out of view and u dont have to worry about adding it somewhere, we can just remove that one little cabinet fron the end table.
+> I put a highlighter around the very small part for u to remove
+
+Decisions:
+- Every inside door is gone (layout.js OPENINGS: open gaps). Only the front door and the back door to the deck stay.
+- Justin's name shows under him in a pill like a player's; while he sits on a couch it goes over his head, as a seated
+  player's does.
+- The missing wall: a north-south wall's south end over the south wall's low line (and at an open doorway) showed only its
+  top, so it looked cut short. Its end now shows down to the floor, as a plain log face (no rings).
+- The end table's drawer is gone.
