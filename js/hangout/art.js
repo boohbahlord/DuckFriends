@@ -53,7 +53,7 @@ function stones(x, y, w, h, seed, rowH = 22) {
   return out;
 }
 /* warm bulbs on a wire that sags between hooks: three sets that twinkle in turn */
-function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1) {
+function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1, big = 1) {
   const n = Math.max(1, Math.round((x1 - x0) / hook)), seg = (x1 - x0) / n, sets = ['', '', ''];
   let wire = '', k = 0;
   for (let i = 0; i < n; i++) {
@@ -62,7 +62,9 @@ function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1) {
     const nb = Math.max(2, Math.round(seg / gap));
     for (let j = 1; j < nb; j++) {
       const t = j / nb, bx = (1 - t) * (1 - t) * a + 2 * (1 - t) * t * m + t * t * b, by = y + 2 * (1 - t) * t * sag * 2 + 5;
-      sets[k++ % 3] += F`<circle cx="${bx}" cy="${by + 2}" r="9" fill="#ffb347" opacity=".3"/><ellipse cx="${bx}" cy="${by + 2}" rx="3.6" ry="4.6" fill="#ffd98a" stroke="#6a3a12" stroke-width="1.2"/>`;
+      sets[k++ % 3] += big > 1
+        ? F`<path d="M${bx} ${by - 2}V${by + 34}" stroke="#2a1a10" stroke-width="2.4"/><circle cx="${bx}" cy="${by + 34 + 7 * big}" r="${9 * big}" fill="#ffb347" opacity=".42"/><ellipse cx="${bx}" cy="${by + 34 + 7 * big}" rx="${3.6 * big}" ry="${4.6 * big}" fill="#ffe7a8" stroke="#6a3a12" stroke-width="1.6"/>`
+        : F`<circle cx="${bx}" cy="${by + 2}" r="9" fill="#ffb347" opacity=".3"/><ellipse cx="${bx}" cy="${by + 2}" rx="3.6" ry="4.6" fill="#ffd98a" stroke="#6a3a12" stroke-width="1.2"/>`;
     }
   }
   return `<path d="${wire}" stroke="#2a1a10" stroke-width="2" fill="none"/>` + sets.map((s, i) => `<g class="hg-twinkle" style="animation-delay:-${(i * .8 + seed * .3).toFixed(1)}s">${s}</g>`).join('');
@@ -856,13 +858,13 @@ export function deck({ w = 2100, d = 400, rail = 50, drop = 190, gapE = [0, 150]
   const pr = Math.max(1, Math.round(w / 210));
   for (let i = 0; i <= pr; i++) { const x = Math.min(w - 14, Math.max(0, i * w / pr - 7)); front += R(x, S - rail - 6, 14, rail + 6, '#c06d30', ln(2.2)); }
   front += R(-4, S - rail - 12, w + 8, 8, '#e8a060', ln(2.2)) + R(-4, S - rail - 4, w + 8, 6, '#a65a2c', ln(1.8));
-  if (bulbs) front += stringLights(0, w, S - rail - 6, 14, w / pr, 28, 5);
+  if (bulbs) front += stringLights(0, w, S - rail - 6, 14, w / pr, 28, 5, 2.6);
   return pair(w, h, [back, boards + glowDef(id + 'w', '#ffb347', .38)], [front, lat], Y, S);
 }
 /* the deck's string lights on their own (a bulbs: false deck's box and place), so they can stutter */
 export function deckBulbs({ w = 2100, d = 400, rail = 50, drop = 190 } = {}) {
   const pr = Math.max(1, Math.round(w / 210));
-  return wrap(w, rail + d + drop, stringLights(0, w, rail + d - rail - 6, 14, w / pr, 28, 5), 'hg-bulbs');
+  return wrap(w, rail + d + drop, stringLights(0, w, rail + d - rail - 6, 14, w / pr, 28, 5, 2.6), 'hg-bulbs');
 }
 /* the deck's stairs: a landing at the deck's height, then steps down south to the ground rise lower, railings on both
    sides. Footprint w × d (landing first), box w × (rail + d + rise); the landing's north edge at y = rail. back: the
