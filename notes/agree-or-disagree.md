@@ -1999,3 +1999,36 @@ all 48 keys (Enter, Shift, Space too; the numpad's Enter as well) are kept from 
 > Someone can add a cowboy hat to the game hats
 
 Decision: a recolorable Cowboy hat (hat and band colors) in the "Hair, hats and caps" group, in the same outlined style as the sombrero and bucket hat.
+
+## Request (2026-10-26 15:27Z): a Specials button for phones (the piano part went to another thread)
+
+> The bottom right of a mobile players screen should have a button they click to bring up a vertical column of all their specials they have selected, and they can use them from there, and holding down a special gives the box option to click "Toggle on", which works how it would for PC when you toggle it on obv, same feature, just a UI solution for mobile players.
+
+Decisions:
+- A round Specials button (the Notes/chat button's style) in the bottom bar's right corner, only where the row of keys
+  is hidden (no mouse or touchpad, or a window under 760 px). Computers see no change.
+- Tapping it opens a column of your chosen specials over it, the same buttons as the finger-held ring (icons, key
+  numbers, cooldown bars, green when kept on); it stays open until the button is tapped again or anywhere else is. On a
+  short screen (a phone on its side) it goes into a second column instead of over the top bar.
+- A tap uses a special; holding one half a second shows a "Toggle on" box beside it ("Toggle off" when it's on), which
+  keeps it on like Shift and its key. The finger-held ring still works.
+- A handgun or dagger kept out (Toggle on) fires toward where you tap the board, the way a click does; nothing new was
+  built for it.
+
+## Request (2026-10-26 15:47Z): the Sound special, faded for now
+
+> there can be a small easy step where we make the sound option faded out and unable to be selected until i get around to how i want that to work
+
+Decisions:
+- Sound (🔊) is faded in Customize → Specials and can't be put on a key (tap, click or keyboard); no new words.
+- A duck that already has it keeps it on its key, but the key, the hotbar, the ring and the phone column show it faded,
+  and it does nothing. Computer players never pick it.
+
+## Request (2026-10-26 15:50Z): the Specials button's icon
+
+> The special button should have the symbol of any special the player has just taking turns appearing, and if they have no specials selected, it takes turns through all the specials. If a player doesn't have specials equiped, then clicking it will tell them that specials are chosen in the customization menu.
+
+Decisions:
+- The button shows your specials' icons in turn, one every 1.5 s with a short cross-fade (no fade with reduced motion);
+  with none chosen it goes through all the specials. The faded Sound is left out of both. The button's size never changes.
+- With none chosen, a tap shows the tip "Pick your specials in Customize → Specials."

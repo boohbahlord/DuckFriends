@@ -81,8 +81,8 @@ const TREE = {
         'style color 3': { vals: COLOR_HINT, run: v => styleTone('color3', v) },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
-        special: { vals: ['none', ...SPECIALS.map(x => x.id)], run: v => {   // a special onto a number key: "trombone 3" (no number: the first free key); none takes them all off
-          const [k, n] = String(v).toLowerCase().trim().split(/\s+/), x = SPECIALS.find(y => y.id === k), keys = profile.duck.keys = keysOfDuck(profile.duck);
+        special: { vals: ['none', ...SPECIALS.filter(x => !x.off).map(x => x.id)], run: v => {   // a special onto a number key: "trombone 3" (no number: the first free key); none takes them all off
+          const [k, n] = String(v).toLowerCase().trim().split(/\s+/), x = SPECIALS.find(y => y.id === k && !y.off), keys = profile.duck.keys = keysOfDuck(profile.duck);
           if (k === 'none') { keys.fill(null); return 'Specials: none'; }
           if (!x || (n !== undefined && !KEYS.includes(n))) return bad(v);
           const was = keys.indexOf(x.id), i = n !== undefined ? KEYS.indexOf(n) : was >= 0 ? was : Math.max(0, keys.indexOf(null));

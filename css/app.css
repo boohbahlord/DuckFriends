@@ -1113,7 +1113,23 @@ html.still .spe-bone .bone-slide { animation: none; }
 .sp-wbtn i { font-style: normal; font-size: 1.4rem; line-height: 1; pointer-events: none; }
 .sp-wbtn b { position: absolute; right: -.2rem; bottom: -.2rem; min-width: 1.05rem; height: 1.05rem; padding: 0 .15rem; border-radius: .3rem; background: var(--bg); color: var(--ink); font-size: .65rem; line-height: 1.05rem; text-align: center; pointer-events: none; }
 .sp-wbtn.on { border-color: var(--green); box-shadow: 0 0 .5rem var(--green); }
+/* a special that's off for now (Sound): faded wherever it shows, and nothing happens */
+.sp-tile.off, .sp-key.off, .hk.off, .sp-wbtn.off { opacity: .35; filter: grayscale(1); }
+.sp-tile.off .arm-tile, .sp-tile.off .sp-prev { cursor: default; pointer-events: none; }
 @keyframes wheelin { from { transform: scale(.4); opacity: 0; } }
+/* on a phone: the Specials button (bottom right) and its column of specials over it */
+.sp-btn { display: none; }
+.sp-cyc { position: relative; width: 1.5rem; height: 1.5rem; overflow: hidden; }   /* (a fixed box: a wide icon never changes the button) */
+.sp-cyc i { position: absolute; inset: 0; display: grid; place-items: center; font-style: normal; font-size: 1.1rem; line-height: 1; opacity: 0; transition: opacity .3s ease; }
+.sp-cyc i.up { opacity: 1; }
+.sp-cyc i svg { width: 1.3em; height: auto; display: block; }
+@media (prefers-reduced-motion: reduce) { .sp-cyc i { transition: none; } }
+.sp-btn.open { border-color: var(--yellow); box-shadow: 0 .15rem 0 var(--line), 0 0 .45rem .1rem color-mix(in srgb, var(--yellow) 65%, transparent); }
+@media not all and (any-pointer: fine) { html:not(.keyboard) .sp-btn { display: grid; } }   /* (the same phones that have no row of keys) */
+@media (max-width: 760px) { .sp-btn { display: grid; } }
+.sp-col { position: fixed; z-index: 80; display: flex; flex-direction: column; flex-wrap: wrap-reverse; align-content: flex-start; gap: .45rem; touch-action: none; }
+.sp-col .sp-wbtn { position: relative; margin: 0; }
+.sp-toggle { position: absolute; right: calc(100% + .45rem); top: 50%; transform: translateY(-50%); white-space: nowrap; padding: .35rem .7rem; border-radius: .7rem; border: .14rem solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: .8rem; font-weight: 700; box-shadow: 0 .15rem 0 var(--line); animation: wheelin .15s ease-out; }
 /* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
 .sp-keys { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: .25rem; }
 .sp-key { position: relative; display: grid; place-items: center; aspect-ratio: 1; min-width: 0; padding: 0; border: .12rem dashed var(--line); border-radius: .45rem; background: transparent; color: var(--dim); cursor: pointer; font: inherit; }

@@ -7,7 +7,7 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast, onMenu, el, navSig, refocus } from './ui.js';
-import { SPECIALS, KEYS, specialById, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, daggerHTML } from './specials.js';
+import { SPECIALS, KEYS, specialById, isOff, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, daggerHTML } from './specials.js';
 import { sfx } from './sound.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
@@ -171,11 +171,11 @@ export function openCustomize(page = lastPage) {
           /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
              special's tile opens a box for each key right under it */
           const keys = keysOf(D), open = specialById(keyFor), phone = !matchMedia('(any-pointer: fine)').matches;   // (only a touch screen: a touchscreen laptop has a touchpad too)
-          const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
+          const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}${isOff(id) ? ' off' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
           const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(x => {
             const at = keys.indexOf(x.id), opened = x.id === keyFor;
-            return `<div class="sp-tile"><button type="button" class="arm-tile" data-g="special" data-v="${x.id}" aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(x.tip)}"><span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ''}</button>
-              <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}" aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button></div>
+            return `<div class="sp-tile${x.off ? ' off' : ''}"><button type="button" class="arm-tile" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ''} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(x.tip)}"><span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ''}</button>
+              <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? ' disabled' : ''} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button></div>
               ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ''}"`)).join('')}</div>` : ''}`;
           }).join('');
           html = head('Specials') + `<div class="arm-body arm-specials"><h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join('')}</div>
@@ -264,7 +264,7 @@ export function openCustomize(page = lastPage) {
         if (a) {
           if (a.dataset.a === 'back') { keyFor = null; show(null); return; }
           if (a.dataset.a === 'preview') { preview(a.dataset.v); return; }
-          if (a.dataset.a === 'setkey') { const keys = keysOf(D), i = +a.dataset.i, was = keys.indexOf(keyFor); if (was >= 0) keys[was] = null; keys[i] = keyFor; D.keys = keys; keyFor = null; changed(); return; }   // (one key per special: it moves)
+          if (a.dataset.a === 'setkey' && !isOff(keyFor)) { const keys = keysOf(D), i = +a.dataset.i, was = keys.indexOf(keyFor); if (was >= 0) keys[was] = null; keys[i] = keyFor; D.keys = keys; keyFor = null; changed(); return; }   // (one key per special: it moves)
           if (a.dataset.a === 'unkey') { const keys = keysOf(D); keys[+a.dataset.i] = null; D.keys = keys; changed(); return; }
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
@@ -283,7 +283,7 @@ export function openCustomize(page = lastPage) {
           style: () => { D.style = v; },   // (nothing else changes; Match the … look brings in the rest)
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },
-          special: () => { keyFor = keyFor === v ? null : v; },   // its key boxes open (or shut) under it
+          special: () => { if (!isOff(v)) keyFor = keyFor === v ? null : v; },   // its key boxes open (or shut) under it
           skin: () => { D.image = null; if (v.startsWith('m:')) D.metal = v.slice(2); else { D.metal = 'none'; D.pattern = v.slice(2); } },
           nfont: () => { N.font = v; },
           cpat: () => { C.pattern = v; C.image = null; },

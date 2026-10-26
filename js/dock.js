@@ -17,11 +17,12 @@ const put = (box, nodes) => {
 };
 export function mountDocks(S, hints = '') {
   const notes = notesWidget(), chat = chatWidget();
+  let right = [];   // what else sits in the bottom bar's right corner (the Specials button on phones)
   const hintEl = hints ? Object.assign(document.createElement('span'), { className: 'hints', innerHTML: hints }) : null;
   const place = () => {
     const side = profile.settings.chatSide;
     put($('.bbar-l', S), [notes.btn, ...(side === 'right' || side === 'hidden' ? [] : [chat.btn]), ...(hintEl ? [hintEl] : [])]);
-    put($('.bbar-r', S), side === 'right' ? [chat.btn] : []);
+    put($('.bbar-r', S), [...(side === 'right' ? [chat.btn] : []), ...right]);
     put($('.dock-l', S), [notes.panel, ...(side === 'left' || side === 'hidden' ? [chat.panel] : [])]);
     put($('.dock-r', S), side === 'right' ? [chat.panel] : []);
     put($('.dock-b', S), side === 'bottom' ? [chat.panel] : []);
@@ -35,7 +36,7 @@ export function mountDocks(S, hints = '') {
   notes.onToggle = chat.onToggle = sync;
   place(); showJumps(S);
   document.addEventListener('settings', place);
-  return { destroy() { chat.destroy(); document.removeEventListener('settings', place); } };
+  return { corner(node) { right = [node]; place(); }, destroy() { chat.destroy(); document.removeEventListener('settings', place); } };
 }
 /* the grid pieces every docked screen has */
 export const DOCK_HTML = '<div class="dock-l"></div><div class="dock-r"></div><div class="dock-b"></div>';
