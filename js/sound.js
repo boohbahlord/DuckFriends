@@ -101,6 +101,26 @@ export const sfx = {
     noise(.35, { gain: .14, type: 'lowpass', freq: 900, at: 2.1, slideTo: 120 }); tone(98, .4, { type: 'triangle', gain: .14, at: 2.1, slide: .6 });
   },
 };
+/* the start screen: the duck drops through its cloud. A soft puff of cloud, then a slide whistle falling away (scheduled
+   a little ahead, every part from silence and back to it). On a's clock into dest: the test page renders it offline */
+export function diveVoice(a, dest, t, v = 1) {
+  const n = Math.ceil(a.sampleRate * .5), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource(), lp = a.createBiquadFilter(), pg = a.createGain();
+  src.buffer = buf; lp.type = 'lowpass'; lp.Q.value = .5; lp.frequency.setValueAtTime(1300, t); lp.frequency.exponentialRampToValueAtTime(260, t + .42);
+  pg.gain.setValueAtTime(0, t); pg.gain.linearRampToValueAtTime(.09 * v, t + .02); pg.gain.setTargetAtTime(0, t + .06, .08);
+  src.connect(lp).connect(pg).connect(dest); src.start(t); src.stop(t + .06 + .48);
+  const w = t + .08, end = w + 1.15, o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(), lfo = a.createOscillator(), dep = a.createGain();
+  o.type = 'sine'; o2.type = 'triangle';
+  for (const x of [o, o2]) { x.frequency.setValueAtTime(1050, w); x.frequency.exponentialRampToValueAtTime(240, end); lfo.connect(dep).connect(x.frequency); }
+  lfo.frequency.value = 5.5; dep.gain.setValueAtTime(0, w); dep.gain.linearRampToValueAtTime(14, w + .5);   // a little wobble as it falls
+  const g2 = a.createGain(); g2.gain.value = .3; o2.connect(g2).connect(g); o.connect(g);
+  g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(.075 * v, w + .04); g.gain.setValueAtTime(.075 * v, end - .35); g.gain.linearRampToValueAtTime(0, end);
+  g.connect(dest);
+  for (const x of [o, o2, lfo]) { x.start(w); x.stop(end + .05); }
+}
+export function dive() { const a = ac(), v = vol(); if (a && v) diveVoice(a, a.destination, a.currentTime + .03, v); }
+
 /* browsers start sound only after the first touch or key */
 addEventListener('pointerdown', ac, { once: true });
 addEventListener('keydown', ac, { once: true });
