@@ -50,6 +50,9 @@ const items = [
   ['chalkFloor', A.chalkFloor(), .6], ['eraserTile', A.eraserTile()], ['wipeTile', A.wipeTile()], ['chalkTile', A.chalkTile()], ['bookStand', A.bookStand()],
   ['counter sink', A.counter({ w: 260, sink: 150 })], ['fridge', A.fridge()], ['stove', A.stove()], ['kitchenTable', A.kitchenTable()],
   ['tub', A.tub()], ['sink', A.sink()], ['toilet', A.toilet()], ['bed', A.bed()], ['nightstand', A.nightstand()],
+  ['couch 3 facing w', A.couch({ w: 100, len: 380, seats: 3, facing: 'w', color: '#3d6e4f' })], ['coffeeTable', A.coffeeTable()], ['endTable', A.endTable()], ['tvSet', A.tvSet()], ['card table', A.kitchenTable({ cards: true })],
+  ['bookshelf', A.bookshelf()], ['picture duck', A.picture()], ['picture hills', A.picture({ kind: 'hills' })], ['wallClock', A.wallClock()], ['coatRack', A.coatRack()], ['boots', A.boots()], ['doorMat', A.doorMat()], ['pottedPlant', A.pottedPlant()],
+  ['doorSide', A.doorSide()], ['doorSwing', A.doorSwing().svg],
   ['logWall x', A.logWall({ w: 400, wallH: 40, doors: [[150, 250]] })], ['logWall x tall', A.logWall({ w: 500, wallH: 170, windows: [[300, 440]], doors: [[80, 180]] })], ['logWall y', A.logWall({ axis: 'y', w: 24, h: 340, doors: [[120, 220]] })],
   ['pool', A.pool(), .45], ['laneRope', A.laneRope({ h: 300 })], ['rubberDuck', A.rubberDuck()], ['beachBall', A.beachBall()],
   ['campfire', A.campfire()], ['logSeat x', A.logSeat()], ['logSeat y', A.logSeat({ axis: 'y' })], ['trampoline', A.trampoline()],
@@ -135,8 +138,9 @@ function world(inside) {
     yw(3500, 1100, 1500, [[100, 220]]); yw(3500, 1650, 2176, [[200, 320]]); yw(3900, 1100, 1650, [[420, 540]]);
     wall({ w: 800, wallH: 36 }, 3500, 1100); wall({ w: 400, wallH: 36 }, 3500, 1500); wall({ w: 800, wallH: 36 }, 3500, 1650);
     at(A.fireplace(), 2170, 696);
-    at(A.couch({ w: 450 }), 2490, 1190); at(A.couch({ w: 100, len: 360, seats: 2, facing: 'e', color: '#3d6e4f' }), 2370, 1190);
-    at(A.floorLamp(), 2940, 1170); at(A.floorLamp(), 2386, 816); at(A.floorLamp(), 1314, 1550);
+    at(A.couch({ w: 280, seats: 2 }), 2895, 2178); at(A.couch({ w: 100, len: 380, seats: 3, facing: 'w', color: '#3d6e4f' }), 3182, 2070); at(A.couch({ w: 100, len: 150, seats: 1, facing: 'w', color: '#c4803a' }), 2448, 862);
+    at(A.endTable(), 3194, 2174); at(A.coffeeTable(), 2965, 1950); at(A.tvSet(), 2745, 1764); at(A.bookshelf(), 2610, 652); at(A.kitchenTable({ cards: true }), 2200, 1360, { foot: 230 });
+    at(A.floorLamp(), 3127, 1670); at(A.floorLamp(), 1314, 1550); at(A.coatRack(), 1876, 728); at(A.boots(), 2090, 714); at(A.pottedPlant(), 1315, 2170); at(A.pottedPlant(), 2645, 2170);
     at(A.pianoBody({ w: 540 }), 1340, 692);
     at(A.stage(), 3038, 1003); at(A.stageStairs({ w: 80, d: 147, z: 70, steps: 6 }), 3208, 1140); at(A.micStand(), 3055, 818, { sy: SY(818) - 70 });
     at(A.bookStand(), 2087, 676);
