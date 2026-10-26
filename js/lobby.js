@@ -107,7 +107,7 @@ const OPT_TIPS = {
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
   bbTimer: 'None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.',
   scTime: 'How long each writer gets for their line. Off: as long as they need. When time runs out, whatever is typed is sent.',
-  scVote: 'Voting on the favorite line and secret word after each paragraph. Off: the story just keeps going. Auto: off with 2 players, on with 3 or more.',
+  scVote: 'Voting on the favorite line and secret word after each paragraph. Off: the story just keeps going. Auto: off with 2 or 3 players, on with 4 or more.',
   wqPicker: 'Each round a random player (never the Quack) picks the secret word and its category, or the game picks one.',
   wqPickTime: 'When time runs out, whatever the picker typed is used, or a word from the list.',
   wqQuacks: 'Two Quacks only with 6 or more players.',
