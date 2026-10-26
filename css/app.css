@@ -1735,7 +1735,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 /* ---------- Hangout: the cabin's characters (hangout/characters.js) ---------- */
 .hang-npc { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .hang-npc-body { position: absolute; }
-.hang-npc-name { position: absolute; left: 0; top: .4rem; transform: translateX(-50%); font-size: calc(.76rem * var(--ts, 1)); opacity: .72; white-space: nowrap; background: color-mix(in srgb, var(--panel) 70%, transparent); border-radius: .4rem; padding: 0 .3rem; }   /* (Justin's name under his feet, like .gduck-name) */
+.hang-npc-name { left: 0; top: var(--nt, 0px); transform: translateX(-50%); }   /* (Justin's name: a player's .gduck-name, under his drawing) */
 .hang-npc.dead .hang-npc-name { opacity: .4; }
 .hang-npc.sat .hang-npc-name { top: auto; bottom: calc(var(--h, 30px) + .1rem); opacity: .8; }
 .hang-npc.sat .hang-npc-say { bottom: calc(var(--h, 30px) + 1.6rem); }
