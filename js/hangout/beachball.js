@@ -1,53 +1,51 @@
 /* ---------- the beach ball ----------
    It floats in the pool. A duck that walks or swims into it bats it along (harder at a sprint); a duck jumping up under
-   it heads it high into the air; it bounces on the ground and plops back on the water. Knocked out of the pool it rolls
-   back toward it, and it never gets more than about 250 px from the pool's edge.
+   it heads it high into the air; it bounces on the ground and plops back on the water. It never leaves the pool: the
+   water's edges are its walls. Hitting the west wall rings a dark ping and lights that wall dark blue; the east wall, a
+   bright ping and pink (a hit is counted in the ball's own numbers, hn, hs and hv, so every screen sees and hears it).
    The host decides every touch (its heartbeat looks at where the ducks are) and writes the ball down only then:
    s.hang.beachball = { x, y, z, vx, vy, vz, t, rest } (world px, px a second, the room's time). Between touches every
    screen, and the host, moves it on from there with the same steps of 1/60 s (move()), so they all see it in the same
    place without the ball going over the network all the time. */
 import { rule, activity } from './registry.js';
 import { POOL, W, H, heightAt, solidsAt } from './layout.js';
-import { WATER, SOUTH, ripple, splash } from './water.js';
+import { WATER, SOUTH, ripple, splash, wallGlow } from './water.js';
+import { play } from './sounds.js';
 import { beachBall } from './art.js';
 import { sfx } from '../sound.js';
 
 const R = 24, DR = 26;          // the ball's radius; a duck's reach round its middle (world px)
 const G = 1100, STEP = 1000 / 60, MAX = 60 * 180;   // gravity (light: it floats down); one step (ms); at most 3 minutes of steps
-const FAR = 250, PULL = 120;    // how far from the pool it may get; how hard it rolls back toward it
+const X0 = POOL.x0 + R, X1 = POOL.x1 - R, Y0 = POOL.y0 + R;   // the pool's walls, for the ball's middle (the near wall is SOUTH: the coping)
+const PING = 70;                // a wall hit this fast (px a second) is a ping
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const r1 = v => Math.round(v * 10) / 10;
-/* how far (x, y) is outside the pool, and the way back to it */
-function outside(x, y) {
-  const nx = cl(x, POOL.x0, POOL.x1), ny = cl(y, POOL.y0, POOL.y1), dx = nx - x, dy = ny - y, d = Math.hypot(dx, dy);
-  return { d, ux: d ? dx / d : 0, uy: d ? dy / d : 0 };
-}
 const onWater = (x, y) => heightAt(x, y) === WATER && x > POOL.x0 && x < POOL.x1 && y > POOL.y0 && y < POOL.y1;
 /* can the ball roll onto (x, y) at height z? (a wall, a post, a step up of more than 8: no) */
 const open = (x, y, z) => x > 160 && x < W - 160 && y > 160 && y < H - 160 && heightAt(x, y) <= z + 8 && !solidsAt(x, y, z + 4).length;
 
+/* the ball hit the west ('w') or east ('e') wall at speed v */
+function wall(b, side, v) { if (v > PING) { b.hn = (b.hn || 0) + 1; b.hs = side; b.hv = Math.round(v); } }
 /* one step of 1/60 s */
 function step(b) {
   const dt = STEP / 1000, sfc = heightAt(b.x, b.y);
   if (b.z > sfc + .5 || b.vz > 0) { b.vz -= G * dt; b.z += b.vz * dt; }
   const wet = onWater(b.x, b.y);
   if (b.z <= sfc + .5 && b.vz <= 0) { b.z = sfc; if (b.vz < 0) { b.vz = -b.vz * (wet ? .22 : .55); if (b.vz < 70) b.vz = 0; } }
-  const low = b.z <= sfc + .5 && b.vz === 0, o = outside(b.x, b.y);
+  const low = b.z <= sfc + .5 && b.vz === 0;
   const k = Math.exp(-(low ? (wet ? 1.1 : 1.6) : .25) * dt); b.vx *= k; b.vy *= k;
-  if (low && o.d > 0) { b.vx += o.ux * PULL * dt; b.vy += o.uy * PULL * dt; }   // out of the pool: back it rolls
   const sx = Math.sign(b.vx) * R * .7, sy = Math.sign(b.vy) * R * .7;
-  let nx = b.x + b.vx * dt, ny = b.y + b.vy * dt, hx = false, hy = false;
+  let nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
   const stuck = solidsAt(b.x, b.y, b.z + 4).length > 0;   // (pushed into a post or a trunk: it rolls out freely)
-  if (!stuck && !open(nx + sx, b.y, b.z)) { b.vx = -b.vx * .5; nx = b.x; hx = true; }
-  if (!stuck && !open(nx, ny + sy, b.z)) { b.vy = -b.vy * .5; ny = b.y; hy = true; }
-  const f = outside(nx, ny);
-  if (f.d > FAR) {   // as far as it goes: back to the edge of that, and back the other way
-    nx += f.ux * (f.d - FAR); ny += f.uy * (f.d - FAR);
-    const out = -(b.vx * f.ux + b.vy * f.uy); if (out > 0) { b.vx += f.ux * out * 1.4; b.vy += f.uy * out * 1.4; }
-  }
-  if (wet && b.z <= WATER + 2 && ny > SOUTH) { ny = SOUTH; if (b.vy > 0) b.vy = -b.vy * .5; }   // (afloat: never in the near strip, under the coping)
+  if (!stuck && !open(nx + sx, b.y, b.z)) { b.vx = -b.vx * .5; nx = b.x; }
+  if (!stuck && !open(nx, ny + sy, b.z)) { b.vy = -b.vy * .5; ny = b.y; }
+  /* the pool's walls: it bounces off them (a little softer than it came) */
+  if (nx < X0) { nx = X0; if (b.vx < 0) { wall(b, 'w', -b.vx); b.vx = -b.vx * .6; } }
+  else if (nx > X1) { nx = X1; if (b.vx > 0) { wall(b, 'e', b.vx); b.vx = -b.vx * .6; } }
+  if (ny < Y0) { ny = Y0; if (b.vy < 0) b.vy = -b.vy * .6; }
+  else if (ny > SOUTH) { ny = SOUTH; if (b.vy > 0) b.vy = -b.vy * .6; }
   b.x = nx; b.y = ny;
-  if (low && Math.hypot(b.vx, b.vy) < 5 && (o.d === 0 || (hx && hy))) { b.vx = b.vy = 0; b.rest = 1; }   // (out of the pool it rolls on back, unless something holds it)
+  if (low && Math.hypot(b.vx, b.vy) < 5) { b.vx = b.vy = 0; b.rest = 1; }
 }
 /* the ball n steps after it was written down (kept: the next frame goes on from there) */
 const memos = { host: { key: '' }, screen: { key: '' } };   // (one each: the host and this screen ask for different times)
@@ -65,7 +63,7 @@ export function ballAt(ball, now, smooth = false) {
   if (smooth && !b.rest && n < MAX) { const c = { ...b }; step(c); const u = ms / STEP - n; for (const k of ['x', 'y', 'z']) b[k] += (c[k] - b[k]) * u; }
   return b;
 }
-const pack = (b, now) => ({ x: r1(b.x), y: r1(b.y), z: r1(b.z), vx: Math.round(b.vx), vy: Math.round(b.vy), vz: Math.round(b.vz), t: now, ...(b.rest ? { rest: 1 } : {}) });
+const pack = (b, now) => ({ x: r1(b.x), y: r1(b.y), z: r1(b.z), vx: Math.round(b.vx), vy: Math.round(b.vy), vz: Math.round(b.vz), t: now, ...(b.rest ? { rest: 1 } : {}), ...(b.hn ? { hn: b.hn, hs: b.hs, hv: b.hv } : {}) });
 
 /* ---------- the host: the ducks touch it ---------- */
 const was = new Map();   // id → where each duck was at the last heartbeat { x, y, z, t }
@@ -104,7 +102,7 @@ rule('beachball', {
 });
 
 /* ---------- every screen: the ball, its shadow, its ripples ---------- */
-let el = null, sh = null, spinG = null, shown = null, err = { x: 0, y: 0, z: 0 }, lastKey = '', spin = 0, rip = 0, wasUp = false;
+let lastHn = null, el = null, sh = null, spinG = null, shown = null, err = { x: 0, y: 0, z: 0 }, lastKey = '', spin = 0, rip = 0, wasUp = false;
 const BW = 48, BH = 52;
 /* where the ball is drawn this frame (the rubber ducks get out of its way) */
 export const ballShown = () => shown;
@@ -115,7 +113,7 @@ activity({
     sh = document.createElement('div'); sh.className = 'hang-ballsh'; sh.style.zIndex = 3;
     el = document.createElement('div'); el.className = 'hang-ball'; el.innerHTML = beachBall({ w: BW, h: BH, shadow: false });
     spinG = el.querySelector('g[transform^="rotate"]');
-    layer.append(sh, el); shown = null; lastKey = '';
+    layer.append(sh, el); shown = null; lastKey = ''; lastHn = null;
   },
   unmount() { el?.remove(); sh?.remove(); el = sh = spinG = shown = null; },
   step(dt, now, ctx) {
@@ -129,6 +127,12 @@ activity({
       }
       lastKey = key;
     }
+    const hn = b.hn || 0;   // a wall hit (counted in the ball's own numbers, so every screen has it): a ping and that wall's glow
+    if (lastHn !== null && hn > lastHn && ctx.world.at(ctx.me)) {
+      const w = b.hs === 'w';
+      play(w ? 'pingLow' : 'pingHigh', { x: w ? POOL.x0 : POOL.x1, y: b.y }); wallGlow(b.hs, (b.hv || 0) / 380);
+    }
+    lastHn = hn;
     const k = Math.exp(-dt / .12); err.x *= k; err.y *= k; err.z *= k;
     const prev = shown; shown = { x: b.x + err.x, y: b.y + err.y, z: b.z + err.z, rest: b.rest };
     const sfc = heightAt(shown.x, shown.y), wet = onWater(shown.x, shown.y), up = shown.z > sfc + 6;

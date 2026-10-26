@@ -13,6 +13,7 @@
 import * as L from './layout.js';
 import { DRAW, GROUND, DECOR, groundColor } from './shapes.js';
 import { svgDataURL, useHangArtCSS } from './art.js';
+import { stutter } from './flicker.js';
 import { ACTS } from './registry.js';
 import './activities.js';
 import { duckRoom } from '../duck.js';
@@ -112,10 +113,11 @@ export function mountWorld(board, api) {
     for (const l of L.LIGHTS) {
       if (l.only && (l.only === 'in') !== inside) continue;
       if (l.prop && !lit(l.prop, s)) continue;
+      const st = l.flick ? stutter(l.porch ? 'porch' : l.prop && l.prop.kind === 'post' ? l.prop.id : '', now) : 1;   // (now and then a lamp stutters: flicker.js)
       const fl = l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
       const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r * fl;
       if (!see(x - r, y - r, x + r, y + r)) continue;
-      const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl)); rg.addColorStop(1, hexA(l.c, 0));
+      const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl * st)); rg.addColorStop(1, hexA(l.c, 0));
       g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
     }
     g.globalCompositeOperation = 'source-over';

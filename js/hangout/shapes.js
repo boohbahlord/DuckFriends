@@ -299,8 +299,10 @@ function decor() {
   /* the forest past the ring of trees in the south: in front of everything (nobody gets near enough to be behind it) */
   for (let x = X0, k = 0; x < X1; x += 512, k++) out.push(part(() => A.forest({ w: 512, h: 420, top: 300, seed: 300 + k, floor: false }), x, L.H + LO + 120 - 314, 512, 420, 99999, { img: true }));
   /* the deck: its railing on the south side, the lattice under it down to the slope */
-  const D = L.DECK, rail = 40, drop = -L.terrainAt(D.y1), dk = A.deck({ w: D.x1 - D.x0, d: D.y1 - D.y0, rail, drop, gapE: [0, D.y1 - D.y0], lights: [] });
+  const D = L.DECK, rail = 40, drop = -L.terrainAt(D.y1), dk = A.deck({ w: D.x1 - D.x0, d: D.y1 - D.y0, rail, drop, gapE: [0, D.y1 - D.y0], lights: [], bulbs: false });
   out.push(part(dk.front, D.x0, D.y0 - rail, D.x1 - D.x0, D.y1 - D.y0 + rail + drop, D.y1, { img: true, part: 'front', only: 'out' }));
+  /* its string lights, apart from the picture: they twinkle, and now and then stutter (flicker.js) */
+  out.push(part(A.deckBulbs({ w: D.x1 - D.x0, d: D.y1 - D.y0, rail, drop }), D.x0, D.y0 - rail, D.x1 - D.x0, D.y1 - D.y0 + rail + drop, D.y1 + 1, { only: 'out', cls: 'hg-porch' }));
   /* the chimney's smoke over the cabin (outside) */
   out.push(part(`<svg class="hg" viewBox="0 0 80 60" width="80" height="60" overflow="visible" aria-hidden="true"><g class="hg-smoke" style="animation-delay:-1s"><circle cx="46" cy="44" r="20" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-3.4s"><circle cx="36" cy="44" r="16" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-5.6s"><circle cx="42" cy="44" r="18" fill="#c9cfdb"/></g></svg>`,
     2300 - 40, C.y0 + A.CHIMNEY.d0 - A.chimneyTop(C.wall) - 56, 80, 60, C.y1 + 16, { only: 'out' }));
