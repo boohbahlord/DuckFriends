@@ -24,6 +24,10 @@ export const TRAMP = { cx: 5200, cy: 3000, rx: 150, ry: 100, h: 30 };   // the t
 export const FIELD = { x0: 4500, y0: 400, x1: 5800, y1: 1800 };
 export const PATH = { x0: 300, y0: 440, x1: 2080, y1: 590 };
 export const DOORS = { front: { x: 2000, y: 600 }, back: { x: 2800, y: 2200 } };
+/* the cabin's two doors are one door (art.js' cabinDoor): w wide and h tall in a frame `frame` wide, so the opening in
+   the wall is the frame's outside edges (w + 2 · frame) */
+export const DOOR = { w: 64, h: 112, frame: 8 };
+const DOOR_HALF = DOOR.w / 2 + DOOR.frame;
 
 const inR = (x, y, r) => x >= r[0] && x < r[2] && y >= r[1] && y < r[3];
 const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
@@ -84,33 +88,39 @@ function wallY(x, y0, y1, h, o = {}) {
   for (let a = y0; a < y1; a += 200) { const b = Math.min(y1, a + 200); add('wall', x - T, a - T, 2 * T, b - a + 2 * T, h, { solid: true, z: 0, fade: true, ...o }); }
 }
 const C = CABIN, WIN = [1550, 2080, 3300, 3700, 4080];   // the south wall's windows (their middles)
-// the outside walls: the front door (north) and the back door (south) are gaps
-wallX(C.y0, C.x0, 1920, C.wall, { side: 'n' }); wallX(C.y0, 2080, C.x1, C.wall, { side: 'n' });
+// the outside walls: the front door (north) and the back door (south) are gaps, as wide as the door's frame (a wall
+// piece reaches T past its ends)
+const FD = [DOORS.front.x - DOOR_HALF, DOORS.front.x + DOOR_HALF], BD = [DOORS.back.x - DOOR_HALF, DOORS.back.x + DOOR_HALF];
+wallX(C.y0, C.x0, FD[0] - T, C.wall, { side: 'n' }); wallX(C.y0, FD[1] + T, C.x1, C.wall, { side: 'n' });
 wallY(C.x0, C.y0, C.y1, C.wall); wallY(C.x1, C.y0, C.y1, C.wall);
-for (const [x0, x1] of [[C.x0, 2720], [2880, C.x1]]) {
+for (const [x0, x1] of [[C.x0, BD[0] - T], [BD[1] + T, C.x1]]) {
   wallX(C.y1, x0, x1, C.wall, { only: 'out', side: 's', windows: WIN.filter(x => x > x0 && x < x1), key: C.y1 + T });   // outside: the front of the cabin, windows lit
   add('stub', x0 - T, C.y1 - T, x1 - x0 + 2 * T, 2 * T, 14, { only: 'in', z: 0 });                                     // inside: it goes away, a low line left
 }
-add('doorway', 2720, C.y1 - T, 160, 2 * T, C.wall, { only: 'out', z: 0 });   // the back door, open, warm light inside
-// inside: the great room | the hall | the kitchen, the bathroom, a nook, bedroom 1, bedroom 2 (doors are gaps)
+add('doorway', BD[0], C.y1 - T, BD[1] - BD[0], 2 * T, C.wall, { only: 'out', z: 0 });   // the back door, open, warm light inside
+// inside: the great room | the hall | the kitchen, the bathroom, a nook, bedroom 1, bedroom 2 (doors are gaps). An
+// east-west wall hides the floor just north of it (its height, drawn up the screen), so every doorway sits where the
+// floor on both its sides shows: a duck going through is never behind a wall. The nook is deep enough for its two
+// doorways to sit in the middle of the floor that shows, wall above and below each.
 const IN = { only: 'in' };
 wallY(3300, C.y0, 1275, C.inner, IN); wallY(3300, 1425, C.y1, C.inner, IN);
-for (const [a, b] of [[C.y0, 790], [940, 1200], [1350, 1470], [1630, 1860], [2010, C.y1]]) wallY(3500, a, b, C.inner, IN);
+for (const [a, b] of [[C.y0, 790], [940, 1200], [1340, 1480], [1600, 1860], [2010, C.y1]]) wallY(3500, a, b, C.inner, IN);
 wallX(1100, 3500, C.x1, C.inner, IN);                                       // the kitchen's south wall
-wallY(3900, 1100, 1470, C.inner, IN); wallY(3900, 1630, 1650, C.inner, IN);  // the bathroom | bedroom 1 (its door from the nook)
+wallY(3900, 1100, 1480, C.inner, IN); wallY(3900, 1600, 1750, C.inner, IN);  // the bathroom | bedroom 1 (its door from the nook)
 wallX(1450, 3500, 3900, C.inner, IN);                                       // the bathroom's south wall
-wallX(1650, 3500, C.x1, C.inner, IN);                                       // bedroom 2's north wall
+wallX(1750, 3500, C.x1, C.inner, IN);                                       // bedroom 2's north wall
 /* the doors, in the gaps of the outside walls (the front door, the back door to the deck): in an east-west wall at y = at,
    across x a … b. hinge: the end it turns on; swing: the side it opens to. They never block walking: doors.js swings each
    open while a duck is near (drawn only, nothing in the room's state) */
 export const DOORWAYS = [
-  { id: 'door-front', axis: 'x', at: C.y0, a: 1920, b: 2080, hinge: 'a', swing: 's', h: 150 },
-  { id: 'door-back', axis: 'x', at: C.y1, a: 2720, b: 2880, hinge: 'a', swing: 's', h: 150 },
+  { id: 'door-front', axis: 'x', at: C.y0, a: FD[0], b: FD[1], hinge: 'a', swing: 's', h: DOOR.h },
+  { id: 'door-back', axis: 'x', at: C.y1, a: BD[0], b: BD[1], hinge: 'a', swing: 's', h: DOOR.h },
 ];
-/* the doorways inside: open gaps, no doors (the owner: only the front door and the deck's) */
+/* the doorways inside: open gaps, no doors (the owner: only the front door and the deck's), in north-south walls at x =
+   at, from y = a to b (the walls either side reach T into it) */
 export const OPENINGS = [
-  { id: 'gap-great', at: 3300, a: 1275, b: 1425 }, { id: 'gap-kitchen', at: 3500, a: 790, b: 940 }, { id: 'gap-bath', at: 3500, a: 1200, b: 1350 },
-  { id: 'gap-nook', at: 3500, a: 1470, b: 1630 }, { id: 'gap-bed2', at: 3500, a: 1860, b: 2010 }, { id: 'gap-bed1', at: 3900, a: 1470, b: 1630 },
+  { id: 'gap-great', at: 3300, a: 1275, b: 1425 }, { id: 'gap-kitchen', at: 3500, a: 790, b: 940 }, { id: 'gap-bath', at: 3500, a: 1200, b: 1340 },
+  { id: 'gap-nook', at: 3500, a: 1480, b: 1600 }, { id: 'gap-bed2', at: 3500, a: 1860, b: 2010 }, { id: 'gap-bed1', at: 3900, a: 1480, b: 1600 },
 ];
 for (const d of DOORWAYS) add('door', d.a, d.at - T, d.b - d.a, 2 * T, d.h, { id: d.id, z: 0, door: d, key: d.at + 6 });
 
@@ -133,7 +143,18 @@ add('couch', 2448, 712, 100, 150, 70, { solid: true, ...IN, seats: 1, facing: 'w
 add('lamp', 3190, 2090, 84, 84, 50, { solid: true, ...IN, end: true, light: { x: 3232, y: 2110, r: 300, c: WARM, k: .45 } });   // (the end table, in the couches' corner)
 add('lamp', 3140, 1640, 44, 30, 150, { solid: true, ...IN, light: { x: 3162, y: 1690, r: 300, c: WARM, k: .45 } });
 add('coffee', 2965, 1850, 150, 100, 38, { solid: true, plat: true, ...IN });
-add('tv', 2745, 1640, 140, 124, 112, { solid: true, ...IN });   // (turned 45°, facing the couches)
+/* the TV on its low stand, turned 45° to face the couches: the stand runs along the north-east diagonal (s, hs each way
+   from its middle cx, cy) and is 2·ht across (t). It blocks walking only where it stands, a row of small blocks along
+   it, so a duck can stand in front of it and behind it; tvFront / tvBack: the stand's south and north edge at x (its
+   strips sort by them: shapes.js) */
+export const TV = { cx: 2815, cy: 1702, hs: 62, ht: 22 };
+add('tv', TV.cx - 70, 1640, 140, TV.cy + 62 - 1640, 112, { ...IN });
+for (let u = -50; u <= 50; u += 20) { const x = TV.cx + u * Math.SQRT1_2, y = TV.cy - u * Math.SQRT1_2; add('tvpart', x - 16, y - 16, 32, 32, 112, { solid: true, block: [x - 16, y - 16, x + 16, y + 16], layer: 'none', ...IN }); }
+const tvEdge = (x, front) => {
+  const q = (Math.min(TV.hs + TV.ht, Math.max(-TV.hs - TV.ht, (x - TV.cx) / Math.SQRT1_2))), t = front ? Math.min(TV.ht, q + TV.hs) : Math.max(-TV.ht, q - TV.hs);
+  return TV.cy + (2 * t - q) * Math.SQRT1_2;
+};
+export const tvFront = x => tvEdge(x, true), tvBack = x => tvEdge(x, false);
 add('shelf', 2610, 612, 190, 40, 100, { solid: true, ...IN });
 add('picture', 2652, 612, 46, 2, 38, { z: 118, ...IN, art: 'duck' });
 add('picture', 2730, 612, 46, 2, 38, { z: 124, ...IN, art: 'hills' });
@@ -161,12 +182,13 @@ add('toilet', 3712, 1112, 80, 70, 44, { solid: true, ...IN });   // (against the
 add('bed', 4060, 1130, 210, 270, 45, { solid: true, plat: true, ...IN });
 add('rug', 3950, 1420, 300, 190, 0, FLOOR);
 add('lamp', 3960, 1112, 40, 30, 110, { solid: true, ...IN, light: { x: 3980, y: 1160, r: 260, c: WARM, k: .45 } });
-add('bed', 3960, 1690, 300, 270, 45, { solid: true, plat: true, ...IN });
+add('bed', 3960, 1790, 300, 270, 45, { solid: true, plat: true, ...IN });
 add('rug', 3600, 1800, 330, 300, 0, FLOOR);
-add('lamp', 3900, 1672, 40, 30, 110, { solid: true, ...IN, light: { x: 3920, y: 1720, r: 260, c: WARM, k: .45 } });
+add('lamp', 3900, 1772, 40, 30, 110, { solid: true, ...IN, light: { x: 3920, y: 1820, r: 260, c: WARM, k: .45 } });
 
 /* the roof (outside: it covers the cabin) and the deck */
-add('roof', C.x0 - 40, C.y0 - 40, C.x1 - C.x0 + 80, C.y1 - C.y0 + 80, 0, { z: C.wall, only: 'out', fade: true, key: C.y1 + 15,
+export const ROOF_KEY = C.y1 + 15;   // (the cabin's drawing from outside sorts by its south wall's foot, a little in front)
+add('roof', C.x0 - 40, C.y0 - 40, C.x1 - C.x0 + 80, C.y1 - C.y0 + 80, 0, { z: C.wall, only: 'out', fade: true, key: ROOF_KEY,
   box: { l: C.x0 - 40, t: C.y0 - 40 - C.wall - C.rise, w: C.x1 - C.x0 + 80, h: C.y1 - C.y0 + 80 + C.rise } });
 /* the railing: around the deck's open sides and both sides of the stairs; a jump clears it (it is 40 tall) */
 const RAIL = 40;
@@ -239,6 +261,7 @@ export function standable(x, y, z, up = STEP, from = null) {
 const BAND = 40, BACK = STAGE.cy - STAGE.ry, LOW = STAGE.cy + STAGE.ry + BAND;
 export function sortY(x, y, z) {
   const pl = PLATS.length && platAt(x, y); if (pl && z >= pl.top - 1) return pl.key + 1 + (y - pl.y0) / (pl.y1 - pl.y0) * 7;
+  if (y >= C.y1 && y < C.y1 + T + FOOT && x > BD[0] && x < BD[1]) return ROOF_KEY + 2;   // (in the back door, outside: in front of the cabin's drawing and its open doorway, so the doorway never hides a duck)
   if (!(onStage(x, y) || onStageStairs(x, y)) || z < heightAt(x, y) - 1 || y >= LOW) return y;
   return STAGE.cy + STAGE.ry + 1 + (y - BACK) / (LOW - BACK) * (BAND - 1);
 }

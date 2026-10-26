@@ -24,7 +24,7 @@
 import * as A from './art.js';
 import * as L from './layout.js';
 
-const C = L.CABIN, T = 12, r75 = 75 * Math.PI / 180, n1 = v => Math.round(v * 10) / 10;
+const C = L.CABIN, T = 12, n1 = v => Math.round(v * 10) / 10;
 const hash = s => { let h = 7; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) | 0; return (h >>> 0) % 1000 / 1000; };
 const part = (svg, l, t, w, h, key, o = {}) => ({ svg, box: { l, t, w, h }, key, ...o });
 /* a pair from art.js (its box w × h) put with its box's left at l and its bottom at screen-world b; keys: the world y of
@@ -56,12 +56,18 @@ function wallParts(p) {
   const tee = WALLS.some(into), low = !tee && L.PROPS.some(q => q.kind === 'stub' && into(q));   // (into an east-west wall: hidden behind its face; over the south wall's low line: its end shows)
   /* a run that starts at an east-west wall: its top starts at that wall's top's front edge (the east-west wall's top runs
      on over the corner; nothing sticks out over it) */
-  const head = WALLS.some(q => q.w > q.d && q.only !== 'out' && Math.abs(q.y - p.y) < 1 && q.x <= p.x && q.x + q.w >= p.x + p.w) ? 24 : 0, o = head ? 0 : -12, d = p.d - head;
+  const head = WALLS.some(q => q.w > q.d && q.only !== 'out' && Math.abs(q.y - p.y) < 1 && q.x <= p.x && q.x + q.w >= p.x + p.w) ? 24 : 0;
+  /* a run that starts at a doorway (its north end at an opening's south side): its top starts where its foot does, not
+     its height up the screen over the opening, so the opening shows as wide as the gap a duck walks through and a duck
+     in it is never behind the wall (the top-down way: the doorway is where it looks to be) */
+  const cut = L.OPENINGS.some(q => Math.abs(q.at - (p.x + p.w / 2)) < 2 && Math.abs(q.b - (p.y + 12)) < 2) ? p.h : 0;
+  const o = head || cut ? 0 : -12, d = p.d - head - cut;
+  if (cut && tee && d <= 2 * 12 + 1) return [];   // (all of it under the east-west wall's top it runs into)
   /* its south end showing (free, at a doorway, over the low line): the end down to the floor; at a doorway and over the
      low line, the wall's own wood (no log ends) */
-  if (end && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: d + p.h, wallH: p.h, plain: gap || low }), p.x, t + head, p.w, d + p.h, p.key, { fade: p.fade, only: 'in' })];
-  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o + 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
-  return [part(top, p.x, t + head, p.w, d, p.key, { fade: p.fade, only: 'in' })];
+  if (end && !tee) return [part(() => A.logWall({ axis: 'y', w: p.w, t: p.w, h: d + p.h, wallH: p.h, plain: gap || low, open: o < 0 }), p.x, t + head + cut, p.w, d + p.h, p.key, { fade: p.fade, only: 'in' })];
+  const top = () => `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * .4} ${o < 0 ? o : 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}${cut ? `M0 0H${p.w}` : ''}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
+  return [part(top, p.x, t + head + cut, p.w, d, p.key, { fade: p.fade, only: 'in' })];
 }
 
 /* ---------- the railings of the deck's stairs (the deck's own are in its drawing): orange wood, posts and balusters ---------- */
@@ -72,7 +78,8 @@ function railParts(p) {
   if (p.w < p.d) {   // north-south, down the stairs: seen edge-on, a sloped bar on its posts
     const S = L.STAIRS, sx = Math.min(S.x1 - 1, Math.max(S.x0 + 1, p.x + 6)), a = p.y, b = p.y + p.d, za = L.heightAt(sx, a + 1), zb = L.heightAt(sx, b - 1);
     const t = a - za - H - 8, h = b - zb - t, w = 16;
-    const svg = () => `<svg class="hg hg-rail" viewBox="0 0 ${w} ${n1(h)}" width="${w}" height="${n1(h)}" overflow="visible" aria-hidden="true"><rect x="3" y="4" width="10" height="${n1(h - 4)}" fill="#d98a4a" stroke="#1c1c28" stroke-width="2.2"/><rect x="6" y="6" width="3" height="${n1(h - 10)}" fill="#f0b070" opacity=".5"/><rect x="0" y="0" width="16" height="12" fill="#a65a2c" stroke="#1c1c28" stroke-width="2"/></svg>`;
+    const foot = b >= S.y1 - 1 ? `<rect x="-1" y="${n1(h - 13)}" width="18" height="14" fill="#a65a2c" stroke="#1c1c28" stroke-width="2"/>` : '';   // (at the stairs' bottom: a block it stands on)
+    const svg = () => `<svg class="hg hg-rail" viewBox="0 0 ${w} ${n1(h)}" width="${w}" height="${n1(h)}" overflow="visible" aria-hidden="true"><rect x="3" y="4" width="10" height="${n1(h - 4)}" fill="#d98a4a" stroke="#1c1c28" stroke-width="2.2"/><rect x="6" y="6" width="3" height="${n1(h - 10)}" fill="#f0b070" opacity=".5"/><rect x="0" y="0" width="16" height="12" fill="#a65a2c" stroke="#1c1c28" stroke-width="2"/>${foot}</svg>`;
     return [part(svg, p.x - 2, t, w, h, p.key)];
   }
   /* east-west: balusters under a top rail, posts at the ends */
@@ -80,6 +87,23 @@ function railParts(p) {
   let bal = ''; for (let x = 12; x < w - 8; x += 20) bal += `M${x} 10V${h - 4}`;
   const svg = () => `<svg class="hg hg-rail" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true"><path d="${bal}" stroke="#1c1c28" stroke-width="8"/><path d="${bal}" stroke="#d07a35" stroke-width="4.5"/><rect x="0" y="${h - 10}" width="${w}" height="7" fill="#b8672c" stroke="#1c1c28" stroke-width="1.8"/><rect x="0" y="2" width="14" height="${h - 2}" fill="#c06d30" stroke="#1c1c28" stroke-width="2.2"/><rect x="${w - 14}" y="2" width="14" height="${h - 2}" fill="#c06d30" stroke="#1c1c28" stroke-width="2.2"/><rect x="-4" y="-4" width="${w + 8}" height="8" fill="#e8a060" stroke="#1c1c28" stroke-width="2.2"/><rect x="-4" y="4" width="${w + 8}" height="6" fill="#a65a2c" stroke="#1c1c28" stroke-width="1.8"/></svg>`;
   return [part(svg, p.x, t, w, h, p.key)];
+}
+
+/* ---------- the TV: in upright strips, as the stage (stage.js) ----------
+   It stands across the diagonal, so one depth can't be right for all of it: each strip of its picture is sorted by the
+   stand's front edge in it (and half a duck's width either side), a duck in front of the stand covers it, one behind it
+   is covered. One strip holds the whole screen (part 'screen': tv.js puts the channels in it). */
+const TV_EXT = 14;
+export const tvScreenStrip = () => { const sc = A.tvScreen(); return [Math.floor(sc.x - 3), Math.ceil(sc.x + sc.w * Math.SQRT1_2 + 3)]; };   // (in the TV's box)
+function tvParts(p) {
+  const l = L.TV.cx - 70, t = L.TV.cy + 62 - p.z - 240, [x0, x1] = tvScreenStrip();
+  const cuts = [0, x0 / 3, x0 * 2 / 3, x0, x1, (x1 + 140) / 2, 140].map(Math.round);
+  const pic = A.tvSet();
+  return cuts.slice(1).map((b0, i) => {
+    const a = cuts[i], b = Math.min(140, b0 + 1), key = Math.floor(Math.min(L.tvFront(l + a - TV_EXT), L.tvFront(l + b0 + TV_EXT)));   // (each a unit wider than its cut: no seam shows between them)
+    const win = () => pic.replace(/viewBox="0 0 140 240" width="140"/, `viewBox="${a} 0 ${b - a} 240" width="${b - a}"`).replace('overflow="visible"', 'overflow="hidden"');
+    return part(win, l + a, t, b - a, 240, key, { img: true, ...(a === x0 ? { part: 'screen' } : {}) });
+  });
 }
 
 /* ---------- trees: a few drawings, each kept as a picture and used again and again ---------- */
@@ -102,21 +126,26 @@ export const DRAW = {
   wall: wallParts,
   stub: p => [part(() => A.logWall({ w: p.w, wallH: p.h, t: p.d }), p.x, p.y - p.h, p.w, p.d + p.h, p.key)],
   doorway: () => [],
-  /* a door (layout.js' DOORWAYS: the front door, the back door): a shut part and an open one, doors.js shows one ("open" on the prop) */
+  /* a door (layout.js' DOORWAYS: the front door, the back door): both are art.js' cabinDoor, as big as layout.js' DOOR,
+     in an opening as wide as its frame. A shut part and open ones; doors.js shows one or the other ("open" on the prop).
+     Open, it has turned 60° on its hinge (the opening's west side) toward the viewer: the front door into the room, the
+     back door out onto the deck. */
   door(p) {
-    const d = p.door, len = d.b - d.a, o = { only: 'in' };
-    if (d.id === 'door-front') {   // in the north wall, seen from inside: a lintel of logs over it; shut, its face; open, swung in toward the room
-      const top = d.at - T - C.wall;
-      return [part(() => A.logWall({ w: len, wallH: C.wall - d.h, t: 2 * T }), d.a, top, len, 2 * T + C.wall - d.h, d.at + 6, o),   // (shut, its face; open, swung in)
-        part(() => A.doorFace({ w: len - 8, h: d.h, knob: 'r' }), d.a + 4, d.at - d.h, len - 8, d.h, d.at + 6, { ...o, cls: 'door-shut' }),
-        part(() => A.doorAjar({ len, h: d.h, ang: 75 }), d.a, d.at - d.h, len * Math.cos(r75), d.h + len * Math.sin(r75), d.at + len * Math.sin(r75), { ...o, cls: 'door-open' })];   // (swung far, clear of a duck in the doorway)
+    const d = p.door, D = L.DOOR, gx = (d.a + d.b) / 2, fw = d.b - d.a, bw = fw + 8, bh = D.h + D.frame, swing = D.w * Math.sin(Math.PI / 3);
+    const ajar = (foot, night, o) => part(() => A.doorAjar({ len: D.w, h: D.h, ang: 60, night }), gx - D.w / 2, foot - D.h, D.w / 2, D.h + swing, foot + swing, { ...o, cls: 'door-open', fade: true });   // (see-through over a duck in the doorway)
+    const o = { only: 'in' };
+    if (d.id === 'door-front') {   // in the north wall, seen from inside: the wall's logs over its frame, its foot at the wall's face; its window shows the night outside
+      const foot = d.at + T;
+      return [part(() => A.logWall({ w: fw, wallH: C.wall - bh, t: 2 * T, rowsH: 2 * T + C.wall }), d.a, d.at - T - C.wall, fw, 2 * T + C.wall - bh, d.at + 6, o),
+        part(() => A.cabinDoor({ night: true }), gx - bw / 2, foot - bh, bw, bh, d.at + 6, { ...o, cls: 'door-shut' }),
+        part(() => A.cabinDoor({ night: true, open: true }), gx - bw / 2, foot - bh, bw, bh, d.at - T, { ...o, cls: 'door-open' }),   // (behind a duck in the doorway)
+        ajar(foot, true, o)];
     }
-    /* the back door: inside, shut, a plank in the low wall's line (open, it has swung out onto the deck); outside, open,
-       the warm doorway in the cabin's drawing and the door swung out toward the deck (shut, the cabin's own drawing shows it) */
-    const gx = (d.a + d.b) / 2;
-    return [part(() => A.logWall({ w: len, wallH: 14, t: 2 * T }).replace(/#c98a52/g, '#d9a066'), d.a, d.at - T - 14, len, 2 * T + 14, d.at + 6, { ...o, cls: 'door-shut' }),
-      part(() => A.doorway({ w: 64, h: 112 }), gx - 32, d.at - 112, 64, 112, C.y1 + 16, { only: 'out', cls: 'door-open' }),
-      part(() => A.doorAjar({ len: 64, h: 112, ang: 60 }), gx - 32, d.at - 112, 32, 112 + 64 * Math.sin(Math.PI / 3), d.at + 64 * Math.sin(Math.PI / 3), { only: 'out', cls: 'door-open' })];
+    /* the back door: inside, shut, a plank in the low wall's line (open, it has swung out onto the deck); outside, the
+       cabin's own drawing shows it shut; open, the lit doorway in its frame and the door swung out */
+    return [part(() => A.logWall({ w: fw, wallH: 14, t: 2 * T }).replace(/#c98a52/g, '#d9a066'), d.a, d.at - T - 14, fw, 2 * T + 14, d.at + 6, { ...o, cls: 'door-shut' }),
+      part(() => A.cabinDoor({ open: true }), gx - bw / 2, d.at - bh, bw, bh, L.ROOF_KEY + 1, { only: 'out', cls: 'door-open' }),
+      ajar(d.at, false, { only: 'out' })];
   },
   roof() {   // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
     const w = C.x1 - C.x0, d = C.y1 - C.y0, h = d + 290;
@@ -145,7 +174,7 @@ export const DRAW = {
   wipe: p => [part(() => A.wipeTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
   coffee: p => one(p, () => A.coffeeTable({ w: p.w, d: p.d, z: p.h }), p.w, p.d + p.h),
-  tv: p => one(p, () => A.tvSet(), 140, 240),
+  tv: tvParts,
   shelf: p => one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
   picture: p => one(p, () => A.picture({ w: p.w, h: p.h, kind: p.art }), p.w, p.h),
   clock: p => one(p, () => A.wallClock({ r: p.w / 2 }), p.w, p.w),
