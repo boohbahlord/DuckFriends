@@ -35,3 +35,5 @@ export function hangTick(s, now) {
 export function hangTargets(s, now) { const out = []; if (s.hang) for (const r of RULES.values()) if (r.targets) out.push(...r.targets(s, now)); return out; }
 /* one of them was hit by player `by`: true when s.hang changed */
 export function hangHit(s, id, by, now) { let ch = false; if (s.hang) for (const r of RULES.values()) if (r.hit && r.hit(s, id, by, now)) ch = true; return ch; }
+/* a duck that can't move for now (shot by Justin: s.hang.still = { id: until }) */
+export const hangStill = (s, id, now) => !!(s.hang && s.hang.still && s.hang.still[id] > now);

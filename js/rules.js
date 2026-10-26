@@ -14,7 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
-import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit } from './hangout/rules.js';
+import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
@@ -328,6 +328,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!boardPhases(s).includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
       if (holdStill(s, a.id, now)) return state;   // Who is the Quack?: the last duck plays dead for a moment
+      if (isHang(s) && hangStill(s, a.id, now)) return state;   // Hangout: shot by Justin, it can't move for a while
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !isLaw(s) && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }   // (a juror may walk over and change their vote)

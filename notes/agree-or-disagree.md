@@ -1896,3 +1896,37 @@ Decisions:
 - Walls: a north-south wall that starts at an east-west wall (the bathroom | bedroom wall, the hall walls, the corners)
   drew its top up past the other wall's top. It now starts at that top's front edge, so the east-west wall runs on over
   the corner.
+
+## Request (2026-10-26 06:35Z): Justin and the shadow duck fixes (a phone screenshot)
+
+> Justin's font isn't comic sans AT ALL!
+>
+> Justin and the shadow duck shouldn't fight ! NOT UNLESS THEY MEET EACHOTHER VERY CLOSELY!
+>
+> When justin shoots at a player, they dont run up to touch them, instead, they keep emough distance to use their gun.
+>
+> When a player is shot by Justin, they cannot move for six seconds.
+>
+> When justin is talking after being revived from a fight with the shadow duck, he must have a lot more time for his chat bubbles to stay before they go
+>
+> Justin got chased by the shadow duck when he was only on the porch and the duck stopped when he could sit dowb... wtf?
+>
+> Make it to where the shadow duck cant go into any place where there is light AND make the shadow duck slightly transparent.
+>
+> The shadow duck should avoid the campfire always unless it's fire is put out.
+>
+> The shadow duck never chases people if they run away.
+>
+> Justin chases the shadow duck very very rarely only when close enough to them and he has to find them by accident.
+
+Decisions:
+- Font: phones have no Comic Sans, so Comic Neue (a free look-alike, assets/fonts) comes with the game; computers with
+  Comic Sans still use it.
+- They only tangle when they meet within about 170 px, both in the dark. Then the shadow duck lunges at him, or (12%) he
+  spots it by accident and chases it, and it fades before he gets close.
+- Justin with his gun stops where it reaches (about 300 px off) and shoots from there. A duck he shoots can't move or
+  jump for 6 seconds.
+- His four lines after the shadow duck: 5 seconds apart, each bubble up 7 seconds.
+- The shadow duck never goes into the cabin, onto the deck, or into the light of a lamppost, a window or the campfire
+  (its paths are blocked there; a put-out fire would be s.hang.fire === 0, there's no way to put it out yet). It's a
+  little see-through (78% at most). A duck that runs away from it isn't followed: it fades away.

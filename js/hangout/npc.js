@@ -28,13 +28,17 @@ export function walkGrid() {
   }
   return grid;
 }
+/* the cells where no(x, y) is true, for o.block (the shadow duck's lit places) */
+export function blockMap(no) { const b = new Uint8Array(GW * GH); for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) b[idx(i, j)] = no(...mid(i, j)) ? 1 : 0; return b; }
 /* rebuild after the map changes (tests) */
 export const resetGrid = () => { grid = hts = null; };
 const POOLPAD = 60;
 const nearPool = (x, y) => x > POOL.x0 - POOLPAD && x < POOL.x1 + POOLPAD && y > POOL.y0 - POOLPAD && y < POOL.y1 + POOLPAD;
-/* can a character be in this cell? (o.dry: not in or right beside the pool) */
+/* can a character be in this cell? (o.dry: not in or right beside the pool; o.block: a map of cells it won't enter, from
+   blockMap) */
 function open(i, j, o) {
   if (i < 0 || j < 0 || i >= GW || j >= GH || !grid[idx(i, j)]) return false;
+  if (o.block && o.block[idx(i, j)]) return false;
   if (o.dry) { const [x, y] = mid(i, j); if (nearPool(x, y)) return false; }
   return true;
 }
@@ -178,18 +182,19 @@ function ctxFor(s, now, rand, D, recs) {
   const c = {
     s, now, rand, ducks: D, npcs: recs, said,
     at: id => npcAt(recs[id], now),
-    /* a character speaks: its bubble and the chat */
-    say(id, text) {
+    /* a character speaks: its bubble (for ms, if given) and the chat */
+    say(id, text, ms) {
       s.hang.npcN = (s.hang.npcN || 0) + 1;
-      said[id] = { text, t: now, n: s.hang.npcN };
+      said[id] = { text, t: now, n: s.hang.npcN, ...(ms ? { d: ms } : {}) };
       if (s.log) { s.logN = (s.logN || 0) + 1; s.log = [...s.log.slice(-199), { n: s.logN, t: Date.now(), npc: id, name: (BRAINS.get(id) || {}).name || id, text }]; }   // (the chat, like rules.js' logLine)
     },
     /* change another character (a swipe sends it running): fn gets a copy to change */
     poke(id, fn) { if (!recs[id]) return; const o = { ...recs[id] }; fn(o); recs[id] = o; c.poked = true; },
-    /* a duck plays dead (a swipe or a shot), for everyone */
-    kill(by, pid, kind) {
+    /* a duck plays dead (a swipe or a shot), for everyone; still for `still` ms (it can't move) */
+    kill(by, pid, kind, still = 0) {
       const P = s.players[pid]; if (!P || P.dead) return false;
       s.players = { ...s.players, [pid]: { ...P, dead: true } };
+      if (still) { const st = {}; for (const [k, v] of Object.entries(s.hang.still || {})) if (v > now) st[k] = v; st[pid] = now + still; s.hang.still = st; }   // (hangout/rules.js hangStill)
       const d = D.find(q => q.id === pid); if (d) d.dead = true;
       c.fx(by, pid, kind); return true;
     },
