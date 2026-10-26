@@ -149,8 +149,8 @@ export { inCabin, inPool, DOORS, CABIN, POOL };
    brain(id, { kind, init(now, rand), tick(me, c), act(me, a, c), hit(me, by, c) }) adds a character. me is its record
    (a copy; change it and return true to write it down), c = { s, now, rand, ducks, npcs, at(id), say, kill, go, … }.
    The host runs npcTick on every heartbeat, npcAct for a player's { t: 'hang', k: 'npc', who, do } and npcHit when a
-   player knocks one down. What everyone else sees: s.hang.npc (above), s.hang.npcLog (their words, the newest 12, for
-   the chat) and s.hang.npcFx (swipes and shots, the newest 12, for the screens). */
+   player knocks one down. What everyone else sees: s.hang.npc (above), their words in the chat (s.log: { npc, name,
+   text }) and s.hang.npcFx (swipes, shots and purrs, the newest 12, for the screens). */
 export const BRAINS = new Map();
 export const brain = (id, b) => { BRAINS.set(id, b); };
 let pathsLeft = 0;   // paths a heartbeat may work out (a long one can take 20 ms)
@@ -182,7 +182,7 @@ function ctxFor(s, now, rand, D, recs) {
     say(id, text) {
       s.hang.npcN = (s.hang.npcN || 0) + 1;
       said[id] = { text, t: now, n: s.hang.npcN };
-      s.hang.npcLog = ring(s.hang.npcLog, { n: s.hang.npcN, who: id, text, t: now });
+      if (s.log) { s.logN = (s.logN || 0) + 1; s.log = [...s.log.slice(-199), { n: s.logN, t: Date.now(), npc: id, name: (BRAINS.get(id) || {}).name || id, text }]; }   // (the chat, like rules.js' logLine)
     },
     /* change another character (a swipe sends it running): fn gets a copy to change */
     poke(id, fn) { if (!recs[id]) return; const o = { ...recs[id] }; fn(o); recs[id] = o; c.poked = true; },

@@ -347,6 +347,7 @@ export function chatWidget() {
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
       if (m.sys) return `<p class="sys${m.small ? ' small' : ''}">${esc(m.text)}</p>`;
+      if (m.npc) return `<p class="npc npc-${esc(m.npc)}"><span class="npc-name">${esc(m.name || m.npc)}</span>: <span class="npc-said">${esc(m.text)}</span></p>`;   // Duck Cabin's characters
       const meName = s.players[me] && s.players[me].name, hit = m.from !== me && meName && (m.to === me || mentionRe(meName).test(m.text)) && !isMuted(s, m.from, 'ping');
       /* over 250 characters: folded under an arrow (a ! beside it if it pings you), open until the chat closes */
       const long = m.text.length > 250, open = long && ui.long.has(m.n);

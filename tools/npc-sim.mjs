@@ -11,7 +11,7 @@ import { W, H, inPool, inCabin } from '../js/hangout/layout.js';
 const MIN = +(process.argv[2] || 10), NP = +(process.argv[3] || 3);
 let seed = +(process.argv[4] || 7);
 const rand = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-const s = { seat: [], players: {}, pos: {}, hang: {} };
+const s = { seat: [], players: {}, pos: {}, hang: {}, log: [] };
 for (let k = 0; k < NP; k++) { const id = 'p' + k; s.seat.push(id); s.players[id] = { name: 'P' + k }; s.pos[id] = { x: 2000 / W, y: (450 - k * 50) / H, z: 0 }; }
 const walks = {}, deadAt = {};
 const count = {}, bump = k => { count[k] = (count[k] || 0) + 1; };
@@ -42,8 +42,8 @@ for (let now = T0; now < END; now += 200) {
   }
   const t = performance.now(); npcTick(s, now, rand); const ms = performance.now() - t;
   worst = Math.max(worst, ms); if (ms > 30) slow++;
-  bigState = Math.max(bigState, JSON.stringify({ npc: s.hang.npc, log: s.hang.npcLog, fx: s.hang.npcFx }).length);
-  for (const m of s.hang.npcLog || []) if (m.n > lastLog) { bump(`${m.who} says`); if (m.who === 'justin') bump('  Justin: ' + m.text.slice(0, 40)); lastLog = Math.max(lastLog, m.n); }
+  bigState = Math.max(bigState, JSON.stringify({ npc: s.hang.npc, fx: s.hang.npcFx }).length);
+  for (const m of s.log) if (m.n > lastLog) { bump(`${m.npc} says`); if (m.npc === 'justin') bump('  Justin: ' + m.text.slice(0, 40)); lastLog = Math.max(lastLog, m.n); }
   for (const f of s.hang.npcFx || []) if (f.n > lastFx) { bump(`fx ${f.kind} ${f.by}→${s.players[f.who] ? 'a duck' : f.who}`); lastFx = Math.max(lastFx, f.n); }
   for (const [id, r] of Object.entries(s.hang.npc || {})) {
     const a = npcAt(r, now); if (!a) continue;
