@@ -28,6 +28,8 @@
 <div class="row" id="g3"></div>
 <h2>Goal 4: the cats, the hotdog, the shadow duck</h2>
 <div class="row" id="g4"></div>
+<h2>The music, muffled (in the dark)</h2>
+<div class="row"><button type="button" class="btn ghost" id="muf">Muffle the music</button><span class="dim">(the game's music plays once you've tapped anywhere on the page)</span></div>
 <h2>Check</h2>
 <button type="button" class="btn purple" id="check">Check every sound</button>
 <table id="out"></table>
@@ -35,6 +37,17 @@
   import { play, loop, setListener, NAMES, LOOPS, render } from '../js/hangout/sounds.js';
   import { findClicks } from './clickcheck.js';
   import { rainbowHTML } from '../js/art.js';
+  import { music } from '../js/music.js';
+  document.body.dataset.screen = 'front';   // (so the menu music plays here, to try the muffle on)
+  document.getElementById('muf').onclick = e => { music.setMuffle(!music.muffled); e.target.setAttribute('aria-pressed', music.muffled); e.target.textContent = music.muffled ? 'Clear the music' : 'Muffle the music'; };
+  /* the muffle, toggled quickly: a bright test sound (chords and noise) through it, offline */
+  async function muffleCheck(sr) {
+    const o = new OfflineAudioContext(1, sr * 6, sr), m = music.muffle(o, o.destination), src = o.createGain(); src.connect(m.inp);
+    src.gain.setValueAtTime(0, 0); src.gain.linearRampToValueAtTime(.12, .2); src.gain.setValueAtTime(.12, 5); src.gain.setTargetAtTime(0, 5, .12);
+    for (const f of [220, 277, 330, 440, 880]) { const x = o.createOscillator(); x.type = 'sawtooth'; x.frequency.value = f; x.connect(src); x.start(0); }
+    for (const [t, on] of [[.5, 1], [.7, 0], [.8, 1], [1, 0], [1.05, 1], [2.6, 0], [3, 1], [3.02, 0], [3.04, 1], [4.6, 0]]) music.muffleTo(m, !!on, 0, t);
+    return o.startRendering();
+  }
   document.getElementById('title').innerHTML = rainbowHTML('Cabin sounds');
   const far = document.getElementById('far'), farv = document.getElementById('farv');
   setListener(() => ({ x: 0, y: 0 }));
@@ -56,15 +69,16 @@
     const out = document.getElementById('out');
     out.innerHTML = '<tr><th>sound</th><th>rate</th><th>peak</th><th>clicks</th><th>clipped</th><th>ends at 0</th></tr>';
     window.checks = [];
-    for (const n of [...NAMES, ...LOOPS]) for (const sr of [44100, 48000]) {
-      const buf = await render(n, LOOPS.includes(n) ? 3 : 2.5, sr);
+    const ROWS = [...NAMES.map(n => [n]), ...['powerDown', 'powerUp'].flatMap(n => [[n, .5, 'half way'], [n, 0, 'far']]), ...LOOPS.map(n => [n]), ['muffle']];
+    for (const [n, near, label] of ROWS) for (const sr of [44100, 48000]) {
+      const buf = n === 'muffle' ? await muffleCheck(sr) : await render(n, LOOPS.includes(n) ? 3 : 2.5, sr, { near: near ?? 1 });
       let pk = 0, cl = 0, clip = 0, edge = false;
       for (let ch = 0; ch < buf.numberOfChannels; ch++) {
         const d = buf.getChannelData(ch); for (const v of d) pk = Math.max(pk, Math.abs(v));
         const f = findClicks(d, sr); cl += f.clicks.length; clip += f.clipped; edge = edge || f.edge;
       }
-      const r = { n, sr, pk: +pk.toFixed(3), clicks: cl, clipped: clip, edge }; window.checks.push(r);
-      out.insertAdjacentHTML('beforeend', `<tr><td>${n}</td><td>${sr / 1000} kHz</td><td>${r.pk}</td><td class="${cl ? 'bad' : ''}">${cl}</td><td class="${clip ? 'bad' : ''}">${clip}</td><td class="${edge ? 'bad' : ''}">${edge ? 'no' : 'yes'}</td></tr>`);
+      const r = { n: label ? `${n} (${label})` : n === 'muffle' ? 'music muffle, toggled fast' : n, sr, pk: +pk.toFixed(3), clicks: cl, clipped: clip, edge }; window.checks.push(r);
+      out.insertAdjacentHTML('beforeend', `<tr><td>${r.n}</td><td>${sr / 1000} kHz</td><td>${r.pk}</td><td class="${cl ? 'bad' : ''}">${cl}</td><td class="${clip ? 'bad' : ''}">${clip}</td><td class="${edge ? 'bad' : ''}">${edge ? 'no' : 'yes'}</td></tr>`);
     }
     window.checked = true;
   };

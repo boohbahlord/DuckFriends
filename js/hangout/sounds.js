@@ -5,6 +5,8 @@
 
      play(name, opts?)        one sound. opts: { x, y } where it happens (world px, layout's W × H): it fades with its
                               distance from my duck and leans left or right; { k } louder or softer (1 = as made).
+                              The lever and the hum are heard near the power box only (RANGE); powerDown and powerUp are
+                              heard everywhere: the machine itself near the box, a soft low thump far off (SPLIT_AT).
      loop(name, opts?)        a sound that goes on (hum, static, purr) → { stop(), move(x, y) }. It swells in and fades out.
      setListener(fn)          fn() → my duck's { x, y } in world px, for the distance fading (none set: every sound is near).
      NAMES, LOOPS             what play() and loop() take.
@@ -78,7 +80,29 @@ function clack(a, d, t, k = 1) {
   hiss(a, d, t + .038, { f: 1600, q: 1.4, peak: .045 * k, att: .006, tau: .01 });
 }
 
-/* ---------- the one-shot sounds: (a, d, t) ---------- */
+/* the transformer's hum as one swell or fade: from level h0 to h1 over secs, then gone */
+function hum(a, d, t, h0, h1, secs) {
+  const g = a.createGain(), lp = a.createBiquadFilter(), end = t + secs;
+  lp.type = 'lowpass'; lp.frequency.value = 900; lp.connect(g).connect(d);
+  g.gain.value = 0; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(h0 || .0001, t + .03);
+  if (h1) { g.gain.linearRampToValueAtTime(h1, end); g.gain.setTargetAtTime(0, end, .25); } else g.gain.linearRampToValueAtTime(0, end);
+  const stop = h1 ? end + 1.8 : end + .05;
+  for (const [f, k, type] of [[60, .5, 'sine'], [120, .4, 'sine'], [180, .16, 'sine'], [240, .06, 'triangle']]) {
+    const o = a.createOscillator(), og = a.createGain(); o.type = type; o.frequency.value = f; og.gain.value = k; o.connect(og).connect(lp); o.start(t); o.stop(stop);
+  }
+}
+/* the power heard from far off: a soft low thump through the walls, and the hum's faint fade (dir -1 down, 1 up) */
+function thump(a, d, t, dir) {
+  hiss(a, d, t, { type: 'lowpass', f: 180, q: .6, peak: .14, att: .02, tau: .12 });
+  tone(a, d, t, { f: 58, f2: 42, slide: .3, peak: .13, att: .02, tau: .2 });
+  tone(a, d, t + .04, dir < 0 ? { f: 120, peak: .025, att: .03, dur: .05, tau: .35 } : { f: 120, peak: .02, att: .5, dur: .6, tau: .3 });
+}
+/* near and far versions of one sound, mixed by n (1 near, 0 far) */
+function both(a, d, t, n, near, far) {
+  for (const [k, f] of [[n, near], [1 - n, far]]) { if (k < .02) continue; const g = a.createGain(); g.gain.value = k; g.connect(d); f(a, g, t); }
+}
+
+/* ---------- the one-shot sounds: (a, d, t, o) ---------- */
 const MEOWS = [   // [start, top, end pitch], length: a plain meow, a kitten's mew, a long low one, a chirpy mrrp
   [[520, 760, 480], .55], [[700, 920, 650], .34], [[430, 610, 370], .8], [[480, 640, 760], .3]];
 function meow(a, d, t, which) {
@@ -100,24 +124,36 @@ function meow(a, d, t, which) {
 const ONE = {
   /* goal 3b */
   switch: (a, d, t) => clack(a, d, t),
-  powerDown(a, d, t) {   // a clunk, then the machine winds down: a low whine falling as its tone closes
-    clack(a, d, t, .7);
-    const w = t + .05, end = w + 1.3, o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain();
-    o.type = 'sawtooth'; o.frequency.setValueAtTime(220, w); o.frequency.exponentialRampToValueAtTime(34, end);
-    fl.type = 'lowpass'; fl.Q.value = 1.5; fl.frequency.setValueAtTime(1500, w); fl.frequency.exponentialRampToValueAtTime(110, end);
-    g.gain.value = 0; g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(.09, w + .03); g.gain.linearRampToValueAtTime(.05, end - .3); g.gain.linearRampToValueAtTime(0, end);
-    o.connect(fl).connect(g).connect(d); o.start(w); o.stop(end + .05);
-    tone(a, d, w, { f: 110, f2: 30, slide: 1.3, peak: .07, att: .02, dur: 1, tau: .1 });
+  lever(a, d, t) {   // the power box's big lever: a ratchet, a metal clack and a heavy thunk
+    for (const dt of [0, .045]) hiss(a, d, t + dt, { f: 1100, q: 1.4, peak: .05, att: .006, tau: .01 });
+    const c = t + .1;
+    ring(a, d, c, 410, [[1, 1, .6], [2.73, .45, .4], [4.6, .18, .3]], { peak: .1, att: .006, tau: .12 });   // the metal
+    hiss(a, d, c, { type: 'lowpass', f: 700, q: .6, peak: .16, att: .006, tau: .05 });
+    tone(a, d, c, { f: 95, f2: 52, slide: .12, peak: .26, att: .016, tau: .09 });   // the thunk
   },
-  powerUp(a, d, t) {   // the machine winds up from low, and a soft "ready" ting
-    clack(a, d, t, .7);
+  /* the power box: near it (o.near 1) the machine itself, far off (0) a soft low thump through the walls, mixed between */
+  powerDown: (a, d, t, o = {}) => both(a, d, t, o.near ?? 1, (a, d, t) => {   // near: a clunk, a loud whine winding down, the hum dying
+    clack(a, d, t, .8);
+    const w = t + .05, end = w + 1.4, o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(240, w); o.frequency.exponentialRampToValueAtTime(32, end);
+    fl.type = 'lowpass'; fl.Q.value = 1.6; fl.frequency.setValueAtTime(1600, w); fl.frequency.exponentialRampToValueAtTime(100, end);
+    g.gain.value = 0; g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(.13, w + .03); g.gain.linearRampToValueAtTime(.07, end - .3); g.gain.linearRampToValueAtTime(0, end);
+    o.connect(fl).connect(g).connect(d); o.start(w); o.stop(end + .05);
+    tone(a, d, w, { f: 110, f2: 30, slide: 1.3, peak: .08, att: .02, dur: 1, tau: .1 });
+    hum(a, d, t, .16, 0, 1.4);
+  }, (a, d, t) => thump(a, d, t, -1)),
+  powerUp: (a, d, t, o = {}) => both(a, d, t, o.near ?? 1, (a, d, t) => {   // near: a clunk, the machine winding up, the hum swelling, a buzz
+    clack(a, d, t, .8);
     const w = t + .05, top = w + 1, o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain();
     o.type = 'sawtooth'; o.frequency.setValueAtTime(40, w); o.frequency.exponentialRampToValueAtTime(260, top);
     fl.type = 'lowpass'; fl.Q.value = 1.5; fl.frequency.setValueAtTime(150, w); fl.frequency.exponentialRampToValueAtTime(1600, top);
-    g.gain.value = 0; g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(.07, top); g.gain.setTargetAtTime(0, top + .05, .08);
+    g.gain.value = 0; g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(.09, top); g.gain.setTargetAtTime(0, top + .05, .08);
     o.connect(fl).connect(g).connect(d); o.start(w); o.stop(top + .7);
-    ring(a, d, top, 880, [[1, 1], [2, .25, .6]], { peak: .05, att: .01, tau: .25 });
-  },
+    hum(a, d, w, 0, .16, 1.1);
+    const bz = a.createOscillator(), bp = a.createBiquadFilter(), { g: bg, end } = env(a, top - .1, .035, .06, .35, .1);   // the buzz as it comes on
+    bz.type = 'sawtooth'; bz.frequency.value = 120; bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 2;
+    bz.connect(bp).connect(bg).connect(d); bz.start(top - .1); bz.stop(end);
+  }, (a, d, t) => thump(a, d, t, 1)),
   candleOut(a, d, t) {   // a short breath, and the flame's little "fft"
     hiss(a, d, t, { f: 760, f2: 520, slide: .25, q: .6, peak: .13, att: .06, dur: .14, tau: .07 });
     hiss(a, d, t + .17, { type: 'lowpass', f: 420, peak: .05, att: .01, tau: .04 });
@@ -226,12 +262,17 @@ function audio() {
 }
 export function setListener(fn) { listener = fn; }
 /* how loud and which way, for a sound at (x, y) */
-function where(x, y) {
-  if (x == null || y == null || !listener) return { k: 1, pan: 0 };
-  const me = listener(); if (!me) return { k: 1, pan: 0 };
-  const dx = x - me.x, dy = y - me.y, dist = Math.hypot(dx, dy), u = Math.min(1, Math.max(0, (dist - NEAR) / (FAR - NEAR)));
-  return { k: (1 - u) * (1 - u), pan: Math.max(-.7, Math.min(.7, dx / 700)) };
+const RANGE = { hum: [120, 520], lever: [150, 650] };   // world px: full up to the first, silent from the second (the rest: NEAR, FAR)
+const SPLIT = { powerDown: 1, powerUp: 1 };   // near and far versions: always heard, the mix follows the distance
+const SPLIT_AT = [400, 900];                 // all near up to the first, all far from the second
+function where(x, y, name) {
+  if (x == null || y == null || !listener) return { k: 1, pan: 0, dist: 0 };
+  const me = listener(); if (!me) return { k: 1, pan: 0, dist: 0 };
+  const [n0, n1] = RANGE[name] || [NEAR, FAR];
+  const dx = x - me.x, dy = y - me.y, dist = Math.hypot(dx, dy), u = Math.min(1, Math.max(0, (dist - n0) / (n1 - n0)));
+  return { k: (1 - u) * (1 - u), pan: Math.max(-.7, Math.min(.7, dx / 700)), dist };
 }
+const nearness = dist => 1 - Math.min(1, Math.max(0, (dist - SPLIT_AT[0]) / (SPLIT_AT[1] - SPLIT_AT[0])));
 /* a sound's own way into the bus: its loudness and its lean */
 function lane(a, k, pan) {
   const g = a.createGain(); g.gain.value = k;
@@ -241,17 +282,17 @@ function lane(a, k, pan) {
 export function play(name, opts = {}) {
   const f = ONE[name], v = vol(); if (!f || !v || live >= CAP) return;
   const a = audio(); if (!a) return;
-  const { k, pan } = where(opts.x, opts.y), kk = k * v * (opts.k ?? 1); if (kk < .01) return;
-  const g = lane(a, kk, pan); live++;
-  f(a, g, a.currentTime + LEAD);
+  const w = where(opts.x, opts.y, name), split = SPLIT[name], kk = (split ? 1 : w.k) * v * (opts.k ?? 1); if (kk < .01) return;
+  const n = split ? nearness(w.dist) : 1, g = lane(a, kk, w.pan * n); live++;
+  f(a, g, a.currentTime + LEAD, { near: n });
   setTimeout(() => { live--; g.disconnect(); }, 4000);   // (every one-shot is silent well within 4 s)
 }
 export function loop(name, opts = {}) {
   const f = LOOP[name], a = f && audio(); if (!a) return { stop() {}, move() {} };
   let x = opts.x, y = opts.y, done = false;
-  const level = () => where(x, y).k * vol() * (opts.k ?? 1);
+  const level = () => where(x, y, name).k * vol() * (opts.k ?? 1);
   const g = a.createGain(), p = a.createStereoPanner ? a.createStereoPanner() : null;
-  g.gain.value = level(); if (p) { p.pan.value = where(x, y).pan; g.connect(p).connect(main); } else g.connect(main);
+  g.gain.value = level(); if (p) { p.pan.value = where(x, y, name).pan; g.connect(p).connect(main); } else g.connect(main);
   const stop = f(a, g, a.currentTime + LEAD);
   const h = {
     move(nx, ny) { x = nx; y = ny; },
@@ -261,7 +302,7 @@ export function loop(name, opts = {}) {
       setTimeout(() => g.disconnect(), (end - a.currentTime + .2) * 1000);
     },
     follow() {   // (every 200 ms: my duck moves, the sound's loudness glides after it)
-      const w = where(x, y), t = a.currentTime + LEAD;
+      const w = where(x, y, name), t = a.currentTime + LEAD;
       g.gain.setTargetAtTime(w.k * vol() * (opts.k ?? 1), t, .15); if (p) p.pan.setTargetAtTime(w.pan, t, .15);
     },
   };
@@ -272,10 +313,10 @@ export function loop(name, opts = {}) {
 let followT = 0;
 
 /* ---------- offline, for the test page: a one-shot, or a loop that runs until 0.8 s before the end ---------- */
-export async function render(name, secs = 2.5, sr = 44100) {
+export async function render(name, secs = 2.5, sr = 44100, o2 = {}) {   // (o2.near: for powerDown and powerUp, 1 near … 0 far)
   const o = new OfflineAudioContext(2, Math.ceil(sr * secs), sr), d = bus(o, o.destination), g = o.createGain();
   g.connect(d);
-  if (ONE[name]) ONE[name](o, g, .05);
+  if (ONE[name]) ONE[name](o, g, .05, o2);
   else if (LOOP[name]) LOOP[name](o, g, .05)(secs - 1);
   return o.startRendering();
 }
