@@ -356,7 +356,7 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
 /* ---------- the cabin, inside ---------- */
 /* a log wall cut away. axis 'x' runs east-west, w long: box w × (t + wallH): the cut top (t deep), then the face that
    looks south; doors are gaps [from, to] along it, windows [from, to] look out at the grass. axis 'y' runs north-south:
-   w = t, box t × (length + wallH): the cut top, then the south end's log ends (plain: a plain log face); doors are gaps [from, to] along y.
+   w = t, box t × (length + wallH): the cut top, then the south end's log ends (plain: the top's wood on down to the floor); doors are gaps [from, to] along y.
    Foot: y = h (an 'x' wall); a 'y' wall is long in depth, so give it a foot per gap-free piece or keep it low. */
 export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], windows = [], plain = false } = {}) {
   w = axis === 'x' ? w || 400 : t;
@@ -385,8 +385,9 @@ export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], wind
     }
   } else {
     for (const [a, b] of segs) {
-      s += R(0, a, w, b - a, '#c98a52', ln(2.6)) + F`<path d="M${w * .4} ${a + 3}V${b - 3}" stroke="#e8b27a" stroke-width="3" opacity=".7"/>`;
-      if (plain) { s += R(0, b, w, wallH, `url(#${id})`, ln(2.6)); continue; }   // (its end as a plain log face, no rings: by an open doorway, over the south wall's low line)
+      const e = plain ? b + wallH : b;   // (plain: the wall's own wood runs on down to the floor, no log ends: by an open doorway, over the south wall's low line)
+      s += R(0, a, w, e - a, '#c98a52', ln(2.6)) + F`<path d="M${w * .4} ${a + 3}V${e - 3}" stroke="#e8b27a" stroke-width="3" opacity=".7"/>`;
+      if (plain) continue;
       s += R(0, b, w, wallH, '#8f4c22', ln(2.6));
       for (let y = b + wallH - 8.5; y > b + 4; y -= 17) s += F`<ellipse cx="${w / 2}" cy="${y}" rx="${w / 2 - 1.5}" ry="8" fill="#dca36a" stroke="#5e2a10" stroke-width="1.4"/><ellipse cx="${w / 2}" cy="${y}" rx="${w / 4}" ry="4" fill="none" stroke="#a0602c" stroke-width="1.2"/>`;
     }

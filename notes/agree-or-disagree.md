@@ -1946,3 +1946,11 @@ Decisions:
 - The missing wall: a north-south wall's south end over the south wall's low line (and at an open doorway) showed only its
   top, so it looked cut short. Its end now shows down to the floor, as a plain log face (no rings).
 - The end table's drawer is gone.
+
+## Request (2026-10-26 14:31Z)
+> Wat is this supposed to be?? Remove that texture from the end of the wall and others like that becuase the logs wouldn't stand upwards there!
+>
+> Keep the wall there in the sqme texture aa everything.
+
+Decision: a north-south wall's end at a doorway or over the south wall's low line is now the wall's own wood (the cut
+top's color and stripe) running on down to the floor, with no log texture.
