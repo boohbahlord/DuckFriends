@@ -15,6 +15,7 @@ export const HATS = [
   { id: 'fila', name: 'Fila', tip: 'The Yoruba cap Nigerian men wear (here a fila gobi, folded to one side).', colors: [['c1', 'Cap', '#6b2fa3'], ['c2', 'Stripes', '#f2c94c']] },
   { id: 'gele', name: 'Gele', tip: 'The Nigerian head tie women wear, wrapped and pleated high.', colors: [['c1', 'Gele', '#7a1f2b']] },
   { id: 'sombrero', name: 'Sombrero' },
+  { id: 'cowboy', name: 'Cowboy hat', colors: [['c1', 'Hat', '#9a6a3a'], ['c2', 'Band', '#4a2d18']] },
   { id: 'dunce', name: 'Dunce hat' },
   { id: 'crown', name: 'Crown', metal: true },
   { id: 'duckling', name: 'Rubber duck', colors: [['c1', 'Duck', '#ffd23f']] },
@@ -43,7 +44,7 @@ export const hatById = id => HATS.find(h => h.id === id) || null;
 export const HAT_GROUPS = [
   ['Fun', ['birthday', 'bow', 'dunce', 'word', 'duckling', 'mouse', 'eye', 'antenna', 'antennae']],
   ['Food', ['pumpkin', 'hotdog', 'cheese']],
-  ['Hair, hats and caps', ['afro', 'cap', 'bucket', 'fila', 'gele', 'sombrero', 'nightcap', 'jordan']],
+  ['Hair, hats and caps', ['afro', 'cap', 'bucket', 'fila', 'gele', 'sombrero', 'cowboy', 'nightcap', 'jordan']],
   ['Fantasy', ['wizard', 'crown', 'halo', 'horns']],
   ['Jobs and uniforms', ['police', 'fire', 'doctor', 'helmet']],
   ['Weddings and church', ['veil', 'pope', 'bishop']],
@@ -124,6 +125,13 @@ const DRAW = {
     <path d="M-16-7C-6-9 6-9 16-7L16-2C6-4-6-4-16-2Z" fill="#d7263d"/>
     <path d="M-15-5l4-2 4 2 4-2 4 2 4-2 4 2 4-2" stroke="#2a9d8f" stroke-width="1.6" fill="none"/>
     ${[-38, -27, -15, -3, 9, 21, 31].map((x, i) => `<circle cx="${x}" cy="${(8 - Math.abs(x + 3) / 9).toFixed(1)}" r="2.2" fill="${['#d7263d', '#2a9d8f', '#f4a261'][i % 3]}"/>`).join('')}`,
+  cowboy: h => { const c = h.c1, d = dk(c, .3), l = lt(c, .25);
+    return `<path d="M-40-7C-37 3-24 7-8 6.5L8 6.5C24 7 37 3 40-7C34-1 24-1 16-2L-16-2C-24-1-34-1-40-7Z" fill="${dk(c, .1)}" ${O}/>
+    <path d="M-17-1C-20-14-18-24-12-27C-8-23-4-21 0-21C4-21 8-23 12-27C18-24 20-14 17-1Z" fill="${c}" ${O}/>
+    <path d="M0-21C0-16 0-10 0-3" stroke="${d}" stroke-width="1.1" fill="none"/>
+    <path d="M-17-1C-8 1 8 1 17-1L16.6-7C8-5-8-5-16.6-7Z" fill="${h.c2}" ${O}/>
+    <rect x="-3" y="-6.6" width="6" height="5" rx="1" fill="#e9c46a" stroke="#1c1c28" stroke-width="1"/>
+    <path d="M-14-12C-14-18-12-22-9-24" stroke="${l}" stroke-width="2" opacity=".55" fill="none" stroke-linecap="round"/>`; },
   dunce: () => `<path d="M-16 2L0-52L16 2Z" fill="#fbfbf6" ${O}/>
     <path d="M0-52L16 2L8 2Z" fill="#000" opacity=".08"/>
     <text x="-1" y="-6" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="16" fill="#1c1c28">D</text>
