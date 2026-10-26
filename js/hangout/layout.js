@@ -202,8 +202,8 @@ add('rocker', 3330, 2240, 80, 60, 80, { solid: true });
 add('rocker', 3560, 2240, 80, 60, 80, { solid: true });
 add('deck-table', 3460, 2260, 60, 50, 45, { solid: true, plat: true });
 const GLOWS = [];   // lights with no prop of their own: the south windows on the deck, the deck's string lights
-for (const x of WIN) GLOWS.push({ x, y: C.y1 + 70, r: 220, c: WARM, k: .35, only: 'out' });
-for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: '#ffcf70', k: .3, flick: .3, only: 'out', porch: true });
+for (const x of WIN) GLOWS.push({ x, y: C.y1 + 70, r: 220, c: WARM, k: .35, only: 'out', el: true });
+for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: '#ffcf70', k: .3, flick: .3, only: 'out', porch: true, el: true });
 
 /* outside: the jeep on the dirt path, lampposts, the campfire and its logs, the trampoline, the soccer goal */
 add('jeep', 580, 495, 260, 125, 110, { solid: true });
@@ -211,6 +211,9 @@ const POST = { solid: true, fade: true };
 for (const [x, y] of [[950, 400], [1680, 400], [2900, 3020], [4880, 3020], [2900, 3960], [4880, 3960]])
   add('post', x - 15, y - 10, 30, 20, 230, { ...POST, light: { x, y, z: 160, r: 330, c: WARM, k: .5, flick: 1 } });   // (z: drawn round the lantern, 160 over the ground)
 add('campfire', 1440, 3260, 120, 80, 30, { solid: true, light: { x: 1500, y: 3300, r: 460, c: HOT, k: .6, flick: 1.6 } });
+/* the power box on its post, by the west wall (power.js): its lever cuts every electric light */
+export const POWER = { x: 1225, y: 900 };
+add('powerbox', POWER.x - 14, POWER.y - 14, 28, 18, 200, { solid: true, block: [POWER.x - 20, POWER.y - 16, POWER.x + 24, POWER.y + 4] });
 for (const [x, y] of [[1260, 3170], [1620, 3170], [1260, 3400], [1620, 3400]]) add('log', x, y, 120, 40, 35, { solid: true, seats: 2 });
 add('trampoline', TRAMP.cx - TRAMP.rx, TRAMP.cy - TRAMP.ry, 2 * TRAMP.rx, 2 * TRAMP.ry, 0, { layer: 'none', z: terrainAt(TRAMP.cy) });   // (trampoline.js draws it: its mat dips under a landing; z: the ground under it)
 add('goal', 5640, 940, 130, 520, 120, { block: null, fade: true });
@@ -274,5 +277,6 @@ export function spawnAt(k = 0, n = 1) {
   return { x: DOORS.front.x, y: DOORS.front.y - 80 };
 }
 /* the pools of light on the ground at night: { x, y, r, c (color), k (strength), flick, only, prop (its prop, for a
-   lamp that switches) } */
-export const LIGHTS = [...PROPS.filter(p => p.light).map(p => ({ only: p.only, ...p.light, prop: p })), ...GLOWS];
+   lamp that switches), el (electric: out while the power is off) } */
+const ELECTRIC = ['lamp', 'stage', 'sink', 'post'];
+export const LIGHTS = [...PROPS.filter(p => p.light).map(p => ({ only: p.only, ...p.light, prop: p, el: ELECTRIC.includes(p.kind) })), ...GLOWS];

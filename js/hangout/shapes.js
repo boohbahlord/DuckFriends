@@ -118,6 +118,10 @@ function treeBox(p) {
   return { kind, cx, sy, w, h, l: cx - w / 2, t: sy - (h0 - 8) * s };
 }
 
+/* the cabin from outside (dark: the power's out, power.js shows this one instead) */
+export const cabinSVG = (dark = false) => { const w = C.x1 - C.x0, d = C.y1 - C.y0;
+  return A.cabinOutside({ w, d, h: d + 290, wallH: C.wall, windows: [1550, 2080, 3300, 3700, 4080].map(x => x - C.x0), backDoor: L.DOORS.back.x - C.x0, frontDoor: L.DOORS.front.x - C.x0, chimney: 2300 - C.x0, dark }); };
+
 /* ---------- the props, kind by kind ---------- */
 const at = (p, w, h, foot = h, cx = p.x + p.w / 2) => ({ l: cx - w / 2, t: p.y + p.d - p.z - foot });   // a box whose foot (y = foot in it) is the prop's front, centered on it
 const one = (p, svg, w, h, foot = h, o = {}) => { const b = at(p, w, h, foot, o.cx); return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)]; };
@@ -144,13 +148,12 @@ export const DRAW = {
     /* the back door: inside, shut, a plank in the low wall's line (open, it has swung out onto the deck); outside, the
        cabin's own drawing shows it shut; open, the lit doorway in its frame and the door swung out */
     return [part(() => A.logWall({ w: fw, wallH: 14, t: 2 * T }).replace(/#c98a52/g, '#d9a066'), d.a, d.at - T - 14, fw, 2 * T + 14, d.at + 6, { ...o, cls: 'door-shut' }),
-      part(() => A.cabinDoor({ open: true }), gx - bw / 2, d.at - bh, bw, bh, L.ROOF_KEY + 1, { only: 'out', cls: 'door-open' }),
+      part(() => A.cabinDoor({ open: true }), gx - bw / 2, d.at - bh, bw, bh, L.ROOF_KEY + 1, { only: 'out', cls: 'door-open door-lit' }),
       ajar(d.at, false, { only: 'out' })];
   },
   roof() {   // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
-    const w = C.x1 - C.x0, d = C.y1 - C.y0, h = d + 290;
-    return [part(() => A.cabinOutside({ w, d, h, wallH: C.wall, windows: [1550, 2080, 3300, 3700, 4080].map(x => x - C.x0), backDoor: L.DOORS.back.x - C.x0, frontDoor: L.DOORS.front.x - C.x0, chimney: 2300 - C.x0 }),
-      C.x0, C.y1 - h, w, h, C.y1 + 15, { img: true, fade: true, hit: { l: C.x0 - 10, t: C.y0 - C.wall - 60, r: C.x1 + 10, b: C.y1 } })];
+    const h = C.y1 - C.y0 + 290;
+    return [part(() => cabinSVG(), C.x0, C.y1 - h, C.x1 - C.x0, h, C.y1 + 15, { img: true, fade: true, hit: { l: C.x0 - 10, t: C.y0 - C.wall - 60, r: C.x1 + 10, b: C.y1 } })];
   },
   fireplace(p) {
     const wallH = 228, h = 72 + wallH, b = p.y + p.d;
@@ -201,6 +204,7 @@ export const DRAW = {
     const cx = p.x + p.w / 2, fy = p.y + p.d - p.z, w = 140, h = 230;
     return [part(() => A.lamppost({ w, h }).front, cx - w / 2, fy - (h - 14), w, h, p.key, { fade: true, hit: { l: cx - 18, t: fy - 216, r: cx + 18, b: fy } })];
   },
+  powerbox: p => one(p, () => A.powerBox({ w: 80, h: 214 }), 80, 214, 206, { cx: L.POWER.x + 6 }),   // (its post over the prop's middle)
   campfire(p) {   // the ring around the light's middle
     const w = 150, h = 260, cx = p.x + p.w / 2, cy = p.light.y - p.z;
     return [part(() => A.campfire({ w, h }), cx - w / 2, cy - (h - w / 2), w, h, p.key)];

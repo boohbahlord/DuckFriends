@@ -24,6 +24,11 @@ export function stutter(target, now) {
   return u % gap < DIP_MS ? DIP : 1;
 }
 
+/* a light's (layout.js' LIGHTS) slow sway in size and strength, and its stutter now: world.js' pools of light and power.js'
+   dark both follow them */
+export const sway = (l, now) => l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
+export const stutterOf = (l, now) => l.flick ? stutter(l.porch ? 'porch' : l.prop && l.prop.kind === 'post' ? l.prop.id : '', now) : 1;
+
 let held = new Set();
 activity({
   id: 'flicker',

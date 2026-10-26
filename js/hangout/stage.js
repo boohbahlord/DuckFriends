@@ -19,8 +19,9 @@ const { cx, cy, rx, ry, h: Z } = STAGE, N = 24, EXT = 14;   // strips; how far r
 const rimY = x => cy + ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));   // the stage's front edge at x (on the floor)
 /* the parts: { l, t, w, h } on the screen in world px (t already raised by its height), z-index key, html */
 function parts() {
-  const out = [], st = A.stage({ rx, ry, z: Z, stairs: STAGE.sx1 - STAGE.sx0 }), bh = 2 * ry + Z, top = cy + ry - bh, x0s = cx - rx;
-  const img = svg => `<img src="${A.svgDataURL(svg)}" width="${rx}" height="${bh}" alt="" draggable="false">`, pic = img(st.back) + img(st.front);   // (pictures: one drawing, cheap to show many times)
+  const out = [], st = A.stage({ rx, ry, z: Z, stairs: STAGE.sx1 - STAGE.sx0 }), dk = A.stage({ rx, ry, z: Z, stairs: STAGE.sx1 - STAGE.sx0, lit: false }), bh = 2 * ry + Z, top = cy + ry - bh, x0s = cx - rx;
+  const img = (svg, c) => `<img class="${c}" src="${A.svgDataURL(svg)}" width="${rx}" height="${bh}" alt="" draggable="false">`;
+  const pic = img(st.back, 'st-on') + img(st.front, 'st-on') + img(dk.back, 'st-off') + img(dk.front, 'st-off');   // (pictures: one drawing, cheap to show many times; st-off in a blackout, power.js)
   out.push({ l: x0s, t: top, w: rx, h: bh, key: cy - ry, html: pic });   // the whole stage under the strips (no seams between them)
   for (let i = 0; i < N; i++) {
     const x0 = cx + rx * Math.cos(Math.PI - Math.PI / 2 * i / N), x1 = cx + rx * Math.cos(Math.PI - Math.PI / 2 * (i + 1) / N);

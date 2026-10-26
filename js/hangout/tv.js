@@ -4,7 +4,8 @@
    screen; the rest are drawn here. Only the channel that is on runs, and only while the TV is on the screen (a few
    seconds after it leaves the view it stops), so the cabin runs as before. The channel is the room's (s.hang.tv), so
    everyone watches the same one; a change clicks the knob and snows for a moment. The picture lives in the TV's screen
-   strip (shapes.js' tvParts, part 'screen'), laid flat on the screen's face, so it sorts with the TV. */
+   strip (shapes.js' tvParts, part 'screen'), laid flat on the screen's face, so it sorts with the TV. In a blackout
+   (power.js) it's off: a dark screen, and no button. */
 import { rule, activity } from './registry.js';
 import { PROPS, TV, W, H } from './layout.js';
 import { tvScreen } from './art.js';
@@ -12,6 +13,7 @@ import { tvScreenStrip } from './shapes.js';
 import { SCENES } from '../maps.js';
 import { duckSVG, DUCK_DEFAULT } from '../duck.js';
 import { play, loop } from './sounds.js';
+import { powered } from './power.js';
 
 const CH = ['static', 'board', 'rabbit', 'stars', 'ec', 'bath', 'kitten'];
 const REACH = 130;   // world px from the stand's middle
@@ -103,7 +105,7 @@ function quiet() { if (hiss) hiss.stop(); hiss = null; }
 activity({
   id: 'tv',
   near(pos, ctx) {
-    if (!pos.inside) return null;
+    if (!pos.inside || !powered(ctx.state())) return null;   // (a blackout: power.js)
     const d = Math.hypot(pos.x - TV.cx, pos.y - TV.cy);
     return d < REACH ? { label: 'Next channel', d, act: () => ctx.send({ t: 'hang', k: 'tv' }) } : null;
   },
@@ -115,7 +117,8 @@ activity({
   draw(now, ctx) {
     const w = ctx.world;
     if (!el || !el.isConnected) { el = w.board.querySelector(`.hp[data-prop="${TV_ID}"][data-part="screen"]`); pic = null; scene = null; on = -1; if (el) attach(el); }
-    const vis = !!el && !el.hidden && w.inside;
+    const pw = powered(ctx.state()), vis = !!el && !el.hidden && w.inside && pw;   // (a blackout: the TV goes off)
+    if (pic && pic._pw !== pw) { pic._pw = pw; pic.hidden = !pw; }
     if (vis) seen = now;
     else if (on >= 0 && now - seen > 3000) stop();
     const c = chan(ctx.state());

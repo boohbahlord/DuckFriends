@@ -53,8 +53,9 @@ function stones(x, y, w, h, seed, rowH = 22) {
   }
   return out;
 }
-/* warm bulbs on a wire that sags between hooks: three sets that twinkle in turn */
-function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1, big = 1) {
+/* warm bulbs on a wire that sags between hooks: three sets that twinkle in turn (off: the power's out, dark bulbs) */
+const BULB_OFF = '#6e5a36';
+function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1, big = 1, off = false) {
   const n = Math.max(1, Math.round((x1 - x0) / hook)), seg = (x1 - x0) / n, sets = ['', '', ''];
   let wire = '', k = 0;
   for (let i = 0; i < n; i++) {
@@ -64,8 +65,8 @@ function stringLights(x0, x1, y, sag = 16, hook = 180, gap = 30, seed = 1, big =
     for (let j = 1; j < nb; j++) {
       const t = j / nb, bx = (1 - t) * (1 - t) * a + 2 * (1 - t) * t * m + t * t * b, by = y + 2 * (1 - t) * t * sag * 2 + 5;
       sets[k++ % 3] += big > 1
-        ? F`<path d="M${bx} ${by - 2}V${by + 34}" stroke="#2a1a10" stroke-width="2.4"/><circle cx="${bx}" cy="${by + 34 + 7 * big}" r="${9 * big}" fill="#ffb347" opacity=".42"/><ellipse cx="${bx}" cy="${by + 34 + 7 * big}" rx="${3.6 * big}" ry="${4.6 * big}" fill="#ffe7a8" stroke="#6a3a12" stroke-width="1.6"/>`
-        : F`<circle cx="${bx}" cy="${by + 2}" r="9" fill="#ffb347" opacity=".3"/><ellipse cx="${bx}" cy="${by + 2}" rx="3.6" ry="4.6" fill="#ffd98a" stroke="#6a3a12" stroke-width="1.2"/>`;
+        ? F`<path d="M${bx} ${by - 2}V${by + 34}" stroke="#2a1a10" stroke-width="2.4"/>${off ? '' : F`<circle cx="${bx}" cy="${by + 34 + 7 * big}" r="${9 * big}" fill="#ffb347" opacity=".42"/>`}<ellipse cx="${bx}" cy="${by + 34 + 7 * big}" rx="${3.6 * big}" ry="${4.6 * big}" fill="${off ? BULB_OFF : '#ffe7a8'}" stroke="#6a3a12" stroke-width="1.6"/>`
+        : F`${off ? '' : F`<circle cx="${bx}" cy="${by + 2}" r="9" fill="#ffb347" opacity=".3"/>`}<ellipse cx="${bx}" cy="${by + 2}" rx="3.6" ry="4.6" fill="${off ? BULB_OFF : '#ffd98a'}" stroke="#6a3a12" stroke-width="1.2"/>`;
     }
   }
   return `<path d="${wire}" stroke="#2a1a10" stroke-width="2" fill="none"/>` + sets.map((s, i) => `<g class="hg-twinkle" style="animation-delay:-${(i * .8 + seed * .3).toFixed(1)}s">${s}</g>`).join('');
@@ -265,11 +266,40 @@ export function forest({ w = 1200, h = 500, top = 300, seed = 5, density = 1, fl
 export function lamppost({ w = 140, h = 230 } = {}) {
   const id = uid(), cx = w / 2, b = h - 14, ly = b - 176;
   const back = F`<ellipse cx="${cx}" cy="${b}" rx="${w / 2}" ry="${w * .22}" fill="url(#${id})" class="hg-flicker"/>`;
-  const front = shade(cx, b, 15, 5) + F`<circle cx="${cx}" cy="${ly + 16}" r="${w * .38}" fill="url(#${id}h)" class="hg-flicker" style="animation-delay:-1.1s"/>`
+  const front = shade(cx, b, 15, 5) + F`<circle cx="${cx}" cy="${ly + 16}" r="${w * .38}" fill="url(#${id}h)" class="hg-flicker lit-glow" style="animation-delay:-1.1s"/>`
     + F`<path d="M${cx - 12} ${b}h24l-4 -14h-16Z" fill="#2a2b35" ${ln(2.2)}/><rect x="${cx - 4}" y="${ly + 34}" width="8" height="${b - ly - 48}" fill="#30313c" ${ln(2.2)}/><rect x="${cx - 2.5}" y="${ly + 36}" width="2" height="${b - ly - 52}" fill="#5a5c6a"/>`
-    + F`<path d="M${cx - 14} ${ly + 8}h28l-3 24h-22Z" fill="#ffd27a" ${ln(2.2)}/><path d="M${cx - 9} ${ly + 10}h7l-1 20h-5Z" fill="#fff4cc"/><path d="M${cx} ${ly + 8}V${ly + 32}" stroke="${O}" stroke-width="1.6"/>`
+    + F`<path d="M${cx - 14} ${ly + 8}h28l-3 24h-22Z" fill="#ffd27a" class="lit" ${ln(2.2)}/><path d="M${cx - 9} ${ly + 10}h7l-1 20h-5Z" fill="#fff4cc" class="lit"/><path d="M${cx} ${ly + 8}V${ly + 32}" stroke="${O}" stroke-width="1.6"/>`
     + F`<path d="M${cx - 20} ${ly + 9}L${cx} ${ly - 6}L${cx + 20} ${ly + 9}Z" fill="#2a2b35" ${ln(2.2)}/><circle cx="${cx}" cy="${ly - 9}" r="3.5" fill="#2a2b35" ${ln(1.8)}/><rect x="${cx - 16}" y="${ly + 31}" width="32" height="5" rx="2" fill="#2a2b35" ${ln(1.8)}/>`;
   return pair(w, h, [back, glowDef(id, '#ffb347', .5)], [front, glowDef(id + 'h', '#ffc46a', .55)], null, b);
+}
+/* the power box (outside, by the cabin's west wall): a wooden post, a small grey transformer near its top (its wire runs
+   off east into the cabin's wall), and a grey box at a duck's height with a big red lever on its right side. The lever
+   shows up (.pb-up, the power on) or down (.pb-down); the light on the box is green or red (.pb-on / .pb-off); the dial
+   on its door (.pb-ring, pathLength 100) counts down while the power can't go back on yet (power.js sets its
+   stroke-dashoffset). Foot: y = h − 8. */
+export function powerBox({ w = 80, h = 214 } = {}) {
+  const cx = 34, b = h - 8, bt = b - 106, bb = b - 40, bx0 = cx - 24, bx1 = cx + 24, px = bx1, py = (bt + bb) / 2 - 2;
+  const lever = (ang, cls) => { const r = ang * Math.PI / 180, ex = px + Math.cos(r) * 34, ey = py + Math.sin(r) * 34;
+    return F`<g class="${cls}"><path d="M${px} ${py}L${ex} ${ey}" stroke="${O}" stroke-width="10" stroke-linecap="round"/><path d="M${px} ${py}L${ex} ${ey}" stroke="#d23a3a" stroke-width="6" stroke-linecap="round"/>`
+      + F`<circle cx="${ex}" cy="${ey}" r="8.5" fill="#e8463c" ${ln(2.2)}/><circle cx="${ex - 2.5}" cy="${ey - 2.5}" r="2.6" fill="#ffb3a8" opacity=".8"/></g>`; };
+  let s = shade(cx, b, 22, 7);
+  /* the post, its cap, the pipe from the box into the ground */
+  s += R(cx - 7, 14, 14, b - 14, '#8a5a32', ln(2.4)) + R(cx - 4, 18, 3, b - 22, '#b07a48', 'opacity=".7"') + R(cx - 9, 10, 18, 7, '#6e4424', `rx="2" ${ln(2)}`);
+  s += R(cx + 9, bb, 7, b - bb - 2, '#5e626c', ln(1.8));
+  /* the transformer: a ribbed can on the post, two white bushings, its wire off east (behind the cabin) */
+  s += F`<path d="M${cx + 4} 30Q${cx + 70} 46 ${cx + 130} 30" stroke="#2a2b35" stroke-width="2.4" fill="none"/><path d="M${cx - 6} 30Q${cx + 60} 52 ${cx + 130} 44" stroke="#2a2b35" stroke-width="2.4" fill="none"/>`
+    + R(cx - 9, 28, 5, 9, '#ece6da', `rx="2" ${ln(1.4)}`) + R(cx + 2, 28, 5, 9, '#ece6da', `rx="2" ${ln(1.4)}`)
+    + R(cx - 15, 36, 30, 40, '#8d939c', `rx="6" ${ln(2.4)}`) + F`<path d="M${cx - 7} 40V72M${cx} 40V72M${cx + 7} 40V72" stroke="#6c717b" stroke-width="2"/>`
+    + F`<ellipse cx="${cx}" cy="37" rx="15" ry="4" fill="#b3b9c2" ${ln(2)}/>` + R(cx - 12, 46, 6, 22, '#c2c8d0', 'rx="2" opacity=".55"');
+  /* the box: its top, its face and door, a warning sign, the light, the dial */
+  s += F`<path d="M${bx0} ${bt}L${bx0 + 6} ${bt - 8}H${bx1 + 6}L${bx1} ${bt}Z" fill="#a9afb8" ${ln(2.2)}/><path d="M${bx1} ${bt}L${bx1 + 6} ${bt - 8}V${bb - 8}L${bx1} ${bb}Z" fill="#5e636c" ${ln(2.2)}/>`
+    + R(bx0, bt, bx1 - bx0, bb - bt, '#7d838d', `rx="3" ${ln(2.6)}`) + R(bx0 + 5, bt + 5, bx1 - bx0 - 10, bb - bt - 10, 'none', `rx="2" stroke="#5a5f68" stroke-width="2"`)
+    + F`<path d="M${bx0 + 14} ${bt + 9}L${bx0 + 22} ${bt + 23}H${bx0 + 6}Z" fill="#ffd23f" ${ln(1.6)}/><path d="M${bx0 + 15} ${bt + 12}l-3 6h3l-2 4l4 -6h-3l2 -4Z" fill="${O}"/>`
+    + F`<circle cx="${bx1 - 10}" cy="${bt + 13}" r="4.5" fill="#3fd46b" class="pb-on" ${ln(1.6)}/><circle cx="${bx1 - 10}" cy="${bt + 13}" r="4.5" fill="#ef3b3b" class="pb-off" ${ln(1.6)}/>`
+    + F`<circle cx="${cx - 4}" cy="${bb - 21}" r="10" fill="#2a2b35" ${ln(2)}/><circle cx="${cx - 4}" cy="${bb - 21}" r="6.5" fill="none" stroke="#ffd23f" stroke-width="4" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100" opacity="0" transform="rotate(-90 ${cx - 4} ${bb - 21})" class="pb-ring"/>`;
+  /* the lever on its boss: up (on) or down (off) */
+  s += lever(-48, 'pb-up') + lever(48, 'pb-down') + F`<circle cx="${px}" cy="${py}" r="6.5" fill="#4a4d56" ${ln(2)}/>`;
+  return wrap(w, h, s, 'hg-powerbox');
 }
 /* a floor lamp (inside): a warm shade on a pole, side-on. Foot: bottom (y = h − 6). */
 export function floorLamp({ w = 70, h = 170 } = {}) {
@@ -288,11 +318,11 @@ export const chimneyTop = (wallH, roofH = 520, d = 1600) => wallH + roofH * Math
    little porch roof over the front door on the north side (the door itself faces away). x positions are from the
    cabin's west wall. Box: w × (d + 290); its bottom is the south wall's foot (foot: y = h), the footprint's north
    edge is at y = h − d. */
-export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roofH = 520, backDoor = 1500, frontDoor = 700, chimney = 1000, gable = 760, windows = [280, 640, 1000, 2240, 2640], dormers = [560, 2440], lights = true, door = DOOR } = {}) {
+export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roofH = 520, backDoor = 1500, frontDoor = 700, chimney = 1000, gable = 760, windows = [280, 640, 1000, 2240, 2640], dormers = [560, 2440], lights = true, door = DOOR, dark = false } = {}) {
   const id = uid(), Y0 = h - d, B = h, wt = B - wallH, sE = wt + 36, nE = Y0 - wallH - 50, ridge = Y0 + d / 2 - wallH - roofH;
   const gx = backDoor, gw = gable / 2, gH = 330, gA = wt - gH, gR = gA - gH * d / 2 / roofH;
   const roofAt = dep => wallH + roofH * Math.min(1, dep / (d / 2));
-  const defs = logDef(id + 'l', B % 17) + shingleDef(id + 's') + shingleDef(id + 'n', .42) + shingleDef(id + 'v', 1, 90) + glassDef(id + 'g') + glowDef(id + 'w', '#ffb347', .42) + glowDef(id + 'p', '#ffbe5c', .6) + stoneStripDef(id + 'f', 16, B - 16)
+  const defs = logDef(id + 'l', B % 17) + shingleDef(id + 's') + shingleDef(id + 'n', .42) + shingleDef(id + 'v', 1, 90) + (dark ? DARK_GLASS(id + 'g') : glassDef(id + 'g')) + glowDef(id + 'w', '#ffb347', dark ? 0 : .42) + glowDef(id + 'p', '#ffbe5c', dark ? 0 : .6) + stoneStripDef(id + 'f', 16, B - 16)
     + `<linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8d4ff" stop-opacity=".14"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>`
     + `<linearGradient id="${id}m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfe0ff" stop-opacity=".1"/><stop offset=".5" stop-color="#bfe0ff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".12"/></linearGradient>`;
   let s = '';
@@ -321,7 +351,7 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
   s += win(gx - 150, 92, 98, B - 30) + win(gx + 150, 92, 98, B - 30);
   /* the back door (glass, lit) and two lanterns beside it */
   s += doorBody(gx, B, door, `url(#${id}g)`);
-  for (const x of [gx - 66, gx + 66]) s += F`<circle cx="${x}" cy="${B - 92}" r="38" fill="url(#${id}p)" class="hg-flicker" style="animation-delay:-${x % 3}s"/><rect x="${x - 7}" y="${B - 104}" width="14" height="20" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${x - 9} ${B - 105}h18M${x} ${B - 84}v8" stroke="${O}" stroke-width="3"/>`;
+  for (const x of [gx - 66, gx + 66]) s += F`<circle cx="${x}" cy="${B - 92}" r="38" fill="url(#${id}p)" class="hg-flicker" style="animation-delay:-${x % 3}s"/><rect x="${x - 7}" y="${B - 104}" width="14" height="20" rx="3" fill="${dark ? BULB_OFF : '#ffd98a'}" ${ln(2)}/><path d="M${x - 9} ${B - 105}h18M${x} ${B - 84}v8" stroke="${O}" stroke-width="3"/>`;
   /* the south slope (notched where the gable comes forward), its gradient, the eave's fascia and shadow */
   const sp = F`M0 ${ridge}H${w}V${sE}H${gx + gw}V${wt}H${gx - gw}V${sE}H0Z`;
   s += F`<path d="${sp}" fill="url(#${id}s)" ${ln(3)}/><path d="${sp}" fill="url(#${id}r)"/><path d="${sp}" fill="url(#${id}m)"/>`
@@ -351,7 +381,7 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
     + R(gx - gw * (gA + 70 - gA) / gH - 6, gA + 62, 2 * gw * 70 / gH + 12, 14, '#d0803e', ln(2.2)) + R(gx - 7, gA + 4, 14, 60, '#d0803e', ln(2.2))
     + R(gx - gw - 14, wt - 8, gable + 28, 16, '#d0803e', ln(2.4));
   s += F`<path d="M${gx - gw - 26} ${wt + 26}L${gx} ${gA - 24}L${gx + gw + 26} ${wt + 26}" stroke="${O}" stroke-width="24" fill="none" stroke-linejoin="round"/><path d="M${gx - gw - 26} ${wt + 26}L${gx} ${gA - 24}L${gx + gw + 26} ${wt + 26}" stroke="#d0803e" stroke-width="17" fill="none" stroke-linejoin="round"/><path d="M${gx - gw - 22} ${wt + 20}L${gx} ${gA - 28}" stroke="#f0a862" stroke-width="3" fill="none" opacity=".6"/>`;
-  if (lights) s += stringLights(30, gx - gw - 30, sE + 2, 12, 170, 30, 1) + stringLights(gx + gw + 30, w - 30, sE + 2, 12, 170, 30, 2) + stringLights(gx - gw + 20, gx + gw - 20, wt + 12, 10, 150, 30, 3);
+  if (lights) s += stringLights(30, gx - gw - 30, sE + 2, 12, 170, 30, 1, 1, dark) + stringLights(gx + gw + 30, w - 30, sE + 2, 12, 170, 30, 2, 1, dark) + stringLights(gx - gw + 20, gx + gw - 20, wt + 12, 10, 150, 30, 3, 1, dark);
   return wrap(w, h, s, 'hg-cabin', defs);
 }
 
@@ -422,6 +452,8 @@ export function cabinDoor({ night = false, open = false, door = DOOR } = {}) {
   const defs = night ? NIGHT_GLASS(id) : `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">${open ? '<stop offset="0" stop-color="#ffcf7a"/><stop offset="1" stop-color="#c8662a"/>' : '<stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#ffbd57"/><stop offset="1" stop-color="#f08a32"/>'}</linearGradient>`;
   return wrap(W, H, doorBody(W / 2, H, door, `url(#${id})`, open), 'hg-door', defs);
 }
+/* a window with the lights off inside, from outside: the night sky in it */
+const DARK_GLASS = id => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3a5c"/><stop offset=".6" stop-color="#1b2540"/><stop offset="1" stop-color="#141b30"/></linearGradient>`;
 const NIGHT_GLASS = id => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#173528"/><stop offset="1" stop-color="#24503d"/></linearGradient>`;
 /* a door's face, w × h: a frame, four sunk panels, a brass knob (knob: 'l' | 'r', the side away from the hinge). Foot: y = h. */
 export function doorFace({ w = 150, h = 150, knob = 'r' } = {}) {
@@ -454,18 +486,18 @@ export function fireplace({ w = 280, h, wallH = 170 } = {}) {
   let b = stones(0, top + 30, w, wallH, 21, 24) + R(0, top + 30, w, wallH, 'none', ln(3)) + stones(0, top, w, 30, 22, 15) + R(0, top, w, 30, 'none', ln(2.6)) + R(0, top, w, 30, '#fff', 'opacity=".08"');
   /* the firebox: an arch, sooty inside, bricks glowing, logs and the fire */
   const arch = F`M${ox - ow} ${ob}V${ot + ow * .55}Q${ox - ow} ${ot} ${ox} ${ot}Q${ox + ow} ${ot} ${ox + ow} ${ot + ow * .55}V${ob}Z`;
-  b += F`<path d="${arch}" fill="#1a1110" stroke="#4a4d56" stroke-width="12"/><path d="${arch}" fill="url(#${id}f)"/><path d="${arch}" fill="none" ${ln(2.6)}/>`
+  b += F`<path d="${arch}" fill="#1a1110" stroke="#4a4d56" stroke-width="12"/><path d="${arch}" fill="url(#${id}f)" class="hg-f"/><path d="${arch}" fill="none" ${ln(2.6)}/>`
     + F`<path d="M${ox - ow * .7} ${ob - 6}L${ox + ow * .6} ${ob - 14}M${ox - ow * .6} ${ob - 14}L${ox + ow * .7} ${ob - 6}" stroke="${O}" stroke-width="13" stroke-linecap="round"/><path d="M${ox - ow * .7} ${ob - 6}L${ox + ow * .6} ${ob - 14}M${ox - ow * .6} ${ob - 14}L${ox + ow * .7} ${ob - 6}" stroke="#6b3f22" stroke-width="9" stroke-linecap="round"/>`
-    + fire(ox, ob - 10, .85) + F`<ellipse cx="${ox}" cy="${ob - 4}" rx="${ow * .8}" ry="6" fill="#ff7a1f" opacity=".8"/>`;
+    + F`<g class="hg-f">${fire(ox, ob - 10, .85)}<ellipse cx="${ox}" cy="${ob - 4}" rx="${ow * .8}" ry="6" fill="#ff7a1f" opacity=".8"/></g>`;
   /* the mantel and what sits on it */
   const my = F0 - 134;
   b += R(-10, my - 14, w + 20, 14, '#c47a3e', ln(2.4)) + R(-10, my, w + 20, 14, '#9a5526', ln(2.4))
-    + F`<rect x="22" y="${my - 40}" width="9" height="26" fill="#f4ecd8" ${ln(1.6)}/><path d="M26.5 ${my - 52}q-5 7 0 11q5 -4 0 -11Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1"/><circle cx="26.5" cy="${my - 46}" r="12" fill="url(#${id}c)" class="hg-flicker"/>`
-    + F`<rect x="${w - 31}" y="${my - 34}" width="9" height="20" fill="#f4ecd8" ${ln(1.6)}/><path d="M${w - 26.5} ${my - 46}q-5 7 0 11q5 -4 0 -11Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1"/><circle cx="${w - 26.5}" cy="${my - 40}" r="12" fill="url(#${id}c)" class="hg-flicker" style="animation-delay:-1.7s"/>`
+    + F`<rect x="22" y="${my - 40}" width="9" height="26" fill="#f4ecd8" ${ln(1.6)}/><path d="M26.5 ${my - 52}q-5 7 0 11q5 -4 0 -11Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1" class="hg-c"/><circle cx="26.5" cy="${my - 46}" r="12" fill="url(#${id}c)" class="hg-flicker hg-c"/>`
+    + F`<rect x="${w - 31}" y="${my - 34}" width="9" height="20" fill="#f4ecd8" ${ln(1.6)}/><path d="M${w - 26.5} ${my - 46}q-5 7 0 11q5 -4 0 -11Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1" class="hg-c"/><circle cx="${w - 26.5}" cy="${my - 40}" r="12" fill="url(#${id}c)" class="hg-flicker hg-c" style="animation-delay:-1.7s"/>`
     + F`<g transform="translate(${w * .62} ${my - 14})"><path d="M-12 0C-14 -6 -12 -11 -8 -12C-8 -18 -2 -21 2 -18C6 -16 6 -11 4 -9C10 -10 13 -6 12 0Z" fill="#ffd23f" ${ln(1.6)}/><path d="M5 -16l5 1.5l-5 1.5Z" fill="#ff9a1f"/><circle cx="2.5" cy="-16" r="1.2" fill="${O}"/></g>`;
-  b += F`<ellipse cx="${ox}" cy="${ot + 40}" rx="${w * .7}" ry="${wallH * .5}" fill="url(#${id}g)" class="hg-flicker"/>`;
+  b += F`<ellipse cx="${ox}" cy="${ot + 40}" rx="${w * .7}" ry="${wallH * .5}" fill="url(#${id}g)" class="hg-flicker hg-f"/>`;
   const hy = F0 - 12;
-  const f = stones(-6, hy, w + 12, d - 30, 23, 21) + R(-6, hy, w + 12, d - 30, 'none', ln(2.6)) + R(-6, hy, w + 12, d - 30, '#ff9a3a', 'opacity=".12"') + R(-6, hy + d - 30, w + 12, 12, '#4f525b', ln(2.4));
+  const f = stones(-6, hy, w + 12, d - 30, 23, 21) + R(-6, hy, w + 12, d - 30, 'none', ln(2.6)) + R(-6, hy, w + 12, d - 30, '#ff9a3a', 'opacity=".12" class="hg-f"') + R(-6, hy + d - 30, w + 12, 12, '#4f525b', ln(2.4));
   const defs = F`<radialGradient id="${id}f" cx=".5" cy=".85" r=".7"><stop offset="0" stop-color="#ff9a3a" stop-opacity=".9"/><stop offset=".5" stop-color="#b8441a" stop-opacity=".5"/><stop offset="1" stop-color="#1a1110" stop-opacity="0"/></radialGradient>` + glowDef(id + 'c', '#ffb347', .55) + glowDef(id + 'g', '#ff9a3a', .3);
   return pair(w, h, [b, defs], [f], F0, h);
 }
@@ -648,7 +680,7 @@ export function pianoBody({ w = 360, h = 240 } = {}) {
   const back = shade(w / 2, Y + 70, w / 2 + 10, 30, .3) + R(0, Y - 150, w, 55, hi, `rx="4" ${ln(2.6)}`) + R(0, Y - 95, w, 150, wood, ln(2.6))
     + R(24, Y - 84, w - 48, 52, lo, `rx="6" ${ln(2)}`) + R(32, Y - 78, w - 64, 40, wood, 'rx="4"') + F`<path d="M${w / 2 - 50} ${Y - 58}q25 -16 50 0q25 16 50 0" stroke="#c88a4a" stroke-width="3" fill="none"/>`
     + R(w / 2 - 70, Y - 40, 140, 10, hi, ln(2)) + R(w / 2 - 50, Y - 64, 100, 26, '#f3e7c8', ln(1.6)) + F`<path d="M${w / 2 - 44} ${Y - 58}h88M${w / 2 - 44} ${Y - 52}h88M${w / 2 - 44} ${Y - 46}h88" stroke="#8a7458" stroke-width="1"/>`
-    + [14, w - 14].map((x, i) => F`<circle cx="${x}" cy="${Y - 110}" r="30" fill="url(#${id})" class="hg-flicker" style="animation-delay:-${i * 1.3}s"/><rect x="${x - 4}" y="${Y - 112}" width="8" height="18" fill="#f4ecd8" ${ln(1.4)}/><path d="M${x} ${Y - 124}q-4 6 0 9q4 -3 0 -9Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1"/>`).join('');
+    + [14, w - 14].map((x, i) => F`<circle cx="${x}" cy="${Y - 110}" r="30" fill="url(#${id})" class="hg-flicker hg-c" style="animation-delay:-${i * 1.3}s"/><rect x="${x - 4}" y="${Y - 112}" width="8" height="18" fill="#f4ecd8" ${ln(1.4)}/><path d="M${x} ${Y - 124}q-4 6 0 9q4 -3 0 -9Z" fill="#ffc23f" stroke="#c46a12" stroke-width="1" class="hg-c"/>`).join('');
   let keys = '';
   const nk = Math.floor((w - 40) / 9);
   for (let i = 0; i < nk; i++) keys += F`M${20 + i * (w - 40) / nk} ${Y - 15}v35`;
@@ -665,13 +697,13 @@ export function pianoBody({ w = 360, h = 240 } = {}) {
 /* the stage: half an oval, its flat side against an east wall: rx out from the wall, ry along it (footprint rx × 2ry),
    raised z (+70). Planks on top with a warm spotlight, a red skirt round the curve, and footlights standing on the top
    just inside the rim along the front, drawn last. Box rx × (2ry + z). back: the top, foot y = z (the footprint's north
-   edge); front: the skirt and the footlights, foot y = h. */
-export function stage({ rx = 250, ry = 195, z = 70, stairs = 0 } = {}) {
+   edge); front: the skirt and the footlights, foot y = h. lit false: the power's out (no spotlight, the bulbs dark). */
+export function stage({ rx = 250, ry = 195, z = 70, stairs = 0, lit = true } = {}) {
   const id = uid(), w = rx, h = 2 * ry + z, cx = rx, cy = ry;   // (the top's middle, on the wall's face)
   const top = F`M${cx} ${cy - ry}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}Z`;
   let planks = '';
   for (let y = cy - ry + 22; y < cy + ry; y += 22) planks += F`M0 ${y}H${w}`;
-  const back = F`<path d="${top}" fill="#b06a35"/><g clip-path="url(#${id}c)"><path d="${planks}" stroke="#7a4220" stroke-width="2.2"/><ellipse cx="${cx - rx * .45}" cy="${cy}" rx="${rx * .5}" ry="${ry * .55}" fill="url(#${id}s)"/>`
+  const back = F`<path d="${top}" fill="#b06a35"/><g clip-path="url(#${id}c)"><path d="${planks}" stroke="#7a4220" stroke-width="2.2"/>${lit ? F`<ellipse cx="${cx - rx * .45}" cy="${cy}" rx="${rx * .5}" ry="${ry * .55}" fill="url(#${id}s)"/>` : ''}`
     + F`<path d="M${cx} ${cy - ry + 7}A${rx - 7} ${ry - 7} 0 0 0 ${cx} ${cy + ry - 7}" fill="none" stroke="#e0a050" stroke-width="12"/></g>`
     + F`<path d="M${cx} ${cy - ry}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" fill="none" ${ln(3)}/>`;
   /* the skirt: the curve's south-west quarter, from its left end round to the wall, z deep */
@@ -684,8 +716,8 @@ export function stage({ rx = 250, ry = 195, z = 70, stairs = 0 } = {}) {
   const a0 = Math.max(Math.PI * .56, Math.acos(-Math.min(1, (stairs + 32) / (rx - 16)))), n = Math.round((Math.PI * .96 - a0) / (Math.PI * .08)) + 1;
   for (let i = 0; i < n; i++) {
     const a = a0 + (Math.PI * .96 - a0) * i / (n - 1), x = cx + (rx - 16) * Math.cos(a), y = cy + (ry - 13) * Math.sin(a), k = Math.cos(a);
-    lamps += F`<g class="hg-twinkle" style="animation-delay:-${i * .5}s"><circle cx="${x - k * 9}" cy="${y - 6}" r="15" fill="#ffb347" opacity=".4"/></g>`
-      + F`<rect x="${x - 8}" y="${y - 10}" width="16" height="11" rx="4" fill="#2a2b35" ${ln(1.8)}/><circle cx="${x - k * 5}" cy="${y - 6}" r="4" fill="#fff0b8" stroke="#6a3a12" stroke-width="1.2"/>`;
+    lamps += (lit ? F`<g class="hg-twinkle" style="animation-delay:-${i * .5}s"><circle cx="${x - k * 9}" cy="${y - 6}" r="15" fill="#ffb347" opacity=".4"/></g>` : '')
+      + F`<rect x="${x - 8}" y="${y - 10}" width="16" height="11" rx="4" fill="#2a2b35" ${ln(1.8)}/><circle cx="${x - k * 5}" cy="${y - 6}" r="4" fill="${lit ? '#fff0b8' : BULB_OFF}" stroke="#6a3a12" stroke-width="1.2"/>`;
   }
   const front = F`<path d="${band}" fill="#7a1f2b"/><g clip-path="url(#${id}b)"><path d="${pleats}" stroke="#5a1520" stroke-width="5"/><path d="${pleats}" stroke="#a83444" stroke-width="2" transform="translate(6 0)"/></g><path d="${band}" fill="url(#${id}d)"/>`
     + F`<path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" stroke="${O}" stroke-width="15" fill="none"/><path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" stroke="#e0a050" stroke-width="9" fill="none"/>`
@@ -809,7 +841,7 @@ export function kitchenTable({ w = 200, h = 240, cards = false } = {}) {
   return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
     + R(tx, Y + 94, tw, 14, '#8a4a22', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#6e3a1a', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#6e3a1a', ln(1.8))
     + [w * .3, w * .7].map(x => F`<ellipse cx="${x}" cy="${Y + 30}" rx="18" ry="12" fill="#f1ecdf" ${ln(1.8)}/><ellipse cx="${x}" cy="${Y + 30}" rx="10" ry="6" fill="#e2dccb"/>`).join('')
-    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
+    + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker hg-l"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" class="hg-lg" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
 }
 
 /* the card table in the great room: the kitchen table's shape and chairs, a green felt top, a hand of cards at each
@@ -951,7 +983,7 @@ export function rockingChair({ w = 70, h = 100, facing = 'e' } = {}) {
 export function smallTable({ w = 60, h = 130 } = {}) {
   const id = uid(), cx = w / 2, Y = h - w, cy = Y + w / 2 - 40;
   return wrap(w, h, shade(cx, Y + w / 2, w * .45, w * .25, .3) + R(cx - 5, cy, 10, 44, '#8a4a22', ln(2)) + F`<ellipse cx="${cx}" cy="${Y + w / 2 + 2}" rx="${w * .28}" ry="6" fill="#6e3a1a" ${ln(1.8)}/><circle cx="${cx}" cy="${cy}" r="${w / 2}" fill="#c47a3e" ${ln(2.4)}/><circle cx="${cx - 6}" cy="${cy - 6}" r="${w / 3}" fill="#e09a5c" opacity=".35"/>`
-    + F`<circle cx="${cx}" cy="${cy - 24}" r="40" fill="url(#${id})" class="hg-flicker"/><rect x="${cx - 7}" y="${cy - 30}" width="14" height="20" rx="3" fill="#ffd98a" ${ln(1.8)}/><path d="M${cx - 9} ${cy - 31}h18M${cx} ${cy - 31}v-6" stroke="${O}" stroke-width="2.6"/>`
+    + F`<circle cx="${cx}" cy="${cy - 24}" r="40" fill="url(#${id})" class="hg-flicker hg-l"/><rect x="${cx - 7}" y="${cy - 30}" width="14" height="20" rx="3" fill="#ffd98a" class="hg-lg" ${ln(1.8)}/><path d="M${cx - 9} ${cy - 31}h18M${cx} ${cy - 31}v-6" stroke="${O}" stroke-width="2.6"/>`
     + F`<rect x="${cx - 22}" y="${cy - 2}" width="9" height="10" rx="2" fill="#2fa4ff" ${ln(1.4)}/><rect x="${cx + 12}" y="${cy + 2}" width="9" height="10" rx="2" fill="#ef3b3b" ${ln(1.4)}/>`, 'hg-smalltable', glowDef(id, '#ffb347', .5));
 }
 
@@ -1034,13 +1066,13 @@ export function campfire({ w = 150, h } = {}) {
   const id = uid(), Y = h - w, cx = w / 2, cy = Y + w / 2, rr = w * .39;
   const stone = a => { const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr; return F`<ellipse cx="${x}" cy="${y}" rx="${w * .1}" ry="${w * .08}" fill="#5c6068" ${ln(2)}/><ellipse cx="${x - 2}" cy="${y - 4}" rx="${w * .07}" ry="${w * .045}" fill="#8a8f98"/>`; };
   const A = Array.from({ length: 12 }, (_, i) => i / 12 * Math.PI * 2 + .2);
-  let s = F`<circle cx="${cx}" cy="${cy}" r="${w * .8}" fill="url(#${id})" class="hg-flicker"/>` + A.filter(a => Math.sin(a) < 0).map(stone).join('')
-    + F`<circle cx="${cx}" cy="${cy}" r="${rr - 4}" fill="#2b2220" ${ln(2)}/><circle cx="${cx}" cy="${cy + 4}" r="${rr * .6}" fill="#ff7a1f" opacity=".45"/>`;
+  let s = F`<circle cx="${cx}" cy="${cy}" r="${w * .8}" fill="url(#${id})" class="hg-flicker hg-f"/>` + A.filter(a => Math.sin(a) < 0).map(stone).join('')
+    + F`<circle cx="${cx}" cy="${cy}" r="${rr - 4}" fill="#2b2220" ${ln(2)}/><circle cx="${cx}" cy="${cy + 4}" r="${rr * .6}" fill="#ff7a1f" opacity=".45" class="hg-f"/>`;
   const logs = F`M${cx - rr * .8} ${cy + rr * .5}L${cx + 4} ${cy - rr * 1.2}M${cx + rr * .8} ${cy + rr * .5}L${cx - 4} ${cy - rr * 1.2}M${cx - rr * .3} ${cy + rr * .75}L${cx + 2} ${cy - rr * 1.1}M${cx + rr * .35} ${cy + rr * .75}L${cx - 2} ${cy - rr * 1.1}`;
   s += `<path d="${logs}" stroke="${O}" stroke-width="13" stroke-linecap="round"/><path d="${logs}" stroke="#6b3f22" stroke-width="8.5" stroke-linecap="round"/>`;
-  s += fire(cx, cy + 8, w / 150 * 1.05);
+  s += `<g class="hg-f">${fire(cx, cy + 8, w / 150 * 1.05)}</g>`;
   s += A.filter(a => Math.sin(a) >= 0).map(stone).join('');
-  for (let i = 0; i < 4; i++) s += F`<circle cx="${cx - 10 + i * 7}" cy="${cy - 70}" r="2.2" fill="#ffd27a" class="hg-spark" style="animation-delay:-${(i * .47).toFixed(2)}s"/>`;
+  for (let i = 0; i < 4; i++) s += F`<circle cx="${cx - 10 + i * 7}" cy="${cy - 70}" r="2.2" fill="#ffd27a" class="hg-spark hg-f" style="animation-delay:-${(i * .47).toFixed(2)}s"/>`;
   return wrap(w, h, s, 'hg-campfire', glowDef(id, '#ff9a3a', .45));
 }
 /* a log to sit on. axis 'x' lies east-west (box w × 79; its ends drawn as cut rings); axis 'y' lies north-south (box
