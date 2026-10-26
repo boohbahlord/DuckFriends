@@ -1,8 +1,8 @@
 /* ---------- the shadow duck ----------
    All black, outside only, and only where it's dark: never into the cabin, onto the deck (the porch), or into the light
-   of a lamppost, a window or the campfire (unless the fire is out). It hides at the forest's edge, fades out and in
-   again every 20 to 40 seconds, and stalks the player furthest from the cabin, keeping a few hundred px behind them;
-   a duck that runs away from it isn't followed (it fades away instead).
+   of a lamppost, a window or the campfire (unless it's out: the fire put out, the power cut). It hides at the forest's
+   edge, fades out and in again every 20 to 40 seconds, and stalks the player furthest from the cabin, keeping a few
+   hundred px behind them; a duck that runs away from it isn't followed (it fades away instead).
    Justin and it only tangle when they meet up close, in the dark: then either it goes for him (a touch and he drops;
    someone revives him with E) and fades away, or, very rarely, he spots it by accident and chases it, and it fades
    before he gets close.
@@ -17,17 +17,19 @@ const MEET = 170, JUSTIN_SPOTS = .12;                   // how close they must m
 const RUNNING = 260;                                    // px a second: a duck going this fast away from it has run off
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 const MID = [(CABIN.x0 + CABIN.x1) / 2, (CABIN.y0 + CABIN.y1) / 2];
-/* the light: the cabin, the deck, and the pools of light outside (a light can be out: the campfire put out, s.hang.fire
-   === 0; the power off for the cabin's own) */
+/* the light: the cabin, the deck, and the pools of light outside (a light can be out: the campfire put out, s.hang.unlit;
+   in a blackout, s.hang.power 0, the electric ones: power.js) */
 const OUT_LIGHTS = LIGHTS.filter(l => l.only !== 'in');
-const fireOut = s => !!s && !!s.hang && s.hang.fire === 0;
+const fireOut = s => !!(s && s.hang && s.hang.unlit && s.hang.unlit.campfire);
+const powerOut = s => !!(s && s.hang && s.hang.power === 0);
 const inLight = (x, y, s) => inCabin(x, y) || inDeck(x, y) || (x > CABIN.x0 - 80 && x < CABIN.x1 + 80 && y > CABIN.y0 - 80 && y < CABIN.y1 + 80)
-  || OUT_LIGHTS.some(l => !(l.prop && l.prop.kind === 'campfire' && fireOut(s)) && Math.hypot(x - l.x, y - l.y) < l.r * .8);
+  || OUT_LIGHTS.some(l => !(l.prop && l.prop.kind === 'campfire' && fireOut(s)) && !(l.el && powerOut(s)) && Math.hypot(x - l.x, y - l.y) < l.r * .8);
 const dark = s => (x, y) => !inLight(x, y, s) && !inPool(x, y);
 const edge = s => (x, y) => dark(s)(x, y) && (x < 520 || x > W - 520 || y < 380 || y > H - 520);
-/* its paths keep to the dark: the lit cells are blocked (worked out once each way the campfire can be) */
+/* its paths keep to the dark: the lit cells are blocked (worked out once each way the campfire and the power can be) */
 const blocks = {};
-const way = s => { const k = fireOut(s) ? 'out' : 'lit'; return { dry: true, block: blocks[k] || (blocks[k] = blockMap((x, y) => inLight(x, y, fireOut(s) ? { hang: { fire: 0 } } : null))) }; };
+const way = s => { const f = fireOut(s), p = powerOut(s), k = +f + 2 * p, h = { hang: { unlit: f ? { campfire: 1 } : {}, power: p ? 0 : 1 } };
+  return { dry: true, block: blocks[k] || (blocks[k] = blockMap((x, y) => inLight(x, y, h))) }; };
 let mm = null;
 export const resetShadow = () => { mm = null; };
 /* where to lurk behind someone: further out from the cabin than they are, in the dark */

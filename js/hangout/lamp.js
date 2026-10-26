@@ -4,6 +4,7 @@
    (the host checks and changes s.hang), its screen part (the button, a class on its props, its light). */
 import { rule, activity } from './registry.js';
 import { PROPS, W, H } from './layout.js';
+import { powered } from './power.js';
 
 const LAMPS = PROPS.filter(p => p.kind === 'lamp');
 const REACH = 120;   // world px from the lamp's foot
@@ -31,6 +32,6 @@ activity({
     const off = isOff(ctx.state(), best.id);
     return { label: off ? 'Light on' : 'Light off', d: bd, act: () => ctx.send({ t: 'hang', k: 'lamp', lamp: best.id }) };
   },
-  propClass: (p, s) => isOff(s, p.id) ? 'off' : '',
-  light: (p, s) => p.kind === 'lamp' ? !isOff(s, p.id) : undefined,
+  propClass: (p, s) => isOff(s, p.id) || !powered(s) ? 'off' : '',   // (a blackout: power.js)
+  light: (p, s) => p && p.kind === 'lamp' ? !isOff(s, p.id) : undefined,
 });

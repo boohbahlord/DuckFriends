@@ -1751,6 +1751,17 @@ html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; an
 .hp > svg, .hp > img { display: block; width: 100%; height: 100%; }
 .hp > img { user-select: none; -webkit-user-drag: none; }
 .hp.off .lit-glow { opacity: 0; }
+.hp.off .hg-flicker.lit-glow { visibility: hidden; }   /* (a lamppost's glow: its flicker would keep its opacity) */
+/* the power (hangout/power.js): in a blackout the stage's dark pictures, the deck's bulbs dark, no light on the pool, the
+   open back door dimmer; a fire, candles or a lantern put out (unlit-f, -c, -l); the power box's lever and light */
+.hang-dark { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; z-index: 24000; }   /* (over the world and its shade, under the fireflies) */
+.hang-board:not(.blackout) .st-off, .hang-board.blackout .st-on { visibility: hidden; }
+.hang-board.blackout .hg-porch circle[fill="#ffb347"], .hang-board.blackout .hang-shimmer { visibility: hidden; }
+.hang-board.blackout .hg-porch ellipse { fill: #6e5a36; }
+.hang-board.blackout .door-lit { filter: brightness(.5); }
+.hp.unlit-f .hg-f, .hp.unlit-c .hg-c, .hp.unlit-l .hg-l { visibility: hidden; }
+.hp.unlit-l .hg-lg { fill: #6e5a36; }
+.hp:not(.pb-off) .pb-down, .hp.pb-off .pb-up, .hp:not(.pb-off) .pb-off, .hp.pb-off .pb-on { display: none; }
 .hp.hang-shimmer { opacity: .5; }
 html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alternate; }
 

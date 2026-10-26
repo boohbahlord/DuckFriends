@@ -13,7 +13,7 @@
 import * as L from './layout.js';
 import { DRAW, GROUND, DECOR, groundColor } from './shapes.js';
 import { svgDataURL, useHangArtCSS } from './art.js';
-import { stutter } from './flicker.js';
+import { sway, stutterOf } from './flicker.js';
 import { ACTS } from './registry.js';
 import './activities.js';
 import { duckRoom } from '../duck.js';
@@ -40,7 +40,7 @@ export function mountWorld(board, api) {
   const R = () => api.room();
   const toScreen = (x, y, h = 0) => ({ left: (x - cam.x) * cam.sc + cam.vw / 2, top: (y - h - cam.y) * cam.sc + cam.vh / 2 });
   const ctx = { state: () => R().state, get me() { return R().me; }, send: a => R().send(a), duck: () => api.me(),
-    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [],
+    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [], shines: l => shines(l, R().state),
       at: id => { const p = R().state.pos[id]; return p || mine(id) ? at(id, p || {}) : null; } } };
   useHangArtCSS();
   const acts = () => ACTS.values();
@@ -112,9 +112,8 @@ export function mountWorld(board, api) {
     g.globalCompositeOperation = 'lighter';
     for (const l of L.LIGHTS) {
       if (l.only && (l.only === 'in') !== inside) continue;
-      if (l.prop && !lit(l.prop, s)) continue;
-      const st = l.flick ? stutter(l.porch ? 'porch' : l.prop && l.prop.kind === 'post' ? l.prop.id : '', now) : 1;   // (now and then a lamp stutters: flicker.js)
-      const fl = l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
+      if (!shines(l, s)) continue;
+      const st = stutterOf(l, now), fl = sway(l, now);   // (now and then a lamp stutters: flicker.js)
       const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r * fl;
       if (!see(x - r, y - r, x + r, y + r)) continue;
       const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl * st)); rg.addColorStop(1, hexA(l.c, 0));
@@ -123,7 +122,7 @@ export function mountWorld(board, api) {
     g.globalCompositeOperation = 'source-over';
   }
   const hexA = (c, a) => c + Math.round(cl(a, 0, 1) * 255).toString(16).padStart(2, '0');
-  const lit = (p, s) => { for (const a of acts()) if (a.light && a.light(p, s) === false) return false; return true; };
+  const shines = (l, s) => { for (const a of acts()) if (a.light && a.light(l.prop, s, l) === false) return false; return true; };
 
   /* ---------- the props: each part of each prop (shapes.js DRAW), and the decor, as an element sorted with the ducks ----------
      Made the first time it comes near the view, then only moved (each is its own layer: moving it is cheap), hidden
