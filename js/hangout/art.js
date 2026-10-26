@@ -835,7 +835,7 @@ export function nightstand({ w = 48, h = 140 } = {}) {
    of each). Footprint w × d at height 0, the posts reaching the ground `drop` below its south edge. Box w × (rail + d +
    drop), the footprint's north edge at y = rail. back: the planks and the side railings, foot y = rail; front: the
    south railing and what is under it, foot y = rail + d. */
-export function deck({ w = 2100, d = 400, rail = 50, drop = 190, gapE = [0, 150], lights = [360, 600, 840, 1300, 1700], h } = {}) {
+export function deck({ w = 2100, d = 400, rail = 50, drop = 190, gapE = [0, 150], lights = [360, 600, 840, 1300, 1700], bulbs = true, h } = {}) {
   h = h || rail + d + drop;
   const id = uid(), Y = rail, S = Y + d;
   const boards = F`<pattern id="${id}" width="44" height="400" patternUnits="userSpaceOnUse"><rect width="22" height="400" fill="#c06d30"/><rect x="22" width="22" height="400" fill="#b8672c"/><path d="M21 0V400M43 0V400" stroke="#7a3d14" stroke-width="2"/><path d="M0 130H22M22 290H44" stroke="#7a3d14" stroke-width="2"/><rect x="3" width="5" height="400" fill="#f0a060" opacity=".18"/></pattern>`;
@@ -856,8 +856,13 @@ export function deck({ w = 2100, d = 400, rail = 50, drop = 190, gapE = [0, 150]
   const pr = Math.max(1, Math.round(w / 210));
   for (let i = 0; i <= pr; i++) { const x = Math.min(w - 14, Math.max(0, i * w / pr - 7)); front += R(x, S - rail - 6, 14, rail + 6, '#c06d30', ln(2.2)); }
   front += R(-4, S - rail - 12, w + 8, 8, '#e8a060', ln(2.2)) + R(-4, S - rail - 4, w + 8, 6, '#a65a2c', ln(1.8));
-  front += stringLights(0, w, S - rail - 6, 14, w / pr, 28, 5);
+  if (bulbs) front += stringLights(0, w, S - rail - 6, 14, w / pr, 28, 5);
   return pair(w, h, [back, boards + glowDef(id + 'w', '#ffb347', .38)], [front, lat], Y, S);
+}
+/* the deck's string lights on their own (a bulbs: false deck's box and place), so they can stutter */
+export function deckBulbs({ w = 2100, d = 400, rail = 50, drop = 190 } = {}) {
+  const pr = Math.max(1, Math.round(w / 210));
+  return wrap(w, rail + d + drop, stringLights(0, w, rail + d - rail - 6, 14, w / pr, 28, 5), 'hg-bulbs');
 }
 /* the deck's stairs: a landing at the deck's height, then steps down south to the ground rise lower, railings on both
    sides. Footprint w × d (landing first), box w × (rail + d + rise); the landing's north edge at y = rail. back: the

@@ -31,8 +31,15 @@ let T = 0;                 // the room's time, this frame (ms)
 let layer = null;          // .hang-props: where splashes go, sorted with the ducks
 const ripples = [];        // { x, y, t, life, r0, r1, a }
 const splashes = [];       // { el, x, y, t, life, k, drops, crown, foam }
+const glows = [];          // { side: 'w' | 'e', t, a } the pool's walls lit by the beach ball
+const GLOW = { w: ['16, 36, 200', 1000], e: ['255, 30, 150', 1000] }, RIM = { w: '110, 150, 255', e: '255, 190, 230' }, GLOW_W = 260;   // (dark blue on the west wall, bright pink on the east: color, ms; how far it reaches over the water)
 const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 let seed = 0;
+/* the beach ball hit the pool's west ('w') or east ('e') wall: that wall glows for about a second (a: how hard, 0 … 1) */
+export function wallGlow(side, a = 1) {
+  for (let i = glows.length - 1; i >= 0; i--) if (glows[i].side === side) glows.splice(i, 1);   // (a quick second hit starts that wall's glow over, it doesn't pile up)
+  glows.push({ side, t: T, a: cl(a, .45, 1) });
+}
 /* a ring that spreads on the water from (x, y); k: how big (a duck swimming about .5, a cannonball 1.5) */
 export function ripple(x, y, k = .5, r0 = 26) {
   if (ripples.length > 180) ripples.splice(0, ripples.length - 180);
@@ -98,7 +105,7 @@ activity({
   unmount() {
     water?.remove(); water = wg = null;
     for (const p of splashes) p.el.remove();
-    splashes.length = ripples.length = 0; seen.clear(); layer = null;
+    splashes.length = ripples.length = glows.length = 0; seen.clear(); layer = null;
   },
   speed: pos => swimming(pos.x, pos.y, pos.z) ? SLOW : 1,
   /* my duck under the ground in the near strip (dropping in, or swimming up to the near edge) keeps north of it by as much
@@ -157,8 +164,9 @@ activity({
     if (!water) return;
     const vw = W.vw, vh = W.vh, dpr = Math.min(2, devicePixelRatio || 1);
     for (let i = ripples.length - 1; i >= 0; i--) if (now - ripples[i].t > ripples[i].life || now < ripples[i].t - 1000) ripples.splice(i, 1);
+    for (let i = glows.length - 1; i >= 0; i--) if (now - glows[i].t > GLOW[glows[i].side][1] || now < glows[i].t - 1000) glows.splice(i, 1);
     const a0 = W.toScreen(BOX.x0, BOX.t), a1 = W.toScreen(BOX.x1, BOX.b);
-    const off = W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh || (!ripples.length && ![...seen.values()].some(d => d.sw));
+    const off = W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh || (!ripples.length && !glows.length && ![...seen.values()].some(d => d.sw));
     if (off && water._clear) return;   // (nothing on it, and nothing to draw: the canvas is left alone)
     if (water.width !== Math.round(vw * dpr) || water.height !== Math.round(vh * dpr)) { water.width = Math.round(vw * dpr); water.height = Math.round(vh * dpr); }
     const g = wg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, water.width, water.height);
@@ -167,6 +175,14 @@ activity({
     g.setTransform(sc * dpr, 0, 0, sc * dpr, o.left * dpr, o.top * dpr);
     g.save(); g.beginPath(); g.rect(BOX.x0, BOX.t, BOX.x1 - BOX.x0, BOX.b - BOX.t); g.clip();
     g.lineCap = 'round';
+    /* a wall the ball hit: a soft colored light from the wall over the water, fading out */
+    for (const l of glows) {
+      const [rgb, life] = GLOW[l.side], u = (now - l.t) / life, a = l.a * (1 - u) ** 1.6, w = l.side === 'w';
+      const x0 = w ? BOX.x0 : BOX.x1, x1 = w ? BOX.x0 + GLOW_W : BOX.x1 - GLOW_W, gr = g.createLinearGradient(x0, 0, x1, 0);
+      gr.addColorStop(0, `rgba(${rgb}, ${(.95 * a).toFixed(3)})`); gr.addColorStop(.45, `rgba(${rgb}, ${(.78 * a).toFixed(3)})`); gr.addColorStop(1, `rgba(${rgb}, 0)`);
+      g.fillStyle = gr; g.fillRect(Math.min(x0, x1), BOX.t, GLOW_W, BOX.b - BOX.t);
+      g.fillStyle = `rgba(${RIM[l.side]}, ${(.7 * a).toFixed(3)})`; g.fillRect(w ? x0 : x0 - 10, BOX.t, 10, BOX.b - BOX.t); // (a bright edge where it touches the wall)
+    }
     for (const r of ripples) {
       const u = (now - r.t) / r.life, e = 1 - (1 - u) * (1 - u), rad = r.r0 + (r.r1 - r.r0) * e;
       g.strokeStyle = `rgba(214, 252, 255, ${(r.a * (1 - u) ** 1.4).toFixed(3)})`; g.lineWidth = 3.2 - 1.6 * u;

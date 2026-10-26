@@ -10,4 +10,5 @@ import './chalk.js';
 import './book.js';
 import './doors.js';
 import './fireflies.js';
+import './flicker.js';
 import './characters.js';

@@ -181,7 +181,7 @@ add('rocker', 3560, 2240, 80, 60, 80, { solid: true });
 add('deck-table', 3460, 2260, 60, 50, 45, { solid: true, plat: true });
 const GLOWS = [];   // lights with no prop of their own: the south windows on the deck, the deck's string lights
 for (const x of WIN) GLOWS.push({ x, y: C.y1 + 70, r: 220, c: WARM, k: .35, only: 'out' });
-for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: '#ffcf70', k: .3, flick: .3, only: 'out' });
+for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: '#ffcf70', k: .3, flick: .3, only: 'out', porch: true });
 
 /* outside: the jeep on the dirt path, lampposts, the campfire and its logs, the trampoline, the soccer goal */
 add('jeep', 580, 495, 260, 125, 110, { solid: true });

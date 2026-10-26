@@ -2032,3 +2032,8 @@ Decisions:
 - The button shows your specials' icons in turn, one every 1.5 s with a short cross-fade (no fade with reduced motion);
   with none chosen it goes through all the specials. The faded Sound is left out of both. The button's size never changes.
 - With none chosen, a tap shows the tip "Pick your specials in Customize → Specials."
+
+## 2026-10-26 (Hangout goal 3b, from the owner's fix-up request above): the beach ball's walls, flickering lights
+> "The beach ball should be in the pool and only stay in the pool and cannot get out of it. If the beach ball hits the right wall or left wall of the swimming pool then it makes a pinging sound and becomes a glow of either dark blue on wall side and bright pink on the other." / "Some lights outside flicker sometimes randomly, and some itty bitty lights on the porch that hang off of it will flicker sometimes too."
+
+Decision (Adam): the ball's walls are the pool's edges (it never leaves); the west wall rings a low ping and glows dark blue, the east wall a high ping and glows pink, fading in about a second, seen and heard by everyone (the hit is counted in the ball's own state). Every 20 to 60 seconds, one of the six lampposts or the porch's string lights stutters (2 to 4 quick dips in half a second), the same moment for everyone.
