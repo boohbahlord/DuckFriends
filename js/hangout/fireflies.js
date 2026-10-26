@@ -52,10 +52,10 @@ activity({
   },
   draw(now, ctx) {
     if (!cv) return;
-    const Wd = ctx.world, dpr = Math.min(2, devicePixelRatio || 1), w = Math.round(Wd.vw * dpr), h = Math.round(Wd.vh * dpr);
+    const Wd = ctx.world, dpr = 1, w = Math.round(Wd.vw * dpr), h = Math.round(Wd.vh * dpr);
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h);
-    if (Wd.inside || !flies.length) return;
+    if (Wd.inside || !flies.length) return;   // (a soft glow: one canvas pixel a screen pixel is plenty, and half the work on a phone)
     g.globalCompositeOperation = 'lighter';
     const base = 36 * Wd.sc * dpr;
     for (const f of flies) {
