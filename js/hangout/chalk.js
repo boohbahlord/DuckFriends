@@ -1,12 +1,14 @@
-/* ---------- the chalk floor: draw on it with the chalk, wipe it with the eraser ----------
-   Beside the chalk floor (the great room's north-west corner) lie the chalk and, under it, the eraser. Pressing the chalk
-   (a click or a tap on it, or the context button "Chalk" beside it) picks it up: the duck holds a little chalk stick,
-   and a drag of the mouse or a finger on the floor draws in the duck's own body color. Anyone holding chalk draws at the
-   same time; walking away from the floor or pressing the chalk again puts it down. Standing on the eraser, the button
-   says "Erase": the floor is wiped for everyone, with a little dust.
+/* ---------- the chalk floor: draw on it with the chalk, rub bits out with the eraser, wipe it all with the white X ----------
+   Beside the chalk floor (the great room's south-west corner) lie the chalk, the eraser and the white X, top to bottom.
+   Pressing the chalk (a click or a tap on it, or the context button "Chalk" beside it) picks it up: the duck holds a
+   little chalk stick, and a drag of the mouse or a finger on the floor draws in the duck's own body color. The eraser
+   the same way ("Eraser"): the duck holds a little eraser, and a drag rubs out what it passes over, a duck's width at a
+   time. Anyone holding chalk or an eraser draws or rubs at the same time; walking away from the floor or pressing it
+   again puts it down. Standing on the white X, the button says "Wipe": the whole floor is wiped for everyone, with a
+   little dust.
 
-   The room keeps the drawing in s.hang.chalk = { h: { id: 1 } (who holds chalk), e: (how many times it was erased),
-   s: [strokes] }. A stroke is one string: its color (6 hex digits), its tag (4 letters the drawer picks, so the next
+   The room keeps the drawing in s.hang.chalk = { h: { id: 1 chalk | 2 eraser } (who holds what), e: (how many times it
+   was wiped), s: [strokes] }. A stroke is one string: its color (6 hex digits; RUB for the eraser's), its tag (4 letters the drawer picks, so the next
    batch of the same stroke joins it), then its points, 4 letters each (x and y on the slate in whole world px, 2 letters
    apiece). The drawer sends its points a few times a second, simplified; the host appends them, and keeps the drawing
    under CAP letters by dropping the oldest strokes. Every screen paints the strokes on a canvas laid on the slate, under
@@ -17,7 +19,8 @@ import { puffHTML } from '../specials.js';
 import { mix } from '../duck.js';
 import { sfx } from '../sound.js';
 
-const FLOOR = PROPS.find(p => p.kind === 'chalkfloor'), CHALK = PROPS.find(p => p.kind === 'chalk'), ERASER = PROPS.find(p => p.kind === 'eraser');
+const FLOOR = PROPS.find(p => p.kind === 'chalkfloor'), CHALK = PROPS.find(p => p.kind === 'chalk'), ERASER = PROPS.find(p => p.kind === 'eraser'), WIPE = PROPS.find(p => p.kind === 'wipe');
+const RUB = 'eraser', RUB_W = 30;   // the eraser's strokes: this in place of a color (6 letters, like one); they rub out this wide
 const IN = 18;   // the slate inside the floor's wooden frame
 const SL = { x0: FLOOR.x + IN, y0: FLOOR.y + IN, w: FLOOR.w - 2 * IN, h: FLOOR.d - 2 * IN };
 const NEAR = 150;          // world px round the floor (and the chalk and eraser beside it) where chalk can be held
@@ -39,7 +42,7 @@ const okPts = p => typeof p === 'string' && p.length >= 4 && p.length % 4 === 0 
   && dec(p, 0).every(([x, y]) => x >= 0 && x <= SL.w && y >= 0 && y <= SL.h);
 
 /* where things are */
-const right = Math.max(FLOOR.x + FLOOR.w, CHALK.x + CHALK.w, ERASER.x + ERASER.w);
+const right = Math.max(FLOOR.x + FLOOR.w, CHALK.x + CHALK.w, ERASER.x + ERASER.w, WIPE.x + WIPE.w);
 const nearFloor = (x, y, m = NEAR) => x > FLOOR.x - m && x < right + m && y > FLOOR.y - m && y < FLOOR.y + FLOOR.d + m;
 const inBox = (x, y, p, m = 0) => x > p.x - m && x < p.x + p.w + m && y > p.y - m && y < p.y + p.d + m;
 const mid = p => [p.x + p.w / 2, p.y + p.d / 2];
@@ -54,13 +57,13 @@ rule('chalk', {
     c.h = c.h || {}; c.s = c.s || [];
     const x = me.x * W, y = me.y * H;
     switch (a.do) {
-      case 'pick': if (c.h[a.id] || !nearFloor(x, y, NEAR + 60)) return false; c.h[a.id] = 1; return true;
+      case 'pick': { const k = a.tool === 'eraser' ? 2 : 1; if (c.h[a.id] === k || !nearFloor(x, y, NEAR + 60)) return false; c.h[a.id] = k; return true; }   // (the other one goes down)
       case 'put': if (!c.h[a.id]) return false; delete c.h[a.id]; return true;
-      case 'erase': if (!inBox(x, y, ERASER, 70)) return false; c.s = []; c.e = (c.e || 0) + 1; return true;
+      case 'wipe': if (!inBox(x, y, WIPE, 70)) return false; c.s = []; c.e = (c.e || 0) + 1; return true;
       case 'draw': {
         const tag = String(a.sid || ''), p = a.p;
         if (!c.h[a.id] || !/^[0-9a-z]{4}$/.test(tag) || !okPts(p)) return false;
-        const col = colorOf(s, a.id);
+        const col = c.h[a.id] === 2 ? RUB : colorOf(s, a.id);
         let i = c.s.length - 1; while (i >= 0 && i >= c.s.length - 12 && c.s[i].slice(0, 10) !== col + tag) i--;   // (this stroke's last piece, among the newest)
         if (i >= 0 && i >= c.s.length - 12 && c.s[i].length + p.length <= LONG) c.s[i] += p;
         else if (i >= 0 && i >= c.s.length - 12) c.s.push(col + tag + c.s[i].slice(-4) + p);   // (a long stroke goes on in a new piece, from where it was)
@@ -120,8 +123,15 @@ function trace(pts, nudge = false) {
 }
 function line(hex, pts) {
   if (!pts.length) return;
-  const g = v.g, P = paints(hex);
+  const g = v.g;
   g.lineCap = g.lineJoin = 'round';
+  if (hex === RUB) {   // the eraser: it takes the chalk off (a soft edge round a clean middle)
+    g.globalCompositeOperation = 'destination-out';
+    g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = RUB_W + 6; trace(pts); g.stroke();
+    g.strokeStyle = '#000'; g.lineWidth = RUB_W; trace(pts); g.stroke();
+    g.globalCompositeOperation = 'source-over'; return;
+  }
+  const P = paints(hex);
   g.strokeStyle = P.dust; g.lineWidth = 13; trace(pts); g.stroke();
   g.strokeStyle = P.body; g.lineWidth = 5.5; trace(pts); g.stroke();
   g.strokeStyle = P.edge; g.lineWidth = 2.6; trace(pts, true); g.stroke();
@@ -157,7 +167,7 @@ function erased() {
   if (fx && v.ctx.world.inside) {
     sfx.puff();
     for (let i = 0; i < 10; i++) {
-      const x = i ? SL.x0 + SL.w * (.12 + .76 * ((i * 37) % 10) / 9) : mid(ERASER)[0], y = i ? SL.y0 + SL.h * (.12 + .76 * ((i * 61) % 10) / 9) : mid(ERASER)[1];
+      const x = i ? SL.x0 + SL.w * (.12 + .76 * ((i * 37) % 10) / 9) : mid(WIPE)[0], y = i ? SL.y0 + SL.h * (.12 + .76 * ((i * 61) % 10) / 9) : mid(WIPE)[1];
       const a = v.ctx.world.toScreen(x, y), pf = document.createElement('div');
       setTimeout(() => { pf.innerHTML = puffHTML(a.left, a.top, 64 * sc * (i ? 2.4 : 1.4), '#e6ece9'); fx.append(pf); setTimeout(() => pf.remove(), 1000); }, i * 40);
     }
@@ -197,13 +207,14 @@ function addPt(pt) {
   line(cur.col, last ? [last, q] : [q]);   // (at once on my screen)
 }
 
-/* the chalk stick a holding duck carries */
+/* the chalk stick (or the eraser) a holding duck carries */
 function sticks(ctx, s) {
   const c = chalkOf(s), layer = ctx.world.board.querySelector('.ducks'); if (!layer) return;
-  for (const id of Object.keys(c.h || {})) {
+  for (const [id, what] of Object.entries(c.h || {})) {
     const d = layer.querySelector(`.gduck[data-pid="${CSS.escape(id)}"] .gduck-lift`); if (!d) continue;
     let k = d.querySelector('.hang-chalkstick');
     if (!k) { k = document.createElement('span'); k.className = 'hang-chalkstick'; k.setAttribute('aria-hidden', 'true'); d.append(k); }
+    const rub = what === 2; if (k.classList.contains('rub') !== rub) k.classList.toggle('rub', rub);
     const col = '#' + chalkColor(colorOf(s, id)); if (k._c !== col) { k._c = col; k.style.setProperty('--chalk', col); }
   }
   for (const k of layer.querySelectorAll('.hang-chalkstick')) { const id = k.closest('.gduck').dataset.pid; if (!(c.h || {})[id]) k.remove(); }
@@ -223,10 +234,11 @@ activity({
   unmount() { if (!v) return; clearTimeout(v.wipeT); v.cv.remove(); v.ctx.world.board.classList.remove('hang-pen'); v = null; },
   near(pos, ctx) {
     if (!pos.inside || !v || !nearFloor(pos.x, pos.y)) return null;
-    const have = holding(ctx);
-    if (inBox(pos.x, pos.y, ERASER, 6)) return { label: 'Erase', d: 0, act: () => send(ctx, 'erase') };
-    const [cx, cy] = mid(CHALK), d = Math.hypot(pos.x - cx, pos.y - cy);
-    if (d < 110) return { label: have ? 'Put down' : 'Chalk', d, act: () => send(ctx, have ? 'put' : 'pick') };
+    const have = chalkOf(ctx.state()).h[ctx.me] || 0;
+    if (inBox(pos.x, pos.y, WIPE, 6)) return { label: 'Wipe', d: 0, act: () => send(ctx, 'wipe') };
+    /* the nearer of the chalk and the eraser: pick it up, or put it down (holding it) */
+    const [best] = [[CHALK, 1, 'Chalk'], [ERASER, 2, 'Eraser']].map(([p, k, label]) => ({ k, label, d: Math.hypot(pos.x - mid(p)[0], pos.y - mid(p)[1]) })).sort((a, b) => a.d - b.d);
+    if (best.d < 90) return have === best.k ? { label: 'Put down', d: best.d, act: () => send(ctx, 'put') } : { label: best.label, d: best.d, act: () => send(ctx, 'pick', { tool: best.k === 2 ? 'eraser' : 'chalk' }) };
     return have ? { label: 'Put down', d: 200, act: () => send(ctx, 'put') } : null;
   },
   onState(s) { if (v) sync(s); },
@@ -264,10 +276,12 @@ activity({
       if (v.cur) { flush(ctx); v.cur = null; }   // (one finger draws at a time: the newest)
       const me = ctx.duck(); if (!me) return false;
       const mx = me.x * W, my = me.y * H;
-      if (inBox(pt.x, pt.y, CHALK, 16) && nearFloor(mx, my)) { send(ctx, holding(ctx) ? 'put' : 'pick'); return true; }   // the chalk itself
+      const have = chalkOf(ctx.state()).h[ctx.me] || 0;   // the chalk or the eraser itself: pick it up (or put it down); the white X: wipe
+      for (const [p, k] of [[CHALK, 1], [ERASER, 2]]) if (inBox(pt.x, pt.y, p, 16) && nearFloor(mx, my)) { if (have === k) send(ctx, 'put'); else send(ctx, 'pick', { tool: k === 2 ? 'eraser' : 'chalk' }); return true; }
+      if (inBox(pt.x, pt.y, WIPE, 10) && inBox(mx, my, WIPE, 70)) { send(ctx, 'wipe'); return true; }
       if (!holding(ctx) || !onSlate(pt, 4) || !nearFloor(mx, my, AWAY)) return false;
       e.preventDefault();
-      v.cur = { pid: e.pointerId, sid: Math.floor(Math.random() * 1679616).toString(36).padStart(4, '0'), col: colorOf(ctx.state(), ctx.me), raw: [], anchor: null, sentAt: performance.now(), t0: performance.now() };
+      v.cur = { pid: e.pointerId, sid: Math.floor(Math.random() * 1679616).toString(36).padStart(4, '0'), col: chalkOf(ctx.state()).h[ctx.me] === 2 ? RUB : colorOf(ctx.state(), ctx.me), raw: [], anchor: null, sentAt: performance.now(), t0: performance.now() };
       addPt(pt);
       return true;
     }

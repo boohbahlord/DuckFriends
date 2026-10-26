@@ -10,7 +10,7 @@
    DRAW     kind → (prop) → its parts: the drawings that stand up, each its own element sorted with the ducks by its own
             foot (key), so one prop can be a back part and a front part (the couch's seat behind a sitting duck, its
             backrest in front). A part: { svg, box: { l, t, w, h }, key, layer ('floor': under every duck), fade (turns
-            see-through over my duck), hit (the box that counts for that), img (a still picture: drawn once by the
+            see-through while it hides a duck), hit (the box that counts for that), img (a still picture: drawn once by the
             browser, cheap to move; no hooks, nothing moves inside it), part ('back' | 'front') }. svg may be a function
             (made when the part first comes into view). A kind may also return a plain SVG string: one part filling
             the prop's own box (the old placeholder way). An empty list draws nothing (the prop still blocks walking).
@@ -41,7 +41,7 @@ const calm = svg => svg.replace(/<rect [^>]*class="hg-shimmer"[^>]*\/>/g, '');  
 
 /* ---------- the walls: log walls cut away inside; outside, the cabin's own drawing covers them ---------- */
 const WALLS = L.PROPS.filter(p => p.kind === 'wall');
-const NORTH_WINDOWS = [[1520, 1660], [2640, 2780], [2980, 3120]];   // the north wall's windows (world x), looking out at the night
+const NORTH_WINDOWS = [[2470, 2590], [2820, 2960]];   // the north wall's windows (world x), looking out at the grass: either side of the TV's place
 function wallParts(p) {
   if (p.only === 'out') return [];   // (the south wall outside: part of the cabin's drawing)
   const z = p.z || 0, t = p.y - z - p.h;
@@ -133,20 +133,12 @@ export const DRAW = {
     if (p.h >= 140) return one(p, () => lit(A.floorLamp({ w: 70, h: 170 }), ['#ffcf73', '#fff0c2']), 70, 170, 164);
     return one(p, () => lit(A.nightstand({ w: 48, h: 140 }), ['#ffcf73', '#fff0c2']), 48, 140, 140);
   },
-  pianokeys: p => [part(() => A.floorPiano({ w: p.w, h: p.d, octaves: 2 }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   piano(p) { const h = 240; return pairParts(A.pianoBody({ w: p.w, h }), p.x, p.y + p.d, p.w, h); },
-  stage(p) {
-    const S = L.STAGE, h = 2 * S.r + S.h;
-    return pairParts(A.stage({ w: 2 * S.r, d: 2 * S.r, z: S.h }), p.x, p.y + p.d, 2 * S.r, h);
-  },
-  stagestairs(p) {
-    const S = L.STAGE, h = p.d + S.h;
-    return pairParts(A.stageStairs({ w: p.w, d: p.d, z: S.h, steps: S.n, dir: 'n' }), p.x, p.y + p.d, p.w, h, { backKey: p.key, frontKey: p.y + p.d });
-  },
-  mic: p => { const fy = L.STAGE.cy - 40, sy = fy - L.STAGE.h; return [part(() => A.micStand({ w: 56, h: 120 }), L.STAGE.cx - 56 * .45, sy - 114, 56, 120, p.key)]; },
+  /* (the stage, its stairs and the mic: stage.js draws them, in strips) */
   chalkfloor: p => [part(() => A.chalkFloor({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   chalk: p => [part(() => A.chalkTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   eraser: p => [part(() => A.eraserTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
+  wipe: p => [part(() => A.wipeTile({ w: p.w, h: p.d }), p.x, p.y, p.w, p.d, p.key, { layer: 'floor' })],
   book: p => one(p, () => A.bookStand({ w: 76, h: 136 }), 76, 136),
   counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 240),
   stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
@@ -269,7 +261,7 @@ function decor() {
   out.push(part(dk.front, D.x0, D.y0 - rail, D.x1 - D.x0, D.y1 - D.y0 + rail + drop, D.y1, { img: true, part: 'front', only: 'out' }));
   /* the chimney's smoke over the cabin (outside) */
   out.push(part(`<svg class="hg" viewBox="0 0 80 60" width="80" height="60" overflow="visible" aria-hidden="true"><g class="hg-smoke" style="animation-delay:-1s"><circle cx="46" cy="44" r="20" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-3.4s"><circle cx="36" cy="44" r="16" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-5.6s"><circle cx="42" cy="44" r="18" fill="#c9cfdb"/></g></svg>`,
-    2300 - 40, C.y0 - 250 - 50, 80, 60, C.y1 + 16, { only: 'out' }));
+    2300 - 40, C.y0 + A.CHIMNEY.d0 - A.chimneyTop(C.wall) - 56, 80, 60, C.y1 + 16, { only: 'out' }));
   /* the pool's light moving on the water (the whole picture fades in and out: cheap) */
   const PL = L.POOL, wy = PL.y0 + LO + (L.SLOPE.low - PL.h), ww = PL.x1 - PL.x0, wh = PL.y1 + LO - wy;
   for (const [k, sz, dl] of [['a', 140, 0], ['b', 180, 1.8]]) {

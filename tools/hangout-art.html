@@ -44,10 +44,10 @@ const items = [
   ...Object.keys(A.TREE_KINDS).map(k => ['tree ' + k, A.tree({ kind: k })]),
   ['forest', A.forest({ w: 700, h: 460 }), .6],
   ['lamppost', A.lamppost()], ['floorLamp', A.floorLamp()], ['micStand', A.micStand()], ['rockingChair', A.rockingChair()], ['smallTable', A.smallTable()],
-  ['fireplace', A.fireplace()], ['couch 3', A.couch()], ['couch 2 facing s', A.couch({ w: 360, seats: 2, facing: 's', color: '#3d6e4f' })],
-  ['floorPiano', A.floorPiano({ lit: { w2: '#ff5a5a', b3: '#5ce1ff', w9: '#ffd23f' } })], ['pianoBody', A.pianoBody()],
+  ['fireplace', A.fireplace()], ['couch 3', A.couch()], ['couch 2 facing s', A.couch({ w: 360, seats: 2, facing: 's', color: '#3d6e4f' })], ['couch 2 facing e', A.couch({ w: 100, len: 360, seats: 2, facing: 'e', color: '#3d6e4f' })],
+  ['pianoBody', A.pianoBody()],
   ['stage', A.stage(), .7], ['stageStairs', A.stageStairs()],
-  ['chalkFloor', A.chalkFloor(), .6], ['eraserTile', A.eraserTile()], ['chalkTile', A.chalkTile()], ['bookStand', A.bookStand()],
+  ['chalkFloor', A.chalkFloor(), .6], ['eraserTile', A.eraserTile()], ['wipeTile', A.wipeTile()], ['chalkTile', A.chalkTile()], ['bookStand', A.bookStand()],
   ['counter sink', A.counter({ w: 260, sink: 150 })], ['fridge', A.fridge()], ['stove', A.stove()], ['kitchenTable', A.kitchenTable()],
   ['tub', A.tub()], ['sink', A.sink()], ['toilet', A.toilet()], ['bed', A.bed()], ['nightstand', A.nightstand()],
   ['logWall x', A.logWall({ w: 400, wallH: 40, doors: [[150, 250]] })], ['logWall x tall', A.logWall({ w: 500, wallH: 170, windows: [[300, 440]], doors: [[80, 180]] })], ['logWall y', A.logWall({ axis: 'y', w: 24, h: 340, doors: [[120, 220]] })],
@@ -122,13 +122,12 @@ function world(inside) {
     flat(A.ground({ w: 3000, h: 1600, kind: 'wood', seed: 6 }), 1300, 600);
     flat(A.ground({ w: 800, h: 500, kind: 'tile' }), 3500, 600);
     flat(A.ground({ w: 400, h: 400, kind: 'bath' }), 3500, 1100);
-    flat(A.rug({ w: 520, h: 420 }), 2040, 840); flat(A.rug({ w: 260, h: 200, kind: 'rect' }), 3980, 1380); flat(A.rug({ w: 300, h: 200, kind: 'rect', colors: ['#3e6d8c', '#e0b04a', '#a8402e', '#1c1c28'] }), 3830, 1930);
+    flat(A.rug({ w: 680, h: 500 }), 2330, 770); flat(A.rug({ w: 260, h: 200, kind: 'rect' }), 3980, 1380); flat(A.rug({ w: 300, h: 200, kind: 'rect', colors: ['#3e6d8c', '#e0b04a', '#a8402e', '#1c1c28'] }), 3830, 1930);
     flat(A.rug({ w: 120, h: 70, colors: ['#7fb6c9', '#f4f4f0'] }), 3740, 1260);
-    flat(A.chalkFloor(), 1400, 700); flat(A.chalkTile(), 2010, 1100); flat(A.eraserTile(), 2010, 1180);
-    flat(A.floorPiano(), 1400, 1850);
+    flat(A.chalkFloor(), 1380, 1600); flat(A.chalkTile({ w: 70, h: 40 }), 2030, 1650); flat(A.eraserTile({ w: 90, h: 80 }), 2020, 1730); flat(A.wipeTile({ w: 74, h: 74 }), 2028, 1850);
     flat(A.glow({ w: 520, h: 300, color: '#ff9a3a', a: .35, flicker: true }), 2040, 640);
     const wall = (o, x, y) => at(A.logWall(o), x, y);
-    wall({ w: 3000, wallH: 170, doors: [[650, 750]], windows: [[200, 340], [1500, 1640], [2610, 2730]] }, 1300, 624);
+    wall({ w: 3000, wallH: 170, doors: [[650, 750]], windows: [[1170, 1290], [1520, 1660]] }, 1300, 624);
     wall({ w: 3000, wallH: 36, doors: [[1450, 1550]] }, 1300, 2200);
     const yw = (x, y0, y1, doors = []) => at(A.logWall({ axis: 'y', h: y1 - y0 + 36, doors }), x, y1, { foot: y1 - y0 + 36 });
     yw(1300, 624, 2176); yw(4276, 624, 2176);
@@ -136,11 +135,11 @@ function world(inside) {
     yw(3500, 1100, 1500, [[100, 220]]); yw(3500, 1650, 2176, [[200, 320]]); yw(3900, 1100, 1650, [[420, 540]]);
     wall({ w: 800, wallH: 36 }, 3500, 1100); wall({ w: 400, wallH: 36 }, 3500, 1500); wall({ w: 800, wallH: 36 }, 3500, 1650);
     at(A.fireplace(), 2170, 696);
-    at(A.couch(), 2050, 1460); at(A.couch({ w: 340, seats: 2, color: '#3d6e4f' }), 2620, 1560);
-    at(A.floorLamp(), 1975, 1450); at(A.floorLamp(), 1300 + 40, 1300);
-    at(A.pianoBody(), 1670, 1850);
-    at(A.stage(), 2700, 1300); at(A.stageStairs({ w: 100, d: 180 }), 3195, 1260); at(A.micStand(), 2900, 1060, { sy: SY(1060) - 95 });
-    at(A.bookStand(), 2420, 1700);
+    at(A.couch({ w: 450 }), 2490, 1190); at(A.couch({ w: 100, len: 360, seats: 2, facing: 'e', color: '#3d6e4f' }), 2370, 1190);
+    at(A.floorLamp(), 2940, 1170); at(A.floorLamp(), 2386, 816); at(A.floorLamp(), 1314, 1550);
+    at(A.pianoBody({ w: 540 }), 1340, 692);
+    at(A.stage(), 3038, 1003); at(A.stageStairs({ w: 80, d: 147, z: 70, steps: 6 }), 3208, 1140); at(A.micStand(), 3055, 818, { sy: SY(818) - 70 });
+    at(A.bookStand(), 2087, 676);
     at(A.counter({ w: 260 }), 3520, 684); at(A.stove(), 3780, 684); at(A.counter({ w: 250, sink: 120, upper: false }), 3856, 684); at(A.fridge(), 4170, 684);
     at(A.kitchenTable(), 3780, 980, { foot: 230 });
     at(A.sink(), 3520, 1170); at(A.toilet(), 3610, 1188); at(A.tub(), 3720, 1208);

@@ -1766,10 +1766,6 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .pia-big .pia-k.on { fill: var(--g, #fff); transition: none; }
 .pia-big .pia-h { fill: var(--g, #fff); opacity: 0; transition: opacity 1.2s ease-out; }
 .pia-big .pia-h.on { opacity: .55; transition: none; }
-.pia-floor .hg-key > rect:first-child { transition: fill 1.2s ease-out; }
-.pia-floor .hg-key.on > rect:first-child { fill: var(--g, #fff); transition: none; }
-.pia-floor .pia-ring { fill: none; stroke: var(--g, #fff); stroke-width: 7; opacity: 0; transition: opacity 1.2s ease-out; }
-.pia-floor .hg-key.on .pia-ring { opacity: .6; transition: none; }
 
 /* ---------- Hangout: the chalk floor and the guestbook (hangout/chalk.js, hangout/book.js) ----------
    The chalk lines are a canvas laid on the slate, over the floor and under every duck; erased, they fade off. A duck
@@ -1822,3 +1818,5 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @keyframes sp-fall { 0% { transform: translateX(-50%); } 100% { transform: translateX(-50%) translateY(150vh) rotate(200deg); } }
 .splash.falling .sp-cloud, .splash.falling .sp-blocks { transition: opacity .8s ease .5s, transform 1s ease .3s; opacity: 0; transform: scale(1.08); }
 @media (prefers-reduced-motion: reduce) { .sp-duck, .splash .sb-block { animation: none; } }
+.hang-chalkstick.rub { width: calc(var(--sz, 60px) * .26); height: calc(var(--sz, 60px) * .14); border-radius: max(2px, calc(var(--sz, 60px) * .03)); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); transform: rotate(-18deg); }
+.gduck.left .hang-chalkstick.rub { transform: rotate(18deg); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); }

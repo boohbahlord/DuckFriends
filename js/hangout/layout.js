@@ -16,7 +16,9 @@ export const CABIN = { x0: 1300, y0: 600, x1: 4300, y1: 2200, wall: 180, inner: 
 export const DECK = { x0: 2200, y0: 2200, x1: 4300, y1: 2600, rail: 40 };
 export const STAIRS = { x0: 4300, x1: 4500, y0: 2200, land: 2350, y1: 2900, n: 20 };   // the deck's stairs, down to the downhill
 export const SLOPE = { y0: 1900, y1: 2800, low: -240 };
-export const STAGE = { cx: 2950, cy: 1050, r: 250, h: 95, sx0: 2975, sx1: 3095, sy0: 1250, sy1: 1490, n: 8 };   // round; its stairs in front, down toward the front (room to walk between the stage and the hall wall)
+/* the stage: half an oval, its flat side on the great room's east wall (cx: the wall's face) north of the hall doorway,
+   rx out into the room, ry along the wall; its stairs along the same wall on its south side, climbing north onto it */
+export const STAGE = { cx: 3288, cy: 808, rx: 250, ry: 195, h: 70, sx0: 3208, sx1: 3288, sy0: 993, sy1: 1140, n: 6 };
 export const POOL = { x0: 3000, y0: 3100, x1: 4800, y1: 3900, h: -280, rope: 3900, steps: [3110, 3410], step: 44 };   // (steps: 3 of them, 44 wide, along the west end from y 3110 to 3410, as art.js draws them)
 export const TRAMP = { cx: 5200, cy: 3000, rx: 150, ry: 100, h: 30 };   // the trampoline: its mat (an oval) stands 30 over the downhill
 export const FIELD = { x0: 4500, y0: 400, x1: 5800, y1: 1800 };
@@ -27,17 +29,21 @@ const inR = (x, y, r) => x >= r[0] && x < r[2] && y >= r[1] && y < r[3];
 const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
 /* the ground outside: flat on the highground, falling smoothly down the slope, flat again downhill */
 export const terrainAt = y => SLOPE.low * smooth((y - SLOPE.y0) / (SLOPE.y1 - SLOPE.y0));
-export const onStage = (x, y) => (x - STAGE.cx) ** 2 + (y - STAGE.cy) ** 2 <= STAGE.r ** 2;
+export const onStage = (x, y) => x <= STAGE.cx && ((x - STAGE.cx) / STAGE.rx) ** 2 + ((y - STAGE.cy) / STAGE.ry) ** 2 <= 1;
 export const onStageStairs = (x, y) => x >= STAGE.sx0 && x < STAGE.sx1 && y >= STAGE.sy0 && y < STAGE.sy1;
 export const inCabin = (x, y) => x > CABIN.x0 && x < CABIN.x1 && y > CABIN.y0 && y < CABIN.y1;   // (the walls' middle lines)
 export const inDeck = (x, y) => inR(x, y, [DECK.x0, DECK.y0, DECK.x1, DECK.y1]);
 export const inPool = (x, y) => inR(x, y, [POOL.x0, POOL.y0, POOL.x1, POOL.y1]);
 export const onTramp = (x, y) => ((x - TRAMP.cx) / TRAMP.rx) ** 2 + ((y - TRAMP.cy) / TRAMP.ry) ** 2 <= 1;
 
+/* things a duck can jump onto and stand on (beds, tables): { x0, y0, x1, y1, top, key }, filled by add() */
+const PLATS = [];
+const platAt = (x, y) => PLATS.find(q => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1) || null;
 /* the height of whatever a duck stands on at (x, y) */
 export function heightAt(x, y) {
   if (onStage(x, y)) return STAGE.h;
   if (onStageStairs(x, y)) return STAGE.h * (1 - Math.min(STAGE.n - 1, Math.floor((y - STAGE.sy0) / (STAGE.sy1 - STAGE.sy0) * STAGE.n)) / STAGE.n);   // (steps of 12 at most; the top one level with the stage)
+  const pl = PLATS.length && platAt(x, y); if (pl) return pl.top;
   if ((x >= CABIN.x0 && x < CABIN.x1 && y >= CABIN.y0 && y < CABIN.y1) || inDeck(x, y)) return 0;
   if (x >= STAIRS.x0 && x < STAIRS.x1 && y >= STAIRS.y0 && y < STAIRS.y1)
     return y < STAIRS.land ? 0 : SLOPE.low / STAIRS.n * Math.min(STAIRS.n, Math.floor((y - STAIRS.land) / (STAIRS.y1 - STAIRS.land) * STAIRS.n) + 1);
@@ -51,7 +57,8 @@ export function heightAt(x, y) {
    height z, standing h tall. Drawn in its box on the screen (world px): left x, top y − z − h, w wide, d + h tall
    (box overrides it); depth-sorted by key (default y + d, its front). solid: blocks walking over its footprint (block
    overrides it) up to the height top (none: always). layer 'floor': drawn under every duck. only 'in' | 'out': shown
-   only while my duck is inside (or outside) the cabin. fade: turns see-through over my duck. light: { x, y, r, c, k,
+   only while my duck is inside (or outside) the cabin. fade: turns see-through while it hides a duck. plat: its top can
+   be stood on (a jump gets up; walking can't). light: { x, y, r, c, k,
    flick } a pool of light on the ground. Drawings: shapes.js (placeholders) by kind. */
 export const PROPS = [];
 const count = {};
@@ -61,7 +68,8 @@ function add(kind, x, y, w, d, h, o = {}) {
   p.key = o.key ?? y + d;
   p.box = o.box || { l: x, t: y - p.z - h, w, h: d + h };
   if (p.solid && !p.block) p.block = [x, y, x + w, y + d];
-  if (p.solid && p.top === undefined) p.top = Infinity;
+  if (p.solid && p.top === undefined) p.top = p.plat ? p.z + h : Infinity;
+  if (p.plat) PLATS.push({ x0: x, y0: y, x1: x + w, y1: y + d, top: p.z + h, key: p.key });
   PROPS.push(p); return p;
 }
 const WARM = '#ffb24a', HOT = '#ff8a2a';
@@ -107,36 +115,39 @@ export const DOORWAYS = [
 for (const d of DOORWAYS) d.axis === 'y' ? add('door', d.at - T, d.a, 2 * T, d.b - d.a, d.h, { id: d.id, z: 0, door: d, key: d.a + 6 })
   : add('door', d.a, d.at - T, d.b - d.a, 2 * T, d.h, { id: d.id, z: 0, door: d, key: d.at + 6 });
 
-/* the great room */
+/* the great room: the piano against the north wall in the west, the guestbook by the front door, the fireplace; the
+   couches in an L on a rug, facing the TV's place on the north wall, a lamp at each end; the stage in the north-east
+   corner; the chalk floor in the south-west, with the chalk, the eraser and the white X beside it */
 const FLOOR = { layer: 'floor', z: 0, ...IN };
+add('piano', 1340, 612, 540, 80, 150, { solid: true, ...IN, box: { l: 1340, t: 452, w: 540, h: 240 }, light: { x: 1610, y: 760, r: 330, c: WARM, k: .3, flick: .4 } });   // (art.js' pianoBody: 240 tall; its candles light the floor)
+add('book', 2095, 640, 60, 36, 60, { solid: true, ...IN });
 add('fireplace', 2180, 612, 240, 90, 220, { solid: true, ...IN, light: { x: 2300, y: 730, r: 460, c: HOT, k: .5, flick: 1 } });
-add('rug', 2040, 1200, 860, 450, 0, FLOOR);   // (under the couches, clear of the chalk floor and the eraser)
-add('couch', 2050, 1350, 500, 100, 70, { solid: true, ...IN, seats: 3 });
-add('couch', 2590, 1350, 300, 100, 70, { solid: true, ...IN, seats: 2 });
-add('lamp', 1960, 1366, 44, 30, 150, { solid: true, ...IN, light: { x: 1982, y: 1420, r: 300, c: WARM, k: .45 } });
-add('lamp', 1330, 1480, 44, 30, 150, { solid: true, ...IN, light: { x: 1352, y: 1530, r: 300, c: WARM, k: .45 } });
-add('pianokeys', 1400, 1850, 900, 300, 0, FLOOR);
-add('piano', 1400, 1760, 900, 80, 150, { solid: true, ...IN, box: { l: 1400, t: 1600, w: 900, h: 240 } });   // (art.js' pianoBody: 240 tall)
-add('stage', STAGE.cx - STAGE.r, STAGE.cy - STAGE.r, 2 * STAGE.r, 2 * STAGE.r, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.r, light: { x: STAGE.cx, y: STAGE.cy, r: 320, c: '#ffd9a0', k: .3 } });
-add('stagestairs', STAGE.sx0, STAGE.sy0, STAGE.sx1 - STAGE.sx0, STAGE.sy1 - STAGE.sy0, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.r + 1 });   // (in front of the stage; a duck on it in front of both)
-add('mic', STAGE.cx - 20, STAGE.cy - 60, 40, 20, 90, { z: STAGE.h, ...IN, key: STAGE.cy + STAGE.r + 2 });
-add('chalkfloor', 1400, 700, 600, 550, 0, FLOOR);
-add('chalk', 2040, 1090, 70, 40, 0, FLOOR);
-add('eraser', 2030, 1160, 90, 80, 0, FLOOR);
-add('book', 2680, 1530, 60, 36, 60, { solid: true, ...IN });
+add('rug', 2350, 800, 620, 440, 0, FLOOR);
+add('couch', 2490, 1090, 450, 100, 70, { solid: true, ...IN, seats: 3 });                // (facing north: its back to us)
+add('couch', 2370, 830, 100, 360, 70, { solid: true, ...IN, seats: 2, facing: 'e' });   // (facing east, along the first one's west end)
+add('lamp', 2952, 1140, 44, 30, 150, { solid: true, ...IN, light: { x: 2974, y: 1190, r: 300, c: WARM, k: .45 } });
+add('lamp', 2398, 786, 44, 30, 150, { solid: true, ...IN, light: { x: 2420, y: 840, r: 300, c: WARM, k: .45 } });
+add('stage', STAGE.cx - STAGE.rx, STAGE.cy - STAGE.ry, STAGE.rx, 2 * STAGE.ry, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.ry, light: { x: STAGE.cx - STAGE.rx * .45, y: STAGE.cy, r: 300, c: '#ffd9a0', k: .3 } });
+add('stagestairs', STAGE.sx0, STAGE.sy0, STAGE.sx1 - STAGE.sx0, STAGE.sy1 - STAGE.sy0, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.ry + 1 });   // (in front of the stage; a duck on it in front of both)
+add('mic', STAGE.cx - STAGE.rx + 25, STAGE.cy - 10, 40, 20, 90, { z: STAGE.h, ...IN });   // (at its left end)
+add('chalkfloor', 1380, 1600, 600, 550, 0, FLOOR);
+add('chalk', 2030, 1650, 70, 40, 0, FLOOR);
+add('eraser', 2020, 1730, 90, 80, 0, FLOOR);
+add('wipe', 2028, 1850, 74, 74, 0, FLOOR);   // (the white X: the whole floor wiped)
+add('lamp', 1326, 1520, 44, 30, 150, { solid: true, ...IN, light: { x: 1348, y: 1580, r: 300, c: WARM, k: .45 } });
 /* the kitchen, the bathroom, the bedrooms */
 add('counter', 3530, 612, 250, 78, 75, { solid: true, ...IN });
 add('stove', 3780, 612, 120, 78, 75, { solid: true, ...IN });
 add('counter', 3900, 612, 240, 78, 75, { solid: true, ...IN });
 add('fridge', 4150, 612, 120, 90, 160, { solid: true, ...IN });
-add('table', 3800, 850, 200, 100, 55, { solid: true, ...IN, light: { x: 3900, y: 900, r: 360, c: WARM, k: .32 } });
+add('table', 3800, 850, 200, 100, 55, { solid: true, plat: true, ...IN, light: { x: 3900, y: 900, r: 360, c: WARM, k: .32 } });
 add('tub', 3530, 1115, 210, 100, 45, { solid: true, ...IN });
-add('sink', 3770, 1115, 110, 60, 75, { solid: true, ...IN, light: { x: 3700, y: 1300, r: 240, c: '#ffe0b0', k: .25 } });
+add('sink', 3770, 1115, 110, 60, 75, { solid: true, ...IN, light: { x: 3805, y: 1230, r: 250, c: '#ffe0b0', k: .3 } });   // (the light over its mirror)
 add('toilet', 3800, 1262, 90, 56, 44, { solid: true, ...IN });   // (against the east wall, facing into the room)
-add('bed', 4060, 1130, 210, 270, 45, { solid: true, ...IN });
+add('bed', 4060, 1130, 210, 270, 45, { solid: true, plat: true, ...IN });
 add('rug', 3950, 1420, 300, 190, 0, FLOOR);
 add('lamp', 3960, 1112, 40, 30, 110, { solid: true, ...IN, light: { x: 3980, y: 1160, r: 260, c: WARM, k: .45 } });
-add('bed', 3960, 1690, 300, 270, 45, { solid: true, ...IN });
+add('bed', 3960, 1690, 300, 270, 45, { solid: true, plat: true, ...IN });
 add('rug', 3600, 1800, 330, 300, 0, FLOOR);
 add('lamp', 3900, 1672, 40, 30, 110, { solid: true, ...IN, light: { x: 3920, y: 1720, r: 260, c: WARM, k: .45 } });
 
@@ -153,7 +164,7 @@ function railY(x, y0, y1) {
 railY(DECK.x0, DECK.y0, DECK.y1); railX(DECK.y1, DECK.x0, DECK.x1); railY(STAIRS.x0, STAIRS.land, STAIRS.y1); railY(STAIRS.x1, STAIRS.y0, STAIRS.y1); railX(STAIRS.y0, STAIRS.x0, STAIRS.x1);
 add('rocker', 3330, 2240, 80, 60, 80, { solid: true });
 add('rocker', 3560, 2240, 80, 60, 80, { solid: true });
-add('deck-table', 3460, 2260, 60, 50, 45, { solid: true });
+add('deck-table', 3460, 2260, 60, 50, 45, { solid: true, plat: true });
 const GLOWS = [];   // lights with no prop of their own: the south windows on the deck, the deck's string lights
 for (const x of WIN) GLOWS.push({ x, y: C.y1 + 70, r: 220, c: WARM, k: .35, only: 'out' });
 for (let x = 2350; x < 4300; x += 320) GLOWS.push({ x, y: C.y1 + 60, r: 150, c: '#ffcf70', k: .3, flick: .3, only: 'out' });
@@ -208,12 +219,14 @@ export function standable(x, y, z, up = STEP, from = null) {
   return !solidsAt(x, y, z).some(b => !(from && hits(b, from[0], from[1])));
 }
 /* where a duck's feet are drawn in depth: its foot y; on the stage (or the stairs' upper steps) in front of the whole
-   stage (its strips sort by its front edge, at most cy + r) and among themselves by depth, squeezed into the 40 steps
-   after it (z-indexes are whole numbers); the stairs' lower steps from there on, at their own depth */
-const BAND = 40, BACK = STAGE.cy - STAGE.r, LOW = STAGE.cy + STAGE.r + BAND;
+   stage (its strips sort by its front edge, at most cy + ry) and among themselves by depth, squeezed into the 40 steps
+   after it (z-indexes are whole numbers); the stairs' lower steps from there on, at their own depth. On a bed or a
+   table: in front of it, the same way, in the 8 steps after its front. */
+const BAND = 40, BACK = STAGE.cy - STAGE.ry, LOW = STAGE.cy + STAGE.ry + BAND;
 export function sortY(x, y, z) {
+  const pl = PLATS.length && platAt(x, y); if (pl && z >= pl.top - 1) return pl.key + 1 + (y - pl.y0) / (pl.y1 - pl.y0) * 7;
   if (!(onStage(x, y) || onStageStairs(x, y)) || z < heightAt(x, y) - 1 || y >= LOW) return y;
-  return STAGE.cy + STAGE.r + 1 + (y - BACK) / (LOW - BACK) * (BAND - 1);
+  return STAGE.cy + STAGE.ry + 1 + (y - BACK) / (LOW - BACK) * (BAND - 1);
 }
 /* where someone arrives: outside the front door (k: the k-th of n, spread out; a free spot) */
 export function spawnAt(k = 0, n = 1) {

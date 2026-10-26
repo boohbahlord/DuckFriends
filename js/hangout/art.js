@@ -33,7 +33,6 @@ const shade = (cx, cy, rx, ry, o = .32) => F`<ellipse cx="${cx}" cy="${cy}" rx="
 const R = (x, y, w, h, fill, more = '') => F`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${more}/>`;
 const glowDef = (id, c = '#ffb347', a = .55) => F`<radialGradient id="${id}"><stop offset="0" stop-color="${c}" stop-opacity="${a}"/><stop offset=".45" stop-color="${c}" stop-opacity="${a * .4}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
 const glassDef = id => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".6" stop-color="#ffbd57"/><stop offset="1" stop-color="#f08a32"/></linearGradient>`;
-const nightGlassDef = id => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101a3e"/><stop offset="1" stop-color="#2b4683"/></linearGradient>`;
 /* round logs in rows R high, the rows lined up so one ends at y0 */
 const logDef = (id, y0 = 0, r = 17) => F`<pattern id="${id}" width="240" height="${r}" patternUnits="userSpaceOnUse" y="${y0}"><rect width="240" height="${r}" fill="#a65a2a"/><rect y="${r * .12}" width="240" height="${r * .32}" fill="#d98d4e" opacity=".6"/><rect y="${r * .7}" width="240" height="${r * .3}" fill="#5e2a10" opacity=".5"/><path d="M0 ${r - .7}H240" stroke="#3a1906" stroke-width="1.5"/><path d="M30 ${r * .55}h34M122 ${r * .45}h22M182 ${r * .6}h40" stroke="#7a3a16" stroke-width="1" opacity=".6"/></pattern>`;
 const shingleDef = (id, sy = 1, rot = 0) => F`<pattern id="${id}" width="56" height="48" patternUnits="userSpaceOnUse"${sy !== 1 || rot ? F` patternTransform="${rot ? `rotate(${rot})` : ''}${sy !== 1 ? ` scale(1 ${sy})` : ''}"` : ''}><rect width="56" height="48" fill="#2b5747"/><rect width="56" height="7" fill="#4f866d" opacity=".35"/><rect y="24" width="56" height="7" fill="#4f866d" opacity=".35"/><path d="M0 23H56M0 47H56" stroke="#14302a" stroke-width="2.6"/><path d="M14 0V23M42 0V23M0 24V47M28 24V47M56 24V47" stroke="#14302a" stroke-width="1.8"/></pattern>`;
@@ -128,12 +127,23 @@ function groundTile(kind, r) {
     return [W, H, b];
   }
   if (kind === 'dirt') return [160, 160, R(0, 0, 160, 160, '#5d4533') + dots(6, 160, 160, '#4b3628', 14, .6) + dots(16, 160, 160, '#7a6150', 3, .7) + dots(10, 160, 160, '#3e2c20', 2.4, .7)];
-  if (kind === 'wood') {   // the cabin's floor: planks that run east-west, joints staggered
-    const tones = ['#a0612f', '#99592a', '#a66834', '#94552a'], joint = [60, 180, 120, 20];
+  if (kind === 'wood') {   // the cabin's floor: planks that run east-west, of mixed lengths and tones, with grain, nails and a few knots
+    const TW = 720, rows = 8, ph = 24, tones = ['#9c5d2c', '#93552a', '#a46634', '#8c4f26', '#a0602f', '#97582b'];
     let b = '';
-    for (let i = 0; i < 4; i++) b += R(0, i * 24, 240, 24, tones[i]) + F`<path d="M0 ${i * 24 + 23}H240M${joint[i]} ${i * 24}V${i * 24 + 23}" stroke="#5e3214" stroke-width="2"/><rect x="0" y="${i * 24 + 2}" width="240" height="4" fill="#ffd9a0" opacity=".08"/><circle cx="${joint[i] + 6}" cy="${i * 24 + 12}" r="1.4" fill="#4a280f"/><circle cx="${joint[i] - 6}" cy="${i * 24 + 12}" r="1.4" fill="#4a280f"/>`;
-    b += `<path d="M30 9h40M150 33h30M90 58h50M200 82h28" stroke="#6e3c1a" stroke-width="1.2" opacity=".55"/>`;
-    return [240, 96, b];
+    for (let i = 0; i < rows; i++) {
+      const y = i * ph, js = [];
+      for (let x = r() * 120; x < TW; x += 130 + r() * 170) js.push(x);   // the joints (the row wraps round the tile)
+      for (let k = 0; k < js.length; k++) {
+        const x0 = js[k], x1 = k + 1 < js.length ? js[k + 1] : js[0] + TW, tone = tones[Math.floor(r() * tones.length)];
+        let g = R(x0, y, x1 - x0, ph, tone) + R(x0, y + 2, x1 - x0, 3, '#ffd9a0', 'opacity=".07"');
+        for (let n = 0; n < 2; n++) { const gy = y + 7 + n * 8 + r() * 4, gx = x0 + 10 + r() * 20, gl = (x1 - x0) * (.4 + r() * .45); g += F`<path d="M${gx} ${gy}q${gl / 3} ${-2 + r() * 4} ${gl / 2} 0t${gl / 2} ${-1 + r() * 2}" stroke="#6a3818" stroke-width="1" fill="none" opacity="${.35 + r() * .25}"/>`; }
+        if (r() < .22) { const kx = x0 + 30 + r() * Math.max(10, x1 - x0 - 60), ky = y + 8 + r() * 8; g += F`<ellipse cx="${kx}" cy="${ky}" rx="6" ry="3.4" fill="#6e3c1a" opacity=".75"/><ellipse cx="${kx}" cy="${ky}" rx="10" ry="5.5" fill="none" stroke="#6e3c1a" stroke-width="1" opacity=".45"/>`; }
+        g += F`<path d="M${x0} ${y}V${y + ph}" stroke="#5e3214" stroke-width="2"/><circle cx="${x0 + 6}" cy="${y + 7}" r="1.3" fill="#3e200c"/><circle cx="${x0 + 6}" cy="${y + 17}" r="1.3" fill="#3e200c"/><circle cx="${x1 - 6}" cy="${y + 7}" r="1.3" fill="#3e200c"/><circle cx="${x1 - 6}" cy="${y + 17}" r="1.3" fill="#3e200c"/>`;
+        b += g + (x1 > TW ? `<g transform="translate(${-TW} 0)">${g}</g>` : '');
+      }
+      b += F`<path d="M0 ${y + ph - 1}H${TW}" stroke="#5e3214" stroke-width="2"/>`;
+    }
+    return [TW, rows * ph, b];
   }
   if (kind === 'tile') return [80, 80, R(0, 0, 80, 80, '#d9c9a6') + R(0, 0, 40, 40, '#b9744a') + R(40, 40, 40, 40, '#b9744a') + '<path d="M0 .5H80M0 40H80M.5 0V80M40 0V80" stroke="#6e4b33" stroke-width="2"/>'];
   if (kind === 'bath') return [36, 36, R(0, 0, 36, 36, '#9fc9d2') + R(0, 0, 18, 18, '#b6dbe2') + R(18, 18, 18, 18, '#b6dbe2') + '<path d="M0 .5H36M0 18H36M.5 0V36M18 0V36" stroke="#e8f4f6" stroke-width="1.6"/>'];
@@ -265,6 +275,10 @@ export function floorLamp({ w = 70, h = 170 } = {}) {
     + F`<path d="M${cx - 15} 14h30l9 34h-48Z" fill="#ffcf73" ${ln(2.4)}/><path d="M${cx - 12} 18h8l-3 26h-11Z" fill="#fff0c2" opacity=".85"/><path d="M${cx - 24} 48h48" stroke="#c9792f" stroke-width="4"/>`, '', glowDef(id, '#ffb347', .5));
 }
 
+/* the chimney: it goes up from the fireplace inside, against the north wall (depth d0 … d1 from the wall's line), and
+   comes out of the roof's north slope right there, rise over it */
+export const CHIMNEY = { d0: 12, d1: 102, rise: 150 };
+export const chimneyTop = (wallH, roofH = 520, d = 1600) => wallH + roofH * Math.min(1, CHIMNEY.d1 / (d / 2)) + CHIMNEY.rise;
 /* ---------- the cabin, outside ----------
    Round orange-brown logs, a steep dark green shingle roof whose ridge runs east-west, a big A-frame gable over the back
    door (the triangle window) facing the deck, a stone chimney, glowing windows, string lights along the eave, and a
@@ -286,7 +300,7 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
     + F`<path d="M${fd - 104} ${Y0 - 236}L${fd} ${Y0 - 292}L${fd + 104} ${Y0 - 236}" stroke="${O}" stroke-width="13" fill="none" stroke-linejoin="round"/><path d="M${fd - 104} ${Y0 - 236}L${fd} ${Y0 - 292}L${fd + 104} ${Y0 - 236}" stroke="#d0803e" stroke-width="8" fill="none" stroke-linejoin="round"/>`;
   /* the north slope (seen steeply, so short), then the chimney that comes up through it */
   s += R(0, nE, w, ridge - nE, `url(#${id}n)`, ln(3)) + R(0, nE, w, ridge - nE, '#000', 'opacity=".28"');
-  const cw = 116, cd0 = d / 2 - 280, cd1 = d / 2 - 200, cz = wallH + roofH + 70, ct = Y0 + cd0 - cz, cf = Y0 + cd1 - cz, cb = Y0 + cd1 - roofAt(cd1), cxl = chimney - cw / 2;
+  const cw = 116, cd0 = CHIMNEY.d0, cd1 = CHIMNEY.d1, cz = chimneyTop(wallH, roofH, d), ct = Y0 + cd0 - cz, cf = Y0 + cd1 - cz, cb = Y0 + cd1 - roofAt(cd1), cxl = chimney - cw / 2;
   s += F`<g class="hg-smoke" style="animation-delay:-1s"><circle cx="${chimney + 6}" cy="${ct - 6}" r="20" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-3.4s"><circle cx="${chimney - 4}" cy="${ct - 6}" r="16" fill="#c9cfdb"/></g><g class="hg-smoke" style="animation-delay:-5.6s"><circle cx="${chimney + 2}" cy="${ct - 6}" r="18" fill="#c9cfdb"/></g>`;
   s += stones(cxl, cf, cw, cb - cf, 11, 20) + R(cxl, cf, cw, cb - cf, 'none', ln(2.6)) + R(cxl, cf, cw, cb - cf, '#000', 'opacity=".18"')
     + R(cxl - 4, cb - 12, cw + 8, 14, '#4a4d56', ln(2.2))
@@ -341,7 +355,7 @@ export function cabinOutside({ w = 3000, d = 1600, h = d + 290, wallH = 170, roo
 
 /* ---------- the cabin, inside ---------- */
 /* a log wall cut away. axis 'x' runs east-west, w long: box w × (t + wallH): the cut top (t deep), then the face that
-   looks south; doors are gaps [from, to] along it, windows [from, to] look out at the night. axis 'y' runs north-south:
+   looks south; doors are gaps [from, to] along it, windows [from, to] look out at the grass. axis 'y' runs north-south:
    w = t, box t × (length + wallH): the cut top, then the south end's log ends; doors are gaps [from, to] along y.
    Foot: y = h (an 'x' wall); a 'y' wall is long in depth, so give it a foot per gap-free piece or keep it low. */
 export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], windows = [] } = {}) {
@@ -359,13 +373,14 @@ export function logWall({ w, h, axis = 'x', wallH = 40, t = 24, doors = [], wind
       if (a > 0) s += R(a - 2, 0, 10, h, '#6e3a1a', ln(2));
       if (b < len) s += R(b - 8, 0, 10, h, '#6e3a1a', ln(2));
     }
-    if (windows.length) {
-      defs += nightGlassDef(id + 'n');
+    if (windows.length) {   // (seen from inside, looking down a little: the grass outside, in the dark)
+      defs += F`<linearGradient id="${id}n" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#173528"/><stop offset="1" stop-color="#24503d"/></linearGradient>`;
       for (const [a, b] of windows) {
         const wy = t + wallH * .2, wh = wallH * .5, r = rnd(a + 7);
-        let stars = '';
-        for (let i = 0; i < 5; i++) stars += F`<circle cx="${a + 12 + r() * (b - a - 24)}" cy="${wy + 8 + r() * (wh - 16)}" r="${.8 + r() * 1.2}" fill="#fff" opacity=".8"/>`;
-        s += R(a - 8, wy - 8, b - a + 16, wh + 16, '#d98a4a', `rx="3" ${ln(2.4)}`) + R(a, wy, b - a, wh, `url(#${id}n)`, ln(1.6)) + stars + F`<path d="M${(a + b) / 2} ${wy}V${wy + wh}M${a} ${wy + wh / 2}H${b}" stroke="#8a4a1f" stroke-width="5"/>` + R(a - 12, wy + wh + 6, b - a + 24, 8, '#c87a3c', ln(2));
+        let grass = '';
+        for (let i = 0; i < 9; i++) { const gx = a + 8 + r() * (b - a - 16), gy = wy + 10 + r() * (wh - 14); grass += F`<path d="M${gx - 3} ${gy}l2 -7l1 7M${gx + 1} ${gy}l3 -6" stroke="#3f7a52" stroke-width="1.6" fill="none" stroke-linecap="round"/>`; }
+        grass += F`<path d="M${a} ${wy + wh * .3}h${b - a}" stroke="#5aa0ff" stroke-width="${wh * .5}" opacity=".05"/>`;
+        s += R(a - 8, wy - 8, b - a + 16, wh + 16, '#d98a4a', `rx="3" ${ln(2.4)}`) + R(a, wy, b - a, wh, `url(#${id}n)`, ln(1.6)) + grass + F`<path d="M${(a + b) / 2} ${wy}V${wy + wh}M${a} ${wy + wh / 2}H${b}" stroke="#8a4a1f" stroke-width="5"/>` + R(a - 12, wy + wh + 6, b - a + 24, 8, '#c87a3c', ln(2));
       }
     }
   } else {
@@ -431,8 +446,13 @@ export function fireplace({ w = 280, h, wallH = 170 } = {}) {
 /* a couch: seats 3 or 2 (cushions visible), facing 'n' (its back toward the viewer; the cabin's couches face the
    fireplace) or 's'. Footprint w × 110; box w × 174. back: the seat and cushions, foot y = 64 (the footprint's north
    edge); front: the backrest (or the seat's front) and the arms, foot y = h. A duck sits on cushion i at
-   x = 30 + (i + .5) × (w − 60) / seats, depth .55 of the couch, 30 high. */
-export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing = 'n', throwOn = true } = {}) {
+   x = 30 + (i + .5) × (w − 60) / seats, depth .55 of the couch, 30 high. facing 'e': turned to face east, len long down
+   the screen and w across (footprint w × len; box w × (len + 64)): the backrest along its west side, an arm at each
+   end, seen from above; back: the seat, its cushions and the north arm, foot y = 64; front: the backrest and the south
+   arm, foot y = h. A duck sits on
+   cushion i at x = 62, y = 26 + (i + .5) × (len − 52) / seats, 32 high. */
+export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing = 'n', throwOn = true, len = 360 } = {}) {
+  if (facing === 'e') return sideCouch({ w, len, seats, color });
   const Y = h - 110, arm = 30, cw = (w - 2 * arm) / seats, hi = mix(color, 255, .2), lo = mix(color, 0, .3), lo2 = mix(color, 0, .45);
   const cushions = (y0, y1) => Array.from({ length: seats }, (_, i) => { const x = arm + i * cw + 3; return R(x, y0, cw - 6, y1 - y0, hi, `rx="12" ${ln(2.4)}`) + R(x + 8, y0 + 5, cw - 22, (y1 - y0) * .25, '#fff', 'rx="6" opacity=".14"') + F`<circle cx="${x + cw / 2 - 3}" cy="${(y0 + y1) / 2 + 4}" r="2.2" fill="${lo2}"/>`; }).join('');
   const arms = [0, w - arm].map(x => R(x, Y - 44, arm, 110, color, `rx="12" ${ln(2.4)}`) + R(x + 5, Y - 40, 8, 100, '#fff', 'rx="4" opacity=".12"')).join('');
@@ -452,24 +472,25 @@ export function couch({ w = 500, h = 174, seats = 3, color = '#a8382c', facing =
   return pair(w, h, [back], [front], Y, h);
 }
 
-/* ---------- the piano ---------- */
-/* the floor piano: big keys flat on the floor, octaves × 7 white keys across (two octaves: one duck wide each), black
-   keys toward the north. Each key carries data-key (w0 … for white from the lowest C, b0 … for black in order) and
-   class hg-key; lit: { w3: '#ff0', b1: '#0ff' } paints keys. Anchor: flat. */
-export function floorPiano({ w = 900, h = 300, octaves = 2, lit = {} } = {}) {
-  const n = octaves * 7, x0 = 14, y0 = 26, kw = (w - 2 * x0) / n, kh = h - y0 - 14;
-  let s = R(0, 0, w, h, '#3a2416', `rx="12" ${ln(3)}`) + R(x0, 10, w - 2 * x0, 14, '#8e1f2b', `rx="3" ${ln(1.8)}`);
-  for (let i = 0; i < n; i++) {
-    const c = lit['w' + i], x = x0 + i * kw;
-    s += F`<g class="hg-key" data-key="w${i}">` + R(x, y0, kw, kh, c || '#f3efe4', `rx="4" ${ln(2.2)}`) + R(x + 3, y0 + kh - 14, kw - 6, 11, c ? mix(c, 0, .2) : '#d6cfbc', 'rx="3"') + (c ? R(x - 4, y0 - 4, kw + 8, kh + 8, 'none', `rx="8" stroke="${c}" stroke-width="7" opacity=".55"`) : '') + '</g>';
+function sideCouch({ w = 100, len = 360, seats = 2, color = '#3d6e4f' }) {
+  const U = 64, h = len + U, Y = h - len, hi = mix(color, 255, .2), lo = mix(color, 0, .3), lo2 = mix(color, 0, .45), arm = 26, bw = 28, AH = 46, SH = 32;
+  const top = (x0, x1, y0, y1, z, fill, more = '') => R(x0, y0 - z, x1 - x0, y1 - y0, fill, more);   // a top face at height z (footprint y0 … y1)
+  /* back: the shadow, the seat and its cushions, the north arm; front: the backrest (it runs the whole length, so its
+     south end is at the front) and the south arm */
+  let back = shade(w / 2, h - 6, w / 2 + 6, 16, .25) + top(bw, w, Y, h, SH, lo, ln(2.4));
+  const cl = (len - 2 * arm) / seats;
+  for (let i = 0; i < seats; i++) {
+    const y0 = Y + arm + i * cl + 3, y1 = y0 + cl - 6;
+    back += top(bw + 4, w - 4, y0, y1, SH, hi, `rx="12" ${ln(2.4)}`) + top(bw + 9, w - 9, y0 + 4, y0 + 10, SH, '#fff', 'rx="3" opacity=".14"') + F`<circle cx="${(bw + w) / 2}" cy="${(y0 + y1) / 2 - SH}" r="2.2" fill="${lo2}"/>`;
   }
-  let bi = 0;
-  for (let o = 0; o < octaves; o++) for (const k of [0, 1, 3, 4, 5]) {
-    const i = o * 7 + k, c = lit['b' + bi], x = x0 + (i + 1) * kw - kw * .31;
-    s += F`<g class="hg-key" data-key="b${bi++}">` + R(x, y0, kw * .62, kh * .58, c || '#23222b', `rx="4" ${ln(2.2)}`) + R(x + 4, y0 + 4, kw * .62 - 8, kh * .58 - 14, c ? mix(c, 255, .3) : '#3d3c48', 'rx="3"') + (c ? R(x - 4, y0 - 4, kw * .62 + 8, kh * .58 + 8, 'none', `rx="7" stroke="${c}" stroke-width="7" opacity=".6"`) : '') + '</g>';
-  }
-  return wrap(w, h, s, 'hg-ground hg-floorpiano');
+  back += top(bw, w, Y, Y + arm, AH, color, `rx="10" ${ln(2.4)}`) + top(bw + 6, w - 6, Y + 4, Y + 9, AH, '#fff', 'rx="2" opacity=".12"');
+  const front = top(0, bw, Y, h, U, color, `rx="8" ${ln(2.4)}`) + top(5, 12, Y + 6, h - 6, U, '#fff', 'rx="3" opacity=".12"') + R(0, h - U, bw, U, lo, ln(2.4))
+    + top(bw, w, h - arm, h, AH, color, `rx="10" ${ln(2.4)}`) + top(bw + 6, w - 6, h - arm + 4, h - arm + 9, AH, '#fff', 'rx="2" opacity=".12"') + R(bw, h - AH, w - bw, AH, lo, ln(2.4))
+    + F`<path d="M${bw + 6} ${h - 30}H${w - 8}" stroke="${lo2}" stroke-width="2" stroke-dasharray="6 5"/>` + [6, w - 18].map(x => R(x, h - 7, 12, 7, '#3b2414', ln(1.6))).join('');
+  return pair(w, h, [back], [front], Y, h);
 }
+
+/* ---------- the piano ---------- */
 /* the piano itself: a warm wooden upright with brass candle sconces. Footprint w × 90, 150 high; box w × 240. back: the
    case, foot y = 205; front: the keyboard shelf, keys, legs and pedals, foot y = h. Ducks playing stand south of it. */
 export function pianoBody({ w = 360, h = 240 } = {}) {
@@ -491,26 +512,35 @@ export function pianoBody({ w = 360, h = 240 } = {}) {
 }
 
 /* ---------- the stage ---------- */
-/* the stage: round (w × d footprint), raised z (+95), planks on top with a warm spotlight, a red skirt and footlights
-   in front. Box w × (d + z). back: the top, foot y = z (the footprint's north edge); front: the front rim, foot y = h. */
-export function stage({ w = 500, d, z = 95, h } = {}) {
-  d = d || w; h = h || d + z;
-  const id = uid(), Y = h - d, cx = w / 2, rx = w / 2, ry = d / 2, cy = Y + ry - z, by = Y + ry;
+/* the stage: half an oval, its flat side against an east wall: rx out from the wall, ry along it (footprint rx × 2ry),
+   raised z (+70). Planks on top with a warm spotlight, a red skirt round the curve, and footlights standing on the top
+   just inside the rim along the front, drawn last. Box rx × (2ry + z). back: the top, foot y = z (the footprint's north
+   edge); front: the skirt and the footlights, foot y = h. */
+export function stage({ rx = 250, ry = 195, z = 70 } = {}) {
+  const id = uid(), w = rx, h = 2 * ry + z, cx = rx, cy = ry;   // (the top's middle, on the wall's face)
+  const top = F`M${cx} ${cy - ry}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}Z`;
   let planks = '';
   for (let y = cy - ry + 22; y < cy + ry; y += 22) planks += F`M0 ${y}H${w}`;
-  const back = F`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#b06a35"/><g clip-path="url(#${id}c)"><path d="${planks}" stroke="#7a4220" stroke-width="2.2"/><ellipse cx="${cx}" cy="${cy}" rx="${rx * .62}" ry="${ry * .62}" fill="url(#${id}s)"/></g>`
-    + F`<ellipse cx="${cx}" cy="${cy}" rx="${rx - 7}" ry="${ry - 7}" fill="none" stroke="#e0a050" stroke-width="12"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" ${ln(3)}/>`;
-  const band = F`M0 ${cy}A${rx} ${ry} 0 0 0 ${w} ${cy}V${by}A${rx} ${ry} 0 0 1 0 ${by}Z`;
+  const back = F`<path d="${top}" fill="#b06a35"/><g clip-path="url(#${id}c)"><path d="${planks}" stroke="#7a4220" stroke-width="2.2"/><ellipse cx="${cx - rx * .45}" cy="${cy}" rx="${rx * .5}" ry="${ry * .55}" fill="url(#${id}s)"/>`
+    + F`<path d="M${cx} ${cy - ry + 7}A${rx - 7} ${ry - 7} 0 0 0 ${cx} ${cy + ry - 7}" fill="none" stroke="#e0a050" stroke-width="12"/></g>`
+    + F`<path d="M${cx} ${cy - ry}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" fill="none" ${ln(3)}/>`;
+  /* the skirt: the curve's south-west quarter, from its left end round to the wall, z deep */
+  const band = F`M0 ${cy}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}V${cy + ry + z}A${rx} ${ry} 0 0 1 0 ${cy + z}Z`;
   let pleats = '';
-  for (let x = 10; x < w; x += 18) pleats += F`M${x} ${cy}V${by + ry}`;
-  const sets = ['', '', ''];
-  for (let i = 0, a = .14; a < Math.PI - .1; a += .2, i++) { const x = cx + rx * Math.cos(a), y = cy + ry * Math.sin(a) + 13; sets[i % 3] += F`<circle cx="${x}" cy="${y}" r="13" fill="#ffb347" opacity=".45"/><circle cx="${x}" cy="${y}" r="5.5" fill="#fff0b8" stroke="#6a3a12" stroke-width="1.4"/>`; }
+  for (let x = 8; x < w; x += 18) pleats += F`M${x} ${cy}V${cy + ry + z}`;
+  /* the footlights: little black cans on the top, each a few px in from the rim, their bulbs turned in toward the stage */
+  let lamps = '';
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI * (.56 + .4 * i / 5), x = cx + (rx - 16) * Math.cos(a), y = cy + (ry - 13) * Math.sin(a), k = Math.cos(a);
+    lamps += F`<g class="hg-twinkle" style="animation-delay:-${i * .5}s"><circle cx="${x - k * 9}" cy="${y - 6}" r="15" fill="#ffb347" opacity=".4"/></g>`
+      + F`<rect x="${x - 8}" y="${y - 10}" width="16" height="11" rx="4" fill="#2a2b35" ${ln(1.8)}/><circle cx="${x - k * 5}" cy="${y - 6}" r="4" fill="#fff0b8" stroke="#6a3a12" stroke-width="1.2"/>`;
+  }
   const front = F`<path d="${band}" fill="#7a1f2b"/><g clip-path="url(#${id}b)"><path d="${pleats}" stroke="#5a1520" stroke-width="5"/><path d="${pleats}" stroke="#a83444" stroke-width="2" transform="translate(6 0)"/></g><path d="${band}" fill="url(#${id}d)"/>`
-    + F`<path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${w} ${cy}" stroke="${O}" stroke-width="17" fill="none"/><path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${w} ${cy}" stroke="#e0a050" stroke-width="11" fill="none"/>`
-    + sets.map((s, i) => `<g class="hg-twinkle" style="animation-delay:-${i * .8}s">${s}</g>`).join('') + F`<path d="${band}" fill="none" ${ln(3)}/>`;
-  const defs = F`<clipPath id="${id}c"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath>` + glowDef(id + 's', '#ffd27a', .4);
+    + F`<path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" stroke="${O}" stroke-width="15" fill="none"/><path d="M0 ${cy}A${rx} ${ry} 0 0 0 ${cx} ${cy + ry}" stroke="#e0a050" stroke-width="9" fill="none"/>`
+    + F`<path d="${band}" fill="none" ${ln(3)}/>` + lamps;
+  const defs = F`<clipPath id="${id}c"><path d="${top}"/></clipPath>` + glowDef(id + 's', '#ffd27a', .4);
   const fdefs = F`<clipPath id="${id}b"><path d="${band}"/></clipPath><linearGradient id="${id}d" x1="0" y1="0" x2="0" y2="1"><stop offset=".3" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>`;
-  return pair(w, h, [back, defs], [front, fdefs], Y, h);
+  return pair(w, h, [back, defs], [front, fdefs], z, h);
 }
 /* stairs up onto the stage, rising to z. dir 'n' (the default) climbs northward, its risers facing the viewer: the stage
    is beside its top step; dir 'w' climbs westward, the stage at its west end (its steps seen from above, their sides
@@ -555,11 +585,17 @@ export function chalkFloor({ w = 600, h = 550, seed = 4 } = {}) {
     + [[18, 18], [w - 18, 18], [18, h - 18], [w - 18, h - 18]].map(([x, y]) => F`<circle cx="${x}" cy="${y}" r="5" fill="#d9a441" ${ln(1.4)}/>`).join(''), 'hg-ground hg-chalk');
 }
 const tile = (w, h) => R(2, 2, w - 4, h - 4, '#2f3836', `rx="8" ${ln(2.4)}`) + R(2, 2, w - 4, h - 4, 'none', 'rx="8" stroke="#a65a2c" stroke-width="4" opacity=".9"');
-/* the eraser tile (stand on it: Erase). Anchor: flat. */
+/* the eraser tile (pick the eraser up, rub out a little at a time). Anchor: flat. */
 export function eraserTile({ w = 72, h = 72 } = {}) {
   const x = w / 2 - 24, y = h / 2 - 8;
   return wrap(w, h, tile(w, h) + F`<ellipse cx="${w / 2}" cy="${y + 26}" rx="26" ry="6" fill="#000" opacity=".35"/><ellipse cx="${w / 2 - 6}" cy="${y + 24}" rx="16" ry="4" fill="#fff" opacity=".1"/>`
     + R(x, y + 10, 48, 12, '#8b8f99', `rx="3" ${ln(2)}`) + R(x, y - 6, 48, 18, '#c58a4e', `rx="4" ${ln(2)}`) + R(x + 5, y - 3, 30, 4, '#ecb57c', 'rx="2" opacity=".7"'), 'hg-ground');
+}
+/* the white X tile beside the chalk floor (use it: the whole floor wiped). Anchor: flat. */
+export function wipeTile({ w = 72, h = 72 } = {}) {
+  const c = w / 2, m = h / 2, k = Math.min(w, h) * .26;
+  const x = F`M${c - k} ${m - k}L${c + k} ${m + k}M${c + k} ${m - k}L${c - k} ${m + k}`;
+  return wrap(w, h, tile(w, h) + F`<path d="${x}" stroke="${O}" stroke-width="15" stroke-linecap="round"/><path d="${x}" stroke="#f4f4f0" stroke-width="9" stroke-linecap="round"/><path d="${x}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".5" transform="translate(-1.5 -1.5)"/>`, 'hg-ground');
 }
 /* the chalk tile (pick up the chalk): a few sticks. Anchor: flat. */
 export function chalkTile({ w = 72, h = 72 } = {}) {
@@ -635,12 +671,14 @@ export function tub({ w = 170, h = 130 } = {}) {
     + F`<g transform="translate(${w * .74} ${t + 44}) scale(-1 1)"><path d="M-8 0C-9 -4 -8 -7 -5 -8C-5 -12 -1 -14 1.5 -12C4 -11 4 -7 2.5 -6C7 -7 9 -4 8 0Z" fill="#ffd23f" ${ln(1.3)}/><path d="M3.5 -11l4 1l-4 1Z" fill="#ff9a1f"/></g>`
     + F`<path d="M14 ${t + 16}v-14h12" stroke="${O}" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M14 ${t + 16}v-14h12" stroke="#d9a441" stroke-width="3" fill="none" stroke-linecap="round"/>`, 'hg-tub');
 }
-/* a washstand with a round mirror on the wall above it. Footprint w × 46, 72 high, the mirror up to 150. Foot: y = h. */
+/* a washstand with a round mirror on the wall above it. Footprint w × 46, 72 high, the mirror up to 150 and a little light over it. Foot: y = h. */
 export function sink({ w = 66, h = 196 } = {}) {
   const Y = h - 46;
-  return wrap(w, h, F`<circle cx="${w / 2}" cy="${Y - 124}" r="24" fill="#c47a3e" ${ln(2.4)}/><circle cx="${w / 2}" cy="${Y - 124}" r="17" fill="#6f8fb0" ${ln(1.6)}/><path d="M${w / 2 - 9} ${Y - 130}l8 -8M${w / 2 - 4} ${Y - 122}l10 -10" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>`
+  const id = uid();
+  return wrap(w, h, F`<circle cx="${w / 2}" cy="${Y - 160}" r="34" fill="url(#${id})" class="lit lit-glow"/><path d="M${w / 2} ${Y - 148}v-8" stroke="${O}" stroke-width="5"/><path d="M${w / 2} ${Y - 148}v-8" stroke="#d9a441" stroke-width="2.4"/><path d="M${w / 2 - 9} ${Y - 156}h18l-4 -10h-10Z" fill="#ffcf73" class="lit" ${ln(1.8)}/>`
+    + F`<circle cx="${w / 2}" cy="${Y - 124}" r="24" fill="#c47a3e" ${ln(2.4)}/><circle cx="${w / 2}" cy="${Y - 124}" r="17" fill="#6f8fb0" ${ln(1.6)}/><path d="M${w / 2 - 9} ${Y - 130}l8 -8M${w / 2 - 4} ${Y - 122}l10 -10" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>`
     + R(4, Y - 26, w - 8, 72, '#9a5526', ln(2.4)) + R(10, Y - 14, w - 20, 50, '#b06a35', `rx="3" ${ln(1.6)}`) + R(w / 2 - 6, Y + 6, 12, 4, '#d9a441', ln(1))
-    + R(0, Y - 72, w, 46, '#e8e2d0', `rx="6" ${ln(2.4)}`) + F`<ellipse cx="${w / 2}" cy="${Y - 46}" rx="${w * .32}" ry="13" fill="#b9c3cb" ${ln(1.8)}/><path d="M${w / 2} ${Y - 66}v10h6" stroke="#c9ced6" stroke-width="4" fill="none" stroke-linecap="round"/>`, 'hg-sink');
+    + R(0, Y - 72, w, 46, '#e8e2d0', `rx="6" ${ln(2.4)}`) + F`<ellipse cx="${w / 2}" cy="${Y - 46}" rx="${w * .32}" ry="13" fill="#b9c3cb" ${ln(1.8)}/><path d="M${w / 2} ${Y - 66}v10h6" stroke="#c9ced6" stroke-width="4" fill="none" stroke-linecap="round"/>`, 'hg-sink', glowDef(id, '#ffe0b0', .5));
 }
 /* a toilet against the east wall, facing west into the room: the tank on the wall side, the bowl and its seat seen
    from above, the bowl's foot under it. Footprint w × 56 (the tank w − 22 … w), 44 high. Foot: y = h. */
@@ -942,9 +980,9 @@ export const ART = {
   lamppost: [lamppost, 140, 230, 'pair: light flat, post at y = h − 14'], floorLamp: [floorLamp, 70, 170, 'foot y = h − 6'],
   cabinOutside: [cabinOutside, 3000, 1890, 'foot y = h (the south wall)'], logWall: [logWall, 400, 64, 'foot y = h'],
   fireplace: [fireplace, 280, 242, 'pair: breast at y = 200, hearth at y = h'], couch: [couch, 500, 174, 'pair: seat at y = 64, back at y = h'],
-  floorPiano: [floorPiano, 900, 300, 'flat'], pianoBody: [pianoBody, 360, 240, 'pair: case at y = 205, keys at y = h'],
-  stage: [stage, 500, 595, 'pair: top at y = 95, rim at y = h'], stageStairs: [stageStairs, 130, 245, 'pair: treads at y = 95, rail at y = h'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
-  chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
+  pianoBody: [pianoBody, 360, 240, 'pair: case at y = 205, keys at y = h'],
+  stage: [stage, 250, 460, 'pair: top at y = 70, skirt at y = h'], stageStairs: [stageStairs, 80, 217, 'pair: treads at y = 70, nothing in front'], micStand: [micStand, 56, 120, 'foot y = h − 6'],
+  chalkFloor: [chalkFloor, 600, 550, 'flat'], eraserTile: [eraserTile, 72, 72, 'flat'], wipeTile: [wipeTile, 72, 72, 'flat'], chalkTile: [chalkTile, 72, 72, 'flat'], bookStand: [bookStand, 76, 136, 'foot y = h'],
   counter: [counter, 260, 240, 'foot y = h'], fridge: [fridge, 76, 196, 'foot y = h'], stove: [stove, 76, 150, 'foot y = h'], kitchenTable: [kitchenTable, 200, 240, 'pair: chairs at y = 100, table at y = h − 10'],
   tub: [tub, 170, 130, 'foot y = h'], sink: [sink, 66, 196, 'foot y = h'], toilet: [toilet, 90, 120, 'foot y = h'], bed: [bed, 150, 290, 'foot y = h'], nightstand: [nightstand, 48, 140, 'foot y = h'],
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
