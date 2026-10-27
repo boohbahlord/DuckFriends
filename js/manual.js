@@ -125,7 +125,7 @@ export const MAN = {
   songs: 'songs: every song, on or off (the same as song list).',
   mode: 'sudo mode <aod | wyr | bb | sc | quack | law | hang>: the game type, in the lobby. mode alone lists them. hang is Hangout: no rounds, no winners, just Duck Cabin.',
   start: 'sudo start: starts the game from the lobby, like the Start button.',
-  forgame: 'forgame show: the game\'s settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · gravity low|normal · silly on|off · justin on|off (Duck Cabin\'s Justin on the board; he never counts) · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages).',
+  forgame: 'forgame show: the game\'s settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · gravity low|normal · silly on|off · justin on|off (Duck Cabin\'s Justin on the board; he never counts) · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages; @names can be Justin and the other characters too).',
   roundstats: 'roundstats [@names] [-m mode]: this round\'s stats (in Bicker Brackets the whole tournament), only for you to see. Hangout keeps none.',
   gamestats: 'gamestats [@names] [-m mode]: this game\'s stats. Hangout keeps none.',
   totalstats: 'totalstats [@names] [-m aod|wyr|bb|sc|quack|law]: all-time stats (Hangout keeps none).',
@@ -136,7 +136,7 @@ export const MAN = {
   kill: 'kill @name: a duck plays dead until it moves (a silly command).',
   hotdog: 'hotdog @name: a hotdog hangs around a duck for a while (a silly command).',
   fire: 'fire @name: a duck catches fire and stays burnt for a few seconds (a silly command).',
-  '\\mute': '\\mute bubble ping text all on|off @names: hides those from you until you leave the room.',
+  '\\mute': '\\mute bubble ping text all on|off @names: hides those from you until you leave the room. Justin, the cats, Justin\'s Butler (@JustinsButler) and the shadow duck (@ShadowDuck) can be muted too.',
   '\\permmute': '\\permmute [-f] …: the same, kept on this device (-f: no question first).',
   '\\show': '\\show mute | permmute | players.',
 };

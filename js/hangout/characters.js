@@ -15,13 +15,14 @@ import { catSVG, CATS, justinSVG, shadowSVG, glassSVG, JUSTIN } from './npcart.j
 import { heldHTML, pressFX, BULLET } from '../specials.js';
 import { now as clockNow } from '../clock.js';
 import { nameHTML } from '../name.js';
+import { seen, npcMuted } from '../npcs.js';
 import { play, loop, setListener } from './sounds.js';
 import './cats.js';
 import './justin.js';
 import './shadowduck.js';
 
 const PETS = { annabelle: 'Pet Annabelle', bubbles: 'Pet Bubbles' };   // who E can pet (Oreo and Opal won't have it)
-const DUCK = 64, FADE = 1500, SEEN = .78;   // (the shadow duck at its most: a little see-through)
+const DUCK = 64, FADE = 1500, SEEN = .4;   // (the shadow duck at its most: the owner wants it well see-through)
 const feetOf = svg => (v => DUCK * (v[1] + v[3] - 10) / 120)(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
 const FEET = feetOf(justinSVG({ size: DUCK }));
 const boxOf = svg => svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);   // (a drawing's viewBox: x, y, w, h)
@@ -40,7 +41,7 @@ addOpeners(s => { const t = clockNow(), out = []; for (const r of Object.values(
 
 /* ---------- every screen ---------- */
 const shown = new Map();   // id → { el, body, say, x, y, z, pose, f, hopFrom, hopAt, sayN, dist }
-let layer = null, fxl = null, lastFx = 0, mounted = false;
+let layer = null, fxl = null, lastFx = 0, lastLog = 0, mounted = false;
 function make(id) {
   const el = document.createElement('div'), duck = BRAINS.get(id)?.kind === 'duck'; el.className = 'hang-npc npc-' + id + (duck ? ' duck' : '');
   const tag = duck && BRAINS.get(id).name;   // (Justin's and the Butler's names under them: a player's name, game.js' own; the shadow duck has none)
@@ -84,7 +85,7 @@ function shot(from, to, miss, ctx) {
 }
 activity({
   id: 'npc',
-  mount(ctx) { setListener(() => ctx.world.at(ctx.me)); layer = ctx.world.board.querySelector('.hang-props'); fxl = ctx.world.board.querySelector('.fxl'); shown.clear(); lastFx = ((ctx.state().hang || {}).npcFx || []).reduce((m, f) => Math.max(m, f.n), 0); mounted = true; },
+  mount(ctx) { setListener(() => ctx.world.at(ctx.me)); layer = ctx.world.board.querySelector('.hang-props'); fxl = ctx.world.board.querySelector('.fxl'); shown.clear(); lastFx = ((ctx.state().hang || {}).npcFx || []).reduce((m, f) => Math.max(m, f.n), 0); lastLog = ctx.state().logN || 0; mounted = true; },
   unmount() { for (const o of shown.values()) o.el.remove(); shown.clear(); layer = fxl = null; mounted = false; },
   near(pos, ctx) {
     const recs = (ctx.state().hang || {}).npc || {}, t = clockNow();
@@ -145,10 +146,14 @@ activity({
           else if (MEOWS.test(t)) play('meow', { x: o.x, y: o.y });
         }
       }
-      o.el.classList.toggle('saying', now < (o.sayUntil || 0));
+      o.el.classList.toggle('saying', now < (o.sayUntil || 0) && !npcMuted(s, id, 'bubble') && !npcMuted(s, id, 'text'));   // (muted: no bubble)
+      const sp = ctx.world.toScreen(o.x, o.y, o.z), M = 40;   // on my screen (a little past its edge counts), on my side of the walls
+      o.vis = inCabin(o.x, o.y) === ctx.world.inside && sp.left > -M && sp.left < ctx.world.vw + M && sp.top > -M && sp.top < ctx.world.vh + M + 60;
       o.el.classList.toggle('sat', r.a === 'tv' || !!BRAINS.get(id).sat);   // (on a couch, or the Butler on his stool: the name over the head, as a seated player's)
     }
     for (const [id, o] of shown) if (!recs[id]) { o.el.remove(); shown.delete(id); }
+    /* a cat's words go in my chat only if I could see it say them */
+    if ((s.logN || 0) > lastLog) { for (const m of s.log || []) if (m.n > lastLog && m.npc && BRAINS.get(m.npc)?.kind === 'cat' && shown.get(m.npc)?.vis) seen.add(m.n); lastLog = s.logN || 0; }
     /* swipes and purrs */
     for (const f of (s.hang || {}).npcFx || []) {
       if (f.n <= lastFx) continue; lastFx = f.n;

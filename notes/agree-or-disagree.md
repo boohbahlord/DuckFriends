@@ -2202,3 +2202,22 @@ Rule (2026-10-27 21:03Z): "i want to see the new items before they are added to 
 - Part A: one squat ribbed pumpkin with a bent stem, vine and leaf; each antenna ball draws the eye picked under Eyes
   (X eyes when dead, plain balls for no eyes); on the Colors page an item with 2 or more colors folds them under its name
   (shut each time Customize opens; the fold holding the color being picked opens).
+
+## Request (owner, 2026-10-27 22:12Z): cats' chat only on screen, NPCs mutable
+"Cats shouldnt have their texts in chat UNLESS they are sharing a screen with a player
+
+NPCs should be able to be muted with any command like usual"
+
+## Request (owner, 2026-10-27 22:13Z): Annabelle dislikes only with 4 or more players
+"annabelle no longer finds a single player to dislike UNLESS there are at LEAST four players in the game"
+
+## Request (owner, 2026-10-27 22:16Z): Justin's water line not so often
+"justin cant keep saying what he does about the water unless it has been a few mins at least. 
+
+BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memory gpu UNTIL it is in charger, SO when i play the game without the dedicated 4 gb of vram, i notice how laggy it feels on cabin"
+
+## Request (owner, 2026-10-27 22:25Z): shadow duck rarer and more see-through
+"the shadow duck should become visible very rarely and be more transparent"
+
+## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
+"On cabin, all player remain dead for as long as they did when justin kills them"

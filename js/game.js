@@ -1186,7 +1186,7 @@ function paint(force) {
   if ((s.logN || 0) > lastLog) {
     for (const m of s.log) if (m.n > lastLog && !m.sys && s.players[m.from] && (!m.to || m.to === R.me || m.from === R.me) && !isMuted(s, m.from, 'bubble') && !isMuted(s, m.from, 'text'))
       bubbles[m.from] = { text: !canOpen(s, R.me, m) ? `📄 ${m.file}` : m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (a sent file opens only for sudo, unless chmod let its group or everyone)
-    for (const m of s.log) if (m.n > lastLog && m.npc === JUSTIN_ID && s.options.mode !== 'hang') bubbles[JUSTIN_ID] = { text: m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (the Justin option: his lines over him)
+    for (const m of s.log) if (m.n > lastLog && m.npc === JUSTIN_ID && s.options.mode !== 'hang' && !isMuted(s, JUSTIN_ID, 'bubble') && !isMuted(s, JUSTIN_ID, 'text')) bubbles[JUSTIN_ID] = { text: m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (the Justin option: his lines over him)
     lastLog = s.logN || 0;
   }
   if (lastFx < 0) lastFx = s.fxN || 0;

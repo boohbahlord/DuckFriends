@@ -35,6 +35,7 @@ import { shareLook } from './customize.js';
 import { applySettings } from './settings.js';
 import { sfx } from './sound.js';
 import { hooks } from './hooks.js';
+import { npcById, npcByTag, npcsHere, npcTag as npcAt, seen, muted } from './npcs.js';
 
 /* ---------- the command line's commands ---------- */
 const COLORS = { red: '#ef3b3b', orange: '#ff8c2b', yellow: '#ffd23f', green: '#37d421', teal: '#14c6b4', blue: '#2fa4ff',
@@ -223,7 +224,7 @@ function chatSuggest(line, s, me) {
   const m = line.match(/((?:\\(?:mute|permmute)\s[^@]*)?\\?@)([\p{L}\p{N}_-]*)$/u);
   if (m && s) {
     const p = m[2].toLowerCase(), pre = line.slice(0, line.length - m[0].length);
-    const people = s.seat.filter(id => id !== me && tag(s.players[id].name).toLowerCase().startsWith(p)).map(id => tag(s.players[id].name));
+    const people = [...s.seat.filter(id => id !== me).map(id => tag(s.players[id].name)), ...(m[1] !== '@' && m[1] !== '\\@' ? npcsHere(s).map(npcAt) : [])].filter(n => n.toLowerCase().startsWith(p));   // (\mute and \permmute: the characters too)
     const opts = m[1] === '@' && 'everyone'.startsWith(p) ? ['everyone', ...people] : people;
     const out = opts.map(n => ({ label: m[1] + n, apply: () => pre + m[1] + n + ' ' }));
     return out.filter(o => o.label.toLowerCase() !== line.slice(pre.length).toLowerCase().trim());
@@ -255,10 +256,11 @@ const keysOfPlayer = p => p ? [...(p.acct ? ['acct:' + p.acct] : []), 'name:' + 
 const sessionMutes = () => { const r = activeRoom(), id = r ? r.state.id : ''; if (session.room !== id) { session.room = id; session.by = {}; } return session.by; };
 /* is this player's text, ping or bubble muted for me? */
 export function isMuted(s, id, kind) {
-  const p = s && s.players[id]; if (!p) return false;
-  const a = sessionMutes(), b = perm();
+  const p = s && s.players[id], a = sessionMutes(), b = perm();
+  if (!p) { const k = npcById(id) && 'npc:' + id; return !!k && (gameMuted(s, id, kind) || !!((a[k] && a[k][kind]) || (b[k] && b[k][kind]))); }   // (Justin, a cat, the Butler, the shadow duck)
   return gameMuted(s, id, kind) || keysOfPlayer(p).some(k => (a[k] && a[k][kind]) || (b[k] && b[k][kind]));   // (forgame's mutes hide it for everyone)
 }
+muted.is = isMuted;
 /* \mute | \permmute: the kinds, then on or off, then the players */
 function setMutes(line, permanent, s, me) {
   const ws = line.trim().split(/\s+/).slice(1).filter(w => w !== '-f');
@@ -267,11 +269,11 @@ function setMutes(line, permanent, s, me) {
   if (!kinds.length || !onOff || !at.length) return `${permanent ? '\\permmute' : '\\mute'}: what (bubble, ping, text or all), on or off, then @names. Like \\mute bubble ping on @${tag(s.players[s.seat.find(i => i !== me) || me].name)}`;
   const list = kinds.includes('all') ? KINDS : kinds, on = /^on$/i.test(onOff), store = permanent ? perm() : sessionMutes(), done = [];
   for (const a of at) {
-    const id = byTag(s, a.slice(1)); if (!id || id === me) { done.push(`✗ ${a}?`); continue; }
-    const k = keysOfPlayer(s.players[id])[0];
+    const id = byTag(s, a.slice(1)), npc = !id && npcByTag(a.slice(1)); if ((!id && !npc) || id === me) { done.push(`✗ ${a}?`); continue; }
+    const k = npc ? 'npc:' + npc.id : keysOfPlayer(s.players[id])[0];
     store[k] = { ...store[k] }; for (const kind of list) { if (on) store[k][kind] = true; else delete store[k][kind]; }
     if (!Object.keys(store[k]).length) delete store[k];
-    done.push(s.players[id].name);
+    done.push(npc ? npc.name : s.players[id].name);
   }
   if (permanent) save();
   return `${on ? 'Muted' : 'Unmuted'} ${list.join(', ')}${permanent ? ' for good (this device)' : ' (until you leave the room)'}: ${done.join(', ')}.`;
@@ -279,7 +281,7 @@ function setMutes(line, permanent, s, me) {
 function showMutes(s, permanent) {
   const store = permanent ? perm() : sessionMutes(), rows = Object.entries(store);
   if (!rows.length) return permanent ? 'No permanent mutes.' : 'No mutes in this room.';
-  const nameOf = k => { const id = s && s.seat.find(i => keysOfPlayer(s.players[i]).includes(k)); return id ? s.players[id].name : k.replace(/^(name|acct):/, k.startsWith('acct:') ? 'account ' : ''); };
+  const nameOf = k => { if (k.startsWith('npc:')) return (npcById(k.slice(4)) || { name: k.slice(4) }).name; const id = s && s.seat.find(i => keysOfPlayer(s.players[i]).includes(k)); return id ? s.players[id].name : k.replace(/^(name|acct):/, k.startsWith('acct:') ? 'account ' : ''); };
   return rows.map(([k, v]) => `${nameOf(k)}: ${Object.keys(v).join(', ')}`).join(' · ');
 }
 function showPlayers(s, online) {
@@ -350,7 +352,7 @@ export function chatWidget() {
     if (ui.mode === 'cmd') { setHTML(log, [...ui.cmd, ...ui.live].map(l => `<p class="cmd-line${l.startsWith('$ ') ? ' echo' : ''}">${paint(l)}</p>`).join('') || '<p class="dim small">Type help and press Enter. New to this? HelpCommandLine.</p>'); log.scrollTop = 1e9; return; }
     if (!s) { setHTML(log, ''); return; }
     const me = r.me, name = id => s.players[id] ? nameHTML(s.players[id].name, s.players[id].nameStyle) : '<span class="dim">Gone</span>';
-    const lines = [...s.log.filter(m => m.t >= ui.chatFrom).filter(m => m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes.filter(m => m.t >= ui.chatFrom)].sort((a, b) => a.t - b.t);
+    const lines = [...s.log.filter(m => m.t >= ui.chatFrom).filter(m => m.npc ? !isMuted(s, m.npc, 'text') && (!(npcById(m.npc) || {}).cat || seen.has(m.n)) : m.sys || ((!m.to || m.to === me || m.from === me) && !(m.from !== me && isMuted(s, m.from, 'text')))), ...ui.notes.filter(m => m.t >= ui.chatFrom)].sort((a, b) => a.t - b.t);
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
       if (m.sys) return `<p class="sys${m.small ? ' small' : ''}">${esc(m.text)}</p>`;
