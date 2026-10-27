@@ -355,13 +355,13 @@ function render(s, now) {
     if (won.length) say += ` · ${won.map(id => nameOf(s, id)).join(' & ')} ${won.length > 1 ? 'split it' : 'wins'}`;
   }
   if (!acts && b.st !== 'vote' && b.st !== 'bet') acts = play3(false, false);   // (not my turn: Hit, Stand and Double wait, greyed, so the window keeps its size)
-  const mine = cards.hands[me] || [], dl = cards.dealer;
+  const mine = cards.hands[me] || [];
   if (v.prev.id !== b.id) v.prev = { id: b.id };
   const hand = (who, key, list, cls, note) => {   // (a card already on this screen doesn't pop in again)
     const was = v.prev[key] || []; v.prev[key] = list.slice();
     return `<div class="hang-bj-hand ${cls}"><span class="hang-bj-who">${who}${list.length ? `<b class="bj-total">${totalTxt(list)}</b>` : ''}${note || ''}</span><div class="bj-cards">${list.map((c, i) => cardHTML(c, was[i] === c ? ' old' : '')).join('') || '<span class="bj-card none"></span>'}</div></div>`;
   };
-  const myNote = (inHand && chips && b.bets[me] ? `<span class="bj-bet">${chipSVG()}${b.bets[me]}</span>` : '') + (res ? `<span class="bj-res r-${res.r}">${WORD[res.r]}</span>` : '');
+  const myNote = res ? `<span class="bj-res r-${res.r}">${WORD[res.r]}</span>` : '';
   v.say.innerHTML = say;
   v.chipsEl.hidden = !chips; if (chips) v.chipsEl.innerHTML = chipSVG(GOLD) + `<b>${shownChips(b, me)}</b>`;
   /* the vote: the two boxes show who picked what, a little duck for each (as Lawyering's votes), mine ringed */
@@ -370,18 +370,14 @@ function render(s, now) {
     return `<div class="hang-bj-hand bj-vote${b.votes[me] === o ? ' turn' : ''}"><span class="hang-bj-who">${label}${ids.length ? `<b class="bj-total">${ids.length}</b>` : ''}</span><div class="bj-cards bj-voters">${ids.map(id => `<span class="bj-voter${was.includes(id) ? ' old' : ''}">${duckSVG(s.players[id].duck, { size: 26, shadow: false, title: s.players[id].name })}</span>`).join('') || '<span class="bj-card none"></span>'}</div></div>`;
   };
   if (b.st !== 'vote') v.voted = {};
-  /* players against each other: the Butler's box shows the hand to beat (the winner's when it's over) and the pot */
-  const beatBox = () => {
-    const top = toBeat(s, b, cards), who = b.st === 'end' ? (top ? nameOf(s, top.id) : 'Nobody') : 'To beat';
-    const note = chips && b.st !== 'end' ? `<span class="bj-bet bj-pot">Pot ${chipSVG(GOLD)}${pot(b)}</span>` : '';
-    return hand(who, 'd', top ? top.list : [], 'dealer', note);
-  };
+  /* beside my hand: my bet, and against each other the pot and the best hand standing (everyone's cards, the Butler's
+     too, are on the table, so the window shows only mine; I asked for that) */
+  const stat = (label, val, cls = '') => `<div class="bj-stat${cls}"><span>${label}</span><b>${val}</b></div>`, top = b.pvp && b.st === 'play' && toBeat(s, b, cards);
+  const stats = (inHand && chips && b.bets[me] ? stat((b.chips[me] ?? 0) === 0 ? 'All in' : 'Bet', chipSVG() + b.bets[me]) : '')
+    + (b.pvp && chips && ['deal', 'play'].includes(b.st) ? stat('Pot', chipSVG(GOLD) + pot(b), ' pot') : '')
+    + (top && top.list.length ? stat('To beat', String(natural(b.hands[top.id].c) ? 'BJ' : total(top.list).t)) : '');
   v.hands.innerHTML = b.st === 'vote' ? pick('chips', 'Play for chips') + pick('fun', 'Just for fun')
-    : ((['bet', 'idle'].includes(b.st) ? atTable(s).length > 1 && !b.butler : b.pvp) ? beatBox() : hand(BUTLER, 'd', dl, 'dealer')) + hand('You', 'm', mine, 'mine' + (turnId === me ? ' turn' : ''), myNote);
-  v.others.innerHTML = b.order.filter(id => id !== me && s.players[id]).map(id => {
-    const list = cards.hands[id] || [], r = b.res[id];
-    return `<li class="${id === turnId ? 'turn' : ''}">${nameOf(s, id)}<b class="bj-total">${totalTxt(list)}</b>${chips && b.bets[id] ? `<span class="bj-bet">${chipSVG()}${b.bets[id]}</span>` : ''}${r ? `<span class="bj-res r-${r.r}">${WORD[r.r]}</span>` : ''}</li>`;
-  }).join('');
+    : inHand ? hand('You', 'm', mine, 'mine' + (turnId === me ? ' turn' : ''), myNote) + (stats ? `<div class="bj-stats">${stats}</div>` : '') : '';
   if (v.acts.dataset.sig !== acts) { v.acts.dataset.sig = acts; v.acts.innerHTML = acts; }
   amtShow();
 }
@@ -477,13 +473,13 @@ activity({
     el.className = 'hang-bj'; el.hidden = true;
     el.innerHTML = `<div class="hang-book-head hang-bj-head"><h3 class="hang-bj-title">${rainbowHTML('Blackjack', { seed: 5 })}</h3><p class="hang-bj-say" aria-live="polite"></p><span class="hang-bj-chips" hidden></span><button type="button" class="win-x hang-book-x" aria-label="Get up">×</button></div>
       <div class="hang-bj-time"><i></i></div>
-      <div class="hang-bj-hands"></div><ul class="hang-bj-others"></ul><div class="hang-bj-acts"></div>`;
+      <div class="hang-bj-hands"></div><div class="hang-bj-acts"></div>`;
     for (const t of ['pointerdown', 'click', 'wheel', 'touchstart']) el.addEventListener(t, e => e.stopPropagation(), { passive: true });   // (a tap on the window never walks the duck)
     board.append(el);
     const art = document.createElement('div'); art.className = 'hp hang-bj-top'; art.hidden = true;
     Object.assign(art.style, { width: TOP.w + 'px', height: TOP.h + 'px', zIndex: Math.round(BJ.cy) + 11 });   // (just over the table: a duck south of it still in front)
     board.querySelector('.hang-props').append(art);
-    v = { ctx, el, art, say: el.querySelector('.hang-bj-say'), chipsEl: el.querySelector('.hang-bj-chips'), hands: el.querySelector('.hang-bj-hands'), others: el.querySelector('.hang-bj-others'),
+    v = { ctx, el, art, say: el.querySelector('.hang-bj-say'), chipsEl: el.querySelector('.hang-bj-chips'), hands: el.querySelector('.hang-bj-hands'),
       acts: el.querySelector('.hang-bj-acts'), bar: el.querySelector('.hang-bj-time i'), open: false, amt: 0, sig: '', prev: {}, voted: {}, artSig: '', seen: -1, betsSeen: -1, free: null, disp: {}, from: {} };
     el.querySelector('.hang-book-x').onclick = () => getUp(ctx);
     el.addEventListener('click', press);
