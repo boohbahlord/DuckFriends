@@ -158,6 +158,20 @@ const ONE = {
     hiss(a, d, t, { f: 760, f2: 520, slide: .25, q: .6, peak: .13, att: .06, dur: .14, tau: .07 });
     hiss(a, d, t + .17, { type: 'lowpass', f: 420, peak: .05, att: .01, tau: .04 });
   },
+  /* blackjack */
+  card(a, d, t) {   // a card laid down: a soft, short slap, a little different each time (a deal can lay 18 in a row)
+    const r = 1 + (Math.random() - .5) * .3;
+    hiss(a, d, t, { f: 850 * r, f2: 600 * r, slide: .04, q: .8, peak: .075, att: .006, tau: .022 });
+    tone(a, d, t, { f: 170 * r, f2: 115, slide: .03, peak: .035, att: .01, tau: .025 });
+  },
+  chips(a, d, t) {   // a bet goes down: two or three clay chips clicking together, dull rather than glassy
+    const n = 2 + (Math.random() < .5 ? 1 : 0);
+    for (let i = 0, at = t; i < n; i++, at += .045 + Math.random() * .035) {
+      const r = 1 + (Math.random() - .5) * .16, k = 1 - i * .2;
+      ring(a, d, at, 1250 * r, [[1, 1], [1.47, .5, .7]], { peak: .035 * k, att: .005, tau: .025 });
+      hiss(a, d, at, { f: 1100 * r, q: 3, peak: .05 * k, att: .006, tau: .014 });
+    }
+  },
   relight(a, d, t) {   // a match struck softly, then a small flame catching ("fff-whup") and settling
     hiss(a, d, t, { f: 900, f2: 1350, slide: .1, q: 1, peak: .06, att: .015, dur: .07, tau: .03 });
     const c = t + .13;
