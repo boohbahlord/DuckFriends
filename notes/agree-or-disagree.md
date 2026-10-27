@@ -2169,3 +2169,10 @@ Decisions:
 - Decided (Solomon the 2nd): the jacket ends at the hip. Under its tile (right below its grid) two small buttons pick
   Jeans (blue jeans, with the belt at the jacket's hem; the default) or No pants (no belt, the duck's own body, as
   under the shirt). Stored as `outfit.pants` ('jeans' / 'none'); outfits can now list such options (`opts`).
+
+## Request (2026-10-27 21:00Z, part): the metals
+> The skins should have the metals placed in an order based on how cool the metals are, with rose gold coming just before gold. Gold and rose gold is above chrome obv. Silver i think would be below chrome or above it? Make silver look better, it just looks  like a lesser chrome.
+
+- Decided (Adam): coolest first: Rose gold, Gold, Chrome, Silver, Bronze (the crown's picker follows). Silver becomes a
+  real polished silver: softer and a little warmer than chrome, with a satin horizon instead of chrome's black one
+  (new METAL values only). Built in PR #127.

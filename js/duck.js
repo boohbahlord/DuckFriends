@@ -19,12 +19,13 @@ export const DUCK_COLORS = [
 ];
 export const DUCK_PATTERNS = [['none', 'Plain'], ['dots', 'Polka dots'], ['stripes', 'Stripes'], ['stars', 'Stars'],
   ['hearts', 'Hearts'], ['checks', 'Checks'], ['waves', 'Waves']];
-export const DUCK_METALS = [['none', 'No metal'], ['gold', 'Gold'], ['silver', 'Silver'], ['bronze', 'Bronze'],
-  ['rose', 'Rose gold'], ['chrome', 'Chrome']];
+/* the metals, coolest first (the owner's order) */
+export const DUCK_METALS = [['none', 'No metal'], ['rose', 'Rose gold'], ['gold', 'Gold'], ['chrome', 'Chrome'], ['silver', 'Silver'],
+  ['bronze', 'Bronze']];
 /* each metal: sky (top reflection), light, mid, horizon (the dark band), floor (the lower reflection), edge */
 export const METAL = {
   gold: ['#fffdf0', '#ffe47a', '#e8a91c', '#5e3a00', '#ffd24a', '#4a2c00'],
-  silver: ['#ffffff', '#f1f4f8', '#a9b2be', '#3a414b', '#dfe5ec', '#262b33'],
+  silver: ['#fdfcf9', '#ebe8e2', '#bdb9b1', '#77736c', '#dcd8d0', '#3e3b37'],   // polished silver: softer and warmer than chrome, a satin horizon, not a black one
   bronze: ['#fff0dc', '#f6b97c', '#b8672a', '#3f1d06', '#eb9d55', '#331604'],
   rose: ['#fff6f4', '#ffd3cb', '#d98b80', '#5a2a24', '#f7b8ae', '#40201b'],
   chrome: ['#ffffff', '#f3f8ff', '#8fa2ba', '#0c121a', '#d3deec', '#070b10'],
