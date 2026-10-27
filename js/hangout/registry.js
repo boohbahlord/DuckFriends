@@ -28,6 +28,9 @@
                                  ev.force to send the move at once): the trampoline bounces it again
      view(ctx)                   → px to move the camera down, so my duck shows that much higher (the piano's keys
                                    cover the bottom of the screen)
+     focus(ctx)                  → { x, y } in world px for the camera to look at instead of my duck, or null (the
+                                   blackjack table, while I sit at it)
+     face(id, ctx)               → which way a duck looks (1 right, -1 left), or 0 (seated: toward what it sits at)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s, l)           → false turns a light off (l: one of layout.js' LIGHTS; prop: its prop, if it has one)
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
