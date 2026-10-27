@@ -159,7 +159,25 @@ add('shelf', 2610, 612, 190, 40, 100, { solid: true, ...IN });
 add('picture', 2652, 612, 46, 2, 38, { z: 118, ...IN, art: 'duck' });
 add('picture', 2730, 612, 46, 2, 38, { z: 124, ...IN, art: 'hills' });
 add('clock', 2977, 612, 46, 2, 46, { z: 112, ...IN });
-add('table', 2200, 1250, 200, 100, 55, { solid: true, plat: true, ...IN, cards: true });   // (the card table; its two chairs sit, seats.js)
+/* the blackjack table (blackjack.js), in the middle of the great room where the square card table was: round (r from
+   its middle to its edge), h tall. 8 stools round it (seats.js), sr from its middle: each a cushion st round, sh tall,
+   its legs a little inside it; numbered 0 … 7 the way the cards go round, from the dealer's left (north-east, east,
+   south, west, north-west), at a degrees east of north (a wider gap at the south, so the two names there don't meet).
+   tag: where a seated duck's name goes on each, so no name covers another, or another duck: over its head ('', as on a
+   couch), or beside it on the outer side ('r', 'l'). Justin's Butler sits behind it on the north side, on a stool of
+   his own at (bx, by). The table blocks walking in strips as round as its top (like the TV); it's no platform: nobody
+   stands on the cards */
+export const BJ = { cx: 2340, cy: 1250, r: 130, h: 55, sr: 172, st: 17, sh: 32, bx: 2340, by: 1078, a: [50, 85, 117.5, 150, 210, 242.5, 275, 310], tag: ['', '', '', 'r', 'l', '', '', ''] };
+/* stool k's place, and where its cards go on the table: d from the table's middle toward it */
+export const bjSpot = (k, d) => { const a = BJ.a[k] * Math.PI / 180; return { x: BJ.cx + d * Math.sin(a), y: BJ.cy - d * Math.cos(a), a }; };
+export const bjStool = k => { const q = bjSpot(k, BJ.sr); return { x: Math.round(q.x), y: Math.round(q.y), a: q.a }; };
+add('bjtable', BJ.cx - BJ.r, BJ.cy - BJ.r, 2 * BJ.r, 2 * BJ.r, BJ.h, { ...IN, key: BJ.cy });   // (sorted by its middle: a duck north of it is behind it, one south of it in front)
+for (let y = -BJ.r; y < BJ.r; y += 20) {
+  const m = y < 0 && y + 20 > 0 ? 0 : Math.min(Math.abs(y), Math.abs(y + 20)), hw = Math.sqrt(BJ.r * BJ.r - m * m);
+  add('bjpart', BJ.cx - hw, BJ.cy + y, 2 * hw, 20, BJ.h, { solid: true, layer: 'none', ...IN });
+}
+for (let k = 0; k < 8; k++) { const q = bjStool(k), r = BJ.st - 2; add('stool', q.x - r, q.y - r, 2 * r, 2 * r, BJ.sh, { solid: true, ...IN, n: k, tag: BJ.tag[k], key: q.y - 2 }); }   // (just behind the duck sitting on it)
+add('dealerstool', BJ.bx - BJ.st + 2, BJ.by - BJ.st + 2, 2 * BJ.st - 4, 2 * BJ.st - 4, BJ.sh, { solid: true, ...IN, key: BJ.by - 2 });
 add('plant', 1320, 2120, 50, 50, 90, { solid: true, ...IN });
 add('plant', 2650, 2120, 50, 50, 90, { solid: true, ...IN });
 add('stage', STAGE.cx - STAGE.rx, STAGE.cy - STAGE.ry, STAGE.rx, 2 * STAGE.ry, STAGE.h, { z: 0, ...IN, key: STAGE.cy + STAGE.ry, light: { x: STAGE.cx - STAGE.rx * .45, y: STAGE.cy, r: 300, c: '#ffd9a0', k: .3 } });

@@ -834,8 +834,7 @@ export function stove({ w = 76, h = 150 } = {}) {
 }
 /* the kitchen table with two chairs behind it, a lantern and plates on it; box w × 240. A pair: the chairs (foot y = 100,
    so a duck sitting on one is in front of them) and the table (foot y = h − 10, the table's front). */
-export function kitchenTable({ w = 200, h = 240, cards = false } = {}) {
-  if (cards) return cardTable({ w, h });
+export function kitchenTable({ w = 200, h = 240 } = {}) {
   const id = uid(), Y = h - 150, tx = 10, tw = w - 20;
   const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
   return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#b8743e', `rx="6" ${ln(2.6)}`) + F`<path d="M${tx + 6} ${Y + 20}H${tx + tw - 6}M${tx + 6} ${Y + 46}H${tx + tw - 6}M${tx + 6} ${Y + 72}H${tx + tw - 6}" stroke="#94582a" stroke-width="1.6"/>`
@@ -844,19 +843,40 @@ export function kitchenTable({ w = 200, h = 240, cards = false } = {}) {
     + F`<circle cx="${w / 2}" cy="${Y + 30}" r="44" fill="url(#${id})" class="hg-flicker hg-l"/><rect x="${w / 2 - 9}" y="${Y + 14}" width="18" height="24" rx="3" fill="#ffd98a" class="hg-lg" ${ln(2)}/><path d="M${w / 2 - 11} ${Y + 13}h22M${w / 2 - 11} ${Y + 39}h22M${w / 2} ${Y + 13}v-6" stroke="${O}" stroke-width="3"/>`, glowDef(id, '#ffb347', .45)], Y + 10, h - 10);
 }
 
-/* the card table in the great room: the kitchen table's shape and chairs, a green felt top, a hand of cards at each
-   chair, the pile between them and a few stacks of chips. A pair, the same feet as kitchenTable. */
-function cardTable({ w = 200, h = 240 } = {}) {
-  const Y = h - 150, tx = 10, tw = w - 20;
-  const chair = x => R(x - 18, Y - 74, 36, 12, '#b06a35', `rx="4" ${ln(2)}`) + R(x - 16, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x + 10, Y - 62, 6, 34, '#8a4a22', ln(1.6)) + R(x - 10, Y - 54, 20, 6, '#8a4a22', ln(1.4)) + R(x - 10, Y - 42, 20, 6, '#8a4a22', ln(1.4)) + R(x - 20, Y - 30, 40, 40, '#c9803f', `rx="4" ${ln(2)}`);
-  const card = (x, y, a, c = '#fbfaf6', mark = '') => F`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-7" y="-10" width="14" height="20" rx="2" fill="${c}" ${ln(1.4)}/>${mark}</g>`;
-  const hand = x => [-22, -8, 6, 20].map((a, i) => card(x + (i - 1.5) * 6, Y + 26, a, '#fbfaf6', F`<path d="M-3 -5l3 -3l3 3l-3 3Z" fill="${i % 2 ? '#d23b33' : O}"/>`)).join('');
-  const chips = (x, y, c, n) => Array.from({ length: n }, (_, i) => F`<ellipse cx="${x}" cy="${y - i * 3}" rx="7" ry="3.4" fill="${c}" ${ln(1.2)}/>`).join('');
-  return pair(w, h, [shade(w / 2, Y + 120, w / 2, 26, .3) + chair(w * .3) + chair(w * .7)], [R(tx, Y - 6, tw, 100, '#8a4a22', `rx="10" ${ln(2.6)}`) + R(tx + 8, Y + 2, tw - 16, 84, '#2f7a4a', `rx="6" ${ln(1.6)}`)
-    + R(tx, Y + 94, tw, 14, '#6e3a1a', ln(2.2)) + R(tx + 6, Y + 108, 12, 32, '#5a2d14', ln(1.8)) + R(tx + tw - 18, Y + 108, 12, 32, '#5a2d14', ln(1.8))
-    + hand(w * .3) + hand(w * .7) + card(w / 2 - 4, Y + 56, -6, '#3e6d8c') + card(w / 2 + 3, Y + 55, 8, '#3e6d8c') + card(w / 2 + 16, Y + 62, 14, '#fbfaf6', F`<path d="M-3 -5l3 -3l3 3l-3 3Z" fill="#d23b33"/>`)
-    + chips(w * .2, Y + 72, '#d23b33', 4) + chips(w * .27, Y + 76, '#3e6d8c', 3) + chips(w * .78, Y + 74, '#e0b04a', 5), ''], Y + 10, h - 10);
+/* a playing card, 14 × 20, its middle at (x, y), turned a degrees: face up (c white, a red or black pip: mark) or face
+   down (c the blue back) */
+const playCard = (x, y, a, c = '#fbfaf6', mark = '') => F`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-7" y="-10" width="14" height="20" rx="2" fill="${c}" ${ln(1.4)}/>${mark}</g>`;
+const CHIPS = ['#ef3b3b', '#2fa4ff', '#ffd23f', '#37d421', '#f4f2ec'];   // (Twister's colors, and white)
+/* the blackjack table in the great room (blackjack.js): round and seen from above like the room, so its top is a circle
+   (r from its middle): a dark wood rim round a green felt top, a light arc and a ring for each stool's bet printed on
+   it, the dealer's tray of chips and the deck on the north side; under the front of the top, its thickness and two of
+   its four legs. seats: each stool's direction, in degrees east of north. Box (2r + 20) × (2r + h + 18); foot y =
+   2r + h + 8 (the floor at its front). The cards and bets of a hand are drawn over it by blackjack.js. */
+export function roundCardTable({ r = 100, h = 55, seats = [50, 85, 117.5, 150, 210, 242.5, 275, 310] } = {}) {
+  const w = 2 * r + 20, cx = w / 2, cy = r + 8, fy = cy + h, t = 14, H = 2 * r + h + 18;   // (cy: the top's middle; fy: the floor under it; t: the top's thickness)
+  const leg = s => { const x = cx + s * r * .5, b = fy + r * .62; return R(x - 6, b - (h - t), 12, h - t, '#5a2d14', ln(1.8)) + R(x - 3, b - (h - t) + 2, 3, h - t - 4, '#8a4a22', 'opacity=".6"'); };
+  const spots = seats.map(a => F`<circle cx="${cx + r * .66 * Math.sin(a * Math.PI / 180)}" cy="${cy - r * .66 * Math.cos(a * Math.PI / 180)}" r="10" fill="none" stroke="#e8d9a0" stroke-width="1.6" opacity=".55"/>`).join('');
+  const tray = R(cx - 36, cy - r + 14, 72, 20, '#3a2414', `rx="5" ${ln(1.8)}`) + CHIPS.map((c, i) => F`<circle cx="${cx - 26 + i * 13}" cy="${cy - r + 24}" r="5.2" fill="${c}" ${ln(1.1)}/>`).join('');
+  const deck = [2, 1, 0].map(i => playCard(cx + 52 - i, cy - r + 34 - i * 1.4, 8, '#3e6d8c')).join('');
+  return wrap(w, H, shade(cx, fy, r * .82, r * .82, .26) + leg(-1) + leg(1)
+    + F`<path d="M${cx - r} ${cy}V${cy + t}A${r} ${r} 0 0 0 ${cx + r} ${cy + t}V${cy}Z" fill="#6e3a1a" ${ln(2.6)}/>`
+    + F`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#8a4a22" ${ln(2.6)}/><circle cx="${cx}" cy="${cy}" r="${r - 11}" fill="#2f7a4a" ${ln(1.6)}/>`
+    + F`<path d="M${cx - r * .44} ${cy - r * .3}A${r * .54} ${r * .54} 0 0 0 ${cx + r * .44} ${cy - r * .3}" fill="none" stroke="#e8d9a0" stroke-width="1.6" opacity=".45"/>`
+    + F`<circle cx="${cx - r * .22}" cy="${cy - r * .24}" r="${r * .5}" fill="#fff" opacity=".05"/>` + spots + tray + deck, 'hg-bjtable');
 }
+/* a bar stool by the blackjack table, seen from above like the room: a round cushion (r from its middle, Twister colors)
+   on a short wooden seat, three legs splayed to the floor and a footrest ring halfway down. h: the cushion's top. Box
+   (2r + 8) × (2r + h + 8); foot y = 2r + h + 4 (the floor at its front). */
+export function stool({ r = 17, h = 32, color = '#ef3b3b' } = {}) {
+  const w = 2 * r + 8, cx = w / 2, cy = r + 4, fy = cy + h, t = 6, H = 2 * r + h + 8;
+  const legs = F`M${cx} ${cy + t}L${cx} ${fy - r * .75}M${cx - r * .35} ${cy + t}L${cx - r * .8} ${fy + r * .45}M${cx + r * .35} ${cy + t}L${cx + r * .8} ${fy + r * .45}`;
+  return wrap(w, H, shade(cx, fy, r * .85, r * .85, .3)
+    + `<path d="${legs}" stroke="${O}" stroke-width="7" stroke-linecap="round" fill="none"/><path d="${legs}" stroke="#8a4a22" stroke-width="3.6" stroke-linecap="round" fill="none"/>`
+    + F`<circle cx="${cx}" cy="${cy + h * .55}" r="${r * .62}" fill="none" stroke="${O}" stroke-width="6"/><circle cx="${cx}" cy="${cy + h * .55}" r="${r * .62}" fill="none" stroke="#a65a2c" stroke-width="3"/>`
+    + F`<path d="M${cx - r} ${cy}V${cy + t}A${r} ${r} 0 0 0 ${cx + r} ${cy + t}V${cy}Z" fill="#8a4a22" ${ln(2.2)}/>`
+    + F`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" ${ln(2.2)}/><path d="M${cx - r * .62} ${cy - r * .2}A${r * .66} ${r * .66} 0 0 1 ${cx - r * .1} ${cy - r * .64}" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".45"/>`, 'hg-stool');
+}
+export { playCard, CHIPS };
 
 /* ---------- the bathroom ---------- */
 /* a tub with bubbles and a tiny rubber duck, seen from above like the room: its rim, a sliver of its side under it and
@@ -1207,6 +1227,7 @@ export const ART = {
   deck: [deck, 2100, 640, 'pair: planks at y = 50, railing at y = 450'], deckStairs: [deckStairs, 200, 990, 'pair: steps at y = 50, rails at y = 750'],
   doorFace: [doorFace, 150, 150, 'foot y = h'], doorway: [doorway, 64, 112, 'foot y = h'], doorAjar: [doorAjar, 75, 280, 'foot y = h'], coffeeTable: [coffeeTable, 150, 138, 'foot y = h'], endTable: [endTable, 76, 170, 'foot y = h'], tvSet: [tvSet, 140, 240, 'foot y = h'], bookshelf: [bookshelf, 190, 140, 'foot y = h'], picture: [picture, 46, 38, 'on a wall'], wallClock: [wallClock, 48, 48, 'on a wall'], coatRack: [coatRack, 50, 170, 'foot y = h'], boots: [boots, 54, 44, 'foot y = h'], doorMat: [doorMat, 130, 64, 'flat'], pottedPlant: [pottedPlant, 60, 100, 'foot y = h'],
   rockingChair: [rockingChair, 70, 100, 'foot y = h − 4'], smallTable: [smallTable, 60, 130, 'foot y = h'],
+  roundCardTable: [roundCardTable, 220, 273, 'foot y = h − 10'], stool: [stool, 42, 74, 'foot y = h − 4'],
   pool: [pool, 1800, 800, 'pair: water flat, near coping at y = h'], laneRope: [laneRope, 22, 740, 'flat, under every duck'], rubberDuck: [rubberDuck, 28, 26, 'foot y = h − 5'], beachBall: [beachBall, 48, 52, 'foot y = h − 3'],
   campfire: [campfire, 150, 260, 'foot y = h'], logSeat: [logSeat, 180, 79, 'foot y = h'], trampoline: [trampoline, 300, 344, 'pair: mat at y = 44, legs at y = h'],
   soccerField: [soccerField, 1300, 1400, 'flat'], soccerNet: [soccerNet, 120, 610, 'pair: north side at y = 110, south side at y = h'], soccerBall: [soccerBall, 30, 34, 'foot y = h − 3'],

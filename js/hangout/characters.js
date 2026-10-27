@@ -43,7 +43,8 @@ const shown = new Map();   // id → { el, body, say, x, y, z, pose, f, hopFrom,
 let layer = null, fxl = null, lastFx = 0, mounted = false;
 function make(id) {
   const el = document.createElement('div'), duck = BRAINS.get(id)?.kind === 'duck'; el.className = 'hang-npc npc-' + id + (duck ? ' duck' : '');
-  el.innerHTML = '<div class="hang-npc-say"></div><div class="hang-npc-body"></div>' + (id === 'justin' ? `<span class="gduck-name hang-npc-name">${nameHTML('Justin')}</span>` : '');   // (his name under him: a player's name, game.js' own)
+  const tag = duck && BRAINS.get(id).name;   // (Justin's and the Butler's names under them: a player's name, game.js' own; the shadow duck has none)
+  el.innerHTML = '<div class="hang-npc-say"></div><div class="hang-npc-body"></div>' + (tag ? `<span class="gduck-name hang-npc-name">${nameHTML(tag)}</span>` : '');
   layer.append(el);
   const body = el.querySelector('.hang-npc-body'), k = CATS[id] ? CATS[id].tall / 63 : 1;   // (a cat's drawing: 100 × 80 units, its feet at 46, 74)
   const feet = duck ? feetOf(svgFor(id, 'stand')) : 0, [fx, fy] = duck ? [DUCK / 2, feet] : [46 * k, 74 * k];
@@ -57,6 +58,7 @@ function svgFor(id, pose, step) {
   const b = BRAINS.get(id); if (!b) return '';
   if (b.kind === 'cat') return catSVG(id, { pose, step });
   if (id === 'justin') return justinSVG({ size: DUCK, shadow: pose !== 'dead', dead: pose === 'dead' }) + (HAND[pose] ? HAND[pose]() : '');
+  if (b.svg) return b.svg(pose);   // (a character that draws itself: the Butler)
   return shadowSVG({ size: DUCK });
 }
 /* a claw swipe over whoever got it, or a heart from a purr */
@@ -114,10 +116,10 @@ activity({
       if (o.hopAt !== undefined) { const u = Math.min(1, (now - o.hopAt) / HOP); o.z = o.hopFrom + (o.zTo - o.hopFrom) * u + Math.sin(Math.PI * u) * 26; if (u >= 1) { o.z = o.zTo; delete o.hopAt; } } else o.z = p.z;
       o.f = p.moving ? p.f : r.f || p.f;
       /* the pose: walking steps, or what the brain says (a swipe shows a moment) */
-      let pose = r.a || (p.moving ? 'walk' : 'stand'), step = 0;
+      let pose = (BRAINS.get(id).look && BRAINS.get(id).look(s, now)) || r.a || (p.moving ? 'walk' : 'stand'), step = 0;   // (look: what a screen works out for itself, the Butler dealing)
       if (pose === 'swipe' && now - r.w.t > 700) pose = 'stand';
       if (pose === 'walk') step = Math.floor(o.dist / 16) % 2 ? 1 : -1;
-      if (o.duck) { if (!['dead', 'gun', 'drink'].includes(pose)) pose = 'stand'; o.bob = p.moving ? Math.abs(Math.sin(o.dist / 14)) * 4 : 0; }   // (a duck waddles: a little bob)
+      if (o.duck) { if (!['dead', 'gun', 'drink', 'deal'].includes(pose)) pose = 'stand'; o.bob = p.moving ? Math.abs(Math.sin(o.dist / 14)) * 4 : 0; }   // (a duck waddles: a little bob)
       else if (pose === 'dead') pose = 'loaf';
       const key = pose + step;
       if (key !== o.pose) { o.pose = key; o.body.innerHTML = svgFor(id, pose, step); o.el.classList.toggle('dead', r.a === 'dead'); }
@@ -144,7 +146,7 @@ activity({
         }
       }
       o.el.classList.toggle('saying', now < (o.sayUntil || 0));
-      o.el.classList.toggle('sat', r.a === 'tv');   // (on a couch: his name over his head, as a seated player's)
+      o.el.classList.toggle('sat', r.a === 'tv' || !!BRAINS.get(id).sat);   // (on a couch, or the Butler on his stool: the name over the head, as a seated player's)
     }
     for (const [id, o] of shown) if (!recs[id]) { o.el.remove(); shown.delete(id); }
     /* swipes and purrs */

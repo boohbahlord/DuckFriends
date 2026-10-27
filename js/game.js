@@ -255,7 +255,7 @@ function drawDucks(now = clockNow()) {
     }
     const at = place(pos, lane.indexOf(id), lane.length), z = liftOf(id, pos);
     const mine = id === R.me;
-    const face = mine && me ? me.face : (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
+    const face = mine && me ? me.face : (hang && world.face(id)) || (d._x !== undefined && Math.abs(pos.x - d._x) > .0005 ? Math.sign(pos.x - d._x) : d._face || 1);
     d._face = face || 1; d._x = pos.x;
     const q = mine ? (now - squash.t < 170 ? squash.q : '') : (pos.q || '');
     const fx = turned() ? 1 : d._face, mq = fx < 0 ? ({ l: 'r', r: 'l' }[q] || q) : q, [org, sx, sy] = SQ[mq] || ['50% 100%', 1, 1];

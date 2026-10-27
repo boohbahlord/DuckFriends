@@ -114,7 +114,10 @@ ${whisk}${swipe}</svg>`;
 export const JUSTIN = { color: '#ffd23f', face: { id: 'glasses' }, outfit: { id: 'jeans' } };
 /* the shadow duck: all black, only its eyes catch a little light */
 export const SHADOW = { color: '#0c0c12' };
+/* Justin's Butler: a pale grey-white duck in a suit and bow tie, with a monocle (he deals at the blackjack table) */
+export const BUTLER = { color: '#e4e2dc', face: { id: 'monocle' }, outfit: { id: 'tux' } };
 export const justinSVG = (o = {}) => duckSVG(JUSTIN, { title: 'Justin', ...o });
+export const butlerSVG = (o = {}) => duckSVG(BUTLER, { title: "Justin's Butler", ...o });
 export const shadowSVG = (o = {}) => duckSVG(SHADOW, { title: '', shadow: false, ...o })
   .replace(/#ff9a1f/g, '#22222c').replace(/#f07f0e/g, '#1a1a22').replace(/#c45f00/g, '#0a0a0e');   // (a black beak too)
 

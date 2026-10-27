@@ -11,6 +11,8 @@
    as an attorney behind in closing arguments, sometimes give up. In Hangout they wander about Duck Cabin, stopping now and
    then, and jump once in a while (they never walk off an edge or up a wall). */
 import * as HL from './hangout/layout.js';
+import { bjBot } from './hangout/blackjack.js';
+import { findPath } from './hangout/npc.js';
 import { colXAt, isHang, isWyr, isSc, isLaw, twoSided, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 import { anyWord, tileCenter, spotOf, speakerOf, stillIn, canAccuse, CLUE_GRACE } from './quackrules.js';
 
@@ -202,11 +204,20 @@ export function botActions(s, now) {
 const roam = new Map();   // computer id → { x, y, rest (until when it stands still) }
 function hangBot(s, id, now, out) {
   const p = s.pos[id]; if (!p) return;
+  const bj = bjBot(s, id, now);   // (the blackjack table: playing at it, or off to a free stool while a person plays)
+  if (Array.isArray(bj)) { out.push(...bj); return; }
+  if (Object.values((s.hang || {}).seats || {}).some(v => v && v[0] === id)) return;   // (seated: it stays)
   const jumping = p.j && now - p.j < 1400;
   let x = p.x * HL.W, y = p.y * HL.H, z = HL.heightAt(x, y), g = roam.get(id);
   const there = g && Math.hypot(g.x - x, g.y - y) < 20;
   if (there && !g.rest) g.rest = now + 1000 + Math.random() * 4000;   // there: it stands still a while
-  if (!g || (there && now > g.rest)) {
+  if (bj) {   // off to a stool: along a path round what's in the way (npc.js), then sit
+    if (Math.hypot(bj.x - x, bj.y - y) < 30) { out.push({ t: 'hang', k: 'sit', seat: bj.seat, id }); return; }
+    if (!g || g.seat !== bj.seat || !g.path) { g = { seat: bj.seat, path: findPath(x, y, bj.x, bj.y) || [[bj.x, bj.y]], i: 0, rest: 0 }; roam.set(id, g); }
+    while (g.i < g.path.length - 1 && Math.hypot(g.path[g.i][0] - x, g.path[g.i][1] - y) < 20) g.i++;
+    [g.x, g.y] = g.path[g.i];
+  } else if (g && g.seat) g = null;
+  if (!g || (!g.seat && there && now > g.rest)) {
     g = { x: Math.max(HL.EDGE, Math.min(HL.W - HL.EDGE, x + (Math.random() - .5) * 900)), y: Math.max(HL.EDGE, Math.min(HL.H - HL.EDGE, y + (Math.random() - .5) * 700)), rest: 0 };
     roam.set(id, g); if (roam.size > 100) roam.delete(roam.keys().next().value);
   }
@@ -215,7 +226,7 @@ function hangBot(s, id, now, out) {
   const d = Math.hypot(g.x - x, g.y - y), n = Math.min(6, Math.ceil(d / 12)), ux = d ? (g.x - x) / d : 0, uy = d ? (g.y - y) / d : 0;
   for (let i = 0; i < n; i++) {   // 12 px at a time: up or down a step at most, never through a wall
     const nx = x + ux * Math.min(12, d - i * 12), ny = y + uy * Math.min(12, d - i * 12), nz = HL.heightAt(nx, ny);
-    if (Math.abs(nz - z) > HL.STEP || !HL.standable(nx, ny, z, HL.STEP, [x, y])) { g.x = x; g.y = y; g.rest = now + 800; break; }   // in the way: another spot soon
+    if (Math.abs(nz - z) > HL.STEP || !HL.standable(nx, ny, z, HL.STEP, [x, y])) { if (g.seat) g.path = null; else { g.x = x; g.y = y; g.rest = now + 800; } break; }   // in the way: another spot soon (or another path)
     x = nx; y = ny; z = nz;
   }
   out.push({ t: 'move', id, x: +(x / HL.W).toFixed(5), y: +(y / HL.H).toFixed(5), j: jump ? now : jumping ? p.j : 0, z: Math.round(z), b: jump ? Math.round(z) : jumping ? p.b || 0 : Math.round(z) });

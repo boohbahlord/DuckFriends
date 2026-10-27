@@ -1,8 +1,9 @@
-/* ---------- the couches, the campfire's logs and the kitchen chairs: sit down, hop over, get up ----------
-   Near a couch (or a log by the campfire, or the kitchen table) the context button says "Sit": the duck sits on the
+/* ---------- the couches, the campfire's logs, the kitchen chairs and the blackjack stools: sit down, hop over, get up ----------
+   Near a couch (or a log by the campfire, the kitchen table or a stool at the blackjack table) the context button says "Sit": the duck sits on the
    nearest free cushion (a log has a seat at each end, the table a chair at each plate). Seated, it doesn't walk: a move key, a push of the stick or a tap to one side hops it to
    the next cushion that way, only if that one is free. "Get up" (or a jump) stands it up in front of the seat: on the
-   couch's sitting side, on a log's fire side, behind a kitchen chair. Each cushion holds one duck; the host keeps who sits where in
+   couch's sitting side, on a log's fire side, behind a kitchen chair, straight out from the blackjack table behind a stool
+   (seated there, it faces the table and blackjack.js opens its window). Each cushion holds one duck; the host keeps who sits where in
    s.hang.seats ({ 'couch1:0': [id, since] }), checks every sit and frees a seat when its duck leaves, resets or walks off.
 
    Drawn sitting: the duck stands on the cushion at the seat's height and depth, between the couch's two parts (art.js'
@@ -10,10 +11,10 @@
    over it; on a log, the log's top covers its feet; at the table, the chair is behind it and the table hides its feet. A seated duck's name is over its head (class hang-sat). The couches
    and logs are drawn here (the world's placeholders are marked layer 'none'); the table and its chairs by shapes.js. */
 import { rule, activity } from './registry.js';
-import { PROPS, W, H, heightAt, standable, STEP } from './layout.js';
+import { PROPS, W, H, heightAt, standable, STEP, BJ } from './layout.js';
 import * as A from './art.js';
 
-const KINDS = ['couch', 'log'], SEAT_KINDS = [...KINDS, 'table'], ART_H = { couch: 174, log: 79 }, COLORS = { couch1: '#a8382c', couch2: '#3d6e4f' };
+const KINDS = ['couch', 'log'], SEAT_KINDS = [...KINDS, 'table', 'stool'], ART_H = { couch: 174, log: 79 }, COLORS = { couch1: '#a8382c', couch2: '#3d6e4f' };
 const REACH = 75;   // from a seat's footprint, the button shows
 for (const p of PROPS) if (KINDS.includes(p.kind)) p.layer = 'none';   // (drawn here)
 const FIRE = PROPS.find(p => p.kind === 'campfire');
@@ -26,6 +27,11 @@ const down = (y, xs) => xs.flatMap(x => [[x, y], [x, y - 40], [x, y + 40]]);
 export const SEATS = [];
 for (const p of PROPS.filter(q => SEAT_KINDS.includes(q.kind))) {
   const n = p.seats || 2, couch = p.kind === 'couch';
+  if (p.kind === 'stool') {   // a stool by the blackjack table (blackjack.js): one seat, on its cushion, facing the table; up, straight out from the table behind it
+    const x = p.x + p.w / 2, y = p.y + p.d / 2, a = Math.atan2(x - BJ.cx, BJ.cy - y), out = (d, b = 0) => [Math.round(BJ.cx + d * Math.sin(a + b)), Math.round(BJ.cy - d * Math.cos(a + b))];
+    SEATS.push({ id: p.id + ':0', p, i: 0, n: 1, x, y, z: p.z + p.h, face: Math.sign(BJ.cx - x) || 1, up: [out(BJ.sr + 56), out(BJ.sr + 56, -.25), out(BJ.sr + 56, .25), out(BJ.sr + 96)] });
+    continue;
+  }
   if (p.kind === 'table') {   // a chair behind each plate (art.js' kitchenTable): sat on, the duck faces the room over the table
     for (let i = 0; i < n; i++) { const x = p.x + p.w * (i ? .7 : .3); SEATS.push({ id: p.id + ':' + i, p, i, n, x, y: p.y - 15, z: p.z + 32, face: 0, up: across(x, [p.y - 70, p.y - 110]) }); }
     continue;
@@ -97,7 +103,7 @@ function sit(ctx, q) {
   const me = ctx.duck(); if (me && FIRE && q.p.kind === 'log') me.face = Math.sign(FIRE.x + FIRE.w / 2 - q.x) || 1;   // (on a log: toward the fire)
   else if (me && q.face) me.face = q.face;
 }
-function getUp(ctx) {
+export function getUp(ctx) {
   const q = seatOf(ctx.state(), ctx.me) || placed; if (!q) return;
   ctx.send({ t: 'hang', k: 'sit', seat: '' });
   placed = null; const st = standSpot(q); put(ctx, st.x, st.y, st.z);
@@ -129,12 +135,19 @@ activity({
       const tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px) scale(${scs})`;
       if (q.e._tr !== tr) { q.e._tr = tr; q.e.style.transform = tr; }
     }
-    // a seated duck has its name over its head (under it, the couch back or the log would hide it); now and then: a duck drawn anew
-    const layer = Wd.board.querySelector('.ducks'), on = Object.values(seatsOf(ctx.state())).filter(Boolean).map(v => v[0]);
-    const sig = on.join(); if (!layer || (sig === satSig && now - satAt < 1000)) return;
+    // a seated duck has its name over its head (under it, the couch back or the log would hide it), or where its stool
+    // says (layout.js' BJ.tag: beside it); now and then: a duck drawn anew
+    const layer = Wd.board.querySelector('.ducks'), on = new Map(Object.entries(seatsOf(ctx.state())).filter(([, v]) => v).map(([k, v]) => [v[0], (BY.get(k) || {}).p]));
+    const sig = [...on].map(([id, p]) => id + (p && p.tag || '')).join(); if (!layer || (sig === satSig && now - satAt < 1000)) return;
     satSig = sig; satAt = now;
-    for (const d of layer.querySelectorAll('.gduck')) { const sat = on.includes(d.dataset.pid); if (d.classList.contains('hang-sat') !== sat) d.classList.toggle('hang-sat', sat); }
+    for (const d of layer.querySelectorAll('.gduck')) {
+      const sat = on.has(d.dataset.pid), tag = sat && (on.get(d.dataset.pid) || {}).tag || '';
+      if (d.classList.contains('hang-sat') !== sat) d.classList.toggle('hang-sat', sat);
+      for (const t of ['r', 'l']) if (d.classList.contains('tag-' + t) !== (tag === t)) d.classList.toggle('tag-' + t, tag === t);
+    }
   },
+  /* which way a seated duck looks, on every screen (its seat's face: on a stool, toward the table) */
+  face(id, ctx) { const q = seatOf(ctx.state(), id); return q ? q.face : 0; },
   /* the button: Get up while seated; Sit beside a couch or a log with a free seat */
   near(pos, ctx) {
     const s = ctx.state();

@@ -1773,6 +1773,10 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-strip-in > *, .hang-seat-part > *, .hang-stage-part > *, .hang-ball > svg { position: absolute; left: 0; top: 0; display: block; max-width: none; }
 .gduck.hang-sat .gduck-name { top: auto; bottom: 100%; margin: 0 0 .1rem; opacity: .8; }   /* seated: the name over the head */
 .gduck.hang-sat .gduck-say { bottom: calc(var(--sz) * 1.08 + 1.3rem); }
+/* on a stool at the blackjack table (layout.js' BJ.tag): the name beside the duck, on its outer side */
+.gduck.hang-sat.tag-r .gduck-name, .gduck.hang-sat.tag-l .gduck-name { bottom: auto; top: 34%; margin: 0; }
+.gduck.hang-sat.tag-r .gduck-name { left: 90%; }
+.gduck.hang-sat.tag-l .gduck-name { right: 90%; }
 .hang-confetti { position: absolute; left: 0; top: 0; width: 9px; height: 5px; margin: -2.5px 0 0 -4.5px; border-radius: 1px; z-index: 9000; pointer-events: none; box-shadow: 0 0 0 1px #1c1c2866; }
 
 /* ---------- Hangout: the cabin's characters (hangout/characters.js) ---------- */
@@ -1879,6 +1883,55 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .hang-book-in { flex: 1; min-width: 0; font-size: calc(1rem * var(--ts)); border: .14rem solid var(--soft); border-radius: .7rem; padding: .35rem .6rem; background: var(--panel2); color: var(--ink); }
 .hang-book-in:focus { outline: .15rem solid var(--blue); }
 .hang-book-write .btn { flex: none; }
+/* the Blackjack window (js/hangout/blackjack.js): the guestbook's window; on a wide screen on the left like it, on a tall
+   one along the bottom (the camera puts the table above it) */
+.hang-bj { position: absolute; z-index: 30001; left: .45rem; right: .45rem; bottom: .45rem; display: flex; flex-direction: column; gap: .35rem; padding: .5rem .65rem .65rem; background: var(--panel); border: .16rem solid var(--line); border-radius: 1.1rem; box-shadow: 0 .3rem 0 var(--line); touch-action: auto; animation: popin .16s ease-out; }
+.hang-bj.side { right: auto; bottom: auto; top: .6rem; left: .6rem; width: min(25rem, 40%); max-height: calc(100% - 1.2rem); overflow-y: auto; gap: .5rem; padding: .6rem .7rem .7rem; }
+.hang-bj-head { padding-left: .2rem; }
+.hang-bj-title { flex: none; margin: 0; font-size: calc(1.1rem * var(--ts)); }
+.hang-bj.side .hang-bj-head { flex-wrap: wrap; row-gap: .3rem; }
+.hang-bj.side .hang-bj-title { font-size: calc(1.3rem * var(--ts)); }
+.hang-bj.side .hang-bj-say { order: 5; flex-basis: 100%; }   /* (a wide screen: the words on their own line) */
+.hang-bj-chips { flex: none; display: inline-flex; align-items: center; gap: .3rem; font-weight: 700; font-size: calc(1rem * var(--ts)); }
+.hang-bj.side .hang-bj-chips { margin-left: auto; }
+.hang-bj-chips[hidden] { display: none; }
+.bj-chip { width: 1.05em; height: 1.05em; flex: none; display: block; }
+.hang-bj-say { flex: 1; min-width: 0; margin: 0; min-height: 1.3em; text-align: center; font-weight: 700; font-size: calc(1rem * var(--ts)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hang-bj-time { height: .3rem; border-radius: .2rem; background: var(--soft); overflow: hidden; }
+.hang-bj-time.off { visibility: hidden; }
+.hang-bj-time i { display: block; height: 100%; background: var(--yellow); transform-origin: 0 50%; }
+.hang-bj-hands { display: flex; gap: .5rem; }
+.hang-bj-hand { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; padding: .35rem .45rem .45rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .7rem; }
+.hang-bj-hand.turn { border-color: var(--yellow); }
+.hang-bj-who { display: flex; align-items: center; gap: .35rem; min-width: 0; color: var(--dim); font-size: calc(.82rem * var(--ts)); white-space: nowrap; }
+.bj-total { color: var(--ink); font-size: calc(1.05rem * var(--ts)); }
+.bj-bet { display: inline-flex; align-items: center; gap: .2rem; color: var(--ink); font-weight: 700; }
+.bj-res { margin-left: auto; font-weight: 700; color: var(--ink); }
+.bj-res.r-win, .bj-res.r-bj { color: var(--green); } .bj-res.r-lose, .bj-res.r-bust { color: var(--red); }
+/* the cards: big and simple, white with the rank and the suit (red or black), the backs blue like the deck on the table */
+.bj-cards { display: flex; min-height: 3.2rem; }
+.bj-card { position: relative; flex: none; width: 2.3rem; height: 3.2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fbfaf6; color: #1c1c28; border: .13rem solid #1c1c28; border-radius: .4rem; box-shadow: 0 .12rem 0 #0006; line-height: 1; animation: popin .16s ease-out; }
+.bj-card + .bj-card { margin-left: -.8rem; }
+.bj-card.red { color: #d23b33; }
+.bj-card b { font-size: calc(1.05rem * var(--ts)); }
+.bj-card i { font-style: normal; font-size: calc(1.05rem * var(--ts)); }
+.bj-card.back { background: #3e6d8c; box-shadow: inset 0 0 0 .22rem #3e6d8c, inset 0 0 0 .3rem #e8d9a0, 0 .12rem 0 #0006; }
+.bj-card.none { visibility: hidden; }
+.bj-card.old { animation: none; }
+.hang-bj:not(.side) .bj-cards { min-height: 2.7rem; }   /* (a tall screen: smaller cards, so the table fits above the window) */
+.hang-bj:not(.side) .bj-card { width: 1.95rem; height: 2.7rem; }
+.hang-bj:not(.side) .bj-card + .bj-card { margin-left: -.65rem; }
+.hang-bj:not(.side) .hang-bj-hand { gap: .2rem; padding: .25rem .4rem .35rem; }
+.hang-bj-others { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0; padding: 0; list-style: none; font-size: calc(.85rem * var(--ts)); }
+.hang-bj-others:empty, .hang-bj:not(.side) .hang-bj-others { display: none; }   /* (tall screens: the table shows the others' cards) */
+.hang-bj-others li { display: inline-flex; align-items: center; gap: .35rem; padding: .1rem .5rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .6rem; }
+.hang-bj-others li.turn { border-color: var(--yellow); }
+.hang-bj-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
+.hang-bj-acts:empty { display: none; }
+.hang-bj-acts .btn { padding: .45rem .9rem; }
+.hang-bj-acts .bj-pick { gap: .3rem; }
+.hang-bj .btn.on { box-shadow: 0 0 0 .2rem var(--yellow), var(--shadow); }
+.hang-npc-held.card { left: 37px; top: 45px; width: 10px; transform: rotate(-18deg); }   /* (the Butler dealing: a card in his wing) */
 @media (orientation: portrait) {
   .hang-book { left: .45rem; right: .45rem; top: .45rem; bottom: auto; width: auto; height: max(10rem, min(calc(50% - 5.2rem), 22rem)); }   /* (above my duck, which stands in the middle) */
 }

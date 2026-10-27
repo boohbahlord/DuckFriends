@@ -14,3 +14,4 @@ import './fireflies.js';
 import './flicker.js';
 import './characters.js';
 import './power.js';
+import './blackjack.js';

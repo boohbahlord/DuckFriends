@@ -188,7 +188,7 @@ export const DRAW = {
   counter: p => one(p, () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }), p.w, 240),
   stove: p => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: p => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
-  table: p => pairParts(A.kitchenTable({ w: p.w, h: 240, cards: p.cards }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
+  table: p => pairParts(A.kitchenTable({ w: p.w, h: 240 }), p.x, p.y + p.d - p.z + 10, p.w, 240, { backKey: p.y - 25, frontKey: p.key ?? p.y + p.d }),   // (the chairs behind a duck sitting on one: seats.js)
   tub: p => one(p, () => A.tub({ w: p.w, h: 130 }), p.w, 130),
   sink: p => one(p, () => A.sink({ w: 70, h: 196 }), 70, 196),
   toilet: p => one(p, () => A.toilet({ w: p.w, h: 130 }), p.w, 130),
@@ -196,6 +196,10 @@ export const DRAW = {
   rail: railParts,
   rocker: p => one(p, () => A.rockingChair({ w: 70, h: 100, facing: p.id === 'rocker1' ? 'e' : 'w' }), 70, 100, 96),
   'deck-table': p => one(p, () => A.smallTable({ w: 60, h: 130 }), 60, 130),
+  /* the blackjack table and its stools (layout.js' BJ): each drawing's floor under its middle on the footprint's middle */
+  bjtable: p => { const { r, h, a } = L.BJ; return one(p, () => A.roundCardTable({ r, h, seats: a }), 2 * r + 20, 2 * r + h + 18, r + 8 + h + p.d / 2); },
+  stool: p => { const { st, sh } = L.BJ; return one(p, () => A.stool({ r: st, h: sh, color: p.kind === 'dealerstool' ? '#2b2b33' : A.CHIPS[p.n % 4] }), 2 * st + 8, 2 * st + sh + 8, st + 4 + sh + p.d / 2); },
+  dealerstool: p => DRAW.stool(p),   // (the Butler's: black)
   jeep(p) {   // the red jeep facing the cabin (east); its shadow is in the ground
     const s = 1.1, pr = A.jeep({ facing: 'e' });
     return [part(pr.front, p.x - 4, p.y + p.d - p.z - 214 * s, 292 * s, 214 * s, p.key, { part: 'front' })];

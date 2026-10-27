@@ -239,6 +239,8 @@ export function mountWorld(board, api) {
     lift(id, pos) { const a = at(id, pos); return Math.max(0, a.z - L.heightAt(a.x, a.y)) * cam.sc; },
     key(id, pos) { const a = at(id, pos); return Math.round(L.sortY(a.x, a.y, a.z)) + 10; },
     hidden(id, pos) { const a = at(id, pos); return L.inCabin(a.x, a.y) !== inside; },
+    /* the way an activity turns a duck (seated: toward what it sits at), or 0 */
+    face(id) { for (const a of acts()) { const f = a.face?.(id, ctx); if (f) return f; } return 0; },
     shown(id, pos) { const o = sm.get(id); return o && pos ? { ...pos, x: o.x / L.W, y: o.y / L.H } : pos; },
     /* every frame, before the ducks: the others glide, the camera follows, the ground, the props, the button */
     frame(now) {
@@ -248,8 +250,9 @@ export function mountWorld(board, api) {
       inside = L.inCabin(me.x * L.W, me.y * L.H);
       for (const id of s.seat) if (id !== r.me && s.pos[id]) glide(id, s.pos[id], dt, now);
       for (const id of [...sm.keys()]) if (!s.pos[id]) sm.delete(id);
-      let shift = 0; for (const a of acts()) shift += a.view?.(ctx) || 0;   // (an activity's panel covers the bottom: my duck shows higher)
-      const tx = me.x * L.W, ty = me.y * L.H - (me.j ? me.b : me.z) + shift / cam.sc;
+      let shift = 0, f = null; for (const a of acts()) shift += a.view?.(ctx) || 0;   // (an activity's panel covers the bottom: my duck shows higher)
+      for (const a of acts()) if ((f = a.focus?.(ctx))) break;   // (or the camera looks somewhere else: the blackjack table while I sit at it)
+      const tx = f ? f.x : me.x * L.W, ty = f ? f.y : me.y * L.H - (me.j ? me.b : me.z) + shift / cam.sc;
       if (!cam.set) { cam.x = tx; cam.y = ty; cam.set = true; } else { const k = 1 - Math.exp(-dt * 7); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; }
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
