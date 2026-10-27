@@ -144,7 +144,7 @@ ${cloud(90, 70, .5, '#ffffffdd', '#ffffff77')}${cloud(330, 150, .55, '#ffffffcc'
   return backdropSVG(480, 270, true).replace('<svg ', '<svg width="480" height="270" ');   // Night Show
 }
 export function gameArtSVG({ width = 480, duck = DUCK_DEFAULT, map = 'board', mapLabel = '', mode = 'aod' } = {}) {
-  const top = duck && duck.hat && !duck.image ? HAT_TOP : 0, title = modeOf(mode).name;   // room for a hat
+  const top = duck && duck.hat && !duck.image && duck.style !== 'jack' ? HAT_TOP : 0, title = modeOf(mode).name;   // room for a hat (Jack in a Box wears none)
   return `<svg class="art" viewBox="0 0 480 270" width="${width}" height="${width * 9 / 16}" role="img" aria-label="${esc(title)}${mapLabel ? ': ' + esc(mapLabel) : ''}">
 <defs><clipPath id="artclip"><rect width="480" height="270" rx="18"/></clipPath><linearGradient id="artshade" x1="0" y1="0" x2="0" y2="1"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient></defs>
 <g clip-path="url(#artclip)">${artBackdrop(map)}</g>

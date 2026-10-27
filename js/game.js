@@ -262,7 +262,7 @@ function drawDucks(now = clockNow()) {
     const q = mine ? (now - squash.t < 170 ? squash.q : '') : (pos.q || '');
     const fx = turned() ? 1 : d._face, mq = fx < 0 ? ({ l: 'r', r: 'l' }[q] || q) : q, [org, sx, sy] = SQ[mq] || ['50% 100%', 1, 1];
     const tr = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`, lift = `translateY(${(-z).toFixed(1)}px)`;
-    const deadPose = dead && !(p.duck && p.duck.image);
+    const deadPose = dead && !(p.duck && (p.duck.image || p.duck.style === 'jack'));   // (Jack in a Box flops over in his own drawing)
     const body = `scaleX(${fx})${deadPose ? ' rotate(-100deg) translateY(-12%)' : ''}`, squish = `scale(${sx}, ${sy})`, sh = (1 - Math.min(.6, z / (size * 3.2))).toFixed(3);
     if (d._tr !== tr) { d._tr = tr; d.style.transform = tr; if (!hang) d.style.zIndex = Math.round(at.top); }
     if (hang) {   // Hangout: in front of what it stands in front of; unseen through the cabin's walls
@@ -276,6 +276,7 @@ function drawDucks(now = clockNow()) {
     if (d._body !== body) { d._body = body; d.querySelector('.gduck-body').style.transform = body; }
     const pic = d.querySelector('.gduck-body svg');
     if (pic && pic._sq !== squish + org) { pic._sq = squish + org; pic.style.transformOrigin = org; pic.style.transform = squish; }
+    if (d._j !== pos.j) { d._j = pos.j; if (pos.j && pic && pic.classList.contains('jack')) { pic.classList.remove('bob'); pic.getBoundingClientRect(); pic.classList.add('bob'); } }   // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle('sprint', mine ? sprinting && moving : !!pos.sp);
     d.classList.toggle('air', z > 1);
     d.classList.toggle('left', d._face < 0);
