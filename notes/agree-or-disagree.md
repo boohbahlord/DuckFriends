@@ -2084,6 +2084,8 @@ Decision: the box stands by the west wall (it's dark there); "Cut power" / "Powe
 
 Decision: only the comments inside the code speak as the owner, in first person ("I want", "we decided"), and say "owner" where a name is needed: never "the user", the owner's display name or a helper's name. CLAUDE.md, notes/ and memory are notes for Claude and keep their usual voice, as do word-for-word quotes, text players see and code names. Changed: the comments in js/hangout/justin.js, js/hangout/layout.js and js/online.js. (A first pass also rewrote CLAUDE.md, notes/ and the log; it was put back.) The rule is one line in CLAUDE.md, under "The owner's rules".
 
+the muscle shirt shouldnt cover the duck's wing (owner, Grunt thread; screenshot /mnt/project-files/grunt/owner-muscle-shirt-wing.png)
+
 ## 2026-10-27: holding Tab stops the mouse
 > "My guess is that while Tab is held, your duck shouldn’t walk toward the mouse." Yeah we can do that AND ALSO the problem is that in default controls, when i hold down tab, i cant move my mouse properly to the player screen, like it stops moving or only moves a little before stopping while i hold down tab, which is kinda broken.
 

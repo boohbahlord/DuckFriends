@@ -9,7 +9,7 @@ import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
-import { styleById, styleColor, styleLayers, blocksBody, geoBody, GEO_BODY } from './styles.js';
+import { styleById, styleColor, styleLayers, blocksBody, geoBody, geoWing, GEO_BODY } from './styles.js';
 import { outfitLayers } from './outfits.js';
 
 export const DUCK_COLORS = [
@@ -101,6 +101,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
 ${hat.back}${OF ? OF.back : ''}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
+${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, 'w') : geoWing(L.color)}</g>` : ''}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ''}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ''}
 ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
   }
@@ -120,8 +121,10 @@ ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
   const SL = styleLayers(L, st, id, BODY, bt), OF = outfitLayers(L.outfit, TB);
   const bare = SL.wing || `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
   <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
-  /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing) */
-  const wing = OF && OF.sleeve !== null ? (OF.bare ? bare : '') + `<g${bt}>${OF.sleeve}</g>` : bare;
+  /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing); a bare arm I paint solid in
+     the body's own color first, so the see-through shade doesn't turn grey over the shirt */
+  const solid = SL.wing ? '' : `<path d="${WING}" fill="url(#${id}b)"${bt}/>`;
+  const wing = OF && OF.sleeve !== null ? (OF.bare ? solid + bare : '') + `<g${bt}>${OF.sleeve}</g>` : bare;
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28', TB)}${fill(id + 'h', '.34', '.28', TH)}
