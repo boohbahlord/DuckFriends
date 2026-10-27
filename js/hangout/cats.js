@@ -127,8 +127,10 @@ brain('bubbles', {
   init: (now, rand) => start(rand, now),
   tick(me, c) {
     const mm = M('bubbles', c.now, c.rand), at = npcAt(me, c.now); if (!at) return false;
-    /* the one he likes (picked again if they've gone) */
-    if (!mm.likes || !c.ducks.some(d => d.id === mm.likes)) { const pick = c.ducks[Math.floor(c.rand() * c.ducks.length)]; mm.likes = pick ? pick.id : null; mm.pets = 0; }
+    /* the one he likes (picked again if they've gone); we decided he only picks one with 4 or more players: fewer, and he
+       likes everyone the same (and lets go of the one he had) */
+    if (c.s.seat.length < 4) mm.likes = null;
+    else if (!mm.likes || !c.ducks.some(d => d.id === mm.likes)) { const pick = c.ducks[Math.floor(c.rand() * c.ducks.length)]; mm.likes = pick ? pick.id : null; mm.pets = 0; }
     /* Oreo too close, or swiping at him: he swipes back */
     const op = c.at('oreo'), om = mem.get('oreo');
     if (op && mm.mode !== 'flee' && c.dist(at, op) < 55 && c.now > (mm.swiped || 0) && !(om && om.mode === 'dead')) {
@@ -156,7 +158,7 @@ brain('bubbles', {
   act(me, a, c) {
     if (a.do !== 'pet') return false;
     const mm = M('bubbles', c.now, c.rand), at = npcAt(me, c.now);
-    if (a.id !== mm.likes) { c.say('bubbles', HISS); return run(me, c, mm, awayFrom(at, at.x - 1, at.y, 300, c), TROT, 'flee') || true; }
+    if (mm.likes && a.id !== mm.likes) { c.say('bubbles', HISS); return run(me, c, mm, awayFrom(at, at.x - 1, at.y, 300, c), TROT, 'flee') || true; }
     if (c.rand() < .5) { return run(me, c, mm, awayFrom(at, at.x - me.f, at.y, 420, c), SPRINT) || true; }   // even from his favorite, half the time
     mm.pets = (mm.pets || 0) + 1; c.stop(me); me.a = 'sit'; c.say('bubbles', PURR); c.fx('bubbles', a.id, 'purr');
     if (mm.pets >= 2) { mm.pets = 0; mm.mode = 'idle'; mm.next = c.now + 3000; }   // only a little: then off he walks

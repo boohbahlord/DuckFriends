@@ -125,7 +125,7 @@ const WALK = 300, SPRINT = 620;
 const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
 const SAY_EVERY = [45, 90], RANT_EVERY = [840, 1560], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
 const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
-const STILL = 6000, LINE = 4000, HEARD = 5000;   // a shot duck can't move (ms); each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
+const LINE = 4000, HEARD = 5000;   // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
 const HOME = (() => { const r = PROPS.filter(p => p.kind === 'rocker'); return r.length ? [Math.round((r[0].x + r[r.length - 1].x) / 2 + 40), Math.round(r[0].y + r[0].d + 70)] : [Math.round((DECK.x0 + DECK.x1) / 2), Math.round((DECK.y0 + DECK.y1) / 2)]; })();
@@ -163,7 +163,7 @@ function chase(me, c, at, shout) {
   const dist = c.dist(at, d);
   if (dist < RANGE && c.now > (mm.aim || 0)) {
     mm.aim = c.now + AIM; me.f = d.x > at.x ? 1 : -1;
-    if (c.rand() < .6) c.kill('justin', d.id, 'gun', STILL); else c.fx('justin', d.id, 'miss');
+    if (c.rand() < .6) c.kill('justin', d.id, 'gun'); else c.fx('justin', d.id, 'miss');
     ch = true;
   }
   /* never up close: to where his gun reaches, then he stands and shoots */
@@ -187,7 +187,7 @@ brain('justin', {
     for (const sh of mm.shots.filter(q => c.now >= q.at)) {
       mm.shots = mm.shots.filter(q => q !== sh);
       const d = c.ducks.find(q => q.id === sh.who);
-      if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun', STILL); mm.gunDown = c.now + 1500; ch = true; }
+      if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun'); mm.gunDown = c.now + 1500; ch = true; }
     }
     if (me.a === 'gun' && mm.mode !== 'chase' && mm.mode !== 'rant' && c.now > (mm.gunDown || 0)) { me.a = ''; ch = true; }
     if (mm.mode === 'dead') {
@@ -207,7 +207,7 @@ brain('justin', {
     if (c.now < (mm.hold || 0)) return ch;   // (someone's talking to him: he stays put)
     /* the pool: never in it */
     if (poolNear(at.x, at.y, 220) || inPool(at.x, at.y)) {
-      if (c.now > mm.pool) { mm.pool = c.now + 30000; c.say('justin', POOL_LINE); ch = true; }
+      if (c.now > mm.pool) { mm.pool = c.now + 180000; c.say('justin', POOL_LINE); ch = true; }
       const to = nearestOpen(at.x + (at.x < (POOL.x0 + POOL.x1) / 2 ? -500 : 500), Math.min(at.y, POOL.y0) - 300, DRY, 8);
       if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 3000; return true; }
     }

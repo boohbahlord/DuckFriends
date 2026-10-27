@@ -2207,3 +2207,22 @@ Rule (2026-10-27 21:03Z): "i want to see the new items before they are added to 
   Justin kills: only handgun or dagger knocks, on the boards and in Duck Cabin, never `kill @Justin`. Computers never
   wear locked items. A picked locked tile is a look only (red); it comes off when you leave the page. While Jack is on,
   the Colors page lists only his own colors. Owner on the design sheet (21:51Z): "i love this".
+
+## Request (owner, 2026-10-27 22:12Z): cats' chat only on screen, NPCs mutable
+"Cats shouldnt have their texts in chat UNLESS they are sharing a screen with a player
+
+NPCs should be able to be muted with any command like usual"
+
+## Request (owner, 2026-10-27 22:13Z): Annabelle dislikes only with 4 or more players
+"annabelle no longer finds a single player to dislike UNLESS there are at LEAST four players in the game"
+
+## Request (owner, 2026-10-27 22:16Z): Justin's water line not so often
+"justin cant keep saying what he does about the water unless it has been a few mins at least. 
+
+BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memory gpu UNTIL it is in charger, SO when i play the game without the dedicated 4 gb of vram, i notice how laggy it feels on cabin"
+
+## Request (owner, 2026-10-27 22:25Z): shadow duck rarer and more see-through
+"the shadow duck should become visible very rarely and be more transparent"
+
+## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
+"On cabin, all player remain dead for as long as they did when justin kills them"
