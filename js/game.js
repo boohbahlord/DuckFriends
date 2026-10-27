@@ -295,6 +295,16 @@ function drawDucks(now = clockNow()) {
     const say = bubbles[id], saying = !!say && now < say.until;   // their newest chat message, for a few seconds
     if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
     if (d._saying !== saying) { d._saying = saying; d.classList.toggle('saying', saying); }
+    if (saying && d._sayAt !== tr + lift + say.n + Math.floor(now / 250)) {   // (the bubble stays inside the board: under the name tag at its top, slid in at its sides)
+      d._sayAt = tr + lift + say.n + Math.floor(now / 250);
+      const sb = d.querySelector('.gduck-say'), bw = sb.offsetWidth, bh = sb.offsetHeight, lay = layer.getBoundingClientRect(), br = ($('.cols', board) || board).getBoundingClientRect();
+      const cx = lay.left + at.left, feet = lay.top + at.top - z, top = feet - size * 1.08 - bh - 4;   // (where the duck is going, not where its glide has got to)
+      const dx = Math.round(Math.max(br.left + 4 - (cx - bw / 2), Math.min(0, br.right - 4 - (cx + bw / 2)))), l = cx + dx - bw / 2;
+      let below = top < br.top;   // (over the board's top, or over what sits on it: the question's cloud and its writer)
+      for (const e of S.querySelectorAll('.topover > *')) { const q = e.getBoundingClientRect(); if (q.width && q.left < l + bw && q.right > l && q.top < top + bh && q.bottom > top) below = true; }
+      if (d._below !== below) { d._below = below; d.classList.toggle('say-below', below); }
+      if (d._sdx !== dx) { d._sdx = dx; sb.style.setProperty('--say-dx', dx + 'px'); }
+    }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 && id !== JUSTIN_ID ? colAt(s, pos.x) : -1;
     if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
