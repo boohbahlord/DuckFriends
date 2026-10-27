@@ -2125,3 +2125,30 @@ Decisions:
 - Decided: on the Lakers #33 and Celtics #33 jerseys the team name now arcs over a small 33 on the chest (right of the
   wing, under the head), so neither covers them, on every body (Rubber builds, metals, Raptor, Pelican, Mallard, Blocks,
   2D shapes). Ducks drawn under 48 px (avatars, chips) leave the name and number out, since they'd only be a smudge.
+
+## Request (2026-10-27 21:00Z): customization list (pumpkin, antenna eyes, jester, Jack in a Box, metals, blocks, Secret, clown, locks, color dropdowns)
+"the pumpkin should look less like oranges clustered together and look more like an actual pumpkin 
+
+The antenna eyes should have their eyes change with whatever eye is used in the eye customization setting
+
+There should be a jester hat that becomes unlocked when a player gets to one thousand jumps. The jester's body becomes unlocked with one thousand jumps too. At ten thousand jumps, a player unlocks the jack in a box, which is not a duck, but a box with the guy on the inside always out, and the jack in the box can only be customized in color or eyes, not in hat or outfit or size or skin or anything like that. The jack in the box cannot close. The jack in the box kinda has the guy from the box bounce a little with every jump, and there is another version of the jack in the box that can be selected in the setting button on his selection in styles that make him a woman named "Jill in a Box" The first picture of the jester is for the outfit and so is the second, as POSSIBLE inspiration. The hat should have four parts at the top not two. 
+
+The skins should have the metals placed in an order based on how cool the metals are, with rose gold coming just before gold. Gold and rose gold is above chrome obv. Silver i think would be below chrome or above it? Make silver look better, it just looks  like a lesser chrome. 
+
+The block style of duck should have very very small lines between the duck, because they are too big. 
+
+There is a secret code box in terminal called "Secret", and typing in certain codes after it allow for secret things to be unlocked, for example, typing in "Secret 1357911 on" will unlock all the jester outfits and jack in the box permanently UNLESS the toggle is off, by typing this into terminal, "Secret 1357911 off".
+
+There should be a clown wig and clown costume that you unlock with the game telling you that you dont know how to unlock it, and you unlock it by killing Justin with a weapon in special ten times, and it only tells you how you unlocked it once you did it. There is also clown paint option that is unlocked too. Hovering over a selected item should tell you about what you need to unlock it while a lock symbol is at the top left of it, and it becomes faded and unlocked (the lock becomes unlocked) when the requirement is met. While the lock is on an item, it is slightly faded and cannot be used, but selecting it will show a preview of it, but the selection is in red, and clicking out of that menu in customization will deselect it automatically and make it go back to the previous item.
+
+Selecting items you cannot wear while wearing jack in the box will turn the duck back to normal and deselect the jack in a box option.
+
+The many extra colors in the color menu that show up for certain items with too many option get collapsed into drop down menus that have to be clicked on to open their options"
+
+Rule (2026-10-27 21:03Z): "i want to see the new items before they are added to the game."
+- Decided (Adam): split into part A (Noah: pumpkin, antenna eyes, color dropdowns, start now) and part B (jester, Jack
+  and Jill in a Box, clown, locks, Secret; waits for the owner's go). Every new or redrawn item is shown to the owner as a
+  picture, and nothing merges until the owner OKs it.
+- Part A: one squat ribbed pumpkin with a bent stem, vine and leaf; each antenna ball draws the eye picked under Eyes
+  (X eyes when dead, plain balls for no eyes); on the Colors page an item with 2 or more colors folds them under its name
+  (shut each time Customize opens; the fold holding the color being picked opens).

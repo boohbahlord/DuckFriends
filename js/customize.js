@@ -210,7 +210,19 @@ export function openCustomize(page = lastPage) {
             <p class="small dim">The card's colors are under Colors.</p></div>`;
         } else if (k === 'colors') {
           const T = colorTargets(), cur = T.find(t => t[0] === lastColor) || T[0]; lastColor = cur[0];
-          html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${T.map(([id, label]) => id ? `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>` : `<li class="arm-sub">${esc(label)}</li>`).join('')}</ul>
+          /* an item with two or more colors folds them away under its own arrow (shut each time Customize opens; the one
+             holding the color being picked stays open) */
+          const row = (id, label) => `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>`, rows = [];
+          for (let i = 0; i < T.length; i++) {
+            const [id, label, , , , g] = T[i];
+            if (!id) { rows.push(`<li class="arm-sub">${esc(label)}</li>`); continue; }
+            if (!g) { rows.push(row(id, label)); continue; }
+            const set = []; while (i < T.length && T[i][5] === g) set.push(T[i++]); i--;
+            const fk = 'c:' + set[0][0].replace(/-[^-]*$/, ''), open = openFolds.has(fk) || set.some(t => t[0] === cur[0]);
+            if (open) openFolds.add(fk);
+            rows.push(`<li><details class="arm-fold cfold" data-fold="${esc(fk)}"${open ? ' open' : ''}><summary>${esc(g)}</summary><ul class="arm-list">${set.map(([id, label]) => row(id, label.replace(g + ': ', ''))).join('')}</ul></details></li>`);
+          }
+          html = head('Colors') + `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${rows.join('')}</ul>
             <div class="cpick"><p class="small dim cnote">${esc(cur[4] || '')}</p></div></div>`;
         }
         const f = document.activeElement, had = menu.contains(f) && navSig(f), from = had && f.dataset.a === 'back' && prev;   // (the focus stays on the same tile, or the row just come back to)
@@ -234,16 +246,16 @@ export function openCustomize(page = lastPage) {
       function colorTargets() {
         const D = profile.duck, C = profile.card, N = profile.nameStyle, hd = D.hat && hatById(D.hat.id), out = [];
         const st = styleById(D.style);
-        if (st.colors) for (const [key, label, def] of st.colors) out.push([key, label, D.metal !== 'none' || D.image ? '' : D[key] || def, c => { D[key] = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.']);
+        if (st.colors) for (const [key, label, def] of st.colors) out.push([key, label, D.metal !== 'none' || D.image ? '' : D[key] || def, c => { D[key] = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.', st.colors.length > 1 && st.name]);
         else if (!st.fixed) out.push(['duck', 'Duck', D.metal !== 'none' || D.image ? '' : D.color, c => { D.color = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.']);
         if (D.pattern !== 'none' && D.metal === 'none' && !D.image) out.push(['dpat', 'Duck pattern', D.patternColor, c => { D.patternColor = c; }, 'The color of the pattern on your duck.']);
-        for (const [key, label, def] of (hd && hd.colors) || []) out.push(['hat-' + key, `${hd.name}: ${label}`, D.hat[key] || def, c => { D.hat = { ...D.hat, [key]: c }; }, '']);
+        for (const [key, label, def] of (hd && hd.colors) || []) out.push(['hat-' + key, `${hd.name}: ${label}`, D.hat[key] || def, c => { D.hat = { ...D.hat, [key]: c }; }, '', hd.colors.length > 1 && hd.name]);
         const bd = beakById(D.beak);
-        for (const [key, label, def] of bd.colors || []) out.push([key, label, D[key] || def, c => { D[key] = c; }, '']);
+        for (const [key, label, def] of bd.colors || []) out.push([key, label, D[key] || def, c => { D[key] = c; }, '', bd.colors.length > 1 && bd.name]);
         const od = D.outfit && outfitById(D.outfit.id);
-        for (const [key, label, def] of (od && od.colors) || []) out.push(['outfit-' + key, `${od.name}: ${label}`, D.outfit[key] || def, c => { D.outfit = { ...D.outfit, [key]: c }; }, '']);
+        for (const [key, label, def] of (od && od.colors) || []) out.push(['outfit-' + key, `${od.name}: ${label}`, D.outfit[key] || def, c => { D.outfit = { ...D.outfit, [key]: c }; }, '', od.colors.length > 1 && od.name]);
         const fd = D.face && faceById(D.face.id);
-        for (const [key, label, def] of (fd && fd.colors) || []) out.push(['face-' + key, `${fd.name}: ${label}`, D.face[key] || def, c => { D.face = { ...D.face, [key]: c }; }, '']);
+        for (const [key, label, def] of (fd && fd.colors) || []) out.push(['face-' + key, `${fd.name}: ${label}`, D.face[key] || def, c => { D.face = { ...D.face, [key]: c }; }, '', fd.colors.length > 1 && fd.name]);
         out.push(['card', 'Card', C.color, c => { C.color = c; }, 'The color behind your card\'s pattern.']);
         if (C.pattern !== 'none' && !C.image) out.push(['cpat', 'Card pattern', C.patternColor, c => { C.patternColor = c; }, 'The pattern\'s color (for a hat pattern, the hat\'s).']);
         out.push(['name', 'Name', N.color, c => { N.color = c; N.rainbow = false; }, 'Plain fits light and dark.']);
@@ -252,7 +264,7 @@ export function openCustomize(page = lastPage) {
         if (sps.length) out.push(['', 'Specials']);
         for (const id of sps) {
           const sp = specialById(id), now = colorsOf(D, id);
-          sp.colors.forEach(([key, label], j) => out.push([`sp-${id}-${key}`, `${sp.name}: ${label}`, now[j], c => { D.spc = { ...(D.spc || {}), [id]: { ...((D.spc || {})[id] || {}), [key]: c } }; }, id === 'double' ? 'The cloud stays see-through.' : '']));
+          sp.colors.forEach(([key, label], j) => out.push([`sp-${id}-${key}`, `${sp.name}: ${label}`, now[j], c => { D.spc = { ...(D.spc || {}), [id]: { ...((D.spc || {})[id] || {}), [key]: c } }; }, id === 'double' ? 'The cloud stays see-through.' : '', sp.colors.length > 1 && sp.name]));
         }
         return out;
       }
