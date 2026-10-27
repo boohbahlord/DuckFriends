@@ -705,7 +705,7 @@ function jumpTo(c) {
 /* what ducks stand in: the board, or the story's view */
 const origin = board => board && (isSc(R.state) ? $('.sc-view', board) : board);
 function boardClick(e) {
-  if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900 || (world && world.grabbing())) return;
+  if (!profile.settings.mouseMove || !canWalk() || !geo || performance.now() - touchedAt < 900 || (world && world.grabbing()) || (pm && pm.held())) return;
   const board = origin(e.target.closest('.board')); if (!board || e.target.closest('.topover, .sc-write, .wq-card')) return;
   const r = board.getBoundingClientRect();
   target = unplace(e.clientX - r.left, e.clientY - r.top);

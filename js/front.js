@@ -5,6 +5,7 @@ import { register, go } from './router.js';
 import { el } from './ui.js';
 import { pitSVG, heroDuckSVG, rainbowHTML } from './art.js';
 import { openSettings } from './settings.js';
+import { openCustomize } from './customize.js';
 import { mountCornerMusicBar } from './musicbar.js';
 
 let mbarOff = null;
@@ -17,6 +18,7 @@ register('front', {
       <div class="front-left">
         <div class="front-btns">
           <button type="button" class="btn big green" data-a="play">Play</button>
+          <button type="button" class="btn big ghost" data-a="customize">Customize</button>
           <button type="button" class="btn big ghost" data-a="settings">Settings</button>
           <a class="btn big ghost site-btn" href="https://boohbahlord.github.io/Nous-Within-Kenoma/">My Other Website<small>Nous Within Kenoma</small></a>
         </div>
@@ -25,6 +27,7 @@ register('front', {
       <div class="pit" aria-hidden="true">${pitSVG('back')}<div class="hero-duck bob">${heroDuckSVG()}</div>${pitSVG('front')}</div>
     </section>`);
     s.querySelector('[data-a="play"]').onclick = () => go('rooms');
+    s.querySelector('[data-a="customize"]').onclick = () => openCustomize();
     s.querySelector('[data-a="settings"]').onclick = () => openSettings();
     if (mbarOff) mbarOff(); mbarOff = mountCornerMusicBar();
     return s;
