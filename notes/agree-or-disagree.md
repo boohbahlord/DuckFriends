@@ -2215,3 +2215,9 @@ NPCs should be able to be muted with any command like usual"
 "justin cant keep saying what he does about the water unless it has been a few mins at least. 
 
 BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memory gpu UNTIL it is in charger, SO when i play the game without the dedicated 4 gb of vram, i notice how laggy it feels on cabin"
+
+## Request (owner, 2026-10-27 22:25Z): shadow duck rarer and more see-through
+"the shadow duck should become visible very rarely and be more transparent"
+
+## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
+"On cabin, all player remain dead for as long as they did when justin kills them"

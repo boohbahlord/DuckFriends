@@ -9,6 +9,7 @@
         -1 left), z a height of their own (on a couch or a table; none: the ground), say { text, t } their last words.
    Paths: a grid of 40-px cells over the world, built once from layout.js (standable), so moved props and new doors are
    found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
+import { holdDown } from './death.js';
 import { W, H, EDGE, STEP, heightAt, standable, onPlatform, inCabin, inPool, POOL, DOORS, CABIN } from './layout.js';
 
 export const CELL = 40;
@@ -190,11 +191,11 @@ function ctxFor(s, now, rand, D, recs) {
     },
     /* change another character (a swipe sends it running): fn gets a copy to change */
     poke(id, fn) { if (!recs[id]) return; const o = { ...recs[id] }; fn(o); recs[id] = o; c.poked = true; },
-    /* a duck plays dead (a swipe or a shot), for everyone; still for `still` ms (it can't move) */
-    kill(by, pid, kind, still = 0) {
+    /* a duck plays dead (a swipe or a shot), for everyone, and can't move for a while (death.js) */
+    kill(by, pid, kind) {
       const P = s.players[pid]; if (!P || P.dead) return false;
       s.players = { ...s.players, [pid]: { ...P, dead: true } };
-      if (still) { const st = {}; for (const [k, v] of Object.entries(s.hang.still || {})) if (v > now) st[k] = v; st[pid] = now + still; s.hang.still = st; }   // (hangout/rules.js hangStill)
+      holdDown(s, pid, now);
       const d = D.find(q => q.id === pid); if (d) d.dead = true;
       c.fx(by, pid, kind); return true;
     },

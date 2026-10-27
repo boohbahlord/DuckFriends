@@ -54,7 +54,7 @@ for (let now = T0; now < END; now += 200) {
     if (!r.z && !walkable(a.x, a.y)) { bump(`(${id} off the walking grid a moment)`); if (process.env.OFF === id && (count.offp = (count.offp || 0) + 1) < 15) console.log(id, Math.round(a.x), Math.round(a.y), r.a, a.moving, JSON.stringify(r.w.p).slice(0, 80)); }
     if (id === 'shadow' && r.o && r.o.v && inLight(a.x, a.y, s)) bump('(shadow seen in the light)');
     if (id === 'shadow' && r.o && r.o.t === now) bump(`shadow ${r.o.v ? 'fades in' : 'fades out'}`);
-    const key = Math.round(a.x) + ',' + Math.round(a.y) + r.a;
+    const key = Math.round(a.x) + ',' + Math.round(a.y) + r.a + (id === 'shadow' && r.o && !r.o.v ? now : '');   // (the shadow duck waits faded for minutes: not stuck)
     if (!still[id] || still[id].key !== key) still[id] = { key, t: now };
     maxStill[id] = Math.max(maxStill[id] || 0, (now - still[id].t) / 1000);
   }

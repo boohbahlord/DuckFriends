@@ -22,7 +22,7 @@ import './justin.js';
 import './shadowduck.js';
 
 const PETS = { annabelle: 'Pet Annabelle', bubbles: 'Pet Bubbles' };   // who E can pet (Oreo and Opal won't have it)
-const DUCK = 64, FADE = 1500, SEEN = .78;   // (the shadow duck at its most: a little see-through)
+const DUCK = 64, FADE = 1500, SEEN = .4;   // (the shadow duck at its most: the owner wants it well see-through)
 const feetOf = svg => (v => DUCK * (v[1] + v[3] - 10) / 120)(svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number));   // a duck's drawing: 64 px wide, its feet this far down (Justin's glasses make it taller)
 const FEET = feetOf(justinSVG({ size: DUCK }));
 const boxOf = svg => svg.match(/viewBox="([^"]+)"/)[1].split(' ').map(Number);   // (a drawing's viewBox: x, y, w, h)

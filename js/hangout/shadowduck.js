@@ -1,7 +1,8 @@
 /* ---------- the shadow duck ----------
    All black, outside only, and only where it's dark: never into the cabin, onto the deck (the porch), or into the light
    of a lamppost, a window or the campfire (unless it's out: the fire put out, the power cut). It hides at the forest's
-   edge, fades out and in again every 20 to 40 seconds, and stalks the player furthest from the cabin, keeping a few
+   edge, shows itself for 20 to 40 seconds only now and then (we decided: never sooner than 10 minutes after it last
+   showed, the owner wants it very rare), and stalks the player furthest from the cabin, keeping a few
    hundred px behind them; a duck that runs away from it isn't followed (it fades away instead).
    Justin and it only tangle when they meet up close, in the dark: then either it goes for him (a touch and he drops;
    someone revives him with E) and fades away, or, very rarely, he spots it by accident and chases it, and it fades
@@ -12,7 +13,7 @@ import { justinFree, justinGot, justinSees } from './justin.js';
 import { W, H, inPool, inCabin, inDeck, LIGHTS } from './layout.js';
 
 const WALK = 170, LUNGE = 420, FADE = 1500;
-const FADE_EVERY = [20, 40], MEET_EVERY = [90, 200];   // seconds
+const FADE_EVERY = [20, 40], MEET_EVERY = [90, 200], SHOW_EVERY = [600, 900];   // seconds (SHOW_EVERY: from one showing to the next)
 const MEET = 170, JUSTIN_SPOTS = .12;                   // how close they must meet; how rarely Justin chases it
 const RUNNING = 260;                                    // px a second: a duck going this fast away from it has run off
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
@@ -44,16 +45,16 @@ brain('shadow', {
   kind: 'duck', name: '',
   init(now, rand) { const p = randomSpot(rand, edge(null), way(null)) || [400, 3000]; return { w: { p: [p], t: now, v: 1 }, a: '', f: 1, o: { v: 0, t: now } }; },
   tick(me, c) {
-    if (!mm) mm = { next: c.now + 2000, fade: c.now + sec(c.rand, FADE_EVERY), meet: c.now + sec(c.rand, MEET_EVERY), mode: 'lurk' };
+    if (!mm) mm = { next: c.now + 2000, fade: c.now + sec(c.rand, FADE_EVERY), meet: c.now + sec(c.rand, MEET_EVERY), show: c.now + sec(c.rand, [120, 600]), mode: 'lurk' };   // (its first showing: 2 to 10 minutes in)
     const at = npcAt(me, c.now); if (!at) return false;
     const seen = me.o && me.o.v;
     /* faded: come back somewhere new, in the dark */
     if (!seen) {
-      if (c.now - me.o.t < FADE * 2 || c.now < mm.back) return false;
+      if (c.now - me.o.t < FADE * 2 || c.now < mm.back || c.now < (mm.show || 0)) return false;
       const out = c.ducks.filter(d => !d.dead && dark(c.s)(d.x, d.y)).sort((a, b) => c.dist({ x: MID[0], y: MID[1] }, b) - c.dist({ x: MID[0], y: MID[1] }, a));
       const p = (out[0] && behind(out[0], c)) || randomSpot(c.rand, edge(c.s), way(c.s));
       if (!p) return false;
-      me.w = { p: [p], t: c.now, v: 1 }; fade(me, 1, c.now); mm.mode = 'lurk'; mm.fade = c.now + sec(c.rand, FADE_EVERY); mm.next = c.now + 1500;
+      me.w = { p: [p], t: c.now, v: 1 }; fade(me, 1, c.now); mm.show = c.now + sec(c.rand, SHOW_EVERY); mm.mode = 'lurk'; mm.fade = c.now + sec(c.rand, FADE_EVERY); mm.next = c.now + 1500;
       return true;
     }
     /* standing in the light (the campfire lit again by it): gone */

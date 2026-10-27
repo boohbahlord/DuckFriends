@@ -14,6 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
+import { holdDown } from './hangout/death.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 import { justinTick, justinDown, justinShown, justinAt, JUSTIN_ID } from './boardjustin.js';
@@ -372,7 +373,7 @@ export function reduce(state, a, now = Date.now()) {
       const who = (a.who || []).filter(id => P[id]);
       if (a.justin && a.kind === 'kill' && me && s.options.fun && !denied(s, a.id, 'nofun')) return justinDown(s, now, logLine) ? s : state;   // (the Justin option: kill @Justin on the boards)
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
-      if (a.kind === 'kill') { for (const id of who) P[id].dead = true; }
+      if (a.kind === 'kill') { for (const id of who) { P[id].dead = true; if (isHang(s)) holdDown(s, id, now); } }   // (Duck Cabin: dead as long as from Justin's gun)
       logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
       return s;
@@ -668,7 +669,7 @@ function moveShots(s, now) {
       const rx = isHang(s) ? .006 : .03, ry = isHang(s) ? .012 : .08;
       const ux = dx / rx, uy = dy / ry, px = (p.x - x0) / rx, py = (p.y - y0) / ry, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
+      if (Math.hypot(px - k * ux, py - k * uy) < 1) { P.dead = true; if (isHang(s)) holdDown(s, id, now); }
     }
     if (sh.hin === undefined && sh.by !== JUSTIN_ID && at.z > -.15 && at.z < 1.05 && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be shot back)
       const n = justinAt(s.justin, now), ux = dx / .03, uy = dy / .08, px = (n.x - x0) / .03, py = (n.y - y0) / .08, len = ux * ux + uy * uy;
