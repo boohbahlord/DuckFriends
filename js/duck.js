@@ -78,6 +78,8 @@ function plainLook(o) {
   }
   return out;
 }
+/* a jersey's name and number (outfits.js' class jm) would only be a smudge on a small duck: left out under 48 px */
+const marks = (OF, size) => { if (OF && size < 48) OF.cloth = OF.cloth.replace(/<g class="jm">.*?<\/g>/s, ''); return OF; };
 export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '', dead = false, extra = '' } = {}) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) }, id = 'dk' + (++uid);
   if (L.image) {   // an uploaded square picture, standing like a card, with the same little shadow
@@ -94,7 +96,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
   const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), eyes = eyesSVG(L, dead);
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
   if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal; an outfit lies flat on the body
-    const OF = outfitLayers(L.outfit, { base: L.color, edge: mix(L.color, 0, .45) }), blocks = st.id === 'blocks';
+    const OF = marks(outfitLayers(L.outfit, { base: L.color, edge: mix(L.color, 0, .45) }), size), blocks = st.id === 'blocks';
     const cloth = OF && OF.cloth ? `<defs><clipPath id="${id}fc"><path d="${blocks ? BODY : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
 <g mask="url(#${id}nh)"><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join('')}" stroke="#00000030" stroke-width="1"/>` : ''}</g></g></g>` : '';
     return `<svg class="duck flat${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
@@ -118,7 +120,7 @@ ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
      little bigger or smaller */
-  const SL = styleLayers(L, st, id, BODY, bt), OF = outfitLayers(L.outfit, TB);
+  const SL = styleLayers(L, st, id, BODY, bt), OF = marks(outfitLayers(L.outfit, TB), size);
   const bare = SL.wing || `<path d="${WING}" fill="${M ? M[2] : dark}" opacity="${M ? '.5' : '.32'}"${bt}/>
   <path d="M42 77C51 71 67 72 74 79" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45"${bt}/>`;
   /* an outfit: its sleeve takes the wing's place (a tank top's trim goes over the bare wing); a bare arm I paint solid in

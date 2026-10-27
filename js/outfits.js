@@ -32,6 +32,12 @@ const STAR = (x, y, r, c) => { let d = ''; for (let i = 0; i < 10; i++) { const 
 const flower = (x, y, r, c, mid = '#ffd23f') => `<g>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="${(x + r * .55 * Math.cos(a * Math.PI / 180)).toFixed(1)}" cy="${(y + r * .55 * Math.sin(a * Math.PI / 180)).toFixed(1)}" rx="${(r * .5).toFixed(1)}" ry="${(r * .32).toFixed(1)}" transform="rotate(${a} ${(x + r * .55 * Math.cos(a * Math.PI / 180)).toFixed(1)} ${(y + r * .55 * Math.sin(a * Math.PI / 180)).toFixed(1)})" fill="${c}"/>`).join('')}<circle cx="${x}" cy="${y}" r="${(r * .2).toFixed(1)}" fill="${mid}"/></g>`;
 const leaf = (x, y, a, c) => `<path d="M${x} ${y}c3-4 8-4 11 0c-3 4-8 4-11 0Z" fill="${c}" transform="rotate(${a} ${x} ${y})"/>`;
 const num33 = (x, y, fill, edge, k = 1) => `<text x="${x}" y="${y}" font-family="'Lilita One', 'Fredoka', sans-serif" font-size="${16 * k}" text-anchor="middle" fill="${fill}" stroke="${edge}" stroke-width="${1.6 * k}" paint-order="stroke fill">33</text>`;
+/* a jersey's front: the team name arched over the number, small on the chest (right of the wing, under the head, so
+   neither covers them); class jm, so a duck drawn too small for them to read leaves them out */
+let arcN = 0;
+const chest = (name, fill, edge) => { const id = 'jma' + (++arcN); return `<g class="jm"><path id="${id}" d="M80.5 75.5Q87.5 70.5 94.5 75.5" fill="none"/>`
+  + `<text font-family="'Fredoka', sans-serif" font-weight="700" font-size="3.6" fill="${fill}" letter-spacing=".15"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${name}</textPath></text>`
+  + num33(87.5, 85, fill, edge, .58) + '</g>'; };
 /* past the outline: a skirt that flares at the hem, and a train behind */
 const flare = (c, y = 92, out = 5) => `<path d="M${18 - out} ${y + 14}C${30} ${y + 4} ${88} ${y + 2} ${100 + out} ${y + 10}L${101 + out} ${y + 15}C${70} ${y + 20} ${40} ${y + 20} ${17 - out} ${y + 15}Z" fill="${c}" stroke="${dk(c, .4)}" stroke-width="1.2"/>`;
 
@@ -78,10 +84,10 @@ export const OUTFITS = [
       <path d="M40 102c2-4 6-4 8 0" stroke="#7a5a2e" stroke-width="1" fill="none"/>
       <rect x="40" y="84" width="24" height="10" rx="5" fill="#b9884a" stroke="#7a5a2e" stroke-width="1.4"/><path d="M47 84v10M53 84v10M59 84v10" stroke="#7a5a2e" stroke-width=".8"/>`, sleeve: () => '' },
   { id: 'lakers', name: 'Lakers jersey #33', tip: 'Kareem Abdul-Jabbar\'s number with the Lakers: gold with purple trim.',
-    cloth: () => TOP('#fdb927', 90) + LOW('#fdb927', 90) + `<rect y="88" width="120" height="3" fill="#552583"/>` + collarBand('#552583', 2.8) + num33(58, 85, '#552583', '#fff') + `<text x="58" y="70" font-family="'Fredoka', sans-serif" font-weight="700" font-size="6" text-anchor="middle" fill="#552583">LAKERS</text>`,
+    cloth: () => TOP('#fdb927', 90) + LOW('#fdb927', 90) + `<rect y="88" width="120" height="3" fill="#552583"/>` + collarBand('#552583', 2.8) + chest('LAKERS', '#552583', '#fff'),
     bare: true, sleeve: () => `<path d="M38 74C48 66 70 67 79 77" stroke="#552583" stroke-width="2.6" fill="none"/>` },
   { id: 'celtics', name: 'Celtics jersey #33', tip: 'Larry Bird\'s number with the Celtics: green with white.',
-    cloth: () => TOP('#007a33', 90) + LOW('#007a33', 90) + `<rect y="88" width="120" height="3" fill="#fff"/>` + collarBand('#fff', 2.8) + num33(58, 85, '#fff', '#00461d') + `<text x="58" y="70" font-family="'Fredoka', sans-serif" font-weight="700" font-size="5.6" text-anchor="middle" fill="#fff">CELTICS</text>`,
+    cloth: () => TOP('#007a33', 90) + LOW('#007a33', 90) + `<rect y="88" width="120" height="3" fill="#fff"/>` + collarBand('#fff', 2.8) + chest('CELTICS', '#fff', '#00461d'),
     bare: true, sleeve: () => `<path d="M38 74C48 66 70 67 79 77" stroke="#fff" stroke-width="2.6" fill="none"/>` },
   { id: 'leather', name: 'Leather jacket',
     cloth: () => ALL('#1b1b1f') + `<path d="M14 58C30 66 50 66 64 62" stroke="#3b3b44" stroke-width="2" fill="none"/><path d="M84 60L96 82L99 70L92 60Z" fill="#2a2a31" stroke="#45454f" stroke-width=".8"/>
