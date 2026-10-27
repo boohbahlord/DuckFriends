@@ -136,7 +136,7 @@ export const MAN = {
   kill: 'kill @name: a duck plays dead until it moves (a silly command).',
   hotdog: 'hotdog @name: a hotdog hangs around a duck for a while (a silly command).',
   fire: 'fire @name: a duck catches fire and stays burnt for a few seconds (a silly command).',
-  '\\mute': '\\mute bubble ping text all on|off @names: hides those from you until you leave the room.',
+  '\\mute': '\\mute bubble ping text all on|off @names: hides those from you until you leave the room. Justin, the cats, Justin\'s Butler (@JustinsButler) and the shadow duck (@ShadowDuck) can be muted too.',
   '\\permmute': '\\permmute [-f] …: the same, kept on this device (-f: no question first).',
   '\\show': '\\show mute | permmute | players.',
 };

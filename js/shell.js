@@ -33,6 +33,7 @@ import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
 import { music } from './music.js';
+import { npcsHere, npcTag } from './npcs.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
 const fail = (msg, code = 1) => { throw Object.assign(new Error(msg), { code }); };
@@ -824,7 +825,7 @@ export function shellSuggest(line, ctx) {
   let opts = [];
   if (!words0.length) opts = [...HELP_NAMES, ...MINE, ...BUILTIN_NAMES.filter(b => /^\w/.test(b)), ...ctx.legacyTop(), ...Object.keys(profile.aliases || {}), '\\mute', '\\permmute', '\\show'];
   else if (ctx.legacyHas(cmd)) return ctx.legacySuggest(seg.replace(/^sudo\s+/, '')).map(x => ({ label: x.label, apply: () => pre + (done[0] === 'sudo' ? 'sudo ' : '') + x.apply() }));
-  else if (last.startsWith('@') || last.startsWith('\\@')) { opts = s ? s.seat.map(id => (last.startsWith('\\') ? '\\@' : '@') + pname(s, id)) : []; if (cmd === 'send' && !last.startsWith('\\')) opts.unshift('@everyone'); }
+  else if (last.startsWith('@') || last.startsWith('\\@')) { opts = s ? s.seat.map(id => (last.startsWith('\\') ? '\\@' : '@') + pname(s, id)) : []; if (cmd === 'send' && !last.startsWith('\\')) opts.unshift('@everyone'); if (/^\\(mute|permmute)$/.test(cmd) && s) opts.push(...npcsHere(s).map(n => '@' + npcTag(n))); }   // (the characters can be muted too)
   else if (last.startsWith('$')) opts = [...GAME_VARS, ...Object.keys(fs.vars)].map(v => '$' + v);
   else if (cmd === 'man' || cmd === 'type' || cmd === 'which') opts = Object.keys(MAN);
   else if (['usermod', 'members', 'gpasswd', 'adduser', 'deluser', 'groupdel', 'chgrp'].includes(cmd) || (cmd === 'getent' && done.length > 1) || (cmd === 'groupmod' && done.length > 1 && !/^-[np]$/.test(done[done.length - 1]))) opts = [...(WORDS[cmd] || []), ...G];

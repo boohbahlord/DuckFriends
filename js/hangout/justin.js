@@ -207,7 +207,7 @@ brain('justin', {
     if (c.now < (mm.hold || 0)) return ch;   // (someone's talking to him: he stays put)
     /* the pool: never in it */
     if (poolNear(at.x, at.y, 220) || inPool(at.x, at.y)) {
-      if (c.now > mm.pool) { mm.pool = c.now + 30000; c.say('justin', POOL_LINE); ch = true; }
+      if (c.now > mm.pool) { mm.pool = c.now + 180000; c.say('justin', POOL_LINE); ch = true; }
       const to = nearestOpen(at.x + (at.x < (POOL.x0 + POOL.x1) / 2 ? -500 : 500), Math.min(at.y, POOL.y0) - 300, DRY, 8);
       if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 3000; return true; }
     }
