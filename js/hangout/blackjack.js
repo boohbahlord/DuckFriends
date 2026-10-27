@@ -29,6 +29,7 @@ import { seatOf, SEATS, getUp } from './seats.js';
 import { play } from './sounds.js';
 import { nameHTML } from '../name.js';
 import { rainbowHTML } from '../art.js';
+import { duckSVG } from '../duck.js';
 
 export const VOTE = 15000, BET = 15000, TURN = 20000, GAP = 360, DGAP = 750, END = 4500, START = 100, BETS = [10, 25, 50];
 const STOOLS = new Map(SEATS.filter(q => q.p.kind === 'stool').map(q => [q.id, q]));
@@ -247,7 +248,7 @@ export function bjBot(s, id, now) {
 }
 
 /* ---------- on the screen: the window, and the cards on the table ---------- */
-let v = null;   // { ctx, el, …parts, open, pick (the bet chosen), sig, prev (the cards each hand box shows), seen (cards shown), bets (bets seen), free (the board around the window) }
+let v = null;   // { ctx, el, …parts, open, pick (the bet chosen), sig, prev (the cards each hand box shows), voted (the ducks each vote box shows), seen (cards shown), bets (bets seen), free (the board around the window) }
 const mySeat = s => { const q = seatOf(s, v && v.ctx.me); return q && q.p.kind === 'stool' ? q : null; };
 /* how many of the deal's cards are down on this screen: the deal goes round twice (each player, then the Butler) */
 const dealtBy = (b, now) => b.st === 'deal' ? Math.max(0, Math.floor((now - b.dt) / GAP) + 1) : Infinity;
@@ -299,7 +300,14 @@ function render(s, now) {
   const myNote = (inHand && chips && b.bets[me] ? `<span class="bj-bet">${chipSVG()}${b.bets[me]}</span>` : '') + (res ? `<span class="bj-res r-${res.r}">${WORD[res.r]}</span>` : '');
   v.say.innerHTML = say;
   v.chipsEl.hidden = !chips; if (chips) v.chipsEl.innerHTML = chipSVG('#ffd23f') + (b.chips[me] ?? 0);
-  v.hands.innerHTML = hand(BUTLER, 'd', dl, 'dealer') + hand('You', 'm', mine, 'mine' + (turnId === me ? ' turn' : ''), myNote);
+  /* the vote: the two boxes show who picked what, a little duck for each (as Lawyering's votes), mine ringed */
+  const pick = (o, label) => {
+    const ids = atTable(s).map(q => q.id).filter(id => b.votes[id] === o && s.players[id]), was = v.voted[o] || []; v.voted[o] = ids;
+    return `<div class="hang-bj-hand bj-vote${b.votes[me] === o ? ' turn' : ''}"><span class="hang-bj-who">${label}${ids.length ? `<b class="bj-total">${ids.length}</b>` : ''}</span><div class="bj-cards bj-voters">${ids.map(id => `<span class="bj-voter${was.includes(id) ? ' old' : ''}">${duckSVG(s.players[id].duck, { size: 26, shadow: false, title: s.players[id].name })}</span>`).join('') || '<span class="bj-card none"></span>'}</div></div>`;
+  };
+  if (b.st !== 'vote') v.voted = {};
+  v.hands.innerHTML = b.st === 'vote' ? pick('chips', 'Play for chips') + pick('fun', 'Just for fun')
+    : hand(BUTLER, 'd', dl, 'dealer') + hand('You', 'm', mine, 'mine' + (turnId === me ? ' turn' : ''), myNote);
   v.others.innerHTML = b.order.filter(id => id !== me && s.players[id]).map(id => {
     const list = cards.hands[id] || [], r = b.res[id];
     return `<li class="${id === turnId ? 'turn' : ''}">${nameOf(s, id)}<b class="bj-total">${totalTxt(list)}</b>${chips && b.bets[id] ? `<span class="bj-bet">${chipSVG()}${b.bets[id]}</span>` : ''}${r ? `<span class="bj-res r-${r.r}">${WORD[r.r]}</span>` : ''}</li>`;
@@ -359,7 +367,7 @@ activity({
     Object.assign(art.style, { width: TOP.w + 'px', height: TOP.h + 'px', zIndex: Math.round(BJ.cy) + 11 });   // (just over the table: a duck south of it still in front)
     board.querySelector('.hang-props').append(art);
     v = { ctx, el, art, say: el.querySelector('.hang-bj-say'), chipsEl: el.querySelector('.hang-bj-chips'), hands: el.querySelector('.hang-bj-hands'), others: el.querySelector('.hang-bj-others'),
-      acts: el.querySelector('.hang-bj-acts'), bar: el.querySelector('.hang-bj-time i'), open: false, pick: BETS[0], sig: '', prev: {}, artSig: '', seen: -1, betsSeen: -1, free: null };
+      acts: el.querySelector('.hang-bj-acts'), bar: el.querySelector('.hang-bj-time i'), open: false, pick: BETS[0], sig: '', prev: {}, voted: {}, artSig: '', seen: -1, betsSeen: -1, free: null };
     el.querySelector('.hang-book-x').onclick = () => getUp(ctx);
     el.addEventListener('click', press);
     addEventListener('keydown', esc_, true);

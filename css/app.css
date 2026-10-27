@@ -1907,7 +1907,7 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .hang-bj-hands { display: flex; gap: .5rem; }
 .hang-bj-hand { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; padding: .35rem .45rem .45rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .7rem; }
 .hang-bj-hand.turn { border-color: var(--yellow); }
-.hang-bj-who { display: flex; align-items: center; gap: .35rem; min-width: 0; color: var(--dim); font-size: calc(.82rem * var(--ts)); white-space: nowrap; }
+.hang-bj-who { display: flex; align-items: center; gap: .35rem; min-width: 0; color: var(--dim); font-size: calc(.82rem * var(--ts)); line-height: calc(1.3rem * var(--ts)); white-space: nowrap; }   /* (one height with a total or without: the window never jumps) */
 .bj-total { color: var(--ink); font-size: calc(1.05rem * var(--ts)); }
 .bj-bet { display: inline-flex; align-items: center; gap: .2rem; color: var(--ink); font-weight: 700; }
 .bj-res { margin-left: auto; font-weight: 700; color: var(--ink); }
@@ -1922,6 +1922,12 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .bj-card.back { background: #3e6d8c; box-shadow: inset 0 0 0 .22rem #3e6d8c, inset 0 0 0 .3rem #e8d9a0, 0 .12rem 0 #0006; }
 .bj-card.none { visibility: hidden; }
 .bj-card.old { animation: none; }
+.bj-voters { align-items: center; overflow: hidden; }   /* (the vote: a little duck for each who picked it, overlapping like cards) */
+.bj-voter { flex: none; display: block; width: 2.1rem; animation: popin .16s ease-out; }
+.bj-voter + .bj-voter { margin-left: -.55rem; }
+.bj-voters:has(.bj-voter:nth-child(5)) .bj-voter + .bj-voter { margin-left: -1rem; }   /* (five or more: closer, so all 8 fit) */
+.bj-voter.old { animation: none; }
+.bj-voter svg { display: block; width: 100%; height: auto; }
 .hang-bj:not(.side) .bj-cards { min-height: 2.7rem; }   /* (a tall screen: smaller cards, so the table fits above the window) */
 .hang-bj:not(.side) .bj-card { width: 1.95rem; height: 2.7rem; }
 .hang-bj:not(.side) .bj-card + .bj-card { margin-left: -.65rem; }
