@@ -2238,3 +2238,19 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
   sounds keep running. Prove it with frame times before and after.
 - The owner's laptop note (22:16Z, above): it lags on its integrated GPU (on battery), so it was measured on a
   weak-GPU budget: headless Chromium's software compositing, CPU slowed 4x.
+
+## Request (owner, 2026-10-27 23:19Z): inside hides the outside, bare bones off screen
+"I think being inside should auto hide the assets to the outside by making it black outside the building WHILE making everything outside of it bear bones, and being ouside should make the inside bear bones as well. When you walk outside, the black fades away smoothly.  Fireflies for example or trees SHOULD NOT be AT ALL rendered when not in the screen, same with the water, the the details of grass if it effects game, or anything like it, so very bear bones when not in render distance. The zooming in and out might show what isnt loaded in though, i havent tested IF anything in the in game settings does that, but i do know the browser doesnt. Lights that arent near by should render UNLESS their emitted area of light enters the screen, then the light becomes rendered, and ONLY IF it is inside for inside players and outside of outside players, or else it wouldnt show even if. 
+
+lemme know ab other ideas and inform me what effects gameplay the most"
+- Done in #134 (Solomon the 2nd): inside, the shade is opaque black and fades in; once it's up, props, ground tiles and
+  light pools under it aren't drawn. Walking out it fades away over .6 s. Zooming shows old tiles stretched, no plain
+  squares.
+
+## Request (owner, 2026-10-27 23:25Z): Low graphics setting, still TV picture
+"UHHMM, make a low graphic setting in other ways that applies to other things in the game.  Ask adam who should handle that new setting"
+"Make the Tv's picture not move anymore, so it is only an image, and it should be a compressed enough image to save resources"
+- Decided (Adam): Solomon the 2nd, as a new PR after #134. Low graphics sits in Settings by "Data saving" and builds on
+  NET '1' (moving background and animations off); it turns off or halves things everywhere (fireflies, shimmer,
+  half-size cabin ground, still map backgrounds, fewer particles), saved like the other settings. The TV shows one small
+  still picture. The owner sees a normal-against-low sheet on every map, phone and computer, with frame times, first.
