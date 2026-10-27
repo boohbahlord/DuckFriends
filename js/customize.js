@@ -63,12 +63,14 @@ const valueOf = k => {
 /* a grid of picture tiles, three to a row */
 const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) =>
   `<button type="button" class="arm-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>`;
-/* a grid split into themed groups under small headings; "none" (if there) comes first, anything ungrouped last */
-const grouped = (group, items, cur, groups) => {
+/* a grid split into themed groups under small headings; "none" (if there) comes first, anything ungrouped last;
+   after: the picked item's own options, right under the grid it sits in */
+const grouped = (group, items, cur, groups, after = '') => {
   const by = new Map(items.map(i => [i[0], i])), used = new Set(['none']), none = items.filter(i => i[0] === 'none');
-  const parts = groups.map(([label, ids]) => { const its = ids.map(id => by.get(id)).filter(Boolean); its.forEach(i => used.add(i[0])); return its.length ? `<h3>${esc(label)}</h3>${grid(group, its, cur)}` : ''; });
+  const block = its => grid(group, its, cur) + (after && its.some(i => i[0] === cur) ? after : '');
+  const parts = groups.map(([label, ids]) => { const its = ids.map(id => by.get(id)).filter(Boolean); its.forEach(i => used.add(i[0])); return its.length ? `<h3>${esc(label)}</h3>${block(its)}` : ''; });
   const rest = items.filter(i => !used.has(i[0]));
-  return (none.length ? grid(group, none, cur) : '') + parts.join('') + (rest.length ? `<h3>More</h3>${grid(group, rest, cur)}` : '');
+  return (none.length ? block(none) : '') + parts.join('') + (rest.length ? `<h3>More</h3>${block(rest)}` : '');
 };
 let lastPage = null, lastColor = 'duck', keyFor = null;   // keyFor: the special whose key boxes are open
 const openFolds = new Set();
@@ -156,7 +158,10 @@ export function openCustomize(page = lastPage) {
         } else if (k === 'outfit') {
           const pic = id => duckSVG({ ...D, image: null, hat: null, face: null, outfit: id ? { ...(D.outfit && D.outfit.id === id ? D.outfit : {}), id } : null }, { size: 58, shadow: false });
           const od = D.outfit && outfitById(D.outfit.id);
-          html = head('Outfit') + `<div class="arm-body">${grouped('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none', OUTFIT_GROUPS)}
+          /* an outfit's options (the leather jacket: jeans or no pants), right under its tile */
+          const opts = od && od.opts ? `<div class="arm-opts">${od.opts.map(([key, choices]) => { const on = choices.some(([v]) => v === D.outfit[key]) ? D.outfit[key] : choices[0][0];
+            return `<div class="row small-tiles">${choices.map(([v, n]) => `<button type="button" class="tile" data-g="oopt" data-k="${key}" data-v="${v}" aria-pressed="${v === on}">${esc(n)}</button>`).join('')}</div>`; }).join('')}</div>` : '';
+          html = head('Outfit') + `<div class="arm-body">${grouped('outfit', [['none', pic(null), 'No outfit'], ...OUTFITS.map(o => [o.id, pic(o.id), o.name, o.tip])], od ? od.id : 'none', OUTFIT_GROUPS, opts)}
             ${od ? `<p class="small dim">${esc(od.name)}${od.tip ? `: ${esc(od.tip)}` : '.'}${od.colors ? ' Its colors are under Colors.' : ''}</p>` : '<p class="small dim">An outfit goes over the body, whatever the style.</p>'}</div>`;
         } else if (k === 'style') {
           /* each style on your duck as it is: picking one changes nothing else; the button below brings in the style's
@@ -280,6 +285,7 @@ export function openCustomize(page = lastPage) {
           eyes: () => { D.eyes = v; },
           beak: () => { D.beak = v; },
           outfit: () => { D.outfit = v === 'none' ? null : { ...(D.outfit && D.outfit.id === v ? D.outfit : {}), id: v }; },
+          oopt: () => { D.outfit = { ...D.outfit, [t.dataset.k]: v }; },
           style: () => { D.style = v; },   // (nothing else changes; Match the … look brings in the rest)
           build: () => { D.build = +v; },
           size: () => { D.size = +v; },

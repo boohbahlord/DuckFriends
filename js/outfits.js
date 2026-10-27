@@ -30,8 +30,8 @@ const neck = (a0, a1, r = 25.3) => { const p = a => `${(76 + r * Math.cos(a * Ma
 const romanCollar = () => `<path d="${neck(150, 30, 25.6)}" stroke="#08080b" stroke-width="5.6" fill="none"/><path d="${neck(150, 30, 28.4)}" stroke="#4a4a56" stroke-width="1" fill="none"/>
   <path d="${neck(80, 26, 25.6)}" stroke="#fdfdf9" stroke-width="5.6" fill="none"/><path d="${neck(80, 26, 28.4)}" stroke="#bdbdb4" stroke-width="1" fill="none"/>`;
 /* the leather jacket's parts: a zip (dark tape, silver teeth) and its pull; the centre-front zip runs on the body's own
-   front edge (from the neck to the hem), so only its near half shows, set in from the outline */
-const FRONT = 'M88 60C96 64 101 72 100 82C99.2 88.4 96.2 93.5 91.4 97.4';
+   front edge (from the neck to the hem at y 94), so only its near half shows, set in from the outline */
+const FRONT = 'M88 60C96 64 101 72 100 82C99.4 86.8 97.5 90.9 94.6 94.2';
 const zipLine = (d, w = 1) => `<path d="${d}" stroke="#0d0d10" stroke-width="${(2.8 * w).toFixed(2)}" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#c9ccd2" stroke-width="${(1.3 * w).toFixed(2)}" fill="none" stroke-dasharray=".6 .55"/>`;
 const pull = (x, y, a = 0, k = 1) => `<rect x="${x - .8 * k}" y="${y}" width="${1.6 * k}" height="${3.4 * k}" rx="${.6 * k}" fill="#c9ccd2" stroke="#6b7078" stroke-width=".4" transform="rotate(${a} ${x} ${y})"/>`;
 const belt = (c, buckle = '#d9b44a', y = 86) => `<rect y="${y - 2}" width="120" height="4" fill="${c}"/><rect x="94" y="${y - 2.6}" width="5" height="5.2" rx="1" fill="none" stroke="${buckle}" stroke-width="1.3"/>`;
@@ -52,8 +52,9 @@ const chest = (name, fill, edge) => { const id = 'jma' + (++arcN); return `<g cl
 /* past the outline: a skirt that flares at the hem */
 const flare = (c, y = 92, out = 5) => `<path d="M${18 - out} ${y + 14}C${30} ${y + 4} ${88} ${y + 2} ${100 + out} ${y + 10}L${101 + out} ${y + 15}C${70} ${y + 20} ${40} ${y + 20} ${17 - out} ${y + 15}Z" fill="${c}" stroke="${dk(c, .4)}" stroke-width="1.2"/>`;
 
-/* each outfit: { id, name, tip, colors, cloth(o), sleeve(o), over(o), back(o), bare, low } (o: the outfit with its colors;
-   low: cloth below the waist only, so the bare body above keeps its highlights) */
+/* each outfit: { id, name, tip, colors, opts, cloth(o), sleeve(o), over(o), back(o), bare, low } (o: the outfit with its
+   colors and options; opts: [key, [[value, label], …]], the first the default, picked under the outfit's tile; low:
+   cloth below the waist only, so the bare body above keeps its highlights) */
 export const OUTFITS = [
   { id: 'suit', name: 'Suit and tie', colors: [['c1', 'Suit', '#2b2f3a'], ['c2', 'Tie', '#c8102e']],
     cloth: o => ALL(o.c1) + shirtV() + lapels(o.c1) + tie(o.c2) + buttons(dk(o.c1, .5), [[90, 84], [90.8, 92]]), sleeve: o => sleeve(o.c1, '#fbfbf7') },
@@ -101,19 +102,25 @@ export const OUTFITS = [
   { id: 'celtics', name: 'Celtics jersey #33', tip: 'Larry Bird\'s number with the Celtics: green with white.',
     cloth: () => TOP('#007a33', 90) + LOW('#007a33', 90) + `<rect y="88" width="120" height="3" fill="#fff"/>` + collarBand('#fff', 2.8) + chest('CELTICS', '#fff', '#00461d'),
     bare: true, sleeve: () => `<path d="M38 74C48 66 70 67 79 77" stroke="#fff" stroke-width="2.6" fill="none"/>` },
-  /* a café racer: matte black leather with a soft sheen and darker seams; the collar: a band round the neck and its point lying on the chest, with a snap; the zip on the
-     centre line (the body's front edge, so only its near half shows, as the suit's tie); a chest and a hand zip pocket;
-     the belt at the hem with its buckle near the front */
-  { id: 'leather', name: 'Leather jacket', tip: 'A black leather biker jacket: zips, a snap collar and a belt at the hem.',
-    cloth: () => ALL('#1f1f24') + `<g fill="none" stroke-linecap="round"><path d="M18 64C30 72 46 72 60 69" stroke="#fff" stroke-width="5" opacity=".06"/><path d="M93.5 67C97.5 73 98.6 80 97.4 87" stroke="#fff" stroke-width="3" opacity=".09"/><path d="M14 66C14 77 18 86 26 93" stroke="#fff" stroke-width="3" opacity=".06"/></g>
-      <g fill="none"><path d="M14 59C30 67 50 67 66 63" stroke="#0d0d10" stroke-width="1.3"/><path d="M15 61C30 68.6 50 68.6 66 64.6" stroke="#3a3a42" stroke-width=".45" stroke-dasharray="1 .8"/><path d="M30 65C27 74 27 84 31 92.5" stroke="#0d0d10" stroke-width="1.1"/></g>
+  /* a café racer: matte black leather with a soft sheen and darker seams; the collar: a band round the neck and its
+     point lying on the chest, with a snap; the zip on the centre line (the body's front edge, so only its near half
+     shows, as the suit's tie); a chest and a hand zip pocket. It ends at the hip (y 94). The owner picks what goes
+     under it: blue jeans with the belt at the jacket's hem, or no pants and no belt (the duck's own body, as under
+     the shirt) */
+  { id: 'leather', name: 'Leather jacket', tip: 'A black leather biker jacket with zips and a snap collar. Pick jeans with a belt, or no pants.',
+    opts: [['pants', [['jeans', 'Jeans'], ['none', 'No pants']]]],
+    cloth: o => TOP('#1f1f24', 94) + `<g fill="none" stroke-linecap="round"><path d="M18 64C30 72 46 72 60 69" stroke="#fff" stroke-width="5" opacity=".06"/><path d="M93.5 67C97.5 73 98.6 80 97.4 87" stroke="#fff" stroke-width="3" opacity=".09"/><path d="M14 66C14 77 18 86 24 91" stroke="#fff" stroke-width="3" opacity=".06"/></g>
+      <g fill="none"><path d="M14 59C30 67 50 67 66 63" stroke="#0d0d10" stroke-width="1.3"/><path d="M15 61C30 68.6 50 68.6 66 64.6" stroke="#3a3a42" stroke-width=".45" stroke-dasharray="1 .8"/><path d="M30 65C27 74 27 82 29 89" stroke="#0d0d10" stroke-width="1.1"/></g>
       <path d="${neck(155, 52, 25.5)}" stroke="#2a2a31" stroke-width="5.4" fill="none"/><path d="${neck(155, 52, 28.2)}" stroke="#0d0d10" stroke-width="1" fill="none"/><path d="${neck(155, 52, 27.2)}" stroke="#4a4a54" stroke-width=".4" stroke-dasharray="1 .8" fill="none"/><circle cx="82.6" cy="64.4" r="1" fill="#c9ccd2" stroke="#6b7078" stroke-width=".4"/>
       <g fill="none"><path d="${FRONT}" stroke="#0d0d10" stroke-width="9.6"/><path d="${FRONT}" stroke="#c9ccd2" stroke-width="6.4" stroke-dasharray=".7 .6"/><path d="${FRONT}" stroke="#0d0d10" stroke-width="2.6"/></g>${pull(89.4, 61.6, -8)}
       <path d="M77 62.4L88.6 61L94.4 64.8L92.2 71.6L84.2 66.8Z" fill="#2a2a31" stroke="#0d0d10" stroke-width=".8" stroke-linejoin="round"/><path d="M84.2 66.8L92.2 71.6" stroke="#4a4a54" stroke-width=".6"/><circle cx="91" cy="69.6" r=".95" fill="#c9ccd2" stroke="#6b7078" stroke-width=".4"/>
-      <path d="M80.6 77L90.2 73.8" stroke="#3a3a42" stroke-width="1.6" stroke-linecap="round"/>${zipLine('M80.6 76.4L90.2 73.2', .8)}${pull(90, 73.2, -4, .8)}
-      <path d="M82.4 90.6L89.6 81.6" stroke="#3a3a42" stroke-width="1.8" stroke-linecap="round"/>${zipLine('M81.8 90.2L89 81.2', .9)}${pull(89, 81.2, -10, .9)}
-      <rect y="92.4" width="120" height="5.6" fill="#141417"/><path d="M0 93.4H120M0 97H120" stroke="#3a3a42" stroke-width=".45" stroke-dasharray="1 .8"/>
-      <path d="M89 93.6H100V96.8H89Z" fill="#1a1a1e"/><circle cx="93.4" cy="95.2" r=".55" fill="#050506"/><rect x="84" y="91.8" width="5.2" height="6.8" rx=".9" fill="none" stroke="#c9ccd2" stroke-width="1.1"/><path d="M86.6 91.8V98.6M86.6 95.2H90.6" stroke="#c9ccd2" stroke-width=".7"/>`,
+      <path d="M80.6 76.6L90.2 73.4" stroke="#3a3a42" stroke-width="1.6" stroke-linecap="round"/>${zipLine('M80.6 76L90.2 72.8', .8)}${pull(90, 72.8, -4, .8)}
+      <path d="M82.8 86.8L88.8 79.6" stroke="#3a3a42" stroke-width="1.8" stroke-linecap="round"/>${zipLine('M82.2 86.4L88.2 79.2', .9)}${pull(88.2, 79.2, -10, .9)}
+      ${o.pants === 'none'
+    ? `<rect y="91.4" width="120" height="2.6" fill="#18181c"/><path d="M0 91.4H120" stroke="#0d0d10" stroke-width=".6"/><path d="M0 92.6H120" stroke="#3a3a42" stroke-width=".4" stroke-dasharray="1 .8"/>`
+    : LOW('#3f63a8', 94) + `<g fill="none" stroke="#d9a441" stroke-width=".8" stroke-dasharray="1.6 1"><path d="M58 94V108"/><path d="M86 94.4C86.6 99 88.6 101.4 92 101"/></g><path d="M61 94V108" stroke="#2f4d86" stroke-width="1"/>
+      <rect y="88.6" width="120" height="5.6" fill="#141417"/><path d="M0 89.6H120M0 93.2H120" stroke="#3a3a42" stroke-width=".45" stroke-dasharray="1 .8"/>
+      <path d="M89 89.8H100V93H89Z" fill="#1a1a1e"/><circle cx="93.4" cy="91.4" r=".55" fill="#050506"/><rect x="84" y="88" width="5.2" height="6.8" rx=".9" fill="none" stroke="#c9ccd2" stroke-width="1.1"/><path d="M86.6 88V94.8M86.6 91.4H90.6" stroke="#c9ccd2" stroke-width=".7"/>`}`,
     sleeve: () => sleeve('#1f1f24') + `${zipLine('M45.4 79.2L49.4 86.6', .7)}${pull(49.4, 86.6, -30, .7)}` },
   { id: 'royal', name: 'Royal robe', tip: 'Red velvet with ermine trim and a gold clasp. The crown goes with it.', colors: [['c1', 'Velvet', '#9b1426']],
     cloth: o => ALL(o.c1) + `<path d="M10 52C26 64 44 70 64 68C78 67 90 64 101 60L102 70C88 76 70 78 56 78C36 78 22 70 10 62Z" fill="#fbfaf6"/>` + `<g fill="#1c1c1c"><path d="M24 66l1.2 3 1.2-3-1.2 1Z"/><path d="M40 72l1.2 3 1.2-3-1.2 1Z"/><path d="M58 73l1.2 3 1.2-3-1.2 1Z"/><path d="M76 71l1.2 3 1.2-3-1.2 1Z"/><path d="M92 66l1.2 3 1.2-3-1.2 1Z"/></g>` + `<circle cx="88" cy="74" r="2.6" fill="#e2b93b" stroke="#8a6400" stroke-width=".8"/>` + `<rect y="100" width="120" height="8" fill="#fbfaf6"/><g fill="#1c1c1c"><path d="M30 102l1 2.6 1-2.6-1 .8Z"/><path d="M50 103l1 2.6 1-2.6-1 .8Z"/><path d="M70 102l1 2.6 1-2.6-1 .8Z"/></g>`,
@@ -179,6 +186,7 @@ export const OUTFIT_GROUPS = [
 export function outfitLayers(outfit, T) {   // T: the duck's own tones { base, edge } (a bare arm)
   const def = outfit && outfitById(outfit.id); if (!def) return null;
   const o = { ...Object.fromEntries((def.colors || []).map(([k, , v]) => [k, v])), ...Object.fromEntries((def.colors || []).map(([k]) => [k, outfit[k]]).filter(([, v]) => v)) };
+  for (const [k, choices] of def.opts || []) o[k] = choices.some(([v]) => v === outfit[k]) ? outfit[k] : choices[0][0];   // an option: the look's pick, or the first
   const run = f => (f ? f(o, T) : '');
   return { cloth: run(def.cloth), sleeve: def.sleeve ? def.sleeve(o, T) : null, over: run(def.over), back: run(def.back), bare: !!def.bare, low: !!def.low };
 }

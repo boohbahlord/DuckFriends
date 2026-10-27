@@ -2151,3 +2151,21 @@ Decisions:
   anything on the chest's centre line (a tie, a zip, buttons, a collar's opening) sits on the body's front edge with only
   its near half showing, curving away with the body; clothes follow the outline, the far side stays hidden; nothing hangs
   outside the outline unless a real garment would show there; no white shine spots on cloth or hats.
+- Built in PR #127 (Solomon the 2nd): all nine; sheets in project files outfit-fixes/sheets/.
+
+## Request (2026-10-27 21:00Z and 21:03Z): thinner block lines, and see new items first
+> The block style of duck should have very very small lines between the duck, because they are too big.
+
+> i want to see the new items before they are added to the game.
+
+- Decided (Adam, 21:05Z): every new or redrawn item is shown to the owner as a picture, and nothing merges until the
+  owner OKs it. In #127: the round white shine dots also come off hats of felt, cloth, straw, paper and cheese (metal,
+  glass and glossy plastic keep real reflections); on Blocks, no red block edges past the clothes, and the lines between
+  blocks become very thin while the blocks still read as blocks at 26 px.
+
+## Request (2026-10-27 21:07Z): the leather jacket's bottom part
+> Make this bottom part be either blue jeans with that belt, or nothing and no belt (like how shirt doesnt have pants on the duck),all of which can be edited in a little option on the selection tile for the leather jacket of either pants or no pants to go with it . I think the cheese might be fine then
+
+- Decided (Solomon the 2nd): the jacket ends at the hip. Under its tile (right below its grid) two small buttons pick
+  Jeans (blue jeans, with the belt at the jacket's hem; the default) or No pants (no belt, the duck's own body, as
+  under the shirt). Stored as `outfit.pants` ('jeans' / 'none'); outfits can now list such options (`opts`).

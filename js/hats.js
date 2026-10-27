@@ -66,11 +66,9 @@ const DRAW = {
     <path d="M6-31C12-36 19-33 20-28C14-27 9-28 6-31Z" fill="#3fa34d" ${O}/>
     <ellipse cx="-11" cy="-11" rx="12" ry="12.5" fill="#f07f15" ${O}/><ellipse cx="13" cy="-11" rx="12" ry="12.5" fill="#f07f15" ${O}/>
     <ellipse cx="1" cy="-12" rx="13" ry="14" fill="#ff9426" ${O}/>
-    <path d="M1-25C-4-18-4-5 1 2M1-25C6-18 6-5 1 2" stroke="#d96a0e" stroke-width="1.4" fill="none"/>
-    <ellipse cx="-4" cy="-19" rx="4" ry="2" fill="#fff" opacity=".45"/>`,
+    <path d="M1-25C-4-18-4-5 1 2M1-25C6-18 6-5 1 2" stroke="#d96a0e" stroke-width="1.4" fill="none"/>`,
   hotdog: h => `<path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" ${O}/>
     <rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" ${O}/>
-    <ellipse cx="-12" cy="-14" rx="8" ry="1.4" fill="#fff" opacity=".35"/>
     ${h.ketchup ? '<path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#d7191c" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' : ''}
     <path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" ${O}/>`,
   afroBack: h => { const r = (k => () => (k = (k * 9301 + 49297) % 233280) / 233280)(7), cx = 71, cy = 28, R = 33, edge = dk(h.c1, .35), hi = lt(h.c1, .28);
@@ -171,7 +169,7 @@ const DRAW = {
     <circle cx="6" cy="-20" r="4.6" fill="#a9afb8" ${O}/><circle cx="6" cy="-20" r="2.6" fill="#f4a3b4"/>
     <circle cx="13.6" cy="-20.4" r="4" fill="#a9afb8" ${O}/><circle cx="13.6" cy="-20.4" r="2.2" fill="#f4a3b4"/>
     <circle cx="17.2" cy="-12" r="1.6" fill="#f07c95"/><circle cx="12.6" cy="-14.6" r="1.3" fill="#111"/>
-    <path d="M16-11l5-1M16-10l5 1" stroke="#555" stroke-width=".6"/><ellipse cx="-6" cy="-12" rx="5" ry="2" fill="#fff" opacity=".35"/>`,
+    <path d="M16-11l5-1M16-10l5 1" stroke="#555" stroke-width=".6"/>`,
   bow: h => `<g transform="translate(-6 -3) rotate(-12)">
     <path d="M0 0C-8-12-22-14-24-4C-25 4-12 6 0 0Z" fill="${h.c1}" ${O}/>
     <path d="M0 0C8-12 22-14 24-4C25 4 12 6 0 0Z" fill="${h.c1}" ${O}/>

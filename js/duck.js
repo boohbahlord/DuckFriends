@@ -9,7 +9,7 @@ import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
-import { styleById, styleColor, styleLayers, blocksBody, geoBody, geoWing, GEO_BODY } from './styles.js';
+import { styleById, styleColor, styleLayers, blocksBody, blocksCloth, geoBody, geoWing, GEO_BODY } from './styles.js';
 import { outfitLayers } from './outfits.js';
 
 export const DUCK_COLORS = [
@@ -105,8 +105,10 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
   if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal; an outfit lies flat on the body
     const OF = marks(outfitLayers(L.outfit, { base: L.color, edge: mix(L.color, 0, .45) }), size), blocks = st.id === 'blocks';
-    const cloth = OF && OF.cloth ? `<defs><clipPath id="${id}fc"><path d="${blocks ? BODY : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
-<g mask="url(#${id}nh)"><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join('')}" stroke="#00000030" stroke-width="1"/>` : ''}</g></g></g>` : '';
+    /* on Blocks the clothes take the blocks' own outline (the head's blocks stay out of it, so no mask), with the same
+       thin seams; on 2D shapes, the half disc's, under the head */
+    const cloth = OF && OF.cloth ? `<defs><clipPath id="${id}fc"><path d="${blocks ? blocksCloth() : GEO_BODY}"/></clipPath><mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask></defs>
+<g${blocks ? '' : ` mask="url(#${id}nh)"`}><g${bt}><g clip-path="url(#${id}fc)">${OF.cloth}${blocks ? `<path d="${Array.from({ length: 20 }, (_, i) => `M0 ${i * 6}H120M${i * 6} 0V120`).join('')}" stroke="#00000038" stroke-width=".3"/>` : ''}</g></g></g>` : '';
     return `<svg class="duck flat${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Duck')}">
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
