@@ -5,6 +5,7 @@
    can be recolored name their colors (c1, c2), which show under Colors. */
 import { ROBOT } from './hats.js';
 import { beakSVG } from './beaks.js';
+import { eyesSVG } from './eyes.js';
 
 export const FACES = [
   { id: 'moto', name: 'Motorcycle helmet', colors: [['c1', 'Helmet', '#d7263d'], ['c2', 'Trim', '#2b2b33']] },
@@ -25,6 +26,7 @@ export const FACES = [
   { id: 'patch', name: 'Eye patch' },
   { id: 'hero', name: 'Hero mask', colors: [['c1', 'Mask', '#1f6feb']] },
   { id: 'vr', name: 'VR headset' },
+  { id: 'clownpaint', name: 'Clown paint', tip: 'White greasepaint, a diamond over the eye, red cheeks and a red nose.', colors: [['c1', 'Diamond', '#1f4fd8']] },
 ];
 export const faceById = id => FACES.find(f => f.id === id) || null;
 /* how Customize shows the face items: in themed groups, each under a small heading */
@@ -33,6 +35,7 @@ export const FACE_GROUPS = [
   ['Helmets and masks', ['moto', 'scifi', 'gasmask', 'ski', 'hero', 'vr']],
   ['Over the eyes', ['blindfold', 'sleep', 'patch']],
   ['Silly', ['bag', 'pumpkin', 'box', 'clown']],
+  ['Jesters and clowns', ['clownpaint']],
 ];
 
 const O = 'stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"';
@@ -118,6 +121,16 @@ const DRAW = {
   clown: (f, id, look) => { const [x, y] = NOSE[look && look.beak] || NOSE.default;
     return `<defs><radialGradient id="${id}n" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".55" stop-color="#e01b1b"/><stop offset="1" stop-color="#8a0a0a"/></radialGradient></defs>
     <circle cx="${x}" cy="${y}" r="5.4" fill="url(#${id}n)" ${O}/><ellipse cx="${x - 1.9}" cy="${y - 2}" rx="1.8" ry="1.1" fill="#fff" opacity=".75"/>`; },
+  /* clown paint: white greasepaint over the front of the face (a wavy edge behind the eye), a diamond through the eye,
+     a red cheek and the red nose; the beak and the eye go back on top of the paint */
+  clownpaint: (f, id, look, dead) => { const L = look || {};
+    return `<defs><clipPath id="${id}h"><circle cx="76" cy="40" r="22.2"/></clipPath><radialGradient id="${id}w" cx=".55" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#f3f1ea"/><stop offset="1" stop-color="#d9d5ca"/></radialGradient></defs>
+    <g clip-path="url(#${id}h)"><path d="M72 17C67 21 70 25 66 29C62 33 67 37 63 41C59 45 65 49 62 53C60 57 66 61 70 64L104 64L104 17Z" fill="url(#${id}w)"/>
+      <path d="M72 17C67 21 70 25 66 29C62 33 67 37 63 41C59 45 65 49 62 53C60 57 66 61 70 64" fill="none" stroke="#c9c4b6" stroke-width=".9"/>
+      <ellipse cx="84" cy="24" rx="5" ry="2.4" fill="#fff" opacity=".8"/></g>
+    <path d="M83 21.5L88 34L83 46.5L78 34Z" fill="${f.c1}" stroke="${dk(f.c1, .45)}" stroke-width=".8" stroke-linejoin="round"/>
+    <circle cx="89.5" cy="46.5" r="3.6" fill="#e8262b" opacity=".75"/>
+    ${beakSVG(L)}${eyesSVG(L, dead)}${DRAW.clown(f, id, L)}`; },
   sleep: f => `<path d="M54 31L76 30M97 31L101 32" stroke="${dk(f.c1, .25)}" stroke-width="3" stroke-linecap="round"/>
     <path d="M75 28.5C82 25 94 25.5 97.5 30C98.5 36.5 94 41.5 86 41.5C79.5 41.5 75 36.5 75 28.5Z" fill="${f.c1}" ${O}/>
     <path d="M76.6 30C83 27 93 27.4 96 30.8" stroke="${lt(f.c1, .4)}" stroke-width="1.2" opacity=".7" fill="none" stroke-linecap="round"/>
@@ -137,10 +150,10 @@ const DRAW = {
 
 /* the layer over the face, or '' */
 let uid = 0;
-export function faceLayer(face, look) {
+export function faceLayer(face, look, dead) {
   const def = face && faceById(face.id); if (!def) return '';
   const f = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), ...face };
-  return DRAW[def.id](f, 'fc' + (++uid), look);
+  return DRAW[def.id](f, 'fc' + (++uid), look, dead);
 }
 /* a face item on its own in a 32 × 32 tile (card patterns) */
 export function faceTile(id) {

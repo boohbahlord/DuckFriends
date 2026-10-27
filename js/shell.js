@@ -32,6 +32,7 @@ import { TEXT, getopt, lines } from './textutils.js';
 import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
+import { secret } from './unlocks.js';
 import { music } from './music.js';
 
 const tag = n => String(n || '').replace(/\s+/g, '');
@@ -408,6 +409,8 @@ const CMDS = {
     return MAN[args[0]] || MAN[args[0].toLowerCase()] || helpPage(args.join('-')) || fail(`✗ No manual entry for ${args[0]} (help lists the Help pages)`);
   },
   apropos: (args, i, x) => CMDS.man(['-k', ...args], i, x),
+  /* the secret codes (kept out of help, /bin and Tab): Secret <code> on|off */
+  secret: (args, i, x) => { const msg = secret(args[0], (args[1] || '').toLowerCase()); if (x.ctx.look) x.ctx.look(); return msg; },
   clear: () => null,
   exit: (a, i, x) => { x.ctx.close(); return ''; },
   pwd: () => fs.cwd,
@@ -668,7 +671,7 @@ const CMDS = {
 };
 CMDS.logout = CMDS.exit;
 /* the commands in /bin: everything with a manual page */
-const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo').sort();
+const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo' && k !== 'secret').sort();
 
 /* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them
    back. A name with a space (or ' or ?) goes in quotes, as in bash: song off "Jester's Stair" */

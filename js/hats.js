@@ -39,6 +39,8 @@ export const HATS = [
   { id: 'pope', name: 'Papal mitre' },
   { id: 'bishop', name: 'Bishop\'s mitre' },
   { id: 'helmet', name: 'Army helmet', colors: [['c1', 'Helmet', '#5b6b3a']] },
+  { id: 'jester', name: 'Jester hat', tip: 'Four floppy points with gold bells.', colors: [['c1', 'Red', '#c8102e'], ['c2', 'Black', '#23232d']] },
+  { id: 'clownwig', name: 'Clown wig', tip: 'Big curly puffs and a bald top.', colors: [['c1', 'Hair', '#ff4a1c']] },
 ];
 export const hatById = id => HATS.find(h => h.id === id) || null;
 /* how Customize shows the hats: in themed groups, each under a small heading */
@@ -49,6 +51,7 @@ export const HAT_GROUPS = [
   ['Fantasy', ['wizard', 'crown', 'halo', 'horns']],
   ['Jobs and uniforms', ['police', 'fire', 'doctor', 'helmet']],
   ['Weddings and church', ['veil', 'pope', 'bishop']],
+  ['Jesters and clowns', ['jester', 'clownwig']],
 ];
 export const HAT_TOP = 32;   // the headroom (in duck units) a hat needs above the duck's box
 const dk = (hex, t) => { const n = parseInt(String(hex).slice(1), 16) || 0, c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * (1 - t))); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
@@ -281,6 +284,34 @@ const DRAW = {
     <circle cx="-9" cy="-11" r="1" fill="${d}"/>
     <path d="M-14-14C-11-19-5-22 1-22" stroke="#fff" stroke-width="2.2" opacity=".35" fill="none" stroke-linecap="round"/>
     <ellipse cx="1" cy="-23.8" rx="3.2" ry="1.7" fill="${dk(c, .2)}" ${O}/>`; },
+  /* the jester's hat: a cap split in its two colors on a gold band, and four floppy points (two up, two drooping to the
+     sides), each ending in a gold bell; a point is a curve that tapers from the cap to its bell */
+  jester: (h, id) => { const gold = '#e2b93b', gd = '#8a6400';
+    const point = (b, c1, c2, t, w, col) => { const at = k => { const u = 1 - k; return [0, 1].map(i => u * u * u * b[i] + 3 * u * u * k * c1[i] + 3 * u * k * k * c2[i] + k * k * k * t[i]); };
+      const L = [], R = [];
+      for (let i = 0; i <= 16; i++) { const k = i / 16, [x, y] = at(k), [x2, y2] = at(Math.min(1, k + .01)), [x1, y1] = at(Math.max(0, k - .01)), dx = x2 - x1, dy = y2 - y1, n = Math.hypot(dx, dy) || 1, r = w / 2 * (1 - k * .72);
+        L.push(`${(x - dy / n * r).toFixed(1)} ${(y + dx / n * r).toFixed(1)}`); R.unshift(`${(x + dy / n * r).toFixed(1)} ${(y - dx / n * r).toFixed(1)}`); }
+      return `<path d="M${L.join('L')}L${R.join('L')}Z" fill="${col}" ${O}/><path d="M${L.slice(2, 12).join('L')}" stroke="#fff" stroke-width="1.3" fill="none" opacity=".22" stroke-linecap="round"/>`; };
+    const bell = (x, y) => `<circle cx="${x}" cy="${y}" r="3" fill="${gold}" stroke="${gd}" stroke-width="1"/><path d="M${x - 1.6} ${y + 1}H${x + 1.6}" stroke="${gd}" stroke-width=".9" stroke-linecap="round"/><circle cx="${x - 1}" cy="${y - 1.1}" r=".8" fill="#fff6c8" opacity=".9"/>`;
+    const cap = 'M-22 2C-22-10-12-17 1-17C14-17 24-10 24 2Z';
+    return `<defs><clipPath id="${id}jc"><path d="${cap}"/></clipPath></defs>
+    ${point([-5, -12], [-9, -36], [-30, -44], [-33, -27], 17, h.c2)}${point([7, -12], [11, -36], [32, -44], [35, -27], 17, h.c1)}
+    ${point([-13, -6], [-26, -20], [-39, -16], [-39, 1], 15, h.c1)}${point([15, -6], [28, -20], [40, -16], [40, 1], 15, h.c2)}
+    <path d="${cap}" fill="${h.c1}"/><g clip-path="url(#${id}jc)"><path d="M1-20L-6 4H-26V-20Z" fill="${h.c2}"/></g><path d="${cap}" fill="none" ${O}/>
+    <path d="M-23.5 3.5C-10 7 12 7 25.5 3.5L24.6-1.4C11 2-10 2-22.6-1.4Z" fill="${gold}" stroke="${gd}" stroke-width="1"/>
+    <g fill="${dk(gold, .25)}"><circle cx="-12" cy="2.6" r=".9"/><circle cx="1" cy="3.6" r=".9"/><circle cx="14" cy="2.8" r=".9"/></g>
+    ${bell(-33, -25)}${bell(35, -25)}${bell(-39, 3)}${bell(40, 3)}`; },
+  /* the clown wig: two big curly puffs (the far one peeks out behind the head), a bald top, a thin fringe at the back */
+  clownwig: h => { const c = h.c1, e = dk(c, .35), hi = lt(c, .32), sh = dk(c, .14);
+    /* a puff: overlapping balls drawn as one fluffy mass (the edge color a little wider behind, then the fill), with curls */
+    const ps = [[-10, -8, 7], [0, -11, 7.4], [9, -7, 6.4], [-14, 1, 7.2], [-4, 0, 8.4], [7, 3, 6.6], [-11, 10, 7], [-1, 11, 7.4], [8, 11, 5.8], [-6, 18, 5.6]];
+    const puff = (cx, cy, k, fill) => { const at = ([x, y, r], d = 0) => `<circle cx="${(cx + x * k * 1.15).toFixed(1)}" cy="${(cy + y * k * .9).toFixed(1)}" r="${(r * k + d).toFixed(1)}"/>`;
+      return `<g fill="${e}">${ps.map(p => at(p, 1.2)).join('')}</g><g fill="${fill}">${ps.map(p => at(p)).join('')}</g>`; };
+    if (h.far) return puff(-6, 4, .78, sh);
+    const curls = [[-12, -6], [-1, -9], [8, -4], [-15, 3], [-5, 2], [5, 6], [-11, 12], [0, 13], [-6, 19], [-17, -2]].map(([x, y], i) =>
+      `<path d="M${(-24 + x * 1.2 - 1.8).toFixed(1)} ${(21 + y * .95).toFixed(1)}a2.4 2.4 0 1 ${i % 2} ${i % 2 ? 3.2 : 3.4} ${i % 2 ? -1.2 : 1.6}"/>`).join('');
+    return `${puff(-24, 21, 1.05, c)}<g fill="none" stroke="${hi}" stroke-width="1.2" stroke-linecap="round" opacity=".75">${curls}</g>
+      <g fill="none" stroke="${sh}" stroke-width="1.1" stroke-linecap="round" opacity=".7"><path d="M-32 29a2.4 2.4 0 1 0 3.4 1.2M-16 31a2.2 2.2 0 1 0 3 1"/></g>`; },
 };
 export const ROBOT = `   /* the cardboard box head (now a Face item, faces.js), in the duck's own space */
   <path d="M46 14L104 14L114 6L58 6Z" fill="#d9b07a" ${O}/><path d="M104 14L114 6L114 60L104 68Z" fill="#a87b45" ${O}/>
@@ -298,7 +329,7 @@ export function hatLayers(hat, look, dead) {   // look, dead: the duck's eyes, f
   const h = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), ...hat, metal: hat.metal || 'gold', look, dead };
   const id = 'ht' + (++uid);
   const front = `<g transform="translate(76 18) rotate(-6)">${DRAW[def.id](h, id)}</g>`;
-  const back = def.id === 'afro' ? DRAW.afroBack(h) : def.id === 'veil' ? DRAW.veilBack(h) : '';
+  const back = def.id === 'afro' ? DRAW.afroBack(h) : def.id === 'veil' ? DRAW.veilBack(h) : def.id === 'clownwig' ? `<g transform="translate(76 18) rotate(-6)">${DRAW.clownwig({ ...h, far: true })}</g>` : '';
   return { back, front };
 }
 
@@ -309,7 +340,8 @@ export function hatTile(hatId, color) {
   if (color && def.colors) h.c1 = color;
   const id = 'hp' + (++uid);
   if (def.id === 'afro') return `<g transform="translate(16 17) scale(.38) translate(-71 -28)">${DRAW.afroBack(h)}</g>`;
+  if (def.id === 'clownwig') return `<g transform="translate(16 16) scale(.55) translate(24 -21)">${DRAW.clownwig(h)}</g>`;
   if (def.id === 'eye') return `<g transform="translate(16 30) scale(.62)">${DRAW.eye(h, id).replace('class="hat-float" ', '')}</g>`;
-  const tall = { wizard: 1, dunce: 1, pumpkin: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8, wide = def.id === 'sombrero' || def.id === 'cowboy';   // (a wide brim fits the tile by its width)
+  const tall = { wizard: 1, dunce: 1, pumpkin: 1, jester: 1.35, crown: .9, gele: .9, cheese: .9 }[def.id] || .8, wide = def.id === 'sombrero' || def.id === 'cowboy';   // (a wide brim fits the tile by its width)
   return `<g transform="translate(16 ${wide ? 22 : def.id === 'pumpkin' ? 26 : 27}) scale(${(def.id === 'sombrero' ? .32 : def.id === 'cowboy' ? .34 : .48 / tall).toFixed(2)})">${DRAW[def.id](h, id)}</g>`;
 }

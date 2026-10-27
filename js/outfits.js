@@ -49,6 +49,16 @@ let arcN = 0;
 const chest = (name, fill, edge) => { const id = 'jma' + (++arcN); return `<g class="jm"><path id="${id}" d="M80.5 75.5Q87.5 70.5 94.5 75.5" fill="none"/>`
   + `<text font-family="'Fredoka', sans-serif" font-weight="700" font-size="3.6" fill="${fill}" letter-spacing=".15"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${name}</textPath></text>`
   + num33(87.5, 85, fill, edge, .58) + '</g>'; };
+/* a ruff: a ring of white pleats round the neck under the head (the head hides its top half), each pleat a small puff
+   with a crease; bells: small gold bells hung from it */
+const ruff = (bells = '') => { let p = ''; for (let a = 172; a >= 8; a -= 11) { const r = a * Math.PI / 180, x = 76 + 27 * Math.cos(r), y = 40 + 27 * Math.sin(r);
+  p += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="#fbfbf7" stroke="#b9b9b0" stroke-width=".9"/><path d="M${(x - 1.4).toFixed(1)} ${(y + 3).toFixed(1)}Q${x.toFixed(1)} ${(y + .6).toFixed(1)} ${(x + 1.4).toFixed(1)} ${(y + 3).toFixed(1)}" stroke="#d6d6cd" stroke-width=".8" fill="none"/>`; }
+  return p + bells; };
+const jbell = (x, y, k = 1) => `<circle cx="${x}" cy="${y}" r="${2 * k}" fill="#e2b93b" stroke="#8a6400" stroke-width=".7"/><path d="M${x - 1 * k} ${y + .7 * k}H${x + 1 * k}" stroke="#8a6400" stroke-width=".6"/><circle cx="${x - .7 * k}" cy="${y - .7 * k}" r="${.5 * k}" fill="#fff6c8"/>`;
+/* the harlequin: diamonds in two colors, edged in gold (a lattice of gold lines over them) */
+const harlequin = (a, b, w = 16, h = 22, y0 = 58) => { let d = ''; for (let j = 0; y0 + (j - 1) * h / 2 < 122; j++) for (let i = -1; i * w < 124; i++) { const x = i * w + (j % 2) * w / 2, y = y0 + j * h / 2;
+  d += `<path d="M${x} ${y - h / 2}L${x + w / 2} ${y}L${x} ${y + h / 2}L${x - w / 2} ${y}Z" fill="${j % 2 ? b : a}" stroke="#e2b93b" stroke-width=".9" stroke-linejoin="round"/>`; }
+  return d; };
 /* past the outline: a skirt that flares at the hem */
 const flare = (c, y = 92, out = 5) => `<path d="M${18 - out} ${y + 14}C${30} ${y + 4} ${88} ${y + 2} ${100 + out} ${y + 10}L${101 + out} ${y + 15}C${70} ${y + 20} ${40} ${y + 20} ${17 - out} ${y + 15}Z" fill="${c}" stroke="${dk(c, .4)}" stroke-width="1.2"/>`;
 
@@ -169,6 +179,15 @@ export const OUTFITS = [
   { id: 'disco', name: 'Disco suit', tip: 'Sequins and a big collar.', colors: [['c1', 'Sequins', '#8e44ad']],
     cloth: o => ALL(o.c1) + dots(lt(o.c1, .5), .9, 5, 58) + `<path d="M82 60L90 78L94 60Z" fill="${lt(o.c1, .7)}"/><path d="M86 60L93 70L99 60Z" fill="#fbfbf7"/>` + `<circle cx="91" cy="78" r="2.4" fill="#e2b93b" stroke="#8a6400" stroke-width=".7"/>` + sparkle(30, 70, 1.6) + sparkle(64, 92, 1.4) + sparkle(48, 80, 1.2),
     sleeve: o => sleeve(o.c1) + `<circle cx="52" cy="80" r=".9" fill="${lt(o.c1, .6)}"/><circle cx="60" cy="84" r=".9" fill="${lt(o.c1, .6)}"/>` },
+  { id: 'jester', name: 'Jester outfit', tip: 'Red and black harlequin with gold trim, a ruff and bells.', colors: [['c1', 'Red', '#c8102e'], ['c2', 'Black', '#23232d']],
+    cloth: o => ALL(o.c1) + harlequin(o.c1, o.c2) + `<rect y="85" width="120" height="3.6" fill="#e2b93b"/><path d="M0 85H120M0 88.6H120" stroke="#8a6400" stroke-width=".6"/>` + jbell(92, 91.4, 1.1) + jbell(80, 92, 1.1) + ruff(jbell(97, 62, .9) + jbell(66, 66.5, .9)),
+    sleeve: o => `<path d="${WING_D}" fill="${dk(o.c2, .05)}" stroke="${dk(o.c2, .5)}" stroke-width="1.2"/><path d="M52 75L58 80L52 86L46 80Z" fill="${o.c1}" stroke="#e2b93b" stroke-width=".8"/><path d="M64 75L69 80L64 86L59 80Z" fill="${o.c1}" stroke="#e2b93b" stroke-width=".8"/>`
+      + `<path d="M43.6 78.4C41.8 81 41.8 84.2 43.6 86.8" stroke="#e2b93b" stroke-width="2.4" fill="none" stroke-linecap="round"/>` },
+  { id: 'clown', name: 'Clown costume', tip: 'A baggy polka-dot suit with pom-pom buttons and a ruff.', colors: [['c1', 'Suit', '#2f8cff'], ['c2', 'Dots', '#ffd23f']],
+    cloth: o => ALL(o.c1) + dots(o.c2, 2.6, 11, 60, 112) + `<g fill="none" stroke="${dk(o.c1, .25)}" stroke-width="1" opacity=".6"><path d="M34 70C38 80 36 94 40 104M60 72C62 84 58 96 62 106M76 92C80 98 78 104 82 108"/></g>`
+      + [[92.4, 70.5], [94.6, 80], [93.4, 89.5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="#e8262b" stroke="#8a0a0a" stroke-width=".8"/><path d="M${x - 2} ${y - .6}a1.6 1.6 0 0 1 2.4-1.4M${x + .4} ${y + 1.6}a1.4 1.4 0 0 1 1.8-1.6" stroke="#ff8a8a" stroke-width=".8" fill="none"/>`).join('') + ruff(),
+    sleeve: o => sleeve(o.c1) + `<circle cx="52" cy="80" r="2.2" fill="${o.c2}"/><circle cx="63" cy="77" r="2.2" fill="${o.c2}"/><circle cx="61" cy="86" r="2" fill="${o.c2}"/>`
+      + `<path d="M43.2 77.6C40.4 80.4 40.4 84.6 43.2 87.6" stroke="#fbfbf7" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-dasharray="2.4 .8"/>` },
 ];
 export const outfitById = id => OUTFITS.find(o => o.id === id) || null;
 /* how Customize shows the outfits: in themed groups, each under a small heading */
@@ -179,6 +198,7 @@ export const OUTFIT_GROUPS = [
   ['Jobs and uniforms', ['doctor', 'firefighter', 'police', 'military']],
   ['Sports', ['lakers', 'celtics']],
   ['Fantasy and sci-fi', ['royal', 'wizard', 'armor', 'robot', 'cloud']],
+  ['Jesters and clowns', ['jester', 'clown']],
 ];
 
 /* the outfit's layers for a duck: cloth (inside the body), sleeve (in place of the wing), over and back (past the

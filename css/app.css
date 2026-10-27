@@ -803,6 +803,12 @@ html.moving .pix-sun { animation: sunbreathe 4.5s ease-in-out infinite; }
 .arm-tile:hover { border-color: var(--line); }
 .arm-tile[aria-pressed="true"] { border-color: var(--blue); box-shadow: 0 0 0 .14rem var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--panel)); }
 .arm-tile svg { width: 3.6rem; height: auto; flex: 1 1 auto; max-height: 4.2rem; }
+.arm-tile .pad { position: absolute; left: .3rem; top: .3rem; width: .85rem; height: auto; color: var(--ink); flex: none; }   /* a locked item (unlocks.js) */
+.arm-tile.locked > :not(.pad) { opacity: .45; }
+.arm-tile.unlockd .pad { opacity: .4; }
+.lock-note { display: flex; align-items: center; gap: .35rem; margin: .4rem 0 0; color: var(--red); }
+.lock-note .pad { width: .75rem; height: auto; flex: none; }
+.arm-tile.peek { border-color: var(--red); box-shadow: 0 0 0 .14rem var(--red); background: color-mix(in srgb, var(--red) 12%, var(--panel)); }
 .arm-tile img { width: 3.2rem; height: 3.2rem; object-fit: cover; border-radius: .4rem; }
 .arm-tile .pat-pic { width: 100%; height: 3.2rem; }
 .arm-up { justify-content: center; border-style: dashed; }

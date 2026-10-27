@@ -14,6 +14,7 @@ import { BEAKS } from './beaks.js';
 import { now } from './clock.js';
 import { who } from './who.js';
 import { publicKey } from './secret.js';
+import { watchKills, isLocked } from './unlocks.js';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck }, card: { ...profile.card }, nameStyle: { ...profile.nameStyle }, bot: false, net: +profile.settings.net || 0, stats: cleanStats(profile.stats), ...(who.acct ? { acct: who.acct } : {}), ...(publicKey() ? { pk: publicKey() } : {}) });
@@ -21,7 +22,7 @@ export const myPlayer = id => ({ id, name: profile.name, duck: { ...profile.duck
 let active = null;
 export const activeRoom = () => active;
 /* an online room (online.js) becomes the active one */
-export function setActive(room) { if (active && active !== room) active.close(); active = room; }
+export function setActive(room) { if (active && active !== room) active.close(); if (room && active !== room) watchKills(room); active = room; }
 export function dropActive(room) { if (active === room) active = null; }
 
 export function createLocalRoom({ name, test = true, computers = 3, max, options, open = true, passkey = '' }) {
@@ -52,7 +53,7 @@ export function createLocalRoom({ name, test = true, computers = 3, max, options
     room.send({ t: 'tick', id: me });
     for (const a of botActions(state, now())) room.send(a);
   }, 200);
-  active = room;
+  active = room; watchKills(room);
   if (test) room.setComputers(computers);
   return room;
 }
@@ -65,7 +66,7 @@ const any = a => a[Math.floor(Math.random() * a.length)];
 /* now and then a computer is a mallard, an eagle or the like, in that style's colors */
 function botStyle() {
   if (Math.random() > .3) return {};
-  const st = any(STYLES.slice(1));
+  const st = any(STYLES.slice(1).filter(x => !isLocked('style', x.id)));   // (computers never wear what players unlock)
   return { style: st.id, ...Object.fromEntries((st.colors || []).map(([k, , c]) => [k, c])), ...(st.match ? { beak: st.match } : {}) };
 }
 function botPlayer(s) {
@@ -73,10 +74,10 @@ function botPlayer(s) {
   let n = 1; while (used.has('Computer-' + n)) n++;
   return {
     id: 'b-' + uid(), name: 'Computer-' + n, bot: true,
-    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES).id } : null,
+    duck: { color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', metal: any(METALS), image: null, hat: Math.random() < .5 ? { id: any(HATS.filter(x => !isLocked('hat', x.id))).id, ketchup: Math.random() < .5 } : null, face: Math.random() < .25 ? { id: any(FACES.filter(x => !isLocked('face', x.id))).id } : null,
       eyes: Math.random() < .3 ? any(EYES).id : 'default', beak: Math.random() < .25 ? any(BEAKS).id : 'default',
       build: Math.random() < .4 ? any([-1, -.5, .5, 1]) : 0, size: Math.random() < .3 ? any([-1, -.5, .5, 1]) : 0,
-      keys: [Math.random() < .35 ? any(['zap', 'flames', 'hearts', 'poison', 'notes', 'longjump', 'double', 'trombone']) : null], outfit: Math.random() < .3 ? { id: any(OUTFITS).id } : null, ...botStyle() },
+      keys: [Math.random() < .35 ? any(['zap', 'flames', 'hearts', 'poison', 'notes', 'longjump', 'double', 'trombone']) : null], outfit: Math.random() < .3 ? { id: any(OUTFITS.filter(x => !isLocked('outfit', x.id))).id } : null, ...botStyle() },
     card: { kind: 'color', color: any(BOT_DUCKS), pattern: any(PATS), patternColor: '#ffffff', image: null },
     nameStyle: { font: 'fredoka', color: '', rainbow: Math.random() < .2 },
   };

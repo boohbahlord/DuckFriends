@@ -22,6 +22,7 @@ import { colorField } from './color.js';
 import { activeRoom } from './net.js';
 import { who } from './who.js';
 import { NAV_HINTS, items } from './keynav.js';
+import { unlocked, isLocked, lockHint } from './unlocks.js';
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -35,6 +36,11 @@ export function setName(raw) {
   profile.name = n; save(true); shareLook(); return true;
 }
 
+/* Jack in a Box (styles.js lists the pages his style takes): on a duck page he doesn't take, his tiles show the duck
+   he'd go back to, and picking one turns him back */
+const DUCK_PAGES = ['hat', 'face', 'eyes', 'beak', 'outfit', 'body', 'skin'];
+const offJack = k => { const st = styleById(profile.duck.style); return !!(st && st.pages && DUCK_PAGES.includes(k) && !st.pages.includes(k)); };
+const styleLabel = D => D.style === 'jack' && D.jill ? 'Jill in a Box' : styleById(D.style).name;
 /* the menu, top to bottom as on the duck; then the rest below a line */
 const ROWS = [['hat', 'Hat'], ['face', 'Face'], ['eyes', 'Eyes'], ['beak', 'Beak'], ['outfit', 'Outfit'], ['body', 'Body'], ['style', 'Style'], ['skin', 'Skin'], null, ['name', 'Name'], ['card', 'Card'], ['specials', 'Specials'], ['colors', 'Colors']];
 const nameOf = (list, v, none = 'None') => { const f = list.find(x => x[0] === v); return f ? f[1] : none; };
@@ -51,7 +57,7 @@ const valueOf = k => {
     eyes: eyeById(D.eyes).name,
     beak: beakById(D.beak).name,
     body: bodyName(D),
-    style: styleById(D.style).name,
+    style: styleLabel(D),
     outfit: D.outfit && outfitById(D.outfit.id) ? outfitById(D.outfit.id).name : 'None',
     skin: D.image ? 'Your picture' : D.metal !== 'none' ? nameOf(DUCK_METALS, D.metal) : nameOf(DUCK_PATTERNS, D.pattern, 'Plain'),
     name: profile.name,
@@ -61,8 +67,15 @@ const valueOf = k => {
   }[k];
 };
 /* a grid of picture tiles, three to a row */
-const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) =>
-  `<button type="button" class="arm-tile" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur}"${tip ? ` data-tip="${esc(tip)}"` : ''}>${pic}<span>${esc(label)}</span></button>`).join('')}</div>`;
+/* a locked tile (unlocks.js): a padlock at its top left, faded and its hint as its tip; picked, it only shows on the
+   big duck, outlined in red (peek); once unlocked the padlock stays, open and faded */
+const PAD = open => `<svg class="pad" viewBox="0 0 12 14" aria-hidden="true"><path d="${open ? 'M3.4 6.4V4.2a2.6 2.6 0 0 1 5.2 0' : 'M3.4 6.4V4.2a2.6 2.6 0 0 1 5.2 0V6.4'}" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="1.4" y="6.2" width="9.2" height="7" rx="1.4" fill="currentColor"/></svg>`;
+const LOCK_KIND = { hat: 'hat', outfit: 'outfit', face: 'face', style: 'style' };
+let peek = null;   // { kind, id }: a locked item shown on the big duck, never worn
+const grid = (group, items, cur) => `<div class="arm-grid" role="group">${items.map(([v, pic, label, tip]) => {
+  const kind = LOCK_KIND[group], lk = kind && isLocked(kind, v), open = lk && unlocked(kind, v), peeked = peek && peek.kind === kind && peek.id === v;
+  const t = lk ? lockHint(kind, v) + (open && tip ? ' ' + tip : '') : tip;
+  return `<button type="button" class="arm-tile${lk ? (open ? ' unlockd' : ' locked') : ''}${peeked ? ' peek' : ''}" data-g="${group}" data-v="${esc(v)}" aria-pressed="${v === cur || !!peeked}"${t ? ` data-tip="${esc(t)}"` : ''}${lk && !open ? ' aria-label="' + esc(label + ' (locked)') + '"' : ''}>${lk ? PAD(open) : ''}${pic}<span>${esc(label)}</span></button>`; }).join('')}</div>`;
 /* a grid split into themed groups under small headings; "none" (if there) comes first, anything ungrouped last;
    after: the picked item's own options, right under the grid it sits in */
 const grouped = (group, items, cur, groups, after = '') => {
@@ -80,13 +93,14 @@ export function openCustomize(page = lastPage) {
   return openWindow(`<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`, {
     cls: 'win-armory',
     onOpen(w) {
-      openFolds.clear(); keyFor = null;
+      openFolds.clear(); keyFor = null; peek = null;
       const menu = w.querySelector('.arm-menu'), duckBox = w.querySelector('.arm-duck'), cardBox = w.querySelector('.arm-card');
       const me = () => ({ id: 'me', name: profile.name, duck: profile.duck, card: profile.card, nameStyle: profile.nameStyle });
       /* the big duck; while an effect's color is being picked, the effect plays around its head */
       const stage = () => {
-        const sp = colorSpecial();
-        duckBox.innerHTML = `<span class="arm-pic">${duckSVG(profile.duck, { size: 220, title: profile.name })}${sp && sp.kind === 'effect' ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ''}</span>`;   // (effects sit on the duck, not on the whole panel)
+        const sp = colorSpecial(), D = profile.duck, look = !peek ? D : peek.kind === 'style' ? { ...D, image: null, style: peek.id, ...(D.style !== 'jack' ? { prevStyle: D.style } : {}) }
+          : { ...(D.style === 'jack' ? { ...D, style: D.prevStyle || 'rubber' } : D), image: null, [peek.kind]: { id: peek.id } };
+        duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: profile.name })}${sp && sp.kind === 'effect' ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ''}</span>`;   // (effects sit on the duck, not on the whole panel)
         cardBox.innerHTML = cardHTML(me(), { size: 52 });
       };
       const colorSpecial = () => lastPage === 'colors' && lastColor.startsWith('sp-') ? specialById(lastColor.split('-')[1]) : null;
@@ -126,8 +140,10 @@ export function openCustomize(page = lastPage) {
       const show = (k, keep) => {
         const scroll = keep ? (menu.querySelector('.arm-body') || {}).scrollTop || 0 : 0;
         const prev = lastPage; lastPage = k || null;
+        if (peek && peek.kind !== k) peek = null;   // (off its page, the preview goes and the duck is as it was)
         if (!keep) stage();   // (the Specials page shows the special on the big duck)
-        const D = profile.duck, C = profile.card, N = profile.nameStyle;
+        /* Jack in a Box takes only the pages his style lists; on the others the tiles show the duck he'd turn back into */
+        const D = offJack(k) ? { ...profile.duck, style: profile.duck.prevStyle || 'rubber' } : profile.duck, C = profile.card, N = profile.nameStyle;
         let html = '';
         if (!k) {
           html = head('Customize') + `<div class="arm-body"><ul class="arm-list">${ROWS.map(r => r ? `<li><button type="button" class="arm-row" data-p="${r[0]}"><span>${esc(r[1])}…</span><span class="val">${esc(valueOf(r[0]) || '')}</span></button></li>` : '<li class="arm-line" aria-hidden="true"></li>').join('')}</ul></div>`;
@@ -169,7 +185,9 @@ export function openCustomize(page = lastPage) {
           const st = styleById(D.style), mb = st.match && beakById(st.match), me = st.eyes && eyeById(st.eyes);
           const matched = (!mb || D.beak === st.match) && (!me || D.eyes === st.eyes) && (st.colors || []).every(([c, , v]) => (D[c] || '').toLowerCase() === v.toLowerCase());
           const what = [mb ? `the ${mb.name.toLowerCase()}` : '', me ? `the ${me.name.toLowerCase()}` : '', st.colors ? 'its colors' : ''].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1');
-          html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG({ ...D, image: null, style: x.id }, { size: 58, shadow: false }), x.name, x.tip]), st.id)}
+          /* Jack's tile has a small settings button that makes him Jill (the tile's name and picture follow) */
+          const flip = `<button type="button" class="sp-prev jill-flip" data-a="jill" aria-pressed="${!!D.jill}" aria-label="${D.jill ? 'Make him Jack' : 'Make her Jill'}" data-tip="${D.jill ? 'Jack in a Box instead' : 'Jill in a Box instead'}">⚙</button>`;
+          html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG({ ...D, image: null, style: x.id, ...(x.id === 'jack' && D.style !== 'jack' ? { prevStyle: D.style } : {}) }, { size: 58, shadow: false }), x.id === 'jack' ? styleLabel({ ...D, style: 'jack' }) : x.name, x.tip]), st.id).replace(/<button[^>]*data-g="style" data-v="jack"[\s\S]*?<\/button>/, b => `<div class="sp-tile">${b}${flip}</div>`)}
             ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
         } else if (k === 'specials') {
@@ -232,6 +250,7 @@ export function openCustomize(page = lastPage) {
         }
         const f = document.activeElement, had = menu.contains(f) && navSig(f), from = had && f.dataset.a === 'back' && prev;   // (the focus stays on the same tile, or the row just come back to)
         menu.innerHTML = html;
+        if (peek) menu.querySelector('.arm-tile.peek')?.closest('.arm-grid, .sp-tile')?.insertAdjacentHTML('afterend', `<p class="small lock-note">${PAD(false)}${esc(lockHint(peek.kind, peek.id).replace(/\.?$/, "."))} Only a look for now.</p>`);   // (a locked pick: why, right under it)
         const body = menu.querySelector('.arm-body'); if (body) body.scrollTop = scroll;
         if (k === 'colors') {
           const T = colorTargets(), cur = T.find(t => t[0] === lastColor);
@@ -251,7 +270,8 @@ export function openCustomize(page = lastPage) {
       function colorTargets() {
         const D = profile.duck, C = profile.card, N = profile.nameStyle, hd = D.hat && hatById(D.hat.id), out = [];
         const st = styleById(D.style);
-        if (st.colors) for (const [key, label, def] of st.colors) out.push([key, label, D.metal !== 'none' || D.image ? '' : D[key] || def, c => { D[key] = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.', st.colors.length > 1 && st.name]);
+        if (st.colors) for (const [key, label, def] of st.colors) out.push(st.id === 'jack' ? [key, label, D[key] || def, c => { D[key] = c; }, '', st.colors.length > 1 && styleLabel(D)]   // (Jack draws no metal or picture: they wait for the duck)
+          : [key, label, D.metal !== 'none' || D.image ? '' : D[key] || def, c => { D[key] = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.', st.colors.length > 1 && st.name]);
         else if (!st.fixed) out.push(['duck', 'Duck', D.metal !== 'none' || D.image ? '' : D.color, c => { D.color = c; D.metal = 'none'; D.image = null; }, 'Picking a color takes off a metal or a picture.']);
         if (D.pattern !== 'none' && D.metal === 'none' && !D.image) out.push(['dpat', 'Duck pattern', D.patternColor, c => { D.patternColor = c; }, 'The color of the pattern on your duck.']);
         for (const [key, label, def] of (hd && hd.colors) || []) out.push(['hat-' + key, `${hd.name}: ${label}`, D.hat[key] || def, c => { D.hat = { ...D.hat, [key]: c }; }, '', hd.colors.length > 1 && hd.name]);
@@ -285,11 +305,17 @@ export function openCustomize(page = lastPage) {
           if (a.dataset.a === 'unkey') { const keys = keysOf(D); keys[+a.dataset.i] = null; D.keys = keys; changed(); return; }
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
+          if (a.dataset.a === 'jill') { D.jill = !D.jill; changed(); return; }
           if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
           if (a.dataset.a === 'matchstyle') { const st = styleById(D.style); if (st.match) D.beak = st.match; if (st.eyes) D.eyes = st.eyes; for (const [c, , v] of st.colors || []) D[c] = v; if (st.colors) { D.metal = 'none'; D.image = null; } changed(); return; }
         }
         const t = e.target.closest('[data-g]'); if (!t) return;
-        const v = t.dataset.v;
+        const v = t.dataset.v, lk = LOCK_KIND[t.dataset.g];
+        if (lk && v !== 'none' && !unlocked(lk, v)) { peek = peek && peek.id === v && peek.kind === lk ? null : { kind: lk, id: v }; stage(); show(lastPage, true); return; }   // (a locked one: only a look)
+        peek = null;
+        /* Jack in a Box: picking him keeps the style to go back to; picking anything his style doesn't take turns him back */
+        if (t.dataset.g === 'style' && v === 'jack' && D.style !== 'jack') D.prevStyle = D.style;
+        else if (offJack(lastPage) && t.dataset.g !== 'oopt' && t.dataset.g !== 'hmetal') D.style = D.prevStyle && D.prevStyle !== 'jack' ? D.prevStyle : 'rubber';
         ({
           hat: () => { D.hat = v === 'none' ? null : { ...(D.hat && D.hat.id === v ? D.hat : {}), id: v }; },
           hmetal: () => { D.hat = { ...D.hat, metal: v }; },
