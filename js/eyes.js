@@ -1,6 +1,7 @@
 /* ---------- eyes ----------
    Drawn in the duck's own 120 × 120 space around the eye's spot at (83, 34) on a head centered at (76, 40). A "dead"
    duck (the kill command) shows X eyes whatever was chosen. */
+import { blockSquares } from './styles.js';
 export const EYES = [
   { id: 'default', name: 'Duck eyes' },
   { id: 'happy', name: 'Happy' },
@@ -75,7 +76,7 @@ const DRAW = {
     <circle cx="85" cy="33.2" r=".8" fill="#fff"/><path d="M77 30.6L90 31.4L89 29.4C85 28.4 80 28.6 77 30.6Z" fill="#2b1c0c"/>`,
   pelican: () => `<circle cx="83" cy="34" r="4.6" fill="#f6b2b8" stroke="#8a4a50" stroke-width=".8"/><circle cx="83" cy="34" r="3" fill="#fbf2c8"/>
     <circle cx="83.2" cy="34" r="1.3" fill="${K}"/><circle cx="84.2" cy="33" r=".6" fill="#fff"/>`,
-  block: () => `<g shape-rendering="crispEdges"><rect x="78" y="30" width="7" height="7" fill="${K}"/><rect x="82" y="31" width="2" height="2" fill="#fff"/></g>`,
+  block: () => `${blockSquares([[78, 30, 7, K]])}<rect x="82" y="31" width="2" height="2" fill="#fff" shape-rendering="crispEdges"/>`,   // (the Blocks duck's own hairline seams)
   flat: () => `<circle cx="83" cy="34" r="4.4" fill="${K}"/><circle cx="84.4" cy="32.6" r="1.4" fill="#fff"/>`,
 };
 let uid = 0;

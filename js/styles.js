@@ -95,16 +95,23 @@ const GRID = [
   '...bbbwwwwwwbbbbb...', '...bbbbwwwwbbbbb....', '....bbbbbbbbbbbb....', '.....bbbbbbbbbb.....', '......bbbbbbb.......',
 ];
 export function blocksBody(color, only = '') {   // only: draw just the blocks of one kind (the wing, 'w', over a shirt)
-  let out = '', seams = '';
+  const cells = [];
   GRID.forEach((row, r) => [...row].forEach((c, k) => {
     if (c === '.' || (only && c !== only)) return;
-    const x = k * 6, y = r * 6, j = ((k * 7 + r * 13) % 5) / 60;   // each block a touch lighter or darker, so they read as blocks even where the seams are too thin to see
-    const f = c === 'w' ? mix(color, 0, .22 + j) : mix(color, r < 9 ? 255 : 0, r < 9 ? .06 + j : j);
-    /* the owner wants very thin seams: a hairline of light on the top and left, of shade on the bottom and right,
-       each inside its own block */
-    out += `<rect x="${x}" y="${y}" width="6" height="6" fill="${f}"/>`;
-    seams += `<path d="M${x + .15} ${y + 6}V${y + .15}H${x + 6}" stroke="${mix(f, 255, .3)}"/><path d="M${x + 5.85} ${y}V${y + 5.85}H${x}" stroke="${mix(f, 0, .3)}"/>`;
+    const j = ((k * 7 + r * 13) % 5) / 60;   // each block a touch lighter or darker, so they read as blocks even where the seams are too thin to see
+    cells.push([k * 6, r * 6, 6, c === 'w' ? mix(color, 0, .22 + j) : mix(color, r < 9 ? 255 : 0, r < 9 ? .06 + j : j)]);
   }));
+  return blockSquares(cells);
+}
+/* squares drawn the way the Blocks duck is built ([x, y, size, fill] each): the owner wants very thin seams, a hairline
+   of light on the top and left, of shade on the bottom and right, each inside its own block. The block beak and the
+   block eye use it too, so every block piece has the same lines. */
+export function blockSquares(cells) {
+  let out = '', seams = '';
+  for (const [x, y, w, f] of cells) {
+    out += `<rect x="${x}" y="${y}" width="${w}" height="${w}" fill="${f}"/>`;
+    seams += `<path d="M${+(x + .15).toFixed(2)} ${+(y + w).toFixed(2)}V${+(y + .15).toFixed(2)}H${+(x + w).toFixed(2)}" stroke="${mix(f, 255, .3)}"/><path d="M${+(x + w - .15).toFixed(2)} ${y}V${+(y + w - .15).toFixed(2)}H${x}" stroke="${mix(f, 0, .3)}"/>`;
+  }
   return `<g shape-rendering="crispEdges">${out}</g><g stroke-width=".3" fill="none">${seams}</g>`;
 }
 /* the body's and the wing's blocks as one outline, so clothes cover the blocks exactly */
