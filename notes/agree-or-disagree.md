@@ -2302,3 +2302,13 @@ lemme know ab other ideas and inform me what effects gameplay the most"
   NET '1' (moving background and animations off); it turns off or halves things everywhere (fireflies, shimmer,
   half-size cabin ground, still map backgrounds, fewer particles), saved like the other settings. The TV shows one small
   still picture. The owner sees a normal-against-low sheet on every map, phone and computer, with frame times, first.
+- Owner OK'd the sheet (2026-10-28 00:50Z, "All three live"); live with #134.
+
+## Request (owner, 2026-10-27 23:35Z): the rug's shading under the table; each door seen through the wall
+"The shading of this object should stretch underneath the table / It is the only thing i notice with this problem / In screenshots 2 and 3, I think you should be able to see the door in the same perspective in the SAME EXACT PLACE (but transparent) like you would see it from the inside of the home. Same with the bottom door, where you can see how it appears from the outside from the inside. Door frame included for both. Show me pictures."
+- Screenshots: /mnt/project-files/hangout/doors-rug/ (1 the rug under the coffee table; 2 and 3 the back door, outside and
+  inside; 4 and 5 the front door, outside and inside).
+- Decided (Adam): Solomon the 2nd, its own small PR before Low graphics. The rug's shading goes on under the table with
+  no cut; from either side of a wall each door shows the other side's door, frame included, in the same place and
+  perspective, see-through, using the existing door drawings. Pictures to the owner first (phone and computer).
+- Owner OK'd the pictures (2026-10-28 00:50Z, "All three live"); live with #134.

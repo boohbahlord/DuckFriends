@@ -1855,6 +1855,8 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 
 /* ---------- Hangout: the piano in the cabin (hangout/piano.js) ---------- */
 .hp-door.door-shut.open, .hp-door.door-open:not(.open) { visibility: hidden; }   /* Hangout's doors: shut or swung open */
+.hp-door.door-ghost { opacity: .4; pointer-events: none; }   /* a door seen through its wall from the other side */
+.hp-door.door-ghost.thru { opacity: .2; }
 /* Hangout's TV (js/hangout/tv.js): the picture laid on the screen, its scan lines and glass; the channels drawn there */
 .tv-pic { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 15px; background: #05070c; }
 .tv-ch { position: absolute; inset: 0; overflow: hidden; container-type: size; }

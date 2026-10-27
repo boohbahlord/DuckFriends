@@ -551,12 +551,13 @@ function sideCouch({ w = 100, len = 360, seats = 2, color = '#3d6e4f', flip = fa
 
 /* ---------- the living corner and the rest of the great room ---------- */
 /* a low coffee table on the rug, seen from above: its top (footprint w × d) at z, the apron and two front legs under it;
+   I want its shadow to fill the whole footprint under the top, so the rug darkens all the way under it with no cut;
    papers, a magazine, a mug of cocoa, a glass of juice and a can of soda on it. Box w × (d + z). Foot: y = h. */
 export function coffeeTable({ w = 150, d = 100, z = 38 } = {}) {
   const h = d + z;
   const paper = (x, y, a, c = '#f6f3ea') => F`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-17" y="-12" width="34" height="24" fill="${c}" ${ln(1.6)}/><path d="M-12 -6h22M-12 -1h18M-12 4h20" stroke="#9aa0aa" stroke-width="1.4"/></g>`;
   const cup = (x, y, top, side, k = 1) => F`<rect x="${x - 7 * k}" y="${y - 12 * k}" width="${14 * k}" height="${12 * k}" fill="${side}" ${ln(1.6)}/><ellipse cx="${x}" cy="${y - 12 * k}" rx="${7 * k}" ry="${3.4 * k}" fill="${top}" ${ln(1.4)}/>`;
-  return wrap(w, h, shade(w / 2, h - 2, w / 2, 10, .3)
+  return wrap(w, h, R(2, z + 2, w - 4, d - 2, '#000', 'rx="14" opacity=".34"') + R(10, d + 2, w - 20, 12, '#000', 'opacity=".16"')
     + R(10, d + 4, 10, z - 6, '#6e3a1a', ln(1.8)) + R(w - 20, d + 4, 10, z - 6, '#6e3a1a', ln(1.8)) + R(4, d - 2, w - 8, 12, '#8a4a22', ln(2))
     + R(0, 0, w, d, '#b8743e', `rx="8" ${ln(2.6)}`) + R(7, 7, w - 14, d - 14, '#c98a52', `rx="5"`) + F`<path d="M12 ${d * .36}H${w - 12}M12 ${d * .68}H${w - 12}" stroke="#a8683a" stroke-width="1.6"/>`
     + paper(w * .27, d * .38, -9) + paper(w * .33, d * .55, 7) + paper(w * .62, d * .7, -4, '#7fb7d8') + F`<path d="M${w * .62 - 10} ${d * .7 - 4}h20" stroke="#fff" stroke-width="3" opacity=".7"/>`
