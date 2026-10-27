@@ -36,8 +36,12 @@ export function mountWorld(board, api) {
   const all = new Map();     // prop id → all its parts' elements
   const cls = new Map();     // prop id → the class its activity gives it
   const sm = new Map();      // other ducks as drawn: { x, y, z } in world px, gliding after the room's numbers
-  let dead = false, last = 0, inside = false, button = null, btnSig = null, pushed = '', grab = null, grabEnd = 0, seenState = null;
+  let dead = false, last = 0, inside = false, flip = -1e9, shut = false, button = null, btnSig = null, pushed = '', grab = null, grabEnd = 0, seenState = null;
   const R = () => api.room();
+  /* inside, everything round the cabin goes black (the shade): once it's up, nothing out there is drawn at all. Walking
+     out, the black fades away */
+  const HOLE = { l: L.CABIN.x0, t: L.CABIN.y0 - L.CABIN.wall - 30, r: L.CABIN.x1, b: L.CABIN.y1 + 14 }, SHADE_IN = 350, SHADE_OUT = 700;
+  const outOfHole = (l, t, r, b) => r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b;
   const toScreen = (x, y, h = 0) => ({ left: (x - cam.x) * cam.sc + cam.vw / 2, top: (y - h - cam.y) * cam.sc + cam.vh / 2 });
   const ctx = { state: () => R().state, get me() { return R().me; }, send: a => R().send(a), duck: () => api.me(),
     world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, seen: (l, t, w, h) => l < cam.vw + NEAR && l + w > -NEAR && t < cam.vh + NEAR && t + h > -NEAR, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [], shines: l => shines(l, R().state),
@@ -78,7 +82,7 @@ export function mountWorld(board, api) {
      them, power.js, sways with the flames: that's the flicker you see). */
   const TILE = 256, MAXT = 90, EDGE = 96;
   const tiles = new Map(), ready = []; let tk = 0, busy = 0, fno = 0;
-  const gv = { x: 0, y: 0, r: [0, 0, 0, 0], sig: '', need: true, tr: '' };   // where the ground was last drawn from (and the world it covers), its lights then, and if it must be drawn again
+  const gv = { x: 0, y: 0, r: [0, 0, 0, 0], dirty: [], shut: false, sig: '', need: true, tr: '' };   // where the ground was last drawn from (and the world it covers), its lights then, and if it must be drawn again
   const pieces = GROUND();
   function paintTile(t) {
     busy++; t.queued = true;
@@ -90,7 +94,14 @@ export function mountWorld(board, api) {
     const done = () => { URL.revokeObjectURL(url); busy--; };
     img.decode().then(() => { done(); if (k === tk && !dead) ready.push([t, img, px]); else t.queued = false; }, () => { done(); t.queued = false; });
   }
-  function copyTile([t, img, px]) { const c = document.createElement('canvas'); c.width = c.height = px; c.getContext('2d').drawImage(img, 0, 0, px, px); t.c = c; t.old = null; const [x0, y0, x1, y1] = gv.r; if ((t.i + 1) * TILE > x0 && t.i * TILE < x1 && (t.j + 1) * TILE > y0 && t.j * TILE < y1) gv.need = true; }   // (drawn again only if it's on the canvas)
+  function copyTile([t, img, px]) { const c = document.createElement('canvas'); c.width = c.height = px; c.getContext('2d').drawImage(img, 0, 0, px, px); t.c = c; t.old = null;
+    /* drawn again at once if it's in view; on the canvas' edge only once the view slides onto it (a tile a frame coming
+       in round the view doesn't draw the whole ground each time) */
+    const x0 = t.i * TILE, y0 = t.j * TILE, x1 = x0 + TILE, y1 = y0 + TILE, [r0, s0, r1, s1] = gv.r;
+    if (x1 <= r0 || x0 >= r1 || y1 <= s0 || y0 >= s1 || (gv.shut && outOfHole(x0, y0, x1, y1))) return;
+    if (inView(x0, y0, x1, y1)) gv.need = true; else gv.dirty.push([x0, y0, x1, y1]);
+  }
+  const inView = (x0, y0, x1, y1) => { const hw = cam.vw / 2 / cam.sc, hh = cam.vh / 2 / cam.sc; return x1 > cam.x - hw && x0 < cam.x + hw && y1 > cam.y - hh && y0 < cam.y + hh; };
   function drawGround(now, s, gx, gy) {   // (gx, gy: where the camera is heading, my duck: its tiles come first)
     const { sc, vw, vh, dpr } = cam; fno++;
     const hw = vw / 2 / sc, hh = vh / 2 / sc, vx0 = cam.x - hw, vx1 = cam.x + hw, vy0 = cam.y - hh, vy1 = cam.y + hh, e = EDGE / sc;
@@ -110,19 +121,21 @@ export function mountWorld(board, api) {
       if (l.only && (l.only === 'in') !== inside) continue;
       if (!shines(l, s)) continue;
       const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r;
-      if (see(x - r, y - r, x + r, y + r)) pools.push([x, y, r, l.c, l.k * stutterOf(l, ln)]);   // (now and then a lamp stutters: flicker.js)
+      if (see(x - r, y - r, x + r, y + r) && !(shut && outOfHole(x - r, y - r, x + r, y + r))) pools.push([x, y, r, l.c, l.k * stutterOf(l, ln)]);   // (now and then a lamp stutters: flicker.js)
     }
     const sig = pools.map(p => p[2].toFixed(1) + p[4].toFixed(3)).join();
     const ox = (gv.x - cam.x) * sc, oy = (gv.y - cam.y) * sc;
+    if (gv.shut !== shut || gv.dirty.some(d => inView(...d))) gv.need = true;
     if (!gv.need && sig === gv.sig && Math.abs(ox) < EDGE - 2 && Math.abs(oy) < EDGE - 2) {   // only slid
       const tr = `translate(${Math.round(ox * dpr) / dpr}px, ${Math.round(oy * dpr) / dpr}px)`;
       if (gv.tr !== tr) { gv.tr = tr; canvas.style.transform = tr; }
       return;
     }
-    gv.x = cam.x; gv.y = cam.y; gv.r = [vx0 - e, vy0 - e, vx1 + e, vy1 + e]; gv.sig = sig; gv.need = false; if (gv.tr) { gv.tr = ''; canvas.style.transform = ''; }
+    gv.x = cam.x; gv.y = cam.y; gv.r = [vx0 - e, vy0 - e, vx1 + e, vy1 + e]; gv.dirty = []; gv.shut = shut; gv.sig = sig; gv.need = false; if (gv.tr) { gv.tr = ''; canvas.style.transform = ''; }
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
     const DX = x => Math.round(((x - cam.x) * sc + vw / 2 + EDGE) * dpr), DY = y => Math.round(((y - cam.y) * sc + vh / 2 + EDGE) * dpr);
     for (let j = Math.floor((vy0 - e) / TILE); j <= Math.floor((vy1 + e) / TILE); j++) for (let i = Math.floor((vx0 - e) / TILE); i <= Math.floor((vx1 + e) / TILE); i++) {
+      if (shut && outOfHole(i * TILE, j * TILE, (i + 1) * TILE, (j + 1) * TILE)) continue;   // (under the black)
       const t = tile(i, j), x0 = DX(i * TILE), x1 = DX((i + 1) * TILE), y0 = DY(j * TILE), y1 = DY((j + 1) * TILE), c = t.c || t.old;
       if (c) g.drawImage(c, x0, y0, x1 - x0, y1 - y0);   // (t.old: the tile at the size it had, until it's painted again at the new one)
       else { g.fillStyle = groundColor((j + .5) * TILE); g.fillRect(x0, y0, x1 - x0, y1 - y0); }
@@ -184,7 +197,7 @@ export function mountWorld(board, api) {
     const { sc, vw, vh } = cam, scs = sc.toFixed(4);
     for (const it of items) {
       const b = it.box, sx = (b.l - cam.x) * sc + vw / 2, sy = (b.t - cam.y) * sc + vh / 2, sw = b.w * sc, sh = b.h * sc;
-      const vis = (!it.only || (it.only === 'in') === inside) && sx < vw + NEAR && sx + sw > -NEAR && sy < vh + NEAR && sy + sh > -NEAR;
+      const vis = (!it.only || (it.only === 'in') === inside) && sx < vw + NEAR && sx + sw > -NEAR && sy < vh + NEAR && sy + sh > -NEAR && !(shut && outOfHole(b.l, b.t, b.l + b.w, b.t + b.h));
       let e = it.el;
       if (!vis) { if (e && !e.hidden) e.hidden = true; continue; }
       if (!e) e = make(it);
@@ -268,7 +281,8 @@ export function mountWorld(board, api) {
       const dt = Math.min(.1, Math.max(0, (now - (last || now)) / 1000)); last = now;
       const r = R(), s = r.state, me = api.me(); if (!me || !cam.vw) return;
       ensure(me);
-      inside = L.inCabin(me.x * L.W, me.y * L.H);
+      const was = inside; inside = L.inCabin(me.x * L.W, me.y * L.H); if (inside !== was) flip = now;
+      shut = inside && now - flip > SHADE_IN;
       for (const id of s.seat) if (id !== r.me && s.pos[id]) glide(id, s.pos[id], dt, now);
       for (const id of [...sm.keys()]) if (!s.pos[id]) sm.delete(id);
       let shift = 0, f = null; for (const a of acts()) shift += a.view?.(ctx) || 0;   // (an activity's panel covers the bottom: my duck shows higher)
@@ -279,11 +293,13 @@ export function mountWorld(board, api) {
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
       drawProps(duckBoxes(s));
-      if (shade.hidden === inside) shade.hidden = !inside;
-      if (inside) {   // (the shade only slides: its size changes only with the board's, so its big shadow is never painted again)
-        const a = toScreen(L.CABIN.x0, L.CABIN.y0 - L.CABIN.wall - 30), b = toScreen(L.CABIN.x1, L.CABIN.y1 + 14), sz = (b.left - a.left).toFixed(1) + 'px', tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px)`;
+      const show = inside || now - flip < SHADE_OUT;
+      if (shade.hidden === show) { shade.hidden = !show; if (show) shade._at = now; }
+      if (show) {   // (the shade only slides: its size changes only with the board's, so its big shadow is never painted again)
+        const a = toScreen(HOLE.l, HOLE.t), b = toScreen(HOLE.r, HOLE.b), sz = (b.left - a.left).toFixed(1) + 'px', tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px)`;
         if (shade._sz !== sz) { shade._sz = sz; shade.style.width = sz; shade.style.height = (b.top - a.top).toFixed(1) + 'px'; }
         if (shade._tr !== tr) { shade._tr = tr; shade.style.transform = tr; }
+        const on = inside && now - shade._at > 30; if (shade._on !== on) { shade._on = on; shade.classList.toggle('on', on); }   // (it fades in, and out)
       }
       for (const a of acts()) a.draw?.(now, ctx);
       pickButton(me);
