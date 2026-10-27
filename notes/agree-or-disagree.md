@@ -933,7 +933,7 @@ i as host was said to not be in the sudo catgeory this is a glitch
 
 (Decision: the host and sudo never need to type the word sudo; groupadd works like sudo groupadd for them. Anyone else
 who tries is told only the host and sudo can.)
-(Also from the bug tester, through the coordinator: `usermod -a -G sudo @name` gave the usage message. Now usermod,
+(Also from the bug test: `usermod -a -G sudo @name` gave the usage message. Now usermod,
 gpasswd, adduser and deluser take names with or without @, and flags work split (-a -G), joined (-aG) or long
 (--append --groups), in every command.)
 
@@ -973,7 +973,7 @@ says so. useradd -G group name now works (like usermod -aG), and userdel says ho
 
 ## The command line bug test (2026-10-25)
 
-(From the coordinator, after a full bug test of the command line; the report is bugtest/2026-10-25-command-line.md in the
+(Follow-up, after a full bug test of the command line; the report is bugtest/2026-10-25-command-line.md in the
 project files.) The command line bug test is done. Please fix all of it in a PR on top of #57 and hold it for my batch.
 Also fix the 12 low ones in the report.
 
@@ -1005,7 +1005,7 @@ music can be less loud by default \
 
 whenever i opened discord app while on game lobby the music in the browser game become crackly rly bad sometimes idky
 
-(Also from the bug tester, through the coordinator: the Music slider at 0 and back started a new song.)
+(Also from the bug test: the Music slider at 0 and back started a new song.)
 
 Decisions: on a phone the notes' tails end sooner and a few faint layers (octave shimmers, the music box's halo, a
 second detuned saw) are left out, about half the work; a computer plays everything in full. The Music slider at 0 and
@@ -1023,7 +1023,7 @@ yeah you can put that in the game
 
 (Done: Spring in a Box is the fifth song.)
 
-(Follow-up from the coordinator: Firefox can't pause an offline render to add notes, so the notes are now set down in
+(Follow-up: Firefox can't pause an offline render to add notes, so the notes are now set down in
 4-second pieces a moment apart before the render starts; Firefox plays recorded songs too.)
 
 ## Bicker Brackets on a phone in Firefox, word for word (2026-10-25)
@@ -1036,7 +1036,7 @@ cuts off a multicolored name that fits ("BoohbahL…"). From the bug tester, rou
 little when its duck wears a hat, so the hat never pokes into the title; on a phone the podium's steps show the places
 and the full contender cards line up under them.)
 
-(Bug report passed on by the coordinator: on a short landscape phone (844×390), the Who is the Quack? tiles get
+(Bug report: on a short landscape phone (844×390), the Who is the Quack? tiles get
 squashed into thin strips and the names overlap.)
 
 (Done: on a phone held sideways, the cloud, the Secret Card and the category stand in a column on the left, and the
@@ -1044,7 +1044,7 @@ tiles, or the "Vote out the Quack" and "Another round of clues" sides, take the 
 ducks are sized to stand under their tile's name. In every mode, the bottom bar on a sideways phone is one row, so the
 board keeps its height.)
 
-(Follow-up from the bug test, through the coordinator: on a slow machine Glow, Spring in a Box and Jester's Stair took 2
+(Follow-up from the bug test: on a slow machine Glow, Spring in a Box and Jester's Stair took 2
 to 3.6 times their length to build. Phones now play the music at a sample rate of 16 kHz (every song is filtered below
 4.2 kHz anyway), with simpler heavy voices (one oscillator for the pads, the felt piano and the bass; no vibrato; no
 sub-octaves, tines or detuned twins) and shorter tails: the three heavy songs take about a fifth of the work they take
@@ -1174,7 +1174,7 @@ The seventh song will take inspiration from pair bound from bioshock 2 soundtrac
 
 The song needs multiple agents to work and and a coordinator to inform them of the task, since three agents will be working on songs at the same time. Another two agents will be writing scripts. One agent will be coordinating.
 
-(Started: a coordinator agent briefs two writers, who write the seven song ideas, and three composers, who build and
+(Started: one agent briefs two writers, who write the seven song ideas, and three composers, who build and
 render them; test renders go to me first. Song 6's rare-play rule is for when it goes into the game.)
 
 Is there any songs dont yet?
@@ -2080,4 +2080,4 @@ Decision: the box stands by the west wall (it's dark there); "Cut power" / "Powe
 >
 > inside the code i mean
 
-Decision: every note and comment that talks about the owner or speaks for the team now speaks as the owner, in first person ("I want", "we decided", "my rules"); where a name is needed it is "owner". Never "the user", my display name or a helper's name. Untouched: word-for-word quotes (this log, Justin's lines), text players see, and code names (shell.js `owner(path)` is a file's owner; "its owner's style" in card.js and name.js is the player's). Comments that speak about no one stay as they are. The rule is one line in CLAUDE.md, under "My rules".
+Decision: every note and comment that talks about the owner or speaks for the team now speaks as me, the owner, in first person ("I want", "we decided", "my rules"); where a name is needed it is "owner". Never "the user", my display name or a helper's name. Untouched: word-for-word quotes (this log, Justin's lines), text players see, and code names (shell.js `owner(path)` is a file's owner; "its owner's style" in card.js and name.js is the player's). Comments that speak about no one stay as they are. The rule is one line in CLAUDE.md, under "My rules".
