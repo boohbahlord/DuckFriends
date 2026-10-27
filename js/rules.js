@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 import { holdDown } from './hangout/death.js';
+import { npcById } from './npcs.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 import { justinTick, justinDown, justinShown, justinAt, JUSTIN_ID } from './boardjustin.js';
@@ -623,12 +624,12 @@ function forgame(s, a, now) {
     return advance(s, now);
   }
   const m = a.mute; if (!m || !may(s, a.id, 'canmute')) return null;
-  const who = (m.who || []).filter(id => s.players[id]), kinds = (m.kinds || []).filter(k => MUTE_KINDS.includes(k));
+  const who = (m.who || []).filter(id => s.players[id] || npcById(id)), kinds = (m.kinds || []).filter(k => MUTE_KINDS.includes(k));
   const stages = (m.stages || []).filter(x => Object.values(STAGE).includes(x)), turns = Math.max(0, Math.min(99, m.turns | 0)), count = Math.max(0, Math.min(99, m.count | 0));
   if (!who.length || !kinds.length) return null;
   if (!m.on && !turns && !stages.length) s.gmutes = (s.gmutes || []).map(x => ({ ...x, who: x.who.filter(id => !who.includes(id)) })).filter(x => x.who.length);   // off for good: drop them
   else s.gmutes = [...(s.gmutes || []), { who, kinds, on: !!m.on, turns, stages, count, t0: s.turnN || 0, s0: { ...(s.stageN || {}) }, cur: STAGE[s.phase] }].slice(-40);
-  say(s, `${me.name} ${m.on ? 'muted' : 'unmuted'} ${kinds.join(', ')} for ${who.map(id => s.players[id].name).join(', ')}${turns ? ` for ${turns} turn${turns > 1 ? 's' : ''}` : ''}${stages.length ? ` in ${count ? `the next ${count} ` : 'the '}${stages.join(', ')} stage${count === 1 && stages.length === 1 ? '' : 's'}` : ''}.`);
+  say(s, `${me.name} ${m.on ? 'muted' : 'unmuted'} ${kinds.join(', ')} for ${who.map(id => (s.players[id] || npcById(id)).name).join(', ')}${turns ? ` for ${turns} turn${turns > 1 ? 's' : ''}` : ''}${stages.length ? ` in ${count ? `the next ${count} ` : 'the '}${stages.join(', ')} stage${count === 1 && stages.length === 1 ? '' : 's'}` : ''}.`);
   return s;
 }
 /* is this player's bubble, ping or text muted for everyone now (by forgame)? the newest mute that applies wins */

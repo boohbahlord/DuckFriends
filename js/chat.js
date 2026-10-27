@@ -257,7 +257,7 @@ const sessionMutes = () => { const r = activeRoom(), id = r ? r.state.id : ''; i
 /* is this player's text, ping or bubble muted for me? */
 export function isMuted(s, id, kind) {
   const p = s && s.players[id], a = sessionMutes(), b = perm();
-  if (!p) { const k = npcById(id) && 'npc:' + id; return !!k && !!((a[k] && a[k][kind]) || (b[k] && b[k][kind])); }   // (Justin, a cat, the Butler, the shadow duck)
+  if (!p) { const k = npcById(id) && 'npc:' + id; return !!k && (gameMuted(s, id, kind) || !!((a[k] && a[k][kind]) || (b[k] && b[k][kind]))); }   // (Justin, a cat, the Butler, the shadow duck)
   return gameMuted(s, id, kind) || keysOfPlayer(p).some(k => (a[k] && a[k][kind]) || (b[k] && b[k][kind]));   // (forgame's mutes hide it for everyone)
 }
 muted.is = isMuted;
