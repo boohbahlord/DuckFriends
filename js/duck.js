@@ -9,7 +9,7 @@ import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
-import { styleById, styleColor, styleLayers, blocksBody, geoBody, GEO_BODY } from './styles.js';
+import { styleById, styleColor, styleLayers, blocksBody, geoBody, geoWing, GEO_BODY } from './styles.js';
 import { outfitLayers } from './outfits.js';
 
 export const DUCK_COLORS = [
@@ -101,6 +101,7 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
 ${hat.back}${OF ? OF.back : ''}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
+${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, 'w') : geoWing(L.color)}</g>` : ''}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ''}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ''}
 ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
   }

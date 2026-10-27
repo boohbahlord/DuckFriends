@@ -90,10 +90,10 @@ const GRID = [
   '..b......hhhhhhh....', '..bb......hhhhh.....', '..bbbbbbbbbbbbbb....', '..bbbbbbbbbbbbbb....', '...bbbbwwwwwbbbbb...',
   '...bbbwwwwwwbbbbb...', '...bbbbwwwwbbbbb....', '....bbbbbbbbbbbb....', '.....bbbbbbbbbb.....', '......bbbbbbb.......',
 ];
-export function blocksBody(color) {
+export function blocksBody(color, only = '') {   // only: draw just the blocks of one kind (the wing, 'w', over a shirt)
   let out = '', n = 0;
   GRID.forEach((row, r) => [...row].forEach((c, k) => {
-    if (c === '.') return;
+    if (c === '.' || (only && c !== only)) return;
     const x = k * 6, y = r * 6, j = ((k * 7 + r * 13) % 5) / 100;   // each block a touch lighter or darker
     const f = c === 'w' ? mix(color, 0, .22 + j) : mix(color, r < 9 ? 255 : 0, r < 9 ? .06 + j : j);
     out += `<rect x="${x}" y="${y}" width="6" height="6" fill="${f}"/><path d="M${x} ${y + 6}V${y}H${x + 6}" stroke="${mix(f, 255, .35)}" stroke-width="1" fill="none"/><path d="M${x + 6} ${y}V${y + 6}H${x}" stroke="${mix(f, 0, .3)}" stroke-width="1" fill="none"/>`;
@@ -104,6 +104,8 @@ export function blocksBody(color) {
 
 /* ---------- 2D shapes: a circle for the head, a half disc for the body, a triangle for the tail ---------- */
 export const GEO_BODY = 'M20 62H100A40 44 0 0 1 20 62ZM14 46L36 64L22 74Z';
+/* the flat wing on its own, so a bare arm can show it over a shirt */
+export const geoWing = color => `<path d="M40 76Q58 66 76 77Q58 90 40 76Z" fill="${mix(color, 0, .18)}" stroke="${mix(color, 0, .5)}" stroke-width="1.6" stroke-linejoin="round"/>`;
 export function geoBody(color) {
   const edge = mix(color, 0, .5), wing = mix(color, 0, .18);
   return `<path d="M14 46L36 64L22 74Z" fill="${color}" stroke="${edge}" stroke-width="2.2" stroke-linejoin="round"/>
