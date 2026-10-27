@@ -2083,3 +2083,5 @@ Decision: the box stands by the west wall (it's dark there); "Cut power" / "Powe
 > Yes, the notes within the code i mean, not any claude note for claude or ill fucking kill you
 
 Decision: only the comments inside the code speak as the owner, in first person ("I want", "we decided"), and say "owner" where a name is needed: never "the user", the owner's display name or a helper's name. CLAUDE.md, notes/ and memory are notes for Claude and keep their usual voice, as do word-for-word quotes, text players see and code names. Changed: the comments in js/hangout/justin.js, js/hangout/layout.js and js/online.js. (A first pass also rewrote CLAUDE.md, notes/ and the log; it was put back.) The rule is one line in CLAUDE.md, under "The owner's rules".
+
+the muscle shirt shouldnt cover the duck's wing (owner, Grunt thread; screenshot /mnt/project-files/grunt/owner-muscle-shirt-wing.png)
