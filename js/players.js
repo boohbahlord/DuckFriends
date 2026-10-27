@@ -92,7 +92,7 @@ export function mountPlayers(S, getR) {
       return `<button type="button" class="btn ghost" data-pa="${kind}vote"${no && !running ? ` disabled data-tip="${esc(no)}"` : ''}>${running ? 'Vote yes: ' : 'Start a vote: '}${words}</button>`;
     };
     setHTML(box.querySelector('.pm-foot'), `<span class="pm-votes">${btn('lobby', 'back to the lobby')}${isBb(s) || isHang(s) ? '' : btn('turn', 'skip this turn')}${isHang(s) ? '' : btn('skip', 'skip this round')}</span>
-      <span class="small dim">Hold Tab, or tap 👥. Click a name for more.</span><span class="hints pm-keys">${NAV_HINTS}</span>`);
+      <span class="small dim">Hold Tab or tap it once, or tap 👥. Click a name for more.</span><span class="hints pm-keys">${NAV_HINTS}</span>`);
   };
   const open = (stay = false) => { sticky = sticky || stay; box.hidden = false; render(); };
   const close = () => { sticky = false; box.hidden = true; };
@@ -130,10 +130,25 @@ export function mountPlayers(S, getR) {
     render();
   };
   const tick = setInterval(() => { const R = getR(), t = vbox.querySelector('.vb-left'); if (R && R.state.vote && t) t.textContent = Math.max(0, Math.ceil((R.state.vote.ends - clockNow()) / 1000)); }, 500);
-  /* Tab: up while held (unless it was opened to stay) */
-  const keydown = e => { if (e.key !== 'Tab') return; e.preventDefault(); if (!e.repeat && box.hidden) open(); };
-  const keyup = e => { if (e.key === 'Tab' && !sticky) close(); };
-  return { open, close, paint, keydown, keyup, isOpen: () => !box.hidden, destroy() { clearInterval(tick); box.remove(); vbox.remove(); } };
+  /* Tab: up while held. A quick tap keeps it up (some laptops stop the touchpad while a key is down); Tab again or Esc
+     closes it. Held, it never lets a click on the board walk the duck. */
+  let downAt = 0, swallow = false;
+  const keydown = e => {
+    if (e.key !== 'Tab') return; e.preventDefault();
+    if (e.repeat || e.altKey) return;   // (Alt+Tab switches windows: the keyup never comes)
+    if (!box.hidden && sticky) { close(); swallow = true; return; }
+    if (box.hidden) open();
+    downAt = performance.now();
+  };
+  const keyup = e => {
+    if (e.key !== 'Tab') return;
+    if (swallow) { swallow = false; return; }
+    downAt && performance.now() - downAt < 350 ? sticky = true : !sticky && close();
+    downAt = 0;
+  };
+  const blur = () => { if (!box.hidden && !sticky) { close(); downAt = 0; } };   // (the window lost focus while Tab was held: the keyup is lost)
+  addEventListener('blur', blur);
+  return { open, close, paint, keydown, keyup, isOpen: () => !box.hidden, held: () => !box.hidden && !sticky, destroy() { removeEventListener('blur', blur); clearInterval(tick); box.remove(); vbox.remove(); } };
 }
 
 /* gone quiet: no key, click, touch or mouse move in two minutes */

@@ -5,12 +5,12 @@ HTML, CSS and JavaScript modules, no build step. Live at https://boohbahlord.git
 serves `main`, so merging to `main` is deploying).
 
 ## Notes (search them, don't read them whole)
-- `notes/agree-or-disagree.md`: every request I've made, word for word, with the decisions taken. It is long:
+- `notes/agree-or-disagree.md`: every request the owner has made, word for word, with the decisions taken. It is long:
   search it for the request you're working on instead of reading it all. Add each new request to the end of it, word
   for word, before working on it.
-- `notes/plan-request-5.md`: the older plan and my answers (words like Stage, Turn, Round; specials; joining).
+- `notes/plan-request-5.md`: the older plan and the owner's answers (words like Stage, Turn, Round; specials; joining).
   Read it only when working on those parts.
-- `notes/ref/`: my reference pictures (board colors, the Halo Reach lobby idea).
+- `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together
 - `index.html` loads `js/main.js`; screens register with `js/router.js`.
@@ -88,13 +88,13 @@ Check with code before pictures (console errors, overlaps, the right element sho
 - Do only the ask. Say it back in one line; offer extras as one-line questions instead of doing them.
 - Medium effort by default. High effort only for new art, new music, game design and a bug that a first try at medium
   didn't fix.
-- At most 2 helper agents per thread, on parts that don't share files, unless I ask for more.
+- At most 2 helper agents per thread, on parts that don't share files, unless the owner asks for more.
 - One merge window: ready PRs wait, then merge together after one shared test and one deploy.
 - A quick question ("is it live?") gets a quick look, not a full test.
 
-## My rules
+## The owner's rules
 - Function first: fix what's broken in the game modes before adding new things.
-- Show me a plan and wait for my go before big changes. Ask me before any brand-new idea (a new mode, map, mechanic or
+- Show a plan and wait for a go before big changes. Ask before any brand-new idea (a new mode, map, mechanic or
   screen); small touches in the existing style are fine.
 - Look and feel: a funny party game with almost no explanations. Twister-like simple colored shapes, rubber ducks that
   look a little 3D with a small shadow, the multicolored letters for titles. Keep new art consistent with what's there.
@@ -103,5 +103,5 @@ Check with code before pictures (console errors, overlaps, the right element sho
   in portrait as well as on a computer.
 - Boards are see-through over the maps, Would You Rather and brackets as much as Agree or Disagree.
 - Words: "Jumps", never "clicks". Specials, not effects. In brackets, players see "contenders", never "seeds" (the code still says seeds).
-- Never send my email address anywhere.
-- Notes inside the repo (comments, `notes/`, CLAUDE.md, READMEs) speak as me, the owner, in first person ("I want", "we decided"). Where a name is needed, write "owner": never "the user", my display name or a helper's name. Word-for-word quotes, text players see and code names stay as they are.
+- Never send the owner's email address anywhere.
+- Comments inside the code (js, css, html, py, tools) speak as the owner in first person ("I want", "we decided") and say "owner" where a name is needed, never "the user", the owner's display name or a helper's name. Notes written for Claude (this file, `notes/`, memory) keep their usual voice. Word-for-word quotes, text players see and code names stay as they are.

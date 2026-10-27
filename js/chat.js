@@ -195,6 +195,10 @@ function runFun(node, args) {
     const id = byTag(s, a.replace(/^@/, '')), npc = !id && (s.hang || {}).npc && npcTag(s, a.replace(/^@/, ''));
     if (npc === 'justin' && node.kind === 'kill') { r.send({ t: 'hang', k: 'npc', who: 'justin', do: 'kill' }); return '✖ Justin plays dead'; }   // (Duck Cabin's Justin: kill works on him)
     if (npc) return npc === 'justin' ? `✗ ${node.kind} doesn't work on Justin.` : '✗ The cats don\'t listen to commands.';
+    if (!id && s.justin && s.options.justin && tag(a.replace(/^@/, '')).toLowerCase() === 'justin') {   // (the Justin option: on the boards)
+      if (node.kind !== 'kill') return `✗ ${node.kind} doesn't work on Justin.`;
+      r.send({ t: 'fx', kind: 'kill', who: [], justin: 1 }); return '✖ Justin plays dead';
+    }
     if (!id) return `✗ No player named ${a.replace(/^@/, '')}.`;
     who.push(id);
   }

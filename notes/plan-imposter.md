@@ -1,6 +1,6 @@
 # Who is the Quack? The plan
 
-Oct 25, 2026 · owner
+Oct 25, 2026 · LordKingStaton
 
 ## The game
 

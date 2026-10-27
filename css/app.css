@@ -968,11 +968,15 @@ html.still .gduck-zz i { animation: none; opacity: 1; }
 .pcard-net .bars i { width: 3px; }
 
 /* chat bubbles over the ducks: see-through, fading */
-.gduck-say { position: absolute; left: 50%; bottom: calc(var(--sz) * 1.08); transform: translate(-50%, .3rem); width: max-content; max-width: min(14rem, 60vw);
+.gduck-say { position: absolute; left: 50%; bottom: calc(var(--sz) * 1.08); transform: translate(calc(-50% + var(--say-dx, 0px)), .3rem); width: max-content; max-width: min(14rem, 60vw);
   padding: .25rem .6rem; border-radius: .8rem; background: #ffffffa8; color: #1c1c28d0; font-size: calc(.8rem * var(--ts)); font-weight: 600; line-height: 1.2;
   text-align: center; overflow-wrap: anywhere; pointer-events: none; opacity: 0; transition: opacity .6s, transform .6s; box-shadow: 0 .15rem .4rem #0003; }
-.gduck-say::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: #ffffffa8; }
-.gduck.saying .gduck-say { opacity: 1; transform: translate(-50%, 0); }
+.gduck-say::after { content: ''; position: absolute; left: calc(50% - var(--say-dx, 0px)); top: 100%; margin-left: -.35rem; border: .35rem solid transparent; border-top-color: #ffffffa8; }
+.gduck.saying .gduck-say { opacity: 1; transform: translate(calc(-50% + var(--say-dx, 0px)), 0); }
+/* kept inside the board: slid in from its sides (--say-dx), and under the name tag where it would go over the top */
+.gduck.say-below .gduck-say { bottom: auto; top: calc(100% + 1.65rem); transform: translate(calc(-50% + var(--say-dx, 0px)), -.3rem); }
+.gduck.say-below.saying .gduck-say { transform: translate(calc(-50% + var(--say-dx, 0px)), 0); }
+.gduck.say-below .gduck-say::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #ffffffa8; }
 .gduck.idle .gduck-zz { bottom: 85%; } .gduck.saying .gduck-zz { display: none; }
 /* fire: flames for a moment, then a charred duck whose burns fade */
 .gduck-fire { display: none; position: absolute; left: 50%; bottom: 8%; width: 80%; height: 90%; transform: translateX(-50%); pointer-events: none; }
