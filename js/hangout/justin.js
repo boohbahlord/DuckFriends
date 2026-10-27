@@ -54,17 +54,21 @@ Why are you telling me this? I am literally an ENGINEER!
 E N G I N E E R
 I am so rich.
 I love money.
+Do you like my cabin?
+My cabin is CRAP!
+I wish my cabin was bigger.
+My seventh cabin is SOOO much better!
 I love food.
 I don't talk to women.
 I am scared of women.
 Help me talk to women.
 I don't understand women.
 Why would I talk to a woman?
-I am still not plat in Siege! How!?
+I am still not plat in Siege! HOW!?
 WHY AM I NOT PLAT!?
-HOW AM I ONLY GOLD!
-Yes I am okay, no I am not angry. CAN YOU STOP ASKING ME THAT!
-Why did you ask me that?
+HOW AM I ONLY GOLD!!!
+Yes I am okay, no I am not angry. CAN YOU STOP ASKING ME THAT!!
+Why did you ask me that?!
 What is wrong with you?
 What is your opinion on data breaching?
 Let me explain to you why you are WRONG!
