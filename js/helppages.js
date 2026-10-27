@@ -86,6 +86,7 @@ const GAME = [
       ['sudo forgame freeroam on | off', 'ducks walk anywhere'],
       ['sudo forgame gravity low | normal', 'floaty ducks'],
       ['sudo forgame silly on | off', 'the silly commands'],
+      ['sudo forgame justin on | off', 'Justin walks the board'],
     ],
     ex: [
       ['forgame show', 'read them'],

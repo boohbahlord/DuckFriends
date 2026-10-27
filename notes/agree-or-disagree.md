@@ -2081,3 +2081,28 @@ Decision: the box stands by the west wall (it's dark there); "Cut power" / "Powe
 > inside the code i mean
 
 Decision: every note and comment that talks about the owner or speaks for the team now speaks as me, the owner, in first person ("I want", "we decided", "my rules"); where a name is needed it is "owner". Never "the user", my display name or a helper's name. Untouched: word-for-word quotes (this log, Justin's lines), text players see, and code names (shell.js `owner(path)` is a file's owner; "its owner's style" in card.js and name.js is the player's). Comments that speak about no one stay as they are. The rule is one line in CLAUDE.md, under "My rules".
+
+## Request (2026-10-27 17:08Z): Justin in every game mode
+
+> make the Justin NPC able to be added to game modes as an option availible to the hose, so like, in would you rather or what not. They basically can only be added as a spectator, like they dont change the votes, BUT they cant look as if they are voting, so for example, in agree or disagree, he always takes the position that is the most opposite of what someone else or the majority takes, so he will either strongly disagree when players agree, or strongly agree with a statement all players disagree with. He isnt voting, he just walks to the tile that shows his oppinion. The same goes for anything, like brackets, would you rather, lawyering, who's the quack, and so on. His NPC is a joke if you couldn't tell. Anyways, he can be enabled in additional settings. He still randomly shoots other players and will randomly chat in game with his saying already selected like once every 15-30 seconds. There is a bash command to turn justin on and off as well.
+
+## Request (2026-10-27 17:32Z, point 2 of 8; the others went to other threads): the go on Justin in every mode
+
+> 2. Players can shoot Justin back; he can be added as a spectator who walks around and pretends to be a part of the game while not effecting it in every game mode AND he doesn't get a card or the ability to write prompts. Also, the click E to interact with Justin is only an option available in the cabin. (Justin should run around less often in cabin and also sit still when you start talking to him for at least 5 seconds after clicking e to interact.
+
+Decisions:
+- Additional settings has a Justin tile (Off by default; not in Hangout, where he already lives), and `sudo forgame justin on | off`
+  works mid-game (in `forgame show`, `man forgame` and HelpBash).
+- He isn't a player: never in the seats, positions, done counts, votes, results, stats, brackets, Secret Cards, writing
+  or the Tab list. No check mark, vote bubble or Lawyering ring.
+- Where he walks: Agree or Disagree, the strong end against the room's average (all on Neutral: a strong end at random);
+  two sides (Would You Rather, the brackets' matches, the Lawyering jury, Quack's vote or more clues), the side with fewer
+  ducks; Quack's accusing, the duck the fewest stand on; Story Chain's votes, the line or word with the fewest ducks. He
+  looks every 2 to 3 seconds and walks only when that changes; on a tie he stays. Elsewhere he wanders.
+- He says one of his lines every 15 to 30 seconds (each once before any repeats), in the chat and his bubble. With the
+  silly commands on, every 45 to 90 seconds he fires the handgun's slow bullet at a random duck (never in Quack's reveal);
+  a duck it hits plays dead until it moves.
+- Players can shoot him back on the boards: a bullet, a dagger or `kill @Justin` knocks him down with one of his death
+  lines, and he gets up by himself after about 5 seconds. E on Justin works only in Duck Cabin.
+- Duck Cabin: he waits about twice as long between walks, rants and chases come about half as often, and E on him keeps
+  him still for at least 5 seconds (longer while his lines run).

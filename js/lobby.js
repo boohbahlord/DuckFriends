@@ -105,6 +105,7 @@ const MORE_TILES = [
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
   ['lowGravity', 'Jumps', [[0, 'Normal'], [1, 'Low gravity']]],
   ['fun', 'Silly commands', [[1, 'On'], [0, 'Off']]],
+  ['justin', 'Justin', [[0, 'Off'], [1, 'On']]],
 ];
 let moreOpen = false;
 const OPT_TIPS = {
@@ -114,6 +115,7 @@ const OPT_TIPS = {
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
   fun: 'lightning, love, kill and hotdog in the command line.',
+  justin: 'Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.',
   bbSeeds: 'How many contenders the bracket has: a number shared out among the players, or so many for each player.',
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
@@ -139,7 +141,7 @@ function openOptions() {
     ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
     ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime'].includes(r[0]))), s, ro)}
+    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

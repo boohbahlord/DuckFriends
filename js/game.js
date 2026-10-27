@@ -34,6 +34,7 @@ import { specialById, keysOf, hasKey, colorsOf, momentHTML, puffHTML, confettiRa
 import { mountHotbar } from './hotbar.js';
 import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontHTML } from './name.js';
+import { justinAt, justinShown, JUSTIN_ID, JUSTIN_PLAYER } from './boardjustin.js';
 import { rainbowHTML } from './art.js';
 import { statBoxHTML, openStats } from './stats.js';
 import { profile, save } from './store.js';
@@ -229,18 +230,19 @@ function drawDucks(now = clockNow()) {
   const board = S && $('.board', S); if (!board || !R || !geo) return;
   const s = R.state, layer = $('.ducks', board), size = geo.size, hang = !!geo.hang;
   if (hang) world.frame(now);   // (the camera first: ducks stand in the world)
-  const posOf = id => id === R.me && me ? me : hang ? world.shown(id, s.pos[id]) : s.pos[id];
+  const jp = !hang && justinShown(s) ? justinAt(s.justin, now) : null;   // (the Justin option: he walks the board, never a player)
+  const posOf = id => id === JUSTIN_ID ? jp : id === R.me && me ? me : hang ? world.shown(id, s.pos[id]) : s.pos[id];
   const liftOf = (id, pos) => hang ? world.lift(id, pos) : jumpZ(pos, now) * size;   // how high over its ground a duck is drawn
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
-  const ids = s.seat.filter(id => s.pos[id]), lane = ids.filter(id => posOf(id).x < 0);
+  const ids = [...s.seat.filter(id => s.pos[id]), ...(jp ? [JUSTIN_ID] : [])], lane = ids.filter(id => posOf(id).x < 0);
   const boxes = [], puffs = [], wearsX = new Set(), brood = [], arms = [];
   /* Who is the Quack?'s reveal keeps its news for the drumroll: who was voted out goes grey after it, the last duck plays dead after that */
   const wq = isQuack(s) && s.wq, rt = wq && s.phase === 'reveal' && wq.lastOut ? now - s.at : 1e9;
   const greyNow = id => wq && isGrey(s, id) && !(id === wq.lastOut && rt < 3200) && !((wq.dead || []).includes(id) && rt < 6100) && !(wq.result && wq.result.quacks.includes(id));
   const deadNow = (id, p) => !!p.dead && !(wq && (wq.dead || []).includes(id) && rt < 6100);
   for (const id of ids) {
-    const p = s.players[id], pos = posOf(id); if (!p) continue;
+    const p = s.players[id] || (id === JUSTIN_ID && { ...JUSTIN_PLAYER, dead: !!s.justin.down }), pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
       d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
@@ -294,14 +296,14 @@ function drawDucks(now = clockNow()) {
     if (saying) { const sb = d.querySelector('.gduck-say'); if (sb._n !== say.n) { sb._n = say.n; sb.textContent = say.text; } }
     if (d._saying !== saying) { d._saying = saying; d.classList.toggle('saying', saying); }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
-    const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 ? colAt(s, pos.x) : -1;
+    const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 && id !== JUSTIN_ID ? colAt(s, pos.x) : -1;
     if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
     /* Lawyering: a ring on the ground in the color of the side a juror stands on, faint until they vote for it */
     const ring = lawRing(s, id, pos);
     if (d._ring !== ring) { d._ring = ring; if (ring) d.dataset.ring = ring; else delete d.dataset.ring; }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
-  layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid]) d.remove(); });
+  layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid] && !(jp && d.dataset.pid === JUSTIN_ID)) d.remove(); });
   /* the handgun's bullets and the thrown daggers, flying the way they were aimed */
   const fxl = $('.fxl', board), live = new Set();
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
@@ -313,7 +315,7 @@ function drawDucks(now = clockNow()) {
     live.add(String(sh.n));
     let b = fxl.querySelector(`[data-n="${sh.n}"]`);
     if (!b) {
-      const duck = (s.players[sh.by] || {}).duck, [vx, vy] = toScreen(sh.vx, sh.vy);
+      const duck = (s.players[sh.by] || (sh.by === JUSTIN_ID ? JUSTIN_PLAYER : {})).duck, [vx, vy] = toScreen(sh.vx, sh.vy);
       b = sh.k === 'dagger' ? el(`<div class="thrown" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? 'ccw' : ''}">${daggerHTML(duck)}</i></div>`)
         : el(`<div class="bullet" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, 'handgun')[2])}</div>`);
       fxl.append(b);
@@ -411,7 +413,7 @@ function inRing(x, y) {
 const attorney = () => isLaw(R.state) && !!R.state.law && isCounsel(R.state, R.me) && ['answer', 'discuss'].includes(R.state.phase);
 /* a juror's ring: 'a' or 'b' (the side), with ' faint' until they've voted for that side */
 function lawRing(s, id, pos) {
-  const L = s.law; if (!isLaw(s) || !L || !['answer', 'discuss'].includes(s.phase) || isCounsel(s, id) || (s.players[id] || {}).late) return '';
+  const L = s.law; if (!isLaw(s) || !L || id === JUSTIN_ID || !['answer', 'discuss'].includes(s.phase) || isCounsel(s, id) || (s.players[id] || {}).late) return '';
   const v = L.votes[id], c = s.phase === 'answer' ? (pos.x >= 0 ? colAt(s, pos.x) : -1) : v ?? -1;
   return c < 0 ? '' : (c ? 'b' : 'a') + (v === c ? '' : ' faint');
 }
@@ -451,7 +453,7 @@ function zoom(how) {
 const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
 function playFx(f) {
   const s = R.state, fxl = S && $('.fxl', S); if (!fxl || !geo) return;
-  const now = clockNow(), size = geo.size, posOf = id => id === R.me && me ? me : s.pos[id];
+  const now = clockNow(), size = geo.size, posOf = id => id === JUSTIN_ID ? justinShown(s) && justinAt(s.justin, now) : id === R.me && me ? me : s.pos[id];
   const spot = id => { const p = posOf(id); return p ? place(p.x < 0 ? { ...p, x: .5 } : p, 0, 1) : null; };
   if (f.kind === 'lightning') {
     const at = spot(f.who[0]); if (!at) return;
@@ -1174,6 +1176,7 @@ function paint(force) {
   if ((s.logN || 0) > lastLog) {
     for (const m of s.log) if (m.n > lastLog && !m.sys && s.players[m.from] && (!m.to || m.to === R.me || m.from === R.me) && !isMuted(s, m.from, 'bubble') && !isMuted(s, m.from, 'text'))
       bubbles[m.from] = { text: !canOpen(s, R.me, m) ? `📄 ${m.file}` : m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (a sent file opens only for sudo, unless chmod let its group or everyone)
+    for (const m of s.log) if (m.n > lastLog && m.npc === JUSTIN_ID && s.options.mode !== 'hang') bubbles[JUSTIN_ID] = { text: m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + '…' : m.text, until: clockNow() + 5500, n: m.n };   // (the Justin option: his lines over him)
     lastLog = s.logN || 0;
   }
   if (lastFx < 0) lastFx = s.fxN || 0;
