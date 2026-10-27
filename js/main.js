@@ -13,6 +13,7 @@ import './music.js';
 import './keynav.js';
 import { acct, onAccount, accountStart, signIn } from './account.js';
 import { openFriends } from './friends.js';
+import { showSplash } from './splash.js';
 
 applySettings();
 
@@ -53,5 +54,6 @@ addEventListener('duck-profile', () => {
 });
 
 start('front');
+showSplash();
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600);   // once, on the first visit   // a device that signed in before connects after the first screen is up

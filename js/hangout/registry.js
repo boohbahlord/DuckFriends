@@ -29,9 +29,9 @@
      view(ctx)                   → px to move the camera down, so my duck shows that much higher (the piano's keys
                                    cover the bottom of the screen)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
-     light(prop, s)              → false turns a prop's light off
+     light(prop, s, l)           → false turns a light off (l: one of layout.js' LIGHTS; prop: its prop, if it has one)
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
-   browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null). */
+   browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
 export const RULES = new Map();   // k → its rules
 export const ACTS = new Map();    // id → its screen part
 export const rule = (k, r) => { RULES.set(k, r); };

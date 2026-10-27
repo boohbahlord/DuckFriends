@@ -1,11 +1,8 @@
-/* ---------- the piano in the cabin (Hangout) ----------
-   The floor piano: big keys on the floor in front of the piano (two octaves, C4 … B5). A duck walking onto a key (or
-   landing on one from a jump) plays its note for everyone, and the key lights in the interval color; standing still
-   doesn't play it again, stepping off lets it ring out.
+/* ---------- the piano in the cabin (Hangout), against the great room's north wall ----------
    Play: near the piano the context button says "Play". Pressing it seats my duck at the first free spot on the bench in
    front of the keyboard (six spots, from the middle out; the host decides who sits where, in s.hang.piano) and opens
    keyboard mode (pianokeys.js) over the bottom of the screen (on a phone held upright, the lower part of the screen, in
-   four rows). Seated, my duck can't walk; the button says "Get up", and Get up, Escape, Enter or a jump (a tap on the
+   four rows). Seated, my duck can't walk; the button says "Get up", and Get up, Escape or a jump (a tap on the
    board on a phone) stands it up.
    Notes: mine go to the room in little batches (one every 110 ms at most while playing, each note with its time in the
    batch, so a quick run keeps its rhythm on the other screens); every other screen plays them (pianokeys' play() when
@@ -14,43 +11,24 @@
    Music: while anyone is seated at the piano the room's music fades away on every screen and the music bar says
    "Piano"; 10 seconds after the last one gets up (s.hang.piano.back) it fades back in, where the room's song is by now. */
 import { rule, activity } from './registry.js';
-import { PROPS, W, H, heightAt, inCabin } from './layout.js';
+import { PROPS, W, H, inCabin } from './layout.js';
 import { mountPianoKeys, noteOn, noteOff, allNotesOff, makeTracker, LOW } from './pianokeys.js';
-import { floorPiano, pianoBody, useHangArtCSS } from './art.js';
+import { pianoBody, useHangArtCSS } from './art.js';
 import { music } from '../music.js';
 import { now as clockNow } from '../clock.js';
 import { profile } from '../store.js';
 
-const BODY = PROPS.find(p => p.kind === 'piano'), FLOOR = PROPS.find(p => p.kind === 'pianokeys');
+const BODY = PROPS.find(p => p.kind === 'piano');
 const WHITE = [0, 2, 4, 5, 7, 9, 11], BLACK = [[0, 1], [1, 3], [3, 6], [4, 8], [5, 10]];   // black keys: [after white key k, pitch class]
 const BACK_MS = 10000;   // the music comes back this long after the last player gets up
 const BATCH_MS = 110;    // my notes wait this long at most before they go to the room
 const KEEP_MS = 4000;    // the room keeps a batch of notes this long
 const COARSE = matchMedia('(hover: none) and (pointer: coarse)').matches;
 
-/* ---------- the floor piano's keys (the same shapes as art.js' floorPiano draws) ---------- */
-const FLO = 60, OCT = 2;   // C4, two octaves
-const FK = (() => {
-  const n = OCT * 7, x0 = 14, y0 = 26, kw = (FLOOR.w - 2 * x0) / n, kh = FLOOR.d - y0 - 14, keys = [];
-  for (let i = 0; i < n; i++) keys.push({ id: 'w' + i, midi: FLO + 12 * Math.floor(i / 7) + WHITE[i % 7], x0: x0 + i * kw, x1: x0 + (i + 1) * kw, y0, y1: y0 + kh });
-  let bi = 0;
-  for (let o = 0; o < OCT; o++) for (const [k, pc] of BLACK) {
-    const x = x0 + (o * 7 + k + 1) * kw - kw * .31;
-    keys.push({ id: 'b' + bi++, midi: FLO + 12 * o + pc, x0: x, x1: x + kw * .62, y0, y1: y0 + kh * .58, black: true });
-  }
-  return keys;
-})();
-/* the key under a duck's feet (world px), or null */
-function floorKeyAt(x, y) {
-  const lx = x - FLOOR.x, ly = y - FLOOR.y;
-  return FK.find(k => k.black && lx >= k.x0 && lx < k.x1 && ly >= k.y0 && ly < k.y1) || FK.find(k => !k.black && lx >= k.x0 && lx < k.x1 && ly >= k.y0 && ly < k.y1) || null;
-}
-const nearFloor = (x, y, m = 0) => x >= FLOOR.x - m && x <= FLOOR.x + FLOOR.w + m && y >= FLOOR.y - m && y <= FLOOR.y + FLOOR.d + m;
-
 /* ---------- the bench: six spots in front of the keyboard, the middle ones first ---------- */
 const SPOTS = [2, 3, 1, 4, 0, 5].map(i => ({ x: BODY.x + BODY.w / 12 * (2 * i + 1), y: BODY.y + BODY.d + 26 }));
-/* where the Play button shows: in front of the piano, on and around its floor keys */
-const inZone = (x, y, m = 0) => x >= BODY.x - 70 - m && x <= BODY.x + BODY.w + 70 + m && y >= BODY.y + BODY.d - m && y <= FLOOR.y + FLOOR.d + 40 + m;
+/* where the Play button shows: in front of the piano */
+const inZone = (x, y, m = 0) => x >= BODY.x - 70 - m && x <= BODY.x + BODY.w + 70 + m && y >= BODY.y + BODY.d - m && y <= BODY.y + BODY.d + 150 + m;
 const pianoOf = s => (s && s.hang && s.hang.piano) || { seats: {}, back: 0 };
 const freeSpot = s => { const taken = new Set(Object.values(pianoOf(s).seats).map(v => v.k)); return SPOTS.findIndex((_, k) => !taken.has(k)); };
 const hushed = (s, t) => { const P = pianoOf(s); return Object.keys(P.seats).length > 0 || t < (P.back || 0); };
@@ -61,8 +39,8 @@ rule('piano', {
   init: () => ({ piano: { seats: {}, back: 0 } }),   // seats: player id → { k: its spot, at }; back: when the music comes back
   act(s, a, now) {
     const P = s.hang.piano || (s.hang.piano = { seats: {}, back: 0 }), me = s.pos[a.id]; if (!me) return false;
-    const x = me.x * W, y = me.y * H;
-    if (a.w === 'sit') {   // Play: the first free spot (from beside the piano)
+    if (a.w === 'sit') {
+      const x = me.x * W, y = me.y * H;   // Play: the first free spot (from beside the piano)
       if (P.seats[a.id] || !inZone(x, y, 160)) return false;
       const k = freeSpot(s); if (k < 0) return false;
       P.seats[a.id] = { k, at: now };
@@ -70,14 +48,13 @@ rule('piano', {
       return true;
     }
     if (a.w === 'up') return up(s, a.id, now);
-    if (a.w === 'n') {   // a batch of notes: [ms into the batch, midi, 1 on / 0 off, '#' | 'b' | '', 1 on the floor]
+    if (a.w === 'n') {   // a batch of notes: [ms into the batch, midi, 1 on / 0 off, '#' | 'b' | '']
       if (!Array.isArray(a.ev) || !a.ev.length || a.ev.length > 64 || !Number.isFinite(a.t0)) return false;
       const ev = [];
       for (const e of a.ev) {
         if (!Array.isArray(e) || !int(e[0], 0, 3000) || !int(e[1], 21, 108) || ![0, 1].includes(e[2])) continue;
-        const f = e[4] === 1 ? 1 : 0;
-        if (f ? !nearFloor(x, y, 220) : !P.seats[a.id]) continue;   // floor notes from on (or by) the floor keys, the keyboard's from the bench
-        ev.push([e[0], e[1], e[2], ['#', 'b'].includes(e[3]) ? e[3] : '', f]);
+        if (!P.seats[a.id]) continue;   // (notes from the bench only)
+        ev.push([e[0], e[1], e[2], ['#', 'b'].includes(e[3]) ? e[3] : '']);
       }
       if (!ev.length) return false;
       const pn = s.pn || { n: 0, b: [] }, n = (pn.n || 0) + 1;
@@ -108,40 +85,35 @@ function up(s, id, now) {
 /* ---------- on every screen ---------- */
 let C = null;                 // the world's ctx while the cabin is open here
 let pk = null, panel = null, panelTop = 0, ro = null, seatK = -1, leaving = false;
-let batch = null, batchT = 0, seen = 0, myKey = null, tap = null, lastTap = null;
+let batch = null, batchT = 0, seen = 0, tap = null, lastTap = null;
 const senders = new Map();    // player id → { L: how late their notes play here (ms), last }
 const timers = new Set();
-const bigTr = new Map(), floorTr = new Map(), held = new Map();   // trackers per player; held: 'b'|'f' + midi → the players holding it
-let bigEls = null, floorEls = null;   // midi → the key's elements on the big piano, on the floor
+const bigTr = new Map(), held = new Map();   // trackers per player; held: midi → the players holding it
+let bigEls = null;   // midi → the key's elements on the piano
 
 const myId = () => C && C.me;
 const colorOf = id => { const s = C && C.state(); return ((s && s.players[id] || {}).duck || {}).color || ''; };
 const vel = () => { const d = C && C.duck(); return d && !inCabin(d.x * W, d.y * H) ? .35 : .8; };   // outside, the piano is heard through the walls
 const tracker = (map, id) => { if (!map.has(id)) map.set(id, makeTracker()); return map.get(id); };
 
-/* a key lit (or let go) on the big piano or the floor; it stays lit while anyone holds it, then fades */
-function lightKey(kind, midi, id, color) {
-  const k = kind + midi; if (!held.has(k)) held.set(k, new Set()); held.get(k).add(id);
-  const els = (kind === 'b' ? bigEls : floorEls) || {}, e = els[midi]; if (!e) return;
+/* a key lit (or let go) on the piano; it stays lit while anyone holds it, then fades */
+function lightKey(midi, id, color) {
+  if (!held.has(midi)) held.set(midi, new Set()); held.get(midi).add(id);
+  const e = (bigEls || {})[midi]; if (!e) return;
   for (const x of e) { x.style.setProperty('--g', color); x.classList.remove('on'); void x.getBoundingClientRect(); x.classList.add('on'); }
 }
-function unlightKey(kind, midi, id) {
-  const k = kind + midi, h = held.get(k); if (h) h.delete(id); if (h && h.size) return;
-  const e = ((kind === 'b' ? bigEls : floorEls) || {})[midi]; if (e) for (const x of e) x.classList.remove('on');
+function unlightKey(midi, id) {
+  const h = held.get(midi); if (h) h.delete(id); if (h && h.size) return;
+  const e = (bigEls || {})[midi]; if (e) for (const x of e) x.classList.remove('on');
 }
-function bigOn(id, midi) {
-  const iv = tracker(bigTr, id).on(midi);
-  lightKey('b', midi, id, iv.color);
-}
-function bigOff(id, midi) { tracker(bigTr, id).off(midi); unlightKey('b', midi, id); }
-function floorOn(id, midi) { const iv = tracker(floorTr, id).on(midi); lightKey('f', midi, id, iv.color); }
-function floorOff(id, midi) { tracker(floorTr, id).off(midi); unlightKey('f', midi, id); }
+function bigOn(id, midi) { lightKey(midi, id, tracker(bigTr, id).on(midi).color); }
+function bigOff(id, midi) { tracker(bigTr, id).off(midi); unlightKey(midi, id); }
 
 /* ---------- my notes, to the room ---------- */
-function queue(midi, on, sp, f) {
+function queue(midi, on, sp) {
   const t = clockNow();
   if (!batch) { batch = { t0: t, ev: [] }; batchT = setTimeout(flush, BATCH_MS); }
-  batch.ev.push([Math.min(3000, Math.round(t - batch.t0)), midi, on ? 1 : 0, sp || '', f ? 1 : 0]);
+  batch.ev.push([Math.min(3000, Math.round(t - batch.t0)), midi, on ? 1 : 0, sp || '']);
   if (batch.ev.length >= 48) flush();
 }
 function flush() {
@@ -165,13 +137,8 @@ function hear(b) {
     timers.add(id);
   }
 }
-function play(by, [, midi, on, sp, f]) {
+function play(by, [, midi, on, sp]) {
   if (!C) return;
-  if (f) {   // the floor
-    if (on) { floorOn(by, midi); noteOn(midi, { who: 'f' + by, vel: vel() }); }
-    else { floorOff(by, midi); noteOff(midi, { who: 'f' + by }); }
-    return;
-  }
   if (on) {
     bigOn(by, midi);
     if (pk) pk.play(midi, { who: by, color: colorOf(by), sp, vel: vel() }); else noteOn(midi, { who: 'k' + by, vel: vel() });
@@ -194,7 +161,7 @@ function openKeys(k) {
   place();
   pk = mountPianoKeys(panel, {
     onNote: ({ midi, on, sp: s }) => {
-      queue(midi, on, s, 0);
+      queue(midi, on, s);
       if (on) bigOn(myId(), midi, s); else bigOff(myId(), midi);
     },
     onClose: () => getUp(),
@@ -233,26 +200,11 @@ function getUp() {
   if (mine) C.send({ t: 'hang', k: 'piano', w: 'up' });
 }
 
-/* ---------- the drawings: the lit floor keys, the big piano's glowing keys ----------
-   Each goes over world.js' own element for its prop (art.js' drawing; drawn here only where the world still has a
-   placeholder): the floor piano's keys (hg-key, data-key w0 … b9), the piano body's front part (its keyboard shelf, 240
-   tall and the piano's width). */
+/* ---------- the drawings: the piano's glowing keys ----------
+   Over world.js' own element for the piano (art.js' drawing; drawn here only where the world still has a placeholder):
+   the piano body's front part (its keyboard shelf, 240 tall and the piano's width). */
 function fill() {
   const W2 = C.world;
-  const fe = W2.propEl(FLOOR.id);
-  if (fe && fe.dataset.pia !== '1') {
-    fe.dataset.pia = '1'; fe.classList.add('pia-floor');
-    if (!fe.querySelector('.hg-key')) fe.innerHTML = floorPiano({ w: FLOOR.w, h: FLOOR.d, octaves: OCT });
-    floorEls = {};
-    for (const g of fe.querySelectorAll('.hg-key')) {
-      const k = FK.find(x => x.id === g.dataset.key), face = g.querySelector('rect'); if (!k || !face) continue;
-      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      for (const [a, d] of [['x', -4], ['y', -4], ['width', 8], ['height', 8]]) ring.setAttribute(a, +face.getAttribute(a) + d);
-      ring.setAttribute('rx', 8); ring.setAttribute('class', 'pia-ring'); g.append(ring);
-      floorEls[k.midi] = [g];
-    }
-    for (const [k, h] of held) if (k[0] === 'f' && h.size) floorEls[+k.slice(1)]?.forEach(x => x.classList.add('on'));
-  }
   const be = W2.propEl(BODY.id);
   if (be && be.dataset.pia !== '1') {
     be.dataset.pia = '1'; be.classList.add('pia-big');
@@ -271,7 +223,7 @@ function fill() {
     be.insertAdjacentHTML('beforeend', `<svg class="pia-keys" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true">${glow}${keys}${black}</svg>`);
     bigEls = {};
     for (const e of be.querySelectorAll('.pia-keys [data-m]')) (bigEls[e.dataset.m] = bigEls[e.dataset.m] || []).push(e);
-    for (const [k, hs] of held) if (k[0] === 'b' && hs.size) bigEls[+k.slice(1)]?.forEach(x => x.classList.add('on'));
+    for (const [m, hs] of held) if (hs.size) bigEls[m]?.forEach(x => x.classList.add('on'));
   }
 }
 
@@ -285,8 +237,8 @@ activity({
     closeKeys(); flush();
     for (const t of timers) clearTimeout(t); timers.clear();
     allNotesOff(); music.hush(null);
-    senders.clear(); bigTr.clear(); floorTr.clear(); held.clear();
-    bigEls = floorEls = null; myKey = null; tap = lastTap = null; batch = null; leaving = false; C = null;
+    senders.clear(); bigTr.clear(); held.clear();
+    bigEls = null; tap = lastTap = null; batch = null; leaving = false; C = null;
   },
   near(pos, ctx) {
     const s = ctx.state();
@@ -304,16 +256,6 @@ activity({
     if (pn && pn.n < seen) seen = pn.n;   // (a new room's count)
   },
   step(dt, now, ctx) {
-    const d = ctx.duck(); if (!d) return;
-    // the floor keys under my feet: on the ground on a key plays it, once a step
-    const x = d.x * W, y = d.y * H, gnd = heightAt(x, y);
-    const k = !pk && !d.j && d.vz == null && Math.abs((d.z ?? gnd) - gnd) < 3 ? floorKeyAt(x, y) : null;
-    if ((k && k.id) !== (myKey && myKey.id)) {
-      const me = ctx.me;
-      if (myKey) { floorOff(me, myKey.midi); noteOff(myKey.midi, { who: 'fme' }); queue(myKey.midi, false, '', 1); }
-      if (k) { floorOn(me, k.midi); noteOn(k.midi, { who: 'fme', vel: .8 }); queue(k.midi, true, '', 1); }
-      myKey = k;
-    }
     music.hush(hushed(ctx.state(), clockNow()) ? 'Piano' : null);
   },
   draw() { fill(); },

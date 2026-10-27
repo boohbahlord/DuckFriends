@@ -5,12 +5,12 @@ HTML, CSS and JavaScript modules, no build step. Live at https://boohbahlord.git
 serves `main`, so merging to `main` is deploying).
 
 ## Notes (search them, don't read them whole)
-- `notes/agree-or-disagree.md`: every request the owner has made, word for word, with the decisions taken. It is long:
+- `notes/agree-or-disagree.md`: every request I've made, word for word, with the decisions taken. It is long:
   search it for the request you're working on instead of reading it all. Add each new request to the end of it, word
   for word, before working on it.
-- `notes/plan-request-5.md`: the older plan and the owner's answers (words like Stage, Turn, Round; specials; joining).
+- `notes/plan-request-5.md`: the older plan and my answers (words like Stage, Turn, Round; specials; joining).
   Read it only when working on those parts.
-- `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
+- `notes/ref/`: my reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together
 - `index.html` loads `js/main.js`; screens register with `js/router.js`.
@@ -33,7 +33,7 @@ serves `main`, so merging to `main` is deploying).
     `rules.js`: `s.hang` and the `{ t: 'hang', k }` action, called from `js/rules.js`.
   - `lamp.js` the lamps (the example activity); `stage.js` the stage and its mic; `seats.js` the couches and the
     campfire's logs; `soccer.js` the soccer ball and net; `chalk.js` the chalk floor and eraser; `book.js` the guestbook.
-  - `piano.js` the floor piano, Play and the music fade; `pianokeys.js` its keyboard mode, sound and music sheet (test
+  - `piano.js` the piano, Play and the music fade; `pianokeys.js` its keyboard mode, sound and music sheet (test
     page: `tools/piano-test.html`).
   - `pool.js` imports the water and the bouncing: `water.js` floating, ripples, splashes; `beachball.js`;
     `rubberducks.js`; `trampoline.js`; `falls.js` falling off the deck.
@@ -88,13 +88,13 @@ Check with code before pictures (console errors, overlaps, the right element sho
 - Do only the ask. Say it back in one line; offer extras as one-line questions instead of doing them.
 - Medium effort by default. High effort only for new art, new music, game design and a bug that a first try at medium
   didn't fix.
-- At most 2 helper agents per thread, on parts that don't share files, unless the owner asks for more.
+- At most 2 helper agents per thread, on parts that don't share files, unless I ask for more.
 - One merge window: ready PRs wait, then merge together after one shared test and one deploy.
 - A quick question ("is it live?") gets a quick look, not a full test.
 
-## The owner's rules
+## My rules
 - Function first: fix what's broken in the game modes before adding new things.
-- Show a plan and wait for a go before big changes. Ask before any brand-new idea (a new mode, map, mechanic or
+- Show me a plan and wait for my go before big changes. Ask me before any brand-new idea (a new mode, map, mechanic or
   screen); small touches in the existing style are fine.
 - Look and feel: a funny party game with almost no explanations. Twister-like simple colored shapes, rubber ducks that
   look a little 3D with a small shadow, the multicolored letters for titles. Keep new art consistent with what's there.
@@ -103,4 +103,5 @@ Check with code before pictures (console errors, overlaps, the right element sho
   in portrait as well as on a computer.
 - Boards are see-through over the maps, Would You Rather and brackets as much as Agree or Disagree.
 - Words: "Jumps", never "clicks". Specials, not effects. In brackets, players see "contenders", never "seeds" (the code still says seeds).
-- Never send the owner's email address anywhere.
+- Never send my email address anywhere.
+- Notes inside the repo (comments, `notes/`, CLAUDE.md, READMEs) speak as me, the owner, in first person ("I want", "we decided"). Where a name is needed, write "owner": never "the user", my display name or a helper's name. Word-for-word quotes, text players see and code names stay as they are.

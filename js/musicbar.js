@@ -41,11 +41,11 @@ export function mountMusicBar(root) {
     const np = music.nowPlaying();
     bar.hidden = !np;
     if (!np) return;
-    const sig = np.name ? `${np.name}|${np.next}` : '-';
+    const sig = np.name ? `${np.name}|${np.next}|${!!np.wait}` : '-';
     if (sig === shown) return; shown = sig;
-    song.classList.toggle('next', !!np.next); song.classList.toggle('none', !np.name);
-    name.innerHTML = np.name ? (np.next ? `<span class="mbar-up">next</span> ` : '') + esc(np.name) : 'No songs on';
-    song.title = np.name ? (np.next ? `Next: ${np.name}` : np.name) : 'Every song is off (song on all)';
+    song.classList.toggle('next', !!(np.next || np.wait)); song.classList.toggle('none', !np.name);
+    name.innerHTML = np.name ? (np.wait ? `<span class="mbar-up">tap anywhere</span> ` : np.next ? `<span class="mbar-up">next</span> ` : '') + esc(np.name) : 'No songs on';
+    song.title = np.wait ? `${np.name}: the browser starts sound once you tap, press a key or use the mouse anywhere` : np.name ? (np.next ? `Next: ${np.name}` : np.name) : 'Every song is off (song on all)';
   };
   /* on a touch screen there's no hovering: a tap shows the slider for a few seconds */
   const open = () => { bar.classList.add('open'); clearTimeout(openT); openT = setTimeout(() => bar.classList.remove('open'), 4000); };
@@ -62,4 +62,12 @@ export function mountMusicBar(root) {
   const t = setInterval(paintSong, 500);
   paintSpk(); paintSong();
   return () => { clearInterval(t); clearTimeout(openT); document.removeEventListener('settings', paintSpk); };
+}
+
+/* the front page and Rooms: the bar sits in the top-right corner, left of Sign in, so the two never overlap; returns its clean-up */
+export function mountCornerMusicBar() {
+  const corner = document.querySelector('.corner-tr'); if (!corner) return () => {};
+  const t = document.createElement('template'); t.innerHTML = musicBarHTML(); const bar = t.content.firstElementChild;
+  corner.prepend(bar); const off = mountMusicBar(corner);
+  return () => { off(); bar.remove(); };
 }

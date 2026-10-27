@@ -3,13 +3,13 @@
    colors (the interval from the previous note) and the music sheet column. It knows nothing of the room: the caller
    sends my notes to the room (onNote) and calls play()/release() for notes from others.
 
-   Keys on a computer (read by e.code, so Shift, Alt and the keyboard's language don't change them):
-     lowest octave (C2)  1 2 3 4 5 6 7         second (C3)  Q W E R T Y U
-     third (C4, middle C) G H J K L ; '        fourth (C5)  V B N M , . /
-     hold Shift or C: a half step sharp; hold Space or Alt (Option on a Mac): a half step flat (black keys are played only
-     that way on a computer; Ctrl isn't used: Ctrl+W/T/N belong to the browser). Esc gets up (onClose).
-   While the keyboard is open these keys (and Space, Alt, Esc) are kept from the game and the browser; Ctrl/Cmd
-   combinations are never touched. Key repeat doesn't strike again; letting go lets the note ring out (the damper).
+   Keys on a computer (read by e.code, so Shift and the keyboard's language don't change them): each row is one chromatic
+   octave, C to B, 12 keys a half step apart (black keys have their own keys; notes are spelled with sharps):
+     lowest octave (C2)   1 2 3 4 5 6 7 8 9 0 - =         second (C3)  Q W E R T Y U I O P [ ]
+     third (C4, middle C) A S D F G H J K L ; ' Enter     fourth (C5)  Shift Z X C V B N M , . / Space
+   While the keyboard is open all 48 keys (Enter, Shift and Space too) and Esc are kept from the game and the browser;
+   Ctrl/Cmd combinations are never touched. Esc (and the Get up button) gets up (onClose). Key repeat doesn't strike
+   again; letting go lets the note ring out (the damper).
    Phones tap the keys (black keys too), several fingers at once for chords.
 
    API
@@ -35,7 +35,7 @@
      sheetHTML() → the sheet's element; drawSheet(el, notes): draws notes ([{ midi, sp, c, g, t }]: c its head color, g
        a chord id (same g = one chord; without g, notes within 60 ms are one)) as a narrow grand staff, newest at the
        bottom; full lines scroll up.
-     KEY_ROWS, KEY_MAP (e.code → midi), KEY_LABEL (e.code → letter), LOW (36, C2), HIGH (83, B5), keyMidi(code, { sharp, flat }).
+     KEY_ROWS, KEY_MAP (e.code → midi), KEY_LABEL (e.code → what the key shows), LOW (36, C2), HIGH (83, B5), keyMidi(code).
      renderOffline(events) → AudioBuffer: the voice written out ([{ midi, t, d, vel }], seconds), for tests. */
 import { profile } from '../store.js';
 
@@ -44,16 +44,17 @@ export const LOW = 36, HIGH = LOW + 47;
 const WHITE = [0, 2, 4, 5, 7, 9, 11];
 const BLACK_PC = new Set([1, 3, 6, 8, 10]);
 export const KEY_ROWS = [
-  ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'],
-  ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU'],
-  ['KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'],
-  ['KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash'],
+  ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0', 'Minus', 'Equal'],
+  ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP', 'BracketLeft', 'BracketRight'],
+  ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'],
+  ['ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'Space'],
 ];
-const LETTERS = ['1234567', 'QWERTYU', "GHJKL;'", 'VBNM,./'];
-export const KEY_MAP = Object.fromEntries(KEY_ROWS.flatMap((row, o) => row.map((c, i) => [c, LOW + 12 * o + WHITE[i]])));
+const LETTERS = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='], 'QWERTYUIOP[]'.split(''), ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '⏎'], ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '␣']];
+export const KEY_MAP = Object.fromEntries(KEY_ROWS.flatMap((row, o) => row.map((c, i) => [c, LOW + 12 * o + i])));
+KEY_MAP.NumpadEnter = KEY_MAP.Enter;   // (the numpad's Enter is the same key to the game, so the same note here)
 export const KEY_LABEL = Object.fromEntries(KEY_ROWS.flatMap((row, o) => row.map((c, i) => [c, LETTERS[o][i]])));
 const LETTER_OF = Object.fromEntries(Object.entries(KEY_MAP).map(([c, m]) => [m, KEY_LABEL[c]]));
-export const keyMidi = (code, { sharp = false, flat = false } = {}) => KEY_MAP[code] == null ? null : KEY_MAP[code] + (sharp ? 1 : 0) - (flat ? 1 : 0);
+export const keyMidi = code => KEY_MAP[code] ?? null;
 const isBlack = m => BLACK_PC.has(((m % 12) + 12) % 12);
 
 /* ---------- names and the glow colors ---------- */
@@ -277,7 +278,7 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
   const kb = box.querySelector('.pk-keys'), sheetEl = box.querySelector('.pk-sheet');
   const keyEl = new Map(), holders = new Map(), trackers = new Map(), down = new Map(), ptr = new Map(), sheetNotes = [];
   const mine = makeTracker();
-  let per = 0, sharpHeld = new Set(), flatHeld = new Set(), raf = 0;
+  let per = 0, raf = 0;
 
   /* the layout: as many octaves a row as keep the white keys wide enough to hit (26 px with a mouse, 40 with a finger):
      4 on a computer, 2 on a phone held sideways, 1 on a phone held upright; the lowest row at the bottom */
@@ -296,7 +297,7 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
           row += `<div class="pk-w" data-m="${m}"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? `<span class="pk-k">${LETTER_OF[m]}</span>` : ''}${!showLetters && pc === 0 ? `<span class="pk-k">C${o + 2}</span>` : ''}</div>`; });
         for (let o = r * p; o < r * p + p; o++) for (const [wi, pc, nudge] of BLACK_AFTER) {
           const m = LOW + 12 * o + pc, left = ((o - r * p) * 7 + wi + 1 + nudge) / n * 100, bw = 60 / n;
-          row += `<div class="pk-b" data-m="${m}" style="left:${(left - bw / 2).toFixed(3)}%;width:${bw.toFixed(3)}%"><span class="pk-gl"><span class="pk-lab"></span></span></div>`;
+          row += `<div class="pk-b" data-m="${m}" style="left:${(left - bw / 2).toFixed(3)}%;width:${bw.toFixed(3)}%"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? `<span class="pk-k">${LETTER_OF[m]}</span>` : ''}</div>`;
         }
         html += row + '</div>';
       }
@@ -335,7 +336,7 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
     const iv = mine.on(m);
     noteOn(m);
     light(m, iv.color, iv.label);
-    if (isBlack(m) && !sp) sp = iv.from != null && iv.from > m ? 'b' : '#';   // a tapped black key: flat going down, sharp going up
+    if (isBlack(m) && !sp) sp = iv.from != null && iv.from > m ? 'b' : '#';   // a tapped black key: flat going down, sharp going up (a computer's keys: sharp)
     addSheet({ midi: m, sp: isBlack(m) ? sp : '', c: iv.color, g: 'me' + iv.g, t: Date.now() });
     onNote({ midi: m, on: true, t: Date.now(), sp: isBlack(m) ? sp : '' });
   }
@@ -348,32 +349,19 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
   function releaseMine() {
     for (const [code, m] of [...down]) { down.delete(code); myOff('k' + code, m); }
     for (const [id, m] of [...ptr]) { ptr.delete(id); myOff('p' + id, m); }
-    sharpHeld.clear(); flatHeld.clear();
   }
 
   /* the computer's keys */
-  const SHARP_KEYS = ['ShiftLeft', 'ShiftRight', 'KeyC'], FLAT_KEYS = ['Space', 'AltLeft', 'AltRight'];
   const keydown = e => {
     if (e.ctrlKey || e.metaKey) { if (e.key === 'Meta') releaseMine(); return; }   // (a Mac sends no key-ups while Cmd is held)
     if (typing(e.target)) return;
     if (e.code === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) onClose(); return; }
-    if (SHARP_KEYS.includes(e.code) || FLAT_KEYS.includes(e.code)) {
-      if (e.code !== 'ShiftLeft' && e.code !== 'ShiftRight') { e.preventDefault(); e.stopImmediatePropagation(); }   // (Space would jump or scroll; Alt would open Firefox's menu bar)
-      (SHARP_KEYS.includes(e.code) ? sharpHeld : flatHeld).add(e.code); return;
-    }
-    const base = KEY_MAP[e.code]; if (base == null) return;
-    e.preventDefault(); e.stopImmediatePropagation();
+    const m = KEY_MAP[e.code]; if (m == null) return;
+    e.preventDefault(); e.stopImmediatePropagation();   // (Enter, Space and Shift are notes too: nothing else gets them)
     if (e.repeat || down.has(e.code)) return;
-    const sharp = e.shiftKey || sharpHeld.size > 0, flat = e.altKey || flatHeld.size > 0;
-    const m = base + (sharp ? 1 : 0) - (flat ? 1 : 0);
-    down.set(e.code, m); myOn('k' + e.code, m, sharp && !flat ? '#' : flat && !sharp ? 'b' : '');
+    down.set(e.code, m); myOn('k' + e.code, m, '#');
   };
   const keyup = e => {
-    if (SHARP_KEYS.includes(e.code) || FLAT_KEYS.includes(e.code)) {
-      sharpHeld.delete(e.code); flatHeld.delete(e.code);
-      if (e.code !== 'ShiftLeft' && e.code !== 'ShiftRight') { e.preventDefault(); e.stopImmediatePropagation(); }
-      return;
-    }
     if (e.code === 'Escape') { e.stopImmediatePropagation(); return; }
     const m = down.get(e.code); if (m == null) return;
     e.preventDefault(); e.stopImmediatePropagation(); down.delete(e.code); myOff('k' + e.code, m);
@@ -427,10 +415,8 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
 
 /* the keys and what they do, in order (a computer only) */
 function legendHTML() {
-  const k = s => `<kbd>${s}</kbd>`, mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  const rows = LETTERS.map((l, o) => `<span class="pk-lg-i"><b>C${o + 2}</b>${k(l[0])}…${k(l[6])}</span>`).join('');
+  const k = s => `<kbd>${s}</kbd>`;
+  const rows = LETTERS.map((l, o) => `<span class="pk-lg-i"><b>C${o + 2}</b>${k(l[0])}…${k(l[11])}</span>`).join('');
   return `<div class="pk-legend" aria-label="Keys">${rows}<span class="pk-lg-sep"></span>
-    <span class="pk-lg-i">${k('Shift')}<em>or</em>${k('C')}<b>♯</b></span>
-    <span class="pk-lg-i">${k('Space')}<em>or</em>${k(mac ? 'Option' : 'Alt')}<b>♭</b></span>
     <span class="pk-lg-i">${k('Esc')}<b>Get up</b></span></div>`;
 }

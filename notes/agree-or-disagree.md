@@ -134,8 +134,8 @@ The rounds go on until the players vote to end the game or leave.
 
 ## Decided (2026-10-23)
 
-- Online: **Firebase** (live room list, real-time play, sign-in, friends). The owner makes a free Firebase project and
-  sends its web settings.
+- Online: **Firebase** (live room list, real-time play, sign-in, friends). I make a free Firebase project and
+  send its web settings.
 - Symbol colors: red, yellow, green.
 - Fonts: **Fredoka** is the default text font; **Lilita One** is the playground font for the multicolored letters
   (Round Lord, the title). The font list: Fredoka, Lilita One, the old English font (Grenze Gotisch, from Ether's
@@ -267,7 +267,7 @@ Those kind of goofy commands like lightning of summoning hotdogs can be turned o
 
 ## Online play (how it works)
 - Firebase project duckfriends-bd795; config in js/online.js; rules in database.rules.json (pasted into Realtime
-  Database → Rules by the owner). Guests sign in anonymously, one guest per browser tab.
+  Database → Rules by me). Guests sign in anonymously, one guest per browser tab.
 - The host's browser runs the rules; players send actions (games/{g}/acts) and duck steps (games/{g}/mv) and read the
   state (games/{g}/s). A host gone (or asleep) for ~6–16 s is replaced by the next player; a player away 30 s leaves.
 - Private rooms: the game's path is a hash of the room id and passkey, so only passkey holders can find it.
@@ -698,7 +698,7 @@ From the request that set up The Court: "Another threat will be in charge of the
 wait on my call and let me decide how things happen for that one."
 
 The idea as pitched: the group builds a story one line per player, each player has a secret word to sneak into their
-line, and at the end everyone walks onto their favorite line. Asked (not the owner's words): 1. where the secret words
+line, and at the end everyone walks onto their favorite line. Asked (not my words): 1. where the secret words
 come from, 2. what a writer sees, 3. how it starts, 4. length and timer, 5. the ending, 6. voting for your own line.
 The answers:
 
@@ -714,7 +714,7 @@ Ducks can walk around on screen while it is being typed, but the game shows a wi
 
 Stats include who got the most votes for their sentences, the most votes for their word, who took the longest writing, and the most jumps.
 
-Asked (not the owner's words): the 160-letter limit with example sentences, and six small questions with suggestions
+Asked (not my words): the 160-letter limit with example sentences, and six small questions with suggestions
 (the word must be in the line; the words show after the line vote; votes end by the usual share; what next is three
 spots with a coin toss for a tie; one word up to 20 letters; old paragraphs stay above, faded, and finished stories
 show on the all-rounds review). The answer, word for word:
@@ -797,7 +797,7 @@ things LIKE pipes and appending too since im not going to name them all here
 
 remember there is a lot of stuff i described for groups
 
-(Planned in the Claude Doc "Command line: more bash". Chose "Build sections 1 to 4": help topics, the bash
+(Planned in the doc "Command line: more bash". Chose "Build sections 1 to 4": help topics, the bash
 operators, text and file tools, groups and new perms, people/room/game commands. Not now: emote, quack, poll, wall,
 nano.)
 
@@ -808,10 +808,10 @@ From a longer message about lawyering and The Court (logged with that work):
 For imposter duck another thread can do that one too.
 
 The pitch it was started from: every duck gets the same secret word except one, who gets nothing. Each player gives one
-clue over voice, then the room walks to whoever they think is the imposter. The plan and the owner's answers are in
+clue over voice, then the room walks to whoever they think is the imposter. The plan and my answers are in
 `notes/plan-imposter.md`.
 
-The owner's answer to the first plan, word for word (2026-10-25):
+My answer to the first plan, word for word (2026-10-25):
 
 The tile should have the duck avatar on it, and it updates with any customization the player makes mid game, and players walk onto that tile to vote who is the imposter. The clue round has a 12 second grace period and players END THEIR OWN clue round, and if they dont end it, then every other player has to. The player whose turn it is gets their tile highlighted and they are seen in the clouds. The tile is the same color as the one in their player card. After every player has had a clue, the tile changes to two sides, either another round of clues (right side) or "Vote Out the Quack" (left side)
 
@@ -823,7 +823,7 @@ The stats should be which player voted correct the most times (only IF any did, 
 
 Give me some suggestions for the stats please
 
-The owner's answers to the five questions left, word for word (2026-10-25):
+My answers to the five questions left, word for word (2026-10-25):
 
 1. Yeah, they see the category not the word. 
 2. No that doesnt even work because then if they guess right everyone knows it is them because the players dont need to guess a word they already know
@@ -933,7 +933,7 @@ i as host was said to not be in the sudo catgeory this is a glitch
 
 (Decision: the host and sudo never need to type the word sudo; groupadd works like sudo groupadd for them. Anyone else
 who tries is told only the host and sudo can.)
-(Also from the bug tester, through the coordinator: `usermod -a -G sudo @name` gave the usage message. Now usermod,
+(Also from the bug test: `usermod -a -G sudo @name` gave the usage message. Now usermod,
 gpasswd, adduser and deluser take names with or without @, and flags work split (-a -G), joined (-aG) or long
 (--append --groups), in every command.)
 
@@ -959,7 +959,7 @@ the people list), the questions and choices they wrote, bracket topics and conte
 The game can make it to where the writing game can continue without a voting round as a setting that is turned on by default when there is only two players and turned off by default when there are four players, that way the voting becomes meaningful.
 
 Decision: a Story Chain lobby option, Voting: Auto (the default) / On / Off. Auto skips the line and secret word votes
-with 2 players and votes with 3 or more (asked the owner about 3; voting kept on meanwhile). With no voting, a finished
+with 2 players and votes with 3 or more (asked me about 3; voting kept on meanwhile). With no voting, a finished
 paragraph goes straight to the stats and the Continue / New story / Lobby choice, where the secret words show lit up in
 their lines.
 
@@ -973,7 +973,7 @@ says so. useradd -G group name now works (like usermod -aG), and userdel says ho
 
 ## The command line bug test (2026-10-25)
 
-(From the coordinator, after a full bug test of the command line; the report is bugtest/2026-10-25-command-line.md in the
+(Follow-up, after a full bug test of the command line; the report is bugtest/2026-10-25-command-line.md in the
 project files.) The command line bug test is done. Please fix all of it in a PR on top of #57 and hold it for my batch.
 Also fix the 12 low ones in the report.
 
@@ -982,8 +982,8 @@ perma-notes hold 100,000 characters in all and say so when full; finger names ha
 HelpHelp; `send @everyone` alone shows how to use it; and the 12 small ones (history, `tail -n -5`, group name errors,
 `adduser group player`, `sudo -v -h -i -u`, `sudo true`, /usr paths, `${#var}` `${var:-x}`, read, xargs, paste,
 `grep -r`, a redirect after a loop, `yes`, names without spaces, long lines say they were cut). A group with nosend
-can't use `write` either. Aliases stay on the device from game to game, like a .bashrc (the coordinator decided while
-the owner was asleep); HelpBash and man alias say so.
+can't use `write` either. Aliases stay on the device from game to game, like a .bashrc (decided while
+I was asleep); HelpBash and man alias say so.
 
 ## Music: phones, the slider, quieter, crackling, Spring in a Box (2026-10-25)
 
@@ -1005,7 +1005,7 @@ music can be less loud by default \
 
 whenever i opened discord app while on game lobby the music in the browser game become crackly rly bad sometimes idky
 
-(Also from the bug tester, through the coordinator: the Music slider at 0 and back started a new song.)
+(Also from the bug test: the Music slider at 0 and back started a new song.)
 
 Decisions: on a phone the notes' tails end sooner and a few faint layers (octave shimmers, the music box's halo, a
 second detuned saw) are left out, about half the work; a computer plays everything in full. The Music slider at 0 and
@@ -1023,7 +1023,7 @@ yeah you can put that in the game
 
 (Done: Spring in a Box is the fifth song.)
 
-(Follow-up from the coordinator: Firefox can't pause an offline render to add notes, so the notes are now set down in
+(Follow-up: Firefox can't pause an offline render to add notes, so the notes are now set down in
 4-second pieces a moment apart before the render starts; Firefox plays recorded songs too.)
 
 ## Bicker Brackets on a phone in Firefox, word for word (2026-10-25)
@@ -1036,7 +1036,7 @@ cuts off a multicolored name that fits ("BoohbahL…"). From the bug tester, rou
 little when its duck wears a hat, so the hat never pokes into the title; on a phone the podium's steps show the places
 and the full contender cards line up under them.)
 
-(Bug report passed on by the coordinator: on a short landscape phone (844×390), the Who is the Quack? tiles get
+(Bug report: on a short landscape phone (844×390), the Who is the Quack? tiles get
 squashed into thin strips and the names overlap.)
 
 (Done: on a phone held sideways, the cloud, the Secret Card and the category stand in a column on the left, and the
@@ -1044,7 +1044,7 @@ tiles, or the "Vote out the Quack" and "Another round of clues" sides, take the 
 ducks are sized to stand under their tile's name. In every mode, the bottom bar on a sideways phone is one row, so the
 board keeps its height.)
 
-(Follow-up from the bug test, through the coordinator: on a slow machine Glow, Spring in a Box and Jester's Stair took 2
+(Follow-up from the bug test: on a slow machine Glow, Spring in a Box and Jester's Stair took 2
 to 3.6 times their length to build. Phones now play the music at a sample rate of 16 kHz (every song is filtered below
 4.2 kHz anyway), with simpler heavy voices (one oscillator for the pads, the felt piano and the bass; no vibrato; no
 sub-octaves, tines or detuned twins) and shorter tails: the three heavy songs take about a fifth of the work they take
@@ -1069,7 +1069,7 @@ move the tiles under everyone's feet.)
 
 give me all the instructions i gave you and paste them down to another agent and have them come up with an idea for a song that is novel but builds off of these. Send them the primpts i wrote you not the songs, then let them write a song idea and ill look at it and consider if i want to send it back to u
 
-(Done: a fresh agent read only the owner's music requests, word for word, and wrote "Ducklings in a Row": a mother
+(Done: a fresh agent read only my music requests, word for word, and wrote "Ducklings in a Row": a mother
 duck's waddle tune on felt piano copied as a round by her ducklings, a music box and a harp; D Mixolydian lifting to D
 major. In /mnt/project-files/music/song-ideas/.)
 
@@ -1114,7 +1114,7 @@ last key. On a computer the see-through row of keys sits top left, the pressed k
 5 seconds unused; phones have no row: holding still on the board brings the specials around the finger (tap to use,
 hold to keep on; holding a duck still opens its player menu). Customize → Specials: a preview button in each tile; the
 tile itself opens ten key boxes under it, inside the menu. Colors gets a Specials section. Sixteen more special ideas
-were offered for the owner to pick from.)
+were offered for me to pick from.)
 
 ## Music: faint crackles (2026-10-25)
 
@@ -1133,7 +1133,7 @@ there is cackling in all of these songs.
 mallet or a breath. The felt piano's hammer and the wood knock now swell in over 5 ms, softer and darker, and the brush
 is a little darker; the seven new songs' own instruments get the same in their thread.)
 
-## Music: seven new songs from the owner's picks (2026-10-25)
+## Music: seven new songs from my picks (2026-10-25)
 
 Offered: scales A1 major pentatonic, A2 whole tone, A3 Lydian dominant, A4 harmonic major, A5 Hirajoshi; rhythms B1
 3-3-2, B2 half time, B3 3 against 2, B4 waltz, B5 fast harp ripples over a slow tune; timbres C1 kalimba, C2 marimba,
@@ -1174,8 +1174,8 @@ The seventh song will take inspiration from pair bound from bioshock 2 soundtrac
 
 The song needs multiple agents to work and and a coordinator to inform them of the task, since three agents will be working on songs at the same time. Another two agents will be writing scripts. One agent will be coordinating.
 
-(Started: a coordinator agent briefs two writers, who write the seven song ideas, and three composers, who build and
-render them; test renders go to the owner first. Song 6's rare-play rule is for when it goes into the game.)
+(Started: one agent briefs two writers, who write the seven song ideas, and three composers, who build and
+render them; test renders go to me first. Song 6's rare-play rule is for when it goes into the game.)
 
 Is there any songs dont yet?
 
@@ -1199,7 +1199,7 @@ Make infinite pond have a different main instrument and make it into a type of l
 I liked feather bound btw and i think we can use all of these songs
 
 (The crackle was soft noise bursts at the start of notes (mallets, felt ticks, the ocarina's breath); they were made much
-softer and darker. Ruffles' lead: the owner was offered a bamboo flute (shakuhachi), clarinet, pan flute or koto.)
+softer and darker. Ruffles' lead: I was offered a bamboo flute (shakuhachi), clarinet, pan flute or koto.)
 
 ## Specials: the number-key row (2026-10-25)
 
@@ -1305,7 +1305,7 @@ orange-brown logs, a steep A-frame roof with a dark green shingle roof, a big tr
 chimney, a wraparound deck with an orange wood railing and stairs down to the right, wooded hillside behind.)
 
 (Building with several workers; the plan and the parts are in notes/plan-hangout.md. Open questions taken with these
-picks until the owner says otherwise: one big floor first (living room, kitchen, two bedrooms, bathroom), upstairs
+picks until I say otherwise: one big floor first (living room, kitchen, two bedrooms, bathroom), upstairs
 later; the book is a guestbook; Shift sharps, Alt (Option) flats, since Ctrl+W/T/N belong to the browser and would
 close the game; each duck's chalk is its body color; the Sit/Play button turns to "Get up", and a jump gets up too.)
 
@@ -1335,7 +1335,7 @@ Yeah, i like these two new versions of the song a lot, now we can just add them 
 darker; the whole mix has a soft dip at 3 kHz, where shrill notes hurt. Every song measured 2.5 to 6.5 dB less shrill at
 its sharpest moment, at the same loudness. No hard clicks were found in any recording; the low notes of the kalimba,
 marimba and harps and the thump drum now come in a little slower, as a round "dum" instead of a pop, and a note played
-live whose moment has just gone by starts with its full soft shape. The owner was asked where they still hear pops.)
+live whose moment has just gone by starts with its full soft shape. I was asked where I still hear pops.)
 
 ## Specials: dagger, aiming, ducklings, disco ball (2026-10-25)
 
@@ -1376,7 +1376,7 @@ i have a laptop with a stupid touchscreen built into the  laptop monitor i cant 
 Now it hides only when there is no mouse or touchpad at all, and it shows anyway as soon as a key is pressed or a
 touchpad or mouse moves. Phones and tablets still have no row. Customize → Specials uses the same check for its words.)
 
-(From the specials thread, the owner: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
+(From the specials thread, I wrote: "i have a laptop with a stupid touchscreen built into the  laptop monitor i cant
 turn off, but maybe that is what is hiding the number key display for the specials". The music took such a laptop for a
 phone and played the lighter phone versions of the songs; now only a device with no mouse or touchpad at all gets them.)
 
@@ -1409,14 +1409,14 @@ title screen and the Night Show map; still smooth (60 frames a second) on a slow
 
 The night show needs the background to have something feeling up it's empty space. How about a very colorful indoor playground that glows and wrapped in lights with wooden block letters stacked and changing colors, colors that glow in more patterns, and there is a window casting a waxing crescent with a tree seen from outside
 
-(First try: a neon playground, letter blocks and a window drawn flat on the back wall. The owner, word for word:
+(First try: a neon playground, letter blocks and a window drawn flat on the back wall. I wrote, word for word:
 "everything added to the night show needs to be made better, more detailed and better blended into the page, it feels
 very post hawk and shoved in, and the playground just kinda floats... ewww" / "How about we make a detailed toy train run
 into the screen from the left and go thru into the right while glowing and carrying ducks on it" / "we can keep the window
 and moon" / "everything must look like they belong" / "maybe the lights on the floor IS the floor" / "and the window and
 everything can be adjusted to show as such".
 
-Second try, waiting for the owner's look: the light-up dots are the room's floor and reach the wall; a baseboard where
+Second try, waiting for my look: the light-up dots are the room's floor and reach the wall; a baseboard where
 the wall meets it, and the wall glows in the floor's colors near the bottom. The playgrounds (striped tent roofs, decks,
 climbing walls, nets, a tube, slides, all wrapped in running string lights) and the letter blocks stand on the floor in
 the same perspective as its dots, lit from below by it, with soft shadows and faint reflections in the shiny floor; the
@@ -1783,13 +1783,301 @@ player games just keep writing. On and Off still force it either way. The lobby'
 >
 > The raw message here can be sent to Solomon and the different plans made by Adam. We can discuss making a new worker too.
 
-Decision: Adam's plan, "Hangout fix-up plans" (https://claude.ai/artifact/MNESfvTTB9pEgVxjEybW8g), the owner's go
+Decision: the plan "Hangout fix-up plans" (https://claude.ai/artifact/MNESfvTTB9pEgVxjEybW8g), my go
 ("Solomon can start when he wants"). Goal 1 (perspective fixes, art only) first, then goal 2 (stage, layout, lights,
 walls, chalk, chimney, windows, floor), goal 3a (E to interact, doors, map and mode pairing, chairs), goal 3b (TV,
-transformer, beach ball, flicker, decorations); goal 4 (cats, Justin, shadow duck, fireflies) by Noah. On Duck Cabin E
+transformer, beach ball, flicker, decorations); goal 4 (cats, Justin, shadow duck, fireflies). On Duck Cabin E
 is interact and R repeats the last special; hits use the existing plays-dead look.
 Goal 1, done: fridge handle off its top and onto its bottom door; kettle on a burner; upper cabinets shallower and
 raised over the counters; fruit in the bowl; counters without side overhangs; chair backs trimmed; couch bases run
 across the corners; the music sheet column removed (the keyboard mode's own sheet stays); the stage stairs' rail
 removed; one tub seen from above, its duck facing left; the toilet redrawn against the bathroom's east wall facing the
 room; a low headboard; the jeep without the bar over its wheels, its wheels and flares inside its width. The rug stays.
+## Menu music, the music bar everywhere, a pause menu in the lobby, word for word (2026-10-26)
+
+Miles Jr needs to have music also be able to play on the main menu and the room section menu just for that player alone, and it randomly plays the happier songs (happy doesnt only mean major) without any 20 second timer between songs, and the song names show up in the little meter too
+
+That song meter should also show in the lobby AND the pause menu needs to be in the lobby IF we can have someone offload the pause in main menu task either for someone free later OR we can have Miles Jr do it becuz why not
+
+the song bare is also everywhere else in the game is my point
+
+Decision: the main menu and Rooms play music for that player alone, picked at random from the happier songs (Spring in a
+Box, Ducklings in a Row, Bouncy Chicks, Waddle before you paddle, Outer Space Swim Commute, Bubble Bath in the Sky,
+Pond-erful Ruffles, Infinite Pond, Glow), back to back with no gap. The music bar shows there too, top right, left of
+Sign in (on a phone's Rooms the word "Rooms" hides so it fits); the lobby and the game already had it. Entering a room
+fades the menu song out and the room's synced song in. The lobby gets a pause menu (Esc or the ☰ button): Resume,
+Customize, Settings, Friends, Leave room. A pause menu on the main menu is left for later.
+
+## Menu music only after Play, and a tap-to-start screen, word for word (2026-10-26)
+
+> miles is such a fucking idiot they had such a simple fucking job. So, the music DOESNT play on the menu of the index page UNLESS you click play! HOW THE FUCK DID THEY FUCK THAT UP !
+
+> The click to start should just be a duck on a cloud with the words in the multicolored look on letter blocks below the cloud, and clicking the screen makes the duck fall through the cloud with a falling sound effect that makes the screen go transparent until it fades, revealing the screen
+
+Decision: browsers hold all sound until the page is first used, so the page now opens on a start screen: your duck on a
+cloud, "TAP TO START" in the multicolored letters on wooden letter blocks. A tap, a click or a key anywhere drops the duck
+through the cloud with a soft puff and a falling slide whistle; the screen turns see-through and fades, showing the
+front page, and the menu music starts on that same tap. The music also wakes on any later tap, mouse button or key
+(a finger's tap only counts once it lifts), starts by itself in a browser that allows it, and until it can, the music
+bar shows "tap anywhere" before the song's name. The first menu song waits at its start until it can be heard.
+
+## Request (2026-10-26 05:38Z): the toilet
+"The toilet is not good enough, it looks awful" / "Like its noy even a toilet" / "Thats what i mean, its not even in the
+correct structure of a toilet"
+
+Decision: redrawn as a classic toilet seen from the front (tank on the wall with a flush handle, the lid up against it,
+the round seat with water, the bowl down to its foot), moved to the bathroom's north wall between the tub and the sink
+so it faces the room. Rides along with goal 2 (PR #99).
+
+## Request (2026-10-26 05:53Z): doors, log ends, couches, TV (two pictures: a screenshot with the log ends circled, a sketch)
+"I circled some of th3se, but these are NOT supposed to be there whenever a door is in between, check your work because
+those are door level and thus covered by doors, so there is no reason or way they would be showing from above like that,
+because it doesnt come out from the top like that, fix ever instance of that in the first screenshot i refer to.
+
+You can barely even see the doors inside either. Also i cant see the door but instead of screenshotting it, compare it to
+yhe standard of yhe door as seen from outside on the balcony, and see if it matches up in art.
+
+The sofas need a little distance from eachother and a coffee table on the rug in front of them. The TV needs to face
+them diagonally if they are arranged like that also. The sofa face the wall should be one cushion shorter, so it becomes
+a two seater. The sofas and it's rugs need to be somewhere away from the stage because the TV cant go in fron of yhe
+stage.
+
+The sofas can go in the bottom right of the room IF there is room for the door to the balcony.
+
+I send something in image 2 about the new plan for the couches, tv location, new coffee table, new end table, and where
+they all go together and how. Make sure to ask adam ab certain things"
+
+Sketch text: "The couches and the rug (represented by the red circle) should go to the bottom right here. The TVs location
+is roughly speaking and the Coffee table can experiment with different orientations. We need suggestions about how to
+fill up all the dead space of the room." Labels: "TV Here.", "Coffee table (Can be shaped differently, it should have
+papers and drinks on it)", "End table."
+
+Decisions: the couch seen from the back becomes the south couch, a 2-seater; the east couch faces west, 3 seats if
+it fits; a duck's width between them at the corner for the end table. TV on a low stand on the floor, turned 45° to face
+the L. Dead space: bookshelf and armchair by the fireplace; a sittable card table with 2 chairs in the middle; coat rack,
+boots and welcome mat by the front door; two potted plants; a wall clock and two small pictures on the north wall.
+No log-end rings at interior doorways; inside doors drawn to match the deck door.
+
+## Request (2026-10-26 05:58Z): the toilet's shape (four reference pictures)
+"The bottom of your toilet has a weird shape, just below the bowl in the neck of it that goes into the ground, look at
+these pictures for reference. Also, your back of the toilet goes way up high AND extends far below down past it's
+back...look at these pictures to see what i mean, esp the last one which you should nodel after."
+
+Decision: redrawn after the last picture (a plain line drawing): a shorter tank with a lid band, a button and a lever,
+right behind a closed round seat; a round bowl; a short foot widening to the floor.
+
+## Request (2026-10-26 06:09Z–06:11Z): the inside doors (a screenshot of the live great-room door, open)
+"THIS DOOR OPENING LIKE THIS IN THE LIVE VERSION I FOUND IS COMPLETELY UNACCEPTABLE"
+"THAT DOOR IN THE SCREENSHOT LOOKS LIKE AN ABSOLUTELY TERRIBLE AND INNACURATE SIDEWAYS DOOR! MANE IT ONE DOOR ONLY NOT
+TWO AND BORROW FROM THE ONE OUTSIDE FROM THE PORCH FOR INSPIRATION OR COPY" / "Make* not mane / Typo on my end"
+
+Decision: the great room's double door to the hall is one door (y 1275–1425). Every inside door copies the porch's door
+(orange frame, dark door, lit four-pane window, low panel, brass knob); shut, seen a little from its side; open, swung
+60° into the room like the porch door hanging open, not a flat face lying across the room.
+
+## Request (2026-10-26, live bugs from the phone, Chrome on Android)
+> Glitches when i walk around the trampoline on mobile that distorts it
+
+> IT SHOWS IM IN THE WATER BUT IM CLEARLY NOT! THIS IS AN OBVIOUS LAYERING ISSUE!
+
+> This light next to the pool doesnt look like it is centered on the light, maybe im just crazy
+
+> WHAT KIND OF LAZY BULLSHIT IS THIS!? WHY IS IT HANGING OVER THE WALL LIKE THIS?! LOOK AT THE CIRCLE I DREW OVER IT
+
+Decisions:
+- Trampoline: black noisy blocks over it on a phone. It was the only moving piece without a layer of its own (Chrome made
+  one for it only because it overlapped others). It, the beach ball, the rubber ducks and the mat's dip now have their own
+  layer, like every other prop.
+- Pool: the water's near strip (40 deep, as deep as the water is under the ground) is hidden under the near coping on the
+  screen, but a duck could swim into it and showed over the coping. Swimmers, the rubber ducks and the beach ball now stay
+  north of it; a duck dropping in from the south side stays at the coping's edge on the screen as it drops.
+- Lamp posts: their glow was on the ground in front of the post's foot, well under the lantern. It is now centered on the
+  lantern (160 over the ground).
+- Walls: a north-south wall that starts at an east-west wall (the bathroom | bedroom wall, the hall walls, the corners)
+  drew its top up past the other wall's top. It now starts at that top's front edge, so the east-west wall runs on over
+  the corner.
+
+## Request (2026-10-26 06:35Z): Justin and the shadow duck fixes (a phone screenshot)
+
+> Justin's font isn't comic sans AT ALL!
+>
+> Justin and the shadow duck shouldn't fight ! NOT UNLESS THEY MEET EACHOTHER VERY CLOSELY!
+>
+> When justin shoots at a player, they dont run up to touch them, instead, they keep emough distance to use their gun.
+>
+> When a player is shot by Justin, they cannot move for six seconds.
+>
+> When justin is talking after being revived from a fight with the shadow duck, he must have a lot more time for his chat bubbles to stay before they go
+>
+> Justin got chased by the shadow duck when he was only on the porch and the duck stopped when he could sit dowb... wtf?
+>
+> Make it to where the shadow duck cant go into any place where there is light AND make the shadow duck slightly transparent.
+>
+> The shadow duck should avoid the campfire always unless it's fire is put out.
+>
+> The shadow duck never chases people if they run away.
+>
+> Justin chases the shadow duck very very rarely only when close enough to them and he has to find them by accident.
+
+Decisions:
+- Font: phones have no Comic Sans, so Comic Neue (a free look-alike, assets/fonts) comes with the game; computers with
+  Comic Sans still use it.
+- They only tangle when they meet within about 170 px, both in the dark. Then the shadow duck lunges at him, or (12%) he
+  spots it by accident and chases it, and it fades before he gets close.
+- Justin with his gun stops where it reaches (about 300 px off) and shoots from there. A duck he shoots can't move or
+  jump for 6 seconds.
+- His four lines after the shadow duck: 5 seconds apart, each bubble up 7 seconds.
+- The shadow duck never goes into the cabin, onto the deck, or into the light of a lamppost, a window or the campfire
+  (its paths are blocked there; a put-out fire would be s.hang.fire === 0, there's no way to put it out yet). It's a
+  little see-through (78% at most). A duck that runs away from it isn't followed: it fades away.
+
+## Request (2026-10-26 06:52Z)
+> WHO THE FUCK WOULD EVER GIVE U A PASS ON THOSE DOORS!?! THOSE DOORS ARENT EVEN FUCKING STANDING! YK WAT JUST REMOVE THE DOORS INSIDE ITS NOT EVEN WORTH IT BECAUSE U CANT EVEN! ONLY LEAVE THE DOOR TO THE FRONT ENTRANC3 AND TO THE BALCONY!
+>
+> Also, justin should have his thing say his name under his duck like he is another player.
+>
+> I have a screenshot, u are missing a wall here it looks like in the corner AND the end table has a little cabinet drawer that shouldnt be showing because i dont want it there. The reason i dont want it there, if ur wondering, is because it is on the wrong side, which means its out of view and u dont have to worry about adding it somewhere, we can just remove that one little cabinet fron the end table.
+> I put a highlighter around the very small part for u to remove
+
+Decisions:
+- Every inside door is gone (layout.js OPENINGS: open gaps). Only the front door and the back door to the deck stay.
+- Justin's name shows under him in a pill like a player's; while he sits on a couch it goes over his head, as a seated
+  player's does.
+- The missing wall: a north-south wall's south end over the south wall's low line (and at an open doorway) showed only its
+  top, so it looked cut short. Its end now shows down to the floor, as a plain log face (no rings).
+- The end table's drawer is gone.
+
+## Request (2026-10-26 14:31Z)
+> Wat is this supposed to be?? Remove that texture from the end of the wall and others like that becuase the logs wouldn't stand upwards there!
+>
+> Keep the wall there in the sqme texture aa everything.
+
+Decision: a north-south wall's end at a doorway or over the south wall's low line is now the wall's own wood (the cut
+top's color and stripe) running on down to the floor, with no log texture.
+
+## Request (2026-10-26 14:33Z)
+> WHY is the player names UI spaced differently and look differently!?!? STOP RECREATING THE WHEEL AND USE THE CODE ALREADY MADE TO MAKE THE PLAYER NAME UI THE SAME BELOW THE DUCKS
+
+Decision: Justin's name is now the players' own name element (game.js' .gduck-name with name.js' nameHTML, same font,
+size and pill), placed under his drawing exactly as a player's is (measured: same font, same gap on phone and computer).
+It looks like any other player's name; your own has the blue ring because it's yours.
+
+## Request (2026-10-26 14:35Z)
+> Simone check that mobile vers of fonts are close enough to their missing counter parts they mimick from pc, because someone tried to mimick comic sans with fucking cursive at one point some fucking how!
+
+Decisions: every font a phone lacks now has a close stand-in on the site (assets/fonts): Courier New → Courier Prime,
+Times New Roman → Tinos, Georgia → Gelasio, Comic Sans → Comic Neue. No stack ends in `cursive` any more where the font
+isn't a script (Comic Sans, Permanent Marker, Justin's words end in sans-serif). The site's own fonts (Grenze Gotisch for
+Old English, Cascadia, Bangers, Pacifico …) already load on every device.
+
+## Request (2026-10-26 14:51Z, about Justin's lines after the shadow duck: 5 seconds apart, each bubble up 7 seconds)
+> THIS SOUNDS LIKE A MADE GLITCH! THE FUCKING UI COULD OVERLAP! ALSO 7 SECONDS IS WAY TOO LONG!
+> WHY CANT THE NUMBERS BE THE SAME?
+
+Decision: one number, 4 seconds: each line shows 4 seconds and the next comes 4 seconds after it, so one bubble is gone
+as the next shows (justin.js LINE).
+
+Follow-up (2026-10-26 ~15:05Z, a phone check of every wall end and of Justin seated, after my "check what else
+a change touches"): the cabin's two outside corners on the south side still showed log-end rings (the corner's low line
+starts exactly at the wall, so it wasn't seen as "over the low line"); they're now the wall's own wood like the rest.
+Seated, Justin's name sat too high; it now sits over his head where a seated player's does (the top of the duck's square,
+not the hat room above it). The extra dimming of his name while he's down is gone (players' names don't dim).
+
+## Request (2026-10-26 15:17Z): Duck Cabin visual fixes, 16 phone screenshots (numbered 1-17, no 16)
+> 1/17: In screenshot 1/17 of what i sent, the door knob needs to be a little more alligned to the right so it isn't on the window.
+>
+> 2/17 There is a visual glitch visual from the balcony on mobile (where these screenshots are from).
+>
+> 3-7/17 In 3 to 7 of 7 screenshots, THERE IS NO DOOR OR EVEN LACK OF A DOOR! THERE IS A FUCKING WALL IN PLACE OF THE DOOR! I TOLD SOLOMON TO REMOVE THE DOORS AND HAVE OPEN PARTS OF WALLS THAT ARE EASY TO SEE AND HE FUCKING PUT WALLS WHERE THE FUCKING DOORWAYS PLAYERS WALK THROUGH ARE! The doorways shouldnt hide the player when they walk through them behind the lower wall because even tho that perspective makes since, it makes the visible opening of the doorway small and betrays a lot of common patterns in top down camera perspectives like this. This isn't speaking for walls this is speakingn for doorsways, like in screenshot 7, the long wall below being transparent is fine, but the doorway is extremely small AND puts you at the very bottom of the hallway to open it INSTEAD of the doorway being symmetrically availible through the center
+>
+> 8/17 THE DOOR ISN'T THE SAME SIZE OR ANYTHING AS THE OTHER DOOR AT ALL !
+>
+> iT SHOULD BE THE SIZE WITH A DOORWAY OR DOORFRAM SHAPE AND SIZE JUST LIKE THE FUCKING FRONT BALCONY DOOR BECAUSE THIS IS STUPID INCONSISTEN!
+>
+> 9/17 WTF IS THAT YELLOW LINE ON BOTH SIDES OF THE PIANO BELOW THE CANDLES?! REMOVE IT
+>
+> 10/17 HOW MANY DIFFERENT WAYS DID I SAY TO NOT LAZILY OVERLAP OBJECTS LIKE THIS!? IF OBJECTS MAKE UP A LARGER OBJECTS, THEN THEIR FUCKING DETAILS GET CREATED FOR THEIR CONTEXT LAST ! THE FUCKING LIGHT DO NOT CONINTUE UNDER THE FUCKING STAIRS! THEY BETTER END BEFORE THEY GET UNDER THE STAIRS IN A NATURAL WAY
+>
+> THE FUCKING BOOKS ARE NO CLIPPING FROM THE INSIDE RIGHT OF THE SHELF TO OVERLAP THE FUCKING SHELF!
+>
+> 12/17 This one isn't that bad, but, the bottom of  the stairs from the balcony should have little sqaure accents that indicate the stairs are being supported at their ends, further more, if we can very very naturally have the stairs get colored a slightly differe tone or color when it gets far away enough from the light to indicate it is getting darker on the way down the stairs, that would be nice, i think the stairs just need to be darker on the way down only slightly thouhg, please dont overdo.
+>
+> 13-14/17 WHY DO WE KEEP MAKING THE SAME MISTAKE WITH THE BOTTOM RIGHT TIRE!? DO WE NOT REMEMBER THE EXAMPLE I GAVE!? The tire on the back isnt round, which might be okay.. probably not, but, there are gaps in it's form because the cause didnt understand that adding cornering to sqaures in a box doesnt make the box shape itself the round form of a wheel. The headlights on the jeep wrangler here have a different size on on in compared to the other that is really bad, they can be the slightest different in size maybe, just make the larger lighter much closer to size as the smaller one in width on the front, while still keeping it bigger and of the same height on the front.
+>
+> 15/17 We can move the faucet down to the center left top of the tub, which means that it vertically moves down a few notches is all.
+>
+> 17/17 The tv has an invisible wall at the corners that must be removed because the ducks should be able to be in front of the TV or behind it. ALSO DID WE REALLY JUST IGNORE MY ENTIRE IDEA ABOUT THERE BEING THINGS THAT PLAY ON THAT TV? I WANTED IT TO BE CLICK TO INNTERACT TO CHANGE CHANNELS!
+
+## 2026-10-26 15:27Z: piano rows (second part of a message with the mobile specials button)
+> FOR THE PIANO, the notes are now this for each row
+>
+> Low octive: 1234567890-=
+> Second lowest octive: qwertyuiop[]
+> Second highest octive: asdfghjkl;' (enter button)
+> Highest octive: (shift button) zxcvbnm,./ (space bar button)
+
+Decision: each row is one chromatic octave (12 keys from C), so black keys have their own keys; ShiftLeft is the first note
+of the top row and Space the last; the old Shift/C sharp and Space/Alt flat modifiers are gone; notes spelled with sharps;
+all 48 keys (Enter, Shift, Space too; the numpad's Enter as well) are kept from the game and the browser while the keyboard is open.
+
+## 2026-10-26 15:37Z: cowboy hat
+> Someone can add a cowboy hat to the game hats
+
+Decision: a recolorable Cowboy hat (hat and band colors) in the "Hair, hats and caps" group, in the same outlined style as the sombrero and bucket hat.
+
+## Request (2026-10-26 15:27Z): a Specials button for phones (the piano part went to another thread)
+
+> The bottom right of a mobile players screen should have a button they click to bring up a vertical column of all their specials they have selected, and they can use them from there, and holding down a special gives the box option to click "Toggle on", which works how it would for PC when you toggle it on obv, same feature, just a UI solution for mobile players.
+
+Decisions:
+- A round Specials button (the Notes/chat button's style) in the bottom bar's right corner, only where the row of keys
+  is hidden (no mouse or touchpad, or a window under 760 px). Computers see no change.
+- Tapping it opens a column of your chosen specials over it, the same buttons as the finger-held ring (icons, key
+  numbers, cooldown bars, green when kept on); it stays open until the button is tapped again or anywhere else is. On a
+  short screen (a phone on its side) it goes into a second column instead of over the top bar.
+- A tap uses a special; holding one half a second shows a "Toggle on" box beside it ("Toggle off" when it's on), which
+  keeps it on like Shift and its key. The finger-held ring still works.
+- A handgun or dagger kept out (Toggle on) fires toward where you tap the board, the way a click does; nothing new was
+  built for it.
+
+## Request (2026-10-26 15:47Z): the Sound special, faded for now
+
+> there can be a small easy step where we make the sound option faded out and unable to be selected until i get around to how i want that to work
+
+Decisions:
+- Sound (🔊) is faded in Customize → Specials and can't be put on a key (tap, click or keyboard); no new words.
+- A duck that already has it keeps it on its key, but the key, the hotbar, the ring and the phone column show it faded,
+  and it does nothing. Computer players never pick it.
+
+## Request (2026-10-26 15:50Z): the Specials button's icon
+
+> The special button should have the symbol of any special the player has just taking turns appearing, and if they have no specials selected, it takes turns through all the specials. If a player doesn't have specials equiped, then clicking it will tell them that specials are chosen in the customization menu.
+
+Decisions:
+- The button shows your specials' icons in turn, one every 1.5 s with a short cross-fade (no fade with reduced motion);
+  with none chosen it goes through all the specials. The faded Sound is left out of both. The button's size never changes.
+- With none chosen, a tap shows the tip "Pick your specials in Customize → Specials."
+
+## 2026-10-26 (Hangout goal 3b, from my fix-up request above): the beach ball's walls, flickering lights
+> "The beach ball should be in the pool and only stay in the pool and cannot get out of it. If the beach ball hits the right wall or left wall of the swimming pool then it makes a pinging sound and becomes a glow of either dark blue on wall side and bright pink on the other." / "Some lights outside flicker sometimes randomly, and some itty bitty lights on the porch that hang off of it will flicker sometimes too."
+
+Decision: the ball's walls are the pool's edges (it never leaves); the west wall rings a low ping and glows dark blue, the east wall a high ping and glows pink, fading in about a second, seen and heard by everyone (the hit is counted in the ball's own state). Every 20 to 60 seconds, one of the six lampposts or the porch's string lights stutters (2 to 4 quick dips in half a second), the same moment for everyone.
+
+## 2026-10-26: the phone interact button on Duck Cabin (I was in class)
+Asked: on phones only, the context button (Sit, Play, Read, Next channel) is its own button where the Vote button sits, shown only when something is in reach; with a Vote button showing it moves right above it with a clear gap; it never covers Vote, Specials, the controls hint, the music bar or Jumps. Computers don't change.
+Decision: the button already sits in the bar's Vote place and shows only in reach, so no new button or style. Hangout never shows a Vote button (it has no votes), so the stacking rule (`.act-row:has(.hang-btn)` first) is only a guard. Fixed the real collision: on a phone on its side the tip toast sat over the button; toasts now rise above the bar (and above the stack if both buttons show).
+
+## 2026-10-26: no key hints in buttons on phones
+Asked: on a phone with no keyboard, hide the key hints inside buttons (the "E" on Sit, the "Enter" on Vote), the way the hotbar hides on touch-only devices; computers and phones with a keyboard keep them.
+Decision: one CSS rule next to the hotbar's, with the same test (`any-pointer: fine`, and the `keyboard` class once a key or mouse is used).
+
+## 2026-10-26: the power box, the blackout, the darker outside (from the plan "Duck Cabin: blackjack, darkness and power"; I was in class)
+Asked: outside by the cabin's side wall, a power box on a post with a big red lever and a small humming transformer. E pulls the lever: every electric light goes out (lamps, windows, string lights, porch lights, lamp posts, pool lights, stage lights, the TV); it can go back on after 10 seconds, a ring on the box counting down. Natural light stays (the campfire, the fireplace, candles, lanterns, fireflies), and E puts out each candle, lantern or fire with its own sound. Outside gets much darker wherever no light reaches; the campfire, the pool, around the jeep, the deck and the lamp posts' pools stay lit, and in a blackout only natural light counts, so the pool and the deck go dark too. After 7 seconds in the dark, my own music muffles until I'm back in the light or inside.
+Decision: the box stands by the west wall (it's dark there); "Cut power" / "Power on" (no button while the ring counts down). The darkness is one soft layer over the world with the lights cut out of it (ducks in the dark are dimmer too); a blackout also dims the inside, but for the fireplace, the piano's candles and the kitchen lantern. E puts out (and lights again) the campfire, the hearth fire, the mantel candles, the piano candles, the kitchen table's lantern and the deck table's lantern; putting out the campfire also lets the shadow duck closer, as the blackout does with the lampposts.
+
+## 2026-10-27: notes in files speak as the owner
+> any notes in files should have me referred to as owner, have notes be spoken in first person as if we are all me
+>
+> inside the code i mean
+
+Decision: every note and comment that talks about the owner or speaks for the team now speaks as me, the owner, in first person ("I want", "we decided", "my rules"); where a name is needed it is "owner". Never "the user", my display name or a helper's name. Untouched: word-for-word quotes (this log, Justin's lines), text players see, and code names (shell.js `owner(path)` is a file's owner; "its owner's style" in card.js and name.js is the player's). Comments that speak about no one stay as they are. The rule is one line in CLAUDE.md, under "My rules".

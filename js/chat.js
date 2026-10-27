@@ -81,8 +81,8 @@ const TREE = {
         'style color 3': { vals: COLOR_HINT, run: v => styleTone('color3', v) },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
         size: { vals: keysOf(SIZES.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(SIZES, 'size', v, 'Size') },
-        special: { vals: ['none', ...SPECIALS.map(x => x.id)], run: v => {   // a special onto a number key: "trombone 3" (no number: the first free key); none takes them all off
-          const [k, n] = String(v).toLowerCase().trim().split(/\s+/), x = SPECIALS.find(y => y.id === k), keys = profile.duck.keys = keysOfDuck(profile.duck);
+        special: { vals: ['none', ...SPECIALS.filter(x => !x.off).map(x => x.id)], run: v => {   // a special onto a number key: "trombone 3" (no number: the first free key); none takes them all off
+          const [k, n] = String(v).toLowerCase().trim().split(/\s+/), x = SPECIALS.find(y => y.id === k && !y.off), keys = profile.duck.keys = keysOfDuck(profile.duck);
           if (k === 'none') { keys.fill(null); return 'Specials: none'; }
           if (!x || (n !== undefined && !KEYS.includes(n))) return bad(v);
           const was = keys.indexOf(x.id), i = n !== undefined ? KEYS.indexOf(n) : was >= 0 ? was : Math.max(0, keys.indexOf(null));
@@ -143,6 +143,7 @@ const quote = w => /\s/.test(w) ? `"${w}"` : w;
 /* what fits next on the command line */
 /* a name as it is typed after @: without its spaces ("Player 1" is @Player1) */
 export const tag = n => String(n || '').replace(/\s+/g, '');
+const npcTag = (s, t) => ['justin', 'annabelle', 'bubbles', 'oreo', 'opal'].find(n => n === tag(t).toLowerCase() && s.hang.npc[n]);   // Duck Cabin's characters
 const byTag = (s, t) => s.seat.find(i => tag(s.players[i].name).toLowerCase() === tag(t).toLowerCase());
 const funOn = () => { const r = activeRoom(); return !r || !!r.state.options.fun; };
 const names = () => { const r = activeRoom(); return r ? r.state.seat.map(id => '@' + tag(r.state.players[id].name)) : []; };
@@ -191,7 +192,9 @@ function runFun(node, args) {
   if (!boardPhases(s).includes(s.phase)) return '✗ That works on the board.';
   const who = [];
   for (const a of args) {
-    const id = byTag(s, a.replace(/^@/, ''));
+    const id = byTag(s, a.replace(/^@/, '')), npc = !id && (s.hang || {}).npc && npcTag(s, a.replace(/^@/, ''));
+    if (npc === 'justin' && node.kind === 'kill') { r.send({ t: 'hang', k: 'npc', who: 'justin', do: 'kill' }); return '✖ Justin plays dead'; }   // (Duck Cabin's Justin: kill works on him)
+    if (npc) return npc === 'justin' ? `✗ ${node.kind} doesn't work on Justin.` : '✗ The cats don\'t listen to commands.';
     if (!id) return `✗ No player named ${a.replace(/^@/, '')}.`;
     who.push(id);
   }
@@ -347,6 +350,7 @@ export function chatWidget() {
     const html = lines.map(m => {
       if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
       if (m.sys) return `<p class="sys${m.small ? ' small' : ''}">${esc(m.text)}</p>`;
+      if (m.npc) return `<p class="npc npc-${esc(m.npc)}"><span class="npc-name">${esc(m.name || m.npc)}</span>: <span class="npc-said">${esc(m.text)}</span></p>`;   // Duck Cabin's characters
       const meName = s.players[me] && s.players[me].name, hit = m.from !== me && meName && (m.to === me || mentionRe(meName).test(m.text)) && !isMuted(s, m.from, 'ping');
       /* over 250 characters: folded under an arrow (a ! beside it if it pings you), open until the chat closes */
       const long = m.text.length > 250, open = long && ui.long.has(m.n);

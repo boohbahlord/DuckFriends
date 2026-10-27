@@ -1241,7 +1241,8 @@ export const music = (function(){
      The melody and the bass pass a fuzz on the way (off unless a song wants it). The room and the delay come back in before the flanger. */
   function graph(){CACHE={};BEDS=[];
     out=gn(0);const lp=biq("lowpass",1600);const dl=ac.createDelay(1);dl.delayTime.value=.42;const fb=gn(.22),wet=gn(.28);
-    out.connect(lp);lp.connect(ac.destination);lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(ac.destination);
+    const sink=MF&&MF.a===ac?MF.inp:ac.destination;   // (the live music goes through the muffle; a song written out doesn't)
+    out.connect(lp);lp.connect(sink);lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(sink);
     const pre=gn(),swl=gn(),fdry=gn(),fwet=gn(0),fd=ac.createDelay(.05),ffb=gn(.55),fl=ac.createOscillator(),flg=gn(.0035);fd.delayTime.value=.0068;fl.frequency.value=.13;
     const wow=ac.createDelay(1);wow.delayTime.value=.03;const w1=ac.createOscillator(),wg1=gn(0),w2=ac.createOscillator(),wg2=gn(0);w1.frequency.value=.3;w2.frequency.value=.071;
     pre.connect(swl);swl.connect(fdry);swl.connect(fd);fd.connect(fwet);fd.connect(ffb);ffb.connect(fd);fl.connect(flg);flg.connect(fd.delayTime);
@@ -1253,7 +1254,7 @@ export const music = (function(){
     const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
     BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}graph();bout=gn(0);bout.connect(ac.destination);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ac.destination);if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
@@ -1670,18 +1671,26 @@ export const music = (function(){
      next one comes in 3 seconds. A room whose host has no song list (an older page) plays this device's own picks. */
   let LOC=null,noListAt=0,PRE=null;
   const end=e=>e.at+durOf(idx(e.n))*1000;
-  function plan(S,t){const off=new Set(S&&S.off||[]),ok=n=>idx(n)>=0&&!off.has(n);
+  function plan(S,t,menu){const off=new Set(menu?SAD:S&&S.off||[]),ok=n=>idx(n)>=0&&!off.has(n),gap=menu?0:GAP;
     let a=S&&S.a||null,b=S&&S.b||null;const was=JSON.stringify([a,b]);
     if(a&&idx(a.n)<0)a=null;
     if(a&&!ok(a.n)&&t<end(a)){a=null;if(b)b={...b,at:Math.min(b.at,t+3000)}}
     if(b&&!ok(b.n))b=null;
     if(b&&(!a||t>=b.at)){a=b;b=null}
     if(!a){if(PRE&&ok(PRE.n))a={n:PRE.n,at:t+1500,seed:PRE.seed};else{const i=pick(-1,off);if(i>=0)a={n:names[i],at:t+1500,seed:newSeed()}}PRE=null}   // the first song: the one written out since the page opened
-    if(a&&!b){const i=pick(idx(a.n),off);if(i>=0)b={n:names[i],at:Math.round(Math.max(end(a),t)+GAP*1000),seed:newSeed()}}
+    if(a&&!b){const i=pick(idx(a.n),off);if(i>=0)b={n:names[i],at:Math.round(Math.max(end(a),t)+gap*1000),seed:newSeed()}}
     return JSON.stringify([a,b])===was?null:{a,b}}
-  function list(){const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
+  /* on the front page and the rooms page each player hears their own songs: only the happier ones, one straight after
+     another; joining a room, the menu's song fades out and the room's comes in */
+  const HAPPY=["Spring in a Box","Ducklings in a Row","Bouncy Chicks","Waddle before you paddle","Outer Space Swim Commute",
+    "Bubble Bath in the Sky","Pond-erful Ruffles","Infinite Pond","Glow"],SAD=names.filter(n=>!HAPPY.includes(n));
+  let MENU=null;const inMenu=()=>["front","rooms"].includes(document.body.dataset.screen);
+  function list(){if(inMenu())return MENU;const r=activeRoom(),s=r&&r.state;if(!s)return null;return s.music||LOC}
   /* the host keeps the list going (every second, whether or not it plays music itself) */
-  function conduct(){const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
+  function conduct(){if(inMenu()){const t=clockNow(),m=plan(MENU,t,true);if(m)MENU={...m,off:[]};
+      if(!sounding()&&MENU&&MENU.a)MENU={a:{...MENU.a,at:t+400},b:null,off:[]};   // (until the sound may start, the first song waits at its start)
+      if(LV()>0&&!profile.settings.musicMute)ahead_(MENU);return}
+    const r=activeRoom(),s=r&&r.state;if(!s){LOC=null;noListAt=0;return}const t=clockNow();
     if(s.hostId===r.me){const m=plan(s.music,t);if(m)r.send({t:"music",a:m.a,b:m.b});LOC=null}
     else if(s.music){LOC=null;noListAt=0}
     else{if(!noListAt)noListAt=t;if(t-noListAt>4000){const m=plan(LOC,t);if(m)LOC={...m,off:[]}}}
@@ -1714,9 +1723,19 @@ export const music = (function(){
   function start(){if(playing)return;if(!ctx())return;if(ac.state==="suspended")ac.resume();playing=true;
     level(.8);timer=setInterval(tick,90);tick()}
   function stop(){if(!playing)return;playing=false;clearInterval(timer);timer=null;if(!ac)return;if(CUR)drop(true);stopBeds();level(.3,0)}
+  /* the muffle: my own music as if heard from far off (Duck Cabin in the dark). A lowpass and a little less level; on, the
+     filter slides down to about 600 Hz over 1.5 s, off it opens again over about 1 s. Only glides (setTargetAtTime on the
+     filter's detune, in cents, so it slides evenly by ear, and on the level), each starting from wherever the last one has
+     got to, so turning it on and off quickly never jumps. Local only: nobody else hears a change */
+  let MF=null,MUF=false;const MUFF=600,MUFDB=-4;
+  function muffle(a,dest){const lp=a.createBiquadFilter(),g=a.createGain(),top=Math.min(20000,a.sampleRate*.45);
+    lp.type="lowpass";lp.Q.value=.6;lp.frequency.value=top;lp.detune.value=0;g.gain.value=1;lp.connect(g);g.connect(dest);return {a,inp:lp,lp,g,top}}
+  function muffleTo(m,on,lead,at){const t=at??m.a.currentTime+lead,c=on?-1200*Math.log2(m.top/MUFF):0;
+    m.lp.detune.setTargetAtTime(c,t,on?.42:.28);m.g.gain.setTargetAtTime(on?Math.pow(10,MUFDB/20):1,t,on?.42:.28)}
+  function setMuffle(on){on=!!on;if(on===MUF)return;MUF=on;if(MF)muffleTo(MF,on,.03)}
   function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
   // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
-  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["lobby","game"].includes(document.body.dataset.screen);
+  const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["front","rooms","lobby","game"].includes(document.body.dataset.screen);
   /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
      unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
   let HUSH=null,hushT=0;
@@ -1724,10 +1743,15 @@ export const music = (function(){
     if(why){if(ac&&playing){level(.6,0);hushT=setTimeout(()=>{if(HUSH)stop()},2600)}return}
     if(!wanted())stop();else if(ac||started){start();if(ac&&playing)level(1.2)}}
   function sync(){if(wanted()){if(ac||started)start()}else stop();if(ac&&playing)level(.15)}
-  let started=false;   // a click or a key has happened, so the browser lets sound start
+  let started=false;   // a tap, a mouse button or a key has happened, so the browser lets sound start
+  const sounding=()=>!!ac&&ac.state==="running"&&playing;
+  /* browsers hold all sound until the page is first used, and which event counts differs (a finger's tap only counts once
+     it lifts): so any of these, anywhere on the page, starts the music, or wakes a sound clock the browser kept asleep */
   const wake=()=>{started=true;if(!wanted())return;if(!playing)start();else if(ac&&ac.state!=="running")ac.resume()};
-  addEventListener("pointerdown",wake,true);
-  addEventListener("keydown",wake,true);
+  for(const k of ["pointerdown","pointerup","mousedown","touchend","click","keydown","keyup"])addEventListener(k,wake,true);
+  /* a browser that lets sound start on its own (one that knows the game): the music starts as soon as the page is up */
+  setTimeout(()=>{if(started||!wanted()||!ctx())return;const go=()=>{if(ac.state==="running"&&!started){started=true;if(wanted())start()}};
+    go();if(!started)ac.resume().then(go,()=>{})},700);
   document.addEventListener("visibilitychange",sync);
   document.addEventListener("settings",sync);
   document.addEventListener("screen",sync);
@@ -1761,7 +1785,7 @@ export const music = (function(){
   function ahead_(S){if(!ahead||!S)return;const e=S.b;if(!e||idx(e.n)<0||REN.has(key(e))||LIVE&&CUR&&CUR.n===e.n)return;
     for(const k of [...REN.keys()])if(!CUR||k!==key(CUR))REN.delete(k);   // (only the song playing and the one after it are kept)
     render(e)}
-  setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
+  setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1,inMenu()?new Set(SAD):null);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
   /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
      it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
   function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn();s.buffer=b.buf;s.connect(g);g.connect(bout);
@@ -1769,6 +1793,7 @@ export const music = (function(){
   function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
   function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
+    if(inMenu()&&!sounding()&&wanted())return {name:e.n,next:false,in:0,off:[],wait:true};   // (the browser still holds the sound: the bar asks for a tap)
     return {name:e.n,next:t<e.at,in:Math.max(0,Math.ceil((e.at-t)/1000)),off:S.off||[]}}
-  return {sync,hush,renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
+  return {sync,hush,setMuffle,muffle,muffleTo,get muffled(){return MUF},renderSong,nowPlaying,length:n=>idx(n)<0?0:durOf(idx(n)),get playing(){return playing},get recorded(){return !!BUF},get written(){return [...REN].map(([k,x])=>k+(x.buf?" (ready)":""))},get track(){return CUR?CUR.n:null},tracks:names};
 })();

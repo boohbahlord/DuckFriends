@@ -46,6 +46,9 @@ const cloud = (cx, cy, s, fill = '#ffffff', shade = '#d8ecff') => {
   return `<g>${c(8, shade)}${c(0, fill)}</g>`;
 };
 
+/* a cloud on its own (the start screen's): w wide */
+export const cloudSVG = (w = 300) => `<svg viewBox="0 -18 220 144" width="${w}" height="${(w * 144 / 220).toFixed(0)}" aria-hidden="true">${cloud(110, 58, 1)}</svg>`;
+
 /* Carnival Night's world, 1600 × 900 (the map stretches it to cover the page from the bottom): a purple night with stars,
    string lights across the top, a Ferris wheel on the left, a striped big top on the right and the outlines of a roller
    coaster and a carousel between them. live: the parts that move get their classes (the wheel turns, its cars hang
@@ -103,7 +106,7 @@ ${legs}${wheel}${tent}${edge}
    clouds and sun, Pixel's sunset, islands and forest), the duck sitting on a cloud, the title, the map's name, and the
    game's symbol at the top left */
 /* the map's world behind the picture (no columns: the picture shows where the game is played) */
-function artBackdrop(map) {
+export function artBackdrop(map) {
   if (map === 'rabbit') return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === 'stars') return '<image href="assets/maps/starry-night.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === 'ec') return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>

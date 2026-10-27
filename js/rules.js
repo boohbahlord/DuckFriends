@@ -14,7 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
-import { hangStart, hangAction, hangTick, hangJoin, hangLeft } from './hangout/rules.js';
+import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
@@ -289,7 +289,9 @@ export function reduce(state, a, now = Date.now()) {
     case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
     case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) {
       Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max);
-      if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';   // Hangout and Duck Cabin are one
+      if (a.options.map === 'cabin' && !a.options.mode) s.options.mode = 'hang';   // Hangout and Duck Cabin are one: picking either picks both,
+      else if (a.options.map && !a.options.mode && isHang(s)) s.options.mode = 'aod';   // and another map leaves Hangout
+      if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';
     } return s;
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;
@@ -326,6 +328,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!boardPhases(s).includes(s.phase)) return state;
       const was = s.pos[a.id], j = +a.j || 0;
       if (holdStill(s, a.id, now)) return state;   // Who is the Quack?: the last duck plays dead for a moment
+      if (isHang(s) && hangStill(s, a.id, now)) return state;   // Hangout: shot by Justin, it can't move for a while
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
       if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !isLaw(s) && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }   // (a juror may walk over and change their vote)
@@ -382,6 +385,7 @@ export function reduce(state, a, now = Date.now()) {
       const sp = a.what || (me && me.duck && me.duck.special), p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
       if (WEAPONS.includes(sp) && !s.options.fun) return state;   // the silly-commands switch covers them
+      if (sp === 'sound') return state;   // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
@@ -662,6 +666,12 @@ function moveShots(s, now) {
       const ux = dx / rx, uy = dy / ry, px = (p.x - x0) / rx, py = (p.y - y0) / ry, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
       if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
+    }
+    if (sh.hin !== undefined && at.z > -.15 && at.z < 1.05) for (const n of hangTargets(s, now)) {   // (Hangout: Justin can be knocked down too)
+      if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48) continue;
+      const ux = dx / .006, uy = dy / .012, px = (n.x / HW - x0) / .006, py = (n.y / HH - y0) / .012, len = ux * ux + uy * uy;
+      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      if (Math.hypot(px - k * ux, py - k * uy) < 1) hangHit(s, n.id, sh.by, now);
     }
     sh.lx = at.x; sh.ly = at.y;
     const on = !walled && at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);

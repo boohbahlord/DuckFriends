@@ -6,7 +6,7 @@
    ducks are, so every screen sees much the same. */
 import { activity } from './registry.js';
 import { POOL } from './layout.js';
-import { WATER, swimming, ripple } from './water.js';
+import { WATER, SOUTH, swimming, ripple } from './water.js';
 import { ballShown } from './beachball.js';
 import { rubberDuck } from './art.js';
 
@@ -52,7 +52,7 @@ activity({
       d.ox += d.vx * dt; d.oy += d.vy * dt;
       /* inside its half of the water, off the steps */
       const lo = x < STEPS.x1 && y > STEPS.y0 && y < STEPS.y1 ? STEPS.x1 : d.lo;
-      const cx = cl(px + d.ox, lo, d.hi), cy = cl(py + d.oy, POOL.y0 + 26, POOL.y1 - 14);
+      const cx = cl(px + d.ox, lo, d.hi), cy = cl(py + d.oy, POOL.y0 + 26, SOUTH - 14);
       if (cx !== px + d.ox) { d.ox = cx - px; d.vx *= -.3; }
       if (cy !== py + d.oy) { d.oy = cy - py; d.vy *= -.3; }
       const mx = cx - d.x; d.x = cx; d.y = cy;

@@ -13,6 +13,7 @@
 import * as L from './layout.js';
 import { DRAW, GROUND, DECOR, groundColor } from './shapes.js';
 import { svgDataURL, useHangArtCSS } from './art.js';
+import { sway, stutterOf } from './flicker.js';
 import { ACTS } from './registry.js';
 import './activities.js';
 import { duckRoom } from '../duck.js';
@@ -21,11 +22,13 @@ import { esc } from '../ui.js';
 export const BOARD_HTML = '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 const SPEED = 380, SPRINT = 1.75;   // world px a second
 const AIR_UP = 6;                    // in the air, ground this much above the feet still catches them
+const CLICK_REACH = 260;             // Click to interact: how far from my duck a click can use a thing
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const dirOf = (dx, dy) => dx > 0 ? 'r' : dx < 0 ? 'l' : dy > 0 ? 'd' : 'u';
 
 /* api: room() → the room; me() → my duck { x, y (0 … 1), j, lj, dj, z, b … }; jumpZ(pos, now) (duck heights); landsAt(pos);
-   cfg() → the jump's { T, H }; button() → the context button changed (redraw it) */
+   cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
+   my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
   const canvas = board.querySelector('.hang-ground'), g = canvas.getContext('2d'), propsBox = board.querySelector('.hang-props'), shade = board.querySelector('.hang-shade');
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
@@ -37,7 +40,7 @@ export function mountWorld(board, api) {
   const R = () => api.room();
   const toScreen = (x, y, h = 0) => ({ left: (x - cam.x) * cam.sc + cam.vw / 2, top: (y - h - cam.y) * cam.sc + cam.vh / 2 });
   const ctx = { state: () => R().state, get me() { return R().me; }, send: a => R().send(a), duck: () => api.me(),
-    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [],
+    world: { toScreen, heightAt: L.heightAt, get sc() { return cam.sc; }, get vw() { return cam.vw; }, get vh() { return cam.vh; }, get inside() { return inside; }, board, propEl: id => els.get(id) || null, propEls: id => all.get(id) || [], shines: l => shines(l, R().state),
       at: id => { const p = R().state.pos[id]; return p || mine(id) ? at(id, p || {}) : null; } } };
   useHangArtCSS();
   const acts = () => ACTS.values();
@@ -109,17 +112,17 @@ export function mountWorld(board, api) {
     g.globalCompositeOperation = 'lighter';
     for (const l of L.LIGHTS) {
       if (l.only && (l.only === 'in') !== inside) continue;
-      if (l.prop && !lit(l.prop, s)) continue;
-      const fl = l.flick ? 1 + Math.sin(now / 130 * l.flick + l.x) * .04 + Math.sin(now / 47 + l.y) * .025 * l.flick : 1;
-      const x = l.x, y = l.y - L.heightAt(l.x, l.y), r = l.r * fl;
+      if (!shines(l, s)) continue;
+      const st = stutterOf(l, now), fl = sway(l, now);   // (now and then a lamp stutters: flicker.js)
+      const x = l.x, y = l.y - L.heightAt(l.x, l.y) - (l.z || 0), r = l.r * fl;
       if (!see(x - r, y - r, x + r, y + r)) continue;
-      const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl)); rg.addColorStop(1, hexA(l.c, 0));
+      const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, hexA(l.c, l.k * fl * st)); rg.addColorStop(1, hexA(l.c, 0));
       g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
     }
     g.globalCompositeOperation = 'source-over';
   }
   const hexA = (c, a) => c + Math.round(cl(a, 0, 1) * 255).toString(16).padStart(2, '0');
-  const lit = (p, s) => { for (const a of acts()) if (a.light && a.light(p, s) === false) return false; return true; };
+  const shines = (l, s) => { for (const a of acts()) if (a.light && a.light(l.prop, s, l) === false) return false; return true; };
 
   /* ---------- the props: each part of each prop (shapes.js DRAW), and the decor, as an element sorted with the ducks ----------
      Made the first time it comes near the view, then only moved (each is its own layer: moving it is cheap), hidden
@@ -150,7 +153,20 @@ export function mountWorld(board, api) {
     }
     propsBox.append(e); it.el = e; return e;
   }
-  function drawProps(me, myKey, myBox) {
+  /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
+     while it hides one: a duck behind it with a good part of it covered) */
+  function duckBoxes(s) {
+    const size = L.DUCK * cam.sc, out = [];
+    for (const id of s.seat) {
+      if (!s.pos[id] && !mine(id)) continue;
+      const a = at(id, s.pos[id]); if (L.inCabin(a.x, a.y) !== inside) continue;
+      const g = L.heightAt(a.x, a.y), f = toScreen(a.x, a.y, g), lift = Math.max(0, a.z - g) * cam.sc;
+      out.push({ key: L.sortY(a.x, a.y, a.z), l: f.left - size * .4, r: f.left + size * .4, t: f.top - lift - size * .9, b: f.top - lift });
+    }
+    return out;
+  }
+  const HIDDEN = .3;   // this much of a duck's box covered: hidden
+  function drawProps(ducks) {
     const { sc, vw, vh } = cam, scs = sc.toFixed(4);
     for (const it of items) {
       const b = it.box, sx = (b.l - cam.x) * sc + vw / 2, sy = (b.t - cam.y) * sc + vh / 2, sw = b.w * sc, sh = b.h * sc;
@@ -163,7 +179,7 @@ export function mountWorld(board, api) {
       if (e._tr !== tr) { e._tr = tr; e.style.transform = tr; }
       if (it.fade) {
         const h = it.hit || { l: b.l, t: b.t, r: b.l + b.w, b: b.t + b.h }, hl = (h.l - cam.x) * sc + vw / 2, hr = (h.r - cam.x) * sc + vw / 2, ht = (h.t - cam.y) * sc + vh / 2, hb = (h.b - cam.y) * sc + vh / 2;
-        const thru = !!myBox && myKey < it.key && myBox.r > hl && myBox.l < hr && myBox.b > ht && myBox.t < hb;
+        const thru = ducks.some(d => d.key < it.key && (Math.min(d.r, hr) - Math.max(d.l, hl)) * (Math.min(d.b, hb) - Math.max(d.t, ht)) > HIDDEN * (d.r - d.l) * (d.b - d.t) && d.r > hl && d.l < hr && d.b > ht && d.t < hb);
         if (e._thru !== thru) { e._thru = thru; e.classList.toggle('thru', thru); }
       }
     }
@@ -238,8 +254,7 @@ export function mountWorld(board, api) {
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
-      const size = L.DUCK * cam.sc, f = toScreen(tx, me.y * L.H, L.heightAt(tx, me.y * L.H)), lift = Math.max(0, me.z - L.heightAt(tx, me.y * L.H)) * cam.sc;
-      drawProps(me, L.sortY(tx, me.y * L.H, me.z), { l: f.left - size * .4, r: f.left + size * .4, t: f.top - lift - size * .9, b: f.top - lift });
+      drawProps(duckBoxes(s));
       shade.hidden = !inside;
       if (inside) { const a = toScreen(L.CABIN.x0, L.CABIN.y0 - L.CABIN.wall - 30), b = toScreen(L.CABIN.x1, L.CABIN.y1 + 14); Object.assign(shade.style, { left: a.left + 'px', top: a.top + 'px', width: (b.left - a.left) + 'px', height: (b.top - a.top) + 'px' }); }
       for (const a of acts()) a.draw?.(now, ctx);
@@ -313,8 +328,8 @@ export function mountWorld(board, api) {
     grabbing: () => !!grab || performance.now() - grabEnd < 350,
     /* the context button, in the place of the Vote / End turn button (kept in its place, unseen, when nothing is near) */
     buttonHTML() {
-      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>Enter</kbd></button></div>`
-        : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>Enter</kbd></button></div>';
+      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>E</kbd></button></div>`
+        : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>E</kbd></button></div>';
     },
     press() { if (button && button.act) button.act(); },
     /* where someone lands, for reset duck */
@@ -327,7 +342,15 @@ export function mountWorld(board, api) {
   };
   /* pointers on the board go to an activity first (drawing on the chalk floor) */
   const pt = e => { const r = board.getBoundingClientRect(), u = world.unplace(e.clientX - r.left, e.clientY - r.top); return { x: u.x * L.W, y: u.y * L.H }; };
-  function down(e) { for (const a of acts()) if (a.pointer?.('down', pt(e), e, ctx)) { grab = a; e.stopPropagation(); return; } }
+  function down(e) {
+    for (const a of acts()) if (a.pointer?.('down', pt(e), e, ctx)) { grab = a; e.stopPropagation(); return; }
+    if (api.clickUse?.()) {   // Click to interact: what the button would offer standing at the click, if my duck is near it
+      const me = api.me(), p = pt(e); if (!me || Math.hypot(p.x - me.x * L.W, p.y - me.y * L.H) > CLICK_REACH) return;
+      let best = null;
+      for (const a of acts()) { const n = a.near?.({ x: p.x, y: p.y, z: me.z, inside }, ctx); if (n && n.label && n.act && (!best || (n.d ?? 0) < (best.d ?? 0))) best = n; }
+      if (best) { best.act(); grabEnd = performance.now(); e.stopPropagation(); }   // (no walking to the click)
+    }
+  }
   function move(e) { if (grab) grab.pointer('move', pt(e), e, ctx); }
   function up(e) { if (!grab) return; grab.pointer('up', pt(e), e, ctx); grab = null; grabEnd = performance.now(); }
   board.addEventListener('pointerdown', down); board.addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', up);
