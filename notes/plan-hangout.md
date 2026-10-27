@@ -1,6 +1,6 @@
 # Plan: Hangout on Duck Cabin
 
-My words are in `notes/agree-or-disagree.md` ("Hangout on Duck Cabin, word for word", and the lines after it).
+The owner's words are in `notes/agree-or-disagree.md` ("Hangout on Duck Cabin, word for word", and the lines after it).
 Read them first, word for word; this file is how we build it. Reference pictures: `notes/ref/hangout/`
 (`cabin-sketch.png`, `stage-sketch.png`, `cabin-photo-front.jpg`, `cabin-photo-deck.jpg`).
 
@@ -21,7 +21,7 @@ Read them first, word for word; this file is how we build it. Reference pictures
 - One context button where the Vote / End turn button sits: it shows only near something to use and says what it
   does: **Sit**, **Play** (piano), **Erase**, **Read** (the book), **Get up**. Enter presses it. Jumping also gets up.
 
-## Picks taken for my open questions (change them if I answer differently)
+## Picks taken for the owner's open questions (change them if the owner answers differently)
 1. One big floor first: the great room, a kitchen, two bedrooms, a bathroom. An upstairs loft comes later.
 2. The book is a guestbook: Read opens it; anyone writes a line (up to 120 letters), everyone sees it, kept while the
    room is open (newest 60 lines).
