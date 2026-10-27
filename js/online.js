@@ -57,7 +57,7 @@ export function connect() {
     return fb;
   })().catch(e => { connecting = null; throw e; }));
 }
-/* what went wrong, in words the player (or the site's owner) can act on */
+/* what went wrong, in words the player (or me, the site's owner) can act on */
 export function whyNot(e) {
   const c = String((e && (e.code || e.message)) || e);
   if (/popup-closed|cancelled-popup|user-cancelled/i.test(c)) return 'Sign-in was closed before it finished.';

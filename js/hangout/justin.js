@@ -14,7 +14,7 @@
      apart, each bubble up 4 seconds (gone as the next comes), and E can't interrupt them (nor for 4 seconds after).
    - With a gun he keeps his distance: he walks to where his gun reaches and shoots from there. A duck he shoots can't
      move for 6 seconds.
-   The lines are the owner's, word for word: don't change them. */
+   The lines are mine, word for word: don't change them. */
 import { brain, npcAt, randomSpot, nearestOpen, POOL, DOORS } from './npc.js';
 import { PROPS, DECK, inPool } from './layout.js';
 
