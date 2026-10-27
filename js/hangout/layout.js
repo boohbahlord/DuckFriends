@@ -116,7 +116,7 @@ export const DOORWAYS = [
   { id: 'door-front', axis: 'x', at: C.y0, a: FD[0], b: FD[1], hinge: 'a', swing: 's', h: DOOR.h },
   { id: 'door-back', axis: 'x', at: C.y1, a: BD[0], b: BD[1], hinge: 'a', swing: 's', h: DOOR.h },
 ];
-/* the doorways inside: open gaps, no doors (the owner: only the front door and the deck's), in north-south walls at x =
+/* the doorways inside: open gaps, no doors (I said: only the front door and the deck's), in north-south walls at x =
    at, from y = a to b (the walls either side reach T into it) */
 export const OPENINGS = [
   { id: 'gap-great', at: 3300, a: 1275, b: 1425 }, { id: 'gap-kitchen', at: 3500, a: 790, b: 940 }, { id: 'gap-bath', at: 3500, a: 1200, b: 1340 },
