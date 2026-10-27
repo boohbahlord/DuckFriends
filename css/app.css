@@ -1957,6 +1957,18 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .hang-bj-acts:empty { display: none; }
 .hang-bj-acts .btn { padding: .45rem .9rem; }
 .hang-bj-acts .bj-pick { gap: .3rem; }
+.bj-amt { display: inline-flex; align-items: center; gap: .25rem; }   /* (the bet box, its arrows either side) */
+.hang-bj-acts .bj-arrow { padding: .45rem .55rem; font-size: calc(.75rem * var(--ts)); }
+.hang-bj .bj-box { width: 3.6rem; padding: .4rem .3rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hang-bj-acts .bj-let { flex-basis: 100%; max-width: max-content; }   /* (the vote: letting the Butler play, on its own line) */
+.bj-count { font: 700 15px 'Fredoka', sans-serif; fill: #fff; stroke: #1c1c28; stroke-width: 3.5px; stroke-linejoin: round; paint-order: stroke; dominant-baseline: middle; }   /* (on the table: each one's chips, and the pot) */
+.bj-count.pot { font-size: 17px; fill: var(--yellow); }
+.bj-face { font: 700 14px 'Fredoka', sans-serif; fill: #1c1c28; text-anchor: middle; dominant-baseline: middle; }   /* (a card on the table) */
+.bj-face.red { fill: #d23b33; }
+.bj-sum { font: 700 13px 'Fredoka', sans-serif; fill: #fff; stroke: #1c1c28; stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; text-anchor: middle; dominant-baseline: middle; }   /* (a hand's total, under it) */
+.bj-sum.r-win, .bj-sum.r-bj, .bj-sum.r-split { fill: var(--green); } .bj-sum.r-lose, .bj-sum.r-bust { fill: var(--red); }
+.bj-pot { margin-left: auto; }
+.hang-bj-chips b { font-variant-numeric: tabular-nums; }
 .hang-bj .btn.on { box-shadow: 0 0 0 .2rem var(--yellow), var(--shadow); }
 .hang-npc-held.card { left: 37px; top: 45px; width: 10px; transform: rotate(-18deg); }   /* (the Butler dealing: a card in his wing) */
 @media (orientation: portrait) {

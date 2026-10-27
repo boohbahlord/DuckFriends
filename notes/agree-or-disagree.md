@@ -2226,3 +2226,8 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
+
+## Request (owner, 2026-10-27 23:09Z): blackjack players against each other, chip counts, All in
+"IF two players play black jack, they play against eachother, and the game should display how many chips they have better AND you should tell me how many chips each player gets. Going all in should be an option too"
+Decided (Adam): two or more players in a hand share one pot, best hand wins it, a tie splits it, all bust = bets back;
+the Butler only deals then. Chip counts on the table by each stool and in the window, counting up. An "All in" bet.
