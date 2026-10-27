@@ -46,10 +46,10 @@ activity({
   },
   draw(now, ctx) {
     if (!back) return;
-    const Wd = ctx.world, sc = Wd.sc, hide = Wd.inside;
+    const Wd = ctx.world, sc = Wd.sc, f = Wd.toScreen(X0, Y0 + TD, terrainAt(TRAMP.cy)), hide = Wd.inside || !Wd.seen(f.left, f.top - TH * sc, TW * sc, TH * sc);   // (inside, or off the screen: hidden)
     if (back.hidden !== hide) back.hidden = front.hidden = hide;
     if (hide) return;
-    const f = Wd.toScreen(X0, Y0 + TD, terrainAt(TRAMP.cy)), tr = `translate(${f.left.toFixed(1)}px, ${(f.top - TH * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
+    const tr = `translate(${f.left.toFixed(1)}px, ${(f.top - TH * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
     if (back._tr !== tr) { back._tr = front._tr = tr; back.style.transform = front.style.transform = tr; }
     /* the mat dips under every duck coming down onto it and pushing off (a moment from each bounce's start, so it shows
        at any frame rate), and the duck sinks into it a little */

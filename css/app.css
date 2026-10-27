@@ -1744,7 +1744,7 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
    ducks by its front (z-index), all in the board's own stacking context; the shade darkens the outside while my duck is
    inside; the specials (fxl) stay over all of it. */
 .hang-board { overflow: hidden; border-radius: 18px; box-shadow: 0 0 0 3px #1c1c28, 0 8px 28px #0009; isolation: isolate; background: #08120d; touch-action: none; user-select: none; -webkit-user-select: none; }
-.hang-ground { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; }
+.hang-ground { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; will-change: transform; }   /* (world.js sizes it past the view's edges and slides it) */
 .hang-props { position: absolute; inset: 0; pointer-events: none; }
 .hp { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; transition: opacity .25s; }
 .hp > svg { display: block; overflow: visible; }
@@ -1757,7 +1757,7 @@ html.moving .hp .flick { transform-box: fill-box; transform-origin: 50% 100%; an
 .hang-board .gduck { transition: none; }
 .gduck.hang-hid { visibility: hidden; }
 .hang-board .fxl { z-index: 30000; }
-.hang-shade { position: absolute; z-index: 20000; pointer-events: none; box-shadow: 0 0 0 4000px rgba(5, 8, 20, .72); }
+.hang-shade { position: absolute; left: 0; top: 0; z-index: 20000; pointer-events: none; box-shadow: 0 0 0 4000px rgba(5, 8, 20, .72); will-change: transform; }
 .hang-btn { background: var(--yellow, #ffd23f); color: #1c1c28; min-width: 9rem; }
 .hang-btn kbd { color: inherit; background: transparent; border-color: currentColor; }
 .hang-btn.idle { visibility: hidden; }

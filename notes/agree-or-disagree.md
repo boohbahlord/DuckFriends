@@ -2226,3 +2226,15 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
+
+## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
+"WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
+
+"WHY IS MY CABIN GAME SO LAGGY ! OPTIMIZE IT AND FIX IT ! IS IT BECAUSE EVERY TEXTURE IS BEING USED ALL AT ONCE! WHY ARE WE RENDERING EVERYTHING TO MAXIMUM TO THE PLAYER'S HARDWARE WHEN THE PLAYER CAN'T EVEN SEE IT? IT SHOULD ONLY LOAD ANYTHING TO THE HARDWARE ONLY BRIEFLY OUT OF SIGHT, EVERYTHING ELSE OUT OF SIGHT SHOULD BE BEAR BONES! ANY OBJECTIONS!?"
+- Decided (Adam): Solomon the 2nd fixes both in one PR, separate from Jack (#130). Chat: opening or closing it must
+  change nothing on the map (Noah found the cause: the chat dock narrows the board, the ground's tiles were thrown away
+  and painted again at the new size). Lag: profile first (CPU slowed 4x, phone and computer), then only what is on
+  screen plus a small margin is drawn and animated; off screen is bare bones. Game state, NPCs' logic, other players and
+  sounds keep running. Prove it with frame times before and after.
+- The owner's laptop note (22:16Z, above): it lags on its integrated GPU (on battery), so it was measured on a
+  weak-GPU budget: headless Chromium's software compositing, CPU slowed 4x.

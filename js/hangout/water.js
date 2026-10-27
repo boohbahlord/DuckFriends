@@ -167,10 +167,10 @@ activity({
     for (let i = glows.length - 1; i >= 0; i--) if (now - glows[i].t > GLOW[glows[i].side][1] || now < glows[i].t - 1000) glows.splice(i, 1);
     const a0 = W.toScreen(BOX.x0, BOX.t), a1 = W.toScreen(BOX.x1, BOX.b);
     const off = W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh || (!ripples.length && !glows.length && ![...seen.values()].some(d => d.sw));
-    if (off && water._clear) return;   // (nothing on it, and nothing to draw: the canvas is left alone)
+    if (water.hidden !== off) water.hidden = off;   // (nothing to draw: hidden, so it costs nothing)
+    if (off) return;
     if (water.width !== Math.round(vw * dpr) || water.height !== Math.round(vh * dpr)) { water.width = Math.round(vw * dpr); water.height = Math.round(vh * dpr); }
     const g = wg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, water.width, water.height);
-    water._clear = off; if (off) return;
     const o = W.toScreen(0, 0);
     g.setTransform(sc * dpr, 0, 0, sc * dpr, o.left * dpr, o.top * dpr);
     g.save(); g.beginPath(); g.rect(BOX.x0, BOX.t, BOX.x1 - BOX.x0, BOX.b - BOX.t); g.clip();
