@@ -2119,3 +2119,9 @@ Decisions:
   lines, and he gets up by himself after about 5 seconds. E on Justin works only in Duck Cabin.
 - Duck Cabin: he waits about twice as long between walks, rants and chases come about half as often, and E on him keeps
   him still for at least 5 seconds (longer while his lines run).
+
+## Request (2026-10-27 20:17Z): jersey name and number visible
+"Have someone make the logo of the jersey number and logo in the sport outfits visible, maybe moving them to the front and making them small"
+- Decided: on the Lakers #33 and Celtics #33 jerseys the team name now arcs over a small 33 on the chest (right of the
+  wing, under the head), so neither covers them, on every body (Rubber builds, metals, Raptor, Pelican, Mallard, Blocks,
+  2D shapes). Ducks drawn under 48 px (avatars, chips) leave the name and number out, since they'd only be a smudge.
