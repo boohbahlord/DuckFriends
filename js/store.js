@@ -15,6 +15,7 @@ export const PROFILE_DEFAULT = {
   card: { kind: 'color', color: '#2fa4ff', pattern: 'none', patternColor: '#ffffff', layout: 'tiled', size: 'm', image: null },
   nameStyle: { font: 'fredoka', color: '', rainbow: false },   // color '' = the theme's text color
   notes: [], jumps: 0, stats: {}, settings: { ...SETTINGS_DEFAULT },
+  justinKills: 0, secrets: {}, unlockSeen: {},   // what unlocks things (unlocks.js): Justin killed with a weapon, the codes on, the unlocks already announced
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
@@ -66,6 +67,9 @@ function normalize(p) {
   out.nameStyle = { ...PROFILE_DEFAULT.nameStyle, ...(p.nameStyle || {}) };
   if (out.nameStyle.color === '#1c1c28') out.nameStyle.color = '';   // the old default, unreadable in dark mode
   if (!NAME_OK.test(out.name)) out.name = 'Player 1';
+  out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
+  const flags = o => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k, v]) => v && /^[\w:]{1,40}$/.test(k)).map(([k]) => [k, 1]));
+  out.secrets = flags(p.secrets); out.unlockSeen = flags(p.unlockSeen);
   out.stats = { ...cleanStats(p.stats), lastGame: String((p.stats || {}).lastGame || '') };   // lastGame: the game last counted
   return out;
 }

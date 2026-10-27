@@ -9,7 +9,7 @@ import { hatLayers, HAT_TOP } from './hats.js';
 import { faceLayer } from './faces.js';
 import { beakSVG } from './beaks.js';
 import { eyesSVG } from './eyes.js';
-import { styleById, styleColor, styleLayers, blocksBody, blocksCloth, geoBody, geoWing, GEO_BODY } from './styles.js';
+import { styleById, styleColor, styleName, styleLayers, blocksBody, blocksCloth, geoBody, geoWing, GEO_BODY, jackSVG } from './styles.js';
 import { outfitLayers } from './outfits.js';
 
 export const DUCK_COLORS = [
@@ -37,7 +37,10 @@ export const BUILDS = [[-1, 'Skinny'], [-.5, 'Slim'], [0, 'Normal'], [.5, 'Fat']
 export const SIZES = [[-1, 'Small'], [-.5, 'A bit small'], [0, 'Normal'], [.5, 'A bit big'], [1, 'Big']];
 const clamp1 = v => Math.max(-1, Math.min(1, +v || 0));
 /* how much room a duck takes on the board, width and depth (1 = a normal duck) */
-export function duckRoom(look = {}) { const k = 1 + .1 * clamp1(look.size), f = clamp1(look.build); return { x: k * (1 + .16 * f), y: k * (1 + .08 * f) }; }
+export function duckRoom(look = {}) {
+  if (look && look.style === 'jack') return { x: 1, y: 1 };   // Jack in a Box takes a normal duck's room (his build and size are only stored)
+  const k = 1 + .1 * clamp1(look.size), f = clamp1(look.build); return { x: k * (1 + .16 * f), y: k * (1 + .08 * f) };
+}
 
 let uid = 0;
 export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) or black (to = 0)
@@ -91,6 +94,10 @@ function plainLook(o) {
 const marks = (OF, size) => { if (OF && size < 48) OF.cloth = OF.cloth.replace(/<g class="jm">.*?<\/g>/s, ''); return OF; };
 export function duckSVG(look = DUCK_DEFAULT, { size = 64, shadow = true, title = '', dead = false, extra = '' } = {}) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) }, id = 'dk' + (++uid);
+  if (L.style === 'jack') {   // Jack (or Jill) in a Box: not a duck; only the eyes and the colors draw on him, the rest stays stored
+    return `<svg class="duck jack" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || styleName(L))}">
+${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"/>` : ''}${jackSVG(L, styleById('jack'), id, eyesSVG(L, dead), dead)}${extra}</svg>`;
+  }
   if (L.image) {   // an uploaded square picture, standing like a card, with the same little shadow
     return `<svg class="duck" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || 'Avatar')}">
 ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>` : ''}
@@ -101,7 +108,7 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 <rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
-  const st = styleById(L.style), hat = hatLayers(L.hat, L, dead), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
+  const st = styleById(L.style), hat = hatLayers(L.hat, L, dead), face = faceLayer(L.face, L, dead), top = hat.front || face ? HAT_TOP : 0;
   const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), eyes = eyesSVG(L, dead);
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
   if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal; an outfit lies flat on the body

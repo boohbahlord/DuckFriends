@@ -2202,6 +2202,11 @@ Rule (2026-10-27 21:03Z): "i want to see the new items before they are added to 
 - Part A: one squat ribbed pumpkin with a bent stem, vine and leaf; each antenna ball draws the eye picked under Eyes
   (X eyes when dead, plain balls for no eyes); on the Colors page an item with 2 or more colors folds them under its name
   (shut each time Customize opens; the fold holding the color being picked opens).
+- Part B (Noah): jester hat (4 points with bells), jester and clown outfits, clown wig and clown paint (a Face item).
+  Locks live in js/unlocks.js and the profile (jumps, justinKills, secrets, unlockSeen). Each device counts its own
+  Justin kills: only handgun or dagger knocks, on the boards and in Duck Cabin, never `kill @Justin`. Computers never
+  wear locked items. A picked locked tile is a look only (red); it comes off when you leave the page. While Jack is on,
+  the Colors page lists only his own colors. Owner on the design sheet (21:51Z): "i love this".
 
 ## Request (owner, 2026-10-27 22:12Z): cats' chat only on screen, NPCs mutable
 "Cats shouldnt have their texts in chat UNLESS they are sharing a screen with a player

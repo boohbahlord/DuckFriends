@@ -649,6 +649,9 @@ export function gameMuted(s, id, kind) {
   return out;
 }
 
+/* Justin knocked down by a player's bullet or dagger (the clown items unlock at 10): the last few, each numbered, so
+   every device counts its own player's once (unlocks.js) */
+function justinKilled(s, by, w) { if (!s.players[by]) return; s.jkN = (s.jkN || 0) + 1; s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }]; }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({ x: sh.x0 + sh.vx * t / 1000, y: sh.y0 + sh.vy * t / 1000, z: sh.k === 'dagger' ? daggerZ(t / 1000) : .41 });
 /* the handgun's bullets and the thrown daggers: a duck on the ground that one passes through plays dead (until it
@@ -675,13 +678,13 @@ function moveShots(s, now) {
     if (sh.hin === undefined && sh.by !== JUSTIN_ID && at.z > -.15 && at.z < 1.05 && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be shot back)
       const n = justinAt(s.justin, now), ux = dx / .03, uy = dy / .08, px = (n.x - x0) / .03, py = (n.y - y0) / .08, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (Math.hypot(px - k * ux, py - k * uy) < 1) justinDown(s, now, logLine);
+      if (Math.hypot(px - k * ux, py - k * uy) < 1 && justinDown(s, now, logLine)) justinKilled(s, sh.by, sh.k);
     }
     if (sh.hin !== undefined && at.z > -.15 && at.z < 1.05) for (const n of hangTargets(s, now)) {   // (Hangout: Justin can be knocked down too)
       if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48) continue;
       const ux = dx / .006, uy = dy / .012, px = (n.x / HW - x0) / .006, py = (n.y / HH - y0) / .012, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (Math.hypot(px - k * ux, py - k * uy) < 1) hangHit(s, n.id, sh.by, now);
+      if (Math.hypot(px - k * ux, py - k * uy) < 1 && hangHit(s, n.id, sh.by, now) && n.id === 'justin') justinKilled(s, sh.by, sh.k);
     }
     sh.lx = at.x; sh.ly = at.y;
     const on = !walled && at.x > -.3 && at.x < 1.3 && at.y > -.6 && at.y < 1.6 && now - sh.t < (sh.k === 'dagger' ? DAGGER_LIFE : 12000);

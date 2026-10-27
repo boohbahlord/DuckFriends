@@ -27,6 +27,7 @@ import { FACES, faceById } from './faces.js';
 import { EYES } from './eyes.js';
 import { BEAKS } from './beaks.js';
 import { STYLES, styleById } from './styles.js';
+import { unlocked, lockHint } from './unlocks.js';
 import { OUTFITS, outfitById } from './outfits.js';
 import { SPECIALS, KEYS, keysOf as keysOfDuck } from './specials.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES } from './card.js';
@@ -63,21 +64,21 @@ const TREE = {
         pattern: { vals: keysOf(DUCK_PATTERNS), run: v => pick(keysOf(DUCK_PATTERNS), v, x => Object.assign(profile.duck, { pattern: x, metal: 'none', image: null }), 'Duck pattern') },
         'pattern color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!c) return bad(v); profile.duck.patternColor = c; return `Duck pattern color: ${c}`; } },
         metal: { vals: keysOf(DUCK_METALS), run: v => pick(keysOf(DUCK_METALS), v, x => Object.assign(profile.duck, { metal: x, image: null }), 'Duck metal') },
-        hat: { vals: ['none', ...HATS.map(h => h.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.hat = null; return 'Hat: none'; } const h = hatById(k); if (!h) return bad(v); profile.duck.hat = { ...(profile.duck.hat && profile.duck.hat.id === k ? profile.duck.hat : {}), id: k }; return `Hat: ${h.name}`; } },
+        hat: { vals: ['none', ...HATS.map(h => h.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.hat = null; return 'Hat: none'; } const h = hatById(k); if (!h) return bad(v); const no = lockedMsg('hat', h.id, h.name); if (no) return no; unJack('hat'); profile.duck.hat = { ...(profile.duck.hat && profile.duck.hat.id === k ? profile.duck.hat : {}), id: k }; return `Hat: ${h.name}`; } },
         'hat color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c1: c }; return `Hat color: ${c}`; } },
         'hat color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v), h = profile.duck.hat; if (!h) return '✗ No hat on. custom avatar hat …'; if (!c) return bad(v); profile.duck.hat = { ...h, c2: c }; return `Hat second color: ${c}`; } },
         'hat metal': { vals: keysOf(DUCK_METALS.slice(1)), run: v => { const h = profile.duck.hat; if (!h || !(hatById(h.id) || {}).metal) return '✗ Only the crown takes a metal.'; return pick(keysOf(DUCK_METALS.slice(1)), v, x => { profile.duck.hat = { ...h, metal: x }; }, 'Hat metal'); } },
         ketchup: { vals: ['on', 'off'], run: v => { const h = profile.duck.hat; if (!h || h.id !== 'hotdog') return '✗ Ketchup goes on the hotdog hat.'; if (!/^(on|off)$/i.test(v)) return bad(v); profile.duck.hat = { ...h, ketchup: /^on$/i.test(v) }; return `Ketchup: ${/^on$/i.test(v) ? 'on' : 'off'}`; } },
-        face: { vals: ['none', ...FACES.map(f => f.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.face = null; return 'Face: none'; } const f = faceById(k); if (!f) return bad(v); profile.duck.face = { ...(profile.duck.face && profile.duck.face.id === k ? profile.duck.face : {}), id: k }; return `Face: ${f.name}`; } },
+        face: { vals: ['none', ...FACES.map(f => f.id)], run: v => { const k = String(v).toLowerCase(); if (k === 'none') { profile.duck.face = null; return 'Face: none'; } const f = faceById(k); if (!f) return bad(v); const no = lockedMsg('face', f.id, f.name); if (no) return no; unJack('face'); profile.duck.face = { ...(profile.duck.face && profile.duck.face.id === k ? profile.duck.face : {}), id: k }; return `Face: ${f.name}`; } },
         'face color': { vals: COLOR_HINT, run: v => { const c = colorOf(v), f = profile.duck.face; if (!f) return '✗ Nothing on the face. custom avatar face …'; if (!c) return bad(v); profile.duck.face = { ...f, c1: c }; return `Face color: ${c}`; } },
         eyes: { vals: EYES.map(x => x.id), run: v => pick(EYES.map(x => x.id), v, x => { profile.duck.eyes = x; }, 'Eyes') },
-        beak: { vals: BEAKS.map(x => x.id), run: v => pick(BEAKS.map(x => x.id), v, x => { profile.duck.beak = x; }, 'Beak') },
+        beak: { vals: BEAKS.map(x => x.id), run: v => pick(BEAKS.map(x => x.id), v, x => { unJack('beak'); profile.duck.beak = x; }, 'Beak') },
         'beak color': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor = c; return `Beak color: ${c}`; } },
         'beak color 2': { vals: COLOR_HINT, run: v => { const c = colorOf(v); if (!/^(blocks|geo)$/.test(profile.duck.beak)) return '✗ Only the block beak and the flat beak take a color.'; if (!c) return bad(v); profile.duck.beakColor2 = c; return `Beak shade: ${c}`; } },
-        outfit: { vals: ['none', ...OUTFITS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = OUTFITS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); profile.duck.outfit = x ? { id: x.id } : null; return `Outfit: ${x ? x.name : 'none'}`; } },
+        outfit: { vals: ['none', ...OUTFITS.map(x => x.id)], run: v => { const k = String(v).toLowerCase().trim(), x = OUTFITS.find(y => y.id === k); if (k !== 'none' && !x) return bad(v); const no = x && lockedMsg('outfit', x.id, x.name); if (no) return no; unJack('outfit'); profile.duck.outfit = x ? { id: x.id } : null; return `Outfit: ${x ? x.name : 'none'}`; } },
         'outfit color': { vals: COLOR_HINT, run: v => part('outfit', outfitById, 0, v, 'outfit') },
         'outfit color 2': { vals: COLOR_HINT, run: v => part('outfit', outfitById, 1, v, 'outfit') },
-        style: { vals: STYLES.map(x => x.id), run: v => pick(STYLES.map(x => x.id), v, x => { profile.duck.style = x; }, 'Style') },
+        style: { vals: STYLES.map(x => x.id), run: v => { const D = profile.duck, k = String(v).toLowerCase().trim(), x = STYLES.find(y => y.id === k); if (!x) return bad(v); const no = lockedMsg('style', x.id, x.name); if (no) return no; if (x.id === 'jack' && D.style !== 'jack') D.prevStyle = D.style; D.style = x.id; return `Style: ${x.id}`; } },
         'style color 2': { vals: COLOR_HINT, run: v => styleTone('color2', v) },
         'style color 3': { vals: COLOR_HINT, run: v => styleTone('color3', v) },
         build: { vals: keysOf(BUILDS.map(([v, n]) => [n.toLowerCase(), v])), run: v => body(BUILDS, 'build', v, 'Build') },
@@ -126,6 +127,10 @@ function styleTone(key, v) {
   if (!col) return `✗ The ${st.name.toLowerCase()} has no color like that.`;
   if (!c) return bad(v); Object.assign(profile.duck, { [key]: c, metal: 'none', image: null }); return `${col[1]}: ${c}`;
 }
+/* a locked item (unlocks.js) can't be put on from here either; Jack in a Box turns back into the duck when a part his
+   style doesn't take is picked */
+const lockedMsg = (kind, id, name) => unlocked(kind, id) ? null : `✗ ${name} is locked. ${lockHint(kind, id)}`;
+const unJack = page => { const D = profile.duck, st = styleById(D.style); if (st.pages && !st.pages.includes(page)) D.style = D.prevStyle && D.prevStyle !== D.style ? D.prevStyle : 'rubber'; };
 function pick(list, v, set, label) { const x = list.find(k => k === String(v).toLowerCase()); if (!x) return bad(v); set(x); return `${label}: ${x}`; }
 
 /* splits a line into words ("two words" in quotes stay one); last = the word being typed, from = where it starts */
@@ -317,6 +322,7 @@ function shellCtx() {
     legacyHas: name => !!TREE[name] && name !== 'help' && name !== 'clear',
     legacyTop: () => Object.keys(TREE).filter(k => k !== 'help' && k !== 'clear' && !(TREE[k].fun && !funOn())),
     legacy: line => runCommand(line), legacySuggest: line => cmdSuggest(line),
+    look: () => { save(); shareLook(); },   // the look changed on this device (a code turned off takes locked things off)
     /* while a command runs: Ctrl+C stops it, top shows its lines live, exit closes the window */
     cancelled: () => ui.cancel, live: ls => { if (current && current.live) current.live(ls); }, close: () => { if (current && current.close) current.close(); },
     slowLeft: () => { const ms = s ? slowMs(s, r.me) : 0; return ms ? ms - (Date.now() - (ui.lastSent || 0)) : 0; }, sent: () => { ui.lastSent = Date.now(); },
@@ -464,7 +470,7 @@ export function chatWidget() {
        Help page opens in the command line */
     if (/^\\?clear$/i.test(text)) { ui.chatFrom = Date.now(); return note('Chat cleared on your screen (everyone else still sees theirs).'); }
     if (/^\\?help$/i.test(text) || /^\\help\b/i.test(text)) return note(...HELP);
-    if (isHelpName(text.split(/\s+/)[0])) { setMode('cmd'); return submit(text); }
+    if (isHelpName(text.split(/\s+/)[0]) || /^secret\b/i.test(text)) { setMode('cmd'); return submit(text); }   // (a secret code never goes to the room's chat)
     const said = await chatCommand(text, r);
     if (said !== null) { drawLog(); return note(said); }
     if (!r) return note('Chat works in a room.');

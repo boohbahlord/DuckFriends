@@ -24,7 +24,7 @@ import { modeOf, MODES } from './modes.js';
 import { MAPS, mapName } from './maps.js';
 import { FONTS } from './name.js';
 import { specialById, keysOf, KEYS } from './specials.js';
-import { styleById } from './styles.js';
+import { styleById, styleName } from './styles.js';
 import { hatById } from './hats.js';
 import { outfitById } from './outfits.js';
 import { runLine, expandHistory, globRe, BUILTIN_NAMES } from './bash.js';
@@ -32,6 +32,7 @@ import { TEXT, getopt, lines } from './textutils.js';
 import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
+import { secret } from './unlocks.js';
 import { music } from './music.js';
 import { npcsHere, npcTag, npcByTag, npcById } from './npcs.js';
 
@@ -384,9 +385,9 @@ function lastLines(s) {
 }
 function finger(ctx, id) {
   const s = ctx.room.state, p = s.players[id], d = p.duck || {}, c = p.card || {}, ns = p.nameStyle || {}, sp = keysOf(d).map((id, i) => id && `${KEYS[i]} ${specialById(id).name}`).filter(Boolean).join(', ');
-  const pretty = v => v ? String(v).replace(/[-_]/g, ' ') : 'none';
+  const pretty = v => v ? String(v).replace(/[-_]/g, ' ') : 'none', jk = d.style === 'jack';   // (Jack in a Box wears no hat, outfit or picture)
   return [`Login: ${pname(s, id)}${id === s.hostId ? ' (host)' : isSudo(s, id) ? ' (sudo)' : ''}${p.bot ? ' (a computer)' : ''}`,
-    `Duck:  ${d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${d.hat ? (hatById(d.hat.id || d.hat) || {}).name || pretty(d.hat.id || d.hat) : 'none'} · outfit ${d.outfit ? (outfitById(d.outfit.id || d.outfit) || {}).name || pretty(d.outfit.id || d.outfit) : 'none'} · specials ${sp || 'none'}`,
+    `Duck:  ${jk ? styleName(d) : d.image ? 'a picture' : `${styleById(d.style).name || pretty(d.style)}, ${d.color || '?'}`} · hat ${d.hat && !jk ? (hatById(d.hat.id || d.hat) || {}).name || pretty(d.hat.id || d.hat) : 'none'} · outfit ${d.outfit && !jk ? (outfitById(d.outfit.id || d.outfit) || {}).name || pretty(d.outfit.id || d.outfit) : 'none'} · specials ${sp || 'none'}`,
     `Card:  ${c.kind === 'image' ? 'a picture' : `${c.color || '?'}, pattern ${pretty(c.pattern)}`}`,
     `Font:  ${(FONTS.find(f => f.id === ns.font) || FONTS[0]).name}${ns.rainbow ? ', rainbow' : ns.color ? ', ' + ns.color : ''}`,
     `Groups: ${[...groupsOf(s, id), 'superuser-' + pname(s, id)].join(', ')}`,
@@ -409,6 +410,8 @@ const CMDS = {
     return MAN[args[0]] || MAN[args[0].toLowerCase()] || helpPage(args.join('-')) || fail(`✗ No manual entry for ${args[0]} (help lists the Help pages)`);
   },
   apropos: (args, i, x) => CMDS.man(['-k', ...args], i, x),
+  /* the secret codes (kept out of help, /bin and Tab): Secret <code> on|off */
+  secret: (args, i, x) => { const msg = secret(args[0], (args[1] || '').toLowerCase()); if (x.ctx.look) x.ctx.look(); return msg; },
   clear: () => null,
   exit: (a, i, x) => { x.ctx.close(); return ''; },
   pwd: () => fs.cwd,
@@ -669,7 +672,7 @@ const CMDS = {
 };
 CMDS.logout = CMDS.exit;
 /* the commands in /bin: everything with a manual page */
-const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo').sort();
+const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])].filter(k => k !== 'sudo' && k !== 'secret').sort();
 
 /* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them
    back. A name with a space (or ' or ?) goes in quotes, as in bash: song off "Jester's Stair" */
