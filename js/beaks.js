@@ -2,6 +2,7 @@
    Drawn in the duck's own 120 × 120 space, where the default beak starts at the face (x ≈ 96) and points right with its
    tip at 116 (upper half from y 33 to 43, the lower from 42 to 49). Only the block beak and the flat geometric beak can be
    recolored; their two colors show under Colors only while one of them is on. */
+import { blockSquares } from './styles.js';
 const O = 'stroke-linejoin="round"';
 const ORANGE = ['#ff9a1f', '#f07f0e', '#c45f00'];   // top, bottom, edge
 
@@ -59,8 +60,8 @@ const DRAW = {
   pelican: () => `<path d="M94 46C102 52 118 60 128 56C127 52 120 46 96 42Z" fill="#f2a07a" stroke="#b96a4a" stroke-width="1.4" ${O}/>
 <path d="M96 35C108 34 122 37 130 41C122 43 106 43 96 42Z" fill="#ffb347" stroke="#c45f00" stroke-width="1.5" ${O}/>
 <path d="M130 41C128 42 127 44 126 45" stroke="#c45f00" stroke-width="1.4" fill="none"/><ellipse cx="108" cy="37.4" rx="7" ry="1.1" fill="#fff" opacity=".5"/>`,
-  blocks: L => { const a = L.beakColor || '#ff9a1f', b = L.beakColor2 || '#c45f00', s = 4.4;
-    return `<g shape-rendering="crispEdges" stroke="#1c1c28" stroke-width=".5">${[[0, 0, a], [1, 0, a], [2, 0, a], [3, 0, a], [0, 1, a], [1, 1, a], [2, 1, a], [3, 1, a], [4, 1, a], [0, 2, b], [1, 2, b], [2, 2, b], [3, 2, b], [0, 3, b], [1, 3, b]].map(([x, y, c]) => `<rect x="${(95 + x * s).toFixed(1)}" y="${(33 + y * s).toFixed(1)}" width="${s}" height="${s}" fill="${c}"/>`).join('')}</g>`; },
+  blocks: L => { const a = L.beakColor || '#ff9a1f', b = L.beakColor2 || '#c45f00', s = 4.4;   // (the Blocks duck's own hairline seams: blockSquares)
+    return blockSquares([[0, 0, a], [1, 0, a], [2, 0, a], [3, 0, a], [0, 1, a], [1, 1, a], [2, 1, a], [3, 1, a], [4, 1, a], [0, 2, b], [1, 2, b], [2, 2, b], [3, 2, b], [0, 3, b], [1, 3, b]].map(([x, y, c]) => [+(95 + x * s).toFixed(1), +(33 + y * s).toFixed(1), s, c])); },
   geo: L => `<path d="M95 33L117 40L95 42Z" fill="${L.beakColor || '#ff9a1f'}"/><path d="M95 42L112 43L95 48Z" fill="${L.beakColor2 || '#c45f00'}"/>`,
   none: () => '',
   hole: (L, id) => `<defs><radialGradient id="${id}h" cx=".45" cy=".45" r=".6"><stop offset="0" stop-color="#000"/><stop offset=".7" stop-color="#14141c"/><stop offset="1" stop-color="#2b2b38"/></radialGradient></defs>
