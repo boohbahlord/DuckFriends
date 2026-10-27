@@ -91,16 +91,20 @@ const GRID = [
   '...bbbwwwwwwbbbbb...', '...bbbbwwwwbbbbb....', '....bbbbbbbbbbbb....', '.....bbbbbbbbbb.....', '......bbbbbbb.......',
 ];
 export function blocksBody(color, only = '') {   // only: draw just the blocks of one kind (the wing, 'w', over a shirt)
-  let out = '', n = 0;
+  let out = '', seams = '';
   GRID.forEach((row, r) => [...row].forEach((c, k) => {
     if (c === '.' || (only && c !== only)) return;
-    const x = k * 6, y = r * 6, j = ((k * 7 + r * 13) % 5) / 100;   // each block a touch lighter or darker
+    const x = k * 6, y = r * 6, j = ((k * 7 + r * 13) % 5) / 60;   // each block a touch lighter or darker, so they read as blocks even where the seams are too thin to see
     const f = c === 'w' ? mix(color, 0, .22 + j) : mix(color, r < 9 ? 255 : 0, r < 9 ? .06 + j : j);
-    out += `<rect x="${x}" y="${y}" width="6" height="6" fill="${f}"/><path d="M${x} ${y + 6}V${y}H${x + 6}" stroke="${mix(f, 255, .35)}" stroke-width="1" fill="none"/><path d="M${x + 6} ${y}V${y + 6}H${x}" stroke="${mix(f, 0, .3)}" stroke-width="1" fill="none"/>`;
-    n++;
+    /* the owner wants very thin seams: a hairline of light on the top and left, of shade on the bottom and right,
+       each inside its own block */
+    out += `<rect x="${x}" y="${y}" width="6" height="6" fill="${f}"/>`;
+    seams += `<path d="M${x + .15} ${y + 6}V${y + .15}H${x + 6}" stroke="${mix(f, 255, .3)}"/><path d="M${x + 5.85} ${y}V${y + 5.85}H${x}" stroke="${mix(f, 0, .3)}"/>`;
   }));
-  return `<g shape-rendering="crispEdges">${out}</g>`;
+  return `<g shape-rendering="crispEdges">${out}</g><g stroke-width=".3" fill="none">${seams}</g>`;
 }
+/* the body's and the wing's blocks as one outline, so clothes cover the blocks exactly */
+export const blocksCloth = () => GRID.map((row, r) => [...row].map((c, k) => c === 'b' || c === 'w' ? `M${k * 6} ${r * 6}h6v6h-6Z` : '').join('')).join('');
 
 /* ---------- 2D shapes: a circle for the head, a half disc for the body, a triangle for the tail ---------- */
 export const GEO_BODY = 'M20 62H100A40 44 0 0 1 20 62ZM14 46L36 64L22 74Z';
