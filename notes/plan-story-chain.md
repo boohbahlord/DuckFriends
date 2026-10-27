@@ -1,6 +1,6 @@
-# Story Chain: the plan I agreed (2026-10-25)
+# Story Chain: the plan the owner agreed (2026-10-25)
 
-My words are in `agree-or-disagree.md` (Story Chain, word for word). Built in `js/rules.js` (the Story Chain
+The owner's words are in `agree-or-disagree.md` (Story Chain, word for word). Built in `js/rules.js` (the Story Chain
 section), `js/story.js` (what it looks like) and `js/game.js`.
 
 - A round is one paragraph. Nothing has a timer unless the host sets a writing time (Game options: Off, 60, 90, 120 s;
