@@ -170,7 +170,7 @@ export function jackSVG(L, st, id, eyes, dead) {
   const arms = dead ? `<g transform="rotate(-62 62 65)">${arm1}</g><g transform="rotate(32 85 65)">${arm2}</g>` : arm1 + arm2;
   const ruff = `<path d="${zigzag(74, 62, 18, 6.2, .7, 11)}" fill="${JRED}" stroke="#9c1418" stroke-width=".9" stroke-linejoin="round"/>`;
   const head = `<circle cx="76" cy="40" r="23" fill="url(#${id}sk)" stroke="${SKIN[3]}" stroke-width="2"/>`;
-  const cheek = `<circle cx="87.6" cy="48.6" r="4.4" fill="url(#${id}ch)"/>`;
+  const cheek = `<circle cx="78.6" cy="48" r="4.4" fill="url(#${id}ch)"/>`;
   const nose = `<circle cx="99.4" cy="41" r="${jill ? 4.6 : 5.4}" fill="url(#${id}ns)" stroke="#8e1015" stroke-width=".8"/>`;
   const mouth = jill ? `<path d="M83.6 52.6Q90 58.4 95.6 50.8Q90.4 54.4 83.6 52.6Z" fill="#c8153c" stroke="#8a0d29" stroke-width=".9" stroke-linejoin="round"/>`
     : `<path d="M83.6 53Q90 58.4 95.6 51" stroke="#3b1a14" stroke-width="1.7" fill="none" stroke-linecap="round"/>`;

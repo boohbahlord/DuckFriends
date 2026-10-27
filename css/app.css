@@ -487,7 +487,7 @@ html.still .lord-say.out .w > span { opacity: 0; }
 svg.duck.jack .jk { transform-box: view-box; transform-origin: 64px 72px; }
 svg.duck.jack.bob .jk, .arm-duck.hop svg.jack .jk { animation: jkbob .42s ease-out; }
 .arm-duck.hop2 svg.jack .jk { animation: jkbob .42s ease-out, jkbob .42s ease-out .55s; }   /* (the double jump: once more as the second jump starts) */
-@keyframes jkbob { 0% { transform: none; } 28% { transform: translateY(1px) scale(1.06, .9); } 62% { transform: translateY(-4px) scale(.96, 1.08); } 84% { transform: translateY(-1px) scale(1.01, .98); } 100% { transform: none; } }
+@keyframes jkbob { 0% { transform: none; } 28% { transform: scale(1.06, .9); } 62% { transform: scale(.95, 1.11); } 84% { transform: scale(1.01, .98); } 100% { transform: none; } }   /* (scaled from the spring's foot only, so he never lifts out of the box) */
 .gduck-body svg { width: 100%; height: auto; display: block; margin-bottom: calc(var(--sz) * -.08); }
 .gduck-name { position: absolute; top: 100%; font-size: calc(.76rem * var(--ts)); opacity: .72; white-space: nowrap; background: color-mix(in srgb, var(--panel) 70%, transparent); border-radius: .4rem; padding: 0 .3rem; margin-top: .1rem; }
 .gduck.mine .gduck-name { opacity: .95; outline: .12rem solid var(--blue); }
