@@ -188,7 +188,7 @@ export function openCustomize(page = lastPage) {
           /* Jack's tile has a small settings button that makes him Jill (the tile's name and picture follow) */
           const flip = `<button type="button" class="sp-prev jill-flip" data-a="jill" aria-pressed="${!!D.jill}" aria-label="${D.jill ? 'Make him Jack' : 'Make her Jill'}" data-tip="${D.jill ? 'Jack in a Box instead' : 'Jill in a Box instead'}">⚙</button>`;
           html = head('Style') + `<div class="arm-body">${grid('style', STYLES.map(x => [x.id, duckSVG({ ...D, image: null, style: x.id, ...(x.id === 'jack' && D.style !== 'jack' ? { prevStyle: D.style } : {}) }, { size: 58, shadow: false }), x.id === 'jack' ? styleLabel({ ...D, style: 'jack' }) : x.name, x.tip]), st.id).replace(/<button[^>]*data-g="style" data-v="jack"[\s\S]*?<\/button>/, b => `<div class="sp-tile">${b}${flip}</div>`)}
-            ${st.tip ? `<p class="small dim">${esc(st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
+            ${st.tip ? `<p class="small dim">${esc(st.box && D.jill ? st.tip.replace(/\bjack\b/, 'jill').replace(/\bhis\b/g, 'her') : st.tip)}</p>` : ''}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ''}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ''}</div>`;
         } else if (k === 'specials') {
           /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
@@ -250,7 +250,7 @@ export function openCustomize(page = lastPage) {
         }
         const f = document.activeElement, had = menu.contains(f) && navSig(f), from = had && f.dataset.a === 'back' && prev;   // (the focus stays on the same tile, or the row just come back to)
         menu.innerHTML = html;
-        if (peek) menu.querySelector('.arm-tile.peek')?.closest('.arm-grid, .sp-tile')?.insertAdjacentHTML('afterend', `<p class="small lock-note">${PAD(false)}${esc(lockHint(peek.kind, peek.id).replace(/\.?$/, "."))} Only a look for now.</p>`);   // (a locked pick: why, right under it)
+        if (peek) menu.querySelector('.arm-tile.peek')?.closest('.arm-grid')?.insertAdjacentHTML('afterend', `<p class="small lock-note">${PAD(false)}${esc(lockHint(peek.kind, peek.id).replace(/\.?$/, "."))} Only a look for now.</p>`);   // (a locked pick: why, right under it)
         const body = menu.querySelector('.arm-body'); if (body) body.scrollTop = scroll;
         if (k === 'colors') {
           const T = colorTargets(), cur = T.find(t => t[0] === lastColor);
