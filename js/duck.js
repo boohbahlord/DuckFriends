@@ -101,7 +101,7 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 <rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ''}${extra}</svg>`;
   }
-  const st = styleById(L.style), hat = hatLayers(L.hat), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
+  const st = styleById(L.style), hat = hatLayers(L.hat, L, dead), face = faceLayer(L.face, L), top = hat.front || face ? HAT_TOP : 0;
   const fat = clamp1(L.build), k = 1 + .1 * clamp1(L.size), eyes = eyesSVG(L, dead);
   const bt = fat ? ` transform="translate(60 106) scale(${(1 + .16 * fat).toFixed(3)} ${(1 + .08 * fat).toFixed(3)}) translate(-60 -106)"` : '';
   if (st.flat) {   // Blocks and 2D shapes: no rubber, no shading, no pattern or metal; an outfit lies flat on the body

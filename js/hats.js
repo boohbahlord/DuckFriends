@@ -4,6 +4,7 @@
    that can be recolored name their colors in `colors` (c1, c2); the hotdog has ketchup; the crown takes a metal. A hat can
    also be a player card's pattern (small hats in a repeating tile). Ducks with hats get headroom above them. */
 import { METAL, mix, metalBands, metalGlints } from './duck.js';
+import { eyesSVG } from './eyes.js';
 
 export const HATS = [
   { id: 'wizard', name: 'Wizard hat', colors: [['c1', 'Hat', '#6a3fb5']] },
@@ -62,11 +63,18 @@ const DRAW = {
     <path d="M-4-20l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#ffd34d"/>
     <path d="M5-34l1.1 2.3 2.5.3-1.8 1.7.4 2.5-2.2-1.2-2.2 1.2.4-2.5-1.8-1.7 2.5-.3z" fill="#ffd34d"/>
     <path d="M-8-6l.8 1.7 1.8.2-1.3 1.3.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.3 1.8-.2z" fill="#fff" opacity=".8"/>`,
-  pumpkin: () => `<path d="M2-24C1-29 3-33 6-35" stroke="#5b3a1a" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-    <path d="M6-31C12-36 19-33 20-28C14-27 9-28 6-31Z" fill="#3fa34d" ${O}/>
-    <ellipse cx="-11" cy="-11" rx="12" ry="12.5" fill="#f07f15" ${O}/><ellipse cx="13" cy="-11" rx="12" ry="12.5" fill="#f07f15" ${O}/>
-    <ellipse cx="1" cy="-12" rx="13" ry="14" fill="#ff9426" ${O}/>
-    <path d="M1-25C-4-18-4-5 1 2M1-25C6-18 6-5 1 2" stroke="#d96a0e" stroke-width="1.4" fill="none"/>`,
+  /* one squat pumpkin: shallow ribs whose grooves bend with its round, a thick bent stem and a curling vine; matte */
+  pumpkin: (h, id) => { const out = 'M1-18.5C-4-23-12-24-18-20.5C-25-16.5-27.5-6-23.5-.5C-19.5 3.5-9 4 1 2.6C11 4 21.5 3.5 25.5-.5C29.5-6 27-16.5 20-20.5C14-24 6-23 1-18.5Z';
+    return `<defs><radialGradient id="${id}pk" cx=".4" cy=".28" r=".8"><stop offset="0" stop-color="#ffa53f"/><stop offset=".55" stop-color="#f07f15"/><stop offset="1" stop-color="#b9520a"/></radialGradient><clipPath id="${id}pc"><path d="${out}"/></clipPath></defs>
+    <path d="${out}" fill="url(#${id}pk)"/>
+    <g clip-path="url(#${id}pc)" fill="none" stroke-linecap="round">
+      <path d="M-4-20.5C-11.5-15-11.5-3-6.5 3.5M6-20.5C13.5-15 13.5-3 8.5 3.5M-11-22C-21.5-16-21.5-4-15.5 2.5M13-22C23.5-16 23.5-4 17.5 2.5M1-18.5C0-11 0-4 1 3" stroke="#a9480a" stroke-width="1.3" opacity=".75"/>
+      <path d="M-8.5-17C-12-11-11.5-4-8.5 0M3.5-16C2.5-10 2.5-4 3.5-.5M-17-15C-19.5-10-19-5-16.5-2" stroke="#ffc06a" stroke-width="1.6" opacity=".35"/></g>
+    <path d="${out}" fill="none" ${O}/>
+    <path d="M-1.6-18.6C-1.8-24-.6-28.5 2.4-31.6L6.4-30.2C4.2-27.4 3.6-23.4 4-18.6C2.2-17.6.2-17.6-1.6-18.6Z" fill="#6b4a22" ${O}/>
+    <path d="M2.6-30.8C3.4-31.6 5.2-31 6-30.2" stroke="#8d6a3a" stroke-width="1" fill="none"/>
+    <path d="M4-20.5C9-22.5 13.5-21.5 14.5-25.5C15.3-28.6 12.4-29.8 11.2-27.8" stroke="#3f8a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M-1-20.6C-6.5-25-12.5-24-14-20.6C-9-18.6-4.5-19.2-1-20.6Z" fill="#3fa34d" ${O}/><path d="M-2-20.7C-6-21.6-9.5-21.4-12.4-20.8" stroke="#2b7a35" stroke-width=".8" fill="none"/>`; },
   hotdog: h => `<path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" ${O}/>
     <rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" ${O}/>
     ${h.ketchup ? '<path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#d7191c" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' : ''}
@@ -253,11 +261,14 @@ const DRAW = {
     <path d="M-26 2.6C-12 6.6 14 6.6 29 2.6" stroke="${mix(h.c1, 255, .25)}" stroke-width=".9" fill="none" opacity=".7"/>
     <path d="M-20-14C-16-23-6-27 4-27" stroke="#fff" stroke-width="3" fill="none" opacity=".18" stroke-linecap="round"/>
     <path d="M14-24C20-20 24-13 25-5" stroke="${dk(h.c1, .4)}" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>`,
-  antennae: h => { const c = h.c1, d = dk(c, .35);
-    const stalk = (x0, x1, y1, r, far) => { const p = `M${x0} 3C${x0} -8 ${x1 - 4} ${y1 + 14} ${x1} ${y1 + r - 1}`;
+  /* each ball shows the eye picked under Eyes (h.look, from the duck), scaled into it; no eyes leaves plain balls */
+  antennae: (h, id) => { const c = h.c1, d = dk(c, .35), L = h.look || {};
+    const stalk = (x0, x1, y1, r, far) => { const p = `M${x0} 3C${x0} -8 ${x1 - 4} ${y1 + 14} ${x1} ${y1 + r - 1}`, k = id + (far ? 'f' : 'n'), s = (r * .15).toFixed(3);
       return `<path d="${p}" stroke="${d}" stroke-width="${far ? 4.4 : 4.8}" fill="none" stroke-linecap="round"/><path d="${p}" stroke="${far ? dk(c, .14) : c}" stroke-width="${far ? 2.6 : 3}" fill="none" stroke-linecap="round"/>
-      <circle cx="${x1}" cy="${y1}" r="${r}" fill="${far ? '#e4e4e4' : '#fff'}" ${O}/><circle cx="${x1 + r * .35}" cy="${y1 + .5}" r="${r * .52}" fill="${far ? dk(c, .45) : dk(c, .3)}"/>
-      <circle cx="${x1 + r * .46}" cy="${y1 + .5}" r="${r * .26}" fill="#111"/><circle cx="${x1 + r * .18}" cy="${y1 - r * .36}" r="${r * .18}" fill="#fff"/>`; };
+      <defs><clipPath id="${k}"><circle cx="${x1}" cy="${y1}" r="${r}"/></clipPath></defs>
+      <circle cx="${x1}" cy="${y1}" r="${r}" fill="${far ? '#e4e4e4' : '#fff'}"/>
+      <g clip-path="url(#${k})"><g transform="translate(${x1} ${y1}) scale(${s}) translate(-83 -34)">${eyesSVG(L, h.dead)}</g>${far ? `<circle cx="${x1}" cy="${y1}" r="${r}" fill="#000" opacity=".12"/>` : ''}</g>
+      <circle cx="${x1}" cy="${y1}" r="${r}" fill="none" ${O}/>`; };
     return `<g class="hat-wobble">${stalk(-9, -16, -30, 5.5, true)}${stalk(5, 10, -36, 6.5, false)}</g>`; },
   cap: (h, id) => { const c = h.c1, d = dk(c, .3), crown = 'M-22 4C-24-12-12-24 1-24C15-24 25-13 23 4C10 1-9 1-22 4Z';
     return `<defs><clipPath id="${id}cp"><path d="${crown}"/></clipPath></defs>
@@ -282,9 +293,9 @@ export const ROBOT = `   /* the cardboard box head (now a Face item, faces.js), 
 
 /* the hat's layers for a duck: { back, front } */
 let uid = 0;
-export function hatLayers(hat) {
+export function hatLayers(hat, look, dead) {   // look, dead: the duck's eyes, for the hats that show them
   const def = hat && hatById(hat.id); if (!def) return { back: '', front: '' };
-  const h = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), ...hat, metal: hat.metal || 'gold' };
+  const h = { ...Object.fromEntries((def.colors || []).map(([k, , d]) => [k, d])), ...hat, metal: hat.metal || 'gold', look, dead };
   const id = 'ht' + (++uid);
   const front = `<g transform="translate(76 18) rotate(-6)">${DRAW[def.id](h, id)}</g>`;
   const back = def.id === 'afro' ? DRAW.afroBack(h) : def.id === 'veil' ? DRAW.veilBack(h) : '';
@@ -299,6 +310,6 @@ export function hatTile(hatId, color) {
   const id = 'hp' + (++uid);
   if (def.id === 'afro') return `<g transform="translate(16 17) scale(.38) translate(-71 -28)">${DRAW.afroBack(h)}</g>`;
   if (def.id === 'eye') return `<g transform="translate(16 30) scale(.62)">${DRAW.eye(h, id).replace('class="hat-float" ', '')}</g>`;
-  const tall = { wizard: 1, dunce: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8, wide = def.id === 'sombrero' || def.id === 'cowboy';   // (a wide brim fits the tile by its width)
-  return `<g transform="translate(16 ${wide ? 22 : 27}) scale(${(def.id === 'sombrero' ? .32 : def.id === 'cowboy' ? .34 : .48 / tall).toFixed(2)})">${DRAW[def.id](h, id)}</g>`;
+  const tall = { wizard: 1, dunce: 1, pumpkin: 1, crown: .9, gele: .9, cheese: .9 }[def.id] || .8, wide = def.id === 'sombrero' || def.id === 'cowboy';   // (a wide brim fits the tile by its width)
+  return `<g transform="translate(16 ${wide ? 22 : def.id === 'pumpkin' ? 26 : 27}) scale(${(def.id === 'sombrero' ? .32 : def.id === 'cowboy' ? .34 : .48 / tall).toFixed(2)})">${DRAW[def.id](h, id)}</g>`;
 }
