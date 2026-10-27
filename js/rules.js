@@ -16,6 +16,7 @@
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
+import { justinTick, justinDown, justinShown, justinAt, JUSTIN_ID } from './boardjustin.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
@@ -28,6 +29,7 @@ export const OPTIONS_DEFAULT = {
   botWait: 5,           // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
+  justin: 0,            // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
   mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
@@ -368,6 +370,7 @@ export function reduce(state, a, now = Date.now()) {
       if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
+      if (a.justin && a.kind === 'kill' && me && s.options.fun && !denied(s, a.id, 'nofun')) return justinDown(s, now, logLine) ? s : state;   // (the Justin option: kill @Justin on the boards)
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
       if (a.kind === 'kill') { for (const id of who) P[id].dead = true; }
       logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
@@ -539,10 +542,10 @@ export function reduce(state, a, now = Date.now()) {
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
-      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now);
+      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine);
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
-      return sig() === was && !shots && !hung ? state : s;
+      return sig() === was && !shots && !hung && !jus ? state : s;
     }
   }
   return s;
@@ -604,7 +607,7 @@ function forgame(s, a, now) {
     const o = {};
     for (const [k, v] of Object.entries(a.set)) {
       if (k === 'order' && ['random', 'rotate'].includes(v)) o.order = v;
-      if (['freeRoam', 'fun', 'lowGravity'].includes(k)) o[k] = v ? 1 : 0;
+      if (['freeRoam', 'fun', 'lowGravity', 'justin'].includes(k)) o[k] = v ? 1 : 0;
       if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
       if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
       if (k === 'answerOff') o.answerOff = v ? 1 : 0;
@@ -614,7 +617,7 @@ function forgame(s, a, now) {
     if (o.catchUp === 0) s.catchEnds = 0;
     if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
     if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
-    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
+    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
     say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`);
     return advance(s, now);
   }
@@ -666,6 +669,11 @@ function moveShots(s, now) {
       const ux = dx / rx, uy = dy / ry, px = (p.x - x0) / rx, py = (p.y - y0) / ry, len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
       if (Math.hypot(px - k * ux, py - k * uy) < 1) P.dead = true;
+    }
+    if (sh.hin === undefined && sh.by !== JUSTIN_ID && at.z > -.15 && at.z < 1.05 && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be shot back)
+      const n = justinAt(s.justin, now), ux = dx / .03, uy = dy / .08, px = (n.x - x0) / .03, py = (n.y - y0) / .08, len = ux * ux + uy * uy;
+      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      if (Math.hypot(px - k * ux, py - k * uy) < 1) justinDown(s, now, logLine);
     }
     if (sh.hin !== undefined && at.z > -.15 && at.z < 1.05) for (const n of hangTargets(s, now)) {   // (Hangout: Justin can be knocked down too)
       if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48) continue;

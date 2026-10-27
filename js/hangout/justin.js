@@ -119,9 +119,9 @@ const RANT_SHOUT = 'SHUT UP!';
 
 const WALK = 300, SPRINT = 620;
 const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
-const SAY_EVERY = [45, 90], RANT_EVERY = [420, 780], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
+const SAY_EVERY = [45, 90], RANT_EVERY = [840, 1560], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
 const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
-const STILL = 6000, LINE = 4000;   // a shot duck can't move (ms); each shadow line: shown this long, and the next one this long after (never two bubbles at once)
+const STILL = 6000, LINE = 4000, HEARD = 5000;   // a shot duck can't move (ms); each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
 const HOME = (() => { const r = PROPS.filter(p => p.kind === 'rocker'); return r.length ? [Math.round((r[0].x + r[r.length - 1].x) / 2 + 40), Math.round(r[0].y + r[0].d + 70)] : [Math.round((DECK.x0 + DECK.x1) / 2), Math.round((DECK.y0 + DECK.y1) / 2)]; })();
@@ -200,6 +200,7 @@ brain('justin', {
       return chase(me, c, at, true) || ch;
     }
     if (mm.mode === 'shadow') return ch;   // (shadowduck.js moves him)
+    if (c.now < (mm.hold || 0)) return ch;   // (someone's talking to him: he stays put)
     /* the pool: never in it */
     if (poolNear(at.x, at.y, 220) || inPool(at.x, at.y)) {
       if (c.now > mm.pool) { mm.pool = c.now + 30000; c.say('justin', POOL_LINE); ch = true; }
@@ -222,14 +223,14 @@ brain('justin', {
     const home = Math.hypot(at.x - HOME[0], at.y - HOME[1]) < 120;
     if (mm.mode === 'tv') { me.a = ''; delete me.z; }
     if (mm.mode === 'toTv') { const p = mm.couch; me.w = { p: [[Math.round(p.x + p.w / 2 + (c.rand() - .5) * p.w * .5), Math.round(p.y + p.d * .45)]], t: c.now, v: 1 }; me.z = Math.round(p.h * .55); me.a = 'tv'; me.f = 1; mm.mode = 'tv'; mm.next = c.now + 30000 + c.rand() * 40000; return true; }
-    if (!home) { if (c.go(me, HOME[0], HOME[1], WALK, DRY)) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 20000 + c.rand() * 40000; return true; } mm.next = c.now + 1000; return ch; }
+    if (!home) { if (c.go(me, HOME[0], HOME[1], WALK, DRY)) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 40000 + c.rand() * 80000; return true; } mm.next = c.now + 1000; return ch; }
     const r = c.rand();
     if (r < .2 && COUCHES.length) {
       const p = COUCHES[Math.floor(c.rand() * COUCHES.length)], beside = nearestOpen(p.x + p.w / 2, p.y + p.d + 30, DRY, 6);
       if (beside && c.go(me, beside[0], beside[1], WALK, DRY)) { me.a = ''; mm.mode = 'toTv'; mm.couch = p; mm.next = c.now; return true; }
     }
     const to = pickSpot(c);
-    if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 5000 + c.rand() * 15000; return true; }
+    if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 10000 + c.rand() * 30000; return true; }
     mm.next = c.now + 1000; return ch;
   },
   act(me, a, c, by) {
@@ -243,7 +244,10 @@ brain('justin', {
     }
     if (mm.lines.length || c.now < mm.lock) return false;   // (still saying his piece)
     if (mm.mode === 'rant' || mm.mode === 'chase') return false;
-    c.say('justin', nextLine(c)); me.f = by.x > (npcAt(me, c.now) || by).x ? 1 : -1;
+    const line = nextLine(c); c.say('justin', line); me.f = by.x > (npcAt(me, c.now) || by).x ? 1 : -1;
+    /* he stops and listens: at least 5 seconds, longer while his line is up */
+    if (mm.mode !== 'tv') { if ((npcAt(me, c.now) || {}).moving) c.stop(me); if (mm.mode === 'toTv') mm.mode = 'wander'; }
+    mm.hold = c.now + Math.max(HEARD, 2500 + line.length * 60); mm.next = Math.max(mm.next, mm.hold);
     if (c.rand() < SHOOT_ODDS) mm.shots.push({ who: by.id, at: c.now + SHOOT_AFTER });
     return true;
   },
@@ -252,7 +256,7 @@ brain('justin', {
     if (mm.mode === 'dead') return false;
     down(me, c, 'player'); mm.by = by; mm.until = c.now + 30000;
     c.say('justin', DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]);
-    mm.getUp = c.rand() < .5 ? c.now + 2500 : 0;
+    mm.getUp = c.rand() < .25 ? c.now + 2500 : 0;   // (now and then he gets up and goes after them)
     return true;
   },
 });
