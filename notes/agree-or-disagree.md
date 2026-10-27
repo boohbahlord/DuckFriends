@@ -2125,3 +2125,29 @@ Decisions:
 - Decided: on the Lakers #33 and Celtics #33 jerseys the team name now arcs over a small 33 on the chest (right of the
   wing, under the head), so neither covers them, on every body (Rubber builds, metals, Raptor, Pelican, Mallard, Blocks,
   2D shapes). Ducks drawn under 48 px (avatars, chips) leave the name and number out, since they'd only be a smudge.
+
+## Request (2026-10-27 20:34Z to 20:35Z): the outfit fix list
+> the leather jacket either needs to be redone or removed
+>
+> The bottom hang below the outfit for pajamas needs to be removed
+>
+> The shoes on the disco outfit need to be removed
+>
+> the back bump behind the bridal outfit in the second screenshot needs removed
+>
+> The priest outfit based on catholic priests doesnt have the signature priest collar
+>
+> The back of the box outfit is missing a part
+>
+> The fourth screenshot shows the suit with a bow and tie, and i really like it, because of how it has the perspective for the tie in the middle done right, where most of it is seen only in half, because it is facing away in perpendicular to the camera perspective. If someone could better word that for me for the plan in how well done the suit and tie is done that would be good.
+>
+> The little white circle on the outfits that are meant to imply highlight or shine should be removed
+
+> the crown should look more golden and shiny like the golden skin does
+
+> the cheese needs to be improved a little
+
+- Plan (Adam): https://claude.ai/artifact/3YHfbdhJnySZFEFLxKZLSy. The standard, from the suit: the duck is side-on, so
+  anything on the chest's centre line (a tie, a zip, buttons, a collar's opening) sits on the body's front edge with only
+  its near half showing, curving away with the body; clothes follow the outline, the far side stays hidden; nothing hangs
+  outside the outline unless a real garment would show there; no white shine spots on cloth or hats.

@@ -3,7 +3,7 @@
    Each hat gives a front layer (drawn over the head) and, for a few, a back layer (drawn behind the duck: the afro). Hats
    that can be recolored name their colors in `colors` (c1, c2); the hotdog has ketchup; the crown takes a metal. A hat can
    also be a player card's pattern (small hats in a repeating tile). Ducks with hats get headroom above them. */
-import { METAL, mix } from './duck.js';
+import { METAL, mix, metalBands, metalGlints } from './duck.js';
 
 export const HATS = [
   { id: 'wizard', name: 'Wizard hat', colors: [['c1', 'Hat', '#6a3fb5']] },
@@ -89,13 +89,23 @@ const DRAW = {
     <path d="M-20-10C-8-16 6-20 18-21C8-16-4-11-16-8Z" fill="${h.c2}"/>
     <path d="M-25-26C-22-31-14-31-9-27" stroke="${h.c2}" stroke-width="3" fill="none"/>
     <path d="M-5-23l4 2M-1-20l4 2M3-17l4 2" stroke="#fff" stroke-width="1.6"/>`,
-  cheese: () => `<path d="M-28-30L27-12L22-15L-23-36Z" fill="#fde98f" ${O}/>
-    <path d="M-28 2L27 2L27-12L-28-30Z" fill="#fdd85f" ${O}/>
-    <path d="M27 2L31-1L31-14L27-12Z" fill="#f9c63a" ${O}/>
-    <ellipse cx="-16" cy="-12" rx="5" ry="4" fill="#efb22b"/><ellipse cx="-17" cy="-13" rx="4" ry="3" fill="#f5c33f"/>
-    <ellipse cx="4" cy="-5" rx="4.5" ry="3.6" fill="#efb22b"/><ellipse cx="3.4" cy="-5.6" rx="3.4" ry="2.6" fill="#f5c33f"/>
-    <ellipse cx="18" cy="-4" rx="2.6" ry="2.2" fill="#efb22b"/><ellipse cx="-24" cy="-2" rx="2.4" ry="2" fill="#efb22b"/>
-    <ellipse cx="-8" cy="-27" rx="4" ry="1.6" fill="#efb22b" transform="rotate(18 -8 -27)"/><ellipse cx="10" cy="-19" rx="3" ry="1.2" fill="#efb22b" transform="rotate(18 10 -19)"/>`,
+  /* a wedge of Swiss: the thick rind end at the back, the top cut sloping down to the front; one depth for every face
+     (up and back), round holes of all sizes, a few cut through the edges */
+  cheese: (h, id) => {
+    const sil = 'M-26 1H26V-6L21-14L-31-36V-7Z', hole = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#c8850f"/><circle cx="${x + r * .28}" cy="${y + r * .28}" r="${r * .72}" fill="#ebb22c"/>`;
+    const lid = (x, y, rx) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx * .45}" fill="#e3a426" transform="rotate(22.9 ${x} ${y})"/>`;
+    const bites = [[-4, -24.6, 2.7], [26, -2.4, 2.4], [-17, 1, 2.4]];
+    return `<defs><mask id="${id}cb" maskUnits="userSpaceOnUse" x="-40" y="-45" width="80" height="55"><rect x="-40" y="-45" width="80" height="55" fill="#fff"/>${bites.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#000"/>`).join('')}</mask>
+    <clipPath id="${id}cs"><path d="${sil}"/></clipPath></defs>
+    <g mask="url(#${id}cb)"><path d="M-26 1V-28L-31-36V-7Z" fill="#e39a26"/><path d="M-29.2-32L-29.2-6" stroke="#f0b850" stroke-width="1.2"/>
+    <path d="M-26-28L26-6L21-14L-31-36Z" fill="#ffe892"/>
+    <path d="M-26 1H26V-6L-26-28Z" fill="#ffd34d"/>
+    ${hole(-14, -10, 5.2)}${hole(2, -5, 3.4)}${hole(-20, -21, 2.4)}${hole(14, -2.8, 2.2)}${hole(-4, -14.5, 1.6)}
+    ${lid(-10, -24.2, 2.6)}${lid(15, -13.5, 1.8)}
+    <path d="M-26 1V-28L26-6" fill="none" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>${hole(8, -13.6, 2.8)}${hole(-15, -23.4, 1.8)}
+    <path d="${sil}" fill="none" ${O}/></g>
+    <g clip-path="url(#${id}cs)" fill="none">${bites.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 1}" stroke="#c8850f" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${r}" ${O}/>`).join('')}</g>`;
+  },
   fila: (h, id) => { const c = h.c1, s = h.c2, d = dk(c, .3);
     const body = 'M-20 2C-21-9-21-20-17-26C-12-32 4-33 14-28C22-24 27-17 26-8C25.5-4.5 22.5-4.5 22-7.5C21-11 19-14 15.5-15C17.5-9 19-3 20 2Z';
     return `<defs><clipPath id="${id}fl"><path d="${body}"/></clipPath>
@@ -137,14 +147,16 @@ const DRAW = {
     <path d="M0-52L16 2L8 2Z" fill="#000" opacity=".08"/>
     <text x="-1" y="-6" text-anchor="middle" font-family="Georgia, Gelasio, serif" font-weight="700" font-size="16" fill="#1c1c28">D</text>
     <path d="M-16 2C-6 5 6 5 16 2" stroke="#1c1c28" stroke-width="1.6" fill="none"/>`,
-  crown: (h, id) => {
-    const M = METAL[h.metal] || METAL.gold;
-    return `<defs><linearGradient id="${id}cr" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".4" stop-color="${M[2]}"/><stop offset=".55" stop-color="${M[3]}"/><stop offset=".75" stop-color="${M[4]}"/><stop offset="1" stop-color="${M[3]}"/></linearGradient></defs>
-    <path d="M-20-9L-22-28L-11-17L0-32L11-17L22-28L20-9Z" fill="url(#${id}cr)" ${O}/>
-    <rect x="-21" y="-10" width="42" height="11" rx="2" fill="url(#${id}cr)" ${O}/>
+  crown: (h, id) => {   /* the metal skin's own shading: its bands, the room's streaks and soft spots of light */
+    const M = METAL[h.metal] || METAL.gold, E = `stroke="${M[5]}" stroke-width="1.6" stroke-linejoin="round"`, pts = 'M-20-9L-22-28L-11-17L0-32L11-17L22-28L20-9Z';
+    return `<defs>${metalBands(id + 'cr', M, 'gradientUnits="userSpaceOnUse" x1="-14" y1="-34" x2="-5" y2="2"')}${metalGlints(id)}
+    <clipPath id="${id}cc"><path d="${pts}"/><rect x="-21" y="-10" width="42" height="11" rx="2"/></clipPath></defs>
+    <path d="${pts}" fill="url(#${id}cr)" ${E}/>
+    <rect x="-21" y="-10" width="42" height="11" rx="2" fill="url(#${id}cr)" ${E}/>
+    <g clip-path="url(#${id}cc)"><rect x="-24" y="-34" width="48" height="36" fill="url(#${id}env)"/>
+      <ellipse cx="-13" cy="-21" rx="5" ry="2.2" fill="url(#${id}spec)" transform="rotate(-62 -13 -21)"/><ellipse cx="-9" cy="-6.6" rx="8" ry="1.8" fill="url(#${id}spec)" opacity=".8"/></g>
     <circle cx="0" cy="-4.5" r="3.2" fill="#e01b4c" stroke="#7a0a25" stroke-width=".8"/><circle cx="-12" cy="-4.5" r="2.4" fill="#2f80ed"/><circle cx="12" cy="-4.5" r="2.4" fill="#27ae60"/>
-    <circle cx="-22" cy="-28" r="2" fill="${M[0]}" ${O}/><circle cx="0" cy="-32" r="2.2" fill="${M[0]}" ${O}/><circle cx="22" cy="-28" r="2" fill="${M[0]}" ${O}/>
-    <path d="M-18-8L-16-2" stroke="#fff" stroke-width="1.4" opacity=".7"/>`;
+    <circle cx="-22" cy="-28" r="2" fill="${M[1]}" ${E}/><circle cx="0" cy="-32" r="2.2" fill="${M[1]}" ${E}/><circle cx="22" cy="-28" r="2" fill="${M[1]}" ${E}/>`;
   },
   duckling: (h, id) => `<g transform="translate(-14 -24) scale(.3)">
     <path d="M30 62C24 60 18 56 12 49C11 60 13 72 18 81C23 98 40 106 60 106C82 106 98 98 100 82C101 72 96 64 88 60L60 60C48 60 38 62 30 62Z" fill="${h.c1}" stroke="#1c1c28" stroke-width="5"/>

@@ -43,6 +43,14 @@ export const mix = (hex, to, t) => {   // blend a color toward white (to = 255) 
   const n = parseInt(String(hex).slice(1), 16) || 0, c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v + (to - v) * t));
   return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 };
+/* a metal's banded reflection (a bright sky, a hard dark horizon, a lighter floor), as a gradient; at: where it runs
+   (the body's box by default; a crown gives its own, in its own units) */
+export const metalBands = (gid, M, at = 'x1=".15" y1="0" x2=".42" y2="1"') => `<linearGradient id="${gid}" ${at}><stop offset="0" stop-color="${M[0]}"/><stop offset=".2" stop-color="${M[0]}"/><stop offset=".34" stop-color="${M[1]}"/><stop offset=".46" stop-color="${M[2]}"/><stop offset=".5" stop-color="${M[3]}"/><stop offset=".57" stop-color="${M[3]}"/><stop offset=".61" stop-color="${M[2]}"/><stop offset=".72" stop-color="${M[4]}"/><stop offset=".84" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[5]}"/></linearGradient>`;
+/* what a metal mirrors over its bands: the shine that sweeps across (id + 's'), the room's streaks (id + 'env') and soft
+   spots of light (id + 'spec') */
+export const metalGlints = id => `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="${id}env" x1="0" y1="0" x2="1" y2="0"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff" stop-opacity=".55"/><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#000" stop-opacity="0"/><stop offset=".66" stop-color="#000" stop-opacity=".28"/><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset=".86" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#fff" stop-opacity=".4"/><stop offset=".95" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<radialGradient id="${id}spec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".35" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* the shapes (120 × 120, facing right, standing on y ≈ 106) */
@@ -116,7 +124,7 @@ ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
   /* fills: a soft ball of light for colors; banded reflections for metals */
   /* a metal mirrors the room: a bright sky, a hard dark horizon, a lighter floor, and dark edges */
   const fill = (gid, cx, cy, T) => M
-    ? `<linearGradient id="${gid}" x1=".15" y1="0" x2=".42" y2="1"><stop offset="0" stop-color="${M[0]}"/><stop offset=".2" stop-color="${M[0]}"/><stop offset=".34" stop-color="${M[1]}"/><stop offset=".46" stop-color="${M[2]}"/><stop offset=".5" stop-color="${M[3]}"/><stop offset=".57" stop-color="${M[3]}"/><stop offset=".61" stop-color="${M[2]}"/><stop offset=".72" stop-color="${M[4]}"/><stop offset=".84" stop-color="${M[1]}"/><stop offset="1" stop-color="${M[5]}"/></linearGradient>`
+    ? metalBands(gid, M)
     : `<radialGradient id="${gid}" cx="${cx}" cy="${cy}" r=".8"><stop offset="0" stop-color="${T.light}"/><stop offset=".5" stop-color="${T.base}"/><stop offset="1" stop-color="${T.dark}"/></radialGradient>`;
   /* the body: wider and a little taller when fat (it grows from the ground up), narrower when skinny; the whole duck a
      little bigger or smaller */
@@ -127,16 +135,19 @@ ${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? '</g>' : ''}${extra}</svg>`;
      the body's own color first, so the see-through shade doesn't turn grey over the shirt */
   const solid = SL.wing ? '' : `<path d="${WING}" fill="url(#${id}b)"${bt}/>`;
   const wing = OF && OF.sleeve !== null ? (OF.bare ? solid + bare : '') + `<g${bt}>${OF.sleeve}</g>` : bare;
+  /* cloth gets no white shine spots: the body's highlights stay only where it is bare (no cloth, or jeans alone), and a
+     metal mirrors the room only off the cloth (a mask: everything but the cloth, the head and a bare arm) */
+  const clothed = !!(OF && OF.cloth), spots = !clothed || OF.low;
+  const offCloth = M && clothed ? `<filter id="${id}blk"><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"/></filter>
+<mask id="${id}nc" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/><g filter="url(#${id}blk)"><g${bt}>${OF.cloth}</g></g><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#fff"/>${OF.sleeve === null || OF.bare ? `<path d="${WING}" fill="#fff"${bt}/>` : ''}</mask>` : '';
   return `<svg class="duck${M ? ' metal' : ''}${top ? ' hatted' : ''}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${(size * (120 + top) / 120).toFixed(1)}" role="img" aria-label="${esc(title || 'Rubber duck')}">
 <defs>
 ${fill(id + 'b', '.36', '.28', TB)}${fill(id + 'h', '.34', '.28', TH)}
 <linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? '.25' : '.28'}"/></linearGradient>
-${pat}
+${pat}${offCloth}
 <clipPath id="${id}c"><path d="${BODY}"${bt}/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
 <mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask>
-${M ? `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<linearGradient id="${id}env" x1="0" y1="0" x2="1" y2="0"><stop offset=".08" stop-color="#fff" stop-opacity="0"/><stop offset=".14" stop-color="#fff" stop-opacity=".55"/><stop offset=".2" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#000" stop-opacity="0"/><stop offset=".66" stop-color="#000" stop-opacity=".28"/><stop offset=".74" stop-color="#000" stop-opacity="0"/><stop offset=".86" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#fff" stop-opacity=".4"/><stop offset=".95" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<radialGradient id="${id}spec" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".35" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>` : ''}
+${M ? metalGlints(id) : ''}
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ''}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + .16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ''}
@@ -150,17 +161,17 @@ ${hat.back}${SL.back || ''}${OF ? OF.back : ''}
   <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   ${wing}
-  ${M ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
+  ${M ? `<g${offCloth ? ` mask="url(#${id}nc)"` : ''}><rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>
   <ellipse cx="64" cy="24" rx="13" ry="7" fill="url(#${id}spec)" transform="rotate(-25 64 24)"/><ellipse cx="34" cy="70" rx="17" ry="7" fill="url(#${id}spec)" transform="rotate(-14 34 70)"/>
   <path d="M22 88C34 101 56 104 78 100" stroke="${M[0]}" stroke-width="2.4" fill="none" opacity=".85" stroke-linecap="round"/>
-  <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g>` : ''}
+  <g class="shine"><rect x="-60" y="-10" width="34" height="140" fill="url(#${id}s)" transform="rotate(18 60 60)"/></g></g>` : ''}
 </g>
 <path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? '#1c1c28a8' : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
 <circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? '.9' : '.6'}" transform="rotate(-25 68 28)"/>
 <circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? '.6' : '.3'}"/>
-<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
-<ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/></g>
+${spots ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? '.75' : '.38'}" transform="rotate(-14 38 73)"/>
+<ellipse cx="17" cy="56" rx="2.6" ry="5" fill="#fff" opacity="${M ? '.6' : '.3'}" transform="rotate(-30 17 56)"/></g>` : ''}
 ${SL.over || ''}
 ${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ''}
 ${beakSVG(L)}
