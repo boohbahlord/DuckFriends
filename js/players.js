@@ -135,7 +135,7 @@ export function mountPlayers(S, getR) {
   let downAt = 0, swallow = false;
   const keydown = e => {
     if (e.key !== 'Tab') return; e.preventDefault();
-    if (e.repeat) return;
+    if (e.repeat || e.altKey) return;   // (Alt+Tab switches windows: the keyup never comes)
     if (!box.hidden && sticky) { close(); swallow = true; return; }
     if (box.hidden) open();
     downAt = performance.now();
@@ -146,7 +146,9 @@ export function mountPlayers(S, getR) {
     downAt && performance.now() - downAt < 350 ? sticky = true : !sticky && close();
     downAt = 0;
   };
-  return { open, close, paint, keydown, keyup, isOpen: () => !box.hidden, held: () => !box.hidden && !sticky, destroy() { clearInterval(tick); box.remove(); vbox.remove(); } };
+  const blur = () => { if (!box.hidden && !sticky) { close(); downAt = 0; } };   // (the window lost focus while Tab was held: the keyup is lost)
+  addEventListener('blur', blur);
+  return { open, close, paint, keydown, keyup, isOpen: () => !box.hidden, held: () => !box.hidden && !sticky, destroy() { removeEventListener('blur', blur); clearInterval(tick); box.remove(); vbox.remove(); } };
 }
 
 /* gone quiet: no key, click, touch or mouse move in two minutes */
