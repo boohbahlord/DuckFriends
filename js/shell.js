@@ -246,7 +246,7 @@ function forgameShow(s) {
   return [`${modeOf(o.mode).name} on ${mapName(o.map)}${s.phase === 'lobby' ? ' (in the lobby)' : o.mode === 'hang' ? ', hanging out' : `, round ${s.round + 1}`}`,
     `  timers:    writing ${t(o.submitTime)} · answer ${o.answerOff ? 'off' : t(o.answerTime)} · catch-up ${t(o.catchUp)}`,
     `  turn-end:  ${sh}`,
-    `  order ${o.order} · freeroam ${o.freeRoam ? 'on' : 'off'} · gravity ${o.lowGravity ? 'low' : 'normal'} · silly ${o.fun ? 'on' : 'off'}${o.mode === 'hang' ? '' : ` · justin ${o.justin ? 'on' : 'off'}`}`,
+    `  order ${o.order} · freeroam ${o.freeRoam ? 'on' : 'off'} · gravity ${o.lowGravity ? 'low' : 'normal'} · silly ${o.fun ? 'on' : 'off'}${o.mode === 'hang' ? ` · ghosts ${o.ghosts ? 'on' : 'off'}` : ` · justin ${o.justin ? 'on' : 'off'}`}`,
     `  mutes for everyone: ${mutes.join('; ') || 'none'}`].join('\n');
 }
 function forgame(x, args) {
@@ -265,6 +265,7 @@ function forgame(x, args) {
   if (a0 === 'turn-end') { const v = SHARES[(args[1] || '').toLowerCase()]; if (!v) fail('✗ forgame turn-end everyone | half | 2/3 | 3/4'); set({ share: v }); return `A turn now ends when ${v === 1 ? 'everyone is' : `${args[1]} of the players are`} done.`; }
   if (a0 === 'order') { const v = (args[1] || '').toLowerCase(); if (!['random', 'rotate'].includes(v)) fail('✗ forgame order random | rotate'); set({ order: v }); return `Questions now come in ${v === 'random' ? 'a random order' : 'turn'}.`; }
   if (['freeroam', 'silly'].includes(a0)) { if (!onOff) fail(`✗ forgame ${a0} on | off`); set({ [a0 === 'silly' ? 'fun' : 'freeRoam']: on ? 1 : 0 }); return `${a0 === 'silly' ? 'Silly commands' : 'Free roam'} ${on ? 'on' : 'off'}.`; }
+  if (a0 === 'ghosts') { if (!onOff) fail('✗ forgame ghosts on | off'); if (s.options.mode !== 'hang') fail('✗ Ghosts are only in Duck Cabin.'); set({ ghosts: on ? 1 : 0 }); return `Ghosts ${on ? 'on: a knocked-down duck\'s ghost walks about until Space' : 'off'}.`; }
   if (a0 === 'justin') { if (!onOff) fail('✗ forgame justin on | off'); if (s.options.mode === 'hang') fail('✗ Justin already lives in Duck Cabin.'); set({ justin: on ? 1 : 0 }); return `Justin ${on ? 'on: he walks the board' : 'off'}.`; }
   if (a0 === 'gravity') { const v = (args[1] || '').toLowerCase(); if (!['low', 'normal'].includes(v)) fail('✗ forgame gravity low | normal'); set({ lowGravity: v === 'low' ? 1 : 0 }); return `Gravity: ${v}.`; }
   const mi = args.findIndex(a => /^\\mute$/i.test(a)); if (mi < 0) fail(`✗ ${MAN.forgame}`);
@@ -812,7 +813,7 @@ export const shellHistory = () => fs.hist;
 const FILE_CMDS = ['cat', 'less', 'more', 'ls', 'cd', 'rm', 'rmdir', 'head', 'tail', 'wc', 'sort', 'grep', 'touch', 'uniq', 'cp', 'mv', 'tree', 'find', 'stat', 'file', 'chmod', 'chgrp', 'source', '.', 'cut', 'tr', 'sed', 'awk', 'rev', 'tac', 'nl', 'fold', 'column', 'diff', 'tee', 'shuf', 'bc', 'mkdir', 'send'];
 const WORDS = {
   help: ['all', ...HELP_NAMES.map(n => n.slice(4).toLowerCase())],
-  forgame: ['show', 'all-timer', 'timer', 'turn-end', 'order', 'freeroam', 'gravity', 'silly', 'justin', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'random', 'rotate', 'low', 'normal', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'],
+  forgame: ['show', 'all-timer', 'timer', 'turn-end', 'order', 'freeroam', 'gravity', 'silly', 'justin', 'ghosts', 'on', 'off', 'catch-up', 'answer', 'writing', 'everyone', 'half', '2/3', '3/4', 'random', 'rotate', 'low', 'normal', 'stage', 'stage2', 'rounds8', ...STAGES, '\\mute', 'bubble', 'ping', 'text', 'all'],
   map: MAPS.map(m => m[0]), mode: MODES.map(m => m.id), song: ['list', 'now', 'on', 'off', 'all', ...music.tracks.map(qn)],
   chmod: ['g+r', 'g-r', 'o+r', 'o-r', 'a+r', 'a-r', '640', '644', '600'],
   totalstats: ['-m', ...STAT_MODES.map(([m]) => m)], gamestats: ['-m'], roundstats: ['-m'],

@@ -13,6 +13,7 @@
    own guess was off. Computers kick it on the host when they walk into it. A goal: a little confetti and a horn, no
    score; a few seconds later the ball is back on the center spot. */
 import { rule, activity } from './registry.js';
+import { isGhost } from './death.js';
 import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from './layout.js';
 import * as A from './art.js';
 import { profile } from '../store.js';
@@ -89,7 +90,7 @@ rule('ball', {
     let ch = false;
     const cur = sim(b, now);
     for (const id of s.seat) {   // computers walking into it
-      const P = s.players[id], p = s.pos[id]; if (!P || !P.bot || !p) continue;
+      const P = s.players[id], p = s.pos[id]; if (!P || !P.bot || !p || isGhost(s, id)) continue;
       const x = p.x * W, y = p.y * H, was = botWas.get(id); botWas.set(id, { x, y });
       if ((p.j && now - p.j < 1200) || !touch(cur.x, cur.y, x, y)) continue;
       const mx = was ? x - was.x : 0, my = was ? y - was.y : 0, m = Math.hypot(mx, my), dx = cur.x - x, dy = cur.y - y, d = Math.hypot(dx, dy) || 1;
