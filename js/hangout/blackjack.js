@@ -40,7 +40,9 @@ import { duckSVG } from '../duck.js';
 
 export const VOTE = 15000, BET = 15000, TURN = 20000, GAP = 360, DGAP = 750, END = 4500, START = 100, BETS = [1, 5, 25];
 const STOOLS = new Map(SEATS.filter(q => q.p.kind === 'stool').map(q => [q.id, q]));
-const BUTLER = "Justin's Butler";
+export const BUTLER = "Justin's Butler";
+/* the other game at this table (poker.js): when it's on, its window and its drawing take over the table */
+export const GAME = { poker: null };
 
 /* ---------- the cards ---------- */
 const pts = c => { const r = c % 13; return r === 0 ? 1 : r >= 9 ? 10 : r + 1; };
@@ -51,8 +53,8 @@ export function total(cards) {
   return ace && t <= 11 ? { t: t + 10, soft: true } : { t, soft: false };
 }
 const natural = cards => cards.length === 2 && total(cards).t === 21;
-const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'], SUITS = ['♠', '♥', '♦', '♣'];
-const red = c => { const u = Math.floor(c / 13); return u === 1 || u === 2; };
+export const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'], SUITS = ['♠', '♥', '♦', '♣'];
+export const red = c => { const u = Math.floor(c / 13); return u === 1 || u === 2; };
 
 /* the host's deck for the hand it's dealing */
 let mem = { id: '', deck: [], hole: -1 };
@@ -79,11 +81,12 @@ export function atTable(s) {
 }
 export const dealEnd = b => b.dt + GAP * (2 * b.order.length + 2);
 
-/* the next hand: the vote first if a group sat down; the bets in a chips game; else straight to the deal */
+/* the next hand: the vote first when someone sits down at an empty table or a group forms (blackjack for chips, just
+   for fun, or poker); the bets in a chips game; else straight to the deal */
 function nextHand(b, seated, now) {
   if (!seated.length) { Object.assign(b, fresh()); return; }
   Object.assign(b, { order: [], hands: {}, dealer: [], res: {}, bets: {}, gift: {}, turn: -1 });   // (the last hand's cards off the table)
-  if (seated.length > 1 && (b.mode === '' || b.mode === 'solo')) { Object.assign(b, { st: 'vote', t: now, votes: {} }); return; }
+  if (b.mode === '' || (seated.length > 1 && b.mode === 'solo')) { Object.assign(b, { st: 'vote', t: now, votes: {} }); return; }
   if (!b.mode) b.mode = 'solo';
   if (b.mode !== 'chips') { deal(b, seated, now); return; }
   for (const { id } of seated) {
@@ -150,7 +153,7 @@ rule('bj', {
     const b = clone(b0), id = a.id, seated = atTable(s).some(q => q.id === id);
     if (!seated) return false;
     if (a.do === 'vote') {
-      if (b.st !== 'vote' || !['chips', 'fun'].includes(a.v)) return false;
+      if (b.st !== 'vote' || !['chips', 'fun', 'poker'].includes(a.v)) return false;
       b.votes[id] = a.v;
     } else if (a.do === 'butler') {
       if (b.st !== 'vote') return false;
@@ -186,11 +189,11 @@ rule('bj', {
     switch (b.st) {
       case 'idle': if (seated.length) nextHand(b, seated, now); break;
       case 'vote': {
-        if (seated.length < 2) { b.mode = 'solo'; b.votes = {}; nextHand(b, seated, now); break; }
         const v = seated.map(q => b.votes[q.id]).filter(Boolean);
         if (v.length < seated.length && now - b.t < VOTE) break;
-        const c = v.filter(x => x === 'chips').length;
-        b.mode = c > v.length - c ? 'chips' : 'fun'; b.votes = {}; b.chips = {};
+        const c = v.filter(x => x === 'chips').length, f = v.filter(x => x === 'fun').length, p = v.length - c - f;
+        if (p > c && p > f && GAME.poker) { Object.assign(b, { mode: 'poker', st: 'poker', t: now, votes: {}, bvotes: {} }); GAME.poker.start(s, seated, now, b.chips); break; }   // (most voted poker: poker.js has the table)
+        b.mode = c > f ? 'chips' : seated.length > 1 ? 'fun' : 'solo'; b.votes = {}; b.chips = {};
         b.butler = seated.filter(q => b.bvotes[q.id]).length * 2 > seated.length ? 1 : 0; b.bvotes = {};
         nextHand(b, seated, now); break;
       }
@@ -215,6 +218,7 @@ rule('bj', {
         break;
       }
       case 'end': if (now - b.t >= END) nextHand(b, seated, now); break;
+      case 'poker': if (!GAME.poker || !GAME.poker.on(s)) { b.mode = ''; nextHand(b, seated, now); } break;   // (the poker game is over: the vote again)
     }
     if (JSON.stringify(b) === JSON.stringify(b0)) return false;
     s.hang.bj = b; return true;
@@ -229,7 +233,8 @@ rule('bj', {
 /* ---------- Justin's Butler ---------- */
 /* is the Butler dealing right now (a card going down): his pose */
 function dealing(s, now) {
-  const b = s.hang && s.hang.bj; if (!b) return false;
+  const b = s.hang && s.hang.bj, pk = s.hang && s.hang.pk; if (!b) return false;
+  if (pk && pk.st !== 'off') return pk.set.deal === 'butler' && (now - (pk.ct || 0) < 380 || (pk.st === 'deal' && now - pk.t < 360 * 2 * pk.order.length));   // (poker: only when he's the dealer)
   return now - (b.ct || 0) < 380 || (b.st === 'deal' && now < dealEnd(b));
 }
 const CARD_HELD = `<span class="hang-npc-held card"><svg viewBox="0 0 14 20" aria-hidden="true"><rect x="1" y="1" width="12" height="18" rx="2" fill="#3e6d8c" stroke="#1c1c28" stroke-width="1.6"/><rect x="3.5" y="3.5" width="7" height="13" rx="1" fill="none" stroke="#e8d9a0" stroke-width="1"/></svg></span>`;
@@ -242,7 +247,7 @@ brain('butler', {
 });
 
 /* ---------- the computers (bots.js, TEST rooms) ---------- */
-const hash = t => { let h = 7; for (const ch of String(t)) h = (h * 31 + ch.charCodeAt(0)) | 0; return h >>> 0; };
+export const hash = t => { let h = 7; for (const ch of String(t)) h = (h * 31 + ch.charCodeAt(0)) | 0; return h >>> 0; };
 /* simple basic strategy against the Butler's up card */
 function basic(b, id) {
   if (b.pvp) {   // (against each other: beat the best hand that's already standing, else stop at 17)
@@ -264,16 +269,17 @@ export function bjBot(s, id, now) {
   const b = (s.hang || {}).bj; if (!b) return null;
   const seated = atTable(s), mine = seated.some(q => q.id === id), people = seated.some(q => !s.players[q.id].bot);
   const think = 900 + hash(id + b.st + b.id + b.turn) % 1800, A = (o) => [{ t: 'hang', k: 'bj', id, ...o }];
+  if (mine && b.st === 'poker') return people && GAME.poker ? GAME.poker.bot(s, id, now) : Math.random() < .03 ? [{ t: 'hang', k: 'sit', seat: '', id }] : [];
   if (mine) {
     if (!people) return Math.random() < .03 ? [{ t: 'hang', k: 'sit', seat: '', id }] : [];
-    if (b.st === 'vote' && !b.votes[id] && now - b.t > think) return [...(hash(id) % 4 ? [] : A({ do: 'butler', v: 1 })), ...A({ do: 'vote', v: hash(id) % 3 ? 'chips' : 'fun' })];
+    if (b.st === 'vote' && !b.votes[id] && now - b.t > think) return [...(hash(id) % 4 ? [] : A({ do: 'butler', v: 1 })), ...A({ do: 'vote', v: ['chips', 'chips', 'fun', 'poker', 'poker'][hash(id + b.t) % 5] })];
     if (b.st === 'bet' && !b.bets[id] && now - b.t > think) { const have = b.chips[id] ?? 0, h = hash(id + b.t); return have ? A({ do: 'bet', v: h % 12 ? Math.min(have, [5, 10, 15, 25, 30, 50][h % 6]) : 'all' }) : []; }
     if (b.st === 'play' && b.order[b.turn] === id && now - b.tt > think) return A({ do: basic(b, id) });
     return [];
   }
   if (!people || hash(id) % 10 > 6) return null;
   const me = s.pos[id]; if (!me) return null;
-  const taken = new Set(Object.keys((s.hang || {}).seats || {})), x = me.x * 6000, y = me.y * 4400;
+  const taken = new Set([...Object.keys((s.hang || {}).seats || {}), ...Object.values((s.hang || {}).npc || {}).map(r => r && r.seat)]), x = me.x * 6000, y = me.y * 4400;
   const free = [...STOOLS.values()].filter(q => !taken.has(q.id)).sort((a, c) => Math.hypot(a.up[0][0] - x, a.up[0][1] - y) - Math.hypot(c.up[0][0] - x, c.up[0][1] - y));
   return free.length ? { seat: free[0].id, x: free[0].up[0][0], y: free[0].up[0][1] } : null;
 }
@@ -289,11 +295,11 @@ function shownCards(b, now) {
   out.dealer = b.dealer.filter((c, i) => i > 1 || (i ? 2 * n + 1 : n) < k);
   return out;
 }
-const cardHTML = (c, cls = '') => c < 0 ? `<span class="bj-card back${cls}"></span>` : `<span class="bj-card${red(c) ? ' red' : ''}${cls}"><b>${RANKS[c % 13]}</b><i>${SUITS[Math.floor(c / 13)]}</i></span>`;
-const chipSVG = (c = '#ef3b3b') => `<svg class="bj-chip" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6" fill="${c}" stroke="#1c1c28" stroke-width="1.6"/><circle cx="10" cy="10" r="5" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.4 2"/></svg>`;
+export const cardHTML = (c, cls = '') => c < 0 ? `<span class="bj-card back${cls}"></span>` : `<span class="bj-card${red(c) ? ' red' : ''}${cls}"><b>${RANKS[c % 13]}</b><i>${SUITS[Math.floor(c / 13)]}</i></span>`;
+export const chipSVG = (c = '#ef3b3b') => `<svg class="bj-chip" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.6" fill="${c}" stroke="#1c1c28" stroke-width="1.6"/><circle cx="10" cy="10" r="5" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="2.4 2"/></svg>`;
 const play3 = (on, dbl) => `<button type="button" class="btn green" data-do="hit"${on ? '' : ' disabled'}>Hit</button><button type="button" class="btn red" data-do="stand"${on ? '' : ' disabled'}>Stand</button><button type="button" class="btn yellow" data-do="double"${dbl ? '' : ' disabled'}>Double</button>`;
 const WORD = { win: 'Win', bj: 'Blackjack!', push: 'Push', lose: 'Lose', bust: 'Bust', split: 'Split', back: 'Bets back' };
-const COLORS = ['#ef3b3b', '#2fa4ff', '#37d421'], GOLD = '#ffd23f', COUNT = 700;   // (COUNT: how long a chip count takes to count up or down)
+export const COLORS = ['#ef3b3b', '#2fa4ff', '#37d421'], GOLD = '#ffd23f', COUNT = 700;   // (COUNT: how long a chip count takes to count up or down)
 /* the chips each one has on this screen: they count up or down to the real number (v.disp) */
 const shownChips = (b, id) => v.disp[id] ?? b.chips[id] ?? 0;
 function countChips(b, dt) {
@@ -318,7 +324,7 @@ function toBeat(s, b, cards) {
   const id = ids.sort((x, y) => score(y) - score(x))[0];
   return id ? { id, list: cards.hands[id] || [] } : null;
 }
-const nameOf = (s, id) => { const p = s.players[id]; return p ? nameHTML(p.name, p.nameStyle) : ''; };
+export const nameOf = (s, id) => { const p = s.players[id]; return p ? nameHTML(p.name, p.nameStyle) : ''; };
 const totalTxt = cards => cards.length ? String(total(cards).t) : '';
 
 /* what the window says, and which buttons it shows */
@@ -327,9 +333,9 @@ function render(s, now) {
   const turnId = b.st === 'play' ? b.order[b.turn] : null, res = b.res[me];
   let say = '', acts = '';
   if (b.st === 'vote') {
-    say = 'Play for chips?';
+    say = 'What do we play?';
     const bn = atTable(s).filter(q => b.bvotes[q.id]).length;
-    acts = `<button type="button" class="btn green${b.votes[me] === 'chips' ? ' on' : ''}" data-do="vote" data-v="chips">Play for chips</button><button type="button" class="btn yellow${b.votes[me] === 'fun' ? ' on' : ''}" data-do="vote" data-v="fun">Just for fun</button>`
+    acts = `<button type="button" class="btn green${b.votes[me] === 'chips' ? ' on' : ''}" data-do="vote" data-v="chips">Blackjack</button><button type="button" class="btn yellow${b.votes[me] === 'fun' ? ' on' : ''}" data-do="vote" data-v="fun">Just for fun</button><button type="button" class="btn purple${b.votes[me] === 'poker' ? ' on' : ''}" data-do="vote" data-v="poker">Poker</button>`
       + `<button type="button" class="btn small bj-let${b.bvotes[me] ? ' on' : ''}" data-do="butler" data-v="${b.bvotes[me] ? 0 : 1}" aria-pressed="${!!b.bvotes[me]}">${b.bvotes[me] ? '✓' : '✗'} ${BUTLER} plays too${bn ? ` <b>${bn}</b>` : ''}</button>`;
   } else if (b.st === 'bet') {
     const have = b.chips[me] ?? 0;
@@ -338,9 +344,7 @@ function render(s, now) {
     else {
       say = b.gift[me] ? '+100 chips, on the house' : 'Bet';
       if (v.amt > have) v.amt = have;
-      acts = `<span class="bj-amt"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="-1" aria-label="One less">▼</button><input class="bj-box" type="text" inputmode="numeric" maxlength="5" placeholder="0" aria-label="Bet"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="1" aria-label="One more">▲</button></span>`
-        + BETS.map((n, i) => `<button type="button" class="btn small bj-pick" data-do="add" data-v="${n}">${chipSVG(COLORS[i])}${n}</button>`).join('')
-        + `<button type="button" class="btn small bj-pick" data-do="all">${chipSVG(GOLD)}All in</button><button type="button" class="btn green bj-go" data-do="bet">Bet</button>`;
+      acts = amtHTML();
     }
   } else if (b.st === 'play' && turnId === me) {
     say = 'Your turn';
@@ -376,28 +380,44 @@ function render(s, now) {
   const stats = (inHand && chips && b.bets[me] ? stat((b.chips[me] ?? 0) === 0 ? 'All in' : 'Bet', chipSVG() + b.bets[me]) : '')
     + (b.pvp && chips && ['deal', 'play'].includes(b.st) ? stat('Pot', chipSVG(GOLD) + pot(b), ' pot') : '')
     + (top && top.list.length ? stat('To beat', String(natural(b.hands[top.id].c) ? 'BJ' : total(top.list).t)) : '');
-  v.hands.innerHTML = b.st === 'vote' ? pick('chips', 'Play for chips') + pick('fun', 'Just for fun')
+  v.hands.innerHTML = b.st === 'vote' ? pick('chips', 'Blackjack') + pick('fun', 'Just for fun') + pick('poker', 'Poker')
     : inHand ? hand('You', 'm', mine, 'mine' + (turnId === me ? ' turn' : ''), myNote) + (stats ? `<div class="bj-stats">${stats}</div>` : '') : '';
   if (v.acts.dataset.sig !== acts) { v.acts.dataset.sig = acts; v.acts.innerHTML = acts; }
-  amtShow();
+  amtShow(v);
 }
-/* the bet box: what I'll bet (v.amt, 0 while empty); typing in it, its arrows, the chips that add to it */
-function amtShow() {
-  const box = v.acts.querySelector('.bj-box'); if (!box) return;
-  if (document.activeElement !== box) box.value = v.amt ? String(v.amt) : '';
-  const go = v.acts.querySelector('.bj-go'); if (go) go.disabled = !v.amt;
+/* the bet box (poker's raise box too): what I'll bet (w.amt, 0 while empty) in w.acts; typing in it, its arrows, the
+   chips that add to it, All in */
+export const amtHTML = (go = 'Bet', cls = 'green') => `<span class="bj-amt"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="-1" aria-label="One less">▼</button><input class="bj-box" type="text" inputmode="numeric" maxlength="5" placeholder="0" aria-label="${go}"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="1" aria-label="One more">▲</button></span>`
+  + BETS.map((n, i) => `<button type="button" class="btn small bj-pick" data-do="add" data-v="${n}">${chipSVG(COLORS[i])}${n}</button>`).join('')
+  + `<button type="button" class="btn small bj-pick" data-do="all">${chipSVG(GOLD)}All in</button><button type="button" class="btn ${cls} bj-go" data-do="bet">${go}</button>`;
+export function amtShow(w) {
+  const box = w.acts.querySelector('.bj-box'); if (!box) return;
+  if (document.activeElement !== box) box.value = w.amt ? String(w.amt) : '';
+  const go = w.acts.querySelector('.bj-go'); if (go) go.disabled = !w.amt;
 }
-function amtSet(n) {
-  const s = v.ctx.state(), have = (s.hang.bj.chips[v.ctx.me] ?? 0);
-  v.amt = Math.max(0, Math.min(have, Math.floor(n) || 0)); amtShow();
-  const box = v.acts.querySelector('.bj-box'); if (box) box.value = v.amt ? String(v.amt) : '';   // (also while it's being typed in)
+function amtSet(w, n, have) {
+  w.amt = Math.max(0, Math.min(have, Math.floor(n) || 0)); amtShow(w);
+  const box = w.acts.querySelector('.bj-box'); if (box) box.value = w.amt ? String(w.amt) : '';   // (also while it's being typed in)
 }
-function amtTyped(e) {
+export function amtTyped(w, e, have) {
   const box = e.target; if (!box.classList || !box.classList.contains('bj-box')) return;
   const t = box.value.replace(/\D/g, ''); if (t !== box.value) box.value = t;
-  const have = (v.ctx.state().hang.bj.chips[v.ctx.me] ?? 0), n = Math.min(have, +t || 0);
-  v.amt = n; if (t && +t > have) box.value = String(have);
-  const go = v.acts.querySelector('.bj-go'); if (go) go.disabled = !v.amt;
+  w.amt = Math.min(have, +t || 0); if (t && +t > have) box.value = String(have);
+  const go = w.acts.querySelector('.bj-go'); if (go) go.disabled = !w.amt;
+}
+/* a press on the box's arrows, a chip or All in (true: it was one of those) */
+export function amtPress(w, d, btn, have) {
+  if (d === 'amt') amtSet(w, Math.max(1, w.amt + +btn.dataset.v), have);   // (the arrows: one more or one less, never under 1)
+  else if (d === 'add') amtSet(w, w.amt + +btn.dataset.v, have);   // (a chip adds to the box: 25 twice is 50)
+  else if (d === 'all') amtSet(w, have, have);
+  else return false;
+  return true;
+}
+/* in the box: Enter presses its button, the arrow keys are its arrows */
+export function amtKeys(w, e, have) {
+  if (!e.target.classList.contains('bj-box') || !['Enter', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+  e.preventDefault(); e.stopPropagation();
+  if (e.key === 'Enter') w.acts.querySelector('.bj-go')?.click(); else amtSet(w, Math.max(1, w.amt + (e.key === 'ArrowUp' ? 1 : -1)), have);
 }
 /* the timer under the words: the vote, the bets, a turn */
 function timer(b, now) {
@@ -408,15 +428,20 @@ function timer(b, now) {
 /* the cards and bets on the table itself (everyone sees them, seated or not): one drawing over its top */
 /* how far out from the middle things lie, in table radii: each one's hand (its total under it), their chips, a bet not
    in a pot; the Butler's hand, toward him */
-const HAND = .5, BANK = .87, BET_AT = .24, DEAL = .5, CW = 26, CH = 36, FAN = 15;
-const TOP = { l: BJ.cx - BJ.r - 10, t: BJ.cy - BJ.h - BJ.r - 10, w: 2 * BJ.r + 20, h: 2 * BJ.r + 20 };
+export const HAND = .5, BANK = .87, BET_AT = .24, DEAL = .5, CW = 26, CH = 36, FAN = 15;
+export const TOP = { l: BJ.cx - BJ.r - 10, t: BJ.cy - BJ.h - BJ.r - 10, w: 2 * BJ.r + 20, h: 2 * BJ.r + 20 };
+/* a card on the table at (x, y) in its drawing, big enough to read: its rank over its suit; face down, its back
+   (k: smaller, for poker's hands) */
+export function tableCard(x, y, c, a = 0, k = 1, cls = '') {
+  return `<g class="${cls}" transform="translate(${x} ${y}) rotate(${a})${k !== 1 ? ` scale(${k})` : ''}"><rect x="${-CW / 2}" y="${-CH / 2}" width="${CW}" height="${CH}" rx="3" fill="${c < 0 ? '#3e6d8c' : '#fbfaf6'}" stroke="#1c1c28" stroke-width="${(1.5 / k).toFixed(2)}"/>${c < 0
+    ? `<rect x="${-CW / 2 + 3}" y="${-CH / 2 + 3}" width="${CW - 6}" height="${CH - 6}" rx="1.5" fill="none" stroke="#e8d9a0" stroke-width="1.2"/>`
+    : `<text class="bj-face${red(c) ? ' red' : ''}" y="-5">${RANKS[c % 13]}</text><text class="bj-face${red(c) ? ' red' : ''}" y="10">${SUITS[Math.floor(c / 13)]}</text>`}</g>`;
+}
 function tableSVG(s, now) {
   const b = s.hang.bj, cards = shownCards(b, now), turnId = b.st === 'play' ? b.order[b.turn] : null, chips = b.mode === 'chips';
   const ox = TOP.l, oy = TOP.t + BJ.h, X = x => (x - ox).toFixed(1), Y = y => (y - oy).toFixed(1);   // (a point on the top at world (x, y) draws at (x − ox, y − oy) in this box)
   /* a card, big enough to read on the table: its rank over its suit; face down, its back */
-  const card = (x, y, c, a = 0) => `<g transform="translate(${X(x)} ${Y(y)}) rotate(${a})"><rect x="${-CW / 2}" y="${-CH / 2}" width="${CW}" height="${CH}" rx="3" fill="${c < 0 ? '#3e6d8c' : '#fbfaf6'}" stroke="#1c1c28" stroke-width="1.5"/>${c < 0
-    ? `<rect x="${-CW / 2 + 3}" y="${-CH / 2 + 3}" width="${CW - 6}" height="${CH - 6}" rx="1.5" fill="none" stroke="#e8d9a0" stroke-width="1.2"/>`
-    : `<text class="bj-face${red(c) ? ' red' : ''}" y="-5">${RANKS[c % 13]}</text><text class="bj-face${red(c) ? ' red' : ''}" y="10">${SUITS[Math.floor(c / 13)]}</text>`}</g>`;
+  const card = (x, y, c, a = 0) => tableCard(X(x), Y(y), c, a);
   const fan = (x, y, list) => list.map((c, i) => card(x + (i - (list.length - 1) / 2) * FAN, y, c, (i - (list.length - 1) / 2) * 3)).join('');
   const stack = (x, y, n, fill) => { let o = ''; for (let i = 0; i < n; i++) o += `<ellipse cx="${X(x)}" cy="${Y(y - i * 3)}" rx="6.5" ry="3.2" fill="${fill}" stroke="#1c1c28" stroke-width="1.1"/>`; return o; };
   const label = (x, y, n, cls = '') => `<text class="bj-count${cls}" x="${X(x)}" y="${Y(y)}">${n}</text>`;
@@ -457,9 +482,7 @@ function press(e) {
   const btn = e.target.closest('[data-do]'); if (!btn || btn.disabled || !v) return;
   const d = btn.dataset.do, s = v.ctx.state(), b = s.hang.bj;
   const have = b ? b.chips[v.ctx.me] ?? 0 : 0;
-  if (d === 'amt') { amtSet(Math.max(1, v.amt + +btn.dataset.v)); return; }   // (the arrows: one more or one less, never under 1)
-  if (d === 'add') { amtSet(v.amt + +btn.dataset.v); return; }   // (a chip adds to the box: 25 twice is 50)
-  if (d === 'all') { amtSet(have); return; }
+  if (amtPress(v, d, btn, have)) return;
   if (d === 'bet') { if (v.amt) v.ctx.send({ t: 'hang', k: 'bj', do: 'bet', v: v.amt >= have ? 'all' : v.amt }); v.amt = 0; return; }
   if (d === 'butler') { v.ctx.send({ t: 'hang', k: 'bj', do: 'butler', v: +btn.dataset.v }); return; }
   if (d === 'vote') { v.ctx.send({ t: 'hang', k: 'bj', do: 'vote', v: btn.dataset.v }); return; }
@@ -483,26 +506,25 @@ activity({
       acts: el.querySelector('.hang-bj-acts'), bar: el.querySelector('.hang-bj-time i'), open: false, amt: 0, sig: '', prev: {}, voted: {}, artSig: '', seen: -1, betsSeen: -1, free: null, disp: {}, from: {} };
     el.querySelector('.hang-book-x').onclick = () => getUp(ctx);
     el.addEventListener('click', press);
-    el.addEventListener('input', amtTyped);
-    el.addEventListener('keydown', e => { if (e.target.classList.contains('bj-box') && (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {   // (Enter bets; the arrow keys as the arrows)
-      e.preventDefault(); e.stopPropagation();
-      if (e.key === 'Enter') v.acts.querySelector('.bj-go')?.click(); else amtSet(Math.max(1, v.amt + (e.key === 'ArrowUp' ? 1 : -1)));
-    } });
+    const have = () => v.ctx.state().hang.bj.chips[v.ctx.me] ?? 0;
+    el.addEventListener('input', e => amtTyped(v, e, have()));
+    el.addEventListener('keydown', e => amtKeys(v, e, have()));
     addEventListener('keydown', esc_, true);
   },
   unmount() { if (!v) return; removeEventListener('keydown', esc_, true); v.el.remove(); v.art.remove(); v = null; },
   step(dt, now, ctx) {
     if (!v) return;
     const s = ctx.state(), b = s.hang && s.hang.bj; if (!b) return;
-    const seat = mySeat(s);
-    if (seat && !v.open) open(ctx); else if (!seat && v.open) close();
+    const seat = mySeat(s), pk = GAME.poker && GAME.poker.on(s);
+    if (seat && !pk && !v.open) open(ctx); else if ((!seat || pk) && v.open) close();
     /* the cards on this screen: a card sound for each one going down, a chip sound for each bet, near the table */
     const shown = shownCards(b, now), n = shown.dealer.length + Object.values(shown.hands).reduce((m, l) => m + l.length, 0), bets = Object.keys(b.bets).length;
     if (n > v.seen && v.seen >= 0 && ctx.world.inside) play('card', { x: BJ.cx, y: BJ.cy });
     if (bets > v.betsSeen && v.betsSeen >= 0 && ctx.world.inside) play('chips', { x: BJ.cx, y: BJ.cy });
     countChips(b, dt * 1000);
-    const artSig = b.id + '|' + n + '|' + JSON.stringify(b.bets) + '|' + b.st + b.turn + '|' + b.dealer.join() + '|' + JSON.stringify(v.disp) + atTable(s).map(q => q.id).join();
-    if (artSig !== v.artSig) { v.artSig = artSig; v.art.innerHTML = tableSVG(s, now); }
+    const artSig = pk ? 'pk' + JSON.stringify(s.hang.pk) + atTable(s).map(q => q.id).join() + GAME.poker.mine(s.hang.pk, ctx.me).join()
+      : b.id + '|' + n + '|' + JSON.stringify(b.bets) + '|' + b.st + b.turn + '|' + b.dealer.join() + '|' + JSON.stringify(v.disp) + atTable(s).map(q => q.id).join();
+    if (artSig !== v.artSig) { v.artSig = artSig; v.art.innerHTML = pk ? GAME.poker.svg(s, now, ctx.me) : tableSVG(s, now); }
     v.seen = n; v.betsSeen = bets;
     if (!v.open) return;
     const sig = JSON.stringify(b) + n + ctx.me + (v.disp[ctx.me] ?? '');
@@ -518,16 +540,17 @@ activity({
   },
   /* seated at the table: the camera looks at the table (its middle, from the Butler's name down to the front stools),
      in the middle of the board the window leaves free */
-  focus(ctx) {
-    if (!v || !v.open) return null;
-    const Wd = ctx.world;
-    if (!v.free || v.free.vw !== Wd.vw || v.free.vh !== Wd.vh) {
-      v.el.classList.toggle('side', Wd.vw > Wd.vh);   // (turned round: the window moves too)
-      const r = v.el.getBoundingClientRect(), o = Wd.board.getBoundingClientRect(), side = v.el.classList.contains('side');
-      v.free = side ? { vw: Wd.vw, vh: Wd.vh, h: r.height, x: (r.right - o.left + Wd.vw) / 2, y: Wd.vh / 2 } : { vw: Wd.vw, vh: Wd.vh, h: r.height, x: Wd.vw / 2, y: (r.top - o.top) / 2 };
-      if (!r.width) v.free = null;
-    }
-    const f = v.free || { x: Wd.vw / 2, y: Wd.vh / 2 }, top = BJ.by - BJ.sh - 64 - 34, bottom = bjSpot(3, BJ.sr).y + BJ.st + 10;
-    return { x: BJ.cx - (f.x - Wd.vw / 2) / Wd.sc, y: (top + bottom) / 2 - (f.y - Wd.vh / 2) / Wd.sc };
-  },
+  focus(ctx) { return v && v.open ? tableFocus(ctx, v) : null; },
 });
+/* the camera on the table for a window w ({ el, free }; poker's too) */
+export function tableFocus(ctx, w) {
+  const Wd = ctx.world;
+  if (!w.free || w.free.vw !== Wd.vw || w.free.vh !== Wd.vh) {
+    w.el.classList.toggle('side', Wd.vw > Wd.vh);   // (turned round: the window moves too)
+    const r = w.el.getBoundingClientRect(), o = Wd.board.getBoundingClientRect(), side = w.el.classList.contains('side');
+    w.free = side ? { vw: Wd.vw, vh: Wd.vh, h: r.height, x: (r.right - o.left + Wd.vw) / 2, y: Wd.vh / 2 } : { vw: Wd.vw, vh: Wd.vh, h: r.height, x: Wd.vw / 2, y: (r.top - o.top) / 2 };
+    if (!r.width) w.free = null;
+  }
+  const f = w.free || { x: Wd.vw / 2, y: Wd.vh / 2 }, top = BJ.by - BJ.sh - 64 - 34, bottom = bjSpot(3, BJ.sr).y + BJ.st + 10;
+  return { x: BJ.cx - (f.x - Wd.vw / 2) / Wd.sc, y: (top + bottom) / 2 - (f.y - Wd.vh / 2) / Wd.sc };
+}
