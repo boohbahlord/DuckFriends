@@ -420,7 +420,7 @@ p.bad { color: var(--red); font-weight: 600; }
 .spk-body path { fill: var(--yellow); stroke: var(--line); stroke-width: 1.5; stroke-linejoin: round; }
 .spk-waves path { fill: none; stroke: var(--blue); stroke-width: 1.9; stroke-linecap: round; }
 .spk-x path { fill: none; stroke: var(--red); stroke-width: 2.6; stroke-linecap: round; }
-.mbar-main { display: grid; align-items: center; min-width: 0; }
+.mbar-main { display: grid; align-items: center; min-width: 0; width: 11.5rem; }   /* one width whatever the song or its "next" and "tap anywhere" tag says (at 0 the tag changed and the bar jumped); a long name is cut with ... */
 .mbar-main > * { grid-area: 1 / 1; transition: opacity .15s, visibility .15s; }   /* the slider takes the name's place: the bar never changes size */
 .mbar-vol { position: relative; justify-self: start; width: 6.6rem; height: 1.6rem; display: flex; align-items: center; visibility: hidden; opacity: 0; }
 .mbar:has(.mbar-spk:hover, .mbar-vol:hover) .mbar-vol, .mbar:focus-within .mbar-vol, .mbar.open .mbar-vol { visibility: visible; opacity: 1; }
@@ -2054,12 +2054,13 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .up-btn { position: relative; }
 .up-dot { position: absolute; top: .45rem; right: .6rem; width: .85rem; height: .85rem; border-radius: 50%; background: var(--red); border: .14rem solid var(--line); }
 .win-updates { width: min(30rem, 100%); }
-.up-title { font-size: calc(2rem * var(--ts)); text-align: center; }
+.win .up-title { font-size: calc(2rem * var(--ts)); text-align: center; padding: 0; }   /* (the window's h2 keeps room for the X on its right, which pushed the word off the middle) */
+.up-ver { font-size: calc(1.3rem * var(--ts)); }
 .up-nav { display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: center; margin: .4rem 0 .8rem; }
 .up-arrow { padding: .4rem .8rem; min-width: 2.8rem; }
 .up-arrow:disabled { opacity: .35; }
 .up-head { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
-.up-date { font-size: calc(.85rem * var(--ts)); opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+.up-date { font-size: calc(.85rem * var(--ts)); opacity: .7; letter-spacing: .04em; }
 .up-name { font-size: calc(1.15rem * var(--ts)); font-weight: 700; overflow-wrap: anywhere; }
 .up-h { margin: .7rem 0 .25rem; font-size: calc(1rem * var(--ts)); }
 .up-h.new { color: var(--green); }
