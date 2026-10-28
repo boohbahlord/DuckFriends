@@ -25,6 +25,7 @@ import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided,
   isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang } from './rules.js';
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
 import { hangStill } from './hangout/rules.js';
+import { downStill } from './hangout/death.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
@@ -514,7 +515,7 @@ const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
 const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam && !isLaw(R.state)) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam; a juror may change their vote)
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-turn: walks anywhere, plays from the next turn
 const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state) || isHang(R.state);   // anywhere on the board (else inside my column)
-const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow()) && !hangStill(R.state, R.me, clockNow());   // (Hangout: shot by Justin, still a while)
+const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow()) && !hangStill(R.state, R.me, clockNow()) && !downStill(R.state, R.me, clockNow());   // (Hangout: shot by Justin, still a while)
 function xBounds() {
   const s = R.state;
   if (roams()) return [.03, .97];
@@ -687,7 +688,7 @@ function jump(how) {
   if (!me || !onBoardPhase()) return;
   const now = clockNow();
   if (world && isHang(R.state) && !world.canJump(me)) return;   // (an activity took Space, or my duck is falling)
-  if (hangStill(R.state, R.me, now)) return;
+  if (hangStill(R.state, R.me, now) || downStill(R.state, R.me, now)) return;
   if (me.j) {   // in the air: the second jump, once a jump, if the Double jump is on a key
     if (me.dj || !(how === 'double' || (kept.has('double') && hasKey(myDuck(), 'double'))) || jumpZ(me, now) <= 0) return;
     me.dj = now; sendMove(true); sfx.puff(); return;

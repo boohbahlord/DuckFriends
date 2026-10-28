@@ -2227,6 +2227,54 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
 
+## Request (2026-10-27 22:03Z): pops and crackles in every song
+> we need miles jr using the fucking notes on how to stop the cackle or popping in my fucking ears! HOW MANY TIMES DID I TELL THEM TO FIX THIS FOR EVERY SONG! THIS IS FUCKING BULLSHIT
+
+> Adam can adjust miles jr's effort to what works
+
+> i have less popping when i turn it down maybe? but literally NO song does this on my youtube music even at the most maximum volume
+
+> maybe btw, big maybe
+
+- Decided: apply CLAUDE.md's "Sound without pops" rules to all the audio code. A soft ceiling ends the music chain and the
+  sound effects' chain (untouched below .7; at Music 200% songs reached 1.15 before). Every fade glides from where it is,
+  set ahead of the clock; echo lengths change only while the echoes are silent; reverbs crossfade; drum and effect noise
+  fades in over 5 ms; all sound effects share one AudioContext (sound.js `sfxContext`, `sfxOut`, `soon`); songs written
+  out ahead play at the speakers' own sample rate. Brief: /mnt/project-files/notes/pops-brief.md.
+
+## Request (owner, 2026-10-27 23:09Z): blackjack players against each other, chip counts, All in
+"IF two players play black jack, they play against eachother, and the game should display how many chips they have better AND you should tell me how many chips each player gets. Going all in should be an option too"
+Decided (Adam): two or more players in a hand share one pot, best hand wins it, a tie splits it, all bust = bets back;
+the Butler only deals then. Chip counts on the table by each stool and in the window, counting up. An "All in" bet.
+
+## Request (owner, 2026-10-27 23:14Z): blackjack bet box, who plays whom, cards on the table (and poker)
+"The default amount you can bet should then be:
+1, 5, 25
+
+AND there is an all in button AND a way to type HOW MUCH you wanna bet OR click the arrow next to that box AND the amount you click on to the right of it (such as 25) will autofill into that box, and players can use the arrows to add or subtract one from there. ALSO, clicking the chip amounts will add unto them in the box that shows how much your betting. That means 25 clicked twice equals 50.
+
+There also should be poker.
+
+The dealer only plays WHEN there is no other player OR if players let the dealer play black jack too. The screen show show every players cards on the card table. The cards should be too big and a number will be under the cards for black jack . THE hidden cards are on the table too, just upside down.
+
+For poker, ask me any questions if need be"
+Decided (Adam): a bet box (typing, arrows ±1) with 1, 5 and 25 chips that add to it, and All in; the Butler plays only
+alone or when the start vote lets him in; every hand on the table with its total under it. Poker is planned separately.
+
+## Request (owner, 2026-10-28 00:29Z): knife, hammer, pistol, knocked-down time, cabin ghosts
+"We can add a knife to the specials that players can use which stabs once a second. 
+
+We can also add a wrench that can be big hammer (Second screenshot( that can swung out wide to hit many ducks at the same time if they are hit by it, that attack it does is one attack every 2.25 seconds, and clicking the configure button on the tile for it can change it to a wrench skin from the BioShock game, as show in the first screenshot, which functions the same because it is just a different skin for the same item.
+
+The pistol can now fire rapidly seven times before needing to be reloaded, which the reload animation length or duration is show in the cooldown bar. The player can reload though by clicking the R button.
+
+In normal mini games, the dead effect makes a player unable to move for half a second by default, and then for a second or longer under additional settings by a host, including there being no immobilization with the dead effect as an option now.
+
+In the cabin map, there is a new setting for cabin, where, the ducks will become ghosts after being dead for five seconds, where their avatar lays dead on the ground WHILE there ghost avatar can walk around, and the ghost avatar is as transparent AS the shadow duck. When they are a ghost, they cannot take damage or use the chalk board, play cards, or anything like that, nor blow out candles or turn on lights. A ghost can click space bar to spawn, which will make their duck slowly fade away before their old body is resurrected and able to be played. This is a setting in the game that is optional for cabin. 
+
+One thing though, the ability to change the time a player is immobilized from being dead for from damage will also be a setting in cabin AND the time it takes to become a ghost IF that setting is on will be based on that number."
+
+- Job (Adam, 00:32Z): only the "Knocked down for" setting (games: None, 0.5 s default, 1 s, 2 s, 3 s, 5 s; Duck Cabin: the same plus 6 s, 6 s the default). Knife, hammer, pistol and ghosts are Solomon the 2nd's.
 ## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
 "WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
 

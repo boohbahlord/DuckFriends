@@ -1922,7 +1922,14 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .hang-bj-time { height: .3rem; border-radius: .2rem; background: var(--soft); overflow: hidden; }
 .hang-bj-time.off { visibility: hidden; }
 .hang-bj-time i { display: block; height: 100%; background: var(--yellow); transform-origin: 0 50%; }
-.hang-bj-hands { display: flex; gap: .5rem; }
+.hang-bj-hands { display: flex; gap: .5rem; justify-content: center; }
+.hang-bj-hands:empty { display: none; }   /* (betting, or not in this hand: no empty boxes) */
+.hang-bj-hand.mine { flex: 0 1 auto; min-width: 7rem; }   /* (my hand: as wide as its cards; the table shows everyone's) */
+.bj-stats { flex: none; display: flex; flex-direction: column; justify-content: center; gap: .3rem; }
+.bj-stat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-width: 6.5rem; padding: .2rem .55rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .6rem; }
+.bj-stat span { color: var(--dim); font-size: calc(.8rem * var(--ts)); }
+.bj-stat b { display: inline-flex; align-items: center; gap: .25rem; font-size: calc(1.05rem * var(--ts)); }
+.bj-stat.pot b { color: var(--yellow); }
 .hang-bj-hand { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .3rem; padding: .35rem .45rem .45rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .7rem; }
 .hang-bj-hand.turn { border-color: var(--yellow); }
 .hang-bj-who { display: flex; align-items: center; gap: .35rem; min-width: 0; color: var(--dim); font-size: calc(.82rem * var(--ts)); line-height: calc(1.3rem * var(--ts)); white-space: nowrap; }   /* (one height with a total or without: the window never jumps) */
@@ -1950,14 +1957,22 @@ html.moving .tvb-b { animation: tvbub var(--d) linear var(--dl) infinite; }
 .hang-bj:not(.side) .bj-card { width: 1.95rem; height: 2.7rem; }
 .hang-bj:not(.side) .bj-card + .bj-card { margin-left: -.65rem; }
 .hang-bj:not(.side) .hang-bj-hand { gap: .2rem; padding: .25rem .4rem .35rem; }
-.hang-bj-others { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0; padding: 0; list-style: none; font-size: calc(.85rem * var(--ts)); }
-.hang-bj-others:empty, .hang-bj:not(.side) .hang-bj-others { display: none; }   /* (tall screens: the table shows the others' cards) */
-.hang-bj-others li { display: inline-flex; align-items: center; gap: .35rem; padding: .1rem .5rem; background: var(--panel2); border: .13rem solid var(--soft); border-radius: .6rem; }
-.hang-bj-others li.turn { border-color: var(--yellow); }
 .hang-bj-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
 .hang-bj-acts:empty { display: none; }
 .hang-bj-acts .btn { padding: .45rem .9rem; }
 .hang-bj-acts .bj-pick { gap: .3rem; }
+.bj-amt { display: inline-flex; align-items: center; gap: .25rem; }   /* (the bet box, its arrows either side) */
+.hang-bj-acts .bj-arrow { padding: .45rem .55rem; font-size: calc(.75rem * var(--ts)); }
+.hang-bj .bj-box { width: 3.6rem; padding: .4rem .3rem; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hang-bj-acts .bj-let { flex-basis: 100%; max-width: max-content; }   /* (the vote: letting the Butler play, on its own line) */
+.bj-count { font: 700 15px 'Fredoka', sans-serif; fill: #fff; stroke: #1c1c28; stroke-width: 3.5px; stroke-linejoin: round; paint-order: stroke; dominant-baseline: middle; }   /* (on the table: each one's chips, and the pot) */
+.bj-count.pot { font-size: 17px; fill: var(--yellow); }
+.bj-face { font: 700 14px 'Fredoka', sans-serif; fill: #1c1c28; text-anchor: middle; dominant-baseline: middle; }   /* (a card on the table) */
+.bj-face.red { fill: #d23b33; }
+.bj-sum { font: 700 13px 'Fredoka', sans-serif; fill: #fff; stroke: #1c1c28; stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; text-anchor: middle; dominant-baseline: middle; }   /* (a hand's total, under it) */
+.bj-sum.r-win, .bj-sum.r-bj, .bj-sum.r-split { fill: var(--green); } .bj-sum.r-lose, .bj-sum.r-bust { fill: var(--red); }
+.bj-pot { margin-left: auto; }
+.hang-bj-chips b { font-variant-numeric: tabular-nums; }
 .hang-bj .btn.on { box-shadow: 0 0 0 .2rem var(--yellow), var(--shadow); }
 .hang-npc-held.card { left: 37px; top: 45px; width: 10px; transform: rotate(-18deg); }   /* (the Butler dealing: a card in his wing) */
 @media (orientation: portrait) {
