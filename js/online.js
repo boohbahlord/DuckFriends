@@ -18,7 +18,7 @@ import { clock, now } from './clock.js';
 import { who } from './who.js';
 import { go } from './router.js';
 import { toast } from './ui.js';
-import { ready, keyOk, seal, unseal } from './secret.js';
+import { ready, keyOk, seal, unseal, handouts } from './secret.js';
 import { cardOf } from './quackrules.js';
 
 export const CONFIG = {
@@ -197,10 +197,14 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   /* the host locks each player's Secret Card for them (once a deal) */
   async function cardsFor(s) {
     const w = s.wq, ids = s.hidden && w && w.deal ? w.ids.filter(id => id !== me && s.players[id] && keyOk(s.players[id].pk)) : [];
-    const sig = ids.length ? w.deal + ':' + ids.map(id => id + s.players[id].pk.x).join() : '';
+    let sig = ids.length ? w.deal + ':' + ids.map(id => id + s.players[id].pk.x).join() : '', give = null;
+    if (!sig) for (const f of handouts) { const h = f(s); if (h) { give = h; break; } }   // (else another secret, as poker's cards)
+    const to = give ? Object.keys(give.items).filter(id => id !== me && s.players[id] && keyOk(s.players[id].pk)) : [];
+    if (give) sig = 'h' + give.sig + ':' + to.map(id => id + s.players[id].pk.x).join();
     if (sig !== sealed.sig) {
       const cards = {};
       for (const id of ids) { const c = cardOf(s, id); if (c) cards[id] = await seal(s.players[id].pk, c).catch(() => null); }
+      for (const id of to) cards[id] = await seal(s.players[id].pk, give.items[id]).catch(() => null);
       sealed = { sig, cards };
     }
     return sealed.cards;
@@ -372,7 +376,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     on(f) { fns.add(f); return () => fns.delete(f); },
     setComputers() { /* computers play in TEST rooms only */ },
     /* my Secret Card for this deal (the host reads it straight from its own state) */
-    secretCard(s) { if (s.hidden) return cardOf(s, me); return myCard && s.wq && myCard.deal === s.wq.deal ? myCard : null; },
+    secretCard(s) { if (s.hidden) return cardOf(s, me); if (myCard && myCard.pk) return myCard; return myCard && s.wq && myCard.deal === s.wq.deal ? myCard : null; },   // (pk: poker's two cards)
     /* resolves once the host has seated me */
     joined() {
       return new Promise((ok, no) => {

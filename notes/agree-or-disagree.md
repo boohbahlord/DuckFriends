@@ -2260,3 +2260,93 @@ The dealer only plays WHEN there is no other player OR if players let the dealer
 For poker, ask me any questions if need be"
 Decided (Adam): a bet box (typing, arrows ±1) with 1, 5 and 25 chips that add to it, and All in; the Butler plays only
 alone or when the start vote lets him in; every hand on the table with its total under it. Poker is planned separately.
+
+## Request (owner, 2026-10-27 23:41Z): no Butler hand in the window, less dead space, poker cards
+"The buttler doesnt need his hand shown in the UI box for blackjack or poker anymore if they are on the table. Also, the ui can now have more room to creatively fit the elements to better adhere to my principles to make up for any deadspace IN the blackjack game. For poker, the UI can have different shapes or sizes to fit cards"
+Decided (Noah): the Butler's hand only on the table; the blackjack window tightened (PR #135). Poker's window fits its
+cards.
+
+## Request (owner, 2026-10-28 00:01Z): poker answers, the setup window, Justin at the table
+"No i actually like the size of the cards in blackjack and yeah i meant dont make them too big.
+
+1.  Yeah? I didnt know there were different kinds of poker, whatever i usually played
+2. Yeah, idky it would be different chips.
+3. Blinds of 1 and 2? Idk wat u mean, but yeah a raise box and everything like that from blackjack obv.
+4. The butler only deals and never plays poker UNLESS no other player can play poker, OR the player can refuse to play poker with the butler, which brings up the "Waiting for other players" on the table. Also, the player can have the butler play poker with everyone else. Whenever poker is selected, the window pops up to configure the game before playing, such as, does the butler deal (if there are more then 1 player and the butler) OR do players pass the deck around and take turns dealing? There is also an option to invite Justin to play, who will take one of the seats, and he will say random comments at the beginning of every new hand, and he will pull negative lines that are fitting whenever he loses, and he will pull lines that are fitting whenever he wins. Justin playing means his duck teleports to the table, but he leaves the table whenever the game is done in whatever way makes the most sense. There could be other settings to configure the poker as well. If Justin loses all of his chips at the end of a game he will shoot at the player with the most chips before walking away if he is out of the game, and justin will say an insult from his line or rage with one his his lines already in his file. 
+5. They same roundtable for poker yeah.
+
+
+
+
+New Justin lines for winning:
+
+YES!
+YES! YES! 
+OMG YES!!
+I'M SO GOOD AT THIS GAME!
+YEESSSS!!!!!!!
+HOLY FLIP!!!!!
+I'M SO GOOD!
+I love life.
+HOW AM I SO GOOD!?!
+YOU SUCK!!! 
+YOU ARE SO BAD!!!
+HOW ARE YOU THIS BAD AT THE GAME!!!
+You are such an IDIOT!!! HAHAHA!!!
+Why do you even try?
+You can't beat me.
+You should give up. 
+I'm not even trying.
+I always win.
+HAHA! IDIOT!
+Just quit the game at this point, YOU'RE SO BAD!"
+
+## Request (owner, 2026-10-28 00:02Z): joining each hand
+"yes players can choose to play when a new hand comes in, so then they have to pay the blind fee or whatever"
+
+## Request (owner, 2026-10-28 00:08Z): Justin bad at poker, his losing lines
+"Make Justin bad at poker 
+
+Here is some of his new losing lines:
+
+HOW DID I LOSE!?!
+NOOOOO!!!!!!
+WHAT THE FLIIIIIP!!!!!
+I CAN'T BELIEVE THIS STUPID GAME!!!
+HOW!!?!!?
+THIS IS SO STUPID!!!!
+AAAAAAHHHHH!!!!!!!
+AAHH!!! AHHH!!!! AAAHH!!!!!
+I AM GOING TO END IT!!!!
+WHAT THE FLIIIIIP!!!!!!! HOW!?!?!?
+I CAN'T TAKE THIS STUPID GAME!!!!
+One more time... AND I'M TURNING OFF MY XBOX!!!!!
+NOOOOOOOOOOO!!!!!!!!
+WHYYYY!?!?!!!?!?!?!?!!
+Why am I alive.
+I am going to end it.
+I hate life.
+I HATE MY STUPID LIFE!!!
+AAHHH!!!! AAHAH!! WHHAAAA!!!!!
+AH!!! AH!!! AH!!!! AH!!! AHH!!!!!
+I am going to cry.
+WHY AM I DOING THIS TO MYSELF!?!!?!?
+STAAHHHP!!!!!!!!!
+STOP!!!
+STOP IT!!!
+STOP!!! STOP!!! STOP!!! STOP!!!!
+STOP!!! STOP!!! STOP!!! STAAAHHPP!!!!
+Get some help.
+IT'S NOT FUNNY!!!! 
+IT'S NOT FUUUUHHHNNNY!!!!!"
+
+## Request (owner, 2026-10-28 00:08Z): his old lines too
+"there are some of his lines that would be fit for him losing or winning, like I said."
+
+## Request (owner, 2026-10-28 00:13Z): go
+"yeah it's a go on the poker plan"
+Decided (Adam, plan https://claude.ai/artifact/8kjvopvB9BEN9sk5ECXvQ4): Texas Hold'em at the blackjack table, picked in
+the start vote; a setup window (who deals, the Butler plays, invite Justin, blinds, blinds up, turn time, hand limit);
+Play or Sit out each hand; the cards stay with the host. Justin sits on a free stool, plays badly, a line each hand, a
+win or lose line at the showdown (new ones mostly, old fitting ones sometimes); busted, he shoots the richest player,
+says an insult or rage line and walks off. Built by Noah.
