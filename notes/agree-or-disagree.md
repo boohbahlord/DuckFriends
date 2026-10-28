@@ -2445,3 +2445,13 @@ Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes,
 "The spawn should be changed to the balcony"
 "like what i mean is that all players spawn on the balcony when Cabin loads"
 - Decided (Adam): the balcony is the raised deck behind the cabin. Everyone starts there when Duck Cabin loads (the game's start, and a joiner mid-game, on the next free spot); reset duck keeps the front door.
+
+## Request (owner, 2026-10-28, relayed by Adam 16:45Z): card table fixes
+(Adam's words for the owner's batch; the owner's own messages are in Adam's thread.) No timer on the Blackjack/Poker
+pick; Justin only slightly bad at poker (he raised so high every time it was no fun); betting confuses players and
+doesn't work well.
+Decided (Adam, Noah): the pick waits for everyone seated and says how many still have to pick. Justin plays sensibly,
+raises small (at most 3 big blinds), goes all in only on a strong hand, now and then makes a silly call. Betting: the
+poker box holds only what you can raise by (a bigger raise did nothing before), a raise under the smallest one becomes
+the smallest, the box shows "min N", the Bet/Raise button says what it will do ("Bet 7", "Raise 5", "All in"), and a
+person sets up poker (a computer asked to set it up left the table stuck).
