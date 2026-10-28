@@ -2006,6 +2006,7 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .hang-pk .pkr-seg .btn { padding: .3rem .65rem; }
 .hang-pk .pkr-seg .btn:disabled:not(.on) { opacity: .45; } .hang-pk .pkr-seg .btn.on:disabled { opacity: 1; }
 .pkr-note { margin: 0; color: var(--dim); font-size: calc(.85rem * var(--ts)); }
+.pkr-final > b { display: flex; align-items: center; gap: .3rem; justify-self: start; }
 .pkr-mine { gap: .2rem; } .pkr-mine.out { opacity: .5; }
 .pkr-did { margin-left: auto; padding-left: .4rem; color: var(--ink); font-weight: 700; } .pkr-did.won { color: var(--green); }
 .pkr-name { min-height: 1.2em; font-weight: 700; font-size: calc(.85rem * var(--ts)); color: var(--yellow); white-space: nowrap; }

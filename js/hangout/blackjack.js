@@ -10,13 +10,17 @@
    it's everyone against him as above. Against each other he only deals, every bet goes into one pot,
    the hand closest to 21 takes it all (a blackjack beats a 21 of three or more cards), a tie splits it in whole chips
    (an odd chip to the first in stool order), and if everyone busts the bets go back.
+   Justin plays too when the vote invites him (most of the seated): he sits on a free stool, says a line as each hand
+   starts and a winning or losing one at the end, bets small and plays a little worse than the computers. Out of chips
+   (the house gives him none) he shoots the richest player and walks off, as at poker.
 
    The host runs the table in s.hang.bj:
      st     the stage: 'idle' (nobody seated), 'vote', 'bet', 'deal', 'play', 'dealer', 'end' (the results); t when it began
      mode   '' (none yet), 'solo' (one player: just for fun, no vote), 'chips' or 'fun' (what the vote said). A game lasts
             until everyone has got up; a second player sitting down during a solo game brings the vote.
      votes  { id: 'chips' | 'fun' } (only the seated vote; a tie is just for fun); bvotes { id: 1 } who wants the Butler
-            to play too, and butler 1 when most of the seated did (a tie: he only deals); chips { id: n } (a chips game: 100 each
+            to play too, and butler 1 when most of the seated did (a tie: he only deals); jvotes { id: 1 } who invites
+            Justin, and jk his stool while he plays (a computer, 'justin' in order, hands, chips and bets); chips { id: n } (a chips game: 100 each
             to start, 100 at the next hand for whoever sits down later, and 100 more from the Butler for whoever has
             run out, with a notice: gift { id: 1 }); bets { id: n } (this hand's, doubles included)
      id     this hand's id; order: its players, in stool order; pvp 1 when they play each other (two or more); hands { id: { c: [cards], s: '' | 'stand' | 'bust' |
@@ -37,6 +41,7 @@ import { play } from './sounds.js';
 import { nameHTML } from '../name.js';
 import { rainbowHTML } from '../art.js';
 import { duckSVG } from '../duck.js';
+import { jPoker } from './justin.js';
 
 export const BET = 15000, TURN = 20000, GAP = 360, DGAP = 750, END = 4500, START = 100, BETS = [1, 5, 25];
 const STOOLS = new Map(SEATS.filter(q => q.p.kind === 'stool').map(q => [q.id, q]));
@@ -71,7 +76,7 @@ function rebuild(b) {
 }
 
 /* ---------- the rules (the host) ---------- */
-const fresh = () => ({ st: 'idle', t: 0, mode: '', votes: {}, bvotes: {}, butler: 0, chips: {}, bets: {}, gift: {}, id: '', order: [], pvp: 0, hands: {}, turn: -1, tt: 0, dealer: [], dt: 0, ct: 0, res: {} });
+const fresh = () => ({ st: 'idle', t: 0, mode: '', votes: {}, bvotes: {}, jvotes: {}, butler: 0, chips: {}, bets: {}, gift: {}, id: '', order: [], pvp: 0, hands: {}, turn: -1, tt: 0, dealer: [], dt: 0, ct: 0, res: {} });
 const clone = b => JSON.parse(JSON.stringify(b));
 /* who sits at the table, in stool order: [{ id, k }] */
 export function atTable(s) {
@@ -89,6 +94,7 @@ function nextHand(b, seated, now) {
   if (b.mode === '' || (seated.length > 1 && b.mode === 'solo')) { Object.assign(b, { st: 'vote', t: now, votes: {} }); return; }
   if (!b.mode) b.mode = 'solo';
   if (b.mode !== 'chips') { deal(b, seated, now); return; }
+  if (b.jk !== undefined && b.chips.justin === undefined) b.chips.justin = START;   // (no gift for him: out of chips he's out)
   for (const { id } of seated) {
     if (b.chips[id] === undefined) b.chips[id] = START;
     else if (b.chips[id] < BETS[0]) { b.chips[id] += START; b.gift[id] = 1; }
@@ -97,6 +103,8 @@ function nextHand(b, seated, now) {
 }
 /* deal to these players ([{ id, k }]: k their stool, where their cards go on the table) */
 function deal(b, players, now) {
+  if (b.jk !== undefined && (b.mode !== 'chips' || b.bets.justin) && !players.some(q => q.id === 'justin')) players = [...players, { id: 'justin', k: b.jk }].sort((x, y) => x.k - y.k);
+  if (players.some(q => q.id === 'justin')) jPoker.say('hand');
   const ids = players.map(q => q.id);
   b.id = Math.random().toString(36).slice(2, 9); b.order = ids; b.hands = {}; b.dealer = []; b.res = {}; b.turn = -1; b.pvp = ids.length > 1 && !b.butler ? 1 : 0;
   mem = { id: b.id, deck: shuffled(), hole: -1 };
@@ -132,8 +140,10 @@ function settlePot(b) {
     if (b.mode === 'chips' && b.chips[id] !== undefined) b.chips[id] += get;
   }
 }
+/* Justin's line for how his hand went */
+function justinSays(b) { const r = (b.res.justin || {}).r; if (r) jPoker.say(['win', 'bj', 'split'].includes(r) ? 'win' : ['lose', 'bust'].includes(r) ? 'lose' : 'hand'); }
 function settle(b, now) {
-  if (b.pvp) { settlePot(b); Object.assign(b, { st: 'end', t: now, turn: -1 }); return; }
+  if (b.pvp) { settlePot(b); justinSays(b); Object.assign(b, { st: 'end', t: now, turn: -1 }); return; }
   const d = total(b.dealer).t, dbj = natural(b.dealer);
   for (const id of b.order) {
     const h = b.hands[id], p = total(h.c).t, bet = b.bets[id] || 0;
@@ -142,7 +152,42 @@ function settle(b, now) {
     b.res[id] = { r, n };
     if (b.mode === 'chips' && b.chips[id] !== undefined && n >= 0) b.chips[id] += bet + n;
   }
+  justinSays(b);
   Object.assign(b, { st: 'end', t: now, turn: -1 });
+}
+
+/* Hit, Stand or Double on one's turn */
+function move(b, id, d, now) {
+  if (b.st !== 'play' || b.order[b.turn] !== id) return false;
+  const h = b.hands[id]; if (!h || h.s) return false;
+  if (d === 'stand') h.s = 'stand';
+  else {
+    if (mem.id !== b.id) return false;   // (the deck is the host's: anyone else waits for the host's answer)
+    if (d === 'double') {
+      if (h.c.length !== 2) return false;
+      if (b.mode === 'chips') { const bet = b.bets[id] || 0; if ((b.chips[id] ?? 0) < bet) return false; b.chips[id] -= bet; b.bets[id] = bet * 2; }
+      h.d = 1;
+    }
+    h.c.push(mem.deck.pop()); b.ct = now;
+    const t = total(h.c).t;
+    if (t > 21) h.s = 'bust'; else if (t === 21 || h.d) h.s = 'stand';
+  }
+  if (h.s) nextTurn(b, now, b.turn); else b.tt = now;   // (each card brings a fresh 20 s)
+  return true;
+}
+/* Justin at the table: invited (most of the seated asked for him) he sits down, else he goes home */
+function justinJoins(s, b, seated, now) {
+  const want = seated.filter(q => b.jvotes[q.id]).length * 2 > seated.length;
+  b.jvotes = {};
+  if (want && b.jk === undefined) { const k = jPoker.sit(s, seated.map(q => q.k), now); if (k >= 0) b.jk = k; }
+  else if (!want && b.jk !== undefined) justinGoes(s, b, now);
+}
+function justinGoes(s, b, now) { jPoker.leave(s, now); delete b.jk; delete b.chips.justin; delete b.bets.justin; }
+/* his move: the computers' simple strategy, but one time in five a silly one (he stands too soon or hits too much) */
+function justinMove(b) {
+  const m = basic(b, 'justin'), t = total(b.hands.justin.c).t;
+  if (Math.random() >= .2) return m;
+  return m === 'stand' && t < 19 ? 'hit' : m === 'hit' && t >= 12 ? 'stand' : m === 'double' ? 'hit' : m;
 }
 
 rule('bj', {
@@ -150,7 +195,7 @@ rule('bj', {
   /* { t: 'hang', k: 'bj', do: 'vote' | 'bet' | 'hit' | 'stand' | 'double', v } */
   act(s, a, now) {
     const b0 = s.hang.bj; if (!b0) return false;
-    const b = clone(b0), id = a.id, seated = atTable(s).some(q => q.id === id);
+    const b = clone(b0), id = a.id, seated = atTable(s).some(q => q.id === id); b.jvotes = b.jvotes || {};
     if (!seated) return false;
     if (a.do === 'vote') {
       if (b.st !== 'vote' || !['chips', 'fun', 'poker'].includes(a.v)) return false;
@@ -162,44 +207,43 @@ rule('bj', {
       const n = a.v === 'all' ? b.chips[id] ?? 0 : +a.v;
       if (b.st !== 'bet' || !Number.isInteger(n) || n < 1 || b.bets[id] || (b.chips[id] ?? 0) < n) return false;
       b.chips[id] -= n; b.bets[id] = n;
+    } else if (a.do === 'justin') {
+      if (b.st !== 'vote') return false;
+      if (a.v) b.jvotes[id] = 1; else delete b.jvotes[id];
     } else if (['hit', 'stand', 'double'].includes(a.do)) {
-      if (b.st !== 'play' || b.order[b.turn] !== id) return false;
-      const h = b.hands[id]; if (!h || h.s) return false;
-      if (a.do === 'stand') h.s = 'stand';
-      else {
-        if (mem.id !== b.id) return false;   // (the deck is the host's: anyone else waits for the host's answer)
-        if (a.do === 'double') {
-          if (h.c.length !== 2) return false;
-          if (b.mode === 'chips') { const bet = b.bets[id] || 0; if ((b.chips[id] ?? 0) < bet) return false; b.chips[id] -= bet; b.bets[id] = bet * 2; }
-          h.d = 1;
-        }
-        h.c.push(mem.deck.pop()); b.ct = now;
-        const t = total(h.c).t;
-        if (t > 21) h.s = 'bust'; else if (t === 21 || h.d) h.s = 'stand';
-      }
-      if (h.s) nextTurn(b, now, b.turn); else b.tt = now;   // (each card brings a fresh 20 s)
+      if (!move(b, id, a.do, now)) return false;
     } else return false;
     s.hang.bj = b; return true;
   },
   tick(s, now) {
     if (!s.hang.bj) { s.hang.bj = fresh(); return true; }
-    const b0 = s.hang.bj, b = clone(b0), seated = atTable(s), at = new Set(seated.map(q => q.id));
+    const b0 = s.hang.bj, b = clone(b0), seated = atTable(s), at = new Set(seated.map(q => q.id)); b.jvotes = b.jvotes || {};   // (a table from before Justin played)
     if (b.id && mem.id !== b.id && ['deal', 'play', 'dealer'].includes(b.st)) rebuild(b);
-    if (!seated.length && b.st !== 'idle') Object.assign(b, fresh());   // everyone got up: the game is over
+    if (!seated.length && b.st !== 'idle') { if (b.jk !== undefined) jPoker.leave(s, now); Object.assign(b, fresh()); }   // everyone got up: the game is over
+    if (b.jk !== undefined && !jPoker.here()) {   // (Justin knocked down at the table: he's out, his chips with him; a hand of his still stands)
+      delete b.jk; delete b.chips.justin;
+      if (b.st === 'play' && b.order[b.turn] === 'justin') move(b, 'justin', 'stand', now);
+    }
     switch (b.st) {
       case 'idle': if (seated.length) nextHand(b, seated, now); break;
       case 'vote': {
         const v = seated.map(q => b.votes[q.id]).filter(Boolean);
         if (v.length < seated.length) break;   // (no timer: the pick waits for everyone seated)
         const c = v.filter(x => x === 'chips').length, f = v.filter(x => x === 'fun').length, p = v.length - c - f;
-        if (p > c && p > f && GAME.poker) { Object.assign(b, { mode: 'poker', st: 'poker', t: now, votes: {}, bvotes: {} }); GAME.poker.start(s, seated, now, b.chips); break; }   // (most voted poker: poker.js has the table)
+        if (p > c && p > f && GAME.poker) {   // (most voted poker: poker.js has the table, and Justin if they invited him)
+          const jv = seated.filter(q => b.jvotes[q.id]).length * 2 > seated.length;
+          if (b.jk !== undefined) justinGoes(s, b, now);
+          Object.assign(b, { mode: 'poker', st: 'poker', t: now, votes: {}, bvotes: {}, jvotes: {} }); GAME.poker.start(s, seated, now, jv); break;
+        }
         b.mode = c > f ? 'chips' : seated.length > 1 ? 'fun' : 'solo'; b.votes = {}; b.chips = {};
+        justinJoins(s, b, seated, now);
         b.butler = seated.filter(q => b.bvotes[q.id]).length * 2 > seated.length ? 1 : 0; b.bvotes = {};
         nextHand(b, seated, now); break;
       }
       case 'bet': {
+        if (b.jk !== undefined && !b.bets.justin && (b.chips.justin ?? 0) > 0 && now - b.t > 700) { const have = b.chips.justin; b.bets.justin = Math.min(have, [5, 5, 10, 10, 15, 25][Math.floor(Math.random() * 6)]); b.chips.justin -= b.bets.justin; }   // (Justin bets small)
         const can = seated.filter(q => (b.chips[q.id] ?? 0) >= BETS[0] || b.bets[q.id]);
-        if (!can.every(q => b.bets[q.id]) && now - b.t < BET) break;
+        if ((!can.every(q => b.bets[q.id]) || (b.jk !== undefined && !b.bets.justin && (b.chips.justin ?? 0) > 0)) && now - b.t < BET) break;   // (Justin bets too)
         const players = seated.filter(q => b.bets[q.id]);
         if (players.length) deal(b, players, now); else b.t = now;   // (nobody bet: the Butler waits for bets again)
         break;
@@ -207,6 +251,7 @@ rule('bj', {
       case 'deal': if (now >= dealEnd(b)) afterDeal(b, now); break;
       case 'play': {
         const id = b.order[b.turn], h = b.hands[id];
+        if (id === 'justin') { if (h && !h.s && now - b.tt > 1100 + hash(b.id + h.c.length) % 1300) move(b, id, justinMove(b), now); break; }
         if (h && !h.s && (!at.has(id) || now - b.tt >= TURN)) { h.s = 'stand'; nextTurn(b, now, b.turn); }   // (got up, or out of time: Stand)
         break;
       }
@@ -217,7 +262,13 @@ rule('bj', {
         if (live && total(b.dealer).t < 17) { b.dealer.push(mem.deck.pop()); b.ct = now; } else settle(b, now);
         break;
       }
-      case 'end': if (now - b.t >= END) nextHand(b, seated, now); break;
+      case 'end': if (now - b.t >= END) {
+        if (b.jk !== undefined && b.mode === 'chips' && (b.chips.justin ?? 0) < BETS[0]) {   // (Justin out of chips: he shoots the richest player and leaves)
+          const rich = seated.map(q => q.id).sort((x, y) => (b.chips[y] ?? 0) - (b.chips[x] ?? 0))[0];
+          jPoker.bust(s, rich, now); delete b.jk; delete b.chips.justin;
+        }
+        nextHand(b, seated, now);
+      } break;
       case 'poker': if (!GAME.poker || !GAME.poker.on(s)) { b.mode = ''; nextHand(b, seated, now); } break;   // (the poker game is over: the vote again)
     }
     if (JSON.stringify(b) === JSON.stringify(b0)) return false;
@@ -226,7 +277,7 @@ rule('bj', {
   /* someone left the room: their chips and their vote go with them (a hand they're in still settles) */
   left(s, id) {
     const b0 = s.hang.bj; if (!b0) return;
-    const b = clone(b0); delete b.chips[id]; delete b.votes[id]; s.hang.bj = b;
+    const b = clone(b0); delete b.chips[id]; delete b.votes[id]; delete b.bvotes[id]; delete b.jvotes[id]; s.hang.bj = b;
   },
 });
 
@@ -324,7 +375,7 @@ function toBeat(s, b, cards) {
   const id = ids.sort((x, y) => score(y) - score(x))[0];
   return id ? { id, list: cards.hands[id] || [] } : null;
 }
-export const nameOf = (s, id) => { const p = s.players[id]; return p ? nameHTML(p.name, p.nameStyle) : ''; };
+export const nameOf = (s, id) => { if (id === 'justin') return 'Justin'; const p = s.players[id]; return p ? nameHTML(p.name, p.nameStyle) : ''; };
 const totalTxt = cards => cards.length ? String(total(cards).t) : '';
 
 /* what the window says, and which buttons it shows */
@@ -335,9 +386,10 @@ function render(s, now) {
   if (b.st === 'vote') {
     const left = atTable(s).filter(q => !b.votes[q.id]).length;
     say = !b.votes[me] ? 'What do we play?' : left ? `Waiting for ${left} more to pick` : '';   // (no timer: it waits for everyone seated)
-    const bn = atTable(s).filter(q => b.bvotes[q.id]).length;
+    const bn = atTable(s).filter(q => b.bvotes[q.id]).length, jv = b.jvotes || {}, jn = atTable(s).filter(q => jv[q.id]).length;
     acts = `<button type="button" class="btn green${b.votes[me] === 'chips' ? ' on' : ''}" data-do="vote" data-v="chips">Blackjack</button><button type="button" class="btn yellow${b.votes[me] === 'fun' ? ' on' : ''}" data-do="vote" data-v="fun">Just for fun</button><button type="button" class="btn purple${b.votes[me] === 'poker' ? ' on' : ''}" data-do="vote" data-v="poker">Poker</button>`
-      + `<button type="button" class="btn small bj-let${b.bvotes[me] ? ' on' : ''}" data-do="butler" data-v="${b.bvotes[me] ? 0 : 1}" aria-pressed="${!!b.bvotes[me]}">${b.bvotes[me] ? '✓' : '✗'} ${BUTLER} plays too${bn ? ` <b>${bn}</b>` : ''}</button>`;
+      + `<button type="button" class="btn small bj-let${b.bvotes[me] ? ' on' : ''}" data-do="butler" data-v="${b.bvotes[me] ? 0 : 1}" aria-pressed="${!!b.bvotes[me]}">${b.bvotes[me] ? '✓' : '✗'} ${BUTLER} plays too${bn ? ` <b>${bn}</b>` : ''}</button>`
+      + `<button type="button" class="btn small bj-let${jv[me] ? ' on' : ''}" data-do="justin" data-v="${jv[me] ? 0 : 1}" aria-pressed="${!!jv[me]}">${jv[me] ? '✓' : '✗'} Invite Justin${jn ? ` <b>${jn}</b>` : ''}</button>`;
   } else if (b.st === 'bet') {
     const have = b.chips[me] ?? 0;
     if (b.bets[me]) say = ((b.chips[me] ?? 0) === 0 ? 'All in ' : 'Bet ') + b.bets[me];
@@ -459,7 +511,7 @@ function tableSVG(s, now) {
   /* the Butler's hand, in front of him (his hole card face down until he turns it over) */
   if (cards.dealer.length) { const y = BJ.cy - BJ.r * DEAL; out += fan(BJ.cx, y, cards.dealer) + under(BJ.cx, y, cards.dealer); }
   /* a chips game: what each one at the table has, a gold stack and the number by their stool (it counts up or down) */
-  if (chips) for (const { id, k } of atTable(s)) {
+  if (chips) for (const { id, k } of [...atTable(s), ...(b.jk !== undefined ? [{ id: 'justin', k: b.jk }] : [])]) {
     if (b.chips[id] === undefined) continue;
     const q = bjSpot(k, BJ.r * BANK), n = shownChips(b, id);
     out += stack(q.x - 9, q.y + 4, Math.max(1, Math.min(4, Math.ceil(n / 50))), GOLD) + label(q.x, q.y + 4, n);
@@ -474,7 +526,7 @@ function tableSVG(s, now) {
     if (chips && b.bets[id] && !inPot && !(b.pvp && b.st === 'end')) { const c = bjSpot(h.k, BJ.r * BET_AT); out += betStack(c.x, c.y, b.bets[id]); }
   }
   /* a bet made before the deal */
-  if (chips && b.st === 'bet') for (const { id, k } of atTable(s)) if (b.bets[id] && !b.order.includes(id)) { const c = bjSpot(k, BJ.r * BET_AT); out += betStack(c.x, c.y, b.bets[id]); }
+  if (chips && b.st === 'bet') for (const { id, k } of [...atTable(s), ...(b.jk !== undefined ? [{ id: 'justin', k: b.jk }] : [])]) if (b.bets[id] && !b.order.includes(id)) { const c = bjSpot(k, BJ.r * BET_AT); out += betStack(c.x, c.y, b.bets[id]); }
   return `<svg class="hg" viewBox="0 0 ${TOP.w} ${TOP.h}" width="${TOP.w}" height="${TOP.h}" overflow="visible" aria-hidden="true">${out}</svg>`;
 }
 
@@ -490,7 +542,7 @@ function press(e) {
   const have = b ? b.chips[v.ctx.me] ?? 0 : 0;
   if (amtPress(v, d, btn, have)) return;
   if (d === 'bet') { if (v.amt) v.ctx.send({ t: 'hang', k: 'bj', do: 'bet', v: v.amt >= have ? 'all' : v.amt }); v.amt = 0; return; }
-  if (d === 'butler') { v.ctx.send({ t: 'hang', k: 'bj', do: 'butler', v: +btn.dataset.v }); return; }
+  if (d === 'butler' || d === 'justin') { v.ctx.send({ t: 'hang', k: 'bj', do: d, v: +btn.dataset.v }); return; }
   if (d === 'vote') { v.ctx.send({ t: 'hang', k: 'bj', do: 'vote', v: btn.dataset.v }); return; }
   if (b && b.st === 'play') v.ctx.send({ t: 'hang', k: 'bj', do: d });
 }
