@@ -18,6 +18,7 @@ import { ACTS } from './registry.js';
 import './activities.js';
 import { duckRoom } from '../duck.js';
 import { esc } from '../ui.js';
+import { low } from '../gfx.js';
 
 export const BOARD_HTML = '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 const SPEED = 380, SPRINT = 1.75;   // world px a second
@@ -249,14 +250,14 @@ export function mountWorld(board, api) {
       const r = board.getBoundingClientRect(), vw = board.clientWidth, vh = board.clientHeight;
       const across = vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + (vw - 500) / 600 * 780;
       cam.sc = Math.min(vw / across, vh / 380) || 1; cam.vw = vw; cam.vh = vh;
-      cam.dpr = Math.min(2, devicePixelRatio || 1);
+      cam.low = low(); cam.dpr = Math.min(2, devicePixelRatio || 1) * (cam.low ? .5 : 1);   // (Low graphics: the ground at half its sharpness)
       const cw = Math.round((vw + 2 * EDGE) * cam.dpr), ch = Math.round((vh + 2 * EDGE) * cam.dpr);
       if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; Object.assign(canvas.style, { left: -EDGE + 'px', top: -EDGE + 'px', width: vw + 2 * EDGE + 'px', height: vh + 2 * EDGE + 'px' }); }
       gv.need = true;
       /* the ground's tiles at a new size: only when it needs them sharper. Smaller (the Chat opened and the board got
          narrower), the sharper ones it has are kept, so nothing pops in; sharper, each one is shown stretched until it's
          painted again */
-      const k = Math.min(vw <= 500 ? 1.5 : 2, Math.round(cam.sc * cam.dpr * 4) / 4);
+      const k = Math.max(.25, Math.min(vw <= 500 ? 1.5 : 2, Math.round(cam.sc * cam.dpr * 4) / 4));
       if (k > tk) { tk = k; ready.length = 0; for (const t of tiles.values()) if (t.c) { t.old = t.c; t.c = null; t.queued = false; } }
       for (const e of els.values()) e._tr = '';
       return { W: vw, H: vh, top0: 0, size: L.DUCK * cam.sc, labelH: 0, left: r.left, top: r.top, hang: true };
@@ -280,6 +281,7 @@ export function mountWorld(board, api) {
     frame(now) {
       const dt = Math.min(.1, Math.max(0, (now - (last || now)) / 1000)); last = now;
       const r = R(), s = r.state, me = api.me(); if (!me || !cam.vw) return;
+      if (cam.low !== low()) world.measure();   // (Graphics changed in Settings)
       ensure(me);
       const was = inside; inside = L.inCabin(me.x * L.W, me.y * L.H); if (inside !== was) flip = now;
       shut = inside && now - flip > SHADE_IN;

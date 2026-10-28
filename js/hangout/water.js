@@ -8,6 +8,7 @@
    everything a duck wears or shows; a splash is drawn just in front of its own duck.
    Other things in the water use it too: ripple(x, y, k) and splash(x, y, k) at a spot on the water (world px). */
 import { activity } from './registry.js';
+import { fewer } from '../gfx.js';
 import { POOL, SLOPE, DUCK, W as BW, H as BH, heightAt, inPool } from './layout.js';
 import { sfx } from '../sound.js';
 
@@ -50,7 +51,7 @@ export function ripple(x, y, k = .5, r0 = 26) {
 export function splash(x, y, k = .6) {
   ripple(x, y, k * 1.3); ripple(x, y, k * .7, 12);
   if (!layer || still()) return;
-  const n = Math.round(5 + 7 * k), drops = [], m = k < .45 ? 3 : 5, tongues = [];
+  const n = fewer(Math.round(5 + 7 * k)), drops = [], m = k < .45 ? 3 : 5, tongues = [];
   for (let i = 0; i < n; i++) {
     const r = hash(++seed), q = hash(seed + .5), a = (i / n - .5) * 2.4 + (r - .5) * .4;
     drops.push({ vx: Math.sin(a) * (90 + 120 * k) * (.6 + q * .6), vy: (220 + 260 * k) * (.75 + r * .5) * Math.cos(a * .6), r: 2.6 + 2.6 * k * (.5 + q) });

@@ -176,7 +176,7 @@ function ecScene(layer) {
   noise();
   return {
     update(now) {
-      if (html.classList.contains('lite') || now - last < 80) return;
+      if (html.classList.contains('low') || now - last < 80) return;
       last = now; noise();
       if (now > nextFlick) {   // now and then the picture flickers dark or bright for a blink
         if (nextFlick) { const dark = Math.random() < .5; flash.classList.toggle('dark', dark); flash.style.opacity = (dark ? .07 : .04).toFixed(2); setTimeout(() => { flash.style.opacity = 0; }, 60 + Math.random() * 90); }
@@ -273,9 +273,9 @@ function rabbitScene(layer) {
   const t0 = performance.now() - Math.random() * 600000;   // everyone starts somewhere else in the fall
   return {
     update() {
-      const still = html.classList.contains('still'), lite = html.classList.contains('lite'), now = performance.now();
+      const still = html.classList.contains('still'), lite = html.classList.contains('low'), now = performance.now();
       if (still && drawnStill) return;
-      if (now - last < (lite ? 66 : 33)) return;   // 30 frames a second (15 with Data saving)
+      if (now - last < (lite ? 66 : 33)) return;   // 30 frames a second (15 on Low graphics)
       // a device that can't keep up (frames 80 ms apart) gets fewer pixels, down to a quarter
       if (last > 0 && !still) { slow = now - last > 80 ? slow + 1 : 0; if (slow > 10 && scale > .5) { scale *= .8; slow = 0; } }
       last = now;
@@ -317,7 +317,7 @@ function starsScene(layer) {
   let drawn = '', timer = 0, rtimer = 0, nextMet = 0, job = null;
   /* the sky is drawn a slice at a time (a few milliseconds each), so the game never stutters; it fades in when done */
   function* build(W, H) {
-    const lite = html.classList.contains('lite'), px = W * .5, py = -.35 * H, R = Math.ceil(Math.hypot(px, H - py)) + 4, S = 2 * R, r0 = -py / R;
+    const lite = html.classList.contains('low'), px = W * .5, py = -.35 * H, R = Math.ceil(Math.hypot(px, H - py)) + 4, S = 2 * R, r0 = -py / R;
     const k = Math.min(devicePixelRatio || 1, (lite ? 1536 : Math.min(W, H) < 600 ? 2304 : 3072) / S), C = Math.round(S * k);
     const base = Math.atan2(.45 * H - py, (W < H ? .62 : .38) * W - px) - Math.atan2(coreY, coreX);   // the core starts left of the middle and rolls right
     /* the Milky Way, small, then stretched over the sky (it is soft anyway) */
@@ -453,7 +453,7 @@ function marquee(col) {
 /* fireworks over the scene (behind the see-through board): a few rockets that burst in the given colors */
 function fireworks(sc, colors) {
   const html = document.documentElement;
-  if (!sc || html.classList.contains('still') || html.classList.contains('lite')) return;
+  if (!sc || html.classList.contains('still') || html.classList.contains('low')) return;
   const box = document.createElement('div'); box.className = 'cn-fw';
   box.innerHTML = Array.from({ length: 5 }, (_, i) => {
     const x = 12 + Math.random() * 76, y = 12 + Math.random() * 30, c = colors[i % colors.length], d = (i * .35 + Math.random() * .2).toFixed(2);

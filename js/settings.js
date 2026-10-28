@@ -2,7 +2,7 @@
    One window in the Armory's look: the sections listed on the left (General, Controls, Performance, Audio), the chosen one
    on the right. Every change applies at once and is kept. In each section the controls are grouped by kind: tiles, then
    checkmarks, then sliders. Performance starts with the connection: Default, Data saving or Poor connection (asked once,
-   on the first visit). */
+   on the first visit), then Graphics: Normal or Low (gfx.js; Data saving turns Low on too). */
 import { profile, save } from './store.js';
 import { openWindow, esc, $$ } from './ui.js';
 import { FONTS, fontCSS } from './name.js';
@@ -12,12 +12,13 @@ const TABS = [['general', 'General'], ['controls', 'Controls'], ['performance', 
 
 /* puts the settings on the page */
 export const NET = [['0', 'Default', 'Everything: the fonts, the moving background and the animations.'],
-  ['1', 'Data saving', 'Your device\'s own fonts, nothing moving, and fewer online updates from you.'],
+  ['1', 'Data saving', 'Your device\'s own fonts, Low graphics, and fewer online updates from you.'],
   ['2', 'Poor connection', 'All of Data saving, even fewer updates, and more patience before a dropped player leaves the room.']];
 export const netLevel = () => Math.max(0, Math.min(2, +S().net || 0));
 export function applySettings() {
-  const s = S(), h = document.documentElement, net = netLevel(), still = !s.motion || net > 0;
+  const s = S(), h = document.documentElement, net = netLevel(), low = s.gfx === 'low' || net > 0, still = !s.motion || low;
   h.classList.toggle('lite', net > 0);
+  h.classList.toggle('low', low);
   h.classList.toggle('poor', net > 1);
   h.classList.toggle('dark', s.theme === 'dark');
   h.classList.toggle('dys', !!s.dyslexic);
@@ -72,6 +73,7 @@ const PAGES = {
       <span>Right-click</span><span>A player card's options</span></div></div>`,
   performance: () => `
     <div class="sect"><h3>Connection</h3>${tiles('net', NET.map(([v, n]) => [v, n]))}<p class="small dim">They improve performance too. ${esc(NET[netLevel()][2])}</p></div>
+    <div class="sect"><h3>Graphics</h3>${netLevel() ? `<p class="small dim">Low, with ${esc(NET[netLevel()][1])}.</p>` : tiles('gfx', [['normal', 'Normal'], ['low', 'Low']])}<p class="small dim">Low: nothing moves, map backgrounds stay still, Duck Cabin is softer, and specials throw fewer bits. For a slow computer or phone.</p></div>
     <div class="sect"><h3>Background shapes</h3>${tiles('shapes', [['moving', 'Moving'], ['still', 'Still'], ['off', 'Off']])}</div>
     <div class="sect"><h3>Movement</h3><div class="row">${check('motion', 'Animations', 'Ducks bob, windows pop, shapes drift. Off keeps everything still.')}</div></div>`,
   audio: () => `<div class="sect"><h3>Volume</h3>${slider('sound', 'Volume', 0, 100, 5)}${slider('sfx', 'Sound effects', 0, 100, 5)}${slider('music', 'Music', 0, 200, 5, '%', 100)}</div>`,
