@@ -14,7 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
-import { holdDown, downStill, DOWN_OK, DEAD_STILL } from './hangout/death.js';
+import { holdDown, downStill, standUps, DOWN_OK, DEAD_STILL } from './hangout/death.js';
 import { npcById } from './npcs.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, W as HW, H as HH } from './hangout/layout.js';
@@ -545,10 +545,10 @@ export function reduce(state, a, now = Date.now()) {
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
-      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine);
+      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine), up = standUps(s, now);   // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
-      return sig() === was && !shots && !hung && !jus ? state : s;
+      return sig() === was && !shots && !hung && !jus && !up ? state : s;
     }
   }
   return s;
