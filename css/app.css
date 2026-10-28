@@ -1310,7 +1310,7 @@ html.still .spe-bone .bone-slide { animation: none; }
 .bb .vote-btn[data-col="0"] { background: var(--seed-a); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; } .bb .vote-btn[data-col="1"] { background: var(--seed-b); color: #fff; text-shadow: 0 .1rem 0 #1c1c28; }
 .mc-b.bb-a { background: var(--seed-a); color: #fff; } .mc-b.bb-b { background: var(--seed-b); color: #fff; }
 @media (orientation: portrait) and (max-width: 760px) {
-  .cols.bb-cols { grid-template-columns: none; grid-template-rows: 46fr 8fr 46fr; }
+  .cols.bb-cols { display: grid; grid-template-columns: none; grid-template-rows: 46fr 8fr 46fr; }   /* (a grid, so the order below puts B on top and A under it; the phone's column-reverse had them the wrong way round) */
   .cols.bb-cols > :nth-child(1) { order: 3; } .cols.bb-cols > :nth-child(3) { order: 1; } .cols.bb-cols > :nth-child(2) { order: 2; }
   .bb-side { padding: .5rem 1rem; }
   .cols.bb-cols > :nth-child(3) { padding-top: 7.5rem; }

@@ -242,7 +242,7 @@ activity({
   },
   near(pos, ctx) {
     const s = ctx.state();
-    if (pk || pianoOf(s).seats[ctx.me]) return { label: 'Get up', d: -1, act: getUp };
+    if (pk || pianoOf(s).seats[ctx.me]) return { label: 'Get up', key: 'Esc', d: -1, act: getUp };   // (E plays a note here: Esc gets up)
     if (!pos.inside || !inZone(pos.x, pos.y) || freeSpot(s) < 0) return null;
     prepare(vel());   // (the Play button shows: the keys are written out ahead, so they're ready when I sit)
     return { label: 'Play', d: Math.max(0, pos.y - (BODY.y + BODY.d)), act: () => ctx.send({ t: 'hang', k: 'piano', w: 'sit' }) };
