@@ -2226,3 +2226,18 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
+
+## Request (2026-10-27 22:03Z): pops and crackles in every song
+> we need miles jr using the fucking notes on how to stop the cackle or popping in my fucking ears! HOW MANY TIMES DID I TELL THEM TO FIX THIS FOR EVERY SONG! THIS IS FUCKING BULLSHIT
+
+> Adam can adjust miles jr's effort to what works
+
+> i have less popping when i turn it down maybe? but literally NO song does this on my youtube music even at the most maximum volume
+
+> maybe btw, big maybe
+
+- Decided: apply CLAUDE.md's "Sound without pops" rules to all the audio code. A soft ceiling ends the music chain and the
+  sound effects' chain (untouched below .7; at Music 200% songs reached 1.15 before). Every fade glides from where it is,
+  set ahead of the clock; echo lengths change only while the echoes are silent; reverbs crossfade; drum and effect noise
+  fades in over 5 ms; all sound effects share one AudioContext (sound.js `sfxContext`, `sfxOut`, `soon`); songs written
+  out ahead play at the speakers' own sample rate. Brief: /mnt/project-files/notes/pops-brief.md.

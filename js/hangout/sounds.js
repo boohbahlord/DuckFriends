@@ -16,6 +16,7 @@
    goes through one bus that rolls off the very top and rounds off anything that would go over (see CLAUDE.md). Volume and
    Sound effects in Settings scale it all. */
 import { profile } from '../store.js';
+import { sfxContext, sfxOut, soon } from '../sound.js';
 
 const vol = () => ((profile.settings.sound ?? 100) / 100) * ((profile.settings.sfx ?? 100) / 100);
 const LEAD = .03;              // how far ahead a live sound is scheduled
@@ -276,7 +277,7 @@ let ac = null, main = null, listener = null, live = 0;
 const loops = new Set();
 function audio() {
   try {
-    if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); main = bus(ac, ac.destination); }
+    if (!ac) { ac = sfxContext(); if (!ac) return null; main = bus(ac, sfxOut()); }   // (the game's one clock for sounds: sound.js)
     if (ac.state === 'suspended') ac.resume();
     return ac;
   } catch (e) { return null; }
@@ -305,7 +306,7 @@ export function play(name, opts = {}) {
   const a = audio(); if (!a) return;
   const w = where(opts.x, opts.y, name), split = SPLIT[name], kk = (split ? 1 : w.k) * v * (opts.k ?? 1); if (kk < .01) return;
   const n = split ? nearness(w.dist) : 1, g = lane(a, kk, w.pan * n); live++;
-  f(a, g, a.currentTime + LEAD, { near: n });
+  f(a, g, soon(a, LEAD), { near: n });
   setTimeout(() => { live--; g.disconnect(); }, 4000);   // (every one-shot is silent well within 4 s)
 }
 export function loop(name, opts = {}) {
@@ -314,16 +315,16 @@ export function loop(name, opts = {}) {
   const level = () => where(x, y, name).k * vol() * (opts.k ?? 1);
   const g = a.createGain(), p = a.createStereoPanner ? a.createStereoPanner() : null;
   g.gain.value = level(); if (p) { p.pan.value = where(x, y, name).pan; g.connect(p).connect(main); } else g.connect(main);
-  const stop = f(a, g, a.currentTime + LEAD);
+  const stop = f(a, g, soon(a, LEAD));
   const h = {
     move(nx, ny) { x = nx; y = ny; },
     stop() {
       if (done) return; done = true; loops.delete(h);
-      const end = stop(a.currentTime + LEAD);
+      const end = stop(soon(a, LEAD));
       setTimeout(() => g.disconnect(), (end - a.currentTime + .2) * 1000);
     },
     follow() {   // (every 200 ms: my duck moves, the sound's loudness glides after it)
-      const w = where(x, y, name), t = a.currentTime + LEAD;
+      const w = where(x, y, name), t = soon(a, LEAD);
       g.gain.setTargetAtTime(w.k * vol() * (opts.k ?? 1), t, .15); if (p) p.pan.setTargetAtTime(w.pan, t, .15);
     },
   };
