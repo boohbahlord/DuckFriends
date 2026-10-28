@@ -2402,3 +2402,8 @@ the start vote; a setup window (who deals, the Butler plays, invite Justin, blin
 Play or Sit out each hand; the cards stay with the host. Justin sits on a free stool, plays badly, a line each hand, a
 win or lose line at the showdown (new ones mostly, old fitting ones sometimes); busted, he shoots the richest player,
 says an insult or rage line and walks off. Built by Noah.
+
+## Request (owner, 2026-10-28 01:42Z): a dead duck stands up on its own
+"Make it to where when you are killed with a dead effect, that when it expires, your duck stands up on it's on. That way, in poker, your duck will stop having dead effect without having to leave the table"
+
+- Decided (Adam): when the knocked-down time runs out the duck stands up in place (seated ducks stay seated), in every mode and in Duck Cabin. With None the dead look still shows 1 s. Done on the host's tick: `standUps` in js/hangout/death.js, with `onGetUp(fn)` as the hook for the Duck Cabin ghosts (Solomon the 2nd).
