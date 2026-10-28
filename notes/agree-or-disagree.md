@@ -2418,6 +2418,15 @@ Play or Sit out each hand; the cards stay with the host. Justin sits on a free s
 win or lose line at the showdown (new ones mostly, old fitting ones sometimes); busted, he shoots the richest player,
 says an insult or rage line and walks off. Built by Noah.
 
+## Request (owner, 2026-10-28 01:27Z): the piano keys pop
+"what do i have to do? 
+
+ALSO! the keys fucking pop like fucking crazy, like my game isnt loud and they fucking pop like crazy from BARELY ANY NOTES! Like players would scream at eachother if someone even thought ab playin the piano and cuss them out becuz of how completely disgusting it is. It is worse then unacceptable"
+Found (Miles Jr.): the recorded sound had no clicks; the sound stream to the speakers ran short (dropouts) because every
+piano note was ten oscillators ringing on after the key was let go, and since #136 they shared one sound clock with the
+cabin's sounds. Fix: each key written out once in the background when someone sits down, then played back (one player
+and a damper a note), same sound.
+
 ## Request (owner, 2026-10-28 01:42Z): a dead duck stands up on its own
 "Make it to where when you are killed with a dead effect, that when it expires, your duck stands up on it's on. That way, in poker, your duck will stop having dead effect without having to leave the table"
 

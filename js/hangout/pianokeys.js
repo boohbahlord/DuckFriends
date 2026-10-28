@@ -36,7 +36,9 @@
        a chord id (same g = one chord; without g, notes within 60 ms are one)) as a narrow grand staff, newest at the
        bottom; full lines scroll up.
      KEY_ROWS, KEY_MAP (e.code → midi), KEY_LABEL (e.code → what the key shows), LOW (36, C2), HIGH (83, B5), keyMidi(code).
-     renderOffline(events) → AudioBuffer: the voice written out ([{ midi, t, d, vel }], seconds), for tests. */
+     prepare(vel): writes the keys out ahead (see the sound below); the first note played does it too.
+     renderOffline(events, { bank }) → AudioBuffer: the voice written out ([{ midi, t, d, vel }], seconds), for tests; bank:
+       played back from the written-out keys, as in the game. */
 import { profile } from '../store.js';
 import { sfxContext, sfxOut, soon } from '../sound.js';
 
@@ -160,7 +162,7 @@ function strike(ctx, out, midi, t, vel, gain, lite) {
   let done = false;
   oscs[0].onended = () => { try { damper.disconnect(); } catch (e) {} };   // (the fundamental rings longest)
   return {
-    end,
+    get end() { return end; },
     release(at, tau) {
       if (done) return; done = true;
       damper.gain.setValueAtTime(1, at); damper.gain.setTargetAtTime(0, at, tau);
@@ -179,13 +181,62 @@ function ctx() {
   if (AC.state === 'suspended') AC.resume();
   return AC;
 }
-const MAX_VOICES = 28;
+/* each key written out once, then played back. Made on the spot, a note is ten oscillators, each with its own fades, and
+   they ring on after the key is let go: a quick run kept hundreds going at once and a busy laptop couldn't work them out
+   in time, so the sound to the speakers ran short, and that was the popping (the sound itself had no clicks in it). Written
+   out, a note is one player and its damper. The keys are written out in the background as soon as anyone sits at the
+   piano (or it is first played), middle C first and outward from there, one at a time; a key that isn't ready yet is made on the spot as before.
+   A key held longer than its recording (7 s, 4 on a phone) fades out at its end. The recordings are at the clock's own
+   sample rate (at a lower one, the clock's quick change of rate left a faint hiss on a big chord's first moment); all
+   48 keys take about 64 MB (37 on a phone) */
+const BANK_LEN = COARSE ? 4 : 7;
+const BANK = new Map();   // "midi|loudness|rate" → AudioBuffer, or true while it's being written out
+const bankVel = vel => vel < .55 ? .35 : .8;   // (two loudnesses: inside, and through the walls, darker)
+let warming = null;
+async function writeKey(midi, vb, sr) {
+  const k = midi + '|' + vb + '|' + sr; if (BANK.has(k)) return;
+  BANK.set(k, true);
+  try {
+    const oc = new OfflineAudioContext(1, Math.ceil(BANK_LEN * sr), sr);
+    strike(oc, oc.destination, midi, 0, vb, 1, COARSE).release(BANK_LEN - .45, .05);   // (its end fades to silence)
+    BANK.set(k, await oc.startRendering());
+  } catch (e) { BANK.delete(k); }
+}
+/* the keys written out ahead, as soon as anyone sits at the piano (vel: how loud I hear it here) */
+export function prepare(vel = .8) { if (warming) return; const a = ctx(); if (a && typeof OfflineAudioContext !== 'undefined') warm(bankVel(vel), a.sampleRate); }
+function warm(vb, sr, first) {
+  if (first != null) writeKey(first, vb, sr);
+  if (warming) return;
+  const todo = Array.from({ length: HIGH - LOW + 1 }, (_, i) => LOW + i).sort((a, b) => Math.abs(a - 60) - Math.abs(b - 60));
+  warming = (async () => { for (const m of todo) { await writeKey(m, vb, sr); await new Promise(r => setTimeout(r, 40)); } })();   // (one at a time, so the computer keeps up)
+}
+function playBack(a, out, midi, t, vel, gain) {
+  const vb = bankVel(vel), buf = BANK.get(midi + '|' + vb + '|' + a.sampleRate);
+  if (!(buf instanceof AudioBuffer)) { warm(vb, a.sampleRate, midi); return strike(a, out, midi, t, vel, gain, COARSE); }
+  const s = a.createBufferSource(), damper = a.createGain(), lvl = gain * vel / vb;
+  s.buffer = buf; damper.gain.value = lvl; s.connect(damper).connect(out);   // (the recording starts at silence: the level is set before it sounds)
+  s.start(t); let end = t + buf.duration, done = false; s.stop(end);
+  s.onended = () => { try { damper.disconnect(); } catch (e) {} };
+  return {
+    get end() { return end; },
+    release(at, tau) {
+      if (done) return; done = true;
+      damper.gain.setValueAtTime(lvl, at); damper.gain.setTargetAtTime(0, at, tau);
+      const stop = at + tau * 8; if (stop < end) { end = stop; try { s.stop(stop); } catch (e) {} }
+    },
+  };
+}
+const MAX_VOICES = 28, MAX_RINGING = 40;
+const ringing = [];   // every note still sounding, held or let go, oldest first
 export function noteOn(midi, { who = '', vel = .8 } = {}) {
   const a = ctx(), v = vol(); if (!a || !v) return;
   const k = who + '|' + midi, t = soon(a, LEAD);
   const old = live.get(k); if (old) old.release(t, .03);   // struck again: the old one stops quickly
   if (live.size >= MAX_VOICES) { const [ok, ov] = live.entries().next().value; ov.release(t, .05); live.delete(ok); }
-  live.delete(k); live.set(k, strike(a, OUT, midi, t, vel * (.96 + Math.random() * .08), v, COARSE));
+  for (let i = ringing.length - 1; i >= 0; i--) if (ringing[i].end <= a.currentTime) ringing.splice(i, 1);
+  while (ringing.length >= MAX_RINGING) ringing.shift().release(t, .05);   // (too many still ringing: the oldest let go)
+  const vc = playBack(a, OUT, midi, t, vel * (.96 + Math.random() * .08), v);
+  live.delete(k); live.set(k, vc); ringing.push(vc);
 }
 export function noteOff(midi, { who = '' } = {}) {
   const k = who + '|' + midi, vc = live.get(k); if (!vc || !AC) return;
@@ -193,10 +244,11 @@ export function noteOff(midi, { who = '' } = {}) {
 }
 export function allNotesOff(who) { for (const k of [...live.keys()]) if (who == null || k.startsWith(who + '|')) noteOff(+k.split('|')[1], { who: k.split('|')[0] }); }
 /* the voice written out, for tests: events [{ midi, t, d, vel }] in seconds */
-export function renderOffline(events, { sampleRate = 44100, tail = 3, lite = false } = {}) {
+export async function renderOffline(events, { sampleRate = 44100, tail = 3, lite = false, bank = false } = {}) {
   const len = Math.max(...events.map(e => e.t + e.d)) + tail;
   const oc = new OfflineAudioContext(2, Math.ceil(len * sampleRate), sampleRate), out = chain(oc, oc.destination, lite);
-  for (const e of events) strike(oc, out, e.midi, e.t, e.vel ?? .8, 1, lite).release(e.t + e.d, damperTau(e.midi));
+  if (bank) for (const e of events) await writeKey(e.midi, bankVel(e.vel ?? .8), sampleRate);   // (bank: played back from the written-out keys, as in the game)
+  for (const e of events) (bank ? playBack(oc, out, e.midi, e.t, e.vel ?? .8, 1) : strike(oc, out, e.midi, e.t, e.vel ?? .8, 1, lite)).release(e.t + e.d, damperTau(e.midi));
   return oc.startRendering();
 }
 
