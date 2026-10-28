@@ -2227,6 +2227,11 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
 
+## Request (owner, 2026-10-27 23:27Z): font dropdown, colorblind mode doubt
+"the font selection under the settings menu SHOULD be collapsed under a dropdown arrow.
+
+I am not convinced colorblind mode works at all because I cannot see the difference"
+
 ## Request (2026-10-27 22:03Z): pops and crackles in every song
 > we need miles jr using the fucking notes on how to stop the cackle or popping in my fucking ears! HOW MANY TIMES DID I TELL THEM TO FIX THIS FOR EVERY SONG! THIS IS FUCKING BULLSHIT
 
