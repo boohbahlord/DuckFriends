@@ -3,12 +3,8 @@
    registry.js), hangTick on the host's heartbeat, hangJoin and hangLeft as players come and go. Everyone starts (and a
    newcomer arrives) outside the front door. */
 import { RULES } from './registry.js';
-<<<<<<< HEAD
 import { isGhost } from './death.js';
-import { spawnAt, heightAt, W, H } from './layout.js';
-=======
-import { deckSpawnAt, heightAt, W, H } from './layout.js';
->>>>>>> p133
+import { spawnAt, deckSpawnAt, heightAt, W, H } from './layout.js';
 import './activities.js';
 
 /* s.hang when the cabin opens: each activity's fields */
