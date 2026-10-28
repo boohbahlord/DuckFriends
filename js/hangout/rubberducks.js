@@ -61,13 +61,14 @@ activity({
     }
   },
   draw(now, ctx) {
-    const Wd = ctx.world, sc = Wd.sc, hide = Wd.inside;
+    const Wd = ctx.world, sc = Wd.sc;
     DUCKS.forEach((d, i) => {
       const e = els[i]; if (!e) return;
+      const bob = Math.sin(now / 430 + d.p * 3) * 1.4, f = Wd.toScreen(d.x, d.y, WATER + bob), tilt = Math.sin(now / 610 + d.q) * 7, x = f.left - RW / 2 * sc, y = f.top - (RH - 5) * sc;
+      const hide = Wd.inside || !Wd.seen(x, y, RW * sc, RH * sc);   // (inside, or off the screen: hidden, and nothing more to do)
       if (e.hidden !== hide) e.hidden = hide;
       if (hide) return;
-      const bob = Math.sin(now / 430 + d.p * 3) * 1.4, f = Wd.toScreen(d.x, d.y, WATER + bob), tilt = Math.sin(now / 610 + d.q) * 7;
-      const tr = `translate(${(f.left - RW / 2 * sc).toFixed(1)}px, ${(f.top - (RH - 5) * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
+      const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(4)})`;
       if (e._tr !== tr) { e._tr = tr; e.style.transform = tr; }
       const z = Math.round(d.y) + 10; if (e._z !== z) { e._z = z; e.style.zIndex = z; }
       const inner = `scaleX(${d.face}) rotate(${tilt.toFixed(1)}deg)`; if (e._in !== inner) { e._in = inner; e.firstElementChild.style.transform = inner; }

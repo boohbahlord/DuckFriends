@@ -51,7 +51,14 @@ function make(id) {
   const feet = duck ? feetOf(svgFor(id, 'stand')) : 0, [fx, fy] = duck ? [DUCK / 2, feet] : [46 * k, 74 * k];
   body.style.left = (-fx).toFixed(1) + 'px'; body.style.top = (-fy).toFixed(1) + 'px'; body.style.transformOrigin = `${fx.toFixed(1)}px ${fy.toFixed(1)}px`; body.style.setProperty('--fy', fy.toFixed(1) + 'px');
   const vb = duck ? boxOf(svgFor(id, 'stand')) : [0, 0, 1, 0], head = DUCK * -vb[1] / vb[2];   // (a duck's drawing: room over its head for a hat, then the duck's own square, as a player's drawing)
-  return { el, body, k, duck, fy, bh: DUCK * vb[3] / vb[2], nb: fy - head, tall: duck ? feet - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', dist: 0, sayN: 0 };
+  return { id, el, body, k, duck, fy, bh: DUCK * vb[3] / vb[2], nb: fy - head, tall: duck ? feet - 4 : 62 * k, say: el.querySelector('.hang-npc-say'), pose: '', looks: new Map(), dist: 0, sayN: 0 };
+}
+/* its drawing for its pose: each one made once and kept, so a walk only swaps two drawings back and forth */
+function dress(id, o) {
+  const [key, pose, step, dead] = o.want || []; if (!key || key === o.pose) return;
+  o.pose = key;
+  let n = o.looks.get(key); if (!n) { const t = document.createElement('template'); t.innerHTML = svgFor(id, pose, step); n = [...t.content.childNodes]; o.looks.set(key, n); }
+  o.body.replaceChildren(...n); o.el.classList.toggle('dead', dead);
 }
 /* what's in Justin's hand: his gun, a glass */
 const HAND = { gun: () => `<span class="hang-npc-held gun">${heldHTML('handgun', JUSTIN)}</span>`, drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>` };
@@ -119,11 +126,11 @@ activity({
       /* the pose: walking steps, or what the brain says (a swipe shows a moment) */
       let pose = (BRAINS.get(id).look && BRAINS.get(id).look(s, now)) || r.a || (p.moving ? 'walk' : 'stand'), step = 0;   // (look: what a screen works out for itself, the Butler dealing)
       if (pose === 'swipe' && now - r.w.t > 700) pose = 'stand';
-      if (pose === 'walk') step = Math.floor(o.dist / 16) % 2 ? 1 : -1;
       if (o.duck) { if (!['dead', 'gun', 'drink', 'deal'].includes(pose)) pose = 'stand'; o.bob = p.moving ? Math.abs(Math.sin(o.dist / 14)) * 4 : 0; }   // (a duck waddles: a little bob)
       else if (pose === 'dead') pose = 'loaf';
-      const key = pose + step;
-      if (key !== o.pose) { o.pose = key; o.body.innerHTML = svgFor(id, pose, step); o.el.classList.toggle('dead', r.a === 'dead'); }
+      if (pose === 'walk') step = Math.floor(o.dist / 16) % 2 ? 1 : -1;
+      o.want = [pose + step, pose, step, r.a === 'dead'];
+      if (!o.el.hidden || !o.pose) dress(id, o);   // (off the screen, its drawing waits till it's seen: draw())
       if (r.a === 'eat' && o.a !== 'eat' && o.seen && inCabin(o.x, o.y) === ctx.world.inside) {   // a hotdog, at his beak
         const wrap = document.createElement('div'); wrap.className = 'spe-follow';
         wrap.append(...pressFX('hotdog', 0, 0, DUCK * ctx.world.sc, o.f < 0 ? -1 : 1, JUSTIN)); o.el.append(wrap); setTimeout(() => wrap.remove(), 2200);
@@ -168,10 +175,11 @@ activity({
   draw(now, ctx) {
     const Wd = ctx.world, sc = Wd.sc;
     for (const o of shown.values()) {
-      const hide = inCabin(o.x, o.y) !== Wd.inside || o.op === 0; if (o.el.hidden !== hide) o.el.hidden = hide;
+      const f = Wd.toScreen(o.x, o.y, o.z), w = DUCK * 1.6 * sc, h = (o.tall + 90) * sc;   // (its box on the screen, with room for its bubble)
+      const hide = inCabin(o.x, o.y) !== Wd.inside || o.op === 0 || !Wd.seen(f.left - w / 2, f.top - h, w, h + 20 * sc);   // (the other side of the walls, faded out, or off the screen)
+      if (o.el.hidden !== hide) { o.el.hidden = hide; if (!hide) dress(o.id, o); }
       if (hide) continue;
       if (o.op !== undefined && o.shownOp !== o.op) { o.shownOp = o.op; o.el.style.opacity = o.op.toFixed(3); }
-      const f = Wd.toScreen(o.x, o.y, o.z);
       o.el.style.transform = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
       o.body.style.transform = `${o.bob ? `translateY(${(-o.bob * sc).toFixed(1)}px) ` : ''}scale(${(o.f < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})`;
       if (o.sc !== sc) {   // (the bubble sits over its head)

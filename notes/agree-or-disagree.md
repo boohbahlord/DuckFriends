@@ -2261,6 +2261,58 @@ For poker, ask me any questions if need be"
 Decided (Adam): a bet box (typing, arrows ±1) with 1, 5 and 25 chips that add to it, and All in; the Butler plays only
 alone or when the start vote lets him in; every hand on the table with its total under it. Poker is planned separately.
 
+## Request (owner, 2026-10-28 00:29Z): knife, hammer, pistol, knocked-down time, cabin ghosts
+"We can add a knife to the specials that players can use which stabs once a second. 
+
+We can also add a wrench that can be big hammer (Second screenshot( that can swung out wide to hit many ducks at the same time if they are hit by it, that attack it does is one attack every 2.25 seconds, and clicking the configure button on the tile for it can change it to a wrench skin from the BioShock game, as show in the first screenshot, which functions the same because it is just a different skin for the same item.
+
+The pistol can now fire rapidly seven times before needing to be reloaded, which the reload animation length or duration is show in the cooldown bar. The player can reload though by clicking the R button.
+
+In normal mini games, the dead effect makes a player unable to move for half a second by default, and then for a second or longer under additional settings by a host, including there being no immobilization with the dead effect as an option now.
+
+In the cabin map, there is a new setting for cabin, where, the ducks will become ghosts after being dead for five seconds, where their avatar lays dead on the ground WHILE there ghost avatar can walk around, and the ghost avatar is as transparent AS the shadow duck. When they are a ghost, they cannot take damage or use the chalk board, play cards, or anything like that, nor blow out candles or turn on lights. A ghost can click space bar to spawn, which will make their duck slowly fade away before their old body is resurrected and able to be played. This is a setting in the game that is optional for cabin. 
+
+One thing though, the ability to change the time a player is immobilized from being dead for from damage will also be a setting in cabin AND the time it takes to become a ghost IF that setting is on will be based on that number."
+
+- Job (Adam, 00:32Z): only the "Knocked down for" setting (games: None, 0.5 s default, 1 s, 2 s, 3 s, 5 s; Duck Cabin: the same plus 6 s, 6 s the default). Knife, hammer, pistol and ghosts are Solomon the 2nd's.
+## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
+"WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
+
+"WHY IS MY CABIN GAME SO LAGGY ! OPTIMIZE IT AND FIX IT ! IS IT BECAUSE EVERY TEXTURE IS BEING USED ALL AT ONCE! WHY ARE WE RENDERING EVERYTHING TO MAXIMUM TO THE PLAYER'S HARDWARE WHEN THE PLAYER CAN'T EVEN SEE IT? IT SHOULD ONLY LOAD ANYTHING TO THE HARDWARE ONLY BRIEFLY OUT OF SIGHT, EVERYTHING ELSE OUT OF SIGHT SHOULD BE BEAR BONES! ANY OBJECTIONS!?"
+- Decided (Adam): Solomon the 2nd fixes both in one PR, separate from Jack (#130). Chat: opening or closing it must
+  change nothing on the map (Noah found the cause: the chat dock narrows the board, the ground's tiles were thrown away
+  and painted again at the new size). Lag: profile first (CPU slowed 4x, phone and computer), then only what is on
+  screen plus a small margin is drawn and animated; off screen is bare bones. Game state, NPCs' logic, other players and
+  sounds keep running. Prove it with frame times before and after.
+- The owner's laptop note (22:16Z, above): it lags on its integrated GPU (on battery), so it was measured on a
+  weak-GPU budget: headless Chromium's software compositing, CPU slowed 4x.
+
+## Request (owner, 2026-10-27 23:19Z): inside hides the outside, bare bones off screen
+"I think being inside should auto hide the assets to the outside by making it black outside the building WHILE making everything outside of it bear bones, and being ouside should make the inside bear bones as well. When you walk outside, the black fades away smoothly.  Fireflies for example or trees SHOULD NOT be AT ALL rendered when not in the screen, same with the water, the the details of grass if it effects game, or anything like it, so very bear bones when not in render distance. The zooming in and out might show what isnt loaded in though, i havent tested IF anything in the in game settings does that, but i do know the browser doesnt. Lights that arent near by should render UNLESS their emitted area of light enters the screen, then the light becomes rendered, and ONLY IF it is inside for inside players and outside of outside players, or else it wouldnt show even if. 
+
+lemme know ab other ideas and inform me what effects gameplay the most"
+- Done in #134 (Solomon the 2nd): inside, the shade is opaque black and fades in; once it's up, props, ground tiles and
+  light pools under it aren't drawn. Walking out it fades away over .6 s. Zooming shows old tiles stretched, no plain
+  squares.
+
+## Request (owner, 2026-10-27 23:25Z): Low graphics setting, still TV picture
+"UHHMM, make a low graphic setting in other ways that applies to other things in the game.  Ask adam who should handle that new setting"
+"Make the Tv's picture not move anymore, so it is only an image, and it should be a compressed enough image to save resources"
+- Decided (Adam): Solomon the 2nd, as a new PR after #134. Low graphics sits in Settings by "Data saving" and builds on
+  NET '1' (moving background and animations off); it turns off or halves things everywhere (fireflies, shimmer,
+  half-size cabin ground, still map backgrounds, fewer particles), saved like the other settings. The TV shows one small
+  still picture. The owner sees a normal-against-low sheet on every map, phone and computer, with frame times, first.
+- Owner OK'd the sheet (2026-10-28 00:50Z, "All three live"); live with #134.
+
+## Request (owner, 2026-10-27 23:35Z): the rug's shading under the table; each door seen through the wall
+"The shading of this object should stretch underneath the table / It is the only thing i notice with this problem / In screenshots 2 and 3, I think you should be able to see the door in the same perspective in the SAME EXACT PLACE (but transparent) like you would see it from the inside of the home. Same with the bottom door, where you can see how it appears from the outside from the inside. Door frame included for both. Show me pictures."
+- Screenshots: /mnt/project-files/hangout/doors-rug/ (1 the rug under the coffee table; 2 and 3 the back door, outside and
+  inside; 4 and 5 the front door, outside and inside).
+- Decided (Adam): Solomon the 2nd, its own small PR before Low graphics. The rug's shading goes on under the table with
+  no cut; from either side of a wall each door shows the other side's door, frame included, in the same place and
+  perspective, see-through, using the existing door drawings. Pictures to the owner first (phone and computer).
+- Owner OK'd the pictures (2026-10-28 00:50Z, "All three live"); live with #134.
+
 ## Request (owner, 2026-10-27 23:41Z): no Butler hand in the window, less dead space, poker cards
 "The buttler doesnt need his hand shown in the UI box for blackjack or poker anymore if they are on the table. Also, the ui can now have more room to creatively fit the elements to better adhere to my principles to make up for any deadspace IN the blackjack game. For poker, the UI can have different shapes or sizes to fit cards"
 Decided (Noah): the Butler's hand only on the table; the blackjack window tightened (PR #135). Poker's window fits its

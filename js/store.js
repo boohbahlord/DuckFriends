@@ -8,7 +8,7 @@ const KEY = 'jmg-profile-1';
 export const SETTINGS_DEFAULT = {
   v: 2, theme: 'dark', font: 'fredoka', textSize: 100, uiSize: 100, dyslexic: false, colorblind: false,
   motion: !matchMedia('(prefers-reduced-motion: reduce)').matches, mouseMove: false, clickUse: false, multipleChoice: false, touch: 'stick', jumpsSci: false, jumpsHidden: false, chatSide: 'left',
-  shapes: 'moving', sound: 100, sfx: 100, music: 100, musicMute: false, settingsTab: 'general', net: '0', netAsked: false, hidePrivate: false,
+  shapes: 'moving', sound: 100, sfx: 100, music: 100, musicMute: false, settingsTab: 'general', net: '0', gfx: 'normal', netAsked: false, hidePrivate: false,
 };
 export const PROFILE_DEFAULT = {
   name: 'Player 1', duck: { ...DUCK_DEFAULT },

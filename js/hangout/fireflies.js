@@ -4,6 +4,7 @@
    network: every screen has its own. At most 40, kept round the camera (one that drifts out of view comes back
    somewhere new), drawn on one canvas over the world, and none while my duck is in the cabin. */
 import { activity } from './registry.js';
+import { low } from '../gfx.js';
 import { inCabin, inPool, W, H, EDGE } from './layout.js';
 
 const MOST = 40, USUAL = 24, PAD = 220;
@@ -52,11 +53,13 @@ activity({
   },
   draw(now, ctx) {
     if (!cv) return;
-    /* a soft glow: one canvas pixel a screen pixel is plenty, and much less work on a phone */
-    const Wd = ctx.world, dpr = 1, w = Math.round(Wd.vw * dpr), h = Math.round(Wd.vh * dpr);
+    /* a soft glow: one canvas pixel for two screen pixels is plenty, and much less work on a weak laptop or a phone;
+       with none to draw (inside, or on Low graphics) the canvas is hidden */
+    const Wd = ctx.world, dpr = .5, w = Math.round(Wd.vw * dpr), h = Math.round(Wd.vh * dpr), none = Wd.inside || !flies.length || low();   // (none on Low graphics)
+    if (cv.hidden !== none) cv.hidden = none;
+    if (none) return;
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h);
-    if (Wd.inside || !flies.length) return;
     g.globalCompositeOperation = 'lighter';
     const base = 36 * Wd.sc * dpr;
     for (const f of flies) {

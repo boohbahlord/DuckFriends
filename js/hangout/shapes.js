@@ -138,18 +138,27 @@ export const DRAW = {
     const d = p.door, D = L.DOOR, gx = (d.a + d.b) / 2, fw = d.b - d.a, bw = fw + 8, bh = D.h + D.frame, swing = D.w * Math.sin(Math.PI / 3);
     const ajar = (foot, night, o) => part(() => A.doorAjar({ len: D.w, h: D.h, ang: 60, night }), gx - D.w / 2, foot - D.h, D.w / 2, D.h + swing, foot + swing, { ...o, cls: 'door-open', fade: true });   // (see-through over a duck in the doorway)
     const o = { only: 'in' };
+    /* I want each door to show through its wall from the other side: the other side's drawing of it, see-through, in
+       front of everything there (the roof outside, the low wall inside), fainter still while a duck is behind it */
+    const ghost = (pts, only) => pts.map(pt => ({ ...pt, only, key: L.ROOF_KEY + 3, cls: pt.cls + ' door-ghost', fade: true, hit: undefined, style: only === 'in' ? 'z-index:20001' : '' }));   // (inside, over the black outside, where the open door swings)
     if (d.id === 'door-front') {   // in the north wall, seen from inside: the wall's logs over its frame, its foot at the wall's face; its window shows the night outside
       const foot = d.at + T;
       return [part(() => A.logWall({ w: fw, wallH: C.wall - bh, t: 2 * T, rowsH: 2 * T + C.wall }), d.a, d.at - T - C.wall, fw, 2 * T + C.wall - bh, d.at + 6, o),
         part(() => A.cabinDoor({ night: true }), gx - bw / 2, foot - bh, bw, bh, d.at + 6, { ...o, cls: 'door-shut' }),
         part(() => A.cabinDoor({ night: true, open: true }), gx - bw / 2, foot - bh, bw, bh, d.at - T, { ...o, cls: 'door-open' }),   // (behind a duck in the doorway)
-        ajar(foot, true, o)];
+        ajar(foot, true, o),
+        /* (from outside: the door as it looks from inside, in the same place, see-through, frame and all) */
+        ...ghost([part(() => A.cabinDoor({ night: true }), gx - bw / 2, foot - bh, bw, bh, 0, { cls: 'door-shut' }),
+          part(() => A.cabinDoor({ night: true, open: true }), gx - bw / 2, foot - bh, bw, bh, 0, { cls: 'door-open' }), ajar(foot, true, {})], 'out')];
     }
     /* the back door: inside, shut, a plank in the low wall's line (open, it has swung out onto the deck); outside, the
        cabin's own drawing shows it shut; open, the lit doorway in its frame and the door swung out */
     return [part(() => A.logWall({ w: fw, wallH: 14, t: 2 * T }).replace(/#c98a52/g, '#d9a066'), d.a, d.at - T - 14, fw, 2 * T + 14, d.at + 6, { ...o, cls: 'door-shut' }),
       part(() => A.cabinDoor({ open: true }), gx - bw / 2, d.at - bh, bw, bh, L.ROOF_KEY + 1, { only: 'out', cls: 'door-open door-lit' }),
-      ajar(d.at, false, { only: 'out' })];
+      ajar(d.at, false, { only: 'out' }),
+      /* (from inside: the door as it looks from outside, in the same place, see-through, frame and all) */
+      ...ghost([part(() => A.cabinDoor(), gx - bw / 2, d.at - bh, bw, bh, 0, { cls: 'door-shut' }),
+        part(() => A.cabinDoor({ open: true }), gx - bw / 2, d.at - bh, bw, bh, 0, { cls: 'door-open' }), ajar(d.at, false, {})], 'in')];
   },
   roof() {   // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
     const h = C.y1 - C.y0 + 290;

@@ -8,6 +8,7 @@
    everything a duck wears or shows; a splash is drawn just in front of its own duck.
    Other things in the water use it too: ripple(x, y, k) and splash(x, y, k) at a spot on the water (world px). */
 import { activity } from './registry.js';
+import { fewer } from '../gfx.js';
 import { POOL, SLOPE, DUCK, W as BW, H as BH, heightAt, inPool } from './layout.js';
 import { sfx } from '../sound.js';
 
@@ -50,7 +51,7 @@ export function ripple(x, y, k = .5, r0 = 26) {
 export function splash(x, y, k = .6) {
   ripple(x, y, k * 1.3); ripple(x, y, k * .7, 12);
   if (!layer || still()) return;
-  const n = Math.round(5 + 7 * k), drops = [], m = k < .45 ? 3 : 5, tongues = [];
+  const n = fewer(Math.round(5 + 7 * k)), drops = [], m = k < .45 ? 3 : 5, tongues = [];
   for (let i = 0; i < n; i++) {
     const r = hash(++seed), q = hash(seed + .5), a = (i / n - .5) * 2.4 + (r - .5) * .4;
     drops.push({ vx: Math.sin(a) * (90 + 120 * k) * (.6 + q * .6), vy: (220 + 260 * k) * (.75 + r * .5) * Math.cos(a * .6), r: 2.6 + 2.6 * k * (.5 + q) });
@@ -167,10 +168,10 @@ activity({
     for (let i = glows.length - 1; i >= 0; i--) if (now - glows[i].t > GLOW[glows[i].side][1] || now < glows[i].t - 1000) glows.splice(i, 1);
     const a0 = W.toScreen(BOX.x0, BOX.t), a1 = W.toScreen(BOX.x1, BOX.b);
     const off = W.inside || a1.left < 0 || a0.left > vw || a1.top < 0 || a0.top > vh || (!ripples.length && !glows.length && ![...seen.values()].some(d => d.sw));
-    if (off && water._clear) return;   // (nothing on it, and nothing to draw: the canvas is left alone)
+    if (water.hidden !== off) water.hidden = off;   // (nothing to draw: hidden, so it costs nothing)
+    if (off) return;
     if (water.width !== Math.round(vw * dpr) || water.height !== Math.round(vh * dpr)) { water.width = Math.round(vw * dpr); water.height = Math.round(vh * dpr); }
     const g = wg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, water.width, water.height);
-    water._clear = off; if (off) return;
     const o = W.toScreen(0, 0);
     g.setTransform(sc * dpr, 0, 0, sc * dpr, o.left * dpr, o.top * dpr);
     g.save(); g.beginPath(); g.rect(BOX.x0, BOX.t, BOX.x1 - BOX.x0, BOX.b - BOX.t); g.clip();

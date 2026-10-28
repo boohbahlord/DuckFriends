@@ -18,6 +18,7 @@ import { PROPS, W, H } from './layout.js';
 import { puffHTML } from '../specials.js';
 import { mix } from '../duck.js';
 import { sfx } from '../sound.js';
+import { fewer } from '../gfx.js';
 
 const FLOOR = PROPS.find(p => p.kind === 'chalkfloor'), CHALK = PROPS.find(p => p.kind === 'chalk'), ERASER = PROPS.find(p => p.kind === 'eraser'), WIPE = PROPS.find(p => p.kind === 'wipe');
 const RUB = 'eraser', RUB_W = 30;   // the eraser's strokes: this in place of a color (6 letters, like one); they rub out this wide
@@ -166,7 +167,7 @@ function erased() {
   const fx = v.ctx.world.board.querySelector('.fxl'), sc = v.ctx.world.sc;
   if (fx && v.ctx.world.inside) {
     sfx.puff();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0, n = fewer(10); i < n; i++) {
       const x = i ? SL.x0 + SL.w * (.12 + .76 * ((i * 37) % 10) / 9) : mid(WIPE)[0], y = i ? SL.y0 + SL.h * (.12 + .76 * ((i * 61) % 10) / 9) : mid(WIPE)[1];
       const a = v.ctx.world.toScreen(x, y), pf = document.createElement('div');
       setTimeout(() => { pf.innerHTML = puffHTML(a.left, a.top, 64 * sc * (i ? 2.4 : 1.4), '#e6ece9'); fx.append(pf); setTimeout(() => pf.remove(), 1000); }, i * 40);

@@ -16,7 +16,7 @@ import { rule, activity } from './registry.js';
 import { PROPS, LIGHTS, POWER, DECK, POOL, CABIN, W, H, heightAt, inDeck, inPool } from './layout.js';
 import { svgDataURL } from './art.js';
 import { cabinSVG } from './shapes.js';
-import { sway, stutterOf } from './flicker.js';
+import { sway, stutterOf, lightNow } from './flicker.js';
 import { play, loop } from './sounds.js';
 import { music } from '../music.js';
 
@@ -76,41 +76,55 @@ function lit(x, y, s, w) {
   return OUT.some(l => Math.hypot(x - l.x, y - l.y) < l.r * .8 && shines(l, s, w));
 }
 
-let cv = null, g = null, last = 0, was = null, hum = null, darkSince = 0, muffled = false, roofDark = null;
+let cv = null, g = null, last = 0, was = null, hum = null, darkSince = 0, muffled = false, roofDark = null, drawn = '';
 const darkURL = () => darkURL.u || (darkURL.u = svgDataURL(cabinSVG(true)));
+/* the dark: first what goes on it (each number in the canvas' px), then the drawing, only when that changed (the camera
+   moved, a light flickered: flicker.js' clock, 20 times a second); with nothing on it (inside, the power on) it's hidden */
 function paint(now, ctx) {
-  const Wd = ctx.world, s = ctx.state(), on = powered(s), w = Math.round(Wd.vw * Q), h = Math.round(Wd.vh * Q);
-  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
-  if (Wd.inside && on) return;
-  let lights;
+  const Wd = ctx.world, s = ctx.state(), on = powered(s), w = Math.round(Wd.vw * Q), h = Math.round(Wd.vh * Q), ln = lightNow(now), sc = Wd.sc * Q;
+  const empty = Wd.inside && on;
+  if (cv.hidden !== empty) cv.hidden = empty;
+  if (empty) { drawn = ''; return; }
+  const f = v => v.toFixed(1), holes = [];
+  let base, pool = null;
   if (Wd.inside) {   // a blackout inside: the cabin dims (the shade covers the rest), but for its fires
     const a = Wd.toScreen(CABIN.x0, CABIN.y0 - CABIN.wall - 30), b = Wd.toScreen(CABIN.x1, CABIN.y1 + 14);
-    g.fillStyle = `rgba(4,6,16,${DARK_IN})`; g.fillRect(a.left * Q, a.top * Q, (b.left - a.left) * Q, (b.top - a.top) * Q);
-    lights = IN;
-  } else {
-    g.fillStyle = `rgba(4,6,16,${DARK})`; g.fillRect(0, 0, w, h); lights = OUT;
-    if (!on) {   // the pool's lights out under the water: darker still over it, its edge soft
-      const c = Wd.toScreen((POOL.x0 + POOL.x1) / 2, (POOL.y0 + POOL.y1) / 2, POOL.h), rx = (POOL.x1 - POOL.x0) * .62 * Wd.sc * Q, ry = (POOL.y1 - POOL.y0) * .62 * Wd.sc * Q;
-      g.save(); g.translate(c.left * Q, c.top * Q); g.scale(1, ry / rx);
+    base = [a.left * Q, a.top * Q, (b.left - a.left) * Q, (b.top - a.top) * Q];
+  } else if (!on) {   // the pool's lights out under the water: darker still over it, its edge soft
+    const c = Wd.toScreen((POOL.x0 + POOL.x1) / 2, (POOL.y0 + POOL.y1) / 2, POOL.h);
+    pool = [c.left * Q, c.top * Q, (POOL.x1 - POOL.x0) * .62 * sc, (POOL.y1 - POOL.y0) * .62 * sc];
+  }
+  for (const l of Wd.inside ? IN : OUT) {
+    if (!shines(l, s, Wd)) continue;
+    const fl = sway(l, ln), p = Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0)), x = p.left * Q, y = p.top * Q, r = l.r * 1.2 * fl * sc;
+    if (x + r < 0 || x - r > w || y + r < 0 || y - r > h) continue;
+    holes.push([x, y, r, Math.min(1, l.k * 1.8) * fl * stutterOf(l, ln)]);
+  }
+  /* a faint glow round my own duck (only mine), so I can find myself in the dark */
+  const me = Wd.at(ctx.me), mp = me && Wd.toScreen(me.x, me.y, me.z + 24);
+  const key = [w, h, base && base.map(f), pool && pool.map(f), mp && f(mp.left) + f(mp.top), sc.toFixed(4), ...holes.map(o => f(o[0]) + f(o[1]) + f(o[2]) + o[3].toFixed(3))].join();
+  if (key === drawn) return;
+  drawn = key;
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, w, h);
+  if (base) { g.fillStyle = `rgba(4,6,16,${DARK_IN})`; g.fillRect(...base); }
+  else {
+    g.fillStyle = `rgba(4,6,16,${DARK})`; g.fillRect(0, 0, w, h);
+    if (pool) {
+      const [x, y, rx, ry] = pool;
+      g.save(); g.translate(x, y); g.scale(1, ry / rx);
       const rg = g.createRadialGradient(0, 0, 0, 0, 0, rx); rg.addColorStop(0, 'rgba(2,6,18,.4)'); rg.addColorStop(.75, 'rgba(2,6,18,.34)'); rg.addColorStop(1, 'rgba(2,6,18,0)');
       g.fillStyle = rg; g.fillRect(-rx, -rx, 2 * rx, 2 * rx); g.restore();
     }
   }
   g.globalCompositeOperation = 'destination-out';
-  const sc = Wd.sc * Q;
-  for (const l of lights) {
-    if (!shines(l, s, Wd)) continue;
-    const fl = sway(l, now), p = Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0)), x = p.left * Q, y = p.top * Q, r = l.r * 1.2 * fl * sc;
-    if (x + r < 0 || x - r > w || y + r < 0 || y - r > h) continue;
-    const k = Math.min(1, l.k * 1.8) * fl * stutterOf(l, now), rg = g.createRadialGradient(x, y, 0, x, y, r);
+  for (const [x, y, r, k] of holes) {
+    const rg = g.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, `rgba(0,0,0,${k.toFixed(3)})`); rg.addColorStop(.45, `rgba(0,0,0,${(k * .85).toFixed(3)})`); rg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
   }
-  /* a faint glow round my own duck (only mine), so I can find myself in the dark */
-  const me = Wd.at(ctx.me);
-  if (me) {
-    const p = Wd.toScreen(me.x, me.y, me.z + 24), x = p.left * Q, y = p.top * Q, r = ME_GLOW * sc, rg = g.createRadialGradient(x, y, 0, x, y, r);
+  if (mp) {
+    const x = mp.left * Q, y = mp.top * Q, r = ME_GLOW * sc, rg = g.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, 'rgba(0,0,0,.5)'); rg.addColorStop(.4, 'rgba(0,0,0,.32)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r);
   }
@@ -124,7 +138,7 @@ activity({
   kinds: ['powerbox', 'sink', 'post', ...new Set(FLAMES.map(f => f.p.kind))],
   mount(ctx) {
     cv = document.createElement('canvas'); cv.className = 'hang-dark'; cv.setAttribute('aria-hidden', 'true');
-    ctx.world.board.querySelector('.hang-shade')?.after(cv); g = cv.getContext('2d'); was = null; darkSince = 0; roofDark = null;
+    ctx.world.board.querySelector('.hang-shade')?.after(cv); g = cv.getContext('2d'); was = null; darkSince = 0; roofDark = null; drawn = '';
   },
   unmount(ctx) { cv?.remove(); cv = g = null; quiet(); setMuffle(false); ctx?.world?.board.classList.remove('blackout'); was = null; },
   near(pos, ctx) {
