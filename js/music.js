@@ -1258,7 +1258,12 @@ export const music = (function(){
     const d2In=gn(),d2ab=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
     d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2ab);d2ab.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
     BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In,d2fb,d2Out,d2ab};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ceiling(ac,ac.destination));   /* the last thing before the speakers: every song at Music 100% and 150% passes it untouched; at 200% it keeps them under full scale, where they crackled */if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ceiling(ac,ac.destination));   /* the last thing before the speakers: every song at Music 100% and 150% passes it untouched; at 200% it keeps them under full scale, where they crackled */if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);
+    /* every part made for a step's notes is kept with that step, and each source's stop with it (see sweep()) */
+    const BP=window.BaseAudioContext?BaseAudioContext.prototype:Object.getPrototypeOf(ac);
+    for(const k of Object.getOwnPropertyNames(BP)){if(!k.startsWith("create")||k==="createBuffer"||k==="createPeriodicWave"||typeof ac[k]!=="function")continue;const make=ac[k];
+      ac[k]=function(...a){const o=make.apply(this,a),B=STEP;if(B){B.ns.push(o);if(o.stop){B.open++;const sp=o.stop;let told=false;o.stop=function(t){if(!told){told=true;B.open--}if(t>B.end)B.end=t;return sp.call(this,t)}}}return o}}
+    return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
@@ -1585,8 +1590,8 @@ export const music = (function(){
   /* a bed of soft hiss under the whole song (there was a needle's crackle in it too, from Ether's Crossroads: in Duck
      Friends it was heard as the music crackling, so it's gone) */
   function stopBeds(){if(!ac)return;const t=ac.currentTime+AH();for(const {s,k} of BEDS){k.gain.setTargetAtTime(0,t,.08);try{s.stop(t+.6)}catch(e){}}BEDS=[]}   // (through a level of its own: cancelling the bed's own fades mid-way made it jump)
-  function startBed(t,dur,h){if(!h)return;const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;const b=biq("bandpass",3400,.45),g=gn(0),k=gn();s.connect(b);b.connect(g);g.connect(k);k.connect(BUS.fx);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(h,t+1.2);g.gain.setValueAtTime(h,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push({s,k})}
+  function startBed(t,dur,h){if(!h)return;const S0=STEP;STEP=null;try{const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;const b=biq("bandpass",3400,.45),g=gn(0),k=gn();s.connect(b);b.connect(g);g.connect(k);k.connect(BUS.fx);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(h,t+1.2);g.gain.setValueAtTime(h,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push({s,k})}finally{STEP=S0}}   // (a bed outlives its step: it isn't kept with it)
   /* a song's notes laid out in time, each with its own loudness: a phrase rises and falls, its last note fades, a higher
      note leans out a little, every other phrase may answer more softly (contrast) */
   function build(T){let s=0;const ev=[];for(const [m,l,v,tag] of T.mel){if(m!=null)ev.push({m:Array.isArray(m)?m:[m],s,l,v:v==null?1:v,tag:tag||"",vel:1,tail:false});s+=l}
@@ -1615,13 +1620,19 @@ export const music = (function(){
     GL=null;if(e.m.length===1&&!air)prevF=hz(e.m[0]);
     if((T.swipe&&e.tag.includes("s"))||cut){const p=BUS.leadLP.frequency;p.setTargetAtTime(230,t+d*.6,.05);p.setTargetAtTime(16000,t+d+E8*(.8+rnd()),.3)}   // swept away, and back
     if(T.onNote)T.onNote(e,t,E8,x)}
-  let RENDER=false,FIXED=false;
-  function tick(until){if(!playing||!ac)return;
+  let RENDER=false,FIXED=false,STEP=null,DONE=[];
+  /* finished notes let go. Played live, a song makes some 50 parts a second (notes, their levels, filters, pans, sends), and
+     a part stays plugged into the mix until the browser's clean-up gets to it, which on a busy computer can be a minute:
+     the mix grew by thousands of silent parts, the sound clock couldn't work them all out in time and the sound ran short
+     (dropouts, heard as crackles). So each step's parts are unplugged a moment after its last source has stopped (a step
+     with a source that is never stopped is left to the clean-up) */
+  function sweep(){const now=ac.currentTime;DONE=DONE.filter(B=>{if(B.end+.3>now)return true;for(const n of B.ns)try{n.disconnect()}catch(e){}return false})}
+  function tick(until){if(!playing||!ac)return;if(!RENDER)sweep();
     if(!RENDER){follow();if(!LIVE)return}
     while(next<(until!=null?until:ac.currentTime+.4)){
       const abs=Math.floor(step/T.bar),bar=abs%T.chords.length,i=step%T.bar,C=T.chords[bar],root=C.b,third=C.third,fifth=C.fifth;
       const E8=60/T.bpm/2/(T.tempo?T.tempo(bar,i,abs):1),x={t:next,bar,abs,i,E8,C,step};
-      try{   // (a song's own code that fails on one step must not stop the music)
+      if(!RENDER)STEP={ns:[],open:0,end:0};try{   // (a song's own code that fails on one step must not stop the music)
       if(MUTE!=="rest"){
         if(step===0&&T.bed)startBed(next,EV.dur+1,T.bed);
         if(i===0&&T.swell){const P=T.swellP||4,ph=(abs%P)/P;BUS.swl.gain.setTargetAtTime(1-T.swell+T.swell*Math.sin(Math.PI*(ph+.5/P)),next,E8*T.bar*.5)}   // the whole song breathes
@@ -1649,6 +1660,7 @@ export const music = (function(){
         if(has("static")&&i===0&&(bar*7)%3===1)hit(next,"static");   // a radio that won't quite tune
         if(T.step)T.step(x);if(i===0&&T.onBar)T.onBar(x);GL=null}
       }catch(err){if(!RENDER&&!tick.told){tick.told=1;console.warn("DuckFriends music:",T&&T.name,err)}}
+      if(STEP){if(!STEP.open&&STEP.ns.length)DONE.push(STEP);STEP=null}
       next+=E8;step++;
       if(step>=total){if(!RENDER)LIVE=false;return}}   // the song ends (the room's list says what comes after it)
   }
