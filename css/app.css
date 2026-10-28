@@ -2065,6 +2065,8 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .up-head { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
 .up-date { font-size: calc(.85rem * var(--ts)); opacity: .7; letter-spacing: .04em; }
 .up-name { font-size: calc(1.15rem * var(--ts)); font-weight: 700; overflow-wrap: anywhere; }
+.up-body { max-height: min(24rem, calc(100dvh - 17rem)); min-height: 6rem; overflow-y: auto; overscroll-behavior: contain; padding-right: .3rem; }   /* I want a long version's info to scroll inside the window, so the title and the arrows stay put */
+.up-body > .up-h:first-child { margin-top: 0; }
 .up-h { margin: .7rem 0 .25rem; font-size: calc(1rem * var(--ts)); }
 .up-h.new { color: var(--green); }
 .up-h.fix { color: var(--blue); }
