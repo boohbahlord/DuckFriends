@@ -12,7 +12,7 @@
    "Piano"; 10 seconds after the last one gets up (s.hang.piano.back) it fades back in, where the room's song is by now. */
 import { rule, activity } from './registry.js';
 import { PROPS, W, H, inCabin } from './layout.js';
-import { mountPianoKeys, noteOn, noteOff, allNotesOff, makeTracker, LOW } from './pianokeys.js';
+import { mountPianoKeys, noteOn, noteOff, allNotesOff, makeTracker, prepare, LOW } from './pianokeys.js';
 import { pianoBody, useHangArtCSS } from './art.js';
 import { music } from '../music.js';
 import { now as clockNow } from '../clock.js';
@@ -249,6 +249,7 @@ activity({
   onState(s, ctx) {
     const mine = pianoOf(s).seats[ctx.me];
     if (!mine) leaving = false;
+    if (Object.keys(pianoOf(s).seats).length) prepare(vel());   // (someone sat down: the keys are written out ahead)
     if (mine && !leaving && (!pk || mine.k !== seatK)) openKeys(mine.k);
     else if (!mine && pk) closeKeys();
     const pn = s.pn;
