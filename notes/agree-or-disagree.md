@@ -2227,6 +2227,11 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
 
+## Request (owner, 2026-10-27 23:27Z): font dropdown, colorblind mode doubt
+"the font selection under the settings menu SHOULD be collapsed under a dropdown arrow.
+
+I am not convinced colorblind mode works at all because I cannot see the difference"
+
 ## Request (2026-10-27 22:03Z): pops and crackles in every song
 > we need miles jr using the fucking notes on how to stop the cackle or popping in my fucking ears! HOW MANY TIMES DID I TELL THEM TO FIX THIS FOR EVERY SONG! THIS IS FUCKING BULLSHIT
 
@@ -2436,3 +2441,7 @@ and a damper a note), same sound.
 "Justin should be able to auto revive himself in two minutes if someone else doesn't revive him."
 Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes, he revives himself the same way as E
 (the drinking line and glass, or the shadow duck's lines). The boards' Justin stays as he is. Built by Noah.
+## Request (owner, 2026-10-27 22:56Z): spawn on the balcony
+"The spawn should be changed to the balcony"
+"like what i mean is that all players spawn on the balcony when Cabin loads"
+- Decided (Adam): the balcony is the raised deck behind the cabin. Everyone starts there when Duck Cabin loads (the game's start, and a joiner mid-game, on the next free spot); reset duck keeps the front door.

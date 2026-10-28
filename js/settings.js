@@ -45,7 +45,7 @@ const slider = (key, label, min, max, step, unit = '%', mark) => { const i = `<i
 const PAGES = {
   general: () => `
     <div class="sect"><h3>Look</h3>${tiles('theme', [['light', 'Light'], ['dark', 'Dark']])}</div>
-    <div class="sect"><h3>Font</h3>${tiles('font', FONTS.map(f => [f.id, f.name, `font-family:${f.css}`]), 'tiles-font')}</div>
+    <div class="sect"><details class="arm-fold set-fold"><summary>Font <span class="fold-pick">${esc((FONTS.find(f => f.id === S().font) || FONTS[0]).name)}</span></summary>${tiles('font', FONTS.map(f => [f.id, f.name, `font-family:${f.css}`]), 'tiles-font')}</details></div>
     <div class="sect"><h3>Reading</h3>
       <div class="row">${check('dyslexic', 'Dyslexic mode', 'Clear letters with more room between letters, words and lines.')}${check('colorblind', 'Colorblind mode', 'A board every kind of color sight tells apart, with marks in each column.')}</div>
       <div style="margin-top:.6rem">${slider('textSize', 'Text size', 80, 180, 5)}${slider('uiSize', 'UI size', 70, 140, 5)}</div></div>
@@ -98,6 +98,7 @@ export function openSettings() {
         const t = e.target.closest('.tile'); if (!t) return;
         S()[t.dataset.k] = t.dataset.v; save(); applySettings();
         $$(`.tile[data-k="${t.dataset.k}"]`, page).forEach(b => b.setAttribute('aria-pressed', b === t));
+        if (t.dataset.k === 'font') page.querySelector('.fold-pick').textContent = t.textContent;   // the closed row names the chosen font
         if (t.dataset.k === 'net') page.innerHTML = PAGES.performance();   // its line below says what it does
       });
       page.addEventListener('input', e => {

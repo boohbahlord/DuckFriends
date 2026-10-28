@@ -294,6 +294,24 @@ export function spawnAt(k = 0, n = 1) {
   }
   return { x: DOORS.front.x, y: DOORS.front.y - 80 };
 }
+/* where everyone arrives when Duck Cabin loads (the game's start, and a joiner mid-game): the owner wants it on the
+   balcony, the raised deck behind the cabin. Free spots in two rows across the deck, below the back door, the rockers and
+   the deck table and above the railing, nearest the middle first (k: the k-th arrival). Reset duck keeps spawnAt. */
+let deckSpots = null;
+export function deckSpawnAt(k = 0) {
+  if (!deckSpots) {
+    deckSpots = [];
+    const door = DOORS.back.x, busy = PROPS.filter(p => p.kind === 'rocker' || p.kind === 'deck-table');   // (not in the doorway's way, not on the rocking chairs or the table)
+    for (const y of [DECK.y0 + 150, DECK.y0 + 250]) for (let x = DECK.x0 + 140; x <= DECK.x1 - 140; x += 110)
+      if (!(y < DECK.y0 + 200 && Math.abs(x - door) < 130) && !busy.some(p => Math.abs(x - p.x) < 110 && y < DECK.y0 + 200)
+        && standable(x, y, heightAt(x, y), 0) && standable(x - 30, y, heightAt(x - 30, y), 0) && standable(x + 30, y, heightAt(x + 30, y), 0)) deckSpots.push({ x, y });
+    const mx = (DECK.x0 + DECK.x1) / 2 - 300;
+    deckSpots.sort((a, b) => Math.abs(a.x - mx) - Math.abs(b.x - mx) || a.y - b.y);
+  }
+  if (!deckSpots.length) return spawnAt(k);
+  const p = deckSpots[k % deckSpots.length], lap = Math.floor(k / deckSpots.length);
+  return lap ? { x: p.x + (lap % 2 ? 45 : 0), y: p.y + (lap % 2 ? 35 : 0) } : p;   // (more ducks than spots: a little in between)
+}
 /* the pools of light on the ground at night: { x, y, r, c (color), k (strength), flick, only, prop (its prop, for a
    lamp that switches), el (electric: out while the power is off) } */
 const ELECTRIC = ['lamp', 'stage', 'sink', 'post'];
