@@ -20,7 +20,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, startX, wyrStats, bbStats, isSudo, canOpen,
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, heldCol, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
   isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang, MAG, RELOAD, magOf, KB_MS, KB_HOP, KB_LAND } from './rules.js';
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
@@ -535,12 +535,14 @@ function playFx(f) {
 
 /* ---------- my duck ---------- */
 const onBoardPhase = () => R && boardPhases(R.state).includes(R.state.phase);
-const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (R.state.phase === 'answer' && R.state.done[R.me] && !R.state.options.freeRoam && !isLaw(R.state)) || (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // an ended turn holds its answer (not in free roam; a juror may change their vote)
+const locked = () => isSc(R.state) ? SC_VOTES.includes(R.state.phase) && !!R.state.done[R.me] : (isQuack(R.state) && ['choice', 'accuse'].includes(R.state.phase) && !!R.state.done[R.me]);   // a vote here holds its spot (the boards' vote holds the column instead: votedCol())
+const votedCol = () => { const c = heldCol(R.state, R.me); return c != null && c >= 0 ? c : null; };   // voted: inside that column until I unvote
 const late = () => !!(R.state.players[R.me] || {}).late;   // joined mid-turn: walks anywhere, plays from the next turn
 const roams = () => ['answer', 'bracket'].includes(R.state.phase) || isSc(R.state) || late() || isQuack(R.state) || isHang(R.state);   // anywhere on the board (else inside my column)
 const canWalk = () => onBoardPhase() && !locked() && !(!roams() && R.state.lock[R.me] === undefined) && !frozen(R.state, R.me, clockNow()) && !hangStill(R.state, R.me, clockNow()) && !downStill(R.state, R.me, clockNow());   // (Hangout: shot by Justin, still a while)
 function xBounds() {
   const s = R.state;
+  if (votedCol() != null) return colBoundsAt(s, votedCol());
   if (roams()) return [.03, .97];
   return colBoundsAt(s, s.lock[R.me]);
 }
@@ -988,8 +990,9 @@ function actHTML(s) {
     const choices = m ? [[s.bb.seeds[m.a].text, 'bb-a'], [s.bb.seeds[m.b].text, 'bb-b']] : isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : COLS.map((c, i) => [c, `c${i + 1}`]);
     const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${choices.map(([c, k], i) => `<button type="button" class="mc-b ${k}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
     const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
-    const off = wait || !onBoard || col < 0 || (mine && !s.options.freeRoam);
-    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${s.options.freeRoam ? ' data-tip="Free roam: keep moving; where you stand when the turn ends is your vote."' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
+    const off = wait || !onBoard || col < 0;   // (Voted ✓ stays pressable: pressing it again takes the vote back)
+    const tip = s.options.freeRoam ? 'Free roam: keep moving; where you stand when the turn ends is your vote.' : mine ? 'Press again to take your vote back.' : '';
+    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}${tip ? ` data-tip="${tip}"` : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${votes}</div>`;
   }
   if (s.phase === 'discuss') return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? ' done' : ''}" data-a="end">${mine ? 'Waiting ✓' : 'End turn'} <kbd>Enter</kbd></button>${count}</div>`;
   if (s.phase === 'results') {
@@ -1214,6 +1217,7 @@ function paint(force) {
     if (p.kb && p.kb.t !== shovedAt) { shovedAt = p.kb.t; me.x = p.x; me.y = p.y; target = null; }   // the hammer shoved me back
     if (p.tp && p.tp !== putAt) { putAt = p.tp; me.x = p.x; me.y = p.y; me.z = undefined; me.b = undefined; me.vz = null; me.j = 0; target = null; }   // put there (Duck Cabin: my ghost's body got up)
     if (locked()) { me.x = p.x; me.y = p.y; }   // an ended turn holds its answer
+    else if (votedCol() != null && me.x >= 0) { const [lo, hi] = colBoundsAt(s, votedCol()); me.x = Math.max(lo, Math.min(hi, me.x)); }   // voted: inside my column
     else if (!roams() && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBoundsAt(s, s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }   // inside my column (not back to where the host last saw me: online that pulled the duck back while it walked)
   }
   const lordSig = !isBb(s) && !isLaw(s) && (s.phase === 'answer' || s.phase === 'discuss') ? JSON.stringify(s.players[s.qs[s.qi].by] || null) : '';
