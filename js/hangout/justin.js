@@ -9,6 +9,7 @@
      shooting and shouting "SHUT UP!" until one is dead.
    - Knocked down (a shot, a dagger, a ball, kill @Justin): a death line; half the time he gets up and chases that duck
      until he's shot it. Otherwise he stays down until someone revives him with E.
+   - Down for any reason and nobody revives him in 2 minutes: he revives himself, just as if someone had pressed E.
    - Drinking (about once in 8 minutes): he drops; revived with E, he says the drinking line and drinks a glass.
    - The shadow duck (shadowduck.js) can get him, only if they meet up close: revived, he says his four lines 4 seconds
      apart, each bubble up 4 seconds (gone as the next comes), and E can't interrupt them (nor for 4 seconds after).
@@ -198,7 +199,14 @@ function notes(c) {
 }
 /* the next line of the playlist (shuffled again once it's all been said) */
 function nextLine(c) { if (!mm.list.length) mm.list = shuffle(c.rand, E_LINES.map((_, i) => i)); return E_LINES[mm.list.shift()]; }
-const down = (me, c, cause) => { c.stop(me); me.a = 'dead'; mm.mode = 'dead'; mm.cause = cause; mm.target = null; };
+const down = (me, c, cause) => { c.stop(me); me.a = 'dead'; mm.mode = 'dead'; mm.cause = cause; mm.target = null; mm.downAt = c.now; };
+const SELF_REVIVE = 120000;   // nobody revived him: up by himself after 2 minutes
+/* up again (E on him, or by himself): the drinking line and a glass, or the shadow duck's lines */
+function revive(me, c) {
+  me.a = ''; mm.mode = 'home'; mm.next = c.now + 3000;
+  if (mm.cause === 'drink') { c.say('justin', DRANK); me.a = 'drink'; mm.mode = 'drinking'; mm.until = c.now + 3500; }
+  else if (mm.cause === 'shadow') { mm.lines = [...SHADOW_LINES]; mm.lineAt = c.now; mm.lock = Infinity; }
+}
 const pickSpot = c => {
   const r = c.rand();
   if (r < .25 && JEEP) return nearestOpen(JEEP.x + JEEP.w / 2 + (c.rand() - .5) * 300, JEEP.y + JEEP.d + 60 + c.rand() * 80, DRY, 6);
@@ -253,6 +261,7 @@ brain('justin', {
         mm.getUp = 0; me.a = 'gun'; mm.mode = 'chase'; mm.target = mm.by; mm.until = c.now + 25000; return true;
       }
       if (mm.cause === 'player' && c.now > mm.until) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 2000; return true; }   // (down a while, then up by himself)
+      if (c.now - (mm.downAt ?? c.now) >= SELF_REVIVE) { revive(me, c); return true; }
       return ch;
     }
     if (mm.mode === 'drinking') { if (c.now > mm.until) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 2000; return true; } return ch; }
@@ -298,12 +307,7 @@ brain('justin', {
   act(me, a, c, by) {
     notes(c);
     if (a.do !== 'talk') return false;
-    if (mm.mode === 'dead') {   // revived
-      me.a = ''; mm.mode = 'home'; mm.next = c.now + 3000;
-      if (mm.cause === 'drink') { c.say('justin', DRANK); me.a = 'drink'; mm.mode = 'drinking'; mm.until = c.now + 3500; }
-      else if (mm.cause === 'shadow') { mm.lines = [...SHADOW_LINES]; mm.lineAt = c.now; mm.lock = Infinity; }
-      return true;
-    }
+    if (mm.mode === 'dead') { revive(me, c); return true; }   // revived
     if (mm.lines.length || c.now < mm.lock) return false;   // (still saying his piece)
     if (mm.mode === 'rant' || mm.mode === 'chase' || mm.mode === 'bust') return false;
     if (mm.mode === 'poker') { c.say('justin', nextLine(c)); return true; }   // (at the table he stays put, and never shoots)

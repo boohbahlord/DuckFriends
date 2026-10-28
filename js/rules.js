@@ -14,10 +14,10 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
-import { holdDown, downStill, DOWN_OK, DEAD_STILL } from './hangout/death.js';
+import { holdDown, downStill, standUps, DOWN_OK, DEAD_STILL } from './hangout/death.js';
 import { npcById } from './npcs.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
-import { inCabin, W as HW, H as HH } from './hangout/layout.js';
+import { inCabin, standable, W as HW, H as HH } from './hangout/layout.js';
 import { justinTick, justinDown, justinShown, justinAt, JUSTIN_ID } from './boardjustin.js';
 
 export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neutral', 'Slightly agree', 'Agree', 'Strongly agree'];
@@ -93,12 +93,19 @@ export const SHOT_SPEED = .22;  // the handgun special's bullet: board widths a 
    on down off the screen */
 export const DAGGER_SPEED = .45, DAGGER_Z = .45, DAGGER_UP = 1.2, DAGGER_G = 2.2, DAGGER_LIFE = 4500;   // (it never flies over a duck's head: everything in its way is hit)
 export const daggerZ = t => DAGGER_Z + DAGGER_UP * t - DAGGER_G * t * t / 2;   // (t in seconds)
-const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'dagger', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
+const PRESS = ['coffee', 'watergun', 'hotdog', 'confgun', 'handgun', 'dagger', 'knife', 'hammer', 'sound', 'trombone', 'confetti'];   // the items, used with their number key
 /* how long an item waits before its key works again (ms); the key shows a bar draining meanwhile */
-const COOLDOWN = { handgun: 3000, dagger: 2000, confetti: 15000 };
+const COOLDOWN = { handgun: 200, dagger: 2000, knife: 1000, hammer: 2250, confetti: 15000 };
 export const coolFor = sp => COOLDOWN[sp] || 1500;
-export const coolEnds = (s, id, sp) => ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp);   // (a time on the room's clock)
-export const WEAPONS = ['handgun', 'dagger'];   // aimed (with the mouse), and kept out with Shift and their key
+/* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
+   s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } */
+export const MAG = 7, RELOAD = 3500;   // (I want 3.5 s: 1.5 was too short)
+export const magOf = (s, id, now) => { const m = (s.mag || {})[id]; return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m; };
+export const coolEnds = (s, id, sp) => Math.max(((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp), sp === 'handgun' ? ((s.mag || {})[id] || {}).r || 0 : 0);   // (a time on the room's clock)
+export const WEAPONS = ['handgun', 'dagger', 'knife', 'hammer'];   // aimed (with the mouse), and kept out with Shift and their key
+/* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
+   (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
+export const KB_MS = 380, KB_FAR = 2.4, KB_HOP = .3, KB_LAND = 110;   // (KB_LAND: ms until the swing gets there; the duck falls then)
 const EFFECTS = ['zap', 'flames', 'hearts', 'poison', 'notes', 'loserx', 'ducklings', 'disco'];   // the effects, shown around a duck
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
 const aimOf = (a, face) => { const ax = Math.max(-3, Math.min(3, +a.ax || 0)), ay = Math.max(-3, Math.min(3, +a.ay || 0)); return Math.hypot(ax, ay) > .05 ? [ax, ay] : [face, 0]; };
@@ -347,7 +354,7 @@ export function reduce(state, a, now = Date.now()) {
       const dj = j && +a.dj > j ? +a.dj : 0;   // a double jump: when the second jump began
       const w = WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun ? a.w : '', [ax, ay] = w ? aimOf(a, 1) : [0, 0];   // a weapon kept out, and where it aims
       const hz = v => Math.max(-400, Math.min(1200, Math.round(+v || 0)));   // Hangout: z, the height of its feet; b, where its jump began (world px)
-      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}), ...(isHang(s) ? { z: hz(a.z), b: hz(a.b), ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}) } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height
+      s.pos[a.id] = { x, y, j, q: /^[lrud]$/.test(a.q) ? a.q : '', sp: !!a.sp, ...(j && a.lj ? { lj: true } : {}), ...(dj ? { dj } : {}), ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}), ...(isHang(s) ? { z: hz(a.z), b: hz(a.b), ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}) } : {}), ...(was && was.kb && now - was.kb.t < KB_LAND + KB_MS ? { kb: was.kb } : {}) };   // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height
       quackMoved(s, a.id);   // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       return s;
@@ -394,13 +401,24 @@ export function reduce(state, a, now = Date.now()) {
       if (sp === 'sound') return state;   // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
+      if (sp === 'handgun') {   // one shot from the magazine; the last starts the reload
+        const m = magOf(s, a.id, now), n = m.n + 1;
+        s.mag = { ...(s.mag || {}), [a.id]: { n, r: n >= MAG ? now + RELOAD : 0 } };
+      }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1, aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
-      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}) }];
-      if (aim) {
+      const hit = sp === 'knife' || sp === 'hammer' ? swing(s, a.id, sp, aim, now) : null;   // (the knife and the hammer hit at once, up close)
+      s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: sp, by: a.id, who: [a.id], face, t: now, ...(aim ? { ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3) } : {}), ...(hit ? { hit } : {}) }];
+      if (aim && !hit) {
         const v = sp === 'dagger' ? DAGGER_SPEED : SHOT_SPEED, hang = isHang(s) ? { hz: Math.round(+p.z || 0), hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {};   // (Hangout: the height it flies at, and which side of the cabin's walls)
         s.shots = [...(s.shots || []), { n: s.fxN, by: a.id, k: sp, x0: p.x, y0: p.y, vx: +(aim[0] * v).toFixed(4), vy: +(aim[1] * v).toFixed(4), t: now, lx: p.x, ly: p.y, ...hang }];
       }
+      return s;
+    }
+    case 'reload': {   // R: the handgun reloads before its magazine is empty
+      if (!me || !onKeys(me.duck, 'handgun') || !s.options.fun) return state;
+      const m = magOf(s, a.id, now); if (!m.n || m.r) return state;
+      s.mag = { ...(s.mag || {}), [a.id]: { n: m.n, r: now + RELOAD } };
       return s;
     }
     case 'aura': {   // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
@@ -545,10 +563,10 @@ export function reduce(state, a, now = Date.now()) {
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
-      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine);
+      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine), up = standUps(s, now);   // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
-      return sig() === was && !shots && !hung && !jus ? state : s;
+      return sig() === was && !shots && !hung && !jus && !up ? state : s;
     }
   }
   return s;
@@ -654,6 +672,49 @@ export function gameMuted(s, id, kind) {
 /* Justin knocked down by a player's bullet or dagger (the clown items unlock at 10): the last few, each numbered, so
    every device counts its own player's once (unlocks.js) */
 function justinKilled(s, by, w) { if (!s.players[by]) return; s.jkN = (s.jkN || 0) + 1; s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }]; }
+/* the knife's stab and the hammer's swing, from duck `by` toward its aim: every duck on the ground in reach plays dead
+   (the knife: the nearest one right in front; the hammer: all of them in a third of a circle, shoved back). Distances
+   are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
+   height. Justin can be hit too. Returns who was hit. */
+const REACH = { knife: [2.3, .9], hammer: [3, .5] };   // how far (duck lengths), and how wide (the cosine of the half angle)
+function swing(s, by, sp, aim, now) {
+  const p0 = s.pos[by], hang = isHang(s), rx = hang ? .006 : .03, ry = hang ? .012 : .08, [far, wide] = REACH[sp];
+  const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1, ux = aim[0] / rx / al, uy = aim[1] / ry / al;
+  const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0, z0 = hang ? +p0.z || 0 : 0;
+  const near = (x, y, z, inSide) => {   // where (x, y) is from the swinger, in duck lengths, if it's in reach
+    if (hang && (inSide !== side || Math.abs(z - z0) > 48)) return null;
+    const dx = (x - p0.x) / rx, dy = (y - p0.y) / ry, d = Math.hypot(dx, dy);
+    if (d > far) return null;
+    const along = dx * ux + dy * uy;
+    return d < .7 || along / d >= wide ? { d, dx, dy } : null;   // (one standing right on top is hit whatever the aim)
+  };
+  let hits = [];
+  for (const id of s.seat) {
+    const p = s.pos[id], P = s.players[id]; if (id === by || !p || p.x < 0 || !P || P.dead) continue;
+    if (p.j && now - p.j < 1300) continue;   // (a duck in the air is missed)
+    const n = near(p.x, p.y, +p.z || 0, hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0); if (n) hits.push({ id, ...n });
+  }
+  if (sp === 'knife') hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
+  for (const h of hits) {
+    const P = s.players[h.id], p = s.pos[h.id]; P.dead = true; holdDown(s, h.id, now);
+    if (sp === 'hammer') {   // shoved straight back from the swinger
+      const k = h.d > .05 ? 1 / h.d : 0, vx = (h.d > .05 ? h.dx * k : ux) * KB_FAR * rx, vy = (h.d > .05 ? h.dy * k : uy) * KB_FAR * ry;
+      let x = p.x, y = p.y;
+      for (let i = 1; i <= 8; i++) {   // as far as it goes before a wall, a tree or the edge (Hangout), or the board's edge
+        const tx = Math.max(0, Math.min(1, p.x + vx * i / 8)), ty = Math.max(0, Math.min(1, p.y + vy * i / 8));
+        if (hang && (!standable(tx * HW, ty * HH, +p.z || 0, undefined, [x * HW, y * HH]) || (inCabin(tx * HW, ty * HH) ? 1 : 0) !== side)) break;
+        x = tx; y = ty;
+      }
+      s.pos[h.id] = { ...p, x: +x.toFixed(4), y: +y.toFixed(4), j: 0, kb: { t: now, x: p.x, y: p.y } };
+    }
+  }
+  if (!hang && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be hit back)
+    const n = justinAt(s.justin, now);
+    if (near(n.x, n.y, 0, 0) && justinDown(s, now, logLine)) justinKilled(s, by, sp);
+  }
+  if (hang) for (const n of hangTargets(s, now)) if (near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) && hangHit(s, n.id, by, now) && n.id === 'justin') justinKilled(s, by, sp);
+  return hits.map(h => h.id);
+}
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({ x: sh.x0 + sh.vx * t / 1000, y: sh.y0 + sh.vy * t / 1000, z: sh.k === 'dagger' ? daggerZ(t / 1000) : .41 });
 /* the handgun's bullets and the thrown daggers: a duck on the ground that one passes through plays dead (until it

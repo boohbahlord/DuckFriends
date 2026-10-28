@@ -2275,6 +2275,15 @@ In the cabin map, there is a new setting for cabin, where, the ducks will become
 One thing though, the ability to change the time a player is immobilized from being dead for from damage will also be a setting in cabin AND the time it takes to become a ghost IF that setting is on will be based on that number."
 
 - Job (Adam, 00:32Z): only the "Knocked down for" setting (games: None, 0.5 s default, 1 s, 2 s, 3 s, 5 s; Duck Cabin: the same plus 6 s, 6 s the default). Knife, hammer, pistol and ghosts are Solomon the 2nd's.
+- Decided (Adam's plan, owner OK'd the drawings 00:50Z "yeah put them in"): knife = the nearest duck in front, about
+  a duck's length, once a second, knocked down. Hammer = a third of a circle, a bit longer reach, every 2.25 s, every
+  duck hit is knocked down and shoved back. Owner's correction (via Adam): "a quick shove away from the swing, with a
+  small hop off the ground, then the duck lands knocked down", not a high arc. The hammer tile's ⚙ swaps in the
+  BioShock wrench (`duck.wrench`; the name and picture follow). Pistol: 7 shots about 5 a second, reloads by itself
+  after the 7th in 1.5 s (in the cooldown bar), 7 ammo dots by the key, R reloads early (in Duck Cabin only while the
+  pistol is out, otherwise R still repeats). Ghosts come after, in their own PR.
+- Owner (2026-10-28 01:56Z, after the in-game page): "okay cool". Then (01:57Z): "1.5 second reload is too short though,
+  make it 3.5 seconds". Decided: RELOAD 3500 ms, then #142 goes live.
 ## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
 "WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
 
@@ -2411,3 +2420,13 @@ Found (Miles Jr.): the recorded sound had no clicks; the sound stream to the spe
 piano note was ten oscillators ringing on after the key was let go, and since #136 they shared one sound clock with the
 cabin's sounds. Fix: each key written out once in the background when someone sits down, then played back (one player
 and a damper a note), same sound.
+
+## Request (owner, 2026-10-28 01:42Z): a dead duck stands up on its own
+"Make it to where when you are killed with a dead effect, that when it expires, your duck stands up on it's on. That way, in poker, your duck will stop having dead effect without having to leave the table"
+
+- Decided (Adam): when the knocked-down time runs out the duck stands up in place (seated ducks stay seated), in every mode and in Duck Cabin. With None the dead look still shows 1 s. Done on the host's tick: `standUps` in js/hangout/death.js, with `onGetUp(fn)` as the hook for the Duck Cabin ghosts (Solomon the 2nd).
+
+## Request (owner, 2026-10-28 01:47Z): Justin gets up by himself
+"Justin should be able to auto revive himself in two minutes if someone else doesn't revive him."
+Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes, he revives himself the same way as E
+(the drinking line and glass, or the shadow duck's lines). The boards' Justin stays as he is. Built by Noah.

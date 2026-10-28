@@ -7,7 +7,7 @@
    colored beside a grid of swatches. Every change shows at once, is kept, and goes to the room you are in. */
 import { profile, save, NAME_OK, cleanName, cleanStats } from './store.js';
 import { openWindow, esc, toast, onMenu, el, navSig, refocus } from './ui.js';
-import { SPECIALS, KEYS, specialById, isOff, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, daggerHTML } from './specials.js';
+import { SPECIALS, KEYS, specialById, looksOf, isOff, keysOf, colorsOf, momentHTML, puffHTML, confettiRain, pressFX, BULLET, daggerHTML, heldHTML } from './specials.js';
 import { sfx } from './sound.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES, pictureToSquare, duckSVG } from './duck.js';
 import { CARD_PATTERNS, CARD_LAYOUTS, CARD_SIZES, cardHTML, patternLayers } from './card.js';
@@ -126,8 +126,10 @@ export function openCustomize(page = lastPage) {
           if (id === 'handgun') els.push(el(`<div class="spe spe-shot" style="left:${(x + w.width * .62).toFixed(0)}px;top:${(y - w.width * .48).toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 40)}px">${BULLET(colorsOf(profile.duck, 'handgun')[2])}</div>`));
           /* the dagger: thrown from the beak, it spins up and over and falls away */
           if (id === 'dagger') els.push(el(`<div class="spe spe-dthrow" style="left:${(x + w.width * .4).toFixed(0)}px;top:${(y - w.width * .55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${daggerHTML(profile.duck)}</i></b></div>`));
+          /* the knife and the hammer: one stab or one swing in the duck's hand */
+          if (id === 'knife' || id === 'hammer') els.push(el(`<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * .45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`));
           pic.append(...els); setTimeout(() => els.forEach(e => e.remove()), 2400);
-          ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, dagger: sfx.swish, sound: sfx.quack, trombone: sfx.trombone })[id]?.();
+          ({ coffee: sfx.sip, hotdog: sfx.chomp, watergun: sfx.splash, confgun: sfx.pop, handgun: sfx.bang, dagger: sfx.swish, knife: sfx.swish, hammer: sfx.swish, sound: sfx.quack, trombone: sfx.trombone })[id]?.();
         }
       };
       const changed = (redraw = true) => {
@@ -195,10 +197,11 @@ export function openCustomize(page = lastPage) {
              special's tile opens a box for each key right under it */
           const keys = keysOf(D), open = specialById(keyFor), phone = !matchMedia('(any-pointer: fine)').matches;   // (only a touch screen: a touchscreen laptop has a touchpad too)
           const box = (n, i, id, attrs) => `<button type="button" class="sp-key${id ? ' full' : ''}${isOff(id) ? ' off' : ''}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ''}</button>`;
-          const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(x => {
-            const at = keys.indexOf(x.id), opened = x.id === keyFor;
+          const tiles = kind => SPECIALS.filter(x => x.kind === kind).map(sp => {
+            const x = looksOf(sp, D), at = keys.indexOf(x.id), opened = x.id === keyFor;
+            const alt = x.id === 'hammer' ? `<button type="button" class="sp-prev sp-alt" data-a="wrench" aria-pressed="${!!D.wrench}" aria-label="${D.wrench ? 'Make it a hammer' : 'Make it a wrench'}" data-tip="${D.wrench ? 'A hammer instead' : 'A wrench instead'}">⚙</button>` : '';   // (the hammer's other look)
             return `<div class="sp-tile${x.off ? ' off' : ''}"><button type="button" class="arm-tile" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ''} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(x.tip)}"><span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ''}</button>
-              <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? ' disabled' : ''} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button></div>
+              <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? ' disabled' : ''} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
               ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ''}"`)).join('')}</div>` : ''}`;
           }).join('');
           html = head('Specials') + `<div class="arm-body arm-specials"><h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join('')}</div>
@@ -307,6 +310,7 @@ export function openCustomize(page = lastPage) {
           if (a.dataset.a === 'nopic') { D.image = null; changed(); return; }
           if (a.dataset.a === 'nocard') { C.image = null; changed(); return; }
           if (a.dataset.a === 'jill') { D.jill = !D.jill; changed(); return; }
+          if (a.dataset.a === 'wrench') { D.wrench = !D.wrench; changed(); return; }
           if (a.dataset.a === 'plainname') { N.color = ''; N.rainbow = false; changed(); return; }
           if (a.dataset.a === 'matchstyle') { const st = styleById(D.style); if (st.match) D.beak = st.match; if (st.eyes) D.eyes = st.eyes; for (const [c, , v] of st.colors || []) D[c] = v; if (st.colors) { D.metal = 'none'; D.image = null; } changed(); return; }
         }

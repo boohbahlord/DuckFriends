@@ -8,7 +8,7 @@
    a column of the same specials over it (a tap uses one; holding one brings a "Toggle on" box, Shift and its key on a
    computer); the column stays until the button is tapped again or somewhere else is. */
 import { esc, toast } from './ui.js';
-import { KEYS, SPECIALS, specialById } from './specials.js';
+import { KEYS, SPECIALS, specialById, looksOf, ammoHTML } from './specials.js';
 
 const LIFE = 5000;   // how long the row (or the ring of specials) stays after its last use
 const HOLD = 450;
@@ -16,7 +16,8 @@ const HOLD = 450;
 const drain = c => c ? `<s class="cooldown" style="--full:${c[1]}ms;--el:${Math.max(0, c[1] - (c[0] - c[2])).toFixed(0)}ms"></s>` : '';    // on a phone: holding a special this long keeps it on
 
 /* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or
-   [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then) */
+   [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
+   my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key) */
 export function mountHotbar(S, api) {
   const bar = document.createElement('div');
   bar.className = 'hotbar gone'; bar.setAttribute('aria-hidden', 'true');
@@ -26,11 +27,13 @@ export function mountHotbar(S, api) {
   btn.type = 'button'; btn.className = 'mode-icon sp-btn'; btn.setAttribute('aria-label', 'Specials'); btn.dataset.tip = 'Specials';
   btn.innerHTML = '<span class="mi sp-cyc"><i></i><i></i></span>';
   let col = null, colSig = '';
+  const look = id => looksOf(specialById(id), api.duck && api.duck());
+  const dots = id => id === 'handgun' && api.ammo ? ammoHTML(api.ammo()) : '';
   /* the button shows your specials' icons in turn (none chosen: all of them; never one that's off) */
   const mine = () => api.keys().filter(id => id && specialById(id) && !specialById(id).off);
   let cycN = 0, cycFace = 0;
   const cycle = () => {
-    const ids = mine(), list = ids.length ? ids : SPECIALS.filter(x => !x.off).map(x => x.id), sp = specialById(list[cycN++ % list.length]);
+    const ids = mine(), list = ids.length ? ids : SPECIALS.filter(x => !x.off).map(x => x.id), sp = look(list[cycN++ % list.length]);
     const faces = btn.querySelectorAll('.sp-cyc i'); cycFace ^= 1;
     faces[cycFace].innerHTML = sp.icon; faces[cycFace].classList.add('up'); faces[cycFace ^ 1].classList.remove('up');
   };
@@ -39,10 +42,10 @@ export function mountHotbar(S, api) {
   const draw = () => {
     const k = api.keys(), on = api.kept(), cd = api.cool ? api.cool() : []; cools = cd;
     if (col) drawCol(k, on, cd);
-    const now = JSON.stringify([k, [...on], sel, cd.map(c => c && c[0])]);
+    const now = JSON.stringify([k, [...on], sel, cd.map(c => c && c[0]), api.ammo && api.ammo(), api.duck && !!(api.duck() || {}).wrench]);
     if (now === sig) return; sig = now;
-    bar.innerHTML = KEYS.map((n, i) => { const sp = specialById(k[i]);
-      return `<span class="hk${sp ? '' : ' empty'}${sp && sp.off ? ' off' : ''}${i === sel ? ' sel' : ''}${sp && on.has(sp.id) ? ' on' : ''}${cd[i] ? ' cool' : ''}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ''}${drain(cd[i])}</span>`; }).join('');
+    bar.innerHTML = KEYS.map((n, i) => { const sp = look(k[i]);
+      return `<span class="hk${sp ? '' : ' empty'}${sp && sp.off ? ' off' : ''}${i === sel ? ' sel' : ''}${sp && on.has(sp.id) ? ' on' : ''}${cd[i] ? ' cool' : ''}"><b>${n}</b>${sp ? `<i>${sp.icon}</i>` : ''}${drain(cd[i])}${dots(k[i])}</span>`; }).join('');
     /* when the next one is ready again, its bar goes */
     const left = cd.filter(Boolean).map(([end, , t]) => end - t);
     clearTimeout(coolT); if (left.length) coolT = setTimeout(() => { draw(); settle(); }, Math.min(...left) + 40);
@@ -69,8 +72,8 @@ export function mountHotbar(S, api) {
     wheel = document.createElement('div');
     wheel.className = 'sp-wheel';
     wheel.innerHTML = slots.map(([id, i], j) => {
-      const a = -Math.PI / 2 + (j / n) * Math.PI * 2, sp = specialById(id);
-      return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}${sp.off ? ' off' : ''}" data-i="${i}" style="left:${(cx + Math.cos(a) * r).toFixed(0)}px;top:${(cy + Math.sin(a) * r).toFixed(0)}px" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}</button>`;
+      const a = -Math.PI / 2 + (j / n) * Math.PI * 2, sp = look(id);
+      return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}${sp.off ? ' off' : ''}" data-i="${i}" style="left:${(cx + Math.cos(a) * r).toFixed(0)}px;top:${(cy + Math.sin(a) * r).toFixed(0)}px" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}${dots(id)}</button>`;
     }).join('');
     wheel.opened = performance.now();
     document.body.append(wheel);
@@ -89,9 +92,9 @@ export function mountHotbar(S, api) {
     return true;
   }
   /* ---------- phones: the Specials button and its column ---------- */
-  const one = (id, i, on, cd) => { const sp = specialById(id); return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}${sp.off ? ' off' : ''}" data-i="${i}" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}</button>`; };
+  const one = (id, i, on, cd) => { const sp = look(id); return `<button type="button" class="sp-wbtn${on.has(id) ? ' on' : ''}${cd[i] ? ' cool' : ''}${sp.off ? ' off' : ''}" data-i="${i}" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}${dots(id)}</button>`; };
   function drawCol(k, on, cd) {
-    const now = JSON.stringify([k, [...on], cd.map(c => c && c[0])]); if (now === colSig) return; colSig = now;
+    const now = JSON.stringify([k, [...on], cd.map(c => c && c[0]), api.ammo && api.ammo()]); if (now === colSig) return; colSig = now;
     const ask = col.querySelector('.sp-toggle'), askI = ask ? +ask.dataset.i : -1;
     col.innerHTML = k.map((id, i) => id && specialById(id) ? one(id, i, on, cd) : '').join('');
     if (askI >= 0) toggleBox(askI);
