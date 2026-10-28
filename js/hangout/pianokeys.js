@@ -38,6 +38,7 @@
      KEY_ROWS, KEY_MAP (e.code → midi), KEY_LABEL (e.code → what the key shows), LOW (36, C2), HIGH (83, B5), keyMidi(code).
      renderOffline(events) → AudioBuffer: the voice written out ([{ midi, t, d, vel }], seconds), for tests. */
 import { profile } from '../store.js';
+import { sfxContext, sfxOut, soon } from '../sound.js';
 
 /* ---------- the keys ---------- */
 export const LOW = 36, HIGH = LOW + 47;
@@ -172,9 +173,8 @@ let AC = null, OUT = null;
 const live = new Map();   // "who|midi" → voice
 function ctx() {
   if (!AC) {
-    const A = window.AudioContext || window.webkitAudioContext; if (!A) return null;
-    try { AC = new A({ latencyHint: 'interactive' }); } catch (e) { try { AC = new A(); } catch (e2) { return null; } }
-    OUT = chain(AC, AC.destination, COARSE);
+    AC = sfxContext(); if (!AC) return null;   // (the game's one clock for sounds: sound.js)
+    OUT = chain(AC, sfxOut(), COARSE);
   }
   if (AC.state === 'suspended') AC.resume();
   return AC;
@@ -182,14 +182,14 @@ function ctx() {
 const MAX_VOICES = 28;
 export function noteOn(midi, { who = '', vel = .8 } = {}) {
   const a = ctx(), v = vol(); if (!a || !v) return;
-  const k = who + '|' + midi, t = a.currentTime + LEAD;
+  const k = who + '|' + midi, t = soon(a, LEAD);
   const old = live.get(k); if (old) old.release(t, .03);   // struck again: the old one stops quickly
   if (live.size >= MAX_VOICES) { const [ok, ov] = live.entries().next().value; ov.release(t, .05); live.delete(ok); }
   live.delete(k); live.set(k, strike(a, OUT, midi, t, vel * (.96 + Math.random() * .08), v, COARSE));
 }
 export function noteOff(midi, { who = '' } = {}) {
   const k = who + '|' + midi, vc = live.get(k); if (!vc || !AC) return;
-  live.delete(k); vc.release(AC.currentTime + LEAD, damperTau(midi));   // (the same lead: a quick tap still sounds)
+  live.delete(k); vc.release(soon(AC, LEAD), damperTau(midi));   // (the same lead: a quick tap still sounds)
 }
 export function allNotesOff(who) { for (const k of [...live.keys()]) if (who == null || k.startsWith(who + '|')) noteOff(+k.split('|')[1], { who: k.split('|')[0] }); }
 /* the voice written out, for tests: events [{ midi, t, d, vel }] in seconds */

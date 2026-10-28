@@ -3,30 +3,55 @@
    a pop when someone joins, a tick when a timer gets short. Volume and Sound effects in Settings scale them all. */
 import { profile } from './store.js';
 
-let ctx = null;
-const ac = () => { if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } } if (ctx.state === 'suspended') ctx.resume(); return ctx; };
+/* the soft ceiling at the end of a chain: straight through up to .7, then rounding off below 1, so many sounds at once
+   never go over full scale, which crackles (its input is quartered, as a curve only reads -1..1: it takes up to 4).
+   The music ends with one too */
+export function ceiling(a, dest) {
+  const q = a.createGain(), w = a.createWaveShaper(), n = 4097, c = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const x = 4 * (i / 2048 - 1), m = Math.abs(x); c[i] = Math.sign(x) * (m <= .7 ? m : .7 + .28 * Math.tanh((m - .7) / .28)); }
+  q.gain.value = .25; w.curve = c; q.connect(w); w.connect(dest); return q;
+}
+/* one sound clock for every sound that isn't music (these, Duck Cabin's, the soccer ball's, the piano's): each clock is its
+   own stream to the speakers and its own work for the computer, and five of them on a busy computer crackled */
+let ctx = null, cap = null;
+export function sfxContext() { if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); cap = ceiling(ctx, ctx.destination); } catch (e) { return null; } } if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+export const sfxOut = () => sfxContext() && cap;   // where they all go: through the ceiling to the speakers
+const ac = sfxContext;
+/* "now" on a sound clock, plus a lead. Firefox only moves currentTime between tasks, so a sound set during a long frame
+   read a clock that had stopped, landed in the past and popped: if the clock hasn't moved since I last looked, I add the
+   time that has passed since then (at most a quarter of a second) */
+const seen = new WeakMap();
+export function soon(a, lead = LEAD) {
+  const p = performance.now(), ct = a.currentTime, s = seen.get(a);
+  if (s && s.ct === ct && a.state === 'running') return ct + Math.min(.25, (p - s.p) / 1000) + lead;
+  seen.set(a, { ct, p }); return ct + lead;
+}
 const vol = () => (profile.settings.sound / 100) * (profile.settings.sfx / 100);
+/* every sound is set a little ahead: set for "now", the moment has gone by the time the sound is worked out, its fade-in
+   is skipped and it starts with a pop */
+const LEAD = .03;
 
 function tone(freq, dur, { type = 'sine', gain = .2, at = 0, slide = 0, attack = .008 } = {}) {
   const a = ac(), v = vol(); if (!a || !v) return;
-  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  const t = soon(a) + at, o = a.createOscillator(), g = a.createGain();
+  attack = Math.max(freq < 200 ? .012 : .005, attack);   // (5 ms at least, a low note longer, or the start is a click)
   o.type = type; o.frequency.setValueAtTime(freq, t);
   if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain * v, t + attack);
   g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+  o.connect(g).connect(cap); o.start(t); o.stop(t + dur + .02);
 }
 
 /* a burst of noise through a filter (crackle, rumble) */
 function noise(dur, { gain = .1, at = 0, type = 'bandpass', freq = 1800, q = .8, slideTo = 0 } = {}) {
   const a = ac(), v = vol(); if (!a || !v) return;
-  const t = a.currentTime + at, n = Math.ceil(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const t = soon(a) + at, n = Math.ceil(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0), fin = a.sampleRate * .005;
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) * Math.min(1, i / fin);   // it comes in over 5 ms: noise that starts at full level crackles
   const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
   src.buffer = buf; f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q;
   if (slideTo) f.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
   g.gain.setValueAtTime(gain * v, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  src.connect(f).connect(g).connect(a.destination); src.start(t); src.stop(t + dur + .02);
+  src.connect(f).connect(g).connect(cap); src.start(t); src.stop(t + dur + .02);
 }
 
 export const sfx = {
@@ -79,7 +104,7 @@ export const sfx = {
      a second voice sits a sour quarter tone off, through a brassy filter that opens and closes */
   trombone() {
     const a = ac(), v = vol(); if (!a || !v) return;
-    const t = a.currentTime, f = [233.1, 207.7, 185, 155.6][Math.floor(Math.random() * 4)] * .97, end = t + 1.25;
+    const t = soon(a), f = [233.1, 207.7, 185, 155.6][Math.floor(Math.random() * 4)] * .97, end = t + 1.25;
     const g = a.createGain(), flt = a.createBiquadFilter(), lfo = a.createOscillator(), depth = a.createGain();
     flt.type = 'lowpass'; flt.Q.value = 3; flt.frequency.setValueAtTime(380, t); flt.frequency.linearRampToValueAtTime(1500, t + .09); flt.frequency.setValueAtTime(1300, t + .5); flt.frequency.exponentialRampToValueAtTime(420, end);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.16 * v, t + .06); g.gain.setValueAtTime(.12 * v, t + .55); g.gain.exponentialRampToValueAtTime(.0001, end);
@@ -91,7 +116,7 @@ export const sfx = {
       o.frequency.setValueAtTime(f, t + .5); o.frequency.exponentialRampToValueAtTime(f * .8, end);    // the sag
       depth.connect(o.frequency); o.connect(flt); o.start(t); o.stop(end + .02);
     }
-    flt.connect(g).connect(a.destination); lfo.start(t); lfo.stop(end + .02);
+    flt.connect(g).connect(cap); lfo.start(t); lfo.stop(end + .02);
     noise(.09, { gain: .05, type: 'bandpass', freq: 600, q: 1.5 });   // the blat as it starts
   },
   hotdog() { tone(440, .08, { gain: .1, slide: 1.6 }); tone(700, .12, { gain: .08, at: .08, slide: 1.3 }); },
@@ -119,7 +144,7 @@ export function diveVoice(a, dest, t, v = 1) {
   g.connect(dest);
   for (const x of [o, o2, lfo]) { x.start(w); x.stop(end + .05); }
 }
-export function dive() { const a = ac(), v = vol(); if (a && v) diveVoice(a, a.destination, a.currentTime + .03, v); }
+export function dive() { const a = ac(), v = vol(); if (a && v) diveVoice(a, cap, soon(a), v); }
 
 /* browsers start sound only after the first touch or key */
 addEventListener('pointerdown', ac, { once: true });
