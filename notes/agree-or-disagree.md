@@ -2445,3 +2445,37 @@ Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes,
 "The spawn should be changed to the balcony"
 "like what i mean is that all players spawn on the balcony when Cabin loads"
 - Decided (Adam): the balcony is the raised deck behind the cabin. Everyone starts there when Duck Cabin loads (the game's start, and a joiner mid-game, on the next free spot); reset duck keeps the front door.
+
+## Request (owner, 2026-10-28 16:43Z): piano Esc, vote share, brackets on phones, and a long batch
+"When you are on the piano, it should say in the vote or interact button the escape button (ESC), not the E to get up button, becuz on piano that plays a note.
+
+The keys you must press on the piano for it to play should be on the keys visibly, so on the first note, it should show the number one key (1), while the first note of the 5th octive, if im getting this right, should show the shift key (SHIFT)
+
+Justin should be able to be only slightly bad, not so bad that it ruins the game, because he literally raises so high every time that it is not fun to play with.
+
+The betting is confusing the players and doesn't work very well and should be checked. Justin should be able to play black jack. The selection between poker or black jack SHOULDN'T be timed. 
+
+In poker the game can only have players buy in at the first one or three hands of poker, and each player gets only their portion of chips until the game ends, either because of the hand limit option (check that it works, as in how many turns until the game ends and declares a winner by the amount of chips) or because a player takes everyone else's chips by the end of a turn while. This means players can be out of the game and only able to sit at the table and watch or wait till the next game if they run out of chips. 
+
+Check that the vote in the game is working, because i had votes set to 2/3rd vote to end turn, and yet, the turn didnt end when me and my friend dyson voted and only one didnt. Check the percent is equal to the fraction for that as well. The new option is that half of votes end a turn by DEFAULT... IF the game has it to where there is a round to look at things or discuss after vote, and that new setting i'll get into is simply called the discussion round in settings.
+
+Furthermore, the vote can be undone by clicking the vote button again, and now in agree or disagree AND anything like it (would you rather or anything with vote), there is a vote round only unless the old system is turned on in additional settings for the map, and ducks can move around in their own section after they voted and they can unvote to leave that section to change their mind. 
+
+
+ON MOBILE, the fucking map would not appear right for my friend without a PC, and so, his game on brackets would say he is standing on the opposite option that he was on, idk if he rotated his phone and it broke, or if it only broke in later ranks or whatever. 
+
+In the bracket game, where it shows all the brackets so far in review, the abillity to see their placements after a round of elimations should ONLY be an option to turn on, BUT it still shows that at the end when the last option won. 
+
+In the story game, there is an arrow that points the players down to the secret words to vote on until they get there and vote. The duck in the cloud should have the cloud tell them what to do next, either by dialog or the text bubble next to it, and the text that tells them what to do should glow. 
+
+In the story game, there is an ability to turn off the voting entirely, and an option to turn off the stat screen, and same goes for the other games, it is in the settings for the game. 
+
+All players must vote for a turn to end, but the amount needed to vote starts a countdown even IF a player undoes a vote (this can be changed in lobby settings to where undoing a vote doesnt do that)
+
+The game needs a new game mode called "Does Duck Relate?" And all it does is ask a question like would you rather or agree to disagree does and the ducks then stand on either side of "Duck Does Relate" or "Duck Doesn't Relate"
+
+It is simple and the stats should just take whatever was in the agree or disagree and repurpose them for this game, since it is mostly just reusing formulas. 
+
+I go to class now cant answer question but adam can"
+
+- Jackal's three (Adam, 16:45Z): the 2/3 vote bug (3 players * .67 = 2.01 wanted all 3: now `shareOf` reads .67 as exactly 2/3), brackets on phones (side mapping), and the piano button saying Esc. The rest of the message is for other threads.
