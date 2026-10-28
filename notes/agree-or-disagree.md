@@ -2414,3 +2414,8 @@ says an insult or rage line and walks off. Built by Noah.
 "Make it to where when you are killed with a dead effect, that when it expires, your duck stands up on it's on. That way, in poker, your duck will stop having dead effect without having to leave the table"
 
 - Decided (Adam): when the knocked-down time runs out the duck stands up in place (seated ducks stay seated), in every mode and in Duck Cabin. With None the dead look still shows 1 s. Done on the host's tick: `standUps` in js/hangout/death.js, with `onGetUp(fn)` as the hook for the Duck Cabin ghosts (Solomon the 2nd).
+
+## Request (owner, 2026-10-28 01:47Z): Justin gets up by himself
+"Justin should be able to auto revive himself in two minutes if someone else doesn't revive him."
+Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes, he revives himself the same way as E
+(the drinking line and glass, or the shadow duck's lines). The boards' Justin stays as he is. Built by Noah.
