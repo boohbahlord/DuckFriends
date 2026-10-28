@@ -58,7 +58,9 @@ export function openUpdates() {
         w.querySelector('.up-ver').textContent = `Version ${u.version}`;
         w.querySelector('.up-date').textContent = u.date;
         w.querySelector('.up-name').textContent = u.title;
-        w.querySelector('.up-body').innerHTML = list('new', 'New', u.news) + list('fix', 'Fixed', u.fixed);
+        const body = w.querySelector('.up-body');
+        body.innerHTML = list('new', 'New', u.news) + list('fix', 'Fixed', u.fixed);
+        body.scrollTop = 0;   // each version starts at its top
         w.querySelector('.up-count').textContent = `${i + 1} of ${UPDATES.length}`;
         w.querySelector('[data-d="1"]').disabled = i === UPDATES.length - 1;
         w.querySelector('[data-d="-1"]').disabled = i === 0;
