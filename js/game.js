@@ -1180,6 +1180,7 @@ function paint(force) {
   if ($('.round', S).textContent !== round) $('.round', S).textContent = round;   // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh();   // (a key kept on, or kept off)
   if (s.phase === 'submit' || s.phase === 'topic' || s.phase === 'words') { setHTML($('.who', S), whoHTML(s)); if (s.done[R.me] && $('form.submit-card', S)) paint(true); }
+  if (isSc(s)) $('.sc-board', S)?.classList.toggle('voted', !!s.done[R.me]);   // (the arrow and the glowing hint are for those who haven't voted)
   if (isSc(s) && s.phase === 'write') {   // the line as it's typed (the writer sees their own straight from the box)
     if (scWriter(s) !== R.me) { const t = $('.sc-typing', S), was = t && t._html; setHTML(t, typingHTML(s)); if (t && t._html !== was) geo = null; }
     else if (s.done[R.me] && $('form.sc-write', S)) paint(true);

@@ -2071,3 +2071,15 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .up-list { margin: 0; padding-left: 1.2rem; }
 .up-list li { margin: .2rem 0; font-size: calc(.95rem * var(--ts)); }
 .up-count { text-align: center; margin: .8rem 0 0; font-size: calc(.8rem * var(--ts)); }
+
+/* Story Chain: the cloud's duck says what to do next in a glowing bubble, and an arrow points down to the secret words until I've voted */
+.sc-glow { color: var(--ink); text-shadow: 0 0 .5rem #ffd23fcc, 0 0 1.1rem #ffd23f77; }
+html.moving .sc-glow { animation: scglowtext 2s ease-in-out infinite; }
+@keyframes scglowtext { 50% { text-shadow: 0 0 .25rem #ffd23f99, 0 0 .6rem #ffd23f44; } }
+.sc-board.voted .sc-glow { text-shadow: none; animation: none; opacity: .75; }
+.sc-arrow { position: absolute; left: 50%; bottom: 0; z-index: 4; transform: translateX(-50%); display: flex; pointer-events: none; padding: 0 .9rem; border-radius: 1rem 1rem 0 0; background: color-mix(in srgb, var(--panel) 90%, transparent); border: .14rem solid var(--line); border-bottom: 0; }   /* (a small tab in the strip at the bottom edge that hides more below) */
+.sc-view:not(.more-down) .sc-arrow { display: none; }
+.sc-arrow b { font-size: calc(1.6rem * var(--ts)); line-height: 1; color: #ffd23f; text-shadow: 0 .1rem 0 var(--line); }
+html.moving .sc-arrow b { animation: scarrow 1s ease-in-out infinite; }
+@keyframes scarrow { 50% { transform: translateY(.3rem); } }
+.sc-board.voted .sc-arrow { display: none; }
