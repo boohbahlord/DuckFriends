@@ -84,7 +84,7 @@ function shuffled() {
 const computer = id => id === 'butler' || id === 'justin';
 /* poker picked in the table's vote (blackjack.js): the setup, set by the first one seated; their blackjack chips come along */
 export function start(s, seated, now, chips = {}) {
-  const pk = fresh(); Object.assign(pk, { st: 'setup', t: now, by: seated[0].id });
+  const pk = fresh(), person = seated.find(q => s.players[q.id] && !s.players[q.id].bot); Object.assign(pk, { st: 'setup', t: now, by: (person || seated[0]).id });   // (a person sets it up, not a computer)
   pk.set.butler = seated.length === 1 ? 1 : 0;   // (alone: the Butler plays, unless they turn him off)
   for (const { id } of seated) pk.chips[id] = chips[id] ?? START;
   s.hang.pk = pk;
@@ -189,8 +189,8 @@ function play(s, pk, id, d, v, now) {
   advance(s, pk, now);
   return true;
 }
-/* the computers (the Butler, Justin, TEST rooms): a rough strength of their hand, then fold, call or raise (Justin plays
-   badly, as I asked: he calls almost everything, raises on junk, bluffs, and now and then folds a good hand) */
+/* the computers (the Butler, Justin, TEST rooms): a rough strength of their hand, then fold, call or raise (Justin a
+   little worse than the rest: he calls a bit too often, so he loses a little more than he wins) */
 function strength(cards, board) {
   if (cards.length < 2) return .3;
   if (!board.length) { const [a, b] = cards.map(val).sort((x, y) => y - x), suited = Math.floor(cards[0] / 13) === Math.floor(cards[1] / 13); return a === b ? .5 + a / 30 : (a + b) / 30 + (suited ? .05 : 0) + (a - b === 1 ? .03 : 0); }
@@ -199,10 +199,13 @@ function strength(cards, board) {
 export function brainMove(pk, id, cards, rand = Math.random) {
   const p = pk.p[id], owe = Math.max(0, pk.high - p.bet), have = pk.chips[id] ?? 0, pot = potOf(pk), st = strength(cards, pk.board), r = rand();
   const raise = k => ({ do: 'raise', v: Math.min(have - owe, Math.max(pk.min, Math.round(pot * k))) });
-  if (id === 'justin') {
-    if (st > .6 && r < .1) return { do: owe ? 'fold' : 'call' };   // (folds a good hand now and then)
-    if (r < .3 && have > owe + pk.min) return raise(.3 + rand() * .7);   // (raises on anything)
-    return { do: owe > have * .7 && st < .3 && r < .5 ? 'fold' : 'call' };   // (calls almost everything)
+  if (id === 'justin') {   // (only a little bad, as I asked: sensible most hands, small raises, all in only on a strong hand, the odd silly call)
+    const big = 2 * blindNow(pk), small = Math.min(have - owe, Math.max(pk.min, Math.round(big * (1 + rand() * 2))));
+    const can = small >= pk.min && small <= 3 * big && have > owe + small;
+    if (st >= .85 && r < .35 && have > owe) return { do: 'raise', v: 'all' };
+    if (can && ((st > .7 && r < .4) || r < .05)) return { do: 'raise', v: small };
+    if (!owe || st > owe / (pot + owe) + .05) return { do: 'call' };
+    return { do: r < .15 && owe <= have * .3 ? 'call' : 'fold' };
   }
   if (st > .78 && r < .6 && have > owe + pk.min) return raise(.5);
   if (r < .07 && have > owe + pk.min) return raise(.4);   // (a bluff)
@@ -213,6 +216,7 @@ export function brainMove(pk, id, cards, rand = Math.random) {
 export function pkBot(s, id, now) {
   const pk = (s.hang || {}).pk; if (!pk) return [];
   const think = 900 + hash(id + pk.st + pk.id + pk.turn + pk.round) % 1600, A = o => [{ t: 'hang', k: 'pk', id, ...o }];
+  if (pk.st === 'setup' && pk.by === id && now - pk.t > think) return A({ do: 'start' });   // (a computer left setting it up: the defaults)
   if (pk.st === 'join' && !pk.join[id] && now - pk.t > think) return A({ do: 'join', v: hash(id + pk.n) % 7 ? 'play' : 'out' });
   if (pk.st === 'bet' && pk.order[pk.turn] === id && now - pk.tt > think) return A(brainMove(pk, id, holesOf(pk, id)));
   return [];
@@ -343,8 +347,8 @@ function render(s, now) {
     body = inHand ? `<div class="hang-bj-hand mine pkr-mine${mineTurn ? ' turn' : ''}${p && p.s === 'fold' ? ' out' : ''}"><span class="hang-bj-who">You${pk.st === 'show' ? (r && r.won > 0 ? `<span class="pkr-did won">+${r.won}</span>` : '') : p && p.a ? `<span class="pkr-did">${p.a}</span>` : ''}</span><div class="bj-cards">${cards.map(c => cardHTML(c, ' old')).join('') || '<span class="bj-card none"></span>'}</div><span class="pkr-name">${h && cards.length ? h.name : ''}</span></div>`
       + `<div class="bj-stats">${stat('Pot', chipSVG(GOLD) + potOf(pk), ' pot')}${pk.st === 'bet' && p && p.s !== 'fold' ? stat('To call', String(owe)) : ''}</div>` : '';
     if (inHand && pk.st !== 'show') {
-      const can = mineTurn && p && !p.s;
-      acts = `<div class="pkr-row"><button type="button" class="btn red" data-do="fold"${can ? '' : ' disabled'}>Fold</button><button type="button" class="btn green" data-do="call"${can ? '' : ' disabled'}>${owe ? 'Call ' + Math.min(owe, pk.chips[me] ?? 0) : 'Check'}</button></div><div class="pkr-row pkr-raise${can ? '' : ' off'}">${amtHTML(pk.high ? 'Raise' : 'Bet', 'yellow')}</div>`;
+      const can = mineTurn && p && !p.s, up = can && raiseMax(pk, me) > 0;
+      acts = `<div class="pkr-row"><button type="button" class="btn red" data-do="fold"${can ? '' : ' disabled'}>Fold</button><button type="button" class="btn green" data-do="call"${can ? '' : ' disabled'}>${owe ? 'Call ' + Math.min(owe, pk.chips[me] ?? 0) : 'Check'}</button></div><div class="pkr-row pkr-raise${up ? '' : ' off'}">${amtHTML(pk.high ? 'Raise' : 'Bet', 'yellow')}</div>`;
     }
   }
   v.say.innerHTML = say;
@@ -352,8 +356,11 @@ function render(s, now) {
   v.body.innerHTML = body;
   if (v.acts.dataset.sig !== acts) { v.acts.dataset.sig = acts; v.acts.innerHTML = acts; }
   for (const b of v.acts.querySelectorAll('.pkr-raise.off button, .pkr-raise.off input')) b.disabled = true;
+  const box = v.acts.querySelector('.bj-box'); v.min = pk.min; if (box && pk.st === 'bet') box.placeholder = 'min ' + Math.min(pk.min, raiseMax(pk, me) || pk.min);   // (the smallest raise, so a new player knows)
   amtShow(v);
 }
+/* the most I can raise by: my chips after calling (more than that is All in) */
+const raiseMax = (pk, id) => Math.max(0, (pk.chips[id] ?? 0) - toCall(pk, id));
 function timer(pk, now) {
   const [from, len] = pk.st === 'join' ? [pk.t, JOIN] : pk.st === 'bet' ? [pk.tt, pk.set.time * 1000] : [0, 0];
   return len ? Math.max(0, 1 - (now - from) / len) : 0;
@@ -402,12 +409,12 @@ GAME.poker = { on, start, bot: pkBot, svg: (s, now, me) => pokerSVG(s, now, me),
 
 function press(e) {
   const btn = e.target.closest('[data-do]'); if (!btn || btn.disabled || !v) return;
-  const d = btn.dataset.do, s = v.ctx.state(), pk = s.hang.pk, have = pk.chips[v.ctx.me] ?? 0, send = o => v.ctx.send({ t: 'hang', k: 'pk', ...o });
+  const d = btn.dataset.do, s = v.ctx.state(), pk = s.hang.pk, have = raiseMax(pk, v.ctx.me), send = o => v.ctx.send({ t: 'hang', k: 'pk', ...o });
   if (amtPress(v, d, btn, have)) return;
   if (d === 'set') send({ do: 'set', key: btn.dataset.k, v: btn.dataset.v });
   else if (d === 'start' || d === 'fold' || d === 'call') send({ do: d });
   else if (d === 'join') send({ do: 'join', v: btn.dataset.v });
-  else if (d === 'bet') { if (v.amt) send({ do: 'raise', v: v.amt >= have ? 'all' : v.amt }); v.amt = 0; }
+  else if (d === 'bet') { const max = raiseMax(pk, v.ctx.me), by = Math.max(v.amt, pk.min); if (v.amt) send({ do: 'raise', v: by >= max ? 'all' : by }); v.amt = 0; }   // (under the smallest raise: the smallest raise)
 }
 function esc_(e) { if (e.key === 'Escape' && v && v.open && !document.querySelector('.win-back, .ctx')) { e.preventDefault(); e.stopPropagation(); getUp(v.ctx); } }
 
@@ -423,7 +430,7 @@ activity({
     v = { ctx, el, say: el.querySelector('.hang-bj-say'), chipsEl: el.querySelector('.hang-bj-chips'), body: el.querySelector('.pkr-body'), acts: el.querySelector('.pkr-acts'), bar: el.querySelector('.hang-bj-time i'), open: false, amt: 0, sig: '', free: null };
     el.querySelector('.hang-book-x').onclick = () => getUp(ctx);
     el.addEventListener('click', press);
-    const have = () => (v.ctx.state().hang.pk.chips[v.ctx.me] ?? 0);
+    const have = () => raiseMax(v.ctx.state().hang.pk, v.ctx.me);   // (the box holds what I can raise by, no more)
     el.addEventListener('input', e => amtTyped(v, e, have()));
     el.addEventListener('keydown', e => amtKeys(v, e, have()));
     addEventListener('keydown', esc_, true);

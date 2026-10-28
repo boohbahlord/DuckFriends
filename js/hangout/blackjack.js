@@ -38,7 +38,7 @@ import { nameHTML } from '../name.js';
 import { rainbowHTML } from '../art.js';
 import { duckSVG } from '../duck.js';
 
-export const VOTE = 15000, BET = 15000, TURN = 20000, GAP = 360, DGAP = 750, END = 4500, START = 100, BETS = [1, 5, 25];
+export const BET = 15000, TURN = 20000, GAP = 360, DGAP = 750, END = 4500, START = 100, BETS = [1, 5, 25];
 const STOOLS = new Map(SEATS.filter(q => q.p.kind === 'stool').map(q => [q.id, q]));
 export const BUTLER = "Justin's Butler";
 /* the other game at this table (poker.js): when it's on, its window and its drawing take over the table */
@@ -190,7 +190,7 @@ rule('bj', {
       case 'idle': if (seated.length) nextHand(b, seated, now); break;
       case 'vote': {
         const v = seated.map(q => b.votes[q.id]).filter(Boolean);
-        if (v.length < seated.length && now - b.t < VOTE) break;
+        if (v.length < seated.length) break;   // (no timer: the pick waits for everyone seated)
         const c = v.filter(x => x === 'chips').length, f = v.filter(x => x === 'fun').length, p = v.length - c - f;
         if (p > c && p > f && GAME.poker) { Object.assign(b, { mode: 'poker', st: 'poker', t: now, votes: {}, bvotes: {} }); GAME.poker.start(s, seated, now, b.chips); break; }   // (most voted poker: poker.js has the table)
         b.mode = c > f ? 'chips' : seated.length > 1 ? 'fun' : 'solo'; b.votes = {}; b.chips = {};
@@ -333,7 +333,8 @@ function render(s, now) {
   const turnId = b.st === 'play' ? b.order[b.turn] : null, res = b.res[me];
   let say = '', acts = '';
   if (b.st === 'vote') {
-    say = 'What do we play?';
+    const left = atTable(s).filter(q => !b.votes[q.id]).length;
+    say = !b.votes[me] ? 'What do we play?' : left ? `Waiting for ${left} more to pick` : '';   // (no timer: it waits for everyone seated)
     const bn = atTable(s).filter(q => b.bvotes[q.id]).length;
     acts = `<button type="button" class="btn green${b.votes[me] === 'chips' ? ' on' : ''}" data-do="vote" data-v="chips">Blackjack</button><button type="button" class="btn yellow${b.votes[me] === 'fun' ? ' on' : ''}" data-do="vote" data-v="fun">Just for fun</button><button type="button" class="btn purple${b.votes[me] === 'poker' ? ' on' : ''}" data-do="vote" data-v="poker">Poker</button>`
       + `<button type="button" class="btn small bj-let${b.bvotes[me] ? ' on' : ''}" data-do="butler" data-v="${b.bvotes[me] ? 0 : 1}" aria-pressed="${!!b.bvotes[me]}">${b.bvotes[me] ? '✓' : '✗'} ${BUTLER} plays too${bn ? ` <b>${bn}</b>` : ''}</button>`;
@@ -389,21 +390,26 @@ function render(s, now) {
    chips that add to it, All in */
 export const amtHTML = (go = 'Bet', cls = 'green') => `<span class="bj-amt"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="-1" aria-label="One less">▼</button><input class="bj-box" type="text" inputmode="numeric" maxlength="5" placeholder="0" aria-label="${go}"><button type="button" class="btn small bj-arrow" data-do="amt" data-v="1" aria-label="One more">▲</button></span>`
   + BETS.map((n, i) => `<button type="button" class="btn small bj-pick" data-do="add" data-v="${n}">${chipSVG(COLORS[i])}${n}</button>`).join('')
-  + `<button type="button" class="btn small bj-pick" data-do="all">${chipSVG(GOLD)}All in</button><button type="button" class="btn ${cls} bj-go" data-do="bet">${go}</button>`;
+  + `<button type="button" class="btn small bj-pick" data-do="all">${chipSVG(GOLD)}All in</button><button type="button" class="btn ${cls} bj-go" data-do="bet" data-go="${go}">${go}</button>`;
 export function amtShow(w) {
   const box = w.acts.querySelector('.bj-box'); if (!box) return;
   if (document.activeElement !== box) box.value = w.amt ? String(w.amt) : '';
-  const go = w.acts.querySelector('.bj-go'); if (go) go.disabled = !w.amt;
+  goLabel(w);
+}
+/* the button says what it will do: "Bet 7", "Raise 5", or "All in" for everything I have */
+function goLabel(w) {
+  const go = w.acts.querySelector('.bj-go'); if (!go) return;
+  const n = Math.max(w.amt, w.min || 0); go.disabled = !w.amt; go.textContent = !w.amt ? go.dataset.go : n >= (w.have ?? Infinity) ? 'All in' : go.dataset.go + ' ' + n;   // (min: poker's smallest raise)
 }
 function amtSet(w, n, have) {
-  w.amt = Math.max(0, Math.min(have, Math.floor(n) || 0)); amtShow(w);
+  w.have = have; w.amt = Math.max(0, Math.min(have, Math.floor(n) || 0)); amtShow(w);
   const box = w.acts.querySelector('.bj-box'); if (box) box.value = w.amt ? String(w.amt) : '';   // (also while it's being typed in)
 }
 export function amtTyped(w, e, have) {
   const box = e.target; if (!box.classList || !box.classList.contains('bj-box')) return;
   const t = box.value.replace(/\D/g, ''); if (t !== box.value) box.value = t;
-  w.amt = Math.min(have, +t || 0); if (t && +t > have) box.value = String(have);
-  const go = w.acts.querySelector('.bj-go'); if (go) go.disabled = !w.amt;
+  w.have = have; w.amt = Math.min(have, +t || 0); if (t && +t > have) box.value = String(have);
+  goLabel(w);
 }
 /* a press on the box's arrows, a chip or All in (true: it was one of those) */
 export function amtPress(w, d, btn, have) {
@@ -421,7 +427,7 @@ export function amtKeys(w, e, have) {
 }
 /* the timer under the words: the vote, the bets, a turn */
 function timer(b, now) {
-  const [from, len] = b.st === 'vote' ? [b.t, VOTE] : b.st === 'bet' ? [b.t, BET] : b.st === 'play' ? [b.tt, TURN] : [0, 0];
+  const [from, len] = b.st === 'bet' ? [b.t, BET] : b.st === 'play' ? [b.tt, TURN] : [0, 0];
   return len ? Math.max(0, 1 - (now - from) / len) : 0;
 }
 
