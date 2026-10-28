@@ -14,6 +14,7 @@
    On a phone, holding still on the board brings the specials around the finger (see hotbar.js). Effects and items take
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from './ui.js';
+import { fewer } from './gfx.js';
 export { SHOT_SPEED } from './rules.js';
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -89,7 +90,7 @@ export function momentHTML(id, duck) {
 export function confettiRain(ms = 5000) {
   if (document.documentElement.classList.contains('lite') || document.querySelector('.confetti-rain')) return;
   const colors = ['#ef3b3b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6', '#ff8c2b'];
-  const node = el(`<div class="confetti-rain" aria-hidden="true">${Array.from({ length: 42 }, (_, i) =>
+  const node = el(`<div class="confetti-rain" aria-hidden="true">${Array.from({ length: fewer(42) }, (_, i) =>
     `<i style="left:${(Math.random() * 100).toFixed(1)}%;background:${colors[i % colors.length]};animation-delay:${(Math.random() * 1.6).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.6).toFixed(2)}s;--r:${Math.round(Math.random() * 720 - 360)}deg"></i>`).join('')}</div>`);
   document.body.appendChild(node); setTimeout(() => node.remove(), ms);
 }
@@ -111,15 +112,15 @@ export function pressFX(id, x, y, size, face, duck) {
   if (id === 'coffee') out.push(at('spe-mug', MUG(c), head.x + face * size * .28, head.y + size * .08));
   if (id === 'hotdog') {
     out.push(at('spe-dog', DOG, head.x + face * size * .3, head.y + size * .12));
-    for (let i = 0; i < 6; i++) out.push(at('spe-crumb', '', head.x + face * size * .3, head.y + size * .15, `--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(20 + Math.random() * 30).toFixed(0)}px;animation-delay:${(i * .18).toFixed(2)}s`));
+    for (let i = 0, n = fewer(6); i < n; i++) out.push(at('spe-crumb', '', head.x + face * size * .3, head.y + size * .15, `--dx:${(Math.random() * 60 - 30).toFixed(0)}px;--dy:${(20 + Math.random() * 30).toFixed(0)}px;animation-delay:${(i * .18).toFixed(2)}s`));
   }
   if (id === 'watergun') {
     out.push(at('spe-gun', WGUN(c), x + face * size * .45, y - size * .38));
-    for (let i = 0; i < 14; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .43, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s;--k1:${c[2]}`));
+    for (let i = 0, n = fewer(14); i < n; i++) out.push(at('spe-drop', '', x + face * size * .75, y - size * .43, `--dx:${(face * (90 + Math.random() * 120)).toFixed(0)}px;--dy:${(Math.random() * 40 - 10).toFixed(0)}px;animation-delay:${(i * .05).toFixed(2)}s;--k1:${c[2]}`));
   }
   if (id === 'confgun') {
     const colors = ['#ef3b3b', '#ffd23f', '#37d421', '#2fa4ff', '#9b5de5', '#ff7eb6'];
-    for (let i = 0; i < 22; i++) out.push(at('spe-conf', '', x + face * size * .42, y - size * .28, `background:${colors[i % 6]};--dx:${(face * (40 + Math.random() * 140)).toFixed(0)}px;--dy:${(-Math.random() * 120 + 20).toFixed(0)}px;--r:${Math.round(Math.random() * 540)}deg`));
+    for (let i = 0, n = fewer(22); i < n; i++) out.push(at('spe-conf', '', x + face * size * .42, y - size * .28, `background:${colors[i % 6]};--dx:${(face * (40 + Math.random() * 140)).toFixed(0)}px;--dy:${(-Math.random() * 120 + 20).toFixed(0)}px;--r:${Math.round(Math.random() * 540)}deg`));
   }
   if (id === 'handgun') out.push(at('spe-gun spe-pistol', PISTOL(c), x + face * size * .45, y - size * .38));
   if (id === 'sound') for (let i = 0; i < 3; i++) out.push(at('spe-ring', '', beak.x, beak.y, `animation-delay:${(i * .25).toFixed(2)}s;--k1:${c[0]}`));

@@ -17,6 +17,7 @@ import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from './layout.js';
 import * as A from './art.js';
 import { profile } from '../store.js';
 import { sfxContext, sfxOut, soon } from '../sound.js';
+import { fewer } from '../gfx.js';
 
 const R = 16, DT = 20, FRIC = .982, DRAG = .4, BOUNCE = .62, STOP = 6, MAX_SP = 1250, MAX_STEPS = 1500, RESET = 3500;
 const CX = 22 + R, CY = 12 + R;   // a duck's feet and the ball touch inside this ellipse (x across, y in depth)
@@ -135,7 +136,7 @@ const BW = 34, BH = 38;
 export const ballShown = () => shown && { ...shown };   // where this screen draws the ball (world px)
 function cheer(ctx, now) {
   const x0 = NET.mouth + 30, y0 = (NET.in0 + NET.in1) / 2;
-  for (let i = 0; i < 28; i++) {   // thrown up out of the net's mouth, toward the field
+  for (let i = 0, n = fewer(28); i < n; i++) {   // thrown up out of the net's mouth, toward the field
     const e = document.createElement('div'), a = Math.PI * (.6 + Math.random() * .8), sp = 70 + Math.random() * 190;
     e.className = 'hang-confetti'; e.style.background = COLORS[i % COLORS.length]; box.append(e);
     bits.push({ e, x: x0 + (Math.random() - .5) * 30, y: y0 + (Math.random() - .5) * 260, h: 70 + Math.random() * 40, vx: Math.cos(a) * sp, vy: (Math.random() - .5) * 120, vh: 380 + Math.random() * 300, r: Math.random() * 360, vr: (Math.random() - .5) * 900, until: now + 1900 + Math.random() * 600 });

@@ -146,12 +146,13 @@ activity({
   },
   draw(now, ctx) {
     if (!el || !shown) return;
-    const Wd = ctx.world, sc = Wd.sc, hide = Wd.inside;
-    if (el.hidden !== hide) { el.hidden = sh.hidden = hide; }
-    if (hide) return;
+    const Wd = ctx.world, sc = Wd.sc;
     const sfc = heightAt(shown.x, shown.y), wet = onWater(shown.x, shown.y), floating = wet && shown.z <= sfc + 2;
     const bob = floating ? Math.sin(now / 640) * 1.8 + 7 : 0, sway = floating ? Math.sin(now / 1900) * 3 : 0;
     const f = Wd.toScreen(shown.x + sway, shown.y, shown.z - bob);
+    const hide = Wd.inside || !Wd.seen(f.left - BW / 2 * sc, f.top - BH * sc, BW * sc, (BH + shown.z - sfc + 20) * sc);   // (inside, or off the screen with its shadow: hidden)
+    if (el.hidden !== hide) { el.hidden = sh.hidden = hide; }
+    if (hide) return;
     el.style.transform = `translate(${(f.left - BW / 2 * sc).toFixed(1)}px, ${(f.top - (BH - 3) * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
     el.style.zIndex = Math.round(shown.y) + 10;
     el.style.clipPath = floating ? `inset(0 0 ${(3 + bob).toFixed(1)}px 0)` : '';   // (the part under the water)
