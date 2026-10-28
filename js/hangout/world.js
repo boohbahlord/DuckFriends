@@ -219,7 +219,7 @@ export function mountWorld(board, api) {
     let best = null;
     for (const a of acts()) { const n = a.near?.(pos, ctx); if (n && n.label && (!best || (n.d ?? 0) < (best.d ?? 0))) best = n; }
     button = best;
-    const sig = best ? best.label : '';
+    const sig = best ? best.label + (best.key || '') : '';
     if (sig !== btnSig) { btnSig = sig; api.button(); }
   }
 
@@ -374,7 +374,7 @@ export function mountWorld(board, api) {
     grabbing: () => !!grab || performance.now() - grabEnd < 350,
     /* the context button, in the place of the Vote / End turn button (kept in its place, unseen, when nothing is near) */
     buttonHTML() {
-      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>E</kbd></button></div>`
+      return button ? `<div class="act-row"><button type="button" class="btn hang-btn" data-a="hang">${esc(button.label)} <kbd>${esc(button.key || 'E')}</kbd></button></div>`
         : '<div class="act-row"><button type="button" class="btn hang-btn idle" tabindex="-1" aria-hidden="true" disabled>Sit <kbd>E</kbd></button></div>';
     },
     press() { if (button && button.act) button.act(); },

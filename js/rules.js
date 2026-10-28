@@ -82,7 +82,9 @@ const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
 export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delete s.players[id].late; };   // they play from here
-export const needed = s => Math.max(1, Math.ceil(playing(s).length * s.options.share - 1e-9));
+/* the share of players that ends a turn; the 2-of-3 tile stores .67, which must count as exactly 2/3 (3 players * .67 is 2.01: it wanted all 3) */
+export const shareOf = s => Math.abs(s.options.share - .67) < .005 ? 2 / 3 : s.options.share;
+export const needed = s => Math.max(1, Math.ceil(playing(s).length * shareOf(s) - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
 /* the turn a back-to-lobby (or skip) vote belongs to; Hangout has no turns, so a couple of minutes instead */
 export const voteKey = (s, now) => isHang(s) ? 'hang' + Math.floor(now / 120000) : turnKey(s);
@@ -116,7 +118,7 @@ const onKeys = (d, id) => !!d && (Array.isArray(d.keys) ? d.keys.slice(0, 10).in
 export function voteNeeds(s, v = s.vote) {
   if (!v) return { voters: [], need: 0 };
   const voters = humanIds(s).filter(id => v.kind !== 'kick' || id !== v.target);
-  return { voters, need: v.kind === 'kick' ? voters.length : Math.max(1, Math.ceil(voters.length * s.options.share - 1e-9)) };
+  return { voters, need: v.kind === 'kick' ? voters.length : Math.max(1, Math.ceil(voters.length * shareOf(s) - 1e-9)) };
 }
 
 export function newRoom({ id, name, host, test = false, open = true, passkey = '', max = MAX_DEFAULT, options = {} }) {
