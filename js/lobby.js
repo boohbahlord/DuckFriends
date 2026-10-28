@@ -81,6 +81,7 @@ const BB_TILES = [
   ['bbSeeds', 'Contenders', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
   ['bbTopic', 'Topic', [['vote', 'Write and vote'], ['random', 'Random']]],
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
+  ['bbReview', 'Review each round', [[0, 'Off'], [1, 'On']]],
   ['bbTimer', 'Match vote timer', [[0, 'None'], [10, '10 s'], [30, '30 s'], [60, '60 s']]],
 ];
 /* Story Chain's own options */
@@ -102,6 +103,7 @@ const LAW_TILES = [
   ['lawClose', 'Closing arguments', [[30, '30 s'], [60, '1 min'], [120, '2 min']]],
 ];
 const MORE_TILES = [
+  ['discuss', 'Discussion round', [[0, 'Off'], [1, 'On']]],
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
   ['submitTime', 'Question time limit', [[0, 'Off'], [60, '60 s'], [90, '90 s'], [120, '120 s']]],
   ['lowGravity', 'Jumps', [[0, 'Normal'], [1, 'Low gravity']]],
@@ -109,11 +111,15 @@ const MORE_TILES = [
   ['justin', 'Justin', [[0, 'Off'], [1, 'On']]],
   ['downMs', 'Knocked down for', [[0, 'None'], [500, '0.5 s'], [1000, '1 s'], [2000, '2 s'], [3000, '3 s'], [5000, '5 s'], [6000, '6 s']]],
   ['ghosts', 'Ghosts', [[0, 'Off'], [1, 'On']]],
+  ['stats', 'Stats screen', [[1, 'On'], [0, 'Off']]],
+  ['unvoteStops', 'Unvoting stops the countdown', [[0, 'No'], [1, 'Yes']]],
 ];
 let moreOpen = false;
 const OPT_TIPS = {
-  share: 'A phase ends once this many players have ended their turn.',
-  catchUp: 'Once enough players are done, the rest get this long (writing questions and answering).',
+  discuss: 'A round after each vote to look at where everyone stood and talk it over.',
+  share: 'Once this many players have voted, the catch-up timer starts. Everyone voting ends the turn at once.',
+  catchUp: 'How long the rest get once enough players have voted. Off: the turn ends as soon as enough have voted.',
+  unvoteStops: 'Yes: if votes are taken back below the needed share, the countdown stops. No: once it starts, it runs out.',
   answerTime: 'The Round Lord\'s answer time unless they choose another.',
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
@@ -121,6 +127,8 @@ const OPT_TIPS = {
   downMs: 'How long a duck that plays dead (shot, stabbed, or killed) can\'t move. None: it can move at once. 0.5 s on the boards, 6 s in Duck Cabin, unless you choose another.',
   ghosts: 'Duck Cabin: once its knocked-down time is up, a duck\'s ghost gets up and walks about while its body lies there. A ghost can\'t be hit or use anything. Space brings it back.',
   justin: 'Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.',
+  stats: 'The stats after each round. Off: the next round starts at once (in Story Chain, the story just goes on).',
+  bbReview: 'On: after every round of matches the room looks at the bracket together (who is out, who is next). Off: only the champion\'s bracket shows.',
   bbSeeds: 'How many contenders the bracket has: a number shared out among the players, or so many for each player.',
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
@@ -146,7 +154,7 @@ function openOptions() {
     ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
     ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin'].includes(r[0])) && !(s.options.mode !== 'hang' && r[0] === 'ghosts')), s, ro)}
+    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin', 'unvoteStops'].includes(r[0])) && !(['sc', 'quack', 'hang'].includes(s.options.mode) && r[0] === 'discuss') && !(s.options.mode === 'quack' && r[0] === 'unvoteStops') && !(s.options.mode !== 'hang' && r[0] === 'ghosts')), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

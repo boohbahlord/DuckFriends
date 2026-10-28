@@ -2479,6 +2479,14 @@ It is simple and the stats should just take whatever was in the agree or disagre
 I go to class now cant answer question but adam can"
 
 - Jackal's three (Adam, 16:45Z): the 2/3 vote bug (3 players * .67 = 2.01 wanted all 3: now `shareOf` reads .67 as exactly 2/3), brackets on phones (side mapping), and the piano button saying Esc. The rest of the message is for other threads.
+- Owner (22:32Z and 22:34Z): "THE DISCUSSION ROUNDS ARE BEING FUCKING REMOVED"; the setting is not "Classic rounds".
+  Decided (Adam, built by Solomon the 2nd): Agree or Disagree, Would You Rather, Bicker Brackets and Lawyering have only
+  the vote round. "Discussion round" (Additional settings, off by default, `s.options.discuss`, `forgame discussion`)
+  brings the old round after the vote back; turning it on moves the share from 3 of 4 to Half (and back) while it's still
+  at the other default. After voting the duck walks only inside its box (`heldCol`); pressing Vote again unvotes and
+  frees it (computers vote with v:true). Every phase: once the share has voted the catch-up timer counts down, everyone
+  voting ends it at once, and taking a vote back doesn't stop it unless "Unvoting stops the countdown" is on
+  (`s.options.unvoteStops`, `forgame unvote-stops`). Owner (22:41Z): no pictures or OKs today, just merge.
 
 ## 2026-10-28 22:06Z and 22:07Z: Updates menu
 
@@ -2489,3 +2497,22 @@ I go to class now cant answer question but adam can"
 > i have 96% do it
 
 - Decision (Adam's plan, section 6): an Updates button on the front page, a window with one update per page (date, title, New and Fixed lists), arrows and arrow keys to page, a dot on the button until the newest is opened. The list lives in `js/updates.js`, newest first. The owner sees a picture before it merges.
+
+## 2026-10-28 22:30Z onward: the planned work is to be done now
+
+(The owner's 22:28Z message above says "DONT SO THE FUCKING WORK IS DONE I REQUESTED MORE TO BE DONE! DO THE WORK!". Adam's reading: do part 4 of the plan now: the brackets review option (off by default), the Story Chain arrow and the glowing cloud hint (picture first), and the Voting and Stats screen options.)
+
+## 2026-10-28 22:41Z: no more pictures today, just merge
+
+> we used a percent in a half from you idiots bumbling around and being retarded! STOP SENDING ME PICTURES TODAY AND JUST MERGE AND UPDATE! STOP ASKING ME AND STOP WRITING TO ME ABOUT IT AND JUST DO IT
+
+- Decision (Adam): no pictures, no asking for OKs and no messages to the owner for the rest of today. A PR that passes its tests is updated from main, restamped and merged by its worker.
+## 2026-10-28 22:28Z: music bar jump, Updates title, the work is not done
+
+> when you turn music all the way down, the top right spasms and moves around... That's fucking stupid and is a disgusting mistake that should of never been allowed, and i refuse to believe someone missed that, but rather someone though it okay... Disgusting.
+>
+> The updates screen is good but the word update needs to be equally center alligned
+>
+> Also, DONT SO THE FUCKING WORK IS DONE I REQUESTED MORE TO BE DONE! DO THE WORK!
+
+- Decision (Adam): fix the music bar so nothing moves at any volume, center the Updates title exactly, then do the rest of the planned work (part 4).

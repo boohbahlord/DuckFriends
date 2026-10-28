@@ -21,8 +21,8 @@
          or '' for how it was spelled, for the sheet). Send them to the room; don't play them back through play().
        onClose(): Esc or the Get up button.
        sheet: show the music sheet beside the keys (above them on a phone held upright). closeButton: the Get up button.
-       legend: the orderly list of keys (default: on a computer). letters: the key letters on the white keys (default:
-       on a computer).
+       legend: the orderly list of keys (default: on a computer). letters: on every key, the computer key that plays it
+       (default: on; a phone also shows C2 … C5 on its C keys).
        play(midi, { who, color, sp, vel }): a note from someone else: sounds, glows (its color the interval from that
          player's own previous note; `color`, their duck's color, rings the key) and goes on the sheet.
        release(midi, { who }): that player let go.
@@ -52,11 +52,11 @@ export const KEY_ROWS = [
   ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Enter'],
   ['ShiftLeft', 'KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM', 'Comma', 'Period', 'Slash', 'Space'],
 ];
-const LETTERS = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='], 'QWERTYUIOP[]'.split(''), ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", '⏎'], ['⇧', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', '␣']];
+const LETTERS = [['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='], 'QWERTYUIOP[]'.split(''), ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", 'ENTER'], ['SHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'SPACE']];   // (the long keys spelled out, as on the keyboard)
 export const KEY_MAP = Object.fromEntries(KEY_ROWS.flatMap((row, o) => row.map((c, i) => [c, LOW + 12 * o + i])));
 KEY_MAP.NumpadEnter = KEY_MAP.Enter;   // (the numpad's Enter is the same key to the game, so the same note here)
 export const KEY_LABEL = Object.fromEntries(KEY_ROWS.flatMap((row, o) => row.map((c, i) => [c, LETTERS[o][i]])));
-const LETTER_OF = Object.fromEntries(Object.entries(KEY_MAP).map(([c, m]) => [m, KEY_LABEL[c]]));
+const LETTER_OF = Object.fromEntries(Object.entries(KEY_MAP).filter(([c]) => KEY_LABEL[c]).map(([c, m]) => [m, KEY_LABEL[c]]));   // (the numpad's Enter has no label of its own: it showed "undefined")
 export const keyMidi = code => KEY_MAP[code] ?? null;
 const isBlack = m => BLACK_PC.has(((m % 12) + 12) % 12);
 
@@ -317,11 +317,12 @@ export function drawSheet(el, notes) {
 
 /* ---------- the keyboard on the screen ---------- */
 const BLACK_AFTER = [[0, 1, -.1], [1, 3, .1], [3, 6, -.12], [4, 8, 0], [5, 10, .12]];   // [white index, pitch class, nudge]
+const letterHTML = m => `<span class="pk-k${LETTER_OF[m].length > 1 ? ' pk-kw' : ''}">${LETTER_OF[m]}</span>`;   // (a word, SHIFT, smaller)
 const typing = t => t instanceof Element && (t.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]'));
 
 export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sheet = true, closeButton = true, legend, letters } = {}) {
   const touch = COARSE;
-  const showLetters = letters ?? !touch, showLegend = legend ?? !touch;
+  const showLetters = letters ?? true, showLegend = legend ?? !touch;   // (every key shows the computer key that plays it, on a phone too)
   const box = document.createElement('div');
   box.className = 'pk';
   box.innerHTML = `${sheet || closeButton ? `<div class="pk-side">${sheet ? sheetHTML() : ''}${closeButton ? '<button type="button" class="btn ghost pk-close">Get up</button>' : ''}</div>` : ''}
@@ -346,10 +347,10 @@ export function mountPianoKeys(root, { onNote = () => {}, onClose = () => {}, sh
       for (let r = 0; r < 4 / p; r++) {
         const n = 7 * p; let row = `<div class="pk-row">`;
         for (let o = r * p; o < r * p + p; o++) WHITE.forEach((pc, i) => { const m = LOW + 12 * o + pc;
-          row += `<div class="pk-w" data-m="${m}"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? `<span class="pk-k">${LETTER_OF[m]}</span>` : ''}${!showLetters && pc === 0 ? `<span class="pk-k">C${o + 2}</span>` : ''}</div>`; });
+          row += `<div class="pk-w" data-m="${m}"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? letterHTML(m) : ''}${(!showLetters || touch) && pc === 0 ? `<span class="pk-k pk-oct">C${o + 2}</span>` : ''}</div>`; });
         for (let o = r * p; o < r * p + p; o++) for (const [wi, pc, nudge] of BLACK_AFTER) {
           const m = LOW + 12 * o + pc, left = ((o - r * p) * 7 + wi + 1 + nudge) / n * 100, bw = 60 / n;
-          row += `<div class="pk-b" data-m="${m}" style="left:${(left - bw / 2).toFixed(3)}%;width:${bw.toFixed(3)}%"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? `<span class="pk-k">${LETTER_OF[m]}</span>` : ''}</div>`;
+          row += `<div class="pk-b" data-m="${m}" style="left:${(left - bw / 2).toFixed(3)}%;width:${bw.toFixed(3)}%"><span class="pk-gl"><span class="pk-lab"></span></span>${showLetters ? letterHTML(m) : ''}</div>`;
         }
         html += row + '</div>';
       }
