@@ -6,9 +6,9 @@ import { rainbowHTML } from './art.js';
 
 export const UPDATES = [
   { id: '2026-10-28', date: 'Oct 28', title: 'Weapons, ghosts and poker',
-    news: ['Duck Cabin has a knife, a hammer (or wrench) and a pistol with a magazine; press R to reload.',
-      'Knocked-out ducks in Duck Cabin turn into ghosts that can walk, and Space brings the body back.',
-      'Poker at the card table, with Justin dealing.',
+    news: ['New specials: a knife, a hammer (or wrench) and a pistol that holds 7 shots; R reloads.',
+      'In Duck Cabin, a new setting turns knocked-out ducks into ghosts that can walk around; Space brings the body back.',
+      'Poker at the card table, and you can invite Justin to play.',
       'A knocked-down duck stands up by itself, so you can stay at the table.',
       'Low graphics in Settings, and the font list folds away.'],
     fixed: ['2/3 of votes now ends the turn at 2 of 3 players.',
@@ -16,7 +16,7 @@ export const UPDATES = [
       'The piano\'s get-up button says Esc.',
       'Colorblind mode recolors the two-sided boards.'] },
   { id: '2026-10-27', date: 'Oct 27', title: 'Blackjack, Jack in a Box and outfits',
-    news: ['Blackjack on the round table, with eight stools and Justin dealing.',
+    news: ['Blackjack on the round table, with eight stools and Justin\'s Butler dealing.',
       'Jack and Jill in a Box, plus jester and clown items; locked ones show how to get them.',
       'A real pumpkin, antenna eyes and color dropdowns.',
       'Justin joins every game mode.'],
