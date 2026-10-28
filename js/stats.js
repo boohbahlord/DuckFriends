@@ -1,7 +1,7 @@
 /* ---------- stats: a player's stat box and the View stats window ----------
    On the −3 (strongly disagree) … +3 (strongly agree) scale: what they chose most, the median, the average, and the
    jumps this game. */
-import { statsFor, COLS, signed, nameOfValue, wyrStats } from './rules.js';
+import { statsFor, COLS, signed, nameOfValue, wyrStats, ddrStats, DDR_SIDES } from './rules.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
 import { openWindow, esc } from './ui.js';
@@ -22,6 +22,21 @@ export function statBoxHTML(s, id, round = null) {
       <dt>Chose most</dt><dd>${st.most.length ? st.most.map(c => `<span class="chip c${c + 1}">${esc(COLS[c])}</span>`).join(' ') : '—'}</dd>
       <dt>Median</dt><dd>${val(st.median)}</dd>
       <dt>Average</dt><dd>${val(st.avg)}</dd>
+      <dt>Jumps this game</dt><dd>${fmtJumps(st.jumps)}</dd>
+    </dl></article>`;
+}
+
+/* Does Duck Relate?: Agree or Disagree's box on its two sides: the side they chose most, how often they related, the
+   jumps this game */
+const ddrChip = c => `<span class="chip ddr-chip ${c ? 'no' : 'yes'}">${esc(DDR_SIDES[c])}</span>`;
+export function ddrBoxHTML(s, id, round = null) {
+  const p = s.players[id]; if (!p) return '';
+  const st = ddrStats(s, id, round);
+  return `<article class="statbox" data-pid="${esc(id)}">
+    <header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${st.n} answer${st.n === 1 ? '' : 's'}</div></div></header>
+    <dl>
+      <dt>Chose most</dt><dd>${st.most.length ? st.most.map(ddrChip).join(' ') : '—'}</dd>
+      <dt>Related</dt><dd>${st.n ? `${st.yes} of ${st.n} <span class="dim">(${Math.round(st.yes / st.n * 100)}%)</span>` : '—'}</dd>
       <dt>Jumps this game</dt><dd>${fmtJumps(st.jumps)}</dd>
     </dl></article>`;
 }
@@ -59,6 +74,13 @@ function totalsHTML(p, t, mode = 'aod') {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Cases argued</dt><dd>${fmtJumps(t.argued)}</dd><dt>Cases won</dt><dd>${fmtJumps(t.wins)}</dd>
         <dt>Cases lost</dt><dd>${fmtJumps(t.losses)}</dd><dt>Gave up</dt><dd>${fmtJumps(t.gave)}</dd><dt>Jury votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === 'ddr') {   // Does Duck Relate?: how often they related
+    const sided = t.majority + t.minority;
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Does Duck Relate?</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd>
+        <dt>Chose most</dt><dd>${sided ? (t.majority > t.minority ? ddrChip(0) : t.majority < t.minority ? ddrChip(1) : ddrChip(0) + ' ' + ddrChip(1)) : '—'}</dd>
+        <dt>Related</dt><dd>${sided ? `${Math.round(t.majority / sided * 100)}%` : '—'}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === 'wyr') {   // Would You Rather: the sides they took
     const sided = t.majority + t.minority;
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Would You Rather</div></div></header>
@@ -85,7 +107,7 @@ export function openStats(s, id, me) {
         w.querySelectorAll('[data-st]').forEach(b => b.setAttribute('aria-pressed', b.dataset.st === lastTab));
         mode.hidden = lastTab !== 'all'; mode.value = lastMode;
         const rounds = s.options.mode === 'quack' ? (s.wqPast || []).length : new Set(s.history.map(h => h.round)).size;
-        body.innerHTML = lastTab === 'game' ? ({ wyr: wyrBoxHTML, bb: bbBoxHTML, sc: scBoxHTML, quack: quackBoxHTML, law: lawBoxHTML }[s.options.mode] || statBoxHTML)(s, id) : totalsHTML(p, all && all[lastMode], lastMode);
+        body.innerHTML = lastTab === 'game' ? ({ wyr: wyrBoxHTML, ddr: ddrBoxHTML, bb: bbBoxHTML, sc: scBoxHTML, quack: quackBoxHTML, law: lawBoxHTML }[s.options.mode] || statBoxHTML)(s, id) : totalsHTML(p, all && all[lastMode], lastMode);
         note.textContent = lastTab === 'game' ? `This game: ${rounds} round${rounds === 1 ? '' : 's'} so far.` : 'Across every game played (test rooms only add jumps).';
       };
       w.querySelector('.stat-tabs').onclick = e => { const b = e.target.closest('[data-st]'); if (b) { lastTab = b.dataset.st; show(); } };

@@ -2516,3 +2516,15 @@ I go to class now cant answer question but adam can"
 > Also, DONT SO THE FUCKING WORK IS DONE I REQUESTED MORE TO BE DONE! DO THE WORK!
 
 - Decision (Adam): fix the music bar so nothing moves at any volume, center the Updates title exactly, then do the rest of the planned work (part 4).
+
+## 2026-10-28 22:30Z to 22:43Z: Does Duck Relate? (players write the prompts, keep it simple)
+
+> The symbol for the duck relate game ... idk wat it should be
+
+> in the does duck relate game, players write the prompts, NOT YOU
+
+> ONLINE PLAYERS THAT IS
+
+> you are NOT sending a fucking picture sheet, just keep it fucking simple because its for online players ! just fucking keep it simple and follow the plan retard! you arent telling me anything! you just do the merge and shut up !
+
+- Decision (Noah): the mode works like Agree or Disagree (everyone writes a statement each round, nothing built in), on two tiles, Duck Does Relate (left) and Duck Doesn't Relate (right), in Agree or Disagree's agree and disagree colors. Its stats are Agree or Disagree's box on two sides: the side chosen most, how often you related, and jumps. Symbol: a green tile with a check and a red tile with a cross. No pictures; merged after the full tier.

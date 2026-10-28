@@ -19,7 +19,7 @@
    or everyone (o+r). The chat's \mute, \permmute and \show work here too. A line sends 3 times at most, and fires 3 silly
    commands at most, a second apart. */
 import { profile, save, STAT_MODES } from './store.js';
-import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, wyrStats, bbStats, scStats, lawStats, COLS, signed, nameOfValue, slowMs } from './rules.js';
+import { groupsOf, isSudo, may, denied, permOk, GROUP_PERMS, STAGE, statsFor, ddrStats, wyrStats, bbStats, scStats, lawStats, COLS, signed, nameOfValue, slowMs } from './rules.js';
 import { modeOf, MODES } from './modes.js';
 import { MAPS, mapName } from './maps.js';
 import { FONTS } from './name.js';
@@ -206,6 +206,7 @@ function statLines(ctx, scope, args) {
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
       else if (mode === 'quack') out.push(`${base} · ${st.wins} rounds won · ${st.titles} won as the Quack · ${st.majority} votes for the real Quack`);
       else if (mode === 'law') out.push(`${base} · ${st.argued} cases argued · ${st.wins} won · ${st.losses} lost · gave up ${st.gave}`);
+      else if (mode === 'ddr') out.push(`${base} · related ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else if (mode === 'aod' && st.counts) { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
       else out.push(base);
@@ -228,6 +229,8 @@ function statLines(ctx, scope, args) {
   } else if (mode === 'wyr') {
     const per = wyrStats(s, round).per;
     for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} Jumps`); }
+  } else if (mode === 'ddr') {
+    for (const id of ids) { const p = ddrStats(s, id, round); out.push(`${nm(id)}: ${p.n} answers · related ${p.yes} · didn't ${p.no}${p.n ? ` (${pct(p.yes / p.n)} related)` : ''} · ${p.jumps} Jumps`); }
   } else if (mode === 'sc') {
     const paras = s.sc ? s.sc.stories.flatMap(x => x.paras).filter(x => round === null || x.round === round) : [], per = scStats(paras);
     for (const id of ids) { const p = per[id] || { lines: 0, lvotes: 0, wvotes: 0 }; out.push(`${nm(id)}: ${p.lines} lines · ${p.lvotes} votes for their lines · ${p.wvotes} for their words · ${jumps(id)} Jumps`); }

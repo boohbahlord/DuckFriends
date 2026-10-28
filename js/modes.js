@@ -1,6 +1,7 @@
 /* ---------- the game modes ----------
    Agree or Disagree: everyone writes a statement; the room stands on a seven-column scale for each one.
    Would You Rather: everyone writes a "would you rather" with two choices in secret; the room walks to a side.
+   Does Duck Relate?: everyone writes something relatable; the room walks to Duck Does Relate or Duck Doesn't Relate.
    Bicker Brackets: a tournament a round; the room picks a topic, writes the seeds and votes match by match.
    Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it.
    Who is the Quack?: everyone's Secret Card has the same word except one duck's; clues out loud, then walk onto a duck.
@@ -12,6 +13,7 @@ import { esc } from './ui.js';
 export const MODES = [
   { id: 'aod', name: 'Agree or Disagree', tip: 'Everyone writes a statement; for each one, walk to how much you agree, then talk it over.' },
   { id: 'wyr', name: 'Would You Rather', tip: 'Everyone writes a "would you rather" with two choices, in secret; for each one, walk to the side you\'d pick.' },
+  { id: 'ddr', name: 'Does Duck Relate?', tip: 'Everyone writes something relatable; for each one, walk to Duck Does Relate or Duck Doesn\'t Relate, then talk it over.' },
   { id: 'bb', name: 'Bicker Brackets', tip: 'A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.' },
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
   { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
@@ -20,14 +22,18 @@ export const MODES = [
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 
-/* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Story Chain's
-   three lines of writing, each underlined in a different card color; Lawyering's sword over a shield; Hangout's little
+/* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
+   Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
+   in a different card color; Lawyering's sword over a shield; Hangout's little
    A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
   if (m.id === 'wyr') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 <rect x="1" y="2" width="11" height="20" rx="2" fill="#2fa4ff" stroke="#1c1c28" stroke-width="1.2"/><rect x="18" y="2" width="11" height="20" rx="2" fill="#ff8c2b" stroke="#1c1c28" stroke-width="1.2"/>
 <text x="15" y="15.5" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="6.5" fill="#fff" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">OR</text></svg>`;
+  if (m.id === 'ddr') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
+<rect x="1" y="2" width="12.5" height="20" rx="2" fill="#37d421" stroke="#1c1c28" stroke-width="1.2"/><rect x="16.5" y="2" width="12.5" height="20" rx="2" fill="#ef3b3b" stroke="#1c1c28" stroke-width="1.2"/>
+<path d="M4 12.3l2.6 2.8 4.4-5.6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 9l5.5 6M25.5 9L20 15" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
   if (m.id === 'bb') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 <path d="M11 6H15V12H19M11 18H15V12" fill="none" stroke="#1c1c28" stroke-width="1.4" opacity=".55"/>
 <rect x="1" y="2" width="10" height="8" rx="2" fill="#37d421" stroke="#1c1c28" stroke-width="1.2"/><rect x="1" y="14" width="10" height="8" rx="2" fill="#7a1220" stroke="#1c1c28" stroke-width="1.2"/>
