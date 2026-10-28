@@ -2241,3 +2241,22 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
   set ahead of the clock; echo lengths change only while the echoes are silent; reverbs crossfade; drum and effect noise
   fades in over 5 ms; all sound effects share one AudioContext (sound.js `sfxContext`, `sfxOut`, `soon`); songs written
   out ahead play at the speakers' own sample rate. Brief: /mnt/project-files/notes/pops-brief.md.
+
+## Request (owner, 2026-10-27 23:09Z): blackjack players against each other, chip counts, All in
+"IF two players play black jack, they play against eachother, and the game should display how many chips they have better AND you should tell me how many chips each player gets. Going all in should be an option too"
+Decided (Adam): two or more players in a hand share one pot, best hand wins it, a tie splits it, all bust = bets back;
+the Butler only deals then. Chip counts on the table by each stool and in the window, counting up. An "All in" bet.
+
+## Request (owner, 2026-10-27 23:14Z): blackjack bet box, who plays whom, cards on the table (and poker)
+"The default amount you can bet should then be:
+1, 5, 25
+
+AND there is an all in button AND a way to type HOW MUCH you wanna bet OR click the arrow next to that box AND the amount you click on to the right of it (such as 25) will autofill into that box, and players can use the arrows to add or subtract one from there. ALSO, clicking the chip amounts will add unto them in the box that shows how much your betting. That means 25 clicked twice equals 50.
+
+There also should be poker.
+
+The dealer only plays WHEN there is no other player OR if players let the dealer play black jack too. The screen show show every players cards on the card table. The cards should be too big and a number will be under the cards for black jack . THE hidden cards are on the table too, just upside down.
+
+For poker, ask me any questions if need be"
+Decided (Adam): a bet box (typing, arrows ±1) with 1, 5 and 25 chips that add to it, and All in; the Butler plays only
+alone or when the start vote lets him in; every hand on the table with its total under it. Poker is planned separately.
