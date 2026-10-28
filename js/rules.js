@@ -24,9 +24,11 @@ export const COLS = ['Strongly disagree', 'Disagree', 'Slightly disagree', 'Neut
 export const SHORT = ['−−−', '−−', '−', '0', '+', '++', '+++'];
 export const OPTIONS_DEFAULT = {
   order: 'random',      // random | rotate: the order of the round's questions
-  share: 0.75,          // how many players must end their turn: .5, .67, .75, 1
+  share: 0.75,          // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
   answerTime: 30,       // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
-  catchUp: 15,          // 0 (off), 15, 30, 45: the rest's time once enough players are done (submit and answer)
+  catchUp: 15,          // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
+  unvoteStops: 0,       // 1: taking a vote back below the share stops that countdown; 0: once started it runs out anyway
+  discuss: 0,           // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
   botWait: 5,           // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
@@ -206,7 +208,17 @@ function startResults(s, now) {
   return toStats(s, now);
 }
 
-/* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
+/* the countdown once the needed share has voted; with "Unvoting stops the countdown" on, falling below the share stops it */
+function catchUp(s, now, enough) {
+  if (enough && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
+  if (!enough && s.catchEnds && s.options.unvoteStops) s.catchEnds = 0;
+}
+/* is there a discussion round after a vote? I want only the vote round unless the host turns on "Discussion round" in
+   Additional settings (free roam never has one) */
+export const discussOn = s => !!s.options.discuss && !s.options.freeRoam;
+/* after voting, my duck walks only inside the column (the box) it voted in; pressing Vote again lets it out */
+export const heldCol = (s, id) => s.phase === 'answer' && s.done[id] && !s.options.freeRoam && !isLaw(s) && s.pos[id] && s.pos[id].x >= 0 ? colAt(s, s.pos[id].x) : null;
+/* what ends a phase: everyone voting, the needed share's countdown (catch-up timer) running out, or its timer */
 function advance(s, now, force = false) {
   if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now, force);
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackAdvance(s, now, force);
@@ -214,10 +226,11 @@ function advance(s, now, force = false) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   if (isLaw(s) && s.phase === 'answer') return lawCheck(s, now, force);   // a case waits for the jury (and closing arguments)
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
-  const timed = ['submit', 'answer', 'topic', 'tvote', 'seeds', 'counsel'].includes(s.phase) && !sway;
   const timeUp = s.ends && now >= s.ends;
-  if (timed && enough && !all && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
-  const go = force || all || timeUp || (!sway && enough && (!timed || !s.options.catchUp || now >= s.catchEnds));
+  /* I want every phase to end when everyone has voted; the needed share only starts the countdown (the catch-up timer).
+     A vote taken back doesn't stop it, unless the host turned on "Unvoting stops the countdown" */
+  catchUp(s, now, enough && !all && !sway);
+  const go = force || all || timeUp || (!sway && (enough || s.catchEnds) && (!s.options.catchUp || (s.catchEnds && now >= s.catchEnds)));
   if (!go) return s;
   switch (s.phase) {
     case 'countdown': return s;
@@ -238,9 +251,9 @@ function advance(s, now, force = false) {
     case 'podium': return startResults(s, now);
     case 'tie': return settleTie(s, now);
     case 'answer':
-      if (isBb(s)) return endMatch(s, now) ? (s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now)) : enter(s, 'tie', now);
+      if (isBb(s)) return endMatch(s, now) ? (discussOn(s) ? enter(s, 'discuss', now) : nextMatch(s, now)) : enter(s, 'tie', now);
       recordAnswers(s);
-      if (!s.options.freeRoam) return enter(s, 'discuss', now);
+      if (discussOn(s)) return enter(s, 'discuss', now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);   // free roam: straight to the next question
       return startResults(s, now);
     case 'discuss':
@@ -310,7 +323,13 @@ export function reduce(state, a, now = Date.now()) {
     case 'ready': if (me && (s.phase === 'lobby' || s.phase === 'over')) me.ready = a.v ?? !me.ready; return s;
     case 'roomName': { const n = String(a.name || '').replace(/\s+/g, ' ').trim().slice(0, 32); if (boss && n) s.name = n; return s; }
     case 'options': if (boss && (s.phase === 'lobby' || s.phase === 'over')) {
+      const was = s.options.discuss;
       Object.assign(s.options, a.options); if (a.max) s.max = Math.max(s.seat.length, a.max);
+      /* I want half the votes to end a turn by default with the Discussion round on, 3 of 4 without it: turning it on or
+         off moves the share along while it's still at the other default */
+      if ('discuss' in a.options && !('share' in a.options) && !!was !== !!s.options.discuss) {
+        const [from, to] = s.options.discuss ? [.75, .5] : [.5, .75]; if (s.options.share === from) s.options.share = to;
+      }
       if (a.options.map === 'cabin' && !a.options.mode) s.options.mode = 'hang';   // Hangout and Duck Cabin are one: picking either picks both,
       else if (a.options.map && !a.options.mode && isHang(s)) s.options.mode = 'aod';   // and another map leaves Hangout
       if (isHang(s)) s.options.map = 'cabin'; else if (s.options.map === 'cabin') s.options.map = 'board';
@@ -353,8 +372,8 @@ export function reduce(state, a, now = Date.now()) {
       if (isHang(s) && hangStill(s, a.id, now)) return state;   // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state;   // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
-      // an ended turn keeps its answer (jumping still works; reset duck may move it inside the same column)
-      if (s.phase === 'answer' && s.done[a.id] && !s.options.freeRoam && !isLaw(s) && !(a.reset && colAt(s, x) === colAt(s, was.x))) { x = was.x; y = was.y; }   // (a juror may walk over and change their vote)
+      // a vote keeps its answer: the duck walks only inside its own column until Vote is pressed again (a juror may walk over and change their vote)
+      { const c = heldCol(s, a.id); if (c != null && c >= 0) { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); } }
       if (s.phase === 'answer' && isLaw(s) && isCounsel(s, a.id)) { const [lo, hi] = colBoundsAt(s, -1); x = Math.max(lo, Math.min(hi, x)); }   // the attorneys argue from the circle
       if (isQuack(s) && ['choice', 'accuse'].includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a vote holds its spot
       if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a story vote holds its spot
@@ -378,8 +397,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
       if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
       if (s.phase === 'answer' && isLaw(s)) return lawVote(s, a, now) || state;
-      s.done[a.id] = a.v ?? !s.done[a.id];
-      if (s.phase === 'answer' && !s.options.freeRoam) s.done[a.id] = true;   // free roam: ready can be taken back
+      s.done[a.id] = a.v ?? !s.done[a.id];   // pressing Vote again takes the vote back (and frees the duck to walk)
       return advance(s, now);
     }
     case 'voteReview':
@@ -640,7 +658,7 @@ function forgame(s, a, now) {
     const o = {};
     for (const [k, v] of Object.entries(a.set)) {
       if (k === 'order' && ['random', 'rotate'].includes(v)) o.order = v;
-      if (['freeRoam', 'fun', 'lowGravity', 'justin', 'ghosts'].includes(k)) o[k] = v ? 1 : 0;
+      if (['freeRoam', 'fun', 'lowGravity', 'justin', 'ghosts', 'discuss', 'unvoteStops'].includes(k)) o[k] = v ? 1 : 0;
       if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
       if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
       if (k === 'answerOff') o.answerOff = v ? 1 : 0;
@@ -651,7 +669,7 @@ function forgame(s, a, now) {
     if (o.catchUp === 0) s.catchEnds = 0;
     if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
     if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
-    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'ghosts' ? `ghosts ${v ? 'on' : 'off'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
+    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'ghosts' ? `ghosts ${v ? 'on' : 'off'}` : k === 'discuss' ? `discussion round ${v ? 'on' : 'off'}` : k === 'unvoteStops' ? `unvoting ${v ? 'stops' : "doesn't stop"} the countdown` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
     say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`);
     return advance(s, now);
   }
@@ -968,7 +986,7 @@ function settleTie(s, now) {
     return enter(s, 'answer', now);
   }
   decide(s, Math.random() < .5 ? 0 : 1, t.va, t.vb, t.who, true); delete b.tie;
-  return s.options.freeRoam ? nextMatch(s, now) : enter(s, 'discuss', now);
+  return discussOn(s) ? enter(s, 'discuss', now) : nextMatch(s, now);
 }
 /* a topic or a seed: sent (send) or typed so far (a draft, which everyone sees as it's typed) */
 function bbWrite(s, a, now, send) {
@@ -1168,8 +1186,8 @@ function scAdvance(s, now, force = false) {   // force: the skip command or a sk
   const on = playing(s), d = force ? on.length : on.filter(free).length, timeUp = force || (s.ends && now >= s.ends), enough = force || d >= needed(s);
   switch (s.phase) {
     case 'words':
-      if (enough && d < on.length && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
-      return d >= on.length || timeUp || (enough && (!s.options.catchUp || now >= s.catchEnds)) ? endWords(s, now) : s;
+      catchUp(s, now, enough && d < on.length);
+      return d >= on.length || timeUp || ((enough || s.catchEnds) && (!s.options.catchUp || (s.catchEnds && now >= s.catchEnds))) ? endWords(s, now) : s;
     case 'write': { const w = scWriter(s); return !s.players[w] || s.done[w] || timeUp ? endTurn(s, now) : s; }
     case 'lvote':
       if (!enough) return s;
@@ -1367,7 +1385,7 @@ function verdict(s, side, now) {
   else if (!L.gave) say(s, W ? `${wn} wins the case ${Math.max(o, d)}–${Math.min(o, d)}.` : `A hung jury: ${o}–${d}. Nobody wins the case.`);
   s.lock = { ...votes, [L.off]: -1, [L.def]: -1 };
   for (const id of s.seat) if (s.lock[id] === undefined && s.pos[id]) { const c = colAt(s, s.pos[id].x); s.lock[id] = c; }
-  return enter(s, 'discuss', now);
+  return discussOn(s) ? enter(s, 'discuss', now) : nextCase(s, now);
 }
 /* the numbers behind Lawyering's stats: each player's cases (argued, won, lost, by side, given up, won against their own
    topic) and jury votes (and how often they switched sides), and every case's score; round = null for the whole game.

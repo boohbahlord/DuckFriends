@@ -177,7 +177,7 @@ export function botActions(s, now) {
         const key = s.round + ':' + s.qi, c = pick(id, key), p = s.pos[id];
         const want = colXAt(s, twoSided(s) ? (c < 3 || (c === 3 && hash(id + key) % 2) ? 0 : 1) : c);   // (a neutral one picks a side once, not every step)
         const x = p.x, y = p.y, step = .035;
-        if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id });
+        if (Math.abs(x - want) <= step) out.push({ t: 'move', id, x: want, y, j: p.j || 0 }, { t: 'end', id, v: true });   // (v: a vote, never a take-back)
         else out.push({ t: 'move', id, x: x + Math.sign(want - x) * step, y, j: p.j || 0 });
         break;
       }
