@@ -2499,3 +2499,12 @@ I go to class now cant answer question but adam can"
 > we used a percent in a half from you idiots bumbling around and being retarded! STOP SENDING ME PICTURES TODAY AND JUST MERGE AND UPDATE! STOP ASKING ME AND STOP WRITING TO ME ABOUT IT AND JUST DO IT
 
 - Decision (Adam): no pictures, no asking for OKs and no messages to the owner for the rest of today. A PR that passes its tests is updated from main, restamped and merged by its worker.
+## 2026-10-28 22:28Z: music bar jump, Updates title, the work is not done
+
+> when you turn music all the way down, the top right spasms and moves around... That's fucking stupid and is a disgusting mistake that should of never been allowed, and i refuse to believe someone missed that, but rather someone though it okay... Disgusting.
+>
+> The updates screen is good but the word update needs to be equally center alligned
+>
+> Also, DONT SO THE FUCKING WORK IS DONE I REQUESTED MORE TO BE DONE! DO THE WORK!
+
+- Decision (Adam): fix the music bar so nothing moves at any volume, center the Updates title exactly, then do the rest of the planned work (part 4).
