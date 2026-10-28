@@ -2402,3 +2402,8 @@ the start vote; a setup window (who deals, the Butler plays, invite Justin, blin
 Play or Sit out each hand; the cards stay with the host. Justin sits on a free stool, plays badly, a line each hand, a
 win or lose line at the showdown (new ones mostly, old fitting ones sometimes); busted, he shoots the richest player,
 says an insult or rage line and walks off. Built by Noah.
+
+## Request (owner, 2026-10-28 01:47Z): Justin gets up by himself
+"Justin should be able to auto revive himself in two minutes if someone else doesn't revive him."
+Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes, he revives himself the same way as E
+(the drinking line and glass, or the shadow duck's lines). The boards' Justin stays as he is. Built by Noah.
