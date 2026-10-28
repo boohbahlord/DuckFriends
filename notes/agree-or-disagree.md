@@ -2480,12 +2480,3 @@ I go to class now cant answer question but adam can"
 
 - Jackal's three (Adam, 16:45Z): the 2/3 vote bug (3 players * .67 = 2.01 wanted all 3: now `shareOf` reads .67 as exactly 2/3), brackets on phones (side mapping), and the piano button saying Esc. The rest of the message is for other threads.
 
-## Request (owner, 2026-10-28, relayed by Adam 16:45Z): card table fixes
-(Adam's words for the owner's batch; the owner's own messages are in Adam's thread.) No timer on the Blackjack/Poker
-pick; Justin only slightly bad at poker (he raised so high every time it was no fun); betting confuses players and
-doesn't work well.
-Decided (Adam, Noah): the pick waits for everyone seated and says how many still have to pick. Justin plays sensibly,
-raises small (at most 3 big blinds), goes all in only on a strong hand, now and then makes a silly call. Betting: the
-poker box holds only what you can raise by (a bigger raise did nothing before), a raise under the smallest one becomes
-the smallest, the box shows "min N", the Bet/Raise button says what it will do ("Bet 7", "Raise 5", "All in"), and a
-person sets up poker (a computer asked to set it up left the table stuck).
