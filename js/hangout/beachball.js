@@ -8,6 +8,7 @@
    screen, and the host, moves it on from there with the same steps of 1/60 s (move()), so they all see it in the same
    place without the ball going over the network all the time. */
 import { rule, activity } from './registry.js';
+import { isGhost } from './death.js';
 import { POOL, W, H, heightAt, solidsAt } from './layout.js';
 import { WATER, SOUTH, ripple, splash, wallGlow } from './water.js';
 import { play } from './sounds.js';
@@ -75,7 +76,7 @@ rule('beachball', {
     const c = ballAt(ball, now);
     let hit = false;
     for (const id of s.seat) {
-      const p = s.pos[id]; if (!p) continue;
+      const p = s.pos[id]; if (!p || isGhost(s, id)) continue;   // (a ghost goes through it)
       const px = p.x * W, py = p.y * H, pz = p.z ?? heightAt(px, py), q = was.get(id) || { x: px, y: py, z: pz, t: now - 200 };
       was.set(id, { x: px, y: py, z: pz, t: now });
       if (Math.abs(px - c.x) > 600 || Math.abs(py - c.y) > 600) continue;

@@ -64,7 +64,7 @@ export function mountWorld(board, api) {
   }
   function glide(id, p, dt, now) {
     const tx = p.x * L.W, ty = p.y * L.H; let o = sm.get(id);
-    if (!o || Math.hypot(tx - o.x, ty - o.y) > 420) { o = { x: tx, y: ty, z: p.z ?? L.heightAt(tx, ty) }; sm.set(id, o); }
+    if (!o || Math.hypot(tx - o.x, ty - o.y) > 420 || o.tp !== p.tp) { o = { x: tx, y: ty, z: p.z ?? L.heightAt(tx, ty), tp: p.tp }; sm.set(id, o); }   // (tp: put there by the host, no gliding)
     else { const k = 1 - Math.exp(-dt / .09); o.x += (tx - o.x) * k; o.y += (ty - o.y) * k; }
     const gnd = L.heightAt(o.x, o.y);
     if (p.j && now < api.landsAt(p)) o.z = Math.max(gnd, (p.b ?? gnd) + api.jumpZ(p, now) * L.DUCK);   // a jump: the arc itself

@@ -3,6 +3,7 @@
    registry.js), hangTick on the host's heartbeat, hangJoin and hangLeft as players come and go. Everyone starts (and a
    newcomer arrives) outside the front door. */
 import { RULES } from './registry.js';
+import { isGhost } from './death.js';
 import { spawnAt, heightAt, W, H } from './layout.js';
 import './activities.js';
 
@@ -22,6 +23,7 @@ export function hangLeft(s, id) { if (s.hang) for (const r of RULES.values()) r.
 /* a player's action: true when s.hang changed */
 export function hangAction(s, a, now) {
   const r = RULES.get(String(a.k)); if (!r || !r.act) return false;
+  if (a.k !== 'ghost' && isGhost(s, a.id)) return false;   // (a ghost can't use anything)
   if (!s.hang) s.hang = newHang();
   return !!r.act(s, a, now);
 }

@@ -9,7 +9,7 @@
         -1 left), z a height of their own (on a couch or a table; none: the ground), say { text, t } their last words.
    Paths: a grid of 40-px cells over the world, built once from layout.js (standable), so moved props and new doors are
    found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
-import { holdDown } from './death.js';
+import { holdDown, isGhost } from './death.js';
 import { W, H, EDGE, STEP, heightAt, standable, onPlatform, inCabin, inPool, POOL, DOORS, CABIN } from './layout.js';
 
 export const CELL = 40;
@@ -164,7 +164,7 @@ const seen = new Map();   // player id → where they were at the last heartbeat
 function ducks(s, now) {
   const out = [];
   for (const id of s.seat || []) {
-    const p = s.pos && s.pos[id], P = s.players && s.players[id]; if (!p || p.x < 0 || !P) continue;
+    const p = s.pos && s.pos[id], P = s.players && s.players[id]; if (!p || p.x < 0 || !P || isGhost(s, id)) continue;   // (ghosts: not there for them)
     const x = p.x * W, y = p.y * H, q = seen.get(id), dt = q ? Math.max(.05, (now - q.t) / 1000) : 1;
     const speed = q ? Math.hypot(x - q.x, y - q.y) / dt : 0;
     seen.set(id, { x, y, t: now });
@@ -193,7 +193,7 @@ function ctxFor(s, now, rand, D, recs) {
     poke(id, fn) { if (!recs[id]) return; const o = { ...recs[id] }; fn(o); recs[id] = o; c.poked = true; },
     /* a duck plays dead (a swipe or a shot), for everyone, and can't move for a while (death.js) */
     kill(by, pid, kind) {
-      const P = s.players[pid]; if (!P || P.dead) return false;
+      const P = s.players[pid]; if (!P || P.dead || isGhost(s, pid)) return false;
       s.players = { ...s.players, [pid]: { ...P, dead: true } };
       holdDown(s, pid, now);
       const d = D.find(q => q.id === pid); if (d) d.dead = true;

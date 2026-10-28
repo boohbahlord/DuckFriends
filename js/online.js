@@ -301,8 +301,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     const ack = ackSeen[me] || 0;
     pending = pending.filter(p => p.q > ack);
     for (const p of pending) s = predict(s, p.a);
-    const kb = s.pos && s.pos[me] && s.pos[me].kb;   // (a hammer that shoved me after my last move: where it put me stands)
-    if (lastMove && lastMove.k === keyOf(s) && !(kb && kb.t >= movedAt)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
+    const p = s.pos && s.pos[me], put = p ? Math.max((p.kb || {}).t || 0, p.tp || 0) : 0;   // (a hammer that shoved me, or the host putting me somewhere, after my last move: that stands)
+    if (lastMove && lastMove.k === keyOf(s) && !(put && put >= movedAt)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
     state = s; emit();
     openCard(s);
   }
