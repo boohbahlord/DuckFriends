@@ -99,7 +99,7 @@ const COOLDOWN = { handgun: 200, dagger: 2000, knife: 1000, hammer: 2250, confet
 export const coolFor = sp => COOLDOWN[sp] || 1500;
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } */
-export const MAG = 7, RELOAD = 1500;
+export const MAG = 7, RELOAD = 3500;   // (I want 3.5 s: 1.5 was too short)
 export const magOf = (s, id, now) => { const m = (s.mag || {})[id]; return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m; };
 export const coolEnds = (s, id, sp) => Math.max(((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp), sp === 'handgun' ? ((s.mag || {})[id] || {}).r || 0 : 0);   // (a time on the room's clock)
 export const WEAPONS = ['handgun', 'dagger', 'knife', 'hammer'];   // aimed (with the mouse), and kept out with Shift and their key

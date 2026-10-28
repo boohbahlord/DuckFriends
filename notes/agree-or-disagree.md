@@ -2282,6 +2282,8 @@ One thing though, the ability to change the time a player is immobilized from be
   BioShock wrench (`duck.wrench`; the name and picture follow). Pistol: 7 shots about 5 a second, reloads by itself
   after the 7th in 1.5 s (in the cooldown bar), 7 ammo dots by the key, R reloads early (in Duck Cabin only while the
   pistol is out, otherwise R still repeats). Ghosts come after, in their own PR.
+- Owner (2026-10-28 01:56Z, after the in-game page): "okay cool". Then (01:57Z): "1.5 second reload is too short though,
+  make it 3.5 seconds". Decided: RELOAD 3500 ms, then #142 goes live.
 ## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
 "WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
 
