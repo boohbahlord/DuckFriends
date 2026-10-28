@@ -38,14 +38,15 @@ export function wordsHTML(s, me, who) {
 }
 
 /* ---------- the board: the cloud and what's going on, the story (or the choices), the writer's window ---------- */
+const HINTS = { lvote: 'Walk to your favorite line, then Vote.', wvote: 'Now pick your favorite secret word, down below.', results: 'What next? Walk to a choice, then Vote.' };
+const STORY_DUCK = { duck: { color: '#b7bccb' } };   // (nobody is writing: a plain duck on the cloud tells what to do next)
 function headHTML(s, me) {
   if (s.phase === 'write') {
     const w = scWriter(s), p = player(s, w), para = scPara(s), first = !para.lines.length, story = scStory(s);
     const what = first ? (story.paras.length > 1 ? 'the first line of a new paragraph' : 'the opening line') : 'the next line';
     return `<div class="topover sc-top">${cloudHTML(p, 'Writing')}<p class="question sc-what">${w === me ? `Your turn: ${what}` : `${nameHTML(p.name, p.nameStyle)} is writing ${what}`}</p></div>`;
   }
-  const say = { lvote: 'Favorite line?', wvote: 'Favorite secret word?', results: 'What next?' }[s.phase] || '';
-  return `<div class="topover sc-top">${cloudHTML(null)}<p class="question sc-what">${say}</p></div>`;
+  return `<div class="topover sc-top">${cloudHTML(STORY_DUCK, 'Story Chain')}<p class="question sc-what sc-glow">${HINTS[s.phase] || ''}</p></div>`;
 }
 /* one row a zone, in the zones' order (rules.js), so a duck's y lands on the same row on every screen */
 export function rowsHTML(s, me) {
@@ -81,7 +82,7 @@ function writeHTML(s, me) {
     <div class="sc-foot"><span class="sc-left small dim">${LINE_MAX} left</span><span class="sc-need small">Put your secret word in it</span><button type="submit" class="btn green" disabled>Send <kbd>Enter</kbd></button></div></form>`;
 }
 export const boardHTML = (s, me) => `<div class="board sc-board">${headHTML(s, me)}
-  <div class="sc-view"><div class="sc-rows">${rowsHTML(s, me)}</div><div class="ducks"></div><div class="fxl"></div></div>${writeHTML(s, me)}</div>`;
+  <div class="sc-view"><div class="sc-rows">${rowsHTML(s, me)}</div><div class="ducks"></div><div class="fxl"></div>${s.phase === 'wvote' ? '<div class="sc-arrow" aria-hidden="true"><b>↓</b></div>' : ''}</div>${writeHTML(s, me)}</div>`;
 
 /* ---------- the stats: this paragraph's awards, then the whole game's once the review vote passes ---------- */
 function awardsHTML(s, per) {

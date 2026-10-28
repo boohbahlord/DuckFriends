@@ -40,6 +40,8 @@ export const OPTIONS_DEFAULT = {
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
   bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
+  bbReview: 0,          // 1: the bracket shows (and the room looks at it) after every round of matches; 0: only the champion's one
+  stats: 1,             // 0: no stats screen after a round (the next round, or the story's next paragraph, starts at once)
   wqPicker: 'player',   // Who is the Quack?: player (a random player picks the word) | list (the built-in words)
   wqPickTime: 60,       // seconds to pick the word (then what they typed, or a word from the list)
   wqQuacks: 1,          // 1 or 2 (2 only with 6 or more players)
@@ -184,18 +186,24 @@ function recordAnswers(s) {
   s.lock = { ...a };   // after answering, each duck stays in the column it chose
 }
 
+/* the round is over: the stats screen, or (the lobby's Stats screen Off) straight on to what comes after it */
+export function toStats(s, now) {
+  if (+s.options.stats !== 0) return enter(s, 'results', now);
+  s.round++; s.subs = []; s.qs = [];
+  return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
+}
 function startResults(s, now) {
   s.reviewVotes = {}; s.review = false;
-  if (isQuack(s)) return enter(s, 'results', now);
-  if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return enter(s, 'results', now); }   // the tournament joins the game's
-  if (isLaw(s)) { s.law = null; s.lock = {}; return enter(s, 'results', now); }   // (the stats fill the screen)
+  if (isQuack(s)) return toStats(s, now);
+  if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return toStats(s, now); }   // the tournament joins the game's
+  if (isLaw(s)) { s.law = null; s.lock = {}; return toStats(s, now); }   // (the stats fill the screen)
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
   const off = [];
   for (const id of s.seat) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) s.lock[id] = c; else { s.lock[id] = isWyr(s) ? -1 : 3; off.push(id); } }
   off.forEach((id, k) => { s.pos[id] = { x: startX(s), y: (k + 1) / (off.length + 1) }; });
-  return enter(s, 'results', now);
+  return toStats(s, now);
 }
 
 /* what ends a phase: enough players done (submit and answer then wait out the catch-up timer), or its timer */
@@ -924,7 +932,7 @@ function nextMatch(s, now) {
     b.m = -1;
     if (b.r === b.rounds.length - 1) { b.champ = round[0].w; say(s, `"${b.seeds[b.champ].text}" is the champion!`); }
     else b.r++;
-    return enterBracket(s, now);
+    return b.champ == null && !+s.options.bbReview ? nextMatch(s, now) : enterBracket(s, now);   // (the bracket between rounds is the Review option; the champion's always shows)
   }
   b.m = i; s.qi++; s.lordTime = s.options.answerOff ? 0 : +s.options.bbTimer || 0; delete b.tie;
   s.pos = {}; s.lock = {}; seatLate(s);
@@ -1121,6 +1129,7 @@ export const scVoting = s => s.options.scVote === 'auto' || s.options.scVote == 
 /* the stats, with the three choices: everyone starts at the top of them */
 function startNext(s, now) {
   s.sc.next = {}; s.reviewVotes = {}; s.review = false;
+  if (+s.options.stats === 0) { s.round++; return startStory(s, now, false); }   // (no stats screen, so no choices: the story goes on)
   s.seat.forEach((id, k) => { s.pos[id] = { x: (k + 1) / (s.seat.length + 1), y: .125 }; });
   return enter(s, 'results', now);
 }
