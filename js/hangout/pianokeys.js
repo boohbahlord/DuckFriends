@@ -203,7 +203,7 @@ async function writeKey(midi, vb, sr) {
   } catch (e) { BANK.delete(k); }
 }
 /* the keys written out ahead, as soon as anyone sits at the piano (vel: how loud I hear it here) */
-export function prepare(vel = .8) { const a = ctx(); if (a && typeof OfflineAudioContext !== 'undefined') warm(bankVel(vel), a.sampleRate); }
+export function prepare(vel = .8) { if (warming) return; const a = ctx(); if (a && typeof OfflineAudioContext !== 'undefined') warm(bankVel(vel), a.sampleRate); }
 function warm(vb, sr, first) {
   if (first != null) writeKey(first, vb, sr);
   if (warming) return;
