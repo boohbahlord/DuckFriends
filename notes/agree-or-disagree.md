@@ -2441,3 +2441,7 @@ and a damper a note), same sound.
 "Justin should be able to auto revive himself in two minutes if someone else doesn't revive him."
 Decided (Adam): in Duck Cabin, down for any reason and not revived in 2 minutes, he revives himself the same way as E
 (the drinking line and glass, or the shadow duck's lines). The boards' Justin stays as he is. Built by Noah.
+## Request (owner, 2026-10-27 22:56Z): spawn on the balcony
+"The spawn should be changed to the balcony"
+"like what i mean is that all players spawn on the balcony when Cabin loads"
+- Decided (Adam): the balcony is the raised deck behind the cabin. Everyone starts there when Duck Cabin loads (the game's start, and a joiner mid-game, on the next free spot); reset duck keeps the front door.

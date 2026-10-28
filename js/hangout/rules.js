@@ -3,20 +3,26 @@
    registry.js), hangTick on the host's heartbeat, hangJoin and hangLeft as players come and go. Everyone starts (and a
    newcomer arrives) outside the front door. */
 import { RULES } from './registry.js';
+<<<<<<< HEAD
 import { isGhost } from './death.js';
 import { spawnAt, heightAt, W, H } from './layout.js';
+=======
+import { deckSpawnAt, heightAt, W, H } from './layout.js';
+>>>>>>> p133
 import './activities.js';
 
 /* s.hang when the cabin opens: each activity's fields */
 export function newHang() { const h = {}; for (const r of RULES.values()) if (r.init) Object.assign(h, r.init()); return h; }
-const spot = (k, n) => { const p = spawnAt(k, n); return { x: +(p.x / W).toFixed(5), y: +(p.y / H).toFixed(5), j: 0, z: Math.round(heightAt(p.x, p.y)), b: 0 }; };
+const spot = k => { const p = deckSpawnAt(k); return { x: +(p.x / W).toFixed(5), y: +(p.y / H).toFixed(5), j: 0, z: Math.round(heightAt(p.x, p.y)), b: 0 }; };
 export function hangStart(s) {
   s.hang = newHang(); s.pos = {}; s.lock = {};
-  s.seat.forEach((id, k) => { s.pos[id] = spot(k, s.seat.length); });
+  s.seat.forEach((id, k) => { s.pos[id] = spot(k); });
 }
 export function hangJoin(s, id) {
   if (!s.hang) s.hang = newHang();
-  s.pos[id] = spot(s.seat.length - 1 + Math.floor(Math.random() * 6), s.seat.length);
+  const taken = Object.values(s.pos || {}); let k = 0;   // a joiner: the first free spot (nobody standing on it)
+  while (k < 40 && taken.some(p => { const q = deckSpawnAt(k); return Math.hypot(p.x * W - q.x, p.y * H - q.y) < 60; })) k++;
+  s.pos[id] = spot(k);
   for (const r of RULES.values()) r.join?.(s, id);
 }
 export function hangLeft(s, id) { if (s.hang) for (const r of RULES.values()) r.left?.(s, id); }
