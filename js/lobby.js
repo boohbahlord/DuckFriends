@@ -13,6 +13,7 @@ import { MODES, modeOf } from './modes.js';
 import { cardHTML } from './card.js';
 import { netHTML, kickItems } from './players.js';
 import { OPTIONS_DEFAULT, isSudo } from './rules.js';
+import { downFor } from './hangout/death.js';
 import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
 import { openStats } from './stats.js';
@@ -106,6 +107,7 @@ const MORE_TILES = [
   ['lowGravity', 'Jumps', [[0, 'Normal'], [1, 'Low gravity']]],
   ['fun', 'Silly commands', [[1, 'On'], [0, 'Off']]],
   ['justin', 'Justin', [[0, 'Off'], [1, 'On']]],
+  ['downMs', 'Knocked down for', [[0, 'None'], [500, '0.5 s'], [1000, '1 s'], [2000, '2 s'], [3000, '3 s'], [5000, '5 s'], [6000, '6 s']]],
 ];
 let moreOpen = false;
 const OPT_TIPS = {
@@ -115,6 +117,7 @@ const OPT_TIPS = {
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
   fun: 'lightning, love, kill and hotdog in the command line.',
+  downMs: 'How long a duck that plays dead (shot, stabbed, or killed) can\'t move. None: it can move at once. 0.5 s on the boards, 6 s in Duck Cabin, unless you choose another.',
   justin: 'Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.',
   bbSeeds: 'How many contenders the bracket has: a number shared out among the players, or so many for each player.',
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
@@ -131,7 +134,7 @@ const OPT_TIPS = {
   lawClose: 'When the jury is split, the attorneys get this long to win them over; then the bigger side wins.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
-  `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${s.options[k] === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
+  `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${(k === 'downMs' ? downFor(s) : s.options[k]) === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
 function openOptions() {
   const s = R.state, host = isSudo(s, R.me), ro = host ? '' : ' aria-disabled="true"';
   return openWindow(`<h2>Game options</h2>${host ? '' : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) changes these.</p>'}
@@ -141,7 +144,7 @@ function openOptions() {
     ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
     ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin'].includes(r[0]))), s, ro)}
+    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

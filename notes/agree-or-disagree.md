@@ -2260,3 +2260,18 @@ The dealer only plays WHEN there is no other player OR if players let the dealer
 For poker, ask me any questions if need be"
 Decided (Adam): a bet box (typing, arrows ±1) with 1, 5 and 25 chips that add to it, and All in; the Butler plays only
 alone or when the start vote lets him in; every hand on the table with its total under it. Poker is planned separately.
+
+## Request (owner, 2026-10-28 00:29Z): knife, hammer, pistol, knocked-down time, cabin ghosts
+"We can add a knife to the specials that players can use which stabs once a second. 
+
+We can also add a wrench that can be big hammer (Second screenshot( that can swung out wide to hit many ducks at the same time if they are hit by it, that attack it does is one attack every 2.25 seconds, and clicking the configure button on the tile for it can change it to a wrench skin from the BioShock game, as show in the first screenshot, which functions the same because it is just a different skin for the same item.
+
+The pistol can now fire rapidly seven times before needing to be reloaded, which the reload animation length or duration is show in the cooldown bar. The player can reload though by clicking the R button.
+
+In normal mini games, the dead effect makes a player unable to move for half a second by default, and then for a second or longer under additional settings by a host, including there being no immobilization with the dead effect as an option now.
+
+In the cabin map, there is a new setting for cabin, where, the ducks will become ghosts after being dead for five seconds, where their avatar lays dead on the ground WHILE there ghost avatar can walk around, and the ghost avatar is as transparent AS the shadow duck. When they are a ghost, they cannot take damage or use the chalk board, play cards, or anything like that, nor blow out candles or turn on lights. A ghost can click space bar to spawn, which will make their duck slowly fade away before their old body is resurrected and able to be played. This is a setting in the game that is optional for cabin. 
+
+One thing though, the ability to change the time a player is immobilized from being dead for from damage will also be a setting in cabin AND the time it takes to become a ghost IF that setting is on will be based on that number."
+
+- Job (Adam, 00:32Z): only the "Knocked down for" setting (games: None, 0.5 s default, 1 s, 2 s, 3 s, 5 s; Duck Cabin: the same plus 6 s, 6 s the default). Knife, hammer, pistol and ghosts are Solomon the 2nd's.
