@@ -2479,4 +2479,3 @@ It is simple and the stats should just take whatever was in the agree or disagre
 I go to class now cant answer question but adam can"
 
 - Jackal's three (Adam, 16:45Z): the 2/3 vote bug (3 players * .67 = 2.01 wanted all 3: now `shareOf` reads .67 as exactly 2/3), brackets on phones (side mapping), and the piano button saying Esc. The rest of the message is for other threads.
-
