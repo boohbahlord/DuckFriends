@@ -10,7 +10,7 @@
 
    The word and who the Quack is are in s.hidden, which only the host has: online.js never writes it, and each player's
    Secret Card goes to that player alone, locked (secret.js). Everyone else sees s.wq. */
-import { enter, say, playing, needed, backToLobby, VOTE_GRACE, seatLate } from './rules.js';
+import { enter, say, playing, needed, backToLobby, VOTE_GRACE, seatLate, toStats } from './rules.js';
 
 export const CLUE_GRACE = 12;   // seconds before a clue turn can end
 export const WORD_MAX = 24, CAT_MAX = 20;
@@ -235,7 +235,7 @@ export function quackAdvance(s, now, force = false) {   // force: the host's ski
     case 'reveal': {
       const on = playing(s), d = on.filter(id => s.done[id]).length;
       if (!force && d < on.length && d < needed(s)) return s;
-      if (w.result) { for (const id of w.dead || []) if (s.players[id]) delete s.players[id].dead; return enter(s, 'results', now); }
+      if (w.result) { for (const id of w.dead || []) if (s.players[id]) delete s.players[id].dead; return toStats(s, now); }
       return startLap(s, now);
     }
   }
@@ -246,7 +246,7 @@ export function quackSkip(s, now) {
   if (!s.wq || s.phase === 'wqpick' || !s.hidden) return startQuackRound(s, now);   // (no word yet: a new picker)
   if (!s.wq.result) finish(s, null, 'skip');
   s.wq.lastOut = null; for (const id of s.wq.dead || []) if (s.players[id]) delete s.players[id].dead;
-  return enter(s, 'results', now);
+  return toStats(s, now);
 }
 /* someone left mid-round: a Quack gone, or too few left, ends it (a missing speaker or picker is passed over by advance) */
 export function quackLeft(s, now) {   // true: the round started over

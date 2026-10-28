@@ -81,6 +81,7 @@ const BB_TILES = [
   ['bbSeeds', 'Contenders', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
   ['bbTopic', 'Topic', [['vote', 'Write and vote'], ['random', 'Random']]],
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
+  ['bbReview', 'Review each round', [[0, 'Off'], [1, 'On']]],
   ['bbTimer', 'Match vote timer', [[0, 'None'], [10, '10 s'], [30, '30 s'], [60, '60 s']]],
 ];
 /* Story Chain's own options */
@@ -109,6 +110,7 @@ const MORE_TILES = [
   ['justin', 'Justin', [[0, 'Off'], [1, 'On']]],
   ['downMs', 'Knocked down for', [[0, 'None'], [500, '0.5 s'], [1000, '1 s'], [2000, '2 s'], [3000, '3 s'], [5000, '5 s'], [6000, '6 s']]],
   ['ghosts', 'Ghosts', [[0, 'Off'], [1, 'On']]],
+  ['stats', 'Stats screen', [[1, 'On'], [0, 'Off']]],
 ];
 let moreOpen = false;
 const OPT_TIPS = {
@@ -121,6 +123,8 @@ const OPT_TIPS = {
   downMs: 'How long a duck that plays dead (shot, stabbed, or killed) can\'t move. None: it can move at once. 0.5 s on the boards, 6 s in Duck Cabin, unless you choose another.',
   ghosts: 'Duck Cabin: once its knocked-down time is up, a duck\'s ghost gets up and walks about while its body lies there. A ghost can\'t be hit or use anything. Space brings it back.',
   justin: 'Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.',
+  stats: 'The stats after each round. Off: the next round starts at once (in Story Chain, the story just goes on).',
+  bbReview: 'On: after every round of matches the room looks at the bracket together (who is out, who is next). Off: only the champion\'s bracket shows.',
   bbSeeds: 'How many contenders the bracket has: a number shared out among the players, or so many for each player.',
   bbTopic: 'Everyone writes a topic and votes on them, or the room gets a random one.',
   bbBlind: 'Hidden: a contender\'s writer stays a secret until it is knocked out or wins it all.',
