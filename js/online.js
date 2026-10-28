@@ -143,7 +143,7 @@ function decode(v) {
 const keyOf = s => s ? [s.phase, s.round, s.qi].join('|') : '';
 
 /* what a player may send, and only as themselves */
-const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'wqWord', 'tieVote', 'counsel', 'giveUp', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'aura', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby', 'songs', 'hang']);
+const REMOTE = new Set(['join', 'leave', 'look', 'ready', 'submit', 'draft', 'pick', 'wqWord', 'tieVote', 'counsel', 'giveUp', 'usermod', 'groupadd', 'groupdel', 'groupmod', 'forgame', 'move', 'end', 'voteReview', 'voteStart', 'voteCast', 'ping', 'idle', 'use', 'reload', 'aura', 'fx', 'jumps', 'chat', 'options', 'roomName', 'kick', 'skip', 'start', 'cancel', 'toLobby', 'songs', 'hang']);
 const LOOK = ['name', 'duck', 'card', 'nameStyle', 'acct', 'net', 'stats', 'pk'];
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o && o[k] !== undefined && o[k] !== null).map(k => [k, o[k]]));
 function clean(a, by) {
@@ -180,7 +180,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
   const fns = new Set(), subs = [];
   let state = first, auth = first, mode = '', closed = false, hostUid = host ? me : null;
   let written = first ? encode(first) : {}, extra = {}, flushT = 0, loop = 0, clientOff = null, hostOffs = [];
-  let seq = 0, pending = [], lastMove = null, ackSeen = {}, seen = false, online = new Set(), hostGoneAt = 0, away = {}, beatAt = 0, beatSig = '', taking = false, hb = 0, hbAt = 0;
+  let seq = 0, pending = [], lastMove = null, movedAt = 0, ackSeen = {}, seen = false, online = new Set(), hostGoneAt = 0, away = {}, beatAt = 0, beatSig = '', taking = false, hb = 0, hbAt = 0;
   let sealed = { sig: '', cards: {} }, myBox = '', myCard = null;   // Who is the Quack?: the Secret Cards I locked (host), mine opened (player)
   const quiet = e => console.warn('DuckFriends online:', e && (e.code || e.message));   // a write turned down (the host role moved on)
   const emit = a => { if (state) fns.forEach(f => f(state, a)); };
@@ -297,7 +297,8 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     const ack = ackSeen[me] || 0;
     pending = pending.filter(p => p.q > ack);
     for (const p of pending) s = predict(s, p.a);
-    if (lastMove && lastMove.k === keyOf(s)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
+    const kb = s.pos && s.pos[me] && s.pos[me].kb;   // (a hammer that shoved me after my last move: where it put me stands)
+    if (lastMove && lastMove.k === keyOf(s) && !(kb && kb.t >= movedAt)) { try { s = reduce(s, lastMove, now()); } catch (e) { /* the host's state stands */ } }
     state = s; emit();
     openCard(s);
   }
@@ -359,7 +360,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
       }
       if (a.t === 'move') {
         if (!state) return;
-        a.k = keyOf(state); lastMove = a;
+        a.k = keyOf(state); lastMove = a; movedAt = now();
         D.set(path('mv/' + me), JSON.stringify(a)).catch(quiet);
         let next = state; try { next = reduce(state, a, now()); } catch (e) { /* the host's state stands */ }
         if (next !== state) { state = next; emit(a); }

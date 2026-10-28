@@ -2275,6 +2275,13 @@ In the cabin map, there is a new setting for cabin, where, the ducks will become
 One thing though, the ability to change the time a player is immobilized from being dead for from damage will also be a setting in cabin AND the time it takes to become a ghost IF that setting is on will be based on that number."
 
 - Job (Adam, 00:32Z): only the "Knocked down for" setting (games: None, 0.5 s default, 1 s, 2 s, 3 s, 5 s; Duck Cabin: the same plus 6 s, 6 s the default). Knife, hammer, pistol and ghosts are Solomon the 2nd's.
+- Decided (Adam's plan, owner OK'd the drawings 00:50Z "yeah put them in"): knife = the nearest duck in front, about
+  a duck's length, once a second, knocked down. Hammer = a third of a circle, a bit longer reach, every 2.25 s, every
+  duck hit is knocked down and shoved back. Owner's correction (via Adam): "a quick shove away from the swing, with a
+  small hop off the ground, then the duck lands knocked down", not a high arc. The hammer tile's ⚙ swaps in the
+  BioShock wrench (`duck.wrench`; the name and picture follow). Pistol: 7 shots about 5 a second, reloads by itself
+  after the 7th in 1.5 s (in the cooldown bar), 7 ammo dots by the key, R reloads early (in Duck Cabin only while the
+  pistol is out, otherwise R still repeats). Ghosts come after, in their own PR.
 ## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
 "WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
 
