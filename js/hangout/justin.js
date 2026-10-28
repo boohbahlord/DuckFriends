@@ -333,7 +333,7 @@ export function justinGot(me, c) { notes(c); down(me, c, 'shadow'); c.say('justi
 export function justinSees(me, c, x, y) { notes(c); if (!justinFree()) return false; mm.mode = 'shadowChase'; return c.go(me, x, y, SPRINT, DRY); }
 export { DOORS };
 
-/* ---------- at the poker table (poker.js runs the game; these are its calls, on the host) ----------
+/* ---------- at the card table (poker.js and blackjack.js run the games; these are their calls, on the host) ----------
    Invited, he teleports onto a free stool (the one farthest from the players) and sits there facing the table; a line
    at each new hand, a winning or losing one at the showdown. Out of chips: he pulls his gun on the richest player, shoots
    (they play dead 6 seconds), says an insult or a rage line and walks off. When the game ends he gets up and goes home. */

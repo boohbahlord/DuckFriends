@@ -1,19 +1,23 @@
 /* ---------- poker at the blackjack table (Texas Hold'em) ----------
    The seated players' start vote at the table (blackjack.js) can pick Poker; then this file runs the table until
-   everyone gets up. I asked for it this way: the same round table and the same chips (100 to start, 100 more from the
-   house for whoever runs out); 2 cards each, face down, and 5 shared ones in the middle (3, then 1, then 1); blinds
+   everyone gets up. I asked for it this way: the same round table; each player buys in once with 100 chips, only during
+   the first 3 hands, and plays with those chips until the game ends (no more from the house: out of chips, you're out,
+   and watch from your stool or get up until the next game); the game ends when one has every chip at the end of a hand,
+   or when the hand limit is reached, and the most chips wins; 2 cards each, face down, and 5 shared ones in the middle (3, then 1, then 1); blinds
    before each hand from the two after the dealer; Fold, Check or Call, Raise with the blackjack bet box. Everyone's
    cards lie on the table in front of their stool (mine face up on my screen), so the window shows only what's mine.
    Picking Poker opens the setup first: who deals (the Butler, or we take turns), whether the Butler plays too, whether
-   Justin is invited, the blinds, blinds going up, the turn time and a hand limit. The first one seated sets it up.
+   Justin is invited (the table's vote may already have), the blinds, blinds going up, the turn time and a hand limit.
+   The first one seated sets it up.
    Each new hand, everyone seated picks Play or Sit out.
 
    The host runs it in s.hang.pk:
      st     'off' (blackjack's table), 'setup', 'join' (Play or Sit out), 'deal', 'bet', 'show' (the showdown), 'wait'
-            ("Waiting for other players": alone, and the Butler isn't playing), 'over' (the hand limit was reached); t
+            ("Waiting for other players": fewer than two can play), 'over' (the game's over: won lists the winners, the
+            most chips, all of them on a tie); t
      by     who sets it up; set { deal: 'butler' | 'turns', butler 0 | 1, justin 0 | 1, blinds 1 | 5 (the small blind;
             the big one is twice it), up 0 | 1 (blinds double every 10 hands), time 20 | 40 (s a turn), limit 0 | 10 | 25 }
-     chips  { id: n } (the Butler's and Justin's too: 'butler', 'justin'); gift { id: 1 } the house's 100 this hand
+     chips  { id: n } (the Butler's and Justin's too: 'butler', 'justin'); 0 is out; none (came after the buy-in) watches
      join   { id: 'play' | 'out' } this hand's answers; n the hands dealt so far; dealer the dealer's id
      id     this hand's id; order: its players in stool order; k { id: stool } (-1: the Butler's own stool)
      board  the shared cards turned up so far; round 0 … 3 (before the flop, the flop, the turn, the river)
@@ -33,7 +37,7 @@ import { handouts } from '../secret.js';
 import { jPoker } from './justin.js';
 import { play as sound } from './sounds.js';
 
-export const JOIN = 12000, SHOW = 6000;
+export const JOIN = 12000, SHOW = 6000, OVER = 10000;
 const HAND_K = .78, HOLE = .66, ROW_Y = -8, ROW_K = .86, CARD_GAP = 25, POT_Y = 22, BANK_AT = .92, NAMES = ['High card', 'Pair', 'Two pair', 'Three of a kind', 'Straight', 'Flush', 'Full house', 'Four of a kind', 'Straight flush'];
 
 /* ---------- the hands ---------- */
@@ -69,10 +73,16 @@ function rate(five) {
 }
 
 /* ---------- the rules (the host) ---------- */
-export const fresh = () => ({ st: 'off', t: 0, by: '', set: { deal: 'butler', butler: 0, justin: 0, blinds: 1, up: 0, time: 20, limit: 0 }, chips: {}, gift: {}, join: {}, n: 0, dealer: '',
+export const fresh = () => ({ st: 'off', t: 0, by: '', set: { deal: 'butler', butler: 0, justin: 0, blinds: 1, up: 0, time: 20, limit: 0 }, chips: {}, join: {}, n: 0, dealer: '', won: [],
   id: '', order: [], k: {}, board: [], round: 0, p: {}, high: 0, min: 0, turn: -1, tt: 0, show: {}, res: {}, best: [] });
 const clone = o => JSON.parse(JSON.stringify(o));
 const SETS = { deal: ['butler', 'turns'], butler: [0, 1], justin: [0, 1], blinds: [1, 5], up: [0, 1], time: [20, 40], limit: [0, 10, 25] };
+export const BUYIN = 3;
+/* can one still buy in: during the first 3 hands (up to the third one's Play or Sit out) */
+const buyIn = pk => pk.n < BUYIN - 1 || (pk.n === BUYIN - 1 && ['setup', 'wait', 'join'].includes(pk.st));
+/* who's still in the game (has chips; the Butler while he plays), and who can play the next hand (and is at the table) */
+const holders = pk => Object.keys(pk.chips).filter(id => pk.chips[id] > 0 && (id !== 'butler' || pk.set.butler));
+const ready = (s, pk) => [...atTable(s).map(q => q.id), ...(pk.set.butler ? ['butler'] : []), ...(pk.k.justin !== undefined ? ['justin'] : [])].filter(id => (pk.chips[id] ?? 0) > 0);
 export const blindNow = pk => pk.set.blinds * (pk.set.up ? 2 ** Math.floor(pk.n / 10) : 1);   // (the small blind; the big one is twice it)
 /* the host's deck and everyone's two cards for the hand it's dealing */
 let mem = { id: '', deck: [], holes: {} };
@@ -82,23 +92,27 @@ function shuffled() {
   return d;
 }
 const computer = id => id === 'butler' || id === 'justin';
-/* poker picked in the table's vote (blackjack.js): the setup, set by the first one seated; their blackjack chips come along */
-export function start(s, seated, now, chips = {}) {
+/* poker picked in the table's vote (blackjack.js): the setup; everyone buys in with the same 100 (justin: the vote
+   invited him) */
+export function start(s, seated, now, justin = false) {
   const pk = fresh(), person = seated.find(q => s.players[q.id] && !s.players[q.id].bot); Object.assign(pk, { st: 'setup', t: now, by: (person || seated[0]).id });   // (a person sets it up, not a computer)
   pk.set.butler = seated.length === 1 ? 1 : 0;   // (alone: the Butler plays, unless they turn him off)
-  for (const { id } of seated) pk.chips[id] = chips[id] ?? START;
+  pk.set.justin = justin ? 1 : 0;
+  for (const { id } of seated) pk.chips[id] = START;
   s.hang.pk = pk;
 }
-/* everyone seated: Play or Sit out for the next hand ("Waiting for other players" when one sits alone without the Butler) */
+/* the next hand: everyone seated with chips picks Play or Sit out ("Waiting for other players" when fewer than two can
+   play); the game's over when one has every chip */
 function toJoin(s, pk, now) {
-  const at = atTable(s), big = 2 * blindNow(pk);
-  Object.assign(pk, { order: [], p: {}, board: [], show: {}, res: {}, best: [], turn: -1, high: 0, round: 0, join: {}, gift: {} });
-  if (at.length < 2 && !pk.set.butler && pk.k.justin === undefined) { Object.assign(pk, { st: 'wait', t: now }); return; }
-  for (const id of [...at.map(q => q.id), ...(pk.set.butler ? ['butler'] : []), ...(pk.k.justin !== undefined ? ['justin'] : [])]) {
-    if (pk.chips[id] === undefined) pk.chips[id] = START;
-    else if (pk.chips[id] < big && id !== 'justin') { pk.chips[id] += START; pk.gift[id] = 1; }   // (the house's 100; Justin gets none: out of chips he's out)
-  }
-  Object.assign(pk, { st: 'join', t: now });
+  Object.assign(pk, { st: 'join', t: now, order: [], p: {}, board: [], show: {}, res: {}, best: [], turn: -1, high: 0, round: 0, join: {} });
+  if (buyIn(pk)) for (const id of [...atTable(s).map(q => q.id), ...(pk.set.butler ? ['butler'] : [])]) if (pk.chips[id] === undefined) pk.chips[id] = START;
+  if (pk.n && holders(pk).length < 2) return over(pk, now);
+  if (ready(s, pk).length < 2) Object.assign(pk, { st: 'wait', t: now });
+}
+/* the game's over: the most chips wins (a tie: all of them) */
+function over(pk, now) {
+  const ids = Object.keys(pk.chips).filter(id => id !== 'butler' || pk.set.butler), top = Math.max(0, ...ids.map(id => pk.chips[id]));
+  Object.assign(pk, { st: 'over', t: now, won: top > 0 ? ids.filter(id => pk.chips[id] === top) : [], order: [], p: {}, board: [], show: {}, res: {}, best: [], turn: -1, join: {} });
 }
 /* one puts chips in (no more than they have: then they're all in) */
 function put(pk, id, n) {
@@ -217,7 +231,7 @@ export function pkBot(s, id, now) {
   const pk = (s.hang || {}).pk; if (!pk) return [];
   const think = 900 + hash(id + pk.st + pk.id + pk.turn + pk.round) % 1600, A = o => [{ t: 'hang', k: 'pk', id, ...o }];
   if (pk.st === 'setup' && pk.by === id && now - pk.t > think) return A({ do: 'start' });   // (a computer left setting it up: the defaults)
-  if (pk.st === 'join' && !pk.join[id] && now - pk.t > think) return A({ do: 'join', v: hash(id + pk.n) % 7 ? 'play' : 'out' });
+  if (pk.st === 'join' && pk.chips[id] > 0 && !pk.join[id] && now - pk.t > think) return A({ do: 'join', v: hash(id + pk.n) % 7 ? 'play' : 'out' });
   if (pk.st === 'bet' && pk.order[pk.turn] === id && now - pk.tt > think) return A(brainMove(pk, id, holesOf(pk, id)));
   return [];
 }
@@ -238,7 +252,7 @@ rule('pk', {
     const pk = clone(pk0), id = a.id; if (!atTable(s).some(q => q.id === id)) return false;
     if (a.do === 'set') {
       const opts = SETS[a.key], val = opts && opts.find(o => String(o) === String(a.v));
-      if (val === undefined || !(pk.st === 'setup' && pk.by === id || pk.st === 'wait' && a.key === 'butler')) return false;
+      if (val === undefined || !(pk.st === 'setup' && pk.by === id || pk.st === 'wait' && a.key === 'butler' && (buyIn(pk) || pk.chips.butler > 0))) return false;
       pk.set[a.key] = val;
       if (pk.st === 'wait' && val) toJoin(s, pk, now);
     } else if (a.do === 'start') {
@@ -246,7 +260,7 @@ rule('pk', {
       if (pk.set.justin) { const k = jPoker.sit(s, atTable(s).map(q => q.k), now); if (k >= 0) { pk.k.justin = k; pk.chips.justin = START; } }
       toJoin(s, pk, now);
     } else if (a.do === 'join') {
-      if (pk.st !== 'join' || !['play', 'out'].includes(a.v)) return false;
+      if (pk.st !== 'join' || !['play', 'out'].includes(a.v) || !(pk.chips[id] > 0)) return false;   // (out of chips, or came after the buy-in: watching)
       pk.join[id] = a.v;
     } else if (['fold', 'call', 'raise'].includes(a.do)) {
       if (pk.st !== 'bet' || pk.order[pk.turn] !== id || pk.p[id].s || mem.id !== pk.id) return false;   // (the deck is the host's)
@@ -259,7 +273,7 @@ rule('pk', {
     const pk0 = s.hang.pk; if (pk0.st === 'off') return false;
     const pk = clone(pk0), at = atTable(s), here = new Set(at.map(q => q.id));
     if (!at.length) { jPoker.leave(s, now); s.hang.pk = fresh(); return true; }   // everyone got up: the game is over
-    for (const { id } of at) if (pk.chips[id] === undefined) pk.chips[id] = START;
+    if (buyIn(pk)) for (const { id } of at) if (pk.chips[id] === undefined) pk.chips[id] = START;   // (sat down in time to buy in)
     if (pk.id && mem.id !== pk.id && ['deal', 'bet'].includes(pk.st)) {   // (a new host: the cards went with the old one, so the bets go back and the hand starts again)
       for (const id of pk.order) pk.chips[id] = (pk.chips[id] ?? 0) + (pk.p[id] ? pk.p[id].in : 0);
       toJoin(s, pk, now);
@@ -270,11 +284,11 @@ rule('pk', {
     }
     switch (pk.st) {
       case 'setup': if (!here.has(pk.by)) pk.by = at[0].id; break;
-      case 'wait': if (at.length > 1 || pk.set.butler) toJoin(s, pk, now); break;
+      case 'wait': if (ready(s, pk).length > 1 || (pk.n && holders(pk).length < 2)) toJoin(s, pk, now); break;
       case 'join': {
-        const asked = at.filter(q => !pk.join[q.id]);
+        const asked = at.filter(q => pk.chips[q.id] > 0 && !pk.join[q.id]);
         if (asked.length && now - pk.t < JOIN) break;
-        const ids = [...at.filter(q => pk.join[q.id] === 'play').map(q => q.id), ...(pk.set.butler ? ['butler'] : []), ...(pk.k.justin !== undefined ? ['justin'] : [])].filter(id => (pk.chips[id] ?? 0) > 0);
+        const ids = ready(s, pk).filter(id => computer(id) || pk.join[id] === 'play');
         if (ids.length < 2) { toJoin(s, pk, now); break; }   // (not enough playing: ask again)
         deal(s, pk, ids, now); break;
       }
@@ -286,8 +300,8 @@ rule('pk', {
         if (!here.has(id) || now - pk.tt >= pk.set.time * 1000) play(s, pk, id, pk.high > pk.p[id].bet ? 'fold' : 'call', 0, now);   // (got up, or out of time: check, else fold)
         break;
       }
-      case 'show': if (now - pk.t >= SHOW) { justinAfter(s, pk, now); pk.n++; if (pk.set.limit && pk.n >= pk.set.limit) Object.assign(pk, { st: 'over', t: now }); else toJoin(s, pk, now); } break;
-      case 'over': if (now - pk.t >= 8000) { jPoker.leave(s, now); Object.assign(pk, fresh()); } break;
+      case 'show': if (now - pk.t >= SHOW) { justinAfter(s, pk, now); pk.n++; if (pk.set.limit && pk.n >= pk.set.limit) over(pk, now); else toJoin(s, pk, now); } break;
+      case 'over': if (now - pk.t >= OVER) { jPoker.leave(s, now); Object.assign(pk, fresh()); } break;
     }
     if (JSON.stringify(pk) === JSON.stringify(pk0)) return false;
     s.hang.pk = pk; return true;
@@ -327,22 +341,24 @@ function render(s, now) {
     acts = edit ? `<button type="button" class="btn green" data-do="start">Start</button>` : '';
   } else if (pk.st === 'wait') {
     say = 'Waiting for other players';
-    acts = `<button type="button" class="btn yellow" data-do="set" data-k="butler" data-v="1">Play the Butler</button>`;
+    if (!pk.set.butler && (buyIn(pk) || pk.chips.butler > 0)) acts = `<button type="button" class="btn yellow" data-do="set" data-k="butler" data-v="1">Play the Butler</button>`;
   } else if (pk.st === 'join') {
-    const a = pk.join[me], big = pk.set.blinds * 2;
-    say = pk.gift[me] ? '+100 chips, on the house' : a ? (a === 'play' ? 'Playing this hand' : 'Sitting out') : 'New hand';
-    acts = `<div class="pkr-row"><button type="button" class="btn green${a === 'play' ? ' on' : ''}" data-do="join" data-v="play">Play</button><button type="button" class="btn yellow${a === 'out' ? ' on' : ''}" data-do="join" data-v="out">Sit out</button></div>`;
-    body = `<p class="pkr-note">Blinds ${pk.set.blinds} / ${big}</p>`;
-  } else if (pk.st === 'over') {
-    const top = Object.entries(pk.chips).sort((a, b) => b[1] - a[1])[0];
-    say = top ? `Game over · ${who(s, top[0])} wins` : 'Game over';
+    const a = pk.join[me], small = blindNow(pk), mine = pk.chips[me];
+    say = mine === 0 ? "You're out · watching" : mine === undefined ? 'Watching · join the next game' : a ? (a === 'play' ? 'Playing this hand' : 'Sitting out') : 'New hand';
+    if (mine > 0) acts = `<div class="pkr-row"><button type="button" class="btn green${a === 'play' ? ' on' : ''}" data-do="join" data-v="play">Play</button><button type="button" class="btn yellow${a === 'out' ? ' on' : ''}" data-do="join" data-v="out">Sit out</button></div>`;
+    body = `<p class="pkr-note">Hand ${pk.n + 1}${pk.set.limit ? ' of ' + pk.set.limit : ''} · Blinds ${small} / ${2 * small}</p>`;
+  } else if (pk.st === 'over') {   // (the winner, and everyone's chips, most first)
+    const won = pk.won || [], name = id => id === me ? 'You' : who(s, id);
+    say = won.length ? `Game over · ${won.map(name).join(' & ')} ${won.length > 1 ? 'tie' : won[0] === me ? 'win' : 'wins'}` : 'Game over';
+    const rows = Object.keys(pk.chips).filter(id => id !== 'butler' || pk.set.butler).sort((a, b) => pk.chips[b] - pk.chips[a]);
+    body = `<div class="pkr-setup pkr-final">${rows.map(id => `<span>${name(id)}</span><b>${chipSVG(GOLD)}${pk.chips[id]}</b>`).join('')}</div>`;
   } else {
     const cards = myCards(pk, me), h = bestHand([...cards, ...pk.board]), r = pk.res[me], owe = toCall(pk, me), mineTurn = turnId === me;
     if (pk.st === 'show') {
       const won = Object.keys(pk.res).filter(id => pk.res[id].won > 0);
       say = r && r.won > 0 ? `You win ${r.won}` + (won.length > 1 ? ' (split)' : '') : won.length ? `${won.map(id => who(s, id)).join(' & ')} ${won.length > 1 ? 'split it' : 'wins'}` : '';
       if (won.length && pk.res[won[0]].name) say += ` · ${pk.res[won[0]].name}`;
-    } else say = !inHand ? 'Next hand' : mineTurn ? 'Your turn' : turnId ? `${who(s, turnId)}'s turn` : pk.st === 'deal' ? (pk.set.deal === 'butler' ? BUTLER : who(s, pk.dealer)) + ' deals' : '';
+    } else say = !inHand ? (pk.chips[me] === 0 ? "You're out · watching" : pk.chips[me] === undefined ? 'Watching · join the next game' : 'Next hand') : mineTurn ? 'Your turn' : turnId ? `${who(s, turnId)}'s turn` : pk.st === 'deal' ? (pk.set.deal === 'butler' ? BUTLER : who(s, pk.dealer)) + ' deals' : '';
     const stat = (label, val, cls = '') => `<div class="bj-stat${cls}"><span>${label}</span><b>${val}</b></div>`;
     body = inHand ? `<div class="hang-bj-hand mine pkr-mine${mineTurn ? ' turn' : ''}${p && p.s === 'fold' ? ' out' : ''}"><span class="hang-bj-who">You${pk.st === 'show' ? (r && r.won > 0 ? `<span class="pkr-did won">+${r.won}</span>` : '') : p && p.a ? `<span class="pkr-did">${p.a}</span>` : ''}</span><div class="bj-cards">${cards.map(c => cardHTML(c, ' old')).join('') || '<span class="bj-card none"></span>'}</div><span class="pkr-name">${h && cards.length ? h.name : ''}</span></div>`
       + `<div class="bj-stats">${stat('Pot', chipSVG(GOLD) + potOf(pk), ' pot')}${pk.st === 'bet' && p && p.s !== 'fold' ? stat('To call', String(owe)) : ''}</div>` : '';
