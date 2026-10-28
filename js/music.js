@@ -7,6 +7,7 @@
 import { profile } from './store.js';
 import { activeRoom } from './net.js';
 import { now as clockNow } from './clock.js';
+import { ceiling } from './sound.js';
 export const music = (function(){
   const N={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
   // "A4:2 F4:1:.5 r:2 D5+E5:1 G5:2::a …" (lengths in eighths, may be fractions; then a loudness and tags: a = a falling
@@ -1222,6 +1223,9 @@ export const music = (function(){
   ];
   const BASE=.45;   // 100% music: loud, but under the game
   const LV=()=>BASE*(profile.settings.sound/100)*(profile.settings.music/100);
+  /* how far ahead a change to something already sounding is set: a change set for a moment the sound has already passed
+     jumps instead of gliding, and pops (with "playback" latency Chrome works out sound in bigger pieces, so a little more) */
+  const AH=()=>RENDER||!ac?0:.03+Math.min(.05,ac.baseLatency||0);
   const hz=m=>440*Math.pow(2,(m-69)/12);
   /* on a phone the music is played at a third of the usual sample rate (every song is filtered below 4.2 kHz anyway), the notes' tails
      are cut sooner (after they have faded to almost nothing), the faint layers are left out (shimmers an octave up,
@@ -1251,29 +1255,35 @@ export const music = (function(){
     music.connect(mdry);mdry.connect(pre);music.connect(mpre);mpre.connect(ws);ws.connect(mlp);mlp.connect(mwet);mwet.connect(pre);
     const lead=gn(),leadLP=biq("lowpass",Math.min(20000,ac.sampleRate/2),.5);const leadPan=ac.createStereoPanner();lead.connect(leadLP);leadLP.connect(leadPan);leadPan.connect(music);const bass=gn();bass.connect(music);
     const perc=gn();perc.connect(pre);const fx=gn();fx.connect(pre);const revIn=gn(),revOut=gn(.9);revOut.connect(pre);
-    const d2In=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
-    d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
-    BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In};DST=music}
-  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ac.destination);if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
+    const d2In=gn(),d2ab=gn(),d2a=ac.createDelay(2),d2b=ac.createDelay(2),d2fb=gn(.42),d2lp=biq("lowpass",1800,.5),pa=ac.createStereoPanner(),pb=ac.createStereoPanner(),d2Out=gn(.8);pa.pan.value=-.55;pb.pan.value=.55;
+    d2In.connect(d2a);d2a.connect(pa);pa.connect(d2Out);d2a.connect(d2ab);d2ab.connect(d2b);d2b.connect(pb);pb.connect(d2Out);d2b.connect(d2fb);d2fb.connect(d2lp);d2lp.connect(d2a);d2Out.connect(pre);   // each repeat darker than the last
+    BUS={lp,dl,fb,wet,pre,swl,trim,fwet,w1,wg1,wg2,mdry,mpre,mlp,mwet,lead,leadLP,leadPan,bass,perc,fx,revIn,revOut,rev:null,revK:"",d2a,d2b,d2In,d2fb,d2Out,d2ab};DST=music}
+  function ctx(){if(ac)return ac;const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;try{ac=new A(LITE?{latencyHint:"playback",sampleRate:16000}:{latencyHint:"playback"})}catch(e){ac=new A()}MF=muffle(ac,ceiling(ac,ac.destination));   /* the last thing before the speakers: every song at Music 100% and 150% passes it untouched; at 200% it keeps them under full scale, where they crackled */if(MUF){MF.lp.detune.value=-1200*Math.log2(MF.top/MUFF);MF.g.gain.value=Math.pow(10,MUFDB/20)}   /* (nothing sounds yet: set at once) */graph();bout=gn(0);bout.connect(MF.inp);return ac}   // a roomy buffer: a busy computer doesn't make it crackle
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec,dark){const n=Math.floor(ac.sampleRate*sec),b=ac.createBuffer(2,n,ac.sampleRate),pd=Math.floor(ac.sampleRate*.018);
     for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let y=0;for(let k=pd;k<n;k++){const q=k/n,cut=1-dark*(.25+.7*q);y+=cut*((Math.random()*2-1)-y);d[k]=y*Math.exp(-6.9*q)}}return b}
-  function setRev([sec,dark]){const k=sec+"/"+dark;if(BUS.revK===k)return;BUS.revK=k;const c=ac.createConvolver();c.buffer=irBuf(sec,dark);BUS.revIn.connect(c);c.connect(BUS.revOut);
-    const old=BUS.rev;BUS.rev=c;if(old){BUS.revIn.disconnect(old);setTimeout(()=>{try{old.disconnect()}catch(e){}},sec*1000+600)}}
-  /* each song sets its own room: how bright, how far the echo, how much fuzz, flanging and wobble */
-  function room(now){if(!BUS||!T)return;const t=ac.currentTime,P=(p,v)=>{p.cancelScheduledValues(t);if(now)p.setValueAtTime(v,t);else p.setTargetAtTime(v,t,.4)};
-    P(BUS.lp.frequency,T.lp||1600);P(BUS.dl.delayTime,T.dly||.42);P(BUS.fb.gain,T.fb||.22);P(BUS.wet.gain,T.echo||.28);
-    P(BUS.pre.gain,1);P(BUS.swl.gain,1);P(BUS.trim.gain,T.trim||1);P(BUS.lead.gain,1);P(BUS.bass.gain,T.bassV||1);P(BUS.leadLP.frequency,Math.min(T.leadLp||20000,ac.sampleRate/2));P(BUS.leadPan.pan,0);
-    const fz=T.fuzz||[0,1,1400];P(BUS.mwet.gain,fz[0]);P(BUS.mdry.gain,fz[1]);P(BUS.mlp.frequency,fz[2]);P(BUS.mpre.gain,2);
-    P(BUS.fwet.gain,T.flange||0);const w=T.wow||[0,.3];P(BUS.wg1.gain,w[0]);P(BUS.w1.frequency,w[1]);P(BUS.wg2.gain,w[0]*.6);
-    const dt=Math.min(1.5,T.dt||60/T.bpm*.75);P(BUS.d2a.delayTime,dt);P(BUS.d2b.delayTime,dt);setRev(T.rev||[3,.5])}
+  function setRev([sec,dark]){const k=sec+"/"+dark;if(BUS.revK===k)return;BUS.revK=k;const c=ac.createConvolver(),old=BUS.rev,g=gn(old?0:1),t=ac.currentTime+AH();c.buffer=irBuf(sec,dark);BUS.revIn.connect(g);g.connect(c);c.connect(BUS.revOut);
+    BUS.rev={c,g};if(old){g.gain.setTargetAtTime(1,t,.06);old.g.gain.setTargetAtTime(0,t,.06);setTimeout(()=>{try{old.g.disconnect();old.c.disconnect()}catch(e){}},sec*1000+900)}}   // the new room fades in as the old one fades out (cut off at once, the old one clicked)
+  /* each song sets its own room: how bright, how far the echo, how much fuzz, flanging and wobble. Played live, the last
+     song may still ring, so nothing jumps: the levels and filters glide; an echo's length can't glide (its repeats would
+     race and warble, which crackled), so the echoes fade out, their length changes while they're silent, and they fade
+     back in, a fifth of a second later */
+  function room(now){if(!BUS||!T)return;const t=ac.currentTime+AH(),cut=now&&!RENDER,t2=t+.18,
+      P=(p,v,at)=>{p.cancelScheduledValues(at);if(now&&RENDER)p.setValueAtTime(v,at);else p.setTargetAtTime(v,at,now?.05:.4)},
+      E=(p,v)=>{if(!cut)return P(p,v,t);p.cancelScheduledValues(t);p.setTargetAtTime(0,t,.025);p.setTargetAtTime(v,t2+.01,.05)},
+      L=(p,v)=>{if(!cut)return P(p,v,t);p.cancelScheduledValues(t);p.setValueAtTime(v,t2)};   // (at t2 every echo is silent)
+    P(BUS.lp.frequency,T.lp||1600,t);L(BUS.dl.delayTime,T.dly||.42);E(BUS.fb.gain,T.fb||.22);E(BUS.wet.gain,T.echo||.28);
+    P(BUS.pre.gain,1,t);P(BUS.swl.gain,1,t);P(BUS.trim.gain,T.trim||1,t);P(BUS.lead.gain,1,t);P(BUS.bass.gain,T.bassV||1,t);P(BUS.leadLP.frequency,Math.min(T.leadLp||20000,ac.sampleRate/2),t);P(BUS.leadPan.pan,0,t);
+    const fz=T.fuzz||[0,1,1400];P(BUS.mwet.gain,fz[0],t);P(BUS.mdry.gain,fz[1],t);P(BUS.mlp.frequency,fz[2],t);P(BUS.mpre.gain,2,t);
+    P(BUS.fwet.gain,T.flange||0,t);const w=T.wow||[0,.3];P(BUS.wg1.gain,w[0],t);P(BUS.w1.frequency,w[1],t);P(BUS.wg2.gain,w[0]*.6,t);
+    const dt=Math.min(1.5,T.dt||60/T.bpm*.75);L(BUS.d2a.delayTime,dt);L(BUS.d2b.delayTime,dt);E(BUS.d2fb.gain,.42);E(BUS.d2Out.gain,.8);E(BUS.d2ab.gain,1);setRev(T.rev||[3,.5])}
   // a 25% pulse, the old cartridge's thin square
   function pulseWave(){if(CACHE.pw)return CACHE.pw;const n=32,re=new Float32Array(n),im=new Float32Array(n);for(let k=1;k<n;k++)im[k]=2/(k*Math.PI)*Math.sin(k*Math.PI*.25);return CACHE.pw=ac.createPeriodicWave(re,im)}
   const env=(g,t,a,peak,hold,rel)=>{g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(0,t+Math.max(a,hold),rel)};
   // an oscillator; GL (when set) slides it in from another pitch, or lets it sag or rise as it sounds
   /* played live, a note whose time has already gone by (the page was busy for a moment) starts now with its whole shape,
      instead of jumping straight to full volume, which popped */
-  const lt=t=>RENDER||!ac?t:Math.max(t,ac.currentTime+.02);   // (a note set in the past skips its fade-in and clicks: Firefox's clock can be several ms behind)
+  const lt=t=>RENDER||!ac?t:Math.max(t,ac.currentTime+AH());   // (a note set in the past skips its fade-in and clicks: Firefox's clock can be several ms behind)
   /* a struck or plucked low note comes in a little slower, so its first push of air is a round "dum", not a pop */
   const atk=f=>f<200?.016:f<400?.01:.004;
   const osc=(type,f,t,stop,dest)=>{const o=ac.createOscillator();if(type==="pulse")o.setPeriodicWave(pulseWave());else o.type=type;o._f=f;
@@ -1291,6 +1301,8 @@ export const music = (function(){
   /* instruments: the cartridge's waves, a music box, a church organ, glass, a metallic FM bell, a harpsichord pluck, a
      tremolo mandolin, an accordion, a filtered brass, a formant choir, a distorted lead; v59: a wisp, a soft music box, bowed
      strings, a sad slide, a muted crisp key, a falling breath, a swelling tremolo, a soft bell */
+  /* every voice ends at silence: a voice whose last fade is slow is closed off over its final 60 ms (stopped while still
+     faintly sounding, it ticked; on a phone, whose tails are shorter, it clicked) */
   function voice(type,f,t,dur,peak,rel,vib_){t=lt(t);if(typeof f==="number"&&f>900)peak*=Math.pow(900/f,.35);   // high notes a touch softer: the ear hears them louder
    const D=DST;
     if(type==="musicbox"){const g=gn();g.connect(D);env(g,t,.004,peak,.02,.55);osc("sine",f,t,t+2.6,g);
@@ -1318,34 +1330,34 @@ export const music = (function(){
       return true}
     if(type==="dist"){const g=gn(),ws=ac.createWaveShaper(),lp=biq("lowpass",1700);ws.curve=distCurve();ws.connect(lp).connect(g);g.connect(D);env(g,t,.01,peak,dur-.04,.07);
       osc("sawtooth",f,t,t+dur+.4,ws);osc("sawtooth",f*.5,t,t+dur+.4,ws);return true}
-    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5*TL,g=gn();g.connect(D);
+    if(type==="wisp"){const a=Math.min(.16,Math.max(.05,dur*.3)),R=rel||.6,stop=t+dur+R*5*TL,g=gn();g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.62,t+a,Math.max(.2,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
       const o1=osc("sine",f,t,stop,g),o2=osc("sine",f*1.0026,t,stop,g);   // two, a hair apart: a slow, seasick beating
       let o3=null;if(!LITE){const h=gn(.07);h.connect(g);o3=osc("triangle",f*2,t,stop,h)}if(!LITE){const s=gn(.16);s.connect(g);osc("sine",f*.5,t,stop,s)}   // and a ghost an octave down
       vib(o3?[o1,o2,o3]:[o1,o2],t,stop,4.4,.0045,.3);
       const nb=noiseSrc(t,dur+.4),bp=biq("bandpass",f*2,7),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*1.6,t+a*.6);ng.gain.setTargetAtTime(0,t+a,.18);nb.connect(bp).connect(ng).connect(D);   // breath
       return true}
-    if(type==="softtri"){const R=rel||.3,g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.03);g.gain.setTargetAtTime(peak*.55,t+.04,.25);g.gain.setTargetAtTime(0,t+dur,R);osc("triangle",f,t,t+dur+R*5,g);return true}
+    if(type==="softtri"){const R=rel||.3,g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.03);g.gain.setTargetAtTime(peak*.55,t+.04,.25);g.gain.setTargetAtTime(0,t+dur,R);g.gain.setTargetAtTime(0,t+dur+R*5-.06,.01);osc("triangle",f,t,t+dur+R*5,g);return true}
     if(type==="softbox"){const R=rel||.9,end=t+Math.max(dur,.4),g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.018);g.gain.setTargetAtTime(peak*.4,t+.03,.35);g.gain.setTargetAtTime(0,end,R);
-      osc("sine",f,t,end+R*5*TL,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
+      g.gain.setTargetAtTime(0,end+R*5*TL-.06,.01);osc("sine",f,t,end+R*5*TL,g);const g2=gn();g2.connect(D);env(g2,t,.012,peak*.16,.02,.22);osc("sine",f*2,t,t+1.5,g2);
       if(!LITE){const g3=gn();g3.connect(D);env(g3,t,.01,peak*.05,.01,.12);osc("sine",f*3.98,t,t+.8,g3)}   // the tine, much softer than the old box
       if(!LITE){const h=gn();h.connect(D);h.gain.setValueAtTime(0,t);h.gain.linearRampToValueAtTime(peak*.22,t+.35);h.gain.setTargetAtTime(0,end,R*1.4);osc("triangle",f,t,end+R*7,h)}   // a halo that lingers
       return true}
-    if(type==="viol"||type==="lament"){const L=type==="lament",a=L?.2:.1,R=rel||(L?.5:.3),stop=t+dur+R*5,g=gn(),lp=biq("lowpass",L?1500:Math.min(5000,f*4+600),.7);lp.connect(g);g.connect(D);
+    if(type==="viol"||type==="lament"){const L=type==="lament",a=L?.2:.1,R=rel||(L?.5:.3),stop=t+dur+R*5,g=gn(),lp=biq("lowpass",L?1500:Math.min(5000,f*4+600),.7);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,Math.max(.1,dur*.6));g.gain.setTargetAtTime(0,t+dur,R);
       const o1=osc("sawtooth",f,t,stop,lp),tg=gn(L?1.4:.6);tg.connect(lp);const o2=osc(L?"triangle":"sawtooth",f*1.003,t,stop,tg);
       vib([o1,o2],t,stop,L?4.9:5.6,L?.0075:.005,L?.25:.18);
       const nb=noiseSrc(t,dur+.3),hp=biq(L?"bandpass":"highpass",L?Math.min(8000,f*3):3200,L?3:.7),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*(L?.25:.35),t+a);ng.gain.setTargetAtTime(0,t+dur*.5,.15);nb.connect(hp).connect(ng).connect(D);   // the bow's rosin
       return true}
-    if(type==="crisp"){const R=rel||.25,stop=t+dur+R*5+.1,g=gn(),ws=ac.createWaveShaper(),lp=biq("lowpass",2600,1.2);ws.curve=crushCurve();ws.connect(lp).connect(g);g.connect(D);
+    if(type==="crisp"){const R=rel||.25,stop=t+dur+R*5+.1,g=gn(),ws=ac.createWaveShaper(),lp=biq("lowpass",2600,1.2);ws.curve=crushCurve();ws.connect(lp).connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.008);g.gain.setTargetAtTime(peak*.45,t+.02,.12);g.gain.setTargetAtTime(0,t+dur,R);
       const p=gn(.9);p.connect(ws);osc("triangle",f,t,stop,p);const k=gn(.3);k.connect(ws);osc("pulse",f*1.002,t,stop,k);
       lp.frequency.setTargetAtTime(900,t+.01,.15);return true}   // the click of a key, then felt
-    if(type==="air"){const R=rel||.8,stop=t+dur+R*5,g=gn();g.connect(D);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.5,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur*.8,R);
+    if(type==="air"){const R=rel||.8,stop=t+dur+R*5,g=gn();g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.5,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur*.8,R);
       osc("sine",f,t,stop,g);const h=gn(.12);h.connect(g);osc("sine",f*2,t,stop,h);
       const nb=noiseSrc(t,dur+R*3),bp=biq("bandpass",f*1.5,9),ng=gn(0);ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(peak*3,t+.04);ng.gain.setTargetAtTime(0,t+.06,Math.max(.1,dur*.35));nb.connect(bp).connect(ng).connect(D);
       return true}
-    if(type==="swell"){const a=dur>.6?dur*.4:.06,R=rel||.35,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",700,.8),tr=gn(1);tr.connect(lp);lp.connect(g);g.connect(D);
+    if(type==="swell"){const a=dur>.6?dur*.4:.06,R=rel||.35,stop=t+dur+R*5,g=gn(),lp=biq("lowpass",700,.8),tr=gn(1);tr.connect(lp);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.55,t+a,Math.max(.1,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
       const l=ac.createOscillator(),lg=gn(.35);l.frequency.value=8.5+rnd()*2;l.connect(lg).connect(tr.gain);l.start(t);l.stop(stop);   // a soft tremolo: the mandolin's ghost
       osc("sawtooth",f,t,stop,tr);osc("triangle",f*1.004,t,stop,tr);
@@ -1360,19 +1372,19 @@ export const music = (function(){
       return true}
     if(type==="harp"){const R=rel||.9,stop=t+R*6*TL,g=gn(),lp=biq("lowpass",3400,.5);lp.connect(g);g.connect(D);env(g,t,atk(f),peak,.01,R);
       osc("triangle",f,t,stop,lp);if(!LITE){const h=gn(.3);h.connect(lp);osc("sine",f*2,t,stop,h)}lp.frequency.setTargetAtTime(1200,t+.02,.4);return true}
-    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);
+    if(type==="mbass"){const R=rel||.5,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",260,.7);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+.05);g.gain.setTargetAtTime(peak*.7,t+.06,Math.max(.1,dur*.4));g.gain.setTargetAtTime(0,t+dur,R);
       osc("sine",f,t,stop,lp);if(!LITE){const k=gn(.45);k.connect(lp);osc("triangle",f*1.002,t,stop,k)}return true}
-    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);
+    if(type==="warm"){const a=Math.max(.3,dur*.35),R=rel||.8,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",380,.6);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
       const k=gn(.6);k.connect(lp);for(const x of [].concat(f)){osc("sawtooth",x,t,stop,lp);if(!LITE){osc("sawtooth",x*1.0035,t,stop,lp);osc("triangle",x*.5,t,stop,k)}}   // f may be a whole chord
       lp.frequency.linearRampToValueAtTime(950,t+a);lp.frequency.setTargetAtTime(600,t+a,dur*.4);return true}
     /* a clean "ooh" of voices: no buzz, just round tones that swell and sway */
-    if(type==="ooh"){const a=Math.max(.25,dur*.3),R=rel||.7,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",1800,.5);lp.connect(g);g.connect(D);
+    if(type==="ooh"){const a=Math.max(.25,dur*.3),R=rel||.7,stop=t+dur+R*5*TL,g=gn(),lp=biq("lowpass",1800,.5);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.8,t+a,dur*.5);g.gain.setTargetAtTime(0,t+dur,R);
       const o1=osc("sine",f,t,stop,lp),o2=osc("sine",f*1.004,t,stop,lp);let o3=null;if(!LITE){const h=gn(.15);h.connect(lp);o3=osc("sine",f*2,t,stop,h)}vib([o1,o2,o3],t,stop,4.8,.006,.2);return true}
     /* a bowed voice, a cello or a viola played softly: round, not buzzy (a triangle and a sine, a little saw for the bow) */
-    if(type==="bow"){const a=Math.min(.22,Math.max(.07,dur*.25)),R=rel||.4,stop=t+dur+R*5*TL,top=Math.min(2600,f*3+300),g=gn(),lp=biq("lowpass",Math.min(1800,f*2),.5);lp.connect(g);g.connect(D);
+    if(type==="bow"){const a=Math.min(.22,Math.max(.07,dur*.25)),R=rel||.4,stop=t+dur+R*5*TL,top=Math.min(2600,f*3+300),g=gn(),lp=biq("lowpass",Math.min(1800,f*2),.5);lp.connect(g);g.connect(D);g.gain.setTargetAtTime(0,stop-.06,.01);
       g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setTargetAtTime(peak*.82,t+a,Math.max(.12,dur*.5));g.gain.setTargetAtTime(0,t+dur,R);
       lp.frequency.setValueAtTime(Math.min(1800,f*2),t);lp.frequency.linearRampToValueAtTime(top,t+a);   // the bow digs in, then sings
       const o1=osc("triangle",f,t,stop,lp),o2=LITE?null:osc("sine",f*1.0025,t,stop,lp),k=gn(.22);k.connect(lp);const o3=osc("sawtooth",f,t,stop,k);
@@ -1479,8 +1491,8 @@ export const music = (function(){
       lp.frequency.setTargetAtTime(Math.min(3000,f*3),t+.01,.12);   // the pluck's brightness fades into the wood
       const c3o=osc("sine",f,t,stop,lp);if(!GL){c3o.frequency.setValueAtTime(f*1.006,t);c3o.frequency.exponentialRampToValueAtTime(f,t+.045)}
       if(!LITE){const c3k=gn(.16);c3k.connect(lp);osc("sine",f*1.0011,t,stop,c3k)}   // the box's slow warmth
-      if(f*5.93<7000){const c3h=gn(0);c3h.connect(q);c3h.gain.setValueAtTime(0,t);c3h.gain.linearRampToValueAtTime(peak*(.24-.12*lo),t+.003);c3h.gain.setTargetAtTime(0,t+.004,.03+.02*(1-lo));osc("sine",f*5.93,t,stop,c3h)}   // the tine's ping
-      if(!LITE&&f*2.98<6000){const c3h3=gn(0);c3h3.connect(q);c3h3.gain.setValueAtTime(0,t);c3h3.gain.linearRampToValueAtTime(peak*.05,t+.003);c3h3.gain.setTargetAtTime(0,t+.004,.09);osc("sine",f*2.98,t,stop,c3h3)}
+      if(f*5.93<7000){const c3h=gn(0);c3h.connect(q);c3h.gain.setValueAtTime(0,t);c3h.gain.linearRampToValueAtTime(peak*(.24-.12*lo),t+.005);c3h.gain.setTargetAtTime(0,t+.006,.03+.02*(1-lo));osc("sine",f*5.93,t,stop,c3h)}   // the tine's ping
+      if(!LITE&&f*2.98<6000){const c3h3=gn(0);c3h3.connect(q);c3h3.gain.setValueAtTime(0,t);c3h3.gain.linearRampToValueAtTime(peak*.05,t+.005);c3h3.gain.setTargetAtTime(0,t+.006,.09);osc("sine",f*2.98,t,stop,c3h3)}
       // the box: a soft hollow thump of wood, and the thumb leaving the tine, through their own gate
       const c3n=noiseSrc(t,.16),c3bp=biq("bandpass",260+f*.15,1.6),c3ng=gn(0),c3nq=gn();
       c3ng.gain.setValueAtTime(0,t);c3ng.gain.linearRampToValueAtTime(peak*.3,t+.006);c3ng.gain.setTargetAtTime(0,t+.007,.02);
@@ -1545,15 +1557,16 @@ export const music = (function(){
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+Math.min(.9,dur*.4));g.gain.setTargetAtTime(0,t+dur*.8,dur*.18);o.connect(g).connect(DST);o.start(t);o.stop(t+dur*1.6)}
   function drip(t,f){t=lt(t);const o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.5,t+.08);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.005);g.gain.setTargetAtTime(0,t+.02,.07);o.connect(g).connect(DST);o.start(t);o.stop(t+.5)}
-  function clank(t){t=lt(t);const b=ac.createBuffer(1,Math.floor(ac.sampleRate*.3),ac.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,6);
+  function clank(t){t=lt(t);const b=ac.createBuffer(1,Math.floor(ac.sampleRate*.3),ac.sampleRate),d=b.getChannelData(0);for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,6)*FIN(k);
     const s=ac.createBufferSource(),bp=ac.createBiquadFilter(),g=ac.createGain();bp.type="bandpass";bp.frequency.value=2600+Math.random()*1800;bp.Q.value=14;g.gain.value=.5;s.buffer=b;s.connect(bp).connect(g).connect(DST);s.start(t);
     const f=180+Math.random()*240;voice("fmbell",f,t,.3,.035,.2,false)}
+  const FIN=k=>Math.min(1,k/(ac.sampleRate*.005));   // a drum's noise comes in over 5 ms (at full level at once, it crackled)
   function hit(t,kind){t=lt(t);if(kind==="snare"||kind==="static"){const len=kind==="snare"?.2:1.3,b=ac.createBuffer(1,Math.floor(ac.sampleRate*len),ac.sampleRate),d=b.getChannelData(0);
-      for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*(kind==="snare"?Math.pow(1-k/d.length,4):Math.sin(Math.PI*k/d.length)*(.6+.4*Math.sin(k/900)));
+      for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*(kind==="snare"?Math.pow(1-k/d.length,4)*FIN(k):Math.sin(Math.PI*k/d.length)*(.6+.4*Math.sin(k/900)));
       const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();f.type="bandpass";f.frequency.value=kind==="snare"?1800:3200;f.Q.value=kind==="snare"?.8:.6;g.gain.value=kind==="snare"?.22:.045;
       s.buffer=b;s.connect(f).connect(g).connect(DST);s.start(t);return}
     const len=kind==="tick"?.04:.12,b=ac.createBuffer(1,Math.floor(ac.sampleRate*len),ac.sampleRate),d=b.getChannelData(0);
-    for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,kind==="tick"?1:3);
+    for(let k=0;k<d.length;k++)d[k]=(Math.random()*2-1)*Math.pow(1-k/d.length,kind==="tick"?1:3)*FIN(k);
     const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();f.type=kind==="tick"?"highpass":"lowpass";f.frequency.value=kind==="tick"?2500:kind==="soft"?140:180;g.gain.value=kind==="kick"?.5:kind==="soft"?.3:.06;
     s.buffer=b;s.connect(f).connect(g).connect(DST);s.start(t)}
   /* v59 percussion and textures */
@@ -1571,9 +1584,9 @@ export const music = (function(){
     s.connect(b).connect(g).connect(p).connect(send(.8,.1))}
   /* a bed of soft hiss under the whole song (there was a needle's crackle in it too, from Ether's Crossroads: in Duck
      Friends it was heard as the music crackling, so it's gone) */
-  function stopBeds(){if(!ac)return;const t=ac.currentTime;for(const {s,g} of BEDS){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.08);try{s.stop(t+.6)}catch(e){}}BEDS=[]}
-  function startBed(t,dur,h){if(!h)return;const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;const b=biq("bandpass",3400,.45),g=gn(0);s.connect(b);b.connect(g);g.connect(BUS.fx);
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(h,t+1.2);g.gain.setValueAtTime(h,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push({s,g})}
+  function stopBeds(){if(!ac)return;const t=ac.currentTime+AH();for(const {s,k} of BEDS){k.gain.setTargetAtTime(0,t,.08);try{s.stop(t+.6)}catch(e){}}BEDS=[]}   // (through a level of its own: cancelling the bed's own fades mid-way made it jump)
+  function startBed(t,dur,h){if(!h)return;const s=ac.createBufferSource();s.buffer=noiseBuf();s.loop=true;const b=biq("bandpass",3400,.45),g=gn(0),k=gn();s.connect(b);b.connect(g);g.connect(k);k.connect(BUS.fx);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(h,t+1.2);g.gain.setValueAtTime(h,t+Math.max(1.3,dur-1.5));g.gain.linearRampToValueAtTime(0,t+dur);s.start(t,Math.random()*2);s.stop(t+dur+.05);BEDS.push({s,k})}
   /* a song's notes laid out in time, each with its own loudness: a phrase rises and falls, its last note fades, a higher
      note leans out a little, every other phrase may answer more softly (contrast) */
   function build(T){let s=0;const ev=[];for(const [m,l,v,tag] of T.mel){if(m!=null)ev.push({m:Array.isArray(m)?m:[m],s,l,v:v==null?1:v,tag:tag||"",vel:1,tail:false});s+=l}
@@ -1733,7 +1746,7 @@ export const music = (function(){
   function muffleTo(m,on,lead,at){const t=at??m.a.currentTime+lead,c=on?-1200*Math.log2(m.top/MUFF):0;
     m.lp.detune.setTargetAtTime(c,t,on?.42:.28);m.g.gain.setTargetAtTime(on?Math.pow(10,MUFDB/20):1,t,on?.42:.28)}
   function setMuffle(on){on=!!on;if(on===MUF)return;MUF=on;if(MF)muffleTo(MF,on,.03)}
-  function level(tc,v){const t=ac.currentTime;for(const g of [out,bout]){g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v==null?LV():v,t,tc)}}
+  function level(tc,v){const t=ac.currentTime+AH();for(const g of [out,bout])g.gain.setTargetAtTime(v==null?LV():v,t,tc)}   // (only glides, each from wherever the last has got to: nothing to cancel, nothing jumps)
   // in a room (the lobby or the game), with the music on and the page in view (and no one at the cabin's piano)
   const wanted=()=>LV()>0&&!profile.settings.musicMute&&!document.hidden&&!HUSH&&["front","rooms","lobby","game"].includes(document.body.dataset.screen);
   /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
@@ -1764,7 +1777,7 @@ export const music = (function(){
      ones that haven't started, so a whole song of notes at once made it three times slower. Elsewhere (Firefox, which is
      quick anyway) they all go in first */
   function offline(i,fixed,lv,seed){const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC||!TRACKS[i])return null;
-    const dur=durOf(i),len=dur+7,o=new OAC(2,Math.ceil(44100*len),44100);let mine,off=false;
+    const dur=durOf(i),len=dur+7,sr=!fixed&&ac?ac.sampleRate:44100,o=new OAC(2,Math.ceil(sr*len),sr);let mine,off=false;   // (written out at the speakers' own rate: played back at another, it was stretched to fit on the way, roughly)
     const run=(f,until)=>{if(off)return;const k=ST();RENDER=true;FIXED=fixed;try{if(f)f();else PUT(mine);tick(until);mine=ST()}finally{RENDER=false;FIXED=false;PUT(k)}};
     run(()=>{ac=o;BUF=null;graph();out.gain.value=lv;load(i,true,seed);next=.05;playing=true},4);
     const p=(async()=>{if(o.suspend)for(let s=4;s<len-6.5;s+=4){const u=Math.min(s+4,len-6.5);o.suspend(s-2).then(()=>{try{run(null,u)}finally{o.resume()}})}
@@ -1788,9 +1801,9 @@ export const music = (function(){
   setTimeout(()=>{if(LV()>0&&ahead&&!PRE&&!list()){const i=pick(-1,inMenu()?new Set(SAD):null);if(i>=0){PRE={n:names[i],seed:newSeed()};render(PRE)}}},1500);   // on a computer, a first song is written out as soon as the page is open
   /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
      it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
-  function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn();s.buffer=b.buf;s.connect(g);g.connect(bout);
-    if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,t0:t-off,end:t-off+b.dur,at:0}}
-  function fadeOut(b){const t=ac.currentTime;b.g.gain.cancelScheduledValues(t);b.g.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}
+  function playBuf(b,t,off){const s=ac.createBufferSource(),g=gn(),k=gn();s.buffer=b.buf;s.connect(g);g.connect(k);k.connect(bout);
+    if(off>0){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.3)}s.start(t,off);BUF={...b,s,g,k,t0:t-off,end:t-off+b.dur,at:0}}
+  function fadeOut(b){const t=ac.currentTime+AH();b.k.gain.setTargetAtTime(0,t,.1);try{b.s.stop(t+.8)}catch(e){}}   // (its own level for the fade out: cancelling the fade in part way dropped it to nothing at once)
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
   function nowPlaying(){const S=list();if(HUSH)return {name:HUSH,next:false,in:0,off:S&&S.off||[],hush:true};if(!S)return null;const t=clockNow(),e=wantOf(S,t);if(!e)return {name:"",off:S.off||[]};
     if(inMenu()&&!sounding()&&wanted())return {name:e.n,next:false,in:0,off:[],wait:true};   // (the browser still holds the sound: the bar asks for a tap)

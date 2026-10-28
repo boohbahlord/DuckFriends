@@ -16,6 +16,7 @@ import { rule, activity } from './registry.js';
 import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from './layout.js';
 import * as A from './art.js';
 import { profile } from '../store.js';
+import { sfxContext, sfxOut, soon } from '../sound.js';
 
 const R = 16, DT = 20, FRIC = .982, DRAG = .4, BOUNCE = .62, STOP = 6, MAX_SP = 1250, MAX_STEPS = 1500, RESET = 3500;
 const CX = 22 + R, CY = 12 + R;   // a duck's feet and the ball touch inside this ellipse (x across, y in depth)
@@ -105,21 +106,22 @@ rule('ball', {
 
 /* ---------- sounds: a thump for a kick, a horn for a goal ---------- */
 let ac = null;
-const audio = () => { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; } catch (e) { return null; } };
+const audio = () => (ac = sfxContext());   // (the game's one clock for sounds: sound.js)
 const vol = () => ((profile.settings.sound ?? 100) / 100) * ((profile.settings.sfx ?? 100) / 100);
 function voice(f, dur, { type = 'sine', gain = .1, at = 0, slide = 0, attack = .012, lp = 0, noise = false } = {}) {
   const a = audio(), v = vol(); if (!a || !v) return;
-  const t = a.currentTime + at, g = a.createGain();
+  const t = soon(a) + at, g = a.createGain();   // (a little ahead: set for "now", the fade-in is skipped and it pops)
+  attack = Math.max(!noise && f < 200 ? .016 : .005, attack);   // (a low thump comes in slower, so it's a thud, not a pop)
   let src;
   if (noise) {
     const n = Math.ceil(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) * Math.min(1, i / (a.sampleRate * .005));
     src = a.createBufferSource(); src.buffer = buf;
   } else { src = a.createOscillator(); src.type = type; src.frequency.setValueAtTime(f, t); if (slide) src.frequency.exponentialRampToValueAtTime(f * slide, t + dur); }
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain * v, t + attack); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   let out = src;
   if (lp) { const fl = a.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp; out = out.connect(fl); }
-  out.connect(g).connect(a.destination); src.start(t); src.stop(t + dur + .03);
+  out.connect(g).connect(sfxOut()); src.start(t); src.stop(t + dur + .03);
 }
 const thump = (k = 1) => { voice(0, .09, { noise: true, gain: .14 * k, lp: 520, attack: .004 }); voice(150, .12, { gain: .12 * k, slide: .5, attack: .004 }); };
 function horn() {   // an air horn: two blasts of a low chord
