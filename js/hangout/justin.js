@@ -15,8 +15,8 @@
    - With a gun he keeps his distance: he walks to where his gun reaches and shoots from there. A duck he shoots can't
      move for 6 seconds.
    The lines are mine, word for word: don't change them. */
-import { brain, npcAt, randomSpot, nearestOpen, POOL, DOORS } from './npc.js';
-import { PROPS, DECK, inPool } from './layout.js';
+import { brain, npcAt, randomSpot, nearestOpen, stand, POOL, DOORS } from './npc.js';
+import { PROPS, DECK, BJ, inPool } from './layout.js';
 
 export const E_LINES = `Shut up.
 Shut up!
@@ -117,6 +117,62 @@ This is so STUPID!
 You are such a stupid IDIOT!`.split('\n');
 export const DRANK = "I drank too much, but I swear it isn't a problem.";
 export const POOL_LINE = "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
+/* poker (poker.js): my new lines for his winning and losing, word for word, and his old ones that fit them (mostly the
+   new ones); busted, he says one of his own insults or rage lines */
+export const WIN_LINES = `YES!
+YES! YES!
+OMG YES!!
+I'M SO GOOD AT THIS GAME!
+YEESSSS!!!!!!!
+HOLY FLIP!!!!!
+I'M SO GOOD!
+I love life.
+HOW AM I SO GOOD!?!
+YOU SUCK!!!
+YOU ARE SO BAD!!!
+HOW ARE YOU THIS BAD AT THE GAME!!!
+You are such an IDIOT!!! HAHAHA!!!
+Why do you even try?
+You can't beat me.
+You should give up.
+I'm not even trying.
+I always win.
+HAHA! IDIOT!
+Just quit the game at this point, YOU'RE SO BAD!`.split('\n');
+export const LOSE_LINES = `HOW DID I LOSE!?!
+NOOOOO!!!!!!
+WHAT THE FLIIIIIP!!!!!
+I CAN'T BELIEVE THIS STUPID GAME!!!
+HOW!!?!!?
+THIS IS SO STUPID!!!!
+AAAAAAHHHHH!!!!!!!
+AAHH!!! AHHH!!!! AAAHH!!!!!
+I AM GOING TO END IT!!!!
+WHAT THE FLIIIIIP!!!!!!! HOW!?!?!?
+I CAN'T TAKE THIS STUPID GAME!!!!
+One more time... AND I'M TURNING OFF MY XBOX!!!!!
+NOOOOOOOOOOO!!!!!!!!
+WHYYYY!?!?!!!?!?!?!?!!
+Why am I alive.
+I am going to end it.
+I hate life.
+I HATE MY STUPID LIFE!!!
+AAHHH!!!! AAHAH!! WHHAAAA!!!!!
+AH!!! AH!!! AH!!!! AH!!! AHH!!!!!
+I am going to cry.
+WHY AM I DOING THIS TO MYSELF!?!!?!?
+STAAHHHP!!!!!!!!!
+STOP!!!
+STOP IT!!!
+STOP!!! STOP!!! STOP!!! STOP!!!!
+STOP!!! STOP!!! STOP!!! STAAAHHPP!!!!
+Get some help.
+IT'S NOT FUNNY!!!!
+IT'S NOT FUUUUHHHNNNY!!!!!`.split('\n');
+const pick = (...ls) => ls.map(l => { if (!E_LINES.includes(l) && !DEATH_LINES.includes(l)) throw new Error('not his line: ' + l); return l; });
+export const OLD_WIN = pick('Shut up, you stupid IDIOT!', "GOD, you're so STUPID!", "YOU'RE SO STUPID!", 'I could buy your whole family.', "You're such a stupid flipping IDIOT!", 'Keep telling yourself that.', 'I am so rich.', 'I love money.', "You're heckin' stupid.", 'Yes, I know.', 'You guys are being so stupid.', 'I make more money than your whole family combined.', 'Why am I so funny?', 'I am so unbelievably BASED!');
+export const OLD_LOSE = pick("I'M TURNING OFF MY XBOX!", 'NOOOOOOOO!', 'NOOOOO!!!', 'I DON\'T GIVE A FLIP!', 'I hate EVERYTHING!', 'What the FLIP!', 'I am done.', "I can't do this anymore.", 'Why am I here?', 'I hate it here.', 'I--don\'t--give--a--FLIIIIIP!', '...', "I couldn't care less.", 'WHYYYY!!?!?!?!', 'STOOOOOOP!!!!!', 'I am turning off my Xbox...', 'This is so STUPID!');
+export const BUST_LINES = pick('SHUT UP!', 'Shut up, you stupid IDIOT!', "GOD, you're so STUPID!", "YOU'RE SO STUPID!", "You're such a stupid flipping IDIOT!", 'God, you are so flipping stupid.', "I'M TURNING OFF MY XBOX!", 'I hate EVERYTHING!', 'I am done.', 'I--don\'t--give--a--FLIIIIIP!', "I'M TURNING OFF MY XBOX!!!!", 'This is so STUPID!', 'You are such a stupid IDIOT!');
 export const SHADOW_LINES = ['I literally got killed by a black duck!', 'WAIT!', 'HE WAS LITERALLY BLACK!', 'NOT RACIALLY OF COURSE!'];
 const SHUT_UPS = E_LINES.filter(l => /^shut up/i.test(l));
 const RANT_SHOUT = 'SHUT UP!';
@@ -189,6 +245,8 @@ brain('justin', {
       const d = c.ducks.find(q => q.id === sh.who);
       if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun'); mm.gunDown = c.now + 1500; ch = true; }
     }
+    if (mm.mode === 'poker') { if (mm.poker) { c.say('justin', mm.poker); mm.poker = ''; } return ch; }   // (at the poker table: he sits, and says what poker.js gives him)
+    if (mm.mode === 'bust') return bust(me, c) || ch;
     if (me.a === 'gun' && mm.mode !== 'chase' && mm.mode !== 'rant' && c.now > (mm.gunDown || 0)) { me.a = ''; ch = true; }
     if (mm.mode === 'dead') {
       if (mm.cause === 'player' && mm.getUp && c.now > mm.getUp) {   // up again, and after them
@@ -247,7 +305,8 @@ brain('justin', {
       return true;
     }
     if (mm.lines.length || c.now < mm.lock) return false;   // (still saying his piece)
-    if (mm.mode === 'rant' || mm.mode === 'chase') return false;
+    if (mm.mode === 'rant' || mm.mode === 'chase' || mm.mode === 'bust') return false;
+    if (mm.mode === 'poker') { c.say('justin', nextLine(c)); return true; }   // (at the table he stays put, and never shoots)
     const line = nextLine(c); c.say('justin', line); me.f = by.x > (npcAt(me, c.now) || by).x ? 1 : -1;
     /* he stops and listens: at least 5 seconds, longer while his line is up */
     if (mm.mode !== 'tv') { if ((npcAt(me, c.now) || {}).moving) c.stop(me); if (mm.mode === 'toTv') mm.mode = 'wander'; }
@@ -265,7 +324,61 @@ brain('justin', {
   },
 });
 /* for the shadow duck: is he up and about outside, and get him */
-export const justinFree = () => !!mm && !['dead', 'rant', 'chase', 'shadow', 'shadowChase', 'drinking', 'tv', 'toTv'].includes(mm.mode) && !mm.lines.length;
+export const justinFree = () => !!mm && !['poker', 'bust', 'dead', 'rant', 'chase', 'shadow', 'shadowChase', 'drinking', 'tv', 'toTv'].includes(mm.mode) && !mm.lines.length;
 export function justinGot(me, c) { notes(c); down(me, c, 'shadow'); c.say('justin', DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]); }
 export function justinSees(me, c, x, y) { notes(c); if (!justinFree()) return false; mm.mode = 'shadowChase'; return c.go(me, x, y, SPRINT, DRY); }
 export { DOORS };
+
+/* ---------- at the poker table (poker.js runs the game; these are its calls, on the host) ----------
+   Invited, he teleports onto a free stool (the one farthest from the players) and sits there facing the table; a line
+   at each new hand, a winning or losing one at the showdown. Out of chips: he pulls his gun on the richest player, shoots
+   (they play dead 6 seconds), says an insult or a rage line and walks off. When the game ends he gets up and goes home. */
+const STOOLS = PROPS.filter(p => p.kind === 'stool');
+const any = l => l[Math.floor(Math.random() * l.length)];
+const recOf = s => s.hang && s.hang.npc && s.hang.npc.justin;
+const setRec = (s, fn) => { const r = recOf(s); if (!r) return; const o = { ...r }; fn(o); s.hang.npc = { ...s.hang.npc, justin: o }; };
+export const jPoker = {
+  /* onto a stool: its number, or -1 (none free, or he isn't here) */
+  sit(s, taken, now) {
+    if (!recOf(s)) return -1;
+    notes({ now, rand: Math.random });
+    const gap = k => Math.min(...taken.map(n => Math.min(Math.abs(k - n), 8 - Math.abs(k - n))), 9);
+    const p = STOOLS.filter(q => !taken.includes(q.n) && !(s.hang.seats || {})[q.id + ':0']).sort((a, b) => gap(b.n) - gap(a.n))[0];
+    if (!p) return -1;
+    const x = p.x + p.w / 2, y = p.y + p.d / 2;
+    setRec(s, o => { o.w = stand(x, y, now); o.z = p.z + p.h; o.a = 'cards'; o.f = Math.sign(BJ.cx - x) || 1; o.seat = p.id + ':0'; });
+    Object.assign(mm, { mode: 'poker', poker: '', target: null, shots: [], lines: [], hold: 0 });
+    return p.n;
+  },
+  /* still in his seat (knocked down, he's out of the game) */
+  here: () => !!mm && mm.mode === 'poker',
+  /* what he says: 'hand' (a new hand), 'win', 'lose' */
+  say(kind) {
+    if (!mm || mm.mode !== 'poker') return;
+    mm.poker = kind === 'win' ? any(Math.random() < .7 ? WIN_LINES : OLD_WIN) : kind === 'lose' ? any(Math.random() < .7 ? LOSE_LINES : OLD_LOSE) : any(E_LINES);
+  },
+  /* out of chips: the shot at `who` (a player's id), then off */
+  bust(s, who, now) {
+    if (!mm || mm.mode !== 'poker') return;
+    setRec(s, o => { delete o.seat; o.a = 'gun'; });
+    Object.assign(mm, { mode: 'bust', target: who, bustAt: now + 900, step: 0 });
+  },
+  /* the game is over: up, and home */
+  leave(s, now) {
+    if (!mm || mm.mode !== 'poker') return;
+    setRec(s, o => { delete o.seat; o.a = ''; });
+    Object.assign(mm, { mode: 'home', next: now + 1500 });
+  },
+};
+/* busted: the gun out, the shot, his line, then he walks off */
+function bust(me, c) {
+  if (c.now < mm.bustAt) return false;
+  const at = npcAt(me, c.now);
+  if (mm.step === 0) {
+    const d = c.ducks.find(q => q.id === mm.target);
+    if (d && at) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; if (!d.dead) c.kill('justin', d.id, 'gun'); }
+    Object.assign(mm, { step: 1, bustAt: c.now + 1300 }); return true;
+  }
+  if (mm.step === 1) { c.say('justin', any(BUST_LINES)); Object.assign(mm, { step: 2, bustAt: c.now + 2500 }); return true; }
+  me.a = ''; mm.mode = 'home'; mm.next = c.now; return true;
+}

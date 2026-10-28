@@ -35,3 +35,7 @@ export async function unseal(them, box) {
   const pt = await C.decrypt({ name: 'AES-GCM', iv: unb64(iv) }, await sharedKey(them), unb64(ct));
   return JSON.parse(new TextDecoder().decode(pt));
 }
+
+/* other secrets the host hands out the same way (poker's two cards each): functions of the room's state that give
+   { sig, items: { player id: what only they may see } } or nothing */
+export const handouts = new Set();

@@ -156,7 +156,7 @@ activity({
       o.el.classList.toggle('saying', now < (o.sayUntil || 0) && !npcMuted(s, id, 'bubble') && !npcMuted(s, id, 'text'));   // (muted: no bubble)
       const sp = ctx.world.toScreen(o.x, o.y, o.z), M = 40;   // on my screen (a little past its edge counts), on my side of the walls
       o.vis = inCabin(o.x, o.y) === ctx.world.inside && sp.left > -M && sp.left < ctx.world.vw + M && sp.top > -M && sp.top < ctx.world.vh + M + 60;
-      o.el.classList.toggle('sat', r.a === 'tv' || !!BRAINS.get(id).sat);   // (on a couch, or the Butler on his stool: the name over the head, as a seated player's)
+      o.el.classList.toggle('sat', r.a === 'tv' || r.a === 'cards' || !!BRAINS.get(id).sat);   // (on a couch, Justin at the poker table, or the Butler on his stool: the name over the head, as a seated player's)
     }
     for (const [id, o] of shown) if (!recs[id]) { o.el.remove(); shown.delete(id); }
     /* a cat's words go in my chat only if I could see it say them */

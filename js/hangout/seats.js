@@ -51,7 +51,8 @@ for (const p of PROPS.filter(q => SEAT_KINDS.includes(q.kind))) {
 const BY = new Map(SEATS.map(q => [q.id, q]));
 const seatsOf = s => (s && s.hang && s.hang.seats) || {};
 export const seatOf = (s, id) => { for (const [k, v] of Object.entries(seatsOf(s))) if (v && v[0] === id) return BY.get(k) || null; return null; };
-const free = (s, q, id) => !seatsOf(s)[q.id] || seatsOf(s)[q.id][0] === id;
+const npcOn = (s, q) => Object.values((s && s.hang && s.hang.npc) || {}).some(r => r && r.seat === q.id);   // (Justin on a stool at the poker table)
+const free = (s, q, id) => (!seatsOf(s)[q.id] || seatsOf(s)[q.id][0] === id) && !npcOn(s, q);
 /* where a duck stands up from a seat: in front of it (or behind, if that is blocked) */
 function standSpot(q) {
   for (const [x, y] of q.up) { const z = heightAt(x, y); if (standable(x, y, z, STEP)) return { x, y, z }; }
