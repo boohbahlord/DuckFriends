@@ -2284,6 +2284,12 @@ One thing though, the ability to change the time a player is immobilized from be
   pistol is out, otherwise R still repeats). Ghosts come after, in their own PR.
 - Owner (2026-10-28 01:56Z, after the in-game page): "okay cool". Then (01:57Z): "1.5 second reload is too short though,
   make it 3.5 seconds". Decided: RELOAD 3500 ms, then #142 goes live.
+- Ghosts (Solomon the 2nd, own PR): Duck Cabin setting "Ghosts" (Off default, `s.options.ghosts`, also
+  `forgame ghosts on|off`). When the "Knocked down for" time is up (`onGetUp` in js/hangout/ghosts.js), the body stays
+  lying there and the ghost (opacity .4, like the shadow duck, no shadow) walks. A ghost is out of every seat and game,
+  can't be hit (knife, hammer, bullets, dagger, kill command, NPCs) and can't use anything (specials, every `hang`
+  action). Space or the "Come back" button: the ghost fades over 1 s standing still, then the body gets up where it lay
+  (`pos.tp` snaps every screen). Computers' ghosts come back by themselves after 4 s.
 ## Request (2026-10-27 22:08Z and 22:11Z): Duck Cabin pop-in on the Chat button, and lag
 "WHY THE FUCK IS IT THAT EEVRYTIME I CLICK THE CHAT BUTTON IN SPAWN ON THE FUCKING CABIN MAP THAT THERE IS A POP IN FOR TEXTURES AND EVERYTHING ?! CLICKING THE CHAT BUTTON SHOULDNT CHANGE ANY OF THAT ! THIS IS BULLSHIT !"
 

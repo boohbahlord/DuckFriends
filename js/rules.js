@@ -14,7 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
-import { holdDown, downStill, standUps, DOWN_OK, DEAD_STILL } from './hangout/death.js';
+import { holdDown, downStill, standUps, isGhost, DOWN_OK, DEAD_STILL } from './hangout/death.js';
 import { npcById } from './npcs.js';
 import { hangStart, hangAction, hangTick, hangJoin, hangLeft, hangTargets, hangHit, hangStill } from './hangout/rules.js';
 import { inCabin, standable, W as HW, H as HH } from './hangout/layout.js';
@@ -31,6 +31,7 @@ export const OPTIONS_DEFAULT = {
   botWait: 5,           // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
+  ghosts: 0,            // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   justin: 0,            // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
@@ -382,7 +383,7 @@ export function reduce(state, a, now = Date.now()) {
       const who = (a.who || []).filter(id => P[id]);
       if (a.justin && a.kind === 'kill' && me && s.options.fun && !denied(s, a.id, 'nofun')) return justinDown(s, now, logLine) ? s : state;   // (the Justin option: kill @Justin on the boards)
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
-      if (a.kind === 'kill') { for (const id of who) { P[id].dead = true; holdDown(s, id, now); } }   // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
+      if (a.kind === 'kill') { for (const id of who) if (!isGhost(s, id)) { P[id].dead = true; holdDown(s, id, now); } }   // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
       logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
       return s;
@@ -398,6 +399,7 @@ export function reduce(state, a, now = Date.now()) {
       const sp = a.what || (me && me.duck && me.duck.special), p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase) || !PRESS.includes(sp) || !onKeys(me.duck, sp)) return state;
       if (WEAPONS.includes(sp) && !s.options.fun) return state;   // the silly-commands switch covers them
+      if (isGhost(s, a.id)) return state;   // (Duck Cabin: a ghost can't use anything)
       if (sp === 'sound') return state;   // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`;   // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
@@ -628,7 +630,7 @@ function forgame(s, a, now) {
     const o = {};
     for (const [k, v] of Object.entries(a.set)) {
       if (k === 'order' && ['random', 'rotate'].includes(v)) o.order = v;
-      if (['freeRoam', 'fun', 'lowGravity', 'justin'].includes(k)) o[k] = v ? 1 : 0;
+      if (['freeRoam', 'fun', 'lowGravity', 'justin', 'ghosts'].includes(k)) o[k] = v ? 1 : 0;
       if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
       if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
       if (k === 'answerOff') o.answerOff = v ? 1 : 0;
@@ -639,7 +641,7 @@ function forgame(s, a, now) {
     if (o.catchUp === 0) s.catchEnds = 0;
     if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
     if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
-    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
+    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'ghosts' ? `ghosts ${v ? 'on' : 'off'}` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
     say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`);
     return advance(s, now);
   }
@@ -690,7 +692,7 @@ function swing(s, by, sp, aim, now) {
   };
   let hits = [];
   for (const id of s.seat) {
-    const p = s.pos[id], P = s.players[id]; if (id === by || !p || p.x < 0 || !P || P.dead) continue;
+    const p = s.pos[id], P = s.players[id]; if (id === by || !p || p.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (p.j && now - p.j < 1300) continue;   // (a duck in the air is missed)
     const n = near(p.x, p.y, +p.z || 0, hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0); if (n) hits.push({ id, ...n });
   }
@@ -729,7 +731,7 @@ function moveShots(s, now) {
     const at = shotAt(sh, now - sh.t), x0 = sh.lx, y0 = sh.ly, dx = at.x - x0, dy = at.y - y0;
     const walled = sh.hin !== undefined && (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;   // (Hangout: it hit the cabin's wall)
     if (at.z > -.15 && at.z < 1.05) for (const id of s.seat) {   // (a dagger over a duck's head, or already fallen, hits nobody)
-      const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead) continue;
+      const p = s.pos[id], P = s.players[id]; if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id)) continue;
       if (sh.hin !== undefined && ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin || Math.abs((+p.z || 0) - sh.hz) > 48)) continue;   // (the other side of the walls, or above or below it)
       if (p.j && now - p.j < 1300) continue;   // jumped over it
       /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */

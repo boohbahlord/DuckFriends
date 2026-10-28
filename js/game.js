@@ -26,6 +26,7 @@ import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided,
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
 import { hangStill } from './hangout/rules.js';
 import { downStill } from './hangout/death.js';
+import { FADE as GHOST_FADE } from './hangout/ghosts.js';
 import { wordsHTML, boardHTML as storyHTML, typingHTML, statsHTML as storyStatsHTML } from './story.js';
 import { lawColsHTML, lawTopHTML, LAW_BANNER, counselHTML, lawStatsHTML, lawOverHTML, sideColor } from './court.js';
 import { cloudHTML, matchColors, matchColsHTML, matchTopHTML, bracketHTML, bracketTopHTML, treeSize, topicHTML, topicLiveHTML, tvoteHTML, topicsHTML, seedsHTML, othersHTML, sofarHTML, podiumHTML, bbStatsHTML, allOut } from './brackets.js';
@@ -66,7 +67,8 @@ let squash = { q: '', t: 0 }, moving = false, sprinting = false;
 let lastFx = -1, hotdogs = [], follows = [];   // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null, lastKey = -1;   // the specials' number keys: the row, the key last pressed (E presses it again; R on Duck Cabin)
 const kept = new Set();          // the jumps kept on here (Shift and the key); kept effects are in the room's state
-let held = null, mouse = null, shovedAt = 0;   // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
+const BODY = '~body';      // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
+let held = null, mouse = null, shovedAt = 0, putAt = 0;   // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 let shows = {};                  // a handgun just fired, shown turned toward its aim for a moment: by player id
 let scene = null;                // the map: its world fills the page behind the game
 let lastSend = 0, lastSent = '', lastBeep = -1, lastT = 0, geo = null, lastGrace = -1, sayJob = 0;
@@ -236,23 +238,27 @@ function drawDucks(now = clockNow()) {
   const kbT = id => { const k = (s.pos[id] || {}).kb; return k && now - k.t < KB_LAND + KB_MS ? [k, Math.max(0, (now - k.t - KB_LAND) / KB_MS)] : null; };
   const landing = id => { const k = (s.pos[id] || {}).kb; return !!k && now - k.t < KB_LAND; };   // (it falls when the hammer gets there)
   const shoved = (id, pos) => { const kt = kbT(id); if (!kt || !pos) return pos; const [k, t] = kt, e = 1 - (1 - t) * (1 - t), to = s.pos[id]; return { ...pos, x: k.x + (to.x - k.x) * e, y: k.y + (to.y - k.y) * e }; };
-  const posOf = id => shoved(id, id === JUSTIN_ID ? jp : id === R.me && me ? me : hang ? world.shown(id, s.pos[id]) : s.pos[id]);
+  const ghosts = (hang && s.hang && s.hang.ghost) || {}, bodyOf = id => id.endsWith(BODY) && ghosts[id.slice(0, -BODY.length)];   // Duck Cabin's ghosts (hangout/ghosts.js): each one's body lies where it fell
+  const posOf = id => bodyOf(id) ? { ...bodyOf(id), j: 0 } : shoved(id, id === JUSTIN_ID ? jp : id === R.me && me ? me : hang ? world.shown(id, s.pos[id]) : s.pos[id]);
   const liftOf = (id, pos) => (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) + (kbT(id) ? 4 * KB_HOP * kbT(id)[1] * (1 - kbT(id)[1]) * size : 0);   // how high over its ground a duck is drawn
   if (s.phase === 'bracket') panTree(posOf(R.me)); else cam = null;   // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
-  const ids = [...s.seat.filter(id => s.pos[id]), ...(jp ? [JUSTIN_ID] : [])], lane = ids.filter(id => posOf(id).x < 0);
+  const ids = [...s.seat.filter(id => s.pos[id]), ...(jp ? [JUSTIN_ID] : []), ...Object.keys(ghosts).filter(id => s.players[id]).map(id => id + BODY)], lane = ids.filter(id => posOf(id).x < 0);
   const boxes = [], puffs = [], wearsX = new Set(), brood = [], arms = [];
   /* Who is the Quack?'s reveal keeps its news for the drumroll: who was voted out goes grey after it, the last duck plays dead after that */
   const wq = isQuack(s) && s.wq, rt = wq && s.phase === 'reveal' && wq.lastOut ? now - s.at : 1e9;
   const greyNow = id => wq && isGrey(s, id) && !(id === wq.lastOut && rt < 3200) && !((wq.dead || []).includes(id) && rt < 6100) && !(wq.result && wq.result.quacks.includes(id));
   const deadNow = (id, p) => !!p.dead && !landing(id) && !(wq && (wq.dead || []).includes(id) && rt < 6100);
   for (const id of ids) {
-    const p = s.players[id] || (id === JUSTIN_ID && { ...JUSTIN_PLAYER, dead: !!s.justin.down }), pos = posOf(id); if (!p) continue;
+    const g = bodyOf(id), p = g ? { ...s.players[id.slice(0, -BODY.length)], dead: true } : s.players[id] || (id === JUSTIN_ID && { ...JUSTIN_PLAYER, dead: !!s.justin.down }), pos = posOf(id); if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
       d = el(`<div class="gduck${id === R.me ? ' mine' : ''}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`);
+      if (g) d.classList.add('gbody');
       layer.append(d);
     }
+    const ghost = ghosts[id], gho = ghost ? (.4 * (ghost.out ? Math.max(0, 1 - (now - ghost.out) / GHOST_FADE) : 1)).toFixed(2) : '';   // a ghost: as see-through as the shadow duck, fading away as it comes back
+    if (d._gho !== gho) { d._gho = gho; d.classList.toggle('ghost', !!ghost); d.style.setProperty('--gho', gho || 1); }
     const dead = deadNow(id, p), sig = JSON.stringify([p.duck, p.name, p.nameStyle, dead]);   // a new look shows at once, mid-game too
     if (d._sig !== sig) {
       d._sig = sig;
@@ -319,7 +325,7 @@ function drawDucks(now = clockNow()) {
     if (d._ring !== ring) { d._ring = ring; if (ring) d.dataset.ring = ring; else delete d.dataset.ring; }
     boxes.push({ l: at.left - size / 2, r: at.left + size / 2, t: at.top - size - z, b: at.top - z });
   }
-  layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid] && !(jp && d.dataset.pid === JUSTIN_ID)) d.remove(); });
+  layer.querySelectorAll('.gduck').forEach(d => { if (!s.pos[d.dataset.pid] && !(jp && d.dataset.pid === JUSTIN_ID) && !bodyOf(d.dataset.pid)) d.remove(); });
   /* the handgun's bullets and the thrown daggers, flying the way they were aimed */
   const fxl = $('.fxl', board), live = new Set();
   for (const [x, y, c] of puffs) { const pf = el(puffHTML(x, y, size, c)); fxl.append(pf); setTimeout(() => pf.remove(), 1000); }
@@ -1205,6 +1211,7 @@ function paint(force) {
   if (me && s.pos[R.me] && onBoardPhase()) {
     const p = s.pos[R.me];
     if (p.kb && p.kb.t !== shovedAt) { shovedAt = p.kb.t; me.x = p.x; me.y = p.y; target = null; }   // the hammer shoved me back
+    if (p.tp && p.tp !== putAt) { putAt = p.tp; me.x = p.x; me.y = p.y; me.z = undefined; me.b = undefined; me.vz = null; me.j = 0; target = null; }   // put there (Duck Cabin: my ghost's body got up)
     if (locked()) { me.x = p.x; me.y = p.y; }   // an ended turn holds its answer
     else if (!roams() && me.x >= 0 && s.lock[R.me] !== undefined) { const [lo, hi] = colBoundsAt(s, s.lock[R.me]); me.x = Math.max(lo, Math.min(hi, me.x)); }   // inside my column (not back to where the host last saw me: online that pulled the duck back while it walked)
   }

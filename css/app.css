@@ -1642,6 +1642,11 @@ html.moving .wq-tile.speaker { animation: wqspeak 1.8s ease-in-out infinite; }
 .wq-board.late .wq-q.wq-later { opacity: 0; animation: wqshow .4s 6.1s forwards; }
 @keyframes wqshow { to { opacity: 1; } }
 .gduck.grey .gduck-body { filter: grayscale(1) brightness(.8); }
+/* Duck Cabin's ghosts (hangout/ghosts.js): the ghost as see-through as the shadow duck (--gho fades it as it comes back),
+   no shadow on the ground; its body lies where it fell, no name tag */
+.gduck.ghost .gduck-body, .gduck.ghost .gduck-x { opacity: var(--gho); }
+.gduck.ghost .gduck-shadow { opacity: 0; }
+.gduck.gbody .gduck-name, .gduck.gbody .gduck-ring, .gduck.gbody .gduck-say, .gduck.gbody .gduck-bubble { display: none; }
 .wq-q { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; }
 .wq-cat { font-size: calc(1rem * var(--ts)); font-weight: 600; }
 .wq-word { color: #ffd23f; }

@@ -16,3 +16,4 @@ import './characters.js';
 import './power.js';
 import './blackjack.js';
 import './poker.js';
+import './ghosts.js';
