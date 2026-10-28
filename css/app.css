@@ -2049,3 +2049,21 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 @media (prefers-reduced-motion: reduce) { .sp-duck, .splash .sb-block { animation: none; } }
 .hang-chalkstick.rub { width: calc(var(--sz, 60px) * .26); height: calc(var(--sz, 60px) * .14); border-radius: max(2px, calc(var(--sz, 60px) * .03)); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); transform: rotate(-18deg); }
 .gduck.left .hang-chalkstick.rub { transform: rotate(18deg); background: linear-gradient(180deg, #c58a4e 60%, #8b8f99 60%); }
+
+/* the Updates window and the dot on its button */
+.up-btn { position: relative; }
+.up-dot { position: absolute; top: .45rem; right: .6rem; width: .85rem; height: .85rem; border-radius: 50%; background: var(--red); border: .14rem solid var(--line); }
+.win-updates { width: min(30rem, 100%); }
+.up-title { font-size: calc(2rem * var(--ts)); text-align: center; }
+.up-nav { display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: center; margin: .4rem 0 .8rem; }
+.up-arrow { padding: .4rem .8rem; min-width: 2.8rem; }
+.up-arrow:disabled { opacity: .35; }
+.up-head { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.up-date { font-size: calc(.85rem * var(--ts)); opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+.up-name { font-size: calc(1.15rem * var(--ts)); font-weight: 700; overflow-wrap: anywhere; }
+.up-h { margin: .7rem 0 .25rem; font-size: calc(1rem * var(--ts)); }
+.up-h.new { color: var(--green); }
+.up-h.fix { color: var(--blue); }
+.up-list { margin: 0; padding-left: 1.2rem; }
+.up-list li { margin: .2rem 0; font-size: calc(.95rem * var(--ts)); }
+.up-count { text-align: center; margin: .8rem 0 0; font-size: calc(.8rem * var(--ts)); }

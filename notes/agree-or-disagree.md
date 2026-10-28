@@ -2479,3 +2479,13 @@ It is simple and the stats should just take whatever was in the agree or disagre
 I go to class now cant answer question but adam can"
 
 - Jackal's three (Adam, 16:45Z): the 2/3 vote bug (3 players * .67 = 2.01 wanted all 3: now `shareOf` reads .67 as exactly 2/3), brackets on phones (side mapping), and the piano button saying Esc. The rest of the message is for other threads.
+
+## 2026-10-28 22:06Z and 22:07Z: Updates menu
+
+> Add an updates menu to the main menu screen that shows new additional content AND Bug fixes.
+>
+> It should include the recent info on that page AND previous updates, at least recent ones. We can have arrows to click to go to different updates to see their content
+
+> i have 96% do it
+
+- Decision (Adam's plan, section 6): an Updates button on the front page, a window with one update per page (date, title, New and Fixed lists), arrows and arrow keys to page, a dot on the button until the newest is opened. The list lives in `js/updates.js`, newest first. The owner sees a picture before it merges.
