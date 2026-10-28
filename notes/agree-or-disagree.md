@@ -2489,3 +2489,13 @@ I go to class now cant answer question but adam can"
 > i have 96% do it
 
 - Decision (Adam's plan, section 6): an Updates button on the front page, a window with one update per page (date, title, New and Fixed lists), arrows and arrow keys to page, a dot on the button until the newest is opened. The list lives in `js/updates.js`, newest first. The owner sees a picture before it merges.
+
+## 2026-10-28 22:28Z: music bar jump, Updates title, the work is not done
+
+> when you turn music all the way down, the top right spasms and moves around... That's fucking stupid and is a disgusting mistake that should of never been allowed, and i refuse to believe someone missed that, but rather someone though it okay... Disgusting.
+>
+> The updates screen is good but the word update needs to be equally center alligned
+>
+> Also, DONT SO THE FUCKING WORK IS DONE I REQUESTED MORE TO BE DONE! DO THE WORK!
+
+- Decision (Adam): fix the music bar so nothing moves at any volume, center the Updates title exactly, then do the rest of the planned work (part 4).
