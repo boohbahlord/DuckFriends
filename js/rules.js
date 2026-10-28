@@ -37,7 +37,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0,            // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -66,6 +66,9 @@ export const colBounds = c => [c / 7 + .035, (c + 1) / 7 - .035];
 /* the board by game mode: Agree or Disagree has its seven columns; Would You Rather two tiles, A on the left and B on the
    right, with an OR strip between them where a duck has no answer (-1) */
 export const isWyr = s => s.options.mode === 'wyr';
+/* Does Duck Relate?: Agree or Disagree's written statements on two tiles, Duck Does Relate (A, left) or Duck Doesn't
+   Relate (B, right) */
+export const isDdr = s => s.options.mode === 'ddr';
 export const isBb = s => s.options.mode === 'bb';
 export const isSc = s => s.options.mode === 'sc';
 export const isLaw = s => s.options.mode === 'law';
@@ -73,7 +76,7 @@ export const isHang = s => s.options.mode === 'hang';
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle */
-export const twoSided = s => isWyr(s) || isBb(s) || isLaw(s) || (isQuack(s) && s.phase === 'choice');
+export const twoSided = s => isWyr(s) || isDdr(s) || isBb(s) || isLaw(s) || (isQuack(s) && s.phase === 'choice');
 export const LAW_MID = [.42, .58];
 export const colAt = (s, x) => isLaw(s) ? (x < LAW_MID[0] ? 0 : x > LAW_MID[1] ? 1 : -1) : twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
 export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
@@ -203,7 +206,7 @@ function startResults(s, now) {
   // the board (it joined late) starts in Neutral
   s.lock = {};
   const off = [];
-  for (const id of s.seat) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) s.lock[id] = c; else { s.lock[id] = isWyr(s) ? -1 : 3; off.push(id); } }
+  for (const id of s.seat) { const p = s.pos[id], c = p && p.x >= 0 ? colAt(s, p.x) : -1; if (c >= 0) s.lock[id] = c; else { s.lock[id] = isWyr(s) || isDdr(s) ? -1 : 3; off.push(id); } }
   off.forEach((id, k) => { s.pos[id] = { x: startX(s), y: (k + 1) / (off.length + 1) }; });
   return toStats(s, now);
 }
@@ -294,7 +297,7 @@ function seatNewcomer(s, id) {
   if (ph === 'seeds') s.done[id] = true;   // (the seeds were shared out: they vote on them)
   if (ph === 'counsel') s.done[id] = counselDone(s, id);
   if (ph === 'answer' && isLaw(s)) { const top = Math.random() < .5; s.pos[id] = { x: .45 + .1 * Math.random(), y: top ? .04 : .96 }; }   // with the jury, above or below the circle
-  if (ph === 'results' && !isBb(s) && !isLaw(s)) s.lock[id] = isWyr(s) ? -1 : 3;   // (like a duck that never stood on the board)
+  if (ph === 'results' && !isBb(s) && !isLaw(s)) s.lock[id] = isWyr(s) || isDdr(s) ? -1 : 3;   // (like a duck that never stood on the board)
 }
 
 /* ---------- the actions ---------- */
@@ -1235,6 +1238,14 @@ function question(s, a) {
   const text = String(a.text || '').trim().slice(0, 200);
   return text ? { text } : null;
 }
+
+/* Does Duck Relate?: how often one related (stood on A), and which side they chose most; round = null for the whole game */
+export function ddrStats(s, id, round = null) {
+  const vals = s.history.filter(h => round === null || h.round === round).map(h => h.a[id]).filter(c => c === 0 || c === 1);
+  const yes = vals.filter(c => c === 0).length, n = vals.length;
+  return { n, yes, no: n - yes, most: !n ? [] : yes > n - yes ? [0] : yes < n - yes ? [1] : [0, 1], jumps: (s.jumps || {})[id] || 0 };
+}
+export const DDR_SIDES = ['Duck Does Relate', "Duck Doesn't Relate"];
 
 /* Would You Rather: how each question split the room, and each player's sides; round = null for the whole game */
 export function wyrStats(s, round = null) {

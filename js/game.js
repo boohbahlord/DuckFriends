@@ -20,7 +20,7 @@
 import { register, go, leaveTo } from './router.js';
 import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, contextMenu, setHTML, toast } from './ui.js';
 import { activeRoom } from './net.js';
-import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, heldCol, startX, wyrStats, bbStats, isSudo, canOpen,
+import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isDdr, DDR_SIDES, ddrStats, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, heldCol, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
   isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang, MAG, RELOAD, magOf, KB_MS, KB_HOP, KB_LAND } from './rules.js';
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
@@ -38,7 +38,7 @@ import { duckSVG, duckRoom } from './duck.js';
 import { nameHTML, fontHTML } from './name.js';
 import { justinAt, justinShown, JUSTIN_ID, JUSTIN_PLAYER } from './boardjustin.js';
 import { rainbowHTML } from './art.js';
-import { statBoxHTML, openStats } from './stats.js';
+import { statBoxHTML, ddrBoxHTML, openStats } from './stats.js';
 import { profile, save } from './store.js';
 import { openSettings, netLevel } from './settings.js';
 import { musicBarHTML, mountMusicBar } from './musicbar.js';
@@ -113,6 +113,8 @@ function wyrColsHTML(s) {
   const tile = (c, t) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt">${q ? fontHTML(writerFont(s), esc(t)) : c ? 'B' : 'A'}</span></div>`;
   return `<div class="cols wyr-cols">${tile(0, q && q.a)}<div class="wyr-or"><span>OR</span></div>${tile(1, q && q.b)}</div>`;
 }
+/* Does Duck Relate?: the same two tiles, always Duck Does Relate (A) and Duck Doesn't Relate (B); the statement is on the cloud */
+const ddrColsHTML = () => `<div class="cols wyr-cols ddr-cols">${DDR_SIDES.map((t, c) => `<div class="col wyr-${c ? 'b' : 'a'}" data-c="${c}"><span class="wyr-txt">${esc(t)}</span></div>`).join('<div class="wyr-or"><span>OR</span></div>')}</div>`;
 /* Bicker Brackets: a match's two seeds (no board drawn), or the bracket that ducks walk over */
 const bbBoardHTML = s => s.phase === 'bracket'
   ? `<div class="board bb-board bb-bracket"><div class="cols bb-cols bb-none"></div><div class="bb-diagram">${bracketHTML(s)}</div>${bracketTopHTML(s)}<div class="ducks"></div><div class="fxl"></div></div>`
@@ -125,7 +127,7 @@ const myCard = s => s.wq && s.wq.ids.includes(R.me) ? (s.hidden ? cardOf(s, R.me
 const quackBoard = s => `<div class="board wq-board${s.phase === 'reveal' && s.wq.lastOut ? ' late' : ''}">${quackBoardHTML(s, R.me)}<div class="ducks"></div><div class="fxl"></div>
   ${quackTopHTML(s, s.phase === 'reveal' && s.wq.result ? revealCardsHTML(s) : myCard(s) !== undefined ? secretCardHTML(myCard(s)) : '')}</div>`;
 const boardHTML = s => isHang(s) ? HANG_HTML : isQuack(s) ? quackBoard(s) : isSc(s) ? storyHTML(s, R.me) : isBb(s) ? bbBoardHTML(s) : isLaw(s) ? lawBoardHTML(s) : `<div class="board">
-  ${isWyr(s) ? wyrColsHTML(s) : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
+  ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join('')}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === 'answer' || s.phase === 'discuss' ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? 'Would you rather' : s.qs[s.qi].text))}</p></div>` : ''}</div>`;   // (Would You Rather: the choices are on the tiles)
 
@@ -319,7 +321,7 @@ function drawDucks(now = clockNow()) {
     }
     /* free roam: a see-through bubble in the color of the column the duck stands on (its vote) */
     const bub = s.options.freeRoam && s.phase === 'answer' && pos.x >= 0 && id !== JUSTIN_ID ? colAt(s, pos.x) : -1;
-    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
+    if (d._bub !== bub) { d._bub = bub; d.classList.toggle('bubbled', bub >= 0); if (bub >= 0) d.style.setProperty('--bub', isBb(s) ? `var(--seed-${bub ? 'b' : 'a'})` : isWyr(s) || isDdr(s) ? `var(--wyr-${bub ? 'b' : 'a'})` : `var(--c${bub + 1})`); }
     /* Lawyering: a ring on the ground in the color of the side a juror stands on, faint until they vote for it */
     const ring = lawRing(s, id, pos);
     if (d._ring !== ring) { d._ring = ring; if (ring) d.dataset.ring = ring; else delete d.dataset.ring; }
@@ -806,12 +808,17 @@ const lordHTML = s => cloudHTML(s.players[s.qs[s.qi].by] || null);
 
 function viewSubmit(s) {
   const mineDone = s.done[R.me], sent = (s.subs || []).find(q => q.by === R.me);
-  const what = isLaw(s) ? 'topic' : 'question';
-  return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? `${isLaw(s) ? 'Topic' : 'Question'} sent ✓` : `No ${what} this round`}</h2>
+  const what = isLaw(s) ? 'topic' : isDdr(s) ? 'statement' : 'question';
+  return `<div class="submit-wrap">${mineDone ? `<div class="panel submit-card done-card"><h2>${sent ? `${what[0].toUpperCase() + what.slice(1)} sent ✓` : `No ${what} this round`}</h2>
       ${sent ? `<p class="q-echo">${esc(sent.text)}</p>` : ''}<p class="dim">Waiting for the others.</p></div>`
     : isLaw(s) ? `<form class="panel submit-card" autocomplete="off"><h2>Your topic</h2>
       <p class="small dim">Someone else will have to defend it, so make it worth arguing about. Nobody sees it until its case.</p>
       <textarea maxlength="200" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
+      <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
+      <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
+    : isDdr(s) ? `<form class="panel submit-card" autocomplete="off"><h2>Your statement</h2>
+      <p class="small dim">Something people might relate to, or might not.</p>
+      <textarea maxlength="200" rows="3" placeholder="I've laughed at my own joke before anyone else." aria-label="Your statement"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
     : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
@@ -834,7 +841,7 @@ function statsHTML(s) {
   if (isSc(s)) return storyStatsHTML(s);
   if (isWyr(s)) return wyrStatsHTML(s);
   if (isLaw(s)) return s.phase === 'over' ? lawOverHTML(s) : lawStatsHTML(s);
-  const boxes = r => s.seat.map(id => statBoxHTML(s, id, r)).join('');
+  const boxes = r => s.seat.map(id => (isDdr(s) ? ddrBoxHTML : statBoxHTML)(s, id, r)).join('');
   if (s.phase === 'over') return boxes(null);
   return `<h2>Round ${s.round + 1}</h2><div class="statboxes">${boxes(s.round)}</div>
     ${s.review ? `<h2 class="all-h">All rounds</h2><div class="statboxes">${boxes(null)}</div>` : ''}`;
@@ -908,6 +915,7 @@ function recordRound(s) {
   if (profile.stats.lastGame !== game) { profile.stats.lastGame = game; st.games++; }
   st.rounds++; st.answers += mine.length;
   if (isWyr(s)) { const p = wyrStats(s, s.round).per[R.me] || {}; st.majority += p.maj || 0; st.minority += p.min || 0; }   // which side I was on
+  else if (isDdr(s)) { const p = ddrStats(s, R.me, s.round); st.majority += p.yes; st.minority += p.no; }   // (Does Duck Relate?: related, and didn't)
   else for (const h of mine) st.counts[h.a[R.me]]++;
   save(); shareLook();
 }
@@ -987,7 +995,7 @@ function actHTML(s) {
     const onBoard = (me && me.x >= 0), wait = graceLeft(s), col = onBoard ? colAt(s, me.x) : -1;
     const votes = `<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ''}</span>`;
     const q = s.qs[s.qi], m = bbMatch(s);
-    const choices = m ? [[s.bb.seeds[m.a].text, 'bb-a'], [s.bb.seeds[m.b].text, 'bb-b']] : isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : COLS.map((c, i) => [c, `c${i + 1}`]);
+    const choices = m ? [[s.bb.seeds[m.a].text, 'bb-a'], [s.bb.seeds[m.b].text, 'bb-b']] : isWyr(s) ? [[q.a, 'wyr-a'], [q.b, 'wyr-b']] : isDdr(s) ? DDR_SIDES.map((t, c) => [t, `wyr-${c ? 'b' : 'a'}`]) : COLS.map((c, i) => [c, `c${i + 1}`]);
     const mc = profile.settings.multipleChoice && (!mine || s.options.freeRoam) ? `<div class="mc">${choices.map(([c, k], i) => `<button type="button" class="mc-b ${k}" data-col="${i}">${esc(c)}</button>`).join('')}</div>` : '';
     const label = wait ? `Vote in ${wait}` : s.options.freeRoam ? (mine ? 'Ready ✓' : 'Ready') : mine ? 'Voted ✓' : 'Vote';
     const off = wait || !onBoard || col < 0;   // (Voted ✓ stays pressable: pressing it again takes the vote back)
@@ -1156,7 +1164,7 @@ function paint(force) {
     target = null;
     const main = $('.gmain', S);
     main.dataset.phase = s.phase;
-    S.classList.toggle('wyr', isWyr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s)); S.classList.toggle('law', isLaw(s)); S.classList.toggle('hang', isHang(s));
+    S.classList.toggle('wyr', isWyr(s) || isDdr(s)); S.classList.toggle('ddr', isDdr(s)); S.classList.toggle('bb', isBb(s)); S.classList.toggle('sc', isSc(s)); S.classList.toggle('wq', isQuack(s)); S.classList.toggle('law', isLaw(s)); S.classList.toggle('hang', isHang(s));
     if (s.phase === 'answer') seedShift = 0;   // a vote starts on the match's own colors
     bbMarks(s);
     if (world) { world.destroy(); world = null; }

@@ -1232,6 +1232,9 @@ html.still .spe-bone .bone-slide { animation: none; }
 .type-tile svg.art { width: 100%; height: auto; }
 .wyr-qs { padding: .5rem .7rem; border-radius: .8rem; display: flex; flex-direction: column; gap: .35rem; }
 .wyr-qs p { margin: 0; }
+/* Does Duck Relate?: Agree or Disagree's agree and disagree colors on its two tiles (colorblind mode's too) */
+.ddr { --wyr-a: var(--c6); --wyr-b: var(--c2); }
+.chip.ddr-chip.yes { --c: var(--c6); --ci: var(--c6i); } .chip.ddr-chip.no { --c: var(--c2); --ci: var(--c2i); }
 
 /* ---------- Bicker Brackets ---------- */
 /* the seed card: the writer's duck in a circle on their card, the words in a box reaching right (rounded on the right) */
