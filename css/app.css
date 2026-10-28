@@ -49,7 +49,15 @@ html.dark {
 html.cb {
   --c1: #b35806; --c2: #e08214; --c3: #fdb863; --c4: #f2f2f2; --c5: #b2abd2; --c6: #8073ac; --c7: #542788;
   --c1i: #fff; --c2i: #1c1c28; --c3i: #1c1c28; --c4i: #1c1c28; --c5i: #1c1c28; --c6i: #fff; --c7i: #fff;
+  --wyr-a: #542788; --wyr-b: #d2690a;
 }
+/* the two-sided boards (Would You Rather, brackets, lawyering) take the same purple and orange; each side a letter too.
+   The game sets the sides' colors on its own element, so these are important to win over it */
+html.cb .game { --seed-a: #542788 !important; --seed-b: #d2690a !important; --law-a: #542788 !important; --law-b: #d2690a !important; }
+html.cb .wyr-cols .col.wyr-a::after, html.cb .wyr-cols .col.wyr-b::after, html.cb .bb-side.bb-a::after, html.cb .bb-side.bb-b::after {
+  position: absolute; top: .55rem; left: .7rem; min-width: 2rem; padding: .05rem .5rem; border-radius: .6rem; text-align: center; font-weight: 700; font-size: calc(1.2rem * var(--ts)); color: #fff; background: #1c1c28cc; }
+html.cb .wyr-cols .col.wyr-a::after, html.cb .bb-side.bb-a::after { content: 'A'; }
+html.cb .wyr-cols .col.wyr-b::after, html.cb .bb-side.bb-b::after { content: 'B'; left: auto; right: .7rem; }   /* (B in its far corner, away from the cloud in the middle) */
 
 /* ---------- the page ---------- */
 * { box-sizing: border-box; }
@@ -206,6 +214,10 @@ html.moving .hero-duck.bob { animation: bob 3.2s ease-in-out infinite; }
 .tile { border: .14rem solid var(--line); border-radius: .7rem; background: var(--panel); padding: .35rem .75rem; cursor: pointer; font-size: calc(.95rem * var(--ts)); min-width: 5.5rem; text-align: center; }
 .tile[aria-pressed="true"] { background: var(--blue); color: #fff; box-shadow: 0 .14rem 0 var(--line); }
 .tiles-font { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .45rem; }
+.set-fold { margin-top: 0; }
+.set-fold > summary { font-size: calc(1.05rem * var(--ts)); text-transform: none; letter-spacing: 0; color: var(--ink); }
+.set-fold .fold-pick { margin-left: auto; font-weight: 500; color: var(--dim); }
+.set-fold > .tiles-font { margin-top: .35rem; }
 .tiles-font .tile { font-size: calc(1.05rem * var(--ts)); }
 .check { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; padding: .25rem .1rem; margin-right: 1.1rem; }
 .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--blue); cursor: pointer; }

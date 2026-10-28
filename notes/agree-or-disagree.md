@@ -2226,3 +2226,8 @@ BY THE WAY! my laptop has 16gb of ram but will default to the no dedicated memor
 
 ## Request (owner, 2026-10-27 22:29Z): every Duck Cabin death lasts as long as Justin's
 "On cabin, all player remain dead for as long as they did when justin kills them"
+
+## Request (owner, 2026-10-27 23:27Z): font dropdown, colorblind mode doubt
+"the font selection under the settings menu SHOULD be collapsed under a dropdown arrow.
+
+I am not convinced colorblind mode works at all because I cannot see the difference"
