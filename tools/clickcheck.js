@@ -8,6 +8,8 @@
      findClicks(samples, sampleRate, opts?) → { clicks: [{ t, db, over }], clipped, dc, nan, edge, worst }
        samples: a Float32Array (one channel) · t: seconds · db: the burst's loudness above 10 kHz (dBFS) · over: dB above
        the moment's surroundings. opts: { hz = 10000, over = 18, floor = -72, win = .4 }
+       (at a low sample rate, a phone's 16 kHz, hz is kept to 40% of it: a high-pass above half the sample rate
+       can't be built, it ran away to NaN and every sound's first moment counted as a click)
      checkBuffer(audioBuffer, opts?) → the same, for every channel ({ ch, ...}) */
 
 const hp = (x, sr, hz) => {   // two 2nd-order high-passes in a row (24 dB per octave), RBJ's recipe
@@ -24,6 +26,7 @@ const hp = (x, sr, hz) => {   // two 2nd-order high-passes in a row (24 dB per o
 const db = v => 20 * Math.log10(Math.max(v, 1e-12));
 
 export function findClicks(x, sr, { hz = 10000, over = 18, floor = -72, win = .4 } = {}) {
+  hz = Math.min(hz, sr * .4);
   let clipped = 0, nan = 0, sum = 0;
   for (let n = 0; n < x.length; n++) { const v = x[n]; if (v !== v) { nan++; continue; } if (Math.abs(v) >= .999) clipped++; sum += v; }
   const dc = sum / Math.max(1, x.length);
