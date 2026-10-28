@@ -1762,9 +1762,12 @@ html.moving .wq-board.late .wq-card.big { animation-delay: 6.1s; }
 .pk-lab { display: flex; flex-direction: column; align-items: center; line-height: 1.02; color: #1c1c28; font-weight: 700; font-size: min(.85rem, calc(var(--ww, 40px) * .3)); white-space: nowrap; }
 .pk-b .pk-lab { font-size: min(.7rem, calc(var(--ww, 40px) * .25)); }
 .pk-lab i { font-style: normal; font-weight: 600; font-size: .86em; }
-.pk-k { position: absolute; left: 0; right: 0; bottom: .45rem; z-index: 1; text-align: center; font-size: min(calc(.78rem * var(--ts)), calc(var(--ww, 40px) * .34)); font-weight: 600; line-height: 1; color: #1c1c2870; pointer-events: none; }
+.pk-k { position: absolute; left: 0; right: 0; bottom: .45rem; z-index: 1; text-align: center; font-size: min(calc(.78rem * var(--ts)), calc(var(--ww, 40px) * .34)); font-weight: 600; line-height: 1; color: #1c1c28a8; pointer-events: none; }
 .pk-k { transition: opacity .3s; }
-.pk-b .pk-k { bottom: .3rem; font-size: min(calc(.7rem * var(--ts)), calc(var(--ww, 40px) * .3)); color: #ffffff9a; }
+.pk-b .pk-k { bottom: .3rem; font-size: min(calc(.7rem * var(--ts)), calc(var(--ww, 40px) * .3)); color: #ffffffc8; }
+.pk-k.pk-kw { font-size: min(calc(.62rem * var(--ts)), calc(var(--ww, 40px) * .23)); letter-spacing: 0; }   /* SHIFT, ENTER, SPACE: a word, smaller, still inside the key */
+.pk-k.pk-oct { bottom: auto; top: 50%; left: .3rem; right: auto; text-align: left; font-size: min(calc(.62rem * var(--ts)), calc(var(--ww, 40px) * .24)); color: #1c1c2858; }   /* (a phone: the octave's name beside the black key, above the letter) */
+.pk:not([data-per="1"]) .pk-k.pk-oct { display: none; }   /* (sideways the keys are too short for both: the letters stay) */
 .pk-w.pk-labd .pk-k, .pk-b.pk-labd .pk-k { opacity: 0; transition: none; }
 .pk-legend { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .3rem .9rem; font-size: calc(.74rem * var(--ts)); color: var(--dim); }
 .pk-lg-i { display: inline-flex; align-items: center; gap: .25rem; white-space: nowrap; }
