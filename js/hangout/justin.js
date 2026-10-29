@@ -15,6 +15,8 @@
      apart, each bubble up 4 seconds (gone as the next comes), and E can't interrupt them (nor for 4 seconds after).
    - With a gun he keeps his distance: he walks to where his gun reaches and shoots from there. A duck he shoots can't
      move for 6 seconds.
+   - Now and then (with the silly commands on) a line from GOD_LINES, then lightning or fire strikes a random duck from
+     the sky, and it plays dead.
    The lines are mine, word for word: don't change them. */
 import { brain, npcAt, randomSpot, nearestOpen, stand, POOL, DOORS } from './npc.js';
 import { PROPS, DECK, BJ, inPool } from './layout.js';
@@ -116,6 +118,22 @@ I am turning off my Xbox...
 I'M TURNING OFF MY XBOX!!!!
 This is so STUPID!
 You are such a stupid IDIOT!`.split('\n');
+/* before he strikes a duck from the sky: a line from this shuffled playlist (every line once, then shuffled again) */
+export const GOD_LINES = `Frick you I am GOD!
+I am perfect!
+I am GOD!!!!
+FEEEEEEL MY POWER!!!!
+BLASPHEMY!!!!
+YOU ARE STUPID AND DUMB! TAKE THIS!!!!
+I CURSE YOU FOR MY NAME IS THE LORD!!!
+I AM JUDGEMENT!!!!
+You deserve what is about to happen IDIOT!!!
+TAKE THIS STUPID!!!
+YOU ARE GOING TO FEEL THIS!!!
+I HATE YOU!!! DIIIE!!!!!!!!
+Did you say I am NOT BASED!?!?!?!
+MWAHAHAHAHAHA!!!!!!
+DIE!!! DIE!!!!! DIE!!!!!!!!!!`.split('\n');
 export const DRANK = "I drank too much, but I swear it isn't a problem.";
 export const POOL_LINE = "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
 /* poker (poker.js): my new lines for his winning and losing, word for word, and his old ones that fit them (mostly the
@@ -180,6 +198,7 @@ const RANT_SHOUT = 'SHUT UP!';
 
 const WALK = 300, SPRINT = 620;
 const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
+const GOD_EVERY = [120, 240], STRIKE = 1600;   // seconds between his strikes from the sky; ms from his line to the strike
 const SAY_EVERY = [45, 90], RANT_EVERY = [840, 1560], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
 const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
 const LINE = 4000, HEARD = 5000;   // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
@@ -277,6 +296,20 @@ brain('justin', {
       if (c.now > mm.pool) { mm.pool = c.now + 180000; c.say('justin', POOL_LINE); ch = true; }
       const to = nearestOpen(at.x + (at.x < (POOL.x0 + POOL.x1) / 2 ? -500 : 500), Math.min(at.y, POOL.y0) - 300, DRY, 8);
       if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 3000; return true; }
+    }
+    /* now and then (silly commands on): a GOD_LINES line, then lightning or fire from the sky on a random duck */
+    if (mm.strike && c.now >= mm.strike.at) {
+      const id = mm.strike.id; mm.strike = null; ch = true;
+      if (c.s.options.fun && c.kill('justin', id, 'god')) { const s = c.s; s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: c.rand() < .5 ? 'lightning' : 'fire', who: [id], by: 'justin', t: c.now }]; }
+    }
+    mm.god ??= c.now + sec(c.rand, GOD_EVERY);
+    if (c.now > mm.god && !mm.strike) {
+      mm.god = c.now + sec(c.rand, GOD_EVERY);
+      const live = c.ducks.filter(d => !d.dead);
+      if (c.s.options.fun && live.length) {
+        if (!(mm.gods || []).length) mm.gods = shuffle(c.rand, GOD_LINES.map((_, i) => i));
+        c.say('justin', GOD_LINES[mm.gods.shift()]); mm.strike = { id: live[Math.floor(c.rand() * live.length)].id, at: c.now + STRIKE }; ch = true;
+      }
     }
     /* now and then: a random line, a hotdog, the drinking, the rant */
     if (c.now > mm.say) { mm.say = c.now + sec(c.rand, SAY_EVERY); c.say('justin', E_LINES[Math.floor(c.rand() * E_LINES.length)]); ch = true; }

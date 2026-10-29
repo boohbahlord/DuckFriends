@@ -27,18 +27,20 @@ export const OPTIONS_DEFAULT = {
   share: 0.75,          // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
   answerTime: 30,       // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15,          // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
-  unvoteStops: 0,       // 1: taking a vote back below the share stops that countdown; 0: once started it runs out anyway
+  writeCatch: 30,       // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
+  unvoteStops: 1,       // 1: taking a vote back below the share stops that countdown (I want this by default); 0: once started it runs out anyway
   discuss: 0,           // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 0,        // 0 (off), 60, 90, 120: a time limit on writing questions
   botWait: 5,           // TEST rooms: seconds before computers act
   lowGravity: 0,        // 1: jumps float, slower and higher
   fun: 1,               // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0,            // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
+  ghostBusy: 1,         // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0,            // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
   mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
-  bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32 seeds shared out, or p1 … p4 seeds for each player
+  bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
   bbTimer: 0,           // seconds a match vote may take (0: no timer, so players can sway each other)
@@ -89,6 +91,41 @@ const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
 export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delete s.players[id].late; };   // they play from here
+/* the fewest players a game needs. I want a game that drops below it to wait for players ("Waiting for players to
+   continue", with 2/3 and the like) instead of ending: the timers stop where they were, ducks still walk, and the game
+   goes on once enough are back */
+export const MIN_PLAYERS = { quack: 3, law: 3 };
+export const minOf = s => MIN_PLAYERS[s.options.mode] || 0;
+const running = s => !['lobby', 'over', 'countdown'].includes(s.phase);
+const WAIT_BLOCK = ['end', 'wqWord', 'giveUp', 'tieVote', 'skip', 'voteReview'];
+export const tooFew = s => running(s) && s.seat.length < minOf(s);
+/* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word) or 'case' (this case again) */
+export function waitFor(s, now, resume = 'phase') {
+  if (s.waiting) { if (resume !== 'phase') s.waiting.resume = resume; return s; }
+  const left = t => t ? Math.max(0, t - now) : 0;
+  s.waiting = { at: now, resume, ends: left(s.ends), catchEnds: left(s.catchEnds) };
+  s.ends = 0; s.catchEnds = 0;
+  say(s, `Waiting for players to continue (${s.seat.length}/${minOf(s)}).`);
+  return s;
+}
+function resumeGame(s, now) {
+  const w = s.waiting; if (!w) return s;
+  delete s.waiting;
+  const d = now - w.at;
+  s.at += d; if (w.ends) s.ends = now + w.ends; if (w.catchEnds) s.catchEnds = now + w.catchEnds;
+  if (s.law && s.law.close) s.law.close += d;
+  say(s, 'Enough players: the game goes on!');
+  if (w.resume === 'quackRound') return startQuackRound(s, now);
+  if (w.resume === 'case') return startCase(s, now);
+  return advance(s, now);
+}
+/* someone left or was removed: a game below its fewest players waits (a countdown that can't start goes back to the lobby) */
+function shortHanded(s, now, gone, wasQuack) {
+  if (s.phase === 'countdown' && s.seat.length < minOf(s)) { s.phase = 'lobby'; s.ends = 0; return true; }
+  if (!tooFew(s)) return false;
+  waitFor(s, now, wasQuack ? 'quackRound' : 'phase');   // (a Quack gone: a new word once enough are back)
+  return true;
+}
 /* the share of players that ends a turn; the 2-of-3 tile stores .67, which must count as exactly 2/3 (3 players * .67 is 2.01: it wanted all 3) */
 export const shareOf = s => Math.abs(s.options.share - .67) < .005 ? 2 / 3 : s.options.share;
 export const needed = s => Math.max(1, Math.ceil(playing(s).length * shareOf(s) - 1e-9));
@@ -161,6 +198,7 @@ export function enter(s, phase, now) {
 /* the room's log (chat and notices); every line has a running number n, so new lines are easy to spot */
 const logLine = (s, line) => { s.logN = (s.logN || 0) + 1; s.log.push({ n: s.logN, t: Date.now(), ...line }); if (s.log.length > 200) s.log.shift(); };
 export const say = (s, text) => logLine(s, { sys: true, text });
+const sayFloat = (s, text, by) => logLine(s, { sys: true, float: true, by, text });   // (a rule, group or room change: it floats by the chat button for everyone else)
 
 /* the order of a round's questions: rotating (who goes first moves along each round) or random */
 function orderQuestions(s, subs) {
@@ -212,8 +250,10 @@ function startResults(s, now) {
 }
 
 /* the countdown once the needed share has voted; with "Unvoting stops the countdown" on, falling below the share stops it */
+export const WRITE_PHASES = ['submit', 'topic', 'seeds', 'words'];
+export const catchLen = s => +(WRITE_PHASES.includes(s.phase) ? s.options.writeCatch ?? 30 : s.options.catchUp) || 0;   // (seconds; writing has its own)
 function catchUp(s, now, enough) {
-  if (enough && s.options.catchUp && !s.catchEnds) s.catchEnds = now + s.options.catchUp * 1000;
+  if (enough && catchLen(s) && !s.catchEnds) s.catchEnds = now + catchLen(s) * 1000;
   if (!enough && s.catchEnds && s.options.unvoteStops) s.catchEnds = 0;
 }
 /* is there a discussion round after a vote? I want only the vote round unless the host turns on "Discussion round" in
@@ -223,6 +263,7 @@ export const discussOn = s => !!s.options.discuss && !s.options.freeRoam;
 export const heldCol = (s, id) => s.phase === 'answer' && s.done[id] && !s.options.freeRoam && !isLaw(s) && s.pos[id] && s.pos[id].x >= 0 ? colAt(s, s.pos[id].x) : null;
 /* what ends a phase: everyone voting, the needed share's countdown (catch-up timer) running out, or its timer */
 function advance(s, now, force = false) {
+  if (s.waiting) return s;   // (waiting for players: nothing moves on)
   if (isSc(s) && SC_PHASES.includes(s.phase)) return scAdvance(s, now, force);
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackAdvance(s, now, force);
   if (isHang(s)) return s;   // (no turns: the cabin stays open until the room goes back to the lobby)
@@ -233,7 +274,7 @@ function advance(s, now, force = false) {
   /* I want every phase to end when everyone has voted; the needed share only starts the countdown (the catch-up timer).
      A vote taken back doesn't stop it, unless the host turned on "Unvoting stops the countdown" */
   catchUp(s, now, enough && !all && !sway);
-  const go = force || all || timeUp || (!sway && (enough || s.catchEnds) && (!s.options.catchUp || (s.catchEnds && now >= s.catchEnds)));
+  const go = force || all || timeUp || (!sway && (enough || s.catchEnds) && (!catchLen(s) || (s.catchEnds && now >= s.catchEnds)));
   if (!go) return s;
   switch (s.phase) {
     case 'countdown': return s;
@@ -303,6 +344,7 @@ function seatNewcomer(s, id) {
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
   const s = clone(state), P = s.players, me = P[a.id], host = a.id === s.hostId, boss = !!me && isSudo(s, a.id);   // boss: the host, or anyone in sudo
+  if (s.waiting && (WAIT_BLOCK.includes(a.t) || (a.t === 'voteStart' && ['skip', 'turn'].includes(a.kind)))) return state;   // waiting for players: no turn ends
   switch (a.t) {
     case 'join': {
       if (P[a.p.id]) { P[a.p.id] = { ...P[a.p.id], ...a.p }; return s; }
@@ -310,15 +352,19 @@ export function reduce(state, a, now = Date.now()) {
       if ((s.banned || {})[a.p.id] || (a.p.acct && (s.banned || {})['acct:' + a.p.acct])) return state;   // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false, joined: now }; s.seat.push(a.p.id);
       if (!['lobby', 'over', 'countdown'].includes(s.phase)) seatNewcomer(s, a.p.id);
-      say(s, `${a.p.name} joined.`); return s;
+      say(s, `${a.p.name} joined.`);
+      if (s.waiting && !tooFew(s)) return resumeGame(s, now);
+      return s;
     }
     case 'leave': {
       if (!me) return s;
       say(s, `${me.name} left.`);
       reopenMatch(s, a.id); if (isHang(s)) hangLeft(s, a.id);
+      const wasQuack = isQuack(s) && !!(s.hidden && (s.hidden.quacks || []).includes(a.id));
       delete P[a.id]; s.seat = s.seat.filter(id => id !== a.id); delete s.pos[a.id]; delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
+      if (shortHanded(s, now, a.id, wasQuack)) return s;
       if (isQuack(s)) quackLeft(s, now);
       return s.phase === 'lobby' || s.phase === 'over' ? s : advance(s, now);
     }
@@ -339,15 +385,18 @@ export function reduce(state, a, now = Date.now()) {
     } return s;
     case 'kick': {   // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who]; if (!may(s, a.id, 'cankick') || !p || a.who === s.hostId || a.who === a.id) return state;
-      if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; say(s, `${me.name} removed ${p.name} from the room.`); }
+      if (!p.bot) { s.banned = { ...(s.banned || {}), [a.who]: true, ...(p.acct ? { ['acct:' + p.acct]: true } : {}) }; sayFloat(s, `${me.name} removed ${p.name} from the room.`, a.id); }
       reopenMatch(s, a.who); if (isHang(s)) hangLeft(s, a.who);
+      const wasQuack = isQuack(s) && !!(s.hidden && (s.hidden.quacks || []).includes(a.who));
       delete P[a.who]; s.seat = s.seat.filter(id => id !== a.who); delete s.pos[a.who]; delete s.done[a.who];
       if (s.vote) settleVote(s, now);
+      if (shortHanded(s, now, a.who, wasQuack)) return s;
+      if (isQuack(s)) quackLeft(s, now);
       return s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown' ? s : advance(s, now);
     }
     case 'start':
       if (!boss || !(s.phase === 'lobby' || s.phase === 'over')) return s;
-      if ((isQuack(s) || isLaw(s)) && s.seat.length < 3) return state;   // (the lobby says it needs 3)
+      if (s.seat.length < minOf(s)) return state;   // (the lobby says how many it needs)
       if (isHang(s) !== (s.options.map === 'cabin')) s.options.map = isHang(s) ? 'cabin' : 'board';   // (Hangout and Duck Cabin are one)
       s.phase = 'countdown'; s.at = now; s.ends = now + COUNTDOWN * 1000; return s;
     case 'cancel': if (boss && s.phase === 'countdown') { s.phase = 'lobby'; s.ends = 0; } return s;
@@ -415,7 +464,7 @@ export function reduce(state, a, now = Date.now()) {
       if (a.justin && a.kind === 'kill' && me && s.options.fun && !denied(s, a.id, 'nofun')) return justinDown(s, now, logLine) ? s : state;   // (the Justin option: kill @Justin on the boards)
       if (!me || !s.options.fun || denied(s, a.id, 'nofun') || !who.length || !['lightning', 'love', 'kill', 'hotdog', 'fire'].includes(a.kind)) return state;
       if (a.kind === 'kill') { for (const id of who) if (!isGhost(s, id)) { P[id].dead = true; holdDown(s, id, now); } }   // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
-      logLine(s, { sys: true, small: true, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
+      logLine(s, { sys: true, small: true, float: true, by: a.id, text: `${me.name} used ${a.kind} on ${who.map(id => P[id].name).join(' and ')}.` });   // who did it, in small print
       s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: a.kind, who, by: a.id, t: now }];
       return s;
     }
@@ -541,30 +590,30 @@ export function reduce(state, a, now = Date.now()) {
         if (name === 'sudo' && a.target === s.hostId) want = false;   // (the host is sudo without being listed, always)
         if (want !== has) g.members = want ? [...g.members, a.target] : g.members.filter(x => x !== a.target);
       }
-      say(s, `${me.name} changed ${P[a.target].name}'s groups: ${groupsOf(s, a.target).join(', ') || 'none'}.`);
+      sayFloat(s, `${me.name} changed ${P[a.target].name}'s groups: ${groupsOf(s, a.target).join(', ') || 'none'}.`, a.id);
       return s;
     }
     case 'groupadd': {   // sudo: a new group with any of the restrictions
       const name = String(a.name || '').toLowerCase(), G = groupsOf0(s);
       if (!me || !isSudo(s, a.id) || !/^[a-z][a-z0-9_-]{0,19}$/.test(name) || G[name] || name.startsWith('superuser-') || Object.keys(G).length >= 20) return state;
       G[name] = { perms: [...new Set((a.perms || []).filter(permOk))], members: [] };
-      say(s, `${me.name} made the group ${name}${G[name].perms.length ? ` (${G[name].perms.join(', ')})` : ''}.`);
+      sayFloat(s, `${me.name} made the group ${name}${G[name].perms.length ? ` (${G[name].perms.join(', ')})` : ''}.`, a.id);
       return s;
     }
     case 'groupdel': {
       const G = groupsOf0(s);
       if (!me || !isSudo(s, a.id) || !G[a.name] || ['sudo', 'dumbasses'].includes(a.name)) return state;
-      delete G[a.name]; say(s, `${me.name} removed the group ${a.name}.`); return s;
+      delete G[a.name]; sayFloat(s, `${me.name} removed the group ${a.name}.`, a.id); return s;
     }
     case 'groupmod': {   // sudo: rename a group (newName), or set its perms (perms); not sudo, dumbasses or a superuser group
       const G = groupsOf0(s), g = G[a.name], to = String(a.newName || '').toLowerCase();
       if (!me || !isSudo(s, a.id) || !g || ['sudo', 'dumbasses'].includes(a.name)) return state;
       if (a.newName !== undefined) {
         if (!/^[a-z][a-z0-9_-]{0,19}$/.test(to) || G[to] || to.startsWith('superuser-')) return state;
-        delete G[a.name]; G[to] = g; say(s, `${me.name} renamed the group ${a.name} to ${to}.`); return s;
+        delete G[a.name]; G[to] = g; sayFloat(s, `${me.name} renamed the group ${a.name} to ${to}.`, a.id); return s;
       }
       if (!Array.isArray(a.perms)) return state;
-      g.perms = [...new Set(a.perms.filter(permOk))]; say(s, `${me.name} set the group ${a.name}'s perms: ${g.perms.join(', ') || 'none'}.`); return s;
+      g.perms = [...new Set(a.perms.filter(permOk))]; sayFloat(s, `${me.name} set the group ${a.name}'s perms: ${g.perms.join(', ') || 'none'}.`, a.id); return s;
     }
     case 'forgame': return forgame(s, a, now) || state;
     case 'skip': {   // the host (or sudo): end the current stage now, as if everyone were done
@@ -661,19 +710,19 @@ function forgame(s, a, now) {
     const o = {};
     for (const [k, v] of Object.entries(a.set)) {
       if (k === 'order' && ['random', 'rotate'].includes(v)) o.order = v;
-      if (['freeRoam', 'fun', 'lowGravity', 'justin', 'ghosts', 'discuss', 'unvoteStops'].includes(k)) o[k] = v ? 1 : 0;
+      if (['freeRoam', 'fun', 'lowGravity', 'justin', 'ghosts', 'ghostBusy', 'discuss', 'unvoteStops'].includes(k)) o[k] = v ? 1 : 0;
       if (k === 'share' && SHARE_OK.includes(v)) o.share = v;
-      if (['catchUp', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
+      if (['catchUp', 'writeCatch', 'answerTime', 'submitTime'].includes(k) && TIME_OK.includes(v)) o[k] = v;
       if (k === 'answerOff') o.answerOff = v ? 1 : 0;
       if (k === 'downMs' && DOWN_OK.includes(v) && (v !== DEAD_STILL || isHang(s))) o.downMs = v;
     }
     if (!Object.keys(o).length) return null;
     Object.assign(s.options, o);
-    if (o.catchUp === 0) s.catchEnds = 0;
+    if (o.catchUp === 0 || o.writeCatch === 0) s.catchEnds = 0;
     if (o.answerOff && s.phase === 'answer') { s.lordTime = 0; s.ends = 0; }
     if (o.submitTime === 0 && ['submit', 'topic', 'seeds'].includes(s.phase)) s.ends = 0;
-    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'ghosts' ? `ghosts ${v ? 'on' : 'off'}` : k === 'discuss' ? `discussion round ${v ? 'on' : 'off'}` : k === 'unvoteStops' ? `unvoting ${v ? 'stops' : "doesn't stop"} the countdown` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
-    say(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`);
+    const said = (k, v) => k === 'share' ? `turn ends with ${v === 1 ? 'everyone' : `${Math.round(v * 100)}%`}` : k === 'answerOff' ? `answer timer ${v ? 'off' : 'on'}` : k === 'order' ? `question order ${v}` : k === 'lowGravity' ? `gravity ${v ? 'low' : 'normal'}` : k === 'downMs' ? `knocked down for ${v ? v / 1000 + ' s' : 'no time'}` : k === 'justin' ? `Justin ${v ? 'on' : 'off'}` : k === 'ghosts' ? `ghosts ${v ? 'on' : 'off'}` : k === 'ghostBusy' ? `no ghosts while busy ${v ? 'on' : 'off'}` : k === 'discuss' ? `discussion round ${v ? 'on' : 'off'}` : k === 'unvoteStops' ? `unvoting ${v ? 'stops' : "doesn't stop"} the countdown` : k === 'freeRoam' || k === 'fun' ? `${k === 'fun' ? 'silly commands' : 'free roam'} ${v ? 'on' : 'off'}` : `${{ catchUp: 'catch-up timer', writeCatch: 'writing catch-up timer', answerTime: 'answer timer', submitTime: 'writing timer' }[k]} ${v ? v + ' s' : 'off'}`;
+    sayFloat(s, `${me.name} changed the game: ${Object.entries(o).map(([k, v]) => said(k, v)).join(', ')}.`, a.id);
     return advance(s, now);
   }
   const m = a.mute; if (!m || !may(s, a.id, 'canmute')) return null;
@@ -710,8 +759,8 @@ function justinKilled(s, by, w) { if (!s.players[by]) return; s.jkN = (s.jkN || 
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit. */
 const REACH = { knife: [2.3, .9], hammer: [3, .5] };   // how far (duck lengths), and how wide (the cosine of the half angle)
-function swing(s, by, sp, aim, now) {
-  const p0 = s.pos[by], hang = isHang(s), rx = hang ? .006 : .03, ry = hang ? .012 : .08, [far, wide] = REACH[sp];
+export function swing(s, by, sp, aim, now, from = s.pos[by]) {   // (from: where the swing starts; Justin on the boards isn't in s.pos)
+  const p0 = from, hang = isHang(s), rx = hang ? .006 : .03, ry = hang ? .012 : .08, [far, wide] = REACH[sp];
   const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1, ux = aim[0] / rx / al, uy = aim[1] / ry / al;
   const side = hang ? (inCabin(p0.x * HW, p0.y * HH) ? 1 : 0) : 0, z0 = hang ? +p0.z || 0 : 0;
   const near = (x, y, z, inSide) => {   // where (x, y) is from the swinger, in duck lengths, if it's in reach
@@ -741,7 +790,7 @@ function swing(s, by, sp, aim, now) {
       s.pos[h.id] = { ...p, x: +x.toFixed(4), y: +y.toFixed(4), j: 0, kb: { t: now, x: p.x, y: p.y } };
     }
   }
-  if (!hang && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be hit back)
+  if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {   // (the Justin option: he can be hit back)
     const n = justinAt(s.justin, now);
     if (near(n.x, n.y, 0, 0) && justinDown(s, now, logLine)) justinKilled(s, by, sp);
   }
@@ -848,6 +897,7 @@ function skipRound(s, now) {
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
+  delete s.waiting;
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
   s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.hang = null; s.bb = null; s.bbPast = []; s.sc = null; s.law = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
@@ -895,7 +945,7 @@ function pickTopic(s, now) {
 }
 /* how many seeds each player writes: a total shared out (the extra ones to random players), or so many each */
 function startSeeds(s, now) {
-  const ids = playing(s), plan = String(s.options.bbSeeds || 't8'), k = Math.max(1, Math.min(32, +plan.slice(1) || 8)), per = {};
+  const ids = playing(s), plan = String(s.options.bbSeeds || 't8'), k = Math.max(1, Math.min(64, +plan.slice(1) || 8)), per = {};
   if (plan[0] === 'p') ids.forEach(id => { per[id] = Math.min(k, 8); });
   else shuffle([...ids]).forEach((id, i) => { per[id] = Math.floor(k / ids.length) + (i < k % ids.length ? 1 : 0); });
   s.bb.per = per; s.bb.turns = Math.max(0, ...Object.values(per)); s.bb.turn = 0;
@@ -1190,7 +1240,7 @@ function scAdvance(s, now, force = false) {   // force: the skip command or a sk
   switch (s.phase) {
     case 'words':
       catchUp(s, now, enough && d < on.length);
-      return d >= on.length || timeUp || ((enough || s.catchEnds) && (!s.options.catchUp || (s.catchEnds && now >= s.catchEnds))) ? endWords(s, now) : s;
+      return d >= on.length || timeUp || ((enough || s.catchEnds) && (!catchLen(s) || (s.catchEnds && now >= s.catchEnds))) ? endWords(s, now) : s;
     case 'write': { const w = scWriter(s); return !s.players[w] || s.done[w] || timeUp ? endTurn(s, now) : s; }
     case 'lvote':
       if (!enough) return s;
@@ -1305,7 +1355,7 @@ function startCase(s, now) {
   const q = s.qs[s.qi], on = playing(s).filter(id => s.players[id]);
   s.lordTime = 0; s.pos = {}; s.lock = {}; s.ends = 0;
   s.law = { def: null, off: null, how: {}, picks: { def: {}, off: {} }, votes: {}, flips: {}, close: 0, start: null, w: null, gave: null };
-  if (s.seat.length < 3) { s.law = null; return backToLobby(s, 'Lawyering needs at least 3 players: two attorneys and a jury.'); }
+  if (s.seat.length < 3) { s.law = null; return waitFor(s, now, 'case'); }   // (two attorneys and a jury: the case waits for players)
   if (on.length < 3) { say(s, `Not enough players for a jury, so "${q.text}" is dismissed.`); return nextCase(s, now); }   // (the rest joined mid-round)
   const writer = s.players[q.by] && on.includes(q.by) ? q.by : null, how = { def: s.options.lawDef, off: s.options.lawOff };
   for (const k of ['def', 'off']) if (how[k] === 'writer' && !writer) how[k] = 'random';   // (the writer left: random)

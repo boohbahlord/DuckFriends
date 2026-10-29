@@ -22,7 +22,7 @@ import { el, esc, $, $$, openWindow, confirmBox, typing, windowOpen, onMenu, con
 import { activeRoom } from './net.js';
 import { COLS, SHORT, needed, playing, VOTE_GRACE, isWyr, isDdr, DDR_SIDES, ddrStats, isBb, isLaw, twoSided, boardPhases, bbMatch, roundName, colAt, colXAt, colBoundsAt, heldCol, startX, wyrStats, bbStats, isSudo, canOpen,
   isSc, SC_BOARD, SC_VOTES, scZones, zoneAt, scCanVote, scLineOf, scWriter, scStats, wordAt, cleanWord, LINE_MAX,
-  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang, MAG, RELOAD, magOf, KB_MS, KB_HOP, KB_LAND } from './rules.js';
+  isCounsel, jury, lawTally, canGiveUp, lawStats, LAW_MID, WEAPONS, shotAt, coolFor, coolEnds, isHang, MAG, RELOAD, magOf, KB_MS, KB_HOP, KB_LAND, catchLen, minOf } from './rules.js';
 import { mountWorld, BOARD_HTML as HANG_HTML } from './hangout/world.js';
 import { hangStill } from './hangout/rules.js';
 import { downStill } from './hangout/death.js';
@@ -976,6 +976,7 @@ const graceLeft = s => Math.ceil(graceLeftMs(s) / 1000);
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me];
+  if (s.waiting) return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`;   // (a game below its fewest players: ducks still walk)
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
   if (isHang(s)) return world ? world.buttonHTML() : '';   // Hangout: the nearest activity's button (Light off …)
   if (late()) return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? 'match' : isLaw(s) ? 'case' : 'question'}. · ${d}/${n} done</span>`;
@@ -1264,7 +1265,7 @@ function showTimer() {
   if (!end || !['submit', 'answer', 'topic', 'tvote', 'seeds', 'words', 'write', 'wqpick', 'choice', 'accuse', 'counsel'].includes(s.phase)) { t.textContent = ''; t.className = 'timer'; if (meter) meter.hidden = true; return; }
   const left = Math.max(0, Math.ceil((end - now) / 1000)), catching = s.catchEnds && end === s.catchEnds, closing = isLaw(s) && s.law && s.law.close && end === s.law.close;
   /* the meter fills as the time runs out; its color drifts slowly (css) */
-  const from = closing ? s.law.close - (+s.options.lawClose || 60) * 1000 : catching ? s.catchEnds - s.options.catchUp * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
+  const from = closing ? s.law.close - (+s.options.lawClose || 60) * 1000 : catching ? s.catchEnds - catchLen(s) * 1000 : s.at, frac = Math.max(0, Math.min(1, (now - from) / Math.max(1, end - from)));
   if (meter) { meter.hidden = false; const w = (frac * 100).toFixed(1) + '%'; if (meter._w !== w) { meter._w = w; meter.firstChild.style.width = w; } meter.classList.toggle('low', left <= 5); }
   if (['submit', 'topic', 'seeds', 'words', 'write', 'wqpick'].includes(s.phase) && left <= 2 && draftT) sendDraft(true);   // the last words make it in
   t.textContent = `${closing ? 'Closing ' : catching ? 'Catch-up ' : ''}${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;

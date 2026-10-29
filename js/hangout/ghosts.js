@@ -15,6 +15,14 @@ const BOT_BACK = 4000;        // ms: a computer's ghost walks this long, then co
 onGetUp((s, id, now) => {
   if (s.options.mode !== 'hang' || !s.options.ghosts || !s.hang) return false;
   const P = s.players[id], p = s.pos[id]; if (!P || !p || p.x < 0) return false;
+  /* I don't want a ghost from a duck that's busy (holding the chalk or the eraser, at the piano, writing in the
+     guestbook, at a card table, in a seat, anything an activity holds it in): it just gets up (s.options.ghostBusy, on
+     unless the host turns it off). Busy: letting it go would change an activity's state */
+  if (s.options.ghostBusy ?? 1) {
+    const c = structuredClone(s), sig = x => JSON.stringify([x.hang, x.pos[id], x.players[id]]), was = sig(c);
+    for (const [k, r] of RULES) if (k !== 'ghost') r.left?.(c, id);
+    if (sig(c) !== was) return false;
+  }
   for (const [k, r] of RULES) if (k !== 'ghost') r.left?.(s, id);
   s.hang.ghost = { ...(s.hang.ghost || {}), [id]: { x: p.x, y: p.y, z: Math.round(+p.z || 0), t: now } };
   delete P.dead;   // (the ghost walks as itself; the body is what lies there)

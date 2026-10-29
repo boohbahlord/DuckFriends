@@ -9,21 +9,27 @@
    - Every 15 to 30 seconds he says one of his lines (every line once before any comes back), in the chat and his bubble.
    - With the silly commands on, every 45 to 90 seconds he fires the handgun's slow bullet at a random duck (never in
      Quack's reveal). A duck it hits plays dead until it moves, as with the Handgun special.
+   - With the silly commands on, every 40 to 80 seconds he hurries up to a random duck and swings the hammer at it (a
+     duck that steps away in time is missed); every 70 to 140 seconds he shouts a line from GOD_LINES (a shuffled
+     playlist, "Frick you I am GOD!" among them) and lightning or fire strikes a random duck from the sky a moment later,
+     and it plays dead.
    - Players can shoot him back: a bullet, a dagger or `kill @Justin` knocks him down with one of his death lines, and he
      gets up by himself after 5 seconds. E on him is Duck Cabin's only.
    s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down }: he walks from (x0, y0) to (x1, y1) from time t at
    v board widths a second (every screen moves him on its own); k is the spot he picked; key the stage he's in; down when
    he was knocked down. In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js). */
-import { E_LINES, DEATH_LINES } from './hangout/justin.js';
+import { E_LINES, DEATH_LINES, GOD_LINES } from './hangout/justin.js';
+import { holdDown } from './hangout/death.js';
 import { JUSTIN } from './hangout/npcart.js';
 import { isQuack, tileAt, tileCenter, stillIn } from './quackrules.js';
-import { twoSided, isSc, scZones, scLineOf, zoneAt, colAt, colBoundsAt, startX, boardPhases, playing, SHOT_SPEED } from './rules.js';
+import { twoSided, isSc, scZones, scLineOf, zoneAt, colAt, colBoundsAt, startX, boardPhases, playing, SHOT_SPEED, swing } from './rules.js';
 
 export const JUSTIN_ID = 'justin';
 export const JUSTIN_PLAYER = { name: 'Justin', duck: JUSTIN };
 const SPEED = .2;                                   // board widths a second (about a duck's walk)
-const LOOK = [2000, 3000], SAY = [15000, 30000], SHOOT = [45000, 90000], DOWN = 5000;
+const LOOK = [2000, 3000], SAY = [15000, 30000], SHOOT = [45000, 90000], DOWN = 5000, HAMMER = [40000, 80000], GOD = [70000, 140000], STRIKE = 1600;
+const RX = .03, RY = .08;   // a duck's length on the board, across and down (as rules.js' swing measures)
 const rnd = ([a, b]) => a + Math.random() * (b - a);
 const any = xs => xs[Math.floor(Math.random() * xs.length)];
 const r3 = v => Math.round(v * 1000) / 1000;
@@ -98,7 +104,7 @@ export function justinTick(s, now, log) {
   if (!s.justin) { s.justin = { next: now + 1500, say: now + rnd(SAY) * .5, shoot: now + rnd(SHOOT), list: [] }; ch = true; }
   const j = s.justin;
   /* a new stage: he starts where the ducks start */
-  if (j.key !== key) { const x = startX(s), y = r3(.2 + Math.random() * .6); Object.assign(j, { key, x0: x, y0: y, x1: x, y1: y, t: now, v: SPEED, k: null, next: now + rnd(LOOK) }); ch = true; }
+  if (j.key !== key) { delete j.swing; delete j.god; const x = startX(s), y = r3(.2 + Math.random() * .6); Object.assign(j, { key, x0: x, y0: y, x1: x, y1: y, t: now, v: SPEED, k: null, next: now + rnd(LOOK) }); ch = true; }
   /* knocked down: he lies there a while, then gets up */
   if (j.down) { if (now - j.down < DOWN) return ch; delete j.down; j.next = now + 1000; j.say = Math.max(j.say, now + 4000); ch = true; }
   /* his lines, a shuffled playlist */
@@ -119,6 +125,46 @@ export function justinTick(s, now, log) {
       s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: 'use', what: 'handgun', by: JUSTIN_ID, who: [], face: ax < 0 ? -1 : 1, t: now, ax: +ax.toFixed(3), ay: +ay.toFixed(3) }];
       s.shots = [...(s.shots || []), { n: s.fxN, by: JUSTIN_ID, k: 'handgun', x0: at.x, y0: at.y, vx: +(ax * SHOT_SPEED).toFixed(4), vy: +(ay * SHOT_SPEED).toFixed(4), t: now, lx: at.x, ly: at.y }];
       ch = true;
+    }
+  }
+  const fx = o => { s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, by: JUSTIN_ID, t: now, ...o }]; };
+  const targets = () => playing(s).filter(id => s.pos[id] && s.pos[id].x >= 0 && !s.players[id].dead);
+  const calm = !s.options.fun || (isQuack(s) && s.phase === 'reveal');
+  /* lightning or fire from the sky, a moment after his line */
+  if (j.god && now >= j.god.at) {
+    const id = j.god.id, P = s.players[id], p = s.pos[id]; delete j.god; ch = true;
+    if (P && p && p.x >= 0 && !calm) { P.dead = true; holdDown(s, id, now); fx({ kind: Math.random() < .5 ? 'lightning' : 'fire', who: [id] }); }
+  }
+  j.godAt ??= now + rnd(GOD);
+  if (now >= j.godAt && !j.god) {
+    j.godAt = now + rnd(GOD);
+    const them = targets();
+    if (!calm && them.length) {
+      if (!(j.gods || []).length) j.gods = GOD_LINES.map((_, i) => i).sort(() => Math.random() - .5);
+      log(s, { npc: JUSTIN_ID, name: 'Justin', text: GOD_LINES[j.gods.shift()] });
+      j.god = { id: any(them), at: now + STRIKE }; ch = true;
+    }
+  }
+  /* the hammer: up to the duck, then the swing (toward where it stands by then) */
+  if (j.swing) {
+    const p = s.pos[j.swing.id];
+    if (!p || p.x < 0 || (s.players[j.swing.id] || {}).dead || calm || now > j.swing.at + 3000) { delete j.swing; return true; }
+    if (now < j.swing.at) return ch;   // (still on his way: nothing else)
+    const dx = p.x - at.x, dy = p.y - at.y, aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
+    const hit = swing(s, JUSTIN_ID, 'hammer', aim, now, at);
+    fx({ kind: 'use', what: 'hammer', who: [], face: aim[0] < 0 ? -1 : 1, ax: +aim[0].toFixed(3), ay: +aim[1].toFixed(3), ...(hit.length ? { hit } : {}) });
+    delete j.swing; j.next = now + 1500; return true;
+  }
+  j.hammer ??= now + rnd(HAMMER);
+  if (now >= j.hammer) {
+    j.hammer = now + rnd(HAMMER);
+    const them = targets();
+    if (!calm && them.length) {
+      const id = any(them), p = s.pos[id], ux = (at.x - p.x) / RX, uy = (at.y - p.y) / RY, d = Math.hypot(ux, uy) || 1;
+      const to = { x: Math.max(.03, Math.min(.97, p.x + ux / d * 1.4 * RX)), y: Math.max(0, Math.min(1, p.y + uy / d * 1.4 * RY)) }, v = SPEED * 1.8;
+      Object.assign(j, { k: null, x0: r3(at.x), y0: r3(at.y), x1: r3(to.x), y1: r3(to.y), t: now, v });
+      j.swing = { id, at: now + Math.hypot(to.x - at.x, to.y - at.y) / v * 1000 + 250 };
+      return true;
     }
   }
   /* where to stand: looked at again every 2 to 3 seconds; he walks only when the spot he wants changes */

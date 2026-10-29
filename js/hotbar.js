@@ -31,8 +31,18 @@ export function mountHotbar(S, api) {
   const dots = id => id === 'handgun' && api.ammo ? ammoHTML(api.ammo()) : '';
   /* the button shows your specials' icons in turn (none chosen: all of them; never one that's off) */
   const mine = () => api.keys().filter(id => id && specialById(id) && !specialById(id).off);
-  let cycN = 0, cycFace = 0;
+  let cycN = 0, cycFace = 0, heldI = -1;
+  const face = html => { const faces = btn.querySelectorAll('.sp-cyc i'); cycFace ^= 1; faces[cycFace].innerHTML = html; faces[cycFace].classList.add('up'); faces[cycFace ^ 1].classList.remove('up'); };
+  /* phones: a special toggled on that is still waiting to work again shows on the button, with its bar draining */
+  const btnCool = () => {
+    const k = api.keys(), on = api.kept(), i = k.findIndex((id, j) => id && on.has(id) && cools[j]);
+    const s = i < 0 ? '' : `${i}:${cools[i][0]}`; if (btn._cool === s) return; btn._cool = s;
+    btn.querySelector('.cooldown')?.remove(); btn.classList.toggle('cool', i >= 0); heldI = i;
+    if (i < 0) return;
+    face(look(k[i]).icon); btn.insertAdjacentHTML('beforeend', drain(cools[i]));
+  };
   const cycle = () => {
+    if (heldI >= 0) return;   // (a special waiting stays on the button)
     const ids = mine(), list = ids.length ? ids : SPECIALS.filter(x => !x.off).map(x => x.id), sp = look(list[cycN++ % list.length]);
     const faces = btn.querySelectorAll('.sp-cyc i'); cycFace ^= 1;
     faces[cycFace].innerHTML = sp.icon; faces[cycFace].classList.add('up'); faces[cycFace ^ 1].classList.remove('up');
@@ -42,6 +52,7 @@ export function mountHotbar(S, api) {
   const draw = () => {
     const k = api.keys(), on = api.kept(), cd = api.cool ? api.cool() : []; cools = cd;
     if (col) drawCol(k, on, cd);
+    btnCool();
     const now = JSON.stringify([k, [...on], sel, cd.map(c => c && c[0]), api.ammo && api.ammo(), api.duck && !!(api.duck() || {}).wrench]);
     if (now === sig) return; sig = now;
     bar.innerHTML = KEYS.map((n, i) => { const sp = look(k[i]);
