@@ -20,7 +20,7 @@ import { activeRoom } from './net.js';
 import { boardPhases, denied, canOpen, gameMuted, slowMs } from './rules.js';
 import { shellRun, shellSuggest, shellHistory } from './shell.js';
 import { paint, isHelpName } from './helppages.js';
-import { nameHTML, FONTS, findFont } from './name.js';
+import { nameHTML, fontHTML, FONTS, findFont } from './name.js';
 import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from './duck.js';
 import { HATS, hatById } from './hats.js';
 import { FACES, faceById } from './faces.js';
@@ -494,6 +494,26 @@ export function chatWidget() {
     return submit(text);
   };
 
+  /* the newest message floats by the chat button for a few seconds (Settings → Chat → Floating messages, on unless turned
+     off), see-through and in its writer's font; so do the room's rule changes, silly commands and group changes others
+     make. One at a time, never while the chat is open, and it lets every tap through */
+  let float = null;
+  const floatable = (s, me, m) => {
+    if (m.npc || m.mine) return false;
+    if (m.sys) return !!m.float && m.by !== me;
+    return !!s.players[m.from] && m.from !== me && (!m.to || m.to === me) && !isMuted(s, m.from, 'text');
+  };
+  const showFloat = (s, me, m) => {
+    if (!float) { float = el('<div class="chat-float" aria-hidden="true"></div>'); document.body.append(float); }
+    const p = s.players[m.from], text = m.file && !canOpen(s, me, m) ? `📄 ${m.file}` : m.text.length > 160 ? m.text.slice(0, 160).trimEnd() + '…' : m.text;
+    float.innerHTML = m.sys ? `<span class="cf-sys">${esc(m.text)}</span>` : `<b class="cf-name">${nameHTML(p.name, p.nameStyle)}</b>: <span class="cf-text">${fontHTML((p.nameStyle || {}).font, esc(text))}</span>`;
+    const r = btn.getBoundingClientRect(), right = r.width && r.left > innerWidth / 2;   // (by the button, wherever Settings put it)
+    float.style.left = r.width && !right ? `${Math.max(8, r.left).toFixed(0)}px` : right ? 'auto' : '8px';
+    float.style.right = right ? `${Math.max(8, innerWidth - r.right).toFixed(0)}px` : 'auto';
+    float.style.bottom = `${Math.max(8, r.width ? innerHeight - r.top + 8 : 8).toFixed(0)}px`;
+    float.classList.remove('on'); void float.offsetWidth; float.classList.add('on');   // (the fade starts over for a newer one)
+  };
+
   /* new messages: pings for @you; a "!" on the closed button */
   const onState = s => {
     const r = room(); if (!r) return;
@@ -505,12 +525,14 @@ export function chatWidget() {
       const meName = s.players[r.me] && s.players[r.me].name;
       const hit = fresh.some(m => !m.sys && m.from !== r.me && !isMuted(s, m.from, 'text') && !isMuted(s, m.from, 'ping') && (m.to === r.me || (meName && mentionRe(meName).test(m.text))));
       if (hit) { sfx.ping(); if (!ui.open) { ui.ping = true; btn.querySelector('.bang').hidden = false; } }
+      const fl = !ui.open && profile.settings.chatFloat !== false && btn.isConnected && [...fresh].reverse().find(m => floatable(s, r.me, m));
+      if (fl) showFloat(s, r.me, fl);
       if (ui.mode === 'chat') drawLog();
     }
   };
   const r0 = room(); if (r0) lastN = r0.state.logN || 0;
   const unsub = r0 ? r0.on(onState) : () => {};
-  w.destroy = () => { unsub(); if (current === w) current = null; };
+  w.destroy = () => { unsub(); if (float) float.remove(); float = null; if (current === w) current = null; };
   w.isOpen = () => ui.open;
   setMode(ui.mode);
   if (ui.open) { panel.hidden = false; btn.setAttribute('aria-pressed', 'true'); }

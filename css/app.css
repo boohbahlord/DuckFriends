@@ -2089,3 +2089,22 @@ html.moving .sc-glow { animation: scglowtext 2s ease-in-out infinite; }
 html.moving .sc-arrow b { animation: scarrow 1s ease-in-out infinite; }
 @keyframes scarrow { 50% { transform: translateY(.3rem); } }
 .sc-board.voted .sc-arrow { display: none; }
+
+/* phones and tablets: a tap never selects words or brings up the look-up / search box (typing boxes still can) */
+@media (hover: none) and (pointer: coarse) {
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+}
+/* waiting for players (a game below its fewest players): in the bottom bar, where the buttons go */
+.wait-bar { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .9rem; border: .14rem solid var(--line); border-radius: 2rem; background: color-mix(in srgb, var(--yellow) 85%, transparent); color: #1c1c28; font-weight: 700; box-shadow: 0 .14rem 0 var(--line); white-space: normal; text-align: center; }
+.wait-bar b { padding: .05rem .5rem; border-radius: 1rem; background: #1c1c28; color: #fff; font-variant-numeric: tabular-nums; }
+/* the newest message, floating by the chat button for a moment (see-through; every tap goes through it) */
+.chat-float { position: fixed; z-index: 45; max-width: min(22rem, calc(100vw - 1rem)); padding: .35rem .7rem; border-radius: .7rem; background: color-mix(in srgb, var(--panel) 62%, transparent); color: var(--ink); font-size: calc(.95rem * var(--ts)); line-height: 1.3; pointer-events: none; opacity: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 .05rem .15rem #0006; }
+.chat-float.on { animation: cfloat 5s ease forwards; }
+.chat-float .cf-sys { font-style: italic; opacity: .9; }
+@keyframes cfloat { 0% { opacity: 0; transform: translateY(.4rem); } 6% { opacity: .92; transform: none; } 78% { opacity: .92; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .chat-float.on { animation-name: cfloatstill; } @keyframes cfloatstill { 0%, 78% { opacity: .92; } 100% { opacity: 0; } } }
+/* phones: a special toggled on and still waiting shows on the Specials button, its bar draining */
+.sp-btn { position: relative; }
+.sp-btn .cooldown { left: 22%; right: 22%; bottom: 12%; height: .22rem; }
+.sp-btn.cool { border-color: var(--yellow); }

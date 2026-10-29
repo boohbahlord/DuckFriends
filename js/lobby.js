@@ -12,7 +12,7 @@ import { gameArtSVG, gameSymbol } from './art.js';
 import { MODES, modeOf } from './modes.js';
 import { cardHTML } from './card.js';
 import { netHTML, kickItems } from './players.js';
-import { OPTIONS_DEFAULT, isSudo } from './rules.js';
+import { OPTIONS_DEFAULT, isSudo, minOf } from './rules.js';
 import { downFor } from './hangout/death.js';
 import { profile, cleanName } from './store.js';
 import { openCustomize, setName } from './customize.js';
@@ -29,7 +29,7 @@ import { openSettings } from './settings.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering or Hangout (in its own Duck Cabin).',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering; Juryful of Ducklings or Hangout (in its own Duck Cabin).',
   map: 'What the board looks like: eight maps, from Night Show to Duck Cabin (Hangout\'s own).',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
@@ -74,11 +74,12 @@ const OPT_TILES = [
   ['order', 'Question order', [['random', 'Random'], ['rotate', 'Rotating']]],
   ['share', 'Turn ends when done', [[.5, 'Half'], [.67, '2 of 3'], [.75, '3 of 4'], [1, 'Everyone']]],
   ['catchUp', 'Catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s']]],
+  ['writeCatch', 'Writing catch-up timer', [[0, 'Off'], [15, '15 s'], [30, '30 s'], [45, '45 s'], [60, '60 s']]],
   ['answerTime', 'Answer timer', [[0, 'Off'], [30, '30 s'], [60, '60 s'], [90, '90 s']]],
 ];
 /* Bicker Brackets' own options (shown when it's the game) */
 const BB_TILES = [
-  ['bbSeeds', 'Contenders', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
+  ['bbSeeds', 'Contenders', [['t8', '8 in all'], ['t12', '12 in all'], ['t16', '16 in all'], ['t32', '32 in all'], ['t64', '64 in all'], ['p1', '1 each'], ['p2', '2 each'], ['p3', '3 each'], ['p4', '4 each']]],
   ['bbTopic', 'Topic', [['vote', 'Write and vote'], ['random', 'Random']]],
   ['bbBlind', 'Writers', [[0, 'Shown'], [1, 'Hidden until out']]],
   ['bbReview', 'Review each round', [[0, 'Off'], [1, 'On']]],
@@ -111,6 +112,7 @@ const MORE_TILES = [
   ['justin', 'Justin', [[0, 'Off'], [1, 'On']]],
   ['downMs', 'Knocked down for', [[0, 'None'], [500, '0.5 s'], [1000, '1 s'], [2000, '2 s'], [3000, '3 s'], [5000, '5 s'], [6000, '6 s']]],
   ['ghosts', 'Ghosts', [[0, 'Off'], [1, 'On']]],
+  ['ghostBusy', 'No ghosts while busy', [[1, 'On'], [0, 'Off']]],
   ['stats', 'Stats screen', [[1, 'On'], [0, 'Off']]],
   ['unvoteStops', 'Unvoting stops the countdown', [[0, 'No'], [1, 'Yes']]],
 ];
@@ -119,12 +121,14 @@ const OPT_TIPS = {
   discuss: 'A round after each vote to look at where everyone stood and talk it over.',
   share: 'Once this many players have voted, the catch-up timer starts. Everyone voting ends the turn at once.',
   catchUp: 'How long the rest get once enough players have voted. Off: the turn ends as soon as enough have voted.',
+  writeCatch: 'How long the last writers get once enough players have sent theirs. Off: writing ends as soon as enough have sent.',
   unvoteStops: 'Yes: if votes are taken back below the needed share, the countdown stops. No: once it starts, it runs out.',
   answerTime: 'The Round Lord\'s answer time unless they choose another.',
   submitTime: 'A time limit on writing questions.',
   freeRoam: 'Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.',
   fun: 'lightning, love, kill and hotdog in the command line.',
   downMs: 'How long a duck that plays dead (shot, stabbed, or killed) can\'t move. None: it can move at once. 0.5 s on the boards, 6 s in Duck Cabin, unless you choose another.',
+  ghostBusy: 'With Ghosts on: a duck holding the chalk or the eraser, at the piano, writing in the guestbook, at a card table or in a seat just gets up instead of becoming a ghost.',
   ghosts: 'Duck Cabin: once its knocked-down time is up, a duck\'s ghost gets up and walks about while its body lies there. A ghost can\'t be hit or use anything. Space brings it back.',
   justin: 'Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.',
   stats: 'The stats after each round. Off: the next round starts at once (in Story Chain, the story just goes on).',
@@ -151,10 +155,10 @@ function openOptions() {
     ${s.options.mode === 'bb' ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ''}
     ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
     ${s.options.mode === 'quack' ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ''}
-    ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
-    ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
+    ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering; Juryful of Ducklings</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
+    ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp', 'writeCatch'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin', 'unvoteStops'].includes(r[0])) && !(['sc', 'quack', 'hang'].includes(s.options.mode) && r[0] === 'discuss') && !(s.options.mode === 'quack' && r[0] === 'unvoteStops') && !(s.options.mode !== 'hang' && r[0] === 'ghosts')), s, ro)}
+    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin', 'unvoteStops'].includes(r[0])) && !(['sc', 'quack', 'hang'].includes(s.options.mode) && r[0] === 'discuss') && !(s.options.mode === 'quack' && r[0] === 'unvoteStops') && !(s.options.mode !== 'hang' && ['ghosts', 'ghostBusy'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>
@@ -221,9 +225,9 @@ function paint() {
     setHTML(st, `<button type="button" class="ready-btn${mine.ready ? ' on' : ''}" data-a="ready" aria-pressed="${!!mine.ready}">${mine.ready ? 'Ready ✓' : 'Not ready'}</button>`);
   }
   const startRow = $('[data-m="start"]', S);
-  const few = ['quack', 'law'].includes(s.options.mode) && s.seat.length < 3;   // Who is the Quack? and Lawyering need 3 ducks
+  const few = s.seat.length < minOf(s);   // Who is the Quack? and Lawyering need 3 ducks
   startRow.setAttribute('aria-disabled', String(!host || s.phase === 'countdown' || few));
-  $('.val', startRow).textContent = few ? 'Needs 3 players' : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
+  $('.val', startRow).textContent = few ? `Needs ${minOf(s)} players` : host ? (s.phase === 'countdown' ? '' : `${s.seat.filter(id => s.players[id].ready).length}/${s.seat.length} ready`) : 'The host starts';
   $('[data-m="options"] .val', S).textContent = host ? 'Edit' : 'View';
   $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
   const fr = $('[data-m="friends"] .val', S);

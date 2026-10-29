@@ -5,6 +5,17 @@ import { openWindow, esc } from './ui.js';
 import { rainbowHTML } from './art.js';
 
 export const UPDATES = [
+  { id: '2026-10-29', version: 98, date: 'Oct 29, 2026', title: 'Waiting for players and floating chat',
+    news: ['A game that drops below the players it needs waits for them instead of ending.',
+      'The newest chat message floats by the chat button for a moment (Settings → Chat).',
+      'Justin swings a hammer now and then, and calls down lightning or fire.',
+      'Lawyering is now Lawyering; Juryful of Ducklings, and Bicker Brackets can have 64 contenders.',
+      'The last writers get 30 seconds once enough have sent theirs, and unvoting stops the countdown.',
+      'Duck Cabin: no ghost while you\'re busy at the piano, the chalk, a table or a seat.',
+      'Upcoming Updates and Release Dates, at the bottom of this window.'],
+    fixed: ['Who is the Quack? never shows who is picking the secret word.',
+      'Tapping on a phone no longer selects words or pops up a search.',
+      'On phones, a toggled special shows its wait on the Specials button.'] },
   { id: '2026-10-28', version: 96, date: 'Oct 28, 2026', title: 'Weapons, ghosts and poker',
     news: ['New specials: a knife, a hammer (or wrench) and a pistol that holds 7 shots; R reloads.',
       'In Duck Cabin, a new setting turns knocked-out ducks into ghosts that can walk around; Space brings the body back.',
@@ -37,6 +48,12 @@ export const UPDATES = [
     fixed: ['Players who join mid-game play right away.'] },
 ];
 
+/* what's coming: the owner sets each date (blank: "Date to be announced"); a thing leaves this list once it's out */
+export const UPCOMING = [
+  { title: 'Duncelation: a new game where you defend a take, or wear the dunce hat', date: '' },
+  { title: 'Report Bug or Suggest Ideas, from the Updates and Settings windows', date: '' },
+];
+
 const KEY = 'duckfriends-updates-seen';
 export const seenUpdate = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
 export const hasNewUpdate = () => seenUpdate() !== UPDATES[0].id;
@@ -50,7 +67,8 @@ export function openUpdates() {
     <div class="up-nav"><button type="button" class="btn ghost up-arrow" data-d="1" aria-label="Older update">◀</button>
       <div class="up-head"><b class="up-ver"></b><span class="up-date"></span><span class="up-name"></span></div>
       <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer update">▶</button></div>
-    <div class="up-body"></div><p class="up-count dim"></p>`, {
+    <div class="up-body"></div><p class="up-count dim"></p>
+    <p class="up-count"><button type="button" class="linkbtn" data-a="upcoming">Upcoming Updates and Release Dates</button></p>`, {
     cls: 'win-updates',
     onOpen(w) {
       let i = 0;
@@ -68,6 +86,7 @@ export function openUpdates() {
         w.querySelector('[data-d="-1"]').disabled = i === 0;
       };
       w.querySelectorAll('.up-arrow').forEach(b => b.onclick = () => show(i + +b.dataset.d));
+      w.querySelector('[data-a="upcoming"]').onclick = openUpcoming;
       const key = e => {
         if (!w.isConnected) return removeEventListener('keydown', key, true);
         if (e.key === 'ArrowLeft') { show(i + 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { show(i - 1); e.preventDefault(); }
@@ -76,4 +95,10 @@ export function openUpdates() {
       show(0);
     },
   });
+}
+
+/* what's coming next, and when (over the Updates window; its X or Esc goes back to it) */
+export function openUpcoming() {
+  return openWindow(`<h2 class="up-title">${rainbowHTML('Upcoming')}</h2>
+    <div class="up-body">${UPCOMING.length ? `<ul class="up-list">${UPCOMING.map(u => `<li><b>${esc(u.title)}</b><br><span class="dim small">${u.date ? `Release date: ${esc(u.date)}` : 'Release date to be announced'}</span></li>`).join('')}</ul>` : '<p class="dim">Nothing announced yet.</p>'}</div>`, { cls: 'win-updates' });
 }
