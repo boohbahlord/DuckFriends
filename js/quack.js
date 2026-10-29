@@ -5,8 +5,8 @@
    Another round of clues on the right.
 
    The Secret Card sits face down in the board's corner; hold it (or Q) to peek. When the round ends, the Quack's card
-   flips over in the middle for everyone: the category and "You are the Quack". Then the word picker's screen and the
-   stats. */
+   flips over in the middle for everyone: the category and "You are the Quack". Then the stats. Nobody but the picker
+   ever sees who picked the word. */
 import { esc } from './ui.js';
 import { duckSVG } from './duck.js';
 import { nameHTML } from './name.js';
@@ -98,9 +98,9 @@ export function revealCardsHTML(s) {
 
 /* ---------- picking the secret word ---------- */
 export function pickHTML(s, me) {
-  const w = s.wq, p = player(s, w.picker);
-  if (w.picker !== me) return `<div class="submit-wrap"><div class="panel submit-card done-card wq-wait">${duckSVG(p.duck, { size: 84, shadow: true, title: p.name })}
-    <h2>${nm(s, w.picker)} is picking the secret word…</h2><p class="dim">Everyone but the Quack will see it on their Secret Card.</p></div></div>`;
+  const w = s.wq;   // (I never show who picks: the picker is never the Quack, so their name would clear a duck)
+  if (w.picker !== me) return `<div class="submit-wrap"><div class="panel submit-card done-card wq-wait">
+    <h2>Someone is picking the secret word…</h2><p class="dim">Everyone but the Quack will see it on their Secret Card.</p></div></div>`;
   return `<div class="submit-wrap"><form class="panel submit-card wq-pick" autocomplete="off"><h2>Pick the secret word</h2>
     <p class="small dim">Only you see this. Everyone gets it on their Secret Card, except the Quack, who only sees the category. You're never the Quack when you pick.</p>
     <label class="wq-field"><span>The word</span><input class="wq-in" name="word" maxlength="${WORD_MAX}" placeholder="Pancake" aria-label="The secret word" spellcheck="true" required></label>
@@ -130,7 +130,7 @@ export function quackStatsHTML(s) {
   const sc = s.wqScore || { quack: 0, room: 0 };
   const head = r.why === 'caught' ? 'The room caught the Quack!' : r.why === 'last' ? 'The Quack wins!' : r.why === 'fled' ? 'The Quack fled!' : r.why === 'skip' ? 'Round skipped.' : 'Not enough ducks left.';
   const block = `<div class="wq-sum panel"><h3>${esc(head)}</h3>
-      <p>${r.quacks.length > 1 ? 'The Quacks' : 'The Quack'}: ${list(r.quacks.map(id => nm(s, id)))} · The word: <b>${esc(r.word)}</b> <span class="dim">(${esc(r.cat)}${r.picker ? `, picked by ${esc(player(s, r.picker).name)}` : ''})</span></p>
+      <p>${r.quacks.length > 1 ? 'The Quacks' : 'The Quack'}: ${list(r.quacks.map(id => nm(s, id)))} · The word: <b>${esc(r.word)}</b> <span class="dim">(${esc(r.cat)})</span></p>
       <p class="wq-score"><span class="q">Quacks ${sc.quack}</span> · <span class="r">Room ${sc.room}</span></p></div>
     <div class="awards">${awardsHTML(s, quackStats([r]))}</div>`;
   const all = s.review ? `<h2 class="all-h">The whole game</h2><div class="awards">${awardsHTML(s, quackStats(past), true)}</div>

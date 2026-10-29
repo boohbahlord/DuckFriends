@@ -1032,7 +1032,7 @@ function lawActHTML(s) {
 /* Who is the Quack?: Done (the speaker) or Skip (everyone else) in a clue turn; Vote; End turn after the reveal */
 function quackActHTML(s) {
   const w = s.wq, row = x => `<div class="act-row">${x}</div>`, P = id => esc((s.players[id] || {}).name || 'Gone');
-  if (s.phase === 'wqpick') return `<span class="progress">${w.picker === R.me ? 'Only you see the word you pick.' : `${P(w.picker)} is picking the secret word.`}</span>`;
+  if (s.phase === 'wqpick') return `<span class="progress">${w.picker === R.me ? 'Only you see the word you pick.' : 'Someone is picking the secret word.'}</span>`;
   if (!w.ids.includes(R.me)) return `<span class="progress">You joined mid-vote: walk around and chat. You play from the next ${w.result ? 'round' : 'lap of clues'}.</span>`;
   if (s.phase === 'reveal') {
     const on = playing(s), d = on.filter(id => s.done[id]).length, need = needed(s), mine = s.done[R.me], hold = frozen(s, R.me, clockNow());

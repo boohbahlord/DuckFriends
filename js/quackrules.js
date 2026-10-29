@@ -212,7 +212,7 @@ export function quackAdvance(s, now, force = false) {   // force: the host's ski
     case 'wqpick': {
       if (!timeUp && s.players[w.picker]) return s;
       const d = s.hidden && s.hidden.draft;   // what they had typed, or (none, or the picker left) a word from the list
-      if (!s.players[w.picker]) say(s, 'The word picker left, so the word comes from the list.');
+      if (!s.players[w.picker]) say(s, 'No word yet, so it comes from the list.');   // (never saying the picker left: that would name them)
       return deal(s, d && d.word ? { word: d.word, cat: d.cat || 'No hint' } : anyWord(), now);
     }
     case 'clue': {
