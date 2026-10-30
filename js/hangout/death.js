@@ -9,6 +9,7 @@ export const DOWN_GAMES = 500; // ms: the boards' default
 export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in Duck Cabin)
 const cabin = (s) => s.options.mode === "hang";
 export const downFor = (s) => {
+  if (s.options.mode === "mgj") return 5000; // (Mad God Justin: always 5 s)
   const v = s.options.downMs;
   return DOWN_OK.includes(v) && (v !== DEAD_STILL || cabin(s))
     ? v

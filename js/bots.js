@@ -10,6 +10,7 @@
    Lawyering they pick or vote for attorneys, vote as jurors (now and then changing their minds in closing arguments) and,
    as an attorney behind in closing arguments, sometimes give up. In Duncelation they write a take, walk to Dunce or Not a
    Dunce once the grace period is over and vote (now and then changing their minds); a defender stays in the circle. In
+   Mad God Justin they walk at Justin, stab him up close and now and then jump (his bullets fly under a jump). In
    Hangout they wander about Duck Cabin, stopping now and
    then, and jump once in a while (they never walk off an edge or up a wall). */
 import * as HL from "./hangout/layout.js";
@@ -47,6 +48,8 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
+import { isMgj, mgjGone } from "./mgjrules.js";
+import { justinAt } from "./boardjustin.js";
 
 export const BOT_QUESTIONS = [
   "Pineapple belongs on pizza.",
@@ -353,6 +356,43 @@ function dnBot(s, id, late, now, out) {
     });
 }
 
+/* Mad God Justin: up to him (stopping a little short, off to one side), a stab once he's in reach, a jump now and then */
+const stabbed = new Map(); // computer id → when it last stabbed
+function mgjBot(s, id, now, out) {
+  const p = s.pos[id],
+    P = s.players[id];
+  if (!p || !P || P.dead || !s.justin || mgjGone(s, now)) return;
+  const j = justinAt(s.justin, now),
+    dx = (j.x - p.x) / 0.03,
+    dy = (j.y - p.y) / 0.08,
+    d = Math.hypot(dx, dy) || 1,
+    len = Math.hypot(j.x - p.x, j.y - p.y) || 1,
+    ax = +((j.x - p.x) / len).toFixed(3),
+    ay = +((j.y - p.y) / len).toFixed(3);
+  const air = p.j && now - p.j < 700,
+    jump = !air && Math.random() < 0.015 ? now : air ? p.j : 0;
+  if (d > 1.6) {
+    const k = Math.min(1, 0.7 / d);
+    out.push({
+      t: "move",
+      id,
+      x: p.x + (j.x - p.x) * k,
+      y: p.y + (j.y - p.y) * k,
+      j: jump,
+      w: "knife",
+      ax,
+      ay,
+    });
+    return;
+  }
+  if (jump !== (p.j || 0))
+    out.push({ t: "move", id, x: p.x, y: p.y, j: jump, w: "knife", ax, ay });
+  if (now - (stabbed.get(id) || 0) > 1100 + Math.random() * 600) {
+    stabbed.set(id, now);
+    if (stabbed.size > 100) stabbed.delete(stabbed.keys().next().value);
+    out.push({ t: "use", id, what: "knife", face: ax < 0 ? -1 : 1, ax, ay });
+  }
+}
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [],
@@ -364,6 +404,10 @@ export function botActions(s, now) {
     const late = now - s.at >= wait + i * 700; // they don't all move on the same instant
     if (isSc(s)) {
       storyBot(s, id, now, wait, late, people, out);
+      return;
+    }
+    if (isMgj(s) && s.phase === "boss") {
+      if (now - s.at > 1500 + i * 300) mgjBot(s, id, now, out);
       return;
     }
     if (isHang(s)) {
@@ -547,7 +591,8 @@ export function botActions(s, now) {
           out.push(
             { t: "move", id, x: want, y, j: p.j || 0 },
             { t: "end", id, v: true },
-          ); // (v: a vote, never a take-back)
+          );
+        // (v: a vote, never a take-back)
         else
           out.push({
             t: "move",

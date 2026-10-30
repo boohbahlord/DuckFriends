@@ -44,12 +44,17 @@ export const EYES = [
     name: "Flat eye",
     tip: "A plain flat dot. Matches the 2D duck.",
   },
+  {
+    id: "lightning",
+    name: "Lightning eyes",
+    tip: "Glowing blue and flickering, like Mad God Justin's.",
+  },
 ];
 export const eyeById = (id) => EYES.find((e) => e.id === id) || EYES[0];
 /* how Customize shows the eyes: in groups, each under a small heading */
 export const EYE_GROUPS = [
   ["Duck eyes", ["default", "happy", "sleepy", "angry", "googly"]],
-  ["Shiny", ["star", "heart", "coins"]],
+  ["Shiny", ["star", "heart", "coins", "lightning"]],
   ["Strange", ["human", "bug", "bug2", "alien", "demon", "many", "holes"]],
   ["To match a style", ["raptor", "eagle", "pelican", "block", "flat"]],
 ];
@@ -130,6 +135,17 @@ const DRAW = {
   ) => `<defs><radialGradient id="${id}o" cx=".45" cy=".45" r=".6"><stop offset="0" stop-color="#000"/><stop offset=".75" stop-color="#121218"/><stop offset="1" stop-color="#2b2b38"/></radialGradient></defs>
     <ellipse cx="83" cy="34" rx="4.6" ry="5.4" fill="url(#${id}o)"/>`,
   none: () => "",
+  /* Mad God Justin's: an electric blue eye glowing through its own halo, a little bolt across it; it flickers like
+     lightning (css: .eye-zap) */
+  lightning: (
+    L,
+    id,
+  ) => `<defs><radialGradient id="${id}z" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#bff1ff" stop-opacity=".95"/><stop offset=".55" stop-color="#38b6ff" stop-opacity=".55"/><stop offset="1" stop-color="#1a6dff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${id}y" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#9be8ff"/><stop offset="1" stop-color="#1f8fff"/></radialGradient></defs>
+    <g class="eye-zap"><ellipse cx="83" cy="34" rx="10" ry="10.5" fill="url(#${id}z)"/>
+    <ellipse cx="83" cy="34" rx="4.6" ry="5.4" fill="url(#${id}y)" stroke="#0b4a8a" stroke-width=".9"/>
+    <path d="M79.6 30.6L83.4 33.6L81.6 34.6L86.4 38.4" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M89.6 27.4L92.6 25.6M90.4 31.8L94 31.4" stroke="#9be8ff" stroke-width="1" stroke-linecap="round" opacity=".8"/></g>`,
   raptor:
     () => `<path d="M77 34C79.5 29.6 87 29.4 89.6 34C87 38.4 79.5 38.4 77 34Z" fill="#f2c218" stroke="#3a2a06" stroke-width="1"/>
     <ellipse cx="83.6" cy="34" rx="1.1" ry="3.9" fill="${K}"/><circle cx="85.6" cy="32.4" r=".8" fill="#fff" opacity=".8"/>

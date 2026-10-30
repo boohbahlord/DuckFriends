@@ -166,6 +166,7 @@ const LOCK_KIND = {
   outfit: "outfit",
   face: "face",
   style: "style",
+  eyes: "eyes",
 };
 let peek = null; // { kind, id }: a locked item shown on the big duck, never worn
 const grid = (group, items, cur) =>
@@ -243,8 +244,9 @@ export function openCustomize(page = lastPage) {
                       ? { ...D, style: D.prevStyle || "rubber" }
                       : D),
                     image: null,
-                    [peek.kind]: { id: peek.id },
-                  };
+                    [peek.kind]:
+                      peek.kind === "eyes" ? peek.id : { id: peek.id },
+                  }; // (the eyes are kept as their id alone)
           duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
           cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };

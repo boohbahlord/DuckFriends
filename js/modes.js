@@ -8,6 +8,7 @@
    Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
    Duncelation: everyone writes a take; one by one, a duck defends the take it got and the room walks to Dunce or Not a
    Dunce, until someone is voted a dunce.
+   Mad God Justin: a boss fight; every duck has only a knife, and together they stab Justin to 0 HP before the time runs out.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby. */
 import { esc } from "./ui.js";
@@ -54,6 +55,11 @@ export const MODES = [
     tip: "Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.",
   },
   {
+    id: "mgj",
+    name: "Mad God Justin",
+    tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP before the timer runs out. He shoots back.",
+  },
+  {
     id: "hang",
     name: "Hangout",
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.",
@@ -63,7 +69,8 @@ export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
-   in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Hangout's little
+   in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Mad God Justin's
+   yellow duck head with its eye glowing blue, and a bolt of lightning; Hangout's little
    A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
@@ -90,6 +97,12 @@ export function modeSymbol(id, size = 32) {
 <path d="M5 21.5L13 2L21 21.5Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M13 2L21 21.5L17 21.5Z" fill="#000" opacity=".1"/>
 <text x="12.8" y="18.6" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7" fill="#1c1c28">D</text><path d="M5 21.5C10 23 16 23 21 21.5" stroke="#1c1c28" stroke-width="1.2" fill="none"/>
 <text x="25.6" y="11" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="10" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`;
+  if (m.id === "mgj")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<path d="M6.4 1.4L2 11.6H5.6L3.4 22.6L10.6 9.4H6.8L9.6 1.4Z" fill="#fff6b0" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
+<ellipse cx="19.4" cy="14.6" rx="8.4" ry="8" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.2"/><path d="M26.4 15.4l3.2.8-3.2 1.6z" fill="#ff8c2b" stroke="#1c1c28" stroke-width=".8" stroke-linejoin="round"/>
+<circle cx="22.2" cy="12" r="3.4" fill="#38b6ff" opacity=".45"/><circle cx="22.2" cy="12" r="1.9" fill="#bff1ff" stroke="#0b4a8a" stroke-width=".7"/>
+<path d="M17 8.4l7.4 1.6" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/></svg>`;
   if (m.id === "sc")
     return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <rect x="1" y="1" width="28" height="22" rx="3" fill="#ffffff" stroke="#1c1c28" stroke-width="1.2"/>

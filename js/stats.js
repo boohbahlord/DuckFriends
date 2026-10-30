@@ -20,6 +20,7 @@ import { lawBoxHTML } from "./court.js";
 import { boxHTML as scBoxHTML } from "./story.js";
 import { quackBoxHTML } from "./quack.js";
 import { dnBoxHTML } from "./dunce.js";
+import { mgjBoxHTML } from "./mgj.js";
 
 export function statBoxHTML(s, id, round = null) {
   const p = s.players[id];
@@ -105,6 +106,12 @@ function totalsHTML(p, t, mode = "aod") {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Cases argued</dt><dd>${fmtJumps(t.argued)}</dd><dt>Cases won</dt><dd>${fmtJumps(t.wins)}</dd>
         <dt>Cases lost</dt><dd>${fmtJumps(t.losses)}</dd><dt>Gave up</dt><dd>${fmtJumps(t.gave)}</dd><dt>Jury votes</dt><dd>${fmtJumps(t.answers)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === "mgj") {
+    // Mad God Justin: their fights won and lost, stabs, the times he got them, killing blows
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Mad God Justin</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Fights</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Won</dt><dd>${fmtJumps(t.wins)}</dd><dt>Lost</dt><dd>${fmtJumps(t.losses)}</dd>
+        <dt>Damage</dt><dd>${fmtJumps(t.answers)}</dd><dt>Knocked down</dt><dd>${fmtJumps(t.majority)}</dd><dt>Killing blows</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === "dunce") {
     // Duncelation: their takes defended, not a dunce and a dunce, and their votes
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Duncelation</div></div></header>
@@ -172,6 +179,7 @@ export function openStats(s, id, me) {
                     quack: quackBoxHTML,
                     law: lawBoxHTML,
                     dunce: dnBoxHTML,
+                    mgj: mgjBoxHTML,
                   }[s.options.mode] || statBoxHTML
                 )(s, id)
               : totalsHTML(p, all && all[lastMode], lastMode);

@@ -52,8 +52,9 @@ export const PROFILE_DEFAULT = {
   settings: { ...SETTINGS_DEFAULT },
   justinKills: 0,
   dunced: 0,
+  mgjWins: 0,
   secrets: {},
-  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon, voted a dunce, the codes on, the unlocks already announced
+  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon, voted a dunce, Mad God Justin beaten, the codes on, the unlocks already announced
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
@@ -68,6 +69,7 @@ export const STAT_MODES = [
   ["quack", "Who is the Quack?"],
   ["law", "Lawyering; Juryful of Ducklings"],
   ["dunce", "Duncelation"],
+  ["mgj", "Mad God Justin"],
 ];
 export function cleanStats(o) {
   const out = {},
@@ -160,6 +162,7 @@ function normalize(p) {
   if (!NAME_OK.test(out.name)) out.name = "Player 1";
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
+  out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
   const flags = (o) =>
     Object.fromEntries(
       Object.entries(o && typeof o === "object" ? o : {})
