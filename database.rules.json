@@ -82,6 +82,39 @@
           }
         }
       }
+    },
+    "reports": {
+      "$id": {
+        ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid && newData.parent().parent().child('reportsLast/' + auth.uid).val() === now",
+        ".validate": "newData.hasChildren(['at', 'uid', 'name', 'device', 'browser', 'text'])",
+        "at": {
+          ".validate": "newData.val() === now"
+        },
+        "uid": {
+          ".validate": "newData.val() === auth.uid"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length <= 20 && !newData.val().contains('@')"
+        },
+        "device": {
+          ".validate": "newData.isString() && newData.val().matches(/^(Phone|Tablet|Computer|Touchscreen laptop or computer)$/)"
+        },
+        "browser": {
+          ".validate": "newData.isString() && newData.val().length <= 40"
+        },
+        "text": {
+          ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 1000"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "reportsLast": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && (!data.exists() || data.val() < now - 60000)",
+        ".validate": "newData.val() === now"
+      }
     }
   }
 }

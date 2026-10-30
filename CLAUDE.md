@@ -39,6 +39,8 @@ serves `main`, so merging to `main` is deploying).
     `rubberducks.js`; `trampoline.js`; `falls.js` falling off the deck.
 - `js/music.js` makes the songs on the spot; the host keeps the room's song list in the state (`s.music`), so everyone hears the
   same song at the same moment. `js/musicbar.js` is the now-playing bar (speaker, Music slider, song name).
+- `js/report.js` is Report Bug or Suggest Ideas (Firebase's write-only `reports` path); `tools/bugs-and-ideas.mjs`, run
+  hourly by `.github/workflows/bugs-and-ideas.yml`, copies new reports into `notes/bugs-and-ideas.md`.
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
   `notes/plan-story-chain.md`), Who is the Quack? (`quack`, plan in `notes/plan-imposter.md`), Lawyering (`law`), Duncelation (`dunce`,
   rules in `js/duncerules.js`, screen in `js/dunce.js`, plan in `notes/plan-duncelation.md`), Hangout

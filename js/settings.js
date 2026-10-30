@@ -6,6 +6,7 @@
 import { profile, save } from './store.js';
 import { openWindow, esc, $$ } from './ui.js';
 import { FONTS, fontCSS } from './name.js';
+import { openReport, reportLinkHTML } from './report.js';
 
 const S = () => profile.settings;
 const TABS = [['general', 'General'], ['controls', 'Controls'], ['performance', 'Performance'], ['audio', 'Audio']];
@@ -83,9 +84,10 @@ const PAGES = {
 export function openSettings() {
   return openWindow(`<div class="armory set-arm"><div class="arm-menu"><header class="arm-h"><span class="arm-mark">◆</span><h2>Settings</h2></header>
     <ul class="arm-list set-tabs" role="tablist">${TABS.map(([k, n]) => `<li><button type="button" class="arm-row" role="tab" data-tab="${k}" aria-pressed="${S().settingsTab === k}"><span>${n}</span></button></li>`).join('')}</ul></div>
-    <div class="arm-page"><h2 class="set-title"></h2><div class="tabpage"></div></div></div>`, {
+    <div class="arm-page"><h2 class="set-title"></h2><div class="tabpage"></div></div></div>${reportLinkHTML()}`, {
     cls: 'win-armory win-settings',
     onOpen(w) {
+      w.querySelector('[data-a="report"]').onclick = openReport;
       const page = w.querySelector('.tabpage');
       const show = k => {
         if (!PAGES[k]) k = 'general';
