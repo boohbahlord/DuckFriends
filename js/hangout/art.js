@@ -2772,7 +2772,7 @@ export function soccerBall({ w = 30, h = 34, spin = 0, shadow = true } = {}) {
     h,
     (shadow ? shade(cx, h - 3, r * 0.9, r * 0.28) : "") +
       F`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#f4f4f0"/><g transform="rotate(${spin} ${cx} ${cy})">${pent(cx, cy, r * 0.32)}${[
-        4,
+        0, 1, 2, 3, 4,
       ]
         .map((i) => {
           const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;

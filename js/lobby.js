@@ -614,7 +614,7 @@ function openOptions() {
     </details>
     <div class="sect"><h3>Room</h3><div class="row">
       <label class="numfield">Players up to <select data-k="max"${host ? "" : " disabled"}>${[
-        16,
+        2, 3, 4, 5, 6, 7, 8, 10, 12, 16,
       ]
         .filter((n) => n >= s.seat.length)
         .map((n) => `<option${n === s.max ? " selected" : ""}>${n}</option>`)
