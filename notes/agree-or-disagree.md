@@ -2583,3 +2583,10 @@ I go to class now cant answer question but adam can"
   the name), tools/bugs-and-ideas.mjs (reads only, keeps the last key copied at the top of notes/bugs-and-ideas.md). The
   workflow file couldn't be written from this session, so the owner adds .github/workflows/bugs-and-ideas.yml by hand,
   with the FIREBASE_SERVICE_ACCOUNT secret, and publishes the rules.
+
+## Request (owner, 2026-10-30 21:48Z): End round in Duncelation
+"In the duncelation gamemode, the players can see an additional button next to the vote button that can be simply clicked to end round IF someone who ALSO votes is also the duck defending the prompt, else the vote cannot pass, AND ALSO the vote must use the amount of votes as normal set in the lobby settings in order to pass."
+- Decided (Adam, built by Solomon the 2nd): an "End round · n/need" button beside Vote for every player (the defender
+  too). Pressing it again takes it back (`dnEnd`, `s.dn.cur.endv`). It ends the take at once (the votes so far decide,
+  like the timer running out) only when the defender pressed it and the presses reach the lobby's share of everyone
+  playing (`endNeed`, the same share as votes). Computers never press it.
