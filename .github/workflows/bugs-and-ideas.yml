@@ -1,0 +1,34 @@
+# Every hour: the game's new bug reports and ideas (Firebase's reports path) go into notes/bugs-and-ideas.md.
+# It needs the FIREBASE_SERVICE_ACCOUNT secret (the project's service account key); without it, it does nothing.
+name: Bugs and ideas
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: bugs-and-ideas
+  cancel-in-progress: false
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Copy the new reports
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node tools/bugs-and-ideas.mjs
+      - name: Commit them
+        run: |
+          if [ -n "$(git status --porcelain notes/bugs-and-ideas.md)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add notes/bugs-and-ideas.md
+            git commit -m "Bugs and ideas: new reports"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
