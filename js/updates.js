@@ -15,6 +15,7 @@ export const UPDATES = [
       "A new game, Mad God Justin: everyone gets a knife, and together you stab Justin down before the timer runs out. He shoots back.",
       "Late in the fight he calls a meteor down on everyone and comes back with a pump shotgun.",
       "Beat him 10 times to unlock his lightning eyes.",
+      "Mad God Justin: get close to him and your knife stabs by itself, no button needed.",
       "A new game, Duncelation: defend the take you get while everyone walks to Dunce or Not a Dunce.",
       "Voted a dunce: lightning, the LOSER podium, and the dunce hat in black and white for the rest of the game.",
       "The dunce hat is now locked: be voted a dunce 10 times to wear it.",
