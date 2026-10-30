@@ -2655,7 +2655,7 @@ function actHTML(s) {
   if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
   if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? "Knocked down! Up again in a moment." : matchMedia("(hover: none) and (pointer: coarse)").matches ? "Stab Justin: tap the knife button" : "Stab Justin with your knife: <kbd>Click</kbd> or <kbd>1</kbd>"}</span>`;
+    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? "Knocked down! Up again in a moment." : "Get close to Justin: your knife stabs him by itself"}</span>`;
   if (s.phase === "mgjend")
     return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
   if (s.phase === "dunced") {

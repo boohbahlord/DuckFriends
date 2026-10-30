@@ -68,7 +68,14 @@ import {
   justinAt,
   JUSTIN_ID,
 } from "./boardjustin.js";
-import { isMgj, mgjStart, mgjAdvance, mgjStab, mgjHurt } from "./mgjrules.js";
+import {
+  isMgj,
+  mgjStart,
+  mgjAdvance,
+  mgjStab,
+  mgjHurt,
+  mgjGone,
+} from "./mgjrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -1558,7 +1565,7 @@ export function reduce(state, a, now = Date.now()) {
       }
       const shots = moveShots(s, now),
         hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
-        jus = justinTick(s, now, logLine) | dnTick(s, now),
+        jus = justinTick(s, now, logLine) | dnTick(s, now) | autoStabs(s, now),
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -1933,6 +1940,48 @@ export function swing(s, by, sp, aim, now, from = s.pos[by]) {
       )
         justinKilled(s, by, sp);
   return [...hits.map((h) => h.id), ...(stab ? [JUSTIN_ID] : [])];
+}
+/* Mad God Justin: a duck close enough to Justin stabs him by itself, no button needed (I want it for the phone
+   players), at the knife's own pace (one a second); a press still works but can't stab any faster */
+function autoStabs(s, now) {
+  const m = s.mgj;
+  if (!isMgj(s) || s.phase !== "boss" || !m || m.met || m.hp <= 0) return false;
+  const n = justinAt(s.justin, now);
+  if (!n || mgjGone(s, now)) return false;
+  let any = false;
+  for (const id of s.seat) {
+    const P = s.players[id],
+      p = s.pos[id];
+    if (!P || P.dead || !p || p.x < 0 || now < coolEnds(s, id, "knife"))
+      continue;
+    const dx = n.x - p.x,
+      dy = n.y - p.y,
+      d = Math.hypot(dx / 0.03, dy / 0.08);
+    if (d > REACH.knife[0] - 0.2) continue; // (a little inside the knife's reach, so the stab lands)
+    const k = Math.hypot(dx, dy) || 1,
+      aim = d > 1e-3 ? [dx / k, dy / k] : [1, 0],
+      face = dx < 0 ? -1 : 1;
+    s.lastUse = { ...(s.lastUse || {}), [`${id} knife`]: now };
+    const hit = swing(s, id, "knife", aim, now);
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [
+      ...(s.fx || []).slice(-19),
+      {
+        n: s.fxN,
+        kind: "use",
+        what: "knife",
+        by: id,
+        who: [id],
+        face,
+        t: now,
+        ax: +aim[0].toFixed(3),
+        ay: +aim[1].toFixed(3),
+        ...(hit ? { hit } : {}),
+      },
+    ];
+    any = true;
+  }
+  return any;
 }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({

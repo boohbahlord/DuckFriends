@@ -2620,3 +2620,11 @@ I go to class now cant answer question but adam can"
 > does this answer ur questions ? usage has been reset for the week on my max plan btw
 
 - Plan (Adam): https://claude.ai/artifact/WE2M1GNsiCgdoY3UdCzo7c. Noah builds it at high effort; one picture sheet of the new art to the owner, merge after the owner's OK.
+
+## 2026-10-30 23:27Z: Mad God Justin, no friendly fire and auto-stab
+
+> I did not check, but make it in the new Justin Fight gamemode that players cannot attack eachother.
+> 
+> FURTHERMORE, make all the knife attacks hit justin automatically when they are near him, not needing to press a button or anything like thaat in that gamemode, it just stabs for the mobile players for them when they are close enough.
+
+- Adam's reading: auto-stab for everyone (phone and computer), at the knife's pace (one a second); a press still works but no faster. Friendly fire was already off in #163 (swing skips other ducks in mgj). Noah builds, medium effort, Standard tier.
