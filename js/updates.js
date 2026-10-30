@@ -62,7 +62,7 @@ export const seenUpdate = () => { try { return localStorage.getItem(KEY); } catc
 export const hasNewUpdate = () => seenUpdate() !== UPDATES[0].id;
 const markSeen = () => { try { localStorage.setItem(KEY, UPDATES[0].id); } catch (e) { /* blocked */ } };
 
-const list = (cls, head, items) => items.length ? `<h3 class="up-h ${cls}">${head}</h3><ul class="up-list">${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+const list = (cls, head, items = []) => items.length ? `<h3 class="up-h ${cls}">${head}</h3><ul class="up-list">${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
 
 export function openUpdates() {
   markSeen();
