@@ -2571,3 +2571,8 @@ I go to class now cant answer question but adam can"
 > I approve
 
 - Decision: the art (the Game type tile's symbol, the Dunce / Not a Dunce board, the LOSER podium) approved; Duncelation merged.
+
+## 2026-10-30: Report Bug or Suggest Ideas, and API keys
+
+> yeah and then execute. 
+> Also there is no API key in the repo is there?

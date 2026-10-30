@@ -3,12 +3,14 @@
    until the newest page has been opened on this device. I want short, plain words for players, not a list of everything. */
 import { openWindow, esc } from './ui.js';
 import { rainbowHTML } from './art.js';
+import { openReport, reportLinkHTML } from './report.js';
 
 export const UPDATES = [
-  { id: '2026-10-30', version: 99, date: 'Oct 30, 2026', title: 'Duncelation',
+  { id: '2026-10-30', version: 100, date: 'Oct 30, 2026', title: 'Duncelation',
     news: ['A new game, Duncelation: defend the take you get while everyone walks to Dunce or Not a Dunce.',
       'Voted a dunce: lightning, the LOSER podium, and the dunce hat in black and white for the rest of the game.',
-      'The dunce hat is now locked: be voted a dunce 10 times to wear it.'] },
+      'The dunce hat is now locked: be voted a dunce 10 times to wear it.',
+      'Report Bug or Suggest Ideas, at the bottom of this window and of Settings.'] },
   { id: '2026-10-29', version: 98, date: 'Oct 29, 2026', title: 'Waiting for players and floating chat',
     news: ['A game that drops below the players it needs waits for them instead of ending.',
       'The newest chat message floats by the chat button for a moment (Settings → Chat).',
@@ -54,7 +56,6 @@ export const UPDATES = [
 
 /* what's coming: the owner sets each date (blank: "Date to be announced"); a thing leaves this list once it's out */
 export const UPCOMING = [
-  { title: 'Report Bug or Suggest Ideas, from the Updates and Settings windows', date: '' },
 ];
 
 const KEY = 'duckfriends-updates-seen';
@@ -62,7 +63,7 @@ export const seenUpdate = () => { try { return localStorage.getItem(KEY); } catc
 export const hasNewUpdate = () => seenUpdate() !== UPDATES[0].id;
 const markSeen = () => { try { localStorage.setItem(KEY, UPDATES[0].id); } catch (e) { /* blocked */ } };
 
-const list = (cls, head, items) => items.length ? `<h3 class="up-h ${cls}">${head}</h3><ul class="up-list">${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+const list = (cls, head, items = []) => items.length ? `<h3 class="up-h ${cls}">${head}</h3><ul class="up-list">${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
 
 export function openUpdates() {
   markSeen();
@@ -71,7 +72,7 @@ export function openUpdates() {
       <div class="up-head"><b class="up-ver"></b><span class="up-date"></span><span class="up-name"></span></div>
       <button type="button" class="btn ghost up-arrow" data-d="-1" aria-label="Newer update">▶</button></div>
     <div class="up-body"></div><p class="up-count dim"></p>
-    <p class="up-count"><button type="button" class="linkbtn" data-a="upcoming">Upcoming Updates and Release Dates</button></p>`, {
+    <p class="up-count"><button type="button" class="linkbtn" data-a="upcoming">Upcoming Updates and Release Dates</button></p>${reportLinkHTML()}`, {
     cls: 'win-updates',
     onOpen(w) {
       let i = 0;
@@ -90,6 +91,7 @@ export function openUpdates() {
       };
       w.querySelectorAll('.up-arrow').forEach(b => b.onclick = () => show(i + +b.dataset.d));
       w.querySelector('[data-a="upcoming"]').onclick = openUpcoming;
+      w.querySelector('[data-a="report"]').onclick = openReport;
       const key = e => {
         if (!w.isConnected) return removeEventListener('keydown', key, true);
         if (e.key === 'ArrowLeft') { show(i + 1); e.preventDefault(); } else if (e.key === 'ArrowRight') { show(i - 1); e.preventDefault(); }

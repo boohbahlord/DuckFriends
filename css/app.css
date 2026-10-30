@@ -2091,6 +2091,15 @@ html.moving .hp.hang-shimmer { animation: hgsh 3.6s ease-in-out infinite alterna
 .up-list { margin: 0; padding-left: 1.2rem; }
 .up-list li { margin: .2rem 0; font-size: calc(.95rem * var(--ts)); }
 .up-count { text-align: center; margin: .8rem 0 0; font-size: calc(.8rem * var(--ts)); }
+/* Report Bug or Suggest Ideas: the small text at the bottom of Updates and Settings, and its big box */
+.report-link { margin-top: .5rem; }
+.set-arm ~ .report-link { margin: .5rem 0 0; }
+.set-arm:has(~ .report-link) { height: min(38.5rem, calc(100dvh - 6.5rem)); }
+.win-report { width: min(40rem, 100%); }
+.win-report .up-title { font-size: calc(1.5rem * var(--ts)); padding-right: 2rem; }
+.report textarea { min-height: 12rem; max-height: 55dvh; }
+.report-foot { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .6rem 0 0; }
+@media (max-width: 760px) { .set-arm:has(~ .report-link) { height: calc(100dvh - 5rem); } }
 
 /* Story Chain: the cloud's duck says what to do next in a glowing bubble, and an arrow points down to the secret words until I've voted */
 .sc-glow { color: var(--ink); text-shadow: 0 0 .5rem #ffd23fcc, 0 0 1.1rem #ffd23f77; }
