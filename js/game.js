@@ -56,7 +56,7 @@ import { mountTouch, stick } from './touch.js';
 import { now as clockNow } from './clock.js';
 import { isQuack, QUACK_PHASES, spotOf, isGrey, speakerOf, frozen, cardOf, stillIn, canAccuse, anyWord, CLUE_GRACE, gridOf } from './quackrules.js';
 import { quackBoardHTML, quackTopHTML, refreshTiles, quackLines, secretCardHTML, revealCardsHTML, pickHTML, quackStatsHTML } from './quack.js';
-import { isDn, DN_GRACE, DN_SIDES, DN_HAT, DN_BW, DN_PODIUM, TAKE_MAX, isDefender, voters, dnTally, wearsDunce, dnStill, dnStats } from './duncerules.js';
+import { isDn, DN_GRACE, DN_SIDES, DN_HAT, DN_BW, DN_PODIUM, TAKE_MAX, isDefender, voters, dnTally, wearsDunce, dnStill, dnStats, endVotes, endNeed } from './duncerules.js';
 import { dnColsHTML, dnTopHTML, DN_PODIUM as PODIUM_HTML, DN_COLORS, dunceDuck, dnStatsHTML, dnOverHTML } from './dunce.js';
 
 let R = null, S = null, off = null, raf = 0, tick = 0, docks = null;
@@ -1091,12 +1091,15 @@ function lawActHTML(s) {
 function dnActHTML(s) {
   const v = voters(s), voted = v.filter(id => s.dn.cur.votes[id] !== undefined).length, [d, n] = dnTally(s);
   const tally = `<span class="progress">${voted}/${v.length} voted · Dunce ${d} · Not a Dunce ${n}</span>`;
-  if (isDefender(s, R.me)) return `<div class="act-row"><span class="law-you">Defend your take: it isn't a dunce take!</span>${tally}</div>`;
+  /* End round, beside Vote for everyone: it passes once the defender pressed it too and enough players did */
+  const ev = endVotes(s), endMine = ev.includes(R.me);
+  const end = `<button type="button" class="btn dn-end${endMine ? ' yellow' : ' ghost'}" data-a="dnend" aria-pressed="${endMine}" data-tip="Ends the take now once the defender and ${endNeed(s)} players press it.">${endMine ? 'End round ✓' : 'End round'} · ${ev.length}/${endNeed(s)}</button>`;
+  if (isDefender(s, R.me)) return `<div class="act-row"><span class="law-you">Defend your take: it isn't a dunce take!</span>${end}${tally}</div>`;
   const onBoard = me && me.x >= 0, wait = graceLeft(s), col = onBoard ? colAt(s, me.x) : -1, mine = s.dn.cur.votes[R.me];
   const label = wait ? `Vote in ${wait}` : mine !== undefined && (col < 0 || mine === col) ? 'Voted ✓' : mine !== undefined ? 'Change vote' : 'Vote';
   const off = !!wait || col < 0 || mine === col;
   const mc = profile.settings.multipleChoice ? `<div class="mc">${DN_SIDES.map((t, i) => `<button type="button" class="mc-b law-${i ? 'b' : 'a'}" data-col="${i}">${esc(t)}</button>`).join('')}</div>` : '';
-  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${tally}</div>`;
+  return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine !== undefined ? ' voted' : ''}" data-a="end" data-col="${col}"${off ? ' disabled' : ''}>${label}${off ? '' : ' <kbd>Enter</kbd>'}</button>${end}${tally}</div>`;
 }
 /* Who is the Quack?: Done (the speaker) or Skip (everyone else) in a clue turn; Vote; End turn after the reveal */
 function quackActHTML(s) {
@@ -1428,6 +1431,7 @@ async function act(a) {
       if ([...boardPhases(s), 'results'].includes(s.phase)) R.send({ t: 'end' });
       break;
     case 'tieagain': R.send({ t: 'tieVote', v: 'again' }); break;
+    case 'dnend': R.send({ t: 'dnEnd' }); break;
     case 'giveup': if (await confirmBox('Give up the case?', 'The other side wins it.')) R.send({ t: 'giveUp' }); break;
     case 'tiecoin': R.send({ t: 'tieVote', v: 'coin' }); break;
     case 'zoomin': zoom('in'); break;

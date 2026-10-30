@@ -14,7 +14,7 @@
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. */
-import { isDn, DN_GRACE, DN_CEREMONY, dnStart, dealTakes, startTake, nextTake, dnVote, dnCheck, dnTick, isDefender } from './duncerules.js';
+import { isDn, DN_GRACE, DN_CEREMONY, dnStart, dealTakes, startTake, nextTake, dnVote, dnCheck, dnTick, isDefender, dnEndVote } from './duncerules.js';
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 import { holdDown, downStill, standUps, isGhost, DOWN_OK, DEAD_STILL } from './hangout/death.js';
 import { npcById } from './npcs.js';
@@ -102,7 +102,7 @@ export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delet
 export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3 };
 export const minOf = s => MIN_PLAYERS[s.options.mode] || 0;
 const running = s => !['lobby', 'over', 'countdown'].includes(s.phase);
-const WAIT_BLOCK = ['end', 'wqWord', 'giveUp', 'tieVote', 'skip', 'voteReview'];
+const WAIT_BLOCK = ['end', 'wqWord', 'giveUp', 'tieVote', 'skip', 'voteReview', 'dnEnd'];
 export const tooFew = s => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
    take again) */
@@ -542,6 +542,7 @@ export function reduce(state, a, now = Date.now()) {
       s.done[a.id] = counselDone(s, a.id);
       return advance(s, now);
     }
+    case 'dnEnd': return me && isDn(s) ? dnEndVote(s, a, now) || state : state;   // Duncelation: End round (or take it back)
     case 'giveUp': {   // Lawyering: an attorney who isn't ahead in closing arguments gives the case to the other side
       const L = s.law;
       if (!me || !isLaw(s) || s.phase !== 'answer' || !L || !L.close || !canGiveUp(s, a.id)) return state;

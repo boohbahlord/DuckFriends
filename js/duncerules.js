@@ -118,13 +118,24 @@ export function dnVote(s, a, now) {
   C.votes = { ...C.votes, [a.id]: c }; s.done[a.id] = true;
   return dnCheck(s, now);
 }
+/* the End round button: every player may press it (again, to take it back). I want it to end the take at once only when
+   the defender pressed it too and the presses reach the lobby's share of everyone playing, like any vote */
+export const endVotes = s => { const e = (s.dn && s.dn.cur && s.dn.cur.endv) || {}; return playing(s).filter(id => e[id]); };
+export const endNeed = s => Math.max(1, Math.ceil(playing(s).length * shareOf(s) - 1e-9));
+const endPasses = s => { const e = endVotes(s); return e.includes(defenderOf(s)) && e.length >= endNeed(s); };
+export function dnEndVote(s, a, now) {
+  const C = s.dn && s.dn.cur; if (!C || C.w != null || s.phase !== 'answer' || !playing(s).includes(a.id)) return null;
+  const e = { ...(C.endv || {}) }; if (e[a.id]) delete e[a.id]; else e[a.id] = true;
+  C.endv = e;
+  return dnCheck(s, now);
+}
 /* does the turn end? With the Take timer the defender gets all of it; without it, everyone voting ends it, and the
    needed share starts the catch-up timer. A defender who leaves drops the take. force: skipped, the votes so far decide */
 export function dnCheck(s, now, force = false) {
   const C = s.dn && s.dn.cur; if (!C || C.w != null || s.waiting) return s;
   if (!s.players[C.def]) { say(s, 'The defender left, so the take is dropped.'); return nextTake(s, now); }
   const v = voters(s); if (!v.length) { say(s, 'Nobody is left to vote, so the take is dropped.'); return nextTake(s, now); }
-  if (force) return dnVerdict(s, now);
+  if (force || endPasses(s)) return dnVerdict(s, now);   // (End round: the defender and the share pressed it)
   if (s.lordTime) return s.ends && now >= s.ends ? dnVerdict(s, now) : s;
   if (now < s.at + DN_GRACE * 1000) return s;
   const d = v.filter(id => C.votes[id] !== undefined).length, need = Math.max(1, Math.ceil(v.length * shareOf(s) - 1e-9)), len = +s.options.catchUp || 0;
