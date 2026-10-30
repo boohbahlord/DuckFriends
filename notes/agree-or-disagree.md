@@ -2576,3 +2576,10 @@ I go to class now cant answer question but adam can"
 
 > yeah and then execute. 
 > Also there is no API key in the repo is there?
+
+- Decision: no secret keys in the repo or its history; the only key is Firebase's web config key in js/online.js, which is
+  public by design (the database rules guard the data). Report Bug or Suggest Ideas: js/report.js (Updates and Settings,
+  1,000 letters, Submit), reports/{id} and reportsLast/{uid} in database.rules.json (write-only, one a minute, no @ in
+  the name), tools/bugs-and-ideas.mjs (reads only, keeps the last key copied at the top of notes/bugs-and-ideas.md). The
+  workflow file couldn't be written from this session, so the owner adds .github/workflows/bugs-and-ideas.yml by hand,
+  with the FIREBASE_SERVICE_ACCOUNT secret, and publishes the rules.

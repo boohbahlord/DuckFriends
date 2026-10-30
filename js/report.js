@@ -56,7 +56,7 @@ export function openReport() {
           close(true); toast('Thanks! Your report is in.');
         } catch (err) {
           send.textContent = 'Submit'; typed();
-          toast(/permission/i.test(String(err && (err.code || err.message))) ? 'One report a minute: try again in a moment.' : 'It didn\'t send. Check your connection and try again.', 4000);
+          toast(/permission/i.test(String(err && (err.code || err.message))) ? 'It couldn\'t send just now (one report a minute). Try again in a minute.' : 'It didn\'t send. Check your connection and try again.', 4000);
         }
       };
       box.focus();

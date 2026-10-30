@@ -44,12 +44,12 @@ function entry(r) {
 }
 
 const doc = fs.existsSync(FILE) ? fs.readFileSync(FILE, 'utf8') : HEAD;
-const last = (doc.match(/<!-- last: ([\w-]*) -->/) || [])[1] || '';
-const q = new URLSearchParams({ orderBy: '"$key"', ...(last ? { startAt: JSON.stringify(last) } : {}), ...(process.env.DB ? { ns: PROJECT } : {}) });
+const MARK = /<!-- last: ?([\w-]*) ?-->/, last = (doc.match(MARK) || [])[1] || '';
+const q = new URLSearchParams({ orderBy: '"$key"', ...(last ? { startAt: JSON.stringify(last) } : {}), ...(process.env.DB ? { ns: `${PROJECT}-default-rtdb` } : {}) });
 const res = await fetch(`${DB}/reports.json?${q}`, { headers: { Authorization: `Bearer ${await token()}` } });
 if (!res.ok) throw new Error(`Reading the reports failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
 const all = (await res.json()) || {}, keys = Object.keys(all).filter(k => k !== last).sort();   // (push keys sort oldest first; startAt includes the last one copied)
 if (!keys.length) { console.log('No new reports.'); process.exit(0); }
-const out = doc.replace(/<!-- last: [\w-]* -->/, `<!-- last: ${keys[keys.length - 1]} -->`).replace(/\n*$/, '\n') + keys.map(k => entry(all[k])).join('');
+const out = doc.replace(MARK, `<!-- last: ${keys[keys.length - 1]} -->`).replace(/\n*$/, '\n') + keys.map(k => entry(all[k])).join('');
 fs.writeFileSync(FILE, out);
 console.log(`Copied ${keys.length} new report${keys.length === 1 ? '' : 's'}.`);
