@@ -366,6 +366,18 @@ const DUNCE_TILES = [
     ],
   ],
 ];
+/* Mad God Justin's own option */
+const MGJ_TILES = [
+  [
+    "mgjTime",
+    "Time to beat him",
+    [
+      [60, "1 min"],
+      [90, "1:30"],
+      [120, "2 min"],
+    ],
+  ],
+];
 const MORE_TILES = [
   [
     "discuss",
@@ -518,6 +530,8 @@ const OPT_TIPS = {
     "When the jury is split, the attorneys get this long to win them over; then the bigger side wins.",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
+  mgjTime:
+    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds.",
   dunceTakes:
     "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Never your own: always someone else's.",
 };
@@ -544,12 +558,14 @@ function openOptions() {
     ${s.options.mode === "quack" ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ""}
     ${s.options.mode === "law" ? `<h3 class="opt-h">Lawyering; Juryful of Ducklings</h3>${tileRows(LAW_TILES, s, ro)}` : ""}
     ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
+    ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
     ${
       s.options.mode === "hang"
         ? ""
         : tileRows(
             OPT_TILES.filter(
               (r) =>
+                !(s.options.mode === "mgj" && r[0] !== "share") &&
                 !(
                   ["bb", "sc"].includes(s.options.mode) &&
                   ["order", "answerTime"].includes(r[0])
@@ -578,6 +594,18 @@ function openOptions() {
           : [k, n, o],
       ).filter(
         (r) =>
+          !(
+            s.options.mode === "mgj" &&
+            [
+              "discuss",
+              "freeRoam",
+              "submitTime",
+              "justin",
+              "downMs",
+              "stats",
+              "unvoteStops",
+            ].includes(r[0])
+          ) &&
           !(
             ["sc", "quack"].includes(s.options.mode) &&
             ["freeRoam", "submitTime"].includes(r[0])

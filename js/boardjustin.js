@@ -23,6 +23,7 @@ import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
 import { holdDown } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
+import { isMgj, mgjTick } from "./mgjrules.js";
 import {
   twoSided,
   isSc,
@@ -71,13 +72,13 @@ export function justinAt(j, now) {
 /* is he on the board now? */
 export const justinShown = (s) =>
   !!s.justin &&
-  !!s.options.justin &&
+  (!!s.options.justin || isMgj(s)) &&
   s.options.mode !== "hang" &&
   boardPhases(s).includes(s.phase);
 /* shot or killed: down where he stands, one of his death lines, up again by himself after DOWN */
 export function justinDown(s, now, log) {
   const j = s.justin;
-  if (!justinShown(s) || j.down) return false;
+  if (!justinShown(s) || j.down || isMgj(s)) return false; // (Mad God Justin: he takes damage instead)
   const at = justinAt(j, now);
   Object.assign(j, {
     down: now,
@@ -189,6 +190,7 @@ function pick(sp, cur) {
 
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
+  if (isMgj(s)) return mgjTick(s, now, log); // (Mad God Justin: his boss brain, mgjrules.js)
   if (!s.options.justin || s.options.mode === "hang") {
     if (!s.justin) return false;
     delete s.justin;

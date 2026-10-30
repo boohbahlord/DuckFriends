@@ -315,7 +315,7 @@ const GAME = [
       ],
       [
         "mode / mode <type>",
-        "the game types / picks one (aod wyr ddr bb sc quack law dunce hang)",
+        "the game types / picks one (aod wyr ddr bb sc quack law dunce mgj hang)",
       ],
       ['sudo hostname "name"', "renames the room"],
       ["sudo start", "starts the game, like the Start button"],
@@ -444,7 +444,7 @@ const GAME = [
       ],
       ["… @name @name", "only those players"],
       [
-        "… -m aod|wyr|ddr|bb|sc|quack|law|dunce",
+        "… -m aod|wyr|ddr|bb|sc|quack|law|dunce|mgj",
         "one game type (Hangout keeps no stats)",
       ],
       ["jumps [@names]", "Jumps, this game and all time"],

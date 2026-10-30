@@ -11336,3 +11336,267 @@ html.moving .sc-arrow b {
 .sp-btn.cool {
   border-color: var(--yellow);
 }
+/* ---------- Mad God Justin ---------- */
+/* the arena: one stormy see-through field over the map */
+.cols.mgj-cols {
+  display: block;
+}
+.mgj-field {
+  --c: #2b2058;
+  height: 100%;
+  border-right: 0;
+  background: var(--c);
+} /* (each map makes it see-through like every board's tiles) */
+.mgj-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 55%, #8a6bff26, transparent 70%);
+  pointer-events: none;
+}
+.mgj-field::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 46%;
+  aspect-ratio: 2.6;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 0.2rem dashed #ffffff22;
+  pointer-events: none;
+}
+/* his HP, beside the cloud */
+.question.mgj-hp {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: min(20rem, 46vw);
+  font-size: calc(1rem * var(--ts));
+}
+.mgj-hp-name {
+  font-family: var(--fun);
+  font-weight: 400;
+  font-size: calc(1.15rem * var(--ts));
+}
+.mgj-bar {
+  flex: 1;
+  min-width: 5rem;
+  height: 0.95rem;
+  border-radius: 1rem;
+  background: #0008;
+  border: 0.15rem solid var(--line);
+  overflow: hidden;
+}
+.mgj-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ef3b3b, #ff8c2b);
+  box-shadow: inset 0 0.18rem 0 #ffffff55;
+  transition: width 0.25s ease-out;
+}
+html.moving .mgj-bar.low i {
+  animation: mgjlow 0.8s ease-in-out infinite alternate;
+}
+@keyframes mgjlow {
+  to {
+    filter: brightness(1.45);
+  }
+}
+.mgj-hp-n {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (orientation: portrait) and (max-width: 760px) {
+  .question.mgj-hp {
+    min-width: 0;
+  }
+  .mgj-hp-name {
+    display: none;
+  }
+}
+/* lightning eyes flicker (on everyone wearing them, and on him) */
+html.moving .eye-zap {
+  animation: eyezap 1.7s steps(1) infinite;
+}
+@keyframes eyezap {
+  0% {
+    opacity: 1;
+  }
+  8% {
+    opacity: 0.35;
+  }
+  12% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  53% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.5;
+  }
+  58% {
+    opacity: 1;
+  }
+}
+/* him: faded away for the meteor, flashing when stabbed, burnt on the podium */
+.mgj .gduck[data-pid="justin"] {
+  transition: opacity 0.9s ease;
+}
+.gduck.mgj-gone {
+  opacity: 0;
+}
+.gduck.hurt .gduck-body {
+  animation: mgjhurt 0.35s ease-out;
+}
+@keyframes mgjhurt {
+  from {
+    filter: brightness(1.6) sepia(1) saturate(5) hue-rotate(-40deg);
+  }
+}
+.gduck.mgj-burnt .gduck-body {
+  filter: brightness(0.3) saturate(0.3) sepia(0.5);
+}
+/* his shotgun and its pellets */
+.held[data-w="shotgun"] i {
+  width: calc(var(--s) * 0.95);
+}
+.bullet.pellet {
+  width: 16px;
+  margin: -4px 0 0 -8px;
+  filter: drop-shadow(0 0 2px #ffb347);
+}
+/* the meteor: down from the top right, then the flash, a ring along the ground, the scorch, and the board shakes */
+.mgj-meteor {
+  position: absolute;
+  width: var(--w);
+  height: var(--w);
+  margin: calc(var(--w) * -0.61) 0 0 calc(var(--w) * -0.39);
+  z-index: 9000;
+  pointer-events: none;
+  animation: mgjfall var(--t) cubic-bezier(0.35, 0.1, 0.85, 0.8) forwards;
+}
+.mgj-meteor svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 0 0.6rem #ff8c2b);
+}
+@keyframes mgjfall {
+  from {
+    transform: translate(var(--dx), var(--dy)) scale(0.75);
+  }
+  to {
+    transform: none;
+  }
+}
+.mgj-boom {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 8999;
+  pointer-events: none;
+}
+.mgj-ring {
+  position: absolute;
+  left: calc(var(--w) / -2);
+  top: calc(var(--w) * -0.18);
+  width: var(--w);
+  height: calc(var(--w) * 0.36);
+  border-radius: 50%;
+  border: 0.3rem solid #ffd27a;
+  box-shadow:
+    0 0 1rem #ff8c2b,
+    inset 0 0 1rem #ff8c2b;
+  animation: mgjring 0.8s ease-out forwards;
+}
+@keyframes mgjring {
+  from {
+    transform: scale(0.1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+.mgj-scorch {
+  position: absolute;
+  left: calc(var(--w) * -0.24);
+  top: calc(var(--w) * -0.1);
+  width: calc(var(--w) * 0.48);
+  animation: mgjscorch 2.6s ease-out forwards;
+}
+.mgj-scorch svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+@keyframes mgjscorch {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.fx-flash.mgj-flash {
+  background: #ffd9a0;
+}
+html.moving .board.quake {
+  animation: shake 0.09s linear 6;
+}
+/* the timer frozen under ice: a frosted block with crystals on it and icicles under it */
+.timer.frozen {
+  position: relative;
+  color: #0b3550;
+  padding: 0 0.45rem;
+  border-radius: 0.45rem;
+  border: 0.12rem solid #e2f7ff;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 20'%3E%3Cg stroke='%23fff' stroke-width='.9' stroke-linecap='round' opacity='.75'%3E%3Cpath d='M6 3v6M3 6h6M4 4l4 4M8 4l-4 4'/%3E%3Cpath d='M31 10v6M28 13h6M29 11l4 4M33 11l-4 4'/%3E%3Cpath d='M19 2l2 3M22 15l3-2M14 16l-2 2'/%3E%3C/g%3E%3C/svg%3E")
+      center / 100% 100% no-repeat,
+    linear-gradient(160deg, #f0fbff, #b4e6ff 55%, #7cc8f2);
+  box-shadow:
+    inset 0 0 0.35rem #fff,
+    0 0 0.55rem #7fd4ffaa;
+  text-shadow: 0 1px 0 #ffffffaa;
+}
+.timer.frozen::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 100%;
+  height: 0.5rem;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 8' preserveAspectRatio='none'%3E%3Cpath d='M0 0h40l-3 0-2 6-2-6-5 0-1.5 8-1.5-8-6 0-2 5-2-5-6 0-1.5 7-1.5-7z' fill='%23bfe9ff' stroke='%23e8f8ff' stroke-width='.5'/%3E%3C/svg%3E")
+    0 0 / 100% 100% no-repeat;
+}
+.tmeter.frozen {
+  border-color: #d9f4ff;
+  box-shadow: 0 0 0.45rem #7fd4ffaa;
+}
+.tmeter.frozen i {
+  background: linear-gradient(90deg, #e9f9ff, #7cc8f2);
+  animation: none;
+}
+.mgj .law-statpanel .statboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+} /* (short boxes side by side, no dead space) */
+.mgj .hotbar .hk.empty {
+  display: none;
+} /* (the knife is the only thing in this fight) */

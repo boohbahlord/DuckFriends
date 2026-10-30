@@ -166,7 +166,7 @@ export const MAN = {
   map: "sudo map <name>: the map, in the lobby (board, sky, pixel, carnival, stars, rabbit, ec). map alone lists them. Hangout brings its own, Duck Cabin.",
   song: "song [list]: every song, on or off, and the one playing now (everyone in the room hears the same song at the same time). song now: the song playing. song off name…: takes songs off the room's list (the host, sudo, or a group with cansettings); song on name… puts them back; song on all, song off all. A name with a space goes in quotes, as in bash: song off \"Jester's Stair\" Glow. Turned off while it plays, a song stops and the next comes in 3 seconds. The speaker by the song's name mutes it for you only.",
   songs: "songs: every song, on or off (the same as song list).",
-  mode: "sudo mode <aod | wyr | ddr | bb | sc | quack | law | dunce | hang>: the game type, in the lobby. mode alone lists them. hang is Hangout: no rounds, no winners, just Duck Cabin.",
+  mode: "sudo mode <aod | wyr | ddr | bb | sc | quack | law | dunce | mgj | hang>: the game type, in the lobby. mode alone lists them. hang is Hangout: no rounds, no winners, just Duck Cabin.",
   start: "sudo start: starts the game from the lobby, like the Start button.",
   secret: "Some codes unlock things.",
   forgame:
@@ -176,7 +176,7 @@ export const MAN = {
   gamestats:
     "gamestats [@names] [-m mode]: this game's stats. Hangout keeps none.",
   totalstats:
-    "totalstats [@names] [-m aod|wyr|ddr|bb|sc|quack|law|dunce]: all-time stats (Hangout keeps none).",
+    "totalstats [@names] [-m aod|wyr|ddr|bb|sc|quack|law|dunce|mgj]: all-time stats (Hangout keeps none).",
   custom:
     'custom avatar | card | username …: customize your duck, card or name (Tab shows the choices): custom username font "times new roman", custom username "font color" red.',
   reset:

@@ -2,8 +2,9 @@
    Some items start locked. The jester hat and outfit open at 1,000 jumps, Jack in a Box (and Jill) at 10,000; a secret
    code opens all three at once. The clown wig, costume and paint open when you've killed Justin with a weapon special 10
    times, and until then nobody is told how. The dunce hat opens once you've been voted a dunce in Duncelation 10 times
-   (TEST rooms don't count). What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, dunced, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
+   (TEST rooms don't count). The lightning eyes open once you've beaten Mad God Justin 10 times (TEST rooms don't count
+   either). What counts lives in the profile (so it stays on the device and the
+   account): jumps, justinKills, dunced, mgjWins, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
@@ -42,14 +43,17 @@ export const LOCKS = [
     name: "Clown paint",
   },
   { kind: "hat", id: "dunce", dunced: 10, name: "Dunce hat" },
+  { kind: "eyes", id: "lightning", mgjWins: 10, name: "Lightning eyes" },
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
-    : l.dunced
-      ? (profile.dunced || 0) >= l.dunced
-      : (profile.justinKills || 0) >= l.kills;
+    : l.mgjWins
+      ? (profile.mgjWins || 0) >= l.mgjWins
+      : l.dunced
+        ? (profile.dunced || 0) >= l.dunced
+        : (profile.justinKills || 0) >= l.kills;
 const coded = (l) => !!(l.code && (profile.secrets || {})[l.code]);
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) {
@@ -64,10 +68,14 @@ export function lockHint(kind, id) {
   if (earned(l))
     return l.jumps
       ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-      : l.dunced
-        ? `Unlocked: voted a dunce ${l.dunced} times`
-        : "Unlocked: you killed Justin with a weapon 10 times";
+      : l.mgjWins
+        ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
+        : l.dunced
+          ? `Unlocked: voted a dunce ${l.dunced} times`
+          : "Unlocked: you killed Justin with a weapon 10 times";
   if (coded(l)) return "Unlocked: a secret code";
+  if (l.mgjWins)
+    return `Beat Mad God Justin ${l.mgjWins} times (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
     return `Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   return l.hidden
@@ -97,15 +105,27 @@ export function countJustinKill() {
 }
 /* a room's Justin kills (the rules' s.jk, numbered by s.jkN): mine with a bullet or a dagger count, each once; what
    happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
-   outside TEST rooms */
+   outside TEST rooms; and Mad God Justin's wins (s.mgjWins, numbered by s.mgjWinN) I played in */
 export function watchKills(room) {
   let seen = null,
-    seenD = null;
+    seenD = null,
+    seenW = null;
   room.on(() => {
     const s = room.state,
       top = (s && s.jkN) || 0,
       dn = (s && s.dn) || {},
-      topD = dn.dkN || 0;
+      topD = dn.dkN || 0,
+      topW = (s && s.mgjWinN) || 0;
+    if (seenW === null || topW < seenW) seenW = topW;
+    else {
+      for (const k of (s && s.mgjWins) || [])
+        if (k.n > seenW && (k.ids || []).includes(room.me) && !s.test) {
+          profile.mgjWins = (profile.mgjWins || 0) + 1;
+          save();
+          checkUnlocks();
+        }
+      seenW = topW;
+    }
     if (seenD === null || topD < seenD) seenD = topD;
     else {
       for (const k of dn.dk || [])
@@ -141,6 +161,10 @@ export function takeOffLocked() {
   if (D.outfit && !unlocked("outfit", D.outfit.id)) {
     off.push(lockOf("outfit", D.outfit.id).name);
     D.outfit = null;
+  }
+  if (D.eyes && !unlocked("eyes", D.eyes)) {
+    off.push(lockOf("eyes", D.eyes).name);
+    D.eyes = "default";
   }
   if (D.face && !unlocked("face", D.face.id)) {
     off.push(lockOf("face", D.face.id).name);

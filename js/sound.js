@@ -92,6 +92,7 @@ function noise(
     freq = 1800,
     q = 0.8,
     slideTo = 0,
+    fade = 0.005,
   } = {},
 ) {
   const a = ac(),
@@ -101,7 +102,7 @@ function noise(
     n = Math.ceil(a.sampleRate * dur),
     buf = a.createBuffer(1, n, a.sampleRate),
     d = buf.getChannelData(0),
-    fin = a.sampleRate * 0.005;
+    fin = a.sampleRate * fade;
   for (let i = 0; i < n; i++)
     d[i] = (Math.random() * 2 - 1) * (1 - i / n) * Math.min(1, i / fin); // it comes in over 5 ms: noise that starts at full level crackles
   const src = a.createBufferSource(),
@@ -225,6 +226,65 @@ export const sfx = {
     noise(0.25, { gain: 0.2, type: "lowpass", freq: 2200, slideTo: 200 });
     tone(110, 0.3, { type: "square", gain: 0.05, slide: 0.5 });
   },
+  shotgun() {
+    noise(0.45, {
+      gain: 0.2,
+      type: "lowpass",
+      freq: 1200,
+      slideTo: 140,
+      fade: 0.016,
+    });
+    tone(90, 0.38, { type: "sine", gain: 0.1, slide: 0.5, attack: 0.014 });
+  }, // Mad God Justin's shotgun: a deeper bang
+  pump() {
+    noise(0.08, {
+      gain: 0.07,
+      type: "bandpass",
+      freq: 1300,
+      q: 3,
+      fade: 0.012,
+    });
+    tone(240, 0.07, { type: "triangle", gain: 0.04, slide: 0.7 });
+    noise(0.1, {
+      gain: 0.08,
+      type: "bandpass",
+      freq: 800,
+      q: 2.4,
+      at: 0.2,
+      fade: 0.012,
+    });
+    tone(170, 0.09, {
+      type: "triangle",
+      gain: 0.05,
+      at: 0.2,
+      slide: 0.6,
+      attack: 0.012,
+    });
+  }, // … and its pump: chk-chk
+  meteor(fall = 1.4) {
+    tone(1400, fall, { type: "sine", gain: 0.05, slide: 0.2, attack: 0.04 });
+    noise(fall, {
+      gain: 0.05,
+      type: "bandpass",
+      freq: 500,
+      q: 0.6,
+      slideTo: 1800,
+    });
+    noise(1.6, {
+      gain: 0.22,
+      type: "lowpass",
+      freq: 900,
+      at: fall,
+      slideTo: 60,
+    });
+    tone(55, 1.1, {
+      type: "sine",
+      gain: 0.2,
+      at: fall,
+      slide: 0.6,
+      attack: 0.02,
+    });
+  }, // whistling down, then the boom
   fall() {
     tone(1500, 1.2, { type: "sine", gain: 0.07, slide: 0.22, attack: 0.03 });
     tone(1520, 1.2, {

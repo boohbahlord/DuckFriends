@@ -68,6 +68,7 @@ import {
   justinAt,
   JUSTIN_ID,
 } from "./boardjustin.js";
+import { isMgj, mgjStart, mgjAdvance, mgjStab, mgjHurt } from "./mgjrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -96,7 +97,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
-  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | hang (Hangout)
+  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0, // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -114,6 +115,7 @@ export const OPTIONS_DEFAULT = {
   lawClose: 60, // seconds of closing arguments when the jury is split: 30, 60, 120
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
+  mgjTime: 60, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -190,7 +192,9 @@ export const boardPhases = (s) =>
             ? ["answer", "discuss"]
             : isDn(s)
               ? ["answer", "discuss", "dunced"]
-              : ["answer", "discuss", "results"];
+              : isMgj(s)
+                ? ["boss", "mgjend"]
+                : ["answer", "discuss", "results"];
 const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -573,6 +577,7 @@ function advance(s, now, force = false) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase))
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
+  if (isMgj(s)) return mgjAdvance(s, now, force, logLine); // (Mad God Justin: his HP, the timer, the podium, Try again)
   const on = playing(s),
     n = on.length,
     d = on.filter((id) => s.done[id]).length,
@@ -940,7 +945,8 @@ export function reduce(state, a, now = Date.now()) {
         !isSc(s) &&
         !me.late &&
         !isQuack(s) &&
-        !isHang(s)
+        !isHang(s) &&
+        !isMgj(s)
       ) {
         // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
@@ -954,7 +960,8 @@ export function reduce(state, a, now = Date.now()) {
       }
       const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
       const w =
-          WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun
+          WEAPONS.includes(a.w) &&
+          (isMgj(s) ? a.w === "knife" : onKeys(me.duck, a.w) && s.options.fun)
             ? a.w
             : "",
         [ax, ay] = w ? aimOf(a, 1) : [0, 0]; // a weapon kept out, and where it aims
@@ -989,6 +996,7 @@ export function reduce(state, a, now = Date.now()) {
         return quackEnd(s, a, now) || state;
       if (isSc(s)) return scVote(s, a, now) || state;
       if (isHang(s)) return state; // (Hangout's button is its own action, below)
+      if (isMgj(s) && s.phase !== "results") return state; // (Mad God Justin: only Try again, on the stats)
       if (
         !me ||
         me.late ||
@@ -1089,16 +1097,15 @@ export function reduce(state, a, now = Date.now()) {
       // an item on the board, seen by everyone; the handgun's bullet or the dagger then flies the way it was aimed
       const sp = a.what || (me && me.duck && me.duck.special),
         p = s.pos[a.id];
-      if (
-        !me ||
-        !p ||
-        p.x < 0 ||
-        !boardPhases(s).includes(s.phase) ||
-        !PRESS.includes(sp) ||
-        !onKeys(me.duck, sp)
-      )
+      if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
-      if (WEAPONS.includes(sp) && !s.options.fun) return state; // the silly-commands switch covers them
+      if (
+        isMgj(s)
+          ? sp !== "knife" || s.phase !== "boss" || me.dead
+          : !PRESS.includes(sp) || !onKeys(me.duck, sp)
+      )
+        return state; // (Mad God Justin: the knife and nothing else, and not while down)
+      if (WEAPONS.includes(sp) && !s.options.fun && !isMgj(s)) return state; // the silly-commands switch covers them
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`; // (each item waits on its own)
@@ -1170,8 +1177,8 @@ export function reduce(state, a, now = Date.now()) {
     case "aura": {
       // an effect around a duck's head, seen by everyone: 5 seconds, or kept on (keep) until kept off
       const what = a.what;
-      if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what))
-        return state;
+      if (!me || !EFFECTS.includes(what) || !onKeys(me.duck, what) || isMgj(s))
+        return state; // (Mad God Justin: no specials)
       const cur = (s.aura || {})[a.id] || {},
         next = {};
       for (const [k, u] of Object.entries(cur)) if (!u || u > now) next[k] = u; // (0: kept on)
@@ -1529,6 +1536,9 @@ export function reduce(state, a, now = Date.now()) {
         }
         s.dn = null;
         if (isDn(s)) dnStart(s);
+        s.mgj = null;
+        s.mgjPast = [];
+        if (isMgj(s)) return mgjStart(s, now);
         return isBb(s)
           ? startTourney(s, now)
           : isQuack(s)
@@ -1640,6 +1650,8 @@ export const canOpen = (s, id, m) =>
   (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
 export const STAGE = {
+  boss: "voting",
+  mgjend: "discussing",
   dunced: "discussing",
   lobby: "lobby",
   countdown: "lobby",
@@ -1771,7 +1783,8 @@ function forgame(s, a, now) {
   if (!m.on && !turns && !stages.length)
     s.gmutes = (s.gmutes || [])
       .map((x) => ({ ...x, who: x.who.filter((id) => !who.includes(id)) }))
-      .filter((x) => x.who.length); // off for good: drop them
+      .filter((x) => x.who.length);
+  // off for good: drop them
   else
     s.gmutes = [
       ...(s.gmutes || []),
@@ -1852,6 +1865,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by]) {
     const p = s.pos[id],
       P = s.players[id];
     if (id === by || !p || p.x < 0 || !P || P.dead || isGhost(s, id)) continue;
+    if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (p.j && now - p.j < 1300) continue; // (a duck in the air is missed)
     const n = near(
       p.x,
@@ -1899,7 +1913,12 @@ export function swing(s, by, sp, aim, now, from = s.pos[by]) {
       };
     }
   }
-  if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
+  let stab = false;
+  if (!hang && by !== JUSTIN_ID && isMgj(s)) {
+    const n = justinAt(s.justin, now);
+    stab = !!n && !!near(n.x, n.y, 0, 0) && mgjStab(s, by, now, logLine);
+  } // (Mad God Justin: 1 damage)
+  else if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
     // (the Justin option: he can be hit back)
     const n = justinAt(s.justin, now);
     if (near(n.x, n.y, 0, 0) && justinDown(s, now, logLine))
@@ -1913,7 +1932,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by]) {
         n.id === "justin"
       )
         justinKilled(s, by, sp);
-  return hits.map((h) => h.id);
+  return [...hits.map((h) => h.id), ...(stab ? [JUSTIN_ID] : [])];
 }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({
@@ -1964,11 +1983,13 @@ function moveShots(s, now) {
         if (Math.hypot(px - k * ux, py - k * uy) < 1) {
           P.dead = true;
           holdDown(s, id, now);
+          if (sh.by === JUSTIN_ID) mgjHurt(s, id);
         }
       }
     if (
       sh.hin === undefined &&
       sh.by !== JUSTIN_ID &&
+      !isMgj(s) &&
       at.z > -0.15 &&
       at.z < 1.05 &&
       justinShown(s) &&
@@ -2017,7 +2038,7 @@ function moveShots(s, now) {
       at.x < 1.3 &&
       at.y > -0.6 &&
       at.y < 1.6 &&
-      now - sh.t < (sh.k === "dagger" ? DAGGER_LIFE : 12000);
+      now - sh.t < (sh.k === "dagger" ? DAGGER_LIFE : sh.life || 12000); // (a shotgun's pellet: its own short life)
     if (on && boardPhases(s).includes(s.phase)) keep.push(sh); // (on past the board to the screen's edge)
   }
   s.shots = keep;
@@ -2109,7 +2130,7 @@ function reopenMatch(s, id) {
    screen, the next round starts */
 function skipRound(s, now) {
   say(s, "The room voted to skip this round.");
-  if (s.phase === "results") return advance(s, now, true);
+  if (s.phase === "results" || isMgj(s)) return advance(s, now, true); // (Mad God Justin: the fight ends as if time ran out)
   if (isBb(s)) {
     s.round++;
     return startTourney(s, now);
@@ -2169,6 +2190,8 @@ export function backToLobby(s, why) {
   s.sc = null;
   s.law = null;
   s.dn = null;
+  s.mgj = null;
+  s.mgjPast = [];
   s.wq = null;
   delete s.hidden;
   s.wqPast = [];

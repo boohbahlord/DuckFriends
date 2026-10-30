@@ -51,6 +51,7 @@ import { MAN, PERMS_TAKE, PERMS_GIVE } from "./manual.js";
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
 import { quackStats } from "./quackrules.js";
 import { dnStats } from "./duncerules.js";
+import { mgjStats } from "./mgjrules.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
@@ -507,6 +508,10 @@ function statLines(ctx, scope, args) {
         out.push(
           `${base} · ${st.argued} takes defended · not a dunce ${st.wins} · voted a dunce ${st.losses}`,
         );
+      else if (mode === "mgj")
+        out.push(
+          `${nm(id)}: ${st.games} games · ${st.rounds} fights · won ${st.wins} · lost ${st.losses} · damage ${st.answers} · knocked down ${st.majority} · killing blows ${st.titles} · ${st.jumps} Jumps`,
+        );
       else if (mode === "ddr")
         out.push(
           `${base} · related ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : "—"}`,
@@ -614,6 +619,14 @@ function statLines(ctx, scope, args) {
       };
       out.push(
         `${nm(id)}: ${p.turns} takes defended · ${p.not} Not a Dunce votes · ${p.dunce} Dunce votes · comeback ${p.comeback} · voted a dunce ${p.dunced} · ${p.votes} votes · ${jumps(id)} Jumps`,
+      );
+    }
+  } else if (mode === "mgj") {
+    const per = mgjStats(s, scope !== "round").per;
+    for (const id of ids) {
+      const p = per[id] || { dmg: 0, hits: 0, kills: 0, fights: 0, wins: 0 };
+      out.push(
+        `${nm(id)}: damage ${p.dmg} · knocked down ${p.hits} · killing blows ${p.kills} · ${p.fights} fights (${p.wins} won) · ${jumps(id)} Jumps`,
       );
     }
   } else if (mode === "wyr") {
@@ -2387,12 +2400,10 @@ export function shellSuggest(line, ctx) {
       "\\show",
     ];
   else if (ctx.legacyHas(cmd))
-    return ctx
-      .legacySuggest(seg.replace(/^sudo\s+/, ""))
-      .map((x) => ({
-        label: x.label,
-        apply: () => pre + (done[0] === "sudo" ? "sudo " : "") + x.apply(),
-      }));
+    return ctx.legacySuggest(seg.replace(/^sudo\s+/, "")).map((x) => ({
+      label: x.label,
+      apply: () => pre + (done[0] === "sudo" ? "sudo " : "") + x.apply(),
+    }));
   else if (last.startsWith("@") || last.startsWith("\\@")) {
     opts = s
       ? s.seat.map((id) => (last.startsWith("\\") ? "\\@" : "@") + pname(s, id))
