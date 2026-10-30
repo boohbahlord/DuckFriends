@@ -2590,3 +2590,41 @@ I go to class now cant answer question but adam can"
   too). Pressing it again takes it back (`dnEnd`, `s.dn.cur.endv`). It ends the take at once (the votes so far decide,
   like the timer running out) only when the defender pressed it and the presses reach the lobby's share of everyone
   playing (`endNeed`, the same share as votes). Computers never press it.
+
+## 2026-10-30 22:21Z: new mode, Mad God Justin
+
+> new game mod, called "Mad God Justin" 
+> 
+> In this gamemode, Justin simply has to be killed in a boss battle, where he shoots at players multiple times until having to reload and using a hammer up close. Justin has a certain amount of HP and has to be killed before a minute. Justin's HP is 8+6{the amount of players}. 
+> Every player ONLY has a knife and no specials, and they have the knife showing on their avatar as if it was toggled. Players have to strike Justin with the knife once to do one damage. Justin is a multiple time more likely to strike a player with lightning for every player in the game. 
+> Justin also can sprint at players to use the hammer if he needs to reload his gun, and he prefers to reload his gun more likely when more players are knocked down, as in, he will try to find time to reload his gun, but he is more likely to do so when more players are knocked down, on the basis of a fraction.
+> When Justin is fighting players, it is possible he says a line from his one of many lines, but one of many aggressive ones (randomly in a playlist) before he fades away, and when this happens, the time freezes with ice in the UI before a meteor lands into the ground and hits every player, and when this happens, Justin fades back in and comes back before the timer has thirty seconds added AND a new weapon he can also use, a shotgun with his other weapons. The moment Justin fades in, the timer comes back with thirty seconds added onto it, and this happens somewhere between 30 or 5 seconds left.
+> The shotgun fires small pellets that function like the bullet and are similar to causing the dead effect, and it spreads out in a wide cone shape direction from where it is shot from, and it is a buckshot shell that reloads after every shot (1.75 seconds with the sound of a shotgun being ... cocked? i cant remember the name, but it is the grip on the barrel you cock back after every shot to put a new shell into the chamber, or i think it is called pumping the shotgun, because it is a pump style shotgun) The shotgun should look like a classic pump shotgun with a barrel shorter then longer. 
+> The meteor knocks down every duck AND the dead effect makes every player down for five seconds since they don't have to worry about HP. Justin doesn't attack players with anything (including lightning or fire) if they already have a dead effect.
+> The players can increase the time by thirty seconds until it is 2 minutes in the lobby settings. 
+> The stats are who done the most damage to Justin "Most Damage", who got the killing blow "Killing Blow", and who got knocked down the most "Hit the Most" which tells who justin did the most damage to, and then the jumping stat as usual.
+> 
+> I might be forgetting some things. The cloud can say, "Defeat Justin!", and it shows his duck in the cloud with glowing blue eyes that flicker like lightning, and these eyes can be unlocked in the eyes menu by winning against Justin ten times. 
+> 
+> You can ask me questions
+
+## 2026-10-30 22:29Z: Mad God Justin, the owner's answers
+
+> 1. Yes
+> 2. it should be one lightning AND one fire per game and then one more of either per player, and the meteor round might restore one of random if it had not been used yet. Justin gets closer to using the lightning or fire the lower his health gets, so that could be seen as approaching 1, with one being the 100% chance he uses it. 
+> 3. the usual amount as the pistol already carries since it's new updates
+> 4. Yes unless he is killed before it's IF condition 
+> 5. Yes, and then players can click to try again or go back to lobby, which is also an option if Justin loses. When Justin loses, he is struck with lightning on a podium that says loser and the burned effect stays on his avatar while it says that. 
+> 
+> 
+> does this answer ur questions ? usage has been reset for the week on my max plan btw
+
+- Plan (Adam): https://claude.ai/artifact/WE2M1GNsiCgdoY3UdCzo7c. Noah builds it at high effort; one picture sheet of the new art to the owner, merge after the owner's OK.
+
+## 2026-10-30 23:27Z: Mad God Justin, no friendly fire and auto-stab
+
+> I did not check, but make it in the new Justin Fight gamemode that players cannot attack eachother.
+> 
+> FURTHERMORE, make all the knife attacks hit justin automatically when they are near him, not needing to press a button or anything like thaat in that gamemode, it just stabs for the mobile players for them when they are close enough.
+
+- Adam's reading: auto-stab for everyone (phone and computer), at the knife's pace (one a second); a press still works but no faster. Friendly fire was already off in #163 (swing skips other ducks in mgj). Noah builds, medium effort, Standard tier.

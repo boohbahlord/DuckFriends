@@ -1,198 +1,695 @@
 <!doctype html>
 <html lang="en" class="dark moving">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Duck Cabin art</title>
-<!-- Every Duck Cabin drawing (js/hangout/art.js) on the night ground, each with a 64-px duck beside it for scale and its
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duck Cabin art</title>
+    <!-- Every Duck Cabin drawing (js/hangout/art.js) on the night ground, each with a 64-px duck beside it for scale and its
      foot lines (red: front or only piece, blue: back piece), then the whole map laid out at the plan's numbers, outside
      and inside, and close-ups of it. Serve the folder (python3 -m http.server) and open /tools/hangout-art.html.
      ?only=overview shows just the map. -->
-<style>
-  body { margin: 0; background: #0b1022; color: #e8ecf6; font-family: system-ui, sans-serif; }
-  h1 { font-size: 22px; margin: 16px; } h2 { font-size: 18px; margin: 24px 16px 8px; }
-  .grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 16px; }
-  .card { background: #1d4535; border: 2px solid #0b0b10; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-  .card .name { font: 600 13px system-ui; } .card .meta { font: 11px system-ui; color: #a9c4b8; }
-  .stagebox { position: relative; }
-  .stagebox > * { position: absolute; }
-  .foot { position: absolute; height: 0; border-top: 2px dashed #ff4d6d; left: -6px; right: -6px; }
-  .foot.b { border-color: #5cc8ff; }
-  .world { position: relative; transform-origin: 0 0; }
-  .world > div { position: absolute; }
-  .world svg, .stagebox svg { display: block; }
-  .view { position: relative; overflow: hidden; margin: 0 16px; border: 2px solid #0b0b10; border-radius: 12px; background: #0e1a14; }
-</style>
-</head>
-<body>
-<h1>Duck Cabin art</h1>
-<div id="out"></div>
-<script type="module">
-import * as A from '../js/hangout/art.js';
-import { duckSVG } from '../js/duck.js';
-A.useHangArtCSS();
-const out = document.getElementById('out');
-const q = new URLSearchParams(location.search);
-const DUCK = (c = '#ffd23f', s = 64, flip = false) => duckSVG({ color: c }, { size: s }).replace('<svg ', flip ? '<svg style="transform:scaleX(-1)" ' : '<svg ');
+    <style>
+      body {
+        margin: 0;
+        background: #0b1022;
+        color: #e8ecf6;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 16px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 24px 16px 8px;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 0 16px;
+      }
+      .card {
+        background: #1d4535;
+        border: 2px solid #0b0b10;
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .card .name {
+        font: 600 13px system-ui;
+      }
+      .card .meta {
+        font: 11px system-ui;
+        color: #a9c4b8;
+      }
+      .stagebox {
+        position: relative;
+      }
+      .stagebox > * {
+        position: absolute;
+      }
+      .foot {
+        position: absolute;
+        height: 0;
+        border-top: 2px dashed #ff4d6d;
+        left: -6px;
+        right: -6px;
+      }
+      .foot.b {
+        border-color: #5cc8ff;
+      }
+      .world {
+        position: relative;
+        transform-origin: 0 0;
+      }
+      .world > div {
+        position: absolute;
+      }
+      .world svg,
+      .stagebox svg {
+        display: block;
+      }
+      .view {
+        position: relative;
+        overflow: hidden;
+        margin: 0 16px;
+        border: 2px solid #0b0b10;
+        border-radius: 12px;
+        background: #0e1a14;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Duck Cabin art</h1>
+    <div id="out"></div>
+    <script type="module">
+      import * as A from "../js/hangout/art.js";
+      import { duckSVG } from "../js/duck.js";
+      A.useHangArtCSS();
+      const out = document.getElementById("out");
+      const q = new URLSearchParams(location.search);
+      const DUCK = (c = "#ffd23f", s = 64, flip = false) =>
+        duckSVG({ color: c }, { size: s }).replace(
+          "<svg ",
+          flip ? '<svg style="transform:scaleX(-1)" ' : "<svg ",
+        );
 
-/* ---------- the gallery: each prop with a duck for scale ---------- */
-const items = [
-  ['ground grass', A.ground({ w: 260, h: 200, kind: 'grass' })], ['ground slope', A.ground({ w: 260, h: 300, kind: 'slope' })], ['ground downhill', A.ground({ w: 260, h: 200, kind: 'downhill' })],
-  ['ground forest', A.ground({ w: 260, h: 200, kind: 'forest' })], ['ground wood', A.ground({ w: 260, h: 200, kind: 'wood' })], ['ground tile', A.ground({ w: 200, h: 200, kind: 'tile' })],
-  ['ground bath', A.ground({ w: 200, h: 200, kind: 'bath' })], ['ground pavers', A.ground({ w: 260, h: 200, kind: 'pavers' })], ['dirtPath', A.dirtPath({ w: 500, h: 170 })],
-  ['rug oval', A.rug({ w: 300, h: 200 })], ['rug rect', A.rug({ w: 300, h: 180, kind: 'rect', colors: ['#3e6d8c', '#e0b04a', '#a8402e', '#1c1c28'] })], ['glow', A.glow({ w: 300, h: 180 })],
-  ...Object.keys(A.TREE_KINDS).map(k => ['tree ' + k, A.tree({ kind: k })]),
-  ['forest', A.forest({ w: 700, h: 460 }), .6],
-  ['lamppost', A.lamppost()], ['floorLamp', A.floorLamp()], ['micStand', A.micStand()], ['rockingChair', A.rockingChair()], ['smallTable', A.smallTable()],
-  ['fireplace', A.fireplace()], ['couch 3', A.couch()], ['couch 2 facing s', A.couch({ w: 360, seats: 2, facing: 's', color: '#3d6e4f' })], ['couch 2 facing e', A.couch({ w: 100, len: 360, seats: 2, facing: 'e', color: '#3d6e4f' })],
-  ['pianoBody', A.pianoBody()],
-  ['stage', A.stage({ stairs: 80 }), .7], ['stageStairs', A.stageStairs()],
-  ['chalkFloor', A.chalkFloor(), .6], ['eraserTile', A.eraserTile()], ['wipeTile', A.wipeTile()], ['chalkTile', A.chalkTile()], ['bookStand', A.bookStand()],
-  ['counter sink', A.counter({ w: 260, sink: 150 })], ['fridge', A.fridge()], ['stove', A.stove()], ['kitchenTable', A.kitchenTable()],
-  ['tub', A.tub()], ['sink', A.sink()], ['toilet', A.toilet()], ['bed', A.bed()], ['nightstand', A.nightstand()],
-  ['couch 3 facing w', A.couch({ w: 100, len: 380, seats: 3, facing: 'w', color: '#3d6e4f' })], ['coffeeTable', A.coffeeTable()], ['endTable', A.endTable()], ['tvSet', A.tvSet()], ['roundCardTable', A.roundCardTable()], ['stool', A.stool()],
-  ['bookshelf', A.bookshelf()], ['picture duck', A.picture()], ['picture hills', A.picture({ kind: 'hills' })], ['wallClock', A.wallClock()], ['coatRack', A.coatRack()], ['boots', A.boots()], ['doorMat', A.doorMat()], ['pottedPlant', A.pottedPlant()],
-  ['logWall x', A.logWall({ w: 400, wallH: 40, doors: [[150, 250]] })], ['logWall x tall', A.logWall({ w: 500, wallH: 170, windows: [[300, 440]], doors: [[80, 180]] })], ['logWall y', A.logWall({ axis: 'y', w: 24, h: 340, doors: [[120, 220]] })],
-  ['pool', A.pool(), .45], ['laneRope', A.laneRope({ h: 300 })], ['rubberDuck', A.rubberDuck()], ['beachBall', A.beachBall()],
-  ['campfire', A.campfire()], ['logSeat x', A.logSeat()], ['logSeat y', A.logSeat({ axis: 'y' })], ['trampoline', A.trampoline()],
-  ['soccerField', A.soccerField(), .3], ['soccerNet', A.soccerNet()], ['soccerBall', A.soccerBall()],
-  ['jeep', A.jeep()], ['jeep w', A.jeep({ facing: 'w' })],
-  ['deck', A.deck({ w: 900, lights: [200, 600] }), .7], ['deckStairs', A.deckStairs(), .6],
-  ['cabinOutside', A.cabinOutside(), .3],
-];
-const footOf = (svg) => +(svg.match(/height="([\d.]+)"/) || [0, 0])[1];
-function card(name, art, k = 1) {
-  const el = document.createElement('div'); el.className = 'card';
-  const isPair = typeof art !== 'string', svg = isPair ? art.back : art, w = +svg.match(/width="([\d.]+)"/)[1], h = footOf(svg);
-  const dw = 64 * k + 12, bw = w * k + dw, bh = Math.max(h * k, 80 * k);
-  const box = document.createElement('div'); box.className = 'stagebox'; box.style.cssText = `width:${bw}px;height:${bh}px`;
-  const layer = (s, i) => { const d = document.createElement('div'); d.style.cssText = `left:0;top:${bh - h * k}px;width:${w * k}px;height:${h * k}px`; d.innerHTML = s.replace(/<svg ([^>]*?)width="[\d.]+" height="[\d.]+"/, `<svg $1width="${w * k}" height="${h * k}"`); box.append(d); };
-  if (isPair) { layer(art.back); layer(art.front); } else layer(art);
-  const duck = document.createElement('div'); duck.style.cssText = `left:${w * k + 8}px;top:${bh - 64 * k}px`; duck.innerHTML = DUCK('#ffd23f', 64 * k); box.append(duck);
-  const feet = isPair ? [[art.backFoot, 'b'], [art.frontFoot, '']] : [[h, '']];
-  for (const [f, c] of feet) if (f != null) { const l = document.createElement('i'); l.className = 'foot ' + c; l.style.top = (bh - h * k + f * k) + 'px'; box.append(l); }
-  el.innerHTML = `<div class="name">${name}</div><div class="meta">${Math.round(w)} × ${Math.round(h)}${k !== 1 ? ` (shown at ${k})` : ''}${isPair ? ` · back ${art.backFoot ?? 'flat'} / front ${art.frontFoot}` : ''}</div>`;
-  el.append(box); return el;
-}
-if (!q.get('only') || q.get('only') === 'gallery') {
-  const h2 = document.createElement('h2'); h2.textContent = 'Every prop, with a 64-px duck (red: foot, blue: back piece\'s foot)'; out.append(h2);
-  const grid = document.createElement('div'); grid.className = 'grid'; out.append(grid);
-  for (const [n, a, k] of items) grid.append(card(n, a, k || 1));
-}
+      /* ---------- the gallery: each prop with a duck for scale ---------- */
+      const items = [
+        ["ground grass", A.ground({ w: 260, h: 200, kind: "grass" })],
+        ["ground slope", A.ground({ w: 260, h: 300, kind: "slope" })],
+        ["ground downhill", A.ground({ w: 260, h: 200, kind: "downhill" })],
+        ["ground forest", A.ground({ w: 260, h: 200, kind: "forest" })],
+        ["ground wood", A.ground({ w: 260, h: 200, kind: "wood" })],
+        ["ground tile", A.ground({ w: 200, h: 200, kind: "tile" })],
+        ["ground bath", A.ground({ w: 200, h: 200, kind: "bath" })],
+        ["ground pavers", A.ground({ w: 260, h: 200, kind: "pavers" })],
+        ["dirtPath", A.dirtPath({ w: 500, h: 170 })],
+        ["rug oval", A.rug({ w: 300, h: 200 })],
+        [
+          "rug rect",
+          A.rug({
+            w: 300,
+            h: 180,
+            kind: "rect",
+            colors: ["#3e6d8c", "#e0b04a", "#a8402e", "#1c1c28"],
+          }),
+        ],
+        ["glow", A.glow({ w: 300, h: 180 })],
+        ...Object.keys(A.TREE_KINDS).map((k) => [
+          "tree " + k,
+          A.tree({ kind: k }),
+        ]),
+        ["forest", A.forest({ w: 700, h: 460 }), 0.6],
+        ["lamppost", A.lamppost()],
+        ["floorLamp", A.floorLamp()],
+        ["micStand", A.micStand()],
+        ["rockingChair", A.rockingChair()],
+        ["smallTable", A.smallTable()],
+        ["fireplace", A.fireplace()],
+        ["couch 3", A.couch()],
+        [
+          "couch 2 facing s",
+          A.couch({ w: 360, seats: 2, facing: "s", color: "#3d6e4f" }),
+        ],
+        [
+          "couch 2 facing e",
+          A.couch({
+            w: 100,
+            len: 360,
+            seats: 2,
+            facing: "e",
+            color: "#3d6e4f",
+          }),
+        ],
+        ["pianoBody", A.pianoBody()],
+        ["stage", A.stage({ stairs: 80 }), 0.7],
+        ["stageStairs", A.stageStairs()],
+        ["chalkFloor", A.chalkFloor(), 0.6],
+        ["eraserTile", A.eraserTile()],
+        ["wipeTile", A.wipeTile()],
+        ["chalkTile", A.chalkTile()],
+        ["bookStand", A.bookStand()],
+        ["counter sink", A.counter({ w: 260, sink: 150 })],
+        ["fridge", A.fridge()],
+        ["stove", A.stove()],
+        ["kitchenTable", A.kitchenTable()],
+        ["tub", A.tub()],
+        ["sink", A.sink()],
+        ["toilet", A.toilet()],
+        ["bed", A.bed()],
+        ["nightstand", A.nightstand()],
+        [
+          "couch 3 facing w",
+          A.couch({
+            w: 100,
+            len: 380,
+            seats: 3,
+            facing: "w",
+            color: "#3d6e4f",
+          }),
+        ],
+        ["coffeeTable", A.coffeeTable()],
+        ["endTable", A.endTable()],
+        ["tvSet", A.tvSet()],
+        ["roundCardTable", A.roundCardTable()],
+        ["stool", A.stool()],
+        ["bookshelf", A.bookshelf()],
+        ["picture duck", A.picture()],
+        ["picture hills", A.picture({ kind: "hills" })],
+        ["wallClock", A.wallClock()],
+        ["coatRack", A.coatRack()],
+        ["boots", A.boots()],
+        ["doorMat", A.doorMat()],
+        ["pottedPlant", A.pottedPlant()],
+        ["logWall x", A.logWall({ w: 400, wallH: 40, doors: [[150, 250]] })],
+        [
+          "logWall x tall",
+          A.logWall({
+            w: 500,
+            wallH: 170,
+            windows: [[300, 440]],
+            doors: [[80, 180]],
+          }),
+        ],
+        [
+          "logWall y",
+          A.logWall({ axis: "y", w: 24, h: 340, doors: [[120, 220]] }),
+        ],
+        ["pool", A.pool(), 0.45],
+        ["laneRope", A.laneRope({ h: 300 })],
+        ["rubberDuck", A.rubberDuck()],
+        ["beachBall", A.beachBall()],
+        ["campfire", A.campfire()],
+        ["logSeat x", A.logSeat()],
+        ["logSeat y", A.logSeat({ axis: "y" })],
+        ["trampoline", A.trampoline()],
+        ["soccerField", A.soccerField(), 0.3],
+        ["soccerNet", A.soccerNet()],
+        ["soccerBall", A.soccerBall()],
+        ["jeep", A.jeep()],
+        ["jeep w", A.jeep({ facing: "w" })],
+        ["deck", A.deck({ w: 900, lights: [200, 600] }), 0.7],
+        ["deckStairs", A.deckStairs(), 0.6],
+        ["cabinOutside", A.cabinOutside(), 0.3],
+      ];
+      const footOf = (svg) => +(svg.match(/height="([\d.]+)"/) || [0, 0])[1];
+      function card(name, art, k = 1) {
+        const el = document.createElement("div");
+        el.className = "card";
+        const isPair = typeof art !== "string",
+          svg = isPair ? art.back : art,
+          w = +svg.match(/width="([\d.]+)"/)[1],
+          h = footOf(svg);
+        const dw = 64 * k + 12,
+          bw = w * k + dw,
+          bh = Math.max(h * k, 80 * k);
+        const box = document.createElement("div");
+        box.className = "stagebox";
+        box.style.cssText = `width:${bw}px;height:${bh}px`;
+        const layer = (s, i) => {
+          const d = document.createElement("div");
+          d.style.cssText = `left:0;top:${bh - h * k}px;width:${w * k}px;height:${h * k}px`;
+          d.innerHTML = s.replace(
+            /<svg ([^>]*?)width="[\d.]+" height="[\d.]+"/,
+            `<svg $1width="${w * k}" height="${h * k}"`,
+          );
+          box.append(d);
+        };
+        if (isPair) {
+          layer(art.back);
+          layer(art.front);
+        } else layer(art);
+        const duck = document.createElement("div");
+        duck.style.cssText = `left:${w * k + 8}px;top:${bh - 64 * k}px`;
+        duck.innerHTML = DUCK("#ffd23f", 64 * k);
+        box.append(duck);
+        const feet = isPair
+          ? [
+              [art.backFoot, "b"],
+              [art.frontFoot, ""],
+            ]
+          : [[h, ""]];
+        for (const [f, c] of feet)
+          if (f != null) {
+            const l = document.createElement("i");
+            l.className = "foot " + c;
+            l.style.top = bh - h * k + f * k + "px";
+            box.append(l);
+          }
+        el.innerHTML = `<div class="name">${name}</div><div class="meta">${Math.round(w)} × ${Math.round(h)}${k !== 1 ? ` (shown at ${k})` : ""}${isPair ? ` · back ${art.backFoot ?? "flat"} / front ${art.frontFoot}` : ""}</div>`;
+        el.append(box);
+        return el;
+      }
+      if (!q.get("only") || q.get("only") === "gallery") {
+        const h2 = document.createElement("h2");
+        h2.textContent =
+          "Every prop, with a 64-px duck (red: foot, blue: back piece's foot)";
+        out.append(h2);
+        const grid = document.createElement("div");
+        grid.className = "grid";
+        out.append(grid);
+        for (const [n, a, k] of items) grid.append(card(n, a, k || 1));
+      }
 
-/* ---------- the whole map at the plan's numbers ---------- */
-/* heights: the highground 0 (y < 1900), the slope falls to −240 by y 2800, the downhill −240; screen y = y − height */
-const H = y => y <= 1900 ? 0 : y >= 2800 ? -240 : -240 * (y - 1900) / 900;
-const SY = y => y - H(y);
-function world(inside) {
-  const W = 6000, HH = 4640, items = [];
-  const put = (svg, x, footY, boxFoot, z, flat = false) => { const h = footOf(svg); items.push({ svg, x, top: footY - boxFoot, z: flat ? -1e9 + items.length : z ?? footY }); };
-  /* place a prop whose footprint's south edge is at world y (screen sy), box foot at boxFoot (default h) */
-  const at = (art, x, y, opt = {}) => {
-    const sy = opt.sy ?? SY(y);
-    if (typeof art === 'string') { const h = footOf(art); put(art, x, sy, opt.foot ?? h, opt.z, opt.flat); return; }
-    const h = footOf(art.front), ff = art.frontFoot;
-    put(art.back, x, sy + (h - ff) * 0, ff, art.backFoot == null ? null : sy - (ff - art.backFoot), art.backFoot == null);
-    put(art.front, x, sy, ff, sy);
-  };
-  const flat = (art, x, sy) => put(art, x, sy + footOf(art), footOf(art), 0, true);
-  /* the ground, in screen space */
-  flat(A.ground({ w: W, h: 1900, kind: 'grass', seed: 2 }), 0, 0);
-  flat(A.ground({ w: W, h: 1140, kind: 'slope', seed: 3 }), 0, 1900);
-  flat(A.ground({ w: W, h: 1600, kind: 'downhill', seed: 4 }), 0, 3040);
-  flat(A.soccerField(), 4500, 400);
-  flat(A.dirtPath({ w: 1900, h: 460, pts: [[300, 400], [1150, 400], [1250, 170], [1700, 110], [1900, 110]], width: 150 }), 0, 300);
-  flat(A.glow({ w: 360, h: 200, a: .35, flicker: true }), 1520, 260);
-  flat(A.ground({ w: 1960, h: 960, kind: 'pavers', seed: 5 }), 2920, SY(3020));
-  flat(A.glow({ w: 520, h: 420, color: '#ff9a3a', a: .4, flicker: true }), 1240, SY(3300) - 210 + 75);
-  /* the forest ring */
-  const band = (x, y0, w, h, seed) => items.push({ svg: A.forest({ w, h: h + 300, top: 300, seed }), x, top: SY(y0) - 300, z: SY(y0) });
-  band(0, 0, W, 170, 1);
-  for (const [x0] of [[0], [W - 170]]) { band(x0, 170, 170, 1730, 2 + x0); band(x0, 1900, 170, 900, 3 + x0); band(x0, 2800, 170, 1430, 4 + x0); }
-  band(0, 4230, W, 170, 9);
-  /* more trees dotted outside */
-  const T = (k, x, y, s = 1) => { const t = A.tree({ kind: k, seed: x }); at(t, x - 60, y); };
-  [['pine', 380, 300], ['fir', 520, 1300], ['oak', 900, 1500], ['spruce', 330, 1750], ['birch', 1100, 2050], ['pine', 760, 2400], ['fir', 400, 2700], ['oak', 1900, 2600],
-   ['pine', 2700, 3000], ['spruce', 600, 3200], ['birch', 2200, 3900], ['fir', 1000, 4000], ['pine', 5600, 2300], ['oak', 5000, 2100], ['spruce', 5650, 3600], ['fir', 4980, 3900], ['bush', 2900, 120], ['bush', 4300, 300],
-   ['pine', 2600, 250], ['fir', 3400, 300], ['spruce', 4100, 200]].forEach(([k, x, y]) => T(k, x, y));
-  /* the jeep, lampposts */
-  at(A.jeep(), 600, 750);
-  for (const [x, y] of [[480, 640], [1000, 640], [1500, 450], [2950, 3080], [4850, 3080], [2950, 3960], [4850, 3960], [4560, 2950]]) at(A.lamppost(), x - 70, y + 14);
-  /* the cabin */
-  if (!inside) at(A.cabinOutside(), 1300, 2200);
-  else {
-    flat(A.ground({ w: 3000, h: 1600, kind: 'wood', seed: 6 }), 1300, 600);
-    flat(A.ground({ w: 800, h: 500, kind: 'tile' }), 3500, 600);
-    flat(A.ground({ w: 400, h: 400, kind: 'bath' }), 3500, 1100);
-    flat(A.rug({ w: 680, h: 500 }), 2330, 770); flat(A.rug({ w: 260, h: 200, kind: 'rect' }), 3980, 1380); flat(A.rug({ w: 300, h: 200, kind: 'rect', colors: ['#3e6d8c', '#e0b04a', '#a8402e', '#1c1c28'] }), 3830, 1930);
-    flat(A.rug({ w: 120, h: 70, colors: ['#7fb6c9', '#f4f4f0'] }), 3740, 1260);
-    flat(A.chalkFloor(), 1380, 1600); flat(A.chalkTile({ w: 70, h: 40 }), 2030, 1650); flat(A.eraserTile({ w: 90, h: 80 }), 2020, 1730); flat(A.wipeTile({ w: 74, h: 74 }), 2028, 1850);
-    flat(A.glow({ w: 520, h: 300, color: '#ff9a3a', a: .35, flicker: true }), 2040, 640);
-    const wall = (o, x, y) => at(A.logWall(o), x, y);
-    wall({ w: 3000, wallH: 170, doors: [[650, 750]], windows: [[1170, 1290], [1520, 1660]] }, 1300, 624);
-    wall({ w: 3000, wallH: 36, doors: [[1450, 1550]] }, 1300, 2200);
-    const yw = (x, y0, y1, doors = []) => at(A.logWall({ axis: 'y', h: y1 - y0 + 36, doors }), x, y1, { foot: y1 - y0 + 36 });
-    yw(1300, 624, 2176); yw(4276, 624, 2176);
-    yw(3300, 624, 2176, [[380, 540], [1080, 1240]]);
-    yw(3500, 1100, 1500, [[100, 220]]); yw(3500, 1650, 2176, [[200, 320]]); yw(3900, 1100, 1650, [[420, 540]]);
-    wall({ w: 800, wallH: 36 }, 3500, 1100); wall({ w: 400, wallH: 36 }, 3500, 1500); wall({ w: 800, wallH: 36 }, 3500, 1650);
-    at(A.fireplace(), 2170, 696);
-    at(A.couch({ w: 280, seats: 2 }), 2895, 2178); at(A.couch({ w: 100, len: 380, seats: 3, facing: 'w', color: '#3d6e4f' }), 3182, 2070); at(A.couch({ w: 100, len: 150, seats: 1, facing: 'w', color: '#c4803a' }), 2448, 862);
-    at(A.endTable(), 3194, 2174); at(A.coffeeTable(), 2965, 1950); at(A.tvSet(), 2745, 1764); at(A.bookshelf(), 2610, 652); at(A.roundCardTable(), 2240, 1330, { foot: 263 });
-    at(A.floorLamp(), 3127, 1670); at(A.floorLamp(), 1314, 1550); at(A.coatRack(), 1876, 728); at(A.boots(), 2090, 714); at(A.pottedPlant(), 1315, 2170); at(A.pottedPlant(), 2645, 2170);
-    at(A.pianoBody({ w: 540 }), 1340, 692);
-    at(A.stage({ stairs: 80 }), 3038, 1003); at(A.stageStairs({ w: 80, d: 147, z: 70, steps: 6 }), 3208, 1140); at(A.micStand(), 3055, 818, { sy: SY(818) - 70 });
-    at(A.bookStand(), 2087, 676);
-    at(A.counter({ w: 260 }), 3520, 684); at(A.stove(), 3780, 684); at(A.counter({ w: 250, sink: 120, upper: false }), 3856, 684); at(A.fridge(), 4170, 684);
-    at(A.kitchenTable(), 3780, 980, { foot: 230 });
-    at(A.tub({ w: 175 }), 3515, 1215); at(A.toilet(), 3712, 1182); at(A.sink(), 3810, 1175);
-    at(A.bed(), 4060, 1334); at(A.nightstand(), 4220, 1164); at(A.bed({ colors: ['#9b5de5', '#e0b04a', '#3e6d8c', '#c4573a'] }), 3900, 1884); at(A.nightstand(), 3840, 1714); at(A.floorLamp(), 4180, 1760);
-  }
-  /* the deck and its stairs */
-  at(A.deck(), 2200, 2600, { sy: 2600 });
-  for (const [a, x, y] of [[A.rockingChair(), 2480, 2440], [A.smallTable(), 2560, 2470], [A.rockingChair({ facing: 'w' }), 2620, 2440], [A.rockingChair(), 3900, 2440], [A.rockingChair({ facing: 'w' }), 4040, 2440]]) at(a, x, y, { sy: y });
-  at(A.deckStairs(), 4300, 2200, { sy: 2900 });
-  /* downhill: the pool, its toys, the campfire, the trampoline */
-  at(A.pool(), 3000, 3900);
-  flat(A.laneRope({ h: 740 }), 3889, SY(3100) + 30 + 40 - 30);
-  [[3300, 3400, '#ffd23f'], [3600, 3700, '#ff7eb6'], [4200, 3350, '#2fa4ff'], [4500, 3750, '#ffd23f'], [3450, 3800, '#8ee03c']].forEach(([x, y, c], i) => at(A.rubberDuck({ color: c, facing: i % 2 ? 'w' : 'e' }), x, y, { sy: SY(y) + 40 }));
-  at(A.beachBall(), 4100, 3550, { sy: SY(3550) + 40 });
-  at(A.campfire(), 1425, 3375);
-  at(A.logSeat(), 1410, 3215); at(A.logSeat(), 1410, 3470); at(A.logSeat({ axis: 'y' }), 1330, 3420); at(A.logSeat({ axis: 'y' }), 1630, 3420);
-  at(A.trampoline(), 5050, 3150);
-  /* the soccer net and ball */
-  at(A.soccerNet(), 5650, 1450); at(A.soccerBall(), 5135, 1100);
-  /* some ducks for scale */
-  const ducks = [[2100, 1000, '#ffd23f'], [3010, 1080, '#ef3b3b', 95], [2250, 1380, '#2fa4ff', 30], [3200, 2450, '#9b5de5', 0, 2450], [3500, 3500, '#ff8c2b', -10], [1500, 3260, '#14c6b4'], [5180, 2990, '#ff7eb6', 44], [5200, 1150, '#8ee03c'], [800, 650, '#f4f4f0'], [1800, 2000, '#ffd23f']];
-  for (const [x, y, c, ht = 0, sy = SY(y)] of ducks) if (inside || (x < 1300 || x > 4300 || y < 600 || y > 2200)) items.push({ svg: DUCK(c), x: x - 32, top: sy - ht - 60, z: sy + .5 });
-  items.sort((a, b) => a.z - b.z);
-  const el = document.createElement('div'); el.className = 'world'; el.style.cssText = `width:${W}px;height:${HH}px`;
-  el.innerHTML = items.map(i => `<div style="left:${i.x}px;top:${i.top}px">${i.svg}</div>`).join('');
-  return el;
-}
-function view(title, inside, k, x0 = 0, y0 = 0, w = 6000, h = 4640) {
-  const h2 = document.createElement('h2'); h2.textContent = title; out.append(h2);
-  const v = document.createElement('div'); v.className = 'view'; v.style.cssText = `width:${w * k}px;height:${h * k}px`;
-  const wd = world(inside); wd.style.transform = `scale(${k}) translate(${-x0}px, ${-y0}px)`; v.append(wd); out.append(v);
-}
-const only = q.get('only');
-if (!only || only === 'overview') { view('The whole map, outside (1 : 4)', false, .25); view('The whole map, inside (1 : 4)', true, .25); }
-if (!only || only === 'close') {
-  view('Great room (1 : 2)', true, .5, 1250, 380, 2150, 1900);
-  view('East wing (1 : 2)', true, .5, 3250, 380, 1150, 1900);
-  view('Back of the cabin, the deck and its stairs (1 : 2)', false, .5, 1900, 1300, 2800, 1950);
-  view('The pool (1 : 2)', false, .5, 2850, 2900, 2200, 1350);
-  view('Jeep, path and campfire (1 : 2)', false, .5, 200, 200, 1800, 1000);
-  view('Campfire (1 : 1)', false, 1, 1200, 3250, 700, 500);
-  view('Soccer net and trampoline (1 : 2)', false, .5, 4600, 700, 1300, 2700);
-}
-/* what players see: a phone held upright shows about 520 world px across, a computer about 1300 */
-if (!only || only === 'screens') {
-  view('A phone held upright, at the game\'s scale: the great room', true, .75, 1950, 650, 520, 1120);
-  view('A phone held upright, outside: the deck stairs and the pool', false, .75, 4050, 2350, 520, 1120);
-  view('A computer, at the game\'s scale: the deck', false, 1.1, 2350, 1600, 1300, 800);
-  view('A computer, inside: the great room', true, 1.1, 1700, 600, 1300, 800);
-}
-</script>
-</body>
+      /* ---------- the whole map at the plan's numbers ---------- */
+      /* heights: the highground 0 (y < 1900), the slope falls to −240 by y 2800, the downhill −240; screen y = y − height */
+      const H = (y) =>
+        y <= 1900 ? 0 : y >= 2800 ? -240 : (-240 * (y - 1900)) / 900;
+      const SY = (y) => y - H(y);
+      function world(inside) {
+        const W = 6000,
+          HH = 4640,
+          items = [];
+        const put = (svg, x, footY, boxFoot, z, flat = false) => {
+          const h = footOf(svg);
+          items.push({
+            svg,
+            x,
+            top: footY - boxFoot,
+            z: flat ? -1e9 + items.length : (z ?? footY),
+          });
+        };
+        /* place a prop whose footprint's south edge is at world y (screen sy), box foot at boxFoot (default h) */
+        const at = (art, x, y, opt = {}) => {
+          const sy = opt.sy ?? SY(y);
+          if (typeof art === "string") {
+            const h = footOf(art);
+            put(art, x, sy, opt.foot ?? h, opt.z, opt.flat);
+            return;
+          }
+          const h = footOf(art.front),
+            ff = art.frontFoot;
+          put(
+            art.back,
+            x,
+            sy + (h - ff) * 0,
+            ff,
+            art.backFoot == null ? null : sy - (ff - art.backFoot),
+            art.backFoot == null,
+          );
+          put(art.front, x, sy, ff, sy);
+        };
+        const flat = (art, x, sy) =>
+          put(art, x, sy + footOf(art), footOf(art), 0, true);
+        /* the ground, in screen space */
+        flat(A.ground({ w: W, h: 1900, kind: "grass", seed: 2 }), 0, 0);
+        flat(A.ground({ w: W, h: 1140, kind: "slope", seed: 3 }), 0, 1900);
+        flat(A.ground({ w: W, h: 1600, kind: "downhill", seed: 4 }), 0, 3040);
+        flat(A.soccerField(), 4500, 400);
+        flat(
+          A.dirtPath({
+            w: 1900,
+            h: 460,
+            pts: [
+              [300, 400],
+              [1150, 400],
+              [1250, 170],
+              [1700, 110],
+              [1900, 110],
+            ],
+            width: 150,
+          }),
+          0,
+          300,
+        );
+        flat(A.glow({ w: 360, h: 200, a: 0.35, flicker: true }), 1520, 260);
+        flat(
+          A.ground({ w: 1960, h: 960, kind: "pavers", seed: 5 }),
+          2920,
+          SY(3020),
+        );
+        flat(
+          A.glow({ w: 520, h: 420, color: "#ff9a3a", a: 0.4, flicker: true }),
+          1240,
+          SY(3300) - 210 + 75,
+        );
+        /* the forest ring */
+        const band = (x, y0, w, h, seed) =>
+          items.push({
+            svg: A.forest({ w, h: h + 300, top: 300, seed }),
+            x,
+            top: SY(y0) - 300,
+            z: SY(y0),
+          });
+        band(0, 0, W, 170, 1);
+        for (const [x0] of [[0], [W - 170]]) {
+          band(x0, 170, 170, 1730, 2 + x0);
+          band(x0, 1900, 170, 900, 3 + x0);
+          band(x0, 2800, 170, 1430, 4 + x0);
+        }
+        band(0, 4230, W, 170, 9);
+        /* more trees dotted outside */
+        const T = (k, x, y, s = 1) => {
+          const t = A.tree({ kind: k, seed: x });
+          at(t, x - 60, y);
+        };
+        [
+          ["pine", 380, 300],
+          ["fir", 520, 1300],
+          ["oak", 900, 1500],
+          ["spruce", 330, 1750],
+          ["birch", 1100, 2050],
+          ["pine", 760, 2400],
+          ["fir", 400, 2700],
+          ["oak", 1900, 2600],
+          ["pine", 2700, 3000],
+          ["spruce", 600, 3200],
+          ["birch", 2200, 3900],
+          ["fir", 1000, 4000],
+          ["pine", 5600, 2300],
+          ["oak", 5000, 2100],
+          ["spruce", 5650, 3600],
+          ["fir", 4980, 3900],
+          ["bush", 2900, 120],
+          ["bush", 4300, 300],
+          ["pine", 2600, 250],
+          ["fir", 3400, 300],
+          ["spruce", 4100, 200],
+        ].forEach(([k, x, y]) => T(k, x, y));
+        /* the jeep, lampposts */
+        at(A.jeep(), 600, 750);
+        for (const [x, y] of [
+          [480, 640],
+          [1000, 640],
+          [1500, 450],
+          [2950, 3080],
+          [4850, 3080],
+          [2950, 3960],
+          [4850, 3960],
+          [4560, 2950],
+        ])
+          at(A.lamppost(), x - 70, y + 14);
+        /* the cabin */
+        if (!inside) at(A.cabinOutside(), 1300, 2200);
+        else {
+          flat(
+            A.ground({ w: 3000, h: 1600, kind: "wood", seed: 6 }),
+            1300,
+            600,
+          );
+          flat(A.ground({ w: 800, h: 500, kind: "tile" }), 3500, 600);
+          flat(A.ground({ w: 400, h: 400, kind: "bath" }), 3500, 1100);
+          flat(A.rug({ w: 680, h: 500 }), 2330, 770);
+          flat(A.rug({ w: 260, h: 200, kind: "rect" }), 3980, 1380);
+          flat(
+            A.rug({
+              w: 300,
+              h: 200,
+              kind: "rect",
+              colors: ["#3e6d8c", "#e0b04a", "#a8402e", "#1c1c28"],
+            }),
+            3830,
+            1930,
+          );
+          flat(
+            A.rug({ w: 120, h: 70, colors: ["#7fb6c9", "#f4f4f0"] }),
+            3740,
+            1260,
+          );
+          flat(A.chalkFloor(), 1380, 1600);
+          flat(A.chalkTile({ w: 70, h: 40 }), 2030, 1650);
+          flat(A.eraserTile({ w: 90, h: 80 }), 2020, 1730);
+          flat(A.wipeTile({ w: 74, h: 74 }), 2028, 1850);
+          flat(
+            A.glow({
+              w: 520,
+              h: 300,
+              color: "#ff9a3a",
+              a: 0.35,
+              flicker: true,
+            }),
+            2040,
+            640,
+          );
+          const wall = (o, x, y) => at(A.logWall(o), x, y);
+          wall(
+            {
+              w: 3000,
+              wallH: 170,
+              doors: [[650, 750]],
+              windows: [
+                [1170, 1290],
+                [1520, 1660],
+              ],
+            },
+            1300,
+            624,
+          );
+          wall({ w: 3000, wallH: 36, doors: [[1450, 1550]] }, 1300, 2200);
+          const yw = (x, y0, y1, doors = []) =>
+            at(A.logWall({ axis: "y", h: y1 - y0 + 36, doors }), x, y1, {
+              foot: y1 - y0 + 36,
+            });
+          yw(1300, 624, 2176);
+          yw(4276, 624, 2176);
+          yw(3300, 624, 2176, [
+            [380, 540],
+            [1080, 1240],
+          ]);
+          yw(3500, 1100, 1500, [[100, 220]]);
+          yw(3500, 1650, 2176, [[200, 320]]);
+          yw(3900, 1100, 1650, [[420, 540]]);
+          wall({ w: 800, wallH: 36 }, 3500, 1100);
+          wall({ w: 400, wallH: 36 }, 3500, 1500);
+          wall({ w: 800, wallH: 36 }, 3500, 1650);
+          at(A.fireplace(), 2170, 696);
+          at(A.couch({ w: 280, seats: 2 }), 2895, 2178);
+          at(
+            A.couch({
+              w: 100,
+              len: 380,
+              seats: 3,
+              facing: "w",
+              color: "#3d6e4f",
+            }),
+            3182,
+            2070,
+          );
+          at(
+            A.couch({
+              w: 100,
+              len: 150,
+              seats: 1,
+              facing: "w",
+              color: "#c4803a",
+            }),
+            2448,
+            862,
+          );
+          at(A.endTable(), 3194, 2174);
+          at(A.coffeeTable(), 2965, 1950);
+          at(A.tvSet(), 2745, 1764);
+          at(A.bookshelf(), 2610, 652);
+          at(A.roundCardTable(), 2240, 1330, { foot: 263 });
+          at(A.floorLamp(), 3127, 1670);
+          at(A.floorLamp(), 1314, 1550);
+          at(A.coatRack(), 1876, 728);
+          at(A.boots(), 2090, 714);
+          at(A.pottedPlant(), 1315, 2170);
+          at(A.pottedPlant(), 2645, 2170);
+          at(A.pianoBody({ w: 540 }), 1340, 692);
+          at(A.stage({ stairs: 80 }), 3038, 1003);
+          at(A.stageStairs({ w: 80, d: 147, z: 70, steps: 6 }), 3208, 1140);
+          at(A.micStand(), 3055, 818, { sy: SY(818) - 70 });
+          at(A.bookStand(), 2087, 676);
+          at(A.counter({ w: 260 }), 3520, 684);
+          at(A.stove(), 3780, 684);
+          at(A.counter({ w: 250, sink: 120, upper: false }), 3856, 684);
+          at(A.fridge(), 4170, 684);
+          at(A.kitchenTable(), 3780, 980, { foot: 230 });
+          at(A.tub({ w: 175 }), 3515, 1215);
+          at(A.toilet(), 3712, 1182);
+          at(A.sink(), 3810, 1175);
+          at(A.bed(), 4060, 1334);
+          at(A.nightstand(), 4220, 1164);
+          at(
+            A.bed({ colors: ["#9b5de5", "#e0b04a", "#3e6d8c", "#c4573a"] }),
+            3900,
+            1884,
+          );
+          at(A.nightstand(), 3840, 1714);
+          at(A.floorLamp(), 4180, 1760);
+        }
+        /* the deck and its stairs */
+        at(A.deck(), 2200, 2600, { sy: 2600 });
+        for (const [a, x, y] of [
+          [A.rockingChair(), 2480, 2440],
+          [A.smallTable(), 2560, 2470],
+          [A.rockingChair({ facing: "w" }), 2620, 2440],
+          [A.rockingChair(), 3900, 2440],
+          [A.rockingChair({ facing: "w" }), 4040, 2440],
+        ])
+          at(a, x, y, { sy: y });
+        at(A.deckStairs(), 4300, 2200, { sy: 2900 });
+        /* downhill: the pool, its toys, the campfire, the trampoline */
+        at(A.pool(), 3000, 3900);
+        flat(A.laneRope({ h: 740 }), 3889, SY(3100) + 30 + 40 - 30);
+        [
+          [3300, 3400, "#ffd23f"],
+          [3600, 3700, "#ff7eb6"],
+          [4200, 3350, "#2fa4ff"],
+          [4500, 3750, "#ffd23f"],
+          [3450, 3800, "#8ee03c"],
+        ].forEach(([x, y, c], i) =>
+          at(A.rubberDuck({ color: c, facing: i % 2 ? "w" : "e" }), x, y, {
+            sy: SY(y) + 40,
+          }),
+        );
+        at(A.beachBall(), 4100, 3550, { sy: SY(3550) + 40 });
+        at(A.campfire(), 1425, 3375);
+        at(A.logSeat(), 1410, 3215);
+        at(A.logSeat(), 1410, 3470);
+        at(A.logSeat({ axis: "y" }), 1330, 3420);
+        at(A.logSeat({ axis: "y" }), 1630, 3420);
+        at(A.trampoline(), 5050, 3150);
+        /* the soccer net and ball */
+        at(A.soccerNet(), 5650, 1450);
+        at(A.soccerBall(), 5135, 1100);
+        /* some ducks for scale */
+        const ducks = [
+          [2100, 1000, "#ffd23f"],
+          [3010, 1080, "#ef3b3b", 95],
+          [2250, 1380, "#2fa4ff", 30],
+          [3200, 2450, "#9b5de5", 0, 2450],
+          [3500, 3500, "#ff8c2b", -10],
+          [1500, 3260, "#14c6b4"],
+          [5180, 2990, "#ff7eb6", 44],
+          [5200, 1150, "#8ee03c"],
+          [800, 650, "#f4f4f0"],
+          [1800, 2000, "#ffd23f"],
+        ];
+        for (const [x, y, c, ht = 0, sy = SY(y)] of ducks)
+          if (inside || x < 1300 || x > 4300 || y < 600 || y > 2200)
+            items.push({
+              svg: DUCK(c),
+              x: x - 32,
+              top: sy - ht - 60,
+              z: sy + 0.5,
+            });
+        items.sort((a, b) => a.z - b.z);
+        const el = document.createElement("div");
+        el.className = "world";
+        el.style.cssText = `width:${W}px;height:${HH}px`;
+        el.innerHTML = items
+          .map(
+            (i) => `<div style="left:${i.x}px;top:${i.top}px">${i.svg}</div>`,
+          )
+          .join("");
+        return el;
+      }
+      function view(title, inside, k, x0 = 0, y0 = 0, w = 6000, h = 4640) {
+        const h2 = document.createElement("h2");
+        h2.textContent = title;
+        out.append(h2);
+        const v = document.createElement("div");
+        v.className = "view";
+        v.style.cssText = `width:${w * k}px;height:${h * k}px`;
+        const wd = world(inside);
+        wd.style.transform = `scale(${k}) translate(${-x0}px, ${-y0}px)`;
+        v.append(wd);
+        out.append(v);
+      }
+      const only = q.get("only");
+      if (!only || only === "overview") {
+        view("The whole map, outside (1 : 4)", false, 0.25);
+        view("The whole map, inside (1 : 4)", true, 0.25);
+      }
+      if (!only || only === "close") {
+        view("Great room (1 : 2)", true, 0.5, 1250, 380, 2150, 1900);
+        view("East wing (1 : 2)", true, 0.5, 3250, 380, 1150, 1900);
+        view(
+          "Back of the cabin, the deck and its stairs (1 : 2)",
+          false,
+          0.5,
+          1900,
+          1300,
+          2800,
+          1950,
+        );
+        view("The pool (1 : 2)", false, 0.5, 2850, 2900, 2200, 1350);
+        view(
+          "Jeep, path and campfire (1 : 2)",
+          false,
+          0.5,
+          200,
+          200,
+          1800,
+          1000,
+        );
+        view("Campfire (1 : 1)", false, 1, 1200, 3250, 700, 500);
+        view(
+          "Soccer net and trampoline (1 : 2)",
+          false,
+          0.5,
+          4600,
+          700,
+          1300,
+          2700,
+        );
+      }
+      /* what players see: a phone held upright shows about 520 world px across, a computer about 1300 */
+      if (!only || only === "screens") {
+        view(
+          "A phone held upright, at the game's scale: the great room",
+          true,
+          0.75,
+          1950,
+          650,
+          520,
+          1120,
+        );
+        view(
+          "A phone held upright, outside: the deck stairs and the pool",
+          false,
+          0.75,
+          4050,
+          2350,
+          520,
+          1120,
+        );
+        view(
+          "A computer, at the game's scale: the deck",
+          false,
+          1.1,
+          2350,
+          1600,
+          1300,
+          800,
+        );
+        view(
+          "A computer, inside: the great room",
+          true,
+          1.1,
+          1700,
+          600,
+          1300,
+          800,
+        );
+      }
+    </script>
+  </body>
 </html>

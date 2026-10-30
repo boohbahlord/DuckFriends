@@ -35,7 +35,11 @@
      light(prop, s, l)           → false turns a light off (l: one of layout.js' LIGHTS; prop: its prop, if it has one)
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
-export const RULES = new Map();   // k → its rules
-export const ACTS = new Map();    // id → its screen part
-export const rule = (k, r) => { RULES.set(k, r); };
-export const activity = a => { ACTS.set(a.id, a); };
+export const RULES = new Map(); // k → its rules
+export const ACTS = new Map(); // id → its screen part
+export const rule = (k, r) => {
+  RULES.set(k, r);
+};
+export const activity = (a) => {
+  ACTS.set(a.id, a);
+};

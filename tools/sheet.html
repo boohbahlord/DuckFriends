@@ -1,36 +1,102 @@
 <!doctype html>
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <title>DuckFriends picture sheet</title>
 <!-- Every hat, face item, eye, beak, outfit and style on the duck, for an art check. Serve the repo and open
      tools/sheet.html; ?only=hats (or faces, eyes, beaks, outfits, styles) shows one section. -->
 <style>
-  body { margin: 0; padding: 16px; background: #1c1c28; color: #f3f3f7; font: 14px/1.3 system-ui, sans-serif; }
-  h2 { margin: 18px 0 8px; font-size: 18px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, 132px); gap: 8px; }
-  figure { margin: 0; padding: 6px; background: #2a2a3a; border-radius: 8px; text-align: center; }
-  figcaption { font-size: 12px; margin-top: 2px; }
-  .head svg { width: 120px; height: 120px; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: #1c1c28;
+    color: #f3f3f7;
+    font:
+      14px/1.3 system-ui,
+      sans-serif;
+  }
+  h2 {
+    margin: 18px 0 8px;
+    font-size: 18px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 132px);
+    gap: 8px;
+  }
+  figure {
+    margin: 0;
+    padding: 6px;
+    background: #2a2a3a;
+    border-radius: 8px;
+    text-align: center;
+  }
+  figcaption {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .head svg {
+    width: 120px;
+    height: 120px;
+  }
 </style>
 <div id="out"></div>
 <script type="module">
-  import { duckSVG, DUCK_DEFAULT } from '../js/duck.js';
-  import { HATS, HAT_GROUPS } from '../js/hats.js';
-  import { FACES, FACE_GROUPS } from '../js/faces.js';
-  import { EYES, EYE_GROUPS } from '../js/eyes.js';
-  import { BEAKS, BEAK_GROUPS } from '../js/beaks.js';
-  import { OUTFITS, OUTFIT_GROUPS } from '../js/outfits.js';
-  import { STYLES } from '../js/styles.js';
-  const D = DUCK_DEFAULT, only = new URLSearchParams(location.search).get('only');
-  const order = (list, groups) => groups ? groups.flatMap(([, ids]) => ids).map(id => list.find(x => x.id === id)).filter(Boolean).concat(list.filter(x => !groups.some(([, ids]) => ids.includes(x.id)))) : list;
+  import { duckSVG, DUCK_DEFAULT } from "../js/duck.js";
+  import { HATS, HAT_GROUPS } from "../js/hats.js";
+  import { FACES, FACE_GROUPS } from "../js/faces.js";
+  import { EYES, EYE_GROUPS } from "../js/eyes.js";
+  import { BEAKS, BEAK_GROUPS } from "../js/beaks.js";
+  import { OUTFITS, OUTFIT_GROUPS } from "../js/outfits.js";
+  import { STYLES } from "../js/styles.js";
+  const D = DUCK_DEFAULT,
+    only = new URLSearchParams(location.search).get("only");
+  const order = (list, groups) =>
+    groups
+      ? groups
+          .flatMap(([, ids]) => ids)
+          .map((id) => list.find((x) => x.id === id))
+          .filter(Boolean)
+          .concat(
+            list.filter((x) => !groups.some(([, ids]) => ids.includes(x.id))),
+          )
+      : list;
   const sections = [
-    ['hats', 'Hats', order(HATS, HAT_GROUPS), x => ({ hat: { id: x.id } })],
-    ['faces', 'Face items', order(FACES, FACE_GROUPS), x => ({ face: { id: x.id } })],
-    ['eyes', 'Eyes', order(EYES, EYE_GROUPS), x => ({ eyes: x.id })],
-    ['beaks', 'Beaks', order(BEAKS, BEAK_GROUPS), x => ({ beak: x.id })],
-    ['outfits', 'Outfits', order(OUTFITS, OUTFIT_GROUPS), x => ({ outfit: { id: x.id } })],
-    ['styles', 'Styles (with their matching beak and eyes)', STYLES, x => ({ style: x.id, ...Object.fromEntries((x.colors || []).map(([k, , v]) => [k, v])), ...(x.match ? { beak: x.match } : {}), ...(x.eyes ? { eyes: x.eyes } : {}) })],
+    ["hats", "Hats", order(HATS, HAT_GROUPS), (x) => ({ hat: { id: x.id } })],
+    [
+      "faces",
+      "Face items",
+      order(FACES, FACE_GROUPS),
+      (x) => ({ face: { id: x.id } }),
+    ],
+    ["eyes", "Eyes", order(EYES, EYE_GROUPS), (x) => ({ eyes: x.id })],
+    ["beaks", "Beaks", order(BEAKS, BEAK_GROUPS), (x) => ({ beak: x.id })],
+    [
+      "outfits",
+      "Outfits",
+      order(OUTFITS, OUTFIT_GROUPS),
+      (x) => ({ outfit: { id: x.id } }),
+    ],
+    [
+      "styles",
+      "Styles (with their matching beak and eyes)",
+      STYLES,
+      (x) => ({
+        style: x.id,
+        ...Object.fromEntries((x.colors || []).map(([k, , v]) => [k, v])),
+        ...(x.match ? { beak: x.match } : {}),
+        ...(x.eyes ? { eyes: x.eyes } : {}),
+      }),
+    ],
   ].filter(([k]) => !only || k === only);
-  document.getElementById('out').innerHTML = sections.map(([, title, list, look]) => `<h2>${title} (${list.length})</h2><div class="grid">${list.map(x =>
-    `<figure>${duckSVG({ ...D, ...look(x) }, { size: 120, shadow: false })}<figcaption>${x.name}</figcaption></figure>`).join('')}</div>`).join('');
-  document.body.dataset.ready = '1';
+  document.getElementById("out").innerHTML = sections
+    .map(
+      ([, title, list, look]) =>
+        `<h2>${title} (${list.length})</h2><div class="grid">${list
+          .map(
+            (x) =>
+              `<figure>${duckSVG({ ...D, ...look(x) }, { size: 120, shadow: false })}<figcaption>${x.name}</figcaption></figure>`,
+          )
+          .join("")}</div>`,
+    )
+    .join("");
+  document.body.dataset.ready = "1";
 </script>

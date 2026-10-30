@@ -1,91 +1,222 @@
 <!doctype html>
 <html lang="en" class="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>DuckFriends piano</title>
-<!-- The Hangout piano's keyboard mode on its own (js/hangout/pianokeys.js). Serve the repo (python3 -m http.server) and
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>DuckFriends piano</title>
+    <!-- The Hangout piano's keyboard mode on its own (js/hangout/pianokeys.js). Serve the repo (python3 -m http.server) and
      open tools/piano-test.html. Play opens the keyboard; the column on the left is the sheet as the cabin would show it
      above the big piano. "A friend plays" sends notes as another player would (their duck color rings the keys). -->
-<link rel="stylesheet" href="../css/app.css">
-<style>
-  body { padding: 16px; }
-  .top { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
-  h1 { font-size: 2.4rem; margin-right: .6rem; }
-  .stage { display: flex; gap: 16px; margin-top: 16px; }
-  .col { width: 9rem; height: 22rem; flex: none; display: flex; }
-  .col .pk-sheet { height: 100%; }
-  .hint { color: var(--dim); max-width: 34rem; }
-  #root { position: fixed; left: 16px; right: 16px; bottom: 16px; height: min(19rem, 48vh); z-index: 10; }
-  @media (hover: none) and (pointer: coarse) { #root { inset: 0; height: auto; } }
-</style>
-</head>
-<body>
-<div class="top"><h1 id="title"></h1>
-  <button type="button" class="btn green" id="open">Play</button>
-  <button type="button" class="btn ghost" id="scale">Scale</button>
-  <button type="button" class="btn ghost" id="chords">Chords</button>
-  <button type="button" class="btn purple" id="friend">A friend plays</button>
-  <button type="button" class="btn ghost" id="wav">Save a .wav</button>
-</div>
-<div class="stage">
-  <div class="col" id="col"></div>
-  <p class="hint">The sheet column, as the cabin shows it above the big piano. Keys: 1–=, Q–], A–⏎, ⇧Z–Space (four chromatic octaves); Esc gets up.</p>
-</div>
-<div id="root" hidden></div>
-<script type="module">
-  import { rainbowHTML } from '../js/art.js';
-  import * as PK from '../js/hangout/pianokeys.js';
-  window.PK = PK;
-  const $ = s => document.querySelector(s);
-  $('#title').innerHTML = rainbowHTML('Piano');
-  const col = $('#col'); col.innerHTML = PK.sheetHTML();
-  const sheet = col.firstElementChild;
-  const log = window.noteLog = [];
-  let api = null, raf = 0;
-  const redraw = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; PK.drawSheet(sheet, api ? api.notes() : []); }); };
-  function open() {
-    if (api) return;
-    $('#root').hidden = false;
-    api = window.pk = PK.mountPianoKeys($('#root'), {
-      onNote: n => { log.push(n); redraw(); },
-      onClose: () => { api.destroy(); api = window.pk = null; $('#root').hidden = true; },
-    });
-  }
-  $('#open').onclick = open;
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-  const friend = async (seq, who = 'Mallard', color = '#37d421') => {
-    open();
-    for (const step of seq) { if (!api) return; const ms = [].concat(step[0]); ms.forEach(m => api.play(m, { who, color })); redraw(); await wait(step[1]); if (!api) return; ms.forEach(m => api.release(m, { who })); }
-  };
-  $('#scale').onclick = () => friend([60, 62, 64, 65, 67, 69, 71, 72].map(m => [m, 260]), 'Scale', '#ffd23f');
-  $('#chords').onclick = () => friend([[[48, 52, 55, 60], 700], [[45, 52, 57, 60], 700], [[41, 53, 57, 60], 700], [[43, 55, 59, 62], 900], [[36, 64, 76], 900]], 'Chords', '#2fa4ff');
-  $('#friend').onclick = () => friend([[67, 220], [71, 220], [74, 220], [79, 400], [[55, 59, 62], 500], [76, 300], [52, 600]]);
-  /* a scale, a few chords and a jump across octaves, written out with the piano's own voice */
-  window.renderWav = async () => {
-    const ev = [], up = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72];
-    up.forEach((m, i) => ev.push({ midi: m, t: i * .28, d: .26 }));
-    let t = up.length * .28 + .4;
-    for (const ch of [[48, 55, 64, 67], [45, 57, 60, 64], [41, 53, 57, 65], [43, 55, 62, 71], [36, 48, 64, 67, 72]]) { ch.forEach((m, i) => ev.push({ midi: m, t: t + i * .012, d: 1.1 })); t += 1.35; }
-    for (const m of [40, 67, 84, 35, 60]) { ev.push({ midi: m, t, d: .7 }); t += .8; }
-    const buf = await PK.renderOffline(ev);
-    return { buf, ev };
-  };
-  window.wavBytes = buf => {
-    const n = buf.length, ch = buf.numberOfChannels, sr = buf.sampleRate, out = new DataView(new ArrayBuffer(44 + n * ch * 2));
-    const w = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
-    w(0, 'RIFF'); out.setUint32(4, 36 + n * ch * 2, true); w(8, 'WAVE'); w(12, 'fmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true);
-    out.setUint16(22, ch, true); out.setUint32(24, sr, true); out.setUint32(28, sr * ch * 2, true); out.setUint16(32, ch * 2, true); out.setUint16(34, 16, true);
-    w(36, 'data'); out.setUint32(40, n * ch * 2, true);
-    const d = [...Array(ch)].map((_, c) => buf.getChannelData(c));
-    for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++) out.setInt16(44 + (i * ch + c) * 2, Math.max(-1, Math.min(1, d[c][i])) * 32767, true);
-    return new Uint8Array(out.buffer);
-  };
-  $('#wav').onclick = async () => {
-    const { buf } = await window.renderWav(), a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([window.wavBytes(buf)], { type: 'audio/wav' })); a.download = 'piano.wav'; a.click();
-  };
-  document.body.dataset.ready = '1';
-</script>
-</body>
+    <link rel="stylesheet" href="../css/app.css" />
+    <style>
+      body {
+        padding: 16px;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      h1 {
+        font-size: 2.4rem;
+        margin-right: 0.6rem;
+      }
+      .stage {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .col {
+        width: 9rem;
+        height: 22rem;
+        flex: none;
+        display: flex;
+      }
+      .col .pk-sheet {
+        height: 100%;
+      }
+      .hint {
+        color: var(--dim);
+        max-width: 34rem;
+      }
+      #root {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        height: min(19rem, 48vh);
+        z-index: 10;
+      }
+      @media (hover: none) and (pointer: coarse) {
+        #root {
+          inset: 0;
+          height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <h1 id="title"></h1>
+      <button type="button" class="btn green" id="open">Play</button>
+      <button type="button" class="btn ghost" id="scale">Scale</button>
+      <button type="button" class="btn ghost" id="chords">Chords</button>
+      <button type="button" class="btn purple" id="friend">
+        A friend plays
+      </button>
+      <button type="button" class="btn ghost" id="wav">Save a .wav</button>
+    </div>
+    <div class="stage">
+      <div class="col" id="col"></div>
+      <p class="hint">
+        The sheet column, as the cabin shows it above the big piano. Keys: 1–=,
+        Q–], A–⏎, ⇧Z–Space (four chromatic octaves); Esc gets up.
+      </p>
+    </div>
+    <div id="root" hidden></div>
+    <script type="module">
+      import { rainbowHTML } from "../js/art.js";
+      import * as PK from "../js/hangout/pianokeys.js";
+      window.PK = PK;
+      const $ = (s) => document.querySelector(s);
+      $("#title").innerHTML = rainbowHTML("Piano");
+      const col = $("#col");
+      col.innerHTML = PK.sheetHTML();
+      const sheet = col.firstElementChild;
+      const log = (window.noteLog = []);
+      let api = null,
+        raf = 0;
+      const redraw = () => {
+        if (!raf)
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            PK.drawSheet(sheet, api ? api.notes() : []);
+          });
+      };
+      function open() {
+        if (api) return;
+        $("#root").hidden = false;
+        api = window.pk = PK.mountPianoKeys($("#root"), {
+          onNote: (n) => {
+            log.push(n);
+            redraw();
+          },
+          onClose: () => {
+            api.destroy();
+            api = window.pk = null;
+            $("#root").hidden = true;
+          },
+        });
+      }
+      $("#open").onclick = open;
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const friend = async (seq, who = "Mallard", color = "#37d421") => {
+        open();
+        for (const step of seq) {
+          if (!api) return;
+          const ms = [].concat(step[0]);
+          ms.forEach((m) => api.play(m, { who, color }));
+          redraw();
+          await wait(step[1]);
+          if (!api) return;
+          ms.forEach((m) => api.release(m, { who }));
+        }
+      };
+      $("#scale").onclick = () =>
+        friend(
+          [60, 62, 64, 65, 67, 69, 71, 72].map((m) => [m, 260]),
+          "Scale",
+          "#ffd23f",
+        );
+      $("#chords").onclick = () =>
+        friend(
+          [
+            [[48, 52, 55, 60], 700],
+            [[45, 52, 57, 60], 700],
+            [[41, 53, 57, 60], 700],
+            [[43, 55, 59, 62], 900],
+            [[36, 64, 76], 900],
+          ],
+          "Chords",
+          "#2fa4ff",
+        );
+      $("#friend").onclick = () =>
+        friend([
+          [67, 220],
+          [71, 220],
+          [74, 220],
+          [79, 400],
+          [[55, 59, 62], 500],
+          [76, 300],
+          [52, 600],
+        ]);
+      /* a scale, a few chords and a jump across octaves, written out with the piano's own voice */
+      window.renderWav = async () => {
+        const ev = [],
+          up = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72];
+        up.forEach((m, i) => ev.push({ midi: m, t: i * 0.28, d: 0.26 }));
+        let t = up.length * 0.28 + 0.4;
+        for (const ch of [
+          [48, 55, 64, 67],
+          [45, 57, 60, 64],
+          [41, 53, 57, 65],
+          [43, 55, 62, 71],
+          [36, 48, 64, 67, 72],
+        ]) {
+          ch.forEach((m, i) => ev.push({ midi: m, t: t + i * 0.012, d: 1.1 }));
+          t += 1.35;
+        }
+        for (const m of [40, 67, 84, 35, 60]) {
+          ev.push({ midi: m, t, d: 0.7 });
+          t += 0.8;
+        }
+        const buf = await PK.renderOffline(ev);
+        return { buf, ev };
+      };
+      window.wavBytes = (buf) => {
+        const n = buf.length,
+          ch = buf.numberOfChannels,
+          sr = buf.sampleRate,
+          out = new DataView(new ArrayBuffer(44 + n * ch * 2));
+        const w = (o, s) =>
+          [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+        w(0, "RIFF");
+        out.setUint32(4, 36 + n * ch * 2, true);
+        w(8, "WAVE");
+        w(12, "fmt ");
+        out.setUint32(16, 16, true);
+        out.setUint16(20, 1, true);
+        out.setUint16(22, ch, true);
+        out.setUint32(24, sr, true);
+        out.setUint32(28, sr * ch * 2, true);
+        out.setUint16(32, ch * 2, true);
+        out.setUint16(34, 16, true);
+        w(36, "data");
+        out.setUint32(40, n * ch * 2, true);
+        const d = [...Array(ch)].map((_, c) => buf.getChannelData(c));
+        for (let i = 0; i < n; i++)
+          for (let c = 0; c < ch; c++)
+            out.setInt16(
+              44 + (i * ch + c) * 2,
+              Math.max(-1, Math.min(1, d[c][i])) * 32767,
+              true,
+            );
+        return new Uint8Array(out.buffer);
+      };
+      $("#wav").onclick = async () => {
+        const { buf } = await window.renderWav(),
+          a = document.createElement("a");
+        a.href = URL.createObjectURL(
+          new Blob([window.wavBytes(buf)], { type: "audio/wav" }),
+        );
+        a.download = "piano.wav";
+        a.click();
+      };
+      document.body.dataset.ready = "1";
+    </script>
+  </body>
 </html>
