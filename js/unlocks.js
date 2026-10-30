@@ -1,8 +1,9 @@
 /* ---------- things you unlock ----------
    Some items start locked. The jester hat and outfit open at 1,000 jumps, Jack in a Box (and Jill) at 10,000; a secret
    code opens all three at once. The clown wig, costume and paint open when you've killed Justin with a weapon special 10
-   times, and until then nobody is told how. What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
+   times, and until then nobody is told how. The dunce hat opens once you've been voted a dunce in Duncelation 10 times
+   (TEST rooms don't count). What counts lives in the profile (so it stays on the device and the
+   account): jumps, justinKills, dunced, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from './store.js';
 import { fmtJumps } from './format.js';
@@ -16,9 +17,10 @@ export const LOCKS = [
   { kind: 'hat', id: 'clownwig', kills: 10, hidden: true, name: 'Clown wig' },
   { kind: 'outfit', id: 'clown', kills: 10, hidden: true, name: 'Clown costume' },
   { kind: 'face', id: 'clownpaint', kills: 10, hidden: true, name: 'Clown paint' },
+  { kind: 'hat', id: 'dunce', dunced: 10, name: 'Dunce hat' },
 ];
 const lockOf = (kind, id) => LOCKS.find(l => l.kind === kind && l.id === id);
-const earned = l => l.jumps ? (profile.jumps || 0) >= l.jumps : (profile.justinKills || 0) >= l.kills;
+const earned = l => l.jumps ? (profile.jumps || 0) >= l.jumps : l.dunced ? (profile.dunced || 0) >= l.dunced : (profile.justinKills || 0) >= l.kills;
 const coded = l => !!(l.code && (profile.secrets || {})[l.code]);
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) { const l = lockOf(kind, id); return !l || earned(l) || coded(l); }
@@ -26,8 +28,9 @@ export const isLocked = (kind, id) => !!lockOf(kind, id);
 /* what a tile says: how to unlock it, or how you did */
 export function lockHint(kind, id) {
   const l = lockOf(kind, id); if (!l) return '';
-  if (earned(l)) return l.jumps ? `Unlocked: ${fmtJumps(l.jumps)} jumps` : 'Unlocked: you killed Justin with a weapon 10 times';
+  if (earned(l)) return l.jumps ? `Unlocked: ${fmtJumps(l.jumps)} jumps` : l.dunced ? `Unlocked: voted a dunce ${l.dunced} times` : 'Unlocked: you killed Justin with a weapon 10 times';
   if (coded(l)) return 'Unlocked: a secret code';
+  if (l.dunced) return `Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   return l.hidden ? 'You don\'t know how to unlock this.' : `Reach ${fmtJumps(l.jumps)} jumps (you have ${fmtJumps(profile.jumps || 0)})`;
 }
 const and = xs => xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1];
@@ -41,11 +44,14 @@ export function checkUnlocks() {
 /* a Justin kill with a weapon special, seen on your own device */
 export function countJustinKill() { profile.justinKills = (profile.justinKills || 0) + 1; save(); checkUnlocks(); }
 /* a room's Justin kills (the rules' s.jk, numbered by s.jkN): mine with a bullet or a dagger count, each once; what
-   happened before I joined doesn't */
+   happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
+   outside TEST rooms */
 export function watchKills(room) {
-  let seen = null;
+  let seen = null, seenD = null;
   room.on(() => {
-    const s = room.state, top = (s && s.jkN) || 0;
+    const s = room.state, top = (s && s.jkN) || 0, dn = (s && s.dn) || {}, topD = dn.dkN || 0;
+    if (seenD === null || topD < seenD) seenD = topD;
+    else { for (const k of dn.dk || []) if (k.n > seenD && k.id === room.me && !s.test) { profile.dunced = (profile.dunced || 0) + 1; save(); checkUnlocks(); } seenD = topD; }
     if (seen === null || top < seen) { seen = top; return; }
     for (const k of (s && s.jk) || []) if (k.n > seen && k.by === room.me && (k.w === 'handgun' || k.w === 'dagger')) countJustinKill();
     seen = top;

@@ -1,11 +1,11 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
 import { applySettings, askConnection } from './settings.js';
 import { backdropHTML } from './art.js';
-import { profile } from './store.js';
+import { profile, save } from './store.js';
 import { $, toast } from './ui.js';
 import { start, current } from './router.js';
 import { showJumps } from './jumps.js';
-import { checkUnlocks } from './unlocks.js';
+import { checkUnlocks, takeOffLocked } from './unlocks.js';
 import './front.js';
 import './rooms.js';
 import './lobby.js';
@@ -29,7 +29,9 @@ let rsT = null;
 addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(drawShapes, 200); });
 drawShapes();
 
-/* the jump counter at the bottom middle; anything already earned and not yet announced says so a moment later */
+/* the jump counter at the bottom middle; anything already earned and not yet announced says so a moment later. Anything
+   worn from before it was locked (the dunce hat) comes off first */
+if (takeOffLocked().length) save();
 showJumps(); setTimeout(checkUnlocks, 2500);
 
 /* ---------- Sign in (top right); once signed in it opens Friends, with a count of invites and requests ---------- */
@@ -49,6 +51,7 @@ corner.onclick = () => acct.uid ? openFriends() : signIn();
 onAccount(paintCorner); paintCorner();
 /* the account's profile came in: show it */
 addEventListener('duck-profile', () => {
+  if (takeOffLocked().length) save();
   applySettings(); showJumps();
   if (['front', 'rooms'].includes(current())) start(current());
   toast('Signed in: your profile is here.'); setTimeout(checkUnlocks, 3500);

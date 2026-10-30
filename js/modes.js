@@ -6,6 +6,8 @@
    Story Chain: a paragraph a round; one line each, each with someone else's secret word hidden in it.
    Who is the Quack?: everyone's Secret Card has the same word except one duck's; clues out loud, then walk onto a duck.
    Lawyering: everyone writes a topic in secret; for each one, two attorneys argue it out and the room walks to a side.
+   Duncelation: everyone writes a take; one by one, a duck defends the take it got and the room walks to Dunce or Not a
+   Dunce, until someone is voted a dunce.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby. */
 import { esc } from './ui.js';
@@ -18,13 +20,14 @@ export const MODES = [
   { id: 'sc', name: 'Story Chain', tip: 'Write a story together, one line each, each with someone else\'s secret word sneaked in; then walk onto your favorite line and your favorite word.' },
   { id: 'quack', name: 'Who is the Quack?', tip: 'Everyone\'s Secret Card has the same word except the Quack\'s. Give clues, then walk onto the duck you think is faking it. 3 players or more.' },
   { id: 'law', name: 'Lawyering; Juryful of Ducklings', tip: 'Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.' },
+  { id: 'dunce', name: 'Duncelation', tip: 'Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.' },
   { id: 'hang', name: 'Hangout', tip: 'No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.' },
 ];
 export const modeOf = id => MODES.find(m => m.id === id) || MODES[0];
 
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
-   in a different card color; Lawyering's sword over a shield; Hangout's little
+   in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Hangout's little
    A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
@@ -42,6 +45,10 @@ export function modeSymbol(id, size = 32) {
   if (m.id === 'law') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 <path d="M17 3L26 5.8V11.6C26 16.6 22 20 17 22C12 20 8 16.6 8 11.6V5.8Z" fill="#2fa4ff" stroke="#1c1c28" stroke-width="1.2"/><path d="M17 5.4V19.8M10.4 11H23.6" stroke="#fff" stroke-width="1.4" opacity=".85"/>
 <g transform="rotate(-42 11 12)"><rect x="9.7" y="-.6" width="2.6" height="14.6" rx="1.1" fill="#e8edf5" stroke="#1c1c28" stroke-width="1.1"/><rect x="6.4" y="13.6" width="9.2" height="2.3" rx="1.1" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.1"/><rect x="9.9" y="15.7" width="2.2" height="4.4" rx="1" fill="#8a4b2a" stroke="#1c1c28" stroke-width="1"/></g></svg>`;
+  if (m.id === 'dunce') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
+<path d="M5 21.5L13 2L21 21.5Z" fill="#fbfbf6" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M13 2L21 21.5L17 21.5Z" fill="#000" opacity=".1"/>
+<text x="12.8" y="18.6" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="7" fill="#1c1c28">D</text><path d="M5 21.5C10 23 16 23 21 21.5" stroke="#1c1c28" stroke-width="1.2" fill="none"/>
+<text x="25.6" y="11" text-anchor="middle" font-family="'Lilita One', sans-serif" font-size="10" fill="#ffd23f" stroke="#1c1c28" stroke-width="1.6" paint-order="stroke fill">?</text></svg>`;
   if (m.id === 'sc') return `<svg viewBox="0 0 30 24" width="${size}" height="${size * .8}" role="img" aria-label="${esc(m.name)}">
 <rect x="1" y="1" width="28" height="22" rx="3" fill="#ffffff" stroke="#1c1c28" stroke-width="1.2"/>
 ${[['#2fa4ff', 22, 4], ['#ff8c2b', 17, 10.5], ['#37d421', 20, 17]].map(([c, w, y]) => `<rect x="4" y="${y}" width="${w}" height="2.6" rx="1.3" fill="#1c1c28" opacity=".55"/><rect x="4" y="${y + 3.4}" width="${w}" height="1.5" rx=".75" fill="${c}"/>`).join('')}</svg>`;

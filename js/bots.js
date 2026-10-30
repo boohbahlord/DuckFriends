@@ -8,13 +8,16 @@
    they pick a word from the list, "say" a clue in a chat bubble (they can't talk), skip a turn only once a person has, and
    vote for a random duck, leaning a little toward the real Quack (a TEST room's computers can see the host's secrets). In
    Lawyering they pick or vote for attorneys, vote as jurors (now and then changing their minds in closing arguments) and,
-   as an attorney behind in closing arguments, sometimes give up. In Hangout they wander about Duck Cabin, stopping now and
+   as an attorney behind in closing arguments, sometimes give up. In Duncelation they write a take, walk to Dunce or Not a
+   Dunce once the grace period is over and vote (now and then changing their minds); a defender stays in the circle. In
+   Hangout they wander about Duck Cabin, stopping now and
    then, and jump once in a while (they never walk off an edge or up a wall). */
 import * as HL from './hangout/layout.js';
 import { bjBot } from './hangout/blackjack.js';
 import { findPath } from './hangout/npc.js';
 import { colXAt, isHang, isWyr, isSc, isLaw, twoSided, isCounsel, jury, canGiveUp, BB_TOPICS, SC_WORDS, scWriter, scZones, scCanVote } from './rules.js';
 import { anyWord, tileCenter, spotOf, speakerOf, stillIn, canAccuse, CLUE_GRACE } from './quackrules.js';
+import { isDn, isDefender, voters, DN_GRACE, DUNCE_TAKES } from './duncerules.js';
 
 export const BOT_QUESTIONS = [
   'Pineapple belongs on pizza.', 'A hot dog is a sandwich.', 'Cereal is a soup.', 'Cats are better than dogs.',
@@ -97,6 +100,19 @@ function lawBot(s, id, late, now, out) {
   else out.push({ t: 'move', id, x: p.x + Math.sign(want - p.x) * step, y: p.y, j: p.j || 0 });
 }
 
+/* Duncelation: a voter walks to the side it leans to once the grace period is over, and votes; now and then it's talked
+   round (it walks over and votes again) */
+function dnBot(s, id, late, now, out) {
+  const C = s.dn && s.dn.cur; if (!C || C.w != null || !late || isDefender(s, id) || !voters(s).includes(id) || now < s.at + DN_GRACE * 1000) return;
+  const key = `${id}|${s.round}:${s.qi}`, mine = C.votes[id];
+  if (mine !== undefined && !swayed.has(key) && Math.random() < .002) { swayed.set(key, 1 - mine); if (swayed.size > 300) swayed.delete(swayed.keys().next().value); }
+  const c = pick(id, s.round + ':' + s.qi), side = swayed.has(key) ? swayed.get(key) : mine !== undefined ? mine : (c < 3 || (c === 3 && hash(key) % 2) ? 0 : 1);
+  if (mine === side) return;
+  const p = s.pos[id], want = colXAt(s, side), step = .035;
+  if (Math.abs(p.x - want) <= step) out.push({ t: 'move', id, x: want, y: p.y, j: p.j || 0 }, { t: 'end', id });
+  else out.push({ t: 'move', id, x: p.x + Math.sign(want - p.x) * step, y: p.y, j: p.j || 0 });
+}
+
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [], wait = (s.options.botWait ?? 5) * 1000;
@@ -158,7 +174,7 @@ export function botActions(s, now) {
       case 'submit':
         if (late && !s.done[id]) {
           const pair = BOT_WYR[Math.floor(Math.random() * BOT_WYR.length)], skip = Math.random() >= .9;
-          out.push(isWyr(s) ? { t: 'submit', id, a: skip ? '' : pair[0], b: skip ? '' : pair[1], time: 0 } : { t: 'submit', id, text: skip ? '' : BOT_QUESTIONS[Math.floor(Math.random() * BOT_QUESTIONS.length)], time: 0 });
+          out.push(isWyr(s) ? { t: 'submit', id, a: skip ? '' : pair[0], b: skip ? '' : pair[1], time: 0 } : { t: 'submit', id, text: skip ? '' : anyOf(isDn(s) ? DUNCE_TAKES : BOT_QUESTIONS), time: 0 });
         }
         break;
       case 'counsel': {
@@ -173,6 +189,7 @@ export function botActions(s, now) {
       }
       case 'answer': {
         if (isLaw(s)) { lawBot(s, id, late, now, out); break; }
+        if (isDn(s)) { dnBot(s, id, late, now, out); break; }
         if (!late || s.done[id]) break;
         const key = s.round + ':' + s.qi, c = pick(id, key), p = s.pos[id];
         const want = colXAt(s, twoSided(s) ? (c < 3 || (c === 3 && hash(id + key) % 2) ? 0 : 1) : c);   // (a neutral one picks a side once, not every step)

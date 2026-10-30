@@ -2559,3 +2559,15 @@ I go to class now cant answer question but adam can"
 > (Answers to the plan: Batch 1 yes; unvoteStops 1 by default yes; Batch 2 yes, "the ducks can move around on the board IF there is a board"; Justin's extra lines for the strike playlist, word for word in hangout/justin.js GOD_LINES; Duncelation yes, "the timer can be turned off, increased, or decreased", "the dunce hat is already in the game btw", a tie is not a dunce, after a dunce the game goes on; bug reports via Firebase and a GitHub job, the file named for bugs and ideas, done last.)
 
 - Decision: one merge for the Upcoming link, Batch 1 and Batch 2 (built locally, each file pushed once through the API: this session had no push access). Waiting for players: MIN_PLAYERS (Lawyering 3, Who is the Quack? 3); below it the game pauses (timers frozen, ducks walk, turn ends blocked), the bottom bar says "Waiting for players to continue 2/3", and it goes on when enough are back (a Quack gone: a new word; a case that couldn't start: that case again). Writing catch-up timer (writeCatch, 30 s default) for questions, topics, contenders and secret words. Floating messages (Settings → Chat, on). No ghosts while busy (ghostBusy, on): any activity that holds the duck. Justin on the boards: hammer swings and GOD_LINES strikes; in Duck Cabin the strikes (his hammer there needs drawing on him: not yet). Release dates on the Upcoming list stay "to be announced" until the owner gives dates. Duncelation and Report Bug or Suggest Ideas come next.
+
+## 2026-10-30: Duncelation, the plan's answers
+
+> yes let's do it
+
+> For the horn: A.
+
+- Decision: the plan in notes/plan-duncelation.md. The horn the dunce spams is the Trombone special (A). Built on a branch; the LOSER podium and the board are shown as pictures before merging.
+
+> I approve
+
+- Decision: the art (the Game type tile's symbol, the Dunce / Not a Dunce board, the LOSER podium) approved; Duncelation merged.

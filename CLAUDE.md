@@ -40,7 +40,8 @@ serves `main`, so merging to `main` is deploying).
 - `js/music.js` makes the songs on the spot; the host keeps the room's song list in the state (`s.music`), so everyone hears the
   same song at the same moment. `js/musicbar.js` is the now-playing bar (speaker, Music slider, song name).
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
-  `notes/plan-story-chain.md`), Who is the Quack? (`quack`, plan in `notes/plan-imposter.md`), Lawyering (`law`), Hangout
+  `notes/plan-story-chain.md`), Who is the Quack? (`quack`, plan in `notes/plan-imposter.md`), Lawyering (`law`), Duncelation (`dunce`,
+  rules in `js/duncerules.js`, screen in `js/dunce.js`, plan in `notes/plan-duncelation.md`), Hangout
   (`hang`, plan in `notes/plan-hangout.md`: no rounds, no stats, always on its own map, Duck Cabin, `cabin`).
 
 ## Sound without pops (every sound made in code: songs, piano, sounds)

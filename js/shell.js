@@ -32,6 +32,7 @@ import { TEXT, getopt, lines } from './textutils.js';
 import { MAN, PERMS_TAKE, PERMS_GIVE } from './manual.js';
 import { helpPage, helpIndex, HELP_NAMES, isHelpName } from './helppages.js';
 import { quackStats } from './quackrules.js';
+import { dnStats } from './duncerules.js';
 import { secret } from './unlocks.js';
 import { music } from './music.js';
 import { npcsHere, npcTag, npcByTag, npcById } from './npcs.js';
@@ -206,6 +207,7 @@ function statLines(ctx, scope, args) {
       if (mode === 'bb') out.push(`${base} · ${st.titles} won · ${st.wins} contender wins · ${st.losses} losses`);
       else if (mode === 'quack') out.push(`${base} · ${st.wins} rounds won · ${st.titles} won as the Quack · ${st.majority} votes for the real Quack`);
       else if (mode === 'law') out.push(`${base} · ${st.argued} cases argued · ${st.wins} won · ${st.losses} lost · gave up ${st.gave}`);
+      else if (mode === 'dunce') out.push(`${base} · ${st.argued} takes defended · not a dunce ${st.wins} · voted a dunce ${st.losses}`);
       else if (mode === 'ddr') out.push(`${base} · related ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else if (mode === 'wyr') out.push(`${base} · with the bigger side ${st.majority + st.minority ? pct(st.majority / (st.majority + st.minority)) : '—'}`);
       else if (mode === 'aod' && st.counts) { const top = Math.max(...st.counts), avg = st.answers ? st.counts.reduce((a, k, c) => a + k * (c - 3), 0) / st.answers : null; out.push(`${base} · chose most ${top ? st.counts.map((k, c) => k === top ? COLS[c] : '').filter(Boolean).join(', ') : '—'} · average ${avg === null ? '—' : signed(Math.round(avg * 10) / 10)}`); }
@@ -226,6 +228,9 @@ function statLines(ctx, scope, args) {
   } else if (mode === 'law') {
     const per = lawStats(s, round).per;
     for (const id of ids) { const p = per[id] || { argued: 0, won: 0, lost: 0, wonDef: 0, wonOff: 0, gave: 0, votes: 0, flips: 0 }; out.push(`${nm(id)}: ${p.argued} cases argued · ${p.won} won (${p.wonDef} as defense, ${p.wonOff} as offense) · ${p.lost} lost · gave up ${p.gave} · ${p.votes} jury votes · switched sides ${p.flips} · ${jumps(id)} Jumps`); }
+  } else if (mode === 'dunce') {
+    const per = dnStats(s).per;
+    for (const id of ids) { const p = per[id] || { turns: 0, not: 0, dunce: 0, comeback: 0, dunced: 0, votes: 0 }; out.push(`${nm(id)}: ${p.turns} takes defended · ${p.not} Not a Dunce votes · ${p.dunce} Dunce votes · comeback ${p.comeback} · voted a dunce ${p.dunced} · ${p.votes} votes · ${jumps(id)} Jumps`); }
   } else if (mode === 'wyr') {
     const per = wyrStats(s, round).per;
     for (const id of ids) { const p = per[id] || { answers: 0, written: 0, split: 0, maj: 0, min: 0 }; out.push(`${nm(id)}: ${p.answers} answers · bigger side ${p.maj} · smaller side ${p.min}${p.written ? ` · their questions split ${pct(p.split / p.written)} evenly` : ''} · ${jumps(id)} Jumps`); }

@@ -12,7 +12,9 @@
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
    that) writes a paragraph a round. Who is the Quack? has its own rules in quackrules.js. Lawyering (at the end) argues
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
-   room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). */
+   room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
+   own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. */
+import { isDn, DN_GRACE, DN_CEREMONY, dnStart, dealTakes, startTake, nextTake, dnVote, dnCheck, dnTick, isDefender } from './duncerules.js';
 import { isQuack, QUACK_PHASES, startQuackRound, quackEnd, quackAdvance, quackLeft, quackSkip, wqWord, holdStill, quackMoved, tileCenter } from './quackrules.js';
 import { holdDown, downStill, standUps, isGhost, DOWN_OK, DEAD_STILL } from './hangout/death.js';
 import { npcById } from './npcs.js';
@@ -39,7 +41,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0,            // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0,          // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: 'board',         // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
-  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | hang (Hangout)
+  mode: 'aod',          // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | hang (Hangout)
   bbSeeds: 't8',        // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: 'vote',      // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0,           // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -55,6 +57,8 @@ export const OPTIONS_DEFAULT = {
   lawDef: 'random',     // Lawyering: who picks the defense attorney: random | writer (the topic's writer) | vote (the room)
   lawOff: 'random',     // … and the offense attorney
   lawClose: 60,         // seconds of closing arguments when the jury is split: 30, 60, 120
+  dunceTime: 120,       // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
+  dunceTakes: 'random', // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -77,16 +81,17 @@ export const isLaw = s => s.options.mode === 'law';
 export const isHang = s => s.options.mode === 'hang';
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
-   circle */
-export const twoSided = s => isWyr(s) || isDdr(s) || isBb(s) || isLaw(s) || (isQuack(s) && s.phase === 'choice');
+   circle; Duncelation: Dunce on the left, Not a Dunce on the right, and the same strip with the defender's circle */
+export const twoSided = s => isWyr(s) || isDdr(s) || isBb(s) || isLaw(s) || isDn(s) || (isQuack(s) && s.phase === 'choice');
 export const LAW_MID = [.42, .58];
-export const colAt = (s, x) => isLaw(s) ? (x < LAW_MID[0] ? 0 : x > LAW_MID[1] ? 1 : -1) : twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
+const ringed = s => isLaw(s) || isDn(s);
+export const colAt = (s, x) => ringed(s) ? (x < LAW_MID[0] ? 0 : x > LAW_MID[1] ? 1 : -1) : twoSided(s) ? (x < .46 ? 0 : x > .54 ? 1 : -1) : colOf(x);
 export const colXAt = (s, c) => twoSided(s) ? [.25, .75][c] ?? .5 : colX(c);
-export const colBoundsAt = (s, c) => isLaw(s) ? ([[.03, .4], [.6, .97]][c] || [.44, .56]) : twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
+export const colBoundsAt = (s, c) => ringed(s) ? ([[.03, .4], [.6, .97]][c] || [.44, .56]) : twoSided(s) ? ([[.03, .44], [.56, .97]][c] || [.47, .53]) : colBounds(c);
 export const startX = s => twoSided(s) || isSc(s) ? .5 : colX(3);   // where ducks start: Neutral, or the OR strip
 /* the phases with ducks on the board (Bicker Brackets: its stats fill the screen; ducks walk over the bracket instead;
    Story Chain: ducks walk up and down the story) */
-export const boardPhases = s => isHang(s) ? ['hang'] : isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : isLaw(s) ? ['answer', 'discuss'] : ['answer', 'discuss', 'results'];
+export const boardPhases = s => isHang(s) ? ['hang'] : isBb(s) ? ['answer', 'tie', 'discuss', 'bracket'] : isSc(s) ? SC_BOARD : isQuack(s) ? ['clue', 'choice', 'accuse', 'reveal'] : isLaw(s) ? ['answer', 'discuss'] : isDn(s) ? ['answer', 'discuss', 'dunced'] : ['answer', 'discuss', 'results'];
 const humanIds = s => s.seat.filter(id => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = s => s.seat.filter(id => !(s.players[id] || {}).late);
@@ -94,12 +99,13 @@ export const seatLate = s => { for (const id of s.seat) if (s.players[id]) delet
 /* the fewest players a game needs. I want a game that drops below it to wait for players ("Waiting for players to
    continue", with 2/3 and the like) instead of ending: the timers stop where they were, ducks still walk, and the game
    goes on once enough are back */
-export const MIN_PLAYERS = { quack: 3, law: 3 };
+export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3 };
 export const minOf = s => MIN_PLAYERS[s.options.mode] || 0;
 const running = s => !['lobby', 'over', 'countdown'].includes(s.phase);
 const WAIT_BLOCK = ['end', 'wqWord', 'giveUp', 'tieVote', 'skip', 'voteReview'];
 export const tooFew = s => running(s) && s.seat.length < minOf(s);
-/* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word) or 'case' (this case again) */
+/* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
+   take again) */
 export function waitFor(s, now, resume = 'phase') {
   if (s.waiting) { if (resume !== 'phase') s.waiting.resume = resume; return s; }
   const left = t => t ? Math.max(0, t - now) : 0;
@@ -117,6 +123,7 @@ function resumeGame(s, now) {
   say(s, 'Enough players: the game goes on!');
   if (w.resume === 'quackRound') return startQuackRound(s, now);
   if (w.resume === 'case') return startCase(s, now);
+  if (w.resume === 'take') return startTake(s, now);
   return advance(s, now);
 }
 /* someone left or was removed: a game below its fewest players waits (a countdown that can't start goes back to the lobby) */
@@ -182,6 +189,7 @@ function phaseLimit(s) {
   if (['submit', 'topic', 'seeds'].includes(s.phase)) return s.options.submitTime;
   if (s.phase === 'answer') return s.lordTime;
   if (s.phase === 'podium') return PODIUM;
+  if (s.phase === 'dunced') return DN_CEREMONY;
   if (s.phase === 'wqpick') return s.options.wqPickTime;
   if (s.phase === 'choice' || s.phase === 'accuse') return s.options.wqTimer;
   return 0;
@@ -240,6 +248,7 @@ function startResults(s, now) {
   if (isQuack(s)) return toStats(s, now);
   if (isBb(s)) { const { topic, topicBy, seeds, rounds, champ } = s.bb; s.bbPast = [...(s.bbPast || []), { round: s.round, topic, topicBy, seeds, rounds, champ }]; return toStats(s, now); }   // the tournament joins the game's
   if (isLaw(s)) { s.law = null; s.lock = {}; return toStats(s, now); }   // (the stats fill the screen)
+  if (isDn(s)) { if (s.dn) s.dn.cur = null; s.lock = {}; return toStats(s, now); }
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
@@ -260,7 +269,7 @@ function catchUp(s, now, enough) {
    Additional settings (free roam never has one) */
 export const discussOn = s => !!s.options.discuss && !s.options.freeRoam;
 /* after voting, my duck walks only inside the column (the box) it voted in; pressing Vote again lets it out */
-export const heldCol = (s, id) => s.phase === 'answer' && s.done[id] && !s.options.freeRoam && !isLaw(s) && s.pos[id] && s.pos[id].x >= 0 ? colAt(s, s.pos[id].x) : null;
+export const heldCol = (s, id) => s.phase === 'answer' && s.done[id] && !s.options.freeRoam && !ringed(s) && s.pos[id] && s.pos[id].x >= 0 ? colAt(s, s.pos[id].x) : null;
 /* what ends a phase: everyone voting, the needed share's countdown (catch-up timer) running out, or its timer */
 function advance(s, now, force = false) {
   if (s.waiting) return s;   // (waiting for players: nothing moves on)
@@ -269,6 +278,7 @@ function advance(s, now, force = false) {
   if (isHang(s)) return s;   // (no turns: the cabin stays open until the room goes back to the lobby)
   const on = playing(s), n = on.length, d = on.filter(id => s.done[id]).length, all = d >= n, enough = d >= needed(s);
   if (isLaw(s) && s.phase === 'answer') return lawCheck(s, now, force);   // a case waits for the jury (and closing arguments)
+  if (isDn(s) && s.phase === 'answer') return dnCheck(s, now, force);   // a take waits for its timer (or, with none, for the votes)
   const sway = isBb(s) && s.phase === 'answer';   // a bracket match waits for every vote (or its own timer, if the host set one)
   const timeUp = s.ends && now >= s.ends;
   /* I want every phase to end when everyone has voted; the needed share only starts the countdown (the catch-up timer).
@@ -279,6 +289,7 @@ function advance(s, now, force = false) {
   switch (s.phase) {
     case 'countdown': return s;
     case 'submit': {
+      if (isDn(s)) return dealTakes(s, now);   // (Duncelation: everyone gets a take, written or not)
       /* whatever someone had typed goes in as their question when time runs out (Send or "Don't submit one" ends it early) */
       for (const id of s.seat) { const d = (s.drafts || {})[id]; if (!s.done[id] && d && d.text) (s.subs = s.subs || []).push({ by: id, ...d }); }
       delete s.drafts;
@@ -292,7 +303,7 @@ function advance(s, now, force = false) {
     case 'seeds': return endSeedTurn(s, now);
     case 'counsel': return endCounsel(s, now);
     case 'bracket': return s.bb.champ != null ? enter(s, 'podium', now) : nextMatch(s, now);
-    case 'podium': return startResults(s, now);
+    case 'podium': case 'dunced': return startResults(s, now);
     case 'tie': return settleTie(s, now);
     case 'answer':
       if (isBb(s)) return endMatch(s, now) ? (discussOn(s) ? enter(s, 'discuss', now) : nextMatch(s, now)) : enter(s, 'tie', now);
@@ -303,6 +314,7 @@ function advance(s, now, force = false) {
     case 'discuss':
       if (isBb(s)) return nextMatch(s, now);
       if (isLaw(s)) return nextCase(s, now);
+      if (isDn(s)) return nextTake(s, now);
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
     case 'results': s.round++; s.subs = []; s.qs = []; return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
@@ -337,7 +349,7 @@ function seatNewcomer(s, id) {
   if (ph === 'discuss') { me.late = true; return; }
   if (ph === 'seeds') s.done[id] = true;   // (the seeds were shared out: they vote on them)
   if (ph === 'counsel') s.done[id] = counselDone(s, id);
-  if (ph === 'answer' && isLaw(s)) { const top = Math.random() < .5; s.pos[id] = { x: .45 + .1 * Math.random(), y: top ? .04 : .96 }; }   // with the jury, above or below the circle
+  if (ph === 'answer' && ringed(s)) { const top = Math.random() < .5; s.pos[id] = { x: .45 + .1 * Math.random(), y: top ? .04 : .96 }; }   // with the jury, above or below the circle
   if (ph === 'results' && !isBb(s) && !isLaw(s)) s.lock[id] = isWyr(s) || isDdr(s) ? -1 : 3;   // (like a duck that never stood on the board)
 }
 
@@ -426,10 +438,11 @@ export function reduce(state, a, now = Date.now()) {
       let x = Math.max(0, Math.min(1, +a.x || 0)), y = Math.max(0, Math.min(1, +a.y || 0));
       // a vote keeps its answer: the duck walks only inside its own column until Vote is pressed again (a juror may walk over and change their vote)
       { const c = heldCol(s, a.id); if (c != null && c >= 0) { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); } }
-      if (s.phase === 'answer' && isLaw(s) && isCounsel(s, a.id)) { const [lo, hi] = colBoundsAt(s, -1); x = Math.max(lo, Math.min(hi, x)); }   // the attorneys argue from the circle
+      if (s.phase === 'answer' && ((isLaw(s) && isCounsel(s, a.id)) || (isDn(s) && isDefender(s, a.id)))) { const [lo, hi] = colBoundsAt(s, -1); x = Math.max(lo, Math.min(hi, x)); }   // the attorneys (the defender) argue from the circle
+      if (isDn(s) && s.phase === 'dunced' && isDefender(s, a.id)) return state;   // the dunce stays on the podium
       if (isQuack(s) && ['choice', 'accuse'].includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a vote holds its spot
       if (isSc(s) && SC_VOTES.includes(s.phase) && s.done[a.id]) { x = was.x; y = was.y; }   // a story vote holds its spot
-      if (s.phase !== 'answer' && s.phase !== 'bracket' && !isSc(s) && !me.late && !isQuack(s) && !isHang(s)) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
+      if (s.phase !== 'answer' && s.phase !== 'bracket' && s.phase !== 'dunced' && !isSc(s) && !me.late && !isQuack(s) && !isHang(s)) {   // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
         if (c === undefined) { x = was.x; y = was.y; } else { const [lo, hi] = colBoundsAt(s, c); x = Math.max(lo, Math.min(hi, x)); }
       }
@@ -446,9 +459,11 @@ export function reduce(state, a, now = Date.now()) {
       if (isSc(s)) return scVote(s, a, now) || state;
       if (isHang(s)) return state;   // (Hangout's button is its own action, below)
       if (!me || me.late || ![...boardPhases(s), 'results'].includes(s.phase) || s.phase === 'tie') return s;   // (a tie is settled with tieVote)
+      if (s.phase === 'dunced') return state;   // (Duncelation: the dunce's moment runs its time, then the stats)
       if (s.phase === 'answer' && !(s.pos[a.id] && s.pos[a.id].x >= 0 && colAt(s, s.pos[a.id].x) >= 0)) return s;   // stand on a column (a tile) first
-      if (s.phase === 'answer' && now < s.at + VOTE_GRACE * 1000) return state;       // not in the first seconds
+      if (s.phase === 'answer' && now < s.at + (isDn(s) ? DN_GRACE : VOTE_GRACE) * 1000) return state;       // not in the first seconds (Duncelation: its grace period)
       if (s.phase === 'answer' && isLaw(s)) return lawVote(s, a, now) || state;
+      if (s.phase === 'answer' && isDn(s)) return dnVote(s, a, now) || state;
       s.done[a.id] = a.v ?? !s.done[a.id];   // pressing Vote again takes the vote back (and frees the duck to walk)
       return advance(s, now);
     }
@@ -458,7 +473,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.filter(id => s.reviewVotes[id]).length >= needed(s)) s.review = true;
       return s;
     case 'toLobby': if (boss && isHang(s) && s.phase === 'hang') return backToLobby(s, `${me.name} took everyone back to the lobby.`);   // (Hangout: the host ends it whenever)
-      if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; for (const id of s.seat) P[id].ready = false; } return s;
+      if (boss && s.phase === 'over') { s.phase = 'lobby'; s.round = 0; s.history = []; s.jumps = {}; s.dn = null; for (const id of s.seat) P[id].ready = false; } return s;
     case 'fx': {   // the silly commands, seen by everyone on the board
       const who = (a.who || []).filter(id => P[id]);
       if (a.justin && a.kind === 'kill' && me && s.options.fun && !denied(s, a.id, 'nofun')) return justinDown(s, now, logLine) ? s : state;   // (the Justin option: kill @Justin on the boards)
@@ -640,12 +655,13 @@ export function reduce(state, a, now = Date.now()) {
         s.startedAt = now; s.round = 0; s.history = []; s.subs = []; s.jumps = {}; s.bbPast = []; s.wqPast = []; s.wqScore = { quack: 0, room: 0 }; s.wqPickers = []; for (const id of s.seat) P[id].ready = false;
         if (isSc(s)) { s.sc = { stories: [] }; return startStory(s, now, true); }
         if (isHang(s)) { hangStart(s, now); return enter(s, 'hang', now); }
+        s.dn = null; if (isDn(s)) dnStart(s);
         return isBb(s) ? startTourney(s, now) : isQuack(s) ? startQuackRound(s, now) : enter(s, 'submit', now);
       }
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) { say(s, 'A new host took over, so a new secret word.'); return startQuackRound(s, now); }   // (the old host's Secret Cards can't be opened)
       if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'countdown') return state;
       if (s.vote && now >= s.vote.ends) { say(s, 'The vote ran out of time.'); s.vote = null; return s; }
-      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine), up = standUps(s, now);   // (a knocked-down duck stands up by itself when its time is up)
+      const shots = moveShots(s, now), hung = isHang(s) && s.phase === 'hang' && hangTick(s, now), jus = justinTick(s, now, logLine) | dnTick(s, now), up = standUps(s, now);   // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(), was = sig();
       advance(s, now);
       return sig() === was && !shots && !hung && !jus && !up ? state : s;
@@ -695,7 +711,7 @@ export function slowMs(s, id) {
 /* may this player open a file someone sent from the command line? its sender, sudo, its group (chmod g+r), or everyone (o+r) */
 export const canOpen = (s, id, m) => !m.file || m.from === id || isSudo(s, id) || !!m.pub || (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
-export const STAGE = { lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', counsel: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats', wqpick: 'writing', clue: 'discussing', choice: 'voting', accuse: 'voting', reveal: 'discussing', hang: 'discussing' };
+export const STAGE = { dunced: 'discussing', lobby: 'lobby', countdown: 'lobby', over: 'stats', submit: 'writing', topic: 'writing', seeds: 'writing', words: 'writing', write: 'writing', answer: 'voting', tvote: 'voting', tie: 'voting', lvote: 'voting', wvote: 'voting', counsel: 'voting', discuss: 'discussing', bracket: 'discussing', results: 'stats', podium: 'stats', wqpick: 'writing', clue: 'discussing', choice: 'voting', accuse: 'voting', reveal: 'discussing', hang: 'discussing' };
 function countTurn(s, was) {
   const k = turnKey(s); if (k !== s.lastTurn) { s.lastTurn = k; s.turnN = (s.turnN || 0) + 1; }
   const st = STAGE[s.phase]; if (st !== was) s.stageN = { ...(s.stageN || {}), [st]: ((s.stageN || {})[st] || 0) + 1 };
@@ -893,13 +909,14 @@ function skipRound(s, now) {
     return startNext(s, now);
   }
   if (s.phase === 'submit') { s.round++; s.subs = []; s.qs = []; return enter(s, 'submit', now); }   // nothing asked yet: on to the next round's writing
+  if (isDn(s) && s.phase !== 'dunced') { s.dn.cur = null; s.round++; s.subs = []; s.qs = []; s.qi = 0; return enter(s, 'submit', now); }   // (Duncelation: a new rotation; after a dunce, its stats)
   return startResults(s, now);
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
   delete s.waiting;
   const was = STAGE[s.phase]; s.phase = 'lobby'; countTurn(s, was); s.at = 0; s.ends = 0; s.catchEnds = 0; s.round = 0; s.history = []; s.jumps = {}; s.qs = []; s.qi = 0; s.subs = [];
-  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.hang = null; s.bb = null; s.bbPast = []; s.sc = null; s.law = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
+  s.done = {}; s.vote = null; s.voteUsed = {}; s.banned = {}; s.pos = {}; s.lock = {}; s.hang = null; s.bb = null; s.bbPast = []; s.sc = null; s.law = null; s.dn = null; s.wq = null; delete s.hidden; s.wqPast = []; s.wqScore = null; s.wqPickers = [];
   for (const id of s.seat) { s.players[id].ready = false; delete s.players[id].late; }
   say(s, why);
   return s;
