@@ -2567,3 +2567,7 @@ I go to class now cant answer question but adam can"
 > For the horn: A.
 
 - Decision: the plan in notes/plan-duncelation.md. The horn the dunce spams is the Trombone special (A). Built on a branch; the LOSER podium and the board are shown as pictures before merging.
+
+> I approve
+
+- Decision: the art (the Game type tile's symbol, the Dunce / Not a Dunce board, the LOSER podium) approved; Duncelation merged.
