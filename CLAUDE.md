@@ -71,6 +71,8 @@ A pop is the wave jumping. Every rule below stops one kind of jump; check each o
 
 ## Before each commit that touches css/ or js/
 Run `python3 tools/stamp.py`. It stamps a version on every file in `index.html`, so browsers never mix old and new files.
+Format first, the owner's way: `npx prettier@3.6.2 --write <changed js/css/html/json/yml files>` and `black <changed .py files>`
+(never Prettier 3.3.3: it drops numbers from arrays inside template literals).
 
 ## Testing
 Serve the folder (`python3 -m http.server`) and drive it with Playwright. A TEST room can be started from the page:

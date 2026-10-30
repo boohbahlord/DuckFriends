@@ -18,8 +18,16 @@
    - Now and then (with the silly commands on) a line from GOD_LINES, then lightning or fire strikes a random duck from
      the sky, and it plays dead.
    The lines are mine, word for word: don't change them. */
-import { brain, npcAt, randomSpot, nearestOpen, stand, POOL, DOORS } from './npc.js';
-import { PROPS, DECK, BJ, inPool } from './layout.js';
+import {
+  brain,
+  npcAt,
+  randomSpot,
+  nearestOpen,
+  stand,
+  POOL,
+  DOORS,
+} from "./npc.js";
+import { PROPS, DECK, BJ, inPool } from "./layout.js";
 
 export const E_LINES = `Shut up.
 Shut up!
@@ -104,7 +112,7 @@ I couldn't care less.
 I am going to rotate.
 I'm LITERALLY A CIVIL ENGINEER!
 This bit isn't funny, just stop.
-?`.split('\n');
+?`.split("\n");
 export const DEATH_LINES = `WHAT THE FLIP!
 What the FLIIIIIP!
 STOP!
@@ -117,7 +125,7 @@ STOOOOOOP!!!!!
 I am turning off my Xbox...
 I'M TURNING OFF MY XBOX!!!!
 This is so STUPID!
-You are such a stupid IDIOT!`.split('\n');
+You are such a stupid IDIOT!`.split("\n");
 /* before he strikes a duck from the sky: a line from this shuffled playlist (every line once, then shuffled again) */
 export const GOD_LINES = `Frick you I am GOD!
 I am perfect!
@@ -133,9 +141,10 @@ YOU ARE GOING TO FEEL THIS!!!
 I HATE YOU!!! DIIIE!!!!!!!!
 Did you say I am NOT BASED!?!?!?!
 MWAHAHAHAHAHA!!!!!!
-DIE!!! DIE!!!!! DIE!!!!!!!!!!`.split('\n');
+DIE!!! DIE!!!!! DIE!!!!!!!!!!`.split("\n");
 export const DRANK = "I drank too much, but I swear it isn't a problem.";
-export const POOL_LINE = "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
+export const POOL_LINE =
+  "Why would I go to the pool?! IT'S JUST WATER! I don't care!";
 /* poker (poker.js): my new lines for his winning and losing, word for word, and his old ones that fit them (mostly the
    new ones); busted, he says one of his own insults or rage lines */
 export const WIN_LINES = `YES!
@@ -157,7 +166,7 @@ You should give up.
 I'm not even trying.
 I always win.
 HAHA! IDIOT!
-Just quit the game at this point, YOU'RE SO BAD!`.split('\n');
+Just quit the game at this point, YOU'RE SO BAD!`.split("\n");
 export const LOSE_LINES = `HOW DID I LOSE!?!
 NOOOOO!!!!!!
 WHAT THE FLIIIIIP!!!!!
@@ -187,224 +196,644 @@ STOP!!! STOP!!! STOP!!! STOP!!!!
 STOP!!! STOP!!! STOP!!! STAAAHHPP!!!!
 Get some help.
 IT'S NOT FUNNY!!!!
-IT'S NOT FUUUUHHHNNNY!!!!!`.split('\n');
-const pick = (...ls) => ls.map(l => { if (!E_LINES.includes(l) && !DEATH_LINES.includes(l)) throw new Error('not his line: ' + l); return l; });
-export const OLD_WIN = pick('Shut up, you stupid IDIOT!', "GOD, you're so STUPID!", "YOU'RE SO STUPID!", 'I could buy your whole family.', "You're such a stupid flipping IDIOT!", 'Keep telling yourself that.', 'I am so rich.', 'I love money.', "You're heckin' stupid.", 'Yes, I know.', 'You guys are being so stupid.', 'I make more money than your whole family combined.', 'Why am I so funny?', 'I am so unbelievably BASED!');
-export const OLD_LOSE = pick("I'M TURNING OFF MY XBOX!", 'NOOOOOOOO!', 'NOOOOO!!!', 'I DON\'T GIVE A FLIP!', 'I hate EVERYTHING!', 'What the FLIP!', 'I am done.', "I can't do this anymore.", 'Why am I here?', 'I hate it here.', 'I--don\'t--give--a--FLIIIIIP!', '...', "I couldn't care less.", 'WHYYYY!!?!?!?!', 'STOOOOOOP!!!!!', 'I am turning off my Xbox...', 'This is so STUPID!');
-export const BUST_LINES = pick('SHUT UP!', 'Shut up, you stupid IDIOT!', "GOD, you're so STUPID!", "YOU'RE SO STUPID!", "You're such a stupid flipping IDIOT!", 'God, you are so flipping stupid.', "I'M TURNING OFF MY XBOX!", 'I hate EVERYTHING!', 'I am done.', 'I--don\'t--give--a--FLIIIIIP!', "I'M TURNING OFF MY XBOX!!!!", 'This is so STUPID!', 'You are such a stupid IDIOT!');
-export const SHADOW_LINES = ['I literally got killed by a black duck!', 'WAIT!', 'HE WAS LITERALLY BLACK!', 'NOT RACIALLY OF COURSE!'];
-const SHUT_UPS = E_LINES.filter(l => /^shut up/i.test(l));
-const RANT_SHOUT = 'SHUT UP!';
+IT'S NOT FUUUUHHHNNNY!!!!!`.split("\n");
+const pick = (...ls) =>
+  ls.map((l) => {
+    if (!E_LINES.includes(l) && !DEATH_LINES.includes(l))
+      throw new Error("not his line: " + l);
+    return l;
+  });
+export const OLD_WIN = pick(
+  "Shut up, you stupid IDIOT!",
+  "GOD, you're so STUPID!",
+  "YOU'RE SO STUPID!",
+  "I could buy your whole family.",
+  "You're such a stupid flipping IDIOT!",
+  "Keep telling yourself that.",
+  "I am so rich.",
+  "I love money.",
+  "You're heckin' stupid.",
+  "Yes, I know.",
+  "You guys are being so stupid.",
+  "I make more money than your whole family combined.",
+  "Why am I so funny?",
+  "I am so unbelievably BASED!",
+);
+export const OLD_LOSE = pick(
+  "I'M TURNING OFF MY XBOX!",
+  "NOOOOOOOO!",
+  "NOOOOO!!!",
+  "I DON'T GIVE A FLIP!",
+  "I hate EVERYTHING!",
+  "What the FLIP!",
+  "I am done.",
+  "I can't do this anymore.",
+  "Why am I here?",
+  "I hate it here.",
+  "I--don't--give--a--FLIIIIIP!",
+  "...",
+  "I couldn't care less.",
+  "WHYYYY!!?!?!?!",
+  "STOOOOOOP!!!!!",
+  "I am turning off my Xbox...",
+  "This is so STUPID!",
+);
+export const BUST_LINES = pick(
+  "SHUT UP!",
+  "Shut up, you stupid IDIOT!",
+  "GOD, you're so STUPID!",
+  "YOU'RE SO STUPID!",
+  "You're such a stupid flipping IDIOT!",
+  "God, you are so flipping stupid.",
+  "I'M TURNING OFF MY XBOX!",
+  "I hate EVERYTHING!",
+  "I am done.",
+  "I--don't--give--a--FLIIIIIP!",
+  "I'M TURNING OFF MY XBOX!!!!",
+  "This is so STUPID!",
+  "You are such a stupid IDIOT!",
+);
+export const SHADOW_LINES = [
+  "I literally got killed by a black duck!",
+  "WAIT!",
+  "HE WAS LITERALLY BLACK!",
+  "NOT RACIALLY OF COURSE!",
+];
+const SHUT_UPS = E_LINES.filter((l) => /^shut up/i.test(l));
+const RANT_SHOUT = "SHUT UP!";
 
-const WALK = 300, SPRINT = 620;
-const SHOOT_ODDS = .15, SHOOT_AFTER = 4000;           // E, then 4 seconds later, sometimes a shot
-const GOD_EVERY = [120, 240], STRIKE = 1600;   // seconds between his strikes from the sky; ms from his line to the strike
-const SAY_EVERY = [45, 90], RANT_EVERY = [840, 1560], DRINK_EVERY = [360, 600], HOTDOG_EVERY = [120, 240];   // seconds
-const RANGE = 360, AIM = 1100, KEEP = 260;            // how far his gun reaches; between his shots (ms); how far off he stays
-const LINE = 4000, HEARD = 5000;   // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
+const WALK = 300,
+  SPRINT = 620;
+const SHOOT_ODDS = 0.15,
+  SHOOT_AFTER = 4000; // E, then 4 seconds later, sometimes a shot
+const GOD_EVERY = [120, 240],
+  STRIKE = 1600; // seconds between his strikes from the sky; ms from his line to the strike
+const SAY_EVERY = [45, 90],
+  RANT_EVERY = [840, 1560],
+  DRINK_EVERY = [360, 600],
+  HOTDOG_EVERY = [120, 240]; // seconds
+const RANGE = 360,
+  AIM = 1100,
+  KEEP = 260; // how far his gun reaches; between his shots (ms); how far off he stays
+const LINE = 4000,
+  HEARD = 5000; // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
-const HOME = (() => { const r = PROPS.filter(p => p.kind === 'rocker'); return r.length ? [Math.round((r[0].x + r[r.length - 1].x) / 2 + 40), Math.round(r[0].y + r[0].d + 70)] : [Math.round((DECK.x0 + DECK.x1) / 2), Math.round((DECK.y0 + DECK.y1) / 2)]; })();
-const JEEP = PROPS.find(p => p.kind === 'jeep');
-const COUCHES = PROPS.filter(p => p.kind === 'couch');
-const poolNear = (x, y, r) => x > POOL.x0 - r && x < POOL.x1 + r && y > POOL.y0 - r && y < POOL.y1 + r;
+const HOME = (() => {
+  const r = PROPS.filter((p) => p.kind === "rocker");
+  return r.length
+    ? [
+        Math.round((r[0].x + r[r.length - 1].x) / 2 + 40),
+        Math.round(r[0].y + r[0].d + 70),
+      ]
+    : [
+        Math.round((DECK.x0 + DECK.x1) / 2),
+        Math.round((DECK.y0 + DECK.y1) / 2),
+      ];
+})();
+const JEEP = PROPS.find((p) => p.kind === "jeep");
+const COUCHES = PROPS.filter((p) => p.kind === "couch");
+const poolNear = (x, y, r) =>
+  x > POOL.x0 - r && x < POOL.x1 + r && y > POOL.y0 - r && y < POOL.y1 + r;
 const DRY = { dry: true };
-let mm = null;   // what he's up to (the host's own notes)
-export const resetJustin = () => { mm = null; };
-const shuffle = (rand, a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let mm = null; // what he's up to (the host's own notes)
+export const resetJustin = () => {
+  mm = null;
+};
+const shuffle = (rand, a) => {
+  a = [...a];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 function notes(c) {
-  if (!mm) mm = { mode: 'home', next: c.now + 4000, say: c.now + sec(c.rand, SAY_EVERY), rant: c.now + sec(c.rand, RANT_EVERY), drink: c.now + sec(c.rand, DRINK_EVERY), hotdog: c.now + sec(c.rand, HOTDOG_EVERY), list: [], pool: 0, shots: [], lock: 0, lines: [] };
+  if (!mm)
+    mm = {
+      mode: "home",
+      next: c.now + 4000,
+      say: c.now + sec(c.rand, SAY_EVERY),
+      rant: c.now + sec(c.rand, RANT_EVERY),
+      drink: c.now + sec(c.rand, DRINK_EVERY),
+      hotdog: c.now + sec(c.rand, HOTDOG_EVERY),
+      list: [],
+      pool: 0,
+      shots: [],
+      lock: 0,
+      lines: [],
+    };
   return mm;
 }
 /* the next line of the playlist (shuffled again once it's all been said) */
-function nextLine(c) { if (!mm.list.length) mm.list = shuffle(c.rand, E_LINES.map((_, i) => i)); return E_LINES[mm.list.shift()]; }
-const down = (me, c, cause) => { c.stop(me); me.a = 'dead'; mm.mode = 'dead'; mm.cause = cause; mm.target = null; mm.downAt = c.now; };
-const SELF_REVIVE = 120000;   // nobody revived him: up by himself after 2 minutes
+function nextLine(c) {
+  if (!mm.list.length)
+    mm.list = shuffle(
+      c.rand,
+      E_LINES.map((_, i) => i),
+    );
+  return E_LINES[mm.list.shift()];
+}
+const down = (me, c, cause) => {
+  c.stop(me);
+  me.a = "dead";
+  mm.mode = "dead";
+  mm.cause = cause;
+  mm.target = null;
+  mm.downAt = c.now;
+};
+const SELF_REVIVE = 120000; // nobody revived him: up by himself after 2 minutes
 /* up again (E on him, or by himself): the drinking line and a glass, or the shadow duck's lines */
 function revive(me, c) {
-  me.a = ''; mm.mode = 'home'; mm.next = c.now + 3000;
-  if (mm.cause === 'drink') { c.say('justin', DRANK); me.a = 'drink'; mm.mode = 'drinking'; mm.until = c.now + 3500; }
-  else if (mm.cause === 'shadow') { mm.lines = [...SHADOW_LINES]; mm.lineAt = c.now; mm.lock = Infinity; }
+  me.a = "";
+  mm.mode = "home";
+  mm.next = c.now + 3000;
+  if (mm.cause === "drink") {
+    c.say("justin", DRANK);
+    me.a = "drink";
+    mm.mode = "drinking";
+    mm.until = c.now + 3500;
+  } else if (mm.cause === "shadow") {
+    mm.lines = [...SHADOW_LINES];
+    mm.lineAt = c.now;
+    mm.lock = Infinity;
+  }
 }
-const pickSpot = c => {
+const pickSpot = (c) => {
   const r = c.rand();
-  if (r < .25 && JEEP) return nearestOpen(JEEP.x + JEEP.w / 2 + (c.rand() - .5) * 300, JEEP.y + JEEP.d + 60 + c.rand() * 80, DRY, 6);
+  if (r < 0.25 && JEEP)
+    return nearestOpen(
+      JEEP.x + JEEP.w / 2 + (c.rand() - 0.5) * 300,
+      JEEP.y + JEEP.d + 60 + c.rand() * 80,
+      DRY,
+      6,
+    );
   return randomSpot(c.rand, (x, y) => !poolNear(x, y, 300), DRY);
 };
 /* chasing someone with the gun: he sprints, and shoots when they're close enough */
 function chase(me, c, at, shout) {
-  const d = c.ducks.find(q => q.id === mm.target);
-  if (!d || d.dead) {   // got them (or they left): a rant ends at the first dead duck
-    if (mm.mode === 'rant' && d && d.dead) { mm.mode = 'home'; mm.next = c.now + 3000; mm.target = null; c.stop(me); return true; }
-    const n = c.ducks.filter(q => !q.dead).sort((a, b) => c.dist(at, a) - c.dist(at, b))[0];
-    if (mm.mode === 'rant' && n && c.dist(at, n) < 1400 && c.now < mm.until) { mm.target = n.id; return false; }
-    mm.mode = 'home'; mm.next = c.now + 2000; mm.target = null; return false;
+  const d = c.ducks.find((q) => q.id === mm.target);
+  if (!d || d.dead) {
+    // got them (or they left): a rant ends at the first dead duck
+    if (mm.mode === "rant" && d && d.dead) {
+      mm.mode = "home";
+      mm.next = c.now + 3000;
+      mm.target = null;
+      c.stop(me);
+      return true;
+    }
+    const n = c.ducks
+      .filter((q) => !q.dead)
+      .sort((a, b) => c.dist(at, a) - c.dist(at, b))[0];
+    if (mm.mode === "rant" && n && c.dist(at, n) < 1400 && c.now < mm.until) {
+      mm.target = n.id;
+      return false;
+    }
+    mm.mode = "home";
+    mm.next = c.now + 2000;
+    mm.target = null;
+    return false;
   }
-  if (c.now > mm.until) { mm.mode = 'home'; mm.next = c.now + 2000; mm.target = null; return false; }
+  if (c.now > mm.until) {
+    mm.mode = "home";
+    mm.next = c.now + 2000;
+    mm.target = null;
+    return false;
+  }
   let ch = false;
-  if (shout && c.now > (mm.shout || 0)) { mm.shout = c.now + 1500; c.say('justin', RANT_SHOUT); ch = true; }
+  if (shout && c.now > (mm.shout || 0)) {
+    mm.shout = c.now + 1500;
+    c.say("justin", RANT_SHOUT);
+    ch = true;
+  }
   const dist = c.dist(at, d);
   if (dist < RANGE && c.now > (mm.aim || 0)) {
-    mm.aim = c.now + AIM; me.f = d.x > at.x ? 1 : -1;
-    if (c.rand() < .6) c.kill('justin', d.id, 'gun'); else c.fx('justin', d.id, 'miss');
+    mm.aim = c.now + AIM;
+    me.f = d.x > at.x ? 1 : -1;
+    if (c.rand() < 0.6) c.kill("justin", d.id, "gun");
+    else c.fx("justin", d.id, "miss");
     ch = true;
   }
   /* never up close: to where his gun reaches, then he stands and shoots */
-  if (dist < RANGE * .85) { if (at.moving) { c.stop(me); me.a = 'gun'; ch = true; } }
-  else if (c.now > (mm.chase || 0)) {
-    mm.chase = c.now + 600; const k = KEEP / dist, to = nearestOpen(d.x + (at.x - d.x) * k, d.y + (at.y - d.y) * k, DRY, 4) || [d.x, d.y];
-    if (c.go(me, to[0], to[1], SPRINT, DRY)) { me.a = 'gun'; ch = true; }
+  if (dist < RANGE * 0.85) {
+    if (at.moving) {
+      c.stop(me);
+      me.a = "gun";
+      ch = true;
+    }
+  } else if (c.now > (mm.chase || 0)) {
+    mm.chase = c.now + 600;
+    const k = KEEP / dist,
+      to = nearestOpen(
+        d.x + (at.x - d.x) * k,
+        d.y + (at.y - d.y) * k,
+        DRY,
+        4,
+      ) || [d.x, d.y];
+    if (c.go(me, to[0], to[1], SPRINT, DRY)) {
+      me.a = "gun";
+      ch = true;
+    }
   }
   return ch;
 }
 
-brain('justin', {
-  kind: 'duck', name: 'Justin',
-  init: now => ({ w: { p: [HOME], t: now, v: 1 }, a: '', f: -1 }),
+brain("justin", {
+  kind: "duck",
+  name: "Justin",
+  init: (now) => ({ w: { p: [HOME], t: now, v: 1 }, a: "", f: -1 }),
   tick(me, c) {
-    notes(c); const at = npcAt(me, c.now); if (!at) return false;
+    notes(c);
+    const at = npcAt(me, c.now);
+    if (!at) return false;
     let ch = false;
     /* lines in a row (after the shadow duck got him): one every 4 seconds, nothing interrupts them */
-    if (mm.lines.length && c.now >= mm.lineAt) { c.say('justin', mm.lines.shift(), LINE); mm.lineAt = c.now + LINE; if (!mm.lines.length) mm.lock = c.now + LINE; ch = true; }
-    /* a shot promised 4 seconds after an E */
-    for (const sh of mm.shots.filter(q => c.now >= q.at)) {
-      mm.shots = mm.shots.filter(q => q !== sh);
-      const d = c.ducks.find(q => q.id === sh.who);
-      if (d && !d.dead && mm.mode !== 'dead' && c.dist(at, d) < RANGE * 1.4) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; c.kill('justin', d.id, 'gun'); mm.gunDown = c.now + 1500; ch = true; }
+    if (mm.lines.length && c.now >= mm.lineAt) {
+      c.say("justin", mm.lines.shift(), LINE);
+      mm.lineAt = c.now + LINE;
+      if (!mm.lines.length) mm.lock = c.now + LINE;
+      ch = true;
     }
-    if (mm.mode === 'poker') { if (mm.poker) { c.say('justin', mm.poker); mm.poker = ''; } return ch; }   // (at the poker table: he sits, and says what poker.js gives him)
-    if (mm.mode === 'bust') return bust(me, c) || ch;
-    if (me.a === 'gun' && mm.mode !== 'chase' && mm.mode !== 'rant' && c.now > (mm.gunDown || 0)) { me.a = ''; ch = true; }
-    if (mm.mode === 'dead') {
-      if (mm.cause === 'player' && mm.getUp && c.now > mm.getUp) {   // up again, and after them
-        mm.getUp = 0; me.a = 'gun'; mm.mode = 'chase'; mm.target = mm.by; mm.until = c.now + 25000; return true;
+    /* a shot promised 4 seconds after an E */
+    for (const sh of mm.shots.filter((q) => c.now >= q.at)) {
+      mm.shots = mm.shots.filter((q) => q !== sh);
+      const d = c.ducks.find((q) => q.id === sh.who);
+      if (d && !d.dead && mm.mode !== "dead" && c.dist(at, d) < RANGE * 1.4) {
+        me.f = d.x > at.x ? 1 : -1;
+        me.a = "gun";
+        c.kill("justin", d.id, "gun");
+        mm.gunDown = c.now + 1500;
+        ch = true;
       }
-      if (mm.cause === 'player' && c.now > mm.until) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 2000; return true; }   // (down a while, then up by himself)
-      if (c.now - (mm.downAt ?? c.now) >= SELF_REVIVE) { revive(me, c); return true; }
+    }
+    if (mm.mode === "poker") {
+      if (mm.poker) {
+        c.say("justin", mm.poker);
+        mm.poker = "";
+      }
+      return ch;
+    } // (at the poker table: he sits, and says what poker.js gives him)
+    if (mm.mode === "bust") return bust(me, c) || ch;
+    if (
+      me.a === "gun" &&
+      mm.mode !== "chase" &&
+      mm.mode !== "rant" &&
+      c.now > (mm.gunDown || 0)
+    ) {
+      me.a = "";
+      ch = true;
+    }
+    if (mm.mode === "dead") {
+      if (mm.cause === "player" && mm.getUp && c.now > mm.getUp) {
+        // up again, and after them
+        mm.getUp = 0;
+        me.a = "gun";
+        mm.mode = "chase";
+        mm.target = mm.by;
+        mm.until = c.now + 25000;
+        return true;
+      }
+      if (mm.cause === "player" && c.now > mm.until) {
+        me.a = "";
+        mm.mode = "home";
+        mm.next = c.now + 2000;
+        return true;
+      } // (down a while, then up by himself)
+      if (c.now - (mm.downAt ?? c.now) >= SELF_REVIVE) {
+        revive(me, c);
+        return true;
+      }
       return ch;
     }
-    if (mm.mode === 'drinking') { if (c.now > mm.until) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 2000; return true; } return ch; }
-    if (mm.mode === 'chase') return chase(me, c, at, false) || ch;
-    if (mm.mode === 'rant') {
-      if (mm.shuts > 0) { if (c.now > mm.shutAt) { mm.shuts--; mm.shutAt = c.now + 1300; c.say('justin', mm.shut); return true; } return ch; }
+    if (mm.mode === "drinking") {
+      if (c.now > mm.until) {
+        me.a = "";
+        mm.mode = "home";
+        mm.next = c.now + 2000;
+        return true;
+      }
+      return ch;
+    }
+    if (mm.mode === "chase") return chase(me, c, at, false) || ch;
+    if (mm.mode === "rant") {
+      if (mm.shuts > 0) {
+        if (c.now > mm.shutAt) {
+          mm.shuts--;
+          mm.shutAt = c.now + 1300;
+          c.say("justin", mm.shut);
+          return true;
+        }
+        return ch;
+      }
       return chase(me, c, at, true) || ch;
     }
-    if (mm.mode === 'shadow') return ch;   // (shadowduck.js moves him)
-    if (c.now < (mm.hold || 0)) return ch;   // (someone's talking to him: he stays put)
+    if (mm.mode === "shadow") return ch; // (shadowduck.js moves him)
+    if (c.now < (mm.hold || 0)) return ch; // (someone's talking to him: he stays put)
     /* the pool: never in it */
     if (poolNear(at.x, at.y, 220) || inPool(at.x, at.y)) {
-      if (c.now > mm.pool) { mm.pool = c.now + 180000; c.say('justin', POOL_LINE); ch = true; }
-      const to = nearestOpen(at.x + (at.x < (POOL.x0 + POOL.x1) / 2 ? -500 : 500), Math.min(at.y, POOL.y0) - 300, DRY, 8);
-      if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 3000; return true; }
+      if (c.now > mm.pool) {
+        mm.pool = c.now + 180000;
+        c.say("justin", POOL_LINE);
+        ch = true;
+      }
+      const to = nearestOpen(
+        at.x + (at.x < (POOL.x0 + POOL.x1) / 2 ? -500 : 500),
+        Math.min(at.y, POOL.y0) - 300,
+        DRY,
+        8,
+      );
+      if (to && c.go(me, to[0], to[1], WALK, DRY)) {
+        me.a = "";
+        mm.mode = "wander";
+        mm.next = c.now + 3000;
+        return true;
+      }
     }
     /* now and then (silly commands on): a GOD_LINES line, then lightning or fire from the sky on a random duck */
     if (mm.strike && c.now >= mm.strike.at) {
-      const id = mm.strike.id; mm.strike = null; ch = true;
-      if (c.s.options.fun && c.kill('justin', id, 'god')) { const s = c.s; s.fxN = (s.fxN || 0) + 1; s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, kind: c.rand() < .5 ? 'lightning' : 'fire', who: [id], by: 'justin', t: c.now }]; }
+      const id = mm.strike.id;
+      mm.strike = null;
+      ch = true;
+      if (c.s.options.fun && c.kill("justin", id, "god")) {
+        const s = c.s;
+        s.fxN = (s.fxN || 0) + 1;
+        s.fx = [
+          ...(s.fx || []).slice(-19),
+          {
+            n: s.fxN,
+            kind: c.rand() < 0.5 ? "lightning" : "fire",
+            who: [id],
+            by: "justin",
+            t: c.now,
+          },
+        ];
+      }
     }
     mm.god ??= c.now + sec(c.rand, GOD_EVERY);
     if (c.now > mm.god && !mm.strike) {
       mm.god = c.now + sec(c.rand, GOD_EVERY);
-      const live = c.ducks.filter(d => !d.dead);
+      const live = c.ducks.filter((d) => !d.dead);
       if (c.s.options.fun && live.length) {
-        if (!(mm.gods || []).length) mm.gods = shuffle(c.rand, GOD_LINES.map((_, i) => i));
-        c.say('justin', GOD_LINES[mm.gods.shift()]); mm.strike = { id: live[Math.floor(c.rand() * live.length)].id, at: c.now + STRIKE }; ch = true;
+        if (!(mm.gods || []).length)
+          mm.gods = shuffle(
+            c.rand,
+            GOD_LINES.map((_, i) => i),
+          );
+        c.say("justin", GOD_LINES[mm.gods.shift()]);
+        mm.strike = {
+          id: live[Math.floor(c.rand() * live.length)].id,
+          at: c.now + STRIKE,
+        };
+        ch = true;
       }
     }
     /* now and then: a random line, a hotdog, the drinking, the rant */
-    if (c.now > mm.say) { mm.say = c.now + sec(c.rand, SAY_EVERY); c.say('justin', E_LINES[Math.floor(c.rand() * E_LINES.length)]); ch = true; }
-    if (c.now > mm.drink && !at.moving) { mm.drink = c.now + sec(c.rand, DRINK_EVERY); down(me, c, 'drink'); return true; }
-    if (c.now > mm.rant && c.ducks.some(d => !d.dead && c.dist(at, d) < 1000)) {
-      mm.rant = c.now + sec(c.rand, RANT_EVERY);
-      c.stop(me); me.a = ''; delete me.z; mm.mode = 'rant'; mm.shut = SHUT_UPS[Math.floor(c.rand() * SHUT_UPS.length)]; mm.shuts = 3 + Math.floor(c.rand() * 3); mm.shutAt = c.now;
-      const n = c.ducks.filter(q => !q.dead).sort((a, b) => c.dist(at, a) - c.dist(at, b))[0]; mm.target = n && n.id; mm.until = c.now + 40000;
+    if (c.now > mm.say) {
+      mm.say = c.now + sec(c.rand, SAY_EVERY);
+      c.say("justin", E_LINES[Math.floor(c.rand() * E_LINES.length)]);
+      ch = true;
+    }
+    if (c.now > mm.drink && !at.moving) {
+      mm.drink = c.now + sec(c.rand, DRINK_EVERY);
+      down(me, c, "drink");
       return true;
     }
-    if (c.now > mm.hotdog && !at.moving && me.a !== 'tv') { mm.hotdog = c.now + sec(c.rand, HOTDOG_EVERY); me.a = 'eat'; mm.eatEnd = c.now + 4000; return true; }
-    if (me.a === 'eat' && c.now > mm.eatEnd) { me.a = ''; ch = true; }
-    if (at.moving || c.now < mm.next || me.a === 'eat') return ch;
+    if (
+      c.now > mm.rant &&
+      c.ducks.some((d) => !d.dead && c.dist(at, d) < 1000)
+    ) {
+      mm.rant = c.now + sec(c.rand, RANT_EVERY);
+      c.stop(me);
+      me.a = "";
+      delete me.z;
+      mm.mode = "rant";
+      mm.shut = SHUT_UPS[Math.floor(c.rand() * SHUT_UPS.length)];
+      mm.shuts = 3 + Math.floor(c.rand() * 3);
+      mm.shutAt = c.now;
+      const n = c.ducks
+        .filter((q) => !q.dead)
+        .sort((a, b) => c.dist(at, a) - c.dist(at, b))[0];
+      mm.target = n && n.id;
+      mm.until = c.now + 40000;
+      return true;
+    }
+    if (c.now > mm.hotdog && !at.moving && me.a !== "tv") {
+      mm.hotdog = c.now + sec(c.rand, HOTDOG_EVERY);
+      me.a = "eat";
+      mm.eatEnd = c.now + 4000;
+      return true;
+    }
+    if (me.a === "eat" && c.now > mm.eatEnd) {
+      me.a = "";
+      ch = true;
+    }
+    if (at.moving || c.now < mm.next || me.a === "eat") return ch;
     /* where next: home most of the time; the jeep, anywhere, or TV on the couch */
     const home = Math.hypot(at.x - HOME[0], at.y - HOME[1]) < 120;
-    if (mm.mode === 'tv') { me.a = ''; delete me.z; }
-    if (mm.mode === 'toTv') { const p = mm.couch; me.w = { p: [[Math.round(p.x + p.w / 2 + (c.rand() - .5) * p.w * .5), Math.round(p.y + p.d * .45)]], t: c.now, v: 1 }; me.z = Math.round(p.h * .55); me.a = 'tv'; me.f = 1; mm.mode = 'tv'; mm.next = c.now + 30000 + c.rand() * 40000; return true; }
-    if (!home) { if (c.go(me, HOME[0], HOME[1], WALK, DRY)) { me.a = ''; mm.mode = 'home'; mm.next = c.now + 40000 + c.rand() * 80000; return true; } mm.next = c.now + 1000; return ch; }
+    if (mm.mode === "tv") {
+      me.a = "";
+      delete me.z;
+    }
+    if (mm.mode === "toTv") {
+      const p = mm.couch;
+      me.w = {
+        p: [
+          [
+            Math.round(p.x + p.w / 2 + (c.rand() - 0.5) * p.w * 0.5),
+            Math.round(p.y + p.d * 0.45),
+          ],
+        ],
+        t: c.now,
+        v: 1,
+      };
+      me.z = Math.round(p.h * 0.55);
+      me.a = "tv";
+      me.f = 1;
+      mm.mode = "tv";
+      mm.next = c.now + 30000 + c.rand() * 40000;
+      return true;
+    }
+    if (!home) {
+      if (c.go(me, HOME[0], HOME[1], WALK, DRY)) {
+        me.a = "";
+        mm.mode = "home";
+        mm.next = c.now + 40000 + c.rand() * 80000;
+        return true;
+      }
+      mm.next = c.now + 1000;
+      return ch;
+    }
     const r = c.rand();
-    if (r < .2 && COUCHES.length) {
-      const p = COUCHES[Math.floor(c.rand() * COUCHES.length)], beside = nearestOpen(p.x + p.w / 2, p.y + p.d + 30, DRY, 6);
-      if (beside && c.go(me, beside[0], beside[1], WALK, DRY)) { me.a = ''; mm.mode = 'toTv'; mm.couch = p; mm.next = c.now; return true; }
+    if (r < 0.2 && COUCHES.length) {
+      const p = COUCHES[Math.floor(c.rand() * COUCHES.length)],
+        beside = nearestOpen(p.x + p.w / 2, p.y + p.d + 30, DRY, 6);
+      if (beside && c.go(me, beside[0], beside[1], WALK, DRY)) {
+        me.a = "";
+        mm.mode = "toTv";
+        mm.couch = p;
+        mm.next = c.now;
+        return true;
+      }
     }
     const to = pickSpot(c);
-    if (to && c.go(me, to[0], to[1], WALK, DRY)) { me.a = ''; mm.mode = 'wander'; mm.next = c.now + 10000 + c.rand() * 30000; return true; }
-    mm.next = c.now + 1000; return ch;
+    if (to && c.go(me, to[0], to[1], WALK, DRY)) {
+      me.a = "";
+      mm.mode = "wander";
+      mm.next = c.now + 10000 + c.rand() * 30000;
+      return true;
+    }
+    mm.next = c.now + 1000;
+    return ch;
   },
   act(me, a, c, by) {
     notes(c);
-    if (a.do !== 'talk') return false;
-    if (mm.mode === 'dead') { revive(me, c); return true; }   // revived
-    if (mm.lines.length || c.now < mm.lock) return false;   // (still saying his piece)
-    if (mm.mode === 'rant' || mm.mode === 'chase' || mm.mode === 'bust') return false;
-    if (mm.mode === 'poker') { c.say('justin', nextLine(c)); return true; }   // (at the table he stays put, and never shoots)
-    const line = nextLine(c); c.say('justin', line); me.f = by.x > (npcAt(me, c.now) || by).x ? 1 : -1;
+    if (a.do !== "talk") return false;
+    if (mm.mode === "dead") {
+      revive(me, c);
+      return true;
+    } // revived
+    if (mm.lines.length || c.now < mm.lock) return false; // (still saying his piece)
+    if (mm.mode === "rant" || mm.mode === "chase" || mm.mode === "bust")
+      return false;
+    if (mm.mode === "poker") {
+      c.say("justin", nextLine(c));
+      return true;
+    } // (at the table he stays put, and never shoots)
+    const line = nextLine(c);
+    c.say("justin", line);
+    me.f = by.x > (npcAt(me, c.now) || by).x ? 1 : -1;
     /* he stops and listens: at least 5 seconds, longer while his line is up */
-    if (mm.mode !== 'tv') { if ((npcAt(me, c.now) || {}).moving) c.stop(me); if (mm.mode === 'toTv') mm.mode = 'wander'; }
-    mm.hold = c.now + Math.max(HEARD, 2500 + line.length * 60); mm.next = Math.max(mm.next, mm.hold);
-    if (c.rand() < SHOOT_ODDS) mm.shots.push({ who: by.id, at: c.now + SHOOT_AFTER });
+    if (mm.mode !== "tv") {
+      if ((npcAt(me, c.now) || {}).moving) c.stop(me);
+      if (mm.mode === "toTv") mm.mode = "wander";
+    }
+    mm.hold = c.now + Math.max(HEARD, 2500 + line.length * 60);
+    mm.next = Math.max(mm.next, mm.hold);
+    if (c.rand() < SHOOT_ODDS)
+      mm.shots.push({ who: by.id, at: c.now + SHOOT_AFTER });
     return true;
   },
   hit(me, by, c) {
     notes(c);
-    if (mm.mode === 'dead') return false;
-    down(me, c, 'player'); mm.by = by; mm.until = c.now + 30000;
-    c.say('justin', DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]);
-    mm.getUp = c.rand() < .25 ? c.now + 2500 : 0;   // (now and then he gets up and goes after them)
+    if (mm.mode === "dead") return false;
+    down(me, c, "player");
+    mm.by = by;
+    mm.until = c.now + 30000;
+    c.say("justin", DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]);
+    mm.getUp = c.rand() < 0.25 ? c.now + 2500 : 0; // (now and then he gets up and goes after them)
     return true;
   },
 });
 /* for the shadow duck: is he up and about outside, and get him */
-export const justinFree = () => !!mm && !['poker', 'bust', 'dead', 'rant', 'chase', 'shadow', 'shadowChase', 'drinking', 'tv', 'toTv'].includes(mm.mode) && !mm.lines.length;
-export function justinGot(me, c) { notes(c); down(me, c, 'shadow'); c.say('justin', DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]); }
-export function justinSees(me, c, x, y) { notes(c); if (!justinFree()) return false; mm.mode = 'shadowChase'; return c.go(me, x, y, SPRINT, DRY); }
+export const justinFree = () =>
+  !!mm &&
+  ![
+    "poker",
+    "bust",
+    "dead",
+    "rant",
+    "chase",
+    "shadow",
+    "shadowChase",
+    "drinking",
+    "tv",
+    "toTv",
+  ].includes(mm.mode) &&
+  !mm.lines.length;
+export function justinGot(me, c) {
+  notes(c);
+  down(me, c, "shadow");
+  c.say("justin", DEATH_LINES[Math.floor(c.rand() * DEATH_LINES.length)]);
+}
+export function justinSees(me, c, x, y) {
+  notes(c);
+  if (!justinFree()) return false;
+  mm.mode = "shadowChase";
+  return c.go(me, x, y, SPRINT, DRY);
+}
 export { DOORS };
 
 /* ---------- at the card table (poker.js and blackjack.js run the games; these are their calls, on the host) ----------
    Invited, he teleports onto a free stool (the one farthest from the players) and sits there facing the table; a line
    at each new hand, a winning or losing one at the showdown. Out of chips: he pulls his gun on the richest player, shoots
    (they play dead 6 seconds), says an insult or a rage line and walks off. When the game ends he gets up and goes home. */
-const STOOLS = PROPS.filter(p => p.kind === 'stool');
-const any = l => l[Math.floor(Math.random() * l.length)];
-const recOf = s => s.hang && s.hang.npc && s.hang.npc.justin;
-const setRec = (s, fn) => { const r = recOf(s); if (!r) return; const o = { ...r }; fn(o); s.hang.npc = { ...s.hang.npc, justin: o }; };
+const STOOLS = PROPS.filter((p) => p.kind === "stool");
+const any = (l) => l[Math.floor(Math.random() * l.length)];
+const recOf = (s) => s.hang && s.hang.npc && s.hang.npc.justin;
+const setRec = (s, fn) => {
+  const r = recOf(s);
+  if (!r) return;
+  const o = { ...r };
+  fn(o);
+  s.hang.npc = { ...s.hang.npc, justin: o };
+};
 export const jPoker = {
   /* onto a stool: its number, or -1 (none free, or he isn't here) */
   sit(s, taken, now) {
     if (!recOf(s)) return -1;
     notes({ now, rand: Math.random });
-    const gap = k => Math.min(...taken.map(n => Math.min(Math.abs(k - n), 8 - Math.abs(k - n))), 9);
-    const p = STOOLS.filter(q => !taken.includes(q.n) && !(s.hang.seats || {})[q.id + ':0']).sort((a, b) => gap(b.n) - gap(a.n))[0];
+    const gap = (k) =>
+      Math.min(
+        ...taken.map((n) => Math.min(Math.abs(k - n), 8 - Math.abs(k - n))),
+        9,
+      );
+    const p = STOOLS.filter(
+      (q) => !taken.includes(q.n) && !(s.hang.seats || {})[q.id + ":0"],
+    ).sort((a, b) => gap(b.n) - gap(a.n))[0];
     if (!p) return -1;
-    const x = p.x + p.w / 2, y = p.y + p.d / 2;
-    setRec(s, o => { o.w = stand(x, y, now); o.z = p.z + p.h; o.a = 'cards'; o.f = Math.sign(BJ.cx - x) || 1; o.seat = p.id + ':0'; });
-    Object.assign(mm, { mode: 'poker', poker: '', target: null, shots: [], lines: [], hold: 0 });
+    const x = p.x + p.w / 2,
+      y = p.y + p.d / 2;
+    setRec(s, (o) => {
+      o.w = stand(x, y, now);
+      o.z = p.z + p.h;
+      o.a = "cards";
+      o.f = Math.sign(BJ.cx - x) || 1;
+      o.seat = p.id + ":0";
+    });
+    Object.assign(mm, {
+      mode: "poker",
+      poker: "",
+      target: null,
+      shots: [],
+      lines: [],
+      hold: 0,
+    });
     return p.n;
   },
   /* still in his seat (knocked down, he's out of the game) */
-  here: () => !!mm && mm.mode === 'poker',
+  here: () => !!mm && mm.mode === "poker",
   /* what he says: 'hand' (a new hand), 'win', 'lose' */
   say(kind) {
-    if (!mm || mm.mode !== 'poker') return;
-    mm.poker = kind === 'win' ? any(Math.random() < .7 ? WIN_LINES : OLD_WIN) : kind === 'lose' ? any(Math.random() < .7 ? LOSE_LINES : OLD_LOSE) : any(E_LINES);
+    if (!mm || mm.mode !== "poker") return;
+    mm.poker =
+      kind === "win"
+        ? any(Math.random() < 0.7 ? WIN_LINES : OLD_WIN)
+        : kind === "lose"
+          ? any(Math.random() < 0.7 ? LOSE_LINES : OLD_LOSE)
+          : any(E_LINES);
   },
   /* out of chips: the shot at `who` (a player's id), then off */
   bust(s, who, now) {
-    if (!mm || mm.mode !== 'poker') return;
-    setRec(s, o => { delete o.seat; o.a = 'gun'; });
-    Object.assign(mm, { mode: 'bust', target: who, bustAt: now + 900, step: 0 });
+    if (!mm || mm.mode !== "poker") return;
+    setRec(s, (o) => {
+      delete o.seat;
+      o.a = "gun";
+    });
+    Object.assign(mm, {
+      mode: "bust",
+      target: who,
+      bustAt: now + 900,
+      step: 0,
+    });
   },
   /* the game is over: up, and home */
   leave(s, now) {
-    if (!mm || mm.mode !== 'poker') return;
-    setRec(s, o => { delete o.seat; o.a = ''; });
-    Object.assign(mm, { mode: 'home', next: now + 1500 });
+    if (!mm || mm.mode !== "poker") return;
+    setRec(s, (o) => {
+      delete o.seat;
+      o.a = "";
+    });
+    Object.assign(mm, { mode: "home", next: now + 1500 });
   },
 };
 /* busted: the gun out, the shot, his line, then he walks off */
@@ -412,10 +841,22 @@ function bust(me, c) {
   if (c.now < mm.bustAt) return false;
   const at = npcAt(me, c.now);
   if (mm.step === 0) {
-    const d = c.ducks.find(q => q.id === mm.target);
-    if (d && at) { me.f = d.x > at.x ? 1 : -1; me.a = 'gun'; if (!d.dead) c.kill('justin', d.id, 'gun'); }
-    Object.assign(mm, { step: 1, bustAt: c.now + 1300 }); return true;
+    const d = c.ducks.find((q) => q.id === mm.target);
+    if (d && at) {
+      me.f = d.x > at.x ? 1 : -1;
+      me.a = "gun";
+      if (!d.dead) c.kill("justin", d.id, "gun");
+    }
+    Object.assign(mm, { step: 1, bustAt: c.now + 1300 });
+    return true;
   }
-  if (mm.step === 1) { c.say('justin', any(BUST_LINES)); Object.assign(mm, { step: 2, bustAt: c.now + 2500 }); return true; }
-  me.a = ''; mm.mode = 'home'; mm.next = c.now; return true;
+  if (mm.step === 1) {
+    c.say("justin", any(BUST_LINES));
+    Object.assign(mm, { step: 2, bustAt: c.now + 2500 });
+    return true;
+  }
+  me.a = "";
+  mm.mode = "home";
+  mm.next = c.now;
+  return true;
 }
