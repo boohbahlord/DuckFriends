@@ -103,7 +103,7 @@ const GAME = [
     what: ['In the lobby, the host and sudo can pick the map and the game type, rename the room and start, all from here. `map` and `mode` alone list the choices (anyone). Hangout is always in Duck Cabin, so it has no map to pick.'],
     flags: [
       ['map / map <name>', 'the maps / picks one (board sky pixel carnival stars rabbit ec)'],
-      ['mode / mode <type>', 'the game types / picks one (aod wyr ddr bb sc quack law hang)'],
+      ['mode / mode <type>', 'the game types / picks one (aod wyr ddr bb sc quack law dunce hang)'],
       ['sudo hostname "name"', 'renames the room'],
       ['sudo start', 'starts the game, like the Start button'],
     ],
@@ -189,7 +189,7 @@ const GAME = [
     flags: [
       ['roundstats / gamestats / totalstats', 'this round / this game / all time'],
       ['… @name @name', 'only those players'],
-      ['… -m aod|wyr|ddr|bb|sc|quack|law', 'one game type (Hangout keeps no stats)'],
+      ['… -m aod|wyr|ddr|bb|sc|quack|law|dunce', 'one game type (Hangout keeps no stats)'],
       ['jumps [@names]', 'Jumps, this game and all time'],
     ],
     ex: [

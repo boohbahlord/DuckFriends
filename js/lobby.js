@@ -29,7 +29,7 @@ import { openSettings } from './settings.js';
 let R = null, off = null, offAcct = null, lastCount = -1, lastSeat = 0, docks = null, mbarOff = null;
 
 const INFO = {
-  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering; Juryful of Ducklings or Hangout (in its own Duck Cabin).',
+  type: 'Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering; Juryful of Ducklings, Duncelation or Hangout (in its own Duck Cabin).',
   map: 'What the board looks like: eight maps, from Night Show to Duck Cabin (Hangout\'s own).',
   options: 'Question order, timers, and how many players end a turn.',
   start: 'Starts the game for everyone.',
@@ -103,6 +103,11 @@ const LAW_TILES = [
   ['lawOff', 'Offense attorney', [['random', 'Random'], ['writer', 'Writer picks'], ['vote', 'Room votes']]],
   ['lawClose', 'Closing arguments', [[30, '30 s'], [60, '1 min'], [120, '2 min']]],
 ];
+/* Duncelation's own options */
+const DUNCE_TILES = [
+  ['dunceTime', 'Take timer', [[0, 'Off'], [60, '1 min'], [120, '2 min'], [180, '3 min'], [300, '5 min']]],
+  ['dunceTakes', 'Takes', [['random', 'Random'], ['own', 'Write your own'], ['notOwn', 'Never your own']]],
+];
 const MORE_TILES = [
   ['discuss', 'Discussion round', [[0, 'Off'], [1, 'On']]],
   ['freeRoam', 'Answering', [[0, 'Lock answers'], [1, 'Free roam']]],
@@ -146,6 +151,8 @@ const OPT_TIPS = {
   lawDef: 'Who argues for each topic: anyone but its writer, picked at random, by the writer, or by a vote of the room.',
   lawOff: 'Who argues against each topic (it can be the writer): picked at random, by the writer, or by a vote of the room.',
   lawClose: 'When the jury is split, the attorneys get this long to win them over; then the bigger side wins.',
+  dunceTime: 'How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.',
+  dunceTakes: 'Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Never your own: always someone else\'s.',
 };
 const tileRows = (rows, s, ro) => rows.map(([k, label, opts]) => `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ''}>${esc(label)}</h3><div class="row">${opts.map(([v, n]) =>
   `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${(k === 'downMs' ? downFor(s) : s.options[k]) === v}"${ro}>${n}</button>`).join('')}</div></div>`).join('');
@@ -156,9 +163,10 @@ function openOptions() {
     ${s.options.mode === 'sc' ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ''}
     ${s.options.mode === 'quack' ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ''}
     ${s.options.mode === 'law' ? `<h3 class="opt-h">Lawyering; Juryful of Ducklings</h3>${tileRows(LAW_TILES, s, ro)}` : ''}
-    ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp', 'writeCatch'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime')), s, ro)}
+    ${s.options.mode === 'dunce' ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ''}
+    ${s.options.mode === 'hang' ? '' : tileRows(OPT_TILES.filter(r => !(['bb', 'sc'].includes(s.options.mode) && ['order', 'answerTime'].includes(r[0])) && !(s.options.mode === 'quack' && ['order', 'answerTime', 'catchUp', 'writeCatch'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'answerTime') && !(s.options.mode === 'dunce' && ['order', 'answerTime'].includes(r[0]))), s, ro)}
     <details class="more"${moreOpen ? ' open' : ''}><summary>Additional settings</summary>
-    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(s.options.mode === 'law' && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin', 'unvoteStops'].includes(r[0])) && !(['sc', 'quack', 'hang'].includes(s.options.mode) && r[0] === 'discuss') && !(s.options.mode === 'quack' && r[0] === 'unvoteStops') && !(s.options.mode !== 'hang' && ['ghosts', 'ghostBusy'].includes(r[0]))), s, ro)}
+    ${tileRows(MORE_TILES.map(([k, n, o]) => k === 'downMs' && s.options.mode !== 'hang' ? [k, n, o.filter(x => x[0] !== 6000)] : [k, n, o]).filter(r => !(['sc', 'quack'].includes(s.options.mode) && ['freeRoam', 'submitTime'].includes(r[0])) && !(['law', 'dunce'].includes(s.options.mode) && r[0] === 'freeRoam') && !(s.options.mode === 'hang' && ['freeRoam', 'submitTime', 'justin', 'unvoteStops'].includes(r[0])) && !(['sc', 'quack', 'hang'].includes(s.options.mode) && r[0] === 'discuss') && !(s.options.mode === 'quack' && r[0] === 'unvoteStops') && !(s.options.mode !== 'hang' && ['ghosts', 'ghostBusy'].includes(r[0]))), s, ro)}
     ${s.test ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[5, 15, 30, 60].map(v =>
       `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`).join('')}</div></div>` : ''}
     </details>

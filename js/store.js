@@ -15,13 +15,13 @@ export const PROFILE_DEFAULT = {
   card: { kind: 'color', color: '#2fa4ff', pattern: 'none', patternColor: '#ffffff', layout: 'tiled', size: 'm', image: null },
   nameStyle: { font: 'fredoka', color: '', rainbow: false },   // color '' = the theme's text color
   notes: [], jumps: 0, stats: {}, settings: { ...SETTINGS_DEFAULT },
-  justinKills: 0, secrets: {}, unlockSeen: {},   // what unlocks things (unlocks.js): Justin killed with a weapon, the codes on, the unlocks already announced
+  justinKills: 0, dunced: 0, secrets: {}, unlockSeen: {},   // what unlocks things (unlocks.js): Justin killed with a weapon, voted a dunce, the codes on, the unlocks already announced
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
    shared copy keeps only these numbers (Who is the Quack? keeps its votes in answers, correct ones in majority, rounds won
    in wins, lost in losses and won as the Quack in titles); Hangout keeps none */
-export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['ddr', 'Does Duck Relate?'], ['bb', 'Bicker Brackets'], ['sc', 'Story Chain'], ['quack', 'Who is the Quack?'], ['law', 'Lawyering; Juryful of Ducklings']];
+export const STAT_MODES = [['aod', 'Agree or Disagree'], ['wyr', 'Would You Rather'], ['ddr', 'Does Duck Relate?'], ['bb', 'Bicker Brackets'], ['sc', 'Story Chain'], ['quack', 'Who is the Quack?'], ['law', 'Lawyering; Juryful of Ducklings'], ['dunce', 'Duncelation']];
 export function cleanStats(o) {
   const out = {}, n = v => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));
   for (const [m] of STAT_MODES) {
@@ -68,6 +68,7 @@ function normalize(p) {
   if (out.nameStyle.color === '#1c1c28') out.nameStyle.color = '';   // the old default, unreadable in dark mode
   if (!NAME_OK.test(out.name)) out.name = 'Player 1';
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
+  out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
   const flags = o => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k, v]) => v && /^[\w:]{1,40}$/.test(k)).map(([k]) => [k, 1]));
   out.secrets = flags(p.secrets); out.unlockSeen = flags(p.unlockSeen);
   out.stats = { ...cleanStats(p.stats), lastGame: String((p.stats || {}).lastGame || '') };   // lastGame: the game last counted
