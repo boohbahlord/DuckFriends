@@ -6839,6 +6839,7 @@ export const music = (function () {
         playing = true;
         if (from > 0) seek(0.05 - from);
       }, 4);
+      // (cancelled, it stays paused: no work for a song nobody hears)
       const go = (s) => {
         if (off) return;
         const w = o2 && o2.wait ? o2.wait(s + 2) : 0;
@@ -6857,7 +6858,7 @@ export const music = (function () {
               go(s - 2);
             }
           });
-        } // (cancelled, it stays paused: no work for a song nobody hears)
+        }
       else
         for (let s = 4; s < len - 6.5; s += 4) {
           await new Promise((r) => setTimeout(r));

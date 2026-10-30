@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-10-30",
-    version: 101,
+    version: 102,
     date: "Oct 30, 2026",
     title: "Duncelation and Mad God Justin",
     news: [
@@ -21,6 +21,9 @@ export const UPDATES = [
       "The dunce hat is now locked: be voted a dunce 10 times to wear it.",
       "Report Bug or Suggest Ideas, at the bottom of this window and of Settings.",
       "Duncelation: End round, beside Vote. It ends the take once the defender and enough players press it.",
+    ],
+    fixed: [
+      "On a computer, the music no longer crackles or pops while other apps (like Discord) keep it busy.",
     ],
   },
   {
