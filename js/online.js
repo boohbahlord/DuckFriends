@@ -291,6 +291,7 @@ const REMOTE = new Set([
   "songs",
   "hang",
   "dnEnd",
+  "goOn",
 ]);
 const LOOK = [
   "name",

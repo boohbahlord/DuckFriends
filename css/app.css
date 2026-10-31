@@ -11783,3 +11783,38 @@ html.moving .board.quake {
     opacity: 0;
   }
 }
+
+/* Lawyering: the sword or the shield beside an attorney's name, and a glow in their side's color breathing on and off
+   (both attorneys together: --ld puts the breath on the room's clock) */
+.gduck-name .law-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05em;
+  height: 1.05em;
+  margin-right: 0.22em;
+  vertical-align: -0.16em;
+}
+.gduck-name .law-tag svg {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+.gduck-name .law-tag.off svg {
+  height: 120%;
+  transform: rotate(
+    45deg
+  ); /* the sword held across, so it reads as a sword and not a line */
+}
+.gduck.lawyer .gduck-body > svg {
+  animation: law-glow 2.4s ease-in-out var(--ld, 0s) infinite;
+}
+@keyframes law-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.35rem var(--lc)) drop-shadow(0 0 0.7rem var(--lc));
+  }
+}

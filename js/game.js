@@ -89,6 +89,9 @@ import {
   KB_LAND,
   catchLen,
   minOf,
+  goOnVotes,
+  goOnNeed,
+  counselBounds,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { hangStill } from "./hangout/rules.js";
@@ -110,6 +113,8 @@ import {
   lawStatsHTML,
   lawOverHTML,
   sideColor,
+  SWORD,
+  SHIELD,
 } from "./court.js";
 import {
   cloudHTML,
@@ -348,7 +353,7 @@ const bbBoardHTML = (s) =>
 /* Lawyering: the offense's and the defense's sides, the attorneys' circle, both attorneys on the cloud */
 const lawBoardHTML = (
   s,
-) => `<div class="board law-board">${lawColsHTML(s)}<div class="law-ring" aria-hidden="true"></div><div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
+) => `<div class="board law-board">${lawColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
   ${["answer", "discuss"].includes(s.phase) ? lawTopHTML(s, knocked.has(caseKey(s))) : ""}</div>`;
 /* Duncelation: Dunce and Not a Dunce, the defender's circle (and in the dunce's moment the LOSER podium), the defender on the cloud */
 const dnBoardHTML = (
@@ -750,7 +755,8 @@ function drawDucks(now = clockNow()) {
     }
     const dead = deadNow(id, p),
       look = dnHat(s, id, now) ? dunceDuck(p.duck) : p.duck,
-      sig = JSON.stringify([look, p.name, p.nameStyle, dead]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
+      role = lawRole(s, id),
+      sig = JSON.stringify([look, p.name, p.nameStyle, dead, role]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
       hurt(d);
@@ -764,8 +770,16 @@ function drawDucks(now = clockNow()) {
       d._aura = null;
       d.style.setProperty("--xc", colorsOf(p.duck, "loserx")[0]);
       d.querySelector(".gduck-name").innerHTML =
+        (role
+          ? `<i class="law-tag ${role}" aria-label="${role === "off" ? "Offense" : "Defense"}">${role === "off" ? SWORD : SHIELD}</i>`
+          : "") +
         nameHTML(p.name, p.nameStyle) +
-        '<span class="gduck-down" aria-hidden="true"><i></i></span>';
+        '<span class="gduck-down" aria-hidden="true"><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
+      d.classList.toggle("lawyer", !!role);
+      if (role) {
+        d.style.setProperty("--lc", sideColor(p));
+        d.style.setProperty("--ld", -(clockNow() % LAW_GLOW) + "ms");
+      } // (the glow breathes on the room's clock, so both attorneys breathe together)
       const cc = (p.card && p.card.color) || "#2fa4ff";
       d.style.setProperty("--dc", cc);
       d.style.setProperty("--dk", against(cc));
@@ -1489,6 +1503,16 @@ function burn(dk, fire = 0) {
     dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
   }, fire + 2400);
 }
+/* Lawyering: an attorney ('off', the sword, or 'def', the shield) while their case is argued and talked over */
+const LAW_GLOW = 2400; // ms: one breath of the attorneys' glow (css/app.css law-glow)
+const lawRole = (s, id) =>
+  isLaw(s) && s.law && ["answer", "discuss"].includes(s.phase)
+    ? id === s.law.off
+      ? "off"
+      : id === s.law.def
+        ? "def"
+        : ""
+    : "";
 /* a short, see-through red flash on a duck: Justin hit, or a duck knocked down */
 function hurt(d) {
   if (!d) return;
@@ -1696,6 +1720,7 @@ const canWalk = () =>
   !dnStill(R.state, R.me); // (Hangout: shot by Justin, still a while; Duncelation: the dunce on its podium)
 function xBounds() {
   const s = R.state;
+  if (isLaw(s) && attorney()) return counselBounds(s, R.me); // (an attorney: their own side)
   if (votedCol() != null) return colBoundsAt(s, votedCol());
   if (roams()) return [0.03, 0.97];
   return colBoundsAt(s, s.lock[R.me]);
@@ -1956,14 +1981,14 @@ function step(dt, now) {
     q = q || scr(0, Math.sign(ay));
     ny = Math.max(0, Math.min(1, ny));
   }
-  if (attorney()) {
+  if (attorney() && isDn(s)) {
     const [rx, ry] = inRing(nx, ny);
     if (rx !== nx || ry !== ny) {
       q = q || scr(Math.sign(ax), Math.sign(ay));
       nx = rx;
       ny = ry;
     }
-  } // the attorneys argue from the circle
+  } // the defender argues from the circle (Lawyering's attorneys: from their own sides, xBounds)
   // other ducks: try both steps, then each alone; a blocked step squashes against them. A step is blocked only when it
   // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it
   const here = crowd(me.x, me.y, now).d,
@@ -2723,6 +2748,11 @@ function actHTML(s) {
     d = on.filter((id) => s.done[id]).length,
     need = needed(s),
     mine = s.done[R.me];
+  if (s.waiting && s.waiting.for) {
+    const g = goOnVotes(s).length,
+      mineG = !!(s.waiting.go || {})[R.me];
+    return `<div class="act-row"><span class="progress wait-bar" role="status">Waiting for ${esc(s.waiting.name || "a player")} to come back</span><button type="button" class="btn${mineG ? " yellow" : " green"}" data-a="goon" aria-pressed="${mineG}" data-tip="Go on without them">${mineG ? "Next round ✓" : "Next round"} · ${g}/${goOnNeed(s)}</button></div>`;
+  } // (Lawyering, Duncelation: an attorney or the defender left mid-case)
   if (s.waiting)
     return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`; // (a game below its fewest players: ducks still walk)
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
@@ -3823,6 +3853,9 @@ async function act(a) {
       break;
     case "dnend":
       R.send({ t: "dnEnd" });
+      break;
+    case "goon":
+      R.send({ t: "goOn" });
       break;
     case "giveup":
       if (await confirmBox("Give up the case?", "The other side wins it."))

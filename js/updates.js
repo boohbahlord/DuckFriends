@@ -27,6 +27,8 @@ export const UPDATES = [
       "Knocked down: a quick red flash, and a meter on your name that empties until you get back up. Justin flashes red when hit.",
       "New specials: the Shotgun (knock down 144 players) and the Grenade (360). Any Justin counts.",
       "Unlocks now count in 12s: Long jump and Double jump at 144 Jumps, the jester at 1,728, Jack in a Box at 20,736.",
+      "Lawyering: no circle. The attorneys stay on their own side, with a sword or a shield by their name and a glow.",
+      "Lawyering and Duncelation: a player who drops out comes back to their place. Until then, Next round goes on without them.",
     ],
     fixed: [
       "On a computer, the music no longer crackles or pops while other apps (like Discord) keep it busy.",

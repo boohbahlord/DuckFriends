@@ -232,7 +232,12 @@ const WAIT_BLOCK = [
 export const tooFew = (s) => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
    take again) */
-export function waitFor(s, now, resume = "phase") {
+export function waitFor(
+  s,
+  now,
+  resume = "phase",
+  line = `Waiting for players to continue (${s.seat.length}/${minOf(s)}).`,
+) {
   if (s.waiting) {
     if (resume !== "phase") s.waiting.resume = resume;
     return s;
@@ -246,10 +251,10 @@ export function waitFor(s, now, resume = "phase") {
   };
   s.ends = 0;
   s.catchEnds = 0;
-  say(s, `Waiting for players to continue (${s.seat.length}/${minOf(s)}).`);
+  say(s, line);
   return s;
 }
-function resumeGame(s, now) {
+function resumeGame(s, now, line = "Enough players: the game goes on!") {
   const w = s.waiting;
   if (!w) return s;
   delete s.waiting;
@@ -258,12 +263,55 @@ function resumeGame(s, now) {
   if (w.ends) s.ends = now + w.ends;
   if (w.catchEnds) s.catchEnds = now + w.catchEnds;
   if (s.law && s.law.close) s.law.close += d;
-  say(s, "Enough players: the game goes on!");
+  say(s, line);
   if (w.resume === "quackRound") return startQuackRound(s, now);
   if (w.resume === "case") return startCase(s, now);
   if (w.resume === "take") return startTake(s, now);
   return advance(s, now);
 }
+/* Lawyering and Duncelation: I want a player who lags out or leaves to come back to their place (where they stood, what
+   they'd done in that turn, k). s.back = { id: { pos, lock, done, k } } keeps it for the rest of the game. An attorney (the defender) who
+   leaves mid-case holds the case: the game waits for them (s.waiting.for, .name) with a Next round vote on everyone's
+   screen (s.waiting.go = { id: true }); it goes on as it was when they're back, or without them once enough press it */
+/* where an attorney may stand: all of the duck on their own side, not half in the middle (0.04: half a duck) */
+export const counselBounds = (s, id) => {
+  const off = id === s.law.off,
+    [lo, hi] = colBoundsAt(s, off ? 0 : 1);
+  return off ? [lo, hi - 0.04] : [lo + 0.04, hi];
+};
+const holdsBack = (s) => (isLaw(s) || isDn(s)) && running(s);
+const holdsCase = (s, id) =>
+  s.phase === "answer" &&
+  !s.players[id].bot &&
+  ((isLaw(s) &&
+    !!s.law &&
+    s.law.w == null &&
+    (s.law.off === id || s.law.def === id)) ||
+    (isDn(s) &&
+      !!s.dn &&
+      !!s.dn.cur &&
+      s.dn.cur.w == null &&
+      isDefender(s, id)));
+function holdFor(s, id, name, now) {
+  waitFor(
+    s,
+    now,
+    "phase",
+    `Waiting for ${name} to come back, or press Next round to go on without them.`,
+  );
+  Object.assign(s.waiting, { for: id, name, go: {} });
+}
+export const goOnVotes = (s) => {
+  const g = (s.waiting && s.waiting.go) || {};
+  return playing(s).filter((id) => g[id]);
+};
+export const goOnNeed = (s) =>
+  Math.max(
+    1,
+    Math.ceil(
+      playing(s).filter((id) => !s.players[id].bot).length * shareOf(s) - 1e-9,
+    ),
+  ); // (the usual share of the players; computers don't vote)
 /* someone left or was removed: a game below its fewest players waits (a countdown that can't start goes back to the lobby) */
 function shortHanded(s, now, gone, wasQuack) {
   if (s.phase === "countdown" && s.seat.length < minOf(s)) {
@@ -788,15 +836,43 @@ export function reduce(state, a, now = Date.now()) {
         return state; // voted out until the lobby
       P[a.p.id] = { ...a.p, ready: false, joined: now };
       s.seat.push(a.p.id);
-      if (!["lobby", "over", "countdown"].includes(s.phase))
+      const back = holdsBack(s) && (s.back || {})[a.p.id];
+      if (back) {
+        if (back.pos && boardPhases(s).includes(s.phase))
+          s.pos[a.p.id] = back.pos;
+        else seatNewcomer(s, a.p.id);
+        if (back.k === turnKey(s)) {
+          if (back.lock !== undefined) s.lock[a.p.id] = back.lock;
+          if (back.done) s.done[a.p.id] = back.done;
+        } // (what they'd done counts only in the same turn)
+        delete s.back[a.p.id];
+      } // (Lawyering, Duncelation: back to their place)
+      else if (!["lobby", "over", "countdown"].includes(s.phase))
         seatNewcomer(s, a.p.id);
-      say(s, `${a.p.name} joined.`);
-      if (s.waiting && !tooFew(s)) return resumeGame(s, now);
+      say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
+      if (s.waiting && s.waiting.for === a.p.id) {
+        delete s.waiting.for;
+        delete s.waiting.go;
+        if (!tooFew(s))
+          return resumeGame(s, now, `${a.p.name} is back: the game goes on!`);
+      }
+      if (s.waiting && !s.waiting.for && !tooFew(s)) return resumeGame(s, now);
       return s;
     }
     case "leave": {
       if (!me) return s;
       say(s, `${me.name} left.`);
+      if (holdsBack(s))
+        s.back = {
+          ...s.back,
+          [a.id]: {
+            pos: s.pos[a.id],
+            lock: s.lock[a.id],
+            done: s.done[a.id],
+            k: turnKey(s),
+          },
+        }; // (their place, for when they're back)
+      const held = holdsCase(s, a.id);
       reopenMatch(s, a.id);
       if (isHang(s)) hangLeft(s, a.id);
       const wasQuack =
@@ -807,7 +883,8 @@ export function reduce(state, a, now = Date.now()) {
       delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
-      if (shortHanded(s, now, a.id, wasQuack)) return s;
+      if (held) holdFor(s, a.id, me.name, now); // (an attorney, the defender: the case waits for them)
+      if (shortHanded(s, now, a.id, wasQuack) || held) return s;
       if (isQuack(s)) quackLeft(s, now);
       return s.phase === "lobby" || s.phase === "over" ? s : advance(s, now);
     }
@@ -951,13 +1028,14 @@ export function reduce(state, a, now = Date.now()) {
           x = Math.max(lo, Math.min(hi, x));
         }
       }
-      if (
-        s.phase === "answer" &&
-        ((isLaw(s) && isCounsel(s, a.id)) || (isDn(s) && isDefender(s, a.id)))
-      ) {
+      if (s.phase === "answer" && isLaw(s) && isCounsel(s, a.id)) {
+        const [lo, hi] = counselBounds(s, a.id);
+        x = Math.max(lo, Math.min(hi, x));
+      } // the attorneys argue from their own side, the offense left, the defense right
+      if (s.phase === "answer" && isDn(s) && isDefender(s, a.id)) {
         const [lo, hi] = colBoundsAt(s, -1);
         x = Math.max(lo, Math.min(hi, x));
-      } // the attorneys (the defender) argue from the circle
+      } // (Duncelation: the defender from the circle)
       if (isDn(s) && s.phase === "dunced" && isDefender(s, a.id)) return state; // the dunce stays on the podium
       if (
         isQuack(s) &&
@@ -1302,6 +1380,20 @@ export function reduce(state, a, now = Date.now()) {
       s.done[a.id] = counselDone(s, a.id);
       return advance(s, now);
     }
+    case "goOn": {
+      // Next round: go on without the attorney (the defender) who left, once enough press it (again: take it back)
+      const w = s.waiting;
+      if (!me || me.late || !w || !w.for) return state;
+      w.go = { ...w.go };
+      if (w.go[a.id]) delete w.go[a.id];
+      else w.go[a.id] = true;
+      if (goOnVotes(s).length < goOnNeed(s)) return s;
+      const name = w.name;
+      delete w.for;
+      delete w.go;
+      if (tooFew(s)) return s; // (still too few to play: it waits for players)
+      return resumeGame(s, now, `The game goes on without ${name}.`);
+    }
     case "dnEnd":
       return me && isDn(s) ? dnEndVote(s, a, now) || state : state; // Duncelation: End round (or take it back)
     case "giveUp": {
@@ -1593,6 +1685,7 @@ export function reduce(state, a, now = Date.now()) {
         s.startedAt = now;
         s.round = 0;
         s.history = [];
+        s.back = {};
         s.subs = [];
         s.jumps = {};
         s.bbPast = [];
@@ -2490,6 +2583,7 @@ export function backToLobby(s, why) {
   s.banned = {};
   s.pos = {};
   s.lock = {};
+  s.back = {};
   s.hang = null;
   s.bb = null;
   s.bbPast = [];
@@ -3491,7 +3585,8 @@ function endCounsel(s, now) {
   }
   return openCase(s, now);
 }
-/* the case opens: random attorneys where nobody picks; the attorneys in the circle, the jury lined up above and below it */
+/* the case opens: random attorneys where nobody picks; each attorney on their own side (I want no circle), the jury lined
+   up along the middle strip's top and bottom */
 function openCase(s, now) {
   const L = s.law,
     q = s.qs[s.qi],
@@ -3500,8 +3595,8 @@ function openCase(s, now) {
   if (!L.off) L.off = pickOne(on.filter((id) => id !== L.def));
   s.pos = {};
   s.lock = {};
-  s.pos[L.off] = { x: 0.47, y: 0.39 };
-  s.pos[L.def] = { x: 0.53, y: 0.61 }; // (apart, inside the circle, on a computer and on a phone held upright)
+  s.pos[L.off] = { x: 0.3, y: 0.5 };
+  s.pos[L.def] = { x: 0.7, y: 0.5 };
   const rest = s.seat.filter((id) => !isCounsel(s, id)),
     half = Math.ceil(rest.length / 2);
   rest.forEach((id, k) => {
