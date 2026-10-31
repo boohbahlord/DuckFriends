@@ -8931,6 +8931,10 @@ html.moving .law-banner.on b {
 .gduck.on-pod .gduck-shadow {
   opacity: 0;
 }
+/* the LOSER podium is up: the duck on it has its name tag, so the cloud's (the same name) hides */
+.board.pod-up .topover .lord-name {
+  visibility: hidden;
+}
 .dn-podium {
   position: absolute;
   container-type: size;
