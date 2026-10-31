@@ -111,7 +111,7 @@ const PAGES = {
       <span><kbd>Enter</kbd></span><span>End your turn</span>
       <span><kbd>E</kbd></span><span>The last special again; on Duck Cabin, Sit, Play, Read …</span>
       <span><kbd>R</kbd></span><span>On Duck Cabin, the last special again</span>
-      <span>Hangout's piano</span><span>1–7, Q–U, G–', V–/: four octaves. Shift or C: sharp. Space or Alt: flat. Esc: get up.</span>
+      <span>Hangout's piano</span><span>1 to =, Q to ], A to Enter, Shift to Space: four octaves, one key for each white and black key (every piano key shows its own). Esc: get up.</span>
       <span><kbd>T</kbd></span><span>Text chat</span>
       <span><kbd>Shift</kbd>+<kbd>T</kbd></span><span>Command line</span>
       <span><kbd>Tab</kbd> <kbd>↑</kbd> <kbd>↓</kbd></span><span>Complete in the chat; choose a suggestion</span>

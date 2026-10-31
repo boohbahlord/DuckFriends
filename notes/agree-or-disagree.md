@@ -2635,3 +2635,54 @@ I go to class now cant answer question but adam can"
 
 - Miles Jr.'s finding: the menu's first song (and any song joined part way) was always made note by note on the sound thread; the "recorded ahead" path only covered the song after it. A busy laptop starves that thread (crackles) and the page (late notes pop).
 - Fix: on a computer every song plays from a recording written out ahead in an OfflineAudioContext and streamed in 1.4 s pieces (AudioWorklet listener), starting after a few seconds; writing rests 30 s ahead; finished notes are let go while writing. Phones still play live. Sound thread 15% → 3% of a core, music dropouts on the Chromium tour 16 → 0.
+
+## Request (owner, 2026-10-31 00:30Z): hits on contact, V key, Justin's battle, unlocks in 12s, loading, Lawyering
+"Make sure that when stabbing in this mode and all modes, that the knife takes an HP away from Justin or gives a player dead effect WHEN the weapon hits them or touches thier hitbox. This should be the same for the hammer, and it happens in the duration of the attack time of a weapon based on the animation's duration. Furthermore, the button to now use a special last used OR that is toggled is NOW the V key (v). 
+
+Whenever you hit Justin, his character has a transparent flash of red on his character that doesnt last long, and so does every player when they get a dead effect now. 
+
+When a player takes on a dead effect, there is a cooldown meter ON their username that goes down until the player rises back up, and that cooldown effect is transparent and in the color of their playercard (with an accent of transparent and undefined streaks that float inside the meter in an opposite color that contrasts inside the meter to improve visability). The meter is somewhat transparent AND doesnt block any of the letters of any font in the player's name. When the meter is empty, the player stands back up and no longer has the dead effect. The default time to defeat Justin now IS a minute and a half. Default time setting must be on to count for the reward for the lightning eyes. There is also a small fade in of a special a player can pick up when it spawns once every  15 seconds OF a weapon special that the player will have toggled on when walked over and they can use once before it goes back to the knife, and the weapon chances will be written below:
+
+Hammer: 29%
+Throwing Dagger (the one already in the game): 27.5%
+The handgun: 25%
+The shotgun: 10%
+Lightning or Fire (could be one of these two WITHIN this 5% chance: 5%
+Meteor (it will hit the ground and do 1 damage to Justin before adding 30 seconds to the clock: 2.5%
+Good Justin (there is a chance that a good guy Justin will spawn in to help, and his name will be "Good Justin God", and he will have the dead effect like other players and a knife, and he will also have his own quotes AND an angelic halo over his head, but no lightning eyes: 1%
+
+the lightning, fire, or meteor automatically hit Justin when there little symbol spawns in btw.
+
+There is a hit sound effect similiar to a player being hit in minecraft when any player in the game is hit now.
+
+Justin now has devil horns on in this gamemode, and these horns can be added to the symbol for the game.
+
+If Justin dies, there is also confetti on the screen when he dies. If Justin dies, he also has a stream of tears going down his face while rage lines that happen when he dies play. I sent a picture example of what the tears should look like, and they are flowing. These tears can also be unlocked by losing to Justin 24 times or losing 144 rounds of games that clearly can be lost.. (ask me about what rounds count as lost).
+
+any item that requires a certain amount of number to earn should now be in the factor of 12, and now it takes 1728 jumps to unlock the Jester items and then 20736 jumps to unlock the jack in a box
+
+
+Players can now cancel the timer that starts a game by clicking X key in the lobby OR clicking the cancel button next to the countdown and then that will make the timer reset to five. The screen slowly fades to black until the game starts, and when the game starts, the loading screen fades in and shows a bar loading, when the bar finishes with it's black background, the game very quickly fades back in. 
+I imagine the game loads instanteously in a lot of instances, but this helps show players when there game will load. The loading screen should also show the players duck in the middle of the black screen with their ping displayed below the duck. 
+IF the loading screen is a bad idea, let me know, but i dont see why it would be. 
+
+Players now have to jump 144 times to unlock long jump AND double jump.
+
+Players have to kill players 144 times (any instance of justin included) to get the shotgun unlocked.
+
+To get a grenade, players have to kill players 360 times, and the grenade has a diameter of three ducks and give the death effect WHILE throwing the ducks away from the grenade after it explodes about three times the distance of the hammer with a similiar effect to the hammer. Grenade explosion also causes a similiar burnt effect to the silly effects.
+
+Players in the center no longer get kicked outside the center in lawyering, but also it will be changed, though the logic still applies. In lawyering, the circle can be removed and instead the symbol of the defense (or shield) can be put beside their name AND the symbol of the offense (or the sword) can be put beside the name of the offense. The offense player only stands in the offense side AND the player for the defense side ONLY stays in the defense side, so no more circle. In lawyering, the offense and defense has a glow that breathes on and off at the same rate as the other duck TO indicate furthermore that they are the lawyers.
+
+In lawyering and other similiar game modes, the player who lags out or leaves is returned to their position in their gamemode upon joining. Without the game saying the position of the player, a vote to begin the next round will stay on the screen that has to be clicked on UNTIL the player joins back OR until the vote is passed and the next rounds continues without that player. 
+
+make sure to update the controls menu to make them accurate AND remove the OLD buttons that made keys sharp or flat on piano."
+- Split (Adam's plan https://claude.ai/artifact/EfYRozRkNv91XS4x3m1fJa): 1 weapons and hits (Solomon the 2nd), 2 Mad God
+  Justin (Noah), 3 lobby start and loading screen (Jackal), 4 Lawyering and rejoining (Solomon the 2nd), 5 hit sound,
+  piano buttons and controls menu (Miles Jr.).
+
+## Clarification (2026-10-31 00:35Z), on the piano's sharp and flat buttons
+
+> remember that for the sharp and flat buttons, i mean the keyboard buttons we mapped long time ago, not any one note already on the keyboard will  be changed
+
+- Miles Jr.: the old keys (Shift or C sharp, Space or Alt flat) were already gone from the piano's code; only Settings → Controls still listed them. That line now shows the four rows as they are. No note on the keyboard changed.
