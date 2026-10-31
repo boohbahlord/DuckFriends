@@ -1414,6 +1414,10 @@ function placePodium(board, now) {
     up = podUp(s, now),
     w = geo.size * 2,
     h = geo.size * (POD_H + 0.14);
+  if (board._podUp !== up > 0) {
+    board._podUp = up > 0;
+    board.classList.toggle("pod-up", up > 0);
+  } // (the duck on the podium wears its own name tag, so the cloud's goes)
   const st = `${(c.left - w / 2).toFixed(1)},${(c.top - h + geo.size * 0.14 + (1 - up) * h).toFixed(1)},${w.toFixed(1)},${h.toFixed(1)},${up.toFixed(2)},${Math.round(c.top - 1)}`;
   if (pod._st === st) return;
   pod._st = st;
