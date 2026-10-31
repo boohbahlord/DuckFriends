@@ -912,16 +912,20 @@ function drawDucks(now = clockNow()) {
       d._gj = true;
       d.classList.add("mgj-good");
     } // (Good Justin God fades in)
-    const scorched =
-      id === JUSTIN_ID &&
-      isMgj(s) &&
-      s.phase === "mgjend" &&
-      !!(s.mgj && s.mgj.won) &&
-      now - s.at >= MGJ_ZAP;
+    const zapT =
+        id === JUSTIN_ID &&
+        isMgj(s) &&
+        s.phase === "mgjend" &&
+        !!(s.mgj && s.mgj.won)
+          ? now - s.at - MGJ_ZAP
+          : -1,
+      scorched =
+        zapT >= 0 && zapT < 4000 ? 1 : zapT >= 4000 && zapT < 6600 ? 2 : 0;
     if (d._sco !== scorched) {
       d._sco = scorched;
-      d.classList.toggle("mgj-burnt", scorched);
-    } // (burnt on the podium while it shows)
+      d.classList.toggle("mgj-burnt", scorched === 1);
+      d.classList.toggle("mgj-unburn", scorched === 2);
+    } // (burnt by the lightning on the podium, then the burn fades like a fire's: 4 s, then 2.5 s)
     const op = podLift(s, id, now) > 0.2;
     if (d._op !== op) {
       d._op = op;

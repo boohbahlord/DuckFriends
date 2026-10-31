@@ -18,7 +18,8 @@
    - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a weapon a duck picks up
      by walking over it and uses once (then it's back to the knife); lightning or fire, or a meteor, that hit him as
      soon as they show; or Good Justin God, a helper with a halo and a knife, who stabs him too and can be knocked down
-     like a duck.
+     like a duck. He has no lines of his own: he shouts Justin's god lines at him, and cheers with Justin's winning
+     lines when he dies.
    He's the Justin option's board Justin (boardjustin.js: s.justin, justinAt, his look, lines and bullets); this file is
    his brain here. s.mgj = { hp, max, n (the fight's number), dmg {id: stabs}, hits {id: times he knocked them down},
    kill, won, strikes (what's left in the sky), strikeAt, metAt (ms left on the timer when the meteor comes), met (the
@@ -45,7 +46,6 @@ import {
   GOD_LINES,
   WIN_LINES,
   LOSE_LINES,
-  GOOD_LINES,
 } from "./hangout/justin.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
@@ -275,6 +275,7 @@ function mgjEnd(s, now, won, log) {
       v: SPEED,
       w: "",
     });
+    if (m.gj) m.gj.down = 0; // (Good Justin God gets up to cheer)
     m.rage1 = any(LOSE_LINES);
     line(m.rage1);
     s.mgjWinN = (s.mgjWinN || 0) + 1;
@@ -336,6 +337,11 @@ export function mgjTick(s, now, log) {
     if (m.won && !m.zapped && now - s.at >= MGJ_ZAP) {
       m.zapped = true;
       fx({ kind: "lightning", who: [JUSTIN_ID] });
+      return true;
+    }
+    if (m.won && m.gj && !m.gjYay && now - s.at >= MGJ_ZAP + 1400) {
+      m.gjYay = true; // (Good Justin God cheers with Justin's own winning lines)
+      log(s, { npc: GOOD_ID, name: GOOD_NAME, text: any(WIN_LINES) });
       return true;
     }
     if (m.won && !m.rage && now - s.at >= MGJ_ZAP + 2800) {
@@ -906,13 +912,13 @@ function goodComes(s, now, P, log) {
     down: 0,
     stabAt: now + 900,
     sayAt: now + rnd(6000, 10000),
-    list: shuffle(GOOD_LINES.map((_, i) => i)),
+    list: shuffle(GOD_LINES.map((_, i) => i)),
   };
   s.pos[GOOD_ID] = { x: P.x, y: P.y, face: P.x < 0.5 ? 1 : -1 };
   log(s, {
     npc: GOOD_ID,
     name: GOOD_NAME,
-    text: GOOD_LINES[s.mgj.gj.list.shift()],
+    text: GOD_LINES[s.mgj.gj.list.shift()],
   });
   say(s, `${GOOD_NAME} came to help!`);
 }
@@ -927,8 +933,8 @@ function goodTick(s, now, at, log, fx) {
     ch = true;
   }
   if (now >= g.sayAt) {
-    if (!(g.list || []).length) g.list = shuffle(GOOD_LINES.map((_, i) => i));
-    log(s, { npc: GOOD_ID, name: GOOD_NAME, text: GOOD_LINES[g.list.shift()] });
+    if (!(g.list || []).length) g.list = shuffle(GOD_LINES.map((_, i) => i));
+    log(s, { npc: GOOD_ID, name: GOOD_NAME, text: GOD_LINES[g.list.shift()] });
     g.sayAt = now + rnd(12000, 22000);
     ch = true;
   }

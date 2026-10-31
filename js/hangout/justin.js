@@ -197,21 +197,6 @@ STOP!!! STOP!!! STOP!!! STAAAHHPP!!!!
 Get some help.
 IT'S NOT FUNNY!!!!
 IT'S NOT FUUUUHHHNNNY!!!!!`.split("\n");
-/* Mad God Justin's helper, Good Justin God (a pickup, 1 in 100): kind, calm and very sure of himself */
-export const GOOD_LINES = `Fear not, ducks. Good Justin is here.
-I forgive you, other me. But I'm still stabbing you.
-Blessings upon your knives!
-Be nice, Justin. It's not that hard.
-I came down from the clouds for this?
-Peace be with you... after this stab.
-You're not a god, Justin. You're just loud.
-Hold the line, ducks!
-I turned my Xbox off and found inner peace.
-The light is on our side!
-Group hug after this, everyone.
-One of us has to be the good one.
-Rise up, little ducks!
-Even gods need a timeout, Justin.`.split("\n");
 const pick = (...ls) =>
   ls.map((l) => {
     if (!E_LINES.includes(l) && !DEATH_LINES.includes(l))

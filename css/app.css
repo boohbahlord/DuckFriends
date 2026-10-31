@@ -11462,6 +11462,10 @@ html.moving .eye-zap {
 }
 .gduck.mgj-burnt .gduck-body > svg:not(.mgj-cry) {
   filter: brightness(0.3) saturate(0.3) sepia(0.5);
+  transition: filter 0.3s;
+}
+.gduck.mgj-unburn .gduck-body > svg:not(.mgj-cry) {
+  transition: filter 2.5s ease-in;
 }
 /* his tears on the loser podium: a copy of the duck on top that shows only the tears, so the burn doesn't darken them */
 .gduck-body > svg.mgj-cry {
