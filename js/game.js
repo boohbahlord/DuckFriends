@@ -145,6 +145,8 @@ import {
   DUCKLING,
   looksOf,
   ammoHTML,
+  SHOTGUN,
+  iconOf,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -231,6 +233,8 @@ import {
   mgjGone,
   mgjStats,
   mgjTime,
+  GOOD_ID,
+  PICK_FADE,
 } from "./mgjrules.js";
 import {
   mgjBoardHTML,
@@ -239,6 +243,9 @@ import {
   mgjStatsHTML,
   mgjOverHTML,
   MAD_JUSTIN,
+  SAD_JUSTIN,
+  GOOD_JUSTIN,
+  pickHTML as mgjPickHTML,
 } from "./mgj.js";
 
 let R = null,
@@ -687,6 +694,7 @@ function drawDucks(now = clockNow()) {
   const ids = [
       ...s.seat.filter((id) => s.pos[id]),
       ...(jp ? [JUSTIN_ID] : []),
+      ...(isMgj(s) && s.mgj && s.mgj.gj && s.pos[GOOD_ID] ? [GOOD_ID] : []),
       ...Object.keys(ghosts)
         .filter((id) => s.players[id])
         .map((id) => id + BODY),
@@ -716,8 +724,16 @@ function drawDucks(now = clockNow()) {
         ? { ...s.players[id.slice(0, -BODY.length)], dead: true }
         : s.players[id] ||
           (id === JUSTIN_ID && {
-            ...(isMgj(s) ? MAD_JUSTIN : JUSTIN_PLAYER),
+            ...(isMgj(s)
+              ? s.phase === "mgjend" && s.mgj && s.mgj.won
+                ? SAD_JUSTIN
+                : MAD_JUSTIN
+              : JUSTIN_PLAYER),
             dead: !!s.justin.down,
+          }) ||
+          (id === GOOD_ID && {
+            ...GOOD_JUSTIN,
+            dead: !!(s.mgj && s.mgj.gj && s.mgj.gj.down),
           }),
       pos = posOf(id);
     if (!p) continue;
@@ -749,6 +765,12 @@ function drawDucks(now = clockNow()) {
       d.querySelector(".gduck-body").innerHTML =
         duckSVG(look, { size: 64, shadow: false, title: p.name, dead }) +
         '<span class="sp-fx gduck-aura"></span>';
+      if (look && look.eyes === "tears") {
+        // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
+        const cry = d.querySelector(".gduck-body svg").cloneNode(true);
+        cry.classList.add("mgj-cry");
+        d.querySelector(".gduck-body").append(cry);
+      }
       d._aura = null;
       d.style.setProperty("--xc", colorsOf(p.duck, "loserx")[0]);
       d.querySelector(".gduck-name").innerHTML = nameHTML(p.name, p.nameStyle);
@@ -854,7 +876,7 @@ function drawDucks(now = clockNow()) {
       id === JUSTIN_ID && isMgj(s)
         ? !mgjGone(s, now) && (shown || pos.w)
         : (isMgj(s) && s.phase === "boss"
-            ? "knife"
+            ? ((s.mgj && s.mgj.held) || {})[id] || "knife"
             : mine
               ? held && hasKey(p.duck, held) && held
               : pos.w) || shown; // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
@@ -884,6 +906,10 @@ function drawDucks(now = clockNow()) {
       d._gone = gone;
       d.classList.toggle("mgj-gone", gone);
     } // Mad God Justin: faded away for the meteor
+    if (id === GOOD_ID && !d._gj) {
+      d._gj = true;
+      d.classList.add("mgj-good");
+    } // (Good Justin God fades in)
     const scorched =
       id === JUSTIN_ID &&
       isMgj(s) &&
@@ -1209,6 +1235,7 @@ function drawDucks(now = clockNow()) {
   } // (Lawyering, Duncelation: Vote, Voted or Change vote)
   placeRing(board);
   placePodium(board, now);
+  placePick(board, s);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll(
     ".topover .lord, .topover .question, .topover .wq-sidecol",
@@ -1339,6 +1366,35 @@ function placePodium(board, now) {
     opacity: Math.min(1, +u * 3),
     zIndex: z,
     clipPath: `inset(0 0 ${((1 - u) * 100).toFixed(1)}% 0)`,
+  });
+}
+
+/* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
+function placePick(board, s) {
+  const P = isMgj(s) && s.phase === "boss" && s.mgj && s.mgj.pick,
+    layer = $(".ducks", board);
+  let n = layer && layer.querySelector(".mgj-pick");
+  if (n && (!P || +n.dataset.n !== P.n)) {
+    n.remove();
+    n = null;
+  }
+  if (!P || !layer || !geo) return;
+  if (!n) {
+    n = el(mgjPickHTML(P));
+    n.style.setProperty("--fade", PICK_FADE + "ms");
+    layer.append(n);
+  }
+  const c = place(P, 0, 1),
+    w = geo.size * 0.9,
+    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
+  if (n._st === st) return;
+  n._st = st;
+  Object.assign(n.style, {
+    left: c.left + "px",
+    top: c.top + "px",
+    width: w + "px",
+    height: w + "px",
+    zIndex: Math.round(c.top - 2),
   });
 }
 
@@ -1556,14 +1612,16 @@ function playFx(f) {
     dropMeteor(
       fxl,
       board,
-      place({ x: 0.5, y: 0.55 }, 0, 1),
-      size,
+      place(f.x != null ? { x: f.x, y: f.y } : { x: 0.5, y: 0.55 }, 0, 1),
+      f.small ? size * 0.6 : size,
       f.land - now,
     );
     sfx.meteor(Math.max(0.15, (f.land - now) / 1000));
   } else if (f.kind === "pump") {
     // he's back, with the shotgun
     sfx.pump();
+  } else if (f.kind === "pickup") {
+    sfx.pop(); // (Mad God Justin: a weapon picked up)
   } else if (f.kind === "hotdog") {
     const node = el(
       `<div class="fx-hotdog" style="width:${(size * 0.8).toFixed(0)}px">${HOTDOG}</div>`,
@@ -2158,6 +2216,12 @@ async function announce(phase) {
   );
 }
 
+const PICK_NAMES = {
+  hammer: "Hammer",
+  dagger: "Throwing dagger",
+  handgun: "Handgun",
+  shotgun: "Shotgun",
+};
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated (and a LOSER), or time's up */
 async function announceMgj(s, phase) {
   const job = ++sayJob;
@@ -2173,6 +2237,7 @@ async function announceMgj(s, phase) {
     return;
   }
   sfx.done();
+  confettiRain(5000);
   say("Justin is DEFEATED!");
   await pause(3400);
   if (job !== sayJob) return;
@@ -2536,8 +2601,17 @@ const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Mad God Justin only the knife, on key 1 (my own keys stay as they are) */
 const playDuck = () =>
   R && isMgj(R.state)
-    ? { ...myDuck(), keys: ["knife", ...Array(9).fill(null)] }
+    ? {
+        ...myDuck(),
+        keys: [
+          specialById(myPick()) ? myPick() : "knife",
+          ...Array(9).fill(null),
+        ],
+      }
     : myDuck();
+/* Mad God Justin: the weapon I picked up (one use), or none */
+const myPick = () =>
+  (R && R.state.mgj && (R.state.mgj.held || {})[R.me]) || null;
 /* the effects kept on for my duck (in the room's state), and the jumps and the weapon kept on here */
 function keptNow() {
   const out = new Set(
@@ -2551,6 +2625,11 @@ function keptNow() {
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
   if (bar) bar.show(i);
+  if (isMgj(R.state)) {
+    if (i === 0) fire(myPick() || "knife");
+    if (bar) setTimeout(() => bar && bar.refresh(), 60);
+    return;
+  } // (Mad God Justin: key 1 is the knife, or the weapon picked up)
   const id = keysOf(playDuck())[i],
     sp = specialById(id);
   if (!sp || sp.off) return; // (a special that's off for now does nothing)
@@ -2655,7 +2734,7 @@ function actHTML(s) {
   if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
   if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? "Knocked down! Up again in a moment." : "Get close to Justin: your knife stabs him by itself"}</span>`;
+    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? "Knocked down! Up again in a moment." : myPick() ? `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${matchMedia("(hover: none) and (pointer: coarse)").matches ? "tap the button" : "<kbd>Click</kbd> or <kbd>1</kbd>"} to use it once` : "Get close to Justin: your knife stabs him by itself"}</span>`;
   if (s.phase === "mgjend")
     return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
   if (s.phase === "dunced") {
@@ -3187,7 +3266,7 @@ function paint(force) {
   }
   if (world) world.state(s); // (a lamp switched off …)
   if (isMgj(s)) {
-    held = s.phase === "boss" ? "knife" : null;
+    held = s.phase === "boss" ? myPick() || "knife" : null;
     const hp = $(".mgj-hp", S);
     if (hp) setHTML(hp, mgjHPHTML(s));
   } // Mad God Justin: the knife always out; his HP
@@ -3331,12 +3410,12 @@ function paint(force) {
     for (const m of s.log)
       if (
         m.n > lastLog &&
-        m.npc === JUSTIN_ID &&
+        (m.npc === JUSTIN_ID || m.npc === GOOD_ID) &&
         s.options.mode !== "hang" &&
         !isMuted(s, JUSTIN_ID, "bubble") &&
         !isMuted(s, JUSTIN_ID, "text")
       )
-        bubbles[JUSTIN_ID] = {
+        bubbles[m.npc] = {
           text:
             m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + "…" : m.text,
           until: clockNow() + 5500,
@@ -3903,6 +3982,10 @@ register("game", {
       cool,
       duck: playDuck,
       ammo,
+      look: (id) =>
+        id === "knife" && myPick() === "shotgun"
+          ? { ...specialById("knife"), name: "Shotgun", icon: iconOf(SHOTGUN) }
+          : null, // (Mad God Justin's shotgun pickup isn't a special: key 1 shows it)
     });
     docks.corner(bar.button); // (phones: the Specials button, bottom right)
     addEventListener("mousemove", aimAt);
@@ -3941,7 +4024,7 @@ register("game", {
       }
       if (
         held &&
-        hasKey(playDuck(), held) &&
+        (isMgj(R.state) || hasKey(playDuck(), held)) &&
         e.button === 0 &&
         onBoardPhase() &&
         e.target.closest(".board") &&

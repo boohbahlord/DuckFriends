@@ -371,6 +371,32 @@ function mgjBot(s, id, now, out) {
     ay = +((j.y - p.y) / len).toFixed(3);
   const air = p.j && now - p.j < 700,
     jump = !air && Math.random() < 0.015 ? now : air ? p.j : 0;
+  const m = s.mgj || {},
+    mine = (m.held || {})[id],
+    pk = m.pick;
+  if (mine && (mine !== "hammer" || d < 2.4)) {
+    out.push({ t: "use", id, what: mine, face: ax < 0 ? -1 : 1, ax, ay });
+    return;
+  } // (a picked-up weapon: fire it at him; the hammer up close)
+  if (
+    pk &&
+    ["hammer", "dagger", "handgun", "shotgun"].includes(pk.k) &&
+    Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) < d
+  ) {
+    const q = Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) || 1,
+      k = Math.min(1, 0.7 / q);
+    out.push({
+      t: "move",
+      id,
+      x: p.x + (pk.x - p.x) * k,
+      y: p.y + (pk.y - p.y) * k,
+      j: jump,
+      w: "knife",
+      ax,
+      ay,
+    });
+    return;
+  } // (a weapon nearer than he is: go get it)
   if (d > 1.6) {
     const k = Math.min(1, 0.7 / d);
     out.push({

@@ -19,6 +19,7 @@ import {
   VOTE_GRACE,
   seatLate,
   toStats,
+  lostRound,
 } from "./rules.js";
 
 export const CLUE_GRACE = 12; // seconds before a clue turn can end
@@ -536,6 +537,13 @@ function finish(s, win, why) {
   const w = s.wq,
     h = s.hidden;
   w.result = { win, why, word: h.word, quacks: [...h.quacks] };
+  if (win === "room") lostRound(s, h.quacks, "quack");
+  else if (win === "quack")
+    lostRound(
+      s,
+      playing(s).filter((id) => !h.quacks.includes(id)),
+      "quack",
+    );
   if (win)
     s.wqScore = {
       ...(s.wqScore || { quack: 0, room: 0 }),

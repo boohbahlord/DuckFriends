@@ -75,6 +75,9 @@ import {
   mgjStab,
   mgjHurt,
   mgjGone,
+  mgjUse,
+  mgjShot,
+  DMG,
 } from "./mgjrules.js";
 
 export const COLS = [
@@ -122,7 +125,7 @@ export const OPTIONS_DEFAULT = {
   lawClose: 60, // seconds of closing arguments when the jury is split: 30, 60, 120
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
-  mgjTime: 60, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
+  mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -451,6 +454,14 @@ const logLine = (s, line) => {
   if (s.log.length > 200) s.log.shift();
 };
 export const say = (s, text) => logLine(s, { sys: true, text });
+/* a clear loss for these players (the owner's list: a Mad God Justin loss, a caught Quack or the room the Quack beat,
+   the losing lawyer, the dunce, a knocked-out contender's writer): each device counts its own player's (unlocks.js) */
+export function lostRound(s, ids, k) {
+  const who = (ids || []).filter((id) => id && s.players[id]);
+  if (!who.length) return;
+  s.lossN = (s.lossN || 0) + 1;
+  s.losses = [...(s.losses || []).slice(-19), { n: s.lossN, ids: who, k }];
+}
 const sayFloat = (s, text, by) =>
   logLine(s, { sys: true, float: true, by, text }); // (a rule, group or room change: it floats by the chat button for everyone else)
 
@@ -1108,10 +1119,12 @@ export function reduce(state, a, now = Date.now()) {
         return state;
       if (
         isMgj(s)
-          ? sp !== "knife" || s.phase !== "boss" || me.dead
+          ? s.phase !== "boss" || me.dead
           : !PRESS.includes(sp) || !onKeys(me.duck, sp)
       )
-        return state; // (Mad God Justin: the knife and nothing else, and not while down)
+        return state; // (Mad God Justin: not while down)
+      if (isMgj(s) && sp !== "knife")
+        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the knife, or the weapon picked up, once)
       if (WEAPONS.includes(sp) && !s.options.fun && !isMgj(s)) return state; // the silly-commands switch covers them
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
@@ -1923,7 +1936,10 @@ export function swing(s, by, sp, aim, now, from = s.pos[by]) {
   let stab = false;
   if (!hang && by !== JUSTIN_ID && isMgj(s)) {
     const n = justinAt(s.justin, now);
-    stab = !!n && !!near(n.x, n.y, 0, 0) && mgjStab(s, by, now, logLine);
+    stab =
+      !!n &&
+      !!near(n.x, n.y, 0, 0) &&
+      mgjStab(s, by, now, logLine, DMG[sp] || 1);
   } // (Mad God Justin: 1 damage)
   else if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
     // (the Justin option: he can be hit back)
@@ -2020,6 +2036,7 @@ function moveShots(s, now) {
         )
           continue; // (the other side of the walls, or above or below it)
         if (p.j && now - p.j < 1300) continue; // jumped over it
+        if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
         /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
         const rx = isHang(s) ? 0.006 : 0.03,
           ry = isHang(s) ? 0.012 : 0.08;
@@ -2035,6 +2052,7 @@ function moveShots(s, now) {
           if (sh.by === JUSTIN_ID) mgjHurt(s, id);
         }
       }
+    if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin)
     if (
       sh.hin === undefined &&
       sh.by !== JUSTIN_ID &&
@@ -2511,7 +2529,9 @@ function decide(s, side, va, vb, who, coin) {
     coin ? { coin: true } : {},
   );
   feed(b, b.r, b.m);
-  const w = b.seeds[m.w];
+  const w = b.seeds[m.w],
+    out = b.seeds[side ? m.a : m.b];
+  if (out) lostRound(s, [out.by], "bb"); // (the knocked-out contender's writer)
   say(
     s,
     coin
@@ -3343,6 +3363,7 @@ function verdict(s, side, now) {
     },
   });
   const W = side === 0 ? L.off : side === 1 ? L.def : null;
+  if (side === 0 || side === 1) lostRound(s, [side ? L.off : L.def], "law");
   const wn = s.players[W]
     ? s.players[W].name
     : "The " + (side ? "defense" : "offense");

@@ -49,11 +49,16 @@ export const EYES = [
     name: "Lightning eyes",
     tip: "Glowing blue and flickering, like Mad God Justin's.",
   },
+  {
+    id: "tears",
+    name: "Tears",
+    tip: "Shut tight and crying a stream, like Mad God Justin when he loses.",
+  },
 ];
 export const eyeById = (id) => EYES.find((e) => e.id === id) || EYES[0];
 /* how Customize shows the eyes: in groups, each under a small heading */
 export const EYE_GROUPS = [
-  ["Duck eyes", ["default", "happy", "sleepy", "angry", "googly"]],
+  ["Duck eyes", ["default", "happy", "sleepy", "angry", "googly", "tears"]],
   ["Shiny", ["star", "heart", "coins", "lightning"]],
   ["Strange", ["human", "bug", "bug2", "alien", "demon", "many", "holes"]],
   ["To match a style", ["raptor", "eagle", "pelican", "block", "flat"]],
@@ -146,6 +151,19 @@ const DRAW = {
     <ellipse cx="83" cy="34" rx="4.6" ry="5.4" fill="url(#${id}y)" stroke="#0b4a8a" stroke-width=".9"/>
     <path d="M79.6 30.6L83.4 33.6L81.6 34.6L86.4 38.4" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M89.6 27.4L92.6 25.6M90.4 31.8L94 31.4" stroke="#9be8ff" stroke-width="1" stroke-linecap="round" opacity=".8"/></g>`,
+  /* crying: shut tight under a worried brow, a pool on the lid and a wide stream down the cheek that flows (css:
+     .eye-tears), with drops falling off it, like the owner's picture */
+  tears: (
+    L,
+    id,
+  ) => `<defs><linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4f1ff"/><stop offset=".5" stop-color="#8fd2fa"/><stop offset="1" stop-color="#5bb4ee"/></linearGradient></defs>
+    <path d="M77.4 28.6L88.6 25.6" stroke="${K}" stroke-width="2" stroke-linecap="round"/>
+    <g class="eye-tears"><path d="M80.6 35.4C79.6 41.4 81.6 46.4 80.2 51.6C79.2 55.6 80.6 59.4 82.4 61.6C85 62.6 88 62.4 90.2 61.4C91.6 58 90.2 54.6 91 50.4C91.8 45.6 90.6 40.6 88.6 35.4Z" fill="url(#${id}t)" stroke="#3a8fcc" stroke-width=".9" stroke-linejoin="round" opacity=".92"/>
+    <path class="tflow" d="M83.4 38.6C82.8 44 84.2 49 83.4 54.6C83 57.4 83.6 59.4 84.2 60.6" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>
+    <path class="tflow t2" d="M87.6 39C88.2 44.4 87.4 49.4 88 54.6" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+    <ellipse cx="84.6" cy="35.4" rx="5.6" ry="2.2" fill="url(#${id}t)" stroke="#3a8fcc" stroke-width=".8"/>
+    <circle class="tdrop" cx="84.4" cy="63.4" r="1.6" fill="#8fd2fa" stroke="#3a8fcc" stroke-width=".6"/><circle class="tdrop t2" cx="88.8" cy="63" r="1.3" fill="#8fd2fa" stroke="#3a8fcc" stroke-width=".6"/></g>
+    <path d="M77.8 33.2Q83.2 37.6 88.8 33" fill="none" stroke="${K}" stroke-width="2.4" stroke-linecap="round"/>`,
   raptor:
     () => `<path d="M77 34C79.5 29.6 87 29.4 89.6 34C87 38.4 79.5 38.4 77 34Z" fill="#f2c218" stroke="#3a2a06" stroke-width="1"/>
     <ellipse cx="83.6" cy="34" rx="1.1" ry="3.9" fill="${K}"/><circle cx="85.6" cy="32.4" r=".8" fill="#fff" opacity=".8"/>

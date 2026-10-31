@@ -21,6 +21,7 @@ import {
   discussOn,
   colAt,
   shareOf,
+  lostRound,
 } from "./rules.js";
 
 export const isDn = (s) => s.options.mode === "dunce";
@@ -315,6 +316,7 @@ function dnVerdict(s, now) {
     ];
   s.dn.dkN = (s.dn.dkN || 0) + 1;
   s.dn.dk = [...(s.dn.dk || []).slice(-9), { n: s.dn.dkN, id: C.def }];
+  lostRound(s, [C.def], "dunce");
   s.dn.fxi = 0;
   say(s, `${p.name} is a DUNCE! ${d}–${n}.`);
   s.lock = {};

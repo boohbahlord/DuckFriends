@@ -43,17 +43,21 @@ export const LOCKS = [
     name: "Clown paint",
   },
   { kind: "hat", id: "dunce", dunced: 10, name: "Dunce hat" },
-  { kind: "eyes", id: "lightning", mgjWins: 10, name: "Lightning eyes" },
+  { kind: "eyes", id: "lightning", mgjWins: 12, name: "Lightning eyes" },
+  { kind: "eyes", id: "tears", mgjLosses: 24, lost: 144, name: "Tears" }, // (lose to Mad God Justin 24 times, or lose 144 rounds)
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
-    : l.mgjWins
-      ? (profile.mgjWins || 0) >= l.mgjWins
-      : l.dunced
-        ? (profile.dunced || 0) >= l.dunced
-        : (profile.justinKills || 0) >= l.kills;
+    : l.mgjLosses
+      ? (profile.mgjLosses || 0) >= l.mgjLosses ||
+        (profile.lostRounds || 0) >= l.lost
+      : l.mgjWins
+        ? (profile.mgjWins || 0) >= l.mgjWins
+        : l.dunced
+          ? (profile.dunced || 0) >= l.dunced
+          : (profile.justinKills || 0) >= l.kills;
 const coded = (l) => !!(l.code && (profile.secrets || {})[l.code]);
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) {
@@ -68,14 +72,20 @@ export function lockHint(kind, id) {
   if (earned(l))
     return l.jumps
       ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-      : l.mgjWins
-        ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
-        : l.dunced
-          ? `Unlocked: voted a dunce ${l.dunced} times`
-          : "Unlocked: you killed Justin with a weapon 10 times";
+      : l.mgjLosses
+        ? (profile.mgjLosses || 0) >= l.mgjLosses
+          ? `Unlocked: lost to Mad God Justin ${l.mgjLosses} times`
+          : `Unlocked: lost ${l.lost} rounds`
+        : l.mgjWins
+          ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
+          : l.dunced
+            ? `Unlocked: voted a dunce ${l.dunced} times`
+            : "Unlocked: you killed Justin with a weapon 10 times";
   if (coded(l)) return "Unlocked: a secret code";
+  if (l.mgjLosses)
+    return `Lose to Mad God Justin ${l.mgjLosses} times (${Math.min(l.mgjLosses, profile.mgjLosses || 0)}/${l.mgjLosses}), or lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
   if (l.mgjWins)
-    return `Beat Mad God Justin ${l.mgjWins} times (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
+    return `Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
     return `Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   return l.hidden
@@ -109,17 +119,35 @@ export function countJustinKill() {
 export function watchKills(room) {
   let seen = null,
     seenD = null,
-    seenW = null;
+    seenW = null,
+    seenL = null;
   room.on(() => {
     const s = room.state,
       top = (s && s.jkN) || 0,
       dn = (s && s.dn) || {},
       topD = dn.dkN || 0,
-      topW = (s && s.mgjWinN) || 0;
+      topW = (s && s.mgjWinN) || 0,
+      topL = (s && s.lossN) || 0;
+    if (seenL === null || topL < seenL) seenL = topL;
+    else {
+      for (const k of (s && s.losses) || [])
+        if (k.n > seenL && (k.ids || []).includes(room.me) && !s.test) {
+          profile.lostRounds = (profile.lostRounds || 0) + 1;
+          if (k.k === "mgj") profile.mgjLosses = (profile.mgjLosses || 0) + 1;
+          save();
+          checkUnlocks();
+        }
+      seenL = topL;
+    } // (a clear loss: rules.js lostRound)
     if (seenW === null || topW < seenW) seenW = topW;
     else {
       for (const k of (s && s.mgjWins) || [])
-        if (k.n > seenW && (k.ids || []).includes(room.me) && !s.test) {
+        if (
+          k.n > seenW &&
+          k.def &&
+          (k.ids || []).includes(room.me) &&
+          !s.test
+        ) {
           profile.mgjWins = (profile.mgjWins || 0) + 1;
           save();
           checkUnlocks();

@@ -53,6 +53,8 @@ export const PROFILE_DEFAULT = {
   justinKills: 0,
   dunced: 0,
   mgjWins: 0,
+  mgjLosses: 0,
+  lostRounds: 0,
   secrets: {},
   unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon, voted a dunce, Mad God Justin beaten, the codes on, the unlocks already announced
 };
@@ -163,6 +165,8 @@ function normalize(p) {
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
   out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
+  out.mgjLosses = Math.max(0, Math.floor(+p.mgjLosses || 0));
+  out.lostRounds = Math.max(0, Math.floor(+p.lostRounds || 0));
   const flags = (o) =>
     Object.fromEntries(
       Object.entries(o && typeof o === "object" ? o : {})

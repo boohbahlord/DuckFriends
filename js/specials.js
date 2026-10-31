@@ -55,7 +55,7 @@ const WRENCH = ([a, b, c]) => {
   <path d="M40.6 4.6Q41.6 3 43.4 3H49.6" stroke="#fff" stroke-width=".8" opacity=".5" fill="none"/>${rust(51.4, 4.4, 2)}${rust(39.8, 9.4, 1.6)}${rust(37.4, 17.6, 1.8)}${rust(50.6, 16.4, 1.4)}</svg>`;
 };
 /* a tile's picture: the item turned 45°, its handle down at the left, filling a square */
-const iconOf = (svg, k = 1) => {
+export const iconOf = (svg, k = 1) => {
   const [, w, h] = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/),
     S = w * 0.78 * k;
   return svg

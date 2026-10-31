@@ -11460,8 +11460,19 @@ html.moving .eye-zap {
     filter: brightness(1.6) sepia(1) saturate(5) hue-rotate(-40deg);
   }
 }
-.gduck.mgj-burnt .gduck-body {
+.gduck.mgj-burnt .gduck-body > svg:not(.mgj-cry) {
   filter: brightness(0.3) saturate(0.3) sepia(0.5);
+}
+/* his tears on the loser podium: a copy of the duck on top that shows only the tears, so the burn doesn't darken them */
+.gduck-body > svg.mgj-cry {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.mgj-cry .eye-tears {
+  visibility: visible;
 }
 /* his shotgun and its pellets */
 .held[data-w="shotgun"] i {
@@ -11600,3 +11611,120 @@ html.moving .board.quake {
 .mgj .hotbar .hk.empty {
   display: none;
 } /* (the knife is the only thing in this fight) */
+/* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
+.mgj-pick {
+  position: absolute;
+  transform: translate(-50%, -70%);
+  pointer-events: none;
+  animation: mgjpickin var(--fade, 700ms) ease-out both;
+}
+.mgj-pick-glow {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff6b0cc 0%,
+    #ffd23f66 40%,
+    #ffd23f00 70%
+  );
+  animation: mgjpickglow 1.6s ease-in-out infinite;
+}
+.mgj-pick.k-lightning .mgj-pick-glow,
+.mgj-pick.k-good .mgj-pick-glow {
+  background: radial-gradient(
+    circle,
+    #e8f8ffdd 0%,
+    #7fd4ff77 40%,
+    #7fd4ff00 70%
+  );
+}
+.mgj-pick.k-fire .mgj-pick-glow,
+.mgj-pick.k-meteor .mgj-pick-glow {
+  background: radial-gradient(
+    circle,
+    #ffe0b0dd 0%,
+    #ff8c2b77 40%,
+    #ff8c2b00 70%
+  );
+}
+.mgj-pick-art {
+  position: absolute;
+  inset: 8%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mgjpickbob 1.6s ease-in-out infinite;
+}
+.mgj-pick-art svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  filter: drop-shadow(0 0.12rem 0 #0006);
+}
+@keyframes mgjpickin {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+@keyframes mgjpickglow {
+  50% {
+    opacity: 0.55;
+    scale: 0.88;
+  }
+}
+@keyframes mgjpickbob {
+  50% {
+    translate: 0 -12%;
+  }
+}
+/* Good Justin God fades in */
+.gduck.mgj-good .gduck-lift {
+  animation: mgjgoodin 0.9s ease-out both;
+}
+@keyframes mgjgoodin {
+  from {
+    opacity: 0;
+    filter: brightness(2.2);
+  }
+}
+/* the tears eyes: the stream flows down and drops fall off it */
+html.moving .eye-tears .tflow {
+  stroke-dasharray: 3 4;
+  animation: tearflow 0.5s linear infinite;
+}
+html.moving .eye-tears .tflow.t2 {
+  animation-duration: 0.65s;
+}
+html.moving .eye-tears .tdrop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: teardrop 0.8s ease-in infinite;
+}
+html.moving .eye-tears .tdrop.t2 {
+  animation-delay: -0.4s;
+}
+@keyframes tearflow {
+  to {
+    stroke-dashoffset: -7;
+  }
+}
+@keyframes teardrop {
+  from {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(7px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eye-tears .tflow,
+  .eye-tears .tdrop,
+  .mgj-pick-art,
+  .mgj-pick-glow {
+    animation: none;
+  }
+}
