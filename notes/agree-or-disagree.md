@@ -2680,3 +2680,9 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 - Split (Adam's plan https://claude.ai/artifact/EfYRozRkNv91XS4x3m1fJa): 1 weapons and hits (Solomon the 2nd), 2 Mad God
   Justin (Noah), 3 lobby start and loading screen (Jackal), 4 Lawyering and rejoining (Solomon the 2nd), 5 hit sound,
   piano buttons and controls menu (Miles Jr.).
+
+## Clarification (2026-10-31 00:35Z), on the piano's sharp and flat buttons
+
+> remember that for the sharp and flat buttons, i mean the keyboard buttons we mapped long time ago, not any one note already on the keyboard will  be changed
+
+- Miles Jr.: the old keys (Shift or C sharp, Space or Alt flat) were already gone from the piano's code; only Settings → Controls still listed them. That line now shows the four rows as they are. No note on the keyboard changed.

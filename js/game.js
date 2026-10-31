@@ -744,6 +744,8 @@ function drawDucks(now = clockNow()) {
     const dead = deadNow(id, p),
       look = dnHat(s, id, now) ? dunceDuck(p.duck) : p.duck,
       sig = JSON.stringify([look, p.name, p.nameStyle, dead]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
+    if (dead && d._dead === false && !g && !wq) sfx.hit(); // a duck knocked down (by a weapon, Justin, a kill): the hit sound, for everyone
+    d._dead = dead;
     if (d._sig !== sig) {
       d._sig = sig;
       d.querySelector(".gduck-body").innerHTML =
@@ -1473,7 +1475,7 @@ function playFx(f) {
     setTimeout(() => heart.remove(), 4200);
     sfx.love();
   } else if (f.kind === "kill") {
-    sfx.bonk();
+    sfx.hit();
   } else if (f.kind === "use") {
     // an item at its duck, moving with it (drawDucks places it each frame)
     if (f.what === "confetti") {
@@ -1502,7 +1504,8 @@ function playFx(f) {
           void jd.offsetWidth;
           jd.classList.add("hurt");
         }
-      } // (Mad God Justin stabbed: he flashes red)
+        sfx.hit();
+      } // (Mad God Justin stabbed: he flashes red, and the hit sound)
       shows[f.by] = {
         what: f.what,
         t: now,
@@ -1512,8 +1515,8 @@ function playFx(f) {
         ay: f.ay || 0,
       };
       (f.what === "handgun" ? sfx.bang : sfx.swish)();
-      if (f.hit && f.hit.length)
-        setTimeout(() => sfx.bonk(), f.what === "hammer" ? KB_LAND : 60); // (the knife or the hammer landed)
+      if (f.what === "hammer" && f.hit && f.hit.length)
+        setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
     } // (it turns toward the aim; the bullet or the dagger flies from the room's state)
     const wrap = el('<div class="spe-follow"></div>');
