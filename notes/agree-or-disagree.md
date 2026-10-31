@@ -2693,3 +2693,9 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 > remember that for the sharp and flat buttons, i mean the keyboard buttons we mapped long time ago, not any one note already on the keyboard will  be changed
 
 - Miles Jr.: the old keys (Shift or C sharp, Space or Alt flat) were already gone from the piano's code; only Settings → Controls still listed them. That line now shows the four rows as they are. No note on the keyboard changed.
+
+## Request (2026-10-31 01:38Z): the hit sound, higher and quackier
+
+> make the sound you made sound more high pitch and more quacky for the hit sound, like a duck, while having it be kinda similiar somehwat
+
+- Miles Jr.: same short "oof" shape, now about an octave higher (360 → 420 → 250 Hz), nasal bands at 1050 and 1900 Hz, a lighter thump.

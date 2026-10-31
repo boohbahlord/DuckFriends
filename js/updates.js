@@ -32,7 +32,7 @@ export const UPDATES = [
       "The dunce hat is now locked: be voted a dunce 10 times to wear it.",
       "Report Bug or Suggest Ideas, at the bottom of this window and of Settings.",
       "Duncelation: End round, beside Vote. It ends the take once the defender and enough players press it.",
-      "A hit sound, like Minecraft's, whenever a player (or Justin) is hit.",
+      "A hit sound, like Minecraft's but a quacky duck's, whenever a player (or Justin) is hit.",
     ],
     fixed: [
       "On a computer, the music no longer crackles or pops while other apps (like Discord) keep it busy.",
