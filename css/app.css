@@ -11885,3 +11885,61 @@ html.moving .board.quake {
     filter: drop-shadow(0 0 0.35rem var(--lc)) drop-shadow(0 0 0.7rem var(--lc));
   }
 }
+
+/* the start: the page goes dark over the countdown, then the loading screen (js/loading.js) */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+  transition-timing-function: linear;
+  display: grid;
+  place-items: center;
+}
+.veil .veil-box {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  color: #fff;
+}
+.veil.loading {
+  z-index: 9000;
+}
+.veil.loading .veil-box {
+  display: flex;
+}
+.veil-duck svg {
+  width: 7rem;
+  height: auto;
+  display: block;
+}
+.veil-ping {
+  margin: 0;
+  font-weight: 600;
+  font-size: calc(0.95rem * var(--ts));
+  opacity: 0.8;
+  min-height: 1.3em;
+  font-variant-numeric: tabular-nums;
+}
+.veil-bar {
+  width: min(16rem, 70vw);
+  height: 0.7rem;
+  border-radius: 1rem;
+  border: 0.14rem solid #fff;
+  padding: 0.1rem;
+}
+.veil-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 1rem;
+  background: var(--green);
+}
+.lobby-status {
+  position: relative;
+  z-index: 41;
+} /* (the countdown and its Cancel button stay above the dark) */

@@ -7,6 +7,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-10-31",
+    version: 104,
+    date: "Oct 31, 2026",
+    title: "Cancel the start, and a loading screen",
+    news: [
+      "Any player can cancel a starting game with the X key or the Cancel button.",
+      "The screen fades to black while the start counts down, then a loading screen shows your duck, your ping and a bar, and the game fades back in.",
+    ],
+    fixed: [],
+  },
+  {
     id: "2026-10-30",
     version: 103,
     date: "Oct 30, 2026",
@@ -21,11 +32,11 @@ export const UPDATES = [
       "The dunce hat is now locked: be voted a dunce 12 times to wear it.",
       "Report Bug or Suggest Ideas, at the bottom of this window and of Settings.",
       "Duncelation: End round, beside Vote. It ends the take once the defender and enough players press it.",
-      "A hit sound, like Minecraft's, whenever a player (or Justin) is hit.",
+      "A hit sound, like Minecraft's but a quacky duck's, whenever a player (or Justin) is hit.",
       "The knife and the hammer hit anyone they touch while they swing, not only at the press.",
       "V uses the special you're holding out, or the last one you used.",
-      "Knocked down: a quick red flash, and a meter on your name that empties until you get back up. Justin flashes red when hit.",
-      "New specials: the Shotgun (knock down 144 players) and the Grenade (360). Any Justin counts.",
+      "Knocked down: a quick see-through red flash, and a meter on your name that empties until you get back up. Justin flashes red when hit.",
+      "New specials: the Shotgun (knock down 144 players) and the Grenade (360, once every 12 seconds). Any Justin counts.",
       "Unlocks now count in 12s: Long jump and Double jump at 144 Jumps, the jester at 1,728, Jack in a Box at 20,736.",
       "Lawyering: no circle. The attorneys stay on their own side, with a sword or a shield by their name and a glow.",
       "Lawyering and Duncelation: a player who drops out comes back to their place. Until then, Next round goes on without them.",
