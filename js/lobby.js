@@ -30,6 +30,7 @@ import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
 import { openStats } from "./stats.js";
 import { sfx } from "./sound.js";
+import { darken, brighten, loadingScreen } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { MAPS, mapMini, mapName } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
@@ -42,6 +43,7 @@ let R = null,
   off = null,
   offAcct = null,
   lastCount = -1,
+  counting = false, // the start's countdown is running here (the screen fades to black over it)
   lastSeat = 0,
   docks = null,
   mbarOff = null;
@@ -796,7 +798,7 @@ function paint() {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
       st,
-      `<span class="count">Starting in <b>${left}</b></span>${host ? '<button type="button" class="btn red" data-a="cancel">Cancel</button>' : ""}`,
+      `<span class="count">Starting in <b>${left}</b></span><button type="button" class="btn red" data-a="cancel">Cancel <kbd>X</kbd></button>`,
     );
   } else {
     setHTML(
@@ -868,17 +870,44 @@ function onState(s) {
   if (!S) return;
   if (!["lobby", "countdown"].includes(s.phase)) {
     if (lastCount > 0) sfx.count(true);
+    const started = counting;
     lastCount = -1;
-    go("game", R);
+    counting = false;
+    const room = R;
+    go("game", room);
+    if (started)
+      loadingScreen({
+        duck: profile.duck,
+        ping: () => (room.ping ? room.ping() : 0),
+        ready: () =>
+          new Promise((r) =>
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() =>
+                (document.fonts
+                  ? document.fonts.ready
+                  : Promise.resolve()
+                ).then(r),
+              ),
+            ),
+          ),
+      });
     return;
   } // the countdown's last tone, at zero
   if (s.phase === "countdown") {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
+    if (!counting) {
+      counting = true;
+      darken(Math.max(0, s.ends - now()));
+    }
     if (left !== lastCount) {
       sfx.count(left === 0);
       lastCount = left;
     }
-  } else lastCount = -1;
+  } else {
+    if (counting) brighten(); // (cancelled: the screen comes back)
+    counting = false;
+    lastCount = -1;
+  }
   paint();
 }
 
@@ -892,6 +921,15 @@ function key(e) {
   if (e.key === "Escape" && !e.repeat) {
     e.preventDefault();
     openPause();
+  }
+  if (
+    (e.key === "x" || e.key === "X") &&
+    !e.repeat &&
+    R &&
+    R.state.phase === "countdown"
+  ) {
+    e.preventDefault();
+    R.send({ t: "cancel" });
   }
 }
 /* the pause menu, as in a game (☰ at the top right, or Esc) */
@@ -979,6 +1017,8 @@ register("lobby", {
     offAcct = null;
     if (docks) docks.destroy();
     docks = null;
+    if (counting) brighten(); // (left the room in the countdown)
+    counting = false;
     clearInterval(S && S._tick);
     S = null;
     removeEventListener("keydown", key);

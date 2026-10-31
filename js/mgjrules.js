@@ -36,7 +36,7 @@ import {
   DAGGER_SPEED,
   MAG,
   RELOAD,
-  swing,
+  strike,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { holdDown } from "./hangout/death.js";
@@ -507,7 +507,7 @@ export function mgjTick(s, now, log) {
       dx = p.x - at.x,
       dy = p.y - at.y,
       aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
-    const hit = swing(s, JUSTIN_ID, "hammer", aim, now, at);
+    const hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
     for (const h of hit) mgjHurt(s, h);
     const g = s.pos[GOOD_ID];
     if (goodUp(s, now) && far(g) < 2.4) {
@@ -811,7 +811,7 @@ export function mgjUse(s, a, now, log) {
       ay: +aim[1].toFixed(3),
     };
   if (k === "hammer") {
-    const hit = swing(s, a.id, "hammer", aim, now);
+    const hit = strike(s, a.id, "hammer", aim, now); // (it hits what it touches while it swings, like the hammer special)
     s.fx = [
       ...(s.fx || []).slice(-19),
       { ...use, ...(hit.length ? { hit } : {}) },

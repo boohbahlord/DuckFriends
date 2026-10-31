@@ -237,6 +237,16 @@ export const sfx = {
     });
     tone(90, 0.38, { type: "sine", gain: 0.1, slide: 0.5, attack: 0.014 });
   }, // Mad God Justin's shotgun: a deeper bang
+  boom() {
+    noise(1.2, {
+      gain: 0.22,
+      type: "lowpass",
+      freq: 1300,
+      slideTo: 70,
+      fade: 0.016,
+    });
+    tone(62, 0.9, { type: "sine", gain: 0.18, slide: 0.55, attack: 0.02 });
+  }, // a grenade going off: the meteor's boom, a little shorter
   pump() {
     noise(0.08, {
       gain: 0.07,
@@ -331,9 +341,9 @@ export const sfx = {
     tone(988, 0.25, { gain: 0.07, at: 0.12 });
     tone(1175, 0.45, { gain: 0.07, at: 0.24 });
   },
-  /* a player hit (or Justin): a short "oof" like a player hurt in Minecraft. A buzzy voice falling in pitch through two
-     vowel bands ("uh"), over a soft thump; each a little higher or lower than the last, as there. Two hits at once (a
-     knife that knocks a duck down) make one sound */
+  /* a player hit (or Justin): a short "oof" like a player hurt in Minecraft, but a duck's: a nasal, buzzy quack that bends
+     up a little and falls ("wahk"), through two bright bands, over a soft thump; each a little higher or lower than the
+     last, as there. Two hits at once (a knife that knocks a duck down) make one sound */
   hit() {
     const a = ac(),
       v = vol(),
@@ -346,14 +356,16 @@ export const sfx = {
       lp = a.createBiquadFilter(),
       g = a.createGain();
     o.type = "sawtooth";
-    o.frequency.setValueAtTime(165 * k, t);
-    o.frequency.exponentialRampToValueAtTime(100 * k, t + 0.3);
+    o.frequency.setValueAtTime(360 * k, t);
+    o.frequency.linearRampToValueAtTime(420 * k, t + 0.035);
+    o.frequency.exponentialRampToValueAtTime(250 * k, t + 0.22);
     lp.type = "lowpass";
-    lp.frequency.value = 2400;
+    lp.frequency.value = 3600;
     o.connect(lp);
     for (const [f, q, l] of [
-      [620, 3.5, 1],
-      [1150, 5, 0.55],
+      [1050, 4, 1],
+      [1900, 6, 0.6],
+      [600, 3, 0.35],
     ]) {
       const b = a.createBiquadFilter(),
         bg = a.createGain();
@@ -365,13 +377,13 @@ export const sfx = {
     }
     g.gain.value = 0;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.4 * v, t + 0.012);
-    g.gain.setValueAtTime(0.4 * v, t + 0.1);
-    g.gain.setTargetAtTime(0, t + 0.1, 0.05);
+    g.gain.linearRampToValueAtTime(0.32 * v, t + 0.008);
+    g.gain.setValueAtTime(0.32 * v, t + 0.08);
+    g.gain.setTargetAtTime(0, t + 0.08, 0.04);
     g.connect(cap);
     o.start(t);
-    o.stop(t + 0.1 + 0.05 * 7);
-    tone(120 * k, 0.14, { gain: 0.08, slide: 0.5, attack: 0.016 }); // (the thump)
+    o.stop(t + 0.08 + 0.04 * 7);
+    tone(170 * k, 0.12, { gain: 0.07, slide: 0.55, attack: 0.016 }); // (the thump)
   },
   bonk() {
     tone(330, 0.18, { type: "triangle", gain: 0.14, slide: 0.5 });

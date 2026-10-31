@@ -41,9 +41,7 @@ export function mountHotbar(S, api) {
   btn.innerHTML = '<span class="mi sp-cyc"><i></i><i></i></span>';
   let col = null,
     colSig = "";
-  const look = (id) =>
-    (api.look && api.look(id)) ||
-    looksOf(specialById(id), api.duck && api.duck()); // (api.look: a look of the game's own for a key, like Mad God Justin's shotgun)
+  const look = (id) => looksOf(specialById(id), api.duck && api.duck());
   const dots = (id) =>
     id === "handgun" && api.ammo ? ammoHTML(api.ammo()) : "";
   /* the button shows your specials' icons in turn (none chosen: all of them; never one that's off) */
@@ -102,7 +100,6 @@ export function mountHotbar(S, api) {
       cd.map((c) => c && c[0]),
       api.ammo && api.ammo(),
       api.duck && !!(api.duck() || {}).wrench,
-      api.look && k.map((id) => !!api.look(id)),
     ]);
     if (now === sig) return;
     sig = now;

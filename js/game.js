@@ -89,11 +89,16 @@ import {
   KB_LAND,
   catchLen,
   minOf,
+  goOnVotes,
+  goOnNeed,
+  counselBounds,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { hangStill } from "./hangout/rules.js";
-import { downStill } from "./hangout/death.js";
+import { downStill, downFor, GET_UP_MIN } from "./hangout/death.js";
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
+import { grenadeBoom } from "./grenade.js";
+import { unlocked } from "./unlocks.js";
 import {
   wordsHTML,
   boardHTML as storyHTML,
@@ -108,6 +113,8 @@ import {
   lawStatsHTML,
   lawOverHTML,
   sideColor,
+  SWORD,
+  SHIELD,
 } from "./court.js";
 import {
   cloudHTML,
@@ -145,8 +152,8 @@ import {
   DUCKLING,
   looksOf,
   ammoHTML,
-  SHOTGUN,
-  iconOf,
+  GRENADE,
+  GRENADE_PIN,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -268,7 +275,7 @@ let lastFx = -1,
   hotdogs = [],
   follows = []; // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null,
-  lastKey = -1; // the specials' number keys: the row, the key last pressed (E presses it again; R on Duck Cabin)
+  lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 let held = null,
@@ -353,7 +360,7 @@ const bbBoardHTML = (s) =>
 /* Lawyering: the offense's and the defense's sides, the attorneys' circle, both attorneys on the cloud */
 const lawBoardHTML = (
   s,
-) => `<div class="board law-board">${lawColsHTML(s)}<div class="law-ring" aria-hidden="true"></div><div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
+) => `<div class="board law-board">${lawColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
   ${["answer", "discuss"].includes(s.phase) ? lawTopHTML(s, knocked.has(caseKey(s))) : ""}</div>`;
 /* Duncelation: Dunce and Not a Dunce, the defender's circle (and in the dunce's moment the LOSER podium), the defender on the cloud */
 const dnBoardHTML = (
@@ -650,16 +657,19 @@ function drawDucks(now = clockNow()) {
             : {}),
         }
       : null; // (the Justin option: he walks the board, never a player; Mad God Justin: with his gun out)
-  /* a duck the hammer shoved (pos.kb): drawn sliding back from where it stood, over a little hop */
+  /* a duck the hammer shoved or a grenade threw (pos.kb): drawn sliding back from where it stood, over a little hop (a
+     grenade's: higher, longer, at once) */
   const kbT = (id) => {
-    const k = (s.pos[id] || {}).kb;
-    return k && now - k.t < KB_LAND + KB_MS
-      ? [k, Math.max(0, (now - k.t - KB_LAND) / KB_MS)]
+    const k = (s.pos[id] || {}).kb,
+      l = k && (k.l ?? KB_LAND),
+      ms = k && (k.ms || KB_MS);
+    return k && now - k.t < l + ms
+      ? [k, Math.max(0, (now - k.t - l) / ms)]
       : null;
   };
   const landing = (id) => {
     const k = (s.pos[id] || {}).kb;
-    return !!k && now - k.t < KB_LAND;
+    return !!k && now - k.t < (k.l ?? KB_LAND);
   }; // (it falls when the hammer gets there)
   const shoved = (id, pos) => {
     const kt = kbT(id);
@@ -686,7 +696,9 @@ function drawDucks(now = clockNow()) {
         );
   const liftOf = (id, pos) =>
     (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) +
-    (kbT(id) ? 4 * KB_HOP * kbT(id)[1] * (1 - kbT(id)[1]) * size : 0) +
+    (kbT(id)
+      ? 4 * (kbT(id)[0].h || KB_HOP) * kbT(id)[1] * (1 - kbT(id)[1]) * size
+      : 0) +
     podLift(s, id, now) * size; // how high over its ground a duck is drawn (Duncelation: the dunce on its podium)
   if (s.phase === "bracket") panTree(posOf(R.me));
   else cam = null; // (the camera first: ducks stand on the bracket)
@@ -759,8 +771,12 @@ function drawDucks(now = clockNow()) {
     }
     const dead = deadNow(id, p),
       look = dnHat(s, id, now) ? dunceDuck(p.duck) : p.duck,
-      sig = JSON.stringify([look, p.name, p.nameStyle, dead]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
-    if (dead && d._dead === false && !g && !wq) sfx.hit(); // a duck knocked down (by a weapon, Justin, a kill): the hit sound, for everyone
+      role = lawRole(s, id),
+      sig = JSON.stringify([look, p.name, p.nameStyle, dead, role]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
+    if (dead && d._dead === false && !g && !wq) {
+      sfx.hit();
+      hurt(d);
+    } // a duck knocked down (by a weapon, Justin, a kill): the hit sound and a short red flash, for everyone
     d._dead = dead;
     if (d._sig !== sig) {
       d._sig = sig;
@@ -775,7 +791,37 @@ function drawDucks(now = clockNow()) {
       }
       d._aura = null;
       d.style.setProperty("--xc", colorsOf(p.duck, "loserx")[0]);
-      d.querySelector(".gduck-name").innerHTML = nameHTML(p.name, p.nameStyle);
+      d.querySelector(".gduck-name").innerHTML =
+        (role
+          ? `<i class="law-tag ${role}" aria-label="${role === "off" ? "Offense" : "Defense"}">${role === "off" ? SWORD : SHIELD}</i>`
+          : "") +
+        nameHTML(p.name, p.nameStyle) +
+        '<span class="gduck-down" aria-hidden="true"><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
+      d.classList.toggle("lawyer", !!role);
+      if (role) {
+        d.style.setProperty("--lc", sideColor(p));
+        d.style.setProperty("--ld", -(clockNow() % LAW_GLOW) + "ms");
+      } // (the glow breathes on the room's clock, so both attorneys breathe together)
+      const cc = (p.card && p.card.color) || "#2fa4ff";
+      d.style.setProperty("--dc", cc);
+      d.style.setProperty("--dk", against(cc));
+      d._dn = null;
+    }
+    /* knocked down: the meter on the name tag empties until the duck stands up (s.up), behind the letters */
+    const upAt = dead && !g && (s.up || {})[id],
+      dn = upAt > now ? upAt : 0;
+    if (d._dn !== dn) {
+      d._dn = dn;
+      d.classList.toggle("downed", !!dn);
+      const m = dn && d.querySelector(".gduck-down i");
+      if (m) {
+        const all = Math.max(downFor(s), GET_UP_MIN);
+        m.style.animation = "none";
+        void m.offsetWidth;
+        m.style.animation = "";
+        m.style.setProperty("--dt", all + "ms");
+        m.style.animationDelay = Math.min(0, dn - now - all) + "ms";
+      }
     }
     const at = place(pos, lane.indexOf(id), lane.length),
       z = liftOf(id, pos);
@@ -873,7 +919,8 @@ function drawDucks(now = clockNow()) {
       shows[id] &&
       now < shows[id].until &&
       shows[id].what !== "dagger" &&
-      shows[id].what; // (a dagger thrown without keeping it out: only the one in the air)
+      shows[id].what !== "grenade" &&
+      shows[id].what; // (a dagger or a grenade thrown without keeping it out: only the one in the air)
     const w =
       id === JUSTIN_ID && isMgj(s)
         ? !mgjGone(s, now) && (shown || pos.w)
@@ -1055,14 +1102,21 @@ function drawDucks(now = clockNow()) {
         ).duck,
         [vx, vy] = toScreen(sh.vx, sh.vy);
       b =
-        sh.k === "dagger"
+        sh.k === "dagger" || sh.k === "grenade"
           ? el(
-              `<div class="thrown" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${daggerHTML(duck)}</i></div>`,
+              `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
             )
           : el(
               `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
             );
       fxl.append(b);
+      if (sh.k === "grenade" && now - sh.t < 400) {
+        const pin = el(
+          `<div class="gpin" style="--s:${size.toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
+        );
+        fxl.append(pin);
+        setTimeout(() => pin.remove(), 1300);
+      } // (its pin stays behind: it drops from the hand and fades)
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
   }
@@ -1125,8 +1179,8 @@ function drawDucks(now = clockNow()) {
     }
     h.classList.toggle(
       "thrown-now",
-      w === "dagger" && !!sh && now < sh.until - 500,
-    ); // (the dagger just thrown: a new one comes to hand)
+      (w === "dagger" || w === "grenade") && !!sh && now < sh.until - 500,
+    ); // (the dagger or the grenade just thrown: a new one comes to hand)
   }
   fxl.querySelectorAll(".held").forEach((h) => {
     if (!handed.has(h.dataset.pid)) h.remove();
@@ -1477,6 +1531,62 @@ function zoom(how) {
 
 /* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
 const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
+/* a color that stands out inside a card's color: the opposite hue, light on a dark color and dark on a light one (the
+   down meter's streaks) */
+function against(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return "#ffffff";
+  const n = parseInt(m[1], 16),
+    [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255].map((v) => v / 255),
+    hi = Math.max(r, g, b),
+    lo = Math.min(r, g, b),
+    c = hi - lo;
+  const h =
+    c === 0
+      ? 0
+      : hi === r
+        ? ((g - b) / c) % 6
+        : hi === g
+          ? (b - r) / c + 2
+          : (r - g) / c + 4;
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return `hsl(${Math.round(h * 60 + 180)} 85% ${lum > 0.45 ? 22 : 88}%)`;
+}
+/* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade) */
+function burn(dk, fire = 0) {
+  if (!dk) return;
+  clearTimeout(dk._fireT);
+  clearTimeout(dk._burnT);
+  dk.classList.remove("burnt", "unburn", "onfire");
+  dk.classList.add(fire ? "onfire" : "burnt");
+  if (fire)
+    dk._fireT = setTimeout(() => {
+      dk.classList.remove("onfire");
+      dk.classList.add("burnt");
+    }, fire);
+  dk._burnT = setTimeout(() => {
+    dk.classList.remove("burnt");
+    dk.classList.add("unburn");
+    dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
+  }, fire + 2400);
+}
+/* Lawyering: an attorney ('off', the sword, or 'def', the shield) while their case is argued and talked over */
+const LAW_GLOW = 2400; // ms: one breath of the attorneys' glow (css/app.css law-glow)
+const lawRole = (s, id) =>
+  isLaw(s) && s.law && ["answer", "discuss"].includes(s.phase)
+    ? id === s.law.off
+      ? "off"
+      : id === s.law.def
+        ? "def"
+        : ""
+    : "";
+/* a short, see-through red flash on a duck: Justin hit, or a duck knocked down */
+function hurt(d) {
+  if (!d) return;
+  d.classList.remove("hurt");
+  void d.offsetWidth;
+  d.classList.add("hurt");
+}
 function playFx(f) {
   const s = R.state,
     fxl = S && $(".fxl", S);
@@ -1536,6 +1646,31 @@ function playFx(f) {
     sfx.love();
   } else if (f.kind === "kill") {
     sfx.hit();
+  } else if (f.kind === "boom") {
+    // a grenade went off: the blast where it landed, and the ducks it caught burnt for a while (their hit sound comes
+    // as they go down)
+    const board = $(".board", S);
+    if (!board) return;
+    const at = geo.hang
+      ? world.place({ x: f.x, y: f.y }, f.hz || 0)
+      : place({ x: f.x, y: f.y }, 0, 1);
+    grenadeBoom(fxl, board, at, size);
+    sfx.boom();
+    for (const id of f.hit) {
+      const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
+      if (id === JUSTIN_ID && isMgj(s)) {
+        hurt(dk);
+        sfx.hit();
+      }
+      burn(dk);
+    }
+  } else if (f.kind === "hit") {
+    // the knife or the hammer touched someone after the press, while it swung
+    if (f.hit.includes(JUSTIN_ID) && isMgj(s)) {
+      hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
+      sfx.hit();
+    }
+    if (f.what === "hammer") setTimeout(() => sfx.bonk(), KB_LAND);
   } else if (f.kind === "use") {
     // an item at its duck, moving with it (drawDucks places it each frame)
     if (f.what === "confetti") {
@@ -1557,20 +1692,17 @@ function playFx(f) {
       return;
     }
     if (WEAPONS.includes(f.what)) {
-      if ((f.hit || []).includes(JUSTIN_ID)) {
-        const jd = S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`);
-        if (jd) {
-          jd.classList.remove("hurt");
-          void jd.offsetWidth;
-          jd.classList.add("hurt");
-        }
+      if ((f.hit || []).includes(JUSTIN_ID) && isMgj(s)) {
+        hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
         sfx.hit();
-      } // (Mad God Justin stabbed: he flashes red, and the hit sound)
+      } // (Mad God Justin stabbed: he flashes red, and the hit sound; anyone else flashes as they go down)
       shows[f.by] = {
         what: f.what,
         t: now,
         until:
-          now + ({ dagger: 900, knife: 700, hammer: 1000 }[f.what] || 1400),
+          now +
+          ({ dagger: 900, grenade: 900, knife: 700, hammer: 1000 }[f.what] ||
+            1400),
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
@@ -1598,19 +1730,7 @@ function playFx(f) {
     // flames for a moment, then charred; the burns fade in a few seconds
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`);
     if (!dk) return;
-    clearTimeout(dk._fireT);
-    clearTimeout(dk._burnT);
-    dk.classList.remove("burnt");
-    dk.classList.add("onfire");
-    dk._fireT = setTimeout(() => {
-      dk.classList.remove("onfire");
-      dk.classList.add("burnt");
-    }, 1600);
-    dk._burnT = setTimeout(() => {
-      dk.classList.remove("burnt");
-      dk.classList.add("unburn");
-      dk._burnT = setTimeout(() => dk.classList.remove("unburn"), 2600);
-    }, 4000);
+    burn(dk, 1600);
     sfx.fire();
   } else if (f.kind === "meteor") {
     // Mad God Justin's meteor, onto the middle of the board
@@ -1669,6 +1789,7 @@ const canWalk = () =>
   !dnStill(R.state, R.me); // (Hangout: shot by Justin, still a while; Duncelation: the dunce on its podium)
 function xBounds() {
   const s = R.state;
+  if (isLaw(s) && attorney()) return counselBounds(s, R.me); // (an attorney: their own side)
   if (votedCol() != null) return colBoundsAt(s, votedCol());
   if (roams()) return [0.03, 0.97];
   return colBoundsAt(s, s.lock[R.me]);
@@ -1929,14 +2050,14 @@ function step(dt, now) {
     q = q || scr(0, Math.sign(ay));
     ny = Math.max(0, Math.min(1, ny));
   }
-  if (attorney()) {
+  if (attorney() && isDn(s)) {
     const [rx, ry] = inRing(nx, ny);
     if (rx !== nx || ry !== ny) {
       q = q || scr(Math.sign(ax), Math.sign(ay));
       nx = rx;
       ny = ry;
     }
-  } // the attorneys argue from the circle
+  } // the defender argues from the circle (Lawyering's attorneys: from their own sides, xBounds)
   // other ducks: try both steps, then each alone; a blocked step squashes against them. A step is blocked only when it
   // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it
   const here = crowd(me.x, me.y, now).d,
@@ -2639,7 +2760,7 @@ function useKey(i, keep) {
   } // (Mad God Justin: key 1 is the knife, or the weapon picked up)
   const id = keysOf(playDuck())[i],
     sp = specialById(id);
-  if (!sp || sp.off) return; // (a special that's off for now does nothing)
+  if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
   lastKey = i;
   if (sp.kind === "effect") R.send({ t: "aura", what: id, keep: !!keep });
   else if (sp.kind === "jump") {
@@ -2681,10 +2802,9 @@ function cool() {
 function ammo() {
   return R ? MAG - magOf(R.state, R.me, clockNow()).n : MAG;
 }
-/* R: the handgun reloads (in Duck Cabin, where R repeats the last key, only while the handgun is kept out) */
+/* R: the handgun reloads */
 function reload() {
   if (!R || !onBoardPhase() || !hasKey(playDuck(), "handgun")) return false;
-  if (isHang(R.state) && held !== "handgun") return false;
   R.send({ t: "reload" });
   return true;
 }
@@ -2718,6 +2838,11 @@ function actHTML(s) {
     d = on.filter((id) => s.done[id]).length,
     need = needed(s),
     mine = s.done[R.me];
+  if (s.waiting && s.waiting.for) {
+    const g = goOnVotes(s).length,
+      mineG = !!(s.waiting.go || {})[R.me];
+    return `<div class="act-row"><span class="progress wait-bar" role="status">Waiting for ${esc(s.waiting.name || "a player")} to come back</span><button type="button" class="btn${mineG ? " yellow" : " green"}" data-a="goon" aria-pressed="${mineG}" data-tip="Go on without them">${mineG ? "Next round ✓" : "Next round"} · ${g}/${goOnNeed(s)}</button></div>`;
+  } // (Lawyering, Duncelation: an attorney or the defender left mid-case)
   if (s.waiting)
     return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`; // (a game below its fewest players: ducks still walk)
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
@@ -3735,16 +3860,13 @@ function keydown(e) {
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
     return;
   } // the handgun reloads
-  if (
-    e.code === (isHang(R.state) ? "KeyR" : "KeyE") &&
-    !e.repeat &&
-    onBoardPhase()
-  ) {
+  if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (lastKey >= 0) useKey(lastKey, false);
+    if (held && hasKey(playDuck(), held) && !isMgj(R.state)) fire(held);
+    else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();
     return;
-  } // E (R on Duck Cabin): the last key again
+  } // V: the special kept out (toggled), or else the one I used last
   if (e.code === "KeyQ" && isQuack(R.state)) {
     e.preventDefault();
     peek(true);
@@ -3821,6 +3943,9 @@ async function act(a) {
       break;
     case "dnend":
       R.send({ t: "dnEnd" });
+      break;
+    case "goon":
+      R.send({ t: "goOn" });
       break;
     case "giveup":
       if (await confirmBox("Give up the case?", "The other side wins it."))
@@ -3989,10 +4114,6 @@ register("game", {
       cool,
       duck: playDuck,
       ammo,
-      look: (id) =>
-        id === "knife" && myPick() === "shotgun"
-          ? { ...specialById("knife"), name: "Shotgun", icon: iconOf(SHOTGUN) }
-          : null, // (Mad God Justin's shotgun pickup isn't a special: key 1 shows it)
     });
     docks.corner(bar.button); // (phones: the Specials button, bottom right)
     addEventListener("mousemove", aimAt);

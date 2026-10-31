@@ -291,6 +291,7 @@ const REMOTE = new Set([
   "songs",
   "hang",
   "dnEnd",
+  "goOn",
 ]);
 const LOOK = [
   "name",
@@ -785,6 +786,12 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     passkey,
     get state() {
       return state;
+    },
+    /* how long a round trip to the server takes, in ms (the loading screen shows it) */
+    async ping() {
+      const t = performance.now();
+      await D.get(path("on/" + me)).catch(() => null);
+      return performance.now() - t;
     },
     send(a) {
       if (closed) return;
