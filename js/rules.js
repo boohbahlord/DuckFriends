@@ -868,7 +868,8 @@ export function reduce(state, a, now = Date.now()) {
       s.ends = now + COUNTDOWN * 1000;
       return s;
     case "cancel":
-      if (boss && s.phase === "countdown") {
+      if (me && s.phase === "countdown") {
+        // (any player stops the start; the next start counts from 5 again)
         s.phase = "lobby";
         s.ends = 0;
       }
