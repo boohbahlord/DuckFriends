@@ -7,6 +7,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-10-31",
+    version: 104,
+    date: "Oct 31, 2026",
+    title: "Cancel the start, and a loading screen",
+    news: [
+      "Any player can cancel a starting game with the X key or the Cancel button.",
+      "The screen fades to black while the start counts down, then a loading screen shows your duck, your ping and a bar, and the game fades back in.",
+    ],
+    fixed: [],
+  },
+  {
     id: "2026-10-30",
     version: 103,
     date: "Oct 30, 2026",
