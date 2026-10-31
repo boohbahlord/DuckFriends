@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-10-31",
-    version: 105,
+    version: 106,
     date: "Oct 31, 2026",
     title: "Cancel the start, and a loading screen",
     news: [
@@ -17,7 +17,9 @@ export const UPDATES = [
       "Mad God Justin: every 15 seconds something falls in. Walk over a weapon to use it once; lightning, fire and meteors hit him by themselves; and sometimes Good Justin God comes to help.",
       "Justin wears devil horns in his fight, and cries when he loses. Lose to him 24 times, or lose 144 rounds, to unlock his Tears eyes.",
     ],
-    fixed: [],
+    fixed: [
+      "Settings → Controls lists every key as it works now: V for your special, R to reload, and more.",
+    ],
   },
   {
     id: "2026-10-30",

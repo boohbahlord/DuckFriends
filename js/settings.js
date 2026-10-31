@@ -108,14 +108,21 @@ const PAGES = {
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span><span>Move your duck</span>
       <span><kbd>Shift</kbd></span><span>Sprint (hold)</span>
       <span><kbd>Space</kbd></span><span>Jump; Ready in the lobby</span>
+      <span><kbd>1</kbd> … <kbd>0</kbd></span><span>Use a special; with <kbd>Shift</kbd>, keep it out</span>
+      <span><kbd>V</kbd></span><span>The special you have out, or the last one you used</span>
+      <span><kbd>R</kbd></span><span>Reload</span>
+      <span><kbd>E</kbd></span><span>On Duck Cabin: Sit, Play, Read …</span>
       <span><kbd>Enter</kbd></span><span>End your turn</span>
-      <span><kbd>E</kbd></span><span>The last special again; on Duck Cabin, Sit, Play, Read …</span>
-      <span><kbd>R</kbd></span><span>On Duck Cabin, the last special again</span>
+      <span><kbd>Tab</kbd></span><span>The players (hold)</span>
+      <span><kbd>Q</kbd></span><span>Who is the Quack?: peek at your Secret Card (hold)</span>
+      <span><kbd>=</kbd> <kbd>-</kbd></span><span>Bicker Brackets: zoom in and out</span>
+      <span><kbd>X</kbd></span><span>Stop the countdown in the lobby</span>
       <span>Hangout's piano</span><span>1 to =, Q to ], A to Enter, Shift to Space: four octaves, one key for each white and black key (every piano key shows its own). Esc: get up.</span>
       <span><kbd>T</kbd></span><span>Text chat</span>
       <span><kbd>Shift</kbd>+<kbd>T</kbd></span><span>Command line</span>
       <span><kbd>Tab</kbd> <kbd>↑</kbd> <kbd>↓</kbd></span><span>Complete in the chat; choose a suggestion</span>
       <span><kbd>Shift</kbd>+<kbd>\\</kbd></span><span>Friends (outside a game)</span>
+      <span><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> <kbd>Enter</kbd></span><span>Move through a menu and choose</span>
       <span><kbd>Esc</kbd></span><span>Pause menu, or close a window</span>
       <span><kbd>Enter</kbd></span><span>Send your question (in its box)</span>
       <span>Right-click</span><span>A player card's options</span></div></div>`,
