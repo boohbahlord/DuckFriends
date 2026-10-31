@@ -41,6 +41,7 @@ export function sfxContext() {
 }
 export const sfxOut = () => sfxContext() && cap; // where they all go: through the ceiling to the speakers
 const ac = sfxContext;
+let lastHit = 0;
 /* "now" on a sound clock, plus a lead. Firefox only moves currentTime between tasks, so a sound set during a long frame
    read a clock that had stopped, landed in the past and popped: if the clock hasn't moved since I last looked, I add the
    time that has passed since then (at most a quarter of a second) */
@@ -329,6 +330,48 @@ export const sfx = {
     tone(784, 0.25, { gain: 0.08 });
     tone(988, 0.25, { gain: 0.07, at: 0.12 });
     tone(1175, 0.45, { gain: 0.07, at: 0.24 });
+  },
+  /* a player hit (or Justin): a short "oof" like a player hurt in Minecraft. A buzzy voice falling in pitch through two
+     vowel bands ("uh"), over a soft thump; each a little higher or lower than the last, as there. Two hits at once (a
+     knife that knocks a duck down) make one sound */
+  hit() {
+    const a = ac(),
+      v = vol(),
+      p = performance.now();
+    if (!a || !v || p - lastHit < 120) return;
+    lastHit = p;
+    const t = soon(a),
+      k = 0.92 + Math.random() * 0.16,
+      o = a.createOscillator(),
+      lp = a.createBiquadFilter(),
+      g = a.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(165 * k, t);
+    o.frequency.exponentialRampToValueAtTime(100 * k, t + 0.3);
+    lp.type = "lowpass";
+    lp.frequency.value = 2400;
+    o.connect(lp);
+    for (const [f, q, l] of [
+      [620, 3.5, 1],
+      [1150, 5, 0.55],
+    ]) {
+      const b = a.createBiquadFilter(),
+        bg = a.createGain();
+      b.type = "bandpass";
+      b.frequency.value = f * k;
+      b.Q.value = q;
+      bg.gain.value = l;
+      lp.connect(b).connect(bg).connect(g);
+    }
+    g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.4 * v, t + 0.012);
+    g.gain.setValueAtTime(0.4 * v, t + 0.1);
+    g.gain.setTargetAtTime(0, t + 0.1, 0.05);
+    g.connect(cap);
+    o.start(t);
+    o.stop(t + 0.1 + 0.05 * 7);
+    tone(120 * k, 0.14, { gain: 0.08, slide: 0.5, attack: 0.016 }); // (the thump)
   },
   bonk() {
     tone(330, 0.18, { type: "triangle", gain: 0.14, slide: 0.5 });
