@@ -10,14 +10,46 @@ import { cloudHTML } from "./brackets.js";
 import { fmtJumps } from "./format.js";
 import { DN_PODIUM } from "./dunce.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
-import { mgjStats } from "./mgjrules.js";
+import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
+import { heldHTML, SHOTGUN } from "./specials.js";
 
-/* his look here: Justin, with the lightning eyes */
+/* his look here: Justin, with the lightning eyes and devil horns; beaten, he cries (the tears eyes) */
 export const MAD_JUSTIN = {
   ...JUSTIN_PLAYER,
-  duck: { ...JUSTIN_PLAYER.duck, eyes: "lightning" },
+  duck: { ...JUSTIN_PLAYER.duck, eyes: "lightning", hat: { id: "horns" } },
+};
+export const SAD_JUSTIN = {
+  ...MAD_JUSTIN,
+  duck: { ...MAD_JUSTIN.duck, eyes: "tears" },
+};
+/* his helper: Justin with a halo and his own eyes */
+export const GOOD_JUSTIN = {
+  name: GOOD_NAME,
+  duck: { ...JUSTIN_PLAYER.duck, hat: { id: "halo" } },
 };
 const nm = (p) => nameHTML(p.name, p.nameStyle);
+
+/* ---------- the pickups: a glowing token with what's in it ---------- */
+const BOLT = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2L8 23H18L14 38L32 15H21L27 2Z" fill="#fff6b0" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><path d="M23 5L12 21" stroke="#fff" stroke-width="1.6" opacity=".7" stroke-linecap="round"/></svg>`;
+const FLAME = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 38C11 38 6 31 7.6 23.6C9 17 14 14.6 14.6 7.6C19.6 10.6 21 15 20.4 19C23 17.6 24.4 14.6 24.2 11C30.6 15.6 34 21.6 32.4 28.4C31 34.4 26 38 20 38Z" fill="#ff7a1a" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><path d="M20 36C15.6 36 13 32.6 14 28.6C14.8 25.4 17.6 24 18 20.6C21.6 23 25.6 26.4 25.2 30.6C24.8 33.8 22.6 36 20 36Z" fill="#ffd23f"/></svg>`;
+const HALO = `<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="15" ry="6" fill="none" stroke="#fff3b0" stroke-width="8" opacity=".4"/><ellipse cx="20" cy="20" rx="14" ry="5" fill="none" stroke="#ffd84a" stroke-width="3.6"/><ellipse cx="20" cy="20" rx="14" ry="5" fill="none" stroke="#fffbe0" stroke-width="1.2"/></svg>`;
+export const pickArt = (k) =>
+  k === "lightning"
+    ? BOLT
+    : k === "fire"
+      ? FLAME
+      : k === "meteor"
+        ? METEOR
+        : k === "good"
+          ? HALO
+          : k === "shotgun"
+            ? SHOTGUN
+            : heldHTML(k);
+export const pickHTML = (P) =>
+  `<div class="mgj-pick k-${esc(P.k)}" data-n="${P.n}"><i class="mgj-pick-glow"></i><span class="mgj-pick-art">${pickArt(P.k)}</span></div>`;
+/* a name for a hit that wasn't a player's: the sky (a pickup's lightning, fire or meteor) or Good Justin God */
+const whoName = (s, id) =>
+  id === GOOD_ID ? GOOD_NAME : id === SKY_ID ? "the sky" : null;
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 export const mgjHPHTML = (s) => {
@@ -133,7 +165,7 @@ const fightsHTML = (s) =>
       (
         f,
       ) => `<article class="law-case panel${f.won ? "" : " dn-was"}"><p class="law-case-topic">Fight ${f.n}: ${f.won ? "Justin defeated" : `Justin won with ${f.hp} of ${f.max} HP left`}</p>
-  <p class="law-case-vs small">${f.won && f.kill ? `Killing blow: ${nm(player(s, f.kill))}` : "Time ran out"}</p></article>`,
+  <p class="law-case-vs small">${f.won && f.kill ? `Killing blow: ${whoName(s, f.kill) ? esc(whoName(s, f.kill)) : nm(player(s, f.kill))}` : "Time ran out"}</p></article>`,
     )
     .join("")}</div>`;
 const block = (s, all) =>

@@ -2699,3 +2699,11 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 > make the sound you made sound more high pitch and more quacky for the hit sound, like a duck, while having it be kinda similiar somehwat
 
 - Miles Jr.: same short "oof" shape, now about an octave higher (360 → 420 → 250 Hz), nasal bands at 1050 and 1900 Hz, a lighter thump.
+
+## Clarification (2026-10-31, relayed by Adam), on which lost rounds count toward the Tears eyes
+
+> Clear losers only
+
+- Counted: a Mad God Justin loss; in Who is the Quack?, the Quack when caught, or every non-Quack when the Quack wins;
+  the losing lawyer in Lawyering; the defender voted Dunce in Duncelation; a player whose contender is knocked out in
+  Bicker Brackets. Card hands don't count. Each device counts its own player's.

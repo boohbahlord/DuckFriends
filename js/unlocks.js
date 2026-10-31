@@ -5,8 +5,9 @@
    times, and until then nobody is told how. The shotgun opens at 144 kills and the grenade at 360: a kill is another
    player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
    voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
-   Justin 12 times (TEST rooms don't count either). What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, kills, dunced, mgjWins, secrets (the codes turned on) and unlockSeen (the unlocks already
+   Justin 12 times at the default time, and the Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms
+   don't count either). What counts lives in the profile (so it stays on the device and the
+   account): jumps, justinKills, kills, dunced, mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already
    announced, so each "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
@@ -50,18 +51,22 @@ export const LOCKS = [
   },
   { kind: "hat", id: "dunce", dunced: 12, name: "Dunce hat" },
   { kind: "eyes", id: "lightning", mgjWins: 12, name: "Lightning eyes" },
+  { kind: "eyes", id: "tears", mgjLosses: 24, lost: 144, name: "Tears" }, // (lose to Mad God Justin 24 times, or lose 144 rounds)
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
-    : l.frags
-      ? (profile.kills || 0) >= l.frags
-      : l.mgjWins
-        ? (profile.mgjWins || 0) >= l.mgjWins
-        : l.dunced
-          ? (profile.dunced || 0) >= l.dunced
-          : (profile.justinKills || 0) >= l.kills;
+    : l.mgjLosses
+      ? (profile.mgjLosses || 0) >= l.mgjLosses ||
+        (profile.lostRounds || 0) >= l.lost
+      : l.frags
+        ? (profile.kills || 0) >= l.frags
+        : l.mgjWins
+          ? (profile.mgjWins || 0) >= l.mgjWins
+          : l.dunced
+            ? (profile.dunced || 0) >= l.dunced
+            : (profile.justinKills || 0) >= l.kills;
 const coded = (l) => !!(l.code && (profile.secrets || {})[l.code]);
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) {
@@ -76,18 +81,24 @@ export function lockHint(kind, id) {
   if (earned(l))
     return l.jumps
       ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-      : l.frags
-        ? `Unlocked: ${l.frags} kills`
-        : l.mgjWins
-          ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
-          : l.dunced
-            ? `Unlocked: voted a dunce ${l.dunced} times`
-            : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
+      : l.mgjLosses
+        ? (profile.mgjLosses || 0) >= l.mgjLosses
+          ? `Unlocked: lost to Mad God Justin ${l.mgjLosses} times`
+          : `Unlocked: lost ${l.lost} rounds`
+        : l.frags
+          ? `Unlocked: ${l.frags} kills`
+          : l.mgjWins
+            ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
+            : l.dunced
+              ? `Unlocked: voted a dunce ${l.dunced} times`
+              : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
   if (coded(l)) return "Unlocked: a secret code";
   if (l.frags)
     return `Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
+  if (l.mgjLosses)
+    return `Lose to Mad God Justin ${l.mgjLosses} times (${Math.min(l.mgjLosses, profile.mgjLosses || 0)}/${l.mgjLosses}), or lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
   if (l.mgjWins)
-    return `Beat Mad God Justin ${l.mgjWins} times (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
+    return `Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
     return `Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   return l.hidden
@@ -128,6 +139,7 @@ export function watchKills(room) {
   let seen = null,
     seenD = null,
     seenW = null,
+    seenL = null,
     seenP = null;
   room.on(() => {
     const s = room.state,
@@ -146,11 +158,28 @@ export function watchKills(room) {
     const top = (s && s.jkN) || 0,
       dn = (s && s.dn) || {},
       topD = dn.dkN || 0,
-      topW = (s && s.mgjWinN) || 0;
+      topW = (s && s.mgjWinN) || 0,
+      topL = (s && s.lossN) || 0;
+    if (seenL === null || topL < seenL) seenL = topL;
+    else {
+      for (const k of (s && s.losses) || [])
+        if (k.n > seenL && (k.ids || []).includes(room.me) && !s.test) {
+          profile.lostRounds = (profile.lostRounds || 0) + 1;
+          if (k.k === "mgj") profile.mgjLosses = (profile.mgjLosses || 0) + 1;
+          save();
+          checkUnlocks();
+        }
+      seenL = topL;
+    } // (a clear loss: rules.js lostRound)
     if (seenW === null || topW < seenW) seenW = topW;
     else {
       for (const k of (s && s.mgjWins) || [])
-        if (k.n > seenW && (k.ids || []).includes(room.me) && !s.test) {
+        if (
+          k.n > seenW &&
+          k.def &&
+          (k.ids || []).includes(room.me) &&
+          !s.test
+        ) {
           profile.mgjWins = (profile.mgjWins || 0) + 1;
           save();
           checkUnlocks();

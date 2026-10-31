@@ -533,7 +533,7 @@ const OPT_TIPS = {
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
   mgjTime:
-    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds.",
+    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 1:30 count toward the lightning eyes.",
   dunceTakes:
     "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Never your own: always someone else's.",
 };

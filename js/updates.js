@@ -8,12 +8,14 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-10-31",
-    version: 104,
+    version: 105,
     date: "Oct 31, 2026",
     title: "Cancel the start, and a loading screen",
     news: [
       "Any player can cancel a starting game with the X key or the Cancel button.",
       "The screen fades to black while the start counts down, then a loading screen shows your duck, your ping and a bar, and the game fades back in.",
+      "Mad God Justin: every 15 seconds something falls in. Walk over a weapon to use it once; lightning, fire and meteors hit him by themselves; and sometimes Good Justin God comes to help.",
+      "Justin wears devil horns in his fight, and cries when he loses. Lose to him 24 times, or lose 144 rounds, to unlock his Tears eyes.",
     ],
     fixed: [],
   },
@@ -25,7 +27,7 @@ export const UPDATES = [
     news: [
       "A new game, Mad God Justin: everyone gets a knife, and together you stab Justin down before the timer runs out. He shoots back.",
       "Late in the fight he calls a meteor down on everyone and comes back with a pump shotgun.",
-      "Beat him 12 times to unlock his lightning eyes.",
+      "Beat him 12 times at the default time (1:30) to unlock his lightning eyes.",
       "Mad God Justin: get close to him and your knife stabs by itself, no button needed.",
       "A new game, Duncelation: defend the take you get while everyone walks to Dunce or Not a Dunce.",
       "Voted a dunce: lightning, the LOSER podium, and the dunce hat in black and white for the rest of the game.",
