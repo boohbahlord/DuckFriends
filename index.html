@@ -32,6 +32,29 @@
     <link rel="stylesheet" href="css/app.css?v=202610310131" />
   </head>
   <body>
+    <!-- the hit flash: a see-through red over the duck (70 in 100, then lighter as it fades), css/app.css @keyframes hurt -->
+    <svg class="defs" width="0" height="0" aria-hidden="true">
+      <filter id="hurt3" color-interpolation-filters="sRGB">
+        <feColorMatrix
+          type="matrix"
+          values="0.30 0 0 0 0.665 0 0.30 0 0 0 0 0 0.30 0 0 0 0 0 1 0"
+        />
+      </filter>
+      <filter id="hurt2" color-interpolation-filters="sRGB">
+        <feColorMatrix
+          type="matrix"
+          values="0.55 0 0 0 0.427 0 0.55 0 0 0 0 0 0.55 0 0 0 0 0 1 0"
+        />
+      </filter>
+      <filter id="hurt1" color-interpolation-filters="sRGB">
+        <feColorMatrix
+          type="matrix"
+          values="0.80 0 0 0 0.190 0 0.80 0 0 0 0 0 0.80 0 0 0 0 0 1 0"
+        />
+      </filter>
+    </svg>
+    <div id="shapes" aria-hidden="true"></div>
+    <main id="app"></main>
     <div id="shapes" aria-hidden="true"></div>
     <main id="app"></main>
     <div class="corner-tr">

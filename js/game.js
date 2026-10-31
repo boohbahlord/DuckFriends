@@ -152,6 +152,8 @@ import {
   DUCKLING,
   looksOf,
   ammoHTML,
+  GRENADE,
+  GRENADE_PIN,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -1074,12 +1076,19 @@ function drawDucks(now = clockNow()) {
       b =
         sh.k === "dagger" || sh.k === "grenade"
           ? el(
-              `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? heldHTML("grenade", duck) : daggerHTML(duck)}</i></div>`,
+              `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
             )
           : el(
               `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
             );
       fxl.append(b);
+      if (sh.k === "grenade" && now - sh.t < 400) {
+        const pin = el(
+          `<div class="gpin" style="--s:${size.toFixed(0)}px;transform:translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)"><i class="${vx < 0 ? "ccw" : ""}">${GRENADE_PIN(colorsOf(duck, "grenade"))}</i></div>`,
+        );
+        fxl.append(pin);
+        setTimeout(() => pin.remove(), 1300);
+      } // (its pin stays behind: it drops from the hand and fades)
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
   }

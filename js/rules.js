@@ -383,7 +383,7 @@ const COOLDOWN = {
   knife: 1000,
   hammer: 2250,
   shotgun: PUMP,
-  grenade: 5000,
+  grenade: 12000,
   confetti: 15000,
 };
 export const coolFor = (sp) => COOLDOWN[sp] || 1500;

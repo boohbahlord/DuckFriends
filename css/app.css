@@ -6054,6 +6054,55 @@ html.still .spx-disco .disco-spot {
 .held.thrown-now i {
   opacity: 0;
 }
+/* the grenade's pin, pulled as it's thrown: it drops where the hand was, tumbling a little, and fades */
+.gpin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+.gpin i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--s) * 0.3);
+  display: block;
+  animation: gpin-fall 1.2s ease-in forwards;
+  filter: drop-shadow(0 0.08rem 0.08rem #0006);
+}
+.gpin i.ccw {
+  --gx: -1;
+}
+.gpin svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+@keyframes gpin-fall {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 1;
+  }
+  45% {
+    transform: translate(
+        calc(-50% - var(--gx, 1) * var(--s) * 0.08),
+        calc(-50% + var(--s) * 0.42)
+      )
+      rotate(calc(var(--gx, 1) * -140deg));
+    opacity: 1;
+  }
+  to {
+    transform: translate(
+        calc(-50% - var(--gx, 1) * var(--s) * 0.12),
+        calc(-50% + var(--s) * 0.5)
+      )
+      rotate(calc(var(--gx, 1) * -180deg));
+    opacity: 0;
+  }
+}
 /* Customize's preview of the knife and the hammer: one stab, one swing, in the duck's hand */
 .held.spe-wield {
   animation: none;
@@ -6176,6 +6225,9 @@ html.still .duckling i {
 }
 html.still .thrown i {
   transform: translate(-50%, -50%);
+}
+html.still .gpin {
+  display: none;
 }
 /* items: the double jump's little cloud (see-through, left in the air) and the trombone, its mouthpiece at the beak */
 .spe-puff {
@@ -11362,6 +11414,12 @@ html.moving .sc-arrow b {
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
+svg.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
 /* the newest message, floating by the chat button for a moment (see-through; every tap goes through it) */
 .chat-float {
   position: fixed;
@@ -11551,12 +11609,21 @@ html.moving .eye-zap {
 /* hit: a short, see-through red flash over the drawing (Justin hit, any duck knocked down; Duck Cabin's Justin too) */
 .gduck.hurt .gduck-body,
 .hang-npc.hurt .hang-npc-body {
-  animation: hurt 0.4s ease-out;
+  animation: hurt 0.4s step-end;
 }
+/* (the red filters are in index.html: the owner wanted it see-through, the duck showing under it) */
 @keyframes hurt {
-  from,
-  25% {
-    filter: brightness(0.8) sepia(1) hue-rotate(-45deg) saturate(10);
+  from {
+    filter: url(#hurt3);
+  }
+  35% {
+    filter: url(#hurt2);
+  }
+  65% {
+    filter: url(#hurt1);
+  }
+  90% {
+    filter: none;
   }
 }
 .gduck.mgj-burnt .gduck-body {
