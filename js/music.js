@@ -4216,7 +4216,7 @@ export const music = (function () {
     dl.delayTime.value = 0.42;
     const fb = gn(0.22),
       wet = gn(0.28);
-    const sink = MF && MF.a === ac ? MF.inp : ac.destination; // (the live music goes through the muffle; a song written out doesn't)
+    const sink = ac.__sink || (MF && MF.a === ac ? MF.inp : ac.destination); // (the live music goes through the muffle; a song written out doesn't, and one written out piece by piece goes through its listener)
     out.connect(lp);
     lp.connect(sink);
     lp.connect(dl);
@@ -4374,21 +4374,26 @@ export const music = (function () {
     /* (nothing sounds yet: set at once) */ graph();
     bout = gn(0);
     bout.connect(MF.inp);
-    /* every part made for a step's notes is kept with that step, and each source's stop with it (see sweep()) */
+    keepParts(ac);
+    return ac;
+  } // a roomy buffer: a busy computer doesn't make it crackle
+  /* every part made for a step's notes is kept with that step, and each source's stop with it (see sweep()); a song
+     written out too, or the parts of every note so far kept working through the whole recording made it slower and slower */
+  function keepParts(a) {
     const BP = window.BaseAudioContext
       ? BaseAudioContext.prototype
-      : Object.getPrototypeOf(ac);
+      : Object.getPrototypeOf(a);
     for (const k of Object.getOwnPropertyNames(BP)) {
       if (
         !k.startsWith("create") ||
         k === "createBuffer" ||
         k === "createPeriodicWave" ||
-        typeof ac[k] !== "function"
+        typeof a[k] !== "function"
       )
         continue;
-      const make = ac[k];
-      ac[k] = function (...a) {
-        const o = make.apply(this, a),
+      const make = a[k];
+      a[k] = function (...x) {
+        const o = make.apply(this, x),
           B = STEP;
         if (B) {
           B.ns.push(o);
@@ -4409,8 +4414,7 @@ export const music = (function () {
         return o;
       };
     }
-    return ac;
-  } // a roomy buffer: a busy computer doesn't make it crackle
+  }
   /* a made room: two channels of noise that fade (and darken) over the room's length */
   function irBuf(sec, dark) {
     const n = Math.floor(ac.sampleRate * sec),
@@ -6113,9 +6117,10 @@ export const music = (function () {
   }
   function tick(until) {
     if (!playing || !ac) return;
-    if (!RENDER) sweep();
+    sweep();
     if (!RENDER) {
       follow();
+      feed();
       if (!LIVE) return;
     }
     while (next < (until != null ? until : ac.currentTime + 0.4)) {
@@ -6128,7 +6133,7 @@ export const music = (function () {
         fifth = C.fifth;
       const E8 = 60 / T.bpm / 2 / (T.tempo ? T.tempo(bar, i, abs) : 1),
         x = { t: next, bar, abs, i, E8, C, step };
-      if (!RENDER) STEP = { ns: [], open: 0, end: 0 };
+      STEP = { ns: [], open: 0, end: 0 };
       try {
         // (a song's own code that fails on one step must not stop the music)
         if (MUTE !== "rest") {
@@ -6379,8 +6384,7 @@ export const music = (function () {
      while comes back to the song where everyone else is, not where it left off. A song turned off stops at once and the
      next one comes in 3 seconds. A room whose host has no song list (an older page) plays this device's own picks. */
   let LOC = null,
-    noListAt = 0,
-    PRE = null;
+    noListAt = 0;
   const end = (e) => e.at + durOf(idx(e.n)) * 1000;
   function plan(S, t, menu) {
     const off = new Set(menu ? SAD : (S && S.off) || []),
@@ -6400,13 +6404,9 @@ export const music = (function () {
       b = null;
     }
     if (!a) {
-      if (PRE && ok(PRE.n)) a = { n: PRE.n, at: t + 1500, seed: PRE.seed };
-      else {
-        const i = pick(-1, off);
-        if (i >= 0) a = { n: names[i], at: t + 1500, seed: newSeed() };
-      }
-      PRE = null;
-    } // the first song: the one written out since the page opened
+      const i = pick(-1, off);
+      if (i >= 0) a = { n: names[i], at: t + 1500, seed: newSeed() };
+    }
     if (a && !b) {
       const i = pick(idx(a.n), off);
       if (i >= 0)
@@ -6448,8 +6448,22 @@ export const music = (function () {
       const t = clockNow(),
         m = plan(MENU, t, true);
       if (m) MENU = { ...m, off: [] };
-      if (!sounding() && MENU && MENU.a)
-        MENU = { a: { ...MENU.a, at: t + 400 }, b: null, off: [] }; // (until the sound may start, the first song waits at its start)
+      if (
+        MENU &&
+        MENU.a &&
+        (!sounding() ||
+          (ahead &&
+            !CUR &&
+            t < end(MENU.a) &&
+            !(REN.get(key(MENU.a)) && ready(REN.get(key(MENU.a)), -0.4))))
+      ) {
+        const a = { ...MENU.a, at: t + 400 };
+        MENU = {
+          a,
+          b: MENU.b && { ...MENU.b, at: Math.round(end(a)) },
+          off: [],
+        };
+      } // (until the sound may start, and its recording is ready, the song waits at its start)
       if (LV() > 0 && !profile.settings.musicMute) ahead_(MENU);
       return;
     }
@@ -6507,17 +6521,29 @@ export const music = (function () {
     if (!e) return;
     // dt: seconds until it starts (below 0: it began that long ago), less the time the sound takes to reach the speakers
     const dt =
-        (e.at - t) / 1000 -
-        Math.min(0.5, ac.outputLatency || ac.baseLatency || 0),
-      r = REN.get(key(e));
-    if (dt > 1 && !(r && r.buf)) return; // (in the quiet before it: its recording may still be on the way)
+      (e.at - t) / 1000 -
+      Math.min(0.5, ac.outputLatency || ac.baseLatency || 0);
+    if (ahead) {
+      let r = REN.get(key(e));
+      if (!r) {
+        if (dt > 1) return;
+        r = render(e, Math.max(0, -dt + 2));
+      } // (joined part way: written out from a little ahead of where it is now)
+      if (r) {
+        if (dt <= 1 && ready(r, -dt)) {
+          CUR = e;
+          ANC = { ac: ac.currentTime, t };
+          playRec(r, -dt);
+        }
+        return;
+      }
+    } // (until then, the quiet)
+    if (dt > 1) return;
     CUR = e;
     ANC = { ac: ac.currentTime, t };
-    if (r && r.buf)
-      playBuf(r, ac.currentTime + Math.max(0.1, dt), Math.max(0, -dt - 0.1));
-    else {
+    {
       for (const [k, x] of REN)
-        if (x.n === e.n && !x.buf) {
+        if (x.n === e.n && !x.full) {
           x.cancel();
           REN.delete(k);
         } // (a song can't be written out while it plays live: they'd share its parts)
@@ -6705,6 +6731,7 @@ export const music = (function () {
     SEED,
     MUTE,
     BUF,
+    DONE,
   ];
   const PUT = (a) => {
     [
@@ -6728,16 +6755,40 @@ export const music = (function () {
       SEED,
       MUTE,
       BUF,
+      DONE,
     ] = a;
   };
+  /* a recording written out piece by piece (o2): a little listener at its end (an AudioWorklet) passes the sound on and
+     sends each piece (65,536 samples, about 1.4 s) to the page as soon as it is done, so the song can start from its
+     recording after a few seconds instead of after the whole song (on a computer that takes about a third of the song).
+     o2.from: written out from that many seconds into the song (a song joined part way), coming in at the next bar, as
+     played live */
+  const PIECE = 65536;
+  let RECURL = null;
+  const recURL = () =>
+    RECURL ||
+    (RECURL = URL.createObjectURL(
+      new Blob(
+        [
+          `registerProcessor("dfrec",class extends AudioWorkletProcessor{
+    constructor(o){super();this.n=o.processorOptions.n;this.end=o.processorOptions.end;this.f=0;this.k=0;this.L=new Float32Array(this.n);this.R=new Float32Array(this.n)}
+    process(ins,outs){const i=ins[0]||[],a=i[0],b=i[1]||a,o=outs[0];
+      if(a){this.L.set(a,this.k);this.R.set(b,this.k);o[0].set(a);o[1].set(b)}else{this.L.fill(0,this.k,this.k+128);this.R.fill(0,this.k,this.k+128)}
+      this.k+=128;if(this.k===this.n){this.f+=this.n;if(this.f<=this.end)this.port.postMessage([this.L,this.R],[this.L.buffer,this.R.buffer]);
+        this.L=new Float32Array(this.n);this.R=new Float32Array(this.n);this.k=0}return this.f<this.end}})`,
+        ],
+        { type: "application/javascript" },
+      ),
+    ));
   /* the notes are set down in 4-second pieces, so the game never stops for long. Where the browser can pause a recording
      (Chrome), each piece goes in 2 seconds before the recording reaches it: Chrome works through every note it holds, even
      ones that haven't started, so a whole song of notes at once made it three times slower. Elsewhere (Firefox, which is
      quick anyway) they all go in first */
-  function offline(i, fixed, lv, seed) {
+  function offline(i, fixed, lv, seed, o2) {
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     if (!OAC || !TRACKS[i]) return null;
-    const dur = durOf(i),
+    const from = (o2 && o2.from) || 0,
+      dur = durOf(i) - from,
       len = dur + 7,
       sr = !fixed && ac ? ac.sampleRate : 44100,
       o = new OAC(2, Math.ceil(sr * len), sr);
@@ -6759,16 +6810,44 @@ export const music = (function () {
         PUT(k);
       }
     };
-    run(() => {
-      ac = o;
-      BUF = null;
-      graph();
-      out.gain.value = lv;
-      load(i, true, seed);
-      next = 0.05;
-      playing = true;
-    }, 4);
     const p = (async () => {
+      if (o2) {
+        if (!o.audioWorklet || !window.AudioWorkletNode)
+          throw new Error("no worklet");
+        await o.audioWorklet.addModule(recURL());
+        const w = new AudioWorkletNode(o, "dfrec", {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [2],
+          processorOptions: { n: PIECE, end: o.length - sr },
+        });
+        w.port.onmessage = (m) => {
+          if (!off) o2.piece(m.data[0], m.data[1]);
+        };
+        w.connect(o.destination);
+        o.__sink = w;
+      } // (the last second is left out: it fades below)
+      run(() => {
+        ac = o;
+        BUF = null;
+        DONE = [];
+        graph();
+        keepParts(o);
+        out.gain.value = lv;
+        load(i, true, seed);
+        next = 0.05;
+        playing = true;
+        if (from > 0) seek(0.05 - from);
+      }, 4);
+      // (cancelled, it stays paused: no work for a song nobody hears)
+      const go = (s) => {
+        if (off) return;
+        const w = o2 && o2.wait ? o2.wait(s + 2) : 0;
+        if (w > 50) {
+          o2.paced(Math.min(w, 1000));
+          setTimeout(() => go(s), Math.min(w, 1000));
+        } else o.resume();
+      }; // (far enough ahead of the song, it rests: no need to keep a whole processor busy)
       if (o.suspend)
         for (let s = 4; s < len - 6.5; s += 4) {
           const u = Math.min(s + 4, len - 6.5);
@@ -6776,7 +6855,7 @@ export const music = (function () {
             try {
               run(null, u);
             } finally {
-              o.resume();
+              go(s - 2);
             }
           });
         }
@@ -6797,89 +6876,178 @@ export const music = (function () {
     return {
       p,
       dur: dur + 0.05,
+      len: o.length / sr,
+      p0: from - 0.05,
+      sr,
       cancel() {
         off = true;
       },
     };
-  } // (cancelled: the rest is left silent)
+  } // (cancelled: the rest is left silent; p0: where in the song the recording begins)
   async function renderSong(i) {
     if (typeof i === "string") i = TRACKS.findIndex((t) => t.name === i);
     const r = offline(i, true, BASE);
     return r ? r.p : null;
   }
-  /* on a computer, while one song plays, the next on the room's list is written out, and then played from that recording:
-     a recording takes almost no work to play, so another app busy on the computer can't make it crackle. A song joined
-     part way that isn't written out yet, a song not ready in time, and every song on a phone (too much memory there) are
-     played live, note by note */
+  /* on a computer every song plays from its recording, never note by note: a recording takes almost no work to play, so
+     another app busy on the computer (a call, a browser) can't make it crackle or pop, and a busy page can't make its notes
+     late. Each is written out piece by piece and starts once enough is written that the rest will come in time; while the
+     first pieces are written (a few seconds) the song waits in the quiet. The song after it is written out once this one
+     is done. Phones (too much memory there), and a browser that can't write songs out, play them live, note by note */
   let BUF = null,
-    ahead = !LITE && !!window.OfflineAudioContext;
+    ahead = !LITE && !!window.OfflineAudioContext && !!window.AudioWorkletNode;
   const REN = new Map(),
-    key = (e) => e.n + "/" + e.seed;
-  function render(e) {
+    key = (e) => e.n + "/" + e.seed,
+    AHEAD = 30;
+  function render(e, from) {
     const i = idx(e.n),
-      k = key(e),
-      t0 = performance.now();
+      k = key(e);
     let r = null;
+    const x = {
+      i,
+      n: e.n,
+      ch: [],
+      t0: performance.now(),
+      at: 0,
+      rest: 0,
+      full: false,
+    };
+    const wait = (s) => {
+      const S = list(),
+        y = S && [S.a, S.b].find((y) => y && key(y) === k);
+      return y ? y.at + (x.p0 + s - AHEAD) * 1000 - clockNow() : 0;
+    }; // (written more than AHEAD seconds before it is heard: it waits)
     try {
-      r = offline(i, false, 1, e.seed);
+      r = offline(i, false, 1, e.seed, {
+        from,
+        wait,
+        paced: (ms) => {
+          x.rest += ms;
+        },
+        piece: (L, R) => {
+          x.ch.push([L, R]);
+          x.at = performance.now();
+        },
+      });
     } catch (err) {}
     if (!r) {
       ahead = false;
-      return;
+      return null;
     }
-    const x = { i, n: e.n, dur: r.dur, cancel: r.cancel };
+    Object.assign(x, {
+      len: r.len,
+      p0: r.p0,
+      sr: r.sr,
+      cancel() {
+        x.off = true;
+        r.cancel();
+      },
+    });
     REN.set(k, x);
     r.p.then(
       (b) => {
-        x.buf = b;
-        if ((performance.now() - t0) / 1000 > r.dur + GAP) ahead = false;
+        const L = b.getChannelData(0),
+          R = b.getChannelData(1);
+        for (let f = x.ch.length * PIECE; f < b.length; f += PIECE)
+          x.ch.push([L.slice(f, f + PIECE), R.slice(f, f + PIECE)]);
+        x.full = true;
       },
       () => {
-        ahead = false;
-        REN.delete(k);
+        if (!x.off) {
+          ahead = false;
+          REN.delete(k);
+        }
       },
     );
-  } // too slow to keep ahead: stay live
-  function ahead_(S) {
-    if (!ahead || !S) return;
-    const e = S.b;
-    if (!e || idx(e.n) < 0 || REN.has(key(e)) || (LIVE && CUR && CUR.n === e.n))
-      return;
-    for (const k of [...REN.keys()]) if (!CUR || k !== key(CUR)) REN.delete(k); // (only the song playing and the one after it are kept)
-    render(e);
+    return x;
+  } // (a browser that can't: live from then on)
+  /* ready to start, q seconds into the song (below 0: before it starts)? Enough written to start, and, at the speed it is
+     being written (with room to spare), each later piece will be done before it is needed */
+  function ready(x, q) {
+    if (x.full) return true;
+    if (!x.ch.length) return false;
+    const at = Math.max(0, q - x.p0),
+      have = (x.ch.length * PIECE) / x.sr,
+      v = (0.75 * have) / Math.max(0.001, (x.at - x.t0 - x.rest) / 1000);
+    return have >= at + 3 && (v >= 1 || have >= x.len - v * (x.len - at));
   }
-  setTimeout(() => {
-    if (LV() > 0 && ahead && !PRE && !list()) {
-      const i = pick(-1, inMenu() ? new Set(SAD) : null);
-      if (i >= 0) {
-        PRE = { n: names[i], seed: newSeed() };
-        render(PRE);
-      }
-    }
-  }, 1500); // on a computer, a first song is written out as soon as the page is open
-  /* each recording plays through its own volume: picked up part way it fades in, and stopped it fades out to nothing before
-     it stops (stopped while still sounding, it clicked; and started again before it had, the song played twice) */
-  function playBuf(b, t, off) {
-    const s = ac.createBufferSource(),
+  function ahead_(S) {
+    if (!ahead || !S || !ac) return;
+    const keep = new Set([S.a, S.b, CUR].filter(Boolean).map(key));
+    for (const [k, x] of [...REN])
+      if (!keep.has(k)) {
+        x.cancel();
+        REN.delete(k);
+      } // (only the song playing and the one after it are kept)
+    if (S.a && !REN.has(key(S.a)) && idx(S.a.n) >= 0 && S.a.at > clockNow()) {
+      render(S.a, 0);
+      return;
+    } // (a song not begun yet is written out from its start)
+    if (LIVE || [...REN.values()].some((x) => !x.full)) return; // (one at a time: two at once would slow both)
+    const e = S.b;
+    if (e && idx(e.n) >= 0 && !REN.has(key(e))) render(e, 0);
+  }
+  /* a recording plays through its own volume, piece after piece, each set down 3 seconds ahead at the very sample where
+     the last one ends: picked up part way it fades in, and stopped it fades out to nothing before it stops (stopped while
+     still sounding, it clicked; and started again before it had, the song played twice). A piece not written in time:
+     the song fades out and comes back in where it should be once it has caught up */
+  function playRec(x, q) {
+    const now = ac.currentTime,
+      F0 = Math.round((now - (q - x.p0)) * x.sr),
+      first = now + 0.1,
       g = gn(),
       k = gn();
-    s.buffer = b.buf;
-    s.connect(g);
     g.connect(k);
     k.connect(bout);
-    if (off > 0) {
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(1, t + 0.3);
+    if (first > F0 / x.sr + 0.06) {
+      g.gain.setValueAtTime(0, first);
+      g.gain.linearRampToValueAtTime(1, first + 0.3);
     }
-    s.start(t, off);
-    BUF = { ...b, s, g, k, t0: t - off, end: t - off + b.dur, at: 0 };
+    BUF = { x, g, k, F0, first, j: 0, srcs: new Set() };
+    feed();
+  }
+  function feed() {
+    const B = BUF;
+    if (!B || !ac) return;
+    const x = B.x,
+      now = ac.currentTime;
+    for (;;) {
+      const s = (B.F0 + B.j * PIECE) / x.sr;
+      if (s > now + 3) return;
+      if (B.j >= x.ch.length) {
+        if (!x.full && s < now + 0.1) {
+          fadeOut(B);
+          BUF = null;
+          CUR = null;
+          ANC = null;
+        }
+        return;
+      } // (not written in time)
+      const [L, R] = x.ch[B.j++];
+      if (s + L.length / x.sr <= B.first) continue;
+      const b = ac.createBuffer(2, L.length, x.sr);
+      b.copyToChannel(L, 0);
+      b.copyToChannel(R, 1);
+      const src = ac.createBufferSource();
+      src.buffer = b;
+      src.connect(B.g);
+      if (s < B.first) src.start(B.first, B.first - s);
+      else src.start(s);
+      B.srcs.add(src);
+      src.onended = () => {
+        B.srcs.delete(src);
+        src.disconnect();
+      };
+    }
   }
   function fadeOut(b) {
     const t = ac.currentTime + AH();
     b.k.gain.setTargetAtTime(0, t, 0.1);
-    try {
-      b.s.stop(t + 0.8);
-    } catch (e) {}
+    for (const s of b.srcs)
+      try {
+        s.stop(t + 0.8);
+      } catch (e) {}
+    b.j = 1e9;
   } // (its own level for the fade out: cancelling the fade in part way dropped it to nothing at once)
   /* what the room hears now, for the music bar: the song (or, in the quiet between two, the next one and when it starts) */
   function nowPlaying() {
@@ -6924,7 +7092,9 @@ export const music = (function () {
       return !!BUF;
     },
     get written() {
-      return [...REN].map(([k, x]) => k + (x.buf ? " (ready)" : ""));
+      return [...REN].map(
+        ([k, x]) => k + (x.full ? " (ready)" : " (" + x.ch.length + " pieces)"),
+      );
     },
     get track() {
       return CUR ? CUR.n : null;

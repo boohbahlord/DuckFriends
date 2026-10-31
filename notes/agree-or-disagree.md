@@ -2628,3 +2628,10 @@ I go to class now cant answer question but adam can"
 > FURTHERMORE, make all the knife attacks hit justin automatically when they are near him, not needing to press a button or anything like thaat in that gamemode, it just stabs for the mobile players for them when they are close enough.
 
 - Adam's reading: auto-stab for everyone (phone and computer), at the knife's pace (one a second); a press still works but no faster. Friendly fire was already off in #163 (swing skips other ducks in mgj). Noah builds, medium effort, Standard tier.
+
+## Request (2026-10-30 22:44Z): menu music crackles on Linux with Discord open
+
+> On my fedora linux on my E490s lenovo thinkpad (since i have more then one laptop), the speakers started to sound randomly cackled and popped to a degree never heard before while disocrd was open while the main menu was, and i never heard it be this bad before. I later ended up minimizing the discord, but it still kept juttting in often and loudly, like it was stabbing my speakers. THis has to be resolved and i STILL STILL STILL CANNOT BELIEVE THE MAGNITUDE OF RESOURCES THAT GOES INTO TRYINNG TO RESOLVE THE SAME ISSUE OVER AND OVER AGAIN WHEN NO INDIE DEV WOULD MOST LIKELY NOT HAVE THIS PROBLEM WITH THEIR AUDIO! REVIEW THE FUCKING PRINCIPLES YOU WROTE OR SOMEONE WROTE FOR MILES JR FOR THIS ISSUE BECUZ I THOUGHT HE WAS HANDED A FILE JUST FOR THIS KIND OF ISSUE! WE NEEED TO STOP HAVING TO RESOLVE THIS CONSTANTLY! SOMEONE MAKE MILES JR FIX THIS!
+
+- Miles Jr.'s finding: the menu's first song (and any song joined part way) was always made note by note on the sound thread; the "recorded ahead" path only covered the song after it. A busy laptop starves that thread (crackles) and the page (late notes pop).
+- Fix: on a computer every song plays from a recording written out ahead in an OfflineAudioContext and streamed in 1.4 s pieces (AudioWorklet listener), starting after a few seconds; writing rests 30 s ahead; finished notes are let go while writing. Phones still play live. Sound thread 15% → 3% of a core, music dropouts on the Chromium tour 16 → 0.
