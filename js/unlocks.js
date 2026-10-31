@@ -1,59 +1,67 @@
 /* ---------- things you unlock ----------
-   Some items start locked. The jester hat and outfit open at 1,000 jumps, Jack in a Box (and Jill) at 10,000; a secret
-   code opens all three at once. The clown wig, costume and paint open when you've killed Justin with a weapon special 10
-   times, and until then nobody is told how. The dunce hat opens once you've been voted a dunce in Duncelation 10 times
-   (TEST rooms don't count). The lightning eyes open once you've beaten Mad God Justin 10 times (TEST rooms don't count
-   either). What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, dunced, mgjWins, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
-   "Unlocked!" shows once). */
+   Some items start locked, every count in twelves (I want them all in factors of 12). The jester hat and outfit open at
+   1,728 jumps, Jack in a Box (and Jill) at 20,736; a secret code opens all three at once. The Long jump and the Double
+   jump open at 144 jumps. The clown wig, costume and paint open when you've killed Justin with a weapon special 12
+   times, and until then nobody is told how. The shotgun opens at 144 kills and the grenade at 360: a kill is another
+   player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
+   voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
+   Justin 12 times (TEST rooms don't count either). What counts lives in the profile (so it stays on the device and the
+   account): jumps, justinKills, kills, dunced, mgjWins, secrets (the codes turned on) and unlockSeen (the unlocks already
+   announced, so each "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { toast } from "./ui.js";
 
 const CODE = "1357911";
 export const LOCKS = [
-  { kind: "hat", id: "jester", jumps: 1000, code: CODE, name: "Jester hat" },
+  { kind: "hat", id: "jester", jumps: 1728, code: CODE, name: "Jester hat" },
   {
     kind: "outfit",
     id: "jester",
-    jumps: 1000,
+    jumps: 1728,
     code: CODE,
     name: "Jester outfit",
   },
   {
     kind: "style",
     id: "jack",
-    jumps: 10000,
+    jumps: 20736,
     code: CODE,
     name: "Jack in a Box",
   },
-  { kind: "hat", id: "clownwig", kills: 10, hidden: true, name: "Clown wig" },
+  { kind: "special", id: "longjump", jumps: 144, name: "Long jump" },
+  { kind: "special", id: "double", jumps: 144, name: "Double jump" },
+  { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
+  { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
+  { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
   {
     kind: "outfit",
     id: "clown",
-    kills: 10,
+    kills: 12,
     hidden: true,
     name: "Clown costume",
   },
   {
     kind: "face",
     id: "clownpaint",
-    kills: 10,
+    kills: 12,
     hidden: true,
     name: "Clown paint",
   },
-  { kind: "hat", id: "dunce", dunced: 10, name: "Dunce hat" },
-  { kind: "eyes", id: "lightning", mgjWins: 10, name: "Lightning eyes" },
+  { kind: "hat", id: "dunce", dunced: 12, name: "Dunce hat" },
+  { kind: "eyes", id: "lightning", mgjWins: 12, name: "Lightning eyes" },
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
-    : l.mgjWins
-      ? (profile.mgjWins || 0) >= l.mgjWins
-      : l.dunced
-        ? (profile.dunced || 0) >= l.dunced
-        : (profile.justinKills || 0) >= l.kills;
+    : l.frags
+      ? (profile.kills || 0) >= l.frags
+      : l.mgjWins
+        ? (profile.mgjWins || 0) >= l.mgjWins
+        : l.dunced
+          ? (profile.dunced || 0) >= l.dunced
+          : (profile.justinKills || 0) >= l.kills;
 const coded = (l) => !!(l.code && (profile.secrets || {})[l.code]);
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) {
@@ -68,12 +76,16 @@ export function lockHint(kind, id) {
   if (earned(l))
     return l.jumps
       ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-      : l.mgjWins
-        ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
-        : l.dunced
-          ? `Unlocked: voted a dunce ${l.dunced} times`
-          : "Unlocked: you killed Justin with a weapon 10 times";
+      : l.frags
+        ? `Unlocked: ${l.frags} kills`
+        : l.mgjWins
+          ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
+          : l.dunced
+            ? `Unlocked: voted a dunce ${l.dunced} times`
+            : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
   if (coded(l)) return "Unlocked: a secret code";
+  if (l.frags)
+    return `Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
   if (l.mgjWins)
     return `Beat Mad God Justin ${l.mgjWins} times (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
@@ -103,16 +115,35 @@ export function countJustinKill() {
   save();
   checkUnlocks();
 }
-/* a room's Justin kills (the rules' s.jk, numbered by s.jkN): mine with a bullet or a dagger count, each once; what
-   happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
+/* another player (not a computer) or Justin knocked down by me with a weapon: toward the shotgun and the grenade */
+function countKill() {
+  profile.kills = (profile.kills || 0) + 1;
+  save();
+  checkUnlocks();
+}
+/* a room's kills (the rules' s.pk, numbered by s.pkN, and Justin's s.jk, numbered by s.jkN): mine count, each once;
+   what happened before I joined doesn't. The same for Duncelation's dunces (s.dn.dk, numbered by s.dn.dkN): me voted a dunce,
    outside TEST rooms; and Mad God Justin's wins (s.mgjWins, numbered by s.mgjWinN) I played in */
 export function watchKills(room) {
   let seen = null,
     seenD = null,
-    seenW = null;
+    seenW = null,
+    seenP = null;
   room.on(() => {
     const s = room.state,
-      top = (s && s.jkN) || 0,
+      topP = (s && s.pkN) || 0;
+    if (seenP === null || topP < seenP) seenP = topP;
+    else {
+      for (const k of (s && s.pk) || [])
+        if (
+          k.n > seenP &&
+          k.by === room.me &&
+          !((s.players || {})[k.id] || {}).bot
+        )
+          countKill();
+      seenP = topP;
+    }
+    const top = (s && s.jkN) || 0,
       dn = (s && s.dn) || {},
       topD = dn.dkN || 0,
       topW = (s && s.mgjWinN) || 0;
@@ -141,12 +172,10 @@ export function watchKills(room) {
       return;
     }
     for (const k of (s && s.jk) || [])
-      if (
-        k.n > seen &&
-        k.by === room.me &&
-        (k.w === "handgun" || k.w === "dagger")
-      )
+      if (k.n > seen && k.by === room.me) {
+        countKill();
         countJustinKill();
+      }
     seen = top;
   });
 }
@@ -170,6 +199,16 @@ export function takeOffLocked() {
     off.push(lockOf("face", D.face.id).name);
     D.face = null;
   }
+  if (
+    Array.isArray(D.keys) &&
+    D.keys.some((k) => k && !unlocked("special", k))
+  ) {
+    D.keys = D.keys.map((k) => {
+      if (!k || unlocked("special", k)) return k;
+      off.push(lockOf("special", k).name);
+      return null;
+    });
+  } // (a special that's locked comes off its key)
   if (D.style && !unlocked("style", D.style)) {
     off.push(D.jill ? "Jill in a Box" : lockOf("style", D.style).name);
     D.style =

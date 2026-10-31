@@ -237,6 +237,16 @@ export const sfx = {
     });
     tone(90, 0.38, { type: "sine", gain: 0.1, slide: 0.5, attack: 0.014 });
   }, // Mad God Justin's shotgun: a deeper bang
+  boom() {
+    noise(1.2, {
+      gain: 0.22,
+      type: "lowpass",
+      freq: 1300,
+      slideTo: 70,
+      fade: 0.016,
+    });
+    tone(62, 0.9, { type: "sine", gain: 0.18, slide: 0.55, attack: 0.02 });
+  }, // a grenade going off: the meteor's boom, a little shorter
   pump() {
     noise(0.08, {
       gain: 0.07,

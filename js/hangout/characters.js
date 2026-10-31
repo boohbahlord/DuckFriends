@@ -133,6 +133,12 @@ function dress(id, o) {
     o.looks.set(key, n);
   }
   o.body.replaceChildren(...n);
+  if (dead && o.dead === false) {
+    o.el.classList.remove("hurt");
+    void o.el.offsetWidth;
+    o.el.classList.add("hurt");
+  } // (knocked down: a red flash, as a player's duck)
+  o.dead = !!dead;
   o.el.classList.toggle("dead", dead);
 }
 /* what's in Justin's hand: his gun, a glass */

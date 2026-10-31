@@ -39,6 +39,10 @@ const KNIFE = ([a, b, c]) =>
    top; a long wooden handle, a little wider at the grip. Colors: head, handle, the band under the head */
 const HAMMER = ([a, b, c]) =>
   `<svg viewBox="0 0 56 30"><path d="M3 11.8Q1.4 11.8 1.4 13.6V16.6Q1.4 18.4 3.2 18.3L37 17.6V12.6L3.2 11.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 13.4L32 13.9" stroke="#fff" stroke-width="1.1" opacity=".3"/><path d="M6 16.8L30 16.4" stroke="${INK}" stroke-width=".7" opacity=".22"/><rect x="33.4" y="11.6" width="4.2" height="7" rx="1" fill="${c}" stroke="${INK}" stroke-width="1.1"/><rect x="37" y="1.4" width="17.4" height="27.2" rx="5.6" fill="${a}" stroke="${INK}" stroke-width="1.4"/><path d="M39.6 7.4Q39.6 4 43 4H45.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M40.2 10.4V20" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".22"/><path d="M51.6 6V24.6" stroke="${INK}" stroke-width="1.2" stroke-linecap="round" opacity=".2"/></svg>`;
+/* the grenade: a round pineapple grenade, its body in a grid of rounded lumps with a shine at the top left; the metal cap
+   with the lever curving down its right side, and the pin's ring at the left. Colors: body, metal, ring */
+export const GRENADE = ([a, b, c]) =>
+  `<svg viewBox="0 0 28 28"><ellipse cx="13.6" cy="17.4" rx="8.6" ry="9.4" fill="${a}" stroke="${INK}" stroke-width="1.3"/><g fill="none" stroke="${INK}" stroke-width=".8" opacity=".35"><path d="M5.6 14.4Q13.6 12.4 21.6 14.4M5.4 20.2Q13.6 22.4 21.8 20.2"/><path d="M10.2 8.6Q8.4 17.4 10.2 26.2M17 8.6Q18.8 17.4 17 26.2"/></g><ellipse cx="9.4" cy="12.2" rx="2.4" ry="1.5" fill="#fff" opacity=".35" transform="rotate(-30 9.4 12.2)"/><rect x="10.2" y="5.2" width="7" height="4.4" rx="1.3" fill="${b}" stroke="${INK}" stroke-width="1.1"/><path d="M14.6 5.6Q22.6 4.4 23 11.6L22.6 16.8Q21.2 17.2 21 15.8L21 11.6Q20.8 7.6 15.2 7.8Z" fill="${b}" stroke="${INK}" stroke-width="1.05" stroke-linejoin="round"/><path d="M16.4 6.4Q21 6.2 21.8 10.6" fill="none" stroke="#fff" stroke-width=".7" opacity=".5"/><circle cx="6.6" cy="5.6" r="3" fill="none" stroke="${INK}" stroke-width="2.4"/><circle cx="6.6" cy="5.6" r="3" fill="none" stroke="${c}" stroke-width="1.2"/><path d="M9.4 6.6L11 7" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/></svg>`;
 /* the wrench, after the owner's BioShock picture: an old pipe wrench, its red paint worn through in chips, a sunk panel
    down the handle and a hole at its end; the frame, the hook jaw over the heel jaw (their teeth facing), the knurled nut
    under them, worn metal with rust. Colors: paint, metal, rust */
@@ -69,6 +73,14 @@ const iconOf = (svg, k = 1) => {
 /* a duckling, facing right, in its colors (body, beak) */
 export const DUCKLING = ([a, b]) =>
   `<svg viewBox="0 0 30 26"><ellipse cx="15" cy="24.6" rx="9" ry="1.6" fill="#0005"/><path d="M4 15c0-5 5-7 10-6l3-1c0-4 3-7 6.5-6.5S29 5 28 9c-.4 2-1.6 3-2.6 3.6C27 16 25 22 16 22 8 22 4 19 4 15Z" fill="${a}" stroke="#3a2a10" stroke-width="1.2" stroke-linejoin="round"/><path d="M27.2 7.6l2.6 1.1-2.9 1.2Z" fill="${b}" stroke="#3a2a10" stroke-width=".8" stroke-linejoin="round"/><circle cx="24.4" cy="6.6" r="1.2" fill="#1c1c28"/><path d="M8 14c3 3 7 3 9 0" fill="none" stroke="#3a2a10" stroke-width="1" opacity=".55"/><path d="M4.6 13.4 1.4 11.6 4.4 16Z" fill="${a}" stroke="#3a2a10" stroke-width=".9" stroke-linejoin="round"/></svg>`;
+/* the pump shotgun (Mad God Justin's, and a player's once it's unlocked): a classic pump-action with a short barrel; the wooden stock and pump, the dark
+   receiver with its trigger guard, the magazine tube under the barrel and a bead sight at the muzzle */
+export const SHOTGUN = `<svg viewBox="0 0 62 20"><path d="M2.6 6.4L15.6 8V13.4L5.6 17.2Q1.4 18.4 1.4 14.8V8.2Q1.4 6.3 2.6 6.4Z" fill="#8a4b2a" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M1.6 8.4V14.8" stroke="#2b1a10" stroke-width="2.2"/><path d="M5 9.2L14 10.2" stroke="#fff" stroke-width=".8" opacity=".3"/>
+<path d="M19.6 12.4Q19.4 16.6 22.6 16.6Q25.6 16.6 25.4 12.4" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M22.4 12L23.2 15" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
+<rect x="14.6" y="6" width="15.6" height="6.6" rx="1.4" fill="#33384a" stroke="${INK}" stroke-width="1.15"/><path d="M16.4 7.6H28.4" stroke="#fff" stroke-width=".8" opacity=".25"/><rect x="21" y="8.4" width="4.6" height="1.6" rx=".6" fill="#1c1c28" opacity=".55"/>
+<rect x="29.4" y="9.6" width="23" height="2.6" rx="1" fill="#2a2e3c" stroke="${INK}" stroke-width="1"/>
+<rect x="29.4" y="6" width="30.4" height="3.2" rx="1" fill="#454b5e" stroke="${INK}" stroke-width="1.1"/><path d="M31 6.9H58" stroke="#fff" stroke-width=".7" opacity=".3"/><circle cx="58.4" cy="5.6" r=".9" fill="#ffd23f" stroke="${INK}" stroke-width=".5"/>
+<rect x="34.4" y="8.4" width="13.6" height="5.2" rx="1.8" fill="#a0612f" stroke="${INK}" stroke-width="1.1"/>${[37.2, 39.8, 42.4, 45].map((x) => `<path d="M${x} 9.4V12.6" stroke="#5a3218" stroke-width=".8"/>`).join("")}</svg>`;
 const P = "Primary",
   S2 = "Secondary",
   A = "Accent";
@@ -259,6 +271,25 @@ export const SPECIALS = [
       ["a", P, "#5f646e"],
       ["b", S2, "#c98a3a"],
       ["c", A, "#3a3d48"],
+    ],
+  },
+  {
+    id: "shotgun",
+    name: "Shotgun",
+    kind: "item",
+    icon: iconOf(SHOTGUN, 0.82),
+    tip: "A blast of pellets in a cone toward your mouse: every duck one hits plays dead. Then a pump before the next. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "grenade",
+    name: "Grenade",
+    kind: "item",
+    icon: GRENADE(["#5d8a3a", "#a4a8b4", "#c9a24a"]),
+    tip: "Throw a grenade toward your mouse: where it lands it blows up, and every duck near it (three ducks across) plays dead, flies off and is burnt for a while. Shift and its key keeps it out: left click throws. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#5d8a3a"],
+      ["b", S2, "#a4a8b4"],
+      ["c", A, "#c9a24a"],
     ],
   },
   {
@@ -479,26 +510,20 @@ export function pressFX(id, x, y, size, face, duck) {
 /* a weapon in a duck's hand, pointing right (the game turns it toward where it aims); the hammer is a wrench on a duck
    that picked the wrench (its ⚙ under Customize → Specials: duck.wrench) */
 const WRENCH_COLORS = ["#a8322a", "#a4a8ad", "#7a4a2e"]; // (the BioShock wrench keeps its own colors)
-/* Mad God Justin's pump shotgun (only his): a classic pump-action with a short barrel; the wooden stock and pump, the dark
-   receiver with its trigger guard, the magazine tube under the barrel and a bead sight at the muzzle */
-export const SHOTGUN = `<svg viewBox="0 0 62 20"><path d="M2.6 6.4L15.6 8V13.4L5.6 17.2Q1.4 18.4 1.4 14.8V8.2Q1.4 6.3 2.6 6.4Z" fill="#8a4b2a" stroke="${INK}" stroke-width="1.15" stroke-linejoin="round"/><path d="M1.6 8.4V14.8" stroke="#2b1a10" stroke-width="2.2"/><path d="M5 9.2L14 10.2" stroke="#fff" stroke-width=".8" opacity=".3"/>
-<path d="M19.6 12.4Q19.4 16.6 22.6 16.6Q25.6 16.6 25.4 12.4" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M22.4 12L23.2 15" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
-<rect x="14.6" y="6" width="15.6" height="6.6" rx="1.4" fill="#33384a" stroke="${INK}" stroke-width="1.15"/><path d="M16.4 7.6H28.4" stroke="#fff" stroke-width=".8" opacity=".25"/><rect x="21" y="8.4" width="4.6" height="1.6" rx=".6" fill="#1c1c28" opacity=".55"/>
-<rect x="29.4" y="9.6" width="23" height="2.6" rx="1" fill="#2a2e3c" stroke="${INK}" stroke-width="1"/>
-<rect x="29.4" y="6" width="30.4" height="3.2" rx="1" fill="#454b5e" stroke="${INK}" stroke-width="1.1"/><path d="M31 6.9H58" stroke="#fff" stroke-width=".7" opacity=".3"/><circle cx="58.4" cy="5.6" r=".9" fill="#ffd23f" stroke="${INK}" stroke-width=".5"/>
-<rect x="34.4" y="8.4" width="13.6" height="5.2" rx="1.8" fill="#a0612f" stroke="${INK}" stroke-width="1.1"/>${[37.2, 39.8, 42.4, 45].map((x) => `<path d="M${x} 9.4V12.6" stroke="#5a3218" stroke-width=".8"/>`).join("")}</svg>`;
 export function heldHTML(id, duck) {
   if (id === "shotgun") return SHOTGUN;
   const c = colorsOf(duck, id);
-  return id === "dagger"
-    ? DAGGER(c)
-    : id === "knife"
-      ? KNIFE(c)
-      : id === "hammer"
-        ? (duck || {}).wrench
-          ? WRENCH(WRENCH_COLORS)
-          : HAMMER(c)
-        : PISTOL(c);
+  return id === "grenade"
+    ? GRENADE(c)
+    : id === "dagger"
+      ? DAGGER(c)
+      : id === "knife"
+        ? KNIFE(c)
+        : id === "hammer"
+          ? (duck || {}).wrench
+            ? WRENCH(WRENCH_COLORS)
+            : HAMMER(c)
+          : PISTOL(c);
 }
 /* a special as this duck shows it: the hammer is "Wrench", with its picture, on a duck that picked the wrench */
 const WRENCH_ICON = iconOf(WRENCH(WRENCH_COLORS));

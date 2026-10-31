@@ -47,7 +47,7 @@ export const METEOR = `<svg viewBox="0 0 160 160" aria-hidden="true"><defs>
 <ellipse cx="56" cy="90" rx="7" ry="5.5" fill="#2a1d1a" opacity=".55"/><ellipse cx="74" cy="104" rx="5" ry="4" fill="#2a1d1a" opacity=".5"/><ellipse cx="72" cy="80" rx="3.4" ry="2.8" fill="#2a1d1a" opacity=".45"/>
 <path d="M46 76C50 70 58 67 64 68" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".35"/></svg>`;
 /* the scorch it leaves for a moment */
-const SCORCH = `<svg viewBox="0 0 200 80" aria-hidden="true"><ellipse cx="100" cy="40" rx="96" ry="36" fill="#1c1210" opacity=".55"/><ellipse cx="100" cy="40" rx="62" ry="22" fill="#0e0807" opacity=".7"/>
+export const SCORCH = `<svg viewBox="0 0 200 80" aria-hidden="true"><ellipse cx="100" cy="40" rx="96" ry="36" fill="#1c1210" opacity=".55"/><ellipse cx="100" cy="40" rx="62" ry="22" fill="#0e0807" opacity=".7"/>
 ${[
   [30, 22],
   [168, 30],
