@@ -2,9 +2,9 @@
    Some items start locked. The jester hat and outfit open at 1,000 jumps, Jack in a Box (and Jill) at 10,000; a secret
    code opens all three at once. The clown wig, costume and paint open when you've killed Justin with a weapon special 10
    times, and until then nobody is told how. The dunce hat opens once you've been voted a dunce in Duncelation 10 times
-   (TEST rooms don't count). The lightning eyes open once you've beaten Mad God Justin 10 times (TEST rooms don't count
-   either). What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, dunced, mgjWins, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
+   (TEST rooms don't count). The lightning eyes open once you've beaten Mad God Justin 12 times at the default time, and the
+   Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms don't count either). What counts lives in the profile (so it stays on the device and the
+   account): jumps, justinKills, dunced, mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";

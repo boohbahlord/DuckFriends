@@ -2686,3 +2686,11 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 > remember that for the sharp and flat buttons, i mean the keyboard buttons we mapped long time ago, not any one note already on the keyboard will  be changed
 
 - Miles Jr.: the old keys (Shift or C sharp, Space or Alt flat) were already gone from the piano's code; only Settings → Controls still listed them. That line now shows the four rows as they are. No note on the keyboard changed.
+
+## Clarification (2026-10-31, relayed by Adam), on which lost rounds count toward the Tears eyes
+
+> Clear losers only
+
+- Counted: a Mad God Justin loss; in Who is the Quack?, the Quack when caught, or every non-Quack when the Quack wins;
+  the losing lawyer in Lawyering; the defender voted Dunce in Duncelation; a player whose contender is knocked out in
+  Bicker Brackets. Card hands don't count. Each device counts its own player's.

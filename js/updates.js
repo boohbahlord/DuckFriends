@@ -14,7 +14,7 @@ export const UPDATES = [
     news: [
       "A new game, Mad God Justin: everyone gets a knife, and together you stab Justin down before the timer runs out. He shoots back.",
       "Late in the fight he calls a meteor down on everyone and comes back with a pump shotgun.",
-      "Beat him 10 times to unlock his lightning eyes.",
+      "Beat him 12 times at the default time (1:30) to unlock his lightning eyes.",
       "Mad God Justin: get close to him and your knife stabs by itself, no button needed.",
       "A new game, Duncelation: defend the take you get while everyone walks to Dunce or Not a Dunce.",
       "Voted a dunce: lightning, the LOSER podium, and the dunce hat in black and white for the rest of the game.",
@@ -22,6 +22,8 @@ export const UPDATES = [
       "Report Bug or Suggest Ideas, at the bottom of this window and of Settings.",
       "Duncelation: End round, beside Vote. It ends the take once the defender and enough players press it.",
       "A hit sound, like Minecraft's, whenever a player (or Justin) is hit.",
+      "Mad God Justin: every 15 seconds something falls in. Walk over a weapon to use it once; lightning, fire and meteors hit him by themselves; and sometimes Good Justin God comes to help.",
+      "Justin wears devil horns in his fight, and cries when he loses. Lose to him 24 times, or lose 144 rounds, to unlock his Tears eyes.",
     ],
     fixed: [
       "On a computer, the music no longer crackles or pops while other apps (like Discord) keep it busy.",
