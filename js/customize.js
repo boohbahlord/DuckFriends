@@ -319,8 +319,15 @@ export function openCustomize(page = lastPage) {
                   `<div class="spe spe-dthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${daggerHTML(profile.duck)}</i></b></div>`,
                 ),
               );
-            /* the knife and the hammer: one stab or one swing in the duck's hand */
-            if (id === "knife" || id === "hammer")
+            /* the grenade: thrown from the hand like the dagger, tumbling slower */
+            if (id === "grenade")
+              els.push(
+                el(
+                  `<div class="spe spe-dthrow spe-gthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${heldHTML("grenade", profile.duck)}</i></b></div>`,
+                ),
+              );
+            /* the knife and the hammer: one stab or one swing in the duck's hand; the shotgun: one kick */
+            if (id === "knife" || id === "hammer" || id === "shotgun")
               els.push(
                 el(
                   `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
@@ -337,6 +344,11 @@ export function openCustomize(page = lastPage) {
               dagger: sfx.swish,
               knife: sfx.swish,
               hammer: sfx.swish,
+              grenade: sfx.swish,
+              shotgun: () => {
+                sfx.shotgun();
+                setTimeout(() => sfx.pump(), 520);
+              },
               sound: sfx.quack,
               trombone: sfx.trombone,
             })[id]?.();
@@ -569,12 +581,17 @@ export function openCustomize(page = lastPage) {
                 .map((sp) => {
                   const x = looksOf(sp, D),
                     at = keys.indexOf(x.id),
-                    opened = x.id === keyFor;
+                    opened = x.id === keyFor,
+                    lk = isLocked("special", x.id),
+                    open = lk && unlocked("special", x.id),
+                    tip = lk
+                      ? lockHint("special", x.id) + (open ? " " + x.tip : "")
+                      : x.tip; // (locked: its padlock and how to unlock it; it can't go on a key yet)
                   const alt =
                     x.id === "hammer"
                       ? `<button type="button" class="sp-prev sp-alt" data-a="wrench" aria-pressed="${!!D.wrench}" aria-label="${D.wrench ? "Make it a hammer" : "Make it a wrench"}" data-tip="${D.wrench ? "A hammer instead" : "A wrench instead"}">⚙</button>`
                       : ""; // (the hammer's other look)
-                  return `<div class="sp-tile${x.off ? " off" : ""}"><button type="button" class="arm-tile" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(x.tip)}"><span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
+                  return `<div class="sp-tile${x.off ? " off" : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
               <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? " disabled" : ""} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
               ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
                 })
@@ -1078,8 +1095,9 @@ export function openCustomize(page = lastPage) {
               D.size = +v;
             },
             special: () => {
-              if (!isOff(v)) keyFor = keyFor === v ? null : v;
-            }, // its key boxes open (or shut) under it
+              if (!isOff(v) && unlocked("special", v))
+                keyFor = keyFor === v ? null : v;
+            }, // its key boxes open (or shut) under it (not while it's locked)
             skin: () => {
               D.image = null;
               if (v.startsWith("m:")) D.metal = v.slice(2);

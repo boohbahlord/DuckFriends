@@ -28,7 +28,7 @@ import {
   SHOT_SPEED,
   MAG,
   RELOAD,
-  swing,
+  strike,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { holdDown } from "./hangout/death.js";
@@ -439,7 +439,7 @@ export function mgjTick(s, now, log) {
       dx = p.x - at.x,
       dy = p.y - at.y,
       aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
-    const hit = swing(s, JUSTIN_ID, "hammer", aim, now, at);
+    const hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
     for (const h of hit) mgjHurt(s, h);
     fx({
       kind: "use",

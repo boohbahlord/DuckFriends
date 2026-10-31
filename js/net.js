@@ -182,16 +182,7 @@ function botPlayer(s) {
       size: Math.random() < 0.3 ? any([-1, -0.5, 0.5, 1]) : 0,
       keys: [
         Math.random() < 0.35
-          ? any([
-              "zap",
-              "flames",
-              "hearts",
-              "poison",
-              "notes",
-              "longjump",
-              "double",
-              "trombone",
-            ])
+          ? any(["zap", "flames", "hearts", "poison", "notes", "trombone"])
           : null,
       ],
       outfit:

@@ -264,7 +264,7 @@ const pick = (id, key) => {
 };
 
 /* Lawyering: a juror walks to the side it leans to and votes; in closing arguments it may be talked round (it walks over
-   and votes again). An attorney stays in the circle, and behind in closing arguments may give up. */
+   and votes again). An attorney stays on its own side, and behind in closing arguments may give up. */
 const swayed = new Map(); // computer id + case → the side it was talked round to
 function lawBot(s, id, late, now, out) {
   const L = s.law;

@@ -36,7 +36,7 @@ import {
   boardPhases,
   playing,
   SHOT_SPEED,
-  swing,
+  strike,
 } from "./rules.js";
 
 export const JUSTIN_ID = "justin";
@@ -353,7 +353,7 @@ export function justinTick(s, now, log) {
     const dx = p.x - at.x,
       dy = p.y - at.y,
       aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
-    const hit = swing(s, JUSTIN_ID, "hammer", aim, now, at);
+    const hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
     fx({
       kind: "use",
       what: "hammer",
