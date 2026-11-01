@@ -2776,3 +2776,10 @@ Saved as /mnt/project-files/mgj/office-chair-ref.png, a stock image: for the loo
   fight, cleared by a new game).
 - Adam (final): Mad God Justin has no board at all. No color, no frame, no floor: everything stands straight on the
   map. The 200 HP was only the test pictures; in the game he has 8 HP plus 6 a player, and 1 HP is 1 damage.
+
+## Request (owner, 2026-11-01 23:47Z), word for word
+
+> make their be a board that slowly changes colors somewhat
+
+- Noah: Mad God Justin's see-through field is back (each map's see-through, its frame and the dashed ring), and its
+  color drifts slowly (48 s a loop: purple, magenta, blue, teal, rust; css `@property --mgjc`, only with motion on).
