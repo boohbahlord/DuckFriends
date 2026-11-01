@@ -377,18 +377,19 @@ export const DRAW = {
         part(
           () =>
             A.logWall({
-              w: fw,
+              w: fw + 12,
               wallH: C.wall - bh,
               t: 2 * T,
               rowsH: 2 * T + C.wall,
+              seamless: true,
             }),
-          d.a,
+          d.a - 6,
           d.at - T - C.wall,
-          fw,
+          fw + 12,
           2 * T + C.wall - bh,
-          d.at + 6,
+          d.at + T + 1,
           o,
-        ),
+        ), // (over the wall pieces' ends either side, sorted just in front of them, so the wall reads solid above the door)
         part(
           () => A.cabinDoor({ night: true }),
           gx - bw / 2,

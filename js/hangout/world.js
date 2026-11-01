@@ -58,7 +58,7 @@ export function mountWorld(board, api) {
      out, the black fades away */
   const HOLE = {
       l: L.CABIN.x0,
-      t: L.CABIN.y0 - L.CABIN.wall - 30,
+      t: L.CABIN.y0 - 12 - L.CABIN.wall, // (the north wall's top edge: it stands T = 12 north of y0, C.wall tall)
       r: L.CABIN.x1,
       b: L.CABIN.y1 + 14,
     },
@@ -162,7 +162,8 @@ export function mountWorld(board, api) {
       o.z = Math.max(
         gnd,
         o.z + ((p.z ?? gnd) - o.z) * (1 - Math.exp(-dt / 0.07)),
-      ); // falling
+      );
+    // falling
     else o.z = gnd; // on the ground: the ground under it as it glides
   }
 
