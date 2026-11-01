@@ -72,6 +72,22 @@ export const PUMP = 1750,
   PELLET_SPEED = 0.3,
   PELLET_LIFE = 1400,
   SPREAD = 0.34;
+/* his throws (the owner's): now and then 8 Xbox One controllers every way at once, bullet hell, to dodge; less often a
+   big black office chair at a duck, slow but wide, that knocks down and shoves back like the hammer. Each is held up
+   first (the tell), so there's time to move */
+export const THROW_TELL = 800, // ms the controllers are held up before they fly
+  CTL_N = 8,
+  CTL_SPEED = 0.15, // board widths a second
+  CTL_LIFE = 9000,
+  CHAIR_TELL = 1100,
+  CHAIR_SPEED = 0.085,
+  CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
+  CHAIR_LIFE = 16000;
+/* the Xbox (the owner's): once in the first 15 seconds a desk comes in with his Xbox and a monitor on it; he runs to it
+   and turns the Xbox off (the light and the screen go dark), fades away with the clock stopped, as for the meteor, and
+   comes back with faster attacks, 15 more seconds on the clock and his HP up by 1, and 1 more for every player (never
+   past full). XB: ms the desk takes to come in, from the switch-off to fading out, to coming back; the desk's fade out */
+export const XB = { IN: 900, FADE: 500, GONE: 3400, OUT: 1200 };
 const SPEED = 0.2,
   RX = 0.03,
   RY = 0.08,
@@ -130,11 +146,16 @@ export const mgjLeft = (s, now) =>
     : s.mgj.met || s.mgj.left
       ? s.mgj.left
       : Math.max(0, (s.ends || 0) - now);
-export const mgjFrozen = (s) => !!(s.mgj && s.mgj.met);
-/* is he faded out (the meteor)? */
+export const mgjFrozen = (s) =>
+  !!(s.mgj && (s.mgj.met || (s.mgj.xb && s.mgj.xb.off && !s.mgj.xb.done)));
+/* is he faded out (the meteor, or his Xbox turned off)? */
 export const mgjGone = (s, now) => {
-  const m = s.mgj && s.mgj.met;
-  return !!m && now - m.at >= MET.FADE * 0.5 && now - m.at < MET.BACK;
+  const m = s.mgj && s.mgj.met,
+    x = s.mgj && s.mgj.xb;
+  return (
+    (!!m && now - m.at >= MET.FADE * 0.5 && now - m.at < MET.BACK) ||
+    (!!x && !!x.off && !x.done && now - x.off >= XB.FADE)
+  );
 };
 
 /* the fight starts (from the countdown, or Try again) */
@@ -165,6 +186,8 @@ export function mgjStart(s, now) {
     shotgun: false,
     over: 0,
     pickAt: now + PICK_EVERY,
+    xbAt: now + rnd(4000, 11000),
+    xb: null,
     pickN: 0,
     pick: null,
     held: {},
@@ -198,6 +221,8 @@ export function mgjStart(s, now) {
     mag: { n: 0, r: 0 },
     fireAt: now + 2500,
     hamAt: now + 5000,
+    ctlAt: now + rnd(9000, 13000),
+    chairAt: now + rnd(18000, 26000),
     sgR: 0,
     next: now + 1500,
     say: now + rnd(9000, 16000),
@@ -264,11 +289,13 @@ function mgjEnd(s, now, won, log) {
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   m.won = won;
   m.over = now;
+  if (m.xb && !m.xb.done) m.xb.done = now;
   m.met = null;
   m.left = 0;
   s.shots = [];
   delete j.swing;
   delete j.god;
+  delete j.tell;
   if (won) {
     // onto the podium in the middle
     Object.assign(j, {
@@ -375,6 +402,7 @@ export function mgjTick(s, now, log) {
     holdDown(s, id, now);
     mgjHurt(s, id);
   };
+  const soon = (ms) => (j.fast ? ms * 0.7 : ms); // (back from his Xbox: every attack comes sooner)
   const stop = () =>
     Object.assign(j, {
       k: null,
@@ -390,12 +418,19 @@ export function mgjTick(s, now, log) {
   };
 
   /* the meteor */
-  if (!m.met && !m.metDone && s.ends && s.ends - now <= m.metAt) {
+  if (
+    !m.met &&
+    !m.metDone &&
+    !(m.xb && !m.xb.done) &&
+    s.ends &&
+    s.ends - now <= m.metAt
+  ) {
     m.met = { at: now };
     m.left = Math.max(0, s.ends - now);
     s.ends = 0;
     delete j.swing;
     delete j.god;
+    delete j.tell;
     stop();
     godLine();
     if (Math.random() < 0.5)
@@ -451,6 +486,65 @@ export function mgjTick(s, now, log) {
   }
   if (pickTick(s, now, at, log, fx)) ch = true;
   if (goodTick(s, now, at, log, fx)) ch = true;
+
+  /* the Xbox: the desk comes in, he runs over, turns it off, fades away with the clock stopped, comes back faster */
+  if (!m.xb && m.xbAt && now >= m.xbAt) {
+    const spot = deskSpot(s, at);
+    const side = at.x < spot.x ? -1 : 1,
+      to = {
+        x: Math.max(0.03, Math.min(0.97, spot.x + side * 0.075)),
+        y: spot.y,
+      },
+      v = SPEED * 1.9;
+    delete j.swing;
+    delete j.tell;
+    Object.assign(j, {
+      k: null,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(to.x),
+      y1: r3(to.y),
+      t: now,
+      v,
+    });
+    m.xb = {
+      at: now,
+      x: spot.x,
+      y: spot.y,
+      arrive:
+        now +
+        Math.max(XB.IN, (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000),
+      off: 0,
+      done: 0,
+    };
+    return true;
+  }
+  if (m.xb && !m.xb.done) {
+    const x = m.xb;
+    if (now < x.arrive) return ch;
+    if (!x.off) {
+      x.off = now;
+      m.left = Math.max(0, s.ends - now);
+      s.ends = 0;
+      stop();
+      line(E_LINES.find((l) => /TURNING OFF MY XBOX/.test(l))); // (his own line)
+      fx({ kind: "xboff" });
+      return true;
+    }
+    if (now - x.off < XB.GONE) return ch;
+    x.done = now;
+    j.fast = true;
+    m.hp = Math.min(m.max, m.hp + 1 + playing(s).length);
+    s.ends = now + m.left + 15000;
+    m.left = 0;
+    j.fireAt = now + 1200;
+    j.hamAt = now + 2000;
+    j.ctlAt = Math.max(j.ctlAt, now + 3000);
+    j.chairAt = Math.max(j.chairAt, now + 6000);
+    m.strikeAt = Math.max(m.strikeAt, now + 2500);
+    m.pickAt = Math.max(m.pickAt || 0, now + 2000);
+    return true;
+  }
 
   /* his everyday lines now and then */
   if (now >= j.say) {
@@ -534,7 +628,7 @@ export function mgjTick(s, now, log) {
       ay: +aim[1].toFixed(3),
       ...(hit.length ? { hit } : {}),
     });
-    j.hamAt = now + rnd(2500, 3500);
+    j.hamAt = now + soon(rnd(2500, 3500));
     j.next = now + 700;
   };
   /* the hammer: on his way to a duck, then the swing (toward where it stands by then) */
@@ -557,6 +651,32 @@ export function mgjTick(s, now, log) {
     swingNow(id);
     return true;
   }
+  /* his throws: held up for a moment (the tell), then the controllers fly every way, or the chair at its duck */
+  if (j.tell) {
+    if (now < j.tell.at) return ch;
+    const k = j.tell.k,
+      q = s.pos[j.tell.id];
+    delete j.tell;
+    throwIt(s, k, at, q && q.x >= 0 ? q : s.pos[nearest[0]], now, fx);
+    j.fireAt = Math.max(j.fireAt, now + 900);
+    j.next = now + 600;
+    return true;
+  }
+  if (now >= j.chairAt || now >= j.ctlAt) {
+    const k = now >= j.chairAt ? "chair" : "controller";
+    stop();
+    j.tell = {
+      k,
+      id: any(them),
+      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
+    };
+    if (k === "chair") {
+      j.chairAt = now + soon(rnd(15000, 22000));
+      j.ctlAt = Math.max(j.ctlAt, now + 4500);
+    } else j.ctlAt = now + soon(rnd(8000, 12000));
+    fx({ kind: "mgjtell", what: k, until: j.tell.at });
+    return true;
+  }
   const reloading = j.mag.r > now;
   if (j.mag.r && now >= j.mag.r) {
     j.mag = { n: 0, r: 0 };
@@ -566,7 +686,7 @@ export function mgjTick(s, now, log) {
   if (now >= j.hamAt && nearest[1] < 1.8) {
     stop();
     j.swing = { id: nearest[0], at: now + 350 };
-    j.hamAt = now + 3000;
+    j.hamAt = now + soon(3000);
     return true;
   }
   /* reloading: he sprints at a duck to hammer it */
@@ -594,7 +714,7 @@ export function mgjTick(s, now, log) {
       id,
       at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
     };
-    j.hamAt = now + 4000;
+    j.hamAt = now + soon(4000);
     return true;
   }
   /* the guns */
@@ -646,7 +766,7 @@ export function mgjTick(s, now, log) {
         ax: +(Math.cos(a0) * RX).toFixed(4),
         ay: +(Math.sin(a0) * RY).toFixed(4),
         sgR: now + PUMP,
-        fireAt: now + rnd(700, 1000),
+        fireAt: now + soon(rnd(700, 1000)),
       });
       return true;
     }
@@ -684,7 +804,7 @@ export function mgjTick(s, now, log) {
       w: "handgun",
       ax: +ax.toFixed(3),
       ay: +ay.toFixed(3),
-      fireAt: now + rnd(650, 1150),
+      fireAt: now + soon(rnd(650, 1150)),
     });
     return true;
   }
@@ -901,7 +1021,7 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
       py = (q.y - y0) / RY,
       len = ux * ux + uy * uy;
     const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-    return Math.hypot(px - k * ux, py - k * uy) < 1;
+    return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
   };
   if (sh.by === JUSTIN_ID) {
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
@@ -987,6 +1107,71 @@ function goodTick(s, now, at, log, fx) {
     ch = true;
   }
   return ch;
+}
+
+/* where the desk comes in: a spot on the board away from him and from the ducks (the best of a few tries) */
+function deskSpot(s, at) {
+  let best = null;
+  for (let i = 0; i < 12; i++) {
+    const p = { x: r3(rnd(0.18, 0.82)), y: r3(rnd(0.28, 0.8)) },
+      d = (q) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY),
+      score = Math.min(
+        d(at) / 2,
+        ...playing(s)
+          .map((id) => s.pos[id])
+          .filter(Boolean)
+          .map(d),
+        8,
+      );
+    if (!best || score > best.score) best = { ...p, score };
+  }
+  return { x: best.x, y: best.y };
+}
+/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair at q */
+function throwIt(s, k, at, q, now, fx) {
+  const dir = (a, v) => {
+    const bx = Math.cos(a) * RX,
+      by = Math.sin(a) * RY,
+      bl = Math.hypot(bx, by);
+    return [+((bx / bl) * v).toFixed(4), +((by / bl) * v).toFixed(4)];
+  };
+  const a0 =
+    k === "chair" && q
+      ? Math.atan2((q.y - at.y) / RY, (q.x - at.x) / RX)
+      : Math.random() * Math.PI * 2;
+  fx({
+    kind: "use",
+    what: k,
+    who: [],
+    face: Math.cos(a0) < 0 ? -1 : 1,
+    ax: +Math.cos(a0).toFixed(3),
+    ay: +Math.sin(a0).toFixed(3),
+  });
+  const n0 = s.fxN,
+    n = k === "chair" ? 1 : CTL_N;
+  for (let i = 0; i < n; i++) {
+    const [vx, vy] = dir(
+      a0 + (i * Math.PI * 2) / n,
+      k === "chair" ? CHAIR_SPEED : CTL_SPEED,
+    );
+    s.shots = [
+      ...(s.shots || []),
+      {
+        n: n0 * 10 + i,
+        by: JUSTIN_ID,
+        k,
+        x0: at.x,
+        y0: at.y,
+        vx,
+        vy,
+        t: now,
+        lx: at.x,
+        ly: at.y,
+        life: k === "chair" ? CHAIR_LIFE : CTL_LIFE,
+        ...(k === "chair" ? { r: CHAIR_R } : {}),
+      },
+    ];
+  }
 }
 
 /* ---------- the stats ---------- */

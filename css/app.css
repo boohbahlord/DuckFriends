@@ -11612,6 +11612,47 @@ html.moving .eye-zap {
 }
 .gduck.mgj-gone {
   opacity: 0;
+  transition:
+    transform 0.12s linear,
+    opacity 0.5s ease-in;
+} /* (he fades out; he's back at once) */
+/* his Xbox's desk: it comes in, and fades away a moment after he's back; turned off, the screen and the light go dark */
+.mgj-desk {
+  position: absolute;
+  transform: translate(-50%, -88%);
+  pointer-events: none;
+  filter: drop-shadow(0 0.3rem 0.25rem #0007);
+  animation: mgjdeskin var(--in, 900ms) ease-out both;
+}
+.mgj-desk.out {
+  opacity: 0;
+  transition: opacity var(--out, 1200ms) ease-in;
+}
+.mgj-desk svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mgj-desk .xb-scr,
+.mgj-desk .xb-led {
+  transition: opacity 0.35s ease-in;
+}
+.mgj-desk .xb-dark {
+  opacity: 0;
+  transition: opacity 0.35s ease-in;
+}
+.mgj-desk.off .xb-scr,
+.mgj-desk.off .xb-led {
+  opacity: 0;
+}
+.mgj-desk.off .xb-dark {
+  opacity: 1;
+}
+@keyframes mgjdeskin {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(0.85);
+  }
 }
 /* hit: a short, see-through red flash over the drawing (Justin hit, any duck knocked down; Duck Cabin's Justin too) */
 .gduck.hurt .gduck-body,
@@ -11788,6 +11829,63 @@ html.moving .board.quake {
 .mgj .hotbar .hk.empty {
   display: none;
 } /* (the knife is the only thing in this fight) */
+/* Mad God Justin's throws: the controllers spin as they fly and the chair turns slowly, each with a light rim so it
+   shows on any map; before they fly he holds them up over his head (the tell) */
+.thrown.mgj-throw i {
+  filter: drop-shadow(0 0 0.2rem #fff9) drop-shadow(0 0.15rem 0.15rem #0009);
+}
+.thrown.k-controller i {
+  width: calc(var(--s) * 0.62);
+  animation-duration: 0.7s;
+}
+.thrown.k-chair {
+  z-index: 7;
+}
+.thrown.k-chair i {
+  width: calc(var(--s) * 2);
+  animation-duration: 2.6s;
+}
+.mgj-tellup {
+  position: absolute;
+  left: 50%;
+  bottom: 88%;
+  width: calc(var(--sz) * 1.5);
+  display: flex;
+  justify-content: center;
+  gap: 6%;
+  translate: -50% 0;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 0.25rem #fffa);
+  animation: mgjtell var(--tell, 800ms) ease-out both;
+}
+.mgj-tellup.k-chair {
+  width: calc(var(--sz) * 1.7);
+}
+.mgj-tellup svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mgj-tellup.k-controller svg {
+  width: 47%;
+}
+@keyframes mgjtell {
+  from {
+    opacity: 0;
+    transform: translateY(35%) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    transform: rotate(-7deg);
+  }
+  to {
+    transform: translateY(-14%) rotate(9deg);
+  }
+}
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;
