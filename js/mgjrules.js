@@ -10,8 +10,8 @@
      likelier he uses one, and at 1 HP it's certain while any are left. Lightning gets likelier with each player.
    - The meteor, once a fight (unless he dies first), at a random moment when 30 to 5 seconds are left: he shouts one of
      his GOD lines and fades away, the timer freezes under ice, a meteor lands and knocks every duck down for 5 seconds,
-     maybe one used strike comes back, he gets 2 HP back, then he fades in again with a pump shotgun added (a wide cone of pellets that act
-     like bullets, then 1.75 s of pumping) and the timer comes back with 30 more seconds.
+     maybe one used strike comes back, he gets 2 or 3 HP back for every player, then he fades in again with a pump shotgun added (a wide cone of pellets that act
+     like bullets, then 1.75 s of pumping) and the timer comes back with 30 seconds left.
    - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Time up: he wins and
      says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
@@ -421,7 +421,11 @@ export function mgjTick(s, now, log) {
         }
       }
       if (m.gj) m.gj.down = now + MGJ_DOWN;
-      m.hp = Math.min(m.max, m.hp + 2); // (the owner: his meteor gives him 2 HP back, up to his full HP)
+      const heal = playing(s).reduce(
+        (n) => n + (Math.random() < 0.5 ? 2 : 3),
+        0,
+      );
+      m.hp = Math.min(m.max, m.hp + heal); // (the owner: his meteor gives him 2 or 3 HP back for every player, up to his full HP)
       ch = true;
     }
     if (t >= MET.BACK && !m.met.back) {
@@ -435,7 +439,7 @@ export function mgjTick(s, now, log) {
       ch = true;
     }
     if (t >= MET.RESUME) {
-      s.ends = now + m.left + 30000;
+      s.ends = now + 30000; // (the owner: after the meteor the timer shows 30 seconds left)
       m.left = 0;
       m.met = null;
       m.metDone = true;
