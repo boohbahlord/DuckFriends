@@ -186,7 +186,9 @@ export function mgjStart(s, now) {
     shotgun: false,
     over: 0,
     pickAt: now + PICK_EVERY,
-    xbAt: now + rnd(4000, 11000),
+    // I want his Xbox turned off only once a game: a new fight ("Try again") keeps it off
+    xbUsed: !!(s.mgj && s.mgj.xbUsed),
+    xbAt: s.mgj && s.mgj.xbUsed ? 0 : now + rnd(4000, 11000),
     xb: null,
     pickN: 0,
     pick: null,
@@ -488,7 +490,7 @@ export function mgjTick(s, now, log) {
   if (goodTick(s, now, at, log, fx)) ch = true;
 
   /* the Xbox: the desk comes in, he runs over, turns it off, fades away with the clock stopped, comes back faster */
-  if (!m.xb && m.xbAt && now >= m.xbAt) {
+  if (!m.xb && !m.xbUsed && m.xbAt && now >= m.xbAt) {
     const spot = deskSpot(s, at);
     const side = at.x < spot.x ? -1 : 1,
       to = {
@@ -507,6 +509,7 @@ export function mgjTick(s, now, log) {
       t: now,
       v,
     });
+    m.xbUsed = true;
     m.xb = {
       at: now,
       x: spot.x,

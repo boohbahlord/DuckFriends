@@ -11498,34 +11498,26 @@ svg.defs {
   border-color: var(--yellow);
 }
 /* ---------- Mad God Justin ---------- */
-/* the arena: one stormy see-through field over the map */
-.cols.mgj-cols {
+/* the arena: no board at all. I want the ducks, Justin, the pickups and his attacks straight on the map, with nothing
+   under them (no color, no frame, no floor) on every map */
+html .board.mgj-board .cols.mgj-cols {
   display: block;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
 }
-.mgj-field {
-  --c: #2b2058;
+.board.mgj-board .cols.mgj-cols .col.mgj-field {
   height: 100%;
-  border-right: 0;
-  background: var(--c);
-} /* (each map makes it see-through like every board's tiles) */
-.mgj-field::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 55%, #8a6bff26, transparent 70%);
-  pointer-events: none;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  filter: none;
 }
-.mgj-field::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 55%;
-  width: 46%;
-  aspect-ratio: 2.6;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 0.2rem dashed #ffffff22;
-  pointer-events: none;
+.board.mgj-board .cols.mgj-cols .col.mgj-field::before,
+.board.mgj-board .cols.mgj-cols .col.mgj-field::after {
+  content: none;
 }
 /* his HP, beside the cloud */
 .question.mgj-hp {

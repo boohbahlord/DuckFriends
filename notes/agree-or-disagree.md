@@ -2752,3 +2752,27 @@ Saved as /mnt/project-files/mgj/office-chair-ref.png, a stock image: for the loo
 
 - Adam: the Xbox attack goes to Noah with the controllers and chair (one picture sheet; HP capped at full, as the
   meteor's). The specials in the bottom right go to Solomon the 2nd.
+
+## Request (owner, 2026-11-01 23:14Z to 23:17Z, on Noah's picture sheet), word for word
+
+> Remove the arms of the chair so we dont have to fuss about how to correct them. I circled them in the first screenshot.
+>
+> The xbox is missing a side here in the second screenshot and so it isnt a box shape yet.
+>
+> Justin can only turn off his xbox once AND the board doesnt have a color since it isnt there, like no purple background.
+>
+> The monitor should say "Siege" in multicolored lettering over top the image on the screen
+
+(With two circled screenshots: the chair's two arms; the Xbox's right end, where its side was missing.)
+
+> why does he have 200 hp btw????? isnt 1 hp equal to one damage ?
+
+> NO FLOOR TO STAND ON ! NONE !
+
+> ADAM WILL BE TELLING YOU NO! STOP TRYING TO DISOBEY ! NO PURPLE FLOOR! NO FUCKING BOARD! NO FLOOR! NO BOARD!!!!
+
+- Noah: the chair has no arms; the Xbox is a closed box (its right side drawn); the monitor shows "Siege" in the
+  title's colors over its picture and goes dark with it; the Xbox comes once a game (`s.mgj.xbUsed`, kept by the next
+  fight, cleared by a new game).
+- Adam (final): Mad God Justin has no board at all. No color, no frame, no floor: everything stands straight on the
+  map. The 200 HP was only the test pictures; in the game he has 8 HP plus 6 a player, and 1 HP is 1 damage.
