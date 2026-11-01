@@ -10,13 +10,13 @@
      likelier he uses one, and at 1 HP it's certain while any are left. Lightning gets likelier with each player.
    - The meteor, once a fight (unless he dies first), at a random moment when 30 to 5 seconds are left: he shouts one of
      his GOD lines and fades away, the timer freezes under ice, a meteor lands and knocks every duck down for 5 seconds,
-     maybe one used strike comes back, then he fades in again with a pump shotgun added (a wide cone of pellets that act
+     maybe one used strike comes back, he gets 2 HP back, then he fades in again with a pump shotgun added (a wide cone of pellets that act
      like bullets, then 1.75 s of pumping) and the timer comes back with 30 more seconds.
    - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Time up: he wins and
      says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
    - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a weapon a duck picks up
-     by walking over it and uses once (then it's back to the knife); lightning or fire, or a meteor, that hit him as
+     by walking over it and uses once, the handgun and the dagger three times (then it's back to the knife); lightning or fire, or a meteor, that hit him as
      soon as they show; or Good Justin God, a helper with a halo and a knife, who stabs him too and can be knocked down
      like a duck. He has no lines of his own: he shouts Justin's god lines at him, and cheers with Justin's winning
      lines when he dies.
@@ -93,6 +93,11 @@ export const PICK_EVERY = 15000,
     ["good", 1],
   ];
 export const PICK_WEAPONS = ["hammer", "dagger", "handgun", "shotgun"];
+/* how many uses a picked-up weapon gives before it's back to the knife (the owner: the handgun and the dagger are easy
+   to miss with, so three each) */
+export const PICK_USES = { handgun: 3, dagger: 3 };
+export const usesOf = (s, id) =>
+  (s.mgj && (s.mgj.held || {})[id] && (s.mgj.uses || {})[id]) || 0;
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
 export const DMG = {
   knife: 1,
@@ -163,6 +168,7 @@ export function mgjStart(s, now) {
     pickN: 0,
     pick: null,
     held: {},
+    uses: {},
     gj: null,
   };
   s.pos = {};
@@ -415,6 +421,7 @@ export function mgjTick(s, now, log) {
         }
       }
       if (m.gj) m.gj.down = now + MGJ_DOWN;
+      m.hp = Math.min(m.max, m.hp + 2); // (the owner: his meteor gives him 2 HP back, up to his full HP)
       ch = true;
     }
     if (t >= MET.BACK && !m.met.back) {
@@ -760,6 +767,7 @@ function pickTick(s, now, at, log, fx) {
       if (Math.hypot((p.x - m.pick.x) / RX, (p.y - m.pick.y) / RY) > 1.1)
         continue;
       m.held = { ...m.held, [id]: m.pick.k };
+      m.uses = { ...m.uses, [id]: PICK_USES[m.pick.k] || 1 };
       fx({ kind: "pickup", what: m.pick.k, who: [id], by: id });
       m.pick = null;
       ch = true;
@@ -794,9 +802,16 @@ export function mgjUse(s, a, now, log) {
     ay0 = Math.max(-3, Math.min(3, +a.ay || 0)),
     face = a.face < 0 ? -1 : 1,
     aim = Math.hypot(ax0, ay0) > 0.05 ? [ax0, ay0] : [face, 0];
-  const held = { ...m.held };
-  delete held[a.id];
-  m.held = held;
+  const left = ((m.uses || {})[a.id] || 1) - 1;
+  if (left > 0) m.uses = { ...m.uses, [a.id]: left };
+  else {
+    const held = { ...m.held },
+      uses = { ...m.uses };
+    delete held[a.id];
+    delete uses[a.id];
+    m.held = held;
+    m.uses = uses;
+  } // (the handgun and the dagger have three uses; the rest one)
   s.fxN = (s.fxN || 0) + 1;
   const n0 = s.fxN,
     use = {
