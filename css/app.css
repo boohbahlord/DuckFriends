@@ -2618,6 +2618,9 @@ svg.duck.jack.bob .jk,
   );
   animation: down-streaks 1.1s linear infinite;
 }
+.gduck.pic .gduck-down i::after {
+  display: none;
+} /* (a player with an imported picture: the meter without the streaks, as the owner asked) */
 @keyframes down-meter {
   from {
     clip-path: inset(0 0 0 0);

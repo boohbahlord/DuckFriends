@@ -7,6 +7,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-11-01",
+    version: 107,
+    date: "Nov 1, 2026",
+    title: "Mad God Justin fixes",
+    news: [
+      "Mad God Justin: a handgun or a dagger you pick up has three uses, shown as dots on its key.",
+      "When Justin's meteor lands, he gets 2 HP back.",
+    ],
+    fixed: [
+      "V stabs or uses the weapon you picked up in Mad God Justin.",
+      "The meter on a knocked-down player's name shows on dark player cards too, and on Good Justin God's.",
+      "Players with an imported picture get a plain meter, without the streaks.",
+    ],
+  },
+  {
     id: "2026-10-31",
     version: 106,
     date: "Oct 31, 2026",

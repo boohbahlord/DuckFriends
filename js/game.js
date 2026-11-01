@@ -242,6 +242,9 @@ import {
   mgjTime,
   GOOD_ID,
   PICK_FADE,
+  PICK_USES,
+  MGJ_DOWN,
+  usesOf,
 } from "./mgjrules.js";
 import {
   mgjBoardHTML,
@@ -798,24 +801,31 @@ function drawDucks(now = clockNow()) {
         nameHTML(p.name, p.nameStyle) +
         '<span class="gduck-down" aria-hidden="true"><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
       d.classList.toggle("lawyer", !!role);
+      d.classList.toggle("pic", !!(look && look.image)); // (an imported picture: its down meter is plain, no streaks)
       if (role) {
         d.style.setProperty("--lc", sideColor(p));
         d.style.setProperty("--ld", -(clockNow() % LAW_GLOW) + "ms");
       } // (the glow breathes on the room's clock, so both attorneys breathe together)
-      const cc = (p.card && p.card.color) || "#2fa4ff";
+      const cc = seen((p.card && p.card.color) || "#2fa4ff");
       d.style.setProperty("--dc", cc);
       d.style.setProperty("--dk", against(cc));
       d._dn = null;
     }
     /* knocked down: the meter on the name tag empties until the duck stands up (s.up), behind the letters */
-    const upAt = dead && !g && (s.up || {})[id],
-      dn = upAt > now ? upAt : 0;
+    const upAt =
+        dead &&
+        !g &&
+        (id === GOOD_ID
+          ? s.mgj && s.mgj.gj && s.mgj.gj.down
+          : (s.up || {})[id]),
+      dn = upAt > now ? upAt : 0; // (Good Justin God keeps his own time down)
     if (d._dn !== dn) {
       d._dn = dn;
       d.classList.toggle("downed", !!dn);
       const m = dn && d.querySelector(".gduck-down i");
       if (m) {
-        const all = Math.max(downFor(s), GET_UP_MIN);
+        const all =
+          id === GOOD_ID ? MGJ_DOWN : Math.max(downFor(s), GET_UP_MIN);
         m.style.animation = "none";
         void m.offsetWidth;
         m.style.animation = "";
@@ -1535,9 +1545,32 @@ function zoom(how) {
 
 /* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
 const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
+/* a card's color, lifted when it's too dark to see on the name tag (a black card's meter showed black on black) */
+function seen(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return hex;
+  const n = parseInt(m[1], 16),
+    [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255].map((v) => v / 255);
+  if (0.2126 * r + 0.7152 * g + 0.0722 * b >= 0.3) return hex;
+  const hi = Math.max(r, g, b),
+    lo = Math.min(r, g, b),
+    c = hi - lo,
+    h =
+      c === 0
+        ? 0
+        : hi === r
+          ? ((g - b) / c) % 6
+          : hi === g
+            ? (b - r) / c + 2
+            : (r - g) / c + 4,
+    sat = c === 0 ? 0 : Math.round((c / (1 - Math.abs(hi + lo - 1))) * 100);
+  return `hsl(${Math.round(h * 60)} ${sat}% 62%)`;
+}
 /* a color that stands out inside a card's color: the opposite hue, light on a dark color and dark on a light one (the
    down meter's streaks) */
 function against(hex) {
+  const l = /^hsl\(\d+ \d+% (\d+)%\)$/.exec(hex || "");
+  if (l) return "#1c1c28"; // (a lifted dark card: dark streaks on it)
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
   if (!m) return "#ffffff";
   const n = parseInt(m[1], 16),
@@ -2804,8 +2837,18 @@ function cool() {
 }
 /* the handgun's shots left (for the dots under its key) */
 function ammo() {
+  if (R && isMgj(R.state)) return usesOf(R.state, R.me);
   return R ? MAG - magOf(R.state, R.me, clockNow()).n : MAG;
 }
+/* the dots under a key: the handgun's shots, or in Mad God Justin the uses left of the weapon picked up */
+const dots = (id) =>
+  R && isMgj(R.state)
+    ? PICK_USES[id] && id === myPick()
+      ? ammoHTML(usesOf(R.state, R.me), PICK_USES[id])
+      : ""
+    : id === "handgun"
+      ? ammoHTML(ammo())
+      : "";
 /* R: the handgun reloads */
 function reload() {
   if (!R || !onBoardPhase() || !hasKey(playDuck(), "handgun")) return false;
@@ -3866,11 +3909,12 @@ function keydown(e) {
   } // the handgun reloads
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (held && hasKey(playDuck(), held) && !isMgj(R.state)) fire(held);
+    if (isMgj(R.state)) useKey(0, false);
+    else if (held && hasKey(playDuck(), held)) fire(held);
     else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();
     return;
-  } // V: the special kept out (toggled), or else the one I used last
+  } // V: the special kept out (toggled), or else the one I used last (Mad God Justin: the knife, or the weapon picked up)
   if (e.code === "KeyQ" && isQuack(R.state)) {
     e.preventDefault();
     peek(true);
@@ -4118,6 +4162,7 @@ register("game", {
       cool,
       duck: playDuck,
       ammo,
+      dots,
     });
     docks.corner(bar.button); // (phones: the Specials button, bottom right)
     addEventListener("mousemove", aimAt);

@@ -20,7 +20,8 @@ const drain = (c) =>
 
 /* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or
    [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
-   my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key) */
+   my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key),
+   dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up) */
 export function mountHotbar(S, api) {
   const bar = document.createElement("div");
   bar.className = "hotbar gone";
@@ -43,7 +44,11 @@ export function mountHotbar(S, api) {
     colSig = "";
   const look = (id) => looksOf(specialById(id), api.duck && api.duck());
   const dots = (id) =>
-    id === "handgun" && api.ammo ? ammoHTML(api.ammo()) : "";
+    api.dots
+      ? api.dots(id)
+      : id === "handgun" && api.ammo
+        ? ammoHTML(api.ammo())
+        : "";
   /* the button shows your specials' icons in turn (none chosen: all of them; never one that's off) */
   const mine = () =>
     api.keys().filter((id) => id && specialById(id) && !specialById(id).off);

@@ -2707,3 +2707,19 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 - Counted: a Mad God Justin loss; in Who is the Quack?, the Quack when caught, or every non-Quack when the Quack wins;
   the losing lawyer in Lawyering; the defender voted Dunce in Duncelation; a player whose contender is knocked out in
   Bicker Brackets. Card hands don't count. Each device counts its own player's.
+
+## Request (owner, 2026-11-01 22:09Z-22:16Z): Mad God Justin fixes, word for word
+
+> NO IT IS NOT! THERE IS NO COOLDOWN METER I CAN SEE ON MY NAME OR ON THE GOOD JUSTIN'S NAME THE THE V BUTTON FOR USING THE WEAPONS DOESNT FUCKING WORK!!!!!!!!!
+
+> my meter is black apparently, uhhh... because of my player card. ALSO, make Justin get +2 HP when the meteor lands.
+
+> the pistol should also have three bullets when you grab it and the throwing dagger has three throws, since they are easy to miss with.
+
+> check that the bar for the players that shows how long till the dead effect is over works the same for image imports the players use (those images shouldnt have the undefined streaks thru them)
+
+- Adam (Version 107): V in Mad God Justin now stabs or uses the weapon picked up (it fell through to showing the bar). A
+  card color too dark to see is lifted for the meter (black became grey). Good Justin God's meter reads s.mgj.gj.down.
+  Justin's own meteor (the one that knocks everyone down) gives him 2 HP back, up to his full HP; the 2.5% meteor pickup
+  still does 1 damage and adds 30 s. Picked-up handgun and dagger: 3 uses (s.mgj.uses), dots on the key. Players with an
+  imported picture: the meter without streaks (.gduck.pic).
