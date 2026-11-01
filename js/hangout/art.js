@@ -928,6 +928,7 @@ export function logWall({
   plain = false,
   rowsH,
   open = false,
+  seamless = false,
 } = {}) {
   w = axis === "x" ? w || 400 : t;
   const id = uid(),
@@ -945,6 +946,15 @@ export function logWall({
     defs = logDef(id, (rowsH ?? h) % 17); // (rowsH: a piece over a door lines its logs up with the whole wall's, rowsH tall)
   if (axis === "x") {
     for (const [a, b] of segs) {
+      if (seamless) {
+        // (seamless: a piece laid over the ends of the wall pieces either side of it, so no seam shows: no side lines,
+        // and no foot line, the door's frame under it has its own)
+        s +=
+          R(a, t, b - a, wallH, `url(#${id})`) +
+          R(a, 0, b - a, t, "#c98a52") +
+          F`<path d="M${a} 0H${b}M${a} ${t}H${b}" fill="none" ${ln(2.6)}/><path d="M${a} ${t * 0.4}H${b}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M${a} ${t - 4}H${b}" stroke="#8a4f22" stroke-width="2"/>`;
+        continue;
+      }
       s +=
         R(a, t, b - a, wallH, `url(#${id})`, ln(2.6)) +
         R(a, 0, b - a, t, "#c98a52", ln(2.6)) +
