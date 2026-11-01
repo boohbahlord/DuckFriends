@@ -4225,7 +4225,7 @@ register("game", {
       ammo,
       dots,
     });
-    docks.corner(bar.button); // (phones: the Specials button, bottom right)
+    docks.corner(bar.button, bar.row); // (bottom right: the Specials button on phones, the row of keys on a computer)
     addEventListener("mousemove", aimAt);
     touchOff = mountTouch(S, {
       active: () =>

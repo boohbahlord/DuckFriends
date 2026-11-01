@@ -1,16 +1,17 @@
 /* ---------- the specials on the number keys ----------
-   On a computer: a small see-through row of the ten keys (1 … 9, 0) sits in the top bar, just after the title, so it
-   covers nothing; it lets every click through (a touchscreen laptop gets it too, once its keys or touchpad are used). It
-   comes in with each new stage on the board and with each key pressed (that key glowing); after 5 seconds unused it slides up off the screen. Keys kept on (Shift and the key) light up green
-   and stay where they are while the rest fade, so you can always see what's on. Phones have no row: holding still on the
-   board brings the specials around the finger (see touch.js); a tap uses one, holding one keeps it on, and lifting the
-   holding finger over one uses it too. Phones also get a round Specials button in the bottom bar's right corner: it opens
-   a column of the same specials over it (a tap uses one; holding one brings a "Toggle on" box, Shift and its key on a
-   computer); the column stays until the button is tapped again or somewhere else is. */
+   On a computer: a row of my specials (1 … 9, 0; a key with nothing on it isn't shown) sits in the bottom bar's right
+   corner, under the board, so it covers nothing; it lets every click through (a touchscreen laptop gets it too, once its
+   keys or touchpad are used). It stays there all through a stage on the board: the key just pressed glows for a moment,
+   keys kept on (Shift and the key) wear a green ring, and an item waiting to work again shows its bar draining. Phones
+   have no row: holding still on the board brings the specials around the finger (see touch.js); a tap uses one, holding
+   one keeps it on, and lifting the holding finger over one uses it too. Phones also get a round Specials button in the
+   bottom bar's right corner: it opens a column of the same specials over it (a tap uses one; holding one brings a
+   "Toggle on" box, Shift and its key on a computer); the column stays until the button is tapped again or somewhere else
+   is. */
 import { esc, toast } from "./ui.js";
 import { KEYS, SPECIALS, specialById, looksOf, ammoHTML } from "./specials.js";
 
-const LIFE = 5000; // how long the row (or the ring of specials) stays after its last use
+const LIFE = 5000; // how long a key just pressed glows (and the ring of specials stays on a phone)
 const HOLD = 450;
 /* an item's wait: a bar that drains from full to nothing (c = [ends, how long, now]) */
 const drain = (c) =>
@@ -25,8 +26,7 @@ const drain = (c) =>
 export function mountHotbar(S, api) {
   const bar = document.createElement("div");
   bar.className = "hotbar gone";
-  bar.setAttribute("aria-hidden", "true");
-  S.querySelector(".gbar-l").after(bar);
+  bar.setAttribute("aria-hidden", "true"); // (game.js puts it in the bottom bar's right corner, with the Specials button)
   let timer = 0,
     sel = -1,
     sig = "",
@@ -124,32 +124,22 @@ export function mountHotbar(S, api) {
         Math.min(...left) + 40,
       );
   };
-  /* the row comes in (i: the key just pressed, glowing), then goes after 5 seconds unused */
-  let resting = true,
-    away = false;
-  /* resting: only the keys kept on stay (none kept: the row is gone) */
-  const settle = () => {
-    const kept = resting && (api.kept().size > 0 || cools.some(Boolean)); // (and the items still waiting)
-    bar.classList.toggle("gone", away || (resting && !kept));
-    bar.classList.toggle("rest", !away && kept);
-  };
+  /* the row stays while a stage is on the board (away: off the board, it fades); a key pressed glows for 5 seconds */
+  let away = true;
+  const settle = () => bar.classList.toggle("gone", away);
   const show = (i = -1) => {
     sel = i;
-    resting = false;
     away = false;
     draw();
     settle();
     clearTimeout(timer);
     timer = setTimeout(() => {
       sel = -1;
-      resting = true;
       draw();
-      settle();
     }, LIFE);
   };
   const hide = () => {
     clearTimeout(timer);
-    resting = true;
     away = true;
     settle();
     closeWheel();
@@ -380,6 +370,7 @@ export function mountHotbar(S, api) {
     wheel: openWheel,
     closeWheel,
     button: btn,
+    row: bar,
     refresh() {
       draw();
       settle();
