@@ -6317,56 +6317,55 @@ html.still .gpin {
 html.still .spe-bone .bone-slide {
   animation: none;
 }
-/* the specials' number keys: a small see-through row in the top bar, after the title (never on a touch screen); the key
-   just pressed glows, a key kept on wears a blue ring; unused for 5 seconds, it slides up off the screen */
+/* the specials' number keys (a computer, never a touch screen): a row in the bottom bar's right corner, under the board.
+   It stays through a stage on the board and fades off it; the key just pressed glows, a key kept on wears a green ring,
+   a key with nothing on it isn't shown. Its keys grow with the window; with no room for them all they go on two lines */
 .hotbar {
+  --hk: clamp(1.55rem, 2.9vw, 2.8rem);
   display: flex;
-  gap: 0.2rem;
-  margin-right: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem 0.3rem;
+  min-width: 0;
   pointer-events: none;
-  opacity: 0.62;
-  transition:
-    transform 0.45s ease,
-    opacity 0.45s ease;
+  transition: opacity 0.45s ease;
 }
 .hotbar.gone {
-  transform: translateY(-170%);
   opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s 0.45s;
 }
 .hk {
   position: relative;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: var(--hk);
+  height: var(--hk);
   display: grid;
   place-items: center;
-  border-radius: 0.35rem;
-  border: 0.1rem solid color-mix(in srgb, var(--ink) 30%, transparent);
-  background: color-mix(in srgb, var(--bg) 35%, transparent);
+  border-radius: 0.45rem;
+  border: 0.12rem solid color-mix(in srgb, var(--ink) 34%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 .hk b {
   position: absolute;
-  left: 0.12rem;
-  top: 0;
-  font-size: 0.55rem;
+  left: 0.16rem;
+  top: 0.02rem;
+  font-size: calc(var(--hk) * 0.27);
   line-height: 1.1;
   color: var(--dim);
 }
-.hk.empty b {
-  position: static;
-  font-size: 0.7rem;
-  opacity: 0.7;
+.hk.empty {
+  display: none;
 }
 .hk i {
   font-style: normal;
-  font-size: 0.85rem;
+  font-size: calc(var(--hk) * 0.5);
   line-height: 1;
 }
 .hk {
   transition: opacity 0.45s ease;
 }
-.hotbar.rest .hk:not(.on):not(.cool) {
-  opacity: 0;
-} /* (resting: only the keys kept on stay, in their places) */
 .hk.on {
   border-color: var(--green);
   background: color-mix(in srgb, var(--green) 38%, transparent);
@@ -6447,15 +6446,6 @@ html.still .spe-bone .bone-slide {
   box-shadow: 0 0 0.45rem 0.12rem
     color-mix(in srgb, var(--yellow) 65%, transparent);
 }
-@media (max-width: 1000px) {
-  .hk {
-    width: 1.3rem;
-    height: 1.3rem;
-  }
-  .hk i {
-    font-size: 0.72rem;
-  }
-}
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .hotbar {
     display: none;
@@ -6465,7 +6455,7 @@ html.still .spe-bone .bone-slide {
   .hotbar {
     display: none;
   }
-} /* (a narrow window has no room for it in the top bar; its keys still work) */
+} /* (a narrow window has the Specials button instead; its keys still work) */
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) button kbd {
     display: none;
@@ -11785,9 +11775,6 @@ html.moving .board.quake {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 } /* (short boxes side by side, no dead space) */
-.mgj .hotbar .hk.empty {
-  display: none;
-} /* (the knife is the only thing in this fight) */
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;

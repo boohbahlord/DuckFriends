@@ -19,7 +19,7 @@ const put = (box, nodes) => {
 export function mountDocks(S, hints = "") {
   const notes = notesWidget(),
     chat = chatWidget();
-  let right = []; // what else sits in the bottom bar's right corner (the Specials button on phones)
+  let right = []; // what else sits in the bottom bar's right corner (the Specials button on phones, the specials' keys on a computer)
   const hintEl = hints
     ? Object.assign(document.createElement("span"), {
         className: "hints",
@@ -56,8 +56,8 @@ export function mountDocks(S, hints = "") {
   showJumps(S);
   document.addEventListener("settings", place);
   return {
-    corner(node) {
-      right = [node];
+    corner(...nodes) {
+      right = nodes;
       place();
     },
     destroy() {
