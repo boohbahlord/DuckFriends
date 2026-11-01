@@ -2723,3 +2723,14 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
   Justin's own meteor (the one that knocks everyone down) gives him 2 HP back, up to his full HP; the 2.5% meteor pickup
   still does 1 damage and adds 30 s. Picked-up handgun and dagger: 3 uses (s.mgj.uses), dots on the key. Players with an
   imported picture: the meter without streaks (.gduck.pic).
+
+## Request (owner, 2026-11-01 22:38Z), word for word
+
+> when justin gets +2 after the meteor, it is now +2-3 for every player in the game. 
+>
+> ALSO, the timer should have thirty seconds left by default. 
+>
+> The board should have a purple on it or anything to stand on.
+
+- Adam: Justin's own meteor now gives him 2 or 3 HP for every player (each rolled), up to his full HP; after it the
+  timer comes back at 30 seconds left (it was what was left plus 30). The board: asked the owner what he means first.

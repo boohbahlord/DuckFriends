@@ -13,7 +13,7 @@ export const UPDATES = [
     title: "Mad God Justin fixes",
     news: [
       "Mad God Justin: a handgun or a dagger you pick up has three uses, shown as dots on its key.",
-      "When Justin's meteor lands, he gets 2 HP back.",
+      "When Justin's meteor lands, he gets 2 or 3 HP back for every player, and the timer comes back with 30 seconds left.",
     ],
     fixed: [
       "V stabs or uses the weapon you picked up in Mad God Justin.",
