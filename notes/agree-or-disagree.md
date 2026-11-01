@@ -2734,3 +2734,17 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 
 - Adam: Justin's own meteor now gives him 2 or 3 HP for every player (each rolled), up to his full HP; after it the
   timer comes back at 30 seconds left (it was what was left plus 30). The board: asked the owner what he means first.
+
+## Request (owner, 2026-11-01 23:03Z): new mode "Valentine's Duck Date", word for word
+
+> make a new game mode called "Valentine's Duck Date"
+>
+> in this one, a random duck is chosen as the potential partner, and the other ducks are trying to compete for them. In the center of the map, the duck tries to convince the duck, and the duck chosen can choose to vote to move on to the next duck. After, every duck gets their own tile (kinda like the who is the quack), and the duck votes on who to eliminate each time. There is a one minute timer by default that can be turned off, and if the timer is one, there is a ten second grace period before the timer starts. THe ducks can walk around during the date but cannot give the dates any dead effect. The duck who wins gets to compete another turn. The ducks keep competing until only one duck is left, and that duck becomes the valentine of the duck.
+>
+> The stats are who won the ducks favor "Sweet Valentine" and the duck with the most jumps. Every eliminated duck becomes black and white. The duck dating and the duck chosen are sat at a fancy dining table with food and drinks of wine (very simplle and make sure it looks good). The two ducks stay there and a new duck takes the seat every new turn.
+>
+> Ask me questions and also help give title suggestions to the different roles in this game.
+
+- Adam asked 7 questions (voice or typed, timer per date, what a turn is, who eliminates, next round's chosen duck,
+  Justin, fewest players) and offered plain role names (the Date or the Pick, Suitors, Turned Down or Out, Valentine).
+  Plan and table picture to follow the answers.
