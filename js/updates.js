@@ -7,6 +7,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-11-02",
+    version: 108,
+    date: "Nov 2, 2026",
+    title: "Valentine's Duck Date",
+    news: [
+      "A new mode, Valentine's Duck Date (3 players or more): one duck is The Date, everyone else a Suitor. The Date writes the topic, then dates each Suitor at a fancy dining table.",
+      "After each turn The Date walks onto a Suitor's tile to turn them down, or stays off the tiles to turn nobody down. The last Suitor left is the Valentine.",
+      "Its stats: Sweet Valentine and Most Jumps. A date timer (1 minute, with 10 seconds of grace) can be changed or turned off in the lobby.",
+    ],
+  },
+  {
     id: "2026-11-01",
     version: 107,
     date: "Nov 1, 2026",

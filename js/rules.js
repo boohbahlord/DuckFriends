@@ -13,7 +13,8 @@
    that) writes a paragraph a round. Who is the Quack? has its own rules in quackrules.js. Lawyering (at the end) argues
    each topic out: two attorneys in the middle, the jury walks to the one who convinced them. Hangout has no rounds: the
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
-   own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. */
+   own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
+   Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
 import {
   isDn,
   DN_GRACE,
@@ -28,6 +29,24 @@ import {
   isDefender,
   dnEndVote,
 } from "./duncerules.js";
+import {
+  isVd,
+  VD_PHASES,
+  VD_WRITE,
+  VD_DOWN,
+  VD_VAL,
+  vdStart,
+  vdAdvance,
+  vdAfter,
+  vdEnd,
+  vdSkip,
+  vdJoin,
+  vdTick,
+  vdWrite,
+  vdSafe,
+  seated,
+  isDate,
+} from "./vddrules.js";
 import {
   isQuack,
   QUACK_PHASES,
@@ -112,7 +131,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
-  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | hang (Hangout)
+  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0, // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -131,6 +150,7 @@ export const OPTIONS_DEFAULT = {
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
+  vdTime: 60, // Valentine's Duck Date: seconds a date gets after its 10 s of grace: 0 (off), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -209,7 +229,9 @@ export const boardPhases = (s) =>
               ? ["answer", "discuss", "dunced"]
               : isMgj(s)
                 ? ["boss", "mgjend"]
-                : ["answer", "discuss", "results"];
+                : isVd(s)
+                  ? VD_PHASES
+                  : ["answer", "discuss", "results"];
 const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -220,7 +242,7 @@ export const seatLate = (s) => {
 /* the fewest players a game needs. I want a game that drops below it to wait for players ("Waiting for players to
    continue", with 2/3 and the like) instead of ending: the timers stop where they were, ducks still walk, and the game
    goes on once enough are back */
-export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3 };
+export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3 };
 export const minOf = (s) => MIN_PLAYERS[s.options.mode] || 0;
 const running = (s) => !["lobby", "over", "countdown"].includes(s.phase);
 const WAIT_BLOCK = [
@@ -282,19 +304,20 @@ export const counselBounds = (s, id) => {
     [lo, hi] = colBoundsAt(s, off ? 0 : 1);
   return off ? [lo, hi - 0.04] : [lo + 0.04, hi];
 };
-const holdsBack = (s) => (isLaw(s) || isDn(s)) && running(s);
+const holdsBack = (s) => (isLaw(s) || isDn(s) || isVd(s)) && running(s);
 const holdsCase = (s, id) =>
-  s.phase === "answer" &&
   !s.players[id].bot &&
-  ((isLaw(s) &&
-    !!s.law &&
-    s.law.w == null &&
-    (s.law.off === id || s.law.def === id)) ||
-    (isDn(s) &&
-      !!s.dn &&
-      !!s.dn.cur &&
-      s.dn.cur.w == null &&
-      isDefender(s, id)));
+  ((s.phase === "answer" &&
+    ((isLaw(s) &&
+      !!s.law &&
+      s.law.w == null &&
+      (s.law.off === id || s.law.def === id)) ||
+      (isDn(s) &&
+        !!s.dn &&
+        !!s.dn.cur &&
+        s.dn.cur.w == null &&
+        isDefender(s, id)))) ||
+    (isVd(s) && VD_PHASES.includes(s.phase) && isDate(s, id))); // (Valentine's Duck Date: The Date)
 function holdFor(s, id, name, now) {
   waitFor(
     s,
@@ -504,6 +527,10 @@ function phaseLimit(s) {
   if (s.phase === "answer") return s.lordTime;
   if (s.phase === "podium") return PODIUM;
   if (s.phase === "dunced") return DN_CEREMONY;
+  if (s.phase === "vdprompt") return VD_WRITE;
+  if (s.phase === "vddate") return s.lordTime;
+  if (s.phase === "vddown") return VD_DOWN;
+  if (s.phase === "vdval") return VD_VAL;
   if (s.phase === "wqpick") return s.options.wqPickTime;
   if (s.phase === "choice" || s.phase === "accuse") return s.options.wqTimer;
   return 0;
@@ -588,6 +615,7 @@ function recordAnswers(s) {
 /* the round is over: the stats screen, or (the lobby's Stats screen Off) straight on to what comes after it */
 export function toStats(s, now) {
   if (+s.options.stats !== 0) return enter(s, "results", now);
+  if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: the game is over)
   s.round++;
   s.subs = [];
   s.qs = [];
@@ -670,6 +698,7 @@ function advance(s, now, force = false) {
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
   if (isMgj(s)) return mgjAdvance(s, now, force, logLine); // (Mad God Justin: his HP, the timer, the podium, Try again)
+  if (isVd(s) && VD_PHASES.includes(s.phase)) return vdAdvance(s, now, force); // (Valentine's Duck Date: its timers)
   const on = playing(s),
     n = on.length,
     d = on.filter((id) => s.done[id]).length,
@@ -748,6 +777,7 @@ function advance(s, now, force = false) {
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
     case "results":
+      if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: one game, one Valentine)
       s.round++;
       s.subs = [];
       s.qs = [];
@@ -770,6 +800,7 @@ function seatNewcomer(s, id) {
     if (ph === "hang") hangJoin(s, id);
     return;
   } // Hangout: at the front door, at once
+  if (isVd(s)) return vdJoin(s, id); // (Valentine's Duck Date: a Suitor from the next turn)
   if (boardPhases(s).includes(ph))
     s.pos[id] = { x: startX(s), y: Math.random() };
   if (isQuack(s)) {
@@ -989,6 +1020,7 @@ export function reduce(state, a, now = Date.now()) {
       }
       return s;
     case "submit": {
+      if (isVd(s)) return vdWrite(s, a, now, true) || state; // (Valentine's Duck Date: The Date's topic)
       if (isBb(s)) return bbWrite(s, a, now, true);
       if (isSc(s)) return scWrite(s, a, now, true) || state;
       if (!me || s.phase !== "submit" || s.done[a.id]) return s;
@@ -1007,6 +1039,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "draft": {
       // what a player has typed so far (kept by the host, sent in for them at the end)
+      if (isVd(s)) return vdWrite(s, a, now, false) || state;
       if (isBb(s)) return bbWrite(s, a, now, false) || state;
       if (isSc(s)) return scWrite(s, a, now, false) || state;
       if (!me || s.phase !== "submit" || s.done[a.id]) return state;
@@ -1030,6 +1063,7 @@ export function reduce(state, a, now = Date.now()) {
       if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
+      if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
       let x = Math.max(0, Math.min(1, +a.x || 0)),
         y = Math.max(0, Math.min(1, +a.y || 0));
       // a vote keeps its answer: the duck walks only inside its own column until Vote is pressed again (a juror may walk over and change their vote)
@@ -1069,7 +1103,8 @@ export function reduce(state, a, now = Date.now()) {
         !me.late &&
         !isQuack(s) &&
         !isHang(s) &&
-        !isMgj(s)
+        !isMgj(s) &&
+        !isVd(s)
       ) {
         // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
@@ -1123,6 +1158,8 @@ export function reduce(state, a, now = Date.now()) {
       if (isSc(s)) return scVote(s, a, now) || state;
       if (isHang(s)) return state; // (Hangout's button is its own action, below)
       if (isMgj(s) && s.phase !== "results") return state; // (Mad God Justin: only Try again, on the stats)
+      if (isVd(s) && VD_PHASES.includes(s.phase))
+        return vdEnd(s, a, now) || state; // (Valentine's Duck Date: only The Date's Next duck and Turn down)
       if (
         !me ||
         me.late ||
@@ -1162,6 +1199,7 @@ export function reduce(state, a, now = Date.now()) {
         s.history = [];
         s.jumps = {};
         s.dn = null;
+        s.vd = null;
         for (const id of s.seat) P[id].ready = false;
       }
       return s;
@@ -1186,7 +1224,7 @@ export function reduce(state, a, now = Date.now()) {
         return state;
       if (a.kind === "kill") {
         for (const id of who)
-          if (!isGhost(s, id)) {
+          if (!isGhost(s, id) && !vdSafe(s, id)) {
             P[id].dead = true;
             holdDown(s, id, now);
           }
@@ -1720,6 +1758,8 @@ export function reduce(state, a, now = Date.now()) {
         s.mgj = null;
         s.mgjPast = [];
         if (isMgj(s)) return mgjStart(s, now);
+        s.vd = null;
+        if (isVd(s)) return vdStart(s, now);
         return isBb(s)
           ? startTourney(s, now)
           : isQuack(s)
@@ -1742,6 +1782,7 @@ export function reduce(state, a, now = Date.now()) {
         jus =
           justinTick(s, now, logLine) |
           dnTick(s, now) |
+          vdTick(s, now) |
           autoStabs(s, now) |
           attacks(s, now), // (the knife and the hammer, still swinging)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
@@ -1838,6 +1879,11 @@ export const STAGE = {
   boss: "voting",
   mgjend: "discussing",
   dunced: "discussing",
+  vdprompt: "writing",
+  vddate: "discussing",
+  vdpick: "voting",
+  vddown: "discussing",
+  vdval: "stats",
   lobby: "lobby",
   countdown: "lobby",
   over: "stats",
@@ -2093,6 +2139,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (id === by || !p || p.x < 0 || !P || P.dead || isGhost(s, id)) continue;
     if (done.includes(id)) continue;
     if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+    if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
     if (p.j && now - p.j < 1300) continue; // (a duck in the air is missed)
     const n = near(
       p.x,
@@ -2281,6 +2328,7 @@ function blast(s, sh, x, y, now) {
       P = s.players[id];
     if (!p || p.x < 0 || !P || isGhost(s, id)) continue;
     if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+    if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
     const n = near(
       p.x,
       p.y,
@@ -2387,6 +2435,7 @@ function moveShots(s, now) {
           continue; // (the other side of the walls, or above or below it)
         if (p.j && now - p.j < 1300) continue; // jumped over it
         if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+        if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
         /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
         const rx = isHang(s) ? 0.006 : 0.03,
           ry = isHang(s) ? 0.012 : 0.08;
@@ -2562,6 +2611,7 @@ function skipRound(s, now) {
     return startTourney(s, now);
   }
   if (isQuack(s)) return quackSkip(s, now); // Who is the Quack?: no winner, the word shown
+  if (isVd(s)) return vdSkip(s, now); // (Valentine's Duck Date: on to the pick, or the next turn)
   if (isSc(s)) {
     // Story Chain: the paragraph ends with what was written; with nothing written yet, new words are drawn
     const none =
@@ -2617,6 +2667,7 @@ export function backToLobby(s, why) {
   s.sc = null;
   s.law = null;
   s.dn = null;
+  s.vd = null;
   s.mgj = null;
   s.mgjPast = [];
   s.wq = null;

@@ -11839,7 +11839,8 @@ html.moving .board.quake {
   background: linear-gradient(90deg, #e9f9ff, #7cc8f2);
   animation: none;
 }
-.mgj .law-statpanel .statboxes {
+.mgj .law-statpanel .statboxes,
+.vd .law-statpanel .statboxes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 } /* (short boxes side by side, no dead space) */
@@ -12194,3 +12195,118 @@ html.moving .eye-tears .tdrop.t2 {
   position: relative;
   z-index: 41;
 } /* (the countdown and its Cancel button stay above the dark) */
+
+/* ---------- Valentine's Duck Date ---------- */
+/* the field: a deep wine color (each map makes it see-through like every board's tiles), a soft rosy light on the
+   table */
+.cols.vd-cols {
+  display: block;
+}
+.vd-field {
+  --c: #4a1632;
+  height: 100%;
+  border-right: 0;
+  background: var(--c);
+}
+.vd-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 46% 40% at 50% 60%,
+    #ff6b9a2e,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+/* the table and its chairs, among the ducks (game.js places them) */
+.vd-table,
+.vd-chair {
+  position: absolute;
+  pointer-events: none;
+}
+.vd-table svg,
+.vd-chair svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.vd-chair.r svg {
+  transform: scaleX(-1);
+}
+/* the pick's tiles: Who is the Quack?'s, each placed on its spot */
+.vd-tiles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+} /* (over the field's tile, under the ducks) */
+.wq-tile.vd-tile {
+  position: absolute;
+  container-type: inline-size;
+}
+@container (max-width: 11rem) {
+  .vd-tile .wq-tduck {
+    display: none;
+  }
+  .vd-tile .wq-tname {
+    max-width: 100%;
+    margin-top: 0;
+  }
+} /* (a narrow tile: just the name; its duck stands on it) */
+.wq-tile.vd-tile.out {
+  animation: wqgrey 0.6s forwards;
+  filter: none;
+}
+/* over the board: the topic beside The Date's cloud */
+.vd-top .question.vd-q {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+.vd-topic {
+  font-size: calc(1.25rem * var(--ts));
+  font-weight: 700;
+}
+.vd-names {
+  font-weight: 600;
+}
+.vd-q .pname,
+.vd-q .rainbow {
+  white-space: nowrap;
+}
+.vd-val {
+  font-family: var(--fun);
+  font-size: calc(1.6rem * var(--ts));
+  line-height: 1.1;
+}
+/* The Date writes the topic (the cloud's row lets clicks through; this box takes them) */
+.vd-write {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(26rem, 52vw);
+}
+.vd-row {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.vd-in {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: calc(1rem * var(--ts));
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  border: 0.14rem solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+}
+.vd-row .btn {
+  flex: none;
+}

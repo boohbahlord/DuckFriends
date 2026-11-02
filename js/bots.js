@@ -49,6 +49,15 @@ import {
   DUNCE_TAKES,
 } from "./duncerules.js";
 import { isMgj, mgjGone } from "./mgjrules.js";
+import {
+  isVd,
+  VD_PHASES,
+  VD_GRACE,
+  VD_TOPICS,
+  isDate,
+  seated,
+  vdTileRects,
+} from "./vddrules.js";
 import { justinAt } from "./boardjustin.js";
 
 export const BOT_QUESTIONS = [
@@ -419,6 +428,50 @@ function mgjBot(s, id, now, out) {
     out.push({ t: "use", id, what: "knife", face: ax < 0 ? -1 : 1, ax, ay });
   }
 }
+/* Valentine's Duck Date: a computer that is The Date writes a topic, lets the date run (with the timer off, it moves on
+   after a while) and picks a tile (now and then none); everyone else not at the table wanders about and jumps now and
+   then */
+const goal = new Map(); // computer id + pick → the spot it walks to
+function vdBot(s, id, now, late, out) {
+  const p = s.pos[id],
+    V = s.vd;
+  if (!p || !V) return;
+  if (isDate(s, id)) {
+    if (s.phase === "vdprompt" && late)
+      out.push({ t: "submit", id, text: anyOf(VD_TOPICS) });
+    if (
+      s.phase === "vddate" &&
+      now - s.at > (s.lordTime ? VD_GRACE * 1000 + 8000 : 20000) &&
+      Math.random() < (s.lordTime ? 0.004 : 1)
+    )
+      out.push({ t: "end", id });
+    if (s.phase === "vdpick" && late) {
+      const key = `${id}|${V.n}`;
+      if (!goal.has(key)) {
+        const rs = vdTileRects((V.ids || []).length),
+          r = Math.random() < 0.15 ? null : anyOf(rs);
+        goal.set(
+          key,
+          r
+            ? { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 }
+            : { x: p.x, y: p.y },
+        );
+        if (goal.size > 100) goal.delete(goal.keys().next().value);
+      }
+      out.push(...walk(s, id, goal.get(key), [{ t: "end", id }], now));
+    }
+    return;
+  }
+  if (seated(s, id) || Math.random() > 0.02) return;
+  const jumpNow = !p.j && Math.random() < 0.3;
+  out.push({
+    t: "move",
+    id,
+    x: Math.max(0.03, Math.min(0.97, p.x + (Math.random() - 0.5) * 0.12)),
+    y: Math.max(0, Math.min(1, p.y + (Math.random() - 0.5) * 0.12)),
+    j: jumpNow ? now : p.j && now - p.j < 1400 ? p.j : 0,
+  });
+}
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [],
@@ -434,6 +487,10 @@ export function botActions(s, now) {
     }
     if (isMgj(s) && s.phase === "boss") {
       if (now - s.at > 1500 + i * 300) mgjBot(s, id, now, out);
+      return;
+    }
+    if (isVd(s) && VD_PHASES.includes(s.phase)) {
+      vdBot(s, id, now, late, out);
       return;
     }
     if (isHang(s)) {
