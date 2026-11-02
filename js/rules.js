@@ -2396,11 +2396,19 @@ function moveShots(s, now) {
           py = (p.y - y0) / ry,
           len = ux * ux + uy * uy;
         const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        if (Math.hypot(px - k * ux, py - k * uy) < 1) {
+        const ox = px - k * ux,
+          oy = py - k * uy,
+          od = Math.hypot(ox, oy);
+        if (od < (sh.r || 1)) {
           P.dead = true;
           holdDown(s, id, now);
           playerKilled(s, sh.by, id, sh.k);
           if (sh.by === JUSTIN_ID) mgjHurt(s, id);
+          if (sh.k === "chair") {
+            const ul = Math.sqrt(len) || 1;
+            if (od > 0.2) shove(s, id, ox / od, oy / od, KB_FAR, now, 0);
+            else shove(s, id, ux / ul, uy / ul, KB_FAR, now, 0);
+          } // (Mad God Justin's office chair: shoved back, as the hammer does, away from it)
         }
       }
     if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin)
