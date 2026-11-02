@@ -2735,6 +2735,55 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 - Adam: Justin's own meteor now gives him 2 or 3 HP for every player (each rolled), up to his full HP; after it the
   timer comes back at 30 seconds left (it was what was left plus 30). The board: asked the owner what he means first.
 
+## Request (owner, 2026-11-01 22:49Z), word for word
+
+> Give Justin a move where he throws a controller out in every direction, like eight of them, and they are xbox one controllers. It is a bullet hell style so the player has to dodge them. Sometimes, he throws a black office chair that the players have to dodge, but it is very large, so even tho it is slow, the object itself is large, and kinda like the image i am sending. The chair also knocks ducks backwards like the hammer does when it gives a dead effect.
+
+(With a picture of a grey-black office chair: a padded high back, padded arms, a seat, one post and five legs on wheels.
+Saved as /mnt/project-files/mgj/office-chair-ref.png, a stock image: for the look only.)
+
+- Adam: Noah builds both in Mad God Justin's move rotation, with a short tell before each; picture sheet to the owner first.
+
+## Request (owner, 2026-11-01 22:54Z), word for word
+
+> there should be a new attack Justin does where he turns off his xbox, which shows a cartoonish (like matching the established artstyle i mean) xbox one, and when he runs to it, he turns it off (you can see the light on it and the  monitor next to it turning off at a desk that spawns in on the map), when it turns off, Justin fades away and the timer pauses, before Justin comes back in, getting faster attacks but adding fifteen seconds to the clock and +1 HP (and an additional +1 for every player), this happens in the first fifteen seconds. 
+>
+> Is there no reason why the cooldowns and specials cannot go into the bottom right where it is circled in the screenshot!?!?!?!?!
+
+- Adam: the Xbox attack goes to Noah with the controllers and chair (one picture sheet; HP capped at full, as the
+  meteor's). The specials in the bottom right go to Solomon the 2nd.
+
+## Request (owner, 2026-11-01 23:14Z to 23:17Z, on Noah's picture sheet), word for word
+
+> Remove the arms of the chair so we dont have to fuss about how to correct them. I circled them in the first screenshot.
+>
+> The xbox is missing a side here in the second screenshot and so it isnt a box shape yet.
+>
+> Justin can only turn off his xbox once AND the board doesnt have a color since it isnt there, like no purple background.
+>
+> The monitor should say "Siege" in multicolored lettering over top the image on the screen
+
+(With two circled screenshots: the chair's two arms; the Xbox's right end, where its side was missing.)
+
+> why does he have 200 hp btw????? isnt 1 hp equal to one damage ?
+
+> NO FLOOR TO STAND ON ! NONE !
+
+> ADAM WILL BE TELLING YOU NO! STOP TRYING TO DISOBEY ! NO PURPLE FLOOR! NO FUCKING BOARD! NO FLOOR! NO BOARD!!!!
+
+- Noah: the chair has no arms; the Xbox is a closed box (its right side drawn); the monitor shows "Siege" in the
+  title's colors over its picture and goes dark with it; the Xbox comes once a game (`s.mgj.xbUsed`, kept by the next
+  fight, cleared by a new game).
+- Adam (final): Mad God Justin has no board at all. No color, no frame, no floor: everything stands straight on the
+  map. The 200 HP was only the test pictures; in the game he has 8 HP plus 6 a player, and 1 HP is 1 damage.
+
+## Request (owner, 2026-11-01 23:47Z), word for word
+
+> make their be a board that slowly changes colors somewhat
+
+- Noah: Mad God Justin's see-through field is back (each map's see-through, its frame and the dashed ring), and its
+  color drifts slowly (48 s a loop: purple, magenta, blue, teal, rust; css `@property --mgjc`, only with motion on).
+
 ## Request (owner, 2026-11-01 23:03Z): new mode "Valentine's Duck Date", word for word
 
 > make a new game mode called "Valentine's Duck Date"

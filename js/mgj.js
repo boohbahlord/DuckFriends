@@ -8,6 +8,7 @@ import { duckSVG } from "./duck.js";
 import { nameHTML } from "./name.js";
 import { cloudHTML } from "./brackets.js";
 import { fmtJumps } from "./format.js";
+import { FRIDGE } from "./art.js";
 import { DN_PODIUM } from "./dunce.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
 import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
@@ -67,6 +68,53 @@ export const mgjBoardHTML = (
 
 /* ---------- the meteor ---------- */
 /* a rock glowing at its edges, with its tail of fire behind it (up and to the right: it falls down to the left) */
+/* his throws: an Xbox One controller (black, from above: two sticks, the cross, the four colored buttons and the glowing
+   one in the middle) and a big black office chair (padded back, a seat, one post, five legs on wheels; no arms) */
+export const CONTROLLER = `<svg viewBox="0 0 64 46" aria-hidden="true">
+<path d="M14 6.4C22 3.4 42 3.4 50 6.4C57.4 8.6 61.4 16.6 62.4 26.4C63.2 34.6 61 42 55 43C50 43.8 47 38.4 44.2 33.6C42.4 30.6 38.4 29.6 32 29.6C25.6 29.6 21.6 30.6 19.8 33.6C17 38.4 14 43.8 9 43C3 42 0.8 34.6 1.6 26.4C2.6 16.6 6.6 8.6 14 6.4Z" fill="#2a2b33" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M12.6 8.6C21 5.6 43 5.6 51.4 8.6" fill="none" stroke="#585b68" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M5.4 22C6.4 15 9 11 12.6 9.6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".18"/>
+<circle cx="18" cy="16" r="5.6" fill="#16171c" stroke="#1c1c28" stroke-width="1"/><circle cx="18" cy="16" r="3.6" fill="#3a3c46"/><circle cx="17.2" cy="15.2" r="1.3" fill="#fff" opacity=".22"/>
+<path d="M23.4 20.4H26.6V23.4H29.6V26.6H26.6V29.6H23.4V26.6H20.4V23.4H23.4Z" fill="#16171c" stroke="#1c1c28" stroke-width=".8" stroke-linejoin="round"/>
+<circle cx="39.4" cy="25" r="5" fill="#16171c" stroke="#1c1c28" stroke-width="1"/><circle cx="39.4" cy="25" r="3.2" fill="#3a3c46"/><circle cx="38.7" cy="24.3" r="1.1" fill="#fff" opacity=".22"/>
+<circle cx="47.4" cy="10.4" r="2.5" fill="#ffd23f" stroke="#1c1c28" stroke-width=".8"/><circle cx="52" cy="15" r="2.5" fill="#ff5a5f" stroke="#1c1c28" stroke-width=".8"/>
+<circle cx="47.4" cy="19.6" r="2.5" fill="#3ddc84" stroke="#1c1c28" stroke-width=".8"/><circle cx="42.8" cy="15" r="2.5" fill="#38b6ff" stroke="#1c1c28" stroke-width=".8"/>
+<circle cx="32" cy="11" r="4.6" fill="#bfe8ff" opacity=".3"/><circle cx="32" cy="11" r="3.2" fill="#f2f6ff" stroke="#1c1c28" stroke-width=".8"/><circle cx="31.2" cy="10.2" r="1" fill="#fff"/>
+<ellipse cx="28" cy="17.4" rx="1.4" ry="1" fill="#16171c"/><ellipse cx="36" cy="17.4" rx="1.4" ry="1" fill="#16171c"/></svg>`;
+export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#1c1c28" stroke-width="6.6" stroke-linecap="round"/>
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#2c2e36" stroke-width="3.8" stroke-linecap="round"/>
+<g fill="#2b2d34" stroke="#1c1c28" stroke-width="1.6"><circle cx="17" cy="108.6" r="4.4"/><circle cx="29.4" cy="116.4" r="4.4"/><circle cx="70.6" cy="116.4" r="4.4"/><circle cx="84" cy="108.6" r="4.4"/><circle cx="52.4" cy="106.4" r="3.8"/></g>
+<rect x="46.4" y="76" width="7.4" height="21" rx="2" fill="#24262d" stroke="#1c1c28" stroke-width="1.6"/><path d="M48.6 79V94" stroke="#fff" stroke-width="1.2" opacity=".2" stroke-linecap="round"/>
+<path d="M36 7C48 2.6 72 3.4 82 8.6C86 10.6 87 14.6 86.4 20.6L82.6 58.6C82 65 78.6 67.6 72 67.4L41 65.8C35 65.4 32.4 62.4 32.2 56.4L31 17C30.8 11 32 8.6 36 7Z" fill="#3b3d46" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M38 12C49 8.4 70 9 79 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".16"/>
+<path d="M36 36C46 33 68 34 80 38" fill="none" stroke="#24262d" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M58 14.6L57 34" stroke="#24262d" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
+<path d="M17 66C26 60.4 72 60.6 84.6 64.4C89.4 66 89.6 72.4 85 75.6C74 82 30 82.4 17.6 78C11.6 75.8 11.8 69 17 66Z" fill="#45474f" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M14.6 73.4C26 79 72 79.4 87 72.6" fill="none" stroke="#2a2c33" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M22 66.6C34 63.6 62 63.6 76 66" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".18"/>
+</svg>`;
+/* the game's name on his monitor, over the picture, in the title's many colors (one color a letter) */
+const SIEGE = `<text x="62" y="36.5" text-anchor="middle" font-family="'Lilita One', 'Fredoka', system-ui, sans-serif" font-size="19" stroke="#1c1c28" stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">${[
+  ..."Siege",
+]
+  .map((c, i) => `<tspan fill="${FRIDGE[[0, 2, 3, 4, 5][i]]}">${c}</tspan>`)
+  .join("")}</text>`;
+/* his Xbox attack: a desk that comes in on the board, with a monitor (its screen lit) and an Xbox One (black, glossy on
+   the left and vented on the right, a full box with its right side, its power light white); turned off, the screen and the light go dark (css: .off) */
+export const DESK = `<svg viewBox="0 0 160 124" aria-hidden="true"><defs>
+<linearGradient id="xb-scr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fe0ff"/><stop offset=".55" stop-color="#3f8cff"/><stop offset="1" stop-color="#3ddc84"/></linearGradient></defs>
+<rect x="16" y="74" width="9" height="46" rx="2" fill="#6a4429" stroke="#1c1c28" stroke-width="2"/><rect x="135" y="74" width="9" height="46" rx="2" fill="#6a4429" stroke="#1c1c28" stroke-width="2"/>
+<rect x="96" y="76" width="42" height="22" rx="2" fill="#7c5133" stroke="#1c1c28" stroke-width="2"/><path d="M110 87H124" stroke="#1c1c28" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="6" y="66" width="148" height="11" rx="3" fill="#a8744a" stroke="#1c1c28" stroke-width="2"/><path d="M11 69.4H149" stroke="#fff" stroke-width="1.6" opacity=".22" stroke-linecap="round"/>
+<path d="M57 52H66L68 66H55Z" fill="#26272e" stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="61.6" cy="65.4" rx="15" ry="2.8" fill="#26272e" stroke="#1c1c28" stroke-width="1.6"/>
+<rect x="20" y="6" width="84" height="50" rx="5" fill="#1d1e24" stroke="#1c1c28" stroke-width="2"/>
+<g class="xb-scr"><rect x="25" y="11" width="74" height="40" rx="2" fill="url(#xb-scr)"/><path d="M25 42Q40 33 54 40T86 37Q93 36 99 39V51H25Z" fill="#2fb36a"/><circle cx="85" cy="20" r="5" fill="#fff6b0"/><path d="M29 15H50" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".45"/>${SIEGE}</g>
+<rect class="xb-dark" x="25" y="11" width="74" height="40" rx="2" fill="#0b0c11"/><path class="xb-dark" d="M29 15L42 15" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-opacity=".14"/>
+<path d="M106 50L111 43H151L147 50Z" fill="#33353e" stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"/><path d="M137 44.4L134.4 49M141 44.4L138.4 49M145 44.4L142.4 49M149 44.4L146.4 49" stroke="#16171c" stroke-width="1.2"/><path d="M112 45.6H128" stroke="#fff" stroke-width="1.2" opacity=".3" stroke-linecap="round"/>
+<rect x="106" y="50" width="41" height="16" rx="1.6" fill="#1f2026" stroke="#1c1c28" stroke-width="1.6"/><path d="M108 52.6H130" stroke="#fff" stroke-width="1" opacity=".18" stroke-linecap="round"/><path d="M132 51V65" stroke="#16171c" stroke-width="1"/>
+<path d="M147 50L151 43V59L147 66Z" fill="#141519" stroke="#1c1c28" stroke-width="1.6" stroke-linejoin="round"/>
+<g class="xb-led"><circle cx="140" cy="58" r="5" fill="#dff4ff" fill-opacity=".3"/><circle cx="140" cy="58" r="2.4" fill="#fff"/></g><circle class="xb-dark" cx="140" cy="58" r="2.4" fill="#3a3c46"/></svg>`;
 export const METEOR = `<svg viewBox="0 0 160 160" aria-hidden="true"><defs>
 <linearGradient id="mt-tail" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f" stop-opacity="0"/><stop offset=".45" stop-color="#ff8c2b" stop-opacity=".75"/><stop offset="1" stop-color="#fff3b0"/></linearGradient>
 <radialGradient id="mt-glow" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#ff8c2b" stop-opacity=".7"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></radialGradient>

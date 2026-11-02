@@ -242,6 +242,7 @@ import {
   mgjTime,
   GOOD_ID,
   PICK_FADE,
+  XB,
   PICK_USES,
   MGJ_DOWN,
   usesOf,
@@ -254,6 +255,9 @@ import {
   mgjOverHTML,
   MAD_JUSTIN,
   SAD_JUSTIN,
+  CONTROLLER,
+  CHAIR,
+  DESK,
   GOOD_JUSTIN,
   pickHTML as mgjPickHTML,
 } from "./mgj.js";
@@ -1166,13 +1170,17 @@ function drawDucks(now = clockNow()) {
         ).duck,
         [vx, vy] = toScreen(sh.vx, sh.vy);
       b =
-        sh.k === "dagger" || sh.k === "grenade"
+        sh.k === "controller" || sh.k === "chair"
           ? el(
-              `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+              `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
             )
-          : el(
-              `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
-            );
+          : sh.k === "dagger" || sh.k === "grenade"
+            ? el(
+                `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+              )
+            : el(
+                `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
+              );
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
@@ -1368,6 +1376,7 @@ function drawDucks(now = clockNow()) {
   placeTable(board);
   placeTiles(board);
   placePick(board, s);
+  placeDesk(board, s, now);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll(
     ".topover .lord, .topover .question, .topover .wq-sidecol",
@@ -1566,6 +1575,41 @@ function placeTiles(board) {
       width: (b.left - a.left).toFixed(1) + "px",
       height: (b.top - a.top).toFixed(1) + "px",
     });
+  });
+}
+
+/* Mad God Justin: his Xbox's desk, where it came in; dark once he turns it off, gone a moment after he's back */
+function placeDesk(board, s, now) {
+  const x = isMgj(s) && s.mgj && s.mgj.xb,
+    layer = $(".ducks", board);
+  let n = layer && layer.querySelector(".mgj-desk");
+  const on =
+    !!x &&
+    ["boss", "mgjend"].includes(s.phase) &&
+    (!x.done || now - x.done < XB.OUT);
+  if (n && (!on || +n.dataset.at !== x.at)) {
+    n.remove();
+    n = null;
+  }
+  if (!on || !layer || !geo) return;
+  if (!n) {
+    n = el(`<div class="mgj-desk" data-at="${x.at}">${DESK}</div>`);
+    n.style.setProperty("--in", XB.IN + "ms");
+    n.style.setProperty("--out", XB.OUT + "ms");
+    layer.append(n);
+  }
+  n.classList.toggle("off", !!x.off && now >= x.off);
+  n.classList.toggle("out", !!x.done);
+  const c = place(x, 0, 1),
+    w = geo.size * 2.2,
+    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)}`;
+  if (n._st === st) return;
+  n._st = st;
+  Object.assign(n.style, {
+    left: c.left + "px",
+    top: c.top + "px",
+    width: w + "px",
+    zIndex: Math.round(c.top - 3),
   });
 }
 
@@ -1841,6 +1885,10 @@ function playFx(f) {
       return;
     } // confetti over everyone's screen
     if (!spot(f.by)) return;
+    if (f.what === "controller" || f.what === "chair") {
+      sfx.swish();
+      return;
+    } // (Mad God Justin's throws: they fly from the room's state)
     if (f.what === "shotgun") {
       // Mad God Justin's shotgun: the blast, then the pump
       shows[f.by] = {
@@ -1910,6 +1958,19 @@ function playFx(f) {
   } else if (f.kind === "pump") {
     // he's back, with the shotgun
     sfx.pump();
+  } else if (f.kind === "xboff") {
+    sfx.tick(); // (Mad God Justin turns his Xbox off: a click, and the light and the screen go dark)
+  } else if (f.kind === "mgjtell") {
+    // Mad God Justin holds up what he's about to throw: the controllers, or the chair over his head
+    const lift = S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"] .gduck-lift`),
+      left = (f.until || 0) - now;
+    if (!lift || left <= 0) return;
+    const up = el(
+      `<div class="mgj-tellup k-${f.what}" style="--tell:${left}ms">${f.what === "chair" ? CHAIR : CONTROLLER.repeat(2)}</div>`,
+    );
+    lift.append(up);
+    setTimeout(() => up.remove(), left);
+    sfx.boop();
   } else if (f.kind === "pickup") {
     sfx.pop(); // (Mad God Justin: a weapon picked up)
   } else if (f.kind === "hotdog") {
