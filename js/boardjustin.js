@@ -74,6 +74,7 @@ export const justinShown = (s) =>
   !!s.justin &&
   (!!s.options.justin || isMgj(s)) &&
   s.options.mode !== "hang" &&
+  s.options.mode !== "vdd" &&
   boardPhases(s).includes(s.phase);
 /* shot or killed: down where he stands, one of his death lines, up again by himself after DOWN */
 export function justinDown(s, now, log) {

@@ -9,6 +9,8 @@
    Duncelation: everyone writes a take; one by one, a duck defends the take it got and the room walks to Dunce or Not a
    Dunce, until someone is voted a dunce.
    Mad God Justin: a boss fight; every duck has only a knife, and together they stab Justin to 0 HP before the time runs out.
+   Valentine's Duck Date: a random duck is The Date; the Suitors take turns on a date with them at the dining table, and
+   after each turn The Date turns one down, until the last one left is their Valentine.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby. */
 import { esc } from "./ui.js";
@@ -60,6 +62,11 @@ export const MODES = [
     tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP before the timer runs out. He shoots back.",
   },
   {
+    id: "vdd",
+    name: "Valentine's Duck Date",
+    tip: "A random duck is The Date. Each Suitor gets a date at the dining table, then The Date turns one down, until one is left: the Valentine. 3 players or more.",
+  },
+  {
     id: "hang",
     name: "Hangout",
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.",
@@ -70,7 +77,8 @@ export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
    in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Mad God Justin's
-   yellow duck head with its eye glowing blue and devil horns, and a bolt of lightning; Hangout's little
+   yellow duck head with its eye glowing blue and devil horns, and a bolt of lightning; Valentine's Duck Date's two
+   glasses of red wine clinking under a pink heart; Hangout's little
    A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
@@ -104,6 +112,18 @@ export function modeSymbol(id, size = 32) {
 <circle cx="22.2" cy="12" r="3.4" fill="#38b6ff" opacity=".45"/><circle cx="22.2" cy="12" r="1.9" fill="#bff1ff" stroke="#0b4a8a" stroke-width=".7"/>
 <path d="M17 8.4l7.4 1.6" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/>
 <path d="M15.8 7.4C14.8 5.4 13.6 3.6 12.2 2.2C12.4 4.6 12.9 6.6 13.7 8.6Z" fill="#a3121b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/><path d="M21.4 7C22.6 5 24.4 3.2 26.4 2C25.8 4.4 25 6.4 23.8 8.1Z" fill="#e3242b" stroke="#3a0408" stroke-width=".9" stroke-linejoin="round"/></svg>`;
+  if (m.id === "vdd")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<path d="M15 7.2C13.2 4.8 9.8 5.6 9.8 8.4C9.8 10.8 12.6 12.6 15 14.8C17.4 12.6 20.2 10.8 20.2 8.4C20.2 5.6 16.8 4.8 15 7.2Z" fill="#ff3d6e" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/>
+${[
+  [7.5, -14],
+  [22.5, 14],
+]
+  .map(
+    ([x, r]) =>
+      `<g transform="rotate(${r} ${x} 21)"><path d="M${x - 4} 10C${x - 4.4} 15 ${x - 2.6} 17.4 ${x} 17.4C${x + 2.6} 17.4 ${x + 4.4} 15 ${x + 4} 10Z" fill="#ffffff55" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/><path d="M${x - 4.1} 13C${x - 3.6} 16 ${x - 2.2} 17.2 ${x} 17.2C${x + 2.2} 17.2 ${x + 3.6} 16 ${x + 4.1} 13Z" fill="#9c1238"/><path d="M${x} 17.4V21.6M${x - 2.8} 22H${x + 2.8}" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/></g>`,
+  )
+  .join("")}</svg>`;
   if (m.id === "sc")
     return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
 <rect x="1" y="1" width="28" height="22" rx="3" fill="#ffffff" stroke="#1c1c28" stroke-width="1.2"/>

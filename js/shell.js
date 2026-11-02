@@ -52,6 +52,7 @@ import { helpPage, helpIndex, HELP_NAMES, isHelpName } from "./helppages.js";
 import { quackStats } from "./quackrules.js";
 import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";
+import { vdStats, turnedDown } from "./vddrules.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
@@ -508,6 +509,10 @@ function statLines(ctx, scope, args) {
         out.push(
           `${base} · ${st.argued} takes defended · not a dunce ${st.wins} · voted a dunce ${st.losses}`,
         );
+      else if (mode === "vdd")
+        out.push(
+          `${nm(id)}: ${st.games} games · ${st.rounds} turns · ${st.argued} dates · Valentine ${st.wins} · Turned Down ${st.losses} · The Date ${st.titles} · ${st.jumps} Jumps`,
+        );
       else if (mode === "mgj")
         out.push(
           `${nm(id)}: ${st.games} games · ${st.rounds} fights · won ${st.wins} · lost ${st.losses} · damage ${st.answers} · knocked down ${st.majority} · killing blows ${st.titles} · ${st.jumps} Jumps`,
@@ -619,6 +624,23 @@ function statLines(ctx, scope, args) {
       };
       out.push(
         `${nm(id)}: ${p.turns} takes defended · ${p.not} Not a Dunce votes · ${p.dunce} Dunce votes · comeback ${p.comeback} · voted a dunce ${p.dunced} · ${p.votes} votes · ${jumps(id)} Jumps`,
+      );
+    }
+  } else if (mode === "vdd") {
+    const V = s.vd || {},
+      per = vdStats(s).per;
+    for (const id of ids) {
+      const p = per[id] || { dates: 0, ms: 0, early: 0 },
+        role =
+          V.date === id
+            ? "The Date"
+            : V.val === id
+              ? "Valentine"
+              : turnedDown(s, id)
+                ? "Turned Down"
+                : "Suitor";
+      out.push(
+        `${nm(id)}: ${role} · ${p.dates} dates · ${Math.round(p.ms / 1000)} s on dates · ended early ${p.early} · ${jumps(id)} Jumps`,
       );
     }
   } else if (mode === "mgj") {

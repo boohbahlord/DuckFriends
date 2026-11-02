@@ -1,0 +1,76 @@
+<!doctype html><meta charset="utf-8" />
+<body
+  style="
+    background: #1b1530;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  "
+>
+  <div id="a" style="width: 480px"></div>
+  <div id="b" style="width: 120px"></div>
+  <div
+    id="c"
+    style="position: relative; width: 600px; height: 300px; background: #4a1630"
+  ></div>
+  <script type="module">
+    import {
+      TABLE_SVG,
+      CHAIR_SVG,
+      TABLE_W,
+      SEAT_OUT,
+      SEAT_LIFT,
+    } from "../js/vdd.js";
+    import { duckSVG } from "../js/duck.js";
+    a.innerHTML = TABLE_SVG;
+    b.innerHTML = CHAIR_SVG;
+    const size = 90,
+      cx = 300,
+      foot = 250,
+      tw = TABLE_W * size,
+      th = (tw * 150) / 240;
+    const put = (html, l, t, w, h, z, flip) => {
+      const d = document.createElement("div");
+      d.innerHTML = html;
+      Object.assign(d.style, {
+        position: "absolute",
+        left: l + "px",
+        top: t + "px",
+        width: w + "px",
+        height: h + "px",
+        zIndex: z,
+        transform: flip ? "scaleX(-1)" : "",
+      });
+      d.firstChild.style.width = "100%";
+      d.firstChild.style.height = "100%";
+      c.append(d);
+    };
+    for (const k of [0, 1]) {
+      const x = cx + (k ? 1 : -1) * SEAT_OUT * size,
+        cw = size * 0.8,
+        ch = (cw * 132) / 80;
+      put(
+        CHAIR_SVG,
+        x - cw / 2 - (k ? -1 : 1) * size * 0.12,
+        foot - (ch * 128) / 132,
+        cw,
+        ch,
+        1,
+        k,
+      );
+      put(
+        duckSVG({ color: k ? "#2fa4ff" : "#ffd23f" }, { size, shadow: false }),
+        x - size / 2,
+        foot - size - SEAT_LIFT * size,
+        size,
+        size,
+        2,
+        k,
+      );
+    }
+    put(TABLE_SVG, cx - tw / 2, foot - (th * 138) / 150, tw, th, 3);
+  </script>
+</body>

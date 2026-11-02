@@ -21,6 +21,7 @@ import { boxHTML as scBoxHTML } from "./story.js";
 import { quackBoxHTML } from "./quack.js";
 import { dnBoxHTML } from "./dunce.js";
 import { mgjBoxHTML } from "./mgj.js";
+import { vdBoxHTML } from "./vdd.js";
 
 export function statBoxHTML(s, id, round = null) {
   const p = s.players[id];
@@ -112,6 +113,12 @@ function totalsHTML(p, t, mode = "aod") {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Fights</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Won</dt><dd>${fmtJumps(t.wins)}</dd><dt>Lost</dt><dd>${fmtJumps(t.losses)}</dd>
         <dt>Damage</dt><dd>${fmtJumps(t.answers)}</dd><dt>Knocked down</dt><dd>${fmtJumps(t.majority)}</dd><dt>Killing blows</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === "vdd") {
+    // Valentine's Duck Date: their games, dates, Valentines and Turned Downs, and their games as The Date
+    return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Valentine's Duck Date</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Turns</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Dates</dt><dd>${fmtJumps(t.argued)}</dd><dt>Valentine</dt><dd>${fmtJumps(t.wins)}</dd>
+        <dt>Turned Down</dt><dd>${fmtJumps(t.losses)}</dd><dt>The Date</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === "dunce") {
     // Duncelation: their takes defended, not a dunce and a dunce, and their votes
     return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">all time · Duncelation</div></div></header>
@@ -180,6 +187,7 @@ export function openStats(s, id, me) {
                     law: lawBoxHTML,
                     dunce: dnBoxHTML,
                     mgj: mgjBoxHTML,
+                    vdd: vdBoxHTML,
                   }[s.options.mode] || statBoxHTML
                 )(s, id)
               : totalsHTML(p, all && all[lastMode], lastMode);

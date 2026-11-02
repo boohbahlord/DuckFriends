@@ -72,6 +72,7 @@ export const STAT_MODES = [
   ["law", "Lawyering; Juryful of Ducklings"],
   ["dunce", "Duncelation"],
   ["mgj", "Mad God Justin"],
+  ["vdd", "Valentine's Duck Date"],
 ];
 export function cleanStats(o) {
   const out = {},

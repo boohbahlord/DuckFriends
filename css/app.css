@@ -6317,56 +6317,55 @@ html.still .gpin {
 html.still .spe-bone .bone-slide {
   animation: none;
 }
-/* the specials' number keys: a small see-through row in the top bar, after the title (never on a touch screen); the key
-   just pressed glows, a key kept on wears a blue ring; unused for 5 seconds, it slides up off the screen */
+/* the specials' number keys (a computer, never a touch screen): a row in the bottom bar's right corner, under the board.
+   It stays through a stage on the board and fades off it; the key just pressed glows, a key kept on wears a green ring,
+   a key with nothing on it isn't shown. Its keys grow with the window; with no room for them all they go on two lines */
 .hotbar {
+  --hk: clamp(1.55rem, 2.9vw, 2.8rem);
   display: flex;
-  gap: 0.2rem;
-  margin-right: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem 0.3rem;
+  min-width: 0;
   pointer-events: none;
-  opacity: 0.62;
-  transition:
-    transform 0.45s ease,
-    opacity 0.45s ease;
+  transition: opacity 0.45s ease;
 }
 .hotbar.gone {
-  transform: translateY(-170%);
   opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s 0.45s;
 }
 .hk {
   position: relative;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: var(--hk);
+  height: var(--hk);
   display: grid;
   place-items: center;
-  border-radius: 0.35rem;
-  border: 0.1rem solid color-mix(in srgb, var(--ink) 30%, transparent);
-  background: color-mix(in srgb, var(--bg) 35%, transparent);
+  border-radius: 0.45rem;
+  border: 0.12rem solid color-mix(in srgb, var(--ink) 34%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
 }
 .hk b {
   position: absolute;
-  left: 0.12rem;
-  top: 0;
-  font-size: 0.55rem;
+  left: 0.16rem;
+  top: 0.02rem;
+  font-size: calc(var(--hk) * 0.27);
   line-height: 1.1;
   color: var(--dim);
 }
-.hk.empty b {
-  position: static;
-  font-size: 0.7rem;
-  opacity: 0.7;
+.hk.empty {
+  display: none;
 }
 .hk i {
   font-style: normal;
-  font-size: 0.85rem;
+  font-size: calc(var(--hk) * 0.5);
   line-height: 1;
 }
 .hk {
   transition: opacity 0.45s ease;
 }
-.hotbar.rest .hk:not(.on):not(.cool) {
-  opacity: 0;
-} /* (resting: only the keys kept on stay, in their places) */
 .hk.on {
   border-color: var(--green);
   background: color-mix(in srgb, var(--green) 38%, transparent);
@@ -6447,15 +6446,6 @@ html.still .spe-bone .bone-slide {
   box-shadow: 0 0 0.45rem 0.12rem
     color-mix(in srgb, var(--yellow) 65%, transparent);
 }
-@media (max-width: 1000px) {
-  .hk {
-    width: 1.3rem;
-    height: 1.3rem;
-  }
-  .hk i {
-    font-size: 0.72rem;
-  }
-}
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .hotbar {
     display: none;
@@ -6465,7 +6455,7 @@ html.still .spe-bone .bone-slide {
   .hotbar {
     display: none;
   }
-} /* (a narrow window has no room for it in the top bar; its keys still work) */
+} /* (a narrow window has the Specials button instead; its keys still work) */
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) button kbd {
     display: none;
@@ -11498,21 +11488,48 @@ svg.defs {
   border-color: var(--yellow);
 }
 /* ---------- Mad God Justin ---------- */
-/* the arena: one stormy see-through field over the map */
+/* the arena: one see-through field over the map (each map's .col rule makes it see-through like every board's
+   tiles). I want its color to drift slowly through the Twister colors, kept dark so the ducks still read on it */
+@property --mgjc {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #3a2a86;
+}
 .cols.mgj-cols {
   display: block;
 }
 .mgj-field {
-  --c: #2b2058;
+  --c: var(--mgjc);
   height: 100%;
   border-right: 0;
   background: var(--c);
-} /* (each map makes it see-through like every board's tiles) */
+}
+html.moving .mgj-field {
+  animation: mgjboard 48s linear infinite;
+}
+@keyframes mgjboard {
+  0%,
+  100% {
+    --mgjc: #3a2a86;
+  }
+  20% {
+    --mgjc: #6d2a7e;
+  }
+  40% {
+    --mgjc: #23498f;
+  }
+  60% {
+    --mgjc: #19706a;
+  }
+  80% {
+    --mgjc: #7a3a2c;
+  }
+}
 .mgj-field::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 55%, #8a6bff26, transparent 70%);
+  background: radial-gradient(ellipse at 50% 55%, #ffffff14, transparent 70%);
   pointer-events: none;
 }
 .mgj-field::after {
@@ -11612,6 +11629,47 @@ html.moving .eye-zap {
 }
 .gduck.mgj-gone {
   opacity: 0;
+  transition:
+    transform 0.12s linear,
+    opacity 0.5s ease-in;
+} /* (he fades out; he's back at once) */
+/* his Xbox's desk: it comes in, and fades away a moment after he's back; turned off, the screen and the light go dark */
+.mgj-desk {
+  position: absolute;
+  transform: translate(-50%, -88%);
+  pointer-events: none;
+  filter: drop-shadow(0 0.3rem 0.25rem #0007);
+  animation: mgjdeskin var(--in, 900ms) ease-out both;
+}
+.mgj-desk.out {
+  opacity: 0;
+  transition: opacity var(--out, 1200ms) ease-in;
+}
+.mgj-desk svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mgj-desk .xb-scr,
+.mgj-desk .xb-led {
+  transition: opacity 0.35s ease-in;
+}
+.mgj-desk .xb-dark {
+  opacity: 0;
+  transition: opacity 0.35s ease-in;
+}
+.mgj-desk.off .xb-scr,
+.mgj-desk.off .xb-led {
+  opacity: 0;
+}
+.mgj-desk.off .xb-dark {
+  opacity: 1;
+}
+@keyframes mgjdeskin {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(0.85);
+  }
 }
 /* hit: a short, see-through red flash over the drawing (Justin hit, any duck knocked down; Duck Cabin's Justin too) */
 .gduck.hurt .gduck-body,
@@ -11781,13 +11839,68 @@ html.moving .board.quake {
   background: linear-gradient(90deg, #e9f9ff, #7cc8f2);
   animation: none;
 }
-.mgj .law-statpanel .statboxes {
+.mgj .law-statpanel .statboxes,
+.vd .law-statpanel .statboxes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 } /* (short boxes side by side, no dead space) */
-.mgj .hotbar .hk.empty {
-  display: none;
-} /* (the knife is the only thing in this fight) */
+/* Mad God Justin's throws: the controllers spin as they fly and the chair turns slowly, each with a light rim so it
+   shows on any map; before they fly he holds them up over his head (the tell) */
+.thrown.mgj-throw i {
+  filter: drop-shadow(0 0 0.2rem #fff9) drop-shadow(0 0.15rem 0.15rem #0009);
+}
+.thrown.k-controller i {
+  width: calc(var(--s) * 0.62);
+  animation-duration: 0.7s;
+}
+.thrown.k-chair {
+  z-index: 7;
+}
+.thrown.k-chair i {
+  width: calc(var(--s) * 2);
+  animation-duration: 2.6s;
+}
+.mgj-tellup {
+  position: absolute;
+  left: 50%;
+  bottom: 88%;
+  width: calc(var(--sz) * 1.5);
+  display: flex;
+  justify-content: center;
+  gap: 6%;
+  translate: -50% 0;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 0.25rem #fffa);
+  animation: mgjtell var(--tell, 800ms) ease-out both;
+}
+.mgj-tellup.k-chair {
+  width: calc(var(--sz) * 1.7);
+}
+.mgj-tellup svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mgj-tellup.k-controller svg {
+  width: 47%;
+}
+@keyframes mgjtell {
+  from {
+    opacity: 0;
+    transform: translateY(35%) scale(0.5);
+  }
+  25% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    transform: rotate(-7deg);
+  }
+  to {
+    transform: translateY(-14%) rotate(9deg);
+  }
+}
 /* Mad God Justin's pickups: a glowing token that fades in where it lies, bobbing a little */
 .mgj-pick {
   position: absolute;
@@ -12082,3 +12195,118 @@ html.moving .eye-tears .tdrop.t2 {
   position: relative;
   z-index: 41;
 } /* (the countdown and its Cancel button stay above the dark) */
+
+/* ---------- Valentine's Duck Date ---------- */
+/* the field: a deep wine color (each map makes it see-through like every board's tiles), a soft rosy light on the
+   table */
+.cols.vd-cols {
+  display: block;
+}
+.vd-field {
+  --c: #4a1632;
+  height: 100%;
+  border-right: 0;
+  background: var(--c);
+}
+.vd-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 46% 40% at 50% 60%,
+    #ff6b9a2e,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+/* the table and its chairs, among the ducks (game.js places them) */
+.vd-table,
+.vd-chair {
+  position: absolute;
+  pointer-events: none;
+}
+.vd-table svg,
+.vd-chair svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.vd-chair.r svg {
+  transform: scaleX(-1);
+}
+/* the pick's tiles: Who is the Quack?'s, each placed on its spot */
+.vd-tiles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+} /* (over the field's tile, under the ducks) */
+.wq-tile.vd-tile {
+  position: absolute;
+  container-type: inline-size;
+}
+@container (max-width: 11rem) {
+  .vd-tile .wq-tduck {
+    display: none;
+  }
+  .vd-tile .wq-tname {
+    max-width: 100%;
+    margin-top: 0;
+  }
+} /* (a narrow tile: just the name; its duck stands on it) */
+.wq-tile.vd-tile.out {
+  animation: wqgrey 0.6s forwards;
+  filter: none;
+}
+/* over the board: the topic beside The Date's cloud */
+.vd-top .question.vd-q {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+.vd-topic {
+  font-size: calc(1.25rem * var(--ts));
+  font-weight: 700;
+}
+.vd-names {
+  font-weight: 600;
+}
+.vd-q .pname,
+.vd-q .rainbow {
+  white-space: nowrap;
+}
+.vd-val {
+  font-family: var(--fun);
+  font-size: calc(1.6rem * var(--ts));
+  line-height: 1.1;
+}
+/* The Date writes the topic (the cloud's row lets clicks through; this box takes them) */
+.vd-write {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: min(26rem, 52vw);
+}
+.vd-row {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+.vd-in {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: calc(1rem * var(--ts));
+  font-weight: 600;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  border: 0.14rem solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+}
+.vd-row .btn {
+  flex: none;
+}
