@@ -395,6 +395,17 @@ const MGJ_TILES = [
 ];
 const MORE_TILES = [
   [
+    "mgjHp",
+    "Player HP",
+    [
+      [0, "Off"],
+      [1, "1"],
+      [5, "5"],
+      [10, "10"],
+      [15, "15"],
+    ],
+  ], // (Mad God Justin only)
+  [
     "discuss",
     "Discussion round",
     [
@@ -547,6 +558,8 @@ const OPT_TIPS = {
     "How long each date lasts, after 10 s of grace. Off: a date lasts until The Date presses Next duck (The Date can press it any time).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
+  mgjHp:
+    "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and the last one knocks it down as usual. It stands up with full HP. Off: one hit knocks a duck down.",
   mgjTime:
     "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 1:30 count toward the lightning eyes.",
   dunceTakes:
@@ -650,7 +663,8 @@ function openOptions() {
           !(s.options.mode === "quack" && r[0] === "unvoteStops") &&
           !(
             s.options.mode !== "hang" && ["ghosts", "ghostBusy"].includes(r[0])
-          ),
+          ) &&
+          !(s.options.mode !== "mgj" && r[0] === "mgjHp"),
       ),
       s,
       ro,

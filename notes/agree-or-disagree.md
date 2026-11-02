@@ -2821,3 +2821,19 @@ duck." "The date writes prompts that determine the topic of the conversation at 
   - Joining mid-game: a Suitor from the next turn. A Suitor who leaves keeps their place (their date is skipped). The Date
     leaving: the usual wait with Next round to go on; going on draws a new Date from the Suitors and starts the turn again.
   - All-time stats per player: games, turns, dates, Valentine, Turned Down, games as The Date.
+
+## Request (owner, 2026-11-02 01:22Z, in Adam's thread, and 01:26Z in Noah's), word for word
+
+> the ring should not be on the middle of the board, like the dotted ring.
+>
+> make the players have a setting to turn on  in the lobby, that gives them HP that shows in green bar behind the player's name, and the loss health part of the bar becomes instantly red before fading away. The hp is either 1, 5, 10, or 15 for the extra setting.
+>
+> you can test and see if the hp should be more or less, and if it is harder or easier then the normal game.
+
+> when hp runs out the dead effect stays on the player until justin wins or loses
+
+- Adam: Noah; the setting is "Player HP" in Additional settings (Mad God Justin only); the bar sits behind the name's
+  letters like the down meter and never shows with it; balance numbers to the owner before Justin changes.
+- Noah: the dotted ring is gone. Player HP: Off, 1, 5, 10, 15 (`mgjHp`); a hit from Justin takes 1 HP (900 ms of grace,
+  and one shot takes HP once); at 0 the duck goes down and stays down until the fight ends; when every duck is out,
+  Justin wins. His meteor still knocks everyone down for a moment, and they get up with full HP.

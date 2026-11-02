@@ -93,6 +93,7 @@ import {
   mgjAdvance,
   mgjStab,
   mgjHurt,
+  mgjSoak,
   mgjGone,
   mgjUse,
   mgjShot,
@@ -150,6 +151,7 @@ export const OPTIONS_DEFAULT = {
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
+  mgjHp: 0, // … Player HP: 0 (off), 1, 5, 10, 15
   vdTime: 60, // Valentine's Duck Date: seconds a date gets after its 10 s of grace: 0 (off), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
@@ -2151,9 +2153,11 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
   for (const h of hits) {
-    s.players[h.id].dead = true;
-    holdDown(s, h.id, now);
-    playerKilled(s, by, h.id, sp);
+    if (!(by === JUSTIN_ID && mgjSoak(s, h.id, now))) {
+      s.players[h.id].dead = true;
+      holdDown(s, h.id, now);
+      playerKilled(s, by, h.id, sp);
+    } // (Mad God Justin's Player HP: a hit it can take keeps the duck up, still shoved back by his hammer)
     if (sp === "hammer") {
       // shoved straight back from the swinger
       const k = h.d > 0.05 ? 1 / h.d : 0;
@@ -2449,9 +2453,14 @@ function moveShots(s, now) {
           oy = py - k * uy,
           od = Math.hypot(ox, oy);
         if (od < (sh.r || 1)) {
-          P.dead = true;
-          holdDown(s, id, now);
-          playerKilled(s, sh.by, id, sh.k);
+          if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
+          if (sh.by === JUSTIN_ID && mgjSoak(s, id, now))
+            sh.got = [...(sh.got || []), id];
+          else {
+            P.dead = true;
+            holdDown(s, id, now);
+            playerKilled(s, sh.by, id, sh.k);
+          } // (Mad God Justin's Player HP: a hit it can take keeps the duck up)
           if (sh.by === JUSTIN_ID) mgjHurt(s, id);
           if (sh.k === "chair") {
             const ul = Math.sqrt(len) || 1;
