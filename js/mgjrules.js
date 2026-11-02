@@ -39,7 +39,7 @@ import {
   strike,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { holdDown } from "./hangout/death.js";
+import { holdDown, onGetUp } from "./hangout/death.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -58,6 +58,48 @@ export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him on the podi
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
 export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enough for his bubble over him, under the cloud)
 export const hpOf = (n) => 8 + 6 * n;
+/* Player HP (the owner's extra setting, in the lobby's Additional settings): off, or 1, 5, 10 or 15. With it on, a hit
+   from Justin takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down as before, and it stands up
+   with full HP. The owner: when its HP runs out, the duck stays down until the fight ends (won or lost), and when every
+   duck is out, Justin wins. s.mgj.lost = { id: HP lost }, s.mgj.out = { id: when its HP ran out }, s.mgj.safe = { id:
+   until when it can't lose more } (one attack takes one HP, even when a few of his controllers or his chair touch the
+   duck at once) */
+export const MGJ_PHP = [1, 5, 10, 15];
+export const SOAK_MS = 900;
+export const mgjPHp = (s) =>
+  isMgj(s) && MGJ_PHP.includes(+s.options.mgjHp) ? +s.options.mgjHp : 0;
+/* a hit from Justin on duck id: true when its HP took it (the duck stays up), false when it goes down */
+export function mgjSoak(s, id, now) {
+  const max = mgjPHp(s),
+    m = s.mgj,
+    P = s.players[id];
+  if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
+  if (((m.safe || {})[id] || 0) > now) return true;
+  m.safe = { ...m.safe, [id]: now + SOAK_MS };
+  const lost = ((m.lost || {})[id] || 0) + 1;
+  if (lost >= max) {
+    const rest = { ...m.lost };
+    delete rest[id];
+    m.lost = rest;
+    m.out = { ...m.out, [id]: now };
+    return false;
+  }
+  m.lost = { ...m.lost, [id]: lost };
+  return true;
+}
+/* however it went down (his meteor too), a duck stands up with full HP; one out of HP stays down (true: it stays) */
+export const mgjOut = (s, id) =>
+  !!(isMgj(s) && s.mgj && s.mgj.out && s.mgj.out[id]);
+onGetUp((s, id) => {
+  const m = s.mgj;
+  if (mgjOut(s, id) && s.phase === "boss") return true;
+  if (m && m.lost && m.lost[id]) {
+    const rest = { ...m.lost };
+    delete rest[id];
+    m.lost = rest;
+  }
+  return false;
+});
 /* the meteor, in ms from its start: he's faded out by FADE; the meteor shows from FALL and lands at LAND; he's back at
    BACK and the timer runs again at RESUME */
 export const MET = {
@@ -259,7 +301,7 @@ export function mgjStab(s, by, now, log, n = 1) {
 /* he knocked a duck down (a bullet, a pellet, the hammer, the sky): counted for Hit the Most */
 export function mgjHurt(s, id) {
   const m = s.mgj;
-  if (m && s.phase === "boss")
+  if (m && s.phase === "boss" && (s.players[id] || {}).dead)
     m.hits = { ...m.hits, [id]: (m.hits[id] || 0) + 1 };
 }
 
@@ -269,6 +311,9 @@ export function mgjAdvance(s, now, force, log) {
   if (!m) return s;
   if (s.phase === "boss") {
     if (m.hp <= 0) return mgjEnd(s, now, true, log);
+    const on = playing(s);
+    if (mgjPHp(s) && on.length && on.every((id) => mgjOut(s, id)))
+      return mgjEnd(s, now, false, log); // (every duck is out of HP: Justin wins)
     if (force || (!m.met && s.ends && now >= s.ends))
       return mgjEnd(s, now, false, log);
     return s;
@@ -291,6 +336,9 @@ function mgjEnd(s, now, won, log) {
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   m.won = won;
   m.over = now;
+  for (const id of Object.keys(m.out || {}))
+    if (s.players[id]) delete s.players[id].dead;
+  m.out = {}; // (the ducks out of HP get up: the fight is over)
   if (m.xb && !m.xb.done) m.xb.done = now;
   m.met = null;
   m.left = 0;
@@ -399,7 +447,7 @@ export function mgjTick(s, now, log) {
   const knock = (id) => {
     if (id === GOOD_ID) return goodDown(s, now);
     const P = s.players[id];
-    if (!P || P.dead) return;
+    if (!P || P.dead || mgjSoak(s, id, now)) return;
     P.dead = true;
     holdDown(s, id, now);
     mgjHurt(s, id);

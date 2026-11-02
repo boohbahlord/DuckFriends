@@ -246,6 +246,8 @@ import {
   PICK_USES,
   MGJ_DOWN,
   usesOf,
+  mgjPHp,
+  mgjOut,
 } from "./mgjrules.js";
 import {
   mgjBoardHTML,
@@ -853,7 +855,7 @@ function drawDucks(now = clockNow()) {
           ? `<i class="law-tag ${role}" aria-label="${role === "off" ? "Offense" : "Defense"}">${role === "off" ? SWORD : SHIELD}</i>`
           : "") +
         nameHTML(p.name, p.nameStyle) +
-        '<span class="gduck-down" aria-hidden="true"><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
+        '<span class="gduck-down" aria-hidden="true"><i></i></span><span class="gduck-hp" aria-hidden="true"><b></b><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
       d.classList.toggle("lawyer", !!role);
       d.classList.toggle("pic", !!(look && look.image)); // (an imported picture: its down meter is plain, no streaks)
       if (role) {
@@ -864,6 +866,7 @@ function drawDucks(now = clockNow()) {
       d.style.setProperty("--dc", cc);
       d.style.setProperty("--dk", against(cc));
       d._dn = null;
+      d._hp = null;
     }
     /* knocked down: the meter on the name tag empties until the duck stands up (s.up), behind the letters */
     const upAt =
@@ -872,7 +875,7 @@ function drawDucks(now = clockNow()) {
         (id === GOOD_ID
           ? s.mgj && s.mgj.gj && s.mgj.gj.down
           : (s.up || {})[id]),
-      dn = upAt > now ? upAt : 0; // (Good Justin God keeps his own time down)
+      dn = upAt > now && !mgjOut(s, id) ? upAt : 0; // (Good Justin God keeps his own time down; a duck out of HP has no meter: it's down until the fight ends)
     if (d._dn !== dn) {
       d._dn = dn;
       d.classList.toggle("downed", !!dn);
@@ -885,6 +888,35 @@ function drawDucks(now = clockNow()) {
         m.style.animation = "";
         m.style.setProperty("--dt", all + "ms");
         m.style.animationDelay = Math.min(0, dn - now - all) + "ms";
+      }
+    }
+    /* Mad God Justin's Player HP: a green bar behind the letters; the part a hit took turns red at once, then fades.
+       Never with the down meter: a duck that's down shows only the down meter, and stands up full */
+    const hpMax =
+        !g && s.seat.includes(id) && s.phase === "boss" ? mgjPHp(s) : 0,
+      hp =
+        hpMax && s.mgj && !dead
+          ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+          : -1;
+    if (d._hp !== hp) {
+      const was = d._hp;
+      d._hp = hp;
+      d.classList.toggle("php", hp >= 0);
+      const bar = d.querySelector(".gduck-hp");
+      if (bar && hp >= 0) {
+        bar.style.setProperty("--hp", (hp / hpMax).toFixed(3));
+        const red = bar.querySelector("b");
+        if (was > hp) {
+          bar.style.setProperty("--was", (was / hpMax).toFixed(3));
+          red.style.animation = "none";
+          void red.offsetWidth;
+          red.style.animation = "";
+          sfx.hit();
+          hurt(d);
+        } else {
+          bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
+          red.style.animation = "none";
+        }
       }
     }
     const at = seatAt(s, id) || place(pos, lane.indexOf(id), lane.length),
@@ -3153,7 +3185,7 @@ function actHTML(s) {
   if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
   if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? "Knocked down! Up again in a moment." : myPick() ? `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${matchMedia("(hover: none) and (pointer: coarse)").matches ? "tap the button" : "<kbd>Click</kbd> or <kbd>1</kbd>"} to use it once` : "Get close to Justin: your knife stabs him by itself"}</span>`;
+    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? (mgjOut(s, R.me) ? "Out of HP! You're back when the fight ends." : "Knocked down! Up again in a moment.") : myPick() ? `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${matchMedia("(hover: none) and (pointer: coarse)").matches ? "tap the button" : "<kbd>Click</kbd> or <kbd>1</kbd>"} to use it once` : "Get close to Justin: your knife stabs him by itself"}</span>`;
   if (s.phase === "mgjend")
     return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
   if (s.phase === "dunced") {

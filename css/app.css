@@ -2640,6 +2640,50 @@ svg.duck.jack.bob .jk,
     ); /* (one stripe along, so it loops without a jump) */
   }
 }
+/* Mad God Justin's Player HP: a green bar behind the name's letters (as the down meter is); a hit's part turns red at
+   once and fades away. Hidden while the duck is down, so the two never show together */
+.gduck-hp {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.gduck.php:not(.downed) .gduck-hp {
+  display: block;
+}
+.gduck.php:not(.downed) .gduck-name {
+  opacity: 0.92;
+  text-shadow:
+    0 0 0.1rem #000,
+    0 0 0.1rem #000,
+    0 0.05rem 0.05rem #000;
+} /* (a dark edge on the letters, so a green or red name still reads on the bar) */
+.gduck-hp i,
+.gduck-hp b {
+  position: absolute;
+  inset: 0;
+}
+.gduck-hp i {
+  background: color-mix(in srgb, #1fb85c 82%, transparent);
+  clip-path: inset(0 calc((1 - var(--hp, 1)) * 100%) 0 0);
+}
+.gduck-hp b {
+  background: #ef3b3b;
+  clip-path: inset(0 calc((1 - var(--was, 1)) * 100%) 0 0);
+  opacity: 0;
+  animation: php-lost 0.9s ease-in 0.25s backwards;
+}
+@keyframes php-lost {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .gduck-done {
   position: absolute;
   top: -0.2rem;
@@ -11530,18 +11574,6 @@ html.moving .mgj-field {
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at 50% 55%, #ffffff14, transparent 70%);
-  pointer-events: none;
-}
-.mgj-field::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 55%;
-  width: 46%;
-  aspect-ratio: 2.6;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 0.2rem dashed #ffffff22;
   pointer-events: none;
 }
 /* his HP, beside the cloud */
