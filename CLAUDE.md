@@ -43,7 +43,8 @@ serves `main`, so merging to `main` is deploying).
   hourly by `.github/workflows/bugs-and-ideas.yml`, copies new reports into `notes/bugs-and-ideas.md`.
 - Game modes: Agree or Disagree (`aod`), Would You Rather (`wyr`), Bicker Brackets (`bb`), Story Chain (`sc`, plan in
   `notes/plan-story-chain.md`), Who is the Quack? (`quack`, plan in `notes/plan-imposter.md`), Lawyering (`law`), Duncelation (`dunce`,
-  rules in `js/duncerules.js`, screen in `js/dunce.js`, plan in `notes/plan-duncelation.md`), Hangout
+  rules in `js/duncerules.js`, screen in `js/dunce.js`, plan in `notes/plan-duncelation.md`), Valentine's Duck Date
+  (`vdd`, rules in `js/vddrules.js`, screen and the dining table's art in `js/vdd.js`, preview `tools/vdd-art.html`), Hangout
   (`hang`, plan in `notes/plan-hangout.md`: no rounds, no stats, always on its own map, Duck Cabin, `cabin`).
 
 ## Sound without pops (every sound made in code: songs, piano, sounds)

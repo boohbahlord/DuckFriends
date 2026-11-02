@@ -369,6 +369,19 @@ const DUNCE_TILES = [
   ],
 ];
 /* Mad God Justin's own option */
+/* Valentine's Duck Date's own option */
+const VDD_TILES = [
+  [
+    "vdTime",
+    "Date timer",
+    [
+      [0, "Off"],
+      [60, "1 min"],
+      [90, "1:30"],
+      [120, "2 min"],
+    ],
+  ],
+];
 const MGJ_TILES = [
   [
     "mgjTime",
@@ -530,6 +543,8 @@ const OPT_TIPS = {
     "Who argues against each topic (it can be the writer): picked at random, by the writer, or by a vote of the room.",
   lawClose:
     "When the jury is split, the attorneys get this long to win them over; then the bigger side wins.",
+  vdTime:
+    "How long each date lasts, after 10 s of grace. Off: a date lasts until The Date presses Next duck (The Date can press it any time).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
   mgjTime:
@@ -561,8 +576,9 @@ function openOptions() {
     ${s.options.mode === "law" ? `<h3 class="opt-h">Lawyering; Juryful of Ducklings</h3>${tileRows(LAW_TILES, s, ro)}` : ""}
     ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
     ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
+    ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
     ${
-      s.options.mode === "hang"
+      ["hang", "vdd"].includes(s.options.mode)
         ? ""
         : tileRows(
             OPT_TILES.filter(
@@ -613,6 +629,16 @@ function openOptions() {
             ["freeRoam", "submitTime"].includes(r[0])
           ) &&
           !(["law", "dunce"].includes(s.options.mode) && r[0] === "freeRoam") &&
+          !(
+            s.options.mode === "vdd" &&
+            [
+              "discuss",
+              "freeRoam",
+              "submitTime",
+              "justin",
+              "unvoteStops",
+            ].includes(r[0])
+          ) &&
           !(
             s.options.mode === "hang" &&
             ["freeRoam", "submitTime", "justin", "unvoteStops"].includes(r[0])

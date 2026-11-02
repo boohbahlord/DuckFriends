@@ -2734,3 +2734,41 @@ make sure to update the controls menu to make them accurate AND remove the OLD b
 
 - Adam: Justin's own meteor now gives him 2 or 3 HP for every player (each rolled), up to his full HP; after it the
   timer comes back at 30 seconds left (it was what was left plus 30). The board: asked the owner what he means first.
+
+## Request (owner, 2026-11-01 23:03Z): new mode "Valentine's Duck Date", word for word
+
+> make a new game mode called "Valentine's Duck Date"
+>
+> in this one, a random duck is chosen as the potential partner, and the other ducks are trying to compete for them. In the center of the map, the duck tries to convince the duck, and the duck chosen can choose to vote to move on to the next duck. After, every duck gets their own tile (kinda like the who is the quack), and the duck votes on who to eliminate each time. There is a one minute timer by default that can be turned off, and if the timer is one, there is a ten second grace period before the timer starts. THe ducks can walk around during the date but cannot give the dates any dead effect. The duck who wins gets to compete another turn. The ducks keep competing until only one duck is left, and that duck becomes the valentine of the duck.
+>
+> The stats are who won the ducks favor "Sweet Valentine" and the duck with the most jumps. Every eliminated duck becomes black and white. The duck dating and the duck chosen are sat at a fancy dining table with food and drinks of wine (very simplle and make sure it looks good). The two ducks stay there and a new duck takes the seat every new turn.
+>
+> Ask me questions and also help give title suggestions to the different roles in this game.
+
+- Adam asked 7 questions (voice or typed, timer per date, what a turn is, who eliminates, next round's chosen duck,
+  Justin, fewest players) and offered plain role names (the Date or the Pick, Suitors, Turned Down or Out, Valentine).
+  Plan and table picture to follow the answers.
+
+Owner's answers (word for word where quoted): convincing happens out loud on the call or in the chat, nothing in the
+game judges it; a timer per date (Yes); a turn is a date with each duck still in (Yes); "Only the chosen picks"; no new
+Date each round (No); Justin doesn't join (No); "Yeah 3" (3 players at least). Role names: "The Date", "Suitors",
+"Turned Down", and "Yes" to "Valentine". "The date can also choose to not eliminate if they vote outside of a tile of any
+duck." "The date writes prompts that determine the topic of the conversation at the dining table."
+
+- Solomon the 2nd built it (mode `vdd`; rules js/vddrules.js, screen and art js/vdd.js, art preview tools/vdd-art.html):
+  - A random duck is The Date, everyone else a Suitor. The Date sits on the left chair of the dining table in the middle
+    the whole game; each Suitor still in takes the right chair in turn (a random order every turn).
+  - Before each date The Date writes the topic in the box beside their cloud (60 s; empty or out of time: what they typed,
+    or one of 24 built-in topics). The topic shows over the table.
+  - Date timer (lobby option, 1 min by default; Off, 1:30, 2 min), with 10 s of grace before it. The Date's Next duck
+    button (Enter) ends a date early, not in its first 5 s. With the timer off, only Next duck ends a date.
+  - Nothing knocks down the two at the table (weapons, grenades, shots, kill); everyone else walks around as usual.
+  - After the last date of a turn: a tile for each Suitor (Quack's tiles, laid out as square as they go, with free space
+    under them). The Date walks onto one and presses Turn down (Enter); on no tile it turns nobody down. The pick has no
+    timer (a skip vote turns nobody down).
+  - Turned Down ducks are black and white for the rest of the game (drawn from s.vd.out only). One Suitor left: the
+    Valentine sits with The Date, hearts, then the stats (Sweet Valentine, Most Jumps, each player's box, every date with
+    its topic and time). Then back to the lobby (VD_AFTER in js/vddrules.js: our guess, one word to change).
+  - Joining mid-game: a Suitor from the next turn. A Suitor who leaves keeps their place (their date is skipped). The Date
+    leaving: the usual wait with Next round to go on; going on draws a new Date from the Suitors and starts the turn again.
+  - All-time stats per player: games, turns, dates, Valentine, Turned Down, games as The Date.

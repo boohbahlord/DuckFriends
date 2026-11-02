@@ -257,6 +257,28 @@ import {
   GOOD_JUSTIN,
   pickHTML as mgjPickHTML,
 } from "./mgj.js";
+import {
+  isVd,
+  VD_PHASES,
+  VD_GRACE,
+  VD_TABLE,
+  VD_AFTER,
+  isDate,
+  seated,
+  seatOf,
+  turnedDown,
+  vdTileAt,
+  vdTileRects,
+  vdStats,
+} from "./vddrules.js";
+import {
+  vdBoardHTML,
+  vdTopHTML,
+  vdStatsHTML,
+  TABLE_W,
+  SEAT_OUT,
+  SEAT_LIFT,
+} from "./vdd.js";
 
 let R = null,
   S = null,
@@ -317,7 +339,13 @@ const portrait = () =>
 /* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
 const turned = () =>
   portrait() &&
-  !(R && (R.state.phase === "bracket" || isSc(R.state) || isHang(R.state)));
+  !(
+    R &&
+    (R.state.phase === "bracket" ||
+      isSc(R.state) ||
+      isHang(R.state) ||
+      isVd(R.state))
+  ); // (Valentine's Duck Date keeps its table the right way up)
 let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -398,7 +426,9 @@ const boardHTML = (s) =>
               ? dnBoardHTML(s)
               : isMgj(s)
                 ? mgjBoardHTML(s)
-                : `<div class="board">
+                : isVd(s)
+                  ? vdBoardHTML(s, R.me)
+                  : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join("")}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === "answer" || s.phase === "discuss" ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? "Would you rather" : s.qs[s.qi].text))}</p></div>` : ""}</div>`; // (Would You Rather: the choices are on the tiles)
@@ -421,7 +451,14 @@ function measure() {
     top0 = cols.offsetTop;
   const size = Math.max(
     34,
-    Math.min(100, (turned() ? H / 7 : board.offsetWidth / 7) * 0.62),
+    Math.min(
+      100,
+      (turned()
+        ? H / 7
+        : isVd(R.state) && portrait()
+          ? board.offsetWidth / 4.4
+          : board.offsetWidth / 7) * 0.62,
+    ),
   );
   const label = board.querySelector(".col-name"),
     labelH = turned() ? 0 : label ? label.offsetHeight + 12 : 30;
@@ -469,6 +506,18 @@ function measure() {
         : { t: Math.max(size * 1.08, below), b: size * 0.25, l: 0, r: 0 };
     geo.qp = qp;
     tiles.style.inset = `${qp.t.toFixed(1)}px ${qp.r.toFixed(1)}px ${qp.b.toFixed(1)}px ${qp.l.toFixed(1)}px`;
+  }
+  /* Valentine's Duck Date's pick: the board starts under the cloud, so every tile is in sight */
+  const vt = $(".vd-tiles", board),
+    vtop = $(".vd-top", board);
+  if (vt) {
+    const below = vtop ? vtop.offsetTop + vtop.offsetHeight + 6 - top0 : 0;
+    geo.qp = {
+      t: Math.max(size * 1.08, below + geo.size * 0.9),
+      b: geo.size * 0.25,
+      l: 0,
+      r: 0,
+    };
   }
 }
 /* Story Chain: the rows' places in the story (its zones, in order) and the view over it */
@@ -702,7 +751,8 @@ function drawDucks(now = clockNow()) {
     (kbT(id)
       ? 4 * (kbT(id)[0].h || KB_HOP) * kbT(id)[1] * (1 - kbT(id)[1]) * size
       : 0) +
-    podLift(s, id, now) * size; // how high over its ground a duck is drawn (Duncelation: the dunce on its podium)
+    podLift(s, id, now) * size +
+    (seated(s, id) ? SEAT_LIFT * size : 0); // how high over its ground a duck is drawn (Duncelation: the dunce on its podium; Valentine's Duck Date: on its chair)
   if (s.phase === "bracket") panTree(posOf(R.me));
   else cam = null; // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
@@ -833,16 +883,20 @@ function drawDucks(now = clockNow()) {
         m.style.animationDelay = Math.min(0, dn - now - all) + "ms";
       }
     }
-    const at = place(pos, lane.indexOf(id), lane.length),
+    const at = seatAt(s, id) || place(pos, lane.indexOf(id), lane.length),
       z = liftOf(id, pos);
     const mine = id === R.me;
     const face =
-      mine && me
-        ? me.face
-        : (hang && world.face(id)) ||
-          (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
-            ? Math.sign(pos.x - d._x)
-            : d._face || 1);
+      seatOf(s, id) >= 0
+        ? seatOf(s, id)
+          ? -1
+          : 1
+        : mine && me
+          ? me.face
+          : (hang && world.face(id)) ||
+            (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
+              ? Math.sign(pos.x - d._x)
+              : d._face || 1);
     d._face = face || 1;
     d._x = pos.x;
     const q = mine ? (now - squash.t < 170 ? squash.q : "") : pos.q || "";
@@ -906,7 +960,7 @@ function drawDucks(now = clockNow()) {
       }
     } // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
-    d.classList.toggle("air", z > 1);
+    d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
     d.querySelector(".gduck-done").hidden = !s.done[id];
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
@@ -955,11 +1009,11 @@ function drawDucks(now = clockNow()) {
       d._gr = gr;
       d.classList.toggle("grey", gr);
     } // Who is the Quack?: out this round
-    const bw = dnGrey(s, id, now);
+    const bw = dnGrey(s, id, now) || (isVd(s) && turnedDown(s, id));
     if (d._bw !== bw) {
       d._bw = bw;
       d.classList.toggle("dn-bw", bw);
-    } // Duncelation: a dunce, in black and white
+    } // Duncelation: a dunce, in black and white (Valentine's Duck Date: Turned Down)
     const gone = id === JUSTIN_ID && mgjGone(s, now);
     if (d._gone !== gone) {
       d._gone = gone;
@@ -1294,17 +1348,25 @@ function drawDucks(now = clockNow()) {
   if (hang) return; // (no columns, no cloud)
   // the column under my duck lights up
   const myCol =
-    me && me.x >= 0 ? (isQuack(s) ? spotOf(s, me) : colAt(s, me.x)) : -1;
+    me && me.x >= 0
+      ? isQuack(s)
+        ? spotOf(s, me)
+        : isVd(s)
+          ? vdTileAt(s, me)
+          : colAt(s, me.x)
+      : -1;
   board
-    .querySelectorAll(".col, .wq-tile")
+    .querySelectorAll(isVd(s) ? ".vd-tile" : ".col, .wq-tile")
     .forEach((c) => c.classList.toggle("here", +c.dataset.c === myCol));
   const vb = S.querySelector(".vote-btn");
   if (vb && vb.dataset.col !== String(myCol)) {
     vb.dataset.col = myCol;
-    if (isLaw(s) || isDn(s)) setHTML($(".gact", S), actHTML(s));
-  } // (Lawyering, Duncelation: Vote, Voted or Change vote)
+    if (isLaw(s) || isDn(s) || isVd(s)) setHTML($(".gact", S), actHTML(s));
+  } // (Lawyering, Duncelation: Vote, Voted or Change vote; Valentine's Duck Date: whom Turn down turns down)
   placeRing(board);
   placePodium(board, now);
+  placeTable(board);
+  placeTiles(board);
   placePick(board, s);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll(
@@ -1440,6 +1502,70 @@ function placePodium(board, now) {
     opacity: Math.min(1, +u * 3),
     zIndex: z,
     clipPath: `inset(0 0 ${((1 - u) * 100).toFixed(1)}% 0)`,
+  });
+}
+
+/* ---------- Valentine's Duck Date: the table, its chairs and the two seated at it; the pick's tiles ---------- */
+/* the table's feet on this screen, and its width */
+const tableAt = () => {
+  const c = place(VD_TABLE, 0, 1);
+  return { ...c, w: geo.size * TABLE_W };
+};
+/* where a duck at the table is drawn: right beside it on this screen, whatever the board's shape (null: not seated) */
+function seatAt(s, id) {
+  const k = seatOf(s, id);
+  if (k < 0 || !geo) return null;
+  const c = tableAt();
+  return { left: c.left + (k ? 1 : -1) * SEAT_OUT * geo.size, top: c.top };
+}
+/* the table stands just behind the two at it (their name tags stay in sight) and keeps its place in depth with everyone
+   walking about; each chair stands just behind its duck */
+function placeTable(board) {
+  const tb = board.querySelector(".vd-table");
+  if (!tb || !geo) return;
+  const c = tableAt(),
+    h = (c.w * 150) / 240,
+    cw = geo.size * 0.8,
+    ch = (cw * 132) / 80,
+    st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${c.w.toFixed(1)}`;
+  if (tb._st === st) return;
+  tb._st = st;
+  Object.assign(tb.style, {
+    left: (c.left - c.w / 2).toFixed(1) + "px",
+    top: (c.top - (h * 138) / 150).toFixed(1) + "px",
+    width: c.w.toFixed(1) + "px",
+    height: h.toFixed(1) + "px",
+    zIndex: Math.round(c.top) - 1,
+  });
+  for (const ch0 of board.querySelectorAll(".vd-chair")) {
+    const k = +ch0.dataset.k,
+      x = c.left + (k ? 1 : -1) * (SEAT_OUT + 0.12) * geo.size;
+    Object.assign(ch0.style, {
+      left: (x - cw / 2).toFixed(1) + "px",
+      top: (c.top - (ch * 128) / 132).toFixed(1) + "px",
+      width: cw.toFixed(1) + "px",
+      height: ch.toFixed(1) + "px",
+      zIndex: Math.round(c.top) - 2,
+    });
+  }
+}
+/* the pick's tiles, on the same spots as the host's (so a duck is on the tile it looks to be on) */
+function placeTiles(board) {
+  const box = board.querySelector(".vd-tiles");
+  if (!box || !geo) return;
+  const rs = vdTileRects(box.children.length),
+    st = `${geo.W},${geo.H},${geo.size},${rs.length}`;
+  if (box._st === st) return;
+  box._st = st;
+  [...box.children].forEach((t, k) => {
+    const a = place({ x: rs[k].x0, y: rs[k].y0 }, 0, 1),
+      b = place({ x: rs[k].x1, y: rs[k].y1 }, 0, 1);
+    Object.assign(t.style, {
+      left: a.left.toFixed(1) + "px",
+      top: a.top.toFixed(1) + "px",
+      width: (b.left - a.left).toFixed(1) + "px",
+      height: (b.top - a.top).toFixed(1) + "px",
+    });
   });
 }
 
@@ -1815,6 +1941,7 @@ const roams = () =>
   isSc(R.state) ||
   late() ||
   isQuack(R.state) ||
+  isVd(R.state) ||
   isHang(R.state); // anywhere on the board (else inside my column)
 const canWalk = () =>
   onBoardPhase() &&
@@ -1823,7 +1950,8 @@ const canWalk = () =>
   !frozen(R.state, R.me, clockNow()) &&
   !hangStill(R.state, R.me, clockNow()) &&
   !downStill(R.state, R.me, clockNow()) &&
-  !dnStill(R.state, R.me); // (Hangout: shot by Justin, still a while; Duncelation: the dunce on its podium)
+  !dnStill(R.state, R.me) &&
+  !seated(R.state, R.me); // (Hangout: shot by Justin, still a while; Duncelation: the dunce on its podium; Valentine's Duck Date: at the table)
 function xBounds() {
   const s = R.state;
   if (isLaw(s) && attorney()) return counselBounds(s, R.me); // (an attorney: their own side)
@@ -2323,6 +2451,7 @@ async function announce(phase) {
   if (isQuack(R.state)) return announceQuack(R.state);
   if (isDn(R.state)) return announceDunce(R.state, phase);
   if (isMgj(R.state)) return announceMgj(R.state, phase);
+  if (isVd(R.state)) return announceVd(R.state, phase);
   const job = ++sayJob;
   if (
     phase === "answer" ||
@@ -2438,6 +2567,33 @@ async function announceDunce(s, phase) {
   if (job !== sayJob) return;
   say("LOSER!");
 }
+/* Valentine's Duck Date: the cloud as a date starts, at the pick, and the news */
+async function announceVd(s, phase) {
+  const job = ++sayJob,
+    V = s.vd;
+  if (!V) return;
+  if (phase === "vddate") {
+    sfx.boop();
+    say("Date time!");
+    return;
+  }
+  if (phase === "vdpick") {
+    sfx.drum();
+    say("Who's out?");
+    return;
+  }
+  if (phase === "vddown") {
+    const last = V.picks[V.picks.length - 1];
+    sfx.boop();
+    say(last && last.id ? "Turned Down!" : "Nobody!");
+    return;
+  }
+  if (phase === "vdval") {
+    sfx.drum();
+    await pause(400);
+    if (job === sayJob) say("Valentine!");
+  }
+}
 /* Who is the Quack?: whose clue it is; the vote; then the drumroll and the news, a line at a time */
 async function announceQuack(s) {
   const job = ++sayJob,
@@ -2551,6 +2707,7 @@ function statsHTML(s) {
   if (isLaw(s)) return s.phase === "over" ? lawOverHTML(s) : lawStatsHTML(s);
   if (isDn(s)) return s.phase === "over" ? dnOverHTML(s) : dnStatsHTML(s);
   if (isMgj(s)) return s.phase === "over" ? mgjOverHTML(s) : mgjStatsHTML(s);
+  if (isVd(s)) return vdStatsHTML(s);
   const boxes = (r) =>
     s.seat
       .map((id) => (isDdr(s) ? ddrBoxHTML : statBoxHTML)(s, id, r))
@@ -2673,6 +2830,25 @@ function recordRound(s) {
     st.argued += p.turns;
     st.wins += p.turns - p.dunced;
     st.losses += p.dunced;
+    save();
+    shareLook();
+    return;
+  }
+  if (isVd(s)) {
+    // Valentine's Duck Date: my dates, the game won (the Valentine) or lost (Turned Down), and my games as The Date
+    const V = s.vd,
+      p = vdStats(s).per[R.me];
+    if (!st || !V) return;
+    const game = `${s.id}:${s.startedAt}`;
+    if (profile.stats.lastGame !== game) {
+      profile.stats.lastGame = game;
+      st.games++;
+    }
+    st.rounds += V.turn || 0;
+    st.argued += p ? p.dates : 0;
+    if (V.val === R.me) st.wins++;
+    else if (turnedDown(s, R.me)) st.losses++;
+    if (isDate(s, R.me)) st.titles++;
     save();
     shareLook();
     return;
@@ -2866,15 +3042,17 @@ const keyIndex = (e) => {
 
 /* the first seconds of a vote (no voting yet), or of a clue turn in Who is the Quack? (12 s before it can end) */
 const graceOf = (s) =>
-  s.phase === "answer" && isDn(s)
-    ? DN_GRACE
-    : s.phase === "answer" ||
-        (isSc(s) && SC_VOTES.includes(s.phase)) ||
-        (isQuack(s) && ["choice", "accuse"].includes(s.phase))
-      ? VOTE_GRACE
-      : isQuack(s) && s.phase === "clue"
-        ? CLUE_GRACE
-        : 0;
+  isVd(s) && ["vddate", "vdpick"].includes(s.phase)
+    ? VOTE_GRACE
+    : s.phase === "answer" && isDn(s)
+      ? DN_GRACE
+      : s.phase === "answer" ||
+          (isSc(s) && SC_VOTES.includes(s.phase)) ||
+          (isQuack(s) && ["choice", "accuse"].includes(s.phase))
+        ? VOTE_GRACE
+        : isQuack(s) && s.phase === "clue"
+          ? CLUE_GRACE
+          : 0;
 const graceLeftMs = (s) =>
   graceOf(s) ? Math.max(0, s.at + graceOf(s) * 1000 - clockNow()) : 0;
 const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
@@ -2893,6 +3071,7 @@ function actHTML(s) {
   if (s.waiting)
     return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`; // (a game below its fewest players: ducks still walk)
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
+  if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
   if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
   if (late())
     return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;
@@ -2965,6 +3144,8 @@ function actHTML(s) {
   }
   if (s.phase === "discuss")
     return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end">${mine ? "Waiting ✓" : "End turn"} <kbd>Enter</kbd></button>${count}</div>`;
+  if (s.phase === "results" && isVd(s))
+    return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : VD_AFTER === "lobby" ? "Back to the lobby" : "New game"} <kbd>Enter</kbd></button>${count}</div>`; // (Valentine's Duck Date: one game, one Valentine)
   if (s.phase === "results") {
     const rv = s.seat.filter((id) => s.reviewVotes[id]).length,
       lv = s.vote && s.vote.kind === "lobby";
@@ -2976,6 +3157,39 @@ function actHTML(s) {
     return `<div class="act-row">${isSudo(s, R.me) ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
   return "";
 }
+
+/* Valentine's Duck Date: The Date's buttons (Next duck in a date, Turn down in the pick), and what everyone else sees */
+function vdActHTML(s) {
+  const V = s.vd;
+  if (!V) return "";
+  const name = (id) => esc((s.players[id] || { name: "Gone" }).name),
+    wait = graceLeft(s);
+  if (late())
+    return `<span class="progress">You joined mid-game: walk around and chat. You're a Suitor from the next turn.</span>`;
+  if (s.phase === "vdprompt")
+    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this date (empty: a random one)." : `The Date is writing the topic${V.cur ? ` for ${name(V.cur)}` : ""}…`}</span>`;
+  if (s.phase === "vddate") {
+    if (isDate(s, R.me))
+      return `<div class="act-row"><button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
+    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}</span>`;
+  }
+  if (s.phase === "vdpick") {
+    if (!isDate(s, R.me))
+      return `<span class="progress">The Date is picking who is Turned Down.</span>`;
+    const k = me && me.x >= 0 ? vdTileAt(s, me) : -1,
+      who = k >= 0 ? V.ids[k] : null;
+    return `<div class="act-row"><button type="button" class="btn vote-btn ${who ? "red" : "ghost"}" data-a="end" data-col="${k}"${wait ? " disabled" : ""}>${wait ? `Turn down in ${wait}` : who ? `Turn down ${name(who)} <kbd>Enter</kbd>` : "Turn down nobody <kbd>Enter</kbd>"}</button></div>`;
+  }
+  if (s.phase === "vddown")
+    return `<span class="progress">${suitorsLeft(s)} still in. The next turn is coming.</span>`;
+  if (s.phase === "vdval")
+    return `<span class="progress">${V.val ? `${name(V.val)} is The Date's Valentine!` : "The game is over."} The stats are next.</span>`;
+  return "";
+}
+const suitorsLeft = (s) => {
+  const n = (s.vd.ids || []).filter((id) => !turnedDown(s, id)).length;
+  return `${n} Suitor${n === 1 ? "" : "s"}`;
+};
 
 /* Lawyering: an attorney argues (and, behind in closing arguments, may give up); a juror votes for the side they stand on,
    and can change it at any time */
@@ -3166,6 +3380,20 @@ const DN_TITLES = {
   discuss: "The verdict",
   dunced: "The dunce",
 };
+const VD_TITLES = {
+  vdprompt: "The topic",
+  vddate: "On a date",
+  vdpick: "Who is Turned Down?",
+  vddown: "Turned Down",
+  vdval: "Valentine",
+  results: "Sweet Valentine",
+};
+/* Valentine's Duck Date: the turn, and the date in it */
+const vdRound = (s) => {
+  const V = s.vd;
+  if (!V || !V.turn) return "";
+  return `Turn ${V.turn}${["vdprompt", "vddate"].includes(s.phase) && V.order.length ? ` · Date ${Math.min(V.k + 1, V.order.length)} of ${V.order.length}` : ""}`;
+};
 const MGJ_TITLES = {
   boss: "Mad God Justin",
   mgjend: "The end",
@@ -3176,7 +3404,7 @@ function viewHTML(s) {
   if (isHang(s)) return `<div class="stage hang-stage">${HANG_HTML}</div>`;
   if (isLaw(s) && s.phase === "counsel")
     return '<div class="law-counsel-wrap"></div>';
-  if ((isLaw(s) || isDn(s) || isMgj(s)) && s.phase === "results")
+  if ((isLaw(s) || isDn(s) || isMgj(s) || isVd(s)) && s.phase === "results")
     return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
   if (isQuack(s))
     switch (s.phase) {
@@ -3367,7 +3595,8 @@ function paint(force) {
       s.phase === "dunced" ||
       (isSc(s) && SC_BOARD.includes(s.phase)) ||
       !me ||
-      (isQuack(s) && (!was || was.split("|")[0] !== s.phase))
+      (isQuack(s) && (!was || was.split("|")[0] !== s.phase)) ||
+      (isVd(s) && ["vdprompt", "vdpick", "vdval"].includes(s.phase))
     )
       me = fresh && {
         ...fresh,
@@ -3387,6 +3616,7 @@ function paint(force) {
     S.classList.toggle("law", isLaw(s) || isDn(s));
     S.classList.toggle("dn", isDn(s));
     S.classList.toggle("mgj", isMgj(s));
+    S.classList.toggle("vd", isVd(s));
     S.classList.toggle("hang", isHang(s));
     if (s.phase === "answer") seedShift = 0; // a vote starts on the match's own colors
     bbMarks(s);
@@ -3395,6 +3625,9 @@ function paint(force) {
       world = null;
     }
     main.innerHTML = viewHTML(s);
+    const vin = $(".vd-in", main);
+    if (vin && !matchMedia("(hover: none) and (pointer: coarse)").matches)
+      vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
     if (isHang(s) && s.phase === "hang")
       world = mountWorld($(".hang-board", main), {
         room: () => R,
@@ -3434,6 +3667,7 @@ function paint(force) {
       (isLaw(s) && LAW_TITLES[s.phase]) ||
       (isDn(s) && DN_TITLES[s.phase]) ||
       (isMgj(s) && MGJ_TITLES[s.phase]) ||
+      (isVd(s) && VD_TITLES[s.phase]) ||
       TITLES[s.phase] ||
       "";
     lastClose = (s.law && s.law.close) || 0;
@@ -3455,7 +3689,9 @@ function paint(force) {
       ? ""
       : isMgj(s)
         ? `Fight ${s.round + 1}`
-        : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced"].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
+        : isVd(s)
+          ? vdRound(s)
+          : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced"].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
   if ($(".round", S).textContent !== round) $(".round", S).textContent = round; // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh(); // (a key kept on, or kept off)
   if (s.phase === "submit" || s.phase === "topic" || s.phase === "words") {
@@ -3688,6 +3924,8 @@ function showTimer() {
       "choice",
       "accuse",
       "counsel",
+      "vdprompt",
+      "vddate",
     ].includes(s.phase)
   ) {
     t.textContent = "";
@@ -3698,7 +3936,9 @@ function showTimer() {
   const graceEnd =
       isDn(s) && s.phase === "answer" && s.lordTime
         ? s.at + DN_GRACE * 1000
-        : 0,
+        : isVd(s) && s.phase === "vddate" && s.lordTime
+          ? s.at + VD_GRACE * 1000
+          : 0,
     inGrace = graceEnd > now; // (Duncelation: the grace period's own countdown, then the Take timer)
   const left = Math.max(
       0,
@@ -3731,9 +3971,15 @@ function showTimer() {
     meter.classList.toggle("low", left <= 5);
   }
   if (
-    ["submit", "topic", "seeds", "words", "write", "wqpick"].includes(
-      s.phase,
-    ) &&
+    [
+      "submit",
+      "topic",
+      "seeds",
+      "words",
+      "write",
+      "wqpick",
+      "vdprompt",
+    ].includes(s.phase) &&
     left <= 2 &&
     draftT
   )
@@ -3753,6 +3999,12 @@ function sendDraft(now = false) {
   draftT = 0;
   const go = () => {
     draftT = 0;
+    if (R && isVd(R.state)) {
+      const inp = S && $("form.vd-write .vd-in", S);
+      if (inp && R.state.phase === "vdprompt")
+        R.send({ t: "draft", text: inp.value });
+      return;
+    } // (The Date's topic, sent in for them if time runs out)
     if (R && isQuack(R.state)) {
       const f = S && $("form.wq-pick", S);
       if (f && R.state.phase === "wqpick")
@@ -4237,6 +4489,14 @@ register("game", {
       boardClick(e);
     });
     S.addEventListener("submit", (e) => {
+      if (e.target.matches(".vd-write")) {
+        // The Date's topic (empty: a random one)
+        e.preventDefault();
+        clearTimeout(draftT);
+        draftT = 0;
+        R.send({ t: "submit", text: e.target.querySelector(".vd-in").value });
+        return;
+      }
       if (e.target.matches(".sc-wordform")) {
         // a secret word
         e.preventDefault();
@@ -4340,7 +4600,7 @@ register("game", {
         sendDraft();
         return;
       } // (one word)
-      if (e.target.matches(".submit-card textarea, .bb-in, .wq-in"))
+      if (e.target.matches(".submit-card textarea, .bb-in, .wq-in, .vd-in"))
         sendDraft(); // (both Would You Rather boxes too)
     });
     S.addEventListener("keydown", (e) => {
