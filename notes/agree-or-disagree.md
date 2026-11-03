@@ -3018,3 +3018,35 @@ Pictures: /mnt/project-files/nov3/ (zebra-cake.png, dat-boi.png, sheltering-sky.
 > Every players should have the hitbox in the shape of the default duck, so outfits, accessories, size, weight, or styles DO NOT change the hitbox.
 
 - Adam's plan (written in Fable, as the owner asked): https://claude.ai/artifact/Xftyz86VsXbqyUVWZVmVrs. The movement glitch went to Solomon the 2nd first (function first), the 2/3 vote check to Jackal, the rest after the owner's answers.
+
+## 2026-11-03: the 2/3 vote (the owner's line, word for word)
+> In ALL gamemodes, MAKES SURE the 2/3 vote ACTUALLy works, because in game or elsewhere I dont think it does, since it has seemed very inconsistent and i cannot memorize when.
+
+Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and every share (half, 2 of 3, 3 of 4, everyone), plus a leaver and a joiner mid-vote. The formula everywhere is `max(1, ceil(players * share))` with 2 of 3 counted as exactly 2/3. Fixed: Next round after a leaver (the go-on count was not checked again when someone else left), the all-rounds review (it counted people who joined mid-turn), the bracket label ("N needed" when a match waits for every vote), the Dunce End round tip (it said one player too many). The rest is listed in the report to Adam as design choices.
+
+## 2026-11-03 02:29Z: the owner's answers to the Nov 3 plan's 20 questions, and the lobby rows (word for word)
+> 1. The name of this new worker can be Pharaoh.
+> 2. It is every 14 seconds, it has a .8 tel, and the old lightning and fire that lacks a tell or anything like that is removed. 
+> 3. yes and one damage but no damage to Justin. Yes it hurts Jaime too.
+> 4. Yes
+> 5. Yes all damage
+> 6. Yes and it is E or enter to revive a duck OR clicking while the medkit is selected.
+> 7. Yes but make it 36 actually AND it can be other players Jaime's stabs too
+> 8. He can be hit AND the hits do not count on him
+> 9. Yes but idk what you mean by third, like literally anywhere far enough from the walls or corners.
+> 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+> 11. The bow and arrow dont need to be unlocked and in the normal game AND the zombie game they shoot once every 0.4 seconds (in the zombie game, they have 150 arrows, 5% chance of crit, and no magazine or anything like that)
+> 12. Frog on unicycle
+> 13. The jetpack SHOULD NOT be in the Mad God Justin gamemode and the chair and fireball can get you. Make the fire effect better it sucks rn, it should make the whole duck covered in one large enough flame.
+> 14. "Don't get your own prompt" setting
+> 15. Yes
+> 16. ????????? wtf is this supposed to mean?????
+> 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
+> 18. yes
+> 19. yeah playing cards is ony for hangout and NOT for the zombie mode.
+> 20. YES, and players cannot go outside BUT they can go on the balcony, but everything around the balcony is very dark and only visual and NOT playable, so the balcony is it's own map boundary. that means the beginning of the staircase can be boarded up and then zombies can come from the stair case, so new idea here
+>
+> New suggestion, when selecting maps in the lobby, there should be a map option called "Vote Maps" and when it is on, players vote a map, and if a map has equal votes, then it is a random choice between maps with equal votes (cabin is not on there). For game modes, the game modes have a selection of categories that are selected first, and each category is different kind of game mode, such as social competive (dating, lawyering etc), social (agree or disagree, would you rather), cabin gamemodes, and special game modes (mad god justin for example). The gamemodes are now on a row instead of a box in the lobby selection, AND the "i" that is circled on the end can be clicked on by mobile or clicked or hovered on for computer to tell the player the info ab the gamemode like we done before. Another example is that we can make the icon of the gamemode to the left. The maps are also rows, but inside them they have a picture slice framed inside in the shape of the row. When selecting game mode or map, the rows arent in a window but a dropdown menu from where they were selected. The vote map mode is at the top of the map selection menu, random below that, with cabin below it, and every other map below that. The vote selelction also has a random map as an option. The random map selection ALSO has a six sided dice for it's picture.
+
+- Readings Adam took: 2 = Justin's old lightning throw and old fire attack go; the fireball (every 14 s, 0.8 s tell) replaces them; the fire pickup that hits Justin stays. 9 = any spot far enough from the walls and corners. 11 = the bow is no longer an unlock: every player has it in every mode; 0.4 s between arrows in the normal game and Left 4 Dead Ducks (Mad God Justin keeps one per second); short jump at the suggested 60% height, 70% time. 13 = no jetpack in Mad God Justin at all. 16 = the plan's "normal game" picks stand (no answer needed). 17 = Sheltering Sky dropped; a new map in its likeness with a lobby setting that turns its colors to greys (name to come from the owner). Lobby rows: Adam builds it; modes not named by the owner were sorted by Adam.
+- Split: Pharaoh (new) = Left 4 Dead Ducks; Solomon the 2nd = Mad God Justin code, then unlocks; Noah = all new art and the new map; Miles Jr. = sounds; Jackal = the food bug, then Valentine, Duncelation, Lawyering, 2:12, Tiles; Adam = Left 4 Dead Ducks plan, lobby rows.

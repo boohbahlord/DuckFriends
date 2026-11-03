@@ -329,6 +329,17 @@ function holdFor(s, id, name, now) {
   );
   Object.assign(s.waiting, { for: id, name, go: {} });
 }
+/* enough pressed Next round: the game goes on without the one who left. I want this checked whenever the count can change,
+   a press, or someone else leaving (the need drops with them). It returns the new state, or null if not enough yet */
+function goOnDone(s, now) {
+  const w = s.waiting;
+  if (!w || !w.for || goOnVotes(s).length < goOnNeed(s)) return null;
+  const name = w.name;
+  delete w.for;
+  delete w.go;
+  if (tooFew(s)) return s; // (still too few to play: it waits for players)
+  return resumeGame(s, now, `The game goes on without ${name}.`);
+}
 export const goOnVotes = (s) => {
   const g = (s.waiting && s.waiting.go) || {};
   return playing(s).filter((id) => g[id]);
@@ -354,6 +365,9 @@ function shortHanded(s, now, gone, wasQuack) {
 /* the share of players that ends a turn; the 2-of-3 tile stores .67, which must count as exactly 2/3 (3 players * .67 is 2.01: it wanted all 3) */
 export const shareOf = (s) =>
   Math.abs(s.options.share - 0.67) < 0.005 ? 2 / 3 : s.options.share;
+/* the all-rounds review votes, counted among the players the share is of (not one who joined mid-turn, not one who left) */
+export const reviewCount = (s) =>
+  playing(s).filter((id) => s.reviewVotes[id]).length;
 export const needed = (s) =>
   Math.max(1, Math.ceil(playing(s).length * shareOf(s) - 1e-9));
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
@@ -927,6 +941,10 @@ export function reduce(state, a, now = Date.now()) {
       delete s.done[a.id];
       if (host) s.hostId = humanIds(s)[0] || null;
       if (s.vote) settleVote(s, now);
+      if (!held && s.waiting && s.waiting.for) {
+        const on = goOnDone(s, now); // (the rest were waiting to go on: one fewer needed)
+        if (on) return on;
+      }
       if (held) holdFor(s, a.id, me.name, now); // (an attorney, the defender: the case waits for them)
       if (shortHanded(s, now, a.id, wasQuack) || held) return s;
       if (isQuack(s)) quackLeft(s, now);
@@ -997,6 +1015,10 @@ export function reduce(state, a, now = Date.now()) {
       delete s.pos[a.who];
       delete s.done[a.who];
       if (s.vote) settleVote(s, now);
+      if (s.waiting && s.waiting.for) {
+        const on = goOnDone(s, now);
+        if (on) return on;
+      }
       if (shortHanded(s, now, a.who, wasQuack)) return s;
       if (isQuack(s)) quackLeft(s, now);
       return s.phase === "lobby" ||
@@ -1189,8 +1211,7 @@ export function reduce(state, a, now = Date.now()) {
       if (!me || s.phase !== "results" || s.round < 1 || s.reviewVotes[a.id])
         return s;
       s.reviewVotes[a.id] = true;
-      if (s.seat.filter((id) => s.reviewVotes[id]).length >= needed(s))
-        s.review = true;
+      if (reviewCount(s) >= needed(s)) s.review = true;
       return s;
     case "toLobby":
       if (boss && isHang(s) && s.phase === "hang")
@@ -1441,12 +1462,7 @@ export function reduce(state, a, now = Date.now()) {
       w.go = { ...w.go };
       if (w.go[a.id]) delete w.go[a.id];
       else w.go[a.id] = true;
-      if (goOnVotes(s).length < goOnNeed(s)) return s;
-      const name = w.name;
-      delete w.for;
-      delete w.go;
-      if (tooFew(s)) return s; // (still too few to play: it waits for players)
-      return resumeGame(s, now, `The game goes on without ${name}.`);
+      return goOnDone(s, now) || s;
     }
     case "dnEnd":
       return me && isDn(s) ? dnEndVote(s, a, now) || state : state; // Duncelation: End round (or take it back)
