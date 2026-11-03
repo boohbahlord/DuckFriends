@@ -1,4 +1,4 @@
-/* ---------- the collage map (a working id: the owner names it later) ----------
+/* ---------- Shelter Sky & Null (id: collage) ----------
    A map very much in the likeness of the owner's Sheltering Sky picture, drawn once on a canvas whenever the page
    changes size (a slice at a time, so the game never stutters), with a few things alive on top:
    - top left, a yellow-green sky like a fractal, cracked by glowing red veins, with dark blue rings over it;
@@ -7,7 +7,10 @@
      speckles showing through the leaves;
    - a rubber duck in yellow halftone at the bottom left, looking up at the tree, on halftone ground that fades to black;
    - red halftone clouds around the leaves;
-   - see-through blue, cyan and purple squares on a grid that slowly blink, and small shaded hexagons that twinkle.
+   - small see-through blue, cyan and purple squares that fade in and out, each jumping to another tile of an imagined
+     grid while it's hidden;
+   - over it all, a colored fuzzy static and faint scan lines.
+   The sky, the band, the patches and the halftones melt into the black at their borders; the tree stays black.
    Everyone sees the same picture (a fixed seed). "Black and white" (options.mapGrey) turns it all into greys. */
 
 const SEED = 20261103;
@@ -169,6 +172,29 @@ function halftone(g, x0, y0, x1, y1, step, col, w, off = 0) {
   g.fill();
 }
 
+/* a canvas the size of the picture, to draw one part on before it goes on the picture */
+function sheet(W, H) {
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  return { c, g: c.getContext("2d") };
+}
+/* softens a part's borders so it flows into a fade: its shape is drawn small (f times smaller) and stretched back over
+   it, so the edge melts over about f pixels (this works in every browser, unlike a canvas blur) */
+function feather(part, W, H, f, shape) {
+  const k = 1 / Math.max(1, f),
+    m = sheet(Math.max(1, Math.ceil(W * k)), Math.max(1, Math.ceil(H * k)));
+  m.g.scale(k, k);
+  m.g.fillStyle = "#000";
+  shape(m.g);
+  part.g.save();
+  part.g.globalCompositeOperation = "destination-in";
+  part.g.imageSmoothingEnabled = true;
+  part.g.imageSmoothingQuality = "high";
+  part.g.drawImage(m.c, 0, 0, W, H);
+  part.g.restore();
+}
+
 function* drawCollage(cv, W, H, grey) {
   const R = rng(SEED),
     g = cv.getContext("2d"),
@@ -196,102 +222,95 @@ function* drawCollage(cv, W, H, grey) {
   }
   skyPath.moveTo(sx + sr * 0.62, sy);
   skyPath.arc(sx, sy, sr * 0.62, 0, Math.PI * 2);
-  g.save();
-  g.clip(skyPath);
-  const sky = g.createRadialGradient(sx, sy, 0, sx, sy, sr);
-  sky.addColorStop(0, "#f3ef6a");
-  sky.addColorStop(0.5, "#dfe35e");
-  sky.addColorStop(0.78, "#9cc94a");
-  sky.addColorStop(1, "#2f6e33");
-  g.fillStyle = sky;
-  g.fillRect(0, 0, W, H);
-  g.fillStyle = grain;
-  g.fillRect(0, 0, W, H);
-  /* where the veins gather, a mottled red */
-  const rx = sx + sr * 0.42,
-    ry = sy - sr * 0.05;
-  halftone(
-    g,
-    rx - sr * 0.4,
-    ry - sr * 0.5,
-    rx + sr * 0.4,
-    ry + sr * 0.3,
-    u * 0.008,
-    "#d81c14",
-    (x, y) =>
-      (1 - Math.hypot((x - rx) / (sr * 0.38), (y - ry) / (sr * 0.42))) *
-      1.6 *
-      (0.6 + 0.4 * Math.sin(x * 0.07) * Math.sin(y * 0.05)),
-  );
-  const vein = (x, y, a, len, w, depth) => {
-    if (depth > 6 || w < 0.5) return;
-    let px = x,
-      py = y;
-    g.beginPath();
-    g.moveTo(px, py);
-    for (let i = 0; i < 6; i++) {
-      a += (R() - 0.5) * 0.9;
-      px += (Math.cos(a) * len) / 6;
-      py += (Math.sin(a) * len) / 6;
-      g.lineTo(px, py);
-    }
-    g.lineWidth = w;
-    g.stroke();
-    const kids = 1 + (R() < 0.6);
-    for (let k = 0; k < kids; k++)
-      vein(
-        px,
-        py,
-        a + (R() - 0.5) * 1.4,
-        len * (0.55 + R() * 0.25),
-        w * 0.62,
-        depth + 1,
-      );
-  };
-  g.strokeStyle = "#e3261c";
-  g.lineCap = "round";
-  g.lineJoin = "round";
-  g.shadowColor = "#ff3a1a";
-  g.shadowBlur = u * 0.01;
-  for (let i = 0; i < 3; i++)
-    vein(
-      rx + (R() - 0.5) * sr * 0.3,
-      ry - sr * 0.15,
-      Math.PI * (0.4 + R() * 0.3),
-      sr * 0.3,
-      u * 0.011,
-      0,
+  const top = g;
+  let part = sheet(W, H);
+  {
+    const g = part.g;
+    const sky = g.createRadialGradient(sx, sy, 0, sx, sy, sr);
+    sky.addColorStop(0, "#f3ef6a");
+    sky.addColorStop(0.5, "#dfe35e");
+    sky.addColorStop(0.78, "#9cc94a");
+    sky.addColorStop(1, "#2f6e33");
+    g.fillStyle = sky;
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = grain;
+    g.fillRect(0, 0, W, H);
+    /* where the veins gather, a mottled red */
+    const rx = sx + sr * 0.42,
+      ry = sy - sr * 0.05;
+    halftone(
+      g,
+      rx - sr * 0.4,
+      ry - sr * 0.5,
+      rx + sr * 0.4,
+      ry + sr * 0.3,
+      u * 0.008,
+      "#d81c14",
+      (x, y) =>
+        (1 - Math.hypot((x - rx) / (sr * 0.38), (y - ry) / (sr * 0.42))) *
+        1.6 *
+        (0.6 + 0.4 * Math.sin(x * 0.07) * Math.sin(y * 0.05)),
     );
-  g.shadowBlur = 0;
-  g.restore();
-  /* its edge glows a little, green into the black */
-  g.save();
-  g.strokeStyle = "#2f6e3380";
-  g.lineWidth = u * 0.012;
-  g.filter = `blur(${(u * 0.01).toFixed(0)}px)`;
-  g.stroke(skyPath);
-  g.restore();
+    const vein = (x, y, a, len, w, depth) => {
+      if (depth > 6 || w < 0.5) return;
+      let px = x,
+        py = y;
+      g.beginPath();
+      g.moveTo(px, py);
+      for (let i = 0; i < 6; i++) {
+        a += (R() - 0.5) * 0.9;
+        px += (Math.cos(a) * len) / 6;
+        py += (Math.sin(a) * len) / 6;
+        g.lineTo(px, py);
+      }
+      g.lineWidth = w;
+      g.stroke();
+      const kids = 1 + (R() < 0.6);
+      for (let k = 0; k < kids; k++)
+        vein(
+          px,
+          py,
+          a + (R() - 0.5) * 1.4,
+          len * (0.55 + R() * 0.25),
+          w * 0.62,
+          depth + 1,
+        );
+    };
+    g.strokeStyle = "#e3261c";
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    g.shadowColor = "#ff3a1a";
+    g.shadowBlur = u * 0.01;
+    for (let i = 0; i < 3; i++)
+      vein(
+        rx + (R() - 0.5) * sr * 0.3,
+        ry - sr * 0.15,
+        Math.PI * (0.4 + R() * 0.3),
+        sr * 0.3,
+        u * 0.011,
+        0,
+      );
+    g.shadowBlur = 0;
+  }
+  /* its borders melt into the black */
+  feather(part, W, H, u * 0.07, (m) => m.fill(skyPath));
+  top.drawImage(part.c, 0, 0);
   yield;
 
   /* the band of swirls: an arc around the sky's lower edge */
   const br0 = sr * 0.95,
     br1 = sr * 1.32;
-  g.save();
-  g.beginPath();
-  g.arc(sx, sy, br1, -0.15, Math.PI * 0.62);
-  g.arc(sx, sy, br0, Math.PI * 0.62, -0.15, true);
-  g.closePath();
-  g.clip();
-  g.fillStyle = swirl;
-  g.fillRect(0, 0, W, H);
-  const fade = g.createRadialGradient(sx, sy, br0, sx, sy, br1);
-  fade.addColorStop(0, "#000b");
-  fade.addColorStop(0.3, "#0000");
-  fade.addColorStop(0.75, "#0000");
-  fade.addColorStop(1, "#000c");
-  g.fillStyle = fade;
-  g.fillRect(0, 0, W, H);
-  g.restore();
+  part = sheet(W, H);
+  part.g.fillStyle = swirl;
+  part.g.fillRect(0, 0, W, H);
+  feather(part, W, H, u * 0.05, (m) => {
+    m.beginPath();
+    m.arc(sx, sy, br1, -0.15, Math.PI * 0.62);
+    m.arc(sx, sy, br0, Math.PI * 0.62, -0.15, true);
+    m.closePath();
+    m.fill();
+  });
+  g.drawImage(part.c, 0, 0);
   yield;
 
   /* dark blue rings, over the sky and the band */
@@ -318,16 +337,27 @@ function* drawCollage(cv, W, H, grey) {
   g.fillRect(W * 0.35 - 37, -61, W * 0.65, H);
   g.restore();
   /* specks of dark sky behind the tree: pale, bluish grains in clumps, and swirl patches the leaves will cut */
-  g.save();
-  for (let i = 0; i < 34; i++) {
-    const x = W * (0.42 + R() * 0.6),
-      y = H * (0.02 + R() * 0.7),
-      r = u * (0.02 + R() * 0.05);
-    g.globalAlpha = 0.55 + R() * 0.4;
-    g.fillStyle = R() < 0.55 ? swirl : grain;
-    blob(g, R, x, y, r, 6);
-  }
-  g.restore();
+  const patches = (n, x0, xw, y0, yh, r0, rw, sides, a0, aw, f) => {
+    const list = Array.from({ length: n }, (_, i) => ({
+      x: W * (x0 + R() * xw),
+      y: H * (y0 + R() * yh),
+      r: u * (r0 + R() * rw),
+      a: a0 + R() * aw,
+      swirl: R() < 0.55,
+      seed: SEED + 100 + i * 7 + Math.round(x0 * 1000),
+    }));
+    const p = sheet(W, H);
+    for (const b of list) {
+      p.g.globalAlpha = b.a;
+      p.g.fillStyle = b.swirl ? swirl : grain;
+      blob(p.g, rng(b.seed), b.x, b.y, b.r, sides);
+    }
+    feather(p, W, H, f, (m) => {
+      for (const b of list) blob(m, rng(b.seed), b.x, b.y, b.r, sides);
+    });
+    g.drawImage(p.c, 0, 0);
+  };
+  patches(34, 0.42, 0.6, 0.02, 0.7, 0.02, 0.05, 6, 0.55, 0.4, u * 0.025);
   yield;
 
   /* red halftone clouds around the tree, and the ground: yellow on red at the bottom left, thinning to red dots */
@@ -362,7 +392,7 @@ function* drawCollage(cv, W, H, grey) {
       dn = (y - gy) / (H - gy);
     return (
       (1.25 - a) *
-      Math.min(1, dn * 6 + 0.3) *
+      Math.min(1, dn * 3) *
       (0.85 + 0.15 * Math.sin(x * 0.03 + y * 0.05))
     );
   });
@@ -415,67 +445,68 @@ function* drawCollage(cv, W, H, grey) {
   const tx = W * (tall ? 0.74 : 0.8),
     trunkW = u * (tall ? 0.24 : 0.2),
     fork = [fx, fy];
-  g.fillStyle = "#000";
-  limb(
-    g,
-    [tx, H * 1.04],
-    [tx + trunkW * 0.15, H * 0.74],
-    fork,
-    trunkW * 1.5,
-    trunkW * 0.6,
-  );
-  const tips = [];
-  const branch = (p, a, len, w, depth) => {
-    const end = [p[0] + Math.cos(a) * len, p[1] + Math.sin(a) * len],
-      mid = [
-        p[0] + Math.cos(a + 0.22) * len * 0.5,
-        p[1] + Math.sin(a + 0.22) * len * 0.5,
-      ];
-    limb(g, p, mid, end, w, w * 0.55);
-    if (depth >= 3) return tips.push(end);
-    const kids = 2 + (R() < 0.35);
-    for (let k = 0; k < kids; k++)
-      branch(
-        end,
-        a + (k - (kids - 1) / 2) * 0.7 + (R() - 0.5) * 0.35,
-        len * (0.62 + R() * 0.14),
-        w * 0.55,
-        depth + 1,
-      );
-  };
-  const L0 = u * (tall ? 0.3 : 0.28);
-  branch(fork, -Math.PI * 0.78, L0, trunkW * 0.55, 0); // up and to the left
-  branch(fork, -Math.PI * 0.42, L0 * 1.1, trunkW * 0.55, 0); // up and to the right
-  branch(
-    [fork[0] + trunkW * 0.05, fork[1] + trunkW * 0.35],
-    -0.06,
-    L0 * 1.15,
-    trunkW * 0.45,
-    1,
-  ); // out to the right
-  yield;
-  for (const [x, y] of tips) blob(g, R, x, y, u * (0.045 + R() * 0.04), 8);
-  for (let i = 0; i < 18; i++)
-    blob(
+  const tree = sheet(W, H);
+  {
+    const g = tree.g;
+    g.fillStyle = "#000";
+    limb(
       g,
-      R,
-      W * (0.5 + R() * 0.55),
-      H * (R() * 0.42),
-      u * (0.05 + R() * 0.07),
-      7,
+      [tx, H * 1.04],
+      [tx + trunkW * 0.15, H * 0.74],
+      fork,
+      trunkW * 1.5,
+      trunkW * 0.6,
     );
+    const tips = [];
+    const branch = (p, a, len, w, depth) => {
+      const end = [p[0] + Math.cos(a) * len, p[1] + Math.sin(a) * len],
+        mid = [
+          p[0] + Math.cos(a + 0.22) * len * 0.5,
+          p[1] + Math.sin(a + 0.22) * len * 0.5,
+        ];
+      limb(g, p, mid, end, w, w * 0.55);
+      if (depth >= 3) return tips.push(end);
+      const kids = 2 + (R() < 0.35);
+      for (let k = 0; k < kids; k++)
+        branch(
+          end,
+          a + (k - (kids - 1) / 2) * 0.7 + (R() - 0.5) * 0.35,
+          len * (0.62 + R() * 0.14),
+          w * 0.55,
+          depth + 1,
+        );
+    };
+    const L0 = u * (tall ? 0.3 : 0.28);
+    branch(fork, -Math.PI * 0.78, L0, trunkW * 0.55, 0); // up and to the left
+    branch(fork, -Math.PI * 0.42, L0 * 1.1, trunkW * 0.55, 0); // up and to the right
+    branch(
+      [fork[0] + trunkW * 0.05, fork[1] + trunkW * 0.35],
+      -0.06,
+      L0 * 1.15,
+      trunkW * 0.45,
+      1,
+    ); // out to the right
+    yield;
+    for (const [x, y] of tips) blob(g, R, x, y, u * (0.045 + R() * 0.04), 8);
+    for (let i = 0; i < 18; i++)
+      blob(
+        g,
+        R,
+        W * (0.5 + R() * 0.55),
+        H * (R() * 0.42),
+        u * (0.05 + R() * 0.07),
+        7,
+      );
+    yield;
+  }
+  /* the tree stays black, its edges a little soft (a blur where the browser has one) */
+  g.save();
+  g.filter = `blur(${Math.max(1, u * 0.004).toFixed(1)}px)`;
+  g.drawImage(tree.c, 0, 0);
+  g.restore();
   yield;
   /* a few spots of light right through the leaves */
-  g.save();
-  for (let i = 0; i < 14; i++) {
-    const x = W * (0.52 + R() * 0.5),
-      y = H * (0.04 + R() * 0.5),
-      r = u * (0.01 + R() * 0.022);
-    g.globalAlpha = 0.85;
-    g.fillStyle = R() < 0.6 ? swirl : grain;
-    blob(g, R, x, y, r, 4);
-  }
-  g.restore();
+  patches(14, 0.52, 0.5, 0.04, 0.5, 0.01, 0.022, 4, 0.85, 0, u * 0.015);
   yield;
 
   /* the duck in yellow halftone, at the bottom left, looking up at the tree */
@@ -523,31 +554,38 @@ function* drawCollage(cv, W, H, grey) {
   }
 }
 
-/* the squares and the hexagons that live on top, in the page's own units (%), the same for everyone */
-function liveBits(tall) {
-  const R = rng(SEED + 9),
-    SQ = ["#1a2cff", "#19b8ff", "#6a2a9a", "#2f4f8f", "#1b6a6a"],
-    HX = [
-      ["#ffe81a", "#fff59a", "#b9a400"],
-      ["#e8141a", "#ff6a6a", "#8a0a0e"],
-      ["#ff8a00", "#ffc46a", "#a85400"],
-    ];
-  const g = tall ? 8 : 5.2; // the squares' grid, in % of the width
-  const squares = Array.from({ length: tall ? 12 : 16 }, (_, i) => {
-    const x = Math.floor(R() * (100 / g)) * g,
-      y =
-        Math.floor(R() * (100 / (g * (tall ? 0.45 : 1.78)))) *
-        g *
-        (tall ? 0.45 : 1.78);
-    return `<i class="cl-sq" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--c:${SQ[i % SQ.length]};animation-delay:-${(R() * 9).toFixed(1)}s"></i>`;
-  }).join("");
-  const hex = Array.from({ length: tall ? 18 : 26 }, (_, i) => {
-    const [c, l, d] = HX[i % 3],
-      x = 4 + R() * 92,
-      y = 4 + R() * 70;
-    return `<i class="cl-hx" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;animation-delay:-${(R() * 5).toFixed(1)}s"><svg viewBox="0 0 20 22"><path d="M10 1L19 6V16L10 21L1 16V6Z" fill="${c}"/><path d="M10 1L19 6L10 11L1 6Z" fill="${l}"/><path d="M10 11L19 6V16L10 21Z" fill="${d}" opacity=".7"/></svg></i>`;
-  }).join("");
-  return squares + hex;
+/* the squares that live on top: small and see-through, each fading in and out over and over, and while it's hidden it
+   jumps to another free spot on an imagined grid of tiles over the whole page */
+const SQ = ["#1a2cff", "#19b8ff", "#6a2a9a", "#2f4f8f", "#1b6a6a"];
+function squaresOf(box, W, H) {
+  const side = Math.max(14, Math.min(W, H) * 0.024),
+    cell = side * 1.3,
+    cols = Math.max(1, Math.floor(W / cell)),
+    rows = Math.max(1, Math.floor(H / cell)),
+    used = new Set(),
+    free = () => {
+      for (let t = 0; t < 40; t++) {
+        const c = Math.floor(Math.random() * cols * rows);
+        if (!used.has(c)) return (used.add(c), c);
+      }
+      return 0;
+    },
+    put = (e) => {
+      if (e.dataset.cell) used.delete(+e.dataset.cell);
+      const c = free();
+      e.dataset.cell = c;
+      e.style.left = ((c % cols) * cell).toFixed(0) + "px";
+      e.style.top = (Math.floor(c / cols) * cell).toFixed(0) + "px";
+    };
+  box.innerHTML = Array.from(
+    { length: W < H ? 26 : 36 },
+    (_, i) =>
+      `<i class="cl-sq" style="width:${side.toFixed(0)}px;--c:${SQ[i % SQ.length]};--a:${(0.16 + Math.random() * 0.2).toFixed(2)};--t:${(1.6 + Math.random() * 1.6).toFixed(2)}s;animation-delay:-${(Math.random() * 3).toFixed(2)}s"></i>`,
+  ).join("");
+  box.querySelectorAll(".cl-sq").forEach(put);
+  /* each time a square has faded out, it moves */
+  box.onanimationiteration = (e) =>
+    e.target.classList.contains("cl-sq") && put(e.target);
 }
 
 /* the scene: scene(layer, s) → { update(now), destroy() } */
@@ -557,7 +595,42 @@ export function collageScene(layer, s) {
   sc.className = "scene collage";
   const grey = () => !!(s && s.options && s.options.mapGrey);
   sc.classList.toggle("grey", grey());
+  /* over the picture: the squares, then a colored fuzzy static and faint scan lines (Ether's Crossroads' own, lighter) */
+  sc.innerHTML =
+    '<div class="cl-live"></div><canvas class="ec-static cl-static" aria-hidden="true"></canvas><div class="ec-scan cl-scan"></div>';
   layer.append(sc);
+  const live = sc.querySelector(".cl-live"),
+    st = sc.querySelector(".cl-static");
+  st.width = 300;
+  st.height = 170;
+  const sg = st.getContext("2d"),
+    img = sg.createImageData(st.width, st.height),
+    d32 = new Uint32Array(img.data.buffer);
+  let seed = (Math.random() * 4294967295) >>> 0 || 1,
+    last = 0;
+  const noise = () => {
+    // specks in every color (greys in black and white), about half of them showing, faintly
+    let x = seed;
+    const A = 0.16 * 255,
+      g0 = grey();
+    for (let i = 0; i < d32.length; i++) {
+      x ^= x << 13;
+      x ^= x >>> 17;
+      x ^= x << 5;
+      if (((x >>> 24) & 255) >= 130) {
+        d32[i] = 0;
+        continue;
+      }
+      const r = x & 255,
+        gg = g0 ? r : (x >>> 8) & 255,
+        b = g0 ? r : (x >>> 16) & 255,
+        a = ((((x >>> 20) & 15) / 15) * A) & 255;
+      d32[i] = (r | (gg << 8) | (b << 16) | (a << 24)) >>> 0;
+    }
+    seed = x >>> 0 || 1;
+    sg.putImageData(img, 0, 0);
+  };
+  noise();
   let drawn = "",
     job = null,
     timer = 0,
@@ -585,18 +658,14 @@ export function collageScene(layer, s) {
       cv = document.createElement("canvas");
     cv.width = Math.round(W * k);
     cv.height = Math.round(H * k);
-    const tall = H > W;
     const all = drawCollage(cv, cv.width, cv.height, grey());
     job = (function* () {
       yield* all;
-      const old = sc.querySelector("canvas");
-      sc.innerHTML = "";
-      sc.append(cv);
-      sc.insertAdjacentHTML(
-        "beforeend",
-        `<div class="cl-live">${liveBits(tall)}</div>`,
-      );
+      const old = sc.querySelector("canvas.cl-pic");
+      cv.className = "cl-pic";
+      sc.prepend(cv);
       if (old) old.remove();
+      squaresOf(live, W, H);
       sc.classList.add("ready");
     })();
     pump();
@@ -608,7 +677,15 @@ export function collageScene(layer, s) {
   ro.observe(layer);
   draw();
   return {
-    update() {
+    update(now) {
+      if (
+        !html.classList.contains("low") &&
+        html.classList.contains("moving") &&
+        now - last >= 80
+      ) {
+        last = now;
+        noise();
+      }
       if (sc.classList.contains("grey") !== grey()) {
         sc.classList.toggle("grey", grey());
         draw();

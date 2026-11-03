@@ -2852,3 +2852,10 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 > 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
 
 Art (Noah): js/mgjart.js holds the new Mad God Justin pictures (bow, arrow, fireball, one big flame, Jaime and his poof, medkit, zebra cake, pizza, donut, teleport, hitmarks, edge glow and lightning); the lightning eyes are drawn over face items. Picture sheet: https://claude.ai/artifact/DZvJvYSFSv5Phv3eukppoL
+
+## 2026-11-03: the new map and dat boi (the owner's message, word for word)
+> about the new map: make the squares that fade in and out more transparent and have them fade back in and out MORE while being in more locations and being small, where they teleport to any given possible position, based on imagined tiles of potential spawns, with a colored fuzzy static over the animation of this map with slight transparent scanlines. Make the tree and patterns kinda have undefined borders that kinda flow into fade at the borders, but leave the tree black, i like that. get rid of the floating cubes that are super small around the tree. The map is called "Shelter Sky & Null"
+>
+> Nice job on dat boi, and u can name him "Dat Boi"
+
+Read as: the map's name is "Shelter Sky & Null" (id stays `collage`). Squares: smaller, more see-through, many more spawn spots on an imagined grid; each fades in and out more often and, while hidden, jumps to another free grid spot. A colored fuzzy static and faint see-through scan lines over the map. The sky, band, patches and halftones get soft, fading edges; the tree stays black (its edge softened a little). The small hexagons ("cubes") are removed. Dat boi's art is OK'd; his style's name is "Dat Boi".

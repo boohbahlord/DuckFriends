@@ -11,6 +11,7 @@
    them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
    Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
+   Shelter Sky & Null: the owner's collage of a black tree and a halftone duck looking up at it (collage.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
@@ -51,8 +52,8 @@ export const MAPS = [
   ],
   [
     "collage",
-    "Collage", // (a working name: the owner names this map)
-    "A black tree, a halftone duck looking up at it, swirls, a chain-link net, and squares and hexagons that blink. It can be black and white.",
+    "Shelter Sky & Null",
+    "A black tree, a halftone duck looking up at it, swirls and a chain-link net, small squares that fade in and out, and static over it all. It can be black and white.",
   ],
   [
     "ec",

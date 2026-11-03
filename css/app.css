@@ -3878,12 +3878,12 @@ html.moving .st-b {
 .map-stars .law-mid {
   background: color-mix(in srgb, #070b1f var(--board-a), transparent);
 }
-/* the collage map (collage.js): its canvas, the blinking squares and the twinkling hexagons; tiles as see-through as on
-   Starry Night, names on pills */
+/* Shelter Sky & Null (collage.js): its picture, the squares that fade and jump, the colored static and scan lines over
+   them; tiles as see-through as on Starry Night, names on pills */
 .scene.collage {
   background: #000;
 }
-.scene.collage > canvas {
+.scene.collage > canvas.cl-pic {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -3896,49 +3896,34 @@ html.moving .st-b {
 }
 .cl-sq {
   position: absolute;
-  width: max(2.6rem, 5vmin);
   aspect-ratio: 1;
-  background: color-mix(in srgb, var(--c) 62%, transparent);
-  box-shadow: inset 0 0 0 1px #ffffff1c;
-  opacity: 0.8;
-}
-.cl-hx {
-  position: absolute;
-  width: max(0.9rem, 1.6vmin);
-  filter: drop-shadow(0 0 0.3rem #fff6);
-}
-.cl-hx svg {
-  display: block;
-  width: 100%;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px #ffffff26;
+  opacity: var(--a);
 }
 html.moving .cl-sq {
-  animation: cl-blink 9s ease-in-out infinite;
-}
-html.moving .cl-hx {
-  animation: cl-twinkle 5s ease-in-out infinite;
-}
-@keyframes cl-blink {
+  opacity: 0;
+  animation: cl-pop var(--t) ease-in-out infinite;
+} /* (collage.js moves each square to another tile each time it has faded out) */
+@keyframes cl-pop {
   0%,
-  100% {
-    opacity: 0.8;
+  8% {
+    opacity: 0;
   }
-  40% {
-    opacity: 0.25;
-  }
+  30%,
   55% {
-    opacity: 0.9;
+    opacity: var(--a);
+  }
+  78%,
+  100% {
+    opacity: 0;
   }
 }
-@keyframes cl-twinkle {
-  0%,
-  100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 0.3rem #fff6);
-  }
-  50% {
-    transform: scale(1.25);
-    filter: drop-shadow(0 0 0.6rem #fffc) brightness(1.3);
-  }
+.cl-static {
+  opacity: 0.8;
+}
+.cl-scan {
+  opacity: 0.32;
 }
 .scene.collage.grey .cl-live {
   filter: grayscale(1);
