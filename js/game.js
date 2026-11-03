@@ -284,6 +284,8 @@ import {
   PICK_USES,
   PICK_WEAPONS,
   MGJ_DOWN,
+  MGJ_SCALE,
+  MGJ_HAMMER,
   usesOf,
   mgjPHp,
   mgjOut,
@@ -372,6 +374,9 @@ let bar = null,
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
+const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
+/* how big a duck is drawn against the others: Mad God Justin and his double a little bigger */
+const bigOf = (s, id) => (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1);
 /* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, with the name of the duck that sent him under him */
 const jaimeLook = (s, id) => {
   const by =
@@ -916,6 +921,7 @@ function drawDucks(now = clockNow()) {
     !landing(id) &&
     !(wq && (wq.dead || []).includes(id) && rt < 6100);
   for (const id of ids) {
+    const size = geo.size * bigOf(s, id); // (this duck's own size: bigger for Mad God Justin)
     const g = bodyOf(id),
       p = g
         ? { ...s.players[id.slice(0, -BODY.length)], dead: true }
@@ -1493,13 +1499,16 @@ function drawDucks(now = clockNow()) {
             : 0;
     handed.add(id);
     let h = fxl.querySelector(`.held[data-pid="${id}"]`);
-    const hk = w + (w === "hammer" && duck && duck.wrench ? "-w" : ""); // (the hammer, or the wrench in its place)
-    if (!h || h._k !== hk) {
+    const hk = w + (w === "hammer" && duck && duck.wrench ? "-w" : ""), // (the hammer, or the wrench in its place)
+      ds = size * bigOf(s, id), // (a bigger Justin holds it farther out)
+      hs = ds * (w === "hammer" && isJustin(id) ? MGJ_HAMMER : 1); // (Justin's hammer is bigger)
+    if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
       h = el(
-        `<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${size.toFixed(0)}px"><i>${heldHTML(w, duck)}</i></div>`,
+        `<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${heldHTML(w, duck)}</i></div>`,
       );
       h._k = hk;
+      h._hs = hs;
       fxl.append(h);
     }
     /* the knife jabs out and back; the hammer rests over the shoulder, then swings from behind the head down through the
@@ -1523,15 +1532,15 @@ function drawDucks(now = clockNow()) {
               : 50 - 120 * Math.min(1, (st - 0.5) / 0.3);
     }
     const rot = ang + ((left ? -1 : 1) * turn * Math.PI) / 180;
-    const tr = `translate(${c.left.toFixed(1)}px, ${c.top.toFixed(1)}px) rotate(${rot.toFixed(3)}rad) translateX(${(size * out).toFixed(1)}px) scaleY(${left ? -1 : 1})`;
+    const tr = `translate(${c.left.toFixed(1)}px, ${c.top.toFixed(1)}px) rotate(${rot.toFixed(3)}rad) translateX(${((w === "hammer" ? hs : ds) * out).toFixed(1)}px) scaleY(${left ? -1 : 1})`;
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
     }
     if (w === "chaingun") {
       // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
-      const wd = size * GUNS.chaingun.w,
-        along = size * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
+      const wd = ds * GUNS.chaingun.w,
+        along = ds * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
         down =
           ((wd * TRACE.box[1]) / TRACE.box[0]) *
           (TRACE.tip[1] / TRACE.box[1] - 0.5) *
@@ -2595,7 +2604,7 @@ function bodyAt(id, pos, now = clockNow()) {
     up = seated(R.state, id) ? SEAT_LIFT : 0; // (on its chair)
   return {
     left: at.left,
-    top: at.top - (jumpZ(pos, now) + up + 0.45) * geo.size,
+    top: at.top - (jumpZ(pos, now) + up + 0.45 * bigOf(R.state, id)) * geo.size, // (his hand higher on a bigger Justin)
   };
 }
 function myAim() {

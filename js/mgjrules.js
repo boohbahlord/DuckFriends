@@ -69,6 +69,9 @@ export const MGJ_END = 9; // seconds of the podium (or his winning line), then t
 export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him on the podium
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
 export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enough for his bubble over him, under the cloud)
+/* (owner 2026-11-03 22:21Z) he's slightly bigger than a duck here, and his hammer bigger, everywhere he swings it */
+export const MGJ_SCALE = 1.2; // Justin and his double against a duck, in Mad God Justin
+export const MGJ_HAMMER = 1.35; // Justin's hammer against a duck's, on top of his size
 export const hpOf = (n) => 20 + 20 * n; // (owner 2026-11-03 17:09Z: 12 more HP for every player, on top of the 8)
 export const TIME_PER = 4; // seconds more on the timer for every player (owner 2026-11-03 17:09Z)
 /* Player HP (in the lobby's Additional settings): on by default at 6; off, or 1, 5, 6, 10 or 15. A hit from Justin
