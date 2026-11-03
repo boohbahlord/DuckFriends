@@ -315,6 +315,15 @@ const QUACK_TILES = [
     ],
   ],
 ];
+/* "Don't get your own prompt", for Duncelation and Lawyering */
+const NO_OWN = [
+  "noOwn",
+  "Don't get your own prompt",
+  [
+    [0, "Off"],
+    [1, "On"],
+  ],
+];
 /* Lawyering's own options */
 const LAW_TILES = [
   [
@@ -344,6 +353,7 @@ const LAW_TILES = [
       [120, "2 min"],
     ],
   ],
+  NO_OWN,
 ];
 /* Duncelation's own options */
 const DUNCE_TILES = [
@@ -364,9 +374,9 @@ const DUNCE_TILES = [
     [
       ["random", "Random"],
       ["own", "Write your own"],
-      ["notOwn", "Never your own"],
     ],
   ],
+  NO_OWN,
 ];
 /* Mad God Justin's own option */
 /* Valentine's Duck Date's own option */
@@ -394,6 +404,11 @@ const MGJ_TILES = [
   ],
 ];
 /* the collage map's own setting (only while it's the map): its colors, or black and white with greys between */
+/* the grey setting shows when the room is on my collage map, or when Vote Maps or Random could land on it (never in
+   Hangout, which is always on Duck Cabin) */
+const showsCollage = (s) =>
+  s.options.map === "collage" ||
+  (!!s.options.mapPick && s.options.mode !== "hang");
 const COLLAGE_TILES = [
   [
     "mapGrey",
@@ -440,6 +455,7 @@ const MORE_TILES = [
       [60, "60 s"],
       [90, "90 s"],
       [120, "120 s"],
+      [132, "2:12"],
     ],
   ],
   [
@@ -566,7 +582,7 @@ const OPT_TIPS = {
   lawClose:
     "When the jury is split, the attorneys get this long to win them over; then the bigger side wins.",
   vdTime:
-    "How long each date lasts, after 10 s of grace. Off: a date lasts until The Date presses Next duck (The Date can press it any time).",
+    "How long each date lasts once The Date presses Start timer (they can pause it and go on). Off: no timer, a date lasts until The Date presses Next duck (after 6 s of grace).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
   mapGrey:
@@ -576,7 +592,9 @@ const OPT_TIPS = {
   mgjTime:
     "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 1:30 count toward the lightning eyes.",
   dunceTakes:
-    "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Never your own: always someone else's.",
+    "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Turn on Don't get your own prompt to always get someone else's.",
+  noOwn:
+    "You never defend (Duncelation) or argue (Lawyering, as either attorney) the prompt you wrote. Off: it can land on you. In Duncelation, Write your own wins over this.",
 };
 const tileRows = (rows, s, ro) =>
   rows
@@ -603,7 +621,7 @@ function openOptions() {
     ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
     ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
     ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
-    ${s.options.map === "collage" ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
+    ${showsCollage(s) ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
     ${
       ["hang", "vdd"].includes(s.options.mode)
         ? ""

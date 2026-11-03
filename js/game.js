@@ -2774,7 +2774,7 @@ function viewSubmit(s) {
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
         : isDn(s)
           ? `<form class="panel submit-card" autocomplete="off"><h2>Your take</h2>
-      <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
+      <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" || +s.options.noOwn ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
       <textarea maxlength="${TAKE_MAX}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
@@ -3160,17 +3160,19 @@ const keyIndex = (e) => {
 
 /* the first seconds of a vote (no voting yet), or of a clue turn in Who is the Quack? (12 s before it can end) */
 const graceOf = (s) =>
-  isVd(s) && ["vddate", "vdpick"].includes(s.phase)
-    ? VOTE_GRACE
-    : s.phase === "answer" && isDn(s)
-      ? DN_GRACE
-      : s.phase === "answer" ||
-          (isSc(s) && SC_VOTES.includes(s.phase)) ||
-          (isQuack(s) && ["choice", "accuse"].includes(s.phase))
-        ? VOTE_GRACE
-        : isQuack(s) && s.phase === "clue"
-          ? CLUE_GRACE
-          : 0;
+  isVd(s) && s.phase === "vddate"
+    ? VD_GRACE
+    : isVd(s) && s.phase === "vdpick"
+      ? VOTE_GRACE
+      : s.phase === "answer" && isDn(s)
+        ? DN_GRACE
+        : s.phase === "answer" ||
+            (isSc(s) && SC_VOTES.includes(s.phase)) ||
+            (isQuack(s) && ["choice", "accuse"].includes(s.phase))
+          ? VOTE_GRACE
+          : isQuack(s) && s.phase === "clue"
+            ? CLUE_GRACE
+            : 0;
 const graceLeftMs = (s) =>
   graceOf(s) ? Math.max(0, s.at + graceOf(s) * 1000 - clockNow()) : 0;
 const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
@@ -3285,11 +3287,16 @@ function vdActHTML(s) {
   if (late())
     return `<span class="progress">You joined mid-game: walk around and chat. You're a Suitor from the next turn.</span>`;
   if (s.phase === "vdprompt")
-    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this date (empty: a random one)." : `The Date is writing the topic${V.cur ? ` for ${name(V.cur)}` : ""}…`}</span>`;
+    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this turn's dates (empty: a random one)." : "The Date is writing the topic for this turn…"}</span>`;
   if (s.phase === "vddate") {
+    /* the date's timer: it starts when The Date presses Start timer, and pressing it again pauses it */
+    const tm = V.tm,
+      ms = tm ? (tm.run ? Math.max(0, s.ends - clockNow()) : tm.left) : 0,
+      left = Math.ceil(ms / 1000),
+      lefts = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
     if (isDate(s, R.me))
-      return `<div class="act-row"><button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
-    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}</span>`;
+      return `<div class="act-row">${tm ? `<button type="button" class="btn ${tm.run ? "yellow" : "purple"}" data-a="vdtimer" aria-pressed="${tm.run}" data-tip="${tm.run ? "Pause the timer" : "Start the timer, or go on where it stopped"}">${tm.run ? "Pause timer" : `${tm.left < (+s.options.vdTime || 0) * 1000 ? "Timer paused" : "Start timer"} · ${lefts}`}</button>` : ""}<button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
+    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}${tm && !tm.run ? ` Timer ${tm.left < (+s.options.vdTime || 0) * 1000 ? "paused" : "not started"}.` : ""}</span>`;
   }
   if (s.phase === "vdpick") {
     if (!isDate(s, R.me))
@@ -4054,9 +4061,7 @@ function showTimer() {
   const graceEnd =
       isDn(s) && s.phase === "answer" && s.lordTime
         ? s.at + DN_GRACE * 1000
-        : isVd(s) && s.phase === "vddate" && s.lordTime
-          ? s.at + VD_GRACE * 1000
-          : 0,
+        : 0,
     inGrace = graceEnd > now; // (Duncelation: the grace period's own countdown, then the Take timer)
   const left = Math.max(
       0,
@@ -4069,9 +4074,11 @@ function showTimer() {
       ? s.at
       : closing
         ? s.law.close - (+s.options.lawClose || 60) * 1000
-        : catching
-          ? s.catchEnds - catchLen(s) * 1000
-          : graceEnd || s.at,
+        : isVd(s) && s.phase === "vddate" && s.vd.tm
+          ? end - (+s.options.vdTime || 60) * 1000 // (the date's timer: pausing and going on keeps the same bar)
+          : catching
+            ? s.catchEnds - catchLen(s) * 1000
+            : graceEnd || s.at,
     frac = Math.max(
       0,
       Math.min(
@@ -4358,6 +4365,9 @@ async function act(a) {
       break;
     case "tieagain":
       R.send({ t: "tieVote", v: "again" });
+      break;
+    case "vdtimer":
+      R.send({ t: "vdTimer" });
       break;
     case "dnend":
       R.send({ t: "dnEnd" });

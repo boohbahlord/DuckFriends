@@ -3552,11 +3552,18 @@ details.more[open] > summary {
 .map-pixel .col {
   border-right-color: #ffffff30;
 }
-.map-board .col {
-  background: color-mix(in srgb, var(--c) 76%, transparent);
-} /* Night Show: the carnival shows through a little */
+/* every map's tiles are as see-through as every other's: one level, --board-a (set once, on :root), mixed here */
+.map-board .col,
+.map-sky .col,
+.map-pixel .col,
+.map-tiles .col,
+.map-rabbit .col,
+.map-stars .col,
+.map-carnival .col,
+.map-ec .col {
+  background: color-mix(in srgb, var(--c) var(--board-a), transparent);
+}
 .map-sky .col {
-  background: color-mix(in srgb, var(--c) 45%, transparent);
   box-shadow:
     inset 0 0 0 0.16rem #ffffff66,
     inset 0 0 1.6rem #ffffff38;
@@ -3565,7 +3572,6 @@ details.more[open] > summary {
     background-color 1.5s;
 } /* a white rim by day, so a blue tile never melts into a blue sky */
 .map-sky .cols.night .col {
-  background: color-mix(in srgb, var(--c) 60%, transparent);
   box-shadow:
     inset 0 0 2.4rem color-mix(in srgb, var(--c) 70%, #fff),
     inset 0 -1rem 2rem color-mix(in srgb, var(--c) 80%, transparent);
@@ -3655,8 +3661,10 @@ html.still .sky-cloud {
   animation: none !important;
   left: var(--x, 30%);
 }
+.map-tiles .col {
+  border-right-color: #ffffff30;
+}
 .map-pixel .col {
-  background: color-mix(in srgb, var(--c) 38%, transparent);
   image-rendering: pixelated;
 }
 .map-pixel .col::before {
@@ -3709,11 +3717,7 @@ html.moving .scene.rabbit.rh-plain {
     filter: hue-rotate(360deg);
   }
 }
-.map-rabbit {
-  --board-a: 45%;
-}
 .map-rabbit .col {
-  background: color-mix(in srgb, var(--c) 45%, transparent);
   border-right-color: #ffffff38;
   box-shadow: inset 0 0 0 0.14rem #ffffff40;
 }
@@ -3857,11 +3861,7 @@ html.moving .st-b {
     transform: translateX(var(--go)) scaleX(1);
   }
 }
-.map-stars {
-  --board-a: 42%;
-}
 .map-stars .col {
-  background: color-mix(in srgb, var(--c) 42%, transparent);
   border-right-color: #ffffff30;
   box-shadow: inset 0 0 0 0.14rem #ffffff38;
 }
@@ -3995,11 +3995,7 @@ html.moving .cn-flag {
     transform: scaleX(0.8) skewY(-6deg);
   }
 }
-.map-carnival {
-  --board-a: 45%;
-}
 .map-carnival .col {
-  background: color-mix(in srgb, var(--c) 45%, transparent);
   border-right-color: #ffffff30;
 }
 .map-carnival .col-name {
@@ -4192,6 +4188,21 @@ html.moving .pix-sun {
   box-shadow:
     0.7rem -0.4rem 0 -0.1rem #fff,
     -0.5rem -0.25rem 0 -0.2rem #fff;
+}
+/* Tiles: a pure black and white checkerboard, 8 squares across on a computer and 5 on a phone */
+.scene.tiles {
+  --n: 8;
+  background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
+    calc(200cqw / var(--n)) calc(200cqw / var(--n));
+}
+@media (max-width: 700px) {
+  .scene.tiles {
+    --n: 5;
+  }
+}
+.mm-tiles {
+  background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
+    3rem 3rem;
 }
 .mm-pixel {
   background: linear-gradient(
@@ -6945,21 +6956,12 @@ html.still .spe-bone .bone-slide {
 .wyr-or {
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, #1c1c28 var(--board-a, 100%), transparent);
+  background: color-mix(in srgb, #1c1c28 var(--board-a), transparent);
   color: #fff;
 }
-.map-board {
-  --board-a: 76%;
-}
-.map-sky {
+:root {
   --board-a: 45%;
-}
-.map-pixel {
-  --board-a: 38%;
-}
-.map-ec {
-  --board-a: 42%;
-} /* how solid a board's tiles are on each map */
+} /* how solid a board's tiles are, on every map */
 .wyr-or span {
   font-family: var(--fun);
   font-size: calc(1.2rem * var(--ts));
@@ -7428,7 +7430,7 @@ html.still .spe-bone .bone-slide {
 .bb-vs {
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, #1c1c28 var(--board-a, 100%), transparent);
+  background: color-mix(in srgb, #1c1c28 var(--board-a), transparent);
 }
 .bb-vs span {
   font-family: var(--fun);
@@ -7943,7 +7945,7 @@ html.still .spe-bone .bone-slide {
   border: 0.2rem solid var(--line);
   border-radius: 1rem;
   box-shadow: 0 0.3rem 0 var(--line);
-  background: color-mix(in srgb, var(--panel) var(--board-a, 76%), transparent);
+  background: color-mix(in srgb, var(--panel) var(--board-a), transparent);
 }
 .sc-rows {
   position: relative;
@@ -8110,7 +8112,7 @@ html.moving .sc-typing {
   place-items: center;
   min-height: 6rem;
   padding: 1rem;
-  background: color-mix(in srgb, var(--cc) var(--board-a, 76%), transparent);
+  background: color-mix(in srgb, var(--cc) var(--board-a), transparent);
 }
 .sc-choice span {
   font-family: var(--fun);
@@ -8408,7 +8410,6 @@ html.moving .mm-rabbit {
   background: radial-gradient(closest-side, #ffcf7aaa, transparent);
 }
 .map-ec .col {
-  background: color-mix(in srgb, var(--c) 42%, transparent);
   border-right-color: #00000040;
 }
 .map-ec .col-name {
@@ -8757,7 +8758,7 @@ html.map-is-ec .tmeter i {
   opacity: 0.95;
 }
 .law-mid {
-  background: color-mix(in srgb, #1c1c28 var(--board-a, 100%), transparent);
+  background: color-mix(in srgb, #1c1c28 var(--board-a), transparent);
 }
 .cols.law-cols.hung .law-mid {
   filter: grayscale(1);
@@ -9169,7 +9170,7 @@ html.moving .law-banner.on b {
 .wq-bg {
   position: absolute;
   inset: 0;
-  opacity: var(--board-a, 100%);
+  opacity: var(--board-a);
 }
 .map-sky .wq-tile {
   box-shadow:
