@@ -6436,6 +6436,20 @@ export const music = (function () {
   let MENU = null;
   const inMenu = () =>
     ["front", "rooms"].includes(document.body.dataset.screen);
+  /* the owner: no music for now in Quacky Zombies and Mad God Justin, until we figure out what fits them (the game itself,
+     not its lobby) */
+  const QUIET = ["l4dd", "mgj"];
+  const noMusic = () => {
+    const r = activeRoom(),
+      s = r && r.state;
+    return (
+      document.body.dataset.screen === "game" &&
+      !!s &&
+      !!s.options &&
+      QUIET.includes(s.options.mode)
+    );
+  };
+  let wasQuiet = false;
   function list() {
     if (inMenu()) return MENU;
     const r = activeRoom(),
@@ -6445,6 +6459,10 @@ export const music = (function () {
   }
   /* the host keeps the list going (every second, whether or not it plays music itself) */
   function conduct() {
+    if (noMusic() !== wasQuiet) {
+      wasQuiet = !wasQuiet;
+      sync();
+    }
     if (inMenu()) {
       const t = clockNow(),
         m = plan(MENU, t, true);
@@ -6490,7 +6508,7 @@ export const music = (function () {
         if (m) LOC = { ...m, off: [] };
       }
     }
-    if (LV() > 0 && !profile.settings.musicMute) ahead_(list());
+    if (LV() > 0 && !profile.settings.musicMute && !wasQuiet) ahead_(list());
   }
   setInterval(conduct, 1000);
   /* the song that should be sounding now: the first on the list that hasn't ended (it may not have begun) */
@@ -6643,6 +6661,7 @@ export const music = (function () {
     !profile.settings.musicMute &&
     !document.hidden &&
     !HUSH &&
+    !noMusic() &&
     ["front", "rooms", "lobby", "game"].includes(document.body.dataset.screen);
   /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
      unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
@@ -7062,6 +7081,8 @@ export const music = (function () {
         hush: true,
       };
     if (!S) return null;
+    if (noMusic())
+      return { name: "No music", next: false, in: 0, off: S.off || [] };
     const t = clockNow(),
       e = wantOf(S, t);
     if (!e) return { name: "", off: S.off || [] };

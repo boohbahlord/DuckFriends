@@ -3415,3 +3415,15 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
   mode, the toilet easter egg kept out of Updates), then a second PR for the deck and balcony. Miles Jr. the sound
   volume and no music in Quacky Zombies or Mad God Justin; Noah the PC controls text, the colors dropdown and the
   missing special previews; Jackal the old Updates entries ("For {mode}: ").
+
+## Request (owner, 2026-11-03 22:50Z, via Adam): game sounds as loud as the music; no music in Quacky Zombies or Mad God Justin
+"the sounds for the guns, zombies, ducks, sepcials become loud as the music, BECAUSE YOU CANNOT EVEN HEAR THEM HARDLY AT DEFAULT VOLUME!"
+"there is no music for now for the duck zombie or mad god justin gamemode until something is figured out with that"
+- Measured: songs sit at about 0.1 RMS (loudest tenth of 100 ms windows) with peaks 0.4 to 0.5; the game sounds were
+  0.003 to 0.1. `LOUDER` in js/sound.js raises each game sound (guns, hits, quacks, falls, specials) to about the
+  music's level while it is made; the countdown, blips and pops stay. Louder, their bright starts showed in findClicks,
+  so noise() and non-sine tones now pass two low-passes (`dark()`), every noise fades in over at least 8 ms.
+  0 clicks, 0 clipped in Chromium and Firefox; a chain gun with a hit every 120 ms, a grenade, a shotgun and a meteor
+  together peaks at 0.75 to 0.87 through the soft ceiling.
+- No music: js/music.js `noMusic()`: on the game screen in `l4dd` and `mgj` the music fades out and the bar says
+  "No music"; the lobby still plays.

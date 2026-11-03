@@ -52,6 +52,8 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
+import { ARROW, CHAIR, ZEBRA, JAIME } from "./mgjart.js";
+import { jetHTML } from "./jetpack.js";
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -307,6 +309,19 @@ export function openCustomize(page = lastPage) {
             clearTimeout(pic._see);
             pic._see = setTimeout(() => pic.classList.remove("see"), 5000);
           } // (the Invisible duck: see-through a while, as in a game)
+          if (id === "jetpack") {
+            pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
+            pic.style.setProperty("--sz", w.width.toFixed(0) + "px");
+            pic.insertAdjacentHTML("afterbegin", jetHTML(profile.duck));
+            duckBox.classList.remove("fly");
+            void duckBox.offsetWidth;
+            duckBox.classList.add("fly");
+            clearTimeout(pic._jet);
+            pic._jet = setTimeout(() => {
+              duckBox.classList.remove("fly");
+              pic.querySelectorAll(".gduck-jet").forEach((e) => e.remove());
+            }, 5000);
+          } // (the Jetpack: on the duck's back, it flies up on its flames, keeps the height, and comes down, as in a game)
           if (sp.kind === "effect") {
             pic.querySelectorAll(".sp-prev-fx").forEach((e) => e.remove());
             const fx = el(
@@ -368,8 +383,46 @@ export function openCustomize(page = lastPage) {
                   `<div class="spe spe-dthrow spe-gthrow" style="left:${(x + w.width * 0.4).toFixed(0)}px;top:${(y - w.width * 0.55).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x)}px"><b><i>${heldHTML("grenade", profile.duck)}</i></b></div>`,
                 ),
               );
-            /* the knife and the hammer: one stab or one swing in the duck's hand; the shotgun: one kick */
-            if (id === "knife" || id === "hammer" || id === "shotgun")
+            /* the bow: drawn back in the hand, then its arrow flies across the preview */
+            if (id === "bow")
+              els.push(
+                el(
+                  `<div class="spe spe-shot spe-arrow" style="left:${(x + w.width * 0.6).toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + 60)}px">${ARROW}</div>`,
+                ),
+              );
+            /* the chair: held up over the head, then thrown, slow and turning, across the preview (Mad God Justin's) */
+            if (id === "chair")
+              els.push(
+                el(
+                  `<div class="spe spe-chair" style="left:${x.toFixed(0)}px;top:${(y - w.width * 1.2).toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - x + w.width * 0.4)}px"><i>${CHAIR}</i></div>`,
+                ),
+              );
+            /* the zebra cake: tossed from the hand, it spins over and lands in front of the duck, lies there a moment, and
+               fades (in a game it lies there for whoever comes to eat it) */
+            if (id === "zebra")
+              els.push(
+                el(
+                  `<div class="spe spe-cake" style="left:${(x + w.width * 0.3).toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><b><i>${ZEBRA}</i></b></div>`,
+                ),
+              );
+            /* Jaime: he pops out by the duck in a puff, knife out, and runs off to find someone */
+            if (id === "jaime") {
+              const jx = x + w.width * 0.55;
+              els.push(
+                el(puffHTML(jx, y - w.width * 0.18, w.width * 0.6, "#ffc2d4")),
+                el(
+                  `<div class="spe spe-jaime" style="left:${jx.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - jx + w.width * 0.4)}px"><b>${duckSVG(JAIME.duck, { size: 80, shadow: false })}<i>${heldHTML("knife", JAIME.duck)}</i></b></div>`,
+                ),
+              );
+            }
+            /* the knife and the hammer: one stab or one swing in the duck's hand; the shotgun: one kick; the bow: drawn
+               back and let go */
+            if (
+              id === "knife" ||
+              id === "hammer" ||
+              id === "shotgun" ||
+              id === "bow"
+            )
               els.push(
                 el(
                   `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
@@ -387,6 +440,13 @@ export function openCustomize(page = lastPage) {
               knife: sfx.swish,
               hammer: sfx.swish,
               grenade: sfx.swish,
+              bow: () => setTimeout(() => sfx.bow(), 380),
+              chair: () => setTimeout(() => sfx.swish(), 600),
+              zebra: sfx.swish,
+              jaime: () => {
+                sfx.puff();
+                setTimeout(() => sfx.jaime(), 250);
+              },
               shotgun: () => {
                 sfx.shotgun();
                 setTimeout(() => sfx.pump(), 520);
@@ -658,7 +718,7 @@ export function openCustomize(page = lastPage) {
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p>${strip}</div>`;
+            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim sp-keep"><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
@@ -762,12 +822,15 @@ export function openCustomize(page = lastPage) {
               cur = T.find((t) => t[0] === lastColor) || T[0];
             lastColor = cur[0];
             /* an item with two or more colors folds them away under its own arrow (shut each time Customize opens; the one
-             holding the color being picked stays open) */
+             holding the color being picked stays open). The duck, the card and the name stay on top; the colors of the
+             hat, beak, clothes, face items and specials go into one big fold under them, More colors (shut at first) */
             const row = (id, label) =>
                 `<li><button type="button" class="arm-row" data-c="${id}" aria-pressed="${id === cur[0]}"><span>${esc(label)}</span></button></li>`,
-              rows = [];
+              top = [],
+              more = [];
             for (let i = 0; i < T.length; i++) {
-              const [id, label, , , , g] = T[i];
+              const [id, label, , , , g, inMore] = T[i],
+                rows = inMore ? more : top;
               if (!id) {
                 rows.push(`<li class="arm-sub">${esc(label)}</li>`);
                 continue;
@@ -786,9 +849,15 @@ export function openCustomize(page = lastPage) {
                 `<li><details class="arm-fold cfold" data-fold="${esc(fk)}"${open ? " open" : ""}><summary>${esc(g)}</summary><ul class="arm-list">${set.map(([id, label]) => row(id, label.replace(g + ": ", ""))).join("")}</ul></details></li>`,
               );
             }
+            const moreOpen =
+              openFolds.has("c:more") || (cur[6] && more.length > 0);
+            if (moreOpen) openFolds.add("c:more");
+            const fold = more.length
+              ? `<li><details class="arm-fold cmore" data-fold="c:more"${moreOpen ? " open" : ""}><summary>More colors</summary><ul class="arm-list">${more.join("")}</ul></details></li>`
+              : "";
             html =
               head("Colors") +
-              `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${rows.join("")}</ul>
+              `<div class="arm-body arm-colors"><ul class="arm-list ctargets">${top.join("")}${fold}</ul>
             <div class="cpick"><p class="small dim cnote">${esc(cur[4] || "")}</p></div></div>`;
           }
           const f = document.activeElement,
@@ -926,6 +995,7 @@ export function openCustomize(page = lastPage) {
               },
               "",
               hd.colors.length > 1 && hd.name,
+              true,
             ]);
           const bd = beakById(D.beak);
           for (const [key, label, def] of (!box && bd.colors) || [])
@@ -938,6 +1008,7 @@ export function openCustomize(page = lastPage) {
               },
               "",
               bd.colors.length > 1 && bd.name,
+              true,
             ]);
           const od = D.outfit && outfitById(D.outfit.id);
           for (const [key, label, def] of (!box && od && od.colors) || [])
@@ -950,6 +1021,7 @@ export function openCustomize(page = lastPage) {
               },
               "",
               od.colors.length > 1 && od.name,
+              true,
             ]);
           const fd = D.face && faceById(D.face.id);
           for (const [key, label, def] of (takes("face") && fd && fd.colors) ||
@@ -963,6 +1035,7 @@ export function openCustomize(page = lastPage) {
               },
               "",
               fd.colors.length > 1 && fd.name,
+              true,
             ]);
           out.push([
             "card",
@@ -995,7 +1068,7 @@ export function openCustomize(page = lastPage) {
           ]);
           /* the specials on your keys that take colors, under their own heading (the Long jump takes none) */
           const sps = keysOf(D).filter((id) => id && specialById(id).colors);
-          if (sps.length) out.push(["", "Specials"]);
+          if (sps.length) out.push(["", "Specials", "", null, "", false, true]); // (the heading, inside More colors)
           for (const id of sps) {
             const sp = specialById(id),
               now = colorsOf(D, id);
@@ -1012,6 +1085,7 @@ export function openCustomize(page = lastPage) {
                 },
                 id === "double" ? "The cloud stays see-through." : "",
                 sp.colors.length > 1 && sp.name,
+                true,
               ]),
             );
           }

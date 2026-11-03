@@ -5366,6 +5366,10 @@ async function act(a) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
+/* a second line, where Shift and a number key keep a special on (not in Mad God Justin or Quacky Zombies: their keys work
+   their own way) */
+const KEEP_HINT =
+  '<i class="hints-br"></i><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Use";
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
@@ -5472,13 +5476,14 @@ register("game", {
       isL4dd(R.state)
         ? L4_HINTS
         : isHang(R.state)
-          ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>E</kbd> Use")
+          ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>E</kbd> Use") +
+            KEEP_HINT
           : isMgj(R.state)
             ? HINTS.replace(
                 "<kbd>Enter</kbd> End turn",
                 "<kbd>Click</kbd> Stab",
               )
-            : HINTS,
+            : HINTS + KEEP_HINT,
     );
     mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R);
