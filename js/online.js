@@ -282,6 +282,8 @@ const REMOTE = new Set([
   "jumps",
   "chat",
   "options",
+  "mapVote",
+  "modeVote",
   "roomName",
   "kick",
   "skip",

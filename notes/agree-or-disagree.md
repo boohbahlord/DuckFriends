@@ -3163,3 +3163,19 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 
 ## 2026-11-03 05:10Z: matching every style's look (word for word)
 > there should be an option to match the look of every style in the style menu for customization
+## 2026-11-03 04:54Z: where Democracy of Ducklings sits (word for word)
+> Democracy of Ducklings sits below the game settings themself, not actually being apart of them, like it is above the start game or ready button
+
+- So the lobby's left side reads: Game Settings, then Democracy of Ducklings (its own screen), then Start Game or Ready.
+
+## 2026-11-03 04:55Z: the name tag setting's name (word for word)
+> '“Change player tag” means a setting where name tags take the duck’s vote color too.'
+>
+> Uhhhhh, call the setting "Change player tag color"
+
+- Noah's look setting: name tags take the duck's vote color; its name is "Change player tag color".
+
+## 2026-11-03 05:12Z: a new name for the zombie mode (word for word)
+> Rename "Left 4 Dead Ducks" simply to "Quacky Zombies"
+
+- Pharaoh renames it in PR #195 (every word players see; code names like l4dd stay).

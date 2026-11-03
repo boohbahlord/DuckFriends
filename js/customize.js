@@ -226,7 +226,7 @@ export function openCustomize(page = lastPage) {
   return openWindow(
     `<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
     {
-      cls: "win-armory",
+      cls: "win-armory win-full",
       onOpen(w) {
         openFolds.clear();
         keyFor = null;

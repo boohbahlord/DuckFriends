@@ -1,7 +1,7 @@
 /* ---------- the lobby, laid out like Halo: Reach's custom game lobby ----------
-   Left: the game's art, the room's name, who can join, Ready, then Game type (locked), Map (hidden for Hangout, always in
-   Duck Cabin), Game options (the host edits them) and Start game, with a line under them saying what the row under the
-   pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
+   Left: the game's art, the room's name, who can join, then Game Settings (the game mode, the map and the game options,
+   on a screen of their own: gamesettings.js) and Start Game for the host, or Ready for everyone else, with a line under
+   them saying what the row under the pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
    options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
    the top right leaves the room. */
 import { register, go, leaveTo } from "./router.js";
@@ -20,19 +20,19 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
-import { gameArtSVG, gameSymbol } from "./art.js";
-import { MODES, modeOf, CABIN_MODES } from "./modes.js";
+import { gameArtSVG } from "./art.js";
+import { modeOf } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
-import { OPTIONS_DEFAULT, isSudo, minOf } from "./rules.js";
-import { downFor } from "./hangout/death.js";
+import { isSudo, minOf } from "./rules.js";
+import { openGameSettings } from "./gamesettings.js";
 import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
 import { openStats } from "./stats.js";
 import { sfx } from "./sound.js";
 import { darken, brighten, loadingScreen } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
-import { MAPS, mapMini, mapName } from "./maps.js";
+import { mapName } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
 import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
@@ -49,840 +49,11 @@ let R = null,
   mbarOff = null;
 
 const INFO = {
-  type: "Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering; Juryful of Ducklings, Duncelation or Hangout (in its own Duck Cabin).",
-  map: "What the board looks like: eight maps, from Night Show to Duck Cabin (Hangout's own).",
-  options: "Question order, timers, and how many players end a turn.",
+  settings: "The game mode, the map and the game options.",
   start: "Starts the game for everyone.",
+  ready: "Tells the host you're ready.",
   friends: "Invite your friends to this room, or add a friend by code.",
 };
-
-/* the Game type window: the host picks the game. Hangout and Duck Cabin are one: on Duck Cabin only Hangout shows, with
-   All games to see the rest (picking another game leaves Duck Cabin for Night Show) */
-const allTile = (label, cls) =>
-  `<button type="button" class="tile ${cls} tile-all" data-all="1"><b>${esc(label)}</b><span class="small dim">Show them all</span></button>`;
-function openTypes() {
-  const s = R.state,
-    host = isSudo(s, R.me),
-    cur = s.options.mode || "aod";
-  const tiles = (all) =>
-    MODES.filter(
-      (m) => all || s.options.map !== "cabin" || CABIN_MODES.includes(m.id),
-    )
-      .map(
-        (m) =>
-          `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? "" : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: CABIN_MODES.includes(m.id) ? "cabin" : s.options.map === "cabin" ? "board" : s.options.map || "board", mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`,
-      )
-      .join("") +
-    (all || s.options.map !== "cabin" ? "" : allTile("All games", "type-tile"));
-  return openWindow(
-    `<h2>Game type</h2>${host ? "" : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the game.</p>'}
-    <div class="type-tiles">${tiles(false)}</div>`,
-    {
-      cls: "win-settings",
-      onOpen: (w) => {
-        const box = w.querySelector(".type-tiles");
-        box.onclick = (e) => {
-          if (e.target.closest("[data-all]")) {
-            box.innerHTML = tiles(true);
-            return;
-          }
-          const b = host && e.target.closest("[data-mode]");
-          if (!b) return;
-          R.send({ t: "options", options: { mode: b.dataset.mode } });
-          w.querySelectorAll("[data-mode]").forEach((x) =>
-            x.setAttribute("aria-pressed", x === b),
-          );
-        };
-      },
-    },
-  );
-}
-
-/* the Map window: each map with a little picture; the host picks. In Hangout only Duck Cabin shows, with All maps to see
-   the rest (picking another map leaves Hangout) */
-function openMaps() {
-  const s = R.state,
-    host = isSudo(s, R.me),
-    cur = s.options.map || "board",
-    hang = CABIN_MODES.includes(s.options.mode);
-  const tiles = (all) =>
-    [
-      ...MAPS,
-      [
-        "cabin",
-        "Duck Cabin",
-        "A log cabin at night with a deck, a pool and a campfire. Hangout's own: picking it picks Hangout.",
-      ],
-    ]
-      .filter(([id]) => (all ? true : hang ? id === "cabin" : true))
-      .map(
-        ([id, name, tip]) =>
-          `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? "" : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`,
-      )
-      .join("") +
-    (all || !hang
-      ? ""
-      : `<button type="button" class="tile map-tile tile-all" data-all="1"><span class="mini-map mm-all">${MAPS.slice(
-          0,
-          4,
-        )
-          .map((m) => mapMini(m[0]))
-          .join("")}</span><span>All maps</span></button>`);
-  return openWindow(
-    `<h2>Map</h2>${host ? "" : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the map.</p>'}
-    <div class="map-tiles">${tiles(false)}</div>`,
-    {
-      cls: "win-settings",
-      onOpen: (w) => {
-        const box = w.querySelector(".map-tiles");
-        box.onclick = (e) => {
-          if (e.target.closest("[data-all]")) {
-            box.innerHTML = tiles(true);
-            return;
-          }
-          const b = host && e.target.closest("[data-map]");
-          if (!b) return;
-          R.send({ t: "options", options: { map: b.dataset.map } });
-          w.querySelectorAll("[data-map]").forEach((x) =>
-            x.setAttribute("aria-pressed", x === b),
-          );
-        };
-      },
-    },
-  );
-}
-
-/* ---------- Game options: the host edits them; everyone else sees them ---------- */
-/* the options most hosts want; the rest wait under Additional settings so a straightforward host never sees them */
-const OPT_TILES = [
-  [
-    "order",
-    "Question order",
-    [
-      ["random", "Random"],
-      ["rotate", "Rotating"],
-    ],
-  ],
-  [
-    "share",
-    "Turn ends when done",
-    [
-      [0.5, "Half"],
-      [0.67, "2 of 3"],
-      [0.75, "3 of 4"],
-      [1, "Everyone"],
-    ],
-  ],
-  [
-    "catchUp",
-    "Catch-up timer",
-    [
-      [0, "Off"],
-      [15, "15 s"],
-      [30, "30 s"],
-      [45, "45 s"],
-    ],
-  ],
-  [
-    "writeCatch",
-    "Writing catch-up timer",
-    [
-      [0, "Off"],
-      [15, "15 s"],
-      [30, "30 s"],
-      [45, "45 s"],
-      [60, "60 s"],
-    ],
-  ],
-  [
-    "answerTime",
-    "Answer timer",
-    [
-      [0, "Off"],
-      [30, "30 s"],
-      [60, "60 s"],
-      [90, "90 s"],
-    ],
-  ],
-];
-/* Bicker Brackets' own options (shown when it's the game) */
-const BB_TILES = [
-  [
-    "bbSeeds",
-    "Contenders",
-    [
-      ["t8", "8 in all"],
-      ["t12", "12 in all"],
-      ["t16", "16 in all"],
-      ["t32", "32 in all"],
-      ["t64", "64 in all"],
-      ["p1", "1 each"],
-      ["p2", "2 each"],
-      ["p3", "3 each"],
-      ["p4", "4 each"],
-    ],
-  ],
-  [
-    "bbTopic",
-    "Topic",
-    [
-      ["vote", "Write and vote"],
-      ["random", "Random"],
-    ],
-  ],
-  [
-    "bbBlind",
-    "Writers",
-    [
-      [0, "Shown"],
-      [1, "Hidden until out"],
-    ],
-  ],
-  [
-    "bbReview",
-    "Review each round",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "bbTimer",
-    "Match vote timer",
-    [
-      [0, "None"],
-      [10, "10 s"],
-      [30, "30 s"],
-      [60, "60 s"],
-    ],
-  ],
-];
-/* Story Chain's own options */
-const SC_TILES = [
-  [
-    "scTime",
-    "Writing time",
-    [
-      [0, "Off"],
-      [60, "60 s"],
-      [90, "90 s"],
-      [120, "120 s"],
-    ],
-  ],
-  [
-    "scVote",
-    "Voting",
-    [
-      ["auto", "Auto"],
-      [1, "On"],
-      [0, "Off"],
-    ],
-  ],
-];
-/* Who is the Quack?'s own options */
-const QUACK_TILES = [
-  [
-    "wqPicker",
-    "Secret word",
-    [
-      ["player", "A random player picks it"],
-      ["list", "From the built-in list"],
-    ],
-  ],
-  [
-    "wqPickTime",
-    "Time to pick the word",
-    [
-      [30, "30 s"],
-      [60, "60 s"],
-      [90, "90 s"],
-    ],
-  ],
-  [
-    "wqQuacks",
-    "Quacks",
-    [
-      [1, "1"],
-      [2, "2 (6+ players)"],
-    ],
-  ],
-  [
-    "wqTimer",
-    "Vote timer",
-    [
-      [0, "None"],
-      [30, "30 s"],
-      [60, "60 s"],
-      [90, "90 s"],
-    ],
-  ],
-];
-/* "Don't get your own prompt", for Duncelation and Lawyering */
-const NO_OWN = [
-  "noOwn",
-  "Don't get your own prompt",
-  [
-    [0, "Off"],
-    [1, "On"],
-  ],
-];
-/* Lawyering's own options */
-const LAW_TILES = [
-  [
-    "lawDef",
-    "Defense attorney",
-    [
-      ["random", "Random"],
-      ["writer", "Writer picks"],
-      ["vote", "Room votes"],
-    ],
-  ],
-  [
-    "lawOff",
-    "Offense attorney",
-    [
-      ["random", "Random"],
-      ["writer", "Writer picks"],
-      ["vote", "Room votes"],
-    ],
-  ],
-  [
-    "lawClose",
-    "Closing arguments",
-    [
-      [30, "30 s"],
-      [60, "1 min"],
-      [120, "2 min"],
-    ],
-  ],
-  NO_OWN,
-];
-/* Duncelation's own options */
-const DUNCE_TILES = [
-  [
-    "dunceTime",
-    "Take timer",
-    [
-      [0, "Off"],
-      [60, "1 min"],
-      [120, "2 min"],
-      [180, "3 min"],
-      [300, "5 min"],
-    ],
-  ],
-  [
-    "dunceTakes",
-    "Takes",
-    [
-      ["random", "Random"],
-      ["own", "Write your own"],
-    ],
-  ],
-  NO_OWN,
-];
-/* Mad God Justin's own option */
-/* Valentine's Duck Date's own option */
-const VDD_TILES = [
-  [
-    "vdTime",
-    "Date timer",
-    [
-      [0, "Off"],
-      [60, "1 min"],
-      [90, "1:30"],
-      [120, "2 min"],
-    ],
-  ],
-];
-const MGJ_TILES = [
-  [
-    "mgjTime",
-    "Time to beat him",
-    [
-      [105, "1:45"],
-      [135, "2:15"],
-      [165, "2:45"],
-    ],
-  ],
-];
-/* the collage map's own setting (only while it's the map): its colors, or black and white with greys between */
-/* the grey setting shows when the room is on my collage map, or when Vote Maps or Random could land on it (never in
-   Hangout, which is always on Duck Cabin) */
-const showsCollage = (s) =>
-  s.options.map === "collage" ||
-  (!!s.options.mapPick && s.options.mode !== "hang");
-const COLLAGE_TILES = [
-  [
-    "mapGrey",
-    "Colors",
-    [
-      [0, "Colors"],
-      [1, "Black and white"],
-    ],
-  ],
-];
-const MORE_TILES = [
-  [
-    "mgjHp",
-    "Player HP",
-    [
-      [0, "Off"],
-      [1, "1"],
-      [5, "5"],
-      [6, "6"],
-      [10, "10"],
-      [15, "15"],
-    ],
-  ], // (Mad God Justin only)
-  [
-    "discuss",
-    "Discussion round",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "freeRoam",
-    "Answering",
-    [
-      [0, "Lock answers"],
-      [1, "Free roam"],
-    ],
-  ],
-  [
-    "submitTime",
-    "Question time limit",
-    [
-      [0, "Off"],
-      [60, "60 s"],
-      [90, "90 s"],
-      [120, "120 s"],
-      [132, "2:12"],
-    ],
-  ],
-  [
-    "lowGravity",
-    "Jumps",
-    [
-      [0, "Normal"],
-      [1, "Low gravity"],
-    ],
-  ],
-  [
-    "fun",
-    "Silly commands",
-    [
-      [1, "On"],
-      [0, "Off"],
-    ],
-  ],
-  [
-    "justin",
-    "Justin",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "downMs",
-    "Knocked down for",
-    [
-      [0, "None"],
-      [500, "0.5 s"],
-      [1000, "1 s"],
-      [2000, "2 s"],
-      [3000, "3 s"],
-      [5000, "5 s"],
-      [6000, "6 s"],
-    ],
-  ],
-  [
-    "ghosts",
-    "Ghosts",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "ghostBusy",
-    "No ghosts while busy",
-    [
-      [1, "On"],
-      [0, "Off"],
-    ],
-  ],
-  [
-    "stats",
-    "Stats screen",
-    [
-      [1, "On"],
-      [0, "Off"],
-    ],
-  ],
-  [
-    "unvoteStops",
-    "Unvoting stops the countdown",
-    [
-      [0, "No"],
-      [1, "Yes"],
-    ],
-  ],
-  [
-    "invuln",
-    "Invulnerability",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "noChat",
-    "No Chat",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "noTerm",
-    "No Terminal",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ],
-  [
-    "aodColors",
-    "Board colors",
-    [
-      ["rainbow", "Rainbow"],
-      ["gr", "Green and red"],
-    ],
-  ], // (Agree or Disagree only)
-  [
-    "hideNames",
-    "Hide names while answering",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ], // (Agree or Disagree, Would You Rather, Does Duck Relate?)
-  [
-    "showWriter",
-    "Show the writer",
-    [
-      [0, "Off"],
-      [1, "On"],
-    ],
-  ], // (Agree or Disagree, Would You Rather)
-  [
-    "scLines",
-    "Lines per player",
-    [
-      [1, "1"],
-      [2, "2"],
-      [3, "3"],
-      [4, "4"],
-    ],
-  ], // (Story Chain only)
-  [
-    "lateJoin",
-    "Players who join mid-game",
-    [
-      ["play", "Play at once"],
-      ["watch", "Watch until the next round"],
-    ],
-  ],
-  [
-    "walk",
-    "Walking speed",
-    [
-      ["slow", "Slow"],
-      ["normal", "Normal"],
-      ["fast", "Fast"],
-    ],
-  ],
-  [
-    "textMax",
-    "Text length limit",
-    [
-      [80, "80"],
-      [140, "140"],
-      [200, "200"],
-      [280, "280"],
-    ],
-  ], // (a question, topic or take)
-];
-/* which modes show a setting that only some modes use */
-const ONLY_IN = {
-  aodColors: ["aod"],
-  hideNames: ["aod", "wyr", "ddr"],
-  showWriter: ["aod", "wyr"],
-  scLines: ["sc"],
-  textMax: ["aod", "wyr", "ddr", "law", "dunce"],
-};
-let moreOpen = false;
-const OPT_TIPS = {
-  discuss:
-    "A round after each vote to look at where everyone stood and talk it over.",
-  share:
-    "Once this many players have voted, the catch-up timer starts. Everyone voting ends the turn at once.",
-  catchUp:
-    "How long the rest get once enough players have voted. Off: the turn ends as soon as enough have voted.",
-  writeCatch:
-    "How long the last writers get once enough players have sent theirs. Off: writing ends as soon as enough have sent.",
-  invuln:
-    "Nothing takes a duck down or takes its HP: bullets, blades, grenades, Justin's attacks and zombies only flash it red.",
-  noChat:
-    "Text chat is off for everyone, the host too. The game's own messages still show.",
-  noTerm: "The command line is off for everyone, the host too.",
-  aodColors:
-    "Green and red: the agree columns are shades of green, the disagree columns shades of red, and Neutral slowly fades between black, grey and white.",
-  hideNames: "Name tags stay hidden until the turn ends.",
-  showWriter: "The question's writer is named after the vote.",
-  scLines: "How many lines each player writes before the paragraph ends.",
-  lateJoin:
-    "Play at once: someone who joins mid-game plays right away. Watch until the next round: they wait for it.",
-  walk: "How fast ducks walk.",
-  textMax: "The most characters a question, topic or take can have.",
-  unvoteStops:
-    "Yes: if votes are taken back below the needed share, the countdown stops. No: once it starts, it runs out.",
-  answerTime: "The Round Lord's answer time unless they choose another.",
-  submitTime: "A time limit on writing questions.",
-  freeRoam:
-    "Free roam: no ending your turn to lock an answer and no talk-it-over step; ducks roam until the turn ends, and where they stand then is their answer.",
-  fun: "lightning, love, kill and hotdog in the command line.",
-  downMs:
-    "How long a duck that plays dead (shot, stabbed, or killed) can't move. None: it can move at once. 0.5 s on the boards, 6 s in Duck Cabin, unless you choose another.",
-  ghostBusy:
-    "With Ghosts on: a duck holding the chalk or the eraser, at the piano, writing in the guestbook, at a card table or in a seat just gets up instead of becoming a ghost.",
-  ghosts:
-    "Duck Cabin: once its knocked-down time is up, a duck's ghost gets up and walks about while its body lies there. A ghost can't be hit or use anything. Space brings it back.",
-  justin:
-    "Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.",
-  stats:
-    "The stats after each round. Off: the next round starts at once (in Story Chain, the story just goes on).",
-  bbReview:
-    "On: after every round of matches the room looks at the bracket together (who is out, who is next). Off: only the champion's bracket shows.",
-  bbSeeds:
-    "How many contenders the bracket has: a number shared out among the players, or so many for each player.",
-  bbTopic:
-    "Everyone writes a topic and votes on them, or the room gets a random one.",
-  bbBlind:
-    "Hidden: a contender's writer stays a secret until it is knocked out or wins it all.",
-  bbTimer:
-    "None: a match vote waits for everyone, so players can try to sway each other. A tie goes to a vote: vote again, or toss a coin.",
-  scTime:
-    "How long each writer gets for their line. Off: as long as they need. When time runs out, whatever is typed is sent.",
-  scVote:
-    "Voting on the favorite line and secret word after each paragraph. Off: the story just keeps going. Auto: off with 2 or 3 players, on with 4 or more.",
-  wqPicker:
-    "Each round a random player (never the Quack) picks the secret word and its category, or the game picks one.",
-  wqPickTime:
-    "When time runs out, whatever the picker typed is used, or a word from the list.",
-  wqQuacks: "Two Quacks only with 6 or more players.",
-  wqTimer: "None: a vote waits for everyone, so players can argue it out.",
-  lawDef:
-    "Who argues for each topic: anyone but its writer, picked at random, by the writer, or by a vote of the room.",
-  lawOff:
-    "Who argues against each topic (it can be the writer): picked at random, by the writer, or by a vote of the room.",
-  lawClose:
-    "When the jury is split, the attorneys get this long to win them over; then the bigger side wins.",
-  vdTime:
-    "How long each date lasts once The Date presses Start timer (they can pause it and go on). Off: no timer, a date lasts until The Date presses Next duck (after 6 s of grace).",
-  dunceTime:
-    "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
-  mapGrey:
-    "Black and white turns the whole map into greys: the tree, the duck, the swirls, the squares and the hexagons.",
-  mgjHp:
-    "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and nothing hurts it for a second after. The last one knocks it down until a medkit or the fight's end. Off: one hit knocks a duck down for 5 seconds.",
-  mgjTime:
-    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 2:15 count toward the lightning eyes.",
-  dunceTakes:
-    "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Turn on Don't get your own prompt to always get someone else's.",
-  noOwn:
-    "You never defend (Duncelation) or argue (Lawyering, as either attorney) the prompt you wrote. Off: it can land on you. In Duncelation, Write your own wins over this.",
-};
-const tileRows = (rows, s, ro) =>
-  rows
-    .map(
-      ([k, label, opts]) =>
-        `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ""}>${esc(label)}</h3><div class="row">${opts
-          .map(
-            ([v, n]) =>
-              `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${(k === "downMs" ? downFor(s) : s.options[k]) === v}"${ro}>${n}</button>`,
-          )
-          .join("")}</div></div>`,
-    )
-    .join("");
-function openOptions() {
-  const s = R.state,
-    host = isSudo(s, R.me),
-    ro = host ? "" : ' aria-disabled="true"';
-  return openWindow(
-    `<h2>Game options</h2>${host ? "" : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) changes these.</p>'}
-    ${s.options.mode === "bb" ? `<h3 class="opt-h">Bicker Brackets</h3>${tileRows(BB_TILES, s, ro)}` : ""}
-    ${s.options.mode === "sc" ? `<h3 class="opt-h">Story Chain</h3>${tileRows(SC_TILES, s, ro)}` : ""}
-    ${s.options.mode === "quack" ? `<h3 class="opt-h">Who is the Quack?</h3>${tileRows(QUACK_TILES, s, ro)}` : ""}
-    ${s.options.mode === "law" ? `<h3 class="opt-h">Lawyering; Juryful of Ducklings</h3>${tileRows(LAW_TILES, s, ro)}` : ""}
-    ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
-    ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
-    ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
-    ${showsCollage(s) ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
-    ${
-      ["hang", "vdd"].includes(s.options.mode)
-        ? ""
-        : tileRows(
-            OPT_TILES.filter(
-              (r) =>
-                !(s.options.mode === "mgj" && r[0] !== "share") &&
-                !(
-                  ["bb", "sc"].includes(s.options.mode) &&
-                  ["order", "answerTime"].includes(r[0])
-                ) &&
-                !(
-                  s.options.mode === "quack" &&
-                  ["order", "answerTime", "catchUp", "writeCatch"].includes(
-                    r[0],
-                  )
-                ) &&
-                !(s.options.mode === "law" && r[0] === "answerTime") &&
-                !(
-                  s.options.mode === "dunce" &&
-                  ["order", "answerTime"].includes(r[0])
-                ),
-            ),
-            s,
-            ro,
-          )
-    }
-    <details class="more"${moreOpen ? " open" : ""}><summary>Additional settings</summary>
-    ${tileRows(
-      MORE_TILES.map(([k, n, o]) =>
-        k === "downMs" && s.options.mode !== "hang"
-          ? [k, n, o.filter((x) => x[0] !== 6000)]
-          : [k, n, o],
-      ).filter(
-        (r) =>
-          !(ONLY_IN[r[0]] && !ONLY_IN[r[0]].includes(s.options.mode)) &&
-          !(
-            s.options.mode === "mgj" &&
-            [
-              "discuss",
-              "freeRoam",
-              "submitTime",
-              "justin",
-              "downMs",
-              "stats",
-              "unvoteStops",
-            ].includes(r[0])
-          ) &&
-          !(
-            ["sc", "quack"].includes(s.options.mode) &&
-            ["freeRoam", "submitTime"].includes(r[0])
-          ) &&
-          !(["law", "dunce"].includes(s.options.mode) && r[0] === "freeRoam") &&
-          !(
-            s.options.mode === "vdd" &&
-            [
-              "discuss",
-              "freeRoam",
-              "submitTime",
-              "justin",
-              "unvoteStops",
-            ].includes(r[0])
-          ) &&
-          !(
-            CABIN_MODES.includes(s.options.mode) &&
-            ["freeRoam", "submitTime", "justin", "unvoteStops"].includes(r[0])
-          ) &&
-          !(
-            ["sc", "quack", ...CABIN_MODES].includes(s.options.mode) &&
-            r[0] === "discuss"
-          ) &&
-          !(s.options.mode === "quack" && r[0] === "unvoteStops") &&
-          !(
-            s.options.mode !== "hang" && ["ghosts", "ghostBusy"].includes(r[0])
-          ) &&
-          !(s.options.mode !== "mgj" && r[0] === "mgjHp"),
-      ),
-      s,
-      ro,
-    )}
-    ${
-      s.test
-        ? `<div class="sect"><h3 data-tip="How long computers wait before they act each phase.">Computers wait</h3><div class="row">${[
-            5, 15, 30, 60,
-          ]
-            .map(
-              (v) =>
-                `<button type="button" class="tile" data-k="botWait" data-v="${v}" aria-pressed="${s.options.botWait === v}"${ro}>${v} s</button>`,
-            )
-            .join("")}</div></div>`
-        : ""
-    }
-    </details>
-    <div class="sect"><h3>Room</h3><div class="row">
-      <label class="numfield">Players up to <select data-k="max"${host ? "" : " disabled"}>${[
-        2, 3, 4, 5, 6, 7, 8, 10, 12, 16,
-      ]
-        .filter((n) => n >= s.seat.length)
-        .map((n) => `<option${n === s.max ? " selected" : ""}>${n}</option>`)
-        .join("")}</select></label>
-      ${
-        s.test
-          ? `<label class="numfield">Computers <select data-k="computers"${host ? "" : " disabled"}>${Array.from(
-              { length: s.max },
-              (_, n) => n,
-            )
-              .filter((n) => n <= s.max - 1)
-              .map(
-                (n) =>
-                  `<option${n === s.seat.filter((id) => s.players[id].bot).length ? " selected" : ""}>${n}</option>`,
-              )
-              .join("")}</select></label>`
-          : ""
-      }
-    </div></div>
-    ${host ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ""}`,
-    {
-      cls: "win-settings",
-      onOpen(w, close) {
-        w.querySelector("details.more").addEventListener("toggle", (e) => {
-          moreOpen = e.target.open;
-        });
-        if (!host) return;
-        w.addEventListener("click", (e) => {
-          const t = e.target.closest(".tile[data-k]");
-          if (t) {
-            const v = t.dataset.v;
-            R.send({
-              t: "options",
-              options: { [t.dataset.k]: v !== "" && !isNaN(v) ? +v : v },
-            });
-            $$(`.tile[data-k="${t.dataset.k}"]`, w).forEach((b) =>
-              b.setAttribute("aria-pressed", b === t),
-            );
-          }
-          if (e.target.closest('[data-a="reset"]')) {
-            R.send({ t: "options", options: { ...OPTIONS_DEFAULT } });
-            close();
-            openOptions();
-          }
-        });
-        w.addEventListener("change", (e) => {
-          const k = e.target.dataset.k;
-          if (k === "max")
-            R.send({ t: "options", options: {}, max: +e.target.value });
-          if (k === "computers") R.setComputers(+e.target.value);
-        });
-      },
-    },
-  );
-}
 
 /* ---------- a player card's options (a click, a right-click or a long press) ----------
    Your own card: View stats, Customize, and your name in a box below them, to type a new one right there. */
@@ -983,27 +154,46 @@ function paint() {
       st,
       `<span class="count">Starting in <b>${left}</b></span><button type="button" class="btn red" data-a="cancel">Cancel <kbd>X</kbd></button>`,
     );
-  } else {
-    setHTML(
-      st,
-      `<button type="button" class="ready-btn${mine.ready ? " on" : ""}" data-a="ready" aria-pressed="${!!mine.ready}">${mine.ready ? "Ready ✓" : "Not ready"}</button>`,
-    );
-  }
-  const startRow = $('[data-m="start"]', S);
-  const few = s.seat.length < minOf(s); // Who is the Quack? and Lawyering need 3 ducks
+  } else setHTML(st, "");
+  /* the host (or sudo) has Start Game; everyone else has Ready */
+  const startRow = $('[data-m="start"]', S),
+    readyRow = $('[data-m="ready"]', S),
+    few = !s.options.modePick && s.seat.length < minOf(s); // (Who is the Quack? and Lawyering need 3 ducks)
+  startRow.hidden = !host;
+  readyRow.hidden = host;
+  startRow.toggleAttribute("data-nav-start", host); // (the arrow keys start on it)
+  readyRow.toggleAttribute("data-nav-start", !host);
   startRow.setAttribute(
     "aria-disabled",
-    String(!host || s.phase === "countdown" || few),
+    String(s.phase === "countdown" || few),
   );
   $(".val", startRow).textContent = few
     ? `Needs ${minOf(s)} players`
-    : host
-      ? s.phase === "countdown"
-        ? ""
-        : `${s.seat.filter((id) => s.players[id].ready).length}/${s.seat.length} ready`
-      : "The host starts";
-  $('[data-m="options"] .val', S).textContent = host ? "Edit" : "View";
-  $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
+    : s.phase === "countdown"
+      ? ""
+      : `${s.seat.filter((id) => s.players[id].ready).length}/${s.seat.length} ready`;
+  readyRow.setAttribute("aria-pressed", String(!!mine.ready));
+  readyRow.classList.toggle("on", !!mine.ready);
+  $("span", readyRow).textContent = mine.ready ? "Ready ✓" : "Ready";
+  $(".val", readyRow).textContent = mine.ready ? "" : "Not ready";
+  setHTML(
+    $('[data-m="settings"] .val', S),
+    esc(
+      `${
+        s.options.modePick === "vote"
+          ? "Vote Game Mode"
+          : s.options.modePick === "random"
+            ? "Random"
+            : modeOf(s.options.mode).name
+      } · ${
+        s.options.mapPick === "vote"
+          ? "Vote Maps"
+          : s.options.mapPick === "random"
+            ? "Random"
+            : mapName(s.options.map)
+      }`,
+    ),
+  );
   const fr = $('[data-m="friends"] .val', S);
   if (fr)
     fr.textContent = acct.uid
@@ -1022,10 +212,6 @@ function paint() {
       mode,
     });
   }
-  setHTML(
-    $('[data-m="type"] .val', S),
-    `${gameSymbol(mode, 20)} ${esc(modeOf(mode).name)}`,
-  );
   $(".party-count", S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $(".party-list", S);
   if (!list.querySelector("input.rename"))
@@ -1219,12 +405,11 @@ register("lobby", {
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
         <h1 class="lobby-title"></h1>
         <p class="lobby-sub dim"></p>
-        <div class="lobby-status" data-nav-start></div>
+        <div class="lobby-status"></div>
         <div class="lmenu" role="menu">
-          <button type="button" role="menuitem" data-m="type"><span>Game type</span><span class="val"></span></button>
-          <button type="button" role="menuitem" data-m="map"><span>Map</span><span class="val"></span></button>
-          <button type="button" role="menuitem" data-m="options"><span>Game options</span><span class="val"></span></button>
-          <button type="button" role="menuitem" data-m="start" class="start"><span>Start game</span><span class="val"></span></button>
+          <button type="button" role="menuitem" data-m="settings"><span>Game Settings</span><span class="val"></span></button>
+          <button type="button" role="menuitem" data-m="start" class="start" hidden><span>Start Game</span><span class="val"></span></button>
+          <button type="button" role="menuitem" data-m="ready" class="ready" hidden><span>Ready</span><span class="val"></span></button>
           ${R.online ? '<button type="button" role="menuitem" data-m="friends"><span>Friends</span><span class="val"></span></button>' : ""}
         </div>
         <p class="lmenu-info dim">${INFO.start}</p>
@@ -1253,9 +438,8 @@ register("lobby", {
       const b = e.target.closest("[data-m]");
       if (!b) return;
       const m = b.dataset.m;
-      if (m === "type") openTypes();
-      if (m === "map") openMaps();
-      if (m === "options") openOptions();
+      if (m === "settings") openGameSettings(R);
+      if (m === "ready") toggleReady();
       if (m === "start" && b.getAttribute("aria-disabled") !== "true")
         R.send({ t: "start" });
       if (m === "friends") openFriends();
