@@ -25,7 +25,7 @@
    become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
    down for the room's knocked-down time, then gets up with his HP full. */
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
-import { holdDown, downFor } from "./hangout/death.js";
+import { holdDown, downFor, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import {
@@ -535,8 +535,11 @@ export function justinTick(s, now, log) {
     delete j.god;
     ch = true;
     if (P && p && p.x >= 0 && !calm) {
-      P.dead = true;
-      holdDown(s, id, now);
+      if (invuln(s)) hurtFx(s, id, now);
+      else {
+        P.dead = true;
+        holdDown(s, id, now);
+      }
       fx({ kind: Math.random() < 0.5 ? "lightning" : "fire", who: [id] });
     }
   }

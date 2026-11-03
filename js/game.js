@@ -71,6 +71,7 @@ import {
   wordAt,
   cleanWord,
   LINE_MAX,
+  textMax,
   isCounsel,
   jury,
   lawTally,
@@ -397,6 +398,7 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
 const MGJ_SLOW = 0.8;
+const WALK = { slow: 0.6, normal: 1, fast: 1.5 }; // the lobby's Walking speed
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 /* a duck's jump: a long jump floats longer and a little higher; a double jump starts a second arc where the duck is, a
    little lower than the first */
@@ -843,6 +845,13 @@ function drawDucks(now = clockNow()) {
     !(id === wq.lastOut && rt < 3200) &&
     !((wq.dead || []).includes(id) && rt < 6100) &&
     !(wq.result && wq.result.quacks.includes(id));
+  /* Hide names while answering: the other ducks' name tags stay hidden until the turn ends */
+  layer.classList.toggle(
+    "hide-names",
+    !!+s.options.hideNames &&
+      ["aod", "wyr", "ddr"].includes(s.options.mode) &&
+      s.phase === "answer",
+  );
   const deadNow = (id, p) =>
     !!p.dead &&
     !landing(id) &&
@@ -898,6 +907,14 @@ function drawDucks(now = clockNow()) {
       hurt(d);
     } // a duck knocked down (by a weapon, Justin, a kill): the hit sound and a short red flash, for everyone
     d._dead = dead;
+    const hs = (s.hurt || {})[id];
+    if (hs !== d._hs) {
+      if (d._hs !== undefined && hs) {
+        sfx.hit();
+        hurt(d);
+      } // (Invulnerability: a hit only flashes red)
+      d._hs = hs;
+    }
     if (d._sig !== sig) {
       d._sig = sig;
       d.querySelector(".gduck-body").innerHTML =
@@ -2595,7 +2612,10 @@ function step(dt, now) {
     onTree = [1, (geo.H * 0.9) / SPEED.y / (row.h * k)];
     scWalk = now;
   } // (the story: the same speed on the screen in any row)
-  const mul = (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1); // (Mad God Justin: the ducks a fifth slower)
+  const mul =
+    (sprinting ? SPEED.sprint : 1) *
+    (isMgj(s) ? MGJ_SLOW : 1) *
+    (WALK[s.options.walk] || 1); // (Mad God Justin: the ducks a fifth slower)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   const [lo, hi] = xBounds();
@@ -3080,29 +3100,29 @@ function viewSubmit(s) {
       : isLaw(s)
         ? `<form class="panel submit-card" autocomplete="off"><h2>Your topic</h2>
       <p class="small dim">Someone else will have to defend it, so make it worth arguing about. Nobody sees it until its case.</p>
-      <textarea maxlength="200" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
+      <textarea maxlength="${textMax(s)}" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
         : isDn(s)
           ? `<form class="panel submit-card" autocomplete="off"><h2>Your take</h2>
       <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" || +s.options.noOwn ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
-      <textarea maxlength="${TAKE_MAX}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
+      <textarea maxlength="${textMax(s)}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
           : isDdr(s)
             ? `<form class="panel submit-card" autocomplete="off"><h2>Your statement</h2>
       <p class="small dim">Something people might relate to, or might not.</p>
-      <textarea maxlength="200" rows="3" placeholder="I've laughed at my own joke before anyone else." aria-label="Your statement"></textarea>
+      <textarea maxlength="${textMax(s)}" rows="3" placeholder="I've laughed at my own joke before anyone else." aria-label="Your statement"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
             : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
       ${
         isWyr(s)
           ? `<p class="wyr-head">Would you rather…</p><div class="wyr-pair">
-        <textarea class="wyr-in" data-side="a" maxlength="100" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
+        <textarea class="wyr-in" data-side="a" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
         <span class="wyr-or-word">OR</span>
-        <textarea class="wyr-in" data-side="b" maxlength="100" rows="3" placeholder="Admit Justin is right about data breaching" aria-label="The second choice"></textarea></div>`
-          : `<textarea maxlength="200" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>`
+        <textarea class="wyr-in" data-side="b" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Admit Justin is right about data breaching" aria-label="The second choice"></textarea></div>`
+          : `<textarea maxlength="${textMax(s)}" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>`
       }
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <div class="sect"><h3 data-tip="How long everyone gets to answer your question.">Answer time</h3><div class="row">${[

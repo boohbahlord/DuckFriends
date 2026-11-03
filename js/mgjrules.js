@@ -51,7 +51,7 @@ import {
   aimOf,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { holdDown, onGetUp } from "./hangout/death.js";
+import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
   DEATH_LINES,
@@ -86,6 +86,8 @@ export function mgjSoak(s, id, now) {
   const max = mgjPHp(s),
     m = s.mgj,
     P = s.players[id];
+  if (invuln(s) && m && P && !P.dead && s.phase === "boss")
+    return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
   if (((m.safe || {})[id] || 0) > now) return true;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
@@ -584,8 +586,11 @@ function brain(s, now, log) {
       for (const id of playing(s)) {
         const P = s.players[id];
         if (P && s.pos[id]) {
-          P.dead = true;
-          holdDown(s, id, now);
+          if (invuln(s)) hurtFx(s, id, now);
+          else {
+            P.dead = true;
+            holdDown(s, id, now);
+          }
         }
       }
       if (m.gj) m.gj.down = now + MGJ_DOWN;

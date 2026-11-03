@@ -1374,7 +1374,12 @@ export function chatWidget() {
       return note(said);
     }
     if (!r) return note("Chat works in a room.");
-    if (denied(r.state, r.me, "nochat")) return note("Your group can't chat.");
+    if (denied(r.state, r.me, "nochat"))
+      return note(
+        +r.state.options.noChat
+          ? "Chat is off in this room."
+          : "Your group can't chat.",
+      );
     const slow = slowMs(r.state, r.me);
     if (slow && Date.now() - (ui.lastSent || 0) < slow)
       return note(
