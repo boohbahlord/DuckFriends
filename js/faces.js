@@ -87,6 +87,7 @@ const arm = (c, w = 2.2) =>
 /* where the clown nose sits: on top of the beak, near its front */
 const NOSE = {
   default: [110, 32.5],
+  frog: [99.5, 39], // (on dat boi: the tip of his snout)
   long: [116, 32.5],
   short: [104, 33],
   tall: [107, 28.5],

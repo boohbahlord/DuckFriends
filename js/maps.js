@@ -11,11 +11,13 @@
    them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
    Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
+   Shelter Sky & Null: the owner's collage of a black tree and a halftone duck looking up at it (collage.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { esc } from "./ui.js";
 import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
+import { collageScene, collageMini } from "./collage.js";
 
 export const MAPS = [
   [
@@ -49,6 +51,11 @@ export const MAPS = [
     "A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.",
   ],
   [
+    "collage",
+    "Shelter Sky & Null",
+    "A black tree, a halftone duck looking up at it, swirls and a chain-link net, small squares that fade in and out, and static over it all. It can be black and white.",
+  ],
+  [
     "ec",
     "Ether's Crossroads",
     "The jester's dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it's played.",
@@ -71,6 +78,7 @@ export function mapMini(id) {
   if (id === "carnival")
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
+  if (id === "collage") return `<div class="mini-map">${collageMini()}</div>`;
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
@@ -1095,9 +1103,11 @@ export function mountMap(layer, s) {
                 ? rabbitScene(layer)
                 : map === "stars"
                   ? starsScene(layer)
-                  : map === "cabin"
-                    ? cabinScene(layer)
-                    : nightScene(layer);
+                  : map === "collage"
+                    ? collageScene(layer, s)
+                    : map === "cabin"
+                      ? cabinScene(layer)
+                      : nightScene(layer);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"

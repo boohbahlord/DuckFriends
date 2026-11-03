@@ -22,7 +22,7 @@ serves `main`, so merging to `main` is deploying).
   `js/helppages.js`.
 - `js/game.js` draws the board, moves your duck and handles keys (`js/keynav.js` moves through menus with the arrow keys); `js/brackets.js` is Bicker Brackets; `js/story.js` is
   Story Chain; `js/maps.js` the
-  maps (Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole, Ether's Crossroads, and Duck Cabin, Hangout's
+  maps (Night Show, Sky, Pixel, Carnival Night, Starry Night, Rabbit Hole, Shelter Sky & Null (`collage`, `js/collage.js`), Ether's Crossroads, and Duck Cabin, Hangout's
   own); `css/app.css` everything's look.
 - `js/hangout/` is Hangout, on Duck Cabin (game.js keeps only a thin branch, `isHang(s)`):
   - `layout.js`: the world's numbers (regions, heights, walls, doors, where every prop stands); no drawing.

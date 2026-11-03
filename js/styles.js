@@ -95,6 +95,18 @@ export const STYLES = [
     ],
     tip: "Not a duck: a jack in a box. Only his eyes and colors change.",
   },
+  /* not a duck either: the frog on his unicycle (datboi.js); hats and face items fit him, and his Skin page is his ranks
+     (look.rank), so a duck's metal never carries over to him */
+  {
+    id: "datboi",
+    name: "Dat Boi",
+    pages: ["hat", "face", "skin", "colors"],
+    colors: [
+      ["frog", "Frog", "#3fbf2f"],
+      ["cycle", "Unicycle", "#ff7a1a"],
+    ],
+    tip: "Not a duck: the frog on his unicycle. Hats and face items fit him, and his ranks are under Skin.",
+  },
 ];
 export const styleById = (id) => STYLES.find((s) => s.id === id) || STYLES[0];
 /* the style's name as players see it: Jack in a Box is Jill in a Box when D.jill */

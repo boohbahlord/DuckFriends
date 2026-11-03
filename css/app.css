@@ -2559,6 +2559,18 @@ svg.duck.jack.bob .jk,
     transform: none;
   }
 } /* (scaled from the spring's foot only, so he never lifts out of the box) */
+/* dat boi's rainbow rank: every part of him and his unicycle runs through the colors at a steady pace (datboi.js) */
+html.moving svg.duck.datboi.rainbow .dbr {
+  animation: db-hue 6s linear infinite;
+}
+@keyframes db-hue {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
 .gduck-body svg {
   width: 100%;
   height: auto;
@@ -3865,6 +3877,77 @@ html.moving .st-b {
 .map-stars .bb-vs,
 .map-stars .law-mid {
   background: color-mix(in srgb, #070b1f var(--board-a), transparent);
+}
+/* Shelter Sky & Null (collage.js): its picture, the squares that fade and jump, the colored static and scan lines over
+   them; tiles as see-through as on Starry Night, names on pills */
+.scene.collage {
+  background: #000;
+}
+.scene.collage > canvas.cl-pic {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cl-live {
+  position: absolute;
+  inset: 0;
+}
+.cl-sq {
+  position: absolute;
+  aspect-ratio: 1;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px #ffffff26;
+  opacity: var(--a);
+}
+html.moving .cl-sq {
+  opacity: 0;
+  animation: cl-pop var(--t) ease-in-out infinite;
+} /* (collage.js moves each square to another tile each time it has faded out) */
+@keyframes cl-pop {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  30%,
+  55% {
+    opacity: var(--a);
+  }
+  78%,
+  100% {
+    opacity: 0;
+  }
+}
+.cl-static {
+  opacity: 0.8;
+}
+.cl-scan {
+  opacity: 0.32;
+}
+.scene.collage.grey .cl-live {
+  filter: grayscale(1);
+}
+.map-collage {
+  --board-a: 42%;
+}
+.map-collage .col {
+  background: color-mix(in srgb, var(--c) 42%, transparent);
+  border-right-color: #ffffff30;
+  box-shadow: inset 0 0 0 0.14rem #ffffff38;
+}
+.map-collage .col-name {
+  position: relative;
+  color: #fff;
+  background: #000c;
+  border-radius: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-collage .wyr-or,
+.map-collage .bb-vs,
+.map-collage .law-mid {
+  background: color-mix(in srgb, #000 var(--board-a), transparent);
 }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {

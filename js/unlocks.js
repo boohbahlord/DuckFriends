@@ -6,7 +6,8 @@
    player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
    voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
    Justin 12 times at the default time, and the Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms
-   don't count either). What counts lives in the profile (so it stays on the device and the
+   don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
+   gold and rose gold at 31,104, rainbow at 62,208. What counts lives in the profile (so it stays on the device and the
    account): jumps, justinKills, kills, dunced, mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already
    announced, so each "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
@@ -30,6 +31,14 @@ export const LOCKS = [
     code: CODE,
     name: "Jack in a Box",
   },
+  { kind: "style", id: "datboi", jumps: 1728, name: "Dat Boi" },
+  /* Dat Boi's ranks, each 1,728 more as the owner set them (silver and chrome together, gold and rose gold together) */
+  { kind: "rank", id: "bronze", jumps: 5184, name: "Dat Boi, bronze" },
+  { kind: "rank", id: "silver", jumps: 15552, name: "Dat Boi, silver" },
+  { kind: "rank", id: "chrome", jumps: 15552, name: "Dat Boi, chrome" },
+  { kind: "rank", id: "gold", jumps: 31104, name: "Dat Boi, gold" },
+  { kind: "rank", id: "rose", jumps: 31104, name: "Dat Boi, rose gold" },
+  { kind: "rank", id: "rainbow", jumps: 62208, name: "Dat Boi, rainbow" },
   { kind: "special", id: "longjump", jumps: 144, name: "Long jump" },
   { kind: "special", id: "double", jumps: 144, name: "Double jump" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
@@ -238,6 +247,10 @@ export function takeOffLocked() {
       return null;
     });
   } // (a special that's locked comes off its key)
+  if (D.rank && !unlocked("rank", D.rank)) {
+    off.push(lockOf("rank", D.rank).name);
+    D.rank = null;
+  }
   if (D.style && !unlocked("style", D.style)) {
     off.push(D.jill ? "Jill in a Box" : lockOf("style", D.style).name);
     D.style =
