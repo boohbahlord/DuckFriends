@@ -520,6 +520,15 @@ const QUACK_TILES = [
     ],
   ],
 ];
+/* "Don't get your own prompt", for Duncelation and Lawyering */
+const NO_OWN = [
+  "noOwn",
+  "Don't get your own prompt",
+  [
+    [0, "Off"],
+    [1, "On"],
+  ],
+];
 /* Lawyering's own options */
 const LAW_TILES = [
   [
@@ -549,6 +558,7 @@ const LAW_TILES = [
       [120, "2 min"],
     ],
   ],
+  NO_OWN,
 ];
 /* Duncelation's own options */
 const DUNCE_TILES = [
@@ -569,9 +579,9 @@ const DUNCE_TILES = [
     [
       ["random", "Random"],
       ["own", "Write your own"],
-      ["notOwn", "Never your own"],
     ],
   ],
+  NO_OWN,
 ];
 /* Mad God Justin's own option */
 /* Valentine's Duck Date's own option */
@@ -634,6 +644,7 @@ const MORE_TILES = [
       [60, "60 s"],
       [90, "90 s"],
       [120, "120 s"],
+      [132, "2:12"],
     ],
   ],
   [
@@ -768,7 +779,9 @@ const OPT_TIPS = {
   mgjTime:
     "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 1:30 count toward the lightning eyes.",
   dunceTakes:
-    "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Never your own: always someone else's.",
+    "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Turn on Don't get your own prompt to always get someone else's.",
+  noOwn:
+    "You never defend (Duncelation) or argue (Lawyering, as either attorney) the prompt you wrote. Off: it can land on you. In Duncelation, Write your own wins over this.",
 };
 const tileRows = (rows, s, ro) =>
   rows
