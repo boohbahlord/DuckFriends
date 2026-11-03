@@ -569,18 +569,7 @@ const BY_MODE = {
         [15, "15"],
       ],
       cat: "rules",
-      d: "The HP of each duck. A hit from Justin takes 1 HP, and nothing hurts the duck for a second after. The last one knocks it down until a medkit or the fight's end. Off: one hit knocks a duck down for 5 s.",
-    },
-    {
-      k: "mgjTime",
-      n: "Time to beat him",
-      c: [
-        [105, "1:45"],
-        [135, "2:15"],
-        [165, "2:45"],
-      ],
-      cat: "time",
-      d: "The time to bring Justin to 0 HP, plus 4 s for every player. His meteor adds 30 s. Only wins at 2:15 count toward the lightning eyes.",
+      d: "The HP of each duck. A hit from Justin takes 1 HP, and nothing hurts the duck for a second after. The last one knocks it down until another duck holds E by it for 5 seconds, or the fight's end. Off: one hit knocks a duck down for 5 s.",
     },
   ],
   vdd: [

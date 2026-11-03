@@ -12396,6 +12396,19 @@ html.moving .mgj-field {
     opacity: 0.25;
   }
 }
+/* his charge's tell (game.js' mgjcharge): a fast shake, flushed red, then he sprints */
+.gduck.mgj-charge .gduck-body {
+  animation: mgj-charge 0.08s linear infinite alternate;
+  filter: url(#hurt1);
+}
+@keyframes mgj-charge {
+  from {
+    transform: translateX(-4%) rotate(-3deg);
+  }
+  to {
+    transform: translateX(4%) rotate(3deg);
+  }
+}
 /* the bow's arrow and his fireball, pointing the way they fly */
 .bullet.k-arrow {
   width: calc(var(--s) * 0.8);
@@ -12437,8 +12450,7 @@ html.moving .mgj-field {
 }
 .mgj-cake svg,
 .mgj-snack svg,
-.mgj-poof svg,
-.mgj-kit svg {
+.mgj-poof svg {
   display: block;
   width: 100%;
   height: auto;
@@ -12461,16 +12473,50 @@ html.moving .mgj-field {
     transform: translateY(-12%) rotate(-8deg);
   }
 }
-/* a Jaime gone in a cloud, and a medkit over the duck it got up */
-.mgj-poof,
-.mgj-kit {
+/* a Jaime gone in a cloud */
+.mgj-poof {
   position: absolute;
   pointer-events: none;
   transform: translate(-50%, -50%);
   animation: mgj-poof 0.8s ease-out forwards;
 }
-.mgj-kit {
-  animation-duration: 1.2s;
+/* a revive (the owner's, Nov 3: hold 5 s by a downed duck): the Hold button over it, filling up green while held */
+.mgj-rv {
+  position: absolute;
+  z-index: 40;
+  transform: translate(-50%, -100%);
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.3em 0.8em;
+  border: 2px solid #6dff8a;
+  border-radius: 999px;
+  background: #1c1e2ae6;
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+.mgj-rv i {
+  position: absolute;
+  inset: 0;
+  background: #3ee06a99;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--rv, 0));
+}
+.mgj-rv span {
+  position: relative;
+}
+.mgj-rv:disabled {
+  cursor: default;
+  border-color: #6dff8a80;
 }
 @keyframes mgj-poof {
   0% {

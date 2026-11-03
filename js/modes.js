@@ -69,7 +69,7 @@ export const MODES = [
     id: "mgj",
     cat: "special",
     name: "Mad God Justin",
-    tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP before the timer runs out. He shoots back.",
+    tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP. He shoots back.",
   },
   {
     id: "vdd",

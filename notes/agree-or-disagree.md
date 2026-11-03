@@ -3357,3 +3357,13 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
 - Adam: one branch with the 22:13Z ask, Solomon the 2nd all the code (high), Noah only the art (Justin slightly bigger,
   the bigger hammer, in js/mgj.js) with one shared size constant; Justin's hitbox matches his drawn form. No time limit
   (the lightning eyes count any win). Projectiles about 15% faster in every mode. No new Justin lines.
+- Built (one PR): keys 1 knife, 2 bow, 3 Jaime (fires at once, never stays in hand), 4 the picked-up weapon, 5 zebra
+  cake; a pick goes in hand by itself and, once used up, the hand goes back to the last weapon that stayed in it.
+  Revive: hold E by a downed duck for 5 s (REVIVE.MS, within 2 lengths; on a phone a Hold button over it); the medkit
+  is gone from the mode. One hitmarker for Justin and his double. The double only after a teleport (DUP_MS 7 s). Xbox
+  off once he has lost 20 HP (XB_LOST), meteor at 10 HP (MET_AT) gives 20 back (MET_HEAL); each one makes his attacks
+  come 0.7x as soon (FAST_SOON) and throws fly 1.25x faster (FAST_FLY), bullets unchanged (JUSTIN_SHOT 0.22). No timer
+  (the Game Settings time row is gone). Size: MGJ_SCALE 1.2, hammer MGJ_HAMMER 1.35, hitbox x1.2. Every mode:
+  arrows, bullets and daggers x1.15 (FASTER in rules.js; Quacky Zombies' bullets too). His charge: every 8 to 12 s
+  (sooner when faster) at a duck 3 to 10 lengths off, a 0.6 s red shake, then a sprint at 0.55 board widths a second;
+  a duck within 1.1 lengths (x1.2) of his path flies KB_FAR x1.6, no HP lost; a jump or stepping off the line dodges.

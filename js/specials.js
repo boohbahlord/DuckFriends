@@ -348,15 +348,15 @@ export const SPECIALS = [
     icon: ZEBRA,
     tip: "Throw a zebra cake toward your mouse: Justin runs after it and eats it, and does nothing else meanwhile. Once every 30 seconds. (In Mad God Justin everyone shares one.)",
   },
-  /* Mad God Justin's own (only there, never in Customize): the medkit. Then Jaime, everyone's once unlocked (the zebra
-     cake is everyone's too, above) */
+  /* Quacky Zombies' own (never in Customize; Mad God Justin's is gone, the owner's, Nov 3): the medkit, here for its
+     picture. Then Jaime, everyone's once unlocked (the zebra cake is everyone's too, above) */
   {
     id: "medkit",
     name: "Medkit",
     kind: "item",
-    only: "mgj",
+    only: "l4dd",
     icon: MEDKIT,
-    tip: "Once a game: stand by a downed duck and press E, Enter or click to get it up with half its HP.",
+    tip: "Gets your HP back.",
   },
   {
     id: "jaime",
