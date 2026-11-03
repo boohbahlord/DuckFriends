@@ -203,14 +203,14 @@ const fightsHTML = (s) =>
       (
         f,
       ) => `<article class="law-case panel${f.won ? "" : " dn-was"}"><p class="law-case-topic">Fight ${f.n}: ${f.won ? "Justin defeated" : `Justin won with ${f.hp} of ${f.max} HP left`}</p>
-  <p class="law-case-vs small">${f.won && f.kill ? `Killing blow: ${whoName(s, f.kill) ? esc(whoName(s, f.kill)) : nm(player(s, f.kill))}` : "Time ran out"}</p></article>`,
+  <p class="law-case-vs small">${f.won && f.kill ? `Killing blow: ${whoName(s, f.kill) ? esc(whoName(s, f.kill)) : nm(player(s, f.kill))}` : "Every duck went down"}</p></article>`,
     )
     .join("")}</div>`;
 const block = (s, all) =>
   `${awardsHTML(s, all)}<div class="statboxes">${s.seat.map((id) => mgjBoxHTML(s, id, all)).join("")}</div>`;
 export function mgjStatsHTML(s) {
   const f = (s.mgjPast || []).slice(-1)[0];
-  const head = !f ? "The fight" : f.won ? "Justin is defeated!" : "Justin wins";
+  const head = !f ? "The fight" : f.won ? "Justin is defeated!" : "Justin Wins";
   return `<h2>${head}</h2>${block(s, false)}${(s.mgjPast || []).length > 1 ? `<h2 class="all-h">Every fight</h2>${block(s, true)}${fightsHTML(s)}` : ""}`;
 }
 export const mgjOverHTML = (s) => block(s, true) + fightsHTML(s);

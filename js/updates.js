@@ -42,6 +42,7 @@ export const UPDATES = [
       "The Jetpack, Bow, Chair, Zebra cake and Jaime have a preview in Customize → Specials now.",
     ],
     fixed: [
+      "For Mad God Justin: when every duck is down they all lie there dead, and the ending says Justin Wins (it no longer says time is up).",
       "For Mad God Justin: hitmarkers show on Justin (and look the same on his double), the weapon you pick up goes in hand by itself and you go back to your last one when it runs out, and a Jaime's name tag says Jaime.",
       "For Valentine's Duck Date: at the table, the weapon in your hand comes with you (it stayed on the floor where you stood).",
       "Hits hurt more on the boards and in Duck Cabin (not in Quacky Zombies or Mad God Justin): the hammer, the chair and a grenade take 3 HP, the knife 2, and a grenade throws ducks twice as far as the hammer. A knocked-down duck stays down 1 s by default (was 0.5 s). In Mad God Justin, his office chair takes 2 HP.",
