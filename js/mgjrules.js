@@ -83,7 +83,7 @@ export const mgjSafe = (s, id, now) =>
 export const mgjPHp = (s) =>
   isMgj(s) && MGJ_PHP.includes(+s.options.mgjHp) ? +s.options.mgjHp : 0;
 /* a hit from Justin on duck id: true when its HP took it (the duck stays up), false when it goes down */
-export function mgjSoak(s, id, now) {
+export function mgjSoak(s, id, now, dmg = 1) {
   const max = mgjPHp(s),
     m = s.mgj,
     P = s.players[id];
@@ -92,7 +92,7 @@ export function mgjSoak(s, id, now) {
   if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
   if (((m.safe || {})[id] || 0) > now) return true;
   m.safe = { ...m.safe, [id]: now + SOAK_MS };
-  const lost = ((m.lost || {})[id] || 0) + 1;
+  const lost = ((m.lost || {})[id] || 0) + dmg; // (the office chair takes 2, owner 2026-11-03 17:15Z)
   if (lost >= max) {
     const rest = { ...m.lost };
     delete rest[id];
