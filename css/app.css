@@ -4854,6 +4854,15 @@ html.moving .pix-sun {
   padding: 0.25rem 0.6rem;
   font-size: calc(0.8rem * var(--ts));
 }
+/* Customize's Style page: the Match each style's look switch over the tiles */
+.match-all {
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.match-all > span {
+  margin-right: 0.2rem;
+}
 .arm-body .check {
   margin-top: 0.6rem;
 }
