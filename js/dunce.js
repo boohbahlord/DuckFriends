@@ -11,6 +11,7 @@ import { cloudHTML } from "./brackets.js";
 import { rainbowHTML } from "./art.js";
 import { fmtJumps } from "./format.js";
 import { DN_SIDES, dnStats, wearsDunce } from "./duncerules.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -19,7 +20,7 @@ const GONE = {
   nameStyle: {},
 };
 const player = (s, id) => (id && s.players[id]) || GONE;
-const nm = (p) => nameHTML(p.name, p.nameStyle);
+const nm = (p) => nameHTML(p.name, seenName(p));
 /* the sides' colors: the board's red and green (the colorblind palettes swap them like every board) */
 export const DN_COLORS = ["var(--c2)", "var(--c6)"];
 /* a dunce's look: the dunce hat over whatever hat it wore (its own duck keeps it) */
@@ -52,7 +53,7 @@ export function dnTopHTML(s, bw) {
   if (!C || !q) return "";
   const p = player(s, C.def),
     dunce = wearsDunce(s, C.def) && bw,
-    look = dunce ? { ...p, duck: dunceDuck(p.duck) } : p;
+    look = dunce ? { ...p, duck: dunceDuck(seenDuck(p)), shown: true } : p;
   const cloud = cloudHTML(s.players[C.def] ? look : null, "Defender").replace(
     'class="lord"',
     `class="lord${dunce ? " dn-bw" : ""}"`,
@@ -73,7 +74,7 @@ const quote = (t) => `"${t.length > 60 ? t.slice(0, 58).trimEnd() + "…" : t}"`
 const faceOf = (s, id, size) => {
   const p = player(s, id),
     on = wearsDunce(s, id);
-  return `<span class="${on ? "dn-bw" : ""}">${duckSVG(on ? dunceDuck(p.duck) : p.duck, { size, shadow: false, title: p.name })}</span>`;
+  return `<span class="${on ? "dn-bw" : ""}">${duckSVG(on ? dunceDuck(seenDuck(p)) : seenDuck(p), { size, shadow: false, title: p.name })}</span>`;
 };
 function awardsHTML(s, set) {
   const { per, takes } = dnStats(s, set),

@@ -22,6 +22,7 @@ import {
   WORD_MAX,
   CAT_MAX,
 } from "./quackrules.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -32,7 +33,7 @@ const GONE = {
 const player = (s, id) => s.players[id] || GONE;
 const nm = (s, id) => {
   const p = player(s, id);
-  return `<span class="wq-w">${nameHTML(p.name, p.nameStyle)}</span>`;
+  return `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`;
 }; // (a name never breaks across lines)
 const list = (xs) =>
   xs.length > 2
@@ -60,7 +61,7 @@ function tileClass(s, id, me) {
 const tileInner = (
   p,
 ) => `<div class="wq-bg" style="${esc(cardBackground(p.card))}"></div>
-  <div class="wq-tduck">${duckSVG(p.duck, { size: 96, shadow: true, title: p.name })}</div><span class="wq-tname">${nameHTML(p.name, p.nameStyle)}</span>`;
+  <div class="wq-tduck">${duckSVG(seenDuck(p), { size: 96, shadow: true, title: p.name })}</div><span class="wq-tname">${nameHTML(p.name, seenName(p))}</span>`;
 export function quackBoardHTML(s, me) {
   const w = s.wq;
   if (s.phase === "choice")
@@ -306,6 +307,6 @@ export function quackBoxHTML(s, id) {
       clueMs: 0,
       clues: 0,
     };
-  return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${w.votes} vote${w.votes === 1 ? "" : "s"}</div></div></header>
+  return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">${w.votes} vote${w.votes === 1 ? "" : "s"}</div></div></header>
     <dl><dt>Voted for the real Quack</dt><dd>${w.right}</dd><dt>Rounds won</dt><dd>${w.wins}</dd><dt>Rounds as the Quack</dt><dd>${w.quack}</dd><dt>Won as the Quack</dt><dd>${w.quackWins}</dd><dt>Laps lasted as the Quack</dt><dd>${w.laps}</dd><dt>First onto the Quack's tile</dt><dd>${w.first}</dd><dt>Voted out while innocent</dt><dd>${w.outs}</dd><dt>Average clue turn</dt><dd>${w.clues ? `${(w.clueMs / w.clues / 1000).toFixed(1)} s` : "—"}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }

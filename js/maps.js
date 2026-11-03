@@ -18,6 +18,7 @@ import { duckSVG } from "./duck.js";
 import { esc } from "./ui.js";
 import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
 import { collageScene, collageMini } from "./collage.js";
+import { seenDuck, seenName } from "./looks.js";
 
 export const MAPS = [
   [
@@ -122,7 +123,7 @@ function skyScene(layer, s, cur) {
       op = 0.55 + rnd() * 0.35;
     const duck =
       i === 2 && rider
-        ? `<div class="sky-rider">${duckSVG(s.players[rider].duck, { size: 60, shadow: false, title: s.players[rider].name })}</div>`
+        ? `<div class="sky-rider">${duckSVG(seenDuck(s.players[rider]), { size: 60, shadow: false, title: s.players[rider].name })}</div>`
         : "";
     return `<div class="sky-cloud${duck ? " ridden" : ""}" style="width:${w.toFixed(1)}%;top:${top.toFixed(1)}%;opacity:${op.toFixed(2)};animation-duration:${dur.toFixed(0)}s;animation-delay:${dl.toFixed(1)}s">${duck}${CLOUD}</div>`;
   }).join("");

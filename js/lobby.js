@@ -421,6 +421,55 @@ const COLLAGE_TILES = [
     ],
   ],
 ];
+/* the duck-look settings (looks.js): Rainbow Ducks only with Hide customization; Vote colors never with Rainbow Ducks
+   and not in Mad God Justin or on Duck Cabin; its tag color only with Vote colors */
+const LOOK_TILES = [
+  [
+    "hideLooks",
+    "Hide customization",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "rainbowDucks",
+    "Rainbow Ducks",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "voteColor",
+    "Vote colors",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "tagColor",
+    "Change player tag color",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+];
+const lookRows = (s, ro) =>
+  tileRows(
+    LOOK_TILES.filter(
+      ([k]) =>
+        (k !== "rainbowDucks" || s.options.hideLooks) &&
+        (k !== "voteColor" ||
+          (!s.options.rainbowDucks &&
+            !["mgj", ...CABIN_MODES].includes(s.options.mode))) &&
+        (k !== "tagColor" || (s.options.voteColor && !s.options.rainbowDucks)),
+    ),
+    s,
+    ro,
+  );
 const MORE_TILES = [
   [
     "mgjHp",
@@ -588,6 +637,13 @@ const OPT_TIPS = {
     "How long each date lasts once The Date presses Start timer (they can pause it and go on). Off: no timer, a date lasts until The Date presses Next duck (after 6 s of grace).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
+  hideLooks:
+    "During the game every duck is the plain yellow duck, with a plain name tag that always shows. Specials stay.",
+  rainbowDucks:
+    "Each duck is dealt one of eight looks at random: the seven colors of the rainbow, or a brown duck in Justin's costume. Knocking that one down isn't a Justin kill.",
+  voteColor:
+    "A duck takes the color of the tile it stands on, and its own color off the tiles. Not in Mad God Justin.",
+  tagColor: "The name tag takes the duck's vote color too.",
   mapGrey:
     "Black and white turns the whole map into greys: the tree, the duck, the swirls, the squares and the hexagons.",
   mgjHp:
@@ -625,6 +681,7 @@ function openOptions() {
     ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
     ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
     ${showsCollage(s) ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
+    <h3 class="opt-h">Duck looks</h3><div class="look-opts">${lookRows(s, ro)}</div>
     ${
       ["hang", "vdd"].includes(s.options.mode)
         ? ""
@@ -758,6 +815,11 @@ function openOptions() {
             $$(`.tile[data-k="${t.dataset.k}"]`, w).forEach((b) =>
               b.setAttribute("aria-pressed", b === t),
             );
+            if (LOOK_TILES.some((r) => r[0] === t.dataset.k))
+              setTimeout(() => {
+                const box = w.querySelector(".look-opts");
+                if (box) box.innerHTML = lookRows(R.state, "");
+              }); // (a look setting shows or hides the ones that go with it)
           }
           if (e.target.closest('[data-a="reset"]')) {
             R.send({ t: "options", options: { ...OPTIONS_DEFAULT } });

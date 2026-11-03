@@ -113,6 +113,7 @@ import {
   SPREAD,
 } from "./mgjrules.js";
 import { isL4dd, l4Use, l4Reload, l4Shots, HELD } from "./l4ddrules.js";
+import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -162,6 +163,10 @@ export const OPTIONS_DEFAULT = {
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
   mgjTime: 135, // Mad God Justin: seconds to beat him: 105, 135, 165 (the meteor adds 30 more)
   mapGrey: 0, // the collage map: 1 turns it black and white
+  hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
+  rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
+  voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
+  tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
@@ -933,6 +938,7 @@ export function reduce(state, a, now = Date.now()) {
       } // (Lawyering, Duncelation: back to their place)
       else if (!["lobby", "over", "countdown"].includes(s.phase))
         seatNewcomer(s, a.p.id);
+      if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
       say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
       if (s.waiting && s.waiting.for === a.p.id) {
         delete s.waiting.for;
@@ -1020,6 +1026,13 @@ export function reduce(state, a, now = Date.now()) {
           s.options.mode = "aod"; // and another map leaves Hangout
         if (isHang(s)) s.options.map = "cabin";
         else if (s.options.map === "cabin") s.options.map = "board";
+        /* the looks (looks.js): Rainbow Ducks needs Hide customization, and Vote colors and Rainbow Ducks never go together
+         (the one just turned on wins); the tag's color goes with Vote colors */
+        const o = s.options;
+        if (a.options.rainbowDucks) o.voteColor = 0;
+        if (a.options.voteColor) o.rainbowDucks = 0;
+        if (!o.hideLooks) o.rainbowDucks = 0;
+        if (!o.voteColor) o.tagColor = 0;
       }
       return s;
     case "kick": {
@@ -1066,6 +1079,7 @@ export function reduce(state, a, now = Date.now()) {
       if (s.seat.length < minOf(s)) return state; // (the lobby says how many it needs)
       if (isHang(s) !== (s.options.map === "cabin"))
         s.options.map = isHang(s) ? "cabin" : "board"; // (Hangout and Duck Cabin are one)
+      dealRainbow(s); // (Rainbow Ducks: each duck's look for this game)
       s.phase = "countdown";
       s.at = now;
       s.ends = now + COUNTDOWN * 1000;

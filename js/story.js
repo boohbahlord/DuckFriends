@@ -20,6 +20,7 @@ import {
   LINE_MAX,
   WORD_MAX,
 } from "./rules.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -77,7 +78,7 @@ function headHTML(s, me) {
         ? "the first line of a new paragraph"
         : "the opening line"
       : "the next line";
-    return `<div class="topover sc-top">${cloudHTML(p, "Writing")}<p class="question sc-what">${w === me ? `Your turn: ${what}` : `${nameHTML(p.name, p.nameStyle)} is writing ${what}`}</p></div>`;
+    return `<div class="topover sc-top">${cloudHTML(p, "Writing")}<p class="question sc-what">${w === me ? `Your turn: ${what}` : `${nameHTML(p.name, seenName(p))} is writing ${what}`}</p></div>`;
   }
   return `<div class="topover sc-top">${cloudHTML(STORY_DUCK, "Story Chain")}<p class="question sc-what sc-glow">${HINTS[s.phase] || ""}</p></div>`;
 }
@@ -92,7 +93,7 @@ export function rowsHTML(s, me) {
     Object.entries(para.votes || {})
       .filter(([id, k]) => k === i && s.players[id])
       .map(([id]) =>
-        duckSVG(s.players[id].duck, {
+        duckSVG(seenDuck(s.players[id]), {
           size: 20,
           shadow: false,
           title: s.players[id].name,
@@ -119,7 +120,7 @@ export function rowsHTML(s, me) {
         old = l.p < last;
       return `<div class="sc-row${old ? " sc-old" : ""}${l.i === 0 && l.p > 0 ? " sc-para" : ""}" data-z="${k}">
       <p class="sc-line"><span class="sc-txt" style="${fontStyle(p)};--u:${esc(cardColor(p))}">${lineText(l.line, lit && !old)}</span></p>
-      <div class="sc-by"><span class="sc-mini">${duckSVG(p.duck, { size: 26, shadow: false, title: p.name })}</span>${lit && !old ? `<span class="sc-votes">${voters(l.i)}</span>` : ""}</div></div>`;
+      <div class="sc-by"><span class="sc-mini">${duckSVG(seenDuck(p), { size: 26, shadow: false, title: p.name })}</span>${lit && !old ? `<span class="sc-votes">${voters(l.i)}</span>` : ""}</div></div>`;
     })
     .join("");
 }
@@ -129,7 +130,7 @@ export function typingHTML(s) {
     p = player(s, w),
     d = ((s.drafts || {})[w] || {}).text || "";
   return `<p class="sc-line"><span class="sc-txt" style="${fontStyle(p)};--u:${esc(cardColor(p))}">${d ? esc(d) : '<span class="dim">thinking…</span>'}<i class="caret"></i></span></p>
-    <div class="sc-by"><span class="sc-mini">${duckSVG(p.duck, { size: 26, shadow: false, title: p.name })}</span><span class="sc-writing small">✎ writing</span></div>`;
+    <div class="sc-by"><span class="sc-mini">${duckSVG(seenDuck(p), { size: 26, shadow: false, title: p.name })}</span><span class="sc-writing small">✎ writing</span></div>`;
 }
 /* the writer's window: their secret word and the box */
 function writeHTML(s, me) {
@@ -151,7 +152,7 @@ export const boardHTML = (
 /* ---------- the stats: this paragraph's awards, then the whole game's once the review vote passes ---------- */
 function awardsHTML(s, per) {
   const ids = Object.keys(per).filter((id) => s.players[id]),
-    nm = (id) => nameHTML(s.players[id].name, s.players[id].nameStyle);
+    nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
   const top = (f) => {
     const xs = ids.map((id) => [id, f(per[id])]);
     const v = Math.max(0, ...xs.map((x) => x[1]));
@@ -215,6 +216,6 @@ export function boxHTML(s, id) {
       wvotes: 0,
       ms: 0,
     };
-  return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${n(w.lines, "line")} written</div></div></header>
+  return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">${n(w.lines, "line")} written</div></div></header>
     <dl><dt>Votes for their lines</dt><dd>${w.lvotes}</dd><dt>Votes for their secret words</dt><dd>${w.wvotes}</dd><dt>Time writing</dt><dd>${Math.round(w.ms / 1000)} s</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }

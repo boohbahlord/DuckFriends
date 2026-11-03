@@ -2592,6 +2592,17 @@ html.moving svg.duck.datboi.rainbow .dbr {
   opacity: 0.95;
   outline: 0.12rem solid var(--blue);
 }
+/* Change player tag color (looks.js): the name tag takes the duck's vote color, its letters in a color that reads on it */
+.gduck.vtag .gduck-name {
+  opacity: 0.95;
+  background: color-mix(in srgb, var(--vc) 85%, transparent);
+}
+.gduck.vtag .gduck-name .pname,
+.gduck.vtag .gduck-name .pname *,
+.gduck.vtag .gduck-name .rainbow,
+.gduck.vtag .gduck-name .rainbow * {
+  color: var(--vk) !important;
+}
 /* knocked down: a meter in the player card's color behind the name's letters, emptying until the duck stands up, with
    soft streaks of a contrasting color drifting through it */
 .gduck-name {

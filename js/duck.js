@@ -249,8 +249,14 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal];
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
-  const bodyC = st.fixed ? st.body : styleColor(L, st, "color"),
-    headC = st.fixed ? st.head : st.head2 ? styleColor(L, st, "color2") : bodyC;
+  const bodyC = st.fixed ? L.tint || st.body : styleColor(L, st, "color"),
+    headC = st.fixed
+      ? st.id === "call" && L.tint
+        ? L.tint
+        : st.head
+      : st.head2
+        ? styleColor(L, st, "color2")
+        : bodyC; // (Vote colors, looks.js: L.tint recolors the mallard's body and all of the call duck)
   const tone = (c) =>
     M
       ? { base: M[2], light: M[1], dark: M[5], edge: M[5] }
