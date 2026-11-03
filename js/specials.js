@@ -15,8 +15,8 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import { BOW, MEDKIT, ZEBRA, JAIME } from "./mgjart.js";
-import { duckSVG } from "./duck.js";
+import { BOW, MEDKIT, ZEBRA, JAIME, CHAIR } from "./mgjart.js";
+import { duckSVG, DUCK_DEFAULT } from "./duck.js";
 export { SHOT_SPEED } from "./rules.js";
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -179,6 +179,15 @@ export const SPECIALS = [
     ],
   },
   {
+    id: "invisible",
+    name: "Invisible duck",
+    kind: "effect",
+    get icon() {
+      return `<span class="sp-see">${duckSVG(DUCK_DEFAULT, { size: 40, shadow: false })}</span>`;
+    }, // (a see-through duck, as the shadow duck; made when it's asked for, so duck.js is ready)
+    tip: "Its key turns your duck see-through, like the shadow duck; press it again to turn it back.",
+  },
+  {
     id: "longjump",
     name: "Long jump",
     kind: "jump",
@@ -192,6 +201,13 @@ export const SPECIALS = [
     icon: "☁️",
     tip: "In the air, its key jumps again off a little cloud, once a jump. Shift and the key: Space does it too.",
     colors: [["a", P, "#ffffff"]],
+  },
+  {
+    id: "shortjump",
+    name: "Short jump",
+    kind: "jump",
+    icon: "🐇",
+    tip: "Its key does a short jump: lower and quicker. Shift and the key: every jump is short (the Long jump and the Double jump go off).",
   },
   {
     id: "coffee",
@@ -307,7 +323,21 @@ export const SPECIALS = [
     icon: iconOf(BOW, 1.2),
     tip: "An arrow flies straight toward your mouse, fast: any duck it hits plays dead. One every 0.4 seconds. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
   },
-  /* Mad God Justin's own (only there, never in Customize): the medkit, Jaime and the zebra cake */
+  {
+    id: "chair",
+    name: "Chair",
+    kind: "item",
+    icon: CHAIR.replace("<svg ", '<svg class="sp-chair" '), // (upright, as he throws it; a light edge so it shows on the dark keys)
+    tip: "Throw Justin's office chair toward your mouse: it rolls along slowly, and every duck it hits plays dead and is shoved back. Once every 15 seconds. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "zebra",
+    name: "Zebra cake",
+    kind: "item",
+    icon: ZEBRA,
+    tip: "Throw a zebra cake toward your mouse: Justin runs after it and eats it, and does nothing else meanwhile. Once every 30 seconds. (In Mad God Justin everyone shares one.)",
+  },
+  /* Mad God Justin's own (only there, never in Customize): the medkit and Jaime (the zebra cake is everyone's now, above) */
   {
     id: "medkit",
     name: "Medkit",
@@ -325,14 +355,6 @@ export const SPECIALS = [
       return duckSVG(JAIME.duck, { size: 40, shadow: false });
     }, // (drawn when it's first shown: duck.js may not be ready while this file loads)
     tip: "Jaime sprints at Justin with his knife. Everyone shares the same Jaimes: a new one every 12 seconds, up to 3.",
-  },
-  {
-    id: "zebra",
-    name: "Zebra cake",
-    kind: "item",
-    only: "mgj",
-    icon: ZEBRA,
-    tip: "Throw a zebra cake: Justin chases it and eats it, and does nothing else meanwhile. Everyone shares it: once every 30 seconds.",
   },
   {
     id: "sound",

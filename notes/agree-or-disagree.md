@@ -3152,6 +3152,14 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 > I know for a fact it does that on the main menu
 
 - Miles Jr.: on the menus, a muted (or not yet ready) first song is held at its start, which moves every second, so the bar flipped between "next" (dimmed) and playing. nowPlaying() now shows the menu's first song steadily. Checked: before 2 states in 8 s, after 1, menu and lobby, phone and computer.
+## Request (2026-11-03 04:50Z, from the owner's answers, relayed by Adam): the board's Mad God Justin and Justin Kills
+> Next, before the unlocks: the board's Mad God Justin and Justin Kills. Plan: https://claude.ai/artifact/DDakyD7MfB7FCkNzeswUa4.
+
+Owner's answers to the plan (2026-11-03 04:48Z), the two that touch this:
+> Q7: He will chase them for only 10 seconds, and players still have the flash of red and everything when they take damage and all of that.
+> Q8: Every player in the fight.
+
+Done (Solomon): a General setting "Mad God Justin" (`mgjBoard`, in Game options under Justin, faded until Justin is on). He has 10 HP (a bar under his name); the duck that hurts him is his target for 10 s from its last hit, with his Mad God Justin attacks (pistol, hammer, controllers, chair, fireball; no edge lightning); ducks he hits by accident never become targets, nor do The Date and the Suitor at the table. At 0 HP he goes down for the room's knocked-down time and comes back full. Justin Kills shows under Jumps in the bottom bar's box whenever Justin is in the game (the Justin option, Mad God Justin, Hangout); a Mad God Justin win adds one for every duck in the fight. Noah's Justin-costume duck is a player, so it never counts. Invulnerability (Jackal) isn't built yet: Justin's hits go through the same HP code as any hit (`soaks`), so it should cover him there.
 
 ## 2026-11-03 05:07Z: the secret code (word for word)
 > I SAID THAT THE SECRET COMMAND FOR THE FOLLOWING IS SUPPOSED TO TURN ON ALL UNLOCKABLE ITEMS AND IT SHOULD STILL TRACK THE PROGRESS TOWARDS THE ITEMS OUTSIDE THE UNLOCK AS WELL
@@ -3232,3 +3240,10 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 
 - Adam's reading: on phones the specials slider stays at the bottom middle in every mode, Quacky Zombies too (its right-side column goes); the weapon toggle is a button just right of the slider; the aim-and-attack stick sits near the bottom right, a little in from the edge, looks like the move stick (not red, crosshair kept), aims first and fires only when pushed a little further; it shows whenever the picked special can attack, toggled on or not; the up-arrow jump button sits right above it, in every mode, and replaces tap-the-board-to-jump; everything else goes to the bottom. Customize's specials list gets a thin row at its top and bottom with a button that takes specials off the hotbar (PC and phone).
 - Done (Solomon, on #195's branch): `js/phonepad.js` (the aim stick: see-through like the walking stick, the crosshair is its knob; it aims from 10 px and attacks only past 30 px, the stick's edge, stopping again under 24 px; a tap does nothing; it and the jump button sit over the board's bottom right, 2rem in from the edge, above the bottom bar), `js/touch.js` (no tap-to-jump, no double-tap jump), `js/hotbar.js` (the slider takes a game's own slots: `look`, `sig`), `js/l4ddbar.js` (`l4Slider`: Quacky Zombies' slots in the slider; the right-side column is gone; the purple switch takes the special in and out of hand and the flashlight on and off; a weapon in hand shows on and can't be switched), `js/customize.js` (Remove from hotbar in a thin row at the top and the bottom of Specials). Also fixed: leaving a game threw an error since the hotbar's key check moved to pointer.js. Picture sheet updated (same link); not merged.
+
+## The four unlocks from the Nov 3 batch (2026-11-03, Adam's go at 08:53Z; owner's words at lines ~2890 to 2904 above)
+
+> im going to bed, so keep working and dont push anything live
+
+- Built (Solomon the 2nd, on `claude/project-thread-2hosjy` with #197; not merged): Short jump (1,728 Jumps; 60% of the height in 70% of the time; kept on, it turns Long jump and Double jump off, and either turns it off), Chair (1,123 Justin kills in Duck Cabin, `profile.cabinKills`; Mad God Justin's chair thrown toward the mouse, 2.8 duck lengths a second, 2.4 wide, 15 s; silly-commands switch covers it), Invisible duck (hit the shadow duck with a thrown chair, `profile.shadowHits` from `s.shk`; an on/off effect, the duck and its shadow at 0.4 like the shadow duck, name tag solid), Zebra cake (72 Justin defeats; now everyone's special, 30 s each, one cake in the room at a time `s.zcake`; board Justin and Duck Cabin's Justin sprint to it and eat it, no new lines). Jetpack and Jaime held, as Adam said.
+- Art reused: Mad God Justin's chair and zebra cake. Only new look: the see-through duck, and a thin light edge on the chair's hotbar icon. Picture sheet for the owner's OK: https://claude.ai/artifact/P3YBC81DrrKLDh9p3yJAdu

@@ -79,6 +79,7 @@ import {
   lawStats,
   LAW_MID,
   WEAPONS,
+  THROWS,
   shotAt,
   coolFor,
   coolEnds,
@@ -180,6 +181,8 @@ import {
   justinShown,
   JUSTIN_ID,
   JUSTIN_PLAYER,
+  boardMgj,
+  BJ_HP,
 } from "./boardjustin.js";
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
@@ -410,12 +413,17 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
 const MGJ_SLOW = 0.8;
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
-/* a duck's jump: a long jump floats longer and a little higher; a double jump starts a second arc where the duck is, a
-   little lower than the first */
+/* a duck's jump: a long jump floats longer and a little higher, a short jump is lower and quicker (60% of the height in
+   70% of the time: the owner's numbers); a double jump starts a second arc where the duck is, a little lower than the
+   first */
 const jumpCfg = (pos) => {
   const b = JUMP[R && R.state.options.lowGravity ? "low" : "normal"];
   if (pos && pos.tb > 0) return { T: b.T * Math.sqrt(pos.tb / b.H), H: pos.tb }; // Hangout's trampoline: a bounce tb duck heights high
-  return pos && pos.lj ? { T: b.T * 1.4, H: b.H * 1.15 } : b;
+  return pos && pos.lj
+    ? { T: b.T * 1.4, H: b.H * 1.15 }
+    : pos && pos.sj
+      ? { T: b.T * 0.7, H: b.H * 0.6 }
+      : b;
 };
 const arc = (t0, now, T, H) => {
   const t = (now - t0) / 1000 / T;
@@ -988,30 +996,37 @@ function drawDucks(now = clockNow()) {
     /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
        Quacky Zombies: its own 3 HP, always shown (down or a ghost, none) */
     const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+      bj = id === JUSTIN_ID && !g && boardMgj(s), // (the board's Mad God Justin: his 10 HP, always shown while he's up)
       lost =
         !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
           ? phpLost(s, id, now)
           : 0,
-      hpMax = l4
-        ? maxHp(s, id)
-        : isMgj(s)
-          ? !g && s.seat.includes(id) && s.phase === "boss"
-            ? mgjPHp(s)
-            : 0
-          : lost
-            ? PHP
-            : 0,
+      hpMax = bj
+        ? s.justin.max || BJ_HP
+        : l4
+          ? maxHp(s, id)
+          : isMgj(s)
+            ? !g && s.seat.includes(id) && s.phase === "boss"
+              ? mgjPHp(s)
+              : 0
+            : lost
+              ? PHP
+              : 0,
       hp = !hpMax
         ? -1
-        : l4
-          ? !dead && l4Hp(s, id) > 0
-            ? l4Hp(s, id)
-            : -1
-          : isMgj(s)
-            ? s.mgj && !dead
-              ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+        : bj
+          ? dead
+            ? -1
+            : (s.justin.hp ?? hpMax)
+          : l4
+            ? !dead && l4Hp(s, id) > 0
+              ? l4Hp(s, id)
               : -1
-            : PHP - lost;
+            : isMgj(s)
+              ? s.mgj && !dead
+                ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+                : -1
+              : PHP - lost;
     if (d._hp !== hp) {
       const was = d._hp;
       d._hp = hp;
@@ -1119,14 +1134,21 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle("left", d._face < 0);
     d.querySelector(".gduck-done").hidden = !s.done[id];
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
-    /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one */
+    /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one; the
+       Invisible duck turns the duck and its shadow see-through, as the shadow duck (css: .gduck.see) */
     const auras = [];
+    let see = false;
     for (const [k, u] of Object.entries((s.aura || {})[id] || {}))
       if (!u || u > now) {
         if (k === "loserx") wearsX.add(id);
         else if (k === "ducklings") brood.push([id, pos, at, p.duck]);
+        else if (k === "invisible") see = true;
         else auras.push(k);
       }
+    if (d._see !== see) {
+      d._see = see;
+      d.classList.toggle("see", see);
+    }
     const au = auras.sort().join();
     if (d._aura !== au) {
       d._aura = au;
@@ -1546,7 +1568,10 @@ function drawDucks(now = clockNow()) {
     storyMarks(s, board);
     return;
   }
-  if (hang) return; // (no columns, no cloud)
+  if (hang) {
+    placeCake(board, s, now);
+    return;
+  } // (no columns, no cloud; the Zebra cake special's cake, though)
   // the column under my duck lights up
   const myCol =
     me && me.x >= 0
@@ -1838,9 +1863,12 @@ function placePick(board, s) {
   });
 }
 
-/* Mad God Justin: the zebra cake, spinning on its way, then lying where it landed until he eats it */
+/* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
+   until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
 function placeCake(board, s, now) {
-  const c = isMgj(s) && s.phase === "boss" && s.mgj && s.mgj.cake,
+  const c = isMgj(s)
+      ? s.phase === "boss" && s.mgj && s.mgj.cake
+      : boardPhases(s).includes(s.phase) && s.zcake,
     layer = $(".ducks", board);
   let n = layer && layer.querySelector(".mgj-cake");
   if (n && (!c || c.eat || +n.dataset.n !== c.n)) {
@@ -1855,19 +1883,24 @@ function placeCake(board, s, now) {
     layer.append(n);
   }
   n.classList.toggle("down", now >= c.stop);
-  const at = place(cakeAt(c, now), 0, 1),
+  const p = cakeAt(c, now),
+    at = place(p, 0, 1),
     w = geo.size * 0.7;
   Object.assign(n.style, {
     left: at.left.toFixed(1) + "px",
     top: (at.top - w * 0.3).toFixed(1) + "px",
     width: w.toFixed(1) + "px",
-    zIndex: Math.round(at.top - 1),
+    zIndex: geo.hang ? world.key("", p) - 1 : Math.round(at.top - 1),
+    visibility: geo.hang && world.hidden("", p) ? "hidden" : "",
   });
 }
-/* Mad God Justin's snack (a look only), or the zebra cake he picked up: at his beak, the way he faces, a bite at a time
-   (his double eats too) */
+/* Mad God Justin's snack (a look only), or the zebra cake he picked up (the board's Justin too: the Zebra cake
+   special): at his beak, the way he faces, a bite at a time (his double eats too) */
 function placeSnack(board, s, now) {
-  const e = isMgj(s) && s.phase === "boss" && s.justin && s.justin.eat,
+  const e =
+      (isMgj(s) ? s.phase === "boss" : justinShown(s)) &&
+      s.justin &&
+      s.justin.eat,
     layer = $(".ducks", board);
   if (!layer) return;
   for (const id of [JUSTIN_ID, JUSTIN2]) {
@@ -2457,6 +2490,7 @@ function sendMove(force) {
     me.y.toFixed(4),
     me.j,
     me.lj,
+    me.sj,
     me.dj,
     q,
     sprinting && moving,
@@ -2479,6 +2513,7 @@ function sendMove(force) {
     y: me.y,
     j: me.j || 0,
     ...(me.j && me.lj ? { lj: true } : {}),
+    ...(me.j && me.sj ? { sj: true } : {}),
     ...(me.j && me.dj ? { dj: me.dj } : {}),
     ...(me.j && me.tb ? { tb: me.tb } : {}),
     q,
@@ -2536,7 +2571,7 @@ function step(dt, now) {
   if (me.j && now >= landsAt(me)) {
     const n = me.dj ? 2 : 1;
     me.j = 0;
-    me.lj = false;
+    me.lj = me.sj = false;
     me.dj = 0;
     for (let i = 0; i < n; i++) countJump();
     sendMove(true);
@@ -2754,7 +2789,14 @@ function resetDuck() {
     // Hangout: back outside the front door
     if (!world) return "✗ That works on the board.";
     const p = world.spawn();
-    Object.assign(me, p, { j: 0, lj: false, dj: 0, b: p.z, vz: null });
+    Object.assign(me, p, {
+      j: 0,
+      lj: false,
+      sj: false,
+      dj: 0,
+      b: p.z,
+      vz: null,
+    });
     target = null;
     R.send({
       t: "move",
@@ -2793,7 +2835,7 @@ function resetDuck() {
   me.x = x;
   me.y = y;
   me.j = 0;
-  me.lj = false;
+  me.lj = me.sj = false;
   me.dj = 0;
   target = null;
   R.send({ t: "move", x, y, j: 0, reset: true });
@@ -2826,7 +2868,12 @@ function jump(how) {
   me.j = now;
   me.dj = 0;
   me.lj =
-    how === "long" || (kept.has("longjump") && hasKey(playDuck(), "longjump"));
+    how === "long" ||
+    (how !== "short" && kept.has("longjump") && hasKey(playDuck(), "longjump"));
+  me.sj =
+    !me.lj &&
+    (how === "short" ||
+      (kept.has("shortjump") && hasKey(playDuck(), "shortjump"))); // (the Short jump: lower and quicker)
   if (world && isHang(R.state)) world.started(me); // (the arc starts from the height it stands on)
   sendMove(true);
 }
@@ -3474,7 +3521,10 @@ function padWeapon() {
       ? id
       : null;
   const sp = specialById(id);
-  return WEAPONS.includes(id) && sp && !sp.off && unlocked("special", id)
+  return (WEAPONS.includes(id) || THROWS.includes(id)) &&
+    sp &&
+    !sp.off &&
+    unlocked("special", id)
     ? id
     : null;
 }
@@ -3514,16 +3564,29 @@ function useKey(i, keep) {
     sp = specialById(id);
   if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
   lastKey = i;
-  if (sp.kind === "effect") R.send({ t: "aura", what: id, keep: !!keep });
+  if (sp.kind === "effect")
+    R.send({ t: "aura", what: id, keep: !!keep || id === "invisible" });
+  // (the Invisible duck: its key turns it on and off)
   else if (sp.kind === "jump") {
     if (keep) {
-      kept.has(id) ? kept.delete(id) : kept.add(id);
-    } else jump(id === "longjump" ? "long" : "double");
+      if (kept.has(id)) kept.delete(id);
+      else {
+        kept.add(id);
+        if (id === "shortjump") {
+          kept.delete("longjump");
+          kept.delete("double");
+        } else kept.delete("shortjump");
+      } // (kept on, the Short jump turns the Long jump and the Double jump off, and either of them turns it off)
+    } else
+      jump(
+        id === "longjump" ? "long" : id === "shortjump" ? "short" : "double",
+      );
   } else if (WEAPONS.includes(id) && keep && !isMgj(R.state)) {
     held = held === id ? null : id;
     sendMove(true);
   } // the handgun or the dagger: kept out (a left click uses it) or put away
-  else if (WEAPONS.includes(id)) fire(id);
+  else if (WEAPONS.includes(id) || THROWS.includes(id))
+    fire(id); // (the Chair and the Zebra cake: thrown toward the mouse)
   else if (me && me.x >= 0)
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
@@ -4218,6 +4281,7 @@ function paint(force) {
         ...fresh,
         j: (me && me.j) || 0,
         lj: !!(me && me.lj),
+        sj: !!(me && me.sj),
         dj: (me && me.dj) || 0,
       }; // (Who is the Quack?: the host puts ducks on their tiles or the strip as a stage starts)
     scZone = null;

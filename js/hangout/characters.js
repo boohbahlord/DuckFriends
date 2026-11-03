@@ -4,7 +4,7 @@
    or a table, shows its words in a bubble over it, lets E pet a cat that likes it, and plays the swipes and purrs
    (s.hang.npcFx). Their words also go in the chat (npc.js). Doors open for them (doors.js addOpeners).
    Justin (justin.js) is a duck: E talks to him (or revives him), his gun shows while he's after someone, a hotdog when
-   he eats, a glass when he drinks; bullets and daggers knock him down (rules.js asks targets and hit), and so does
+   he eats, a glass when he drinks, the zebra cake (the Zebra cake special) when he's caught it; bullets and daggers knock him down (rules.js asks targets and hit), and so does
    kill @Justin. The shadow duck (shadowduck.js) fades in and out (its record's o) with a whoosh, and whooshes away when
    it gets Justin (it fades). */
 import { rule, activity } from "./registry.js";
@@ -20,6 +20,7 @@ import {
   JUSTIN,
 } from "./npcart.js";
 import { heldHTML, pressFX, BULLET } from "../specials.js";
+import { ZEBRA } from "../mgjart.js";
 import { now as clockNow } from "../clock.js";
 import { nameHTML } from "../name.js";
 import { seen, npcMuted } from "../npcs.js";
@@ -56,13 +57,27 @@ rule("npc", {
     a.do === "kill"
       ? !!(s.options || {}).fun && npcHit(s, String(a.who), a.id, now)
       : npcAct(s, a, now), // (kill @Justin, from anywhere)
-  /* who a bullet or a dagger can knock down: Justin, while he's up */
-  targets(s, now) {
-    const r = ((s.hang || {}).npc || {}).justin,
-      p = r && r.a !== "dead" && npcAt(r, now);
-    return p ? [{ id: "justin", x: p.x, y: p.y, z: p.z }] : [];
+  /* who a bullet or a dagger can knock down: Justin, while he's up; a thrown chair (the Chair special) can also hit
+     the shadow duck while it shows */
+  targets(s, now, k) {
+    const npc = (s.hang || {}).npc || {},
+      r = npc.justin,
+      p = r && r.a !== "dead" && npcAt(r, now),
+      sd = npc.shadow,
+      q = k === "chair" && sd && sd.o && sd.o.v && npcAt(sd, now);
+    return [
+      ...(p ? [{ id: "justin", x: p.x, y: p.y, z: p.z }] : []),
+      ...(q ? [{ id: "shadow", x: q.x, y: q.y, z: q.z }] : []),
+    ];
   },
-  hit: (s, id, by, now) => npcHit(s, id, by, now),
+  hit(s, id, by, now) {
+    const got = npcHit(s, id, by, now);
+    if (got && id === "shadow") {
+      s.shkN = (s.shkN || 0) + 1;
+      s.shk = [...(s.shk || []).slice(-9), { n: s.shkN, by }];
+    } // (the Invisible duck's unlock counts these: unlocks.js)
+    return got;
+  },
 });
 /* doors open for whoever walks through */
 addOpeners((s) => {
@@ -146,6 +161,7 @@ const HAND = {
   gun: () =>
     `<span class="hang-npc-held gun">${heldHTML("handgun", JUSTIN)}</span>`,
   drink: () => `<span class="hang-npc-held glass">${glassSVG()}</span>`,
+  cake: () => `<span class="hang-npc-held cake"><i>${ZEBRA}</i></span>`, // (the Zebra cake special's, a bite at a time)
 };
 function svgFor(id, pose, step) {
   const b = BRAINS.get(id);
@@ -308,7 +324,8 @@ activity({
         step = 0; // (look: what a screen works out for itself, the Butler dealing)
       if (pose === "swipe" && now - r.w.t > 700) pose = "stand";
       if (o.duck) {
-        if (!["dead", "gun", "drink", "deal"].includes(pose)) pose = "stand";
+        if (!["dead", "gun", "drink", "deal", "cake"].includes(pose))
+          pose = "stand";
         o.bob = p.moving ? Math.abs(Math.sin(o.dist / 14)) * 4 : 0;
       } // (a duck waddles: a little bob)
       else if (pose === "dead") pose = "loaf";
@@ -340,6 +357,8 @@ activity({
       }
       if (r.a === "drink" && o.a !== "drink" && o.seen)
         play("gulp", { x: o.x, y: o.y });
+      if (r.a === "cake" && o.a !== "cake" && o.seen)
+        play("bite", { x: o.x, y: o.y });
       o.a = r.a;
       o.seen = true;
       if (r.o) {

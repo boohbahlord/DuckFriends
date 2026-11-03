@@ -7,6 +7,7 @@
    Justin and it only tangle when they meet up close, in the dark: then either it goes for him (a touch and he drops;
    someone revives him with E) and fades away, or, very rarely, he spots it by accident and chases it, and it fades
    before he gets close.
+   A chair thrown at it (the Chair special) whooshes it away at once; that hit unlocks the Invisible duck.
    Its record (npc.js) adds o = { v, t }: seen (1) or faded (0) since the room's time t, for the screens to fade it. */
 import {
   brain,
@@ -246,6 +247,13 @@ brain("shadow", {
       if (p && c.go(me, p[0], p[1], WALK * 0.6, way(c.s))) return true;
     }
     return false;
+  },
+  /* hit by a thrown chair (the Chair special; characters.js only lets a chair hit it, while it shows): it whooshes away */
+  hit(me, by, c) {
+    if (!me.o || !me.o.v) return false;
+    if (!mm) return false;
+    away(me, c, 6000);
+    return true;
   },
 });
 export { inLight }; // (tools/npc-sim.mjs checks it stays out of the light)
