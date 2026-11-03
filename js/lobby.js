@@ -555,14 +555,6 @@ const MORE_TILES = [
     ],
   ],
   [
-    "aodColors",
-    "Board colors",
-    [
-      ["rainbow", "Rainbow"],
-      ["gr", "Green and red"],
-    ],
-  ], // (Agree or Disagree only)
-  [
     "hideNames",
     "Hide names while answering",
     [
@@ -618,7 +610,6 @@ const MORE_TILES = [
 ];
 /* which modes show a setting that only some modes use */
 const ONLY_IN = {
-  aodColors: ["aod"],
   hideNames: ["aod", "wyr", "ddr"],
   showWriter: ["aod", "wyr"],
   scLines: ["sc"],
@@ -639,8 +630,6 @@ const OPT_TIPS = {
   noChat:
     "Text chat is off for everyone, the host too. The game's own messages still show.",
   noTerm: "The command line is off for everyone, the host too.",
-  aodColors:
-    "Green and red: the agree columns are shades of green, the disagree columns shades of red, and Neutral slowly fades between black, grey and white.",
   hideNames: "Name tags stay hidden until the turn ends.",
   showWriter: "The question's writer is named after the vote.",
   scLines: "How many lines each player writes before the paragraph ends.",

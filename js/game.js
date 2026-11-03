@@ -475,7 +475,7 @@ const boardHTML = (s) =>
                 ? mgjBoardHTML(s)
                 : isVd(s)
                   ? vdBoardHTML(s, R.me)
-                  : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
+                  : `<div class="board">
   ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join("")}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === "answer" || s.phase === "discuss" ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? "Would you rather" : s.qs[s.qi].text))}</p></div>` : ""}</div>`; // (Would You Rather: the choices are on the tiles)
