@@ -5413,49 +5413,54 @@ html.still .gduck-zz i {
 .gduck.saying .gduck-zz {
   display: none;
 }
-/* fire: flames for a moment, then a charred duck whose burns fade */
+/* fire: one big flame over the whole duck for a moment (the owner: "the whole duck covered in one large enough flame";
+   art: FLAME in mgjart.js), then a charred duck whose burns fade. Its three layers flicker out of step */
 .gduck-fire {
   display: none;
   position: absolute;
   left: 50%;
-  bottom: 8%;
-  width: 80%;
-  height: 90%;
+  bottom: -4%;
+  z-index: 3;
+  width: 118%;
   transform: translateX(-50%);
   pointer-events: none;
 }
+.gduck-fire svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
 .gduck.onfire .gduck-fire {
   display: block;
+  animation: fl-up 0.22s ease-out;
 }
-.gduck-fire i {
-  position: absolute;
-  bottom: 0;
-  width: 40%;
-  height: 70%;
-  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-  background: radial-gradient(
-    ellipse at 50% 70%,
-    #fff2b0 0,
-    #ffb347 35%,
-    #ff5a1a 65%,
-    #ff5a1a00 75%
-  );
-  mix-blend-mode: screen;
-  animation: flick 0.32s ease-in-out infinite alternate;
+.gduck-fire g {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
-.gduck-fire i:nth-child(1) {
-  left: 0;
-  height: 60%;
+html.moving .gduck-fire .fl-out {
+  animation: fl-lick 0.46s ease-in-out infinite alternate;
 }
-.gduck-fire i:nth-child(2) {
-  left: 30%;
-  height: 95%;
-  animation-delay: 0.1s;
+html.moving .gduck-fire .fl-mid {
+  animation: fl-lick 0.34s ease-in-out -0.12s infinite alternate-reverse;
 }
-.gduck-fire i:nth-child(3) {
-  left: 60%;
-  height: 70%;
-  animation-delay: 0.2s;
+html.moving .gduck-fire .fl-in {
+  animation: fl-lick 0.27s ease-in-out -0.2s infinite alternate;
+}
+@keyframes fl-lick {
+  from {
+    transform: scale(1, 0.93) skewX(-2.5deg);
+  }
+  to {
+    transform: scale(1.03, 1.06) skewX(2.5deg);
+  }
+}
+@keyframes fl-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.4);
+  }
 }
 @keyframes flick {
   from {
@@ -11576,6 +11581,256 @@ html.moving .mgj-field {
   inset: 0;
   background: radial-gradient(ellipse at 50% 55%, #ffffff14, transparent 70%);
   pointer-events: none;
+}
+/* the edge lightning (art: edgeHTML in mgjart.js): "warn" glows electric blue along the edges and corners, as deep as the
+   strip it will hit (--edge-x on the sides, --edge-y top and bottom, as parts of the board), brightening for 0.6 s; "zap" strikes: a white flash in the strip and bolts along the sides */
+.mgj-edge {
+  --edge-x: 5%;
+  --edge-y: 9%;
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.mgj-edge.warn {
+  background:
+    linear-gradient(
+      to bottom,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-y),
+      transparent calc(var(--edge-y) + 2%)
+    ),
+    linear-gradient(
+      to top,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-y),
+      transparent calc(var(--edge-y) + 2%)
+    ),
+    linear-gradient(
+      to right,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-x),
+      transparent calc(var(--edge-x) + 1.2%)
+    ),
+    linear-gradient(
+      to left,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-x),
+      transparent calc(var(--edge-x) + 1.2%)
+    );
+  box-shadow:
+    inset 0 0 0 0.18rem #9be8ff,
+    inset 0 0 1rem 0.3rem #38b6ffcc;
+  animation: edge-warn 0.6s ease-in forwards;
+}
+@keyframes edge-warn {
+  0% {
+    opacity: 0.15;
+  }
+  35% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.mgj-edge.zap {
+  box-shadow:
+    inset 0 0 0 0.3rem #ffffff,
+    inset 0 0 2rem 0.8rem #bff1ffdd;
+  animation: edge-zap 0.35s linear forwards;
+}
+.mgj-edge.zap svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+@keyframes edge-zap {
+  0%,
+  22% {
+    opacity: 1;
+  }
+  32% {
+    opacity: 0.35;
+  }
+  44% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* his teleport flash (TELEPORT), half a second where he leaves and where he lands: up from the ground, then gone */
+.mgj-tp {
+  position: absolute;
+  pointer-events: none;
+  transform-origin: 50% 88%;
+  animation: mgj-tp 0.5s ease-out forwards;
+}
+.mgj-tp svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes mgj-tp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.5, 0.2);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -88%) scale(1, 1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.7, 1.15);
+  }
+}
+/* a hitmarker (HITMARK, HITMARK_FAKE): pops in big over what was hit, settles and fades */
+.mgj-hit {
+  position: absolute;
+  pointer-events: none;
+  animation: mgj-hit 0.45s ease-out forwards;
+}
+.mgj-hit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes mgj-hit {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+/* the rework's (game.js): a duck nothing can hurt for a second after a hit flickers fast, in and out */
+.gduck.mgj-blink .gduck-body {
+  animation: mgj-blink 0.12s steps(2, jump-none) infinite;
+}
+@keyframes mgj-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+/* the bow's arrow and his fireball, pointing the way they fly */
+.bullet.k-arrow {
+  width: calc(var(--s) * 0.8);
+  margin: calc(var(--s) * -0.075) 0 0 calc(var(--s) * -0.4);
+  filter: drop-shadow(0 0.1rem 0.12rem #0006);
+}
+.bullet.k-fireball {
+  width: var(--s);
+  margin: calc(var(--s) * -0.3) 0 0 calc(var(--s) * -0.5);
+  filter: drop-shadow(0 0 0.4rem #ff8c2b);
+}
+.bullet.k-arrow svg,
+.bullet.k-fireball svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* the zebra cake: spinning on its way, then lying still where it landed */
+.mgj-cake {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0.15rem 0.15rem #0006);
+}
+.mgj-cake i {
+  display: block;
+  animation: cake-spin 0.6s linear infinite;
+}
+@keyframes cake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.mgj-cake i.ccw {
+  animation-direction: reverse;
+}
+.mgj-cake.down i {
+  animation: none;
+}
+.mgj-cake svg,
+.mgj-snack svg,
+.mgj-poof svg,
+.mgj-kit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* his snack at his beak, a bite at a time; it turns with him */
+.mgj-snack {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.mgj-snack i {
+  display: block;
+  animation: mgj-bite 0.5s ease-in-out infinite;
+}
+.mgj-snack.left i {
+  scale: -1 1;
+}
+@keyframes mgj-bite {
+  50% {
+    transform: translateY(-12%) rotate(-8deg);
+  }
+}
+/* a Jaime gone in a cloud, and a medkit over the duck it got up */
+.mgj-poof,
+.mgj-kit {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: mgj-poof 0.8s ease-out forwards;
+}
+.mgj-kit {
+  animation-duration: 1.2s;
+}
+@keyframes mgj-poof {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(1.2);
+  }
+}
+/* the Jaimes' shared key: one or more stored, the bar charges the next one in pink (it fills, not drains) */
+.cooldown.more {
+  background: #ff9ec2;
+  box-shadow: 0 0 0.25rem #ff9ec2b0;
+  animation-name: cfill;
+}
+@keyframes cfill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 /* his HP, beside the cloud */
 .question.mgj-hp {

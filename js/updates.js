@@ -8,9 +8,14 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 112,
+    version: 117,
     date: "Nov 3, 2026",
-    title: "Walking fix",
+    title: "Mad God Justin, reworked",
+    news: [
+      "In Mad God Justin you have 6 HP and blink after a hit, a Jump dodges, and WASD walks while the arrow keys aim. He throws a fireball that sets ducks on fire, lights up the edges, teleports, splits in two and turns off his Xbox.",
+      "New in your hotbar for him: a bow, one medkit to get a downed duck up, Jaime (he charges at Justin) and a zebra cake to keep him busy.",
+      "The bow is in every mode now, and every duck takes 3 hits before it goes down.",
+    ],
     fixed: [
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",

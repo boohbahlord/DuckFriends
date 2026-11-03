@@ -2845,6 +2845,13 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 
 ## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
 > 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+> 2. It is every 14 seconds, it has a .8 tel, and the old lightning and fire that lacks a tell or anything like that is removed.
+> 11. The bow and arrow dont need to be unlocked and in the normal game AND the zombie game they shoot once every 0.4 seconds (in the zombie game, they have 150 arrows, 5% chance of crit, and no magazine or anything like that)
+> 12. Frog on unicycle
+> 13. The jetpack SHOULD NOT be in the Mad God Justin gamemode and the chair and fireball can get you. Make the fire effect better it sucks rn, it should make the whole duck covered in one large enough flame.
+> 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
+
+Art (Noah): js/mgjart.js holds the new Mad God Justin pictures (bow, arrow, fireball, one big flame, Jaime and his poof, medkit, zebra cake, pizza, donut, teleport, hitmarks, edge glow and lightning); the lightning eyes are drawn over face items. Picture sheet: https://claude.ai/artifact/DZvJvYSFSv5Phv3eukppoL
 
 ## 2026-11-03: Valentine's Duck Date, the Date's timer (Adam's relay of the owner's answers)
 The Date gets a start/pause timer button; a 6 s grace follows, then the Date can skip; with the timer off there is no button; the Date writes one prompt per round. (Jackal) Done in `js/vddrules.js` (`vdTimer`, `VD_GRACE`), `js/game.js` (`vdActHTML`), computers in `js/bots.js`.
