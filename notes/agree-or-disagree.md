@@ -3063,6 +3063,20 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 
 ## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
 > 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+> 2. It is every 14 seconds, it has a .8 tel, and the old lightning and fire that lacks a tell or anything like that is removed.
+> 11. The bow and arrow dont need to be unlocked and in the normal game AND the zombie game they shoot once every 0.4 seconds (in the zombie game, they have 150 arrows, 5% chance of crit, and no magazine or anything like that)
+> 12. Frog on unicycle
+> 13. The jetpack SHOULD NOT be in the Mad God Justin gamemode and the chair and fireball can get you. Make the fire effect better it sucks rn, it should make the whole duck covered in one large enough flame.
+> 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
+
+Art (Noah): js/mgjart.js holds the new Mad God Justin pictures (bow, arrow, fireball, one big flame, Jaime and his poof, medkit, zebra cake, pizza, donut, teleport, hitmarks, edge glow and lightning); the lightning eyes are drawn over face items. Picture sheet: https://claude.ai/artifact/DZvJvYSFSv5Phv3eukppoL
+
+## 2026-11-03: the new map and dat boi (the owner's message, word for word)
+> about the new map: make the squares that fade in and out more transparent and have them fade back in and out MORE while being in more locations and being small, where they teleport to any given possible position, based on imagined tiles of potential spawns, with a colored fuzzy static over the animation of this map with slight transparent scanlines. Make the tree and patterns kinda have undefined borders that kinda flow into fade at the borders, but leave the tree black, i like that. get rid of the floating cubes that are super small around the tree. The map is called "Shelter Sky & Null"
+>
+> Nice job on dat boi, and u can name him "Dat Boi"
+
+Read as: the map's name is "Shelter Sky & Null" (id stays `collage`). Squares: smaller, more see-through, many more spawn spots on an imagined grid; each fades in and out more often and, while hidden, jumps to another free grid spot. A colored fuzzy static and faint see-through scan lines over the map. The sky, band, patches and halftones get soft, fading edges; the tree stays black (its edge softened a little). The small hexagons ("cubes") are removed. Dat boi's art is OK'd; his style's name is "Dat Boi".
 
 ## 2026-11-03: Valentine's Duck Date, the Date's timer (Adam's relay of the owner's answers)
 The Date gets a start/pause timer button; a 6 s grace follows, then the Date can skip; with the timer off there is no button; the Date writes one prompt per round. (Jackal) Done in `js/vddrules.js` (`vdTimer`, `VD_GRACE`), `js/game.js` (`vdActHTML`), computers in `js/bots.js`.
@@ -3088,3 +3102,35 @@ Done (Jackal): the dunce look goes as soon as someone else is crowned (only the 
 > Game setting suggestions can also be general. New game setting suggestions ought NOT to be witty names or anything, they should be matter of fact and provide clarity.
 
 - Replaces the dropdown menus of PR #186 (not merged); Adam's plan with the categories, descriptions, numbered suggestions and questions follows.
+
+## 2026-11-03 04:48Z: the owner's answers to the Game Settings plan (word for word)
+> Suggestions
+>
+> 1. nah
+> 2. yeah
+> 3. Yeah
+> 4. yes but instead of only lines per paragraph, there is only lines per player till paragraph ends.
+> 5. No that defeats the point
+> 6. No
+> 7. No
+> 8. No
+> 9. No
+> 10. Yes
+> 11. Yes
+> 12. Yes
+>
+>
+> Questions
+>
+> 1. A host can start the game regardless. BUT, there is a new setting below the host settings (it will now be called host settings), called "Democracy of Ducklings", and in this option BELOW the duck setting, the ducks can vote to make the host unable to start and they most vote ready like everyone else, they can also vote that the map is always voted and that the game mode is always voted. They can vote that ALL players can change the game settings, AND they can make it to where if ALL ducks vote a new host (host cannot vote on this), then the duck they voted becomes the new host. The host CANNOT start a game during a vote, and they can only ready, and a text popup on the top of the host's screen says as much, and a vote shows up as a highlight and notification with an exclamation on the vote menu, and there is also a soft bell sound to indicate that a vote is up. Most votes only need 2/3rds of duck votes to pass, but the new host needs ALL ducks to vote together. There is another vote called "Sudo Perms" which grants sudo perms to all ducks. If the host wants, they can go to this menu and enable them automatically with a single vote, including switching host. This is something that can be canceled by a host BEFORE a lobby is created. There is also a new setting for general WHICH hides customization features, which during the game, will make every duck a default yellow duck with their player tag (you cannot disable player tags for this game option), and this unlocks a new option called "rainbow ducks", where every duck is a color of a rainbow, and the eighth duck is brown with the Justin costume on. the colors of the rainbow are 7 + the Justin outfit, and it is randomly assigned. Killing a player with this outfit does not count towards the kill Justin count. There is another general setting apart from these where the color of a duck is determined by their vote (so it cannot be on if rainbow ducks is on, but doesnt contradict player tags nor disabled cosmetics), and in this one, where the duck stands on a board changes their color with it. If a duck is greyscaled, then the change applies. The mad god justin gamemode for example though does not change their colors obv under this setting the skins like the jack in the box or malard duck can change colors to their choice or state in this setting.and there is a change player tag to the choice of a player as a separate setting that has to be enabled.
+> 2. Yes
+> 3. Yes and yes
+> 4. Yes
+> 5. Yes
+> 6. Yes
+> 7. He will chase them for only 10 seconds, and players still have the flash of red and everything when they take damage and all of that.
+> 8. Every player in the fight.
+> 9. It can switch colors between black, grey, and white, slowly fading into the differences and the words on it fade with it (the duck doesnt change color when on this tile in the new setting where ducks change colors to their choices, BUT we can make them change with it, because that would be pretty cool)
+> 10. The default is 2 of 3 and IDK WHAT THE FUCK ARE YOU TALKING ABOUT
+
+- Plan: https://claude.ai/artifact/DDakyD7MfB7FCkNzeswUa4. Answer 10: the code's default was 3 of 4 (OPTIONS_DEFAULT.share 0.75); it becomes 2 of 3 as the owner says. Answer 9 is about the Neutral column on the green-and-red board.

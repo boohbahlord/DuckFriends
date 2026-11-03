@@ -70,8 +70,6 @@ import {
   DOWN_OK,
   DEAD_STILL,
 } from "./hangout/death.js";
-import { MAPS } from "./maps.js";
-import { onCabin } from "./modes.js";
 import { npcById } from "./npcs.js";
 import {
   hangStart,
@@ -101,6 +99,13 @@ import {
   mgjGone,
   mgjUse,
   mgjShot,
+  mgjSafe,
+  mgjBurn,
+  mgjBodies,
+  mgjHitAt,
+  mgjTeamUse,
+  mgjCool,
+  MGJ_HOLD,
   DMG,
   PUMP,
   PELLETS,
@@ -108,6 +113,7 @@ import {
   PELLET_LIFE,
   SPREAD,
 } from "./mgjrules.js";
+import { isL4dd, l4Use, l4Reload, l4Shots, HELD } from "./l4ddrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -135,8 +141,7 @@ export const OPTIONS_DEFAULT = {
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: "board", // board | sky | pixel | carnival | stars | rabbit | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
-  mapPick: "", // "" (the host's map) | vote (Vote Maps: everyone votes, ties are a coin toss) | random: settled at the start
+  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: Hangout's own, and only Hangout's)
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
@@ -156,32 +161,12 @@ export const OPTIONS_DEFAULT = {
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
-  mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
-  mgjHp: 0, // … Player HP: 0 (off), 1, 5, 10, 15
+  mgjTime: 135, // Mad God Justin: seconds to beat him: 105, 135, 165 (the meteor adds 30 more)
+  mapGrey: 0, // the collage map: 1 turns it black and white
+  mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
-
-/* Vote Maps and Random, settled when the host starts: the most votes from the players in the room win, a tie is a random
-   pick between the tied maps, a win for Random (or no votes at all) is any map; Duck Cabin is never one of them */
-export const mapTally = (s) => {
-  const n = {};
-  for (const id of s.seat) {
-    const m = (s.mapVotes || {})[id];
-    if (m) n[m] = (n[m] || 0) + 1;
-  }
-  return n;
-};
-const anyMap = () => MAPS[Math.floor(Math.random() * MAPS.length)][0];
-function pickMap(s) {
-  if (s.options.mapPick !== "vote") return anyMap();
-  const n = mapTally(s),
-    top = Math.max(0, ...Object.values(n)),
-    tied = Object.keys(n).filter((m) => n[m] === top);
-  if (!top) return anyMap();
-  const won = tied[Math.floor(Math.random() * tied.length)];
-  return won === "random" ? anyMap() : won;
-}
 export const COUNTDOWN = 5;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
@@ -199,7 +184,9 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
-export const isHang = (s) => s.options.mode === "hang";
+/* Duck Cabin's world: Hangout, and Left 4 Dead Ducks on the same map (its own rules: l4ddrules.js) */
+export const isHang = (s) =>
+  s.options.mode === "hang" || s.options.mode === "l4dd";
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle; Duncelation: Dunce on the left, Not a Dunce on the right, and the same strip with the defender's circle */
@@ -411,6 +398,8 @@ export const turnKey = (s) =>
         ? `write${s.round}.${s.sc.turn}`
         : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
+/* the bow's arrow: it flies straight and fast the way it was aimed, on to the screen's edge */
+export const ARROW_SPEED = 0.6;
 export const SHOT_SPEED = 0.22; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 /* the thrown dagger: across the board at DAGGER_SPEED (board widths a second) while its height (in duck sizes) rises
    from the beak and falls: z = DAGGER_Z + DAGGER_UP·t − DAGGER_G·t²/2; it hits ducks only at their height, then falls
@@ -442,6 +431,7 @@ const PRESS = [
   "hammer",
   "shotgun",
   "grenade",
+  "bow",
   "sound",
   "trombone",
   "confetti",
@@ -455,8 +445,10 @@ const COOLDOWN = {
   shotgun: PUMP,
   grenade: 12000,
   confetti: 15000,
+  bow: 400,
 };
-export const coolFor = (sp) => COOLDOWN[sp] || 1500;
+export const coolFor = (sp, s) =>
+  (s && isMgj(s) && mgjCool(sp)) || COOLDOWN[sp] || 1500; // (Mad God Justin has its own for the knife and the bow)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } */
 export const MAG = 7,
@@ -467,7 +459,7 @@ export const magOf = (s, id, now) => {
 };
 export const coolEnds = (s, id, sp) =>
   Math.max(
-    ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp),
+    ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp, s),
     sp === "handgun" ? ((s.mag || {})[id] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
 export const WEAPONS = [
@@ -477,6 +469,7 @@ export const WEAPONS = [
   "hammer",
   "shotgun",
   "grenade",
+  "bow",
 ]; // aimed (with the mouse), and kept out with Shift and their key
 /* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
@@ -495,7 +488,7 @@ const EFFECTS = [
   "disco",
 ]; // the effects, shown around a duck
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
-const aimOf = (a, face) => {
+export const aimOf = (a, face) => {
   const ax = Math.max(-3, Math.min(3, +a.ax || 0)),
     ay = Math.max(-3, Math.min(3, +a.ay || 0));
   return Math.hypot(ax, ay) > 0.05 ? [ax, ay] : [face, 0];
@@ -1015,8 +1008,6 @@ export function reduce(state, a, now = Date.now()) {
           const [from, to] = s.options.discuss ? [0.75, 0.5] : [0.5, 0.75];
           if (s.options.share === from) s.options.share = to;
         }
-        if (a.options.map && !("mapPick" in a.options)) s.options.mapPick = ""; // (picking a map ends Vote Maps or Random)
-        if ("mapPick" in a.options) s.mapVotes = {}; // (a new vote starts from nobody)
         /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's
          still at the other default */
         if (a.options.mode && !("submitTime" in a.options)) {
@@ -1024,15 +1015,11 @@ export function reduce(state, a, now = Date.now()) {
           else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
             s.options.submitTime = 132;
         }
-        if (a.options.map === "cabin" && !a.options.mode)
-          s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
-        else if (
-          (a.options.map || a.options.mapPick) &&
-          !a.options.mode &&
-          onCabin(s.options.mode)
-        )
-          s.options.mode = "aod"; // and another map (or Vote Maps, or Random) leaves Duck Cabin
-        if (onCabin(s.options.mode)) s.options.map = "cabin";
+        if (a.options.map === "cabin" && !a.options.mode && !isHang(s))
+          s.options.mode = "hang"; // Hangout and Duck Cabin are one: picking either picks both,
+        else if (a.options.map && !a.options.mode && isHang(s))
+          s.options.mode = "aod"; // and another map leaves Hangout
+        if (isHang(s)) s.options.map = "cabin";
         else if (s.options.map === "cabin") s.options.map = "board";
       }
       return s;
@@ -1075,32 +1062,11 @@ export function reduce(state, a, now = Date.now()) {
         ? s
         : advance(s, now);
     }
-    case "mapVote": {
-      // Vote Maps: any player in the lobby votes a map (or Random); the same pick again takes the vote back
-      const ok = a.map === "random" || MAPS.some(([id]) => id === a.map);
-      if (
-        !me ||
-        !ok ||
-        s.options.mapPick !== "vote" ||
-        onCabin(s.options.mode) ||
-        !(s.phase === "lobby" || s.phase === "over")
-      )
-        return state;
-      const v = { ...(s.mapVotes || {}) };
-      if (v[a.id] === a.map) delete v[a.id];
-      else v[a.id] = a.map;
-      s.mapVotes = v;
-      return s;
-    }
     case "start":
       if (!boss || !(s.phase === "lobby" || s.phase === "over")) return s;
       if (s.seat.length < minOf(s)) return state; // (the lobby says how many it needs)
-      if (onCabin(s.options.mode) !== (s.options.map === "cabin"))
-        s.options.map = onCabin(s.options.mode) ? "cabin" : "board"; // (Duck Cabin and its games are one)
-      else if (s.options.mapPick && !onCabin(s.options.mode)) {
-        s.options.map = pickMap(s);
-        s.mapVotes = {};
-      }
+      if (isHang(s) !== (s.options.map === "cabin"))
+        s.options.map = isHang(s) ? "cabin" : "board"; // (Hangout and Duck Cabin are one)
       s.phase = "countdown";
       s.at = now;
       s.ends = now + COUNTDOWN * 1000;
@@ -1154,6 +1120,13 @@ export function reduce(state, a, now = Date.now()) {
       const was = s.pos[a.id],
         j = +a.j || 0;
       if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
+      if (
+        isL4dd(s) &&
+        was.tp &&
+        now - was.tp < 1500 &&
+        Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
+      )
+        return state; // (Left 4 Dead Ducks: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
@@ -1210,11 +1183,16 @@ export function reduce(state, a, now = Date.now()) {
         }
       }
       const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
-      const w =
-          WEAPONS.includes(a.w) &&
-          (isMgj(s) ? a.w === "knife" : onKeys(me.duck, a.w) && s.options.fun)
-            ? a.w
-            : "",
+      const w = (
+          isL4dd(s)
+            ? HELD.includes(a.w)
+            : WEAPONS.includes(a.w) &&
+              (isMgj(s)
+                ? MGJ_HOLD.includes(a.w)
+                : onKeys(me.duck, a.w) && s.options.fun)
+        )
+          ? a.w
+          : "",
         [ax, ay] = w ? aimOf(a, 1) : [0, 0]; // a weapon kept out, and where it aims
       const hz = (v) => Math.max(-400, Math.min(1200, Math.round(+v || 0))); // Hangout: z, the height of its feet; b, where its jump began (world px)
       s.pos[a.id] = {
@@ -1355,14 +1333,17 @@ export function reduce(state, a, now = Date.now()) {
         p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
+      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Left 4 Dead Ducks: its own weapons, l4ddrules.js)
       if (
         isMgj(s)
           ? s.phase !== "boss" || me.dead
           : !PRESS.includes(sp) || !onKeys(me.duck, sp)
       )
         return state; // (Mad God Justin: not while down)
-      if (isMgj(s) && sp !== "knife")
-        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the knife, or the weapon picked up, once)
+      if (isMgj(s) && ["medkit", "jaime", "zebra"].includes(sp))
+        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit, a Jaime, the zebra cake)
+      if (isMgj(s) && sp !== "knife" && sp !== "bow")
+        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
       if (WEAPONS.includes(sp) && !s.options.fun && !isMgj(s)) return state; // the silly-commands switch covers them
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
@@ -1400,7 +1381,12 @@ export function reduce(state, a, now = Date.now()) {
         },
       ];
       if (aim && !hit) {
-        const v = sp === "dagger" ? DAGGER_SPEED : SHOT_SPEED,
+        const v =
+            sp === "dagger"
+              ? DAGGER_SPEED
+              : sp === "bow"
+                ? ARROW_SPEED
+                : SHOT_SPEED,
           hang = isHang(s)
             ? {
                 hz: Math.round(+p.z || 0),
@@ -1457,13 +1443,14 @@ export function reduce(state, a, now = Date.now()) {
         } else
           s.shots = [
             ...(s.shots || []),
-            shot(s.fxN, sp, aim[0] * v, aim[1] * v),
+            shot(s.fxN, sp === "bow" ? "arrow" : sp, aim[0] * v, aim[1] * v),
           ];
       }
       return s;
     }
     case "reload": {
       // R: the handgun reloads before its magazine is empty
+      if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
       if (!me || !onKeys(me.duck, "handgun") || !s.options.fun) return state;
       const m = magOf(s, a.id, now);
       if (!m.n || m.r) return state;
@@ -1866,7 +1853,7 @@ export function reduce(state, a, now = Date.now()) {
         s.vote = null;
         return s;
       }
-      const shots = moveShots(s, now),
+      const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
         hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
         jus =
           justinTick(s, now, logLine) |
@@ -2155,6 +2142,34 @@ function justinKilled(s, by, w) {
 }
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
+/* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
+   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s, low gravity 1.2 s, a long jump 1.4 times; a double jump goes
+   on for a second arc from when it began */
+export function dodges(s, p, now) {
+  if (!p || !p.j) return false;
+  const T =
+      p.tb > 0
+        ? 620 * Math.sqrt(p.tb / 1.35)
+        : (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : 1),
+    end = (p.dj > p.j ? p.dj : p.j) + T;
+  return now - p.j > T * 0.2 && end - now > T * 0.2;
+}
+/* the normal game's HP (every mode but Mad God Justin): a duck takes PHP hits before it plays dead, and has them all back
+   after PHP_BACK ms without a hit. s.php = { id: { n: hits taken, t: the last one } }. True when the hit only took HP */
+export const PHP = 3,
+  PHP_BACK = 6000;
+export const phpLost = (s, id, now) => {
+  const h = (s.php || {})[id];
+  return h && now - h.t < PHP_BACK ? h.n : 0;
+};
+export function soaks(s, id, now) {
+  if (isMgj(s)) return false;
+  const n = phpLost(s, id, now) + 1,
+    rest = { ...s.php };
+  delete rest[id];
+  s.php = n >= PHP ? rest : { ...rest, [id]: { n, t: now } };
+  return n < PHP;
+}
 function playerKilled(s, by, id, w) {
   if (!s.players[by] || by === id) return;
   s.pkN = (s.pkN || 0) + 1;
@@ -2229,7 +2244,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (done.includes(id)) continue;
     if (isMgj(s) && by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: nothing knocks down the two at the table)
-    if (p.j && now - p.j < 1300) continue; // (a duck in the air is missed)
+    if (dodges(s, p, now)) continue; // (a duck in the air is missed)
     const n = near(
       p.x,
       p.y,
@@ -2240,11 +2255,11 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
   for (const h of hits) {
-    if (!(by === JUSTIN_ID && mgjSoak(s, h.id, now))) {
+    if (!(isMgj(s) ? mgjSoak(s, h.id, now) : soaks(s, h.id, now))) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
       playerKilled(s, by, h.id, sp);
-    } // (Mad God Justin's Player HP: a hit it can take keeps the duck up, still shoved back by his hammer)
+    } // (the HP: a hit it can take keeps the duck up, still shoved back by a hammer)
     if (sp === "hammer") {
       // shoved straight back from the swinger
       const k = h.d > 0.05 ? 1 / h.d : 0;
@@ -2260,13 +2275,16 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     }
   }
   let stab = false;
-  if (!hang && by !== JUSTIN_ID && !done.includes(JUSTIN_ID) && isMgj(s)) {
-    const n = justinAt(s.justin, now);
-    stab =
-      !!n &&
-      !!near(n.x, n.y, 0, 0) &&
-      mgjStab(s, by, now, logLine, DMG[sp] || 1);
-  } // (Mad God Justin: 1 damage)
+  if (!hang && by !== JUSTIN_ID && !done.includes(JUSTIN_ID) && isMgj(s))
+    stab = mgjHitAt(
+      s,
+      by,
+      now,
+      (b) => !!near(b.x, b.y, 0, 0),
+      logLine,
+      DMG[sp] || 1,
+    );
+  // (Mad God Justin: 1 damage; a hit on his double counts for nothing)
   else if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
     // (the Justin option: he can be hit back)
     const n = justinAt(s.justin, now);
@@ -2350,14 +2368,17 @@ function attacks(s, now) {
 function autoStabs(s, now) {
   const m = s.mgj;
   if (!isMgj(s) || s.phase !== "boss" || !m || m.met || m.hp <= 0) return false;
-  const n = justinAt(s.justin, now);
-  if (!n || mgjGone(s, now)) return false;
+  const bodies = mgjBodies(s, now);
+  if (!bodies.length || mgjGone(s, now)) return false;
   let any = false;
   for (const id of s.seat) {
     const P = s.players[id],
       p = s.pos[id];
     if (!P || P.dead || !p || p.x < 0 || now < coolEnds(s, id, "knife"))
       continue;
+    if (p.w && p.w !== "knife") continue; // (the bow or the medkit in hand: no stab)
+    const far = (b) => Math.hypot((b.x - p.x) / 0.03, (b.y - p.y) / 0.08),
+      n = bodies.reduce((a, b) => (far(b) < far(a) ? b : a)); // (the nearer of him and his double)
     const dx = n.x - p.x,
       dy = n.y - p.y,
       d = Math.hypot(dx / 0.03, dy / 0.08);
@@ -2427,9 +2448,11 @@ function blast(s, sh, x, y, now) {
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
     );
     if (!n) continue;
-    if (!P.dead) playerKilled(s, sh.by, id, "grenade");
-    P.dead = true;
-    holdDown(s, id, now);
+    if (P.dead || !soaks(s, id, now)) {
+      if (!P.dead) playerKilled(s, sh.by, id, "grenade");
+      P.dead = true;
+      holdDown(s, id, now);
+    } // (the normal game's HP: one hit's worth, and it still flies)
     const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2;
     shove(
       s,
@@ -2524,7 +2547,7 @@ function moveShots(s, now) {
             Math.abs((+p.z || 0) - sh.hz) > 48)
         )
           continue; // (the other side of the walls, or above or below it)
-        if (p.j && now - p.j < 1300) continue; // jumped over it
+        if (dodges(s, p, now)) continue; // jumped over it
         if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
         if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
         /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
@@ -2541,14 +2564,17 @@ function moveShots(s, now) {
           od = Math.hypot(ox, oy);
         if (od < (sh.r || 1)) {
           if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
-          if (sh.by === JUSTIN_ID && mgjSoak(s, id, now))
+          if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
+          const safe = isMgj(s) && mgjSafe(s, id, now);
+          if (isMgj(s) ? mgjSoak(s, id, now) : soaks(s, id, now))
             sh.got = [...(sh.got || []), id];
           else {
             P.dead = true;
             holdDown(s, id, now);
             playerKilled(s, sh.by, id, sh.k);
-          } // (Mad God Justin's Player HP: a hit it can take keeps the duck up)
+          } // (the HP: a hit it can take keeps the duck up)
           if (sh.by === JUSTIN_ID) mgjHurt(s, id);
+          if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
           if (sh.k === "chair") {
             const ul = Math.sqrt(len) || 1;
             if (od > 0.2) shove(s, id, ox / od, oy / od, KB_FAR, now, 0);
@@ -2556,7 +2582,7 @@ function moveShots(s, now) {
           } // (Mad God Justin's office chair: shoved back, as the hammer does, away from it)
         }
       }
-    if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin)
+    if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
     if (
       sh.hin === undefined &&
       sh.by !== JUSTIN_ID &&

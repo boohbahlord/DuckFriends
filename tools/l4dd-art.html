@@ -1,0 +1,119 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Left 4 Dead Ducks art</title>
+<style>
+  body {
+    background: #12131c;
+    color: #e8e8f0;
+    font:
+      15px/1.3 system-ui,
+      sans-serif;
+    margin: 0;
+    padding: 18px 22px;
+  }
+  h2 {
+    font-size: 17px;
+    margin: 18px 0 8px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+  }
+  figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  figcaption {
+    font-size: 12px;
+    color: #b8b8c8;
+  }
+  .floor {
+    background: #b97c45;
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .wall {
+    background: #6b4426;
+  }
+  .big img,
+  .big svg {
+    transform: scale(1.5);
+    transform-origin: bottom center;
+    margin-top: 20px;
+  }
+</style>
+<body>
+  <h2>Zombie ducks (next to a player's duck)</h2>
+  <div class="row" id="z"></div>
+  <h2>A candle on the floor (7 of them light the cabin)</h2>
+  <div class="row" id="c"></div>
+  <h2>Boards: 0 to 5 on each opening</h2>
+  <div id="b"></div>
+  <h2>
+    Weapons bar: the flashlight, on and off; the mode's picture in the lobby
+  </h2>
+  <div class="row" id="i"></div>
+  <script type="module">
+    import { duckSVG } from "../js/duck.js";
+    import { zombieURL, CANDLE, boardsSVG, ICONS } from "../js/l4ddart.js";
+    import { OPENINGS } from "../js/l4ddrules.js";
+    import { modeSymbol } from "../js/modes.js";
+
+    const fig = (html, cap, cls = "floor") =>
+      `<figure><div class="${cls}">${html}</div><figcaption>${cap}</figcaption></figure>`;
+    /* a zombie's look: [max, speed, opening, size, build, hat, outfit] (l4ddrules.js zl) */
+    const Z = [
+      ["plain", [2, 0, "front", 0, 0, -1, -1]],
+      ["a cap", [2, 0, "front", 0, 0, 0, -1]],
+      ["a hoodie", [2, 0, "front", 0, 0, -1, 1]],
+      ["police", [2, 0, "front", 0, 0, 5, 9]],
+      ["pumpkin, pajamas", [2, 0, "front", 0, 0, 10, 3]],
+      ["bigger", [2, 0, "front", 1, 0, -1, -1]],
+      ["smaller", [2, 0, "front", -1, 0, -1, -1]],
+      ["fatter", [2, 0, "front", 0, 1, -1, -1]],
+      ["thinner", [2, 0, "front", 0, -1, -1, -1]],
+    ];
+    z.innerHTML =
+      fig(
+        duckSVG({ color: "#ffd23f" }, { size: 64, shadow: true }),
+        "a player",
+        "floor big",
+      ) +
+      Z.map(([cap, l]) =>
+        fig(`<img src="${zombieURL(l)}" width="64" alt="">`, cap, "floor big"),
+      ).join("");
+    c.innerHTML = fig(
+      `<div style="transform: scale(2); transform-origin: bottom center; margin-top: 46px">${CANDLE}</div>`,
+      "×2",
+    );
+    const KINDS = [
+      ["front", "the front door", "floor wall"],
+      ["w1", "a hole in the west wall", "floor"],
+      ["e1", "a hole in the east wall", "floor"],
+      ["s1", "a hole in the south wall", "floor"],
+      ["stairs", "the top of the deck's stairs", "floor"],
+    ];
+    b.innerHTML = KINDS.map(([id, cap, cls]) => {
+      const o = OPENINGS.find((p) => p.id === id);
+      return `<p style="margin: 10px 0 4px">${cap}</p><div class="row">${[0, 1, 2, 3, 4, 5].map((n) => fig(boardsSVG(o, n), n, cls)).join("")}</div>`;
+    }).join("");
+    const sq = (svg) =>
+      `<div style="width: 60px; height: 60px; display: grid; place-items: center">${svg.replace("<svg", '<svg width="48" height="48"')}</div>`;
+    i.innerHTML =
+      fig(sq(ICONS.flashlight(true)), "on", "floor wall") +
+      fig(sq(ICONS.flashlight(false)), "off", "floor wall") +
+      fig(
+        `<div style="padding: 6px">${modeSymbol("l4dd", 64)}</div>`,
+        "the mode",
+        "floor wall",
+      );
+  </script>
+</body>

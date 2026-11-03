@@ -1797,192 +1797,6 @@ p.bad {
   color: #1c1c28;
   outline: none;
 }
-/* the lobby's Game type and Map menus: rows dropping down from the row that opened them */
-.ldrop {
-  min-width: 0;
-  gap: 0.3rem;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.ldrop .ld-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.6rem;
-  font-size: calc(1.02rem * var(--ts));
-  font-weight: 600;
-  color: var(--ink);
-}
-.ldrop .ld-row[aria-pressed="true"] {
-  background: var(--blue);
-  color: #fff;
-}
-.ldrop .ld-row[aria-disabled="true"] {
-  cursor: default;
-  opacity: 0.75;
-}
-.ldrop .ld-row[aria-disabled="true"]:hover {
-  background: transparent;
-  color: var(--ink);
-}
-.ldrop .ld-row[aria-pressed="true"][aria-disabled="true"]:hover {
-  background: var(--blue);
-  color: #fff;
-}
-.ldrop .ld-cat[aria-current="true"] {
-  box-shadow: inset 0.3rem 0 0 var(--blue);
-}
-.ld-syms {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
-}
-.ld-syms svg {
-  flex: none;
-}
-.ld-go {
-  font-size: 1.3em;
-  line-height: 1;
-  color: var(--dim);
-}
-.ld-back .ld-go {
-  margin-right: 0.1rem;
-}
-.ld-row:hover .ld-go,
-.ld-row:focus-visible .ld-go {
-  color: inherit;
-}
-.ld-sym {
-  display: inline-grid;
-  place-items: center;
-  width: 2.2rem;
-  flex: none;
-}
-.ld-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0 0.4rem;
-}
-.ldrop .ld-i {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-right: 0.35rem;
-  padding: 0;
-  border: 0.14rem solid currentColor;
-  border-radius: 50%;
-  color: var(--dim);
-  font-family: Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 1rem;
-  line-height: 1;
-}
-.ldrop .ld-i:hover,
-.ldrop .ld-i:focus-visible,
-.ld-item.open .ld-i {
-  background: var(--yellow);
-  border-color: #1c1c28;
-  color: #1c1c28;
-}
-.ld-tip {
-  display: none;
-  grid-column: 1 / -1;
-  margin: 0.1rem 0.75rem 0.4rem 3.55rem;
-  color: var(--dim);
-}
-.ld-item.open .ld-tip {
-  display: block;
-}
-.ld-note {
-  margin: 0.2rem 0.6rem 0.3rem;
-}
-.ld-head {
-  margin: 0.35rem 0.6rem 0;
-  font-weight: 700;
-  color: var(--dim);
-}
-.ldrop .ld-map {
-  position: relative;
-  flex: none;
-  min-height: 3.7rem;
-  padding: 0 0.55rem;
-  overflow: hidden;
-  border: 0.14rem solid var(--line);
-  background: #222;
-}
-.ld-pic {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.ld-pic > .mini-map,
-.ld-pic > svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  border-radius: 0;
-}
-.ld-strip {
-  display: flex;
-}
-.ld-strip > .mini-map {
-  flex: 1;
-  width: auto;
-  height: 100%;
-  border: 0;
-  border-left: 0.12rem solid var(--line);
-  border-radius: 0;
-}
-.ld-strip > .mini-map:first-child {
-  border-left: 0;
-}
-.ld-name,
-.ld-n {
-  position: relative;
-  padding: 0.15rem 0.55rem;
-  border-radius: 0.5rem;
-  background: #000000b8;
-  color: #fff;
-}
-.ld-n {
-  margin-left: auto;
-  min-width: 1.7rem;
-  text-align: center;
-  background: var(--yellow);
-  color: #1c1c28;
-  box-shadow: 0 0.12rem 0 #1c1c28;
-}
-.ldrop .ld-map[aria-pressed="true"] {
-  border-color: var(--blue);
-  box-shadow: inset 0 0 0 0.16rem var(--blue);
-}
-.ldrop .ld-map[aria-pressed="true"] .ld-name {
-  background: var(--blue);
-}
-.ldrop .ld-map:hover,
-.ldrop .ld-map:focus-visible {
-  background: #222;
-  border-color: var(--yellow);
-}
-.ldrop .ld-map:not([aria-disabled="true"]):hover .ld-name,
-.ldrop .ld-map:focus-visible .ld-name {
-  background: var(--yellow);
-  color: #1c1c28;
-}
-.ldrop .ld-map[aria-disabled="true"]:hover {
-  border-color: var(--line);
-}
-.ldrop .ld-map[aria-pressed="true"][aria-disabled="true"]:hover {
-  border-color: var(--blue);
-}
 .ctx-name {
   display: flex;
   flex-direction: column;
@@ -2745,6 +2559,18 @@ svg.duck.jack.bob .jk,
     transform: none;
   }
 } /* (scaled from the spring's foot only, so he never lifts out of the box) */
+/* dat boi's rainbow rank: every part of him and his unicycle runs through the colors at a steady pace (datboi.js) */
+html.moving svg.duck.datboi.rainbow .dbr {
+  animation: db-hue 6s linear infinite;
+}
+@keyframes db-hue {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
 .gduck-body svg {
   width: 100%;
   height: auto;
@@ -4051,6 +3877,77 @@ html.moving .st-b {
 .map-stars .bb-vs,
 .map-stars .law-mid {
   background: color-mix(in srgb, #070b1f var(--board-a), transparent);
+}
+/* Shelter Sky & Null (collage.js): its picture, the squares that fade and jump, the colored static and scan lines over
+   them; tiles as see-through as on Starry Night, names on pills */
+.scene.collage {
+  background: #000;
+}
+.scene.collage > canvas.cl-pic {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cl-live {
+  position: absolute;
+  inset: 0;
+}
+.cl-sq {
+  position: absolute;
+  aspect-ratio: 1;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px #ffffff26;
+  opacity: var(--a);
+}
+html.moving .cl-sq {
+  opacity: 0;
+  animation: cl-pop var(--t) ease-in-out infinite;
+} /* (collage.js moves each square to another tile each time it has faded out) */
+@keyframes cl-pop {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  30%,
+  55% {
+    opacity: var(--a);
+  }
+  78%,
+  100% {
+    opacity: 0;
+  }
+}
+.cl-static {
+  opacity: 0.8;
+}
+.cl-scan {
+  opacity: 0.32;
+}
+.scene.collage.grey .cl-live {
+  filter: grayscale(1);
+}
+.map-collage {
+  --board-a: 42%;
+}
+.map-collage .col {
+  background: color-mix(in srgb, var(--c) 42%, transparent);
+  border-right-color: #ffffff30;
+  box-shadow: inset 0 0 0 0.14rem #ffffff38;
+}
+.map-collage .col-name {
+  position: relative;
+  color: #fff;
+  background: #000c;
+  border-radius: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-collage .wyr-or,
+.map-collage .bb-vs,
+.map-collage .law-mid {
+  background: color-mix(in srgb, #000 var(--board-a), transparent);
 }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {
@@ -5599,49 +5496,54 @@ html.still .gduck-zz i {
 .gduck.saying .gduck-zz {
   display: none;
 }
-/* fire: flames for a moment, then a charred duck whose burns fade */
+/* fire: one big flame over the whole duck for a moment (the owner: "the whole duck covered in one large enough flame";
+   art: FLAME in mgjart.js), then a charred duck whose burns fade. Its three layers flicker out of step */
 .gduck-fire {
   display: none;
   position: absolute;
   left: 50%;
-  bottom: 8%;
-  width: 80%;
-  height: 90%;
+  bottom: -4%;
+  z-index: 3;
+  width: 118%;
   transform: translateX(-50%);
   pointer-events: none;
 }
+.gduck-fire svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
 .gduck.onfire .gduck-fire {
   display: block;
+  animation: fl-up 0.22s ease-out;
 }
-.gduck-fire i {
-  position: absolute;
-  bottom: 0;
-  width: 40%;
-  height: 70%;
-  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
-  background: radial-gradient(
-    ellipse at 50% 70%,
-    #fff2b0 0,
-    #ffb347 35%,
-    #ff5a1a 65%,
-    #ff5a1a00 75%
-  );
-  mix-blend-mode: screen;
-  animation: flick 0.32s ease-in-out infinite alternate;
+.gduck-fire g {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
 }
-.gduck-fire i:nth-child(1) {
-  left: 0;
-  height: 60%;
+html.moving .gduck-fire .fl-out {
+  animation: fl-lick 0.46s ease-in-out infinite alternate;
 }
-.gduck-fire i:nth-child(2) {
-  left: 30%;
-  height: 95%;
-  animation-delay: 0.1s;
+html.moving .gduck-fire .fl-mid {
+  animation: fl-lick 0.34s ease-in-out -0.12s infinite alternate-reverse;
 }
-.gduck-fire i:nth-child(3) {
-  left: 60%;
-  height: 70%;
-  animation-delay: 0.2s;
+html.moving .gduck-fire .fl-in {
+  animation: fl-lick 0.27s ease-in-out -0.2s infinite alternate;
+}
+@keyframes fl-lick {
+  from {
+    transform: scale(1, 0.93) skewX(-2.5deg);
+  }
+  to {
+    transform: scale(1.03, 1.06) skewX(2.5deg);
+  }
+}
+@keyframes fl-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.4);
+  }
 }
 @keyframes flick {
   from {
@@ -11763,6 +11665,256 @@ html.moving .mgj-field {
   background: radial-gradient(ellipse at 50% 55%, #ffffff14, transparent 70%);
   pointer-events: none;
 }
+/* the edge lightning (art: edgeHTML in mgjart.js): "warn" glows electric blue along the edges and corners, as deep as the
+   strip it will hit (--edge-x on the sides, --edge-y top and bottom, as parts of the board), brightening for 0.6 s; "zap" strikes: a white flash in the strip and bolts along the sides */
+.mgj-edge {
+  --edge-x: 5%;
+  --edge-y: 9%;
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.mgj-edge.warn {
+  background:
+    linear-gradient(
+      to bottom,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-y),
+      transparent calc(var(--edge-y) + 2%)
+    ),
+    linear-gradient(
+      to top,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-y),
+      transparent calc(var(--edge-y) + 2%)
+    ),
+    linear-gradient(
+      to right,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-x),
+      transparent calc(var(--edge-x) + 1.2%)
+    ),
+    linear-gradient(
+      to left,
+      #38b6ffb0,
+      #38b6ff30 var(--edge-x),
+      transparent calc(var(--edge-x) + 1.2%)
+    );
+  box-shadow:
+    inset 0 0 0 0.18rem #9be8ff,
+    inset 0 0 1rem 0.3rem #38b6ffcc;
+  animation: edge-warn 0.6s ease-in forwards;
+}
+@keyframes edge-warn {
+  0% {
+    opacity: 0.15;
+  }
+  35% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.mgj-edge.zap {
+  box-shadow:
+    inset 0 0 0 0.3rem #ffffff,
+    inset 0 0 2rem 0.8rem #bff1ffdd;
+  animation: edge-zap 0.35s linear forwards;
+}
+.mgj-edge.zap svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+@keyframes edge-zap {
+  0%,
+  22% {
+    opacity: 1;
+  }
+  32% {
+    opacity: 0.35;
+  }
+  44% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* his teleport flash (TELEPORT), half a second where he leaves and where he lands: up from the ground, then gone */
+.mgj-tp {
+  position: absolute;
+  pointer-events: none;
+  transform-origin: 50% 88%;
+  animation: mgj-tp 0.5s ease-out forwards;
+}
+.mgj-tp svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes mgj-tp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.5, 0.2);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -88%) scale(1, 1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -88%) scale(0.7, 1.15);
+  }
+}
+/* a hitmarker (HITMARK, HITMARK_FAKE): pops in big over what was hit, settles and fades */
+.mgj-hit {
+  position: absolute;
+  pointer-events: none;
+  animation: mgj-hit 0.45s ease-out forwards;
+}
+.mgj-hit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes mgj-hit {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+/* the rework's (game.js): a duck nothing can hurt for a second after a hit flickers fast, in and out */
+.gduck.mgj-blink .gduck-body {
+  animation: mgj-blink 0.12s steps(2, jump-none) infinite;
+}
+@keyframes mgj-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+/* the bow's arrow and his fireball, pointing the way they fly */
+.bullet.k-arrow {
+  width: calc(var(--s) * 0.8);
+  margin: calc(var(--s) * -0.075) 0 0 calc(var(--s) * -0.4);
+  filter: drop-shadow(0 0.1rem 0.12rem #0006);
+}
+.bullet.k-fireball {
+  width: var(--s);
+  margin: calc(var(--s) * -0.3) 0 0 calc(var(--s) * -0.5);
+  filter: drop-shadow(0 0 0.4rem #ff8c2b);
+}
+.bullet.k-arrow svg,
+.bullet.k-fireball svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* the zebra cake: spinning on its way, then lying still where it landed */
+.mgj-cake {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0.15rem 0.15rem #0006);
+}
+.mgj-cake i {
+  display: block;
+  animation: cake-spin 0.6s linear infinite;
+}
+@keyframes cake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.mgj-cake i.ccw {
+  animation-direction: reverse;
+}
+.mgj-cake.down i {
+  animation: none;
+}
+.mgj-cake svg,
+.mgj-snack svg,
+.mgj-poof svg,
+.mgj-kit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* his snack at his beak, a bite at a time; it turns with him */
+.mgj-snack {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.mgj-snack i {
+  display: block;
+  animation: mgj-bite 0.5s ease-in-out infinite;
+}
+.mgj-snack.left i {
+  scale: -1 1;
+}
+@keyframes mgj-bite {
+  50% {
+    transform: translateY(-12%) rotate(-8deg);
+  }
+}
+/* a Jaime gone in a cloud, and a medkit over the duck it got up */
+.mgj-poof,
+.mgj-kit {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: mgj-poof 0.8s ease-out forwards;
+}
+.mgj-kit {
+  animation-duration: 1.2s;
+}
+@keyframes mgj-poof {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(1.2);
+  }
+}
+/* the Jaimes' shared key: one or more stored, the bar charges the next one in pink (it fills, not drains) */
+.cooldown.more {
+  background: #ff9ec2;
+  box-shadow: 0 0 0.25rem #ff9ec2b0;
+  animation-name: cfill;
+}
+@keyframes cfill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
 /* his HP, beside the cloud */
 .question.mgj-hp {
   display: flex;
@@ -12528,4 +12680,323 @@ html.moving .eye-tears .tdrop.t2 {
 }
 .vd-row .btn {
   flex: none;
+}
+
+/* ---------- Left 4 Dead Ducks (l4dd.js, l4ddbar.js) ----------
+   The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
+   dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
+   the dark; the end card over everything. */
+.l4z,
+.l4-boards,
+.l4-candle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.l4z {
+  width: 0;
+  height: 0;
+}
+.l4z-body {
+  position: absolute;
+}
+.l4z-body img,
+.l4-candle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.l4z-hp {
+  position: absolute;
+  left: calc(-17px * var(--k, 1));
+  top: calc(4px * var(--k, 1));
+  width: calc(34px * var(--k, 1));
+  height: 3px;
+  border-radius: 2px;
+  background: #000a;
+  overflow: hidden;
+}
+.l4z-hp i {
+  position: absolute;
+  inset: 0;
+  background: #e8424d;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--hp, 1));
+}
+.l4z.hit .l4z-body img {
+  animation: l4z-hit 0.32s ease-out;
+}
+@keyframes l4z-hit {
+  35% {
+    filter: brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg);
+  }
+}
+.l4z.dead .l4z-hp {
+  display: none;
+}
+.l4z.dead {
+  animation: l4z-die 1s ease-in forwards;
+}
+@keyframes l4z-die {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+} /* (lying down, see-through, gone in a second) */
+.l4-boards,
+.l4-candle {
+  transform-origin: 0 0;
+}
+.l4-boards svg {
+  display: block;
+  overflow: visible;
+}
+.l4-candle {
+  width: 30px;
+  height: 46px;
+}
+.hang-board.l4-board .hang-dark.l4-dark {
+  z-index: 24000;
+}
+.l4-hud {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31000;
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(1.7rem, 4.6vw, 2.8rem);
+  line-height: 1;
+  color: #dc143c;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.06em #2a0408;
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.06em 0 #2a0408,
+    0 0 0.5em #dc143c66;
+}
+.l4-hud.new {
+  animation: l4-round 1.6s ease-out;
+}
+@keyframes l4-round {
+  0% {
+    transform: translateX(-50%) scale(1.7);
+    opacity: 0;
+  }
+  25% {
+    transform: translateX(-50%) scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+.l4-over {
+  position: absolute;
+  inset: 0;
+  z-index: 31500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #0009;
+}
+.l4-over[hidden] {
+  display: none;
+}
+.l4-over-card {
+  max-width: 22rem;
+  padding: 1.1rem 1.3rem;
+  border-radius: 1rem;
+  background: var(--panel);
+  border: 0.14rem solid #dc143c;
+  text-align: center;
+}
+.l4-over-card h2 {
+  margin: 0 0 0.4rem;
+  font-family: "Lilita One", sans-serif;
+  color: #dc143c;
+}
+.l4-over-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+/* my sprint: a thin dark mana-blue bar under my name, gone while it's full */
+.l4-sprint {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: calc(100% + 0.16rem);
+  height: 0.2rem;
+  border-radius: 1rem;
+  background: #0008;
+  overflow: hidden;
+  transition: opacity 0.3s;
+}
+.l4-sprint.full {
+  opacity: 0;
+}
+.l4-sprint i {
+  position: absolute;
+  inset: 0;
+  background: #2f5fd6;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--sp, 1));
+}
+.l4-sprint.tired i {
+  background: #24418c;
+}
+.gduck.l4-heal .gduck-body {
+  animation: l4-heal 1.4s ease-out;
+}
+@keyframes l4-heal {
+  0% {
+    filter: drop-shadow(0 0 0.5rem #5be35b) brightness(1.25);
+  }
+  100% {
+    filter: none;
+  }
+} /* (1 HP back: a green glow that fades) */
+/* the weapons bar: on a computer in the bottom bar's right corner, my HP under it */
+.l4bar {
+  --hk: clamp(1.9rem, 2.9vw, 2.8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+.l4slots {
+  display: flex;
+  gap: 0.3rem;
+}
+.l4s {
+  position: relative;
+  width: var(--hk);
+  height: var(--hk);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 0.45rem;
+  border: 0.12rem solid color-mix(in srgb, var(--ink) 34%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+}
+.l4s i {
+  display: grid;
+  place-items: center;
+  width: 78%;
+  height: 78%;
+  font-style: normal;
+  font-size: calc(var(--hk) * 0.56);
+  line-height: 1;
+} /* (the pistol's icon is the specials' bar's emoji) */
+.l4s i svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+.l4s kbd {
+  position: absolute;
+  left: 0.12rem;
+  top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: calc(var(--hk) * 0.27);
+  line-height: 1.1;
+  color: var(--dim);
+}
+.l4s small {
+  position: absolute;
+  left: 50%;
+  bottom: -0.15rem;
+  transform: translateX(-50%) translateY(50%);
+  padding: 0 0.2rem;
+  border-radius: 0.4rem;
+  background: var(--panel);
+  font-size: calc(var(--hk) * 0.26);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.l4s.sel {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0.45rem 0.12rem
+    color-mix(in srgb, var(--yellow) 65%, transparent);
+}
+.l4s.empty i {
+  opacity: 0.35;
+}
+.l4s:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.l4hp {
+  display: flex;
+  gap: 0.18rem;
+  margin-top: 0.3rem;
+}
+.l4hp i {
+  width: 1.4rem;
+  height: 0.42rem;
+  border-radius: 0.2rem;
+  background: #0008;
+  box-shadow: inset 0 0 0 0.08rem #1fb85c88;
+}
+.l4hp i.on {
+  background: #1fb85c;
+}
+/* on a phone: a column of round buttons at the board's bottom right, the big Attack button under them */
+.l4pad {
+  display: none;
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 31200;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  --hk: 2.7rem;
+  touch-action: none;
+}
+.l4pad .l4s {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.l4pad .l4s small {
+  bottom: 0.05rem;
+}
+.l4pad .l4-attack {
+  --hk: 4.2rem;
+  border-color: #dc143c;
+  color: #ffd6dc;
+  background: color-mix(in srgb, #dc143c 35%, transparent);
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .l4bar {
+    display: none;
+  }
+  html:not(.keyboard) .l4pad {
+    display: flex;
+  }
+} /* (a phone or a tablet: the column on the board instead of the bar) */
+@media (max-width: 760px) {
+  .l4bar {
+    display: none;
+  }
+  .l4pad {
+    display: flex;
+  }
 }
