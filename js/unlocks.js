@@ -9,8 +9,9 @@
    don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
    gold and rose gold at 31,104, rainbow at 62,208. The Short jump opens at 1,728 jumps; the Chair at 1,123 Justin kills
    in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
-   once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too). What counts lives in the
-   profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits, kills, dunced,
+   once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too); Jaime once Jaimes have
+   stabbed Mad God Justin 36 times in fights I was in (anyone's Jaimes: the owner's). What counts lives in the
+   profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits, jaimeStabs, kills, dunced,
    mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
@@ -48,6 +49,7 @@ export const LOCKS = [
   { kind: "special", id: "chair", cabin: 1123, name: "Chair" },
   { kind: "special", id: "invisible", shadow: 1, name: "Invisible duck" },
   { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
+  { kind: "special", id: "jaime", jaime: 36, name: "Jaime" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
@@ -75,7 +77,9 @@ const earned = (l) =>
     ? (profile.cabinKills || 0) >= l.cabin
     : l.shadow
       ? (profile.shadowHits || 0) >= l.shadow
-      : earnedElse(l);
+      : l.jaime
+        ? (profile.jaimeStabs || 0) >= l.jaime
+        : earnedElse(l);
 const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
@@ -101,6 +105,8 @@ export const isLocked = (kind, id) => !!lockOf(kind, id);
 export function lockHint(kind, id) {
   const l = lockOf(kind, id);
   if (!l) return "";
+  if (l.jaime && earned(l))
+    return `Unlocked: Jaimes stabbed Mad God Justin ${l.jaime} times with you`;
   if (earned(l))
     return l.cabin
       ? `Unlocked: ${fmtJumps(l.cabin)} Justin kills in Duck Cabin`
@@ -134,6 +140,8 @@ export function lockHint(kind, id) {
     return `${pre}Kill Justin ${fmtJumps(l.cabin)} times in Duck Cabin, in Hangout (${fmtJumps(Math.min(l.cabin, profile.cabinKills || 0))}/${fmtJumps(l.cabin)})`;
   if (l.shadow)
     return `${pre}Hit the shadow duck in Duck Cabin with a thrown chair`;
+  if (l.jaime)
+    return `${pre}Be in Mad God Justin while Jaimes stab him ${l.jaime} times, anyone's Jaimes (${Math.min(l.jaime, profile.jaimeStabs || 0)}/${l.jaime})`;
   if (l.kills && !l.hidden)
     return `${pre}Beat Justin ${l.kills} times, any Justin, any weapon (${Math.min(l.kills, profile.justinKills || 0)}/${l.kills})`;
   return l.hidden
@@ -186,6 +194,7 @@ export function watchKills(room) {
     seenL = null,
     seenP = null,
     seenS = null,
+    seenJ = null,
     jin = null;
   room.on(() => {
     const s = room.state,
@@ -244,6 +253,20 @@ export function watchKills(room) {
         }
       seenS = topS;
     } // (the shadow duck hit with my thrown chair: hangout/characters.js)
+    const topJ = (s && s.jaimeStabs) || 0;
+    if (seenJ === null || topJ < seenJ) seenJ = topJ;
+    else if (topJ > seenJ) {
+      if (
+        s.options &&
+        s.options.mode === "mgj" &&
+        (s.seat || []).includes(room.me)
+      ) {
+        profile.jaimeStabs = (profile.jaimeStabs || 0) + (topJ - seenJ);
+        save();
+        checkUnlocks();
+      }
+      seenJ = topJ;
+    } // (every Jaime's stab on Mad God Justin while I'm in the fight, anyone's: mgjrules.js jaimeTick)
     if (seenD === null || topD < seenD) seenD = topD;
     else {
       for (const k of dn.dk || [])
