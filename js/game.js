@@ -100,7 +100,12 @@ import {
   walkOf,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
-import { W as HW, H as HH } from "./hangout/layout.js";
+import {
+  W as HW,
+  H as HH,
+  heightAt,
+  DUCK as DUCK_PX,
+} from "./hangout/layout.js";
 import { hangStill } from "./hangout/rules.js";
 import { downStill, downFor, GET_UP_MIN } from "./hangout/death.js";
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
@@ -177,7 +182,8 @@ import {
   BURN,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4TouchAim, l4Held } from "./l4dd.js";
+import { l4TouchAim, l4Held, l4Got } from "./l4dd.js";
+import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import {
@@ -380,7 +386,8 @@ const jaimeLook = (s, id) => {
     ] || {};
   return { ...JAIME, name: by.name || JAIME.name, nameStyle: by.nameStyle };
 };
-let held = null,
+let padHold = false, // a phone's jump button held down (the jetpack flies)
+  held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
   l4Last = 0,
   mgjHold = "knife", // Mad God Justin: what keys 1 to 3 put in hand (the knife, the bow, the medkit)
@@ -450,6 +457,7 @@ const arc = (t0, now, T, H) => {
   return t <= 0 || t >= 1 ? 0 : 4 * H * t * (1 - t);
 };
 const jumpZ = (pos, now) => {
+  if (pos && pos.jf && pos.fz !== undefined) return pos.fz; // (the jetpack, on the boards: its height)
   if (!pos || !pos.j) return 0;
   const { T, H } = jumpCfg(pos);
   if (!pos.dj || now < pos.dj) return arc(pos.j, now, T, H);
@@ -458,6 +466,55 @@ const jumpZ = (pos, now) => {
   return t >= 1 ? 0 : z0 * (1 - t) + 4 * H * 0.8 * t * (1 - t);
 };
 const landsAt = (pos) => (pos.dj || pos.j) + jumpCfg(pos).T * 1000;
+/* the jetpack: is it on a duck's back (Quacky Zombies: switched on from its slot; the other modes: the Jetpack
+   special's key; never in Mad God Justin), and how much flight my own has left (ms) */
+function jetOn(s, id, now) {
+  if (!s || isMgj(s)) return false;
+  if (isL4dd(s)) return !!(kitOf(s, id) || {}).jp;
+  const u = ((s.aura || {})[id] || {}).jetpack;
+  return u !== undefined && (!u || u > now);
+}
+const fuelLeft = () =>
+  isL4dd(R.state)
+    ? (((kitOf(R.state, R.me) || {}).am || {}).jetpack || [0])[0]
+    : myFuel();
+/* my duck flying high enough that a hit misses (near the ground, taking off or coming down, it doesn't) */
+function flyHigh() {
+  if (!me || !me.jf) return false;
+  if (world && isHang(R.state))
+    return me.z - heightAt(me.x * HW, me.y * HH) > JET.SAFE * DUCK_PX;
+  return (me.fz || 0) > JET.SAFE;
+}
+/* after a step: the jets' flames show while they're on, and the other modes' fuel goes down in the air, up on the
+   ground (Quacky Zombies' is the host's) */
+function jetAfter(jt, dt) {
+  const on = !!me.jf && jt;
+  if (me.jt !== on) {
+    me.jt = on;
+    sendMove(true);
+  }
+  if (!isL4dd(R.state) && jetOn(R.state, R.me, clockNow())) burnFuel(dt, on);
+}
+/* flying: the jets on (Space held, a phone's jump button held) or keeping the height (Shift), while there's fuel */
+function jetKeys() {
+  const has = me && me.jf && fuelLeft() > 0;
+  return {
+    up: !!has && (keys.has("Space") || padHold),
+    hold: !!has && (keys.has("ShiftLeft") || keys.has("ShiftRight")),
+  };
+}
+function takeOff() {
+  me.jf = true;
+  me.j = 0;
+  if (world && isHang(R.state)) {
+    world.started(me);
+    me.vz = 0;
+  } else {
+    me.fz = 0;
+    me.fv = 0;
+  }
+  sendMove(true);
+}
 
 /* ---------- the board ---------- */
 /* Would You Rather: two tiles, each choice in its writer's font, with an OR strip between them */
@@ -963,6 +1020,7 @@ function drawDucks(now = clockNow()) {
       worn = dnHat(s, id, now) ? dunceDuck(own) : own,
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
+      jet = jetOn(s, id, now),
       sig = JSON.stringify([
         look,
         p.name,
@@ -970,7 +1028,8 @@ function drawDucks(now = clockNow()) {
         dead,
         role,
         hidesLooks(s),
-      ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
+        jet,
+      ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
       hurt(d);
@@ -987,6 +1046,7 @@ function drawDucks(now = clockNow()) {
     if (d._sig !== sig) {
       d._sig = sig;
       d.querySelector(".gduck-body").innerHTML =
+        (jet ? jetHTML(look) : "") +
         duckSVG(look, { size: 64, shadow: false, title: p.name, dead }) +
         '<span class="sp-fx gduck-aura"></span>';
       if (look && look.eyes === "tears") {
@@ -1194,6 +1254,10 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle("left", d._face < 0);
     d.querySelector(".gduck-done").hidden = !s.done[id];
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
+    d.classList.toggle(
+      "jet-on",
+      !!(jet && (id === R.me ? me : s.pos[id] || {}).jt),
+    ); // (the jetpack's jets: their flames)
     /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one; the
        Invisible duck turns the duck and its shadow see-through, as the shadow duck (css: .gduck.see) */
     const auras = [];
@@ -2495,6 +2559,8 @@ function playFx(f) {
         far * (0.25 + Math.random() * 0.5),
         Math.random() * 30,
       );
+  } else if (f.kind === "l4drop") {
+    l4Got(f.k); // (a drop was taken: its name for everyone)
   } else if (f.kind === "l4bite") {
     sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "jaime") {
@@ -2593,9 +2659,11 @@ function bodyAt(id, pos, now = clockNow()) {
   );
   const at = seatAt(R.state, id) || place(pos, lane.indexOf(id), lane.length), // (Valentine's Duck Date: at the table, its weapon goes with it)
     up = seated(R.state, id) ? SEAT_LIFT : 0; // (on its chair)
+  const lift =
+    geo.hang && world ? world.lift(id, pos) : jumpZ(pos, now) * geo.size; // (Hangout: how high it's drawn, a jump's or the jetpack's)
   return {
     left: at.left,
-    top: at.top - (jumpZ(pos, now) + up + 0.45) * geo.size,
+    top: at.top - lift - (up + 0.45) * geo.size,
   };
 }
 function myAim() {
@@ -2636,6 +2704,10 @@ function sendMove(force) {
     aim && Math.round(Math.atan2(aim[1], aim[0]) * 20),
     hz && hz.z,
     me.tb,
+    me.jf,
+    me.jt,
+    flyHigh(),
+    me.jf && me.fz !== undefined && !hz ? me.fz.toFixed(2) : "",
   ].join();
   if (
     !force &&
@@ -2654,6 +2726,14 @@ function sendMove(force) {
     ...(me.j && me.sj ? { sj: true } : {}),
     ...(me.j && me.dj ? { dj: me.dj } : {}),
     ...(me.j && me.tb ? { tb: me.tb } : {}),
+    ...(me.jf
+      ? {
+          jf: 1,
+          ...(me.jt ? { jt: 1 } : {}),
+          ...(flyHigh() ? { fly: 1 } : {}),
+          ...(hz ? {} : { fz: +(me.fz || 0).toFixed(2) }),
+        }
+      : {}),
     q,
     sp: sprinting && moving,
     ...(w ? { w, ax: aim[0], ay: aim[1] } : {}),
@@ -2714,6 +2794,23 @@ function step(dt, now) {
     for (let i = 0; i < n; i++) countJump();
     sendMove(true);
   } // (a double jump is two)
+  if (me.jf) {
+    // the jetpack: up while Space is held, the height kept with Shift, else it comes down onto the board again
+    const jk = jetKeys(),
+      b = jumpCfg(null),
+      G = (8 * b.H) / (b.T * b.T);
+    if (jk.up) me.fv = Math.min(JET.RISE, me.fv + JET.PUSH * dt);
+    else if (jk.hold) me.fv = 0;
+    else me.fv -= G * dt;
+    me.fz = Math.min(JET.TOP, me.fz + me.fv * dt);
+    if (me.fz >= JET.TOP && me.fv > 0) me.fv = 0;
+    if (me.fz <= 0 && me.fv <= 0) {
+      me.jf = false;
+      me.fz = me.fv = 0;
+      sendMove(true);
+    }
+    jetAfter(me.jf && (jk.up || jk.hold), dt);
+  } else jetAfter(false, dt); // (on the ground: the fuel fills up again)
   const k = (c) => keys.has(c),
     aims = arrowsAim(); // (Mad God Justin: WASD walks, the arrows aim)
   const up = k("KeyW") || (!aims && k("ArrowUp")),
@@ -2909,7 +3006,10 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
+  const jk = jetKeys(),
+    jt = !!me.jf && (jk.up || jk.hold);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
+  jetAfter(jt, dt); // (the jets' flames, my fuel)
   moving = ev.moved;
   for (let i = 0; i < ev.land; i++) countJump(); // (a double jump is two)
   if (ev.q) squash = { q: ev.q, t: now };
@@ -2987,6 +3087,9 @@ function jump(how) {
   const now = clockNow();
   if (world && isHang(R.state) && !world.canJump(me)) return; // (an activity took Space, or my duck is falling)
   if (hangStill(R.state, R.me, now) || downStill(R.state, R.me, now)) return;
+  if (!me.j && !me.jf && jetOn(R.state, R.me, now) && fuelLeft() > 0)
+    return takeOff(); // (the jetpack on: Space flies instead of jumping)
+  if (me.jf) return;
   if (me.j) {
     // in the air: the second jump, once a jump, if the Double jump is on a key
     if (
@@ -3706,8 +3809,12 @@ function useKey(i, keep) {
   if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
   lastKey = i;
   if (sp.kind === "effect")
-    R.send({ t: "aura", what: id, keep: !!keep || id === "invisible" });
-  // (the Invisible duck: its key turns it on and off)
+    R.send({
+      t: "aura",
+      what: id,
+      keep: !!keep || id === "invisible" || id === "jetpack",
+    });
+  // (the Invisible duck and the Jetpack: the key turns it on and off)
   else if (sp.kind === "jump") {
     if (keep) {
       if (kept.has(id)) kept.delete(id);
@@ -4455,6 +4562,7 @@ function paint(force) {
         jumpZ,
         landsAt,
         cfg: () => jumpCfg(me),
+        jet: jetKeys,
         clickUse: () => !!profile.settings.clickUse,
         button: () => {
           if (S && R) setHTML($(".gact", S), actHTML(R.state));
@@ -4963,6 +5071,7 @@ function keydown(e) {
   }
   if (e.code === "Space") {
     e.preventDefault();
+    keys.add("Space"); // (held: the jetpack keeps going up)
     if (!e.repeat) jump();
     return;
   }
@@ -5031,6 +5140,7 @@ const keyup = (e) => {
 };
 const blur = () => {
   keys.clear();
+  padHold = false;
   peek(false);
 };
 /* my Secret Card turns face up while it's held (or Q is) */
@@ -5331,6 +5441,9 @@ register("game", {
       });
     }
     pad = mountPad({
+      hold: (on) => {
+        padHold = on;
+      },
       active: () =>
         onBoardPhase() &&
         !windowOpen() &&

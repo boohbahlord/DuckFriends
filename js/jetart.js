@@ -4,7 +4,7 @@
    box, so the pack goes behind him at his back (JET_AT), on dat boi a little higher (JET_AT_FROG). */
 import { mix } from "./duck.js";
 
-export const JET_AT = { x: -2, y: 36, k: 0.9 };
+export const JET_AT = { x: -6, y: 20, k: 0.95 }; // (higher than first drawn, so its tanks show over the duck's back)
 export const JET_AT_FROG = { x: 16, y: 24, k: 0.78 };
 
 const RED = "#e5383b",

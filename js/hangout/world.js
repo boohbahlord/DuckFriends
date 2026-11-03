@@ -20,6 +20,7 @@ import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
+import { JET } from "../jetpack.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
@@ -596,6 +597,10 @@ export function mountWorld(board, api) {
   /* after a step: up or down a step, landing on what it walked onto, or off an edge (it falls) */
   function ground(me, x, y, ev) {
     const gnd = L.heightAt(x, y);
+    if (me.jf) {
+      if (me.z < gnd) me.z = gnd; // (flying: onto anything higher, still flying)
+      return;
+    }
     if (me.j) {
       if (me.z < gnd) {
         ev.land = me.dj ? 2 : 1;
@@ -739,7 +744,9 @@ export function mountWorld(board, api) {
       for (const a of acts()) shift += a.view?.(ctx) || 0; // (an activity's panel covers the bottom: my duck shows higher)
       for (const a of acts()) if ((f = a.focus?.(ctx))) break; // (or the camera looks somewhere else: the blackjack table while I sit at it)
       const tx = f ? f.x : me.x * L.W,
-        ty = f ? f.y : me.y * L.H - (me.j ? me.b : me.z) + shift / cam.sc;
+        ty = f
+          ? f.y
+          : me.y * L.H - (me.j || me.jf ? me.b : me.z) + shift / cam.sc;
       if (!cam.set) {
         cam.x = tx;
         cam.y = ty;
@@ -840,7 +847,27 @@ export function mountWorld(board, api) {
       const cfg = api.cfg(),
         Hpx = cfg.H * L.DUCK,
         G = (8 * Hpx) / (cfg.T * cfg.T);
-      if (me.j) {
+      if (me.jf) {
+        // the jetpack: up while its jets are on, the height kept, or falling; never higher than JET.TOP over the ground
+        const jet = api.jet?.() || {},
+          gnd = L.heightAt(x, y),
+          top = gnd + JET.TOP * L.DUCK;
+        if (jet.up)
+          me.vz = Math.min(JET.RISE * L.DUCK, me.vz + JET.PUSH * L.DUCK * dt);
+        else if (jet.hold) me.vz = 0;
+        else me.vz -= G * dt;
+        me.z += me.vz * dt;
+        if (me.z > top) {
+          me.z = top;
+          me.vz = Math.min(0, me.vz);
+        }
+        if (me.z <= gnd && me.vz <= 0) {
+          me.z = gnd;
+          me.jf = false;
+          me.vz = null;
+          ev.force = true; // (landed: the others hear of it at once)
+        }
+      } else if (me.j) {
         // a jump's arc, from where it began; it lands early on anything high enough, or falls on past its end
         const za = me.b + api.jumpZ(me, now) * L.DUCK,
           gnd = L.heightAt(x, y);

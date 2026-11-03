@@ -13992,3 +13992,245 @@ html.moving .eye-tears .tdrop.t2 {
     display: none;
   }
 }
+/* Quacky Zombies' drops: the symbol floats over the floor, bobbing, with a green glow and a ring of light under it; in
+   its last 10 s it blinks (l4dddrops.js draws them) */
+.l4-drop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(46px * var(--k, 1));
+  height: calc(46px * var(--k, 1));
+  margin: calc(-62px * var(--k, 1)) 0 0 calc(-23px * var(--k, 1));
+  pointer-events: none;
+}
+.l4-drop::before {
+  content: "";
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: -38%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #7dff9a99, #3ee06a33 60%, #0000);
+  animation: l4-drop-ring 1.6s ease-in-out infinite;
+}
+.l4-drop i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  filter: drop-shadow(0 0 4px #6dff8a) drop-shadow(0 0 10px #3ee06a99);
+  animation: l4-drop-bob 1.6s ease-in-out infinite;
+}
+.l4-drop svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.l4-drop.ending i,
+.l4-drop.ending::before {
+  animation:
+    l4-drop-bob 1.6s ease-in-out infinite,
+    l4-drop-blink 0.5s steps(1) infinite;
+}
+@keyframes l4-drop-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-14%) rotate(6deg);
+  }
+}
+@keyframes l4-drop-ring {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.82);
+  }
+}
+@keyframes l4-drop-blink {
+  50% {
+    opacity: 0.15;
+  }
+}
+/* what a drop turned on, top right: its symbol and the seconds left (Sale: until the round ends) */
+.l4-on {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  z-index: 31000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+.l4-on-k {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.25rem;
+  border-radius: 999px;
+  background: #0d1a12cc;
+  box-shadow: 0 0 0 2px #3ee06a88;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(0.95rem, 2.4vw, 1.25rem);
+  line-height: 1;
+  color: #eaffef;
+}
+.l4-on-k i {
+  display: block;
+  width: 1.6em;
+  height: 1.6em;
+  filter: drop-shadow(0 0 3px #6dff8a);
+}
+.l4-on-k i svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.l4-on-k b {
+  min-width: 1.3em;
+  text-align: right;
+  font-weight: 400;
+}
+/* a drop taken: its symbol and its name in the multicolored letters, under the points, for everyone */
+.l4-got {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  z-index: 31050;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(1.6rem, 5vw, 3rem);
+  line-height: 1.1;
+  -webkit-text-stroke: 0.06em #14161c;
+  paint-order: stroke fill;
+  opacity: 0;
+}
+.l4-got-ic {
+  display: block;
+  flex: none;
+  width: 1.3em;
+  height: 1.3em;
+  filter: drop-shadow(0 0 5px #6dff8a);
+}
+.l4-got-ic svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.l4-got.on {
+  animation: l4-got 2.2s ease-out forwards;
+}
+@keyframes l4-got {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.6);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.08);
+  }
+  18% {
+    transform: translateX(-50%) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* the Nuke: the whole board flashes white and fades */
+.l4-nukeflash {
+  position: absolute;
+  inset: 0;
+  z-index: 31040;
+  pointer-events: none;
+  background: #fff;
+  animation: l4-nuke 1.2s ease-out forwards;
+}
+@keyframes l4-nuke {
+  0% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* the jetpack (jetpack.js, Noah's pictures in jetart.js): on the duck's back, behind it (JET_AT in the duck's 120 box,
+   from the duck's feet so a hat doesn't move it), and the flames under its nozzles while its jets are on */
+.gduck-jet {
+  position: absolute;
+  z-index: -1;
+  left: calc(var(--sz, 60px) * var(--jx) / 120);
+  bottom: calc(
+    var(--sz, 60px) * ((120 - var(--jy) - 56 * var(--jk)) / 120 - 0.08)
+  );
+  width: calc(var(--sz, 60px) * 40 * var(--jk) / 120);
+  pointer-events: none;
+}
+.gduck-jet > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.gduck-jet .jet-f {
+  position: absolute;
+  top: calc(100% * 53 / 56);
+  width: 50%;
+  display: none;
+  transform-origin: 50% 0;
+  animation: jet-flick 0.12s steps(2) infinite;
+}
+.gduck-jet .jet-f.far {
+  left: 5%;
+  opacity: 0.85;
+}
+.gduck-jet .jet-f.near {
+  left: 27.5%;
+  animation-delay: -0.06s;
+}
+.gduck-jet .jet-f svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.gduck.jet-on .gduck-jet .jet-f {
+  display: block;
+}
+@keyframes jet-flick {
+  0% {
+    transform: scaleY(1) scaleX(1);
+  }
+  50% {
+    transform: scaleY(0.8) scaleX(0.92);
+  }
+}
+/* the Jetpack special's key, and a Quacky Zombies slot switched on (the jetpack, the long jump): a green ring */
+.sp-jet {
+  display: block;
+  width: 70%;
+  margin: 0 auto;
+}
+.sp-jet svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.l4s.on {
+  box-shadow:
+    0 0 0 2px #6dff8a,
+    0 0 8px #3ee06a;
+}

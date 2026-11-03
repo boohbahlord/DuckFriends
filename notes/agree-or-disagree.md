@@ -3300,3 +3300,33 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 Duck looks (Noah, from the owner's answer 1 above and "Change player tag color"): js/looks.js draws them, js/looksrules.js holds the rules' part. Options `hideLooks`, `rainbowDucks`, `voteColor`, `tagColor`, under "Duck looks" in Game options. Readings: the looks change only during a game (the lobby and the room after a game show the real looks); Hide customization keeps each duck's specials and makes name tags plain; Rainbow Ducks are dealt by the host at the start (`s.rainbow`, shuffled per eight ducks, a mid-game joiner gets the least-used look), and `fakeJustin(s, id)` tells Justin Kills to skip the brown one; Vote colors read the tile's color from the board (so any palette and a fading tile work), never in Mad God Justin or on Duck Cabin, and a duck between tiles keeps its own color; each style's take: body in the color, stripes/wings/second suit in shades, the mallard keeps its head, Jack's box takes it, Dat Boi's unicycle goes darker; metals, patterns and pictures give way. Picture sheet: https://claude.ai/artifact/2yRHMDLuA4Yc7auyKKSL7Q
 
 "there should be an option to match the look of every style in the style menu for customization" (owner, 2026-11-03 05:10Z). Noah: a switch "Match each style's look" (Off/On) above the Style tiles, kept on the device (`profile.settings.matchStyles`); on, every tile shows its style's own beak, eyes and colors and picking a style puts that look on (hats, faces and outfits stay). Picture https://claude.ai/artifact/THaDNMNKaaVT3TLXdPtbaH; owner chose "Yes, build it" (16:57Z), then "good" (22:03Z) as the OK for both, with PR #199.
+
+## Quacky Zombies Stage 4: the jetpack and the drops (Adam's go, 2026-11-03 18:53Z; the owner's drops word for word at line ~2960 above)
+
+- Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main). It doesn't merge until the owner OKs the picture sheet.
+- Jetpack (`js/jetpack.js`, Noah's art in `js/jetart.js`): in the fireplace's pool, 10 s of flight; its slot (4) switches it
+  on, hold Space (phone: hold the jump button) to fly up, Shift keeps the height, let go to come down. High in the air a
+  hit misses, as in a jump (not near the ground). Also the Jetpack special, 20,736 Jumps, every mode but Mad God Justin.
+- Drops (`dropTick` in `js/l4ddrules.js`, art in `js/l4dddrops.js`): 25% of rounds get one in the first 30 s (lasts 45 s,
+  only on walkable floor); of those, 25% get a second 30 s later; on its own, a 5% Max Ammo in the first minute (none if
+  the round ends first). Instant Kill, Max Ammo (grenades back to 3, the launcher too), Nuke, Speed Boost (the
+  adrenaline for everyone, 30 s, timer top right), Double Points, Sale.
+- Guesses (no number from the owner): Instant Kill and Double Points last 30 s; Sale lasts the rest of the round, each
+  upgrade half off once per player, the fireplace half off every time; the Nuke's points split evenly among all players
+  (each zombie's HP left x5, x2 with Double Points); a drop is taken within 70 px and blinks in its last 10 s; the
+  jetpack rises 2.4 duck heights a second up to 2.6, dodges above 0.86; out of Quacky Zombies it fills up again in 10 s
+  on the ground; Max Ammo fills the jetpack too; computers leave the jetpack alone; a flight isn't counted as a Jump.
+
+## 2026-11-03 22:01Z: Quacky Zombies, Instant Kill's X (word for word)
+> make the instant kill a X over a duck zombie's head
+
+- Misread at first as a red X floating over every zombie during Instant Kill. The owner, 22:06Z, word for word:
+  > NO NO NO! I DONT WANT THAT FOR INSTANT KILL! REMOVE THAT ! WHAT I MEANT WAS CHANGE THE SYMBOL OF INSTANT TO THE DUCK ZOMBIE HEAD WITH A RED X OVER IT
+- Solomon the 2nd (PR #206): the X over the zombies is gone; Instant Kill's symbol (the drop, the big name, the timer)
+  is now a zombie duck's head (dark green, orange beak) with a big red X over it, in place of the skull (l4dddrops.js).
+
+## 2026-11-03 22:02Z: Quacky Zombies, the Nuke and Speed Boost drops (word for word, with a marked-up picture)
+> remove the yellow line on the nuke, and add the corners back to the adrenaline shot
+
+- Solomon the 2nd (PR #206): the Nuke drop loses the darker yellow line under its belly; the Speed Boost drop shows the
+  whole syringe (plunger and needle tip no longer cut off: GUNS.adrenaline.whole). The weapons bar's icon is unchanged.
