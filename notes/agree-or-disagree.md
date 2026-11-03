@@ -3163,3 +3163,49 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 
 ## 2026-11-03 05:10Z: matching every style's look (word for word)
 > there should be an option to match the look of every style in the style menu for customization
+
+## 2026-11-03 05:12Z: the zombie mode's new name (word for word)
+> Rename "Left 4 Dead Ducks" simply to "Quacky Zombies"
+
+- Pharaoh, in PR #195 (with Stage 2): every name players see (the mode's name in `js/modes.js`, so the lobby tile, the
+  drawn title on its art, the room's mode line and the command line's lines; the Updates lines) and the code's comments
+  say Quacky Zombies. Code names stay `l4dd` (files, the mode id, `isL4dd`). Older notes keep the old name.
+
+
+## Request (2026-11-03 05:26Z, the owner, project chat, with a screenshot): fix Quacky Zombies
+> Pharoah WILL write a note for Solomon the 2nd and have him fix the game, because having a new AI do it was the dumbest fucking idea of all fucking time. 
+>
+> I MEAN JUST LOOK AT THIS FUCKING SCREENSHOT! 
+>
+> 1. FIRST OF ALL! MY FUCKING LAPTOP WITH A TOUHCSCREEN WAS DETECTED AS A FUCKING MOBILE VERSION OF THE FUCKING GAME!!!!!! WHY THE FUCK FUCK FUCK IS THE GODDAMN GAME LIKE THAT!?!?!?!? LOOK AT IT ! THE HOTBAR OR SPECIAL BAR IS MADE LIKE IT WAS FOR FUCKING MOBILE! NOT ONLY THAT! IF IT WASNT BECAUSE IT WAS DETECTED AS A MOBILE VERS AND THE UI JUST ISSS LIKE THAT, THEN THAT IS ANOTHER REASON TO RESOLVE PHAROAH SOOON! BEECAUSE THIS IS RETARDED! THIS IS BROKEN!!!!!  THE UI IS JUST BEING REMADE IF THAT IS THE CASE, BECAUSE I DONT KNOW OF ANY CHANGES I EVER APPROVED OF THAT EVER LOOKED LIEK THIS!!!
+> 2. WHY THE FUCK FUCK FUCK IS THERE GODDAMN THE SYMBOL FOR IMAGE FILES ALL OVER THE FUCKING MAP!!!!!! THEY ARE ALL OVER THE PLACE IN GAME! THIS ISNT ACCEPTABLE FOR PC OR FOR MOBILE
+> 3. THE FUCKING BOARDS NEEEEEEEEED TO BE FIXED IN PERSPECTIVE ACCORDING TO MY RULES THAT ARE TAUGHT EITHER TO SOLOMON, SOLOMON THE 2ND, ADAM, OR MOSES ABOUT HOW TO HANDLE PERSPECTIVE, BECAUSE THOSE FUCKING BOARDS, LIKE, MOST OF THEM ALL COMPLETELY DISREGARD THE CONSISTENCY OF PERSPECTIVE OF THEIR GIVEN WALL!!!!! COMPLETELY!!!!
+> 4. THE SPEED OF THE ZOMBIES WAS COMPLETELY WRONG! ALSO, I WANT THE SPEED OF THE PLAYERS TO BE 20% FAST AND THE SPRING GETS UPSCALED WITH THAT BASED OFF OF IT'S NEW SPEED, AND EVERY ZOMBIE TAKES ON IT'S SPEED BASED OFF OF THE PLAYER'S NEW WALKING SPEED IN THIS GAMEMODE ONLY, NOT ANY ANY ANY OTHER GAMEMODE. 
+> 5. DO NOT MAKE THE MAP THIS DARK, IT SHOULD BE A LITTLE LESS DARK, IT SHOULD STILL BE DARK, BUT NOT THIS FUCKING DARK!!!!! 
+> 6. LITERALLY ALMOST ANYTHING THAT PHAROAH DID FEELS IMMEDIATELY WRONG TO ME THE CREATOR WHO IS TESTING AS A HUMAN PLAYER! WE CANNOT JUST MAKE NEW FUCKING AI FOR OUR BIGGEST PROJECTS! WHOEVER THOUGHT THAT WAS FUCKING RETARDED! THIS COULD OF BEEN ONE OF THE WORST POSSSIBLE THINGS TO HAND OFF TO A NEW AI! AND IT USES UP MORE OF MY FUCKING USAGE! IF IF IF WE ARE GOING TO HAND IT OFF TO A NEW AI, THEN IT SHOULD BE SOMETHING SOURMOUNTABLE! 
+> 7. I DONT EVEN SEE MY FUCKING SCORE ANYWHERE AND I CANT EVEN USE THE FUCKING FIREPLACE! WHO THE FUCK THOUGHT TO DEPLOY AN COMPLETELY UNFINISHED FUCKING GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+>
+>
+> ALL OF THIS IN ALL CAPS AND ALL THE CUSSING AND ALLL THE REPITIATION  OR SPELING EORRRORS MEANS IM ABSOLUTELY FUCKING PISSED!!!!!!!!!!!!
+
+Owner, 05:28Z (Pharaoh's thread): "adam and solomon choose what to do with ur changes because they are taking over from here". Adam gave the fix list to Solomon the 2nd on top of PR #195.
+
+Done (Solomon, on #195's branch): (1) one computer-or-phone test for every mode, `js/pointer.js`: a computer when a mouse or touchpad is there, when the system is Windows, Linux or ChromeOS on a screen bigger than a phone's, or once a key or a mouse is used; a touch screen never decides it (the touch laptop got the phone column because only the hotbar ran the old key/mouse check, and Quacky Zombies has no hotbar). (2) The broken icons were the candles: `svgDataURL` added a second xmlns to a drawing that had one, which Firefox refuses; it adds one only when missing. (3) This mode's walk 0.5 -> 0.6 of Duck Cabin's (`SPEED` in l4dd.js, `WALK` in l4ddrules.js); sprint and every zombie and computer go from it. (4) `DARK` 0.93 -> 0.84. (5) Points under the round and the fireplace were only in #195; checked as a human; E takes the fireplace's ranged weapon even when holding the knife (it replaces the first ranged slot). (6) Side wall boards: narrow planks along the strip, edge on; south wall boards: along the wall, one above another; the door and the stairs were already face on. Picture sheet: https://claude.ai/artifact/4jfvW8eKcgkpLzeCPtrzoR (waiting for the owner's OK).
+
+## Request (2026-11-03 08:00Z, the owner, in Adam's thread, on the Quacky Zombies boards)
+> south wall, make the boards travel laterally with their native wall, like it does on south wall. West wall need the boards to cover it, and it is okay if some overlap a little into the left of the wall or to the right, just make them cover the hole, same for east wall. Maybe some boards can lay a little diagnol to help give reason for boards to overlap on east or west.
+>
+> dont push this out yet i need to talk to someone else here
+
+Adam's reading: the south wall's boards run sideways along their own wall (as they already did); on the west and east walls the boards cover the hole, a little past its left or right is fine, and a few lie a little diagonal. Done (Solomon): side wall boards are now planks down the strip over the gap (three cover it edge to edge, the last two lie a little diagonal over them). Not merged: the owner said don't push it out yet.
+
+## 2026-11-03 08:15Z: the phone controls in Quacky Zombies, the attack stick and the jump button (word for word)
+> for the UI i wanted on mobile, why the FUCK does the zombie game not have it? like the fucking specials are in the BOTTOM MIDDLE AS I DISCUSSED !!! WHAT THE FUCK HAPPENED TO THAT PLAN FOR MOBILE!?!?!?!? WHY ARE WE JUST DECIDING DIFFERENT WITHOUT MY FUCKING PERMISSION!?!?!?!?!?!
+> The only thing i want for mobile that hasnt been done is the fucking attack button to be on the screen as it is in the zombie game, and then to have a up arrow button above that for jumping. The attack button and jump button are beside eachother in that part of the screen, but everything else goes to the bottom. The hotbar is still a fucking thing for mobile, idky we are doing away with it all of the sudden. 
+>
+> ALSO, for the hotbar, there should be a way to remove specials for PC and Mobile in the customization menu, so at the top and bottom, there is a thin row that has a button you select to remove specuals from hot bar, which is esp useful for mobile because they have to scroll less through their hot bar options that way. The im joy stick should somewhat resemble the movement joystick used on mobile and NOT be red. The crosshair for it is fine. On the attack button, it is an aim and attack button, and it is a little bit more left then to the very right of the screen. It will be a sensitive attack button, but can be controlled by the mobile player comfortably because it's input isn't instant, so there is a little room for error where u have to kinda somewhat committ to the direction your aiming in BEOFRE it fires the weapon, and thus, the on and off switch for attacking comes after the aiming by pushing more into that direction, but only a little more because of limited phone screen space on the screen. The jump button is universal and replaces the touch screen to jump thing for mobile. The attack button only shows up when a special is selected that can attack, even if it isnt toggled. 
+>
+> The weapon toggle is still a button for zombies on mobile, as my prompt that made the game would make the implication of which obvious, and the location of which is to the right of the hot bar menu.
+
+- Adam's reading: on phones the specials slider stays at the bottom middle in every mode, Quacky Zombies too (its right-side column goes); the weapon toggle is a button just right of the slider; the aim-and-attack stick sits near the bottom right, a little in from the edge, looks like the move stick (not red, crosshair kept), aims first and fires only when pushed a little further; it shows whenever the picked special can attack, toggled on or not; the up-arrow jump button sits right above it, in every mode, and replaces tap-the-board-to-jump; everything else goes to the bottom. Customize's specials list gets a thin row at its top and bottom with a button that takes specials off the hotbar (PC and phone).
+- Done (Solomon, on #195's branch): `js/phonepad.js` (the aim stick: see-through like the walking stick, the crosshair is its knob; it aims from 10 px and attacks only past 30 px, the stick's edge, stopping again under 24 px; a tap does nothing; it and the jump button sit over the board's bottom right, 2rem in from the edge, above the bottom bar), `js/touch.js` (no tap-to-jump, no double-tap jump), `js/hotbar.js` (the slider takes a game's own slots: `look`, `sig`), `js/l4ddbar.js` (`l4Slider`: Quacky Zombies' slots in the slider; the right-side column is gone; the purple switch takes the special in and out of hand and the flashlight on and off; a weapon in hand shows on and can't be switched), `js/customize.js` (Remove from hotbar in a thin row at the top and the bottom of Specials). Also fixed: leaving a game threw an error since the hotbar's key check moved to pointer.js. Picture sheet updated (same link); not merged.

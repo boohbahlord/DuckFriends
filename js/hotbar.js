@@ -24,7 +24,9 @@ const drain = (c) =>
    [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
    my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key),
    dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up),
-   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null) */
+   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null).
+   A game with slots of its own (Quacky Zombies) gives look(id) → { id, name, icon, off, keep, cls } for each (keep:
+   false, the square can't switch it; cls, the slot's color) and sig() → what changes how they look */
 export function mountHotbar(S, api) {
   const bar = document.createElement("div");
   bar.className = "hotbar gone";
@@ -35,7 +37,8 @@ export function mountHotbar(S, api) {
     wheel = null,
     wheelT = 0,
     coolT = 0;
-  const look = (id) => looksOf(specialById(id), api.duck && api.duck());
+  const look = (id) =>
+    api.look ? api.look(id) : looksOf(specialById(id), api.duck && api.duck());
   const dots = (id) =>
     api.dots
       ? api.dots(id)
@@ -212,12 +215,12 @@ export function mountHotbar(S, api) {
     const sp = cur && look(cur),
       on = !!cur && api.kept().has(cur);
     keep.classList.toggle("on", on);
-    keep.disabled = !sp || !!sp.off;
+    keep.disabled = !sp || !!sp.off || sp.keep === false;
     keep.setAttribute("aria-pressed", String(on));
     keep.setAttribute("aria-label", on ? "Toggle off" : "Toggle on");
   };
   function drawSlide(k, on, cd) {
-    list = k.map((id, i) => [id, i]).filter(([id]) => id && specialById(id));
+    list = k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
     slide.classList.toggle("none", !list.length);
     const sig = JSON.stringify([
       list,
@@ -225,13 +228,14 @@ export function mountHotbar(S, api) {
       cd.map((c) => c && c[0]),
       k.map(dots),
       api.duck && !!(api.duck() || {}).wrench,
+      api.sig && api.sig(),
     ]);
     if (sig !== slideSig) {
       slideSig = sig;
       track.innerHTML = list
         .map(([id, i]) => {
           const sp = look(id);
-          return `<button type="button" class="sp-slot${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
+          return `<button type="button" class="sp-slot${sp.cls ? " " + sp.cls : ""}${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
         })
         .join("");
     }
@@ -318,16 +322,7 @@ export function mountHotbar(S, api) {
     }
   }
   addEventListener("pointerup", lifted);
-  /* a keyboard, a mouse or a touchpad (a touchscreen laptop can tell the page it is only a touch screen): the row shows */
-  const real = (e) => {
-    if (e.type === "keydown" || e.pointerType === "mouse") {
-      document.documentElement.classList.add("keyboard");
-      removeEventListener("keydown", real);
-      removeEventListener("pointermove", real);
-    }
-  };
-  addEventListener("keydown", real);
-  addEventListener("pointermove", real);
+  /* (a keyboard, a mouse or a touchpad shows the row: pointer.js) */
 
   return {
     show,
@@ -348,8 +343,6 @@ export function mountHotbar(S, api) {
       bar.remove();
       slide.remove();
       removeEventListener("pointerup", lifted);
-      removeEventListener("keydown", real);
-      removeEventListener("pointermove", real);
     },
   };
 }

@@ -114,7 +114,7 @@ import {
   PELLET_LIFE,
   SPREAD,
 } from "./mgjrules.js";
-import { isL4dd, l4Use, l4Reload, l4Shots, HELD } from "./l4ddrules.js";
+import { isL4dd, l4Use, l4Reload, l4Shots, l4Holds } from "./l4ddrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -178,6 +178,10 @@ export const OPTIONS_DEFAULT = {
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
+/* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
+   the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
+export const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
+export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const COUNTDOWN = 5;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
@@ -195,7 +199,7 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
-/* Duck Cabin's world: Hangout, and Left 4 Dead Ducks on the same map (its own rules: l4ddrules.js) */
+/* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
   s.options.mode === "hang" || s.options.mode === "l4dd";
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
@@ -1151,7 +1155,7 @@ export function reduce(state, a, now = Date.now()) {
         now - was.tp < 1500 &&
         Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
       )
-        return state; // (Left 4 Dead Ducks: the host just put it at a start spot; a move sent before that got there is old)
+        return state; // (Quacky Zombies: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
@@ -1210,7 +1214,7 @@ export function reduce(state, a, now = Date.now()) {
       const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
       const w = (
           isL4dd(s)
-            ? HELD.includes(a.w)
+            ? l4Holds(s, a.id, a.w)
             : WEAPONS.includes(a.w) &&
               (isMgj(s)
                 ? MGJ_HOLD.includes(a.w)
@@ -1358,7 +1362,7 @@ export function reduce(state, a, now = Date.now()) {
         p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
-      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Left 4 Dead Ducks: its own weapons, l4ddrules.js)
+      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
       if (
         isMgj(s)
           ? s.phase !== "boss" || me.dead
