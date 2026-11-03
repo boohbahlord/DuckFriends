@@ -27,6 +27,7 @@ export const UPDATES = [
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
       "Lightning's crack starts smoothly, with no click.",
       "A turn ends once 2 of 3 players are done by default (it was 3 of 4, so with 3 players all 3 had to finish).",
+      "In Quacky Zombies the zombies (and the computers) walk faster or slower with the lobby's Walking speed, just like your duck, so on Slow they no longer keep up with you.",
       "With the music muted on the main menu, the song name no longer blinks on and off.",
       "The secret code unlocks every item that can be unlocked, Dat Boi and his ranks too, and your progress toward each one keeps counting.",
     ],
