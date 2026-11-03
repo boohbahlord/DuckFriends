@@ -23,6 +23,7 @@ export const UPDATES = [
       "On a phone: your specials are a slider at the bottom (slide to pick one, tap it to use it, the purple square keeps it on), in every mode. The up-arrow button at the bottom right jumps (a tap on the board doesn't any more), and with something that attacks picked, the aim stick comes in under it: push it to aim, then a little further to attack.",
       "A new setting in Game options, Mad God Justin (with Justin on): Justin has 10 HP, and whoever hurts him gets his Mad God Justin attacks for 10 seconds. Your Justin Kills show under your Jumps whenever he's in the game, and beating Mad God Justin counts as one for everyone in the fight.",
       "In Customize → Specials, Remove from hotbar (at the top and the bottom of the list) takes specials off your keys with one tap each, so the slider has fewer to slide through.",
+      "Four new specials to unlock: Short jump (1,728 Jumps: lower and quicker; kept on, it turns Long jump and Double jump off), Chair (kill Justin 1,123 times in Duck Cabin: throw his office chair), Zebra cake (beat Justin 72 times: throw it and Justin runs off to eat it) and Invisible duck (hit Duck Cabin's shadow duck with a thrown chair: your duck goes see-through, like it).",
     ],
     fixed: [
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",

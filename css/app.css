@@ -3505,6 +3505,29 @@ html.moving .hat-float {
     opacity: 0;
   }
 }
+/* the Invisible duck special: as see-through as Duck Cabin's shadow duck (its SEEN, in hangout/characters.js); the name
+   and the ring stay */
+.gduck.see .gduck-body,
+.gduck.see .gduck-shadow {
+  opacity: 0.4;
+}
+/* the Chair special's icon: Mad God Justin's black chair, with a light edge so it shows on the dark keys */
+svg.sp-chair {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.75));
+}
+.arm-pic.see > svg {
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+.sp-see {
+  display: inline-block;
+  opacity: 0.4;
+}
+.sp-see svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 .gduck.zapped .gduck-body {
   filter: brightness(0.35) contrast(1.4);
   animation: shake 0.12s linear 8;
@@ -10537,6 +10560,15 @@ html.moving .hp.hang-shimmer {
   left: 44px;
   top: 42px;
   width: 11px;
+}
+.hang-npc-held.cake {
+  left: 40px;
+  top: 34px;
+  width: 22px;
+}
+.hang-npc-held.cake i {
+  display: block;
+  animation: mgj-bite 0.5s ease-in-out infinite;
 }
 .hang-npc-say {
   position: absolute;

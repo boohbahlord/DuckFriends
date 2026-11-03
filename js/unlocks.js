@@ -7,9 +7,12 @@
    voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
    Justin 12 times at the default time, and the Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms
    don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
-   gold and rose gold at 31,104, rainbow at 62,208. What counts lives in the profile (so it stays on the device and the
-   account): jumps, justinKills, kills, dunced, mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already
-   announced, so each "Unlocked!" shows once). */
+   gold and rose gold at 31,104, rainbow at 62,208. The Short jump opens at 1,728 jumps; the Chair at 1,123 Justin kills
+   in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
+   once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too). What counts lives in the
+   profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits, kills, dunced,
+   mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
+   "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { toast } from "./ui.js";
@@ -41,6 +44,10 @@ export const LOCKS = [
   { kind: "rank", id: "rainbow", jumps: 62208, name: "Dat Boi, rainbow" },
   { kind: "special", id: "longjump", jumps: 144, name: "Long jump" },
   { kind: "special", id: "double", jumps: 144, name: "Double jump" },
+  { kind: "special", id: "shortjump", jumps: 1728, name: "Short jump" },
+  { kind: "special", id: "chair", cabin: 1123, name: "Chair" },
+  { kind: "special", id: "invisible", shadow: 1, name: "Invisible duck" },
+  { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
@@ -64,6 +71,12 @@ export const LOCKS = [
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
+  l.cabin
+    ? (profile.cabinKills || 0) >= l.cabin
+    : l.shadow
+      ? (profile.shadowHits || 0) >= l.shadow
+      : earnedElse(l);
+const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
     : l.mgjLosses
@@ -89,19 +102,25 @@ export function lockHint(kind, id) {
   const l = lockOf(kind, id);
   if (!l) return "";
   if (earned(l))
-    return l.jumps
-      ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
-      : l.mgjLosses
-        ? (profile.mgjLosses || 0) >= l.mgjLosses
-          ? `Unlocked: lost to Mad God Justin ${l.mgjLosses} times`
-          : `Unlocked: lost ${l.lost} rounds`
-        : l.frags
-          ? `Unlocked: ${l.frags} kills`
-          : l.mgjWins
-            ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
-            : l.dunced
-              ? `Unlocked: voted a dunce ${l.dunced} times`
-              : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
+    return l.cabin
+      ? `Unlocked: ${fmtJumps(l.cabin)} Justin kills in Duck Cabin`
+      : l.shadow
+        ? "Unlocked: you hit the shadow duck with a chair"
+        : l.kills && !l.hidden
+          ? `Unlocked: you beat Justin ${l.kills} times`
+          : l.jumps
+            ? `Unlocked: ${fmtJumps(l.jumps)} jumps`
+            : l.mgjLosses
+              ? (profile.mgjLosses || 0) >= l.mgjLosses
+                ? `Unlocked: lost to Mad God Justin ${l.mgjLosses} times`
+                : `Unlocked: lost ${l.lost} rounds`
+              : l.frags
+                ? `Unlocked: ${l.frags} kills`
+                : l.mgjWins
+                  ? `Unlocked: beat Mad God Justin ${l.mgjWins} times`
+                  : l.dunced
+                    ? `Unlocked: voted a dunce ${l.dunced} times`
+                    : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
   const pre = coded(l) ? "Unlocked: a secret code. " : "";
   if (l.frags)
     return `${pre}Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
@@ -111,6 +130,12 @@ export function lockHint(kind, id) {
     return `${pre}Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
     return `${pre}Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
+  if (l.cabin)
+    return `${pre}Kill Justin ${fmtJumps(l.cabin)} times in Duck Cabin, in Hangout (${fmtJumps(Math.min(l.cabin, profile.cabinKills || 0))}/${fmtJumps(l.cabin)})`;
+  if (l.shadow)
+    return `${pre}Hit the shadow duck in Duck Cabin with a thrown chair`;
+  if (l.kills && !l.hidden)
+    return `${pre}Beat Justin ${l.kills} times, any Justin, any weapon (${Math.min(l.kills, profile.justinKills || 0)}/${l.kills})`;
   return l.hidden
     ? pre.trim() || "You don't know how to unlock this."
     : `${pre}Reach ${fmtJumps(l.jumps)} jumps (you have ${fmtJumps(profile.jumps || 0)})`;
@@ -160,6 +185,7 @@ export function watchKills(room) {
     seenW = null,
     seenL = null,
     seenP = null,
+    seenS = null,
     jin = null;
   room.on(() => {
     const s = room.state,
@@ -207,6 +233,17 @@ export function watchKills(room) {
         }
       seenW = topW;
     }
+    const topS = (s && s.shkN) || 0;
+    if (seenS === null || topS < seenS) seenS = topS;
+    else {
+      for (const k of (s && s.shk) || [])
+        if (k.n > seenS && k.by === room.me) {
+          profile.shadowHits = (profile.shadowHits || 0) + 1;
+          save();
+          checkUnlocks();
+        }
+      seenS = topS;
+    } // (the shadow duck hit with my thrown chair: hangout/characters.js)
     if (seenD === null || topD < seenD) seenD = topD;
     else {
       for (const k of dn.dk || [])
@@ -223,6 +260,8 @@ export function watchKills(room) {
     }
     for (const k of (s && s.jk) || [])
       if (k.n > seen && k.by === room.me) {
+        if (s.options && s.options.mode === "hang")
+          profile.cabinKills = (profile.cabinKills || 0) + 1; // (Duck Cabin's Justin, in Hangout: toward the Chair)
         countKill();
         countJustinKill();
       }

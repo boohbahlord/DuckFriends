@@ -19,6 +19,8 @@
    v board widths a second (every screen moves him on its own); k is the spot he picked; key the stage he's in; down when
    he was knocked down. In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js).
+   A zebra cake thrown (the Zebra cake special, s.zcake): he runs after it, wherever he is, and eats it once it has
+   landed (j.eat), as Mad God Justin does; nothing else of his happens meanwhile.
    The board's Mad God Justin (the mgjBoard option, only with Justin on): he has BJ_HP HP (j.hp of j.max), and a duck
    that hurts him is his target for RAGE_MS (j.rage): he goes after it with Mad God Justin's attacks (the hammer, his
    pistol, the controllers, the chair and the fireball; never the edge lightning). A duck he hits by accident doesn't
@@ -37,6 +39,8 @@ import {
   CHAIR_TELL,
   FB_TELL,
   FB_EVERY,
+  cakeAt,
+  CAKE_EAT_MS,
 } from "./mgjrules.js";
 import { vdSafe } from "./vddrules.js";
 import {
@@ -108,6 +112,10 @@ export function justinDown(s, now, log) {
   delete j.rage;
   delete j.tell;
   delete j.swing;
+  if (j.eat) {
+    delete j.eat;
+    if (s.zcake && s.zcake.eat) s.zcake = null;
+  } // (knocked down eating the zebra cake: it's gone)
   log(s, { npc: JUSTIN_ID, name: "Justin", text: any(DEATH_LINES) });
   return true;
 }
@@ -393,6 +401,54 @@ function pick(sp, cur) {
   return any(best);
 }
 
+/* the Zebra cake special (rules.js' s.zcake): he runs after it, as after Mad God Justin's, and once it has landed he eats
+   it (j.eat, drawn at his beak) for CAKE_EAT_MS; then it's gone and he's back to his spot. True when anything changed */
+function cakeChase(s, now, at) {
+  const j = s.justin,
+    c = s.zcake;
+  delete j.swing;
+  delete j.god;
+  if (c.eat) {
+    if (now < c.eat + CAKE_EAT_MS) return false;
+    s.zcake = null;
+    delete j.eat;
+    j.k = null;
+    j.next = now + 500;
+    return true;
+  }
+  const p = cakeAt(c, now),
+    d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
+  if (now >= c.stop && d < 1.3) {
+    c.eat = now;
+    Object.assign(j, {
+      k: null,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(at.x),
+      y1: r3(at.y),
+      t: now,
+    });
+    j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [
+      ...(s.fx || []).slice(-19),
+      { n: s.fxN, kind: "eat", what: "zebra", by: JUSTIN_ID, who: [], t: now },
+    ];
+    return true;
+  }
+  if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
+    return false;
+  Object.assign(j, {
+    k: null,
+    x0: r3(at.x),
+    y0: r3(at.y),
+    x1: r3(p.x),
+    y1: r3(p.y),
+    t: now,
+    v: SPEED * 1.9,
+  }); // (he runs after it)
+  return true;
+}
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
   if (isMgj(s)) return mgjTick(s, now, log); // (Mad God Justin: his boss brain, mgjrules.js)
@@ -455,6 +511,7 @@ export function justinTick(s, now, log) {
     ducks = playing(s)
       .map((id) => s.pos[id])
       .filter((p) => p && p.x >= 0);
+  if (s.zcake) return cakeChase(s, now, at) || ch; // (the Zebra cake special: nothing else of his meanwhile)
   /* the slow bullet at a random duck (the silly commands' switch covers it) */
   if (now >= j.shoot) {
     j.shoot = now + rnd(SHOOT);
