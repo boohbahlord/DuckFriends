@@ -11,6 +11,7 @@ import { cardBackground, cardHTML } from "./card.js";
 import { duelCloudHTML } from "./brackets.js";
 import { lawStats } from "./rules.js";
 import { fmtJumps } from "./format.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -21,7 +22,7 @@ const GONE = {
 const player = (s, id) => (id && s.players[id]) || GONE;
 const inFont = (p, html) =>
   fontHTML(p && p.nameStyle && p.nameStyle.font, html); // (a player's font, scaled to match)
-const nm = (p) => nameHTML(p.name, p.nameStyle);
+const nm = (p) => nameHTML(p.name, seenName(p));
 /* an attorney's side color: their card's color */
 export const sideColor = (p) => (p && p.card && p.card.color) || "#8a8fa3";
 
@@ -104,7 +105,7 @@ export function counselHTML(s, me, who) {
               ? Object.entries(picks)
                   .filter(([v, w]) => w === id && s.players[v])
                   .map(([v]) =>
-                    duckSVG(s.players[v].duck, {
+                    duckSVG(seenDuck(s.players[v]), {
                       size: 22,
                       shadow: false,
                       title: s.players[v].name,
@@ -140,8 +141,8 @@ export function lawCasesHTML(s, round = null) {
         [o, d] = c.end || [0, 0],
         w = c.w === -1 ? null : c.w ? def : off;
       return `<article class="law-case panel"><p class="law-case-topic">${inFont(s.players[h.by], esc(h.text))}</p>
-      <p class="law-case-vs"><span class="law-chip off" style="--c:${esc(sideColor(off))}">${duckSVG(off.duck, { size: 26, shadow: false, title: off.name })}${nm(off)}</span>
-        <b class="law-score">${c.left ? "–" : `${o} – ${d}`}</b><span class="law-chip def" style="--c:${esc(sideColor(def))}">${nm(def)}${duckSVG(def.duck, { size: 26, shadow: false, title: def.name })}</span></p>
+      <p class="law-case-vs"><span class="law-chip off" style="--c:${esc(sideColor(off))}">${duckSVG(seenDuck(off), { size: 26, shadow: false, title: off.name })}${nm(off)}</span>
+        <b class="law-score">${c.left ? "–" : `${o} – ${d}`}</b><span class="law-chip def" style="--c:${esc(sideColor(def))}">${nm(def)}${duckSVG(seenDuck(def), { size: 26, shadow: false, title: def.name })}</span></p>
       <p class="small">${w ? `${nm(w)} won${c.gave ? ` (${nm(player(s, c.gave))} gave up)` : c.left ? ` (${nm(player(s, c.left))} left)` : ""}` : "Hung jury: nobody won"}${c.start ? ` · closing arguments from ${c.start[0]}–${c.start[1]}` : ""}</p></article>`;
     })
     .join("")}</div>`;
@@ -207,7 +208,7 @@ export function lawBoxHTML(s, id, round = null) {
     votes: 0,
     flips: 0,
   };
-  return `<article class="statbox" data-pid="${esc(id)}"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nm(p)}<div class="small dim">${plural(w.argued, "case")} argued · ${plural(w.votes, "jury vote")}</div></div></header>
+  return `<article class="statbox" data-pid="${esc(id)}"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nm(p)}<div class="small dim">${plural(w.argued, "case")} argued · ${plural(w.votes, "jury vote")}</div></div></header>
     <dl><dt>Cases won</dt><dd>${w.won}</dd><dt>Cases lost</dt><dd>${w.lost}</dd><dt>Won as defense</dt><dd>${w.wonDef}</dd><dt>Won as offense</dt><dd>${w.wonOff}</dd>
       <dt>Gave up</dt><dd>${w.gave}</dd><dt>Switched sides</dt><dd>${w.flips}</dd><dt>Jumps this game</dt><dd>${fmtJumps((s.jumps || {})[id] || 0)}</dd></dl></article>`;
 }

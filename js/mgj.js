@@ -13,6 +13,7 @@ import { DN_PODIUM } from "./dunce.js";
 import { JUSTIN_PLAYER } from "./boardjustin.js";
 import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
 import { heldHTML, SHOTGUN } from "./specials.js";
+import { seenDuck, seenName } from "./looks.js";
 import { CHAIR } from "./mgjart.js";
 
 /* his look here: Justin, with the lightning eyes and devil horns; beaten, he cries (the tears eyes) */
@@ -29,7 +30,7 @@ export const GOOD_JUSTIN = {
   name: GOOD_NAME,
   duck: { ...JUSTIN_PLAYER.duck, hat: { id: "halo" } },
 };
-const nm = (p) => nameHTML(p.name, p.nameStyle);
+const nm = (p) => nameHTML(p.name, seenName(p));
 
 /* ---------- the pickups: a glowing token with what's in it ---------- */
 const BOLT = `<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M23 2L8 23H18L14 38L32 15H21L27 2Z" fill="#fff6b0" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><path d="M23 5L12 21" stroke="#fff" stroke-width="1.6" opacity=".7" stroke-linecap="round"/></svg>`;
@@ -193,7 +194,7 @@ export function mgjBoxHTML(s, id, all = false) {
     fights: 0,
     wins: 0,
   };
-  return `<article class="statbox" data-pid="${esc(id)}"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nm(p)}<div class="small dim">${plural(w.fights, "fight")} · ${plural(w.wins, "win")}</div></div></header>
+  return `<article class="statbox" data-pid="${esc(id)}"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nm(p)}<div class="small dim">${plural(w.fights, "fight")} · ${plural(w.wins, "win")}</div></div></header>
     <dl><dt>Damage</dt><dd>${w.dmg}</dd><dt>Knocked down</dt><dd>${w.hits}</dd><dt>Killing blows</dt><dd>${w.kills}</dd><dt>Jumps this game</dt><dd>${fmtJumps((s.jumps || {})[id] || 0)}</dd></dl></article>`;
 }
 const fightsHTML = (s) =>

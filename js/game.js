@@ -180,6 +180,18 @@ import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { l4TouchAim, l4Held } from "./l4dd.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
+import {
+  shownDuck,
+  shownNameStyle,
+  hidesLooks,
+  voteColorOn,
+  tagColorOn,
+  tinted,
+  tileColor,
+  inkOn,
+  seenDuck,
+  seenName,
+} from "./looks.js";
 import { nameHTML, fontHTML } from "./name.js";
 import {
   justinAt,
@@ -767,7 +779,24 @@ const SQ = {
   u: ["50% 0%", 1.12, 0.84],
   d: ["50% 100%", 1.14, 0.82],
 };
+/* Vote colors (looks.js): the color of the tile a duck stands on, "" off the tiles; the tiles' colors are read once a
+   frame, so a fading tile fades the ducks on it too */
+let tileFrame = 0,
+  tileSeen = {};
+function voteTint(s, board, pos) {
+  if (!voteColorOn(s) || !pos || pos.x < 0 || !boardPhases(s).includes(s.phase))
+    return "";
+  const c = colAt(s, pos.x);
+  if (c < 0) return "";
+  if (tileFrame !== frameNo) {
+    tileFrame = frameNo;
+    tileSeen = {};
+  }
+  return (tileSeen[c] ??= tileColor(board, c));
+}
+let frameNo = 0;
 function drawDucks(now = clockNow()) {
+  frameNo++;
   const board = S && $(".board", S);
   if (!board || !R || !geo) return;
   const s = R.state,
@@ -878,6 +907,7 @@ function drawDucks(now = clockNow()) {
   layer.classList.toggle(
     "hide-names",
     !!+s.options.hideNames &&
+      !hidesLooks(s) && // (Hide customization: name tags always show)
       ["aod", "wyr", "ddr"].includes(s.options.mode) &&
       s.phase === "answer",
   );
@@ -928,9 +958,19 @@ function drawDucks(now = clockNow()) {
       d.style.setProperty("--gho", gho || 1);
     }
     const dead = deadNow(id, p),
-      look = dnHat(s, id, now) ? dunceDuck(p.duck) : p.duck,
+      own = s.players[id] && !g ? shownDuck(s, p) : p.duck, // (Hide customization, Rainbow Ducks: looks.js)
+      vc = s.players[id] && !g ? voteTint(s, board, pos) : "",
+      worn = dnHat(s, id, now) ? dunceDuck(own) : own,
+      look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
-      sig = JSON.stringify([look, p.name, p.nameStyle, dead, role]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
+      sig = JSON.stringify([
+        look,
+        p.name,
+        p.nameStyle,
+        dead,
+        role,
+        hidesLooks(s),
+      ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
       hurt(d);
@@ -961,7 +1001,7 @@ function drawDucks(now = clockNow()) {
         (role
           ? `<i class="law-tag ${role}" aria-label="${role === "off" ? "Offense" : "Defense"}">${role === "off" ? SWORD : SHIELD}</i>`
           : "") +
-        nameHTML(p.name, p.nameStyle) +
+        nameHTML(p.name, s.players[id] ? shownNameStyle(s, p) : p.nameStyle) +
         '<span class="gduck-down" aria-hidden="true"><i></i></span><span class="gduck-hp" aria-hidden="true"><b></b><i></i></span>'; // (Lawyering: the sword or the shield beside an attorney's name)
       d.classList.toggle("lawyer", !!role);
       d.classList.toggle("pic", !!(look && look.image)); // (an imported picture: its down meter is plain, no streaks)
@@ -974,6 +1014,15 @@ function drawDucks(now = clockNow()) {
       d.style.setProperty("--dk", against(cc));
       d._dn = null;
       d._hp = null;
+    }
+    const tag = tagColorOn(s) && vc ? vc : ""; // (Change player tag color: the name tag in the duck's vote color)
+    if (d._tag !== tag) {
+      d._tag = tag;
+      d.classList.toggle("vtag", !!tag);
+      if (tag) {
+        d.style.setProperty("--vc", tag);
+        d.style.setProperty("--vk", inkOn(tag));
+      }
     }
     /* knocked down: the meter on the name tag empties until the duck stands up (s.up), behind the letters */
     const upAt =
@@ -2190,7 +2239,7 @@ function playFx(f) {
       y = Math.min(a.top, b.top) - size * 0.4;
     const heart =
       el(`<div class="fx-heart" style="left:${x}px;top:${y}px;--rise:${(-y - 40).toFixed(0)}px"><svg viewBox="0 0 100 90" class="fx-heart-bg"><path d="M50 86C14 60 2 42 4 26 6 10 20 2 32 3c8 1 14 6 18 13 4-7 10-12 18-13 12-1 26 7 28 23 2 16-10 34-46 60z" fill="#ff4f8b" stroke="#fff" stroke-width="3"/></svg>
-      <div class="fx-heart-ducks">${pa ? duckSVG(pa.duck, { size: 40, shadow: false, title: pa.name }) : ""}${pb ? duckSVG({ ...pb.duck }, { size: 40, shadow: false, title: pb.name }).replace("<svg ", '<svg style="transform:scaleX(-1)" ') : ""}</div></div>`);
+      <div class="fx-heart-ducks">${pa ? duckSVG(seenDuck(pa), { size: 40, shadow: false, title: pa.name }) : ""}${pb ? duckSVG(seenDuck(pb), { size: 40, shadow: false, title: pb.name }).replace("<svg ", '<svg style="transform:scaleX(-1)" ') : ""}</div></div>`);
     fxl.append(heart);
     setTimeout(() => heart.remove(), 4200);
     sfx.love();
@@ -3288,7 +3337,7 @@ const whoHTML = (s) =>
   s.seat
     .map(
       (id) =>
-        `<span class="who-chip${s.done[id] ? " done" : ""}">${duckSVG(s.players[id].duck, { size: 26, shadow: false })}${nameHTML(s.players[id].name, s.players[id].nameStyle)}${s.done[id] ? " ✓" : ""}</span>`,
+        `<span class="who-chip${s.done[id] ? " done" : ""}">${duckSVG(seenDuck(s.players[id]), { size: 26, shadow: false })}${nameHTML(s.players[id].name, seenName(s.players[id]))}${s.done[id] ? " ✓" : ""}</span>`,
     )
     .join("");
 
@@ -3313,7 +3362,7 @@ function statsHTML(s) {
 function wyrStatsHTML(s) {
   const nm = (id) =>
     s.players[id]
-      ? nameHTML(s.players[id].name, s.players[id].nameStyle)
+      ? nameHTML(s.players[id].name, seenName(s.players[id]))
       : "Gone";
   const block = (round) => {
     const { per, questions } = wyrStats(s, round),

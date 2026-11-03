@@ -20,6 +20,7 @@ import {
   vdStats,
   TOPIC_MAX,
 } from "./vddrules.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -28,7 +29,7 @@ const GONE = {
   nameStyle: {},
 };
 const player = (s, id) => (id && s.players[id]) || GONE;
-const nm = (p) => `<span class="wq-w">${nameHTML(p.name, p.nameStyle)}</span>`; // (a name never breaks across lines)
+const nm = (p) => `<span class="wq-w">${nameHTML(p.name, seenName(p))}</span>`; // (a name never breaks across lines)
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 const mmss = (ms) => {
   const t = Math.round(ms / 1000);
@@ -87,7 +88,7 @@ const withTable = (s) => ["vdprompt", "vddate", "vdval"].includes(s.phase);
 const tileInner = (
   p,
 ) => `<div class="wq-bg" style="${esc(cardBackground(p.card))}"></div>
-  <div class="wq-tduck">${duckSVG(p.duck, { size: 96, shadow: true, title: p.name })}</div><span class="wq-tname">${nameHTML(p.name, p.nameStyle)}</span>`;
+  <div class="wq-tduck">${duckSVG(seenDuck(p), { size: 96, shadow: true, title: p.name })}</div><span class="wq-tname">${nameHTML(p.name, seenName(p))}</span>`;
 function tilesHTML(s) {
   const V = s.vd;
   if (!V || !V.ids || withTable(s)) return "";
@@ -147,7 +148,7 @@ export const myTile = (s, pos) => vdTileAt(s, pos);
 const faceOf = (s, id, size) => {
   const p = player(s, id),
     bw = turnedDown(s, id);
-  return `<span class="${bw ? "dn-bw" : ""}">${duckSVG(p.duck, { size, shadow: false, title: p.name })}</span>`;
+  return `<span class="${bw ? "dn-bw" : ""}">${duckSVG(seenDuck(p), { size, shadow: false, title: p.name })}</span>`;
 };
 const roleOf = (s, id) => {
   const V = s.vd || {},
@@ -181,7 +182,7 @@ export function vdBoxHTML(s, id) {
   const p = s.players[id];
   if (!p) return "";
   const w = vdStats(s).per[id] || { dates: 0, ms: 0, early: 0 };
-  return `<article class="statbox" data-pid="${esc(id)}"><header>${faceOf(s, id, 46)}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${roleOf(s, id)}</div></div></header>
+  return `<article class="statbox" data-pid="${esc(id)}"><header>${faceOf(s, id, 46)}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">${roleOf(s, id)}</div></div></header>
     <dl><dt>Dates</dt><dd>${w.dates}</dd><dt>Time on dates</dt><dd>${mmss(w.ms)}</dd><dt>Ended early (Next duck)</dt><dd>${w.early}</dd>
       <dt>Jumps this game</dt><dd>${fmtJumps((s.jumps || {})[id] || 0)}</dd></dl></article>`;
 }

@@ -7,6 +7,7 @@ import { HATS, hatTile } from "./hats.js";
 import { FACES, faceTile } from "./faces.js";
 import { nameHTML } from "./name.js";
 import { esc } from "./ui.js";
+import { seenDuck, seenName } from "./looks.js";
 
 /* sport balls, drawn in their own colors in a 32 × 32 box */
 const BALLS = {
@@ -165,8 +166,8 @@ export function cardHTML(p, o = {}) {
     o.net ? `<span class="pcard-net">${o.net}</span>` : "",
   ].join("");
   return `<div class="pcard${o.me ? " mine" : ""}${o.ready ? " ready" : ""}" data-pid="${esc(p.id)}" style="${esc(cardBackground(p.card))}" tabindex="0">
-  <div class="pcard-duck">${duckSVG(p.duck, { size: o.size || 58, title: p.name })}</div>
-  <div class="pcard-name"><span class="pcard-label">${nameHTML(p.name, p.nameStyle)}</span>${tags}</div>
+  <div class="pcard-duck">${duckSVG(seenDuck(p), { size: o.size || 58, title: p.name })}</div>
+  <div class="pcard-name"><span class="pcard-label">${nameHTML(p.name, seenName(p))}</span>${tags}</div>
   ${o.extra || ""}${o.ready !== undefined ? `<span class="pcard-ready" aria-label="${o.ready ? "Ready" : "Not ready"}">${o.ready ? "✓" : ""}</span>` : ""}
 </div>`;
 }
