@@ -2773,7 +2773,7 @@ function viewSubmit(s) {
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
         : isDn(s)
           ? `<form class="panel submit-card" autocomplete="off"><h2>Your take</h2>
-      <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
+      <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" || +s.options.noOwn ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
       <textarea maxlength="${TAKE_MAX}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
