@@ -11799,6 +11799,122 @@ html.moving .mgj-field {
     transform: translate(-50%, -50%) scale(1);
   }
 }
+/* the rework's (game.js): a duck nothing can hurt for a second after a hit flickers fast, in and out */
+.gduck.mgj-blink .gduck-body {
+  animation: mgj-blink 0.12s steps(2, jump-none) infinite;
+}
+@keyframes mgj-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+/* the bow's arrow and his fireball, pointing the way they fly */
+.bullet.k-arrow {
+  width: calc(var(--s) * 0.8);
+  margin: calc(var(--s) * -0.075) 0 0 calc(var(--s) * -0.4);
+  filter: drop-shadow(0 0.1rem 0.12rem #0006);
+}
+.bullet.k-fireball {
+  width: var(--s);
+  margin: calc(var(--s) * -0.3) 0 0 calc(var(--s) * -0.5);
+  filter: drop-shadow(0 0 0.4rem #ff8c2b);
+}
+.bullet.k-arrow svg,
+.bullet.k-fireball svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* the zebra cake: spinning on its way, then lying still where it landed */
+.mgj-cake {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0.15rem 0.15rem #0006);
+}
+.mgj-cake i {
+  display: block;
+  animation: cake-spin 0.6s linear infinite;
+}
+@keyframes cake-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.mgj-cake i.ccw {
+  animation-direction: reverse;
+}
+.mgj-cake.down i {
+  animation: none;
+}
+.mgj-cake svg,
+.mgj-snack svg,
+.mgj-poof svg,
+.mgj-kit svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* his snack at his beak, a bite at a time; it turns with him */
+.mgj-snack {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.mgj-snack i {
+  display: block;
+  animation: mgj-bite 0.5s ease-in-out infinite;
+}
+.mgj-snack.left i {
+  scale: -1 1;
+}
+@keyframes mgj-bite {
+  50% {
+    transform: translateY(-12%) rotate(-8deg);
+  }
+}
+/* a Jaime gone in a cloud, and a medkit over the duck it got up */
+.mgj-poof,
+.mgj-kit {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: mgj-poof 0.8s ease-out forwards;
+}
+.mgj-kit {
+  animation-duration: 1.2s;
+}
+@keyframes mgj-poof {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(1.2);
+  }
+}
+/* the Jaimes' shared key: one or more stored, the bar charges the next one in pink (it fills, not drains) */
+.cooldown.more {
+  background: #ff9ec2;
+  box-shadow: 0 0 0.25rem #ff9ec2b0;
+  animation-name: cfill;
+}
+@keyframes cfill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
 /* his HP, beside the cloud */
 .question.mgj-hp {
   display: flex;

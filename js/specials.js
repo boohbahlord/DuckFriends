@@ -15,6 +15,8 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
+import { BOW, MEDKIT, ZEBRA, JAIME } from "./mgjart.js";
+import { duckSVG } from "./duck.js";
 export { SHOT_SPEED } from "./rules.js";
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -299,6 +301,40 @@ export const SPECIALS = [
     ],
   },
   {
+    id: "bow",
+    name: "Bow",
+    kind: "item",
+    icon: iconOf(BOW, 1.2),
+    tip: "An arrow flies straight toward your mouse, fast: any duck it hits plays dead. One every 0.4 seconds. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  /* Mad God Justin's own (only there, never in Customize): the medkit, Jaime and the zebra cake */
+  {
+    id: "medkit",
+    name: "Medkit",
+    kind: "item",
+    only: "mgj",
+    icon: MEDKIT,
+    tip: "Once a game: stand by a downed duck and press E, Enter or click to get it up with half its HP.",
+  },
+  {
+    id: "jaime",
+    name: "Jaime",
+    kind: "item",
+    only: "mgj",
+    get icon() {
+      return duckSVG(JAIME.duck, { size: 40, shadow: false });
+    }, // (drawn when it's first shown: duck.js may not be ready while this file loads)
+    tip: "Jaime sprints at Justin with his knife. Everyone shares the same Jaimes: a new one every 12 seconds, up to 3.",
+  },
+  {
+    id: "zebra",
+    name: "Zebra cake",
+    kind: "item",
+    only: "mgj",
+    icon: ZEBRA,
+    tip: "Throw a zebra cake: Justin chases it and eats it, and does nothing else meanwhile. Everyone shares it: once every 30 seconds.",
+  },
+  {
     id: "sound",
     name: "Sound",
     kind: "item",
@@ -518,6 +554,8 @@ export function pressFX(id, x, y, size, face, duck) {
 const WRENCH_COLORS = ["#a8322a", "#a4a8ad", "#7a4a2e"]; // (the BioShock wrench keeps its own colors)
 export function heldHTML(id, duck) {
   if (id === "shotgun") return SHOTGUN;
+  if (id === "bow") return BOW;
+  if (id === "medkit") return MEDKIT;
   const c = colorsOf(duck, id);
   return id === "grenade"
     ? GRENADE(c)

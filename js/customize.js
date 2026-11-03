@@ -594,7 +594,7 @@ export function openCustomize(page = lastPage) {
             const box = (n, i, id, attrs) =>
               `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ""}</button>`;
             const tiles = (kind) =>
-              SPECIALS.filter((x) => x.kind === kind)
+              SPECIALS.filter((x) => x.kind === kind && !x.only)
                 .map((sp) => {
                   const x = looksOf(sp, D),
                     at = keys.indexOf(x.id),
