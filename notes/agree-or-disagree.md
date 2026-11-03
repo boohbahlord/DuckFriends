@@ -2842,3 +2842,6 @@ duck." "The date writes prompts that determine the topic of the conversation at 
 > In ALL gamemodes, MAKES SURE the 2/3 vote ACTUALLy works, because in game or elsewhere I dont think it does, since it has seemed very inconsistent and i cannot memorize when.
 
 Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and every share (half, 2 of 3, 3 of 4, everyone), plus a leaver and a joiner mid-vote. The formula everywhere is `max(1, ceil(players * share))` with 2 of 3 counted as exactly 2/3. Fixed: Next round after a leaver (the go-on count was not checked again when someone else left), the all-rounds review (it counted people who joined mid-turn), the bracket label ("N needed" when a match waits for every vote), the Dunce End round tip (it said one player too many). The rest is listed in the report to Adam as design choices.
+
+## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
+> 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
