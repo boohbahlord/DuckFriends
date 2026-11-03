@@ -2852,3 +2852,9 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 > 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
 
 Art (Noah): js/mgjart.js holds the new Mad God Justin pictures (bow, arrow, fireball, one big flame, Jaime and his poof, medkit, zebra cake, pizza, donut, teleport, hitmarks, edge glow and lightning); the lightning eyes are drawn over face items. Picture sheet: https://claude.ai/artifact/DZvJvYSFSv5Phv3eukppoL
+
+## 2026-11-03: Valentine's Duck Date, the Date's timer (Adam's relay of the owner's answers)
+The Date gets a start/pause timer button; a 6 s grace follows, then the Date can skip; with the timer off there is no button; the Date writes one prompt per round. (Jackal) Done in `js/vddrules.js` (`vdTimer`, `VD_GRACE`), `js/game.js` (`vdActHTML`), computers in `js/bots.js`.
+
+## 2026-11-03: Duncelation and Lawyering, the write timer (Adam's relay of the owner's step 3)
+Done (Jackal): the dunce look goes as soon as someone else is crowned (only the newest dunce is in `s.dn.dunces`); after a dunce's stats play goes on into the takes not yet defended (`afterDunce`), a new rotation only after the last; a setting named exactly "Don't get your own prompt" (`noOwn`) for Duncelation (replaces the old "Never your own" tile; "Write your own" wins over it) and Lawyering (the writer is neither attorney); the write timer ("Question time limit") now defaults to 2:12 (132 s) and has a 2:12 tile; Bicker Brackets starts with none, and switching to or from it moves the timer along while it sits at the other default.

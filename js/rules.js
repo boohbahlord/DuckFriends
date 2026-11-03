@@ -23,6 +23,7 @@ import {
   dealTakes,
   startTake,
   nextTake,
+  afterDunce,
   dnVote,
   dnCheck,
   dnTick,
@@ -40,6 +41,7 @@ import {
   vdAfter,
   vdEnd,
   vdSkip,
+  vdTimer,
   vdJoin,
   vdTick,
   vdWrite,
@@ -123,7 +125,7 @@ export const OPTIONS_DEFAULT = {
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
   unvoteStops: 1, // 1: taking a vote back below the share stops that countdown (I want this by default); 0: once started it runs out anyway
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
-  submitTime: 0, // 0 (off), 60, 90, 120: a time limit on writing questions
+  submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
   botWait: 5, // TEST rooms: seconds before computers act
   lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
@@ -150,9 +152,10 @@ export const OPTIONS_DEFAULT = {
   lawClose: 60, // seconds of closing arguments when the jury is split: 30, 60, 120
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
+  noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
   mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
   mgjHp: 0, // … Player HP: 0 (off), 1, 5, 10, 15
-  vdTime: 60, // Valentine's Duck Date: seconds a date gets after its 10 s of grace: 0 (off), 60, 90, 120
+  vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
 export const COUNTDOWN = 5;
@@ -255,6 +258,7 @@ const WAIT_BLOCK = [
   "skip",
   "voteReview",
   "dnEnd",
+  "vdTimer",
 ];
 export const tooFew = (s) => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
@@ -510,7 +514,11 @@ export function newRoom({
     passkey,
     max,
     hostId: host.id,
-    options: { ...OPTIONS_DEFAULT, ...options },
+    options: {
+      ...OPTIONS_DEFAULT,
+      ...(options.mode === "bb" ? { submitTime: 0 } : {}), // (Bicker Brackets starts with no write timer)
+      ...options,
+    },
     players: { [host.id]: { ...host, bot: false, ready: false } },
     seat: [host.id],
     phase: "lobby",
@@ -632,6 +640,7 @@ function recordAnswers(s) {
 export function toStats(s, now) {
   if (+s.options.stats !== 0) return enter(s, "results", now);
   if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: the game is over)
+  if (isDn(s) && s.qs && s.qs.length) return afterDunce(s, now); // (Duncelation: on into the takes not yet defended)
   s.round++;
   s.subs = [];
   s.qs = [];
@@ -794,6 +803,7 @@ function advance(s, now, force = false) {
       return startResults(s, now);
     case "results":
       if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: one game, one Valentine)
+      if (isDn(s) && s.qs && s.qs.length) return afterDunce(s, now); // (Duncelation: on into the takes not yet defended)
       s.round++;
       s.subs = [];
       s.qs = [];
@@ -967,7 +977,8 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "options":
       if (boss && (s.phase === "lobby" || s.phase === "over")) {
-        const was = s.options.discuss;
+        const was = s.options.discuss,
+          wasMode = s.options.mode;
         Object.assign(s.options, a.options);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
         /* I want half the votes to end a turn by default with the Discussion round on, 3 of 4 without it: turning it on or
@@ -979,6 +990,13 @@ export function reduce(state, a, now = Date.now()) {
         ) {
           const [from, to] = s.options.discuss ? [0.75, 0.5] : [0.5, 0.75];
           if (s.options.share === from) s.options.share = to;
+        }
+        /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's
+         still at the other default */
+        if (a.options.mode && !("submitTime" in a.options)) {
+          if (isBb(s) && s.options.submitTime === 132) s.options.submitTime = 0;
+          else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
+            s.options.submitTime = 132;
         }
         if (a.options.map === "cabin" && !a.options.mode)
           s.options.mode = "hang"; // Hangout and Duck Cabin are one: picking either picks both,
@@ -1464,6 +1482,8 @@ export function reduce(state, a, now = Date.now()) {
       else w.go[a.id] = true;
       return goOnDone(s, now) || s;
     }
+    case "vdTimer":
+      return me && isVd(s) ? vdTimer(s, a, now) || state : state; // Valentine's Duck Date: The Date's Start timer (pause, go on)
     case "dnEnd":
       return me && isDn(s) ? dnEndVote(s, a, now) || state : state; // Duncelation: End round (or take it back)
     case "giveUp": {
@@ -1939,7 +1959,7 @@ function countTurn(s, was) {
 }
 /* forgame: the game's timers and turn share mid-game, or mutes that everyone sees, for good, for a number of turns, or
    in some stages (stage2 voting: the next two voting stages) */
-const TIME_OK = [0, 15, 30, 45, 60, 90, 120],
+const TIME_OK = [0, 15, 30, 45, 60, 90, 120, 132],
   SHARE_OK = [0.5, 0.67, 0.75, 1],
   MUTE_KINDS = ["bubble", "ping", "text"];
 function forgame(s, a, now) {
@@ -3663,6 +3683,7 @@ function nextCase(s, now) {
 function counselOk(s, role, who) {
   const q = s.qs[s.qi];
   if (!playing(s).includes(who) || !s.players[who]) return false;
+  if (+s.options.noOwn && who === q.by) return false; // (Don't get your own prompt: the writer is no attorney)
   return role === "def" ? who !== q.by : who !== s.law.def;
 }
 /* has this player picked everything they're asked to? */
@@ -3679,7 +3700,7 @@ function endCounsel(s, now) {
     q = s.qs[s.qi],
     on = playing(s).filter((id) => s.players[id]);
   for (const role of ["def", "off"]) {
-    const ok = (id) => (role === "def" ? id !== q.by : id !== L.def),
+    const ok = (id) => counselOk(s, role, id),
       n = {};
     for (const [voter, who] of Object.entries(L.picks[role] || {}))
       if (s.players[voter] && on.includes(who) && ok(who))
@@ -3696,8 +3717,9 @@ function openCase(s, now) {
   const L = s.law,
     q = s.qs[s.qi],
     on = playing(s).filter((id) => s.players[id]);
+  const noOwn = +s.options.noOwn ? q.by : null; // (Don't get your own prompt: the writer is no attorney, either side)
   if (!L.def) L.def = pickOne(on.filter((id) => id !== q.by));
-  if (!L.off) L.off = pickOne(on.filter((id) => id !== L.def));
+  if (!L.off) L.off = pickOne(on.filter((id) => id !== L.def && id !== noOwn));
   s.pos = {};
   s.lock = {};
   s.pos[L.off] = { x: 0.3, y: 0.5 };

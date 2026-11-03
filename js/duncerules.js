@@ -7,8 +7,9 @@
    counts if it never voted → more Dunce votes than Not a Dunce: a dunce (a tie is not) → the next defender, and after the
    last one a new rotation.
    A dunce: lightning strikes it three times as the dunce hat lands on it, then it stands on the LOSER podium playing the
-   trombone and gets struck once more → the stats → a new rotation, until the room goes back to the lobby.
-   A dunce wears the dunce hat and stays black and white for the rest of the game. That's only drawn from s.dn.dunces,
+   trombone and gets struck once more → the stats → the takes not yet defended carry on, and after the last one a new
+   rotation, until the room goes back to the lobby.
+   The newest dunce wears the dunce hat and stays black and white until someone else is crowned (then the look moves on). That's only drawn from s.dn.dunces,
    never put on anyone's own duck, so nothing can stay behind after the game (leaving, lag or a reload included). Each
    dunce is numbered (s.dn.dk), so each player's device counts its own once toward unlocking the dunce hat (unlocks.js).
    The writer of a take is never shown. */
@@ -133,7 +134,10 @@ export function dealTakes(s, now) {
     if (s.players[q.by] && String(q.text || "").trim())
       mine[q.by] = { by: q.by, text: String(q.text).trim().slice(0, TAKE_MAX) };
   delete s.subs;
-  const how = s.options.dunceTakes,
+  const how =
+      +s.options.noOwn && s.options.dunceTakes !== "own"
+        ? "notOwn"
+        : s.options.dunceTakes,
     ok =
       how === "own"
         ? (id, t) => t.by === id
@@ -205,6 +209,15 @@ function endRotation(s, now) {
   s.qs = [];
   s.qi = 0;
   return enter(s, "submit", now);
+}
+/* after a dunce's stats the rotation goes on into the takes nobody has defended yet */
+export function afterDunce(s, now) {
+  s.dn.cur = null;
+  if (s.qi + 1 < (s.qs || []).length) {
+    s.qi++;
+    return startTake(s, now);
+  }
+  return endRotation(s, now);
 }
 export function nextTake(s, now) {
   s.dn.cur = null;
@@ -309,11 +322,8 @@ function dnVerdict(s, now) {
     say(s, `${p.name} is not a dunce${d + n ? ` (${n}–${d})` : ""}.`);
     return discussOn(s) ? enter(s, "discuss", now) : nextTake(s, now);
   }
-  if (!wearsDunce(s, C.def))
-    s.dn.dunces = [
-      ...(s.dn.dunces || []),
-      { id: C.def, ...(p.acct ? { acct: p.acct } : {}) },
-    ];
+  /* I want only the newest dunce to wear the look: it goes the moment someone else is crowned */
+  s.dn.dunces = [{ id: C.def, ...(p.acct ? { acct: p.acct } : {}) }];
   s.dn.dkN = (s.dn.dkN || 0) + 1;
   s.dn.dk = [...(s.dn.dk || []).slice(-9), { n: s.dn.dkN, id: C.def }];
   lostRound(s, [C.def], "dunce");
