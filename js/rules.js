@@ -64,6 +64,8 @@ import {
 } from "./quackrules.js";
 import {
   holdDown,
+  invuln,
+  hurtFx,
   downStill,
   standUps,
   isGhost,
@@ -163,6 +165,16 @@ export const OPTIONS_DEFAULT = {
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
   mgjTime: 135, // Mad God Justin: seconds to beat him: 105, 135, 165 (the meteor adds 30 more)
   mapGrey: 0, // the collage map: 1 turns it black and white
+  invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
+  noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
+  noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
+  aodColors: "rainbow", // Agree or Disagree's board: rainbow | gr (shades of green and red, Neutral fading black, grey, white)
+  hideNames: 0, // 1: name tags stay hidden while answering (Agree or Disagree, Would You Rather, Does Duck Relate?)
+  showWriter: 0, // 1: the question's writer is named after the vote (Agree or Disagree, Would You Rather)
+  scLines: 1, // Story Chain: lines each player writes before the paragraph ends: 1 … 4
+  lateJoin: "play", // play (a player who joins mid-game plays at once) | watch (they wait for the next round)
+  walk: "normal", // walking speed: slow | normal | fast
+  textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
   hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
   rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
@@ -655,6 +667,13 @@ function recordAnswers(s) {
     a,
   });
   s.lock = { ...a }; // after answering, each duck stays in the column it chose
+  if (
+    +s.options.showWriter &&
+    ["aod", "wyr"].includes(s.options.mode) &&
+    q.by &&
+    s.players[q.by]
+  )
+    say(s, `${s.players[q.by].name} wrote: ${q.text}`); // (Show the writer: named after the vote)
 }
 
 /* the round is over: the stats screen, or (the lobby's Stats screen Off) straight on to what comes after it */
@@ -848,6 +867,13 @@ function seatNewcomer(s, id) {
     return;
   } // Hangout: at the front door, at once
   if (isVd(s)) return vdJoin(s, id); // (Valentine's Duck Date: a Suitor from the next turn)
+  if (s.options.lateJoin === "watch") {
+    // (Players who join mid-game: Watch until the next round: they walk about and chat, and play from the next turn)
+    if (boardPhases(s).includes(ph))
+      s.pos[id] = { x: startX(s), y: Math.random() };
+    me.late = true;
+    return;
+  }
   if (boardPhases(s).includes(ph))
     s.pos[id] = { x: startX(s), y: Math.random() };
   if (isQuack(s)) {
@@ -1938,7 +1964,10 @@ export const groupsOf = (s, id) => {
   return out;
 };
 export const isSudo = (s, id) => groupsOf(s, id).includes("sudo");
+/* the lobby's No Chat and No Terminal settings take chat and the command line away from everyone, the host too */
 export const denied = (s, id, perm) =>
+  (perm === "nochat" && +s.options.noChat === 1) ||
+  (perm === "nocmd" && +s.options.noTerm === 1) ||
   groupsOf(s, id).some((n) =>
     (((s.groups || {})[n] || {}).perms || []).includes(perm),
   );
@@ -2176,6 +2205,7 @@ export const phpLost = (s, id, now) => {
 };
 export function soaks(s, id, now) {
   if (isMgj(s)) return false;
+  if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   const n = phpLost(s, id, now) + 1,
     rest = { ...s.php };
   delete rest[id];
@@ -3310,7 +3340,9 @@ function endWords(s, now) {
       (w) => !Object.values(sc.words).some((x) => x.toLowerCase() === w),
     ),
   );
-  sc.order = order;
+  /* Lines per player: the writers go round that many times before the paragraph ends */
+  const laps = Math.max(1, Math.min(4, Math.round(+s.options.scLines) || 1));
+  sc.order = Array.from({ length: laps }, () => order).flat();
   sc.turn = 0;
   sc.assign = Object.fromEntries(
     order.map((w, i) => {
@@ -3548,21 +3580,24 @@ export function scStats(paras) {
 }
 
 /* a written question: one line of text, or in Would You Rather the two choices (A or B) */
+/* the most characters a question, topic or take can have: the Text length limit (a Would You Rather choice: at most 100) */
+export const textMax = (s) =>
+  [80, 140, 200, 280].includes(+s.options.textMax) ? +s.options.textMax : 200;
 function question(s, a) {
   if (isWyr(s)) {
     const qa = String(a.a || "")
         .trim()
-        .slice(0, 100),
+        .slice(0, Math.min(100, textMax(s))),
       qb = String(a.b || "")
         .trim()
-        .slice(0, 100);
+        .slice(0, Math.min(100, textMax(s)));
     return qa && qb
       ? { a: qa, b: qb, text: `Would you rather ${qa} or ${qb}?` }
       : null;
   }
   const text = String(a.text || "")
     .trim()
-    .slice(0, 200);
+    .slice(0, textMax(s));
   return text ? { text } : null;
 }
 

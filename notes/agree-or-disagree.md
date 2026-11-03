@@ -3141,4 +3141,27 @@ Done (Jackal): the dunce look goes as soon as someone else is crowned (only the 
 
 Sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg. Done (Solomon): `js/hotbar.js` (the slider and the purple square replace the round Specials button), `js/phonepad.js` (the jump button, and the crosshair when the slider's middle is a weapon; the jump moves up above it), Mad God Justin's auto stab removed from `js/rules.js`. Kept: a tap on the board still jumps, and holding still still brings the ring of specials. A phone on its side: the jump sits beside the crosshair, in the bottom row.
 
+## 2026-11-03: Game settings (Adam's relay of the owner's answers to the Game Settings plan)
+Nine new options, each with a tile in Additional settings for now (Adam moves them into the full-screen Game Settings): `invuln` (Invulnerability: no hit takes a duck down or its HP, it only flashes red; `s.hurt`), `noChat`, `noTerm` (both through `denied`, so the host is held to them too), `hideNames`, `showWriter` (the writer is named in the log after the vote), `scLines` (Story Chain laps), `lateJoin` (play | watch), `walk` (slow | normal | fast) and `textMax` (80, 140, 200, 280). (Jackal)
+- Board colors (Jackal): `aodColors` = rainbow | gr (Agree or Disagree: shades of red and green, Neutral fading black, grey, white), a tile in Additional settings; the owner sees the picture before merge.
+
+## Request (2026-11-03 05:04Z): the music bar blinks when muted
+
+> WHAT THE FUCK! I TOLD YOU A LONG TIME AGO TO FIX THE BLINKING EFFECT WHEN YOU MUTE A SONG ON THE FUCKING GAME, IT SHOULD DO THAT! IT KEEPS FLASHING NEXT ON AND OFF THE SCREEN WHEN MUTED! THAT SHOULDNT DO THAT! OTHER THINGS BECOME FADED AND UNFADED! MUTING IT SHOULD NOT MAKE IT MOVE ON IT'S OWN CONSTANTLY! THAT IS FUCKING RETARDED! FIX IT AND DONT MAKE IT AN INSANE AMOUNT OF EFFORT, IT SHOUD BE A SIMPLE FIX !!!!! AAAHHHH YOU MAKE ME SO ANGRY
+
+> I know for a fact it does that on the main menu
+
+- Miles Jr.: on the menus, a muted (or not yet ready) first song is held at its start, which moves every second, so the bar flipped between "next" (dimmed) and playing. nowPlaying() now shows the menu's first song steadily. Checked: before 2 states in 8 s, after 1, menu and lobby, phone and computer.
+
+## 2026-11-03 05:07Z: the secret code (word for word)
+> I SAID THAT THE SECRET COMMAND FOR THE FOLLOWING IS SUPPOSED TO TURN ON ALL UNLOCKABLE ITEMS AND IT SHOULD STILL TRACK THE PROGRESS TOWARDS THE ITEMS OUTSIDE THE UNLOCK AS WELL
+>
+> secret 1357911 on
+
+- Fixed: the code opened only the jester hat, the jester outfit and Jack in a Box. It now opens every entry in LOCKS
+  (js/unlocks.js), and each tile still shows its progress ("Unlocked: a secret code. Reach … (you have …)").
+
+## 2026-11-03 05:10Z: matching every style's look (word for word)
+> there should be an option to match the look of every style in the style menu for customization
+
 Duck looks (Noah, from the owner's answer 1 above and "Change player tag color"): js/looks.js draws them, js/looksrules.js holds the rules' part. Options `hideLooks`, `rainbowDucks`, `voteColor`, `tagColor`, under "Duck looks" in Game options. Readings: the looks change only during a game (the lobby and the room after a game show the real looks); Hide customization keeps each duck's specials and makes name tags plain; Rainbow Ducks are dealt by the host at the start (`s.rainbow`, shuffled per eight ducks, a mid-game joiner gets the least-used look), and `fakeJustin(s, id)` tells Justin Kills to skip the brown one; Vote colors read the tile's color from the board (so any palette and a fading tile work), never in Mad God Justin or on Duck Cabin, and a duck between tiles keeps its own color; each style's take: body in the color, stripes/wings/second suit in shades, the mallard keeps its head, Jack's box takes it, Dat Boi's unicycle goes darker; metals, patterns and pictures give way. Picture sheet: https://claude.ai/artifact/2yRHMDLuA4Yc7auyKKSL7Q

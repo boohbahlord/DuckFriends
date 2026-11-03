@@ -9,7 +9,7 @@
         -1 left), z a height of their own (on a couch or a table; none: the ground), say { text, t } their last words.
    Paths: a grid of 40-px cells over the world, built once from layout.js (standable), so moved props and new doors are
    found by themselves. A* finds the way; the pool can be kept out of it. Plain logic, no drawing: node can run it. */
-import { holdDown, isGhost } from "./death.js";
+import { holdDown, isGhost, invuln, hurtFx } from "./death.js";
 import {
   W,
   H,
@@ -377,6 +377,11 @@ function ctxFor(s, now, rand, D, recs) {
     kill(by, pid, kind) {
       const P = s.players[pid];
       if (!P || P.dead || isGhost(s, pid)) return false;
+      if (invuln(s)) {
+        hurtFx(s, pid, now);
+        c.fx(by, pid, kind);
+        return true;
+      } // (Invulnerability: it only flashes)
       s.players = { ...s.players, [pid]: { ...P, dead: true } };
       holdDown(s, pid, now);
       const d = D.find((q) => q.id === pid);

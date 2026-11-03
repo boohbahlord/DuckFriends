@@ -20,7 +20,7 @@
    he was knocked down. In
    Hangout he stays Duck Cabin's own (js/hangout/justin.js). */
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
-import { holdDown } from "./hangout/death.js";
+import { holdDown, invuln, hurtFx } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
 import { isMgj, mgjTick } from "./mgjrules.js";
@@ -316,8 +316,11 @@ export function justinTick(s, now, log) {
     delete j.god;
     ch = true;
     if (P && p && p.x >= 0 && !calm) {
-      P.dead = true;
-      holdDown(s, id, now);
+      if (invuln(s)) hurtFx(s, id, now);
+      else {
+        P.dead = true;
+        holdDown(s, id, now);
+      }
       fx({ kind: Math.random() < 0.5 ? "lightning" : "fire", who: [id] });
     }
   }

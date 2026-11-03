@@ -579,7 +579,100 @@ const MORE_TILES = [
       [1, "Yes"],
     ],
   ],
+  [
+    "invuln",
+    "Invulnerability",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "noChat",
+    "No Chat",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "noTerm",
+    "No Terminal",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
+    "aodColors",
+    "Board colors",
+    [
+      ["rainbow", "Rainbow"],
+      ["gr", "Green and red"],
+    ],
+  ], // (Agree or Disagree only)
+  [
+    "hideNames",
+    "Hide names while answering",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ], // (Agree or Disagree, Would You Rather, Does Duck Relate?)
+  [
+    "showWriter",
+    "Show the writer",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ], // (Agree or Disagree, Would You Rather)
+  [
+    "scLines",
+    "Lines per player",
+    [
+      [1, "1"],
+      [2, "2"],
+      [3, "3"],
+      [4, "4"],
+    ],
+  ], // (Story Chain only)
+  [
+    "lateJoin",
+    "Players who join mid-game",
+    [
+      ["play", "Play at once"],
+      ["watch", "Watch until the next round"],
+    ],
+  ],
+  [
+    "walk",
+    "Walking speed",
+    [
+      ["slow", "Slow"],
+      ["normal", "Normal"],
+      ["fast", "Fast"],
+    ],
+  ],
+  [
+    "textMax",
+    "Text length limit",
+    [
+      [80, "80"],
+      [140, "140"],
+      [200, "200"],
+      [280, "280"],
+    ],
+  ], // (a question, topic or take)
 ];
+/* which modes show a setting that only some modes use */
+const ONLY_IN = {
+  aodColors: ["aod"],
+  hideNames: ["aod", "wyr", "ddr"],
+  showWriter: ["aod", "wyr"],
+  scLines: ["sc"],
+  textMax: ["aod", "wyr", "ddr", "law", "dunce"],
+};
 let moreOpen = false;
 const OPT_TIPS = {
   discuss:
@@ -590,6 +683,20 @@ const OPT_TIPS = {
     "How long the rest get once enough players have voted. Off: the turn ends as soon as enough have voted.",
   writeCatch:
     "How long the last writers get once enough players have sent theirs. Off: writing ends as soon as enough have sent.",
+  invuln:
+    "Nothing takes a duck down or takes its HP: bullets, blades, grenades, Justin's attacks and zombies only flash it red.",
+  noChat:
+    "Text chat is off for everyone, the host too. The game's own messages still show.",
+  noTerm: "The command line is off for everyone, the host too.",
+  aodColors:
+    "Green and red: the agree columns are shades of green, the disagree columns shades of red, and Neutral slowly fades between black, grey and white.",
+  hideNames: "Name tags stay hidden until the turn ends.",
+  showWriter: "The question's writer is named after the vote.",
+  scLines: "How many lines each player writes before the paragraph ends.",
+  lateJoin:
+    "Play at once: someone who joins mid-game plays right away. Watch until the next round: they wait for it.",
+  walk: "How fast ducks walk.",
+  textMax: "The most characters a question, topic or take can have.",
   unvoteStops:
     "Yes: if votes are taken back below the needed share, the countdown stops. No: once it starts, it runs out.",
   answerTime: "The Round Lord's answer time unless they choose another.",
@@ -717,6 +824,7 @@ function openOptions() {
           : [k, n, o],
       ).filter(
         (r) =>
+          !(ONLY_IN[r[0]] && !ONLY_IN[r[0]].includes(s.options.mode)) &&
           !(
             s.options.mode === "mgj" &&
             [
