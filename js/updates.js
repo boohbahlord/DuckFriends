@@ -53,6 +53,7 @@ export const UPDATES = [
       "The Jetpack, Bow, Chair, Zebra cake and Jaime have a preview in Customize → Specials now.",
     ],
     fixed: [
+      "For Quacky Zombies: the deck and the balcony run smoother: the forest, the pool and the yard, which nobody can get to, aren't made at all now.",
       "For Quacky Zombies: boarding up the east wall pays points again (each opening has its own 50 points a round).",
       "For Mad God Justin: when every duck is down they all lie there dead, and the ending says Justin Wins (it no longer says time is up).",
       "For Mad God Justin: hitmarkers show on Justin (and look the same on his double), the weapon you pick up goes in hand by itself and you go back to your last one when it runs out, and a Jaime's name tag says Jaime.",

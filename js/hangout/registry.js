@@ -40,6 +40,8 @@
      crowd(x, y, me, ctx)        → how far my duck at (x, y) would be into walkers of the activity's own, 0 (clear) … 1
      sprint(on, dt, ctx)         → false stops my duck sprinting this step (on: Shift held while walking)
      spawn(ctx)                  → { x, y } in world px where reset duck puts my duck, or null
+     area                        [[x0, y0, x1, y1] …] in world px: the only ground a mode ever shows (Quacky Zombies: the
+                                 cabin, the deck and its stairs); the world never makes what stands wholly outside it
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
 export const RULES = new Map(); // k → its rules
