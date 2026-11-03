@@ -96,6 +96,7 @@ import {
   goOnVotes,
   goOnNeed,
   counselBounds,
+  walkOf,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import { hangStill } from "./hangout/rules.js";
@@ -407,7 +408,6 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
 const MGJ_SLOW = 0.8;
-const WALK = { slow: 0.6, normal: 1, fast: 1.5 }; // the lobby's Walking speed
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 /* a duck's jump: a long jump floats longer and a little higher; a double jump starts a second arc where the duck is, a
    little lower than the first */
@@ -2619,9 +2619,7 @@ function step(dt, now) {
     scWalk = now;
   } // (the story: the same speed on the screen in any row)
   const mul =
-    (sprinting ? SPEED.sprint : 1) *
-    (isMgj(s) ? MGJ_SLOW : 1) *
-    (WALK[s.options.walk] || 1); // (Mad God Justin: the ducks a fifth slower)
+    (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1) * walkOf(s); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   const [lo, hi] = xBounds();

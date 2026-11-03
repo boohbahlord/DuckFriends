@@ -20,7 +20,7 @@
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
      (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
-     zl   { i: [max hp, speed (px a second), opening, size, build, hat, outfit] }: set once, when it comes
+     zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
      brd  { opening: boards up, 0 … BOARDS }
      l4p  { id: { hp, at (its last hit or heal), dn (down: bleeds out then), rv: { by, at } (being revived), gh (a ghost
           this round) } }
@@ -50,7 +50,7 @@ import {
   onPlatform,
   BJ,
 } from "./hangout/layout.js";
-import { GRENADE_MS, daggerZ } from "./rules.js";
+import { GRENADE_MS, daggerZ, walkOf } from "./rules.js";
 import { invuln } from "./hangout/death.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
@@ -74,7 +74,7 @@ export const L4 = {
   REACH: 110, // world px: how near E works (a downed duck, an opening)
   DEAD_MS: 1000, // ms a dead zombie lies there, fading
 };
-export const WALK = 380 * 0.5; // world px a second: ducks at 50% of Duck Cabin's walk (world.js SPEED)
+export const WALK = 380 * 0.5; // world px a second: ducks at 50% of Duck Cabin's walk (world.js SPEED), at the Normal Walking speed
 /* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
    their speed as a share of the ducks' [slowest, fastest], how long one is at a duck before it swipes and how often
    after (ms), and the most on the board at once */
@@ -1356,7 +1356,7 @@ function moveZombies(s, zs, now, T, up) {
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
-      v = z.l[1];
+      v = z.l[1] * walkOf(s); // (as much faster or slower as the ducks, by the lobby's Walking speed)
     if (z.st === 0) {
       // coming: to the spot outside its opening
       const [tx, ty] = o.out;

@@ -178,6 +178,10 @@ export const OPTIONS_DEFAULT = {
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
+/* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
+   the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
+export const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
+export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const COUNTDOWN = 5;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 

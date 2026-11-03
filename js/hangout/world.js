@@ -19,6 +19,7 @@ import "./activities.js";
 import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
 import { low } from "../gfx.js";
+import { walkOf } from "../rules.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
@@ -881,7 +882,7 @@ export function mountWorld(board, api) {
         if (a.sprint && a.sprint(!!sprint && !!(ax || ay), dt, ctx) === false)
           sprint = false; // (an activity can run out of breath: Quacky Zombies' sprint bar)
       if (ax || ay) {
-        let k = { slow: 0.6, fast: 1.5 }[ctx.state().options.walk] || 1; // (the lobby's Walking speed)
+        let k = walkOf(ctx.state()); // (the lobby's Walking speed)
         for (const a of acts())
           if (a.speed) k *= a.speed({ x, y, z: me.z }, ctx) ?? 1; // (the water slows it)
         const sp = SPEED * (sprint ? SPRINT : 1) * k,

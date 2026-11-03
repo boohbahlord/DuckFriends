@@ -26,6 +26,7 @@ import {
   BOX,
   boxNow,
 } from "./l4ddrules.js";
+import { walkOf } from "./rules.js";
 
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
@@ -58,7 +59,7 @@ export function l4Bot(s, id, now, out) {
   if (!p || !h || !h.l4 || h.l4.over || !l4Up(s, id)) return;
   const x = p.x * W,
     y = p.y * H,
-    far = WALK * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1),
+    far = WALK * walkOf(s) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
     send = (nx, ny, w, ax, ay) =>
