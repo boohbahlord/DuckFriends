@@ -67,11 +67,24 @@ export function soon(a, lead = LEAD) {
   seen.set(a, { ct, p });
   return ct + lead;
 }
-const vol = () => (profile.settings.sound / 100) * (profile.settings.sfx / 100);
+let boost = 1; // (how much louder the game sound being made right now is: see LOUDER under the sounds)
+const vol = () =>
+  boost * (profile.settings.sound / 100) * (profile.settings.sfx / 100);
 /* every sound is set a little ahead: set for "now", the moment has gone by the time the sound is worked out, its fade-in
    is skipped and it starts with a pop */
 const LEAD = 0.03;
 
+/* two low-passes in a row, so almost nothing passes above hz (one alone still let a loud sound's start through as a click) */
+function dark(a, from, hz) {
+  let o = from;
+  for (let i = 0; i < 2; i++) {
+    const lp = a.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = hz;
+    o = o.connect(lp);
+  }
+  return o;
+}
 function tone(
   freq,
   dur,
@@ -90,7 +103,8 @@ function tone(
   g.gain.setValueAtTime(0, t);
   g.gain.linearRampToValueAtTime(gain * v, t + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(cap);
+  const w = type === "sine" ? o : dark(a, o, 2400); // (a sawtooth's, a square's or a triangle's edges reach every pitch, and at a start that is heard as a click)
+  w.connect(g).connect(cap);
   o.start(t);
   o.stop(t + dur + 0.02);
 }
@@ -112,6 +126,8 @@ function noise(
   const a = ac(),
     v = vol();
   if (!a || !v) return;
+  fade = Math.max(0.008, fade);
+  if (!top && type !== "highpass") top = 3500; // (bright noise at a start is heard as a click, and louder it showed: nothing goes above 3.5 kHz unless the sound is meant to hiss)
   const t = soon(a) + at,
     n = Math.ceil(a.sampleRate * dur),
     buf = a.createBuffer(1, n, a.sampleRate),
@@ -130,12 +146,7 @@ function noise(
   g.gain.setValueAtTime(gain * v, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   let o = src.connect(f);
-  if (top) {
-    const lp = a.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = top;
-    o = o.connect(lp);
-  } // top: nothing above it (bright noise at a start is heard as a click)
+  if (top) o = dark(a, o, top); // top: nothing above it (bright noise at a start is heard as a click)
   o.connect(g).connect(cap);
   src.start(t);
   src.stop(t + dur + 0.02);
@@ -248,11 +259,20 @@ export const sfx = {
       q: 1,
       at: 0.16,
       slideTo: 900,
+      fade: 0.02,
+      top: 2600,
     });
   }, // a dagger thrown, spinning away
   bang() {
-    noise(0.25, { gain: 0.2, type: "lowpass", freq: 2200, slideTo: 200 });
-    tone(110, 0.3, { type: "square", gain: 0.05, slide: 0.5 });
+    noise(0.25, {
+      gain: 0.2,
+      type: "lowpass",
+      freq: 2200,
+      slideTo: 200,
+      fade: 0.01,
+      top: 2200,
+    });
+    tone(110, 0.3, { type: "triangle", gain: 0.09, slide: 0.5 }); // (a triangle, not a square: a square's edges crackled)
   },
   /* a full-auto gun's shot (Quacky Zombies' SMG, AK-47, LMG and chain gun): a short dark crack, lighter than the
      handgun's bang, as many fly every second */
@@ -364,8 +384,8 @@ export const sfx = {
     });
   },
   zap() {
-    noise(0.18, { gain: 0.1, freq: 2800, q: 0.6, fade: 0.025, top: 3000 });
-    noise(0.12, { gain: 0.06, freq: 2200, at: 0.08, fade: 0.012, top: 3500 });
+    noise(0.18, { gain: 0.1, freq: 2800, q: 0.6, fade: 0.03, top: 2400 });
+    noise(0.12, { gain: 0.06, freq: 2200, at: 0.08, fade: 0.02, top: 2400 });
     noise(1.1, {
       gain: 0.07,
       type: "lowpass",
@@ -398,8 +418,8 @@ export const sfx = {
     o.frequency.linearRampToValueAtTime(420 * k, t + 0.035);
     o.frequency.exponentialRampToValueAtTime(250 * k, t + 0.22);
     lp.type = "lowpass";
-    lp.frequency.value = 3600;
-    o.connect(lp);
+    lp.frequency.value = 3000;
+    dark(a, o, 3000).connect(lp);
     for (const [f, q, l] of [
       [1050, 4, 1],
       [1900, 6, 0.6],
@@ -415,7 +435,7 @@ export const sfx = {
     }
     g.gain.value = 0;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.32 * v, t + 0.008);
+    g.gain.linearRampToValueAtTime(0.32 * v, t + 0.012);
     g.gain.setValueAtTime(0.32 * v, t + 0.08);
     g.gain.setTargetAtTime(0, t + 0.08, 0.04);
     g.connect(cap);
@@ -456,7 +476,7 @@ export const sfx = {
       g = a.createGain();
     src.buffer = whiteNoise(a);
     lp.type = "lowpass";
-    lp.frequency.value = 4500; // (dark: bright noise at a start is heard as a click)
+    lp.frequency.value = 2800; // (dark: bright noise at a start is heard as a click)
     f.type = "bandpass";
     f.frequency.setValueAtTime(2600 * k, t);
     f.frequency.exponentialRampToValueAtTime(1000 * k, t + 0.18);
@@ -465,7 +485,7 @@ export const sfx = {
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(0.06 * v, t + 0.015);
     g.gain.setTargetAtTime(0, t + 0.035, 0.035);
-    src.connect(f).connect(lp).connect(g).connect(cap);
+    dark(a, src.connect(f).connect(lp), 2800).connect(g).connect(cap);
     src.start(t, Math.random() * 0.5);
     src.stop(t + 0.035 + 0.035 * 7);
     tone(330 * k, 0.12, {
@@ -553,7 +573,7 @@ export const sfx = {
       q: 1,
       slideTo: 4500,
       fade: 0.06,
-      top: 6000,
+      top: 4000,
     });
   },
   /* the edge lightning's warning (0.6 s, as its glow shows): a buzz that rises and brightens, and stops just as the flash
@@ -709,6 +729,47 @@ export const sfx = {
     tone(98, 0.4, { type: "triangle", gain: 0.14, at: 2.1, slide: 0.6 });
   },
 };
+/* the owner: the guns, the zombies, the ducks and the specials were hard to hear at the default volumes, under the music.
+   Each is raised to about as loud as the music (at their loudest, around a tenth of full scale on average and under half at
+   their peak, like a song), a quiet one more than a loud one; the countdown, the blips and the pops stay as they were. A
+   chain gun or a crowd of hits all at once still can't go over full scale: everything ends at the soft ceiling */
+const LOUDER = {
+  bang: 3,
+  tat: 6,
+  shotgun: 2.5,
+  pump: 4,
+  boom: 1.4,
+  meteor: 1.2,
+  hit: 1.7,
+  quack: 5,
+  fall: 2,
+  zap: 10,
+  fireball: 3,
+  bow: 4.5,
+  swish: 8,
+  teleport: 2.5,
+  jaime: 3,
+  love: 3,
+  burn: 5,
+  warn: 3,
+  chomp: 10,
+  bonk: 2.5,
+  puff: 5,
+  fire: 5,
+  splash: 3,
+};
+for (const [n, k] of Object.entries(LOUDER)) {
+  const play = sfx[n];
+  sfx[n] = (...x) => {
+    const was = boost;
+    boost = k;
+    try {
+      return play(...x);
+    } finally {
+      boost = was;
+    }
+  };
+}
 /* the start screen: the duck drops through its cloud. A soft puff of cloud, then a slide whistle falling away (scheduled
    a little ahead, every part from silence and back to it). On a's clock into dest: the test page renders it offline */
 export function diveVoice(a, dest, t, v = 1) {
