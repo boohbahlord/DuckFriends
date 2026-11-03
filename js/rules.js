@@ -167,6 +167,7 @@ export const OPTIONS_DEFAULT = {
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
   noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
+  aodColors: "rainbow", // Agree or Disagree's board: rainbow | gr (shades of green and red, Neutral fading black, grey, white)
   hideNames: 0, // 1: name tags stay hidden while answering (Agree or Disagree, Would You Rather, Does Duck Relate?)
   showWriter: 0, // 1: the question's writer is named after the vote (Agree or Disagree, Would You Rather)
   scLines: 1, // Story Chain: lines each player writes before the paragraph ends: 1 … 4
