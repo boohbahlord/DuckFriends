@@ -3428,3 +3428,27 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
 - No music: js/music.js `noMusic()`: on the game screen in `l4dd` and `mgj` the music fades out and the bar says
   "No music"; the lobby still plays.
 - Mad God Justin ending (Jackal, the owner's words relayed): "in mad god Justin, the players actually get a dead effect when they all lose. Further more, it doesnt say time is up anymore, it just says \"Justin Wins\"". When every duck is out, every duck stays dead (`m.allOut`) through the ending and the stats; the ending says Justin Wins.
+
+## Request (owner, 2026-11-03 23:17Z, via Adam): HP meters, "+1 HP" pops, Justin's HP blocks, other players' HP
+"in mad god Justin, the players actually get a dead effect when they all lose. Further more, it doesnt say time is up anymore, it just says "Justin Wins"
+
+When Justin eats, he gets +1 HP and it shows a "+1 HP" after he finishes eating. When Justin gains HP or loses HP, it says it in a hover over his character in small text, and same for players. 
+
+On PC, the health bar is now also an actual meter with blocks or bars per HP BELOW the hot bar (same for mobile, make it work), and the stamina bar is a thin blue beneath it IF the game doesn't have unlimited stamina. The Hp +1 or -1 should be small and even smaller on pc on mobile when it shows zombies getting hit. It can be in every game mode now honestly. 
+
+Justin's HP also will have the little bars or blocks on it too. The HP is now red and looks kinda like what I am showing in the screenshot, and the HP is also still in the player tag but is more transparent now in the player tag. When HP is at 20% or lower, it starts slowly having a red flashing or kinda red glow breathing effect.
+
+The other player's HP on PC will show as small version of these meters with small font of their name above them on the bottom right of the playable board in the zombies game and mad god justin, and walking into them by a player makes them go transparent on that player's screen, and it looks dif for every player and can be turned off in settings"
+- Adam: the dead effect and "Justin Wins" went to Jackal (#211); the rest to Noah. Reference picture:
+  notes/ref/hp-bar-reference.png (a bronze round badge with a heart joined to a bronze-framed bar of red blocks, white
+  where empty).
+- Built (js/hpmeter.js): my meter under the hotbar in every mode where HP counts (normal game 3, Quacky Zombies, Mad God
+  Justin, the board's Mad God Justin as Justin), one block per HP up to 40 blocks (more HP: a block holds a few). On a
+  phone it sits under the specials' slider. The thin blue sprint bar only in Quacky Zombies (grey while tired). At 20%
+  or less a slow red breathing glow (a still glow with reduced motion). Justin's panel in Mad God Justin uses the same
+  meter. The player tag keeps its HP as see-through red blocks. "+N HP" / "−N HP" floats over ducks, Justin and
+  zombies (smaller on touch screens and over zombies). Justin +1 HP (up to his max) when he finishes eating, in Mad God
+  Justin and the board's Mad God Justin. Other players' mini meters with names: Quacky Zombies and Mad God Justin, PC
+  only, the board's bottom right, see-through (only on my screen) while my duck overlaps them; Settings → HP → "Other
+  players' HP" (profile.settings.otherHp). "looks dif for every player" read as: each player sees everyone but
+  themselves.

@@ -877,7 +877,10 @@ function hpFull(s, id, now) {
   }
   if (id === JUSTIN_ID)
     return boardMgj(s) && justinShown(s)
-      ? [s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP), s.justin.max || BJ_HP]
+      ? [
+          s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
+          s.justin.max || BJ_HP,
+        ]
       : null;
   if (!seated || !onBoardPhase()) return null;
   return [s.players[id].dead ? 0 : Math.max(0, PHP - phpLost(s, id, now)), PHP];
@@ -894,9 +897,7 @@ function drawMeters(s, board, layer, now) {
     meter.set(hv[0], hv[1], sp, tired);
   } else meter.hide();
   const want =
-    (isL4dd(s) || isMgj(s)) &&
-    profile.settings.otherHp !== false &&
-    !!board;
+    (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
   let box = board && board.querySelector(".hpo");
   if (!want) {
     if (box) box.remove();

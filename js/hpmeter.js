@@ -41,7 +41,12 @@ export function meterHTML(hp, max, cls = "", key = "") {
   let bl = "";
   for (let i = 0; i < n; i++) {
     const f = fillOf(i, k, hp, max);
-    bl += f >= 1 ? '<i class="on"></i>' : f > 0 ? `<i style="--f:${f.toFixed(2)}"></i>` : "<i></i>";
+    bl +=
+      f >= 1
+        ? '<i class="on"></i>'
+        : f > 0
+          ? `<i style="--f:${f.toFixed(2)}"></i>`
+          : "<i></i>";
   }
   return `<span class="hpm${cls ? " " + cls : ""}${low(hp, max) ? " low" : ""}" style="--nb:${n}" role="meter" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${hp}"><span class="hpm-row">${badgeSVG(key)}<span class="hpm-bar"><span class="hpm-blocks">${bl}</span></span></span></span>`;
 }
