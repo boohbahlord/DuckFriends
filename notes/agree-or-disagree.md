@@ -3368,6 +3368,54 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
   (sooner when faster) at a duck 3 to 10 lengths off, a 0.6 s red shake, then a sprint at 0.55 board widths a second;
   a duck within 1.1 lengths (x1.2) of his path flies KB_FAR x1.6, no HP lost; a jump or stepping off the line dodges.
 
+## 2026-11-03 22:50Z: Quacky Zombies and more, a big batch (word for word)
+> IN DUCK FRIEND REPAIRING A BARRICADE IS ONLY 5 POINTS! furthermore, the fireplace doesnt let the player who spin a weapon get another weapon until their weapon is gone, and no other player can interact to get another weapon till that one fades away either. East wall doesnt give points when repaired i noticed. The fireplace should be 750 points maybe and all the butler upgrades cost twice as much at least for now. the zombies should be 20% slower overall. the rounds have a end turn button where the next round doesnt come in till enough ducks hit end turn.
+>
+> the specials effect drops (instant kill, sale) now spawn in with the same chances but are dropped from one of the random zombies once they are killed, and the drops stay there for a minute and can even stay there unto the next round.
+>
+> the balcony or deck should run smoother since most of the map out of site should even be generated outside BECAUSE you cannot go to it (like parts of the outside that are impossible to go to)
+>
+> the players go 5% faster
+>
+> the sounds for the guns, zombies, ducks, sepcials become loud as the music, BECAUSE YOU CANNOT EVEN HEAR THEM HARDLY AT DEFAULT VOLUME!
+>
+> there is no music for now for the duck zombie or mad god justin gamemode until something is figured out with that
+>
+> There should be a setting that starts players at round 16 automatically (doesn't count for normal stats, but for a stat called "Round 16 Start", and this gamemode has the players start out with 3,000 points each when they start.
+>
+> Round 1 doesnt start when ducks load in till enough votes are passed to ready, and this is round 0, and ducks have round 0 for Round 16 Start before they ready, and then it skips them to round 16.
+>
+> the chair is a special that can be used three times before a ammo refill now that is found in the zombie game in the fireplace
+>
+> the long jump and abilities like it (jetpack) can become toggled at the same time as other weapons and the game does not switch to them or switch out of normal toggles, because players should be able to leave long jump on when they are using other weapons and same for similiar specials.
+>
+> the zebra cake can be eaten for as long as it is on the ground over and over by any zombie near by until it despawns because the point of it is to send the zombies away from the player and towards the food as a distraction, and the zebra cake attracts all zombies in the map now. The sniper only goes through three zombies before the bullet goes away now. The knife attacks once every 0.25 seconds now in every game mode.
+>
+> If a player throws a zebra cake in the bathroom in a radius of four ducks near the toilet and in the bathroom in the zebra game, the zebra cake is seen in the toilet bowl, and this will show Justin teleporting in to eat it for the duration of the zebra cake (do not add this to  updates)
+>
+> When a claim is made in updates that is specific only to that gamemode, state that gamemode before a semicolon like this
+> For {game mode title}:
+>
+> or
+>
+> For Agree or Disagree:
+>
+> like that
+>
+> some specials are missing a preview in the game
+>
+> For PC, we have enough room to fit more into the controls in the bottom left, SO include the fact that a shift + the number key for a given special item will = toggle, but write it more simply, and also include this info on the bottom of the customization options for specials.
+>
+> For the colors, there is a larger drop down menu which is collapsed which includes all the complex and specific color features, such as coloring items or clothes, and that makes it to where there is less clutter on that menu.
+
+- Adam's split: Solomon the 2nd the Quacky Zombies gameplay (barricade points and the east wall, fireplace 750 and
+  anyone can spin, the chair in the fireplace, Butler 2x, zombies 20% slower, players 5% faster, End turn and the
+  round 0 ready, drops from killed zombies for a minute, the Round 16 Start setting and stat, specials like Long jump
+  and the jetpack toggled alongside weapons, the zebra cake, the sniper through 3, the knife every 0.25 s in every
+  mode, the toilet easter egg kept out of Updates), then a second PR for the deck and balcony. Miles Jr. the sound
+  volume and no music in Quacky Zombies or Mad God Justin; Noah the PC controls text, the colors dropdown and the
+  missing special previews; Jackal the old Updates entries ("For {mode}: ").
+
 ## Request (owner, 2026-11-03 22:50Z, via Adam): game sounds as loud as the music; no music in Quacky Zombies or Mad God Justin
 "the sounds for the guns, zombies, ducks, sepcials become loud as the music, BECAUSE YOU CANNOT EVEN HEAR THEM HARDLY AT DEFAULT VOLUME!"
 "there is no music for now for the duck zombie or mad god justin gamemode until something is figured out with that"

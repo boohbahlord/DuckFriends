@@ -225,7 +225,7 @@ export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: 667, bow: 1000 };
+const MGJ_COOL = { knife: 250, bow: 1000 }; // (the knife: four a second, as in every mode)
 export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
    hold E (a phone: the Revive button) for REVIVE.MS */

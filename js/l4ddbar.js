@@ -143,6 +143,12 @@ export function l4Slider(api) {
       const w = api.held();
       if (w) on.add(w);
       if (!lightOff(k)) on.add("fl");
+      if (
+        k.m &&
+        ((k.m.lj && k.sl[3] === "longjump") ||
+          (k.m.jp && k.sl[3] === "jetpack"))
+      )
+        on.add(k.sl[3]); // (switched on beside the weapon in hand)
       return on;
     },
     use(i, keep) {
@@ -154,6 +160,8 @@ export function l4Slider(api) {
       else if (i === 4 && !keep) api.grenade();
     },
     select(i) {
+      const k = kit();
+      if (i === 3 && k && ["longjump", "jetpack"].includes(k.sl[3])) return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (i < 3 || (i === 3 && api.slot() !== 3)) api.pick(i);
     },
     current: () => api.held() || null,

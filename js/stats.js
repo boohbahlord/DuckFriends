@@ -114,6 +114,11 @@ function totalsHTML(p, t, mode = "aod") {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Fights</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Won</dt><dd>${fmtJumps(t.wins)}</dd><dt>Lost</dt><dd>${fmtJumps(t.losses)}</dd>
         <dt>Damage</dt><dd>${fmtJumps(t.answers)}</dd><dt>Knocked down</dt><dd>${fmtJumps(t.majority)}</dd><dt>Killing blows</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === "l4dd" || mode === "l4r16") {
+    // Quacky Zombies (or its Round 16 Start): games, rounds cleared, the best round reached
+    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · ${mode === "l4r16" ? "Round 16 Start" : "Quacky Zombies"}</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds cleared</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Best round</dt><dd>${t.titles ? fmtJumps(t.titles) : "—"}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === "vdd") {
     // Valentine's Duck Date: their games, dates, Valentines and Turned Downs, and their games as The Date
     return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Valentine's Duck Date</div></div></header>

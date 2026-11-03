@@ -205,6 +205,7 @@ export const OPTIONS_DEFAULT = {
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
+  l4r16: 0, // Quacky Zombies' Round 16 Start: 1 = after round 0's Ready it skips to round 16, everyone with 3,000 points
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
 };
@@ -620,7 +621,7 @@ const PRESS = [
 const COOLDOWN = {
   handgun: 200,
   dagger: 2000,
-  knife: 1000,
+  knife: 250, // (four stabs a second, in every mode: the owner's, Nov 3)
   hammer: 2250,
   shotgun: PUMP,
   grenade: 12000,
