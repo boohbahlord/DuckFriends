@@ -12746,6 +12746,9 @@ html.moving .eye-zap {
 .held[data-w="adrenaline"] i {
   width: calc(var(--s) * 0.44);
 }
+.held[data-w="chair"] i {
+  width: calc(var(--s) * 0.62);
+}
 .held[data-w="zebra"] i {
   width: calc(var(--s) * 0.5);
 }
@@ -13540,6 +13543,43 @@ html.moving .eye-tears .tdrop.t2 {
   gap: 0.5rem;
   margin-top: 0.8rem;
 }
+/* between rounds: End turn (Ready before round 1) under my points, and a line of what it waits for */
+.l4-end {
+  position: absolute;
+  top: calc(
+    1.4rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+  );
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+}
+.l4-end[hidden] {
+  display: none;
+}
+.l4-end .btn {
+  font-size: 1rem;
+  padding: 0.4rem 1rem;
+}
+.l4-end-n {
+  margin-left: 0.3em;
+  opacity: 0.75;
+  font-size: 0.85em;
+}
+.l4-end-say {
+  font-size: 0.85rem;
+  color: #f4e7b0;
+  text-align: center;
+  text-shadow: 0 0.06em 0.2em #000;
+}
+.l4-waiting .l4-got {
+  top: calc(32% + 2rem);
+} /* (a drop taken between rounds: its name below the button) */
 /* my sprint: a thin dark mana-blue bar under my name, gone while it's full */
 .l4-sprint {
   position: absolute;
@@ -13901,7 +13941,18 @@ html.moving .eye-tears .tdrop.t2 {
   max-height: calc(100% - 1.2rem);
 } /* (as tall as its rows: no empty page under them) */
 .l4-shopping .l4-hud,
-.l4-shopping .l4-pts {
+/* the secret in the bathroom: Justin bending to the bowl, a bite at a time */
+.l4-egg .hang-npc-body img {
+  transform-origin: 50% 100%;
+  animation: l4-egg 1.1s ease-in-out infinite;
+}
+@keyframes l4-egg {
+  45% {
+    transform: rotate(-10deg) translateY(4%);
+  }
+}
+.l4-shopping .l4-pts,
+.l4-shopping .l4-end {
   visibility: hidden;
 } /* (while it's open, "Round N" and my points make way for it: it shows my points itself) */
 .l4-shop-pts {

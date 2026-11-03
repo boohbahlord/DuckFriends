@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 133,
+    version: 134,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -34,8 +34,16 @@ export const UPDATES = [
       "In Customize → Style, Match each style's look: turn it on and every style shows, and puts on, its own beak, eyes and colors.",
       "Mad God Justin is bigger and faster, with a bigger hammer. He fires a light machine gun, an SMG and his shotgun (no more pistol), and now and then shakes red and charges a duck, sending it flying (no damage: step aside or jump). He turns off his Xbox once he's lost 20 HP and the meteor comes at 10 HP (giving him 20 back); each time his attacks come faster. His double shows up after every teleport.",
       "Arrows, bullets and throwing daggers fly a little faster in every mode.",
+      "The knife stabs four times a second in every mode.",
+      "For Quacky Zombies: after each round the next one waits until enough ducks press End turn, and the game starts at round 0 until enough ducks press Ready.",
+      "For Quacky Zombies: a new setting, Round 16 Start: after round 0 it skips to round 16 and every duck starts with 3,000 points. It has its own stats.",
+      "For Quacky Zombies: the fireplace costs 750 and every duck can spin it, even while someone else's weapon is still in the fire. The chair is in it now: three throws, and a Max Ammo gives them back.",
+      "For Quacky Zombies: Justin's Butler's upgrades cost twice as much, a board is worth 5 points, the zombies are 20% slower and the ducks 5% faster.",
+      "For Quacky Zombies: the drops fall from a zombie you kill and stay for a minute, into the next round too. The zebra cake draws every zombie, and they keep eating it until it's gone. The sniper's bullet goes through three zombies.",
+      "For Quacky Zombies: the Long jump and the jetpack switch on and off without taking the weapon out of your hand.",
     ],
     fixed: [
+      "For Quacky Zombies: boarding up the east wall pays points again (each opening has its own 50 points a round).",
       "Mad God Justin: hitmarkers show on Justin (and look the same on his double), the weapon you pick up goes in hand by itself and you go back to your last one when it runs out, and a Jaime's name tag says Jaime.",
       "Valentine's Duck Date: at the table, the weapon in your hand comes with you (it stayed on the floor where you stood).",
       "Hits hurt more on the boards and in Duck Cabin (not in Quacky Zombies or Mad God Justin): the hammer, the chair and a grenade take 3 HP, the knife 2, and a grenade throws ducks twice as far as the hammer. A knocked-down duck stays down 1 s by default (was 0.5 s). In Mad God Justin, his office chair takes 2 HP.",

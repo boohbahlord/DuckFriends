@@ -76,7 +76,14 @@ export const STAT_MODES = [
   ["dunce", "Duncelation"],
   ["mgj", "Mad God Justin"],
   ["vdd", "Valentine's Duck Date"],
+  ["l4dd", "Quacky Zombies"],
+  ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
 ];
+/* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies with that setting on */
+export const statMode = (s) => {
+  const m = (s && s.options && s.options.mode) || "aod";
+  return m === "l4dd" && +s.options.l4r16 ? "l4r16" : m;
+};
 export function cleanStats(o) {
   const out = {},
     n = (v) => Math.max(0, Math.min(1e9, Math.floor(+v || 0)));

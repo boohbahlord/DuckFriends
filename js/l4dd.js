@@ -23,11 +23,12 @@ import {
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { butlerSVG } from "./hangout/npcart.js";
-import { FLAME } from "./mgjart.js";
+import { butlerSVG, justinSVG } from "./hangout/npcart.js";
+import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { nameHTML } from "./name.js";
+import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -49,6 +50,10 @@ import {
   priceFor,
   saleOn,
   dropName,
+  TOILET,
+  waitNeed,
+  waitVotes,
+  isR16,
 } from "./l4ddrules.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import {
@@ -64,7 +69,7 @@ import {
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
-const SPEED = 0.6; // my duck at 60% of Duck Cabin's walk: I wanted it 20% faster than the half it was (sprint and the zombies go from it)
+const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20% faster than the half it was, then 5% more (Nov 3; sprint goes from it)
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
@@ -156,11 +161,13 @@ let layer = null,
   cv = null,
   g = null,
   hud = null,
+  endEl = null, // the End turn button between rounds (Ready in round 0)
+  endSig = "",
   over = null,
   zpSig = "",
   snapAt = 0,
   gap = 200,
-  roundShown = 0,
+  roundShown = -1, // (none yet)
   overShown = "",
   candleSig = "",
   stamina = 1,
@@ -391,16 +398,46 @@ export function l4Got(k) {
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 
+/* my all-time stats (not in test rooms): a game once its first round starts, a round each time one is cleared, and the
+   best round reached; with Round 16 Start on, its own stats (store.js statMode) */
+function record(s, L, cleared) {
+  if (s.test) return;
+  const st = profile.stats[statMode(s)];
+  if (!st) return;
+  const game = `${s.id}:${s.startedAt}:${L.g || 0}`;
+  if (profile.stats.lastGame !== game) {
+    profile.stats.lastGame = game;
+    st.games++;
+  } else if (cleared) st.rounds++; // (round 0 to 1, or to 16, isn't one cleared)
+  st.titles = Math.max(st.titles || 0, L.r);
+  save();
+}
 /* ---------- the HUD: "Round N", and the end ---------- */
 function seeHud(s, ctx) {
   const L = s.hang.l4;
   if (!hud || !L) return;
   if (roundShown !== L.r) {
+    if (roundShown >= 0 && L.r > roundShown)
+      record(s, L, L.r - roundShown === 1);
     hud.innerHTML = `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
     hud.classList.remove("new");
     void hud.offsetWidth;
-    if (roundShown) hud.classList.add("new"); // (a new round: it pulses)
+    if (roundShown >= 0) hud.classList.add("new"); // (a new round: it pulses)
     roundShown = L.r;
+  }
+  /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
+  const w = !L.over && L.wait,
+    mine = !!(w && w.v[ctx.me]),
+    es = w ? [L.r, mine, waitVotes(s), waitNeed(s), isR16(s)].join() : "";
+  if (es !== endSig) {
+    endSig = es;
+    endEl.hidden = !w;
+    ctx.world.board.classList.toggle("l4-waiting", !!w);
+    if (w) {
+      const word = L.r === 0 ? "Ready" : "End turn",
+        next = L.r === 0 && isR16(s) ? 16 : w.r;
+      endEl.innerHTML = `<button type="button" class="btn ${mine ? "purple" : "yellow"}" aria-pressed="${mine}">${word}${mine ? " ✓" : ""} <span class="l4-end-n">${waitVotes(s)}/${waitNeed(s)}</span></button><span class="l4-end-say">${mine ? `Round ${next} starts when ${waitNeed(s)} ${waitNeed(s) === 1 ? "duck is" : "ducks are"} ${L.r === 0 ? "ready" : "done"}` : L.r === 0 ? `Ready for round ${next}?` : `Round ${L.r} cleared`}</span>`;
+    }
   }
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
@@ -561,9 +598,8 @@ function paint(now, ctx) {
 }
 
 /* ---------- Justin's Butler, standing by the card table ---------- */
-function butlerEl() {
-  const svg = butlerSVG({ size: 64 }),
-    v = svg
+function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
+  const v = svg
       .match(/viewBox="([^"]+)"/)[1]
       .split(" ")
       .map(Number),
@@ -571,7 +607,7 @@ function butlerEl() {
     feet = (64 * (v[3] - 10)) / v[2],
     el = document.createElement("div");
   el.className = "hang-npc duck l4-butler";
-  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${svgDataURL(svg)}"></div><span class="gduck-name hang-npc-name">${nameHTML(BUTLER_NAME)}</span>`;
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${svgDataURL(svg)}"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
   const body = el.firstChild;
   body.style.width = "64px";
   body.style.height = h.toFixed(1) + "px";
@@ -580,6 +616,56 @@ function butlerEl() {
   body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
   layer.append(el);
   return { el, body };
+}
+
+/* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
+   long as it lasts (the rules' s.zcake.toilet) */
+const EGG = { x: TOILET.x + 62, y: TOILET.y + 78 }; // (where he stands: in front of the sink, facing the bowl)
+let egg = null;
+function drawEgg(ctx, now) {
+  const s = ctx.state(),
+    c = s.zcake,
+    on = !!(c && c.toilet && !c.eat && now >= c.stop),
+    Wd = ctx.world,
+    z = heightAt(EGG.x, EGG.y),
+    p = Wd.toScreen(EGG.x, EGG.y, z),
+    sc = Wd.sc;
+  if (on !== !!egg.on) {
+    egg.on = on;
+    if (Wd.inside) {
+      const n = document.createElement("div");
+      n.className = "mgj-tp";
+      n.style.cssText = `left:${p.left.toFixed(1)}px;top:${p.top.toFixed(1)}px;width:${(90 * sc).toFixed(0)}px;z-index:${Math.round(sortY(EGG.x, EGG.y, z)) + 12}`;
+      n.innerHTML = TELEPORT;
+      (fxl || layer).append(n);
+      setTimeout(() => n.remove(), 600);
+      const me = ctx.duck();
+      if (me && Math.hypot(me.x * W - EGG.x, me.y * H - EGG.y) < 1200)
+        sfx.teleport();
+    } // (a blue flash as he comes and goes)
+    egg.chomp = now + 400;
+  }
+  const hide = !on || !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+  if (egg.el.hidden !== hide) egg.el.hidden = hide;
+  if (hide) return;
+  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  if (egg.tr !== tr) {
+    egg.tr = tr;
+    egg.el.style.transform = tr;
+    egg.el.style.zIndex = Math.round(sortY(EGG.x, EGG.y, z)) + 10;
+  }
+  const gd = Wd.board.querySelector(".gduck .gduck-body"),
+    k = gd && gd.offsetWidth ? gd.offsetWidth / 64 : sc; // (as big as the ducks are drawn)
+  if (egg.k !== k) {
+    egg.k = k;
+    egg.body.style.transform = `scale(${(-k).toFixed(4)}, ${k.toFixed(4)})`; // (facing left, toward the bowl)
+    egg.el.style.setProperty("--nt", (2 * k).toFixed(1) + "px");
+  }
+  if (now >= egg.chomp) {
+    egg.chomp = now + 1100;
+    const me = ctx.duck();
+    if (me && Math.hypot(me.x * W - EGG.x, me.y * H - EGG.y) < 900) sfx.chomp();
+  } // (a bite now and then)
 }
 
 /* ---------- the fireplace's weapon ---------- */
@@ -595,7 +681,7 @@ function boxShows(b, now) {
 function drawBox(ctx) {
   const s = ctx.state(),
     now = clockNow(),
-    b = boxNow(s, now),
+    b = boxNow(s, now, ctx.me) || boxNow(s, now), // (mine, else the newest anyone spun)
     Wd = ctx.world;
   if (!b || !Wd.inside) {
     if (!boxEl.hidden) boxEl.hidden = true;
@@ -766,10 +852,9 @@ function holdTarget(pos, ctx) {
   const now = clockNow(),
     db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
   if (db < NEAR) {
-    const b = boxNow(s, now);
+    const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
-    if (b.by === me && now >= b.t + BOX.spin)
-      return { kind: "take", d: db, w: b.w };
+    if (now >= b.t + BOX.spin) return { kind: "take", d: db, w: b.w };
   }
   const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
@@ -873,6 +958,22 @@ activity({
       if (e.target.closest("[data-l4='again']"))
         ctx.send({ t: "hang", k: "l4", do: "again" });
     });
+    endEl = document.createElement("div");
+    endEl.className = "l4-end";
+    endEl.hidden = true;
+    for (const t of ["pointerdown", "touchstart", "wheel"])
+      endEl.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on it never walks or attacks)
+    endEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const b = e.target.closest("button");
+      if (b)
+        ctx.send({
+          t: "hang",
+          k: "l4",
+          do: "endturn",
+          on: b.getAttribute("aria-pressed") !== "true",
+        });
+    });
     ptsEl = document.createElement("div");
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
@@ -892,9 +993,12 @@ activity({
     boxEl.innerHTML =
       '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
     layer.append(boxEl);
-    ctx.world.board.append(hud, over, ptsEl, sayEl, onEl, gotEl);
+    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl);
     shop = shopEl(ctx);
     butler = butlerEl();
+    egg = butlerEl(justinSVG({ size: 64 }), "Justin");
+    egg.el.classList.replace("l4-butler", "l4-egg");
+    egg.el.hidden = true;
     ctx.world.board.classList.add("blackout", "l4-board");
     Z.clear();
     B.clear();
@@ -903,13 +1007,14 @@ activity({
     zpSig =
       candleSig =
       overShown =
+      endSig =
       drawn =
       boxSig =
       upSig =
       slotSig =
       onSig =
         "";
-    roundShown = 0;
+    roundShown = -1;
     ptsShown = -1;
     boxSpun = false;
     stamina = 1;
@@ -929,17 +1034,20 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
+    ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,
+      endEl,
       sayEl,
       onEl,
       gotEl,
       boxEl,
       butler && butler.el,
+      egg && egg.el,
       shop && shop.el,
     ])
       e?.remove();
-    cv = g = hud = over = layer = fxl = null;
+    cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = boxEl = butler = shop = null;
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
@@ -1119,6 +1227,7 @@ activity({
         }
       }
     }
+    drawEgg(ctx, now);
     drawBox(ctx);
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full */

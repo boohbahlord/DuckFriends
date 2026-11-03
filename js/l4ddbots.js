@@ -34,6 +34,7 @@ const STEP_MS = 200; // (the TEST room's heartbeat: how far it walks each time)
 const WISH = ["hp", "sp", "rl", "acc", "as"]; // what a computer buys first
 const AT = 90; // world px: near enough to the Butler or the fireplace
 const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
+const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
 
 /* a few small steps toward (tx, ty), never off the cabin and the deck, never up a wall */
 function walk(x, y, tx, ty, far) {
@@ -57,6 +58,15 @@ export function l4Bot(s, id, now, out) {
   const p = s.pos[id],
     h = s.hang;
   if (!p || !h || !h.l4 || h.l4.over || !l4Up(s, id)) return;
+  const wait = h.l4.wait;
+  if (wait && !wait.v[id]) {
+    const k = `${id} ${h.l4.r}`;
+    if (!readyAt.has(k)) readyAt.set(k, now + 1500 + Math.random() * 2500);
+    if (now >= readyAt.get(k)) {
+      readyAt.delete(k);
+      out.push({ t: "hang", k: "l4", do: "endturn", on: true, id });
+    }
+  }
   const x = p.x * W,
     y = p.y * H,
     far = WALK * walkOf(s) * (STEP_MS / 1000) * (upOf(s, id).sp ? 1.1 : 1), // (as fast as my duck: the Walking speed, the Butler's Speed)
@@ -187,9 +197,9 @@ export function l4Bot(s, id, now, out) {
 /* no zombie in sight: walk to the Butler or the fireplace and spend points there, or take what the fireplace landed on;
    true while it's busy with that */
 function shopping(s, id, now, x, y, far, m, send, out) {
-  const b = boxNow(s, now),
+  const b = boxNow(s, now, id),
     pts = ptsOf(s, id),
-    mine = b && b.by === id;
+    mine = !!b;
   let to = null,
     act = null,
     hand = m.sl[1];
