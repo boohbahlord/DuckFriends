@@ -285,6 +285,13 @@ export function openCustomize(page = lastPage) {
             b = pic.getBoundingClientRect();
           const x = w.left - b.left + w.width * 0.5,
             y = w.bottom - b.top - w.width * 0.06;
+          if (id === "invisible") {
+            pic.classList.remove("see");
+            void pic.offsetWidth;
+            pic.classList.add("see");
+            clearTimeout(pic._see);
+            pic._see = setTimeout(() => pic.classList.remove("see"), 5000);
+          } // (the Invisible duck: see-through a while, as in a game)
           if (sp.kind === "effect") {
             pic.querySelectorAll(".sp-prev-fx").forEach((e) => e.remove());
             const fx = el(

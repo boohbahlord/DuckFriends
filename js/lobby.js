@@ -486,6 +486,14 @@ const MORE_TILES = [
     ],
   ],
   [
+    "mgjBoard",
+    "Mad God Justin",
+    [
+      [0, "Off"],
+      [1, "On"],
+    ],
+  ],
+  [
     "downMs",
     "Knocked down for",
     [
@@ -663,6 +671,8 @@ const OPT_TIPS = {
     "Duck Cabin: once its knocked-down time is up, a duck's ghost gets up and walks about while its body lies there. A ghost can't be hit or use anything. Space brings it back.",
   justin:
     "Justin from Duck Cabin walks the board, always against the room, talks and shoots now and then. He never counts.",
+  mgjBoard:
+    "With Justin on: he has 10 HP, and whoever hurts him is his target for 10 seconds, with his Mad God Justin attacks. At 0 HP he goes down for the knocked-down time, then comes back.",
   stats:
     "The stats after each round. Off: the next round starts at once (in Story Chain, the story just goes on).",
   bbReview:
@@ -713,7 +723,7 @@ const tileRows = (rows, s, ro) =>
         `<div class="sect"><h3${OPT_TIPS[k] ? ` data-tip="${esc(OPT_TIPS[k])}"` : ""}>${esc(label)}</h3><div class="row">${opts
           .map(
             ([v, n]) =>
-              `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${(k === "downMs" ? downFor(s) : s.options[k]) === v}"${ro}>${n}</button>`,
+              `<button type="button" class="tile" data-k="${k}" data-v="${v}" aria-pressed="${(k === "downMs" ? downFor(s) : s.options[k]) === v}"${ro || (k === "mgjBoard" && !s.options.justin ? ' aria-disabled="true"' : "")}>${n}</button>`,
           )
           .join("")}</div></div>`,
     )
@@ -775,6 +785,7 @@ function openOptions() {
               "freeRoam",
               "submitTime",
               "justin",
+              "mgjBoard",
               "downMs",
               "stats",
               "unvoteStops",
@@ -792,12 +803,19 @@ function openOptions() {
               "freeRoam",
               "submitTime",
               "justin",
+              "mgjBoard",
               "unvoteStops",
             ].includes(r[0])
           ) &&
           !(
             CABIN_MODES.includes(s.options.mode) &&
-            ["freeRoam", "submitTime", "justin", "unvoteStops"].includes(r[0])
+            [
+              "freeRoam",
+              "submitTime",
+              "justin",
+              "mgjBoard",
+              "unvoteStops",
+            ].includes(r[0])
           ) &&
           !(
             ["sc", "quack", ...CABIN_MODES].includes(s.options.mode) &&
@@ -857,6 +875,7 @@ function openOptions() {
         if (!host) return;
         w.addEventListener("click", (e) => {
           const t = e.target.closest(".tile[data-k]");
+          if (t && t.getAttribute("aria-disabled") === "true") return; // (Mad God Justin waits for Justin to be on)
           if (t) {
             const v = t.dataset.v;
             R.send({
@@ -866,6 +885,10 @@ function openOptions() {
             $$(`.tile[data-k="${t.dataset.k}"]`, w).forEach((b) =>
               b.setAttribute("aria-pressed", b === t),
             );
+            if (t.dataset.k === "justin")
+              $$('.tile[data-k="mgjBoard"]', w).forEach((b) =>
+                b.toggleAttribute("aria-disabled", v !== "1"),
+              );
           }
           if (e.target.closest('[data-a="reset"]')) {
             R.send({ t: "options", options: { ...OPTIONS_DEFAULT } });

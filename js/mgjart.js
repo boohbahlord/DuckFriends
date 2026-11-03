@@ -86,6 +86,21 @@ export const MEDKIT = `<svg viewBox="0 0 48 40" aria-hidden="true">
 <path d="M20.4 15H27.6V20.4H33V27.6H27.6V33H20.4V27.6H15V20.4H20.4Z" fill="#e63946" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
 <path d="M7 13.6Q7 12 9 12" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M21.6 16.4V20" stroke="#fff" stroke-width="1" opacity=".5" stroke-linecap="round"/></svg>`;
 
+/* Mad God Justin's big black office chair (padded back, a seat, one post, five legs on wheels; no arms): his throw, and
+   the Chair special's (specials.js) */
+export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#1c1c28" stroke-width="6.6" stroke-linecap="round"/>
+<path d="M50 96L18 106M50 96L30 115M50 96L70 115M50 96L83 106M50 96L52 104" stroke="#2c2e36" stroke-width="3.8" stroke-linecap="round"/>
+<g fill="#2b2d34" stroke="#1c1c28" stroke-width="1.6"><circle cx="17" cy="108.6" r="4.4"/><circle cx="29.4" cy="116.4" r="4.4"/><circle cx="70.6" cy="116.4" r="4.4"/><circle cx="84" cy="108.6" r="4.4"/><circle cx="52.4" cy="106.4" r="3.8"/></g>
+<rect x="46.4" y="76" width="7.4" height="21" rx="2" fill="#24262d" stroke="#1c1c28" stroke-width="1.6"/><path d="M48.6 79V94" stroke="#fff" stroke-width="1.2" opacity=".2" stroke-linecap="round"/>
+<path d="M36 7C48 2.6 72 3.4 82 8.6C86 10.6 87 14.6 86.4 20.6L82.6 58.6C82 65 78.6 67.6 72 67.4L41 65.8C35 65.4 32.4 62.4 32.2 56.4L31 17C30.8 11 32 8.6 36 7Z" fill="#3b3d46" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M38 12C49 8.4 70 9 79 13" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".16"/>
+<path d="M36 36C46 33 68 34 80 38" fill="none" stroke="#24262d" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M58 14.6L57 34" stroke="#24262d" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
+<path d="M17 66C26 60.4 72 60.6 84.6 64.4C89.4 66 89.6 72.4 85 75.6C74 82 30 82.4 17.6 78C11.6 75.8 11.8 69 17 66Z" fill="#45474f" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/>
+<path d="M14.6 73.4C26 79 72 79.4 87 72.6" fill="none" stroke="#2a2c33" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M22 66.6C34 63.6 62 63.6 76 66" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".18"/>
+</svg>`;
 /* the zebra cake (the owner's picture): a square snack cake in white icing with thin chocolate stripes across the top and
    down the sides, its cut front showing the golden sponge and the cream between */
 export const ZEBRA = `<svg viewBox="0 0 56 36" aria-hidden="true">

@@ -87,6 +87,7 @@ import { inCabin, standable, W as HW, H as HH } from "./hangout/layout.js";
 import {
   justinTick,
   justinDown,
+  justinHit,
   justinShown,
   justinAt,
   JUSTIN_ID,
@@ -113,6 +114,9 @@ import {
   PELLET_SPEED,
   PELLET_LIFE,
   SPREAD,
+  CHAIR_R,
+  CAKE_SPEED,
+  CAKE_EAT_MS,
 } from "./mgjrules.js";
 import { isL4dd, l4Use, l4Reload, l4Shots, l4Holds } from "./l4ddrules.js";
 
@@ -141,6 +145,7 @@ export const OPTIONS_DEFAULT = {
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
+  mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: Hangout's own, and only Hangout's)
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
@@ -447,6 +452,8 @@ const PRESS = [
   "shotgun",
   "grenade",
   "bow",
+  "chair",
+  "zebra",
   "sound",
   "trombone",
   "confetti",
@@ -461,6 +468,8 @@ const COOLDOWN = {
   grenade: 12000,
   confetti: 15000,
   bow: 400,
+  chair: 15000,
+  zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
 };
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) || COOLDOWN[sp] || 1500; // (Mad God Justin has its own for the knife and the bow)
@@ -501,7 +510,15 @@ const EFFECTS = [
   "loserx",
   "ducklings",
   "disco",
-]; // the effects, shown around a duck
+  "invisible",
+]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
+/* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
+   weapons) and the Zebra cake */
+export const THROWS = ["chair", "zebra"];
+/* the Chair special's chair: Mad God Justin's own, as slow and as wide (CHAIR_DUCKS duck lengths a second, CHAIR_R
+   duck lengths near), for CHAIR_MS */
+const CHAIR_DUCKS = 2.8,
+  CHAIR_MS = 8000;
 /* an aim from the player: a direction on the board (x, y), about one board width long on their screen */
 export const aimOf = (a, face) => {
   const ax = Math.max(-3, Math.min(3, +a.ax || 0)),
@@ -1231,6 +1248,7 @@ export function reduce(state, a, now = Date.now()) {
         q: /^[lrud]$/.test(a.q) ? a.q : "",
         sp: !!a.sp,
         ...(j && a.lj ? { lj: true } : {}),
+        ...(j && a.sj && !a.lj ? { sj: true } : {}),
         ...(dj ? { dj } : {}),
         ...(w ? { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) } : {}),
         ...(isHang(s)
@@ -1373,11 +1391,17 @@ export function reduce(state, a, now = Date.now()) {
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit, a Jaime, the zebra cake)
       if (isMgj(s) && sp !== "knife" && sp !== "bow")
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
-      if (WEAPONS.includes(sp) && !s.options.fun && !isMgj(s)) return state; // the silly-commands switch covers them
+      if (
+        (WEAPONS.includes(sp) || sp === "chair") &&
+        !s.options.fun &&
+        !isMgj(s)
+      )
+        return state; // the silly-commands switch covers them
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`; // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
+      if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
       if (sp === "handgun") {
         // one shot from the magazine; the last starts the reload
         const m = magOf(s, a.id, now),
@@ -1389,7 +1413,8 @@ export function reduce(state, a, now = Date.now()) {
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
       const face = a.face < 0 ? -1 : 1,
-        aim = WEAPONS.includes(sp) ? aimOf(a, face) : null;
+        aim =
+          WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
       const hit =
         sp === "knife" || sp === "hammer"
           ? strike(s, a.id, sp, aim, now)
@@ -1463,7 +1488,17 @@ export function reduce(state, a, now = Date.now()) {
             );
           }
           s.shots = [...(s.shots || []), ...out];
-        } else if (sp === "grenade") {
+        } else if (sp === "chair") {
+          const k = CHAIR_DUCKS / dl;
+          s.shots = [
+            ...(s.shots || []),
+            shot(s.fxN, "chair", dx * k * rx, dy * k * ry, {
+              r: CHAIR_R,
+              life: CHAIR_MS,
+            }),
+          ];
+        } else if (sp === "zebra") throwCake(s, a.id, p, aim, now);
+        else if (sp === "grenade") {
           const k = GRENADE_FAR / (GRENADE_MS / 1000) / dl;
           s.shots = [
             ...(s.shots || []),
@@ -1888,7 +1923,8 @@ export function reduce(state, a, now = Date.now()) {
           justinTick(s, now, logLine) |
           dnTick(s, now) |
           vdTick(s, now) |
-          attacks(s, now), // (the knife and the hammer, still swinging)
+          attacks(s, now) | // (the knife and the hammer, still swinging)
+          cakeGone(s, now),
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -2045,6 +2081,7 @@ function forgame(s, a, now) {
           "fun",
           "lowGravity",
           "justin",
+          "mgjBoard",
           "ghosts",
           "ghostBusy",
           "discuss",
@@ -2088,17 +2125,19 @@ function forgame(s, a, now) {
                 ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
                 : k === "justin"
                   ? `Justin ${v ? "on" : "off"}`
-                  : k === "ghosts"
-                    ? `ghosts ${v ? "on" : "off"}`
-                    : k === "ghostBusy"
-                      ? `no ghosts while busy ${v ? "on" : "off"}`
-                      : k === "discuss"
-                        ? `discussion round ${v ? "on" : "off"}`
-                        : k === "unvoteStops"
-                          ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
-                          : k === "freeRoam" || k === "fun"
-                            ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
-                            : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
+                  : k === "mgjBoard"
+                    ? `Mad God Justin ${v ? "on" : "off"}`
+                    : k === "ghosts"
+                      ? `ghosts ${v ? "on" : "off"}`
+                      : k === "ghostBusy"
+                        ? `no ghosts while busy ${v ? "on" : "off"}`
+                        : k === "discuss"
+                          ? `discussion round ${v ? "on" : "off"}`
+                          : k === "unvoteStops"
+                            ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
+                            : k === "freeRoam" || k === "fun"
+                              ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
+                              : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
     sayFloat(
       s,
       `${me.name} changed the game: ${Object.entries(o)
@@ -2174,14 +2213,14 @@ function justinKilled(s, by, w) {
 /* a player knocked down by another player's weapon: the last few, each numbered, so every device counts its own player's
    kills once (unlocks.js: the shotgun opens at 144 kills, the grenade at 360, and Justin counts too) */
 /* a jump dodges attacks, but not in its first and its last fifth: I want a dodge timed, not a jump held as a shield.
-   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s, low gravity 1.2 s, a long jump 1.4 times; a double jump goes
-   on for a second arc from when it began */
+   The jump's length is game.js' (JUMP, jumpCfg): 0.62 s, low gravity 1.2 s, a long jump 1.4 times, a short jump 0.7
+   times; a double jump goes on for a second arc from when it began */
 export function dodges(s, p, now) {
   if (!p || !p.j) return false;
   const T =
       p.tb > 0
         ? 620 * Math.sqrt(p.tb / 1.35)
-        : (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : 1),
+        : (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : p.sj ? 0.7 : 1),
     end = (p.dj > p.j ? p.dj : p.j) + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
@@ -2317,16 +2356,21 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       DMG[sp] || 1,
     );
   // (Mad God Justin: 1 damage; a hit on his double counts for nothing)
-  else if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
-    // (the Justin option: he can be hit back)
-    const n = justinAt(s.justin, now);
-    if (near(n.x, n.y, 0, 0) && justinDown(s, now, logLine)) {
-      justinKilled(s, by, sp);
-      stab = true;
-    }
+  else if (
+    !hang &&
+    by !== JUSTIN_ID &&
+    !done.includes(JUSTIN_ID) &&
+    justinShown(s) &&
+    !s.justin.down
+  ) {
+    // (the Justin option: he can be hit back; the board's Mad God Justin takes HP off first)
+    const n = justinAt(s.justin, now),
+      got = near(n.x, n.y, 0, 0) ? justinHit(s, by, now, logLine, sp) : 0;
+    if (got === 2) justinKilled(s, by, sp);
+    stab = got > 0;
   }
   if (hang)
-    for (const n of hangTargets(s, now)) {
+    for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
@@ -2456,16 +2500,17 @@ function blast(s, sh, x, y, now) {
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
-      if (
-        isMgj(s) ? mgjStab(s, sh.by, now, logLine) : justinDown(s, now, logLine)
-      ) {
-        if (!isMgj(s)) justinKilled(s, sh.by, "grenade");
+      const got = isMgj(s)
+        ? mgjStab(s, sh.by, now, logLine)
+        : justinHit(s, sh.by, now, logLine, "grenade");
+      if (got) {
+        if (got === 2) justinKilled(s, sh.by, "grenade");
         hit.push(JUSTIN_ID);
       }
     }
   }
   if (hang)
-    for (const n of hangTargets(s, now))
+    for (const n of hangTargets(s, now, "grenade"))
       if (
         near(n.x / HW, n.y / HH, n.z, inCabin(n.x, n.y) ? 1 : 0) &&
         hangHit(s, n.id, sh.by, now) &&
@@ -2564,9 +2609,10 @@ function moveShots(s, now) {
           if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
           if (sh.k === "chair") {
             const ul = Math.sqrt(len) || 1;
-            if (od > 0.2) shove(s, id, ox / od, oy / od, KB_FAR, now, 0);
-            else shove(s, id, ux / ul, uy / ul, KB_FAR, now, 0);
-          } // (Mad God Justin's office chair: shoved back, as the hammer does, away from it)
+            if (od > 0.2)
+              shove(s, id, ox / od, oy / od, KB_FAR, now, sh.hin || 0);
+            else shove(s, id, ux / ul, uy / ul, KB_FAR, now, sh.hin || 0);
+          } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
         }
       }
     if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
@@ -2577,9 +2623,10 @@ function moveShots(s, now) {
       at.z > -0.15 &&
       at.z < 1.05 &&
       justinShown(s) &&
-      !s.justin.down
+      !s.justin.down &&
+      !(sh.got && sh.got.includes(JUSTIN_ID))
     ) {
-      // (the Justin option: he can be shot back)
+      // (the Justin option: he can be shot back, once by each shot)
       const n = justinAt(s.justin, now),
         ux = dx / 0.03,
         uy = dy / 0.08,
@@ -2587,15 +2634,16 @@ function moveShots(s, now) {
         py = (n.y - y0) / 0.08,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (
-        Math.hypot(px - k * ux, py - k * uy) < 1 &&
-        justinDown(s, now, logLine)
-      )
-        justinKilled(s, sh.by, sh.k);
+      const got =
+        Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)
+          ? justinHit(s, sh.by, now, logLine, sh.k)
+          : 0;
+      if (got) sh.got = [...(sh.got || []), JUSTIN_ID];
+      if (got === 2) justinKilled(s, sh.by, sh.k);
     }
     if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
-      for (const n of hangTargets(s, now)) {
-        // (Hangout: Justin can be knocked down too)
+      for (const n of hangTargets(s, now, sh.k)) {
+        // (Hangout: Justin can be knocked down too, and a chair whooshes the shadow duck away)
         if (
           (inCabin(n.x, n.y) ? 1 : 0) !== sh.hin ||
           Math.abs(n.z - sh.hz) > 48
@@ -2608,7 +2656,7 @@ function moveShots(s, now) {
           len = ux * ux + uy * uy;
         const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
         if (
-          Math.hypot(px - k * ux, py - k * uy) < 1 &&
+          Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) &&
           hangHit(s, n.id, sh.by, now) &&
           n.id === "justin"
         )
@@ -2627,6 +2675,66 @@ function moveShots(s, now) {
   }
   s.shots = keep;
   return true;
+}
+
+/* ---------- the Zebra cake special ----------
+   One in the room at a time: s.zcake = { n, by, x0, y0, vx, vy, t, stop, eat, hin }. It flies the way it was thrown, as
+   Mad God Justin's does, and lands at the board's edge or after 6 s (Hangout: at the cabin's walls or the world's edge
+   too; hin, the side it's on). Justin runs after it wherever he is and eats it, and does nothing else meanwhile
+   (boardjustin.js, hangout/justin.js: eat, when he started); with no Justin to eat it, it's gone 12 s after it lands */
+const CAKE_LEFT = 12000;
+function throwCake(s, by, p, aim, now) {
+  const vx = aim[0] * CAKE_SPEED,
+    vy = aim[1] * CAKE_SPEED;
+  let stop = 6;
+  if (isHang(s)) {
+    const side = inCabin(p.x * HW, p.y * HH) ? 1 : 0;
+    for (let t = 0.05; t <= 6; t += 0.05) {
+      const x = p.x + vx * t,
+        y = p.y + vy * t;
+      if (
+        x < 0.005 ||
+        x > 0.995 ||
+        y < 0.005 ||
+        y > 0.995 ||
+        (inCabin(x * HW, y * HH) ? 1 : 0) !== side
+      ) {
+        stop = t - 0.05;
+        break;
+      }
+    }
+  } else {
+    const tx =
+        vx > 0 ? (0.97 - p.x) / vx : vx < 0 ? (0.03 - p.x) / vx : Infinity,
+      ty = vy > 0 ? (0.96 - p.y) / vy : vy < 0 ? (0.04 - p.y) / vy : Infinity;
+    stop = Math.min(tx, ty, 6);
+  }
+  s.zcake = {
+    n: s.fxN,
+    by,
+    x0: p.x,
+    y0: p.y,
+    vx: +vx.toFixed(4),
+    vy: +vy.toFixed(4),
+    t: now,
+    stop: now + Math.max(0, stop) * 1000,
+    eat: 0,
+    ...(isHang(s) ? { hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0 } : {}),
+  };
+}
+/* a cake nobody ate (no Justin, or he's down), or one out of its stage: gone */
+function cakeGone(s, now) {
+  const c = s.zcake;
+  if (!c) return false;
+  if (
+    !boardPhases(s).includes(s.phase) ||
+    isMgj(s) ||
+    (c.eat ? now > c.eat + CAKE_EAT_MS + 3000 : now > c.stop + CAKE_LEFT)
+  ) {
+    s.zcake = null;
+    return true;
+  }
+  return false;
 }
 
 /* a vote passes once enough say yes, and fails once it can't pass any more */

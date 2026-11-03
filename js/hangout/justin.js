@@ -17,6 +17,9 @@
      move for 6 seconds.
    - Now and then (with the silly commands on) a line from GOD_LINES, then lightning or fire strikes a random duck from
      the sky, and it plays dead.
+   - A zebra cake thrown (the Zebra cake special, rules.js' s.zcake): unless he's down, busy at a table, after someone or
+     drinking, he sprints after it wherever he is, eats it once it has landed (CAKE_EAT_MS) and then goes home. No
+     line: he says nothing new for it.
    The lines are mine, word for word: don't change them. */
 import {
   brain,
@@ -27,7 +30,7 @@ import {
   POOL,
   DOORS,
 } from "./npc.js";
-import { PROPS, DECK, BJ, inPool } from "./layout.js";
+import { PROPS, DECK, BJ, inPool, W, H } from "./layout.js";
 
 export const E_LINES = `Shut up.
 Shut up!
@@ -278,6 +281,61 @@ const RANGE = 360,
 const LINE = 4000,
   HEARD = 5000; // each shadow line: shown this long, and the next one this long after (never two bubbles at once); E on him: he stays still at least this long
 const sec = (rand, [a, b]) => (a + rand() * (b - a)) * 1000;
+const CAKE_EAT_MS = 2500; // (as Mad God Justin's)
+/* where the zebra cake is (world px): as mgjrules.js' cakeAt */
+const cakeAt = (k, now) => {
+  const t = (Math.min(now, k.stop) - k.t) / 1000;
+  return { x: (k.x0 + k.vx * t) * W, y: (k.y0 + k.vy * t) * H };
+};
+/* the zebra cake: true when he's after it or eating it (nothing else of his happens then) */
+function cake(me, c, at) {
+  const k = c.s.zcake;
+  if (mm.mode !== "cake") {
+    if (!k || k.eat || mm.lines.length) return false;
+    if (
+      ["poker", "bust", "dead", "rant", "chase", "shadow", "drinking"].includes(
+        mm.mode,
+      )
+    )
+      return false;
+    mm.mode = "cake";
+    mm.chase = 0;
+    me.a = "";
+    return true; // (off he goes next beat; c.go hops him off the couch, if he was watching TV)
+  }
+  if (!k) {
+    me.a = "";
+    mm.mode = "home";
+    mm.next = c.now + 2000;
+    return true;
+  } // (gone before he got it)
+  if (k.eat) {
+    if (c.now < k.eat + CAKE_EAT_MS) return false;
+    c.s.zcake = null;
+    me.a = "";
+    mm.mode = "home";
+    mm.next = c.now + 2000;
+    return true;
+  }
+  const p = cakeAt(k, c.now),
+    d = c.dist(at, p);
+  if (c.now >= k.stop && (d < 70 || (!at.moving && d < 220 && mm.chase))) {
+    c.stop(me);
+    me.f = p.x > at.x ? 1 : -1;
+    me.a = "cake";
+    k.eat = c.now;
+    return true;
+  } // (landed: he eats it, from the pool's edge if it fell in)
+  if (c.now < (mm.chase || 0)) return false;
+  mm.chase = c.now + 600;
+  const to = nearestOpen(p.x, p.y, DRY, 6);
+  if (!to) {
+    mm.mode = "home";
+    mm.next = c.now + 2000;
+    return false;
+  }
+  return c.go(me, to[0], to[1], SPRINT, DRY);
+}
 /* home: the porch, by the rocking chairs; the jeep; the couches (TV) */
 const HOME = (() => {
   const r = PROPS.filter((p) => p.kind === "rocker");
@@ -528,6 +586,10 @@ brain("justin", {
       return chase(me, c, at, true) || ch;
     }
     if (mm.mode === "shadow") return ch; // (shadowduck.js moves him)
+    if ((c.s.zcake || mm.mode === "cake") && mm.mode !== "shadowChase") {
+      if (cake(me, c, at)) return true;
+      if (mm.mode === "cake") return ch;
+    }
     if (c.now < (mm.hold || 0)) return ch; // (someone's talking to him: he stays put)
     /* the pool: never in it */
     if (poolNear(at.x, at.y, 220) || inPool(at.x, at.y)) {
