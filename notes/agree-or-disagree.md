@@ -3330,3 +3330,40 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
 
 - Solomon the 2nd (PR #206): the Nuke drop loses the darker yellow line under its belly; the Speed Boost drop shows the
   whole syringe (plunger and needle tip no longer cut off: GUNS.adrenaline.whole). The weapons bar's icon is unchanged.
+## 2026-11-03 22:13Z: Mad God Justin's guns, and faster (word for word)
+> for mad God Justin, give him the light machine gun and have each bullet do one damage. also give him the shotgun and the smg. No more pistol. he uses those guns alongside his other attacks. on top of that, he moves faster and his attacks are way faster (such as the chair and controllers
+
+- Adam: build it at high effort after #206, reusing Quacky Zombies' gun art and bullets; clear numbers in the PR for
+  the owner to tune; tells kept long enough to dodge. No new art, so no picture sheet.
+- Solomon the 2nd (js/mgjrules.js): no pistol. Bursts at a duck: LMG 10 bullets at 10 a second, SMG 8 at 12.5 a second,
+  each bullet 1 HP, then a reload (LMG 2.6 s, SMG 1.8 s; he still sprints in to hammer while reloading). The pump shotgun
+  from the start (35% of the time when a duck is within 9 duck lengths). He walks 25% faster (SPEED 0.2 -> 0.25). Every
+  attack comes 40% sooner (PACE 0.6: controllers, chair, fireball, hammer, guns; the Xbox's 0.7 on top). Thrown things
+  fly faster: controllers 0.15 -> 0.19, chair 0.085 -> 0.11, fireball 0.2 -> 0.25 board widths a second. The tells
+  (0.8 s controllers and fireball, 1.1 s chair) stay. Only the mode: the board modes' Mad God Justin setting keeps his
+  pistol.
+
+## 2026-11-03 22:21Z: Mad God Justin, the second batch (word for word)
+> we also need to make it to where you can switch to the weapons you pick up and it auto toggles anything you switch to EXCEPT Jaime, and those weapons autoswitch to your last toggled weapon when it runs out, as in jaime doesnt get switched back to since it doesnt toggle, and now revive takes five seconds and you dont need a medkit to do it, so remove the medkit. ALSO make it to where hitmarkers actually show on Justin and the decoy Justin DOESNT have hitmarks thatt are any dif, so the same hit markers. The decoy spawns in now after every teleoport and only after teleporting. Turning off his xbox happens after losing 20 health now and the meteor comes in when he is at 10 health, and the meteor now gives him back 20 health and makes his attacks fast again.
+>
+> Whenever his attacks get faster, the bullets dont travel any faster, but he does attack more often and the controllers and chair get faster. We can remove the time limit from the Mad God Justin gamemode. Also, the Mad God Justin is slightly bigger and has a bigger hitbox that matches his form. He can move faster too.
+>
+> players arrow goes slightly faster in every game mode now and so does every bullet or throwing daggers. ALSO Justin can sprint into an enemy and send their duck flying (doesnt deal damage and is dodgeable either by movement or jumping out the way)
+>
+> Justin's hammer is bigger now
+>
+> Jaime when spawned in now says "Jaime" in their player tag, since for me it said my name, which it should not do that
+
+- Adam: one branch with the 22:13Z ask, Solomon the 2nd all the code (high), Noah only the art (Justin slightly bigger,
+  the bigger hammer, in js/mgj.js) with one shared size constant; Justin's hitbox matches his drawn form. No time limit
+  (the lightning eyes count any win). Projectiles about 15% faster in every mode. No new Justin lines.
+- Built (one PR): keys 1 knife, 2 bow, 3 Jaime (fires at once, never stays in hand), 4 the picked-up weapon, 5 zebra
+  cake; a pick goes in hand by itself and, once used up, the hand goes back to the last weapon that stayed in it.
+  Revive: hold E by a downed duck for 5 s (REVIVE.MS, within 2 lengths; on a phone a Hold button over it); the medkit
+  is gone from the mode. One hitmarker for Justin and his double. The double only after a teleport (DUP_MS 7 s). Xbox
+  off once he has lost 20 HP (XB_LOST), meteor at 10 HP (MET_AT) gives 20 back (MET_HEAL); each one makes his attacks
+  come 0.7x as soon (FAST_SOON) and throws fly 1.25x faster (FAST_FLY), bullets unchanged (JUSTIN_SHOT 0.22). No timer
+  (the Game Settings time row is gone). Size: MGJ_SCALE 1.2, hammer MGJ_HAMMER 1.35, hitbox x1.2. Every mode:
+  arrows, bullets and daggers x1.15 (FASTER in rules.js; Quacky Zombies' bullets too). His charge: every 8 to 12 s
+  (sooner when faster) at a duck 3 to 10 lengths off, a 0.6 s red shake, then a sprint at 0.55 board widths a second;
+  a duck within 1.1 lengths (x1.2) of his path flies KB_FAR x1.6, no HP lost; a jump or stepping off the line dodges.

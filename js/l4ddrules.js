@@ -50,7 +50,7 @@ import {
   onPlatform,
   BJ,
 } from "./hangout/layout.js";
-import { GRENADE_MS, daggerZ, walkOf } from "./rules.js";
+import { GRENADE_MS, daggerZ, walkOf, FASTER } from "./rules.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
 
@@ -277,6 +277,17 @@ const NAMES = {
 };
 export const weaponName = (w) => NAMES[w] || w;
 /* points (the owner's) */
+/* what flies a little faster, as in every mode (rules.js FASTER): the arrows, the bullets and the daggers */
+const BULLETS = new Set([
+  "handgun",
+  "bow",
+  "dagger",
+  "sniper",
+  "smg",
+  "ak",
+  "revolver",
+  "lmg",
+]);
 export const PTS = { START: 50, HIT: 5, HEAD: 25, BOARD: 10, BOARDS: 50 };
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
@@ -1312,7 +1323,7 @@ export function l4Use(s, a, now) {
           A.spread * ((i / (A.pellets - 1)) * 2 - 1) +
           (Math.random() - 0.5) * 0.08;
         out.push(
-          shot("pellet", Math.cos(an), Math.sin(an), A.speed, {
+          shot("pellet", Math.cos(an), Math.sin(an), A.speed * FASTER, {
             n: n * 10 + i,
             life: A.life,
           }),
@@ -1321,7 +1332,9 @@ export function l4Use(s, a, now) {
       s.shots = [...(s.shots || []), ...out];
     } else {
       const v =
-          what === "grenade" ? ARMS.grenade.far / (GRENADE_MS / 1000) : A.speed,
+          what === "grenade"
+            ? ARMS.grenade.far / (GRENADE_MS / 1000)
+            : A.speed * (BULLETS.has(what) ? FASTER : 1), // (arrows, bullets and daggers: a little faster, as in every mode)
         k =
           what === "bow"
             ? "arrow"

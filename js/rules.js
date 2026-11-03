@@ -111,9 +111,11 @@ import {
   mgjSafe,
   mgjBurn,
   mgjHitAt,
+  MGJ_SCALE,
+  MGJ_HAMMER,
   mgjTeamUse,
   mgjCool,
-  MGJ_HOLD,
+  mgjHolds,
   DMG,
   PUMP,
   PELLETS,
@@ -187,7 +189,6 @@ export const OPTIONS_DEFAULT = {
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
-  mgjTime: 135, // Mad God Justin: seconds to beat him: 105, 135, 165 (the meteor adds 30 more)
   mapGrey: 0, // the collage map: 1 turns it black and white
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
@@ -571,13 +572,16 @@ export const turnKey = (s) =>
         ? `write${s.round}.${s.sc.turn}`
         : `${s.phase}${s.round}.${s.qi}`;
 export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
+/* every duck's arrows, bullets and thrown daggers fly this much faster than they first did, in every mode (the owner,
+   Nov 3: "slightly faster"); Mad God Justin's own bullets keep their speed (mgjrules.js JUSTIN_SHOT) */
+export const FASTER = 1.15;
 /* the bow's arrow: it flies straight and fast the way it was aimed, on to the screen's edge */
-export const ARROW_SPEED = 0.6;
-export const SHOT_SPEED = 0.22; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
+export const ARROW_SPEED = 0.6 * FASTER;
+export const SHOT_SPEED = 0.22 * FASTER; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 /* the thrown dagger: across the board at DAGGER_SPEED (board widths a second) while its height (in duck sizes) rises
    from the beak and falls: z = DAGGER_Z + DAGGER_UP·t − DAGGER_G·t²/2; it hits ducks only at their height, then falls
    on down off the screen */
-export const DAGGER_SPEED = 0.45,
+export const DAGGER_SPEED = 0.45 * FASTER,
   DAGGER_Z = 0.45,
   DAGGER_UP = 1.2,
   DAGGER_G = 2.2,
@@ -1482,10 +1486,9 @@ export function reduce(state, a, now = Date.now()) {
       const w = (
           isL4dd(s)
             ? l4Holds(s, a.id, a.w)
-            : WEAPONS.includes(a.w) &&
-              (isMgj(s)
-                ? MGJ_HOLD.includes(a.w)
-                : onKeys(me.duck, a.w) && s.options.fun)
+            : isMgj(s)
+              ? mgjHolds(s, a.id, a.w)
+              : WEAPONS.includes(a.w) && onKeys(me.duck, a.w) && s.options.fun
         )
           ? a.w
           : "",
@@ -1647,8 +1650,8 @@ export function reduce(state, a, now = Date.now()) {
           : !PRESS.includes(sp) || !onKeys(me.duck, sp)
       )
         return state; // (Mad God Justin: not while down)
-      if (isMgj(s) && ["medkit", "jaime", "zebra"].includes(sp))
-        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit, a Jaime, the zebra cake)
+      if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
+        return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
       if (isMgj(s) && sp !== "knife" && sp !== "bow")
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
       if (
@@ -2593,7 +2596,7 @@ function playerKilled(s, by, id, w) {
    as it goes before a wall, a tree or the edge (Hangout: only on its side of the cabin's walls), or the board's edge.
    pos.kb = { t, x, y: where it was } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
    and l: 0 (it falls at once, not when a swing gets there) */
-function shove(s, id, ux, uy, far, now, side, more = {}) {
+export function shove(s, id, ux, uy, far, now, side, more = {}) {
   const p = s.pos[id],
     hang = isHang(s),
     [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
@@ -2634,7 +2637,12 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     hang = isHang(s),
     rx = hang ? 0.006 : 0.03,
     ry = hang ? 0.012 : 0.08,
-    [far, wide] = REACH[sp];
+    [far0, wide] = REACH[sp],
+    far =
+      far0 *
+      (sp === "hammer" && by === JUSTIN_ID && isMgj(s)
+        ? MGJ_SCALE * MGJ_HAMMER
+        : 1); // (Mad God Justin's bigger hammer reaches farther)
   const al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
     ux = aim[0] / rx / al,
     uy = aim[1] / ry / al;
@@ -2697,7 +2705,13 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       s,
       by,
       now,
-      (b) => !!near(b.x, b.y, 0, 0),
+      (b) =>
+        !!near(
+          p0.x + (b.x - p0.x) / MGJ_SCALE,
+          p0.y + (b.y - p0.y) / MGJ_SCALE,
+          0,
+          0,
+        ), // (he's bigger: a swing reaches him from MGJ_SCALE times as far)
       logLine,
       DMG[sp] || 1,
     );

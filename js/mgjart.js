@@ -144,16 +144,13 @@ export const TELEPORT = (() => {
 <g fill="#fff"><path d="M18 60l2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><path d="M82 40l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6Z"/><path d="M80 84l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2Z"/><path d="M22 28l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2Z"/></g></svg>`;
 })();
 
-/* hitmarkers: four short white strokes around the spot that was hit, with a dark edge so they show on any map; the fake
-   Justin's are hollow and grey (his hits count for nothing) */
+/* hitmarkers: four short white strokes around the spot that was hit, with a dark edge so they show on any map; his
+   double gets the same ones (the owner's, Nov 3) */
 const MARK = (fill, edge, op) =>
   `<svg viewBox="0 0 32 32" aria-hidden="true"><g stroke-linecap="round" opacity="${op}">
 <path d="M5 5L12 12M27 5L20 12M5 27L12 20M27 27L20 20" stroke="${edge}" stroke-width="5.4"/>
 <path d="M5 5L12 12M27 5L20 12M5 27L12 20M27 27L20 20" stroke="${fill}" stroke-width="2.8"/></g></svg>`;
 export const HITMARK = MARK("#ffffff", INK, 1);
-export const HITMARK_FAKE = `<svg viewBox="0 0 32 32" aria-hidden="true"><g stroke-linecap="round" opacity=".8">
-<path d="M5 5L12 12M27 5L20 12M5 27L12 20M27 27L20 20" stroke="#9aa0ad" stroke-width="5.4"/>
-<path d="M5 5L12 12M27 5L20 12M5 27L12 20M27 27L20 20" stroke="${INK}" stroke-width="2.4"/></g></svg>`;
 
 /* the edge lightning, on the board's edges and corners (css: .mgj-edge, its depth --edge): "warn" glows electric blue
    along them for a moment, "zap" strikes: jagged bolts run along all four sides with bright flashes in the corners. The
