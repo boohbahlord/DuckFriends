@@ -12858,3 +12858,322 @@ html.moving .eye-tears .tdrop.t2 {
 .vd-row .btn {
   flex: none;
 }
+
+/* ---------- Left 4 Dead Ducks (l4dd.js, l4ddbar.js) ----------
+   The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
+   dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
+   the dark; the end card over everything. */
+.l4z,
+.l4-boards,
+.l4-candle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+.l4z {
+  width: 0;
+  height: 0;
+}
+.l4z-body {
+  position: absolute;
+}
+.l4z-body img,
+.l4-candle img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.l4z-hp {
+  position: absolute;
+  left: calc(-17px * var(--k, 1));
+  top: calc(4px * var(--k, 1));
+  width: calc(34px * var(--k, 1));
+  height: 3px;
+  border-radius: 2px;
+  background: #000a;
+  overflow: hidden;
+}
+.l4z-hp i {
+  position: absolute;
+  inset: 0;
+  background: #e8424d;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--hp, 1));
+}
+.l4z.hit .l4z-body img {
+  animation: l4z-hit 0.32s ease-out;
+}
+@keyframes l4z-hit {
+  35% {
+    filter: brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg);
+  }
+}
+.l4z.dead .l4z-hp {
+  display: none;
+}
+.l4z.dead {
+  animation: l4z-die 1s ease-in forwards;
+}
+@keyframes l4z-die {
+  0% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+} /* (lying down, see-through, gone in a second) */
+.l4-boards,
+.l4-candle {
+  transform-origin: 0 0;
+}
+.l4-boards svg {
+  display: block;
+  overflow: visible;
+}
+.l4-candle {
+  width: 30px;
+  height: 46px;
+}
+.hang-board.l4-board .hang-dark.l4-dark {
+  z-index: 24000;
+}
+.l4-hud {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31000;
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(1.7rem, 4.6vw, 2.8rem);
+  line-height: 1;
+  color: #dc143c;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.06em #2a0408;
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.06em 0 #2a0408,
+    0 0 0.5em #dc143c66;
+}
+.l4-hud.new {
+  animation: l4-round 1.6s ease-out;
+}
+@keyframes l4-round {
+  0% {
+    transform: translateX(-50%) scale(1.7);
+    opacity: 0;
+  }
+  25% {
+    transform: translateX(-50%) scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+.l4-over {
+  position: absolute;
+  inset: 0;
+  z-index: 31500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: #0009;
+}
+.l4-over[hidden] {
+  display: none;
+}
+.l4-over-card {
+  max-width: 22rem;
+  padding: 1.1rem 1.3rem;
+  border-radius: 1rem;
+  background: var(--panel);
+  border: 0.14rem solid #dc143c;
+  text-align: center;
+}
+.l4-over-card h2 {
+  margin: 0 0 0.4rem;
+  font-family: "Lilita One", sans-serif;
+  color: #dc143c;
+}
+.l4-over-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+/* my sprint: a thin dark mana-blue bar under my name, gone while it's full */
+.l4-sprint {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: calc(100% + 0.16rem);
+  height: 0.2rem;
+  border-radius: 1rem;
+  background: #0008;
+  overflow: hidden;
+  transition: opacity 0.3s;
+}
+.l4-sprint.full {
+  opacity: 0;
+}
+.l4-sprint i {
+  position: absolute;
+  inset: 0;
+  background: #2f5fd6;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--sp, 1));
+}
+.l4-sprint.tired i {
+  background: #24418c;
+}
+.gduck.l4-heal .gduck-body {
+  animation: l4-heal 1.4s ease-out;
+}
+@keyframes l4-heal {
+  0% {
+    filter: drop-shadow(0 0 0.5rem #5be35b) brightness(1.25);
+  }
+  100% {
+    filter: none;
+  }
+} /* (1 HP back: a green glow that fades) */
+/* the weapons bar: on a computer in the bottom bar's right corner, my HP under it */
+.l4bar {
+  --hk: clamp(1.9rem, 2.9vw, 2.8rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+.l4slots {
+  display: flex;
+  gap: 0.3rem;
+}
+.l4s {
+  position: relative;
+  width: var(--hk);
+  height: var(--hk);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 0.45rem;
+  border: 0.12rem solid color-mix(in srgb, var(--ink) 34%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+}
+.l4s i {
+  display: grid;
+  place-items: center;
+  width: 78%;
+  height: 78%;
+  font-style: normal;
+  font-size: calc(var(--hk) * 0.56);
+  line-height: 1;
+} /* (the pistol's icon is the specials' bar's emoji) */
+.l4s i svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+.l4s kbd {
+  position: absolute;
+  left: 0.12rem;
+  top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: calc(var(--hk) * 0.27);
+  line-height: 1.1;
+  color: var(--dim);
+}
+.l4s small {
+  position: absolute;
+  left: 50%;
+  bottom: -0.15rem;
+  transform: translateX(-50%) translateY(50%);
+  padding: 0 0.2rem;
+  border-radius: 0.4rem;
+  background: var(--panel);
+  font-size: calc(var(--hk) * 0.26);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.l4s.sel {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0.45rem 0.12rem
+    color-mix(in srgb, var(--yellow) 65%, transparent);
+}
+.l4s.empty i {
+  opacity: 0.35;
+}
+.l4s:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.l4hp {
+  display: flex;
+  gap: 0.18rem;
+  margin-top: 0.3rem;
+}
+.l4hp i {
+  width: 1.4rem;
+  height: 0.42rem;
+  border-radius: 0.2rem;
+  background: #0008;
+  box-shadow: inset 0 0 0 0.08rem #1fb85c88;
+}
+.l4hp i.on {
+  background: #1fb85c;
+}
+/* on a phone: a column of round buttons at the board's bottom right, the big Attack button under them */
+.l4pad {
+  display: none;
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 31200;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  --hk: 2.7rem;
+  touch-action: none;
+}
+.l4pad .l4s {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.l4pad .l4s small {
+  bottom: 0.05rem;
+}
+.l4pad .l4-attack {
+  --hk: 4.2rem;
+  border-color: #dc143c;
+  color: #ffd6dc;
+  background: color-mix(in srgb, #dc143c 35%, transparent);
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .l4bar {
+    display: none;
+  }
+  html:not(.keyboard) .l4pad {
+    display: flex;
+  }
+} /* (a phone or a tablet: the column on the board instead of the bar) */
+@media (max-width: 760px) {
+  .l4bar {
+    display: none;
+  }
+  .l4pad {
+    display: flex;
+  }
+}

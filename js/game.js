@@ -159,6 +159,9 @@ import {
   GRENADE_PIN,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
+import { isL4dd, HELD, L4, l4Hp, l4Down, ARMS } from "./l4ddrules.js";
+import { l4TouchAim } from "./l4dd.js";
+import { mountL4Bar } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import {
@@ -820,8 +823,8 @@ function drawDucks(now = clockNow()) {
       ...jaimes,
       ...(isMgj(s) && s.mgj && s.mgj.gj && s.pos[GOOD_ID] ? [GOOD_ID] : []),
       ...Object.keys(ghosts)
-        .filter((id) => s.players[id])
-        .map((id) => id + BODY),
+        .filter((id) => s.players[id] && !ghosts[id].l4)
+        .map((id) => id + BODY), // (Left 4 Dead Ducks' ghosts leave no body)
     ],
     lane = ids.filter((id) => posOf(id).x < 0);
   const boxes = [],
@@ -881,6 +884,7 @@ function drawDucks(now = clockNow()) {
     if (d._gho !== gho) {
       d._gho = gho;
       d.classList.toggle("ghost", !!ghost);
+      d.classList.toggle("grey", !!(ghost && ghost.l4)); // (Left 4 Dead Ducks: a ghost is grey too)
       d.style.setProperty("--gho", gho || 1);
     }
     const dead = deadNow(id, p),
@@ -930,14 +934,19 @@ function drawDucks(now = clockNow()) {
         (id === GOOD_ID
           ? s.mgj && s.mgj.gj && s.mgj.gj.down
           : (s.up || {})[id]),
-      dn = upAt > now && !mgjOut(s, id) ? upAt : 0; // (Good Justin God keeps his own time down; a duck out of HP has no meter: it's down until the fight ends)
+      l4dn = isL4dd(s) && !g ? l4Down(s, id) : 0,
+      dn = l4dn ? l4dn : upAt > now && !mgjOut(s, id) ? upAt : 0; // (Good Justin God keeps his own time down; a duck out of HP has no meter: it's down until the fight ends; Left 4 Dead Ducks: the time it has to be revived)
     if (d._dn !== dn) {
       d._dn = dn;
       d.classList.toggle("downed", !!dn);
       const m = dn && d.querySelector(".gduck-down i");
       if (m) {
         const all =
-          id === GOOD_ID ? MGJ_DOWN : Math.max(downFor(s), GET_UP_MIN);
+          id === GOOD_ID
+            ? MGJ_DOWN
+            : l4dn
+              ? L4.BLEED
+              : Math.max(downFor(s), GET_UP_MIN);
         m.style.animation = "none";
         void m.offsetWidth;
         m.style.animation = "";
@@ -947,25 +956,33 @@ function drawDucks(now = clockNow()) {
     }
     /* Mad God Justin's Player HP: a green bar behind the letters; the part a hit took turns red at once, then fades.
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
-    /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted */
-    const lost =
-        !isMgj(s) && !g && s.seat.includes(id) && !dead
+    /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
+       Left 4 Dead Ducks: its own 3 HP, always shown (down or a ghost, none) */
+    const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+      lost =
+        !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
           ? phpLost(s, id, now)
           : 0,
-      hpMax = isMgj(s)
-        ? !g && s.seat.includes(id) && s.phase === "boss"
-          ? mgjPHp(s)
-          : 0
-        : lost
-          ? PHP
-          : 0,
+      hpMax = l4
+        ? L4.HP
+        : isMgj(s)
+          ? !g && s.seat.includes(id) && s.phase === "boss"
+            ? mgjPHp(s)
+            : 0
+          : lost
+            ? PHP
+            : 0,
       hp = !hpMax
         ? -1
-        : isMgj(s)
-          ? s.mgj && !dead
-            ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+        : l4
+          ? !dead && l4Hp(s, id) > 0
+            ? l4Hp(s, id)
             : -1
-          : PHP - lost;
+          : isMgj(s)
+            ? s.mgj && !dead
+              ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+              : -1
+            : PHP - lost;
     if (d._hp !== hp) {
       const was = d._hp;
       d._hp = hp;
@@ -984,6 +1001,11 @@ function drawDucks(now = clockNow()) {
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
+          if (l4 && was >= 0 && hp > was) {
+            d.classList.remove("l4-heal");
+            void d.offsetWidth;
+            d.classList.add("l4-heal");
+          } // (Left 4 Dead Ducks: 1 HP back, a green glow that fades)
         }
       }
     }
@@ -1095,9 +1117,11 @@ function drawDucks(now = clockNow()) {
           (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
             ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
-            : mine
-              ? held && hasKey(p.duck, held) && held
-              : pos.w) || shown; // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
+            : isL4dd(s)
+              ? l4Hp(s, id) > 0 && (mine ? heldNow() : pos.w)
+              : mine
+                ? held && hasKey(p.duck, held) && held
+                : pos.w) || shown; // (Left 4 Dead Ducks: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     if (pos.dj && d._dj !== pos.dj) {
       d._dj = pos.dj;
@@ -1363,8 +1387,9 @@ function drawDucks(now = clockNow()) {
       st = sh && sh.t !== undefined ? Math.min(1, (now - sh.t) / 1000) : 1;
     let out = 0.42,
       turn = 0;
+    const jab = isL4dd(s) ? 0.125 : 0.25; // (Left 4 Dead Ducks: the knife swings twice as fast)
     if (w === "knife")
-      out = 0.44 + (st < 0.25 ? 0.26 * Math.sin((Math.PI * st) / 0.25) : 0);
+      out = 0.44 + (st < jab ? 0.26 * Math.sin((Math.PI * st) / jab) : 0);
     if (w === "hammer") {
       out = 0.55;
       turn =
@@ -2110,6 +2135,22 @@ function playFx(f) {
       sfx.swish();
       return;
     } // (Mad God Justin's throws: they fly from the room's state)
+    if (isL4dd(s) && ARMS[f.what]) {
+      shows[f.by] = {
+        what: f.what,
+        t: now,
+        until: now + (f.what === "knife" ? 350 : 700),
+        ax: f.ax || f.face || 1,
+        ay: f.ay || 0,
+      };
+      ({
+        handgun: sfx.bang,
+        bow: sfx.bow,
+        knife: sfx.swish,
+        grenade: sfx.swish,
+      })[f.what]?.();
+      return;
+    } // (Left 4 Dead Ducks: the weapon turns toward the aim; the shot flies from the room's state)
     if (f.what === "fireball") {
       sfx.fireball();
       return;
@@ -2357,6 +2398,8 @@ function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
   if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
+  if (R && isL4dd(R.state) && (!mouse || performance.now() - touchedAt < 4000))
+    return l4TouchAim(me) || [face, 0]; // (Left 4 Dead Ducks on a phone: at the nearest zombie in sight, or the way it walks)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];
@@ -2370,7 +2413,7 @@ function sendMove(force) {
   if (!me) return;
   const now = performance.now(),
     q = clockNow() - squash.t < 170 ? squash.q : "";
-  const w = held && hasKey(playDuck(), held) ? held : "",
+  const w = heldNow(),
     aim = w ? myAim() : null; // a weapon kept out: where it aims, roughly
   const hz =
     world && isHang(R.state)
@@ -2664,6 +2707,7 @@ function hangStep(dt, now) {
   for (let i = 0; i < ev.land; i++) countJump(); // (a double jump is two)
   if (ev.q) squash = { q: ev.q, t: now };
   if (ax) me.face = Math.sign(ax);
+  if (isL4dd(R.state)) me.aim = myAim(); // (Left 4 Dead Ducks: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
   sendMove(!!(ev.land || ev.thud || ev.force));
@@ -3315,24 +3359,36 @@ function recordRound(s) {
 
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the duck my keys play with: in Mad God Justin its own keys (my own keys stay as they are): 1 the knife, 2 the bow,
-   3 the medkit (once a game), 4 Jaime, 5 the weapon picked up, 6 the zebra cake */
+/* the duck my keys play with: in Left 4 Dead Ducks the knife, the pistol and the bow on 1, 2, 3; in Mad God Justin its
+   own keys: 1 the knife, 2 the bow, 3 the medkit (once a game), 4 Jaime, 5 the weapon picked up, 6 the zebra cake (my
+   own keys stay as they are) */
 const playDuck = () =>
-  R && isMgj(R.state)
-    ? {
-        ...myDuck(),
-        keys: [
-          "knife",
-          "bow",
-          kitUsed() ? null : "medkit",
-          "jaime",
-          specialById(myPick()) ? myPick() : null,
-          "zebra",
-          ...Array(4).fill(null),
-        ],
-      }
-    : myDuck();
+  R && isL4dd(R.state)
+    ? { ...myDuck(), keys: [...HELD, ...Array(7).fill(null)] }
+    : R && isMgj(R.state)
+      ? {
+          ...myDuck(),
+          keys: [
+            "knife",
+            "bow",
+            kitUsed() ? null : "medkit",
+            "jaime",
+            specialById(myPick()) ? myPick() : null,
+            "zebra",
+            ...Array(4).fill(null),
+          ],
+        }
+      : myDuck();
 const kitUsed = () => !!(R && R.state.mgj && (R.state.mgj.kits || {})[R.me]);
+/* the weapon in my duck's hand: the one kept out (Shift and its key); Left 4 Dead Ducks: always one of its three (the
+   knife at first), none while I'm down or a ghost */
+function heldNow() {
+  if (R && isL4dd(R.state)) {
+    if (!HELD.includes(held)) held = "knife";
+    return l4Hp(R.state, R.me) > 0 ? held : "";
+  }
+  return held && hasKey(playDuck(), held) ? held : "";
+}
 /* Mad God Justin: the weapon I picked up (one use), or none */
 const myPick = () =>
   (R && R.state.mgj && (R.state.mgj.held || {})[R.me]) || null;
@@ -3362,7 +3418,7 @@ function slidTap(i) {
 }
 /* phones: the weapon in the slider's middle, which the attack button uses (or null) */
 function padWeapon() {
-  const id = bar && bar.current();
+  const id = bar && bar.current && bar.current();
   if (!id || !R || !hasKey(playDuck(), id)) return null;
   if (isMgj(R.state))
     return R.state.phase === "boss" &&
@@ -3385,6 +3441,14 @@ function padAttack() {
 /* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
+  if (isL4dd(R.state)) {
+    if (HELD[i]) {
+      held = HELD[i];
+      sendMove(true);
+    } // (Left 4 Dead Ducks: 1, 2, 3 put the knife, the pistol or the bow in hand; a click uses it)
+    if (bar) bar.refresh();
+    return;
+  }
   if (bar) bar.show(i);
   if (isMgj(R.state)) {
     const id = keysOf(playDuck())[i];
@@ -4641,6 +4705,11 @@ function keydown(e) {
     if (!e.repeat && world) world.press();
     return;
   } // Duck Cabin: E uses what's near (sit, play, read …)
+  if (e.code === "KeyG" && isL4dd(R.state) && onBoardPhase()) {
+    e.preventDefault();
+    if (!e.repeat) fire("grenade");
+    return;
+  } // (Left 4 Dead Ducks: G throws a grenade toward the mouse)
   if (e.code === "KeyR" && !e.repeat && reload()) {
     e.preventDefault();
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
@@ -4649,7 +4718,7 @@ function keydown(e) {
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
     if (isMgj(R.state)) fire(held || "knife");
-    else if (held && hasKey(playDuck(), held)) fire(held);
+    else if (heldNow()) fire(heldNow());
     else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();
     return;
@@ -4827,6 +4896,35 @@ async function act(a) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
+const L4_HINTS =
+  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Revive";
+/* Left 4 Dead Ducks: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
+   the button stays down */
+let l4Fire = 0;
+function l4Press(e) {
+  if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
+    return;
+  if (
+    !onBoardPhase() ||
+    !e.target.closest(".board") ||
+    e.target.closest("button, a, input, textarea, .l4pad, .l4-over")
+  )
+    return;
+  const go = () => {
+    const w = heldNow();
+    if (w) fire(w);
+    l4Fire = setTimeout(go, Math.max(120, (ARMS[w] || {}).cool || 400));
+  };
+  clearTimeout(l4Fire);
+  go();
+  const stop = () => {
+    clearTimeout(l4Fire);
+    removeEventListener("pointerup", stop);
+    removeEventListener("blur", stop);
+  };
+  addEventListener("pointerup", stop);
+  addEventListener("blur", stop);
+}
 register("game", {
   guard: () => !!activeRoom(),
   exit() {
@@ -4900,46 +4998,67 @@ register("game", {
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(
       S,
-      isHang(R.state)
-        ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>E</kbd> Use")
-        : isMgj(R.state)
-          ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>Click</kbd> Stab")
-          : HINTS,
+      isL4dd(R.state)
+        ? L4_HINTS
+        : isHang(R.state)
+          ? HINTS.replace("<kbd>Enter</kbd> End turn", "<kbd>E</kbd> Use")
+          : isMgj(R.state)
+            ? HINTS.replace(
+                "<kbd>Enter</kbd> End turn",
+                "<kbd>Click</kbd> Stab",
+              )
+            : HINTS,
     );
     mbarOff = mountMusicBar(S);
     pm = mountPlayers(S, () => R);
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
-    bar = mountHotbar(S, {
-      keys: () => keysOf(playDuck()),
-      kept: keptNow,
-      use: useKey,
-      cool,
-      duck: playDuck,
-      ammo,
-      dots,
-      select: slidPick,
-      tap: slidTap,
-      current: () =>
-        R && isMgj(R.state) && R.state.phase === "boss" ? held : null,
-    });
-    pad = mountPad({
-      active: () =>
-        onBoardPhase() &&
-        !windowOpen() &&
-        !!me &&
-        !(R.state.players[R.me] || {}).dead,
-      weapon: padWeapon,
-      aim: (dx, dy) => {
-        keyAim =
-          dx == null
-            ? [(turned() ? 1 : (me && me.face) || 1) * 100, 0]
-            : [dx, dy];
-      },
-      attack: padAttack,
-      jump: () => jump(),
-    });
-    docks.corner(pad.el, bar.slider, bar.row); // (bottom right: the jump and attack buttons, and the slider in the middle, on phones; the row of keys on a computer)
+    if (isL4dd(R.state)) {
+      bar = mountL4Bar(S, {
+        state: () => R.state,
+        me: () => R.me,
+        held: heldNow,
+        pick: (w) => {
+          held = w;
+          sendMove(true);
+        },
+        fire: () => heldNow() && fire(heldNow()),
+        grenade: () => fire("grenade"),
+        flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
+      });
+      docks.corner(bar.row); // (Left 4 Dead Ducks: its own weapons bar; on a phone it stands on the board)
+    } else {
+      bar = mountHotbar(S, {
+        keys: () => keysOf(playDuck()),
+        kept: keptNow,
+        use: useKey,
+        cool,
+        duck: playDuck,
+        ammo,
+        dots,
+        select: slidPick,
+        tap: slidTap,
+        current: () =>
+          R && isMgj(R.state) && R.state.phase === "boss" ? held : null,
+      });
+      pad = mountPad({
+        active: () =>
+          onBoardPhase() &&
+          !windowOpen() &&
+          !!me &&
+          !(R.state.players[R.me] || {}).dead,
+        weapon: padWeapon,
+        aim: (dx, dy) => {
+          keyAim =
+            dx == null
+              ? [(turned() ? 1 : (me && me.face) || 1) * 100, 0]
+              : [dx, dy];
+        },
+        attack: padAttack,
+        jump: () => jump(),
+      });
+      docks.corner(pad.el, bar.slider, bar.row); // (bottom right: the jump and attack buttons, and the slider in the middle, on phones; the row of keys on a computer)
+    }
     addEventListener("mousemove", aimAt);
     touchOff = mountTouch(S, {
       active: () =>
@@ -4960,6 +5079,7 @@ register("game", {
       },
       true,
     );
+    S.addEventListener("pointerdown", l4Press);
     S.addEventListener("pointerdown", (e) => {
       if (e.target.closest(".wq-card.mine")) {
         e.preventDefault();
@@ -4974,6 +5094,11 @@ register("game", {
         else act(b.dataset.a);
         return;
       }
+      if (isL4dd(R.state) && e.target.closest(".board")) {
+        if (e.target.closest(".l4pad, .l4-over")) return;
+        if (performance.now() - touchedAt < 900) boardClick(e);
+        return;
+      } // (Left 4 Dead Ducks: the mouse button fires as it goes down, l4Down below; a tap walks)
       if (
         held &&
         (isMgj(R.state) || hasKey(playDuck(), held)) &&

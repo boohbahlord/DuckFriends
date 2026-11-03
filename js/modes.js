@@ -12,7 +12,8 @@
    Valentine's Duck Date: a random duck is The Date; the Suitors take turns on a date with them at the dining table, and
    after each turn The Date turns one down, until the last one left is their Valentine.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
-   guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby. */
+   guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby.
+   Left 4 Dead Ducks: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
 import { esc } from "./ui.js";
 
 export const MODES = [
@@ -71,8 +72,15 @@ export const MODES = [
     name: "Hangout",
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.",
   },
+  {
+    id: "l4dd",
+    cat: "cabin",
+    name: "Left 4 Dead Ducks",
+    tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last.",
+  },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
+export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
 
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
@@ -155,5 +163,10 @@ ${[
 <circle cx="25" cy="5" r="3" fill="#ffe9a8" stroke="#1c1c28" stroke-width="1"/><rect x="2" y="20" width="26" height="3" rx="1.5" fill="#37a046" stroke="#1c1c28" stroke-width="1"/>
 <path d="M4 21L15 3L26 21Z" fill="#a85a26" stroke="#1c1c28" stroke-width="1.2" stroke-linejoin="round"/><path d="M8.5 21L15 9.5L21.5 21Z" fill="#6e3a17" stroke="#1c1c28" stroke-width="1"/>
 <rect x="12.6" y="14" width="4.8" height="7" rx="1" fill="#ffd23f" stroke="#1c1c28" stroke-width="1"/></svg>`;
+  if (m.id === "l4dd")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<ellipse cx="14" cy="14.4" rx="10.6" ry="8.6" fill="#3f7a34" stroke="#1c1c28" stroke-width="1.2"/><path d="M23.6 14.6l5 1.2-5 2.4z" fill="#b06a1e" stroke="#1c1c28" stroke-width=".9" stroke-linejoin="round"/>
+<path d="M16 9.6l3.6 3.6M19.6 9.6L16 13.2" stroke="#1c1c28" stroke-width="1.5" stroke-linecap="round"/><path d="M8.4 18.4c2.4 1.4 5.6 1.4 8 .2" stroke="#1c1c28" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+<path d="M3 3.4l3.4 4.2M6.6 2.4l.4 4.6M1.6 7.4l4 1.4" stroke="#c0182b" stroke-width="1.3" stroke-linecap="round"/></svg>`;
   return ""; // (Agree or Disagree's symbol is art.js's symbolSVG)
 }

@@ -2,15 +2,15 @@
    rules.js calls these: hangStart as the countdown ends, hangAction for a 'hang' action (k picks the activity's rule in
    registry.js), hangTick on the host's heartbeat, hangJoin and hangLeft as players come and go. Everyone starts (and a
    newcomer arrives) outside the front door. */
-import { RULES } from "./registry.js";
+import { rulesOf } from "./registry.js";
 import { isGhost } from "./death.js";
 import { spawnAt, deckSpawnAt, heightAt, W, H } from "./layout.js";
 import "./activities.js";
 
-/* s.hang when the cabin opens: each activity's fields */
-export function newHang() {
+/* s.hang when the cabin opens: each activity's fields (the ones the room's mode runs) */
+export function newHang(s) {
   const h = {};
-  for (const r of RULES.values()) if (r.init) Object.assign(h, r.init());
+  for (const [, r] of rulesOf(s)) if (r.init) Object.assign(h, r.init(s));
   return h;
 }
 const spot = (k) => {
@@ -23,16 +23,17 @@ const spot = (k) => {
     b: 0,
   };
 };
-export function hangStart(s) {
-  s.hang = newHang();
+export function hangStart(s, now) {
+  s.hang = newHang(s);
   s.pos = {};
   s.lock = {};
   s.seat.forEach((id, k) => {
     s.pos[id] = spot(k);
   });
+  for (const [, r] of rulesOf(s)) r.start?.(s, now); // (a mode of its own sets everyone up its way: Left 4 Dead Ducks)
 }
 export function hangJoin(s, id) {
-  if (!s.hang) s.hang = newHang();
+  if (!s.hang) s.hang = newHang(s);
   const taken = Object.values(s.pos || {});
   let k = 0; // a joiner: the first free spot (nobody standing on it)
   while (
@@ -44,31 +45,31 @@ export function hangJoin(s, id) {
   )
     k++;
   s.pos[id] = spot(k);
-  for (const r of RULES.values()) r.join?.(s, id);
+  for (const [, r] of rulesOf(s)) r.join?.(s, id);
 }
 export function hangLeft(s, id) {
-  if (s.hang) for (const r of RULES.values()) r.left?.(s, id);
+  if (s.hang) for (const [, r] of rulesOf(s)) r.left?.(s, id);
 }
 /* a player's action: true when s.hang changed */
 export function hangAction(s, a, now) {
-  const r = RULES.get(String(a.k));
+  const r = new Map(rulesOf(s)).get(String(a.k));
   if (!r || !r.act) return false;
-  if (a.k !== "ghost" && isGhost(s, a.id)) return false; // (a ghost can't use anything)
-  if (!s.hang) s.hang = newHang();
+  if (a.k !== "ghost" && !r.ghosts && isGhost(s, a.id)) return false; // (a ghost can't use anything; a rule with ghosts: true hears them too)
+  if (!s.hang) s.hang = newHang(s);
   return !!r.act(s, a, now);
 }
 /* the host's heartbeat: true when s.hang changed */
 export function hangTick(s, now) {
   if (!s.hang) return false;
   let ch = false;
-  for (const r of RULES.values()) if (r.tick && r.tick(s, now)) ch = true;
+  for (const [, r] of rulesOf(s)) if (r.tick && r.tick(s, now)) ch = true;
   return ch;
 }
 /* what a bullet or a dagger can knock down besides the players (Justin): [{ id, x, y, z }] in world px */
 export function hangTargets(s, now) {
   const out = [];
   if (s.hang)
-    for (const r of RULES.values())
+    for (const [, r] of rulesOf(s))
       if (r.targets) out.push(...r.targets(s, now));
   return out;
 }
@@ -76,7 +77,7 @@ export function hangTargets(s, now) {
 export function hangHit(s, id, by, now) {
   let ch = false;
   if (s.hang)
-    for (const r of RULES.values())
+    for (const [, r] of rulesOf(s))
       if (r.hit && r.hit(s, id, by, now)) ch = true;
   return ch;
 }
