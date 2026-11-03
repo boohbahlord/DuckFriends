@@ -3179,3 +3179,9 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 > Rename "Left 4 Dead Ducks" simply to "Quacky Zombies"
 
 - Pharaoh renames it in PR #195 (every word players see; code names like l4dd stay).
+
+## 2026-11-03 08:03Z: Democracy of Ducklings, when the game starts (word for word)
+> the game only starts in the ready only when 2/3rds of ducks are ready.
+
+- Adam: with Host must ready on (or after the host readied during a vote), the game starts once 2 of 3 of the ducks are
+  ready (dodNeed, the same share as a vote), not every duck.

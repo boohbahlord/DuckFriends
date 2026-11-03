@@ -2213,13 +2213,13 @@ function dodSettle(s, now) {
   }
   return changed;
 }
-/* the game starts by itself once every duck is ready, the host too: with Host must ready on, or after the host readied
-   during a vote */
+/* the game starts by itself once 2 of 3 of the ducks are ready (owner 2026-11-03 08:03Z): with Host must ready on, or
+   after the host readied during a vote */
 const dodStarts = (s) =>
   s.phase === "lobby" &&
   !dodVoting(s) &&
   (dodOn(s, "ready") || !!(s.players[s.hostId] || {}).ready) &&
-  humanIds(s).every((id) => s.players[id].ready);
+  humanIds(s).filter((id) => s.players[id].ready).length >= dodNeed(s, "ready");
 export const groupsOf = (s, id) => {
   const out =
     id === s.hostId || (dodOn(s, "sudo") && s.players[id] && !s.players[id].bot)

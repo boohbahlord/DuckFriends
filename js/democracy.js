@@ -16,7 +16,7 @@ import { now } from "./clock.js";
 /* what each rule does, as the preview says it */
 export const DOD_TEXT = {
   ready:
-    "The host can't start the game and readies like everyone else. The game starts once every duck is ready.",
+    "The host can't start the game and readies like everyone else. The game starts once 2 of 3 of the ducks are ready.",
   maps: "The map is always picked by Vote Maps. (Duck Cabin's games always play on Duck Cabin.)",
   modes: "The game mode is always picked by Vote Game Mode.",
   settings: "Every duck can change the game settings, not only the host.",
