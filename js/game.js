@@ -1358,7 +1358,9 @@ function drawDucks(now = clockNow()) {
       h.el.style.visibility = world.hidden(h.id, pos) ? "hidden" : "";
       withDuck(h.el, h.id, pos);
     }
-    h.el.style.transform = `translate(${(at.left + size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
+    const hd = layer.querySelector(`[data-pid="${h.id}"]`),
+      side = (hd && hd._face) || 1; // (the hotdog is at the beak of the way the duck faces)
+    h.el.style.transform = `translate(${(at.left + side * size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
     h.el.classList.toggle("going", now > h.until - 900);
   }
   follows = follows.filter((f) => {
@@ -1376,7 +1378,11 @@ function drawDucks(now = clockNow()) {
       f.el.style.visibility = world.hidden(f.id, pos) ? "hidden" : "";
       withDuck(f.el, f.id, pos);
     }
-    const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
+    /* I want the item to turn with its duck: it was drawn for the way the duck faced when it began, so a duck that now
+       faces the other way flips it (and the way it sits at the beak) */
+    const dk = layer.querySelector(`[data-pid="${f.id}"]`),
+      turn = (dk && dk._face ? dk._face : f.face) * f.face;
+    const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px) scaleX(${turn})`;
     if (f.el._tr !== tr) {
       f.el._tr = tr;
       f.el.style.transform = tr;
@@ -1960,7 +1966,7 @@ function playFx(f) {
       ...pressFX(f.what, 0, 0, size, f.face || 1, (s.players[f.by] || {}).duck),
     );
     fxl.append(wrap);
-    follows.push({ id: f.by, el: wrap, until: now + 2200 });
+    follows.push({ id: f.by, el: wrap, until: now + 2200, face: f.face || 1 });
     ({
       coffee: sfx.sip,
       hotdog: sfx.chomp,
