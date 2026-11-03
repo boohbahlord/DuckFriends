@@ -176,7 +176,7 @@ import {
   inHand,
   BURN,
 } from "./l4ddrules.js";
-import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
+import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { l4TouchAim, l4Held } from "./l4dd.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -1479,6 +1479,20 @@ function drawDucks(now = clockNow()) {
       h._tr = tr;
       h.style.transform = tr;
     }
+    if (w === "chaingun") {
+      // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
+      const wd = size * GUNS.chaingun.w,
+        along = size * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
+        down =
+          ((wd * TRACE.box[1]) / TRACE.box[0]) *
+          (TRACE.tip[1] / TRACE.box[1] - 0.5) *
+          (left ? -1 : 1);
+      h._tip = [
+        c.left + Math.cos(rot) * along - Math.sin(rot) * down,
+        c.top + Math.sin(rot) * along + Math.cos(rot) * down,
+        rot,
+      ];
+    }
     h.classList.toggle(
       "thrown-now",
       (w === "dagger" || w === "grenade") && !!sh && now < sh.until - 500,
@@ -2397,16 +2411,41 @@ function playFx(f) {
     setTimeout(() => n.remove(), 1200);
     sfx.pop();
   } else if (f.kind === "l4line") {
-    // the chain gun's shot: a thin yellow line from the barrel to what it hit, flashing in and out
+    /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
+       hit, and one or two shorter ones pointing a little off to the sides */
     if (!geo.hang) return;
     const a = world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
       b = world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41,
-      n = el(
-        `<div class="l4-line" style="left:${a.left.toFixed(1)}px;top:${(a.top - up).toFixed(1)}px;width:${Math.hypot(b.left - a.left, b.top - a.top).toFixed(1)}px;transform:rotate(${Math.atan2(b.top - a.top, b.left - a.left).toFixed(3)}rad);--c:${TRACE.color};--g:${TRACE.glow};--ms:${TRACE.ms}ms"></div>`,
+      gun = fxl.querySelector(
+        `.held[data-pid="${CSS.escape(f.by)}"][data-w="chaingun"]`,
+      ),
+      [x0, y0, aim] = (gun && gun._tip) || [
+        a.left,
+        a.top - up,
+        Math.atan2(b.top - a.top, b.left - a.left),
+      ];
+    let ang = Math.atan2(b.top - up - y0, b.left - x0),
+      far = Math.hypot(b.left - x0, b.top - up - y0);
+    if (Math.cos(ang - aim) < 0.5) {
+      // (what it hit is beside the barrel or behind its end: the lines still only go forward)
+      ang = aim;
+      far = size * 0.8;
+    }
+    const line = (turn, long, wait) => {
+      const n = el(
+        `<div class="l4-line" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${TRACE.color};--g:${TRACE.glow};--ms:${TRACE.ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
       );
-    fxl.append(n);
-    setTimeout(() => n.remove(), TRACE.ms + 40);
+      fxl.append(n);
+      setTimeout(() => n.remove(), TRACE.ms + wait + 40);
+    };
+    line(0, far, 0);
+    for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
+      line(
+        (Math.random() - 0.5) * TRACE.spread,
+        far * (0.25 + Math.random() * 0.5),
+        Math.random() * 30,
+      );
   } else if (f.kind === "l4bite") {
     sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "jaime") {

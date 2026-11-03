@@ -3286,3 +3286,13 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
   - Guesses (no number from the owner): the bullets' speeds, the reload times (sniper 2.2 s, SMG 1.4, AK 1.9, revolver 1.7, LMG 2.8), the sniper's headshot 5% (as the pistol's), full-auto fire rates (SMG 12.5 a second, AK 9, LMG 10), the launcher's grenade flies straight up to 760 px and goes off on the first zombie it touches, the zebra cake reaches zombies within 700 px and the first one there eats it in one bite, the chain gun's line stops at the first zombie (it doesn't go through), the fireball's zombie takes its first 1 as it's lit (2 in all), Jaime stays 12 s (as the Jaime special) and the zombies leave him be.
   - Spent specials (zebra cake, fireball, adrenaline) stay in the slot at 0 for Stage 4's ammo refills; the medkit still empties its slot.
 - Tested: every weapon in Chromium and Firefox, phone and computer (tools/l4dd-art.html shows the art); online with 2 (player 2's sniper, chain gun, fireball and Jaime seen on both screens); the computers play with them; the full-auto sound `sfx.tat` 0 clicks, 0 clipped.
+
+## 2026-11-03 17:55Z: Quacky Zombies, the chain gun's lines and fire rate (word for word)
+> the chain gun can have the thin yellow line kinda pop in and out quickly and in different areas in front of the gun, but make sure it only comes out of the end of the gun.
+>
+>
+> You can make the chain gun 15 shots a second actually
+
+- Solomon the 2nd (on Stage 3's PR #205): the chain gun fires 15 a second (cool 67 ms; 60 shots now last 4 s). Each
+  shot's line starts at the barrel's tip as drawn on screen; besides the line to what it hit, one or two shorter
+  lines pop in and out at slightly different angles in front of the gun (only what the main line touches is hit).

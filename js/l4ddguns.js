@@ -175,4 +175,11 @@ export const ROUNDS_ART = {
   },
 };
 /* the chain gun's shots: thin yellow lines from the barrel out to what each hit, flashing in and out */
-export const TRACE = { color: "#ffe066", glow: "#ffb347", ms: 110 };
+export const TRACE = {
+  color: "#ffe066",
+  glow: "#ffb347",
+  ms: 70, // each line's flash, in and out
+  tip: [69.6, 13.4], // the barrel's end in the chain gun's drawing (viewBox 72 by 32)
+  box: [72, 32],
+  spread: 0.24, // radians: how far apart the extra lines can point
+};

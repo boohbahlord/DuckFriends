@@ -125,7 +125,7 @@ export const ARMS = {
   medkit: { kind: "special", cool: 600, all: 1 },
   grenade: { kind: "grenade", cool: 900, far: 300, r: 140, start: 2, most: 3 },
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
-     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun hits at once
+     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
      (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its
      cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
      kill every zombie in their blast. Where the owner gave no number (the speeds, the reloads, the sniper's headshot)
@@ -169,7 +169,7 @@ export const ARMS = {
   chaingun: {
     kind: "ranged",
     auto: true,
-    cool: 200,
+    cool: 67, // (15 a second)
     dmg: 99,
     all: 60,
     far: 3000,

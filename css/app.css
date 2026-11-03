@@ -12711,7 +12711,7 @@ html.moving .eye-zap {
   transform-origin: 0 50%;
   pointer-events: none;
   z-index: 7;
-  animation: l4-flash var(--ms) ease-out forwards;
+  animation: l4-flash var(--ms) ease-out both;
 }
 @keyframes l4-flash {
   0% {
