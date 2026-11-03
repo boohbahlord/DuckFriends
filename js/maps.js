@@ -53,6 +53,11 @@ export const MAPS = [
     "Ether's Crossroads",
     "The jester's dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it's played.",
   ],
+  [
+    "tiles",
+    "Tiles",
+    "A pure black and white checkerboard: 8 tiles across on a computer, 5 on a phone.",
+  ],
 ];
 export const mapName = (id) =>
   id === "cabin" ? "Duck Cabin" : (MAPS.find((m) => m[0] === id) || MAPS[0])[1];
@@ -66,6 +71,7 @@ export function mapMini(id) {
   if (id === "carnival")
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
+  if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
     return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${artBackdrop("cabin")}</svg></div>`;
@@ -1055,6 +1061,13 @@ function fireworks(sc, colors) {
 /* puts a map's world over the whole page (the page's own background rests meanwhile); returns { update(now), board(el),
    destroy() }: board() hands it the board, whose columns turn see-through for the map */
 /* the maps' scenes on their own, for a small screen (Duck Cabin's TV): scene(layer) → { update(now), destroy() } */
+/* Tiles: nothing but a pure black and white checkerboard (the squares are drawn by css/app.css) */
+function tilesScene(layer) {
+  const sc = document.createElement("div");
+  sc.className = "scene tiles";
+  layer.append(sc);
+  return { update() {}, destroy: () => sc.remove() };
+}
 export const SCENES = {
   board: nightScene,
   rabbit: rabbitScene,
@@ -1074,15 +1087,17 @@ export function mountMap(layer, s) {
         ? pixelScene(layer)
         : map === "ec"
           ? ecScene(layer)
-          : map === "carnival"
-            ? carnivalScene(layer)
-            : map === "rabbit"
-              ? rabbitScene(layer)
-              : map === "stars"
-                ? starsScene(layer)
-                : map === "cabin"
-                  ? cabinScene(layer)
-                  : nightScene(layer);
+          : map === "tiles"
+            ? tilesScene(layer)
+            : map === "carnival"
+              ? carnivalScene(layer)
+              : map === "rabbit"
+                ? rabbitScene(layer)
+                : map === "stars"
+                  ? starsScene(layer)
+                  : map === "cabin"
+                    ? cabinScene(layer)
+                    : nightScene(layer);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"

@@ -4110,6 +4110,21 @@ html.moving .pix-sun {
     0.7rem -0.4rem 0 -0.1rem #fff,
     -0.5rem -0.25rem 0 -0.2rem #fff;
 }
+/* Tiles: a pure black and white checkerboard, 8 squares across on a computer and 5 on a phone */
+.scene.tiles {
+  --n: 8;
+  background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
+    calc(200cqw / var(--n)) calc(200cqw / var(--n));
+}
+@media (max-width: 700px) {
+  .scene.tiles {
+    --n: 5;
+  }
+}
+.mm-tiles {
+  background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0 /
+    3rem 3rem;
+}
 .mm-pixel {
   background: linear-gradient(
     #24245f,
@@ -6868,6 +6883,9 @@ html.still .spe-bone .bone-slide {
 }
 .map-pixel {
   --board-a: 38%;
+}
+.map-tiles {
+  --board-a: 62%;
 }
 .map-ec {
   --board-a: 42%;
