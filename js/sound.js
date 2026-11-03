@@ -197,6 +197,13 @@ export const sfx = {
     tone(660, 0.09, { gain: 0.14 });
     tone(990, 0.14, { gain: 0.12, at: 0.08 });
   },
+  /* Democracy of Ducklings: a vote is up. A soft bell: a high sine that rings out, a quiet low one under it and a
+     bell's off partial on top that fades first */
+  bell() {
+    tone(1319, 0.9, { type: "sine", gain: 0.07, attack: 0.006 }); // E6
+    tone(659, 0.7, { type: "sine", gain: 0.03, attack: 0.01 });
+    tone(1319 * 2.76, 0.3, { type: "sine", gain: 0.01, attack: 0.006 });
+  },
   /* the silly commands; the lightning is kept soft */
   /* the E specials */
   sip() {
@@ -562,6 +569,12 @@ export const sfx = {
     o.start(t);
     o.stop(t + sec + 0.012 * 7);
   },
+  /* Quacky Zombies: something that can't be done (not enough points, no ranged weapon in hand to swap): two low
+     notes going down */
+  nope() {
+    tone(220, 0.13, { type: "triangle", gain: 0.17, attack: 0.012 });
+    tone(165, 0.2, { type: "triangle", gain: 0.17, attack: 0.014, at: 0.15 });
+  }, // (no square wave under it: its edges crackled in the click finder)
   bonk() {
     tone(330, 0.18, { type: "triangle", gain: 0.14, slide: 0.5 });
     noise(0.08, { gain: 0.05, freq: 900 });

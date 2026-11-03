@@ -1,6 +1,7 @@
 <!doctype html>
 <meta charset="utf-8" />
-<title>Left 4 Dead Ducks art</title>
+<title>Quacky Zombies art</title>
+<link rel="stylesheet" href="../css/app.css" />
 <style>
   body {
     background: #12131c;
@@ -61,10 +62,21 @@
     Weapons bar: the flashlight, on and off; the mode's picture in the lobby
   </h2>
   <div class="row" id="i"></div>
+  <h2>Weapons as orbs, in their slot's color (the fireplace shows them)</h2>
+  <div class="row" id="o"></div>
+  <h2>Justin's Butler's upgrades</h2>
+  <div class="row" id="u"></div>
   <script type="module">
     import { duckSVG } from "../js/duck.js";
-    import { zombieURL, CANDLE, boardsSVG, ICONS } from "../js/l4ddart.js";
-    import { OPENINGS } from "../js/l4ddrules.js";
+    import {
+      zombieURL,
+      CANDLE,
+      boardsSVG,
+      ICONS,
+      orbHTML,
+      UP_ICONS,
+    } from "../js/l4ddart.js";
+    import { OPENINGS, POOL, SHOP, weaponName } from "../js/l4ddrules.js";
     import { modeSymbol } from "../js/modes.js";
 
     const fig = (html, cap, cls = "floor") =>
@@ -115,5 +127,15 @@
         "the mode",
         "floor wall",
       );
+    o.innerHTML = [...POOL, "grenade"]
+      .map((w) => fig(orbHTML(w), weaponName(w), "floor wall"))
+      .join("");
+    u.innerHTML = SHOP.map((it) =>
+      fig(
+        `<div style="width: 48px; height: 48px">${UP_ICONS[it.id]}</div>`,
+        it.name,
+        "floor wall",
+      ),
+    ).join("");
   </script>
 </body>

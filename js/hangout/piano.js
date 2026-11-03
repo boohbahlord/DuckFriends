@@ -25,6 +25,7 @@ import { pianoBody, useHangArtCSS } from "./art.js";
 import { music } from "../music.js";
 import { now as clockNow } from "../clock.js";
 import { profile } from "../store.js";
+import { touchOnly } from "../pointer.js";
 
 const BODY = PROPS.find((p) => p.kind === "piano");
 const WHITE = [0, 2, 4, 5, 7, 9, 11],
@@ -38,7 +39,7 @@ const WHITE = [0, 2, 4, 5, 7, 9, 11],
 const BACK_MS = 10000; // the music comes back this long after the last player gets up
 const BATCH_MS = 110; // my notes wait this long at most before they go to the room
 const KEEP_MS = 4000; // the room keeps a batch of notes this long
-const COARSE = matchMedia("(hover: none) and (pointer: coarse)").matches;
+const COARSE = touchOnly();
 
 /* ---------- the bench: six spots in front of the keyboard, the middle ones first ---------- */
 const SPOTS = [2, 3, 1, 4, 0, 5].map((i) => ({

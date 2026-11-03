@@ -13,74 +13,92 @@
    after each turn The Date turns one down, until the last one left is their Valentine.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby.
-   Left 4 Dead Ducks: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
+   Quacky Zombies: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
 import { esc } from "./ui.js";
 
 export const MODES = [
   {
     id: "aod",
+    cat: "social",
     name: "Agree or Disagree",
     tip: "Everyone writes a statement; for each one, walk to how much you agree, then talk it over.",
   },
   {
     id: "wyr",
+    cat: "social",
     name: "Would You Rather",
     tip: 'Everyone writes a "would you rather" with two choices, in secret; for each one, walk to the side you\'d pick.',
   },
   {
     id: "ddr",
+    cat: "social",
     name: "Does Duck Relate?",
     tip: "Everyone writes something relatable; for each one, walk to Duck Does Relate or Duck Doesn't Relate, then talk it over.",
   },
   {
     id: "bb",
+    cat: "comp",
     name: "Bicker Brackets",
     tip: "A tournament: pick a topic, write the contenders together, then walk onto the one you back, match by match, until one is the champion.",
   },
   {
     id: "sc",
+    cat: "social",
     name: "Story Chain",
     tip: "Write a story together, one line each, each with someone else's secret word sneaked in; then walk onto your favorite line and your favorite word.",
   },
   {
     id: "quack",
+    cat: "comp",
     name: "Who is the Quack?",
     tip: "Everyone's Secret Card has the same word except the Quack's. Give clues, then walk onto the duck you think is faking it. 3 players or more.",
   },
   {
     id: "law",
+    cat: "comp",
     name: "Lawyering; Juryful of Ducklings",
     tip: "Everyone writes a topic in secret; for each one, two players argue it out and everyone else walks to whoever convinced them. 3 players or more.",
   },
   {
     id: "dunce",
+    cat: "comp",
     name: "Duncelation",
     tip: "Everyone writes a controversial take; defend the one you get while everyone else walks to Dunce or Not a Dunce. 3 players or more.",
   },
   {
     id: "mgj",
+    cat: "special",
     name: "Mad God Justin",
     tip: "A boss fight: everyone gets a knife, and together you have to stab Justin down to 0 HP before the timer runs out. He shoots back.",
   },
   {
     id: "vdd",
+    cat: "comp",
     name: "Valentine's Duck Date",
     tip: "A random duck is The Date. Each Suitor gets a date at the dining table, then The Date turns one down, until one is left: the Valentine. 3 players or more.",
   },
   {
     id: "hang",
+    cat: "cabin",
     name: "Hangout",
     tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.",
   },
   {
     id: "l4dd",
     cat: "cabin",
-    name: "Left 4 Dead Ducks",
+    name: "Quacky Zombies",
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last.",
   },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
+/* the four kinds of game on the Game Settings screen's Game mode page (Cabin: Duck Cabin's own games) */
+export const CATS = [
+  ["social", "Social"],
+  ["comp", "Social Competitive"],
+  ["cabin", "Cabin"],
+  ["special", "Special"],
+];
 
 /* each mode's little symbol: Agree or Disagree's colored bars; Would You Rather's two tiles with OR between; Does Duck
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined

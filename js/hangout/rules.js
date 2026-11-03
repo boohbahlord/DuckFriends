@@ -30,7 +30,7 @@ export function hangStart(s, now) {
   s.seat.forEach((id, k) => {
     s.pos[id] = spot(k);
   });
-  for (const [, r] of rulesOf(s)) r.start?.(s, now); // (a mode of its own sets everyone up its way: Left 4 Dead Ducks)
+  for (const [, r] of rulesOf(s)) r.start?.(s, now); // (a mode of its own sets everyone up its way: Quacky Zombies)
 }
 export function hangJoin(s, id) {
   if (!s.hang) s.hang = newHang(s);
@@ -65,12 +65,13 @@ export function hangTick(s, now) {
   for (const [, r] of rulesOf(s)) if (r.tick && r.tick(s, now)) ch = true;
   return ch;
 }
-/* what a bullet or a dagger can knock down besides the players (Justin): [{ id, x, y, z }] in world px */
-export function hangTargets(s, now) {
+/* what a bullet or a dagger can knock down besides the players (Justin; a thrown chair, the shadow duck too):
+   [{ id, x, y, z }] in world px. k: what hits (a shot's k, or the weapon) */
+export function hangTargets(s, now, k) {
   const out = [];
   if (s.hang)
     for (const [, r] of rulesOf(s))
-      if (r.targets) out.push(...r.targets(s, now));
+      if (r.targets) out.push(...r.targets(s, now, k));
   return out;
 }
 /* one of them was hit by player `by`: true when s.hang changed */

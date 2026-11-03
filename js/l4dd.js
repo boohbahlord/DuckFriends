@@ -1,11 +1,14 @@
-/* ---------- Left 4 Dead Ducks on every screen ----------
+/* ---------- Quacky Zombies on every screen ----------
    Duck Cabin's world draws it (an activity that runs only in this mode, registry.js): the zombies where the host says
    (gliding between its heartbeats), their thin HP bars, a red blink when hit, the claw's swipe, lying down and fading
    when they die; the boards over the openings; the extra candles; the dark over everything (the power is cut) with the
    fires, the candles and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
-   at the top; the end. Hold E by a downed duck to revive it, or by an opening to board it up; key 0 switches my
-   flashlight. My duck walks at half speed and has 7 seconds of sprint (a thin blue bar under my name). The rules are
-   the host's (l4ddrules.js); the weapons bar is l4ddbar.js. */
+   at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
+   by an opening to board it up; key 0 switches my flashlight. Justin's Butler stands by the card table: E by him opens
+   his shop. E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
+   it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
+   speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
+   (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { activity } from "./hangout/registry.js";
 import {
   CABIN,
@@ -20,9 +23,29 @@ import {
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
+import { butlerSVG } from "./hangout/npcart.js";
+import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { nameHTML } from "./name.js";
-import { L4, OPENINGS, playable, zombiesOf, startSpot } from "./l4ddrules.js";
+import { sfx } from "./sound.js";
+import { now as clockNow } from "./clock.js";
+import {
+  L4,
+  OPENINGS,
+  playable,
+  zombiesOf,
+  startSpot,
+  SHOP,
+  priceOf,
+  upOf,
+  ptsOf,
+  slotsOf,
+  BUTLER,
+  BOX,
+  POOL,
+  boxNow,
+  weaponName,
+} from "./l4ddrules.js";
 import {
   zombieURL,
   zombieBox,
@@ -30,12 +53,14 @@ import {
   CANDLE_BOX,
   boardsSVG,
   boardsBox,
+  orbHTML,
+  UP_ICONS,
 } from "./l4ddart.js";
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
-const SPEED = 0.5; // my duck at half of Duck Cabin's walk (the owner's)
-const DARK = 0.93; // how dark the dark is
+const SPEED = 0.6; // my duck at 60% of Duck Cabin's walk: I wanted it 20% faster than the half it was (sprint and the zombies go from it)
+const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 const CANDLE_LIGHT = { r: 190, k: 0.62, flick: 1 };
@@ -50,6 +75,12 @@ const MOON = Object.fromEntries(
   }),
 );
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
+const BUTLER_NAME = "Justin's Butler";
+const NEAR = 130; // world px: how near E works at the Butler and the fireplace
+const AWAY = 260; // walked this far off: his shop closes
+/* the weapon in my hand (game.js tells me how to ask) */
+let heldFn = () => "";
+export const l4Held = (f) => (heldFn = f);
 const up = (s, id) => {
   const p = P4(s, id);
   return !!p && !p.dn && !p.gh;
@@ -130,6 +161,17 @@ let layer = null,
   walkDir = [1, 0],
   lastXY = null,
   drawn = "";
+/* the Butler, the fireplace's weapon, my points, the big words, his shop */
+let butler = null,
+  boxEl = null,
+  ptsEl = null,
+  sayEl = null,
+  shop = null,
+  ptsShown = -1,
+  boxSig = "",
+  boxSpun = false,
+  upSig = "",
+  slotSig = "";
 
 const LIT = {
   in: LIGHTS.filter((l) => l.only === "in" && !l.el),
@@ -344,6 +386,16 @@ function paint(now, ctx) {
         0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
       ]);
   }
+  /* Justin's Butler stands in a little light, and the fireplace's weapon glows while it's out */
+  if (Wd.inside) {
+    const p = Wd.toScreen(BUTLER.x, BUTLER.y, 30);
+    if (on(p.left * q, p.top * q, 100 * sc))
+      holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    if (boxNow(s, clockNow())) {
+      const o = Wd.toScreen(BOX.x, 706, 58);
+      holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
+    }
+  }
   /* every duck: a faint glow round it, and its flashlight (not a ghost's, not a downed duck's, not one switched off) */
   const off = s.hang.l4f || {},
     rays = low() ? 12 : 22;
@@ -423,7 +475,186 @@ function paint(now, ctx) {
   g.globalCompositeOperation = "source-over";
 }
 
-/* ---------- holding E: reviving a downed duck, boarding up an opening ---------- */
+/* ---------- Justin's Butler, standing by the card table ---------- */
+function butlerEl() {
+  const svg = butlerSVG({ size: 64 }),
+    v = svg
+      .match(/viewBox="([^"]+)"/)[1]
+      .split(" ")
+      .map(Number),
+    h = (64 * v[3]) / v[2],
+    feet = (64 * (v[3] - 10)) / v[2],
+    el = document.createElement("div");
+  el.className = "hang-npc duck l4-butler";
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${svgDataURL(svg)}"></div><span class="gduck-name hang-npc-name">${nameHTML(BUTLER_NAME)}</span>`;
+  const body = el.firstChild;
+  body.style.width = "64px";
+  body.style.height = h.toFixed(1) + "px";
+  body.style.left = "-32px";
+  body.style.top = (-feet).toFixed(1) + "px";
+  body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
+  layer.append(el);
+  return { el, body };
+}
+
+/* ---------- the fireplace's weapon ---------- */
+/* what it shows at `now`: flickering through the weapons, fast and then slower (the same on every screen), until it
+   lands on the one the host picked; [weapon, landed] */
+const FLICKS = 30;
+function boxShows(b, now) {
+  const u = (now - b.t) / BOX.spin;
+  if (u >= 1) return [b.w, true];
+  const f = Math.floor(FLICKS * (1 - Math.pow(1 - Math.max(0, u), 2)));
+  return [POOL[(b.t + f) % POOL.length], false];
+}
+function drawBox(ctx) {
+  const s = ctx.state(),
+    now = clockNow(),
+    b = boxNow(s, now),
+    Wd = ctx.world;
+  if (!b || !Wd.inside) {
+    if (!boxEl.hidden) boxEl.hidden = true;
+    if (!b) {
+      boxSig = "";
+      boxSpun = false;
+    }
+    return;
+  }
+  const [w, landed] = boxShows(b, now),
+    sig = w + (landed ? "!" : "") + b.t;
+  if (sig !== boxSig) {
+    const first = !boxSig;
+    boxSig = sig;
+    boxEl.querySelector(".l4-box-orb").innerHTML = orbHTML(w);
+    const me = ctx.duck(),
+      close =
+        me && Math.hypot(me.x * W - BOX.x, me.y * H - BOX.y) < 900 && !first;
+    if (landed && boxSpun && close) sfx.ping();
+    else if (!landed && close) sfx.tick();
+    boxSpun = !landed;
+    const P = s.players[b.by] || {};
+    boxEl.querySelector(".l4-box-who").innerHTML = nameHTML(
+      P.name || "",
+      P.nameStyle || {},
+    );
+  }
+  boxEl.classList.toggle("landed", landed);
+  boxEl.classList.toggle(
+    "ending",
+    landed && b.t + BOX.spin + BOX.keep - now < 3000,
+  ); // (its last 3 seconds: it blinks)
+  const sc = Wd.sc,
+    p = Wd.toScreen(BOX.x, 706, 58),
+    hide = !Wd.seen(p.left - 60, p.top - 80, 120, 140);
+  if (boxEl.hidden !== hide) boxEl.hidden = hide;
+  if (hide) return;
+  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  if (boxEl._tr !== tr) {
+    boxEl._tr = tr;
+    boxEl.style.transform = tr;
+    boxEl.style.zIndex = Math.round(sortY(BOX.x, 712, 0)) + 20;
+  }
+  if (boxEl._k !== sc) {
+    boxEl._k = sc;
+    boxEl.style.setProperty("--k", sc.toFixed(3));
+  }
+}
+
+/* ---------- my points, and big words when something can't be done ---------- */
+function seePts(s, ctx) {
+  const n = ptsOf(s, ctx.me);
+  if (n === ptsShown) return;
+  const got = ptsShown >= 0 && n > ptsShown ? n - ptsShown : 0;
+  ptsShown = n;
+  ptsEl.querySelector("b").textContent = n;
+  if (got) {
+    const pop = document.createElement("span");
+    pop.className = "l4-pts-pop" + (got >= 25 ? " big" : "");
+    pop.textContent = "+" + got;
+    ptsEl.append(pop);
+    setTimeout(() => pop.remove(), 900);
+  }
+}
+function say(text) {
+  if (!sayEl) return;
+  sayEl.textContent = text;
+  sayEl.classList.remove("on");
+  void sayEl.offsetWidth;
+  sayEl.classList.add("on");
+  sfx.nope();
+}
+
+/* ---------- Justin's Butler's shop: a page over the board, as the guestbook's ---------- */
+function shopFill(s, ctx) {
+  const me = ctx.me,
+    up = upOf(s, me),
+    pts = ptsOf(s, me),
+    sig = JSON.stringify([up, pts]);
+  if (sig === shop.sig) return;
+  shop.sig = sig;
+  shop.pts.textContent = pts;
+  shop.list.innerHTML = SHOP.map((it) => {
+    const n = up[it.id] || 0,
+      max = n >= it.most,
+      price = priceOf(it.id, n);
+    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : price}</button></li>`;
+  }).join("");
+}
+function openShop(ctx) {
+  if (!shop || shop.open) return;
+  shop.open = true;
+  ctx.world.board.classList.add("l4-shopping");
+  shop.sig = "";
+  shop.el.hidden = false;
+  shopFill(ctx.state(), ctx);
+  addEventListener("keydown", shopEsc, true);
+}
+function closeShop() {
+  if (!shop || !shop.open) return;
+  shop.open = false;
+  shop.el.hidden = true;
+  shop.el.parentNode?.classList.remove("l4-shopping");
+  if (shop.el.contains(document.activeElement)) document.activeElement.blur();
+  removeEventListener("keydown", shopEsc, true);
+}
+function shopEsc(e) {
+  if (
+    e.key === "Escape" &&
+    shop &&
+    shop.open &&
+    !document.querySelector(".win-back, .ctx")
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeShop();
+  }
+} // (before the game's own Escape: the pause menu)
+function shopEl(ctx) {
+  const el = document.createElement("div");
+  el.className = "hang-book l4-shop";
+  el.hidden = true;
+  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(BUTLER_NAME, { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
+      <ul class="l4-shop-list"></ul>
+      <p class="l4-shop-say"><span class="l4-shop-me">${butlerSVG({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
+  for (const t of ["pointerdown", "click", "wheel", "touchstart"])
+    el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
+  el.querySelector(".hang-book-x").onclick = closeShop;
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-buy]");
+    if (b && !b.disabled)
+      ctx.send({ t: "hang", k: "l4", do: "buy", what: b.dataset.buy });
+  });
+  ctx.world.board.append(el);
+  return {
+    el,
+    open: false,
+    sig: "",
+    pts: el.querySelector(".l4-shop-pts b"),
+    list: el.querySelector(".l4-shop-list"),
+  };
+}
+
+/* ---------- holding E: reviving a downed duck, boarding up an opening; E at the fireplace and the Butler ---------- */
 function holdTarget(pos, ctx) {
   const s = ctx.state(),
     me = ctx.me;
@@ -445,8 +676,33 @@ function holdTarget(pos, ctx) {
     if (d < L4.REACH && n < L4.BOARDS && (!best || d < best.d))
       best = { kind: "board", o: o.id, d, n };
   }
-  return best;
+  if (best) return best;
+  const now = clockNow(),
+    db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
+  if (db < NEAR) {
+    const b = boxNow(s, now);
+    if (!b) return { kind: "box", d: db };
+    if (b.by === me && now >= b.t + BOX.spin)
+      return { kind: "take", d: db, w: b.w };
+  }
+  const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
+  if (ds < NEAR || (shop && shop.open && ds < AWAY))
+    return { kind: "shop", d: ds };
+  return null;
 }
+/* E (a tap) at the Butler or the fireplace */
+function tap(t, ctx) {
+  if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
+  const s = ctx.state(),
+    me = ctx.me;
+  if (t.kind === "box") {
+    if (ptsOf(s, me) < BOX.price) return say("Not enough points");
+    ctx.send({ t: "hang", k: "l4", do: "box" });
+  } else if (t.kind === "take") {
+    ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
+  }
+}
+const TAPS = ["box", "take", "shop"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -468,6 +724,9 @@ function stopHold(ctx) {
 }
 /* the button's words: what holding E does, or how far along it is */
 function holdLabel(t, s, ctx, now) {
+  if (t.kind === "box") return `Spin for a weapon · ${BOX.price}`;
+  if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
+  if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
@@ -527,13 +786,30 @@ activity({
       if (e.target.closest("[data-l4='again']"))
         ctx.send({ t: "hang", k: "l4", do: "again" });
     });
-    ctx.world.board.append(hud, over);
+    ptsEl = document.createElement("div");
+    ptsEl.className = "l4-pts";
+    ptsEl.setAttribute("role", "status");
+    ptsEl.innerHTML = "<span><b>0</b> points</span>";
+    sayEl = document.createElement("div");
+    sayEl.className = "l4-say";
+    sayEl.setAttribute("role", "alert");
+    boxEl = document.createElement("div");
+    boxEl.className = "l4-box";
+    boxEl.hidden = true;
+    boxEl.innerHTML =
+      '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
+    layer.append(boxEl);
+    ctx.world.board.append(hud, over, ptsEl, sayEl);
+    shop = shopEl(ctx);
+    butler = butlerEl();
     ctx.world.board.classList.add("blackout", "l4-board");
     Z.clear();
     B.clear();
     C.length = 0;
-    zpSig = candleSig = overShown = drawn = "";
+    zpSig = candleSig = overShown = drawn = boxSig = upSig = slotSig = "";
     roundShown = 0;
+    ptsShown = -1;
+    boxSpun = false;
     stamina = 1;
     tired = false;
     holding = null;
@@ -548,7 +824,11 @@ activity({
     cv?.remove();
     hud?.remove();
     over?.remove();
+    closeShop();
+    for (const e of [ptsEl, sayEl, boxEl, butler && butler.el, shop && shop.el])
+      e?.remove();
     cv = g = hud = over = layer = fxl = null;
+    ptsEl = sayEl = boxEl = butler = shop = null;
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
@@ -558,6 +838,19 @@ activity({
     seeBoards(s);
     seeCandles(s);
     seeHud(s, ctx);
+    seePts(s, ctx);
+    if (shop.open) shopFill(s, ctx);
+    /* a ding: an upgrade bought, a weapon from the fireplace taken */
+    const u = JSON.stringify(upOf(s, ctx.me)),
+      sl = slotsOf(s, ctx.me),
+      had = slotSig.split(",");
+    if (
+      (upSig && u !== upSig) ||
+      (slotSig && sl.some((w) => w && !had.includes(w)))
+    )
+      sfx.done();
+    upSig = u;
+    slotSig = sl.join();
     if (holding && !up(s, ctx.me)) holding = null;
   },
   step(dt, now, ctx) {
@@ -573,6 +866,13 @@ activity({
         if (d > 0.5 && d < 60) walkDir = [dx / d, dy / d]; // (not a jump back to a start spot)
       }
       lastXY = [x, y];
+      if (
+        shop.open &&
+        (!up(ctx.state(), ctx.me) ||
+          !ctx.world.inside ||
+          Math.hypot(BUTLER.x - x, BUTLER.y - y) > AWAY)
+      )
+        closeShop(); // (walked off, or down: it closes)
       if (holding) {
         const t = holdTarget({ x, y }, ctx);
         if (
@@ -658,6 +958,28 @@ activity({
         c.el.style.zIndex = Math.round(sortY(c.x, c.y, 0)) + 10;
       }
     }
+    /* Justin's Butler */
+    {
+      const z = heightAt(BUTLER.x, BUTLER.y),
+        p = Wd.toScreen(BUTLER.x, BUTLER.y, z),
+        hide = !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+      if (butler.el.hidden !== hide) butler.el.hidden = hide;
+      if (!hide) {
+        const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+        if (butler.tr !== tr) {
+          butler.tr = tr;
+          butler.el.style.transform = tr;
+          butler.el.style.zIndex =
+            Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
+        }
+        if (butler.k !== sc) {
+          butler.k = sc;
+          butler.body.style.transform = `scale(${sc.toFixed(4)})`;
+          butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
+        }
+      }
+    }
+    drawBox(ctx);
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
@@ -686,7 +1008,12 @@ activity({
     return {
       label: holdLabel(t, s, ctx, Date.now()),
       d: t.d,
-      act: () => (holding ? stopHold(ctx) : startHold(t, ctx)), // (a tap on the button holds until I walk away)
+      act: () =>
+        TAPS.includes(t.kind)
+          ? tap(t, ctx)
+          : holding
+            ? stopHold(ctx)
+            : startHold(t, ctx), // (a tap on the button holds until I walk away)
     };
   },
   keydown(e, ctx) {
@@ -697,8 +1024,10 @@ activity({
     if (e.code === "KeyE") {
       e.preventDefault();
       if (e.repeat || holding) return true;
-      const me = ctx.duck();
-      if (me) startHold(holdTarget({ x: me.x * W, y: me.y * H }, ctx), ctx);
+      const me = ctx.duck(),
+        t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
+      if (t && TAPS.includes(t.kind)) tap(t, ctx);
+      else startHold(t, ctx);
       return true;
     }
     return false;
@@ -729,7 +1058,7 @@ activity({
     }
     return d;
   },
-  speed: () => SPEED,
+  speed: (pos, ctx) => SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1), // (Speed, from the Butler: 10% faster)
   sprint(on, dt) {
     if (on && !tired && stamina > 0) {
       stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);

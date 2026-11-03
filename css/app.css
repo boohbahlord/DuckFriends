@@ -794,6 +794,18 @@ body[data-screen="game"] #jumps {
   white-space: nowrap;
   user-select: none;
 }
+.jumps-slot.jk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  border-radius: 0.9rem;
+  padding: 0.12rem 0.7rem;
+} /* Justin Kills under Jumps, in the same box */
+.jumps-jk {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
 
 /* ---------- the front page: the buttons above a ball pit that covers the bottom of the page ---------- */
 .front {
@@ -1571,21 +1583,6 @@ p.bad {
   gap: 0.8rem;
   min-height: 2.6rem;
 }
-.ready-btn {
-  border: 0.16rem solid var(--line);
-  border-radius: 0.8rem;
-  background: var(--panel2);
-  padding: 0.35rem 1rem;
-  font-weight: 700;
-  font-size: calc(1.15rem * var(--ts));
-  cursor: pointer;
-}
-.ready-btn.on {
-  background: var(--green);
-  color: #fff;
-  text-shadow: 0 0.06rem 0 #0004;
-  box-shadow: 0 0.15rem 0 var(--line);
-}
 .count {
   font-size: calc(1.4rem * var(--ts));
   font-weight: 700;
@@ -1636,6 +1633,17 @@ p.bad {
 .lmenu button:hover .val {
   color: inherit;
 }
+.lmenu button > span:first-child {
+  flex: none;
+  white-space: nowrap;
+}
+.lmenu [data-m="settings"] .val {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+} /* (a long game and map fit on one line on a phone) */
 .lmenu .start:not([aria-disabled="true"]) {
   background: var(--green);
   color: #fff;
@@ -1643,6 +1651,15 @@ p.bad {
 }
 .lmenu .start:not([aria-disabled="true"]) .val {
   color: #fff;
+}
+.lmenu button[hidden],
+.lobby-status:empty {
+  display: none;
+}
+.lmenu .ready.on {
+  background: var(--green);
+  color: #fff;
+  text-shadow: 0 0.06rem 0 #0004;
 }
 .lmenu .start:not([aria-disabled="true"]):hover {
   filter: brightness(1.08);
@@ -1652,6 +1669,57 @@ p.bad {
 .lmenu-info {
   margin-top: 0.7rem;
   min-height: 1.4em;
+}
+
+/* ---------- Democracy of Ducklings: a "!" on its row (and the rule's row) while a vote is up, and the host's popup ---------- */
+.dod-bang {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25em;
+  height: 1.25em;
+  margin-left: 0.45em;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #1c1c28;
+  font-size: 0.85em;
+  font-weight: 800;
+  vertical-align: 0.08em;
+  box-shadow: 0 0.12rem 0 var(--line);
+}
+.lmenu .dod-up {
+  background: color-mix(in srgb, var(--orange) 22%, transparent);
+}
+.arm-row.dod-up:not(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--orange) 18%, transparent);
+}
+.dod-pop {
+  margin: 0 0 0.7rem;
+  padding: 0.55rem 0.8rem;
+  border: 0.16rem solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--orange);
+  color: #1c1c28;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 0.25rem 0 var(--line);
+  animation: dod-pop 0.25s ease-out;
+}
+.dod-pop[hidden] {
+  display: none;
+}
+@keyframes dod-pop {
+  from {
+    transform: translateY(-0.6rem);
+    opacity: 0;
+  }
+}
+.gs-text .dod-now {
+  margin-top: 0.5rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+.gs-text p + p {
+  margin-top: 0.4rem;
 }
 .party header {
   display: flex;
@@ -3504,6 +3572,29 @@ html.moving .hat-float {
     opacity: 0;
   }
 }
+/* the Invisible duck special: as see-through as Duck Cabin's shadow duck (its SEEN, in hangout/characters.js); the name
+   and the ring stay */
+.gduck.see .gduck-body,
+.gduck.see .gduck-shadow {
+  opacity: 0.4;
+}
+/* the Chair special's icon: Mad God Justin's black chair, with a light edge so it shows on the dark keys */
+svg.sp-chair {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.75));
+}
+.arm-pic.see > svg {
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+.sp-see {
+  display: inline-block;
+  opacity: 0.4;
+}
+.sp-see svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 .gduck.zapped .gduck-body {
   filter: brightness(0.35) contrast(1.4);
   animation: shake 0.12s linear 8;
@@ -4905,6 +4996,171 @@ html.moving .pix-sun {
   }
   .colors.grid3 .swatches {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Customize and Game Settings fill the whole screen, on a computer as on a phone ---------- */
+.win-back:has(> .win-full) {
+  padding: 0;
+}
+.win-full {
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.win-full .armory {
+  grid-template-columns: minmax(18rem, 30rem) minmax(0, 1fr);
+  height: calc(100dvh - 2rem);
+}
+.win-full .arm-stage {
+  margin-right: 2.6rem;
+} /* (room for the X) */
+
+/* ---------- Game Settings: plain rows on the left, the preview on the right ---------- */
+.gs-stage {
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+}
+.gs-pic {
+  width: min(100%, 52rem);
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 0.16rem solid var(--line);
+  background: #0e1022;
+  box-shadow: 0 0.3rem 0 var(--line);
+}
+.gs-pic.empty {
+  display: none;
+}
+.gs-pic > svg,
+.gs-pic > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gs-pic:has(> .gs-cabin) {
+  aspect-ratio: 1280 / 988;
+  width: min(100%, 52rem, (100dvh - 15rem) * 1.3);
+} /* (the whole cabin map is nearly square) */
+.gs-cabin.dark {
+  filter: brightness(0.42) saturate(0.7);
+} /* (Left 4 Dead Ducks: the power is cut) */
+.gs-map.grey .gs-back {
+  filter: grayscale(1);
+}
+.gs-text {
+  width: min(100%, 52rem);
+  background: var(--panel2);
+  border: 0.14rem solid var(--line);
+  border-radius: 0.8rem;
+  padding: 0.7rem 0.9rem;
+}
+.gs-text h3 {
+  margin: 0 0 0.3rem;
+  font-size: calc(1.05rem * var(--ts));
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gs-text p {
+  margin: 0;
+  color: var(--dim);
+  line-height: 1.45;
+}
+.gs-opts .gs-h {
+  margin: 0.4rem 0 0.2rem;
+  font-size: calc(0.95rem * var(--ts));
+  color: var(--ink);
+}
+.gs-opts .gs-h.gs-big {
+  margin-top: 1.4rem;
+  padding-top: 0.9rem;
+  border-top: 0.12rem solid var(--soft);
+  font-size: calc(1.2rem * var(--ts));
+}
+.arm-body .gs-sub {
+  color: var(--ink);
+  margin-top: 0.9rem;
+}
+.gs-fold {
+  margin-top: 0.3rem;
+}
+.gs-fold > .gs-set:first-of-type {
+  margin-top: 0.3rem;
+}
+.gs-set {
+  margin: 0 0 0.7rem 0.4rem;
+}
+.arm-body .gs-set h3 {
+  margin: 0 0 0.3rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.gs-set .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.gs-set .tile {
+  min-width: 0;
+  padding: 0.28rem 0.65rem;
+  font-size: calc(0.85rem * var(--ts));
+}
+.gs .arm-row[aria-pressed="true"] .val::after {
+  content: " ✓";
+  color: var(--blue);
+  font-weight: 700;
+} /* (the picked one, or my vote) */
+.gs-set.faded {
+  opacity: 0.45;
+} /* (it needs another setting on first) */
+.gs-ro,
+.gs-none {
+  margin: 0.2rem 0 0.6rem;
+}
+@media (max-width: 760px) {
+  .win-full .armory {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100dvh - 1.4rem);
+  }
+  .win-full .arm-stage {
+    margin-right: 0;
+  }
+  .gs-stage {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 2.8rem 0.4rem 0.4rem;
+    height: 9.5rem;
+  } /* (room for the X; one height whatever it shows, so the rows under a finger never move) */
+  .gs-pic,
+  .gs-pic:has(> .gs-cabin) {
+    flex: none;
+    width: auto;
+    height: 100%;
+    border-radius: 0.6rem;
+  }
+  .gs-text {
+    flex: 1;
+    min-width: 0;
+    max-height: 100%;
+    overflow: auto;
+    padding: 0.45rem 0.6rem;
+  }
+  .gs-text h3 {
+    font-size: calc(0.9rem * var(--ts));
+  }
+  .gs-text p {
+    font-size: calc(0.76rem * var(--ts));
+    line-height: 1.35;
   }
 }
 
@@ -6781,15 +7037,12 @@ html.still .spe-bone .bone-slide {
     --step: 2.2rem;
     --slot: 1.85rem;
   }
-  .bbar .tpad {
-    width: 6.1rem;
-  }
   .bbar .tpad.armed .tpad-jump {
-    right: 3.9rem;
-    bottom: 0.1rem;
+    right: 4.5rem;
+    bottom: 0.75rem;
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
-     the crosshair instead of over the board; the corner keeps room for both, so nothing moves when the crosshair comes) */
+     the attack stick instead of above it) */
 .bbar {
   position: relative;
 }
@@ -6909,46 +7162,47 @@ html.still .spe-bone .bone-slide {
   opacity: 0.4;
   cursor: default;
 }
-/* on a phone: the jump button in the bottom bar's right corner; with a weapon in the slider's middle, the crosshair
-   button takes the corner and the jump button goes up above it */
+/* on a phone: the jump button over the board's bottom right, a little in from the edge, just above the bottom bar;
+   when the special in the slider's middle can attack, the attack stick takes its place and it moves up above it */
 .tpad {
-  position: relative;
-  flex: none;
-  width: 3.3rem;
-  height: 2.5rem;
+  position: absolute;
+  right: calc(2rem + env(safe-area-inset-right));
+  bottom: calc(100% + 0.7rem);
+  width: 3.8rem;
+  height: 3.8rem;
   display: none;
+  z-index: 40;
 }
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .tpad {
     display: block;
   }
+  html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
+    left: calc(50vw - 3.15rem);
+    max-width: calc(100vw - 7.3rem);
+  } /* (a tip sits in the middle of what's left of the buttons, never over them) */
 }
 .tpad.gone {
   visibility: hidden;
 }
-.tpad-jump,
-.tpad-atk {
+.tpad-jump {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 2.3rem;
+  height: 2.3rem;
   display: grid;
   place-items: center;
   padding: 0;
   border-radius: 50%;
   border: 0.16rem solid var(--line);
   box-shadow: 0 0.15rem 0 var(--line);
+  background: #fff;
+  color: #1c1c28;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-}
-.tpad-jump {
-  width: 2.3rem;
-  height: 2.3rem;
-  right: 0.5rem;
-  bottom: 0.1rem;
-  background: #fff;
-  color: #1c1c28;
   transition:
     bottom 0.15s ease-out,
     right 0.15s ease-out;
@@ -6957,20 +7211,46 @@ html.still .spe-bone .bone-slide {
   width: 1.15rem;
   fill: currentColor;
 }
-.tpad-jump:active,
-.tpad-atk:active {
+.tpad-jump:active {
   transform: translateY(0.1rem);
   box-shadow: 0 0.05rem 0 var(--line);
 }
+.tpad.armed .tpad-jump {
+  bottom: 4.5rem;
+}
+/* the attack stick: see-through like the walking stick (touch.js), its knob the crosshair */
 .tpad-atk {
-  width: 3.3rem;
-  height: 3.3rem;
-  background: var(--red);
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff12 0 55%, #ffffff26 100%),
+    rgb(10 12 20 / 0.35);
+  border: 2px solid #ffffff70;
+  box-shadow: 0 0 0 1px #00000024;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tpad-atk > i {
+  position: absolute;
+  left: calc(50% - 1.15rem);
+  top: calc(50% - 1.15rem);
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff38;
+  border: 2px solid #ffffff80;
+  box-shadow: 0 0 0 1px #00000020;
   color: #fff;
+  pointer-events: none;
   z-index: 1;
 }
 .tpad-atk svg {
-  width: 1.85rem;
+  width: 1.5rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.2;
@@ -6980,37 +7260,76 @@ html.still .spe-bone .bone-slide {
   fill: currentColor;
   stroke: none;
 }
-.tpad.armed .tpad-jump {
-  right: 0.5rem;
-  bottom: 4rem;
-}
-/* the crosshair held: a ring around it, and a knob that shows where it aims */
+/* held: the ring of how far the knob goes shows around it; pushed past the stick's edge it attacks, and the knob
+   lights up */
 .tpad-ring {
   position: absolute;
-  right: calc(1.65rem - 52px);
-  bottom: calc(1.65rem - 52px);
-  width: 104px;
-  height: 104px;
+  left: calc(50% - 60px);
+  top: calc(50% - 60px);
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   border: 2px solid #ffffff40;
-  background: radial-gradient(circle, #ef3b3b14 0 55%, #ef3b3b2a 100%);
+  background: radial-gradient(circle, #ffffff08 0 55%, #ffffff1c 100%);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.12s;
+  transition:
+    opacity 0.12s,
+    border-color 0.12s;
 }
 .tpad.aiming .tpad-ring {
   opacity: 1;
 }
-.tpad-ring i {
-  position: absolute;
-  left: calc(50% - 0.75rem);
-  top: calc(50% - 0.75rem);
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: #ffffff55;
-  border: 2px solid #ffffffaa;
-  z-index: 2;
+.tpad.firing .tpad-ring {
+  border-color: #ffffffb0;
+}
+.tpad.firing .tpad-atk > i {
+  background: #fff;
+  border-color: #fff;
+  color: #1c1c28;
+  box-shadow: 0 0 0.8rem #ffffffaa;
+}
+/* Customize → Specials: the thin row at the top and the bottom of the list (Remove from hotbar); while it's on, the
+   specials on a key turn red (their key's box says × too) and the rest fade */
+.sp-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem;
+  margin: 0.3rem 0;
+  border-radius: 0.5rem;
+  border: 0.1rem solid var(--soft);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.sp-strip .btn {
+  flex: none;
+  padding: 0.2rem 0.65rem;
+  min-height: 0;
+}
+.sp-strip > span {
+  min-width: 0;
+}
+.sp-strip.on {
+  border-color: var(--red);
+}
+.sp-strip.on .btn {
+  background: var(--red);
+  color: #fff;
+}
+.sp-rm > .arm-tile[aria-pressed="true"] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 0.14rem var(--red);
+  background: color-mix(in srgb, var(--red) 12%, var(--panel));
+}
+.sp-rm .sp-on {
+  background: var(--red);
+}
+.sp-rm .sp-on::after {
+  content: " ×";
+}
+.sp-rm-no {
+  opacity: 0.4;
 }
 /* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
 .sp-keys {
@@ -10474,6 +10793,15 @@ html.moving .hp.hang-shimmer {
   top: 42px;
   width: 11px;
 }
+.hang-npc-held.cake {
+  left: 40px;
+  top: 34px;
+  width: 22px;
+}
+.hang-npc-held.cake i {
+  display: block;
+  animation: mgj-bite 0.5s ease-in-out infinite;
+}
 .hang-npc-say {
   position: absolute;
   left: 0;
@@ -12927,7 +13255,7 @@ html.moving .eye-tears .tdrop.t2 {
   flex: none;
 }
 
-/* ---------- Left 4 Dead Ducks (l4dd.js, l4ddbar.js) ----------
+/* ---------- Quacky Zombies (l4dd.js, l4ddbar.js) ----------
    The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
    dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
    the dark; the end card over everything. */
@@ -13114,6 +13442,73 @@ html.moving .eye-tears .tdrop.t2 {
     filter: none;
   }
 } /* (1 HP back: a green glow that fades) */
+/* the slots' colors (the owner's): melee blue, ranged red, the special purple, the grenades white; a weapon out in the
+   world is an orb in its color (the fireplace's) */
+.l4s,
+.l4orb,
+.sp-slot[class*="k-"] {
+  --c: #9a4de0;
+  --cl: #dcbcff;
+  --cd: #461a80;
+}
+.l4s.k-melee,
+.l4orb.k-melee,
+.sp-slot.k-melee {
+  --c: #3d7be0;
+  --cl: #a9c9ff;
+  --cd: #173a80;
+}
+.l4s.k-ranged,
+.l4orb.k-ranged,
+.sp-slot.k-ranged {
+  --c: #e0463d;
+  --cl: #ffb0a6;
+  --cd: #7e1a15;
+}
+.l4s.k-special,
+.l4orb.k-special,
+.sp-slot.k-special {
+  --c: #9a4de0;
+  --cl: #dcbcff;
+  --cd: #461a80;
+}
+.l4s.k-grenade,
+.l4orb.k-grenade,
+.sp-slot.k-grenade {
+  --c: #e9e9f2;
+  --cl: #ffffff;
+  --cd: #8a8aa0;
+}
+.l4orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 33% 27%, #fffd 0 8%, transparent 21%),
+    radial-gradient(circle at 40% 36%, var(--cl), var(--c) 52%, var(--cd));
+  border: 0.14rem solid #1c1c28;
+  box-shadow:
+    0 0 0.9rem 0.2rem color-mix(in srgb, var(--c) 70%, transparent),
+    inset 0 -0.3rem 0.5rem #0006;
+}
+.l4orb i {
+  display: grid;
+  place-items: center;
+  width: 64%;
+  height: 64%;
+  font-style: normal;
+  font-size: 1.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 0.06rem 0 #000a);
+}
+.l4orb i svg {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
 /* the weapons bar: on a computer in the bottom bar's right corner, my HP under it */
 .l4bar {
   --hk: clamp(1.9rem, 2.9vw, 2.8rem);
@@ -13176,7 +13571,17 @@ html.moving .eye-tears .tdrop.t2 {
   line-height: 1.15;
   white-space: nowrap;
 }
-.l4s.sel {
+.l4slots .l4s:is(.k-melee, .k-ranged, .k-special, .k-grenade) {
+  background: color-mix(in srgb, var(--c) 46%, rgb(10 12 20 / 0.6));
+  border-color: color-mix(in srgb, var(--c) 75%, #000);
+}
+.l4slots .l4s.k-grenade {
+  background: color-mix(in srgb, var(--c) 62%, rgb(10 12 20 / 0.5));
+}
+.l4s.k-grenade kbd {
+  color: #3a3a48;
+}
+.l4slots .l4s.sel {
   border-color: var(--yellow);
   box-shadow: 0 0 0.45rem 0.12rem
     color-mix(in srgb, var(--yellow) 65%, transparent);
@@ -13203,45 +13608,299 @@ html.moving .eye-tears .tdrop.t2 {
 .l4hp i.on {
   background: #1fb85c;
 }
-/* on a phone: a column of round buttons at the board's bottom right, the big Attack button under them */
-.l4pad {
-  display: none;
+/* my points, under "Round N"; a +N rises off them for each one earned (a headshot's bigger) */
+.l4-pts {
   position: absolute;
-  right: 0.6rem;
-  bottom: 0.6rem;
-  z-index: 31200;
+  top: calc(0.85rem + clamp(1.7rem, 4.6vw, 2.8rem));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 31000;
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(1rem, 2.6vw, 1.45rem);
+  line-height: 1;
+  color: #ffd23f;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.07em #2a1e04;
+  paint-order: stroke fill;
+}
+.l4-pts > span {
+  color: #f4e7b0;
+}
+.l4-pts b {
+  color: #ffd23f;
+  font-weight: inherit;
+}
+.l4-pts-pop {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 0.35rem;
+  color: #ffd23f;
+  animation: l4-pop 0.9s ease-out forwards;
+}
+.l4-pts-pop.big {
+  color: #ff6b4a;
+  font-size: 1.25em;
+  top: -0.15em;
+}
+@keyframes l4-pop {
+  0% {
+    transform: translateY(0.3rem);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-1.1rem);
+    opacity: 0;
+  }
+}
+/* big words when something can't be done (switch to a ranged weapon first, not enough points) */
+.l4-say {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translateX(-50%);
+  z-index: 31100;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(1.5rem, 4.4vw, 2.6rem);
+  line-height: 1.1;
+  color: #fff;
+  -webkit-text-stroke: 0.07em #3a0408;
+  paint-order: stroke fill;
+  text-shadow: 0 0.06em 0 #3a0408;
+  opacity: 0;
+}
+.l4-say.on {
+  animation: l4-say 2.4s ease-out forwards;
+}
+@keyframes l4-say {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.25);
+  }
+  8% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  12% {
+    transform: translateX(calc(-50% - 0.4rem));
+  }
+  16% {
+    transform: translateX(calc(-50% + 0.4rem));
+  }
+  20% {
+    transform: translateX(-50%);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+} /* (it shakes once, as a "no") */
+/* the fireplace's weapon: an orb floating over the fire, flickering through the weapons, then glowing; the name of who
+   paid for it under it; blinking in its last seconds */
+.l4-box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.l4-box-orb {
+  position: absolute;
+  left: calc(-27px * var(--k, 1));
+  top: calc(-54px * var(--k, 1));
+  width: calc(54px * var(--k, 1));
+  height: calc(54px * var(--k, 1));
+  animation: l4-bob 1.6s ease-in-out infinite;
+}
+.l4-box-orb .l4orb {
+  width: 100%;
+  height: 100%;
+}
+.l4-box-orb .l4orb i {
+  font-size: calc(28px * var(--k, 1));
+}
+.l4-box.landed .l4orb {
+  animation: l4-glow 0.8s ease-in-out infinite alternate;
+}
+.l4-box.ending {
+  animation: l4-blink 0.5s steps(2) infinite;
+}
+.l4-box-who {
+  left: 0;
+  top: calc(8px * var(--k, 1));
+  transform: translateX(-50%);
+}
+@keyframes l4-bob {
+  50% {
+    transform: translateY(calc(-6px * var(--k, 1)));
+  }
+}
+@keyframes l4-glow {
+  100% {
+    box-shadow:
+      0 0 1.6rem 0.5rem color-mix(in srgb, var(--c) 85%, transparent),
+      inset 0 -0.3rem 0.5rem #0006;
+  }
+}
+@keyframes l4-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+/* Justin's Butler's shop: the guestbook's page; each upgrade a row (its picture, name, what it does, how many bought,
+   the price); his words at the bottom */
+.hang-book.l4-shop {
+  bottom: auto;
+  height: auto;
+  max-height: calc(100% - 1.2rem);
+} /* (as tall as its rows: no empty page under them) */
+.l4-shopping .l4-hud,
+.l4-shopping .l4-pts {
+  visibility: hidden;
+} /* (while it's open, "Round N" and my points make way for it: it shows my points itself) */
+.l4-shop-pts {
+  margin-left: auto;
+  font-family: "Lilita One", sans-serif;
+  font-size: calc(1.05rem * var(--ts));
+  color: #f4e7b0;
+  white-space: nowrap;
+}
+.l4-shop-pts b {
+  color: #ffd23f;
+  font-weight: inherit;
+}
+.l4-shop-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
   flex-direction: column;
+  gap: 0.35rem;
+}
+.l4-up {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr auto 4.2rem;
   align-items: center;
   gap: 0.55rem;
-  --hk: 2.7rem;
-  touch-action: none;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.7rem;
+  background: var(--panel2);
+  border: 0.13rem solid var(--soft);
 }
-.l4pad .l4s {
+.l4-up-ic {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+}
+.l4-up-ic svg {
+  width: 100%;
+  height: 100%;
+}
+.l4-up-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+.l4-up-t b {
+  font-size: calc(1rem * var(--ts));
+}
+.l4-up-t small {
+  color: var(--dim);
+  font-size: calc(0.8rem * var(--ts));
+}
+.l4-up-lv {
+  display: flex;
+  gap: 0.2rem;
+}
+.l4-up-lv i {
+  width: 0.55rem;
+  height: 0.55rem;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  background: #0006;
+  box-shadow: inset 0 0 0 0.08rem #ffd23f88;
 }
-.l4pad .l4s small {
-  bottom: 0.05rem;
+.l4-up-lv i.on {
+  background: #ffd23f;
 }
-.l4pad .l4-attack {
-  --hk: 4.2rem;
-  border-color: #dc143c;
-  color: #ffd6dc;
-  background: color-mix(in srgb, #dc143c 35%, transparent);
+.l4-up-buy {
+  width: 100%;
+  justify-content: center;
+}
+.l4-shop-say {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.1rem 0.2rem 0;
+  font-size: calc(0.92rem * var(--ts));
+  color: var(--ink);
+}
+.l4-shop-me {
+  flex: none;
+  width: 2.5rem;
+}
+.l4-shop-me svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.l4-shop-say q {
+  font-style: italic;
+}
+/* on a phone: the slots are in the specials' slider (hotbar.js), each in its color, the count under it */
+.sp-slot[class*="k-"] {
+  background: color-mix(in srgb, var(--c) 34%, rgb(10 12 20 / 0.7));
+  border-color: color-mix(in srgb, var(--c) 70%, #000);
+}
+.sp-slot[class*="k-"].mid {
+  background: color-mix(in srgb, var(--c) 60%, rgb(10 12 20 / 0.6));
+  border-color: color-mix(in srgb, var(--c) 55%, #fff);
+}
+.sp-slot.k-light {
+  background: color-mix(in srgb, var(--yellow) 22%, var(--panel));
+}
+.sp-slot.k-light.mid {
+  background: color-mix(in srgb, var(--yellow) 45%, var(--panel));
+  border-color: color-mix(in srgb, var(--yellow) 55%, #fff);
+}
+.sp-slot .sp-n {
+  position: absolute;
+  left: 50%;
+  bottom: -0.1rem;
+  transform: translateX(-50%) translateY(35%);
+  padding: 0 0.18rem;
+  border-radius: 0.35rem;
+  background: var(--panel);
+  font-size: 0.5rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  pointer-events: none;
 }
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .l4bar {
     display: none;
   }
-  html:not(.keyboard) .l4pad {
-    display: flex;
-  }
-} /* (a phone or a tablet: the column on the board instead of the bar) */
+} /* (a phone or a tablet: the slider instead of the bar) */
 @media (max-width: 760px) {
   .l4bar {
     display: none;
-  }
-  .l4pad {
-    display: flex;
   }
 }
