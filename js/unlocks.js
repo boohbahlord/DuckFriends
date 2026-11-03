@@ -1,6 +1,6 @@
 /* ---------- things you unlock ----------
    Some items start locked, every count in twelves (I want them all in factors of 12). The jester hat and outfit open at
-   1,728 jumps, Jack in a Box (and Jill) at 20,736; a secret code opens all three at once. The Long jump and the Double
+   1,728 jumps, Jack in a Box (and Jill) at 20,736; the secret code (secret 1357911 on) opens every unlockable at once, and the counts toward each one go on as before. The Long jump and the Double
    jump open at 144 jumps. The clown wig, costume and paint open when you've killed Justin with a weapon special 12
    times, and until then nobody is told how. The shotgun opens at 144 kills and the grenade at 360: a kill is another
    player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
@@ -76,7 +76,8 @@ const earned = (l) =>
           : l.dunced
             ? (profile.dunced || 0) >= l.dunced
             : (profile.justinKills || 0) >= l.kills;
-const coded = (l) => !!(l.code && (profile.secrets || {})[l.code]);
+/* the secret code opens every unlockable at once; what you've earned still counts on toward each one */
+const coded = () => !!(profile.secrets || {})[CODE];
 /* is it yours to wear? (anything not in the list always is) */
 export function unlocked(kind, id) {
   const l = lockOf(kind, id);
@@ -101,18 +102,18 @@ export function lockHint(kind, id) {
             : l.dunced
               ? `Unlocked: voted a dunce ${l.dunced} times`
               : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
-  if (coded(l)) return "Unlocked: a secret code";
+  const pre = coded(l) ? "Unlocked: a secret code. " : "";
   if (l.frags)
-    return `Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
+    return `${pre}Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
   if (l.mgjLosses)
-    return `Lose to Mad God Justin ${l.mgjLosses} times (${Math.min(l.mgjLosses, profile.mgjLosses || 0)}/${l.mgjLosses}), or lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
+    return `${pre}Lose to Mad God Justin ${l.mgjLosses} times (${Math.min(l.mgjLosses, profile.mgjLosses || 0)}/${l.mgjLosses}), or lose ${l.lost} rounds (${Math.min(l.lost, profile.lostRounds || 0)}/${l.lost})`;
   if (l.mgjWins)
-    return `Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
+    return `${pre}Beat Mad God Justin ${l.mgjWins} times at the default time (${Math.min(l.mgjWins, profile.mgjWins || 0)}/${l.mgjWins})`;
   if (l.dunced)
-    return `Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
+    return `${pre}Be voted a dunce in Duncelation ${l.dunced} times (${Math.min(l.dunced, profile.dunced || 0)}/${l.dunced})`;
   return l.hidden
-    ? "You don't know how to unlock this."
-    : `Reach ${fmtJumps(l.jumps)} jumps (you have ${fmtJumps(profile.jumps || 0)})`;
+    ? pre.trim() || "You don't know how to unlock this."
+    : `${pre}Reach ${fmtJumps(l.jumps)} jumps (you have ${fmtJumps(profile.jumps || 0)})`;
 }
 const and = (xs) =>
   xs.length < 2
