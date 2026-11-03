@@ -3272,3 +3272,9 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 - Adam: HIT_DMG in js/rules.js (hammer, chair, grenade 3; knife 2; the rest 1) through soaks(s, id, now, dmg), not in
   Quacky Zombies; Mad God Justin's chair takes 2 (mgjSoak dmg). Grenade throw KB_FAR x2 in the normal game (x3 kept in
   Mad God Justin and Quacky Zombies). Boards' default down time 0.5 s -> 1 s (DOWN_GAMES); Duck Cabin stays 6 s.
+
+## 2026-11-03 17:19Z: Valentine's Duck Date, the weapon stays behind (word for word)
+> when teleported to the seat in dating, the weapon i was last holding doesnt come with AND whatever i switch to stays overthere. Must be fixed
+
+- Adam: the held weapon was drawn at the duck's floor spot (bodyAt in game.js) while the duck is drawn at its seat;
+  bodyAt now uses seatAt and the chair's lift, so the weapon (and its aim) goes with the seated duck.
