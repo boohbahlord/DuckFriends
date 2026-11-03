@@ -6,8 +6,10 @@
    has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it flickers), and a duck out of HP
    stays down until a medkit or the fight's end. He never goes after a duck that's down. A jump dodges everything but
    in its first and last fifth (rules.js dodges).
-   - His pistol: the usual 7 shots, then the usual 3.5 s reload; the more of the ducks are down, the readier he is to
-     reload early. While it reloads he sprints at a duck to hammer it, and a duck that comes up close gets the hammer too.
+   - His guns (the owner's, Nov 3: no more pistol): the LMG and the SMG fire bursts at a duck (each bullet takes 1 HP),
+     and the pump shotgun a cone of pellets at a duck close enough. After each burst he reloads; while he reloads he
+     sprints at a duck to hammer it, and a duck that comes up close gets the hammer too. He walks faster than before and
+     every attack comes sooner (PACE).
    - His throws, each held up first (the tell): the controllers every way at once, the office chair, and every 14 s a
      fireball (1 damage, and the duck burns for 3.5 s: a burning duck lights every duck it touches).
    - The edge lightning, every 10 s by itself: the board's edges glow for 0.6 s, then a flash runs along them and hits
@@ -19,8 +21,8 @@
      eats it, and does nothing else meanwhile.
    - The meteor, once a fight (unless he dies first), at a random moment when 30 to 5 seconds are left: he shouts one of
      his GOD lines and fades away, the timer freezes under ice, a meteor lands and knocks every duck down for 5 seconds,
-     he gets 2 or 3 HP back for every player, then he fades in again with a pump shotgun added (a wide cone of pellets that act
-     like bullets, then 1.75 s of pumping) and the timer comes back with 30 seconds left.
+     he gets 2 or 3 HP back for every player, then he fades in again pumping his shotgun and the timer comes back with
+     30 seconds left.
    - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Time up: he wins and
      says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
@@ -44,8 +46,6 @@ import {
   boardPhases,
   SHOT_SPEED,
   DAGGER_SPEED,
-  MAG,
-  RELOAD,
   strike,
   dodges,
   aimOf,
@@ -124,22 +124,31 @@ export const PUMP = 1750,
   PELLET_SPEED = 0.3,
   PELLET_LIFE = 1400,
   SPREAD = 0.34;
+/* his guns' bursts (the owner's, Nov 3, in place of the pistol): n bullets, one every gap ms, each a little off the aim
+   (spread, radians); then a reload of reload ms. Each bullet takes 1 HP (rules.js: mgjSoak). PACE: how much sooner every
+   attack of his comes than it used to (the owner: way faster), on top of the Xbox's 0.7 */
+export const BURST = {
+    lmg: { n: 10, gap: 100, spread: 0.07, reload: 2600 },
+    smg: { n: 8, gap: 80, spread: 0.12, reload: 1800 },
+  },
+  SG_ODDS = 0.35, // (a duck close enough: how often he takes the shotgun instead of a burst)
+  PACE = 0.6;
 /* his throws (the owner's): now and then 8 Xbox One controllers every way at once, bullet hell, to dodge; less often a
    big black office chair at a duck, slow but wide, that knocks down and shoves back like the hammer. Each is held up
    first (the tell), so there's time to move */
 export const THROW_TELL = 800, // ms the controllers are held up before they fly
   CTL_N = 8,
-  CTL_SPEED = 0.15, // board widths a second
+  CTL_SPEED = 0.19, // board widths a second (owner 2026-11-03 22:13Z: his attacks way faster; was 0.15)
   CTL_LIFE = 9000,
   CHAIR_TELL = 1100,
-  CHAIR_SPEED = 0.085,
+  CHAIR_SPEED = 0.11, // (was 0.085)
   CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
   CHAIR_LIFE = 16000;
 /* the rework (the owner's, Nov 3): his fireball, every FB_EVERY ms with its tell; the duck it hits burns for BURN_MS
    and looks burnt for BURNT_MS, and while it burns it lights every duck it touches (TOUCH duck lengths) */
 export const FB_EVERY = 14000,
   FB_TELL = 800,
-  FB_SPEED = 0.2,
+  FB_SPEED = 0.25, // (was 0.2)
   FB_R = 1.2,
   FB_LIFE = 9000,
   BURN_MS = 3500,
@@ -198,7 +207,7 @@ export const MEDKIT_REACH = 2; // duck lengths from a downed duck
    comes back with faster attacks, 15 more seconds on the clock and his HP up by 1, and 1 more for every player (never
    past full). XB: ms the desk takes to come in, from the switch-off to fading out, to coming back; the desk's fade out */
 export const XB = { IN: 900, FADE: 500, GONE: 3400, OUT: 1200 };
-const SPEED = 0.2,
+const SPEED = 0.25, // (owner 2026-11-03 22:13Z: he moves faster; was 0.2)
   RX = 0.03,
   RY = 0.08;
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
@@ -288,7 +297,7 @@ export function mgjStart(s, now) {
     met: null,
     metDone: false,
     left: 0,
-    shotgun: false,
+    shotgun: true, // (the owner: he has the shotgun from the start now)
     over: 0,
     pickAt: now + PICK_EVERY,
     // I want his Xbox turned off only once a game, and only after the first 45 seconds: a new fight ("Try again")
@@ -339,13 +348,13 @@ export function mgjStart(s, now) {
     k: null,
     list: (s.justin && s.justin.list) || [],
     gods: (s.justin && s.justin.gods) || [],
-    w: "handgun",
+    w: "lmg",
     mag: { n: 0, r: 0 },
-    fireAt: now + 2500,
-    hamAt: now + 5000,
-    ctlAt: now + rnd(9000, 13000),
-    chairAt: now + rnd(18000, 26000),
-    fbAt: now + rnd(5000, 8000),
+    fireAt: now + 2500 * PACE,
+    hamAt: now + 5000 * PACE,
+    ctlAt: now + rnd(9000, 13000) * PACE,
+    chairAt: now + rnd(18000, 26000) * PACE,
+    fbAt: now + rnd(5000, 8000) * PACE,
     tpAt: 0,
     eatAt: now + rnd(25000, 40000),
     sgR: 0,
@@ -538,7 +547,7 @@ function brain(s, now, log) {
     ...(goodUp(s, now) ? [GOOD_ID] : []),
   ];
   const far = (p, q = at) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY); // in duck lengths
-  const soon = (ms) => (j.fast ? ms * 0.7 : ms); // (back from his Xbox: every attack comes sooner)
+  const soon = (ms) => ms * PACE * (j.fast ? 0.7 : 1); // (every attack sooner than it used to; back from his Xbox, sooner still)
   const stop = () =>
     Object.assign(j, {
       k: null,
@@ -799,6 +808,54 @@ function brain(s, now, log) {
     j.next = now + 600;
     return true;
   }
+  /* a burst going on: the next bullet at its duck, until the burst is done; then the reload */
+  if (j.burst) {
+    const B = j.burst,
+      G = BURST[B.w],
+      p = s.pos[B.id];
+    const gone =
+      !p ||
+      p.x < 0 ||
+      (B.id === GOOD_ID ? !goodUp(s, now) : (s.players[B.id] || {}).dead);
+    if (!gone && now < B.at) return ch;
+    if (gone || B.left <= 0) {
+      delete j.burst;
+      j.mag = { n: 0, r: now + G.reload };
+      j.fireAt = now + G.reload + soon(rnd(300, 700));
+      return true;
+    }
+    const [bx, by] = aimAt(p),
+      a = Math.atan2(by, bx) + rnd(-G.spread, G.spread),
+      ax = Math.cos(a),
+      ay = Math.sin(a);
+    fx({
+      kind: "use",
+      what: B.w,
+      who: [],
+      face: ax < 0 ? -1 : 1,
+      ax: +ax.toFixed(3),
+      ay: +ay.toFixed(3),
+    });
+    s.shots = [
+      ...(s.shots || []),
+      {
+        n: s.fxN * 10,
+        by: JUSTIN_ID,
+        k: B.w,
+        x0: at.x,
+        y0: at.y,
+        vx: +(ax * SHOT_SPEED).toFixed(4),
+        vy: +(ay * SHOT_SPEED).toFixed(4),
+        t: now,
+        lx: at.x,
+        ly: at.y,
+      },
+    ];
+    B.left -= 1;
+    B.at = now + G.gap;
+    Object.assign(j, { w: B.w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
+    return true;
+  }
   if (now >= j.chairAt || now >= j.ctlAt || now >= j.fbAt) {
     const k =
       now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
@@ -867,7 +924,7 @@ function brain(s, now, log) {
       p = s.pos[id],
       [ax, ay] = aimAt(p);
     const close = them.filter((t) => far(s.pos[t]) < 9);
-    if (m.shotgun && now >= j.sgR && close.length) {
+    if (m.shotgun && now >= j.sgR && close.length && Math.random() < SG_ODDS) {
       // the shotgun: a cone of pellets at a duck close enough
       const q = s.pos[any(close)],
         ux = (q.x - at.x) / RX,
@@ -914,42 +971,10 @@ function brain(s, now, log) {
       });
       return true;
     }
-    /* the pistol */
-    fx({
-      kind: "use",
-      what: "handgun",
-      who: [],
-      face: ax < 0 ? -1 : 1,
-      ax: +ax.toFixed(3),
-      ay: +ay.toFixed(3),
-    });
-    s.shots = [
-      ...(s.shots || []),
-      {
-        n: s.fxN * 10,
-        by: JUSTIN_ID,
-        k: "handgun",
-        x0: at.x,
-        y0: at.y,
-        vx: +(ax * SHOT_SPEED).toFixed(4),
-        vy: +(ay * SHOT_SPEED).toFixed(4),
-        t: now,
-        lx: at.x,
-        ly: at.y,
-      },
-    ];
-    const n = j.mag.n + 1,
-      down = 1 - them.length / Math.max(1, playing(s).length);
-    j.mag = {
-      n,
-      r: n >= MAG || Math.random() < down * 0.45 ? now + RELOAD : 0,
-    }; // (the more are down, the readier he is to reload)
-    Object.assign(j, {
-      w: "handgun",
-      ax: +ax.toFixed(3),
-      ay: +ay.toFixed(3),
-      fireAt: now + soon(rnd(650, 1150)),
-    });
+    /* the LMG or the SMG: a burst at the duck (the bullets go out one by one, above) */
+    const w = Math.random() < 0.5 ? "lmg" : "smg";
+    j.burst = { w, id, left: BURST[w].n, at: now };
+    Object.assign(j, { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
     return true;
   }
   /* where to stand: a few duck lengths from the nearest duck, looked at again every 1.5 to 2.5 seconds */

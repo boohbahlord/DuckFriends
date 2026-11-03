@@ -2398,6 +2398,28 @@ function playFx(f) {
       setTimeout(() => sfx.pump(), 520);
       return;
     }
+    if (
+      isMgj(s) &&
+      f.by === JUSTIN_ID &&
+      (f.what === "lmg" || f.what === "smg")
+    ) {
+      // Mad God Justin's LMG and SMG (in place of his pistol): turned toward each bullet's aim, the quick rattle
+      shows[f.by] = {
+        what: f.what,
+        t: now,
+        until: now + 400,
+        ax: f.ax || f.face || 1,
+        ay: f.ay || 0,
+      };
+      if (s.mgj && s.mgj.dup)
+        shows[JUSTIN2] = {
+          ...shows[f.by],
+          ax: -shows[f.by].ax,
+          ay: -shows[f.by].ay,
+        }; // (his double does the same, mirrored)
+      sfx.tat();
+      return;
+    }
     if (WEAPONS.includes(f.what)) {
       if ((f.hit || []).includes(JUSTIN_ID) && isMgj(s)) {
         hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
