@@ -7,6 +7,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-11-03",
+    version: 111,
+    date: "Nov 3, 2026",
+    title: "Walking fix",
+    fixed: [
+      "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
+      "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
+    ],
+  },
+  {
     id: "2026-11-02",
     version: 108,
     date: "Nov 2, 2026",

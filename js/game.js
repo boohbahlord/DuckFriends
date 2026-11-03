@@ -2164,7 +2164,7 @@ function crowd(x, y, now) {
   for (const id of s.seat) {
     if (id === R.me || !s.pos[id] || s.pos[id].x < 0) continue;
     const o = s.pos[id];
-    if (jumpZ(o, now) > 0) continue;
+    if (jumpZ(o, now) > 0 || (s.players[id] || {}).dead) continue; // (in the air, or lying knocked down: walked over)
     const kb = duckRoom((s.players[id] || {}).duck);
     const b = place(o, 0, 1),
       dx = (a.left - b.left) / (rx * (ka.x + kb.x)),
@@ -2318,23 +2318,40 @@ function step(dt, now) {
     }
   } // the defender argues from the circle (Lawyering's attorneys: from their own sides, xBounds)
   // other ducks: try both steps, then each alone; a blocked step squashes against them. A step is blocked only when it
-  // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it
+  // goes further into a duck, so a duck that walked onto mine (computers walk through everyone) never pins it. A slow
+  // frame takes a long step that can be blocked a step away from a duck, so a blocked step tries again shorter (down
+  // to an eighth) before it gives up: my duck walks right up to the other one, as it does at a smooth frame rate
   const here = crowd(me.x, me.y, now).d,
     into = (x, y) => {
       const d = crowd(x, y, now).d;
       return d > 0 && d > here - 1e-6;
     };
   if (into(nx, ny)) {
-    if (!into(nx, me.y)) {
-      q = q || scr(0, Math.sign(ay));
-      ny = me.y;
-    } else if (!into(me.x, ny)) {
-      q = q || scr(Math.sign(ax), 0);
-      nx = me.x;
+    const x0 = me.x,
+      y0 = me.y,
+      dx = nx - x0,
+      dy = ny - y0;
+    let to = null;
+    for (const f of [1, 0.5, 0.25, 0.125]) {
+      const tx = x0 + dx * f,
+        ty = y0 + dy * f;
+      to =
+        f < 1 && !into(tx, ty)
+          ? [tx, ty, ""]
+          : dx && !into(tx, y0)
+            ? [tx, y0, scr(0, Math.sign(ay))]
+            : dy && !into(x0, ty)
+              ? [x0, ty, scr(Math.sign(ax), 0)]
+              : null; // (a step along one way only, when it goes that way at all)
+      if (to) break;
+    }
+    if (to) {
+      [nx, ny] = to;
+      q = q || to[2];
     } else {
       q = q || scr(Math.sign(ax), Math.sign(ay));
-      nx = me.x;
-      ny = me.y;
+      nx = x0;
+      ny = y0;
     }
   }
   if (q) squash = { q, t: now };
