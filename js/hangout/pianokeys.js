@@ -41,6 +41,7 @@
        played back from the written-out keys, as in the game. */
 import { profile } from "../store.js";
 import { sfxContext, sfxOut, soon } from "../sound.js";
+import { touchOnly } from "../pointer.js";
 
 /* ---------- the keys ---------- */
 export const LOW = 36,
@@ -214,7 +215,7 @@ export function makeTracker({ chordMs = 60 } = {}) {
    Settings scale it, as for every sound.
    Every key is set to sound LEAD from now: a note set to start in the past skips its fade-in and clicks, or even starts
    at full volume. Firefox's clock only moves between tasks, so "now" can already be several ms gone. */
-const COARSE = matchMedia("(hover: none) and (pointer: coarse)").matches;
+const COARSE = touchOnly();
 const vol = () => (profile.settings.sound / 100) * (profile.settings.sfx / 100);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const damperTau = (m) => clamp(0.32 - (m - 36) * 0.004, 0.11, 0.32);

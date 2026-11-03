@@ -52,7 +52,7 @@ export const activity = (a) => {
 };
 
 /* ---------- other modes on Duck Cabin ----------
-   Hangout runs every activity. Another mode on the same map (Left 4 Dead Ducks) keeps only the ones it names, and adds
+   Hangout runs every activity. Another mode on the same map (Quacky Zombies) keeps only the ones it names, and adds
    its own: an activity or a rule with only: 'l4dd' runs in that mode alone. keepOnly(mode, rules, acts, quiet) names what
    stays on (the rules' k, the screen parts' id); a quiet one only draws (the couches: no Sit button, no keys, no
    pointer). rulesOf(s) and actsOf(s) give what runs for the room's mode */

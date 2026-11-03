@@ -8,6 +8,7 @@ import { profile } from "./store.js";
 import { activeRoom } from "./net.js";
 import { now as clockNow } from "./clock.js";
 import { ceiling } from "./sound.js";
+import { touchOnly } from "./pointer.js";
 export const music = (function () {
   const N = {
     C: 0,
@@ -4142,7 +4143,7 @@ export const music = (function () {
      sub-octaves, the music box's halo and tine, detuned twins) and nothing has vibrato, so the music takes a fraction of
      the work and doesn't stutter; a computer plays everything in full */
   // a phone or tablet has no mouse or touchpad at all (a laptop with a touch screen still has one, and gets the full songs)
-  const LITE = !matchMedia("(any-pointer: fine)").matches,
+  const LITE = touchOnly(),
     TL = LITE ? 0.5 : 1;
   let ac = null,
     out = null,
