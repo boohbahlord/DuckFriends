@@ -52,7 +52,6 @@ import { isMgj, mgjGone } from "./mgjrules.js";
 import {
   isVd,
   VD_PHASES,
-  VD_GRACE,
   VD_TOPICS,
   isDate,
   seated,
@@ -439,11 +438,9 @@ function vdBot(s, id, now, late, out) {
   if (isDate(s, id)) {
     if (s.phase === "vdprompt" && late)
       out.push({ t: "submit", id, text: anyOf(VD_TOPICS) });
-    if (
-      s.phase === "vddate" &&
-      now - s.at > (s.lordTime ? VD_GRACE * 1000 + 8000 : 20000) &&
-      Math.random() < (s.lordTime ? 0.004 : 1)
-    )
+    if (s.phase === "vddate" && V.tm && !V.tm.run && now - s.at > 2500)
+      out.push({ t: "vdTimer", id }); // (a computer as The Date starts the timer, and the timer ends the date)
+    if (s.phase === "vddate" && !V.tm && now - s.at > 20000)
       out.push({ t: "end", id });
     if (s.phase === "vdpick" && late) {
       const key = `${id}|${V.n}`;

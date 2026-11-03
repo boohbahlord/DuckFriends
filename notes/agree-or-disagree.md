@@ -2845,3 +2845,6 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 
 ## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
 > 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+
+## 2026-11-03: Valentine's Duck Date, the Date's timer (Adam's relay of the owner's answers)
+The Date gets a start/pause timer button; a 6 s grace follows, then the Date can skip; with the timer off there is no button; the Date writes one prompt per round. (Jackal) Done in `js/vddrules.js` (`vdTimer`, `VD_GRACE`), `js/game.js` (`vdActHTML`), computers in `js/bots.js`.
