@@ -1621,6 +1621,17 @@ p.bad {
 .lmenu button:hover .val {
   color: inherit;
 }
+.lmenu button > span:first-child {
+  flex: none;
+  white-space: nowrap;
+}
+.lmenu [data-m="settings"] .val {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+} /* (a long game and map fit on one line on a phone) */
 .lmenu .start:not([aria-disabled="true"]) {
   background: var(--green);
   color: #fff;
