@@ -3060,3 +3060,9 @@ Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and 
 > Here is my idea for the specials (blue), and the purple can be the button for toggle AND the autoswing idea can just be completely removed from mobile
 
 - The sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg (three slots at the bottom middle in blue, the middle one bigger; a purple square to its right; a purple line through the old round special button). Sent to Solomon the 2nd; Adam read the line as "the slider replaces it" and asked the owner.
+
+## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
+> 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+
+## 2026-11-03: Valentine's Duck Date, the Date's timer (Adam's relay of the owner's answers)
+The Date gets a start/pause timer button; a 6 s grace follows, then the Date can skip; with the timer off there is no button; the Date writes one prompt per round. (Jackal) Done in `js/vddrules.js` (`vdTimer`, `VD_GRACE`), `js/game.js` (`vdActHTML`), computers in `js/bots.js`.

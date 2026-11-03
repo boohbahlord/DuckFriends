@@ -760,7 +760,7 @@ const OPT_TIPS = {
   lawClose:
     "When the jury is split, the attorneys get this long to win them over; then the bigger side wins.",
   vdTime:
-    "How long each date lasts, after 10 s of grace. Off: a date lasts until The Date presses Next duck (The Date can press it any time).",
+    "How long each date lasts once The Date presses Start timer (they can pause it and go on). Off: no timer, a date lasts until The Date presses Next duck (after 6 s of grace).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
   mgjHp:

@@ -40,6 +40,7 @@ import {
   vdAfter,
   vdEnd,
   vdSkip,
+  vdTimer,
   vdJoin,
   vdTick,
   vdWrite,
@@ -155,7 +156,7 @@ export const OPTIONS_DEFAULT = {
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   mgjTime: 90, // Mad God Justin: seconds to beat him: 60, 90, 120 (the meteor adds 30 more)
   mgjHp: 0, // … Player HP: 0 (off), 1, 5, 10, 15
-  vdTime: 60, // Valentine's Duck Date: seconds a date gets after its 10 s of grace: 0 (off), 60, 90, 120
+  vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
 
@@ -279,6 +280,7 @@ const WAIT_BLOCK = [
   "skip",
   "voteReview",
   "dnEnd",
+  "vdTimer",
 ];
 export const tooFew = (s) => running(s) && s.seat.length < minOf(s);
 /* resume: 'phase' (go on where it stopped), 'quackRound' (a new secret word), 'case' (this case again) or 'take' (this
@@ -1515,6 +1517,8 @@ export function reduce(state, a, now = Date.now()) {
       else w.go[a.id] = true;
       return goOnDone(s, now) || s;
     }
+    case "vdTimer":
+      return me && isVd(s) ? vdTimer(s, a, now) || state : state; // Valentine's Duck Date: The Date's Start timer (pause, go on)
     case "dnEnd":
       return me && isDn(s) ? dnEndVote(s, a, now) || state : state; // Duncelation: End round (or take it back)
     case "giveUp": {

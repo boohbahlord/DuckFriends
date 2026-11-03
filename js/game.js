@@ -1358,7 +1358,9 @@ function drawDucks(now = clockNow()) {
       h.el.style.visibility = world.hidden(h.id, pos) ? "hidden" : "";
       withDuck(h.el, h.id, pos);
     }
-    h.el.style.transform = `translate(${(at.left + size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
+    const hd = layer.querySelector(`[data-pid="${h.id}"]`),
+      side = (turned() ? 1 : hd && hd._face) || 1; // (the hotdog is at the beak of the way the duck faces)
+    h.el.style.transform = `translate(${(at.left + side * size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
     h.el.classList.toggle("going", now > h.until - 900);
   }
   follows = follows.filter((f) => {
@@ -1376,7 +1378,11 @@ function drawDucks(now = clockNow()) {
       f.el.style.visibility = world.hidden(f.id, pos) ? "hidden" : "";
       withDuck(f.el, f.id, pos);
     }
-    const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px)`;
+    /* I want the item to turn with its duck: it was drawn for the way the duck faced when it began, so a duck that now
+       faces the other way flips it (and the way it sits at the beak) */
+    const dk = layer.querySelector(`[data-pid="${f.id}"]`),
+      turn = (turned() ? 1 : dk && dk._face ? dk._face : f.face) * f.face;
+    const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px) scaleX(${turn})`;
     if (f.el._tr !== tr) {
       f.el._tr = tr;
       f.el.style.transform = tr;
@@ -1960,7 +1966,7 @@ function playFx(f) {
       ...pressFX(f.what, 0, 0, size, f.face || 1, (s.players[f.by] || {}).duck),
     );
     fxl.append(wrap);
-    follows.push({ id: f.by, el: wrap, until: now + 2200 });
+    follows.push({ id: f.by, el: wrap, until: now + 2200, face: f.face || 1 });
     ({
       coffee: sfx.sip,
       hotdog: sfx.chomp,
@@ -3153,17 +3159,19 @@ const keyIndex = (e) => {
 
 /* the first seconds of a vote (no voting yet), or of a clue turn in Who is the Quack? (12 s before it can end) */
 const graceOf = (s) =>
-  isVd(s) && ["vddate", "vdpick"].includes(s.phase)
-    ? VOTE_GRACE
-    : s.phase === "answer" && isDn(s)
-      ? DN_GRACE
-      : s.phase === "answer" ||
-          (isSc(s) && SC_VOTES.includes(s.phase)) ||
-          (isQuack(s) && ["choice", "accuse"].includes(s.phase))
-        ? VOTE_GRACE
-        : isQuack(s) && s.phase === "clue"
-          ? CLUE_GRACE
-          : 0;
+  isVd(s) && s.phase === "vddate"
+    ? VD_GRACE
+    : isVd(s) && s.phase === "vdpick"
+      ? VOTE_GRACE
+      : s.phase === "answer" && isDn(s)
+        ? DN_GRACE
+        : s.phase === "answer" ||
+            (isSc(s) && SC_VOTES.includes(s.phase)) ||
+            (isQuack(s) && ["choice", "accuse"].includes(s.phase))
+          ? VOTE_GRACE
+          : isQuack(s) && s.phase === "clue"
+            ? CLUE_GRACE
+            : 0;
 const graceLeftMs = (s) =>
   graceOf(s) ? Math.max(0, s.at + graceOf(s) * 1000 - clockNow()) : 0;
 const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
@@ -3278,11 +3286,16 @@ function vdActHTML(s) {
   if (late())
     return `<span class="progress">You joined mid-game: walk around and chat. You're a Suitor from the next turn.</span>`;
   if (s.phase === "vdprompt")
-    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this date (empty: a random one)." : `The Date is writing the topic${V.cur ? ` for ${name(V.cur)}` : ""}…`}</span>`;
+    return `<span class="progress">${isDate(s, R.me) ? "Write the topic for this turn's dates (empty: a random one)." : "The Date is writing the topic for this turn…"}</span>`;
   if (s.phase === "vddate") {
+    /* the date's timer: it starts when The Date presses Start timer, and pressing it again pauses it */
+    const tm = V.tm,
+      ms = tm ? (tm.run ? Math.max(0, s.ends - clockNow()) : tm.left) : 0,
+      left = Math.ceil(ms / 1000),
+      lefts = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
     if (isDate(s, R.me))
-      return `<div class="act-row"><button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
-    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}</span>`;
+      return `<div class="act-row">${tm ? `<button type="button" class="btn ${tm.run ? "yellow" : "purple"}" data-a="vdtimer" aria-pressed="${tm.run}" data-tip="${tm.run ? "Pause the timer" : "Start the timer, or go on where it stopped"}">${tm.run ? "Pause timer" : `${tm.left < (+s.options.vdTime || 0) * 1000 ? "Timer paused" : "Start timer"} · ${lefts}`}</button>` : ""}<button type="button" class="btn green" data-a="end"${wait ? " disabled" : ""} data-tip="End this date and go on to the next Suitor">${wait ? `Next duck in ${wait}` : "Next duck <kbd>Enter</kbd>"}</button></div>`;
+    return `<span class="progress">${V.cur === R.me ? "Your date! Win The Date over (on the call or in the chat)." : `${V.cur ? name(V.cur) : "A Suitor"} is on a date with The Date.`}${tm && !tm.run ? ` Timer ${tm.left < (+s.options.vdTime || 0) * 1000 ? "paused" : "not started"}.` : ""}</span>`;
   }
   if (s.phase === "vdpick") {
     if (!isDate(s, R.me))
@@ -4047,9 +4060,7 @@ function showTimer() {
   const graceEnd =
       isDn(s) && s.phase === "answer" && s.lordTime
         ? s.at + DN_GRACE * 1000
-        : isVd(s) && s.phase === "vddate" && s.lordTime
-          ? s.at + VD_GRACE * 1000
-          : 0,
+        : 0,
     inGrace = graceEnd > now; // (Duncelation: the grace period's own countdown, then the Take timer)
   const left = Math.max(
       0,
@@ -4062,9 +4073,11 @@ function showTimer() {
       ? s.at
       : closing
         ? s.law.close - (+s.options.lawClose || 60) * 1000
-        : catching
-          ? s.catchEnds - catchLen(s) * 1000
-          : graceEnd || s.at,
+        : isVd(s) && s.phase === "vddate" && s.vd.tm
+          ? end - (+s.options.vdTime || 60) * 1000 // (the date's timer: pausing and going on keeps the same bar)
+          : catching
+            ? s.catchEnds - catchLen(s) * 1000
+            : graceEnd || s.at,
     frac = Math.max(
       0,
       Math.min(
@@ -4351,6 +4364,9 @@ async function act(a) {
       break;
     case "tieagain":
       R.send({ t: "tieVote", v: "again" });
+      break;
+    case "vdtimer":
+      R.send({ t: "vdTimer" });
       break;
     case "dnend":
       R.send({ t: "dnEnd" });
