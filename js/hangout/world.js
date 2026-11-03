@@ -169,6 +169,28 @@ export function mountWorld(board, api) {
     else o.z = gnd; // on the ground: the ground under it as it glides
   }
 
+  /* ---------- a mode that shows only part of the map (an activity's area: Quacky Zombies keeps to the cabin and the deck) ----------
+     Nobody can get to the rest, so none of it is made: no prop whose foot stands wholly outside it (with REACH px round
+     it), no picture of the decor and no tile of the ground whose box is (with room for the walls and the roof above,
+     the downhill below). The ground there is its plain color, under the dark. Hangout has no area: everything is made */
+  const area = (acts().find((a) => a.area) || {}).area || null,
+    REACH = 100;
+  const nearFoot = (x0, y0, x1, y1) =>
+    !area ||
+    area.some(
+      ([a, b, c, d]) =>
+        x1 > a - REACH && x0 < c + REACH && y1 > b - REACH && y0 < d + REACH,
+    );
+  const nearBox = (x0, y0, x1, y1) =>
+    !area ||
+    area.some(
+      ([a, b, c, d]) =>
+        x1 > a - REACH && x0 < c + REACH && y1 > b - 500 && y0 < d + 300,
+    );
+  const gone = new Set(); // the props left out (their lights too)
+  const tileIn = (i, j) =>
+    nearBox(i * TILE, j * TILE, (i + 1) * TILE, (j + 1) * TILE);
+
   /* ---------- the ground: art.js's flat pieces (shapes.js GROUND), painted once into tiles, then the night's light ----------
      A tile is TILE screen-world px square, painted at the board's resolution (at most 1.5 px a world px on a phone, 2 on
      a computer) from one SVG of the pieces it touches; a few at a time, nearest first, the ones around the view too. Until
@@ -292,6 +314,7 @@ export function mountWorld(board, api) {
     const span = (x0, x1, y0, y1, pri) => {
       for (let j = Math.floor(y0 / TILE); j <= Math.floor(y1 / TILE); j++)
         for (let i = Math.floor(x0 / TILE); i <= Math.floor(x1 / TILE); i++) {
+          if (!tileIn(i, j)) continue; // (left out: plain)
           const t = tile(i, j);
           if (!t.c && !t.queued) want.push([pri, near(t), t]);
         }
@@ -302,7 +325,7 @@ export function mountWorld(board, api) {
     let missing = false;
     for (let j = Math.floor(vy0 / TILE); j <= Math.floor(vy1 / TILE); j++)
       for (let i = Math.floor(vx0 / TILE); i <= Math.floor(vx1 / TILE); i++)
-        if (!tile(i, j).c) missing = true;
+        if (tileIn(i, j) && !tile(i, j).c) missing = true;
     if (ready.length) {
       ready.sort((a, b) => near(a[0]) - near(b[0]));
       for (let n = missing ? 3 : 1; n > 0 && ready.length; n--)
@@ -325,6 +348,7 @@ export function mountWorld(board, api) {
       ln = lightNow(now);
     for (const l of L.LIGHTS) {
       if (l.only && (l.only === "in") !== inside) continue;
+      if (l.prop && gone.has(l.prop)) continue;
       if (!shines(l, s)) continue;
       const x = l.x,
         y = l.y - L.heightAt(l.x, l.y) - (l.z || 0),
@@ -431,6 +455,10 @@ export function mountWorld(board, api) {
   const items = [];
   for (const p of L.PROPS) {
     if (p.layer === "none") continue;
+    if (!nearFoot(p.x, p.y, p.x + p.w, p.y + p.d)) {
+      gone.add(p);
+      continue;
+    }
     let parts = DRAW[p.kind] ? DRAW[p.kind](p) : [];
     if (typeof parts === "string") {
       const svg = parts;
@@ -438,7 +466,10 @@ export function mountWorld(board, api) {
     }
     for (const pt of parts) items.push({ ...pt, p, only: pt.only || p.only });
   }
-  for (const d of DECOR()) items.push({ ...d, p: null });
+  for (const d of DECOR()) {
+    const b = d.box;
+    if (nearBox(b.l, b.t, b.l + b.w, b.t + b.h)) items.push({ ...d, p: null });
+  }
   const NEAR = 160; // (px past the view's edge: made and shown a little before it comes into view)
   function make(it) {
     const e = document.createElement("div"),
