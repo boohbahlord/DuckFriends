@@ -8,6 +8,9 @@
                           s.hang (s is already a copy) and return true, or return false for no change
      tick(s, now)       → the host's heartbeat (every 200 ms): physics (balls …); return true when s.hang changed
      join(s, id)        → someone arrived mid-game;  left(s, id) → someone left (free their seat …)
+     start(s, now)      → the cabin just opened, everyone placed: a mode of its own sets them up its way
+     ghosts: true       → act() hears ghosts too (a ghost's actions are dropped otherwise)
+     only: 'l4dd'       → runs only in that mode (see keepOnly below)
 
    activity({ id, … }): its part on every screen (world.js asks each one every frame; all are optional):
      mount(ctx) / unmount()      when the cabin opens or closes on this screen (ctx below)
@@ -33,6 +36,10 @@
      face(id, ctx)               → which way a duck looks (1 right, -1 left), or 0 (seated: toward what it sits at)
      propClass(prop, s)          → a class for a prop's element ('off' for a lamp switched off)
      light(prop, s, l)           → false turns a light off (l: one of layout.js' LIGHTS; prop: its prop, if it has one)
+     blocked(x, y, z, ctx)       → true where my duck may not step (world px): a mode's own edges
+     crowd(x, y, me, ctx)        → how far my duck at (x, y) would be into walkers of the activity's own, 0 (clear) … 1
+     sprint(on, dt, ctx)         → false stops my duck sprinting this step (on: Shift held while walking)
+     spawn(ctx)                  → { x, y } in world px where reset duck puts my duck, or null
    ctx = { state(), me, send(action), world } (world: toScreen, heightAt, sc, vw and vh (the board's size, without making the
    browser lay the page out again), board, propEl(id), at(id) → where a duck is drawn { x, y, z } in world px, or null, shines(l) → is that light on now). */
 export const RULES = new Map(); // k → its rules
@@ -43,3 +50,22 @@ export const rule = (k, r) => {
 export const activity = (a) => {
   ACTS.set(a.id, a);
 };
+
+/* ---------- other modes on Duck Cabin ----------
+   Hangout runs every activity. Another mode on the same map (Left 4 Dead Ducks) keeps only the ones it names, and adds
+   its own: an activity or a rule with only: 'l4dd' runs in that mode alone. keepOnly(mode, rules, acts) names what stays
+   on (the rules' k, the screen parts' id). rulesOf(s) and actsOf(s) give what runs for the room's mode */
+const KEEP = new Map(); // mode → { rules: Set, acts: Set }
+export const keepOnly = (mode, rules, acts) => {
+  KEEP.set(mode, { rules: new Set(rules), acts: new Set(acts) });
+};
+const runs = (mode, key, o, kind) => {
+  if (o.only) return o.only === mode;
+  const k = KEEP.get(mode);
+  return !k || k[kind].has(key);
+};
+const modeOf = (s) => (s && s.options && s.options.mode) || "hang";
+export const rulesOf = (s) =>
+  [...RULES].filter(([k, r]) => runs(modeOf(s), k, r, "rules"));
+export const actsOf = (s) =>
+  [...ACTS.values()].filter((a) => runs(modeOf(s), a.id, a, "acts"));

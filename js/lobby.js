@@ -21,7 +21,7 @@ import {
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
 import { gameArtSVG, gameSymbol } from "./art.js";
-import { MODES, modeOf } from "./modes.js";
+import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
 import { OPTIONS_DEFAULT, isSudo, minOf } from "./rules.js";
@@ -65,10 +65,12 @@ function openTypes() {
     host = isSudo(s, R.me),
     cur = s.options.mode || "aod";
   const tiles = (all) =>
-    MODES.filter((m) => all || s.options.map !== "cabin" || m.id === "hang")
+    MODES.filter(
+      (m) => all || s.options.map !== "cabin" || CABIN_MODES.includes(m.id),
+    )
       .map(
         (m) =>
-          `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? "" : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: m.id === "hang" ? "cabin" : s.options.map === "cabin" ? "board" : s.options.map || "board", mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`,
+          `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? "" : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: CABIN_MODES.includes(m.id) ? "cabin" : s.options.map === "cabin" ? "board" : s.options.map || "board", mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`,
       )
       .join("") +
     (all || s.options.map !== "cabin" ? "" : allTile("All games", "type-tile"));
@@ -102,7 +104,7 @@ function openMaps() {
   const s = R.state,
     host = isSudo(s, R.me),
     cur = s.options.map || "board",
-    hang = s.options.mode === "hang";
+    hang = CABIN_MODES.includes(s.options.mode);
   const tiles = (all) =>
     [
       ...MAPS,
@@ -666,11 +668,11 @@ function openOptions() {
             ].includes(r[0])
           ) &&
           !(
-            s.options.mode === "hang" &&
+            CABIN_MODES.includes(s.options.mode) &&
             ["freeRoam", "submitTime", "justin", "unvoteStops"].includes(r[0])
           ) &&
           !(
-            ["sc", "quack", "hang"].includes(s.options.mode) &&
+            ["sc", "quack", ...CABIN_MODES].includes(s.options.mode) &&
             r[0] === "discuss"
           ) &&
           !(s.options.mode === "quack" && r[0] === "unvoteStops") &&

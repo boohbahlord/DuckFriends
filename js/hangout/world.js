@@ -14,7 +14,7 @@ import * as L from "./layout.js";
 import { DRAW, GROUND, DECOR, groundColor } from "./shapes.js";
 import { svgDataURL, useHangArtCSS } from "./art.js";
 import { stutterOf, lightNow } from "./flicker.js";
-import { ACTS } from "./registry.js";
+import { actsOf } from "./registry.js";
 import "./activities.js";
 import { duckRoom } from "../duck.js";
 import { esc } from "../ui.js";
@@ -108,7 +108,7 @@ export function mountWorld(board, api) {
     },
   };
   useHangArtCSS();
-  const acts = () => ACTS.values();
+  const acts = () => actsOf(R().state); // (the ones the room's mode runs: registry.js)
   for (const a of acts()) a.mount?.(ctx);
 
   function ensure(me) {
@@ -582,6 +582,8 @@ export function mountWorld(board, api) {
         dy = (y - oy) / (12.8 * (ka.y + kb.y));
       d = Math.max(d, 1 - (dx * dx + dy * dy));
     }
+    for (const a of acts())
+      if (a.crowd) d = Math.max(d, a.crowd(x, y, me, ctx)); // (an activity's own walkers: Left 4 Dead Ducks' zombies)
     return d;
   }
   const endJump = (me) => {
@@ -875,6 +877,9 @@ export function mountWorld(board, api) {
         ax /= n0;
         ay /= n0;
       }
+      for (const a of acts())
+        if (a.sprint && a.sprint(!!sprint && !!(ax || ay), dt, ctx) === false)
+          sprint = false; // (an activity can run out of breath: Left 4 Dead Ducks' sprint bar)
       if (ax || ay) {
         let k = 1;
         for (const a of acts())
@@ -890,6 +895,8 @@ export function mountWorld(board, api) {
             here = crowd(x, y, me, now);
           const ok = (tx, ty) => {
             if (!L.standable(tx, ty, me.z, up, [x, y])) return false;
+            for (const a of acts())
+              if (a.blocked && a.blocked(tx, ty, me.z, ctx)) return false; // (a mode's own edges: Left 4 Dead Ducks' boarded doors)
             const c = crowd(tx, ty, me, now);
             return !(c > 0 && c > here - 1e-6);
           };
@@ -956,6 +963,10 @@ export function mountWorld(board, api) {
     },
     /* where someone lands, for reset duck */
     spawn() {
+      for (const a of acts()) {
+        const q = a.spawn?.(ctx);
+        if (q) return { x: q.x / L.W, y: q.y / L.H, z: L.heightAt(q.x, q.y) };
+      } // (a mode of its own puts ducks back its way)
       const p = L.spawnAt(Math.floor(Math.random() * 12));
       return { x: p.x / L.W, y: p.y / L.H, z: L.heightAt(p.x, p.y) };
     },
