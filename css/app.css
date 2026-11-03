@@ -3643,6 +3643,10 @@ html.still .sky-cloud {
   animation: none !important;
   left: var(--x, 30%);
 }
+.map-tiles .col {
+  background: color-mix(in srgb, var(--c) 45%, transparent);
+  border-right-color: #ffffff30;
+}
 .map-pixel .col {
   background: color-mix(in srgb, var(--c) 38%, transparent);
   image-rendering: pixelated;
