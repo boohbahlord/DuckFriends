@@ -125,6 +125,7 @@ const DRAW = {
   geo: (L) =>
     `<path d="M95 33L117 40L95 42Z" fill="${L.beakColor || "#ff9a1f"}"/><path d="M95 42L112 43L95 48Z" fill="${L.beakColor2 || "#c45f00"}"/>`,
   none: () => "",
+  frog: () => "", // (dat boi has his own mouth: no beak in a face item drawn on him)
   hole: (
     L,
     id,

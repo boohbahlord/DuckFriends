@@ -405,6 +405,22 @@ const MGJ_TILES = [
     ],
   ],
 ];
+/* the collage map's own setting (only while it's the map): its colors, or black and white with greys between */
+/* the grey setting shows when the room is on my collage map, or when Vote Maps or Random could land on it (never in
+   Hangout, which is always on Duck Cabin) */
+const showsCollage = (s) =>
+  s.options.map === "collage" ||
+  (!!s.options.mapPick && s.options.mode !== "hang");
+const COLLAGE_TILES = [
+  [
+    "mapGrey",
+    "Colors",
+    [
+      [0, "Colors"],
+      [1, "Black and white"],
+    ],
+  ],
+];
 const MORE_TILES = [
   [
     "mgjHp",
@@ -572,6 +588,8 @@ const OPT_TIPS = {
     "How long each date lasts once The Date presses Start timer (they can pause it and go on). Off: no timer, a date lasts until The Date presses Next duck (after 6 s of grace).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
+  mapGrey:
+    "Black and white turns the whole map into greys: the tree, the duck, the swirls, the squares and the hexagons.",
   mgjHp:
     "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and nothing hurts it for a second after. The last one knocks it down until a medkit or the fight's end. Off: one hit knocks a duck down for 5 seconds.",
   mgjTime:
@@ -606,6 +624,7 @@ function openOptions() {
     ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
     ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
     ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
+    ${showsCollage(s) ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
     ${
       ["hang", "vdd"].includes(s.options.mode)
         ? ""
