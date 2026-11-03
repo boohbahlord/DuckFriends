@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 126,
+    version: 127,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -29,6 +29,7 @@ export const UPDATES = [
       "Jaime is a special now too: unlock him by being in Mad God Justin while Jaimes stab him 36 times (anyone's). Out of Mad God Justin he goes for the duck you just hit, or else the one who just hit you, or else the nearest.",
     ],
     fixed: [
+      "Mad God Justin: Justin has 12 more HP for every player, and the timer gets 4 more seconds for every player.",
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
       "Lightning's crack starts smoothly, with no click.",
