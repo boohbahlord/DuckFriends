@@ -2838,10 +2838,228 @@ duck." "The date writes prompts that determine the topic of the conversation at 
   and one shot takes HP once); at 0 the duck goes down and stays down until the fight ends; when every duck is out,
   Justin wins. His meteor still knocks everyone down for a moment, and they get up with full HP.
 
+## Request (owner, 2026-11-03 01:30Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFjCZDQQfvC1NbHPZQu5Ay7), word for word
+Pictures: /mnt/project-files/nov3/ (zebra-cake.png, dat-boi.png, sheltering-sky.png). Plan: see the end of this entry.
+
+> for duck friends in the mad god justin gamemode, have the player have one second of invulnerability frame after they take damage, so their duck will kinda flash very fast in disapearing and reappearing to indicate a vulnerability frame. This default health should be six health and this is the default gamemode.
+>
+> Justin can no longer throw lightning down on players. instead, Justin will throw a fireball, and a player will take one damage while appearing on fire with the burnt visual on their duck for twice as long as the fire, and the fire effect lasts 3.5 seconds, any player who touches another duck on fire should also become on fire. Lightning will now be a flash that shots out on the edges of the playable board and the corners every ten seconds automatically and will deal damage.
+>
+> THE MAD GOD JUSTIN GAME HAS GAME BREAKING GLITCHES! Players sometimes, and seemingly without much lag or NO lag at all will either get stuck in the top of the board and now be able to move up and down anymore OR even without being stuck in the top of the board, will lose the ability to move up and down. Total duck speed is decreased in this Mad God Justin game mode by 20%, and Justin doesn't become slower despite this.
+>
+> The knife now can strike a 3rd faster in regards to it's cooldown time, and players can now use a bow and arrow, where the arrow shoots straight and has a cooldown of 1 second per arrow shot. The bow is very simple and i facing anyway the players aims. The knife and bow are always toggled in this game by default when selected between the 1 or 2 arrow key. The third ability is a medkit to revive a player to half health, and it must be equiped with the number 3 key before a player is revived. You only get 1 medkit per game. The game is now 45 seconds stronger, and Justin's HP is now +12 more by the beginning of the game. Justin can now teleport when he touches the corners or walls of the playable board, and he flashes blue before teleporting to a random center of the board, but he can only do this one every fifteen seconds IF he is on a wall or corner.
+>
+> The lightning eyes now sits over any face apparel, including the glasses Justin wears.
+>
+> Justin can sometimes duplicate, but one version of him doesn't do damage with any of his attacks while the real one does, and this happens once every sixty seconds randomly, and it lasts for seven seconds.
+>
+> when good Justin spawns in, he only has six HP.
+>
+> Justin can turn off his xbox once a game ONLY AFTER the first forty five seconds, and when he turns off his xbox, the bottom left of the text chat will say "NightRobin1123 has left the party"
+>
+> any player can use their jumps to dodge an attack, but only if the first fifth of a fraction of the jump time at the beginning or end isn't active, as in, the first part of the jump has a fifth of the total time where the jump doesn't dodge the attack during it's duration, and the last fifth of the jump animation doesn't dodge the attack during it's duration in a similar way.
+>
+> The fourth move is a summoning move that can be done once every twelve seconds, where the player spawns a duck that is skinny and small in size and weight named "Jaime", and Jaime is a pink duck with a Sombrero and will charge straight at Justin with a knife toggled in a sprint with 1 hp. If the player doesnt use the move, it starts having the cooldown bar go down in a different color, which loads a second Jaime summon, and this can allow for a maximum of three Jaime's that load, which can be spawned one at a time instantly IF the player has a Jaime saved up. The Jaime has their player's name under their duck too. If Jaime is killed, they instantly disappear in a poof of cloud with the sound of a cloud and the sound of getting hit but more high pitch.
+>
+> The Jaime special can be unlocked by doing seventy-two damage to Justin with the player's Jaime attacking them (doesnt count the summons of other players). Every player shares the same amount of Jaime's, so they also share the cooldown and how many Jaime's there are.
+>
+> If Justin gets hit by a Jaime, he says:
+> Screw you Jaime!!!
+> JAIME!!!!!!
+> YOU STUPID MEXICAN!!!!
+> I HATE YOU JAIME!!!!
+>
+> If Justin gets hit with a Jaime, it shows a hitmarker on his duck.
+>
+> If Justin hits a Jaime with a controller or chair, he says this as the Jaime takes a hitmarker effect:
+>
+> HAHAHA!!! STUPID MEXICAN!!!
+> TAKE THAT JAIME!!!!
+> TAKE THAT MEXICAN!!!!
+> DIE JAIME!!!!!!!
+> I AM TRYING TO SOUND WHORE JAIME!!!!
+>
+> The glitches are a big problem and the game should be very playable for keyboard and touchscreen, but especially pc players.
+>
+> the arrow keys should be able to be used to aim the weapons IF a player wants to, so it doesnt replace the functionality of using the mouse to aim.
+>
+> Justin gets an additional +2 hp for every player in the game on top of what he already had for every additional player.
+>
+> good Justin cannot spawn Jaime.
+>
+> The litte debbie zebra cake can be seen getting eaten by Justin in the middle of the fight sometimes alongside other food items. To unlock the zebra cake special, a player must defeat Justin seventy two times.
+>
+> Players can unlock a short jump special (enabling this disabes long jump and double jump as does enabling either of those will unable the short jump special), and players have to jump for 1,728 times to unlock it. It basically makes players jump less height AND jump faster while it is enabled.
+>
+> Players can unlock a jetpack for jumping 20,736 times, and it works by making the player ascend by holding the spacebar, which holds them up as high as the maximum jump height, and it can keep them locked at that height IF they hold down the space bar. The jetpack can also be locked at that height IF the player uses shift while the spacebar is held down first. Toggling on the jepack is needed to use it, and using it doesnt add to jumps. Players using the jetpack cannot take damage UNLESS the ducks are as high in the air as the jetpack rider, which can probably be determined with some math put into the code (?)
+>
+> In the second screenshot is the "here come dat boi", which will have it's image and a simple shadow like how it is done with the ducks (not the shadow in the screenshot), and it is unlocked after 1,728 jumps. The frog CANNOT have the different skins UNLESS each skin is a rank that is earned by an additional 1,728 jumps each, where the bronze here come dat boi is earn 5,184 jumps total, silver and chrome is 15,552 jumps total, and 31,104 jumps total is for gold and rose gold version of here come dat boi. The skins dont need extra amounts of jumps to unlock, but the metallic ones do IF the here come dat boi is selected in style. The rainbow here come dat boi which all of it's colors change in every part of the rainbow at a steady pace is 62,208 jumps total.
+>
+> the here come dat boi can wear the helmets and face stuff, and it should be resized and made to sit in a differing rotation or orientation to fit the hear come dat boi. Make sure the jetpack works on him too
+>
+> The bow and arrow can be unlocked in specials
+>
+> The chair can also be unlocked in specials and has a 15 second cooldown, and it is unlocked by killing Justin 1,123 times in the cabin mode.
+>
+> The invisible duck can be unlocked by throwing a chair at the shadow duck in the cabin map, and this special can be clicked to make a duck transparent, or click off to make the duck normal again. The trasnparency is as much AS the duck.
+>
+> The secret code for unlocking locked items in commands will unlock EVERY locked item in the game WHEN it is toggled. The meter that fills up for locked items still ticks up like normal even when this cheat is enabled.
+>
+> In the dating game mode, the one being dated can click a button to start the timer INSTEAD of there already being a timer, AND the timer can be clicked by the date again to pause the timer. The date can still skip ducks ONCE the grace period passes, which will now be six seconds. In the dating game, the date has ALL the suitors take turns on the same prompt, AND the date writes the prompt BEFORE every round, like how it is in agree or disagree or something, and every suitor gets one turn with that prompt IF they arent eliminated.
+>
+> in the duncelation game, the dunce appearance with the hat and the black and white color goes away ONCE someone else is crowned the Dunce, AND the game keeps playing like normal into the remaining prompts written even after the stats and everything, and they finish their round unto the next.
+>
+> In duncelation AND lawyering, the players now have a setting where they dont have their own topic now, as in, if they right a prompt in duncelation, they dont have to defend it, same with lawyering.
+>
+> In dunceation and lawyering, the default timer to write a prompt now (as well as any gamemode that isnt brackets) is now two minutes and twelve seconds.
+>
+> In ALL gamemodes, MAKES SURE the 2/3 vote ACTUALLy works, because in game or elsewhere I dont think it does, since it has seemed very inconsistent and i cannot memorize when.
+>
+> In the realm of the mad god gamemode, all players share a zebra cake, and it can be used once every thirty seconds, and using it makes Justin chase the zebra cake thrown (it is thrown with the trajectory of a throwing dagger), and he will chase it until it hits a wall and then pick it up and eat it, and during this, he doesnt attack OR teleport at the wall.
+>
+> In the game, there is a map called "Tiles", and the background is just a checkered pattern of pure black and white tiles, nothing fancy.
+>
+> THe third screenshot is a new map, called "Sheltering Sky", and it is in a fitting vertical ratio for phone AND a horizontal ratio on computer that scans up and down through the image. The image will be highly animated and brought to life, by making the fractals move in the sky, making the colors roll and change into saturates that match their color temperature (warm is red, yellow, or orange for example), AND there is visual drifting, where patterns even emerge or move on the ground. (https://youtu.be/OWa5rzEOumQ?si=S6I6OK4acRMCUJeL kinda like this but of the colors of the image)
+>
+> any new items i have in the mad god justin game that should be in the normal game? idk, obv not all of them.
+>
+> Ask me questions
+>
+> The cabin map should take place in doors (so now textures or anything loaded from outdoors where players cannot get into from the inside of the cabin), and every turn, slow green ducks with dead eyes (like the X for eyes), will slowly huddle towards the nearest players. Every player has three HP, and zombie ducks only have to touch a player to make them lose HP. The power is cut off but candles and the fireplace is left on and cannot be turned off. Every player starts with a knife and a gun. The gun starts off with 72 bullets with magazine count included, and every duck has 2 HP, but there is a 20% percent chance that a duck has 3 HP and a 5% chance they have 4 HP. The HP is shown on every player in a meter below the weapons or special bar on PC AND as the green HP bars on the duck. The zombies have HP bars but they are thin bars AND underneath the zombie ducks who dont have names. The zombie ducks are a darker green. The zombie ducks have a swiping attack effect they do after being close enough to a player for 0.75-1.25 of a second, and the swipe effect when done near a player (and it has to be somewhere in a wide radius in front of the zombie duck) does 1 HP of damage.
+>
+> There is a thing where players can click E or use the vote button to interact with Justin's buttler to buy upgrades to their stats. One option in the shop window that shows up is to upgrade accuracy (this adds an additional 5% chance for instant kill in an attack), or increase attack speed by 10% percent (cooldowns are 10% faster), or increase HP by 1 (can be 5 at max).
+>
+> The buttler also has a tab to spin for weapons, where the items you could end up with are on a single slot, and it spins until it lands on one, and duplicates are not possible.
+>
+> The weapons in the wheel are ALL the ones you can get in the special weapons, such as the throwing dagger, the hammer, the grenade, the shotgun, Jaime (in this gamemode, you can use him three times per round per player), and all the new attacks from mad god justin gamemode. There is also a new sniper that has 24 bullets, but the bullet keeps passing through every enemy it touches before hitting the map's boundary limit and does 2-3 damage to everyone it passes through with a bolt action that makes it a .75 second cooldown per shot (the bullet is a longer version of the pistol bullet), there is the submachine gun which only has a 1.75% (including per headshot chance increase) chance of headshot BUT has 160 bullets and 20 bullets per magazine that is full auto with high fire rate of small and simple bullets that arent hard on hardware and do 1 damage each. There is an AK-47 that has 30 rounds each and does 2 damage flat AND has 3% chance of headshot as a full auto with and there is 180 bullets in each, there is the zebra cake which makes zombie ducks run after it and distracts them to they have a bite of the zebra cake (every zombie in a large radius near the zebra cake will walk towards it to have a bite of it, and only need one bit till it disapears next round, but the Justin NPC goes after it too is the problem,, ,we will talk ab that later) but can only be used by a player once before it runs out and they need an ammo refill (we will talk ab that later), there is a chain gun that doesnt need reloaded and does max damage for every bullet and is hit scan (so it doesnt animate the bullets but does show little yellow thin lines that flash in and out really fast that stratches out to the wall it hits) and has 60 bullets (the bullets are like five bullets a second) and no magazine, there is a revolver that is only five bullets per magazine but has 75 bullets total AND the bullets do 2 damage with a 4% headshot chance, there is a grenade launcher that shoots the grenades out (of which it has fifteen and a 1.2 second cooldown) and it plus the granade do max damage in it's radius, (every player starts with two grenades at the beginning and there is a dedicated grenade slot in the special list that is at the end, and you use the letter G to throw it), there is a fireball that players get one of and it does 1hp damage every three seconds and will keep the zombies on fire once they are lit for six seconds (players only take 1 damage of hp insantly after being set on fire and their fire effect goes away after three seconds, but they can get it from touching someone else on fire), there is a jetpack that lasts ten seconds in flight time before needing refilled, and there is a long jump which can be picked up and then toggled (the jump or jetpack has it to where the not getting damaged for a certain amount of time when first jumping or about to hit the ground still applies), there is a medkit (this can be used once and cannot be refilled by ammo refills) that refills your health to max, and a adrenaline shot that makes your duck as fast as they normally are in the game for twenty seconds (can be refilled), there is a light machine gun which does 1 damage per bullet with a 1.25% chance of headshot but has 75 bullets per mag AND has 225 bullets total.
+>
+> * Ducks are only 50% as fast as normal
+> * ducks go into the dead effect and have a cooldown bar that shows on their player name that ticks down in a round before they are revived, and failinng to revive them in time will make the duck die for that round and they will become a ghost that can walk around (the ghost is black and white as in greyscale to indicate they are dead and it is a similiar transparency to the ghost effect on cabin). The revive takes ten seconds
+> * The ducks can get 1 HP back every fifteen seconds, where the green hp bar has that part glow and fade back it when it comes back.
+> * ducks have a cone flashlight in front of their duck to help see in a brightness LIKE what the map brightness WOULD of been IF the light would of been turned on IF anything is in that player's cone, and players can see other players cones as well.
+> * ducks can turn off their flashlight by clicking the zero key where the flashlight is in their special bar, but nothing happens when they do this, it is just a choice.
+> * the zombies start off either a 3rd or half as slow, and maybe somewhere in between, for the first 5 rounds, they take half a second to attack and can only attack one every second.
+> * the first five rounds has 14 zombies per round plus 3-5 zombies for every additional player.
+> * the rounds 6-15 the zombies become all only half or 0.75 as fast as the players and can now attack one every .75 seconds after 0.3 seconds of being near a player; by rounds 11-15, they are all 75% as fast as the players, here 20 zombies per round and +3-5 per player.
+> * by rounds 16 and onward, all the zombies are 95% as fast as the players AND do one damage once every half a second when close enough and attack only after 0.25 seconds of beinng near a player, here there is 50 zombies per round and +5-10 per pllayer.
+> * the first 1-5 rounds has no limit on the max amount of zombies to spawn. rounds 6-15 has a max of 35 zombies that can spawn in per round. rounds 16-25 has a max of 45 zombies spawned in per round. Rounds 26 and onward have a spawn limit of 50 zombies per round. The zombies per round here in this rule counts zombies all spawned in at the same time per round. Zombies might be different weight or sizes randomly, but are most commonly the default weight and size 75% of the time, and they all have the same hitbox obviously.
+> * zombies cannot sprint.
+> * zombies are simple AI that go after the most near by player IN TERMS of walking distance, as in, a player on the other side of the wall might BE closer, but the zombie will actually not count them IF the total walking distance to get to them for an attack is longer, so the zombies take the path of least resistance. zombies cannot overlap eachother NOR do they have their size change or compressed when they do things like walk into other ducks or zombies or walls, which is unlike players.
+> * zombies only have one attack, and that is the claw attack with an animation and effect based off the cats. Their claw effect that shows like it does for the cats is slightly bigger and has a half less range AS the knife, AND they continue to keep moving towards to player even when attacking.
+> * zombies cannot pick up weapons or revive eachother, becuz when they die, their duck goes onto the ground and become transparent before fading away fast enough, zombies and players can walk past throuhg their corpse for the short moment they lie dead. zombies blink red like players do when taking damage. zombies do not have an invulnerability frame to damage like players do in the mad god justin gamemode for example.
+> * players do NOT have an invulnerability frame in this gamemode.
+> * there is no time limit per round.
+> * a round is completed by killing all the zombies.
+> * zombies spawn in at holes put into the wall at random parts of the maps OR at the doors in the map. Players cannot go through the doors or holes.
+> * The doors or holes can be boarded up just like how they can in call of duty blacks ops 1 or 2 zombies or like call of duty world at war zombies. The walls can be boarded up with five boards at a time. E to interact to board up a hole or door.
+> * Players cannot sit down, play piano, use the chalk board, the guest book, or anything like that during this gamemode.
+> * Ducks have unlimited amount of times they can revive teammates.
+> * Revived ducks come up with only 2 HP.
+> * every damage to a zombie is 5 points, but the headshot is 25 points.
+> * the critical chance that is raised by accuracy for it's given weapon (such as the 5% chancce for default pistol) is called a headshot
+> * there is a 25% chance in a round that a special drop effect will spawn in somewhere on the map in the first thirty seconds of the round, and it's drop will last for forty five seconds that a player can walk over it to get's it's effect(so no spawning it on couches or things a player cannot walk onto): instant kill is a skull where every kill is insant and the point of every hp for every zombie and it's symbol is a skull, full ammo is a bullet that makes every weapon that can have refill get refilled (grenades and grenade launcher included), nuke is a nuclear bomb special that if walked over will make every zombie spawned in die and give every player a split share of the damage to all of the zombies in points to their point pile, speed boost is the adrenaline shot efffect for every player for 30 seconds (shown at a timer in the top right) with the symbol of the adrenaline shot, double points is the symbol of a dollar sign and gives players double points for every attack, and sale is when everything the player buys that round is half off in the Justin's butler shop (but things like increased health or accuracy is only half off for that item once). There is a 25% chance within every 25% chance that another spawn in of another special effect on the map will drop 30 seconds after the first spawns, and this loop here resets at the beginning of every new round. Apart from the other random special effect chances, there is a 5% chance every round that is it's own that a maximum ammo will spawn in the first minute of a round IF the round doesnt end in that first minute.
+> * The weapons in the weapon slot is all equal chance to get and duplicates cannot happen.
+>
+> Players can only have one melee, two ranged weapons, and one special at a time (special would be niether melee or ranged weapon, such as Jaime, zebra cake, or jet pack). The special slots in the bottom right will be five, with each having their own color. Range is red in background, blue is melee, purple is special, and white is grenades (grenades are always there and can be filled to 3 max i said from max ammo i think).
+>
+> zombies can spawn once every second with a max of five after the first, and the spawn rate is increased in the limit by +3 and for every player and the spawn rate is increased by 50% for every player (as in maybe three players have two zombies spawn in per second). there is a 25% chance a zombie doesn't spawn in within a second. The spawns stay on hold when the spawn cap is reached as outlined earlier, and the spawns continue again when a zombie below the spawn cap happens.
+>
+> Zombies have a 20% chance of having on an outfit and/or hat.
+>
+> Every round is completed when a zombie is dead and every player has 50 points when the game starts.
+>
+> The increase accuracy is 300 points and becomes 50 points more expensive per purchase, and increase accuracy can only go up to five maximum.
+> Increasing max health is 100 points and becomes 25 more points the second time, and can only be bough twice, but the effect on maximum hp is has is lost when a player goes down and needs to be revived, which means they have to buy it back.
+> Speed boost is permanent and is a 10% speed boost and cost 250 points.
+> Faster reload makes reload fast by 30% and costs 300 points.
+> The wheel you spin for weapons is 210 points... It shouldnt be a spin wheel actually, it is on the poker table, and clicking E to interact on the fireplacce will have it flicker between different weapons like it does on the mystery box for cod zombies, and players can choose to take the weapon it lands on by clicking E to interact. The weapon can only be picked up by the payer who spent money on it.
+>
+> The butler now stands next to the poker table and can be walked through and not damaged or killed. The butler also says at the bottom of his page that the fireplace is where you click to see what weapon you get. Whatever ranged weapon you have selected is what it replaces IF it is a ranged weapon, otherwise, the game will tell the player to switch to the range weapon they want to replace IF they dont have a ranged weapon toggled, and it says this in large text and an error sound.
+> Any melee or ranged weapon can only be toggled one at a time AND MUST stay toggled when selected automatically. The special special slot that is purple can be toggled on and off, and IF it is something like the zebra cake or Jaime, then switching to it makes the weapons that were last selected untoggled and IT becomes toggled instead, following the same rule. Thhings like the jetpack though can be toggled without replacing weapons or competing with them.
+>
+> there are limitless rounds and the rounds are in the center top, and say in crimson color "Round {round numer" such as "Round 15" or "Round 2", it should be a large enough text. This new cabin variation is a gamemode that is called "Left 4 Dead Ducks", and it is can be played solo and is a gamemode option under the cabin map alongside hangout. They are both cabin map, but they change the function of the map when selected. The weapons should have the color of their type in an orb similiar to the weapon drops in realm of the mad god, but their color is based on the slots in the special slots, such as maybe purple, red, or blue.
+>
+> The melee weapons have a damage effect WITHIN a small bubble outside of the object's hitbox IF it touches the players hitbox, and the weapons hitbox is active WHILE it is in the middle of an attack.
+>
+> Melee weapons swing twice as fast now in this gamemode. Friendly fire is off in this gamemode.
+>
+> Ducks can still sprint, but they have a thin spring bar below their player name that is a dark mana like blue that lasts seven seconds total, and it takes seven seconds to refill, and it instantly starts refilling AS SOON as it isnt being used.
+>
+> The Justin AI can be invited to play in the lobby settings by default, and he has all the same mechanics as other players and will try to revive players that are down. He does effect the spawn rates of zombies AND OR the amount that spawn ONLY when he is alive. He should still send messages mid game.
+>
+> The zombie maps will have some candles randomly on some barren parts of the floors.
+>
+> when all players die in the zombie gamemode, the game ends, and they can click replay or back to lobby. THe stat screen will show the max amount of rounds, the damage per player, the downs per player, the jumps per player, the points earned per player and the points spent per player. There is a max rounds survived also shown on a player AND put into their stats info on their duck.
+>
+> Hovering over a weapon on the special slots or hotbar shows basic weapon info, such as their critical chance which says headshot chance in parenthesis next to critical chance, it has the damage or damage range, reload time, and the maximum ammo, and bullets per reload size.
+>
+> * The submachine gun take 0.5 (or half) a second longer then the default pistol to reload.
+> * the sniper takes 0.5 seconds to load before the next shot for it's cooldown (bolt action)
+> * the assault rifle is 1.25 extra second to reload compared to the default pistol.
+> * the light machine gun is seven seconds to reload AND sprinting will cancel it's reload, which will also say that in text with an error sound if a player sprints during it's reload.
+> * the shotgun does not need reloaded but can shoot once every half a second with each pellet doing 1 damage and has 40 shells total.
+> * the revolver if i included it will have a 1 bullet per 0.3 second loaded per reload, and it keeps loading bullets into chamber until max unless shooting it, which will interupt that reload.
+> * shooting a range weapon interrupts reloading
+> * grenade launcher is i think already said to have a time till it reloads the next grenade.
+> * the critical effect has a absolute red flash on the duck it hits, becoming absolutely red with a "CRIT" in small and bold itallics that is in multicolored lettering that isnt too big.
+> * zombies cannot crit
+> * hammers send zombies into mid air like usual EVEN IF it doesnt kill them, and it has a 50% chance of doing 2 damage instead of one PER ENEMY.
+>
+> default game now has 3 hp per player until dead effect, but in normal games that ISNT mad god justin or left 4 dead ducks WILL have HP come back in 6 seconds of not beinng attacked.
+>
+> getting attacked in the zombie gamemode resets the timer for HP time unto natural heal.
+>
+> Ask me questions
+>
+> (reviving grants 10 points once per player after round 5.)
+>
+> One worker should work on the new visual components with good principle, another two or more need to do the code, and Adam can share in visual components, code, or planning. The bulk of the plans will be written in high effort Fable mode by Adam, before he switches back to the appropriate Opus and appropriate effort level after planning. Adam does not need to use fable for every plan NOR for anything hard, only when i say.
+>
+> Every players should have the hitbox in the shape of the default duck, so outfits, accessories, size, weight, or styles DO NOT change the hitbox.
+
+- Adam's plan (written in Fable, as the owner asked): https://claude.ai/artifact/Xftyz86VsXbqyUVWZVmVrs. The movement glitch went to Solomon the 2nd first (function first), the 2/3 vote check to Jackal, the rest after the owner's answers.
+
 ## 2026-11-03: the 2/3 vote (the owner's line, word for word)
 > In ALL gamemodes, MAKES SURE the 2/3 vote ACTUALLy works, because in game or elsewhere I dont think it does, since it has seemed very inconsistent and i cannot memorize when.
 
 Audit (Jackal): every vote that uses the lobby's share, with 3 to 7 players and every share (half, 2 of 3, 3 of 4, everyone), plus a leaver and a joiner mid-vote. The formula everywhere is `max(1, ceil(players * share))` with 2 of 3 counted as exactly 2/3. Fixed: Next round after a leaver (the go-on count was not checked again when someone else left), the all-rounds review (it counted people who joined mid-turn), the bracket label ("N needed" when a match waits for every vote), the Dunce End round tip (it said one player too many). The rest is listed in the report to Adam as design choices.
+
+## 2026-11-03 02:29Z: the owner's answers to the Nov 3 plan's 20 questions, and the lobby rows (word for word)
+> 1. The name of this new worker can be Pharaoh.
+> 2. It is every 14 seconds, it has a .8 tel, and the old lightning and fire that lacks a tell or anything like that is removed. 
+> 3. yes and one damage but no damage to Justin. Yes it hurts Jaime too.
+> 4. Yes
+> 5. Yes all damage
+> 6. Yes and it is E or enter to revive a duck OR clicking while the medkit is selected.
+> 7. Yes but make it 36 actually AND it can be other players Jaime's stabs too
+> 8. He can be hit AND the hits do not count on him
+> 9. Yes but idk what you mean by third, like literally anywhere far enough from the walls or corners.
+> 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
+> 11. The bow and arrow dont need to be unlocked and in the normal game AND the zombie game they shoot once every 0.4 seconds (in the zombie game, they have 150 arrows, 5% chance of crit, and no magazine or anything like that)
+> 12. Frog on unicycle
+> 13. The jetpack SHOULD NOT be in the Mad God Justin gamemode and the chair and fireball can get you. Make the fire effect better it sucks rn, it should make the whole duck covered in one large enough flame.
+> 14. "Don't get your own prompt" setting
+> 15. Yes
+> 16. ????????? wtf is this supposed to mean?????
+> 17. Uhhh.... Dont even include it since it is not worth the effort. We CAN make something VERY MUCH in it's likeness though, and it can be a map where there is a setting in the map to turn off the colors, which makes the map black and white with greys in between as a lobby setting when that map is selected.
+> 18. yes
+> 19. yeah playing cards is ony for hangout and NOT for the zombie mode.
+> 20. YES, and players cannot go outside BUT they can go on the balcony, but everything around the balcony is very dark and only visual and NOT playable, so the balcony is it's own map boundary. that means the beginning of the staircase can be boarded up and then zombies can come from the stair case, so new idea here
+>
+> New suggestion, when selecting maps in the lobby, there should be a map option called "Vote Maps" and when it is on, players vote a map, and if a map has equal votes, then it is a random choice between maps with equal votes (cabin is not on there). For game modes, the game modes have a selection of categories that are selected first, and each category is different kind of game mode, such as social competive (dating, lawyering etc), social (agree or disagree, would you rather), cabin gamemodes, and special game modes (mad god justin for example). The gamemodes are now on a row instead of a box in the lobby selection, AND the "i" that is circled on the end can be clicked on by mobile or clicked or hovered on for computer to tell the player the info ab the gamemode like we done before. Another example is that we can make the icon of the gamemode to the left. The maps are also rows, but inside them they have a picture slice framed inside in the shape of the row. When selecting game mode or map, the rows arent in a window but a dropdown menu from where they were selected. The vote map mode is at the top of the map selection menu, random below that, with cabin below it, and every other map below that. The vote selelction also has a random map as an option. The random map selection ALSO has a six sided dice for it's picture.
+
+- Readings Adam took: 2 = Justin's old lightning throw and old fire attack go; the fireball (every 14 s, 0.8 s tell) replaces them; the fire pickup that hits Justin stays. 9 = any spot far enough from the walls and corners. 11 = the bow is no longer an unlock: every player has it in every mode; 0.4 s between arrows in the normal game and Left 4 Dead Ducks (Mad God Justin keeps one per second); short jump at the suggested 60% height, 70% time. 13 = no jetpack in Mad God Justin at all. 16 = the plan's "normal game" picks stand (no answer needed). 17 = Sheltering Sky dropped; a new map in its likeness with a lobby setting that turns its colors to greys (name to come from the owner). Lobby rows: Adam builds it; modes not named by the owner were sorted by Adam.
+- Split: Pharaoh (new) = Left 4 Dead Ducks; Solomon the 2nd = Mad God Justin code, then unlocks; Noah = all new art and the new map; Miles Jr. = sounds; Jackal = the food bug, then Valentine, Duncelation, Lawyering, 2:12, Tiles; Adam = Left 4 Dead Ducks plan, lobby rows.
+
+## 2026-11-03 02:37Z: phone controls for weapons (word for word)
+> the autoswing button for melee when near an enemy SHOULD be next to the special button on mobile AND there should be a little crosshair button to select SOMEWHERE in the bottom right of the screen to do damage, and the button is also a joystick which can be aimed in the direction you attack in, where you have to push the joystick into the direction you want to attack in. There is also a jump button that is sma above that with the symbol of an upwards arrow. autoswing is a toggle btw. This is a setting that ONLY shows up WHEN a weapon is selected, like the buttons show up automatically, and the jump button is the NEW way players jump in mobile now and it is here to stay, and it gets moved up when the attack button is there now. the other part of the screen the finger goes on that makes the duck move still works as usual, and so does the sprint. hmmmmmm, for the special button, make the specials in their slots something that shows the middle slot and the slot to the left and right of it, and the player slides left OR right to switch weapons, and sliding more or less switches through more special slots, and it is now in the bottom most middle of the phone screen, and the toggle button is to the right of it, and the autoswing is to the left of it and ONLY shows up when a melee or relevent special is selected.
+
+- Given to Solomon the 2nd with the Mad God Justin rework (same hotbar and aim code).
+
+## 2026-11-03 02:44Z: the phone specials sketch (word for word)
+> Here is my idea for the specials (blue), and the purple can be the button for toggle AND the autoswing idea can just be completely removed from mobile
+
+- The sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg (three slots at the bottom middle in blue, the middle one bigger; a purple square to its right; a purple line through the old round special button). Sent to Solomon the 2nd; Adam read the line as "the slider replaces it" and asked the owner.
 
 ## 2026-11-03: the owner's answers to Adam's questions (relayed word for word)
 > 10. Just a look only and not too often (the food items will not face the duck when they look in another direction AND will not be up to their beak either when eating i found out in game)
@@ -2866,6 +3084,56 @@ The Date gets a start/pause timer button; a 6 s grace follows, then the Date can
 ## 2026-11-03: Duncelation and Lawyering, the write timer (Adam's relay of the owner's step 3)
 Done (Jackal): the dunce look goes as soon as someone else is crowned (only the newest dunce is in `s.dn.dunces`); after a dunce's stats play goes on into the takes not yet defended (`afterDunce`), a new rotation only after the last; a setting named exactly "Don't get your own prompt" (`noOwn`) for Duncelation (replaces the old "Never your own" tile; "Write your own" wins over it) and Lawyering (the writer is neither attorney); the write timer ("Question time limit") now defaults to 2:12 (132 s) and has a 2:12 tile; Bicker Brackets starts with none, and switching to or from it moves the timer along while it sits at the other default.
 - Tiles map (Jackal, Adam's step 3, the owner's words relayed: a pure black and white checkerboard, 8 tiles across on a computer and 5 on a phone): map id `tiles` in js/maps.js, css under `.scene.tiles`; waits for the owner's OK on the picture before merging.
+
+## 2026-11-03 04:09Z: the Game Settings screen (word for word)
+> The customization menu for players SHOULD take up their whole screen, making it the same as it was though.
+>
+> Hmmmm... You know what? New UI idea, the map will selection will cover the whole screen like the customization does AND the rows are on the left WITHOUT art on them, AND selecting them SHOWS a preview on the right box, kinda like how the customization menu has a showcase of the duck on the right. There is an arrow on the left to go back a menu and an X on the right, and the arrow allows a plalyer to go back and ouut from the cabin menu IF they selected it. The preview for the cabin map SHOULD show the ACTUAL cabin map in one large full map picture, which the map preview changes if another game mode is selected. ALSO, in this same menu, there is two options "Map" or "Game mode", and a player can see that the menu they are in like how it is in customization, but now selections are in rows as opposed to boxes, as established before. The third setting seen is "Game Options", which is below game modes, and that is something that brings up all the game settings into this screen, where every game option is now labeled in categories, such as "General Rules", "Durations", "Round Settings", and "Additional Settings"
+> The game mode setting "Game mode Settings" is a larger Heading near the bottom, and then there is a "General Settings" heading for universal rules at the top, each having their own drop-down menus. There is a new general setting called "Invulnerability", where players do not die or take damage because weapons do not effect them. Another general setting is called "No Chat", which disables text chat, and another setting called "No Terminal" which disabes terminal use by all players in the lobby or game. ANother general setting is called "Mad God Justin", where Justin has 10 hp AND will keep attacking players who attacked them until they are dead IF they are not invulnerable condition from a game mode (such as the date or suitor sitting at the table), and he has his attack patterns from the game mode (excluding the electric walls) and he uses them until the player did damage to him are dead. When they are dead, Justin will go back to not killing them or anyone else, since he only targets the one who hurt him, and others he accidentally damaged do not become targeted. He gets the dead effect like anyone else and comes back to life accordingly just like anyone else, and he will have the lightning eyes and the horns if he had them. Mad God Justin condition can only be turned on IF the Justin condition is turned on, otherwise it is faded. In any game mode, there is a "Justin Kills" counter, and the Justin kills sits in the same box or place as the jumps, and it sits below jumps WHEN Justin is in the game. Killing Justin in the Mad God Justin game mode ADDS to the Justin Kills count AND any relevant item unlock that i did not previously add this rule unto.
+>
+> There can be game mode settings too, such as making the agree or disagree different shades of green or red ONLY, with green being agree and red being disagree, and this is an optional setting obv, and we can also make gamemode option suggestions (: (number the suggestions pls so the reply is easier)
+>
+> In these categories, every one of them is a menu already seen under arrows that can be opened or collapsed, with descriptions in a text box on the right that are simple, matter of fact, and informational only. Adam should help with the categorization of which settings go into what, and he can also ask me the questions about that, which moses can remind me of.  Adam should be in charge of these descriptions, and they should provide clarity. They should not read as AI output but a well done setting not said in first or third person, like a wikipedia article doesnt do if yk wat i mean, just purely informational.
+>
+> This means the left before clicking these buttons will just say "Game Settings", and then the "Start Game" or "Ready" button for other players. The game can start if the host isn't ready btw and the majority of ducks are.
+>
+> There is a vote game mode setting also and a random game mode setting, and in random, the game mode switches to a new game mode after every end of round, so it cycles after every player's turn, and will go through every game mode ONCE before reshuffling randomly. This game mode can have it set to NOT have it have to play every game mode once before reshuffling, and the setting is called "True Random", which then doesnt have a consideration or condition, because any gamemode can come next without any condition changing whatever may come next.
+>
+> Game setting suggestions can also be general. New game setting suggestions ought NOT to be witty names or anything, they should be matter of fact and provide clarity.
+
+- Replaces the dropdown menus of PR #186 (not merged); Adam's plan with the categories, descriptions, numbered suggestions and questions follows.
+
+## 2026-11-03 04:48Z: the owner's answers to the Game Settings plan (word for word)
+> Suggestions
+>
+> 1. nah
+> 2. yeah
+> 3. Yeah
+> 4. yes but instead of only lines per paragraph, there is only lines per player till paragraph ends.
+> 5. No that defeats the point
+> 6. No
+> 7. No
+> 8. No
+> 9. No
+> 10. Yes
+> 11. Yes
+> 12. Yes
+>
+>
+> Questions
+>
+> 1. A host can start the game regardless. BUT, there is a new setting below the host settings (it will now be called host settings), called "Democracy of Ducklings", and in this option BELOW the duck setting, the ducks can vote to make the host unable to start and they most vote ready like everyone else, they can also vote that the map is always voted and that the game mode is always voted. They can vote that ALL players can change the game settings, AND they can make it to where if ALL ducks vote a new host (host cannot vote on this), then the duck they voted becomes the new host. The host CANNOT start a game during a vote, and they can only ready, and a text popup on the top of the host's screen says as much, and a vote shows up as a highlight and notification with an exclamation on the vote menu, and there is also a soft bell sound to indicate that a vote is up. Most votes only need 2/3rds of duck votes to pass, but the new host needs ALL ducks to vote together. There is another vote called "Sudo Perms" which grants sudo perms to all ducks. If the host wants, they can go to this menu and enable them automatically with a single vote, including switching host. This is something that can be canceled by a host BEFORE a lobby is created. There is also a new setting for general WHICH hides customization features, which during the game, will make every duck a default yellow duck with their player tag (you cannot disable player tags for this game option), and this unlocks a new option called "rainbow ducks", where every duck is a color of a rainbow, and the eighth duck is brown with the Justin costume on. the colors of the rainbow are 7 + the Justin outfit, and it is randomly assigned. Killing a player with this outfit does not count towards the kill Justin count. There is another general setting apart from these where the color of a duck is determined by their vote (so it cannot be on if rainbow ducks is on, but doesnt contradict player tags nor disabled cosmetics), and in this one, where the duck stands on a board changes their color with it. If a duck is greyscaled, then the change applies. The mad god justin gamemode for example though does not change their colors obv under this setting the skins like the jack in the box or malard duck can change colors to their choice or state in this setting.and there is a change player tag to the choice of a player as a separate setting that has to be enabled.
+> 2. Yes
+> 3. Yes and yes
+> 4. Yes
+> 5. Yes
+> 6. Yes
+> 7. He will chase them for only 10 seconds, and players still have the flash of red and everything when they take damage and all of that.
+> 8. Every player in the fight.
+> 9. It can switch colors between black, grey, and white, slowly fading into the differences and the words on it fade with it (the duck doesnt change color when on this tile in the new setting where ducks change colors to their choices, BUT we can make them change with it, because that would be pretty cool)
+> 10. The default is 2 of 3 and IDK WHAT THE FUCK ARE YOU TALKING ABOUT
+
+- Plan: https://claude.ai/artifact/DDakyD7MfB7FCkNzeswUa4. Answer 10: the code's default was 3 of 4 (OPTIONS_DEFAULT.share 0.75); it becomes 2 of 3 as the owner says. Answer 9 is about the Neutral column on the green-and-red board.
 
 ## 2026-11-03: phone weapon controls (Adam's relay of the owner's words)
 > the autoswing button for melee when near an enemy SHOULD be next to the special button on mobile AND there should be a little crosshair button to select SOMEWHERE in the bottom right of the screen to do damage, and the button is also a joystick which can be aimed in the direction you attack in, where you have to push the joystick into the direction you want to attack in. There is also a jump button that is sma above that with the symbol of an upwards arrow. autoswing is a toggle btw. This is a setting that ONLY shows up WHEN a weapon is selected, like the buttons show up automatically, and the jump button is the NEW way players jump in mobile now and it is here to stay, and it gets moved up when the attack button is there now. the other part of the screen the finger goes on that makes the duck move still works as usual, and so does the sprint. hmmmmmm, for the special button, make the specials in their slots something that shows the middle slot and the slot to the left and right of it, and the player slides left OR right to switch weapons, and sliding more or less switches through more special slots, and it is now in the bottom most middle of the phone screen, and the toggle button is to the right of it, and the autoswing is to the left of it and ONLY shows up when a melee or relevent special is selected.
