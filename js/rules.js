@@ -6,7 +6,7 @@
    turn) → talk it over → the next question → the round's results → the next round. The rounds go on until the players
    vote to end the game.
 
-   A phase ends when enough players have ended their turn (3 of 4 by default). In submit and answer, reaching that starts
+   A phase ends when enough players have ended their turn (2 of 3 by default). In submit and answer, reaching that starts
    the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
 
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
@@ -127,7 +127,7 @@ export const COLS = [
 export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
-  share: 0.75, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
+  share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
   answerTime: 30, // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -998,14 +998,14 @@ export function reduce(state, a, now = Date.now()) {
           wasMode = s.options.mode;
         Object.assign(s.options, a.options);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
-        /* I want half the votes to end a turn by default with the Discussion round on, 3 of 4 without it: turning it on or
+        /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
          off moves the share along while it's still at the other default */
         if (
           "discuss" in a.options &&
           !("share" in a.options) &&
           !!was !== !!s.options.discuss
         ) {
-          const [from, to] = s.options.discuss ? [0.75, 0.5] : [0.5, 0.75];
+          const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
           if (s.options.share === from) s.options.share = to;
         }
         /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's
