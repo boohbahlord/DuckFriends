@@ -3296,3 +3296,19 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 - Solomon the 2nd (on Stage 3's PR #205): the chain gun fires 15 a second (cool 67 ms; 60 shots now last 4 s). Each
   shot's line starts at the barrel's tip as drawn on screen; besides the line to what it hit, one or two shorter
   lines pop in and out at slightly different angles in front of the gun (only what the main line touches is hit).
+
+## Quacky Zombies Stage 4: the jetpack and the drops (Adam's go, 2026-11-03 18:53Z; the owner's drops word for word at line ~2960 above)
+
+- Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main). It doesn't merge until the owner OKs the picture sheet.
+- Jetpack (`js/jetpack.js`, Noah's art in `js/jetart.js`): in the fireplace's pool, 10 s of flight; its slot (4) switches it
+  on, hold Space (phone: hold the jump button) to fly up, Shift keeps the height, let go to come down. High in the air a
+  hit misses, as in a jump (not near the ground). Also the Jetpack special, 20,736 Jumps, every mode but Mad God Justin.
+- Drops (`dropTick` in `js/l4ddrules.js`, art in `js/l4dddrops.js`): 25% of rounds get one in the first 30 s (lasts 45 s,
+  only on walkable floor); of those, 25% get a second 30 s later; on its own, a 5% Max Ammo in the first minute (none if
+  the round ends first). Instant Kill, Max Ammo (grenades back to 3, the launcher too), Nuke, Speed Boost (the
+  adrenaline for everyone, 30 s, timer top right), Double Points, Sale.
+- Guesses (no number from the owner): Instant Kill and Double Points last 30 s; Sale lasts the rest of the round, each
+  upgrade half off once per player, the fireplace half off every time; the Nuke's points split evenly among all players
+  (each zombie's HP left x5, x2 with Double Points); a drop is taken within 70 px and blinks in its last 10 s; the
+  jetpack rises 2.4 duck heights a second up to 2.6, dodges above 0.86; out of Quacky Zombies it fills up again in 10 s
+  on the ground; Max Ammo fills the jetpack too; computers leave the jetpack alone; a flight isn't counted as a Jump.

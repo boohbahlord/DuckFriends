@@ -18,6 +18,7 @@ import { fewer } from "./gfx.js";
 import { BOW, MEDKIT, ZEBRA, JAIME, CHAIR, FIREBALL } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
+import { jetpackSVG } from "./jetart.js";
 export { SHOT_SPEED } from "./rules.js";
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -187,6 +188,15 @@ export const SPECIALS = [
       return `<span class="sp-see">${duckSVG(DUCK_DEFAULT, { size: 40, shadow: false })}</span>`;
     }, // (a see-through duck, as the shadow duck; made when it's asked for, so duck.js is ready)
     tip: "Its key turns your duck see-through, like the shadow duck; press it again to turn it back.",
+  },
+  {
+    id: "jetpack",
+    name: "Jetpack",
+    kind: "effect",
+    get icon() {
+      return `<span class="sp-jet">${jetpackSVG()}</span>`;
+    },
+    tip: "Its key puts a jetpack on your duck's back (again: off). Hold Space to fly up, Shift keeps the height, let go to come down. 10 seconds of flight; it fills up again on the ground. Not in Mad God Justin.",
   },
   {
     id: "longjump",

@@ -124,7 +124,15 @@ import {
   CAKE_SPEED,
   CAKE_EAT_MS,
 } from "./mgjrules.js";
-import { isL4dd, l4Use, l4Reload, l4Shots, l4Holds } from "./l4ddrules.js";
+import {
+  isL4dd,
+  l4Use,
+  l4Reload,
+  l4Shots,
+  l4Holds,
+  kitOf,
+} from "./l4ddrules.js";
+import { JET } from "./jetpack.js";
 import { MAPS } from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 
@@ -642,6 +650,16 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
+/* may this duck fly? (the jetpack on its back, with fuel left in Quacky Zombies; never in Mad God Justin) */
+function canFly(s, id, now) {
+  if (isMgj(s)) return false;
+  if (isL4dd(s)) {
+    const m = kitOf(s, id);
+    return !!(m && m.jp && ((m.am || {}).jetpack || [0])[0] > 0);
+  }
+  const u = ((s.aura || {})[id] || {}).jetpack;
+  return u !== undefined && (!u || u > now);
+}
 const EFFECTS = [
   "zap",
   "flames",
@@ -652,7 +670,8 @@ const EFFECTS = [
   "ducklings",
   "disco",
   "invisible",
-]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
+  "jetpack",
+]; // the effects, shown around a duck (the Invisible duck and the Jetpack: only on or off, never for 5 seconds)
 /* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
    weapons) and the Zebra cake */
 export const THROWS = ["chair", "zebra"];
@@ -1475,12 +1494,22 @@ export function reduce(state, a, now = Date.now()) {
               ...(j && +a.tb > 0 ? { tb: Math.min(3.5, +a.tb) } : {}),
             }
           : {}),
+        ...(a.jf && canFly(s, a.id, now)
+          ? {
+              jf: 1,
+              ...(a.jt ? { jt: 1 } : {}),
+              ...(a.fly ? { fly: 1 } : {}),
+              ...(isHang(s)
+                ? {}
+                : { fz: Math.max(0, Math.min(JET.TOP, +a.fz || 0)) }),
+            }
+          : {}),
         ...(was &&
         was.kb &&
         now - was.kb.t < (was.kb.l ?? KB_LAND) + (was.kb.ms || KB_MS)
           ? { kb: was.kb }
           : {}),
-      }; // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height
+      }; // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
       if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
       attacks(s, now); // (walked into a swing, or swung into a duck)

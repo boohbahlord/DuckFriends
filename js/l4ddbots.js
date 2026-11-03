@@ -140,7 +140,7 @@ export function l4Bot(s, id, now, out) {
     return;
   }
   /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
-     jump stays as it is) */
+     jump and the jetpack stay as they are) */
   const sp = sl[3];
   if (
     ["jaime", "fireball", "zebra", "adrenaline"].includes(sp) &&

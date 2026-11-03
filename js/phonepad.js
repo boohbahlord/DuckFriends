@@ -19,7 +19,8 @@ const CROSS =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.6"/><path d="M12 2.6V8.2M12 15.8V21.4M2.6 12H8.2M15.8 12H21.4"/><circle class="dot" cx="12" cy="12" r="1.5"/></svg>';
 
 /* api: active() → the board is on (buttons show), weapon() → the weapon in the slider's middle (or null), aim(dx, dy)
-   → aim that way on the screen (null: stop aiming), attack() → attacks, and says in ms when it can again, jump() */
+   → aim that way on the screen (null: stop aiming), attack() → attacks, and says in ms when it can again, jump(),
+   hold(on) → the jump button held down or let go */
 export function mountPad(api) {
   const box = el(
     `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button></div>`,
@@ -42,8 +43,11 @@ export function mountPad(api) {
 
   jumpBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    api.hold?.(true); // (held down: the jetpack keeps going up)
     if (api.active()) api.jump();
   });
+  for (const t of ["pointerup", "pointercancel", "pointerleave"])
+    jumpBtn.addEventListener(t, () => api.hold?.(false));
 
   /* pushed past the edge: it attacks as often as the weapon allows */
   const again = () => {

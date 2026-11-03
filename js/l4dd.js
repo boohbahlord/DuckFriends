@@ -46,7 +46,11 @@ import {
   POOL,
   boxNow,
   weaponName,
+  priceFor,
+  saleOn,
+  dropName,
 } from "./l4ddrules.js";
+import { DROP_ICONS } from "./l4dddrops.js";
 import {
   zombieURL,
   zombieBox,
@@ -144,6 +148,9 @@ const boardKey = (o) => {
 const Z = new Map(); // zombie number → how it's drawn here
 const B = new Map(); // opening id → its boards' element
 const C = []; // the candles' elements
+const D = new Map(); // a drop's number → its element
+const DROP_LIGHT = { r: 120, k: 0.55 }; // the light round a drop on the floor
+const DROP_ENDING = 10000; // ms: a drop blinks in its last 10 s
 let layer = null,
   fxl = null,
   cv = null,
@@ -164,6 +171,9 @@ let layer = null,
   drawn = "";
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
 let butler = null,
+  onEl = null,
+  onSig = "",
+  gotEl = null,
   boxEl = null,
   ptsEl = null,
   sayEl = null,
@@ -326,6 +336,61 @@ function seeCandles(s) {
   }
 }
 
+/* ---------- the drops: on the floor, what's on now (top right), and the big words when one is taken ---------- */
+function seeDrops(s) {
+  const list = s.hang.l4dr || [],
+    have = new Set(list.map((d) => d.n));
+  for (const [n, o] of D)
+    if (!have.has(n)) {
+      o.el.remove();
+      D.delete(n);
+    }
+  for (const d of list) {
+    if (D.has(d.n)) continue;
+    const el = document.createElement("div");
+    el.className = "l4-drop k-" + d.k;
+    el.innerHTML = `<i>${DROP_ICONS[d.k] || ""}</i>`;
+    layer.append(el);
+    D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
+  }
+}
+/* Instant Kill, Double Points and Speed Boost, with the seconds they have left; Sale, until the round ends */
+function seeOn(s) {
+  if (!onEl) return;
+  const now = clockNow(),
+    on = s.hang.l4on || {},
+    rows = ["kill", "double", "speed"]
+      .filter((k) => on[k] > now)
+      .map((k) => [k, Math.ceil((on[k] - now) / 1000)]);
+  if (saleOn(s)) rows.push(["sale", "Sale"]);
+  const sig = JSON.stringify(rows);
+  if (sig === onSig) return;
+  onSig = sig;
+  onEl.innerHTML = rows
+    .map(
+      ([k, t]) =>
+        `<span class="l4-on-k k-${k}" title="${dropName(k)}"><i>${DROP_ICONS[k]}</i><b>${t}</b></span>`,
+    )
+    .join("");
+  onEl.hidden = !rows.length;
+}
+/* a duck walked over a drop: its name in big letters for everyone, and a sound (the Nuke: a white flash too) */
+export function l4Got(k) {
+  if (!gotEl) return;
+  gotEl.innerHTML = `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+  gotEl.classList.remove("on");
+  void gotEl.offsetWidth;
+  gotEl.classList.add("on");
+  if (k === "nuke") {
+    const fl = document.createElement("div");
+    fl.className = "l4-nukeflash";
+    gotEl.before(fl);
+    setTimeout(() => fl.remove(), 1300);
+    sfx.boom();
+  } else sfx.bell();
+}
+const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
+
 /* ---------- the HUD: "Round N", and the end ---------- */
 function seeHud(s, ctx) {
   const L = s.hang.l4;
@@ -407,6 +472,14 @@ function paint(now, ctx) {
       const o = Wd.toScreen(BOX.x, 706, 58);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
     }
+  }
+  /* the drops glow on the floor */
+  for (const o of D.values()) {
+    if (inCabin(o.x, o.y) !== Wd.inside) continue;
+    const p = Wd.toScreen(o.x, o.y, 30),
+      r = DROP_LIGHT.r * sc;
+    if (on(p.left * q, p.top * q, r))
+      holes.push([p.left * q, p.top * q, r, DROP_LIGHT.k]);
   }
   /* every duck: a faint glow round it, and its flashlight (not a ghost's, not a downed duck's, not one switched off) */
   const off = s.hang.l4f || {},
@@ -601,15 +674,16 @@ function shopFill(s, ctx) {
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
-    sig = JSON.stringify([up, pts]);
+    sig = JSON.stringify([up, pts, s.hang.l4sale, saleOn(s)]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.pts.textContent = pts;
   shop.list.innerHTML = SHOP.map((it) => {
     const n = up[it.id] || 0,
       max = n >= it.most,
-      price = priceOf(it.id, n);
-    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : price}</button></li>`;
+      price = priceFor(s, me, it.id, n),
+      was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
+    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
   }).join("");
 }
 function openShop(ctx) {
@@ -708,7 +782,7 @@ function tap(t, ctx) {
   const s = ctx.state(),
     me = ctx.me;
   if (t.kind === "box") {
-    if (ptsOf(s, me) < BOX.price) return say("Not enough points");
+    if (ptsOf(s, me) < priceFor(s, me, "box")) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "box" });
   } else if (t.kind === "take") {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
@@ -736,7 +810,8 @@ function stopHold(ctx) {
 }
 /* the button's words: what holding E does, or how far along it is */
 function holdLabel(t, s, ctx, now) {
-  if (t.kind === "box") return `Spin for a weapon · ${BOX.price}`;
+  if (t.kind === "box")
+    return `Spin for a weapon · ${priceFor(s, ctx.me, "box")}${saleOn(s) ? " (Sale)" : ""}`;
   if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "rev") {
@@ -805,20 +880,35 @@ activity({
     sayEl = document.createElement("div");
     sayEl.className = "l4-say";
     sayEl.setAttribute("role", "alert");
+    onEl = document.createElement("div");
+    onEl.className = "l4-on";
+    onEl.hidden = true;
+    gotEl = document.createElement("div");
+    gotEl.className = "l4-got";
+    gotEl.setAttribute("role", "status");
     boxEl = document.createElement("div");
     boxEl.className = "l4-box";
     boxEl.hidden = true;
     boxEl.innerHTML =
       '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
     layer.append(boxEl);
-    ctx.world.board.append(hud, over, ptsEl, sayEl);
+    ctx.world.board.append(hud, over, ptsEl, sayEl, onEl, gotEl);
     shop = shopEl(ctx);
     butler = butlerEl();
     ctx.world.board.classList.add("blackout", "l4-board");
     Z.clear();
     B.clear();
     C.length = 0;
-    zpSig = candleSig = overShown = drawn = boxSig = upSig = slotSig = "";
+    D.clear();
+    zpSig =
+      candleSig =
+      overShown =
+      drawn =
+      boxSig =
+      upSig =
+      slotSig =
+      onSig =
+        "";
     roundShown = 0;
     ptsShown = -1;
     boxSpun = false;
@@ -830,17 +920,27 @@ activity({
     for (const o of Z.values()) o.el.remove();
     for (const b of B.values()) b.el.remove();
     for (const c of C) c.el.remove();
+    for (const o of D.values()) o.el.remove();
     Z.clear();
     B.clear();
     C.length = 0;
+    D.clear();
     cv?.remove();
     hud?.remove();
     over?.remove();
     closeShop();
-    for (const e of [ptsEl, sayEl, boxEl, butler && butler.el, shop && shop.el])
+    for (const e of [
+      ptsEl,
+      sayEl,
+      onEl,
+      gotEl,
+      boxEl,
+      butler && butler.el,
+      shop && shop.el,
+    ])
       e?.remove();
     cv = g = hud = over = layer = fxl = null;
-    ptsEl = sayEl = boxEl = butler = shop = null;
+    ptsEl = sayEl = onEl = gotEl = boxEl = butler = shop = null;
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
@@ -849,6 +949,8 @@ activity({
     seeZombies(s, ctx, now);
     seeBoards(s);
     seeCandles(s);
+    seeDrops(s);
+    seeOn(s);
     seeHud(s, ctx);
     seePts(s, ctx);
     if (shop.open) shopFill(s, ctx);
@@ -970,6 +1072,32 @@ activity({
         c.el.style.zIndex = Math.round(sortY(c.x, c.y, 0)) + 10;
       }
     }
+    /* the drops, blinking in their last seconds; and the seconds left on what's on */
+    const tn = clockNow();
+    for (const o of D.values()) {
+      const p = Wd.toScreen(o.x, o.y, 0),
+        hide =
+          inCabin(o.x, o.y) !== Wd.inside ||
+          !Wd.seen(p.left - 40, p.top - 80, 80, 100);
+      if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (hide) continue;
+      const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+      if (o.tr !== tr) {
+        o.tr = tr;
+        o.el.style.transform = tr;
+        o.el.style.zIndex = Math.round(sortY(o.x, o.y, 0)) + 10;
+      }
+      if (o.k !== sc) {
+        o.k = sc;
+        o.el.style.setProperty("--k", sc.toFixed(3));
+      }
+      const end = o.until - tn < DROP_ENDING;
+      if (o.end !== end) {
+        o.end = end;
+        o.el.classList.toggle("ending", end);
+      }
+    }
+    seeOn(ctx.state());
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),

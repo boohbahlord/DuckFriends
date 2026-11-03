@@ -52,6 +52,7 @@ import {
 } from "./hangout/layout.js";
 import { GRENADE_MS, daggerZ, walkOf } from "./rules.js";
 import { invuln } from "./hangout/death.js";
+import { JET } from "./jetpack.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
@@ -207,6 +208,9 @@ export const ARMS = {
   adrenaline: { kind: "special", cool: 600, all: 1, ms: 20000 },
   longjump: { kind: "special", cool: 300 },
   jaime: { kind: "special", cool: 1500, all: 3, round: true },
+  /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
+     10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
+  jetpack: { kind: "special", cool: 300, all: JET.FUEL },
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 const dmgOf = (A) =>
@@ -217,7 +221,7 @@ export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
 /* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jaime") return "";
+  if (!w || w === "longjump" || w === "jaime" || w === "jetpack") return ""; // (the jetpack is on the back: game.js)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -245,6 +249,7 @@ export const POOL = [
   "adrenaline",
   "longjump",
   "jaime",
+  "jetpack",
 ];
 /* their names, as players see them */
 const NAMES = {
@@ -268,6 +273,7 @@ const NAMES = {
   adrenaline: "Adrenaline shot",
   longjump: "Long jump",
   jaime: "Jaime",
+  jetpack: "Jetpack",
 };
 export const weaponName = (w) => NAMES[w] || w;
 /* points (the owner's) */
@@ -289,6 +295,22 @@ export const priceOf = (id, n) =>
     sp: 250,
     rl: 300,
   })[id];
+/* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
+   once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time */
+export const saleOn = (s) =>
+  !!(
+    s &&
+    s.hang &&
+    s.hang.l4sale &&
+    s.hang.l4 &&
+    s.hang.l4.r === s.hang.l4sale.r
+  );
+export const priceFor = (s, id, what, n) => {
+  const full = what === "box" ? BOX.price : priceOf(what, n);
+  if (!saleOn(s)) return full;
+  const used = (s.hang.l4sale.used || {})[id] || {};
+  return what !== "box" && used[what] ? full : Math.ceil(full / 2);
+};
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
@@ -623,6 +645,7 @@ const standing = (s, id) => {
 };
 /* a duck in the middle of a jump dodges a hit: not in its first fifth or its last (the owner's) */
 export function dodging(s, p, now) {
+  if (p && p.fly) return true; // (the jetpack, high in the air)
   if (!p || !p.j) return false;
   const T = (s.options.lowGravity ? 1200 : 620) * (p.lj ? 1.4 : 1),
     u = (now - (p.dj || p.j)) / T;
@@ -744,6 +767,7 @@ function newRound(s, r, now, wait) {
     acc: 0,
     sec: -1,
     bp: {},
+    dq: dropPlan(),
   };
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
@@ -780,26 +804,29 @@ function bringBack(s, id, now, k, fresh) {
 }
 /* a few extra candles on bare spots of the floor (the owner's): 6 inside, 1 on the deck, far from each other, from the
    openings and from where everyone starts */
+/* bare floor: flat, nothing standing on it or right beside it, not by an opening or the fireplace, and far enough from
+   the spots in out (a candle's, a drop's) */
+const bare = (x, y, out, far) =>
+  playable(x, y) &&
+  Math.abs(heightAt(x, y)) < 1 &&
+  !onPlatform(x, y) &&
+  [
+    [0, 0],
+    [-50, 0],
+    [50, 0],
+    [0, -40],
+    [0, 40],
+  ].every(([dx, dy]) => !solidsAt(x + dx, y + dy, 0).length) &&
+  OPENINGS.every((o) => Math.hypot(x - o.in[0], y - o.in[1]) > 200) &&
+  Math.hypot(x - 2800, y - 1420) > 320 &&
+  out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
 function candleSpots() {
-  const out = [],
-    bare = (x, y) =>
-      Math.abs(heightAt(x, y)) < 1 &&
-      !onPlatform(x, y) &&
-      [
-        [0, 0],
-        [-50, 0],
-        [50, 0],
-        [0, -40],
-        [0, 40],
-      ].every(([dx, dy]) => !solidsAt(x + dx, y + dy, 0).length) &&
-      OPENINGS.every((o) => Math.hypot(x - o.in[0], y - o.in[1]) > 200) &&
-      Math.hypot(x - 2800, y - 1420) > 320 &&
-      out.every(([a, b]) => Math.hypot(x - a, y - b) > 420);
+  const out = [];
   const pick = (n, x0, y0, x1, y1) => {
     for (let k = 0, got = 0; k < 400 && got < n; k++) {
       const x = Math.round(rnd(x0, x1)),
         y = Math.round(rnd(y0, y1));
-      if (playable(x, y) && bare(x, y)) {
+      if (bare(x, y, out, 420)) {
         out.push([x, y]);
         got++;
       }
@@ -808,6 +835,157 @@ function candleSpots() {
   pick(6, CABIN.x0 + 90, CABIN.y0 + 90, CABIN.x1 - 90, CABIN.y1 - 70);
   pick(1, DECK.x0 + 120, DECK.y0 + 70, DECK.x1 - 120, DECK.y1 - 70);
   return out;
+}
+/* the jetpack's fuel: it burns while a duck flies with its jets on (its move says so: rules.js' jt), from one heartbeat to
+   the next; at 0 the jets stop and the duck comes down (game.js) */
+function jetBurn(s, now, ids) {
+  const was = s.hang.l4jt || {},
+    next = {};
+  for (const id of ids) {
+    const m = kitOf(s, id),
+      p = s.pos[id];
+    if (!m || !m.jp || !p || !p.jt) continue;
+    next[id] = now;
+    const c = (m.am || {}).jetpack;
+    if (!c || !was[id]) continue;
+    const left = Math.max(0, c[0] - Math.min(500, now - was[id]));
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...m, am: { ...m.am, jetpack: [Math.round(left), 0] } },
+    };
+  }
+  if (Object.keys(was).length || Object.keys(next).length) s.hang.l4jt = next;
+}
+/* ---------- the drops (Stage 4, the owner's) ----------
+   Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
+   own, a 5% chance of a Max Ammo in the first minute. A drop lies on bare floor for 45 s, and the first duck to walk
+   over it takes it for everyone. Instant Kill, Double Points and Speed Boost last 30 s (Speed Boost: the owner's;
+   the other two: Adam's plan's guess, question 5), Sale the rest of the round. */
+export const DROPS = ["kill", "ammo", "nuke", "speed", "double", "sale"];
+export const DROP = {
+  CHANCE: 0.25,
+  IN: 30000, // ms: the first drop, somewhere in the round's first 30 s
+  AGAIN: 0.25, // and a second one
+  GAP: 30000, // 30 s after the first
+  AMMO: 0.05, // the Max Ammo of its own
+  AMMO_IN: 60000, // in the round's first minute
+  LIFE: 45000, // ms a drop lies there
+  FOR: 30000, // ms Instant Kill, Double Points and Speed Boost last
+  REACH: 70, // world px: how near a duck walks over one
+};
+const DROP_NAMES = {
+  kill: "Instant Kill",
+  ammo: "Max Ammo",
+  nuke: "Nuke",
+  speed: "Speed Boost",
+  double: "Double Points",
+  sale: "Sale",
+};
+export const dropName = (k) => DROP_NAMES[k] || k;
+/* when this round's drops come (ms after its start) and which: a random one, or the Max Ammo */
+function dropPlan() {
+  const q = [];
+  if (Math.random() < DROP.CHANCE) {
+    const t = rnd(0, DROP.IN);
+    q.push([Math.round(t), ""]);
+    if (Math.random() < DROP.AGAIN) q.push([Math.round(t + DROP.GAP), ""]);
+  }
+  if (Math.random() < DROP.AMMO)
+    q.push([Math.round(rnd(0, DROP.AMMO_IN)), "ammo"]);
+  return q;
+}
+/* a bare spot for a drop, inside or on the deck, away from the candles and the other drops */
+function dropSpot(s) {
+  const out = [
+    ...(s.hang.l4c || []),
+    ...(s.hang.l4dr || []).map((d) => [d.x, d.y]),
+  ];
+  for (let k = 0; k < 400; k++) {
+    const deck = Math.random() < 0.15,
+      R = deck ? DECK : CABIN,
+      x = Math.round(rnd(R.x0 + 110, R.x1 - 110)),
+      y = Math.round(rnd(R.y0 + 80, R.y1 - 70));
+    if (bare(x, y, out, 120)) return [x, y];
+  }
+  return null;
+}
+/* the drops due now come down, the old ones go, a duck walking over one takes it; and what was taken wears off */
+function dropTick(s, L, zs, now, T, ids) {
+  if (L.dq && L.dq.length && T >= L.dq[0][0]) {
+    const [, k0] = L.dq[0],
+      k = k0 || DROPS[Math.floor(Math.random() * DROPS.length)],
+      spot = dropSpot(s);
+    L.dq = L.dq.slice(1); // (L: the round, as l4Tick keeps it)
+    if (spot)
+      s.hang.l4dr = [
+        ...(s.hang.l4dr || []),
+        { n: now, k, x: spot[0], y: spot[1], until: now + DROP.LIFE },
+      ];
+  }
+  const was = s.hang.l4dr || [];
+  let dr = was.filter((d) => now < d.until);
+  for (const d of [...dr]) {
+    const by = ids.find((id) => {
+      const p = s.pos[id];
+      return (
+        standing(s, id) &&
+        p &&
+        Math.hypot(p.x * W - d.x, p.y * H - d.y) < DROP.REACH
+      );
+    });
+    if (!by) continue;
+    dr = dr.filter((x) => x !== d);
+    takeDrop(s, d.k, by, zs, now, ids);
+  }
+  if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one came or went: the state stays the same object)
+  const on = s.hang.l4on || {};
+  if (Object.values(on).some((u) => u <= now))
+    s.hang.l4on = Object.fromEntries(
+      Object.entries(on).filter(([, u]) => u > now),
+    ); // (what wore off)
+}
+/* what a drop does, for every duck */
+function takeDrop(s, k, by, zs, now, ids) {
+  addFx(s, { kind: "l4drop", k, by, who: [], t: now });
+  if (k === "kill" || k === "double")
+    s.hang.l4on = { ...(s.hang.l4on || {}), [k]: now + DROP.FOR };
+  else if (k === "speed") {
+    s.hang.l4on = { ...(s.hang.l4on || {}), speed: now + DROP.FOR };
+    const ad = { ...(s.hang.l4ad || {}) };
+    for (const id of ids) ad[id] = Math.max(ad[id] || 0, now + DROP.FOR);
+    s.hang.l4ad = ad; // (the adrenaline shot's speed, for everyone)
+  } else if (k === "sale") s.hang.l4sale = { r: s.hang.l4.r, used: {} };
+  else if (k === "ammo") maxAmmo(s);
+  else if (k === "nuke") {
+    const T = now - s.hang.l4.t0;
+    let hp = 0;
+    for (const z of zs)
+      if (z.st !== 3) {
+        hp += z.hp;
+        z.hp = 0;
+        die(z, T);
+      }
+    const share = Math.round(
+      (hp * PTS.HIT * ((s.hang.l4on || {}).double ? 2 : 1)) /
+        Math.max(1, ids.length),
+    );
+    for (const id of ids) addPts(s, id, share); // (the points for all their HP, split between the ducks)
+  }
+}
+/* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
+   way (the medkit never refills, Jaime comes back each round) */
+function maxAmmo(s) {
+  const am = { ...(s.hang.l4a || {}) };
+  for (const id of Object.keys(am)) {
+    const m = { ...am[id], am: { ...am[id].am }, g: ARMS.grenade.most };
+    for (const w of m.sl || [])
+      if (fullAmmo(w) && w !== "medkit" && !ARMS[w].round)
+        m.am[w] = fullAmmo(w);
+    m.rl = 0;
+    m.rw = "";
+    am[id] = m;
+  }
+  s.hang.l4a = am;
 }
 function setUp(s, now) {
   s.hang.l4 = { r: 1, next: 1, over: null };
@@ -820,6 +998,9 @@ function setUp(s, now) {
   s.hang.l4pt = {};
   s.hang.l4u = {};
   s.hang.l4box = null;
+  s.hang.l4dr = [];
+  s.hang.l4on = {};
+  s.hang.l4sale = null;
   s.hang.l4b = {};
   s.hang.l4f = {};
   s.hang.power = 0; // (the power is cut: the lamps are dark; the fires and the candles burn)
@@ -926,9 +1107,17 @@ function buy(s, id, what, mx, my) {
     n = up[what] || 0;
   if (!it || n >= it.most) return false;
   if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
-  const price = priceOf(what, n);
+  const price = priceFor(s, id, what, n);
   if (ptsOf(s, id) < price) return false;
   addPts(s, id, -price);
+  if (saleOn(s) && price < priceOf(what, n)) {
+    const sale = s.hang.l4sale,
+      used = sale.used || {};
+    s.hang.l4sale = {
+      ...sale,
+      used: { ...used, [id]: { ...(used[id] || {}), [what]: 1 } },
+    };
+  } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
@@ -950,8 +1139,9 @@ function fireplace(s, id, a, now, mx, my) {
   if (!kit) return false;
   if (!b) {
     const pool = POOL.filter((w) => !kit.sl.includes(w));
-    if (!pool.length || ptsOf(s, id) < BOX.price) return false;
-    addPts(s, id, -BOX.price);
+    const price = priceFor(s, id, "box");
+    if (!pool.length || ptsOf(s, id) < price) return false;
+    addPts(s, id, -price);
     s.hang.l4box = {
       by: id,
       t: now,
@@ -1046,6 +1236,12 @@ export function l4Use(s, a, now) {
   finishReload(m, now);
   if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
     return false; // (full auto: the shots can come a little bunched over the network)
+  if (what === "jetpack") {
+    m.u[what] = now;
+    m.jp = !m.jp;
+    s.hang.l4a = { ...s.hang.l4a, [id]: m };
+    return true;
+  } // (switched on or off, empty or not: its fuel burns only in flight, in l4Tick)
   const c = m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === what))
     return false; // (empty, or reloading)
@@ -1151,9 +1347,11 @@ export function l4Use(s, a, now) {
    takes all of it); true when it died */
 function strike(s, z, dmg, head, by) {
   if (z.st === 3) return false;
-  const took = head ? z.hp : Math.min(z.hp, dmg);
-  z.hp = head ? 0 : Math.max(0, z.hp - dmg);
-  addPts(s, by, head ? PTS.HEAD : PTS.HIT * took);
+  const on = s.hang.l4on || {},
+    all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
+    took = all ? z.hp : Math.min(z.hp, dmg);
+  z.hp = all ? 0 : Math.max(0, z.hp - dmg);
+  addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   return z.hp <= 0;
 }
 /* a headshot, now and then (the weapon's chance and the duck's Accuracy): every screen shows it */
@@ -1640,6 +1838,7 @@ function l4Tick(s, now) {
       finishReload(m, now);
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
     }
+  jetBurn(s, now, ids);
   if (s.hang.l4box && !boxNow(s, now)) s.hang.l4box = null; // (nobody took it: the fire keeps it)
   const brd = { ...(s.hang.brd || {}) },
     bl = { ...(s.hang.l4b || {}) };
@@ -1709,6 +1908,7 @@ function l4Tick(s, now) {
   /* the zombies walk, tear boards down, climb in, swipe */
   moveZombies(s, zs, now, T, up);
   jaimesRun(s, zs, now, T);
+  dropTick(s, L2, zs, now, T, ids);
   const ad = s.hang.l4ad;
   if (ad && Object.values(ad).some((u) => u <= now))
     s.hang.l4ad = Object.fromEntries(
