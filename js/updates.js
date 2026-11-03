@@ -8,10 +8,13 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 133,
+    version: 134,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "The guns, the hits, the quacks and the specials are louder now, about as loud as the music, and still with no pops.",
+      "For Quacky Zombies: no music for now.",
+      "For Mad God Justin: no music for now.",
       "A new mode in Duck Cabin, Quacky Zombies: the power's out and zombie ducks come in round after round. Hold E to board up the doors and holes or to get a downed friend up, and see how long you last.",
       "For Quacky Zombies: you get a knife (1), a pistol (2, R reloads), a bow (3), two grenades (G) and a flashlight (0). Shift sprints. On a phone they're in the slider at the bottom, like your specials.",
       "For Quacky Zombies: you earn points by hitting zombies and boarding up, then spend them with Justin's Butler by the card table (upgrades) or at the fireplace (210 for a random weapon). Your slots: a melee weapon (blue), two ranged (red), a special (purple, 4) and the grenades (white).",
