@@ -1481,6 +1481,13 @@ p.bad {
 .hints kbd:first-child {
   margin-left: 0;
 }
+.hints .hints-br {
+  flex-basis: 100%;
+  height: 0;
+} /* (the second line: Shift and a number) */
+.hints .hints-br + kbd {
+  margin-left: 0;
+}
 @media (max-width: 860px) {
   .docked {
     grid-template-columns: minmax(0, 1fr);
@@ -4941,6 +4948,19 @@ html.moving .pix-sun {
 .ctargets .cfold > .arm-list {
   margin: 0.1rem 0 0.2rem 0.8rem;
 }
+/* More colors: the hat's, beak's, clothes', face items' and specials' colors, in one big fold under the rest */
+.ctargets .cmore {
+  margin: 0.45rem 0 0;
+  border-top: 0.1rem solid var(--soft);
+  padding-top: 0.2rem;
+}
+.ctargets .cmore > summary {
+  padding: 0.4rem 0.45rem;
+  font-size: calc(0.78rem * var(--ts));
+}
+.ctargets .cmore > .arm-list {
+  margin: 0.1rem 0 0.2rem 0.6rem;
+}
 .colors.grid3 .swatches {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5003,6 +5023,15 @@ html.moving .pix-sun {
     flex-basis: 100%;
   }
   .ctargets .cfold > .arm-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .ctargets > li:has(> .cmore),
+  .ctargets .cmore > .arm-list > li:has(> .cfold[open]),
+  .ctargets .cmore .arm-sub {
+    flex-basis: 100%;
+  }
+  .ctargets .cmore > .arm-list {
     flex-direction: row;
     flex-wrap: wrap;
   }
@@ -6626,6 +6655,222 @@ html.still .spx-disco .disco-spot {
 .spe-gthrow i {
   width: calc(var(--s) * 0.22);
   animation-duration: 0.8s;
+}
+/* Customize's previews of the bow, the chair, the zebra cake and Jaime (the art is Mad God Justin's, mgjart.js) */
+.spe-wield[data-w="bow"] {
+  animation: wdraw 1.3s ease-out forwards;
+}
+.spe-wield[data-w="bow"] i {
+  width: calc(var(--s) * 0.34);
+}
+@keyframes wdraw {
+  0% {
+    transform: translateX(calc(var(--s) * 0.42));
+    opacity: 0;
+  }
+  10% {
+    transform: translateX(calc(var(--s) * 0.42));
+    opacity: 1;
+  }
+  28% {
+    transform: translateX(calc(var(--s) * 0.36));
+  }
+  33%,
+  85% {
+    transform: translateX(calc(var(--s) * 0.42));
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(var(--s) * 0.42));
+    opacity: 0;
+  }
+} /* (pulled back, then let go) */
+.spe-shot.spe-arrow {
+  width: calc(var(--s) * 0.45);
+  animation: spshot 0.9s linear 0.36s both;
+  filter: drop-shadow(0 0.1rem 0.12rem #0006);
+}
+.spe-shot.spe-arrow svg {
+  filter: none;
+}
+.spe-chair {
+  animation: chairthrow 2.2s linear forwards;
+}
+.spe-chair i {
+  display: block;
+  width: calc(var(--s) * 0.62);
+  filter: drop-shadow(0 0 0.2rem #fff9) drop-shadow(0 0.15rem 0.15rem #0009);
+  animation: chairturn 2.2s linear forwards;
+}
+.spe-chair svg {
+  display: block;
+  width: 100%;
+}
+@keyframes chairthrow {
+  0% {
+    transform: translate(-50%, -30%) scale(0.85);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%);
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 300px)), -10%);
+    opacity: 0;
+  }
+} /* (held up over the head, then thrown) */
+@keyframes chairturn {
+  0%,
+  30% {
+    transform: none;
+  }
+  100% {
+    transform: rotate(200deg);
+  }
+}
+.spe-cake {
+  animation: cakex 2.3s forwards;
+}
+.spe-cake b {
+  display: block;
+  animation: cakey 2.3s forwards;
+}
+.spe-cake i {
+  display: block;
+  width: calc(var(--s) * 0.32);
+  filter: drop-shadow(0 0.1rem 0.1rem #0007);
+  animation: dspin 0.3s linear 2 forwards;
+}
+.spe-cake svg {
+  display: block;
+  width: 100%;
+}
+@keyframes cakex {
+  0% {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  26%,
+  80% {
+    transform: translate(calc(-50% + var(--s) * 0.55), -50%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--s) * 0.55), -50%);
+    opacity: 0;
+  }
+}
+@keyframes cakey {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: ease-out;
+  }
+  11% {
+    transform: translateY(calc(var(--s) * -0.22));
+    animation-timing-function: ease-in;
+  }
+  26%,
+  100% {
+    transform: translateY(calc(var(--s) * 0.4));
+  }
+} /* (up out of the hand, down onto the ground in front, where it stays) */
+.spe-jaime {
+  transform: translate(-50%, -100%);
+  animation: jaimerun 2.3s linear forwards;
+}
+.spe-jaime b {
+  position: relative;
+  display: block;
+  width: calc(var(--s) * 0.42);
+  animation: jaimebob 0.18s ease-in-out 0.45s infinite alternate;
+}
+.spe-jaime b > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.spe-jaime i {
+  position: absolute;
+  left: 78%;
+  top: 52%;
+  width: 46%;
+  transform: translate(-50%, -50%) rotate(-6deg);
+}
+.spe-jaime i svg {
+  display: block;
+  width: 100%;
+}
+@keyframes jaimerun {
+  0% {
+    transform: translate(-50%, -100%) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-50%, -100%) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-50%, -100%);
+    animation-timing-function: ease-in;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx, 300px)), -100%);
+    opacity: 0;
+  }
+} /* (he pops out, then runs off) */
+@keyframes jaimebob {
+  to {
+    transform: translateY(-8%) rotate(4deg);
+  }
+}
+/* the Jetpack on the big duck: worn on its back (the pack's own place, without the board's foot offset), it flies up on
+   its flames, keeps the height a moment, and comes down */
+.arm-pic .gduck-jet {
+  bottom: calc(var(--sz, 60px) * ((120 - var(--jy) - 56 * var(--jk)) / 120));
+}
+.arm-duck.fly .arm-pic {
+  animation: spfly 2.6s ease-in-out;
+}
+.arm-duck.fly .gduck-jet .jet-f {
+  display: block;
+  animation:
+    jet-flick 0.12s steps(2) infinite,
+    jet-on 2.6s step-end forwards;
+}
+@keyframes spfly {
+  0%,
+  8% {
+    transform: none;
+  }
+  40%,
+  62% {
+    transform: translateY(-22%);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes jet-on {
+  0% {
+    visibility: hidden;
+  }
+  6% {
+    visibility: visible;
+  }
+  64% {
+    visibility: hidden;
+  }
 }
 @keyframes wstab {
   0% {

@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 134,
+    version: 135,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -37,6 +37,9 @@ export const UPDATES = [
       "In Customize → Style, Match each style's look: turn it on and every style shows, and puts on, its own beak, eyes and colors.",
       "For Mad God Justin: he is bigger and faster, with a bigger hammer. He fires a light machine gun, an SMG and his shotgun (no more pistol), and now and then shakes red and charges a duck, sending it flying (no damage: step aside or jump). He turns off his Xbox once he's lost 20 HP and the meteor comes at 10 HP (giving him 20 back); each time his attacks come faster. His double shows up after every teleport.",
       "Arrows, bullets and throwing daggers fly a little faster in every mode.",
+      "On a computer, the key hints at the bottom left now say that Shift and a special's number key keep it on (Customize → Specials says so too).",
+      "In Customize → Colors, the colors of hats, beaks, clothes, face items and specials are folded into one More colors list, so the menu is shorter.",
+      "The Jetpack, Bow, Chair, Zebra cake and Jaime have a preview in Customize → Specials now.",
     ],
     fixed: [
       "For Mad God Justin: hitmarkers show on Justin (and look the same on his double), the weapon you pick up goes in hand by itself and you go back to your last one when it runs out, and a Jaime's name tag says Jaime.",
