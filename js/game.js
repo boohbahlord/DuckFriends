@@ -195,6 +195,7 @@ import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
 import { mountTouch, stick } from "./touch.js";
+import { mountPad } from "./phonepad.js";
 import { now as clockNow } from "./clock.js";
 import {
   isQuack,
@@ -259,6 +260,7 @@ import {
   PICK_FADE,
   XB,
   PICK_USES,
+  PICK_WEAPONS,
   MGJ_DOWN,
   usesOf,
   mgjPHp,
@@ -342,6 +344,7 @@ let lastFx = -1,
   hotdogs = [],
   follows = []; // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null,
+  pad = null, // phones: the jump button and the attack button
   lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
@@ -3421,6 +3424,43 @@ function keptNow() {
   for (const [id, u] of Object.entries(a)) if (u === 0) out.add(id);
   return out;
 }
+/* phones: the slider picked key i (in Mad God Justin the knife, the bow or the medkit goes in hand) */
+function slidPick(i) {
+  const id = keysOf(playDuck())[i];
+  if (R && isMgj(R.state) && ["knife", "bow", "medkit"].includes(id))
+    useKey(i, false);
+}
+/* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces; in Mad God Justin
+   the medkit gets the downed duck next to mine up) */
+function slidTap(i) {
+  const id = keysOf(playDuck())[i];
+  if (R && isMgj(R.state) && ["knife", "bow", "medkit"].includes(id)) {
+    useKey(i, false);
+    fire(id);
+  } else useKey(i, false);
+}
+/* phones: the weapon in the slider's middle, which the attack button uses (or null) */
+function padWeapon() {
+  const id = bar && bar.current && bar.current();
+  if (!id || !R || !hasKey(playDuck(), id)) return null;
+  if (isMgj(R.state))
+    return R.state.phase === "boss" &&
+      (id === "knife" || id === "bow" || PICK_WEAPONS.includes(id))
+      ? id
+      : null;
+  const sp = specialById(id);
+  return WEAPONS.includes(id) && sp && !sp.off && unlocked("special", id)
+    ? id
+    : null;
+}
+/* phones: the attack button: the weapon in the slider's middle, where the button aims; says when it can again (ms) */
+function padAttack() {
+  const id = padWeapon();
+  if (!id) return 500;
+  if (isMgj(R.state) && (id === "knife" || id === "bow")) mgjHold = held = id;
+  fire(id);
+  return coolFor(id, R.state);
+}
 /* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
@@ -3589,11 +3629,13 @@ function mgjTip(s) {
       ? "Out of HP! A medkit, or the fight's end, gets you up."
       : "Knocked down! Up again in a moment.";
   if (myPick())
-    return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "tap its button" : "<kbd>5</kbd>"} to use it`;
+    return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "slide to it, then push the crosshair" : "<kbd>5</kbd>"} to use it`;
   if (held === "medkit")
-    return `Medkit: stand by a downed duck, then ${phone ? "tap the board" : "<kbd>E</kbd>"}`;
+    return `Medkit: stand by a downed duck, then ${phone ? "tap it" : "<kbd>E</kbd>"}`;
   return phone
-    ? "Get close to Justin: your knife stabs him by itself"
+    ? padWeapon()
+      ? "Push the crosshair toward Justin to attack"
+      : "Tap the special in the middle to use it"
     : "<kbd>WASD</kbd> walk · <kbd>Arrows</kbd> or the mouse aim · <kbd>Click</kbd> use";
 }
 /* the middle of the bottom bar: what you can do now, and how many are done */
@@ -4955,6 +4997,8 @@ register("game", {
     bubbles = {};
     if (bar) bar.destroy();
     bar = null;
+    if (pad) pad.destroy();
+    pad = null;
     if (mbarOff) mbarOff();
     mbarOff = null;
     lastKey = -1;
@@ -5029,8 +5073,28 @@ register("game", {
         duck: playDuck,
         ammo,
         dots,
+        select: slidPick,
+        tap: slidTap,
+        current: () =>
+          R && isMgj(R.state) && R.state.phase === "boss" ? held : null,
       });
-      docks.corner(bar.button, bar.row); // (bottom right: the Specials button on phones, the row of keys on a computer)
+      pad = mountPad({
+        active: () =>
+          onBoardPhase() &&
+          !windowOpen() &&
+          !!me &&
+          !(R.state.players[R.me] || {}).dead,
+        weapon: padWeapon,
+        aim: (dx, dy) => {
+          keyAim =
+            dx == null
+              ? [(turned() ? 1 : (me && me.face) || 1) * 100, 0]
+              : [dx, dy];
+        },
+        attack: padAttack,
+        jump: () => jump(),
+      });
+      docks.corner(pad.el, bar.slider, bar.row); // (bottom right: the jump and attack buttons, and the slider in the middle, on phones; the row of keys on a computer)
     }
     addEventListener("mousemove", aimAt);
     touchOff = mountTouch(S, {

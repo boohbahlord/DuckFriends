@@ -6,7 +6,7 @@
    turn) → talk it over → the next question → the round's results → the next round. The rounds go on until the players
    vote to end the game.
 
-   A phase ends when enough players have ended their turn (3 of 4 by default). In submit and answer, reaching that starts
+   A phase ends when enough players have ended their turn (2 of 3 by default). In submit and answer, reaching that starts
    the catch-up timer (15 s by default) for the rest; a timer, when one is set, ends the phase too.
 
    Would You Rather is the same with two choices. Bicker Brackets (below) runs a tournament a round; Story Chain (below
@@ -101,7 +101,6 @@ import {
   mgjShot,
   mgjSafe,
   mgjBurn,
-  mgjBodies,
   mgjHitAt,
   mgjTeamUse,
   mgjCool,
@@ -127,7 +126,7 @@ export const COLS = [
 export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
-  share: 0.75, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
+  share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
   answerTime: 30, // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -998,14 +997,14 @@ export function reduce(state, a, now = Date.now()) {
           wasMode = s.options.mode;
         Object.assign(s.options, a.options);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
-        /* I want half the votes to end a turn by default with the Discussion round on, 3 of 4 without it: turning it on or
+        /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
          off moves the share along while it's still at the other default */
         if (
           "discuss" in a.options &&
           !("share" in a.options) &&
           !!was !== !!s.options.discuss
         ) {
-          const [from, to] = s.options.discuss ? [0.75, 0.5] : [0.5, 0.75];
+          const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
           if (s.options.share === from) s.options.share = to;
         }
         /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's
@@ -1859,7 +1858,6 @@ export function reduce(state, a, now = Date.now()) {
           justinTick(s, now, logLine) |
           dnTick(s, now) |
           vdTick(s, now) |
-          autoStabs(s, now) |
           attacks(s, now), // (the knife and the hammer, still swinging)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
@@ -2362,51 +2360,6 @@ function attacks(s, now) {
   }
   s.atk = keep.length ? keep : null;
   return ch;
-}
-/* Mad God Justin: a duck close enough to Justin stabs him by itself, no button needed (I want it for the phone
-   players), at the knife's own pace (one a second); a press still works but can't stab any faster */
-function autoStabs(s, now) {
-  const m = s.mgj;
-  if (!isMgj(s) || s.phase !== "boss" || !m || m.met || m.hp <= 0) return false;
-  const bodies = mgjBodies(s, now);
-  if (!bodies.length || mgjGone(s, now)) return false;
-  let any = false;
-  for (const id of s.seat) {
-    const P = s.players[id],
-      p = s.pos[id];
-    if (!P || P.dead || !p || p.x < 0 || now < coolEnds(s, id, "knife"))
-      continue;
-    if (p.w && p.w !== "knife") continue; // (the bow or the medkit in hand: no stab)
-    const far = (b) => Math.hypot((b.x - p.x) / 0.03, (b.y - p.y) / 0.08),
-      n = bodies.reduce((a, b) => (far(b) < far(a) ? b : a)); // (the nearer of him and his double)
-    const dx = n.x - p.x,
-      dy = n.y - p.y,
-      d = Math.hypot(dx / 0.03, dy / 0.08);
-    if (d > REACH.knife[0] - 0.2) continue; // (a little inside the knife's reach, so the stab lands)
-    const k = Math.hypot(dx, dy) || 1,
-      aim = d > 1e-3 ? [dx / k, dy / k] : [1, 0],
-      face = dx < 0 ? -1 : 1;
-    s.lastUse = { ...(s.lastUse || {}), [`${id} knife`]: now };
-    const hit = strike(s, id, "knife", aim, now);
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      {
-        n: s.fxN,
-        kind: "use",
-        what: "knife",
-        by: id,
-        who: [id],
-        face,
-        t: now,
-        ax: +aim[0].toFixed(3),
-        ay: +aim[1].toFixed(3),
-        ...(hit ? { hit } : {}),
-      },
-    ];
-    any = true;
-  }
-  return any;
 }
 /* where a bullet or a dagger is, t ms after it was fired: on the board (x, y) and, for the dagger, its height z */
 export const shotAt = (sh, t) => ({

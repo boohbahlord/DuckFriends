@@ -4,12 +4,12 @@
    keys or touchpad are used). It stays there all through a stage on the board: the key just pressed glows for a moment,
    keys kept on (Shift and the key) wear a green ring, and an item waiting to work again shows its bar draining. Phones
    have no row: holding still on the board brings the specials around the finger (see touch.js); a tap uses one, holding
-   one keeps it on, and lifting the holding finger over one uses it too. Phones also get a round Specials button in the
-   bottom bar's right corner: it opens a column of the same specials over it (a tap uses one; holding one brings a
-   "Toggle on" box, Shift and its key on a computer); the column stays until the button is tapped again or somewhere else
-   is. */
-import { esc, toast } from "./ui.js";
-import { KEYS, SPECIALS, specialById, looksOf, ammoHTML } from "./specials.js";
+   one keeps it on, and lifting the holding finger over one uses it too. Phones also get the specials as a slider in the
+   bottom middle (as in my sketch): three slots, the middle one bigger, which is the one picked. Sliding left or right
+   picks another (a longer slide goes past more of them), a tap on the middle one uses it, a tap on a side one picks it,
+   and the purple square to its right keeps the picked one on (Shift and its key on a computer). */
+import { esc } from "./ui.js";
+import { KEYS, specialById, looksOf, ammoHTML } from "./specials.js";
 
 const LIFE = 5000; // how long a key just pressed glows (and the ring of specials stays on a phone)
 const HOLD = 450;
@@ -23,26 +23,18 @@ const drain = (c) =>
 /* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or
    [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
    my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key),
-   dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up) */
+   dots(id) → the dots under a key, when the game has its own (Mad God Justin: the uses left of a weapon picked up),
+   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null) */
 export function mountHotbar(S, api) {
   const bar = document.createElement("div");
   bar.className = "hotbar gone";
-  bar.setAttribute("aria-hidden", "true"); // (game.js puts it in the bottom bar's right corner, with the Specials button)
+  bar.setAttribute("aria-hidden", "true"); // (game.js puts it in the bottom bar's right corner, with the slider)
   let timer = 0,
     sel = -1,
     sig = "",
     wheel = null,
     wheelT = 0,
-    coolT = 0,
-    cools = [];
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "mode-icon sp-btn";
-  btn.setAttribute("aria-label", "Specials");
-  btn.dataset.tip = "Specials";
-  btn.innerHTML = '<span class="mi sp-cyc"><i></i><i></i></span>';
-  let col = null,
-    colSig = "";
+    coolT = 0;
   const look = (id) => looksOf(specialById(id), api.duck && api.duck());
   const dots = (id) =>
     api.dots
@@ -50,57 +42,12 @@ export function mountHotbar(S, api) {
       : id === "handgun" && api.ammo
         ? ammoHTML(api.ammo())
         : "";
-  /* the button shows your specials' icons in turn (none chosen: all of them; never one that's off) */
-  const mine = () =>
-    api.keys().filter((id) => id && specialById(id) && !specialById(id).off);
-  let cycN = 0,
-    cycFace = 0,
-    heldI = -1;
-  const face = (html) => {
-    const faces = btn.querySelectorAll(".sp-cyc i");
-    cycFace ^= 1;
-    faces[cycFace].innerHTML = html;
-    faces[cycFace].classList.add("up");
-    faces[cycFace ^ 1].classList.remove("up");
-  };
-  /* phones: a special toggled on that is still waiting to work again shows on the button, with its bar draining */
-  const btnCool = () => {
-    const k = api.keys(),
-      on = api.kept(),
-      i = k.findIndex((id, j) => id && on.has(id) && cools[j]);
-    const s = i < 0 ? "" : `${i}:${cools[i][0]}`;
-    if (btn._cool === s) return;
-    btn._cool = s;
-    btn.querySelector(".cooldown")?.remove();
-    btn.classList.toggle("cool", i >= 0);
-    heldI = i;
-    if (i < 0) return;
-    face(look(k[i]).icon);
-    btn.insertAdjacentHTML("beforeend", drain(cools[i]));
-  };
-  const cycle = () => {
-    if (heldI >= 0) return; // (a special waiting stays on the button)
-    const ids = mine(),
-      list = ids.length
-        ? ids
-        : SPECIALS.filter((x) => !x.off && !x.only).map((x) => x.id),
-      sp = look(list[cycN++ % list.length]);
-    const faces = btn.querySelectorAll(".sp-cyc i");
-    cycFace ^= 1;
-    faces[cycFace].innerHTML = sp.icon;
-    faces[cycFace].classList.add("up");
-    faces[cycFace ^ 1].classList.remove("up");
-  };
-  cycle();
-  const cycT = setInterval(cycle, 1500);
 
   const draw = () => {
     const k = api.keys(),
       on = api.kept(),
       cd = api.cool ? api.cool() : [];
-    cools = cd;
-    if (col) drawCol(k, on, cd);
-    btnCool();
+    drawSlide(k, on, cd);
     const now = JSON.stringify([
       k,
       [...on],
@@ -130,7 +77,10 @@ export function mountHotbar(S, api) {
   };
   /* the row stays while a stage is on the board (away: off the board, it fades); a key pressed glows for 5 seconds */
   let away = true;
-  const settle = () => bar.classList.toggle("gone", away);
+  const settle = () => {
+    bar.classList.toggle("gone", away);
+    slide.classList.toggle("gone", away);
+  };
   const show = (i = -1) => {
     sel = i;
     away = false;
@@ -147,7 +97,6 @@ export function mountHotbar(S, api) {
     away = true;
     settle();
     closeWheel();
-    closeCol();
   };
 
   /* ---------- phones: the specials around the finger ---------- */
@@ -218,132 +167,144 @@ export function mountHotbar(S, api) {
     wheelT = setTimeout(closeWheel, LIFE);
     return true;
   }
-  /* ---------- phones: the Specials button and its column ---------- */
-  const one = (id, i, on, cd) => {
-    const sp = look(id);
-    return `<button type="button" class="sp-wbtn${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" data-i="${i}" aria-label="${esc(sp.name)}"><i>${sp.icon}</i><b>${KEYS[i]}</b>${drain(cd[i])}${dots(id)}</button>`;
+  /* ---------- phones: the slider of specials, and the square that keeps one on ---------- */
+  const slide = document.createElement("div");
+  slide.className = "sp-phone gone";
+  slide.innerHTML =
+    '<div class="sp-slide" role="listbox" aria-label="Specials"><div class="sp-track"></div></div>' +
+    '<button type="button" class="sp-keep" aria-label="Toggle on" aria-pressed="false"><i></i></button>';
+  const track = slide.querySelector(".sp-track"),
+    keep = slide.querySelector(".sp-keep");
+  let list = [], // [id, key index] of each special on my keys, in key order
+    cur = null, // the id in the middle
+    pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
+    slideSig = "",
+    lastWant = null;
+  const STEP = () =>
+    parseFloat(getComputedStyle(slide).getPropertyValue("--step")) *
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 36;
+  const curI = () => list.findIndex(([id]) => id === cur);
+  /* each slot along the row: the one in the middle bigger, the two beside it smaller, the rest out of sight */
+  const lay = () => {
+    const step = STEP();
+    track.querySelectorAll(".sp-slot").forEach((b, j) => {
+      const d = j - pos,
+        a = Math.abs(d);
+      b.style.transform = `translateX(${(d * step).toFixed(1)}px) scale(${(1 + 0.32 * Math.max(0, 1 - a)).toFixed(3)})`;
+      b.style.opacity = a > 1.6 ? 0 : a > 1.1 ? ((1.6 - a) * 2).toFixed(2) : 1;
+      b.classList.toggle("mid", a < 0.5);
+      b.tabIndex = a < 0.5 ? 0 : -1;
+    });
   };
-  function drawCol(k, on, cd) {
-    const now = JSON.stringify([
-      k,
+  /* picks the one in the middle (the game is told, so in Mad God Justin the knife, the bow or the medkit goes in hand) */
+  const pick = (j, tell = true) => {
+    if (!list.length) return;
+    j = Math.max(0, Math.min(list.length - 1, j));
+    const was = cur;
+    cur = list[j][0];
+    pos = j;
+    track.classList.remove("sliding");
+    lay();
+    drawKeep();
+    if (tell && cur !== was && api.select) api.select(list[j][1]);
+  };
+  const drawKeep = () => {
+    const sp = cur && look(cur),
+      on = !!cur && api.kept().has(cur);
+    keep.classList.toggle("on", on);
+    keep.disabled = !sp || !!sp.off;
+    keep.setAttribute("aria-pressed", String(on));
+    keep.setAttribute("aria-label", on ? "Toggle off" : "Toggle on");
+  };
+  function drawSlide(k, on, cd) {
+    list = k.map((id, i) => [id, i]).filter(([id]) => id && specialById(id));
+    slide.classList.toggle("none", !list.length);
+    const sig = JSON.stringify([
+      list,
       [...on],
       cd.map((c) => c && c[0]),
-      api.ammo && api.ammo(),
+      k.map(dots),
+      api.duck && !!(api.duck() || {}).wrench,
     ]);
-    if (now === colSig) return;
-    colSig = now;
-    const ask = col.querySelector(".sp-toggle"),
-      askI = ask ? +ask.dataset.i : -1;
-    col.innerHTML = k
-      .map((id, i) => (id && specialById(id) ? one(id, i, on, cd) : ""))
-      .join("");
-    if (askI >= 0) toggleBox(askI);
-  }
-  /* the box beside a held special: Toggle on (or off) */
-  function toggleBox(i) {
-    col.querySelector(".sp-toggle")?.remove();
-    const b = col.querySelector(`.sp-wbtn[data-i="${i}"]`);
-    if (!b || b.classList.contains("off")) return;
-    const box = document.createElement("button");
-    box.type = "button";
-    box.className = "sp-toggle";
-    box.dataset.i = i;
-    box.textContent = api.kept().has(api.keys()[i])
-      ? "Toggle off"
-      : "Toggle on";
-    b.append(box);
-  }
-  /* over the button, under the top bar (more of them go in a second column), and over a note at the bottom (a toast)
-     that reaches into its lane */
-  const place = () => {
-    if (!col) return;
-    const r = btn.getBoundingClientRect(),
-      lane = r.left - 120;
-    let floor = r.top;
-    for (const t of document.querySelectorAll("#toasts .toast:not(.out)")) {
-      const q = t.getBoundingClientRect();
-      if (q.width && q.right > lane && q.top < floor) floor = q.top;
+    if (sig !== slideSig) {
+      slideSig = sig;
+      track.innerHTML = list
+        .map(([id, i]) => {
+          const sp = look(id);
+          return `<button type="button" class="sp-slot${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
+        })
+        .join("");
     }
-    const top = (S.querySelector(".gbar") || btn).getBoundingClientRect()
-      .bottom;
-    col.style.right = Math.max(6, innerWidth - r.right).toFixed(0) + "px";
-    col.style.bottom = (innerHeight - floor + 8).toFixed(0) + "px";
-    col.style.maxHeight = Math.max(60, floor - top - 16).toFixed(0) + "px";
-  };
-  function openCol() {
-    closeWheel();
-    col = document.createElement("div");
-    col.className = "sp-col";
-    colSig = "";
-    document.body.append(col);
-    place();
-    draw();
-    drawCol(api.keys(), api.kept(), api.cool ? api.cool() : []);
-    btn.classList.add("open");
-    btn.setAttribute("aria-expanded", "true");
-    col.tick = setInterval(() => {
-      if (col) {
-        drawCol(api.keys(), api.kept(), api.cool ? api.cool() : []);
-        place();
-      }
-    }, 300); // (kept on, or off, by the room a moment later)
-    let press = null;
-    col.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      const t = e.target.closest(".sp-toggle");
-      if (t) {
-        const i = +t.dataset.i;
-        t.remove();
-        api.use(i, true);
-        return;
-      }
-      const b = e.target.closest(".sp-wbtn");
-      if (!b) return;
-      press = {
-        i: +b.dataset.i,
-        id: e.pointerId,
-        t: setTimeout(() => {
-          if (press) {
-            toggleBox(press.i);
-            press = null;
-          }
-        }, HOLD),
-      };
-    });
-    col.addEventListener("pointerup", (e) => {
-      if (!press || press.id !== e.pointerId) return;
-      clearTimeout(press.t);
-      const i = press.i;
-      press = null;
-      col.querySelector(".sp-toggle")?.remove();
-      api.use(i, false);
-    });
-    col.addEventListener("pointercancel", () => {
-      if (press) clearTimeout(press.t);
-      press = null;
-    });
-    col.addEventListener("contextmenu", (e) => e.preventDefault());
+    /* the one in the middle stays (gone from my keys, like a medkit used: the nearest one) */
+    const want = api.current && api.current();
+    if (want !== lastWant) {
+      lastWant = want;
+      if (want && list.some(([id]) => id === want)) cur = want;
+    } // (the game put another in hand: Mad God Justin's keys 1 to 3)
+    if (curI() < 0 && list.length)
+      pick(Math.min(Math.round(pos), list.length - 1), !!cur);
+    else if (!track.classList.contains("sliding")) {
+      pos = Math.max(0, curI());
+      lay();
+    }
+    drawKeep();
   }
-  function closeCol() {
-    if (!col) return;
-    clearInterval(col.tick);
-    col.remove();
-    col = null;
-    btn.classList.remove("open");
-    btn.setAttribute("aria-expanded", "false");
-  }
-  btn.addEventListener("click", () => {
-    if (col) closeCol();
-    else if (!mine().length)
-      toast("Pick your specials in Customize → Specials.");
-    else openCol();
+  /* a finger on the slider: it follows the finger; let go, the nearest one is picked. A tap: the middle one is used,
+     one beside it is picked */
+  let drag = null;
+  slide.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest(".sp-slide") || !list.length) return;
+    e.preventDefault();
+    try {
+      slide.setPointerCapture(e.pointerId);
+    } catch {}
+    drag = {
+      id: e.pointerId,
+      x: e.clientX,
+      from: pos,
+      moved: 0,
+      slot: e.target.closest(".sp-slot"),
+    };
   });
-  /* a tap anywhere else closes it */
-  const outside = (e) => {
-    if (col && !col.contains(e.target) && !btn.contains(e.target)) closeCol();
+  slide.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    drag.moved = Math.max(drag.moved, Math.abs(dx));
+    if (drag.moved < 6) return;
+    track.classList.add("sliding");
+    pos = Math.max(
+      -0.35,
+      Math.min(list.length - 0.65, drag.from - dx / STEP()),
+    );
+    lay();
+  });
+  const let_go = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    if (d.moved >= 6 || e.type !== "pointerup") {
+      pick(Math.round(pos));
+      return;
+    }
+    const j = d.slot ? [...track.children].indexOf(d.slot) : -1;
+    if (j < 0) return;
+    if (j === curI()) {
+      (api.tap || api.use)(list[j][1], false);
+      show(list[j][1]);
+    } else pick(j);
   };
-  addEventListener("pointerdown", outside, true);
-  addEventListener("resize", place);
+  slide.addEventListener("pointerup", let_go);
+  slide.addEventListener("pointercancel", let_go);
+  slide.addEventListener("contextmenu", (e) => e.preventDefault());
+  keep.addEventListener("click", () => {
+    const j = curI();
+    if (j < 0) return;
+    api.use(list[j][1], true);
+    setTimeout(drawKeep, 80); // (kept on, or off, by the room a moment later)
+  });
+  const slideT = setInterval(() => {
+    if (!away) draw();
+  }, 300);
 
   /* the finger that brought the ring up, lifted over one of them: that one */
   function lifted(e) {
@@ -373,21 +334,19 @@ export function mountHotbar(S, api) {
     hide,
     wheel: openWheel,
     closeWheel,
-    button: btn,
+    slider: slide,
     row: bar,
+    current: () => cur,
     refresh() {
       draw();
       settle();
     },
     destroy() {
       clearTimeout(coolT);
-      clearInterval(cycT);
+      clearInterval(slideT);
       hide();
-      closeCol();
       bar.remove();
-      btn.remove();
-      removeEventListener("pointerdown", outside, true);
-      removeEventListener("resize", place);
+      slide.remove();
       removeEventListener("pointerup", lifted);
       removeEventListener("keydown", real);
       removeEventListener("pointermove", real);
