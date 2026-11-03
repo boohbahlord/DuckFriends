@@ -5,12 +5,16 @@
    nearest duck by walking distance. Everyone has 3 HP, the knife, the pistol, the bow and 2 grenades; a duck at 0 HP is
    down until a teammate holds E by it for 10 seconds, or it bleeds out and walks as a ghost until the next round. The
    game ends when nobody is left standing. The host runs it all (this file); every screen draws it (l4dd.js).
+   Points (the owner's): 50 to start, 5 for each point of damage to a zombie, 25 for a headshot (it kills at once), 10
+   for each board put up (50 a round at most). They buy upgrades from Justin's Butler, who stands by the card table, and
+   a weapon at the fireplace (210: it flickers through the weapons, then lands on one only the payer can take). Each duck
+   has five slots: one melee, two ranged, one special and the grenades.
 
    It is Duck Cabin's world (rules.js' isHang is true for it too), with only the activities it keeps (keepOnly below),
    and its own rule 'l4'. s.hang, each key online as its own string (so the zombies walking never send the boards again):
      l4   { r: round, t0: when its zombies start coming (the round's "Round N" shows BREAK before), n: zombies in it,
             made: how many came so far, owe: held back while the board is full, acc, sec: the spawning's clock, next:
-            the next zombie's number, over: { at, r } once nobody is standing }
+            the next zombie's number, over: { at, r } once nobody is standing, bp: { id: points for boards this round } }
      zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 8 + st (st 0 coming,
           1 tearing the boards, 4 climbing in, 2 in, 3 dead), sent every heartbeat
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
@@ -20,12 +24,16 @@
      brd  { opening: boards up, 0 … BOARDS }
      l4p  { id: { hp, at (its last hit or heal), dn (down: bleeds out then), rv: { by, at } (being revived), gh (a ghost
           this round) } }
-     l4a  { id: { m (pistol shots in the magazine), r (the rest), rl (its reload ends), b (arrows), g (grenades), u: {
-          weapon: when last used } } }
+     l4a  { id: { sl: [melee, ranged, ranged, special] (weapon ids, "" for an empty slot), am: { weapon: [in the
+          magazine (or all of it, without one), the rest] }, rl: when a reload ends (0: none), rw: the weapon reloading,
+          g: grenades, u: { weapon: when last used } } }
+     l4pt { id: points }
+     l4u  { id: { acc, as, hp, sp, rl } }: the upgrades bought (accuracy, attack speed, max HP, speed, faster reload)
+     l4box { by, t, w } | null: the fireplace's weapon, paid for by `by` at t, landing on w after BOX.spin
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4c  [[x, y], …]: the extra candles on the floor, picked as the game starts (world px)
-     l4k  [{ by, dx, dy, t, hit }]: knives mid-swing (each hurts a zombie once, only for ARMS.knife.swing ms) */
+     l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
   W,
@@ -40,8 +48,9 @@ import {
   standable,
   solidsAt,
   onPlatform,
+  BJ,
 } from "./hangout/layout.js";
-import { GRENADE_MS } from "./rules.js";
+import { GRENADE_MS, daggerZ } from "./rules.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
@@ -79,12 +88,17 @@ export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first); each second a 25% chance that none comes */
 const SKIP = 0.25;
-/* the weapons here (Stage 1): the knife swings twice as fast as anywhere else and hurts only mid-swing, in a small
-   bubble just past its blade; the pistol: 72 bullets in all, 8 a magazine; the bow: 150 arrows, one every 0.4 s;
-   headshots (crits) kill at once; grenades kill every zombie in their blast. Nothing hurts another duck */
+/* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
+   anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
+   all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
+   cone of pellets; the medkit puts my HP back to full, once. A headshot (crit, and +5% for each Accuracy) kills at
+   once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
+   are guesses (Adam's plan, question 2) */
 export const ARMS = {
-  knife: { cool: 500, dmg: 1, swing: 125, at: 58, r: 34 },
+  knife: { kind: "melee", cool: 500, dmg: 1, swing: 125, at: 58, r: 34 },
+  hammer: { kind: "melee", cool: 1100, dmg: 2, swing: 250, at: 66, r: 50 },
   handgun: {
+    kind: "ranged",
     cool: 200,
     dmg: 1,
     crit: 0.05,
@@ -93,10 +107,73 @@ export const ARMS = {
     all: 72,
     reload: 1200,
   },
-  bow: { cool: 400, dmg: 1, crit: 0.05, speed: 820, all: 150 },
-  grenade: { cool: 900, far: 300, r: 140, start: 2, most: 3 },
+  bow: { kind: "ranged", cool: 400, dmg: 1, crit: 0.05, speed: 820, all: 150 },
+  dagger: { kind: "ranged", cool: 600, dmg: 2, speed: 700, all: 24 },
+  shotgun: {
+    kind: "ranged",
+    cool: 900,
+    dmg: 1,
+    speed: 1100,
+    mag: 6,
+    all: 48,
+    reload: 1500,
+    pellets: 5,
+    spread: 0.3,
+    life: 420,
+  },
+  medkit: { kind: "special", cool: 600, all: 1 },
+  grenade: { kind: "grenade", cool: 900, far: 300, r: 140, start: 2, most: 3 },
 };
-export const HELD = ["knife", "handgun", "bow"]; // what a duck holds out (keys 1 to 3); grenades are thrown with G
+export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
+/* the slots, in order (keys 1 to 4; the grenades are G): blue, red, red, purple, and the grenades white */
+export const START = ["knife", "handgun", "bow", ""];
+export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
+/* what the fireplace can give: every weapon with an equal chance, never one already in my slots */
+export const POOL = [
+  "knife",
+  "hammer",
+  "handgun",
+  "bow",
+  "dagger",
+  "shotgun",
+  "medkit",
+];
+/* their names, as players see them */
+const NAMES = {
+  knife: "Knife",
+  hammer: "Hammer",
+  handgun: "Pistol",
+  bow: "Bow",
+  dagger: "Dagger",
+  shotgun: "Shotgun",
+  medkit: "Medkit",
+  grenade: "Grenade",
+};
+export const weaponName = (w) => NAMES[w] || w;
+/* points (the owner's) */
+export const PTS = { START: 50, HIT: 5, HEAD: 25, BOARD: 10, BOARDS: 50 };
+/* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
+   next one when n are bought already, how many at most */
+export const SHOP = [
+  { id: "acc", name: "Accuracy", what: "+5% headshots", most: 5 },
+  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 5 },
+  { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
+  { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
+  { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
+];
+export const priceOf = (id, n) =>
+  ({
+    acc: 300 + 50 * n,
+    as: 250 + 50 * n,
+    hp: n ? 125 : 100,
+    sp: 250,
+    rl: 300,
+  })[id];
+/* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
+   the fireplace's front, where E spins it */
+export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
+export const BOX = { x: 2300, y: 742, price: 210, spin: 4200, keep: 10000 };
+const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
 /* a zombie's room on the floor, as the ducks' (world.js crowd): an ellipse 56 across and 25.6 deep; every zombie the
    same, whatever its size. Its claw reaches a little past touching */
@@ -484,17 +561,42 @@ function store(s, zs, keepStatic) {
 }
 export const zombiesOf = zombies;
 
-/* ---------- a game, a round ---------- */
-function freshAmmo() {
-  return {
-    m: ARMS.handgun.mag,
-    r: ARMS.handgun.all - ARMS.handgun.mag,
-    rl: 0,
-    b: ARMS.bow.all,
-    g: ARMS.grenade.start,
-    u: {},
-  };
+/* ---------- a duck's slots, points and upgrades ---------- */
+/* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
+export const fullAmmo = (w) => {
+  const a = ARMS[w];
+  if (!a || a.all === undefined) return null;
+  return a.mag ? [a.mag, a.all - a.mag] : [a.all, 0];
+};
+function freshKit() {
+  const am = {};
+  for (const w of START) if (fullAmmo(w)) am[w] = fullAmmo(w);
+  return { sl: [...START], am, rl: 0, rw: "", g: ARMS.grenade.start, u: {} };
 }
+export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
+export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
+/* is w one of this duck's weapons? (what it can hold out and use; the grenades are always there) */
+export const l4Holds = (s, id, w) =>
+  !!w && kindOf(w) !== "grenade" && slotsOf(s, id).includes(w);
+export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
+export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
+export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
+/* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
+   headshot chance (each Accuracy: 5% more, on every attack) */
+export const l4Cool = (s, id, w) =>
+  ARMS[w] ? ARMS[w].cool * Math.pow(0.9, upOf(s, id).as || 0) : 400;
+const reloadOf = (s, id, w) =>
+  (ARMS[w].reload || 1500) * (upOf(s, id).rl ? 0.7 : 1);
+const headOf = (s, id, w) =>
+  kindOf(w) === "grenade"
+    ? 0
+    : ((ARMS[w] && ARMS[w].crit) || 0) + 0.05 * (upOf(s, id).acc || 0);
+function addPts(s, id, n) {
+  if (!n || !s.players[id]) return;
+  s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
+}
+
+/* ---------- a game, a round ---------- */
 function countFor(s, r) {
   const R = roundOf(r),
     extra = Math.max(0, players(s).length - 1);
@@ -512,6 +614,7 @@ function newRound(s, r, now, wait) {
     owe: 0,
     acc: 0,
     sec: -1,
+    bp: {},
   };
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
@@ -520,7 +623,11 @@ function bringBack(s, id, now, k, fresh) {
     was = p4[id] || {};
   p4[id] = { hp: L4.HP, at: now };
   s.hang.l4p = p4;
-  if (fresh) s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshAmmo() };
+  if (fresh) {
+    s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
+    s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: PTS.START };
+    s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} };
+  } // (a ghost back at the next round keeps its weapons, its points and what it bought; its max HP went when it went down)
   if (s.players[id]) delete s.players[id].dead;
   const still = { ...(s.hang.still || {}) };
   delete still[id];
@@ -581,6 +688,9 @@ function setUp(s, now) {
   s.hang.brd = Object.fromEntries(OPENINGS.map((o) => [o.id, L4.BOARDS]));
   s.hang.l4p = {};
   s.hang.l4a = {};
+  s.hang.l4pt = {};
+  s.hang.l4u = {};
+  s.hang.l4box = null;
   s.hang.l4b = {};
   s.hang.l4f = {};
   s.hang.power = 0; // (the power is cut: the lamps are dark; the fires and the candles burn)
@@ -603,12 +713,13 @@ rule("l4", {
     bringBack(s, id, now, players(s).indexOf(id), true);
   },
   left(s, id) {
-    for (const k of ["l4p", "l4a", "l4b", "l4f"])
-      if (s.hang[k] && s.hang[k][id]) {
+    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u"])
+      if (s.hang[k] && s.hang[k][id] !== undefined) {
         const o = { ...s.hang[k] };
         delete o[id];
         s.hang[k] = o;
       }
+    if (s.hang.l4box && s.hang.l4box.by === id) s.hang.l4box = null;
     const p4 = s.hang.l4p || {};
     for (const [t, p] of Object.entries(p4))
       if (p.rv && p.rv.by === id)
@@ -675,7 +786,77 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
+  if (a.do === "buy") return buy(s, id, String(a.what || ""), mx, my);
+  if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   return false;
+}
+/* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
+function buy(s, id, what, mx, my) {
+  const it = SHOP.find((x) => x.id === what),
+    up = upOf(s, id),
+    n = up[what] || 0;
+  if (!it || n >= it.most) return false;
+  if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
+  const price = priceOf(what, n);
+  if (ptsOf(s, id) < price) return false;
+  addPts(s, id, -price);
+  s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
+  if (what === "hp") {
+    const p4 = s.hang.l4p || {};
+    if (p4[id]) s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: p4[id].hp + 1 } };
+  } // (the new HP comes full)
+  return true;
+}
+/* the fireplace: E pays and it spins; once it has landed, E takes the weapon (only whoever paid): a melee weapon or a
+   special takes its own slot, a ranged one the ranged weapon in hand (a.hand, else the one the duck holds out) */
+export const boxNow = (s, now) => {
+  const b = s && s.hang && s.hang.l4box;
+  return b && now < b.t + BOX.spin + BOX.keep ? b : null;
+};
+function fireplace(s, id, a, now, mx, my) {
+  if (Math.hypot(BOX.x - mx, BOX.y - my) > SHOP_REACH * 2) return false;
+  const b = boxNow(s, now),
+    kit = kitOf(s, id);
+  if (!kit) return false;
+  if (!b) {
+    const pool = POOL.filter((w) => !kit.sl.includes(w));
+    if (!pool.length || ptsOf(s, id) < BOX.price) return false;
+    addPts(s, id, -BOX.price);
+    s.hang.l4box = {
+      by: id,
+      t: now,
+      w: pool[Math.floor(Math.random() * pool.length)],
+    };
+    return true;
+  }
+  if (b.by !== id || now < b.t + BOX.spin) return false;
+  const w = b.w,
+    kind = kindOf(w),
+    hand = kit.sl.includes(a.hand) ? a.hand : (s.pos[id] || {}).w;
+  let k = kind === "melee" ? 0 : kind === "special" ? 3 : -1;
+  if (kind === "ranged") {
+    k = [1, 2].find((i) => kit.sl[i] === hand) ?? -1;
+    if (k < 0) return false; // (no ranged weapon in hand: that screen says to switch to the one to replace)
+  }
+  if (k < 0 || kit.sl.includes(w)) return false;
+  const old = kit.sl[k],
+    am = { ...kit.am };
+  delete am[old];
+  if (fullAmmo(w)) am[w] = fullAmmo(w);
+  const sl = [...kit.sl];
+  sl[k] = w;
+  s.hang.l4a = {
+    ...s.hang.l4a,
+    [id]: {
+      ...kit,
+      sl,
+      am,
+      ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
+    },
+  };
+  s.hang.l4box = null;
+  addFx(s, { kind: "l4take", by: id, who: [], w, t: now });
+  return true;
 }
 
 /* ---------- the weapons (rules.js sends the 'use' and 'reload' actions here) ---------- */
@@ -685,21 +866,35 @@ const aimDir = (a) => {
     l = Math.hypot(ax, ay);
   return l > 1e-6 ? [ax / l, ay / l] : [a.face < 0 ? -1 : 1, 0];
 };
+/* a reload that's done: the magazine fills from the rest */
 function finishReload(m, now) {
   if (!m.rl || now < m.rl) return false;
-  const k = Math.min(ARMS.handgun.mag - m.m, m.r);
-  m.m += k;
-  m.r -= k;
+  const w = m.rw,
+    c = m.am && m.am[w];
+  if (c && ARMS[w] && ARMS[w].mag) {
+    const k = Math.min(ARMS[w].mag - c[0], c[1]);
+    m.am = { ...m.am, [w]: [c[0] + k, c[1] - k] };
+  }
   m.rl = 0;
+  m.rw = "";
+  return true;
+}
+/* R: the ranged weapon in hand reloads (one with a magazine, not full, with bullets left) */
+function startReload(s, id, m, w, now) {
+  const c = m.am[w];
+  if (!ARMS[w] || !ARMS[w].mag || !c || m.rl) return false;
+  if (c[0] >= ARMS[w].mag || c[1] <= 0) return false;
+  m.rl = now + reloadOf(s, id, w);
+  m.rw = w;
   return true;
 }
 export function l4Reload(s, a, now) {
-  const m0 = (s.hang.l4a || {})[a.id];
-  if (!m0 || !standing(s, a.id)) return false;
+  const m0 = kitOf(s, a.id),
+    w = l4Holds(s, a.id, a.w) ? a.w : (s.pos[a.id] || {}).w;
+  if (!m0 || !standing(s, a.id) || !l4Holds(s, a.id, w)) return false;
   const m = { ...m0 };
   finishReload(m, now);
-  if (m.rl || m.m >= ARMS.handgun.mag || m.r <= 0) return false;
-  m.rl = now + ARMS.handgun.reload;
+  if (!startReload(s, a.id, m, w, now)) return false;
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
   return true;
 }
@@ -713,15 +908,18 @@ export function l4Use(s, a, now) {
     what = String(a.what || ""),
     p = s.pos[id],
     L = s.hang && s.hang.l4,
-    m0 = (s.hang.l4a || {})[id];
-  if (!L || L.over || !p || !m0 || !standing(s, id) || !ARMS[what])
-    return false;
-  const m = { ...m0, u: { ...m0.u } };
+    m0 = kitOf(s, id),
+    A = ARMS[what],
+    kind = kindOf(what);
+  if (!L || L.over || !p || !m0 || !standing(s, id) || !A) return false;
+  if (kind !== "grenade" && !m0.sl.includes(what)) return false;
+  const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
-  if (now - (m.u[what] || 0) < ARMS[what].cool) return false;
-  if (what === "handgun" && (m.rl || m.m <= 0)) return false;
-  if (what === "bow" && m.b <= 0) return false;
-  if (what === "grenade" && m.g <= 0) return false;
+  if (now - (m.u[what] || 0) < l4Cool(s, id, what)) return false;
+  const c = m.am[what];
+  if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === what))
+    return false; // (empty, or reloading)
+  if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
   m.u[what] = now;
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
@@ -737,54 +935,96 @@ export function l4Use(s, a, now) {
     ax: +(dx / W).toFixed(5),
     ay: +(dy / H).toFixed(5),
   });
-  if (what === "knife") {
+  if (kind === "grenade") m.g--;
+  else if (c) {
+    m.am[what] = [c[0] - 1, c[1]];
+    if (c[0] - 1 <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
+  }
+  if (kind === "melee") {
     s.hang.l4k = [
       ...(s.hang.l4k || []).filter(
-        (k) => now - k.t < ARMS.knife.swing && k.by !== id,
+        (k) => now - k.t < (ARMS[k.w] || A).swing && k.by !== id,
       ),
-      { by: id, dx, dy, t: now, hit: [] },
+      { by: id, w: what, dx, dy, t: now, hit: [] },
     ];
-    knifeHits(s, now);
+    meleeHits(s, now);
+  } else if (what === "medkit") {
+    const p4 = s.hang.l4p || {};
+    s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
+    delete m.am.medkit;
+    m.sl = m.sl.map((w) => (w === "medkit" ? "" : w)); // (used up: the special slot is empty again)
   } else {
-    if (what === "handgun") {
-      m.m--;
-      if (m.m <= 0 && m.r > 0) m.rl = now + ARMS.handgun.reload; // (empty: it reloads by itself)
+    const shot = (k, ux, uy, v, more) => ({
+      n,
+      by: id,
+      w: what,
+      k,
+      x0: p.x,
+      y0: p.y,
+      vx: +((ux * v) / W).toFixed(5),
+      vy: +((uy * v) / H).toFixed(5),
+      t: now,
+      lx: p.x,
+      ly: p.y,
+      hz,
+      hin: inCabin(px, py) ? 1 : 0,
+      ...more,
+    });
+    if (what === "shotgun") {
+      const a0 = Math.atan2(dy, dx),
+        out = [];
+      for (let i = 0; i < A.pellets; i++) {
+        const an =
+          a0 +
+          A.spread * ((i / (A.pellets - 1)) * 2 - 1) +
+          (Math.random() - 0.5) * 0.08;
+        out.push(
+          shot("pellet", Math.cos(an), Math.sin(an), A.speed, {
+            n: n * 10 + i,
+            life: A.life,
+          }),
+        );
+      }
+      s.shots = [...(s.shots || []), ...out];
+    } else {
+      const v =
+        what === "grenade" ? ARMS.grenade.far / (GRENADE_MS / 1000) : A.speed;
+      s.shots = [
+        ...(s.shots || []),
+        shot(what === "bow" ? "arrow" : what, dx, dy, v),
+      ];
     }
-    if (what === "bow") m.b--;
-    if (what === "grenade") m.g--;
-    const v =
-      what === "grenade"
-        ? ARMS.grenade.far / (GRENADE_MS / 1000)
-        : ARMS[what].speed;
-    s.shots = [
-      ...(s.shots || []),
-      {
-        n,
-        by: id,
-        k: what === "bow" ? "arrow" : what,
-        x0: p.x,
-        y0: p.y,
-        vx: +((dx * v) / W).toFixed(5),
-        vy: +((dy * v) / H).toFixed(5),
-        t: now,
-        lx: p.x,
-        ly: p.y,
-        hz,
-        hin: inCabin(px, py) ? 1 : 0,
-      },
-    ];
   }
   s.hang.l4a = { ...s.hang.l4a, [id]: m };
   return true;
 }
-/* a zombie takes damage (a headshot: all of it); true when it died */
-function hurt(z, dmg, crit) {
+/* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot (which
+   takes all of it); true when it died */
+function strike(s, z, dmg, head, by) {
   if (z.st === 3) return false;
-  z.hp = crit ? 0 : Math.max(0, z.hp - dmg);
+  const took = head ? z.hp : Math.min(z.hp, dmg);
+  z.hp = head ? 0 : Math.max(0, z.hp - dmg);
+  addPts(s, by, head ? PTS.HEAD : PTS.HIT * took);
   return z.hp <= 0;
 }
-function knifeHits(s, now) {
-  const ks = (s.hang.l4k || []).filter((k) => now - k.t <= ARMS.knife.swing);
+/* a headshot, now and then (the weapon's chance and the duck's Accuracy): every screen shows it */
+function headshot(s, by, w, z, now) {
+  if (Math.random() >= headOf(s, by, w)) return false;
+  addFx(s, {
+    kind: "l4crit",
+    by,
+    who: [],
+    t: now,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+  });
+  return true;
+}
+/* the melee weapons mid-swing hit every zombie in their bubble, each once */
+function meleeHits(s, now) {
+  const ks = (s.hang.l4k || []).filter(
+    (k) => now - k.t <= (ARMS[k.w] || ARMS.knife).swing,
+  );
   if (!ks.length) {
     if (s.hang.l4k && s.hang.l4k.length) s.hang.l4k = [];
     return false;
@@ -793,16 +1033,17 @@ function knifeHits(s, now) {
     T = now - s.hang.l4.t0;
   let any = false;
   for (const k of ks) {
-    const p = s.pos[k.by];
+    const p = s.pos[k.by],
+      A = ARMS[k.w] || ARMS.knife;
     if (!p || !standing(s, k.by)) continue;
     const [px, py] = at(p),
-      bx = px + k.dx * ARMS.knife.at,
-      by = py + k.dy * ARMS.knife.at;
+      bx = px + k.dx * A.at,
+      by = py + k.dy * A.at;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
-      if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > ARMS.knife.r + 22) continue;
+      if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
       k.hit.push(z.i);
-      if (hurt(z, ARMS.knife.dmg, false)) die(z, T);
+      if (strike(s, z, A.dmg, headshot(s, k.by, k.w, z, now), k.by)) die(z, T);
       any = true;
     }
   }
@@ -851,7 +1092,7 @@ export function l4Shots(s, now) {
             z.st !== 3 &&
             Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r
           ) {
-            hurt(z, Infinity, true);
+            strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
             die(z, T);
             hit.push(z.i);
           }
@@ -880,7 +1121,9 @@ export function l4Shots(s, now) {
       y1 = (sh.y0 + sh.vy * u) * H,
       len = Math.hypot(x1 - x0, y1 - y0),
       steps = Math.max(1, Math.ceil(len / 12));
-    let gone = age > SHOT_LIFE,
+    let gone =
+        age > (sh.life || SHOT_LIFE) ||
+        (sh.k === "dagger" && daggerZ(age / 1000) <= 0), // (a pellet goes only so far; a dagger falls to the floor)
       endX = x1,
       endY = y1;
     for (let k = 1; k <= steps && !gone; k++) {
@@ -896,19 +1139,15 @@ export function l4Shots(s, now) {
         (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
       );
       if (z) {
-        const w = sh.k === "arrow" ? ARMS.bow : ARMS.handgun,
-          crit = Math.random() < w.crit;
-        if (hurt(z, w.dmg, crit)) die(z, T);
-        z.hitBy = sh.by;
-        if (crit)
-          addFx(s, {
-            kind: "l4crit",
-            by: sh.by,
-            who: [],
-            t: now,
-            x: Math.round(z.x),
-            y: Math.round(z.y),
-          });
+        const w = ARMS[sh.w]
+          ? sh.w
+          : sh.k === "arrow"
+            ? "bow"
+            : sh.k === "pellet"
+              ? "shotgun"
+              : "handgun";
+        if (strike(s, z, ARMS[w].dmg, headshot(s, sh.by, w, z, now), sh.by))
+          die(z, T);
         hitAny = true;
         gone = true;
       }
@@ -928,7 +1167,7 @@ function l4Tick(s, now) {
   const L = s.hang.l4;
   if (!L) return false;
   if (L.over) return false;
-  knifeHits(s, now); // (first: the zombies below are read after it)
+  meleeHits(s, now); // (first: the zombies below are read after it)
   const T = now - L.t0,
     zs = zombies(s);
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */
@@ -972,7 +1211,7 @@ function l4Tick(s, now) {
       continue;
     }
     if (p.gh) continue;
-    if (p.hp < L4.HP && now - p.at >= L4.REGEN)
+    if (p.hp < maxHp(s, id) && now - p.at >= L4.REGEN)
       p4[id] = { ...p, hp: p.hp + 1, at: now };
   }
   s.hang.l4p = p4;
@@ -983,6 +1222,7 @@ function l4Tick(s, now) {
       finishReload(m, now);
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
     }
+  if (s.hang.l4box && !boxNow(s, now)) s.hang.l4box = null; // (nobody took it: the fire keeps it)
   const brd = { ...(s.hang.brd || {}) },
     bl = { ...(s.hang.l4b || {}) };
   for (const [id, b] of Object.entries(bl)) {
@@ -1001,6 +1241,14 @@ function l4Tick(s, now) {
     if (now - b.at >= L4.BOARD_MS) {
       brd[o.id] = Math.min(L4.BOARDS, (brd[o.id] || 0) + 1);
       bl[id] = { ...b, at: now };
+      const bp = s.hang.l4.bp || {};
+      if ((bp[id] || 0) < PTS.BOARDS) {
+        addPts(s, id, PTS.BOARD);
+        s.hang.l4 = {
+          ...s.hang.l4,
+          bp: { ...bp, [id]: (bp[id] || 0) + PTS.BOARD },
+        };
+      } // (10 a board, 50 a round at most)
     }
   }
   s.hang.brd = brd;
@@ -1008,7 +1256,7 @@ function l4Tick(s, now) {
   /* nobody standing: the game is over */
   const up = ids.filter((id) => standing(s, id));
   if (!up.length && ids.length) {
-    s.hang.l4 = { ...L, over: { at: now, r: L.r } };
+    s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
     return true;
   }
@@ -1170,6 +1418,9 @@ function moveZombies(s, zs, now, T, up) {
             const hp = p.hp - 1;
             if (hp <= 0) {
               p4[target.id] = { hp: 0, at: now, dn: now + L4.BLEED };
+              const u = upOf(s, target.id);
+              if (u.hp)
+                s.hang.l4u = { ...s.hang.l4u, [target.id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
               if (s.players[target.id]) s.players[target.id].dead = true;
               s.hang.still = {
                 ...(s.hang.still || {}),

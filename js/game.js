@@ -159,8 +159,17 @@ import {
   GRENADE_PIN,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
-import { isL4dd, HELD, L4, l4Hp, l4Down, ARMS } from "./l4ddrules.js";
-import { l4TouchAim } from "./l4dd.js";
+import {
+  isL4dd,
+  L4,
+  l4Hp,
+  l4Down,
+  ARMS,
+  slotsOf,
+  maxHp,
+  l4Cool,
+} from "./l4ddrules.js";
+import { l4TouchAim, l4Held } from "./l4dd.js";
 import { mountL4Bar } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
@@ -343,6 +352,8 @@ const jaimeLook = (s, id) => {
   return { ...JAIME, name: by.name || JAIME.name, nameStyle: by.nameStyle };
 };
 let held = null,
+  l4Slot = 0, // Left 4 Dead Ducks: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
+  l4Last = 0,
   mgjHold = "knife", // Mad God Justin: what keys 1 to 3 put in hand (the knife, the bow, the medkit)
   keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
   mouse = null,
@@ -961,7 +972,7 @@ function drawDucks(now = clockNow()) {
           ? phpLost(s, id, now)
           : 0,
       hpMax = l4
-        ? L4.HP
+        ? maxHp(s, id)
         : isMgj(s)
           ? !g && s.seat.includes(id) && s.phase === "boss"
             ? mgjPHp(s)
@@ -2144,6 +2155,10 @@ function playFx(f) {
         handgun: sfx.bang,
         bow: sfx.bow,
         knife: sfx.swish,
+        hammer: sfx.swish,
+        dagger: sfx.swish,
+        shotgun: sfx.shotgun,
+        medkit: sfx.done,
         grenade: sfx.swish,
       })[f.what]?.();
       return;
@@ -3356,12 +3371,18 @@ function recordRound(s) {
 
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the duck my keys play with: in Left 4 Dead Ducks the knife, the pistol and the bow on 1, 2, 3; in Mad God Justin its
-   own keys: 1 the knife, 2 the bow, 3 the medkit (once a game), 4 Jaime, 5 the weapon picked up, 6 the zebra cake (my
-   own keys stay as they are) */
+/* the duck my keys play with: in Left 4 Dead Ducks its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
+   Justin its own keys: 1 the knife, 2 the bow, 3 the medkit (once a game), 4 Jaime, 5 the weapon picked up, 6 the zebra
+   cake (my own keys stay as they are) */
 const playDuck = () =>
   R && isL4dd(R.state)
-    ? { ...myDuck(), keys: [...HELD, ...Array(7).fill(null)] }
+    ? {
+        ...myDuck(),
+        keys: [
+          ...slotsOf(R.state, R.me).map((w) => w || null),
+          ...Array(6).fill(null),
+        ],
+      }
     : R && isMgj(R.state)
       ? {
           ...myDuck(),
@@ -3377,12 +3398,14 @@ const playDuck = () =>
         }
       : myDuck();
 const kitUsed = () => !!(R && R.state.mgj && (R.state.mgj.kits || {})[R.me]);
-/* the weapon in my duck's hand: the one kept out (Shift and its key); Left 4 Dead Ducks: always one of its three (the
-   knife at first), none while I'm down or a ghost */
+/* the weapon in my duck's hand: the one kept out (Shift and its key); Left 4 Dead Ducks: always the one in the slot
+   picked (the melee weapon at first; back to the one before when the special is used up), none while I'm down or a
+   ghost */
 function heldNow() {
   if (R && isL4dd(R.state)) {
-    if (!HELD.includes(held)) held = "knife";
-    return l4Hp(R.state, R.me) > 0 ? held : "";
+    const sl = slotsOf(R.state, R.me);
+    if (!sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
+    return l4Hp(R.state, R.me) > 0 ? sl[l4Slot] || "" : "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -3402,11 +3425,7 @@ function keptNow() {
 function useKey(i, keep) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
-    if (HELD[i]) {
-      held = HELD[i];
-      sendMove(true);
-    } // (Left 4 Dead Ducks: 1, 2, 3 put the knife, the pistol or the bow in hand; a click uses it)
-    if (bar) bar.refresh();
+    l4Pick(i);
     return;
   }
   if (bar) bar.show(i);
@@ -3439,6 +3458,21 @@ function useKey(i, keep) {
   else if (me && me.x >= 0)
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
+}
+/* Left 4 Dead Ducks: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
+   switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back */
+function l4Pick(i) {
+  const sl = slotsOf(R.state, R.me);
+  if (i > 3 || !sl[i]) return;
+  if (i === 3) {
+    if (l4Slot === 3) l4Slot = l4Last;
+    else {
+      l4Last = l4Slot;
+      l4Slot = 3;
+    }
+  } else l4Slot = l4Last = i;
+  sendMove(true);
+  if (bar) bar.refresh();
 }
 /* the handgun or the dagger, toward the mouse */
 function fire(id) {
@@ -3493,6 +3527,10 @@ const dots = (id) =>
       : "";
 /* R: the handgun reloads */
 function reload() {
+  if (R && isL4dd(R.state) && onBoardPhase()) {
+    R.send({ t: "reload", w: heldNow() });
+    return true;
+  } // (Left 4 Dead Ducks: the ranged weapon in hand)
   if (!R || !onBoardPhase() || !hasKey(playDuck(), "handgun")) return false;
   R.send({ t: "reload" });
   return true;
@@ -4855,7 +4893,7 @@ async function act(a) {
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
 const L4_HINTS =
-  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Revive";
+  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Use";
 /* Left 4 Dead Ducks: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
 let l4Fire = 0;
@@ -4871,7 +4909,7 @@ function l4Press(e) {
   const go = () => {
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(120, (ARMS[w] || {}).cool || 400));
+    l4Fire = setTimeout(go, Math.max(120, l4Cool(R.state, R.me, w)));
   };
   clearTimeout(l4Fire);
   go();
@@ -4922,6 +4960,7 @@ register("game", {
     lastKey = -1;
     kept.clear();
     held = null;
+    l4Slot = l4Last = 0;
     shows = {};
     mouse = null;
     removeEventListener("mousemove", aimAt);
@@ -4970,14 +5009,12 @@ register("game", {
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {
+      l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
       bar = mountL4Bar(S, {
         state: () => R.state,
         me: () => R.me,
         held: heldNow,
-        pick: (w) => {
-          held = w;
-          sendMove(true);
-        },
+        pick: l4Pick,
         fire: () => heldNow() && fire(heldNow()),
         grenade: () => fire("grenade"),
         flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),

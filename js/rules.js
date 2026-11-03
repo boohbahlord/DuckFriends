@@ -113,7 +113,7 @@ import {
   PELLET_LIFE,
   SPREAD,
 } from "./mgjrules.js";
-import { isL4dd, l4Use, l4Reload, l4Shots, HELD } from "./l4ddrules.js";
+import { isL4dd, l4Use, l4Reload, l4Shots, l4Holds } from "./l4ddrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -1185,7 +1185,7 @@ export function reduce(state, a, now = Date.now()) {
       const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
       const w = (
           isL4dd(s)
-            ? HELD.includes(a.w)
+            ? l4Holds(s, a.id, a.w)
             : WEAPONS.includes(a.w) &&
               (isMgj(s)
                 ? MGJ_HOLD.includes(a.w)
