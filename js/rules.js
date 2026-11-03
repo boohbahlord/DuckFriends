@@ -195,7 +195,7 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
-/* Duck Cabin's world: Hangout, and Left 4 Dead Ducks on the same map (its own rules: l4ddrules.js) */
+/* Duck Cabin's world: Hangout, and Quacky Zombies on the same map (its own rules: l4ddrules.js) */
 export const isHang = (s) =>
   s.options.mode === "hang" || s.options.mode === "l4dd";
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
@@ -1151,7 +1151,7 @@ export function reduce(state, a, now = Date.now()) {
         now - was.tp < 1500 &&
         Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
       )
-        return state; // (Left 4 Dead Ducks: the host just put it at a start spot; a move sent before that got there is old)
+        return state; // (Quacky Zombies: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
@@ -1358,7 +1358,7 @@ export function reduce(state, a, now = Date.now()) {
         p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
-      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Left 4 Dead Ducks: its own weapons, l4ddrules.js)
+      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
       if (
         isMgj(s)
           ? s.phase !== "boss" || me.dead

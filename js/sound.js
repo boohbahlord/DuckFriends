@@ -562,7 +562,7 @@ export const sfx = {
     o.start(t);
     o.stop(t + sec + 0.012 * 7);
   },
-  /* Left 4 Dead Ducks: something that can't be done (not enough points, no ranged weapon in hand to swap): two low
+  /* Quacky Zombies: something that can't be done (not enough points, no ranged weapon in hand to swap): two low
      notes going down */
   nope() {
     tone(220, 0.13, { type: "triangle", gain: 0.17, attack: 0.012 });

@@ -13,7 +13,7 @@
    after each turn The Date turns one down, until the last one left is their Valentine.
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby.
-   Left 4 Dead Ducks: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
+   Quacky Zombies: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
 import { esc } from "./ui.js";
 
 export const MODES = [
@@ -75,7 +75,7 @@ export const MODES = [
   {
     id: "l4dd",
     cat: "cabin",
-    name: "Left 4 Dead Ducks",
+    name: "Quacky Zombies",
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last.",
   },
 ];

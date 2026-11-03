@@ -1,4 +1,4 @@
-/* ---------- Left 4 Dead Ducks' computers (TEST rooms) ----------
+/* ---------- Quacky Zombies' computers (TEST rooms) ----------
    A computer goes to a downed teammate and holds E by it; otherwise it shoots the nearest zombie it can see (a ranged
    weapon with something left in it, the melee weapon up close, the medkit when it's hurt), backs away from one that's
    too close, throws a grenade into a crowd now and then, and keeps near the middle of the great room. With no zombie in

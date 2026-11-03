@@ -12916,7 +12916,7 @@ html.moving .eye-tears .tdrop.t2 {
   flex: none;
 }
 
-/* ---------- Left 4 Dead Ducks (l4dd.js, l4ddbar.js) ----------
+/* ---------- Quacky Zombies (l4dd.js, l4ddbar.js) ----------
    The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
    dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
    the dark; the end card over everything. */

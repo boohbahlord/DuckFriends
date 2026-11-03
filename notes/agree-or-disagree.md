@@ -3163,3 +3163,10 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 
 ## 2026-11-03 05:10Z: matching every style's look (word for word)
 > there should be an option to match the look of every style in the style menu for customization
+
+## 2026-11-03 05:12Z: the zombie mode's new name (word for word)
+> Rename "Left 4 Dead Ducks" simply to "Quacky Zombies"
+
+- Pharaoh, in PR #195 (with Stage 2): every name players see (the mode's name in `js/modes.js`, so the lobby tile, the
+  drawn title on its art, the room's mode line and the command line's lines; the Updates lines) and the code's comments
+  say Quacky Zombies. Code names stay `l4dd` (files, the mode id, `isL4dd`). Older notes keep the old name.

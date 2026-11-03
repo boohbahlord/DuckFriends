@@ -1,4 +1,4 @@
-/* ---------- the rules of Left 4 Dead Ducks ----------
+/* ---------- the rules of Quacky Zombies ----------
    A zombie mode on Duck Cabin (the owner's, Nov 3). The power is cut and the outside can't be reached: only the cabin
    and the deck (the owner's balcony) are played on. Slow green ducks with X eyes come in at the front door, up the
    deck's stairs (boarded at the top) and through holes in the walls, round after round without end, each after the

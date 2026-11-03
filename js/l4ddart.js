@@ -1,4 +1,4 @@
-/* ---------- Left 4 Dead Ducks' pictures (in the game's style; the owner OK'd them) ----------
+/* ---------- Quacky Zombies' pictures (in the game's style; the owner OK'd them) ----------
    The zombie duck (a darker green rubber duck with X eyes, now and then in a hat or an outfit, a little bigger or
    fatter), the extra candles on the floor, the boards over the doors, the holes and the top of the deck's stairs, and the
    flashlight's icon on the weapons bar (the bow and its arrow are Mad God Justin's: mgjart.js); a weapon as an orb in its

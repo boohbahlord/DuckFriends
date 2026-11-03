@@ -583,7 +583,7 @@ export function mountWorld(board, api) {
       d = Math.max(d, 1 - (dx * dx + dy * dy));
     }
     for (const a of acts())
-      if (a.crowd) d = Math.max(d, a.crowd(x, y, me, ctx)); // (an activity's own walkers: Left 4 Dead Ducks' zombies)
+      if (a.crowd) d = Math.max(d, a.crowd(x, y, me, ctx)); // (an activity's own walkers: Quacky Zombies' zombies)
     return d;
   }
   const endJump = (me) => {
@@ -879,7 +879,7 @@ export function mountWorld(board, api) {
       }
       for (const a of acts())
         if (a.sprint && a.sprint(!!sprint && !!(ax || ay), dt, ctx) === false)
-          sprint = false; // (an activity can run out of breath: Left 4 Dead Ducks' sprint bar)
+          sprint = false; // (an activity can run out of breath: Quacky Zombies' sprint bar)
       if (ax || ay) {
         let k = { slow: 0.6, fast: 1.5 }[ctx.state().options.walk] || 1; // (the lobby's Walking speed)
         for (const a of acts())
@@ -896,7 +896,7 @@ export function mountWorld(board, api) {
           const ok = (tx, ty) => {
             if (!L.standable(tx, ty, me.z, up, [x, y])) return false;
             for (const a of acts())
-              if (a.blocked && a.blocked(tx, ty, me.z, ctx)) return false; // (a mode's own edges: Left 4 Dead Ducks' boarded doors)
+              if (a.blocked && a.blocked(tx, ty, me.z, ctx)) return false; // (a mode's own edges: Quacky Zombies' boarded doors)
             const c = crowd(tx, ty, me, now);
             return !(c > 0 && c > here - 1e-6);
           };

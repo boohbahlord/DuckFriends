@@ -1,4 +1,4 @@
-/* ---------- Left 4 Dead Ducks on every screen ----------
+/* ---------- Quacky Zombies on every screen ----------
    Duck Cabin's world draws it (an activity that runs only in this mode, registry.js): the zombies where the host says
    (gliding between its heartbeats), their thin HP bars, a red blink when hit, the claw's swipe, lying down and fading
    when they die; the boards over the openings; the extra candles; the dark over everything (the power is cut) with the
