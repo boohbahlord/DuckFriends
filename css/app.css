@@ -2275,6 +2275,60 @@ p.bad {
   --c: var(--c7);
   --ci: var(--c7i);
 }
+/* Agree or Disagree's "Green and red" board colors: the disagree columns are shades of red, the agree columns shades of
+   green, and Neutral slowly fades between black, grey and white, its words fading with it (colorblind mode keeps its own) */
+@property --neu {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #000;
+}
+@property --neui {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #fff;
+}
+html:not(.cb) .aod-gr {
+  --c1: #7a0012;
+  --c2: #c8102e;
+  --c3: #ff6b6b;
+  --c5: #8fe388;
+  --c6: #2fbf4a;
+  --c7: #0b7a2a;
+  --c1i: #fff;
+  --c2i: #fff;
+  --c3i: #1c1c28;
+  --c5i: #1c1c28;
+  --c6i: #1c1c28;
+  --c7i: #fff;
+}
+html:not(.cb) .aod-gr .c4 {
+  --c: var(--neu);
+  --ci: var(--neui);
+  animation: neutral-fade 15s ease-in-out infinite;
+}
+@keyframes neutral-fade {
+  0%,
+  100% {
+    --neu: #000;
+    --neui: #fff;
+  }
+  30% {
+    --neu: #6e6e6e;
+    --neui: #fff;
+  }
+  50% {
+    --neu: #b8b8b8;
+    --neui: #fff;
+  }
+  58% {
+    --neu: #cfcfcf;
+    --neui: #1c1c28;
+  }
+  75% {
+    --neu: #fff;
+    --neui: #1c1c28;
+  }
+}
 .stage {
   flex: 1;
   min-height: 0;

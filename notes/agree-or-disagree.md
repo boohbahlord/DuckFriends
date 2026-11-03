@@ -3143,3 +3143,4 @@ Sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg. Done (Solomon): `js/h
 
 ## 2026-11-03: Game settings (Adam's relay of the owner's answers to the Game Settings plan)
 Nine new options, each with a tile in Additional settings for now (Adam moves them into the full-screen Game Settings): `invuln` (Invulnerability: no hit takes a duck down or its HP, it only flashes red; `s.hurt`), `noChat`, `noTerm` (both through `denied`, so the host is held to them too), `hideNames`, `showWriter` (the writer is named in the log after the vote), `scLines` (Story Chain laps), `lateJoin` (play | watch), `walk` (slow | normal | fast) and `textMax` (80, 140, 200, 280). (Jackal)
+- Board colors (Jackal): `aodColors` = rainbow | gr (Agree or Disagree: shades of red and green, Neutral fading black, grey, white), a tile in Additional settings; the owner sees the picture before merge.
