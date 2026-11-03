@@ -3,8 +3,9 @@
    magazine and the rest, or how many are left), the special (4, purple; empty until the fireplace gives one) and the
    grenades (G, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
    bottom bar's right corner (where the specials' keys go), my HP under it as green blocks; a click on a slot picks it.
-   On a phone it stands at the board's bottom right as a column of round buttons, with a big Attack button that uses
-   what's in hand toward the nearest zombie I can see (l4dd.js l4TouchAim); my HP shows on my duck's green bar there. */
+   On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the
+   purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
+   my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
 import {
   L4,
@@ -16,24 +17,29 @@ import {
   weaponName,
 } from "./l4ddrules.js";
 
-const ATTACK = `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="9.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 1.6V8.4M15 21.6V28.4M1.6 15H8.4M21.6 15H28.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="15" r="2.2" fill="currentColor"/></svg>`;
+/* what a slot says under it: the magazine and the rest, or how many are left */
+const count = (w, m) => {
+  if (!m) return "";
+  if (w === "grenade") return String(m.g);
+  const c = (m.am || {})[w];
+  if (!c || ARMS[w].all <= 1) return "";
+  return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
+};
+/* a slot with nothing left in it (no grenades, a weapon out of ammo) */
+const spent = (w, m) => {
+  const c = m && (m.am || {})[w];
+  return w === "grenade" ? !m || m.g <= 0 : !!c && c[0] + c[1] <= 0;
+};
+const out = (s, me) => {
+  const p = (s.hang.l4p || {})[me] || {};
+  return !!(p.dn || p.gh);
+};
 
-/* api: state() → the room's state, me() → my id, held() → the weapon in hand, pick(slot), fire() (the Attack button),
-   grenade(), flash() */
+/* api: state() → the room's state, me() → my id, held() → the weapon in hand, pick(slot), grenade(), flash() */
 export function mountL4Bar(S, api) {
   const row = document.createElement("div");
   row.className = "l4bar";
-  const pad = document.createElement("div");
-  pad.className = "l4pad";
   let sig = "";
-  /* what a slot says under it: the magazine and the rest, or how many are left */
-  const count = (w, m) => {
-    if (!m) return "";
-    if (w === "grenade") return String(m.g);
-    const c = (m.am || {})[w];
-    if (!c || ARMS[w].all <= 1) return "";
-    return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
-  };
   function draw() {
     const s = api.state();
     if (!s || !s.hang || !s.hang.l4) return;
@@ -54,23 +60,15 @@ export function mountL4Bar(S, api) {
       ["G", "grenade", "grenade", "grenade"],
       ["0", "fl", "light", "fl"],
     ];
-    const slot = ([key, w, kind, does], phone) => {
+    const slot = ([key, w, kind, does]) => {
       const n = w ? count(w, m) : "",
-        c = m && (m.am || {})[w],
-        empty =
-          !w || (w === "grenade" ? !m || m.g <= 0 : !!c && c[0] + c[1] <= 0),
+        empty = !w || spent(w, m),
         name = w === "fl" ? "Flashlight" : w ? weaponName(w) : "Special",
         icon = w === "fl" ? ICONS.flashlight(!off) : w ? weaponIcon(w) : "";
-      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}><i>${icon}</i>${phone ? "" : `<kbd>${key}</kbd>`}${n ? `<small>${n}</small>` : ""}</button>`;
+      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}><i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     const hp = Math.max(0, p.hp ?? L4.HP);
-    row.innerHTML = `<div class="l4slots">${slots.map((x) => slot(x, false)).join("")}</div><div class="l4hp" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="${most}" aria-valuenow="${hp}">${Array.from({ length: most }, (_, i) => `<i${i < hp ? ' class="on"' : ""}></i>`).join("")}</div>`;
-    pad.innerHTML = `${slots
-      .filter(([, w, kind]) => w || kind !== "special")
-      .map((x) => slot(x, true))
-      .join(
-        "",
-      )}<button type="button" class="l4s l4-attack" data-l4w="attack" aria-label="Attack"${out ? " disabled" : ""}><i>${ATTACK}</i></button>`; // (a phone: the empty special slot isn't shown)
+    row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div><div class="l4hp" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="${most}" aria-valuenow="${hp}">${Array.from({ length: most }, (_, i) => `<i${i < hp ? ' class="on"' : ""}></i>`).join("")}</div>`;
   }
   const press = (e) => {
     const b = e.target.closest("[data-l4w]");
@@ -78,31 +76,93 @@ export function mountL4Bar(S, api) {
     e.preventDefault();
     e.stopPropagation();
     const w = b.dataset.l4w;
-    if (w === "attack") api.fire();
-    else if (w === "grenade") api.grenade();
+    if (w === "grenade") api.grenade();
     else if (w === "fl") api.flash();
     else api.pick(+w);
     setTimeout(draw, 60);
   };
   row.addEventListener("click", press);
-  pad.addEventListener("pointerdown", press); // (a phone: at once, no waiting for the tap to end)
-  pad.addEventListener("click", (e) => e.stopPropagation());
-  const place = () => {
-    const board = S.querySelector(".hang-board");
-    if (board && pad.parentNode !== board) board.append(pad);
-  };
   return {
     row,
-    show() {},
-    hide() {},
-    wheel: () => false,
-    refresh() {
-      place();
-      draw();
-    },
+    refresh: draw,
     destroy() {
       row.remove();
-      pad.remove();
+    },
+  };
+}
+
+/* ---------- phones: the slots in the specials' slider ----------
+   The slider (hotbar.js) holds my five slots and the flashlight, in the bar's order, each in its color. Sliding to the
+   melee or a ranged weapon puts it in hand (it stays there, as on a computer), and sliding to the special puts the
+   special in hand instead. The grenades and the flashlight don't change what's in hand: with the grenades in the middle
+   the attack stick throws one, and the purple switch turns the flashlight on and off. The switch also takes the special
+   out of hand again (the weapon before it comes back); a weapon in hand can't be switched off, so it shows on and
+   can't be pressed. A tap on the middle one: the special is used (the medkit), a grenade is thrown at the nearest
+   zombie, the flashlight goes on or off.
+   api: as mountL4Bar's, plus fire(w) (uses w where I aim), slot() → the slot in hand. Gives the slider's api. */
+export function l4Slider(api) {
+  const kit = () => {
+    const s = api.state(),
+      me = api.me();
+    return s && s.hang && s.hang.l4
+      ? { s, me, m: kitOf(s, me), sl: slotsOf(s, me) }
+      : null;
+  };
+  const lightOff = (k) => !!(k.s.hang.l4f || {})[k.me];
+  /* the key index of a slot: 0 to 3 the slots, 4 the grenades, 5 the flashlight */
+  const keys = () => {
+    const k = kit();
+    if (!k) return [];
+    return [...k.sl.map((w) => w || null), "grenade", "fl"];
+  };
+  const kindAt = (i) => SLOT_KINDS[i] || (i === 4 ? "grenade" : "light");
+  const look = (id) => {
+    const k = id && kit();
+    if (!k) return null;
+    const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
+    if (i < 0) return null;
+    return {
+      id,
+      name: id === "fl" ? "Flashlight" : weaponName(id),
+      icon: id === "fl" ? ICONS.flashlight(!lightOff(k)) : weaponIcon(id),
+      off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
+      keep: i === 3 || i === 5,
+      cls: `k-${kindAt(i)}`,
+    };
+  };
+  return {
+    keys,
+    look,
+    kept() {
+      const k = kit(),
+        on = new Set();
+      if (!k) return on;
+      const w = api.held();
+      if (w) on.add(w);
+      if (!lightOff(k)) on.add("fl");
+      return on;
+    },
+    use(i, keep) {
+      const k = kit();
+      if (!k || out(k.s, k.me)) return;
+      if (i === 5) api.flash();
+      else if (i === 3 && keep) api.pick(3);
+      else if (i === 3) api.fire(k.sl[3]);
+      else if (i === 4 && !keep) api.grenade();
+    },
+    select(i) {
+      if (i < 3 || (i === 3 && api.slot() !== 3)) api.pick(i);
+    },
+    current: () => api.held() || null,
+    cool: () => [],
+    dots(id) {
+      const k = id && kit(),
+        n = k ? count(id === "fl" ? "" : id, k.m) : "";
+      return n ? `<small class="sp-n">${n}</small>` : "";
+    },
+    sig() {
+      const k = kit();
+      return k ? JSON.stringify([k.m, lightOff(k), out(k.s, k.me)]) : "";
     },
   };
 }

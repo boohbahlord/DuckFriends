@@ -13,14 +13,15 @@ export const UPDATES = [
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
       "A new mode in Duck Cabin, Quacky Zombies: the power's out and zombie ducks come in round after round. Hold E to board up the doors and holes or to get a downed friend up, and see how long you last.",
-      "You get a knife (1), a pistol (2, R reloads), a bow (3), two grenades (G) and a flashlight (0). Shift sprints. On a phone, pick a weapon on the right; the Attack button aims at the nearest zombie.",
+      "You get a knife (1), a pistol (2, R reloads), a bow (3), two grenades (G) and a flashlight (0). Shift sprints. On a phone they're in the slider at the bottom, like your specials.",
       "Quacky Zombies has points: hit zombies and board up to earn them, then spend them with Justin's Butler by the card table (upgrades) or at the fireplace (210 for a random weapon). Your slots: a melee weapon (blue), two ranged (red), a special (purple, 4) and the grenades (white).",
       "In Mad God Justin you have 6 HP and blink after a hit, a Jump dodges, and WASD walks while the arrow keys aim. He throws a fireball that sets ducks on fire, lights up the edges, teleports, splits in two and turns off his Xbox.",
       "New in your hotbar for him: a bow, one medkit to get a downed duck up, Jaime (he charges at Justin) and a zebra cake to keep him busy.",
       "The bow is in every mode now, and every duck takes 3 hits before it goes down.",
       "A new map, Shelter Sky & Null: a black tree and a halftone duck under red clouds. Its setting in Game options turns it black and white.",
       "A new style in Customize, Dat Boi, unlocked at 1,728 Jumps, with metal ranks and a rainbow one to unlock after him.",
-      "On a phone: your specials are a slider at the bottom (slide to pick one, tap it to use it, the purple square keeps it on), a jump button sits at the bottom right, and with a weapon picked a crosshair joins it: push it the way you want to attack.",
+      "On a phone: your specials are a slider at the bottom (slide to pick one, tap it to use it, the purple square keeps it on), in every mode. The up-arrow button at the bottom right jumps (a tap on the board doesn't any more), and with something that attacks picked, the aim stick comes in under it: push it to aim, then a little further to attack.",
+      "In Customize → Specials, Remove from hotbar (at the top and the bottom of the list) takes specials off your keys with one tap each, so the slider has fewer to slide through.",
     ],
     fixed: [
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",

@@ -6770,15 +6770,12 @@ html.still .spe-bone .bone-slide {
     --step: 2.2rem;
     --slot: 1.85rem;
   }
-  .bbar .tpad {
-    width: 6.1rem;
-  }
   .bbar .tpad.armed .tpad-jump {
-    right: 3.9rem;
-    bottom: 0.1rem;
+    right: 4.5rem;
+    bottom: 0.75rem;
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
-     the crosshair instead of over the board; the corner keeps room for both, so nothing moves when the crosshair comes) */
+     the attack stick instead of above it) */
 .bbar {
   position: relative;
 }
@@ -6898,46 +6895,47 @@ html.still .spe-bone .bone-slide {
   opacity: 0.4;
   cursor: default;
 }
-/* on a phone: the jump button in the bottom bar's right corner; with a weapon in the slider's middle, the crosshair
-   button takes the corner and the jump button goes up above it */
+/* on a phone: the jump button over the board's bottom right, a little in from the edge, just above the bottom bar;
+   when the special in the slider's middle can attack, the attack stick takes its place and it moves up above it */
 .tpad {
-  position: relative;
-  flex: none;
-  width: 3.3rem;
-  height: 2.5rem;
+  position: absolute;
+  right: calc(2rem + env(safe-area-inset-right));
+  bottom: calc(100% + 0.7rem);
+  width: 3.8rem;
+  height: 3.8rem;
   display: none;
+  z-index: 40;
 }
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .tpad {
     display: block;
   }
+  html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
+    left: calc(50vw - 3.15rem);
+    max-width: calc(100vw - 7.3rem);
+  } /* (a tip sits in the middle of what's left of the buttons, never over them) */
 }
 .tpad.gone {
   visibility: hidden;
 }
-.tpad-jump,
-.tpad-atk {
+.tpad-jump {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 2.3rem;
+  height: 2.3rem;
   display: grid;
   place-items: center;
   padding: 0;
   border-radius: 50%;
   border: 0.16rem solid var(--line);
   box-shadow: 0 0.15rem 0 var(--line);
+  background: #fff;
+  color: #1c1c28;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-}
-.tpad-jump {
-  width: 2.3rem;
-  height: 2.3rem;
-  right: 0.5rem;
-  bottom: 0.1rem;
-  background: #fff;
-  color: #1c1c28;
   transition:
     bottom 0.15s ease-out,
     right 0.15s ease-out;
@@ -6946,20 +6944,46 @@ html.still .spe-bone .bone-slide {
   width: 1.15rem;
   fill: currentColor;
 }
-.tpad-jump:active,
-.tpad-atk:active {
+.tpad-jump:active {
   transform: translateY(0.1rem);
   box-shadow: 0 0.05rem 0 var(--line);
 }
+.tpad.armed .tpad-jump {
+  bottom: 4.5rem;
+}
+/* the attack stick: see-through like the walking stick (touch.js), its knob the crosshair */
 .tpad-atk {
-  width: 3.3rem;
-  height: 3.3rem;
-  background: var(--red);
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff12 0 55%, #ffffff26 100%),
+    rgb(10 12 20 / 0.35);
+  border: 2px solid #ffffff70;
+  box-shadow: 0 0 0 1px #00000024;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tpad-atk > i {
+  position: absolute;
+  left: calc(50% - 1.15rem);
+  top: calc(50% - 1.15rem);
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff38;
+  border: 2px solid #ffffff80;
+  box-shadow: 0 0 0 1px #00000020;
   color: #fff;
+  pointer-events: none;
   z-index: 1;
 }
 .tpad-atk svg {
-  width: 1.85rem;
+  width: 1.5rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.2;
@@ -6969,37 +6993,76 @@ html.still .spe-bone .bone-slide {
   fill: currentColor;
   stroke: none;
 }
-.tpad.armed .tpad-jump {
-  right: 0.5rem;
-  bottom: 4rem;
-}
-/* the crosshair held: a ring around it, and a knob that shows where it aims */
+/* held: the ring of how far the knob goes shows around it; pushed past the stick's edge it attacks, and the knob
+   lights up */
 .tpad-ring {
   position: absolute;
-  right: calc(1.65rem - 52px);
-  bottom: calc(1.65rem - 52px);
-  width: 104px;
-  height: 104px;
+  left: calc(50% - 60px);
+  top: calc(50% - 60px);
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   border: 2px solid #ffffff40;
-  background: radial-gradient(circle, #ef3b3b14 0 55%, #ef3b3b2a 100%);
+  background: radial-gradient(circle, #ffffff08 0 55%, #ffffff1c 100%);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.12s;
+  transition:
+    opacity 0.12s,
+    border-color 0.12s;
 }
 .tpad.aiming .tpad-ring {
   opacity: 1;
 }
-.tpad-ring i {
-  position: absolute;
-  left: calc(50% - 0.75rem);
-  top: calc(50% - 0.75rem);
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: #ffffff55;
-  border: 2px solid #ffffffaa;
-  z-index: 2;
+.tpad.firing .tpad-ring {
+  border-color: #ffffffb0;
+}
+.tpad.firing .tpad-atk > i {
+  background: #fff;
+  border-color: #fff;
+  color: #1c1c28;
+  box-shadow: 0 0 0.8rem #ffffffaa;
+}
+/* Customize → Specials: the thin row at the top and the bottom of the list (Remove from hotbar); while it's on, the
+   specials on a key turn red (their key's box says × too) and the rest fade */
+.sp-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem;
+  margin: 0.3rem 0;
+  border-radius: 0.5rem;
+  border: 0.1rem solid var(--soft);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.sp-strip .btn {
+  flex: none;
+  padding: 0.2rem 0.65rem;
+  min-height: 0;
+}
+.sp-strip > span {
+  min-width: 0;
+}
+.sp-strip.on {
+  border-color: var(--red);
+}
+.sp-strip.on .btn {
+  background: var(--red);
+  color: #fff;
+}
+.sp-rm > .arm-tile[aria-pressed="true"] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 0.14rem var(--red);
+  background: color-mix(in srgb, var(--red) 12%, var(--panel));
+}
+.sp-rm .sp-on {
+  background: var(--red);
+}
+.sp-rm .sp-on::after {
+  content: " ×";
+}
+.sp-rm-no {
+  opacity: 0.4;
 }
 /* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
 .sp-keys {
@@ -13106,31 +13169,36 @@ html.moving .eye-tears .tdrop.t2 {
 /* the slots' colors (the owner's): melee blue, ranged red, the special purple, the grenades white; a weapon out in the
    world is an orb in its color (the fireplace's) */
 .l4s,
-.l4orb {
+.l4orb,
+.sp-slot[class*="k-"] {
   --c: #9a4de0;
   --cl: #dcbcff;
   --cd: #461a80;
 }
 .l4s.k-melee,
-.l4orb.k-melee {
+.l4orb.k-melee,
+.sp-slot.k-melee {
   --c: #3d7be0;
   --cl: #a9c9ff;
   --cd: #173a80;
 }
 .l4s.k-ranged,
-.l4orb.k-ranged {
+.l4orb.k-ranged,
+.sp-slot.k-ranged {
   --c: #e0463d;
   --cl: #ffb0a6;
   --cd: #7e1a15;
 }
 .l4s.k-special,
-.l4orb.k-special {
+.l4orb.k-special,
+.sp-slot.k-special {
   --c: #9a4de0;
   --cl: #dcbcff;
   --cd: #461a80;
 }
 .l4s.k-grenade,
-.l4orb.k-grenade {
+.l4orb.k-grenade,
+.sp-slot.k-grenade {
   --c: #e9e9f2;
   --cl: #ffffff;
   --cd: #8a8aa0;
@@ -13227,20 +13295,17 @@ html.moving .eye-tears .tdrop.t2 {
   line-height: 1.15;
   white-space: nowrap;
 }
-.l4slots .l4s:is(.k-melee, .k-ranged, .k-special, .k-grenade),
-.l4pad .l4s:is(.k-melee, .k-ranged, .k-special, .k-grenade) {
+.l4slots .l4s:is(.k-melee, .k-ranged, .k-special, .k-grenade) {
   background: color-mix(in srgb, var(--c) 46%, rgb(10 12 20 / 0.6));
   border-color: color-mix(in srgb, var(--c) 75%, #000);
 }
-.l4slots .l4s.k-grenade,
-.l4pad .l4s.k-grenade {
+.l4slots .l4s.k-grenade {
   background: color-mix(in srgb, var(--c) 62%, rgb(10 12 20 / 0.5));
 }
 .l4s.k-grenade kbd {
   color: #3a3a48;
 }
-.l4slots .l4s.sel,
-.l4pad .l4s.sel {
+.l4slots .l4s.sel {
   border-color: var(--yellow);
   box-shadow: 0 0 0.45rem 0.12rem
     color-mix(in srgb, var(--yellow) 65%, transparent);
@@ -13524,45 +13589,42 @@ html.moving .eye-tears .tdrop.t2 {
 .l4-shop-say q {
   font-style: italic;
 }
-/* on a phone: a column of round buttons at the board's bottom right, the big Attack button under them */
-.l4pad {
-  display: none;
+/* on a phone: the slots are in the specials' slider (hotbar.js), each in its color, the count under it */
+.sp-slot[class*="k-"] {
+  background: color-mix(in srgb, var(--c) 34%, rgb(10 12 20 / 0.7));
+  border-color: color-mix(in srgb, var(--c) 70%, #000);
+}
+.sp-slot[class*="k-"].mid {
+  background: color-mix(in srgb, var(--c) 60%, rgb(10 12 20 / 0.6));
+  border-color: color-mix(in srgb, var(--c) 55%, #fff);
+}
+.sp-slot.k-light {
+  background: color-mix(in srgb, var(--yellow) 22%, var(--panel));
+}
+.sp-slot.k-light.mid {
+  background: color-mix(in srgb, var(--yellow) 45%, var(--panel));
+  border-color: color-mix(in srgb, var(--yellow) 55%, #fff);
+}
+.sp-slot .sp-n {
   position: absolute;
-  right: 0.6rem;
-  bottom: 0.6rem;
-  z-index: 31200;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
-  --hk: 2.7rem;
-  touch-action: none;
-}
-.l4pad .l4s {
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-}
-.l4pad .l4s small {
-  bottom: 0.05rem;
-}
-.l4pad .l4-attack {
-  --hk: 4.2rem;
-  border-color: #dc143c;
-  color: #ffd6dc;
-  background: color-mix(in srgb, #dc143c 35%, transparent);
+  left: 50%;
+  bottom: -0.1rem;
+  transform: translateX(-50%) translateY(35%);
+  padding: 0 0.18rem;
+  border-radius: 0.35rem;
+  background: var(--panel);
+  font-size: 0.5rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  pointer-events: none;
 }
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .l4bar {
     display: none;
   }
-  html:not(.keyboard) .l4pad {
-    display: flex;
-  }
-} /* (a phone or a tablet: the column on the board instead of the bar) */
+} /* (a phone or a tablet: the slider instead of the bar) */
 @media (max-width: 760px) {
   .l4bar {
     display: none;
-  }
-  .l4pad {
-    display: flex;
   }
 }

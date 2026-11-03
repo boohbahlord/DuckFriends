@@ -172,7 +172,7 @@ import {
   l4Cool,
 } from "./l4ddrules.js";
 import { l4TouchAim, l4Held } from "./l4dd.js";
-import { mountL4Bar } from "./l4ddbar.js";
+import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import {
@@ -3461,6 +3461,12 @@ function slidTap(i) {
 /* phones: the weapon in the slider's middle, which the attack button uses (or null) */
 function padWeapon() {
   const id = bar && bar.current && bar.current();
+  if (id && R && isL4dd(R.state)) {
+    if (id === "grenade") return id;
+    return ARMS[id] && ARMS[id].kind !== "special" && id === heldNow()
+      ? id
+      : null; // (the flashlight and the medkit don't attack: a tap on the slider uses them)
+  } // (Quacky Zombies: the weapon in hand, or the grenades)
   if (!id || !R || !hasKey(playDuck(), id)) return null;
   if (isMgj(R.state))
     return R.state.phase === "boss" &&
@@ -3476,6 +3482,10 @@ function padWeapon() {
 function padAttack() {
   const id = padWeapon();
   if (!id) return 500;
+  if (isL4dd(R.state)) {
+    fire(id);
+    return l4Cool(R.state, R.me, id);
+  }
   if (isMgj(R.state) && (id === "knife" || id === "bow")) mgjHold = held = id;
   fire(id);
   return coolFor(id, R.state);
@@ -3653,7 +3663,7 @@ function mgjTip(s) {
     return `Medkit: stand by a downed duck, then ${phone ? "tap it" : "<kbd>E</kbd>"}`;
   return phone
     ? padWeapon()
-      ? "Push the crosshair toward Justin to attack"
+      ? "Aim the crosshair at Justin, then push a little further to attack"
       : "Tap the special in the middle to use it"
     : "<kbd>WASD</kbd> walk · <kbd>Arrows</kbd> or the mouse aim · <kbd>Click</kbd> use";
 }
@@ -4263,8 +4273,8 @@ function paint(force) {
       touchTold = true;
       toast(
         profile.settings.touch === "tap"
-          ? "Tap: walk there · Double tap: jump · Fast swipe: sprint"
-          : "Hold and drag: walk · Tap: jump · Flick twice: sprint",
+          ? "Tap: walk there · Fast swipe: sprint · ⬆ jumps"
+          : "Hold and drag: walk · Flick twice: sprint · ⬆ jumps",
         5000,
       );
     }
@@ -4963,7 +4973,7 @@ function l4Press(e) {
   if (
     !onBoardPhase() ||
     !e.target.closest(".board") ||
-    e.target.closest("button, a, input, textarea, .l4pad, .l4-over")
+    e.target.closest("button, a, input, textarea, .l4-over")
   )
     return;
   const go = () => {
@@ -5072,16 +5082,34 @@ register("game", {
     hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {
       l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
-      bar = mountL4Bar(S, {
-        state: () => R.state,
-        me: () => R.me,
-        held: heldNow,
-        pick: l4Pick,
-        fire: () => heldNow() && fire(heldNow()),
-        grenade: () => fire("grenade"),
-        flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
-      });
-      docks.corner(bar.row); // (Quacky Zombies: its own weapons bar; on a phone it stands on the board)
+      const l4 = {
+          state: () => R.state,
+          me: () => R.me,
+          held: heldNow,
+          slot: () => l4Slot,
+          pick: l4Pick,
+          fire,
+          grenade: () => fire("grenade"),
+          flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
+        },
+        row = mountL4Bar(S, l4),
+        slide = mountHotbar(S, l4Slider(l4));
+      bar = {
+        row: row.row,
+        slider: slide.slider,
+        show: slide.show,
+        hide: slide.hide,
+        wheel: () => false,
+        current: slide.current,
+        refresh() {
+          row.refresh();
+          slide.refresh();
+        },
+        destroy() {
+          row.destroy();
+          slide.destroy();
+        },
+      }; // (Quacky Zombies: its own weapons bar on a computer; on a phone its slots in the slider, as in every mode)
     } else {
       bar = mountHotbar(S, {
         keys: () => keysOf(playDuck()),
@@ -5096,29 +5124,26 @@ register("game", {
         current: () =>
           R && isMgj(R.state) && R.state.phase === "boss" ? held : null,
       });
-      pad = mountPad({
-        active: () =>
-          onBoardPhase() &&
-          !windowOpen() &&
-          !!me &&
-          !(R.state.players[R.me] || {}).dead,
-        weapon: padWeapon,
-        aim: (dx, dy) => {
-          keyAim =
-            dx == null
-              ? [(turned() ? 1 : (me && me.face) || 1) * 100, 0]
-              : [dx, dy];
-        },
-        attack: padAttack,
-        jump: () => jump(),
-      });
-      docks.corner(pad.el, bar.slider, bar.row); // (bottom right: the jump and attack buttons, and the slider in the middle, on phones; the row of keys on a computer)
     }
+    pad = mountPad({
+      active: () =>
+        onBoardPhase() &&
+        !windowOpen() &&
+        !!me &&
+        !(R.state.players[R.me] || {}).dead &&
+        !(isL4dd(R.state) && !(l4Hp(R.state, R.me) > 0)),
+      weapon: padWeapon,
+      aim: (dx, dy) => {
+        keyAim = dx == null ? null : [dx, dy];
+      }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
+      attack: padAttack,
+      jump: () => jump(),
+    });
+    docks.corner(pad.el, bar.slider, bar.row); // (on phones the slider in the bottom middle, and the jump and attack buttons over the board's bottom right; the row of keys on a computer)
     addEventListener("mousemove", aimAt);
     touchOff = mountTouch(S, {
       active: () =>
         onBoardPhase() && !windowOpen() && !(world && world.grabbing()),
-      jump,
       walkTo,
       duckAt,
       getTarget: () => target,
@@ -5150,7 +5175,7 @@ register("game", {
         return;
       }
       if (isL4dd(R.state) && e.target.closest(".board")) {
-        if (e.target.closest(".l4pad, .l4-over")) return;
+        if (e.target.closest(".l4-over")) return;
         if (performance.now() - touchedAt < 900) boardClick(e);
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
