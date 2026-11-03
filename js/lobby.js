@@ -24,7 +24,8 @@ import { gameArtSVG } from "./art.js";
 import { modeOf } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
-import { isSudo, minOf } from "./rules.js";
+import { isSudo, minOf, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./rules.js";
+import { openDemocracy } from "./democracy.js";
 import { openGameSettings } from "./gamesettings.js";
 import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
@@ -45,11 +46,13 @@ let R = null,
   lastCount = -1,
   counting = false, // the start's countdown is running here (the screen fades to black over it)
   lastSeat = 0,
+  rang = new Set(), // Democracy of Ducklings: the votes the bell has rung for
   docks = null,
   mbarOff = null;
 
 const INFO = {
   settings: "The game mode, the map and the game options.",
+  dod: "The ducks vote on the room's rules.",
   start: "Starts the game for everyone.",
   ready: "Tells the host you're ready.",
   friends: "Invite your friends to this room, or add a friend by code.",
@@ -155,14 +158,42 @@ function paint() {
       `<span class="count">Starting in <b>${left}</b></span><button type="button" class="btn red" data-a="cancel">Cancel <kbd>X</kbd></button>`,
     );
   } else setHTML(st, "");
-  /* the host (or sudo) has Start Game; everyone else has Ready */
+  /* Democracy of Ducklings: its row shows a "!" while a vote is up, and a soft bell rings once for each new vote */
+  const dodRow = $('[data-m="dod"]', S),
+    voting = dodVoting(s),
+    votes = (s.dod || {}).votes || {};
+  dodRow.hidden = !dodRoom(s);
+  dodRow.classList.toggle("dod-up", voting);
+  setHTML(
+    $("span", dodRow),
+    `Democracy of Ducklings${voting ? '<b class="dod-bang" aria-label="A vote is up">!</b>' : ""}`,
+  );
+  const rules = DOD_KEYS.filter((k) => dodOn(s, k)).length;
+  $(".val", dodRow).textContent = voting
+    ? "A vote is up"
+    : rules
+      ? `${rules} rule${rules === 1 ? "" : "s"} on`
+      : "";
+  for (const [k, x] of Object.entries(votes))
+    if (!rang.has(`${k}:${x.at}`)) {
+      rang.add(`${k}:${x.at}`);
+      sfx.bell();
+    }
+  /* the host (or sudo) has Start Game; everyone else has Ready. With Host must ready on, or while a vote is up, the host
+     readies too, and a popup at the top says why */
   const startRow = $('[data-m="start"]', S),
     readyRow = $('[data-m="ready"]', S),
-    few = !s.options.modePick && s.seat.length < minOf(s); // (Who is the Quack? and Lawyering need 3 ducks)
-  startRow.hidden = !host;
-  readyRow.hidden = host;
-  startRow.toggleAttribute("data-nav-start", host); // (the arrow keys start on it)
-  readyRow.toggleAttribute("data-nav-start", !host);
+    few = !s.options.modePick && s.seat.length < minOf(s), // (Who is the Quack? and Lawyering need 3 ducks)
+    starts = host && !dodOn(s, "ready") && !voting;
+  startRow.hidden = !starts;
+  readyRow.hidden = starts;
+  startRow.toggleAttribute("data-nav-start", starts); // (the arrow keys start on it)
+  readyRow.toggleAttribute("data-nav-start", !starts);
+  const pop = $(".dod-pop", S);
+  pop.hidden = !(host && voting);
+  if (!pop.hidden)
+    pop.textContent =
+      "A vote is up: you can't start the game until it ends, only ready.";
   startRow.setAttribute(
     "aria-disabled",
     String(s.phase === "countdown" || few),
@@ -402,12 +433,14 @@ register("lobby", {
       <header class="lbar">${musicBarHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
+        <p class="dod-pop" role="status" hidden></p>
         <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
         <h1 class="lobby-title"></h1>
         <p class="lobby-sub dim"></p>
         <div class="lobby-status"></div>
         <div class="lmenu" role="menu">
           <button type="button" role="menuitem" data-m="settings"><span>Game Settings</span><span class="val"></span></button>
+          <button type="button" role="menuitem" data-m="dod" class="dod" hidden><span>Democracy of Ducklings</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="start" class="start" hidden><span>Start Game</span><span class="val"></span></button>
           <button type="button" role="menuitem" data-m="ready" class="ready" hidden><span>Ready</span><span class="val"></span></button>
           ${R.online ? '<button type="button" role="menuitem" data-m="friends"><span>Friends</span><span class="val"></span></button>' : ""}
@@ -439,6 +472,7 @@ register("lobby", {
       if (!b) return;
       const m = b.dataset.m;
       if (m === "settings") openGameSettings(R);
+      if (m === "dod") openDemocracy(R);
       if (m === "ready") toggleReady();
       if (m === "start" && b.getAttribute("aria-disabled") !== "true")
         R.send({ t: "start" });

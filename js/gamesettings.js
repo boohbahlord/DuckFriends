@@ -7,7 +7,7 @@ import { esc, openWindow, setHTML } from "./ui.js";
 import { gameArtSVG, artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, mapName } from "./maps.js";
-import { OPTIONS_DEFAULT, isSudo, tally, randomPool } from "./rules.js";
+import { OPTIONS_DEFAULT, isSudo, tally, randomPool, dodOn } from "./rules.js";
 import { downFor } from "./hangout/death.js";
 import { profile } from "./store.js";
 import { collageMini } from "./collage.js";
@@ -695,7 +695,8 @@ export function openGameSettings(R, start = null) {
     W = null,
     off = null;
   const S = () => R.state,
-    host = () => isSudo(S(), R.me);
+    host = () =>
+      isSudo(S(), R.me) || (dodOn(S(), "settings") && !!S().players[R.me]); // (Democracy of Ducklings: everyone can)
   const head = (title) =>
     `<header class="arm-h">${page ? '<button type="button" class="arm-back" data-a="back" aria-label="Back">‹</button>' : '<span class="arm-mark">◆</span>'}<h2>${esc(title)}</h2></header>`;
   const row = (attrs, label, val = "", on = false, dis = false) =>
@@ -783,7 +784,7 @@ export function openGameSettings(R, start = null) {
       const cur = modeOf(o.mode).cat;
       return (
         head("Game mode") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="vote"', "Vote Game Mode", "", o.modePick === "vote", !host())}${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host())}${LINE}${CATS.map(
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="vote"', "Vote Game Mode", "", o.modePick === "vote", !host() || dodOn(s, "modes"))}${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host() || dodOn(s, "modes"))}${LINE}${CATS.map(
           ([id, name]) =>
             row(
               `data-cat="${id}"`,
@@ -821,7 +822,7 @@ export function openGameSettings(R, start = null) {
         mine = (s.mapVotes || {})[me];
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="vote"', "Vote Maps", "", o.mapPick === "vote", !host())}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", !host())}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", !host())}${LINE}${MAPS.map(
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="vote"', "Vote Maps", "", o.mapPick === "vote", !host() || dodOn(s, "maps"))}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", !host() || dodOn(s, "maps"))}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", !host() || dodOn(s, "maps"))}${LINE}${MAPS.map(
           ([id, name]) =>
             row(
               `data-map="${id}"`,

@@ -1647,6 +1647,57 @@ p.bad {
   margin-top: 0.7rem;
   min-height: 1.4em;
 }
+
+/* ---------- Democracy of Ducklings: a "!" on its row (and the rule's row) while a vote is up, and the host's popup ---------- */
+.dod-bang {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25em;
+  height: 1.25em;
+  margin-left: 0.45em;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #1c1c28;
+  font-size: 0.85em;
+  font-weight: 800;
+  vertical-align: 0.08em;
+  box-shadow: 0 0.12rem 0 var(--line);
+}
+.lmenu .dod-up {
+  background: color-mix(in srgb, var(--orange) 22%, transparent);
+}
+.arm-row.dod-up:not(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--orange) 18%, transparent);
+}
+.dod-pop {
+  margin: 0 0 0.7rem;
+  padding: 0.55rem 0.8rem;
+  border: 0.16rem solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--orange);
+  color: #1c1c28;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 0.25rem 0 var(--line);
+  animation: dod-pop 0.25s ease-out;
+}
+.dod-pop[hidden] {
+  display: none;
+}
+@keyframes dod-pop {
+  from {
+    transform: translateY(-0.6rem);
+    opacity: 0;
+  }
+}
+.gs-text .dod-now {
+  margin-top: 0.5rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+.gs-text p + p {
+  margin-top: 0.4rem;
+}
 .party header {
   display: flex;
   align-items: baseline;

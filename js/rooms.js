@@ -15,7 +15,7 @@ import { gameArtSVG, symbolSVG } from "./art.js";
 import { MAX_DEFAULT } from "./rules.js";
 import { mountCornerMusicBar } from "./musicbar.js";
 
-const last = { computers: 3, max: MAX_DEFAULT, test: false };
+const last = { computers: 3, max: MAX_DEFAULT, test: false, dod: true };
 let unwatch = null,
   busy = false,
   mbarOff = null;
@@ -51,6 +51,9 @@ register("rooms", {
             <label class="check" data-tip="On this device only, filled with computers. Nothing in a TEST room counts toward stats."><input type="checkbox" name="test"${last.test ? " checked" : ""}>TEST</label>
             <label class="numfield">Computers <select name="computers">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<option${n === last.computers ? " selected" : ""}>${n}</option>`).join("")}</select></label>
             <label class="numfield">Players up to <select name="max">${[2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map((n) => `<option${n === last.max ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+          </div>
+          <div class="row">
+            <label class="check" data-tip="The ducks vote on the room's rules: the host readying, the map, the game mode, the settings, sudo and a new host. It can't be turned off once the room is made."><input type="checkbox" name="dod"${last.dod ? " checked" : ""}>Democracy of Ducklings</label>
           </div>
           <button type="submit" class="btn big green create-go" data-nav-start>Create</button>
           <p class="create-msg small" role="status" hidden></p>
@@ -96,6 +99,8 @@ register("rooms", {
       last.computers = +f.computers.value;
       last.max = +f.max.value;
       last.test = f.test.checked;
+      last.dod = f.dod.checked;
+      const options = { dod: last.dod ? 1 : 0 };
       const name =
         f.querySelector("#rm-name").value.trim() || `${profile.name}'s room`;
       const open =
@@ -109,6 +114,7 @@ register("rooms", {
             test: true,
             computers: Math.min(last.computers, last.max - 1),
             max: last.max,
+            options,
           }),
         );
         return;
@@ -127,6 +133,7 @@ register("rooms", {
           open,
           passkey: pass.value,
           max: last.max,
+          options,
         });
         go("lobby", room);
       } catch (err) {
