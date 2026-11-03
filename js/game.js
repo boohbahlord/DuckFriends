@@ -100,6 +100,7 @@ import {
   walkOf,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
+import { W as HW, H as HH } from "./hangout/layout.js";
 import { hangStill } from "./hangout/rules.js";
 import { downStill, downFor, GET_UP_MIN } from "./hangout/death.js";
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
@@ -171,7 +172,11 @@ import {
   slotsOf,
   maxHp,
   l4Cool,
+  kitOf,
+  inHand,
+  BURN,
 } from "./l4ddrules.js";
+import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { l4TouchAim, l4Held } from "./l4dd.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -1174,10 +1179,10 @@ function drawDucks(now = clockNow()) {
           (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
             ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
-            : isL4dd(s)
-              ? l4Hp(s, id) > 0 && (mine ? heldNow() : pos.w)
-              : jm[id]
-                ? "knife" // (the Jaime special's: his knife always out)
+            : jm[id]
+              ? "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out)
+              : isL4dd(s)
+                ? l4Hp(s, id) > 0 && inHand(mine ? heldNow() : pos.w, s, id)
                 : mine
                   ? held && hasKey(p.duck, held) && held
                   : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
@@ -1239,14 +1244,17 @@ function drawDucks(now = clockNow()) {
           : (s.mgj.burnt || {})[id] > now
             ? 1
             : 0
-        : 0;
+        : isL4dd(s) && ((s.hang.l4fire || {}).p || {})[id] > now
+          ? 3
+          : 0; // (Quacky Zombies: on fire, BURN.P)
     if ((d._bn || 0) !== bn) {
       const was = d._bn || 0;
       d._bn = bn;
-      d.classList.toggle("onfire", bn === 2);
+      d.classList.toggle("onfire", bn >= 2);
       d.classList.toggle("burnt", bn === 1);
       if (bn === 2) sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000));
-      if (!bn && was) {
+      if (bn === 3) sfx.burn(BURN.P / 1000);
+      if (!bn && was && was < 3) {
         d.classList.add("unburn");
         setTimeout(() => d.classList.remove("unburn"), 2600);
       }
@@ -1390,13 +1398,17 @@ function drawDucks(now = clockNow()) {
             ? el(
                 `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
               )
-            : sh.k === "dagger" || sh.k === "grenade"
+            : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
               ? el(
-                  `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
-                )
-              : el(
-                  `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
-                );
+                  `<div class="thrown${sh.k !== "dagger" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k !== "dagger" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+                ) // (the grenade launcher's fly as the thrown ones, straight)
+              : ROUNDS_ART[sh.k]
+                ? el(
+                    `<div class="bullet k-${sh.k}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad;--w:${ROUNDS_ART[sh.k].w}px">${ROUNDS_ART[sh.k].svg}</div>`,
+                  ) // (Quacky Zombies' new guns: each its own bullet)
+                : el(
+                    `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
+                  );
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
@@ -1466,6 +1478,20 @@ function drawDucks(now = clockNow()) {
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
+    }
+    if (w === "chaingun") {
+      // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
+      const wd = size * GUNS.chaingun.w,
+        along = size * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
+        down =
+          ((wd * TRACE.box[1]) / TRACE.box[0]) *
+          (TRACE.tip[1] / TRACE.box[1] - 0.5) *
+          (left ? -1 : 1);
+      h._tip = [
+        c.left + Math.cos(rot) * along - Math.sin(rot) * down,
+        c.top + Math.sin(rot) * along + Math.cos(rot) * down,
+        rot,
+      ];
     }
     h.classList.toggle(
       "thrown-now",
@@ -2207,13 +2233,14 @@ function playFx(f) {
       return;
     } // (Mad God Justin's throws: they fly from the room's state)
     if (isL4dd(s) && ARMS[f.what]) {
-      shows[f.by] = {
-        what: f.what,
-        t: now,
-        until: now + (f.what === "knife" ? 350 : 700),
-        ax: f.ax || f.face || 1,
-        ay: f.ay || 0,
-      };
+      if (inHand(f.what))
+        shows[f.by] = {
+          what: f.what,
+          t: now,
+          until: now + (f.what === "knife" ? 350 : 700),
+          ax: f.ax || f.face || 1,
+          ay: f.ay || 0,
+        };
       ({
         handgun: sfx.bang,
         bow: sfx.bow,
@@ -2223,6 +2250,17 @@ function playFx(f) {
         shotgun: sfx.shotgun,
         medkit: sfx.done,
         grenade: sfx.swish,
+        sniper: sfx.bang,
+        revolver: sfx.bang,
+        smg: sfx.tat,
+        ak: sfx.tat,
+        lmg: sfx.tat,
+        chaingun: sfx.tat,
+        glauncher: sfx.shotgun,
+        zebra: sfx.swish,
+        fireball: sfx.fireball,
+        adrenaline: sfx.sip,
+        longjump: sfx.boing,
       })[f.what]?.();
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
@@ -2372,6 +2410,44 @@ function playFx(f) {
     fxl.append(n);
     setTimeout(() => n.remove(), 1200);
     sfx.pop();
+  } else if (f.kind === "l4line") {
+    /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
+       hit, and one or two shorter ones pointing a little off to the sides */
+    if (!geo.hang) return;
+    const a = world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
+      b = world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
+      up = size * 0.41,
+      gun = fxl.querySelector(
+        `.held[data-pid="${CSS.escape(f.by)}"][data-w="chaingun"]`,
+      ),
+      [x0, y0, aim] = (gun && gun._tip) || [
+        a.left,
+        a.top - up,
+        Math.atan2(b.top - a.top, b.left - a.left),
+      ];
+    let ang = Math.atan2(b.top - up - y0, b.left - x0),
+      far = Math.hypot(b.left - x0, b.top - up - y0);
+    if (Math.cos(ang - aim) < 0.5) {
+      // (what it hit is beside the barrel or behind its end: the lines still only go forward)
+      ang = aim;
+      far = size * 0.8;
+    }
+    const line = (turn, long, wait) => {
+      const n = el(
+        `<div class="l4-line" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${TRACE.color};--g:${TRACE.glow};--ms:${TRACE.ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
+      );
+      fxl.append(n);
+      setTimeout(() => n.remove(), TRACE.ms + wait + 40);
+    };
+    line(0, far, 0);
+    for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
+      line(
+        (Math.random() - 0.5) * TRACE.spread,
+        far * (0.25 + Math.random() * 0.5),
+        Math.random() * 30,
+      );
+  } else if (f.kind === "l4bite") {
+    sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "jaime") {
     sfx.puff(); // (a Jaime comes in)
   } else if (f.kind === "eat") {
@@ -2882,7 +2958,10 @@ function jump(how) {
   me.dj = 0;
   me.lj =
     how === "long" ||
-    (how !== "short" && kept.has("longjump") && hasKey(playDuck(), "longjump"));
+    (how !== "short" &&
+      kept.has("longjump") &&
+      hasKey(playDuck(), "longjump")) ||
+    (isL4dd(R.state) && how !== "short" && !!(kitOf(R.state, R.me) || {}).lj); // (Quacky Zombies: the Long jump from the fireplace, switched on)
   me.sj =
     !me.lj &&
     (how === "short" ||
@@ -5056,7 +5135,7 @@ function l4Press(e) {
   const go = () => {
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(120, l4Cool(R.state, R.me, w)));
+    l4Fire = setTimeout(go, Math.max(60, l4Cool(R.state, R.me, w)));
   };
   clearTimeout(l4Fire);
   go();

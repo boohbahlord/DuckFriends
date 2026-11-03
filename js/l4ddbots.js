@@ -139,6 +139,26 @@ export function l4Bot(s, id, now, out) {
     });
     return;
   }
+  /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
+     jump stays as it is) */
+  const sp = sl[3];
+  if (
+    ["jaime", "fireball", "zebra", "adrenaline"].includes(sp) &&
+    m.am[sp] &&
+    m.am[sp][0] > 0 &&
+    bd < 400 &&
+    now - (u[sp] || 0) > 6000
+  ) {
+    out.push({
+      t: "use",
+      id,
+      what: sp,
+      face: ax < 0 ? -1 : 1,
+      ax: ax / W,
+      ay: ay / H,
+    });
+    return;
+  }
   const loaded = [sl[1], sl[2]].filter(
       (w) => w && m.am[w] && m.am[w][0] > 0 && m.rw !== w,
     ),

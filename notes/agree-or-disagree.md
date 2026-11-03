@@ -3278,3 +3278,21 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 
 - Adam: the held weapon was drawn at the duck's floor spot (bodyAt in game.js) while the duck is drawn at its seat;
   bodyAt now uses seatAt and the chair's lift, so the weapon (and its aim) goes with the seated duck.
+## Quacky Zombies Stage 3: the owner's new weapons (Adam's go, 2026-11-03 16:55Z and 17:09Z; the owner's list word for word at line ~2934 above)
+
+- Adam's plan: https://claude.ai/artifact/Aeykix5aJPWqmJkNb8mWxQ. Everything below goes into the fireplace's pool (19 in all now); the jetpack and the drops wait for Stage 4. It doesn't merge until the owner OKs the picture sheet.
+- Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main): `js/l4ddguns.js` (the new drawings: sniper, SMG, AK-47, chain gun, revolver, grenade launcher, LMG, adrenaline shot, and their bullets); `js/l4ddrules.js` ARMS has each one's numbers.
+  - The owner's numbers: sniper 24 (5 a magazine), through every zombie to the wall, 2 or 3 to each, 0.75 s bolt; SMG 160 (20), 1, 1.75% headshot, full auto; AK-47 180 (30), 2, 3%, full auto; chain gun 60, no magazine, no reload, hits at once with a thin yellow line, 5 a second, kills what it hits; revolver 75 (5), 2, 4%; grenade launcher 15, 1.2 s between, kills everything in the blast; LMG 225 (75), 1, 1.25%; zebra cake 1; fireball 1 (a zombie burns 6 s, 1 every 3 s; a duck takes 1 as it's lit and burns 3 s; touching anyone on fire lights a duck); adrenaline shot 1, full Duck Cabin speed for 20 s; long jump: picked up, then each use switches it on or off (a jump still dodges); Jaime 3 a round, 1 a stab.
+  - Guesses (no number from the owner): the bullets' speeds, the reload times (sniper 2.2 s, SMG 1.4, AK 1.9, revolver 1.7, LMG 2.8), the sniper's headshot 5% (as the pistol's), full-auto fire rates (SMG 12.5 a second, AK 9, LMG 10), the launcher's grenade flies straight up to 760 px and goes off on the first zombie it touches, the zebra cake reaches zombies within 700 px and the first one there eats it in one bite, the chain gun's line stops at the first zombie (it doesn't go through), the fireball's zombie takes its first 1 as it's lit (2 in all), Jaime stays 12 s (as the Jaime special) and the zombies leave him be.
+  - Spent specials (zebra cake, fireball, adrenaline) stay in the slot at 0 for Stage 4's ammo refills; the medkit still empties its slot.
+- Tested: every weapon in Chromium and Firefox, phone and computer (tools/l4dd-art.html shows the art); online with 2 (player 2's sniper, chain gun, fireball and Jaime seen on both screens); the computers play with them; the full-auto sound `sfx.tat` 0 clicks, 0 clipped.
+
+## 2026-11-03 17:55Z: Quacky Zombies, the chain gun's lines and fire rate (word for word)
+> the chain gun can have the thin yellow line kinda pop in and out quickly and in different areas in front of the gun, but make sure it only comes out of the end of the gun.
+>
+>
+> You can make the chain gun 15 shots a second actually
+
+- Solomon the 2nd (on Stage 3's PR #205): the chain gun fires 15 a second (cool 67 ms; 60 shots now last 4 s). Each
+  shot's line starts at the barrel's tip as drawn on screen; besides the line to what it hit, one or two shorter
+  lines pop in and out at slightly different angles in front of the gun (only what the main line touches is hit).
