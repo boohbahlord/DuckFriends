@@ -97,12 +97,10 @@ export const SIZES = [
   [1, "Big"],
 ];
 const clamp1 = (v) => Math.max(-1, Math.min(1, +v || 0));
-/* how much room a duck takes on the board, width and depth (1 = a normal duck) */
-export function duckRoom(look = {}) {
-  if (look && look.style === "jack") return { x: 1, y: 1 }; // Jack in a Box takes a normal duck's room (his build and size are only stored)
-  const k = 1 + 0.1 * clamp1(look.size),
-    f = clamp1(look.build);
-  return { x: k * (1 + 0.16 * f), y: k * (1 + 0.08 * f) };
+/* how much room a duck takes on the board, width and depth (1 = a normal duck). The owner: every duck's hitbox is the
+   default duck's, whatever its outfit, hat, size, build or style, in every mode (the rules' hits never looked at them) */
+export function duckRoom() {
+  return { x: 1, y: 1 };
 }
 
 let uid = 0;
