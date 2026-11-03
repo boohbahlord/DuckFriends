@@ -399,9 +399,9 @@ const MGJ_TILES = [
     "mgjTime",
     "Time to beat him",
     [
-      [60, "1 min"],
-      [90, "1:30"],
-      [120, "2 min"],
+      [105, "1:45"],
+      [135, "2:15"],
+      [165, "2:45"],
     ],
   ],
 ];
@@ -413,6 +413,7 @@ const MORE_TILES = [
       [0, "Off"],
       [1, "1"],
       [5, "5"],
+      [6, "6"],
       [10, "10"],
       [15, "15"],
     ],
@@ -572,9 +573,9 @@ const OPT_TIPS = {
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
   mgjHp:
-    "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and the last one knocks it down as usual. It stands up with full HP. Off: one hit knocks a duck down.",
+    "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and nothing hurts it for a second after. The last one knocks it down until a medkit or the fight's end. Off: one hit knocks a duck down for 5 seconds.",
   mgjTime:
-    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 1:30 count toward the lightning eyes.",
+    "How long the ducks get to bring Justin's HP to 0. His meteor adds 30 seconds. Only wins at 2:15 count toward the lightning eyes.",
   dunceTakes:
     "Random: the takes are handed out at random, so you might get your own. Write your own: you defend what you wrote. Turn on Don't get your own prompt to always get someone else's.",
   noOwn:

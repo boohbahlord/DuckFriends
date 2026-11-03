@@ -81,6 +81,8 @@ import {
   shotAt,
   coolFor,
   coolEnds,
+  phpLost,
+  PHP,
   isHang,
   MAG,
   RELOAD,
@@ -160,7 +162,6 @@ import { mountHotbar } from "./hotbar.js";
 import { isL4dd, HELD, L4, l4Hp, l4Down, ARMS } from "./l4ddrules.js";
 import { l4TouchAim } from "./l4dd.js";
 import { mountL4Bar } from "./l4ddbar.js";
-import { BOW as L4_BOW, ARROW as L4_ARROW } from "./l4ddart.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import {
@@ -253,7 +254,28 @@ import {
   usesOf,
   mgjPHp,
   mgjOut,
+  mgjSafe,
+  EDGE_WARN,
+  jaimePool,
+  JAIME_MS,
+  JAIME_MAX,
+  CAKE_EVERY,
+  cakeAt,
 } from "./mgjrules.js";
+import {
+  FLAME,
+  ARROW,
+  FIREBALL,
+  JAIME,
+  POOF,
+  MEDKIT,
+  ZEBRA,
+  FOODS,
+  TELEPORT,
+  HITMARK,
+  HITMARK_FAKE,
+  edgeHTML,
+} from "./mgjart.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
@@ -314,7 +336,15 @@ let bar = null,
   lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
+const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
+/* a Jaime (Mad God Justin): his look, with the name of the duck that sent him under him */
+const jaimeLook = (s, id) => {
+  const by = s.players[((s.mgj && s.mgj.jaimes) || {})[id]?.by] || {};
+  return { ...JAIME, name: by.name || JAIME.name, nameStyle: by.nameStyle };
+};
 let held = null,
+  mgjHold = "knife", // Mad God Justin: what keys 1 to 3 put in hand (the knife, the bow, the medkit)
+  keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
   mouse = null,
   shovedAt = 0,
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
@@ -361,6 +391,7 @@ let cam = null; // the bracket's camera: the diagram's corner on the board (dx, 
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: 1.75 };
+const MGJ_SLOW = 0.8;
 const JUMP = { normal: { T: 0.62, H: 1.35 }, low: { T: 1.2, H: 2 } }; // seconds in the air; apex in duck heights (low gravity: floatier, still quick)
 /* a duck's jump: a long jump floats longer and a little higher; a double jump starts a second arc where the duck is, a
    little lower than the first */
@@ -720,6 +751,19 @@ function drawDucks(now = clockNow()) {
             : {}),
         }
       : null; // (the Justin option: he walks the board, never a player; Mad God Justin: with his gun out)
+  const jp2 =
+    jp && isMgj(s) && s.mgj && s.mgj.dup && s.phase === "boss"
+      ? {
+          ...jp,
+          x: 1 - jp.x,
+          y: 1 - jp.y,
+          ...(jp.ax !== undefined ? { ax: -jp.ax, ay: -jp.ay } : {}),
+        }
+      : null; // (Mad God Justin's double: mirrored through the board's middle)
+  const jaimes =
+    isMgj(s) && s.mgj
+      ? Object.keys(s.mgj.jaimes || {}).filter((id) => s.pos[id])
+      : [];
   /* a duck the hammer shoved or a grenade threw (pos.kb): drawn sliding back from where it stood, over a little hop (a
      grenade's: higher, longer, at once) */
   const kbT = (id) => {
@@ -751,11 +795,13 @@ function drawDucks(now = clockNow()) {
           id,
           id === JUSTIN_ID
             ? jp
-            : id === R.me && me
-              ? me
-              : hang
-                ? world.shown(id, s.pos[id])
-                : s.pos[id],
+            : id === JUSTIN2
+              ? jp2
+              : id === R.me && me
+                ? me
+                : hang
+                  ? world.shown(id, s.pos[id])
+                  : s.pos[id],
         );
   const liftOf = (id, pos) =>
     (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) +
@@ -770,6 +816,8 @@ function drawDucks(now = clockNow()) {
   const ids = [
       ...s.seat.filter((id) => s.pos[id]),
       ...(jp ? [JUSTIN_ID] : []),
+      ...(jp2 ? [JUSTIN2] : []),
+      ...jaimes,
       ...(isMgj(s) && s.mgj && s.mgj.gj && s.pos[GOOD_ID] ? [GOOD_ID] : []),
       ...Object.keys(ghosts)
         .filter((id) => s.players[id] && !ghosts[id].l4)
@@ -810,13 +858,15 @@ function drawDucks(now = clockNow()) {
           (id === GOOD_ID && {
             ...GOOD_JUSTIN,
             dead: !!(s.mgj && s.mgj.gj && s.mgj.gj.down),
-          }),
+          }) ||
+          (id === JUSTIN2 && MAD_JUSTIN) ||
+          (jaimes.includes(id) && jaimeLook(s, id)),
       pos = posOf(id);
     if (!p) continue;
     let d = layer.querySelector(`[data-pid="${id}"]`);
     if (!d) {
       d = el(
-        `<div class="gduck${id === R.me ? " mine" : ""}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true"><i></i><i></i><i></i></span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`,
+        `<div class="gduck${id === R.me ? " mine" : ""}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true">${FLAME}</span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`,
       );
       if (g) d.classList.add("gbody");
       layer.append(d);
@@ -903,19 +953,33 @@ function drawDucks(now = clockNow()) {
     }
     /* Mad God Justin's Player HP: a green bar behind the letters; the part a hit took turns red at once, then fades.
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
+    /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
+       Left 4 Dead Ducks: its own 3 HP, always shown (down or a ghost, none) */
     const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+      lost =
+        !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
+          ? phpLost(s, id, now)
+          : 0,
       hpMax = l4
         ? L4.HP
-        : !g && s.seat.includes(id) && s.phase === "boss"
-          ? mgjPHp(s)
-          : 0,
-      hp = l4
-        ? !dead && l4Hp(s, id) > 0
-          ? l4Hp(s, id)
-          : -1
-        : hpMax && s.mgj && !dead
-          ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
-          : -1; // (Left 4 Dead Ducks: its 3 HP; down or a ghost, none)
+        : isMgj(s)
+          ? !g && s.seat.includes(id) && s.phase === "boss"
+            ? mgjPHp(s)
+            : 0
+          : lost
+            ? PHP
+            : 0,
+      hp = !hpMax
+        ? -1
+        : l4
+          ? !dead && l4Hp(s, id) > 0
+            ? l4Hp(s, id)
+            : -1
+          : isMgj(s)
+            ? s.mgj && !dead
+              ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+              : -1
+            : PHP - lost;
     if (d._hp !== hp) {
       const was = d._hp;
       d._hp = hp;
@@ -1045,10 +1109,11 @@ function drawDucks(now = clockNow()) {
       shows[id].what !== "grenade" &&
       shows[id].what; // (a dagger or a grenade thrown without keeping it out: only the one in the air)
     const w =
-      id === JUSTIN_ID && isMgj(s)
-        ? !mgjGone(s, now) && (shown || pos.w)
+      (id === JUSTIN_ID || id === JUSTIN2) && isMgj(s)
+        ? !mgjGone(s, now) &&
+          (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
-            ? ((s.mgj && s.mgj.held) || {})[id] || "knife"
+            ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
             : isL4dd(s)
               ? l4Hp(s, id) > 0 && (mine ? heldNow() : pos.w)
               : mine
@@ -1098,6 +1163,32 @@ function drawDucks(now = clockNow()) {
       d.classList.toggle("mgj-burnt", scorched === 1);
       d.classList.toggle("mgj-unburn", scorched === 2);
     } // (burnt by the lightning on the podium, then the burn fades like a fire's: 4 s, then 2.5 s)
+    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a fireball's burn: one
+       big flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
+    const blink = isMgj(s) && s.phase === "boss" && mgjSafe(s, id, now);
+    if (d._blink !== blink) {
+      d._blink = blink;
+      d.classList.toggle("mgj-blink", blink);
+    }
+    const bn =
+      isMgj(s) && s.mgj && s.phase === "boss"
+        ? (s.mgj.burn || {})[id] > now
+          ? 2
+          : (s.mgj.burnt || {})[id] > now
+            ? 1
+            : 0
+        : 0;
+    if ((d._bn || 0) !== bn) {
+      const was = d._bn || 0;
+      d._bn = bn;
+      d.classList.toggle("onfire", bn === 2);
+      d.classList.toggle("burnt", bn === 1);
+      if (bn === 2) sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000));
+      if (!bn && was) {
+        d.classList.add("unburn");
+        setTimeout(() => d.classList.remove("unburn"), 2600);
+      }
+    }
     const op = podLift(s, id, now) > 0.2;
     if (d._op !== op) {
       d._op = op;
@@ -1194,6 +1285,7 @@ function drawDucks(now = clockNow()) {
     if (
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
+      !(jp2 && d.dataset.pid === JUSTIN2) &&
       !bodyOf(d.dataset.pid)
     )
       d.remove();
@@ -1227,17 +1319,21 @@ function drawDucks(now = clockNow()) {
         ).duck,
         [vx, vy] = toScreen(sh.vx, sh.vy);
       b =
-        sh.k === "controller" || sh.k === "chair"
+        sh.k === "arrow" || sh.k === "fireball"
           ? el(
-              `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
-            )
-          : sh.k === "dagger" || sh.k === "grenade"
+              `<div class="bullet k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px;--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${sh.k === "arrow" ? ARROW : FIREBALL}</div>`,
+            ) // (the bow's arrow, Mad God Justin's fireball: pointing the way they fly)
+          : sh.k === "controller" || sh.k === "chair"
             ? el(
-                `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+                `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
               )
-            : el(
-                `<div class="bullet${sh.k === "pellet" ? " pellet" : sh.k === "arrow" ? " arrow" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${sh.k === "arrow" ? L4_ARROW : BULLET(colorsOf(duck, "handgun")[2])}</div>`,
-              );
+            : sh.k === "dagger" || sh.k === "grenade"
+              ? el(
+                  `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+                )
+              : el(
+                  `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
+                );
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
@@ -1258,7 +1354,8 @@ function drawDucks(now = clockNow()) {
     const c = bodyAt(id, pos, now),
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
     let dir = null;
-    if (mine && mouse) {
+    if (mine && keyAim) dir = keyAim;
+    else if (mine && mouse) {
       const r = board.getBoundingClientRect();
       dir = [mouse.x - r.left - c.left, mouse.y - r.top - c.top];
     } else if (sh && (!pos.w || mine)) dir = toScreen(sh.ax, sh.ay);
@@ -1276,7 +1373,7 @@ function drawDucks(now = clockNow()) {
     if (!h || h._k !== hk) {
       if (h) h.remove();
       h = el(
-        `<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${size.toFixed(0)}px"><i>${w === "bow" ? L4_BOW : heldHTML(w, duck)}</i></div>`,
+        `<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${size.toFixed(0)}px"><i>${heldHTML(w, duck)}</i></div>`,
       );
       h._k = hk;
       fxl.append(h);
@@ -1441,6 +1538,9 @@ function drawDucks(now = clockNow()) {
   placeTiles(board);
   placePick(board, s);
   placeDesk(board, s, now);
+  placeCake(board, s, now);
+  placeSnack(board, s, now);
+  placeEdge(board, s, now);
   // the Round Lord and the question turn see-through over ducks
   for (const o of board.querySelectorAll(
     ".topover .lord, .topover .question, .topover .wq-sidecol",
@@ -1706,6 +1806,85 @@ function placePick(board, s) {
   });
 }
 
+/* Mad God Justin: the zebra cake, spinning on its way, then lying where it landed until he eats it */
+function placeCake(board, s, now) {
+  const c = isMgj(s) && s.phase === "boss" && s.mgj && s.mgj.cake,
+    layer = $(".ducks", board);
+  let n = layer && layer.querySelector(".mgj-cake");
+  if (n && (!c || c.eat || +n.dataset.n !== c.n)) {
+    n.remove();
+    n = null;
+  }
+  if (!c || c.eat || !layer || !geo) return;
+  if (!n) {
+    n = el(
+      `<div class="mgj-cake" data-n="${c.n}"><i class="${c.vx < 0 ? "ccw" : ""}">${ZEBRA}</i></div>`,
+    );
+    layer.append(n);
+  }
+  n.classList.toggle("down", now >= c.stop);
+  const at = place(cakeAt(c, now), 0, 1),
+    w = geo.size * 0.7;
+  Object.assign(n.style, {
+    left: at.left.toFixed(1) + "px",
+    top: (at.top - w * 0.3).toFixed(1) + "px",
+    width: w.toFixed(1) + "px",
+    zIndex: Math.round(at.top - 1),
+  });
+}
+/* Mad God Justin's snack (a look only), or the zebra cake he picked up: at his beak, the way he faces, a bite at a time
+   (his double eats too) */
+function placeSnack(board, s, now) {
+  const e = isMgj(s) && s.phase === "boss" && s.justin && s.justin.eat,
+    layer = $(".ducks", board);
+  if (!layer) return;
+  for (const id of [JUSTIN_ID, JUSTIN2]) {
+    let n = layer.querySelector(`.mgj-snack[data-pid="${id}"]`);
+    const dk = layer.querySelector(`.gduck[data-pid="${id}"]`);
+    if (n && (!e || !dk || n.dataset.k !== `${e.k} ${e.at}`)) {
+      n.remove();
+      n = null;
+    }
+    if (!e || !dk || !geo || now >= e.until) continue;
+    if (!n) {
+      n = el(
+        `<div class="mgj-snack" data-pid="${id}" data-k="${e.k} ${e.at}"><i>${FOODS[e.k] || FOODS.zebra}</i></div>`,
+      );
+      n.style.setProperty("--eat", e.until - e.at + "ms");
+      layer.append(n);
+    }
+    const j = justinAt(s.justin, now),
+      p = id === JUSTIN2 ? { x: 1 - j.x, y: 1 - j.y } : j,
+      at = place(p, 0, 1),
+      side = (turned() ? 1 : dk._face) || 1,
+      w = geo.size * 0.42;
+    Object.assign(n.style, {
+      left: (at.left + side * geo.size * 0.5).toFixed(1) + "px",
+      top: (at.top - geo.size * 0.78).toFixed(1) + "px",
+      width: w.toFixed(1) + "px",
+      zIndex: Math.round(at.top + 1),
+    });
+    n.classList.toggle("left", side < 0);
+  }
+}
+/* Mad God Justin's edge lightning: the edges glow for EDGE_WARN before it strikes (the strike itself: the "edge" fx) */
+function placeEdge(board, s, now) {
+  const m = isMgj(s) && s.phase === "boss" && s.mgj,
+    warn =
+      !!m && !mgjFrozen(s) && m.edgeAt - now <= EDGE_WARN && m.edgeAt > now;
+  let n = board.querySelector(".mgj-edge.warn");
+  if (n && (!warn || +n.dataset.at !== m.edgeAt)) {
+    n.remove();
+    n = null;
+  }
+  if (!warn || n) return;
+  n = el(edgeHTML("warn"));
+  n.dataset.at = m.edgeAt;
+  n.style.animationDelay = -(EDGE_WARN - (m.edgeAt - now)) + "ms";
+  board.append(n);
+  sfx.warn(Math.max(0.05, (m.edgeAt - now) / 1000));
+}
+
 /* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
 function storyMarks(s, board) {
   const zones = scZones(s),
@@ -1969,6 +2148,14 @@ function playFx(f) {
       })[f.what]?.();
       return;
     } // (Left 4 Dead Ducks: the weapon turns toward the aim; the shot flies from the room's state)
+    if (f.what === "fireball") {
+      sfx.fireball();
+      return;
+    }
+    if (f.what === "zebra") {
+      sfx.swish();
+      return;
+    } // (Mad God Justin's zebra cake: it flies from the room's state)
     if (f.what === "shotgun") {
       // Mad God Justin's shotgun: the blast, then the pump
       shows[f.by] = {
@@ -1997,7 +2184,17 @@ function playFx(f) {
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
-      (f.what === "handgun" ? sfx.bang : sfx.swish)();
+      if (f.by === JUSTIN_ID && isMgj(s) && s.mgj && s.mgj.dup)
+        shows[JUSTIN2] = {
+          ...shows[f.by],
+          ax: -shows[f.by].ax,
+          ay: -shows[f.by].ay,
+        }; // (his double does the same, mirrored)
+      (f.what === "handgun"
+        ? sfx.bang
+        : f.what === "bow"
+          ? sfx.bow
+          : sfx.swish)();
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
@@ -2053,6 +2250,63 @@ function playFx(f) {
     sfx.boop();
   } else if (f.kind === "pickup") {
     sfx.pop(); // (Mad God Justin: a weapon picked up)
+  } else if (f.kind === "teleport") {
+    // Mad God Justin's blue flash where he leaves and where he lands (his double: where it shows up)
+    for (const [x, y] of f.dup
+      ? [[f.x, f.y]]
+      : [
+          [f.x0, f.y0],
+          [f.x, f.y],
+        ]) {
+      const at = place({ x, y }, 0, 1),
+        n = el(
+          `<div class="mgj-tp" style="left:${at.left.toFixed(1)}px;top:${at.top.toFixed(1)}px;width:${(size * 1.6).toFixed(0)}px">${TELEPORT}</div>`,
+        );
+      fxl.append(n);
+      setTimeout(() => n.remove(), 600);
+    }
+    sfx.teleport();
+  } else if (f.kind === "hitmark") {
+    // a hit on Justin (or a Jaime): the hitmarker; on his double, the grey one (it counts for nothing)
+    const at = place({ x: f.x, y: f.y }, 0, 1),
+      n = el(
+        `<div class="mgj-hit" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 0.5).toFixed(1)}px;width:${(size * 0.55).toFixed(0)}px">${f.fake ? HITMARK_FAKE : HITMARK}</div>`,
+      );
+    fxl.append(n);
+    setTimeout(() => n.remove(), 500);
+    if (f.fake) sfx.boop();
+  } else if (f.kind === "poof") {
+    // a Jaime (or Good Justin God) gone in a cloud
+    const at = place({ x: f.x, y: f.y }, 0, 1),
+      n = el(
+        `<div class="mgj-poof" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 0.4).toFixed(1)}px;width:${(size * 1.3).toFixed(0)}px">${POOF}</div>`,
+      );
+    fxl.append(n);
+    setTimeout(() => n.remove(), 800);
+    sfx.jaime();
+  } else if (f.kind === "medkit") {
+    // a duck got up with a medkit: the medkit over it for a moment
+    const at = spot(f.who[0]);
+    if (!at) return;
+    const n = el(
+      `<div class="mgj-kit" style="left:${at.left.toFixed(1)}px;top:${(at.top - size * 1.2).toFixed(1)}px;width:${(size * 0.6).toFixed(0)}px">${MEDKIT}</div>`,
+    );
+    fxl.append(n);
+    setTimeout(() => n.remove(), 1200);
+    sfx.pop();
+  } else if (f.kind === "jaime") {
+    sfx.puff(); // (a Jaime comes in)
+  } else if (f.kind === "eat") {
+    sfx.chomp();
+  } else if (f.kind === "edge") {
+    // the edge lightning strikes (its glow before it: drawEdge)
+    const board = $(".board", S);
+    if (!board) return;
+    board.querySelector(".mgj-edge.warn")?.remove();
+    const n = el(edgeHTML("zap"));
+    board.append(n);
+    setTimeout(() => n.remove(), 400);
+    sfx.zap();
   } else if (f.kind === "hotdog") {
     const node = el(
       `<div class="fx-hotdog" style="width:${(size * 0.8).toFixed(0)}px">${HOTDOG}</div>`,
@@ -2140,6 +2394,7 @@ function bodyAt(id, pos, now = clockNow()) {
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
+  if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
   if (R && isL4dd(R.state) && (!mouse || performance.now() - touchedAt < 4000))
     return l4TouchAim(me) || [face, 0]; // (Left 4 Dead Ducks on a phone: at the nearest zombie in sight, or the way it walks)
   if (!mouse) return toBoard(face, 0) || [face, 0];
@@ -2250,11 +2505,12 @@ function step(dt, now) {
     for (let i = 0; i < n; i++) countJump();
     sendMove(true);
   } // (a double jump is two)
-  const k = (c) => keys.has(c);
-  const up = k("KeyW") || k("ArrowUp"),
-    down = k("KeyS") || k("ArrowDown"),
-    left = k("KeyA") || k("ArrowLeft"),
-    right = k("KeyD") || k("ArrowRight");
+  const k = (c) => keys.has(c),
+    aims = arrowsAim(); // (Mad God Justin: WASD walks, the arrows aim)
+  const up = k("KeyW") || (!aims && k("ArrowUp")),
+    down = k("KeyS") || (!aims && k("ArrowDown")),
+    left = k("KeyA") || (!aims && k("ArrowLeft")),
+    right = k("KeyD") || (!aims && k("ArrowRight"));
   let hx = (right ? 1 : 0) - (left ? 1 : 0),
     vy = (down ? 1 : 0) - (up ? 1 : 0); // on screen: right, down
   if (!hx && !vy && (stick.x || stick.y)) {
@@ -2327,7 +2583,7 @@ function step(dt, now) {
     onTree = [1, (geo.H * 0.9) / SPEED.y / (row.h * k)];
     scWalk = now;
   } // (the story: the same speed on the screen in any row)
-  const mul = sprinting ? SPEED.sprint : 1;
+  const mul = (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1); // (Mad God Justin: the ducks a fifth slower)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
   const [lo, hi] = xBounds();
@@ -3100,8 +3356,9 @@ function recordRound(s) {
 
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
-/* the duck my keys play with: in Mad God Justin only the knife, on key 1; in Left 4 Dead Ducks the knife, the pistol and
-   the bow on 1, 2, 3 (my own keys stay as they are) */
+/* the duck my keys play with: in Left 4 Dead Ducks the knife, the pistol and the bow on 1, 2, 3; in Mad God Justin its
+   own keys: 1 the knife, 2 the bow, 3 the medkit (once a game), 4 Jaime, 5 the weapon picked up, 6 the zebra cake (my
+   own keys stay as they are) */
 const playDuck = () =>
   R && isL4dd(R.state)
     ? { ...myDuck(), keys: [...HELD, ...Array(7).fill(null)] }
@@ -3109,11 +3366,17 @@ const playDuck = () =>
       ? {
           ...myDuck(),
           keys: [
-            specialById(myPick()) ? myPick() : "knife",
-            ...Array(9).fill(null),
+            "knife",
+            "bow",
+            kitUsed() ? null : "medkit",
+            "jaime",
+            specialById(myPick()) ? myPick() : null,
+            "zebra",
+            ...Array(4).fill(null),
           ],
         }
       : myDuck();
+const kitUsed = () => !!(R && R.state.mgj && (R.state.mgj.kits || {})[R.me]);
 /* the weapon in my duck's hand: the one kept out (Shift and its key); Left 4 Dead Ducks: always one of its three (the
    knife at first), none while I'm down or a ghost */
 function heldNow() {
@@ -3148,10 +3411,17 @@ function useKey(i, keep) {
   }
   if (bar) bar.show(i);
   if (isMgj(R.state)) {
-    if (i === 0) fire(myPick() || "knife");
+    const id = keysOf(playDuck())[i];
+    if (["knife", "bow", "medkit"].includes(id)) {
+      mgjHold = held = id;
+      sendMove(true);
+    } // (always kept out once picked: a click, V, or for the medkit E or Enter, uses it)
+    else if (id === "jaime" && me && me.x >= 0)
+      R.send({ t: "use", what: "jaime", face: me.face || 1 });
+    else if (id) fire(id); // (the zebra cake, or the weapon picked up: at once)
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
     return;
-  } // (Mad God Justin: key 1 is the knife, or the weapon picked up)
+  } // (Mad God Justin's own keys)
   const id = keysOf(playDuck())[i],
     sp = specialById(id);
   if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
@@ -3181,15 +3451,28 @@ function fire(id) {
 function cool() {
   if (!R) return [];
   const now = clockNow();
+  const m = isMgj(R.state) && R.state.mgj;
   return keysOf(playDuck()).map((id) => {
     const sp = specialById(id);
     if (!sp || sp.kind !== "item") return null;
+    if (m && id === "jaime") {
+      const p = jaimePool(m, now);
+      return p.n >= JAIME_MAX
+        ? null
+        : [p.at + JAIME_MS, JAIME_MS, now, p.n ? "more" : ""];
+    } // (one pool for everyone: with one stored, the bar charges the next in its second color)
+    if (m && id === "zebra") {
+      const end = (m.zebraAt || 0) + CAKE_EVERY;
+      return end > now || m.cake
+        ? [Math.max(end, now + 1), CAKE_EVERY, now]
+        : null;
+    } // (shared too)
     if (id === "handgun") {
       const r = magOf(R.state, R.me, now).r;
       return r > now ? [r, RELOAD, now] : null;
     } // (between shots no bar: only the reload)
     const end = coolEnds(R.state, R.me, id);
-    return end > now ? [end, coolFor(id), now] : null;
+    return end > now ? [end, coolFor(id, R.state), now] : null;
   });
 }
 /* the handgun's shots left (for the dots under its key) */
@@ -3202,7 +3485,9 @@ const dots = (id) =>
   R && isMgj(R.state)
     ? PICK_USES[id] && id === myPick()
       ? ammoHTML(usesOf(R.state, R.me), PICK_USES[id])
-      : ""
+      : id === "jaime"
+        ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
+        : ""
     : id === "handgun"
       ? ammoHTML(ammo())
       : "";
@@ -3214,7 +3499,26 @@ function reload() {
 }
 const aimAt = (e) => {
   mouse = { x: e.clientX, y: e.clientY };
-}; // (the handgun and the dagger aim at the mouse)
+  keyAim = null;
+}; // (the handgun and the dagger aim at the mouse; in Mad God Justin the arrow keys too, whichever moved last)
+/* Mad God Justin: the arrow keys aim instead of walking (WASD walks) */
+const arrowsAim = () => !!R && isMgj(R.state) && R.state.phase === "boss";
+const ARROWS = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+};
+function keyAimNow() {
+  let x = 0,
+    y = 0;
+  for (const [k, [dx, dy]] of Object.entries(ARROWS))
+    if (keys.has(k)) {
+      x += dx;
+      y += dy;
+    }
+  if (x || y) keyAim = [x * 100, y * 100]; // (on the screen; let go, it keeps aiming that way)
+}
 const KEY_CODES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 const keyIndex = (e) => {
   const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
@@ -3239,6 +3543,21 @@ const graceOf = (s) =>
 const graceLeftMs = (s) =>
   graceOf(s) ? Math.max(0, s.at + graceOf(s) * 1000 - clockNow()) : 0;
 const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
+/* Mad God Justin: what my keys do now, in a line */
+function mgjTip(s) {
+  const phone = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  if ((s.players[R.me] || {}).dead)
+    return mgjOut(s, R.me)
+      ? "Out of HP! A medkit, or the fight's end, gets you up."
+      : "Knocked down! Up again in a moment.";
+  if (myPick())
+    return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "tap its button" : "<kbd>5</kbd>"} to use it`;
+  if (held === "medkit")
+    return `Medkit: stand by a downed duck, then ${phone ? "tap the board" : "<kbd>E</kbd>"}`;
+  return phone
+    ? "Get close to Justin: your knife stabs him by itself"
+    : "<kbd>WASD</kbd> walk · <kbd>Arrows</kbd> or the mouse aim · <kbd>Click</kbd> use";
+}
 /* the middle of the bottom bar: what you can do now, and how many are done */
 function actHTML(s) {
   const on = playing(s),
@@ -3275,7 +3594,7 @@ function actHTML(s) {
   if (s.phase === "answer" && isLaw(s) && s.law) return lawActHTML(s);
   if (s.phase === "answer" && isDn(s) && s.dn && s.dn.cur) return dnActHTML(s);
   if (s.phase === "boss")
-    return `<span class="progress mgj-tip">${(s.players[R.me] || {}).dead ? (mgjOut(s, R.me) ? "Out of HP! You're back when the fight ends." : "Knocked down! Up again in a moment.") : myPick() ? `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${matchMedia("(hover: none) and (pointer: coarse)").matches ? "tap the button" : "<kbd>Click</kbd> or <kbd>1</kbd>"} to use it once` : "Get close to Justin: your knife stabs him by itself"}</span>`;
+    return `<span class="progress mgj-tip">${mgjTip(s)}</span>`;
   if (s.phase === "mgjend")
     return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
   if (s.phase === "dunced") {
@@ -3867,7 +4186,8 @@ function paint(force) {
   }
   if (world) world.state(s); // (a lamp switched off …)
   if (isMgj(s)) {
-    held = s.phase === "boss" ? myPick() || "knife" : null;
+    if (mgjHold === "medkit" && kitUsed()) mgjHold = "knife";
+    held = s.phase === "boss" ? mgjHold : null;
     const hp = $(".mgj-hp", S);
     if (hp) setHTML(hp, mgjHPHTML(s));
   } // Mad God Justin: the knife always out; his HP
@@ -4325,6 +4645,7 @@ function keydown(e) {
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
     if (!e.code.startsWith("Shift")) e.preventDefault();
     keys.add(e.code);
+    if (ARROWS[e.code] && arrowsAim()) keyAimNow();
     return;
   }
   if (e.code === "Space") {
@@ -4354,12 +4675,23 @@ function keydown(e) {
   } // the handgun reloads
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (isMgj(R.state)) useKey(0, false);
+    if (isMgj(R.state)) fire(held || "knife");
     else if (heldNow()) fire(heldNow());
     else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();
     return;
-  } // V: the special kept out (toggled), or else the one I used last (Mad God Justin: the knife, or the weapon picked up)
+  } // V: the special kept out (toggled), or else the one I used last (Mad God Justin: what's in hand)
+  if (
+    (e.code === "KeyE" || e.code === "Enter") &&
+    !e.repeat &&
+    isMgj(R.state) &&
+    R.state.phase === "boss" &&
+    held === "medkit"
+  ) {
+    e.preventDefault();
+    fire("medkit");
+    return;
+  } // Mad God Justin: the medkit in hand, E or Enter gets the downed duck next to mine up
   if (e.code === "KeyQ" && isQuack(R.state)) {
     e.preventDefault();
     peek(true);

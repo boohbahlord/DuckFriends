@@ -350,11 +350,14 @@ const TREE = {
             run: (v) => body(SIZES, "size", v, "Size"),
           },
           special: {
-            vals: ["none", ...SPECIALS.filter((x) => !x.off).map((x) => x.id)],
+            vals: [
+              "none",
+              ...SPECIALS.filter((x) => !x.off && !x.only).map((x) => x.id),
+            ],
             run: (v) => {
               // a special onto a number key: "trombone 3" (no number: the first free key); none takes them all off
               const [k, n] = String(v).toLowerCase().trim().split(/\s+/),
-                x = SPECIALS.find((y) => y.id === k && !y.off),
+                x = SPECIALS.find((y) => y.id === k && !y.off && !y.only),
                 keys = (profile.duck.keys = keysOfDuck(profile.duck));
               if (k === "none") {
                 keys.fill(null);

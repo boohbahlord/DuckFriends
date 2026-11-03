@@ -1,29 +1,39 @@
 /* ---------- the rules of Mad God Justin ----------
-   A boss fight: every duck has only the knife (always out, no specials) and together they must bring Justin's HP to 0
-   before the timer runs out (1 minute 30 by default; the lobby has 1 and 2 minutes too, but only a win at the default
-   counts toward the lightning eyes). His HP is 8 + 6 for each player
-   when the fight starts, and one stab takes 1. Any hit knocks a duck down for 5 seconds (no HP of their own), and he
-   never goes after a duck that's down.
+   A boss fight: every duck has the knife (1), the bow (2), a medkit (3, once a game), Jaime (4, from a pool everyone
+   shares), the weapon it picked up (5) and the zebra cake (6, shared too), and together they must bring Justin's HP to 0
+   before the timer runs out (2:15 by default; the lobby has 1:45 and 2:45 too, but only a win at the default counts
+   toward the lightning eyes). His HP is 20 + 8 for each player when the fight starts, and one stab takes 1. Each duck
+   has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it flickers), and a duck out of HP
+   stays down until a medkit or the fight's end. He never goes after a duck that's down. A jump dodges everything but
+   in its first and last fifth (rules.js dodges).
    - His pistol: the usual 7 shots, then the usual 3.5 s reload; the more of the ducks are down, the readier he is to
      reload early. While it reloads he sprints at a duck to hammer it, and a duck that comes up close gets the hammer too.
-   - From the sky: each fight he has 1 lightning and 1 fire, plus 1 more of either for each player. The lower his HP, the
-     likelier he uses one, and at 1 HP it's certain while any are left. Lightning gets likelier with each player.
+   - His throws, each held up first (the tell): the controllers every way at once, the office chair, and every 14 s a
+     fireball (1 damage, and the duck burns for 3.5 s: a burning duck lights every duck it touches).
+   - The edge lightning, every 10 s by itself: the board's edges glow for 0.6 s, then a flash runs along them and hits
+     every duck and Jaime there (not him).
+   - When he touches the board's edge he flashes blue and jumps to a spot far from it, once every 15 s at most.
+   - Once a minute, at a random moment, his double for 7 s: one of the two does no harm, and hits on that one count for
+     nothing.
+   - Now and then he stops to eat something (only a look). A thrown zebra cake he chases until it lands at the edge, then
+     eats it, and does nothing else meanwhile.
    - The meteor, once a fight (unless he dies first), at a random moment when 30 to 5 seconds are left: he shouts one of
      his GOD lines and fades away, the timer freezes under ice, a meteor lands and knocks every duck down for 5 seconds,
-     maybe one used strike comes back, he gets 2 or 3 HP back for every player, then he fades in again with a pump shotgun added (a wide cone of pellets that act
+     he gets 2 or 3 HP back for every player, then he fades in again with a pump shotgun added (a wide cone of pellets that act
      like bullets, then 1.75 s of pumping) and the timer comes back with 30 seconds left.
    - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Time up: he wins and
      says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
    - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a weapon a duck picks up
-     by walking over it and uses once, the handgun and the dagger three times (then it's back to the knife); lightning or fire, or a meteor, that hit him as
-     soon as they show; or Good Justin God, a helper with a halo and a knife, who stabs him too and can be knocked down
-     like a duck. He has no lines of his own: he shouts Justin's god lines at him, and cheers with Justin's winning
-     lines when he dies.
+     by walking over it and uses once, the handgun and the dagger three times; lightning or fire, or a meteor, that hit him as
+     soon as they show; or Good Justin God, a helper with a halo, 6 HP and a knife, who stabs him too. He has no lines of
+     his own: he shouts Justin's god lines at him, and cheers with Justin's winning lines when he dies.
    He's the Justin option's board Justin (boardjustin.js: s.justin, justinAt, his look, lines and bullets); this file is
    his brain here. s.mgj = { hp, max, n (the fight's number), dmg {id: stabs}, hits {id: times he knocked them down},
-   kill, won, strikes (what's left in the sky), strikeAt, metAt (ms left on the timer when the meteor comes), met (the
-   meteor now: { at, fx, hit, back }), metDone, left (ms left while the timer is frozen), shotgun, over }. */
+   kill, won, metAt (ms left on the timer when the meteor comes), met (the meteor now: { at, fx, hit, back }), metDone,
+   left (ms left while the timer is frozen), shotgun, over, and the rework's: burn and burnt {id: until}, edgeAt (the
+   next edge flash), edgeLast, dup (his double: { at, until, fake: 0 him, 1 the double }), dupAt, jp (Jaime's pool:
+   { n, at }), jaimes {id: { by, n, stabAt }}, jStabs, kits {id: when its medkit was used}, cake, zebraAt }. */
 import {
   enter,
   lostRound,
@@ -37,6 +47,8 @@ import {
   MAG,
   RELOAD,
   strike,
+  dodges,
+  aimOf,
 } from "./rules.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { holdDown, onGetUp } from "./hangout/death.js";
@@ -49,23 +61,24 @@ import {
 } from "./hangout/justin.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
-export const MGJ_TIMES = [60, 90, 120],
-  MGJ_DEFAULT = 90; // (I want a minute and a half; only a win at this time counts toward the lightning eyes)
+export const MGJ_TIMES = [105, 135, 165],
+  MGJ_DEFAULT = 135; // (I want 2:15, 45 s more than before; only a win at this time counts toward the lightning eyes)
 export const mgjTime = (s) =>
   MGJ_TIMES.includes(+s.options.mgjTime) ? +s.options.mgjTime : MGJ_DEFAULT;
 export const MGJ_END = 9; // seconds of the podium (or his winning line), then the stats
 export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him on the podium
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
 export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enough for his bubble over him, under the cloud)
-export const hpOf = (n) => 8 + 6 * n;
-/* Player HP (the owner's extra setting, in the lobby's Additional settings): off, or 1, 5, 10 or 15. With it on, a hit
-   from Justin takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down as before, and it stands up
-   with full HP. The owner: when its HP runs out, the duck stays down until the fight ends (won or lost), and when every
-   duck is out, Justin wins. s.mgj.lost = { id: HP lost }, s.mgj.out = { id: when its HP ran out }, s.mgj.safe = { id:
-   until when it can't lose more } (one attack takes one HP, even when a few of his controllers or his chair touch the
-   duck at once) */
-export const MGJ_PHP = [1, 5, 10, 15];
-export const SOAK_MS = 900;
+export const hpOf = (n) => 20 + 8 * n; // (12 more than before, and 2 more for every player)
+/* Player HP (in the lobby's Additional settings): on by default at 6; off, or 1, 5, 6, 10 or 15. A hit from Justin
+   takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down, and it stays down until a medkit or
+   the fight's end (won or lost); when every duck is out, Justin wins. After any hit nothing can hurt the duck for
+   SOAK_MS (it flickers, game.js). s.mgj.lost = { id: HP lost }, s.mgj.out = { id: when its HP ran out }, s.mgj.safe =
+   { id: until when nothing hurts it } */
+export const MGJ_PHP = [1, 5, 6, 10, 15];
+export const SOAK_MS = 1000;
+export const mgjSafe = (s, id, now) =>
+  (((s.mgj || {}).safe || {})[id] || 0) > now;
 export const mgjPHp = (s) =>
   isMgj(s) && MGJ_PHP.includes(+s.options.mgjHp) ? +s.options.mgjHp : 0;
 /* a hit from Justin on duck id: true when its HP took it (the duck stays up), false when it goes down */
@@ -87,18 +100,12 @@ export function mgjSoak(s, id, now) {
   m.lost = { ...m.lost, [id]: lost };
   return true;
 }
-/* however it went down (his meteor too), a duck stands up with full HP; one out of HP stays down (true: it stays) */
+/* however it went down (his meteor too), a duck stands up with the HP it had; one out of HP stays down (true: it stays) */
 export const mgjOut = (s, id) =>
   !!(isMgj(s) && s.mgj && s.mgj.out && s.mgj.out[id]);
 onGetUp((s, id) => {
   const m = s.mgj;
-  if (mgjOut(s, id) && s.phase === "boss") return true;
-  if (m && m.lost && m.lost[id]) {
-    const rest = { ...m.lost };
-    delete rest[id];
-    m.lost = rest;
-  }
-  return false;
+  return !!(m && mgjOut(s, id) && s.phase === "boss");
 });
 /* the meteor, in ms from its start: he's faded out by FADE; the meteor shows from FALL and lands at LAND; he's back at
    BACK and the timer runs again at RESUME */
@@ -125,15 +132,72 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
   CHAIR_SPEED = 0.085,
   CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
   CHAIR_LIFE = 16000;
-/* the Xbox (the owner's): once in the first 15 seconds a desk comes in with his Xbox and a monitor on it; he runs to it
+/* the rework (the owner's, Nov 3): his fireball, every FB_EVERY ms with its tell; the duck it hits burns for BURN_MS
+   and looks burnt for BURNT_MS, and while it burns it lights every duck it touches (TOUCH duck lengths) */
+export const FB_EVERY = 14000,
+  FB_TELL = 800,
+  FB_SPEED = 0.2,
+  FB_R = 1.2,
+  FB_LIFE = 9000,
+  BURN_MS = 3500,
+  BURNT_MS = 7000,
+  TOUCH = 1.1;
+/* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
+   within EDGE of the board's edge (in board widths and heights) */
+export const EDGE_EVERY = 10000,
+  EDGE_WARN = 600,
+  EDGE = { x: 0.05, y: 0.1 };
+export const onEdge = (p) =>
+  p.x < EDGE.x || p.x > 1 - EDGE.x || p.y < EDGE.y || p.y > 1 - EDGE.y;
+/* his teleport: when he's at the edge (WALL) he jumps to a spot far from it, once every TP_EVERY ms at most */
+const WALL = { x: 0.065, y: 0.09 },
+  TP_EVERY = 15000;
+/* his double: once every DUP_EVERY ms at a random moment, for DUP_MS */
+export const DUP_EVERY = 60000,
+  DUP_MS = 7000;
+/* now and then he eats (a look only): for EAT_MS, once every 30 to 45 s; the zebra cake he eats for CAKE_EAT_MS */
+export const EAT_MS = 2000,
+  CAKE_EAT_MS = 2500,
+  FOODS = ["zebra", "pizza", "donut"];
+/* the zebra cake: shared by everyone, one throw every CAKE_EVERY ms; it flies at CAKE_SPEED until the board's edge */
+export const CAKE_EVERY = 30000,
+  CAKE_SPEED = 0.45;
+/* Jaime: the ducks share one pool, a new one every JAIME_MS up to JAIME_MAX stored; he sprints at Justin
+   (JAIME_RUN duck lengths a second) and stabs him once a second */
+export const JAIME_MS = 12000,
+  JAIME_MAX = 3,
+  JAIME_RUN = 9;
+export const JAIME_NAME = "Jaime";
+export const isJaime = (id) => /^jaime\d+$/.test(id);
+/* the owner's own lines for Justin, word for word: when a Jaime hits him, and when he gets a Jaime with a controller or
+   his chair */
+const JAIME_OUCH = [
+    "Screw you Jaime!!!",
+    "JAIME!!!!!!",
+    "YOU STUPID MEXICAN!!!!",
+    "I HATE YOU JAIME!!!!",
+  ],
+  JAIME_GOT = [
+    "HAHAHA!!! STUPID MEXICAN!!!",
+    "TAKE THAT JAIME!!!!",
+    "TAKE THAT MEXICAN!!!!",
+    "DIE JAIME!!!!!!!",
+    "I AM TRYING TO SOUND WHORE JAIME!!!!",
+  ];
+/* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife a third shorter, an arrow
+   a second */
+export const MGJ_HOLD = ["knife", "bow", "medkit"];
+const MGJ_COOL = { knife: 667, bow: 1000 };
+export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
+export const MEDKIT_REACH = 2; // duck lengths from a downed duck
+/* the Xbox (the owner's): once a game, at a random moment after the first 45 seconds, a desk comes in with his Xbox and a monitor on it; he runs to it
    and turns the Xbox off (the light and the screen go dark), fades away with the clock stopped, as for the meteor, and
    comes back with faster attacks, 15 more seconds on the clock and his HP up by 1, and 1 more for every player (never
    past full). XB: ms the desk takes to come in, from the switch-off to fading out, to coming back; the desk's fade out */
 export const XB = { IN: 900, FADE: 500, GONE: 3400, OUT: 1200 };
 const SPEED = 0.2,
   RX = 0.03,
-  RY = 0.08,
-  STRIKE = 1600;
+  RY = 0.08;
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
    fire (half and half) and hits him as it shows, as the meteor does (1 damage and 30 more seconds); "good" is Good
    Justin God. A weapon waits until a duck walks over it or the next one comes */
@@ -163,12 +227,15 @@ export const DMG = {
   dagger: 2,
   handgun: 2,
   pellet: 1,
+  arrow: 1,
+  jaime: 1,
   lightning: 2,
   fire: 2,
   meteor: 1,
 };
 export const GOOD_ID = "goodjustin",
-  GOOD_NAME = "Good Justin God";
+  GOOD_NAME = "Good Justin God",
+  GOOD_HP = 6;
 export const SKY_ID = "sky"; // (the pickups' lightning, fire and meteor, in the damage and the killing blow)
 const rnd = (a, b) => a + Math.random() * (b - a);
 const any = (xs) => xs[Math.floor(Math.random() * xs.length)];
@@ -206,11 +273,6 @@ export function mgjStart(s, now) {
   const ids = playing(s),
     n = Math.max(1, ids.length),
     max = hpOf(n);
-  const strikes = shuffle([
-    "lightning",
-    "fire",
-    ...ids.map(() => (Math.random() < 0.5 ? "lightning" : "fire")),
-  ]);
   s.mgj = {
     n: ((s.mgj && s.mgj.n) || 0) + 1,
     hp: max,
@@ -219,8 +281,6 @@ export function mgjStart(s, now) {
     hits: {},
     kill: null,
     won: null,
-    strikes,
-    strikeAt: now + 6000,
     metAt: rnd(5000, 30000),
     met: null,
     metDone: false,
@@ -228,15 +288,30 @@ export function mgjStart(s, now) {
     shotgun: false,
     over: 0,
     pickAt: now + PICK_EVERY,
-    // I want his Xbox turned off only once a game: a new fight ("Try again") keeps it off
+    // I want his Xbox turned off only once a game, and only after the first 45 seconds: a new fight ("Try again")
+    // keeps it off
     xbUsed: !!(s.mgj && s.mgj.xbUsed),
-    xbAt: s.mgj && s.mgj.xbUsed ? 0 : now + rnd(4000, 11000),
+    xbAt: s.mgj && s.mgj.xbUsed ? 0 : now + rnd(45000, 60000),
     xb: null,
     pickN: 0,
     pick: null,
     held: {},
     uses: {},
     gj: null,
+    burn: {},
+    burnt: {},
+    edgeAt: now + EDGE_EVERY,
+    edgeLast: 0,
+    dup: null,
+    dupAt: now + rnd(8000, DUP_EVERY - DUP_MS),
+    dupWin: now,
+    jp: { n: 0, at: now },
+    jaimeN: 0,
+    jaimes: {},
+    jStabs: 0,
+    kits: (s.mgj && s.mgj.kits) || {}, // (one medkit a game for each duck: Try again keeps the used ones used)
+    cake: null,
+    zebraAt: 0,
   };
   s.pos = {};
   s.lock = {};
@@ -267,6 +342,9 @@ export function mgjStart(s, now) {
     hamAt: now + 5000,
     ctlAt: now + rnd(9000, 13000),
     chairAt: now + rnd(18000, 26000),
+    fbAt: now + rnd(5000, 8000),
+    tpAt: 0,
+    eatAt: now + rnd(25000, 40000),
     sgR: 0,
     next: now + 1500,
     say: now + rnd(9000, 16000),
@@ -313,7 +391,7 @@ export function mgjAdvance(s, now, force, log) {
     if (m.hp <= 0) return mgjEnd(s, now, true, log);
     const on = playing(s);
     if (mgjPHp(s) && on.length && on.every((id) => mgjOut(s, id)))
-      return mgjEnd(s, now, false, log); // (every duck is out of HP: Justin wins)
+      return mgjEnd(s, now, false, log, true); // (every duck is out of HP: Justin wins)
     if (force || (!m.met && s.ends && now >= s.ends))
       return mgjEnd(s, now, false, log);
     return s;
@@ -330,7 +408,7 @@ export function mgjAdvance(s, now, force, log) {
   }
   return s;
 }
-function mgjEnd(s, now, won, log) {
+function mgjEnd(s, now, won, log, allOut = false) {
   const m = s.mgj,
     j = s.justin,
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
@@ -344,8 +422,13 @@ function mgjEnd(s, now, won, log) {
   m.left = 0;
   s.shots = [];
   delete j.swing;
-  delete j.god;
   delete j.tell;
+  delete j.eat;
+  m.dup = null;
+  m.cake = null;
+  m.burn = {};
+  for (const id of Object.keys(m.jaimes || {})) delete s.pos[id];
+  m.jaimes = {}; // (the Jaimes go: the fight is over)
   if (won) {
     // onto the podium in the middle
     Object.assign(j, {
@@ -390,13 +473,14 @@ function mgjEnd(s, now, won, log) {
       hits: { ...m.hits },
       kill: m.kill,
       ids: playing(s),
+      jStabs: m.jStabs || 0,
     },
   ];
   say(
     s,
     won
       ? `Justin is defeated!${m.kill && s.players[m.kill] ? ` ${s.players[m.kill].name} got the killing blow.` : ""}`
-      : `Time's up: Justin wins with ${m.hp} HP left.`,
+      : `${allOut ? "Every duck is out" : "Time's up"}: Justin wins with ${m.hp} HP left.`,
   );
   enter(s, "mgjend", now);
   s.ends = now + MGJ_END * 1000;
@@ -404,16 +488,23 @@ function mgjEnd(s, now, won, log) {
 }
 /* ---------- his brain, on the host's heartbeat: true when anything changed ---------- */
 export function mgjTick(s, now, log) {
+  const m = s.mgj;
+  if (!m || !s.justin || !boardPhases(s).includes(s.phase)) return false;
+  const n0 = (s.shots || []).length,
+    ch = brain(s, now, log);
+  return twin(s, now, n0) || ch;
+}
+const fxOf = (s, now) => (o) => {
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    { n: s.fxN, by: JUSTIN_ID, t: now, ...o },
+  ];
+};
+function brain(s, now, log) {
   const m = s.mgj,
     j = s.justin;
-  if (!m || !j || !boardPhases(s).includes(s.phase)) return false;
-  const fx = (o) => {
-    s.fxN = (s.fxN || 0) + 1;
-    s.fx = [
-      ...(s.fx || []).slice(-19),
-      { n: s.fxN, by: JUSTIN_ID, t: now, ...o },
-    ];
-  };
+  const fx = fxOf(s, now);
   const line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   if (s.phase === "mgjend") {
     // a win: lightning on the podium, once
@@ -444,14 +535,6 @@ export function mgjTick(s, now, log) {
     ...(goodUp(s, now) ? [GOOD_ID] : []),
   ];
   const far = (p, q = at) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY); // in duck lengths
-  const knock = (id) => {
-    if (id === GOOD_ID) return goodDown(s, now);
-    const P = s.players[id];
-    if (!P || P.dead || mgjSoak(s, id, now)) return;
-    P.dead = true;
-    holdDown(s, id, now);
-    mgjHurt(s, id);
-  };
   const soon = (ms) => (j.fast ? ms * 0.7 : ms); // (back from his Xbox: every attack comes sooner)
   const stop = () =>
     Object.assign(j, {
@@ -479,12 +562,12 @@ export function mgjTick(s, now, log) {
     m.left = Math.max(0, s.ends - now);
     s.ends = 0;
     delete j.swing;
-    delete j.god;
     delete j.tell;
+    delete j.eat;
+    m.cake = null;
+    m.dup = null;
     stop();
     godLine();
-    if (Math.random() < 0.5)
-      m.strikes = [...m.strikes, Math.random() < 0.5 ? "lightning" : "fire"]; // (maybe one strike comes back)
     return true;
   }
   if (m.met) {
@@ -528,14 +611,15 @@ export function mgjTick(s, now, log) {
       m.left = 0;
       m.met = null;
       m.metDone = true;
-      m.strikeAt = Math.max(m.strikeAt, now + 2500);
       m.pickAt = Math.max(m.pickAt || 0, now + 3000);
+      later(s, now, 3000);
       ch = true;
     }
     return ch;
   }
   if (pickTick(s, now, at, log, fx)) ch = true;
-  if (goodTick(s, now, at, log, fx)) ch = true;
+  if (goodTick(s, now, mgjBodies(s, now).find((b) => b.real) || at, log, fx))
+    ch = true; // (he goes after the real one, when the double is out)
 
   /* the Xbox: the desk comes in, he runs over, turns it off, fades away with the clock stopped, comes back faster */
   if (!m.xb && !m.xbUsed && m.xbAt && now >= m.xbAt) {
@@ -548,6 +632,9 @@ export function mgjTick(s, now, log) {
       v = SPEED * 1.9;
     delete j.swing;
     delete j.tell;
+    delete j.eat;
+    m.cake = null;
+    m.dup = null;
     Object.assign(j, {
       k: null,
       x0: r3(at.x),
@@ -579,6 +666,7 @@ export function mgjTick(s, now, log) {
       s.ends = 0;
       stop();
       line(E_LINES.find((l) => /TURNING OFF MY XBOX/.test(l))); // (his own line)
+      say(s, "NightRobin1123 has left the party"); // (the owner's: in the chat, as Xbox says it)
       fx({ kind: "xboff" });
       return true;
     }
@@ -592,8 +680,8 @@ export function mgjTick(s, now, log) {
     j.hamAt = now + 2000;
     j.ctlAt = Math.max(j.ctlAt, now + 3000);
     j.chairAt = Math.max(j.chairAt, now + 6000);
-    m.strikeAt = Math.max(m.strikeAt, now + 2500);
     m.pickAt = Math.max(m.pickAt || 0, now + 2000);
+    later(s, now, 2500);
     return true;
   }
 
@@ -604,42 +692,28 @@ export function mgjTick(s, now, log) {
     j.say = now + rnd(15000, 30000);
     ch = true;
   }
-  /* from the sky, a moment after his line */
-  if (j.god && now >= j.god.at) {
-    const them = standing(),
-      id = them.includes(j.god.id) ? j.god.id : any(them),
-      kind = j.god.kind;
-    delete j.god;
-    ch = true;
-    if (id) {
-      knock(id);
-      fx({ kind, who: [id] });
-    }
+  /* the rework's: burning ducks, the edge lightning, the Jaimes, his double; then the zebra cake, his snack, his
+     teleport (each of those last three keeps him from attacking while it lasts) */
+  if (burnTick(s, now)) ch = true;
+  if (edgeTick(s, now, fx)) ch = true;
+  if (jaimeTick(s, now, log, fx)) ch = true;
+  if (dupTick(s, now, at)) ch = true;
+  if (m.cake) return cakeTick(s, now, at, fx) || ch;
+  if (j.eat) {
+    if (now < j.eat.until) return ch;
+    delete j.eat;
+    j.next = now;
+    return true;
   }
-  if (!j.god && now >= m.strikeAt && m.strikes.length) {
-    m.strikeAt = now + 2500;
-    const n = playing(s).length,
-      L = m.strikes.includes("lightning"),
-      F = m.strikes.includes("fire");
-    const kind =
-      L && F
-        ? Math.random() < n / (n + 1)
-          ? "lightning"
-          : "fire"
-        : L
-          ? "lightning"
-          : "fire";
-    const low =
-        m.max > 1 ? Math.max(0, Math.min(1, 1 - (m.hp - 1) / (m.max - 1))) : 1,
-      base = Math.min(1, kind === "lightning" ? 0.035 * n : 0.035);
-    const them = standing();
-    if (them.length && Math.random() < base + (1 - base) * low ** 3) {
-      m.strikes = [...m.strikes];
-      m.strikes.splice(m.strikes.indexOf(kind), 1);
-      godLine();
-      j.god = { id: any(them), at: now + STRIKE, kind };
-      ch = true;
-    }
+  if (now >= j.eatAt && !j.swing && !j.tell) {
+    j.eatAt = now + rnd(30000, 45000);
+    stop();
+    j.eat = { k: any(FOODS), at: now, until: now + EAT_MS };
+    return true;
+  } // (now and then he stops for a snack: a look only)
+  if (now >= j.tpAt && !j.swing && !j.tell && atWall(at)) {
+    teleport(s, now, at, fx);
+    return true;
   }
   const them = standing();
   if (!them.length) {
@@ -663,13 +737,19 @@ export function mgjTick(s, now, log) {
       dx = p.x - at.x,
       dy = p.y - at.y,
       aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0];
-    const hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
+    /* with his double out, the swing that hurts is the real one's: his own here, or the double's, mirrored */
+    const from = m.dup && m.dup.fake === 0 ? mirror(at) : at,
+      aim2 = from === at ? aim : [-aim[0], -aim[1]];
+    const hit = strike(s, JUSTIN_ID, "hammer", aim2, now, from);
     for (const h of hit) mgjHurt(s, h);
     const g = s.pos[GOOD_ID];
-    if (goodUp(s, now) && far(g) < 2.4) {
+    if (goodUp(s, now) && far(g, from) < 2.4) {
       goodDown(s, now);
       hit.push(GOOD_ID);
     }
+    for (const jid of Object.keys(m.jaimes || {}))
+      if (s.pos[jid] && far(s.pos[jid], from) < 2.4)
+        jaimeDies(s, jid, now, log, fx, "hammer");
     fx({
       kind: "use",
       what: "hammer",
@@ -713,15 +793,22 @@ export function mgjTick(s, now, log) {
     j.next = now + 600;
     return true;
   }
-  if (now >= j.chairAt || now >= j.ctlAt) {
-    const k = now >= j.chairAt ? "chair" : "controller";
+  if (now >= j.chairAt || now >= j.ctlAt || now >= j.fbAt) {
+    const k =
+      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
     stop();
     j.tell = {
       k,
       id: any(them),
-      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
+      at:
+        now +
+        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
     };
-    if (k === "chair") {
+    if (k === "fireball") {
+      j.fbAt = now + soon(FB_EVERY);
+      j.ctlAt = Math.max(j.ctlAt, now + 2500);
+      j.chairAt = Math.max(j.chairAt, now + 2500);
+    } else if (k === "chair") {
       j.chairAt = now + soon(rnd(15000, 22000));
       j.ctlAt = Math.max(j.ctlAt, now + 4500);
     } else j.ctlAt = now + soon(rnd(8000, 12000));
@@ -1060,8 +1147,8 @@ function pellets(s, by, at, a0, n0, now) {
     ];
   }
 }
-/* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true);
-   his shots knock Good Justin down. Ducks never hit each other here */
+/* a shot this beat, from (x0, y0) to (x0 + dx, y0 + dy): a duck's shot that reaches Justin hits him (and is gone: true;
+   on his double it counts for nothing); his shots hit Good Justin and the Jaimes. Ducks never hit each other here */
 export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
   const m = s.mgj;
   if (!m || s.phase !== "boss") return false;
@@ -1075,14 +1162,14 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
   };
   if (sh.by === JUSTIN_ID) {
+    if (sh.fake) return false;
     if (goodUp(s, now) && near(s.pos[GOOD_ID])) goodDown(s, now);
+    for (const id of Object.keys(m.jaimes || {}))
+      if (s.pos[id] && near(s.pos[id]))
+        jaimeDies(s, id, now, log, fxOf(s, now), sh.k);
     return false;
   }
-  if (mgjGone(s, now) || m.met) return false;
-  const n = justinAt(s.justin, now);
-  if (!n || !near(n)) return false;
-  mgjStab(s, sh.by, now, log, DMG[sh.k] || 1);
-  return true;
+  return mgjHitAt(s, sh.by, now, near, log, DMG[sh.k] || 1);
 }
 
 /* ---------- Good Justin God ---------- */
@@ -1090,16 +1177,26 @@ export const goodUp = (s, now) => {
   const g = s.mgj && s.mgj.gj;
   return !!g && !g.down && now >= g.in && !!s.pos[GOOD_ID];
 };
+/* a hit on him takes 1 of his GOOD_HP, then nothing hurts him for a second; with none left he goes in a poof (and can
+   come again from a pickup) */
 function goodDown(s, now) {
   const g = s.mgj && s.mgj.gj;
-  if (!g || g.down) return;
-  g.down = now + MGJ_DOWN;
+  if (!g || g.down || (g.safe || 0) > now) return;
   g.hits = (g.hits || 0) + 1;
+  g.hp = (g.hp ?? GOOD_HP) - 1;
+  g.safe = now + SOAK_MS;
+  if (g.hp > 0) return;
+  const p = s.pos[GOOD_ID];
+  if (p) fxOf(s, now)({ kind: "poof", x: p.x, y: p.y, who: [GOOD_ID] });
+  delete s.pos[GOOD_ID];
+  s.mgj.gj = null;
+  say(s, `${GOOD_NAME} is gone.`);
 }
 function goodComes(s, now, P, log) {
   s.mgj.gj = {
     in: now,
     down: 0,
+    hp: GOOD_HP,
     stabAt: now + 900,
     sayAt: now + rnd(6000, 10000),
     list: shuffle(GOD_LINES.map((_, i) => i)),
@@ -1178,7 +1275,8 @@ function deskSpot(s, at) {
   }
   return { x: best.x, y: best.y };
 }
-/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair at q */
+/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair or
+   the fireball at q */
 function throwIt(s, k, at, q, now, fx) {
   const dir = (a, v) => {
     const bx = Math.cos(a) * RX,
@@ -1186,10 +1284,11 @@ function throwIt(s, k, at, q, now, fx) {
       bl = Math.hypot(bx, by);
     return [+((bx / bl) * v).toFixed(4), +((by / bl) * v).toFixed(4)];
   };
-  const a0 =
-    k === "chair" && q
-      ? Math.atan2((q.y - at.y) / RY, (q.x - at.x) / RX)
-      : Math.random() * Math.PI * 2;
+  const one = k === "chair" || k === "fireball",
+    a0 =
+      one && q
+        ? Math.atan2((q.y - at.y) / RY, (q.x - at.x) / RX)
+        : Math.random() * Math.PI * 2;
   fx({
     kind: "use",
     what: k,
@@ -1199,11 +1298,11 @@ function throwIt(s, k, at, q, now, fx) {
     ay: +Math.sin(a0).toFixed(3),
   });
   const n0 = s.fxN,
-    n = k === "chair" ? 1 : CTL_N;
+    n = one ? 1 : CTL_N;
   for (let i = 0; i < n; i++) {
     const [vx, vy] = dir(
       a0 + (i * Math.PI * 2) / n,
-      k === "chair" ? CHAIR_SPEED : CTL_SPEED,
+      k === "chair" ? CHAIR_SPEED : k === "fireball" ? FB_SPEED : CTL_SPEED,
     );
     s.shots = [
       ...(s.shots || []),
@@ -1218,11 +1317,411 @@ function throwIt(s, k, at, q, now, fx) {
         t: now,
         lx: at.x,
         ly: at.y,
-        life: k === "chair" ? CHAIR_LIFE : CTL_LIFE,
-        ...(k === "chair" ? { r: CHAIR_R } : {}),
+        life:
+          k === "chair" ? CHAIR_LIFE : k === "fireball" ? FB_LIFE : CTL_LIFE,
+        ...(k === "chair"
+          ? { r: CHAIR_R }
+          : k === "fireball"
+            ? { r: FB_R }
+            : {}),
       },
     ];
   }
+}
+
+/* ---------- the rework (the owner's, Nov 3) ---------- */
+/* a hit on a duck from anything of his (the fireball, a burning duck, the edge lightning): its HP, or down. True when
+   it hurt (not while nothing can hurt it, nor in the air) */
+export function mgjKnock(s, id, now) {
+  if (id === GOOD_ID) {
+    goodDown(s, now);
+    return true;
+  }
+  const P = s.players[id],
+    p = s.pos[id];
+  if (!P || P.dead || !p || mgjSafe(s, id, now) || dodges(s, p, now))
+    return false;
+  if (!mgjSoak(s, id, now)) {
+    P.dead = true;
+    holdDown(s, id, now);
+  }
+  mgjHurt(s, id);
+  return true;
+}
+/* the duck catches fire: it burns for BURN_MS and looks burnt for BURNT_MS */
+export function mgjBurn(s, id, now) {
+  const m = s.mgj;
+  if (!m || !s.players[id]) return;
+  m.burn = { ...m.burn, [id]: now + BURN_MS };
+  m.burnt = { ...m.burnt, [id]: now + BURNT_MS };
+}
+export const mgjBurning = (s, id, now) =>
+  ((s.mgj && s.mgj.burn) || {})[id] > now;
+const alive = (o, now) =>
+  Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v > now));
+/* the burns run out; a burning duck lights every duck it touches (that takes 1 HP, as the fireball does) */
+function burnTick(s, now) {
+  const m = s.mgj,
+    burn = alive(m.burn, now),
+    burnt = alive(m.burnt, now);
+  let ch =
+    Object.keys(burn).length !== Object.keys(m.burn || {}).length ||
+    Object.keys(burnt).length !== Object.keys(m.burnt || {}).length;
+  m.burn = burn;
+  m.burnt = burnt;
+  for (const a of Object.keys(burn)) {
+    const p = s.pos[a];
+    if (!p || p.x < 0 || dodges(s, p, now)) continue;
+    for (const b of playing(s)) {
+      const q = s.pos[b];
+      if (b === a || !q || q.x < 0 || m.burn[b] > now) continue;
+      if (Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY) > TOUCH) continue;
+      if (mgjKnock(s, b, now)) {
+        mgjBurn(s, b, now);
+        fxOf(s, now)({ kind: "burn", who: [b] });
+        ch = true;
+      }
+    }
+  }
+  return ch;
+}
+/* the edge lightning: when its time comes, every duck and Jaime on the edge is hit (the edges glowed for EDGE_WARN
+   before: game.js reads edgeAt) */
+function edgeTick(s, now, fx) {
+  const m = s.mgj;
+  if (now < m.edgeAt) return false;
+  m.edgeAt = now + EDGE_EVERY;
+  m.edgeLast = now;
+  const hit = [];
+  for (const id of playing(s)) {
+    const p = s.pos[id];
+    if (p && p.x >= 0 && onEdge(p) && mgjKnock(s, id, now)) hit.push(id);
+  }
+  for (const id of Object.keys(m.jaimes || {})) {
+    const p = s.pos[id];
+    if (p && onEdge(p) && !dodges(s, p, now))
+      jaimeDies(s, id, now, () => {}, fx, "edge");
+  }
+  fx({ kind: "edge", who: hit });
+  return true;
+}
+/* the timed attacks wait a moment after he's back (the meteor, his Xbox) */
+function later(s, now, ms) {
+  const m = s.mgj,
+    j = s.justin;
+  m.edgeAt = Math.max(m.edgeAt || 0, now + ms + EDGE_WARN);
+  j.fbAt = Math.max(j.fbAt || 0, now + ms);
+  if (m.dupAt) m.dupAt = Math.max(m.dupAt, now + ms); // (0: this minute's double came already)
+}
+
+/* his teleport: at the edge he flashes blue and is somewhere far from every edge */
+const atWall = (p) =>
+  p.x < WALL.x || p.x > 1 - WALL.x || p.y < WALL.y || p.y > 1 - WALL.y;
+function teleport(s, now, at, fx) {
+  const j = s.justin,
+    x = r3(rnd(0.25, 0.75)),
+    y = r3(rnd(0.25, 0.75));
+  j.tpAt = now + TP_EVERY;
+  fx({ kind: "teleport", x0: r3(at.x), y0: r3(at.y), x, y });
+  Object.assign(j, { k: null, x0: x, y0: y, x1: x, y1: y, t: now, v: SPEED });
+  j.next = now + 700;
+}
+
+/* his double: the same Justin, mirrored through the board's middle, doing all he does; one of the two (fake: 0 him, 1
+   the double) does no harm, and a hit on that one counts for nothing */
+const mirror = (p) => ({ x: r3(1 - p.x), y: r3(1 - p.y) });
+function dupTick(s, now, at) {
+  const m = s.mgj;
+  if (m.dup && now >= m.dup.until) {
+    m.dup = null;
+    return true;
+  }
+  if (now >= m.dupWin + DUP_EVERY) {
+    m.dupWin += DUP_EVERY;
+    m.dupAt = Math.max(m.dupAt, m.dupWin + rnd(0, DUP_EVERY - DUP_MS));
+  } // (one a minute, at a random moment in it)
+  if (m.dup || now < m.dupAt || m.dupAt < m.dupWin) return false;
+  m.dupAt = 0;
+  m.dup = { at: now, until: now + DUP_MS, fake: Math.random() < 0.5 ? 0 : 1 };
+  fxOf(
+    s,
+    now,
+  )({ kind: "teleport", x0: r3(at.x), y0: r3(at.y), ...mirror(at), dup: true });
+  return true;
+}
+/* where he can be hit: himself, and his double while it's out (real: hits on it count) */
+export function mgjBodies(s, now) {
+  const m = s.mgj,
+    n = s.justin && justinAt(s.justin, now);
+  if (!m || !n || mgjGone(s, now) || m.met) return [];
+  const me = { x: n.x, y: n.y, real: !m.dup || m.dup.fake !== 0 };
+  return m.dup
+    ? [me, { ...mirror(n), real: m.dup.fake === 0, dup: true }]
+    : [me];
+}
+/* a duck's hit that reaches him (near: is that body in reach?): the real one takes n damage; on the fake only a grey
+   hitmarker. True when it hit either */
+export function mgjHitAt(s, by, now, near, log, n = 1) {
+  const bodies = mgjBodies(s, now).filter(near);
+  if (!bodies.length) return false;
+  const b = bodies.find((x) => x.real) || bodies[0];
+  if (b.real) mgjStab(s, by, now, log, n);
+  if (s.mgj.dup)
+    fxOf(s, now)({ kind: "hitmark", x: b.x, y: b.y, fake: !b.real });
+  return true;
+}
+/* his double's shots: each new shot of his this beat gets a mirrored twin, and the fake one's are marked */
+function twin(s, now, n0) {
+  const m = s.mgj,
+    d = m && m.dup;
+  if (!d || !s.shots || s.shots.length <= n0) return false;
+  const made = s.shots
+    .slice(n0)
+    .filter((sh) => sh.by === JUSTIN_ID && !sh.twin);
+  if (!made.length) return false;
+  for (const sh of made) {
+    sh.twin = 1;
+    if (d.fake === 0) sh.fake = 1;
+    const o = mirror({ x: sh.x0, y: sh.y0 });
+    s.shots.push({
+      ...sh,
+      n: sh.n + 1e7,
+      x0: o.x,
+      y0: o.y,
+      lx: o.x,
+      ly: o.y,
+      vx: -sh.vx,
+      vy: -sh.vy,
+      twin: 2,
+      ...(d.fake === 1 ? { fake: 1 } : { fake: 0 }),
+    });
+  }
+  return true;
+}
+
+/* ---------- the zebra cake: thrown by a duck, he chases it to where it lands at the edge and eats it ---------- */
+export const cakeAt = (c, now) => {
+  const t = (Math.min(now, c.stop) - c.t) / 1000;
+  return { x: c.x0 + c.vx * t, y: c.y0 + c.vy * t };
+};
+function cakeTick(s, now, at, fx) {
+  const m = s.mgj,
+    j = s.justin,
+    c = m.cake;
+  delete j.swing;
+  delete j.tell;
+  if (c.eat) {
+    if (now < c.eat + CAKE_EAT_MS) return false;
+    m.cake = null;
+    delete j.eat;
+    j.next = now;
+    j.fireAt = Math.max(j.fireAt, now + 800);
+    j.hamAt = Math.max(j.hamAt, now + 1200);
+    return true;
+  }
+  const p = cakeAt(c, now),
+    d = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY);
+  if (now >= c.stop && d < 1.3) {
+    c.eat = now;
+    Object.assign(j, {
+      k: null,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(at.x),
+      y1: r3(at.y),
+      t: now,
+    });
+    j.eat = { k: "zebra", at: now, until: now + CAKE_EAT_MS, cake: true };
+    fx({ kind: "eat", what: "zebra" });
+    return true;
+  }
+  if (Math.abs(j.x1 - p.x) < 0.004 && Math.abs(j.y1 - p.y) < 0.004)
+    return false;
+  Object.assign(j, {
+    k: null,
+    x0: r3(at.x),
+    y0: r3(at.y),
+    x1: r3(p.x),
+    y1: r3(p.y),
+    t: now,
+    v: SPEED * 1.9,
+  }); // (he runs after it)
+  return true;
+}
+
+/* ---------- Jaime ---------- */
+/* the shared pool: how many are stored, and when the one charging now began */
+export function jaimePool(m, now) {
+  const jp = (m && m.jp) || { n: 0, at: now },
+    k = Math.floor(Math.max(0, now - jp.at) / JAIME_MS),
+    n = jp.n + k;
+  return n >= JAIME_MAX
+    ? { n: JAIME_MAX, at: now }
+    : { n, at: jp.at + k * JAIME_MS };
+}
+function jaimeComes(s, by, now, fx) {
+  const m = s.mgj,
+    p = s.pos[by],
+    pool = jaimePool(m, now);
+  if (!p || pool.n < 1) return false;
+  m.jp = { n: pool.n - 1, at: pool.n === JAIME_MAX ? now : pool.at };
+  m.jaimeN = (m.jaimeN || 0) + 1;
+  const id = `jaime${m.jaimeN}`;
+  m.jaimes = {
+    ...m.jaimes,
+    [id]: { by, n: m.jaimeN, stabAt: now + 600, safe: now + SOAK_MS },
+  }; // (a moment safe as he comes in: the duck that sent him is where Justin shoots)
+  s.pos[id] = { x: p.x, y: p.y, face: p.face || 1 };
+  fx({ kind: "jaime", who: [id], by });
+  return true;
+}
+/* every beat: each Jaime sprints at the real Justin and stabs him once a second when close */
+function jaimeTick(s, now, log, fx) {
+  const m = s.mgj,
+    ids = Object.keys(m.jaimes || {});
+  const dt = Math.min(0.5, Math.max(0, (now - (m.jt || now)) / 1000));
+  m.jt = now;
+  if (!ids.length) return false;
+  const b = mgjBodies(s, now).find((x) => x.real);
+  if (!b) return false;
+  let ch = false;
+  for (const id of ids) {
+    const J = m.jaimes[id],
+      p = s.pos[id];
+    if (!p) continue;
+    const dx = (b.x - p.x) / RX,
+      dy = (b.y - p.y) / RY,
+      d = Math.hypot(dx, dy);
+    if (d > 1.3) {
+      const step = Math.min(d - 1.2, JAIME_RUN * dt);
+      s.pos[id] = {
+        ...p,
+        x: r3(Math.max(0, Math.min(1, p.x + (dx / d) * step * RX))),
+        y: r3(Math.max(0, Math.min(1, p.y + (dy / d) * step * RY))),
+        face: dx < 0 ? -1 : 1,
+      };
+      ch = true;
+    }
+    if (d <= 2 && now >= J.stabAt) {
+      J.stabAt = now + 1000;
+      const aim = d > 1e-3 ? [dx / d, dy / d] : [1, 0],
+        hit = mgjStab(s, J.by, now, log, DMG.jaime);
+      fx({
+        kind: "use",
+        what: "knife",
+        by: id,
+        who: [id],
+        face: aim[0] < 0 ? -1 : 1,
+        ax: +aim[0].toFixed(3),
+        ay: +aim[1].toFixed(3),
+        ...(hit ? { hit: [JUSTIN_ID] } : {}),
+      });
+      if (hit) {
+        m.jStabs = (m.jStabs || 0) + 1;
+        s.jaimeStabs = (s.jaimeStabs || 0) + 1; // (every Jaime's stabs, toward the unlock: unlocks.js)
+        fx({ kind: "hitmark", x: b.x, y: b.y });
+        const j = s.justin;
+        if (now > (j.ouchJ || 0) && Math.random() < 0.4) {
+          j.ouchJ = now + 4000;
+          log(s, { npc: JUSTIN_ID, name: "Justin", text: any(JAIME_OUCH) });
+        }
+      }
+      ch = true;
+    }
+  }
+  return ch;
+}
+/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin) */
+function jaimeDies(s, id, now, log, fx, how) {
+  const m = s.mgj,
+    p = s.pos[id];
+  if (!m.jaimes || !m.jaimes[id] || m.jaimes[id].safe > now) return;
+  const rest = { ...m.jaimes };
+  delete rest[id];
+  m.jaimes = rest;
+  delete s.pos[id];
+  if (!p) return;
+  fx({ kind: "poof", x: p.x, y: p.y, who: [id] });
+  if (how === "controller" || how === "chair") {
+    fx({ kind: "hitmark", x: p.x, y: p.y });
+    const j = s.justin;
+    if (now > (j.gotJ || 0) && Math.random() < 0.6) {
+      j.gotJ = now + 4000;
+      log(s, { npc: JUSTIN_ID, name: "Justin", text: any(JAIME_GOT) });
+    }
+  }
+}
+
+/* ---------- the ducks' own: the medkit, Jaime, the zebra cake (a = the use action) ---------- */
+export function mgjTeamUse(s, a, now, log) {
+  const m = s.mgj,
+    p = s.pos[a.id],
+    fx = fxOf(s, now);
+  if (!m || !p) return false;
+  if (a.what === "jaime") return jaimeComes(s, a.id, now, fx);
+  if (a.what === "medkit") {
+    if ((m.kits || {})[a.id]) return false;
+    const down = playing(s)
+      .filter((id) => id !== a.id && (s.players[id] || {}).dead && s.pos[id])
+      .map((id) => [
+        id,
+        Math.hypot((s.pos[id].x - p.x) / RX, (s.pos[id].y - p.y) / RY),
+      ])
+      .filter(([, d]) => d <= MEDKIT_REACH)
+      .sort((x, y) => x[1] - y[1])[0];
+    if (!down) return false;
+    const id = down[0],
+      max = mgjPHp(s);
+    delete s.players[id].dead;
+    for (const k of ["down", "up"]) {
+      const rest = { ...s[k] };
+      delete rest[id];
+      s[k] = rest;
+    }
+    const out = { ...m.out };
+    delete out[id];
+    m.out = out;
+    if (max) m.lost = { ...m.lost, [id]: max - Math.ceil(max / 2) }; // (it stands up at half its HP: 3 of 6)
+    m.safe = { ...m.safe, [id]: now + SOAK_MS };
+    m.kits = { ...m.kits, [a.id]: now };
+    fx({ kind: "medkit", by: a.id, who: [id] });
+    say(
+      s,
+      `${s.players[a.id].name} got ${s.players[id].name} up with a medkit.`,
+    );
+    return true;
+  }
+  if (a.what === "zebra") {
+    if (m.cake || now - (m.zebraAt || 0) < CAKE_EVERY || mgjGone(s, now))
+      return false;
+    const aim = aimOf(a, a.face < 0 ? -1 : 1),
+      vx = aim[0] * CAKE_SPEED,
+      vy = aim[1] * CAKE_SPEED; // (as the dagger flies: the aim is about a board width long on the thrower's screen)
+    const tx =
+        vx > 0 ? (0.97 - p.x) / vx : vx < 0 ? (0.03 - p.x) / vx : Infinity,
+      ty = vy > 0 ? (0.96 - p.y) / vy : vy < 0 ? (0.04 - p.y) / vy : Infinity;
+    m.zebraAt = now;
+    m.cake = {
+      n: now,
+      by: a.id,
+      x0: p.x,
+      y0: p.y,
+      vx: +vx.toFixed(4),
+      vy: +vy.toFixed(4),
+      t: now,
+      stop: now + Math.max(0, Math.min(tx, ty, 6)) * 1000,
+      eat: 0,
+    };
+    fx({
+      kind: "use",
+      what: "zebra",
+      by: a.id,
+      who: [a.id],
+      face: vx < 0 ? -1 : 1,
+    });
+    return true;
+  }
+  return false;
 }
 
 /* ---------- the stats ---------- */

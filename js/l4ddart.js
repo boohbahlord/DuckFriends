@@ -1,7 +1,7 @@
-/* ---------- Left 4 Dead Ducks' pictures (placeholders in the game's style, for the owner to OK) ----------
+/* ---------- Left 4 Dead Ducks' pictures (in the game's style; the owner OK'd them) ----------
    The zombie duck (a darker green rubber duck with X eyes, now and then in a hat or an outfit, a little bigger or
-   fatter), the extra candles on the floor, the boards over the doors, the holes and the top of the deck's stairs, the
-   bow in hand and its arrow, and the icons on the weapons bar. Preview: tools/l4dd-art.html */
+   fatter), the extra candles on the floor, the boards over the doors, the holes and the top of the deck's stairs, and the
+   flashlight's icon on the weapons bar (the bow and its arrow are Mad God Justin's: mgjart.js). Preview: tools/l4dd-art.html */
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./hangout/art.js";
 import { zombieLook } from "./l4ddrules.js";
@@ -137,14 +137,8 @@ export function boardsSVG(o, n) {
   return `<svg viewBox="${b.l} ${b.t} ${b.w} ${b.h}" width="${b.w}" height="${b.h}" xmlns="http://www.w3.org/2000/svg">${parts.join("")}</svg>`;
 }
 
-/* the bow in hand, as the pistol is drawn (40 × 24, pointing right): a curved wooden bow, its string, an arrow on it */
-export const BOW = `<svg viewBox="0 0 40 24"><path d="M14 1.4Q25 12 14 22.6" fill="none" stroke="${INK}" stroke-width="4.2" stroke-linecap="round"/><path d="M14 1.4Q25 12 14 22.6" fill="none" stroke="#a8692e" stroke-width="2.4" stroke-linecap="round"/><path d="M14 1.4L9 12L14 22.6" fill="none" stroke="#f4ecd8" stroke-width=".9"/><path d="M9 12H36" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"/><path d="M9 12H36" stroke="#d9b98a" stroke-width="1"/><path d="M33 9.4L39 12L33 14.6Z" fill="#b8c2cc" stroke="${INK}" stroke-width="1"/><path d="M8 12l-3-3h4.4l2 3-2 3H5Z" fill="#e8424d" stroke="${INK}" stroke-width=".8"/></svg>`;
-/* an arrow in flight (24 × 10, pointing right, as the bullet) */
-export const ARROW = `<svg viewBox="0 0 24 10"><path d="M2 5H20" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/><path d="M2 5H20" stroke="#d9b98a" stroke-width="1.1"/><path d="M18 2.2L23.6 5L18 7.8Z" fill="#b8c2cc" stroke="${INK}" stroke-width=".9"/><path d="M1 2.4L5 5L1 7.6M3.6 2.4L7.6 5L3.6 7.6" fill="none" stroke="#e8424d" stroke-width="1.3"/></svg>`;
-
 /* the weapons bar's icons (square) */
 export const ICONS = {
-  bow: `<svg viewBox="0 0 30 30"><path d="M11 2Q27 15 11 28" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M11 2Q27 15 11 28" fill="none" stroke="#a8692e" stroke-width="3" stroke-linecap="round"/><path d="M11 2L5 15L11 28" fill="none" stroke="#f4ecd8" stroke-width="1"/><path d="M5 15H27" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/><path d="M5 15H27" stroke="#d9b98a" stroke-width="1.2"/><path d="M24 11.6L29.4 15L24 18.4Z" fill="#b8c2cc" stroke="${INK}" stroke-width="1"/></svg>`,
   flashlight: (on) =>
     `<svg viewBox="0 0 30 30">${on ? '<path d="M17 8L29 2V28L17 22Z" fill="#fff4c2" opacity=".55"/>' : ""}<rect x="2" y="11" width="11" height="8" rx="2" fill="#3b3f4a" stroke="${INK}" stroke-width="1.3"/><path d="M13 9.4L18 7.6V22.4L13 20.6Z" fill="#6b7280" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><rect x="5" y="13.4" width="4" height="3.2" rx="1" fill="${on ? "#ffd23f" : "#8a8f99"}" stroke="${INK}" stroke-width=".8"/>${on ? "" : `<path d="M4 5L26 26" stroke="#ff3d6e" stroke-width="2.6" stroke-linecap="round"/>`}</svg>`,
 };

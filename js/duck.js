@@ -97,12 +97,10 @@ export const SIZES = [
   [1, "Big"],
 ];
 const clamp1 = (v) => Math.max(-1, Math.min(1, +v || 0));
-/* how much room a duck takes on the board, width and depth (1 = a normal duck) */
-export function duckRoom(look = {}) {
-  if (look && look.style === "jack") return { x: 1, y: 1 }; // Jack in a Box takes a normal duck's room (his build and size are only stored)
-  const k = 1 + 0.1 * clamp1(look.size),
-    f = clamp1(look.build);
-  return { x: k * (1 + 0.16 * f), y: k * (1 + 0.08 * f) };
+/* how much room a duck takes on the board, width and depth (1 = a normal duck). The owner: every duck's hitbox is the
+   default duck's, whatever its outfit, hat, size, build or style, in every mode (the rules' hits never looked at them) */
+export function duckRoom() {
+  return { x: 1, y: 1 };
 }
 
 let uid = 0;
@@ -210,7 +208,8 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
     top = hat.front || face ? HAT_TOP : 0;
   const fat = clamp1(L.build),
     k = 1 + 0.1 * clamp1(L.size),
-    eyes = eyesSVG(L, dead);
+    eyes = eyesSVG(L, dead),
+    zap = L.eyes === "lightning" && !dead; // (I want the lightning eyes drawn over any face apparel, his glasses too)
   const bt = fat
     ? ` transform="translate(60 106) scale(${(1 + 0.16 * fat).toFixed(3)} ${(1 + 0.08 * fat).toFixed(3)}) translate(-60 -106)"`
     : "";
@@ -234,7 +233,7 @@ ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}"
 ${hat.back}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
 ${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>` : ""}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${beakSVG(L)}${eyes}${face}${hat.front}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal];
@@ -331,8 +330,9 @@ ${
 ${SL.over || ""}
 ${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
 ${beakSVG(L)}
-${eyes}
+${zap ? "" : eyes}
 ${face}
+${zap ? eyes : ""}
 ${hat.front}
 ${k !== 1 ? "</g>" : ""}
 ${extra}

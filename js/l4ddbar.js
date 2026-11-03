@@ -26,11 +26,9 @@ export function mountL4Bar(S, api) {
   pad.className = "l4pad";
   let sig = "";
   const icon = (w, s) =>
-    w === "bow"
-      ? ICONS.bow
-      : w === "fl"
-        ? ICONS.flashlight(!((s.hang && s.hang.l4f) || {})[api.me()])
-        : specialById(w).icon; // (the knife, the pistol and the grenade as the specials' bar shows them)
+    w === "fl"
+      ? ICONS.flashlight(!((s.hang && s.hang.l4f) || {})[api.me()])
+      : specialById(w).icon; // (the knife, the pistol, the bow and the grenade as the specials' bar shows them)
   const count = (w, m) =>
     !m
       ? ""
