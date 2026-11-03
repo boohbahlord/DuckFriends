@@ -2559,6 +2559,18 @@ svg.duck.jack.bob .jk,
     transform: none;
   }
 } /* (scaled from the spring's foot only, so he never lifts out of the box) */
+/* dat boi's rainbow rank: every part of him and his unicycle runs through the colors at a steady pace (datboi.js) */
+html.moving svg.duck.datboi.rainbow .dbr {
+  animation: db-hue 6s linear infinite;
+}
+@keyframes db-hue {
+  from {
+    filter: hue-rotate(0deg);
+  }
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
 .gduck-body svg {
   width: 100%;
   height: auto;
