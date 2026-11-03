@@ -544,7 +544,7 @@ const BY_MODE = {
         [165, "2:45"],
       ],
       cat: "time",
-      d: "The time to bring Justin to 0 HP. His meteor adds 30 s. Only wins at 2:15 count toward the lightning eyes.",
+      d: "The time to bring Justin to 0 HP, plus 4 s for every player. His meteor adds 30 s. Only wins at 2:15 count toward the lightning eyes.",
     },
   ],
   vdd: [

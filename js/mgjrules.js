@@ -2,7 +2,7 @@
    A boss fight: every duck has the knife (1), the bow (2), a medkit (3, once a game), Jaime (4, from a pool everyone
    shares), the weapon it picked up (5) and the zebra cake (6, shared too), and together they must bring Justin's HP to 0
    before the timer runs out (2:15 by default; the lobby has 1:45 and 2:45 too, but only a win at the default counts
-   toward the lightning eyes). His HP is 20 + 8 for each player when the fight starts, and one stab takes 1. Each duck
+   toward the lightning eyes). His HP is 20 + 20 for each player when the fight starts, and one stab takes 1. Each duck
    has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it flickers), and a duck out of HP
    stays down until a medkit or the fight's end. He never goes after a duck that's down. A jump dodges everything but
    in its first and last fifth (rules.js dodges).
@@ -69,7 +69,8 @@ export const MGJ_END = 9; // seconds of the podium (or his winning line), then t
 export const MGJ_ZAP = 1600; // ms into a win: lightning strikes him on the podium
 export const MGJ_DOWN = 5000; // ms a hit duck stays down
 export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enough for his bubble over him, under the cloud)
-export const hpOf = (n) => 20 + 8 * n; // (12 more than before, and 2 more for every player)
+export const hpOf = (n) => 20 + 20 * n; // (owner 2026-11-03 17:09Z: 12 more HP for every player, on top of the 8)
+export const TIME_PER = 4; // seconds more on the timer for every player (owner 2026-11-03 17:09Z)
 /* Player HP (in the lobby's Additional settings): on by default at 6; off, or 1, 5, 6, 10 or 15. A hit from Justin
    takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down, and it stays down until a medkit or
    the fight's end (won or lost); when every duck is out, Justin wins. After any hit nothing can hurt the duck for
@@ -353,7 +354,7 @@ export function mgjStart(s, now) {
     ouch: 0,
   };
   enter(s, "boss", now);
-  s.ends = now + mgjTime(s) * 1000;
+  s.ends = now + (mgjTime(s) + TIME_PER * n) * 1000;
   say(s, `Defeat Justin! He has ${max} HP.`);
   return s;
 }

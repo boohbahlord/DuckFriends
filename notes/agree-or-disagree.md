@@ -3256,3 +3256,9 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 
 - Adam's reading: unlocked at 36 damage from Jaime stabs on Mad God Justin, anyone's Jaimes (the Nov 3 answer 7); a normal special in Customize; when released he goes for the player I hit in the last 15 s, else the player who hit me in the last 15 s, else the nearest; Mad God Justin's Jaime art and charge; under the silly-commands switch like the Chair.
 - Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main): `s.jm` holds each Jaime (his own place, not in s.pos, so he never votes); `s.hitLog` the last 15 s of player-on-player hits (knife, hammer, bullets, arrows, daggers, chair, grenade, Jaime's own stabs). 12 s per duck, a Jaime lasts 12 s at most, stabs once a second (the normal 3 HP), poofs once his target is down. Unlock counts `s.jaimeStabs` while I'm seated in Mad God Justin (TEST rooms count too, like Justin kills).
+
+## 2026-11-03 17:09Z: Mad God Justin, more HP and time per player (word for word)
+> Justin should get and additional +12 hp per player and +4 seconds of time per player
+
+- Adam: read as Mad God Justin (the mode with a timer). His HP goes from 20 + 8 per player to 20 + 20 per player, and the
+  fight's timer gets 4 s more per player (TIME_PER in js/mgjrules.js). Board Justin (10 HP, no timer) is unchanged.
