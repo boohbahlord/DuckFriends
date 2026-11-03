@@ -7066,6 +7066,8 @@ export const music = (function () {
     if (!e) return { name: "", off: S.off || [] };
     if (inMenu() && !sounding() && wanted())
       return { name: e.n, next: false, in: 0, off: [], wait: true }; // (the browser still holds the sound: the bar asks for a tap)
+    if (inMenu() && e === S.a)
+      return { name: e.n, next: false, in: 0, off: [] }; // (on the menus the first song waits at its start while the music is muted, or while its recording gets ready, and its start moves every second: shown as "next", the bar blinked on and off)
     return {
       name: e.n,
       next: t < e.at,
