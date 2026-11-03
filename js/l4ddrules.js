@@ -44,8 +44,9 @@ import {
 import { GRENADE_MS } from "./rules.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
-/* I want only these of Hangout's activities on: the lights' stutter. Nothing to sit on, play, write in or switch */
-keepOnly("l4dd", [], ["flicker"]);
+/* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
+   keys are still drawn, but quiet: nothing to sit on, sing into or play at, and nothing else to write in or switch. */
+keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano"]);
 
 /* ---------- the numbers ---------- */
 export const L4 = {

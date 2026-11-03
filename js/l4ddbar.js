@@ -5,8 +5,8 @@
    On a phone it stands at the board's bottom right as a column of round buttons, with a big Attack button that uses
    what's in hand toward the nearest zombie I can see (l4dd.js l4TouchAim); my HP shows on my duck's green bar there. */
 import { heldHTML } from "./specials.js";
-import { ICONS, BOW } from "./l4ddart.js";
-import { L4, ARMS } from "./l4ddrules.js";
+import { ICONS } from "./l4ddart.js";
+import { L4 } from "./l4ddrules.js";
 
 const SLOTS = [
   ["knife", "1", "Knife"],
@@ -104,5 +104,3 @@ export function mountL4Bar(S, api) {
     },
   };
 }
-export const L4_HELD = { bow: BOW };
-export const L4_COOL = (w) => (ARMS[w] ? ARMS[w].cool : 0);

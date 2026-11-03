@@ -53,19 +53,37 @@ export const activity = (a) => {
 
 /* ---------- other modes on Duck Cabin ----------
    Hangout runs every activity. Another mode on the same map (Left 4 Dead Ducks) keeps only the ones it names, and adds
-   its own: an activity or a rule with only: 'l4dd' runs in that mode alone. keepOnly(mode, rules, acts) names what stays
-   on (the rules' k, the screen parts' id). rulesOf(s) and actsOf(s) give what runs for the room's mode */
-const KEEP = new Map(); // mode → { rules: Set, acts: Set }
-export const keepOnly = (mode, rules, acts) => {
-  KEEP.set(mode, { rules: new Set(rules), acts: new Set(acts) });
+   its own: an activity or a rule with only: 'l4dd' runs in that mode alone. keepOnly(mode, rules, acts, quiet) names what
+   stays on (the rules' k, the screen parts' id); a quiet one only draws (the couches: no Sit button, no keys, no
+   pointer). rulesOf(s) and actsOf(s) give what runs for the room's mode */
+const KEEP = new Map(); // mode → { rules: Set, acts: Set, quiet: Set }
+export const keepOnly = (mode, rules, acts, quiet = []) => {
+  KEEP.set(mode, {
+    rules: new Set(rules),
+    acts: new Set([...acts, ...quiet]),
+    quiet: new Set(quiet),
+  });
 };
 const runs = (mode, key, o, kind) => {
   if (o.only) return o.only === mode;
   const k = KEEP.get(mode);
   return !k || k[kind].has(key);
 };
+const QUIET = ["near", "hold", "push", "jump", "keydown", "keyup", "pointer"];
+const hush = (a) =>
+  Object.fromEntries(Object.entries(a).filter(([k]) => !QUIET.includes(k)));
 const modeOf = (s) => (s && s.options && s.options.mode) || "hang";
 export const rulesOf = (s) =>
   [...RULES].filter(([k, r]) => runs(modeOf(s), k, r, "rules"));
-export const actsOf = (s) =>
-  [...ACTS.values()].filter((a) => runs(modeOf(s), a.id, a, "acts"));
+const actsCache = new Map(); // mode → [its screen parts] (the activities all register as the page loads)
+export function actsOf(s) {
+  const mode = modeOf(s),
+    c = actsCache.get(mode);
+  if (c && c.n === ACTS.size) return c.list;
+  const quiet = (KEEP.get(mode) || {}).quiet || new Set(),
+    list = [...ACTS.values()]
+      .filter((a) => runs(mode, a.id, a, "acts"))
+      .map((a) => (quiet.has(a.id) ? hush(a) : a));
+  actsCache.set(mode, { n: ACTS.size, list });
+  return list;
+}
