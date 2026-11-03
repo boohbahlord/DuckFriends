@@ -41,6 +41,18 @@ export function sfxContext() {
 }
 export const sfxOut = () => sfxContext() && cap; // where they all go: through the ceiling to the speakers
 const ac = sfxContext;
+/* two seconds of white noise, made once per sound clock, for sounds that come often (the bow) or last (burning) */
+const NOISE = new WeakMap();
+function whiteNoise(a) {
+  let b = NOISE.get(a);
+  if (!b) {
+    b = a.createBuffer(1, a.sampleRate * 2, a.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    NOISE.set(a, b);
+  }
+  return b;
+}
 let lastHit = 0;
 /* "now" on a sound clock, plus a lead. Firefox only moves currentTime between tasks, so a sound set during a long frame
    read a clock that had stopped, landed in the past and popped: if the clock hasn't moved since I last looked, I add the
@@ -94,6 +106,7 @@ function noise(
     q = 0.8,
     slideTo = 0,
     fade = 0.005,
+    top = 0,
   } = {},
 ) {
   const a = ac(),
@@ -116,7 +129,14 @@ function noise(
   if (slideTo) f.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
   g.gain.setValueAtTime(gain * v, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  src.connect(f).connect(g).connect(cap);
+  let o = src.connect(f);
+  if (top) {
+    const lp = a.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = top;
+    o = o.connect(lp);
+  } // top: nothing above it (bright noise at a start is heard as a click)
+  o.connect(g).connect(cap);
   src.start(t);
   src.stop(t + dur + 0.02);
 }
@@ -326,8 +346,8 @@ export const sfx = {
     });
   },
   zap() {
-    noise(0.18, { gain: 0.09, freq: 3200, q: 0.6 });
-    noise(0.12, { gain: 0.06, freq: 2200, at: 0.08 });
+    noise(0.18, { gain: 0.1, freq: 2800, q: 0.6, fade: 0.025, top: 3000 });
+    noise(0.12, { gain: 0.06, freq: 2200, at: 0.08, fade: 0.012, top: 3500 });
     noise(1.1, {
       gain: 0.07,
       type: "lowpass",
@@ -343,15 +363,15 @@ export const sfx = {
   },
   /* a player hit (or Justin): a short "oof" like a player hurt in Minecraft, but a duck's: a nasal, buzzy quack that bends
      up a little and falls ("wahk"), through two bright bands, over a soft thump; each a little higher or lower than the
-     last, as there. Two hits at once (a knife that knocks a duck down) make one sound */
-  hit() {
+     last, as there. Two hits at once (a knife that knocks a duck down) make one sound. up: higher (Jaime: 1.35) */
+  hit(up = 1) {
     const a = ac(),
       v = vol(),
       p = performance.now();
     if (!a || !v || p - lastHit < 120) return;
     lastHit = p;
     const t = soon(a),
-      k = 0.92 + Math.random() * 0.16,
+      k = up * (0.92 + Math.random() * 0.16),
       o = a.createOscillator(),
       lp = a.createBiquadFilter(),
       g = a.createGain();
@@ -384,6 +404,163 @@ export const sfx = {
     o.start(t);
     o.stop(t + 0.08 + 0.04 * 7);
     tone(170 * k, 0.12, { gain: 0.07, slide: 0.55, attack: 0.016 }); // (the thump)
+  },
+  /* ---------- Mad God Justin ---------- */
+  /* Jaime goes down: a soft cloud poof (dark, airy) and a higher hit */
+  jaime() {
+    noise(0.4, {
+      gain: 0.07,
+      type: "lowpass",
+      freq: 1200,
+      slideTo: 260,
+      fade: 0.025,
+    });
+    noise(0.22, {
+      gain: 0.03,
+      type: "lowpass",
+      freq: 800,
+      at: 0.03,
+      fade: 0.02,
+    });
+    sfx.hit(1.35);
+  },
+  /* the bow: a short twang of the string and the arrow's hiss. It can shoot every 0.4 s, so it stays light: one note, one
+     piece of a noise buffer made once, and nothing longer than a quarter of a second */
+  bow() {
+    const a = ac(),
+      v = vol();
+    if (!a || !v) return;
+    const t = soon(a),
+      k = 0.95 + Math.random() * 0.1,
+      src = a.createBufferSource(),
+      f = a.createBiquadFilter(),
+      lp = a.createBiquadFilter(),
+      g = a.createGain();
+    src.buffer = whiteNoise(a);
+    lp.type = "lowpass";
+    lp.frequency.value = 4500; // (dark: bright noise at a start is heard as a click)
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(2600 * k, t);
+    f.frequency.exponentialRampToValueAtTime(1000 * k, t + 0.18);
+    f.Q.value = 2.5;
+    g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.06 * v, t + 0.015);
+    g.gain.setTargetAtTime(0, t + 0.035, 0.035);
+    src.connect(f).connect(lp).connect(g).connect(cap);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + 0.035 + 0.035 * 7);
+    tone(330 * k, 0.12, {
+      type: "sine",
+      gain: 0.06,
+      slide: 0.8,
+      attack: 0.008,
+    });
+  },
+  /* a fireball thrown: a low "fwoomph" that swells and opens up as it leaves */
+  fireball() {
+    noise(0.45, {
+      gain: 0.09,
+      type: "lowpass",
+      freq: 500,
+      slideTo: 2200,
+      fade: 0.03,
+    });
+    tone(85, 0.35, { type: "sine", gain: 0.08, slide: 1.6, attack: 0.02 });
+  },
+  /* burning (sec seconds): a soft, dark roar with a quieter hiss over it; it comes in and goes out gently */
+  burn(sec = 1.5) {
+    const a = ac(),
+      v = vol();
+    if (!a || !v) return;
+    const t = soon(a),
+      end = t + sec;
+    for (const [type, freq, q, l] of [
+      ["lowpass", 520, 0.7, 0.08],
+      ["bandpass", 1500, 0.5, 0.025],
+    ]) {
+      const src = a.createBufferSource(),
+        f = a.createBiquadFilter(),
+        g = a.createGain();
+      src.buffer = whiteNoise(a);
+      src.loop = true;
+      f.type = type;
+      f.frequency.value = freq;
+      f.Q.value = q;
+      g.gain.value = 0;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(l * v, t + 0.12);
+      g.gain.setTargetAtTime(0, end, 0.12);
+      src.connect(f).connect(g).connect(cap);
+      src.start(t, Math.random());
+      src.stop(end + 0.12 * 7);
+    }
+  },
+  /* Justin's blue teleport: a bright shimmer sweeping up, two voices a fifth apart with a quick wobble, and a soft airy swish */
+  teleport() {
+    const a = ac(),
+      v = vol();
+    if (!a || !v) return;
+    const t = soon(a),
+      g = a.createGain(),
+      lfo = a.createOscillator(),
+      lg = a.createGain();
+    lfo.frequency.value = 18;
+    lg.gain.value = 25;
+    lfo.connect(lg);
+    for (const [f0, f1] of [
+      [300, 1400],
+      [450, 2100],
+    ]) {
+      const o = a.createOscillator();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(f1, t + 0.35);
+      lg.connect(o.detune);
+      o.connect(g);
+      o.start(t);
+      o.stop(t + 0.35 + 0.06 * 7);
+    }
+    g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.035 * v, t + 0.02);
+    g.gain.setTargetAtTime(0, t + 0.3, 0.06);
+    g.connect(cap);
+    lfo.start(t);
+    lfo.stop(t + 0.35 + 0.06 * 7);
+    noise(0.4, {
+      gain: 0.04,
+      type: "bandpass",
+      freq: 2000,
+      q: 1,
+      slideTo: 4500,
+      fade: 0.06,
+      top: 6000,
+    });
+  },
+  /* the edge lightning's warning (0.6 s, as its glow shows): a buzz that rises and brightens, and stops just as the flash
+     (zap) comes */
+  warn(sec = 0.6) {
+    const a = ac(),
+      v = vol();
+    if (!a || !v) return;
+    const t = soon(a),
+      o = a.createOscillator(),
+      f = a.createBiquadFilter(),
+      g = a.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(110, t);
+    o.frequency.exponentialRampToValueAtTime(220, t + sec);
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(300, t);
+    f.frequency.exponentialRampToValueAtTime(1800, t + sec);
+    g.gain.value = 0;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.06 * v, t + sec);
+    g.gain.setTargetAtTime(0, t + sec, 0.012);
+    o.connect(f).connect(g).connect(cap);
+    o.start(t);
+    o.stop(t + sec + 0.012 * 7);
   },
   bonk() {
     tone(330, 0.18, { type: "triangle", gain: 0.14, slide: 0.5 });
