@@ -572,6 +572,15 @@ const BY_MODE = {
       d: "The HP of each duck. A hit from Justin takes 1 HP, and nothing hurts the duck for a second after. The last one knocks it down until another duck holds E by it for 5 seconds, or the fight's end. Off: one hit knocks a duck down for 5 s.",
     },
   ],
+  l4dd: [
+    {
+      k: "l4r16",
+      n: "Round 16 Start",
+      c: ON_OFF,
+      cat: "round",
+      d: "Once everyone is ready, the game skips to round 16, and every duck starts with 3,000 points. It counts toward its own stats, Round 16 Start, not the usual ones.",
+    },
+  ],
   vdd: [
     {
       k: "vdTime",

@@ -289,7 +289,7 @@ export const SPECIALS = [
     name: "Knife",
     kind: "item",
     icon: iconOf(KNIFE(["#d9dee8", "#3b2a22", "#c9a24a"])),
-    tip: "Stab the duck right in front of you, toward your mouse: it plays dead. Once a second. Shift and its key keeps it out: left click stabs. (Off when the host turns off the silly commands.)",
+    tip: "Stab the duck right in front of you, toward your mouse: it plays dead. Four times a second. Shift and its key keeps it out: left click stabs. (Off when the host turns off the silly commands.)",
     colors: [
       ["a", P, "#d9dee8"],
       ["b", S2, "#3b2a22"],
@@ -591,6 +591,7 @@ export function heldHTML(id, duck) {
   if (id === "medkit") return MEDKIT;
   if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
   if (id === "zebra") return ZEBRA;
+  if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
   if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
   return id === "grenade"

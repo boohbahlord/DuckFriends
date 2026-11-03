@@ -210,7 +210,7 @@ import {
 } from "./boardjustin.js";
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
-import { profile, save } from "./store.js";
+import { profile, save, statMode } from "./store.js";
 import { openSettings, netLevel } from "./settings.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
@@ -2112,8 +2112,6 @@ function placePick(board, s) {
   });
 }
 
-/* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
-   until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
 /* Mad God Justin: getting a downed duck up (the owner's, Nov 3: hold 5 s, no medkit). Over the downed duck nearest me
    a Revive button (hold it, or E), filling up while it's held; every revive going on shows its fill to everyone */
 function placeRevive(board, s, now) {
@@ -2157,6 +2155,8 @@ function mgjRevive(on) {
   mgjRv = on;
   if (R) R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1 });
 }
+/* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
+   until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
 function placeCake(board, s, now) {
   const c = isMgj(s)
       ? s.phase === "boss" && s.mgj && s.mgj.cake
@@ -2176,13 +2176,18 @@ function placeCake(board, s, now) {
   }
   n.classList.toggle("down", now >= c.stop);
   const p = cakeAt(c, now),
-    at = place(p, 0, 1),
-    w = geo.size * 0.7;
+    bowl = geo.hang && c.toilet && now >= c.stop, // (Quacky Zombies: in the toilet's bowl, over the toilet)
+    at = bowl ? world.place(p, c.toilet) : place(p, 0, 1),
+    w = geo.size * (bowl ? 0.5 : 0.7);
   Object.assign(n.style, {
     left: at.left.toFixed(1) + "px",
     top: (at.top - w * 0.3).toFixed(1) + "px",
     width: w.toFixed(1) + "px",
-    zIndex: geo.hang ? world.key("", p) - 1 : Math.round(at.top - 1),
+    zIndex: bowl
+      ? world.key("", { x: p.x, y: p.y + 0.012 }) + 1
+      : geo.hang
+        ? world.key("", p) - 1
+        : Math.round(at.top - 1),
     visibility: geo.hang && world.hidden("", p) ? "hidden" : "",
   });
 }
@@ -3443,7 +3448,7 @@ async function announceMgj(s, phase) {
   if (phase !== "mgjend") return;
   if (!(s.mgj && s.mgj.won)) {
     sfx.bonk();
-    say("Time's up!");
+    say("Justin Wins");
     return;
   }
   sfx.done();
@@ -3688,7 +3693,7 @@ function recordRound(s) {
   if (key === recorded) return;
   recorded = key;
   if (s.test) return;
-  const st = profile.stats[(s.options && s.options.mode) || "aod"];
+  const st = profile.stats[statMode(s)];
   if (isQuack(s)) {
     // Who is the Quack?: my votes (and the right ones), the round won or lost, and won as the Quack
     const r = (s.wqPast || []).slice(-1)[0];
@@ -4029,10 +4034,16 @@ function useKey(i, keep) {
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
 /* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
-   switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back */
+   switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
+   and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i) {
   const sl = slotsOf(R.state, R.me);
   if (i > 3 || !sl[i]) return;
+  if (i === 3 && L4_TOGGLES.includes(sl[3])) {
+    fire(sl[3]);
+    if (bar) bar.refresh();
+    return;
+  }
   if (i === 3) {
     if (l4Slot === 3) l4Slot = l4Last;
     else {
@@ -4043,6 +4054,7 @@ function l4Pick(i) {
   sendMove(true);
   if (bar) bar.refresh();
 }
+const L4_TOGGLES = ["longjump", "jetpack"];
 /* the handgun or the dagger, toward the mouse */
 function fire(id) {
   if (!me || me.x < 0 || !R || !onBoardPhase()) return;
@@ -4207,7 +4219,7 @@ function actHTML(s) {
   if (s.phase === "boss")
     return `<span class="progress mgj-tip">${mgjTip(s)}</span>`;
   if (s.phase === "mgjend")
-    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
+    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin Wins."} The stats are next.</span>`;
   if (s.phase === "dunced") {
     const p = s.players[((s.dn && s.dn.cur) || {}).def];
     return `<span class="progress">${p ? `${esc(p.name)} is the dunce` : "A dunce"}</span>`;

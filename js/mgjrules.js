@@ -116,7 +116,11 @@ export const mgjOut = (s, id) =>
   !!(isMgj(s) && s.mgj && s.mgj.out && s.mgj.out[id]);
 onGetUp((s, id) => {
   const m = s.mgj;
-  return !!(m && mgjOut(s, id) && s.phase === "boss");
+  return !!(
+    m &&
+    ((mgjOut(s, id) && s.phase === "boss") ||
+      (m.allOut && ["mgjend", "results"].includes(s.phase)))
+  ); // (every duck out: they stay down through the ending and the stats)
 });
 /* the meteor, in ms from its start: he's faded out by FADE; the meteor shows from FALL and lands at LAND; he's back at
    BACK and the timer runs again at RESUME */
@@ -225,7 +229,7 @@ export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: 667, bow: 1000 };
+const MGJ_COOL = { knife: 250, bow: 1000 }; // (the knife: four a second, as in every mode)
 export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
    hold E (a phone: the Revive button) for REVIVE.MS */
@@ -444,9 +448,16 @@ function mgjEnd(s, now, won, log, allOut = false) {
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   m.won = won;
   m.over = now;
-  for (const id of Object.keys(m.out || {}))
-    if (s.players[id]) delete s.players[id].dead;
-  m.out = {}; // (the ducks out of HP get up: the fight is over)
+  /* every duck out of HP: they all lie dead until the next fight starts (the dead look, no new art); otherwise the
+     ducks out of HP get up: the fight is over */
+  m.allOut = !won && allOut;
+  if (m.allOut) {
+    for (const id of playing(s))
+      if (s.players[id] && s.pos[id]) s.players[id].dead = true;
+  } else
+    for (const id of Object.keys(m.out || {}))
+      if (s.players[id]) delete s.players[id].dead;
+  m.out = {};
   if (m.xb && !m.xb.done) m.xb.done = now;
   m.met = null;
   m.left = 0;
@@ -511,7 +522,7 @@ function mgjEnd(s, now, won, log, allOut = false) {
     s,
     won
       ? `Justin is defeated!${m.kill && s.players[m.kill] ? ` ${s.players[m.kill].name} got the killing blow.` : ""}`
-      : `${allOut ? "Every duck is out" : "Time's up"}: Justin wins with ${m.hp} HP left.`,
+      : `Justin Wins with ${m.hp} HP left.`,
   );
   enter(s, "mgjend", now);
   s.ends = now + MGJ_END * 1000;

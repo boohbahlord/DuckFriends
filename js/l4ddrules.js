@@ -14,7 +14,7 @@
    and its own rule 'l4'. s.hang, each key online as its own string (so the zombies walking never send the boards again):
      l4   { r: round, t0: when its zombies start coming (the round's "Round N" shows BREAK before), n: zombies in it,
             made: how many came so far, owe: held back while the board is full, acc, sec: the spawning's clock, next:
-            the next zombie's number, over: { at, r } once nobody is standing, bp: { id: points for boards this round } }
+            the next zombie's number, over: { at, r } once nobody is standing, bp: { "id opening": points for boards there this round } }
      zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 8 + st (st 0 coming,
           1 tearing the boards, 4 climbing in, 2 in, 3 dead), sent every heartbeat
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
@@ -29,7 +29,7 @@
           g: grenades, u: { weapon: when last used } } }
      l4pt { id: points }
      l4u  { id: { acc, as, hp, sp, rl } }: the upgrades bought (accuracy, attack speed, max HP, speed, faster reload)
-     l4box { by, t, w } | null: the fireplace's weapon, paid for by `by` at t, landing on w after BOX.spin
+     l4box { id: { by, t, w } }: the fireplace's weapons, one for each duck that paid (at t), landing on w after BOX.spin
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4c  [[x, y], …]: the extra candles on the floor, picked as the game starts (world px)
@@ -50,7 +50,7 @@ import {
   onPlatform,
   BJ,
 } from "./hangout/layout.js";
-import { GRENADE_MS, daggerZ, walkOf, FASTER } from "./rules.js";
+import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf } from "./rules.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
 
@@ -75,7 +75,8 @@ export const L4 = {
   REACH: 110, // world px: how near E works (a downed duck, an opening)
   DEAD_MS: 1000, // ms a dead zombie lies there, fading
 };
-export const WALK = 380 * 0.6; // world px a second: ducks at 60% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED), at the Normal Walking speed; every zombie's speed is a share of it
+export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
+const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
 /* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
    their speed as a share of the ducks' [slowest, fastest], how long one is at a duck before it swipes and how often
    after (ms), and the most on the board at once */
@@ -97,7 +98,7 @@ const SKIP = 0.25;
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 export const ARMS = {
-  knife: { kind: "melee", cool: 500, dmg: 1, swing: 125, at: 58, r: 34 },
+  knife: { kind: "melee", cool: 250, dmg: 1, swing: 125, at: 58, r: 34 }, // (four a second, as in every mode)
   hammer: { kind: "melee", cool: 1100, dmg: 2, swing: 250, at: 66, r: 50 },
   handgun: {
     kind: "ranged",
@@ -140,7 +141,7 @@ export const ARMS = {
     mag: 5,
     all: 24,
     reload: 2200,
-    pierce: true,
+    pierce: 3, // (zombies a bullet goes through)
     k: "sniper",
   },
   smg: {
@@ -199,7 +200,7 @@ export const ARMS = {
     reload: 2800,
     k: "lmg",
   },
-  /* the new specials: the zebra cake (thrown; zombies near where it lands go for a bite, and one bite eats it), the
+  /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
      20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
      nearest zombie and stabs it, 1 a stab, until one gets him) */
@@ -211,6 +212,9 @@ export const ARMS = {
   /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
      10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
+  /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 HP to the zombie it hits; 3 throws, a Max Ammo
+     gives them back */
+  chair: { kind: "special", cool: 900, all: 3, dmg: 3, speed: 600 },
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 const dmgOf = (A) =>
@@ -250,6 +254,7 @@ export const POOL = [
   "longjump",
   "jaime",
   "jetpack",
+  "chair",
 ];
 /* their names, as players see them */
 const NAMES = {
@@ -274,6 +279,7 @@ const NAMES = {
   longjump: "Long jump",
   jaime: "Jaime",
   jetpack: "Jetpack",
+  chair: "Chair",
 };
 export const weaponName = (w) => NAMES[w] || w;
 /* points (the owner's) */
@@ -288,7 +294,7 @@ const BULLETS = new Set([
   "revolver",
   "lmg",
 ]);
-export const PTS = { START: 50, HIT: 5, HEAD: 25, BOARD: 10, BOARDS: 50 };
+export const PTS = { START: 50, HIT: 5, HEAD: 25, BOARD: 5, BOARDS: 50 }; // (a board: 5, the owner's, Nov 3)
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
@@ -299,13 +305,15 @@ export const SHOP = [
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
 ];
 export const priceOf = (id, n) =>
-  ({
+  UP_TIMES *
+  {
     acc: 300 + 50 * n,
     as: 250 + 50 * n,
     hp: n ? 125 : 100,
     sp: 250,
     rl: 300,
-  })[id];
+  }[id];
+const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time */
 export const saleOn = (s) =>
@@ -325,7 +333,7 @@ export const priceFor = (s, id, what, n) => {
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
-export const BOX = { x: 2300, y: 742, price: 210, spin: 4200, keep: 10000 };
+export const BOX = { x: 2300, y: 742, price: 750, spin: 4200, keep: 10000 }; // (750 a spin: the owner's, Nov 3)
 const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
 /* a zombie's room on the floor, as the ducks' (world.js crowd): an ellipse 56 across and 25.6 deep; every zombie the
@@ -779,6 +787,8 @@ function newRound(s, r, now, wait) {
     sec: -1,
     bp: {},
     dq: dropPlan(),
+    due: [],
+    wait: null,
   };
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
@@ -789,7 +799,10 @@ function bringBack(s, id, now, k, fresh) {
   s.hang.l4p = p4;
   if (fresh) {
     s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
-    s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: PTS.START };
+    s.hang.l4pt = {
+      ...(s.hang.l4pt || {}),
+      [id]: isR16(s) && s.hang.l4 && s.hang.l4.r >= R16 ? R16_PTS : PTS.START,
+    }; // (Round 16 Start: a duck joining later gets its points too)
     s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} };
   } // (a ghost back at the next round keeps its weapons, its points and what it bought; its max HP went when it went down)
   if (s.players[id]) delete s.players[id].dead;
@@ -869,8 +882,9 @@ function jetBurn(s, now, ids) {
 }
 /* ---------- the drops (Stage 4, the owner's) ----------
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
-   own, a 5% chance of a Max Ammo in the first minute. A drop lies on bare floor for 45 s, and the first duck to walk
-   over it takes it for everyone. Instant Kill, Double Points and Speed Boost last 30 s (Speed Boost: the owner's;
+   own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
+   fell (the owner's, Nov 3); it lies there a minute, into the next round too, and the first duck to walk over it takes
+   it for everyone. Instant Kill, Double Points and Speed Boost last 30 s (Speed Boost: the owner's;
    the other two: Adam's plan's guess, question 5), Sale the rest of the round. */
 export const DROPS = ["kill", "ammo", "nuke", "speed", "double", "sale"];
 export const DROP = {
@@ -880,7 +894,7 @@ export const DROP = {
   GAP: 30000, // 30 s after the first
   AMMO: 0.05, // the Max Ammo of its own
   AMMO_IN: 60000, // in the round's first minute
-  LIFE: 45000, // ms a drop lies there
+  LIFE: 60000, // ms a drop lies there (it stays through a round's end)
   FOR: 30000, // ms Instant Kill, Double Points and Speed Boost last
   REACH: 70, // world px: how near a duck walks over one
 };
@@ -923,15 +937,12 @@ function dropSpot(s) {
 /* the drops due now come down, the old ones go, a duck walking over one takes it; and what was taken wears off */
 function dropTick(s, L, zs, now, T, ids) {
   if (L.dq && L.dq.length && T >= L.dq[0][0]) {
-    const [, k0] = L.dq[0],
-      k = k0 || DROPS[Math.floor(Math.random() * DROPS.length)],
-      spot = dropSpot(s);
+    const [, k0] = L.dq[0];
     L.dq = L.dq.slice(1); // (L: the round, as l4Tick keeps it)
-    if (spot)
-      s.hang.l4dr = [
-        ...(s.hang.l4dr || []),
-        { n: now, k, x: spot[0], y: spot[1], until: now + DROP.LIFE },
-      ];
+    L.due = [
+      ...(L.due || []),
+      k0 || DROPS[Math.floor(Math.random() * DROPS.length)],
+    ]; // (it waits for the next kill)
   }
   const was = s.hang.l4dr || [];
   let dr = was.filter((d) => now < d.until);
@@ -949,6 +960,23 @@ function dropTick(s, L, zs, now, T, ids) {
     takeDrop(s, d.k, by, zs, now, ids);
   }
   if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one came or went: the state stays the same object)
+  /* a drop due: the next zombie killed (a Nuke taken just now too) drops it where it fell */
+  const fell = zs.filter((z) => z.st === 3 && T - z.d <= L4.DEAD_MS); // (killed in the last second: still lying there)
+  if (L.due && L.due.length && fell.length) {
+    const z = fell[Math.floor(Math.random() * fell.length)],
+      [x, y] = playable(z.x, z.y) ? [z.x, z.y] : dropSpot(s) || [z.x, z.y];
+    s.hang.l4dr = [
+      ...(s.hang.l4dr || []),
+      {
+        n: now,
+        k: L.due[0],
+        x: Math.round(x),
+        y: Math.round(y),
+        until: now + DROP.LIFE,
+      },
+    ];
+    L.due = L.due.slice(1);
+  }
   const on = s.hang.l4on || {};
   if (Object.values(on).some((u) => u <= now))
     s.hang.l4on = Object.fromEntries(
@@ -999,7 +1027,7 @@ function maxAmmo(s) {
   s.hang.l4a = am;
 }
 function setUp(s, now) {
-  s.hang.l4 = { r: 1, next: 1, over: null };
+  s.hang.l4 = { r: 1, next: 1, over: null, g: now }; // (g: when this game began, for the stats)
   s.hang.zp = [];
   s.hang.zs = {};
   s.hang.zl = {};
@@ -1008,7 +1036,7 @@ function setUp(s, now) {
   s.hang.l4a = {};
   s.hang.l4pt = {};
   s.hang.l4u = {};
-  s.hang.l4box = null;
+  s.hang.l4box = {};
   s.hang.l4dr = [];
   s.hang.l4on = {};
   s.hang.l4sale = null;
@@ -1019,7 +1047,35 @@ function setUp(s, now) {
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
-  newRound(s, 1, now, L4.FIRST);
+  newRound(s, 0, now, 0);
+  s.hang.l4 = { ...s.hang.l4, n: 0, dq: [], wait: { r: 1, v: {} } }; // (round 0: no zombies until enough ducks are ready)
+}
+/* between rounds (and round 0, before the first): the next round waits until enough ducks press End turn (Ready in
+   round 0), the room's share (2 of 3 by default); with Round 16 Start on, round 0 goes on to round 16, everyone with
+   R16_PTS points (the owner's, Nov 3) */
+export const R16 = 16,
+  R16_PTS = 3000,
+  GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
+export const isR16 = (s) => !!(s && s.options && +s.options.l4r16);
+export const waitNeed = (s) =>
+  Math.max(1, Math.ceil(players(s).length * shareOf(s) - 1e-9));
+export const waitVotes = (s) => {
+  const w = s.hang && s.hang.l4 && s.hang.l4.wait;
+  return w ? players(s).filter((id) => w.v[id]).length : 0;
+};
+function waitTick(s, now) {
+  const L = s.hang.l4,
+    w = L.wait;
+  if (!w || waitVotes(s) < waitNeed(s)) return false;
+  let r = w.r;
+  if (r === 1 && L.r === 0 && isR16(s)) {
+    r = R16;
+    const pt = {};
+    for (const id of players(s)) pt[id] = R16_PTS;
+    s.hang.l4pt = { ...(s.hang.l4pt || {}), ...pt };
+  }
+  newRound(s, r, now, GO_MS);
+  return true;
 }
 
 rule("l4", {
@@ -1040,7 +1096,7 @@ rule("l4", {
         delete o[id];
         s.hang[k] = o;
       }
-    if (s.hang.l4box && s.hang.l4box.by === id) s.hang.l4box = null;
+    dropBox(s, id);
     const p4 = s.hang.l4p || {};
     for (const [t, p] of Object.entries(p4))
       if (p.rv && p.rv.by === id)
@@ -1072,6 +1128,15 @@ function l4Act(s, a, now) {
     s.hang.l4f = f;
     return true;
   }
+  if (a.do === "endturn") {
+    if (L.over || !L.wait) return false;
+    const v = { ...L.wait.v };
+    if (a.on === false) delete v[id];
+    else v[id] = 1;
+    s.hang.l4 = { ...L, wait: { ...L.wait, v } };
+    waitTick(s, now);
+    return true;
+  } // (End turn, or Ready in round 0; ghosts and downed ducks may press it too)
   if (L.over || !standing(s, id)) return false;
   const [mx, my] = at(me);
   if (a.do === "rev") {
@@ -1138,14 +1203,30 @@ function buy(s, id, what, mx, my) {
 }
 /* the fireplace: E pays and it spins; once it has landed, E takes the weapon (only whoever paid): a melee weapon or a
    special takes its own slot, a ranged one the ranged weapon in hand (a.hand, else the one the duck holds out, else the
-   first ranged slot) */
-export const boxNow = (s, now) => {
+   first ranged slot). Every duck spins its own (the owner's, Nov 3: one duck's weapon kept everyone else waiting) */
+const boxesOf = (s) => {
   const b = s && s.hang && s.hang.l4box;
-  return b && now < b.t + BOX.spin + BOX.keep ? b : null;
+  return b && !b.by ? b : {};
+};
+function dropBox(s, id) {
+  const b = { ...boxesOf(s) };
+  if (!b[id]) return;
+  delete b[id];
+  s.hang.l4box = b;
+}
+/* the weapon the fireplace shows for duck `id`; with no id, the newest one anyone spun */
+export const boxNow = (s, now, id) => {
+  const live = (b) => b && now < b.t + BOX.spin + BOX.keep;
+  if (id) return live(boxesOf(s)[id]) ? boxesOf(s)[id] : null;
+  return (
+    Object.values(boxesOf(s))
+      .filter(live)
+      .sort((a, b) => b.t - a.t)[0] || null
+  );
 };
 function fireplace(s, id, a, now, mx, my) {
   if (Math.hypot(BOX.x - mx, BOX.y - my) > SHOP_REACH * 2) return false;
-  const b = boxNow(s, now),
+  const b = boxNow(s, now, id),
     kit = kitOf(s, id);
   if (!kit) return false;
   if (!b) {
@@ -1154,9 +1235,12 @@ function fireplace(s, id, a, now, mx, my) {
     if (!pool.length || ptsOf(s, id) < price) return false;
     addPts(s, id, -price);
     s.hang.l4box = {
-      by: id,
-      t: now,
-      w: pool[Math.floor(Math.random() * pool.length)],
+      ...boxesOf(s),
+      [id]: {
+        by: id,
+        t: now,
+        w: pool[Math.floor(Math.random() * pool.length)],
+      },
     };
     return true;
   }
@@ -1184,7 +1268,7 @@ function fireplace(s, id, a, now, mx, my) {
       ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
     },
   };
-  s.hang.l4box = null;
+  dropBox(s, id);
   addFx(s, { kind: "l4take", by: id, who: [], w, t: now });
   return true;
 }
@@ -1418,8 +1502,8 @@ function trace(s, id, px, py, dx, dy, hz, now) {
   });
 }
 /* the zebra cake: thrown the way I aim, it lands at its range or where a wall stops it (rules.js' s.zcake, so every
-   screen draws it as the Zebra cake special's); the zombies near it go for a bite (moveZombies) */
-const CAKE_R = 700, // world px: how far off a zombie smells it
+   screen draws it as the Zebra cake special's); every zombie goes for it and bites it until it's gone (moveZombies) */
+const CAKE_R = 40, // world px: how near a zombie bites it
   CAKE_BITE = 900; // ms a zombie stands there chewing
 function cakeOut(s, id, p, dx, dy, now) {
   const A = ARMS.zebra,
@@ -1430,6 +1514,18 @@ function cakeOut(s, id, p, dx, dy, now) {
     const n = t + 0.02;
     if (walled(px + dx * A.speed * n, py + dy * A.speed * n, hz)) break;
     t = n;
+  }
+  /* (a secret, kept out of Updates: a cake landing in the bathroom, near the toilet, goes in the bowl, and Justin
+     teleports in and eats it there for as long as it lasts; the zombies leave that one be) */
+  const lx = px + dx * A.speed * t,
+    ly = py + dy * A.speed * t,
+    bowl =
+      inBath(lx, ly) && Math.hypot(lx - TOILET.x, ly - TOILET.y) <= TOILET.near;
+  if (bowl) {
+    const d = Math.hypot(TOILET.x - px, TOILET.y - py) || 1;
+    dx = (TOILET.x - px) / d;
+    dy = (TOILET.y - py) / d;
+    t = d / A.speed;
   }
   s.zcake = {
     n: s.fxN,
@@ -1442,12 +1538,16 @@ function cakeOut(s, id, p, dx, dy, now) {
     stop: now + Math.round(t * 1000),
     eat: 0,
     hin: inCabin(px, py) ? 1 : 0,
+    ...(bowl ? { toilet: TOILET.z } : {}),
   };
 }
+/* the toilet's bowl (world px; z: how high the cake sits in it) and how near a cake must land: 4 duck lengths */
+export const TOILET = { x: 3752, y: 1150, z: 26, near: 4 * RX };
+const inBath = (x, y) => x > 3500 && x < 3900 && y > 1100 && y < 1450;
 /* where the cake lies (world px), once it has landed and while nobody ate it */
 function cakeDown(s, now) {
   const c = s.zcake;
-  if (!c || c.eat || now < c.stop) return null;
+  if (!c || c.eat || c.toilet || now < c.stop) return null; // (the one in the toilet: Justin's)
   const t = (c.stop - c.t) / 1000;
   return [(c.x0 + c.vx * t) * W, (c.y0 + c.vy * t) * H];
 }
@@ -1731,14 +1831,16 @@ export function l4Shots(s, now) {
         near = (z) =>
           z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1;
       if (A.pierce) {
-        /* the sniper's: through every zombie it meets, each once, on to the wall */
+        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
         for (const z of zs)
           if (near(z) && !(sh.hit || []).includes(z.i)) {
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by))
               die(z, T);
             hitAny = true;
+            if (sh.hit.length >= A.pierce) break;
           }
+        if ((sh.hit || []).length >= A.pierce) gone = true;
         continue;
       }
       const z = zs.find(near);
@@ -1852,7 +1954,8 @@ function l4Tick(s, now) {
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
     }
   jetBurn(s, now, ids);
-  if (s.hang.l4box && !boxNow(s, now)) s.hang.l4box = null; // (nobody took it: the fire keeps it)
+  for (const b of Object.values(boxesOf(s)))
+    if (now >= b.t + BOX.spin + BOX.keep) dropBox(s, b.by); // (nobody took it: the fire keeps it)
   const brd = { ...(s.hang.brd || {}) },
     bl = { ...(s.hang.l4b || {}) };
   for (const [id, b] of Object.entries(bl)) {
@@ -1871,14 +1974,15 @@ function l4Tick(s, now) {
     if (now - b.at >= L4.BOARD_MS) {
       brd[o.id] = Math.min(L4.BOARDS, (brd[o.id] || 0) + 1);
       bl[id] = { ...b, at: now };
-      const bp = s.hang.l4.bp || {};
-      if ((bp[id] || 0) < PTS.BOARDS) {
+      const bp = s.hang.l4.bp || {},
+        k = `${id} ${o.id}`;
+      if ((bp[k] || 0) < PTS.BOARDS) {
         addPts(s, id, PTS.BOARD);
         s.hang.l4 = {
           ...s.hang.l4,
-          bp: { ...bp, [id]: (bp[id] || 0) + PTS.BOARD },
+          bp: { ...bp, [k]: (bp[k] || 0) + PTS.BOARD },
         };
-      } // (10 a board, 50 a round at most)
+      } // (5 a board, 50 a round at most for each opening: one cap for them all left the east wall paying nothing after the others)
     }
   }
   s.hang.brd = brd;
@@ -1888,6 +1992,14 @@ function l4Tick(s, now) {
   if (!up.length && ids.length) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
+    return true;
+  }
+  /* between rounds: no zombies; the drops still lie there to be taken */
+  if (s.hang.l4.wait) {
+    if (waitTick(s, now)) return true;
+    const Lw = { ...s.hang.l4 };
+    dropTick(s, Lw, zs, now, T, ids);
+    s.hang.l4 = Lw;
     return true;
   }
   /* more zombies come */
@@ -1931,9 +2043,8 @@ function l4Tick(s, now) {
   const left = zs.filter((z) => !(z.st === 3 && T - z.d > L4.DEAD_MS));
   /* every zombie of the round came and died: the next round, and the ghosts come back */
   if (L2.made >= L2.n && !left.length && T >= 0) {
-    s.hang.l4 = L2;
+    s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, [], false);
-    newRound(s, L2.r + 1, now, L4.BREAK);
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
     });
@@ -1965,7 +2076,7 @@ function newZombie(s, L, T) {
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
     max = hp0(),
-    v = Math.round(WALK * rnd(R[3][0], R[3][1])),
+    v = Math.round(WALK * Z_SLOW * rnd(R[3][0], R[3][1])),
     [sx, sy] = o.from || o.out;
   return {
     i,
@@ -1991,7 +2102,8 @@ function moveZombies(s, zs, now, T, up) {
   const p4 = { ...s.hang.l4p },
     eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
   let cake = cakeDown(s, now);
-  for (const k of Object.keys(eating)) if (eating[k] <= now) delete eating[k];
+  for (const k of Object.keys(eating))
+    if (k !== "fx" && eating[k] <= now) delete eating[k];
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
@@ -2028,14 +2140,16 @@ function moveZombies(s, zs, now, T, up) {
       if (walkTo(z, o.in[0], o.in[1], v * dt)) z.st = 2;
       continue;
     }
-    /* a zombie near the zebra cake goes for a bite (the first there eats it), and stands there chewing */
+    /* every zombie in goes for the zebra cake while it lies there (the owner's, Nov 3: it draws them all away from the
+       ducks), and each one there bites it again and again, chewing between bites, until the cake is gone by itself */
     if ((eating[z.i] || 0) > now) continue;
-    if (cake && Math.hypot(z.x - cake[0], z.y - cake[1]) < CAKE_R) {
-      if (Math.hypot(z.x - cake[0], z.y - cake[1]) < 34) {
+    if (cake) {
+      if (Math.hypot(z.x - cake[0], z.y - cake[1]) < CAKE_R) {
         eating[z.i] = now + CAKE_BITE;
-        s.zcake = null; // (one bite and it's gone)
-        cake = null;
-        addFx(s, { kind: "l4bite", who: [], t: now, x: z.x, y: z.y });
+        if (now - (eating.fx || 0) >= 450) {
+          eating.fx = now;
+          addFx(s, { kind: "l4bite", who: [], t: now, x: z.x, y: z.y });
+        } // (a chomp now and then, not one for every zombie at it)
         continue;
       }
       const aim =
