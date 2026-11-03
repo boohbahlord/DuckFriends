@@ -37,6 +37,7 @@ import {
   COLS,
   SHORT,
   needed,
+  reviewCount,
   playing,
   VOTE_GRACE,
   isWyr,
@@ -3215,7 +3216,7 @@ function actHTML(s) {
     const onBoard = me && me.x >= 0,
       wait = graceLeft(s),
       col = onBoard ? colAt(s, me.x) : -1;
-    const votes = `<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ""}</span>`;
+    const votes = `<span class="progress">${d}/${n} voted${need < n && !isBb(s) ? ` · ${need} needed` : ""}</span>`; // (a bracket match waits for every vote or its timer)
     const q = s.qs[s.qi],
       m = bbMatch(s);
     const choices = m
@@ -3257,7 +3258,7 @@ function actHTML(s) {
   if (s.phase === "results" && isVd(s))
     return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : VD_AFTER === "lobby" ? "Back to the lobby" : "New game"} <kbd>Enter</kbd></button>${count}</div>`; // (Valentine's Duck Date: one game, one Valentine)
   if (s.phase === "results") {
-    const rv = s.seat.filter((id) => s.reviewVotes[id]).length,
+    const rv = reviewCount(s),
       lv = s.vote && s.vote.kind === "lobby";
     return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : isBb(s) ? "Next tournament" : isMgj(s) ? "Try again" : "Next round"} <kbd>Enter</kbd></button>
       ${s.round >= 1 && !s.review && !isMgj(s) ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ""}
@@ -3346,7 +3347,7 @@ function dnActHTML(s) {
   /* End round, beside Vote for everyone: it passes once the defender pressed it too and enough players did */
   const ev = endVotes(s),
     endMine = ev.includes(R.me);
-  const end = `<button type="button" class="btn dn-end${endMine ? " yellow" : " ghost"}" data-a="dnend" aria-pressed="${endMine}" data-tip="Ends the take now once the defender and ${endNeed(s)} players press it.">${endMine ? "End round ✓" : "End round"} · ${ev.length}/${endNeed(s)}</button>`;
+  const end = `<button type="button" class="btn dn-end${endMine ? " yellow" : " ghost"}" data-a="dnend" aria-pressed="${endMine}" data-tip="Ends the take now once the defender presses it too and ${endNeed(s)} players in all have.">${endMine ? "End round ✓" : "End round"} · ${ev.length}/${endNeed(s)}</button>`;
   if (isDefender(s, R.me))
     return `<div class="act-row"><span class="law-you">Defend your take: it isn't a dunce take!</span>${end}${tally}</div>`;
   const onBoard = me && me.x >= 0,
@@ -3451,7 +3452,7 @@ function storyActHTML(s, d, n, need, count) {
     off = wait || !ok || mine;
   const review =
     s.phase === "results" && s.round >= 1 && !s.review
-      ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${s.seat.filter((id) => s.reviewVotes[id]).length}/${need}</button>`
+      ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${reviewCount(s)}/${need}</button>`
       : "";
   return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? " voted" : ""}" data-a="end"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button><span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ""}</span>${review}</div>`;
 }
