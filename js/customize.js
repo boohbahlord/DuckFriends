@@ -51,6 +51,7 @@ import { activeRoom } from "./net.js";
 import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
+import { touchOnly } from "./pointer.js";
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -590,7 +591,7 @@ export function openCustomize(page = lastPage) {
              special's tile opens a box for each key right under it */
             const keys = keysOf(D),
               open = specialById(keyFor),
-              phone = !matchMedia("(any-pointer: fine)").matches; // (only a touch screen: a touchscreen laptop has a touchpad too)
+              phone = touchOnly(); // (only a touch screen: pointer.js)
             const box = (n, i, id, attrs) =>
               `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ""}</button>`;
             const tiles = (kind) =>

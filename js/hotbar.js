@@ -318,16 +318,7 @@ export function mountHotbar(S, api) {
     }
   }
   addEventListener("pointerup", lifted);
-  /* a keyboard, a mouse or a touchpad (a touchscreen laptop can tell the page it is only a touch screen): the row shows */
-  const real = (e) => {
-    if (e.type === "keydown" || e.pointerType === "mouse") {
-      document.documentElement.classList.add("keyboard");
-      removeEventListener("keydown", real);
-      removeEventListener("pointermove", real);
-    }
-  };
-  addEventListener("keydown", real);
-  addEventListener("pointermove", real);
+  /* (a keyboard, a mouse or a touchpad shows the row: pointer.js) */
 
   return {
     show,

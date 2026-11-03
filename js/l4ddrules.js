@@ -74,7 +74,7 @@ export const L4 = {
   REACH: 110, // world px: how near E works (a downed duck, an opening)
   DEAD_MS: 1000, // ms a dead zombie lies there, fading
 };
-export const WALK = 380 * 0.5; // world px a second: ducks at 50% of Duck Cabin's walk (world.js SPEED), at the Normal Walking speed
+export const WALK = 380 * 0.6; // world px a second: ducks at 60% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED), at the Normal Walking speed; every zombie's speed is a share of it
 /* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
    their speed as a share of the ducks' [slowest, fastest], how long one is at a duck before it swipes and how often
    after (ms), and the most on the board at once */
@@ -809,7 +809,8 @@ function buy(s, id, what, mx, my) {
   return true;
 }
 /* the fireplace: E pays and it spins; once it has landed, E takes the weapon (only whoever paid): a melee weapon or a
-   special takes its own slot, a ranged one the ranged weapon in hand (a.hand, else the one the duck holds out) */
+   special takes its own slot, a ranged one the ranged weapon in hand (a.hand, else the one the duck holds out, else the
+   first ranged slot) */
 export const boxNow = (s, now) => {
   const b = s && s.hang && s.hang.l4box;
   return b && now < b.t + BOX.spin + BOX.keep ? b : null;
@@ -836,8 +837,7 @@ function fireplace(s, id, a, now, mx, my) {
     hand = kit.sl.includes(a.hand) ? a.hand : (s.pos[id] || {}).w;
   let k = kind === "melee" ? 0 : kind === "special" ? 3 : -1;
   if (kind === "ranged") {
-    k = [1, 2].find((i) => kit.sl[i] === hand) ?? -1;
-    if (k < 0) return false; // (no ranged weapon in hand: that screen says to switch to the one to replace)
+    k = [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
   }
   if (k < 0 || kit.sl.includes(w)) return false;
   const old = kit.sl[k],

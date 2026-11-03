@@ -40,7 +40,6 @@ import {
   upOf,
   ptsOf,
   slotsOf,
-  kindOf,
   BUTLER,
   BOX,
   POOL,
@@ -60,8 +59,8 @@ import {
 
 const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
-const SPEED = 0.5; // my duck at half of Duck Cabin's walk (the owner's)
-const DARK = 0.93; // how dark the dark is
+const SPEED = 0.6; // my duck at 60% of Duck Cabin's walk: I wanted it 20% faster than the half it was (sprint and the zombies go from it)
+const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 const CANDLE_LIGHT = { r: 190, k: 0.62, flick: 1 };
@@ -700,11 +699,7 @@ function tap(t, ctx) {
     if (ptsOf(s, me) < BOX.price) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "box" });
   } else if (t.kind === "take") {
-    const sl = slotsOf(s, me),
-      hand = heldFn();
-    if (kindOf(t.w) === "ranged" && !(hand && [sl[1], sl[2]].includes(hand)))
-      return say("Switch to the ranged weapon you want to replace");
-    ctx.send({ t: "hang", k: "l4", do: "box", hand });
+    ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   }
 }
 const TAPS = ["box", "take", "shop"];

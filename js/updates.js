@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 122,
+    version: 123,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -29,6 +29,10 @@ export const UPDATES = [
       "A turn ends once 2 of 3 players are done by default (it was 3 of 4, so with 3 players all 3 had to finish).",
       "In Quacky Zombies the zombies (and the computers) walk faster or slower with the lobby's Walking speed, just like your duck, so on Slow they no longer keep up with you.",
       "With the music muted on the main menu, the song name no longer blinks on and off.",
+      "A computer with a touch screen gets the computer's controls in every mode (the bar of weapons and specials, the key hints), not the phone's.",
+      "No more broken picture icons on the map in Firefox (the candles).",
+      "Quacky Zombies: your duck walks 20% faster, sprinting goes from that, and the zombies keep the same pace next to it. The dark is a little lighter, still dark.",
+      "Quacky Zombies: the boards over the holes lie flat on their walls, and at the fireplace E takes the weapon even when you hold your knife (a ranged one swaps out your first ranged weapon).",
       "The secret code unlocks every item that can be unlocked, Dat Boi and his ranks too, and your progress toward each one keeps counting.",
     ],
   },

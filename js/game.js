@@ -325,6 +325,7 @@ import {
   SEAT_OUT,
   SEAT_LIFT,
 } from "./vdd.js";
+import { touchOnly } from "./pointer.js";
 
 let R = null,
   S = null,
@@ -3641,7 +3642,7 @@ const graceLeftMs = (s) =>
 const graceLeft = (s) => Math.ceil(graceLeftMs(s) / 1000);
 /* Mad God Justin: what my keys do now, in a line */
 function mgjTip(s) {
-  const phone = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const phone = touchOnly();
   if ((s.players[R.me] || {}).dead)
     return mgjOut(s, R.me)
       ? "Out of HP! A medkit, or the fight's end, gets you up."
@@ -4231,8 +4232,7 @@ function paint(force) {
     }
     main.innerHTML = viewHTML(s);
     const vin = $(".vd-in", main);
-    if (vin && !matchMedia("(hover: none) and (pointer: coarse)").matches)
-      vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
+    if (vin && !touchOnly()) vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
     if (isHang(s) && s.phase === "hang")
       world = mountWorld($(".hang-board", main), {
         room: () => R,
@@ -4257,7 +4257,7 @@ function paint(force) {
     if (
       (s.phase === "answer" || s.phase === "hang") &&
       !touchTold &&
-      matchMedia("(hover: none) and (pointer: coarse)").matches
+      touchOnly()
     ) {
       // a touch screen: how to move, once
       touchTold = true;

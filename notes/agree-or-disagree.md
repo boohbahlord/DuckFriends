@@ -3170,3 +3170,24 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 - Pharaoh, in PR #195 (with Stage 2): every name players see (the mode's name in `js/modes.js`, so the lobby tile, the
   drawn title on its art, the room's mode line and the command line's lines; the Updates lines) and the code's comments
   say Quacky Zombies. Code names stay `l4dd` (files, the mode id, `isL4dd`). Older notes keep the old name.
+
+
+## Request (2026-11-03 05:26Z, the owner, project chat, with a screenshot): fix Quacky Zombies
+> Pharoah WILL write a note for Solomon the 2nd and have him fix the game, because having a new AI do it was the dumbest fucking idea of all fucking time. 
+>
+> I MEAN JUST LOOK AT THIS FUCKING SCREENSHOT! 
+>
+> 1. FIRST OF ALL! MY FUCKING LAPTOP WITH A TOUHCSCREEN WAS DETECTED AS A FUCKING MOBILE VERSION OF THE FUCKING GAME!!!!!! WHY THE FUCK FUCK FUCK IS THE GODDAMN GAME LIKE THAT!?!?!?!? LOOK AT IT ! THE HOTBAR OR SPECIAL BAR IS MADE LIKE IT WAS FOR FUCKING MOBILE! NOT ONLY THAT! IF IT WASNT BECAUSE IT WAS DETECTED AS A MOBILE VERS AND THE UI JUST ISSS LIKE THAT, THEN THAT IS ANOTHER REASON TO RESOLVE PHAROAH SOOON! BEECAUSE THIS IS RETARDED! THIS IS BROKEN!!!!!  THE UI IS JUST BEING REMADE IF THAT IS THE CASE, BECAUSE I DONT KNOW OF ANY CHANGES I EVER APPROVED OF THAT EVER LOOKED LIEK THIS!!!
+> 2. WHY THE FUCK FUCK FUCK IS THERE GODDAMN THE SYMBOL FOR IMAGE FILES ALL OVER THE FUCKING MAP!!!!!! THEY ARE ALL OVER THE PLACE IN GAME! THIS ISNT ACCEPTABLE FOR PC OR FOR MOBILE
+> 3. THE FUCKING BOARDS NEEEEEEEEED TO BE FIXED IN PERSPECTIVE ACCORDING TO MY RULES THAT ARE TAUGHT EITHER TO SOLOMON, SOLOMON THE 2ND, ADAM, OR MOSES ABOUT HOW TO HANDLE PERSPECTIVE, BECAUSE THOSE FUCKING BOARDS, LIKE, MOST OF THEM ALL COMPLETELY DISREGARD THE CONSISTENCY OF PERSPECTIVE OF THEIR GIVEN WALL!!!!! COMPLETELY!!!!
+> 4. THE SPEED OF THE ZOMBIES WAS COMPLETELY WRONG! ALSO, I WANT THE SPEED OF THE PLAYERS TO BE 20% FAST AND THE SPRING GETS UPSCALED WITH THAT BASED OFF OF IT'S NEW SPEED, AND EVERY ZOMBIE TAKES ON IT'S SPEED BASED OFF OF THE PLAYER'S NEW WALKING SPEED IN THIS GAMEMODE ONLY, NOT ANY ANY ANY OTHER GAMEMODE. 
+> 5. DO NOT MAKE THE MAP THIS DARK, IT SHOULD BE A LITTLE LESS DARK, IT SHOULD STILL BE DARK, BUT NOT THIS FUCKING DARK!!!!! 
+> 6. LITERALLY ALMOST ANYTHING THAT PHAROAH DID FEELS IMMEDIATELY WRONG TO ME THE CREATOR WHO IS TESTING AS A HUMAN PLAYER! WE CANNOT JUST MAKE NEW FUCKING AI FOR OUR BIGGEST PROJECTS! WHOEVER THOUGHT THAT WAS FUCKING RETARDED! THIS COULD OF BEEN ONE OF THE WORST POSSSIBLE THINGS TO HAND OFF TO A NEW AI! AND IT USES UP MORE OF MY FUCKING USAGE! IF IF IF WE ARE GOING TO HAND IT OFF TO A NEW AI, THEN IT SHOULD BE SOMETHING SOURMOUNTABLE! 
+> 7. I DONT EVEN SEE MY FUCKING SCORE ANYWHERE AND I CANT EVEN USE THE FUCKING FIREPLACE! WHO THE FUCK THOUGHT TO DEPLOY AN COMPLETELY UNFINISHED FUCKING GAME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+>
+>
+> ALL OF THIS IN ALL CAPS AND ALL THE CUSSING AND ALLL THE REPITIATION  OR SPELING EORRRORS MEANS IM ABSOLUTELY FUCKING PISSED!!!!!!!!!!!!
+
+Owner, 05:28Z (Pharaoh's thread): "adam and solomon choose what to do with ur changes because they are taking over from here". Adam gave the fix list to Solomon the 2nd on top of PR #195.
+
+Done (Solomon, on #195's branch): (1) one computer-or-phone test for every mode, `js/pointer.js`: a computer when a mouse or touchpad is there, when the system is Windows, Linux or ChromeOS on a screen bigger than a phone's, or once a key or a mouse is used; a touch screen never decides it (the touch laptop got the phone column because only the hotbar ran the old key/mouse check, and Quacky Zombies has no hotbar). (2) The broken icons were the candles: `svgDataURL` added a second xmlns to a drawing that had one, which Firefox refuses; it adds one only when missing. (3) This mode's walk 0.5 -> 0.6 of Duck Cabin's (`SPEED` in l4dd.js, `WALK` in l4ddrules.js); sprint and every zombie and computer go from it. (4) `DARK` 0.93 -> 0.84. (5) Points under the round and the fireplace were only in #195; checked as a human; E takes the fireplace's ranged weapon even when holding the knife (it replaces the first ranged slot). (6) Side wall boards: narrow planks along the strip, edge on; south wall boards: along the wall, one above another; the door and the stairs were already face on. Picture sheet: https://claude.ai/artifact/4jfvW8eKcgkpLzeCPtrzoR (waiting for the owner's OK).

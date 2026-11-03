@@ -1,4 +1,5 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
+import "./pointer.js"; // (first: a computer or a phone, before anything asks)
 import { applySettings, askConnection } from "./settings.js";
 import { backdropHTML } from "./art.js";
 import { profile, save } from "./store.js";
