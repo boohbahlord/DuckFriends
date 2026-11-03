@@ -119,6 +119,8 @@ import {
   CAKE_EAT_MS,
 } from "./mgjrules.js";
 import { isL4dd, l4Use, l4Reload, l4Shots, l4Holds } from "./l4ddrules.js";
+import { MAPS } from "./maps.js";
+import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -147,7 +149,10 @@ export const OPTIONS_DEFAULT = {
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: Hangout's own, and only Hangout's)
+  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
+  mapPick: "", // "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
+  modePick: "", // "" (the host's game) | vote (Vote Game Mode: everyone votes) | random (a new game every round)
+  trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
@@ -181,8 +186,136 @@ export const OPTIONS_DEFAULT = {
   textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
+  dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
 };
 export const MAX_DEFAULT = 8;
+
+/* Vote Maps and Vote Game Mode, settled when the host starts: the most votes from the players in the room win, and a
+   tie is a random pick between the tied ones. No votes at all: any of them. Duck Cabin is never a map to vote for (it
+   comes with its own games); a game that needs more players than the room has can't win */
+export const tally = (s, votes) => {
+  const n = {};
+  for (const id of s.seat) {
+    const v = (votes || {})[id];
+    if (v) n[v] = (n[v] || 0) + 1;
+  }
+  return n;
+};
+const winner = (n, pool) => {
+  const ok = Object.keys(n).filter((k) => pool.includes(k)),
+    top = Math.max(0, ...ok.map((k) => n[k])),
+    tied = ok.filter((k) => n[k] === top);
+  return anyOf(top ? tied : pool);
+};
+export const VOTE_MAPS = MAPS.map((m) => m[0]); // (the boards' maps: Duck Cabin isn't one)
+const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
+const pickMap = (s) =>
+  s.options.mapPick === "vote"
+    ? winner(tally(s, s.mapVotes), VOTE_MAPS)
+    : anyOf(VOTE_MAPS);
+const pickMode = (s) =>
+  winner(
+    tally(s, s.modeVotes),
+    MODES.map((m) => m.id).filter((id) => fits(s, id)),
+  );
+/* Random: the games it plays (never Hangout or Left 4 Dead Ducks, nor a game the room is too small for); each round is
+   the next one in the bag, every game once before a new shuffle, or with True Random any game at all */
+export const randomPool = (s) =>
+  MODES.map((m) => m.id).filter(
+    (id) => !CABIN_MODES.includes(id) && fits(s, id),
+  );
+function nextMode(s) {
+  const pool = randomPool(s);
+  if (!pool.length) return "aod";
+  if (s.options.trueRandom) return anyOf(pool);
+  let bag = (s.modeBag || []).filter((id) => pool.includes(id));
+  if (!bag.length) bag = shuffle([...pool]);
+  const next = bag.shift();
+  s.modeBag = bag;
+  return next;
+}
+/* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's still
+   at the other default */
+function writeTimerFor(s, wasMode) {
+  if (isBb(s) && s.options.submitTime === 132) s.options.submitTime = 0;
+  else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
+    s.options.submitTime = 132;
+}
+/* the start: Vote Game Mode, Random and Vote Maps settle, then the countdown. Returns null when the room has too few
+   players for the game (the lobby says how many it needs) */
+function countdown(s, now) {
+  if (dodOn(s, "modes")) s.options.modePick = "vote"; // (Democracy of Ducklings: the ducks always vote)
+  if (dodOn(s, "maps")) s.options.mapPick = "vote";
+  if (s.options.modePick) {
+    const was = s.options.mode;
+    s.options.mode =
+      s.options.modePick === "vote"
+        ? pickMode(s)
+        : ((s.modeBag = []), nextMode(s));
+    writeTimerFor(s, was);
+    s.modeVotes = {};
+    say(s, `The game: ${modeOf(s.options.mode).name}!`);
+  }
+  if (s.seat.length < minOf(s)) return null; // (the lobby says how many it needs)
+  if (isHang(s) !== (s.options.map === "cabin"))
+    s.options.map = isHang(s) ? "cabin" : "board"; // (Duck Cabin and its games are one)
+  if (s.options.mapPick && !isHang(s)) {
+    s.options.map = pickMap(s);
+    s.mapVotes = {};
+    say(s, `The map: ${MAPS.find((m) => m[0] === s.options.map)[1]}!`);
+  }
+  s.phase = "countdown";
+  s.at = now;
+  s.ends = now + COUNTDOWN * 1000;
+  return s;
+}
+const rolling = (s) => s.options.modePick === "random";
+/* Random, at the end of a round: the room goes straight into the next game (nobody kicked comes back in) */
+function rotate(s, now) {
+  const mode = nextMode(s),
+    was = s.options.mode,
+    banned = s.banned;
+  backToLobby(s, `Next game: ${modeOf(mode).name}!`);
+  s.banned = banned;
+  s.options.mode = mode;
+  writeTimerFor(s, was);
+  return beginGame(s, now);
+}
+/* the countdown is over: the game begins (Random: again for every new game) */
+function beginGame(s, now) {
+  const P = s.players;
+  s.startedAt = now;
+  s.round = 0;
+  s.history = [];
+  s.back = {};
+  s.subs = [];
+  s.jumps = {};
+  s.bbPast = [];
+  s.wqPast = [];
+  s.wqScore = { quack: 0, room: 0 };
+  s.wqPickers = [];
+  for (const id of s.seat) P[id].ready = false;
+  if (isSc(s)) {
+    s.sc = { stories: [] };
+    return startStory(s, now, true);
+  }
+  if (isHang(s)) {
+    hangStart(s, now);
+    return enter(s, "hang", now);
+  }
+  s.dn = null;
+  if (isDn(s)) dnStart(s);
+  s.mgj = null;
+  s.mgjPast = [];
+  if (isMgj(s)) return mgjStart(s, now);
+  s.vd = null;
+  if (isVd(s)) return vdStart(s, now);
+  return isBb(s)
+    ? startTourney(s, now)
+    : isQuack(s)
+      ? startQuackRound(s, now)
+      : enter(s, "submit", now);
+}
 /* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
    the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
 export const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
@@ -695,8 +828,9 @@ function recordAnswers(s) {
 /* the round is over: the stats screen, or (the lobby's Stats screen Off) straight on to what comes after it */
 export function toStats(s, now) {
   if (+s.options.stats !== 0) return enter(s, "results", now);
-  if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: the game is over)
   if (isDn(s) && s.qs && s.qs.length) return afterDunce(s, now); // (Duncelation: on into the takes not yet defended)
+  if (rolling(s)) return rotate(s, now); // (Random: the next round is the next game)
+  if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: the game is over)
   s.round++;
   s.subs = [];
   s.qs = [];
@@ -778,7 +912,13 @@ function advance(s, now, force = false) {
   if (isQuack(s) && QUACK_PHASES.includes(s.phase))
     return quackAdvance(s, now, force);
   if (isHang(s)) return s; // (no turns: the cabin stays open until the room goes back to the lobby)
-  if (isMgj(s)) return mgjAdvance(s, now, force, logLine); // (Mad God Justin: his HP, the timer, the podium, Try again)
+  if (isMgj(s)) {
+    const was = s.phase,
+      next = mgjAdvance(s, now, force, logLine);
+    return was === "results" && next.phase !== "results" && rolling(next)
+      ? rotate(next, now)
+      : next;
+  } // (Mad God Justin: his HP, the timer, the podium, Try again; with Random, the next game instead)
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdAdvance(s, now, force); // (Valentine's Duck Date: its timers)
   const on = playing(s),
     n = on.length,
@@ -858,8 +998,9 @@ function advance(s, now, force = false) {
       if (++s.qi < s.qs.length) return startQuestion(s, now);
       return startResults(s, now);
     case "results":
-      if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: one game, one Valentine)
       if (isDn(s) && s.qs && s.qs.length) return afterDunce(s, now); // (Duncelation: on into the takes not yet defended)
+      if (rolling(s)) return rotate(s, now); // (Random: the next round is the next game)
+      if (isVd(s)) return vdAfter(s, now); // (Valentine's Duck Date: one game, one Valentine)
       s.round++;
       s.subs = [];
       s.qs = [];
@@ -1038,37 +1179,54 @@ export function reduce(state, a, now = Date.now()) {
       if (boss && n) s.name = n;
       return s;
     }
-    case "options":
-      if (boss && (s.phase === "lobby" || s.phase === "over")) {
+    case "options": {
+      const o = { ...a.options };
+      delete o.dod; // (Democracy of Ducklings is set when the room is made, and stays)
+      if (dodOn(s, "modes")) {
+        delete o.mode; // (the ducks always vote on the game mode,
+        delete o.modePick;
+      }
+      if (dodOn(s, "maps")) {
+        delete o.map; // and on the map)
+        delete o.mapPick;
+      }
+      if (
+        (boss || (dodOn(s, "settings") && me && !me.bot)) &&
+        (s.phase === "lobby" || s.phase === "over")
+      ) {
         const was = s.options.discuss,
           wasMode = s.options.mode;
-        Object.assign(s.options, a.options);
+        Object.assign(s.options, o);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
         /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
          off moves the share along while it's still at the other default */
         if (
-          "discuss" in a.options &&
-          !("share" in a.options) &&
+          "discuss" in o &&
+          !("share" in o) &&
           !!was !== !!s.options.discuss
         ) {
           const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
           if (s.options.share === from) s.options.share = to;
         }
-        /* I want a write timer of 2:12 everywhere but Bicker Brackets: changing to or from them moves it along while it's
-         still at the other default */
-        if (a.options.mode && !("submitTime" in a.options)) {
-          if (isBb(s) && s.options.submitTime === 132) s.options.submitTime = 0;
-          else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
-            s.options.submitTime = 132;
-        }
-        if (a.options.map === "cabin" && !a.options.mode && !isHang(s))
-          s.options.mode = "hang"; // Hangout and Duck Cabin are one: picking either picks both,
-        else if (a.options.map && !a.options.mode && isHang(s))
-          s.options.mode = "aod"; // and another map leaves Hangout
-        if (isHang(s)) s.options.map = "cabin";
-        else if (s.options.map === "cabin") s.options.map = "board";
+        if (o.mode && !("submitTime" in o)) writeTimerFor(s, wasMode);
+        /* picking a game ends Vote Game Mode and Random; picking a map ends Vote Maps and Random. A new vote starts from
+           nobody */
+        if (o.mode && !("modePick" in o)) s.options.modePick = "";
+        if (o.map && !("mapPick" in o)) s.options.mapPick = "";
+        if ("modePick" in o) s.modeVotes = {};
+        if ("mapPick" in o) s.mapVotes = {};
+        if (o.map === "cabin" && !o.mode && !isHang(s)) {
+          s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
+          s.options.modePick = "";
+        } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
+          s.options.mode = "aod"; // and another map (or a vote, or Random) leaves Duck Cabin
+        if (isHang(s)) {
+          s.options.map = "cabin";
+          s.options.mapPick = "";
+        } else if (s.options.map === "cabin") s.options.map = "board";
       }
       return s;
+    }
     case "kick": {
       // the host (or sudo) removes a player at once, no vote; a person stays out until the room goes back to the lobby
       const p = P[a.who];
@@ -1108,20 +1266,71 @@ export function reduce(state, a, now = Date.now()) {
         ? s
         : advance(s, now);
     }
+    case "modeVote":
+    case "mapVote": {
+      // Vote Game Mode and Vote Maps: any player in the lobby votes; the same pick again takes the vote back
+      const map = a.t === "mapVote",
+        v = map ? a.map : a.mode,
+        ok = map
+          ? VOTE_MAPS.includes(v) && s.options.mapPick === "vote" && !isHang(s)
+          : MODES.some((m) => m.id === v) && s.options.modePick === "vote",
+        key = map ? "mapVotes" : "modeVotes";
+      if (!me || !ok || !(s.phase === "lobby" || s.phase === "over"))
+        return state;
+      const votes = { ...(s[key] || {}) };
+      if (votes[a.id] === v) delete votes[a.id];
+      else votes[a.id] = v;
+      s[key] = votes;
+      return s;
+    }
+    case "dod": {
+      // Democracy of Ducklings: a duck votes (again: takes the vote back); the host turns a rule on, or hands the host over, directly
+      const k = a.k;
+      if (
+        !me ||
+        me.bot ||
+        !dodRoom(s) ||
+        !DOD_KEYS.includes(k) ||
+        !(s.phase === "lobby" || s.phase === "over")
+      )
+        return state;
+      s.dod = { on: {}, votes: {}, ...(s.dod || {}) };
+      s.dod.votes = { ...(s.dod.votes || {}) };
+      if (k === "host") {
+        const to = a.v;
+        if (!s.players[to] || s.players[to].bot || to === s.hostId)
+          return state;
+        if (host) {
+          delete s.dod.votes.host;
+          dodSet(s, k, true, to);
+          return s;
+        }
+        const x = s.dod.votes.host || (s.dod.votes.host = { at: now, by: {} });
+        if (x.by[a.id] === to) delete x.by[a.id];
+        else x.by[a.id] = to;
+      } else {
+        if (host && !dodOn(s, k)) {
+          delete s.dod.votes[k];
+          dodSet(s, k, true);
+          return s;
+        }
+        const x = s.dod.votes[k] || (s.dod.votes[k] = { at: now, by: {} });
+        if (x.by[a.id]) delete x.by[a.id];
+        else x.by[a.id] = true;
+      }
+      dodSettle(s, now);
+      return s;
+    }
     case "start":
       if (!boss || !(s.phase === "lobby" || s.phase === "over")) return s;
-      if (s.seat.length < minOf(s)) return state; // (the lobby says how many it needs)
-      if (isHang(s) !== (s.options.map === "cabin"))
-        s.options.map = isHang(s) ? "cabin" : "board"; // (Hangout and Duck Cabin are one)
-      s.phase = "countdown";
-      s.at = now;
-      s.ends = now + COUNTDOWN * 1000;
-      return s;
+      if (dodOn(s, "ready") || dodVoting(s)) return state; // (Democracy of Ducklings: the host readies like everyone)
+      return countdown(s, now) || state;
     case "cancel":
       if (me && s.phase === "countdown") {
         // (any player stops the start; the next start counts from 5 again)
         s.phase = "lobby";
         s.ends = 0;
+        if (dodRoom(s)) me.ready = false; // (with every duck ready, Democracy of Ducklings would start it again at once)
       }
       return s;
     case "submit": {
@@ -1873,45 +2082,21 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "tick": {
       // the host's heartbeat; the same state comes back when nothing changed, so nothing redraws
-      if (s.phase === "countdown" && now >= s.ends) {
-        s.startedAt = now;
-        s.round = 0;
-        s.history = [];
-        s.back = {};
-        s.subs = [];
-        s.jumps = {};
-        s.bbPast = [];
-        s.wqPast = [];
-        s.wqScore = { quack: 0, room: 0 };
-        s.wqPickers = [];
-        for (const id of s.seat) P[id].ready = false;
-        if (isSc(s)) {
-          s.sc = { stories: [] };
-          return startStory(s, now, true);
-        }
-        if (isHang(s)) {
-          hangStart(s, now);
-          return enter(s, "hang", now);
-        }
-        s.dn = null;
-        if (isDn(s)) dnStart(s);
-        s.mgj = null;
-        s.mgjPast = [];
-        if (isMgj(s)) return mgjStart(s, now);
-        s.vd = null;
-        if (isVd(s)) return vdStart(s, now);
-        return isBb(s)
-          ? startTourney(s, now)
-          : isQuack(s)
-            ? startQuackRound(s, now)
-            : enter(s, "submit", now);
-      }
+      if (s.phase === "countdown" && now >= s.ends) return beginGame(s, now);
       if (isQuack(s) && QUACK_PHASES.includes(s.phase) && s.wq && !s.hidden) {
         say(s, "A new host took over, so a new secret word.");
         return startQuackRound(s, now);
       } // (the old host's Secret Cards can't be opened)
-      if (s.phase === "lobby" || s.phase === "over" || s.phase === "countdown")
-        return state;
+      if (s.phase === "lobby" || s.phase === "over") {
+        if (!dodRoom(s)) return state;
+        const changed = dodSettle(s, now);
+        if (dodStarts(s)) {
+          const c = countdown(clone(s), now);
+          if (c) return c;
+        }
+        return changed ? s : state;
+      }
+      if (s.phase === "countdown") return state;
       if (s.vote && now >= s.vote.ends) {
         say(s, "The vote ran out of time.");
         s.vote = null;
@@ -1981,8 +2166,105 @@ function groupsOf0(s) {
     };
   return s.groups;
 }
+/* ---------- Democracy of Ducklings (owner 2026-11-03): the ducks vote on the room's rules, in the lobby ----------
+   A rule passes with 2 of 3 ducks; New host takes every duck but the host, and the host can't vote on it. The host turns
+   a rule on, or hands the host over, directly. A rule that is on goes off again by another vote. A vote lasts 60 s, and
+   while one is up the host can't start the game. The room has it or not from the moment it's made (options.dod) */
+export const DOD_KEYS = ["ready", "maps", "modes", "settings", "sudo", "host"];
+export const DOD_NAMES = {
+  ready: "Host must ready",
+  maps: "Map is always voted",
+  modes: "Game mode is always voted",
+  settings: "Everyone can change settings",
+  sudo: "Sudo Perms",
+  host: "New host",
+};
+export const DOD_MS = 60000;
+export const dodRoom = (s) => +(s.options || {}).dod === 1;
+export const dodOn = (s, k) => dodRoom(s) && !!((s.dod || {}).on || {})[k];
+export const dodVoting = (s) =>
+  dodRoom(s) && Object.keys((s.dod || {}).votes || {}).length > 0;
+/* the votes a rule needs: 2 of 3 of the ducks (computers don't vote), or for New host every duck but the host */
+export const dodNeed = (s, k) =>
+  k === "host"
+    ? humanIds(s).filter((id) => id !== s.hostId).length
+    : Math.ceil((humanIds(s).length * 2) / 3 - 1e-9);
+/* a vote's count so far; for New host, the most votes any one duck has (and who that is) */
+export function dodCount(s, k) {
+  const by = (((s.dod || {}).votes || {})[k] || {}).by || {};
+  if (k !== "host") return { n: Object.keys(by).length, to: null };
+  const n = {};
+  for (const c of Object.values(by)) n[c] = (n[c] || 0) + 1;
+  const to = Object.keys(n).sort((x, y) => n[y] - n[x])[0] || null;
+  return { n: to ? n[to] : 0, to };
+}
+/* a rule takes effect (or goes off); New host: the duck it names becomes the host */
+function dodSet(s, k, on, to = null) {
+  if (k === "host") {
+    s.hostId = to;
+    say(s, `Democracy of Ducklings: ${s.players[to].name} is the new host.`);
+    return;
+  }
+  const rules = { ...(s.dod.on || {}) };
+  if (on) rules[k] = true;
+  else delete rules[k];
+  s.dod.on = rules;
+  if (on && k === "modes") {
+    s.options.modePick = "vote";
+    s.modeVotes = {};
+  }
+  if (on && k === "maps" && !isHang(s)) {
+    s.options.mapPick = "vote";
+    s.mapVotes = {};
+  }
+  say(s, `Democracy of Ducklings: ${DOD_NAMES[k]} is ${on ? "on" : "off"}.`);
+}
+/* votes from ducks who left (or for one who left) are dropped, a vote with enough votes passes, and one that has run 60 s
+   ends; true when anything changed */
+function dodSettle(s, now) {
+  const votes = (s.dod || {}).votes;
+  if (!votes) return false;
+  let changed = false;
+  for (const [k, x] of Object.entries(votes)) {
+    for (const [id, c] of Object.entries(x.by)) {
+      const gone =
+        !s.players[id] ||
+        (k === "host" && (id === s.hostId || !s.players[c] || c === s.hostId));
+      if (gone) {
+        delete x.by[id];
+        changed = true;
+      }
+    }
+    const { n, to } = dodCount(s, k),
+      need = dodNeed(s, k);
+    if (n && need && n >= need) {
+      dodSet(s, k, !dodOn(s, k), to);
+      delete votes[k];
+      changed = true;
+    } else if (!n || now >= x.at + DOD_MS) {
+      if (n)
+        say(
+          s,
+          `Democracy of Ducklings: the vote on ${DOD_NAMES[k]} ran out of time.`,
+        );
+      delete votes[k];
+      changed = true;
+    }
+  }
+  return changed;
+}
+/* the game starts by itself once 2 of 3 of the ducks are ready (owner 2026-11-03 08:03Z): with Host must ready on, or
+   after the host readied during a vote */
+const dodStarts = (s) =>
+  s.phase === "lobby" &&
+  !dodVoting(s) &&
+  (dodOn(s, "ready") || !!(s.players[s.hostId] || {}).ready) &&
+  humanIds(s).filter((id) => s.players[id].ready).length >= dodNeed(s, "ready");
 export const groupsOf = (s, id) => {
-  const out = id === s.hostId ? ["sudo"] : [];
+  const out =
+    id === s.hostId || (dodOn(s, "sudo") && s.players[id] && !s.players[id].bot)
+      ? ["sudo"]
+      : [];
   for (const [name, g] of Object.entries(
     s.groups || { dumbasses: { perms: ["nofun", "slow"], members: [] } },
   ))
@@ -2823,6 +3105,7 @@ function reopenMatch(s, id) {
 function skipRound(s, now) {
   say(s, "The room voted to skip this round.");
   if (s.phase === "results" || isMgj(s)) return advance(s, now, true); // (Mad God Justin: the fight ends as if time ran out)
+  if (rolling(s)) return rotate(s, now); // (Random: a skipped round ends like any other, into the next game)
   if (isBb(s)) {
     s.round++;
     return startTourney(s, now);
@@ -3627,6 +3910,7 @@ function scAdvance(s, now, force = false) {
           : `${name}!`,
       );
       if (pick === "lobby") return backToLobby(s, "Back to the lobby.");
+      if (rolling(s)) return rotate(s, now); // (Random: the next paragraph is the next game)
       s.round++;
       return startStory(s, now, pick === "new");
     }
