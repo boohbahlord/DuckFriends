@@ -22,6 +22,12 @@ const live = (o, now) => {
   for (const [k, v] of Object.entries(o || {})) if (v > now) st[k] = v;
   return st;
 };
+/* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp) */
+export const invuln = (s) => +s.options.invuln === 1;
+export function hurtFx(s, id, now) {
+  s.hurt = { ...(s.hurt || {}), [id]: now };
+  return true;
+}
 export function holdDown(s, id, now) {
   const ms = downFor(s);
   s.up = { ...(s.up || {}), [id]: now + Math.max(ms, GET_UP_MIN) }; // (when the duck stands up by itself: standUps)

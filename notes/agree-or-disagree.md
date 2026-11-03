@@ -3140,3 +3140,7 @@ Done (Jackal): the dunce look goes as soon as someone else is crowned (only the 
 > Here is my idea for the specials (blue), and the purple can be the button for toggle AND the autoswing idea can just be completely removed from mobile
 
 Sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg. Done (Solomon): `js/hotbar.js` (the slider and the purple square replace the round Specials button), `js/phonepad.js` (the jump button, and the crosshair when the slider's middle is a weapon; the jump moves up above it), Mad God Justin's auto stab removed from `js/rules.js`. Kept: a tap on the board still jumps, and holding still still brings the ring of specials. A phone on its side: the jump sits beside the crosshair, in the bottom row.
+
+## 2026-11-03: Game settings (Adam's relay of the owner's answers to the Game Settings plan)
+Nine new options, each with a tile in Additional settings for now (Adam moves them into the full-screen Game Settings): `invuln` (Invulnerability: no hit takes a duck down or its HP, it only flashes red; `s.hurt`), `noChat`, `noTerm` (both through `denied`, so the host is held to them too), `hideNames`, `showWriter` (the writer is named in the log after the vote), `scLines` (Story Chain laps), `lateJoin` (play | watch), `walk` (slow | normal | fast) and `textMax` (80, 140, 200, 280). (Jackal)
+- Board colors (Jackal): `aodColors` = rainbow | gr (Agree or Disagree: shades of red and green, Neutral fading black, grey, white), a tile in Additional settings; the owner sees the picture before merge.

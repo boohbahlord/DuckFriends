@@ -51,6 +51,7 @@ import {
   BJ,
 } from "./hangout/layout.js";
 import { GRENADE_MS, daggerZ } from "./rules.js";
+import { invuln } from "./hangout/death.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
@@ -1415,7 +1416,7 @@ function moveZombies(s, zs, now, T, up) {
         if (!dodging(s, target.p, now)) {
           const p = p4[target.id];
           if (p && !p.dn && !p.gh) {
-            const hp = p.hp - 1;
+            const hp = invuln(s) ? p.hp : p.hp - 1; // (Invulnerability: it only flashes)
             if (hp <= 0) {
               p4[target.id] = { hp: 0, at: now, dn: now + L4.BLEED };
               const u = upOf(s, target.id);
