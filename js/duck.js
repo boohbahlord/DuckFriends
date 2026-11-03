@@ -200,7 +200,7 @@ ${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"
       face = faceLayer(L.face, { ...L, beak: "frog" }, dead),
       top = hat.front || face ? HAT_TOP : 0,
       k = 1 + 0.1 * clamp1(L.size);
-    return `<svg class="duck datboi${L.metal === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}">
+    return `<svg class="duck datboi${L.rank === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}">
 ${k !== 1 ? `<g transform="translate(56 106) scale(${k.toFixed(3)}) translate(-56 -106)">` : ""}
 ${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(hat.back)}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(face)}${onHead(hat.front)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }

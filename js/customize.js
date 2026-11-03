@@ -78,13 +78,24 @@ export function setName(raw) {
   return true;
 }
 
-/* Jack in a Box (styles.js lists the pages his style takes): on a duck page he doesn't take, his tiles show the duck
-   he'd go back to, and picking one turns him back */
+/* Jack in a Box and Dat Boi (styles.js lists the pages their styles take): on a duck page one doesn't take, its tiles
+   show the duck he'd go back to, and picking one turns him back */
 const DUCK_PAGES = ["hat", "face", "eyes", "beak", "outfit", "body", "skin"];
 const offJack = (k) => {
   const st = styleById(profile.duck.style);
   return !!(st && st.pages && DUCK_PAGES.includes(k) && !st.pages.includes(k));
 };
+/* Dat Boi's ranks, in the order they open (unlocks.js) */
+const DATBOI_RANKS = [
+  ["none", "Green"],
+  ["bronze", "Bronze"],
+  ["silver", "Silver"],
+  ["chrome", "Chrome"],
+  ["gold", "Gold"],
+  ["rose", "Rose gold"],
+  ["rainbow", "Rainbow"],
+];
+const boxed = (id) => !!styleById(id).pages; // (Jack in a Box or Dat Boi)
 const styleLabel = (D) =>
   D.style === "jack" && D.jill ? "Jill in a Box" : styleById(D.style).name;
 /* the menu, top to bottom as on the duck; then the rest below a line */
@@ -140,11 +151,14 @@ const valueOf = (k) => {
       D.outfit && outfitById(D.outfit.id)
         ? outfitById(D.outfit.id).name
         : "None",
-    skin: D.image
-      ? "Your picture"
-      : D.metal !== "none"
-        ? nameOf(DUCK_METALS, D.metal)
-        : nameOf(DUCK_PATTERNS, D.pattern, "Plain"),
+    skin:
+      D.style === "datboi"
+        ? nameOf(DATBOI_RANKS, D.rank || "none")
+        : D.image
+          ? "Your picture"
+          : D.metal !== "none"
+            ? nameOf(DUCK_METALS, D.metal)
+            : nameOf(DUCK_PATTERNS, D.pattern, "Plain"),
     name: profile.name,
     card: C.image ? "Your picture" : nameOf(CARD_PATTERNS, C.pattern, "Plain"),
     specials: ((k) =>
@@ -167,6 +181,7 @@ const LOCK_KIND = {
   face: "face",
   style: "style",
   eyes: "eyes",
+  rank: "rank",
 };
 let peek = null; // { kind, id }: a locked item shown on the big duck, never worn
 const grid = (group, items, cur) =>
@@ -237,16 +252,18 @@ export function openCustomize(page = lastPage) {
                     ...D,
                     image: null,
                     style: peek.id,
-                    ...(D.style !== "jack" ? { prevStyle: D.style } : {}),
+                    ...(!boxed(D.style) ? { prevStyle: D.style } : {}),
                   }
                 : {
-                    ...(D.style === "jack"
+                    ...(offJack(peek.kind)
                       ? { ...D, style: D.prevStyle || "rubber" }
                       : D),
                     image: null,
                     [peek.kind]:
-                      peek.kind === "eyes" ? peek.id : { id: peek.id },
-                  }; // (the eyes are kept as their id alone)
+                      peek.kind === "eyes" || peek.kind === "rank"
+                        ? peek.id
+                        : { id: peek.id },
+                  }; // (the eyes and Dat Boi's rank are kept as their id alone)
           duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
           cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };
@@ -550,7 +567,7 @@ export function openCustomize(page = lastPage) {
                       ...D,
                       image: null,
                       style: x.id,
-                      ...(x.id === "jack" && D.style !== "jack"
+                      ...(x.pages && !boxed(D.style)
                         ? { prevStyle: D.style }
                         : {}),
                     },
@@ -604,6 +621,21 @@ export function openCustomize(page = lastPage) {
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
             <p class="small dim">Their colors are under Colors.</p></div>`;
+          } else if (k === "skin" && D.style === "datboi") {
+            /* Dat Boi's Skin page is his ranks */
+            const pic = (rank) =>
+              duckSVG(
+                { ...D, hat: null, face: null, rank },
+                { size: 58, shadow: false },
+              );
+            html =
+              head("Skin") +
+              `<div class="arm-body">${grid(
+                "rank",
+                DATBOI_RANKS.map(([v, n]) => [v, pic(v), n]),
+                D.rank || "none",
+              )}
+            <p class="small dim">His ranks: each one opens with more jumps.</p></div>`;
           } else if (k === "skin") {
             const pic = (look) =>
               duckSVG(
@@ -797,7 +829,7 @@ export function openCustomize(page = lastPage) {
           if (st.colors)
             for (const [key, label, def] of st.colors)
               out.push(
-                st.id === "jack"
+                st.pages
                   ? [
                       key,
                       label,
@@ -807,7 +839,7 @@ export function openCustomize(page = lastPage) {
                       },
                       "",
                       st.colors.length > 1 && styleLabel(D),
-                    ] // (Jack draws no metal or picture: they wait for the duck)
+                    ] // (Jack and Dat Boi draw no metal or picture: they wait for the duck)
                   : [
                       key,
                       label,
@@ -833,7 +865,8 @@ export function openCustomize(page = lastPage) {
               },
               "Picking a color takes off a metal or a picture.",
             ]);
-          const box = !!st.pages; // (Jack draws no pattern, hat, beak, outfit or face, so their colors wait for the duck)
+          const box = !!st.pages, // (Jack draws no pattern, hat, beak, outfit or face, so their colors wait for the duck;
+            takes = (k) => !box || st.pages.includes(k); // Dat Boi takes hats and face items)
           if (!box && D.pattern !== "none" && D.metal === "none" && !D.image)
             out.push([
               "dpat",
@@ -844,7 +877,8 @@ export function openCustomize(page = lastPage) {
               },
               "The color of the pattern on your duck.",
             ]);
-          for (const [key, label, def] of (!box && hd && hd.colors) || [])
+          for (const [key, label, def] of (takes("hat") && hd && hd.colors) ||
+            [])
             out.push([
               "hat-" + key,
               `${hd.name}: ${label}`,
@@ -880,7 +914,8 @@ export function openCustomize(page = lastPage) {
               od.colors.length > 1 && od.name,
             ]);
           const fd = D.face && faceById(D.face.id);
-          for (const [key, label, def] of (!box && fd && fd.colors) || [])
+          for (const [key, label, def] of (takes("face") && fd && fd.colors) ||
+            [])
             out.push([
               "face-" + key,
               `${fd.name}: ${label}`,
@@ -1045,7 +1080,7 @@ export function openCustomize(page = lastPage) {
           } // (a locked one: only a look)
           peek = null;
           /* Jack in a Box: picking him keeps the style to go back to; picking anything his style doesn't take turns him back */
-          if (t.dataset.g === "style" && v === "jack" && D.style !== "jack")
+          if (t.dataset.g === "style" && boxed(v) && !boxed(D.style))
             D.prevStyle = D.style;
           else if (
             offJack(lastPage) &&
@@ -1053,13 +1088,16 @@ export function openCustomize(page = lastPage) {
             t.dataset.g !== "hmetal"
           )
             D.style =
-              D.prevStyle && D.prevStyle !== "jack" ? D.prevStyle : "rubber";
+              D.prevStyle && !boxed(D.prevStyle) ? D.prevStyle : "rubber";
           ({
             hat: () => {
               D.hat =
                 v === "none"
                   ? null
                   : { ...(D.hat && D.hat.id === v ? D.hat : {}), id: v };
+            },
+            rank: () => {
+              D.rank = v === "none" ? null : v;
             },
             hmetal: () => {
               D.hat = { ...D.hat, metal: v };

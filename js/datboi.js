@@ -22,10 +22,11 @@ export const CYCLE = "#ff7a1a";
 const tube = (d, w, fill, edge) =>
   `<path d="${d}" stroke="${edge}" stroke-width="${w + 2.2}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="${fill}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
 
-/* L: the look (frog and cycle: his colors; metal: his rank); id: a unique id; dead: X eyes and the arm down */
+/* L: the look (frog and cycle: his colors; rank: bronze, silver, chrome, gold, rose or rainbow, or none); id: a unique id;
+   dead: X eyes and the arm down */
 export function datboiSVG(L, id, dead) {
-  const rainbow = L.metal === "rainbow",
-    M = !rainbow && L.metal && L.metal !== "none" && METAL[L.metal];
+  const rainbow = L.rank === "rainbow",
+    M = !rainbow && L.rank && METAL[L.rank];
   const skin = rainbow ? RAINBOW : L.frog || FROG,
     bike = rainbow ? mix(RAINBOW, 0, 0.1) : L.cycle || CYCLE;
   /* the colors of his skin: light, mid, dark, edge (a metal takes its own) */
