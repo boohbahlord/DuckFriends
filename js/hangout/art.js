@@ -160,8 +160,10 @@ html.moving .hg-spark{animation:hgsp 1.9s linear infinite}
 export const svgDataURL = (svg) =>
   "data:image/svg+xml;charset=utf-8," +
   encodeURIComponent(
-    svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
-  );
+    /^<svg[^>]*\sxmlns=/.test(svg)
+      ? svg
+      : svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
+  ); // (a drawing that names its xmlns already keeps just the one: twice, and Firefox shows a broken picture)
 export function useHangArtCSS(doc = document) {
   if (doc.getElementById("hg-art-css")) return;
   const s = doc.createElement("style");

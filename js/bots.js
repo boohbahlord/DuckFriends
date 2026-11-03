@@ -12,7 +12,7 @@
    Dunce once the grace period is over and vote (now and then changing their minds); a defender stays in the circle. In
    Mad God Justin they walk at Justin, stab him up close and now and then jump (his bullets fly under a jump). In
    Hangout they wander about Duck Cabin, stopping now and
-   then, and jump once in a while (they never walk off an edge or up a wall). In Left 4 Dead Ducks they fight the zombies
+   then, and jump once in a while (they never walk off an edge or up a wall). In Quacky Zombies they fight the zombies
    and revive each other (l4ddbots.js). */
 import * as HL from "./hangout/layout.js";
 import { bjBot } from "./hangout/blackjack.js";
@@ -495,7 +495,7 @@ export function botActions(s, now) {
     }
     if (isHang(s)) {
       if (s.phase === "hang")
-        (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Left 4 Dead Ducks: they fight, l4ddbots.js)
+        (isL4dd(s) ? l4Bot : hangBot)(s, id, now, out); // (Quacky Zombies: they fight, l4ddbots.js)
       else if (s.phase === "lobby" && !s.players[id].ready)
         out.push({ t: "ready", id, v: true });
       return;

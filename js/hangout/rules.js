@@ -30,7 +30,7 @@ export function hangStart(s, now) {
   s.seat.forEach((id, k) => {
     s.pos[id] = spot(k);
   });
-  for (const [, r] of rulesOf(s)) r.start?.(s, now); // (a mode of its own sets everyone up its way: Left 4 Dead Ducks)
+  for (const [, r] of rulesOf(s)) r.start?.(s, now); // (a mode of its own sets everyone up its way: Quacky Zombies)
 }
 export function hangJoin(s, id) {
   if (!s.hang) s.hang = newHang(s);

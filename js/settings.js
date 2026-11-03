@@ -102,8 +102,8 @@ const PAGES = {
       ["stick", "Joystick"],
       ["tap", "Tap to move"],
     ])}<div class="keys" style="margin-top:.5rem">
-      <span>Joystick</span><span>Hold a finger off the buttons and drag: a see-through stick appears. Tap: jump. Flick the stick twice the same way: sprint, for as long as you hold it out.</span>
-      <span>Tap to move</span><span>Tap: walk there. Quick double tap: jump, on the way too. Fast swipe: sprint that way.</span></div></div>
+      <span>Joystick</span><span>Hold a finger off the buttons and drag: a see-through stick appears. Flick the stick twice the same way: sprint, for as long as you hold it out.</span>
+      <span>Tap to move</span><span>Tap: walk there. Fast swipe: sprint that way.</span></div></div>
     <div class="sect"><h3>Keys</h3><div class="keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span><span>Move your duck</span>
       <span><kbd>Shift</kbd></span><span>Sprint (hold)</span>

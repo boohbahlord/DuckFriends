@@ -51,6 +51,7 @@ import { activeRoom } from "./net.js";
 import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
+import { touchOnly } from "./pointer.js";
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -218,7 +219,8 @@ const grouped = (group, items, cur, groups, after = "") => {
 };
 let lastPage = null,
   lastColor = "duck",
-  keyFor = null; // keyFor: the special whose key boxes are open
+  keyFor = null, // keyFor: the special whose key boxes are open
+  unkeying = false; // the Specials page's Remove from hotbar is on: a special tapped comes off its key
 const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
@@ -230,6 +232,7 @@ export function openCustomize(page = lastPage) {
       onOpen(w) {
         openFolds.clear();
         keyFor = null;
+        unkeying = false;
         peek = null;
         const menu = w.querySelector(".arm-menu"),
           duckBox = w.querySelector(".arm-duck"),
@@ -393,6 +396,7 @@ export function openCustomize(page = lastPage) {
             : 0;
           const prev = lastPage;
           lastPage = k || null;
+          if (k !== "specials") unkeying = false; // (Remove from hotbar is only for its page)
           if (peek && peek.kind !== k) peek = null; // (off its page, the preview goes and the duck is as it was)
           if (!keep) stage(); // (the Specials page shows the special on the big duck)
           /* Jack in a Box takes only the pages his style lists; on the others the tiles show the duck he'd turn back into */
@@ -587,10 +591,11 @@ export function openCustomize(page = lastPage) {
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ""}</div>`;
           } else if (k === "specials") {
             /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
-             special's tile opens a box for each key right under it */
+             special's tile opens a box for each key right under it. A thin row at the top and at the bottom (so a
+             phone never scrolls far for it): Remove from hotbar; while it's on, a special tapped comes off its key */
             const keys = keysOf(D),
               open = specialById(keyFor),
-              phone = !matchMedia("(any-pointer: fine)").matches; // (only a touch screen: a touchscreen laptop has a touchpad too)
+              phone = touchOnly(); // (only a touch screen: pointer.js)
             const box = (n, i, id, attrs) =>
               `<button type="button" class="sp-key${id ? " full" : ""}${isOff(id) ? " off" : ""}" data-i="${i}" ${attrs}><b>${n}</b>${id ? `<i>${specialById(id).icon}</i>` : ""}</button>`;
             const tiles = (kind) =>
@@ -608,19 +613,21 @@ export function openCustomize(page = lastPage) {
                     x.id === "hammer"
                       ? `<button type="button" class="sp-prev sp-alt" data-a="wrench" aria-pressed="${!!D.wrench}" aria-label="${D.wrench ? "Make it a hammer" : "Make it a wrench"}" data-tip="${D.wrench ? "A hammer instead" : "A wrench instead"}">⚙</button>`
                       : ""; // (the hammer's other look)
-                  return `<div class="sp-tile${x.off ? " off" : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
+                  return `<div class="sp-tile${x.off ? " off" : ""}${unkeying ? (at >= 0 ? " sp-rm" : " sp-rm-no") : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
               <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? " disabled" : ""} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
               ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
                 })
                 .join("");
+            const used = keys.filter(Boolean).length,
+              strip = `<div class="sp-strip${unkeying ? " on" : ""}"><button type="button" class="btn small${unkeying ? "" : " ghost"}" data-a="unkeying" aria-pressed="${unkeying}"${used || unkeying ? "" : " disabled"}>${unkeying ? "Done" : "Remove from hotbar"}</button><span class="small dim">${unkeying ? (used ? `Tap a special to take it off. ${used} on the hotbar.` : "The hotbar is empty.") : `${used} on the hotbar`}</span></div>`;
             html =
               head("Specials") +
-              `<div class="arm-body arm-specials"><h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join("")}</div>
+              `<div class="arm-body arm-specials">${strip}<h3>Your keys</h3><div class="sp-keys sp-mine">${KEYS.map((n, i) => box(n, i, keys[i], keys[i] ? `data-a="unkey" data-tip="Take ${esc(specialById(keys[i]).name)} off key ${n}" aria-label="Key ${n}: ${esc(specialById(keys[i]).name)}"` : `aria-label="Key ${n}: empty" disabled`)).join("")}</div>
             <p class="small dim sp-now">${open ? `${esc(open.name)}: ${esc(open.tip)} Pick its key.` : phone ? "Tap a special, then the key to put it on. In a game, hold still on the board to use them." : "Pick a special, then the key to put it on. In a game, press its key; Shift and the key keeps it on."}</p>
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p></div>`;
+            <p class="small dim">Their colors are under Colors.</p>${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>
@@ -1019,6 +1026,12 @@ export function openCustomize(page = lastPage) {
               changed();
               return;
             } // (one key per special: it moves)
+            if (a.dataset.a === "unkeying") {
+              unkeying = !unkeying;
+              keyFor = null;
+              show(lastPage, true);
+              return;
+            }
             if (a.dataset.a === "unkey") {
               const keys = keysOf(D);
               keys[+a.dataset.i] = null;
@@ -1133,7 +1146,12 @@ export function openCustomize(page = lastPage) {
               D.size = +v;
             },
             special: () => {
-              if (!isOff(v) && unlocked("special", v))
+              if (unkeying) {
+                const keys = keysOf(D);
+                if (keys.includes(v)) keys[keys.indexOf(v)] = null;
+                D.keys = keys;
+              } // (Remove from hotbar is on: it comes off its key)
+              else if (!isOff(v) && unlocked("special", v))
                 keyFor = keyFor === v ? null : v;
             }, // its key boxes open (or shut) under it (not while it's locked)
             skin: () => {

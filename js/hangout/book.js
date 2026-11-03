@@ -10,6 +10,7 @@ import { nameHTML } from "../name.js";
 import { rainbowHTML } from "../art.js";
 import { esc } from "../ui.js";
 import { denied } from "../rules.js";
+import { touchOnly } from "../pointer.js";
 
 const BOOK = PROPS.find((p) => p.kind === "book");
 const FOOT = [BOOK.x + BOOK.w / 2, BOOK.y + BOOK.d];
@@ -79,8 +80,7 @@ function open() {
   v.shown = "";
   v.el.hidden = false;
   fill(v.ctx.state());
-  if (!matchMedia("(hover: none) and (pointer: coarse)").matches)
-    v.input.focus({ preventScroll: true }); // (a phone's keyboard waits for a tap)
+  if (!touchOnly()) v.input.focus({ preventScroll: true }); // (a phone's keyboard waits for a tap)
   addEventListener("keydown", esc_, true);
 }
 function close() {
