@@ -3316,8 +3316,10 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 ## 2026-11-03 22:01Z: Quacky Zombies, Instant Kill's X (word for word)
 > make the instant kill a X over a duck zombie's head
 
-- Solomon the 2nd (on Stage 4's PR #206): while Instant Kill is on, a red X (dark outline) pops in and bobs over every
-  living zombie's head (l4dd.js KILL_X, css .l4-kill .l4z-x).
+- Misread at first as a red X floating over every zombie during Instant Kill. The owner, 22:06Z, word for word:
+  > NO NO NO! I DONT WANT THAT FOR INSTANT KILL! REMOVE THAT ! WHAT I MEANT WAS CHANGE THE SYMBOL OF INSTANT TO THE DUCK ZOMBIE HEAD WITH A RED X OVER IT
+- Solomon the 2nd (PR #206): the X over the zombies is gone; Instant Kill's symbol (the drop, the big name, the timer)
+  is now a zombie duck's head (dark green, orange beak) with a big red X over it, in place of the skull (l4dddrops.js).
 
 ## 2026-11-03 22:02Z: Quacky Zombies, the Nuke and Speed Boost drops (word for word, with a marked-up picture)
 > remove the yellow line on the nuke, and add the corners back to the adrenaline shot

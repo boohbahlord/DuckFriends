@@ -1,5 +1,5 @@
 /* ---------- Quacky Zombies' drops, drawn (Stage 4, the owner's list) ----------
-   Each one's symbol, as the owner named them: a skull (Instant Kill), a bullet (Max Ammo), a nuclear bomb (Nuke), the
+   Each one's symbol, as the owner named them: a zombie duck's head crossed out in red (Instant Kill), a bullet (Max Ammo), a nuclear bomb (Nuke), the
    adrenaline shot (Speed Boost), a dollar sign (Double Points) and a price tag (Sale). Simple shapes with the guns'
    dark outline and a soft white shine (l4ddguns.js), each filling a 40 × 40 square; the screen floats them over the
    floor with a green glow (css .l4-drop). Preview: tools/l4dd-art.html */
@@ -9,14 +9,18 @@ const INK = "#2a2d38";
 const shine = (d, o = 0.5, w = 1.2) =>
   `<path d="${d}" stroke="#fff" stroke-width="${w}" opacity="${o}" fill="none" stroke-linecap="round"/>`;
 
-/* the skull: bone white, darker on its right side, its eye holes with a red glint, the nose, the teeth */
-const SKULL = `<svg viewBox="0 0 40 40"><path d="M20 3.6C11 3.6 5.2 9.8 5.2 17.6C5.2 22.2 7.4 25.6 10.4 27.4V32.2Q10.4 35.2 13.4 35.2H26.6Q29.6 35.2 29.6 32.2V27.4C32.6 25.6 34.8 22.2 34.8 17.6C34.8 9.8 29 3.6 20 3.6Z" fill="#f2efe6" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
-<path d="M27 6.2C31.4 8.6 33.6 12.8 33.6 17.6C33.6 21.6 31.8 24.6 28.4 26.6V32.2Q28.4 34 26.6 34H24.6Q27 33.4 27 30.6V25.4C30 23.4 31 20.6 31 17.6C31 12.6 29.4 8.6 27 6.2Z" fill="#d8d1bf"/>
-<path d="M9.8 18.2C9.8 15.4 12 13.6 14.6 13.6S18.8 15.6 18.8 18.1C18.8 20.8 16.8 22.8 14.4 22.8S9.8 21 9.8 18.2Z" fill="#1c1d26"/><path d="M30.2 18.2C30.2 15.4 28 13.6 25.4 13.6S21.2 15.6 21.2 18.1C21.2 20.8 23.2 22.8 25.6 22.8S30.2 21 30.2 18.2Z" fill="#1c1d26"/>
-<circle cx="14.8" cy="18.4" r="1.5" fill="#ff4b4b"/><circle cx="25.2" cy="18.4" r="1.5" fill="#ff4b4b"/>
-<path d="M20 22.6L17.8 26.4H22.2Z" fill="#1c1d26" stroke="#1c1d26" stroke-width=".8" stroke-linejoin="round"/>
-<path d="M10.4 29H29.6" stroke="${INK}" stroke-width="1.3"/><path d="M15.2 29V35M20 29V35M24.8 29V35" stroke="${INK}" stroke-width="1.3"/>
-${shine("M9.4 11.4Q12.4 6.8 18 6", 0.7, 1.6)}</svg>`;
+/* Instant Kill: a zombie duck's head (as the zombies are drawn: dark green, its X eyes, the orange beak) with a big red
+   X over it, the owner's pick. Flat colors, no gradients, so it shows in every hidden or copied spot. In the duck's own
+   120 box, cropped to the head */
+const ZG = "#3f7a34",
+  ZLINE = "#23431d";
+const SKULL = `<svg viewBox="47 6 70 70"><circle cx="76" cy="40" r="23" fill="${ZG}"/>
+<circle cx="76" cy="40" r="23" fill="none" stroke="${ZLINE}" stroke-width="2.4"/>
+<ellipse cx="67" cy="29" rx="9.5" ry="5.6" fill="#9fbd9a" opacity=".75" transform="rotate(-25 67 29)"/><ellipse cx="66" cy="27.6" rx="5" ry="2.6" fill="#fff" opacity=".6" transform="rotate(-25 66 27.6)"/>
+<path d="M96 35C104 32 113 34 116 39C111 42.5 103 43.5 96.5 42.5Z" fill="#ff9a1f" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M96.5 42.5C103 43.5 110 43.5 113 45.5C108 49.5 100.5 49.5 95.5 46.5Z" fill="#f07f0e" stroke="#c45f00" stroke-width="1.6" stroke-linejoin="round"/>
+<path d="M78 30l8 8M86 30l-8 8" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>
+<g fill="none" stroke-linecap="round"><path d="M60 24L92 56M92 24L60 56" stroke="${INK}" stroke-width="9"/><path d="M60 24L92 56M92 24L60 56" stroke="#ff3b3b" stroke-width="5"/><path d="M62 26L67 31" stroke="#fff" stroke-width="1.6" opacity=".55"/></g></svg>`;
 
 /* the bullet: standing up, a copper tip on a brass case, the groove and the rim at its foot */
 const BULLET = `<svg viewBox="0 0 40 40"><path d="M13.6 17.6C13.6 9.4 16.8 4.6 20 3.4C23.2 4.6 26.4 9.4 26.4 17.6Z" fill="#c8693a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
