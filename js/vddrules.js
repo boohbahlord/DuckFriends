@@ -1,9 +1,10 @@
 /* ---------- the rules of Valentine's Duck Date ----------
    A random duck is The Date; everyone else is a Suitor. The Date sits at the fancy dining table in the middle for the
-   whole game. A turn: each Suitor still in takes the other seat in turn, for one date → before each date The Date writes
-   the topic, shown over the table (the talking itself happens on the call or in the chat; nothing here judges it) → the
-   date runs its timer (1 min by default after 10 s of grace; the host can turn it off), and The Date can end it early
-   with Next duck → after the last date of the turn, every Suitor gets their own tile (like Who is the Quack?), and The
+   whole game. A turn: The Date writes one topic first, shown over the table (the talking itself happens on the call or
+   in the chat; nothing here judges it) → each Suitor still in takes the other seat in turn, for one date on that same
+   topic → the date's timer (1 min by default; the host can turn it off) starts when The Date presses Start timer, and
+   pressing it again pauses it. The Date can end a date with Next duck once the grace period (6 s) has passed → after
+   the last date of the turn, every Suitor gets their own tile (like Who is the Quack?), and The
    Date walks onto one and turns that duck down; standing on no tile turns nobody down → the next turn, until one Suitor
    is left: the Valentine → the stats (Sweet Valentine and Most Jumps) → back to the lobby (VD_AFTER).
    Everyone walks around the whole time, but I want nothing to knock down the two ducks at the table (vdSafe). A Turned
@@ -24,7 +25,7 @@ import {
 
 export const isVd = (s) => s.options.mode === "vdd";
 export const VD_PHASES = ["vdprompt", "vddate", "vdpick", "vddown", "vdval"];
-export const VD_GRACE = 10; // seconds of grace before the date's timer starts
+export const VD_GRACE = 6; // seconds at the start of a date before The Date can skip it with Next duck
 export const VD_WRITE = 60; // seconds The Date has to write the topic (then what they typed, or one from VD_TOPICS)
 export const VD_DOWN = 5; // seconds of the Turned Down moment
 export const VD_VAL = 9; // seconds of the Valentine's moment, then the stats
@@ -218,28 +219,35 @@ function startTurn(s, now) {
   V.k = 0;
   V.ids = null;
   say(s, `Turn ${V.turn}: a date with each of the ${live.length} Suitors.`);
-  return startDate(s, now);
+  return startDate(s, now, true);
 }
-/* the next Suitor takes the seat (one who left is skipped, and keeps their place for the next turn), and The Date writes
-   the topic */
-function startDate(s, now) {
+/* the next Suitor still here and in (one who left is skipped, and keeps their place for the next turn): false when there
+   is none left this turn */
+function nextLive(s) {
   const V = s.vd;
   while (
     V.k < V.order.length &&
     !(s.players[V.order[V.k]] && !turnedDown(s, V.order[V.k]))
   )
     V.k++;
-  if (V.k >= V.order.length) return startPick(s, now);
+  return V.k < V.order.length;
+}
+/* the next Suitor takes the seat. The first date of a turn starts with The Date writing the topic; the rest of the turn's
+   dates are on that same topic */
+function startDate(s, now, first = false) {
+  const V = s.vd;
+  if (!nextLive(s)) return startPick(s, now);
   const was = V.cur;
   V.cur = V.order[V.k];
   V.n++;
   s.qi = V.n;
-  V.topic = "";
-  V.draft = "";
   V.early = false;
   s.lock = {};
   s.lordTime = 0;
   if (was && was !== V.cur && s.pos[was]) s.pos[was] = floorSpot(); // (up from the table, onto the floor)
+  if (!first) return beginDate(s, now);
+  V.topic = "";
+  V.draft = "";
   enter(s, "vdprompt", now);
   seatAll(s);
   return s;
@@ -264,14 +272,33 @@ function startTalk(s, now, text) {
   const V = s.vd;
   V.topic = text || V.draft || anyOf(VD_TOPICS);
   delete V.draft;
-  const T = +s.options.vdTime || 0;
-  s.lordTime = T ? VD_GRACE + T : 0;
-  const p = s.players[V.cur];
-  say(
-    s,
-    `Date ${V.k + 1} of ${V.order.length}: ${p ? p.name : "a Suitor"}. The topic: ${V.topic}`,
-  );
-  return enter(s, "vddate", now);
+  say(s, `This turn's topic: ${V.topic}`);
+  return beginDate(s, now);
+}
+/* a date on the turn's topic: its timer waits for The Date to press Start timer (none when the host turned it off) */
+function beginDate(s, now) {
+  const V = s.vd,
+    T = +s.options.vdTime || 0,
+    p = s.players[V.cur];
+  V.tm = T ? { left: T * 1000, run: false } : null;
+  s.lordTime = 0;
+  say(s, `Date ${V.k + 1} of ${V.order.length}: ${p ? p.name : "a Suitor"}.`);
+  enter(s, "vddate", now);
+  seatAll(s);
+  return s;
+}
+/* The Date's Start timer button: starts the date's timer, pauses it, and starts it again where it stopped */
+export function vdTimer(s, a, now) {
+  const V = s.vd;
+  if (!V || s.phase !== "vddate" || !V.tm || !isDate(s, a.id)) return null;
+  if (V.tm.run) {
+    V.tm = { left: Math.max(0, s.ends - now), run: false };
+    s.ends = 0;
+  } else {
+    V.tm = { left: V.tm.left, run: true };
+    s.ends = now + V.tm.left;
+  }
+  return s;
 }
 function endDate(s, now) {
   const V = s.vd,
@@ -394,9 +421,13 @@ export function vdAdvance(s, now, force = false) {
   switch (s.phase) {
     case "vdprompt":
       if (!s.players[V.cur]) {
+        // (the Suitor left before their date: the next one sits down, and the topic is still being written)
         V.k++;
-        return startDate(s, now);
-      } // (the Suitor left before their date)
+        if (!nextLive(s)) return startPick(s, now);
+        V.cur = V.order[V.k];
+        seatAll(s);
+        return s;
+      }
       return up ? startTalk(s, now, "") : s;
     case "vddate":
       if (!s.players[V.cur]) {
@@ -415,7 +446,11 @@ export function vdAdvance(s, now, force = false) {
 }
 /* The Date's button: Next duck (a date) or Turn down (the pick); not in the first seconds, so a stray Enter can't */
 export function vdEnd(s, a, now) {
-  if (!isDate(s, a.id) || now < s.at + VOTE_GRACE * 1000) return null;
+  if (
+    !isDate(s, a.id) ||
+    now < s.at + (s.phase === "vddate" ? VD_GRACE : VOTE_GRACE) * 1000
+  )
+    return null;
   if (s.phase === "vddate") {
     s.vd.early = true;
     return endDate(s, now);
