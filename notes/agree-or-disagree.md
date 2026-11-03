@@ -3144,3 +3144,11 @@ Sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg. Done (Solomon): `js/h
 ## 2026-11-03: Game settings (Adam's relay of the owner's answers to the Game Settings plan)
 Nine new options, each with a tile in Additional settings for now (Adam moves them into the full-screen Game Settings): `invuln` (Invulnerability: no hit takes a duck down or its HP, it only flashes red; `s.hurt`), `noChat`, `noTerm` (both through `denied`, so the host is held to them too), `hideNames`, `showWriter` (the writer is named in the log after the vote), `scLines` (Story Chain laps), `lateJoin` (play | watch), `walk` (slow | normal | fast) and `textMax` (80, 140, 200, 280). (Jackal)
 - Board colors (Jackal): `aodColors` = rainbow | gr (Agree or Disagree: shades of red and green, Neutral fading black, grey, white), a tile in Additional settings; the owner sees the picture before merge.
+
+## Request (2026-11-03 05:04Z): the music bar blinks when muted
+
+> WHAT THE FUCK! I TOLD YOU A LONG TIME AGO TO FIX THE BLINKING EFFECT WHEN YOU MUTE A SONG ON THE FUCKING GAME, IT SHOULD DO THAT! IT KEEPS FLASHING NEXT ON AND OFF THE SCREEN WHEN MUTED! THAT SHOULDNT DO THAT! OTHER THINGS BECOME FADED AND UNFADED! MUTING IT SHOULD NOT MAKE IT MOVE ON IT'S OWN CONSTANTLY! THAT IS FUCKING RETARDED! FIX IT AND DONT MAKE IT AN INSANE AMOUNT OF EFFORT, IT SHOUD BE A SIMPLE FIX !!!!! AAAHHHH YOU MAKE ME SO ANGRY
+
+> I know for a fact it does that on the main menu
+
+- Miles Jr.: on the menus, a muted (or not yet ready) first song is held at its start, which moves every second, so the bar flipped between "next" (dimmed) and playing. nowPlaying() now shows the menu's first song steadily. Checked: before 2 states in 8 s, after 1, menu and lobby, phone and computer.
