@@ -24,10 +24,11 @@ const BULLET = `<svg viewBox="0 0 40 40"><path d="M13.6 17.6C13.6 9.4 16.8 4.6 2
 <rect x="12.6" y="32.6" width="14.8" height="3.6" rx="1.2" fill="#c98a3a" stroke="${INK}" stroke-width="1.5"/><path d="M14.2 30.4H25.8" stroke="${INK}" stroke-width="1" opacity=".55"/>
 ${shine("M16.6 19.6V29.6", 0.6, 1.6)}${shine("M16.8 14.6Q17.2 9.6 19.2 6.8", 0.5, 1.3)}</svg>`;
 
-/* the nuclear bomb: fat and yellow, falling nose first, the black trefoil on its side, the box fins at its tail */
+/* the nuclear bomb: fat and yellow, falling nose first, the black trefoil on its side, the box fins at its tail (no
+   darker line under its belly: the owner took it off) */
 const NUKE = `<svg viewBox="0 0 40 40"><g transform="translate(20 20) rotate(35) scale(.84) translate(-21 -20)"><path d="M28.4 15.6L33.4 14.2V25.8L28.4 24.4Z" fill="#454b5e" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
 <rect x="32" y="11" width="5.6" height="18" rx="1" fill="#33384a" stroke="${INK}" stroke-width="1.5"/><path d="M32 20H37.6" stroke="${INK}" stroke-width="1.2"/>
-<ellipse cx="17" cy="20" rx="12.6" ry="10.4" fill="#ffd23f" stroke="${INK}" stroke-width="1.8"/><path d="M8.6 26.8Q17 31.6 26 27.4" fill="none" stroke="#d9a21a" stroke-width="2.6" stroke-linecap="round"/>
+<ellipse cx="17" cy="20" rx="12.6" ry="10.4" fill="#ffd23f" stroke="${INK}" stroke-width="1.8"/>
 <path d="M15.70 17.75L13.30 13.59A7.4 7.4 0 0 1 20.70 13.59L18.30 17.75A2.6 2.6 0 0 0 15.70 17.75ZM19.60 20.00L24.40 20.00A7.4 7.4 0 0 1 20.70 26.41L18.30 22.25A2.6 2.6 0 0 0 19.60 20.00ZM15.70 22.25L13.30 26.41A7.4 7.4 0 0 1 9.60 20.00L14.40 20.00A2.6 2.6 0 0 0 15.70 22.25Z" fill="#1c1d26"/><circle cx="17" cy="20" r="1.5" fill="#1c1d26"/>
 ${shine("M9.6 13.4Q13 10.6 18.4 10.4", 0.75, 1.6)}</g></svg>`;
 
@@ -47,7 +48,7 @@ export const DROP_ICONS = {
   kill: SKULL,
   ammo: BULLET,
   nuke: NUKE,
-  speed: GUNS.adrenaline.icon,
+  speed: GUNS.adrenaline.whole,
   double: DOLLAR,
   sale: TAG,
 };

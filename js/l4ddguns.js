@@ -145,7 +145,12 @@ export const GUNS = {
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8), w: 1.2 },
-  adrenaline: { held: ADRENALINE, icon: iconOf(ADRENALINE, 0.8), w: 0.44 },
+  adrenaline: {
+    held: ADRENALINE,
+    icon: iconOf(ADRENALINE, 0.8),
+    whole: iconOf(ADRENALINE, 1.06), // (the Speed Boost drop: the whole syringe, its corners in, as the owner asked)
+    w: 0.44,
+  },
 };
 
 /* the bullets, flying right (the screens turn them): the sniper's, a longer pistol bullet with a long streak; the

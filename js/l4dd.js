@@ -189,11 +189,14 @@ const LIT = {
   out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
 };
 
+/* Instant Kill on: a red X over every zombie's head (the owner's ask, css .l4-kill .l4z-x) */
+const KILL_X = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5L19 19M19 5L5 19" stroke="#2a2d38" stroke-width="7.4" stroke-linecap="round"/><path d="M5 5L19 19M19 5L5 19" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round"/><path d="M6.4 6.4L9.4 9.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg>`;
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${zombieURL(z.l)}"></div><span class="l4z-hp"><i></i></span>`;
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${zombieURL(z.l)}"></div><span class="l4z-hp"><i></i></span><span class="l4z-x">${KILL_X}</span>`;
+  el.style.setProperty("--head", box.feet.toFixed(1)); // (how high its head is over its feet: the X floats over it)
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -362,6 +365,7 @@ function seeOn(s) {
     rows = ["kill", "double", "speed"]
       .filter((k) => on[k] > now)
       .map((k) => [k, Math.ceil((on[k] - now) / 1000)]);
+  if (layer) layer.classList.toggle("l4-kill", on.kill > now);
   if (saleOn(s)) rows.push(["sale", "Sale"]);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;

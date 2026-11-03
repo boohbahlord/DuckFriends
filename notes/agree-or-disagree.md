@@ -3312,3 +3312,15 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
   (each zombie's HP left x5, x2 with Double Points); a drop is taken within 70 px and blinks in its last 10 s; the
   jetpack rises 2.4 duck heights a second up to 2.6, dodges above 0.86; out of Quacky Zombies it fills up again in 10 s
   on the ground; Max Ammo fills the jetpack too; computers leave the jetpack alone; a flight isn't counted as a Jump.
+
+## 2026-11-03 22:01Z: Quacky Zombies, Instant Kill's X (word for word)
+> make the instant kill a X over a duck zombie's head
+
+- Solomon the 2nd (on Stage 4's PR #206): while Instant Kill is on, a red X (dark outline) pops in and bobs over every
+  living zombie's head (l4dd.js KILL_X, css .l4-kill .l4z-x).
+
+## 2026-11-03 22:02Z: Quacky Zombies, the Nuke and Speed Boost drops (word for word, with a marked-up picture)
+> remove the yellow line on the nuke, and add the corners back to the adrenaline shot
+
+- Solomon the 2nd (PR #206): the Nuke drop loses the darker yellow line under its belly; the Speed Boost drop shows the
+  whole syringe (plunger and needle tip no longer cut off: GUNS.adrenaline.whole). The weapons bar's icon is unchanged.

@@ -13375,8 +13375,43 @@ html.moving .eye-tears .tdrop.t2 {
   width: 104%;
   animation: fl-up 0.22s ease-out;
 } /* (a zombie set on fire by a fireball: the burning duck's flame over it) */
-.l4z.dead .l4z-hp {
+.l4z.dead .l4z-hp,
+.l4z.dead .l4z-x {
   display: none;
+}
+/* Instant Kill: a red X floats over every zombie's head (l4dd.js KILL_X), popping in */
+.l4z-x {
+  position: absolute;
+  display: none;
+  left: calc(-12px * var(--k, 1));
+  top: calc((-1px * var(--head, 60) - 30px) * var(--k, 1));
+  width: calc(24px * var(--k, 1));
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px #ff3b3b99);
+}
+.l4z-x svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.l4-kill .l4z-x {
+  display: block;
+  animation:
+    l4z-x-in 0.25s ease-out,
+    l4z-x-bob 1.2s ease-in-out 0.25s infinite;
+}
+@keyframes l4z-x-in {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.25);
+  }
+}
+@keyframes l4z-x-bob {
+  50% {
+    transform: translateY(-3px);
+  }
 }
 .l4z.dead {
   animation: l4z-die 1s ease-in forwards;
