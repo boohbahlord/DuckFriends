@@ -66,6 +66,14 @@
   <div class="row" id="o"></div>
   <h2>Justin's Butler's upgrades</h2>
   <div class="row" id="u"></div>
+  <h2>The new weapons, big (beside the pistol and the shotgun)</h2>
+  <div class="row" id="gb"></div>
+  <h2>In a duck's hand, at the game's size</h2>
+  <div class="row" id="gh"></div>
+  <h2>On the weapons bar (red: ranged, purple: special)</h2>
+  <div class="row" id="gs"></div>
+  <h2>Their bullets, flying right (×3, then the game's size)</h2>
+  <div class="row" id="gr"></div>
   <script type="module">
     import { duckSVG } from "../js/duck.js";
     import {
@@ -78,6 +86,8 @@
     } from "../js/l4ddart.js";
     import { OPENINGS, POOL, SHOP, weaponName } from "../js/l4ddrules.js";
     import { modeSymbol } from "../js/modes.js";
+    import { GUNS, ROUNDS_ART, TRACE } from "../js/l4ddguns.js";
+    import { heldHTML, BULLET } from "../js/specials.js";
 
     const fig = (html, cap, cls = "floor") =>
       `<figure><div class="${cls}">${html}</div><figcaption>${cap}</figcaption></figure>`;
@@ -137,5 +147,80 @@
         "floor wall",
       ),
     ).join("");
+    /* the new weapons (Stage 3) */
+    const NEW = [
+      "sniper",
+      "smg",
+      "ak",
+      "chaingun",
+      "revolver",
+      "glauncher",
+      "lmg",
+      "adrenaline",
+    ];
+    const OLD = [
+      ["handgun", 0.34],
+      ["shotgun", 0.95],
+    ];
+    const big = (svg, w) =>
+      svg.replace(
+        "<svg",
+        `<svg style="width:${w}px;height:auto;display:block"`,
+      );
+    gb.innerHTML =
+      OLD.map(([w, k]) =>
+        fig(big(heldHTML(w), k * 260), weaponName(w), "floor wall"),
+      ).join("") +
+      NEW.map((w) =>
+        fig(big(GUNS[w].held, GUNS[w].w * 260), weaponName(w), "floor wall"),
+      ).join("");
+    const duckWith = (svg, k) =>
+      `<div style="position:relative;width:${64 + k * 64}px;height:72px">${duckSVG({ color: "#ffd23f" }, { size: 64, shadow: true })}<div style="position:absolute;left:${32 + 64 * 0.42 - (k * 64) / 2}px;top:34px;width:${k * 64}px;filter:drop-shadow(0 1px 1px #0006)">${big(svg, k * 64)}</div></div>`;
+    gh.innerHTML =
+      OLD.map(([w, k]) => fig(duckWith(heldHTML(w), k), weaponName(w))).join(
+        "",
+      ) +
+      NEW.map((w) =>
+        fig(duckWith(GUNS[w].held, GUNS[w].w), weaponName(w)),
+      ).join("");
+    const slot = (icon, kind, key, n) =>
+      `<button type="button" class="l4s k-${kind}"><i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+    const SZ = [2, 3, 6];
+    const AMMO = {
+      sniper: "5 | 19",
+      smg: "20 | 140",
+      ak: "30 | 150",
+      chaingun: "60",
+      revolver: "5 | 70",
+      glauncher: "15",
+      lmg: "75 | 150",
+      adrenaline: "1",
+    };
+    gs.innerHTML = SZ.map(
+      (sz) =>
+        `<div class="l4bar" style="--hk:${sz}rem;padding:12px 10px 18px;background:#1c1e2a;border-radius:8px"><div class="l4slots">${NEW.map((w) => slot(GUNS[w].icon, w === "adrenaline" ? "special" : "ranged", w === "adrenaline" ? "4" : "2", AMMO[w])).join("")}</div></div>`,
+    ).join("");
+    const bul = (svg, w) =>
+      `<div style="width:${w}px;filter:drop-shadow(0 0 3px #ffd84a)">${svg.replace("<svg", '<svg style="width:100%;height:auto;display:block"')}</div>`;
+    gr.innerHTML =
+      fig(
+        `<div style="display:flex;gap:16px;align-items:center">${bul(BULLET(), 34 * 3)}${bul(BULLET(), 34)}</div>`,
+        "the pistol's",
+        "floor wall",
+      ) +
+      Object.entries(ROUNDS_ART)
+        .map(([w, r]) =>
+          fig(
+            `<div style="display:flex;gap:16px;align-items:center">${bul(r.svg, r.w * 3)}${bul(r.svg, r.w)}</div>`,
+            weaponName(w),
+            "floor wall",
+          ),
+        )
+        .join("") +
+      fig(
+        `<svg width="220" height="40"><line x1="4" y1="20" x2="216" y2="20" stroke="${TRACE.glow}" stroke-width="4" opacity=".35" stroke-linecap="round"/><line x1="4" y1="20" x2="216" y2="20" stroke="${TRACE.color}" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+        "the chain gun's line",
+        "floor wall",
+      );
   </script>
 </body>

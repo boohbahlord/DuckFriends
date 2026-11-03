@@ -3124,7 +3124,8 @@ function jaimeRun(s, now) {
     s.fxN = (s.fxN || 0) + 1;
     s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, t: now, ...o }];
   };
-  if (!boardPhases(s).includes(s.phase) || isMgj(s) || isL4dd(s)) {
+  if (isL4dd(s)) return false; // (Quacky Zombies' Jaime goes for the zombies: l4ddrules.js runs him)
+  if (!boardPhases(s).includes(s.phase) || isMgj(s)) {
     s.jm = null;
     return true;
   }

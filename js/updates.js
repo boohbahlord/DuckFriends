@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 126,
+    version: 127,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -26,6 +26,7 @@ export const UPDATES = [
       "Democracy of Ducklings, under Game Settings in the lobby: the ducks vote on the room's rules (the host readies too, the map and the game are always voted, everyone changes the settings, Sudo Perms, a new host). 2 of 3 ducks pass a vote; a new host takes every duck. The host can turn it off when making the room.",
       "In Customize → Specials, Remove from hotbar (at the top and the bottom of the list) takes specials off your keys with one tap each, so the slider has fewer to slide through.",
       "Four new specials to unlock: Short jump (1,728 Jumps: lower and quicker; kept on, it turns Long jump and Double jump off), Chair (kill Justin 1,123 times in Duck Cabin: throw his office chair), Zebra cake (beat Justin 72 times: throw it and Justin runs off to eat it) and Invisible duck (hit Duck Cabin's shadow duck with a thrown chair: your duck goes see-through, like it).",
+      "Quacky Zombies' fireplace has twelve new things in it: a sniper (its bullet goes through every zombie), an SMG, an AK-47 and an LMG (hold the button down), a chain gun, a revolver, a grenade launcher, a zebra cake the zombies go for, a fireball that sets them on fire, an adrenaline shot (full speed for 20 seconds), the Long jump, and Jaime (three a round).",
       "Jaime is a special now too: unlock him by being in Mad God Justin while Jaimes stab him 36 times (anyone's). Out of Mad God Justin he goes for the duck you just hit, or else the one who just hit you, or else the nearest.",
     ],
     fixed: [

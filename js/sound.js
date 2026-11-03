@@ -254,6 +254,17 @@ export const sfx = {
     noise(0.25, { gain: 0.2, type: "lowpass", freq: 2200, slideTo: 200 });
     tone(110, 0.3, { type: "square", gain: 0.05, slide: 0.5 });
   },
+  /* a full-auto gun's shot (Quacky Zombies' SMG, AK-47, LMG and chain gun): a short dark crack, lighter than the
+     handgun's bang, as many fly every second */
+  tat() {
+    noise(0.09, {
+      gain: 0.12,
+      type: "lowpass",
+      freq: 2400,
+      slideTo: 300,
+      top: 3000,
+    }); // (0 clicks, 0 clipped: tools/clickcheck.js, 14 in a row 80 ms apart)
+  },
   shotgun() {
     noise(0.45, {
       gain: 0.2,

@@ -49,7 +49,7 @@ export function mountPad(api) {
   const again = () => {
     if (!push || !push.firing) return;
     const ms = api.attack();
-    push.t = setTimeout(again, Math.max(120, ms || 0));
+    push.t = setTimeout(again, Math.max(60, ms || 0)); // (Quacky Zombies' full-auto guns: as fast as 80 ms)
   };
   const firing = (on) => {
     if (!push || push.firing === on) return;
