@@ -3152,3 +3152,14 @@ Nine new options, each with a tile in Additional settings for now (Adam moves th
 > I know for a fact it does that on the main menu
 
 - Miles Jr.: on the menus, a muted (or not yet ready) first song is held at its start, which moves every second, so the bar flipped between "next" (dimmed) and playing. nowPlaying() now shows the menu's first song steadily. Checked: before 2 states in 8 s, after 1, menu and lobby, phone and computer.
+
+## 2026-11-03 05:07Z: the secret code (word for word)
+> I SAID THAT THE SECRET COMMAND FOR THE FOLLOWING IS SUPPOSED TO TURN ON ALL UNLOCKABLE ITEMS AND IT SHOULD STILL TRACK THE PROGRESS TOWARDS THE ITEMS OUTSIDE THE UNLOCK AS WELL
+>
+> secret 1357911 on
+
+- Fixed: the code opened only the jester hat, the jester outfit and Jack in a Box. It now opens every entry in LOCKS
+  (js/unlocks.js), and each tile still shows its progress ("Unlocked: a secret code. Reach … (you have …)").
+
+## 2026-11-03 05:10Z: matching every style's look (word for word)
+> there should be an option to match the look of every style in the style menu for customization
