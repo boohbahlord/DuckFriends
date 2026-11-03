@@ -6598,7 +6598,7 @@ html.still .spe-bone .bone-slide {
   .hotbar {
     display: none;
   }
-} /* (a narrow window has the Specials button instead; its keys still work) */
+} /* (a narrow window has the slider of specials instead; its keys still work) */
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) button kbd {
     display: none;
@@ -6673,86 +6673,276 @@ html.still .spe-bone .bone-slide {
     opacity: 0;
   }
 }
-/* on a phone: the Specials button (bottom right) and its column of specials over it */
-.sp-btn {
+/* on a phone: the specials as a slider in the bottom middle (three slots, the middle one bigger: the one picked), and
+   the purple square to its right that keeps the picked one on */
+.sp-phone {
+  --step: 2.45rem;
+  --slot: 2.05rem;
+  position: absolute;
+  left: calc(50% - var(--step) - var(--slot) * 0.66);
+  bottom: max(0.35rem, env(safe-area-inset-bottom));
   display: none;
+  align-items: center;
+  gap: 0.4rem;
+  transition: opacity 0.25s ease;
 }
-.sp-cyc {
+.sp-phone.gone,
+.sp-phone.none {
+  opacity: 0;
+  pointer-events: none;
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .sp-phone {
+    display: flex;
+  }
+} /* (the same phones that have no row of keys) */
+@media (max-width: 760px) {
+  .sp-phone {
+    display: flex;
+  }
+}
+.bbar:has(.bbar-r .chat-btn) .sp-phone {
+  left: calc(50% - var(--step) - var(--slot) * 0.66 - 1.4rem);
+} /* (the chat button at the right: the slider moves over, so the square never meets it) */
+@media (orientation: landscape) and (max-height: 520px) {
+  .sp-phone {
+    position: static;
+    order: -1;
+  }
+  .sp-phone {
+    --step: 2.2rem;
+    --slot: 1.85rem;
+  }
+  .bbar .tpad {
+    width: 6.1rem;
+  }
+  .bbar .tpad.armed .tpad-jump {
+    right: 3.9rem;
+    bottom: 0.1rem;
+  }
+} /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
+     the crosshair instead of over the board; the corner keeps room for both, so nothing moves when the crosshair comes) */
+.bbar {
   position: relative;
-  width: 1.5rem;
-  height: 1.5rem;
+}
+.sp-slide {
+  position: relative;
+  width: calc(var(--step) * 2 + var(--slot) * 1.32);
+  height: calc(var(--slot) * 1.36);
   overflow: hidden;
-} /* (a fixed box: a wide icon never changes the button) */
-.sp-cyc i {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  mask: linear-gradient(90deg, #0000, #000 14%, #000 86%, #0000);
+} /* (the ones going out of sight fade at its ends) */
+.sp-track {
   position: absolute;
   inset: 0;
+}
+.sp-slot {
+  position: absolute;
+  left: calc(50% - var(--slot) / 2);
+  top: calc(50% - var(--slot) / 2);
+  width: var(--slot);
+  height: var(--slot);
   display: grid;
   place-items: center;
+  padding: 0;
+  border-radius: 0.45rem;
+  border: 0.14rem solid var(--line);
+  background: color-mix(in srgb, var(--blue) 30%, var(--panel));
+  color: var(--ink);
+  box-shadow: 0 0.12rem 0 var(--line);
+  transition:
+    transform 0.18s ease-out,
+    opacity 0.18s ease-out;
+  touch-action: none;
+}
+.sp-track.sliding .sp-slot {
+  transition: none;
+} /* (under the finger: it follows at once) */
+.sp-slot.mid {
+  background: color-mix(in srgb, var(--blue) 62%, var(--panel));
+  border-color: color-mix(in srgb, var(--blue) 55%, #fff);
+  z-index: 1;
+}
+.sp-slot i {
   font-style: normal;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
-.sp-cyc i.up {
-  opacity: 1;
-}
-.sp-cyc i svg {
+.sp-slot i svg {
   width: 1.3em;
   height: auto;
   display: block;
 }
+.sp-slot.on {
+  border-color: var(--green);
+  box-shadow:
+    0 0.12rem 0 var(--line),
+    0 0 0.45rem var(--green);
+}
+.sp-slot.off {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.sp-slot .cooldown {
+  left: 16%;
+  right: 16%;
+  bottom: 10%;
+  height: 0.18rem;
+}
 @media (prefers-reduced-motion: reduce) {
-  .sp-cyc i {
+  .sp-slot {
     transition: none;
   }
 }
-.sp-btn.open {
-  border-color: var(--yellow);
-  box-shadow:
-    0 0.15rem 0 var(--line),
-    0 0 0.45rem 0.1rem color-mix(in srgb, var(--yellow) 65%, transparent);
+.sp-keep {
+  flex: none;
+  width: var(--slot);
+  height: var(--slot);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 0.45rem;
+  border: 0.14rem solid var(--line);
+  background: var(--purple);
+  box-shadow: 0 0.12rem 0 var(--line);
+  cursor: pointer;
+}
+.sp-keep i {
+  position: relative;
+  width: 1.15rem;
+  height: 0.66rem;
+  border-radius: 1rem;
+  background: #fff6;
+  pointer-events: none;
+}
+.sp-keep i::after {
+  content: "";
+  position: absolute;
+  left: 0.08rem;
+  top: 0.08rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.15s ease;
+} /* a little switch: on, its knob goes right and it turns green */
+.sp-keep.on i {
+  background: var(--green);
+}
+.sp-keep.on i::after {
+  left: 0.57rem;
+}
+.sp-keep:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* on a phone: the jump button in the bottom bar's right corner; with a weapon in the slider's middle, the crosshair
+   button takes the corner and the jump button goes up above it */
+.tpad {
+  position: relative;
+  flex: none;
+  width: 3.3rem;
+  height: 2.5rem;
+  display: none;
 }
 @media not all and (any-pointer: fine) {
-  html:not(.keyboard) .sp-btn {
-    display: grid;
-  }
-} /* (the same phones that have no row of keys) */
-@media (max-width: 760px) {
-  .sp-btn {
-    display: grid;
+  html:not(.keyboard) .tpad {
+    display: block;
   }
 }
-.sp-col {
-  position: fixed;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap-reverse;
-  align-content: flex-start;
-  gap: 0.45rem;
-  touch-action: none;
+.tpad.gone {
+  visibility: hidden;
 }
-.sp-col .sp-wbtn {
-  position: relative;
-  margin: 0;
-}
-.sp-toggle {
+.tpad-jump,
+.tpad-atk {
   position: absolute;
-  right: calc(100% + 0.45rem);
-  top: 50%;
-  transform: translateY(-50%);
-  white-space: nowrap;
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.7rem;
-  border: 0.14rem solid var(--line);
-  background: var(--panel);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 0.16rem solid var(--line);
   box-shadow: 0 0.15rem 0 var(--line);
-  animation: wheelin 0.15s ease-out;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tpad-jump {
+  width: 2.3rem;
+  height: 2.3rem;
+  right: 0.5rem;
+  bottom: 0.1rem;
+  background: #fff;
+  color: #1c1c28;
+  transition:
+    bottom 0.15s ease-out,
+    right 0.15s ease-out;
+}
+.tpad-jump svg {
+  width: 1.15rem;
+  fill: currentColor;
+}
+.tpad-jump:active,
+.tpad-atk:active {
+  transform: translateY(0.1rem);
+  box-shadow: 0 0.05rem 0 var(--line);
+}
+.tpad-atk {
+  width: 3.3rem;
+  height: 3.3rem;
+  background: var(--red);
+  color: #fff;
+  z-index: 1;
+}
+.tpad-atk svg {
+  width: 1.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+.tpad-atk svg .dot {
+  fill: currentColor;
+  stroke: none;
+}
+.tpad.armed .tpad-jump {
+  right: 0.5rem;
+  bottom: 4rem;
+}
+/* the crosshair held: a ring around it, and a knob that shows where it aims */
+.tpad-ring {
+  position: absolute;
+  right: calc(1.65rem - 52px);
+  bottom: calc(1.65rem - 52px);
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 2px solid #ffffff40;
+  background: radial-gradient(circle, #ef3b3b14 0 55%, #ef3b3b2a 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tpad.aiming .tpad-ring {
+  opacity: 1;
+}
+.tpad-ring i {
+  position: absolute;
+  left: calc(50% - 0.75rem);
+  top: calc(50% - 0.75rem);
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #ffffff55;
+  border: 2px solid #ffffffaa;
+  z-index: 2;
 }
 /* Customize → Specials: your ten keys, the tiles with a preview button each, and a tile's key boxes right under it */
 .sp-keys {
@@ -9598,7 +9788,7 @@ html.moving .wq-board.late .wq-card.big {
     transform: rotate(135deg);
   } /* (its point goes up, to the cloud) */
   .wq-top .lord-sit {
-    width: 6rem;
+    width: 6.1rem;
     height: 4.3rem;
   }
   .wq-top .lord-duck {
@@ -11606,19 +11796,6 @@ svg.defs {
       opacity: 0;
     }
   }
-}
-/* phones: a special toggled on and still waiting shows on the Specials button, its bar draining */
-.sp-btn {
-  position: relative;
-}
-.sp-btn .cooldown {
-  left: 22%;
-  right: 22%;
-  bottom: 12%;
-  height: 0.22rem;
-}
-.sp-btn.cool {
-  border-color: var(--yellow);
 }
 /* ---------- Mad God Justin ---------- */
 /* the arena: one see-through field over the map (each map's .col rule makes it see-through like every board's
