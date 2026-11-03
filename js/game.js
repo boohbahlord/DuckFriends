@@ -4641,7 +4641,6 @@ register("game", {
       bar = mountL4Bar(S, {
         state: () => R.state,
         me: () => R.me,
-        duck: playDuck,
         held: heldNow,
         pick: (w) => {
           held = w;

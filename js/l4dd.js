@@ -8,6 +8,7 @@
    the host's (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { activity } from "./hangout/registry.js";
 import {
+  CABIN,
   inCabin,
   sortY,
   heightAt,
@@ -38,6 +39,16 @@ const DARK = 0.93; // how dark the dark is
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 const CANDLE_LIGHT = { r: 190, k: 0.62, flick: 1 };
+/* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
+const MOON = Object.fromEntries(
+  OPENINGS.map((o) => {
+    const k =
+      o.kind === "stairs"
+        ? 0
+        : Math.sign(o.axis === "y" ? o.in[0] - o.x : o.in[1] - o.y);
+    return [o.id, o.axis === "y" ? [o.x + k * 36, o.y] : [o.x, o.y + k * 36]];
+  }),
+);
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
 const up = (s, id) => {
   const p = P4(s, id);
@@ -77,18 +88,24 @@ function rayTo(x, y, dx, dy, far) {
   return best;
 }
 
-/* where an opening's boards sort: just in front of the wall piece they're on (a side wall's pieces sort by their own
-   front, so a hole's boards go just after its piece) */
+/* where an opening's boards sort: just in front of the wall piece they're on. A side wall's pieces sort by their own
+   front, and a piece's top shows CABIN.wall higher up the screen than its foot, so a hole's boards go in front of every
+   piece of that wall whose top covers them */
 const WALL_PROPS = PROPS.filter((p) => p.kind === "wall" && p.block);
 const boardKey = (o) => {
-  const w = WALL_PROPS.find(
-    (p) =>
-      o.x >= p.block[0] - 1 &&
-      o.x <= p.block[2] + 1 &&
-      o.y >= p.block[1] - 1 &&
-      o.y <= p.block[3] + 1,
+  const on = (p) => o.x >= p.block[0] - 1 && o.x <= p.block[2] + 1,
+    reach = o.axis === "y" ? o.half + 14 : 0,
+    up = o.axis === "y" ? CABIN.wall : 0,
+    keys = WALL_PROPS.filter(
+      (p) =>
+        on(p) &&
+        p.block[1] - 1 <= o.y + reach + up &&
+        p.block[3] + 1 >= o.y - reach,
+    ).map((p) => p.key);
+  return (
+    Math.round(keys.length ? Math.max(...keys) + 1 : sortY(o.x, o.y + 16, 0)) +
+    10
   );
-  return Math.round(w ? w.key + 1 : sortY(o.x, o.y + 16, 0)) + 10;
 };
 
 /* ---------- what this screen keeps ---------- */
@@ -311,6 +328,21 @@ function paint(now, ctx) {
       r = CANDLE_LIGHT.r * fl * sc;
     if (on(p.left * q, p.top * q, r))
       holes.push([p.left * q, p.top * q, r, CANDLE_LIGHT.k * fl]);
+  }
+  /* each opening lets a little moonlight in, more as its boards come down: the way in shows in the dark */
+  const brd = s.hang.brd || {};
+  for (const o of OPENINGS) {
+    const [x0, y0] = MOON[o.id];
+    if (inCabin(x0, y0) !== Wd.inside) continue;
+    const p = Wd.toScreen(x0, y0, heightAt(x0, y0)),
+      r = 120 * sc;
+    if (on(p.left * q, p.top * q, r))
+      holes.push([
+        p.left * q,
+        p.top * q,
+        r,
+        0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
+      ]);
   }
   /* every duck: a faint glow round it, and its flashlight (not a ghost's, not a downed duck's, not one switched off) */
   const off = s.hang.l4f || {},
@@ -678,8 +710,10 @@ activity({
     }
     return false;
   },
-  propClass(p) {
+  propClass(p, s) {
     if (["lamp", "sink", "post", "tv"].includes(p.kind)) return "off";
+    if (p.id === "door-front")
+      return ((s.hang && s.hang.brd) || {}).front > 0 ? "" : "open"; // (boarded shut; open once the zombies tear the last board down)
     if (p.kind === "door") return "open";
     return "";
   },

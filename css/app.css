@@ -12564,7 +12564,10 @@ html.moving .eye-tears .tdrop.t2 {
   place-items: center;
   width: 78%;
   height: 78%;
-}
+  font-style: normal;
+  font-size: calc(var(--hk) * 0.56);
+  line-height: 1;
+} /* (the pistol's icon is the specials' bar's emoji) */
 .l4s i svg {
   width: 100%;
   height: auto;

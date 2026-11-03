@@ -4,7 +4,7 @@
    right corner (where the specials' keys go), my HP under it as three green blocks; a click on a slot picks it.
    On a phone it stands at the board's bottom right as a column of round buttons, with a big Attack button that uses
    what's in hand toward the nearest zombie I can see (l4dd.js l4TouchAim); my HP shows on my duck's green bar there. */
-import { heldHTML } from "./specials.js";
+import { specialById } from "./specials.js";
 import { ICONS } from "./l4ddart.js";
 import { L4 } from "./l4ddrules.js";
 
@@ -17,7 +17,7 @@ const SLOTS = [
 ];
 const ATTACK = `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="9.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 1.6V8.4M15 21.6V28.4M1.6 15H8.4M21.6 15H28.4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="15" r="2.2" fill="currentColor"/></svg>`;
 
-/* api: state() → the room's state, me() → my id, duck() → my duck's look, held() → the weapon in hand, pick(w),
+/* api: state() → the room's state, me() → my id, held() → the weapon in hand, pick(w),
    fire() (the Attack button), grenade(), flash() */
 export function mountL4Bar(S, api) {
   const row = document.createElement("div");
@@ -30,7 +30,7 @@ export function mountL4Bar(S, api) {
       ? ICONS.bow
       : w === "fl"
         ? ICONS.flashlight(!((s.hang && s.hang.l4f) || {})[api.me()])
-        : heldHTML(w, api.duck());
+        : specialById(w).icon; // (the knife, the pistol and the grenade as the specials' bar shows them)
   const count = (w, m) =>
     !m
       ? ""

@@ -54,7 +54,7 @@ export const CANDLE = `<svg viewBox="0 0 30 46" width="30" height="46" xmlns="ht
 
 /* the boards over an opening, n of them (0 … 5), in world px around the opening's spot:
    a door (the front door, in the tall north wall): planks across its doorway, one over another up the door;
-   a hole in a side wall (axis 'y', a thin strip from above): a ragged dark hole along the strip, the planks across it;
+   a hole in a side wall (axis 'y', a thin strip from above): a ragged dark gap in the strip, the planks across it;
    a hole in the south wall (axis 'x', a low strip): the same, along it;
    the top of the deck's stairs: a low barricade between two posts, its planks one over another */
 const PLANK = "#9a6a3a",
@@ -71,7 +71,7 @@ export function boardsBox(o) {
   if (o.kind === "stairs") return { l: -110, t: -70, w: 220, h: 84 };
   const k = inward(o);
   if (o.axis === "y")
-    return { l: k > 0 ? -16 : -44, t: -o.half - 14, w: 60, h: 2 * o.half + 28 };
+    return { l: k > 0 ? -18 : -48, t: -o.half - 14, w: 66, h: 2 * o.half + 28 };
   return { l: -o.half - 14, t: -40, w: 2 * o.half + 28, h: 58 };
 }
 export function boardsSVG(o, n) {
@@ -86,12 +86,32 @@ export function boardsSVG(o, n) {
     );
     for (let k = 0; k < n; k++)
       parts.push(plank(-100, -8 - k * 12, 200, 11, TILT[k] / 4));
+  } else if (o.axis === "y") {
+    /* a hole in a side wall: from above the wall is a thin strip (24 wide), so the hole is a ragged dark gap in the
+       strip, its broken ends zigzagging, and the boards nailed across it on the inside lie out into the room */
+    const dir = inward(o),
+      JAG = [0, 7, 3, 9, 4, 8, 2, 6],
+      top = [],
+      bottom = [];
+    for (let k = 0; k <= 7; k++) {
+      const a = -13 + (26 * k) / 7;
+      top.push([a, -o.half + JAG[k]]);
+      bottom.push([a, o.half - JAG[(k + 3) % 8]]);
+    }
+    const pts = [...top, ...bottom.reverse()].map(
+      ([a, c]) => `${a.toFixed(1)} ${c.toFixed(1)}`,
+    );
+    parts.push(
+      `<path d="M${pts.join("L")}Z" fill="#05060c" stroke="#4a2c14" stroke-width="2.4" stroke-linejoin="round"/>`,
+    );
+    const gap = (2 * o.half - 8) / 5;
+    for (let k = 0; k < n; k++) {
+      const c = -o.half + 4 + gap * (k + 0.5);
+      parts.push(plank(dir > 0 ? -12 : -44, c - 6.5, 56, 13, TILT[k] * dir));
+    }
   } else {
-    /* the hole: a ragged dark patch along the wall's strip, its edges zigzagging; the boards across it are nailed on the
-       inside, so they lie a little into the room (seen from above) */
-    const along = o.axis === "y",
-      dir = inward(o),
-      JAG = [9, 12, 7, 11, 8, 13, 9, 10, 12, 8],
+    /* a hole in the south wall: a ragged dark patch along its strip, the boards up across it */
+    const JAG = [9, 12, 7, 11, 8, 13, 9, 10, 12, 8],
       side = [],
       back = [];
     for (
@@ -102,8 +122,8 @@ export function boardsSVG(o, n) {
       side.push([-JAG[k % 10], u]);
       back.push([JAG[(k + 4) % 10], u]);
     }
-    const pts = [...side, ...back.reverse()].map(([a, c]) =>
-      along ? `${a} ${c.toFixed(1)}` : `${c.toFixed(1)} ${a - 4}`,
+    const pts = [...side, ...back.reverse()].map(
+      ([a, c]) => `${c.toFixed(1)} ${a - 4}`,
     );
     parts.push(
       `<path d="M${pts.join("L")}Z" fill="#05060c" stroke="#2a1a0e" stroke-width="2" stroke-linejoin="round"/>`,
@@ -111,11 +131,7 @@ export function boardsSVG(o, n) {
     const gap = (2 * o.half - 8) / 5;
     for (let k = 0; k < n; k++) {
       const c = -o.half + 4 + gap * (k + 0.5);
-      parts.push(
-        along
-          ? plank(dir > 0 ? -10 : -30, c - 6, 40, 12, TILT[k] * 2 * dir)
-          : plank(c - 6, -34, 12, 44, TILT[k] * 1.6),
-      );
+      parts.push(plank(c - 6, -34, 12, 44, TILT[k] * 1.6));
     }
   }
   return `<svg viewBox="${b.l} ${b.t} ${b.w} ${b.h}" width="${b.w}" height="${b.h}" xmlns="http://www.w3.org/2000/svg">${parts.join("")}</svg>`;
