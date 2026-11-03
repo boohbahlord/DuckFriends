@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 122,
+    version: 123,
     date: "Nov 3, 2026",
     title: "Left 4 Dead Ducks, and Mad God Justin reworked",
     news: [
@@ -27,6 +27,7 @@ export const UPDATES = [
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
       "Lightning's crack starts smoothly, with no click.",
       "A turn ends once 2 of 3 players are done by default (it was 3 of 4, so with 3 players all 3 had to finish).",
+      "With the music muted on the main menu, the song name no longer blinks on and off.",
     ],
   },
   {
