@@ -23,6 +23,7 @@ import {
   SEED_MAX,
   TOPIC_MAX,
 } from "./rules.js";
+import { seenDuck, seenName } from "./looks.js";
 
 const GONE = {
   name: "Gone",
@@ -41,10 +42,10 @@ export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidde
 /* a duck on the cloud (or an empty cloud): p = the player, tip = what hovering the duck calls them */
 export function cloudHTML(p, tip = "Round Lord") {
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(p.duck, { size: 80, shadow: false, title: "", dead: !!p.dead }) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ""}</div>
+    <div class="lord-duck">${p ? duckSVG(seenDuck(p), { size: 80, shadow: false, title: "", dead: !!p.dead }) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ""}</div>
     ${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div>
-    <div class="lord-name">${p ? nameHTML(p.name, p.nameStyle) : ""}</div></div>`;
+    <div class="lord-name">${p ? nameHTML(p.name, seenName(p)) : ""}</div></div>`;
 }
 /* two ducks on one cloud (a match's two writers): pa on the left facing right, pb on the right facing left. o.winner = 0 or
    1 once it's decided; o.knocked = the loser is already off the cloud (knockOff in
@@ -52,7 +53,7 @@ export function cloudHTML(p, tip = "Round Lord") {
 const MYSTERY = { duck: { color: "#b7bccb" } };
 export function duelCloudHTML(pa, pb, o = {}) {
   const duck = (p, side) =>
-    `<div class="lord-duck duel-duck${o.winner === side ? " won" : ""}" data-side="${side}"><div class="duel-in">${duckSVG((p || MYSTERY).duck, { size: 80, shadow: false, title: p ? p.name : "A secret writer", dead: !!(p && p.dead) })}</div></div>`;
+    `<div class="lord-duck duel-duck${o.winner === side ? " won" : ""}" data-side="${side}"><div class="duel-in">${duckSVG(seenDuck(p || MYSTERY), { size: 80, shadow: false, title: p ? p.name : "A secret writer", dead: !!(p && p.dead) })}</div></div>`;
   return `<div class="lord duel${o.winner != null ? " decided" : ""}${o.both ? " bothoff" : ""}${o.knocked ? " knocked" : ""}"><div class="lord-sit">
     ${duck(pa, 0)}${duck(pb, 1)}${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div><div class="lord-name"></div></div>`;
@@ -63,8 +64,8 @@ export function duelCloudHTML(pa, pb, o = {}) {
 export function cardFor(p, body, o = {}) {
   const bg = esc(cardBackground(p ? p.card : { color: "#8a8fa3" }));
   return `<div class="seed${o.tier ? " " + o.tier : ""}${o.out ? " out" : ""}${o.size ? " " + o.size : ""}${o.cls ? " " + o.cls : ""}"${o.attrs || ""}>
-    <div class="seed-disc" style="${bg}">${p ? duckSVG(p.duck, { size: 60, shadow: false, title: p.name }) : '<span class="seed-q">?</span>'}</div>
-    <div class="seed-box" style="${bg}"><span class="seed-txt">${p ? inFont(p, body) : body}</span><span class="seed-by">${p ? nameHTML(p.name, p.nameStyle) : "A secret writer"}</span></div>
+    <div class="seed-disc" style="${bg}">${p ? duckSVG(seenDuck(p), { size: 60, shadow: false, title: p.name }) : '<span class="seed-q">?</span>'}</div>
+    <div class="seed-box" style="${bg}"><span class="seed-txt">${p ? inFont(p, body) : body}</span><span class="seed-by">${p ? nameHTML(p.name, seenName(p)) : "A secret writer"}</span></div>
     ${o.out ? '<svg class="seed-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg>' : ""}${o.extra || ""}</div>`;
 }
 export function seedCardHTML(s, b, i, o = {}) {
@@ -118,7 +119,7 @@ export function topicsHTML(s, me) {
         extra: `<span class="tc-votes">${Object.entries(b.tvotes || {})
           .filter(([id, k]) => k === i && s.players[id])
           .map(([id]) =>
-            duckSVG(s.players[id].duck, {
+            duckSVG(seenDuck(s.players[id]), {
               size: 22,
               shadow: false,
               title: s.players[id].name,
@@ -373,7 +374,7 @@ export function podiumHTML(s) {
     <div class="pod-ducks">${seeds
       .map((i) => {
         const p = player(s, b.seeds[i].by);
-        return `<span class="pod-duck">${duckSVG(p.duck, { size: 96, shadow: false, title: p.name })}</span>`;
+        return `<span class="pod-duck">${duckSVG(seenDuck(p), { size: 96, shadow: false, title: p.name })}</span>`;
       })
       .join("")}</div>
     <div class="pod-block"><b class="pod-n">${label}</b>${seeds.map((i) => seedCardHTML(s, b, i, { size: "mini", tier: place === 1 ? "gold" : place === 2 ? "silver" : "bronze" })).join("")}</div></div>`;
@@ -389,7 +390,7 @@ export function podiumHTML(s) {
 /* ---------- the stats: this tournament's awards, then the whole game's once the review vote passes ---------- */
 function awardsHTML(s, per, scope) {
   const ids = Object.keys(per).filter((id) => s.players[id]),
-    nm = (id) => nameHTML(s.players[id].name, s.players[id].nameStyle);
+    nm = (id) => nameHTML(s.players[id].name, seenName(s.players[id]));
   const top = (f) => {
     const xs = ids.map((id) => [id, f(per[id])]);
     const v = Math.max(0, ...xs.map((x) => x[1]));
@@ -457,7 +458,7 @@ export function bbBoxHTML(s, id) {
       king: 0,
       titles: 0,
     };
-  return `<article class="statbox"><header>${duckSVG(p.duck, { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, p.nameStyle)}<div class="small dim">${w.votes} vote${w.votes === 1 ? "" : "s"} in matches</div></div></header>
+  return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">${w.votes} vote${w.votes === 1 ? "" : "s"} in matches</div></div></header>
     <dl><dt>Tournaments won</dt><dd>${w.titles}</dd><dt>Contender wins</dt><dd>${w.wins}</dd><dt>Contender losses</dt><dd>${w.losses}</dd><dt>Voted for their own</dt><dd>${w.own}</dd><dt>Jumps this game</dt><dd>${(s.jumps || {})[id] || 0}</dd></dl></article>`;
 }
 /* a player whose seeds are all out (for the Loser's X special) */

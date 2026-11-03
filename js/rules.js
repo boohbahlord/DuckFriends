@@ -135,6 +135,7 @@ import {
 import { JET } from "./jetpack.js";
 import { MAPS } from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
+import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -198,6 +199,10 @@ export const OPTIONS_DEFAULT = {
   lateJoin: "play", // play (a player who joins mid-game plays at once) | watch (they wait for the next round)
   walk: "normal", // walking speed: slow | normal | fast
   textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
+  hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
+  rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
+  voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
+  tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
@@ -278,6 +283,7 @@ function countdown(s, now) {
     s.mapVotes = {};
     say(s, `The map: ${MAPS.find((m) => m[0] === s.options.map)[1]}!`);
   }
+  dealRainbow(s); // (Rainbow Ducks: each duck's look for this game)
   s.phase = "countdown";
   s.at = now;
   s.ends = now + COUNTDOWN * 1000;
@@ -1148,6 +1154,7 @@ export function reduce(state, a, now = Date.now()) {
       } // (Lawyering, Duncelation: back to their place)
       else if (!["lobby", "over", "countdown"].includes(s.phase))
         seatNewcomer(s, a.p.id);
+      if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
       say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
       if (s.waiting && s.waiting.for === a.p.id) {
         delete s.waiting.for;
@@ -1251,6 +1258,13 @@ export function reduce(state, a, now = Date.now()) {
           s.options.map = "cabin";
           s.options.mapPick = "";
         } else if (s.options.map === "cabin") s.options.map = "board";
+        /* the looks (looks.js): Rainbow Ducks needs Hide customization, and Vote colors and Rainbow Ducks never go together
+         (the one just turned on wins); the tag's color goes with Vote colors */
+        const L = s.options;
+        if (o.rainbowDucks) L.voteColor = 0;
+        if (o.voteColor) L.rainbowDucks = 0;
+        if (!L.hideLooks) L.rainbowDucks = 0;
+        if (!L.voteColor) L.tagColor = 0;
       }
       return s;
     }

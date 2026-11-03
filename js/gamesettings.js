@@ -276,6 +276,42 @@ const HOST = [
     when: (s) => s.test,
     d: "How long computer players wait before acting in each step. TEST rooms only.",
   },
+  /* the duck looks (looks.js): Rainbow Ducks needs Hide customization; Vote colors never with Rainbow Ducks, and the
+     tag's color needs Vote colors */
+  {
+    k: "hideLooks",
+    n: "Hide customization",
+    c: ON_OFF,
+    cat: "more",
+    d: "During the game every duck is the plain yellow duck, with a plain name tag that always shows. Specials stay.",
+  },
+  {
+    k: "rainbowDucks",
+    n: "Rainbow Ducks",
+    c: ON_OFF,
+    cat: "more",
+    need: "hideLooks",
+    d: "Needs Hide customization on. Each duck is dealt one of eight looks at random: the seven colors of the rainbow, or a brown duck in Justin's costume. Knocking that one down isn't a Justin kill.",
+  },
+  {
+    k: "voteColor",
+    n: "Vote colors",
+    c: ON_OFF,
+    cat: "more",
+    off: ["mgj", ...CABIN_MODES],
+    when: (s) => !+s.options.rainbowDucks,
+    d: "A duck takes the color of the tile it stands on, and its own color off the tiles. Not with Rainbow Ducks.",
+  },
+  {
+    k: "tagColor",
+    n: "Change player tag color",
+    c: ON_OFF,
+    cat: "more",
+    off: ["mgj", ...CABIN_MODES],
+    need: "voteColor",
+    when: (s) => !+s.options.rainbowDucks,
+    d: "Needs Vote colors on. The name tag takes the duck's vote color too.",
+  },
 ];
 /* each game's own settings */
 const NO_OWN = {
