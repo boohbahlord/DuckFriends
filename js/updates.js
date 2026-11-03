@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 120,
+    version: 121,
     date: "Nov 3, 2026",
     title: "Left 4 Dead Ducks, and Mad God Justin reworked",
     news: [
@@ -19,6 +19,7 @@ export const UPDATES = [
       "The bow is in every mode now, and every duck takes 3 hits before it goes down.",
       "A new map, Shelter Sky & Null: a black tree and a halftone duck under red clouds. Its setting in Game options turns it black and white.",
       "A new style in Customize, Dat Boi, unlocked at 1,728 Jumps, with metal ranks and a rainbow one to unlock after him.",
+      "On a phone: your specials are a slider at the bottom (slide to pick one, tap it to use it, the purple square keeps it on), a jump button sits at the bottom right, and with a weapon picked a crosshair joins it: push it the way you want to attack.",
     ],
     fixed: [
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
