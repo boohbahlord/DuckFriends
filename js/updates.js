@@ -11,6 +11,10 @@ export const UPDATES = [
     version: 112,
     date: "Nov 3, 2026",
     title: "Walking fix",
+    news: [
+      "The lobby's Game type and Map menus drop down as rows: pick a kind of game first (Social, Social Competitive, Cabin, Special), then the game. The circled i says what a game is.",
+      "Map has Vote Maps (everyone votes, a tie is a random pick between the tied maps) and Random.",
+    ],
     fixed: [
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
