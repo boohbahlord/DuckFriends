@@ -881,7 +881,7 @@ export function mountWorld(board, api) {
         if (a.sprint && a.sprint(!!sprint && !!(ax || ay), dt, ctx) === false)
           sprint = false; // (an activity can run out of breath: Left 4 Dead Ducks' sprint bar)
       if (ax || ay) {
-        let k = 1;
+        let k = { slow: 0.6, fast: 1.5 }[ctx.state().options.walk] || 1; // (the lobby's Walking speed)
         for (const a of acts())
           if (a.speed) k *= a.speed({ x, y, z: me.z }, ctx) ?? 1; // (the water slows it)
         const sp = SPEED * (sprint ? SPRINT : 1) * k,

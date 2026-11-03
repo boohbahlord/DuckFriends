@@ -2577,6 +2577,9 @@ html.moving svg.duck.datboi.rainbow .dbr {
   display: block;
   margin-bottom: calc(var(--sz) * -0.08);
 }
+.hide-names .gduck:not(.mine) .gduck-name {
+  display: none;
+}
 .gduck-name {
   position: absolute;
   top: 100%;

@@ -2279,7 +2279,11 @@ export async function shellRun(text, ctx) {
   const s = ctx.room && ctx.room.state;
   if (s && denied(s, ctx.room.me, "nocmd"))
     return {
-      lines: ["✗ Your group can't use the command line."],
+      lines: [
+        +s.options.noTerm
+          ? "✗ The command line is off in this room."
+          : "✗ Your group can't use the command line.",
+      ],
       cleared: false,
     };
   const r = await runLine(line, env(ctx, { fun: 0, funAt: 0, sends: 0 }));

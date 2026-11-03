@@ -23,6 +23,7 @@ import {
   colAt,
   shareOf,
   lostRound,
+  textMax,
 } from "./rules.js";
 
 export const isDn = (s) => s.options.mode === "dunce";
@@ -132,7 +133,10 @@ export function dealTakes(s, now) {
     mine = {};
   for (const q of s.subs || [])
     if (s.players[q.by] && String(q.text || "").trim())
-      mine[q.by] = { by: q.by, text: String(q.text).trim().slice(0, TAKE_MAX) };
+      mine[q.by] = {
+        by: q.by,
+        text: String(q.text).trim().slice(0, textMax(s)),
+      };
   delete s.subs;
   const how =
       +s.options.noOwn && s.options.dunceTakes !== "own"
