@@ -192,7 +192,7 @@ function pick(sp, cur) {
 /* the host's part, every heartbeat: true when s.justin changed. log: the rules' chat line */
 export function justinTick(s, now, log) {
   if (isMgj(s)) return mgjTick(s, now, log); // (Mad God Justin: his boss brain, mgjrules.js)
-  if (!s.options.justin || s.options.mode === "hang") {
+  if (!s.options.justin || ["hang", "l4dd"].includes(s.options.mode)) {
     if (!s.justin) return false;
     delete s.justin;
     return true;

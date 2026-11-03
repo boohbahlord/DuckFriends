@@ -113,6 +113,7 @@ import {
   PELLET_LIFE,
   SPREAD,
 } from "./mgjrules.js";
+import { isL4dd, l4Use, l4Reload, l4Shots, HELD } from "./l4ddrules.js";
 
 export const COLS = [
   "Strongly disagree",
@@ -183,7 +184,9 @@ export const isDdr = (s) => s.options.mode === "ddr";
 export const isBb = (s) => s.options.mode === "bb";
 export const isSc = (s) => s.options.mode === "sc";
 export const isLaw = (s) => s.options.mode === "law";
-export const isHang = (s) => s.options.mode === "hang";
+/* Duck Cabin's world: Hangout, and Left 4 Dead Ducks on the same map (its own rules: l4ddrules.js) */
+export const isHang = (s) =>
+  s.options.mode === "hang" || s.options.mode === "l4dd";
 /* a match in Bicker Brackets: seed A on the left, B on the right; Who is the Quack?: vote (left) or more clues; Lawyering:
    the offense (sword) on the left, the defense (shield) on the right, and between them a wider strip with the attorneys'
    circle; Duncelation: Dunce on the left, Not a Dunce on the right, and the same strip with the defender's circle */
@@ -1012,7 +1015,7 @@ export function reduce(state, a, now = Date.now()) {
           else if (!isBb(s) && s.options.submitTime === 0 && wasMode === "bb")
             s.options.submitTime = 132;
         }
-        if (a.options.map === "cabin" && !a.options.mode)
+        if (a.options.map === "cabin" && !a.options.mode && !isHang(s))
           s.options.mode = "hang"; // Hangout and Duck Cabin are one: picking either picks both,
         else if (a.options.map && !a.options.mode && isHang(s))
           s.options.mode = "aod"; // and another map leaves Hangout
@@ -1117,6 +1120,13 @@ export function reduce(state, a, now = Date.now()) {
       const was = s.pos[a.id],
         j = +a.j || 0;
       if (holdStill(s, a.id, now)) return state; // Who is the Quack?: the last duck plays dead for a moment
+      if (
+        isL4dd(s) &&
+        was.tp &&
+        now - was.tp < 1500 &&
+        Math.hypot((+a.x || 0) - was.x, (+a.y || 0) - was.y) > 0.03
+      )
+        return state; // (Left 4 Dead Ducks: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
       if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
@@ -1173,13 +1183,16 @@ export function reduce(state, a, now = Date.now()) {
         }
       }
       const dj = j && +a.dj > j ? +a.dj : 0; // a double jump: when the second jump began
-      const w =
-          WEAPONS.includes(a.w) &&
-          (isMgj(s)
-            ? MGJ_HOLD.includes(a.w)
-            : onKeys(me.duck, a.w) && s.options.fun)
-            ? a.w
-            : "",
+      const w = (
+          isL4dd(s)
+            ? HELD.includes(a.w)
+            : WEAPONS.includes(a.w) &&
+              (isMgj(s)
+                ? MGJ_HOLD.includes(a.w)
+                : onKeys(me.duck, a.w) && s.options.fun)
+        )
+          ? a.w
+          : "",
         [ax, ay] = w ? aimOf(a, 1) : [0, 0]; // a weapon kept out, and where it aims
       const hz = (v) => Math.max(-400, Math.min(1200, Math.round(+v || 0))); // Hangout: z, the height of its feet; b, where its jump began (world px)
       s.pos[a.id] = {
@@ -1320,6 +1333,7 @@ export function reduce(state, a, now = Date.now()) {
         p = s.pos[a.id];
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
+      if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Left 4 Dead Ducks: its own weapons, l4ddrules.js)
       if (
         isMgj(s)
           ? s.phase !== "boss" || me.dead
@@ -1436,6 +1450,7 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "reload": {
       // R: the handgun reloads before its magazine is empty
+      if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
       if (!me || !onKeys(me.duck, "handgun") || !s.options.fun) return state;
       const m = magOf(s, a.id, now);
       if (!m.n || m.r) return state;
@@ -1838,7 +1853,7 @@ export function reduce(state, a, now = Date.now()) {
         s.vote = null;
         return s;
       }
-      const shots = moveShots(s, now),
+      const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
         hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
         jus =
           justinTick(s, now, logLine) |
