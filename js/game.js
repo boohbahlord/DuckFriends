@@ -2503,8 +2503,12 @@ function bodyAt(id, pos, now = clockNow()) {
   const lane = R.state.seat.filter(
     (i) => R.state.pos[i] && (i === R.me && me ? me : R.state.pos[i]).x < 0,
   );
-  const at = place(pos, lane.indexOf(id), lane.length);
-  return { left: at.left, top: at.top - (jumpZ(pos, now) + 0.45) * geo.size };
+  const at = seatAt(R.state, id) || place(pos, lane.indexOf(id), lane.length), // (Valentine's Duck Date: at the table, its weapon goes with it)
+    up = seated(R.state, id) ? SEAT_LIFT : 0; // (on its chair)
+  return {
+    left: at.left,
+    top: at.top - (jumpZ(pos, now) + up + 0.45) * geo.size,
+  };
 }
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;

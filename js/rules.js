@@ -1391,7 +1391,7 @@ export function reduce(state, a, now = Date.now()) {
       )
         return state; // (Quacky Zombies: the host just put it at a start spot; a move sent before that got there is old)
       if (isHang(s) && hangStill(s, a.id, now)) return state; // Hangout: shot by Justin, it can't move for a while
-      if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (0.5 s unless set)
+      if (downStill(s, a.id, now)) return state; // the boards: knocked down, it can't move for the host's time (1 s unless set)
       if (seated(s, a.id)) return state; // (Valentine's Duck Date: the two at the table stay in their seats)
       let x = Math.max(0, Math.min(1, +a.x || 0)),
         y = Math.max(0, Math.min(1, +a.y || 0));
@@ -2520,18 +2520,22 @@ export function dodges(s, p, now) {
     end = (p.dj > p.j ? p.dj : p.j) + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
-/* the normal game's HP (every mode but Mad God Justin): a duck takes PHP hits before it plays dead, and has them all back
-   after PHP_BACK ms without a hit. s.php = { id: { n: hits taken, t: the last one } }. True when the hit only took HP */
+/* the normal game's HP (every mode but Mad God Justin): a duck has PHP HP before it plays dead, and has them all back
+   after PHP_BACK ms without a hit. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
+   What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
+   the rest 1 */
 export const PHP = 3,
   PHP_BACK = 6000;
 export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
   return h && now - h.t < PHP_BACK ? h.n : 0;
 };
-export function soaks(s, id, now) {
+export const HIT_DMG = { hammer: 3, chair: 3, grenade: 3, knife: 2 };
+export const dmgOf = (s, k) => (isL4dd(s) ? 1 : HIT_DMG[k] || 1);
+export function soaks(s, id, now, dmg = 1) {
   if (isMgj(s)) return false;
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
-  const n = phpLost(s, id, now) + 1,
+  const n = phpLost(s, id, now) + dmg,
     rest = { ...s.php };
   delete rest[id];
   s.php = n >= PHP ? rest : { ...rest, [id]: { n, t: now } };
@@ -2623,7 +2627,9 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
   for (const h of hits) {
     logHit(s, by, h.id, now);
-    if (!(isMgj(s) ? mgjSoak(s, h.id, now) : soaks(s, h.id, now))) {
+    if (
+      !(isMgj(s) ? mgjSoak(s, h.id, now) : soaks(s, h.id, now, dmgOf(s, sp)))
+    ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
       playerKilled(s, by, h.id, sp);
@@ -2777,7 +2783,7 @@ function blast(s, sh, x, y, now) {
     );
     if (!n) continue;
     if (!P.dead) logHit(s, sh.by, id, now);
-    if (P.dead || !soaks(s, id, now)) {
+    if (P.dead || !soaks(s, id, now, dmgOf(s, "grenade"))) {
       if (!P.dead) playerKilled(s, sh.by, id, "grenade");
       P.dead = true;
       holdDown(s, id, now);
@@ -2788,7 +2794,7 @@ function blast(s, sh, x, y, now) {
       id,
       a === null ? n.dx / n.d : Math.cos(a),
       a === null ? n.dy / n.d : Math.sin(a),
-      KB_FAR * 3,
+      KB_FAR * (isMgj(s) || isL4dd(s) ? 3 : 2), // (twice the hammer's in the normal game, owner 2026-11-03 17:15Z)
       now,
       side,
       { ms: 650, h: 0.9, l: 0 },
@@ -2897,7 +2903,11 @@ function moveShots(s, now) {
           if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
           const safe = isMgj(s) && mgjSafe(s, id, now);
           logHit(s, sh.by, id, now);
-          if (isMgj(s) ? mgjSoak(s, id, now) : soaks(s, id, now))
+          if (
+            isMgj(s)
+              ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
+              : soaks(s, id, now, dmgOf(s, sh.k))
+          )
             sh.got = [...(sh.got || []), id];
           else {
             P.dead = true;

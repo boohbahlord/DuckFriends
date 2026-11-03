@@ -3257,6 +3257,27 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 - Adam's reading: unlocked at 36 damage from Jaime stabs on Mad God Justin, anyone's Jaimes (the Nov 3 answer 7); a normal special in Customize; when released he goes for the player I hit in the last 15 s, else the player who hit me in the last 15 s, else the nearest; Mad God Justin's Jaime art and charge; under the silly-commands switch like the Chair.
 - Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main): `s.jm` holds each Jaime (his own place, not in s.pos, so he never votes); `s.hitLog` the last 15 s of player-on-player hits (knife, hammer, bullets, arrows, daggers, chair, grenade, Jaime's own stabs). 12 s per duck, a Jaime lasts 12 s at most, stabs once a second (the normal 3 HP), poofs once his target is down. Unlock counts `s.jaimeStabs` while I'm seated in Mad God Justin (TEST rooms count too, like Justin kills).
 
+## 2026-11-03 17:09Z: Mad God Justin, more HP and time per player (word for word)
+> Justin should get and additional +12 hp per player and +4 seconds of time per player
+
+- Adam: read as Mad God Justin (the mode with a timer). His HP goes from 20 + 8 per player to 20 + 20 per player, and the
+  fight's timer gets 4 s more per player (TIME_PER in js/mgjrules.js). Board Justin (10 HP, no timer) is unchanged.
+
+## 2026-11-03 17:15Z: weapon damage in the normal game (word for word)
+> the chair should do three damage to HP in the game OUTSIDE of the Justin mode and then 2 HP of damage in the Mad God Justin mode.
+>
+> ALSO in the normal game and NOT in the zozmies or mad god justin game:
+> The grenade should do 3 damage AND make the ducks fly twice as far as the hammer's knockback effect. The hammer should do three damage in normal game. The knife does two damage. The players are downed for half a second longer by default in normal modes.
+
+- Adam: HIT_DMG in js/rules.js (hammer, chair, grenade 3; knife 2; the rest 1) through soaks(s, id, now, dmg), not in
+  Quacky Zombies; Mad God Justin's chair takes 2 (mgjSoak dmg). Grenade throw KB_FAR x2 in the normal game (x3 kept in
+  Mad God Justin and Quacky Zombies). Boards' default down time 0.5 s -> 1 s (DOWN_GAMES); Duck Cabin stays 6 s.
+
+## 2026-11-03 17:19Z: Valentine's Duck Date, the weapon stays behind (word for word)
+> when teleported to the seat in dating, the weapon i was last holding doesnt come with AND whatever i switch to stays overthere. Must be fixed
+
+- Adam: the held weapon was drawn at the duck's floor spot (bodyAt in game.js) while the duck is drawn at its seat;
+  bodyAt now uses seatAt and the chair's lift, so the weapon (and its aim) goes with the seated duck.
 ## Quacky Zombies Stage 3: the owner's new weapons (Adam's go, 2026-11-03 16:55Z and 17:09Z; the owner's list word for word at line ~2934 above)
 
 - Adam's plan: https://claude.ai/artifact/Aeykix5aJPWqmJkNb8mWxQ. Everything below goes into the fireplace's pool (19 in all now); the jetpack and the drops wait for Stage 4. It doesn't merge until the owner OKs the picture sheet.

@@ -8,7 +8,7 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 127,
+    version: 130,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
@@ -30,6 +30,9 @@ export const UPDATES = [
       "Jaime is a special now too: unlock him by being in Mad God Justin while Jaimes stab him 36 times (anyone's). Out of Mad God Justin he goes for the duck you just hit, or else the one who just hit you, or else the nearest.",
     ],
     fixed: [
+      "Valentine's Duck Date: at the table, the weapon in your hand comes with you (it stayed on the floor where you stood).",
+      "Hits hurt more on the boards and in Duck Cabin (not in Quacky Zombies or Mad God Justin): the hammer, the chair and a grenade take 3 HP, the knife 2, and a grenade throws ducks twice as far as the hammer. A knocked-down duck stays down 1 s by default (was 0.5 s). In Mad God Justin, his office chair takes 2 HP.",
+      "Mad God Justin: Justin has 12 more HP for every player, and the timer gets 4 more seconds for every player.",
       "Your duck walks over ducks that are knocked down, so it can't get stuck between them (in Mad God Justin, a duck out of HP lies there for the whole fight).",
       "On a slow frame your duck no longer stops a step away from another duck: it walks right up to it.",
       "Lightning's crack starts smoothly, with no click.",
