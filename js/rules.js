@@ -68,6 +68,8 @@ import {
   DOWN_OK,
   DEAD_STILL,
 } from "./hangout/death.js";
+import { MAPS } from "./maps.js";
+import { onCabin } from "./modes.js";
 import { npcById } from "./npcs.js";
 import {
   hangStart,
@@ -131,7 +133,8 @@ export const OPTIONS_DEFAULT = {
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: "board", // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: Hangout's own, and only Hangout's)
+  map: "board", // board | sky | pixel | carnival | stars | rabbit | ec | cabin (Duck Cabin: only for its own games, the Cabin ones)
+  mapPick: "", // "" (the host's map) | vote (Vote Maps: everyone votes, ties are a coin toss) | random: settled at the start
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
@@ -155,6 +158,27 @@ export const OPTIONS_DEFAULT = {
   vdTime: 60, // Valentine's Duck Date: seconds a date gets after its 10 s of grace: 0 (off), 60, 90, 120
 };
 export const MAX_DEFAULT = 8;
+
+/* Vote Maps and Random, settled when the host starts: the most votes from the players in the room win, a tie is a random
+   pick between the tied maps, a win for Random (or no votes at all) is any map; Duck Cabin is never one of them */
+export const mapTally = (s) => {
+  const n = {};
+  for (const id of s.seat) {
+    const m = (s.mapVotes || {})[id];
+    if (m) n[m] = (n[m] || 0) + 1;
+  }
+  return n;
+};
+const anyMap = () => MAPS[Math.floor(Math.random() * MAPS.length)][0];
+function pickMap(s) {
+  if (s.options.mapPick !== "vote") return anyMap();
+  const n = mapTally(s),
+    top = Math.max(0, ...Object.values(n)),
+    tied = Object.keys(n).filter((m) => n[m] === top);
+  if (!top) return anyMap();
+  const won = tied[Math.floor(Math.random() * tied.length)];
+  return won === "random" ? anyMap() : won;
+}
 export const COUNTDOWN = 5;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
@@ -980,11 +1004,17 @@ export function reduce(state, a, now = Date.now()) {
           const [from, to] = s.options.discuss ? [0.75, 0.5] : [0.5, 0.75];
           if (s.options.share === from) s.options.share = to;
         }
+        if (a.options.map && !("mapPick" in a.options)) s.options.mapPick = ""; // (picking a map ends Vote Maps or Random)
+        if ("mapPick" in a.options) s.mapVotes = {}; // (a new vote starts from nobody)
         if (a.options.map === "cabin" && !a.options.mode)
-          s.options.mode = "hang"; // Hangout and Duck Cabin are one: picking either picks both,
-        else if (a.options.map && !a.options.mode && isHang(s))
-          s.options.mode = "aod"; // and another map leaves Hangout
-        if (isHang(s)) s.options.map = "cabin";
+          s.options.mode = "hang"; // Duck Cabin and its games are one: picking the map picks Hangout,
+        else if (
+          (a.options.map || a.options.mapPick) &&
+          !a.options.mode &&
+          onCabin(s.options.mode)
+        )
+          s.options.mode = "aod"; // and another map (or Vote Maps, or Random) leaves Duck Cabin
+        if (onCabin(s.options.mode)) s.options.map = "cabin";
         else if (s.options.map === "cabin") s.options.map = "board";
       }
       return s;
@@ -1027,11 +1057,32 @@ export function reduce(state, a, now = Date.now()) {
         ? s
         : advance(s, now);
     }
+    case "mapVote": {
+      // Vote Maps: any player in the lobby votes a map (or Random); the same pick again takes the vote back
+      const ok = a.map === "random" || MAPS.some(([id]) => id === a.map);
+      if (
+        !me ||
+        !ok ||
+        s.options.mapPick !== "vote" ||
+        onCabin(s.options.mode) ||
+        !(s.phase === "lobby" || s.phase === "over")
+      )
+        return state;
+      const v = { ...(s.mapVotes || {}) };
+      if (v[a.id] === a.map) delete v[a.id];
+      else v[a.id] = a.map;
+      s.mapVotes = v;
+      return s;
+    }
     case "start":
       if (!boss || !(s.phase === "lobby" || s.phase === "over")) return s;
       if (s.seat.length < minOf(s)) return state; // (the lobby says how many it needs)
-      if (isHang(s) !== (s.options.map === "cabin"))
-        s.options.map = isHang(s) ? "cabin" : "board"; // (Hangout and Duck Cabin are one)
+      if (onCabin(s.options.mode) !== (s.options.map === "cabin"))
+        s.options.map = onCabin(s.options.mode) ? "cabin" : "board"; // (Duck Cabin and its games are one)
+      else if (s.options.mapPick && !onCabin(s.options.mode)) {
+        s.options.map = pickMap(s);
+        s.mapVotes = {};
+      }
       s.phase = "countdown";
       s.at = now;
       s.ends = now + COUNTDOWN * 1000;

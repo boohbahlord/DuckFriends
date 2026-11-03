@@ -21,10 +21,10 @@ import {
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
 import { gameArtSVG, gameSymbol } from "./art.js";
-import { MODES, modeOf } from "./modes.js";
+import { MODES, CATS, modeOf, onCabin } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
-import { OPTIONS_DEFAULT, isSudo, minOf } from "./rules.js";
+import { OPTIONS_DEFAULT, isSudo, minOf, mapTally } from "./rules.js";
 import { downFor } from "./hangout/death.js";
 import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
@@ -49,105 +49,310 @@ let R = null,
   mbarOff = null;
 
 const INFO = {
-  type: "Which game: Agree or Disagree, Would You Rather, Bicker Brackets, Story Chain, Who is the Quack?, Lawyering; Juryful of Ducklings, Duncelation or Hangout (in its own Duck Cabin).",
-  map: "What the board looks like: eight maps, from Night Show to Duck Cabin (Hangout's own).",
+  type: "Which game, by kind: Social, Social Competitive, Cabin (in Duck Cabin) and Special.",
+  map: "What the board looks like: pick one, let everyone vote (Vote Maps), or leave it to chance (Random).",
   options: "Question order, timers, and how many players end a turn.",
   start: "Starts the game for everyone.",
   friends: "Invite your friends to this room, or add a friend by code.",
 };
 
-/* the Game type window: the host picks the game. Hangout and Duck Cabin are one: on Duck Cabin only Hangout shows, with
-   All games to see the rest (picking another game leaves Duck Cabin for Night Show) */
-const allTile = (label, cls) =>
-  `<button type="button" class="tile ${cls} tile-all" data-all="1"><b>${esc(label)}</b><span class="small dim">Show them all</span></button>`;
-function openTypes() {
+/* ---------- the Game type and Map menus: rows that drop down from the row that opened them ----------
+   Game type: first the kind of game (Social, Social Competitive, Cabin, Special), then the games of that kind, each a row
+   with its symbol on the left and a circled i at the end (hover it on a computer, tap it on a phone, for what the game
+   is). Map: Vote Maps at the top, Random under it (a die for its picture), Duck Cabin, then every other map, each row a
+   slice of the map's picture. With Vote Maps on, every player votes in the same menu: Random or a map, never Duck Cabin.
+   Only the host (or sudo) picks; everyone else sees the rows greyed, except their vote. */
+let drop = null; // the open menu: { m, row, html }
+function closeDrop() {
+  if (!drop) return;
+  const d = drop,
+    had = d.m.contains(document.activeElement);
+  drop = null;
+  d.m.remove();
+  removeEventListener("pointerdown", d.off, true);
+  removeEventListener("keydown", d.key, true);
+  removeEventListener("resize", d.place);
+  removeEventListener("scroll", d.scroll, true);
+  if (had && d.row.isConnected) d.row.focus({ preventScroll: true });
+}
+/* below the row when it fits, else above it (whichever side has more room), as wide as the lobby's menu, and never over
+   the bottom bar (Notes, Jumps) */
+function placeDrop() {
+  if (!drop) return;
+  const { m, row } = drop,
+    r = row.getBoundingClientRect(),
+    menu = row.closest(".lmenu").getBoundingClientRect(),
+    bar = row.closest(".screen")?.querySelector(".bbar"),
+    floor = bar
+      ? Math.min(innerHeight, bar.getBoundingClientRect().top)
+      : innerHeight, // (never over the bottom bar)
+    below = floor - r.bottom - 10,
+    above = r.top - 10,
+    want = m.scrollHeight,
+    down = want <= below || below >= above,
+    h = Math.min(want, down ? below : above);
+  m.style.left = menu.left + "px";
+  m.style.width = menu.width + "px";
+  m.style.maxHeight = h + "px";
+  m.style.top = (down ? r.bottom + 4 : r.top - 4 - h) + "px";
+}
+function openDrop(row, html, onClick) {
+  closeDrop();
+  $$(".ctx").forEach((x) => x.remove());
+  const m = el(`<div class="ctx ldrop" role="menu"></div>`);
+  document.body.appendChild(m);
+  drop = {
+    m,
+    row,
+    html,
+    place: placeDrop,
+    scroll: (e) => {
+      if (!m.contains(e.target)) placeDrop(); // (the lobby scrolled on a phone: the menu follows its row)
+    },
+    off: (e) => {
+      if (!m.contains(e.target) && !row.contains(e.target)) closeDrop();
+    },
+    key: (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeDrop();
+      }
+    },
+  };
+  m.onclick = (e) => {
+    const i = e.target.closest("[data-info]");
+    if (i) {
+      // the circled i: the game's line opens under its row (and closes again)
+      const item = i.closest(".ld-item");
+      item.classList.toggle("open");
+      placeDrop();
+      return;
+    }
+    const b = e.target.closest("button");
+    if (b && b.getAttribute("aria-disabled") !== "true") onClick(b);
+  };
+  refreshDrop(true);
+  setTimeout(() => {
+    if (drop && drop.m === m) {
+      addEventListener("pointerdown", drop.off, true);
+      addEventListener("keydown", drop.key, true);
+      addEventListener("resize", drop.place);
+      addEventListener("scroll", drop.scroll, true);
+    }
+  });
+}
+/* the menu's rows again (a pick, a vote, someone else's change); the open i lines and the focus stay where they were */
+function refreshDrop(first) {
+  if (!drop) return;
+  const { m } = drop,
+    html = drop.html();
+  if (!first && html === m._html) return;
+  const open = $$(".ld-item.open", m).map((x) => x.dataset.k),
+    sig =
+      document.activeElement && m.contains(document.activeElement)
+        ? document.activeElement.dataset.k
+        : null,
+    top = m.scrollTop;
+  m._html = html;
+  m.innerHTML = html;
+  open.forEach((k) => $(`.ld-item[data-k="${k}"]`, m)?.classList.add("open"));
+  placeDrop();
+  m.scrollTop = top;
+  const f =
+    (sig && $(`button[data-k="${sig}"]`, m)) ||
+    (first && ($("[aria-pressed='true']", m) || $("button", m)));
+  if (f) f.focus({ preventScroll: !first });
+}
+
+const lock = (on) => (on ? "" : ' aria-disabled="true"');
+const hostNote = (what) =>
+  `<p class="ld-note small dim">Only the host (or sudo) picks the ${what}.</p>`;
+
+/* Game type */
+let typeCat = null; // the kind open in the menu (null: the kinds)
+function typesHTML() {
   const s = R.state,
     host = isSudo(s, R.me),
     cur = s.options.mode || "aod";
-  const tiles = (all) =>
-    MODES.filter((m) => all || s.options.map !== "cabin" || m.id === "hang")
+  if (!typeCat)
+    return (
+      (host ? "" : hostNote("game")) +
+      CATS.map(
+        ([k, name, tip]) =>
+          `<button type="button" role="menuitem" class="ld-row ld-cat" data-cat="${k}" data-k="cat-${k}" aria-current="${modeOf(cur).cat === k}" data-tip="${esc(tip)}"><b>${esc(name)}</b><span class="ld-syms">${MODES.filter(
+            (m) => m.cat === k,
+          )
+            .map((m) => gameSymbol(m.id, 20))
+            .join(
+              "",
+            )}</span><span class="ld-go" aria-hidden="true">›</span></button>`,
+      ).join("")
+    );
+  return (
+    `<button type="button" role="menuitem" class="ld-row ld-back" data-back="1" data-k="back"><span class="ld-go" aria-hidden="true">‹</span><b>${esc(CATS.find((c) => c[0] === typeCat)[1])}</b></button>` +
+    (host ? "" : hostNote("game")) +
+    MODES.filter((m) => m.cat === typeCat)
       .map(
         (m) =>
-          `<button type="button" class="tile type-tile" data-mode="${m.id}" aria-pressed="${m.id === cur}"${host ? "" : ' aria-disabled="true"'}>${gameArtSVG({ width: 220, duck: profile.duck, map: m.id === "hang" ? "cabin" : s.options.map === "cabin" ? "board" : s.options.map || "board", mode: m.id })}<b>${esc(m.name)}</b><span class="small dim">${esc(m.tip)}</span></button>`,
+          `<div class="ld-item" data-k="${m.id}"><button type="button" role="menuitem" class="ld-row ld-mode" data-mode="${m.id}" data-k="m-${m.id}" aria-pressed="${m.id === cur}"${lock(host)}><span class="ld-sym">${gameSymbol(m.id, 30)}</span><b>${esc(m.name)}</b></button><button type="button" class="ld-i" data-info="1" data-k="i-${m.id}" aria-label="What is ${esc(m.name)}?" data-tip="${esc(m.tip)}">i</button><p class="ld-tip small">${esc(m.tip)}</p></div>`,
       )
-      .join("") +
-    (all || s.options.map !== "cabin" ? "" : allTile("All games", "type-tile"));
-  return openWindow(
-    `<h2>Game type</h2>${host ? "" : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the game.</p>'}
-    <div class="type-tiles">${tiles(false)}</div>`,
-    {
-      cls: "win-settings",
-      onOpen: (w) => {
-        const box = w.querySelector(".type-tiles");
-        box.onclick = (e) => {
-          if (e.target.closest("[data-all]")) {
-            box.innerHTML = tiles(true);
-            return;
-          }
-          const b = host && e.target.closest("[data-mode]");
-          if (!b) return;
-          R.send({ t: "options", options: { mode: b.dataset.mode } });
-          w.querySelectorAll("[data-mode]").forEach((x) =>
-            x.setAttribute("aria-pressed", x === b),
-          );
-        };
-      },
-    },
+      .join("")
   );
 }
+function openTypes(row) {
+  const s = R.state;
+  typeCat = onCabin(s.options.mode) ? "cabin" : null; // (on Duck Cabin it opens on the Cabin games)
+  openDrop(row, typesHTML, (b) => {
+    if (b.dataset.cat) typeCat = b.dataset.cat;
+    else if (b.dataset.back) typeCat = null;
+    else if (b.dataset.mode && isSudo(R.state, R.me)) {
+      R.send({ t: "options", options: { mode: b.dataset.mode } });
+      closeDrop();
+      return;
+    }
+    refreshDrop(true);
+  });
+}
 
-/* the Map window: each map with a little picture; the host picks. In Hangout only Duck Cabin shows, with All maps to see
-   the rest (picking another map leaves Hangout) */
-function openMaps() {
+/* Map: Random's die, Vote Maps' strip of four maps, then each map's own picture, as a slice the shape of the row */
+const DIE = `<svg class="ld-die" viewBox="0 0 480 64" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="480" height="64" fill="#1b1d2b"/>${[
+  [40, 14, "#ed1c24"],
+  [92, 48, "#2fa4ff"],
+  [150, 20, "#37d421"],
+  [330, 44, "#ffd23f"],
+  [390, 12, "#9b5de5"],
+  [446, 46, "#ff8c2b"],
+]
+  .map(
+    ([x, y, c]) =>
+      `<circle cx="${x}" cy="${y}" r="9" fill="${c}" opacity=".55"/>`,
+  )
+  .join(
+    "",
+  )}<ellipse cx="240" cy="58" rx="27" ry="4" fill="#000" opacity=".35"/><path d="M216 18 l12 -9 h36 l-12 9 z" fill="#e6e8f0" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><path d="M252 18 l12 -9 v34 l-12 9 z" fill="#c9ccd8" stroke="#1c1c28" stroke-width="2" stroke-linejoin="round"/><rect x="216" y="18" width="36" height="34" rx="5" fill="#fff" stroke="#1c1c28" stroke-width="2"/>${[
+  [224, 26, "#ed1c24"],
+  [244, 26, "#2fa4ff"],
+  [234, 35, "#37d421"],
+  [224, 44, "#ffd23f"],
+  [244, 44, "#9b5de5"],
+]
+  .map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${c}"/>`)
+  .join(
+    "",
+  )}<circle cx="234" cy="13.5" r="2.2" fill="#ff8c2b"/><circle cx="246" cy="13.5" r="2.2" fill="#ff8c2b"/><circle cx="256" cy="22" r="2" fill="#ed1c24"/><circle cx="258" cy="31" r="2" fill="#ed1c24"/><circle cx="260" cy="40" r="2" fill="#ed1c24"/></svg>`;
+const MAP_ROWS = () => [
+  ...MAPS,
+  [
+    "cabin",
+    "Duck Cabin",
+    "A log cabin at night with a deck, a pool and a campfire. Its own games are the Cabin ones: picking it picks Hangout.",
+  ],
+];
+function mapRow(k, name, tip, pic, { on, ok, n, attr }) {
+  return `<button type="button" role="menuitem" class="ld-row ld-map" ${attr} data-k="${k}" aria-pressed="${!!on}" data-tip="${esc(tip)}"${lock(ok)}><span class="ld-pic">${pic}</span><b class="ld-name">${esc(name)}</b>${n ? `<span class="ld-n" aria-label="${n} vote${n === 1 ? "" : "s"}">${n}</span>` : ""}</button>`;
+}
+let allMaps = false; // on Duck Cabin, the other maps show only after All maps
+function mapsHTML() {
   const s = R.state,
     host = isSudo(s, R.me),
-    cur = s.options.map || "board",
-    hang = s.options.mode === "hang";
-  const tiles = (all) =>
-    [
-      ...MAPS,
-      [
-        "cabin",
-        "Duck Cabin",
-        "A log cabin at night with a deck, a pool and a campfire. Hangout's own: picking it picks Hangout.",
-      ],
-    ]
-      .filter(([id]) => (all ? true : hang ? id === "cabin" : true))
-      .map(
-        ([id, name, tip]) =>
-          `<button type="button" class="tile map-tile" data-map="${id}" aria-pressed="${id === cur}" data-tip="${esc(tip)}"${host ? "" : ' aria-disabled="true"'}>${mapMini(id)}<span>${esc(name)}</span></button>`,
-      )
-      .join("") +
-    (all || !hang
-      ? ""
-      : `<button type="button" class="tile map-tile tile-all" data-all="1"><span class="mini-map mm-all">${MAPS.slice(
-          0,
-          4,
-        )
-          .map((m) => mapMini(m[0]))
-          .join("")}</span><span>All maps</span></button>`);
-  return openWindow(
-    `<h2>Map</h2>${host ? "" : '<p class="small dim" style="margin:-.3rem 0 .6rem">Only the host (or sudo) picks the map.</p>'}
-    <div class="map-tiles">${tiles(false)}</div>`,
-    {
-      cls: "win-settings",
-      onOpen: (w) => {
-        const box = w.querySelector(".map-tiles");
-        box.onclick = (e) => {
-          if (e.target.closest("[data-all]")) {
-            box.innerHTML = tiles(true);
-            return;
-          }
-          const b = host && e.target.closest("[data-map]");
-          if (!b) return;
-          R.send({ t: "options", options: { map: b.dataset.map } });
-          w.querySelectorAll("[data-map]").forEach((x) =>
-            x.setAttribute("aria-pressed", x === b),
-          );
-        };
-      },
-    },
+    pick = s.options.mapPick || "",
+    cabin = onCabin(s.options.mode),
+    mine = (s.mapVotes || {})[R.me],
+    n = mapTally(s);
+  const strip = `<span class="mini-map ld-strip">${MAPS.slice(0, 4)
+    .map((m) => mapMini(m[0]))
+    .join("")}</span>`;
+  if (cabin && !allMaps)
+    return (
+      (host ? "" : hostNote("map")) +
+      mapRow("cabin", "Duck Cabin", MAP_ROWS().at(-1)[2], mapMini("cabin"), {
+        on: true,
+        ok: host,
+        attr: 'data-map="cabin"',
+      }) +
+      `<button type="button" role="menuitem" class="ld-row ld-back" data-all="1" data-k="all"><b>All maps</b><span class="ld-go" aria-hidden="true">›</span></button>`
+    );
+  const vote = pick === "vote" && !cabin;
+  return (
+    (vote
+      ? '<p class="ld-note small dim">Everyone votes. Only the host (or sudo) turns Vote Maps off.</p>'
+      : host
+        ? ""
+        : hostNote("map")) +
+    mapRow(
+      "vote",
+      "Vote Maps",
+      "Everyone votes for a map (or Random); a tie is a random pick between the tied maps.",
+      strip,
+      { on: vote, ok: host, attr: 'data-pick="vote"' },
+    ) +
+    (vote
+      ? `<p class="ld-head small">Your vote</p>` +
+        [["random", "Random", "Any map, picked when the game starts.", DIE]]
+          .concat(MAPS.map(([id, name, tip]) => [id, name, tip, mapMini(id)]))
+          .map(([id, name, tip, pic]) =>
+            mapRow("v-" + id, name, tip, pic, {
+              on: mine === id,
+              ok: true,
+              n: n[id],
+              attr: `data-vote="${id}"`,
+            }),
+          )
+          .join("")
+      : mapRow(
+          "random",
+          "Random",
+          "Any map, picked when the game starts.",
+          DIE,
+          {
+            on: pick === "random" && !cabin,
+            ok: host,
+            attr: 'data-pick="random"',
+          },
+        ) +
+        [MAP_ROWS().at(-1), ...MAPS]
+          .map(([id, name, tip]) =>
+            mapRow(id, name, tip, mapMini(id), {
+              on: !(pick && !cabin) && s.options.map === id,
+              ok: host,
+              attr: `data-map="${id}"`,
+            }),
+          )
+          .join(""))
   );
+}
+function openMaps(row) {
+  allMaps = false;
+  openDrop(row, mapsHTML, (b) => {
+    const s = R.state,
+      host = isSudo(s, R.me);
+    if (b.dataset.all) {
+      allMaps = true;
+      refreshDrop(true);
+      return;
+    }
+    if (b.dataset.vote) {
+      R.send({ t: "mapVote", map: b.dataset.vote });
+      return; // (the menu stays open: the counts change as the votes come in)
+    }
+    if (!host) return;
+    if (b.dataset.pick) {
+      const on =
+        s.options.mapPick === b.dataset.pick && !onCabin(s.options.mode);
+      R.send({
+        t: "options",
+        options: {
+          mapPick: on && b.dataset.pick === "vote" ? "" : b.dataset.pick,
+        },
+      }); // (Vote Maps again turns it off; then the host's map is back)
+      if (b.dataset.pick === "random") closeDrop();
+      return;
+    }
+    if (b.dataset.map) {
+      R.send({ t: "options", options: { map: b.dataset.map } });
+      closeDrop();
+    }
+  });
 }
 
 /* ---------- Game options: the host edits them; everyone else sees them ---------- */
@@ -860,7 +1065,9 @@ function paint() {
         : `${s.seat.filter((id) => s.players[id].ready).length}/${s.seat.length} ready`
       : "The host starts";
   $('[data-m="options"] .val', S).textContent = host ? "Edit" : "View";
-  $('[data-m="map"] .val', S).textContent = mapName(s.options.map);
+  const pick = onCabin(s.options.mode) ? "" : s.options.mapPick || "",
+    pickName = { vote: "Vote Maps", random: "Random" }[pick];
+  $('[data-m="map"] .val', S).textContent = pickName || mapName(s.options.map);
   const fr = $('[data-m="friends"] .val', S);
   if (fr)
     fr.textContent = acct.uid
@@ -868,14 +1075,15 @@ function paint() {
       : "Sign in";
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),
-    artSig = (s.options.map || "board") + mode + JSON.stringify(profile.duck); // the picture shows the game and the map
+    artSig =
+      (s.options.map || "board") + pick + mode + JSON.stringify(profile.duck); // the picture shows the game and the map
   if (art._sig !== artSig) {
     art._sig = artSig;
     art.innerHTML = gameArtSVG({
       width: 480,
       duck: profile.duck,
-      map: s.options.map || "board",
-      mapLabel: mapName(s.options.map),
+      map: pick ? "board" : s.options.map || "board",
+      mapLabel: pickName || mapName(s.options.map),
       mode,
     });
   }
@@ -902,6 +1110,7 @@ function paint() {
         )
         .join(""),
     );
+  refreshDrop(false);
   if (s.seat.length > lastSeat && lastSeat) sfx.pop();
   lastSeat = s.seat.length;
 }
@@ -1049,6 +1258,7 @@ register("lobby", {
     }
   },
   leave() {
+    closeDrop();
     if (off) off();
     off = null;
     if (mbarOff) mbarOff();
@@ -1110,8 +1320,11 @@ register("lobby", {
       const b = e.target.closest("[data-m]");
       if (!b) return;
       const m = b.dataset.m;
-      if (m === "type") openTypes();
-      if (m === "map") openMaps();
+      if (m === "type" || m === "map") {
+        const again = drop && drop.row === b; // (its row again closes the menu)
+        closeDrop();
+        if (!again) (m === "type" ? openTypes : openMaps)(b);
+      }
       if (m === "options") openOptions();
       if (m === "start" && b.getAttribute("aria-disabled") !== "true")
         R.send({ t: "start" });

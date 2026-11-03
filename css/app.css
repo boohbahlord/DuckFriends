@@ -1797,6 +1797,192 @@ p.bad {
   color: #1c1c28;
   outline: none;
 }
+/* the lobby's Game type and Map menus: rows dropping down from the row that opened them */
+.ldrop {
+  min-width: 0;
+  gap: 0.3rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ldrop .ld-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: calc(1.02rem * var(--ts));
+  font-weight: 600;
+  color: var(--ink);
+}
+.ldrop .ld-row[aria-pressed="true"] {
+  background: var(--blue);
+  color: #fff;
+}
+.ldrop .ld-row[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.75;
+}
+.ldrop .ld-row[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--ink);
+}
+.ldrop .ld-row[aria-pressed="true"][aria-disabled="true"]:hover {
+  background: var(--blue);
+  color: #fff;
+}
+.ldrop .ld-cat[aria-current="true"] {
+  box-shadow: inset 0.3rem 0 0 var(--blue);
+}
+.ld-syms {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+.ld-syms svg {
+  flex: none;
+}
+.ld-go {
+  font-size: 1.3em;
+  line-height: 1;
+  color: var(--dim);
+}
+.ld-back .ld-go {
+  margin-right: 0.1rem;
+}
+.ld-row:hover .ld-go,
+.ld-row:focus-visible .ld-go {
+  color: inherit;
+}
+.ld-sym {
+  display: inline-grid;
+  place-items: center;
+  width: 2.2rem;
+  flex: none;
+}
+.ld-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 0.4rem;
+}
+.ldrop .ld-i {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.35rem;
+  padding: 0;
+  border: 0.14rem solid currentColor;
+  border-radius: 50%;
+  color: var(--dim);
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+}
+.ldrop .ld-i:hover,
+.ldrop .ld-i:focus-visible,
+.ld-item.open .ld-i {
+  background: var(--yellow);
+  border-color: #1c1c28;
+  color: #1c1c28;
+}
+.ld-tip {
+  display: none;
+  grid-column: 1 / -1;
+  margin: 0.1rem 0.75rem 0.4rem 3.55rem;
+  color: var(--dim);
+}
+.ld-item.open .ld-tip {
+  display: block;
+}
+.ld-note {
+  margin: 0.2rem 0.6rem 0.3rem;
+}
+.ld-head {
+  margin: 0.35rem 0.6rem 0;
+  font-weight: 700;
+  color: var(--dim);
+}
+.ldrop .ld-map {
+  position: relative;
+  flex: none;
+  min-height: 3.7rem;
+  padding: 0 0.55rem;
+  overflow: hidden;
+  border: 0.14rem solid var(--line);
+  background: #222;
+}
+.ld-pic {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ld-pic > .mini-map,
+.ld-pic > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+.ld-strip {
+  display: flex;
+}
+.ld-strip > .mini-map {
+  flex: 1;
+  width: auto;
+  height: 100%;
+  border: 0;
+  border-left: 0.12rem solid var(--line);
+  border-radius: 0;
+}
+.ld-strip > .mini-map:first-child {
+  border-left: 0;
+}
+.ld-name,
+.ld-n {
+  position: relative;
+  padding: 0.15rem 0.55rem;
+  border-radius: 0.5rem;
+  background: #000000b8;
+  color: #fff;
+}
+.ld-n {
+  margin-left: auto;
+  min-width: 1.7rem;
+  text-align: center;
+  background: var(--yellow);
+  color: #1c1c28;
+  box-shadow: 0 0.12rem 0 #1c1c28;
+}
+.ldrop .ld-map[aria-pressed="true"] {
+  border-color: var(--blue);
+  box-shadow: inset 0 0 0 0.16rem var(--blue);
+}
+.ldrop .ld-map[aria-pressed="true"] .ld-name {
+  background: var(--blue);
+}
+.ldrop .ld-map:hover,
+.ldrop .ld-map:focus-visible {
+  background: #222;
+  border-color: var(--yellow);
+}
+.ldrop .ld-map:not([aria-disabled="true"]):hover .ld-name,
+.ldrop .ld-map:focus-visible .ld-name {
+  background: var(--yellow);
+  color: #1c1c28;
+}
+.ldrop .ld-map[aria-disabled="true"]:hover {
+  border-color: var(--line);
+}
+.ldrop .ld-map[aria-pressed="true"][aria-disabled="true"]:hover {
+  border-color: var(--blue);
+}
 .ctx-name {
   display: flex;
   flex-direction: column;
