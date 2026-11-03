@@ -12,6 +12,8 @@
 import { activity } from "./hangout/registry.js";
 import {
   CABIN,
+  DECK,
+  STAIRS,
   inCabin,
   sortY,
   heightAt,
@@ -939,6 +941,13 @@ export function l4TouchAim(me) {
 activity({
   id: "l4",
   only: "l4dd",
+  /* the only ground anyone sees: the cabin, the deck and its stairs (the zombies come up them). The forest, the pool and
+     the yard can't be reached, so the world doesn't make them: the deck runs smoother */
+  area: [
+    [CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1],
+    [DECK.x0, DECK.y0, DECK.x1, DECK.y1],
+    [STAIRS.x0, STAIRS.y0, STAIRS.x1, STAIRS.y1],
+  ],
   mount(ctx) {
     setListener(() => ctx.world.at(ctx.me));
     layer = ctx.world.board.querySelector(".hang-props");
