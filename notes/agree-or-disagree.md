@@ -3262,3 +3262,13 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 
 - Adam: read as Mad God Justin (the mode with a timer). His HP goes from 20 + 8 per player to 20 + 20 per player, and the
   fight's timer gets 4 s more per player (TIME_PER in js/mgjrules.js). Board Justin (10 HP, no timer) is unchanged.
+
+## 2026-11-03 17:15Z: weapon damage in the normal game (word for word)
+> the chair should do three damage to HP in the game OUTSIDE of the Justin mode and then 2 HP of damage in the Mad God Justin mode.
+>
+> ALSO in the normal game and NOT in the zozmies or mad god justin game:
+> The grenade should do 3 damage AND make the ducks fly twice as far as the hammer's knockback effect. The hammer should do three damage in normal game. The knife does two damage. The players are downed for half a second longer by default in normal modes.
+
+- Adam: HIT_DMG in js/rules.js (hammer, chair, grenade 3; knife 2; the rest 1) through soaks(s, id, now, dmg), not in
+  Quacky Zombies; Mad God Justin's chair takes 2 (mgjSoak dmg). Grenade throw KB_FAR x2 in the normal game (x3 kept in
+  Mad God Justin and Quacky Zombies). Boards' default down time 0.5 s -> 1 s (DOWN_GAMES); Duck Cabin stays 6 s.
