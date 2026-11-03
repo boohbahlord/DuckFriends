@@ -3427,3 +3427,4 @@ Duck looks (Noah, from the owner's answer 1 above and "Change player tag color")
   together peaks at 0.75 to 0.87 through the soft ceiling.
 - No music: js/music.js `noMusic()`: on the game screen in `l4dd` and `mgj` the music fades out and the bar says
   "No music"; the lobby still plays.
+- Mad God Justin ending (Jackal, the owner's words relayed): "in mad god Justin, the players actually get a dead effect when they all lose. Further more, it doesnt say time is up anymore, it just says \"Justin Wins\"". When every duck is out, every duck stays dead (`m.allOut`) through the ending and the stats; the ending says Justin Wins.

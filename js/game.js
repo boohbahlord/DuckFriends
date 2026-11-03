@@ -3352,7 +3352,7 @@ async function announceMgj(s, phase) {
   if (phase !== "mgjend") return;
   if (!(s.mgj && s.mgj.won)) {
     sfx.bonk();
-    say("Time's up!");
+    say("Justin Wins");
     return;
   }
   sfx.done();
@@ -4123,7 +4123,7 @@ function actHTML(s) {
   if (s.phase === "boss")
     return `<span class="progress mgj-tip">${mgjTip(s)}</span>`;
   if (s.phase === "mgjend")
-    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin wins this time."} The stats are next.</span>`;
+    return `<span class="progress">${s.mgj && s.mgj.won ? "Justin is defeated!" : "Justin Wins."} The stats are next.</span>`;
   if (s.phase === "dunced") {
     const p = s.players[((s.dn && s.dn.cur) || {}).def];
     return `<span class="progress">${p ? `${esc(p.name)} is the dunce` : "A dunce"}</span>`;
