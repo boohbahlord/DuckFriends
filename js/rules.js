@@ -83,7 +83,13 @@ import {
   hangHit,
   hangStill,
 } from "./hangout/rules.js";
-import { inCabin, standable, W as HW, H as HH } from "./hangout/layout.js";
+import {
+  inCabin,
+  standable,
+  heightAt,
+  W as HW,
+  H as HH,
+} from "./hangout/layout.js";
 import {
   justinTick,
   justinDown,
@@ -587,6 +593,7 @@ const PRESS = [
   "bow",
   "chair",
   "zebra",
+  "jaime",
   "sound",
   "trombone",
   "confetti",
@@ -603,6 +610,7 @@ const COOLDOWN = {
   bow: 400,
   chair: 15000,
   zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
+  jaime: 12000, // (as Mad God Justin's JAIME_MS, but each duck's own)
 };
 export const coolFor = (sp, s) =>
   (s && isMgj(s) && mgjCool(sp)) || COOLDOWN[sp] || 1500; // (Mad God Justin has its own for the knife and the bow)
@@ -1601,7 +1609,7 @@ export function reduce(state, a, now = Date.now()) {
       if (isMgj(s) && sp !== "knife" && sp !== "bow")
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
       if (
-        (WEAPONS.includes(sp) || sp === "chair") &&
+        (WEAPONS.includes(sp) || sp === "chair" || sp === "jaime") &&
         !s.options.fun &&
         !isMgj(s)
       )
@@ -1611,6 +1619,11 @@ export function reduce(state, a, now = Date.now()) {
       const k = `${a.id} ${sp}`; // (each item waits on its own)
       if (now < coolEnds(s, a.id, sp)) return state;
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
+      if (sp === "jaime") {
+        if (!jaimeOut(s, a.id, now)) return state; // (nobody to go for: the key keeps its Jaime)
+        s.lastUse = { ...(s.lastUse || {}), [k]: now };
+        return s;
+      }
       if (sp === "handgun") {
         // one shot from the magazine; the last starts the reload
         const m = magOf(s, a.id, now),
@@ -2109,7 +2122,8 @@ export function reduce(state, a, now = Date.now()) {
           dnTick(s, now) |
           vdTick(s, now) |
           attacks(s, now) | // (the knife and the hammer, still swinging)
-          cakeGone(s, now),
+          cakeGone(s, now) |
+          jaimeRun(s, now),
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -2608,6 +2622,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   }
   if (sp === "knife") hits = hits.sort((a, b) => a.d - b.d).slice(0, 1);
   for (const h of hits) {
+    logHit(s, by, h.id, now);
     if (!(isMgj(s) ? mgjSoak(s, h.id, now) : soaks(s, h.id, now))) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
@@ -2761,6 +2776,7 @@ function blast(s, sh, x, y, now) {
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
     );
     if (!n) continue;
+    if (!P.dead) logHit(s, sh.by, id, now);
     if (P.dead || !soaks(s, id, now)) {
       if (!P.dead) playerKilled(s, sh.by, id, "grenade");
       P.dead = true;
@@ -2880,6 +2896,7 @@ function moveShots(s, now) {
           if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
           if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
           const safe = isMgj(s) && mgjSafe(s, id, now);
+          logHit(s, sh.by, id, now);
           if (isMgj(s) ? mgjSoak(s, id, now) : soaks(s, id, now))
             sh.got = [...(sh.got || []), id];
           else {
@@ -3017,6 +3034,180 @@ function cakeGone(s, now) {
     return true;
   }
   return false;
+}
+
+/* ---------- the Jaime special (Mad God Justin's Jaime, for every mode with the specials' hotbar) ----------
+   Released, Jaime goes for one player: the one I hit in the last JAIME_FEUD ms, or else the one who hit me in that time,
+   or else the nearest (the owner's). He sprints at them as he does at Mad God Justin (JAIME_RUN), stops a little
+   apart (so the two don't stand in each other) and stabs once a second
+   (a hit as any other: the HP, and a jump dodges it), and once they're down, gone, or after JAIME_LIFE, he's gone in a
+   poof. In Hangout he keeps to his side of the cabin's walls and goes up only what a duck walks up.
+   s.jm = { [id]: { n, by, t (who he's after), x, y, z, face, at, stabAt, mt } }: his own place, not in s.pos (he isn't
+   a player, so he never counts in a vote). s.hitLog = the latest hits between players, [{ by, id, t }] */
+const JAIME_FEUD = 15000,
+  JAIME_LIFE = 12000,
+  JAIME_RUN = 9; // (duck lengths a second, as Mad God Justin's)
+function logHit(s, by, id, now) {
+  if (isMgj(s) || !s.players[by] || !s.players[id] || by === id) return;
+  s.hitLog = [
+    ...(s.hitLog || []).filter((h) => now - h.t < JAIME_FEUD).slice(-15),
+    { by, id, t: now },
+  ];
+}
+/* who a Jaime sent by `by` goes for (or null) */
+function jaimeTarget(s, by, now) {
+  const hang = isHang(s),
+    p0 = s.pos[by],
+    side = (p) => (hang && inCabin(p.x * HW, p.y * HH) ? 1 : 0);
+  const ok = (id) => {
+    const P = s.players[id],
+      p = s.pos[id];
+    return (
+      id !== by &&
+      !!P &&
+      !P.dead &&
+      !!p &&
+      p.x >= 0 &&
+      !isGhost(s, id) &&
+      !vdSafe(s, id)
+    );
+  };
+  const feud = (s.hitLog || []).filter((h) => now - h.t < JAIME_FEUD).reverse();
+  const mine = feud.find((h) => h.by === by && ok(h.id));
+  if (mine) return mine.id; // (the one I hit)
+  const theirs = feud.find((h) => h.id === by && ok(h.by));
+  if (theirs) return theirs.by; // (the one who hit me)
+  const [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+  return (
+    s.seat
+      .filter((id) => ok(id) && side(s.pos[id]) === side(p0))
+      .map((id) => [
+        id,
+        Math.hypot((s.pos[id].x - p0.x) / rx, (s.pos[id].y - p0.y) / ry),
+      ])
+      .sort((a, b) => a[1] - b[1])[0]?.[0] || null
+  ); // (the nearest, on my side of the walls)
+}
+/* a Jaime comes in beside the duck that sent him: false when there's nobody for him to go for */
+function jaimeOut(s, by, now) {
+  const p = s.pos[by],
+    t = p && jaimeTarget(s, by, now);
+  if (!t) return false;
+  s.jmN = (s.jmN || 0) + 1;
+  const id = `jaime${s.jmN}`;
+  s.jm = {
+    ...(s.jm || {}),
+    [id]: {
+      n: s.jmN,
+      by,
+      t,
+      x: p.x,
+      y: p.y,
+      ...(isHang(s) ? { z: +p.z || 0 } : {}),
+      face: p.face || 1,
+      at: now,
+      stabAt: now + 600,
+      mt: now,
+    },
+  };
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    { n: s.fxN, kind: "jaime", by, who: [id], t: now },
+  ];
+  return true;
+}
+/* every beat: each Jaime runs at his target and stabs; true when anything changed */
+function jaimeRun(s, now) {
+  if (!s.jm) return false;
+  const fx = (o) => {
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, t: now, ...o }];
+  };
+  if (!boardPhases(s).includes(s.phase) || isMgj(s) || isL4dd(s)) {
+    s.jm = null;
+    return true;
+  }
+  const hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    next = {};
+  let ch = false;
+  for (const [id, J0] of Object.entries(s.jm)) {
+    const J = { ...J0 },
+      P = s.players[J.t],
+      q = s.pos[J.t];
+    if (
+      !P ||
+      P.dead ||
+      !q ||
+      q.x < 0 ||
+      isGhost(s, J.t) ||
+      !s.players[J.by] ||
+      now - J.at > JAIME_LIFE
+    ) {
+      fx({ kind: "poof", x: J.x, y: J.y, who: [id] });
+      ch = true;
+      continue;
+    } // (his target is down or gone, or his time is up: gone in a poof)
+    const dt = Math.min(0.5, Math.max(0, (now - J.mt) / 1000)),
+      dx = (q.x - J.x) / rx,
+      dy = (q.y - J.y) / ry,
+      d = Math.hypot(dx, dy);
+    J.mt = now;
+    if (d > 1.8) {
+      const step = Math.min(d - 1.7, JAIME_RUN * dt),
+        to = (ux, uy) => ({
+          x: Math.max(0, Math.min(1, J.x + ux * step * rx)),
+          y: Math.max(0, Math.min(1, J.y + uy * step * ry)),
+        });
+      let at = to(dx / d, dy / d);
+      if (hang) {
+        const side = inCabin(J.x * HW, J.y * HH) ? 1 : 0,
+          fits = (c) =>
+            standable(c.x * HW, c.y * HH, J.z || 0, undefined, [
+              J.x * HW,
+              J.y * HH,
+            ]) && (inCabin(c.x * HW, c.y * HH) ? 1 : 0) === side;
+        at = [at, to(Math.sign(dx), 0), to(0, Math.sign(dy))].find(fits); // (a wall in the way: along it, or he waits)
+        if (at) at.z = heightAt(at.x * HW, at.y * HH);
+      }
+      if (at) {
+        J.x = +at.x.toFixed(4);
+        J.y = +at.y.toFixed(4);
+        if (at.z !== undefined) J.z = Math.round(at.z);
+      }
+      J.face = dx < 0 ? -1 : 1;
+      ch = true;
+    }
+    if (d <= 2.2 && now >= J.stabAt) {
+      J.stabAt = now + 1000;
+      const aim = d > 1e-3 ? [dx / d, dy / d] : [J.face, 0],
+        high = hang && Math.abs((+q.z || 0) - (J.z || 0)) > 48,
+        hit = !high && !dodges(s, q, now) && !vdSafe(s, J.t);
+      if (hit) {
+        logHit(s, J.by, J.t, now);
+        if (!soaks(s, J.t, now)) {
+          P.dead = true;
+          holdDown(s, J.t, now);
+          playerKilled(s, J.by, J.t, "jaime");
+        }
+      }
+      fx({
+        kind: "use",
+        what: "knife",
+        by: id,
+        who: [id],
+        face: aim[0] < 0 ? -1 : 1,
+        ax: +(aim[0] * rx).toFixed(4),
+        ay: +(aim[1] * ry).toFixed(4),
+        ...(hit ? { hit: [J.t] } : {}),
+      });
+      ch = true;
+    }
+    next[id] = J;
+  }
+  s.jm = Object.keys(next).length ? next : null;
+  return ch;
 }
 
 /* a vote passes once enough say yes, and fails once it can't pass any more */

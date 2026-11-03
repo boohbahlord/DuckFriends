@@ -355,9 +355,12 @@ let bar = null,
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
-/* a Jaime (Mad God Justin): his look, with the name of the duck that sent him under him */
+/* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, with the name of the duck that sent him under him */
 const jaimeLook = (s, id) => {
-  const by = s.players[((s.mgj && s.mgj.jaimes) || {})[id]?.by] || {};
+  const by =
+    s.players[
+      (((s.mgj && s.mgj.jaimes) || {})[id] || (s.jm || {})[id] || {}).by
+    ] || {};
   return { ...JAIME, name: by.name || JAIME.name, nameStyle: by.nameStyle };
 };
 let held = null,
@@ -785,10 +788,11 @@ function drawDucks(now = clockNow()) {
           ...(jp.ax !== undefined ? { ax: -jp.ax, ay: -jp.ay } : {}),
         }
       : null; // (Mad God Justin's double: mirrored through the board's middle)
-  const jaimes =
-    isMgj(s) && s.mgj
-      ? Object.keys(s.mgj.jaimes || {}).filter((id) => s.pos[id])
-      : [];
+  const jm = (!isMgj(s) && s.jm) || {},
+    jaimes =
+      isMgj(s) && s.mgj
+        ? Object.keys(s.mgj.jaimes || {}).filter((id) => s.pos[id])
+        : Object.keys(jm); // (the Jaime special's keep their place in s.jm, not s.pos)
   /* a duck the hammer shoved or a grenade threw (pos.kb): drawn sliding back from where it stood, over a little hop (a
      grenade's: higher, longer, at once) */
   const kbT = (id) => {
@@ -822,11 +826,13 @@ function drawDucks(now = clockNow()) {
             ? jp
             : id === JUSTIN2
               ? jp2
-              : id === R.me && me
-                ? me
-                : hang
-                  ? world.shown(id, s.pos[id])
-                  : s.pos[id],
+              : jm[id]
+                ? jm[id]
+                : id === R.me && me
+                  ? me
+                  : hang
+                    ? world.shown(id, s.pos[id])
+                    : s.pos[id],
         );
   const liftOf = (id, pos) =>
     (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) +
@@ -1170,9 +1176,11 @@ function drawDucks(now = clockNow()) {
             ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
             : isL4dd(s)
               ? l4Hp(s, id) > 0 && (mine ? heldNow() : pos.w)
-              : mine
-                ? held && hasKey(p.duck, held) && held
-                : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
+              : jm[id]
+                ? "knife" // (the Jaime special's: his knife always out)
+                : mine
+                  ? held && hasKey(p.duck, held) && held
+                  : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     if (pos.dj && d._dj !== pos.dj) {
       d._dj = pos.dj;
@@ -1340,6 +1348,7 @@ function drawDucks(now = clockNow()) {
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
       !(jp2 && d.dataset.pid === JUSTIN2) &&
+      !jm[d.dataset.pid] &&
       !bodyOf(d.dataset.pid)
     )
       d.remove();
