@@ -129,12 +129,21 @@ export function checkUnlocks() {
   save();
   toast("Unlocked: " + and(fresh.map((l) => l.name)));
 }
-/* a Justin kill with a weapon special, seen on your own device */
+/* a Justin kill with a weapon special, seen on your own device; or a Mad God Justin win I was in the fight for. Noah's
+   brown Justin-costume duck (Rainbow Ducks) never counts: it's a player, so knocking it down is a player kill */
 export function countJustinKill() {
   profile.justinKills = (profile.justinKills || 0) + 1;
   save();
   checkUnlocks();
+  document.dispatchEvent(new Event("jumpsbox"));
 }
+/* is Justin in this room's game: the Justin option (not in Valentine's Duck Date or Left 4 Dead Ducks), Mad God Justin,
+   or Hangout, where he lives */
+export const justinIn = (s) =>
+  !!s &&
+  !!s.options &&
+  (["mgj", "hang"].includes(s.options.mode) ||
+    (!!s.options.justin && !["vdd", "l4dd"].includes(s.options.mode)));
 /* another player (not a computer) or Justin knocked down by me with a weapon: toward the shotgun and the grenade */
 function countKill() {
   profile.kills = (profile.kills || 0) + 1;
@@ -149,10 +158,15 @@ export function watchKills(room) {
     seenD = null,
     seenW = null,
     seenL = null,
-    seenP = null;
+    seenP = null,
+    jin = null;
   room.on(() => {
     const s = room.state,
       topP = (s && s.pkN) || 0;
+    if (justinIn(s) !== jin) {
+      jin = justinIn(s);
+      document.dispatchEvent(new Event("jumpsbox"));
+    } // (the Justin Kills line comes and goes with him)
     if (seenP === null || topP < seenP) seenP = topP;
     else {
       for (const k of (s && s.pk) || [])
@@ -183,15 +197,12 @@ export function watchKills(room) {
     if (seenW === null || topW < seenW) seenW = topW;
     else {
       for (const k of (s && s.mgjWins) || [])
-        if (
-          k.n > seenW &&
-          k.def &&
-          (k.ids || []).includes(room.me) &&
-          !s.test
-        ) {
-          profile.mgjWins = (profile.mgjWins || 0) + 1;
-          save();
-          checkUnlocks();
+        if (k.n > seenW && (k.ids || []).includes(room.me)) {
+          if (k.def && !s.test) {
+            profile.mgjWins = (profile.mgjWins || 0) + 1;
+            save();
+          }
+          countJustinKill(); // (a win is a Justin kill for every duck in the fight, at any time)
         }
       seenW = topW;
     }

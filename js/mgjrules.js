@@ -1276,8 +1276,8 @@ function deskSpot(s, at) {
   return { x: best.x, y: best.y };
 }
 /* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair or
-   the fireball at q */
-function throwIt(s, k, at, q, now, fx) {
+   the fireball at q (the board's Mad God Justin throws them too, boardjustin.js) */
+export function throwIt(s, k, at, q, now, fx) {
   const dir = (a, v) => {
     const bx = Math.cos(a) * RX,
       by = Math.sin(a) * RY,

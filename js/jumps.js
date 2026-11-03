@@ -5,10 +5,16 @@
 import { profile, save } from "./store.js";
 import { fmtJumps } from "./format.js";
 import { activeRoom } from "./net.js";
-import { checkUnlocks } from "./unlocks.js";
+import { checkUnlocks, justinIn } from "./unlocks.js";
 
+/* in a room's bottom bar (.jumps-slot), Justin Kills goes under Jumps in the same box whenever Justin is in the game */
 export function showJumps(root) {
-  const html = `Jumps <b>${fmtJumps(profile.jumps)}</b>`;
+  const r = activeRoom(),
+    html = `Jumps <b>${fmtJumps(profile.jumps)}</b>`,
+    slot =
+      r && justinIn(r.state)
+        ? `<span class="jumps-n">${html}</span><span class="jumps-jk">Justin Kills <b>${fmtJumps(profile.justinKills)}</b></span>`
+        : html;
   const nodes = [
     ...document.querySelectorAll("#jumps, .jumps-slot"),
     ...(root && root.querySelectorAll
@@ -16,9 +22,11 @@ export function showJumps(root) {
       : []),
   ];
   nodes.forEach((n) => {
-    if (n._html !== html) {
-      n._html = html;
-      n.innerHTML = html;
+    const h = n.id === "jumps" ? html : slot;
+    if (n._html !== h) {
+      n._html = h;
+      n.innerHTML = h;
+      n.classList.toggle("jk", h !== html);
     }
   });
 }
@@ -34,3 +42,4 @@ export function countJump() {
   if (st) st.jumps++; // all-time, test rooms too
 }
 document.addEventListener("settings", showJumps);
+document.addEventListener("jumpsbox", () => showJumps()); // (unlocks.js: a Justin kill, or Justin came into the game or left it)

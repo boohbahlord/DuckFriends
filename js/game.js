@@ -169,6 +169,8 @@ import {
   justinShown,
   JUSTIN_ID,
   JUSTIN_PLAYER,
+  boardMgj,
+  BJ_HP,
 } from "./boardjustin.js";
 import { rainbowHTML } from "./art.js";
 import { statBoxHTML, ddrBoxHTML, openStats } from "./stats.js";
@@ -959,30 +961,37 @@ function drawDucks(now = clockNow()) {
     /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
        Left 4 Dead Ducks: its own 3 HP, always shown (down or a ghost, none) */
     const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+      bj = id === JUSTIN_ID && !g && boardMgj(s), // (the board's Mad God Justin: his 10 HP, always shown while he's up)
       lost =
         !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
           ? phpLost(s, id, now)
           : 0,
-      hpMax = l4
-        ? L4.HP
-        : isMgj(s)
-          ? !g && s.seat.includes(id) && s.phase === "boss"
-            ? mgjPHp(s)
-            : 0
-          : lost
-            ? PHP
-            : 0,
+      hpMax = bj
+        ? s.justin.max || BJ_HP
+        : l4
+          ? L4.HP
+          : isMgj(s)
+            ? !g && s.seat.includes(id) && s.phase === "boss"
+              ? mgjPHp(s)
+              : 0
+            : lost
+              ? PHP
+              : 0,
       hp = !hpMax
         ? -1
-        : l4
-          ? !dead && l4Hp(s, id) > 0
-            ? l4Hp(s, id)
-            : -1
-          : isMgj(s)
-            ? s.mgj && !dead
-              ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+        : bj
+          ? dead
+            ? -1
+            : (s.justin.hp ?? hpMax)
+          : l4
+            ? !dead && l4Hp(s, id) > 0
+              ? l4Hp(s, id)
               : -1
-            : PHP - lost;
+            : isMgj(s)
+              ? s.mgj && !dead
+                ? Math.max(0, hpMax - ((s.mgj.lost || {})[id] || 0))
+                : -1
+              : PHP - lost;
     if (d._hp !== hp) {
       const was = d._hp;
       d._hp = hp;

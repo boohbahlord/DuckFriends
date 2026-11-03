@@ -3140,3 +3140,12 @@ Done (Jackal): the dunce look goes as soon as someone else is crowned (only the 
 > Here is my idea for the specials (blue), and the purple can be the button for toggle AND the autoswing idea can just be completely removed from mobile
 
 Sketch: /mnt/project-files/nov3/phone-specials-sketch.jpg. Done (Solomon): `js/hotbar.js` (the slider and the purple square replace the round Specials button), `js/phonepad.js` (the jump button, and the crosshair when the slider's middle is a weapon; the jump moves up above it), Mad God Justin's auto stab removed from `js/rules.js`. Kept: a tap on the board still jumps, and holding still still brings the ring of specials. A phone on its side: the jump sits beside the crosshair, in the bottom row.
+
+## Request (2026-11-03 04:50Z, from the owner's answers, relayed by Adam): the board's Mad God Justin and Justin Kills
+> Next, before the unlocks: the board's Mad God Justin and Justin Kills. Plan: https://claude.ai/artifact/DDakyD7MfB7FCkNzeswUa4.
+
+Owner's answers to the plan (2026-11-03 04:48Z), the two that touch this:
+> Q7: He will chase them for only 10 seconds, and players still have the flash of red and everything when they take damage and all of that.
+> Q8: Every player in the fight.
+
+Done (Solomon): a General setting "Mad God Justin" (`mgjBoard`, in Game options under Justin, faded until Justin is on). He has 10 HP (a bar under his name); the duck that hurts him is his target for 10 s from its last hit, with his Mad God Justin attacks (pistol, hammer, controllers, chair, fireball; no edge lightning); ducks he hits by accident never become targets, nor do The Date and the Suitor at the table. At 0 HP he goes down for the room's knocked-down time and comes back full. Justin Kills shows under Jumps in the bottom bar's box whenever Justin is in the game (the Justin option, Mad God Justin, Hangout); a Mad God Justin win adds one for every duck in the fight. Noah's Justin-costume duck is a player, so it never counts. Invulnerability (Jackal) isn't built yet: Justin's hits go through the same HP code as any hit (`soaks`), so it should cover him there.

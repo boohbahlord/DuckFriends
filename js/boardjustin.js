@@ -18,12 +18,27 @@
    s.justin = { x0, y0, x1, y1, t, v, k, key, next, say, shoot, list, down }: he walks from (x0, y0) to (x1, y1) from time t at
    v board widths a second (every screen moves him on its own); k is the spot he picked; key the stage he's in; down when
    he was knocked down. In
-   Hangout he stays Duck Cabin's own (js/hangout/justin.js). */
+   Hangout he stays Duck Cabin's own (js/hangout/justin.js).
+   The board's Mad God Justin (the mgjBoard option, only with Justin on): he has BJ_HP HP (j.hp of j.max), and a duck
+   that hurts him is his target for RAGE_MS (j.rage): he goes after it with Mad God Justin's attacks (the hammer, his
+   pistol, the controllers, the chair and the fireball; never the edge lightning). A duck he hits by accident doesn't
+   become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
+   down for the room's knocked-down time, then gets up with his HP full. */
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
-import { holdDown } from "./hangout/death.js";
+import { holdDown, downFor } from "./hangout/death.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { isQuack, tileAt, tileCenter, stillIn } from "./quackrules.js";
-import { isMgj, mgjTick } from "./mgjrules.js";
+import {
+  isMgj,
+  mgjTick,
+  throwIt,
+  DMG,
+  THROW_TELL,
+  CHAIR_TELL,
+  FB_TELL,
+  FB_EVERY,
+} from "./mgjrules.js";
+import { vdSafe } from "./vddrules.js";
 import {
   twoSided,
   isSc,
@@ -90,7 +105,196 @@ export function justinDown(s, now, log) {
     y1: r3(at.y),
     t: now,
   });
+  delete j.rage;
+  delete j.tell;
+  delete j.swing;
   log(s, { npc: JUSTIN_ID, name: "Justin", text: any(DEATH_LINES) });
+  return true;
+}
+
+/* ---------- the board's Mad God Justin ---------- */
+export const BJ_HP = 10,
+  RAGE_MS = 10000;
+export const boardMgj = (s) =>
+  !isMgj(s) && !!s.options.mgjBoard && justinShown(s);
+/* a duck's weapon hit him: 0 nothing, 1 a hit he takes (the board's Mad God Justin: HP off, and the duck is his
+   target), 2 he went down */
+export function justinHit(s, by, now, log, w) {
+  const j = s.justin;
+  if (!justinShown(s) || j.down || isMgj(s)) return 0;
+  if (!boardMgj(s)) return justinDown(s, now, log) ? 2 : 0;
+  j.max = BJ_HP;
+  j.hp = Math.max(0, (j.hp ?? BJ_HP) - (DMG[w] || 1));
+  const at = justinAt(j, now);
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    {
+      n: s.fxN,
+      kind: "hitmark",
+      by,
+      who: [],
+      t: now,
+      x: r3(at.x),
+      y: r3(at.y),
+    },
+  ];
+  if (j.hp <= 0) return justinDown(s, now, log) ? 2 : 1;
+  if (s.players[by] && !vdSafe(s, by)) {
+    if (!j.rage) j.rage = { fireAt: now + 500, hamAt: now + 800 };
+    Object.assign(j.rage, { id: by, until: now + RAGE_MS });
+    j.ctlAt ??= now + 2500;
+    j.chairAt ??= now + 6000;
+    j.fbAt ??= now + 4000;
+  } // (the latest duck to hurt him is the one he goes after, for 10 s from its last hit)
+  return 1;
+}
+/* his rage: true while he is busy with his target (nothing else of his happens then) */
+function rageTick(s, now, at, fx, calm) {
+  const j = s.justin,
+    r = j.rage,
+    P = s.players[r.id],
+    p = s.pos[r.id];
+  const stop = () =>
+    Object.assign(j, {
+      k: null,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(at.x),
+      y1: r3(at.y),
+      t: now,
+    });
+  if (now >= r.until || !P || !p || p.x < 0 || vdSafe(s, r.id) || calm) {
+    delete j.rage;
+    delete j.tell;
+    delete j.swing;
+    j.next = now + 1000;
+    return true;
+  }
+  if (P.dead) return false; // (his target is down: he waits by it)
+  const far = Math.hypot((p.x - at.x) / RX, (p.y - at.y) / RY),
+    dx = p.x - at.x,
+    dy = p.y - at.y,
+    d = Math.hypot(dx, dy) || 1;
+  /* a throw held up (the tell), then the controllers every way, or the chair or the fireball at the duck */
+  if (j.tell) {
+    if (now < j.tell.at) return false;
+    const k = j.tell.k;
+    delete j.tell;
+    throwIt(s, k, at, p, now, fx);
+    r.fireAt = Math.max(r.fireAt, now + 900);
+    return true;
+  }
+  /* the hammer: on his way to the duck, then the swing toward where it stands by then */
+  if (j.swing) {
+    if (now < j.swing.at) return false;
+    delete j.swing;
+    const aim = Math.hypot(dx, dy) > 1e-4 ? [dx, dy] : [1, 0],
+      hit = strike(s, JUSTIN_ID, "hammer", aim, now, at);
+    fx({
+      kind: "use",
+      what: "hammer",
+      who: [],
+      face: aim[0] < 0 ? -1 : 1,
+      ax: +aim[0].toFixed(3),
+      ay: +aim[1].toFixed(3),
+      ...(hit.length ? { hit } : {}),
+    });
+    r.fireAt = Math.max(r.fireAt, now + 600);
+    return true;
+  }
+  if (now >= r.hamAt) {
+    r.hamAt = now + rnd([3200, 4200]);
+    if (far < 1.8) {
+      stop();
+      j.swing = { id: r.id, at: now + 350 };
+      return true;
+    } // (up close: a moment's wind-up, so it can step away)
+    const ux = -dx / RX,
+      uy = -dy / RY,
+      u = Math.hypot(ux, uy) || 1;
+    const to = {
+        x: Math.max(0.03, Math.min(0.97, p.x + (ux / u) * 1.4 * RX)),
+        y: Math.max(0, Math.min(1, p.y + (uy / u) * 1.4 * RY)),
+      },
+      v = SPEED * 1.9;
+    Object.assign(j, {
+      k: null,
+      x0: r3(at.x),
+      y0: r3(at.y),
+      x1: r3(to.x),
+      y1: r3(to.y),
+      t: now,
+      v,
+    });
+    j.swing = {
+      id: r.id,
+      at: now + (Math.hypot(to.x - at.x, to.y - at.y) / v) * 1000 + 250,
+    };
+    return true;
+  } // (further off: he sprints at it, then swings)
+  if (now >= j.fbAt || now >= j.chairAt || now >= j.ctlAt) {
+    const k =
+      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
+    stop();
+    j.tell = {
+      k,
+      at:
+        now +
+        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
+    };
+    if (k === "fireball") j.fbAt = now + FB_EVERY;
+    else if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
+    else j.ctlAt = now + rnd([8000, 12000]);
+    j.ctlAt = Math.max(j.ctlAt, now + 2500);
+    j.chairAt = Math.max(j.chairAt, now + 2500);
+    fx({ kind: "mgjtell", what: k, until: j.tell.at });
+    return true;
+  }
+  /* his pistol */
+  if (now >= r.fireAt) {
+    r.fireAt = now + rnd([650, 1150]);
+    const ax = dx / d,
+      ay = dy / d;
+    fx({
+      kind: "use",
+      what: "handgun",
+      who: [],
+      face: ax < 0 ? -1 : 1,
+      ax: +ax.toFixed(3),
+      ay: +ay.toFixed(3),
+    });
+    s.shots = [
+      ...(s.shots || []),
+      {
+        n: s.fxN * 10,
+        by: JUSTIN_ID,
+        k: "handgun",
+        x0: at.x,
+        y0: at.y,
+        vx: +(ax * SHOT_SPEED).toFixed(4),
+        vy: +(ay * SHOT_SPEED).toFixed(4),
+        t: now,
+        lx: at.x,
+        ly: at.y,
+      },
+    ];
+    return true;
+  }
+  /* where to stand: a few duck lengths from it, looked at again every 1.5 to 2.5 seconds */
+  if (now < (r.next || 0)) return false;
+  r.next = now + rnd([1500, 2500]);
+  const want = rnd([5, 8]),
+    ang = Math.atan2((at.y - p.y) / RY, (at.x - p.x) / RX) + rnd([-0.9, 0.9]);
+  Object.assign(j, {
+    k: null,
+    x0: r3(at.x),
+    y0: r3(at.y),
+    x1: r3(Math.max(0.05, Math.min(0.95, p.x + Math.cos(ang) * want * RX))),
+    y1: r3(Math.max(0.06, Math.min(0.94, p.y + Math.sin(ang) * want * RY))),
+    t: now,
+    v: SPEED,
+  });
   return true;
 }
 
@@ -231,8 +435,9 @@ export function justinTick(s, now, log) {
   }
   /* knocked down: he lies there a while, then gets up */
   if (j.down) {
-    if (now - j.down < DOWN) return ch;
+    if (now - j.down < (boardMgj(s) ? downFor(s) : DOWN)) return ch;
     delete j.down;
+    if (j.max) j.hp = j.max; // (the board's Mad God Justin: up with his HP full)
     j.next = now + 1000;
     j.say = Math.max(j.say, now + 4000);
     ch = true;
@@ -308,6 +513,20 @@ export function justinTick(s, now, log) {
       (id) => s.pos[id] && s.pos[id].x >= 0 && !s.players[id].dead,
     );
   const calm = !s.options.fun || (isQuack(s) && s.phase === "reveal");
+  /* the board's Mad God Justin: his HP, and the duck that hurt him */
+  if (boardMgj(s)) {
+    if (j.hp == null) {
+      j.hp = j.max = BJ_HP;
+      ch = true;
+    }
+    if (j.rage)
+      return rageTick(s, now, at, fx, isQuack(s) && s.phase === "reveal") || ch;
+  } else if (j.hp != null || j.rage) {
+    delete j.hp;
+    delete j.max;
+    delete j.rage;
+    ch = true;
+  }
   /* lightning or fire from the sky, a moment after his line */
   if (j.god && now >= j.god.at) {
     const id = j.god.id,

@@ -85,6 +85,7 @@ import { inCabin, standable, W as HW, H as HH } from "./hangout/layout.js";
 import {
   justinTick,
   justinDown,
+  justinHit,
   justinShown,
   justinAt,
   JUSTIN_ID,
@@ -139,6 +140,7 @@ export const OPTIONS_DEFAULT = {
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
+  mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: Hangout's own, and only Hangout's)
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
@@ -2012,6 +2014,7 @@ function forgame(s, a, now) {
           "fun",
           "lowGravity",
           "justin",
+          "mgjBoard",
           "ghosts",
           "ghostBusy",
           "discuss",
@@ -2055,17 +2058,19 @@ function forgame(s, a, now) {
                 ? `knocked down for ${v ? v / 1000 + " s" : "no time"}`
                 : k === "justin"
                   ? `Justin ${v ? "on" : "off"}`
-                  : k === "ghosts"
-                    ? `ghosts ${v ? "on" : "off"}`
-                    : k === "ghostBusy"
-                      ? `no ghosts while busy ${v ? "on" : "off"}`
-                      : k === "discuss"
-                        ? `discussion round ${v ? "on" : "off"}`
-                        : k === "unvoteStops"
-                          ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
-                          : k === "freeRoam" || k === "fun"
-                            ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
-                            : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
+                  : k === "mgjBoard"
+                    ? `Mad God Justin ${v ? "on" : "off"}`
+                    : k === "ghosts"
+                      ? `ghosts ${v ? "on" : "off"}`
+                      : k === "ghostBusy"
+                        ? `no ghosts while busy ${v ? "on" : "off"}`
+                        : k === "discuss"
+                          ? `discussion round ${v ? "on" : "off"}`
+                          : k === "unvoteStops"
+                            ? `unvoting ${v ? "stops" : "doesn't stop"} the countdown`
+                            : k === "freeRoam" || k === "fun"
+                              ? `${k === "fun" ? "silly commands" : "free roam"} ${v ? "on" : "off"}`
+                              : `${{ catchUp: "catch-up timer", writeCatch: "writing catch-up timer", answerTime: "answer timer", submitTime: "writing timer" }[k]} ${v ? v + " s" : "off"}`;
     sayFloat(
       s,
       `${me.name} changed the game: ${Object.entries(o)
@@ -2283,13 +2288,18 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       DMG[sp] || 1,
     );
   // (Mad God Justin: 1 damage; a hit on his double counts for nothing)
-  else if (!hang && by !== JUSTIN_ID && justinShown(s) && !s.justin.down) {
-    // (the Justin option: he can be hit back)
-    const n = justinAt(s.justin, now);
-    if (near(n.x, n.y, 0, 0) && justinDown(s, now, logLine)) {
-      justinKilled(s, by, sp);
-      stab = true;
-    }
+  else if (
+    !hang &&
+    by !== JUSTIN_ID &&
+    !done.includes(JUSTIN_ID) &&
+    justinShown(s) &&
+    !s.justin.down
+  ) {
+    // (the Justin option: he can be hit back; the board's Mad God Justin takes HP off first)
+    const n = justinAt(s.justin, now),
+      got = near(n.x, n.y, 0, 0) ? justinHit(s, by, now, logLine, sp) : 0;
+    if (got === 2) justinKilled(s, by, sp);
+    stab = got > 0;
   }
   if (hang)
     for (const n of hangTargets(s, now)) {
@@ -2422,10 +2432,11 @@ function blast(s, sh, x, y, now) {
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
-      if (
-        isMgj(s) ? mgjStab(s, sh.by, now, logLine) : justinDown(s, now, logLine)
-      ) {
-        if (!isMgj(s)) justinKilled(s, sh.by, "grenade");
+      const got = isMgj(s)
+        ? mgjStab(s, sh.by, now, logLine)
+        : justinHit(s, sh.by, now, logLine, "grenade");
+      if (got) {
+        if (got === 2) justinKilled(s, sh.by, "grenade");
         hit.push(JUSTIN_ID);
       }
     }
@@ -2543,9 +2554,10 @@ function moveShots(s, now) {
       at.z > -0.15 &&
       at.z < 1.05 &&
       justinShown(s) &&
-      !s.justin.down
+      !s.justin.down &&
+      !(sh.got && sh.got.includes(JUSTIN_ID))
     ) {
-      // (the Justin option: he can be shot back)
+      // (the Justin option: he can be shot back, once by each shot)
       const n = justinAt(s.justin, now),
         ux = dx / 0.03,
         uy = dy / 0.08,
@@ -2553,11 +2565,12 @@ function moveShots(s, now) {
         py = (n.y - y0) / 0.08,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (
-        Math.hypot(px - k * ux, py - k * uy) < 1 &&
-        justinDown(s, now, logLine)
-      )
-        justinKilled(s, sh.by, sh.k);
+      const got =
+        Math.hypot(px - k * ux, py - k * uy) < 1
+          ? justinHit(s, sh.by, now, logLine, sh.k)
+          : 0;
+      if (got) sh.got = [...(sh.got || []), JUSTIN_ID];
+      if (got === 2) justinKilled(s, sh.by, sh.k);
     }
     if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
       for (const n of hangTargets(s, now)) {
