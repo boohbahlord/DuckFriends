@@ -51,6 +51,7 @@ import {
   dropName,
 } from "./l4ddrules.js";
 import { DROP_ICONS } from "./l4dddrops.js";
+import { popHP } from "./hpmeter.js";
 import {
   zombieURL,
   zombieBox,
@@ -170,6 +171,8 @@ let layer = null,
   lastXY = null,
   drawn = "";
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
+/* my sprint left (0 … 1) and whether I'm too tired to sprint, for the HP meter's blue bar (game.js) */
+export const sprintLeft = () => [stamina, tired];
 let butler = null,
   onEl = null,
   onSig = "",
@@ -267,6 +270,8 @@ function seeZombies(s, ctx, now) {
       void o.el.offsetWidth;
       o.el.classList.add("hit");
     } // (hit: a red blink)
+    if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3)
+      popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
     if (z.st === 3 && o.st !== 3) {
       o.el.classList.add("dead");
       o.diedAt = now;
@@ -1121,7 +1126,7 @@ activity({
     }
     drawBox(ctx);
     paint(now, ctx);
-    /* my sprint: a thin blue bar under my name, while it isn't full */
+    /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
     if (tag) {
       let sp = tag.querySelector(".l4-sprint");

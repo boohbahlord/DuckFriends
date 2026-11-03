@@ -183,7 +183,11 @@ const WALL = { x: 0.065, y: 0.09 },
   TP_EVERY = 15000;
 /* his double: after every teleport, for DUP_MS */
 export const DUP_MS = 7000;
-/* now and then he eats (a look only): for EAT_MS, once every 30 to 45 s; the zebra cake he eats for CAKE_EAT_MS */
+/* now and then he eats: for EAT_MS, once every 30 to 45 s; the zebra cake he eats for CAKE_EAT_MS. Each time he
+   finishes eating he gets 1 HP back (owner 2026-11-03 23:17Z), never past his most */
+const ateHp = (m) => {
+  if (m && m.hp > 0) m.hp = Math.min(m.max, m.hp + 1);
+};
 export const EAT_MS = 2000,
   CAKE_EAT_MS = 2500,
   FOODS = ["zebra", "pizza", "donut"];
@@ -718,6 +722,7 @@ function brain(s, now, log) {
   if (j.eat) {
     if (now < j.eat.until) return ch;
     delete j.eat;
+    ateHp(m);
     j.next = now;
     return true;
   }
@@ -1649,6 +1654,7 @@ function cakeTick(s, now, at, fx) {
     if (now < c.eat + CAKE_EAT_MS) return false;
     m.cake = null;
     delete j.eat;
+    ateHp(m);
     j.next = now;
     j.fireAt = Math.max(j.fireAt, now + 800);
     j.hamAt = Math.max(j.hamAt, now + 1200);
