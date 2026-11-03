@@ -15,6 +15,7 @@ import { mgjStats, GOOD_ID, GOOD_NAME, SKY_ID } from "./mgjrules.js";
 import { heldHTML, SHOTGUN } from "./specials.js";
 import { seenDuck, seenName } from "./looks.js";
 import { CHAIR } from "./mgjart.js";
+import { meterHTML } from "./hpmeter.js";
 
 /* his look here: Justin, with the lightning eyes and devil horns; beaten, he cries (the tears eyes) */
 export const MAD_JUSTIN = {
@@ -57,9 +58,8 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
 export const mgjHPHTML = (s) => {
   const m = s.mgj || { hp: 0, max: 1 },
-    hp = Math.max(0, m.hp),
-    k = Math.max(0, Math.min(1, hp / Math.max(1, m.max)));
-  return `<span class="mgj-hp-name">Justin</span><span class="mgj-bar${k <= 0.25 ? " low" : ""}" role="meter" aria-valuemin="0" aria-valuemax="${m.max}" aria-valuenow="${hp}" aria-label="Justin's HP"><i style="width:${(k * 100).toFixed(1)}%"></i></span><b class="mgj-hp-n">${hp} / ${m.max} HP</b>`;
+    hp = Math.max(0, m.hp);
+  return `<span class="mgj-hp-name">Justin</span>${meterHTML(hp, m.max, "", "j")}<b class="mgj-hp-n">${hp} / ${m.max} HP</b>`; // (the HP meter's blocks: hpmeter.js)
 };
 /* the board: the field, the podium (a win), the cloud and the HP bar */
 export const mgjBoardHTML = (

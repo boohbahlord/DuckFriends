@@ -12,6 +12,10 @@ export const UPDATES = [
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "Your HP is a red meter under your hotbar now, a block for each HP, and it glows red when you're nearly out. A thin blue bar under it shows how much sprint you have left where sprinting runs out.",
+      'A little "+1 HP" or "-1 HP" floats over a duck, Justin or a zombie when it gains or loses HP. The HP in the player tag is see-through red blocks now.',
+      "For Mad God Justin: Justin's HP is in blocks too, and he gets 1 HP back each time he finishes eating.",
+      "For Quacky Zombies and Mad God Justin: on a computer, the other ducks' HP is in the board's bottom right corner, and goes see-through when your duck walks into it. Turn it off in Settings (Other players' HP).",
       "The guns, the hits, the quacks and the specials are louder now, about as loud as the music, and still with no pops.",
       "For Quacky Zombies: no music for now.",
       "For Mad God Justin: no music for now.",

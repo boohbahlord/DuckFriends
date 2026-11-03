@@ -182,7 +182,8 @@ import {
   BURN,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4TouchAim, l4Held, l4Got } from "./l4dd.js";
+import { l4TouchAim, l4Held, l4Got, sprintLeft } from "./l4dd.js";
+import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -373,6 +374,7 @@ let lastFx = -1,
   hotdogs = [],
   follows = []; // the silly commands seen so far; hotdogs and items following their ducks
 let bar = null,
+  meter = null, // my HP meter, under the hotbar (hpmeter.js)
   pad = null, // phones: the jump button and the attack button
   lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
@@ -852,6 +854,90 @@ function voteTint(s, board, pos) {
   return (tileSeen[c] ??= tileColor(board, c));
 }
 let frameNo = 0;
+/* the HP of a duck, Justin or his double right now, as [hp, most], or null where it has none: Quacky Zombies' own,
+   Mad God Justin's (the players' and his), the board's Mad God Justin's, and the normal game's 3 (back after a while
+   without a hit) on the boards and in Duck Cabin */
+function hpFull(s, id, now) {
+  const seated = s.seat.includes(id) && s.players[id];
+  if (isL4dd(s))
+    return seated && s.phase === "hang"
+      ? [Math.max(0, l4Hp(s, id) || 0), maxHp(s, id)]
+      : null;
+  if (isMgj(s)) {
+    if (s.phase !== "boss" || !s.mgj) return null;
+    if (id === JUSTIN_ID) return [Math.max(0, s.mgj.hp), s.mgj.max];
+    if (!seated) return null;
+    const most = mgjPHp(s);
+    return [
+      s.players[id].dead
+        ? 0
+        : Math.max(0, most - ((s.mgj.lost || {})[id] || 0)),
+      most,
+    ];
+  }
+  if (id === JUSTIN_ID)
+    return boardMgj(s) && justinShown(s)
+      ? [
+          s.justin.down ? 0 : Math.max(0, s.justin.hp ?? BJ_HP),
+          s.justin.max || BJ_HP,
+        ]
+      : null;
+  if (!seated || !onBoardPhase()) return null;
+  return [s.players[id].dead ? 0 : Math.max(0, PHP - phpLost(s, id, now)), PHP];
+}
+/* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
+   Justin, on a computer, unless turned off in Settings) */
+let othersSig = "",
+  othersAt = 0;
+function drawMeters(s, board, layer, now) {
+  if (!meter) return;
+  const hv = R.me && hpFull(s, R.me, now);
+  if (hv) {
+    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false];
+    meter.set(hv[0], hv[1], sp, tired);
+  } else meter.hide();
+  const want =
+    (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
+  let box = board && board.querySelector(".hpo");
+  if (!want) {
+    if (box) box.remove();
+    othersSig = "";
+    return;
+  }
+  const list = s.seat
+    .filter((id) => id !== R.me && s.players[id])
+    .map((id) => [id, s.players[id].name, hpFull(s, id, now)])
+    .filter(([, , h]) => h)
+    .map(([id, n, h]) => [id, n, h[0], h[1]]);
+  if (!box) {
+    box = document.createElement("div");
+    box.className = "hpo";
+    box.setAttribute("aria-hidden", "true");
+    board.append(box);
+    othersSig = "";
+  }
+  const sig = JSON.stringify(list);
+  if (sig !== othersSig) {
+    othersSig = sig;
+    box.innerHTML = othersHpHTML(list);
+  }
+  /* my duck walking into them: see-through on my screen (checked a few times a second) */
+  if (now - othersAt > 120) {
+    othersAt = now;
+    const mine = layer && layer.querySelector(".gduck.mine .gduck-body");
+    let see = false;
+    if (mine && list.length) {
+      const a = mine.getBoundingClientRect(),
+        b = box.getBoundingClientRect();
+      see =
+        a.right > b.left - 8 &&
+        a.left < b.right + 8 &&
+        a.bottom > b.top - 8 &&
+        a.top < b.bottom + 8;
+    }
+    box.classList.toggle("see", see);
+  }
+}
 function drawDucks(now = clockNow()) {
   frameNo++;
   const board = S && $(".board", S);
@@ -861,6 +947,7 @@ function drawDucks(now = clockNow()) {
     size = geo.size,
     hang = !!geo.hang;
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
+  drawMeters(s, board, layer, now);
   const jp =
     !hang && justinShown(s)
       ? {
@@ -1112,7 +1199,8 @@ function drawDucks(now = clockNow()) {
         m.style.animationDelay = Math.min(0, dn - now - all) + "ms";
       }
     }
-    /* Mad God Justin's Player HP: a green bar behind the letters; the part a hit took turns red at once, then fades.
+    /* Mad God Justin's Player HP: see-through red blocks behind the letters (one for each HP, the real meter is under the
+       hotbar); the part a hit took flashes light at once, then fades.
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
     /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
        Quacky Zombies: its own 3 HP, always shown (down or a ghost, none) */
@@ -1155,6 +1243,7 @@ function drawDucks(now = clockNow()) {
       const bar = d.querySelector(".gduck-hp");
       if (bar && hp >= 0) {
         bar.style.setProperty("--hp", (hp / hpMax).toFixed(3));
+        bar.style.setProperty("--n", Math.min(hpMax, 40)); // (its blocks)
         const red = bar.querySelector("b");
         if (was > hp) {
           bar.style.setProperty("--was", (was / hpMax).toFixed(3));
@@ -1174,6 +1263,14 @@ function drawDucks(now = clockNow()) {
         }
       }
     }
+    /* a duck, Justin or his double gaining or losing HP: "+1 HP" or "−1 HP" over it for a moment (not when a fight or a
+       round starts the HP over) */
+    const hv = !g && hpFull(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
+      hk = hv ? hv[1] + "/" + s.phase : "";
+    if (hv && d._hk === hk && d._hv !== hv[0] && id !== JUSTIN2)
+      popHP(d.querySelector(".gduck-lift"), hv[0] - d._hv, touchOnly());
+    d._hk = hk;
+    d._hv = hv ? hv[0] : -1;
     const at = seatAt(s, id) || place(pos, lane.indexOf(id), lane.length),
       z = liftOf(id, pos);
     const mine = id === R.me;
@@ -5433,6 +5530,7 @@ register("game", {
     bubbles = {};
     if (bar) bar.destroy();
     bar = null;
+    meter = null;
     if (pad) pad.destroy();
     pad = null;
     if (mbarOff) mbarOff();
@@ -5554,7 +5652,11 @@ register("game", {
       attack: padAttack,
       jump: () => jump(),
     });
-    docks.corner(pad.el, bar.slider, bar.row); // (on phones the slider in the bottom middle, and the jump and attack buttons over the board's bottom right; the row of keys on a computer)
+    meter = mountMeter();
+    const stack = document.createElement("div");
+    stack.className = "hb-stack";
+    stack.append(...[bar.row, meter.el].filter(Boolean)); // (my HP meter under the hotbar; on a phone under the slider: css)
+    docks.corner(pad.el, bar.slider, stack); // (on phones the slider in the bottom middle, and the jump and attack buttons over the board's bottom right; the row of keys on a computer)
     addEventListener("mousemove", aimAt);
     touchOff = mountTouch(S, {
       active: () =>

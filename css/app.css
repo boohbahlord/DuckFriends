@@ -2795,8 +2795,8 @@ html.moving svg.duck.datboi.rainbow .dbr {
     ); /* (one stripe along, so it loops without a jump) */
   }
 }
-/* Mad God Justin's Player HP: a green bar behind the name's letters (as the down meter is); a hit's part turns red at
-   once and fades away. Hidden while the duck is down, so the two never show together */
+/* the HP in a name tag: a see-through red bar of blocks behind the name's letters (as the down meter is); a hit's part
+   flashes light at once and fades away. Hidden while the duck is down, so the two never show together */
 .gduck-hp {
   display: none;
   position: absolute;
@@ -2822,11 +2822,16 @@ html.moving svg.duck.datboi.rainbow .dbr {
   inset: 0;
 }
 .gduck-hp i {
-  background: color-mix(in srgb, #1fb85c 82%, transparent);
+  --blk: calc(100% / var(--n, 3));
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, #ea2f5f 48%, transparent) 0 calc(var(--blk) - 2px),
+    transparent calc(var(--blk) - 2px) var(--blk)
+  );
   clip-path: inset(0 calc((1 - var(--hp, 1)) * 100%) 0 0);
-}
+} /* (red and see-through now, one block for each HP, like the meter: owner 2026-11-03 23:17Z) */
 .gduck-hp b {
-  background: #ef3b3b;
+  background: color-mix(in srgb, #fff 55%, transparent);
   clip-path: inset(0 calc((1 - var(--was, 1)) * 100%) 0 0);
   opacity: 0;
   animation: php-lost 0.9s ease-in 0.25s backwards;
@@ -14575,4 +14580,303 @@ html.moving .eye-tears .tdrop.t2 {
   box-shadow:
     0 0 0 2px #6dff8a,
     0 0 8px #3ee06a;
+}
+/* ---------- HP meters (hpmeter.js): the owner's picture, a bronze badge with a heart joined to a bronze-framed bar of
+   red blocks, one for each HP, white where they're gone ---------- */
+.hpm {
+  --h: 0.95rem; /* a block's height */
+  --bw: 0.95rem; /* a block's width, at most */
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+}
+.hpm-row {
+  display: flex;
+  align-items: center;
+}
+.hpm-badge {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: calc(var(--h) * 2.05);
+  height: auto;
+  filter: drop-shadow(0 0.08rem 0.08rem #0008);
+}
+.hpm-bar {
+  margin-left: calc(var(--h) * -0.62);
+  padding: calc(var(--h) * 0.14) calc(var(--h) * 0.16) calc(var(--h) * 0.14)
+    calc(var(--h) * 0.6);
+  background: linear-gradient(#ffbd66, #d98030 52%, #a3561b);
+  border: calc(var(--h) * 0.12) solid #2b1a10;
+  border-radius: calc(var(--h) * 0.36);
+  box-shadow:
+    inset 0 calc(var(--h) * 0.07) 0 #ffe0a880,
+    0 0.1rem 0.2rem #0006;
+}
+.hpm-blocks {
+  display: flex;
+  gap: calc(var(--h) * 0.1);
+  width: min(calc(var(--nb, 3) * var(--bw)), 12rem);
+  height: var(--h);
+  padding: calc(var(--h) * 0.09);
+  box-sizing: content-box;
+  background: #fff;
+  border: calc(var(--h) * 0.09) solid #2b1a10;
+  border-radius: calc(var(--h) * 0.2);
+}
+.hpm-blocks i {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: calc(var(--h) * 0.08);
+  overflow: hidden;
+}
+.hpm-blocks i::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: calc(var(--f, 0) * 100%);
+  background: linear-gradient(#ff7397 0 20%, #ea2f5f 20% 66%, #b31b48 66%);
+} /* (a lighter top, the red, a darker bottom, as in the picture) */
+.hpm-blocks i.on::before {
+  width: 100%;
+}
+/* 20% or less: a slow red breath around the bar and the badge */
+.hpm.low .hpm-bar {
+  animation: hp-breathe 1.8s ease-in-out infinite;
+}
+.hpm.low .hpm-badge {
+  animation: hp-breathe-b 1.8s ease-in-out infinite;
+}
+@keyframes hp-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 calc(var(--h) * 0.07) 0 #ffe0a880,
+      0 0.1rem 0.2rem #0006,
+      0 0 0 0 #ff2a4a00;
+  }
+  50% {
+    box-shadow:
+      inset 0 calc(var(--h) * 0.07) 0 #ffe0a880,
+      0 0.1rem 0.2rem #0006,
+      0 0 0.75rem 0.22rem #ff2a4ad0;
+  }
+}
+@keyframes hp-breathe-b {
+  0%,
+  100% {
+    filter: drop-shadow(0 0.08rem 0.08rem #0008);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.4rem #ff2a4a) drop-shadow(0 0 0.15rem #ff2a4a);
+  }
+}
+html.still .hpm.low .hpm-bar,
+html.still .hpm.low .hpm-badge {
+  animation: none;
+  box-shadow: 0 0 0.5rem 0.15rem #ff2a4a99;
+}
+/* the sprint bar: thin and blue under the blocks, where sprinting runs out; grey while too tired to sprint */
+.hpm-stam {
+  display: block;
+  align-self: stretch;
+  margin: calc(var(--h) * 0.22) 0 0 calc(var(--h) * 1.5);
+  height: calc(var(--h) * 0.26);
+  background: #0c1624;
+  border: 0.06rem solid #05080d;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.hpm-stam[hidden] {
+  display: none;
+}
+.hpm-stam i {
+  display: block;
+  height: 100%;
+  width: calc(var(--sp, 1) * 100%);
+  background: linear-gradient(#8fd8ff, #2f8fe8);
+  border-radius: inherit;
+}
+.hpm-stam.tired i {
+  background: #6a7d98;
+}
+/* mine: under the hotbar in the bottom bar's right corner (a phone: under the specials' slider, in the middle) */
+.hb-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.hpm-me {
+  transition: opacity 0.45s ease;
+}
+.hpm-me.gone {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s 0.45s;
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .hpm-me {
+    --h: 0.72rem;
+    --bw: 0.8rem;
+    position: absolute;
+    left: 50%;
+    bottom: max(0.3rem, env(safe-area-inset-bottom));
+    translate: -50% 0;
+  }
+  html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) {
+    padding-bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+  }
+  html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) .sp-phone {
+    bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+  }
+}
+@media (max-width: 760px) {
+  .hpm-me {
+    --h: 0.72rem;
+    --bw: 0.8rem;
+    position: absolute;
+    left: 50%;
+    bottom: max(0.3rem, env(safe-area-inset-bottom));
+    translate: -50% 0;
+  }
+  .bbar:has(.hpm-me:not(.gone)) {
+    padding-bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+  }
+  .bbar:has(.hpm-me:not(.gone)) .sp-phone {
+    bottom: calc(max(0.35rem, env(safe-area-inset-bottom)) + 1.95rem);
+  }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .hpm-me,
+  html:not(.keyboard) .hpm-me {
+    position: static;
+    translate: none;
+    --h: 0.6rem;
+    --bw: 0.66rem;
+  }
+  .bbar:has(.hpm-me:not(.gone)),
+  html:not(.keyboard) .bbar:has(.hpm-me:not(.gone)) {
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+  }
+} /* (a phone on its side: one short row, the meter in it beside the slider) */
+/* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
+   Justin on a computer); see-through on my screen while my duck walks into them */
+.hpo {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.hpo.see {
+  opacity: 0.22;
+}
+.hpo-one {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.hpo-name {
+  max-width: 7rem;
+  margin: 0 0 0.05rem 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow:
+    0 0 0.12rem #000,
+    0 0.05rem 0.05rem #000;
+}
+.hpm.mini {
+  --h: 0.42rem;
+  --bw: 0.5rem;
+}
+@media not all and (any-pointer: fine) {
+  html:not(.keyboard) .hpo {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .hpo {
+    display: none;
+  }
+}
+/* Justin's HP over the board in Mad God Justin: the same bar */
+.mgj-hp .hpm {
+  --h: 0.85rem;
+  --bw: 0.42rem;
+}
+.mgj-hp .hpm-blocks {
+  width: min(calc(var(--nb, 3) * var(--bw)), 15rem);
+}
+@media (max-width: 760px) {
+  .mgj-hp .hpm {
+    --h: 0.62rem;
+  }
+  .mgj-hp .hpm-blocks {
+    width: min(calc(var(--nb, 3) * var(--bw)), 9rem);
+  }
+}
+/* "+1 HP" / "−1 HP" over a duck, Justin or a zombie: small, rising and fading (a phone: smaller) */
+.hp-pop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--sz, 60px) * 1.08 + 1.3rem + var(--up, 0) * 0.75rem);
+  z-index: 9;
+  translate: calc(-50% + var(--dx, 0px)) 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow:
+    0 0 0.12rem #000,
+    0 0 0.12rem #000,
+    0 0.06rem 0.06rem #000;
+  animation: hp-pop 1.05s ease-out forwards;
+}
+.hp-pop.down {
+  color: #ff5a6a;
+}
+.hp-pop.up {
+  color: #6dff97;
+}
+.hp-pop.small,
+html:not(.keyboard) .hp-pop {
+  font-size: 0.56rem;
+}
+html.keyboard .hp-pop:not(.small) {
+  font-size: 0.68rem;
+}
+.l4z .hp-pop {
+  bottom: calc(var(--k, 1) * 96px + var(--up, 0) * 0.7rem);
+}
+@keyframes hp-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(0.3rem) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: none;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.9rem);
+  }
 }

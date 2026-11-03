@@ -412,6 +412,7 @@ function cakeChase(s, now, at) {
     if (now < c.eat + CAKE_EAT_MS) return false;
     s.zcake = null;
     delete j.eat;
+    if (boardMgj(s) && j.hp > 0) j.hp = Math.min(j.max || BJ_HP, j.hp + 1); // (done eating: 1 HP back, owner 2026-11-03 23:17Z)
     j.k = null;
     j.next = now + 500;
     return true;
