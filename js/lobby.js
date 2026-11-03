@@ -393,6 +393,17 @@ const MGJ_TILES = [
     ],
   ],
 ];
+/* the collage map's own setting (only while it's the map): its colors, or black and white with greys between */
+const COLLAGE_TILES = [
+  [
+    "mapGrey",
+    "Colors",
+    [
+      [0, "Colors"],
+      [1, "Black and white"],
+    ],
+  ],
+];
 const MORE_TILES = [
   [
     "mgjHp",
@@ -558,6 +569,8 @@ const OPT_TIPS = {
     "How long each date lasts, after 10 s of grace. Off: a date lasts until The Date presses Next duck (The Date can press it any time).",
   dunceTime:
     "How long the defender gets after the 15 s grace period. Off: the turn ends once enough have voted and the catch-up timer runs out.",
+  mapGrey:
+    "Black and white turns the whole map into greys: the tree, the duck, the swirls, the squares and the hexagons.",
   mgjHp:
     "Each duck gets this much HP: a hit from Justin takes 1 and the duck stays up, and the last one knocks it down as usual. It stands up with full HP. Off: one hit knocks a duck down.",
   mgjTime:
@@ -590,6 +603,7 @@ function openOptions() {
     ${s.options.mode === "dunce" ? `<h3 class="opt-h">Duncelation</h3>${tileRows(DUNCE_TILES, s, ro)}` : ""}
     ${s.options.mode === "mgj" ? `<h3 class="opt-h">Mad God Justin</h3>${tileRows(MGJ_TILES, s, ro)}` : ""}
     ${s.options.mode === "vdd" ? `<h3 class="opt-h">Valentine's Duck Date</h3>${tileRows(VDD_TILES, s, ro)}` : ""}
+    ${s.options.map === "collage" ? `<h3 class="opt-h">${esc(mapName("collage"))}</h3>${tileRows(COLLAGE_TILES, s, ro)}` : ""}
     ${
       ["hang", "vdd"].includes(s.options.mode)
         ? ""

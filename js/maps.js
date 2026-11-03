@@ -16,6 +16,7 @@
 import { duckSVG } from "./duck.js";
 import { esc } from "./ui.js";
 import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
+import { collageScene, collageMini } from "./collage.js";
 
 export const MAPS = [
   [
@@ -49,6 +50,11 @@ export const MAPS = [
     "A colorful fractal you keep falling into: it morphs as you go, and its colors never sit still.",
   ],
   [
+    "collage",
+    "Collage", // (a working name: the owner names this map)
+    "A black tree, a halftone duck looking up at it, swirls, a chain-link net, and squares and hexagons that blink. It can be black and white.",
+  ],
+  [
     "ec",
     "Ether's Crossroads",
     "The jester's dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it's played.",
@@ -66,6 +72,7 @@ export function mapMini(id) {
   if (id === "carnival")
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
+  if (id === "collage") return `<div class="mini-map">${collageMini()}</div>`;
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
     return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${artBackdrop("cabin")}</svg></div>`;
@@ -1080,9 +1087,11 @@ export function mountMap(layer, s) {
               ? rabbitScene(layer)
               : map === "stars"
                 ? starsScene(layer)
-                : map === "cabin"
-                  ? cabinScene(layer)
-                  : nightScene(layer);
+                : map === "collage"
+                  ? collageScene(layer, s)
+                  : map === "cabin"
+                    ? cabinScene(layer)
+                    : nightScene(layer);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"

@@ -3878,6 +3878,92 @@ html.moving .st-b {
 .map-stars .law-mid {
   background: color-mix(in srgb, #070b1f var(--board-a), transparent);
 }
+/* the collage map (collage.js): its canvas, the blinking squares and the twinkling hexagons; tiles as see-through as on
+   Starry Night, names on pills */
+.scene.collage {
+  background: #000;
+}
+.scene.collage > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cl-live {
+  position: absolute;
+  inset: 0;
+}
+.cl-sq {
+  position: absolute;
+  width: max(2.6rem, 5vmin);
+  aspect-ratio: 1;
+  background: color-mix(in srgb, var(--c) 62%, transparent);
+  box-shadow: inset 0 0 0 1px #ffffff1c;
+  opacity: 0.8;
+}
+.cl-hx {
+  position: absolute;
+  width: max(0.9rem, 1.6vmin);
+  filter: drop-shadow(0 0 0.3rem #fff6);
+}
+.cl-hx svg {
+  display: block;
+  width: 100%;
+}
+html.moving .cl-sq {
+  animation: cl-blink 9s ease-in-out infinite;
+}
+html.moving .cl-hx {
+  animation: cl-twinkle 5s ease-in-out infinite;
+}
+@keyframes cl-blink {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  40% {
+    opacity: 0.25;
+  }
+  55% {
+    opacity: 0.9;
+  }
+}
+@keyframes cl-twinkle {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0.3rem #fff6);
+  }
+  50% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 0.6rem #fffc) brightness(1.3);
+  }
+}
+.scene.collage.grey .cl-live {
+  filter: grayscale(1);
+}
+.map-collage {
+  --board-a: 42%;
+}
+.map-collage .col {
+  background: color-mix(in srgb, var(--c) 42%, transparent);
+  border-right-color: #ffffff30;
+  box-shadow: inset 0 0 0 0.14rem #ffffff38;
+}
+.map-collage .col-name {
+  position: relative;
+  color: #fff;
+  background: #000c;
+  border-radius: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-collage .wyr-or,
+.map-collage .bb-vs,
+.map-collage .law-mid {
+  background: color-mix(in srgb, #000 var(--board-a), transparent);
+}
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {
   background: #0d0722;
