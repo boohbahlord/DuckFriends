@@ -185,6 +185,21 @@ const LOCK_KIND = {
   rank: "rank",
 };
 let peek = null; // { kind, id }: a locked item shown on the big duck, never worn
+/* a style's own look: its matching beak, eyes and colors on the duck (metals and pictures give way to its colors) */
+function matchedLook(L, st) {
+  const M = { ...L };
+  if (st.match) M.beak = st.match;
+  if (st.eyes) M.eyes = st.eyes;
+  for (const [c, , v] of st.colors || []) M[c] = v;
+  if (st.colors) {
+    M.metal = "none";
+    M.image = null;
+  }
+  return M;
+}
+/* Match each style's look (the switch on the Style page, kept on this device): every tile shows its style's own look,
+   and picking a style puts that look on */
+const matchAll = () => !!(profile.settings && profile.settings.matchStyles);
 const grid = (group, items, cur) =>
   `<div class="arm-grid" role="group">${items
     .map(([v, pic, label, tip]) => {
@@ -567,15 +582,24 @@ export function openCustomize(page = lastPage) {
               .replace(/, ([^,]*)$/, " and $1");
             /* Jack's tile has a small settings button that makes him Jill (the tile's name and picture follow) */
             const flip = `<button type="button" class="sp-prev jill-flip" data-a="jill" aria-pressed="${!!D.jill}" aria-label="${D.jill ? "Make him Jack" : "Make her Jill"}" data-tip="${D.jill ? "Jack in a Box instead" : "Jill in a Box instead"}">⚙</button>`;
+            const sw = `<div class="row small-tiles match-all" role="group" aria-label="Match each style's look"><span class="small">Match each style's look</span>${[
+              [0, "Off"],
+              [1, "On"],
+            ]
+              .map(
+                ([v, n]) =>
+                  `<button type="button" class="tile" data-a="matchall" data-v="${v}" aria-pressed="${+matchAll() === v}">${n}</button>`,
+              )
+              .join("")}</div>`;
             html =
               head("Style") +
-              `<div class="arm-body">${grid(
+              `<div class="arm-body">${sw}${grid(
                 "style",
                 STYLES.map((x) => [
                   x.id,
                   duckSVG(
                     {
-                      ...D,
+                      ...(matchAll() ? matchedLook(D, x) : D),
                       image: null,
                       style: x.id,
                       ...(x.pages && !boxed(D.style)
@@ -594,7 +618,7 @@ export function openCustomize(page = lastPage) {
                 /<button[^>]*data-g="style" data-v="jack"[\s\S]*?<\/button>/,
                 (b) => `<div class="sp-tile">${b}${flip}</div>`,
               )}
-            ${st.tip ? `<p class="small dim">${esc(st.box && D.jill ? st.tip.replace(/\bjack\b/, "jill").replace(/\bhis\b/g, "her") : st.tip)}</p>` : ""}${what && !matched ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ""}
+            ${st.tip ? `<p class="small dim">${esc(st.box && D.jill ? st.tip.replace(/\bjack\b/, "jill").replace(/\bhis\b/g, "her") : st.tip)}</p>` : ""}${what && !matched && !matchAll() ? `<p><button type="button" class="btn ghost small" data-a="matchstyle" data-tip="Puts on ${esc(what)}.">Match the ${esc(st.name.toLowerCase())} look</button></p>` : ""}
             ${st.colors ? '<p class="small dim">Its colors are under Colors.</p>' : ""}</div>`;
           } else if (k === "specials") {
             /* your ten keys on top (tap one to take its special off); then every special, each with a preview button; a
@@ -1073,14 +1097,17 @@ export function openCustomize(page = lastPage) {
               return;
             }
             if (a.dataset.a === "matchstyle") {
-              const st = styleById(D.style);
-              if (st.match) D.beak = st.match;
-              if (st.eyes) D.eyes = st.eyes;
-              for (const [c, , v] of st.colors || []) D[c] = v;
-              if (st.colors) {
-                D.metal = "none";
-                D.image = null;
-              }
+              Object.assign(D, matchedLook(D, styleById(D.style)));
+              changed();
+              return;
+            }
+            if (a.dataset.a === "matchall") {
+              profile.settings = {
+                ...(profile.settings || {}),
+                matchStyles: a.dataset.v === "1",
+              };
+              if (matchAll())
+                Object.assign(D, matchedLook(D, styleById(D.style)));
               changed();
               return;
             }
@@ -1145,7 +1172,8 @@ export function openCustomize(page = lastPage) {
             },
             style: () => {
               D.style = v;
-            }, // (nothing else changes; Match the … look brings in the rest)
+              if (matchAll()) Object.assign(D, matchedLook(D, styleById(v)));
+            }, // (nothing else changes, unless Match each style's look is on; the Match the … look button brings in the rest)
             build: () => {
               D.build = +v;
             },
