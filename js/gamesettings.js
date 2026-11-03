@@ -192,7 +192,7 @@ const HOST = [
     ],
     cat: "time",
     off: ["mgj"],
-    d: "How long a duck that is shot, stabbed or killed stays down before it can move. 0.5 s on the boards and 6 s in Duck Cabin unless set.",
+    d: "How long a duck that is shot, stabbed or killed stays down before it can move. 1 s on the boards and 6 s in Duck Cabin unless set.",
   },
   {
     k: "order",
@@ -580,7 +580,7 @@ const BY_MODE = {
         [165, "2:45"],
       ],
       cat: "time",
-      d: "The time to bring Justin to 0 HP. His meteor adds 30 s. Only wins at 2:15 count toward the lightning eyes.",
+      d: "The time to bring Justin to 0 HP, plus 4 s for every player. His meteor adds 30 s. Only wins at 2:15 count toward the lightning eyes.",
     },
   ],
   vdd: [

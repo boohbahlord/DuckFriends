@@ -24,6 +24,7 @@ import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
 import { butlerSVG } from "./hangout/npcart.js";
+import { FLAME } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { nameHTML } from "./name.js";
@@ -263,6 +264,17 @@ function seeZombies(s, ctx, now) {
     if (z.a !== o.a && z.a > 0 && z.st === 2)
       if (inCabin(o.x, o.y) === ctx.world.inside)
         claw(o.x, o.y, z.dir / 100, ctx);
+    const fire = ((s.hang.l4fire || {}).z || {})[z.i],
+      lit = !!fire && fire[0] > clockNow() && z.st !== 3;
+    if (o.lit !== lit) {
+      o.lit = lit;
+      if (lit && !o.body.querySelector(".gduck-fire"))
+        o.body.insertAdjacentHTML(
+          "beforeend",
+          `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
+        );
+      o.el.classList.toggle("onfire", lit);
+    } // (set on fire by a fireball: one big flame over it, as a duck's)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
@@ -1058,7 +1070,10 @@ activity({
     }
     return d;
   },
-  speed: (pos, ctx) => SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1), // (Speed, from the Butler: 10% faster)
+  speed: (pos, ctx) =>
+    ((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
+      ? 1
+      : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1), // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
   sprint(on, dt) {
     if (on && !tired && stamina > 0) {
       stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);

@@ -3248,5 +3248,55 @@ Adam's reading: the south wall's boards run sideways along their own wall (as th
 - Built (Solomon the 2nd, on `claude/project-thread-2hosjy` with #197; not merged): Short jump (1,728 Jumps; 60% of the height in 70% of the time; kept on, it turns Long jump and Double jump off, and either turns it off), Chair (1,123 Justin kills in Duck Cabin, `profile.cabinKills`; Mad God Justin's chair thrown toward the mouse, 2.8 duck lengths a second, 2.4 wide, 15 s; silly-commands switch covers it), Invisible duck (hit the shadow duck with a thrown chair, `profile.shadowHits` from `s.shk`; an on/off effect, the duck and its shadow at 0.4 like the shadow duck, name tag solid), Zebra cake (72 Justin defeats; now everyone's special, 30 s each, one cake in the room at a time `s.zcake`; board Justin and Duck Cabin's Justin sprint to it and eat it, no new lines). Jetpack and Jaime held, as Adam said.
 - Art reused: Mad God Justin's chair and zebra cake. Only new look: the see-through duck, and a thin light edge on the chair's hotbar icon. Picture sheet for the owner's OK: https://claude.ai/artifact/P3YBC81DrrKLDh9p3yJAdu
 
+## The Jaime unlock (owner, 2026-11-03 16:50Z, in Adam's thread)
+
+> Unlocking Jaime has Jaime available in the special menu (duh) and is then equipped to a slot on the hot bar IF the player wants, AND Jaime does not transfer to every game mode where the special hot bar is changed for that game mode, like any other special, so all rules apply the same.
+>
+> When releasing Jaime, he attacks the most nearby player UNLESS the player recently attacked another player in the previous fifteen seconds then they attack that player OR the one releasing Jaime was attacked by them and took damage in the previous fifteen seconds, then they attack that player.
+
+- Adam's reading: unlocked at 36 damage from Jaime stabs on Mad God Justin, anyone's Jaimes (the Nov 3 answer 7); a normal special in Customize; when released he goes for the player I hit in the last 15 s, else the player who hit me in the last 15 s, else the nearest; Mad God Justin's Jaime art and charge; under the silly-commands switch like the Chair.
+- Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main): `s.jm` holds each Jaime (his own place, not in s.pos, so he never votes); `s.hitLog` the last 15 s of player-on-player hits (knife, hammer, bullets, arrows, daggers, chair, grenade, Jaime's own stabs). 12 s per duck, a Jaime lasts 12 s at most, stabs once a second (the normal 3 HP), poofs once his target is down. Unlock counts `s.jaimeStabs` while I'm seated in Mad God Justin (TEST rooms count too, like Justin kills).
+
+## 2026-11-03 17:09Z: Mad God Justin, more HP and time per player (word for word)
+> Justin should get and additional +12 hp per player and +4 seconds of time per player
+
+- Adam: read as Mad God Justin (the mode with a timer). His HP goes from 20 + 8 per player to 20 + 20 per player, and the
+  fight's timer gets 4 s more per player (TIME_PER in js/mgjrules.js). Board Justin (10 HP, no timer) is unchanged.
+
+## 2026-11-03 17:15Z: weapon damage in the normal game (word for word)
+> the chair should do three damage to HP in the game OUTSIDE of the Justin mode and then 2 HP of damage in the Mad God Justin mode.
+>
+> ALSO in the normal game and NOT in the zozmies or mad god justin game:
+> The grenade should do 3 damage AND make the ducks fly twice as far as the hammer's knockback effect. The hammer should do three damage in normal game. The knife does two damage. The players are downed for half a second longer by default in normal modes.
+
+- Adam: HIT_DMG in js/rules.js (hammer, chair, grenade 3; knife 2; the rest 1) through soaks(s, id, now, dmg), not in
+  Quacky Zombies; Mad God Justin's chair takes 2 (mgjSoak dmg). Grenade throw KB_FAR x2 in the normal game (x3 kept in
+  Mad God Justin and Quacky Zombies). Boards' default down time 0.5 s -> 1 s (DOWN_GAMES); Duck Cabin stays 6 s.
+
+## 2026-11-03 17:19Z: Valentine's Duck Date, the weapon stays behind (word for word)
+> when teleported to the seat in dating, the weapon i was last holding doesnt come with AND whatever i switch to stays overthere. Must be fixed
+
+- Adam: the held weapon was drawn at the duck's floor spot (bodyAt in game.js) while the duck is drawn at its seat;
+  bodyAt now uses seatAt and the chair's lift, so the weapon (and its aim) goes with the seated duck.
+## Quacky Zombies Stage 3: the owner's new weapons (Adam's go, 2026-11-03 16:55Z and 17:09Z; the owner's list word for word at line ~2934 above)
+
+- Adam's plan: https://claude.ai/artifact/Aeykix5aJPWqmJkNb8mWxQ. Everything below goes into the fireplace's pool (19 in all now); the jetpack and the drops wait for Stage 4. It doesn't merge until the owner OKs the picture sheet.
+- Built (Solomon the 2nd, branch `claude/project-thread-2hosjy` from main): `js/l4ddguns.js` (the new drawings: sniper, SMG, AK-47, chain gun, revolver, grenade launcher, LMG, adrenaline shot, and their bullets); `js/l4ddrules.js` ARMS has each one's numbers.
+  - The owner's numbers: sniper 24 (5 a magazine), through every zombie to the wall, 2 or 3 to each, 0.75 s bolt; SMG 160 (20), 1, 1.75% headshot, full auto; AK-47 180 (30), 2, 3%, full auto; chain gun 60, no magazine, no reload, hits at once with a thin yellow line, 5 a second, kills what it hits; revolver 75 (5), 2, 4%; grenade launcher 15, 1.2 s between, kills everything in the blast; LMG 225 (75), 1, 1.25%; zebra cake 1; fireball 1 (a zombie burns 6 s, 1 every 3 s; a duck takes 1 as it's lit and burns 3 s; touching anyone on fire lights a duck); adrenaline shot 1, full Duck Cabin speed for 20 s; long jump: picked up, then each use switches it on or off (a jump still dodges); Jaime 3 a round, 1 a stab.
+  - Guesses (no number from the owner): the bullets' speeds, the reload times (sniper 2.2 s, SMG 1.4, AK 1.9, revolver 1.7, LMG 2.8), the sniper's headshot 5% (as the pistol's), full-auto fire rates (SMG 12.5 a second, AK 9, LMG 10), the launcher's grenade flies straight up to 760 px and goes off on the first zombie it touches, the zebra cake reaches zombies within 700 px and the first one there eats it in one bite, the chain gun's line stops at the first zombie (it doesn't go through), the fireball's zombie takes its first 1 as it's lit (2 in all), Jaime stays 12 s (as the Jaime special) and the zombies leave him be.
+  - Spent specials (zebra cake, fireball, adrenaline) stay in the slot at 0 for Stage 4's ammo refills; the medkit still empties its slot.
+- Tested: every weapon in Chromium and Firefox, phone and computer (tools/l4dd-art.html shows the art); online with 2 (player 2's sniper, chain gun, fireball and Jaime seen on both screens); the computers play with them; the full-auto sound `sfx.tat` 0 clicks, 0 clipped.
+
+## 2026-11-03 17:55Z: Quacky Zombies, the chain gun's lines and fire rate (word for word)
+> the chain gun can have the thin yellow line kinda pop in and out quickly and in different areas in front of the gun, but make sure it only comes out of the end of the gun.
+>
+>
+> You can make the chain gun 15 shots a second actually
+
+- Solomon the 2nd (on Stage 3's PR #205): the chain gun fires 15 a second (cool 67 ms; 60 shots now last 4 s). Each
+  shot's line starts at the barrel's tip as drawn on screen; besides the line to what it hit, one or two shorter
+  lines pop in and out at slightly different angles in front of the gun (only what the main line touches is hit).
 
 Duck looks (Noah, from the owner's answer 1 above and "Change player tag color"): js/looks.js draws them, js/looksrules.js holds the rules' part. Options `hideLooks`, `rainbowDucks`, `voteColor`, `tagColor`, under "Duck looks" in Game options. Readings: the looks change only during a game (the lobby and the room after a game show the real looks); Hide customization keeps each duck's specials and makes name tags plain; Rainbow Ducks are dealt by the host at the start (`s.rainbow`, shuffled per eight ducks, a mid-game joiner gets the least-used look), and `fakeJustin(s, id)` tells Justin Kills to skip the brown one; Vote colors read the tile's color from the board (so any palette and a fading tile work), never in Mad God Justin or on Duck Cabin, and a duck between tiles keeps its own color; each style's take: body in the color, stripes/wings/second suit in shades, the mallard keeps its head, Jack's box takes it, Dat Boi's unicycle goes darker; metals, patterns and pictures give way. Picture sheet: https://claude.ai/artifact/2yRHMDLuA4Yc7auyKKSL7Q
+
+"there should be an option to match the look of every style in the style menu for customization" (owner, 2026-11-03 05:10Z). Noah: a switch "Match each style's look" (Off/On) above the Style tiles, kept on the device (`profile.settings.matchStyles`); on, every tile shows its style's own beak, eyes and colors and picking a style puts that look on (hats, faces and outfits stay). Picture https://claude.ai/artifact/THaDNMNKaaVT3TLXdPtbaH; owner chose "Yes, build it" (16:57Z), then "good" (22:03Z) as the OK for both, with PR #199.

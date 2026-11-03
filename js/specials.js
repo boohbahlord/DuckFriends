@@ -15,7 +15,8 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import { BOW, MEDKIT, ZEBRA, JAIME, CHAIR } from "./mgjart.js";
+import { BOW, MEDKIT, ZEBRA, JAIME, CHAIR, FIREBALL } from "./mgjart.js";
+import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
 export { SHOT_SPEED } from "./rules.js";
 
@@ -337,7 +338,8 @@ export const SPECIALS = [
     icon: ZEBRA,
     tip: "Throw a zebra cake toward your mouse: Justin runs after it and eats it, and does nothing else meanwhile. Once every 30 seconds. (In Mad God Justin everyone shares one.)",
   },
-  /* Mad God Justin's own (only there, never in Customize): the medkit and Jaime (the zebra cake is everyone's now, above) */
+  /* Mad God Justin's own (only there, never in Customize): the medkit. Then Jaime, everyone's once unlocked (the zebra
+     cake is everyone's too, above) */
   {
     id: "medkit",
     name: "Medkit",
@@ -350,11 +352,10 @@ export const SPECIALS = [
     id: "jaime",
     name: "Jaime",
     kind: "item",
-    only: "mgj",
     get icon() {
       return duckSVG(JAIME.duck, { size: 40, shadow: false });
     }, // (drawn when it's first shown: duck.js may not be ready while this file loads)
-    tip: "Jaime sprints at Justin with his knife. Everyone shares the same Jaimes: a new one every 12 seconds, up to 3.",
+    tip: "Jaime sprints at a duck with his knife: the one you hit in the last 15 seconds, or else the one who hit you, or else the nearest. Once every 12 seconds. (In Mad God Justin he goes for Justin, and everyone shares the same Jaimes: a new one every 12 seconds, up to 3. Off when the host turns off the silly commands.)",
   },
   {
     id: "sound",
@@ -578,6 +579,9 @@ export function heldHTML(id, duck) {
   if (id === "shotgun") return SHOTGUN;
   if (id === "bow") return BOW;
   if (id === "medkit") return MEDKIT;
+  if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
+  if (id === "zebra") return ZEBRA;
+  if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
   return id === "grenade"
     ? GRENADE(c)

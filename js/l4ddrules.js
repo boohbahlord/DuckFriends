@@ -124,8 +124,103 @@ export const ARMS = {
   },
   medkit: { kind: "special", cool: 600, all: 1 },
   grenade: { kind: "grenade", cool: 900, far: 300, r: 140, start: 2, most: 3 },
+  /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
+     action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
+     (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its
+     cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
+     kill every zombie in their blast. Where the owner gave no number (the speeds, the reloads, the sniper's headshot)
+     they are guesses: k is how the bullet looks */
+  sniper: {
+    kind: "ranged",
+    cool: 750,
+    dmg: [2, 3],
+    crit: 0.05,
+    speed: 1900,
+    mag: 5,
+    all: 24,
+    reload: 2200,
+    pierce: true,
+    k: "sniper",
+  },
+  smg: {
+    kind: "ranged",
+    auto: true,
+    cool: 80,
+    dmg: 1,
+    crit: 0.0175,
+    speed: 1100,
+    mag: 20,
+    all: 160,
+    reload: 1400,
+    k: "smg",
+  },
+  ak: {
+    kind: "ranged",
+    auto: true,
+    cool: 110,
+    dmg: 2,
+    crit: 0.03,
+    speed: 1200,
+    mag: 30,
+    all: 180,
+    reload: 1900,
+    k: "ak",
+  },
+  chaingun: {
+    kind: "ranged",
+    auto: true,
+    cool: 67, // (15 a second)
+    dmg: 99,
+    all: 60,
+    far: 3000,
+  },
+  revolver: {
+    kind: "ranged",
+    cool: 380,
+    dmg: 2,
+    crit: 0.04,
+    speed: 1150,
+    mag: 5,
+    all: 75,
+    reload: 1700,
+    k: "revolver",
+  },
+  glauncher: { kind: "ranged", cool: 1200, all: 15, speed: 900, far: 760 },
+  lmg: {
+    kind: "ranged",
+    auto: true,
+    cool: 100,
+    dmg: 1,
+    crit: 0.0125,
+    speed: 1150,
+    mag: 75,
+    all: 225,
+    reload: 2800,
+    k: "lmg",
+  },
+  /* the new specials: the zebra cake (thrown; zombies near where it lands go for a bite, and one bite eats it), the
+     fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
+     20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
+     nearest zombie and stabs it, 1 a stab, until one gets him) */
+  zebra: { kind: "special", cool: 600, all: 1, speed: 650, far: 520 },
+  fireball: { kind: "special", cool: 600, all: 1, speed: 700 },
+  adrenaline: { kind: "special", cool: 600, all: 1, ms: 20000 },
+  longjump: { kind: "special", cool: 300 },
+  jaime: { kind: "special", cool: 1500, all: 3, round: true },
 };
+/* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
+const dmgOf = (A) =>
+  Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
+/* fire (the owner's): a zombie burns 6 s and takes 1 every 3 s (the first as it's lit); a duck takes 1 as it's lit and
+   burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
+export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
+/* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
+export const inHand = (w, s, id) => {
+  if (!w || w === "longjump" || w === "jaime") return "";
+  const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
+  return c && c[0] <= 0 ? "" : w;
+};
 /* the slots, in order (keys 1 to 4; the grenades are G): blue, red, red, purple, and the grenades white */
 export const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
@@ -138,6 +233,18 @@ export const POOL = [
   "dagger",
   "shotgun",
   "medkit",
+  "sniper",
+  "smg",
+  "ak",
+  "chaingun",
+  "revolver",
+  "glauncher",
+  "lmg",
+  "zebra",
+  "fireball",
+  "adrenaline",
+  "longjump",
+  "jaime",
 ];
 /* their names, as players see them */
 const NAMES = {
@@ -149,6 +256,18 @@ const NAMES = {
   shotgun: "Shotgun",
   medkit: "Medkit",
   grenade: "Grenade",
+  sniper: "Sniper",
+  smg: "SMG",
+  ak: "AK-47",
+  chaingun: "Chain gun",
+  revolver: "Revolver",
+  glauncher: "Grenade launcher",
+  lmg: "LMG",
+  zebra: "Zebra cake",
+  fireball: "Fireball",
+  adrenaline: "Adrenaline shot",
+  longjump: "Long jump",
+  jaime: "Jaime",
 };
 export const weaponName = (w) => NAMES[w] || w;
 /* points (the owner's) */
@@ -606,6 +725,15 @@ function countFor(s, r) {
   return n;
 }
 function newRound(s, r, now, wait) {
+  const am = s.hang.l4a || {};
+  for (const id of Object.keys(am))
+    for (const w of am[id].sl || [])
+      if (ARMS[w] && ARMS[w].round)
+        s.hang.l4a = {
+          ...s.hang.l4a,
+          [id]: { ...s.hang.l4a[id], am: { ...am[id].am, [w]: fullAmmo(w) } },
+        }; // (Jaime: 3 again each round)
+  s.jm = null; // (and every Jaime out is gone)
   s.hang.l4 = {
     ...s.hang.l4,
     r,
@@ -916,11 +1044,13 @@ export function l4Use(s, a, now) {
   if (kind !== "grenade" && !m0.sl.includes(what)) return false;
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
-  if (now - (m.u[what] || 0) < l4Cool(s, id, what)) return false;
+  if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
+    return false; // (full auto: the shots can come a little bunched over the network)
   const c = m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === what))
     return false; // (empty, or reloading)
   if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
+  if (what === "zebra" && s.zcake) return false; // (one zebra cake in the room at a time)
   m.u[what] = now;
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
@@ -954,7 +1084,13 @@ export function l4Use(s, a, now) {
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
     delete m.am.medkit;
     m.sl = m.sl.map((w) => (w === "medkit" ? "" : w)); // (used up: the special slot is empty again)
-  } else {
+  } else if (what === "adrenaline")
+    s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
+  else if (what === "longjump") m.lj = !m.lj;
+  else if (what === "jaime") jaimeIn(s, id, p, now);
+  else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
+  else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
+  else {
     const shot = (k, ux, uy, v, more) => ({
       n,
       by: id,
@@ -989,10 +1125,22 @@ export function l4Use(s, a, now) {
       s.shots = [...(s.shots || []), ...out];
     } else {
       const v =
-        what === "grenade" ? ARMS.grenade.far / (GRENADE_MS / 1000) : A.speed;
+          what === "grenade" ? ARMS.grenade.far / (GRENADE_MS / 1000) : A.speed,
+        k =
+          what === "bow"
+            ? "arrow"
+            : what === "glauncher"
+              ? "lgren"
+              : A.k || what; // (the new guns' bullets each look their own way)
       s.shots = [
         ...(s.shots || []),
-        shot(what === "bow" ? "arrow" : what, dx, dy, v),
+        shot(
+          k,
+          dx,
+          dy,
+          v,
+          what === "glauncher" ? { life: (A.far / A.speed) * 1000 } : {},
+        ),
       ];
     }
   }
@@ -1019,6 +1167,220 @@ function headshot(s, by, w, z, now) {
     x: Math.round(z.x),
     y: Math.round(z.y),
   });
+  return true;
+}
+/* the chain gun: it hits at once, along the aim to the first zombie or wall (it kills that zombie); every screen draws
+   the thin yellow line (the l4line fx) */
+function trace(s, id, px, py, dx, dy, hz, now) {
+  const A = ARMS.chaingun,
+    zs = zombies(s),
+    T = now - s.hang.l4.t0;
+  let x = px,
+    y = py,
+    hit = null;
+  for (let d = 0; d < A.far; d += 12) {
+    const nx = x + dx * 12,
+      ny = y + dy * 12;
+    if (walled(nx, ny, hz)) break;
+    x = nx;
+    y = ny;
+    hit = zs.find(
+      (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
+    );
+    if (hit) break;
+  }
+  if (hit) {
+    strike(s, hit, A.dmg, false, id);
+    die(hit, T);
+    store(s, zs, true);
+  }
+  addFx(s, {
+    kind: "l4line",
+    by: id,
+    who: [],
+    t: now,
+    x0: Math.round(px + dx * 40),
+    y0: Math.round(py + dy * 40),
+    x1: Math.round(x),
+    y1: Math.round(y),
+    hz,
+  });
+}
+/* the zebra cake: thrown the way I aim, it lands at its range or where a wall stops it (rules.js' s.zcake, so every
+   screen draws it as the Zebra cake special's); the zombies near it go for a bite (moveZombies) */
+const CAKE_R = 700, // world px: how far off a zombie smells it
+  CAKE_BITE = 900; // ms a zombie stands there chewing
+function cakeOut(s, id, p, dx, dy, now) {
+  const A = ARMS.zebra,
+    [px, py] = at(p),
+    hz = Math.round(+p.z || 0);
+  let t = 0;
+  while (t < A.far / A.speed) {
+    const n = t + 0.02;
+    if (walled(px + dx * A.speed * n, py + dy * A.speed * n, hz)) break;
+    t = n;
+  }
+  s.zcake = {
+    n: s.fxN,
+    by: id,
+    x0: p.x,
+    y0: p.y,
+    vx: +((dx * A.speed) / W).toFixed(5),
+    vy: +((dy * A.speed) / H).toFixed(5),
+    t: now,
+    stop: now + Math.round(t * 1000),
+    eat: 0,
+    hin: inCabin(px, py) ? 1 : 0,
+  };
+}
+/* where the cake lies (world px), once it has landed and while nobody ate it */
+function cakeDown(s, now) {
+  const c = s.zcake;
+  if (!c || c.eat || now < c.stop) return null;
+  const t = (c.stop - c.t) / 1000;
+  return [(c.x0 + c.vx * t) * W, (c.y0 + c.vy * t) * H];
+}
+/* Jaime (the owner's: 3 a round, 1 a stab, as in Mad God Justin): he comes in beside me, sprints at the nearest zombie
+   that's in, stabs it once a second, then the next. The zombies leave him be; after JAIME_LIFE (as the Jaime special's)
+   he's gone in a poof, and the round's end takes him too. s.jm as the Jaime special's (game.js draws him) */
+const JAIME_SPEED = 330, // world px a second (9 duck lengths, as Mad God Justin's)
+  JAIME_LIFE = 12000;
+function jaimeIn(s, by, p, now) {
+  s.jmN = (s.jmN || 0) + 1;
+  const id = `jaime${s.jmN}`;
+  s.jm = {
+    ...(s.jm || {}),
+    [id]: {
+      n: s.jmN,
+      by,
+      zi: -1,
+      x: p.x,
+      y: p.y,
+      z: Math.round(+p.z || 0),
+      face: p.face || 1,
+      at: now,
+      stabAt: now + 600,
+      mt: now,
+    },
+  };
+  addFx(s, { kind: "jaime", by, who: [id], t: now });
+}
+function jaimesRun(s, zs, now, T) {
+  if (!s.jm) return;
+  const next = {};
+  for (const [id, J0] of Object.entries(s.jm)) {
+    const J = { ...J0 },
+      dt = Math.min(0.35, Math.max(0, (now - J.mt) / 1000));
+    J.mt = now;
+    const o = { x: J.x * W, y: J.y * H },
+      live = zs.filter((z) => z.st === 2);
+    const gone = () =>
+      addFx(s, { kind: "poof", x: J.x, y: J.y, who: [id], t: now });
+    if (!s.players[J.by] || now - J.at > JAIME_LIFE) {
+      gone();
+      continue;
+    }
+    let z = live.find((q) => q.i === J.zi);
+    if (!z) {
+      z = live
+        .map((q) => [q, Math.hypot(q.x - o.x, q.y - o.y)])
+        .sort((a, b) => a[1] - b[1])[0]?.[0];
+      J.zi = z ? z.i : -1;
+    }
+    if (z) {
+      const d = room(o.x, o.y, z.x, z.y);
+      if (d > 1.3) {
+        const aim = d < 3 ? [z.x, z.y] : wayTo(o.x, o.y, z.x, z.y, now);
+        if (aim) stepZombie(o, aim, JAIME_SPEED * dt, []);
+      }
+      J.face = z.x < o.x ? -1 : 1;
+      if (room(o.x, o.y, z.x, z.y) <= 1.6 && now >= J.stabAt) {
+        J.stabAt = now + 1000;
+        const ux = z.x - o.x,
+          uy = z.y - o.y,
+          l = Math.hypot(ux, uy) || 1;
+        if (strike(s, z, 1, false, J.by)) die(z, T);
+        addFx(s, {
+          kind: "use",
+          what: "knife",
+          by: id,
+          who: [id],
+          face: J.face,
+          t: now,
+          ax: +(ux / l / W).toFixed(5),
+          ay: +(uy / l / H).toFixed(5),
+        });
+      }
+    }
+    J.x = +(o.x / W).toFixed(5);
+    J.y = +(o.y / H).toFixed(5);
+    J.z = Math.round(heightAt(o.x, o.y));
+    next[id] = J;
+  }
+  s.jm = Object.keys(next).length ? next : null;
+}
+/* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
+   a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by] }, p: { id: until } } */
+function light(s, z, by, now) {
+  const F = s.hang.l4fire || {};
+  s.hang.l4fire = {
+    ...F,
+    z: { ...(F.z || {}), [z.i]: [now + BURN.Z, now + BURN.EVERY, by] },
+  };
+}
+function fireTick(s, zs, now, T, p4) {
+  const F = s.hang.l4fire;
+  if (!F) return;
+  const fz = { ...(F.z || {}) },
+    fp = { ...(F.p || {}) };
+  for (const k of Object.keys(fz)) {
+    const z = zs.find((q) => q.i === +k),
+      f = fz[k];
+    if (!z || z.st === 3 || now >= f[0]) {
+      delete fz[k];
+      continue;
+    }
+    if (now >= f[1]) {
+      if (strike(s, z, 1, false, f[2])) die(z, T);
+      else fz[k] = [f[0], f[1] + BURN.EVERY, f[2]];
+    }
+  }
+  for (const id of Object.keys(fp))
+    if (now >= fp[id] + BURN.AGAIN || !standing(s, id)) delete fp[id];
+  const ids = players(s).filter((id) => standing(s, id)),
+    hot = [
+      ...zs.filter((z) => z.st === 2 && fz[z.i]).map((z) => ["", z.x, z.y]),
+      ...ids.filter((id) => fp[id] > now).map((id) => [id, ...at(s.pos[id])]),
+    ];
+  for (const id of ids) {
+    if (fp[id] || dodging(s, s.pos[id], now)) continue; // (burning, just put out, or mid-jump)
+    const [x, y] = at(s.pos[id]);
+    if (!hot.some(([o, hx, hy]) => o !== id && room(hx, hy, x, y) < CLAW))
+      continue;
+    fp[id] = now + BURN.P;
+    if (hurtDuck(s, p4, id, now)) delete fp[id];
+  }
+  const out =
+    Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
+  if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
+}
+/* a duck takes 1 (a claw, fire); true when that put it down */
+function hurtDuck(s, p4, id, now) {
+  const p = p4[id];
+  if (!p || p.dn || p.gh) return false;
+  const hp = invuln(s) ? p.hp : p.hp - 1; // (Invulnerability: it only flashes)
+  if (hp > 0) {
+    p4[id] = { ...p, hp, at: now };
+    return false;
+  }
+  p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
+  const u = upOf(s, id);
+  if (u.hp) s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
+  if (s.players[id]) s.players[id].dead = true;
+  s.hang.still = { ...(s.hang.still || {}), [id]: now + L4.BLEED + 60000 };
+  const b = { ...(s.hang.l4b || {}) };
+  delete b[id];
+  s.hang.l4b = b;
   return true;
 }
 /* the melee weapons mid-swing hit every zombie in their bubble, each once */
@@ -1085,33 +1447,44 @@ export function l4Shots(s, now) {
         y = (sh.y0 + sh.vy * u) * H,
         wall = walled(x, y, sh.hz);
       if (wall || age >= GRENADE_MS) {
-        const bx = wall ? sh.lx * W : x,
-          by = wall ? sh.ly * H : y,
-          hit = [];
-        for (const z of zs)
-          if (
-            z.st !== 3 &&
-            Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r
-          ) {
-            strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
-            die(z, T);
-            hit.push(z.i);
-          }
-        addFx(s, {
-          kind: "boom",
-          by: sh.by,
-          who: [],
-          t: now,
-          x: +(bx / W).toFixed(4),
-          y: +(by / H).toFixed(4),
-          hit: [],
-          hz: sh.hz || 0,
-        });
-        hitAny = hitAny || hit.length > 0;
+        hitAny =
+          boom(s, sh, wall ? sh.lx * W : x, wall ? sh.ly * H : y, zs, T, now) ||
+          hitAny;
         continue;
       }
       sh.lx = x / W;
       sh.ly = y / H;
+      keep.push(sh);
+      continue;
+    }
+    if (sh.k === "lgren") {
+      /* the grenade launcher's: straight, and off at the first zombie, a wall or its range */
+      const u = age / 1000,
+        x0 = sh.lx * W,
+        y0 = sh.ly * H,
+        x1 = (sh.x0 + sh.vx * u) * W,
+        y1 = (sh.y0 + sh.vy * u) * H,
+        n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 12));
+      let at = null;
+      for (let k = 1; k <= n && !at; k++) {
+        const x = x0 + ((x1 - x0) * k) / n,
+          y = y0 + ((y1 - y0) * k) / n;
+        if (walled(x, y, sh.hz))
+          at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
+        else if (
+          zs.some(
+            (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
+          )
+        )
+          at = [x, y];
+      }
+      if (!at && age >= sh.life) at = [x1, y1];
+      if (at) {
+        hitAny = boom(s, sh, at[0], at[1], zs, T, now) || hitAny;
+        continue;
+      }
+      sh.lx = x1 / W;
+      sh.ly = y1 / H;
       keep.push(sh);
       continue;
     }
@@ -1136,18 +1509,33 @@ export function l4Shots(s, now) {
         endY = y;
         break;
       }
-      const z = zs.find(
-        (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
-      );
-      if (z) {
-        const w = ARMS[sh.w]
+      const w = ARMS[sh.w]
           ? sh.w
           : sh.k === "arrow"
             ? "bow"
             : sh.k === "pellet"
               ? "shotgun"
-              : "handgun";
-        if (strike(s, z, ARMS[w].dmg, headshot(s, sh.by, w, z, now), sh.by))
+              : "handgun",
+        A = ARMS[w],
+        near = (z) =>
+          z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1;
+      if (A.pierce) {
+        /* the sniper's: through every zombie it meets, each once, on to the wall */
+        for (const z of zs)
+          if (near(z) && !(sh.hit || []).includes(z.i)) {
+            sh.hit = [...(sh.hit || []), z.i];
+            if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by))
+              die(z, T);
+            hitAny = true;
+          }
+        continue;
+      }
+      const z = zs.find(near);
+      if (z) {
+        if (w === "fireball") {
+          if (strike(s, z, 1, false, sh.by)) die(z, T);
+          else light(s, z, sh.by, now); // (the first of its burn as it's lit)
+        } else if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by))
           die(z, T);
         hitAny = true;
         gone = true;
@@ -1163,11 +1551,40 @@ export function l4Shots(s, now) {
   return true;
 }
 
+/* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies; true when it got any */
+function boom(s, sh, bx, by, zs, T, now) {
+  let any = false;
+  for (const z of zs)
+    if (
+      z.st !== 3 &&
+      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r
+    ) {
+      strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
+      die(z, T);
+      any = true;
+    }
+  addFx(s, {
+    kind: "boom",
+    by: sh.by,
+    who: [],
+    t: now,
+    x: +(bx / W).toFixed(4),
+    y: +(by / H).toFixed(4),
+    hit: [],
+    hz: sh.hz || 0,
+  });
+  return any;
+}
+
 /* ---------- the host's heartbeat ---------- */
 function l4Tick(s, now) {
   const L = s.hang.l4;
   if (!L) return false;
-  if (L.over) return false;
+  if (L.over) {
+    if (!s.jm) return false;
+    s.jm = null;
+    return true;
+  }
   meleeHits(s, now); // (first: the zombies below are read after it)
   const T = now - L.t0,
     zs = zombies(s);
@@ -1291,6 +1708,12 @@ function l4Tick(s, now) {
   }
   /* the zombies walk, tear boards down, climb in, swipe */
   moveZombies(s, zs, now, T, up);
+  jaimesRun(s, zs, now, T);
+  const ad = s.hang.l4ad;
+  if (ad && Object.values(ad).some((u) => u <= now))
+    s.hang.l4ad = Object.fromEntries(
+      Object.entries(ad).filter(([, u]) => u > now),
+    ); // (the adrenaline shots that wore off)
   /* the dead go */
   const left = zs.filter((z) => !(z.st === 3 && T - z.d > L4.DEAD_MS));
   /* every zombie of the round came and died: the next round, and the ghosts come back */
@@ -1352,7 +1775,10 @@ function moveZombies(s, zs, now, T, up) {
     pls = up.map((id) => ({ id, p: s.pos[id], xy: at(s.pos[id]) }));
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const dist = flowFrom(pls.map((q) => openNear(...q.xy)));
-  const p4 = { ...s.hang.l4p };
+  const p4 = { ...s.hang.l4p },
+    eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
+  let cake = cakeDown(s, now);
+  for (const k of Object.keys(eating)) if (eating[k] <= now) delete eating[k];
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
@@ -1389,6 +1815,24 @@ function moveZombies(s, zs, now, T, up) {
       if (walkTo(z, o.in[0], o.in[1], v * dt)) z.st = 2;
       continue;
     }
+    /* a zombie near the zebra cake goes for a bite (the first there eats it), and stands there chewing */
+    if ((eating[z.i] || 0) > now) continue;
+    if (cake && Math.hypot(z.x - cake[0], z.y - cake[1]) < CAKE_R) {
+      if (Math.hypot(z.x - cake[0], z.y - cake[1]) < 34) {
+        eating[z.i] = now + CAKE_BITE;
+        s.zcake = null; // (one bite and it's gone)
+        cake = null;
+        addFx(s, { kind: "l4bite", who: [], t: now, x: z.x, y: z.y });
+        continue;
+      }
+      const aim =
+        Math.hypot(z.x - cake[0], z.y - cake[1]) < 120
+          ? cake
+          : wayTo(z.x, z.y, cake[0], cake[1], now);
+      if (aim) stepZombie(z, aim, v * dt, pls);
+      z.n = 0;
+      continue;
+    }
     /* in: along the flow field, or straight at a duck close by; never into a duck */
     let target = null,
       best = Infinity;
@@ -1413,32 +1857,15 @@ function moveZombies(s, zs, now, T, up) {
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (!dodging(s, target.p, now)) {
-          const p = p4[target.id];
-          if (p && !p.dn && !p.gh) {
-            const hp = invuln(s) ? p.hp : p.hp - 1; // (Invulnerability: it only flashes)
-            if (hp <= 0) {
-              p4[target.id] = { hp: 0, at: now, dn: now + L4.BLEED };
-              const u = upOf(s, target.id);
-              if (u.hp)
-                s.hang.l4u = { ...s.hang.l4u, [target.id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
-              if (s.players[target.id]) s.players[target.id].dead = true;
-              s.hang.still = {
-                ...(s.hang.still || {}),
-                [target.id]: now + L4.BLEED + 60000,
-              };
-              const b = { ...(s.hang.l4b || {}) };
-              delete b[target.id];
-              s.hang.l4b = b;
-              pls.splice(pls.indexOf(target), 1);
-            } else p4[target.id] = { ...p, hp, at: now };
-          }
-        }
+        if (!dodging(s, target.p, now) && hurtDuck(s, p4, target.id, now))
+          pls.splice(pls.indexOf(target), 1);
       }
     } else z.n = 0;
   }
+  fireTick(s, zs, now, T, p4);
   s.hang.l4p = p4;
   s.hang.brd = brd;
+  s.hidden = { ...s.hidden, l4ze: eating };
   separate(zs);
 }
 /* straight toward (tx, ty), through anything (outside, or climbing in): true on arrival */

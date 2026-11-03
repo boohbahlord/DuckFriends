@@ -100,6 +100,7 @@ import {
   walkOf,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
+import { W as HW, H as HH } from "./hangout/layout.js";
 import { hangStill } from "./hangout/rules.js";
 import { downStill, downFor, GET_UP_MIN } from "./hangout/death.js";
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
@@ -171,7 +172,11 @@ import {
   slotsOf,
   maxHp,
   l4Cool,
+  kitOf,
+  inHand,
+  BURN,
 } from "./l4ddrules.js";
+import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { l4TouchAim, l4Held } from "./l4dd.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
 import { duckSVG, duckRoom } from "./duck.js";
@@ -367,9 +372,12 @@ let bar = null,
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
-/* a Jaime (Mad God Justin): his look, with the name of the duck that sent him under him */
+/* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, with the name of the duck that sent him under him */
 const jaimeLook = (s, id) => {
-  const by = s.players[((s.mgj && s.mgj.jaimes) || {})[id]?.by] || {};
+  const by =
+    s.players[
+      (((s.mgj && s.mgj.jaimes) || {})[id] || (s.jm || {})[id] || {}).by
+    ] || {};
   return { ...JAIME, name: by.name || JAIME.name, nameStyle: by.nameStyle };
 };
 let held = null,
@@ -814,10 +822,11 @@ function drawDucks(now = clockNow()) {
           ...(jp.ax !== undefined ? { ax: -jp.ax, ay: -jp.ay } : {}),
         }
       : null; // (Mad God Justin's double: mirrored through the board's middle)
-  const jaimes =
-    isMgj(s) && s.mgj
-      ? Object.keys(s.mgj.jaimes || {}).filter((id) => s.pos[id])
-      : [];
+  const jm = (!isMgj(s) && s.jm) || {},
+    jaimes =
+      isMgj(s) && s.mgj
+        ? Object.keys(s.mgj.jaimes || {}).filter((id) => s.pos[id])
+        : Object.keys(jm); // (the Jaime special's keep their place in s.jm, not s.pos)
   /* a duck the hammer shoved or a grenade threw (pos.kb): drawn sliding back from where it stood, over a little hop (a
      grenade's: higher, longer, at once) */
   const kbT = (id) => {
@@ -851,11 +860,13 @@ function drawDucks(now = clockNow()) {
             ? jp
             : id === JUSTIN2
               ? jp2
-              : id === R.me && me
-                ? me
-                : hang
-                  ? world.shown(id, s.pos[id])
-                  : s.pos[id],
+              : jm[id]
+                ? jm[id]
+                : id === R.me && me
+                  ? me
+                  : hang
+                    ? world.shown(id, s.pos[id])
+                    : s.pos[id],
         );
   const liftOf = (id, pos) =>
     (hang ? world.lift(id, pos) : jumpZ(pos, now) * size) +
@@ -1217,11 +1228,13 @@ function drawDucks(now = clockNow()) {
           (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
             ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
-            : isL4dd(s)
-              ? l4Hp(s, id) > 0 && (mine ? heldNow() : pos.w)
-              : mine
-                ? held && hasKey(p.duck, held) && held
-                : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
+            : jm[id]
+              ? "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out)
+              : isL4dd(s)
+                ? l4Hp(s, id) > 0 && inHand(mine ? heldNow() : pos.w, s, id)
+                : mine
+                  ? held && hasKey(p.duck, held) && held
+                  : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
     if (w) arms.push([id, w, pos, p.duck, mine]);
     if (pos.dj && d._dj !== pos.dj) {
       d._dj = pos.dj;
@@ -1280,14 +1293,17 @@ function drawDucks(now = clockNow()) {
           : (s.mgj.burnt || {})[id] > now
             ? 1
             : 0
-        : 0;
+        : isL4dd(s) && ((s.hang.l4fire || {}).p || {})[id] > now
+          ? 3
+          : 0; // (Quacky Zombies: on fire, BURN.P)
     if ((d._bn || 0) !== bn) {
       const was = d._bn || 0;
       d._bn = bn;
-      d.classList.toggle("onfire", bn === 2);
+      d.classList.toggle("onfire", bn >= 2);
       d.classList.toggle("burnt", bn === 1);
       if (bn === 2) sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000));
-      if (!bn && was) {
+      if (bn === 3) sfx.burn(BURN.P / 1000);
+      if (!bn && was && was < 3) {
         d.classList.add("unburn");
         setTimeout(() => d.classList.remove("unburn"), 2600);
       }
@@ -1389,6 +1405,7 @@ function drawDucks(now = clockNow()) {
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
       !(jp2 && d.dataset.pid === JUSTIN2) &&
+      !jm[d.dataset.pid] &&
       !bodyOf(d.dataset.pid)
     )
       d.remove();
@@ -1430,13 +1447,17 @@ function drawDucks(now = clockNow()) {
             ? el(
                 `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
               )
-            : sh.k === "dagger" || sh.k === "grenade"
+            : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
               ? el(
-                  `<div class="thrown${sh.k === "grenade" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "grenade" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
-                )
-              : el(
-                  `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
-                );
+                  `<div class="thrown${sh.k !== "dagger" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k !== "dagger" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
+                ) // (the grenade launcher's fly as the thrown ones, straight)
+              : ROUNDS_ART[sh.k]
+                ? el(
+                    `<div class="bullet k-${sh.k}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad;--w:${ROUNDS_ART[sh.k].w}px">${ROUNDS_ART[sh.k].svg}</div>`,
+                  ) // (Quacky Zombies' new guns: each its own bullet)
+                : el(
+                    `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
+                  );
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
@@ -1506,6 +1527,20 @@ function drawDucks(now = clockNow()) {
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
+    }
+    if (w === "chaingun") {
+      // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
+      const wd = size * GUNS.chaingun.w,
+        along = size * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
+        down =
+          ((wd * TRACE.box[1]) / TRACE.box[0]) *
+          (TRACE.tip[1] / TRACE.box[1] - 0.5) *
+          (left ? -1 : 1);
+      h._tip = [
+        c.left + Math.cos(rot) * along - Math.sin(rot) * down,
+        c.top + Math.sin(rot) * along + Math.cos(rot) * down,
+        rot,
+      ];
     }
     h.classList.toggle(
       "thrown-now",
@@ -2247,13 +2282,14 @@ function playFx(f) {
       return;
     } // (Mad God Justin's throws: they fly from the room's state)
     if (isL4dd(s) && ARMS[f.what]) {
-      shows[f.by] = {
-        what: f.what,
-        t: now,
-        until: now + (f.what === "knife" ? 350 : 700),
-        ax: f.ax || f.face || 1,
-        ay: f.ay || 0,
-      };
+      if (inHand(f.what))
+        shows[f.by] = {
+          what: f.what,
+          t: now,
+          until: now + (f.what === "knife" ? 350 : 700),
+          ax: f.ax || f.face || 1,
+          ay: f.ay || 0,
+        };
       ({
         handgun: sfx.bang,
         bow: sfx.bow,
@@ -2263,6 +2299,17 @@ function playFx(f) {
         shotgun: sfx.shotgun,
         medkit: sfx.done,
         grenade: sfx.swish,
+        sniper: sfx.bang,
+        revolver: sfx.bang,
+        smg: sfx.tat,
+        ak: sfx.tat,
+        lmg: sfx.tat,
+        chaingun: sfx.tat,
+        glauncher: sfx.shotgun,
+        zebra: sfx.swish,
+        fireball: sfx.fireball,
+        adrenaline: sfx.sip,
+        longjump: sfx.boing,
       })[f.what]?.();
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
@@ -2412,6 +2459,44 @@ function playFx(f) {
     fxl.append(n);
     setTimeout(() => n.remove(), 1200);
     sfx.pop();
+  } else if (f.kind === "l4line") {
+    /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
+       hit, and one or two shorter ones pointing a little off to the sides */
+    if (!geo.hang) return;
+    const a = world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
+      b = world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
+      up = size * 0.41,
+      gun = fxl.querySelector(
+        `.held[data-pid="${CSS.escape(f.by)}"][data-w="chaingun"]`,
+      ),
+      [x0, y0, aim] = (gun && gun._tip) || [
+        a.left,
+        a.top - up,
+        Math.atan2(b.top - a.top, b.left - a.left),
+      ];
+    let ang = Math.atan2(b.top - up - y0, b.left - x0),
+      far = Math.hypot(b.left - x0, b.top - up - y0);
+    if (Math.cos(ang - aim) < 0.5) {
+      // (what it hit is beside the barrel or behind its end: the lines still only go forward)
+      ang = aim;
+      far = size * 0.8;
+    }
+    const line = (turn, long, wait) => {
+      const n = el(
+        `<div class="l4-line" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${TRACE.color};--g:${TRACE.glow};--ms:${TRACE.ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
+      );
+      fxl.append(n);
+      setTimeout(() => n.remove(), TRACE.ms + wait + 40);
+    };
+    line(0, far, 0);
+    for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
+      line(
+        (Math.random() - 0.5) * TRACE.spread,
+        far * (0.25 + Math.random() * 0.5),
+        Math.random() * 30,
+      );
+  } else if (f.kind === "l4bite") {
+    sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "jaime") {
     sfx.puff(); // (a Jaime comes in)
   } else if (f.kind === "eat") {
@@ -2506,8 +2591,12 @@ function bodyAt(id, pos, now = clockNow()) {
   const lane = R.state.seat.filter(
     (i) => R.state.pos[i] && (i === R.me && me ? me : R.state.pos[i]).x < 0,
   );
-  const at = place(pos, lane.indexOf(id), lane.length);
-  return { left: at.left, top: at.top - (jumpZ(pos, now) + 0.45) * geo.size };
+  const at = seatAt(R.state, id) || place(pos, lane.indexOf(id), lane.length), // (Valentine's Duck Date: at the table, its weapon goes with it)
+    up = seated(R.state, id) ? SEAT_LIFT : 0; // (on its chair)
+  return {
+    left: at.left,
+    top: at.top - (jumpZ(pos, now) + up + 0.45) * geo.size,
+  };
 }
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
@@ -2918,7 +3007,10 @@ function jump(how) {
   me.dj = 0;
   me.lj =
     how === "long" ||
-    (how !== "short" && kept.has("longjump") && hasKey(playDuck(), "longjump"));
+    (how !== "short" &&
+      kept.has("longjump") &&
+      hasKey(playDuck(), "longjump")) ||
+    (isL4dd(R.state) && how !== "short" && !!(kitOf(R.state, R.me) || {}).lj); // (Quacky Zombies: the Long jump from the fireplace, switched on)
   me.sj =
     !me.lj &&
     (how === "short" ||
@@ -5092,7 +5184,7 @@ function l4Press(e) {
   const go = () => {
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(120, l4Cool(R.state, R.me, w)));
+    l4Fire = setTimeout(go, Math.max(60, l4Cool(R.state, R.me, w)));
   };
   clearTimeout(l4Fire);
   go();

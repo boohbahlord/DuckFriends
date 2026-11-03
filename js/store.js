@@ -53,12 +53,13 @@ export const PROFILE_DEFAULT = {
   justinKills: 0,
   cabinKills: 0,
   shadowHits: 0,
+  jaimeStabs: 0,
   dunced: 0,
   mgjWins: 0,
   mgjLosses: 0,
   lostRounds: 0,
   secrets: {},
-  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon (in Duck Cabin too), the shadow duck hit with a chair, voted a dunce, Mad God Justin beaten, the codes on, the unlocks already announced
+  unlockSeen: {}, // what unlocks things (unlocks.js): Justin killed with a weapon (in Duck Cabin too), the shadow duck hit with a chair, Jaimes' stabs on Mad God Justin, voted a dunce, Mad God Justin beaten, the codes on, the unlocks already announced
 };
 
 /* all-time stats, one set per game mode (test rooms don't count, except their jumps); others see them too, so a
@@ -168,6 +169,7 @@ function normalize(p) {
   out.justinKills = Math.max(0, Math.floor(+p.justinKills || 0));
   out.cabinKills = Math.max(0, Math.floor(+p.cabinKills || 0));
   out.shadowHits = Math.max(0, Math.floor(+p.shadowHits || 0));
+  out.jaimeStabs = Math.max(0, Math.floor(+p.jaimeStabs || 0));
   out.dunced = Math.max(0, Math.floor(+p.dunced || 0));
   out.mgjWins = Math.max(0, Math.floor(+p.mgjWins || 0));
   out.mgjLosses = Math.max(0, Math.floor(+p.mgjLosses || 0));
