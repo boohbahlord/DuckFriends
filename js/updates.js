@@ -8,10 +8,11 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 144,
+    version: 145,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "A new map, Euclid's Squares: bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
       "For Quacky Zombies: every zombie has its own scars, cuts, bruises, bites or torn holes, and hits leave wounds: bullet holes (bigger from bigger guns), shotgun pellets, cuts, bruises from the hammer, arrows that stay stuck, chunks torn out, a beak shot off. A headshot blows its head off and shows a big CRIT.",
       "On a phone, the board takes the whole screen in every mode, upright or on its side, with the bars over it. The joystick starts wherever you put your thumb that isn't a button, on the bars too.",
       "For Would You Rather: Add a prompt from Notes lets you pick which box the note goes into; both boxes glow green until you tap one.",

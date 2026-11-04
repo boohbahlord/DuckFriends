@@ -4173,6 +4173,39 @@ html.moving .cl-sq {
 .map-collage .law-mid {
   background: color-mix(in srgb, #000 var(--board-a), transparent);
 }
+/* Euclid's Squares (euclid.js): the mosaic on its canvas; tiles as see-through as on Shelter Sky & Null, with a white
+   rim and names on pills, so a tile never melts into a square of its own color */
+.scene.euclid {
+  background: #16161c;
+}
+.scene.euclid > canvas.eu-pic {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.map-euclid {
+  --board-a: 42%;
+}
+.map-euclid .col {
+  background: color-mix(in srgb, var(--c) 42%, transparent);
+  border-right-color: #ffffff30;
+  box-shadow: inset 0 0 0 0.14rem #ffffff38;
+}
+.map-euclid .col-name {
+  position: relative;
+  color: #fff;
+  background: #000c;
+  border-radius: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-euclid .wyr-or,
+.map-euclid .bb-vs,
+.map-euclid .law-mid {
+  background: color-mix(in srgb, #000 var(--board-a), transparent);
+}
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {
   background: #0d0722;
