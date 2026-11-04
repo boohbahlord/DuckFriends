@@ -15152,3 +15152,264 @@ html.keyboard .hp-pop:not(.small) {
 html.still .l4-crit {
   animation: none !important;
 } /* (no movement: the word stays, still, until it goes) */
+
+/* ---------- Trivia ---------- */
+/* the field: a deep blue (each map makes it see-through like every board's tiles), with the rows over it */
+.cols.tv-cols {
+  display: block;
+}
+.tv-field {
+  --c: #14284a;
+  height: 100%;
+  border-right: 0;
+  background: var(--c);
+}
+.tv-top .question.tv-qbox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+.tv-qtext {
+  font-size: calc(1.25rem * var(--ts));
+  font-weight: 700;
+}
+.tv-sub {
+  font-weight: 600;
+}
+.tv-sub .pname {
+  white-space: nowrap;
+}
+/* the rows: lines of text over the field, like Story Chain's, from under the cloud down to the strip where a duck
+   stands on no row (game.js sets their top and height) */
+.tv-rows {
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  pointer-events: none;
+}
+.tv-row {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.2rem 1rem 1.3rem;
+  border-radius: 0.8rem;
+  border: 0.15rem solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--panel) 30%, transparent);
+  pointer-events: auto;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+.tv-row.here {
+  border-color: color-mix(in srgb, var(--ink) 55%, transparent);
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
+  box-shadow: inset 0.35rem 0 0 color-mix(in srgb, var(--ink) 70%, transparent);
+}
+/* the writer's grade on the row they stand on: the one already given is pressed in */
+.tv-gb[aria-pressed="true"] {
+  outline: 0.2rem solid var(--ink);
+  outline-offset: 0.1rem;
+}
+/* my own votes glow green, only on my screen */
+.tv-row.picked {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 26%, transparent);
+  box-shadow:
+    0 0 0.9rem color-mix(in srgb, var(--green) 70%, transparent),
+    inset 0.35rem 0 0 var(--green);
+}
+.tv-row.right {
+  border-color: var(--green);
+  background: color-mix(in srgb, var(--green) 30%, transparent);
+}
+.tv-row.wrong {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 22%, transparent);
+}
+.tv-line {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: calc(clamp(1rem, 1.7vw, 1.4rem) * var(--ts));
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0.06rem 0.35rem color-mix(in srgb, var(--bg) 75%, transparent);
+}
+.tv-txt {
+  min-width: 0;
+}
+.tv-let {
+  flex-shrink: 0;
+  font-size: 1.25em;
+}
+.tv-ok,
+.tv-no {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 1.4em;
+  color: var(--green);
+  -webkit-text-stroke: 0.04em #1c1c28;
+  paint-order: stroke fill;
+}
+.tv-no {
+  color: var(--red);
+}
+.tv-who {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8em;
+}
+.tv-who svg {
+  width: 1.5rem;
+  height: auto;
+  display: block;
+}
+/* the votes: a small copy of each voter's duck at the bottom middle of its row */
+.tv-votes {
+  position: absolute;
+  left: 50%;
+  bottom: 0.1rem;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.15rem;
+}
+.tv-votes svg {
+  width: 1.3rem;
+  height: auto;
+  display: block;
+}
+/* my written answer's box, at the bottom of the board */
+.tv-ansform {
+  position: absolute;
+  left: 50%;
+  bottom: 0.5rem;
+  transform: translateX(-50%);
+  z-index: 3001;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(36rem, calc(100% - 1rem));
+  padding: 0.4rem 0.5rem;
+}
+.tv-win {
+  flex: 1;
+  resize: none;
+  min-height: 2.4rem;
+}
+/* a hidden writer on the cloud: the multicolored "?" */
+.lord-q {
+  display: block;
+  text-align: center;
+  font-size: 4.4rem;
+  line-height: 1;
+  padding-bottom: 0.2rem;
+}
+.lord.duel .lord-q {
+  font-size: 3.6rem;
+}
+/* the question window */
+.tv-form .tv-qin {
+  resize: vertical;
+}
+.tv-kindrow,
+.tv-addrow {
+  margin: 0;
+}
+.tv-kind[aria-pressed="true"] {
+  background: var(--green);
+  color: #10240c;
+}
+.tv-hint {
+  margin: 0 0 0.2rem;
+}
+.tv-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
+.tv-mark {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  border: 0.15rem solid var(--line);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  font-size: calc(1.15rem * var(--ts));
+  cursor: pointer;
+}
+.tv-tick {
+  display: none;
+  color: var(--green);
+  -webkit-text-stroke: 0.04em #1c1c28;
+  paint-order: stroke fill;
+}
+.tv-mark[aria-pressed="true"] {
+  border-color: var(--green);
+  box-shadow: 0 0 0.6rem color-mix(in srgb, var(--green) 75%, transparent);
+}
+.tv-mark[aria-pressed="true"] .tv-tick {
+  display: inline;
+}
+.tv-ain {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  min-height: 2.4rem;
+}
+.tv-choice.right .tv-ain {
+  border-color: var(--green);
+  box-shadow: 0 0 0 0.15rem color-mix(in srgb, var(--green) 45%, transparent);
+}
+.tv-del {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 0.13rem solid var(--line);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.tv-add[hidden] {
+  display: none;
+}
+.tv-wnote {
+  display: none;
+  margin: 0;
+}
+.tv-form.tv-written .tv-mc {
+  display: none;
+}
+.tv-form.tv-written .tv-wnote {
+  display: block;
+}
+.tv-err {
+  margin: 0;
+  min-height: 1.2em;
+  color: var(--red);
+  font-weight: 700;
+}
+.tv-err:empty {
+  min-height: 0;
+}
+.tv-score {
+  margin-left: 0.3rem;
+}

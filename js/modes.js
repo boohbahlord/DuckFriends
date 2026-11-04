@@ -11,6 +11,7 @@
    Mad God Justin: a boss fight; every duck has only a knife, and together they stab Justin to 0 HP before the time runs out.
    Valentine's Duck Date: a random duck is The Date; the Suitors take turns on a date with them at the dining table, and
    after each turn The Date turns one down, until the last one left is their Valentine.
+   Trivia: everyone writes a question; for each one, walk onto the right answer (or type one and its writer grades it).
    Hangout: no rounds, no winners, no stats; everyone hangs out in Duck Cabin (couches, the piano, the chalk floor, the
    guestbook, the stage, the pool, the trampoline, soccer, the campfire) until the room goes back to the lobby.
    Quacky Zombies: Duck Cabin with the power cut; zombie ducks come in round after round, until nobody is standing. */
@@ -78,6 +79,12 @@ export const MODES = [
     tip: "A random duck is The Date. Each Suitor gets a date at the dining table, then The Date turns one down, until one is left: the Valentine. 3 players or more.",
   },
   {
+    id: "trivia",
+    cat: "comp",
+    name: "Trivia",
+    tip: "Everyone writes a question, multiple choice or written. Walk onto the answer you think is right and press Enter, or type yours and let its writer grade it. 2 players or more.",
+  },
+  {
     id: "hang",
     cat: "social",
     name: "Hangout",
@@ -105,7 +112,8 @@ export const CATS = [
    Relate?'s green tile with a check and red tile with a cross; Story Chain's three lines of writing, each underlined
    in a different card color; Lawyering's sword over a shield; Duncelation's dunce hat with a question mark; Mad God Justin's
    yellow duck head with its eye glowing blue and devil horns, and a bolt of lightning; Valentine's Duck Date's two
-   glasses of red wine clinking under a pink heart; Hangout's little
+   glasses of red wine clinking under a pink heart; Trivia's three answer rows, the middle one green with a check;
+   Hangout's little
    A-frame cabin with a lit window, under the moon */
 export function modeSymbol(id, size = 32) {
   const m = modeOf(id);
@@ -149,6 +157,19 @@ ${[
   .map(
     ([x, r]) =>
       `<g transform="rotate(${r} ${x} 21)"><path d="M${x - 4} 10C${x - 4.4} 15 ${x - 2.6} 17.4 ${x} 17.4C${x + 2.6} 17.4 ${x + 4.4} 15 ${x + 4} 10Z" fill="#ffffff55" stroke="#1c1c28" stroke-width="1.1" stroke-linejoin="round"/><path d="M${x - 4.1} 13C${x - 3.6} 16 ${x - 2.2} 17.2 ${x} 17.2C${x + 2.2} 17.2 ${x + 3.6} 16 ${x + 4.1} 13Z" fill="#9c1238"/><path d="M${x} 17.4V21.6M${x - 2.8} 22H${x + 2.8}" stroke="#1c1c28" stroke-width="1.3" stroke-linecap="round"/></g>`,
+  )
+  .join("")}</svg>`;
+  if (m.id === "trivia")
+    return `<svg viewBox="0 0 30 24" width="${size}" height="${size * 0.8}" role="img" aria-label="${esc(m.name)}">
+<rect x="1" y="1" width="28" height="22" rx="3" fill="#ffffff" stroke="#1c1c28" stroke-width="1.2"/>
+${[
+  ["#2fa4ff", 4.2, 0],
+  ["#37d421", 10.2, 1],
+  ["#ff8c2b", 16.2, 0],
+]
+  .map(
+    ([c, y, ok]) =>
+      `${ok ? `<rect x="2.6" y="${y - 1.2}" width="24.8" height="5.8" rx="1.6" fill="#37d421" opacity=".28"/>` : ""}<circle cx="6" cy="${y + 1.7}" r="2.2" fill="${c}" stroke="#1c1c28" stroke-width=".9"/><rect x="10" y="${y + 0.9}" width="${ok ? 10 : 13}" height="1.8" rx=".9" fill="#1c1c28" opacity=".55"/>${ok ? `<path d="M22 ${y + 1.8}l1.6 1.7 2.8-3.4" fill="none" stroke="#1d8a12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>` : ""}`,
   )
   .join("")}</svg>`;
   if (m.id === "sc")

@@ -352,6 +352,26 @@ import {
   SEAT_OUT,
   SEAT_LIFT,
 } from "./vdd.js";
+import {
+  isTv,
+  TV_BOARD,
+  TV_ROWS_END,
+  tvRowAt,
+  tvStats,
+} from "./triviarules.js";
+import {
+  tvWriteHTML,
+  tvBoardHTML,
+  tvRefresh,
+  tvTyped,
+  tvActHTML,
+  tvRound,
+  TV_TITLES,
+  tvStatsHTML,
+  formQ,
+  formProblem,
+  tvFormClick,
+} from "./trivia.js";
 import { touchOnly } from "./pointer.js";
 
 let R = null,
@@ -434,8 +454,9 @@ const turned = () =>
     (R.state.phase === "bracket" ||
       isSc(R.state) ||
       isHang(R.state) ||
-      isVd(R.state))
-  ); // (Valentine's Duck Date keeps its table the right way up)
+      isVd(R.state) ||
+      isTv(R.state))
+  ); // (Valentine's Duck Date keeps its table the right way up; Trivia's rows stay rows)
 let cam = null; // the bracket's camera: the diagram's corner on the board (dx, dy), the bracket's offset in it (ox, oy), its zoom and size
 
 /* ---------- movement numbers (board widths or heights per second) ---------- */
@@ -574,7 +595,9 @@ const boardHTML = (s) =>
                 ? mgjBoardHTML(s)
                 : isVd(s)
                   ? vdBoardHTML(s, R.me)
-                  : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
+                  : isTv(s)
+                    ? tvBoardHTML(s, R.me)
+                    : `<div class="board${!isWyr(s) && !isDdr(s) && s.options.aodColors === "gr" ? " aod-gr" : ""}">
   ${isWyr(s) ? wyrColsHTML(s) : isDdr(s) ? ddrColsHTML() : `<div class="cols">${COLS.map((c, i) => `<div class="col c${i + 1}" data-c="${i}"><span class="col-name">${esc(c)}<span class="cb-mark">${SHORT[i]}</span></span></div>`).join("")}</div>`}
   <div class="ducks"></div><div class="fxl"></div>
   ${s.phase === "answer" || s.phase === "discuss" ? `<div class="topover">${lordHTML(s)}<p class="question">${fontHTML(writerFont(s), esc(isWyr(s) ? "Would you rather" : s.qs[s.qi].text))}</p></div>` : ""}</div>`; // (Would You Rather: the choices are on the tiles)
@@ -652,6 +675,21 @@ function measure() {
         : { t: Math.max(size * 1.08, below), b: size * 0.25, l: 0, r: 0 };
     geo.qp = qp;
     tiles.style.inset = `${qp.t.toFixed(1)}px ${qp.r.toFixed(1)}px ${qp.b.toFixed(1)}px ${qp.l.toFixed(1)}px`;
+  }
+  /* Trivia: the rows start under the cloud and the question, and stop over the strip where a duck stands on no row; a
+     duck's feet go down the rows and the strip the same way on every screen */
+  const tr = $(".tv-rows", board),
+    ttop = $(".tv-top", board);
+  if (tr) {
+    const below = ttop ? ttop.offsetTop + ttop.offsetHeight + 4 - top0 : 0,
+      form = $(".tv-ansform", board),
+      under = form ? H + top0 - form.offsetTop + 6 : 0,
+      t = Math.max(size * 0.4, below),
+      b = Math.max(size * 0.2, under),
+      h = Math.max(1, H - t - b);
+    geo.qp = { t, b, l: 0, r: 0 };
+    tr.style.top = `${(top0 + t).toFixed(1)}px`;
+    tr.style.height = `${(h * TV_ROWS_END).toFixed(1)}px`;
   }
   /* Valentine's Duck Date's pick: the board starts under the cloud, so every tile is in sight */
   const vt = $(".vd-tiles", board),
@@ -1828,16 +1866,21 @@ function drawDucks(now = clockNow()) {
         ? spotOf(s, me)
         : isVd(s)
           ? vdTileAt(s, me)
-          : colAt(s, me.x)
+          : isTv(s)
+            ? tvRowAt(s, me)
+            : colAt(s, me.x)
       : -1;
   board
-    .querySelectorAll(isVd(s) ? ".vd-tile" : ".col, .wq-tile")
+    .querySelectorAll(
+      isVd(s) ? ".vd-tile" : isTv(s) ? ".tv-row" : ".col, .wq-tile",
+    )
     .forEach((c) => c.classList.toggle("here", +c.dataset.c === myCol));
   const vb = S.querySelector(".vote-btn");
   if (vb && vb.dataset.col !== String(myCol)) {
     vb.dataset.col = myCol;
-    if (isLaw(s) || isDn(s) || isVd(s)) setHTML($(".gact", S), actHTML(s));
-  } // (Lawyering, Duncelation: Vote, Voted or Change vote; Valentine's Duck Date: whom Turn down turns down)
+    if (isLaw(s) || isDn(s) || isVd(s) || isTv(s))
+      setHTML($(".gact", S), actHTML(s));
+  } // (Lawyering, Duncelation: Vote, Voted or Change vote; Valentine's Duck Date: whom Turn down turns down; Trivia: the row's Vote, Correct and Wrong)
   placeRing(board);
   placePodium(board, now);
   placeTable(board);
@@ -2804,6 +2847,7 @@ const roams = () =>
   late() ||
   isQuack(R.state) ||
   isVd(R.state) ||
+  isTv(R.state) ||
   isHang(R.state); // anywhere on the board (else inside my column)
 const canWalk = () =>
   onBoardPhase() &&
@@ -3396,6 +3440,7 @@ async function announce(phase) {
   if (isDn(R.state)) return announceDunce(R.state, phase);
   if (isMgj(R.state)) return announceMgj(R.state, phase);
   if (isVd(R.state)) return announceVd(R.state, phase);
+  if (isTv(R.state)) return; // (Trivia: the question says it all)
   const job = ++sayJob;
   if (
     phase === "answer" ||
@@ -3652,6 +3697,7 @@ function statsHTML(s) {
   if (isDn(s)) return s.phase === "over" ? dnOverHTML(s) : dnStatsHTML(s);
   if (isMgj(s)) return s.phase === "over" ? mgjOverHTML(s) : mgjStatsHTML(s);
   if (isVd(s)) return vdStatsHTML(s);
+  if (isTv(s)) return tvStatsHTML(s);
   const boxes = (r) =>
     s.seat
       .map((id) => (isDdr(s) ? ddrBoxHTML : statBoxHTML)(s, id, r))
@@ -3774,6 +3820,26 @@ function recordRound(s) {
     st.argued += p.turns;
     st.wins += p.turns - p.dunced;
     st.losses += p.dunced;
+    save();
+    shareLook();
+    return;
+  }
+  if (isTv(s)) {
+    // Trivia: my answers this round, right and wrong, and the questions I wrote
+    const w = tvStats(s, s.round).per[R.me];
+    if (!st) return;
+    const game = `${s.id}:${s.startedAt}`;
+    if (profile.stats.lastGame !== game) {
+      profile.stats.lastGame = game;
+      st.games++;
+    }
+    st.rounds++;
+    if (w) {
+      st.answers += w.right + w.wrong;
+      st.wins += w.right;
+      st.losses += w.wrong;
+      st.titles += w.asked;
+    }
     save();
     shareLook();
     return;
@@ -4285,12 +4351,17 @@ function actHTML(s) {
     return `<span class="progress wait-bar" role="status">Waiting for players to continue <b>${s.seat.length}/${minOf(s)}</b></span>`; // (a game below its fewest players: ducks still walk)
   if (isQuack(s) && QUACK_PHASES.includes(s.phase)) return quackActHTML(s);
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdActHTML(s);
+  if (isTv(s) && TV_BOARD.includes(s.phase)) return tvActHTML(s, R.me, me);
   if (isHang(s)) return world ? world.buttonHTML() : ""; // Hangout: the nearest activity's button (Light off …)
   if (late())
     return `<span class="progress">You joined mid-turn: walk around and chat. You play from the next ${isBb(s) ? "match" : isLaw(s) ? "case" : isDn(s) ? "take" : "question"}. · ${d}/${n} done</span>`;
   const count = `<span class="progress">${d}/${n} done${need < n ? ` · ${need} needed` : ""}</span>`;
   if (isSc(s)) return storyActHTML(s, d, n, need, count);
-  if (["submit", "topic", "tvote", "seeds", "counsel"].includes(s.phase))
+  if (
+    ["submit", "topic", "tvote", "seeds", "counsel", "tvwrite"].includes(
+      s.phase,
+    )
+  )
     return count;
   if (s.phase === "podium") return "";
   if (s.phase === "tie") {
@@ -4622,7 +4693,11 @@ function viewHTML(s) {
   if (isHang(s)) return `<div class="stage hang-stage">${HANG_HTML}</div>`;
   if (isLaw(s) && s.phase === "counsel")
     return '<div class="law-counsel-wrap"></div>';
-  if ((isLaw(s) || isDn(s) || isMgj(s) || isVd(s)) && s.phase === "results")
+  if (isTv(s) && s.phase === "tvwrite") return tvWriteHTML(s, R.me, whoHTML(s));
+  if (
+    (isLaw(s) || isDn(s) || isMgj(s) || isVd(s) || isTv(s)) &&
+    s.phase === "results"
+  )
     return '<div class="bb-results"><div class="statpanel law-statpanel"></div></div>';
   if (isQuack(s))
     switch (s.phase) {
@@ -4814,7 +4889,8 @@ function paint(force) {
       (isSc(s) && SC_BOARD.includes(s.phase)) ||
       !me ||
       (isQuack(s) && (!was || was.split("|")[0] !== s.phase)) ||
-      (isVd(s) && ["vdprompt", "vdpick", "vdval"].includes(s.phase))
+      (isVd(s) && ["vdprompt", "vdpick", "vdval"].includes(s.phase)) ||
+      (isTv(s) && ["tvq", "tvw"].includes(s.phase))
     )
       me = fresh && {
         ...fresh,
@@ -4836,6 +4912,7 @@ function paint(force) {
     S.classList.toggle("dn", isDn(s));
     S.classList.toggle("mgj", isMgj(s));
     S.classList.toggle("vd", isVd(s));
+    S.classList.toggle("tv", isTv(s));
     S.classList.toggle("hang", isHang(s));
     if (s.phase === "answer") seedShift = 0; // a vote starts on the match's own colors
     bbMarks(s);
@@ -4887,6 +4964,7 @@ function paint(force) {
       (isDn(s) && DN_TITLES[s.phase]) ||
       (isMgj(s) && MGJ_TITLES[s.phase]) ||
       (isVd(s) && VD_TITLES[s.phase]) ||
+      (isTv(s) && TV_TITLES[s.phase]) ||
       TITLES[s.phase] ||
       "";
     lastClose = (s.law && s.law.close) || 0;
@@ -4910,10 +4988,19 @@ function paint(force) {
         ? `Fight ${s.round + 1}`
         : isVd(s)
           ? vdRound(s)
-          : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced"].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
+          : isTv(s)
+            ? `Round ${s.round + 1}${tvRound(s)}`
+            : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced"].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
   if ($(".round", S).textContent !== round) $(".round", S).textContent = round; // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh(); // (a key kept on, or kept off)
-  if (s.phase === "submit" || s.phase === "topic" || s.phase === "words") {
+  if (isTv(s) && TV_BOARD.includes(s.phase) && tvRefresh(S, s, R.me))
+    geo = null; // (Trivia: the votes, answers and grades as they come; a row for someone who joined)
+  if (
+    s.phase === "submit" ||
+    s.phase === "topic" ||
+    s.phase === "words" ||
+    s.phase === "tvwrite"
+  ) {
     setHTML($(".who", S), whoHTML(s));
     if (s.done[R.me] && $("form.submit-card", S)) paint(true);
   }
@@ -5224,6 +5311,13 @@ function sendDraft(now = false) {
         R.send({ t: "draft", text: inp.value });
       return;
     } // (everyone sees a line as it's typed)
+    if (R && isTv(R.state)) {
+      const f = S && $("form.tv-form", S),
+        w = S && $("form.tv-ansform .tv-win", S);
+      if (f && R.state.phase === "tvwrite") R.send({ t: "draft", q: formQ(f) });
+      if (w && R.state.phase === "tvw") R.send({ t: "draft", text: w.value });
+      return;
+    } // (Trivia: what's typed goes in when the time runs out)
     if (R && isBb(R.state)) {
       const inp = S && $("form.bb-write .bb-in", S);
       if (inp && ["topic", "seeds"].includes(R.state.phase))
@@ -5438,6 +5532,15 @@ async function act(a) {
         if (world) world.press();
         break;
       } // (Enter)
+      if (isTv(s) && TV_BOARD.includes(s.phase)) {
+        const row = me && me.x >= 0 ? tvRowAt(s, me) : -1;
+        if (s.phase === "tvq" && row >= 0) {
+          sendMove(true);
+          R.send({ t: "tv", k: "pick", i: row });
+        }
+        break;
+      } // (Trivia: Enter votes for the answer I stand on, or takes the vote back)
+
       if (isSc(s)) {
         if (SC_VOTES.includes(s.phase) && me && me.x >= 0 && !graceLeft(s)) {
           sendMove(true);
@@ -5465,6 +5568,28 @@ async function act(a) {
     case "vdtimer":
       R.send({ t: "vdTimer" });
       break;
+    case "tvpick": {
+      // Trivia: Vote on the answer I stand on, or Take back
+      const row = me && me.x >= 0 ? tvRowAt(s, me) : -1;
+      if (row >= 0) {
+        sendMove(true);
+        R.send({ t: "tv", k: "pick", i: row });
+      }
+      break;
+    }
+    case "tvend":
+      R.send({ t: "tv", k: "end" });
+      break;
+    case "tvok":
+    case "tvno": {
+      // Trivia: the writer's Correct or Wrong on the row they stand on
+      const row = me && me.x >= 0 ? tvRowAt(s, me) : -1;
+      if (row >= 0) {
+        sendMove(true);
+        R.send({ t: "tv", k: "grade", i: row, ok: a === "tvok" });
+      }
+      break;
+    }
     case "dnend":
       R.send({ t: "dnEnd" });
       break;
@@ -5816,6 +5941,7 @@ register("game", {
     });
     for (const t of ["pointerup", "pointercancel"]) addEventListener(t, unpeek);
     S.addEventListener("click", (e) => {
+      if (isTv(R.state) && tvFormClick(e, R.state, () => sendDraft())) return; // (Trivia's question window: a mark, +, ×, Written Answer)
       const b = e.target.closest("[data-a]");
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
@@ -5845,6 +5971,9 @@ register("game", {
         jumpTo(+mc.dataset.col);
         return;
       }
+      const tr = e.target.closest(".tv-row[data-i]");
+      if (tr && R.state.phase === "tvq" && performance.now() - touchedAt < 900)
+        R.send({ t: "tv", k: "pick", i: +tr.dataset.i }); // (Trivia on a touch screen: a tap on an answer votes, and the duck walks there)
       const tc = e.target.closest("[data-topic]");
       if (tc) {
         R.send({ t: "pick", i: +tc.dataset.topic });
@@ -5865,6 +5994,40 @@ register("game", {
       boardClick(e);
     });
     S.addEventListener("submit", (e) => {
+      if (e.target.matches(".tv-form")) {
+        // Trivia: a question, checked here first (the host checks it again)
+        e.preventDefault();
+        const f = e.target,
+          q = formQ(f),
+          bad = formProblem(R.state, q),
+          err = f.querySelector(".tv-err");
+        if (bad) {
+          err.textContent = bad[1];
+          err.classList.remove("shake");
+          void err.offsetWidth;
+          err.classList.add("shake");
+          const box = bad[0] && f.querySelector("." + bad[0]);
+          if (box) box.focus();
+          return;
+        }
+        clearTimeout(draftT);
+        draftT = 0;
+        R.send({ t: "submit", q });
+        return;
+      }
+      if (e.target.matches(".tv-ansform")) {
+        // Trivia: my written answer
+        e.preventDefault();
+        const box = e.target.querySelector(".tv-win");
+        if (!box.value.trim()) {
+          box.focus();
+          return;
+        }
+        clearTimeout(draftT);
+        draftT = 0;
+        R.send({ t: "submit", text: box.value });
+        return;
+      }
       if (e.target.matches(".vd-write")) {
         // The Date's topic (empty: a random one)
         e.preventDefault();
@@ -5976,6 +6139,11 @@ register("game", {
         sendDraft();
         return;
       } // (one word)
+      if (e.target.matches(".tv-win")) {
+        tvTyped(S, R.state, R.me, e.target.value);
+        sendDraft();
+        return;
+      } // (Trivia: my answer shows in my row as I type it)
       if (e.target.matches(".submit-card textarea, .bb-in, .wq-in, .vd-in"))
         sendDraft(); // (both Would You Rather boxes too)
     });
@@ -6001,7 +6169,7 @@ register("game", {
         e.stopPropagation();
         e.target.form.requestSubmit();
       }
-      if (e.target.matches(".sc-in") && e.key === "Enter") {
+      if (e.target.matches(".sc-in, .tv-win") && e.key === "Enter") {
         e.preventDefault();
         e.stopPropagation();
         e.target.form.requestSubmit();

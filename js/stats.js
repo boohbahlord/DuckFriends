@@ -22,6 +22,7 @@ import { quackBoxHTML } from "./quack.js";
 import { dnBoxHTML } from "./dunce.js";
 import { mgjBoxHTML } from "./mgj.js";
 import { vdBoxHTML } from "./vdd.js";
+import { tvBoxHTML } from "./trivia.js";
 import { seenDuck, seenName } from "./looks.js";
 
 export function statBoxHTML(s, id, round = null) {
@@ -125,6 +126,12 @@ function totalsHTML(p, t, mode = "aod") {
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Turns</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Dates</dt><dd>${fmtJumps(t.argued)}</dd><dt>Valentine</dt><dd>${fmtJumps(t.wins)}</dd>
         <dt>Turned Down</dt><dd>${fmtJumps(t.losses)}</dd><dt>The Date</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
+  if (mode === "trivia") {
+    // Trivia: their answers, right and wrong, and the questions they wrote
+    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Trivia</div></div></header>
+      <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Answers</dt><dd>${fmtJumps(t.answers)}</dd><dt>Right</dt><dd>${fmtJumps(t.wins)}</dd>
+        <dt>Wrong</dt><dd>${fmtJumps(t.losses)}</dd><dt>Questions written</dt><dd>${fmtJumps(t.titles)}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
+  }
   if (mode === "dunce") {
     // Duncelation: their takes defended, not a dunce and a dunce, and their votes
     return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · Duncelation</div></div></header>
@@ -194,6 +201,7 @@ export function openStats(s, id, me) {
                     dunce: dnBoxHTML,
                     mgj: mgjBoxHTML,
                     vdd: vdBoxHTML,
+                    trivia: tvBoxHTML,
                   }[s.options.mode] || statBoxHTML
                 )(s, id)
               : totalsHTML(p, all && all[lastMode], lastMode);
