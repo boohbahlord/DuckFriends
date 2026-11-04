@@ -1311,6 +1311,7 @@ function drawDucks(now = clockNow()) {
       d.style.setProperty("--dc", cc);
       d.style.setProperty("--dk", against(cc));
       d._dn = null;
+      d._hpWas = d._hp; // (the new bar starts from what the old one showed, so a hit that redraws the tag still flashes)
       d._hp = null;
     }
     const tag = tagColorOn(s) && vc ? vc : ""; // (Change player tag color: the name tag in the duck's vote color)
@@ -1387,7 +1388,10 @@ function drawDucks(now = clockNow()) {
                 : -1
               : PHP - lost;
     if (d._hp !== hp) {
-      const was = d._hp;
+      /* the normal game's bar only shows once a hit is counted, so the first HP lost comes from a full bar (the same
+         flash and sound as every later one) */
+      const was0 = d._hp === null ? (d._hpWas ?? null) : d._hp,
+        was = was0 === -1 && lost && hp >= 0 ? hpMax : was0;
       d._hp = hp;
       d.classList.toggle("php", hp >= 0);
       const bar = d.querySelector(".gduck-hp");

@@ -3939,7 +3939,7 @@ Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.
   The row and its settings are gone from the Game mode and Map pages (Random stays there). Every "Vote Mode & Game" players
   see is now "Vote Mode & Map"; the Democracy rule keeps the owner's name "Ducks Vote Mode & Game".
 
-## Request (owner, 2026-11-04 07:43Z, through Adam): Vote Mode & Map, Quacky Zombies, the computer's board, sounds
+## Request (owner, 2026-11-04 07:43Z, through Adam): Vote Mode & Map, Quacky Zombies, full-screen PC board, sounds, guns
 "Vote Mode & Map goes HERE!!!!! you just fucking hallucinated what i meant.
 
 Also, the five rounds for difficulty changes are now being changed to four, everything in the shop is now 20% expensive (including ammo), the amount of zombies is 25% more for rounds 1-4, 100% more for rounds 5-8, and 200% more for rounds 9-12, and 300% more for rounds 13 and up. The amount of zombies increases according to the multiplier even for increase amount of zombies per player. Zombie corpses stay on the ground for 3 seconds longer, crit is smaller, and there is a tab in the shop for the butler that shows every item and it's stat and description in this game mode that can be clicked on, and every item is in it's own category. 
@@ -3953,9 +3953,9 @@ There are walking sounds from ducks thar are quiet in every other game mode now.
 jumping should have a sound if it doesnt yet, and it should be quieter but not so quiet that it is impossible to hear. 
 
 every gun from the zombie game should be in the special list. I will come up for ideas of how to unlick them later."
-- Split by Adam: Vote Mode & Map row = Adam (#247); the computer's full-screen board, the first HP loss and the guns in
-  the specials list = Noah; the walk and jump sounds = Miles Jr.; the Quacky Zombies part = Solomon.
-- Solomon (v166): the difficulty steps (ROUNDS in js/l4ddrules.js) end at rounds 4, 8, 12 and 20 (they were 5, 10, 15
+- Split by Adam: Solomon = Quacky Zombies gameplay, Miles Jr. = sounds, Noah = first HP lost, guns in the specials
+  list, PC full-screen board with clicks anywhere but buttons.
+- Solomon (v167): the difficulty steps (ROUNDS in js/l4ddrules.js) end at rounds 4, 8, 12 and 20 (they were 5, 10, 15
   and 25: each step four-fifths as long, my reading of "five rounds ... changed to four"). `moreOf(r)` multiplies a
   round's whole count, the extras for each player included: x1.25 (1-4), x2 (5-8), x3 (9-12), x4 (13+). Everything the
   Butler sells is x1.2 (`SHOP_MORE`): upgrades (e.g. Accuracy 720, Attack speed 600), bullets 6 for 2, arrows 6 for 5,
