@@ -12,12 +12,14 @@
    Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
    Shelter Sky & Null: the owner's collage of a black tree and a halftone duck looking up at it (collage.js).
+   Euclid's Squares: a mosaic of bright squares by Euclid's rule, shrinking forever into three points (euclid.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { esc } from "./ui.js";
 import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
 import { collageScene, collageMini } from "./collage.js";
+import { euclidScene, euclidMini } from "./euclid.js";
 import { seenDuck, seenName } from "./looks.js";
 
 export const MAPS = [
@@ -62,13 +64,31 @@ export const MAPS = [
     "The jester's dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it's played.",
   ],
   [
+    "euclid",
+    "Euclid's Squares",
+    "Bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
+  ],
+  [
     "tiles",
     "Tiles",
     "A pure black and white checkerboard: 8 tiles across on a computer, 5 on a phone.",
   ],
 ];
+/* Euclid's Squares with its endless zoom: an entry of its own in Vote Maps and Random (picked, it's Euclid's Squares
+   with s.mapZoomed on; the host who picks the map turns it on with the map's Zoom setting instead) */
+export const ZOOM_MAP = [
+  "euclidzoom",
+  "Euclid's Squares (Zoom)",
+  "Euclid's Squares, zooming into its tiny squares forever.",
+];
+/* the maps Vote Maps and Random choose from: every map, and the zoom right after Euclid's Squares */
+export const VOTE_LIST = MAPS.flatMap((m) =>
+  m[0] === "euclid" ? [m, ZOOM_MAP] : [m],
+);
 export const mapName = (id) =>
-  id === "cabin" ? "Duck Cabin" : (MAPS.find((m) => m[0] === id) || MAPS[0])[1];
+  id === "cabin"
+    ? "Duck Cabin"
+    : (VOTE_LIST.find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
@@ -80,6 +100,8 @@ export function mapMini(id) {
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
   if (id === "collage") return `<div class="mini-map">${collageMini()}</div>`;
+  if (id === "euclid" || id === ZOOM_MAP[0])
+    return `<div class="mini-map">${euclidMini()}</div>`;
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
@@ -1106,9 +1128,11 @@ export function mountMap(layer, s) {
                   ? starsScene(layer)
                   : map === "collage"
                     ? collageScene(layer, s)
-                    : map === "cabin"
-                      ? cabinScene(layer)
-                      : nightScene(layer);
+                    : map === "euclid"
+                      ? euclidScene(layer, s)
+                      : map === "cabin"
+                        ? cabinScene(layer)
+                        : nightScene(layer);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"

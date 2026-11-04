@@ -6,7 +6,7 @@
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
-import { MAPS, mapName } from "./maps.js";
+import { MAPS, VOTE_LIST, mapName } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, tally, randomPool, dodOn } from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
 
@@ -628,6 +628,21 @@ const GREY = {
 export const showsCollage = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
   (s.options.map === "collage" || !!s.options.mapPick);
+/* Euclid's Squares' own setting, shown when the host picked it (Vote Maps and Random have the zoom as an entry of its
+   own) */
+const ZOOM = {
+  k: "mapZoom",
+  n: "Zoom",
+  c: [
+    [0, "Still"],
+    [1, "Endless zoom"],
+  ],
+  d: "Endless zoom: the map keeps zooming into its tiny squares, forever.",
+};
+const showsZoom = (s) =>
+  !CABIN_MODES.includes(s.options.mode) &&
+  !s.options.mapPick &&
+  s.options.map === "euclid";
 
 /* the plain words for the rows that aren't a game, a map or a setting */
 const PICK_TEXT = {
@@ -653,7 +668,7 @@ export function settingText(k, v) {
   if (k === "mapPick")
     return v ? ["Map", v === "vote" ? "Vote Maps" : "Random"] : null;
   if (k === "max") return ["Players up to", String(v)];
-  const o = [...HOST, GREY, ...Object.values(BY_MODE).flat()].find(
+  const o = [...HOST, GREY, ZOOM, ...Object.values(BY_MODE).flat()].find(
       (x) => x.k === k,
     ),
     c = o && (o.c || []).find(([x]) => String(x) === String(v));
@@ -903,8 +918,11 @@ export function openGameSettings(R, start = null) {
         mine = (s.mapVotes || {})[me];
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="vote"', "Vote Maps", "", o.mapPick === "vote", !host() || dodOn(s, "maps"))}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", !host() || dodOn(s, "maps"))}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", !host() || dodOn(s, "maps"))}${LINE}${MAPS.map(
-          ([id, name]) =>
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="vote"', "Vote Maps", "", o.mapPick === "vote", !host() || dodOn(s, "maps"))}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", !host() || dodOn(s, "maps"))}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", !host() || dodOn(s, "maps"))}${LINE}${(voting
+          ? VOTE_LIST
+          : MAPS
+        )
+          .map(([id, name]) =>
             row(
               `data-map="${id}"`,
               name,
@@ -912,9 +930,10 @@ export function openGameSettings(R, start = null) {
               voting ? mine === id : !o.mapPick && o.map === id,
               !voting && !host(),
             ),
-        ).join(
-          "",
-        )}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}</div>`
+          )
+          .join(
+            "",
+          )}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
       );
     }
     /* Game Options: Host Settings for every game, then Game mode Settings for the picked one (or each one a vote or
@@ -1005,7 +1024,7 @@ export function openGameSettings(R, start = null) {
         tip =
           p.id === "cabin"
             ? CABIN_TIP
-            : (MAPS.find((m) => m[0] === p.id) || [])[2] || "";
+            : (VOTE_LIST.find((m) => m[0] === p.id) || [])[2] || "";
       return card(mapName(p.id), tip, mapPic(s, p.id, mode));
     }
     if (p.kind === "set") return card(p.title, p.text);
@@ -1060,7 +1079,7 @@ export function openGameSettings(R, start = null) {
   };
   /* the description of a setting (its name and what it does) */
   const describe = (k) => {
-    const all = [...HOST, GREY, ...Object.values(BY_MODE).flat()],
+    const all = [...HOST, GREY, ZOOM, ...Object.values(BY_MODE).flat()],
       mode = S().options.mode,
       o =
         (BY_MODE[mode] || []).find((x) => x.k === k) ||
