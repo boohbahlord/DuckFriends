@@ -3852,3 +3852,74 @@ Show me the rough UI design plan before u do it for all three"
 "give the grenade 50% wide explosion radius"
 - Built (Adam): every mode. rules.js GRENADE_R 1.5 to 2.25 duck lengths (board games, Mad God Justin), Quacky Zombies'
   ARMS.grenade.r 140 to 210 (thrown and launched), and the drawn blast (grenade.js) 3.2 to 4.8 duck sizes across.
+## Request (owner, 2026-11-04 06:59Z, in Noah's thread): more Jaime and Justin lines
+
+"other jaime lines:
+
+I'm tired of your shit Justin!
+I'm not Mexican!
+I hate you Justin!
+Die Justin!
+You're a piece of shit Justin!
+I'm not your slave Justin!
+Justin, I'm not your slave anymore!
+I am tired of being hit with controllers!
+I hate the chair! Not the chair!
+Not the controller! Ouch!
+Ouch Justin! 
+Stop hitting me Justin!
+That hurts Justin!
+Why are you like this Justin!
+Justin no!
+Justin, you piece of shit!
+
+
+Whenever Justin is attacked by Jaime, his first reaction is to use the controller or chair instantly IF it isn't the Mad God Justin game mode AND if Jaime can even attack Justin, which he doesnt in zombies
+
+
+
+New Justin lines against Jaime:
+
+You deserve that flipping controller!
+I should beat Jaime!!!
+I'M GOING TO KILL YOU JAIME!!!!!!
+Die Jaime!!!
+JAIME!!!!!
+JAIME STOP!!!!
+KILL JAIME!!!!!!
+Somone kill Jaime!
+Jaime is a STUPID IDIOT!!!!
+JAIME!!! I SAID STOP!!! 
+I WON'T FEED YOU JAIME!!!!
+GO BACK TO MY CLOSET JAIME!!!!!!
+JAIME I'M TRYING TO SOUND WHORE!!!
+JAIME!!! YOU STUPID MEXICAN!!!! 
+I HATE YOU JAIME!!!!! 
+JAIIIIIMEE!!!!!!
+You're a piece of SHIT Jaime!!!!
+Someone?! Beat Jaime!!! 
+EVERYONE!!! BEAT JAIME!!!!
+WE NEED TO BEAT THE POOP OUT OF JAIME!!!!!
+JAIME! YOU STUPID MEXICAN!!!!
+I HATE MEXICANS!!!!!
+I AM GOING TO THROW A CHAIR AT JAIMEM, AGAIN!!!
+JAIME!!! YOU ARE WHY I'M NOT PLAT!!!!
+WHY DO WOMEN LIKE JAIME BUT NOT ME!?!?!?!
+Jaime isn't a civil engineer!!!!
+WHY DOES JAIME HAVE MORE GIRLFRIENDS THEN ME!!?!?!?!?!?!?
+STOP EATING MY ZEBRA CAKES JAIME!!! YOU STUPID IDIOT!!!"
+
+Decided (Noah): the lines go in word for word (trailing spaces trimmed). Jaime says a line from the first list now and
+then as he stabs Justin, and the controller/chair/hit ones when Justin hits him. Justin's new lines join his Jaime lines
+(when a Jaime hits him, and his answer to a Jaime Bomb). Outside Mad God Justin, Jaimes only go after players, so the
+"controller or chair at once" reaction has nowhere to happen yet: asked the owner whether Jaime should go after the
+board's and the cabin's Justin.
+
+## Request (owner, 2026-11-04 07:04Z + 07:05Z, in Noah's thread): Jaime Guard
+
+"Jaime should be able to be summoned by a player as a special IF they get to round 30 in zombies, and it bascially summons a Jaime that walks around and follows a player with 1 HP and protects them (they dont vote or anything like that), and this Jaime has a weapon the player selects for Jaime WHEN they select him in customization before adding him to their hot bar. How he defends a player and therefore damages another is dependent on the weapon he has, since range is dif then melee behavior."
+
+"It is called 
+"Jaime Guard""
+
+Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.

@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v161",
+    version: 161,
+    date: "Nov 4, 2026",
+    title: "Jaime Bomb",
+    news: [
+      "1 Jaime in 20, in every mode, has dynamite strapped to his chest. He says something to Justin as he comes in, and Justin snaps back. When he gets to who he's after, he blows up: the blast is half again as wide as a grenade's and takes all the HP of every duck in it. His body flies off headless.",
+      "New special: Jaime Bomb, sent every time, once every 12 seconds. It unlocks after 864 Jaimes, counting the ones you send and Jaime's hits on you.",
+      "For Quacky Zombies: the fireplace gives the Jaime Bomb 1 spin in 50, and taking it unlocks it for good. Its blast kills every zombie in it.",
+      "Outside Mad God Justin, a Jaime now and then goes for Justin himself. Justin answers at once with a controller or his chair, and a Jaime Bomb takes 3 of those to stop.",
+      "For Mad God Justin: a Jaime Bomb takes 3 of Justin's hits to stop, and its blast takes only 3 HP off Justin. Jaime and Justin have new lines for each other.",
+    ],
+  },
+  {
     id: "v160",
     version: 160,
     date: "Nov 4, 2026",

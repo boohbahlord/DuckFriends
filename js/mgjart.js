@@ -67,6 +67,20 @@ export const JAIME = {
     size: -1,
   },
 };
+/* the Jaime Bomb's dynamite (jaimebomb.js), as a duck's skin (duck.js, in the 120 box): a black strap round his body
+   under the wing, three red sticks on his chest with a strap over them, a little black timer with a red light and green
+   numbers, and a fuse up from the middle stick */
+const STICK_X = [80, 86.5, 93];
+export const BOMB_SKIN = {
+  body: `<path d="M12 74C40 81 76 81 101 73V80C76 88 40 88 13 81Z" fill="#22222a" opacity=".92"/>`,
+  out: `<g stroke="#4a0a0a" stroke-width="1.4">${STICK_X.map((x) => `<rect x="${x}" y="64" width="6.2" height="27" rx="2.6" fill="#d8312b"/>`).join("")}</g>
+${STICK_X.map((x) => `<rect x="${x + 1.3}" y="66.5" width="1.5" height="22" rx=".75" fill="#ff9a88" opacity=".75"/>`).join("")}
+<rect x="77.5" y="75.5" width="25" height="5" rx="1.6" fill="#24242c" stroke="#0b0b10" stroke-width="1"/>
+<rect x="83.2" y="68.6" width="12.6" height="8" rx="1.5" fill="#15151b" stroke="#000" stroke-width="1"/>
+<circle cx="86.4" cy="72.6" r="1.5" fill="#ff2a2a"/><rect x="88.6" y="71.1" width="5" height="3" rx=".6" fill="#46e06a" opacity=".9"/>
+<path d="M89.6 64C89.6 59 95 58.5 96.5 54.5" stroke="#e9d9ad" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<circle cx="96.7" cy="54" r="1.6" fill="#ffb02e"/>`,
+};
 
 /* his poof when he's killed: a burst of round cloud puffs with a few little ones flying off */
 export const POOF = `<svg viewBox="0 0 100 70" aria-hidden="true">

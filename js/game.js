@@ -312,6 +312,7 @@ import {
   ARROW,
   FIREBALL,
   JAIME,
+  BOMB_SKIN,
   POOF,
   ZEBRA,
   FOODS,
@@ -319,6 +320,7 @@ import {
   HITMARK,
   edgeHTML,
 } from "./mgjart.js";
+import { hitsOf } from "./l4ddart.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
@@ -408,7 +410,11 @@ const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
 const bigOf = (s, id) => (isJustin(id) && isMgj(s) ? MGJ_SCALE : 1);
 /* a Jaime (Mad God Justin's, or the Jaime special's, s.jm): his look, and "Jaime" under him, never the name of the duck
    that sent him (the owner's, Nov 3) */
-const jaimeLook = () => ({ ...JAIME, name: "Jaime" });
+const jaimeLook = (s, id) => ({
+  ...JAIME,
+  name: "Jaime",
+  bomb: !!(((isMgj(s) ? s.mgj && s.mgj.jaimes : s.jm) || {})[id] || {}).bomb,
+}); // (the Jaime Bomb: his dynamite on, BOMB_SKIN)
 let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
@@ -1250,6 +1256,7 @@ function drawDucks(now = clockNow()) {
         role,
         hidesLooks(s),
         jet,
+        !!p.bomb,
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1268,7 +1275,13 @@ function drawDucks(now = clockNow()) {
       d._sig = sig;
       d.querySelector(".gduck-body").innerHTML =
         (jet ? jetHTML(look) : "") +
-        duckSVG(look, { size: 64, shadow: false, title: p.name, dead }) +
+        duckSVG(look, {
+          size: 64,
+          shadow: false,
+          title: p.name,
+          dead,
+          ...(p.bomb ? { skin: BOMB_SKIN } : {}),
+        }) +
         '<span class="sp-fx gduck-aura"></span>';
       if (look && look.eyes === "tears") {
         // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
@@ -2605,7 +2618,7 @@ function playFx(f) {
     const at = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1);
-    grenadeBoom(fxl, board, at, size);
+    grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
     sfx.boom();
     if (geo.hang)
       for (const [x, y] of f.gore || []) {
@@ -2905,6 +2918,29 @@ function playFx(f) {
     sfx.chomp(); // (a zombie ate the zebra cake)
   } else if (f.kind === "jaime") {
     sfx.puff(); // (a Jaime comes in)
+  } else if (f.kind === "jthrow") {
+    /* Justin's answer to a Jaime coming for him (not in Mad God Justin): a controller or his chair, from his hand to
+       Jaime, at once */
+    const P = (x, y) =>
+        geo.hang ? world.place({ x, y }, f.hz || 0) : place({ x, y }, 0, 1),
+      a = P(f.x0, f.y0),
+      b = P(f.x1, f.y1),
+      up = size * 0.5,
+      n = el(
+        `<div class="thrown mgj-throw k-${f.k}" style="--s:${size.toFixed(0)}px"><i class="${b.left < a.left ? "ccw" : ""}">${f.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
+      );
+    fxl.append(n);
+    n.animate(
+      [
+        { transform: `translate(${a.left}px, ${a.top - up}px)` },
+        { transform: `translate(${b.left}px, ${b.top - up}px)` },
+      ],
+      { duration: 260, easing: "linear", fill: "forwards" },
+    );
+    setTimeout(() => n.remove(), 300);
+    sfx.swish();
+  } else if (f.kind === "jbomb") {
+    jaimeBody(f, place, size); // (the Jaime Bomb went off: his body flies)
   } else if (f.kind === "eat") {
     sfx.chomp();
   } else if (f.kind === "edge") {
@@ -2958,6 +2994,38 @@ function neckSpray(x, y) {
   );
   fxl.append(spray);
   setTimeout(() => spray.remove(), 2400);
+}
+
+/* the Jaime Bomb's Jaime after it went off: headless and torn apart (as a grenade leaves a zombie, and burnt), his
+   body flies from (x, y) to (x1, y1) over a little arc, turning over until it lies on its side, blood bursting out of
+   his neck as he goes and spurting once he lands; a few seconds later it fades */
+function jaimeBody(f, place, size) {
+  const fxl = S && $(".fxl", S);
+  if (!fxl) return;
+  const P = (x, y) =>
+      geo.hang ? world.place({ x, y }, f.hz || 0) : place({ x, y }, 0, 1),
+    a = P(f.x, f.y),
+    b = P(f.x1, f.y1),
+    dir = b.left < a.left ? -1 : 1,
+    h = hitsOf("g0x0f0"),
+    w = size * MGJ_SCALE;
+  const n = el(
+    `<div class="jb-body" style="left:${a.left.toFixed(1)}px;top:${a.top.toFixed(1)}px;--w:${w.toFixed(0)}px;--dx:${(b.left - a.left).toFixed(1)}px;--dy:${(b.top - a.top).toFixed(1)}px;--h:${(size * 1.1).toFixed(0)}px;--r:${dir * 450}deg" aria-hidden="true"><b style="--f:${dir}">${duckSVG(JAIME.duck, { size: 64, shadow: false, dead: true, skin: { head: h.inner, out: h.out }, gone: h.gone })}</b></div>`,
+  );
+  fxl.append(n);
+  bloodBurst(
+    a.left,
+    a.top - size * 0.8,
+    16,
+    Math.PI * 2,
+    size * 0.4,
+    size * 0.75,
+  );
+  setTimeout(
+    () => neckSpray(b.left + dir * size * 0.45, b.top - size * 0.2),
+    700,
+  );
+  setTimeout(() => n.remove(), 7000);
 }
 
 /* ---------- my duck ---------- */
@@ -5296,7 +5364,10 @@ function paint(force) {
             m.text.length > 90 ? m.text.slice(0, 90).trimEnd() + "…" : m.text,
           until: clockNow() + 5500,
           n: m.n,
-        }; // (the Justin option: his lines over him)
+        };
+      // (the Justin option: his lines over him)
+      else if (m.n > lastLog && m.npc === "jaime" && m.jid)
+        bubbles[m.jid] = { text: m.text, until: clockNow() + 4000, n: m.n }; // (a Jaime Bomb's line, over him)
     lastLog = s.logN || 0;
   }
   if (lastFx < 0) lastFx = s.fxN || 0;

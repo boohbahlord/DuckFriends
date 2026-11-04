@@ -15541,6 +15541,56 @@ html.still .l4-crit {
     left: 10px;
   }
 }
+/* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
+   turning over until it lies on its side (--r), and fades a few seconds after it lands */
+.jb-body {
+  position: absolute;
+  width: var(--w);
+  translate: -50% -100%;
+  pointer-events: none;
+  z-index: 3;
+  animation:
+    jb-fly 0.75s cubic-bezier(0.25, 0.6, 0.45, 1) forwards,
+    jb-gone 1s ease-in 5.5s forwards;
+}
+.jb-body > b {
+  display: block;
+  transform-origin: 50% 78%;
+  scale: var(--f) 1;
+  animation: jb-turn 0.75s ease-out forwards;
+}
+.jb-body svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes jb-fly {
+  0% {
+    transform: translate(0, 0);
+  }
+  45% {
+    transform: translate(
+      calc(var(--dx) * 0.45),
+      calc(var(--dy) * 0.45 - var(--h))
+    );
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes jb-turn {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: var(--r);
+  }
+}
+@keyframes jb-gone {
+  to {
+    opacity: 0;
+  }
+}
 
 /* ---------- Vote Mode & Game: the vote windows over the whole screen (js/vote.js) ---------- */
 .vt {
