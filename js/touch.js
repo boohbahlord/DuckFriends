@@ -1,5 +1,5 @@
 /* ---------- touch controls on the board (phones and tablets) ----------
-   Joystick (the default): hold a finger anywhere off the buttons and drag; a see-through stick appears under it and walks
+   Joystick (the default): hold a finger anywhere off the buttons (the bars too) and drag; a see-through stick appears under it and walks
    your duck that way, slower near the middle. Flick the stick twice the same way to sprint; the sprint lasts while the
    stick is held away from the middle, in any direction.
    Tap to move (Settings → Controls): a tap walks your duck there, with a faint white circle on the spot; a slow drag
@@ -16,8 +16,12 @@ const TAP = { ms: 260, px: 12 }; // a tap: short and still
 const FLICK = { out: 450, gap: 380, ang: 0.9 }; // two flicks: each out for under .45 s, back for under .38 s, about the same way
 const SWIPE = { px: 40, ms: 350 }; // a swipe: this far, this fast
 const STILL = 520; // held still this long: the specials (on a duck: its menu)
+/* where a finger never starts the stick: on something it presses or types in, or reads and scrolls (the docked Notes and
+   chat, the specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button
+   (the owner's, Nov 4) */
 const NOT_HERE =
-  "button, a, input, select, textarea, label, .statpanel, .mc, .gbar, .bbar, .dock-l, .dock-r, .dock-b, .sc-write";
+  "button, a, input, select, textarea, label, [role=button], [role=slider], .statpanel, .mc, .dock-panel, .sp-phone, .mbar, .pmenu, .votebox, .sc-write";
+const BARS = ".gbar, .bbar, .dock-l, .dock-r, .dock-b"; // (Tap to move walks where I tap: never under a bar)
 const angDiff = (a, b) =>
   Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
 
@@ -85,8 +89,8 @@ export function mountTouch(S, api) {
     if (
       e.pointerType === "mouse" ||
       !api.active() ||
-      !e.target.closest(".gmain") ||
-      e.target.closest(NOT_HERE)
+      e.target.closest(NOT_HERE) ||
+      (profile.settings.touch === "tap" && e.target.closest(BARS))
     )
       return;
     const now = performance.now(),
