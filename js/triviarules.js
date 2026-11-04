@@ -17,10 +17,12 @@
    a row and marks it Correct or Wrong, one row at a time, in any order; everyone watches the marks come in. No timer
    unless the host turns on Grading timer: 1:00 a row, and a row still ungraded when it runs out counts as right. A row
    left empty is marked Wrong by itself. There's no answer key.
-   After each question a short reveal (tvr) shows what was right, then the next question.
+   After each question a 10 s reveal (tvr) shows what was right, then the next question. With "Stop timer" on (the
+   default), anyone can press the red Stop timer button there: while any duck has it pressed the clock stands still, and
+   once every duck has let it go again it starts over at 5 s.
    s.tv = { qs (this round's questions: { by, auto, text, kind 'mc' | 'wr', ans, ok }), qi, n (counts questions, for
    the screens), subs and drafts (the writing), votes { id: [row] }, ids (a written question's rows, one per answerer),
-   text { id: answer }, sent { id: true }, grades { id: true | false }, used (auto questions dealt), log (every played
+   text { id: answer }, sent { id: true }, grades { id: true | false }, stop { id: true } (the reveal's Stop timer), used (auto questions dealt), log (every played
    question: { round, by, auto, kind, text, right, wrong, none }) } */
 import { enter, say, playing, seatLate, toStats, shareOf } from "./rules.js";
 import { TV_BANK } from "./triviabank.js";
@@ -30,7 +32,8 @@ export const TV_PHASES = ["tvwrite", "tvq", "tvw", "tvg", "tvr"];
 export const TV_BOARD = ["tvq", "tvw", "tvg", "tvr"]; // (the writing is a screen of its own)
 export const TV_ANSWER = 120; // seconds to type a written answer
 export const TV_GRADE = 60; // seconds a row, with the Grading timer on
-export const TV_REVEAL = 5; // seconds of the reveal after each question
+export const TV_REVEAL = 10; // seconds of the reveal after each question
+export const TV_RESUME = 5; // … left once every Stop timer is let go
 export const Q_MAX = 200; // the most characters a question can have
 export const A_MAX = 100; // … an answer box
 export const W_MAX = 140; // … a written answer
@@ -70,6 +73,7 @@ export const multiOn = (s) => +(s.options.tvMulti ?? 1) !== 0;
 export const noWrongOn = (s) => !!+s.options.tvNoWrong;
 export const mcOn = (s) => +(s.options.tvMc ?? 1) !== 0;
 export const wrOn = (s) => +(s.options.tvWr ?? 1) !== 0 || !mcOn(s); // (never both off)
+export const stopOn = (s) => (s.options.tvStop ?? 1) !== 0;
 export const hideWriter = (s) => !!+s.options.tvHide;
 
 /* a question as its writer sent it, checked: null when it isn't valid. With multiple choice off every question is
@@ -361,7 +365,22 @@ function reveal(s, now) {
       ? "No wrong answers on this one."
       : `${right.length} of ${right.length + wrong.length} got it right.`,
   );
+  T.stop = {};
   return enter(s, "tvr", now);
+}
+/* who holds the reveal's Stop timer (only ducks still here) */
+export const stoppers = (s) =>
+  Object.keys((s.tv && s.tv.stop) || {}).filter(
+    (id) => s.tv.stop[id] && s.players[id],
+  );
+/* Stop timer: anyone presses it to stop the clock, and again to let go; the last one to let go starts it at 5 s */
+export function tvStop(s, a, now) {
+  const T = s.tv;
+  if (!T || s.phase !== "tvr" || !stopOn(s) || !s.players[a.id]) return null;
+  T.stop = { ...(T.stop || {}), [a.id]: !(T.stop || {})[a.id] };
+  if (stoppers(s).length) s.ends = 0;
+  else s.ends = now + TV_RESUME * 1000;
+  return s;
 }
 /* after the reveal: the next question, or the round's stats */
 function nextQ(s, now) {
@@ -391,6 +410,8 @@ export function tvAdvance(s, now, force = false) {
       if (up) return gradeLate(s, now);
       return settle(s, now); // (the writer left: the rows left count as right)
     case "tvr":
+      if (!force && !s.ends && !stoppers(s).length)
+        s.ends = now + TV_RESUME * 1000; // (whoever held Stop timer left)
       return force || up ? nextQ(s, now) : s;
   }
   return s;

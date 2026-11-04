@@ -677,20 +677,39 @@ function measure() {
     geo.qp = qp;
     tiles.style.inset = `${qp.t.toFixed(1)}px ${qp.r.toFixed(1)}px ${qp.b.toFixed(1)}px ${qp.l.toFixed(1)}px`;
   }
-  /* Trivia: the rows start under the cloud and the question, and stop over the strip where a duck stands on no row; a
-     duck's feet go down the rows and the strip the same way on every screen */
-  const tr = $(".tv-rows", board),
-    ttop = $(".tv-top", board);
-  if (tr) {
-    const below = ttop ? ttop.offsetTop + ttop.offsetHeight + 4 - top0 : 0,
+  /* Trivia: the rows start under the cloud and the question and stop over my answer box. Each row is as tall as its
+     words and the ducks on it need (at least a duck), so they can reach past the bottom: then the view slides down them
+     as my duck walks, like Story Chain's. Under the last row is the strip where a duck stands on no row */
+  const tv = $(".tv-view", board);
+  if (tv) {
+    const ttop = $(".tv-top", board),
       form = $(".tv-ansform", board),
-      under = form ? H + top0 - form.offsetTop + 6 : 0,
-      t = Math.max(size * 0.4, below),
-      b = Math.max(size * 0.2, under),
-      h = Math.max(1, H - t - b);
-    geo.qp = { t, b, l: 0, r: 0 };
-    tr.style.top = `${(top0 + t).toFixed(1)}px`;
-    tr.style.height = `${(h * TV_ROWS_END).toFixed(1)}px`;
+      t = Math.max(
+        top0 + size * 0.4,
+        ttop ? ttop.offsetTop + ttop.offsetHeight + 4 : 0,
+      ),
+      b = Math.max(
+        size * 0.2,
+        form ? board.offsetHeight - form.offsetTop + 6 : 0,
+      );
+    tv.style.top = `${t.toFixed(1)}px`;
+    tv.style.bottom = `${b.toFixed(1)}px`;
+    board.style.setProperty("--tvd", `${size.toFixed(1)}px`);
+    board.style.setProperty(
+      "--tvt",
+      `${Math.max(0, t - size * 1.1).toFixed(1)}px`,
+    ); // (the ducks show down to the view's edges, and a duck's height over its top)
+    board.style.setProperty("--tvb", `${b.toFixed(1)}px`);
+    const list = $(".tv-rows", tv);
+    geo.tl = {
+      t,
+      h: Math.max(1, tv.clientHeight),
+      rows: [...list.children].map((e) => ({
+        top: e.offsetTop,
+        h: Math.max(1, e.offsetHeight),
+      })),
+      contentH: list.offsetHeight,
+    };
   }
   /* Valentine's Duck Date's pick: the board starts under the cloud, so every tile is in sight */
   const vt = $(".vd-tiles", board),
@@ -762,6 +781,51 @@ function panStory(pos, now) {
     v.classList.toggle("more-down", scY < max - 8); // more story above or below
   }
 }
+/* Trivia: the row (or the strip) at a duck's y, and how far down it the duck stands. The rows share y up to
+   TV_ROWS_END, each the same part of it, whatever their height; the strip takes the rest */
+function tvSeg(y) {
+  const rows = geo.tl.rows,
+    n = rows.length - 1;
+  y = Math.max(0, Math.min(0.9999, y));
+  if (n < 1) return { row: rows[0] || { top: 0, h: geo.tl.h }, f: y, share: 1 };
+  if (y < TV_ROWS_END) {
+    const u = (y / TV_ROWS_END) * n;
+    return { row: rows[Math.floor(u)], f: u % 1, share: TV_ROWS_END / n };
+  }
+  return {
+    row: rows[n],
+    f: (y - TV_ROWS_END) / (1 - TV_ROWS_END),
+    share: 1 - TV_ROWS_END,
+  };
+}
+const tvFeet = (y) => {
+  const { row, f } = tvSeg(y);
+  return row.top + row.h * f;
+};
+/* Trivia's view slides to keep my duck in sight */
+function panRows(pos, now) {
+  const list = S.querySelector(".tv-rows");
+  if (!list || !geo.tl) return;
+  const dt = Math.min(0.1, Math.max(0, (now - (scT || now)) / 1000));
+  scT = now;
+  const max = Math.max(0, geo.tl.contentH - geo.tl.h),
+    want = Math.max(
+      0,
+      Math.min(max, pos && pos.x >= 0 ? tvFeet(pos.y) - geo.tl.h * 0.55 : scY),
+    );
+  scY =
+    Math.abs(want - scY) < 0.5
+      ? want
+      : scY + (want - scY) * Math.min(1, dt * 5);
+  const tr = `translateY(${(-scY).toFixed(1)}px)`;
+  if (list._tr !== tr) {
+    list._tr = tr;
+    list.style.transform = tr;
+    const v = list.parentNode;
+    v.classList.toggle("more-up", scY > 8);
+    v.classList.toggle("more-down", scY < max - 8); // more rows above or below
+  }
+}
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
   if (geo && geo.hang) return world.place(p); // Hangout: through the camera
@@ -778,6 +842,11 @@ function place(p, i, n) {
       left: cam.dx + cam.ox + p.x * cam.W * cam.z,
       top: cam.dy + cam.oy + p.y * cam.H * cam.z,
     }; // on the bracket itself, the same spot on every screen
+  if (geo.tl)
+    return {
+      left: geo.W * Math.max(0, p.x),
+      top: geo.tl.t + tvFeet(p.y) - scY,
+    }; // Trivia: down the rows, as tall as each one is
   const { W, H, top0, size, labelH, qp } = geo;
   if (p.x < 0) p = { ...p, x: startX(R.state) }; // (ducks start on the board; this only covers an old state)
   if (qp) {
@@ -818,6 +887,23 @@ function unplace(px, py) {
       x: cl((px - cam.dx - cam.ox) / (cam.W * cam.z)),
       y: cl((py - cam.dy - cam.oy) / (cam.H * cam.z)),
     };
+  if (geo.tl) {
+    const y = py - geo.tl.t + scY,
+      rows = geo.tl.rows,
+      n = rows.length - 1;
+    let k = rows.findIndex((r) => y < r.top + r.h);
+    if (k < 0) k = rows.length - 1;
+    const f = cl((y - rows[k].top) / rows[k].h) * 0.999;
+    return {
+      x: cl(px / W),
+      y:
+        n < 1
+          ? f
+          : k < n
+            ? ((k + f) / n) * TV_ROWS_END
+            : TV_ROWS_END + f * (1 - TV_ROWS_END),
+    };
+  } // (Trivia's rows)
   py -= geo.top0;
   if (qp) {
     const a = cl((px - qp.l) / (W - qp.l - qp.r)),
@@ -1061,6 +1147,7 @@ function drawDucks(now = clockNow()) {
   if (s.phase === "bracket") panTree(posOf(R.me));
   else cam = null; // (the camera first: ducks stand on the bracket)
   if (geo.sc) panStory(me, now);
+  if (geo.tl) panRows(me, now);
   const ids = [
       ...s.seat.filter((id) => s.pos[id]),
       ...(jp ? [JUSTIN_ID] : []),
@@ -3132,6 +3219,10 @@ function step(dt, now) {
     onTree = [1, (geo.H * 0.9) / SPEED.y / (row.h * k)];
     scWalk = now;
   } // (the story: the same speed on the screen in any row)
+  if (geo && geo.tl && me.x >= 0) {
+    const { row, share } = tvSeg(me.y);
+    onTree = [1, (geo.tl.h * share) / row.h];
+  } // (Trivia: the same speed on the screen in any row, however tall)
   const mul =
     (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1) * walkOf(s); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
@@ -5589,6 +5680,9 @@ async function act(a) {
     case "endround":
       R.send({ t: "endRound" });
       break;
+    case "tvstop":
+      R.send({ t: "tv", k: "stop" });
+      break;
     case "tvok":
     case "tvno": {
       // Trivia: the writer's Correct or Wrong on the row they stand on
@@ -6149,7 +6243,7 @@ register("game", {
         return;
       } // (one word)
       if (e.target.matches(".tv-win")) {
-        tvTyped(S, R.state, R.me, e.target.value);
+        if (tvTyped(S, R.state, R.me, e.target.value)) geo = null; // (my row grew: measured again)
         sendDraft();
         return;
       } // (Trivia: my answer shows in my row as I type it)
