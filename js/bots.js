@@ -61,6 +61,22 @@ import {
   vdTileRects,
 } from "./vddrules.js";
 import { justinAt } from "./boardjustin.js";
+import {
+  isTv,
+  TV_PHASES,
+  TV_ROWS_END,
+  TV_BOT_ANSWERS,
+  tvQ,
+  isWriter,
+  answerers,
+  needOf,
+  doneN,
+  canEnd,
+  rowCount,
+  tvRowAt,
+  mcOn,
+} from "./triviarules.js";
+import { TV_BANK } from "./triviabank.js";
 
 export const BOT_QUESTIONS = [
   "Pineapple belongs on pizza.",
@@ -472,6 +488,100 @@ function vdBot(s, id, now, late, out) {
     j: jumpNow ? now : p.j && now - p.j < 1400 ? p.j : 0,
   });
 }
+/* Trivia: a computer writes one of the auto questions (now and then a written one), walks onto answers and votes for
+   them (right a little more often than not: a TEST room's computers can see the answer), types a written answer, and as
+   the writer walks to each row and grades it. It presses End round only once every duck has voted and a while has
+   passed, so a person usually gets there first */
+const TV_BOT_WRITTEN = [
+  "Name a famous scientist.",
+  "What's the capital of Australia?",
+  "Name a planet with rings.",
+  "What year did the Titanic sink?",
+  "Name a Shakespeare play.",
+];
+const tvPlan = new Map(); // computer id + question → the rows it votes for
+function tvBot(s, id, now, late, out) {
+  const T = s.tv,
+    q = tvQ(s),
+    p = s.pos[id];
+  if (s.phase === "tvwrite") {
+    if (!late || s.done[id]) return;
+    if (!mcOn(s) || Math.random() < 0.2) {
+      out.push({
+        t: "submit",
+        id,
+        q: { text: anyOf(TV_BOT_WRITTEN), kind: "wr", ans: [], ok: [] },
+      });
+      return;
+    }
+    const [text, ans, ok = 0] = anyOf(TV_BANK);
+    out.push({ t: "submit", id, q: { text, kind: "mc", ans, ok: [ok] } });
+    return;
+  }
+  if (!q || !p) return;
+  const rowSpot = (i) => ({
+    x: 0.2 + (hash(id) % 60) / 100,
+    y: ((i + 0.55) / rowCount(s)) * TV_ROWS_END,
+  });
+  if (
+    s.phase === "tvq" &&
+    canEnd(s) &&
+    doneN(s) >= answerers(s).length &&
+    now - s.at > 15000 + (hash(id) % 5000)
+  ) {
+    out.push({ t: "tv", id, k: "end" });
+    return;
+  }
+  if (s.phase === "tvq" && late && answerers(s).includes(id)) {
+    const key = `${id}|${T.n}`;
+    if (!tvPlan.has(key)) {
+      const rows = q.ans.map((_, i) => i),
+        right = Math.random() < 0.6 && q.ok.length,
+        k = needOf(q);
+      tvPlan.set(
+        key,
+        right ? [...q.ok] : rows.sort(() => Math.random() - 0.5).slice(0, k),
+      );
+      if (tvPlan.size > 200) tvPlan.delete(tvPlan.keys().next().value);
+    }
+    const mine = T.votes[id] || [],
+      next = tvPlan.get(key).find((i) => !mine.includes(i));
+    if (next === undefined) return;
+    out.push(
+      ...walk(s, id, rowSpot(next), [{ t: "tv", id, k: "pick", i: next }], now),
+    );
+    return;
+  }
+  if (s.phase === "tvw" && late && T.ids.includes(id) && !T.sent[id]) {
+    out.push({ t: "submit", id, text: anyOf(TV_BOT_ANSWERS) });
+    return;
+  }
+  if (s.phase === "tvg" && isWriter(s, id) && now - s.at > 2500) {
+    const k = T.ids.findIndex((x) => T.grades[x] === undefined && T.text[x]);
+    if (k < 0) return;
+    const there = tvRowAt(s, p) === k;
+    out.push(
+      ...walk(
+        s,
+        id,
+        rowSpot(k),
+        there
+          ? [{ t: "tv", id, k: "grade", i: k, ok: Math.random() < 0.6 }]
+          : [],
+        now,
+      ),
+    );
+    return;
+  }
+  if (Math.random() > 0.015) return;
+  out.push({
+    t: "move",
+    id,
+    x: Math.max(0.03, Math.min(0.97, p.x + (Math.random() - 0.5) * 0.12)),
+    y: Math.max(0, Math.min(1, p.y + (Math.random() - 0.5) * 0.06)),
+    j: !p.j && Math.random() < 0.3 ? now : 0,
+  });
+}
 /* what the computers do now; returns a list of actions */
 export function botActions(s, now) {
   const out = [],
@@ -491,6 +601,10 @@ export function botActions(s, now) {
     }
     if (isVd(s) && VD_PHASES.includes(s.phase)) {
       vdBot(s, id, now, late, out);
+      return;
+    }
+    if (isTv(s) && TV_PHASES.includes(s.phase)) {
+      tvBot(s, id, now, late, out);
       return;
     }
     if (isHang(s)) {

@@ -50,6 +50,21 @@ import {
   isDate,
 } from "./vddrules.js";
 import {
+  isTv,
+  TV_BOARD,
+  tvStart,
+  tvRound,
+  tvDeal,
+  tvAdvance,
+  tvWrite,
+  tvPick,
+  tvEnd,
+  tvGrade,
+  tvJoin,
+  tvSkip,
+  tvLimit,
+} from "./triviarules.js";
+import {
   isQuack,
   QUACK_PHASES,
   startQuackRound,
@@ -170,7 +185,7 @@ export const OPTIONS_DEFAULT = {
   mapPick: "vote", // (Vote Maps is the default) "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
   modePick: "", // "" (the host's game) | vote (Vote Game Mode: everyone votes) | random (a new game every round)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
-  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
+  mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | trivia (Trivia) | hang (Hangout)
   bbSeeds: "t8", // Bicker Brackets: t8, t12, t16, t32, t64 seeds shared out, or p1 … p4 seeds for each player
   bbTopic: "vote", // vote (everyone writes one, then votes) | random (one of BB_TOPICS)
   bbBlind: 0, // 1: a seed's writer stays hidden until it is knocked out or wins
@@ -207,6 +222,13 @@ export const OPTIONS_DEFAULT = {
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   l4r16: 0, // Quacky Zombies' Round 16 Start: 1 = after round 0's Ready it skips to round 16, everyone with 3,000 points
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
+  tvWrite: 210, // Trivia: seconds to write the questions: 120, 210, 300 or 0 (no limit)
+  tvMulti: 1, // … Multiple answers: 1 = a question can have several right answers (never all); 0 = exactly one
+  tvNoWrong: 0, // … No wrong answers: 1 = a writer can leave every answer unmarked (it then counts for nobody's stats)
+  tvMc: 1, // … Multiple choice: 0 = every question is written (never off with tvWr off)
+  tvWr: 1, // … Written answers: 0 = no Written Answer button (never off with tvMc off)
+  tvHide: 0, // … Hide who wrote it: 1 = the cloud shows a multicolored "?" in place of the writer
+  tvGrade: 0, // … Grading timer: 1 = the writer has 1:00 a row, and a row still ungraded then counts as right
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
 };
 export const MAX_DEFAULT = 8;
@@ -332,6 +354,8 @@ function beginGame(s, now) {
   if (isMgj(s)) return mgjStart(s, now);
   s.vd = null;
   if (isVd(s)) return vdStart(s, now);
+  s.tv = null;
+  if (isTv(s)) return tvStart(s, now);
   return isBb(s)
     ? startTourney(s, now)
     : isQuack(s)
@@ -422,7 +446,9 @@ export const boardPhases = (s) =>
                 ? ["boss", "mgjend"]
                 : isVd(s)
                   ? VD_PHASES
-                  : ["answer", "discuss", "results"];
+                  : isTv(s)
+                    ? TV_BOARD
+                    : ["answer", "discuss", "results"];
 const humanIds = (s) => s.seat.filter((id) => !s.players[id].bot);
 /* who plays now: a player who joined in the middle of a turn they can't take part in walks around until the next one */
 export const playing = (s) =>
@@ -433,7 +459,7 @@ export const seatLate = (s) => {
 /* the fewest players a game needs. I want a game that drops below it to wait for players ("Waiting for players to
    continue", with 2/3 and the like) instead of ending: the timers stop where they were, ducks still walk, and the game
    goes on once enough are back */
-export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3 };
+export const MIN_PLAYERS = { quack: 3, law: 3, dunce: 3, vdd: 3, trivia: 2 };
 export const minOf = (s) => MIN_PLAYERS[s.options.mode] || 0;
 const running = (s) => !["lobby", "over", "countdown"].includes(s.phase);
 const WAIT_BLOCK = [
@@ -565,7 +591,7 @@ export const needed = (s) =>
 export const voteKey = (s, now) =>
   isHang(s) ? "hang" + Math.floor(now / 120000) : turnKey(s);
 export const turnKey = (s) =>
-  s.phase === "submit"
+  s.phase === "submit" || s.phase === "tvwrite"
     ? `w${s.round}`
     : ["answer", "discuss"].includes(s.phase)
       ? `q${s.round}.${s.qi}`
@@ -765,6 +791,7 @@ export function newRoom({
 
 /* the time limit of the current phase (0 = none) */
 function phaseLimit(s) {
+  if (isTv(s) && s.phase.startsWith("tv")) return tvLimit(s);
   if (s.phase === "write") return +s.options.scTime || 0;
   if (["submit", "topic", "seeds"].includes(s.phase))
     return s.options.submitTime;
@@ -876,7 +903,9 @@ export function toStats(s, now) {
     ? startTourney(s, now)
     : isQuack(s)
       ? startQuackRound(s, now)
-      : enter(s, "submit", now);
+      : isTv(s)
+        ? tvRound(s, now)
+        : enter(s, "submit", now);
 }
 function startResults(s, now) {
   s.reviewVotes = {};
@@ -900,6 +929,10 @@ function startResults(s, now) {
     s.lock = {};
     return toStats(s, now);
   }
+  if (isTv(s)) {
+    s.lock = {};
+    return toStats(s, now);
+  } // (Trivia: the stats fill the screen)
   // each duck stays where it was, in the column it was locked into on the last question; a duck that never stood on
   // the board (it joined late) starts in Neutral
   s.lock = {};
@@ -920,7 +953,7 @@ function startResults(s, now) {
 }
 
 /* the countdown once the needed share has voted; with "Unvoting stops the countdown" on, falling below the share stops it */
-export const WRITE_PHASES = ["submit", "topic", "seeds", "words"];
+export const WRITE_PHASES = ["submit", "topic", "seeds", "words", "tvwrite"];
 export const catchLen = (s) =>
   +(WRITE_PHASES.includes(s.phase)
     ? (s.options.writeCatch ?? 30)
@@ -958,6 +991,7 @@ function advance(s, now, force = false) {
       : next;
   } // (Mad God Justin: his HP, the timer, the podium, Try again; with Random, the next game instead)
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdAdvance(s, now, force); // (Valentine's Duck Date: its timers)
+  if (isTv(s) && TV_BOARD.includes(s.phase)) return tvAdvance(s, now, force); // (Trivia: a question's votes, answers, grades)
   const on = playing(s),
     n = on.length,
     d = on.filter((id) => s.done[id]).length,
@@ -1003,6 +1037,8 @@ function advance(s, now, force = false) {
       }
       return isLaw(s) ? startCase(s, now) : startQuestion(s, now);
     }
+    case "tvwrite":
+      return tvDeal(s, now); // (Trivia: everyone's question, or an auto one)
     case "topic":
       return endTopics(s, now);
     case "tvote":
@@ -1046,7 +1082,9 @@ function advance(s, now, force = false) {
         ? startTourney(s, now)
         : isQuack(s)
           ? startQuackRound(s, now)
-          : enter(s, "submit", now);
+          : isTv(s)
+            ? tvRound(s, now)
+            : enter(s, "submit", now);
   }
   return s;
 }
@@ -1069,6 +1107,7 @@ function seatNewcomer(s, id) {
     me.late = true;
     return;
   }
+  if (isTv(s)) return tvJoin(s, id); // (Trivia: on the strip under the rows, and a row of their own while answers are written)
   if (boardPhases(s).includes(ph))
     s.pos[id] = { x: startX(s), y: Math.random() };
   if (isQuack(s)) {
@@ -1401,6 +1440,10 @@ export function reduce(state, a, now = Date.now()) {
       return s;
     case "submit": {
       if (isVd(s)) return vdWrite(s, a, now, true) || state; // (Valentine's Duck Date: The Date's topic)
+      if (isTv(s)) {
+        const r = tvWrite(s, a, now, true);
+        return !r ? state : r.phase === "tvwrite" ? advance(r, now) : r;
+      } // (Trivia: a question, or a written answer)
       if (isBb(s)) return bbWrite(s, a, now, true);
       if (isSc(s)) return scWrite(s, a, now, true) || state;
       if (!me || s.phase !== "submit" || s.done[a.id]) return s;
@@ -1420,6 +1463,7 @@ export function reduce(state, a, now = Date.now()) {
     case "draft": {
       // what a player has typed so far (kept by the host, sent in for them at the end)
       if (isVd(s)) return vdWrite(s, a, now, false) || state;
+      if (isTv(s)) return tvWrite(s, a, now, false) || state;
       if (isBb(s)) return bbWrite(s, a, now, false) || state;
       if (isSc(s)) return scWrite(s, a, now, false) || state;
       if (!me || s.phase !== "submit" || s.done[a.id]) return state;
@@ -1491,7 +1535,8 @@ export function reduce(state, a, now = Date.now()) {
         !isQuack(s) &&
         !isHang(s) &&
         !isMgj(s) &&
-        !isVd(s)
+        !isVd(s) &&
+        !isTv(s)
       ) {
         // after answering: inside your own column; no answer, no board (late joiners roam; over the bracket anyone does)
         const c = s.lock[a.id];
@@ -1562,6 +1607,7 @@ export function reduce(state, a, now = Date.now()) {
       if (isMgj(s) && s.phase !== "results") return state; // (Mad God Justin: only Try again, on the stats)
       if (isVd(s) && VD_PHASES.includes(s.phase))
         return vdEnd(s, a, now) || state; // (Valentine's Duck Date: only The Date's Next duck and Turn down)
+      if (isTv(s) && TV_BOARD.includes(s.phase)) return state; // (Trivia: its own action, below)
       if (
         !me ||
         me.late ||
@@ -1872,6 +1918,19 @@ export function reduce(state, a, now = Date.now()) {
       if (w.go[a.id]) delete w.go[a.id];
       else w.go[a.id] = true;
       return goOnDone(s, now) || s;
+    }
+    case "tv": {
+      // Trivia: a vote on a row (pick), End round (end), the writer's Correct or Wrong (grade)
+      if (!me || !isTv(s)) return state;
+      const r =
+        a.k === "pick"
+          ? tvPick(s, a, now)
+          : a.k === "end"
+            ? tvEnd(s, a, now)
+            : a.k === "grade"
+              ? tvGrade(s, a, now)
+              : null;
+      return r || state;
     }
     case "vdTimer":
       return me && isVd(s) ? vdTimer(s, a, now) || state : state; // Valentine's Duck Date: The Date's Start timer (pause, go on)
@@ -2390,6 +2449,11 @@ export const STAGE = {
   vdpick: "voting",
   vddown: "discussing",
   vdval: "stats",
+  tvwrite: "writing",
+  tvq: "voting",
+  tvw: "writing",
+  tvg: "voting",
+  tvr: "discussing",
   lobby: "lobby",
   countdown: "lobby",
   over: "stats",
@@ -3392,6 +3456,7 @@ function skipRound(s, now) {
   }
   if (isQuack(s)) return quackSkip(s, now); // Who is the Quack?: no winner, the word shown
   if (isVd(s)) return vdSkip(s, now); // (Valentine's Duck Date: on to the pick, or the next turn)
+  if (isTv(s)) return tvSkip(s, now); // (Trivia: the rest of the round's questions are dropped)
   if (isSc(s)) {
     // Story Chain: the paragraph ends with what was written; with nothing written yet, new words are drawn
     const none =

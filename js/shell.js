@@ -53,6 +53,7 @@ import { quackStats } from "./quackrules.js";
 import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";
 import { vdStats, turnedDown } from "./vddrules.js";
+import { tvStats } from "./triviarules.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
@@ -513,6 +514,10 @@ function statLines(ctx, scope, args) {
         out.push(
           `${nm(id)}: ${st.games} games · ${st.rounds} turns · ${st.argued} dates · Valentine ${st.wins} · Turned Down ${st.losses} · The Date ${st.titles} · ${st.jumps} Jumps`,
         );
+      else if (mode === "trivia")
+        out.push(
+          `${nm(id)}: ${st.games} games · ${st.rounds} rounds · ${st.answers} answers · right ${st.wins} · wrong ${st.losses} · ${st.titles} questions written · ${st.jumps} Jumps`,
+        );
       else if (mode === "mgj")
         out.push(
           `${nm(id)}: ${st.games} games · ${st.rounds} fights · won ${st.wins} · lost ${st.losses} · damage ${st.answers} · knocked down ${st.majority} · killing blows ${st.titles} · ${st.jumps} Jumps`,
@@ -641,6 +646,14 @@ function statLines(ctx, scope, args) {
                 : "Suitor";
       out.push(
         `${nm(id)}: ${role} · ${p.dates} dates · ${Math.round(p.ms / 1000)} s on dates · ended early ${p.early} · ${jumps(id)} Jumps`,
+      );
+    }
+  } else if (mode === "trivia") {
+    const per = tvStats(s, round).per;
+    for (const id of ids) {
+      const p = per[id] || { right: 0, wrong: 0, asked: 0, got: 0, of: 0 };
+      out.push(
+        `${nm(id)}: right ${p.right} · wrong ${p.wrong} · ${p.asked} questions written${p.of ? ` · ${pct(p.got / p.of)} of their answers right` : ""} · ${jumps(id)} Jumps`,
       );
     }
   } else if (mode === "mgj") {

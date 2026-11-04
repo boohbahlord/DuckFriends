@@ -12,6 +12,8 @@ export const UPDATES = [
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "A new mode, Trivia (2 players or more): everyone writes a question, multiple choice or a written answer, then the ducks walk onto the answers they think are right. Whoever wrote it grades the written answers. Genius, Dumbo, Easiest Prompts and Hardest Prompts at the end.",
+      "For Bicker Brackets: when the writer is hidden, the cloud shows a multicolored ? instead.",
       "For Would You Rather: Add a prompt from Notes lets you pick which box the note goes into; both boxes glow green until you tap one.",
       "On a computer, right-click a note in the Notes list and press Copy to copy its text.",
       "For Quacky Zombies: the cash register rings for ammo bought anywhere with B too.",

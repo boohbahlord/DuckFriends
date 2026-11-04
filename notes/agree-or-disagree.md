@@ -3568,3 +3568,109 @@ Maybe bleeding cuts or bleeding bullet holes can show up as well when they get s
   chest, the belly and the tail; bruises on the back of the head, the chest, the belly and the tail; bites on the back
   of the head, the chest and the tail; torn holes on the head, the belly and the tail). The 8 others stay, none added.
   The sheet: https://claude.ai/artifact/XcPy4QrV2JvdhYze3CbBFG (version 1, before these).
+
+
+## Trivia mode and Euclid's Squares map (owner 2026-11-04 02:18Z, answers 03:49Z and 03:53Z)
+
+Owner, 02:18Z:
+
+> Here is my friend's idea:
+>
+> "I got a fun idea you could do for duck game
+>
+> Trivia
+>
+> One person has a topic and is the “host” who asks the questions
+>
+> And the questions can either be written response or multiple choice depending on the setting"
+>
+> It is called "Trivia" and it is a game where the prompt will be written before the round by all players, each getting their own prompt. The players write a question in the top of the prompt window, and the question there is boxes that are multiple choice, where their answers are written into. The choices have to be at least two or a + below them can be clicked to add more, and the boxes have to be written into. Each answer can be clicked to equal correct to the left of them, BUT a player does NOT need to have any be correct IF a setting in the game lobby enables no wrong answers. There is another setting to enable written answers which can then allow this in game: above the multiple choice select and below the question in the prompt window, the player can click a button to enable "Written Answer", which then can allow players to write answers in the round where a written answer is necessary in the same way it is done in the story writing game (they have two minutes to write their answer), where every player gets a row to write in on a map that you can move down through. Players write their responses at the same time AND the duck who wrote it will vote correct or wrong over every row answer, where they are not timed and can go through and grade if the players are right or wrong one at a time (but an option setting appears in lobby to have 1 minute timer before every grading or correct vs wrong vote by the prompter). this setup appears ONLY during a round WHERE there is a written prompt section, and another setting is written prompt only. In the multiple choice one, there are columns on the board with the letters of the choice written inside them, and each tile is also going to have the letter choice mentioned as so:
+> A
+> B
+> C
+> D
+> and so on...
+> The players select their answers on lines like the story writing mode, and the letters are to the left of the answers. The letters for the choice such as "(A)" are multicolored in the font of the usual thing you see for the multicolored letters in game. The prompt is in the cloud and has the player who wrote it in the cloud. There is a game mode option to make it hide who answered it, so it does not say the player who wrote it, and for now on, this option will hide the player who wrote it who might be shown in the cloud IF they are by putting the multicolored coloring lettering  with the usual font for the queestion mark character "?" (only if that gamemode EVEN showed the writer in the cloud, since not all will)
+>
+> There can be four multiple choices max AND there is ONLY one correct answer max actually (maybe there can be as many correct answers in multiple choice as they want and they can vote for many answers, and so that can be changed in the gamemode settings.)
+>
+> The answers will highlight green when the player walks over a given answer and selects that one AND the player's duck is shown on the bottom middle of the row they selected.
+>
+> They players vote for the one they want, and votes do not end the round, but the end round button next to it does, which has to be clicked manually AND it only appears once the amount needed to end a round has already voted, and the end round button disappears if not enough voted because one unvoted. SO if it is set to 2/3 votes, then 2/3 most vote their answer BEFORE the end round button can show up, and this can be added to similar social games in a game option found in the lobby. 
+>
+> OKAY, so MAYBE we CAN have it to WHERE the written answer DOESNT have to be turned on, BUT it can be turned off OR multiple choice can, in a option that fades out the other if one is selected, and the other option becomes available WHEN the selected one becomes unselected for the option that disables one of these two, so both cannot be true at the same time or the game becomes impossible. this is a gmemode setting, and thus there is no option to enable one but to only disable another, since both are on by default. We can also make it to where multiple answers is on by default unless turned off, and the round will tell players IF it is a multiple choice, WHICH ONLY THEN will allow players to vote for more then one, but the writer nor player can not answer ALL of them as correct. The player gets the answer wrong IF they didnt select only the correct ones on multiple choice.
+>
+> The notes you can write into still work, and at the bottom of the prompt writer, you simply click the notes AND THEN it will show some kind of option for the multiple boxes you can input into from the notes, prob in the same way would you rather might already be done OR something better if they dont make it as i mention here, but you can tell me with context and help me know.
+>
+> The stats will be who got the most correct, who got the most wrong, which writer was the easiest to get the right answer on, and which writer was hardest to get the right answer on.
+>
+> "Good Student" The stats will be who got the most correct
+> "Dumbo" who got the most wrong
+> "Easiest Prompts" which writer was the easiest to get the right answer on
+> "Hardest Prompts" and which writer was hardest to get the right answer on
+> Most jumps is still a stat
+>
+> Ask me questions about this and see if I have anything undefined here OR just need clarity. Number your questions and never repeat numbering, so 1 doesnt go twice.
+>
+> Do not add unto my ideas without asking. 
+>
+> I obv changed a lot of things in the middle of writing, so you could imagine what to leave out or ask me a simple true or false answer. I will answer your questions in a prompt i write, not a multipe choice you put on my screen. 
+>
+> This game is obv a competetive social 
+>
+> I also want a new map of some kind of squared mosaic based off some math that i saw in a video. Ill send the picture of it that can be used as inspiration for the map. The color pattern and square pattern should be similar.
+
+Owner, 03:49Z (answers 1-37):
+
+> True = t
+> False = f
+>
+> 1. t
+> 2. t
+> 3. t
+> 4. t (or else their question doesn't make it in the game, so you can make a default auto question based in college level curriculum, such as physics, calculus, computer science, history, neuroscience, or english, and more as well).
+> 5. (B)
+> 6. t (yes it says how many are correct)
+> 7. yes the answer to the question in a written answer format is either correct or inccorect, as judged by the player who wrote the prompt, who go on the board and judges everybodies answers THRU buttons that appear when they stand on them
+> 8. t 
+> 9. t
+> 10. For the written answer round yeah, but the prompt writing will last 3 and a half minutes by default but can be changed to 2 minutes or 5  or no time limit in the prompt writing turn everyone shares in at the same time.
+> 11. t
+> 12. (a) & (d)
+> 13. t. yes they can walk around and everything while they are graded and nobody has to stay on a particular row after choosing one either in multiple choice because there vote is shown by their duck being placed in the bottom middle of where they voted (which it can show many ducks there of equal sizes if they voted too)
+> 14. t
+> 15. f, instead, it will be rows with the text in it, and the rows are just like that for the written answer section AND they still have the multicolored letter in beginning of the statement
+> 16. no columns and nothing like agree or disagree, i changed my mind on that
+> 17. b, with multiple answers, you go over the other one and press enter as well, and your answers arent all in until you answers multiple in regards to a turn being considered finished voting, even IF the next round wont happen because of the end turn button we talked about. So yeah, you click enter again over a row to unselect or unvote and then click it again to vote or select
+> 18. t (and multiple options are green in multiple choice for that player)
+> 19. t
+> 20. your duck doesnt get locked into any row ever
+> 21. t
+> 22. t unless the grader didnt grade in time IF the setting for that was turned on (which it isnt on by default as we know)
+> 23. t
+> 24. t
+> 25. t
+> 26. t
+> 27. (a)
+> 28. t
+> 29. only true for social games where it can apply, prob all of them.
+> 30. Okay, how it will work is that u select the notes option at the bottom of the prompt, and for any gamemode WHERE there are multiple options, you just select the box you want to import it into, and then those boxes will breathe a green glow at the and around the edges until one is selected. right clicking a note in pc will have a button that says "Copy" and that puts it to the computer to paste anywhere. all of the stuff is for any game mode where the new features apply
+> 31. easiest prompts goes to the writer, as in, if the players were able to get their questions right more then any other writer, then that player who wrote those which this is true gets the easiest prompt award, and the same goes for the vice versa here
+> 32. t, but rename good student to "Genius"
+> 33. 2 players minimum
+> 34. yes but that isnt the image, it is a math concept where they are the tiniest off center, and those gaps that are off center are filled with more sqaures in which  suffer the same rule by recursion... something liike that, it should be mathmatically recreatable and be able to look similiar if you know what i am talking ab, u should ask me to be sure if u know now or not.
+> 35. (a) & (c) ; if (c) is even possible, let's focus on finishinig (a) before attempting (c), and (c) could be it's own map to vote in the vote map setting BUT is a setting in the game instead of a different map IF it is selected and not by random OR map vote.
+> 36. t
+> 37. It should be named after it's math 
+> 38.
+
+Owner, 03:53Z:
+
+> 38. t / 39. t (yeah that particulary prompt they didnt answer doesnt count towards them as writer yeah but pllayers who select the right answer or fail to still get their stat for which) / 40. t / 41. t
+
+- Full spec with every question and answer: /mnt/project-files/trivia/spec.md.
+- Built by Adam (Trivia, mode `trivia`, js/triviarules.js, js/trivia.js, js/triviabank.js). Choices Adam made: a 5 s
+  reveal after each question; written answers stay hidden until grading; an empty written answer counts as Wrong;
+  an added answer box has a x to remove it; computers press End round after a while once it shows.
+- A hidden writer in Bicker Brackets is now the multicolored ? on the cloud too (answer about the ? for every mode).
+- Still to do: the End round setting for the other social games (Q41, off by default).
