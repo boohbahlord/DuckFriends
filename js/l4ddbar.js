@@ -95,13 +95,13 @@ export function mountL4Bar(S, api) {
 }
 
 /* ---------- phones: the slots in the specials' slider ----------
-   The slider (hotbar.js) holds my five slots and the flashlight, in the bar's order, each in its color. Sliding to the
-   melee or a ranged weapon puts it in hand (it stays there, as on a computer), and sliding to the special puts the
-   special in hand instead. The grenades and the flashlight don't change what's in hand: with the grenades in the middle
-   the attack stick throws one, and the purple switch turns the flashlight on and off. The switch also takes the special
-   out of hand again (the weapon before it comes back); a weapon in hand can't be switched off, so it shows on and
-   can't be pressed. A tap on the middle one: the special is used (the medkit), a grenade is thrown at the nearest
-   zombie, the flashlight goes on or off.
+   The slider (hotbar.js) holds my five slots in the bar's order, each in its color (not the flashlight: on a phone it
+   just stays on, one thing less to think of; the owner's, Nov 4). Sliding to the melee or a ranged weapon puts it in
+   hand (it stays there, as on a computer), and sliding to the special puts the special in hand instead. The grenades
+   don't change what's in hand: with them in the middle the attack stick throws one. The purple switch takes the
+   special out of hand again (the weapon before it comes back); a weapon in hand can't be switched off, so it shows on
+   and can't be pressed. A tap on the middle one: the special is used (the medkit), or a grenade is thrown at the
+   nearest zombie.
    api: as mountL4Bar's, plus fire(w) (uses w where I aim), slot() → the slot in hand. Gives the slider's api. */
 export function l4Slider(api) {
   const kit = () => {
@@ -116,7 +116,7 @@ export function l4Slider(api) {
   const keys = () => {
     const k = kit();
     if (!k) return [];
-    return [...k.sl.map((w) => w || null), "grenade", "fl"];
+    return [...k.sl.map((w) => w || null), "grenade"];
   };
   const kindAt = (i) => SLOT_KINDS[i] || (i === 4 ? "grenade" : "light");
   const look = (id) => {

@@ -15,7 +15,7 @@ const INK = "#1c1c28";
 /* a zombie's picture, made once for each look (the same look is the same picture): 64 px wide, its shadow under it */
 const LOOKS = new Map();
 export function zombieURL(l) {
-  const k = [l[3], l[4], l[5], l[6]].join();
+  const k = [l[3], l[4], l[5], l[6], l[7]].join();
   if (!LOOKS.has(k))
     LOOKS.set(
       k,
@@ -28,7 +28,7 @@ export function zombieURL(l) {
 /* its box: 64 wide, as tall as its drawing (a hat makes it taller); feet 10 units over the bottom, as a duck's */
 const BOXES = new Map();
 export function zombieBox(l) {
-  const k = [l[3], l[4], l[5], l[6]].join();
+  const k = [l[3], l[4], l[5], l[6], l[7]].join();
   if (!BOXES.has(k)) {
     const v = duckSVG(zombieLook(l), { size: 64, dead: true })
       .match(/viewBox="([^"]+)"/)[1]

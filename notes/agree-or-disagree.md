@@ -3462,3 +3462,48 @@ The other player's HP on PC will show as small version of these meters with smal
   one screenshot of that mode (assets/modes/<mode>.webp: every name tag, the top bar and the bottom bar hidden, the
   ducks in the seven rainbow colors). It was taken with the map left out, so it's drawn over the picked map. Duck
   Cabin's games are screenshots of the cabin.
+
+## Request (owner, 2026-11-04 03:16Z, with a screenshot of the mobile Game Settings screen)
+"some things i noticed ab the zombie game, and ill answer the questions too:
+
+* the grenade button isnt listed in controls in the bottom left (only for this gamemode pls) for the zombie game AND the G button on the slot is hard to read
+* the the shotgun has a magazine, it is not suppose to do that
+* there needs to be walking sound for players, a quitter walking sound for zombies (the sound matching their speed), a sound for repairing boards, and a sound of boards being broken. Also a slot machine sound for the fireplace.
+* there should be guns that can be purchased from the butler, such as the two different pistols, the knife, AND the shotgun, and the bullet cost for these are 5 points per two bullets AND buying it again when you already have that gun WILL say refill and auto spend the amount of points necessary to refill ammo to max ONLY for that gun he is selling IF you have it AND there is an auto refill button on the store that automatically buys a magazine for that gun as soon as it reaches zero. the guns you buy from him SHOULD NOT be possible to see in the fireplace for yourself IF you have that gun equipped. 
+* the purchasing should have a cash register sound maybe 
+* the sound of a new round should have an ambient sound that is hard to make out and fades away. It should sound like.... the beginning of this video maybe or something like that https://youtu.be/tmlZeYnfw7g?si=sg9fnner1FZxBqqe
+* make sure guns are loud enough because maybe they are still too quiet.
+* zombies should have zombie duck sounds that arent to quiet and dont happen too commonly per zombie since there are many zombies (there should be a limit to how many zombies can make sounds at a time when approximate to another group of zombies a certain distance away?).
+* the special drop effects SHOULD last a minute each and not end when a round ends IF they have a timer.  Max ammo should be maybe 20% more likely then the others to drop, AND THAT MEANS that it is still the same chance to drop as a special drop effect for all of them, but once they drop the max ammo becomes 20% more likey then before (so like if every one of them was 100% equally, then max ammo is 120% now). Nuke is still a Nuke and it gives points to all players for every damage done, and there is a 5% chance or crit for any one zombie killed +250 points for the nuke.
+* the zombies have a 0.25% chance to have the justin skin instead of however much it was before. 
+* Justin (maybe do this last after everything) has a 1% chance of being spawned in the fireplace, and doing this means that Justin spawns in the game as another player and helps the players survives, and he starts with 1,500 points of his own and will use the knife when he runs out of weapons (actually make his npc decent or good at the game). Invulnerability OR justin cannot be spawned in with terminal for this game OR mad god justin NOR can they be enabled thru setttings to spawn in with them for EITHER. Justin spawns in with max health already and a chain gun. He prefers to use guns over melee and avoids getting damaged while moving away or around zombies without getting cornered. He moves as fast as any other player and all the rules apply to him the same.
+* why is there green bars below the hotbars for HP? we already have an hp bar. We can also make all the HP bars not have white around the bars or blocks in the meters but black AND it should be somewhat thinner (very little) BUT a lot more thin for the Justin boss in the Mad God Justin game mode becuz he has so much health. Have a different screenshot for Justin in that gamemode please because you cannot see him in it's screenshot. 
+* the default map now is vote for map whenever you play the normal game IF another map option isnt selected OR it is not cabin map. 
+* make the zombies have random scars, cuts, or signs of rotting added and give me pictures for the many variations for me to check and see if i approve of them.
+* smg bullets dont need to be that small. 
+* also the bow and arrow can be bought from the butler too
+* the scroll wheel should be a way to switch between specials in the hotbar for all gamemodes. 
+* the auto refill ammo shouldnt actually be added on second thought, BUT a B button can be used for the gun your holding to buy ammo for the price the butler sells it for as a shortcut BUT the ammo only buys if you have enough points. The ammo shortcut is shown in the bottom left for PC. The B button is mentioned in the bottom of the butler window AND the escape button exits the window instantly AND using the arrow keys ALSO instant exits it. The ammo refill with B button ONLY WORKS for guns that are both in his shop tab AND also not full of ammo. The arrows cost five points for every five arrows.
+* On mobile, the board can take up the full screen ON mobile AND have ui over it like normal AND allow the movement joystick to appear anywhere that isnt on top of a place where you click a button on, but it can be used on a place next to a button. HMMMMMM, actually make it like this for everything on mobile, like every game mode, including horizontal play.
+* The arrow keys should be used to aim for a player not using keyboard for EVERY game mode, but i think pharaoh messed that up.
+
+
+I have a screenshot of UI in the settings menu on mbile, and this is completely unacceptable. The preview being at the top is fine, but move the descrption box below the selected option, and it only shows info below the row of the selected item one at a time only for now on. Move hangout to the social games AND add the zombie game and the mad god justin game to the special game modes together.
+
+The description for the games that use the cabin map should say that the game mode can only be played on cabin map, and selecting cabin map IN the map menu will take players to a unique window that ONLY shows the game mode for cabin map.
+
+The settings changed in the lobby or through terminal will be shown in the text chat for players to read, and it will say who changed them by their player tag. 
+
+the flashlight doesnt need to be an option in the hotbar for the mobile players so they dont have to worry about it within their particular setup."
+- Adam's split:
+  - Solomon the 2nd, in 3 PRs:
+    1. Quacky Zombies gameplay: G in the controls list; shotgun with no magazine; the Butler's gun shop with Refill; the B
+       key; Esc and the arrows close the shop; drops last 1 min; Max Ammo weighted 1.2; nuke points and its 5% +250;
+       Justin skin 0.25%; no flashlight on phones.
+    2. A full-screen phone board in every mode, with the joystick anywhere.
+    3. Last: helper Justin.
+  - Miles Jr.: the sounds and louder guns.
+  - Noah: the scars and rot (pictures to the owner), the HP meter style, the green bars, the SMG bullets, the G label.
+  - Jackal: the scroll wheel and arrow-key aiming.
+  - Adam: Game Settings layout, mode groups, the Cabin map window, settings in chat, Vote Maps default, the new Mad God
+    Justin screenshot.

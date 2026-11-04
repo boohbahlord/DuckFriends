@@ -7,6 +7,26 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "2026-11-04",
+    version: 139,
+    date: "Nov 4, 2026",
+    title: "The Butler sells guns",
+    news: [
+      "For Quacky Zombies: Justin's Butler sells both pistols, the knife, the shotgun and the bow. Bullets are 5 points for 2, arrows 5 points for 5. A gun you already have says Refill and fills it to the top.",
+      "For Quacky Zombies: on a computer, B buys ammo for the gun in your hand at the Butler's price, from anywhere (his guns only, when it isn't full, and only if you have the points for all of it). G and B are in the keys at the bottom left now.",
+      "For Quacky Zombies: Esc or an arrow key closes the Butler's window at once.",
+      "For Quacky Zombies: the shotgun has no magazine: 48 shots, no reloading.",
+      "For Quacky Zombies: the fireplace never shows you a weapon you already have.",
+      "For Quacky Zombies: Instant Kill, Double Points and Speed Boost last a minute each, into the next round too. When a drop comes, Max Ammo is a little more likely than the others.",
+      "For Quacky Zombies: a Nuke gives every duck the points for everything it kills, and each zombie it kills has a 5% chance of 250 more.",
+      "For Quacky Zombies: 1 zombie in 400 is Justin.",
+      "For Quacky Zombies: on a phone, the flashlight isn't in the hotbar anymore. It just stays on.",
+    ],
+    fixed: [
+      "For Quacky Zombies: on a phone, the jump and aim buttons no longer cover the bottom of the Butler's window.",
+    ],
+  },
+  {
     id: "2026-11-03",
     version: 138,
     date: "Nov 3, 2026",
