@@ -171,6 +171,7 @@ export const OPTIONS_DEFAULT = {
   answerTime: 30, // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
+  endBtn: 0, // 1: End round: in the social games a vote doesn't end the turn; a button does, once the needed share has voted (Trivia always has it)
   unvoteStops: 1, // 1: taking a vote back below the share stops that countdown (I want this by default); 0: once started it runs out anyway
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
@@ -624,6 +625,19 @@ export const reviewCount = (s) =>
   playing(s).filter((id) => s.reviewVotes[id]).length;
 export const needed = (s) =>
   Math.max(1, Math.ceil(playing(s).length * shareOf(s) - 1e-9));
+/* the End round button (the host's setting, off by default): in the social games where ducks vote, the votes don't end the
+   turn, the button does, and anyone playing can press it once the needed share has voted. A vote taken back below the
+   share hides it again. The answer timer, when there is one, still ends the turn */
+export const END_BTN_MODES = ["aod", "wyr", "ddr", "sc"];
+export const endBtnOn = (s) =>
+  !!s.options.endBtn &&
+  END_BTN_MODES.includes(s.options.mode) &&
+  (isSc(s) ? ["lvote", "wvote"].includes(s.phase) : s.phase === "answer");
+export const endDone = (s) =>
+  isSc(s)
+    ? playing(s).filter(scFreeOf(s)).length
+    : playing(s).filter((id) => s.done[id]).length;
+export const canEndRound = (s) => endBtnOn(s) && endDone(s) >= needed(s);
 /* one turn: the writing stage, one question (its vote and talk), or the stat screen */
 /* the turn a back-to-lobby (or skip) vote belongs to; Hangout has no turns, so a couple of minutes instead */
 export const voteKey = (s, now) =>
@@ -1039,6 +1053,7 @@ function advance(s, now, force = false) {
   if (isDn(s) && s.phase === "answer") return dnCheck(s, now, force); // a take waits for its timer (or, with none, for the votes)
   const sway = isBb(s) && s.phase === "answer"; // a bracket match waits for every vote (or its own timer, if the host set one)
   const timeUp = s.ends && now >= s.ends;
+  if (endBtnOn(s) && !force && !timeUp) return s; // (End round: only the button, or the timer, ends the vote)
   /* I want every phase to end when everyone has voted; the needed share only starts the countdown (the catch-up timer).
      A vote taken back doesn't stop it, unless the host turned on "Unvoting stops the countdown" */
   catchUp(s, now, enough && !all && !sway);
@@ -1678,6 +1693,11 @@ export function reduce(state, a, now = Date.now()) {
       s.done[a.id] = a.v ?? !s.done[a.id]; // pressing Vote again takes the vote back (and frees the duck to walk)
       return advance(s, now);
     }
+    case "endRound":
+      // the End round button: anyone playing, once enough have voted
+      if (!me || me.late || !playing(s).includes(a.id) || !canEndRound(s))
+        return state;
+      return advance(s, now, true);
     case "voteReview":
       if (!me || s.phase !== "results" || s.round < 1 || s.reviewVotes[a.id])
         return s;
@@ -4254,13 +4274,17 @@ function scWrite(s, a, now, send) {
   s.done[a.id] = true;
   return advance(s, now);
 }
+/* who is through with a Story Chain step: done, or with nothing to vote for (only their own line or word left) */
+const scFreeOf = (s) => {
+  const zs = SC_VOTES.includes(s.phase) ? scZones(s) : [];
+  return (id) =>
+    s.done[id] || (zs.length && !zs.some((z) => scCanVote(s, id, z)));
+};
 /* what ends a Story Chain phase: the words when enough are in (then the catch-up timer for the rest); a line when its
    writer is done, out of time or gone; a vote once enough have voted (no timer: there is time to sway each other) */
 function scAdvance(s, now, force = false) {
   // force: the skip command or a skip vote, as if everyone were done
-  const zs = SC_VOTES.includes(s.phase) ? scZones(s) : [],
-    free = (id) =>
-      s.done[id] || (zs.length && !zs.some((z) => scCanVote(s, id, z))); // (nothing to vote for: only their own line or word left)
+  const free = scFreeOf(s);
   const on = playing(s),
     d = force ? on.length : on.filter(free).length,
     timeUp = force || (s.ends && now >= s.ends),
@@ -4279,6 +4303,7 @@ function scAdvance(s, now, force = false) {
       return !s.players[w] || s.done[w] || timeUp ? endTurn(s, now) : s;
     }
     case "lvote":
+      if (endBtnOn(s) && !force) return s; // (End round: only the button ends the vote)
       if (!enough) return s;
       if (!scPara(s).lines.some((l) => l.wordBy && s.players[l.wordBy]))
         return startNext(s, now); // no words to vote on
@@ -4291,6 +4316,7 @@ function scAdvance(s, now, force = false) {
       }
       return enter(s, "wvote", now);
     case "wvote":
+      if (endBtnOn(s) && !force) return s;
       return enough ? startNext(s, now) : s;
     case "results": {
       if (!enough) return s;

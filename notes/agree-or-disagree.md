@@ -3717,3 +3717,7 @@ Owner, 03:53Z:
   an added answer box has a x to remove it; computers press End round after a while once it shows.
 - A hidden writer in Bicker Brackets is now the multicolored ? on the cloud too (answer about the ? for every mode).
 - Still to do: the End round setting for the other social games (Q41, off by default).
+- Q41 done by Adam: Game Setting "End round button" (`endBtn`, off by default) for Agree or Disagree, Would You Rather,
+  DDR and Story Chain (its line and word votes). With it on, votes never end the turn; the End round button (next to
+  Vote) shows once the needed share has voted and anyone playing can press it. The answer timer still ends a turn.
+  Computers press it once every duck has voted and 15 to 20 s have passed.
