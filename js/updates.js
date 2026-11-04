@@ -9,13 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
-    id: "v162",
-    version: 162,
+    id: "v163",
+    version: 163,
     date: "Nov 4, 2026",
     title: "Jaime Guard",
     news: [
       "New special: Jaime Guard. Jaime follows you around, and whoever hits you, he goes after with the weapon you pick for him in Customize. He has 1 HP. One at a time, once every 12 seconds.",
       "It unlocks when you reach round 30 in Quacky Zombies.",
+    ],
+  },
+  {
+    id: "v162",
+    version: 162,
+    date: "Nov 4, 2026",
+    title: "The wheel stays on the hotbar",
+    news: [
+      "While your duck is in the game, scrolling over the board (a mouse wheel or a touchpad) only goes through your hotbar and never moves the board. Watching without a duck, it scrolls as before.",
     ],
   },
   {

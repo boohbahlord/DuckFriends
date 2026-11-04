@@ -3923,3 +3923,10 @@ board's and the cabin's Justin.
 "Jaime Guard""
 
 Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.
+
+## Request (owner, 2026-11-04 07:12Z, through Adam): the wheel and the board
+"scrolling the wheel shouldnt move the board WHEN your just scrolling thru hotbar, so that only applies when duck isnt in game since camera follows duck"
+- Found: game.js onWheel only stopped the page's own scroll once the wheel had added up 40 px and picked a slot, so a
+  touchpad's small steps (and sideways swipes, and the wheel over any part of the board that scrolls) still moved the
+  board. Now with my duck in the game every wheel event over the board (.gmain) is the hotbar's (Ctrl+wheel still
+  zooms); watching without a duck, it scrolls as before.

@@ -4494,13 +4494,22 @@ function wheelPick(dir) {
   return true;
 }
 const onWheel = (e) => {
-  if (!e.deltaY || !R || !onBoardPhase() || windowOpen() || typing(e)) return;
-  for (let el = e.target; el && el !== document.body; el = el.parentElement)
-    if (
-      el.scrollHeight > el.clientHeight + 2 &&
-      /auto|scroll/.test(getComputedStyle(el).overflowY)
-    )
-      return; // (a list scrolling: leave it)
+  if (!R || !onBoardPhase() || windowOpen() || typing(e) || e.ctrlKey) return; // (Ctrl: the browser's zoom)
+  /* with my duck in the game, the wheel over the board is the hotbar's and never moves the board (the camera follows
+     the duck, owner 2026-11-04 07:12Z); without one (watching), or over a list off the board, it scrolls as always */
+  const onBoard =
+    !!me &&
+    !!R.state.pos[R.me] &&
+    !!(e.target.closest && e.target.closest(".gmain"));
+  if (onBoard) e.preventDefault(); // (a touchpad's small steps and sideways swipes too)
+  if (!e.deltaY) return;
+  if (!onBoard)
+    for (let el = e.target; el && el !== document.body; el = el.parentElement)
+      if (
+        el.scrollHeight > el.clientHeight + 2 &&
+        /auto|scroll/.test(getComputedStyle(el).overflowY)
+      )
+        return; // (a list scrolling: leave it)
   const now = performance.now();
   wheelSum = now - wheelAt > 400 ? 0 : wheelSum;
   wheelAt = now;
