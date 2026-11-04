@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v154",
+    version: 154,
+    date: "Nov 4, 2026",
+    title: "Phones: the joystick and the board",
+    news: [
+      "On a phone, the joystick starts anywhere on the board in every mode, on the answers, rows and tiles too. A tap on an answer still votes.",
+      "On a phone, the board keeps its size through a turn: the top bar stays on one line, and the song bar isn't shown (the music still plays).",
+      "On a phone held upright, your duck and its name tag stay on the board and never walk under the bottom bar.",
+    ],
+  },
+  {
     id: "v153",
     version: 153,
     date: "Nov 4, 2026",

@@ -827,6 +827,7 @@ function panRows(pos, now) {
     v.classList.toggle("more-down", scY < max - 8); // more rows above or below
   }
 }
+const TAG_ROOM = 24; // px under a duck's feet: its name tag
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
 function place(p, i, n) {
   if (geo && geo.hang) return world.place(p); // Hangout: through the camera
@@ -860,8 +861,11 @@ function place(p, i, n) {
   if (turned())
     return {
       left: W * (0.1 + p.y * 0.8),
-      top: top0 + H * (1 - p.x) + size * 0.45,
-    };
+      top: Math.max(
+        top0 + size * 1.08,
+        Math.min(top0 + H - TAG_ROOM, top0 + H * (1 - p.x) + size * 0.45),
+      ),
+    }; // (upright on a phone: the whole duck and its name tag stay on the board, never under a bar: the owner's, Nov 4)
   return {
     left: W * p.x,
     top: top0 + size * 1.08 + p.y * (H - size * 1.08 - labelH),
@@ -3228,7 +3232,20 @@ function step(dt, now) {
     (sprinting ? SPEED.sprint : 1) * (isMgj(s) ? MGJ_SLOW : 1) * walkOf(s); // (Mad God Justin: the ducks a fifth slower; the lobby's Walking speed)
   const sx = (turned() ? SPEED.px : SPEED.x) * mul * onTree[0],
     sy = (turned() ? SPEED.py : SPEED.y) * mul * onTree[1];
-  const [lo, hi] = xBounds();
+  let [lo, hi] = xBounds();
+  if (
+    turned() &&
+    geo &&
+    geo.H &&
+    !geo.qp &&
+    !geo.tl &&
+    !geo.sc &&
+    !geo.hang &&
+    s.phase !== "bracket"
+  ) {
+    lo = Math.max(lo, Math.min(hi, (geo.size * 0.45 + TAG_ROOM) / geo.H));
+    hi = Math.min(hi, Math.max(lo, 1 - (geo.size * 0.63) / geo.H));
+  } // (upright on a phone: my duck stops where its feet reach the board's bottom and its head the top, as place() draws it)
   let nx = me.x + ax * sx * dt,
     ny = me.y + ay * sy * dt,
     q = "";
@@ -5801,18 +5818,35 @@ async function act(a) {
 let insetsOff = null;
 function watchInsets(S) {
   const top = $(".gbar", S),
-    bot = [$(".bbar", S), $(".dock-b", S)],
-    set = () => {
-      S.style.setProperty("--ui-top", top.offsetHeight + "px");
-      S.style.setProperty(
-        "--ui-bot",
-        bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0) + "px",
-      );
-    };
+    bot = [$(".bbar", S), $(".dock-b", S)];
+  let turn = "",
+    hi = [0, 0];
+  /* during a turn they only grow (a bar that gets taller pushes the board in at once, so nothing is under it), and
+     they go back to the bars' own heights when the next stage starts: the board doesn't keep growing and shrinking
+     (the owner's, Nov 4) */
+  const set = () => {
+    const s = R && R.state,
+      k = s ? [s.phase, s.round, s.qi].join() : "",
+      now = [
+        top.offsetHeight,
+        bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0),
+      ];
+    const was = hi.join();
+    hi = k === turn ? now.map((v, i) => Math.max(v, hi[i])) : now;
+    turn = k;
+    if (hi.join() === was) return;
+    S.style.setProperty("--ui-top", hi[0] + "px");
+    S.style.setProperty("--ui-bot", hi[1] + "px");
+    geo = null; // (the board's new size: where the ducks stand is measured again)
+  };
   const ro = new ResizeObserver(set);
   for (const e of [top, ...bot]) if (e) ro.observe(e);
   set();
-  return () => ro.disconnect();
+  const t = setInterval(set, 500); // (a new stage with bars that didn't change size: back to their own heights)
+  return () => {
+    ro.disconnect();
+    clearInterval(t);
+  };
 }
 
 const HINTS =

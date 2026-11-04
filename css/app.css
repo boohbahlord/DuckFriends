@@ -2391,6 +2391,25 @@ html:not(.keyboard)
 html:not(.keyboard) .game.hang .hang-book {
   max-height: calc(100% - 1.2rem - var(--ui-top, 0px) - var(--ui-bot, 0px));
 }
+/* the top bar keeps one line, so the board never grows and shrinks under it (the owner's, Nov 4): the round's words
+   give way with "…" before the stage's name does; the song bar isn't on a phone (the music still plays) */
+html:not(.keyboard) .game .gbar-l {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+html:not(.keyboard) .game .gbar-l .round {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html:not(.keyboard) .game .gbar-l .phase {
+  flex-shrink: 0;
+}
+html:not(.keyboard) .game .gbar > .mbar {
+  display: none;
+}
 .gact {
   display: flex;
   flex-direction: column;
@@ -3009,16 +3028,22 @@ html.moving svg.duck.datboi.rainbow .dbr {
 html.mouse-move .board {
   cursor: pointer;
 }
-/* touch: the board takes every finger (no page scroll or zoom); the joystick and the tap-to-move circle are faint and white */
+/* touch: the board takes every finger in every stage (no page scroll, zoom or text picked: a drag on the board is the
+   joystick's, the owner's, Nov 4); the joystick and the tap-to-move circle are faint and white */
 .game > .gmain[data-phase="answer"],
 .game > .gmain[data-phase="discuss"],
 .game > .gmain[data-phase="bracket"],
+.game > .gmain .board,
 .results .stage {
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
+.game > .gmain .board :is(input, textarea) {
+  -webkit-user-select: text;
+  user-select: text;
+} /* (a box on the board still takes its words) */
 .stick {
   position: fixed;
   left: 0;
