@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v155",
+    version: 155,
+    date: "Nov 4, 2026",
+    title: "Phones: more room for the board",
+    news: [
+      "On a phone held upright, the bottom bar is shorter: Jumps (and Justin Kills) sit at the left above Notes and ABC, and your HP sits at the right.",
+      "On a phone held upright, the cloud, its duck and the question are a little smaller, and the top bar is a little shorter.",
+      "For Trivia: on a phone on its side, the form for writing a question starts at its top and scrolls, never under the bars.",
+    ],
+  },
+  {
     id: "v154",
     version: 154,
     date: "Nov 4, 2026",

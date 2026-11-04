@@ -2410,6 +2410,11 @@ html:not(.keyboard) .game .gbar-l .phase {
 html:not(.keyboard) .game .gbar > .mbar {
   display: none;
 }
+html:not(.keyboard) .game .gbar {
+  grid-template-areas: "l r";
+  row-gap: 0;
+  padding-block: 0.2rem;
+} /* (no row left for the music bar, and less room above and below the buttons) */
 .gact {
   display: flex;
   flex-direction: column;
@@ -3129,7 +3134,7 @@ html.mouse-move .board {
     order: -1;
     grid-template-columns: auto 1fr;
     gap: 0.5rem;
-    padding: 0 0 0.4rem;
+    padding: 0 0 0.2rem;
   }
   .topover .lord {
     grid-column: 1;
@@ -3138,13 +3143,13 @@ html.mouse-move .board {
     grid-column: 2;
   }
   .lord-sit {
-    width: 6.4rem;
-    height: 4.6rem;
+    width: 5.6rem;
+    height: 4rem;
   }
   .lord-duck {
-    width: 3.6rem;
-    bottom: 1.3rem;
-  }
+    width: 3.15rem;
+    bottom: 1.13rem;
+  } /* (a little smaller than before, so the board gets the room: the owner, Nov 4) */
   .topover:has(.lord-duck svg.hatted) {
     padding-top: 1.05rem;
   } /* room for a hat on the cloud's duck, so it never pokes into the title */
@@ -3163,7 +3168,8 @@ html.mouse-move .board {
     bottom: 11.4rem;
   }
   .question {
-    font-size: calc(1rem * var(--ts));
+    font-size: calc(0.92rem * var(--ts));
+    padding: 0.35rem 0.75rem;
   }
   .gbar-l .phase {
     font-size: calc(1.1rem * var(--ts));
@@ -3201,6 +3207,7 @@ html.mouse-move .board {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  justify-content: safe center; /* (a card taller than the room starts at the top and scrolls, never half under the top bar: Trivia's, a phone on its side) */
   gap: 1rem;
   padding-bottom: 1rem;
   overflow: auto;
@@ -15009,6 +15016,45 @@ html.still .hpm.low .hpm-badge {
     padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
   }
 } /* (a phone on its side: one short row, the meter in it beside the slider) */
+/* a phone standing up, in a game: the buttons' row on top; under it Jumps (and Justin Kills) at the left over Notes and
+   the chat, the specials' slider in the middle, my HP at the right. No row of its own for the HP, so the board gets
+   the room (the owner, Nov 4) */
+@media (orientation: portrait) and (max-width: 860px) {
+  .game .bbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "c c" "j r" "l r";
+    row-gap: 0.25rem;
+    padding-top: 0.2rem;
+  }
+  .game .bbar-c {
+    display: contents;
+  }
+  .game .bbar .gact {
+    grid-area: c;
+    justify-self: center;
+    margin-bottom: 0.1rem;
+  }
+  .game .bbar .jumps-slot {
+    grid-area: j;
+    justify-self: start;
+  }
+  .game .bbar-r {
+    align-self: end;
+  }
+  .game .hpm-me,
+  html:not(.keyboard) .game .hpm-me {
+    position: static;
+    translate: none;
+  }
+  .game .bbar:has(.hpm-me:not(.gone)),
+  html:not(.keyboard) .game .bbar:has(.hpm-me:not(.gone)) {
+    padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+  }
+  .game .bbar:has(.hpm-me:not(.gone)) .sp-phone,
+  html:not(.keyboard) .game .bbar:has(.hpm-me:not(.gone)) .sp-phone {
+    bottom: max(0.35rem, env(safe-area-inset-bottom));
+  }
+}
 /* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
    Justin on a computer); see-through on my screen while my duck walks into them */
 .hpo {
