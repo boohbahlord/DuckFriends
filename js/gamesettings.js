@@ -8,7 +8,7 @@ import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, VOTE_LIST, mapName } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, tally, randomPool, dodOn } from "./rules.js";
-import { downFor } from "./hangout/death.js";
+import { downFor, NO_INVULN } from "./hangout/death.js";
 
 /* ---------- every setting: its key, its name, its choices, its category and what it does ----------
    off: the games it doesn't apply to (it's hidden there). The four categories, under Host Settings and under each game */
@@ -82,6 +82,7 @@ const HOST = [
     n: "Invulnerability",
     c: ON_OFF,
     cat: "rules",
+    off: NO_INVULN, // (never in Quacky Zombies or Mad God Justin)
     d: "Players take no damage and are never knocked down. Bullets, blades, grenades, Justin's attacks and zombies only flash a duck red.",
   },
   {

@@ -51,7 +51,8 @@ import {
   onPlatform,
   BJ,
 } from "./hangout/layout.js";
-import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf } from "./rules.js";
+import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
+import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
 
@@ -1072,6 +1073,7 @@ function maxAmmo(s) {
   s.hang.l4a = am;
 }
 function setUp(s, now) {
+  helperOut(s); // (a new game: the fireplace's Justin goes)
   s.hang.l4 = { r: 1, next: 1, over: null, g: now }; // (g: when this game began, for the stats)
   s.hang.zp = [];
   s.hang.zs = {};
@@ -1292,16 +1294,80 @@ function fireplace(s, id, a, now, mx, my) {
       [id]: {
         by: id,
         t: now,
-        w: pool[Math.floor(Math.random() * pool.length)],
+        w:
+          Math.random() < HELPER.chance && !s.players[HELPER.id]
+            ? HELPER.w
+            : pool[Math.floor(Math.random() * pool.length)],
       },
     };
     return true;
   }
-  if (b.by !== id || now < b.t + BOX.spin) return false;
+  if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
   if (!give(s, id, b.w, a.hand)) return false;
   dropBox(s, id);
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
+}
+/* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
+   moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
+   all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
+   plays him). He goes when the game does: Play again, or back to the lobby */
+export const HELPER = {
+  id: "b-justin",
+  w: "justin",
+  chance: 0.01,
+  pts: 1500,
+  out: 1200,
+};
+export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
+function helperIn(s, by, now) {
+  const id = HELPER.id;
+  if (s.players[id]) return;
+  s.players[id] = {
+    id,
+    name: "Justin",
+    bot: true,
+    helper: 1,
+    duck: { ...JUSTIN },
+    card: {},
+    nameStyle: {},
+    ready: true,
+    joined: now,
+  };
+  s.seat.push(id);
+  bringBack(s, id, now, players(s).length, true);
+  const kit = freshKit();
+  kit.sl = ["knife", "chaingun", "handgun", ""];
+  kit.am = { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
+  s.hang.l4a = { ...s.hang.l4a, [id]: kit };
+  s.hang.l4pt = { ...s.hang.l4pt, [id]: HELPER.pts };
+  const out = [BOX.x, BOX.y + 70];
+  if (playable(...out) && standable(...out, heightAt(...out), STEP))
+    s.pos[id] = {
+      ...s.pos[id],
+      x: +(out[0] / W).toFixed(5),
+      y: +(out[1] / H).toFixed(5),
+      w: "chaingun",
+    };
+  else s.pos[id] = { ...s.pos[id], w: "chaingun" };
+  addFx(s, { kind: "l4justin", by, who: [], t: now });
+  say(s, "Justin joined.");
+}
+/* Justin goes (a new game, the lobby) */
+export function helperOut(s) {
+  const id = HELPER.id;
+  if (!s.players[id]) return;
+  delete s.players[id];
+  s.seat = s.seat.filter((t) => t !== id);
+  if (s.pos) delete s.pos[id];
+  if (s.rainbow) delete s.rainbow[id];
+  if (s.hang)
+    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
+      if (s.hang[k] && s.hang[k][id] !== undefined) {
+        const o = { ...s.hang[k] };
+        delete o[id];
+        s.hang[k] = o;
+      }
 }
 /* weapon w into duck id's slots, full: a melee weapon or a special takes its own slot, a ranged one the ranged weapon
    in hand (hand, else the one the duck holds out, else the first ranged slot) */
@@ -2120,7 +2186,10 @@ function l4Tick(s, now) {
     }
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
-    if (now >= b.t + BOX.spin + BOX.keep) dropBox(s, b.by); // (nobody took it: the fire keeps it)
+    if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
+      dropBox(s, b.by);
+      helperIn(s, b.by, now);
+    } else if (now >= b.t + BOX.spin + BOX.keep) dropBox(s, b.by); // (nobody took it: the fire keeps it)
   const brd = { ...(s.hang.brd || {}) },
     bl = { ...(s.hang.l4b || {}) };
   for (const [id, b] of Object.entries(bl)) {

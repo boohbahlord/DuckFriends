@@ -8,10 +8,12 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 146,
+    version: 147,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "For Quacky Zombies: 1 spin in 100 at the fireplace lands on Justin. He climbs out and plays with you as another player, with 1,500 points of his own, all his HP and the chain gun. He'd rather shoot than stab, keeps away from the zombies and doesn't get cornered.",
+      "For Quacky Zombies and Mad God Justin: Invulnerability and Justin on the board can't be turned on, in Game Settings or the command line.",
       "Euclid's Squares can zoom into its tiny squares forever: vote for Euclid's Squares (Zoom) in Vote Maps (Random can land on it too), or pick the map and turn on Zoom under it.",
       "A new map, Euclid's Squares: bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
       "For Quacky Zombies: every zombie has its own scars, cuts, bruises, bites or torn holes, and hits leave wounds: bullet holes (bigger from bigger guns), shotgun pellets, cuts, bruises from the hammer, arrows that stay stuck, chunks torn out, a beak shot off. A headshot blows its head off and shows a big CRIT.",

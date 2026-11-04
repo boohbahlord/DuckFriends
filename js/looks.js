@@ -40,7 +40,7 @@ export const rainbowLook = (k) =>
 /* the look a game draws for a player (p: one of s.players, with its id) */
 export function shownDuck(s, p) {
   const L = (p && p.duck) || DUCK_DEFAULT;
-  if (!hidesLooks(s)) return L;
+  if (!hidesLooks(s) || (p && p.helper)) return L; // (the fireplace's Justin always looks like Justin)
   if (rainbowOn(s) && s.rainbow && p.id in s.rainbow)
     return { ...rainbowLook(s.rainbow[p.id]), ...keepPlay(L) };
   return { ...DUCK_DEFAULT, ...keepPlay(L) };

@@ -806,6 +806,8 @@ function forgame(x, args) {
     if (!onOff) fail("✗ forgame justin on | off");
     if (s.options.mode === "hang")
       fail("✗ Justin already lives in Duck Cabin.");
+    if (["l4dd", "mgj"].includes(s.options.mode))
+      fail("✗ Not in this game: Justin can't be called in here.");
     set({ justin: on ? 1 : 0 });
     return `Justin ${on ? "on: he walks the board" : "off"}.`;
   }

@@ -9,6 +9,7 @@ import { zombieLook, kindOf } from "./l4ddrules.js";
 import { specialById } from "./specials.js";
 import { GUNS } from "./l4ddguns.js";
 import { FIREBALL } from "./mgjart.js";
+import { justinSVG } from "./hangout/npcart.js";
 
 const INK = "#1c1c28";
 
@@ -673,7 +674,7 @@ export const weaponIcon = (w) =>
   (w === "fireball" ? FIREBALL : (specialById(w) || {}).icon || "");
 /* a weapon as an orb, glowing in its slot's color (css: .l4orb, blue melee, red ranged, purple special, white grenades) */
 export const orbHTML = (w) =>
-  `<span class="l4orb k-${kindOf(w) || "special"}"><i>${weaponIcon(w)}</i></span>`;
+  `<span class="l4orb k-${kindOf(w) || "special"}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
 /* Justin's Butler's upgrades: accuracy (a crosshair), attack speed (a lightning bolt), max HP (a green heart), speed
    (a running arrow), faster reload (a bullet in a turning arrow) */
 export const UP_ICONS = {
