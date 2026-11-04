@@ -129,6 +129,7 @@ import {
   guardWeapon,
 } from "./jaimebomb.js";
 import { justinSnaps, justinUpAt } from "./hangout/justin.js";
+import { pwAdd, pwHit, pwTick, PCRIT, CRIT_DOWN, DEATH } from "./wounds.js";
 import {
   isMgj,
   mgjStart,
@@ -2427,7 +2428,8 @@ export function reduce(state, a, now = Date.now()) {
           vdTick(s, now) |
           attacks(s, now) | // (the knife and the hammer, still swinging)
           cakeGone(s, now) |
-          jaimeRun(s, now),
+          jaimeRun(s, now) |
+          pwTick(s, now), // (the ducks' wounds going away: wounds.js)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -2948,13 +2950,17 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   if (sp !== "knife" || !hits.length) guardsHit(s, by, near, now); // (a Jaime Guard in reach: his 1 HP)
   for (const h of hits) {
     logHit(s, by, h.id, now);
+    const crit = critRoll(s, sp);
     if (
-      !(isMgj(s) ? mgjSoak(s, h.id, now) : soaks(s, h.id, now, dmgOf(s, sp)))
+      !(isMgj(s)
+        ? mgjSoak(s, h.id, now)
+        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp)))
     ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
       playerKilled(s, by, h.id, sp);
     } // (the HP: a hit it can take keeps the duck up, still shoved back by a hammer)
+    wounded(s, h.id, sp, now, crit); // (its wounds: wounds.js)
     if (sp === "hammer") {
       // shoved straight back from the swinger
       const k = h.d > 0.05 ? 1 / h.d : 0;
@@ -2963,7 +2969,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
         h.id,
         h.d > 0.05 ? h.dx * k : ux,
         h.d > 0.05 ? h.dy * k : uy,
-        KB_FAR,
+        KB_FAR * (isMgj(s) ? 1 : 1.5), // (50% farther than it was: the owner's, Nov 4)
         now,
         side,
       );
@@ -3116,17 +3122,26 @@ function blast(s, sh, x, y, now, o = {}) {
     );
     if (!n) continue;
     if (!P.dead) logHit(s, sh.by, id, now);
-    if (P.dead || !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"))) {
+    const killed =
+      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"));
+    if (P.dead || killed) {
       if (!P.dead) playerKilled(s, sh.by, id, w); // (o.max: the Jaime Bomb's, all of its HP)
       P.dead = true;
       holdDown(s, id, now);
     } // (the normal game's HP: one hit's worth, and it still flies)
-    const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2;
+    if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt, as the Jaime Bomb's Jaime)
+    const a = n.d > 0.05 || o.dir ? null : Math.random() * Math.PI * 2,
+      [tx, ty] =
+        killed && o.dir
+          ? o.dir
+          : n.d > 0.05
+            ? [n.dx / n.d, n.dy / n.d]
+            : [0, 0]; // (the Jaime Bomb's: thrown the way his body flies)
     shove(
       s,
       id,
-      a === null ? n.dx / n.d : Math.cos(a),
-      a === null ? n.dy / n.d : Math.sin(a),
+      a === null ? tx : Math.cos(a),
+      a === null ? ty : Math.sin(a),
       KB_FAR * (isMgj(s) || isL4dd(s) ? 3 : 2), // (twice the hammer's in the normal game, owner 2026-11-03 17:15Z)
       now,
       side,
@@ -3239,10 +3254,11 @@ function moveShots(s, now) {
           if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
           const safe = isMgj(s) && mgjSafe(s, id, now);
           logHit(s, sh.by, id, now);
+          const crit = critRoll(s, sh.k);
           if (
             isMgj(s)
               ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-              : soaks(s, id, now, dmgOf(s, sh.k))
+              : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k))
           )
             sh.got = [...(sh.got || []), id];
           else {
@@ -3250,6 +3266,7 @@ function moveShots(s, now) {
             holdDown(s, id, now);
             playerKilled(s, sh.by, id, sh.k);
           } // (the HP: a hit it can take keeps the duck up)
+          wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
           if (sh.by === JUSTIN_ID) mgjHurt(s, id);
           if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
           if (sh.k === "chair") {
@@ -3601,6 +3618,7 @@ function jaimeRun(s, now) {
           holdDown(s, J.t, now);
           playerKilled(s, J.by, J.t, "jaime");
         }
+        wounded(s, J.t, "jaime", now, false); // (his knife's cuts: wounds.js)
       }
       fx({
         kind: "use",
@@ -3619,6 +3637,33 @@ function jaimeRun(s, now) {
   for (const k of Object.keys(next)) if (!(s.jm || {})[k]) delete next[k]; // (a Guard a blast got meanwhile)
   s.jm = Object.keys(next).length ? next : null;
   return ch;
+}
+/* ---------- the ducks' wounds and crits outside Quacky Zombies and Mad God Justin (wounds.js) ---------- */
+const pwOn = (s) => !isMgj(s) && !isL4dd(s);
+const critRoll = (s, w) => pwOn(s) && Math.random() < (PCRIT[w] || 0);
+/* duck id was hit by weapon w: a wound, or (crit, and it went down) its head blown off, down CRIT_DOWN ms, and a
+   smaller CRIT over it on every screen (the pcrit fx) */
+function wounded(s, id, w, now, crit) {
+  const P = s.players[id];
+  if (!pwOn(s) || !P) return;
+  if (crit && P.dead) {
+    pwAdd(s, id, ["x0"], now, true);
+    holdDown(s, id, now, CRIT_DOWN);
+    const p = s.pos[id] || {};
+    s.fxN = (s.fxN || 0) + 1;
+    s.fx = [
+      ...(s.fx || []).slice(-19),
+      {
+        n: s.fxN,
+        kind: "pcrit",
+        who: [id],
+        t: now,
+        x: p.x,
+        y: p.y,
+        ...(isHang(s) ? { hz: Math.round(+p.z || 0) } : {}),
+      },
+    ];
+  } else pwHit(s, id, w, now, !!P.dead);
 }
 /* a Jaime takes a step of `step` duck lengths along (dx, dy) (in duck lengths); in Hangout he keeps to his side of the
    cabin's walls (a wall in the way: along it, or he waits) and goes up only what a duck walks up */
@@ -3871,7 +3916,15 @@ function jaimeBlows(s, id, J, aim, now) {
       J.x,
       J.y,
       now,
-      { wide: BOMB.wide, max: true, w: "jaimebomb" },
+      {
+        wide: BOMB.wide,
+        max: true,
+        w: "jaimebomb",
+        dir: [
+          -aim[0] / (Math.hypot(...aim) || 1),
+          -aim[1] / (Math.hypot(...aim) || 1),
+        ],
+      },
     );
   for (const t of hit) if (s.players[t]) jaimeCount(s, { id: t });
   const [x1, y1] = flyTo(J.x, J.y, aim[0], aim[1], rx, ry);

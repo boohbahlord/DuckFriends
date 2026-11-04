@@ -321,6 +321,7 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
+import { pwCodes } from "./wounds.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
@@ -1248,6 +1249,7 @@ function drawDucks(now = clockNow()) {
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
       jet = jetOn(s, id, now),
+      wc = s.players[id] && !g && s.pw ? pwCodes(s, id, now) : "", // (its wounds: wounds.js)
       sig = JSON.stringify([
         look,
         p.name,
@@ -1257,6 +1259,7 @@ function drawDucks(now = clockNow()) {
         hidesLooks(s),
         jet,
         !!p.bomb,
+        wc,
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1281,6 +1284,7 @@ function drawDucks(now = clockNow()) {
           title: p.name,
           dead,
           ...(p.bomb ? { skin: BOMB_SKIN } : {}),
+          ...(wc ? woundLook(wc) : {}),
         }) +
         '<span class="sp-fx gduck-aura"></span>';
       if (look && look.eyes === "tears") {
@@ -2939,6 +2943,20 @@ function playFx(f) {
     );
     setTimeout(() => n.remove(), 300);
     sfx.swish();
+  } else if (f.kind === "pcrit") {
+    /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
+       Zombies' rises over it */
+    const a = geo.hang
+        ? world.place({ x: f.x, y: f.y }, f.hz || 0)
+        : place({ x: f.x, y: f.y }, 0, 1),
+      top = a.top - size * 0.78;
+    bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5);
+    neckSpray(a.left + size * 0.12, a.top - size * 0.5);
+    const word = el(
+      `<div class="l4-crit small" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.3).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
+    );
+    fxl.append(word);
+    setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "jbomb") {
     jaimeBody(f, place, size); // (the Jaime Bomb went off: his body flies)
   } else if (f.kind === "eat") {
@@ -2996,6 +3014,16 @@ function neckSpray(x, y) {
   setTimeout(() => spray.remove(), 2400);
 }
 
+/* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
+const WLOOK = new Map();
+function woundLook(wc) {
+  if (!WLOOK.has(wc)) {
+    if (WLOOK.size > 200) WLOOK.clear();
+    const h = hitsOf(wc);
+    WLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
+  }
+  return WLOOK.get(wc);
+}
 /* the Jaime Bomb's Jaime after it went off: headless and torn apart (as a grenade leaves a zombie, and burnt), his
    body flies from (x, y) to (x1, y1) over a little arc, turning over until it lies on its side, blood bursting out of
    his neck as he goes and spurting once he lands; a few seconds later it fades */
