@@ -3938,3 +3938,20 @@ Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.
   only / Map only). It opens its own page: the On/Off row, and while on, Vote for game mode, Vote for map, Vote return.
   The row and its settings are gone from the Game mode and Map pages (Random stays there). Every "Vote Mode & Game" players
   see is now "Vote Mode & Map"; the Democracy rule keeps the owner's name "Ducks Vote Mode & Game".
+
+## Request (owner, 2026-11-04 07:43Z, through Adam): Vote Mode & Map, Quacky Zombies, full-screen PC board, sounds, guns
+"Vote Mode & Map goes HERE!!!!! you just fucking hallucinated what i meant.
+
+Also, the five rounds for difficulty changes are now being changed to four, everything in the shop is now 20% expensive (including ammo), the amount of zombies is 25% more for rounds 1-4, 100% more for rounds 5-8, and 200% more for rounds 9-12, and 300% more for rounds 13 and up. The amount of zombies increases according to the multiplier even for increase amount of zombies per player. Zombie corpses stay on the ground for 3 seconds longer, crit is smaller, and there is a tab in the shop for the butler that shows every item and it's stat and description in this game mode that can be clicked on, and every item is in it's own category. 
+
+The computer game will now also have the board be full screen, with the UI for pc staying the same. The screen being fullscreen also means that when a mouse is clicked to lets say use a special, that anything that isnt a button will now let it do so, since before it was only limited to the board. 
+
+When the first HP is lost on a player, it is lost with the same sound and HP bar side effect as any other HP lost, since it doesnt do that rn. 
+
+There are walking sounds from ducks thar are quiet in every other game mode now. 
+
+jumping should have a sound if it doesnt yet, and it should be quieter but not so quiet that it is impossible to hear. 
+
+every gun from the zombie game should be in the special list. I will come up for ideas of how to unlick them later."
+- Split by Adam: Solomon = Quacky Zombies gameplay, Miles Jr. = sounds, Noah = first HP lost, guns in the specials
+  list, PC full-screen board with clicks anywhere but buttons.
