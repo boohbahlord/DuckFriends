@@ -135,7 +135,7 @@ import {
   kitOf,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
-import { MAPS } from "./maps.js";
+import { VOTE_LIST, ZOOM_MAP, mapName } from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
@@ -190,6 +190,7 @@ export const OPTIONS_DEFAULT = {
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
   mapGrey: 0, // the collage map: 1 turns it black and white
+  mapZoom: 0, // Euclid's Squares, picked by the host: 1 zooms into its tiny squares forever (s.mapZoomed in the game)
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
   noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
@@ -228,7 +229,7 @@ const winner = (n, pool) => {
     tied = ok.filter((k) => n[k] === top);
   return anyOf(top ? tied : pool);
 };
-export const VOTE_MAPS = MAPS.map((m) => m[0]); // (the boards' maps: Duck Cabin isn't one)
+export const VOTE_MAPS = VOTE_LIST.map((m) => m[0]); // (the boards' maps and the zoom: Duck Cabin isn't one)
 const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 const pickMap = (s) =>
   s.options.mapPick === "vote"
@@ -280,10 +281,14 @@ function countdown(s, now) {
   if (s.seat.length < minOf(s)) return null; // (the lobby says how many it needs)
   if (isHang(s) !== (s.options.map === "cabin"))
     s.options.map = isHang(s) ? "cabin" : "board"; // (Duck Cabin and its games are one)
+  /* the zoom on Euclid's Squares: its own entry for Vote Maps and Random, the map's Zoom setting for the host's pick */
+  s.mapZoomed = s.options.map === "euclid" && s.options.mapZoom ? 1 : 0;
   if (s.options.mapPick && !isHang(s)) {
-    s.options.map = pickMap(s);
+    const won = pickMap(s);
+    s.options.map = won === ZOOM_MAP[0] ? "euclid" : won;
+    s.mapZoomed = won === ZOOM_MAP[0] ? 1 : 0;
     s.mapVotes = {};
-    say(s, `The map: ${MAPS.find((m) => m[0] === s.options.map)[1]}!`);
+    say(s, `The map: ${mapName(won)}!`);
   }
   dealRainbow(s); // (Rainbow Ducks: each duck's look for this game)
   s.phase = "countdown";

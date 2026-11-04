@@ -8,10 +8,11 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 145,
+    version: 146,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "Euclid's Squares can zoom into its tiny squares forever: vote for Euclid's Squares (Zoom) in Vote Maps (Random can land on it too), or pick the map and turn on Zoom under it.",
       "A new map, Euclid's Squares: bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
       "For Quacky Zombies: every zombie has its own scars, cuts, bruises, bites or torn holes, and hits leave wounds: bullet holes (bigger from bigger guns), shotgun pellets, cuts, bruises from the hammer, arrows that stay stuck, chunks torn out, a beak shot off. A headshot blows its head off and shows a big CRIT.",
       "On a phone, the board takes the whole screen in every mode, upright or on its side, with the bars over it. The joystick starts wherever you put your thumb that isn't a button, on the bars too.",
