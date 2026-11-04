@@ -1,6 +1,6 @@
 /* ---------- HP meters and the little "+1 HP" over a duck (owner 2026-11-03 23:17Z) ----------
    The owner's picture (notes/ref/hp-bar-reference.png): a round bronze badge with a pink-red heart, joined to a
-   bronze-framed bar of separate red blocks, one for each HP, white where they're gone. Mine sits under the hotbar (on a
+   bronze-framed bar of separate red blocks, one for each HP, black where they're gone (black since 2026-11-04). Mine sits under the hotbar (on a
    phone, under the specials' slider), with a thin blue sprint bar under it where sprinting runs out (Quacky Zombies). At
    20% HP or less it slowly breathes a red glow. Justin's HP in Mad God Justin is the same bar, and in Quacky Zombies and
    Mad God Justin the other players' meters are small ones in the board's bottom right corner (a computer only; off in
