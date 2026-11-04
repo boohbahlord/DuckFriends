@@ -153,7 +153,7 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: 600, all: 1 },
-  grenade: { kind: "grenade", cool: 900, far: 300, r: 140, start: 2, most: 3 },
+  grenade: { kind: "grenade", cool: 900, far: 300, r: 210, start: 2, most: 3 }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
      action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
      (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its

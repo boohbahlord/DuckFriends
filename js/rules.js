@@ -740,11 +740,12 @@ export const DAGGER_SPEED = boardSpeed("dagger") * FASTER,
   DAGGER_LIFE = 4500; // (it never flies over a duck's head: everything in its way is hit)
 export const daggerZ = (t) => DAGGER_Z + DAGGER_UP * t - (DAGGER_G * t * t) / 2; // (t in seconds)
 /* the grenade: thrown GRENADE_FAR duck lengths the way it aims, over an arc (its height in duck sizes), and it goes off
-   where it lands, GRENADE_MS later: every duck within GRENADE_R duck lengths (3 ducks across) plays dead and is thrown
-   three times as far as the hammer throws one, then looks burnt for a while */
+   where it lands, GRENADE_MS later: every duck within GRENADE_R duck lengths (4.5 ducks across: I want its blast 50%
+   wider, owner 2026-11-04 07:10Z; it was 3) plays dead and is thrown three times as far as the hammer throws one, then
+   looks burnt for a while */
 export const GRENADE_MS = 900,
   GRENADE_FAR = 8,
-  GRENADE_R = 1.5;
+  GRENADE_R = 2.25;
 export const grenadeZ = (t) => {
   const u = Math.min(1, t / (GRENADE_MS / 1000));
   return 0.45 * (1 - u) + 4.4 * u * (1 - u);
