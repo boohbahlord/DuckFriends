@@ -2,7 +2,7 @@
    A button at the bottom left of the lobby and the game; its panel opens in the left dock. Notes are kept on this device.
    When writing a question, Add a prompt from Notes puts one of them in the box. */
 import { profile, save } from "./store.js";
-import { el, esc, openWindow } from "./ui.js";
+import { el, esc, openWindow, contextMenu } from "./ui.js";
 
 /* two parts the screen places: the Notes button (bottom bar) and the panel (the left dock, so it never covers anything) */
 export function notesWidget() {
@@ -81,6 +81,20 @@ export function pickNote() {
           const b = e.target.closest("[data-i]");
           if (b) close(profile.notes[+b.dataset.i]);
         };
+        // right-click a note on a computer: Copy puts its text on the clipboard
+        w.querySelector(".note-pick").addEventListener("contextmenu", (e) => {
+          const b = e.target.closest("[data-i]");
+          if (!b) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const text = profile.notes[+b.dataset.i];
+          contextMenu(e.clientX, e.clientY, [
+            [
+              "Copy",
+              () => navigator.clipboard?.writeText(text).catch(() => {}),
+            ],
+          ]);
+        });
       },
     },
   );
