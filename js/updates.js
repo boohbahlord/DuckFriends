@@ -8,10 +8,11 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 141,
+    version: 142,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "For Quacky Zombies: the cash register rings for ammo bought anywhere with B too.",
       "For Quacky Zombies: Justin's Butler sells both pistols, the knife, the shotgun and the bow. Bullets are 5 points for 2, arrows 5 points for 5. A gun you already have says Refill and fills it to the top.",
       "For Quacky Zombies: on a computer, B buys ammo for the gun in your hand at the Butler's price, from anywhere (his guns only, when it isn't full, and only if you have the points for all of it). G and B are in the keys at the bottom left now.",
       "For Quacky Zombies: Esc or an arrow key closes the Butler's window at once.",
