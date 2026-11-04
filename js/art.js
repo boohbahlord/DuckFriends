@@ -8,6 +8,7 @@ import { HAT_TOP } from "./hats.js";
 import { esc } from "./ui.js";
 import { modeOf, modeSymbol } from "./modes.js";
 import { collageMini } from "./collage.js";
+import { euclidMiniURL } from "./euclid.js";
 import { JUSTIN } from "./hangout/npcart.js";
 
 export const FRIDGE = [
@@ -187,6 +188,8 @@ ${legs}${wheel}${tent}${edge}
 export function artBackdrop(map) {
   if (map === "collage")
     return `<image href="${collageMini().match(/src="([^"]+)"/)[1]}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // my collage map's real drawing
+  if (map === "euclid")
+    return `<image href="${euclidMiniURL()}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // Euclid's Squares' real drawing
   if (map === "tiles")
     return '<defs><pattern id="arttiles" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff"/><rect width="60" height="60" fill="#000"/><rect x="60" y="60" width="60" height="60" fill="#000"/></pattern></defs><rect width="480" height="270" fill="url(#arttiles)"/>'; // Tiles' checkerboard, 8 tiles across
   if (map === "rabbit")

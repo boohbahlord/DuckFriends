@@ -3575,3 +3575,12 @@ Maybe bleeding cuts or bleeding bullet holes can show up as well when they get s
   beak shot off: now and then from a bullet; x headless: every headshot). duckSVG `gone` { head, beak, holes } and
   `skin.out`. The l4crit fx (now with z) shows a burst of blood and a big CRIT (game.js, .l4-crit), which nothing drew
   before. Grenades, fire and Jaime leave none.
+
+## Map (Adam's relay, owner's Q38 answer "t", 2026-11-04 03:53Z): Euclid's Squares, step (a), the still map
+- Built: js/euclid.js (id `euclid`, "Euclid's Squares"). The page is one rectangle, tiled by Euclid's rule (the biggest
+  square, as many times as it fits, then the same on what's left, winding in: left, top, right, bottom); near three
+  points (0.53, 0.40), (0.82, 0.38), (0.75, 0.50) of the page (as in notes/ref/mosaic-map-inspiration.png) a square is
+  cut a tiny bit off center (5/9, 4/7, 6/11, 7/12 or 8/13 of it) and both parts get the rule again, while it's bigger
+  than 0.85 of its distance from the nearest point (down to 2.4 px). Colors picked from the owner's picture, a dark
+  line between squares. Drawn once per page size. Lobby picture and Map window: the same drawing at 480 by 270.
+  Next: (c) the endless zoom (its own Vote Maps entry; a setting on the map when picked directly).

@@ -166,7 +166,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
+  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | euclid | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
   mapPick: "vote", // (Vote Maps is the default) "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
   modePick: "", // "" (the host's game) | vote (Vote Game Mode: everyone votes) | random (a new game every round)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
