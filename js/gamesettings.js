@@ -659,6 +659,16 @@ const BY_MODE = {
       cat: "time",
       d: "The writer has 1:00 for each written answer. A row still ungraded when it runs out counts as right.",
     },
+    {
+      k: "tvStop",
+      n: "Stop timer",
+      c: [
+        [1, "On"],
+        [0, "Off"],
+      ],
+      cat: "time",
+      d: "After each answer is shown there are 10 seconds before the next question. Anyone can press Stop timer to hold the clock; once everyone lets go it starts again at 5 seconds.",
+    },
   ],
   hang: [
     {

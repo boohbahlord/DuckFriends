@@ -1574,6 +1574,24 @@ p.bad {
   border: 0.18rem solid var(--line);
   box-shadow: 0 0.3rem 0 var(--line);
 }
+.lobby-art {
+  position: relative;
+}
+/* with Vote Maps or Random, the next map's picture fades in over the last one (lobby.js) */
+.lobby-art > svg.art-in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: art-in 1.6s ease-in-out both;
+}
+@keyframes art-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .lobby-title {
   margin-top: 0.9rem;
   font-size: calc(2.1rem * var(--ts));
@@ -15180,25 +15198,73 @@ html.still .l4-crit {
 .tv-sub .pname {
   white-space: nowrap;
 }
-/* the rows: lines of text over the field, like Story Chain's, from under the cloud down to the strip where a duck
-   stands on no row (game.js sets their top and height) */
-.tv-rows {
+/* the rows: lines of text over the field, like Story Chain's, from under the cloud down to my answer box (game.js sets
+   the view's top and bottom). A row is as tall as its words and the ducks on it need, at least a duck (--tvd); when they
+   don't all fit, the view slides down them as my duck walks. The strip under the last row is where a duck stands on no
+   row */
+.tv-view {
   position: absolute;
   left: 0.6rem;
   right: 0.6rem;
+  top: 0;
+  bottom: 0;
   z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tv-rows {
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  will-change: transform;
+}
+.tv-strip {
+  flex: none;
+  height: calc(var(--tvd, 3rem) * 0.9);
+}
+/* more rows above or below: the edge fades */
+.tv-view::before,
+.tv-view::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 2rem;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(
+    color-mix(in srgb, var(--bg) 70%, transparent),
+    transparent
+  );
+}
+.tv-view::before {
+  top: 0;
+}
+.tv-view::after {
+  bottom: 0;
+  background: linear-gradient(
+    transparent,
+    color-mix(in srgb, var(--bg) 70%, transparent)
+  );
+}
+.tv-view.more-up::before,
+.tv-view.more-down::after {
+  opacity: 0.9;
+}
+/* the ducks show only over the rows (and a duck's height over the top one), so none walks over the cloud */
+.tv-board .ducks {
+  clip-path: inset(var(--tvt, 0) 0 var(--tvb, 0) 0);
 }
 .tv-row {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
+  min-height: calc(var(--tvd, 3rem) * 1.15);
   display: flex;
   align-items: center;
-  padding: 0.2rem 1rem 1.3rem;
+  padding: 0.4rem 1rem 4.1rem;
   border-radius: 0.8rem;
   border: 0.15rem solid color-mix(in srgb, var(--ink) 16%, transparent);
   background: color-mix(in srgb, var(--panel) 30%, transparent);
@@ -15218,17 +15284,26 @@ html.still .l4-crit {
   outline: 0.2rem solid var(--ink);
   outline-offset: 0.1rem;
 }
-/* my own votes glow green, only on my screen */
+/* my own votes glow yellow, only on my screen; the right answers turn green once they're shown */
 .tv-row.picked {
-  border-color: var(--green);
-  background: color-mix(in srgb, var(--green) 26%, transparent);
+  border-color: var(--yellow);
+  background: color-mix(in srgb, var(--yellow) 24%, transparent);
   box-shadow:
-    0 0 0.9rem color-mix(in srgb, var(--green) 70%, transparent),
-    inset 0.35rem 0 0 var(--green);
+    0 0 0.9rem color-mix(in srgb, var(--yellow) 65%, transparent),
+    inset 0.35rem 0 0 var(--yellow);
 }
 .tv-row.right {
   border-color: var(--green);
   background: color-mix(in srgb, var(--green) 30%, transparent);
+}
+.tv-row.picked.right {
+  box-shadow:
+    0 0 0.9rem color-mix(in srgb, var(--green) 70%, transparent),
+    inset 0.35rem 0 0 var(--green);
+}
+/* a written answer's row has no votes under it */
+.tv-row.tv-wrow {
+  padding-bottom: 0.4rem;
 }
 .tv-row.wrong {
   border-color: var(--red);
@@ -15273,7 +15348,7 @@ html.still .l4-crit {
   font-size: 0.8em;
 }
 .tv-who svg {
-  width: 1.5rem;
+  width: 2.4rem;
   height: auto;
   display: block;
 }
@@ -15287,7 +15362,7 @@ html.still .l4-crit {
   gap: 0.15rem;
 }
 .tv-votes svg {
-  width: 1.3rem;
+  width: 3.6rem;
   height: auto;
   display: block;
 }

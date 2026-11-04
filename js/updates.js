@@ -8,17 +8,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 150,
+    version: 152,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
       "Every weapon works as fast as in Quacky Zombies now, in every mode: the bullets, arrows, daggers and shotgun pellets fly faster, the hammer, dagger and shotgun can be used again sooner, and the knife and hammer swing quicker. The pistol reloads in 1.2 seconds.",
+
+      "For Agree or Disagree: no answer timer by default again. Whoever writes a question can still give it one, and so can the host in Game Settings.",
+      "For Trivia: each row is as tall as its answer needs, and when they don't all fit, the board slides down them as you walk, like Story Chain. The ducks on the rows are bigger.",
+      "For Trivia: the answers you pick glow yellow, and the right ones turn green when they're shown.",
+      "For Trivia: after each answer is shown there are 10 seconds before the next question. Anyone can press the red Stop timer to hold the clock; once everyone lets go it goes on from 5 seconds. Turn it off in Game Settings (Stop timer).",
       "A new Game Setting for Agree or Disagree, Would You Rather, DDR and Story Chain, End round button (off unless you turn it on): votes don't end the turn, an End round button does. It shows once enough ducks have voted, and anyone can press it.",
       "A new mode, Trivia (2 players or more): everyone writes a question, multiple choice or a written answer, then the ducks walk onto the answers they think are right. Whoever wrote it grades the written answers. Genius, Dumbo, Easiest Prompts and Hardest Prompts at the end.",
       "For Bicker Brackets: when the writer is hidden, the cloud shows a multicolored ? instead.",
       "For Quacky Zombies: 1 spin in 100 at the fireplace lands on Justin. He climbs out and plays with you as another player, with 1,500 points of his own, all his HP and the chain gun. He'd rather shoot than stab, keeps away from the zombies and doesn't get cornered.",
       "For Quacky Zombies and Mad God Justin: Invulnerability and Justin on the board can't be turned on, in Game Settings or the command line.",
-      "Vote Maps is a round of its own now: when the host starts, three random maps show in the lobby and everyone votes; the most votes win, and a tie is a random pick. Game Settings can show all the maps instead. With Vote Maps or Random, the lobby's picture keeps showing random maps.",
+      "Vote Maps is a round of its own now: when the host starts, three random maps show in the lobby and everyone votes; the most votes win, and a tie is a random pick. Game Settings can show all the maps instead. With Vote Maps or Random, the lobby's picture fades from one map to the next, 10 seconds each, starting on a random one.",
       "Euclid's Squares can zoom into its tiny squares forever: the map vote and Random sometimes bring it zooming, or pick the map and turn on Zoom under it.",
       "A new map, Euclid's Squares: bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
       "For Quacky Zombies: every zombie has its own scars, cuts, bruises, bites or torn holes, and hits leave wounds: bullet holes (bigger from bigger guns), shotgun pellets, cuts, bruises from the hammer, arrows that stay stuck, chunks torn out, a beak shot off. A headshot blows its head off and shows a big CRIT.",

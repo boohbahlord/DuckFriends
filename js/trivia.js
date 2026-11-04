@@ -35,6 +35,8 @@ import {
   multiOn,
   noWrongOn,
   hideWriter,
+  stopOn,
+  stoppers,
   LETTERS,
   Q_MAX,
   A_MAX,
@@ -241,9 +243,12 @@ export function tvTopHTML(s, me) {
 const votesHTML = (s, i) =>
   Object.entries(s.tv.votes || {})
     .filter(([id, v]) => v.includes(i) && s.players[id])
-    .map(([id]) => mini(s.players[id], 22))
+    .map(([id]) => mini(s.players[id], 58))
     .join("");
-function rowsHTML(s, me) {
+/* the strip under the rows, where a duck stands on no row */
+const STRIP = '<div class="tv-strip" aria-hidden="true"></div>';
+const rowsHTML = (s, me) => rowsOnly(s, me) + STRIP;
+function rowsOnly(s, me) {
   const T = s.tv,
     q = tvQ(s),
     shown = s.phase === "tvr";
@@ -271,7 +276,7 @@ function rowsHTML(s, me) {
             ? `<span class="tv-txt">${esc(text)}</span>`
             : `<span class="tv-txt dim">${open ? "No answer" : "…"}</span>`
           : `<span class="tv-txt dim">${T.sent[id] ? "✓ Sent" : "✎ writing…"}</span>`;
-      return `<div class="tv-row tv-wrow${g === true ? " right" : g === false ? " wrong" : ""}${own ? " own" : ""}" data-c="${k}" data-i="${k}" data-pid="${esc(id)}"><p class="tv-line"><span class="tv-who">${mini(p, 24)}${nm(p)}</span>${words}${g === true ? '<b class="tv-ok">✓</b>' : g === false ? '<b class="tv-no">✗</b>' : ""}</p></div>`;
+      return `<div class="tv-row tv-wrow${g === true ? " right" : g === false ? " wrong" : ""}${own ? " own" : ""}" data-c="${k}" data-i="${k}" data-pid="${esc(id)}"><p class="tv-line"><span class="tv-who">${mini(p, 40)}${nm(p)}</span>${words}${g === true ? '<b class="tv-ok">✓</b>' : g === false ? '<b class="tv-no">✗</b>' : ""}</p></div>`;
     })
     .join("");
 }
@@ -284,19 +289,21 @@ function answerFormHTML(s, me) {
 export const tvBoardHTML = (
   s,
   me,
-) => `<div class="board tv-board"><div class="cols tv-cols"><div class="col tv-field" data-c="0"></div></div><div class="tv-rows">${tvQ(s) ? rowsHTML(s, me) : ""}</div>
+) => `<div class="board tv-board"><div class="cols tv-cols"><div class="col tv-field" data-c="0"></div></div><div class="tv-view"><div class="tv-rows">${tvQ(s) ? rowsHTML(s, me) : ""}</div></div>
   <div class="ducks"></div><div class="fxl"></div>${tvTopHTML(s, me)}${answerFormHTML(s, me)}</div>`;
 /* within a question, what changes as votes, answers and grades come in: the rows and the words under the question
-   (redrawn only when they change). True when the rows were redrawn, so the board is measured again */
+   (redrawn only when they change). True when the rows were redrawn (they can change height), so the board is measured
+   again */
 export function tvRefresh(root, s, me) {
   const rows = root.querySelector(".tv-rows"),
     sub = root.querySelector(".tv-top .tv-sub");
   if (!rows || !tvQ(s)) return false;
-  const html = rowsHTML(s, me),
-    n = rows.children.length;
+  const html = rowsHTML(s, me);
+  let redrawn = false;
   if (rows._html !== html) {
     rows._html = html;
     rows.innerHTML = html;
+    redrawn = true;
   }
   if (sub) {
     const h = subHTML(s, me);
@@ -306,17 +313,22 @@ export function tvRefresh(root, s, me) {
     }
   }
   const form = root.querySelector("form.tv-ansform");
-  if (form && s.tv.sent[me]) form.remove();
-  return rows.children.length !== n;
+  if (form && s.tv.sent[me]) {
+    form.remove();
+    redrawn = true; // (the rows reach down where it was)
+  }
+  return redrawn;
 }
-/* my own row shows what I type at once */
+/* my own row shows what I type at once (true when it grew or shrank, so the board is measured again) */
 export function tvTyped(root, s, me, text) {
   const k = s.tv ? s.tv.ids.indexOf(me) : -1,
-    row = k >= 0 && root.querySelector(`.tv-row[data-i="${k}"] .tv-txt`);
-  if (row) {
-    row.classList.toggle("dim", !text);
-    row.textContent = text || "…";
-  }
+    row = k >= 0 && root.querySelector(`.tv-row[data-i="${k}"]`),
+    words = row && row.querySelector(".tv-txt");
+  if (!words) return false;
+  const h = row.offsetHeight;
+  words.classList.toggle("dim", !text);
+  words.textContent = text || "…";
+  return row.offsetHeight !== h;
 }
 
 /* ---------- the bar under the board ---------- */
@@ -337,7 +349,7 @@ export function tvActHTML(s, me, pos) {
     const mine = (s.tv.votes[me] || []).includes(row),
       vote =
         row >= 0
-          ? `<button type="button" class="btn${mine ? " green voted" : ""}" data-a="tvpick">${mine ? `Take back (${LETTERS[row]})` : `Vote (${LETTERS[row]})`} <kbd>Enter</kbd></button>`
+          ? `<button type="button" class="btn${mine ? " yellow voted" : ""}" data-a="tvpick">${mine ? `Take back (${LETTERS[row]})` : `Vote (${LETTERS[row]})`} <kbd>Enter</kbd></button>`
           : `<button type="button" class="btn" disabled>${touchOnly() ? "Tap an answer" : "Walk onto an answer"}</button>`;
     const need = needOf(q),
       left =
@@ -362,7 +374,15 @@ export function tvActHTML(s, me, pos) {
     }
     return `<div class="act-row">${anchor}${isWriter(s, me) ? '<span class="progress">Walk onto a row</span>' : ""}${count}</div>`;
   }
-  return `<div class="act-row">${anchor}<span class="progress">Question ${s.tv.qi + 1} of ${s.tv.qs.length}</span></div>`;
+  const which = `<span class="progress">Question ${s.tv.qi + 1} of ${s.tv.qs.length}</span>`;
+  if (s.phase === "tvr" && stopOn(s)) {
+    /* Stop timer: anyone holds the clock; it goes on (from 5 s) once everyone has let go */
+    const held = stoppers(s),
+      mine = held.includes(me),
+      by = held.length ? `Stopped by ${held.length} · ` : "";
+    return `<div class="act-row">${anchor}<button type="button" class="btn red" data-a="tvstop" aria-pressed="${mine}"${mine ? ' data-tip="Press again to let the timer go on."' : ""}>${mine ? "Timer stopped ✓" : "Stop timer"}</button><span class="progress">${by}Question ${s.tv.qi + 1} of ${s.tv.qs.length}</span></div>`;
+  }
+  return `<div class="act-row">${anchor}${which}</div>`;
 }
 /* the round label over the board */
 export const tvRound = (s) =>

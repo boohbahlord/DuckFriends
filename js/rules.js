@@ -61,6 +61,7 @@ import {
   tvPick,
   tvEnd,
   tvGrade,
+  tvStop,
   tvJoin,
   tvSkip,
   tvLimit,
@@ -168,7 +169,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
-  answerTime: 30, // the Round Lord's default answer time in seconds: 0 (off), 30, 60, 90
+  answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
   endBtn: 0, // 1: End round: in the social games a vote doesn't end the turn; a button does, once the needed share has voted (Trivia always has it)
@@ -232,6 +233,7 @@ export const OPTIONS_DEFAULT = {
   tvMc: 1, // … Multiple choice: 0 = every question is written (never off with tvWr off)
   tvWr: 1, // … Written answers: 0 = no Written Answer button (never off with tvMc off)
   tvHide: 0, // … Hide who wrote it: 1 = the cloud shows a multicolored "?" in place of the writer
+  tvStop: 1, // … Stop timer: 1 = anyone can stop the clock on the reveal after each question
   tvGrade: 0, // … Grading timer: 1 = the writer has 1:00 a row, and a row still ungraded then counts as right
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
 };
@@ -1994,7 +1996,7 @@ export function reduce(state, a, now = Date.now()) {
       return goOnDone(s, now) || s;
     }
     case "tv": {
-      // Trivia: a vote on a row (pick), End round (end), the writer's Correct or Wrong (grade)
+      // Trivia: a vote on a row (pick), End round (end), the writer's Correct or Wrong (grade), the reveal's Stop timer (stop)
       if (!me || !isTv(s)) return state;
       const r =
         a.k === "pick"
@@ -2003,7 +2005,9 @@ export function reduce(state, a, now = Date.now()) {
             ? tvEnd(s, a, now)
             : a.k === "grade"
               ? tvGrade(s, a, now)
-              : null;
+              : a.k === "stop"
+                ? tvStop(s, a, now)
+                : null;
       return r || state;
     }
     case "vdTimer":
