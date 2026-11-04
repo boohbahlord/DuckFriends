@@ -9,6 +9,27 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v156",
+    version: 156,
+    date: "Nov 4, 2026",
+    title: "Leave the cabin by vote",
+    news: [
+      "For Hangout: a small End Cabin button in the top left. Click it to vote, click again to take your vote back. When half of the players have voted, a 10 second timer starts on the button, and the cabin ends when it runs out.",
+      "For Quacky Zombies: the same vote, called Exit Cabin.",
+    ],
+  },
+  {
+    id: "v155",
+    version: 155,
+    date: "Nov 4, 2026",
+    title: "Phones: more room for the board",
+    news: [
+      "On a phone held upright, the bottom bar is shorter: Jumps (and Justin Kills) sit at the left above Notes and ABC, and your HP sits at the right.",
+      "On a phone held upright, the cloud, its duck and the question are a little smaller, and the top bar is a little shorter.",
+      "For Trivia: on a phone on its side, the form for writing a question starts at its top and scrolls, never under the bars.",
+    ],
+  },
+  {
     id: "v154",
     version: 154,
     date: "Nov 4, 2026",
