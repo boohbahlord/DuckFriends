@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v167",
+    version: 167,
+    date: "Nov 4, 2026",
+    title: "Quacky Zombies: more zombies, dearer shop",
+    news: [
+      "For Quacky Zombies: the zombies get tougher every 4 rounds instead of every 5.",
+      "For Quacky Zombies: more zombies come: 25% more in rounds 1 to 4, twice as many in rounds 5 to 8, three times as many in rounds 9 to 12 and four times as many from round 13 on.",
+      "For Quacky Zombies: everything Justin's Butler sells costs 20% more, ammo too (6 points for 2 bullets, 6 for 5 arrows).",
+      "For Quacky Zombies: Justin's Butler has an Items tab with every item in the game, each in its own category. Tap one to see what it does and its numbers.",
+      "For Quacky Zombies: dead zombies stay on the floor 3 seconds longer, and the CRIT is smaller.",
+    ],
+  },
+  {
     id: "v166",
     version: 166,
     date: "Nov 4, 2026",

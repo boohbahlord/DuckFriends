@@ -60,9 +60,11 @@ import {
   isR16,
   GUN_SHOP,
   gunPrice,
+  AMMO_PRICE,
   kitOf,
 } from "./l4ddrules.js";
 import { touchOnly } from "./pointer.js";
+import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import {
@@ -816,12 +818,11 @@ function shopFill(s, ctx) {
     return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
   }).join("");
 }
-const gunWhat = (w) =>
-  w === "knife"
-    ? "Melee"
-    : w === "bow"
-      ? "5 points for 5 arrows"
-      : "5 points for 2 bullets";
+const gunWhat = (w) => {
+  if (w === "knife") return "Melee";
+  const [p, n] = AMMO_PRICE[w] || AMMO_PRICE.gun;
+  return `${p} points for ${n} ${w === "bow" ? "arrows" : "bullets"}`;
+};
 function openShop(ctx) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -852,13 +853,24 @@ function shopEl(ctx) {
   el.className = "hang-book l4-shop";
   el.hidden = true;
   el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(BUTLER_NAME, { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
-      <div class="l4-shop-list"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
+      <div class="tabs l4-shop-tabs" role="tablist"><button type="button" class="tab" role="tab" aria-selected="true" data-tab="buy">Shop</button><button type="button" class="tab" role="tab" aria-selected="false" data-tab="items">Items</button></div>
+      <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
+      <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
       ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
       <p class="l4-shop-say"><span class="l4-shop-me">${butlerSVG({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
   el.addEventListener("click", (e) => {
+    const tab = e.target.closest("[data-tab]");
+    if (tab) {
+      /* the tabs: his shop, or every item in this mode (l4ddcatalog.js) */
+      for (const t of el.querySelectorAll("[data-tab]"))
+        t.setAttribute("aria-selected", t === tab);
+      for (const p of el.querySelectorAll("[data-pane]"))
+        p.hidden = p.dataset.pane !== tab.dataset.tab;
+      return;
+    }
     const b = e.target.closest("[data-buy]");
     if (b && !b.disabled)
       ctx.send({
