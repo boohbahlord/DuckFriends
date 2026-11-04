@@ -15425,6 +15425,7 @@ html.still .l4-crit {
 /* the ducks show only over the rows (and a duck's height over the top one), so none walks over the cloud */
 .tv-board .ducks {
   clip-path: inset(var(--tvt, 0) 0 var(--tvb, 0) 0);
+  z-index: 2; /* (the clip makes the ducks a layer of their own: without this it sat under the field, and no duck showed) */
 }
 .tv-row {
   position: relative;
@@ -15432,7 +15433,7 @@ html.still .l4-crit {
   min-height: calc(var(--tvd, 3rem) * 1.15);
   display: flex;
   align-items: center;
-  padding: 0.4rem 1rem 4.1rem;
+  padding: 0.4rem 1rem calc(var(--tvd, 6.25rem) * 0.66); /* (room for the votes' ducks, as big as the ducks allow) */
   border-radius: 0.8rem;
   border: 0.15rem solid color-mix(in srgb, var(--ink) 16%, transparent);
   background: color-mix(in srgb, var(--panel) 30%, transparent);
@@ -15530,7 +15531,7 @@ html.still .l4-crit {
   gap: 0.15rem;
 }
 .tv-votes svg {
-  width: 3.6rem;
+  width: calc(var(--tvd, 6.25rem) * 0.58);
   height: auto;
   display: block;
 }

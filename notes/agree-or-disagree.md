@@ -3990,3 +3990,9 @@ every gun from the zombie game should be in the special list. I will come up for
   the hidden song bar and touch-action stay phone-only. Side docks (Notes, a side chat) stay beside the board. A
   click with a weapon out works anywhere on the game screen on a computer but on a button, a field, a card, a panel,
   the hotbar or a window (game.js NOT_AIM); touch screens keep it to the board.
+
+## Found by Noah (2026-11-04 08:40Z): "on PC in the Trivia question phase, row (A)'s label isn't visible"
+- Found: on a 1280x800 computer the four rows and the strip were 83 px taller than the view, so with my duck in the
+  strip the view slid down past (A). Now the ducks shrink (down to 70%) when that lets every row fit; the votes' room
+  under a row follows the duck size. Also found: `.tv-board .ducks`' clip-path made the ducks a layer of their own
+  under the field (z-index 1), so no duck showed in Trivia at all; it gets z-index 2.
