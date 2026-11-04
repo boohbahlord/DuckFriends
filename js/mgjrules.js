@@ -1,3 +1,4 @@
+import { ARM_COOL } from "./armspeed.js";
 /* ---------- the rules of Mad God Justin ----------
    A boss fight: every duck has the knife (1), the bow (2), Jaime (3, from a pool everyone shares), the weapon it picked
    up (4) and the zebra cake (5, shared too); whatever it switches to stays out in its hand, but Jaime, and a picked-up
@@ -43,6 +44,9 @@ import {
   say,
   boardPhases,
   SHOT_SPEED,
+  ARROW_SPEED,
+  PELLET_V,
+  DUCK_PELLET_LIFE,
   DAGGER_SPEED,
   strike,
   dodges,
@@ -229,7 +233,7 @@ export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: 250, bow: 1000 }; // (the knife: four a second, as in every mode)
+const MGJ_COOL = { knife: ARM_COOL.knife, bow: ARM_COOL.bow }; // (the knife: four a second, as in every mode)
 export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
    hold E (a phone: the Revive button) for REVIVE.MS */
@@ -1249,7 +1253,7 @@ export function mgjUse(s, a, now, log) {
     return true;
   }
   const l = Math.hypot(aim[0], aim[1]) || 1,
-    v = k === "dagger" ? DAGGER_SPEED : SHOT_SPEED;
+    v = k === "dagger" ? DAGGER_SPEED : k === "bow" ? ARROW_SPEED : SHOT_SPEED;
   s.shots = [
     ...(s.shots || []),
     {
@@ -1282,12 +1286,12 @@ function pellets(s, by, at, a0, n0, now) {
         k: "pellet",
         x0: at.x,
         y0: at.y,
-        vx: +((bx / bl) * PELLET_SPEED * FASTER).toFixed(4),
-        vy: +((by2 / bl) * PELLET_SPEED * FASTER).toFixed(4),
+        vx: +((bx / bl) * PELLET_V).toFixed(4),
+        vy: +((by2 / bl) * PELLET_V).toFixed(4),
         t: now,
         lx: at.x,
         ly: at.y,
-        life: PELLET_LIFE,
+        life: DUCK_PELLET_LIFE,
       },
     ];
   }
