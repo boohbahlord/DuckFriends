@@ -597,7 +597,7 @@ export function botActions(s, now) {
   bots.forEach((id, i) => {
     const late = now - s.at >= wait + i * 700; // they don't all move on the same instant
     if (s.phase === "countdown") {
-      // Vote Mode & Game: each clicks a game or a map (now and then the dice), a few seconds in
+      // Vote Mode & Map: each clicks a game or a map (now and then the dice), a few seconds in
       const vt = s.vt;
       if (vt && !(vt.votes || {})[id] && now - s.at > 2500 + i * 900) {
         const ids = [...voteIds(s, vt.k), DICE];

@@ -152,7 +152,7 @@ function paint() {
     .filter(Boolean)
     .join(" · ");
   const st = $(".lobby-status", S);
-  paintVotes(R); // (Vote Mode & Game: its window over the whole screen, after the countdown)
+  paintVotes(R); // (Vote Mode & Map: its window over the whole screen, after the countdown)
   if (s.phase === "countdown" && !s.vt) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
@@ -214,7 +214,7 @@ function paint() {
     esc(
       `${
         s.options.modePick === "vote" && s.options.mapPick === "vote"
-          ? "Vote Mode & Game"
+          ? "Vote Mode & Map"
           : `${
               s.options.modePick === "vote"
                 ? "Vote for Game Mode"
@@ -366,7 +366,7 @@ function onState(s) {
 /* Space: ready */
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
-  if (R && R.state.vt) return; // (Vote Mode & Game's window is up: only clicks vote)
+  if (R && R.state.vt) return; // (Vote Mode & Map's window is up: only clicks vote)
   if (e.code === "Space" && !e.repeat) {
     e.preventDefault();
     toggleReady();

@@ -18,7 +18,7 @@ import { infoUnder } from "./gamesettings.js";
 export const DOD_TEXT = {
   ready:
     "The host can't start the game and readies like everyone else. The game starts once 2 of 3 of the ducks are ready.",
-  vote: "Vote Mode & Game stays on: the ducks always vote on the game mode and the map, and nobody can change it, the host neither.",
+  vote: "Vote Mode & Map stays on: the ducks always vote on the game mode and the map, and nobody can change it, the host neither.",
   justin:
     "Justin joins every game he can be in, and nobody can send him away, the host neither.",
   settings: "Every duck can change the game settings, not only the host.",

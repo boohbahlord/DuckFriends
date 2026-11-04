@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v165",
+    version: 165,
+    date: "Nov 4, 2026",
+    title: "Vote Mode & Map row",
+    news: [
+      "Vote Mode & Map is now the first row of Game Settings, above Game mode. Its page turns it on or off and holds Vote for game mode, Vote for map and Vote return.",
+    ],
+  },
+  {
     id: "v164",
     version: 164,
     date: "Nov 4, 2026",

@@ -200,8 +200,8 @@ export const OPTIONS_DEFAULT = {
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | euclid | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
-  mapPick: "vote", // "" (the host's map) | vote (Vote for Map, part of Vote Mode & Game) | random: settled when the game starts
-  modePick: "vote", // "" (the host's game) | vote (Vote for Game Mode: Vote Mode & Game is on by default, owner 2026-11-04) | random (a new game every round)
+  mapPick: "vote", // "" (the host's map) | vote (Vote for Map, part of Vote Mode & Map) | random: settled when the game starts
+  modePick: "vote", // "" (the host's game) | vote (Vote for Game Mode: Vote Mode & Map is on by default, owner 2026-11-04) | random (a new game every round)
   voteBack: 3, // Vote return: the games until both votes come back: 1 … 6, "r" (a random 1 to 6 each time) or 0 (never)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | trivia (Trivia) | hang (Hangout)
@@ -254,7 +254,7 @@ export const OPTIONS_DEFAULT = {
 };
 export const MAX_DEFAULT = 8;
 
-/* a vote's count: the votes of the players in the game (Vote Mode & Game, below) */
+/* a vote's count: the votes of the players in the game (Vote Mode & Map, below) */
 export const tally = (s, votes) => {
   const n = {};
   for (const id of s.seat) {
@@ -313,7 +313,7 @@ function setMode(s, mode) {
   say(s, `The game: ${modeOf(mode).name}!`);
 }
 
-/* ---------- Vote Mode & Game (owner 2026-11-04) ----------
+/* ---------- Vote Mode & Map (owner 2026-11-04) ----------
    After the start's 5 s countdown, a window over the whole screen: Vote for Game Mode (1:05), then Vote for Map (0:20;
    not for the games that bring their own place: Duck Cabin's and Mad God Justin's). Every player clicks one (the same
    one again takes the vote back); the dice is a random pick. Once every player has voted, the clock runs twice as
@@ -1514,7 +1514,7 @@ export function reduce(state, a, now = Date.now()) {
         : advance(s, now);
     }
     case "vote": {
-      // Vote Mode & Game: a player clicks a game or a map (the same one again takes the vote back); once every player has
+      // Vote Mode & Map: a player clicks a game or a map (the same one again takes the vote back); once every player has
       // voted, the clock runs twice as fast
       const vt = s.vt;
       if (
@@ -2530,7 +2530,7 @@ function dodSet(s, k, on, to = null) {
   else delete rules[k];
   s.dod.on = rules;
   if (on && k === "vote") {
-    // (Vote Mode & Game on, both votes, and locked: the game and the map come from the votes)
+    // (Vote Mode & Map on, both votes, and locked: the game and the map come from the votes)
     const o = s.options;
     o.modePick = o.mapPick = "vote";
     if (o.voteBack === undefined) o.voteBack = 3;
@@ -4091,7 +4091,7 @@ function cabinCheck(s, now) {
   c.at = at;
   return true;
 }
-/* a cabin game ends (the vote won): the whole stay is one game. With Vote Mode & Game on, Vote return counts it (the
+/* a cabin game ends (the vote won): the whole stay is one game. With Vote Mode & Map on, Vote return counts it (the
    votes come back when it's time, or the same game starts over); otherwise the room goes back to the lobby, as when the
    host ends it */
 export function cabinOver(s, now) {
