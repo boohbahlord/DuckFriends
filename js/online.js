@@ -295,6 +295,7 @@ const REMOTE = new Set([
   "hang",
   "dnEnd",
   "vdTimer",
+  "tv",
   "goOn",
 ]);
 const LOOK = [

@@ -39,10 +39,13 @@ export const CLOUD_SVG = `<svg class="cloud-svg" viewBox="0 0 200 84" aria-hidde
       <g fill="#dcebf8"><circle cx="50" cy="52" r="28"/><circle cx="92" cy="40" r="34"/><circle cx="140" cy="48" r="30"/><circle cx="170" cy="62" r="20"/><circle cx="26" cy="64" r="18"/><rect x="26" y="52" width="148" height="30" rx="15"/></g>
       <g fill="#fff"><circle cx="50" cy="48" r="26"/><circle cx="92" cy="36" r="32"/><circle cx="140" cy="44" r="28"/><circle cx="170" cy="58" r="18"/><circle cx="26" cy="60" r="16"/><rect x="28" y="50" width="144" height="26" rx="13"/></g>
       <ellipse cx="84" cy="24" rx="16" ry="6" fill="#fff" opacity=".9"/></svg>`;
-/* a duck on the cloud (or an empty cloud): p = the player, tip = what hovering the duck calls them */
+/* a hidden writer on the cloud: a big "?" in the title's multicolored letters, in every mode that hides who wrote it */
+export const SECRET = { secret: true };
+const SECRET_HTML = `<span class="lord-q" title="A secret writer">${rainbowHTML("?", { seed: 11, from: 3 })}</span>`;
+/* a duck on the cloud (or an empty cloud): p = the player (SECRET: the "?"), tip = what hovering the duck calls them */
 export function cloudHTML(p, tip = "Round Lord") {
   return `<div class="lord"><div class="lord-sit">
-    <div class="lord-duck">${p ? duckSVG(seenDuck(p), { size: 80, shadow: false, title: "", dead: !!p.dead }) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ""}</div>
+    <div class="lord-duck">${p && p.secret ? SECRET_HTML : p ? duckSVG(seenDuck(p), { size: 80, shadow: false, title: "", dead: !!p.dead }) + `<span class="lord-tip">${inFont(p, esc(tip))}</span>` : ""}</div>
     ${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div>
     <div class="lord-name">${p ? nameHTML(p.name, seenName(p)) : ""}</div></div>`;
@@ -50,10 +53,9 @@ export function cloudHTML(p, tip = "Round Lord") {
 /* two ducks on one cloud (a match's two writers): pa on the left facing right, pb on the right facing left. o.winner = 0 or
    1 once it's decided; o.knocked = the loser is already off the cloud (knockOff in
    duel.js plays the bump); o.both = nobody won, so both jump off (bothOff), and o.knocked then means they're gone */
-const MYSTERY = { duck: { color: "#b7bccb" } };
 export function duelCloudHTML(pa, pb, o = {}) {
   const duck = (p, side) =>
-    `<div class="lord-duck duel-duck${o.winner === side ? " won" : ""}" data-side="${side}"><div class="duel-in">${duckSVG(seenDuck(p || MYSTERY), { size: 80, shadow: false, title: p ? p.name : "A secret writer", dead: !!(p && p.dead) })}</div></div>`;
+    `<div class="lord-duck duel-duck${o.winner === side ? " won" : ""}" data-side="${side}"><div class="duel-in">${p ? duckSVG(seenDuck(p), { size: 80, shadow: false, title: p.name, dead: !!p.dead }) : SECRET_HTML}</div></div>`; // (a hidden writer: the "?")
   return `<div class="lord duel${o.winner != null ? " decided" : ""}${o.both ? " bothoff" : ""}${o.knocked ? " knocked" : ""}"><div class="lord-sit">
     ${duck(pa, 0)}${duck(pb, 1)}${CLOUD_SVG}</div>
     <div class="lord-say" aria-live="polite"></div><div class="lord-name"></div></div>`;

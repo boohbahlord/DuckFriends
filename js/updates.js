@@ -8,10 +8,12 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 147,
+    version: 148,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "A new mode, Trivia (2 players or more): everyone writes a question, multiple choice or a written answer, then the ducks walk onto the answers they think are right. Whoever wrote it grades the written answers. Genius, Dumbo, Easiest Prompts and Hardest Prompts at the end.",
+      "For Bicker Brackets: when the writer is hidden, the cloud shows a multicolored ? instead.",
       "For Quacky Zombies: 1 spin in 100 at the fireplace lands on Justin. He climbs out and plays with you as another player, with 1,500 points of his own, all his HP and the chain gun. He'd rather shoot than stab, keeps away from the zombies and doesn't get cornered.",
       "For Quacky Zombies and Mad God Justin: Invulnerability and Justin on the board can't be turned on, in Game Settings or the command line.",
       "Euclid's Squares can zoom into its tiny squares forever: vote for Euclid's Squares (Zoom) in Vote Maps (Random can land on it too), or pick the map and turn on Zoom under it.",
