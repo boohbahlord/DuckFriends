@@ -8,10 +8,14 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 151,
+    version: 152,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "For Agree or Disagree: no answer timer by default again. Whoever writes a question can still give it one, and so can the host in Game Settings.",
+      "For Trivia: each row is as tall as its answer needs, and when they don't all fit, the board slides down them as you walk, like Story Chain. The ducks on the rows are bigger.",
+      "For Trivia: the answers you pick glow yellow, and the right ones turn green when they're shown.",
+      "For Trivia: after each answer is shown there are 10 seconds before the next question. Anyone can press the red Stop timer to hold the clock; once everyone lets go it goes on from 5 seconds. Turn it off in Game Settings (Stop timer).",
       "A new Game Setting for Agree or Disagree, Would You Rather, DDR and Story Chain, End round button (off unless you turn it on): votes don't end the turn, an End round button does. It shows once enough ducks have voted, and anyone can press it.",
       "A new mode, Trivia (2 players or more): everyone writes a question, multiple choice or a written answer, then the ducks walk onto the answers they think are right. Whoever wrote it grades the written answers. Genius, Dumbo, Easiest Prompts and Hardest Prompts at the end.",
       "For Bicker Brackets: when the writer is hidden, the cloud shows a multicolored ? instead.",

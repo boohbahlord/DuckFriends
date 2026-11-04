@@ -3729,3 +3729,16 @@ the weapons need to work as fast as they do in the zombies game mode for now on,
 - Built (Noah, the first part; the weapons part went to Jackal): with Vote Maps or Random, the lobby picture shows each
   map for 10 s (CYCLE_MS) in a random order starting on a random map each lobby visit, the next fading in over 1.6 s
   (.lobby-art > svg.art-in). No fade with Less motion.
+
+## Owner 2026-11-04 05:12Z (phone layout, Trivia) and 05:26Z (board, default timer): Adam's parts
+- 05:12Z batch (logged word for word by Solomon): Solomon = phone joystick anywhere on the board, then the phone
+  layout; Adam = Trivia: rows as tall as their answers need (at least a duck), the view slides down them like Story
+  Chain's, bigger ducks on the rows, my picks yellow, right answers green, the reveal is 10 s with a red Stop timer
+  (anyone holds it; once everyone lets go it goes on from 5 s; Game Setting "Stop timer", on by default).
+- 05:26Z (furious, screen recording): "WHY THE FUCK DOES THE FUCKING DEFAULT SETTING I HAVE FOR FUCKING AGREE OR DISAGREE
+  BEEN CHANGED TO FUCKIMG 30 SECONDS !?!?!?!? IT DIDNT HAVE A FUCKING TIMER!!!! WHO IS CHANGING MY DEFAULT SETTINGS!?!?!?
+  WAIT, DONT TELL ME THAT MOBILE DOESNT HAVE THE SAME DEFAULT LOBBY SETTINGS AS PC!!!!!!!!????!?!?!?!?! AAAAAAHHHH IM PISSED"
+  (the full message also says the board contracts and lengthens and the duck can walk off it: Solomon).
+  Found: OPTIONS_DEFAULT.answerTime was 30 since 2026-10-24 (request 4 asked "a 30 s answer time by default"), the same
+  on phone and computer (rooms start from OPTIONS_DEFAULT; nothing is kept per device). Now 0 (Off) by default, as the
+  owner says. Never change the owner's defaults without asking.
