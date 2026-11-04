@@ -311,7 +311,7 @@ const GAME = [
     flags: [
       [
         "map / map <name>",
-        "the maps / picks one (board sky pixel carnival stars rabbit ec tiles)",
+        "the maps / picks one (board sky pixel carnival stars rabbit collage euclid ec tiles)",
       ],
       [
         "mode / mode <type>",

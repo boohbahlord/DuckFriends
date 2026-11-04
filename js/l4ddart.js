@@ -9,6 +9,7 @@ import { zombieLook, kindOf } from "./l4ddrules.js";
 import { specialById } from "./specials.js";
 import { GUNS } from "./l4ddguns.js";
 import { FIREBALL } from "./mgjart.js";
+import { justinSVG } from "./hangout/npcart.js";
 
 const INK = "#1c1c28";
 
@@ -402,13 +403,111 @@ export const woundSkin = (ids) => ({
     .join(""),
 });
 
-/* a zombie's picture, made once for each look and marks (the same ones are the same picture): 64 px wide, its shadow
-   under it; n is its number, which picks its marks */
+/* ---------- the wounds a zombie gets from hits (owner 2026-11-04 04:01Z) ----------
+   The host picks them (l4ddrules.js, s.hang.zw: two letters each, a kind and a spot), so every screen shows the same:
+   b a small bleeding bullet hole (the handgun, the SMG, the LMG), B a big one with spatter (the sniper, the AK-47, the
+   revolver, the chain gun), s the shotgun's spread of pellet holes, c a bleeding cut (a knife, a dagger, now and then a
+   bullet or an arrow), r a bruise (the hammer, the chair), a an arrow left sticking in it, k a bloody chunk torn out of
+   it, p its beak shot off (a bloody mess in its place), x its head blown off (a headshot). Each in the 120 box. */
+const FLESH = "#2a0508";
+const HIT_AT = [
+  [88, 78],
+  [66, 96],
+  [30, 70],
+  [60, 44],
+  [92, 90],
+  [48, 100],
+  [84, 52],
+  [22, 60],
+];
+const SMALL_HOLE = `<circle r="3.6" fill="${BLOOD}" opacity=".55"/><circle r="2.1" fill="${FLESH}" stroke="${BLOOD_D}" stroke-width=".7"/>${place(DRIP, 0.4, 1.4, 0, 0.7)}`;
+const BIG_HOLE = `<circle r="6.2" fill="${BLOOD}" opacity=".55"/><circle r="3.8" fill="${FLESH}" stroke="${BLOOD_D}" stroke-width=".9"/>
+<circle cx="6.6" cy="-4.4" r="1.3" fill="${BLOOD}"/><circle cx="-6" cy="-3.6" r="1" fill="${BLOOD}"/><circle cx="7.8" cy="1.6" r=".8" fill="${BLOOD}"/>
+<path d="M-1.4 -2.6L-.4 -1.6M1.8 -2.4L1 -1.4" stroke="${BLOOD_L}" stroke-width=".7" stroke-linecap="round"/>${place(DRIP, 0.6, 2.8, 0, 1.1)}`;
+const PELLETS = `<ellipse rx="9.4" ry="7.4" fill="${BLOOD}" opacity=".35"/>${[
+  [-4.6, -3],
+  [1.4, -4.4],
+  [5.2, -0.6],
+  [-1.2, 0.6],
+  [-5, 3],
+  [2.6, 3.8],
+]
+  .map(
+    ([x, y]) =>
+      `<circle cx="${x}" cy="${y}" r="1.45" fill="${FLESH}" stroke="${BLOOD_D}" stroke-width=".5"/>`,
+  )
+  .join("")}${place(DRIP, -1.2, 1.4, 0, 0.6)}${place(DRIP, 2.6, 4.6, 0, 0.55)}`;
+/* where an arrow sticks in, and which way its shaft points out (degrees) */
+const ARROW_AT = [
+  [30, 68, 190],
+  [96, 80, -15],
+  [60, 27, -120],
+  [56, 101, 100],
+  [18, 56, 205],
+  [92, 92, 25],
+];
+const ARROW = `<path d="M0 0H19" stroke="#7a4a22" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M15 0l5 -4h5l-3 4l3 4h-5Z" fill="#e8463a" stroke="#5a1a14" stroke-width=".7" stroke-linejoin="round"/>
+<circle r="2.6" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width=".6"/>`;
+/* the chunks: bites out of its outline (x, y, r), never the whole head */
+const CHUNK_AT = [
+  [38, 62, 8.5],
+  [14, 50.5, 7.5],
+  [62, 104, 9],
+  [98.5, 76, 8.5],
+  [24, 92, 8.5],
+  [57.5, 26.5, 7.5],
+];
+const chunkRim = ([x, y, r]) =>
+  `<circle cx="${x}" cy="${y}" r="${r + 1.5}" fill="none" stroke="${BLOOD}" stroke-width="3"/><circle cx="${x}" cy="${y}" r="${r + 0.5}" fill="none" stroke="${FLESH}" stroke-width="1.2"/>${place(DRIP, x, y + r + 1.4, 0, 0.8)}`;
+const BEAK_GONE = `<ellipse cx="98" cy="42" rx="4.6" ry="6.2" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1"/><ellipse cx="98.6" cy="41.6" rx="2.4" ry="3.6" fill="${FLESH}"/>
+<path d="M101.6 36.6l3 -1.4l-1 2.8ZM101.4 47l3.2 1l-2.6 1.6Z" fill="#ff9a1f" stroke="#c45f00" stroke-width=".6"/>${place(DRIP, 97.6, 47, 0, 0.9)}`;
+const HEADLESS = `<ellipse cx="75" cy="60.6" rx="14.4" ry="4.8" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1.1"/><ellipse cx="75" cy="60.2" rx="9.4" ry="2.7" fill="${FLESH}"/><ellipse cx="72.4" cy="59.6" rx="2.2" ry="1" fill="#efe2d0"/>
+${place(DRIP, 66, 63, 0, 1.1)}${place(DRIP, 83.6, 63.4, 0, 0.9)}<circle cx="69" cy="51" r="1.3" fill="${BLOOD}"/><circle cx="80" cy="47.6" r="1.1" fill="${BLOOD}"/><circle cx="76" cy="43" r=".9" fill="${BLOOD}"/><circle cx="86" cy="53" r=".8" fill="${BLOOD}"/>`;
+const HIT_KINDS = "bBscrakpx";
+/* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie */
+export function hitsOf(codes = "") {
+  const inner = [],
+    out = [],
+    holes = [],
+    gone = {};
+  for (let i = 0; i + 1 < codes.length; i += 2) {
+    const kind = codes[i],
+      at = +codes[i + 1] || 0,
+      [x, y] = HIT_AT[at % HIT_AT.length];
+    if (kind === "b") inner.push(place(SMALL_HOLE, x, y));
+    else if (kind === "B") inner.push(place(BIG_HOLE, x, y));
+    else if (kind === "s") inner.push(place(PELLETS, x, y));
+    else if (kind === "c") inner.push(bleeding(x, y, at * 37 - 60, 1.15));
+    else if (kind === "r") inner.push(place(BRUISE, x, y, 0, 0.95));
+    else if (kind === "a") {
+      const [ax, ay, a] = ARROW_AT[at % ARROW_AT.length];
+      out.push(place(ARROW, ax, ay, a));
+    } else if (kind === "k") {
+      const c = CHUNK_AT[at % CHUNK_AT.length];
+      holes.push(c);
+      inner.push(chunkRim(c));
+    } else if (kind === "p") {
+      gone.beak = true;
+      out.push(BEAK_GONE);
+    } else if (kind === "x") gone.head = true;
+  }
+  if (gone.head) out.push(HEADLESS);
+  if (holes.length) gone.holes = holes;
+  return { inner: inner.join(""), out: out.join(""), gone };
+}
+export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
+
+/* a zombie's picture, made once for each look, marks and wounds (the same ones are the same picture): 64 px wide, its
+   shadow under it; n is its number, which picks its marks; hits, its wounds from hits (s.hang.zw) */
 const LOOKS = new Map();
-export function zombieURL(l, n = 0) {
+export function zombieURL(l, n = 0, hits = "") {
   const w = woundsOf(n, l[6] >= 0),
-    k = [l[3], l[4], l[5], l[6], l[7], w.join("+")].join();
-  if (!LOOKS.has(k))
+    k = [l[3], l[4], l[5], l[6], l[7], w.join("+"), hits].join();
+  if (!LOOKS.has(k)) {
+    if (LOOKS.size > 600) LOOKS.clear(); // (wounds make many pictures: I keep only the newest few hundred)
+    const sk = woundSkin(w),
+      h = hitsOf(hits);
     LOOKS.set(
       k,
       svgDataURL(
@@ -416,10 +515,12 @@ export function zombieURL(l, n = 0) {
           size: 64,
           shadow: true,
           dead: true,
-          skin: woundSkin(w),
+          skin: { body: sk.body, head: sk.head + h.inner, out: h.out },
+          gone: h.gone,
         }),
       ),
     );
+  }
   return LOOKS.get(k);
 }
 /* its box: 64 wide, as tall as its drawing (a hat makes it taller); feet 10 units over the bottom, as a duck's */
@@ -573,7 +674,7 @@ export const weaponIcon = (w) =>
   (w === "fireball" ? FIREBALL : (specialById(w) || {}).icon || "");
 /* a weapon as an orb, glowing in its slot's color (css: .l4orb, blue melee, red ranged, purple special, white grenades) */
 export const orbHTML = (w) =>
-  `<span class="l4orb k-${kindOf(w) || "special"}"><i>${weaponIcon(w)}</i></span>`;
+  `<span class="l4orb k-${kindOf(w) || "special"}"><i>${w === "justin" ? justinSVG({ size: 30, shadow: false }) : weaponIcon(w)}</i></span>`; // (the fireplace's 1 in 100: Justin himself)
 /* Justin's Butler's upgrades: accuracy (a crosshair), attack speed (a lightning bolt), max HP (a green heart), speed
    (a running arrow), faster reload (a bullet in a turning arrow) */
 export const UP_ICONS = {

@@ -49,6 +49,7 @@ import {
   BOX,
   POOL,
   boxNow,
+  HELPER,
   weaponName,
   priceFor,
   saleOn,
@@ -234,6 +235,8 @@ function zombieEl(z) {
     st: z.st,
     a: z.a,
     sh: "",
+    hits: "",
+    img: body.firstChild,
   };
 }
 function claw(x, y, dir, ctx) {
@@ -304,6 +307,11 @@ function seeZombies(s, ctx, now) {
         );
       o.el.classList.toggle("onfire", lit);
     } // (set on fire by a fireball: one big flame over it, as a duck's)
+    const hits = (s.hang.zw || {})[z.i] || "";
+    if (o.hits !== hits) {
+      o.hits = hits;
+      o.img.src = zombieURL(z.l, z.i, hits);
+    } // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
@@ -900,7 +908,8 @@ function holdTarget(pos, ctx) {
   if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
-    if (now >= b.t + BOX.spin) return { kind: "take", d: db, w: b.w };
+    if (now >= b.t + BOX.spin && b.w !== HELPER.w)
+      return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
   const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))

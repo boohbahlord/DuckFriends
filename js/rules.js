@@ -148,9 +148,10 @@ import {
   l4Shots,
   l4Holds,
   kitOf,
+  helperOut,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
-import { MAPS } from "./maps.js";
+import { VOTE_LIST, ZOOM_MAP, mapName } from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
@@ -181,7 +182,7 @@ export const OPTIONS_DEFAULT = {
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
-  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
+  map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | euclid | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
   mapPick: "vote", // (Vote Maps is the default) "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
   modePick: "", // "" (the host's game) | vote (Vote Game Mode: everyone votes) | random (a new game every round)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
@@ -205,6 +206,7 @@ export const OPTIONS_DEFAULT = {
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
   noOwn: 0, // Duncelation and Lawyering, "Don't get your own prompt": 1 = you never defend or argue the prompt you wrote
   mapGrey: 0, // the collage map: 1 turns it black and white
+  mapZoom: 0, // Euclid's Squares, picked by the host: 1 zooms into its tiny squares forever (s.mapZoomed in the game)
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
   noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
@@ -250,7 +252,7 @@ const winner = (n, pool) => {
     tied = ok.filter((k) => n[k] === top);
   return anyOf(top ? tied : pool);
 };
-export const VOTE_MAPS = MAPS.map((m) => m[0]); // (the boards' maps: Duck Cabin isn't one)
+export const VOTE_MAPS = VOTE_LIST.map((m) => m[0]); // (the boards' maps and the zoom: Duck Cabin isn't one)
 const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 const pickMap = (s) =>
   s.options.mapPick === "vote"
@@ -302,10 +304,14 @@ function countdown(s, now) {
   if (s.seat.length < minOf(s)) return null; // (the lobby says how many it needs)
   if (isHang(s) !== (s.options.map === "cabin"))
     s.options.map = isHang(s) ? "cabin" : "board"; // (Duck Cabin and its games are one)
+  /* the zoom on Euclid's Squares: its own entry for Vote Maps and Random, the map's Zoom setting for the host's pick */
+  s.mapZoomed = s.options.map === "euclid" && s.options.mapZoom ? 1 : 0;
   if (s.options.mapPick && !isHang(s)) {
-    s.options.map = pickMap(s);
+    const won = pickMap(s);
+    s.options.map = won === ZOOM_MAP[0] ? "euclid" : won;
+    s.mapZoomed = won === ZOOM_MAP[0] ? 1 : 0;
     s.mapVotes = {};
-    say(s, `The map: ${MAPS.find((m) => m[0] === s.options.map)[1]}!`);
+    say(s, `The map: ${mapName(won)}!`);
   }
   dealRainbow(s); // (Rainbow Ducks: each duck's look for this game)
   s.phase = "countdown";
@@ -1177,7 +1183,7 @@ export function reduce(state, a, now = Date.now()) {
         P[a.p.id] = { ...P[a.p.id], ...a.p };
         return s;
       }
-      if (s.seat.length >= s.max) return s;
+      if (s.seat.filter((id) => !P[id].helper).length >= s.max) return s; // (the fireplace's Justin takes nobody's seat)
       if (
         (s.banned || {})[a.p.id] ||
         (a.p.acct && (s.banned || {})["acct:" + a.p.acct])
@@ -2516,6 +2522,11 @@ function forgame(s, a, now) {
         ].includes(k)
       )
         o[k] = v ? 1 : 0;
+      if (
+        ["justin", "mgjBoard"].includes(k) &&
+        ["l4dd", "mgj"].includes(s.options.mode)
+      )
+        delete o[k]; // (never Justin on the board in Quacky Zombies or Mad God Justin: the owner's, Nov 4)
       if (k === "share" && SHARE_OK.includes(v)) o.share = v;
       if (
         ["catchUp", "writeCatch", "answerTime", "submitTime"].includes(k) &&
@@ -3486,6 +3497,7 @@ function skipRound(s, now) {
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
+  helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
   const was = STAGE[s.phase];
   s.phase = "lobby";

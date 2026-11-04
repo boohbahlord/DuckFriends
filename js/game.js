@@ -2779,6 +2779,27 @@ function playFx(f) {
         far * (0.25 + Math.random() * 0.5),
         Math.random() * 30,
       );
+  } else if (f.kind === "l4crit") {
+    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a big CRIT rises
+       over it, so it's never missed (owner 2026-11-04 04:01Z) */
+    if (!geo.hang) return;
+    const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
+      top = a.top - size * 0.78;
+    let drops = "";
+    for (let i = 0; i < 14; i++) {
+      const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.6,
+        far = size * (0.35 + Math.random() * 0.55);
+      drops += `<i style="--x:${(Math.cos(ang) * far).toFixed(0)}px;--y:${(Math.sin(ang) * far).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px"></i>`;
+    }
+    const burst = el(
+        `<div class="l4-burst" style="left:${a.left.toFixed(1)}px;top:${top.toFixed(1)}px">${drops}</div>`,
+      ),
+      word = el(
+        `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
+      );
+    fxl.append(burst, word);
+    setTimeout(() => burst.remove(), 800);
+    setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
   } else if (f.kind === "l4bite") {
@@ -5670,6 +5691,26 @@ async function act(a) {
   }
 }
 
+/* on a phone the board takes the whole screen and the bars sit over it (css: html:not(.keyboard) .game): how tall
+   the top bar and everything at the bottom (the bottom bar and the chat docked over it) are, so what's on the board
+   keeps out from under them (--ui-top, --ui-bot) */
+let insetsOff = null;
+function watchInsets(S) {
+  const top = $(".gbar", S),
+    bot = [$(".bbar", S), $(".dock-b", S)],
+    set = () => {
+      S.style.setProperty("--ui-top", top.offsetHeight + "px");
+      S.style.setProperty(
+        "--ui-bot",
+        bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0) + "px",
+      );
+    };
+  const ro = new ResizeObserver(set);
+  for (const e of [top, ...bot]) if (e) ro.observe(e);
+  set();
+  return () => ro.disconnect();
+}
+
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
 /* a second line, where Shift and a number key keep a special on (not in Mad God Justin or Quacky Zombies: their keys work
@@ -5677,8 +5718,8 @@ const HINTS =
 const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on';
 const L4_HINTS =
-  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Use" +
-  '<i class="hints-br"></i><kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, on a line of their own: the owner's, Nov 4)
+  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, the owner's, Nov 4; E goes with them, so no key is split from its word)
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
 let l4Fire = 0;
@@ -5745,6 +5786,8 @@ register("game", {
     pad = null;
     if (mbarOff) mbarOff();
     mbarOff = null;
+    if (insetsOff) insetsOff();
+    insetsOff = null;
     lastKey = -1;
     kept.clear();
     held = null;
@@ -5795,6 +5838,7 @@ register("game", {
             : HINTS + KEEP_HINT,
     );
     mbarOff = mountMusicBar(S);
+    insetsOff = watchInsets(S);
     pm = mountPlayers(S, () => R);
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
