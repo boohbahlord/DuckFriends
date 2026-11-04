@@ -38,6 +38,7 @@ import { acct, onAccount, requestFriend, canAdd } from "./account.js";
 import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
+import { paintVotes, closeVotes } from "./vote.js";
 import { openSettings } from "./settings.js";
 
 let R = null,
@@ -150,16 +151,9 @@ function paint() {
   ]
     .filter(Boolean)
     .join(" · ");
-  const st = $(".lobby-status", S),
-    mv = s.phase === "countdown" ? s.mv : null;
-  paintVote(s, mv, host);
-  if (mv) {
-    const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
-    setHTML(
-      st,
-      `<span class="count">Vote for a map <b>${left}</b></span><button type="button" class="btn red" data-a="cancel">Cancel <kbd>X</kbd></button>`,
-    );
-  } else if (s.phase === "countdown") {
+  const st = $(".lobby-status", S);
+  paintVotes(R); // (Vote Mode & Game: its window over the whole screen, after the countdown)
+  if (s.phase === "countdown" && !s.vt) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
       st,
@@ -219,17 +213,21 @@ function paint() {
     $('[data-m="settings"] .val', S),
     esc(
       `${
-        s.options.modePick === "vote"
-          ? "Vote Game Mode"
-          : s.options.modePick === "random"
-            ? "Random"
-            : modeOf(s.options.mode).name
-      } · ${
-        s.options.mapPick === "vote"
-          ? "Vote Maps"
-          : s.options.mapPick === "random"
-            ? "Random"
-            : mapName(s.options.map)
+        s.options.modePick === "vote" && s.options.mapPick === "vote"
+          ? "Vote Mode & Game"
+          : `${
+              s.options.modePick === "vote"
+                ? "Vote for Game Mode"
+                : s.options.modePick === "random"
+                  ? "Random"
+                  : modeOf(s.options.mode).name
+            } · ${
+              s.options.mapPick === "vote"
+                ? "Vote for Map"
+                : s.options.mapPick === "random"
+                  ? "Random"
+                  : mapName(s.options.map)
+            }`
       }`,
     ),
   );
@@ -262,22 +260,12 @@ function paint() {
   lastSeat = s.seat.length;
 }
 
-/* the picture: the game and the map. In the map vote, the map under the pointer (or yours, or the one ahead); with Vote
-   Maps or Random, as the map isn't picked yet, the maps one after another, 10 seconds each, fading from one into the
-   next, starting on a random one */
+/* the picture: the game and the map. With Vote for Map or Random, as the map isn't picked yet, the maps one after
+   another, 10 seconds each, fading from one into the next, starting on a random one */
 let cycle = [],
   cycleAt = 0;
 const CYCLE_MS = 10000;
 function artMap(s) {
-  const mv = s.phase === "countdown" ? s.mv : null;
-  if (mv) {
-    const n = {};
-    for (const v of Object.values(mv.votes || {})) n[v] = (n[v] || 0) + 1;
-    const ahead = [...mv.maps].sort((a, b) => (n[b] || 0) - (n[a] || 0))[0];
-    return (
-      (mv.maps.includes(S._hov) && S._hov) || (mv.votes || {})[R.me] || ahead
-    );
-  }
   if (!s.options.mapPick || s.options.map === "cabin")
     return s.options.map || "board";
   if (!cycle.length) {
@@ -286,10 +274,7 @@ function artMap(s) {
   }
   return cycle[Math.floor((Date.now() - cycleAt) / CYCLE_MS) % cycle.length];
 }
-const cycling = (s) =>
-  !(s.phase === "countdown" && s.mv) &&
-  !!s.options.mapPick &&
-  s.options.map !== "cabin";
+const cycling = (s) => !!s.options.mapPick && s.options.map !== "cabin";
 function paintArt(s) {
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),
@@ -333,48 +318,6 @@ function paintArt(s) {
   );
 }
 /* the map vote's round (the start's first part): its maps in place of the menu, each with its picture and its votes */
-function paintVote(s, mv, host) {
-  const menu = $(".lmenu:not(.lvote)", S),
-    box = $(".lvote", S),
-    info = $(".lmenu-info", S);
-  menu.hidden = !!mv;
-  box.hidden = !mv;
-  if (!mv) {
-    if (box._sig) {
-      box._sig = "";
-      box.textContent = "";
-      info.textContent = INFO.start;
-    }
-    return;
-  }
-  const sig = mv.maps.join();
-  if (box._sig !== sig) {
-    box._sig = sig;
-    box.innerHTML = mv.maps
-      .map(
-        (id) =>
-          `<button type="button" role="menuitem" data-v="${id}"><span class="lv-pic"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${artBackdrop(id)}</svg></span><span class="lv-name">${esc(mapName(id))}</span><span class="val"></span></button>`,
-      )
-      .join("");
-    info.textContent = "Vote for a map: the most votes win.";
-    const f = box.querySelector("button");
-    if (f && !windowOpen()) f.focus();
-  }
-  const n = {};
-  for (const id of s.seat) {
-    const v = (mv.votes || {})[id];
-    if (v) n[v] = (n[v] || 0) + 1;
-  }
-  for (const b of box.querySelectorAll("button")) {
-    const v = b.dataset.v,
-      on = (mv.votes || {})[R.me] === v;
-    b.setAttribute("aria-pressed", String(on));
-    b.classList.toggle("on", on);
-    $(".val", b).textContent =
-      (n[v] ? `${n[v]} vote${n[v] === 1 ? "" : "s"}` : "") + (on ? " ✓" : "");
-  }
-}
-
 function onState(s) {
   if (!S) return;
   if (!["lobby", "countdown"].includes(s.phase)) {
@@ -402,7 +345,7 @@ function onState(s) {
       });
     return;
   } // the countdown's last tone, at zero
-  if (s.phase === "countdown" && !s.mv) {
+  if (s.phase === "countdown" && !s.vt) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     if (!counting) {
       counting = true;
@@ -423,6 +366,7 @@ function onState(s) {
 /* Space: ready */
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
+  if (R && R.state.vt) return; // (Vote Mode & Game's window is up: only clicks vote)
   if (e.code === "Space" && !e.repeat) {
     e.preventDefault();
     toggleReady();
@@ -526,6 +470,7 @@ register("lobby", {
     offAcct = null;
     if (docks) docks.destroy();
     docks = null;
+    closeVotes();
     if (counting) brighten(); // (left the room in the countdown)
     counting = false;
     clearInterval(S && S._tick);
@@ -555,7 +500,6 @@ register("lobby", {
           <button type="button" role="menuitem" data-m="ready" class="ready" hidden><span>Ready</span><span class="val"></span></button>
           ${R.online ? '<button type="button" role="menuitem" data-m="friends"><span>Friends</span><span class="val"></span></button>' : ""}
         </div>
-        <div class="lmenu lvote" role="menu" hidden></div>
         <p class="lmenu-info dim">${INFO.start}</p>
       </div>
       <aside class="party"><header><h2>Party</h2><span class="party-count dim"></span></header><div class="party-list"></div></aside>
@@ -577,25 +521,6 @@ register("lobby", {
     S.querySelector(".lmenu").addEventListener("focusin", (e) => {
       const b = e.target.closest("[data-m]");
       if (b) info.textContent = INFO[b.dataset.m];
-    });
-    const vote = S.querySelector(".lvote");
-    vote.onclick = (e) => {
-      const b = e.target.closest("[data-v]");
-      if (b) {
-        R.send({ t: "mapVote", map: b.dataset.v });
-        sfx.tick();
-      }
-    };
-    const hover = (e) => {
-      const b = e.target.closest("[data-v]");
-      S._hov = b ? b.dataset.v : "";
-      paintArt(R.state);
-    };
-    vote.addEventListener("pointerover", hover);
-    vote.addEventListener("focusin", hover);
-    vote.addEventListener("pointerleave", () => {
-      S._hov = "";
-      paintArt(R.state);
     });
     S.querySelector(".lmenu").onclick = (e) => {
       const b = e.target.closest("[data-m]");
