@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v166",
+    version: 166,
+    date: "Nov 4, 2026",
+    title: "The first HP lost",
+    fixed: [
+      "The first HP a duck loses now flashes its HP bar and makes the hit sound, the same as every HP lost after it.",
+    ],
+  },
+  {
     id: "v165",
     version: 165,
     date: "Nov 4, 2026",
