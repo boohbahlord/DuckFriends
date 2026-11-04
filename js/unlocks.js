@@ -10,8 +10,10 @@
    gold and rose gold at 31,104, rainbow at 62,208. The Short jump opens at 1,728 jumps; the Chair at 1,123 Justin kills
    in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
    once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too); Jaime once Jaimes have
-   stabbed Mad God Justin 36 times in fights I was in (anyone's Jaimes: the owner's). What counts lives in the
-   profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits, jaimeStabs, kills, dunced,
+   stabbed Mad God Justin 36 times in fights I was in (anyone's Jaimes: the owner's); the Jaime Bomb at 864 Jaimes I
+   sent and Jaime's hits on me together, any mode, or at once when I take it from Quacky Zombies' fireplace. What counts
+   lives in the profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits,
+   jaimeStabs, jaimes (sent and hit by), jaimeBomb (taken from the fireplace), kills, dunced,
    mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
@@ -51,6 +53,7 @@ export const LOCKS = [
   { kind: "special", id: "invisible", shadow: 1, name: "Invisible duck" },
   { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
   { kind: "special", id: "jaime", jaime: 36, name: "Jaime" },
+  { kind: "special", id: "jaimebomb", jbomb: 864, name: "Jaime Bomb" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
@@ -80,7 +83,9 @@ const earned = (l) =>
       ? (profile.shadowHits || 0) >= l.shadow
       : l.jaime
         ? (profile.jaimeStabs || 0) >= l.jaime
-        : earnedElse(l);
+        : l.jbomb
+          ? (profile.jaimes || 0) >= l.jbomb || !!profile.jaimeBomb
+          : earnedElse(l);
 const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
@@ -108,6 +113,10 @@ export function lockHint(kind, id) {
   if (!l) return "";
   if (l.jaime && earned(l))
     return `Unlocked: Jaimes stabbed Mad God Justin ${l.jaime} times with you`;
+  if (l.jbomb && earned(l))
+    return profile.jaimeBomb
+      ? "Unlocked: you found it in the fireplace in Quacky Zombies"
+      : `Unlocked: ${fmtJumps(l.jbomb)} Jaimes`;
   if (earned(l))
     return l.cabin
       ? `Unlocked: ${fmtJumps(l.cabin)} Justin kills in Duck Cabin`
@@ -141,6 +150,8 @@ export function lockHint(kind, id) {
     return `${pre}Kill Justin ${fmtJumps(l.cabin)} times in Duck Cabin, in Hangout (${fmtJumps(Math.min(l.cabin, profile.cabinKills || 0))}/${fmtJumps(l.cabin)})`;
   if (l.shadow)
     return `${pre}Hit the shadow duck in Duck Cabin with a thrown chair`;
+  if (l.jbomb)
+    return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)}), or find it in the fireplace in Quacky Zombies`;
   if (l.jaime)
     return `${pre}Be in Mad God Justin while Jaimes stab him ${l.jaime} times, anyone's Jaimes (${Math.min(l.jaime, profile.jaimeStabs || 0)}/${l.jaime})`;
   if (l.kills && !l.hidden)
@@ -196,6 +207,7 @@ export function watchKills(room) {
     seenP = null,
     seenS = null,
     seenJ = null,
+    seenB = null,
     jin = null;
   room.on(() => {
     const s = room.state,
@@ -268,6 +280,20 @@ export function watchKills(room) {
       }
       seenJ = topJ;
     } // (every Jaime's stab on Mad God Justin while I'm in the fight, anyone's: mgjrules.js jaimeTick)
+    const topB = (s && s.jmkN) || 0;
+    if (seenB === null || topB < seenB) seenB = topB;
+    else if (topB > seenB) {
+      for (const k of s.jmk || [])
+        if (k.n > seenB) {
+          if (k.by === room.me || k.id === room.me)
+            profile.jaimes = (profile.jaimes || 0) + 1;
+          else if (k.got === room.me) profile.jaimeBomb = 1;
+          else continue;
+          save();
+          checkUnlocks();
+        }
+      seenB = topB;
+    } // (toward the Jaime Bomb: a Jaime I sent, Jaime's hit on me, the one from the fireplace: jaimebomb.js jaimeCount)
     if (seenD === null || topD < seenD) seenD = topD;
     else {
       for (const k of dn.dk || [])

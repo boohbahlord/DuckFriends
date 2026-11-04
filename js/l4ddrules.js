@@ -56,6 +56,15 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
+import {
+  BOMB,
+  bombRoll,
+  bombIn,
+  flyTo,
+  snapLine,
+  logIn,
+  jaimeCount,
+} from "./jaimebomb.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
@@ -237,6 +246,7 @@ export const ARMS = {
   adrenaline: { kind: "special", cool: 600, all: 1, ms: 20000 },
   longjump: { kind: "special", cool: 300 },
   jaime: { kind: "special", cool: 1500, all: 3, round: true },
+  jaimebomb: { kind: "special", cool: 1500, all: 3, round: true }, // (as Jaime: 1 spin in 50 at the fireplace, BOMB.fire)
   /* the jetpack (Stage 4): each use switches it on or off, as the long jump; on, Space flies (jetpack.js), and its
      10 s of flight (all, in ms) burn only while its jets are on in the air; a Max Ammo fills it */
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
@@ -253,7 +263,14 @@ export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
 /* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
 export const inHand = (w, s, id) => {
-  if (!w || w === "longjump" || w === "jaime" || w === "jetpack") return ""; // (the jetpack is on the back: game.js)
+  if (
+    !w ||
+    w === "longjump" ||
+    w === "jaime" ||
+    w === "jaimebomb" ||
+    w === "jetpack"
+  )
+    return ""; // (the jetpack is on the back: game.js)
   const c = s && kindOf(w) === "special" && ((kitOf(s, id) || {}).am || {})[w];
   return c && c[0] <= 0 ? "" : w;
 };
@@ -306,6 +323,7 @@ const NAMES = {
   adrenaline: "Adrenaline shot",
   longjump: "Long jump",
   jaime: "Jaime",
+  jaimebomb: "Jaime Bomb",
   jetpack: "Jetpack",
   chair: "Chair",
 };
@@ -1325,13 +1343,16 @@ function fireplace(s, id, a, now, mx, my) {
         w:
           Math.random() < HELPER.chance && !s.players[HELPER.id]
             ? HELPER.w
-            : pool[Math.floor(Math.random() * pool.length)],
+            : Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb")
+              ? "jaimebomb" // (1 spin in 50: the Jaime Bomb, and it's unlocked for good once taken)
+              : pool[Math.floor(Math.random() * pool.length)],
       },
     };
     return true;
   }
   if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
   if (!give(s, id, b.w, a.hand)) return false;
+  if (b.w === "jaimebomb") jaimeCount(s, { got: id }); // (unlocks.js)
   dropBox(s, id);
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
@@ -1554,7 +1575,8 @@ export function l4Use(s, a, now) {
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "longjump") m.lj = !m.lj;
-  else if (what === "jaime") jaimeIn(s, id, p, now);
+  else if (what === "jaime" || what === "jaimebomb")
+    jaimeIn(s, id, p, now, bombRoll(what));
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
   else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
   else {
@@ -1819,12 +1841,10 @@ function cakeDown(s, now) {
    he's gone in a poof, and the round's end takes him too. s.jm as the Jaime special's (game.js draws him) */
 const JAIME_SPEED = 330, // world px a second (9 duck lengths, as Mad God Justin's)
   JAIME_LIFE = 12000;
-function jaimeIn(s, by, p, now) {
+function jaimeIn(s, by, p, now, bomb) {
   s.jmN = (s.jmN || 0) + 1;
-  const id = `jaime${s.jmN}`;
-  s.jm = {
-    ...(s.jm || {}),
-    [id]: {
+  const id = `jaime${s.jmN}`,
+    J = {
       n: s.jmN,
       by,
       zi: -1,
@@ -1835,9 +1855,34 @@ function jaimeIn(s, by, p, now) {
       at: now,
       stabAt: now + 600,
       mt: now,
-    },
-  };
+    };
+  if (bomb) bombIn(s, id, J, now); // (the Jaime Bomb: jaimebomb.js)
+  s.jm = { ...(s.jm || {}), [id]: J };
   addFx(s, { kind: "jaime", by, who: [id], t: now });
+  jaimeCount(s, { by });
+}
+/* the Jaime Bomb goes off where he stands (ux, uy: the way he was running): every zombie in BOMB.wide times a
+   grenade's blast dies, torn apart as a grenade does it, and his body flies off the other way */
+function jaimeBlows(s, id, J, o, ux, uy, zs, T, now) {
+  if (J.snapAt) jaimeSnap(s); // (Justin still answers his line)
+  boom(s, { by: J.by, hz: J.z || 0 }, o.x, o.y, zs, T, now, BOMB.wide);
+  const [x1, y1] = flyTo(o.x / W, o.y / H, ux / RX, uy / RY, RX / W, RY / H);
+  addFx(s, {
+    kind: "jbomb",
+    who: [id],
+    t: now,
+    x: +(o.x / W).toFixed(5),
+    y: +(o.y / H).toFixed(5),
+    x1,
+    y1,
+    hz: J.z || 0,
+  });
+}
+/* the fireplace's Justin, if he's here and up, snaps back at a Jaime Bomb's line, as a player would in the chat */
+function jaimeSnap(s) {
+  const P = s.players[HELPER.id];
+  if (!P || P.dead) return;
+  logIn(s, { from: HELPER.id, to: null, text: snapLine() });
 }
 function jaimesRun(s, zs, now, T) {
   if (!s.jm) return;
@@ -1851,8 +1896,13 @@ function jaimesRun(s, zs, now, T) {
     const gone = () =>
       addFx(s, { kind: "poof", x: J.x, y: J.y, who: [id], t: now });
     if (!s.players[J.by] || now - J.at > JAIME_LIFE) {
-      gone();
+      if (J.bomb) jaimeBlows(s, id, J, o, J.face, 0, zs, T, now);
+      else gone();
       continue;
+    } // (his time is up: gone in a poof, or the bomb goes off where he is)
+    if (J.snapAt && now >= J.snapAt) {
+      delete J.snapAt;
+      jaimeSnap(s);
     }
     let z = live.find((q) => q.i === J.zi);
     if (!z) {
@@ -1873,6 +1923,10 @@ function jaimesRun(s, zs, now, T) {
         const ux = z.x - o.x,
           uy = z.y - o.y,
           l = Math.hypot(ux, uy) || 1;
+        if (J.bomb) {
+          jaimeBlows(s, id, J, o, ux, uy, zs, T, now);
+          continue;
+        } // (the Jaime Bomb got to a zombie: it goes off)
         if (strike(s, z, 1, false, J.by, "knife")) die(z, T); // (his knife's wounds)
         addFx(s, {
           kind: "use",
@@ -2132,13 +2186,13 @@ export function l4Shots(s, now) {
 }
 
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies; true when it got any */
-function boom(s, sh, bx, by, zs, T, now) {
+function boom(s, sh, bx, by, zs, T, now, wide = 1) {
   let any = false;
   const gore = [];
   for (const z of zs)
     if (
       z.st !== 3 &&
-      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r
+      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide
     ) {
       strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
       die(z, T);
@@ -2156,6 +2210,7 @@ function boom(s, sh, bx, by, zs, T, now) {
     hit: [],
     hz: sh.hz || 0,
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
+    ...(wide !== 1 ? { wide } : {}),
   });
   return any;
 }

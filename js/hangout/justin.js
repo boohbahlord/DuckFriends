@@ -829,6 +829,29 @@ const setRec = (s, fn) => {
   fn(o);
   s.hang.npc = { ...s.hang.npc, justin: o };
 };
+/* where Duck Cabin's Justin stands (world px), when he's up and about for a Jaime to go after (rules.js), or null */
+export function justinUpAt(s, now) {
+  const r = recOf(s);
+  if (!r || !mm || ["dead", "drinking", "poker", "bust"].includes(mm.mode))
+    return null;
+  return npcAt(r, now);
+}
+/* a Jaime Bomb's line (rules.js): unless he's down or drinking, and if he's near enough to see Jaime (x, y: world px),
+   he snaps back with `text`, over him and in the chat, as anything he says */
+export function justinSnaps(s, x, y, text, now) {
+  const r = recOf(s),
+    at = r && npcAt(r, now);
+  if (!at || !mm || mm.mode === "dead" || mm.mode === "drinking") return false;
+  if (Math.hypot(at.x - x, at.y - y) > 900) return false;
+  s.hang.npcN = (s.hang.npcN || 0) + 1;
+  setRec(s, (o) => (o.say = { text, t: now, n: s.hang.npcN }));
+  s.logN = (s.logN || 0) + 1;
+  s.log = [
+    ...(s.log || []).slice(-199),
+    { n: s.logN, t: Date.now(), npc: "justin", name: "Justin", text },
+  ];
+  return true;
+}
 export const jPoker = {
   /* onto a stool: its number, or -1 (none free, or he isn't here) */
   sit(s, taken, now) {

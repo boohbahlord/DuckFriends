@@ -157,7 +157,7 @@ export function l4Bot(s, id, now, out) {
      jump and the jetpack stay as they are) */
   const sp = sl[3];
   if (
-    ["jaime", "fireball", "zebra", "adrenaline"].includes(sp) &&
+    ["jaime", "jaimebomb", "fireball", "zebra", "adrenaline"].includes(sp) &&
     m.am[sp] &&
     m.am[sp][0] > 0 &&
     bd < 400 &&

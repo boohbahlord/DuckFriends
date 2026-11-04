@@ -15,7 +15,15 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import { BOW, MEDKIT, ZEBRA, JAIME, CHAIR, FIREBALL } from "./mgjart.js";
+import {
+  BOW,
+  MEDKIT,
+  ZEBRA,
+  JAIME,
+  BOMB_SKIN,
+  CHAIR,
+  FIREBALL,
+} from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
 import { jetpackSVG } from "./jetart.js";
@@ -366,6 +374,15 @@ export const SPECIALS = [
       return duckSVG(JAIME.duck, { size: 40, shadow: false });
     }, // (drawn when it's first shown: duck.js may not be ready while this file loads)
     tip: "Jaime sprints at a duck with his knife: the one you hit in the last 15 seconds, or else the one who hit you, or else the nearest. Once every 12 seconds. (In Mad God Justin he goes for Justin, and everyone shares the same Jaimes: a new one every 12 seconds, up to 3. Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "jaimebomb",
+    name: "Jaime Bomb",
+    kind: "item",
+    get icon() {
+      return duckSVG(JAIME.duck, { size: 40, shadow: false, skin: BOMB_SKIN });
+    },
+    tip: "Jaime, with dynamite strapped to his chest: he sprints at a duck as Jaime does and blows up when he gets there. The blast is half again as wide as a grenade's and takes all the HP of every duck in it. Once every 12 seconds. (Any Jaime has a 1 in 20 chance of being this one. Off when the host turns off the silly commands.)",
   },
   {
     id: "sound",

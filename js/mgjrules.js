@@ -54,7 +54,21 @@ import {
   KB_FAR,
   aimOf,
   FASTER,
+  GRENADE_R,
 } from "./rules.js";
+import {
+  BOMB,
+  bombRoll,
+  bombIn,
+  flyTo,
+  snapLine,
+  jaimeCount,
+  jaimeSays,
+  anyOf,
+  JAIME_MAD,
+  JAIME_HURT,
+  JUSTIN_AT_JAIME,
+} from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
@@ -277,6 +291,7 @@ export const DMG = {
   pellet: 1,
   arrow: 1,
   jaime: 1,
+  jaimebomb: 3, // (the Jaime Bomb takes only 3 off him: the owner's, jaimebomb.js)
   lightning: 2,
   fire: 2,
   meteor: 1,
@@ -1722,13 +1737,13 @@ function jaimeComes(s, by, now, fx) {
   if (!p || pool.n < 1) return false;
   m.jp = { n: pool.n - 1, at: pool.n === JAIME_MAX ? now : pool.at };
   m.jaimeN = (m.jaimeN || 0) + 1;
-  const id = `jaime${m.jaimeN}`;
-  m.jaimes = {
-    ...m.jaimes,
-    [id]: { by, n: m.jaimeN, stabAt: now + 600, safe: now + SOAK_MS },
-  }; // (a moment safe as he comes in: the duck that sent him is where Justin shoots)
+  const id = `jaime${m.jaimeN}`,
+    J = { by, n: m.jaimeN, stabAt: now + 600, safe: now + SOAK_MS };
+  if (bombRoll()) bombIn(s, id, J, now); // (1 in 20 with the bomb: jaimebomb.js)
+  m.jaimes = { ...m.jaimes, [id]: J }; // (a moment safe as he comes in: the duck that sent him is where Justin shoots)
   s.pos[id] = { x: p.x, y: p.y, face: p.face || 1 };
   fx({ kind: "jaime", who: [id], by });
+  jaimeCount(s, { by });
   return true;
 }
 /* every beat: each Jaime sprints at the real Justin and stabs him once a second when close */
@@ -1748,6 +1763,15 @@ function jaimeTick(s, now, log, fx) {
     const dx = (b.x - p.x) / RX,
       dy = (b.y - p.y) / RY,
       d = Math.hypot(dx, dy);
+    if (J.snapAt && now >= J.snapAt) {
+      delete J.snapAt;
+      log(s, { npc: JUSTIN_ID, name: "Justin", text: snapLine() });
+    } // (his Jaime Bomb line: Justin answers it)
+    if (J.bomb && d <= 2 && now >= J.stabAt) {
+      jaimeBlows(s, id, [dx, dy], now, log, fx);
+      ch = true;
+      continue;
+    } // (the Jaime Bomb got to him: it goes off)
     if (d > 1.3) {
       const step = Math.min(d - 1.2, JAIME_RUN * dt);
       s.pos[id] = {
@@ -1779,19 +1803,39 @@ function jaimeTick(s, now, log, fx) {
         const j = s.justin;
         if (now > (j.ouchJ || 0) && Math.random() < 0.4) {
           j.ouchJ = now + 4000;
-          log(s, { npc: JUSTIN_ID, name: "Justin", text: any(JAIME_OUCH) });
-        }
+          log(s, {
+            npc: JUSTIN_ID,
+            name: "Justin",
+            text: any([...JAIME_OUCH, ...JUSTIN_AT_JAIME]),
+          });
+        } else if (now > (m.madJ || 0) && Math.random() < 0.3) {
+          m.madJ = now + 5000;
+          jaimeSays(s, id, anyOf(JAIME_MAD));
+        } // (now and then a line from Justin, or from Jaime as he stabs: jaimebomb.js)
       }
       ch = true;
     }
   }
   return ch;
 }
-/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin) */
+/* a Jaime is hit (1 HP): he's gone in a poof. how: what got him (a controller or the chair: a line from Justin). A
+   Jaime Bomb has 3 HP, and when they're gone his bomb goes off */
 function jaimeDies(s, id, now, log, fx, how) {
   const m = s.mgj,
     p = s.pos[id];
   if (!m.jaimes || !m.jaimes[id] || m.jaimes[id].safe > now) return;
+  const J = m.jaimes[id];
+  if (now > (m.hurtJ || 0) && Math.random() < 0.5) {
+    m.hurtJ = now + 3000;
+    jaimeSays(s, id, anyOf(JAIME_HURT));
+  } // (hit by Justin: an "ouch" line from him)
+  if (J.bomb) {
+    J.hp = (J.hp ?? BOMB.hp) - 1;
+    if (p) fx({ kind: "hitmark", x: p.x, y: p.y });
+    if (J.hp <= 0) jaimeBlows(s, id, [p ? p.face || 1 : 1, 0], now, log, fx);
+    else m.jaimes = { ...m.jaimes, [id]: { ...J, safe: now + 300 } }; // (a hit takes 1, not every beat of one blast)
+    return;
+  }
   const rest = { ...m.jaimes };
   delete rest[id];
   m.jaimes = rest;
@@ -1806,6 +1850,36 @@ function jaimeDies(s, id, now, log, fx, how) {
       log(s, { npc: JUSTIN_ID, name: "Justin", text: any(JAIME_GOT) });
     }
   }
+}
+
+/* the Jaime Bomb goes off (aim: the way he was running): Mad God Justin takes BOMB.mgj if he's in the blast (half again
+   as wide as a grenade's; the ducks are on one side here, so it never hurts them), and Jaime's body flies off the
+   other way */
+function jaimeBlows(s, id, aim, now, log, fx) {
+  const m = s.mgj,
+    p = s.pos[id],
+    J = (m.jaimes || {})[id] || {};
+  const rest = { ...m.jaimes };
+  delete rest[id];
+  m.jaimes = rest;
+  delete s.pos[id];
+  if (J.snapAt) log(s, { npc: JUSTIN_ID, name: "Justin", text: snapLine() }); // (Justin still answers his line)
+  if (!p) return;
+  const b = mgjBodies(s, now).find((x) => x.real),
+    far = b && Math.hypot((b.x - p.x) / RX, (b.y - p.y) / RY);
+  const hit =
+    b && far <= GRENADE_R * BOMB.wide && mgjStab(s, J.by, now, log, BOMB.mgj);
+  fx({
+    kind: "boom",
+    by: id,
+    who: [],
+    x: p.x,
+    y: p.y,
+    hit: hit ? [JUSTIN_ID] : [],
+    wide: BOMB.wide,
+  });
+  const [x1, y1] = flyTo(p.x, p.y, aim[0], aim[1], RX, RY);
+  fx({ kind: "jbomb", who: [id], x: p.x, y: p.y, x1, y1 });
 }
 
 /* ---------- the ducks' own: reviving, Jaime, the zebra cake (a = the use action) ---------- */
@@ -1867,6 +1941,7 @@ export function mgjTeamUse(s, a, now, log) {
     fx = fxOf(s, now);
   if (!m || !p) return false;
   if (a.what === "jaime") return jaimeComes(s, a.id, now, fx);
+  if (a.what === "jaimebomb") return false; // (his own keys here: Jaime, 1 in 20 of them with the bomb)
   if (a.what === "revive") {
     const rv = { ...(m.rv || {}) };
     if (!a.hold) {

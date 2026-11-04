@@ -52,7 +52,7 @@ import { who } from "./who.js";
 import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
-import { ARROW, CHAIR, ZEBRA, JAIME } from "./mgjart.js";
+import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
 import { jetHTML } from "./jetpack.js";
 
 /* sends your look to the room you are in */
@@ -405,13 +405,14 @@ export function openCustomize(page = lastPage) {
                   `<div class="spe spe-cake" style="left:${(x + w.width * 0.3).toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><b><i>${ZEBRA}</i></b></div>`,
                 ),
               );
-            /* Jaime: he pops out by the duck in a puff, knife out, and runs off to find someone */
-            if (id === "jaime") {
+            /* Jaime: he pops out by the duck in a puff, knife out, and runs off to find someone (the Jaime Bomb: with his
+               dynamite on) */
+            if (id === "jaime" || id === "jaimebomb") {
               const jx = x + w.width * 0.55;
               els.push(
                 el(puffHTML(jx, y - w.width * 0.18, w.width * 0.6, "#ffc2d4")),
                 el(
-                  `<div class="spe spe-jaime" style="left:${jx.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - jx + w.width * 0.4)}px"><b>${duckSVG(JAIME.duck, { size: 80, shadow: false })}<i>${heldHTML("knife", JAIME.duck)}</i></b></div>`,
+                  `<div class="spe spe-jaime" style="left:${jx.toFixed(0)}px;top:${y.toFixed(0)}px;--s:${w.width.toFixed(0)}px;--dx:${Math.round(duckBox.getBoundingClientRect().right - b.left - jx + w.width * 0.4)}px"><b>${duckSVG(JAIME.duck, { size: 80, shadow: false, ...(id === "jaimebomb" ? { skin: BOMB_SKIN } : {}) })}<i>${heldHTML("knife", JAIME.duck)}</i></b></div>`,
                 ),
               );
             }
