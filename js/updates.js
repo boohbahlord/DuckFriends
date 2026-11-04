@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v162",
+    version: 162,
+    date: "Nov 4, 2026",
+    title: "Jaime Guard",
+    news: [
+      "New special: Jaime Guard. Jaime follows you around, and whoever hits you, he goes after with the weapon you pick for him in Customize. He has 1 HP. One at a time, once every 12 seconds.",
+      "It unlocks when you reach round 30 in Quacky Zombies.",
+    ],
+  },
+  {
     id: "v161",
     version: 161,
     date: "Nov 4, 2026",
