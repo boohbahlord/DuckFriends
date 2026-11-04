@@ -3491,3 +3491,12 @@ The other player's HP on PC will show as small version of these meters with smal
   them (`settingText`). Command-line changes go through the same action, so they show too.
 - Vote Maps is the default (`mapPick: "vote"`), and leaving Duck Cabin without picking a map goes back to it.
 - Mad God Justin's preview screenshot retaken with Justin in plain sight.
+
+## Request (owner, 2026-11-04 04:01Z, in Noah's thread): the zombie scars sheet, and wounds from hits
+"yes but more cuts, bleeding cuts, bruises elsewhere, bites and some torns holes, those are better anyways so i want more of them, the others  can stay too but no more of ones i didnt mention 
+
+Maybe bleeding cuts or bleeding bullet holes can show up as well when they get shot or stabbed, and the bruises for when they get hit with the hammer (getting shot has a chance of causing bleeding cut, but it is more likely to be a bleeding bullet wound, and shotgun and very large calibers get their own bullet wounds, so guns with most damage get bigger and new bleeding bullet wound AND the smaller weapons get smaller ones. Arrows just can land on a duck and stay in them as a cosmetic chance IF it doesn't result in bleeding cut AND the bullets will sometimes explode bloody chunks they get ripped out of the duck, so a chunk will be missing from the duck (not the entire head though, but losing a beak with a bloody mess in it's pllace is possible). there is a effect where the head explodes with blood and the duck becomes headless with blood wound to prove it IF the crit hit happens AND it should say CRIT when there is a crit if we remember, i usually cant see it, but it should be large text."
+- Scars: 16 more marks in the kinds the owner named (cuts and bleeding cuts on the top and back of the head, the
+  chest, the belly and the tail; bruises on the back of the head, the chest, the belly and the tail; bites on the back
+  of the head, the chest and the tail; torn holes on the head, the belly and the tail). The 8 others stay, none added.
+  The sheet: https://claude.ai/artifact/XcPy4QrV2JvdhYze3CbBFG (version 1, before these).

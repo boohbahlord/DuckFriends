@@ -49,6 +49,107 @@ ${specks.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${ROT_S}
 /* bigger about a point, so a mark still reads on a 64 px zombie */
 const grow = (svg, cx, cy, k) =>
   `<g transform="translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})">${svg}</g>`;
+/* a shape drawn around 0 0, put at x y, turned a degrees and k times as big */
+const place = (svg, x, y, a = 0, k = 1) =>
+  `<g transform="translate(${x} ${y}) rotate(${a}) scale(${k})">${svg}</g>`;
+/* the owner liked the cuts, the bleeding cuts, the bruises, the bites and the torn holes best (2026-11-04 04:01Z), so
+   those come in many places: their shapes, each around 0 0 */
+const CUT = `<path d="M-9 3.4Q0 -3.4 9.4 -2.4Q1 1.8 -9 3.4Z" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1" stroke-linejoin="round"/>
+<path d="M-5.6 1.8Q0 -1.2 6 -1.6" stroke="${BLOOD_L}" stroke-width=".9" fill="none" stroke-linecap="round"/>`;
+const DRIP = `<path d="M-1.6 .4C-1.4 3 -2.2 5.6 -2.2 7.4a2 2 0 0 0 4 0C1.8 5.6 1 3 1 -.4Z" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width=".8"/>`;
+const BRUISE = `<ellipse rx="8.8" ry="7.6" fill="#6b1f5c" opacity=".5"/><ellipse rx="5.8" ry="4.8" fill="#3a0f34" opacity=".4"/>`;
+const BITE = `<ellipse rx="10" ry="6.4" fill="${BLOOD}" opacity=".45"/>
+${[
+  [-7.4, -2, -40],
+  [-3.2, -4.6, -15],
+  [2, -5, 10],
+  [6.8, -3, 35],
+  [-6.8, 2.6, 40],
+  [-2.4, 4.8, 15],
+  [2.6, 5, -10],
+  [7, 2.8, -35],
+]
+  .map(
+    ([x, y, a]) =>
+      `<ellipse cx="${x}" cy="${y}" rx="1.1" ry="1.9" fill="${BLOOD_D}" transform="rotate(${a} ${x} ${y})"/>`,
+  )
+  .join("")}`;
+const HOLE = `<path d="M-6.6 .4L-3.2 -4.4L-.2 -1.4L3 -5L6.8 -.4L5.2 4L.8 6.2L-3.6 5.2Z" fill="#1d140e" stroke="#20361a" stroke-width="1.3" stroke-linejoin="round"/>
+<path d="M-3 1.4Q.4 -1 4 1.2" stroke="#3a2a1a" stroke-width="1" fill="none"/>
+<path d="M-.2 -1.4L1.4 -6.6L3 -5Z" fill="#5d8f4c" stroke="#20361a" stroke-width=".8" stroke-linejoin="round"/>`;
+/* a cut that bleeds: the cut, turned, and a drop running straight down from its middle */
+const bleeding = (x, y, a, k, drops = 1) =>
+  (drops > 1 ? place(DRIP, x - 3 * k, y + 0.6 * k, 0, k * 0.8) : "") +
+  place(DRIP, x, y, 0, k) +
+  place(CUT, x, y, a, k);
+const MANY = {
+  cutTop: [
+    "head",
+    "crown",
+    "Cut (top of the head)",
+    place(CUT, 64, 26, -38, 1.2),
+  ],
+  bleedNape: [
+    "head",
+    "nape",
+    "Bleeding cut (back of the head)",
+    bleeding(60, 44, 72, 1.05),
+  ],
+  bruiseNape: [
+    "head",
+    "nape",
+    "Bruise (back of the head)",
+    place(BRUISE, 62, 42, 0, 0.95),
+  ],
+  biteNape: [
+    "head",
+    "nape",
+    "Bite (back of the head)",
+    place(BITE, 62, 42, 80, 0.95),
+  ],
+  holeTop: [
+    "head",
+    "crown",
+    "Torn hole (top of the head)",
+    place(HOLE, 59, 33, -30, 1.05),
+  ],
+  cutChest: ["body", "chest", "Cut (chest)", place(CUT, 90, 75, -60, 1.5)],
+  bleedChest: [
+    "body",
+    "chest",
+    "Bleeding cut (chest)",
+    bleeding(90, 74, -25, 1.4, 2),
+  ],
+  bruiseChest: [
+    "body",
+    "chest",
+    "Bruise (chest)",
+    place(BRUISE, 90, 76, 0, 1.3),
+  ],
+  biteChest: ["body", "chest", "Bite (chest)", place(BITE, 91, 76, -70, 1.35)],
+  bleedBelly: [
+    "body",
+    "belly",
+    "Bleeding cut (belly)",
+    bleeding(64, 93, -32, 1.2),
+  ],
+  bruiseBelly: [
+    "body",
+    "belly",
+    "Bruise (belly)",
+    place(BRUISE, 66, 97, 0, 1.4),
+  ],
+  holeBelly: [
+    "body",
+    "belly",
+    "Torn hole (belly)",
+    place(HOLE, 60, 97, 10, 1.45),
+  ],
+  cutTail: ["body", "tail", "Cut (tail)", place(CUT, 22, 63, 45, 1.3)],
+  bruiseTail: ["body", "tail", "Bruise (tail)", place(BRUISE, 22, 64, 0, 1.1)],
+  biteTail: ["body", "tail", "Bite (tail)", place(BITE, 22, 64, 30, 1.2)],
+  holeTail: ["body", "tail", "Torn hole (tail)", place(HOLE, 22, 63, 20, 1.3)],
+};
 export const WOUNDS = {
   // the head
   scar: {
@@ -265,6 +366,8 @@ ${[
     ),
   },
 };
+for (const [id, [on, spot, name, svg]] of Object.entries(MANY))
+  WOUNDS[id] = { on, spot, name, svg };
 const WOUND_IDS = Object.keys(WOUNDS);
 /* a zombie's marks, the same on every screen: from its number, 1 to 3 marks, never two on one spot; a zombie in clothes
    gets only the head's (the body's would be hidden) */
