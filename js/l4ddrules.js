@@ -1690,7 +1690,8 @@ function wound(s, z, w, head) {
   if (head) add = had.includes("x") ? "" : "x0";
   else {
     const W = WOUND[WOUND_OF[w]];
-    if (!W || had.length >= 12 || Math.random() >= W.p) return;
+    if (!W || had.replace(/[gf]0/g, "").length >= 12 || Math.random() >= W.p)
+      return;
     let r = Math.random(),
       kind = W.kinds[W.kinds.length - 1][0];
     for (const [k, p] of W.kinds)
@@ -1705,6 +1706,12 @@ function wound(s, z, w, head) {
     if (had.includes(add)) return;
   }
   if (add) s.hang.zw = { ...zw, [z.i]: had + add };
+}
+/* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */
+function mark(s, z, code) {
+  const zw = s.hang.zw || {},
+    had = zw[z.i] || "";
+  if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
 /* a headshot, now and then (the weapon's chance and the duck's Accuracy): every screen shows it */
 function headshot(s, by, w, z, now) {
@@ -1866,7 +1873,7 @@ function jaimesRun(s, zs, now, T) {
         const ux = z.x - o.x,
           uy = z.y - o.y,
           l = Math.hypot(ux, uy) || 1;
-        if (strike(s, z, 1, false, J.by)) die(z, T);
+        if (strike(s, z, 1, false, J.by, "knife")) die(z, T); // (his knife's wounds)
         addFx(s, {
           kind: "use",
           what: "knife",
@@ -1889,6 +1896,7 @@ function jaimesRun(s, zs, now, T) {
 /* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
    a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by] }, p: { id: until } } */
 function light(s, z, by, now) {
+  mark(s, z, "f0"); // (burnt for good, even once the fire is out)
   const F = s.hang.l4fire || {};
   s.hang.l4fire = {
     ...F,
@@ -2126,6 +2134,7 @@ export function l4Shots(s, now) {
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies; true when it got any */
 function boom(s, sh, bx, by, zs, T, now) {
   let any = false;
+  const gore = [];
   for (const z of zs)
     if (
       z.st !== 3 &&
@@ -2133,6 +2142,8 @@ function boom(s, sh, bx, by, zs, T, now) {
     ) {
       strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
       die(z, T);
+      mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
+      gore.push([Math.round(z.x), Math.round(z.y)]);
       any = true;
     }
   addFx(s, {
@@ -2144,6 +2155,7 @@ function boom(s, sh, bx, by, zs, T, now) {
     y: +(by / H).toFixed(4),
     hit: [],
     hz: sh.hz || 0,
+    gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
   });
   return any;
 }

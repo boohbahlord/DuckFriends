@@ -408,7 +408,9 @@ export const woundSkin = (ids) => ({
    b a small bleeding bullet hole (the handgun, the SMG, the LMG), B a big one with spatter (the sniper, the AK-47, the
    revolver, the chain gun), s the shotgun's spread of pellet holes, c a bleeding cut (a knife, a dagger, now and then a
    bullet or an arrow), r a bruise (the hammer, the chair), a an arrow left sticking in it, k a bloody chunk torn out of
-   it, p its beak shot off (a bloody mess in its place), x its head blown off (a headshot). Each in the 120 box. */
+   it, p its beak shot off (a bloody mess in its place), x its head blown off (a headshot), g a grenade's (owner
+   2026-11-04 06:44Z: every chunk torn out, bleeding cuts and big bullet holes, all at once), f burnt by fire (black and
+   brown scorch with embers, for good). Each in the 120 box. */
 const FLESH = "#2a0508";
 const HIT_AT = [
   [88, 78],
@@ -464,7 +466,42 @@ const BEAK_GONE = `<ellipse cx="98" cy="42" rx="4.6" ry="6.2" fill="${BLOOD}" st
 <path d="M101.6 36.6l3 -1.4l-1 2.8ZM101.4 47l3.2 1l-2.6 1.6Z" fill="#ff9a1f" stroke="#c45f00" stroke-width=".6"/>${place(DRIP, 97.6, 47, 0, 0.9)}`;
 const HEADLESS = `<ellipse cx="75" cy="60.6" rx="14.4" ry="4.8" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1.1"/><ellipse cx="75" cy="60.2" rx="9.4" ry="2.7" fill="${FLESH}"/><ellipse cx="72.4" cy="59.6" rx="2.2" ry="1" fill="#efe2d0"/>
 ${place(DRIP, 66, 63, 0, 1.1)}${place(DRIP, 83.6, 63.4, 0, 0.9)}<circle cx="69" cy="51" r="1.3" fill="${BLOOD}"/><circle cx="80" cy="47.6" r="1.1" fill="${BLOOD}"/><circle cx="76" cy="43" r=".9" fill="${BLOOD}"/><circle cx="86" cy="53" r=".8" fill="${BLOOD}"/>`;
-const HIT_KINDS = "bBscrakpx";
+/* burnt: scorch over the body and the head (clipped to the duck), darker in the middle, and a few embers */
+const BURNT = `<g opacity=".92">${[
+  [40, 80, 25, 15, -12],
+  [78, 92, 19, 10, 8],
+  [60, 30, 11, 9, -20],
+  [22, 62, 12, 10, 30],
+  [99, 72, 11, 9, 0],
+  [56, 60, 10, 6, 10],
+]
+  .map(
+    ([x, y, rx, ry, a]) =>
+      `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${a} ${x} ${y})" fill="#2a1a10" opacity=".78"/><ellipse cx="${x + 1}" cy="${y}" rx="${(rx * 0.6).toFixed(1)}" ry="${(ry * 0.55).toFixed(1)}" transform="rotate(${a} ${x} ${y})" fill="#0b0705" opacity=".9"/>`,
+  )
+  .join("")}</g>${[
+  [36, 80],
+  [44, 75],
+  [74, 94],
+  [60, 30],
+  [26, 66],
+  [98, 75],
+]
+  .map(
+    ([x, y]) =>
+      `<circle cx="${x}" cy="${y}" r=".9" fill="#ff8a2a" opacity=".85"/>`,
+  )
+  .join("")}`;
+/* a grenade's: every chunk, three big holes and three bleeding cuts */
+const GORE = () => ({
+  inner: [
+    ...CHUNK_AT.map(chunkRim),
+    ...[0, 3, 6].map((i) => place(BIG_HOLE, ...HIT_AT[i])),
+    ...[1, 4, 7].map((i) => bleeding(...HIT_AT[i], i * 37 - 60, 1.15)),
+  ],
+  holes: CHUNK_AT,
+});
+const HIT_KINDS = "bBscrakpxgf";
 /* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie */
 export function hitsOf(codes = "") {
   const inner = [],
@@ -491,6 +528,11 @@ export function hitsOf(codes = "") {
       gone.beak = true;
       out.push(BEAK_GONE);
     } else if (kind === "x") gone.head = true;
+    else if (kind === "g") {
+      const g = GORE();
+      inner.push(...g.inner);
+      for (const c of g.holes) if (!holes.includes(c)) holes.push(c);
+    } else if (kind === "f") inner.unshift(BURNT); // (under the other wounds)
   }
   if (gone.head) out.push(HEADLESS);
   if (holes.length) gone.holes = holes;

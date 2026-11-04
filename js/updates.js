@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v157",
+    version: 157,
+    date: "Nov 4, 2026",
+    title: "Zombie gore",
+    news: [
+      "For Quacky Zombies: a headshot's neck keeps spurting blood after the head comes off.",
+      "For Quacky Zombies: grenades tear zombies apart, with every chunk, cut and big hole, and blood bursts out of them. Fire leaves burn marks that stay, and Jaime's stabs leave cuts.",
+    ],
+  },
+  {
     id: "v156",
     version: 156,
     date: "Nov 4, 2026",

@@ -3785,3 +3785,30 @@ the HP or anyting like that can be moved to the right on mobile to make more roo
 "WHY THE FUCK DOES THIS FUCKING BOARD CONTRACT AND LENGTHEN AND WHY THE FUCK CAN I WALK OFF THE BOARD!?!?!?! WHY THE FUCK DOES THE FUCKING DEFAULT SETTING I HAVE FOR FUCKING AGREE OR DISAGREE BEEN CHANGED TO FUCKIMG 30 SECONDS !?!?!?!? IT DIDNT HAVE A FUCKING TIMER!!!! WHO IS CHANGING MY DEFAULT SETTINGS!?!?!?
 WAIT, DONT TELL ME THAT MOBILE DOESNT HAVE THE SAME DEFAULT LOBBY SETTINGS AS PC!!!!!!!!????!?!?!?!?! AAAAAAHHHH IM PISSED"
 - The board and the walking off it: Solomon, PR #236 (above). The default timer: Adam (above).
+
+## Request (owner, 2026-11-04 06:44Z, in Noah's thread): gore, Jaime Bomb, wounds on players
+"Adam said this:
+"Grenades, fire and Jaime don’t leave wounds."
+make the head blown off spray a little blood animation out of the dead duck. 
+
+
+Okay, so, the ducks literally have every chunk in them and bleeding cuts and big bullet holes when they are exploded with grenade and a blood spraying out their duck in the explosion. 
+Fire just leaves a burnt effect on the zombie ducks that dont go away (but obv their bodies still fade away yk).
+Jaime causes all the normal things you would expect from a knife, BUT there is a 5% chance in this game mode AND the rest of the game that Jaime has a bomb strapped to his chest, and when he explodes, it does 50% the increased radius of the grenade and does max damage to zombies in it's radius. Jaime is seen saying the following: 
+"I go nuclear Justin"
+"Fuck you Justin"
+"For you Justin"
+"Justin, why are you making me do this?"
+"Justin, don't make me do this"
+
+Justin always replies with an anger dialog if he sees Jaime saying this in any form. such as him saying shut up or i dont care. 
+
+When Jaime is in this mode where dynamite is strapped to his duck, he has 3 hp, but the bomb immediately kills him, and his body goes flies away in the opposite direction he moved into AND his head explodes AND he gets all the grenade effects on his corpse.
+
+The bomb version of Jaime ONLY does 3 damage to Mad God Justin though. 
+
+The "Jaime Bomb" can be unlocked by using Jaime 864 times OR by being attacked by Jaime 864 times, so they both contribute to the unlocking of this special. His cooldown is the same as normal Jaime, and he can be unlocked in the fireplace in the zombie game with a 2% chance of dropping there for a player.
+
+Any player killed by a grenade or Jaime Bomb will have the death effect that Jaime gets, and their body is thrown in the direction Jaime is thrown.
+
+In the normal game, ducks get damage showing on their duck that the zombies get and they fade away from players who are dead on have a dead effect in 6-12 seonds, but the timer doesnt go down for wounds to fade away IF they are in dead effect or dead. the players can also get crits based on the chance of some weapons with same effects of max damage and head exploding, which gives them the dead effect for four seconds. ducks with an exploded head fall over like every duck does who dies or gets dead effect. crit can be smaller. ducks still have their heads explode from Jaime. Hammer still gives bruises and other wound effects now knocks back 50% further."
