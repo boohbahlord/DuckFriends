@@ -8,10 +8,11 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 139,
+    version: 140,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "For Quacky Zombies: footsteps (the zombies' quieter, at their own pace), zombie ducks groaning, boards nailed up and torn off, a slot machine at the fireplace, a cash register at Justin's Butler, an eerie sound as each round starts, and louder guns.",
       "Game Settings on a phone: what a row does shows right under it, one row at a time.",
       "Hangout is with the social games now, and Quacky Zombies is with Mad God Justin in the special ones. Duck Cabin in the Map list opens a page with just its two games.",
       "Every change to the game settings shows in the chat, with the name tag of whoever made it.",

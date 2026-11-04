@@ -734,9 +734,9 @@ export const sfx = {
    their peak, like a song), a quiet one more than a loud one; the countdown, the blips and the pops stay as they were. A
    chain gun or a crowd of hits all at once still can't go over full scale: everything ends at the soft ceiling */
 const LOUDER = {
-  bang: 3,
-  tat: 6,
-  shotgun: 2.5,
+  bang: 4.5,
+  tat: 9,
+  shotgun: 3.5,
   pump: 4,
   boom: 1.4,
   meteor: 1.2,
