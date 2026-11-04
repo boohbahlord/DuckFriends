@@ -5545,6 +5545,26 @@ async function act(a) {
   }
 }
 
+/* on a phone the board takes the whole screen and the bars sit over it (css: html:not(.keyboard) .game): how tall
+   the top bar and everything at the bottom (the bottom bar and the chat docked over it) are, so what's on the board
+   keeps out from under them (--ui-top, --ui-bot) */
+let insetsOff = null;
+function watchInsets(S) {
+  const top = $(".gbar", S),
+    bot = [$(".bbar", S), $(".dock-b", S)],
+    set = () => {
+      S.style.setProperty("--ui-top", top.offsetHeight + "px");
+      S.style.setProperty(
+        "--ui-bot",
+        bot.reduce((a, e) => a + (e ? e.offsetHeight : 0), 0) + "px",
+      );
+    };
+  const ro = new ResizeObserver(set);
+  for (const e of [top, ...bot]) if (e) ro.observe(e);
+  set();
+  return () => ro.disconnect();
+}
+
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
 /* a second line, where Shift and a number key keep a special on (not in Mad God Justin or Quacky Zombies: their keys work
@@ -5620,6 +5640,8 @@ register("game", {
     pad = null;
     if (mbarOff) mbarOff();
     mbarOff = null;
+    if (insetsOff) insetsOff();
+    insetsOff = null;
     lastKey = -1;
     kept.clear();
     held = null;
@@ -5670,6 +5692,7 @@ register("game", {
             : HINTS + KEEP_HINT,
     );
     mbarOff = mountMusicBar(S);
+    insetsOff = watchInsets(S);
     pm = mountPlayers(S, () => R);
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
