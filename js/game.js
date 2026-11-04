@@ -2607,6 +2607,18 @@ function playFx(f) {
       : place({ x: f.x, y: f.y }, 0, 1);
     grenadeBoom(fxl, board, at, size);
     sfx.boom();
+    if (geo.hang)
+      for (const [x, y] of f.gore || []) {
+        const z = world.place({ x: x / HW, y: y / HH }, 0);
+        bloodBurst(
+          z.left,
+          z.top - size * 0.4,
+          12,
+          Math.PI * 2,
+          size * 0.3,
+          size * 0.6,
+        ); // (Quacky Zombies: blood out of every zombie it got)
+      }
     for (const id of f.hit) {
       const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
       if (id === JUSTIN_ID && isMgj(s)) {
@@ -2880,20 +2892,12 @@ function playFx(f) {
     if (!geo.hang) return;
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78;
-    let drops = "";
-    for (let i = 0; i < 14; i++) {
-      const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.6,
-        far = size * (0.35 + Math.random() * 0.55);
-      drops += `<i style="--x:${(Math.cos(ang) * far).toFixed(0)}px;--y:${(Math.sin(ang) * far).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px"></i>`;
-    }
-    const burst = el(
-        `<div class="l4-burst" style="left:${a.left.toFixed(1)}px;top:${top.toFixed(1)}px">${drops}</div>`,
-      ),
-      word = el(
-        `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
-      );
-    fxl.append(burst, word);
-    setTimeout(() => burst.remove(), 800);
+    bloodBurst(a.left, top, 14, 2.6, size * 0.35, size * 0.55);
+    neckSpray(a.left + size * 0.12, a.top - size * 0.5); // (then blood keeps spurting out of its neck for a moment)
+    const word = el(
+      `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
+    );
+    fxl.append(word);
     setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
@@ -2920,6 +2924,40 @@ function playFx(f) {
     hotdogs.push({ id: f.who[0], el: node, until: now + 7000 });
     sfx.hotdog();
   }
+}
+
+/* blood bursting from (x, y): n drops over `wide` radians around up, from `near` to near + `far` px out */
+function bloodBurst(x, y, n, wide, near, far, delay = 0) {
+  const fxl = S && $(".fxl", S);
+  if (!fxl) return;
+  let drops = "";
+  for (let i = 0; i < n; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * wide,
+      d = near + Math.random() * far;
+    drops += `<i style="--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px;animation-delay:${delay}ms"></i>`;
+  }
+  const burst = el(
+    `<div class="l4-burst" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${drops}</div>`,
+  );
+  fxl.append(burst);
+  setTimeout(() => burst.remove(), 800 + delay);
+}
+/* a headless duck's neck spurting blood for a moment after (owner 2026-11-04 06:44Z): small spurts, one after another */
+function neckSpray(x, y) {
+  const fxl = S && $(".fxl", S),
+    size = geo && geo.size;
+  if (!fxl || !size) return;
+  let drops = "";
+  for (let i = 0; i < 18; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.1,
+      d = size * (0.18 + Math.random() * 0.32);
+    drops += `<i style="--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(2 + Math.random() * 3).toFixed(1)}px;animation-delay:${200 + i * 75}ms"></i>`;
+  }
+  const spray = el(
+    `<div class="l4-burst l4-spray" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${drops}</div>`,
+  );
+  fxl.append(spray);
+  setTimeout(() => spray.remove(), 2400);
 }
 
 /* ---------- my duck ---------- */

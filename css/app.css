@@ -15225,6 +15225,9 @@ html.keyboard .hp-pop:not(.small) {
   background: radial-gradient(circle at 35% 30%, #e0384c, #7d1424 70%);
   animation: l4-blood 0.75s cubic-bezier(0.2, 0.7, 0.4, 1) both;
 }
+.l4-spray i {
+  animation-duration: 0.55s; /* (the neck's small spurts: quicker, one after another) */
+}
 @keyframes l4-blood {
   0% {
     transform: translate(0, 0) scale(0.6);
