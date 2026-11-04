@@ -369,6 +369,7 @@ function fresh() {
     z: new Map(),
     zAt: 0,
     groans: [],
+    fx: -1,
   };
 }
 export function l4Reset() {
@@ -400,7 +401,19 @@ export function l4Hear(s, ctx) {
         play("l4slot", { x: BOX.x, y: BOX.y, secs: BOX.spin / 1000 });
       st.box[id] = b.t;
     }
-  /* a sale: someone's points went down by the Butler (the fireplace's spin is the slot machine instead) */
+  /* a sale: the rules' l4buy (ammo or a gun, anywhere: B) rings where the buyer stands; anything else bought by the
+     Butler (his upgrades) is someone's points going down near him (the fireplace's spin is the slot machine instead) */
+  const rang = new Set();
+  if (st.fx < 0) st.fx = s.fxN || 0;
+  if ((s.fxN || 0) > st.fx) {
+    for (const f of s.fx || [])
+      if (f.n > st.fx && f.kind === "l4buy") {
+        const a = ctx.world.at(f.by);
+        play("l4till", a ? { x: a.x, y: a.y } : {});
+        rang.add(f.by);
+      }
+    st.fx = s.fxN || 0;
+  }
   for (const id of s.seat || []) {
     const n = ptsOf(s, id),
       was = st.pts[id],
@@ -408,6 +421,7 @@ export function l4Hear(s, ctx) {
     if (
       was !== undefined &&
       n < was &&
+      !rang.has(id) &&
       a &&
       Math.hypot(a.x - BUTLER.x, a.y - BUTLER.y) < 320
     )

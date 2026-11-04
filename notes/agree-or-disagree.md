@@ -3550,3 +3550,6 @@ zombie, a close group counting as one; guns louder.
   Board sounds from s.hang.brd changes (many up at once, a new game: quiet). The till: someone's points drop within
   320 px of the Butler. Guns: LOUDER bang 4.5, tat 9, shotgun 3.5. 0 clicks, 0 clipped in Chromium and Firefox.
   Preview: /mnt/project-files/sounds/quacky-zombies-sounds.wav.
+
+## Follow-up (Adam, 2026-11-04 03:42Z): the till on every purchase
+B buys ammo anywhere (#220), so the cash register now rings on the rules' `l4buy` fx where the buyer stands; a points drop near the Butler still rings for upgrades, never twice for one buy.
