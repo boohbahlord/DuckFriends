@@ -15912,3 +15912,8 @@ html.still .l4-crit {
 .sp-jg .sp-key {
   width: 2.6rem;
 }
+/* a crit on a duck outside Quacky Zombies (game.js pcrit): the same CRIT, smaller */
+.l4-crit.small {
+  font-size: clamp(1.2rem, 2.6vw, 1.8rem);
+  -webkit-text-stroke: 0.1rem #2a0508;
+}

@@ -56,6 +56,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
+import { woundCode } from "./wounds.js";
 import {
   BOMB,
   bombRoll,
@@ -1655,78 +1656,10 @@ function strike(s, z, dmg, head, by, w = "") {
    ones big holes, the shotgun its pellets, now and then a bleeding cut instead; knives cut; the hammer and the chair
    bruise; an arrow cuts or stays stuck in it; a bullet now and then tears a chunk out, or the beak off; a headshot
    blows the head off. At most 6 on a zombie, and a headless one keeps its head off */
-const WOUND = {
-  small: {
-    p: 0.35,
-    kinds: [
-      ["b", 0.75],
-      ["c", 0.25],
-    ],
-    chunk: 0.04,
-  },
-  big: {
-    p: 0.55,
-    kinds: [
-      ["B", 0.85],
-      ["c", 0.15],
-    ],
-    chunk: 0.1,
-  },
-  shot: {
-    p: 0.2,
-    kinds: [
-      ["s", 0.9],
-      ["c", 0.1],
-    ],
-    chunk: 0.06,
-  },
-  blade: { p: 0.45, kinds: [["c", 1]] },
-  blunt: { p: 0.55, kinds: [["r", 1]] },
-  arrow: {
-    p: 0.5,
-    kinds: [
-      ["c", 0.35],
-      ["a", 0.65],
-    ],
-  },
-};
-const WOUND_OF = {
-  handgun: "small",
-  smg: "small",
-  lmg: "small",
-  sniper: "big",
-  ak: "big",
-  revolver: "big",
-  chaingun: "big",
-  shotgun: "shot",
-  knife: "blade",
-  dagger: "blade",
-  hammer: "blunt",
-  chair: "blunt",
-  bow: "arrow",
-};
 function wound(s, z, w, head) {
   const zw = s.hang.zw || {},
     had = zw[z.i] || "";
-  let add = "";
-  if (head) add = had.includes("x") ? "" : "x0";
-  else {
-    const W = WOUND[WOUND_OF[w]];
-    if (!W || had.replace(/[gf]0/g, "").length >= 12 || Math.random() >= W.p)
-      return;
-    let r = Math.random(),
-      kind = W.kinds[W.kinds.length - 1][0];
-    for (const [k, p] of W.kinds)
-      if ((r -= p) < 0) {
-        kind = k;
-        break;
-      }
-    if (W.chunk && Math.random() < W.chunk)
-      kind = Math.random() < 0.2 && !had.includes("p") ? "p" : "k";
-    const spots = kind === "a" || kind === "k" ? 6 : 8;
-    add = kind + Math.floor(Math.random() * spots);
-    if (had.includes(add)) return;
-  }
+  const add = head ? (had.includes("x") ? "" : "x0") : woundCode(had, w); // (wounds.js)
   if (add) s.hang.zw = { ...zw, [z.i]: had + add };
 }
 /* a mark that comes once and stays, past the 6 wounds (owner 2026-11-04 06:44Z): g a grenade's gore, f burnt by fire */

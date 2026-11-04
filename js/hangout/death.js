@@ -31,8 +31,8 @@ export function hurtFx(s, id, now) {
   s.hurt = { ...(s.hurt || {}), [id]: now };
   return true;
 }
-export function holdDown(s, id, now) {
-  const ms = downFor(s);
+export function holdDown(s, id, now, ms0) {
+  const ms = ms0 ?? downFor(s); // (ms0: a time of its own, as a crit's CRIT_DOWN: wounds.js)
   s.up = { ...(s.up || {}), [id]: now + Math.max(ms, GET_UP_MIN) }; // (when the duck stands up by itself: standUps)
   if (cabin(s)) {
     if (!s.hang) return;

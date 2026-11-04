@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v164",
+    version: 164,
+    date: "Nov 4, 2026",
+    title: "Wounds on ducks",
+    news: [
+      "Outside Quacky Zombies and Mad God Justin, hits leave wounds on ducks, the same ones the zombies get. Each wound goes away 6 to 12 seconds after the duck is up again. While it plays dead, they stay.",
+      "The pistol and the bow can crit: all the duck's HP, its head blown off, a small CRIT over it, and it plays dead for 4 seconds.",
+      "A duck killed by a grenade or a Jaime Bomb is torn apart, headless and burnt, and a Jaime Bomb throws it the way Jaime's body flies.",
+      "The hammer knocks ducks back 50% farther.",
+    ],
+  },
+  {
     id: "v163",
     version: 163,
     date: "Nov 4, 2026",
