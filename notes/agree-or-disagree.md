@@ -3472,3 +3472,16 @@ The other player's HP on PC will show as small version of these meters with smal
 - Built: the green HP blocks under Quacky Zombies' hotbar (`.l4hp`, js/l4ddbar.js) are gone; the red meter is the only
   one. Meter blocks sit on black (#120c0a), not white; blocks 0.78 of the meter's size (--t), Justin's panel 0.36.
   SMG bullet 22 px (was 13), pointed with a thin outline. The grenade slot's G: white on a dark chip, bolder.
+
+## Adam's part of the owner's 2026-11-04 03:16Z request (Solomon the 2nd logs the whole message)
+- Game Settings on a phone: the preview keeps only its picture (a row with none, like Vote or a kind of game, keeps
+  the picked game's or map's picture, so rows never move); the words go under the row they're about, one at a time
+  (`infoUnder` in js/gamesettings.js; Democracy of Ducklings does the same). Game Options and Democracy of Ducklings
+  have no pictures, so the preview is gone there on a phone.
+- Hangout moved to Social, Quacky Zombies to Special by Mad God Justin; the Cabin kind is gone. Duck Cabin on the Map
+  page opens a page with only its two games (picking one picks the map). Their descriptions say they can only be played
+  on the Duck Cabin map.
+- Settings changes go in the chat with the changer's name tag: rules.js logs the changed keys (`opts`), chat.js words
+  them (`settingText`). Command-line changes go through the same action, so they show too.
+- Vote Maps is the default (`mapPick: "vote"`), and leaving Duck Cabin without picking a map goes back to it.
+- Mad God Justin's preview screenshot retaken with Justin in plain sight.

@@ -12,6 +12,7 @@ import {
   dodCount,
 } from "./rules.js";
 import { now } from "./clock.js";
+import { infoUnder } from "./gamesettings.js";
 
 /* what each rule does, as the preview says it */
 export const DOD_TEXT = {
@@ -144,7 +145,19 @@ export function openDemocracy(R) {
     const nb = menu.querySelector(".arm-body");
     if (nb) nb.scrollTop = top;
     setHTML(W.querySelector(".gs-stage"), stageHTML());
+    place();
   }
+  /* on a phone the words go under the row they're about (gamesettings.js), or under the last row for how the votes work */
+  const place = () => {
+    const menu = W.querySelector(".arm-menu"),
+      rows = [...menu.querySelectorAll(".arm-row")];
+    infoUnder(
+      W,
+      rows.find((r) => (r.dataset.k || r.dataset.to) === peek) ||
+        rows[rows.length - 1] ||
+        null,
+    );
+  };
   const go = (p) => {
     page = p;
     peek = null;
@@ -158,6 +171,7 @@ export function openDemocracy(R) {
     if (p === peek) return;
     peek = p;
     setHTML(W.querySelector(".gs-stage"), stageHTML());
+    place();
   };
 
   return openWindow(

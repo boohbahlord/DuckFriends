@@ -640,7 +640,44 @@ const PICK_TEXT = {
     "A random map each time the host starts. Duck Cabin comes only with its own games.",
 };
 const CABIN_TIP =
-  "A log cabin at night with a deck, a pool and a campfire. It comes with its own games: picking it picks Hangout.";
+  "A log cabin at night with a deck, a pool and a campfire. It comes with its own games: picking it lists them.";
+
+/* a settings change as the chat says it (rules.js logs the keys): [the setting's name, the value's words], or null for
+   a key players don't see as a setting */
+export function settingText(k, v) {
+  if (k === "mode") return ["Game mode", modeOf(v).name];
+  if (k === "map") return ["Map", mapName(v)];
+  if (k === "modePick")
+    return v ? ["Game mode", v === "vote" ? "Vote Game Mode" : "Random"] : null;
+  if (k === "mapPick")
+    return v ? ["Map", v === "vote" ? "Vote Maps" : "Random"] : null;
+  if (k === "max") return ["Players up to", String(v)];
+  const o = [...HOST, GREY, ...Object.values(BY_MODE).flat()].find(
+      (x) => x.k === k,
+    ),
+    c = o && (o.c || []).find(([x]) => String(x) === String(v));
+  return o ? [o.n, c ? c[1] : String(v)] : null;
+}
+
+/* on a phone the preview keeps only its picture, and the words go under the row they're about, one row at a time
+   (Democracy of Ducklings does the same): at is that row (or setting), or null for none */
+export function infoUnder(W, at) {
+  const menu = W.querySelector(".arm-menu");
+  for (const x of menu.querySelectorAll(".gs-info")) x.remove();
+  const stage = W.querySelector(".gs-stage"),
+    t = stage.querySelector(".gs-text");
+  stage.classList.toggle(
+    "gs-nopic",
+    !stage.querySelector(".gs-pic:not(.empty)"),
+  );
+  if (!t || !at) return;
+  const li = at.closest("li"),
+    box = document.createElement(li ? "li" : "div");
+  box.className = "gs-info";
+  box.setAttribute("aria-hidden", "true"); // (the same words as the preview's, which screen readers already have)
+  box.innerHTML = t.innerHTML;
+  (li || at).after(box);
+}
 
 /* which games a setting is shown for: the picked one, or every game Vote Game Mode or Random can land on */
 const games = (s) =>
@@ -704,7 +741,7 @@ function mapPic(s, id, mode) {
    picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
    screenshots of the cabin itself */
 function gamePic(s, mode) {
-  const shot = `<image href="assets/modes/${mode}.webp" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
+  const shot = `<image href="assets/modes/${mode}.webp?v=2" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
   if (CABIN_MODES.includes(mode))
     return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
   const map =
@@ -842,6 +879,23 @@ export function openGameSettings(R, start = null) {
           .join("")}</ul></div>`
       );
     }
+    if (page === "cabin") {
+      const voting = o.modePick === "vote",
+        n = tally(s, s.modeVotes),
+        mine = (s.modeVotes || {})[me];
+      return (
+        head("Duck Cabin") +
+        `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.map((id) =>
+          row(
+            `data-mode="${id}"`,
+            modeOf(id).name,
+            voting ? votes(n[id]) : "",
+            voting ? mine === id : !o.modePick && o.mode === id,
+            !voting && !host(),
+          ),
+        ).join("")}</ul></div>`
+      );
+    }
     if (page === "map") {
       const voting = o.mapPick === "vote",
         n = tally(s, s.mapVotes),
@@ -889,17 +943,33 @@ export function openGameSettings(R, start = null) {
   /* the preview: what the row under the pointer (or the picked one) looks like, with its name and what it is */
   function stageHTML() {
     const s = S(),
-      o = s.options;
+      o = s.options,
+      html = stageCard(s, o);
+    if (page === "opts" || html.includes('<div class="gs-pic">')) return html;
+    /* a row with no picture of its own (Vote, Random, a kind of game) keeps the picked game's or map's picture on a
+       phone, so the rows under a finger never move */
+    const keep =
+      page === "map" ? mapPic(s, o.map, o.mode) : gamePic(s, o.mode || "aod");
+    return html.replace(
+      '<div class="gs-text">',
+      `<div class="gs-pic gs-keep">${keep}</div><div class="gs-text">`,
+    );
+  }
+  function stageCard(s, o) {
     let p = peek;
     if (!p)
       p =
-        page === "map"
-          ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
-          : page === "opts"
-            ? { kind: "opts" }
-            : page && page.startsWith("cat:")
-              ? { kind: "cat", id: page.slice(4) }
-              : { kind: "mode", id: o.modePick || o.mode };
+        page === "cabin"
+          ? CABIN_MODES.includes(o.mode)
+            ? { kind: "mode", id: o.mode }
+            : { kind: "map", id: "cabin" }
+          : page === "map"
+            ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
+            : page === "opts"
+              ? { kind: "opts" }
+              : page && page.startsWith("cat:")
+                ? { kind: "cat", id: page.slice(4) }
+                : { kind: "mode", id: o.modePick || o.mode };
     const card = (title, text, pic = "") =>
       `<div class="gs-pic${pic ? "" : " empty"}">${pic}</div><div class="gs-text"><h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ""}</div>`;
     if (p.kind === "mode") {
@@ -956,10 +1026,33 @@ export function openGameSettings(R, start = null) {
     const nb = menu.querySelector(".arm-body");
     if (nb) nb.scrollTop = top;
     setHTML(W.querySelector(".gs-stage"), stageHTML());
+    place();
   }
+  /* the row the preview is about: the one under the pointer, or else the picked one */
+  let peekSel = null;
+  const keyOf = (el) =>
+    el.classList.contains("gs-set")
+      ? `.gs-set[data-d="${el.dataset.d}"]`
+      : ".arm-row" +
+        ["mode", "map", "pick", "v", "cat", "p"]
+          .filter((k) => k in el.dataset)
+          .map((k) => `[data-${k}="${el.dataset[k]}"]`)
+          .join("");
+  const place = () => {
+    const menu = W.querySelector(".arm-menu"),
+      cat = modeOf(S().options.mode).cat;
+    infoUnder(
+      W,
+      (peekSel && menu.querySelector(peekSel)) ||
+        menu.querySelector('.arm-row[aria-pressed="true"]') ||
+        (page === "mode" && menu.querySelector(`[data-cat="${cat}"]`)) ||
+        (!page && menu.querySelector('[data-p="mode"]')),
+    );
+  };
   const go = (p) => {
     page = p;
     peek = null;
+    peekSel = null;
     paint(false);
     const f = W.querySelector(".arm-menu .arm-back, .arm-menu .arm-row");
     if (f) f.focus();
@@ -995,7 +1088,9 @@ export function openGameSettings(R, start = null) {
     else if (set) p = describe(set.dataset.d);
     if (!p || JSON.stringify(p) === JSON.stringify(peek)) return;
     peek = p;
+    peekSel = keyOf(r || set);
     setHTML(W.querySelector(".gs-stage"), stageHTML());
+    place();
   };
 
   return openWindow(
@@ -1027,7 +1122,13 @@ export function openGameSettings(R, start = null) {
             send = (options) => R.send({ t: "options", options });
           const a = e.target.closest("[data-a]");
           if (a && a.dataset.a === "back")
-            return go(page && page.startsWith("cat:") ? "mode" : null);
+            return go(
+              page && page.startsWith("cat:")
+                ? "mode"
+                : page === "cabin"
+                  ? "map"
+                  : null,
+            );
           if (a && a.dataset.a === "reset" && boss) {
             send({ ...OPTIONS_DEFAULT });
             return;
@@ -1054,6 +1155,7 @@ export function openGameSettings(R, start = null) {
             else if (boss) send({ mode: r.dataset.mode });
             return;
           }
+          if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
           if (r.dataset.map) {
             if (o.mapPick === "vote" && r.dataset.map !== "cabin")
               R.send({ t: "mapVote", map: r.dataset.map });
