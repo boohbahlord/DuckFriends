@@ -1,4 +1,4 @@
-/* ---------- Vote Mode & Game: the vote windows (owner 2026-11-04) ----------
+/* ---------- Vote Mode & Map: the vote windows (owner 2026-11-04) ----------
    After the start's countdown (and again with Vote return), a window over the whole screen, on a phone too: first
    "Vote for Game Mode", the games in rows (their symbol, the title to the right, the votes' number under the symbol and
    the voters' ducks under the title), then "Vote for Map", every map as a picture, each form of a map a picture of its

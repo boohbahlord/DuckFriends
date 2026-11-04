@@ -3930,3 +3930,11 @@ Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.
   touchpad's small steps (and sideways swipes, and the wheel over any part of the board that scrolls) still moved the
   board. Now with my duck in the game every wheel event over the board (.gmain) is the hotbar's (Ctrl+wheel still
   zooms); watching without a duck, it scrolls as before.
+
+## Request (owner 2026-11-04 07:43Z, with a screenshot of Game Settings, a red arrow at the top of its list)
+"Vote Mode & Map goes HERE!!!!! you just fucking hallucinated what i meant."
+(07:44Z) "yeah the vote mode and map goes above the game mode option that is the first theing on the game settings menu"
+- Done: "Vote Mode & Map" is the first row of the Game Settings main list, above Game mode (value On / Off / Game mode
+  only / Map only). It opens its own page: the On/Off row, and while on, Vote for game mode, Vote for map, Vote return.
+  The row and its settings are gone from the Game mode and Map pages (Random stays there). Every "Vote Mode & Game" players
+  see is now "Vote Mode & Map"; the Democracy rule keeps the owner's name "Ducks Vote Mode & Game".
