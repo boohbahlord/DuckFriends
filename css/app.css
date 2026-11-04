@@ -2310,39 +2310,37 @@ textarea.note-glow {
   flex-direction: column;
   padding: 0 max(0.5rem, 1vw) 0.3rem;
 }
-/* ---------- a phone: the board takes the whole screen, the bars over it (the owner's, Nov 4: every mode, upright and on
-   its side) ----------
+/* ---------- the board takes the whole screen, the bars over it (the owner's, Nov 4: on a phone in every mode, upright
+   and on its side; and on a computer too, 07:43Z, its bars and docks as they were) ----------
    The top bar, the chat docked at the bottom and the bottom bar lie over the board. Duck Cabin's world goes all the way
    under them, edge to edge, and only its own words and windows keep out from under them; a flat board (the fields
    ducks vote on) keeps its fields between them, edge to edge, so no field's name is ever under a bar. --ui-top and
-   --ui-bot are the bars' heights (game.js watchInsets) */
-html:not(.keyboard) .game.docked > .gmain {
+   --ui-bot are the bars' heights (game.js watchInsets). On a computer Notes and the chat on a side still sit beside
+   the board, as they always did */
+.game.docked > .gmain {
   grid-row: 1 / -1;
   padding: var(--ui-top, 0) 0 var(--ui-bot, 0);
 }
-html:not(.keyboard) .game.docked > :is(header, .dock-b, .bbar) {
+.game.docked > :is(header, .dock-b, .bbar) {
   position: relative;
   z-index: 6;
 }
 html:not(.keyboard) .game.docked > :is(header, .bbar) {
   touch-action: none;
 } /* (the stick starts on their empty spots too: the browser mustn't take the finger for a scroll) */
-html:not(.keyboard) .game.docked.hang > .gmain {
+.game.docked.hang > .gmain {
   padding: 0;
 }
-html:not(.keyboard) .game.hang .hang-board {
+.game.hang .hang-board {
   border-radius: 0;
   box-shadow: none;
 }
-html:not(.keyboard)
-  .game.hang
-  .hang-board
-  > :not(canvas, .hang-props, .ducks, .hang-shade, .fxl) {
+.game.hang .hang-board > :not(canvas, .hang-props, .ducks, .hang-shade, .fxl) {
   margin-top: var(--ui-top, 0);
   margin-bottom: var(--ui-bot, 0);
 } /* (its words and windows: Round N, my points, the guestbook, the Butler, the cards … just under the top bar, or
      just over the bottom one) */
-html:not(.keyboard) .game.hang .hang-book {
+.game.hang .hang-book {
   max-height: calc(100% - 1.2rem - var(--ui-top, 0px) - var(--ui-bot, 0px));
 }
 /* the top bar keeps one line, so the board never grows and shrinks under it (the owner's, Nov 4): the round's words

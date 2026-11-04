@@ -6058,7 +6058,16 @@ const KEEP_HINT =
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
   '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, the owner's, Nov 4; E goes with them, so no key is split from its word)
-/* a left click that uses the weapon kept out (not on a button, a field or a card) */
+/* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
+   (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
+const NOT_AIM =
+  "button, a, input, textarea, select, label, summary, [role=button], [role=option], [role=slider], .topover, .sc-write, .wq-card, .dock-panel, .hotbar, .win-back, .pmenu, .votebox, .l4-over";
+const aimHere = (e) =>
+  !!e.target.closest &&
+  (document.documentElement.classList.contains("keyboard") ||
+    !!e.target.closest(".board")) &&
+  !e.target.closest(NOT_AIM);
+/* a left click that uses the weapon kept out */
 function heldClick(e) {
   return (
     !!held &&
@@ -6066,10 +6075,7 @@ function heldClick(e) {
     (isMgj(R.state) || hasKey(playDuck(), held)) &&
     e.button === 0 &&
     onBoardPhase() &&
-    !!e.target.closest(".board") &&
-    !e.target.closest(
-      "button, a, input, textarea, .topover, .sc-write, .wq-card",
-    )
+    aimHere(e)
   );
 }
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies and Mad God Justin): the left button
@@ -6108,12 +6114,7 @@ let l4Fire = 0;
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
-  if (
-    !onBoardPhase() ||
-    !e.target.closest(".board") ||
-    e.target.closest("button, a, input, textarea, .l4-over")
-  )
-    return;
+  if (!onBoardPhase() || !aimHere(e)) return;
   const go = () => {
     const w = heldNow();
     if (w) fire(w);
