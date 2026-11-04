@@ -2736,6 +2736,27 @@ function playFx(f) {
         far * (0.25 + Math.random() * 0.5),
         Math.random() * 30,
       );
+  } else if (f.kind === "l4crit") {
+    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a big CRIT rises
+       over it, so it's never missed (owner 2026-11-04 04:01Z) */
+    if (!geo.hang) return;
+    const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
+      top = a.top - size * 0.78;
+    let drops = "";
+    for (let i = 0; i < 14; i++) {
+      const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.6,
+        far = size * (0.35 + Math.random() * 0.55);
+      drops += `<i style="--x:${(Math.cos(ang) * far).toFixed(0)}px;--y:${(Math.sin(ang) * far).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px"></i>`;
+    }
+    const burst = el(
+        `<div class="l4-burst" style="left:${a.left.toFixed(1)}px;top:${top.toFixed(1)}px">${drops}</div>`,
+      ),
+      word = el(
+        `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
+      );
+    fxl.append(burst, word);
+    setTimeout(() => burst.remove(), 800);
+    setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
   } else if (f.kind === "l4bite") {

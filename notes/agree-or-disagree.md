@@ -3568,3 +3568,10 @@ Maybe bleeding cuts or bleeding bullet holes can show up as well when they get s
   chest, the belly and the tail; bruises on the back of the head, the chest, the belly and the tail; bites on the back
   of the head, the chest and the tail; torn holes on the head, the belly and the tail). The 8 others stay, none added.
   The sheet: https://claude.ai/artifact/XcPy4QrV2JvdhYze3CbBFG (version 1, before these).
+- Wounds from hits (Noah): l4ddrules.js `wound()` on each strike with a weapon (WOUND / WOUND_OF), `s.hang.zw`
+  { i: "B3c1…" } two letters each, pruned with its zombie, 6 at most; l4ddart.js `hitsOf` draws them (b small hole:
+  handgun, SMG, LMG; B big hole with spatter: sniper, AK-47, revolver, chain gun; s pellets: shotgun; c bleeding cut:
+  knife, dagger, sometimes a bullet or an arrow; r bruise: hammer, chair; a stuck arrow: bow; k chunk torn out and p
+  beak shot off: now and then from a bullet; x headless: every headshot). duckSVG `gone` { head, beak, holes } and
+  `skin.out`. The l4crit fx (now with z) shows a burst of blood and a big CRIT (game.js, .l4-crit), which nothing drew
+  before. Grenades, fire and Jaime leave none.
