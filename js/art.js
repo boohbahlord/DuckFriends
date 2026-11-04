@@ -7,6 +7,8 @@ import { playroom } from "./playroom.js";
 import { HAT_TOP } from "./hats.js";
 import { esc } from "./ui.js";
 import { modeOf, modeSymbol } from "./modes.js";
+import { collageMini } from "./collage.js";
+import { JUSTIN } from "./hangout/npcart.js";
 
 export const FRIDGE = [
   "#ef3b3b",
@@ -183,6 +185,10 @@ ${legs}${wheel}${tent}${edge}
    game's symbol at the top left */
 /* the map's world behind the picture (no columns: the picture shows where the game is played) */
 export function artBackdrop(map) {
+  if (map === "collage")
+    return `<image href="${collageMini().match(/src="([^"]+)"/)[1]}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // my collage map's real drawing
+  if (map === "tiles")
+    return '<defs><pattern id="arttiles" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff"/><rect width="60" height="60" fill="#000"/><rect x="60" y="60" width="60" height="60" fill="#000"/></pattern></defs><rect width="480" height="270" fill="url(#arttiles)"/>'; // Tiles' checkerboard, 8 tiles across
   if (map === "rabbit")
     return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === "stars")
@@ -258,6 +264,17 @@ ${cloud(90, 70, 0.5, "#ffffffdd", "#ffffff77")}${cloud(330, 150, 0.55, "#ffffffc
     '<svg width="480" height="270" ',
   ); // Night Show
 }
+/* the duck on the lobby's cloud: the plain yellow duck, and 1 time in 20 Justin's duck. Everyone in the room sees the
+   same one, because the roll comes from the room's id and the moment it came back to the lobby */
+export function lobbyDuck(s) {
+  let h = 2166136261;
+  for (const c of `${s.id}:${s.at}`)
+    h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  h = Math.imul(h ^ (h >>> 15), 2246822507);
+  h ^= h >>> 13;
+  return (h >>> 0) % 100 < 5 ? { ...DUCK_DEFAULT, ...JUSTIN } : DUCK_DEFAULT;
+}
+
 export function gameArtSVG({
   width = 480,
   duck = DUCK_DEFAULT,

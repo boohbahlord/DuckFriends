@@ -4,13 +4,11 @@
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
    everyone else looks. With Vote Game Mode or Vote Maps on, every player's click on a game or a map is their vote. */
 import { esc, openWindow, setHTML } from "./ui.js";
-import { gameArtSVG, artBackdrop } from "./art.js";
+import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, mapName } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, tally, randomPool, dodOn } from "./rules.js";
 import { downFor } from "./hangout/death.js";
-import { profile } from "./store.js";
-import { collageMini } from "./collage.js";
 
 /* ---------- every setting: its key, its name, its choices, its category and what it does ----------
    off: the games it doesn't apply to (it's hidden there). The four categories, under Host Settings and under each game */
@@ -694,32 +692,26 @@ function boardSketch(mode) {
       .join("")}`;
   return "";
 }
-/* a map's picture: the lobby's (art.js), my collage map's real drawing, and Tiles' checkerboard (8 tiles across) */
-const backOf = (id) =>
-  id === "collage"
-    ? `<image href="${collageMini().match(/src="([^"]+)"/)[1]}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`
-    : id === "tiles"
-      ? '<defs><pattern id="gstiles" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff"/><rect width="60" height="60" fill="#000"/><rect x="60" y="60" width="60" height="60" fill="#000"/></pattern></defs><rect width="480" height="270" fill="url(#gstiles)"/>'
-      : artBackdrop(id);
 /* the map large: Duck Cabin as the real map (one picture of all of it; dark with the power cut in Left 4 Dead Ducks), any
    other map with the picked game's board on it */
 function mapPic(s, id, mode) {
   if (id === "cabin")
     return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/maps/duck-cabin.jpg" alt="Duck Cabin" draggable="false">`;
   const grey = id === "collage" && s.options.mapGrey ? " grey" : "";
-  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${backOf(id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
+  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
 }
-const gamePic = (s, mode) =>
-  gameArtSVG({
-    width: 640,
-    duck: profile.duck,
-    map: CABIN_MODES.includes(mode)
-      ? "cabin"
-      : s.options.mapPick || s.options.map === "cabin"
-        ? "board"
-        : s.options.map || "board",
-    mode,
-  });
+/* a game mode's picture: one screenshot of the mode (every name tag hidden, rainbow ducks), its board drawn over the
+   picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
+   screenshots of the cabin itself */
+function gamePic(s, mode) {
+  const shot = `<image href="assets/modes/${mode}.webp" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`;
+  if (CABIN_MODES.includes(mode))
+    return `<svg class="gs-map" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}">${shot}</svg>`;
+  const map =
+      s.options.map && s.options.map !== "cabin" ? s.options.map : "board",
+    grey = map === "collage" && s.options.mapGrey ? " grey" : "";
+  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(modeOf(mode).name)}: ${esc(mapName(map))}"><g class="gs-back">${artBackdrop(map)}</g>${shot}</svg>`;
+}
 
 /* ---------- the screen ---------- */
 const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)

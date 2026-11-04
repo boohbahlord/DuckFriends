@@ -8,10 +8,12 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 137,
+    version: 138,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "The lobby's picture shows the picked map (Tiles and Shelter Sky & Null too), with the plain yellow duck on its cloud. Once in a while it's Justin's duck instead, the same for everyone in the room.",
+      "In Game Settings, every game mode's preview is a real look at the game, on the picked map.",
       "Your HP is a red meter under your hotbar now, a block for each HP, and it glows red when you're nearly out. A thin blue bar under it shows how much sprint you have left where sprinting runs out.",
       'A little "+1 HP" or "-1 HP" floats over a duck, Justin or a zombie when it gains or loses HP. The HP in the player tag is see-through red blocks now.',
       "For Mad God Justin: Justin's HP is in blocks too, and he gets 1 HP back each time he finishes eating.",
