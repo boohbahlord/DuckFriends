@@ -56,7 +56,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { woundCode } from "./wounds.js";
+import { woundCode, pwHit } from "./wounds.js";
 import {
   BOMB,
   bombRoll,
@@ -1926,11 +1926,13 @@ function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
-/* a duck takes 1 (a claw, fire); true when that put it down */
-function hurtDuck(s, p4, id, now) {
+/* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
+   every other mode, and it goes away by itself 6 to 12 seconds after the duck is up (wounds.js) */
+function hurtDuck(s, p4, id, now, w = "") {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
   const hp = invuln(s) ? p.hp : p.hp - 1; // (Invulnerability: it only flashes)
+  if (w && !invuln(s)) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
     return false;
@@ -2449,7 +2451,10 @@ function moveZombies(s, zs, now, T, up) {
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (!dodging(s, target.p, now) && hurtDuck(s, p4, target.id, now))
+        if (
+          !dodging(s, target.p, now) &&
+          hurtDuck(s, p4, target.id, now, "claw")
+        )
           pls.splice(pls.indexOf(target), 1);
       }
     } else z.n = 0;

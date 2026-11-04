@@ -342,6 +342,71 @@ export const SPECIALS = [
     icon: iconOf(BOW, 1.2),
     tip: "An arrow flies straight toward your mouse, fast: any duck it hits plays dead. One every 0.4 seconds. Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
   },
+  /* Quacky Zombies' guns, in every mode (the owner's, Nov 4 07:43Z): locked until the owner says how they unlock
+     (unlocks.js) */
+  {
+    id: "sniper",
+    name: "Sniper",
+    kind: "item",
+    get icon() {
+      return GUNS.sniper.icon;
+    },
+    tip: "A fast bullet toward your mouse that goes through every duck in its way, and takes 2 or 3 HP from each. Five shots, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "smg",
+    name: "SMG",
+    kind: "item",
+    get icon() {
+      return GUNS.smg.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down. 20 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "ak",
+    name: "AK-47",
+    kind: "item",
+    get icon() {
+      return GUNS.ak.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down, 2 HP a bullet. 30 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "revolver",
+    name: "Revolver",
+    kind: "item",
+    get icon() {
+      return GUNS.revolver.icon;
+    },
+    tip: "A bullet toward your mouse, 2 HP a shot. Five in its cylinder, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "lmg",
+    name: "LMG",
+    kind: "item",
+    get icon() {
+      return GUNS.lmg.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down. 75 shots, then a long reload (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "chaingun",
+    name: "Chain gun",
+    kind: "item",
+    get icon() {
+      return GUNS.chaingun.icon;
+    },
+    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 60 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "glauncher",
+    name: "Grenade launcher",
+    kind: "item",
+    get icon() {
+      return GUNS.glauncher.icon;
+    },
+    tip: "A grenade flies straight toward your mouse and goes off on the first duck it gets to, or at its range, as a grenade does. Three, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
   {
     id: "chair",
     name: "Chair",

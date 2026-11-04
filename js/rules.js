@@ -15,7 +15,13 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
-import { boardSpeed, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
+import {
+  boardSpeed,
+  ARM_COOL,
+  ARM_SWING,
+  ARM_RELOAD,
+  BOARD_PX,
+} from "./armspeed.js";
 import {
   isDn,
   DN_GRACE,
@@ -165,6 +171,7 @@ import {
   l4Holds,
   kitOf,
   helperOut,
+  ARMS,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
 import { MAPS, MAP_FORMS, mapForm, mapName } from "./maps.js";
@@ -777,6 +784,13 @@ const PRESS = [
   "shotgun",
   "grenade",
   "bow",
+  "sniper",
+  "smg",
+  "ak",
+  "revolver",
+  "lmg",
+  "chaingun",
+  "glauncher",
   "chair",
   "zebra",
   "jaime",
@@ -803,19 +817,49 @@ const COOLDOWN = {
   jaimeguard: 12000, // (as Jaime's; and one Guard of mine at a time)
 };
 export const coolFor = (sp, s) =>
-  (s && isMgj(s) && mgjCool(sp)) || COOLDOWN[sp] || 1500; // (Mad God Justin has its own for the knife and the bow)
+  (s && isMgj(s) && mgjCool(sp)) ||
+  COOLDOWN[sp] ||
+  (GUNS_NEW.includes(sp) && ARMS[sp].cool) ||
+  1500; // (Mad God Justin has its own for the knife and the bow; Quacky Zombies' guns keep theirs, l4ddrules.js ARMS)
+/* every gun from Quacky Zombies is a special too (the owner's, Nov 4 07:43Z), working as it does there: the sniper's
+   bullet, the SMG's, the AK-47's, the revolver's and the LMG's fly as theirs do (every bullet goes through every duck it
+   passes, as the handgun's does), the SMG, the AK-47, the LMG and the chain gun fire as long as the button is down, the
+   chain gun's shot hits at once and takes all the HP of the first duck on its line, and the grenade launcher's grenade
+   flies straight and goes off on the first duck or at its range, as a grenade does */
+export const GUNS_NEW = [
+  "sniper",
+  "smg",
+  "ak",
+  "revolver",
+  "lmg",
+  "chaingun",
+  "glauncher",
+];
+export const AUTO = ["smg", "ak", "lmg", "chaingun"]; // (they fire while the button is down)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
-   s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } */
+   The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
+   gun and the grenade launcher have none there, so here the chain gun reloads after its 60, and the launcher after 3
+   (my guesses). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
+   { "id gun": … } for the others */
 export const MAG = 7,
   RELOAD = ARM_RELOAD;
-export const magOf = (s, id, now) => {
-  const m = (s.mag || {})[id];
+const MAG_MORE = { chaingun: [60, 4000], glauncher: [3, 4000] };
+export const magSize = (w) =>
+  w === "handgun"
+    ? [MAG, RELOAD]
+    : MAG_MORE[w] ||
+      (GUNS_NEW.includes(w) && ARMS[w].mag
+        ? [ARMS[w].mag, ARMS[w].reload]
+        : null); // ([shots, reload ms], or null: no magazine)
+const magKey = (id, w) => (w === "handgun" ? id : `${id} ${w}`);
+export const magOf = (s, id, now, w = "handgun") => {
+  const m = (s.mag || {})[magKey(id, w)];
   return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m;
 };
 export const coolEnds = (s, id, sp) =>
   Math.max(
     ((s.lastUse || {})[`${id} ${sp}`] || 0) + coolFor(sp, s),
-    sp === "handgun" ? ((s.mag || {})[id] || {}).r || 0 : 0,
+    magSize(sp) ? ((s.mag || {})[magKey(id, sp)] || {}).r || 0 : 0,
   ); // (a time on the room's clock)
 export const WEAPONS = [
   "handgun",
@@ -825,6 +869,7 @@ export const WEAPONS = [
   "shotgun",
   "grenade",
   "bow",
+  ...GUNS_NEW,
 ]; // aimed (with the mouse), and kept out with Shift and their key
 /* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
@@ -1901,7 +1946,11 @@ export function reduce(state, a, now = Date.now()) {
       if (isGhost(s, a.id)) return state; // (Duck Cabin: a ghost can't use anything)
       if (sp === "sound") return state; // (Sound is off for now: specials.js off)
       const k = `${a.id} ${sp}`; // (each item waits on its own)
-      if (now < coolEnds(s, a.id, sp)) return state;
+      if (
+        now <
+        coolEnds(s, a.id, sp) - (AUTO.includes(sp) ? coolFor(sp, s) * 0.2 : 0)
+      )
+        return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
       if (sp === "jaimeguard") {
         if (!guardOut(s, a.id, now)) return state; // (my Guard is still out: the key keeps its Jaime)
@@ -1913,13 +1962,14 @@ export function reduce(state, a, now = Date.now()) {
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
         return s;
       }
-      if (sp === "handgun") {
+      const mg = magSize(sp);
+      if (mg) {
         // one shot from the magazine; the last starts the reload
-        const m = magOf(s, a.id, now),
+        const m = magOf(s, a.id, now, sp),
           n = m.n + 1;
         s.mag = {
           ...(s.mag || {}),
-          [a.id]: { n, r: n >= MAG ? now + RELOAD : 0 },
+          [magKey(a.id, sp)]: { n, r: n >= mg[0] ? now + mg[1] : 0 },
         };
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
@@ -1945,13 +1995,16 @@ export function reduce(state, a, now = Date.now()) {
           ...(hit ? { hit } : {}),
         },
       ];
-      if (aim && !hit) {
+      if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
+      else if (aim && !hit) {
         const v =
             sp === "dagger"
               ? DAGGER_SPEED
               : sp === "bow"
                 ? ARROW_SPEED
-                : SHOT_SPEED,
+                : GUNS_NEW.includes(sp)
+                  ? gunSpeed(sp)
+                  : SHOT_SPEED,
           hang = isHang(s)
             ? {
                 hz: Math.round(+p.z || 0),
@@ -2015,10 +2068,25 @@ export function reduce(state, a, now = Date.now()) {
             ...(s.shots || []),
             shot(s.fxN, "grenade", dx * k * rx, dy * k * ry),
           ];
-        } else
+        } else if (sp === "glauncher")
           s.shots = [
             ...(s.shots || []),
-            shot(s.fxN, sp === "bow" ? "arrow" : sp, aim[0] * v, aim[1] * v),
+            shot(s.fxN, "lgren", aim[0] * v, aim[1] * v, {
+              life: Math.round(
+                (ARMS.glauncher.far / ARMS.glauncher.speed) * 1000,
+              ),
+            }),
+          ];
+        // (straight, and it goes off on the first duck or at its range: moveShots)
+        else
+          s.shots = [
+            ...(s.shots || []),
+            shot(
+              s.fxN,
+              sp === "bow" ? "arrow" : (ARMS[sp] && ARMS[sp].k) || sp,
+              aim[0] * v,
+              aim[1] * v,
+            ),
           ];
       }
       return s;
@@ -2026,10 +2094,15 @@ export function reduce(state, a, now = Date.now()) {
     case "reload": {
       // R: the handgun reloads before its magazine is empty
       if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
-      if (!me || !onKeys(me.duck, "handgun") || !s.options.fun) return state;
-      const m = magOf(s, a.id, now);
+      const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
+      if (!me || !onKeys(me.duck, w) || !s.options.fun || isMgj(s))
+        return state;
+      const m = magOf(s, a.id, now, w);
       if (!m.n || m.r) return state;
-      s.mag = { ...(s.mag || {}), [a.id]: { n: m.n, r: now + RELOAD } };
+      s.mag = {
+        ...(s.mag || {}),
+        [magKey(a.id, w)]: { n: m.n, r: now + magSize(w)[1] },
+      };
       return s;
     }
     case "aura": {
@@ -2847,8 +2920,22 @@ export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
   return h && now - h.t < PHP_BACK ? h.n : 0;
 };
-export const HIT_DMG = { hammer: 3, chair: 3, grenade: 3, knife: 2 };
-export const dmgOf = (s, k) => (isL4dd(s) ? 1 : HIT_DMG[k] || 1);
+export const HIT_DMG = {
+  hammer: 3,
+  chair: 3,
+  grenade: 3,
+  knife: 2,
+  sniper: [2, 3],
+  ak: 2,
+  revolver: 2,
+  chain: PHP,
+}; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2, the chain gun all)
+export const dmgOf = (s, k) => {
+  const d = isL4dd(s) ? 1 : HIT_DMG[k] || 1;
+  return Array.isArray(d)
+    ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
+    : d;
+};
 export function soaks(s, id, now, dmg = 1) {
   if (isMgj(s)) return false;
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
@@ -3213,6 +3300,32 @@ function moveShots(s, now) {
       keep.push(sh);
       continue;
     }
+    if (sh.k === "lgren") {
+      // the grenade launcher's: straight, and it goes off on the first duck it gets to, a wall, or at its range
+      const at = shotAt(sh, Math.min(now - sh.t, sh.life)),
+        walled =
+          sh.hin !== undefined &&
+          (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin;
+      if (
+        walled ||
+        now - sh.t >= sh.life ||
+        lgrenHits(s, sh, at, now) ||
+        at.x < -0.05 ||
+        at.x > 1.05 ||
+        at.y < -0.05 ||
+        at.y > 1.05
+      ) {
+        if (boardPhases(s).includes(s.phase))
+          blast(s, sh, walled ? sh.lx : at.x, walled ? sh.ly : at.y, now, {
+            w: "glauncher",
+          });
+        continue;
+      }
+      sh.lx = at.x;
+      sh.ly = at.y;
+      keep.push(sh);
+      continue;
+    }
     const at = shotAt(sh, now - sh.t),
       x0 = sh.lx,
       y0 = sh.ly,
@@ -3221,132 +3334,7 @@ function moveShots(s, now) {
     const walled =
       sh.hin !== undefined &&
       (inCabin(at.x * HW, at.y * HH) ? 1 : 0) !== sh.hin; // (Hangout: it hit the cabin's wall)
-    if (at.z > -0.15 && at.z < 1.05)
-      for (const id of s.seat) {
-        // (a dagger over a duck's head, or already fallen, hits nobody)
-        const p = s.pos[id],
-          P = s.players[id];
-        if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
-          continue;
-        if (
-          sh.hin !== undefined &&
-          ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
-            Math.abs((+p.z || 0) - sh.hz) > 48)
-        )
-          continue; // (the other side of the walls, or above or below it)
-        if (dodges(s, p, now)) continue; // jumped over it
-        if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
-        if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
-        /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
-        const rx = isHang(s) ? 0.006 : 0.03,
-          ry = isHang(s) ? 0.012 : 0.08;
-        const ux = dx / rx,
-          uy = dy / ry,
-          px = (p.x - x0) / rx,
-          py = (p.y - y0) / ry,
-          len = ux * ux + uy * uy;
-        const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        const ox = px - k * ux,
-          oy = py - k * uy,
-          od = Math.hypot(ox, oy);
-        if (od < (sh.r || 1)) {
-          if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
-          if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
-          const safe = isMgj(s) && mgjSafe(s, id, now);
-          logHit(s, sh.by, id, now);
-          const crit = critRoll(s, sh.k);
-          if (
-            isMgj(s)
-              ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-              : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k))
-          )
-            sh.got = [...(sh.got || []), id];
-          else {
-            P.dead = true;
-            holdDown(s, id, now);
-            playerKilled(s, sh.by, id, sh.k);
-          } // (the HP: a hit it can take keeps the duck up)
-          wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
-          if (sh.by === JUSTIN_ID) mgjHurt(s, id);
-          if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
-          if (sh.k === "chair") {
-            const ul = Math.sqrt(len) || 1;
-            if (od > 0.2)
-              shove(s, id, ox / od, oy / od, KB_FAR, now, sh.hin || 0);
-            else shove(s, id, ux / ul, uy / ul, KB_FAR, now, sh.hin || 0);
-          } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
-        }
-      }
-    if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) continue; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
-    if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
-      const rx = isHang(s) ? 0.006 : 0.03,
-        ry = isHang(s) ? 0.012 : 0.08,
-        ux = dx / rx,
-        uy = dy / ry,
-        len = ux * ux + uy * uy;
-      guardsHit(
-        s,
-        sh.by,
-        (x, y, z, side) => {
-          if (
-            sh.hin !== undefined &&
-            (side !== sh.hin || Math.abs(z - sh.hz) > 48)
-          )
-            return null;
-          const px = (x - x0) / rx,
-            py = (y - y0) / ry,
-            k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-          return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) || null;
-        },
-        now,
-      );
-    } // (a Jaime Guard it passes: his 1 HP)
-    if (
-      sh.hin === undefined &&
-      sh.by !== JUSTIN_ID &&
-      !isMgj(s) &&
-      at.z > -0.15 &&
-      at.z < 1.05 &&
-      justinShown(s) &&
-      !s.justin.down &&
-      !(sh.got && sh.got.includes(JUSTIN_ID))
-    ) {
-      // (the Justin option: he can be shot back, once by each shot)
-      const n = justinAt(s.justin, now),
-        ux = dx / 0.03,
-        uy = dy / 0.08,
-        px = (n.x - x0) / 0.03,
-        py = (n.y - y0) / 0.08,
-        len = ux * ux + uy * uy;
-      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      const got =
-        Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)
-          ? justinHit(s, sh.by, now, logLine, sh.k)
-          : 0;
-      if (got) sh.got = [...(sh.got || []), JUSTIN_ID];
-      if (got === 2) justinKilled(s, sh.by, sh.k);
-    }
-    if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
-      for (const n of hangTargets(s, now, sh.k)) {
-        // (Hangout: Justin can be knocked down too, and a chair whooshes the shadow duck away)
-        if (
-          (inCabin(n.x, n.y) ? 1 : 0) !== sh.hin ||
-          Math.abs(n.z - sh.hz) > 48
-        )
-          continue;
-        const ux = dx / 0.006,
-          uy = dy / 0.012,
-          px = (n.x / HW - x0) / 0.006,
-          py = (n.y / HH - y0) / 0.012,
-          len = ux * ux + uy * uy;
-        const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        if (
-          Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) &&
-          hangHit(s, n.id, sh.by, now) &&
-          n.id === "justin"
-        )
-          justinKilled(s, sh.by, sh.k);
-      }
+    if (shotHits(s, sh, at, x0, y0, dx, dy, now)) continue;
     sh.lx = at.x;
     sh.ly = at.y;
     const on =
@@ -3360,6 +3348,251 @@ function moveShots(s, now) {
   }
   s.shots = keep;
   return true;
+}
+/* how fast one of Quacky Zombies' guns' bullets flies here: its speed there, in board widths a second, a little faster
+   as every duck's bullets are (the grenade launcher's grenade keeps its own) */
+const gunSpeed = (w) =>
+  (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
+/* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
+   along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
+   of the cabin's walls) */
+function firstDuck(s, sh, at, now) {
+  const hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    ux = (at.x - sh.lx) / rx,
+    uy = (at.y - sh.ly) / ry,
+    len = ux * ux + uy * uy;
+  let best = null;
+  for (const id of s.seat) {
+    const p = s.pos[id],
+      P = s.players[id];
+    if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
+      continue;
+    if (
+      sh.hin !== undefined &&
+      ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
+        Math.abs((+p.z || 0) - sh.hz) > 48)
+    )
+      continue;
+    if (dodges(s, p, now) || vdSafe(s, id)) continue;
+    const px = (p.x - sh.lx) / rx,
+      py = (p.y - sh.ly) / ry,
+      k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    if (Math.hypot(px - k * ux, py - k * uy) < 1 && (!best || k < best.k))
+      best = {
+        id,
+        k,
+        x: sh.lx + k * (at.x - sh.lx),
+        y: sh.ly + k * (at.y - sh.ly),
+      };
+  }
+  return best;
+}
+/* the grenade launcher's grenade got to a duck: it stops there (where it goes off) */
+function lgrenHits(s, sh, at, now) {
+  const d = firstDuck(s, sh, at, now);
+  if (!d) return false;
+  at.x = d.x;
+  at.y = d.y;
+  return true;
+}
+/* the chain gun's shot: at once, along the aim to the first duck (all its HP) or on past the board's edge; anything
+   else on that line is hit as a bullet hits it. Every screen draws its thin yellow line (the l4line fx) */
+const CHAIN_FAR = 1.6; // (board widths: on past the board's edge)
+function chainShot(s, by, p, aim, now) {
+  const hang = isHang(s),
+    l = Math.hypot(aim[0], aim[1]) || 1,
+    sh = {
+      n: s.fxN,
+      by,
+      k: "chain",
+      x0: p.x,
+      y0: p.y,
+      lx: p.x,
+      ly: p.y,
+      vx: 0,
+      vy: 0,
+      t: now,
+      ...(hang
+        ? {
+            hz: Math.round(+p.z || 0),
+            hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
+          }
+        : {}),
+    },
+    far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR; // (Hangout's world is far bigger than a board)
+  let at = {
+    x: p.x + (aim[0] / l) * far,
+    y: p.y + (aim[1] / l) * far,
+    z: 0.41,
+  };
+  if (hang) {
+    // the cabin's walls stop it
+    for (let i = 1; i <= 80; i++) {
+      const x = p.x + ((aim[0] / l) * far * i) / 80,
+        y = p.y + ((aim[1] / l) * far * i) / 80;
+      if ((inCabin(x * HW, y * HH) ? 1 : 0) !== sh.hin) {
+        at = { x, y, z: 0.41 };
+        break;
+      }
+    }
+  }
+  const d = firstDuck(s, sh, at, now);
+  if (d) {
+    const [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+    at = {
+      x: d.x + ((aim[0] / l) * rx) / 2,
+      y: d.y + ((aim[1] / l) * ry) / 2,
+      z: 0.41,
+    }; // (a little past it, so the duck is surely on the line)
+  }
+  shotHits(s, sh, at, p.x, p.y, at.x - p.x, at.y - p.y, now);
+  const k = hang ? [HW, HH] : [1, 1];
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    {
+      n: s.fxN,
+      kind: "l4line",
+      by,
+      who: [],
+      t: now,
+      ...(hang ? {} : { b: 1 }),
+      x0: +(p.x * k[0]).toFixed(4),
+      y0: +(p.y * k[1]).toFixed(4),
+      x1: +(at.x * k[0]).toFixed(4),
+      y1: +(at.y * k[1]).toFixed(4),
+      hz: Math.round(+p.z || 0),
+    },
+  ]; // (b: board units; in Hangout, the world's pixels, as Quacky Zombies' own)
+}
+/* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, a Jaime Guard, Justin, Duck Cabin's
+   Justin and cats; true when it's gone (Mad God Justin's own) */
+function shotHits(s, sh, at, x0, y0, dx, dy, now) {
+  if (at.z > -0.15 && at.z < 1.05)
+    for (const id of s.seat) {
+      // (a dagger over a duck's head, or already fallen, hits nobody)
+      const p = s.pos[id],
+        P = s.players[id];
+      if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
+        continue;
+      if (
+        sh.hin !== undefined &&
+        ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
+          Math.abs((+p.z || 0) - sh.hz) > 48)
+      )
+        continue; // (the other side of the walls, or above or below it)
+      if (dodges(s, p, now)) continue; // jumped over it
+      if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+      if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
+      /* the nearest the shot came to the duck this beat, measured in a duck's room (.03 across, .08 deep; Hangout's world is far bigger than a board) */
+      const rx = isHang(s) ? 0.006 : 0.03,
+        ry = isHang(s) ? 0.012 : 0.08;
+      const ux = dx / rx,
+        uy = dy / ry,
+        px = (p.x - x0) / rx,
+        py = (p.y - y0) / ry,
+        len = ux * ux + uy * uy;
+      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      const ox = px - k * ux,
+        oy = py - k * uy,
+        od = Math.hypot(ox, oy);
+      if (od < (sh.r || 1)) {
+        if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
+        if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
+        const safe = isMgj(s) && mgjSafe(s, id, now);
+        logHit(s, sh.by, id, now);
+        const crit = critRoll(s, sh.k);
+        if (
+          isMgj(s)
+            ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
+            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k))
+        )
+          sh.got = [...(sh.got || []), id];
+        else {
+          P.dead = true;
+          holdDown(s, id, now);
+          playerKilled(s, sh.by, id, sh.k);
+        } // (the HP: a hit it can take keeps the duck up)
+        wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
+        if (sh.by === JUSTIN_ID) mgjHurt(s, id);
+        if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
+        if (sh.k === "chair") {
+          const ul = Math.sqrt(len) || 1;
+          if (od > 0.2)
+            shove(s, id, ox / od, oy / od, KB_FAR, now, sh.hin || 0);
+          else shove(s, id, ux / ul, uy / ul, KB_FAR, now, sh.hin || 0);
+        } // (Mad God Justin's office chair, or the Chair special's: shoved back, as the hammer does, away from it)
+      }
+    }
+  if (isMgj(s) && mgjShot(s, sh, x0, y0, dx, dy, now, logLine)) return true; // (Mad God Justin: a duck's shot hit him, or his hit Good Justin or a Jaime)
+  if (s.jm && at.z > -0.15 && at.z < 1.05 && !sh.fake) {
+    const rx = isHang(s) ? 0.006 : 0.03,
+      ry = isHang(s) ? 0.012 : 0.08,
+      ux = dx / rx,
+      uy = dy / ry,
+      len = ux * ux + uy * uy;
+    guardsHit(
+      s,
+      sh.by,
+      (x, y, z, side) => {
+        if (
+          sh.hin !== undefined &&
+          (side !== sh.hin || Math.abs(z - sh.hz) > 48)
+        )
+          return null;
+        const px = (x - x0) / rx,
+          py = (y - y0) / ry,
+          k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+        return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) || null;
+      },
+      now,
+    );
+  } // (a Jaime Guard it passes: his 1 HP)
+  if (
+    sh.hin === undefined &&
+    sh.by !== JUSTIN_ID &&
+    !isMgj(s) &&
+    at.z > -0.15 &&
+    at.z < 1.05 &&
+    justinShown(s) &&
+    !s.justin.down &&
+    !(sh.got && sh.got.includes(JUSTIN_ID))
+  ) {
+    // (the Justin option: he can be shot back, once by each shot)
+    const n = justinAt(s.justin, now),
+      ux = dx / 0.03,
+      uy = dy / 0.08,
+      px = (n.x - x0) / 0.03,
+      py = (n.y - y0) / 0.08,
+      len = ux * ux + uy * uy;
+    const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    const got =
+      Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)
+        ? justinHit(s, sh.by, now, logLine, sh.k)
+        : 0;
+    if (got) sh.got = [...(sh.got || []), JUSTIN_ID];
+    if (got === 2) justinKilled(s, sh.by, sh.k);
+  }
+  if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
+    for (const n of hangTargets(s, now, sh.k)) {
+      // (Hangout: Justin can be knocked down too, and a chair whooshes the shadow duck away)
+      if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48)
+        continue;
+      const ux = dx / 0.006,
+        uy = dy / 0.012,
+        px = (n.x / HW - x0) / 0.006,
+        py = (n.y / HH - y0) / 0.012,
+        len = ux * ux + uy * uy;
+      const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      if (
+        Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) &&
+        hangHit(s, n.id, sh.by, now) &&
+        n.id === "justin"
+      )
+        justinKilled(s, sh.by, sh.k);
+    }
+  return false;
 }
 
 /* ---------- the Zebra cake special ----------

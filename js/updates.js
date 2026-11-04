@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v167",
+    version: 167,
+    date: "Nov 4, 2026",
+    title: "Quacky Zombies' guns as specials, and wounds on players",
+    news: [
+      "Every gun from Quacky Zombies is now a special for every mode with the hotbar: the Sniper, SMG, AK-47, Revolver, LMG, Chain gun and Grenade launcher. Each works as it does there: the SMG, AK-47, LMG and Chain gun fire as long as the button is down, the Chain gun's shot hits at once, and the Grenade launcher's grenade goes off on the first duck it gets to.",
+      "They are locked for now. How to unlock them is coming soon.",
+      "For Quacky Zombies: a zombie's claw now and then leaves a cut or a bruise on your duck, and it goes away by itself 6 to 12 seconds after you're up, as wounds do in the other modes.",
+    ],
+  },
+  {
     id: "v166",
     version: 166,
     date: "Nov 4, 2026",

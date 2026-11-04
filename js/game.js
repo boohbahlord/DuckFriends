@@ -88,8 +88,9 @@ import {
   PHP,
   isHang,
   MAG,
-  RELOAD,
   magOf,
+  magSize,
+  AUTO,
   KB_MS,
   KB_HOP,
   KB_LAND,
@@ -2752,7 +2753,7 @@ function playFx(f) {
         until:
           now +
           ({ dagger: 900, grenade: 900, knife: 700, hammer: 1000 }[f.what] ||
-            1400),
+            (AUTO.includes(f.what) ? 500 : 1400)),
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
@@ -2762,11 +2763,19 @@ function playFx(f) {
           ax: -shows[f.by].ax,
           ay: -shows[f.by].ay,
         }; // (his double does the same, mirrored)
-      (f.what === "handgun"
-        ? sfx.bang
-        : f.what === "bow"
-          ? sfx.bow
-          : sfx.swish)();
+      (
+        ({
+          handgun: sfx.bang,
+          bow: sfx.bow,
+          sniper: sfx.bang,
+          revolver: sfx.bang,
+          smg: sfx.tat,
+          ak: sfx.tat,
+          lmg: sfx.tat,
+          chaingun: sfx.tat,
+          glauncher: sfx.shotgun,
+        })[f.what] || sfx.swish
+      )(); // (Quacky Zombies' guns sound as they do there)
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
@@ -2874,9 +2883,13 @@ function playFx(f) {
   } else if (f.kind === "l4line") {
     /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
        hit, and one or two shorter ones pointing a little off to the sides */
-    if (!geo.hang) return;
-    const a = world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
-      b = world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
+    if (!geo.hang && !f.b) return;
+    const a = f.b
+        ? place({ x: f.x0, y: f.y0 }, 0, 1)
+        : world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
+      b = f.b
+        ? place({ x: f.x1, y: f.y1 }, 0, 1)
+        : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41,
       gun = fxl.querySelector(
         `.held[data-pid="${CSS.escape(f.by)}"][data-w="chaingun"]`,
@@ -4421,20 +4434,30 @@ function cool() {
         ? [Math.max(end, now + 1), CAKE_EVERY, now]
         : null;
     } // (shared too)
-    if (id === "handgun") {
-      const r = magOf(R.state, R.me, now).r;
-      return r > now ? [r, RELOAD, now] : null;
-    } // (between shots no bar: only the reload)
+    const mg = magSize(id);
+    if (mg) {
+      const r = magOf(R.state, R.me, now, id).r;
+      return r > now
+        ? [r, mg[1], now]
+        : AUTO.includes(id)
+          ? null
+          : (() => {
+              const end = coolEnds(R.state, R.me, id);
+              return end > now + 250 ? [end, coolFor(id, R.state), now] : null;
+            })();
+    } // (between quick shots no bar: only the reload, and the sniper's bolt or the launcher's wait)
     const end = coolEnds(R.state, R.me, id);
     return end > now ? [end, coolFor(id, R.state), now] : null;
   });
 }
-/* the handgun's shots left (for the dots under its key) */
-function ammo() {
+/* the handgun's shots left (for the dots under its key), or another gun's */
+function ammo(id = "handgun") {
   if (R && isMgj(R.state)) return usesOf(R.state, R.me);
-  return R ? MAG - magOf(R.state, R.me, clockNow()).n : MAG;
+  const n = (magSize(id) || [MAG])[0];
+  return R ? n - magOf(R.state, R.me, clockNow(), id).n : n;
 }
-/* the dots under a key: the handgun's shots, or in Mad God Justin the uses left of the weapon picked up */
+/* the dots under a key: a gun's shots (a number past 8: the SMG's 20 … the LMG's 75), or in Mad God Justin the uses left
+   of the weapon picked up */
 const dots = (id) =>
   R && isMgj(R.state)
     ? PICK_USES[id] && id === myPick()
@@ -4442,17 +4465,27 @@ const dots = (id) =>
       : id === "jaime"
         ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
         : ""
-    : id === "handgun"
-      ? ammoHTML(ammo())
+    : magSize(id)
+      ? magSize(id)[0] > 8
+        ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
+        : ammoHTML(ammo(id), magSize(id)[0])
       : "";
-/* R: the handgun reloads */
+/* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
     R.send({ t: "reload", w: heldNow() });
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
-  if (!R || !onBoardPhase() || !hasKey(playDuck(), "handgun")) return false;
-  R.send({ t: "reload" });
+  if (!R || !onBoardPhase() || isMgj(R.state)) return false;
+  const k = keysOf(playDuck()),
+    w =
+      held && magSize(held) && hasKey(playDuck(), held)
+        ? held
+        : k.includes("handgun")
+          ? "handgun"
+          : k.find((id) => id && magSize(id));
+  if (!w) return false;
+  R.send({ t: "reload", w });
   return true;
 }
 let mouseAt = 0; // when the mouse last moved
@@ -6010,6 +6043,50 @@ const KEEP_HINT =
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
   '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, the owner's, Nov 4; E goes with them, so no key is split from its word)
+/* a left click that uses the weapon kept out (not on a button, a field or a card) */
+function heldClick(e) {
+  return (
+    !!held &&
+    !!R &&
+    (isMgj(R.state) || hasKey(playDuck(), held)) &&
+    e.button === 0 &&
+    onBoardPhase() &&
+    !!e.target.closest(".board") &&
+    !e.target.closest(
+      "button, a, input, textarea, .topover, .sc-write, .wq-card",
+    )
+  );
+}
+/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies and Mad God Justin): the left button
+   down fires, and again as soon as it can while the button stays down */
+let autoFire = 0,
+  autoDid = false;
+function autoPress(e) {
+  if (
+    !R ||
+    isL4dd(R.state) ||
+    isMgj(R.state) ||
+    e.pointerType !== "mouse" ||
+    !AUTO.includes(held) ||
+    !heldClick(e)
+  )
+    return;
+  const go = () => {
+    if (!AUTO.includes(held) || !onBoardPhase()) return;
+    fire(held);
+    autoFire = setTimeout(go, Math.max(60, coolFor(held, R.state)));
+  };
+  clearTimeout(autoFire);
+  autoDid = true;
+  go();
+  const stop = () => {
+    clearTimeout(autoFire);
+    removeEventListener("pointerup", stop);
+    removeEventListener("blur", stop);
+  };
+  addEventListener("pointerup", stop);
+  addEventListener("blur", stop);
+}
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
 let l4Fire = 0;
@@ -6226,6 +6303,7 @@ register("game", {
       true,
     );
     S.addEventListener("pointerdown", l4Press);
+    S.addEventListener("pointerdown", autoPress);
     S.addEventListener("pointerdown", (e) => {
       if (e.target.closest(".wq-card.mine")) {
         e.preventDefault();
@@ -6246,17 +6324,9 @@ register("game", {
         if (performance.now() - touchedAt < 900) boardClick(e);
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
-      if (
-        held &&
-        (isMgj(R.state) || hasKey(playDuck(), held)) &&
-        e.button === 0 &&
-        onBoardPhase() &&
-        e.target.closest(".board") &&
-        !e.target.closest(
-          "button, a, input, textarea, .topover, .sc-write, .wq-card",
-        )
-      ) {
-        fire(held);
+      if (heldClick(e)) {
+        if (autoDid && AUTO.includes(held)) autoDid = false;
+        else fire(held); // (a gun that fires while the mouse button is down already did: autoPress)
         return;
       } // a weapon kept out: a left click uses it
       const mc = e.target.closest("[data-col]");

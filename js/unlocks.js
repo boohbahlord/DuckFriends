@@ -15,6 +15,7 @@
    lives in the profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits,
    jaimeStabs, jaimes (sent and hit by), jaimeBomb (taken from the fireplace), l4round (my best Quacky Zombies round:
    the Jaime Guard at 30), kills, dunced,
+   (Quacky Zombies' guns stay locked until I say how they unlock: only the secret code opens them for now)
    mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
@@ -57,6 +58,13 @@ export const LOCKS = [
   { kind: "special", id: "jaimebomb", jbomb: 864, name: "Jaime Bomb" },
   { kind: "special", id: "jaimeguard", l4r: 30, name: "Jaime Guard" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
+  { kind: "special", id: "sniper", later: true, name: "Sniper" },
+  { kind: "special", id: "smg", later: true, name: "SMG" },
+  { kind: "special", id: "ak", later: true, name: "AK-47" },
+  { kind: "special", id: "revolver", later: true, name: "Revolver" },
+  { kind: "special", id: "lmg", later: true, name: "LMG" },
+  { kind: "special", id: "chaingun", later: true, name: "Chain gun" },
+  { kind: "special", id: "glauncher", later: true, name: "Grenade launcher" }, // (Quacky Zombies' guns: the owner will say how they unlock)
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
   {
@@ -79,17 +87,19 @@ export const LOCKS = [
 ];
 const lockOf = (kind, id) => LOCKS.find((l) => l.kind === kind && l.id === id);
 const earned = (l) =>
-  l.cabin
-    ? (profile.cabinKills || 0) >= l.cabin
-    : l.shadow
-      ? (profile.shadowHits || 0) >= l.shadow
-      : l.jaime
-        ? (profile.jaimeStabs || 0) >= l.jaime
-        : l.jbomb
-          ? (profile.jaimes || 0) >= l.jbomb || !!profile.jaimeBomb
-          : l.l4r
-            ? (profile.l4round || 0) >= l.l4r
-            : earnedElse(l);
+  l.later
+    ? false
+    : l.cabin
+      ? (profile.cabinKills || 0) >= l.cabin
+      : l.shadow
+        ? (profile.shadowHits || 0) >= l.shadow
+        : l.jaime
+          ? (profile.jaimeStabs || 0) >= l.jaime
+          : l.jbomb
+            ? (profile.jaimes || 0) >= l.jbomb || !!profile.jaimeBomb
+            : l.l4r
+              ? (profile.l4round || 0) >= l.l4r
+              : earnedElse(l);
 const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
@@ -144,6 +154,7 @@ export function lockHint(kind, id) {
                     ? `Unlocked: voted a dunce ${l.dunced} times`
                     : `Unlocked: you killed Justin with a weapon ${l.kills} times`;
   const pre = coded(l) ? "Unlocked: a secret code. " : "";
+  if (l.later) return pre.trim() || "How to unlock this is coming soon.";
   if (l.frags)
     return `${pre}Knock down ${l.frags} players with a weapon (any Justin counts) (${Math.min(l.frags, profile.kills || 0)}/${l.frags})`;
   if (l.mgjLosses)
