@@ -763,7 +763,7 @@ const showsZoom = (s) =>
 
 /* the plain words for the rows that aren't a game, a map or a setting */
 const PICK_TEXT = {
-  vote: "After the start's countdown, every player votes in a window over the whole screen: first for the game mode (1:05), then for the map (0:20; not for Duck Cabin's games or Mad God Justin). Click once to vote; the dice is a random pick. Once everyone has voted, the clock runs twice as fast. The most votes win; a tie is a random pick between the tied ones.",
+  vote: "After the start's countdown, every player votes in a window over the whole screen: first for the game mode (1:05), then for the map (0:20; not for Duck Cabin's games or Mad God Justin). Click once to vote; the dice is a random pick. Once everyone has voted, the clock runs twice as fast (the map vote drops to 0:10 first). The most votes win; a tie is a random pick between the tied ones.",
   modeRandom:
     "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Hangout, Quacky Zombies and games that need more players than the room has are left out. The map stays the one picked.",
   mapRandom:

@@ -302,9 +302,10 @@ function setMode(s, mode) {
    After the start's 5 s countdown, a window over the whole screen: Vote for Game Mode (1:05), then Vote for Map (0:20;
    not for the games that bring their own place: Duck Cabin's and Mad God Justin's). Every player clicks one (the same
    one again takes the vote back); the dice is a random pick. Once every player has voted, the clock runs twice as
-   fast. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
+   fast (the map vote's drops to 10 s first). The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
 export const PICK_TIME = { mode: 65, map: 20 };
+const MAP_ALL_IN = 10000; // the map vote's clock once everyone has voted: 10 s, then twice as fast
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
 export const voteModes = (s) =>
@@ -1509,8 +1510,10 @@ export function reduce(state, a, now = Date.now()) {
       else votes[a.id] = a.v;
       vt.votes = votes; // (online, an empty list of votes doesn't come back)
       if (!vt.fast && s.seat.every((id) => votes[id])) {
+        // (the map vote first drops to 10 s, owner 2026-11-04 07:06Z; then both run twice as fast)
+        const left = Math.max(0, s.ends - now);
         vt.fast = 1;
-        s.ends = now + Math.max(0, s.ends - now) / 2;
+        s.ends = now + (vt.k === "map" ? Math.min(left, MAP_ALL_IN) : left) / 2;
       }
       return s;
     }

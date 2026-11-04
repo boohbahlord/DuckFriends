@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v159",
+    version: 159,
+    date: "Nov 4, 2026",
+    title: "Map vote: 10 seconds once everyone votes",
+    news: [
+      "The map vote's clock drops to 0:10 once everyone has voted, then runs twice as fast.",
+    ],
+  },
+  {
     id: "v158",
     version: 158,
     date: "Nov 4, 2026",
