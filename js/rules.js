@@ -1713,6 +1713,17 @@ export function reduce(state, a, now = Date.now()) {
       s.reviewVotes[a.id] = true;
       if (reviewCount(s) >= needed(s)) s.review = true;
       return s;
+    case "cabinEnd": {
+      // Hangout's End Cabin and Quacky Zombies' Exit Cabin: a click votes, another takes it back; half the people
+      // (never the computers) start a CABIN_END_MS timer, and the cabin game ends when it runs out
+      if (!isHang(s) || s.phase !== "hang" || !me || me.bot) return state;
+      const c = (s.cabinEnd = s.cabinEnd || { by: {}, at: 0 });
+      c.by = c.by || {}; // (online, an empty list of votes doesn't come back)
+      if (c.by[a.id]) delete c.by[a.id];
+      else c.by[a.id] = true;
+      cabinCheck(s, now);
+      return s;
+    }
     case "toLobby":
       if (boss && isHang(s) && s.phase === "hang")
         return backToLobby(s, `${me.name} took everyone back to the lobby.`); // (Hangout: the host ends it whenever)
@@ -2320,6 +2331,7 @@ export function reduce(state, a, now = Date.now()) {
         s.vote = null;
         return s;
       }
+      if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
       const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
         hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
         jus =
@@ -3568,6 +3580,38 @@ function skipRound(s, now) {
   } // (Duncelation: a new rotation; after a dunce, its stats)
   return startResults(s, now);
 }
+/* the people in the cabin who voted to end it, and how many it takes: half of them, rounded up */
+export const CABIN_END_MS = 10000;
+export const cabinVotes = (s) =>
+  humanIds(s).filter((id) => ((s.cabinEnd || {}).by || {})[id]).length;
+export const cabinNeeded = (s) =>
+  Math.max(1, Math.ceil(humanIds(s).length / 2));
+/* starts the timer when enough have voted, and starts it over (from CABIN_END_MS) when the votes drop; true when it
+   changed anything */
+function cabinCheck(s, now) {
+  const c = s.cabinEnd;
+  if (!c) return false;
+  const enough = cabinVotes(s) >= cabinNeeded(s),
+    at = enough ? c.at || now + CABIN_END_MS : 0;
+  if (at === c.at) return false;
+  c.at = at;
+  return true;
+}
+/* a cabin game ends (the vote won): for now the room goes back to the lobby, as when the host ends it */
+export function cabinOver(s, now) {
+  return backToLobby(s, "The ducks voted to leave the cabin.");
+}
+/* every beat in the cabin: the votes of players who left stop counting; true when the game ended or the timer changed */
+function cabinTick(s, now) {
+  if (!s.cabinEnd) return false;
+  const was = s.cabinEnd.at,
+    changed = cabinCheck(s, now);
+  if (s.cabinEnd.at && now >= s.cabinEnd.at) {
+    cabinOver(s, now);
+    return true;
+  }
+  return changed || was !== s.cabinEnd.at;
+}
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
@@ -3592,6 +3636,7 @@ export function backToLobby(s, why) {
   s.lock = {};
   s.back = {};
   s.hang = null;
+  s.cabinEnd = null;
   s.bb = null;
   s.bbPast = [];
   s.sc = null;

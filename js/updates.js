@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v156",
+    version: 156,
+    date: "Nov 4, 2026",
+    title: "Leave the cabin by vote",
+    news: [
+      "For Hangout: a small End Cabin button in the top left. Click it to vote, click again to take your vote back. When half of the players have voted, a 10 second timer starts on the button, and the cabin ends when it runs out.",
+      "For Quacky Zombies: the same vote, called Exit Cabin.",
+    ],
+  },
+  {
     id: "v155",
     version: 155,
     date: "Nov 4, 2026",

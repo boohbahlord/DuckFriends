@@ -15559,3 +15559,28 @@ html.still .l4-crit {
 .tv-score {
   margin-left: 0.3rem;
 }
+
+/* the End Cabin / Exit Cabin vote, at the board's top left (js/hangout/cabinend.js) */
+.game .btn.cabin-end {
+  position: fixed;
+  top: 52px;
+  left: 18px;
+  z-index: 30;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.game .btn.cabin-end.on {
+  background: var(--yellow, #ffd23f);
+  color: #1b1b1b;
+}
+.cabin-end.ticking {
+  animation: noteglow 1.2s ease-in-out infinite;
+}
+@media (max-width: 700px) {
+  .game .btn.cabin-end {
+    top: 74px;
+    left: 10px;
+  }
+}
