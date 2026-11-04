@@ -3462,3 +3462,13 @@ The other player's HP on PC will show as small version of these meters with smal
   one screenshot of that mode (assets/modes/<mode>.webp: every name tag, the top bar and the bottom bar hidden, the
   ducks in the seven rainbow colors). It was taken with the map left out, so it's drawn over the picked map. Duck
   Cabin's games are screenshots of the cabin.
+
+## Request (owner, 2026-11-04 03:16Z, via Adam): the zombie game list, HP bars, settings on phone (Noah's part logged here)
+"why is there green bars below the hotbars for HP? we already have an hp bar. We can also make all the HP bars not have white around the bars or blocks in the meters but black AND it should be somewhat thinner (very little) BUT a lot more thin for the Justin boss in the Mad God Justin game mode becuz he has so much health. Have a different screenshot for Justin in that gamemode please because you cannot see him in it's screenshot."
+"the G button on the slot is hard to read"
+"make the zombies have random scars, cuts, or signs of rotting added and give me pictures for the many variations for me to check and see if i approve of them."
+"smg bullets dont need to be that small."
+- (The rest of the 03:16Z message went to Solomon the 2nd, Miles Jr., Jackal and Adam; the Justin screenshot is Adam's.)
+- Built: the green HP blocks under Quacky Zombies' hotbar (`.l4hp`, js/l4ddbar.js) are gone; the red meter is the only
+  one. Meter blocks sit on black (#120c0a), not white; blocks 0.78 of the meter's size (--t), Justin's panel 0.36.
+  SMG bullet 22 px (was 13), pointed with a thin outline. The grenade slot's G: white on a dark chip, bolder.
