@@ -79,24 +79,25 @@ export const MODES = [
   },
   {
     id: "hang",
-    cat: "cabin",
+    cat: "social",
     name: "Hangout",
-    tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby.",
+    tip: "No rounds, no winners, no pressure: hang out in Duck Cabin. Piano, couches, chalk, a pool, soccer, until you all go back to the lobby. It can only be played on the Duck Cabin map.",
   },
   {
     id: "l4dd",
-    cat: "cabin",
+    cat: "special",
     name: "Quacky Zombies",
-    tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last.",
+    tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
-/* the four kinds of game on the Game Settings screen's Game mode page (Cabin: Duck Cabin's own games) */
+/* the three kinds of game on the Game Settings screen's Game mode page. Duck Cabin's own games sit with the others
+   (Hangout with the social games, Quacky Zombies by Mad God Justin with the special ones); the Map page's Duck Cabin
+   row lists them on their own */
 export const CATS = [
   ["social", "Social"],
   ["comp", "Social Competitive"],
-  ["cabin", "Cabin"],
   ["special", "Special"],
 ];
 

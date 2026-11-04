@@ -36,6 +36,7 @@ import { shareLook } from "./customize.js";
 import { applySettings } from "./settings.js";
 import { sfx } from "./sound.js";
 import { hooks } from "./hooks.js";
+import { settingText } from "./gamesettings.js";
 import {
   npcById,
   npcByTag,
@@ -44,6 +45,26 @@ import {
   seen,
   muted,
 } from "./npcs.js";
+
+/* a settings change in the chat, after the name tag of whoever made it: "changed Map to Tiles and Turn ends when done to
+   2 of 3", or "put the game settings back to the defaults" */
+function optsWords(m) {
+  if (m.reset) return "put the game settings back to the defaults.";
+  const all = Object.entries(m.opts)
+    .filter(
+      ([k]) =>
+        !((k === "map" && m.opts.mapPick) || (k === "mode" && m.opts.modePick)),
+    ) // (a vote or Random says it)
+    .map(([k, v]) => settingText(k, v))
+    .filter(Boolean)
+    .map(([n, v]) => `${n} to ${v}`);
+  if (!all.length) return "changed the game settings.";
+  const list =
+    all.length < 3
+      ? all.join(" and ")
+      : `${all.slice(0, -1).join(", ")} and ${all[all.length - 1]}`;
+  return `changed ${list}.`;
+}
 
 /* ---------- the command line's commands ---------- */
 const COLORS = {
@@ -1079,6 +1100,8 @@ export function chatWidget() {
     const html = lines
       .map((m) => {
         if (m.mine) return `<p class="sys note">${esc(m.text)}</p>`;
+        if (m.opts)
+          return `<p class="sys">${name(m.by)} ${esc(optsWords(m))}</p>`;
         if (m.sys)
           return `<p class="sys${m.small ? " small" : ""}">${esc(m.text)}</p>`;
         if (m.npc)
@@ -1434,9 +1457,11 @@ export function chatWidget() {
           : m.text.length > 160
             ? m.text.slice(0, 160).trimEnd() + "…"
             : m.text;
-    float.innerHTML = m.sys
-      ? `<span class="cf-sys">${esc(m.text)}</span>`
-      : `<b class="cf-name">${nameHTML(p.name, p.nameStyle)}</b>: <span class="cf-text">${fontHTML((p.nameStyle || {}).font, esc(text))}</span>`;
+    float.innerHTML = m.opts
+      ? `<span class="cf-sys">${s.players[m.by] ? nameHTML(s.players[m.by].name, s.players[m.by].nameStyle) : "The host"} ${esc(optsWords(m))}</span>`
+      : m.sys
+        ? `<span class="cf-sys">${esc(m.text)}</span>`
+        : `<b class="cf-name">${nameHTML(p.name, p.nameStyle)}</b>: <span class="cf-text">${fontHTML((p.nameStyle || {}).font, esc(text))}</span>`;
     const r = btn.getBoundingClientRect(),
       right = r.width && r.left > innerWidth / 2; // (by the button, wherever Settings put it)
     float.style.left =
