@@ -215,6 +215,7 @@ import { profile, save, statMode } from "./store.js";
 import { openSettings, netLevel } from "./settings.js";
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 import { openCustomize, shareLook } from "./customize.js";
+import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
 import { canAdd, requestFriend } from "./account.js";
@@ -1712,7 +1713,7 @@ function drawDucks(now = clockNow()) {
       st = sh && sh.t !== undefined ? Math.min(1, (now - sh.t) / 1000) : 1;
     let out = 0.42,
       turn = 0;
-    const jab = isL4dd(s) ? 0.125 : 0.25; // (Quacky Zombies: the knife swings twice as fast)
+    const jab = ARM_SWING.knife / 1000; // (the knife swings as fast in every mode as in Quacky Zombies)
     if (w === "knife")
       out = 0.44 + (st < jab ? 0.26 * Math.sin((Math.PI * st) / jab) : 0);
     if (w === "hammer") {

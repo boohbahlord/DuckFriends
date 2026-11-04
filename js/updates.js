@@ -12,6 +12,7 @@ export const UPDATES = [
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "Every weapon works as fast as in Quacky Zombies now, in every mode: the bullets, arrows, daggers and shotgun pellets fly faster, the hammer, dagger and shotgun can be used again sooner, and the knife and hammer swing quicker. The pistol reloads in 1.2 seconds.",
       "A new Game Setting for Agree or Disagree, Would You Rather, DDR and Story Chain, End round button (off unless you turn it on): votes don't end the turn, an End round button does. It shows once enough ducks have voted, and anyone can press it.",
       "A new mode, Trivia (2 players or more): everyone writes a question, multiple choice or a written answer, then the ducks walk onto the answers they think are right. Whoever wrote it grades the written answers. Genius, Dumbo, Easiest Prompts and Hardest Prompts at the end.",
       "For Bicker Brackets: when the writer is hidden, the cloud shows a multicolored ? instead.",

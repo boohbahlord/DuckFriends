@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { boardSpeed, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import {
   isDn,
   DN_GRACE,
@@ -132,7 +133,6 @@ import {
   mgjCool,
   mgjHolds,
   DMG,
-  PUMP,
   PELLETS,
   PELLET_SPEED,
   PELLET_LIFE,
@@ -655,12 +655,19 @@ export const VOTE_TIME = 30; // seconds a kick or back-to-lobby vote stays open
    Nov 3: "slightly faster"); Mad God Justin's own bullets keep their speed (mgjrules.js JUSTIN_SHOT) */
 export const FASTER = 1.15;
 /* the bow's arrow: it flies straight and fast the way it was aimed, on to the screen's edge */
-export const ARROW_SPEED = 0.6 * FASTER;
-export const SHOT_SPEED = 0.22 * FASTER; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
+export const ARROW_SPEED = boardSpeed("bow") * FASTER;
+/* (Quacky Zombies' speeds, armspeed.js, in every mode; Justin's own bullets on the boards keep the old, slow BOSS_SHOT_SPEED) */
+export const BOSS_SHOT_SPEED = 0.22 * FASTER;
+/* a duck's shotgun pellet: the same speed, and so a shorter life, to fly as far as it did */
+export const PELLET_V = boardSpeed("shotgun") * FASTER;
+export const DUCK_PELLET_LIFE = Math.round(
+  (PELLET_LIFE * PELLET_SPEED * FASTER) / PELLET_V,
+);
+export const SHOT_SPEED = boardSpeed("handgun") * FASTER; // the handgun special's bullet: board widths a second (slow enough to see, and to jump over)
 /* the thrown dagger: across the board at DAGGER_SPEED (board widths a second) while its height (in duck sizes) rises
    from the beak and falls: z = DAGGER_Z + DAGGER_UP·t − DAGGER_G·t²/2; it hits ducks only at their height, then falls
    on down off the screen */
-export const DAGGER_SPEED = 0.45 * FASTER,
+export const DAGGER_SPEED = boardSpeed("dagger") * FASTER,
   DAGGER_Z = 0.45,
   DAGGER_UP = 1.2,
   DAGGER_G = 2.2,
@@ -697,14 +704,14 @@ const PRESS = [
 ]; // the items, used with their number key
 /* how long an item waits before its key works again (ms); the key shows a bar draining meanwhile */
 const COOLDOWN = {
-  handgun: 200,
-  dagger: 2000,
-  knife: 250, // (four stabs a second, in every mode: the owner's, Nov 3)
-  hammer: 2250,
-  shotgun: PUMP,
+  handgun: ARM_COOL.handgun,
+  dagger: ARM_COOL.dagger,
+  knife: ARM_COOL.knife, // (four stabs a second, in every mode: the owner's, Nov 3)
+  hammer: ARM_COOL.hammer,
+  shotgun: ARM_COOL.shotgun,
   grenade: 12000,
   confetti: 15000,
-  bow: 400,
+  bow: ARM_COOL.bow,
   chair: 15000,
   zebra: 30000, // (as Mad God Justin's CAKE_EVERY)
   jaime: 12000, // (as Mad God Justin's JAIME_MS, but each duck's own)
@@ -714,7 +721,7 @@ export const coolFor = (sp, s) =>
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } */
 export const MAG = 7,
-  RELOAD = 3500; // (I want 3.5 s: 1.5 was too short)
+  RELOAD = ARM_RELOAD;
 export const magOf = (s, id, now) => {
   const m = (s.mag || {})[id];
   return !m || (m.r && now >= m.r) ? { n: 0, r: 0 } : m;
@@ -1883,9 +1890,9 @@ export function reduce(state, a, now = Date.now()) {
               shot(
                 s.fxN * 10 + i,
                 "pellet",
-                (bx / bl) * PELLET_SPEED,
-                (by / bl) * PELLET_SPEED,
-                { life: PELLET_LIFE },
+                (bx / bl) * PELLET_V,
+                (by / bl) * PELLET_V,
+                { life: DUCK_PELLET_LIFE },
               ),
             );
           }
@@ -2905,7 +2912,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
    knife's jab, the hammer's swing down and its rest), and every move and every heartbeat checks it again. The knife
    hits once; the hammer everything it touches, each once.
    s.atk = [{ by, sp, ax, ay, t, until, hit: [who it hit] }] */
-const ATK_MS = { knife: 250, hammer: 500 };
+const ATK_MS = ARM_SWING;
 export function strike(s, by, sp, aim, now, from = s.pos[by]) {
   const hit = swing(s, by, sp, aim, now, from);
   s.atk = [
