@@ -3842,3 +3842,8 @@ Show me the rough UI design plan before u do it for all three"
   True Random stay, and both vote windows get a dice tile (random) at the top.
 - Who: Jackal = End Cabin / Exit Cabin (top-left vote button, half the players, 10 s, resets) with cabinOver(s, now);
   Adam = everything else.
+
+## Request (owner, 2026-11-04 07:06Z, in Adam's thread): the map vote's 10 seconds
+"for the map vote, the count go down to ten seconds ONCE everyone has voted a map before it accelerates the timer"
+- Built (Adam, #241, v159): in the map vote, once every player has voted, the clock drops to 0:10 (when it has more),
+  then runs twice as fast (MAP_ALL_IN in rules.js). The game mode vote only runs twice as fast.
