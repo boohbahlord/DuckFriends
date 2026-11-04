@@ -6825,6 +6825,51 @@ html.still .spx-disco .disco-spot {
     opacity: 0;
   }
 }
+/* Customize's previews of Quacky Zombies' guns: a kick in the hand, then their bullets, the chain gun's line or the
+   launcher's grenade across the preview */
+.spe-wield.spe-gun {
+  animation: wkick 1.3s ease-out forwards;
+}
+.spe-shot.spe-round {
+  width: var(--w);
+  opacity: 0;
+  animation: spround 0.7s linear forwards;
+}
+@keyframes spround {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--dx, 300px)), -50%);
+  }
+}
+.spe-shot.spe-lgren {
+  width: calc(var(--s) * 0.22);
+  animation: spshot 0.9s linear 0.2s both;
+}
+.spe-shot.spe-lgren svg {
+  filter: none;
+}
+.spe-cline {
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--c);
+  box-shadow: 0 0 4px 1px var(--g);
+  pointer-events: none;
+  opacity: 0;
+  animation: spcline 0.14s steps(2, jump-none) 0.2s 6;
+}
+@keyframes spcline {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
 .spe-gthrow i {
   width: calc(var(--s) * 0.22);
   animation-duration: 0.8s;
@@ -7303,6 +7348,18 @@ html.still .spe-bone .bone-slide {
   gap: 0.06rem;
   pointer-events: none;
 }
+.ammo.ammo-n {
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--yellow);
+  text-shadow: 0 1px 1px #000a;
+}
+.sp-slot .ammo-n,
+.sp-wbtn .ammo-n {
+  top: auto;
+  bottom: 0.08rem;
+} /* (on a phone, inside the square: under it there's no room) */
 .ammo i {
   width: 0.16rem;
   height: 0.16rem;

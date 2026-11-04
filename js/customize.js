@@ -22,6 +22,7 @@ import {
   BULLET,
   daggerHTML,
   heldHTML,
+  GRENADE,
 } from "./specials.js";
 import { sfx } from "./sound.js";
 import {
@@ -55,6 +56,8 @@ import { touchOnly } from "./pointer.js";
 import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
 import { GUARD_W, guardWeapon } from "./jaimebomb.js";
 import { jetHTML } from "./jetpack.js";
+import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
+import { GUNS_NEW, AUTO } from "./rules.js";
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -440,6 +443,39 @@ export function openCustomize(page = lastPage) {
                   `<div class="held spe-wield" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
                 ),
               );
+            /* Quacky Zombies' guns: in the duck's hand with a kick, and their bullets (three for the ones that fire while the
+               button is down) across the preview; the chain gun's yellow line, the launcher's grenade */
+            if (GUNS_NEW.includes(id)) {
+              els.push(
+                el(
+                  `<div class="held spe-wield spe-gun" data-w="${id}" style="left:${x.toFixed(0)}px;top:${(y - w.width * 0.45).toFixed(0)}px;--s:${w.width.toFixed(0)}px"><i>${heldHTML(id, profile.duck)}</i></div>`,
+                ),
+              );
+              const far = Math.round(
+                  duckBox.getBoundingClientRect().right - b.left - x + 40,
+                ),
+                sx = (x + w.width * 0.95).toFixed(0),
+                sy = (y - w.width * 0.47).toFixed(0);
+              if (id === "chaingun")
+                els.push(
+                  el(
+                    `<div class="spe spe-cline" style="left:${sx}px;top:${sy}px;width:${far}px;--c:${TRACE.color};--g:${TRACE.glow}"></div>`,
+                  ),
+                );
+              else if (id === "glauncher")
+                els.push(
+                  el(
+                    `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(profile.duck, "grenade"), false)}</div>`,
+                  ),
+                );
+              else
+                for (let i = 0; i < (AUTO.includes(id) ? 3 : 1); i++)
+                  els.push(
+                    el(
+                      `<div class="spe spe-shot spe-round" style="left:${sx}px;top:${sy}px;--dx:${far}px;--w:${ROUNDS_ART[id].w}px;animation-delay:${0.2 + i * 0.12}s">${ROUNDS_ART[id].svg}</div>`,
+                    ),
+                  );
+            }
             pic.append(...els);
             setTimeout(() => els.forEach((e) => e.remove()), 2400);
             ({
@@ -448,6 +484,13 @@ export function openCustomize(page = lastPage) {
               watergun: sfx.splash,
               confgun: sfx.pop,
               handgun: sfx.bang,
+              sniper: sfx.bang,
+              revolver: sfx.bang,
+              smg: sfx.tat,
+              ak: sfx.tat,
+              lmg: sfx.tat,
+              chaingun: sfx.tat,
+              glauncher: sfx.shotgun,
               dagger: sfx.swish,
               knife: sfx.swish,
               hammer: sfx.swish,

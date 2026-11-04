@@ -3973,3 +3973,15 @@ every gun from the zombie game should be in the special list. I will come up for
   step every 0.7 duck sizes on a board (44 world px in Duck Cabin, fainter far off there), none in a jump, at most 3 in
   any 150 ms. Hook: one call in game.js drawDucks. Jump: sfx.hop (a soft rising "hup", ~0.03 RMS, the music ~0.1),
   from jump() for my own jumps. tat and bow made a touch darker (Firefox found a rare pop). 0 clicks both browsers.
+- Noah, first HP lost: live #248 (v166). The bar over a duck only showed once a hit was counted, and a hit that
+  redrew the name tag (a new wound) lost the bar's last value; both now flash and make the hit sound.
+- Noah, guns in the specials list: sniper, smg, ak, revolver, lmg, chaingun, glauncher are specials (rules.js
+  GUNS_NEW, numbers read from l4ddrules.js ARMS). Locked (unlocks.js `later: true`, "How to unlock this is coming
+  soon."), only the secret code opens them until the owner says how. My guesses: the chain gun reloads after 60
+  (4 s), the launcher after 3 (4 s); damage as in Quacky Zombies (sniper 2-3, AK and revolver 2, chain gun all).
+
+## Request (owner, 2026-11-04 08:05Z, in Noah's thread): wounds on players in Quacky Zombies
+"The players can have damage effects on them that goes away like it does other game modes actually tbh"
+- Done (Noah): a zombie's claw leaves a wound on the duck now and then (wounds.js `claw`: 60%, a cut or a bruise),
+  through s.pw as in every other mode: it fades 6 to 12 s after the duck is up, paused while it's down. Fire
+  doesn't wound (the duck already burns).

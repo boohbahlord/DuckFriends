@@ -28,6 +28,13 @@ const WOUND = {
     chunk: 0.06,
   },
   blade: { p: 0.45, kinds: [["c", 1]] },
+  claw: {
+    p: 0.6,
+    kinds: [
+      ["c", 0.75],
+      ["r", 0.25],
+    ],
+  }, // (a zombie's claw on a duck in Quacky Zombies: cuts and bruises)
   blunt: { p: 0.55, kinds: [["r", 1]] },
   arrow: {
     p: 0.5,
@@ -45,6 +52,7 @@ const WOUND_OF = {
   ak: "big",
   revolver: "big",
   chaingun: "big",
+  chain: "big", // (the chain gun's shot outside Quacky Zombies, rules.js chainShot)
   shotgun: "shot",
   pellet: "shot",
   knife: "blade",
@@ -54,6 +62,7 @@ const WOUND_OF = {
   chair: "blunt",
   bow: "arrow",
   arrow: "arrow",
+  claw: "claw",
 };
 /* a new wound for a hit by weapon w on something that has `had` (or "": none this time, or it has enough: 6) */
 export function woundCode(had, w) {
@@ -74,13 +83,22 @@ export function woundCode(had, w) {
   return had.includes(add) ? "" : add;
 }
 
-/* ---------- the ducks' wounds, outside Quacky Zombies ----------
+/* ---------- the ducks' wounds (in Quacky Zombies too: a zombie's claw, the owner's, Nov 4 08:05Z) ----------
    Each wound goes away by itself 6 to 12 seconds (a roll for each) after its duck is up again: the clock stops while it
    plays dead. A crit (PCRIT: a weapon's chance, as Quacky Zombies' headshots) takes all its HP, blows its head off
    (x0) and keeps it down CRIT_DOWN ms; a grenade or a Jaime Bomb that kills it leaves it as the Jaime Bomb leaves
    Jaime: torn apart, headless and burnt (DEATH). s.pw = { id: { m: [[code, ms left]], at: when its clock started
    (0: stopped, it's down) } } */
-export const PCRIT = { handgun: 0.05, bow: 0.05, arrow: 0.05 };
+export const PCRIT = {
+  handgun: 0.05,
+  bow: 0.05,
+  arrow: 0.05,
+  sniper: 0.05,
+  smg: 0.0175,
+  ak: 0.03,
+  revolver: 0.04,
+  lmg: 0.0125,
+}; // (Quacky Zombies' guns: their headshot chances there, l4ddrules.js ARMS)
 export const CRIT_DOWN = 4000;
 export const DEATH = ["g0", "x0", "f0"];
 const FADE = [6000, 12000];
