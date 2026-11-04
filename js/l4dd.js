@@ -32,6 +32,7 @@ import { low } from "./gfx.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
+import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import {
   L4,
@@ -1030,6 +1031,7 @@ activity({
         "";
     roundShown = -1;
     ptsShown = -1;
+    l4Reset();
     boxSpun = false;
     stamina = 1;
     tired = false;
@@ -1075,14 +1077,20 @@ activity({
     seeOn(s);
     seeHud(s, ctx);
     seePts(s, ctx);
+    l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
     if (shop.open) shopFill(s, ctx);
-    /* a ding: an upgrade bought, a weapon from the fireplace taken */
+    /* a ding: a weapon from the fireplace taken (an upgrade bought rings the Butler's till: l4ddsfx.js) */
     const u = JSON.stringify(upOf(s, ctx.me)),
       sl = slotsOf(s, ctx.me),
       had = slotSig.split(",");
     if (
-      (upSig && u !== upSig) ||
-      (slotSig && sl.some((w) => w && !had.includes(w)))
+      slotSig &&
+      sl.some((w) => w && !had.includes(w)) &&
+      !(
+        ctx.duck() &&
+        Math.hypot(ctx.duck().x * W - BUTLER.x, ctx.duck().y * H - BUTLER.y) <
+          320
+      )
     )
       sfx.done();
     upSig = u;
@@ -1090,6 +1098,7 @@ activity({
     if (holding && !up(s, ctx.me)) holding = null;
   },
   step(dt, now, ctx) {
+    l4Steps(dt, ctx); // (footsteps and groans: l4ddsfx.js)
     /* the way I last walked (a phone's aim without a zombie in sight) */
     const me = ctx.duck();
     if (me) {

@@ -3491,3 +3491,17 @@ The other player's HP on PC will show as small version of these meters with smal
   them (`settingText`). Command-line changes go through the same action, so they show too.
 - Vote Maps is the default (`mapPick: "vote"`), and leaving Duck Cabin without picking a map goes back to it.
 - Mad God Justin's preview screenshot retaken with Justin in plain sight.
+
+## Request (owner, 2026-11-04 03:16Z, via Adam): Quacky Zombies sounds
+Adam's summary of the owner's batch (sound part): footsteps for ducks, quieter footsteps for zombies paced to how fast
+they move; a sound for repairing boards and one for boards breaking; a slot machine sound for the fireplace spin and a
+cash register for buying from the Butler; a new-round sound, an ambient sound that's hard to make out and fades away
+(the owner pointed to the start of https://youtu.be/tmlZeYnfw7g); zombie duck sounds, loud enough but not too often per
+zombie, a close group counting as one; guns louder.
+- Done in js/l4ddsfx.js (Duck Cabin's sound bus and building blocks, hangout/sounds.js `addSounds`): l4step, l4zstep,
+  l4nail, l4crack, l4slot, l4till, l4round (a far-off drone and wind, ~8 s, not from the video: I couldn't hear it),
+  l4groan. Footsteps every 44 px a duck walks (none in a jump), zombies every 40 px at their own speed, at most 4
+  zombie footsteps at once (nearest groups, a group = within 160 px). Groans every 6 to 12 s per group, at most 2 at once.
+  Board sounds from s.hang.brd changes (many up at once, a new game: quiet). The till: someone's points drop within
+  320 px of the Butler. Guns: LOUDER bang 4.5, tat 9, shotgun 3.5. 0 clicks, 0 clipped in Chromium and Firefox.
+  Preview: /mnt/project-files/sounds/quacky-zombies-sounds.wav.

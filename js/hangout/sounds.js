@@ -895,6 +895,15 @@ const LOOP = {
 };
 export const NAMES = Object.keys(ONE),
   LOOPS = Object.keys(LOOP);
+/* another part of the game's own sounds (Quacky Zombies': l4ddsfx.js), made with the same building blocks and heard the
+   same way. life: ms each one takes to fall silent (a short one frees its place under CAP sooner; a long one keeps it) */
+export const parts = { env, tone, hiss, ring };
+const LIFE = {};
+export function addSounds(defs, life = {}) {
+  Object.assign(ONE, defs);
+  Object.assign(LIFE, life);
+  NAMES.push(...Object.keys(defs));
+}
 
 /* ---------- live ---------- */
 let ac = null,
@@ -964,11 +973,11 @@ export function play(name, opts = {}) {
   const n = split ? nearness(w.dist) : 1,
     g = lane(a, kk, w.pan * n);
   live++;
-  f(a, g, soon(a, LEAD), { near: n });
+  f(a, g, soon(a, LEAD), { near: n, ...opts });
   setTimeout(() => {
     live--;
     g.disconnect();
-  }, 4000); // (every one-shot is silent well within 4 s)
+  }, LIFE[name] || 4000); // (every one-shot is silent well within 4 s, unless it says otherwise)
 }
 export function loop(name, opts = {}) {
   const f = LOOP[name],
