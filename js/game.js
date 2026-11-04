@@ -3153,12 +3153,13 @@ function step(dt, now) {
 function hangStep(dt, now) {
   if (!world || !geo) return;
   const k = (c) => keys.has(c);
+  const aims = arrowsAim(); // (the arrows aim: WASD walks)
   let ax =
-      (k("KeyD") || k("ArrowRight") ? 1 : 0) -
-      (k("KeyA") || k("ArrowLeft") ? 1 : 0),
+      (k("KeyD") || (!aims && k("ArrowRight")) ? 1 : 0) -
+      (k("KeyA") || (!aims && k("ArrowLeft")) ? 1 : 0),
     ay =
-      (k("KeyS") || k("ArrowDown") ? 1 : 0) -
-      (k("KeyW") || k("ArrowUp") ? 1 : 0);
+      (k("KeyS") || (!aims && k("ArrowDown")) ? 1 : 0) -
+      (k("KeyW") || (!aims && k("ArrowUp")) ? 1 : 0);
   if (!ax && !ay && (stick.x || stick.y)) {
     ax = stick.x;
     ay = stick.y;
@@ -4117,12 +4118,21 @@ function reload() {
   R.send({ t: "reload" });
   return true;
 }
+let mouseAt = 0; // when the mouse last moved
+const MOUSE_IDLE = 2500; // ms without the mouse before the arrow keys aim
 const aimAt = (e) => {
   mouse = { x: e.clientX, y: e.clientY };
+  mouseAt = performance.now();
   keyAim = null;
 }; // (the handgun and the dagger aim at the mouse; in Mad God Justin the arrow keys too, whichever moved last)
-/* Mad God Justin: the arrow keys aim instead of walking (WASD walks) */
-const arrowsAim = () => !!R && isMgj(R.state) && R.state.phase === "boss";
+/* the arrow keys aim instead of walking (WASD walks): in Mad God Justin's fight, and in every mode while a weapon is in
+   hand and the mouse is still (a player who isn't aiming with the mouse) */
+const arrowsAim = () =>
+  !!R &&
+  ((isMgj(R.state) && R.state.phase === "boss") ||
+    (onBoardPhase() &&
+      !!heldNow() &&
+      (!mouse || performance.now() - mouseAt > MOUSE_IDLE)));
 const ARROWS = {
   ArrowUp: [0, -1],
   ArrowDown: [0, 1],
@@ -4139,6 +4149,62 @@ function keyAimNow() {
     }
   if (x || y) keyAim = [x * 100, y * 100]; // (on the screen; let go, it keeps aiming that way)
 }
+/* the scroll wheel: the next (or last) special in the hotbar. A weapon goes in hand, anything else is the one V uses
+   (Quacky Zombies: the next slot; Mad God Justin: its own picking) */
+let wheelSum = 0,
+  wheelAt = 0;
+function wheelPick(dir) {
+  if (!R || !onBoardPhase()) return false;
+  const s = R.state;
+  if (isL4dd(s)) {
+    const sl = slotsOf(s, R.me);
+    let i = l4Slot;
+    for (let k = 0; k < 4; k++) {
+      i = (i + dir + 4) % 4;
+      if (sl[i]) {
+        l4Pick(i);
+        return true;
+      }
+    }
+    return false;
+  }
+  const ids = keysOf(playDuck())
+    .map((id, i) => [id, i])
+    .filter(([id]) => id);
+  if (!ids.length) return false;
+  const at = ids.findIndex(([, i]) => i === lastKey),
+    [id, i] =
+      ids[
+        (at < 0 ? (dir > 0 ? 0 : ids.length - 1) : at + dir + ids.length) %
+          ids.length
+      ];
+  if (isMgj(s)) useKey(i, false);
+  else {
+    lastKey = i;
+    if (WEAPONS.includes(id)) held = id;
+    else held = null;
+    if (bar) bar.show(i);
+    sendMove(true);
+  }
+  return true;
+}
+const onWheel = (e) => {
+  if (!e.deltaY || !R || !onBoardPhase() || windowOpen() || typing(e)) return;
+  for (let el = e.target; el && el !== document.body; el = el.parentElement)
+    if (
+      el.scrollHeight > el.clientHeight + 2 &&
+      /auto|scroll/.test(getComputedStyle(el).overflowY)
+    )
+      return; // (a list scrolling: leave it)
+  const now = performance.now();
+  wheelSum = now - wheelAt > 400 ? 0 : wheelSum;
+  wheelAt = now;
+  wheelSum += e.deltaY;
+  if (Math.abs(wheelSum) < 40) return;
+  const dir = wheelSum > 0 ? 1 : -1;
+  wheelSum = 0;
+  if (wheelPick(dir)) e.preventDefault();
+};
 const KEY_CODES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 const keyIndex = (e) => {
   const m = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
@@ -5543,6 +5609,7 @@ register("game", {
     shows = {};
     mouse = null;
     removeEventListener("mousemove", aimAt);
+    removeEventListener("wheel", onWheel);
     if (scene) scene.destroy();
     scene = null;
     hooks.resetDuck = null;
@@ -5659,6 +5726,7 @@ register("game", {
     stack.append(...[bar.row, meter.el].filter(Boolean)); // (my HP meter under the hotbar; on a phone under the slider: css)
     docks.corner(pad.el, bar.slider, stack); // (on phones the slider in the bottom middle, and the jump and attack buttons over the board's bottom right; the row of keys on a computer)
     addEventListener("mousemove", aimAt);
+    addEventListener("wheel", onWheel, { passive: false });
     touchOff = mountTouch(S, {
       active: () =>
         onBoardPhase() && !windowOpen() && !(world && world.grabbing()),

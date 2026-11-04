@@ -154,7 +154,7 @@ export const GUNS = {
 };
 
 /* the bullets, flying right (the screens turn them): the sniper's, a longer pistol bullet with a long streak; the
-   SMG's, a tiny plain one (many fly at once, so nothing costly: no outline, no glow); the AK-47's, a pointed copper
+   SMG's, a small pointed one, not tiny (owner 2026-11-04 03:16Z), and cheap since many fly at once (no glow); the AK-47's, a pointed copper
    one; the revolver's, a big round-nosed slug; the LMG's, a tracer with a red streak. Each: its picture and how wide
    it shows (px) */
 export const ROUNDS_ART = {
@@ -163,8 +163,8 @@ export const ROUNDS_ART = {
     svg: `<svg viewBox="0 0 48 10"><path d="M2 5h30" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M27 2.6h12.6q6 .2 8.2 2.4q-2.2 2.2-8.2 2.4H27Z" fill="#c9a24a" stroke="#5a4310" stroke-width="1"/><path d="M33 2.8v4.4" stroke="#5a4310" stroke-width=".7" opacity=".6"/></svg>`,
   },
   smg: {
-    w: 13,
-    svg: `<svg viewBox="0 0 12 6"><path d="M0 3h6" stroke="#ffd84a" stroke-width="1.4" opacity=".5"/><rect x="5" y="1.5" width="6.4" height="3" rx="1.5" fill="#e0b04a"/></svg>`,
+    w: 22,
+    svg: `<svg viewBox="0 0 20 8"><path d="M0 4h11" stroke="#ffd84a" stroke-width="1.8" opacity=".55"/><path d="M8 1.9h6.2q4 .3 5.4 2.1q-1.4 1.8-5.4 2.1H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".8"/></svg>`,
   },
   ak: {
     w: 30,

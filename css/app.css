@@ -5171,7 +5171,43 @@ html.moving .pix-sun {
 .gs-none {
   margin: 0.2rem 0 0.6rem;
 }
+.gs-info,
+.gs-keep {
+  display: none;
+} /* (on a phone only: the words under their row, and the picked game's picture behind a row that has none) */
 @media (max-width: 760px) {
+  .gs-stage .gs-text {
+    display: none;
+  } /* (the words go under their row instead) */
+  .gs-stage {
+    justify-content: center;
+  }
+  .gs-stage.gs-nopic {
+    display: none;
+  } /* (Game Options and Democracy of Ducklings have no pictures: the rows get the room) */
+  .armory:has(> .gs-stage.gs-nopic) {
+    padding-top: 2.9rem;
+  } /* (and the X keeps its own room above them) */
+  .gs-pic.empty + .gs-keep {
+    display: block;
+  }
+  .gs-info {
+    display: block;
+    list-style: none;
+    margin: 0.15rem 0.3rem 0.5rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.6rem;
+    background: var(--panel2);
+    border: 0.12rem solid var(--line);
+  }
+  .gs-info h3 {
+    display: none;
+  } /* (the row above already says its name) */
+  .gs-info p {
+    margin: 0.15rem 0;
+    font-size: calc(0.8rem * var(--ts));
+    line-height: 1.35;
+  }
   .win-full .armory {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
@@ -14003,8 +14039,15 @@ html.moving .eye-tears .tdrop.t2 {
   background: color-mix(in srgb, var(--c) 62%, rgb(10 12 20 / 0.5));
 }
 .l4s.k-grenade kbd {
-  color: #3a3a48;
-}
+  left: 0.08rem;
+  top: 0.06rem;
+  padding: 0 0.16rem;
+  border-radius: 0.25rem;
+  background: #16161e;
+  font-size: calc(var(--hk) * 0.29);
+  font-weight: 800;
+  color: #fff;
+} /* (the G on a light slot: white on a dark chip, so it reads; owner 2026-11-04 03:16Z) */
 .l4slots .l4s.sel {
   border-color: var(--yellow);
   box-shadow: 0 0 0.45rem 0.12rem
@@ -14610,9 +14653,11 @@ html.moving .eye-tears .tdrop.t2 {
     0 0 8px #3ee06a;
 }
 /* ---------- HP meters (hpmeter.js): the owner's picture, a bronze badge with a heart joined to a bronze-framed bar of
-   red blocks, one for each HP, white where they're gone ---------- */
+   red blocks, one for each HP, black where they're gone (black, not white, and a little thinner: owner 2026-11-04
+   03:16Z) ---------- */
 .hpm {
-  --h: 0.95rem; /* a block's height */
+  --h: 0.95rem; /* the meter's size (the badge goes by it) */
+  --t: 0.78; /* how tall a block is, of --h */
   --bw: 0.95rem; /* a block's width, at most */
   display: inline-flex;
   flex-direction: column;
@@ -14646,10 +14691,10 @@ html.moving .eye-tears .tdrop.t2 {
   display: flex;
   gap: calc(var(--h) * 0.1);
   width: min(calc(var(--nb, 3) * var(--bw)), 12rem);
-  height: var(--h);
+  height: calc(var(--h) * var(--t));
   padding: calc(var(--h) * 0.09);
   box-sizing: content-box;
-  background: #fff;
+  background: #120c0a;
   border: calc(var(--h) * 0.09) solid #2b1a10;
   border-radius: calc(var(--h) * 0.2);
 }
@@ -14842,9 +14887,10 @@ html.still .hpm.low .hpm-badge {
     display: none;
   }
 }
-/* Justin's HP over the board in Mad God Justin: the same bar */
+/* Justin's HP over the board in Mad God Justin: the same bar, a lot thinner (his HP is huge) */
 .mgj-hp .hpm {
   --h: 0.85rem;
+  --t: 0.36;
   --bw: 0.42rem;
 }
 .mgj-hp .hpm-blocks {

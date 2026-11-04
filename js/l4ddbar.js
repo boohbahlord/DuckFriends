@@ -7,15 +7,7 @@
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
    my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
-import {
-  L4,
-  ARMS,
-  slotsOf,
-  kitOf,
-  maxHp,
-  SLOT_KINDS,
-  weaponName,
-} from "./l4ddrules.js";
+import { ARMS, slotsOf, kitOf, SLOT_KINDS, weaponName } from "./l4ddrules.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -51,8 +43,7 @@ export function mountL4Bar(S, api) {
       out = !!(p.dn || p.gh),
       held = api.held(),
       off = !!(s.hang.l4f || {})[me],
-      most = maxHp(s, me),
-      next = JSON.stringify([m, held, off, p.hp, most, out]);
+      next = JSON.stringify([m, held, off, out]);
     if (next === sig) return;
     sig = next;
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does] */
@@ -70,8 +61,8 @@ export function mountL4Bar(S, api) {
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
       return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}><i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
-    const hp = Math.max(0, p.hp ?? L4.HP);
-    row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div><div class="l4hp" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="${most}" aria-valuenow="${hp}">${Array.from({ length: most }, (_, i) => `<i${i < hp ? ' class="on"' : ""}></i>`).join("")}</div>`;
+    /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
+    row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
   }
   const press = (e) => {
     const b = e.target.closest("[data-l4w]");
