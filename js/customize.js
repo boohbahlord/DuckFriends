@@ -53,6 +53,7 @@ import { NAV_HINTS, items } from "./keynav.js";
 import { unlocked, isLocked, lockHint } from "./unlocks.js";
 import { touchOnly } from "./pointer.js";
 import { ARROW, CHAIR, ZEBRA, JAIME, BOMB_SKIN } from "./mgjart.js";
+import { GUARD_W, guardWeapon } from "./jaimebomb.js";
 import { jetHTML } from "./jetpack.js";
 
 /* sends your look to the room you are in */
@@ -98,6 +99,16 @@ const DATBOI_RANKS = [
   ["rose", "Rose gold"],
   ["rainbow", "Rainbow"],
 ];
+/* the Jaime Guard's weapon, picked as he goes on a key (only the weapons I have unlocked) */
+const guardPick = (D) =>
+  `<div class="sp-jg" role="group" aria-label="Jaime's weapon"><span class="small dim">Jaime's weapon</span>${GUARD_W.filter(
+    (w) => unlocked("special", w),
+  )
+    .map(
+      (w) =>
+        `<button type="button" class="sp-key${guardWeapon(D) === w ? " full" : ""}" data-a="jgw" data-v="${w}" aria-pressed="${guardWeapon(D) === w}" aria-label="${esc(specialById(w).name)}" data-tip="${esc(specialById(w).name)}"><i>${specialById(w).icon}</i></button>`,
+    )
+    .join("")}</div>`;
 const boxed = (id) => !!styleById(id).pages; // (Jack in a Box or Dat Boi)
 const styleLabel = (D) =>
   D.style === "jack" && D.jill ? "Jill in a Box" : styleById(D.style).name;
@@ -707,7 +718,7 @@ export function openCustomize(page = lastPage) {
                       : ""; // (the hammer's other look)
                   return `<div class="sp-tile${x.off ? " off" : ""}${unkeying ? (at >= 0 ? " sp-rm" : " sp-rm-no") : ""}"><button type="button" class="arm-tile${lk ? (open ? " unlockd" : " locked") : ""}" data-g="special" data-v="${x.id}"${x.off ? ' disabled aria-disabled="true"' : ""} aria-pressed="${at >= 0}" aria-expanded="${opened}" data-tip="${esc(tip)}"${lk && !open ? ' aria-label="' + esc(x.name + " (locked)") + '"' : ""}>${lk ? PAD(open) : ""}<span class="sp-icon">${x.icon}</span><span>${esc(x.name)}</span>${at >= 0 ? `<b class="sp-on">${KEYS[at]}</b>` : ""}</button>
               <button type="button" class="sp-prev" data-a="preview" data-v="${x.id}"${x.off ? " disabled" : ""} aria-label="Preview ${esc(x.name)}" data-tip="Show it on your duck">▶</button>${alt}</div>
-              ${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
+              ${opened && x.id === "jaimeguard" ? guardPick(D) : ""}${opened ? `<div class="sp-keys sp-pick" role="group" aria-label="Put ${esc(x.name)} on a key">${KEYS.map((n, i) => box(n, i, keys[i], `data-a="setkey" aria-pressed="${keys[i] === x.id}" aria-label="Key ${n}${keys[i] ? `: ${esc(specialById(keys[i]).name)}` : ""}"`)).join("")}</div>` : ""}`;
                 })
                 .join("");
             const used = keys.filter(Boolean).length,
@@ -1121,6 +1132,11 @@ export function openCustomize(page = lastPage) {
               preview(a.dataset.v);
               return;
             }
+            if (a.dataset.a === "jgw") {
+              D.jg = a.dataset.v;
+              changed();
+              return;
+            } // (the Jaime Guard's weapon)
             if (a.dataset.a === "setkey" && !isOff(keyFor)) {
               const keys = keysOf(D),
                 i = +a.dataset.i,

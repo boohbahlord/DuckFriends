@@ -120,3 +120,15 @@ export function jaimeCount(s, o) {
   s.jmkN = (s.jmkN || 0) + 1;
   s.jmk = [...(s.jmk || []).slice(-19), { n: s.jmkN, ...o }];
 }
+/* the Jaime Guard's weapons (rules.js runs him): the one picked in Customize (duck.jg), or the knife */
+export const GUARD_W = [
+  "knife",
+  "hammer",
+  "handgun",
+  "dagger",
+  "bow",
+  "shotgun",
+  "grenade",
+];
+export const guardWeapon = (duck) =>
+  GUARD_W.includes((duck || {}).jg) ? duck.jg : "knife";

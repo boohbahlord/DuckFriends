@@ -15894,3 +15894,21 @@ html.still .l4-crit {
     grid-column: 1;
   }
 }
+/* the Jaime Guard's weapon, picked over his key boxes in Customize (customize.js guardPick) */
+.sp-jg {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem;
+  border-radius: 0.6rem;
+  border: 0.12rem solid var(--blue);
+  background: color-mix(in srgb, var(--blue) 10%, var(--panel));
+}
+.sp-jg > span {
+  flex: 1 0 100%;
+}
+.sp-jg .sp-key {
+  width: 2.6rem;
+}

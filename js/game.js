@@ -1537,7 +1537,7 @@ function drawDucks(now = clockNow()) {
         : (isMgj(s) && s.phase === "boss"
             ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
             : jm[id]
-              ? "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out)
+              ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
               : isL4dd(s)
                 ? l4Hp(s, id) > 0 && inHand(mine ? heldNow() : pos.w, s, id)
                 : mine

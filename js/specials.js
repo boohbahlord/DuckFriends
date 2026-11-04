@@ -385,6 +385,19 @@ export const SPECIALS = [
     tip: "Jaime, with dynamite strapped to his chest: he sprints at a duck as Jaime does and blows up when he gets there. The blast is half again as wide as a grenade's and takes all the HP of every duck in it. Once every 12 seconds. (Any Jaime has a 1 in 20 chance of being this one. Off when the host turns off the silly commands.)",
   },
   {
+    id: "jaimeguard",
+    name: "Jaime Guard",
+    kind: "item",
+    get icon() {
+      return duckSVG(JAIME.duck, {
+        size: 40,
+        shadow: false,
+        extra: GUARD_BADGE,
+      });
+    },
+    tip: "Jaime follows you around and protects you: whoever hits you, he goes after with the weapon you pick for him here, up close with the knife or the hammer, from farther off with the others. He has 1 HP, and one hit sends him off. One at a time, once every 12 seconds. (Off when the host turns off the silly commands.)",
+  },
+  {
     id: "sound",
     name: "Sound",
     kind: "item",
@@ -412,6 +425,8 @@ export const SPECIALS = [
     tip: "Confetti rains over everyone's screen. It also rains when your question comes up, when you win, and on the podium.",
   },
 ];
+/* the Jaime Guard's picture: Jaime with a blue shield by him (in the duck's 120 box) */
+const GUARD_BADGE = `<path d="M6 64L28 57L50 64V82C50 96 40 104 28 110C16 104 6 96 6 82Z" fill="#3b82f6" stroke="#1c1c28" stroke-width="3.4" stroke-linejoin="round"/><path d="M28 68V98M16 80H40" stroke="#eef3fa" stroke-width="5" stroke-linecap="round"/>`;
 export const specialById = (id) => SPECIALS.find((x) => x.id === id) || null;
 /* a special that's off for now (faded everywhere, can't be picked or used; a duck that has it keeps it on its key) */
 export const isOff = (id) => !!(specialById(id) || {}).off;

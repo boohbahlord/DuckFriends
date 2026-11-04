@@ -13,7 +13,8 @@
    stabbed Mad God Justin 36 times in fights I was in (anyone's Jaimes: the owner's); the Jaime Bomb at 864 Jaimes I
    sent and Jaime's hits on me together, any mode, or at once when I take it from Quacky Zombies' fireplace. What counts
    lives in the profile (so it stays on the device and the account): jumps, justinKills, cabinKills, shadowHits,
-   jaimeStabs, jaimes (sent and hit by), jaimeBomb (taken from the fireplace), kills, dunced,
+   jaimeStabs, jaimes (sent and hit by), jaimeBomb (taken from the fireplace), l4round (my best Quacky Zombies round:
+   the Jaime Guard at 30), kills, dunced,
    mgjWins, mgjLosses, lostRounds, secrets (the codes turned on) and unlockSeen (the unlocks already announced, so each
    "Unlocked!" shows once). */
 import { profile, save } from "./store.js";
@@ -54,6 +55,7 @@ export const LOCKS = [
   { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
   { kind: "special", id: "jaime", jaime: 36, name: "Jaime" },
   { kind: "special", id: "jaimebomb", jbomb: 864, name: "Jaime Bomb" },
+  { kind: "special", id: "jaimeguard", l4r: 30, name: "Jaime Guard" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
@@ -85,7 +87,9 @@ const earned = (l) =>
         ? (profile.jaimeStabs || 0) >= l.jaime
         : l.jbomb
           ? (profile.jaimes || 0) >= l.jbomb || !!profile.jaimeBomb
-          : earnedElse(l);
+          : l.l4r
+            ? (profile.l4round || 0) >= l.l4r
+            : earnedElse(l);
 const earnedElse = (l) =>
   l.jumps
     ? (profile.jumps || 0) >= l.jumps
@@ -113,6 +117,8 @@ export function lockHint(kind, id) {
   if (!l) return "";
   if (l.jaime && earned(l))
     return `Unlocked: Jaimes stabbed Mad God Justin ${l.jaime} times with you`;
+  if (l.l4r && earned(l))
+    return `Unlocked: you reached round ${l.l4r} in Quacky Zombies`;
   if (l.jbomb && earned(l))
     return profile.jaimeBomb
       ? "Unlocked: you found it in the fireplace in Quacky Zombies"
@@ -150,6 +156,8 @@ export function lockHint(kind, id) {
     return `${pre}Kill Justin ${fmtJumps(l.cabin)} times in Duck Cabin, in Hangout (${fmtJumps(Math.min(l.cabin, profile.cabinKills || 0))}/${fmtJumps(l.cabin)})`;
   if (l.shadow)
     return `${pre}Hit the shadow duck in Duck Cabin with a thrown chair`;
+  if (l.l4r)
+    return `${pre}Reach round ${l.l4r} in Quacky Zombies (your best: ${profile.l4round || 0})`;
   if (l.jbomb)
     return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)}), or find it in the fireplace in Quacky Zombies`;
   if (l.jaime)
@@ -280,6 +288,15 @@ export function watchKills(room) {
       }
       seenJ = topJ;
     } // (every Jaime's stab on Mad God Justin while I'm in the fight, anyone's: mgjrules.js jaimeTick)
+    const r4 =
+      s && s.options && s.options.mode === "l4dd" && s.hang && s.hang.l4
+        ? +s.hang.l4.r || 0
+        : 0;
+    if (r4 > (profile.l4round || 0) && (s.seat || []).includes(room.me)) {
+      profile.l4round = r4;
+      save();
+      checkUnlocks();
+    } // (my best round in Quacky Zombies: the Jaime Guard at 30)
     const topB = (s && s.jmkN) || 0;
     if (seenB === null || topB < seenB) seenB = topB;
     else if (topB > seenB) {
