@@ -31,6 +31,22 @@ export function symbolSVG(size = 32, title = "Agree or Disagree") {
 <rect x="21" y="1" width="8" height="22" rx="1.6" fill="#37D421" fill-opacity=".78" stroke="#23931a" stroke-width="1"/></svg>`;
 }
 
+/* a die for Random, in the Twister colors: a white die a little turned, its side in shade, five colored pips */
+export function diceSVG(size = 32, title = "Random") {
+  const pips = [
+    [9, 9, "#ED1C24"],
+    [21, 9, "#2fa4ff"],
+    [15, 15, "#FFF200"],
+    [9, 21, "#37D421"],
+    [21, 21, "#ff8c2b"],
+  ];
+  return `<svg viewBox="0 0 32 32" width="${size}" height="${size}" role="img" aria-label="${esc(title)}"><g transform="rotate(-8 16 16)">
+<rect x="3.5" y="5" width="25" height="25" rx="5" fill="#1c1c28" fill-opacity=".35"/>
+<rect x="2.5" y="2.5" width="25" height="25" rx="5" fill="#f4f1ea" stroke="#1c1c28" stroke-width="1.4"/>
+<path d="M5 26.2 Q4 26.2 4 25 V7" stroke="#d9d3c4" stroke-width="2" fill="none" stroke-linecap="round"/>
+${pips.map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="2.7" fill="${c}" stroke="#1c1c28" stroke-width=".9"/>`).join("")}</g></svg>`;
+}
+
 /* a game mode's symbol */
 export const gameSymbol = (mode, size = 32) =>
   modeOf(mode).id === "aod" ? symbolSVG(size) : modeSymbol(mode, size);

@@ -9,8 +9,8 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
-    id: "v158",
-    version: 158,
+    id: "v161",
+    version: 161,
     date: "Nov 4, 2026",
     title: "Jaime Bomb",
     news: [
@@ -19,6 +19,35 @@ export const UPDATES = [
       "For Quacky Zombies: the fireplace gives the Jaime Bomb 1 spin in 50, and taking it unlocks it for good. Its blast kills every zombie in it.",
       "Outside Mad God Justin, a Jaime now and then goes for Justin himself. Justin answers at once with a controller or his chair, and a Jaime Bomb takes 3 of those to stop.",
       "For Mad God Justin: a Jaime Bomb takes 3 of Justin's hits to stop, and its blast takes only 3 HP off Justin. Jaime and Justin have new lines for each other.",
+    ],
+  },
+  {
+    id: "v160",
+    version: 160,
+    date: "Nov 4, 2026",
+    title: "Wider grenade blasts",
+    news: ["Grenades blow up 50% wider in every mode, Quacky Zombies too."],
+  },
+  {
+    id: "v159",
+    version: 159,
+    date: "Nov 4, 2026",
+    title: "Map vote: 10 seconds once everyone votes",
+    news: [
+      "The map vote's clock drops to 0:10 once everyone has voted, then runs twice as fast.",
+    ],
+  },
+  {
+    id: "v158",
+    version: 158,
+    date: "Nov 4, 2026",
+    title: "Vote Mode & Game",
+    news: [
+      "Vote Mode & Game, on by default: after the start's countdown, a window over the whole screen to vote for the game mode (1:05), then one for the map (0:20). Click or tap once to vote, again to take it back. Once everyone has voted, the clock runs twice as fast.",
+      "The map vote shows every map, and each map's other form as a map of its own: Euclid's Squares (Zoom) and Shelter Sky & Null (Black and white). A map moves while you hover it or hold it, and the one you voted for keeps moving.",
+      "Both vote windows have a dice at the top: a random pick.",
+      "Vote return: the votes come back every 3 games, or 1, 2, 4, 5, 6 or a random number of games, or never. Its settings sit under Vote Mode & Game on the Game mode and Map pages, with Vote for game mode and Vote for map.",
+      "Democracy of Ducklings: Ducks Vote Mode & Game keeps the votes on for good, and Invite Justin brings Justin into every game he can be in. Only another vote undoes a rule, never a host.",
     ],
   },
   {

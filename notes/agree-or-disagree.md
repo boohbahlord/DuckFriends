@@ -3813,6 +3813,45 @@ Any player killed by a grenade or Jaime Bomb will have the death effect that Jai
 
 In the normal game, ducks get damage showing on their duck that the zombies get and they fade away from players who are dead on have a dead effect in 6-12 seonds, but the timer doesnt go down for wounds to fade away IF they are in dead effect or dead. the players can also get crits based on the chance of some weapons with same effects of max damage and head exploding, which gives them the dead effect for four seconds. ducks with an exploded head fall over like every duck does who dies or gets dead effect. crit can be smaller. ducks still have their heads explode from Jaime. Hammer still gives bruises and other wound effects now knocks back 50% further."
 
+## Request (owner, 2026-11-04 05:47Z, through Adam, with a sketch "Vote map or gamemode.png"): full-screen vote windows
+"make it for vote maps that when the vote opens up a window WHEN the 5 second counter is done AND THEN it shows images of all the maps and says "Vote for Map" in multi colored letterinng at the top and players have 20 seconds to vote for a map, and map variations are their own maps next towards their actual maps. The map animations arent shown, but the map has animation that plays when you hover your mouse over it or hold ur finger down over it on phone. voting for it also shows the animation AND the map will have it's variation type in it's title to indicate it's difference in word and not just visually 
+
+This is a very rough idea because the things aren't aligned very well in regards to the shape, sizes, and symmetry, that will be worked out by you because mircrosoft paint suck, but this is the most rough outline possible, so it is very loose and unfinished scaff holding here really. The maps should all fit within the square on PC and mobile might have two or three per row for that many columns total on mobile and they scroll thru and it still says vote map above while they do. Voting a map shows a good sized avatar of a player's duck in the bottom right corner with a golden glow around them for help add contrast from the map background, and that indicates who voted on it, and a multicolored number goes on the bottom left to indicate the number of votes.
+
+somethinng similiaer to this woud be for gamemodes, where the gamemodes are simply in rows with their still normal size of symbol for that gamemode within their column AND the title to the right of it. each row has the number of votes under the left of it and the duck's avatar's under the right of it. there is only one column on mobile to scroll through. the hangout gets it's own gamemode which goes straight to cabin. Gamemode goes first and then map in the vote, which means cabin isnt in the vote because gamemode decides if it is cabin technically by defacto. 
+
+The last vote on by default is very quick fifteen seconds of restart map after 1 round, 3 rounds, or never (default), and this option has to be manually turned on. This window covers the screen, all the vote windows do, including for mobile. ducks vote by selecting with their mouse, not by walking over them or anything like that, and clicking once counts as a vote. Mobile players can slide through the options with a swipe over them like any other setting menu. 
+
+Show me the rough UI design plan before u do it for all three"
+- Adam's rough plan (mockups drawn in the game): https://claude.ai/artifact/Bh745WyBiVBM9CUvrXHX9s, questions 42 to 47.
+
+## Owner's answers to 42-47 (2026-11-04 06:19Z)
+"42. vote game mode has 1 minute and 5 seconds 
+43. yes
+44. every voting makes the timer go twice as fast.
+45. map vote again in the setting that can be turned off as a setting and will be just 3 and doesnt need voted, and the game mode gets voted again with it, and players can vote the same gamemode again ; this will be default actually and turn on WHEN vote is on, and vote is just an option that you click above the settings for map or game mode, and it is called "Vote Mode & Game", and it is on by default and has settings to disable it or parts of it, such as disabling vote for game mode, disabling vote for map, or disabling vote return. Vote return (as in how many games till needing to vote again) is set to 3 games by default, but can be just 1,2,4,5,6 or random number of games. The hangout game mode only lasts for as long as it takes for players to vote to end it, which is half of players after it starts, and they can unvote to end it too, and the vote will start a ten second timer. the timer resets IF there isnt enough votes, so there has to be enough votes for hangout to end. The vote is NOT enter and is a click that is on a small UI in the top left of the screen that appears like a vote button, and i says "End Cabin" Hangout does not count as only but a whole game, as in, even if it is set to 3 or 6 games, that hangout will only last as one whole game once players end it in vote, same with the zombie game mode, which has "Exit Cabin" at the top left and can be unvoted the same by clicking again and counts as 1 game. The democracy option has it to where there is a "Ducks Vote Mode & Game", WHICH locks this setting into place. There is also a democracy vote simply called "Invite Justin", which includes him in everry gamemode he can be added to. Host cannot overturn any democracy votes UNLESS he is making someone else host, but even new hosts cannot overturn democracy votes
+46. yes
+47. yes AND in the gamemodes AND maps, there is a dice selection for random that comes above everything else."
+- Readings (Adam, told to the owner 06:2xZ): Q43 clicking my own pick again takes the vote back, clicking another moves
+  it. Q44 read as "everyone voting": once every duck has voted, the time left runs twice as fast. Q45: no separate 15 s
+  map revote; Vote return brings both votes back after N games (one game = one round, as Random counts it; a whole
+  Hangout or Quacky Zombies session is one game). "Vote Mode & Game" (on by default, owner's own default) with Vote for
+  game mode, Vote for map, Vote return (1 2 3 4 5 6 Random, 3 by default). Democracy: "Ducks Vote Mode & Game" replaces
+  the two "always voted" rules and locks the setting; "Invite Justin" turns Justin on wherever he can be. A passed rule
+  only goes off by another vote, never by any host. Q46: the old 3-map vote and "Maps to vote on" go. Q47: Random and
+  True Random stay, and both vote windows get a dice tile (random) at the top.
+- Who: Jackal = End Cabin / Exit Cabin (top-left vote button, half the players, 10 s, resets) with cabinOver(s, now);
+  Adam = everything else.
+
+## Request (owner, 2026-11-04 07:06Z, in Adam's thread): the map vote's 10 seconds
+"for the map vote, the count go down to ten seconds ONCE everyone has voted a map before it accelerates the timer"
+- Built (Adam, #241, v159): in the map vote, once every player has voted, the clock drops to 0:10 (when it has more),
+  then runs twice as fast (MAP_ALL_IN in rules.js). The game mode vote only runs twice as fast.
+
+## Request (owner, 2026-11-04 07:10Z, through Adam): the grenade's blast
+"give the grenade 50% wide explosion radius"
+- Built (Adam): every mode. rules.js GRENADE_R 1.5 to 2.25 duck lengths (board games, Mad God Justin), Quacky Zombies'
+  ARMS.grenade.r 140 to 210 (thrown and launched), and the drawn blast (grenade.js) 3.2 to 4.8 duck sizes across.
 ## Request (owner, 2026-11-04 06:59Z, in Noah's thread): more Jaime and Justin lines
 
 "other jaime lines:

@@ -593,7 +593,8 @@ export function collageScene(layer, s) {
   const sc = document.createElement("div"),
     html = document.documentElement;
   sc.className = "scene collage";
-  const grey = () => !!(s && s.options && s.options.mapGrey);
+  /* black and white: the form the vote or Random landed on (s.mapGreyed), or the host's Colors setting */
+  const grey = () => !!(s && (s.mapGreyed ?? (s.options && s.options.mapGrey)));
   sc.classList.toggle("grey", grey());
   /* over the picture: the squares, then a colored fuzzy static and faint scan lines (Ether's Crossroads' own, lighter) */
   sc.innerHTML =

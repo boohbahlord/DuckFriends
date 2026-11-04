@@ -1,6 +1,6 @@
 /* ---------- a grenade going off ----------
    I want it loud and simple, like the other specials: a yellow and orange starburst with a white middle, a ball of fire
-   under it, a ring across the ground three ducks wide (where it knocks ducks down), a few puffs of smoke rising, and the
+   under it, a ring across the ground four and a half ducks wide (where it knocks ducks down), a few puffs of smoke rising, and the
    meteor's scorch mark left on the ground for a moment. The rules throw the ducks (rules.js blast); this only draws it. */
 import { el } from "./ui.js";
 import { SCORCH } from "./mgj.js";
@@ -17,7 +17,7 @@ function star(cx, cy, R, r, n, turn = 0) {
 }
 /* at: where it went off, on the screen (the ground under it); size: a duck's size there */
 export function grenadeBoom(fxl, board, at, size) {
-  const w = size * 3.2,
+  const w = size * 4.8, // (50% wider than the 3.2 it was, like the blast itself)
     puffs = [-0.32, -0.12, 0.1, 0.3]
       .map(
         (x, i) =>

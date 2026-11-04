@@ -2,12 +2,13 @@
    On the left, plain rows in three pages: Game mode, Map, then Game Options; the back arrow goes up a page, the X closes.
    On the right, a preview of the row under the pointer: the game on the picked map, the map large with the game's board
    on it (Duck Cabin as the real map, one picture of all of it), or a setting's description. The host (or sudo) picks;
-   everyone else looks. With Vote Game Mode or Vote Maps on, every player's click on a game or a map is their vote. */
+   everyone else looks. With Vote Mode & Game on, the game and the map are voted on in their own windows as the game
+   starts (vote.js). */
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, mapName } from "./maps.js";
-import { OPTIONS_DEFAULT, isSudo, tally, randomPool, dodOn } from "./rules.js";
+import { OPTIONS_DEFAULT, isSudo, randomPool, dodOn } from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
 
 /* ---------- every setting: its key, its name, its choices, its category and what it does ----------
@@ -690,8 +691,8 @@ const BY_MODE = {
     },
   ],
 };
-/* Shelter Sky & Null's own setting, under the Map page's rows: shown when it's the map, or when Vote Maps or Random could
-   land on it */
+/* Shelter Sky & Null's own setting, under the Map page's rows: shown when the host picked it (the vote and Random have
+   black and white as a form of its own) */
 const GREY = {
   k: "mapGrey",
   n: "Colors",
@@ -703,7 +704,8 @@ const GREY = {
 };
 export const showsCollage = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
-  (s.options.map === "collage" || !!s.options.mapPick);
+  !s.options.mapPick &&
+  s.options.map === "collage";
 /* Euclid's Squares' own setting, shown when the host picked it (Vote Maps and Random have the zoom as an entry of its
    own) */
 const ZOOM = {
@@ -715,16 +717,45 @@ const ZOOM = {
   ],
   d: "Endless zoom: the map keeps zooming into its tiny squares, forever.",
 };
-/* Vote Maps' own setting: three random maps in its round, or all of them */
-const ALL = {
-  k: "mapAll",
-  n: "Maps to vote on",
-  c: [
-    [0, "Three maps"],
-    [1, "All maps"],
-  ],
-  d: "All maps: the map vote shows every map instead of three random ones.",
-};
+/* Vote Mode & Game's own settings, under its row on the Game mode and Map pages while it's on: each vote on or off, and
+   Vote return */
+const VOTE_SETS = [
+  {
+    k: "modePick",
+    n: "Vote for game mode",
+    c: [
+      ["vote", "On"],
+      ["", "Off"],
+    ],
+    d: "Off: the host's game is played, and only the map is voted on.",
+  },
+  {
+    k: "mapPick",
+    n: "Vote for map",
+    c: [
+      ["vote", "On"],
+      ["", "Off"],
+    ],
+    d: "Off: the host's map is played, and only the game mode is voted on.",
+  },
+  {
+    k: "voteBack",
+    n: "Vote return",
+    c: [
+      [1, "1"],
+      [2, "2"],
+      [3, "3"],
+      [4, "4"],
+      [5, "5"],
+      [6, "6"],
+      ["r", "Random"],
+      [0, "Off"],
+    ],
+    d: "The games played before both votes come back. A round is a game; a whole Hangout or Quacky Zombies counts as one. Random: 1 to 6, picked again each time.",
+  },
+];
+const voting = (s) =>
+  s.options.modePick === "vote" || s.options.mapPick === "vote";
 const showsZoom = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
   !s.options.mapPick &&
@@ -732,12 +763,9 @@ const showsZoom = (s) =>
 
 /* the plain words for the rows that aren't a game, a map or a setting */
 const PICK_TEXT = {
-  modeVote:
-    "Every player votes for a game. When the host starts, the most votes win; a tie is a random pick between the tied games. A Cabin game that wins moves the room to Duck Cabin.",
+  vote: "After the start's countdown, every player votes in a window over the whole screen: first for the game mode (1:05), then for the map (0:20; not for Duck Cabin's games or Mad God Justin). Click once to vote; the dice is a random pick. Once everyone has voted, the clock runs twice as fast (the map vote drops to 0:10 first). The most votes win; a tie is a random pick between the tied ones.",
   modeRandom:
     "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Hangout, Quacky Zombies and games that need more players than the room has are left out. The map stays the one picked.",
-  mapVote:
-    "When the host starts, three random maps show (or all of them, with All maps) and every player votes. The most votes win; a tie is a random pick between the tied maps. Duck Cabin comes only with its own games, and Mad God Justin has his own place.",
   mapRandom:
     "A random map each time the host starts. Duck Cabin comes only with its own games.",
 };
@@ -750,13 +778,19 @@ export function settingText(k, v) {
   if (k === "mode") return ["Game mode", modeOf(v).name];
   if (k === "map") return ["Map", mapName(v)];
   if (k === "modePick")
-    return v ? ["Game mode", v === "vote" ? "Vote Game Mode" : "Random"] : null;
+    return v
+      ? ["Game mode", v === "vote" ? "Vote for game mode" : "Random"]
+      : null;
   if (k === "mapPick")
-    return v ? ["Map", v === "vote" ? "Vote Maps" : "Random"] : null;
+    return v ? ["Map", v === "vote" ? "Vote for map" : "Random"] : null;
   if (k === "max") return ["Players up to", String(v)];
-  const o = [...HOST, GREY, ZOOM, ALL, ...Object.values(BY_MODE).flat()].find(
-      (x) => x.k === k,
-    ),
+  const o = [
+      ...HOST,
+      GREY,
+      ZOOM,
+      ...VOTE_SETS,
+      ...Object.values(BY_MODE).flat(),
+    ].find((x) => x.k === k),
     c = o && (o.c || []).find(([x]) => String(x) === String(v));
   return o ? [o.n, c ? c[1] : String(v)] : null;
 }
@@ -867,10 +901,22 @@ export function openGameSettings(R, start = null) {
   const row = (attrs, label, val = "", on = false, dis = false) =>
     `<li><button type="button" class="arm-row" ${attrs} aria-pressed="${on}"${dis ? ' aria-disabled="true"' : ""}><span>${esc(label)}</span><span class="val">${esc(val)}</span></button></li>`;
   const LINE = '<li class="arm-line" aria-hidden="true"></li>';
-  const votes = (n) => (n ? `${n} vote${n === 1 ? "" : "s"}` : "");
+  /* Vote Mode & Game's row, at the top of the Game mode and Map pages, and its settings under the rows while it's on */
+  const voteRow = (s, dis) =>
+    row(
+      'data-pick="vote" data-v="vote"',
+      "Vote Mode & Game",
+      "",
+      voting(s),
+      dis,
+    );
+  const voteSets = (s) =>
+    voting(s)
+      ? `<h3 class="gs-sub">Vote Mode &amp; Game</h3>${VOTE_SETS.map((x) => tiles(s, x)).join("")}`
+      : "";
   const modeVal = (s) =>
     s.options.modePick === "vote"
-      ? "Vote Game Mode"
+      ? "Vote Mode & Game"
       : s.options.modePick === "random"
         ? s.options.trueRandom
           ? "True Random"
@@ -878,7 +924,7 @@ export function openGameSettings(R, start = null) {
         : modeOf(s.options.mode).name;
   const mapVal = (s) =>
     s.options.mapPick === "vote"
-      ? "Vote Maps"
+      ? "Vote Mode & Game"
       : s.options.mapPick === "random"
         ? "Random"
         : mapName(s.options.map);
@@ -949,21 +995,19 @@ export function openGameSettings(R, start = null) {
       const cur = modeOf(o.mode).cat;
       return (
         head("Game mode") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="vote"', "Vote Game Mode", "", o.modePick === "vote", !host() || dodOn(s, "modes"))}${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host() || dodOn(s, "modes"))}${LINE}${CATS.map(
+        `<div class="arm-body"><ul class="arm-list">${voteRow(s, !host() || dodOn(s, "vote"))}${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host() || dodOn(s, "vote"))}${LINE}${CATS.map(
           ([id, name]) =>
             row(
               `data-cat="${id}"`,
               name,
               !o.modePick && cur === id ? modeOf(o.mode).name : "",
             ),
-        ).join("")}</ul></div>`
+        ).join("")}</ul>${voteSets(s)}</div>`
       );
     }
     if (page.startsWith("cat:")) {
       const cat = page.slice(4),
-        voting = o.modePick === "vote",
-        n = tally(s, s.modeVotes),
-        mine = (s.modeVotes || {})[me];
+        dis = !host() || dodOn(s, "vote");
       return (
         head(CATS.find((c) => c[0] === cat)[1]) +
         `<div class="arm-body"><ul class="arm-list">${MODES.filter(
@@ -973,43 +1017,41 @@ export function openGameSettings(R, start = null) {
             row(
               `data-mode="${m.id}"`,
               m.name,
-              voting ? votes(n[m.id]) : "",
-              voting ? mine === m.id : !o.modePick && o.mode === m.id,
-              !voting && !host(),
+              "",
+              !o.modePick && o.mode === m.id,
+              dis,
             ),
           )
           .join("")}</ul></div>`
       );
     }
     if (page === "cabin") {
-      const voting = o.modePick === "vote",
-        n = tally(s, s.modeVotes),
-        mine = (s.modeVotes || {})[me];
+      const dis = !host() || dodOn(s, "vote");
       return (
         head("Duck Cabin") +
         `<div class="arm-body"><ul class="arm-list">${CABIN_MODES.map((id) =>
           row(
             `data-mode="${id}"`,
             modeOf(id).name,
-            voting ? votes(n[id]) : "",
-            voting ? mine === id : !o.modePick && o.mode === id,
-            !voting && !host(),
+            "",
+            !o.modePick && o.mode === id,
+            dis,
           ),
         ).join("")}</ul></div>`
       );
     }
     if (page === "map") {
-      /* the maps aren't voted on here: Vote Maps has its own round as the game starts; a map picked here is just played
-         (Vote Maps and Random go off) */
-      const dis = !host() || dodOn(s, "maps");
+      /* the maps aren't voted on here: Vote Mode & Game has its own window as the game starts; a map picked here is just
+         played (Vote for map and Random go off) */
+      const dis = !host() || dodOn(s, "vote");
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="vote"', "Vote Maps", "", o.mapPick === "vote", dis)}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
+        `<div class="arm-body"><ul class="arm-list">${voteRow(s, dis)}${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
           ([id, name]) =>
             row(`data-map="${id}"`, name, "", !o.mapPick && o.map === id, dis),
         ).join(
           "",
-        )}</ul>${o.mapPick === "vote" ? `<h3 class="gs-sub">Vote Maps</h3>${tiles(s, ALL)}` : ""}${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
+        )}</ul>${voteSets(s)}${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
       );
     }
     /* Game Options: Host Settings for every game, then Game mode Settings for the picked one (or each one a vote or
@@ -1071,8 +1113,8 @@ export function openGameSettings(R, start = null) {
     if (p.kind === "mode") {
       if (p.id === "vote" || p.id === "random")
         return card(
-          p.id === "vote" ? "Vote Game Mode" : "Random",
-          PICK_TEXT[p.id === "vote" ? "modeVote" : "modeRandom"],
+          p.id === "vote" ? "Vote Mode & Game" : "Random",
+          PICK_TEXT[p.id === "vote" ? "vote" : "modeRandom"],
         );
       const m = modeOf(p.id);
       return card(m.name, m.tip, gamePic(s, m.id));
@@ -1087,8 +1129,8 @@ export function openGameSettings(R, start = null) {
     if (p.kind === "map") {
       if (p.id === "vote" || p.id === "random")
         return card(
-          p.id === "vote" ? "Vote Maps" : "Random",
-          PICK_TEXT[p.id === "vote" ? "mapVote" : "mapRandom"],
+          p.id === "vote" ? "Vote Mode & Game" : "Random",
+          PICK_TEXT[p.id === "vote" ? "vote" : "mapRandom"],
         );
       const mode = CABIN_MODES.includes(o.mode)
           ? o.mode
@@ -1155,7 +1197,13 @@ export function openGameSettings(R, start = null) {
   };
   /* the description of a setting (its name and what it does) */
   const describe = (k) => {
-    const all = [...HOST, GREY, ZOOM, ALL, ...Object.values(BY_MODE).flat()],
+    const all = [
+        ...HOST,
+        GREY,
+        ZOOM,
+        ...VOTE_SETS,
+        ...Object.values(BY_MODE).flat(),
+      ],
       mode = S().options.mode,
       o =
         (BY_MODE[mode] || []).find((x) => x.k === k) ||
@@ -1174,7 +1222,16 @@ export function openGameSettings(R, start = null) {
       set = t.closest(".gs-set");
     if (r && r.dataset.mode) p = { kind: "mode", id: r.dataset.mode };
     else if (r && r.dataset.map) p = { kind: "map", id: r.dataset.map };
-    else if (r && r.dataset.pick) p = { kind: r.dataset.pick, id: r.dataset.v };
+    else if (r && r.dataset.pick)
+      p = {
+        kind:
+          r.dataset.pick === "vote"
+            ? page === "map"
+              ? "map"
+              : "mode"
+            : r.dataset.pick,
+        id: r.dataset.v,
+      };
     else if (r && r.dataset.cat) p = { kind: "cat", id: r.dataset.cat };
     else if (r && r.dataset.p === "mode")
       p = { kind: "mode", id: S().options.modePick || S().options.mode };
@@ -1240,15 +1297,19 @@ export function openGameSettings(R, start = null) {
           peekAt(r);
           if (r.dataset.p) return go(r.dataset.p);
           if (r.dataset.cat) return go("cat:" + r.dataset.cat);
+          if (r.dataset.pick === "vote" && boss) {
+            // Vote Mode & Game: on, both votes; off, the host's game and map
+            const v = voting(S()) ? "" : "vote";
+            send({ modePick: v, mapPick: v });
+            return;
+          }
           if (r.dataset.pick && boss) {
             const k = r.dataset.pick === "mode" ? "modePick" : "mapPick";
             send({ [k]: o[k] === r.dataset.v ? "" : r.dataset.v });
             return;
           }
           if (r.dataset.mode) {
-            if (o.modePick === "vote")
-              R.send({ t: "modeVote", mode: r.dataset.mode });
-            else if (boss) send({ mode: r.dataset.mode });
+            if (boss) send({ mode: r.dataset.mode });
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
