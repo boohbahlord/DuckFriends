@@ -181,9 +181,19 @@ const marks = (OF, size) => {
     OF.cloth = OF.cloth.replace(/<g class="jm">.*?<\/g>/s, "");
   return OF;
 };
+/* skin: marks painted on a rubber duck, { body, head } (svg in the 120 box): the body's under its clothes and the wing,
+   the head's over the head and under the beak and the eyes; both stay inside the duck's outline (Quacky Zombies'
+   scars, cuts and rot: l4ddart.js) */
 export function duckSVG(
   look = DUCK_DEFAULT,
-  { size = 64, shadow = true, title = "", dead = false, extra = "" } = {},
+  {
+    size = 64,
+    shadow = true,
+    title = "",
+    dead = false,
+    extra = "",
+    skin = null,
+  } = {},
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
     id = "dk" + ++uid;
@@ -321,10 +331,12 @@ ${hat.back}${SL.back || ""}${OF ? OF.back : ""}
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ""}
   ${SL.under || ""}
+  ${skin && skin.body ? `<g${bt}>${skin.body}</g>` : ""}
   ${OF && OF.cloth ? `<g mask="url(#${id}nh)"><g${bt}>${OF.cloth}</g></g>` : ""}
   <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   ${wing}
+  ${skin && skin.head ? skin.head : ""}
   ${
     M
       ? `<g${offCloth ? ` mask="url(#${id}nc)"` : ""}><rect x="0" y="0" width="120" height="120" fill="url(#${id}env)"/>

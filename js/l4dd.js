@@ -210,7 +210,7 @@ function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${zombieURL(z.l)}"></div><span class="l4z-hp"><i></i></span>`;
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${zombieURL(z.l, z.i)}"></div><span class="l4z-hp"><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
