@@ -706,13 +706,25 @@ function measure() {
       );
     tv.style.top = `${t.toFixed(1)}px`;
     tv.style.bottom = `${b.toFixed(1)}px`;
-    board.style.setProperty("--tvd", `${size.toFixed(1)}px`);
+    /* the ducks get smaller (down to 70%) when that lets every row and the strip fit, so on a short screen the view
+       doesn't start slid down past (A); past that the view slides as before */
+    const list = $(".tv-rows", tv);
+    let d = size;
+    for (let k = 0; k < 4; k++) {
+      board.style.setProperty("--tvd", `${d.toFixed(1)}px`);
+      const over = list.offsetHeight - tv.clientHeight;
+      if (over <= 0 || d <= size * 0.7) break;
+      d = Math.max(
+        size * 0.7,
+        d - over / ((list.children.length - 1) * 0.7 + 0.9) - 1,
+      );
+    }
+    geo.size = d;
     board.style.setProperty(
       "--tvt",
-      `${Math.max(0, t - size * 1.1).toFixed(1)}px`,
+      `${Math.max(0, t - d * 1.1).toFixed(1)}px`,
     ); // (the ducks show down to the view's edges, and a duck's height over its top)
     board.style.setProperty("--tvb", `${b.toFixed(1)}px`);
-    const list = $(".tv-rows", tv);
     geo.tl = {
       t,
       h: Math.max(1, tv.clientHeight),

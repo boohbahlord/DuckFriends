@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v171",
+    version: 171,
+    date: "Nov 4, 2026",
+    title: "Trivia's ducks and rows",
+    fixed: [
+      "For Trivia: the ducks show on the rows again (they were hidden under the board), and on a computer every answer fits on the screen at once, (A) included.",
+    ],
+  },
+  {
     id: "v170",
     version: 170,
     date: "Nov 4, 2026",
