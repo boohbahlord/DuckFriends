@@ -2904,12 +2904,12 @@ function playFx(f) {
         Math.random() * 30,
       );
   } else if (f.kind === "l4crit") {
-    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a big CRIT rises
-       over it, so it's never missed (owner 2026-11-04 04:01Z) */
+    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
+       it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
     if (!geo.hang) return;
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78;
-    bloodBurst(a.left, top, 14, 2.6, size * 0.35, size * 0.55);
+    bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
     neckSpray(a.left + size * 0.12, a.top - size * 0.5); // (then blood keeps spurting out of its neck for a moment)
     const word = el(
       `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,

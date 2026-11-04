@@ -3938,3 +3938,30 @@ Decided (Noah): its own PR after the Jaime Bomb, before the player wounds.
   only / Map only). It opens its own page: the On/Off row, and while on, Vote for game mode, Vote for map, Vote return.
   The row and its settings are gone from the Game mode and Map pages (Random stays there). Every "Vote Mode & Game" players
   see is now "Vote Mode & Map"; the Democracy rule keeps the owner's name "Ducks Vote Mode & Game".
+
+## Request (owner, 2026-11-04 07:43Z, through Adam): Vote Mode & Map, Quacky Zombies, the computer's board, sounds
+"Vote Mode & Map goes HERE!!!!! you just fucking hallucinated what i meant.
+
+Also, the five rounds for difficulty changes are now being changed to four, everything in the shop is now 20% expensive (including ammo), the amount of zombies is 25% more for rounds 1-4, 100% more for rounds 5-8, and 200% more for rounds 9-12, and 300% more for rounds 13 and up. The amount of zombies increases according to the multiplier even for increase amount of zombies per player. Zombie corpses stay on the ground for 3 seconds longer, crit is smaller, and there is a tab in the shop for the butler that shows every item and it's stat and description in this game mode that can be clicked on, and every item is in it's own category. 
+
+The computer game will now also have the board be full screen, with the UI for pc staying the same. The screen being fullscreen also means that when a mouse is clicked to lets say use a special, that anything that isnt a button will now let it do so, since before it was only limited to the board. 
+
+When the first HP is lost on a player, it is lost with the same sound and HP bar side effect as any other HP lost, since it doesnt do that rn. 
+
+There are walking sounds from ducks thar are quiet in every other game mode now. 
+
+jumping should have a sound if it doesnt yet, and it should be quieter but not so quiet that it is impossible to hear. 
+
+every gun from the zombie game should be in the special list. I will come up for ideas of how to unlick them later."
+- Split by Adam: Vote Mode & Map row = Adam (#247); the computer's full-screen board, the first HP loss and the guns in
+  the specials list = Noah; the walk and jump sounds = Miles Jr.; the Quacky Zombies part = Solomon.
+- Solomon (v166): the difficulty steps (ROUNDS in js/l4ddrules.js) end at rounds 4, 8, 12 and 20 (they were 5, 10, 15
+  and 25: each step four-fifths as long, my reading of "five rounds ... changed to four"). `moreOf(r)` multiplies a
+  round's whole count, the extras for each player included: x1.25 (1-4), x2 (5-8), x3 (9-12), x4 (13+). Everything the
+  Butler sells is x1.2 (`SHOP_MORE`): upgrades (e.g. Accuracy 720, Attack speed 600), bullets 6 for 2, arrows 6 for 5,
+  the knife 120; the fireplace stays 750 (not his shop). Corpses lie 4 s (`L4.DEAD_MS`, see-through at once, fading in
+  the last second); a drop due still falls only on a zombie killed in the last second (`L4.FELL_MS`). Crit: the CRIT
+  word a third smaller and the blood burst as small as a duck's crit (read as the text and burst, not the headshot
+  chance). The Butler's page has two tabs, Shop and Items (`js/l4ddcatalog.js`): every weapon, special, grenade, drop
+  and upgrade under its category heading; a tap opens its line and its numbers, read from the rules. Exit Cabin hides
+  while the page is open (it sat on the tabs).
