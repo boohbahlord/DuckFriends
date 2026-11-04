@@ -49,6 +49,14 @@ const HOST = [
     d: "Whether taking a vote back below the needed share stops the catch-up timer. With No, a timer that has started runs out.",
   },
   {
+    k: "endBtn",
+    n: "End round button",
+    c: ON_OFF,
+    cat: "rules",
+    only: ["aod", "wyr", "ddr", "sc"],
+    d: "Votes don't end the turn: an End round button does. It shows once the needed share has voted, and anyone can press it.",
+  },
+  {
     k: "freeRoam",
     n: "Answering",
     c: [

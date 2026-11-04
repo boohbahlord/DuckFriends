@@ -37,6 +37,7 @@ import {
   COLS,
   SHORT,
   needed,
+  canEndRound,
   reviewCount,
   playing,
   VOTE_GRACE,
@@ -4424,7 +4425,7 @@ function actHTML(s) {
       : mine
         ? "Press again to take your vote back."
         : "";
-    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}${tip ? ` data-tip="${tip}"` : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${votes}</div>`;
+    return `${mc}<div class="act-row"><button type="button" class="btn vote-btn${mine ? " voted" : ""}" data-a="end" data-col="${col}"${off ? " disabled" : ""}${tip ? ` data-tip="${tip}"` : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${endRoundHTML(s)}${votes}</div>`;
   }
   if (s.phase === "discuss")
     return `<div class="act-row"><button type="button" class="btn theme-btn${mine ? " done" : ""}" data-a="end">${mine ? "Waiting ✓" : "End turn"} <kbd>Enter</kbd></button>${count}</div>`;
@@ -4604,6 +4605,11 @@ function quackActHTML(s) {
 }
 
 /* Story Chain: whose line it is, or Vote (stand on a line, a word or a choice; not your own) */
+/* the End round button (the host's End round setting), next to Vote once enough have voted */
+const endRoundHTML = (s) =>
+  canEndRound(s) && !late() && playing(s).includes(R.me)
+    ? '<button type="button" class="btn yellow" data-a="endround">End round</button>'
+    : "";
 function storyActHTML(s, d, n, need, count) {
   if (s.phase === "words") return count;
   if (s.phase === "write") return ""; // (the top bar says which line it is; the writer's window has Send)
@@ -4632,7 +4638,7 @@ function storyActHTML(s, d, n, need, count) {
     s.phase === "results" && s.round >= 1 && !s.review
       ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats and the finished stories. One vote each round.">All-rounds review ${reviewCount(s)}/${need}</button>`
       : "";
-  return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? " voted" : ""}" data-a="end"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button><span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ""}</span>${review}</div>`;
+  return `<div class="act-row"><button type="button" class="btn vote-btn sc-vote${mine ? " voted" : ""}" data-a="end"${off ? " disabled" : ""}>${label}${off ? "" : " <kbd>Enter</kbd>"}</button>${endRoundHTML(s)}<span class="progress">${d}/${n} voted${need < n ? ` · ${need} needed` : ""}</span>${review}</div>`;
 }
 const TITLES = {
   hang: "Duck Cabin",
@@ -5579,6 +5585,9 @@ async function act(a) {
     }
     case "tvend":
       R.send({ t: "tv", k: "end" });
+      break;
+    case "endround":
+      R.send({ t: "endRound" });
       break;
     case "tvok":
     case "tvno": {

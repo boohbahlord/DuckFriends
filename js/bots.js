@@ -32,6 +32,9 @@ import {
   scWriter,
   scZones,
   scCanVote,
+  canEndRound,
+  endDone,
+  playing,
 } from "./rules.js";
 import {
   anyWord,
@@ -600,6 +603,15 @@ export function botActions(s, now) {
           id,
           map: mv.maps[hash(id + s.at) % mv.maps.length],
         });
+      return;
+    }
+    /* the End round button (the host's setting): a computer presses it once every duck has voted and a while has passed */
+    if (
+      canEndRound(s) &&
+      endDone(s) >= playing(s).length &&
+      now - s.at > 15000 + (hash(id) % 5000)
+    ) {
+      out.push({ t: "endRound", id });
       return;
     }
     if (isSc(s)) {

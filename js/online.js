@@ -252,6 +252,7 @@ const keyOf = (s) => (s ? [s.phase, s.round, s.qi].join("|") : "");
 
 /* what a player may send, and only as themselves */
 const REMOTE = new Set([
+  "endRound",
   "join",
   "leave",
   "look",
