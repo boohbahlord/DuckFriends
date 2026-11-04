@@ -223,6 +223,7 @@ import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
 import { sfx } from "./sound.js";
+import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
@@ -1173,6 +1174,19 @@ function drawDucks(now = clockNow()) {
         .map((id) => id + BODY), // (Quacky Zombies' ghosts leave no body)
     ],
     lane = ids.filter((id) => posOf(id).x < 0);
+  if (!isL4dd(s) && onBoardPhase())
+    feet(
+      s.seat
+        .filter((id) => s.pos[id] && s.players[id] && !s.players[id].dead)
+        .map((id) => {
+          const p = posOf(id);
+          return [id, p.x, p.y, liftOf(id, p)];
+        }),
+      hang ? [HW, HH] : [geo.W, geo.H],
+      hang ? 44 : geo.size * 0.7,
+      R.me,
+      hang,
+    ); // (quiet footsteps in every mode; Quacky Zombies has its own: feet.js)
   const boxes = [],
     puffs = [],
     wearsX = new Set(),
@@ -3612,6 +3626,7 @@ function jump(how) {
     (how === "short" ||
       (kept.has("shortjump") && hasKey(playDuck(), "shortjump"))); // (the Short jump: lower and quicker)
   if (world && isHang(R.state)) world.started(me); // (the arc starts from the height it stands on)
+  sfx.hop();
   sendMove(true);
 }
 function jumpTo(c) {

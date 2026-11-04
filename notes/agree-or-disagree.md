@@ -3965,3 +3965,11 @@ every gun from the zombie game should be in the special list. I will come up for
   chance). The Butler's page has two tabs, Shop and Items (`js/l4ddcatalog.js`): every weapon, special, grenade, drop
   and upgrade under its category heading; a tap opens its line and its numbers, read from the rules. Exit Cabin hides
   while the page is open (it sat on the tabs).
+
+## Request (owner, 2026-11-04 07:43Z, sound part, via Adam): footsteps everywhere, a jump sound
+"There are walking sounds from ducks thar are quiet in every other game mode now."
+"jumping should have a sound if it doesnt yet, and it should be quieter but not so quiet that it is impossible to hear."
+- js/feet.js: Quacky Zombies' footstep (l4step) for every duck in every other mode, mine at 0.4, others at 0.28, a
+  step every 0.7 duck sizes on a board (44 world px in Duck Cabin, fainter far off there), none in a jump, at most 3 in
+  any 150 ms. Hook: one call in game.js drawDucks. Jump: sfx.hop (a soft rising "hup", ~0.03 RMS, the music ~0.1),
+  from jump() for my own jumps. tat and bow made a touch darker (Firefox found a rare pop). 0 clicks both browsers.

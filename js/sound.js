@@ -282,7 +282,8 @@ export const sfx = {
       type: "lowpass",
       freq: 2400,
       slideTo: 300,
-      top: 3000,
+      top: 2400,
+      fade: 0.012,
     }); // (0 clicks, 0 clipped: tools/clickcheck.js, 14 in a row 80 ms apart)
   },
   shotgun() {
@@ -476,16 +477,16 @@ export const sfx = {
       g = a.createGain();
     src.buffer = whiteNoise(a);
     lp.type = "lowpass";
-    lp.frequency.value = 2800; // (dark: bright noise at a start is heard as a click)
+    lp.frequency.value = 2400; // (dark: bright noise at a start is heard as a click)
     f.type = "bandpass";
     f.frequency.setValueAtTime(2600 * k, t);
     f.frequency.exponentialRampToValueAtTime(1000 * k, t + 0.18);
     f.Q.value = 2.5;
     g.gain.value = 0;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.06 * v, t + 0.015);
+    g.gain.linearRampToValueAtTime(0.06 * v, t + 0.02);
     g.gain.setTargetAtTime(0, t + 0.035, 0.035);
-    dark(a, src.connect(f).connect(lp), 2800).connect(g).connect(cap);
+    dark(a, src.connect(f).connect(lp), 2400).connect(g).connect(cap);
     src.start(t, Math.random() * 0.5);
     src.stop(t + 0.035 + 0.035 * 7);
     tone(330 * k, 0.12, {
@@ -649,6 +650,11 @@ export const sfx = {
   pat() {
     tone(240, 0.1, { type: "sine", gain: 0.08, slide: 0.7, attack: 0.004 });
     noise(0.06, { gain: 0.03, type: "lowpass", freq: 700 });
+  },
+  /* a jump: a soft rising "hup", quieter than the game's other sounds but easy to hear */
+  hop() {
+    tone(260, 0.13, { gain: 0.12, slide: 1.9, attack: 0.012 });
+    tone(520, 0.09, { gain: 0.025, slide: 1.6, attack: 0.01, at: 0.01 });
   },
   /* the double jump: a soft puff of cloud */
   puff() {
