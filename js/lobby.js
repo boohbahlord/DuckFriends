@@ -263,9 +263,11 @@ function paint() {
 }
 
 /* the picture: the game and the map. In the map vote, the map under the pointer (or yours, or the one ahead); with Vote
-   Maps or Random, a random map every few seconds, as the map isn't picked yet */
-let cycle = [];
-const CYCLE_MS = 3000;
+   Maps or Random, as the map isn't picked yet, the maps one after another, 10 seconds each, fading from one into the
+   next, starting on a random one */
+let cycle = [],
+  cycleAt = 0;
+const CYCLE_MS = 10000;
 function artMap(s) {
   const mv = s.phase === "countdown" ? s.mv : null;
   if (mv) {
@@ -278,25 +280,57 @@ function artMap(s) {
   }
   if (!s.options.mapPick || s.options.map === "cabin")
     return s.options.map || "board";
-  if (!cycle.length)
+  if (!cycle.length) {
     cycle = MAPS.map((m) => m[0]).sort(() => Math.random() - 0.5);
-  return cycle[Math.floor(Date.now() / CYCLE_MS) % cycle.length];
+    cycleAt = Date.now();
+  }
+  return cycle[Math.floor((Date.now() - cycleAt) / CYCLE_MS) % cycle.length];
 }
+const cycling = (s) =>
+  !(s.phase === "countdown" && s.mv) &&
+  !!s.options.mapPick &&
+  s.options.map !== "cabin";
 function paintArt(s) {
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),
     duck = lobbyDuck(s),
     map = artMap(s),
-    sig = map + mode + JSON.stringify(duck);
+    rest = mode + JSON.stringify(duck),
+    sig = map + rest;
   if (art._sig === sig) return;
+  const fade =
+    cycling(s) &&
+    art._rest === rest &&
+    !document.documentElement.classList.contains("still"); // (only the cycling map changed: it fades in)
   art._sig = sig;
-  art.innerHTML = gameArtSVG({
+  art._rest = rest;
+  const pic = gameArtSVG({
     width: 480,
     duck,
     map,
     mapLabel: mapName(map),
     mode,
   });
+  if (!fade || !art.firstElementChild) {
+    art.innerHTML = pic;
+    return;
+  }
+  /* the next picture over the last one, fading in; then the last one goes */
+  art
+    .querySelectorAll("svg.art-in")
+    .forEach((x) => x.classList.remove("art-in"));
+  while (art.children.length > 1) art.firstElementChild.remove();
+  art.insertAdjacentHTML("beforeend", pic);
+  const next = art.lastElementChild;
+  next.classList.add("art-in");
+  next.addEventListener(
+    "animationend",
+    () => {
+      next.classList.remove("art-in");
+      while (art.firstElementChild !== next) art.firstElementChild.remove();
+    },
+    { once: true },
+  );
 }
 /* the map vote's round (the start's first part): its maps in place of the menu, each with its picture and its votes */
 function paintVote(s, mv, host) {
@@ -501,6 +535,7 @@ register("lobby", {
   render(arg) {
     R = arg || activeRoom();
     if (!R) return null;
+    cycle = []; // (each visit to the lobby starts on a random map)
     if (!["lobby", "countdown"].includes(R.state.phase)) {
       setTimeout(() => go("game", R));
     }

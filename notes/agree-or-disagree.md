@@ -3721,3 +3721,11 @@ Owner, 03:53Z:
   DDR and Story Chain (its line and word votes). With it on, votes never end the turn; the End round button (next to
   Vote) shows once the needed share has voted and anyone playing can press it. The answer timer still ends a turn.
   Computers press it once every duck has voted and 15 to 20 s have passed.
+
+## Request (owner, 2026-11-04 05:20Z, through Adam): the lobby's map pictures fade
+"did i tell you that if vote maps or random is on, that the map preview in lobby will just have other map images fade in and out ? if so, we can make that last for 10 seconds each for every image and it starts on a random image for that.
+
+the weapons need to work as fast as they do in the zombies game mode for now on, in terms of bullet speeds or attack speeds"
+- Built (Noah, the first part; the weapons part went to Jackal): with Vote Maps or Random, the lobby picture shows each
+  map for 10 s (CYCLE_MS) in a random order starting on a random map each lobby visit, the next fading in over 1.6 s
+  (.lobby-art > svg.art-in). No fade with Less motion.

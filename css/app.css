@@ -1574,6 +1574,24 @@ p.bad {
   border: 0.18rem solid var(--line);
   box-shadow: 0 0.3rem 0 var(--line);
 }
+.lobby-art {
+  position: relative;
+}
+/* with Vote Maps or Random, the next map's picture fades in over the last one (lobby.js) */
+.lobby-art > svg.art-in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: art-in 1.6s ease-in-out both;
+}
+@keyframes art-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .lobby-title {
   margin-top: 0.9rem;
   font-size: calc(2.1rem * var(--ts));
