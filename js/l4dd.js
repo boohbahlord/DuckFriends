@@ -57,7 +57,11 @@ import {
   waitNeed,
   waitVotes,
   isR16,
+  GUN_SHOP,
+  gunPrice,
+  kitOf,
 } from "./l4ddrules.js";
+import { touchOnly } from "./pointer.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import {
@@ -680,11 +684,13 @@ function drawEgg(ctx, now) {
 /* what it shows at `now`: flickering through the weapons, fast and then slower (the same on every screen), until it
    lands on the one the host picked; [weapon, landed] */
 const FLICKS = 30;
-function boxShows(b, now) {
+function boxShows(b, now, s) {
   const u = (now - b.t) / BOX.spin;
   if (u >= 1) return [b.w, true];
-  const f = Math.floor(FLICKS * (1 - Math.pow(1 - Math.max(0, u), 2)));
-  return [POOL[(b.t + f) % POOL.length], false];
+  const f = Math.floor(FLICKS * (1 - Math.pow(1 - Math.max(0, u), 2))),
+    sl = slotsOf(s, b.by),
+    pool = POOL.filter((w) => !sl.includes(w)); // (never a weapon its duck has: the owner's, Nov 4)
+  return [pool[(b.t + f) % pool.length] || b.w, false];
 }
 function drawBox(ctx) {
   const s = ctx.state(),
@@ -699,7 +705,7 @@ function drawBox(ctx) {
     }
     return;
   }
-  const [w, landed] = boxShows(b, now),
+  const [w, landed] = boxShows(b, now, s),
     sig = w + (landed ? "!" : "") + b.t;
   if (sig !== boxSig) {
     const first = !boxSig;
@@ -768,7 +774,15 @@ function shopFill(s, ctx) {
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
-    sig = JSON.stringify([up, pts, s.hang.l4sale, saleOn(s)]);
+    kit = kitOf(s, me),
+    sig = JSON.stringify([
+      up,
+      pts,
+      s.hang.l4sale,
+      saleOn(s),
+      kit && kit.sl,
+      kit && kit.am,
+    ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.pts.textContent = pts;
@@ -779,7 +793,27 @@ function shopFill(s, ctx) {
       was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
     return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
   }).join("");
+  /* his guns: Buy (a price), Refill (a price) once I have it, Full when it's full (the knife: Owned) */
+  shop.guns.innerHTML = GUN_SHOP.map((w) => {
+    const have = !!kit && kit.sl.includes(w),
+      price = gunPrice(s, me, w),
+      off = !price || pts < price,
+      label = have
+        ? price
+          ? `Refill ${price}`
+          : price === 0
+            ? "Full"
+            : "Owned"
+        : `Buy ${price}`;
+    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
+  }).join("");
 }
+const gunWhat = (w) =>
+  w === "knife"
+    ? "Melee"
+    : w === "bow"
+      ? "5 points for 5 arrows"
+      : "5 points for 2 bullets";
 function openShop(ctx) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -798,23 +832,20 @@ function closeShop() {
   removeEventListener("keydown", shopEsc, true);
 }
 function shopEsc(e) {
-  if (
-    e.key === "Escape" &&
-    shop &&
-    shop.open &&
-    !document.querySelector(".win-back, .ctx")
-  ) {
+  if (!shop || !shop.open || document.querySelector(".win-back, .ctx")) return;
+  if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
     closeShop();
-  }
+  } else if (e.key.startsWith("Arrow")) closeShop(); // (the arrows close it at once too, and still do what they do)
 } // (before the game's own Escape: the pause menu)
 function shopEl(ctx) {
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
   el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(BUTLER_NAME, { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
-      <ul class="l4-shop-list"></ul>
+      <div class="l4-shop-list"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
+      ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
       <p class="l4-shop-say"><span class="l4-shop-me">${butlerSVG({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
@@ -822,7 +853,13 @@ function shopEl(ctx) {
   el.addEventListener("click", (e) => {
     const b = e.target.closest("[data-buy]");
     if (b && !b.disabled)
-      ctx.send({ t: "hang", k: "l4", do: "buy", what: b.dataset.buy });
+      ctx.send({
+        t: "hang",
+        k: "l4",
+        do: "buy",
+        what: b.dataset.buy,
+        hand: heldFn(),
+      }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
   });
   ctx.world.board.append(el);
   return {
@@ -830,7 +867,8 @@ function shopEl(ctx) {
     open: false,
     sig: "",
     pts: el.querySelector(".l4-shop-pts b"),
-    list: el.querySelector(".l4-shop-list"),
+    list: el.querySelector(".l4-shop-ups"),
+    guns: el.querySelector(".l4-shop-guns"),
   };
 }
 
@@ -868,6 +906,20 @@ function holdTarget(pos, ctx) {
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
+}
+/* B: ammo for the gun in hand, at the Butler's price, from anywhere (only one of his guns, not full, with the points) */
+function buyAmmo(ctx) {
+  const s = ctx.state(),
+    me = ctx.me,
+    w = heldFn();
+  if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return;
+  const kit = kitOf(s, me),
+    price = gunPrice(s, me, w);
+  if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
+    return say("The Butler doesn't sell ammo for that");
+  if (!price) return say("It's full");
+  if (ptsOf(s, me) < price) return say("Not enough points");
+  ctx.send({ t: "hang", k: "l4", do: "ammo", what: w });
 }
 /* E (a tap) at the Butler or the fireplace */
 function tap(t, ctx) {
@@ -1289,6 +1341,10 @@ activity({
     };
   },
   keydown(e, ctx) {
+    if (e.code === "KeyB") {
+      if (!e.repeat) buyAmmo(ctx);
+      return true;
+    }
     if (e.code === "Digit0" || e.code === "Numpad0") {
       if (!e.repeat) ctx.send({ t: "hang", k: "l4", do: "fl" });
       return true;

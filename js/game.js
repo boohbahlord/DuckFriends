@@ -5534,7 +5534,8 @@ const HINTS =
 const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on';
 const L4_HINTS =
-  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Use";
+  "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload <kbd>E</kbd> Use" +
+  '<i class="hints-br"></i><kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, on a line of their own: the owner's, Nov 4)
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
 let l4Fire = 0;

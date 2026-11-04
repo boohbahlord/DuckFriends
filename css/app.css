@@ -14233,7 +14233,6 @@ html.moving .eye-tears .tdrop.t2 {
   height: auto;
   max-height: calc(100% - 1.2rem);
 } /* (as tall as its rows: no empty page under them) */
-.l4-shopping .l4-hud,
 /* the secret in the bathroom: Justin bending to the bowl, a bite at a time */
 .l4-egg .hang-npc-body img {
   transform-origin: 50% 100%;
@@ -14244,6 +14243,10 @@ html.moving .eye-tears .tdrop.t2 {
     transform: rotate(-10deg) translateY(4%);
   }
 }
+.screen:has(.l4-shopping) .tpad {
+  visibility: hidden;
+} /* (on a phone the jump and aim buttons step aside for it: they sat over its last row) */
+.l4-shopping .l4-hud,
 .l4-shopping .l4-pts,
 .l4-shopping .l4-end {
   visibility: hidden;
@@ -14264,12 +14267,37 @@ html.moving .eye-tears .tdrop.t2 {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.l4-shop-list ul {
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+/* his guns, under the upgrades: no level dots, a wider button (Buy 190, Refill 40) */
+.l4-shop-h {
+  margin: 0.3rem 0 0;
+  font-family: "Lilita One", sans-serif;
+  font-weight: 400;
+  font-size: calc(1rem * var(--ts));
+  color: #f4e7b0;
+}
+.l4-up.l4-buyw {
+  grid-template-columns: 2.2rem 1fr 6.4rem;
+}
+.l4-buyw .l4orb {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+.l4-shop-key {
+  margin: 0;
+  font-size: calc(0.85rem * var(--ts));
+  color: var(--dim);
 }
 .l4-up {
   display: grid;

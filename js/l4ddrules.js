@@ -94,7 +94,7 @@ const SKIP = 0.25;
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
-   cone of pellets; the medkit puts my HP back to full, once. A headshot (crit, and +5% for each Accuracy) kills at
+   cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (crit, and +5% for each Accuracy) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 export const ARMS = {
@@ -117,9 +117,7 @@ export const ARMS = {
     cool: 900,
     dmg: 1,
     speed: 1100,
-    mag: 6,
-    all: 48,
-    reload: 1500,
+    all: 48, // (no magazine: the owner's, Nov 4)
     pellets: 5,
     spread: 0.3,
     life: 420,
@@ -294,7 +292,14 @@ const BULLETS = new Set([
   "revolver",
   "lmg",
 ]);
-export const PTS = { START: 50, HIT: 5, HEAD: 25, BOARD: 5, BOARDS: 50 }; // (a board: 5, the owner's, Nov 3)
+export const PTS = {
+  START: 50,
+  HIT: 5,
+  HEAD: 25,
+  BOARD: 5,
+  BOARDS: 50,
+  NUKE_CRIT: 250,
+}; // (a board: 5, the owner's, Nov 3)
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
@@ -304,6 +309,28 @@ export const SHOP = [
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
 ];
+/* and his guns (the owner's, Nov 4): both pistols, the knife, the shotgun and the bow. Bullets cost 5 points for 2,
+   arrows 5 for 5; a gun I already have says Refill and costs what fills it to the top. What a gun costs to buy
+   when I haven't got it the owner didn't say: I made it its full load of ammo at that price (the knife 100) */
+export const GUN_SHOP = ["handgun", "revolver", "knife", "shotgun", "bow"];
+export const AMMO_PRICE = { bow: [5, 5] }; // (points, for how many: arrows; every other gun 5 for 2 bullets)
+const KNIFE_PRICE = 100;
+const ammoLeft = (c) => (c ? c[0] + c[1] : 0);
+const ammoCost = (w, n) => {
+  const [p, k] = AMMO_PRICE[w] || [5, 2];
+  return Math.ceil(n / k) * p;
+};
+/* what the Butler asks for gun w now: to buy it, or to fill it to the top (0: it's full; null: not his, or a knife I
+   have already) */
+export function gunPrice(s, id, w) {
+  if (!GUN_SHOP.includes(w)) return null;
+  const kit = kitOf(s, id),
+    full = fullAmmo(w);
+  if (!kit || !kit.sl.includes(w))
+    return full ? ammoCost(w, ammoLeft(full)) : KNIFE_PRICE;
+  if (!full) return null;
+  return ammoCost(w, ammoLeft(full) - ammoLeft(kit.am[w]));
+}
 export const priceOf = (id, n) =>
   UP_TIMES *
   {
@@ -375,6 +402,8 @@ const ZOUTFITS = [
   "firefighter",
   "military",
 ];
+/* 1 zombie in 400 is Justin (the owner's, Nov 4: 0.25%): his glasses and jeans, as a zombie */
+const Z_JUSTIN = 0.0025;
 export const zombieLook = (l) => ({
   color: "#3f7a34",
   pattern: "none",
@@ -387,6 +416,7 @@ export const zombieLook = (l) => ({
   build: l[4] || 0,
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
+  ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
 });
 
 /* ---------- the map: only inside and the deck ----------
@@ -895,7 +925,8 @@ export const DROP = {
   AMMO: 0.05, // the Max Ammo of its own
   AMMO_IN: 60000, // in the round's first minute
   LIFE: 60000, // ms a drop lies there (it stays through a round's end)
-  FOR: 30000, // ms Instant Kill, Double Points and Speed Boost last
+  FOR: 60000, // ms Instant Kill, Double Points and Speed Boost last (a minute each, into the next round: the owner's, Nov 4)
+  AMMO_W: 1.2, // once a drop comes, Max Ammo is this likely against 1 for each of the others (the owner's, Nov 4)
   REACH: 70, // world px: how near a duck walks over one
 };
 const DROP_NAMES = {
@@ -907,6 +938,13 @@ const DROP_NAMES = {
   sale: "Sale",
 };
 export const dropName = (k) => DROP_NAMES[k] || k;
+/* which drop: each as likely as the others, Max Ammo AMMO_W times as likely */
+function pickDrop() {
+  const w = (k) => (k === "ammo" ? DROP.AMMO_W : 1);
+  let r = Math.random() * DROPS.reduce((a, k) => a + w(k), 0);
+  for (const k of DROPS) if ((r -= w(k)) < 0) return k;
+  return DROPS[DROPS.length - 1];
+}
 /* when this round's drops come (ms after its start) and which: a random one, or the Max Ammo */
 function dropPlan() {
   const q = [];
@@ -939,10 +977,7 @@ function dropTick(s, L, zs, now, T, ids) {
   if (L.dq && L.dq.length && T >= L.dq[0][0]) {
     const [, k0] = L.dq[0];
     L.dq = L.dq.slice(1); // (L: the round, as l4Tick keeps it)
-    L.due = [
-      ...(L.due || []),
-      k0 || DROPS[Math.floor(Math.random() * DROPS.length)],
-    ]; // (it waits for the next kill)
+    L.due = [...(L.due || []), k0 || pickDrop()]; // (it waits for the next kill)
   }
   const was = s.hang.l4dr || [];
   let dr = was.filter((d) => now < d.until);
@@ -983,6 +1018,8 @@ function dropTick(s, L, zs, now, T, ids) {
       Object.entries(on).filter(([, u]) => u > now),
     ); // (what wore off)
 }
+/* the Nuke: each zombie it kills has a 5% chance of +250 more (the owner's, Nov 4) */
+const NUKE_CRIT = 0.05;
 /* what a drop does, for every duck */
 function takeDrop(s, k, by, zs, now, ids) {
   addFx(s, { kind: "l4drop", k, by, who: [], t: now });
@@ -997,18 +1034,19 @@ function takeDrop(s, k, by, zs, now, ids) {
   else if (k === "ammo") maxAmmo(s);
   else if (k === "nuke") {
     const T = now - s.hang.l4.t0;
-    let hp = 0;
+    let hp = 0,
+      crits = 0;
     for (const z of zs)
       if (z.st !== 3) {
         hp += z.hp;
         z.hp = 0;
         die(z, T);
+        if (Math.random() < NUKE_CRIT) crits++;
       }
-    const share = Math.round(
-      (hp * PTS.HIT * ((s.hang.l4on || {}).double ? 2 : 1)) /
-        Math.max(1, ids.length),
-    );
-    for (const id of ids) addPts(s, id, share); // (the points for all their HP, split between the ducks)
+    const each =
+      (hp * PTS.HIT + crits * PTS.NUKE_CRIT) *
+      ((s.hang.l4on || {}).double ? 2 : 1);
+    for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
   }
 }
 /* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
@@ -1172,12 +1210,19 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
-  if (a.do === "buy") return buy(s, id, String(a.what || ""), mx, my);
+  if (a.do === "buy")
+    return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
+  if (a.do === "ammo")
+    return buyGun(s, id, String(a.what || ""), "", true, now); // (B: anywhere, the gun in hand)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   return false;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
-function buy(s, id, what, mx, my) {
+function buy(s, id, what, mx, my, hand, now) {
+  if (GUN_SHOP.includes(what)) {
+    if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
+    return buyGun(s, id, what, hand, false, now);
+  }
   const it = SHOP.find((x) => x.id === what),
     up = upOf(s, id),
     n = up[what] || 0;
@@ -1245,9 +1290,18 @@ function fireplace(s, id, a, now, mx, my) {
     return true;
   }
   if (b.by !== id || now < b.t + BOX.spin) return false;
-  const w = b.w,
+  if (!give(s, id, b.w, a.hand)) return false;
+  dropBox(s, id);
+  addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
+  return true;
+}
+/* weapon w into duck id's slots, full: a melee weapon or a special takes its own slot, a ranged one the ranged weapon
+   in hand (hand, else the one the duck holds out, else the first ranged slot) */
+function give(s, id, w, hand0) {
+  const kit = kitOf(s, id),
     kind = kindOf(w),
-    hand = kit.sl.includes(a.hand) ? a.hand : (s.pos[id] || {}).w;
+    hand = kit && kit.sl.includes(hand0) ? hand0 : (s.pos[id] || {}).w;
+  if (!kit) return false;
   let k = kind === "melee" ? 0 : kind === "special" ? 3 : -1;
   if (kind === "ranged") {
     k = [1, 2].find((i) => kit.sl[i] === hand) ?? 1; // (no ranged weapon in hand: it takes the first ranged slot's place)
@@ -1268,8 +1322,28 @@ function fireplace(s, id, a, now, mx, my) {
       ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
     },
   };
-  dropBox(s, id);
-  addFx(s, { kind: "l4take", by: id, who: [], w, t: now });
+  return true;
+}
+/* a gun from the Butler: bought (into my slots, as the fireplace's), or filled to the top (Refill; B does the same for
+   the gun in hand, from anywhere: only one of his, only when it isn't full, only with the points for all of it) */
+function buyGun(s, id, w, hand, refillOnly, now) {
+  const kit = kitOf(s, id),
+    price = gunPrice(s, id, w);
+  if (!kit || !price || ptsOf(s, id) < price) return false;
+  const have = kit.sl.includes(w);
+  if (refillOnly && !have) return false;
+  if (have) {
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: {
+        ...kit,
+        am: { ...kit.am, [w]: fullAmmo(w) },
+        ...(kit.rw === w ? { rl: 0, rw: "" } : {}),
+      },
+    };
+  } else if (!give(s, id, w, hand)) return false;
+  addPts(s, id, -price);
+  addFx(s, { kind: "l4buy", by: id, who: [], w, t: now }); // (Miles Jr.'s cash register can hang on this)
   return true;
 }
 
@@ -2076,6 +2150,7 @@ function newZombie(s, L, T) {
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
     max = hp0(),
+    jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * Z_SLOW * rnd(R[3][0], R[3][1])),
     [sx, sy] = o.from || o.out;
   return {
@@ -2088,7 +2163,9 @@ function newZombie(s, L, T) {
     n: 0,
     d: 0,
     dir: 0,
-    l: [max, v, o.id, size, build, hat, outfit],
+    l: jus
+      ? [max, v, o.id, 0, 0, -1, -1, 1]
+      : [max, v, o.id, size, build, hat, outfit],
   };
 }
 function moveZombies(s, zs, now, T, up) {
