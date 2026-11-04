@@ -81,12 +81,29 @@ export const ZOOM_MAP = [
   "Euclid's Squares (Zoom)",
   "Euclid's Squares, zooming into its tiny squares forever.",
 ];
-/* a map's forms: the map vote and Random show a map once, in one of them, picked at random */
-export const MAP_FORMS = { euclid: ["euclid", ZOOM_MAP[0]] };
+/* Shelter Sky & Null in black and white: its other form in the map vote and Random (picked, it's the collage with
+   s.mapGreyed on; the host who picks the map turns it on with the map's Colors setting instead) */
+export const GREY_MAP = [
+  "collagebw",
+  "Shelter Sky & Null (Black and white)",
+  "Shelter Sky & Null in black, white and greys.",
+];
+/* a map's forms: the map vote shows each one as a map of its own, next to its map; Random picks one at random */
+export const MAP_FORMS = {
+  euclid: ["euclid", ZOOM_MAP[0]],
+  collage: ["collage", GREY_MAP[0]],
+};
+/* a form as the game plays it: the map, and whether it zooms or is grey */
+export const mapForm = (id) =>
+  id === ZOOM_MAP[0]
+    ? { map: "euclid", zoom: 1 }
+    : id === GREY_MAP[0]
+      ? { map: "collage", grey: 1 }
+      : { map: id };
 export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
-    : ([...MAPS, ZOOM_MAP].find((m) => m[0] === id) || MAPS[0])[1];
+    : ([...MAPS, ZOOM_MAP, GREY_MAP].find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
@@ -97,7 +114,8 @@ export function mapMini(id) {
   if (id === "carnival")
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
-  if (id === "collage") return `<div class="mini-map">${collageMini()}</div>`;
+  if (id === "collage" || id === GREY_MAP[0])
+    return `<div class="mini-map${id === "collage" ? "" : " grey"}">${collageMini()}</div>`;
   if (id === "euclid" || id === ZOOM_MAP[0])
     return `<div class="mini-map">${euclidMini()}</div>`;
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
@@ -1104,33 +1122,62 @@ export const SCENES = {
   ec: ecScene,
 };
 
+/* a map's scene in its layer */
+function sceneOf(map, layer, s, cur) {
+  return map === "sky"
+    ? skyScene(layer, s, cur)
+    : map === "pixel"
+      ? pixelScene(layer)
+      : map === "ec"
+        ? ecScene(layer)
+        : map === "tiles"
+          ? tilesScene(layer)
+          : map === "carnival"
+            ? carnivalScene(layer)
+            : map === "rabbit"
+              ? rabbitScene(layer)
+              : map === "stars"
+                ? starsScene(layer)
+                : map === "collage"
+                  ? collageScene(layer, s)
+                  : map === "euclid"
+                    ? euclidScene(layer, s)
+                    : map === "cabin"
+                      ? cabinScene(layer)
+                      : nightScene(layer);
+}
+/* a map moving in a small box of its own (the map vote's tiles, under the pointer or a finger, and the one you voted
+   for): the same scene as in the game, without the page's own map look; a form plays as itself (zoom, black and white) */
+export function mountPreview(box, id) {
+  const f = mapForm(id),
+    layer = document.createElement("div");
+  layer.className = `map-layer map-peek map-${f.map}`;
+  box.append(layer);
+  const s = {
+      options: { map: f.map },
+      mapZoomed: f.zoom ? 1 : 0,
+      mapGreyed: f.grey ? 1 : 0,
+      seat: [],
+      players: {},
+      round: 0,
+      qi: 0,
+    },
+    scene = sceneOf(f.map, layer, s, { cols: null });
+  return {
+    update: (now) => scene.update(now),
+    destroy() {
+      scene.destroy();
+      layer.remove();
+    },
+  };
+}
+
 export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
   layer.className = "map-layer map-" + map;
   document.documentElement.classList.add("map-on", "map-is-" + map); // (map-is-ec: the Ether & Kenoma look)
-  const scene =
-    map === "sky"
-      ? skyScene(layer, s, cur)
-      : map === "pixel"
-        ? pixelScene(layer)
-        : map === "ec"
-          ? ecScene(layer)
-          : map === "tiles"
-            ? tilesScene(layer)
-            : map === "carnival"
-              ? carnivalScene(layer)
-              : map === "rabbit"
-                ? rabbitScene(layer)
-                : map === "stars"
-                  ? starsScene(layer)
-                  : map === "collage"
-                    ? collageScene(layer, s)
-                    : map === "euclid"
-                      ? euclidScene(layer, s)
-                      : map === "cabin"
-                        ? cabinScene(layer)
-                        : nightScene(layer);
+  const scene = sceneOf(map, layer, s, cur);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"

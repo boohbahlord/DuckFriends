@@ -18,14 +18,15 @@ import { infoUnder } from "./gamesettings.js";
 export const DOD_TEXT = {
   ready:
     "The host can't start the game and readies like everyone else. The game starts once 2 of 3 of the ducks are ready.",
-  maps: "The map is always picked by Vote Maps. (Duck Cabin's games always play on Duck Cabin.)",
-  modes: "The game mode is always picked by Vote Game Mode.",
+  vote: "Vote Mode & Game stays on: the ducks always vote on the game mode and the map, and nobody can change it, the host neither.",
+  justin:
+    "Justin joins every game he can be in, and nobody can send him away, the host neither.",
   settings: "Every duck can change the game settings, not only the host.",
   sudo: "Every duck gets sudo: the host's powers in the command line and the room.",
   host: "Pick the duck to become the new host. It takes every duck's vote, and the host can't vote.",
 };
 const HOW =
-  "A vote passes with 2 of 3 ducks and lasts 60 s. While a vote is up, the host can't start the game, only ready. A rule that is on goes off again by another vote. The host turns a rule on, or hands the host over, directly.";
+  "A vote passes with 2 of 3 ducks and lasts 60 s. While a vote is up, the host can't start the game, only ready. A rule that is on goes off again only by another vote: no host can undo it, a new host neither. The host turns a rule on, or hands the host over, directly.";
 
 /* a rule's vote, if one is up: its votes, the votes it needs and the seconds it has left */
 export function dodVote(s, k) {

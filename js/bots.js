@@ -35,6 +35,8 @@ import {
   canEndRound,
   endDone,
   playing,
+  voteIds,
+  DICE,
 } from "./rules.js";
 import {
   anyWord,
@@ -595,14 +597,12 @@ export function botActions(s, now) {
   bots.forEach((id, i) => {
     const late = now - s.at >= wait + i * 700; // they don't all move on the same instant
     if (s.phase === "countdown") {
-      // the map vote: each votes for one of its maps, a few seconds in
-      const mv = s.mv;
-      if (mv && !(mv.votes || {})[id] && now - s.at > 2500 + i * 900)
-        out.push({
-          t: "mapVote",
-          id,
-          map: mv.maps[hash(id + s.at) % mv.maps.length],
-        });
+      // Vote Mode & Game: each clicks a game or a map (now and then the dice), a few seconds in
+      const vt = s.vt;
+      if (vt && !(vt.votes || {})[id] && now - s.at > 2500 + i * 900) {
+        const ids = [...voteIds(s, vt.k), DICE];
+        out.push({ t: "vote", id, v: ids[hash(id + s.at) % ids.length] });
+      }
       return;
     }
     /* the End round button (the host's setting): a computer presses it once every duck has voted and a while has passed */
