@@ -133,6 +133,7 @@ import {
   l4Shots,
   l4Holds,
   kitOf,
+  helperOut,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
 import { MAPS } from "./maps.js";
@@ -1138,7 +1139,7 @@ export function reduce(state, a, now = Date.now()) {
         P[a.p.id] = { ...P[a.p.id], ...a.p };
         return s;
       }
-      if (s.seat.length >= s.max) return s;
+      if (s.seat.filter((id) => !P[id].helper).length >= s.max) return s; // (the fireplace's Justin takes nobody's seat)
       if (
         (s.banned || {})[a.p.id] ||
         (a.p.acct && (s.banned || {})["acct:" + a.p.acct])
@@ -2452,6 +2453,11 @@ function forgame(s, a, now) {
         ].includes(k)
       )
         o[k] = v ? 1 : 0;
+      if (
+        ["justin", "mgjBoard"].includes(k) &&
+        ["l4dd", "mgj"].includes(s.options.mode)
+      )
+        delete o[k]; // (never Justin on the board in Quacky Zombies or Mad God Justin: the owner's, Nov 4)
       if (k === "share" && SHARE_OK.includes(v)) o.share = v;
       if (
         ["catchUp", "writeCatch", "answerTime", "submitTime"].includes(k) &&
@@ -3421,6 +3427,7 @@ function skipRound(s, now) {
 }
 /* the room goes back to the lobby: a fresh game next time, and the voted-out may come back */
 export function backToLobby(s, why) {
+  helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
   const was = STAGE[s.phase];
   s.phase = "lobby";

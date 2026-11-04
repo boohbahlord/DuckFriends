@@ -22,8 +22,11 @@ const live = (o, now) => {
   for (const [k, v] of Object.entries(o || {})) if (v > now) st[k] = v;
   return st;
 };
-/* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp) */
-export const invuln = (s) => +s.options.invuln === 1;
+/* Invulnerability: no hit takes a duck down, it only flashes red (s.hurt[id] = when; the screens flash on a new stamp).
+   Never in Quacky Zombies or Mad God Justin (the owner's, Nov 4), from the settings or the command line */
+export const NO_INVULN = ["l4dd", "mgj"];
+export const invuln = (s) =>
+  +s.options.invuln === 1 && !NO_INVULN.includes(s.options.mode);
 export function hurtFx(s, id, now) {
   s.hurt = { ...(s.hurt || {}), [id]: now };
   return true;

@@ -49,6 +49,7 @@ import {
   BOX,
   POOL,
   boxNow,
+  HELPER,
   weaponName,
   priceFor,
   saleOn,
@@ -907,7 +908,8 @@ function holdTarget(pos, ctx) {
   if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
-    if (now >= b.t + BOX.spin) return { kind: "take", d: db, w: b.w };
+    if (now >= b.t + BOX.spin && b.w !== HELPER.w)
+      return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
   const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
