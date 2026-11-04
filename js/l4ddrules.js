@@ -51,6 +51,7 @@ import {
   onPlatform,
   BJ,
 } from "./hangout/layout.js";
+import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
@@ -100,25 +101,52 @@ const SKIP = 0.25;
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 export const ARMS = {
-  knife: { kind: "melee", cool: 250, dmg: 1, swing: 125, at: 58, r: 34 }, // (four a second, as in every mode)
-  hammer: { kind: "melee", cool: 1100, dmg: 2, swing: 250, at: 66, r: 50 },
+  knife: {
+    kind: "melee",
+    cool: ARM_COOL.knife,
+    dmg: 1,
+    swing: ARM_SWING.knife,
+    at: 58,
+    r: 34,
+  }, // (four a second, as in every mode)
+  hammer: {
+    kind: "melee",
+    cool: ARM_COOL.hammer,
+    dmg: 2,
+    swing: ARM_SWING.hammer,
+    at: 66,
+    r: 50,
+  },
   handgun: {
     kind: "ranged",
-    cool: 200,
+    cool: ARM_COOL.handgun,
     dmg: 1,
     crit: 0.05,
-    speed: 1000,
+    speed: ARM_SPEED.handgun,
     mag: 8,
     all: 72,
-    reload: 1200,
+    reload: ARM_RELOAD,
   },
-  bow: { kind: "ranged", cool: 400, dmg: 1, crit: 0.05, speed: 820, all: 150 },
-  dagger: { kind: "ranged", cool: 600, dmg: 2, speed: 700, all: 24 },
+  bow: {
+    kind: "ranged",
+    cool: ARM_COOL.bow,
+    dmg: 1,
+    crit: 0.05,
+    speed: ARM_SPEED.bow,
+    all: 150,
+  },
+  dagger: {
+    kind: "ranged",
+    cool: ARM_COOL.dagger,
+    dmg: 2,
+    speed: ARM_SPEED.dagger,
+    all: 24,
+  },
   shotgun: {
     kind: "ranged",
-    cool: 900,
+    cool: ARM_COOL.shotgun,
     dmg: 1,
-    speed: 1100,
+    speed: ARM_SPEED.shotgun,
     all: 48, // (no magazine: the owner's, Nov 4)
     pellets: 5,
     spread: 0.3,

@@ -9,11 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v153",
+    version: 153,
+    date: "Nov 4, 2026",
+    title: "Faster weapons",
+    news: [
+      "Every weapon works as fast as in Quacky Zombies now, in every mode: the bullets, arrows, daggers and shotgun pellets fly faster, the hammer, dagger and shotgun can be used again sooner, and the knife and hammer swing quicker. The pistol reloads in 1.2 seconds.",
+    ],
+  },
+  {
     id: "v152",
     version: 152,
     date: "Nov 4, 2026",
     title: "Trivia rows and Stop timer",
     news: [
+      "Every weapon works as fast as in Quacky Zombies now, in every mode: the bullets, arrows, daggers and shotgun pellets fly faster, the hammer, dagger and shotgun can be used again sooner, and the knife and hammer swing quicker. The pistol reloads in 1.2 seconds.",
+
       "For Agree or Disagree: no answer timer by default again. Whoever writes a question can still give it one, and so can the host in Game Settings.",
       "For Trivia: each row is as tall as its answer needs, and when they don't all fit, the board slides down them as you walk, like Story Chain. The ducks on the rows are bigger.",
       "For Trivia: the answers you pick glow yellow, and the right ones turn green when they're shown.",

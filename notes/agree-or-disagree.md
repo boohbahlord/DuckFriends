@@ -3722,6 +3722,16 @@ Owner, 03:53Z:
   Vote) shows once the needed share has voted and anyone playing can press it. The answer timer still ends a turn.
   Computers press it once every duck has voted and 15 to 20 s have passed.
 
+"the weapons need to work as fast as they do in the zombies game mode for now on, in terms of bullet speeds or attack speeds" (owner 2026-11-04 05:20Z, via Adam; the same message also asked for the lobby preview to fade other map images in and out, 10 s each, from a random one, when Vote maps or Random is on: not mine)
+- Jackal: one table, `js/armspeed.js`, holds Quacky Zombies' weapon numbers; Quacky Zombies (`ARMS`) and every other mode
+  (rules.js, mgjrules.js) read it. Speeds there are Duck Cabin pixels a second, turned into board widths a second by
+  `BOARD_PX` 1100 (a computer's board). Changed in the other modes: handgun bullet 0.253 to 1.045 board widths a second,
+  arrow 0.69 to 0.857, dagger 0.52 to 0.732, a duck's shotgun pellet 0.345 to 1.15 (its life shortened so it flies as far
+  as before). Cooldowns: hammer 2250 to 1100, dagger 2000 to 600, shotgun 1750 to 900, Mad God Justin's bow 1000 to 400.
+  Knife stab 250 to 125 ms and hammer swing 500 to 250 ms. Handgun reload 3500 to 1200. Grenade, chair, Jaime and zebra
+  cake waits stay (Quacky Zombies limits them by how many you hold). Justin's own bullets keep their old speed
+  (`BOSS_SHOT_SPEED`). Damage and HP unchanged.
+
 ## Request (owner, 2026-11-04 05:20Z, through Adam): the lobby's map pictures fade
 "did i tell you that if vote maps or random is on, that the map preview in lobby will just have other map images fade in and out ? if so, we can make that last for 10 seconds each for every image and it starts on a random image for that.
 
