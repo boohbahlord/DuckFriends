@@ -181,9 +181,10 @@ const marks = (OF, size) => {
     OF.cloth = OF.cloth.replace(/<g class="jm">.*?<\/g>/s, "");
   return OF;
 };
-/* skin: marks painted on a rubber duck, { body, head } (svg in the 120 box): the body's under its clothes and the wing,
-   the head's over the head and under the beak and the eyes; both stay inside the duck's outline (Quacky Zombies'
-   scars, cuts and rot: l4ddart.js) */
+/* skin: marks painted on a rubber duck, { body, head, out } (svg in the 120 box): the body's under its clothes and the
+   wing, the head's over the head and under the beak and the eyes, both inside the duck's outline; out is over it all
+   and may stick out of it (an arrow). gone: what a rubber duck has lost, { head, beak, holes: [[x, y, r]] } (a chunk
+   torn out is a hole through it). Quacky Zombies' scars and wounds: l4ddart.js */
 export function duckSVG(
   look = DUCK_DEFAULT,
   {
@@ -193,6 +194,7 @@ export function duckSVG(
     dead = false,
     extra = "",
     skin = null,
+    gone = null,
   } = {},
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
@@ -256,6 +258,16 @@ ${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
 ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
+  const noHead = !!(gone && gone.head),
+    holes =
+      gone && gone.holes && gone.holes.length
+        ? gone.holes
+            .map(
+              ([x, y, r]) =>
+                `<circle cx="${x}" cy="${y}" r="${r}" fill="#000"/>`,
+            )
+            .join("")
+        : "";
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal];
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
@@ -319,15 +331,17 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
 ${fill(id + "b", ".36", ".28", TB)}${fill(id + "h", ".34", ".28", TH)}
 <linearGradient id="${id}ao" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${M ? ".25" : ".28"}"/></linearGradient>
 ${pat}${offCloth}
-<clipPath id="${id}c"><path d="${BODY}"${bt}/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/></clipPath>
-<mask id="${id}nh"><rect width="120" height="120" fill="#fff"/><circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/></mask>
+<clipPath id="${id}c"><path d="${BODY}"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/>`}</clipPath>
+<mask id="${id}nh"><rect width="120" height="120" fill="#fff"/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/>`}</mask>
+${holes ? `<mask id="${id}g" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${holes}</mask>` : ""}
 ${M ? metalGlints(id) : ""}
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
-${hat.back}${SL.back || ""}${OF ? OF.back : ""}
+${holes ? `<g mask="url(#${id}g)">` : ""}
+${noHead ? "" : hat.back}${SL.back || ""}${OF ? OF.back : ""}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
-<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>
+${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ""}
   ${SL.under || ""}
@@ -347,9 +361,13 @@ ${hat.back}${SL.back || ""}${OF ? OF.back : ""}
   }
 </g>
 <path d="${BODY}" fill="none" stroke="${OF && OF.cloth ? "#1c1c28a8" : edge}" stroke-width="2.2" stroke-linejoin="round" mask="url(#${id}nh)"${bt}/>
-<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
+${
+  noHead
+    ? ""
+    : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="none" stroke="${TH.edge}" stroke-width="2.2"/>
 <ellipse cx="68" cy="28" rx="8" ry="4.6" fill="#fff" opacity="${M ? ".9" : ".6"}" transform="rotate(-25 68 28)"/>
-<circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? ".6" : ".3"}"/>
+<circle cx="88" cy="47" r="2.2" fill="#fff" opacity="${M ? ".6" : ".3"}"/>`
+}
 ${
   spots
     ? `<g${bt}><ellipse cx="38" cy="73" rx="11" ry="5" fill="#fff" opacity="${M ? ".75" : ".38"}" transform="rotate(-14 38 73)"/>
@@ -358,11 +376,17 @@ ${
 }
 ${SL.over || ""}
 ${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${beakSVG(L)}
+${
+  noHead
+    ? ""
+    : `${gone && gone.beak ? "" : beakSVG(L)}
 ${zap ? "" : eyes}
 ${face}
 ${zap ? eyes : ""}
-${hat.front}
+${hat.front}`
+}
+${holes ? "</g>" : ""}
+${skin && skin.out ? skin.out : ""}
 ${k !== 1 ? "</g>" : ""}
 ${extra}
 </svg>`;

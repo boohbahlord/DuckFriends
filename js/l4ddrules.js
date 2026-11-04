@@ -20,6 +20,7 @@
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
      (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
+     zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), l4ddart.js' hitsOf)
      zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
      brd  { opening: boards up, 0 … BOARDS }
      l4p  { id: { hp, at (its last hit or heal), dn (down: bleeds out then), rv: { by, at } (being revived), gh (a ghost
@@ -749,6 +750,12 @@ function store(s, zs, keepStatic) {
   if (sig(zp) !== sig(s.hang.zp)) s.hang.zp = zp;
   if (sig(sw) !== sig(s.hang.zs)) s.hang.zs = sw;
   if (!keepStatic && sig(zl) !== sig(s.hang.zl)) s.hang.zl = zl;
+  if (s.hang.zw) {
+    // (the wounds go with their zombie)
+    const zw = {};
+    for (const z of zs) if (s.hang.zw[z.i]) zw[z.i] = s.hang.zw[z.i];
+    if (sig(zw) !== sig(s.hang.zw)) s.hang.zw = zw;
+  }
   s.hidden = { ...(s.hidden || {}), l4z: mine };
 }
 export const zombiesOf = zombies;
@@ -1069,6 +1076,7 @@ function setUp(s, now) {
   s.hang.zp = [];
   s.hang.zs = {};
   s.hang.zl = {};
+  s.hang.zw = {};
   s.hang.brd = Object.fromEntries(OPENINGS.map((o) => [o.id, L4.BOARDS]));
   s.hang.l4p = {};
   s.hang.l4a = {};
@@ -1516,8 +1524,9 @@ export function l4Use(s, a, now) {
 }
 /* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot (which
    takes all of it); true when it died */
-function strike(s, z, dmg, head, by) {
+function strike(s, z, dmg, head, by, w = "") {
   if (z.st === 3) return false;
+  if (w) wound(s, z, w, head);
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
@@ -1525,12 +1534,91 @@ function strike(s, z, dmg, head, by) {
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   return z.hp <= 0;
 }
+/* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by l4ddart.js' hitsOf: zw { i: "B3c1…" }, two letters for
+   each, its kind and its spot (0 … 7, or 0 … 5 for an arrow or a chunk). Small guns leave small bullet holes, the big
+   ones big holes, the shotgun its pellets, now and then a bleeding cut instead; knives cut; the hammer and the chair
+   bruise; an arrow cuts or stays stuck in it; a bullet now and then tears a chunk out, or the beak off; a headshot
+   blows the head off. At most 6 on a zombie, and a headless one keeps its head off */
+const WOUND = {
+  small: {
+    p: 0.35,
+    kinds: [
+      ["b", 0.75],
+      ["c", 0.25],
+    ],
+    chunk: 0.04,
+  },
+  big: {
+    p: 0.55,
+    kinds: [
+      ["B", 0.85],
+      ["c", 0.15],
+    ],
+    chunk: 0.1,
+  },
+  shot: {
+    p: 0.2,
+    kinds: [
+      ["s", 0.9],
+      ["c", 0.1],
+    ],
+    chunk: 0.06,
+  },
+  blade: { p: 0.45, kinds: [["c", 1]] },
+  blunt: { p: 0.55, kinds: [["r", 1]] },
+  arrow: {
+    p: 0.5,
+    kinds: [
+      ["c", 0.35],
+      ["a", 0.65],
+    ],
+  },
+};
+const WOUND_OF = {
+  handgun: "small",
+  smg: "small",
+  lmg: "small",
+  sniper: "big",
+  ak: "big",
+  revolver: "big",
+  chaingun: "big",
+  shotgun: "shot",
+  knife: "blade",
+  dagger: "blade",
+  hammer: "blunt",
+  chair: "blunt",
+  bow: "arrow",
+};
+function wound(s, z, w, head) {
+  const zw = s.hang.zw || {},
+    had = zw[z.i] || "";
+  let add = "";
+  if (head) add = had.includes("x") ? "" : "x0";
+  else {
+    const W = WOUND[WOUND_OF[w]];
+    if (!W || had.length >= 12 || Math.random() >= W.p) return;
+    let r = Math.random(),
+      kind = W.kinds[W.kinds.length - 1][0];
+    for (const [k, p] of W.kinds)
+      if ((r -= p) < 0) {
+        kind = k;
+        break;
+      }
+    if (W.chunk && Math.random() < W.chunk)
+      kind = Math.random() < 0.2 && !had.includes("p") ? "p" : "k";
+    const spots = kind === "a" || kind === "k" ? 6 : 8;
+    add = kind + Math.floor(Math.random() * spots);
+    if (had.includes(add)) return;
+  }
+  if (add) s.hang.zw = { ...zw, [z.i]: had + add };
+}
 /* a headshot, now and then (the weapon's chance and the duck's Accuracy): every screen shows it */
 function headshot(s, by, w, z, now) {
   if (Math.random() >= headOf(s, by, w)) return false;
   addFx(s, {
     kind: "l4crit",
     by,
+    z: z.i,
     who: [],
     t: now,
     x: Math.round(z.x),
@@ -1559,7 +1647,7 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     if (hit) break;
   }
   if (hit) {
-    strike(s, hit, A.dmg, false, id);
+    strike(s, hit, A.dmg, false, id, "chaingun");
     die(hit, T);
     store(s, zs, true);
   }
@@ -1791,7 +1879,8 @@ function meleeHits(s, now) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
       if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
       k.hit.push(z.i);
-      if (strike(s, z, A.dmg, headshot(s, k.by, k.w, z, now), k.by)) die(z, T);
+      if (strike(s, z, A.dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
+        die(z, T);
       any = true;
     }
   }
@@ -1909,7 +1998,7 @@ export function l4Shots(s, now) {
         for (const z of zs)
           if (near(z) && !(sh.hit || []).includes(z.i)) {
             sh.hit = [...(sh.hit || []), z.i];
-            if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by))
+            if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w))
               die(z, T);
             hitAny = true;
             if (sh.hit.length >= A.pierce) break;
@@ -1922,7 +2011,9 @@ export function l4Shots(s, now) {
         if (w === "fireball") {
           if (strike(s, z, 1, false, sh.by)) die(z, T);
           else light(s, z, sh.by, now); // (the first of its burn as it's lit)
-        } else if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by))
+        } else if (
+          strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
+        )
           die(z, T);
         hitAny = true;
         gone = true;

@@ -234,6 +234,8 @@ function zombieEl(z) {
     st: z.st,
     a: z.a,
     sh: "",
+    hits: "",
+    img: body.firstChild,
   };
 }
 function claw(x, y, dir, ctx) {
@@ -304,6 +306,11 @@ function seeZombies(s, ctx, now) {
         );
       o.el.classList.toggle("onfire", lit);
     } // (set on fire by a fireball: one big flame over it, as a duck's)
+    const hits = (s.hang.zw || {})[z.i] || "";
+    if (o.hits !== hits) {
+      o.hits = hits;
+      o.img.src = zombieURL(z.l, z.i, hits);
+    } // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;

@@ -12,6 +12,7 @@ export const UPDATES = [
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "For Quacky Zombies: every zombie has its own scars, cuts, bruises, bites or torn holes, and hits leave wounds: bullet holes (bigger from bigger guns), shotgun pellets, cuts, bruises from the hammer, arrows that stay stuck, chunks torn out, a beak shot off. A headshot blows its head off and shows a big CRIT.",
       "For Would You Rather: Add a prompt from Notes lets you pick which box the note goes into; both boxes glow green until you tap one.",
       "On a computer, right-click a note in the Notes list and press Copy to copy its text.",
       "For Quacky Zombies: the cash register rings for ammo bought anywhere with B too.",

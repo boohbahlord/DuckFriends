@@ -14969,3 +14969,73 @@ html.keyboard .hp-pop:not(.small) {
     transform: translateY(-0.9rem);
   }
 }
+/* Quacky Zombies' headshot: the head bursts in drops of blood and a big CRIT rises over it (game.js, the l4crit fx) */
+.l4-crit {
+  position: absolute;
+  z-index: 40;
+  translate: -50% -100%;
+  pointer-events: none;
+  font-family: "Lilita One", sans-serif;
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  line-height: 1;
+  color: #ff3b2f;
+  -webkit-text-stroke: 0.14rem #2a0508;
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.12rem 0 #2a0508,
+    0 0 0.8rem #ff3b2f99;
+  animation: l4-crit 1.15s ease-out both;
+}
+@keyframes l4-crit {
+  0% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  14% {
+    opacity: 1;
+    scale: 1.2;
+  }
+  26% {
+    scale: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-1.4rem);
+  }
+}
+.l4-burst {
+  position: absolute;
+  z-index: 39;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.l4-burst i {
+  position: absolute;
+  left: calc(var(--r) / -2);
+  top: calc(var(--r) / -2);
+  width: var(--r);
+  height: var(--r);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e0384c, #7d1424 70%);
+  animation: l4-blood 0.75s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+}
+@keyframes l4-blood {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), calc(var(--y) + 1.6rem)) scale(1);
+    opacity: 0;
+  }
+}
+html.still .l4-crit {
+  animation: none !important;
+} /* (no movement: the word stays, still, until it goes) */
