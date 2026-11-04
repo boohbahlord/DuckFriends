@@ -3985,3 +3985,8 @@ every gun from the zombie game should be in the special list. I will come up for
 - Done (Noah): a zombie's claw leaves a wound on the duck now and then (wounds.js `claw`: 60%, a cut or a bruise),
   through s.pw as in every other mode: it fades 6 to 12 s after the duck is up, paused while it's down. Fire
   doesn't wound (the duck already burns).
+- Noah, full-screen PC board: the phone's full-screen rules (gmain over every row, padded by --ui-top/--ui-bot from
+  watchInsets; Duck Cabin's world under the bars) now apply on a computer too; only the phone's one-line top bar,
+  the hidden song bar and touch-action stay phone-only. Side docks (Notes, a side chat) stay beside the board. A
+  click with a weapon out works anywhere on the game screen on a computer but on a button, a field, a card, a panel,
+  the hotbar or a window (game.js NOT_AIM); touch screens keep it to the board.

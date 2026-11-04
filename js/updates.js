@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v170",
+    version: 170,
+    date: "Nov 4, 2026",
+    title: "Full-screen board on a computer",
+    news: [
+      "On a computer the board now takes the whole screen too, as it does on a phone: the top bar and the bottom bar sit over it, and Duck Cabin's world goes under them, edge to edge. Notes and a side chat still sit beside it.",
+      "With a weapon out, a click anywhere that isn't a button uses it, not only a click on the board.",
+    ],
+  },
+  {
     id: "v169",
     version: 169,
     date: "Nov 4, 2026",
