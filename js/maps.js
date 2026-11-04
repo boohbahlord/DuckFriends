@@ -74,21 +74,19 @@ export const MAPS = [
     "A pure black and white checkerboard: 8 tiles across on a computer, 5 on a phone.",
   ],
 ];
-/* Euclid's Squares with its endless zoom: an entry of its own in Vote Maps and Random (picked, it's Euclid's Squares
-   with s.mapZoomed on; the host who picks the map turns it on with the map's Zoom setting instead) */
+/* Euclid's Squares with its endless zoom: one of the map's two forms in the map vote and Random (picked, it's Euclid's
+   Squares with s.mapZoomed on; the host who picks the map turns it on with the map's Zoom setting instead) */
 export const ZOOM_MAP = [
   "euclidzoom",
   "Euclid's Squares (Zoom)",
   "Euclid's Squares, zooming into its tiny squares forever.",
 ];
-/* the maps Vote Maps and Random choose from: every map, and the zoom right after Euclid's Squares */
-export const VOTE_LIST = MAPS.flatMap((m) =>
-  m[0] === "euclid" ? [m, ZOOM_MAP] : [m],
-);
+/* a map's forms: the map vote and Random show a map once, in one of them, picked at random */
+export const MAP_FORMS = { euclid: ["euclid", ZOOM_MAP[0]] };
 export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
-    : (VOTE_LIST.find((m) => m[0] === id) || MAPS[0])[1];
+    : ([...MAPS, ZOOM_MAP].find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {

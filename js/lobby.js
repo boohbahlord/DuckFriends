@@ -20,7 +20,7 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
-import { gameArtSVG, lobbyDuck } from "./art.js";
+import { gameArtSVG, lobbyDuck, artBackdrop } from "./art.js";
 import { modeOf } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
@@ -33,7 +33,7 @@ import { openStats } from "./stats.js";
 import { sfx } from "./sound.js";
 import { darken, brighten, loadingScreen } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
-import { mapName } from "./maps.js";
+import { MAPS, mapName } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
 import { openFriends } from "./friends.js";
 import { NAV_HINTS } from "./keynav.js";
@@ -150,8 +150,16 @@ function paint() {
   ]
     .filter(Boolean)
     .join(" · ");
-  const st = $(".lobby-status", S);
-  if (s.phase === "countdown") {
+  const st = $(".lobby-status", S),
+    mv = s.phase === "countdown" ? s.mv : null;
+  paintVote(s, mv, host);
+  if (mv) {
+    const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
+    setHTML(
+      st,
+      `<span class="count">Vote for a map <b>${left}</b></span><button type="button" class="btn red" data-a="cancel">Cancel <kbd>X</kbd></button>`,
+    );
+  } else if (s.phase === "countdown") {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
       st,
@@ -230,20 +238,7 @@ function paint() {
     fr.textContent = acct.uid
       ? `${Object.values(acct.friends).filter((f) => f.on).length} online`
       : "Sign in";
-  const mode = s.options.mode || "aod",
-    art = $(".lobby-art", S),
-    duck = lobbyDuck(s),
-    artSig = (s.options.map || "board") + mode + JSON.stringify(duck); // the picture shows the game and the map
-  if (art._sig !== artSig) {
-    art._sig = artSig;
-    art.innerHTML = gameArtSVG({
-      width: 480,
-      duck,
-      map: s.options.map || "board",
-      mapLabel: mapName(s.options.map),
-      mode,
-    });
-  }
+  paintArt(s);
   $(".party-count", S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $(".party-list", S);
   if (!list.querySelector("input.rename"))
@@ -265,6 +260,85 @@ function paint() {
     );
   if (s.seat.length > lastSeat && lastSeat) sfx.pop();
   lastSeat = s.seat.length;
+}
+
+/* the picture: the game and the map. In the map vote, the map under the pointer (or yours, or the one ahead); with Vote
+   Maps or Random, a random map every few seconds, as the map isn't picked yet */
+let cycle = [];
+const CYCLE_MS = 3000;
+function artMap(s) {
+  const mv = s.phase === "countdown" ? s.mv : null;
+  if (mv) {
+    const n = {};
+    for (const v of Object.values(mv.votes || {})) n[v] = (n[v] || 0) + 1;
+    const ahead = [...mv.maps].sort((a, b) => (n[b] || 0) - (n[a] || 0))[0];
+    return (
+      (mv.maps.includes(S._hov) && S._hov) || (mv.votes || {})[R.me] || ahead
+    );
+  }
+  if (!s.options.mapPick || s.options.map === "cabin")
+    return s.options.map || "board";
+  if (!cycle.length)
+    cycle = MAPS.map((m) => m[0]).sort(() => Math.random() - 0.5);
+  return cycle[Math.floor(Date.now() / CYCLE_MS) % cycle.length];
+}
+function paintArt(s) {
+  const mode = s.options.mode || "aod",
+    art = $(".lobby-art", S),
+    duck = lobbyDuck(s),
+    map = artMap(s),
+    sig = map + mode + JSON.stringify(duck);
+  if (art._sig === sig) return;
+  art._sig = sig;
+  art.innerHTML = gameArtSVG({
+    width: 480,
+    duck,
+    map,
+    mapLabel: mapName(map),
+    mode,
+  });
+}
+/* the map vote's round (the start's first part): its maps in place of the menu, each with its picture and its votes */
+function paintVote(s, mv, host) {
+  const menu = $(".lmenu:not(.lvote)", S),
+    box = $(".lvote", S),
+    info = $(".lmenu-info", S);
+  menu.hidden = !!mv;
+  box.hidden = !mv;
+  if (!mv) {
+    if (box._sig) {
+      box._sig = "";
+      box.textContent = "";
+      info.textContent = INFO.start;
+    }
+    return;
+  }
+  const sig = mv.maps.join();
+  if (box._sig !== sig) {
+    box._sig = sig;
+    box.innerHTML = mv.maps
+      .map(
+        (id) =>
+          `<button type="button" role="menuitem" data-v="${id}"><span class="lv-pic"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${artBackdrop(id)}</svg></span><span class="lv-name">${esc(mapName(id))}</span><span class="val"></span></button>`,
+      )
+      .join("");
+    info.textContent = "Vote for a map: the most votes win.";
+    const f = box.querySelector("button");
+    if (f && !windowOpen()) f.focus();
+  }
+  const n = {};
+  for (const id of s.seat) {
+    const v = (mv.votes || {})[id];
+    if (v) n[v] = (n[v] || 0) + 1;
+  }
+  for (const b of box.querySelectorAll("button")) {
+    const v = b.dataset.v,
+      on = (mv.votes || {})[R.me] === v;
+    b.setAttribute("aria-pressed", String(on));
+    b.classList.toggle("on", on);
+    $(".val", b).textContent =
+      (n[v] ? `${n[v]} vote${n[v] === 1 ? "" : "s"}` : "") + (on ? " ✓" : "");
+  }
 }
 
 function onState(s) {
@@ -294,7 +368,7 @@ function onState(s) {
       });
     return;
   } // the countdown's last tone, at zero
-  if (s.phase === "countdown") {
+  if (s.phase === "countdown" && !s.mv) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     if (!counting) {
       counting = true;
@@ -446,6 +520,7 @@ register("lobby", {
           <button type="button" role="menuitem" data-m="ready" class="ready" hidden><span>Ready</span><span class="val"></span></button>
           ${R.online ? '<button type="button" role="menuitem" data-m="friends"><span>Friends</span><span class="val"></span></button>' : ""}
         </div>
+        <div class="lmenu lvote" role="menu" hidden></div>
         <p class="lmenu-info dim">${INFO.start}</p>
       </div>
       <aside class="party"><header><h2>Party</h2><span class="party-count dim"></span></header><div class="party-list"></div></aside>
@@ -467,6 +542,25 @@ register("lobby", {
     S.querySelector(".lmenu").addEventListener("focusin", (e) => {
       const b = e.target.closest("[data-m]");
       if (b) info.textContent = INFO[b.dataset.m];
+    });
+    const vote = S.querySelector(".lvote");
+    vote.onclick = (e) => {
+      const b = e.target.closest("[data-v]");
+      if (b) {
+        R.send({ t: "mapVote", map: b.dataset.v });
+        sfx.tick();
+      }
+    };
+    const hover = (e) => {
+      const b = e.target.closest("[data-v]");
+      S._hov = b ? b.dataset.v : "";
+      paintArt(R.state);
+    };
+    vote.addEventListener("pointerover", hover);
+    vote.addEventListener("focusin", hover);
+    vote.addEventListener("pointerleave", () => {
+      S._hov = "";
+      paintArt(R.state);
     });
     S.querySelector(".lmenu").onclick = (e) => {
       const b = e.target.closest("[data-m]");
@@ -507,6 +601,7 @@ register("lobby", {
     addEventListener("keydown", key);
     S._tick = setInterval(() => {
       if (R && R.state.phase === "countdown") onState(R.state);
+      else if (R && R.state.players[R.me]) paintArt(R.state); // (Vote Maps and Random: the picture's next map)
     }, 250);
     queueMicrotask(paint);
     return S;

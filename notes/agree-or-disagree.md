@@ -3595,3 +3595,20 @@ Maybe bleeding cuts or bleeding bullet holes can show up as well when they get s
   the point, and every 8 doublings the units grow by a power of 2 (exact) and only on-screen squares are kept, so it
   costs the same after hours. Squares under one page px choose their cut and color from their place in their own size
   and depth. 30 frames a second (15 with Low graphics); still with Less motion.
+
+## Request (owner, 2026-11-04 04:48Z, through Adam): the map vote round
+"the map vote is it's own round that takes place before a gamemode that it works with (so not cabin or zombie stuff obv), and it should resemble.... something where three options show up and players vote between them, and the three maps are random. 
+
+ALSO, the maps that are map variations dont show up twice, only one map in it's randomly predetermined form shows up 
+
+the map preview on the left screen just now cycles between random maps now BUT the host can select a map which will deselect random AND vote and just play that map UNLESS the rule for pllayers can change settings is on selects vote anyways or whatever antithesis (since everyone is able to change settings freely by that point.
+
+there is a game setting to where it shows ALL maps on the players screen and they vote which one of those, and the maps with equal votes win randomly with no one having advantage UNLESS  a map has more votes total obv"
+- Built (Noah): Vote Maps is a round of its own as the host starts, in the lobby (the countdown's first part, `s.mv`
+  { maps, votes }, 15 s, MAP_VOTE_TIME): three random maps (Game Settings > Map > Vote Maps > "Maps to vote on": All maps,
+  options.mapAll) in place of the lobby menu, each with its picture; the lobby picture shows the one under the pointer.
+  Every player voting ends it early; most votes win, ties random, no votes random. Then "The map: …" and the 5 s
+  countdown. Computers vote too. Not for Duck Cabin's games or Mad God Justin (Random picks for them). A map's forms
+  (MAP_FORMS: Euclid's Squares still or zoom) count once, in a random form; Random does the same. The lobby's picture
+  cycles random maps every 3 s with Vote Maps or Random. No more voting on the Map page: a host's click picks the map
+  and turns Vote Maps and Random off (Democracy of Ducklings' "maps" rule keeps the vote).
