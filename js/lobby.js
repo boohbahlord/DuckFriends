@@ -20,7 +20,7 @@ import {
 } from "./ui.js";
 import { activeRoom } from "./net.js";
 import { now } from "./clock.js";
-import { gameArtSVG } from "./art.js";
+import { gameArtSVG, lobbyDuck } from "./art.js";
 import { modeOf } from "./modes.js";
 import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
@@ -232,12 +232,13 @@ function paint() {
       : "Sign in";
   const mode = s.options.mode || "aod",
     art = $(".lobby-art", S),
-    artSig = (s.options.map || "board") + mode + JSON.stringify(profile.duck); // the picture shows the game and the map
+    duck = lobbyDuck(s),
+    artSig = (s.options.map || "board") + mode + JSON.stringify(duck); // the picture shows the game and the map
   if (art._sig !== artSig) {
     art._sig = artSig;
     art.innerHTML = gameArtSVG({
       width: 480,
-      duck: profile.duck,
+      duck,
       map: s.options.map || "board",
       mapLabel: mapName(s.options.map),
       mode,
@@ -434,7 +435,7 @@ register("lobby", {
       <div class="gmain lmain">
       <div class="lobby-left">
         <p class="dod-pop" role="status" hidden></p>
-        <div class="lobby-art">${gameArtSVG({ width: 480, duck: profile.duck })}</div>
+        <div class="lobby-art"></div>
         <h1 class="lobby-title"></h1>
         <p class="lobby-sub dim"></p>
         <div class="lobby-status"></div>

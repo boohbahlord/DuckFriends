@@ -3452,3 +3452,13 @@ The other player's HP on PC will show as small version of these meters with smal
   only, the board's bottom right, see-through (only on my screen) while my duck overlaps them; Settings → HP → "Other
   players' HP" (profile.settings.otherHp). "looks dif for every player" read as: each player sees everyone but
   themselves.
+
+## Request (owner, 2026-11-03 23:22Z, with a screenshot of the lobby's game picture)
+"the map should preview here AND the duck on the cloud should just be the default yellow duck and there is a 5% chance that it shows Justin's duck instead for everyone in the lobby. The settings screen should also show the map selected in the preview screen. The game modes have screenshots of the game modes in the preview, and your screenshots for that will have every player's gametag hidden for the screenshots and the ducks will just be different colors of the rainbow, and one screenshot per gamemode. Do this last."
+- Adam: the lobby's picture and every Game Settings picture take the picked map. Tiles and Shelter Sky & Null were
+  showing Night Show there, because `artBackdrop` (js/art.js) had no picture for them; it has them now. The cloud duck
+  is the plain yellow duck, 1 time in 20 Justin's duck (`lobbyDuck(s)`): the roll comes from the room's id and the
+  moment the room came back to the lobby, so everyone sees the same duck. In Game Settings, a game mode's preview is
+  one screenshot of that mode (assets/modes/<mode>.webp: every name tag, the top bar and the bottom bar hidden, the
+  ducks in the seven rainbow colors). It was taken with the map left out, so it's drawn over the picked map. Duck
+  Cabin's games are screenshots of the cabin.
