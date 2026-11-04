@@ -167,7 +167,7 @@ export const OPTIONS_DEFAULT = {
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | ec | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
-  mapPick: "", // "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
+  mapPick: "vote", // (Vote Maps is the default) "" (the host's map) | vote (Vote Maps: everyone votes) | random: settled when the host starts
   modePick: "", // "" (the host's game) | vote (Vote Game Mode: everyone votes) | random (a new game every round)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
   mode: "aod", // the game: aod (Agree or Disagree) | wyr (Would You Rather) | ddr (Does Duck Relate?) | bb (Bicker Brackets) | sc (Story Chain) | quack (Who is the Quack?) | law (Lawyering) | dunce (Duncelation) | mgj (Mad God Justin) | vdd (Valentine's Duck Date) | hang (Hangout)
@@ -1234,7 +1234,8 @@ export function reduce(state, a, now = Date.now()) {
         (s.phase === "lobby" || s.phase === "over")
       ) {
         const was = s.options.discuss,
-          wasMode = s.options.mode;
+          wasMode = s.options.mode,
+          before = { ...s.options, max: s.max };
         Object.assign(s.options, o);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
         /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
@@ -1262,7 +1263,10 @@ export function reduce(state, a, now = Date.now()) {
         if (isHang(s)) {
           s.options.map = "cabin";
           s.options.mapPick = "";
-        } else if (s.options.map === "cabin") s.options.map = "board";
+        } else if (s.options.map === "cabin") {
+          s.options.map = "board"; // leaving Duck Cabin without picking a map goes back to Vote Maps
+          if (!o.map && !("mapPick" in o)) s.options.mapPick = "vote";
+        }
         /* the looks (looks.js): Rainbow Ducks needs Hide customization, and Vote colors and Rainbow Ducks never go together
          (the one just turned on wins); the tag's color goes with Vote colors */
         const L = s.options;
@@ -1270,6 +1274,22 @@ export function reduce(state, a, now = Date.now()) {
         if (o.voteColor) L.rainbowDucks = 0;
         if (!L.hideLooks) L.rainbowDucks = 0;
         if (!L.voteColor) L.tagColor = 0;
+        /* every change goes in the chat, with who made it (from Game Settings or the command line alike): the chat
+           words it from the keys (settingText in gamesettings.js) */
+        const after = { ...s.options, max: s.max },
+          ch = {};
+        for (const k of Object.keys(after))
+          if (JSON.stringify(after[k]) !== JSON.stringify(before[k]))
+            ch[k] = after[k];
+        if (Object.keys(ch).length)
+          logLine(s, {
+            sys: true,
+            float: true,
+            by: a.id,
+            opts: ch,
+            reset: Object.keys(OPTIONS_DEFAULT).every((k) => k in o),
+            text: `${me ? me.name : "The host"} changed the game settings.`,
+          });
       }
       return s;
     }

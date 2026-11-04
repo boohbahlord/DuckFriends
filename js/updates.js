@@ -8,10 +8,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 export const UPDATES = [
   {
     id: "2026-11-03",
-    version: 138,
+    version: 139,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, and Mad God Justin reworked",
     news: [
+      "Game Settings on a phone: what a row does shows right under it, one row at a time.",
+      "Hangout is with the social games now, and Quacky Zombies is with Mad God Justin in the special ones. Duck Cabin in the Map list opens a page with just its two games.",
+      "Every change to the game settings shows in the chat, with the name tag of whoever made it.",
+      "New rooms start on Vote Maps.",
+      "The scroll wheel switches between the specials in your hotbar.",
+      "If you aim with the arrow keys and walk with WASD, it works in every mode now: with a weapon in your hand and the mouse sitting still, the arrow keys aim.",
       "The lobby's picture shows the picked map (Tiles and Shelter Sky & Null too), with the plain yellow duck on its cloud. Once in a while it's Justin's duck instead, the same for everyone in the room.",
       "In Game Settings, every game mode's preview is a real look at the game, on the picked map.",
       "Your HP is a red meter under your hotbar now, a block for each HP, and it glows red when you're nearly out. A thin blue bar under it shows how much sprint you have left where sprinting runs out.",
