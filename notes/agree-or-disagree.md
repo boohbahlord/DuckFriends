@@ -3462,3 +3462,9 @@ The other player's HP on PC will show as small version of these meters with smal
   one screenshot of that mode (assets/modes/<mode>.webp: every name tag, the top bar and the bottom bar hidden, the
   ducks in the seven rainbow colors). It was taken with the map left out, so it's drawn over the picked map. Duck
   Cabin's games are screenshots of the cabin.
+
+"The arrow keys should be used to aim for a player not using keyboard for EVERY game mode, but i think pharaoh messed that up." (plus: the scroll wheel switches between the specials in the hotbar)
+- Jackal: the arrow-key aim only existed in Mad God Justin's boss phase. Now in every mode, when a weapon is in hand and
+  the mouse has been idle for 2.5 s (or never used), the arrows aim and WASD walks; with no weapon in hand the arrows
+  walk as before (`arrowsAim` in js/game.js, also used by `hangStep`). The wheel (`onWheel`/`wheelPick`) picks the
+  next special in the hotbar; in Quacky Zombies it steps through the filled slots. Menus' arrows are js/keynav.js, untouched.
