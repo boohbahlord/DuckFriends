@@ -13923,19 +13923,22 @@ html.moving .eye-tears .tdrop.t2 {
   display: none;
 }
 .l4z.dead {
-  animation: l4z-die 1s ease-in forwards;
+  animation: l4z-die 4s ease-in forwards;
 }
 @keyframes l4z-die {
   0% {
     opacity: 1;
   }
-  25% {
+  6% {
+    opacity: 0.5;
+  }
+  75% {
     opacity: 0.5;
   }
   100% {
     opacity: 0;
   }
-} /* (lying down, see-through, gone in a second) */
+} /* (lying down, see-through at once, gone in 4 s: L4.DEAD_MS) */
 .l4-boards,
 .l4-candle {
   transform-origin: 0 0;
@@ -14432,9 +14435,10 @@ html.moving .eye-tears .tdrop.t2 {
     transform: rotate(-10deg) translateY(4%);
   }
 }
-.screen:has(.l4-shopping) .tpad {
+.screen:has(.l4-shopping) :is(.tpad, .cabin-end) {
   visibility: hidden;
-} /* (on a phone the jump and aim buttons step aside for it: they sat over its last row) */
+} /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
+     tabs) */
 .l4-shopping .l4-hud,
 .l4-shopping .l4-pts,
 .l4-shopping .l4-end {
@@ -14538,6 +14542,86 @@ html.moving .eye-tears .tdrop.t2 {
 .l4-up-buy {
   width: 100%;
   justify-content: center;
+}
+/* its two tabs: the shop, and every item in this mode, each category under its heading; a tap on an item opens what
+   it does and its numbers (l4ddcatalog.js) */
+.l4-shop-tabs {
+  margin: 0;
+}
+.l4-cat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.l4-cat-it {
+  border-radius: 0.7rem;
+  background: var(--panel2);
+  border: 0.13rem solid var(--soft);
+}
+.l4-cat-it > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: calc(1rem * var(--ts));
+}
+.l4-cat-it > summary::-webkit-details-marker {
+  display: none;
+}
+.l4-cat-it > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--dim);
+}
+.l4-cat-it[open] > summary::after {
+  content: "–";
+}
+.l4-cat-it .l4orb {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+.l4-cat-drop {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+}
+.l4-cat-drop svg {
+  width: 100%;
+  height: 100%;
+}
+.l4-cat-body {
+  padding: 0 0.6rem 0.5rem 3.25rem;
+  font-size: calc(0.85rem * var(--ts));
+}
+.l4-cat-body p {
+  margin: 0 0 0.3rem;
+}
+.l4-cat-body dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.15rem 0.8rem;
+}
+.l4-cat-body dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.l4-cat-body dt {
+  color: var(--dim);
+}
+.l4-cat-body dd {
+  margin: 0;
+  font-weight: 700;
+  color: #ffd23f;
+  text-align: right;
 }
 .l4-shop-say {
   display: flex;
@@ -15182,17 +15266,18 @@ html.keyboard .hp-pop:not(.small) {
     transform: translateY(-0.9rem);
   }
 }
-/* Quacky Zombies' headshot: the head bursts in drops of blood and a big CRIT rises over it (game.js, the l4crit fx) */
+/* Quacky Zombies' headshot: the head bursts in drops of blood and a CRIT rises over it (game.js, the l4crit fx; a
+   third smaller than it was: the owner's, Nov 4) */
 .l4-crit {
   position: absolute;
   z-index: 40;
   translate: -50% -100%;
   pointer-events: none;
   font-family: "Lilita One", sans-serif;
-  font-size: clamp(2rem, 4.4vw, 3rem);
+  font-size: clamp(1.4rem, 3vw, 2rem);
   line-height: 1;
   color: #ff3b2f;
-  -webkit-text-stroke: 0.14rem #2a0508;
+  -webkit-text-stroke: 0.11rem #2a0508;
   paint-order: stroke fill;
   text-shadow:
     0 0.12rem 0 #2a0508,

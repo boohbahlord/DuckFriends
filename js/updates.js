@@ -9,14 +9,36 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
-    id: "v167",
-    version: 167,
+    id: "v169",
+    version: 169,
     date: "Nov 4, 2026",
     title: "Quacky Zombies' guns as specials, and wounds on players",
     news: [
       "Every gun from Quacky Zombies is now a special for every mode with the hotbar: the Sniper, SMG, AK-47, Revolver, LMG, Chain gun and Grenade launcher. Each works as it does there: the SMG, AK-47, LMG and Chain gun fire as long as the button is down, the Chain gun's shot hits at once, and the Grenade launcher's grenade goes off on the first duck it gets to.",
       "They are locked for now. How to unlock them is coming soon.",
       "For Quacky Zombies: a zombie's claw now and then leaves a cut or a bruise on your duck, and it goes away by itself 6 to 12 seconds after you're up, as wounds do in the other modes.",
+    ],
+  },
+  {
+    id: "v168",
+    version: 168,
+    date: "Nov 4, 2026",
+    title: "Footsteps and a jump sound",
+    news: [
+      "Ducks make quiet footsteps as they walk, in every game mode, and a jump makes a soft hup.",
+    ],
+  },
+  {
+    id: "v167",
+    version: 167,
+    date: "Nov 4, 2026",
+    title: "Quacky Zombies: more zombies, dearer shop",
+    news: [
+      "For Quacky Zombies: the zombies get tougher every 4 rounds instead of every 5.",
+      "For Quacky Zombies: more zombies come: 25% more in rounds 1 to 4, twice as many in rounds 5 to 8, three times as many in rounds 9 to 12 and four times as many from round 13 on.",
+      "For Quacky Zombies: everything Justin's Butler sells costs 20% more, ammo too (6 points for 2 bullets, 6 for 5 arrows).",
+      "For Quacky Zombies: Justin's Butler has an Items tab with every item in the game, each in its own category. Tap one to see what it does and its numbers.",
+      "For Quacky Zombies: dead zombies stay on the floor 3 seconds longer, and the CRIT is smaller.",
     ],
   },
   {

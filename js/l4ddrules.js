@@ -86,21 +86,26 @@ export const L4 = {
   BOARD_MS: 900, // ms of holding E for each board
   TEAR_MS: 1500, // ms a zombie takes to tear one board down
   REACH: 110, // world px: how near E works (a downed duck, an opening)
-  DEAD_MS: 1000, // ms a dead zombie lies there, fading
+  DEAD_MS: 4000, // ms a dead zombie lies there, fading (3 s longer than its first second: the owner's, Nov 4)
+  FELL_MS: 1000, // ms a zombie counts as just killed (a drop due falls where it lies)
 };
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
 /* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
    their speed as a share of the ducks' [slowest, fastest], how long one is at a duck before it swipes and how often
-   after (ms), and the most on the board at once */
+   after (ms), and the most on the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10,
+   15 and 25 became 4, 8, 12 and 20) */
 const ROUNDS = [
-  [5, 14, [3, 5], [0.5, 0.67], 500, 1000, Infinity],
-  [10, 20, [3, 5], [0.5, 0.75], 300, 750, 35],
-  [15, 20, [3, 5], [0.75, 0.75], 300, 750, 35],
-  [25, 50, [5, 10], [0.95, 0.95], 250, 500, 45],
+  [4, 14, [3, 5], [0.5, 0.67], 500, 1000, Infinity],
+  [8, 20, [3, 5], [0.5, 0.75], 300, 750, 35],
+  [12, 20, [3, 5], [0.75, 0.75], 300, 750, 35],
+  [20, 50, [5, 10], [0.95, 0.95], 250, 500, 45],
   [Infinity, 50, [5, 10], [0.95, 0.95], 250, 500, 50],
 ];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
+/* and more of them (the owner's, Nov 4): 25% more in rounds 1 to 4, 100% more in 5 to 8, 200% more in 9 to 12, 300%
+   more from 13 on, the ones for each player past the first too */
+export const moreOf = (r) => (r <= 4 ? 1.25 : r <= 8 ? 2 : r <= 12 ? 3 : 4);
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first); each second a 25% chance that none comes */
 const SKIP = 0.25;
@@ -360,14 +365,21 @@ export const SHOP = [
 ];
 /* and his guns (the owner's, Nov 4): both pistols, the knife, the shotgun and the bow. Bullets cost 5 points for 2,
    arrows 5 for 5; a gun I already have says Refill and costs what fills it to the top. What a gun costs to buy
-   when I haven't got it the owner didn't say: I made it its full load of ammo at that price (the knife 100) */
+   when I haven't got it the owner didn't say: I made it its full load of ammo at that price (the knife 100).
+   Everything he sells is 20% dearer, the ammo too (the owner's, Nov 4): bullets 6 for 2, arrows 6 for 5, the knife 120 */
+const SHOP_MORE = 1.2;
 export const GUN_SHOP = ["handgun", "revolver", "knife", "shotgun", "bow"];
-export const AMMO_PRICE = { bow: [5, 5] }; // (points, for how many: arrows; every other gun 5 for 2 bullets)
-const KNIFE_PRICE = 100;
+export const AMMO_PRICE = { bow: [6, 5], gun: [6, 2] }; // (points, for how many: arrows; every other gun's bullets)
+const KNIFE_PRICE = 120;
 const ammoLeft = (c) => (c ? c[0] + c[1] : 0);
 const ammoCost = (w, n) => {
-  const [p, k] = AMMO_PRICE[w] || [5, 2];
+  const [p, k] = AMMO_PRICE[w] || AMMO_PRICE.gun;
   return Math.ceil(n / k) * p;
+};
+/* what gun w costs to buy when I haven't got it */
+export const buyPrice = (w) => {
+  const full = fullAmmo(w);
+  return full ? ammoCost(w, ammoLeft(full)) : KNIFE_PRICE;
 };
 /* what the Butler asks for gun w now: to buy it, or to fill it to the top (0: it's full; null: not his, or a knife I
    have already) */
@@ -375,21 +387,23 @@ export function gunPrice(s, id, w) {
   if (!GUN_SHOP.includes(w)) return null;
   const kit = kitOf(s, id),
     full = fullAmmo(w);
-  if (!kit || !kit.sl.includes(w))
-    return full ? ammoCost(w, ammoLeft(full)) : KNIFE_PRICE;
+  if (!kit || !kit.sl.includes(w)) return buyPrice(w);
   if (!full) return null;
   return ammoCost(w, ammoLeft(full) - ammoLeft(kit.am[w]));
 }
 export const priceOf = (id, n) =>
-  UP_TIMES *
-  {
-    acc: 300 + 50 * n,
-    as: 250 + 50 * n,
-    hp: n ? 125 : 100,
-    sp: 250,
-    rl: 300,
-  }[id];
-const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3)
+  Math.round(
+    UP_TIMES *
+      SHOP_MORE *
+      {
+        acc: 300 + 50 * n,
+        as: 250 + 50 * n,
+        hp: n ? 125 : 100,
+        sp: 250,
+        rl: 300,
+      }[id],
+  );
+const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time */
 export const saleOn = (s) =>
@@ -849,7 +863,7 @@ function countFor(s, r) {
     extra = Math.max(0, players(s).length - 1);
   let n = R[1];
   for (let k = 0; k < extra; k++) n += rint(R[2][0], R[2][1]);
-  return n;
+  return Math.round(n * moreOf(r));
 }
 function newRound(s, r, now, wait) {
   const am = s.hang.l4a || {};
@@ -1051,7 +1065,7 @@ function dropTick(s, L, zs, now, T, ids) {
   }
   if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one came or went: the state stays the same object)
   /* a drop due: the next zombie killed (a Nuke taken just now too) drops it where it fell */
-  const fell = zs.filter((z) => z.st === 3 && T - z.d <= L4.DEAD_MS); // (killed in the last second: still lying there)
+  const fell = zs.filter((z) => z.st === 3 && T - z.d <= L4.FELL_MS); // (killed in the last second)
   if (L.due && L.due.length && fell.length) {
     const z = fell[Math.floor(Math.random() * fell.length)],
       [x, y] = playable(z.x, z.y) ? [z.x, z.y] : dropSpot(s) || [z.x, z.y];

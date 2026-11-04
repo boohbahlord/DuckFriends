@@ -3955,6 +3955,24 @@ jumping should have a sound if it doesnt yet, and it should be quieter but not s
 every gun from the zombie game should be in the special list. I will come up for ideas of how to unlick them later."
 - Split by Adam: Solomon = Quacky Zombies gameplay, Miles Jr. = sounds, Noah = first HP lost, guns in the specials
   list, PC full-screen board with clicks anywhere but buttons.
+- Solomon (v167): the difficulty steps (ROUNDS in js/l4ddrules.js) end at rounds 4, 8, 12 and 20 (they were 5, 10, 15
+  and 25: each step four-fifths as long, my reading of "five rounds ... changed to four"). `moreOf(r)` multiplies a
+  round's whole count, the extras for each player included: x1.25 (1-4), x2 (5-8), x3 (9-12), x4 (13+). Everything the
+  Butler sells is x1.2 (`SHOP_MORE`): upgrades (e.g. Accuracy 720, Attack speed 600), bullets 6 for 2, arrows 6 for 5,
+  the knife 120; the fireplace stays 750 (not his shop). Corpses lie 4 s (`L4.DEAD_MS`, see-through at once, fading in
+  the last second); a drop due still falls only on a zombie killed in the last second (`L4.FELL_MS`). Crit: the CRIT
+  word a third smaller and the blood burst as small as a duck's crit (read as the text and burst, not the headshot
+  chance). The Butler's page has two tabs, Shop and Items (`js/l4ddcatalog.js`): every weapon, special, grenade, drop
+  and upgrade under its category heading; a tap opens its line and its numbers, read from the rules. Exit Cabin hides
+  while the page is open (it sat on the tabs).
+
+## Request (owner, 2026-11-04 07:43Z, sound part, via Adam): footsteps everywhere, a jump sound
+"There are walking sounds from ducks thar are quiet in every other game mode now."
+"jumping should have a sound if it doesnt yet, and it should be quieter but not so quiet that it is impossible to hear."
+- js/feet.js: Quacky Zombies' footstep (l4step) for every duck in every other mode, mine at 0.4, others at 0.28, a
+  step every 0.7 duck sizes on a board (44 world px in Duck Cabin, fainter far off there), none in a jump, at most 3 in
+  any 150 ms. Hook: one call in game.js drawDucks. Jump: sfx.hop (a soft rising "hup", ~0.03 RMS, the music ~0.1),
+  from jump() for my own jumps. tat and bow made a touch darker (Firefox found a rare pop). 0 clicks both browsers.
 - Noah, first HP lost: live #248 (v166). The bar over a duck only showed once a hit was counted, and a hit that
   redrew the name tag (a new wound) lost the bar's last value; both now flash and make the hit sound.
 - Noah, guns in the specials list: sniper, smg, ak, revolver, lmg, chaingun, glauncher are specials (rules.js

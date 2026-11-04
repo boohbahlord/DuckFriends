@@ -224,6 +224,7 @@ import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
 import { sfx } from "./sound.js";
+import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
 import { hooks } from "./hooks.js";
@@ -1174,6 +1175,19 @@ function drawDucks(now = clockNow()) {
         .map((id) => id + BODY), // (Quacky Zombies' ghosts leave no body)
     ],
     lane = ids.filter((id) => posOf(id).x < 0);
+  if (!isL4dd(s) && onBoardPhase())
+    feet(
+      s.seat
+        .filter((id) => s.pos[id] && s.players[id] && !s.players[id].dead)
+        .map((id) => {
+          const p = posOf(id);
+          return [id, p.x, p.y, liftOf(id, p)];
+        }),
+      hang ? [HW, HH] : [geo.W, geo.H],
+      hang ? 44 : geo.size * 0.7,
+      R.me,
+      hang,
+    ); // (quiet footsteps in every mode; Quacky Zombies has its own: feet.js)
   const boxes = [],
     puffs = [],
     wearsX = new Set(),
@@ -2921,12 +2935,12 @@ function playFx(f) {
         Math.random() * 30,
       );
   } else if (f.kind === "l4crit") {
-    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a big CRIT rises
-       over it, so it's never missed (owner 2026-11-04 04:01Z) */
+    /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
+       it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
     if (!geo.hang) return;
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78;
-    bloodBurst(a.left, top, 14, 2.6, size * 0.35, size * 0.55);
+    bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
     neckSpray(a.left + size * 0.12, a.top - size * 0.5); // (then blood keeps spurting out of its neck for a moment)
     const word = el(
       `<div class="l4-crit" style="left:${a.left.toFixed(1)}px;top:${(top - size * 0.35).toFixed(1)}px" aria-hidden="true">CRIT</div>`,
@@ -3625,6 +3639,7 @@ function jump(how) {
     (how === "short" ||
       (kept.has("shortjump") && hasKey(playDuck(), "shortjump"))); // (the Short jump: lower and quicker)
   if (world && isHang(R.state)) world.started(me); // (the arc starts from the height it stands on)
+  sfx.hop();
   sendMove(true);
 }
 function jumpTo(c) {
