@@ -3752,3 +3752,30 @@ the weapons need to work as fast as they do in the zombies game mode for now on,
   Found: OPTIONS_DEFAULT.answerTime was 30 since 2026-10-24 (request 4 asked "a 30 s answer time by default"), the same
   on phone and computer (rooms start from OPTIONS_DEFAULT; nothing is kept per device). Now 0 (Off) by default, as the
   owner says. Never change the owner's defaults without asking.
+
+## Request (owner, 2026-11-04 05:12Z, through Adam): Trivia rows, the phone's joystick and the phone's layout
+"the ducks on the rows need to be bigger, the rows should be able to grow in height to adjust to size of prompts OR to include the ducks on them, AND the map can be walked down and up like in story chain to adjust for the growing size of map
+
+the select answer should be yellow tbh  AND the correct answer is shown in green
+
+when correct answer show up then the players will see the end round button become a red button that says stop timer, because after the answer is shown, there is only 10 seconds before the next answer, and only one player is needed to stop the clock there to not let it go to next turn, and the timer starts over at 5 seconds one the red button is clicked again, and the button can be clicked by anyone, and all players must have it unclicked for it to continue to the next round. this is something that is on by default but can be turned off in game setting for it . 
+
+on mobile, the player SHOULD be able to put their movement joystick on the board where they please without the fucking board itself being selected BECAUSE THAT COMPLETEY STOPS THE MOBILE PLAYER FROM BEING ABLE TO FUCKING USE THE CONTROLS AS THEY MUST BE! The only thing that stops the placement of the joystick is actual dedicated buttons and the like NOT THAT
+
+the HP or anyting like that can be moved to the right on mobile to make more room for the screen, and the jumps or justin kill count can go to the left above the notes and abc, and the bottom ui elements should make more room for the board and the cloud and prompt on the phone screen should be slightly smaller. There should be less dead space in the active game for the UI for mobile players, such as the top part. The thing that shows the song playing can be removed for mobile, but they can still hear the music."
+- Trivia parts: Adam (see above).
+- Solomon, PR #236 (v154): the board itself no longer takes the finger for a scroll on a phone (`touch-action: none` on
+  `.game > .gmain .board`; typing boxes still select text), so the joystick starts anywhere off a button in every stage
+  and a tap on an answer still votes. The board keeps one size through a turn (`watchInsets` only lets the bars' room
+  grow within a turn), the top bar keeps one line, the song bar is hidden on phones, and an upright phone's duck and
+  name tag stay on the board (`TAG_ROOM`).
+- Solomon, PR B (v155): on a phone standing up, the bottom bar is the buttons' row, then Jumps (and Justin Kills) at the
+  left over Notes and ABC, the specials' slider in the middle and my HP at the right, with no row of its own for the HP
+  (about 30 px more board). The cloud's duck and the prompt are a little smaller, the top bar a little shorter. Trivia's
+  write form (and any submit card taller than the room) starts at its top and scrolls instead of sitting under both
+  bars when the phone is on its side.
+
+## Request (owner, 2026-11-04 05:26Z, through Adam): the board grows and shrinks, the duck walks off it
+"WHY THE FUCK DOES THIS FUCKING BOARD CONTRACT AND LENGTHEN AND WHY THE FUCK CAN I WALK OFF THE BOARD!?!?!?! WHY THE FUCK DOES THE FUCKING DEFAULT SETTING I HAVE FOR FUCKING AGREE OR DISAGREE BEEN CHANGED TO FUCKIMG 30 SECONDS !?!?!?!? IT DIDNT HAVE A FUCKING TIMER!!!! WHO IS CHANGING MY DEFAULT SETTINGS!?!?!?
+WAIT, DONT TELL ME THAT MOBILE DOESNT HAVE THE SAME DEFAULT LOBBY SETTINGS AS PC!!!!!!!!????!?!?!?!?! AAAAAAHHHH IM PISSED"
+- The board and the walking off it: Solomon, PR #236 (above). The default timer: Adam (above).
