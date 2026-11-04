@@ -187,6 +187,7 @@ import { l4TouchAim, l4Held, l4Got, sprintLeft } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
+import { mountCabinEnd } from "./hangout/cabinend.js";
 import { duckSVG, duckRoom } from "./duck.js";
 import {
   shownDuck,
@@ -431,6 +432,7 @@ let lastSend = 0,
 let draftT = 0;
 let pm = null,
   idleOff = null,
+  cabinEndOff = null, // (Hangout and Quacky Zombies: the End Cabin vote)
   mbarOff = null; // the player menu (Tab), and the away watch
 let recorded = ""; // the last round counted in my all-time stats
 let lastLog = -1,
@@ -5924,6 +5926,8 @@ register("game", {
     pad = null;
     if (mbarOff) mbarOff();
     mbarOff = null;
+    if (cabinEndOff) cabinEndOff();
+    cabinEndOff = null;
     if (insetsOff) insetsOff();
     insetsOff = null;
     lastKey = -1;
@@ -5978,6 +5982,7 @@ register("game", {
     mbarOff = mountMusicBar(S);
     insetsOff = watchInsets(S);
     pm = mountPlayers(S, () => R);
+    cabinEndOff = isHang(R.state) ? mountCabinEnd(S, () => R) : null;
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {

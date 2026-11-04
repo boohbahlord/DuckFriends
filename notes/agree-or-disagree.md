@@ -3752,3 +3752,9 @@ the weapons need to work as fast as they do in the zombies game mode for now on,
   Found: OPTIONS_DEFAULT.answerTime was 30 since 2026-10-24 (request 4 asked "a 30 s answer time by default"), the same
   on phone and computer (rooms start from OPTIONS_DEFAULT; nothing is kept per device). Now 0 (Off) by default, as the
   owner says. Never change the owner's defaults without asking.
+
+"45. ... The hangout game mode only lasts for as long as it takes for players to vote to end it, which is half of players after it starts, and they can unvote to end it too, and the vote will start a ten second timer. the timer resets IF there isnt enough votes, so there has to be enough votes for hangout to end. The vote is NOT enter and is a click that is on a small UI in the top left of the screen that appears like a vote button, and i says "End Cabin" Hangout does not count as only but a whole game, as in, even if it is set to 3 or 6 games, that hangout will only last as one whole game once players end it in vote, same with the zombie game mode, which has "Exit Cabin" at the top left and can be unvoted the same by clicking again and counts as 1 game. ..." (owner 2026-11-04 06:19Z, answer to Adam's question 45; the rest is Adam's)
+- Jackal: the End Cabin / Exit Cabin part. `s.cabinEnd = { by: {id: true}, at }`, action `cabinEnd` (js/rules.js, in REMOTE),
+  `cabinVotes`/`cabinNeeded` (half of the people, rounded up, never the computers), the 10 s timer `CABIN_END_MS` starts
+  at enough votes and goes back to 0 when they drop; `cabinOver(s, now)` is the one place the ending lives (the lobby
+  for now). The button is js/hangout/cabinend.js, top left of the board (on a phone under the song bar).
