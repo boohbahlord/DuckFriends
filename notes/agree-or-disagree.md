@@ -3847,3 +3847,8 @@ Show me the rough UI design plan before u do it for all three"
 "for the map vote, the count go down to ten seconds ONCE everyone has voted a map before it accelerates the timer"
 - Built (Adam, #241, v159): in the map vote, once every player has voted, the clock drops to 0:10 (when it has more),
   then runs twice as fast (MAP_ALL_IN in rules.js). The game mode vote only runs twice as fast.
+
+## Request (owner, 2026-11-04 07:10Z, through Adam): the grenade's blast
+"give the grenade 50% wide explosion radius"
+- Built (Adam): every mode. rules.js GRENADE_R 1.5 to 2.25 duck lengths (board games, Mad God Justin), Quacky Zombies'
+  ARMS.grenade.r 140 to 210 (thrown and launched), and the drawn blast (grenade.js) 3.2 to 4.8 duck sizes across.
