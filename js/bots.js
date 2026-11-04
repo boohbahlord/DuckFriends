@@ -591,6 +591,17 @@ export function botActions(s, now) {
   const people = s.seat.filter((id) => !s.players[id].bot);
   bots.forEach((id, i) => {
     const late = now - s.at >= wait + i * 700; // they don't all move on the same instant
+    if (s.phase === "countdown") {
+      // the map vote: each votes for one of its maps, a few seconds in
+      const mv = s.mv;
+      if (mv && !(mv.votes || {})[id] && now - s.at > 2500 + i * 900)
+        out.push({
+          t: "mapVote",
+          id,
+          map: mv.maps[hash(id + s.at) % mv.maps.length],
+        });
+      return;
+    }
     if (isSc(s)) {
       storyBot(s, id, now, wait, late, people, out);
       return;
