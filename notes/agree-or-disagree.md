@@ -3584,3 +3584,14 @@ Maybe bleeding cuts or bleeding bullet holes can show up as well when they get s
   than 0.85 of its distance from the nearest point (down to 2.4 px). Colors picked from the owner's picture, a dark
   line between squares. Drawn once per page size. Lobby picture and Map window: the same drawing at 480 by 270.
   Next: (c) the endless zoom (its own Vote Maps entry; a setting on the map when picked directly).
+
+## Map, step (c) (Adam's relay, 2026-11-04 03:55Z): Euclid's Squares, the endless zoom
+- Vote Maps and Random have an entry of their own, "Euclid's Squares (Zoom)" (vote id `euclidzoom`, `ZOOM_MAP` and
+  `VOTE_LIST` in js/maps.js; not a map id). When it wins, rules.js sets options.map `euclid` and `s.mapZoomed` 1. A host
+  who picks Euclid's Squares gets the map's own setting under the Map rows, Zoom: Still | Endless zoom
+  (options.mapZoom), like Shelter Sky & Null's black and white.
+- euclid.js `zoomer`: the camera goes into the first point (0.53, 0.40), twice as close every 5 s, forever. Each frame
+  makes the tiling again for what's on screen only; a square is cut down to 1.6 px on screen. Positions are kept from
+  the point, and every 8 doublings the units grow by a power of 2 (exact) and only on-screen squares are kept, so it
+  costs the same after hours. Squares under one page px choose their cut and color from their place in their own size
+  and depth. 30 frames a second (15 with Low graphics); still with Less motion.

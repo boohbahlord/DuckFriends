@@ -74,8 +74,21 @@ export const MAPS = [
     "A pure black and white checkerboard: 8 tiles across on a computer, 5 on a phone.",
   ],
 ];
+/* Euclid's Squares with its endless zoom: an entry of its own in Vote Maps and Random (picked, it's Euclid's Squares
+   with s.mapZoomed on; the host who picks the map turns it on with the map's Zoom setting instead) */
+export const ZOOM_MAP = [
+  "euclidzoom",
+  "Euclid's Squares (Zoom)",
+  "Euclid's Squares, zooming into its tiny squares forever.",
+];
+/* the maps Vote Maps and Random choose from: every map, and the zoom right after Euclid's Squares */
+export const VOTE_LIST = MAPS.flatMap((m) =>
+  m[0] === "euclid" ? [m, ZOOM_MAP] : [m],
+);
 export const mapName = (id) =>
-  id === "cabin" ? "Duck Cabin" : (MAPS.find((m) => m[0] === id) || MAPS[0])[1];
+  id === "cabin"
+    ? "Duck Cabin"
+    : (VOTE_LIST.find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
@@ -87,7 +100,8 @@ export function mapMini(id) {
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
   if (id === "collage") return `<div class="mini-map">${collageMini()}</div>`;
-  if (id === "euclid") return `<div class="mini-map">${euclidMini()}</div>`;
+  if (id === "euclid" || id === ZOOM_MAP[0])
+    return `<div class="mini-map">${euclidMini()}</div>`;
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
@@ -1115,7 +1129,7 @@ export function mountMap(layer, s) {
                   : map === "collage"
                     ? collageScene(layer, s)
                     : map === "euclid"
-                      ? euclidScene(layer)
+                      ? euclidScene(layer, s)
                       : map === "cabin"
                         ? cabinScene(layer)
                         : nightScene(layer);
