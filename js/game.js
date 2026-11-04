@@ -3574,29 +3574,29 @@ function viewSubmit(s) {
       : isLaw(s)
         ? `<form class="panel submit-card" autocomplete="off"><h2>Your topic</h2>
       <p class="small dim">Someone else will have to defend it, so make it worth arguing about. Nobody sees it until its case.</p>
-      <textarea maxlength="${textMax(s)}" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
+      <textarea data-note-box maxlength="${textMax(s)}" rows="3" placeholder="Pineapple belongs on pizza." aria-label="Your topic"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
         : isDn(s)
           ? `<form class="panel submit-card" autocomplete="off"><h2>Your take</h2>
       <p class="small dim">Something controversial enough to argue about. ${s.options.dunceTakes === "own" ? "You defend your own take." : s.options.dunceTakes === "notOwn" || +s.options.noOwn ? "Someone else will have to defend it." : "It goes to a random duck, maybe you."} Nobody is told who wrote it.</p>
-      <textarea maxlength="${textMax(s)}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
+      <textarea data-note-box maxlength="${textMax(s)}" rows="3" placeholder="Cereal is a soup." aria-label="Your take"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
           : isDdr(s)
             ? `<form class="panel submit-card" autocomplete="off"><h2>Your statement</h2>
       <p class="small dim">Something people might relate to, or might not.</p>
-      <textarea maxlength="${textMax(s)}" rows="3" placeholder="I've laughed at my own joke before anyone else." aria-label="Your statement"></textarea>
+      <textarea data-note-box maxlength="${textMax(s)}" rows="3" placeholder="I've laughed at my own joke before anyone else." aria-label="Your statement"></textarea>
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <p class="acts"><button type="submit" class="btn green">Send</button><button type="button" class="btn ghost" data-a="none">Don't submit one</button></p></form>`
             : `<form class="panel submit-card" autocomplete="off"><h2>Your question</h2>
       ${
         isWyr(s)
           ? `<p class="wyr-head">Would you rather…</p><div class="wyr-pair">
-        <textarea class="wyr-in" data-side="a" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
+        <textarea data-note-box class="wyr-in" data-side="a" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Lose every right ever and become data breached" aria-label="The first choice"></textarea>
         <span class="wyr-or-word">OR</span>
-        <textarea class="wyr-in" data-side="b" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Admit Justin is right about data breaching" aria-label="The second choice"></textarea></div>`
-          : `<textarea maxlength="${textMax(s)}" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>`
+        <textarea data-note-box class="wyr-in" data-side="b" maxlength="${Math.min(100, textMax(s))}" rows="3" placeholder="Admit Justin is right about data breaching" aria-label="The second choice"></textarea></div>`
+          : `<textarea data-note-box maxlength="${textMax(s)}" rows="3" placeholder="Data breaching is a serious problem, and IDIOTS don't understand what I am saying!" aria-label="Your question"></textarea>`
       }
       <div class="row"><button type="button" class="btn ghost" data-a="notes">Add a prompt from Notes</button></div>
       <div class="sect"><h3 data-tip="How long everyone gets to answer your question.">Answer time</h3><div class="row">${[
@@ -5506,11 +5506,29 @@ async function act(a) {
       break;
     case "notes": {
       const t = await pickNote();
-      const box = $(".submit-card textarea", S);
-      if (t && box) {
-        box.value = t;
-        box.focus();
+      const boxes = $$(".submit-card textarea[data-note-box]", S);
+      if (!t || !boxes.length) break;
+      if (boxes.length === 1) {
+        boxes[0].value = t;
+        boxes[0].focus();
+        break;
       }
+      // I want more than one box to breathe green until I tap the one the note goes into
+      const done = () =>
+        boxes.forEach((b) => {
+          b.classList.remove("note-glow");
+          b.removeEventListener("pointerdown", fill);
+        });
+      const fill = (e) => {
+        e.preventDefault();
+        done();
+        e.currentTarget.value = t;
+        e.currentTarget.focus();
+      };
+      boxes.forEach((b) => {
+        b.classList.add("note-glow");
+        b.addEventListener("pointerdown", fill);
+      });
       break;
     }
     case "none":

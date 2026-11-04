@@ -3553,3 +3553,9 @@ zombie, a close group counting as one; guns louder.
 
 ## Follow-up (Adam, 2026-11-04 03:42Z): the till on every purchase
 B buys ammo anywhere (#220), so the cash register now rings on the rules' `l4buy` fx where the buyer stands; a points drop near the Butler still rings for upgrades, never twice for one buy.
+
+"u select the notes option at the bottom of the prompt, and for any gamemode WHERE there are multiple options, you just select the box you want to import it into, and then those boxes will breathe a green glow at the and around the edges until one is selected. right clicking a note in pc will have a button that says "Copy" and that puts it to the computer to paste anywhere." (answer 30, via Adam)
+- Jackal: every textarea in the submit card has `data-note-box` (Trivia will use it too). With more than one
+  (Would You Rather), Add a prompt from Notes lets you pick a note, then all boxes get `.note-glow` (green breathing
+  glow, css/app.css) until you tap one; the note goes into it. One box works as before. Right-clicking a note in the
+  list (js/notes.js) opens a Copy menu (`contextMenu`) that writes to the clipboard.

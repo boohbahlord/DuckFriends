@@ -2034,6 +2034,21 @@ p.bad {
   text-align: left;
 }
 
+/* a note waits to go into one of several boxes: they all breathe green until I tap one */
+textarea.note-glow {
+  border-color: #4cd964;
+  animation: noteglow 1.6s ease-in-out infinite;
+}
+@keyframes noteglow {
+  0%,
+  100% {
+    box-shadow: 0 0 2px 0 rgba(76, 217, 100, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(76, 217, 100, 0.85);
+  }
+}
+
 /* ---------- the game ---------- */
 .gbar {
   display: flex;
