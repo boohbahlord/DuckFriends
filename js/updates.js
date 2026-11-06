@@ -15,7 +15,7 @@ export const UPDATES = [
     title: "A new map: The King's Festival",
     news: [
       "A new map, The King's Festival: the bare vellum page of an old medieval book, under the board.",
-      "While it's played, every letter turns blackletter and the bars, buttons and meters take the Ether & Kenoma look, burnt amber, as on Ether's Crossroads.",
+      "While it's played, every letter turns blackletter and the bars, buttons and meters take the burnt amber look of the Nous Within Kenoma book site.",
     ],
   },
   {

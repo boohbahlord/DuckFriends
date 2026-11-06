@@ -4022,4 +4022,7 @@ I did not want any text on the page, only the page background the letters were w
 - Read as: this map's UI is the burnt amber Ether & Kenoma look. Every `html.map-is-ec` rule of the look now also
   names `html.map-is-vellum`, so a change to the look changes both maps. Only the font differs: Grenze Gotisch. The
   meters and hotbar keys are in the same burnt amber (amber frame, the game's heart red blocks, square corners).
+- Then read again: the owner's message came as the book site went burnt amber (NWK #193: near-black #0e0904, amber
+  letters #ffad4d, accent #ff8a1f, hairlines #3d2410), so this map's UI takes those colors on top of the shared
+  Ether & Kenoma rules (filled amber buttons with dark letters, as the site's accent), in Grenze Gotisch.
 
