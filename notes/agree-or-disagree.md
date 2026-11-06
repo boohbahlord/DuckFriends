@@ -4012,3 +4012,14 @@ every gun from the zombie game should be in the special list. I will come up for
   frame with vermilion blocks and a lapis badge, the sprint bar lapis, the timer's meter vermilion in gilt, the
   hotbar keys square with a gilt lozenge where a weapon is out.
 
+## Request (owner, 2026-11-06 09:52Z, in Noah's thread, on the map's picture)
+"Remove the blue and red lines off to the left and more becuz u added things that werent on the page. ALSO! 
+I did not want any text on the page, only the page background the letters were written on"
+"If i approve of this, then the ui for this map we talk ab only will take after the burnt amber look for ANYTHING that is on nous within kenoma update for it"
+- Done (Noah): the map is only the vellum photo with its edges a little darker (as on the book page). The writing,
+  rubric, paragraph marks, initials, penwork, bar border, leaf number and candle light are gone (vellum.js has no
+  canvas now; the two Lombardic scans are removed).
+- Read as: this map's UI is the burnt amber Ether & Kenoma look. Every `html.map-is-ec` rule of the look now also
+  names `html.map-is-vellum`, so a change to the look changes both maps. Only the font differs: Grenze Gotisch. The
+  meters and hotbar keys are in the same burnt amber (amber frame, the game's heart red blocks, square corners).
+

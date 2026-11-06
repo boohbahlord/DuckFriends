@@ -9,7 +9,7 @@ import { esc } from "./ui.js";
 import { modeOf, modeSymbol } from "./modes.js";
 import { collageMini } from "./collage.js";
 import { euclidMiniURL } from "./euclid.js";
-import { vellumMiniURL } from "./vellum.js";
+import { vellumBackdrop } from "./vellum.js";
 import { JUSTIN } from "./hangout/npcart.js";
 
 export const FRIDGE = [
@@ -207,8 +207,7 @@ export function artBackdrop(map) {
     return `<image href="${collageMini().match(/src="([^"]+)"/)[1]}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // my collage map's real drawing
   if (map === "euclid" || map === "euclidzoom")
     return `<image href="${euclidMiniURL()}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // Euclid's Squares' real drawing
-  if (map === "vellum")
-    return `<image href="${vellumMiniURL()}" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>`; // the book page's real drawing
+  if (map === "vellum") return vellumBackdrop(); // the book page, as it is
   if (map === "tiles")
     return '<defs><pattern id="arttiles" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff"/><rect width="60" height="60" fill="#000"/><rect x="60" y="60" width="60" height="60" fill="#000"/></pattern></defs><rect width="480" height="270" fill="url(#arttiles)"/>'; // Tiles' checkerboard, 8 tiles across
   if (map === "rabbit")

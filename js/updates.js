@@ -14,8 +14,8 @@ export const UPDATES = [
     date: "Nov 6, 2026",
     title: "A new map: The King's Festival",
     news: [
-      "A new map, The King's Festival: a page of an old medieval book, with its writing, red and blue initials and penwork, under the board.",
-      "While it's played, every letter turns blackletter and the bars, buttons and meters take the book's look: ink, vermilion, lapis and gilt.",
+      "A new map, The King's Festival: the bare vellum page of an old medieval book, under the board.",
+      "While it's played, every letter turns blackletter and the bars, buttons and meters take the Ether & Kenoma look, burnt amber, as on Ether's Crossroads.",
     ],
   },
   {

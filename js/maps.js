@@ -13,9 +13,8 @@
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
    Shelter Sky & Null: the owner's collage of a black tree and a halftone duck looking up at it (collage.js).
    Euclid's Squares: a mosaic of bright squares by Euclid's rule, shrinking forever into three points (euclid.js).
-   The King's Festival: the page of No. 54 of my book, an old medieval book's leaf of vellum with its writing, initials
-   and penwork; the interface takes the book's look (Grenze Gotisch, ink, vermilion, lapis and gilt) while it's played
-   (vellum.js).
+   The King's Festival: the page of No. 54 of my book, only the old vellum the letters were written on; the interface
+   takes the Ether & Kenoma look (burnt amber) in the chapter's blackletter while it's played (vellum.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
@@ -75,7 +74,7 @@ export const MAPS = [
   [
     "vellum",
     "The King's Festival",
-    "A page of an old medieval book: vellum, writing, red and blue initials with penwork, and the book's look while it's played.",
+    "The bare vellum page of an old medieval book, and the Ether & Kenoma look in blackletter while it's played.",
   ],
   [
     "tiles",
@@ -127,7 +126,7 @@ export function mapMini(id) {
     return `<div class="mini-map${id === "collage" ? "" : " grey"}">${collageMini()}</div>`;
   if (id === "euclid" || id === ZOOM_MAP[0])
     return `<div class="mini-map">${euclidMini()}</div>`;
-  if (id === "vellum") return `<div class="mini-map">${vellumMini()}</div>`;
+  if (id === "vellum") return vellumMini();
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
