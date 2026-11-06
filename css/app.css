@@ -3408,7 +3408,8 @@ html.mouse-move .board {
   --k-str: #6d5a00;
 }
 html.dark,
-html.map-is-ec {
+html.map-is-ec,
+html.map-is-vellum {
   --k-help: #4be03a;
   --k-bash: #4fb3ff;
   --k-file: #2fd8c4;
@@ -3831,7 +3832,8 @@ details.more[open] > summary {
 .map-rabbit .col,
 .map-stars .col,
 .map-carnival .col,
-.map-ec .col {
+.map-ec .col,
+.map-vellum .col {
   background: color-mix(in srgb, var(--c) var(--board-a), transparent);
 }
 .map-sky .col {
@@ -4252,6 +4254,72 @@ html.moving .cl-sq {
 .map-euclid .bb-vs,
 .map-euclid .law-mid {
   background: color-mix(in srgb, #000 var(--board-a), transparent);
+}
+/* The King's Festival (vellum.js): the vellum under the ink's canvas, a candle light breathing over it, the edges a
+   little darker; tiles as see-through as on every map, ruled in ink, names on ink plates */
+.scene.vellum {
+  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover
+    no-repeat;
+}
+.scene.vellum > canvas.vl-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.vl-glow {
+  position: absolute;
+  inset: -15%;
+  background: radial-gradient(
+    ellipse 38% 42% at 50% 46%,
+    #ffe3a830,
+    transparent 72%
+  );
+  animation: vl-candle 11s ease-in-out infinite alternate;
+}
+@keyframes vl-candle {
+  0% {
+    transform: translate(-5%, -2%);
+    opacity: 0.65;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(5%, 3%);
+    opacity: 0.8;
+  }
+}
+html.still .vl-glow,
+html.low .vl-glow {
+  animation: none;
+}
+.vl-edge {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 70% at 50% 48%,
+    transparent 55%,
+    rgba(70, 42, 18, 0.22) 100%
+  );
+}
+.map-vellum .col {
+  border-right-color: #2b1d1440;
+  box-shadow: inset 0 0 0 0.06rem #2b1d1455;
+}
+.map-vellum .col-name {
+  position: relative;
+  color: #f1e2c4;
+  background: #2b1d14db;
+  border-radius: 0.15rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-vellum .wyr-or,
+.map-vellum .bb-vs,
+.map-vellum .law-mid {
+  background: color-mix(in srgb, #2b1d14 var(--board-a), transparent);
 }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {
@@ -7358,6 +7426,13 @@ html.still .spe-bone .bone-slide {
   top: auto;
   bottom: 0.08rem;
 } /* (on a phone, inside the square: under it there's no room) */
+.hk .ammo-n {
+  top: auto;
+  left: auto;
+  right: 0.14rem;
+  bottom: 0.08rem;
+  transform: none;
+} /* (a hotbar key's count sits in its corner too: under it, the HP meter covered it) */
 .ammo i {
   width: 0.16rem;
   height: 0.16rem;
@@ -9639,6 +9714,277 @@ html.map-is-ec .tmeter i {
 }
 html.map-is-ec .tmeter i {
   animation: none;
+}
+
+/* the book's look while The King's Festival is played (No. 54 of my book, with Ether's Crossroads' build: square
+   corners, thin rules): every letter in the chapter's blackletter (Grenze Gotisch), plates of iron-gall ink with
+   vellum letters, rubric vermilion and lapis, gilt rules. The meters are a gilt frame with vermilion blocks and a
+   lapis badge, the sprint bar lapis. Player names, prompts and seeds keep each player's own font (they set it on
+   themselves); the command line keeps its typewriter letters; Dyslexic mode keeps its clear letters. */
+html.map-is-vellum {
+  --bg: #1d140d;
+  --panel: #2b1d14;
+  --panel2: #231810;
+  --ink: #f1e2c4;
+  --dim: #cdb48c;
+  --line: #8a6a45;
+  --soft: #5a4128;
+  --shadow: 0 0 0.6rem #00000080;
+  --gilt: #d9b45e;
+  --rubric: #d65a3e;
+  --lapis: #86a6e8;
+  color-scheme: dark;
+}
+html.map-is-vellum:not(.dys) body {
+  font-weight: 500;
+  --font: "Grenze Gotisch", "Old English Text MT", serif;
+  --fun: "Grenze Gotisch", "Old English Text MT", serif;
+} /* (on body: the font setting sits on html) */
+html.map-is-vellum .game h1,
+html.map-is-vellum .game h2,
+html.map-is-vellum .win h2 {
+  color: var(--rubric);
+  text-shadow: 0 0.06rem 0 #000a;
+  font-weight: 500;
+}
+html.map-is-vellum .game h3,
+html.map-is-vellum .win h3 {
+  color: var(--lapis);
+  font-weight: 500;
+}
+html.map-is-vellum .btn {
+  background: linear-gradient(#a8402a, #74231a);
+  border: 1px solid var(--gilt);
+  color: #fbecd0;
+  border-radius: 0.15rem;
+  box-shadow: 0 0.1rem 0 #3a160d;
+  text-shadow: none;
+  font-weight: 500;
+}
+html.map-is-vellum .btn:hover,
+html.map-is-vellum .btn:focus-visible {
+  background: linear-gradient(#bb4a31, #852a1e);
+}
+html.map-is-vellum .btn.ghost,
+html.map-is-vellum .iconbtn {
+  background: #2b1d14d9;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+html.map-is-vellum .mbar {
+  background: #2b1d14d9;
+  border: 1px solid var(--line);
+  border-radius: 0.15rem;
+  box-shadow: none;
+}
+html.map-is-vellum .btn.green,
+html.map-is-vellum .btn.red,
+html.map-is-vellum .btn.purple,
+html.map-is-vellum .btn.yellow {
+  border-color: var(--gilt);
+}
+html.map-is-vellum .btn:disabled {
+  opacity: 0.5;
+}
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox,
+html.map-is-vellum .award,
+html.map-is-vellum .who-chip,
+html.map-is-vellum .tile,
+html.map-is-vellum .toast,
+html.map-is-vellum .ctx,
+html.map-is-vellum .jumps-slot,
+html.map-is-vellum #jumps,
+html.map-is-vellum .pmenu,
+html.map-is-vellum .votebox,
+html.map-is-vellum kbd {
+  border-width: 1px;
+  border-color: var(--line);
+  border-radius: 0.15rem;
+  box-shadow: 0 0.15rem 0.6rem #2b1d1499;
+}
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox {
+  background: #2b1d14ee;
+}
+/* the question's plate: a gilt rule inside its edge and a vermilion one under its top, like a rubricated heading */
+html.map-is-vellum .question {
+  box-shadow:
+    inset 0 0 0 0.18rem #2b1d14,
+    inset 0 0 0 0.24rem #d9b45e70,
+    0 0.15rem 0.6rem #2b1d1499;
+}
+html.map-is-vellum .question::before {
+  border-width: 1px;
+  border-color: var(--line);
+  background: #2b1d14;
+}
+html.map-is-vellum .pod-title {
+  background: #2b1d14ee;
+  border: 1px solid var(--line);
+  border-radius: 0.15rem;
+  padding: 0.15rem 0.9rem;
+  box-shadow: 0 0.15rem 0.8rem #2b1d1499;
+  max-width: 100%;
+} /* (the letters on a plate, off the page's writing) */
+html.map-is-vellum .cols {
+  border-width: 1px;
+  border-color: #2b1d14aa;
+  border-radius: 0.15rem;
+  box-shadow: 0 0.2rem 1rem #2b1d1466;
+}
+html.map-is-vellum .tile[aria-pressed="true"] {
+  background: linear-gradient(#a8402a, #74231a);
+  color: #fbecd0;
+  border-color: var(--gilt);
+}
+html.map-is-vellum .gbar .phase {
+  color: var(--rubric);
+}
+html.map-is-vellum .lord-say {
+  font-weight: 500;
+  text-shadow:
+    0 0 0.5rem #000,
+    0 0.1rem 0 #000;
+}
+/* the top and bottom bars: ink, edged with a gilt rule and a vermilion one, as a page's border is ruled */
+html.map-is-vellum .game .gbar,
+html.map-is-vellum .game .bbar {
+  background: #1d140dd4;
+  border-color: var(--line);
+}
+html.map-is-vellum .game .gbar {
+  box-shadow:
+    inset 0 -0.08rem 0 #d9b45e90,
+    inset 0 -0.2rem 0 #9c362490;
+}
+html.map-is-vellum .game .bbar {
+  box-shadow:
+    inset 0 0.08rem 0 #d9b45e90,
+    inset 0 0.2rem 0 #9c362490;
+}
+html.map-is-vellum input:not([type]),
+html.map-is-vellum input[type="text"],
+html.map-is-vellum textarea,
+html.map-is-vellum select {
+  background: #1d140d;
+  border-width: 1px;
+  border-color: var(--line);
+  border-radius: 0.15rem;
+  color: var(--ink);
+}
+html.map-is-vellum .seed-box,
+html.map-is-vellum .seed-disc {
+  border-width: 1px;
+}
+/* the timer's meter: a gilt rule round a vermilion fill */
+html.map-is-vellum .tmeter {
+  background: #1d140d;
+  border: 1px solid var(--gilt);
+  border-radius: 0.1rem;
+}
+html.map-is-vellum .tmeter i {
+  background: linear-gradient(90deg, #74231a, #c8553a);
+  animation: none;
+}
+html.map-is-vellum .tmeter.low i {
+  background: linear-gradient(90deg, #9c3624, #e0664a);
+}
+/* the hotbar's keys and the specials' slots: square plates of ink, gilt where it's held, the number in gilt */
+html.map-is-vellum .hk,
+html.map-is-vellum .l4s {
+  border-radius: 0.12rem;
+  border: 1px solid var(--line);
+  background: #2b1d14d0;
+}
+html.map-is-vellum .hk b {
+  color: var(--gilt);
+}
+html.map-is-vellum .hk.on,
+html.map-is-vellum .l4s.on {
+  border-color: var(--gilt);
+  background: linear-gradient(#6b4a1ad8, #3d2a10d8);
+  box-shadow: 0 0 0.4rem #d9b45e90;
+}
+html.map-is-vellum .hk.on::after {
+  border-radius: 0;
+  rotate: 45deg;
+  background: var(--gilt);
+  box-shadow: 0 0 0.25rem var(--gilt);
+} /* (a little gilt lozenge where the dot was) */
+html.map-is-vellum .hk.sel {
+  border-color: var(--rubric);
+  box-shadow: 0 0 0.45rem 0.1rem #d65a3ea0;
+}
+html.map-is-vellum .sp-slot {
+  border-radius: 0.12rem;
+  border-width: 1px;
+  box-shadow: 0 0.1rem 0 #1d140d;
+}
+html.map-is-vellum .sp-slot[class*="k-"] {
+  background: color-mix(in srgb, var(--c) 30%, #2b1d14d9);
+}
+html.map-is-vellum .sp-slot[class*="k-"].mid {
+  background: color-mix(in srgb, var(--c) 52%, #2b1d14cc);
+  border-color: var(--gilt);
+}
+/* the HP meter: a gilt frame with square corners, vermilion blocks, ink where they're gone; the badge's coin turns a
+   lapis roundel in a gilt ring with a vermilion heart */
+html.map-is-vellum .hpm-bar {
+  background: linear-gradient(#f2d98e, #c99a3c 52%, #8a6020);
+  border-color: #2b1d14;
+  border-radius: calc(var(--h) * 0.1);
+  box-shadow:
+    inset 0 calc(var(--h) * 0.07) 0 #fff3c880,
+    0 0.1rem 0.2rem #2b1d1499;
+}
+html.map-is-vellum .hpm-blocks {
+  background: #1d140d;
+  border-color: #2b1d14;
+  border-radius: calc(var(--h) * 0.06);
+}
+html.map-is-vellum .hpm-blocks i {
+  border-radius: 0;
+}
+html.map-is-vellum .hpm-blocks i::before {
+  background: linear-gradient(#e8735a 0 20%, #b8392a 20% 66%, #7e1f14 66%);
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(2) {
+  fill: #d4a64a;
+}
+html.map-is-vellum .hpm-badge > path:nth-of-type(1) {
+  stroke: #fff0c0;
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(3) {
+  fill: #1f3a78;
+  stroke: #2b1d14;
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(4) {
+  fill: #2f4f93;
+}
+html.map-is-vellum .hpm-badge > path:nth-of-type(2) {
+  fill: #c8402c;
+  stroke: #4a120a;
+}
+html.map-is-vellum .hpm-stam {
+  background: #1d140d;
+  border-color: #2b1d14;
+  border-radius: 0.06rem;
+}
+html.map-is-vellum .hpm-stam i {
+  background: linear-gradient(#a9c2f2, #2f4f93);
+}
+html.map-is-vellum .hpm-stam.tired i {
+  background: #6f6656;
+}
+html.map-is-vellum .hpo-name {
+  color: var(--ink);
 }
 
 /* a message sent from the command line: the command in small print, then its output as it came out */

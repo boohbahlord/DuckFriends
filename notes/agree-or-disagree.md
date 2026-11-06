@@ -3996,3 +3996,19 @@ every gun from the zombie game should be in the special list. I will come up for
   strip the view slid down past (A). Now the ducks shrink (down to 70%) when that lets every row fit; the votes' room
   under a row follows the duck size. Also found: `.tv-board .ducks`' clip-path made the ducks a layer of their own
   under the field (z-index 1), so no duck showed in Trivia at all; it gets z-index 2.
+
+## Request (owner, 2026-11-06 06:42Z, via Adam to Noah): the book page as a map
+"The page that was used for ch.55 should be used for a duck friends map, and we can make the UI and fonts all be the blackletter font AND make the UI look like it is from Ether's Crossroads by making the meters and ui look like it is from it."
+- The book's vellum page with blackletter is No. 54, "The King's Festival" (No. 55, "Blue to Gray", is blue-grey with
+  no blackletter), so the map is No. 54's page. Adam OK'd the name "The King's Festival" and id `vellum`; the owner
+  can rename it when OK'ing the picture.
+- Noah: js/vellum.js. The book site's vellum photo and two Lombardic scans (blue T, red K) in assets/maps/vellum/;
+  the rest drawn on a canvas in ink: ruling, lines of writing too small to read, a red rubric, red/blue paragraph
+  marks, penwork round the initials, a red/blue bar border with gilt joins, the leaf number "fo. liiij". Two columns
+  on a wide screen, one on a phone. A slow candle light (still with Less motion and Low graphics).
+- The look while it's played (html.map-is-vellum, built like map-is-ec): Grenze Gotisch for every letter (not the
+  command line, not Dyslexic mode, not the players' own fonts on names and prompts), ink plates with vellum letters,
+  vermilion buttons with gilt edges, square corners, gilt and vermilion rules on the bars; the HP meter in a gilt
+  frame with vermilion blocks and a lapis badge, the sprint bar lapis, the timer's meter vermilion in gilt, the
+  hotbar keys square with a gilt lozenge where a weapon is out.
+

@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v172",
+    version: 172,
+    date: "Nov 6, 2026",
+    title: "A new map: The King's Festival",
+    news: [
+      "A new map, The King's Festival: a page of an old medieval book, with its writing, red and blue initials and penwork, under the board.",
+      "While it's played, every letter turns blackletter and the bars, buttons and meters take the book's look: ink, vermilion, lapis and gilt.",
+    ],
+  },
+  {
     id: "v171",
     version: 171,
     date: "Nov 4, 2026",
