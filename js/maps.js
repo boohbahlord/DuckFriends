@@ -13,6 +13,8 @@
    Starry Night: the Milky Way and a sky full of stars rolling slowly overhead, twinkling, with shooting stars.
    Shelter Sky & Null: the owner's collage of a black tree and a halftone duck looking up at it (collage.js).
    Euclid's Squares: a mosaic of bright squares by Euclid's rule, shrinking forever into three points (euclid.js).
+   The King's Festival: the page of No. 54 of my book, only the old vellum the letters were written on; the interface
+   takes the Ether & Kenoma look (burnt amber) in the chapter's blackletter while it's played (vellum.js).
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
@@ -20,6 +22,7 @@ import { esc } from "./ui.js";
 import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
 import { collageScene, collageMini } from "./collage.js";
 import { euclidScene, euclidMini } from "./euclid.js";
+import { vellumScene, vellumMini } from "./vellum.js";
 import { seenDuck, seenName } from "./looks.js";
 
 export const MAPS = [
@@ -67,6 +70,11 @@ export const MAPS = [
     "euclid",
     "Euclid's Squares",
     "Bright squares, each the biggest that fits in what's left, shrinking forever into three points.",
+  ],
+  [
+    "vellum",
+    "The King's Festival",
+    "The bare vellum page of an old medieval book, and the Ether & Kenoma look in blackletter while it's played.",
   ],
   [
     "tiles",
@@ -118,6 +126,7 @@ export function mapMini(id) {
     return `<div class="mini-map${id === "collage" ? "" : " grey"}">${collageMini()}</div>`;
   if (id === "euclid" || id === ZOOM_MAP[0])
     return `<div class="mini-map">${euclidMini()}</div>`;
+  if (id === "vellum") return vellumMini();
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
   if (id === "cabin")
@@ -1142,9 +1151,11 @@ function sceneOf(map, layer, s, cur) {
                   ? collageScene(layer, s)
                   : map === "euclid"
                     ? euclidScene(layer, s)
-                    : map === "cabin"
-                      ? cabinScene(layer)
-                      : nightScene(layer);
+                    : map === "vellum"
+                      ? vellumScene(layer)
+                      : map === "cabin"
+                        ? cabinScene(layer)
+                        : nightScene(layer);
 }
 /* a map moving in a small box of its own (the map vote's tiles, under the pointer or a finger, and the one you voted
    for): the same scene as in the game, without the page's own map look; a form plays as itself (zoom, black and white) */
@@ -1176,7 +1187,7 @@ export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
   layer.className = "map-layer map-" + map;
-  document.documentElement.classList.add("map-on", "map-is-" + map); // (map-is-ec: the Ether & Kenoma look)
+  document.documentElement.classList.add("map-on", "map-is-" + map); // (map-is-ec: the Ether & Kenoma look; map-is-vellum: the book's)
   const scene = sceneOf(map, layer, s, cur);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =

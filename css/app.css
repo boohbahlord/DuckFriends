@@ -3408,7 +3408,8 @@ html.mouse-move .board {
   --k-str: #6d5a00;
 }
 html.dark,
-html.map-is-ec {
+html.map-is-ec,
+html.map-is-vellum {
   --k-help: #4be03a;
   --k-bash: #4fb3ff;
   --k-file: #2fd8c4;
@@ -3831,7 +3832,8 @@ details.more[open] > summary {
 .map-rabbit .col,
 .map-stars .col,
 .map-carnival .col,
-.map-ec .col {
+.map-ec .col,
+.map-vellum .col {
   background: color-mix(in srgb, var(--c) var(--board-a), transparent);
 }
 .map-sky .col {
@@ -4252,6 +4254,43 @@ html.moving .cl-sq {
 .map-euclid .bb-vs,
 .map-euclid .law-mid {
   background: color-mix(in srgb, #000 var(--board-a), transparent);
+}
+/* The King's Festival (vellum.js): only the vellum, its edges a little darker, as on the book's page; tiles as
+   see-through as on every map, names on dark plates */
+.scene.vellum {
+  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover
+    no-repeat;
+}
+.mini-map.mm-vellum {
+  background: #ba966c url(../assets/maps/vellum/vellum.webp) center / cover;
+}
+.vl-edge,
+.mm-vellum::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 70% at 50% 48%,
+    transparent 55%,
+    rgba(70, 42, 18, 0.22) 100%
+  );
+}
+.map-vellum .col {
+  border-right-color: #2b1d1440;
+  box-shadow: inset 0 0 0 0.06rem #2b1d1455;
+}
+.map-vellum .col-name {
+  position: relative;
+  color: #ffad4d;
+  background: #0e0904d9;
+  border-radius: 0.2rem;
+  padding: 0.1rem 0.45rem;
+  text-shadow: none;
+}
+.map-vellum .wyr-or,
+.map-vellum .bb-vs,
+.map-vellum .law-mid {
+  background: color-mix(in srgb, #120904 var(--board-a), transparent);
 }
 /* Carnival Night: the world, marquee tiles, fireworks */
 .scene.carnival {
@@ -7358,6 +7397,13 @@ html.still .spe-bone .bone-slide {
   top: auto;
   bottom: 0.08rem;
 } /* (on a phone, inside the square: under it there's no room) */
+.hk .ammo-n {
+  top: auto;
+  left: auto;
+  right: 0.14rem;
+  bottom: 0.08rem;
+  transform: none;
+} /* (a hotbar key's count sits in its corner too: under it, the HP meter covered it) */
 .ammo i {
   width: 0.16rem;
   height: 0.16rem;
@@ -9486,9 +9532,10 @@ html.moving .mm-rabbit {
   background: color-mix(in srgb, #120904 var(--board-a), transparent);
 }
 
-/* the Ether & Kenoma look while the map is played: burnt amber, Cascadia Code Extra Light, square corners, thin rules.
+/* the Ether & Kenoma look while the map is played (and on The King's Festival, the book page, in its blackletter): burnt amber, Cascadia Code Extra Light, square corners, thin rules.
    Player names, prompts and seeds keep each player's own font (they set it on themselves). */
-html.map-is-ec {
+html.map-is-ec,
+html.map-is-vellum {
   --bg: #150c06;
   --panel: #23150c;
   --panel2: #1b110a;
@@ -9506,17 +9553,23 @@ html.map-is-ec body {
 } /* (on body: the font setting sits on html) */
 html.map-is-ec .game h1,
 html.map-is-ec .game h2,
-html.map-is-ec .win h2 {
+html.map-is-ec .win h2,
+html.map-is-vellum .game h1,
+html.map-is-vellum .game h2,
+html.map-is-vellum .win h2 {
   color: #ff9a4a;
   text-shadow: 0 0 12px #c2581c80;
   font-weight: 400;
 }
 html.map-is-ec .game h3,
-html.map-is-ec .win h3 {
+html.map-is-ec .win h3,
+html.map-is-vellum .game h3,
+html.map-is-vellum .win h3 {
   color: #9cc7b9;
   font-weight: 400;
 }
-html.map-is-ec .btn {
+html.map-is-ec .btn,
+html.map-is-vellum .btn {
   background: linear-gradient(#96461a, #6a2e0f);
   border: 1px solid #e8994d;
   color: #fbe4c4;
@@ -9526,16 +9579,21 @@ html.map-is-ec .btn {
   font-weight: 400;
 }
 html.map-is-ec .btn:hover,
-html.map-is-ec .btn:focus-visible {
+html.map-is-ec .btn:focus-visible,
+html.map-is-vellum .btn:hover,
+html.map-is-vellum .btn:focus-visible {
   background: linear-gradient(#ac531e, #7e3713);
 }
 html.map-is-ec .btn.ghost,
-html.map-is-ec .iconbtn {
+html.map-is-ec .iconbtn,
+html.map-is-vellum .btn.ghost,
+html.map-is-vellum .iconbtn {
   background: #140c06cc;
   border: 1px solid #78512e;
   color: var(--ink);
 }
-html.map-is-ec .mbar {
+html.map-is-ec .mbar,
+html.map-is-vellum .mbar {
   background: #140c06cc;
   border: 1px solid #78512e;
   box-shadow: none;
@@ -9543,10 +9601,15 @@ html.map-is-ec .mbar {
 html.map-is-ec .btn.green,
 html.map-is-ec .btn.red,
 html.map-is-ec .btn.purple,
-html.map-is-ec .btn.yellow {
+html.map-is-ec .btn.yellow,
+html.map-is-vellum .btn.green,
+html.map-is-vellum .btn.red,
+html.map-is-vellum .btn.purple,
+html.map-is-vellum .btn.yellow {
   border-color: #e8994d;
 }
-html.map-is-ec .btn:disabled {
+html.map-is-ec .btn:disabled,
+html.map-is-vellum .btn:disabled {
   opacity: 0.5;
 }
 html.map-is-ec .panel,
@@ -9563,7 +9626,22 @@ html.map-is-ec .jumps-slot,
 html.map-is-ec #jumps,
 html.map-is-ec .pmenu,
 html.map-is-ec .votebox,
-html.map-is-ec kbd {
+html.map-is-ec kbd,
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox,
+html.map-is-vellum .award,
+html.map-is-vellum .who-chip,
+html.map-is-vellum .tile,
+html.map-is-vellum .toast,
+html.map-is-vellum .ctx,
+html.map-is-vellum .jumps-slot,
+html.map-is-vellum #jumps,
+html.map-is-vellum .pmenu,
+html.map-is-vellum .votebox,
+html.map-is-vellum kbd {
   border-width: 1px;
   border-color: #8a5a2c;
   border-radius: 0.2rem;
@@ -9573,15 +9651,22 @@ html.map-is-ec .panel,
 html.map-is-ec .question,
 html.map-is-ec .win,
 html.map-is-ec .dock-panel,
-html.map-is-ec .statbox {
+html.map-is-ec .statbox,
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox {
   background: #23150cea;
 }
-html.map-is-ec .question::before {
+html.map-is-ec .question::before,
+html.map-is-vellum .question::before {
   border-width: 1px;
   border-color: #8a5a2c;
   background: #23150c;
 }
-html.map-is-ec .pod-title {
+html.map-is-ec .pod-title,
+html.map-is-vellum .pod-title {
   background: #23150cea;
   border: 1px solid #8a5a2c;
   border-radius: 0.2rem;
@@ -9589,41 +9674,54 @@ html.map-is-ec .pod-title {
   box-shadow: 0 0 1rem #000a;
   max-width: 100%;
 } /* the thin letters on a plate, off the bricks */
-html.map-is-ec .cols {
+html.map-is-ec .cols,
+html.map-is-vellum .cols {
   border-width: 1px;
   border-color: #8a5a2c;
   border-radius: 0.2rem;
   box-shadow: 0 0 1rem #000a;
 }
-html.map-is-ec .tile[aria-pressed="true"] {
+html.map-is-ec .tile[aria-pressed="true"],
+html.map-is-vellum .tile[aria-pressed="true"] {
   background: linear-gradient(#96461a, #6a2e0f);
   color: #fbe4c4;
   border-color: #e8994d;
 }
 html.map-is-ec .timer,
 html.map-is-ec .gbar .round,
-html.map-is-ec .gbar .phase {
+html.map-is-ec .gbar .phase,
+html.map-is-vellum .timer,
+html.map-is-vellum .gbar .round,
+html.map-is-vellum .gbar .phase {
   font-family: var(--font);
 }
-html.map-is-ec .gbar .phase {
+html.map-is-ec .gbar .phase,
+html.map-is-vellum .gbar .phase {
   color: #ff9a4a;
   text-shadow: 0 0 10px #c2581c70;
 }
-html.map-is-ec .lord-say {
+html.map-is-ec .lord-say,
+html.map-is-vellum .lord-say {
   font-weight: 400;
   text-shadow:
     0 0 0.5rem #000,
     0 0.1rem 0 #000;
 }
 html.map-is-ec .game .gbar,
-html.map-is-ec .game .bbar {
+html.map-is-ec .game .bbar,
+html.map-is-vellum .game .gbar,
+html.map-is-vellum .game .bbar {
   background: #120904c4;
   border-color: #5b3317;
 }
 html.map-is-ec input:not([type]),
 html.map-is-ec input[type="text"],
 html.map-is-ec textarea,
-html.map-is-ec select {
+html.map-is-ec select,
+html.map-is-vellum input:not([type]),
+html.map-is-vellum input[type="text"],
+html.map-is-vellum textarea,
+html.map-is-vellum select {
   background: #120904;
   border-width: 1px;
   border-color: #78512e;
@@ -9631,14 +9729,205 @@ html.map-is-ec select {
   color: var(--ink);
 }
 html.map-is-ec .seed-box,
-html.map-is-ec .seed-disc {
+html.map-is-ec .seed-disc,
+html.map-is-vellum .seed-box,
+html.map-is-vellum .seed-disc {
   border-width: 1px;
 }
-html.map-is-ec .tmeter i {
+html.map-is-ec .tmeter i,
+html.map-is-vellum .tmeter i {
   background: linear-gradient(90deg, #96461a, #e8994d);
 }
-html.map-is-ec .tmeter i {
+html.map-is-ec .tmeter i,
+html.map-is-vellum .tmeter i {
   animation: none;
+}
+
+/* The King's Festival takes the Ether & Kenoma look above, in the colors of my book site's burnt amber (owner
+   2026-11-06: the burnt amber look, following what the book site does: near-black like an amber terminal, amber
+   letters, a burnt orange accent, dark hairlines; source/theme/site.css :root there), in the chapter's blackletter
+   (Grenze Gotisch) for every letter. The command line keeps its typewriter letters, Dyslexic mode its clear ones,
+   and players their own fonts on names and prompts. Meters and keys in the same amber; the HP blocks the game's
+   heart red. */
+html.map-is-vellum {
+  --bg: #0e0904;
+  --panel: #170e06;
+  --panel2: #090502;
+  --ink: #ffad4d;
+  --dim: #d9893a;
+  --line: #3d2410;
+  --soft: #2a180a;
+}
+html.map-is-vellum .game h1,
+html.map-is-vellum .game h2,
+html.map-is-vellum .win h2,
+html.map-is-vellum .gbar .phase {
+  color: #ff8a1f;
+  text-shadow: none;
+}
+html.map-is-vellum .game h3,
+html.map-is-vellum .win h3 {
+  color: #ffc070;
+}
+html.map-is-vellum .btn,
+html.map-is-vellum .tile[aria-pressed="true"] {
+  background: #ff8a1f;
+  border: 1px solid #ff8a1f;
+  color: #0e0904;
+  box-shadow: none;
+}
+html.map-is-vellum .btn:hover,
+html.map-is-vellum .btn:focus-visible {
+  background: #ffc070;
+  border-color: #ffc070;
+}
+html.map-is-vellum .btn.green,
+html.map-is-vellum .btn.red,
+html.map-is-vellum .btn.purple,
+html.map-is-vellum .btn.yellow {
+  border-color: #ff8a1f;
+}
+html.map-is-vellum .btn.ghost,
+html.map-is-vellum .iconbtn,
+html.map-is-vellum .mbar {
+  background: #0e0904e0;
+  border: 1px solid #3d2410;
+  color: #ff8a1f;
+}
+html.map-is-vellum .btn.ghost:hover,
+html.map-is-vellum .iconbtn:hover {
+  border-color: #ffc070;
+  color: #ffc070;
+}
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox,
+html.map-is-vellum .pod-title {
+  background: #170e06f0;
+}
+html.map-is-vellum .panel,
+html.map-is-vellum .question,
+html.map-is-vellum .win,
+html.map-is-vellum .dock-panel,
+html.map-is-vellum .statbox,
+html.map-is-vellum .award,
+html.map-is-vellum .who-chip,
+html.map-is-vellum .tile,
+html.map-is-vellum .toast,
+html.map-is-vellum .ctx,
+html.map-is-vellum .jumps-slot,
+html.map-is-vellum #jumps,
+html.map-is-vellum .pmenu,
+html.map-is-vellum .votebox,
+html.map-is-vellum kbd,
+html.map-is-vellum .pod-title,
+html.map-is-vellum .question::before,
+html.map-is-vellum .cols {
+  border-color: #3d2410;
+}
+html.map-is-vellum .question::before {
+  background: #170e06;
+}
+html.map-is-vellum .game .gbar,
+html.map-is-vellum .game .bbar {
+  background: #0e0904e6;
+  border-color: #3d2410;
+}
+html.map-is-vellum input:not([type]),
+html.map-is-vellum input[type="text"],
+html.map-is-vellum textarea,
+html.map-is-vellum select {
+  background: #090502;
+  border-color: #3d2410;
+  color: #ffad4d;
+}
+html.map-is-vellum .tmeter {
+  background: #090502;
+  border-color: #3d2410;
+}
+html.map-is-vellum .tmeter i {
+  background: linear-gradient(90deg, #d9893a, #ff8a1f);
+}
+html.map-is-vellum:not(.dys) body {
+  font-weight: 500;
+  --font: "Grenze Gotisch", "Old English Text MT", serif;
+  --fun: "Grenze Gotisch", "Old English Text MT", serif;
+} /* (on body: the font setting sits on html) */
+html.map-is-vellum .hk,
+html.map-is-vellum .l4s {
+  border-radius: 0.2rem;
+  border: 1px solid #3d2410;
+  background: #0e0904d0;
+}
+html.map-is-vellum .hk b {
+  color: #d9893a;
+}
+html.map-is-vellum .hk.on,
+html.map-is-vellum .l4s.on {
+  border-color: #ff8a1f;
+  background: #ff8a1f40;
+  box-shadow: 0 0 0.5rem #ff8a1f70;
+}
+html.map-is-vellum .hk.on::after {
+  background: #ff8a1f;
+  box-shadow: 0 0 0.25rem #ff8a1f;
+}
+html.map-is-vellum .sp-slot {
+  border-radius: 0.2rem;
+  border-width: 1px;
+}
+html.map-is-vellum .sp-slot[class*="k-"] {
+  background: color-mix(in srgb, var(--c) 30%, #0e0904d9);
+}
+html.map-is-vellum .sp-slot[class*="k-"].mid {
+  background: color-mix(in srgb, var(--c) 52%, #0e0904cc);
+  border-color: #ff8a1f;
+}
+html.map-is-vellum .hpm-bar {
+  background: linear-gradient(#ffc070, #ff8a1f 50%, #b8560f);
+  border-color: #0e0904;
+  border-radius: calc(var(--h) * 0.12);
+  box-shadow:
+    inset 0 calc(var(--h) * 0.07) 0 #ffe0b060,
+    0 0 0.5rem #ff8a1f40;
+}
+html.map-is-vellum .hpm-blocks {
+  background: #120904;
+  border-color: #120904;
+  border-radius: calc(var(--h) * 0.06);
+}
+html.map-is-vellum .hpm-blocks i {
+  border-radius: 0;
+}
+html.map-is-vellum .hpm-blocks i::before {
+  background: linear-gradient(#e0473f 0 20%, #b3191f 20% 66%, #7a0f14 66%);
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(2) {
+  fill: #ff8a1f;
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(3) {
+  fill: #170e06;
+  stroke: #0e0904;
+}
+html.map-is-vellum .hpm-badge > circle:nth-of-type(4) {
+  fill: #2a180a;
+}
+html.map-is-vellum .hpm-badge > path:nth-of-type(2) {
+  fill: #c8202a;
+  stroke: #4a0a0e;
+}
+html.map-is-vellum .hpm-stam {
+  background: #120904;
+  border-color: #120904;
+  border-radius: 0.1rem;
+}
+html.map-is-vellum .hpm-stam i {
+  background: linear-gradient(#ffc070, #d9893a);
+}
+html.map-is-vellum .hpm-stam.tired i {
+  background: #6a5040;
 }
 
 /* a message sent from the command line: the command in small print, then its output as it came out */
