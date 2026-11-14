@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v174",
+    version: 174,
+    date: "Nov 14, 2026",
+    title: "Faster game mode vote",
+    fixed: [
+      "Vote for Game Mode: once everyone has voted, its clock drops to 0:10 and runs twice as fast, like the map vote, so nobody waits out the minute.",
+    ],
+  },
+  {
     id: "v173",
     version: 173,
     date: "Nov 14, 2026",

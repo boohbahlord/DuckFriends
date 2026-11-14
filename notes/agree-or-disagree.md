@@ -4030,3 +4030,10 @@ I did not want any text on the page, only the page background the letters were w
 ## Request (owner, 2026-11-14 05:30Z, via Adam): "the game music is too loud"
 - js/music.js BASE 0.45 → 0.28 (38% quieter at every slider position; the slider's default and saved values untouched).
   Songs now peak about 0.25 and sit about 0.05 RMS, under the game sounds (about 0.1). 0 clicks in Chromium and Firefox.
+
+## Request (owner 2026-11-14 11:31Z, furious, via the coordinator)
+"why didnt we fix the 60 second fucking timer on the vote for gamemode yet!?!?!"
+- The owner's earlier answer (Q42) set the game mode vote to 1:05, and Q44 "every voting makes the timer go twice as
+  fast"; on Nov 4 07:06Z the map vote got "ten seconds ONCE everyone has voted ... before it accelerates", but the game
+  mode vote only ran x2, so after everyone picked it still sat ~30 s or more. Done (Adam): once everyone has voted, the
+  game mode vote drops to 10 s too, then runs twice as fast (5 s real), same as the map vote. The 1:05 full time stays.
