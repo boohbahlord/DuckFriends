@@ -4130,7 +4130,7 @@ export const music = (function () {
     WTD,
     FEATHER,
   ];
-  const BASE = 0.45; // 100% music: loud, but under the game
+  const BASE = 0.28; // 100% music: under the game. The owner (Nov 14): the music was too loud, so I lowered it from 0.45, 38% quieter (the slider and its saved values stay as they were)
   const LV = () =>
     BASE * (profile.settings.sound / 100) * (profile.settings.music / 100);
   /* how far ahead a change to something already sounding is set: a change set for a moment the sound has already passed

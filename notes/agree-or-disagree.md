@@ -4026,3 +4026,7 @@ I did not want any text on the page, only the page background the letters were w
   letters #ffad4d, accent #ff8a1f, hairlines #3d2410), so this map's UI takes those colors on top of the shared
   Ether & Kenoma rules (filled amber buttons with dark letters, as the site's accent), in Grenze Gotisch.
 
+
+## Request (owner, 2026-11-14 05:30Z, via Adam): "the game music is too loud"
+- js/music.js BASE 0.45 → 0.28 (38% quieter at every slider position; the slider's default and saved values untouched).
+  Songs now peak about 0.25 and sit about 0.05 RMS, under the game sounds (about 0.1). 0 clicks in Chromium and Firefox.
