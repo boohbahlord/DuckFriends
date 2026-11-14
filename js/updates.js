@@ -11,7 +11,7 @@ export const UPDATES = [
   {
     id: "v173",
     version: 173,
-    date: "Nov 13, 2026",
+    date: "Nov 14, 2026",
     title: "Quieter music",
     news: [
       "The music is quieter, so the game's sounds come through over it. Your Music slider stays where you put it.",
