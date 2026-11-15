@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v180",
+    version: 180,
+    date: "Nov 15, 2026",
+    title: "A little smoother",
+    fixed: [
+      "The game does less work on every move: the rules copy the game faster, and the specials row no longer makes the browser re-measure the page each time.",
+    ],
+  },
+  {
     id: "v179",
     version: 179,
     date: "Nov 15, 2026",
