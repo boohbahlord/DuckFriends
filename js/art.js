@@ -477,9 +477,10 @@ ${cols.map((c, k) => `<radialGradient id="bdg${k}"><stop offset=".35" stop-color
     room,
   };
 }
-/* a drawing of some parts; y0, y1: only that band of the page (the fading layers stay small: the floor, the lights) */
-const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${y0.toFixed(1)} ${P.w} ${(y1 - y0).toFixed(1)}" width="${P.w}" height="${(y1 - y0).toFixed(0)}" preserveAspectRatio="none" aria-hidden="true">${P.defs}${sky ? `<rect width="${P.w}" height="${P.h}" fill="url(#bdsky)"/>` : ""}${body}</svg>`;
+/* a drawing of some parts; y0, y1: only that band of the page (the fading layers stay small: the floor, the lights);
+   x0, x1: only that much of its width (the blocks' letters: only their pile) */
+const svgOf = (P, body, sky = false, y0 = 0, y1 = P.h, x0 = 0, x1 = P.w) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${(x1 - x0).toFixed(1)} ${(y1 - y0).toFixed(1)}" width="${(x1 - x0).toFixed(0)}" height="${(y1 - y0).toFixed(0)}" preserveAspectRatio="none" aria-hidden="true">${P.defs}${sky ? `<rect width="${P.w}" height="${P.h}" fill="url(#bdsky)"/>` : ""}${body}</svg>`;
 /* the whole backdrop as one still drawing */
 export function backdropSVG(w = innerWidth, h = innerHeight, dark = false) {
   const P = backdropParts(w, h, dark);
@@ -525,21 +526,29 @@ function roomHTML(P, img, dark) {
           : "",
       )
       .join("") +
+    /* each color of letters as two small pictures, one over each pile of blocks (not one as wide as the page: the
+       browser blends every fading picture again each frame, so a smaller one costs less), fading together */
     R.letters
       .map((g, k) =>
         g
           .map((L, c) =>
-            img(
-              svgOf(
-                P,
-                `<g${dark ? ' filter="url(#pgglow)"' : ""}>${L.join("")}</g>`,
-                false,
-                R.letterTop,
-                R.letterBottom,
-              ),
-              `bd-bk bd-bk${c}`,
-              `${band(R.letterTop, R.letterBottom)};--dl:-${(c * 1.5 + k * 0.45).toFixed(2)}s`,
-            ),
+            R.letterX
+              .map(([x0, x1]) =>
+                img(
+                  svgOf(
+                    P,
+                    `<g${dark ? ' filter="url(#pgglow)"' : ""}>${L.join("")}</g>`,
+                    false,
+                    R.letterTop,
+                    R.letterBottom,
+                    x0,
+                    x1,
+                  ),
+                  `bd-bk bd-bk${c}`,
+                  `${band(R.letterTop, R.letterBottom)};left:${pct(x0, P.w)};width:${pct(x1 - x0, P.w)};--dl:-${(c * 1.5 + k * 0.45).toFixed(2)}s`,
+                ),
+              )
+              .join(""),
           )
           .join(""),
       )
@@ -579,16 +588,24 @@ export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
   return (
     img(svgOf(P, P.base[0], true)) +
     P.dots
-      .map((d) =>
-        img(
-          svgOf(P, d.items.join(""), false, d.y0, d.y1),
-          "bd-dots",
-          `top:${((d.y0 / h) * 100).toFixed(3)}%;height:${(((d.y1 - d.y0) / h) * 100).toFixed(3)}%;--dl:-${d.dl.toFixed(2)}s`,
-        ),
+      .map(
+        (d) =>
+          img(
+            svgOf(P, d.items.join(""), false, d.y0, d.y1),
+            "bd-dots",
+            `top:${((d.y0 / h) * 100).toFixed(3)}%;height:${(((d.y1 - d.y0) / h) * 100).toFixed(3)}%;--dl:-${d.dl.toFixed(2)}s`,
+          ).replace(
+            "<img ",
+            `<img data-y="${d.y0.toFixed(2)} ${d.y1.toFixed(2)} ${d.dl.toFixed(2)}" `,
+          ), // (for floorCanvas)
       )
       .join("") +
     roomHTML(P, img, dark) +
-    img(svgOf(P, P.base.slice(1).join(""))) +
+    img(
+      svgOf(P, P.base.slice(1).join(""), false, 0, P.h * 0.3),
+      "",
+      "height:30%",
+    ) + // (the bunting: only the top of the page, where it hangs)
     P.bulbs
       .map((b, k) =>
         b.length
@@ -613,4 +630,130 @@ export function backdropHTML(w = innerWidth, h = innerHeight, dark = false) {
       })
       .join("")
   );
+}
+
+/* ---------- the floor's breathing dots on one canvas, drawn off the page's own thread ----------
+   As pictures, the 52 rows of dots (each row and color breathing a little after the last) are 52 fading layers that the
+   browser blends again every frame, over three screens' worth of pixels: on a computer without a graphics card doing that
+   work, the most costly part of the Night Show map. Here each row is drawn once into a small picture, and a worker
+   (its own thread) lays the rows onto one canvas the size of the floor about 30 times a second, each at the opacity
+   its CSS breath would have at that moment (the same curve, the same timing). Without a worker or OffscreenCanvas
+   (an old browser) the pictures stay as they were. */
+const FLOOR_WORKER = `
+let ctx = null, rows = [], moving = false, light = false, on = false, last = 0;
+const bez = (x) => { // cubic-bezier(.42, 0, .58, 1): CSS's ease-in-out
+  let t = x;
+  for (let i = 0; i < 6; i++) {
+    const xt = 3 * (1 - t) * (1 - t) * t * 0.42 + 3 * (1 - t) * t * t * 0.58 + t * t * t,
+      dx = 3 * (1 - t) * (1 - t) * 0.42 + 6 * (1 - t) * t * (0.58 - 0.42) + 3 * t * t * (1 - 0.58);
+    if (Math.abs(xt - x) < 1e-5 || !dx) break;
+    t -= (xt - x) / dx;
+  }
+  return 3 * (1 - t) * t * t + t * t * t;
+};
+function draw(now) {
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const lo = light ? 0.14 : 0.16, hi = light ? 0.5 : 0.78, still = light ? 0.4 : 0.5;
+  for (const r of rows) {
+    let a = still;
+    if (moving) {
+      const p = (now / 1000 + r.dl) / 2.2, n = Math.floor(p), f = p - n;
+      a = lo + (hi - lo) * bez(n % 2 ? 1 - f : f); // (2.2 s each way, alternate)
+    }
+    ctx.globalAlpha = a;
+    ctx.drawImage(r.bm, 0, r.y);
+  }
+}
+const tick = (now) => {
+  if (!on) return;
+  if (now - last >= 32) { last = now; draw(now); }
+  if (moving) next();
+};
+const next = () => (self.requestAnimationFrame ? requestAnimationFrame(tick) : setTimeout(() => tick(performance.now()), 33));
+onmessage = (e) => {
+  const m = e.data;
+  if (m.canvas) { ctx = m.canvas.getContext("2d"); rows = m.rows; }
+  if ("moving" in m) { const was = moving && on; moving = m.moving; light = m.light; on = m.on; draw(performance.now()); if (moving && on && !was) next(); }
+};`;
+let floorURL = null;
+export async function floorCanvas(root) {
+  const imgs = [...root.querySelectorAll(":scope > img.bd-dots[data-y]")];
+  if (
+    !imgs.length ||
+    typeof Worker !== "function" ||
+    typeof OffscreenCanvas !== "function" ||
+    !HTMLCanvasElement.prototype.transferControlToOffscreen
+  )
+    return;
+  const W = root.clientWidth,
+    H = root.clientHeight,
+    dpr = Math.min(2, devicePixelRatio || 1),
+    rows = imgs.map((im) => {
+      const [y0, y1, dl] = im.dataset.y.split(" ").map(Number);
+      return { im, y0, y1, dl };
+    }),
+    top = Math.min(...rows.map((r) => r.y0)),
+    bottom = Math.max(...rows.map((r) => r.y1));
+  if (!W || !H) return;
+  try {
+    await Promise.all(imgs.map((im) => im.decode()));
+    const out = [];
+    for (const r of rows) {
+      // each row once, at the screen's sharpness, on whole pixels of the floor canvas
+      const c = document.createElement("canvas");
+      c.width = Math.round(W * dpr);
+      c.height = Math.max(1, Math.round((r.y1 - r.y0) * dpr));
+      c.getContext("2d").drawImage(r.im, 0, 0, c.width, c.height);
+      out.push({
+        bm: await createImageBitmap(c),
+        y: Math.round((r.y0 - top) * dpr),
+        dl: r.dl,
+      });
+    }
+    if (!imgs[0].isConnected) return; // (redrawn meanwhile: a newer floor is on its way)
+    const cv = document.createElement("canvas");
+    cv.className = "bd-layer bd-floor";
+    cv.style.cssText = `top:${top.toFixed(1)}px;height:${(bottom - top).toFixed(1)}px`;
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round((bottom - top) * dpr);
+    floorURL =
+      floorURL ||
+      URL.createObjectURL(
+        new Blob([FLOOR_WORKER], { type: "text/javascript" }),
+      );
+    const wk = new Worker(floorURL),
+      off = cv.transferControlToOffscreen(),
+      html = document.documentElement,
+      state = () => ({
+        moving: html.classList.contains("moving"),
+        light: root.id === "shapes" && !html.classList.contains("dark"),
+        on: !document.hidden && cv.isConnected && !!cv.getClientRects().length,
+      });
+    imgs[0].before(cv);
+    for (const im of imgs) im.remove();
+    wk.postMessage({ canvas: off, rows: out, ...state() }, [
+      off,
+      ...out.map((r) => r.bm),
+    ]);
+    /* the page's motion setting and theme as they change; stopped while hidden, and for good once it's gone */
+    let was = JSON.stringify(state());
+    const tell = () => {
+      const st = state(),
+        k = JSON.stringify(st);
+      if (k !== was) {
+        was = k;
+        wk.postMessage(st);
+      }
+    };
+    const mo = new MutationObserver(tell);
+    mo.observe(html, { attributes: true, attributeFilter: ["class"] });
+    document.addEventListener("visibilitychange", tell);
+    const watch = setInterval(() => {
+      if (cv.isConnected) return tell();
+      clearInterval(watch);
+      mo.disconnect();
+      document.removeEventListener("visibilitychange", tell);
+      wk.terminate();
+    }, 1000);
+  } catch {} // (anything that fails leaves the pictures as they were)
 }

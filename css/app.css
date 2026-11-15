@@ -2813,6 +2813,14 @@ html.moving svg.duck.datboi.rainbow .dbr {
   opacity: 0.95;
   outline: 0.12rem solid var(--blue);
 }
+/* Quacky Zombies: no ring around my name and HP bar, and the tags (with the HP bar under every duck) have square ends
+   (owner, Nov 15) */
+.l4-board .gduck.mine .gduck-name {
+  outline: none;
+}
+.l4-board .gduck-name {
+  border-radius: 0;
+}
 /* Change player tag color (looks.js): the name tag takes the duck's vote color, its letters in a color that reads on it */
 .gduck.vtag .gduck-name {
   opacity: 0.95;
@@ -4031,7 +4039,7 @@ html.moving .st-spin {
     transform: rotate(-360deg);
   }
 }
-.st-spin canvas {
+.st-spin .st-sky {
   position: absolute;
   inset: 0;
   width: 100%;

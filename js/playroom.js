@@ -627,6 +627,7 @@ export function playroom(w, h, dark) {
     bulbTop: bmin,
     bulbBottom: bmax,
     letters,
+    letterX: pileBoxes.map(([x0, x1]) => [x0 - b * 0.4, x1 + b * 0.4]), // (each pile's letters lie within, glow and all)
     letterTop: lmin,
     letterBottom: lmax,
     train: trainParts(ut, ry, w, dark),
