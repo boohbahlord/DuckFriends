@@ -26,6 +26,7 @@ import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
 import { isSudo, minOf, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./rules.js";
 import { openDemocracy } from "./democracy.js";
+import { lsetWatch } from "./lobbysettings.js";
 import { openGameSettings } from "./gamesettings.js";
 import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
@@ -556,7 +557,12 @@ register("lobby", {
       const c = e.target.closest && e.target.closest(".pcard");
       if (c) cardMenu(c.dataset.pid, x, y);
     });
-    off = R.on(onState);
+    const lset = lsetWatch(S); // (the Democracy note under the top of the lobby when a vote starts)
+    lset(R.state);
+    off = R.on((s) => {
+      onState(s);
+      lset(s);
+    });
     offAcct = onAccount(() => paint());
     addEventListener("keydown", key);
     S._tick = setInterval(() => {

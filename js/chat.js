@@ -37,6 +37,7 @@ import { applySettings } from "./settings.js";
 import { sfx } from "./sound.js";
 import { hooks } from "./hooks.js";
 import { settingText } from "./gamesettings.js";
+import { DOD_NEWS } from "./lobbysettings.js";
 import {
   npcById,
   npcByTag,
@@ -1025,6 +1026,8 @@ const ui = {
   cancel: false,
   live: [],
   chatFrom: 0,
+  dodRoom: "",
+  dodVotes: [],
 }; // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages; chatFrom: clear hides the chat before it, on your screen
 const mentionRe = (n) =>
   new RegExp(
@@ -1483,6 +1486,15 @@ export function chatWidget() {
   const onState = (s) => {
     const r = room();
     if (!r) return;
+    /* a Democracy of Ducklings vote starting: a line in the chat (the note under the cloud says the same) */
+    const dv = Object.keys((s.dod && s.dod.votes) || {}),
+      dk = `${s.id}`;
+    if (ui.dodRoom === dk && dv.some((k) => !ui.dodVotes.includes(k))) {
+      ui.notes.push({ t: Date.now(), mine: true, text: DOD_NEWS });
+      if (ui.mode === "chat") drawLog();
+    }
+    ui.dodRoom = dk;
+    ui.dodVotes = dv;
     const g = s.startedAt ? `${s.id}:${s.startedAt}` : ""; // each new game: a note on the chat's suggestions
     if (g && g !== ui.game) {
       ui.game = g;

@@ -10,9 +10,10 @@ import {
   dodOn,
   dodNeed,
   dodCount,
+  dodRoom,
 } from "./rules.js";
 import { now } from "./clock.js";
-import { infoUnder } from "./gamesettings.js";
+import { infoUnder, openGameSettings } from "./gamesettings.js";
 
 /* what each rule does, as the preview says it */
 export const DOD_TEXT = {
@@ -40,7 +41,9 @@ export function dodVote(s, k) {
   };
 }
 
-export function openDemocracy(R) {
+/* lobby: the Lobby Settings window (the button left of ☰ in a game, and the top of the pause menu): the same rules under a
+   Lobby Settings row at the top, which opens Game Settings over it */
+export function openDemocracy(R, { lobby = false } = {}) {
   let page = null, // null (the rules) | host (the ducks to pick from)
     peek = null, // the row under the pointer: a rule's key, or a duck's id on the New host page
     W = null,
@@ -79,26 +82,38 @@ export function openDemocracy(R) {
           )}</ul>${list.length ? "" : '<p class="small dim gs-none">No other duck is here to be the host.</p>'}</div>`
       );
     }
+    const rules = dodRoom(s);
     return (
-      head("Democracy of Ducklings") +
-      `<div class="arm-body"><ul class="arm-list">${DOD_KEYS.map((k) => {
-        const v = dodVote(s, k);
-        if (k === "host")
+      head(lobby ? "Lobby Settings" : "Democracy of Ducklings") +
+      `<div class="arm-body"><ul class="arm-list">${
+        lobby
+          ? row('data-k="lset"', "Lobby Settings", "›", false, false) +
+            (rules
+              ? '<li class="arm-sub" aria-hidden="true">Democracy of Ducklings</li>'
+              : "")
+          : ""
+      }${(rules ? DOD_KEYS : [])
+        .map((k) => {
+          const v = dodVote(s, k);
+          if (k === "host")
+            return row(
+              'data-k="host"',
+              DOD_NAMES.host,
+              v ? `${v.n}/${v.need}` : "",
+              false,
+              !!v,
+            );
           return row(
-            'data-k="host"',
-            DOD_NAMES.host,
-            v ? `${v.n}/${v.need}` : "",
-            false,
+            `data-k="${k}"`,
+            DOD_NAMES[k],
+            v ? `${v.n}/${v.need}` : dodOn(s, k) ? "On" : "Off",
+            !!v && !!v.by[R.me],
             !!v,
           );
-        return row(
-          `data-k="${k}"`,
-          DOD_NAMES[k],
-          v ? `${v.n}/${v.need}` : dodOn(s, k) ? "On" : "Off",
-          !!v && !!v.by[R.me],
-          !!v,
-        );
-      }).join("")}</ul></div>`
+        })
+        .join(
+          "",
+        )}</ul>${lobby && !rules ? '<p class="small dim gs-none">This room has no Democracy of Ducklings.</p>' : ""}</div>`
     );
   }
 
@@ -111,6 +126,8 @@ export function openDemocracy(R) {
           : peek && DOD_KEYS.includes(peek)
             ? peek
             : null;
+    if (peek === "lset")
+      return `<div class="gs-text"><h3>Lobby Settings</h3><p>${esc(LSET_TEXT)}</p></div>`;
     if (!k)
       return `<div class="gs-text"><h3>Democracy of Ducklings</h3><p>${esc(HOW)}</p></div>`;
     const v = dodVote(s, k),
@@ -196,6 +213,7 @@ export function openDemocracy(R) {
           const r = e.target.closest(".arm-row");
           if (!r) return;
           peekAt(r);
+          if (r.dataset.k === "lset") return openGameSettings(R);
           if (r.dataset.k === "host") return go("host");
           if (r.dataset.k) return R.send({ t: "dod", k: r.dataset.k });
           if (r.dataset.to) {
@@ -220,4 +238,6 @@ export function openDemocracy(R) {
     return v;
   });
 }
+const LSET_TEXT =
+  "The room's game settings: game mode, map and the rest. Only the host can change them, or every duck once Democracy of Ducklings lets them.";
 const dodVoteUp = (s) => Object.keys((s.dod || {}).votes || {}).length > 0;
