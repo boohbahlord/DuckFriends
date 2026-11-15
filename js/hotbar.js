@@ -188,7 +188,11 @@ export function mountHotbar(S, api) {
       parseFloat(getComputedStyle(document.documentElement).fontSize) || 36;
   const curI = () => list.findIndex(([id]) => id === cur);
   /* each slot along the row: the one in the middle bigger, the two beside it smaller, the rest out of sight */
+  let laid = ""; // what the last lay() placed: the same slots at the same spot on the same screen need no new layout
   const lay = () => {
+    const key = `${slideSig}|${pos}|${innerWidth}x${innerHeight}`;
+    if (key === laid) return; // (it ran on every paint and asked the browser for a fresh style each time: slow)
+    laid = key;
     const step = STEP();
     track.querySelectorAll(".sp-slot").forEach((b, j) => {
       const d = j - pos,
