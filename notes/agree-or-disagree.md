@@ -4144,7 +4144,7 @@ Zombies only; Hangout's Duck Cabin unchanged).
   picked (the writer can't defend; the defense can't also be the offense). Anyone votes for anyone, themselves too.
   Each vote lasts 0:20 and drops to 0:05 once the lobby's vote share (`shareOf`) has voted. Most votes win; a tie or
   no votes: the shuffle bag. Chat says who won. Solomon started it, Adam finished it (computers vote, window CSS, tests).
-- PR A done (v186): the fireplace costs 500; the extra candles (6 on the floor, 1 on the deck) are gone (rules, art,
+- PR A done (#268, Adam merges): the fireplace costs 500; the extra candles (6 on the floor, 1 on the deck) are gone (rules, art,
   drawing, light); layout.js has a Quacky Zombies variant: useMode(mode) (called at the top of reduce and when the world
   mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
   turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
