@@ -9,6 +9,23 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v24",
+    version: 24,
+    date: "Nov 15, 2026",
+    title: "Holes in the zombie cabin, and save slots",
+    news: [
+      "For Quacky Zombies: new holes in the cabin's walls (kitchen and bathroom into the top bedroom, the top bedroom into the bottom one, the hall onto the deck). Ducks and zombies walk through them, and they can't be boarded up.",
+      "For Quacky Zombies: the back door is now a large hole. You can see the porch from inside and part of the room from the porch.",
+      "For Quacky Zombies: the doorways on the right side of the cabin are wider.",
+      "Game Settings → Save slots: save the room's settings in one of 5 slots on your device, and load them in the lobby.",
+      "Game Settings → Modes in Random & Vote: turn games off so Random and the vote leave them out. During a game, every one but the game being played can change.",
+    ],
+    fixed: [
+      "For Quacky Zombies: no ring around your name, and the name tags and HP bars under the ducks have square ends.",
+      "Night Show, Starry Night and Carnival Night run smoother: their lights and skies cost the browser much less each frame.",
+    ],
+  },
+  {
     id: "v23",
     version: 23,
     date: "Nov 15, 2026",
