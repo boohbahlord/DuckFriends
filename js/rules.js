@@ -15,6 +15,7 @@
    room walks around Duck Cabin until it goes back to the lobby (its parts are in hangout/rules.js). Duncelation has its
    own rules in duncerules.js: one defender in the circle, everyone else walks to Dunce or Not a Dunce. Valentine's Duck
    Date has its own in vddrules.js: The Date at the dining table, a date with each Suitor, then a Suitor Turned Down. */
+import { stamp, took } from "./perf.js";
 import {
   boardSpeed,
   ARM_COOL,
@@ -2558,6 +2559,7 @@ export function reduce(state, a, now = Date.now()) {
 /* the safety net: an action that throws is skipped (the room keeps going) and the room's log says so, once a minute at
    most, so a broken action can't stop a game */
 export function safeReduce(state, a, now = Date.now()) {
+  const t0 = stamp(); // (the frame-rate readout: how long the rules take, perf.js)
   try {
     return reduce(state, a, now);
   } catch (e) {
@@ -2570,6 +2572,8 @@ export function safeReduce(state, a, now = Date.now()) {
       `Something went wrong (${String(a && a.t).slice(0, 20)}), so it was skipped. If the game seems stuck, the host can type skip in the command line.`,
     );
     return s;
+  } finally {
+    took("rules", t0);
   }
 }
 

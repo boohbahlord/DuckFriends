@@ -4074,3 +4074,17 @@ Later plan (Adam's summary): free, properly licensed, compressed audio files wit
   tools/sounds-test.html and tools/tap-worklet.js removed. No AudioContext is ever made. The Music bar stays and says
   "No music"; the Volume, Sound effects and Music sliders and mute keep working and their saved values.
 - The full files from main at 220d00e: /mnt/project-files/music/removed-sound-2026-11-15.zip (with a README.txt).
+
+## Nov 15 2026: measure first (from the planning talk, owner "Yes to the measure idea", order "Yes")
+- Done: js/perf.js, a hidden frame-rate readout (`fps on`/`fps off` in the command line, or `?fps` in the address; kept
+  out of help). It shows frames a second, the average and worst frame, the time of each part of the loop (rules, my
+  duck, scene, ducks, paint), long tasks and the element count. Off, it costs nothing.
+- Findings (1366x768; "4x slower" = Chrome CPU throttling x4):
+  - Agree or Disagree, 3 computers: 59 fps fast, 55 fps 4x slower.
+  - Hangout, 8 ducks: 57 fps fast, 26 fps 4x slower (worst frame 83 ms).
+  - Mad God Justin, 3 computers: 40 fps fast (worst frame 83 ms), 28 fps 4x slower.
+  - Quacky Zombies round 16 (33 zombies): 59 fps fast, 22 fps 4x slower (worst frame 133 ms).
+  - Phone 2x slower: Quacky Zombies 53 fps (worst 67 ms), Hangout 60 fps.
+  - On the slow computer only about a quarter of the busy time is our script; the rest is the browser laying out and
+    painting SVG. Fix order: a canvas layer for busy scenes, then the copy of the whole state on every action in
+    reduce (structuredClone), then the detached elements (DOM nodes 37k-64k for 700-3,200 elements on the page).

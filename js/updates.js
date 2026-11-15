@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v179",
+    version: 179,
+    date: "Nov 15, 2026",
+    title: "A frame-rate readout",
+    news: [
+      "Type fps on in the command line (or add ?fps to the address) for a small readout at the top left: frames a second and the slowest parts of each frame. fps off hides it.",
+    ],
+  },
+  {
     id: "v178",
     version: 178,
     date: "Nov 15, 2026",
