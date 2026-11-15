@@ -16068,10 +16068,6 @@ html.still .l4-crit {
   color: #1c1c28;
   background: var(--yellow);
 }
-.vt-time.fast::after {
-  content: " ×2";
-  font-size: 0.75em;
-}
 .vt-sub {
   margin: -0.35rem 0 0;
   font-size: 1rem;
