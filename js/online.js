@@ -263,6 +263,7 @@ const REMOTE = new Set([
   "wqWord",
   "tieVote",
   "counsel",
+  "attvote",
   "giveUp",
   "usermod",
   "groupadd",

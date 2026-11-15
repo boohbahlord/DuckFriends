@@ -501,6 +501,13 @@ const BY_MODE = {
   ],
   law: [
     {
+      k: "lawVote",
+      n: "Vote for attorneys",
+      c: ON_OFF,
+      cat: "rules",
+      d: "Each case, a window over the board: everyone votes the defense attorney, then the offense, 0:20 each (0:05 once the vote share has voted). A tie is settled by chance. On, it replaces Defense attorney and Offense attorney.",
+    },
+    {
       k: "lawDef",
       n: "Defense attorney",
       c: [

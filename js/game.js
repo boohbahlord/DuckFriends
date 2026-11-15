@@ -99,6 +99,7 @@ import {
   goOnVotes,
   goOnNeed,
   counselBounds,
+  ATT_PHASES,
   walkOf,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
@@ -124,6 +125,7 @@ import {
   lawTopHTML,
   LAW_BANNER,
   counselHTML,
+  attVoteHTML,
   lawStatsHTML,
   lawOverHTML,
   sideColor,
@@ -577,7 +579,7 @@ const bbBoardHTML = (s) =>
 const lawBoardHTML = (
   s,
 ) => `<div class="board law-board">${lawColsHTML(s)}<div class="ducks"></div><div class="fxl"></div>${LAW_BANNER}
-  ${["answer", "discuss"].includes(s.phase) ? lawTopHTML(s, knocked.has(caseKey(s))) : ""}</div>`;
+  ${["answer", "discuss", ...ATT_PHASES].includes(s.phase) ? lawTopHTML(s, knocked.has(caseKey(s))) : ""}${ATT_PHASES.includes(s.phase) ? '<div class="law-vote-wrap"></div>' : ""}</div>`;
 /* Duncelation: Dunce and Not a Dunce, the defender's circle (and in the dunce's moment the LOSER podium), the defender on the cloud */
 const dnBoardHTML = (
   s,
@@ -4808,6 +4810,11 @@ function actHTML(s) {
     )
   )
     return count;
+  if (isLaw(s) && ATT_PHASES.includes(s.phase) && s.law) {
+    const p = s.law.picks[s.phase === "lawdef" ? "def" : "off"] || {},
+      v = on.filter((id) => p[id] !== undefined).length;
+    return `<span class="progress">${v}/${n} voted</span>`;
+  } // (the attorney vote)
   if (s.phase === "podium") return "";
   if (s.phase === "tie") {
     // the tied match: vote again or toss a coin (a choice can change until everyone has chosen)
@@ -5110,6 +5117,8 @@ const TITLES = {
 const LAW_TITLES = {
   submit: "Write a topic",
   counsel: "Pick the attorneys",
+  lawdef: "Vote the defense",
+  lawoff: "Vote the offense",
   answer: "Court is in session",
   discuss: "The verdict",
 };
@@ -5342,6 +5351,7 @@ function paintNow(force) {
       s.phase === "results" ||
       s.phase === "bracket" ||
       s.phase === "dunced" ||
+      s.phase === "lawdef" ||
       (isSc(s) && SC_BOARD.includes(s.phase)) ||
       !me ||
       (isQuack(s) && (!was || was.split("|")[0] !== s.phase)) ||
@@ -5446,7 +5456,7 @@ function paintNow(force) {
           ? vdRound(s)
           : isTv(s)
             ? `Round ${s.round + 1}${tvRound(s)}`
-            : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced"].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
+            : `Round ${s.round + 1}${isQuack(s) ? (s.wq && s.wq.lap && QUACK_PHASES.includes(s.phase) ? ` · Lap ${s.wq.lap}` : "") : isSc(s) ? (s.phase === "write" ? ` · Line ${s.sc.turn + 1} of ${s.sc.order.length}` : "") : isBb(s) ? (bbMatch(s) ? ` · ${roundName(s.bb, s.bb.r)}` : "") : s.qs.length && ["answer", "discuss", "counsel", "dunced", ...ATT_PHASES].includes(s.phase) ? ` · ${isLaw(s) ? "Case" : isDn(s) ? "Take" : "Question"} ${s.qi + 1} of ${s.qs.length}` : ""}`;
   if ($(".round", S).textContent !== round) $(".round", S).textContent = round; // (every paint: a Story Chain line can be added for someone who joined)
   if (bar) bar.refresh(); // (a key kept on, or kept off)
   if (isTv(s) && TV_BOARD.includes(s.phase) && tvRefresh(S, s, R.me))
@@ -5486,6 +5496,8 @@ function paintNow(force) {
   if (isBb(s) && s.phase === "discuss") bbMarks(s);
   if (isLaw(s) && s.phase === "counsel")
     setHTML($(".law-counsel-wrap", S), counselHTML(s, R.me, whoHTML(s)));
+  if (isLaw(s) && ATT_PHASES.includes(s.phase))
+    setHTML($(".law-vote-wrap", S), attVoteHTML(s, R.me)); // (the attorney vote's window over the board)
   if (isLaw(s) && s.phase === "answer" && s.law) {
     // closing arguments: the banner, and the cloud asks the jury to reconsider
     const close = s.law.close || 0,
@@ -5672,6 +5684,8 @@ function showTimer() {
       "choice",
       "accuse",
       "counsel",
+      "lawdef",
+      "lawoff",
       "vdprompt",
       "vddate",
     ].includes(s.phase)
@@ -6505,7 +6519,11 @@ register("game", {
       }
       const lc = e.target.closest(".law-cand");
       if (lc) {
-        R.send({ t: "counsel", role: lc.dataset.role, who: lc.dataset.who });
+        R.send(
+          ATT_PHASES.includes(R.state.phase)
+            ? { t: "attvote", who: lc.dataset.who }
+            : { t: "counsel", role: lc.dataset.role, who: lc.dataset.who },
+        );
         return;
       }
       const tile = e.target.closest(".submit-card .tile[data-time]");

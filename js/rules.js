@@ -227,6 +227,7 @@ export const OPTIONS_DEFAULT = {
   scVote: "auto", // … voting on lines and secret words: 1 | 0 | auto (none with 2 or 3 players, so a vote means something)
   lawDef: "random", // Lawyering: who picks the defense attorney: random | writer (the topic's writer) | vote (the room)
   lawOff: "random", // … and the offense attorney
+  lawVote: 0, // 1: Lawyering: each case the room votes the defense, then the offense, in a window over the board (it takes the place of lawDef and lawOff)
   lawClose: 60, // seconds of closing arguments when the jury is split: 30, 60, 120
   dunceTime: 120, // Duncelation: seconds the defender gets after the grace period: 0 (off), 60, 120, 180, 300
   dunceTakes: "random", // … whose take you defend: random (it can be your own) | own (you write your own) | notOwn (never your own)
@@ -622,7 +623,7 @@ export const boardPhases = (s) =>
         : isQuack(s)
           ? ["clue", "choice", "accuse", "reveal"]
           : isLaw(s)
-            ? ["answer", "discuss"]
+            ? ["answer", "discuss", ...ATT_PHASES]
             : isDn(s)
               ? ["answer", "discuss", "dunced"]
               : isMgj(s)
@@ -1042,6 +1043,7 @@ function phaseLimit(s) {
   if (["submit", "topic", "seeds"].includes(s.phase))
     return s.options.submitTime;
   if (s.phase === "answer") return s.lordTime;
+  if (ATT_PHASES.includes(s.phase)) return ATT_TIME / 1000;
   if (s.phase === "podium") return PODIUM;
   if (s.phase === "dunced") return DN_CEREMONY;
   if (s.phase === "vdprompt") return VD_WRITE;
@@ -1245,6 +1247,7 @@ function advance(s, now, force = false) {
     all = d >= n,
     enough = d >= needed(s);
   if (isLaw(s) && s.phase === "answer") return lawCheck(s, now, force); // a case waits for the jury (and closing arguments)
+  if (isLaw(s) && ATT_PHASES.includes(s.phase)) return attCheck(s, now, force); // the attorney vote waits for its clock
   if (isDn(s) && s.phase === "answer") return dnCheck(s, now, force); // a take waits for its timer (or, with none, for the votes)
   const sway = isBb(s) && s.phase === "answer"; // a bracket match waits for every vote (or its own timer, if the host set one)
   const timeUp = s.ends && now >= s.ends;
@@ -2219,6 +2222,31 @@ export function reduce(state, a, now = Date.now()) {
       s.done[a.id] = counselDone(s, a.id);
       return advance(s, now);
     }
+    case "attvote": {
+      // Lawyering's attorney vote: my vote for the defense (then the offense); it can change until the clock runs out
+      const L = s.law;
+      if (
+        !me ||
+        me.late ||
+        !isLaw(s) ||
+        !L ||
+        !ATT_PHASES.includes(s.phase) ||
+        !counselOk(s, attRole(s), a.who)
+      )
+        return state;
+      const role = attRole(s),
+        picks = (L.picks[role] = { ...L.picks[role], [a.id]: a.who }),
+        on = playing(s).filter((id) => s.players[id]);
+      if (
+        !L.fast &&
+        on.filter((id) => picks[id] !== undefined).length >=
+          Math.max(1, Math.ceil(on.length * shareOf(s) - 1e-9))
+      ) {
+        L.fast = 1;
+        s.ends = now + Math.min(Math.max(0, s.ends - now), ATT_FAST);
+      } // (the share of the room is in: 0:05 left)
+      return s;
+    }
     case "goOn": {
       // Next round: go on without the attorney (the defender) who left, once enough press it (again: take it back)
       const w = s.waiting;
@@ -2785,6 +2813,8 @@ export const STAGE = {
   lvote: "voting",
   wvote: "voting",
   counsel: "voting",
+  lawdef: "voting",
+  lawoff: "voting",
   discuss: "discussing",
   bracket: "discussing",
   results: "stats",
@@ -5412,6 +5442,13 @@ function startCase(s, now) {
     how = { def: s.options.lawDef, off: s.options.lawOff };
   for (const k of ["def", "off"])
     if (how[k] === "writer" && !writer) how[k] = "random"; // (the writer left: random)
+  if (+s.options.lawVote) {
+    s.law.how = { def: "vote", off: "vote" };
+    s.seat.forEach((id, k) => {
+      s.pos[id] = { x: (k + 1) / (s.seat.length + 1), y: 0.96 };
+    }); // (everyone along the bottom edge, under the window)
+    return enter(s, "lawdef", now);
+  } // (the attorney vote: the defense first, then the offense)
   s.law.how = Object.fromEntries(
     Object.entries(how).filter(([, v]) => v === "writer" || v === "vote"),
   );
@@ -5456,6 +5493,41 @@ function endCounsel(s, now) {
   }
   return openCase(s, now);
 }
+/* ---------- the attorney vote (the host's setting lawVote, off by default) ----------
+   Each case, once its topic shows on the cloud, a window over the board lists every duck who can be picked: the room votes
+   the defense first, then the offense. Anyone may vote for themselves or anyone else, the new defense attorney too. Each
+   vote lasts 0:20 and drops to 0:05 once the lobby's vote share of the room has voted. The most votes win; a tie, or no
+   vote at all, is settled by the shuffle bag */
+export const ATT_PHASES = ["lawdef", "lawoff"];
+const ATT_TIME = 20000,
+  ATT_FAST = 5000;
+export const attRole = (s) => (s.phase === "lawdef" ? "def" : "off");
+export const attCands = (s) =>
+  playing(s).filter((id) => s.players[id] && counselOk(s, attRole(s), id)); // (who can be voted for now)
+function attCheck(s, now, force) {
+  if (!force && !(s.ends && now >= s.ends)) return s;
+  const L = s.law,
+    role = attRole(s),
+    on = playing(s).filter((id) => s.players[id]),
+    ok = (id) => counselOk(s, role, id),
+    n = {};
+  for (const [voter, who] of Object.entries(L.picks[role] || {}))
+    if (s.players[voter] && on.includes(who) && ok(who))
+      n[who] = (n[who] || 0) + 1;
+  const top = Math.max(0, ...Object.values(n)),
+    best = Object.keys(n).filter((id) => n[id] === top && top > 0);
+  L[role] = bagPick(s, `law ${role}`, best.length ? best : on.filter(ok));
+  L.fast = 0;
+  const p = s.players[L[role]];
+  if (p)
+    say(
+      s,
+      `${p.name} is the ${role === "def" ? "defense" : "offense"} attorney${best.length > 1 ? " (a tie, settled by chance)" : !top ? " (nobody voted, so chance picked)" : ""}.`,
+    );
+  if (role === "def") return enter(s, "lawoff", now);
+  if (!s.players[L.def]) L.def = null; // (the defense left during the offense vote: openCase picks one)
+  return openCase(s, now);
+}
 /* the case opens: random attorneys where nobody picks; each attorney on their own side (I want no circle), the jury lined
    up along the middle strip's top and bottom */
 function openCase(s, now) {
@@ -5467,7 +5539,7 @@ function openCase(s, now) {
     L.def = bagPick(
       s,
       "law def",
-      on.filter((id) => id !== q.by),
+      on.filter((id) => id !== q.by && id !== L.off),
     );
   if (!L.off)
     L.off = bagPick(
