@@ -1,5 +1,5 @@
 /* ---------- Lobby Settings (owner, Nov 15) ----------
-   A button of its own in a game, between the players button and ☰ (never faded), and the top row of the pause menu:
+   A button of its own in a game, between the players button and ☰ (never faded; I keep it out of the pause menu):
    it opens the Lobby Settings window (democracy.js), with Game Settings at the top and the Democracy of Ducklings rules
    under it. The button blinks when a setting changes and shows a "!" while a Democracy vote is up. When a vote starts, a
    small see-through note shows under the cloud for a moment ("Democracy of Ducklings: New Legislation is Being

@@ -26,7 +26,7 @@ import { cardHTML } from "./card.js";
 import { netHTML, kickItems } from "./players.js";
 import { isSudo, minOf, dodRoom, dodOn, dodVoting, DOD_KEYS } from "./rules.js";
 import { openDemocracy } from "./democracy.js";
-import { lsetWatch, openLobbySettings } from "./lobbysettings.js";
+import { lsetWatch } from "./lobbysettings.js";
 import { openGameSettings } from "./gamesettings.js";
 import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
@@ -391,7 +391,6 @@ function openPause() {
   if (windowOpen()) return;
   openWindow(
     `<h2>Paused</h2><div class="pause-list">
-    <button type="button" class="btn ghost" data-a="lset">Lobby Settings</button>
     <button type="button" class="btn green" data-a="resume">Resume</button>
     <button type="button" class="btn ghost" data-a="custom">Customize</button>
     <button type="button" class="btn ghost" data-a="settings">Settings</button>
@@ -406,7 +405,6 @@ function openPause() {
           close();
           ({
             resume() {},
-            lset: () => openLobbySettings(R),
             custom: () => openCustomize(),
             settings: () => openSettings(),
             friends: () => openFriends(),
