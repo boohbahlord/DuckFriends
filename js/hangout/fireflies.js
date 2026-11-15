@@ -15,7 +15,11 @@ let cv = null,
   sprite = null,
   flies = [],
   view = null,
-  was = 0;
+  was = 0,
+  drawnAt = 0,
+  from = null, // where the world's corner was on the screen at the last drawing
+  slid = "";
+const EVERY = 33; // ms: drawn at most 30 times a second; in between the canvas slides with the camera
 /* the soft glow, drawn once */
 function glowSprite() {
   const c = document.createElement("canvas"),
@@ -72,6 +76,8 @@ activity({
     sprite = glowSprite();
     flies = [];
     was = 0;
+    from = null;
+    slid = "";
   },
   unmount() {
     cv?.remove();
@@ -126,7 +132,8 @@ activity({
   draw(now, ctx) {
     if (!cv) return;
     /* a soft glow: one canvas pixel for two screen pixels is plenty, and much less work on a weak laptop or a phone;
-       with none to draw (inside, or on Low graphics) the canvas is hidden */
+       with none to draw (inside, or on Low graphics) the canvas is hidden. Their slow drift and blink look the same at
+       30 drawings a second, and each drawing the browser must take in costs a weak laptop a lot */
     const Wd = ctx.world,
       dpr = 0.5,
       w = Math.round(Wd.vw * dpr),
@@ -134,6 +141,15 @@ activity({
       none = Wd.inside || !flies.length || low(); // (none on Low graphics)
     if (cv.hidden !== none) cv.hidden = none;
     if (none) return;
+    const o = Wd.toScreen(0, 0, 0);
+    if (from && now - drawnAt < EVERY && cv.width === w && cv.height === h) {
+      const tr = `translate(${(o.left - from[0]).toFixed(1)}px, ${(o.top - from[1]).toFixed(1)}px)`;
+      if (tr !== slid) cv.style.transform = slid = tr;
+      return;
+    }
+    drawnAt = now;
+    from = [o.left, o.top];
+    if (slid) cv.style.transform = slid = "";
     if (cv.width !== w || cv.height !== h) {
       cv.width = w;
       cv.height = h;
