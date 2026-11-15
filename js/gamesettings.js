@@ -10,6 +10,7 @@ import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, mapName } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, randomPool, dodOn } from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
+import { profile, save } from "./store.js";
 
 /* ---------- every setting: its key, its name, its choices, its category and what it does ----------
    off: the games it doesn't apply to (it's hidden there). The four categories, under Host Settings and under each game */
@@ -791,6 +792,13 @@ export function settingText(k, v) {
   if (k === "mapPick")
     return v ? ["Map", v === "vote" ? "Vote for map" : "Random"] : null;
   if (k === "max") return ["Players up to", String(v)];
+  if (k === "modesOff")
+    return [
+      "Modes in Random & Vote",
+      (v || []).length
+        ? `all but ${v.map((id) => modeOf(id).name).join(", ")}`
+        : "All",
+    ];
   const o = [
       ...HOST,
       GREY,
@@ -895,6 +903,29 @@ function gamePic(s, mode) {
 
 /* ---------- the screen ---------- */
 const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
+/* the Modes in Random & Vote row's value: All, or how many are on */
+const poolVal = (s) => {
+  const all = MODES.filter((m) => !CABIN_MODES.includes(m.id)),
+    off = (s.options.modesOff || []).filter((id) =>
+      all.some((m) => m.id === id),
+    );
+  return off.length ? `${all.length - off.length} of ${all.length}` : "All";
+};
+/* ---------- save slots (owner 2026-11-15): 5 per player, kept on this device with the profile ----------
+   Save copies every Game Setting of the room; Load sends them back, and only in the lobby (never mid-game) */
+const SLOTS = 5;
+const slots = () =>
+  Array.from({ length: SLOTS }, (_, n) => {
+    const x = (profile.saves || [])[n];
+    return x && x.options ? x : null;
+  });
+const when = (t) =>
+  new Date(t).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 export function openGameSettings(R, start = null) {
   let page = start, // null (the three pages) | mode | cat:<kind> | map | opts
     peek = null, // what the preview shows: { kind: mode | map | set | text, … }
@@ -993,8 +1024,41 @@ export function openGameSettings(R, start = null) {
     if (!page)
       return (
         head("Game Settings") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="pool"', "Modes in Random & Vote", poolVal(s))}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}</ul></div>`
       );
+    if (page === "pool") {
+      const off = o.modesOff || [],
+        mid = !["lobby", "over", "countdown"].includes(s.phase);
+      return (
+        head("Modes in Random & Vote") +
+        `<div class="arm-body"><ul class="arm-list">${MODES.filter(
+          (m) => !CABIN_MODES.includes(m.id),
+        )
+          .map((m) =>
+            row(
+              `data-pool="${esc(m.id)}"`,
+              m.name,
+              off.includes(m.id) ? "Off" : "On",
+              !off.includes(m.id),
+              !host() || (mid && m.id === o.mode),
+            ),
+          )
+          .join("")}</ul></div>`
+      );
+    }
+    if (page === "saves") {
+      const inLobby = s.phase === "lobby",
+        list = slots();
+      return (
+        head("Save slots") +
+        `<div class="arm-body"><ul class="arm-list gs-slots">${list
+          .map(
+            (x, n) =>
+              `<li class="gs-slot"><span class="gs-slot-name">Slot ${n + 1}<span class="small dim">${x ? esc(`${modeOf(x.options.mode).name} · ${when(x.at)}`) : "Empty"}</span></span><button type="button" class="btn ghost small" data-a="save" data-n="${n}">Save</button><button type="button" class="btn ghost small" data-a="load" data-n="${n}"${x && inLobby && host() ? "" : " disabled"}>Load</button></li>${n ? "" : `<li class="gs-slot-note small dim">Save keeps these Game Settings on this device. Load works only in the lobby, before a game${host() ? "" : ", and only for the host (or sudo)"}.</li>`}`,
+          )
+          .join("")}</ul></div>`
+      );
+    }
     if (page === "vote")
       return (
         head("Vote Mode & Map") +
@@ -1118,7 +1182,13 @@ export function openGameSettings(R, start = null) {
                 ? { kind: "cat", id: page.slice(4) }
                 : page === "vote"
                   ? { kind: "mode", id: "vote" }
-                  : { kind: "mode", id: o.modePick || o.mode };
+                  : page === "pool"
+                    ? {
+                        kind: "set",
+                        title: "Modes in Random & Vote",
+                        text: "Turn a game off and Random and the vote leave it out. During a game, every one but the game being played can change.",
+                      }
+                    : { kind: "mode", id: o.modePick || o.mode };
     const card = (title, text, pic = "") =>
       `<div class="gs-pic${pic ? "" : " empty"}">${pic}</div><div class="gs-text"><h3>${esc(title)}</h3>${text ? `<p>${esc(text)}</p>` : ""}</div>`;
     if (p.kind === "mode") {
@@ -1294,6 +1364,19 @@ export function openGameSettings(R, start = null) {
                   ? "map"
                   : null,
             );
+          if (a && a.dataset.a === "save") {
+            const list = slots();
+            list[+a.dataset.n] = { at: Date.now(), options: { ...o } };
+            profile.saves = list;
+            save();
+            paint(false);
+            return;
+          }
+          if (a && a.dataset.a === "load") {
+            const x = slots()[+a.dataset.n];
+            if (x && boss && s.phase === "lobby") send({ ...x.options });
+            return;
+          }
           if (a && a.dataset.a === "reset" && boss) {
             send({ ...OPTIONS_DEFAULT });
             return;
@@ -1309,6 +1392,17 @@ export function openGameSettings(R, start = null) {
           peekAt(r);
           if (r.dataset.p) return go(r.dataset.p);
           if (r.dataset.cat) return go("cat:" + r.dataset.cat);
+          if (r.dataset.pool) {
+            if (!boss || r.getAttribute("aria-disabled") === "true") return;
+            const off = o.modesOff || [],
+              id = r.dataset.pool;
+            send({
+              modesOff: off.includes(id)
+                ? off.filter((x) => x !== id)
+                : [...off, id],
+            });
+            return;
+          }
           if (r.dataset.pick === "vote" && boss) {
             // Vote Mode & Map: on, both votes; off, the host's game and map
             const v = voting(S()) ? "" : "vote";

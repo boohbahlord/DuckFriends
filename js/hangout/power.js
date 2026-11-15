@@ -25,6 +25,7 @@ import {
   heightAt,
   inDeck,
   inPool,
+  layoutRev,
 } from "./layout.js";
 import { svgDataURL } from "./art.js";
 import { cabinSVG } from "./shapes.js";
@@ -188,7 +189,13 @@ let cv = null,
   drawnAt = 0,
   from = null, // where the world's corner was on the screen when the dark was last drawn
   slid = "";
-const darkURL = () => darkURL.u || (darkURL.u = svgDataURL(cabinSVG(true)));
+const darkURL = () => {
+  if (darkURL.r !== layoutRev()) {
+    darkURL.r = layoutRev(); // (the room's cabin's: Quacky Zombies' has holes in its south wall)
+    darkURL.u = svgDataURL(cabinSVG(true));
+  }
+  return darkURL.u;
+};
 /* the dark: first what goes on it (each number in the canvas' px, from the world's corner), then the drawing, only when
    that changed (a light flickered: flicker.js' clock, 20 times a second; my duck walked), at most every EVERY ms. When
    the camera moves the canvas slides with the world instead of being drawn again: a canvas drawn anew every frame was

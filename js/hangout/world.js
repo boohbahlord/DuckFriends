@@ -67,8 +67,31 @@ export function mountWorld(board, api) {
     },
     SHADE_IN = 350,
     SHADE_OUT = 700;
+  /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
+     out of it and its big shadow (in its own px, at the camera's scale) */
+  const peekClip = () => {
+    if (!L.PEEKS.length) return "";
+    const k = cam.sc,
+      W0 = (HOLE.r - HOLE.l) * k,
+      H0 = (HOLE.b - HOLE.t) * k,
+      E = 4200,
+      box = (x0, y0, x1, y1) =>
+        `M${x0.toFixed(1)} ${y0.toFixed(1)}H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`;
+    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${L.PEEKS.map(
+      ({ out: [x0, y0, x1, y1] }) =>
+        box(
+          (x0 - HOLE.l) * k,
+          (y0 - HOLE.t) * k,
+          (x1 - HOLE.l) * k,
+          (y1 - HOLE.t) * k,
+        ),
+    ).join("")}")`;
+  };
   const outOfHole = (l, t, r, b) =>
-    r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b;
+    (r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b) &&
+    !L.PEEKS.some(
+      ({ out: [x0, y0, x1, y1] }) => r > x0 && l < x1 && b > y0 && t < y1,
+    ); // (Quacky Zombies: the deck through a hole in the south wall shows too)
   const toScreen = (x, y, h = 0) => ({
     left: (x - cam.x) * cam.sc + cam.vw / 2,
     top: (y - h - cam.y) * cam.sc + cam.vh / 2,
@@ -465,7 +488,14 @@ export function mountWorld(board, api) {
       const svg = parts;
       parts = [{ svg, box: p.box, key: p.key, layer: p.layer, fade: p.fade }];
     }
-    for (const pt of parts) items.push({ ...pt, p, only: pt.only || p.only });
+    const peek =
+      L.PEEKS.length > 0 &&
+      L.PEEKS.some(
+        ({ in: [x0, y0, x1, y1] }) =>
+          p.x < x1 && p.x + p.w > x0 && p.y < y1 && p.y + p.d > y0,
+      ); // (inside, but seen from the deck through a hole: Quacky Zombies')
+    for (const pt of parts)
+      items.push({ ...pt, p, only: pt.only || p.only, peek });
   }
   for (const d of DECOR()) {
     const b = d.box;
@@ -512,7 +542,7 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
-      if (L.inCabin(a.x, a.y) !== inside) continue;
+      if (L.inCabin(a.x, a.y) !== inside) continue; // (not one seen through a hole: nothing turns see-through over it)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
@@ -537,7 +567,7 @@ export function mountWorld(board, api) {
         sw = b.w * sc,
         sh = b.h * sc;
       const vis =
-        (!it.only || (it.only === "in") === inside) &&
+        (!it.only || (it.only === "in") === inside || (it.peek && !inside)) &&
         sx < vw + NEAR &&
         sx + sw > -NEAR &&
         sy < vh + NEAR &&
@@ -740,7 +770,7 @@ export function mountWorld(board, api) {
     },
     hidden(id, pos) {
       const a = at(id, pos);
-      return L.inCabin(a.x, a.y) !== inside;
+      return !L.seenFrom(a.x, a.y, inside);
     },
     /* the way an activity turns a duck (seated: toward what it sits at), or 0 */
     face(id) {
@@ -807,6 +837,7 @@ export function mountWorld(board, api) {
           shade._sz = sz;
           shade.style.width = sz;
           shade.style.height = (b.top - a.top).toFixed(1) + "px";
+          shade.style.clipPath = peekClip(); // (only when its size changes, as its shadow)
         }
         if (shade._tr !== tr) {
           shade._tr = tr;

@@ -4149,6 +4149,13 @@ Zombies only; Hangout's Duck Cabin unchanged).
   mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
   turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
   still be walked onto. layoutRev() lets l4ddrules' walk grid be made again. Hangout's cabin is unchanged.
+- PR B done (stacked on #268, Adam merges): holes placed from the owner's 4 screenshots (refs/cabin-holes-2026-11-15):
+  1.png kitchen | top bedroom (y 1100, x 4080-4250), 2.png bathroom | top bedroom (x 3900, y 1175-1335), 3.png top
+  bedroom | bottom bedroom (y 1750, x 3990-4230), 4.png the hall's south end onto the deck (x 3320-3480). The back door
+  is a large hole (x 2570-2880). Wider east doorways (about 180-230 wide, were 120-150). The deck's rocking chairs and
+  table move 400 east in Quacky Zombies (they blocked the hall hole). layout.js: l4: 1 props (Quacky Zombies only),
+  HOLES, PEEKS, seenFrom(x, y, inside), OPENINGS swapped per mode; the shade gets a clip-path notch over the deck in
+  front of the outside holes, the cabin's outside picture has the holes cut (art.js holeCut/holed). Hangout unchanged.
 
 ## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
 - Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
@@ -4160,3 +4167,15 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - Done (Version 23): Settings → Performance → Frame rate: "Frame cap" (on at first) and a number box (120 at first,
   30 to 1000). The game loop skips early frames on a steady beat (a 144 Hz screen capped at 120 draws about 120).
   Off: as many frames as the screen shows. Checked uncapped: 120 → 120 fps, 60 → 60, off → 420-590 in Agree or Disagree.
+
+## Nov 15 2026: 5 save slots per player (planning talk 11:42Z; 11:57Z "save slots load only in the lobby", with a note)
+- Done (in the next deploy): Game Settings → "Save slots" (last row of the main page): 5 slots kept on this device with
+  the profile (`profile.saves`). Save copies every Game Setting of the room; Load sends them back, only in the lobby
+  and only for the host or sudo. A small note under Slot 1 says so.
+
+## Nov 15 2026: turn modes on or off for Random and Vote (planning talk 11:42Z: "only modes not being played can be edited mid-game")
+- Done (in the next deploy): Game Settings → "Modes in Random & Vote" (main page): one On/Off row per game Random and
+  the vote can pick (`options.modesOff`, empty = all on, so nothing changes by default). In the lobby any can change;
+  mid-game every one but the game being played (rules.js keeps the current one as it was). All off: Random and the
+  vote fall back to every game. Hangout and Quacky Zombies aren't in Random or the vote today, so they aren't listed;
+  Hangout's own time limit for when it comes up in Random is still to do.

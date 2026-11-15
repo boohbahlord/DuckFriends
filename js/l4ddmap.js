@@ -3,7 +3,14 @@
    shapes, no furniture; every duck's head where it stands (mine ringed in white); a red dot for every zombie some
    duck's camera sees right now. A dot fades in as its zombie comes into any camera and fades out quickly once none sees
    it. I want it dead simple and cheap: the map is drawn once, and the canvas only 12 times a second. */
-import { CABIN, DECK, STAIRS, PROPS, inCabin } from "./hangout/layout.js";
+import {
+  CABIN,
+  DECK,
+  STAIRS,
+  PROPS,
+  inCabin,
+  seenFrom,
+} from "./hangout/layout.js";
 import { shownDuck } from "./looks.js";
 
 const X0 = 1250,
@@ -14,9 +21,6 @@ const EVERY = 80; // ms between drawings
 const IN_MS = 250,
   OUT_MS = 400; // a dot's fade in, and its quicker fade out (it's gone in under half a second)
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
-const WALLS = PROPS.filter((p) => p.kind === "wall" && p.block).map(
-  (p) => p.block,
-);
 
 let cv = null,
   g = null,
@@ -83,7 +87,9 @@ function drawMap(w, h, dpr) {
   box(LAND.x0, LAND.y0, LAND.x1, LAND.y1);
   m.fillStyle = "rgba(246,236,216,.9)"; // the walls (the doors are their gaps)
   const t = Math.max(1.5 / f.k, 0); // (at least 1.5 px thick)
-  for (const [x0, y0, x1, y1] of WALLS) {
+  for (const p of PROPS) {
+    if (p.kind !== "wall" || !p.block) continue; // (the room's cabin's: Quacky Zombies' has its holes)
+    const [x0, y0, x1, y1] = p.block;
     const cx = (x0 + x1) / 2,
       cy = (y0 + y1) / 2,
       ww = Math.max(x1 - x0, t),
@@ -115,7 +121,8 @@ export function mapDraw(now, ctx, s, zs, alive) {
   if (now - drawnAt < EVERY) return;
   const dt = drawnAt ? now - drawnAt : EVERY;
   drawnAt = now;
-  /* every duck's camera: the box round it, as big as mine, on its side of the cabin's walls */
+  /* every duck's camera: the box round it, as big as mine, on its side of the cabin's walls (or through a hole in them,
+     Quacky Zombies' onto the deck) */
   const hw = Wd.vw / 2 / Wd.sc,
     hh = Wd.vh / 2 / Wd.sc,
     cams = [];
@@ -128,9 +135,8 @@ export function mapDraw(now, ctx, s, zs, alive) {
     ducks.push([id, a.x, a.y]);
   }
   const sees = (x, y) => {
-    const ins = inCabin(x, y);
     for (const [cx, cy, ci] of cams)
-      if (ci === ins && Math.abs(x - cx) < hw && Math.abs(y - cy) < hh)
+      if (Math.abs(x - cx) < hw && Math.abs(y - cy) < hh && seenFrom(x, y, ci))
         return true;
     return false;
   };
