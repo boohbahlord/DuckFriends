@@ -3311,9 +3311,13 @@ function myAim() {
   const board = origin($(".board", S));
   if (!board) return [face, 0];
   const r = board.getBoundingClientRect(),
-    c = bodyAt(R.me, me);
+    c = bodyAt(R.me, me),
+    up = isL4dd(R.state) && world ? world.lift(R.me, me) : 0; // (Quacky Zombies, up in the air (a jump, the jetpack): it aims from where it stands, as its shot flies along the ground from its feet, so it goes where I point; the owner's, Nov 15)
   return (
-    toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top) || [face, 0]
+    toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top - up) || [
+      face,
+      0,
+    ]
   );
 }
 function sendMove(force) {

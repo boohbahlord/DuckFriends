@@ -4156,3 +4156,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
   table move 400 east in Quacky Zombies (they blocked the hall hole). layout.js: l4: 1 props (Quacky Zombies only),
   HOLES, PEEKS, seenFrom(x, y, inside), OPENINGS swapped per mode; the shade gets a clip-path notch over the deck in
   front of the outside holes, the cabin's outside picture has the holes cut (art.js holeCut/holed). Hangout unchanged.
+- PR C done (stacked on PR B, Adam merges): from inside, a zombie beating on boards (or climbing in) shows over the dark
+  (z 20001, l4dd.js atBoards) and those boards go see-through (.l4-boards.beat) above it; shots pass the boards and the
+  wall round an opening out to 130 px outside and 70 px either side (l4ddrules inOpening); walls fade over zombies too
+  (activity hook hiders in world.js duckBoxes); in the air (jump, jetpack) my aim is taken from where I stand (game.js
+  myAim takes off world.lift), since the host fires from the feet: before, the lift skewed the aim and shots missed.
