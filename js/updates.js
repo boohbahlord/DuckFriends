@@ -1,7 +1,7 @@
 /* ---------- Updates ----------
    What changed, newest first, one page per version. A version is a deploy: the finished work of a batch, merged to main
    together once (never one version per merge), "Version N" (one more than the last), with its date and a short title.
-   Up to Nov 2 it was one page per day; from Nov 3 on, one page per deploy. The Updates button on the front page opens this window and shows a dot until
+   Up to Nov 2 it was one page per day; from Nov 3 on, one page per deploy. Version 1 is the first page (Oct 25). The Updates button on the front page opens this window and shows a dot until
    the newest page has been opened on this device. I want short, plain words for players, not a list of everything. */
 import { openWindow, esc } from "./ui.js";
 import { rainbowHTML } from "./art.js";
@@ -9,8 +9,8 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
-    id: "v121",
-    version: 121,
+    id: "v22",
+    version: 22,
     date: "Nov 15, 2026",
     title: "A roomier zombie cabin",
     news: [
@@ -19,8 +19,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v120",
-    version: 120,
+    id: "v21",
+    version: 21,
     date: "Nov 15, 2026",
     title: "Smoother play, a minimap and attorney votes",
     news: [
@@ -38,8 +38,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v119",
-    version: 119,
+    id: "v20",
+    version: 20,
     date: "Nov 15, 2026",
     title: "6 second votes, the fireplace roll and fair picks",
     news: [
@@ -49,8 +49,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v118",
-    version: 118,
+    id: "v19",
+    version: 19,
     date: "Nov 14, 2026",
     title: "Faster game mode vote",
     fixed: [
@@ -58,8 +58,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v117",
-    version: 117,
+    id: "v18",
+    version: 18,
     date: "Nov 14, 2026",
     title: "Quieter music",
     news: [
@@ -67,8 +67,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v116",
-    version: 116,
+    id: "v17",
+    version: 17,
     date: "Nov 6, 2026",
     title: "A new map: The King's Festival",
     news: [
@@ -77,8 +77,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v115",
-    version: 115,
+    id: "v16",
+    version: 16,
     date: "Nov 4, 2026",
     title: "Trivia, Euclid's Squares, the map vote and Jaime Bomb",
     news: [
@@ -167,8 +167,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v114",
-    version: 114,
+    id: "v15",
+    version: 15,
     date: "Nov 3, 2026",
     title: "Duck looks, drops, the jetpack and HP meters",
     news: [
@@ -205,8 +205,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v113",
-    version: 113,
+    id: "v14",
+    version: 14,
     date: "Nov 3, 2026",
     title: "Fireplace weapons",
     news: [
@@ -214,8 +214,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v112",
-    version: 112,
+    id: "v13",
+    version: 13,
     date: "Nov 3, 2026",
     title: "Jaime, a tougher Justin and harder hits",
     news: [
@@ -228,8 +228,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v111",
-    version: 111,
+    id: "v12",
+    version: 12,
     date: "Nov 3, 2026",
     title: "Game Settings, Democracy of Ducklings and Board Justin",
     news: [
@@ -240,8 +240,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v110",
-    version: 110,
+    id: "v11",
+    version: 11,
     date: "Nov 3, 2026",
     title: "Quacky Zombies points and phone specials",
     news: [
@@ -258,8 +258,8 @@ export const UPDATES = [
     ],
   },
   {
-    id: "v109",
-    version: 109,
+    id: "v10",
+    version: 10,
     date: "Nov 3, 2026",
     title: "Quacky Zombies, Shelter Sky & Null and Dat Boi",
     news: [
@@ -281,7 +281,7 @@ export const UPDATES = [
   },
   {
     id: "2026-11-02",
-    version: 108,
+    version: 9,
     date: "Nov 2, 2026",
     title: "Valentine's Duck Date",
     news: [
@@ -292,7 +292,7 @@ export const UPDATES = [
   },
   {
     id: "2026-11-01",
-    version: 107,
+    version: 8,
     date: "Nov 1, 2026",
     title: "Mad God Justin fixes",
     news: [
@@ -307,7 +307,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-31",
-    version: 106,
+    version: 7,
     date: "Oct 31, 2026",
     title: "Cancel the start, and a loading screen",
     news: [
@@ -322,7 +322,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-30",
-    version: 103,
+    version: 6,
     date: "Oct 30, 2026",
     title: "Duncelation and Mad God Justin",
     news: [
@@ -351,7 +351,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-29",
-    version: 98,
+    version: 5,
     date: "Oct 29, 2026",
     title: "Waiting for players and floating chat",
     news: [
@@ -371,7 +371,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-28",
-    version: 96,
+    version: 4,
     date: "Oct 28, 2026",
     title: "Weapons, ghosts and poker",
     news: [
@@ -393,7 +393,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-27",
-    version: 87,
+    version: 3,
     date: "Oct 27, 2026",
     title: "Blackjack, Jack in a Box and outfits",
     news: [
@@ -410,7 +410,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-26",
-    version: 80,
+    version: 2,
     date: "Oct 26, 2026",
     title: "Power box and the dark",
     news: [
@@ -424,7 +424,7 @@ export const UPDATES = [
   },
   {
     id: "2026-10-25",
-    version: 58,
+    version: 1,
     date: "Oct 25, 2026",
     title: "Night Show and the toy train",
     news: [

@@ -4153,4 +4153,5 @@ Zombies only; Hangout's Duck Cabin unchanged).
 ## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
 - Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
 - The per-merge pages from Nov 3 on were regrouped by work session (merges with under ~45 minutes between them were
-  one sitting): Versions 109 (Nov 2-3 night) to 120 (Nov 15 morning). The next deploy is Version 121.
+  one sitting), then every page renumbered from Version 1 (Oct 25) so each version is one deploy (owner 14:01Z
+  "EVERY VERSION PREVIOUSLY IS ALSO BASED ON THIS PRINCIPLE"). Today's deploys are Versions 20 to 22.
