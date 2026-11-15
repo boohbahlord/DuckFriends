@@ -4149,3 +4149,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
   mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
   turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
   still be walked onto. layoutRev() lets l4ddrules' walk grid be made again. Hangout's cabin is unchanged.
+
+## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
+- Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
+- The per-merge pages from Nov 3 on were regrouped by work session (merges with under ~45 minutes between them were
+  one sitting): Versions 109 (Nov 2-3 night) to 120 (Nov 15 morning). The next deploy is Version 121.
