@@ -19,6 +19,7 @@ import {
   seatLate,
   toStats,
   backToLobby,
+  bagPick,
   lostRound,
   VOTE_GRACE,
 } from "./rules.js";
@@ -183,7 +184,7 @@ const tileSpot = (n, k) => {
 export function vdStart(s, now) {
   seatLate(s);
   const ids = playing(s).filter((id) => s.players[id]),
-    date = anyOf(ids),
+    date = bagPick(s, "vdd date", ids),
     p = s.players[date];
   s.vd = {
     date,
@@ -400,7 +401,11 @@ export function vdAfter(s, now) {
 function newDate(s, now) {
   const V = s.vd,
     pool = suitors(s),
-    date = anyOf(pool.length ? pool : playing(s).filter((id) => s.players[id]));
+    date = bagPick(
+      s,
+      "vdd date",
+      pool.length ? pool : playing(s).filter((id) => s.players[id]),
+    );
   if (!date) return s;
   const p = s.players[date];
   V.date = date;

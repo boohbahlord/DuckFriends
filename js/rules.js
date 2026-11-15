@@ -281,6 +281,44 @@ const winner = (n, pool) => {
 const MAP_IDS = MAPS.map((m) => m[0]);
 const formOf = (id) => anyOf(MAP_FORMS[id] || [id]);
 export const VOTE_MAPS = MAP_IDS.flatMap((id) => MAP_FORMS[id] || [id]);
+/* A shuffle bag for every random pick of a player's role (the Quack, the date, an attorney, the first writer), so nobody
+   is picked over and over: each eligible player goes in a bag, one is drawn without putting it back, and the bag is
+   filled and shuffled again when nobody eligible is left in it (the one picked last never opens the new bag). One bag
+   for each `key` in the room, kept in the state, so it lasts the whole night: s.bags = { key: { left: [ids], last } }.
+   Players who joined are in the bag from the next draw; a player who left comes out of it. ids: who may be picked now
+   (the caller has left out whoever can't be: the writer, the date). Returns null when ids is empty. */
+export function bagPick(s, key, ids) {
+  if (!ids.length) return null;
+  const bags = (s.bags = s.bags || {}),
+    bag = (bags[key] = bags[key] || { left: [], last: null }),
+    alive = (id) => !!(s.players || {})[id],
+    refill = () => {
+      const all = shuffle(
+        s.seat.filter(alive).filter((id) => ids.includes(id)),
+      );
+      const rest = shuffle(ids.filter((id) => !all.includes(id)));
+      bag.left = [...all, ...rest];
+      if (bag.left.length > 1 && bag.left[0] === bag.last)
+        bag.left.push(bag.left.shift()); // (never the one picked last first)
+    };
+  // (everyone seated who isn't in the bag yet and wasn't drawn this lap joins it)
+  const seen = new Set([...(bag.left || []), ...(bag.drawn || [])]);
+  bag.left = (bag.left || []).filter(alive);
+  bag.drawn = (bag.drawn || []).filter(alive);
+  const fresh = !seen.size; // (a new bag: shuffled before the first draw)
+  for (const id of s.seat) if (alive(id) && !seen.has(id)) bag.left.push(id);
+  if (fresh) shuffle(bag.left);
+  let pick = bag.left.find((id) => ids.includes(id));
+  if (pick === undefined) {
+    bag.drawn = [];
+    refill();
+    pick = bag.left.find((id) => ids.includes(id));
+  }
+  bag.left = bag.left.filter((id) => id !== pick);
+  bag.drawn = [...bag.drawn, pick];
+  bag.last = pick;
+  return pick;
+}
 /* the map the vote or Random lands on, in its form (s.mapZoomed, s.mapGreyed) */
 function setMap(s, won) {
   const f = mapForm(won);
@@ -4915,7 +4953,9 @@ function endWords(s, now) {
   }
   s.drafts = {};
   const order = shuffle(playing(s)),
-    authors = Object.keys(sc.words).filter((id) => s.players[id]);
+    first = bagPick(s, "sc first", order);
+  if (first) order.unshift(...order.splice(order.indexOf(first), 1)); // (the first writer comes from the bag)
+  const authors = Object.keys(sc.words).filter((id) => s.players[id]);
   if (!order.length) return s;
   let best = null;
   for (let k = 0; k < 40 && !(best && best.left === 0); k++) {
@@ -5319,7 +5359,6 @@ export function canGiveUp(s, id) {
   const [o, d] = lawTally(s);
   return id === L.off ? o <= d : d <= o;
 }
-const pickOne = (xs) => xs[Math.floor(Math.random() * xs.length)];
 function startCase(s, now) {
   seatLate(s);
   const q = s.qs[s.qi],
@@ -5392,7 +5431,7 @@ function endCounsel(s, now) {
         n[who] = (n[who] || 0) + 1;
     const top = Math.max(0, ...Object.values(n)),
       best = Object.keys(n).filter((id) => n[id] === top && top > 0);
-    L[role] = best.length ? pickOne(best) : pickOne(on.filter(ok));
+    L[role] = bagPick(s, `law ${role}`, best.length ? best : on.filter(ok));
   }
   return openCase(s, now);
 }
@@ -5403,8 +5442,18 @@ function openCase(s, now) {
     q = s.qs[s.qi],
     on = playing(s).filter((id) => s.players[id]);
   const noOwn = +s.options.noOwn ? q.by : null; // (Don't get your own prompt: the writer is no attorney, either side)
-  if (!L.def) L.def = pickOne(on.filter((id) => id !== q.by));
-  if (!L.off) L.off = pickOne(on.filter((id) => id !== L.def && id !== noOwn));
+  if (!L.def)
+    L.def = bagPick(
+      s,
+      "law def",
+      on.filter((id) => id !== q.by),
+    );
+  if (!L.off)
+    L.off = bagPick(
+      s,
+      "law off",
+      on.filter((id) => id !== L.def && id !== noOwn),
+    );
   s.pos = {};
   s.lock = {};
   s.pos[L.off] = { x: 0.3, y: 0.5 };

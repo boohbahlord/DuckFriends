@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v177",
+    version: 177,
+    date: "Nov 15, 2026",
+    title: "Fair random picks",
+    news: [
+      "When chance decides who is an attorney, the Quack, the picker, the Date or the first writer, everyone gets a turn before anyone is picked again, and the same duck is never picked twice in a row.",
+    ],
+  },
+  {
     id: "v176",
     version: 176,
     date: "Nov 15, 2026",

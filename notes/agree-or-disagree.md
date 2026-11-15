@@ -4054,3 +4054,13 @@ Add fire ball and chair to the items."
   hammer, handgun, bow, dagger, shotgun, sniper, smg, ak, chaingun, revolver, glauncher, lmg) at WEAPON_ODDS 0.85, else
   ITEMS (medkit, zebra, adrenaline, longjump, jaime, jetpack, fireball, chair); fair pick inside a group, never what the
   duck holds, the other group when one is empty. The Butler's Items tab says which group each one is in. Updates v176.
+
+"add shuffle bag to any random determination to what a player is, so things besides lawyering" (owner, Nov 15 plan, section 5, via Adam)
+- Jackal: `bagPick(s, key, ids)` in js/rules.js is the one helper: a shuffle bag per room and per role kind, kept in
+  `s.bags = { key: { left, drawn, last } }` (never reset by a new game, so it lasts the night and works online). Draw
+  without putting back; refill and reshuffle when nobody eligible is left; the one picked last never opens the new bag;
+  a joiner is in the bag from the next draw, a leaver comes out. Used for: Lawyering's defense and offense when chance
+  decides (`law def`, `law off`; ties among votes draw from the tied players), Who is the Quack's picker (`quack
+  picker`) and the Quack (`quack`), Valentine's Duck Date's date (`vdd date`, also a new date), Story Chain's first
+  writer (`sc first`). Left alone, not roles: Mad God Justin's targets, question and turn orders, Duncelation's order
+  (a full rotation already), topic, word and map picks.
