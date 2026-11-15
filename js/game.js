@@ -434,6 +434,10 @@ let padHold = false, // a phone's jump button held down (the jetpack flies)
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 let shows = {}; // a handgun just fired, shown turned toward its aim for a moment: by player id
 let scene = null; // the map: its world fills the page behind the game
+/* the place the screen was made for: Duck Cabin's games or not, and the map in its form */
+const placeKey = (s) =>
+  [isHang(s), s.options.map, s.mapZoomed, s.mapGreyed].join();
+let placed = "";
 let lastSend = 0,
   lastSent = "",
   lastBeep = -1,
@@ -5705,6 +5709,7 @@ function showTimer() {
       "lawoff",
       "vdprompt",
       "vddate",
+      "hang", // (only a Hangout from Random or the vote has a time limit)
     ].includes(s.phase)
   ) {
     if (t.textContent) t.textContent = "";
@@ -6402,6 +6407,7 @@ register("game", {
     insetsOff = watchInsets(S);
     pm = mountPlayers(S, () => R);
     cabinEndOff = isHang(R.state) ? mountCabinEnd(S, () => R) : null;
+    placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
     hooks.resetDuck = resetDuck;
     if (isL4dd(R.state)) {
@@ -6750,6 +6756,10 @@ register("game", {
       if (!S) return;
       if (s.phase === "lobby" || s.phase === "countdown") {
         go("lobby", R);
+        return;
+      }
+      if (placeKey(s) !== placed) {
+        go("game", R); // (Random going into Duck Cabin or out of it: the screen again, on the new map)
         return;
       }
       paint();

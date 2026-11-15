@@ -204,6 +204,7 @@ export const OPTIONS_DEFAULT = {
   lowGravity: 0, // 1: jumps float, slower and higher
   fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
+  hangTime: 15, // Hangout's time limit in minutes when Random or the vote picked it: 0 (none), 5, 10, 15, 20, 30 (never when the host picks it)
   ghostBusy: 1, // 1: no ghost from a duck busy with an activity (chalk, piano, guestbook, cards, a seat …): it just gets up
   justin: 0, // 1: Duck Cabin's Justin walks the boards too, as a joke (js/boardjustin.js); he never counts
   mgjBoard: 0, // 1: the board's Mad God Justin (only with justin on): 10 HP, and the duck that hurts him is his target for 10 s
@@ -332,11 +333,12 @@ function setMap(s, won) {
   say(s, `The map: ${mapName(won)}!`);
 }
 const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
-/* Random: the games it plays (never Hangout or Quacky Zombies, nor a game the room is too small for); each round is
-   the next one in the bag, every game once before a new shuffle, or with True Random any game at all */
+/* Random: the games it plays (never Quacky Zombies, nor a game the room is too small for; Hangout comes up too, with its
+   own time limit); each round is the next one in the bag, every game once before a new shuffle, or with True Random
+   any game at all */
 export const randomPool = (s) => {
   const all = MODES.map((m) => m.id).filter(
-      (id) => !CABIN_MODES.includes(id) && fits(s, id),
+      (id) => id !== "l4dd" && fits(s, id),
     ),
     off = s.options.modesOff || [],
     on = all.filter((id) => !off.includes(id));
@@ -422,16 +424,29 @@ function placeMap(s) {
   const o = s.options,
     voted = s.mapVoted;
   delete s.mapVoted;
-  if (isHang(s)) {
-    o.map = "cabin";
-    s.mapZoomed = s.mapGreyed = 0;
-    return;
-  }
-  if (o.map === "cabin") o.map = "board";
-  if (voted) return;
+  cabinMap(s);
+  if (isHang(s) || voted) return;
   if (o.mapPick === "random") return setMap(s, formOf(anyOf(MAP_IDS)));
   s.mapZoomed = o.map === "euclid" && o.mapZoom ? 1 : 0;
   s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
+}
+/* Duck Cabin's games bring their own map: going in keeps the room's map (in its form) to come back to, and coming out
+   puts it back (the board if there was none) */
+function cabinMap(s) {
+  const o = s.options;
+  if (isHang(s)) {
+    if (o.map !== "cabin")
+      s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
+    o.map = "cabin";
+    s.mapZoomed = s.mapGreyed = 0;
+  } else if (o.map === "cabin") {
+    [o.map, s.mapZoomed, s.mapGreyed] = s.roomMap || ["board", 0, 0];
+    delete s.roomMap;
+    if (!o.mapPick) {
+      s.mapZoomed = o.map === "euclid" && o.mapZoom ? 1 : 0; // (the host's map: the host's Zoom and Colors)
+      s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
+    }
+  }
 }
 /* the countdown or a vote is over: the next vote, or the game */
 function nextVote(s, now) {
@@ -500,6 +515,7 @@ function rotate(s, now) {
   s.banned = banned;
   s.options.mode = mode;
   writeTimerFor(s, was);
+  cabinMap(s); // (into Duck Cabin, or out of it)
   return beginGame(s, now);
 }
 /* the countdown is over: the game begins (Random: again for every new game) */
@@ -1061,6 +1077,7 @@ function phaseLimit(s) {
   if (s.phase === "vddown") return VD_DOWN;
   if (s.phase === "vdval") return VD_VAL;
   if (s.phase === "wqpick") return s.options.wqPickTime;
+  if (s.phase === "hang") return hangLimit(s);
   if (s.phase === "choice" || s.phase === "accuse") return s.options.wqTimer;
   return 0;
 }
@@ -1581,10 +1598,13 @@ export function reduce(state, a, now = Date.now()) {
           s.options.modePick = "";
         } else if ((o.map || o.mapPick || o.modePick) && !o.mode && isHang(s))
           s.options.mode = "aod"; // and another map (or a vote, or Random) leaves Duck Cabin
-        if (isHang(s)) {
-          s.options.map = "cabin";
+        if (isHang(s) && !s.options.modePick) {
+          s.options.map = "cabin"; // (the host's Hangout; one from Random or the vote keeps the map's settings)
           s.options.mapPick = "";
-        } else if (s.options.map === "cabin") {
+          delete s.roomMap;
+        } else if (!isHang(s) && s.options.map === "cabin" && s.roomMap)
+          cabinMap(s); // (out of a Hangout that Random or the vote picked: the room's map again)
+        else if (!isHang(s) && s.options.map === "cabin") {
           s.options.map = "board"; // leaving Duck Cabin without picking a map goes back to Vote Maps
           if (!o.map && !("mapPick" in o)) s.options.mapPick = "vote";
         }
@@ -2617,6 +2637,13 @@ export function reduce(state, a, now = Date.now()) {
         return s;
       }
       if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
+      if (
+        s.phase === "hang" &&
+        s.options.mode === "hang" &&
+        s.ends &&
+        now >= s.ends
+      )
+        return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
       const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
         hung = isHang(s) && s.phase === "hang" && hangTick(s, now),
         jus =
@@ -4453,13 +4480,12 @@ function cabinCheck(s, now) {
   c.at = at;
   return true;
 }
-/* a cabin game ends (the vote won): the whole stay is one game. With Vote Mode & Map on, Vote return counts it (the
-   votes come back when it's time, or the same game starts over); otherwise the room goes back to the lobby, as when the
-   host ends it */
-export function cabinOver(s, now) {
-  const why = "The ducks voted to leave the cabin.";
+/* a cabin game ends (the vote won, or a Hangout's time limit ran out): the whole stay is one game. With Vote Mode & Map
+   on, Vote return counts it (the votes come back when it's time, or the same game starts over); with Random the next
+   game begins; otherwise the room goes back to the lobby, as when the host ends it */
+export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   delete s.cabinEnd;
-  if (!votesDue(s).length) return backToLobby(s, why);
+  if (!votesDue(s).length && !rolling(s)) return backToLobby(s, why); // (Random goes on to its next game)
   say(s, why);
   const over = gameOver(s, now);
   if (over) return over;
@@ -4467,6 +4493,15 @@ export function cabinOver(s, now) {
   backToLobby(s, "A new game in the cabin.");
   s.banned = banned;
   return beginGame(s, now);
+}
+/* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
+   seconds, 0 for none */
+const HANG_TIMES = [0, 5, 10, 15, 20, 30];
+function hangLimit(s) {
+  const o = s.options;
+  if (o.mode !== "hang" || !["random", "vote"].includes(o.modePick)) return 0;
+  const m = HANG_TIMES.includes(+o.hangTime) ? +o.hangTime : 15;
+  return m * 60;
 }
 /* every beat in the cabin: the votes of players who left stop counting; true when the game ended or the timer changed */
 function cabinTick(s, now) {
