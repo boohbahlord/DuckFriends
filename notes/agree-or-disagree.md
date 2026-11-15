@@ -4161,3 +4161,26 @@ Zombies only; Hangout's Duck Cabin unchanged).
   wall round an opening out to 130 px outside and 70 px either side (l4ddrules inOpening); walls fade over zombies too
   (activity hook hiders in world.js duckBoxes); in the air (jump, jetpack) my aim is taken from where I stand (game.js
   myAim takes off world.lift), since the host fires from the feet: before, the lift skewed the aim and shots missed.
+
+## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
+- Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
+- The per-merge pages from Nov 3 on were regrouped by work session (merges with under ~45 minutes between them were
+  one sitting), then every page renumbered from Version 1 (Oct 25) so each version is one deploy (owner 14:01Z
+  "EVERY VERSION PREVIOUSLY IS ALSO BASED ON THIS PRINCIPLE"). Today's deploys are Versions 20 to 22.
+
+## Nov 15 2026 13:53Z: "good that shouldnt be a limit cap UNLESS the player turns it on in settings, the frame cap is automatically at 120 fps by default for duck friends and can be set with a number they type into a box, because why not? Should be simple, right?"
+- Done (Version 23): Settings → Performance → Frame rate: "Frame cap" (on at first) and a number box (120 at first,
+  30 to 1000). The game loop skips early frames on a steady beat (a 144 Hz screen capped at 120 draws about 120).
+  Off: as many frames as the screen shows. Checked uncapped: 120 → 120 fps, 60 → 60, off → 420-590 in Agree or Disagree.
+
+## Nov 15 2026: 5 save slots per player (planning talk 11:42Z; 11:57Z "save slots load only in the lobby", with a note)
+- Done (in the next deploy): Game Settings → "Save slots" (last row of the main page): 5 slots kept on this device with
+  the profile (`profile.saves`). Save copies every Game Setting of the room; Load sends them back, only in the lobby
+  and only for the host or sudo. A small note under Slot 1 says so.
+
+## Nov 15 2026: turn modes on or off for Random and Vote (planning talk 11:42Z: "only modes not being played can be edited mid-game")
+- Done (in the next deploy): Game Settings → "Modes in Random & Vote" (main page): one On/Off row per game Random and
+  the vote can pick (`options.modesOff`, empty = all on, so nothing changes by default). In the lobby any can change;
+  mid-game every one but the game being played (rules.js keeps the current one as it was). All off: Random and the
+  vote fall back to every game. Hangout and Quacky Zombies aren't in Random or the vote today, so they aren't listed;
+  Hangout's own time limit for when it comes up in Random is still to do.

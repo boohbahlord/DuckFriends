@@ -2813,6 +2813,14 @@ html.moving svg.duck.datboi.rainbow .dbr {
   opacity: 0.95;
   outline: 0.12rem solid var(--blue);
 }
+/* Quacky Zombies: no ring around my name and HP bar, and the tags (with the HP bar under every duck) have square ends
+   (owner, Nov 15) */
+.l4-board .gduck.mine .gduck-name {
+  outline: none;
+}
+.l4-board .gduck-name {
+  border-radius: 0;
+}
 /* Change player tag color (looks.js): the name tag takes the duck's vote color, its letters in a color that reads on it */
 .gduck.vtag .gduck-name {
   opacity: 0.95;
@@ -4031,7 +4039,7 @@ html.moving .st-spin {
     transform: rotate(-360deg);
   }
 }
-.st-spin canvas {
+.st-spin .st-sky {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -16426,4 +16434,38 @@ html.still .l4-crit {
   border-radius: 0.35rem;
   pointer-events: none;
   white-space: pre;
+}
+/* Settings → Performance: the frame cap's number box */
+.fps-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fps-cap input {
+  width: 5.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+}
+/* Game Settings → Save slots: each slot's name and what it holds, then Save and Load */
+.gs-slot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.2rem;
+}
+.gs-slot-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+}
+.gs-slot-name .small {
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gs-slot-note {
+  padding: 0 0.2rem 0.4rem;
 }
