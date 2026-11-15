@@ -554,6 +554,18 @@ export function mountWorld(board, api) {
         b: f.top - lift,
       });
     }
+    /* and whatever else an activity says walks about (Quacky Zombies' zombies): [x, y] on the ground, as big as a duck */
+    for (const a of acts())
+      for (const [x, y] of a.hiders?.(ctx) || []) {
+        const f = toScreen(x, y, L.heightAt(x, y));
+        out.push({
+          key: L.sortY(x, y, 0),
+          l: f.left - size * 0.4,
+          r: f.left + size * 0.4,
+          t: f.top - size * 0.9,
+          b: f.top,
+        });
+      }
     return out;
   }
   const HIDDEN = 0.3; // this much of a duck's box covered: hidden

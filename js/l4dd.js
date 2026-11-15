@@ -65,6 +65,7 @@ import {
   gunPrice,
   AMMO_PRICE,
   kitOf,
+  openingById,
 } from "./l4ddrules.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
@@ -167,6 +168,15 @@ const boardKey = (o) => {
     10
   );
 };
+
+/* a zombie beating on an opening's boards (or climbing in once they're down), seen from inside: the owner wants to see
+   them coming (Nov 15), so it shows over the dark round the cabin (world.js' shade), the boards over it see-through */
+const AT_BOARDS = 20001;
+const atBoards = (o, inside) =>
+  inside &&
+  (o.st === 1 || o.st === 4) &&
+  !inCabin(o.x, o.y) &&
+  (openingById(o.l[2]) || {}).kind !== "stairs";
 
 /* ---------- what this screen keeps ---------- */
 const Z = new Map(); // zombie number → how it's drawn here
@@ -1214,8 +1224,9 @@ activity({
       o.y = o.fy + (o.ty - o.fy) * u;
       const z = heightAt(o.x, o.y),
         f = Wd.toScreen(o.x, o.y, z),
+        door = atBoards(o, Wd.inside),
         hide =
-          !seenFrom(o.x, o.y, Wd.inside) ||
+          !(door || seenFrom(o.x, o.y, Wd.inside)) ||
           !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
@@ -1234,13 +1245,15 @@ activity({
         o.k = sc;
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
-      const zi = Math.round(sortY(o.x, o.y, z)) + 10;
+      const zi = door ? AT_BOARDS : Math.round(sortY(o.x, o.y, z)) + 10;
       if (o.zi !== zi) {
         o.zi = zi;
         o.el.style.zIndex = zi;
       }
     }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
+    const beat = new Set();
+    for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */
     for (const o of OPENINGS) {
       const b = B.get(o.id);
@@ -1258,10 +1271,13 @@ activity({
       if (b.el.hidden !== hide) b.el.hidden = hide;
       if (hide) continue;
       const tr = `translate(${(p.left + b.box.l * sc).toFixed(1)}px, ${(p.top + b.box.t * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
-      if (b.tr !== tr) {
+      const on = beat.has(o.id);
+      if (b.tr !== tr || b.on !== on) {
         b.tr = tr;
+        b.on = on;
         b.el.style.transform = tr;
-        b.el.style.zIndex = boardKey(o);
+        b.el.style.zIndex = on ? AT_BOARDS + 1 : boardKey(o);
+        b.el.classList.toggle("beat", on);
       }
     }
     /* the drops, blinking in their last seconds; and the seconds left on what's on */
@@ -1385,6 +1401,16 @@ activity({
   },
   light: (p, s, l) => (l && l.el ? false : undefined), // (the power is cut: only the fires and the candles shine)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
+  /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
+     and see what's coming) */
+  hiders: (ctx) => {
+    const out = [],
+      ins = ctx.world.inside;
+    for (const o of Z.values())
+      if (o.st !== 3 && !o.el.hidden && inCabin(o.x, o.y) === ins)
+        out.push([o.x, o.y]);
+    return out;
+  },
   crowd(x, y) {
     let d = 0;
     for (const o of Z.values()) {

@@ -905,7 +905,7 @@ function gamePic(s, mode) {
 const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
 /* the Modes in Random & Vote row's value: All, or how many are on */
 const poolVal = (s) => {
-  const all = MODES.filter((m) => !CABIN_MODES.includes(m.id)),
+  const all = MODES,
     off = (s.options.modesOff || []).filter((id) =>
       all.some((m) => m.id === id),
     );
@@ -1031,19 +1031,15 @@ export function openGameSettings(R, start = null) {
         mid = !["lobby", "over", "countdown"].includes(s.phase);
       return (
         head("Modes in Random & Vote") +
-        `<div class="arm-body"><ul class="arm-list">${MODES.filter(
-          (m) => !CABIN_MODES.includes(m.id),
-        )
-          .map((m) =>
-            row(
-              `data-pool="${esc(m.id)}"`,
-              m.name,
-              off.includes(m.id) ? "Off" : "On",
-              !off.includes(m.id),
-              !host() || (mid && m.id === o.mode),
-            ),
-          )
-          .join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${MODES.map((m) =>
+          row(
+            `data-pool="${esc(m.id)}"`,
+            m.name,
+            off.includes(m.id) ? "Off" : "On",
+            !off.includes(m.id),
+            !host() || (mid && m.id === o.mode),
+          ),
+        ).join("")}</ul></div>`
       );
     }
     if (page === "saves") {

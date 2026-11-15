@@ -14284,7 +14284,11 @@ html.moving .eye-tears .tdrop.t2 {
 } /* (lying down, see-through at once, gone in 4 s: L4.DEAD_MS) */
 .l4-boards {
   transform-origin: 0 0;
+  transition: opacity 0.25s;
 }
+.l4-boards.beat {
+  opacity: 0.45;
+} /* (a zombie beating on them: see-through, so it shows behind them) */
 .l4-boards svg {
   display: block;
   overflow: visible;
