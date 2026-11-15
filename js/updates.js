@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v26",
+    version: 26,
+    date: "Nov 15, 2026",
+    title: "Hangout in Random, with a time limit",
+    news: [
+      "For Hangout: Random can pick it now. You can turn it off under Modes in Random & Vote.",
+      "For Hangout: new setting \"Time limit (Random & Vote)\" under Game Options: 5, 10, 15, 20 or 30 minutes, or No limit (15 at first). The time left shows at the top. When it runs out, Random's next game begins, or the votes come back when it's their turn. A Hangout the host picks has no time limit.",
+      "For Hangout: after a Hangout from Random or the vote, the room's map comes back, zoom or black and white included.",
+    ],
+  },
+  {
     id: "v25",
     version: 25,
     date: "Nov 15, 2026",

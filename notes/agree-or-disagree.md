@@ -4194,3 +4194,6 @@ Zombies only; Hangout's Duck Cabin unchanged).
   vote counts it for Vote return (the votes come back, or a fresh Hangout until they do). The cabin's End vote under
   Random now goes to the next game too, not the lobby. Going into the cabin keeps the room's map (`s.roomMap`, with its
   zoom or grey) and coming out puts it back; the game screen remounts when Random moves into or out of the cabin.
+- Version 26 (Solomon #276): Hangout comes up in Random too (Quacky Zombies stays vote-only); "Time limit (Random & Vote)"
+  (`hangTime`, 5/10/15/20/30 min or No limit, 15 at first) only when Hangout came from Random or the vote; the room's
+  map comes back after the cabin; under Random the cabin's End vote goes on to the next game.
