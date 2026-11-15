@@ -377,8 +377,12 @@ export const PICK_TIME = { mode: 65, map: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
-export const voteModes = (s) =>
-  MODES.map((m) => m.id).filter((id) => fits(s, id));
+export const voteModes = (s) => {
+  const all = MODES.map((m) => m.id).filter((id) => fits(s, id)),
+    off = s.options.modesOff || [],
+    on = all.filter((id) => !off.includes(id));
+  return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
+};
 export const voteIds = (s, k) => (k === "mode" ? voteModes(s) : VOTE_MAPS);
 /* the time a vote shows */
 export const voteLeft = (s, now) => Math.max(0, s.ends - now);

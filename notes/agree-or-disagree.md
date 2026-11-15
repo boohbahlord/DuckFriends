@@ -4184,3 +4184,5 @@ Zombies only; Hangout's Duck Cabin unchanged).
   wall round an opening out to 130 px outside and 70 px either side (l4ddrules inOpening); walls fade over zombies too
   (activity hook hiders in world.js duckBoxes); in the air (jump, jetpack) my aim is taken from where I stand (game.js
   myAim takes off world.lift), since the host fires from the feet: before, the lift skewed the aim and shots missed.
+- Fix (Version 25, Adam): the vote's list (voteModes) now leaves out the games turned off too, and the page lists
+  Hangout and Quacky Zombies (they're on the vote, not in Random).
