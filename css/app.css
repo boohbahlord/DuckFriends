@@ -6697,6 +6697,13 @@ html.still .spx-disco .disco-spot {
   z-index: 6;
   filter: drop-shadow(0 0 3px #ffd84a);
 }
+/* what flies or is held moves every frame: each on a layer of its own, drawn once (its glow too) and only moved after,
+   so the page doesn't paint it again every frame */
+.bullet,
+.thrown,
+.held {
+  will-change: transform;
+}
 .bullet svg {
   transform: rotate(var(--ang, 0rad));
 }
@@ -11329,6 +11336,9 @@ html.moving .hp .flick {
 .gduck.hang-hid {
   visibility: hidden;
 }
+.gduck.off-cam {
+  display: none;
+} /* (Hangout: a duck off the camera isn't drawn; game.js keeps it walking) */
 .hang-board .fxl {
   z-index: 30000;
 }
@@ -12985,8 +12995,8 @@ svg.defs {
   background: var(--c);
 }
 html.moving .mgj-field {
-  animation: mgjboard 48s linear infinite;
-}
+  animation: mgjboard 48s steps(48) infinite;
+} /* (in small steps, five a second, each too small to see: a smooth drift repainted the whole field every frame) */
 @keyframes mgjboard {
   0%,
   100% {

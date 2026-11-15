@@ -458,8 +458,12 @@ let scY = 0,
   scT = 0,
   scWalk = 0,
   scZone = ""; // Story Chain: how far the story has scrolled, the last frame, when my duck last walked, the zone it stands in
-const portrait = () =>
-  matchMedia("(orientation: portrait) and (max-width: 760px)").matches;
+/* (one query, kept: a new matchMedia every call cost a little on every frame) */
+const PORTRAIT =
+  typeof matchMedia === "function"
+    ? matchMedia("(orientation: portrait) and (max-width: 760px)")
+    : null;
+const portrait = () => !!PORTRAIT && PORTRAIT.matches;
 /* on a phone held upright the board turns (agree at the top); the bracket and the story don't: they keep their own layout */
 const turned = () =>
   portrait() &&
@@ -1042,7 +1046,10 @@ function hpFull(s, id, now) {
 /* my meter under the hotbar, and the other players' small ones in the board's corner (Quacky Zombies and Mad God
    Justin, on a computer, unless turned off in Settings) */
 let othersSig = "",
-  othersAt = 0;
+  othersAt = 0,
+  othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
+  myBox = null, // my duck's box in the last frame, in the board's px
+  overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
@@ -1052,7 +1059,11 @@ function drawMeters(s, board, layer, now) {
   } else meter.hide();
   const want =
     (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
-  let box = board && board.querySelector(".hpo");
+  let box =
+    board &&
+    (board._hpo && board._hpo.parentNode === board
+      ? board._hpo
+      : (board._hpo = board.querySelector(".hpo"))); // (kept on the board: found once, not every frame)
   if (!want) {
     if (box) box.remove();
     othersSig = "";
@@ -1074,21 +1085,32 @@ function drawMeters(s, board, layer, now) {
   if (sig !== othersSig) {
     othersSig = sig;
     box.innerHTML = othersHpHTML(list);
+    othersBox = null; // (measured again once, below: its size changed)
   }
-  /* my duck walking into them: see-through on my screen (checked a few times a second) */
+  /* my duck walking into them: see-through on my screen (checked a few times a second). The box is measured only when
+     its content or the board changes, and my duck's box comes from the last frame's drawing, so no frame waits on the
+     page's layout */
   if (now - othersAt > 120) {
     othersAt = now;
-    const mine = layer && layer.querySelector(".gduck.mine .gduck-body");
-    let see = false;
-    if (mine && list.length) {
-      const a = mine.getBoundingClientRect(),
-        b = box.getBoundingClientRect();
-      see =
-        a.right > b.left - 8 &&
-        a.left < b.right + 8 &&
-        a.bottom > b.top - 8 &&
-        a.top < b.bottom + 8;
+    if (!othersBox || othersBox.g !== geo) {
+      const b = box.getBoundingClientRect();
+      othersBox = {
+        g: geo,
+        l: b.left - geo.left,
+        r: b.right - geo.left,
+        t: b.top - geo.top,
+        b: b.bottom - geo.top,
+      };
     }
+    const a = myBox,
+      b = othersBox,
+      see =
+        !!a &&
+        !!list.length &&
+        a.r > b.l - 8 &&
+        a.l < b.r + 8 &&
+        a.b > b.t - 8 &&
+        a.t < b.b + 8;
     box.classList.toggle("see", see);
   }
 }
@@ -1100,6 +1122,12 @@ function drawDucks(now = clockNow()) {
     layer = $(".ducks", board),
     size = geo.size,
     hang = !!geo.hang;
+  /* each duck's element by its id, kept on the layer (a search of the layer for every duck, every frame, added up) */
+  const duckEls = layer._els || (layer._els = new Map()),
+    duckEl = (id) => {
+      const d = duckEls.get(id);
+      return d && d.parentNode === layer ? d : null;
+    };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
   drawMeters(s, board, layer, now);
   const jp =
@@ -1249,14 +1277,18 @@ function drawDucks(now = clockNow()) {
           (jaimes.includes(id) && jaimeLook(s, id)),
       pos = posOf(id);
     if (!p) continue;
-    let d = layer.querySelector(`[data-pid="${id}"]`);
+    let d = duckEl(id);
     if (!d) {
       d = el(
         `<div class="gduck${id === R.me ? " mine" : ""}" data-pid="${esc(id)}"><span class="gduck-ring"></span><div class="gduck-shadow"></div><div class="gduck-lift"><span class="gduck-bubble"></span><span class="gduck-zz" aria-hidden="true"><i>z</i><i>z</i><i>Z</i></span><span class="gduck-fire" aria-hidden="true">${FLAME}</span><span class="gduck-say"></span><div class="gduck-body"></div><svg class="gduck-x" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 7L33 33M33 7L7 33"/></svg><span class="gduck-name"></span><span class="gduck-done" hidden>✓</span></div></div>`,
       );
       if (g) d.classList.add("gbody");
       layer.append(d);
-    }
+      duckEls.set(id, d);
+      d._liftEl = d.querySelector(".gduck-lift");
+      d._shadowEl = d.querySelector(".gduck-shadow");
+      d._bodyEl = d.querySelector(".gduck-body");
+    } // (its parts, found once)
     const ghost = ghosts[id],
       gho = ghost
         ? (
@@ -1304,7 +1336,7 @@ function drawDucks(now = clockNow()) {
     }
     if (d._sig !== sig) {
       d._sig = sig;
-      d.querySelector(".gduck-body").innerHTML =
+      d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
         duckSVG(look, {
           size: 64,
@@ -1315,6 +1347,7 @@ function drawDucks(now = clockNow()) {
           ...(wc ? woundLook(wc) : {}),
         }) +
         '<span class="sp-fx gduck-aura"></span>';
+      d._pic = d._bodyEl.querySelector("svg");
       if (look && look.eyes === "tears") {
         // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
         const cry = d.querySelector(".gduck-body svg").cloneNode(true);
@@ -1497,6 +1530,17 @@ function drawDucks(now = clockNow()) {
         d._hid = hid;
         d.classList.toggle("hang-hid", hid);
       }
+      /* off the camera (a duck's room past the screen's edges): not drawn at all, so the page doesn't style or paint
+         it; it still walks, fights and counts as before, and shows again as it comes near */
+      const off =
+        at.left < -size * 2 ||
+        at.left > geo.W + size * 2 ||
+        at.top - z < -size * 2 ||
+        at.top - z > geo.H + size * 3;
+      if (d._off !== off) {
+        d._off = off;
+        d.classList.toggle("off-cam", off);
+      }
     }
     if (d._sz !== size) {
       d._sz = size;
@@ -1504,18 +1548,19 @@ function drawDucks(now = clockNow()) {
     }
     if (d._lift !== lift) {
       d._lift = lift;
-      d.querySelector(".gduck-lift").style.transform = lift;
+      d._liftEl.style.transform = lift;
     }
     if (d._sh !== sh) {
       d._sh = sh;
-      d.querySelector(".gduck-shadow").style.transform =
-        `translateX(-50%) scale(${sh})`;
+      d._shadowEl.style.transform = `translateX(-50%) scale(${sh})`;
     }
     if (d._body !== body) {
       d._body = body;
-      d.querySelector(".gduck-body").style.transform = body;
+      d._bodyEl.style.transform = body;
     }
-    const pic = d.querySelector(".gduck-body svg");
+    let pic = d._pic;
+    if (!pic || !d._bodyEl.contains(pic))
+      pic = d._pic = d._bodyEl.querySelector("svg"); // (found again only if its body was redrawn elsewhere)
     if (pic && pic._sq !== squish + org) {
       pic._sq = squish + org;
       pic.style.transformOrigin = org;
@@ -1532,7 +1577,11 @@ function drawDucks(now = clockNow()) {
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
     d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
-    d.querySelector(".gduck-done").hidden = !s.done[id];
+    const dn0 = !s.done[id];
+    if (d._doneH !== dn0) {
+      d._doneH = dn0;
+      d.querySelector(".gduck-done").hidden = dn0;
+    } // (set only when it changes: set again every frame, the page restyled every duck every frame)
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
     d.classList.toggle(
       "jet-on",
@@ -1743,6 +1792,7 @@ function drawDucks(now = clockNow()) {
       t: at.top - size - z,
       b: at.top - z,
     });
+    if (mine) myBox = boxes[boxes.length - 1];
   }
   layer.querySelectorAll(".gduck").forEach((d) => {
     if (
@@ -1751,8 +1801,10 @@ function drawDucks(now = clockNow()) {
       !(jp2 && d.dataset.pid === JUSTIN2) &&
       !jm[d.dataset.pid] &&
       !bodyOf(d.dataset.pid)
-    )
+    ) {
       d.remove();
+      duckEls.delete(d.dataset.pid);
+    }
   });
   /* the handgun's bullets and the thrown daggers, flying the way they were aimed */
   const fxl = $(".fxl", board),
@@ -1823,12 +1875,12 @@ function drawDucks(now = clockNow()) {
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
     let dir = null;
     if (mine && keyAim) dir = keyAim;
-    else if (mine && mouse) {
-      const r = board.getBoundingClientRect();
-      dir = [mouse.x - r.left - c.left, mouse.y - r.top - c.top];
-    } else if (sh && (!pos.w || mine)) dir = toScreen(sh.ax, sh.ay);
+    else if (mine && mouse)
+      dir = [mouse.x - geo.left - c.left, mouse.y - geo.top - c.top];
+    // (the board's place from its last measuring: no layout read in the frame)
+    else if (sh && (!pos.w || mine)) dir = toScreen(sh.ax, sh.ay);
     else if (pos.ax !== undefined) dir = toScreen(pos.ax, pos.ay);
-    const dk = layer.querySelector(`[data-pid="${CSS.escape(id)}"]`),
+    const dk = duckEl(id),
       ang =
         dir && Math.hypot(dir[0], dir[1]) > 1
           ? Math.atan2(dir[1], dir[0])
@@ -1836,7 +1888,9 @@ function drawDucks(now = clockNow()) {
             ? Math.PI
             : 0;
     handed.add(id);
-    let h = fxl.querySelector(`.held[data-pid="${id}"]`);
+    const heldEls = fxl._held || (fxl._held = new Map());
+    let h = heldEls.get(id);
+    if (h && h.parentNode !== fxl) h = null;
     const hk = w + (w === "hammer" && duck && duck.wrench ? "-w" : ""), // (the hammer, or the wrench in its place)
       ds = size * bigOf(s, id), // (a bigger Justin holds it farther out)
       hs = ds * (w === "hammer" && isJustin(id) ? MGJ_HAMMER : 1); // (Justin's hammer is bigger)
@@ -1848,6 +1902,7 @@ function drawDucks(now = clockNow()) {
       h._k = hk;
       h._hs = hs;
       fxl.append(h);
+      heldEls.set(id, h);
     }
     /* the knife jabs out and back; the hammer rests over the shoulder, then swings from behind the head down through the
        aim. Turned toward the aim, its offsets mirror for a duck facing left, so the swing always goes over the top */
@@ -1900,7 +1955,7 @@ function drawDucks(now = clockNow()) {
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
   for (const [id, pos, at, duck] of brood) {
-    const d = layer.querySelector(`[data-pid="${id}"]`),
+    const d = duckEl(id),
       path = (d && d._trail) || [];
     for (let i = 0; i < 3; i++) {
       const spot = along(path, at, (i + 1) * size * 0.4, d ? d._face : 1),
@@ -1965,7 +2020,7 @@ function drawDucks(now = clockNow()) {
       h.el.style.visibility = world.hidden(h.id, pos) ? "hidden" : "";
       withDuck(h.el, h.id, pos);
     }
-    const hd = layer.querySelector(`[data-pid="${h.id}"]`),
+    const hd = duckEl(h.id),
       side = (turned() ? 1 : hd && hd._face) || 1; // (the hotdog is at the beak of the way the duck faces)
     h.el.style.transform = `translate(${(at.left + side * size * 0.62).toFixed(1)}px, ${(at.top - size * 0.9 - z).toFixed(1)}px)`;
     h.el.classList.toggle("going", now > h.until - 900);
@@ -1987,7 +2042,7 @@ function drawDucks(now = clockNow()) {
     }
     /* I want the item to turn with its duck: it was drawn for the way the duck faced when it began, so a duck that now
        faces the other way flips it (and the way it sits at the beak) */
-    const dk = layer.querySelector(`[data-pid="${f.id}"]`),
+    const dk = duckEl(f.id),
       turn = (turned() ? 1 : dk && dk._face ? dk._face : f.face) * f.face;
     const tr = `translate(${at.left.toFixed(1)}px, ${(at.top - z).toFixed(1)}px) scaleX(${turn})`;
     if (f.el._tr !== tr) {
@@ -2035,15 +2090,26 @@ function drawDucks(now = clockNow()) {
   placeRevive(board, s, now);
   placeSnack(board, s, now);
   placeEdge(board, s, now);
-  // the Round Lord and the question turn see-through over ducks
-  for (const o of board.querySelectorAll(
-    ".topover .lord, .topover .question, .topover .wq-sidecol",
-  )) {
-    const r = o.getBoundingClientRect(),
-      L = r.left - geo.left,
-      T = r.top - geo.top;
+  /* the Round Lord and the question turn see-through over ducks; their boxes are measured a few times a second, not
+     every frame (a measure after this frame's writes made the page lay itself out again, every frame) */
+  if (!overBoxes || overBoxes.g !== geo || now - overBoxes.at > 400) {
+    overBoxes = { g: geo, at: now, list: [] };
+    for (const o of board.querySelectorAll(
+      ".topover .lord, .topover .question, .topover .wq-sidecol",
+    )) {
+      const r = o.getBoundingClientRect();
+      overBoxes.list.push([
+        o,
+        r.left - geo.left,
+        r.top - geo.top,
+        r.width,
+        r.height,
+      ]);
+    }
+  }
+  for (const [o, L, T, w, h] of overBoxes.list) {
     const hit = boxes.some(
-      (b) => b.r > L && b.l < L + r.width && b.b > T && b.t < T + r.height,
+      (b) => b.r > L && b.l < L + w && b.b > T && b.t < T + h,
     );
     o.classList.toggle("see-through", hit);
   }
@@ -5534,9 +5600,9 @@ function showTimer() {
   }
   if (isMgj(s) && s.phase === "boss" && s.mgj) {
     // Mad God Justin: no time limit (the owner's, Nov 3), so no clock
-    if (meter) meter.hidden = true;
-    t.textContent = "";
-    t.className = "timer";
+    if (meter && !meter.hidden) meter.hidden = true;
+    if (t.textContent) t.textContent = "";
+    if (t.className !== "timer") t.className = "timer";
     return;
   }
   if (meter) meter.classList.remove("frozen");
@@ -5558,9 +5624,9 @@ function showTimer() {
       "vddate",
     ].includes(s.phase)
   ) {
-    t.textContent = "";
-    t.className = "timer";
-    if (meter) meter.hidden = true;
+    if (t.textContent) t.textContent = "";
+    if (t.className !== "timer") t.className = "timer";
+    if (meter && !meter.hidden) meter.hidden = true;
     return;
   }
   const graceEnd =
@@ -5592,7 +5658,7 @@ function showTimer() {
       ),
     );
   if (meter) {
-    meter.hidden = false;
+    if (meter.hidden) meter.hidden = false;
     const w = (frac * 100).toFixed(1) + "%";
     if (meter._w !== w) {
       meter._w = w;
@@ -5614,9 +5680,10 @@ function showTimer() {
     draftT
   )
     sendDraft(true); // the last words make it in
-  t.textContent = `${inGrace ? "Grace " : closing ? "Closing " : catching ? "Catch-up " : ""}${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
-  t.className =
-    "timer" + (catching ? " catch" : "") + (left <= 5 ? " low" : "");
+  const tx = `${inGrace ? "Grace " : closing ? "Closing " : catching ? "Catch-up " : ""}${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`,
+    tc = "timer" + (catching ? " catch" : "") + (left <= 5 ? " low" : "");
+  if (t.textContent !== tx) t.textContent = tx;
+  if (t.className !== tc) t.className = tc; // (each only when it changes: this runs many times a second)
   if (left <= 5 && left > 0 && left !== lastBeep) {
     lastBeep = left;
     sfx.tick();
