@@ -54,6 +54,7 @@ import { dnStats } from "./duncerules.js";
 import { mgjStats } from "./mgjrules.js";
 import { vdStats, turnedDown } from "./vddrules.js";
 import { tvStats } from "./triviarules.js";
+import { setPerf, perfOn } from "./perf.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
@@ -1195,6 +1196,12 @@ const CMDS = {
     if (x.ctx.look) x.ctx.look();
     return msg;
   },
+  /* the frame-rate readout (perf.js), kept out of help, /bin and Tab like secret: fps on|off */
+  fps: (args) => {
+    const want = (args[0] || "").toLowerCase();
+    const on = setPerf(want ? want === "on" : !perfOn());
+    return on ? "Frame-rate readout on (top left)." : "Frame-rate readout off.";
+  },
   clear: () => null,
   exit: (a, i, x) => {
     x.ctx.close();
@@ -2018,7 +2025,7 @@ const CMDS = {
 CMDS.logout = CMDS.exit;
 /* the commands in /bin: everything with a manual page */
 const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])]
-  .filter((k) => k !== "sudo" && k !== "secret")
+  .filter((k) => k !== "sudo" && k !== "secret" && k !== "fps")
   .sort();
 
 /* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them

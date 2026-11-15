@@ -16343,3 +16343,23 @@ html.still .l4-crit {
   font-size: clamp(1.2rem, 2.6vw, 1.8rem);
   -webkit-text-stroke: 0.1rem #2a0508;
 }
+
+/* the frame-rate readout (perf.js, fps on): small, see-through, never in the way of a click */
+.perf-box {
+  position: fixed;
+  left: 0.4rem;
+  top: 3.2rem;
+  z-index: 99999;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  font:
+    11px/1.35 ui-monospace,
+    Menlo,
+    Consolas,
+    monospace;
+  color: #b8ffb8;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0.35rem;
+  pointer-events: none;
+  white-space: pre;
+}

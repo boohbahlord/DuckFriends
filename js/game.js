@@ -380,6 +380,7 @@ import {
   formProblem,
   tvFormClick,
 } from "./trivia.js";
+import { frame, stamp, took } from "./perf.js";
 import { touchOnly } from "./pointer.js";
 
 let R = null,
@@ -3289,12 +3290,19 @@ function loop(t) {
   const dt = Math.min(0.05, (t - (lastT || t)) / 1000);
   lastT = t;
   if (!S || !R) return;
+  frame(t); // (the frame-rate readout, perf.js: each part's time below, only while it's on)
   const now = clockNow();
+  let t0 = stamp();
   if (!geo) measure();
   if (me && onBoardPhase()) step(dt, now);
+  took("my duck", t0);
+  t0 = stamp();
   if (scene) scene.update(now);
+  took("scene", t0);
+  t0 = stamp();
   shiftSides(R.state, now);
   drawDucks(now);
+  took("ducks", t0);
 }
 function step(dt, now) {
   if (isHang(R.state)) return hangStep(dt, now);
@@ -5197,7 +5205,13 @@ function topColors(s) {
     })
     .filter(Boolean);
 }
+/* the screen as the state has it (timed for the frame-rate readout, perf.js) */
 function paint(force) {
+  const t0 = stamp();
+  paintNow(force);
+  took("paint", t0);
+}
+function paintNow(force) {
   if (!S || !R) return;
   const s = R.state,
     key = [s.phase, s.round, s.qi].join("|");
