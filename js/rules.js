@@ -323,20 +323,19 @@ function setMode(s, mode) {
 /* ---------- Vote Mode & Map (owner 2026-11-04) ----------
    After the start's 5 s countdown, a window over the whole screen: Vote for Game Mode (1:05), then Vote for Map (0:20;
    not for the games that bring their own place: Duck Cabin's and Mad God Justin's). Every player clicks one (the same
-   one again takes the vote back); the dice is a random pick. Once every player has voted, the clock runs twice as
-   fast, after it drops to 10 s (the map vote's since 2026-11-04 07:06Z; the game mode vote's too since the owner,
-   furious, 2026-11-14: waiting out a minute once everyone has picked was the "60 second timer"). The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
+   one again takes the vote back); the dice is a random pick. Once the majority has voted (the room's vote share,
+   shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
+   speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
 export const PICK_TIME = { mode: 65, map: 20 };
-const ALL_IN = 10000; // a vote's clock once everyone has voted: 10 s, then twice as fast
+const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
 export const voteModes = (s) =>
   MODES.map((m) => m.id).filter((id) => fits(s, id));
 export const voteIds = (s, k) => (k === "mode" ? voteModes(s) : VOTE_MAPS);
-/* the time a vote shows: twice as fast once everyone has voted (s.ends was halved then) */
-export const voteLeft = (s, now) =>
-  Math.max(0, (s.ends - now) * ((s.vt || {}).fast ? 2 : 1));
+/* the time a vote shows */
+export const voteLeft = (s, now) => Math.max(0, s.ends - now);
 const votesDue = (s) =>
   [
     s.options.modePick === "vote" && "mode",
@@ -1575,11 +1574,15 @@ export function reduce(state, a, now = Date.now()) {
       if (votes[a.id] === a.v) delete votes[a.id];
       else votes[a.id] = a.v;
       vt.votes = votes; // (online, an empty list of votes doesn't come back)
-      if (!vt.fast && s.seat.every((id) => votes[id])) {
-        // (both votes first drop to 10 s, then run twice as fast)
-        const left = Math.max(0, s.ends - now);
+      const voters = s.seat.filter((id) => s.players[id]);
+      if (
+        !vt.fast &&
+        voters.filter((id) => votes[id]).length >=
+          Math.max(1, Math.ceil(voters.length * shareOf(s) - 1e-9))
+      ) {
+        // (the majority is in: 6 s left, at normal speed)
         vt.fast = 1;
-        s.ends = now + Math.min(left, ALL_IN) / 2;
+        s.ends = now + Math.min(Math.max(0, s.ends - now), ALL_IN);
       }
       return s;
     }

@@ -4037,3 +4037,11 @@ I did not want any text on the page, only the page background the letters were w
   fast"; on Nov 4 07:06Z the map vote got "ten seconds ONCE everyone has voted ... before it accelerates", but the game
   mode vote only ran x2, so after everyone picked it still sat ~30 s or more. Done (Adam): once everyone has voted, the
   game mode vote drops to 10 s too, then runs twice as fast (5 s real), same as the map vote. The 1:05 full time stays.
+
+## Request (owner 2026-11-15 10:56Z + 11:42Z + 11:57Z, planning talk with Adam)
+"make the game timer only six seconds and NOT double speed for the votes." Then: "Yeah only after everyone has voted"
+and "6 second timer only after the majority votes, and majority is ALWAYS determined by the lobby setting in the game."
+Order of work agreed (11:57Z "Yes"): vote timer, fireplace roll, shuffle bag, measuring, speed fixes + minimap,
+Lawyering vote + Lobby Settings with save slots. The whole plan: https://claude.ai/artifact/KER3R7gt5K2jZCbXgiRadu
+- Done (Adam): both votes drop to 6 s once the room's vote share (shareOf) of the seated players has voted, and run at
+  normal speed (no x2, the "×2" mark is gone). Full times 1:05 / 0:20 stay for when the majority never votes.
