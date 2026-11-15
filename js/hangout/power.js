@@ -36,7 +36,9 @@ const WAIT = 10000; // ms before the power can go back on
 const REACH = 110; // world px from the box (and from a flame's spot, past its bias)
 const DARK = 0.55,
   DARK_IN = 0.5,
-  Q = 0.5; // how dark outside, and inside in a blackout; the canvas' px per screen px
+  Q = 0.3, // how dark outside, and inside in a blackout; the canvas' px per screen px (it's all soft light)
+  REACH_PAST = 60, // screen px the dark reaches past the view on every side, so it can slide with the camera
+  EVERY = 50; // ms: drawn at most this often (flicker.js' clock is 20 times a second); in between it only slides
 const ME_GLOW = 120; // world px: the soft glow round my own duck
 const MUFFLE_AFTER = 7000; // ms in the dark before the music muffles
 export const powered = (s) => ((s && s.hang) || {}).power !== 0;
@@ -182,24 +184,34 @@ let cv = null,
   darkSince = 0,
   muffled = false,
   roofDark = null,
-  drawn = "";
+  drawn = "",
+  drawnAt = 0,
+  from = null, // where the world's corner was on the screen when the dark was last drawn
+  slid = "";
 const darkURL = () => darkURL.u || (darkURL.u = svgDataURL(cabinSVG(true)));
-/* the dark: first what goes on it (each number in the canvas' px), then the drawing, only when that changed (the camera
-   moved, a light flickered: flicker.js' clock, 20 times a second); with nothing on it (inside, the power on) it's hidden */
+/* the dark: first what goes on it (each number in the canvas' px, from the world's corner), then the drawing, only when
+   that changed (a light flickered: flicker.js' clock, 20 times a second; my duck walked), at most every EVERY ms. When
+   the camera moves the canvas slides with the world instead of being drawn again: a canvas drawn anew every frame was
+   most of a frame's work on a weak laptop. With nothing on it (inside, the power on) it's hidden */
 function paint(now, ctx) {
   const Wd = ctx.world,
     s = ctx.state(),
     on = powered(s),
-    w = Math.round(Wd.vw * Q),
-    h = Math.round(Wd.vh * Q),
+    E = REACH_PAST,
+    w = Math.round((Wd.vw + 2 * E) * Q),
+    h = Math.round((Wd.vh + 2 * E) * Q),
     ln = lightNow(now),
-    sc = Wd.sc * Q;
+    sc = Wd.sc * Q,
+    o = Wd.toScreen(0, 0, 0);
   const empty = Wd.inside && on;
   if (cv.hidden !== empty) cv.hidden = empty;
   if (empty) {
     drawn = "";
     return;
   }
+  const at = (p) => [(p.left + E) * Q, (p.top + E) * Q], // (a point on the screen, in the canvas' px)
+    ox = (o.left + E) * Q,
+    oy = (o.top + E) * Q;
   const f = (v) => v.toFixed(1),
     holes = [];
   let base,
@@ -208,7 +220,7 @@ function paint(now, ctx) {
     // a blackout inside: the cabin dims (the shade covers the rest), but for its fires
     const a = Wd.toScreen(CABIN.x0, CABIN.y0 - CABIN.wall - 30),
       b = Wd.toScreen(CABIN.x1, CABIN.y1 + 14);
-    base = [a.left * Q, a.top * Q, (b.left - a.left) * Q, (b.top - a.top) * Q];
+    base = [...at(a), (b.left - a.left) * Q, (b.top - a.top) * Q];
   } else if (!on) {
     // the pool's lights out under the water: darker still over it, its edge soft
     const c = Wd.toScreen(
@@ -217,8 +229,7 @@ function paint(now, ctx) {
       POOL.h,
     );
     pool = [
-      c.left * Q,
-      c.top * Q,
+      ...at(c),
       (POOL.x1 - POOL.x0) * 0.62 * sc,
       (POOL.y1 - POOL.y0) * 0.62 * sc,
     ];
@@ -226,27 +237,41 @@ function paint(now, ctx) {
   for (const l of Wd.inside ? IN : OUT) {
     if (!shines(l, s, Wd)) continue;
     const fl = sway(l, ln),
-      p = Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0)),
-      x = p.left * Q,
-      y = p.top * Q,
+      [x, y] = at(Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0))),
       r = l.r * 1.2 * fl * sc;
     if (x + r < 0 || x - r > w || y + r < 0 || y - r > h) continue;
     holes.push([x, y, r, Math.min(1, l.k * 1.8) * fl * stutterOf(l, ln)]);
   }
   /* a faint glow round my own duck (only mine), so I can find myself in the dark */
   const me = Wd.at(ctx.me),
-    mp = me && Wd.toScreen(me.x, me.y, me.z + 24);
+    mp = me && at(Wd.toScreen(me.x, me.y, me.z + 24));
+  const X = (v) => f(v - ox),
+    Y = (v) => f(v - oy); // (from the world's corner: the camera moving changes nothing)
   const key = [
     w,
     h,
-    base && base.map(f),
-    pool && pool.map(f),
-    mp && f(mp.left) + f(mp.top),
+    base && X(base[0]) + Y(base[1]) + f(base[2]) + f(base[3]),
+    pool && X(pool[0]) + Y(pool[1]) + f(pool[2]) + f(pool[3]),
+    mp && X(mp[0]) + Y(mp[1]),
     sc.toFixed(4),
-    ...holes.map((o) => f(o[0]) + f(o[1]) + f(o[2]) + o[3].toFixed(3)),
+    ...holes.map((o) => X(o[0]) + Y(o[1]) + f(o[2]) + o[3].toFixed(3)),
   ].join();
-  if (key === drawn) return;
+  const dx = from ? (ox - from[0]) / Q : 0,
+    dy = from ? (oy - from[1]) / Q : 0, // (screen px the world moved since the drawing)
+    near = from && Math.abs(dx) < E - 2 && Math.abs(dy) < E - 2;
+  if (
+    near &&
+    drawn.startsWith(w + "," + h + ",") &&
+    (key === drawn || now - drawnAt < EVERY)
+  ) {
+    const tr = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+    if (tr !== slid) cv.style.transform = slid = tr;
+    return;
+  }
   drawn = key;
+  drawnAt = now;
+  from = [ox, oy];
+  if (slid) cv.style.transform = slid = "";
   if (cv.width !== w || cv.height !== h) {
     cv.width = w;
     cv.height = h;
@@ -284,8 +309,7 @@ function paint(now, ctx) {
     g.fillRect(x - r, y - r, 2 * r, 2 * r);
   }
   if (mp) {
-    const x = mp.left * Q,
-      y = mp.top * Q,
+    const [x, y] = mp,
       r = ME_GLOW * sc,
       rg = g.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, "rgba(0,0,0,.5)");
@@ -313,12 +337,19 @@ activity({
     cv = document.createElement("canvas");
     cv.className = "hang-dark";
     cv.setAttribute("aria-hidden", "true");
+    Object.assign(cv.style, {
+      left: -REACH_PAST + "px",
+      top: -REACH_PAST + "px",
+      width: `calc(100% + ${2 * REACH_PAST}px)`,
+      height: `calc(100% + ${2 * REACH_PAST}px)`,
+    }); // (past the view, so it can slide)
     ctx.world.board.querySelector(".hang-shade")?.after(cv);
     g = cv.getContext("2d");
     was = null;
     darkSince = 0;
     roofDark = null;
-    drawn = "";
+    drawn = slid = "";
+    from = null;
   },
   unmount(ctx) {
     cv?.remove();

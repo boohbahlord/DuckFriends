@@ -126,15 +126,24 @@ export function othersHpHTML(list) {
 
 /* "+1 HP" or "-2 HP" over something, small, rising and fading: host is the element it rises from (a duck's lift, a
    zombie); a few at once stack up a little */
+/* the numbers are kept when done and handed out again (a pool: owner 2026-11-15), instead of a new element for every
+   hit; put back in the page, the rise starts over by itself */
+const POPS_KEPT = [];
 export function popHP(host, n, small = false) {
   if (!host || !n) return;
-  const p = document.createElement("span");
+  let p = POPS_KEPT.pop();
+  if (!p) {
+    p = document.createElement("span");
+    p.setAttribute("aria-hidden", "true");
+  }
   p.className = `hp-pop ${n > 0 ? "up" : "down"}${small ? " small" : ""}`;
-  p.setAttribute("aria-hidden", "true");
   p.textContent = `${n > 0 ? "+" : "−"}${Math.abs(n)} HP`;
   const live = host.querySelectorAll(".hp-pop").length;
   p.style.setProperty("--dx", (Math.random() * 16 - 8).toFixed(0) + "px");
   p.style.setProperty("--up", live);
   host.append(p);
-  setTimeout(() => p.remove(), 1100);
+  setTimeout(() => {
+    p.remove();
+    if (POPS_KEPT.length < 40) POPS_KEPT.push(p);
+  }, 1100);
 }

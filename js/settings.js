@@ -145,6 +145,7 @@ const PAGES = {
       ["still", "Still"],
       ["off", "Off"],
     ])}</div>
+    <div class="sect"><h3>Frame rate</h3><div class="row">${check("fpsCapOn", "Frame cap", "The most frames a second the game draws. Off: as many as your screen shows.")}<label class="fps-cap">Frames a second <input type="number" data-k="fpsCap" min="30" max="1000" step="1" inputmode="numeric" value="${+S().fpsCap || 120}"></label></div></div>
     <div class="sect"><h3>Movement</h3><div class="row">${check("motion", "Animations", "Ducks bob, windows pop, shapes drift. Off keeps everything still.")}</div></div>`,
   audio: () =>
     `<div class="sect"><h3>Volume</h3>${slider("sound", "Volume", 0, 100, 5)}${slider("sfx", "Sound effects", 0, 100, 5)}${slider("music", "Music", 0, 200, 5, "%", 100)}</div>`,
@@ -193,7 +194,11 @@ export function openSettings() {
           const i = e.target;
           if (!i.dataset.k) return;
           if (i.type === "checkbox") S()[i.dataset.k] = i.checked;
-          else if (i.type === "range") {
+          else if (i.type === "number") {
+            const v = Math.round(+i.value);
+            if (!(v >= 30 && v <= 1000)) return; // (still typing, or out of range: keep the last good one)
+            S()[i.dataset.k] = v;
+          } else if (i.type === "range") {
             S()[i.dataset.k] = +i.value;
             i.closest(".slide").querySelector("output").textContent =
               i.value + "%";
@@ -201,6 +206,10 @@ export function openSettings() {
           }
           save();
           applySettings();
+        });
+        page.addEventListener("change", (e) => {
+          const i = e.target;
+          if (i.type === "number" && i.dataset.k) i.value = S()[i.dataset.k]; // (left out of range: back to the last good number)
         });
         show(S().settingsTab);
       },

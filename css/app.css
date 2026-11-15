@@ -10342,6 +10342,54 @@ html.moving .law-banner.on b {
   right: 0.5rem;
   bottom: -0.6rem;
 }
+/* the attorney vote: a see-through window over the middle of the board, over the ducks and under the cloud */
+.law-vote-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2900;
+  padding: 0 0.6rem;
+}
+.law-vote {
+  pointer-events: auto;
+  width: min(42rem, 100%);
+  max-height: 60%;
+  overflow-y: auto;
+  margin-top: 4rem;
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter: blur(2px);
+}
+.law-vote h3 {
+  margin: 0 0 0.6rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+}
+.law-vote .law-cands {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+.law-vote .pcard {
+  padding-right: 0.6rem;
+  gap: 0.45rem;
+  min-height: 3.6rem;
+}
+.law-vote .pcard-name {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.law-vote .pcard-label {
+  font-size: calc(1rem * var(--ts));
+  overflow-wrap: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+} /* (one line per name: a long name ends in "…" instead of breaking mid-word) */
 /* the round's cases on the stats screen */
 .law-statpanel {
   width: min(56rem, 100%);
@@ -14160,11 +14208,10 @@ html.moving .eye-tears .tdrop.t2 {
 
 /* ---------- Quacky Zombies (l4dd.js, l4ddbar.js) ----------
    The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
-   dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
+   dead, they lie down and fade. The boards are props too. "Round N" in crimson at the top, over
    the dark; the end card over everything. */
 .l4z,
-.l4-boards,
-.l4-candle {
+.l4-boards {
   position: absolute;
   left: 0;
   top: 0;
@@ -14177,8 +14224,7 @@ html.moving .eye-tears .tdrop.t2 {
 .l4z-body {
   position: absolute;
 }
-.l4z-body img,
-.l4-candle img {
+.l4z-body img {
   display: block;
   width: 100%;
   height: 100%;
@@ -14201,14 +14247,6 @@ html.moving .eye-tears .tdrop.t2 {
   background: #e8424d;
   transform-origin: 0 50%;
   transform: scaleX(var(--hp, 1));
-}
-.l4z.hit .l4z-body img {
-  animation: l4z-hit 0.32s ease-out;
-}
-@keyframes l4z-hit {
-  35% {
-    filter: brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg);
-  }
 }
 .l4z.onfire .gduck-fire {
   display: block;
@@ -14236,20 +14274,32 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 } /* (lying down, see-through at once, gone in 4 s: L4.DEAD_MS) */
-.l4-boards,
-.l4-candle {
+.l4-boards {
   transform-origin: 0 0;
 }
 .l4-boards svg {
   display: block;
   overflow: visible;
 }
-.l4-candle {
-  width: 30px;
-  height: 46px;
-}
 .hang-board.l4-board .hang-dark.l4-dark {
   z-index: 24000;
+}
+/* Quacky Zombies' minimap (l4ddmap.js): bottom left, just over the bottom bar (its bottom is set from the bar's height) */
+.l4-map {
+  position: absolute;
+  left: 14px;
+  bottom: 64px;
+  z-index: 31000;
+  pointer-events: none;
+  border-radius: 8px;
+  background: rgba(10, 12, 24, 0.55);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.18);
+}
+@media (max-width: 600px) {
+  .l4-map {
+    left: 8px;
+    border-radius: 6px;
+  }
 }
 .l4-hud {
   position: absolute;
@@ -16372,4 +16422,15 @@ html.still .l4-crit {
   border-radius: 0.35rem;
   pointer-events: none;
   white-space: pre;
+}
+/* Settings → Performance: the frame cap's number box */
+.fps-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fps-cap input {
+  width: 5.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
 }

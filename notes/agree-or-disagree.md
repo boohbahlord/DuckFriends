@@ -4092,3 +4092,71 @@ Later plan (Adam's summary): free, properly licensed, compressed audio files wit
   getComputedStyle on every paint, 4.1% of the main thread, so now it re-lays only when its slots, spot or screen size
   change. The rules' state copy (rules.js clone) is a hand-written plain-object copy, 2 to 6 times faster than
   structuredClone (4.2% down to 1.3%). The state has no shared objects and no Sets, Maps or Dates (checked in four modes).
+
+## Nov 15 2026: Quacky Zombies speed (plan step 5, via Adam), PR 1
+Owner (planning talk, point 3): the game must run smoothly; then a minimap (PR 2). Adam: the simulation keeps running for
+the whole map, only drawing is culled.
+- Done (v182): the dark overlay paints at a quarter of the size with one round light stamp per hole, and skips light
+  cones off camera; zombie path fields (Dijkstra) are kept (48 most recent) and use a typed-array heap; bullets find
+  zombies through a 64 px grid instead of checking all; bullets, blood bursts and HP numbers reuse their elements; the
+  zombie hit flash is a Web Animation (no forced layout) and wounds/HP numbers update only for zombies on camera.
+- Measured (Quacky Zombies round 16, 1366x768, 4x slower CPU): before 25-29 fps (p95 frame 83-100 ms, worst 217-250 ms),
+  after 42 fps (p95 50 ms, worst 133-183 ms). A canvas for the zombies was tried in a trace first: hiding every zombie
+  gained only 1-2 fps, so it was left out.
+- Follow-up (Adam, via Noah's trace): "add the ground canvas to your list". Measured in Hangout at 4x slower CPU: the
+  ground canvas already redraws only about once a second (8 times in 6 s); the night's dark (power.js) and the
+  fireflies were drawn anew every frame, and each new drawing the browser takes in costs a lot of Commit. Done (v183):
+  the dark is drawn at 0.3 of the screen's px (was 0.5), reaches 60 px past the view and slides with the camera, drawn
+  again at most 20 times a second; the fireflies at most 30 times a second, sliding in between. Hangout at 4x: 14-16 fps
+  before, 25-30 fps after (Commit 3.0-3.3 s per 6 s before, 2.4 s after).
+- PR 2, the minimap (owner's point 3, word for word in the Nov 15 planning talk): Done (v184), js/l4ddmap.js, mounted by
+  l4dd.js, Quacky Zombies only. Bottom left, 8 px over the bottom bar (measured from .bbar on mount and resize); 196 px
+  wide on a computer, 124 on a phone; see-through dark box. The map: the cabin's floor, every wall (layout.js PROPS
+  kind "wall", the doors are their gaps), the deck and the stairs' landing; no furniture. Each duck: a round head in
+  its shown color with a beak the way it last walked and an eye; mine ringed in white; downed or ghost at 45%. Each
+  zombie: a red dot (3 px radius on a computer, 2.4 on a phone) that fades in over 250 ms while any duck's camera sees
+  it (a box the size of my own view round each duck, same side of the cabin's walls) and out over 400 ms. Drawn 12
+  times a second; no fps cost measured (round 16, 4x slower CPU).
+
+## Request (owner, 2026-11-15 13:49Z, via Adam): Quacky Zombies batch
+"remove the candles on the floors of the cabin in the zombie game mode
+
+reduce the cost of the fireplace to 500 points instead
+
+The circle around a user's name and health bar is removed AND the health bar in zombie below a duck is now sqaured at the edges instead of rounded
+
+The flower pot near the door to the porch in the zombie game is removed and so is the door, instead there is a LARGE hole AND the porch is still visible from the inside AND a part of the inside of the cabin is still visible from the porch for the zombie game
+
+The doorways to rooms in the right of the map are all bigger now to make it easier to dodge zombie while going through them AND players can no longer jump on tables or beds ( i said this long time ago but no need to look it up becuz i know it for a fact so dont waste usage), because the zombies cannot hit them there. Actually while players cannot jump ontop of surfaces, we can remove the beds AND add a hole between the walls to the bedrooms AND the kitchen to the top most bedroom. The holes in the walls look like the ones the zombies comefrom, and players and zombies can walk thru them without being able to board them up.
+
+Zombies can be shot at and killed as they hit the boards AND the part of walls in the way and boards become transparent to show zombies while they beat at the boards and try and come in. Walls in hallways to the bedroom or in the kitchen for example become transparent to everyone like it would a player to themselves in hangout WHEN there is another player or zombie behind them in the game so the players can find their friends in zombies. The holes allow for more movement.
+
+The podium in the large room of the cabin can still be walked onto, AND anytime a player jumps while shooting in zombies, it doesnt make their projectile miss the zombies, and same goes for the jetpack and anything else that raises the player in the air for the zombie game mode.
+
+We can remove the step stools in the large room of the cabin and the candles outside on the deck as well.
+
+The game should be able to run as more then 60 fps on agree or disagree or any other basic mode on good computers btw, no? because a lot of gamers now run 120 fps as a bear minimum, and you are accepting only 60 fps ? what is wrong with you, the game needs to be better optimized."
+Split by Adam: Noah = name/HP circle removed + square HP bar under ducks; Adam = 120+ fps; Solomon = the rest (Quacky
+Zombies only; Hangout's Duck Cabin unchanged).
+## Nov 15 2026: Lawyering attorney vote (planning talk, owner 11:42Z; step 6 of the agreed order)
+- Done (v185): the Lawyering setting "Vote for attorneys" (`lawVote`, off by default). Each case, once the prompt is on
+  the cloud, phases `lawdef` then `lawoff` show a see-through window over the board listing every duck who may be
+  picked (the writer can't defend; the defense can't also be the offense). Anyone votes for anyone, themselves too.
+  Each vote lasts 0:20 and drops to 0:05 once the lobby's vote share (`shareOf`) has voted. Most votes win; a tie or
+  no votes: the shuffle bag. Chat says who won. Solomon started it, Adam finished it (computers vote, window CSS, tests).
+- PR A done (#268, Adam merges): the fireplace costs 500; the extra candles (6 on the floor, 1 on the deck) are gone (rules, art,
+  drawing, light); layout.js has a Quacky Zombies variant: useMode(mode) (called at the top of reduce and when the world
+  mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
+  turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
+  still be walked onto. layoutRev() lets l4ddrules' walk grid be made again. Hangout's cabin is unchanged.
+
+## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
+- Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
+- The per-merge pages from Nov 3 on were regrouped by work session (merges with under ~45 minutes between them were
+  one sitting), then every page renumbered from Version 1 (Oct 25) so each version is one deploy (owner 14:01Z
+  "EVERY VERSION PREVIOUSLY IS ALSO BASED ON THIS PRINCIPLE"). Today's deploys are Versions 20 to 22.
+
+## Nov 15 2026 13:53Z: "good that shouldnt be a limit cap UNLESS the player turns it on in settings, the frame cap is automatically at 120 fps by default for duck friends and can be set with a number they type into a box, because why not? Should be simple, right?"
+- Done (Version 23): Settings → Performance → Frame rate: "Frame cap" (on at first) and a number box (120 at first,
+  30 to 1000). The game loop skips early frames on a steady beat (a 144 Hz screen capped at 120 draws about 120).
+  Off: as many frames as the screen shows. Checked uncapped: 120 → 120 fps, 60 → 60, off → 420-590 in Agree or Disagree.
