@@ -4103,3 +4103,9 @@ the whole map, only drawing is culled.
 - Measured (Quacky Zombies round 16, 1366x768, 4x slower CPU): before 25-29 fps (p95 frame 83-100 ms, worst 217-250 ms),
   after 42 fps (p95 50 ms, worst 133-183 ms). A canvas for the zombies was tried in a trace first: hiding every zombie
   gained only 1-2 fps, so it was left out.
+- Follow-up (Adam, via Noah's trace): "add the ground canvas to your list". Measured in Hangout at 4x slower CPU: the
+  ground canvas already redraws only about once a second (8 times in 6 s); the night's dark (power.js) and the
+  fireflies were drawn anew every frame, and each new drawing the browser takes in costs a lot of Commit. Done (v183):
+  the dark is drawn at 0.3 of the screen's px (was 0.5), reaches 60 px past the view and slides with the camera, drawn
+  again at most 20 times a second; the fireflies at most 30 times a second, sliding in between. Hangout at 4x: 14-16 fps
+  before, 25-30 fps after (Commit 3.0-3.3 s per 6 s before, 2.4 s after).

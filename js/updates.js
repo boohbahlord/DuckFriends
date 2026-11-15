@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v183",
+    version: 183,
+    date: "Nov 15, 2026",
+    title: "Smoother nights at the cabin",
+    fixed: [
+      "For Hangout: the night's dark and the fireflies cost far less work each frame, so the cabin runs smoother on slower computers.",
+    ],
+  },
+  {
     id: "v182",
     version: 182,
     date: "Nov 15, 2026",
