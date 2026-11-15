@@ -2030,12 +2030,22 @@ const die = (z, T) => {
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
    or an arrow (a headshot now and then kills it at once), a grenade goes off where it lands or where a wall stops it */
 const OPEN_PAD = 30;
+/* by an opening: a shot goes on through its boards and the wall either side of it, out to the zombies beating on them
+   (the owner's, Nov 15), never further out than they stand */
+const OPEN_IN = OPEN_PAD + 40, // (inside: as far in from the wall as before)
+  OPEN_OUT = 130, // (outside: past the spot a zombie tears the boards from, and the ones crowding round it)
+  OPEN_SIDE = 70; // (along the wall, either side of the opening)
 const inOpening = (x, y) =>
-  OPENINGS.some((o) =>
-    o.axis === "x"
-      ? Math.abs(x - o.x) < o.half && Math.abs(y - o.y) < OPEN_PAD + 40
-      : Math.abs(y - o.y) < o.half && Math.abs(x - o.x) < OPEN_PAD + 40,
-  );
+  OPENINGS.some((o) => {
+    const [ax, ay, a, c] = o.axis === "x" ? [x, y, o.x, o.y] : [y, x, o.y, o.x],
+      out = Math.sign((o.axis === "x" ? o.out[1] : o.out[0]) - c) || 1,
+      across = (ay - c) * out;
+    return (
+      Math.abs(ax - a) < o.half + OPEN_SIDE &&
+      across > -OPEN_IN &&
+      across < OPEN_OUT
+    );
+  });
 const walled = (x, y, z) =>
   (!playable(x, y) && !inOpening(x, y)) ||
   (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));

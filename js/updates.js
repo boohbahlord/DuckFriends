@@ -9,6 +9,31 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v26",
+    version: 26,
+    date: "Nov 15, 2026",
+    title: "Hangout in Random, with a time limit",
+    news: [
+      "For Hangout: Random can pick it now. You can turn it off under Modes in Random & Vote.",
+      "For Hangout: new setting \"Time limit (Random & Vote)\" under Game Options: 5, 10, 15, 20 or 30 minutes, or No limit (15 at first). The time left shows at the top. When it runs out, Random's next game begins, or the votes come back when it's their turn. A Hangout the host picks has no time limit.",
+      "For Hangout: after a Hangout from Random or the vote, the room's map comes back, zoom or black and white included.",
+    ],
+  },
+  {
+    id: "v25",
+    version: 25,
+    date: "Nov 15, 2026",
+    title: "See-through walls in Quacky Zombies",
+    news: [
+      "For Quacky Zombies: from inside, you can see zombies beating on the boards, and those boards turn see-through. You can shoot them there.",
+      "For Quacky Zombies: walls turn see-through when a player or a zombie is behind them.",
+    ],
+    fixed: [
+      "For Quacky Zombies: shots fired while jumping or on the jetpack now go where you aim.",
+      "Modes in Random & Vote now lists Hangout and Quacky Zombies too, and a game turned off is left off the vote as well as Random.",
+    ],
+  },
+  {
     id: "v24",
     version: 24,
     date: "Nov 15, 2026",

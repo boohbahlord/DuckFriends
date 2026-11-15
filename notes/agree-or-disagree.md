@@ -4156,6 +4156,11 @@ Zombies only; Hangout's Duck Cabin unchanged).
   table move 400 east in Quacky Zombies (they blocked the hall hole). layout.js: l4: 1 props (Quacky Zombies only),
   HOLES, PEEKS, seenFrom(x, y, inside), OPENINGS swapped per mode; the shade gets a clip-path notch over the deck in
   front of the outside holes, the cabin's outside picture has the holes cut (art.js holeCut/holed). Hangout unchanged.
+- PR C done (stacked on PR B, Adam merges): from inside, a zombie beating on boards (or climbing in) shows over the dark
+  (z 20001, l4dd.js atBoards) and those boards go see-through (.l4-boards.beat) above it; shots pass the boards and the
+  wall round an opening out to 130 px outside and 70 px either side (l4ddrules inOpening); walls fade over zombies too
+  (activity hook hiders in world.js duckBoxes); in the air (jump, jetpack) my aim is taken from where I stand (game.js
+  myAim takes off world.lift), since the host fires from the feet: before, the lift skewed the aim and shots missed.
 
 ## Nov 15 2026 13:56Z: "merged versions should NOT have their own version number!!! UPDATES ARE VERSIONS THAT ARE DEPLOYED! A VERSION IS A DEPLOY! NOT MERGES!!!!" and 13:56Z "THEN FIX THE FUCKING VERSION LIST IN UPDATES!"
 - Done: workers no longer merge or touch js/updates.js; Adam merges ready PRs together, one deploy, one Updates page.
@@ -4177,5 +4182,18 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - Done (in the next deploy): Game Settings → "Modes in Random & Vote" (main page): one On/Off row per game Random and
   the vote can pick (`options.modesOff`, empty = all on, so nothing changes by default). In the lobby any can change;
   mid-game every one but the game being played (rules.js keeps the current one as it was). All off: Random and the
-  vote fall back to every game. Hangout and Quacky Zombies aren't in Random or the vote today, so they aren't listed;
-  Hangout's own time limit for when it comes up in Random is still to do.
+  vote fall back to every game. Hangout's own time limit for when it comes up in Random is still to do.
+- Fix (Version 25, Adam): the vote's list (voteModes) now leaves out the games turned off too, and the page lists
+  Hangout and Quacky Zombies (they're on the vote, not in Random).
+
+## Nov 15 2026: Hangout's own time-limit choices when it comes up in Random or Vote (planning talk; Adam's relay 14:30Z)
+- Done (PR, Adam merges): Hangout now comes up in Random too (Quacky Zombies stays vote-only), unless turned off under
+  Modes in Random & Vote. Game Options → Hangout → Durations: "Time limit (Random & Vote)" (`options.hangTime`): 5, 10,
+  15 (default), 20, 30 min or No limit; hidden when the host picks a game (a host-picked Hangout has no limit). The
+  HUD timer shows the time left. When it runs out ("Time's up in the cabin."): Random goes on to its next game; the
+  vote counts it for Vote return (the votes come back, or a fresh Hangout until they do). The cabin's End vote under
+  Random now goes to the next game too, not the lobby. Going into the cabin keeps the room's map (`s.roomMap`, with its
+  zoom or grey) and coming out puts it back; the game screen remounts when Random moves into or out of the cabin.
+- Version 26 (Solomon #276): Hangout comes up in Random too (Quacky Zombies stays vote-only); "Time limit (Random & Vote)"
+  (`hangTime`, 5/10/15/20/30 min or No limit, 15 at first) only when Hangout came from Random or the vote; the room's
+  map comes back after the cabin; under Random the cabin's End vote goes on to the next game.

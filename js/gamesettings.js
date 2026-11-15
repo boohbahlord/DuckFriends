@@ -681,6 +681,21 @@ const BY_MODE = {
   ],
   hang: [
     {
+      k: "hangTime",
+      n: "Time limit (Random & Vote)",
+      c: [
+        [5, "5 min"],
+        [10, "10 min"],
+        [15, "15 min"],
+        [20, "20 min"],
+        [30, "30 min"],
+        [0, "No limit"],
+      ],
+      cat: "time",
+      when: (s) => !!s.options.modePick, // (a Hangout the host picks never has one)
+      d: "When Random or the vote picks Hangout, it lasts this long, and the time left shows at the top. Then the next game begins, or the votes come back when it's their turn. A Hangout the host picks has no time limit.",
+    },
+    {
       k: "ghosts",
       n: "Ghosts",
       c: ON_OFF,
@@ -773,7 +788,7 @@ const showsZoom = (s) =>
 const PICK_TEXT = {
   vote: "After the start's countdown, every player votes in a window over the whole screen: first for the game mode (1:05), then for the map (0:20; not for Duck Cabin's games or Mad God Justin). Click once to vote; the dice is a random pick. Once the majority has voted (the room's vote share), the clock drops to 0:06. The most votes win; a tie is a random pick between the tied ones.",
   modeRandom:
-    "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Hangout, Quacky Zombies and games that need more players than the room has are left out. The map stays the one picked.",
+    "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Quacky Zombies and games that need more players than the room has are left out. Hangout plays on Duck Cabin with its own time limit (Game Options); every other game stays on the map picked.",
   mapRandom:
     "A random map each time the host starts. Duck Cabin comes only with its own games.",
 };
@@ -905,7 +920,7 @@ function gamePic(s, mode) {
 const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
 /* the Modes in Random & Vote row's value: All, or how many are on */
 const poolVal = (s) => {
-  const all = MODES.filter((m) => !CABIN_MODES.includes(m.id)),
+  const all = MODES,
     off = (s.options.modesOff || []).filter((id) =>
       all.some((m) => m.id === id),
     );
@@ -1031,19 +1046,15 @@ export function openGameSettings(R, start = null) {
         mid = !["lobby", "over", "countdown"].includes(s.phase);
       return (
         head("Modes in Random & Vote") +
-        `<div class="arm-body"><ul class="arm-list">${MODES.filter(
-          (m) => !CABIN_MODES.includes(m.id),
-        )
-          .map((m) =>
-            row(
-              `data-pool="${esc(m.id)}"`,
-              m.name,
-              off.includes(m.id) ? "Off" : "On",
-              !off.includes(m.id),
-              !host() || (mid && m.id === o.mode),
-            ),
-          )
-          .join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${MODES.map((m) =>
+          row(
+            `data-pool="${esc(m.id)}"`,
+            m.name,
+            off.includes(m.id) ? "Off" : "On",
+            !off.includes(m.id),
+            !host() || (mid && m.id === o.mode),
+          ),
+        ).join("")}</ul></div>`
       );
     }
     if (page === "saves") {
@@ -1142,7 +1153,11 @@ export function openGameSettings(R, start = null) {
       .filter((g) => BY_MODE[g])
       .map(
         (g) =>
-          `${gs.length > 1 ? `<h3 class="gs-sub">${esc(modeOf(g).name)}</h3>` : ""}${folds(s, BY_MODE[g], `mode:${g}`)}`,
+          `${gs.length > 1 ? `<h3 class="gs-sub">${esc(modeOf(g).name)}</h3>` : ""}${folds(
+            s,
+            BY_MODE[g].filter((x) => !x.when || x.when(s)),
+            `mode:${g}`,
+          )}`,
       )
       .join("");
     return (
