@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v27",
+    version: 27,
+    date: "Nov 15, 2026",
+    title: "Lobby Settings",
+    news: [
+      "New Lobby Settings button (the gear next to the pause menu): the game settings and the Democracy of Ducklings votes, even during a game. It blinks when a setting changes and shows ! while a vote is up, and a note under the cloud says when new legislation is being passed (also in the chat).",
+    ],
+    fixed: [
+      "Democracy of Ducklings votes now work during a game, not only in the lobby.",
+    ],
+  },
+  {
     id: "v26",
     version: 26,
     date: "Nov 15, 2026",
