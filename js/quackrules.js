@@ -16,6 +16,7 @@ import {
   playing,
   needed,
   backToLobby,
+  bagPick,
   VOTE_GRACE,
   seatLate,
   toStats,
@@ -359,13 +360,7 @@ export function startQuackRound(s, now) {
     s.pos[id] = { x: 0.5, y: (k + 1) / (s.seat.length + 1) };
   });
   if (s.options.wqPicker === "list") return deal(s, anyWord(), now);
-  let pool = ids.filter((id) => !(s.wqPickers || []).includes(id)); // everyone gets a turn at picking
-  if (!pool.length) {
-    s.wqPickers = [];
-    pool = ids;
-  }
-  s.wq.picker = anyOf(pool);
-  s.wqPickers = [...(s.wqPickers || []), s.wq.picker];
+  s.wq.picker = bagPick(s, "quack picker", ids); // (everyone gets a turn at picking, over the whole night)
   return enter(s, "wqpick", now);
 }
 /* the picker sends the word (or, as they type, a draft that goes in if time runs out) */
@@ -387,7 +382,16 @@ function deal(s, { word, cat }, now) {
     ids = w.ids.filter((id) => s.players[id]),
     can = ids.filter((id) => id !== w.picker);
   const n = s.options.wqQuacks === 2 && ids.length >= 6 ? 2 : 1;
-  s.hidden = { word, quacks: shuffle([...can]).slice(0, n), draft: null };
+  const quacks = [];
+  for (let i = 0; i < n; i++) {
+    const q = bagPick(
+      s,
+      "quack",
+      can.filter((id) => !quacks.includes(id)),
+    ); // (the Quack comes from the shuffle bag: nobody is it twice in a row)
+    if (q) quacks.push(q);
+  }
+  s.hidden = { word, quacks, draft: null };
   w.cat = cat;
   w.deal = Math.floor(Math.random() * 1e9) + 1;
   say(s, `The Secret Cards are dealt. The category: ${cat}.`);
