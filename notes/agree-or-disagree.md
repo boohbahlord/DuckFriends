@@ -4179,3 +4179,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
   mid-game every one but the game being played (rules.js keeps the current one as it was). All off: Random and the
   vote fall back to every game. Hangout and Quacky Zombies aren't in Random or the vote today, so they aren't listed;
   Hangout's own time limit for when it comes up in Random is still to do.
+- PR C done (stacked on PR B, Adam merges): from inside, a zombie beating on boards (or climbing in) shows over the dark
+  (z 20001, l4dd.js atBoards) and those boards go see-through (.l4-boards.beat) above it; shots pass the boards and the
+  wall round an opening out to 130 px outside and 70 px either side (l4ddrules inOpening); walls fade over zombies too
+  (activity hook hiders in world.js duckBoxes); in the air (jump, jetpack) my aim is taken from where I stand (game.js
+  myAim takes off world.lift), since the host fires from the feet: before, the lift skewed the aim and shots missed.
