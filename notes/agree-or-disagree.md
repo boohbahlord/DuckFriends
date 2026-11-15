@@ -4109,3 +4109,11 @@ the whole map, only drawing is culled.
   the dark is drawn at 0.3 of the screen's px (was 0.5), reaches 60 px past the view and slides with the camera, drawn
   again at most 20 times a second; the fireflies at most 30 times a second, sliding in between. Hangout at 4x: 14-16 fps
   before, 25-30 fps after (Commit 3.0-3.3 s per 6 s before, 2.4 s after).
+- PR 2, the minimap (owner's point 3, word for word in the Nov 15 planning talk): Done (v184), js/l4ddmap.js, mounted by
+  l4dd.js, Quacky Zombies only. Bottom left, 8 px over the bottom bar (measured from .bbar on mount and resize); 196 px
+  wide on a computer, 124 on a phone; see-through dark box. The map: the cabin's floor, every wall (layout.js PROPS
+  kind "wall", the doors are their gaps), the deck and the stairs' landing; no furniture. Each duck: a round head in
+  its shown color with a beak the way it last walked and an eye; mine ringed in white; downed or ghost at 45%. Each
+  zombie: a red dot (3 px radius on a computer, 2.4 on a phone) that fades in over 250 ms while any duck's camera sees
+  it (a box the size of my own view round each duck, same side of the cabin's walls) and out over 400 ms. Drawn 12
+  times a second; no fps cost measured (round 16, 4x slower CPU).
