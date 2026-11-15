@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v181",
+    version: 181,
+    date: "Nov 15, 2026",
+    title: "Smoother ducks",
+    fixed: [
+      "For Mad God Justin: the ducks, the weapons in hand and the board cost the browser about half the work they did each frame, so the fight runs smoother on slower computers.",
+      "For Hangout: ducks far off the screen aren't drawn until they come near (they still walk and play as before).",
+    ],
+  },
+  {
     id: "v180",
     version: 180,
     date: "Nov 15, 2026",
