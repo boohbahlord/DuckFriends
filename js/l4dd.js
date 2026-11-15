@@ -15,12 +15,14 @@ import {
   DECK,
   STAIRS,
   inCabin,
+  seenFrom,
   sortY,
   heightAt,
   W,
   H,
   LIGHTS,
   PROPS,
+  layoutRev,
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
@@ -106,13 +108,21 @@ const up = (s, id) => {
 };
 
 /* ---------- the walls, for the flashlights: their boxes on the floor ---------- */
-const WALLS = PROPS.filter((p) => p.kind === "wall" && p.block).map(
-  (p) => p.block,
-); // [x0, y0, x1, y1]
+let WALL_PROPS = [],
+  WALLS = [], // [x0, y0, x1, y1]
+  wallsRev = -1;
+const walls = () => {
+  if (wallsRev !== layoutRev()) {
+    wallsRev = layoutRev(); // (Quacky Zombies' cabin: layout.js' useMode has turned to it by the time it's drawn)
+    WALL_PROPS = PROPS.filter((p) => p.kind === "wall" && p.block);
+    WALLS = WALL_PROPS.map((p) => p.block);
+  }
+  return WALLS;
+};
 /* how far a ray from (x, y) along (dx, dy) goes before a wall, at most far */
 function rayTo(x, y, dx, dy, far) {
   let best = far;
-  for (const [x0, y0, x1, y1] of WALLS) {
+  for (const [x0, y0, x1, y1] of walls()) {
     let t0 = 0,
       t1 = best;
     if (Math.abs(dx) < 1e-9) {
@@ -141,8 +151,8 @@ function rayTo(x, y, dx, dy, far) {
 /* where an opening's boards sort: just in front of the wall piece they're on. A side wall's pieces sort by their own
    front, and a piece's top shows CABIN.wall higher up the screen than its foot, so a hole's boards go in front of every
    piece of that wall whose top covers them */
-const WALL_PROPS = PROPS.filter((p) => p.kind === "wall" && p.block);
 const boardKey = (o) => {
+  walls();
   const on = (p) => o.x >= p.block[0] - 1 && o.x <= p.block[2] + 1,
     reach = o.axis === "y" ? o.half + 14 : 0,
     up = o.axis === "y" ? CABIN.wall : 0,
@@ -308,7 +318,7 @@ function seeZombies(s, ctx, now) {
       o.diedAt = now;
     }
     if (z.a !== o.a && z.a > 0 && z.st === 2)
-      if (inCabin(o.x, o.y) === ctx.world.inside)
+      if (seenFrom(o.x, o.y, ctx.world.inside))
         claw(o.x, o.y, z.dir / 100, ctx);
     const fire = ((s.hang.l4fire || {}).z || {})[z.i],
       lit = !!fire && fire[0] > clockNow() && z.st !== 3;
@@ -536,7 +546,7 @@ function paint(now, ctx) {
   }
   /* the drops glow on the floor */
   for (const o of D.values()) {
-    if (inCabin(o.x, o.y) !== Wd.inside) continue;
+    if (!seenFrom(o.x, o.y, Wd.inside)) continue;
     const p = Wd.toScreen(o.x, o.y, 30),
       r = DROP_LIGHT.r * sc;
     if (on(p.left * q, p.top * q, r))
@@ -548,7 +558,7 @@ function paint(now, ctx) {
   for (const id of s.seat) {
     const a = Wd.at(id),
       pos = s.pos[id];
-    if (!a || !pos || inCabin(a.x, a.y) !== Wd.inside) continue;
+    if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside)) continue;
     const p4 = P4(s, id);
     if (p4 && p4.gh) continue;
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
@@ -1003,7 +1013,7 @@ export function l4TouchAim(me) {
   let best = null,
     bd = 520;
   for (const o of Z.values()) {
-    if (o.st === 3 || inCabin(o.x, o.y) !== inside) continue;
+    if (o.st === 3 || !seenFrom(o.x, o.y, inside)) continue;
     const dx = o.x - x,
       dy = o.y - y,
       d = Math.hypot(dx, dy),
@@ -1205,7 +1215,7 @@ activity({
       const z = heightAt(o.x, o.y),
         f = Wd.toScreen(o.x, o.y, z),
         hide =
-          inCabin(o.x, o.y) !== Wd.inside ||
+          !seenFrom(o.x, o.y, Wd.inside) ||
           !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
@@ -1259,7 +1269,7 @@ activity({
     for (const o of D.values()) {
       const p = Wd.toScreen(o.x, o.y, 0),
         hide =
-          inCabin(o.x, o.y) !== Wd.inside ||
+          !seenFrom(o.x, o.y, Wd.inside) ||
           !Wd.seen(p.left - 40, p.top - 80, 80, 100);
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
