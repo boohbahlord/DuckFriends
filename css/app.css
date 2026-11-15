@@ -14208,11 +14208,10 @@ html.moving .eye-tears .tdrop.t2 {
 
 /* ---------- Quacky Zombies (l4dd.js, l4ddbar.js) ----------
    The zombies stand in the world as the props do (sorted by their feet); a thin HP bar under each; a red blink when hit;
-   dead, they lie down and fade. The boards and the extra candles are props too. "Round N" in crimson at the top, over
+   dead, they lie down and fade. The boards are props too. "Round N" in crimson at the top, over
    the dark; the end card over everything. */
 .l4z,
-.l4-boards,
-.l4-candle {
+.l4-boards {
   position: absolute;
   left: 0;
   top: 0;
@@ -14225,8 +14224,7 @@ html.moving .eye-tears .tdrop.t2 {
 .l4z-body {
   position: absolute;
 }
-.l4z-body img,
-.l4-candle img {
+.l4z-body img {
   display: block;
   width: 100%;
   height: 100%;
@@ -14276,17 +14274,12 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 } /* (lying down, see-through at once, gone in 4 s: L4.DEAD_MS) */
-.l4-boards,
-.l4-candle {
+.l4-boards {
   transform-origin: 0 0;
 }
 .l4-boards svg {
   display: block;
   overflow: visible;
-}
-.l4-candle {
-  width: 30px;
-  height: 46px;
 }
 .hang-board.l4-board .hang-dark.l4-dark {
   z-index: 24000;

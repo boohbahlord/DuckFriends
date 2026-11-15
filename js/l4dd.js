@@ -1,8 +1,8 @@
 /* ---------- Quacky Zombies on every screen ----------
    Duck Cabin's world draws it (an activity that runs only in this mode, registry.js): the zombies where the host says
    (gliding between its heartbeats), their thin HP bars, a red blink when hit, the claw's swipe, lying down and fading
-   when they die; the boards over the openings; the extra candles; the dark over everything (the power is cut) with the
-   fires, the candles and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
+   when they die; the boards over the openings; the dark over everything (the power is cut) with the
+   fires and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
    by an opening to board it up; key 0 switches my flashlight. Justin's Butler stands by the card table: E by him opens
    his shop. E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
@@ -71,8 +71,6 @@ import { popHP } from "./hpmeter.js";
 import {
   zombieURL,
   zombieBox,
-  CANDLE,
-  CANDLE_BOX,
   boardsSVG,
   boardsBox,
   orbHTML,
@@ -85,7 +83,6 @@ const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
-const CANDLE_LIGHT = { r: 190, k: 0.62, flick: 1 };
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
 const MOON = Object.fromEntries(
   OPENINGS.map((o) => {
@@ -164,7 +161,6 @@ const boardKey = (o) => {
 /* ---------- what this screen keeps ---------- */
 const Z = new Map(); // zombie number → how it's drawn here
 const B = new Map(); // opening id → its boards' element
-const C = []; // the candles' elements
 const D = new Map(); // a drop's number → its element
 const DROP_LIGHT = { r: 120, k: 0.55 }; // the light round a drop on the floor
 const DROP_ENDING = 10000; // ms: a drop blinks in its last 10 s
@@ -181,7 +177,6 @@ let layer = null,
   gap = 200,
   roundShown = -1, // (none yet)
   overShown = "",
-  candleSig = "",
   stamina = 1,
   tired = false,
   holding = null,
@@ -363,23 +358,6 @@ function seeBoards(s) {
     }
   }
 }
-function seeCandles(s) {
-  const spots = s.hang.l4c || [],
-    sig = JSON.stringify(spots);
-  if (sig === candleSig) return;
-  candleSig = sig;
-  for (const c of C) c.el.remove();
-  C.length = 0;
-  const url = svgDataURL(CANDLE);
-  for (const [x, y] of spots) {
-    const el = document.createElement("div");
-    el.className = "l4-candle";
-    el.innerHTML = `<img alt="" draggable="false" src="${url}">`;
-    layer.append(el);
-    C.push({ el, x, y });
-  }
-}
-
 /* ---------- the drops: on the floor, what's on now (top right), and the big words when one is taken ---------- */
 function seeDrops(s) {
   const list = s.hang.l4dr || [],
@@ -530,14 +508,6 @@ function paint(now, ctx) {
       r = l.r * 0.9 * fl * sc;
     if (on(x, y, r))
       holes.push([x, y, r, Math.min(0.72, l.k * 1.45) * fl * stutterOf(l, ln)]); // (dimmer than Hangout's blackout: the owner wants it very dark)
-  }
-  for (const c of C) {
-    if (inCabin(c.x, c.y) !== Wd.inside) continue;
-    const fl = sway({ ...CANDLE_LIGHT, x: c.x, y: c.y }, ln),
-      p = Wd.toScreen(c.x, c.y, 20),
-      r = CANDLE_LIGHT.r * fl * sc;
-    if (on(p.left * q, p.top * q, r))
-      holes.push([p.left * q, p.top * q, r, CANDLE_LIGHT.k * fl]);
   }
   /* each opening lets a little moonlight in, more as its boards come down: the way in shows in the dark */
   const brd = s.hang.brd || {};
@@ -1122,18 +1092,8 @@ activity({
     ctx.world.board.classList.add("blackout", "l4-board");
     Z.clear();
     B.clear();
-    C.length = 0;
     D.clear();
-    zpSig =
-      candleSig =
-      overShown =
-      endSig =
-      drawn =
-      boxSig =
-      upSig =
-      slotSig =
-      onSig =
-        "";
+    zpSig = overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();
@@ -1145,11 +1105,9 @@ activity({
   unmount(ctx) {
     for (const o of Z.values()) o.el.remove();
     for (const b of B.values()) b.el.remove();
-    for (const c of C) c.el.remove();
     for (const o of D.values()) o.el.remove();
     Z.clear();
     B.clear();
-    C.length = 0;
     D.clear();
     cv?.remove();
     mapUnmount();
@@ -1178,7 +1136,6 @@ activity({
     const now = performance.now();
     seeZombies(s, ctx, now);
     seeBoards(s);
-    seeCandles(s);
     seeDrops(s);
     seeOn(s);
     seeHud(s, ctx);
@@ -1295,20 +1252,6 @@ activity({
         b.tr = tr;
         b.el.style.transform = tr;
         b.el.style.zIndex = boardKey(o);
-      }
-    }
-    for (const c of C) {
-      const p = Wd.toScreen(c.x, c.y, 0),
-        hide =
-          inCabin(c.x, c.y) !== Wd.inside ||
-          !Wd.seen(p.left - 20, p.top - 50, 40, 60);
-      if (c.el.hidden !== hide) c.el.hidden = hide;
-      if (hide) continue;
-      const tr = `translate(${(p.left - (CANDLE_BOX.w / 2) * sc).toFixed(1)}px, ${(p.top - (CANDLE_BOX.h - 6) * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
-      if (c.tr !== tr) {
-        c.tr = tr;
-        c.el.style.transform = tr;
-        c.el.style.zIndex = Math.round(sortY(c.x, c.y, 0)) + 10;
       }
     }
     /* the drops, blinking in their last seconds; and the seconds left on what's on */

@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v186",
+    version: 186,
+    date: "Nov 15, 2026",
+    title: "A clearer cabin for Quacky Zombies",
+    news: [
+      "For Quacky Zombies: a fireplace spin costs 500 points.",
+      "For Quacky Zombies: the candles on the floor and the deck, the stools round the card table, the beds and the plant by the back door are gone, and nobody can jump up onto a table anymore.",
+    ],
+  },
+  {
     id: "v185",
     version: 185,
     date: "Nov 15, 2026",
