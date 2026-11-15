@@ -1775,33 +1775,52 @@ function drawDucks(now = clockNow()) {
       top < -geo.H
     )
       continue; // (off the screen)
-    live.add(String(sh.n));
-    let b = fxl.querySelector(`[data-n="${sh.n}"]`);
+    live.add(sh.n);
+    let b = SHOT_EL.get(sh.n);
+    if (b && b.parentNode !== fxl) b = null; // (the board was built again)
     if (!b) {
       const duck = (
           s.players[sh.by] || (sh.by === JUSTIN_ID ? JUSTIN_PLAYER : {})
         ).duck,
-        [vx, vy] = toScreen(sh.vx, sh.vy);
-      b =
+        [vx, vy] = toScreen(sh.vx, sh.vy),
+        ang = `--ang:${Math.atan2(vy, vx).toFixed(3)}rad`,
+        sz = `--s:${size.toFixed(0)}px`,
+        spin = vx < 0 ? "ccw" : "";
+      /* [its class, its look, its style]: elements with the same class and look are handed out again (shotPool) */
+      const [cls, inner, style] =
         sh.k === "arrow" || sh.k === "fireball"
-          ? el(
-              `<div class="bullet k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px;--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${sh.k === "arrow" ? ARROW : FIREBALL}</div>`,
-            ) // (the bow's arrow, Mad God Justin's fireball: pointing the way they fly)
+          ? [
+              `bullet k-${sh.k}`,
+              sh.k === "arrow" ? ARROW : FIREBALL,
+              `${sz};${ang}`,
+            ] // (the bow's arrow, Mad God Justin's fireball: pointing the way they fly)
           : sh.k === "controller" || sh.k === "chair"
-            ? el(
-                `<div class="thrown mgj-throw k-${sh.k}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i></div>`,
-              )
+            ? [
+                `thrown mgj-throw k-${sh.k}`,
+                `<i class="${spin}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i>`,
+                sz,
+              ]
             : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
-              ? el(
-                  `<div class="thrown${sh.k !== "dagger" ? " grenade" : ""}" data-n="${sh.n}" style="--s:${size.toFixed(0)}px"><i class="${vx < 0 ? "ccw" : ""}">${sh.k !== "dagger" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i></div>`,
-                ) // (the grenade launcher's fly as the thrown ones, straight)
+              ? [
+                  `thrown${sh.k !== "dagger" ? " grenade" : ""}`,
+                  `<i class="${spin}">${sh.k !== "dagger" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i>`,
+                  sz,
+                ] // (the grenade launcher's fly as the thrown ones, straight)
               : ROUNDS_ART[sh.k]
-                ? el(
-                    `<div class="bullet k-${sh.k}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad;--w:${ROUNDS_ART[sh.k].w}px">${ROUNDS_ART[sh.k].svg}</div>`,
-                  ) // (Quacky Zombies' new guns: each its own bullet)
-                : el(
-                    `<div class="bullet${sh.k === "pellet" ? " pellet" : ""}" data-n="${sh.n}" style="--ang:${Math.atan2(vy, vx).toFixed(3)}rad">${BULLET(colorsOf(duck, "handgun")[2])}</div>`,
-                  );
+                ? [
+                    `bullet k-${sh.k}`,
+                    ROUNDS_ART[sh.k].svg,
+                    `${ang};--w:${ROUNDS_ART[sh.k].w}px`,
+                  ] // (Quacky Zombies' new guns: each its own bullet)
+                : [
+                    `bullet${sh.k === "pellet" ? " pellet" : ""}`,
+                    BULLET(colorsOf(duck, "handgun")[2]),
+                    ang,
+                  ];
+      b = shotPool(cls, inner);
+      b.setAttribute("style", style);
+      b.dataset.n = sh.n;
+      SHOT_EL.set(sh.n, b);
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
         const pin = el(
@@ -1813,9 +1832,11 @@ function drawDucks(now = clockNow()) {
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
   }
-  fxl.querySelectorAll(".bullet, .thrown").forEach((b) => {
-    if (!live.has(b.dataset.n)) b.remove();
-  });
+  for (const [n, b] of SHOT_EL)
+    if (!live.has(n)) {
+      SHOT_EL.delete(n);
+      shotDone(b);
+    } // (landed, gone, or off the screen: kept for the next shot that looks the same)
   /* the handgun or the dagger in hand, turned toward where it aims: my mouse, or the aim the others sent */
   const handed = new Set();
   for (const [id, w, pos, duck, mine] of arms) {
@@ -3024,21 +3045,52 @@ function playFx(f) {
   }
 }
 
+/* ---------- pools (owner 2026-11-15: "I agree with reusing objects") ----------
+   The bullets in the air and the blood bursts are made and thrown away many times a second. Done with, they're kept
+   (out of the page) and handed out again for the next one that looks the same, instead of building new elements every
+   time: fewer small freezes while the browser cleans up. Put back in the page, an element's CSS animation starts over
+   by itself. */
+const SHOT_EL = new Map(); // a shot's number → its element
+const SHOTS_KEPT = new Map(); // class + look → elements ready to go again
+function shotPool(cls, inner) {
+  const k = cls + "|" + inner,
+    free = SHOTS_KEPT.get(k);
+  if (free && free.length) return free.pop();
+  const b = el(`<div class="${cls}">${inner}</div>`);
+  b._k = k;
+  return b;
+}
+function shotDone(b) {
+  b.remove();
+  let free = SHOTS_KEPT.get(b._k);
+  if (!free) SHOTS_KEPT.set(b._k, (free = []));
+  if (free.length < 24) free.push(b);
+  if (SHOTS_KEPT.size > 60) SHOTS_KEPT.clear(); // (many looks: start over)
+}
+const BURSTS_KEPT = new Map(); // how many drops → bursts ready to go again
 /* blood bursting from (x, y): n drops over `wide` radians around up, from `near` to near + `far` px out */
 function bloodBurst(x, y, n, wide, near, far, delay = 0) {
   const fxl = S && $(".fxl", S);
   if (!fxl) return;
-  let drops = "";
-  for (let i = 0; i < n; i++) {
+  const free = BURSTS_KEPT.get(n) || [];
+  BURSTS_KEPT.set(n, free);
+  const burst =
+    free.pop() || el(`<div class="l4-burst">${"<i></i>".repeat(n)}</div>`);
+  burst.style.left = x.toFixed(1) + "px";
+  burst.style.top = y.toFixed(1) + "px";
+  for (const i of burst.children) {
     const ang = -Math.PI / 2 + (Math.random() - 0.5) * wide,
       d = near + Math.random() * far;
-    drops += `<i style="--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px;animation-delay:${delay}ms"></i>`;
+    i.setAttribute(
+      "style",
+      `--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px;animation-delay:${delay}ms`,
+    );
   }
-  const burst = el(
-    `<div class="l4-burst" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${drops}</div>`,
-  );
   fxl.append(burst);
-  setTimeout(() => burst.remove(), 800 + delay);
+  setTimeout(() => {
+    burst.remove();
+    if (free.length < 16) free.push(burst);
+  }, 800 + delay);
 }
 /* a headless duck's neck spurting blood for a moment after (owner 2026-11-04 06:44Z): small spurts, one after another */
 function neckSpray(x, y) {

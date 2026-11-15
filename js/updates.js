@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v181",
+    version: 181,
+    date: "Nov 15, 2026",
+    title: "Smoother Quacky Zombies",
+    news: [
+      "For Quacky Zombies: the late rounds run much smoother, with lots of zombies on screen.",
+    ],
+  },
+  {
     id: "v180",
     version: 180,
     date: "Nov 15, 2026",
