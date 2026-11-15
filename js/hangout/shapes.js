@@ -80,7 +80,15 @@ const still = (svg) =>
 const calm = (svg) => svg.replace(/<rect [^>]*class="hg-shimmer"[^>]*\/>/g, ""); // (the pool without its light on the water: DECOR moves that)
 
 /* ---------- the walls: log walls cut away inside; outside, the cabin's own drawing covers them ---------- */
-const WALLS = L.PROPS.filter((p) => p.kind === "wall");
+let WALLS = [],
+  wallsRev = -1;
+const walls = () => {
+  if (wallsRev !== L.layoutRev()) {
+    wallsRev = L.layoutRev();
+    WALLS = L.PROPS.filter((p) => p.kind === "wall");
+  }
+  return WALLS;
+}; // (the room's mode's: Quacky Zombies' cabin has walls of its own)
 const NORTH_WINDOWS = [
   [2470, 2590],
   [2820, 2960],
@@ -111,7 +119,7 @@ function wallParts(p) {
   }
   /* north-south: a run of pieces; only the run's south end shows its log ends, the rest is the cut top */
   const b = p.y + p.d - 12,
-    end = !WALLS.some(
+    end = !walls().some(
       (q) =>
         q !== p &&
         q.x === p.x &&
@@ -128,11 +136,11 @@ function wallParts(p) {
     Math.abs(q.y + 12 - b) < 2 &&
     q.x <= p.x + 1 &&
     q.x + q.w >= p.x + p.w - 1; // (at a corner the east-west wall starts or ends with it)
-  const tee = WALLS.some(into),
+  const tee = walls().some(into),
     low = !tee && L.PROPS.some((q) => q.kind === "stub" && into(q)); // (into an east-west wall: hidden behind its face; over the south wall's low line: its end shows)
   /* a run that starts at an east-west wall: its top starts at that wall's top's front edge (the east-west wall's top runs
      on over the corner; nothing sticks out over it) */
-  const head = WALLS.some(
+  const head = walls().some(
     (q) =>
       q.w > q.d &&
       q.only !== "out" &&
@@ -305,6 +313,7 @@ export const cabinSVG = (dark = false) => {
     h: d + 290,
     wallH: C.wall,
     windows: [1550, 2080, 3300, 3700, 4080].map((x) => x - C.x0),
+    holes: L.HOLES.filter((o) => o.out).map((o) => [o.a - C.x0, o.b - C.x0]), // (Quacky Zombies')
     backDoor: L.DOORS.back.x - C.x0,
     frontDoor: L.DOORS.front.x - C.x0,
     chimney: 2300 - C.x0,
@@ -335,6 +344,57 @@ export const DRAW = {
     ),
   ],
   doorway: () => [],
+  /* Quacky Zombies' holes (layout.js' L4_HOLES): the wall's own drawing over the gap with the hole broken through it,
+     sorted just in front of the wall pieces either side (it covers their ends, whichever came into view first) */
+  hole(p) {
+    const o = p.hole,
+      seed = Math.round(o.a + o.at);
+    if (o.axis === "x") {
+      // an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends
+      const h = p.d + p.h,
+        svg = A.logWall({ w: p.w, wallH: p.h, t: p.d, seamless: true }),
+        cut = o.out
+          ? A.holeCut(T + 2, p.w - T - 2, -30, h + 30, seed, 6)
+          : A.holeCut(T + 2, p.w - T - 2, p.d + 30, h + 30, seed, 7);
+      return [
+        part(
+          () => A.holed(svg, p.w, h, [cut]),
+          p.x,
+          p.y - p.h,
+          p.w,
+          h,
+          p.key + 1,
+          {
+            fade: p.fade,
+            only: "in",
+          },
+        ),
+      ];
+    }
+    /* a north-south wall: from above, a gap in its strip; the piece north of it ends in splinters hanging over the gap,
+       the one south of it starts with them sticking up, each sorted with its own piece */
+    const south = walls().find(
+      (q) => q.x === p.x && Math.abs(q.y + T - o.b) < 1,
+    );
+    const jag = (up) =>
+      `<svg class="hg hg-wall" viewBox="0 0 24 20" width="24" height="20" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? "#c98a52" : "#b97a44"}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="#6e3a1a" stroke-width="2" stroke-linecap="round"/></svg>`;
+    return [
+      part(() => jag(false), p.x, o.a + T - 8, 24, 20, o.a + T + 1, {
+        only: "in",
+      }),
+      part(
+        () => jag(true),
+        p.x,
+        o.b - T - 14,
+        24,
+        20,
+        (south ? south.key : o.b + T) + 1,
+        {
+          only: "in",
+        },
+      ),
+    ];
+  },
   /* a door (layout.js' DOORWAYS: the front door, the back door): both are art.js' cabinDoor, as big as layout.js' DOOR,
      in an opening as wide as its frame. A shut part and open ones; doors.js shows one or the other ("open" on the prop).
      Open, it has turned 60° on its hinge (the opening's west side) toward the viewer: the front door into the room, the

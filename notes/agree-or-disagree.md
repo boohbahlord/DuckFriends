@@ -4149,3 +4149,10 @@ Zombies only; Hangout's Duck Cabin unchanged).
   mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
   turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
   still be walked onto. layoutRev() lets l4ddrules' walk grid be made again. Hangout's cabin is unchanged.
+- PR B done (stacked on #268, Adam merges): holes placed from the owner's 4 screenshots (refs/cabin-holes-2026-11-15):
+  1.png kitchen | top bedroom (y 1100, x 4080-4250), 2.png bathroom | top bedroom (x 3900, y 1175-1335), 3.png top
+  bedroom | bottom bedroom (y 1750, x 3990-4230), 4.png the hall's south end onto the deck (x 3320-3480). The back door
+  is a large hole (x 2570-2880). Wider east doorways (about 180-230 wide, were 120-150). The deck's rocking chairs and
+  table move 400 east in Quacky Zombies (they blocked the hall hole). layout.js: l4: 1 props (Quacky Zombies only),
+  HOLES, PEEKS, seenFrom(x, y, inside), OPENINGS swapped per mode; the shade gets a clip-path notch over the deck in
+  front of the outside holes, the cabin's outside picture has the holes cut (art.js holeCut/holed). Hangout unchanged.
