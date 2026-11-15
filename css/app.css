@@ -1710,6 +1710,135 @@ p.bad {
   vertical-align: 0.08em;
   box-shadow: 0 0.12rem 0 var(--line);
 }
+/* Lobby Settings (lobbysettings.js): the button between the players button and ☰ in a game (its own symbol, never
+   faded), its "!" while a Democracy vote is up, and a soft glow that pulses when a setting changes */
+.lset-btn {
+  position: relative;
+}
+.lset-ic {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+.lset-bang {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #1c1c28;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 0.1rem 0 var(--line);
+  pointer-events: none;
+}
+.lset-bang[hidden] {
+  display: none;
+}
+.lset-btn.blink0,
+.lset-btn.blink1 {
+  animation: lset-blink 0.8s ease-in-out 3;
+}
+.lset-btn.blink1 {
+  animation-name: lset-blink1;
+} /* (the same blink under a second name, so a change in the middle of one starts it over) */
+@keyframes lset-blink {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--yellow) 0%, transparent);
+    color: inherit;
+  }
+  50% {
+    box-shadow: 0 0 0.9rem 0.2rem
+      color-mix(in srgb, var(--yellow) 70%, transparent);
+    color: var(--yellow);
+  }
+}
+@keyframes lset-blink1 {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--yellow) 0%, transparent);
+    color: inherit;
+  }
+  50% {
+    box-shadow: 0 0 0.9rem 0.2rem
+      color-mix(in srgb, var(--yellow) 70%, transparent);
+    color: var(--yellow);
+  }
+}
+html.still .lset-btn.blink0,
+html.still .lset-btn.blink1 {
+  animation-duration: 0.01s;
+}
+/* the Lobby Settings window: the small label over the Democracy of Ducklings rules */
+.arm-sub {
+  margin: 0.7rem 0.4rem 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+/* the note under the cloud when a Democracy vote starts: small, see-through, fades in and out on its own; only its X
+   can be clicked */
+.dod-news {
+  position: fixed;
+  z-index: 9000;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100vw - 1rem);
+  padding: 0.3rem 0.35rem 0.3rem 0.75rem;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--panel) 62%, transparent);
+  box-shadow: 0 0.15rem 0.6rem #0004;
+  font-size: 0.82rem;
+  font-weight: 700;
+  pointer-events: none;
+  animation: dod-news 5.5s ease-in-out forwards;
+}
+body:has(> .win-back) > .dod-news {
+  display: none;
+} /* (never over an open window) */
+.dod-news span {
+  min-width: 0;
+}
+.dod-news-x {
+  pointer-events: auto;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.dod-news-x:hover,
+.dod-news-x:focus-visible {
+  opacity: 1;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+@keyframes dod-news {
+  0% {
+    opacity: 0;
+  }
+  8%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .lmenu .dod-up {
   background: color-mix(in srgb, var(--orange) 22%, transparent);
 }

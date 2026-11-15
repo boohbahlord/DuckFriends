@@ -1680,14 +1680,7 @@ export function reduce(state, a, now = Date.now()) {
     case "dod": {
       // Democracy of Ducklings: a duck votes (again: takes the vote back); the host turns a rule on, or hands the host over, directly
       const k = a.k;
-      if (
-        !me ||
-        me.bot ||
-        !dodRoom(s) ||
-        !DOD_KEYS.includes(k) ||
-        !(s.phase === "lobby" || s.phase === "over")
-      )
-        return state;
+      if (!me || me.bot || !dodRoom(s) || !DOD_KEYS.includes(k)) return state; // (in any stage: Lobby Settings votes during a game too, owner Nov 15)
       s.dod = { on: {}, votes: {}, ...(s.dod || {}) };
       s.dod.votes = { ...(s.dod.votes || {}) };
       if (k === "host") {
@@ -2607,6 +2600,7 @@ export function reduce(state, a, now = Date.now()) {
         return changed ? s : state;
       }
       if (s.phase === "countdown") return state;
+      const dv = dodVoting(s) && dodSettle(s, now); // (Democracy of Ducklings: a vote during a game passes or runs out here)
       if (s.vote && now >= s.vote.ends) {
         say(s, "The vote ran out of time.");
         s.vote = null;
@@ -2627,7 +2621,7 @@ export function reduce(state, a, now = Date.now()) {
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
       advance(s, now);
-      return sig() === was && !shots && !hung && !jus && !up ? state : s;
+      return sig() === was && !shots && !hung && !jus && !up && !dv ? state : s;
     }
   }
   return s;
