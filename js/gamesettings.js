@@ -10,6 +10,7 @@ import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, mapName } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, randomPool, dodOn } from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
+import { profile, save } from "./store.js";
 
 /* ---------- every setting: its key, its name, its choices, its category and what it does ----------
    off: the games it doesn't apply to (it's hidden there). The four categories, under Host Settings and under each game */
@@ -895,6 +896,21 @@ function gamePic(s, mode) {
 
 /* ---------- the screen ---------- */
 const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
+/* ---------- save slots (owner 2026-11-15): 5 per player, kept on this device with the profile ----------
+   Save copies every Game Setting of the room; Load sends them back, and only in the lobby (never mid-game) */
+const SLOTS = 5;
+const slots = () =>
+  Array.from({ length: SLOTS }, (_, n) => {
+    const x = (profile.saves || [])[n];
+    return x && x.options ? x : null;
+  });
+const when = (t) =>
+  new Date(t).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 export function openGameSettings(R, start = null) {
   let page = start, // null (the three pages) | mode | cat:<kind> | map | opts
     peek = null, // what the preview shows: { kind: mode | map | set | text, … }
@@ -993,8 +1009,21 @@ export function openGameSettings(R, start = null) {
     if (!page)
       return (
         head("Game Settings") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}</ul></div>`
       );
+    if (page === "saves") {
+      const inLobby = s.phase === "lobby",
+        list = slots();
+      return (
+        head("Save slots") +
+        `<div class="arm-body"><ul class="arm-list gs-slots">${list
+          .map(
+            (x, n) =>
+              `<li class="gs-slot"><span class="gs-slot-name">Slot ${n + 1}<span class="small dim">${x ? esc(`${modeOf(x.options.mode).name} · ${when(x.at)}`) : "Empty"}</span></span><button type="button" class="btn ghost small" data-a="save" data-n="${n}">Save</button><button type="button" class="btn ghost small" data-a="load" data-n="${n}"${x && inLobby && host() ? "" : " disabled"}>Load</button></li>${n ? "" : `<li class="gs-slot-note small dim">Save keeps these Game Settings on this device. Load works only in the lobby, before a game${host() ? "" : ", and only for the host (or sudo)"}.</li>`}`,
+          )
+          .join("")}</ul></div>`
+      );
+    }
     if (page === "vote")
       return (
         head("Vote Mode & Map") +
@@ -1294,6 +1323,19 @@ export function openGameSettings(R, start = null) {
                   ? "map"
                   : null,
             );
+          if (a && a.dataset.a === "save") {
+            const list = slots();
+            list[+a.dataset.n] = { at: Date.now(), options: { ...o } };
+            profile.saves = list;
+            save();
+            paint(false);
+            return;
+          }
+          if (a && a.dataset.a === "load") {
+            const x = slots()[+a.dataset.n];
+            if (x && boss && s.phase === "lobby") send({ ...x.options });
+            return;
+          }
           if (a && a.dataset.a === "reset" && boss) {
             send({ ...OPTIONS_DEFAULT });
             return;

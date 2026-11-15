@@ -4160,3 +4160,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - Done (Version 23): Settings → Performance → Frame rate: "Frame cap" (on at first) and a number box (120 at first,
   30 to 1000). The game loop skips early frames on a steady beat (a 144 Hz screen capped at 120 draws about 120).
   Off: as many frames as the screen shows. Checked uncapped: 120 → 120 fps, 60 → 60, off → 420-590 in Agree or Disagree.
+
+## Nov 15 2026: 5 save slots per player (planning talk 11:42Z; 11:57Z "save slots load only in the lobby", with a note)
+- Done (in the next deploy): Game Settings → "Save slots" (last row of the main page): 5 slots kept on this device with
+  the profile (`profile.saves`). Save copies every Game Setting of the room; Load sends them back, only in the lobby
+  and only for the host or sudo. A small note under Slot 1 says so.
