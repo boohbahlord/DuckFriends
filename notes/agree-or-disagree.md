@@ -4185,3 +4185,12 @@ Zombies only; Hangout's Duck Cabin unchanged).
   vote fall back to every game. Hangout's own time limit for when it comes up in Random is still to do.
 - Fix (Version 25, Adam): the vote's list (voteModes) now leaves out the games turned off too, and the page lists
   Hangout and Quacky Zombies (they're on the vote, not in Random).
+
+## Nov 15 2026: Hangout's own time-limit choices when it comes up in Random or Vote (planning talk; Adam's relay 14:30Z)
+- Done (PR, Adam merges): Hangout now comes up in Random too (Quacky Zombies stays vote-only), unless turned off under
+  Modes in Random & Vote. Game Options → Hangout → Durations: "Time limit (Random & Vote)" (`options.hangTime`): 5, 10,
+  15 (default), 20, 30 min or No limit; hidden when the host picks a game (a host-picked Hangout has no limit). The
+  HUD timer shows the time left. When it runs out ("Time's up in the cabin."): Random goes on to its next game; the
+  vote counts it for Vote return (the votes come back, or a fresh Hangout until they do). The cabin's End vote under
+  Random now goes to the next game too, not the lobby. Going into the cabin keeps the room's map (`s.roomMap`, with its
+  zoom or grey) and coming out puts it back; the game screen remounts when Random moves into or out of the cabin.
