@@ -210,6 +210,7 @@ export const OPTIONS_DEFAULT = {
   freeRoam: 0, // 1: no answer lock and no talk-it-over step; ducks roam until the turn ends
   map: "board", // board | sky | pixel | carnival | stars | rabbit | collage | euclid | ec | vellum | tiles | cabin (Duck Cabin: only for its own games, the Cabin ones)
   mapPick: "vote", // "" (the host's map) | vote (Vote for Map, part of Vote Mode & Map) | random: settled when the game starts
+  modesOff: [], // the game modes left out of Random and Vote Mode & Map (Game Settings → Modes in Random & Vote)
   modePick: "vote", // "" (the host's game) | vote (Vote for Game Mode: Vote Mode & Map is on by default, owner 2026-11-04) | random (a new game every round)
   voteBack: 3, // Vote return: the games until both votes come back: 1 … 6, "r" (a random 1 to 6 each time) or 0 (never)
   trueRandom: 0, // with Random: 1 = any game can come next; 0 = every game once before a new shuffle
@@ -333,10 +334,14 @@ function setMap(s, won) {
 const fits = (s, id) => s.seat.length >= (MIN_PLAYERS[id] || 0);
 /* Random: the games it plays (never Hangout or Quacky Zombies, nor a game the room is too small for); each round is
    the next one in the bag, every game once before a new shuffle, or with True Random any game at all */
-export const randomPool = (s) =>
-  MODES.map((m) => m.id).filter(
-    (id) => !CABIN_MODES.includes(id) && fits(s, id),
-  );
+export const randomPool = (s) => {
+  const all = MODES.map((m) => m.id).filter(
+      (id) => !CABIN_MODES.includes(id) && fits(s, id),
+    ),
+    off = s.options.modesOff || [],
+    on = all.filter((id) => !off.includes(id));
+  return on.length ? on : all; // (every one turned off: Random and the vote still have games to pick from)
+};
 function nextMode(s) {
   const pool = randomPool(s);
   if (!pool.length) return "aod";
@@ -1518,6 +1523,31 @@ export function reduce(state, a, now = Date.now()) {
         for (const k of ["mode", "modePick", "map", "mapPick", "voteBack"])
           delete o[k]; // (Ducks Vote Mode & Game: the votes stay as they are)
       if (dodOn(s, "justin")) delete o.justin; // (Invite Justin: he stays)
+      /* the modes in Random and the vote can change mid-game too, all but the one being played (owner 2026-11-15) */
+      if (
+        Array.isArray(o.modesOff) &&
+        (boss || (dodOn(s, "settings") && me && !me.bot)) &&
+        running(s)
+      ) {
+        const cur = s.options.mode,
+          was = s.options.modesOff || [],
+          next = o.modesOff.filter(
+            (id) => typeof id === "string" && id !== cur,
+          );
+        if (was.includes(cur)) next.push(cur);
+        if (JSON.stringify(next) !== JSON.stringify(was)) {
+          s.options.modesOff = next;
+          logLine(s, {
+            sys: true,
+            float: true,
+            by: a.id,
+            opts: { modesOff: next },
+            text: `${me ? me.name : "The host"} changed the game settings.`,
+          });
+        }
+        return s;
+      }
+      if ("modesOff" in o && !Array.isArray(o.modesOff)) delete o.modesOff;
       if (
         (boss || (dodOn(s, "settings") && me && !me.bot)) &&
         (s.phase === "lobby" || s.phase === "over")

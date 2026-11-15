@@ -4165,3 +4165,10 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - Done (in the next deploy): Game Settings → "Save slots" (last row of the main page): 5 slots kept on this device with
   the profile (`profile.saves`). Save copies every Game Setting of the room; Load sends them back, only in the lobby
   and only for the host or sudo. A small note under Slot 1 says so.
+
+## Nov 15 2026: turn modes on or off for Random and Vote (planning talk 11:42Z: "only modes not being played can be edited mid-game")
+- Done (in the next deploy): Game Settings → "Modes in Random & Vote" (main page): one On/Off row per game Random and
+  the vote can pick (`options.modesOff`, empty = all on, so nothing changes by default). In the lobby any can change;
+  mid-game every one but the game being played (rules.js keeps the current one as it was). All off: Random and the
+  vote fall back to every game. Hangout and Quacky Zombies aren't in Random or the vote today, so they aren't listed;
+  Hangout's own time limit for when it comes up in Random is still to do.
