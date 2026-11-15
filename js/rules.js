@@ -111,6 +111,7 @@ import {
   inCabin,
   standable,
   heightAt,
+  useMode,
   W as HW,
   H as HH,
 } from "./hangout/layout.js";
@@ -1412,6 +1413,7 @@ function seatNewcomer(s, id) {
 
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
+  useMode(state.options && state.options.mode); // (Duck Cabin as the room's mode has it: hangout/layout.js)
   const s = clone(state),
     P = s.players,
     me = P[a.id],

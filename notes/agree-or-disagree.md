@@ -4118,9 +4118,34 @@ the whole map, only drawing is culled.
   it (a box the size of my own view round each duck, same side of the cabin's walls) and out over 400 ms. Drawn 12
   times a second; no fps cost measured (round 16, 4x slower CPU).
 
+## Request (owner, 2026-11-15 13:49Z, via Adam): Quacky Zombies batch
+"remove the candles on the floors of the cabin in the zombie game mode
+
+reduce the cost of the fireplace to 500 points instead
+
+The circle around a user's name and health bar is removed AND the health bar in zombie below a duck is now sqaured at the edges instead of rounded
+
+The flower pot near the door to the porch in the zombie game is removed and so is the door, instead there is a LARGE hole AND the porch is still visible from the inside AND a part of the inside of the cabin is still visible from the porch for the zombie game
+
+The doorways to rooms in the right of the map are all bigger now to make it easier to dodge zombie while going through them AND players can no longer jump on tables or beds ( i said this long time ago but no need to look it up becuz i know it for a fact so dont waste usage), because the zombies cannot hit them there. Actually while players cannot jump ontop of surfaces, we can remove the beds AND add a hole between the walls to the bedrooms AND the kitchen to the top most bedroom. The holes in the walls look like the ones the zombies comefrom, and players and zombies can walk thru them without being able to board them up.
+
+Zombies can be shot at and killed as they hit the boards AND the part of walls in the way and boards become transparent to show zombies while they beat at the boards and try and come in. Walls in hallways to the bedroom or in the kitchen for example become transparent to everyone like it would a player to themselves in hangout WHEN there is another player or zombie behind them in the game so the players can find their friends in zombies. The holes allow for more movement.
+
+The podium in the large room of the cabin can still be walked onto, AND anytime a player jumps while shooting in zombies, it doesnt make their projectile miss the zombies, and same goes for the jetpack and anything else that raises the player in the air for the zombie game mode.
+
+We can remove the step stools in the large room of the cabin and the candles outside on the deck as well.
+
+The game should be able to run as more then 60 fps on agree or disagree or any other basic mode on good computers btw, no? because a lot of gamers now run 120 fps as a bear minimum, and you are accepting only 60 fps ? what is wrong with you, the game needs to be better optimized."
+Split by Adam: Noah = name/HP circle removed + square HP bar under ducks; Adam = 120+ fps; Solomon = the rest (Quacky
+Zombies only; Hangout's Duck Cabin unchanged).
 ## Nov 15 2026: Lawyering attorney vote (planning talk, owner 11:42Z; step 6 of the agreed order)
 - Done (v185): the Lawyering setting "Vote for attorneys" (`lawVote`, off by default). Each case, once the prompt is on
   the cloud, phases `lawdef` then `lawoff` show a see-through window over the board listing every duck who may be
   picked (the writer can't defend; the defense can't also be the offense). Anyone votes for anyone, themselves too.
   Each vote lasts 0:20 and drops to 0:05 once the lobby's vote share (`shareOf`) has voted. Most votes win; a tie or
   no votes: the shuffle bag. Chat says who won. Solomon started it, Adam finished it (computers vote, window CSS, tests).
+- PR A done (#268, Adam merges): the fireplace costs 500; the extra candles (6 on the floor, 1 on the deck) are gone (rules, art,
+  drawing, light); layout.js has a Quacky Zombies variant: useMode(mode) (called at the top of reduce and when the world
+  mounts) leaves out props with l4: 0 (the 8 stools round the card table, both beds, the plant by the back door) and
+  turns every platform into a plain solid (top Infinity), so nobody jumps onto a table; the stage is ground, so it can
+  still be walked onto. layoutRev() lets l4ddrules' walk grid be made again. Hangout's cabin is unchanged.

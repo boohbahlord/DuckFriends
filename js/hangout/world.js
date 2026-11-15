@@ -35,6 +35,7 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
+  L.useMode(((api.room().state || {}).options || {}).mode); // (Quacky Zombies' cabin, or Hangout's: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),

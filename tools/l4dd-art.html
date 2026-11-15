@@ -57,8 +57,6 @@
 <body>
   <h2>Zombie ducks (next to a player's duck)</h2>
   <div class="row" id="z"></div>
-  <h2>A candle on the floor (7 of them light the cabin)</h2>
-  <div class="row" id="c"></div>
   <h2>Boards: 0 to 5 on each opening</h2>
   <div id="b"></div>
   <h2>
@@ -88,7 +86,6 @@
     import { duckSVG } from "../js/duck.js";
     import {
       zombieURL,
-      CANDLE,
       boardsSVG,
       ICONS,
       orbHTML,
@@ -126,10 +123,6 @@
       Z.map(([cap, l]) =>
         fig(`<img src="${zombieURL(l)}" width="64" alt="">`, cap, "floor big"),
       ).join("");
-    c.innerHTML = fig(
-      `<div style="transform: scale(2); transform-origin: bottom center; margin-top: 46px">${CANDLE}</div>`,
-      "×2",
-    );
     const KINDS = [
       ["front", "the front door", "floor wall"],
       ["w1", "a hole in the west wall", "floor"],
