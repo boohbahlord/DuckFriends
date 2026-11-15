@@ -33,7 +33,6 @@
      l4box { id: { by, t, w } }: the fireplace's weapons, one for each duck that paid (at t), landing on w after BOX.spin
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
-     l4c  [[x, y], …]: the extra candles on the floor, picked as the game starts (world px)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
 import { rule, keepOnly } from "./hangout/registry.js";
 import {
@@ -50,6 +49,7 @@ import {
   solidsAt,
   onPlatform,
   BJ,
+  layoutRev,
 } from "./hangout/layout.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
@@ -429,7 +429,7 @@ export const priceFor = (s, id, what, n) => {
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
-export const BOX = { x: 2300, y: 742, price: 750, spin: 4200, keep: 10000 }; // (750 a spin: the owner's, Nov 3)
+export const BOX = { x: 2300, y: 742, price: 500, spin: 4200, keep: 10000 }; // (500 a spin: the owner's, Nov 15)
 const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
 /* a zombie's room on the floor, as the ducks' (world.js crowd): an ellipse 56 across and 25.6 deep; every zombie the
@@ -609,6 +609,7 @@ const CELL = 40,
   GW = 82,
   GH = 52;
 let walk = null,
+  walkRev = -1, // (the cabin it was made for: layout.js' layoutRev)
   hts = null;
 const cellAt = (x, y) => {
   const i = Math.floor((x - GX) / CELL),
@@ -620,7 +621,9 @@ const mid = (c) => [
   GY + Math.floor(c / GW) * CELL + CELL / 2,
 ];
 function cells() {
-  if (walk) return walk;
+  if (walk && walkRev === layoutRev()) return walk;
+  walkRev = layoutRev();
+  FLOWS.clear(); // (their ways were for the cabin before)
   walk = new Uint8Array(GW * GH);
   hts = new Float32Array(GW * GH);
   for (let c = 0; c < GW * GH; c++) {
@@ -966,10 +969,8 @@ function bringBack(s, id, now, k, fresh) {
     };
   }
 }
-/* a few extra candles on bare spots of the floor (the owner's): 6 inside, 1 on the deck, far from each other, from the
-   openings and from where everyone starts */
 /* bare floor: flat, nothing standing on it or right beside it, not by an opening or the fireplace, and far enough from
-   the spots in out (a candle's, a drop's) */
+   the spots in out (the other drops) */
 const bare = (x, y, out, far) =>
   playable(x, y) &&
   Math.abs(heightAt(x, y)) < 1 &&
@@ -984,22 +985,6 @@ const bare = (x, y, out, far) =>
   OPENINGS.every((o) => Math.hypot(x - o.in[0], y - o.in[1]) > 200) &&
   Math.hypot(x - 2800, y - 1420) > 320 &&
   out.every(([a, b]) => Math.hypot(x - a, y - b) > far);
-function candleSpots() {
-  const out = [];
-  const pick = (n, x0, y0, x1, y1) => {
-    for (let k = 0, got = 0; k < 400 && got < n; k++) {
-      const x = Math.round(rnd(x0, x1)),
-        y = Math.round(rnd(y0, y1));
-      if (bare(x, y, out, 420)) {
-        out.push([x, y]);
-        got++;
-      }
-    }
-  };
-  pick(6, CABIN.x0 + 90, CABIN.y0 + 90, CABIN.x1 - 90, CABIN.y1 - 70);
-  pick(1, DECK.x0 + 120, DECK.y0 + 70, DECK.x1 - 120, DECK.y1 - 70);
-  return out;
-}
 /* the jetpack's fuel: it burns while a duck flies with its jets on (its move says so: rules.js' jt), from one heartbeat to
    the next; at 0 the jets stop and the duck comes down (game.js) */
 function jetBurn(s, now, ids) {
@@ -1067,12 +1052,9 @@ function dropPlan() {
     q.push([Math.round(rnd(0, DROP.AMMO_IN)), "ammo"]);
   return q;
 }
-/* a bare spot for a drop, inside or on the deck, away from the candles and the other drops */
+/* a bare spot for a drop, inside or on the deck, away from the other drops */
 function dropSpot(s) {
-  const out = [
-    ...(s.hang.l4c || []),
-    ...(s.hang.l4dr || []).map((d) => [d.x, d.y]),
-  ];
+  const out = (s.hang.l4dr || []).map((d) => [d.x, d.y]);
   for (let k = 0; k < 400; k++) {
     const deck = Math.random() < 0.15,
       R = deck ? DECK : CABIN,
@@ -1192,8 +1174,7 @@ function setUp(s, now) {
   s.hang.l4sale = null;
   s.hang.l4b = {};
   s.hang.l4f = {};
-  s.hang.power = 0; // (the power is cut: the lamps are dark; the fires and the candles burn)
-  s.hang.l4c = candleSpots();
+  s.hang.power = 0; // (the power is cut: the lamps are dark; the fires burn)
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));

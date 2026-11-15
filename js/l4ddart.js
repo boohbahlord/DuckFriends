@@ -1,6 +1,6 @@
 /* ---------- Quacky Zombies' pictures (in the game's style; the owner OK'd them) ----------
    The zombie duck (a darker green rubber duck with X eyes, now and then in a hat or an outfit, a little bigger or
-   fatter), the extra candles on the floor, the boards over the doors, the holes and the top of the deck's stairs, and the
+   fatter), the boards over the doors, the holes and the top of the deck's stairs, and the
    flashlight's icon on the weapons bar (the bow and its arrow are Mad God Justin's: mgjart.js); a weapon as an orb in its
    slot's color, and the pictures on Justin's Butler's upgrades. Preview: tools/l4dd-art.html */
 import { duckSVG } from "./duck.js";
@@ -582,19 +582,6 @@ export function zombieBox(l) {
   }
   return BOXES.get(k);
 }
-
-/* a candle on the floor: a stubby wax candle on a little brass dish, its flame (the class hg-flame flickers with the
-   lamps' clock) */
-export const CANDLE_BOX = { w: 30, h: 46 };
-export const CANDLE = `<svg viewBox="0 0 30 46" width="30" height="46" xmlns="http://www.w3.org/2000/svg">
-<ellipse cx="15" cy="41" rx="13" ry="4.4" fill="#000" opacity=".28"/>
-<ellipse cx="15" cy="39" rx="12" ry="4" fill="#c99a3c" stroke="${INK}" stroke-width="1.2"/>
-<path d="M9 22v15.6q6 2.4 12 0V22Z" fill="#f4ecd8" stroke="${INK}" stroke-width="1.2"/>
-<ellipse cx="15" cy="22" rx="6" ry="2.2" fill="#fffaf0" stroke="${INK}" stroke-width="1.1"/>
-<path d="M11.4 24.4v6" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".6"/>
-<path d="M15 21.6v-2.4" stroke="${INK}" stroke-width="1"/>
-<path class="l4-flame" d="M15 6q5 6.4 0 13.6q-5-7.2 0-13.6Z" fill="#ffb347" stroke="#c7621c" stroke-width=".8"/>
-<path d="M15 11q2 3.4 0 6.6q-2-3.2 0-6.6Z" fill="#fff4c2"/></svg>`;
 
 /* the boards over an opening, n of them (0 … 5), in world px around the opening's spot:
    a door (the front door, in the tall north wall): planks across its doorway, one over another up the door;

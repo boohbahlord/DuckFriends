@@ -136,8 +136,10 @@ export function heightAt(x, y) {
    overrides it) up to the height top (none: always). layer 'floor': drawn under every duck. only 'in' | 'out': shown
    only while my duck is inside (or outside) the cabin. fade: turns see-through while it hides a duck. plat: its top can
    be stood on (a jump gets up; walking can't). light: { x, y, r, c, k,
-   flick } a pool of light on the ground. Drawings: shapes.js (placeholders) by kind. */
+   flick } a pool of light on the ground. l4: 0: left out in Quacky Zombies (useMode below). Drawings: shapes.js
+   (placeholders) by kind. */
 export const PROPS = [];
+const ALL = []; // (every prop; PROPS: the ones the room's mode has)
 const count = {};
 function add(kind, x, y, w, d, h, o = {}) {
   const p = { kind, x, y, w, d, h, z: heightAt(x + w / 2, y + d - 1), ...o };
@@ -156,6 +158,7 @@ function add(kind, x, y, w, d, h, o = {}) {
       key: p.key,
     });
   PROPS.push(p);
+  ALL.push(p);
   return p;
 }
 const WARM = "#ffb24a",
@@ -402,6 +405,7 @@ for (let k = 0; k < 8; k++) {
   add("stool", q.x - r, q.y - r, 2 * r, 2 * r, BJ.sh, {
     solid: true,
     ...IN,
+    l4: 0,
     n: k,
     tag: BJ.tag[k],
     key: q.y - 2,
@@ -417,7 +421,7 @@ add(
   { solid: true, ...IN, key: BJ.by - 2 },
 );
 add("plant", 1320, 2120, 50, 50, 90, { solid: true, ...IN });
-add("plant", 2650, 2120, 50, 50, 90, { solid: true, ...IN });
+add("plant", 2650, 2120, 50, 50, 90, { solid: true, ...IN, l4: 0 }); // (by the back door)
 add(
   "stage",
   STAGE.cx - STAGE.rx,
@@ -478,14 +482,24 @@ add("sink", 3805, 1115, 80, 60, 75, {
   light: { x: 3845, y: 1230, r: 250, c: "#ffe0b0", k: 0.3 },
 }); // (the light over its mirror)
 add("toilet", 3712, 1112, 80, 70, 44, { solid: true, ...IN }); // (against the north wall, between the tub and the sink)
-add("bed", 4060, 1130, 210, 270, 45, { solid: true, plat: true, ...IN });
+add("bed", 4060, 1130, 210, 270, 45, {
+  solid: true,
+  plat: true,
+  ...IN,
+  l4: 0,
+});
 add("rug", 3950, 1420, 300, 190, 0, FLOOR);
 add("lamp", 3960, 1112, 40, 30, 110, {
   solid: true,
   ...IN,
   light: { x: 3980, y: 1160, r: 260, c: WARM, k: 0.45 },
 });
-add("bed", 3960, 1790, 300, 270, 45, { solid: true, plat: true, ...IN });
+add("bed", 3960, 1790, 300, 270, 45, {
+  solid: true,
+  plat: true,
+  ...IN,
+  l4: 0,
+});
 add("rug", 3600, 1800, 330, 300, 0, FLOOR);
 add("lamp", 3900, 1772, 40, 30, 110, {
   solid: true,
@@ -682,31 +696,70 @@ for (
 }
 
 /* ---------- walking: solids (in a grid of 200 px cells, so a step looks at a few) ---------- */
-export const SOLIDS = PROPS.filter((p) => p.solid && p.block).map((p) => ({
-  id: p.id,
-  x0: p.block[0],
-  y0: p.block[1],
-  x1: p.block[2],
-  y1: p.block[3],
-  top: p.top,
-}));
+export const SOLIDS = [];
 const CELL = 200,
   grid = new Map();
-for (const b of SOLIDS)
-  for (
-    let i = Math.floor((b.x0 - FOOT) / CELL);
-    i <= Math.floor((b.x1 + FOOT) / CELL);
-    i++
-  )
+let variant = "", // "l4": Quacky Zombies' cabin (useMode below)
+  rev = 0;
+function makeSolids() {
+  SOLIDS.length = 0;
+  grid.clear();
+  for (const p of PROPS)
+    if (p.solid && p.block)
+      SOLIDS.push({
+        id: p.id,
+        x0: p.block[0],
+        y0: p.block[1],
+        x1: p.block[2],
+        y1: p.block[3],
+        top: p.plat && variant === "l4" ? Infinity : p.top, // (Quacky Zombies: nothing to jump up onto)
+      });
+  for (const b of SOLIDS)
     for (
-      let j = Math.floor((b.y0 - FOOT) / CELL);
-      j <= Math.floor((b.y1 + FOOT) / CELL);
-      j++
-    ) {
-      const k = i * 1000 + j;
-      if (!grid.has(k)) grid.set(k, []);
-      grid.get(k).push(b);
-    }
+      let i = Math.floor((b.x0 - FOOT) / CELL);
+      i <= Math.floor((b.x1 + FOOT) / CELL);
+      i++
+    )
+      for (
+        let j = Math.floor((b.y0 - FOOT) / CELL);
+        j <= Math.floor((b.y1 + FOOT) / CELL);
+        j++
+      ) {
+        const k = i * 1000 + j;
+        if (!grid.has(k)) grid.set(k, []);
+        grid.get(k).push(b);
+      }
+}
+makeSolids();
+
+/* ---------- Quacky Zombies' own cabin (the owner's, Nov 15) ----------
+   The same cabin with a few things left out (a prop with l4: 0: the stools round the card table, the beds, the plant
+   by the back door) and nothing to jump up onto: a table is only in the way, so the zombies can always reach a duck.
+   useMode(mode) turns PROPS, the platforms and the solids to the room's mode (the rules call it for every action,
+   the world as it opens); layoutRev() moves on each time, so whatever was made from them can be made again. Hangout's
+   cabin stays as it was. */
+export const layoutRev = () => rev;
+export function useMode(mode) {
+  const v = mode === "l4dd" ? "l4" : "";
+  if (v === variant) return;
+  variant = v;
+  rev++;
+  PROPS.length = 0;
+  for (const p of ALL) if (!(v === "l4" && p.l4 === 0)) PROPS.push(p);
+  PLATS.length = 0;
+  if (v !== "l4")
+    for (const p of PROPS)
+      if (p.plat)
+        PLATS.push({
+          x0: p.x,
+          y0: p.y,
+          x1: p.x + p.w,
+          y1: p.y + p.d,
+          top: p.z + p.h,
+          key: p.key,
+        });
+  makeSolids();
+}
 const hits = (b, x, y) =>
   x > b.x0 - FOOT && x < b.x1 + FOOT && y > b.y0 - FOOT && y < b.y1 + FOOT;
 /* the solids a duck's feet at (x, y) touch, below height z (all of them without z) */
