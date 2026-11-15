@@ -233,7 +233,7 @@ export function mountPlayers(S, getR) {
     const R = getR();
     if (!R) return;
     const v = R.state.vote;
-    vbox.hidden = !v;
+    if (vbox.hidden !== !v) vbox.hidden = !v; // (only when it changes)
     if (v) {
       setHTML(vbox, voteHTML(R.state, R.me));
       if (v.n !== lastVote) {

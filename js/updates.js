@@ -9,12 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v182",
+    version: 182,
+    date: "Nov 15, 2026",
+    title: "Smoother Quacky Zombies",
+    fixed: [
+      "For Quacky Zombies: the late rounds run much smoother, with lots of zombies on screen.",
+    ],
+  },
+  {
     id: "v181",
     version: 181,
     date: "Nov 15, 2026",
-    title: "Smoother Quacky Zombies",
-    news: [
-      "For Quacky Zombies: the late rounds run much smoother, with lots of zombies on screen.",
+    title: "Smoother ducks",
+    fixed: [
+      "For Mad God Justin: the ducks, the weapons in hand and the board cost the browser about half the work they did each frame, so the fight runs smoother on slower computers.",
+      "For Hangout: ducks far off the screen aren't drawn until they come near (they still walk and play as before).",
     ],
   },
   {

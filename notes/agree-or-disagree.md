@@ -4096,7 +4096,7 @@ Later plan (Adam's summary): free, properly licensed, compressed audio files wit
 ## Nov 15 2026: Quacky Zombies speed (plan step 5, via Adam), PR 1
 Owner (planning talk, point 3): the game must run smoothly; then a minimap (PR 2). Adam: the simulation keeps running for
 the whole map, only drawing is culled.
-- Done (v181): the dark overlay paints at a quarter of the size with one round light stamp per hole, and skips light
+- Done (v182): the dark overlay paints at a quarter of the size with one round light stamp per hole, and skips light
   cones off camera; zombie path fields (Dijkstra) are kept (48 most recent) and use a typed-array heap; bullets find
   zombies through a 64 px grid instead of checking all; bullets, blood bursts and HP numbers reuse their elements; the
   zombie hit flash is a Web Animation (no forced layout) and wounds/HP numbers update only for zombies on camera.
