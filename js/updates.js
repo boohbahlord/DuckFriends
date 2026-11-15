@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v178",
+    version: 178,
+    date: "Nov 15, 2026",
+    title: "Sound and music are off for now",
+    news: [
+      "Sound and music are off for now while we get new ones. The Music bar and the sliders stay, and keep your settings.",
+    ],
+  },
+  {
     id: "v177",
     version: 177,
     date: "Nov 15, 2026",

@@ -16,8 +16,6 @@ import { rule, activity } from "./registry.js";
 import { isGhost } from "./death.js";
 import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from "./layout.js";
 import * as A from "./art.js";
-import { profile } from "../store.js";
-import { sfxContext, sfxOut, soon } from "../sound.js";
 import { fewer } from "../gfx.js";
 
 const R = 16,
@@ -263,83 +261,11 @@ rule("ball", {
   },
 });
 
-/* ---------- sounds: a thump for a kick, a horn for a goal ---------- */
-let ac = null;
-const audio = () => (ac = sfxContext()); // (the game's one clock for sounds: sound.js)
-const vol = () =>
-  ((profile.settings.sound ?? 100) / 100) *
-  ((profile.settings.sfx ?? 100) / 100);
-function voice(
-  f,
-  dur,
-  {
-    type = "sine",
-    gain = 0.1,
-    at = 0,
-    slide = 0,
-    attack = 0.012,
-    lp = 0,
-    noise = false,
-  } = {},
-) {
-  const a = audio(),
-    v = vol();
-  if (!a || !v) return;
-  const t = soon(a) + at,
-    g = a.createGain(); // (a little ahead: set for "now", the fade-in is skipped and it pops)
-  attack = Math.max(!noise && f < 200 ? 0.016 : 0.005, attack); // (a low thump comes in slower, so it's a thud, not a pop)
-  let src;
-  if (noise) {
-    const n = Math.ceil(a.sampleRate * dur),
-      buf = a.createBuffer(1, n, a.sampleRate),
-      d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++)
-      d[i] =
-        (Math.random() * 2 - 1) *
-        (1 - i / n) *
-        Math.min(1, i / (a.sampleRate * 0.005));
-    src = a.createBufferSource();
-    src.buffer = buf;
-  } else {
-    src = a.createOscillator();
-    src.type = type;
-    src.frequency.setValueAtTime(f, t);
-    if (slide) src.frequency.exponentialRampToValueAtTime(f * slide, t + dur);
-  }
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(gain * v, t + attack);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  let out = src;
-  if (lp) {
-    const fl = a.createBiquadFilter();
-    fl.type = "lowpass";
-    fl.frequency.value = lp;
-    out = out.connect(fl);
-  }
-  out.connect(g).connect(sfxOut());
-  src.start(t);
-  src.stop(t + dur + 0.03);
-}
-const thump = (k = 1) => {
-  voice(0, 0.09, { noise: true, gain: 0.14 * k, lp: 520, attack: 0.004 });
-  voice(150, 0.12, { gain: 0.12 * k, slide: 0.5, attack: 0.004 });
-};
-function horn() {
-  // an air horn: two blasts of a low chord
-  for (const [at, dur] of [
-    [0, 0.32],
-    [0.42, 0.75],
-  ])
-    for (const f of [233, 294, 349])
-      voice(f, dur, {
-        type: "sawtooth",
-        gain: 0.045,
-        at,
-        attack: 0.02,
-        lp: 1500,
-        slide: 0.985,
-      });
-}
+/* ---------- sounds: off for now ----------
+   The owner (Nov 15): every sound and the music are out of the game for now (see sound.js); the kick's thump and the
+   goal's horn are packed in the project's files (music/removed-sound-2026-11-15.zip). Silent stand-ins. */
+const thump = () => {};
+function horn() {}
 
 /* ---------- on the screen ---------- */
 const COLORS = [
