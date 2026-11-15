@@ -4117,3 +4117,10 @@ the whole map, only drawing is culled.
   zombie: a red dot (3 px radius on a computer, 2.4 on a phone) that fades in over 250 ms while any duck's camera sees
   it (a box the size of my own view round each duck, same side of the cabin's walls) and out over 400 ms. Drawn 12
   times a second; no fps cost measured (round 16, 4x slower CPU).
+
+## Nov 15 2026: Lawyering attorney vote (planning talk, owner 11:42Z; step 6 of the agreed order)
+- Done (v185): the Lawyering setting "Vote for attorneys" (`lawVote`, off by default). Each case, once the prompt is on
+  the cloud, phases `lawdef` then `lawoff` show a see-through window over the board listing every duck who may be
+  picked (the writer can't defend; the defense can't also be the offense). Anyone votes for anyone, themselves too.
+  Each vote lasts 0:20 and drops to 0:05 once the lobby's vote share (`shareOf`) has voted. Most votes win; a tie or
+  no votes: the shuffle bag. Chat says who won. Solomon started it, Adam finished it (computers vote, window CSS, tests).

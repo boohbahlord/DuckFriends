@@ -9,7 +9,7 @@ import { duckSVG } from "./duck.js";
 import { nameHTML, fontHTML } from "./name.js";
 import { cardBackground, cardHTML } from "./card.js";
 import { duelCloudHTML } from "./brackets.js";
-import { lawStats } from "./rules.js";
+import { lawStats, attCands, attRole } from "./rules.js";
 import { fmtJumps } from "./format.js";
 import { seenDuck, seenName } from "./looks.js";
 
@@ -42,7 +42,7 @@ export function lawColsHTML(s) {
       cls = done ? (L.w === c ? " won" : " lost") : "";
     return `<div class="col law-side law-${c ? "def" : "off"}${cls}" data-c="${c}" style="--c:${esc(sideColor(p))}">
       <div class="law-pat" style="${esc(cardBackground(p.card))}"></div><div class="law-mark">${c ? SHIELD : SWORD}</div>
-      <span class="law-who"><b>${c ? "Defense" : "Offense"}</b> ${nm(p)}</span></div>`;
+      <span class="law-who"><b>${c ? "Defense" : "Offense"}</b> ${id ? nm(p) : "?"}</span></div>`; // (?: still being voted for)
   };
   return `<div class="cols law-cols${done && L.w === -1 ? " hung" : ""}">${side(0, L.off)}<div class="law-mid"></div>${side(1, L.def)}</div>`;
 }
@@ -54,9 +54,10 @@ export function lawTopHTML(s, knocked = false) {
   const off = player(s, L.off),
     def = player(s, L.def),
     done = s.phase === "discuss" && L.w != null;
+  const voting = !L.off || !L.def; // (the attorney vote: an attorney not picked yet is a "?")
   const cloud = duelCloudHTML(
-    s.players[L.off] || GONE,
-    s.players[L.def] || GONE,
+    L.off ? s.players[L.off] || GONE : null,
+    L.def ? s.players[L.def] || GONE : null,
     done
       ? L.w === -1
         ? { both: true, knocked }
@@ -72,11 +73,42 @@ export function lawTopHTML(s, knocked = false) {
       : `<span class="law-verdict">Hung jury ${o}–${d}: nobody wins</span>`;
   return `<div class="topover law-top">${cloud}<div class="question law-what">
     <span class="small dim">The Court Case</span><span class="law-topic">${inFont(s.players[q.by], esc(q.text))}</span>
-    <span class="small law-names">${nm(def)} defends it · ${nm(off)} is against it</span>${verdict}</div></div>`;
+    <span class="small law-names">${L.def || !voting ? nm(def) : "?"} defends it · ${L.off || !voting ? nm(off) : "?"} is against it</span>${verdict}</div></div>`;
 }
 /* closing arguments: a banner over the board (game.js shows it while they run) */
 export const LAW_BANNER =
   '<div class="law-banner" aria-live="polite"><b>Closing arguments!</b> <span>Last chance to win the jury over.</span></div>';
+
+/* ---------- the attorney vote: a window over the board (the defense, then the offense) ---------- */
+/* a duck to pick: its card, and the little ducks of everyone who voted for it */
+function candHTML(s, id, k, picks, mine, votes) {
+  const v = votes
+    ? Object.entries(picks)
+        .filter(([, w]) => w === id)
+        .filter(([v]) => s.players[v])
+        .map(([v]) =>
+          duckSVG(seenDuck(s.players[v]), {
+            size: 22,
+            shadow: false,
+            title: s.players[v].name,
+          }),
+        )
+        .join("")
+    : "";
+  return `<button type="button" class="law-cand" data-role="${k}" data-who="${esc(id)}" aria-pressed="${mine === id}">${cardHTML(s.players[id], { size: 44 })}${v ? `<span class="tc-votes">${v}</span>` : ""}</button>`;
+}
+export function attVoteHTML(s, me) {
+  const L = s.law;
+  if (!L) return "";
+  const k = attRole(s),
+    picks = L.picks[k] || {},
+    def = k === "def";
+  return `<section class="law-vote panel" aria-label="Vote for the ${def ? "defense" : "offense"} attorney">
+    <h3>Vote: <b>${def ? "Defense" : "Offense"} attorney</b> <span class="small dim">${def ? "1" : "2"} of 2 · argues ${def ? "for" : "against"} it</span></h3>
+    <div class="law-cands">${attCands(s)
+      .map((id) => candHTML(s, id, k, picks, picks[me], true))
+      .join("")}</div></section>`;
+}
 
 /* ---------- picking the attorneys: by the topic's writer, or by a vote of the room ---------- */
 export function counselHTML(s, me, who) {
@@ -99,22 +131,7 @@ export function counselHTML(s, me, who) {
           (k === "def" ? id !== q.by : true),
       );
       body = `<div class="law-cands">${can
-        .map((id) => {
-          const votes =
-            how === "vote"
-              ? Object.entries(picks)
-                  .filter(([v, w]) => w === id && s.players[v])
-                  .map(([v]) =>
-                    duckSVG(seenDuck(s.players[v]), {
-                      size: 22,
-                      shadow: false,
-                      title: s.players[v].name,
-                    }),
-                  )
-                  .join("")
-              : "";
-          return `<button type="button" class="law-cand" data-role="${k}" data-who="${esc(id)}" aria-pressed="${mine === id}">${cardHTML(s.players[id], { size: 44 })}${votes ? `<span class="tc-votes">${votes}</span>` : ""}</button>`;
-        })
+        .map((id) => candHTML(s, id, k, picks, mine, how === "vote"))
         .join(
           "",
         )}</div><p class="small dim">${how === "vote" ? "Everyone votes; you can change your mind until the picking ends. A tie is a coin flip." : "You wrote this topic, so you pick. You can change your mind until the picking ends."}</p>`;
