@@ -29,6 +29,7 @@ import { butlerSVG, justinSVG } from "./hangout/npcart.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
+import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
@@ -1112,6 +1113,7 @@ activity({
       '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
     layer.append(boxEl);
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl);
+    mapMount(ctx.world.board);
     shop = shopEl(ctx);
     butler = butlerEl();
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -1150,6 +1152,7 @@ activity({
     C.length = 0;
     D.clear();
     cv?.remove();
+    mapUnmount();
     hud?.remove();
     over?.remove();
     closeShop();
@@ -1270,6 +1273,7 @@ activity({
         o.el.style.zIndex = zi;
       }
     }
+    mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */
     for (const o of OPENINGS) {
       const b = B.get(o.id);

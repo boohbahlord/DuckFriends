@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v184",
+    version: 184,
+    date: "Nov 15, 2026",
+    title: "A minimap for Quacky Zombies",
+    news: [
+      "For Quacky Zombies: a small map at the bottom left shows the whole cabin, every duck's head, and a red dot for each zombie someone can see.",
+    ],
+  },
+  {
     id: "v183",
     version: 183,
     date: "Nov 15, 2026",

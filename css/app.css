@@ -14243,6 +14243,23 @@ html.moving .eye-tears .tdrop.t2 {
 .hang-board.l4-board .hang-dark.l4-dark {
   z-index: 24000;
 }
+/* Quacky Zombies' minimap (l4ddmap.js): bottom left, just over the bottom bar (its bottom is set from the bar's height) */
+.l4-map {
+  position: absolute;
+  left: 14px;
+  bottom: 64px;
+  z-index: 31000;
+  pointer-events: none;
+  border-radius: 8px;
+  background: rgba(10, 12, 24, 0.55);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.18);
+}
+@media (max-width: 600px) {
+  .l4-map {
+    left: 8px;
+    border-radius: 6px;
+  }
+}
 .l4-hud {
   position: absolute;
   top: 0.5rem;
