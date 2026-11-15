@@ -4064,3 +4064,13 @@ Add fire ball and chair to the items."
   picker`) and the Quack (`quack`), Valentine's Duck Date's date (`vdd date`, also a new date), Story Chain's first
   writer (`sc first`). Left alone, not roles: Mad God Justin's targets, question and turn orders, Duncelation's order
   (a full rotation already), topic, word and map picks.
+
+## Request (owner, 2026-11-15, via Adam): all sound and music out for now
+"The sounds and music will all be temporarily removed for now from the game."
+"It stays and shows as if nothing is playing AND the music is completely removed from the files for now and it's all moved into a compressed file and folder into Miles chat."
+Later plan (Adam's summary): free, properly licensed, compressed audio files with capped voices.
+- Done: js/music.js, js/sound.js, js/hangout/sounds.js, js/l4ddsfx.js, js/feet.js are silent stand-ins with the same
+  exports; the piano's voice (pianokeys.js) and the soccer ball's thump and horn (soccer.js) are cut down to no-ops;
+  tools/sounds-test.html and tools/tap-worklet.js removed. No AudioContext is ever made. The Music bar stays and says
+  "No music"; the Volume, Sound effects and Music sliders and mute keep working and their saved values.
+- The full files from main at 220d00e: /mnt/project-files/music/removed-sound-2026-11-15.zip (with a README.txt).

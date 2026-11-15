@@ -73,14 +73,18 @@ export function mountMusicBar(root) {
           : np.next
             ? `<span class="mbar-up">next</span> `
             : "") + esc(np.name)
-      : "No songs on";
+      : np.none
+        ? "No music"
+        : "No songs on"; // (none: the music is off for now, music.js)
     song.title = np.wait
       ? `${np.name}: the browser starts sound once you tap, press a key or use the mouse anywhere`
       : np.name
         ? np.next
           ? `Next: ${np.name}`
           : np.name
-        : "Every song is off (song on all)";
+        : np.none
+          ? "No music for now"
+          : "Every song is off (song on all)";
   };
   /* on a touch screen there's no hovering: a tap shows the slider for a few seconds */
   const open = () => {
