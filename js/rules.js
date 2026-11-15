@@ -535,7 +535,24 @@ export const walkOf = (s) => WALKS[s && s.options && s.options.walk] || 1;
 export const COUNTDOWN = 5;
 export const VOTE_GRACE = 5; // seconds at the start of a question before anyone can lock a vote (a stray Enter can't)
 
-const clone = (o) => structuredClone(o);
+/* every action works on a copy of the state, so a rule that fails halfway leaves the room as it was. The state is plain
+   objects, arrays, strings and numbers (it travels as JSON online), and copying those by hand is 2 to 6 times faster
+   than structuredClone (measured Nov 15 in Quacky Zombies, Mad God Justin, Hangout and Agree or Disagree). Anything
+   else, a Set or a Date say, still goes through structuredClone. */
+function clone(o) {
+  if (o === null || typeof o !== "object") return o;
+  if (Array.isArray(o)) {
+    const n = o.length,
+      a = new Array(n);
+    for (let i = 0; i < n; i++) a[i] = clone(o[i]);
+    return a;
+  }
+  const pr = Object.getPrototypeOf(o);
+  if (pr !== Object.prototype && pr !== null) return structuredClone(o);
+  const r = {};
+  for (const k in o) r[k] = clone(o[k]);
+  return r;
+}
 export const colOf = (x) => Math.max(0, Math.min(6, Math.floor(x * 7)));
 export const colX = (c) => (c + 0.5) / 7;
 /* the edges of a column, a little inside, for ducks kept in their column */

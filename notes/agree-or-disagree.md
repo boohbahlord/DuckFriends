@@ -4088,3 +4088,7 @@ Later plan (Adam's summary): free, properly licensed, compressed audio files wit
   - On the slow computer only about a quarter of the busy time is our script; the rest is the browser laying out and
     painting SVG. Fix order: a canvas layer for busy scenes, then the copy of the whole state on every action in
     reduce (structuredClone), then the detached elements (DOM nodes 37k-64k for 700-3,200 elements on the page).
+- Speed fix 1 (Adam, v180): profiling Quacky Zombies round 16 at 4x throttle. The specials slider (hotbar.js lay) asked
+  getComputedStyle on every paint, 4.1% of the main thread, so now it re-lays only when its slots, spot or screen size
+  change. The rules' state copy (rules.js clone) is a hand-written plain-object copy, 2 to 6 times faster than
+  structuredClone (4.2% down to 1.3%). The state has no shared objects and no Sets, Maps or Dates (checked in four modes).
