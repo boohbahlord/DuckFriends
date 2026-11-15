@@ -16423,3 +16423,14 @@ html.still .l4-crit {
   pointer-events: none;
   white-space: pre;
 }
+/* Settings → Performance: the frame cap's number box */
+.fps-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fps-cap input {
+  width: 5.5rem;
+  padding: 0.25rem 0.45rem;
+  font: inherit;
+}
