@@ -4031,7 +4031,7 @@ html.moving .st-spin {
     transform: rotate(-360deg);
   }
 }
-.st-spin canvas {
+.st-spin .st-sky {
   position: absolute;
   inset: 0;
   width: 100%;

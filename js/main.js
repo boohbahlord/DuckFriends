@@ -1,7 +1,7 @@
 /* ---------- the start: settings on the page, the background, the jump counter, the first screen ---------- */
 import "./pointer.js"; // (first: a computer or a phone, before anything asks)
 import { applySettings, askConnection } from "./settings.js";
-import { backdropHTML } from "./art.js";
+import { backdropHTML, floorCanvas } from "./art.js";
 import { profile, save } from "./store.js";
 import { $, toast } from "./ui.js";
 import { start, current } from "./router.js";
@@ -30,6 +30,7 @@ const drawShapes = () => {
     innerHeight,
     profile.settings.theme === "dark",
   );
+  floorCanvas($("#shapes"));
 };
 document.addEventListener("settings", drawShapes);
 let rsT = null;

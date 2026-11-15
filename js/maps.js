@@ -19,7 +19,13 @@
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
 import { esc } from "./ui.js";
-import { backdropSVG, backdropHTML, carnivalSVG, artBackdrop } from "./art.js";
+import {
+  backdropSVG,
+  backdropHTML,
+  floorCanvas,
+  carnivalSVG,
+  artBackdrop,
+} from "./art.js";
 import { collageScene, collageMini } from "./collage.js";
 import { euclidScene, euclidMini } from "./euclid.js";
 import { vellumScene, vellumMini } from "./vellum.js";
@@ -534,6 +540,7 @@ function nightScene(layer) {
     if (k === drawn || !layer.clientWidth) return;
     drawn = k;
     sc.innerHTML = backdropHTML(layer.clientWidth, layer.clientHeight, true);
+    floorCanvas(sc);
   };
   const ro = new ResizeObserver(draw);
   ro.observe(layer);
@@ -878,6 +885,7 @@ function starsScene(layer) {
     }
     ng.putImageData(img, 0, 0);
     const cv = document.createElement("canvas");
+    cv.className = "st-sky";
     cv.width = cv.height = C;
     const g = cv.getContext("2d");
     g.imageSmoothingQuality = "high";
@@ -963,9 +971,25 @@ function starsScene(layer) {
     /* swap in the new sky over the old one */
     dome.style.cssText = `left:${px}px;top:${py.toFixed(0)}px;width:${S}px;height:${S}px;margin:${-R}px 0 0 ${-R}px;transform:rotate(${((base * 180) / Math.PI).toFixed(1)}deg)`;
     bright.innerHTML = list.join("");
-    const old = spin.querySelector("canvas");
+    const old = spin.querySelector(".st-sky");
     spin.prepend(cv);
-    if (old) old.remove();
+    if (old) {
+      old.remove();
+      if (old.src) URL.revokeObjectURL(old.src);
+    }
+    /* then the finished sky as a picture in its place, the same pixels: as a canvas, the browser handed its whole
+       (huge) sky over again every frame, and Starry Night ran at half the speed of the other maps */
+    cv.toBlob((b) => {
+      if (!b || !cv.isConnected) return;
+      const im = new Image();
+      im.className = "st-sky";
+      im.alt = "";
+      im.draggable = false;
+      im.src = URL.createObjectURL(b);
+      im.decode()
+        .then(() => (cv.isConnected ? cv.replaceWith(im) : Promise.reject()))
+        .catch(() => URL.revokeObjectURL(im.src));
+    });
     sc.classList.add("ready");
   }
   const pump = () => {
@@ -1073,25 +1097,34 @@ function marquee(col) {
     ny = Math.max(1, Math.round((h - inset * 2) / g)),
     sx = (w - inset * 2) / nx,
     sy = (h - inset * 2) / ny;
-  const pts = [];
-  for (let i = 0; i < nx; i++) pts.push([inset + i * sx, inset]);
-  for (let i = 0; i < ny; i++) pts.push([w - inset, inset + i * sy]);
-  for (let i = 0; i < nx; i++) pts.push([w - inset - i * sx, h - inset]);
-  for (let i = 0; i < ny; i++) pts.push([inset, h - inset - i * sy]);
-  const sets = [0, 1, 2].map((k) =>
-    pts
-      .filter((_, i) => i % 3 === k)
-      .map(
-        ([x, y]) =>
-          `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="mq-glow"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`,
-      )
-      .join(""),
-  );
+  const pts = []; // [x, y, side]
+  for (let i = 0; i < nx; i++) pts.push([inset + i * sx, inset, 0]);
+  for (let i = 0; i < ny; i++) pts.push([w - inset, inset + i * sy, 1]);
+  for (let i = 0; i < nx; i++) pts.push([w - inset - i * sx, h - inset, 2]);
+  for (let i = 0; i < ny; i++) pts.push([inset, h - inset - i * sy, 3]);
+  /* each set as four groups, one per side: a lit set is a layer of its own for the browser, as big as what it holds, so
+     one per side stays a thin strip instead of the whole tile (the same bulbs, lit at the same moments) */
+  const sets = [];
+  for (let k = 0; k < 3; k++)
+    for (let side = 0; side < 4; side++)
+      sets.push([
+        k,
+        pts
+          .filter((p, i) => i % 3 === k && p[2] === side)
+          .map(
+            ([x, y]) =>
+              `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="mq-glow"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6"/>`,
+          )
+          .join(""),
+      ]);
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("class", "marquee");
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  svg.innerHTML = sets.map((x, k) => `<g class="mq mq${k}">${x}</g>`).join("");
+  svg.innerHTML = sets
+    .filter(([, x]) => x)
+    .map(([k, x]) => `<g class="mq mq${k}">${x}</g>`)
+    .join("");
   svg._k = w + "x" + h;
   if (old) old.replaceWith(svg);
   else col.prepend(svg);
