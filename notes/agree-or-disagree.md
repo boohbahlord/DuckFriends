@@ -4045,3 +4045,12 @@ Order of work agreed (11:57Z "Yes"): vote timer, fireplace roll, shuffle bag, me
 Lawyering vote + Lobby Settings with save slots. The whole plan: https://claude.ai/artifact/KER3R7gt5K2jZCbXgiRadu
 - Done (Adam): both votes drop to 6 s once the room's vote share (shareOf) of the seated players has voted, and run at
   normal speed (no x2, the "×2" mark is gone). Full times 1:05 / 0:20 stay for when the majority never votes.
+
+## Request (2026-11-15, the Nov 15 plan, "Your answers"): the fireplace roll order
+"The Justin roll comes first in a super simple line of code (1 out of 100), then the Jaime Bomb in a super fast line of
+code also (1 in 50), and then the 85% chance for weapons or anything that deals damage, and then last is items at 15%.
+Add fire ball and chair to the items."
+- Done (Solomon): fireRoll() in js/l4ddrules.js: Justin 1 in 100, then the Jaime Bomb 1 in 50, then WEAPONS (knife,
+  hammer, handgun, bow, dagger, shotgun, sniper, smg, ak, chaingun, revolver, glauncher, lmg) at WEAPON_ODDS 0.85, else
+  ITEMS (medkit, zebra, adrenaline, longjump, jaime, jetpack, fireball, chair); fair pick inside a group, never what the
+  duck holds, the other group when one is empty. The Butler's Items tab says which group each one is in. Updates v176.

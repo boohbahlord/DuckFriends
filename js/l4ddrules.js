@@ -283,15 +283,16 @@ export const inHand = (w, s, id) => {
 /* the slots, in order (keys 1 to 4; the grenades are G): blue, red, red, purple, and the grenades white */
 export const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
-/* what the fireplace can give: every weapon with an equal chance, never one already in my slots */
-export const POOL = [
+/* what the fireplace can give, in two groups (the owner's, Nov 15): after Justin (1 in 100) and the Jaime Bomb (1 in
+   50), 85 spins in 100 pick from the weapons, anything that deals damage, and the rest from the items; each with an
+   equal chance inside its group, never one already in my slots */
+export const WEAPONS = [
   "knife",
   "hammer",
   "handgun",
   "bow",
   "dagger",
   "shotgun",
-  "medkit",
   "sniper",
   "smg",
   "ak",
@@ -299,14 +300,19 @@ export const POOL = [
   "revolver",
   "glauncher",
   "lmg",
+];
+export const ITEMS = [
+  "medkit",
   "zebra",
-  "fireball",
   "adrenaline",
   "longjump",
   "jaime",
   "jetpack",
+  "fireball",
   "chair",
 ];
+export const WEAPON_ODDS = 0.85;
+export const POOL = [...WEAPONS, ...ITEMS];
 /* their names, as players see them */
 const NAMES = {
   knife: "Knife",
@@ -1355,12 +1361,7 @@ function fireplace(s, id, a, now, mx, my) {
       [id]: {
         by: id,
         t: now,
-        w:
-          Math.random() < HELPER.chance && !s.players[HELPER.id]
-            ? HELPER.w
-            : Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb")
-              ? "jaimebomb" // (1 spin in 50: the Jaime Bomb, and it's unlocked for good once taken)
-              : pool[Math.floor(Math.random() * pool.length)],
+        w: fireRoll(s, kit),
       },
     };
     return true;
@@ -1371,6 +1372,19 @@ function fireplace(s, id, a, now, mx, my) {
   dropBox(s, id);
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
+}
+/* the fireplace's spin, in this order (the owner's, Nov 15) */
+function fireRoll(s, kit) {
+  if (Math.random() < HELPER.chance && !s.players[HELPER.id]) return HELPER.w; // 1 in 100: Justin
+  if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
+    return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
+  const weapons = WEAPONS.filter((w) => !kit.sl.includes(w)),
+    items = ITEMS.filter((w) => !kit.sl.includes(w)),
+    group =
+      weapons.length && (!items.length || Math.random() < WEAPON_ODDS)
+        ? weapons // 85%: a weapon
+        : items; // 15%: an item
+  return group[Math.floor(Math.random() * group.length)];
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
