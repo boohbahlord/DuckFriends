@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v185",
+    version: 185,
+    date: "Nov 15, 2026",
+    title: "Vote for the attorneys",
+    news: [
+      "For Lawyering: a new setting, Vote for attorneys (off at first). Each case, everyone votes for the defense attorney, then the offense attorney, in a window over the board. Each vote lasts 0:20, and drops to 0:05 once the room's vote share has voted. A tie is settled by chance.",
+    ],
+  },
+  {
     id: "v184",
     version: 184,
     date: "Nov 15, 2026",

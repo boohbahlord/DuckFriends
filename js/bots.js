@@ -37,6 +37,8 @@ import {
   playing,
   voteIds,
   DICE,
+  attCands,
+  attRole,
 } from "./rules.js";
 import {
   anyWord,
@@ -769,6 +771,15 @@ export function botActions(s, now) {
           );
         }
         break;
+      case "lawdef":
+      case "lawoff": {
+        // the attorney vote: a computer votes for anyone it may (itself too)
+        const k = attRole(s),
+          can = attCands(s);
+        if (!late || !s.law || (s.law.picks[k] || {})[id] !== undefined) break;
+        if (can.length) out.push({ t: "attvote", id, who: anyOf(can) });
+        break;
+      }
       case "counsel": {
         if (!late || s.done[id]) break;
         const q = s.qs[s.qi],
