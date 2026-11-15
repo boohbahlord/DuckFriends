@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v23",
+    version: 23,
+    date: "Nov 15, 2026",
+    title: "A frame cap",
+    news: [
+      "Settings → Performance → Frame rate: the game draws at most 120 frames a second at first. Type your own number (30 to 1000) in the box, or turn Frame cap off to draw as many as your screen shows.",
+    ],
+  },
+  {
     id: "v22",
     version: 22,
     date: "Nov 15, 2026",

@@ -3405,8 +3405,21 @@ function crowd(x, y, now) {
   }
   return out;
 }
+/* the frame cap (Settings → Performance, 120 frames a second at first): a frame comes early, so it's skipped. nextAt
+   keeps the beat, so a 144 Hz screen capped at 120 draws about 120, not every other frame */
+let nextAt = 0;
+function capped(t) {
+  const st = profile.settings,
+    cap = st.fpsCapOn !== false ? +st.fpsCap || 0 : 0;
+  if (cap < 1) return false;
+  const gap = 1000 / cap;
+  if (t < nextAt - 1) return true;
+  nextAt = t - nextAt > gap ? t + gap : nextAt + gap; // (fell behind: start the beat again from now)
+  return false;
+}
 function loop(t) {
   raf = requestAnimationFrame(loop);
+  if (capped(t)) return;
   const dt = Math.min(0.05, (t - (lastT || t)) / 1000);
   lastT = t;
   if (!S || !R) return;

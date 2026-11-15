@@ -4155,3 +4155,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - The per-merge pages from Nov 3 on were regrouped by work session (merges with under ~45 minutes between them were
   one sitting), then every page renumbered from Version 1 (Oct 25) so each version is one deploy (owner 14:01Z
   "EVERY VERSION PREVIOUSLY IS ALSO BASED ON THIS PRINCIPLE"). Today's deploys are Versions 20 to 22.
+
+## Nov 15 2026 13:53Z: "good that shouldnt be a limit cap UNLESS the player turns it on in settings, the frame cap is automatically at 120 fps by default for duck friends and can be set with a number they type into a box, because why not? Should be simple, right?"
+- Done (Version 23): Settings → Performance → Frame rate: "Frame cap" (on at first) and a number box (120 at first,
+  30 to 1000). The game loop skips early frames on a steady beat (a 144 Hz screen capped at 120 draws about 120).
+  Off: as many frames as the screen shows. Checked uncapped: 120 → 120 fps, 60 → 60, off → 420-590 in Agree or Disagree.
