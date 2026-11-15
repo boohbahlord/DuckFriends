@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v176",
+    version: 176,
+    date: "Nov 15, 2026",
+    title: "The fireplace's weapons and items",
+    news: [
+      "For Quacky Zombies: the fireplace first rolls for Justin (1 in 100), then the Jaime Bomb (1 in 50); otherwise 85% of spins give a weapon and 15% an item (Medkit, Zebra cake, Adrenaline, Long jump, Jaime, Jetpack, Fireball, Chair).",
+    ],
+  },
+  {
     id: "v175",
     version: 175,
     date: "Nov 15, 2026",

@@ -5,6 +5,8 @@
 import {
   ARMS,
   POOL,
+  WEAPONS,
+  WEAPON_ODDS,
   SHOP,
   GUN_SHOP,
   DROPS,
@@ -96,7 +98,13 @@ function stats(w) {
   }
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
   if (GUN_SHOP.includes(w)) out.push(["The Butler sells it", buyPrice(w)]);
-  else if (POOL.includes(w)) out.push(["Where", "The fireplace"]);
+  else if (POOL.includes(w))
+    out.push([
+      "Where",
+      WEAPONS.includes(w)
+        ? `The fireplace, with the weapons (${Math.round(WEAPON_ODDS * 100)}% of spins)`
+        : `The fireplace, with the items (${100 - Math.round(WEAPON_ODDS * 100)}% of spins)`,
+    ]);
   else if (w === "jaimebomb")
     out.push([
       "Where",
