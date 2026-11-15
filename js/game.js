@@ -222,6 +222,7 @@ import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
+import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
@@ -6387,7 +6388,7 @@ register("game", {
     if (!R) return null;
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
-        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button><button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
+        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(
       S,
@@ -6514,6 +6515,7 @@ register("game", {
       const b = e.target.closest("[data-a]");
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
+        else if (b.dataset.a === "lset") openLobbySettings(R);
         else act(b.dataset.a);
         return;
       }
@@ -6752,6 +6754,8 @@ register("game", {
         ...(p ? kickItems(R, d.dataset.pid) : []),
       ]);
     });
+    const lset = lsetWatch(S); // (the Lobby Settings button's blink and "!", and the Democracy note)
+    lset(R.state);
     off = R.on((s) => {
       if (!S) return;
       if (s.phase === "lobby" || s.phase === "countdown") {
@@ -6763,6 +6767,7 @@ register("game", {
         return;
       }
       paint();
+      lset(s);
     });
     addEventListener("keydown", keydown);
     addEventListener("keyup", keyup);
