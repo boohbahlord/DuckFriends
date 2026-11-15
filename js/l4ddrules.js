@@ -676,46 +676,81 @@ function openNear(x, y) {
     }
   return best;
 }
+/* the walking distance from every cell to the nearest of `starts` (Dijkstra from all of them at once). The grid never
+   changes, so a field is the same every time its starts are: I keep the last ones made and hand them out again instead
+   of working them out on every heartbeat (the ducks only change cells now and then). A field handed out is only read. */
+const FLOWS = new Map(),
+  FLOWS_KEPT = 48;
+let heapD = null,
+  heapC = null;
 function flowFrom(starts) {
+  const key = [...new Set(starts.filter((c) => c >= 0))]
+    .sort((a, b) => a - b)
+    .join();
+  let dist = FLOWS.get(key);
+  if (dist) {
+    FLOWS.delete(key);
+    FLOWS.set(key, dist); // (the newest used is the last one dropped)
+    return dist;
+  }
+  dist = dijkstra(key ? key.split(",").map(Number) : []);
+  FLOWS.set(key, dist);
+  if (FLOWS.size > FLOWS_KEPT) FLOWS.delete(FLOWS.keys().next().value);
+  return dist;
+}
+function dijkstra(starts) {
   cells();
-  const dist = new Float64Array(GW * GH).fill(Infinity), // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
-    heap = [];
+  const n = GW * GH,
+    dist = new Float64Array(n).fill(Infinity); // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
+  /* the heap: distances and cells side by side in typed arrays, made once (every cell can be pushed once per neighbor) */
+  if (!heapD) {
+    heapD = new Float64Array(n * 8 + 8);
+    heapC = new Int32Array(n * 8 + 8);
+  }
+  let size = 0;
   const push = (d, c) => {
-    heap.push([d, c]);
-    let k = heap.length - 1;
+    let k = size++;
     while (k) {
       const p = (k - 1) >> 1;
-      if (heap[p][0] <= heap[k][0]) break;
-      [heap[p], heap[k]] = [heap[k], heap[p]];
+      if (heapD[p] <= d) break;
+      heapD[k] = heapD[p];
+      heapC[k] = heapC[p];
       k = p;
     }
+    heapD[k] = d;
+    heapC[k] = c;
   };
-  const pop = () => {
-    const top = heap[0],
-      last = heap.pop();
-    if (heap.length) {
-      heap[0] = last;
-      let k = 0;
-      for (;;) {
-        const l = 2 * k + 1,
-          r = l + 1;
-        let m = k;
-        if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
-        if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
-        if (m === k) break;
-        [heap[m], heap[k]] = [heap[k], heap[m]];
-        k = m;
+  const popTo = () => {
+    // takes the smallest off the top; the caller has read heapD[0] and heapC[0] first
+    const d = heapD[--size],
+      c = heapC[size];
+    let k = 0;
+    for (;;) {
+      const l = 2 * k + 1,
+        r = l + 1;
+      let m = -1,
+        md = d;
+      if (l < size && heapD[l] < md) {
+        m = l;
+        md = heapD[l];
       }
+      if (r < size && heapD[r] < md) m = r;
+      if (m < 0) break;
+      heapD[k] = heapD[m];
+      heapC[k] = heapC[m];
+      k = m;
     }
-    return top;
+    heapD[k] = d;
+    heapC[k] = c;
   };
-  for (const c of starts)
-    if (c >= 0) {
-      dist[c] = 0;
-      push(0, c);
-    }
-  while (heap.length) {
-    const [d, c] = pop();
+  for (const c of starts) {
+    dist[c] = 0;
+    push(0, c);
+  }
+  while (size) {
+    const d = heapD[0],
+      c = heapC[0];
+    popTo();
     if (d > dist[c]) continue;
     for (let k = 0; k < 8; k++) {
       const b = nextTo(c, k);
@@ -2023,12 +2058,43 @@ const inOpening = (x, y) =>
 const walled = (x, y, z) =>
   (!playable(x, y) && !inOpening(x, y)) ||
   (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
+/* the zombies by 64-px square (a spatial grid), so a shot only looks at the few round it instead of every zombie on the
+   map: the same hits, far fewer looks. A zombie's hit room (26 by 22 px) never reaches past the squares next to its own */
+const HIT_CELL = 64;
+const hitKey = (x, y) =>
+  Math.floor(x / HIT_CELL) + 1000 * Math.floor(y / HIT_CELL);
+function hitGrid(zs) {
+  const g = new Map();
+  zs.forEach((z, i) => {
+    if (z.st === 3) return;
+    const k = hitKey(z.x, z.y);
+    let c = g.get(k);
+    if (!c) g.set(k, (c = []));
+    c.push(i);
+  });
+  return g;
+}
+/* the zombies that could be at (x, y), in the order of the list (as a look along it would meet them) */
+function nearby(g, zs, x, y) {
+  const i = Math.floor(x / HIT_CELL),
+    j = Math.floor(y / HIT_CELL),
+    out = [];
+  for (let dj = -1; dj <= 1; dj++)
+    for (let di = -1; di <= 1; di++) {
+      const c = g.get(i + di + 1000 * (j + dj));
+      if (c) out.push(...c);
+    }
+  return out.length > 1
+    ? out.sort((a, b) => a - b).map((k) => zs[k])
+    : out.map((k) => zs[k]);
+}
 export function l4Shots(s, now) {
   const list = s.shots || [];
   if (!list.length || !s.hang || !s.hang.l4) return false;
   const L = s.hang.l4,
     T = now - L.t0,
     zs = zombies(s),
+    grid = hitGrid(zs),
     keep = [];
   let hitAny = false;
   for (const sh0 of list) {
@@ -2065,7 +2131,7 @@ export function l4Shots(s, now) {
         if (walled(x, y, sh.hz))
           at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
         else if (
-          zs.some(
+          nearby(grid, zs, x, y).some(
             (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
           )
         )
@@ -2114,7 +2180,7 @@ export function l4Shots(s, now) {
           z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1;
       if (A.pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
-        for (const z of zs)
+        for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i)) {
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w))
@@ -2125,7 +2191,7 @@ export function l4Shots(s, now) {
         if ((sh.hit || []).length >= A.pierce) gone = true;
         continue;
       }
-      const z = zs.find(near);
+      const z = nearby(grid, zs, x, y).find(near);
       if (z) {
         if (w === "fireball") {
           if (strike(s, z, 1, false, sh.by)) die(z, T);
@@ -2582,18 +2648,11 @@ function nudge(z, dx, dy) {
 }
 /* ---------- for the computers (l4ddbots.js) ---------- */
 /* the way from (x, y) toward (tx, ty) by walking (the next point along the flow field), or null; one field per target
-   cell, kept for the heartbeat */
-let ways = new Map(),
-  waysAt = 0;
+   cell (flowFrom keeps them) */
 export function wayTo(x, y, tx, ty, now) {
-  if (now - waysAt > 150) {
-    ways = new Map();
-    waysAt = now;
-  }
   const c = openNear(tx, ty);
   if (c < 0) return null;
-  if (!ways.has(c)) ways.set(c, flowFrom([c]));
-  return heading(ways.get(c), x, y);
+  return heading(flowFrom([c]), x, y); // (flowFrom keeps the fields it made)
 }
 /* can a shot from (x0, y0) reach (x1, y1)? (no wall or furniture in between, at height z) */
 export function clearShot(x0, y0, x1, y1, z = 0) {

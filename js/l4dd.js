@@ -238,6 +238,9 @@ function zombieEl(z) {
     a: z.a,
     sh: "",
     hits: "",
+    want: "",
+    l: z.l,
+    i: z.i,
     img: body.firstChild,
   };
 }
@@ -256,6 +259,22 @@ function claw(x, y, dir, ctx) {
   fxl.append(el);
   setTimeout(() => el.remove(), 1100);
   play("swipe", { x: px, y: py });
+}
+/* a hit's red blink (as the l4z-hit keyframes were) */
+const HIT = [
+  { filter: "none", easing: "ease-out" },
+  {
+    filter: "brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg)",
+    offset: 0.35,
+    easing: "ease-out",
+  },
+  { filter: "none" },
+];
+/* its picture with the wounds it has now, made only when they changed and it's on a screen */
+function wounds(o, l, i) {
+  if (o.hits === o.want) return;
+  o.hits = o.want;
+  o.img.src = zombieURL(l, i, o.hits);
 }
 /* the zombies in a new state: where each glides to, its hits, its swipes, its death */
 function seeZombies(s, ctx, now) {
@@ -284,12 +303,9 @@ function seeZombies(s, ctx, now) {
       if (Math.hypot(z.x - o.x, z.y - o.y) > 300) o.fx = o.x = z.x; // (far: there at once)
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
-    if (z.hp < o.hp && z.st !== 3) {
-      o.el.classList.remove("hit");
-      void o.el.offsetWidth;
-      o.el.classList.add("hit");
-    } // (hit: a red blink)
-    if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3)
+    const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
+    if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
     if (z.st === 3 && o.st !== 3) {
       o.el.classList.add("dead");
@@ -309,11 +325,9 @@ function seeZombies(s, ctx, now) {
         );
       o.el.classList.toggle("onfire", lit);
     } // (set on fire by a fireball: one big flame over it, as a duck's)
-    const hits = (s.hang.zw || {})[z.i] || "";
-    if (o.hits !== hits) {
-      o.hits = hits;
-      o.img.src = zombieURL(z.l, z.i, hits);
-    } // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
+    o.want = (s.hang.zw || {})[z.i] || "";
+    o.l = z.l;
+    if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
@@ -479,10 +493,27 @@ function seeHud(s, ctx) {
 }
 
 /* ---------- the dark ---------- */
+/* one soft light, drawn once: every light's hole in the dark is this, sized and faded (instead of a new gradient for
+   each light on every frame) */
+let STAMP = null;
+function stamp() {
+  if (STAMP) return STAMP;
+  const n = 128,
+    c = document.createElement("canvas");
+  c.width = c.height = n;
+  const x = c.getContext("2d"),
+    rg = x.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n / 2);
+  rg.addColorStop(0, "rgba(0,0,0,1)");
+  rg.addColorStop(0.45, "rgba(0,0,0,0.8)");
+  rg.addColorStop(1, "rgba(0,0,0,0)");
+  x.fillStyle = rg;
+  x.fillRect(0, 0, n, n);
+  return (STAMP = c);
+}
 function paint(now, ctx) {
   const Wd = ctx.world,
     s = ctx.state(),
-    q = low() ? 0.35 : 0.5,
+    q = low() ? 0.22 : 0.3, // (the dark is all soft light: a small canvas stretched over the board looks the same, and every frame it's redrawn costs far less)
     w = Math.round(Wd.vw * q),
     h = Math.round(Wd.vh * q),
     sc = Wd.sc * q,
@@ -552,6 +583,7 @@ function paint(now, ctx) {
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
     if (!up(s, id) || off[id]) continue;
+    if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
     const aim = id === ctx.me ? ctx.duck() && ctx.duck().aim : [pos.ax, pos.ay];
     let dx = aim && aim[0] !== undefined ? aim[0] * W : 0,
       dy = aim && aim[1] !== undefined ? aim[1] * H : 0;
@@ -590,14 +622,12 @@ function paint(now, ctx) {
   g.fillStyle = `rgba(3,4,10,${DARK})`;
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = "destination-out";
+  const st = stamp();
   for (const [x, y, r, k] of holes) {
-    const rg = g.createRadialGradient(x, y, 0, x, y, r);
-    rg.addColorStop(0, `rgba(0,0,0,${k.toFixed(3)})`);
-    rg.addColorStop(0.45, `rgba(0,0,0,${(k * 0.8).toFixed(3)})`);
-    rg.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = rg;
-    g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    g.globalAlpha = Math.min(1, k);
+    g.drawImage(st, x - r, y - r, 2 * r, 2 * r);
   }
+  g.globalAlpha = 1;
   /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft */
   for (const [ox, oy, pts, far] of cones) {
     const rg = g.createRadialGradient(ox, oy, 0, ox, oy, far);
@@ -1219,6 +1249,7 @@ activity({
           !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
+      wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;

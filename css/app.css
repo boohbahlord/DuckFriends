@@ -14202,14 +14202,6 @@ html.moving .eye-tears .tdrop.t2 {
   transform-origin: 0 50%;
   transform: scaleX(var(--hp, 1));
 }
-.l4z.hit .l4z-body img {
-  animation: l4z-hit 0.32s ease-out;
-}
-@keyframes l4z-hit {
-  35% {
-    filter: brightness(1.3) sepia(1) saturate(9) hue-rotate(-38deg);
-  }
-}
 .l4z.onfire .gduck-fire {
   display: block;
   bottom: 6%;

@@ -4092,3 +4092,14 @@ Later plan (Adam's summary): free, properly licensed, compressed audio files wit
   getComputedStyle on every paint, 4.1% of the main thread, so now it re-lays only when its slots, spot or screen size
   change. The rules' state copy (rules.js clone) is a hand-written plain-object copy, 2 to 6 times faster than
   structuredClone (4.2% down to 1.3%). The state has no shared objects and no Sets, Maps or Dates (checked in four modes).
+
+## Nov 15 2026: Quacky Zombies speed (plan step 5, via Adam), PR 1
+Owner (planning talk, point 3): the game must run smoothly; then a minimap (PR 2). Adam: the simulation keeps running for
+the whole map, only drawing is culled.
+- Done (v182): the dark overlay paints at a quarter of the size with one round light stamp per hole, and skips light
+  cones off camera; zombie path fields (Dijkstra) are kept (48 most recent) and use a typed-array heap; bullets find
+  zombies through a 64 px grid instead of checking all; bullets, blood bursts and HP numbers reuse their elements; the
+  zombie hit flash is a Web Animation (no forced layout) and wounds/HP numbers update only for zombies on camera.
+- Measured (Quacky Zombies round 16, 1366x768, 4x slower CPU): before 25-29 fps (p95 frame 83-100 ms, worst 217-250 ms),
+  after 42 fps (p95 50 ms, worst 133-183 ms). A canvas for the zombies was tried in a trace first: hiding every zombie
+  gained only 1-2 fps, so it was left out.
