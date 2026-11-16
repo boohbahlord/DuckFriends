@@ -10,6 +10,7 @@ import { modeOf, modeSymbol } from "./modes.js";
 import { collageMini } from "./collage.js";
 import { euclidMiniURL } from "./euclid.js";
 import { vellumBackdrop } from "./vellum.js";
+import { isNwk, nwkSVG } from "./nwk.js";
 import { JUSTIN } from "./hangout/npcart.js";
 
 export const FRIDGE = [
@@ -214,10 +215,7 @@ export function artBackdrop(map) {
     return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (map === "stars")
     return '<image href="assets/maps/starry-night.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
-  if (map === "ec")
-    return `<image href="assets/maps/ethers-crossroads.png" width="480" height="270" preserveAspectRatio="xMidYMid slice" style="image-rendering:pixelated"/>
-<circle cx="268" cy="70" r="34" fill="#ffb347" opacity=".22"/><rect width="480" height="270" fill="url(#ecscan)" opacity=".5"/>
-<defs><pattern id="ecscan" width="4" height="4" patternUnits="userSpaceOnUse"><rect y="3" width="4" height="1" fill="#000" opacity=".35"/></pattern></defs>`;
+  if (isNwk(map)) return nwkSVG(map); // Nous Within Kenoma: the book's page, and its variations
   if (map === "sky")
     return `<defs><linearGradient id="artsky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab8f5"/><stop offset="1" stop-color="#ffd6a8"/></linearGradient></defs>
 <rect width="480" height="270" fill="url(#artsky2)"/><circle cx="392" cy="58" r="30" fill="#ffd84a"/><circle cx="392" cy="58" r="44" fill="#ffd84a" opacity=".25"/>

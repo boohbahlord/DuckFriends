@@ -182,7 +182,14 @@ import {
   ARMS,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
-import { MAPS, MAP_FORMS, mapForm, mapName } from "./maps.js";
+import {
+  MAPS,
+  MAP_FORMS,
+  mapForm,
+  mapName,
+  ZOOM_MAP,
+  GREY_MAP,
+} from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
@@ -254,6 +261,8 @@ export const OPTIONS_DEFAULT = {
   walk: "normal", // walking speed: slow | normal | fast
   textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
   hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
+  noGore: 0, // Gore off: 1 = no blood or gore on the board (fx.js)
+  noFx: 0, // Heavy effects off: 1 = no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game (fx.js)
   rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
@@ -269,8 +278,84 @@ export const OPTIONS_DEFAULT = {
   tvStop: 1, // … Stop timer: 1 = anyone can stop the clock on the reveal after each question
   tvGrade: 0, // … Grading timer: 1 = the writer has 1:00 a row, and a row still ungraded then counts as right
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
+  genOff: 0, // 1: the General Rules are off, and every game mode plays the default rules (unless its Mode Rules say otherwise)
+  modeRules: {}, // Mode Rules: { mode: { setting: value } }, a game mode's own General Rules, which win in that mode
 };
 export const MAX_DEFAULT = 8;
+
+/* ---------- Mode Rules (owner 2026-11-16) ----------
+   The General Rules (Game Settings → Host Settings) count in every game mode. Each game mode has its Mode Rules too: the
+   same settings, and one set there wins over the General Rules in that mode only. With the General Rules off, a game
+   mode plays the default rules, unless its Mode Rules say otherwise. s.options holds what the game reads (the rules of
+   the mode being played); s.options.gen holds the General Rules as the host set them, s.options.modeRules each mode's
+   own, and s.options.genOff the switch */
+export const GEN_RULES = [
+  "share",
+  "unvoteStops",
+  "endBtn",
+  "freeRoam",
+  "justin",
+  "mgjBoard",
+  "invuln",
+  "noChat",
+  "noTerm",
+  "lateJoin",
+  "textMax",
+];
+/* a General Rule as the host set it (a room from before Mode Rules keeps it in the options themselves) */
+export const genVal = (s, k) => {
+  const g = s.options.gen;
+  return g && k in g
+    ? g[k]
+    : k in s.options
+      ? s.options[k]
+      : OPTIONS_DEFAULT[k];
+};
+/* a General Rule in one game mode: its Mode Rule, else the General Rule (or the default, with the General Rules off) */
+export function ruleFor(s, mode, k) {
+  if (k === "justin" && dodOn(s, "justin")) return 1; // (Democracy's Invite Justin wins over both)
+  const mine = (s.options.modeRules || {})[mode] || {};
+  if (k in mine) return mine[k];
+  return +s.options.genOff ? OPTIONS_DEFAULT[k] : genVal(s, k);
+}
+/* after every change: the options hold the rules of the mode now picked */
+function applyRules(s) {
+  const o = s.options;
+  if (!o) return;
+  if (!o.gen) {
+    const g = {};
+    for (const k of GEN_RULES) g[k] = genVal(s, k);
+    o.gen = g;
+  }
+  for (const k of GEN_RULES) {
+    const v = ruleFor(s, o.mode, k);
+    if (o[k] !== v) o[k] = v;
+  }
+}
+/* Mode Rules as sent (from Game Settings or a save slot): only General Rules, each a plain value */
+function cleanModeRules(x) {
+  const out = {};
+  if (!x || typeof x !== "object" || Array.isArray(x)) return out;
+  for (const [m, r] of Object.entries(x)) {
+    if (!r || typeof r !== "object" || Array.isArray(r)) continue;
+    const one = {};
+    for (const [k, v] of Object.entries(r))
+      if (GEN_RULES.includes(k) && ["string", "number"].includes(typeof v))
+        one[k] = v;
+    if (Object.keys(one).length) out[m] = one;
+  }
+  return out;
+}
+/* the settings as the chat words a change: the General Rules as set, each Mode Rule as "mr:<mode>:<setting>" */
+function flatOptions(s) {
+  const o = { ...s.options, max: s.max };
+  delete o.gen;
+  delete o.modeRules;
+  for (const k of GEN_RULES) o[k] = genVal(s, k);
+  for (const [m, r] of Object.entries(s.options.modeRules || {}))
+    for (const [k, v] of Object.entries(r)) o[`mr:${m}:${k}`] = v;
+  return o;
+}
 
 /* a vote's count: the votes of the players in the game (Vote Mode & Map, below) */
 export const tally = (s, votes) => {
@@ -288,10 +373,38 @@ const winner = (n, pool) => {
   return anyOf(top ? tied : pool);
 };
 /* the maps the map vote and Random choose from: every board map in each of its forms (Euclid's Squares still or
-   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games */
+   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Every map's
+   variations sit at the bottom of the list, after all the maps (owner, Nov 16) */
 const MAP_IDS = MAPS.map((m) => m[0]);
-const formOf = (id) => anyOf(MAP_FORMS[id] || [id]);
-export const VOTE_MAPS = MAP_IDS.flatMap((id) => MAP_FORMS[id] || [id]);
+export const VOTE_MAPS = [
+  ...MAP_IDS,
+  ...MAP_IDS.flatMap((id) => (MAP_FORMS[id] || []).filter((f) => f !== id)),
+];
+/* Random's map, and the map vote's dice (owner, Nov 16): a bag of maps, each holding a bag of its variations, so the
+   variations never crowd out the other maps. The map played least tonight comes first (never the one just played while
+   another is left), then the variation of it played least. s.mapPlays = { m: { map: n }, f: { variation: n } } */
+const baseOf = (id) =>
+  MAP_IDS.find((b) => (MAP_FORMS[b] || [b]).includes(id)) || id;
+export function pickMap(s) {
+  const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
+    least = (ids, n, last) => {
+      const pool = ids.length > 1 ? ids.filter((id) => id !== last) : ids,
+        lo = Math.min(...pool.map((id) => n[id] || 0));
+      return anyOf(pool.filter((id) => (n[id] || 0) === lo));
+    },
+    base = least(MAP_IDS, P.m, P.lastM),
+    forms = MAP_FORMS[base] || [base];
+  return forms.length > 1 ? least(forms, P.f, P.lastF) : base;
+}
+/* a map played: counted for the bags above */
+export function countMap(s, id) {
+  const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
+    base = baseOf(id);
+  P.m[base] = (P.m[base] || 0) + 1;
+  P.f[id] = (P.f[id] || 0) + 1;
+  P.lastM = base;
+  P.lastF = id;
+}
 /* A shuffle bag for every random pick of a player's role (the Quack, the date, an attorney, the first writer), so nobody
    is picked over and over: each eligible player goes in a bag, one is drawn without putting it back, and the bag is
    filled and shuffled again when nobody eligible is left in it (the one picked last never opens the new bag). One bag
@@ -332,6 +445,7 @@ export function bagPick(s, key, ids) {
 }
 /* the map the vote or Random lands on, in its form (s.mapZoomed, s.mapGreyed) */
 function setMap(s, won) {
+  countMap(s, won);
   const f = mapForm(won);
   s.options.map = f.map;
   s.mapZoomed = f.zoom ? 1 : 0;
@@ -416,10 +530,11 @@ function closeVote(s) {
     ids = voteIds(s, vt.k);
   delete s.vt;
   let won = winner(tally(s, vt.votes), [...ids, DICE]);
-  if (won === DICE) {
-    const pool = vt.k === "mode" ? randomPool(s) : ids;
-    won = anyOf(pool.length ? pool : ids);
-  }
+  if (won === DICE)
+    won =
+      vt.k === "mode"
+        ? anyOf(randomPool(s).length ? randomPool(s) : ids)
+        : pickMap(s); // (the map's dice: the bags, as Random)
   if (vt.k === "mode") return setMode(s, won || "aod");
   setMap(s, won);
   s.mapVoted = 1;
@@ -432,9 +547,10 @@ function placeMap(s) {
   delete s.mapVoted;
   cabinMap(s);
   if (isHang(s) || voted) return;
-  if (o.mapPick === "random") return setMap(s, formOf(anyOf(MAP_IDS)));
+  if (o.mapPick === "random") return setMap(s, pickMap(s));
   s.mapZoomed = o.map === "euclid" && o.mapZoom ? 1 : 0;
   s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
+  countMap(s, s.mapZoomed ? ZOOM_MAP[0] : s.mapGreyed ? GREY_MAP[0] : o.map); // (the host's own pick counts as played too)
 }
 /* Duck Cabin's games bring their own map: going in keeps the room's map (in its form) to come back to, and coming out
    puts it back (the board if there was none) */
@@ -1445,6 +1561,11 @@ function seatNewcomer(s, id) {
 
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
+  const s = reduceStep(state, a, now);
+  if (s && s !== state) applyRules(s); // (Mode Rules: the options follow the mode now picked)
+  return s;
+}
+function reduceStep(state, a, now) {
   useMode(state.options && state.options.mode); // (Duck Cabin as the room's mode has it: hangout/layout.js)
   const s = clone(state),
     P = s.players,
@@ -1581,7 +1702,21 @@ export function reduce(state, a, now = Date.now()) {
       ) {
         const was = s.options.discuss,
           wasMode = s.options.mode,
-          before = { ...s.options, max: s.max };
+          before = flatOptions(s),
+          reset = Object.keys(OPTIONS_DEFAULT)
+            .filter((k) => typeof OPTIONS_DEFAULT[k] !== "object") // (an empty list or {} doesn't make it through Firebase)
+            .every((k) => k in o);
+        /* the General Rules go to their own layer (a save slot brings its own; its plain values were one mode's) */
+        const G = (s.options.gen = Object.fromEntries(
+          GEN_RULES.map((k) => [k, genVal(s, k)]),
+        ));
+        if (o.gen && typeof o.gen === "object") {
+          for (const k of GEN_RULES) if (k in o.gen) G[k] = o.gen[k];
+        } else for (const k of GEN_RULES) if (k in o) G[k] = o[k];
+        for (const k of GEN_RULES) delete o[k];
+        delete o.gen;
+        if (reset && !("modeRules" in o)) o.modeRules = {}; // (Defaults: no Mode Rules either)
+        if ("modeRules" in o) o.modeRules = cleanModeRules(o.modeRules);
         Object.assign(s.options, o);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
         /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
@@ -1592,7 +1727,7 @@ export function reduce(state, a, now = Date.now()) {
           !!was !== !!s.options.discuss
         ) {
           const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
-          if (s.options.share === from) s.options.share = to;
+          if (G.share === from) G.share = to;
         }
         if (o.mode && !("submitTime" in o)) writeTimerFor(s, wasMode);
         /* picking a game ends Vote Game Mode and Random; picking a map ends Vote Maps and Random. A new vote starts from
@@ -1623,18 +1758,22 @@ export function reduce(state, a, now = Date.now()) {
         if (!L.voteColor) L.tagColor = 0;
         /* every change goes in the chat, with who made it (from Game Settings or the command line alike): the chat
            words it from the keys (settingText in gamesettings.js) */
-        const after = { ...s.options, max: s.max },
+        applyRules(s);
+        const after = flatOptions(s),
           ch = {};
-        for (const k of Object.keys(after))
+        for (const k of new Set([
+          ...Object.keys(after),
+          ...Object.keys(before),
+        ]))
           if (JSON.stringify(after[k]) !== JSON.stringify(before[k]))
-            ch[k] = after[k];
+            ch[k] = k in after ? after[k] : "same"; // (a Mode Rule taken away: Same as General)
         if (Object.keys(ch).length)
           logLine(s, {
             sys: true,
             float: true,
             by: a.id,
             opts: ch,
-            reset: Object.keys(OPTIONS_DEFAULT).every((k) => k in o),
+            reset,
             text: `${me ? me.name : "The host"} changed the game settings.`,
           });
       }
@@ -2376,8 +2515,13 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "voteStart": {
       // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
-      if (!me || me.bot || ["lobby", "countdown", "over"].includes(s.phase))
-        return state;
+      if (
+        !me ||
+        me.bot ||
+        (["lobby", "countdown", "over"].includes(s.phase) &&
+          !(s.phase === "countdown" && s.vt && a.kind === "lobby"))
+      )
+        return state; // (in the game and map votes, only a vote to go back to the lobby: owner, Nov 16)
       if (s.vote) return state;
       const used = (s.voteUsed || {})[a.id] || {},
         tk = voteKey(s, now);
@@ -2663,6 +2807,16 @@ export function reduce(state, a, now = Date.now()) {
         return s;
       }
       if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
+      if (
+        isL4dd(s) &&
+        s.phase === "hang" &&
+        s.hang &&
+        s.hang.l4 &&
+        s.hang.l4.over &&
+        (votesDue(s).length || rolling(s)) &&
+        now - s.hang.l4.over.at >= L4_OVER_MS
+      )
+        return cabinOver(s, now, "Everyone's down.");
       if (
         s.phase === "hang" &&
         s.options.mode === "hang" &&
@@ -4527,15 +4681,15 @@ function cabinCheck(s, now) {
    game begins; otherwise the room goes back to the lobby, as when the host ends it */
 export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   delete s.cabinEnd;
-  if (!votesDue(s).length && !rolling(s)) return backToLobby(s, why); // (Random goes on to its next game)
+  const due = votesDue(s);
+  if (!due.length && !rolling(s)) return backToLobby(s, why); // (the host's own pick: back to the lobby)
   say(s, why);
-  const over = gameOver(s, now);
-  if (over) return over;
-  const banned = s.banned;
-  backToLobby(s, "A new game in the cabin.");
-  s.banned = banned;
-  return beginGame(s, now);
+  /* Duck Cabin's games (Hangout, Quacky Zombies) are one game whatever Vote return says (owner 2026-11-16): one
+     playthrough, then the votes come back, or Random's next game */
+  return due.length ? voteAgain(s, now, due) : rotate(s, now);
 }
+/* Quacky Zombies from the vote or Random: once everyone's down, the score shows a moment, then the room moves on */
+export const L4_OVER_MS = 8000;
 /* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
    seconds, 0 for none */
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];

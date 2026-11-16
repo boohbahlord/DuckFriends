@@ -8,7 +8,7 @@
    - Shake: firing shakes my screen, a little for a pistol, most for the chain gun but never too much; an adrenaline
      shot taken wobbles it fast for a moment.
    Everything here is per duck and costs a few sums a frame. */
-import { MUZZLE } from "./fx.js";
+import { MUZZLE, heavyOff } from "./fx.js";
 
 const DEG = Math.PI / 180;
 const S = new Map(); // duck id -> its motion
@@ -111,10 +111,12 @@ let trauma = 0,
   wobbleTill = 0;
 /* a shot of mine (how much: fx.js MUZZLE's shake) */
 export function shake(amount) {
+  if (heavyOff()) return;
   trauma = Math.min(0.65, trauma + amount);
 }
 /* an adrenaline shot taken: a short fast wobble */
 export function wobble(now, ms = 650) {
+  if (heavyOff()) return;
   wobbleTill = now + ms;
 }
 /* where the board sits now, [x, y] css px (0, 0 when still) */

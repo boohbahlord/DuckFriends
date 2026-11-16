@@ -14,6 +14,7 @@ import {
 import { gameArtSVG, symbolSVG } from "./art.js";
 import { MAX_DEFAULT } from "./rules.js";
 import { mountCornerMusicBar } from "./musicbar.js";
+import { holdLoading } from "./loading.js";
 
 const last = { computers: 3, max: MAX_DEFAULT, test: false, dod: true };
 let unwatch = null,
@@ -127,6 +128,7 @@ register("rooms", {
       busy = true;
       f.querySelector(".create-go").disabled = true;
       say("Creating…", false);
+      const loaded = holdLoading();
       try {
         const room = await createOnlineRoom({
           name,
@@ -139,6 +141,7 @@ register("rooms", {
       } catch (err) {
         say(whyNot(err));
       } finally {
+        loaded();
         busy = false;
         f.querySelector(".create-go").disabled = false;
       }
@@ -171,6 +174,7 @@ register("rooms", {
       busy = true;
       const row = list.querySelector(`[data-rid="${r.rid}"] .rr-phase`);
       if (row) row.textContent = "Joining…";
+      const loaded = holdLoading();
       try {
         const room = await joinOnlineRoom(r, passkey);
         go("lobby", room);
@@ -179,6 +183,8 @@ register("rooms", {
         paintList();
         askOrSay(r, err);
         return;
+      } finally {
+        loaded();
       }
       busy = false;
     };
