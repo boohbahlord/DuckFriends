@@ -4681,3 +4681,16 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
   sweep 1 s, flash 150 ms, fade 650 ms, smoke 6.2 s; board grey 7 s then 3 s back; plain grey fade with Heavy
   effects off). Miles: nuke roar + flashbang ring (#297). Noah: prebuilt explosion-death looks (beak/eyes off, max
   chunks) to call from nukeTick's screen side, behind the Gore setting.
+## Request (owner, 2026-11-16 15:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVwna3n2QVHgxXuG7GPaYpX), the pixel part, word for word
+> some things werent pixelated
+
+(With a screenshot of the Specials page and a hover tip. The rest of that message, the chain gun and grenades, went to
+Solomon.)
+
+- Done (Noah): the icons that stayed smooth were emoji (the ducklings, the coffee, the kangaroo, the cloud…), which are
+  words to the browser, so the pixel look never touched them. js/pxtext.js now shows every emoji on the page (Specials,
+  the hotbar, Updates, chat, names) as pixels on the one grid, through the palette; the emoji stays in the text unseen.
+  The hover tips were the pixel font drawn at a size between screen pixels, so it came out smooth: a tip's words are now
+  drawn on whole screen pixels (each of the font's pixels one screen pixel, or more on sharp screens), still at reading
+  size (the owner's "128" for words). A card's pattern or picture (player cards, the Card page's swatches) goes through
+  the grid filter too. Swept Customize (every page), Updates, the lobby, Game Settings and a game: nothing else missed.

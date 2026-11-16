@@ -2,6 +2,7 @@
    Elements, windows (each with an X at its top right; an X on a question means No), toasts at the bottom middle, and hover
    tips that wait about a second before they show and never cover what they explain. */
 import { sfx } from "./sound.js";
+import { pxWords } from "./pxtext.js";
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -168,14 +169,17 @@ document.addEventListener("pointerover", (e) => {
     tipEl = el('<div class="tip" role="tooltip"></div>');
     tipEl.textContent = t.dataset.tip;
     document.body.appendChild(tipEl);
+    pxWords(tipEl); // (its words on whole screen pixels: pxtext.js)
     const r = t.getBoundingClientRect(),
       w = tipEl.offsetWidth,
       h = tipEl.offsetHeight;
     const below = r.bottom + h + 10 < innerHeight;
+    const dp = (v) => Math.round(v * devicePixelRatio) / devicePixelRatio; // (on a screen pixel, so its words' pixels are whole)
     tipEl.style.left =
-      Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) +
-      "px";
-    tipEl.style.top = (below ? r.bottom + 8 : r.top - h - 8) + "px";
+      dp(
+        Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)),
+      ) + "px";
+    tipEl.style.top = dp(below ? r.bottom + 8 : r.top - h - 8) + "px";
   }, 900);
 });
 document.addEventListener("pointerout", (e) => {

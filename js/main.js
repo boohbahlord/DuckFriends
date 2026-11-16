@@ -10,6 +10,7 @@ import { checkUnlocks, takeOffLocked } from "./unlocks.js";
 import "./front.js";
 import { pixelOn, pxImgWatch } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
+import { pxEmojiWatch } from "./pxtext.js";
 import "./rooms.js";
 import "./lobby.js";
 import "./game.js";
@@ -89,5 +90,6 @@ const pxStart = () => {
   if (!pixelOn() || pxStop) return;
   pxStop = pxWatch(document.body);
   pxImgWatch(document.body); // (and every <img>: pixel.js)
+  pxEmojiWatch(document.body); // (and every emoji: pxtext.js)
 };
 pxStart();
