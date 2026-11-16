@@ -2786,6 +2786,16 @@ function reduceStep(state, a, now) {
       }
       if (isHang(s) && s.phase === "hang" && cabinTick(s, now)) return s;
       if (
+        isL4dd(s) &&
+        s.phase === "hang" &&
+        s.hang &&
+        s.hang.l4 &&
+        s.hang.l4.over &&
+        (votesDue(s).length || rolling(s)) &&
+        now - s.hang.l4.over.at >= L4_OVER_MS
+      )
+        return cabinOver(s, now, "Everyone's down.");
+      if (
         s.phase === "hang" &&
         s.options.mode === "hang" &&
         s.ends &&
@@ -4642,15 +4652,15 @@ function cabinCheck(s, now) {
    game begins; otherwise the room goes back to the lobby, as when the host ends it */
 export function cabinOver(s, now, why = "The ducks voted to leave the cabin.") {
   delete s.cabinEnd;
-  if (!votesDue(s).length && !rolling(s)) return backToLobby(s, why); // (Random goes on to its next game)
+  const due = votesDue(s);
+  if (!due.length && !rolling(s)) return backToLobby(s, why); // (the host's own pick: back to the lobby)
   say(s, why);
-  const over = gameOver(s, now);
-  if (over) return over;
-  const banned = s.banned;
-  backToLobby(s, "A new game in the cabin.");
-  s.banned = banned;
-  return beginGame(s, now);
+  /* Duck Cabin's games (Hangout, Quacky Zombies) are one game whatever Vote return says (owner 2026-11-16): one
+     playthrough, then the votes come back, or Random's next game */
+  return due.length ? voteAgain(s, now, due) : rotate(s, now);
 }
+/* Quacky Zombies from the vote or Random: once everyone's down, the score shows a moment, then the room moves on */
+export const L4_OVER_MS = 8000;
 /* Hangout's time limit (Game Settings, hangTime): only when Random or the vote picked it, never when the host did; in
    seconds, 0 for none */
 const HANG_TIMES = [0, 5, 10, 15, 20, 30];
