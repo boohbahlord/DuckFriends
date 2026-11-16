@@ -1451,11 +1451,8 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
 }
-/* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to hit it and be gone: the
-   chair takes CHAIR_HITS hits to break and a controller CTL_HITS (a sniper's counts 2), and each hit shows a hitmarker
-   on it (owner, Nov 16) */
-export const CHAIR_HITS = 6,
-  CTL_HITS = 2;
+/* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
+   they block bullets and never break (owner, Nov 16 16:47Z) */
 function shotThrown(s, sh, x0, y0, dx, dy, now) {
   if (sh.k === "grenade" || sh.k === "lgren" || sh.fake) return false;
   const ux = dx / RX,
@@ -1473,11 +1470,6 @@ function shotThrown(s, sh, x0, y0, dx, dy, now) {
       k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     if (Math.hypot(px - k * ux, py - k * uy) >= (th.k === "chair" ? 1.6 : 1))
       continue;
-    th.hp =
-      (th.hp ?? (th.k === "chair" ? CHAIR_HITS : CTL_HITS)) -
-      (sh.k === "sniper" ? 2 : 1);
-    if (th.hp <= 0) th.dead = true; // (broken: moveShots drops it)
-    fxOf(s, now)({ kind: "hitmark", x: q.x, y: q.y });
     return true;
   }
   return false;
