@@ -93,14 +93,18 @@ const STAYS = {
     "clownpaint",
   ],
 };
-/* what duck look `d` wears that a hit could knock off: { hat, face } */
+/* what duck look `d` wears that a hit could knock off: { hat, face, beak }. Jack in a Box and an uploaded picture
+   show no hat or face item, and they and Dat Boi have no beak, so nothing of those flies off them */
 const idOf = (v) => (v && typeof v === "object" ? v.id : v) || "";
 export const knockable = (d) => {
   const hat = idOf(d && d.hat),
-    face = idOf(d && d.face);
+    face = idOf(d && d.face),
+    style = d && d.style,
+    shown = !(d && d.image) && style !== "jack";
   return {
-    hat: !!hat && hat !== "none" && !STAYS.hat.includes(hat),
-    face: !!face && face !== "none" && !STAYS.face.includes(face),
+    hat: shown && !!hat && hat !== "none" && !STAYS.hat.includes(hat),
+    face: shown && !!face && face !== "none" && !STAYS.face.includes(face),
+    beak: shown && style !== "datboi",
   };
 };
 export const KNOCKED = 10000; // (ms a knocked-off hat or face item stays off: the owner's "in like 10 seconds")
@@ -117,7 +121,8 @@ export function woundCode(had, w, can = {}) {
   } // (knocked off: it doesn't count as a wound)
   if (had.replace(/[gfhm][01]/g, "").length >= 12 || Math.random() >= W.p)
     return "";
-  if (W.beak && Math.random() < W.beak && !had.includes("p")) return "p0";
+  const beak = can.beak !== false && !had.includes("p");
+  if (W.beak && Math.random() < W.beak && beak) return "p0";
   if (W.eye && Math.random() < W.eye && !had.includes("e")) return "e0";
   let r = Math.random(),
     kind = W.kinds[W.kinds.length - 1][0];
@@ -128,12 +133,7 @@ export function woundCode(had, w, can = {}) {
     }
   if (W.chunk && Math.random() < W.chunk) {
     const q = Math.random();
-    kind =
-      q < 0.2 && !had.includes("p")
-        ? "p"
-        : q < 0.35 && !had.includes("e")
-          ? "e"
-          : "k"; // (a bullet tears a chunk out, or shoots the beak off or an eye out)
+    kind = q < 0.2 && beak ? "p" : q < 0.35 && !had.includes("e") ? "e" : "k"; // (a bullet tears a chunk out, or shoots the beak off or an eye out)
   }
   if (kind === "p" || kind === "e") return kind + "0";
   const spots = kind === "a" || kind === "k" ? 6 : 8,
