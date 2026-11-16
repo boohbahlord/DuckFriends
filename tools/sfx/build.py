@@ -777,26 +777,20 @@ SOUNDS = {
             "https://freesound.org/s/146960/",
         ),
     ),
-    # the TV with no channel: an electric crackle over a steam hiss, darkened to a TV's snow, a seamless loop
+    # the TV with no channel: a steady hiss, the same from start to end (the owner, Nov 16: "more constant and make
+    # sure it is quiet"): two of rubberduck's even machine-hiss loops played end to end, darkened, a seamless loop
     "static": dict(
-        layers=[("gh:tv-static/crackleelectricityloop.opus*5", 0, 2.5, 0, 0.5)]
-        + [
-            ("oga:adrenaline-injector/steam_hisses_-_Marker_3.wav", 0.05, 1.7, 0.2, 1),
-            (
-                "oga:adrenaline-injector/steam_hisses_-_Marker_1.wav",
-                0.05,
-                1.7,
-                0.9,
-                0.7,
-            ),
+        layers=[
+            ("gh:tv-static/machine_04.opus*6", 0, 3.7, 0, 1),
+            ("gh:tv-static/machine_01.opus*3", 0, 3.6, 0, 0.4),
         ],
-        lp=6000,
+        lp=5000,
         loop=1.2,
         room=False,
         kbps=32,
         credit=(
-            "Electricity game sound pack (crackle loop); bart, Steam Release Sounds",
-            OGA_URL["electricity"],
+            "rubberduck (OpenGameArt), machine loops",
+            "https://opengameart.org/users/rubberduck",
         ),
     ),
     # the power box's transformer: a 100 Hz mains hum, a seamless loop

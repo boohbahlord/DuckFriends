@@ -90,7 +90,7 @@ instruments (its license: LICENSES.md).
 | meow | videog (freesound 149191), Jordan Irwin (AntumDeluge), SelsRoyalNavy (freesound 427081): all CC0, as credited in the Stendhal and VoxeLibre games — https://freesound.org/people/videog/sounds/149191/ | CC0 1.0 |
 | purr | Belhene, cat purr (freesound 157837) — https://freesound.org/people/Belhene/sounds/157837/ | CC0 1.0 |
 | hiss | Zabuhailo, hiss (freesound 146960) — https://freesound.org/s/146960/ | CC0 1.0 |
-| static | Electricity game sound pack (crackle loop); bart, Steam Release Sounds — https://opengameart.org/content/electricity-game-sound-pack | CC0 1.0 |
+| static | rubberduck (OpenGameArt), machine loops — https://opengameart.org/users/rubberduck | CC0 1.0 |
 | hum | rubberduck (OpenGameArt), machine loop — https://opengameart.org/users/rubberduck | CC0 1.0 |
 | quack | U.S. Fish and Wildlife Service, Ducks landing in water (public domain) — https://commons.wikimedia.org/wiki/File:Ducks_landing_in_water.ogg | CC0 1.0 |
 | lampOn | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
