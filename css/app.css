@@ -16883,3 +16883,209 @@ html.pixel.cb .wyr-cols .col.wyr-a::after,
 html.pixel.cb .wyr-cols .col.wyr-b::after {
   border-radius: 0 !important;
 }
+
+/* the mouse pointer as pixels (pixel.js draws them: --cur-*). Every rule above that picks a pointer gets its pixel one,
+   in the same order, so the same one wins */
+html.pixel {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel a:any-link {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel
+  :is(input:not([type]), input[type="text"], input[type="search"], textarea) {
+  cursor: var(--cur-text), text;
+}
+html.pixel .btn {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .btn:disabled,
+html.pixel .btn.off {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .win-x {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .tab {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .tile {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .check {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .check input {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel select {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .tile[aria-disabled="true"],
+html.pixel .lmenu [aria-disabled="true"] {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .room-row {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .room-row:disabled {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .lmenu button {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .dod-news-x {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .pcard {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .pcard.mine {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .ctx button {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .sw {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .invent [type="color"] {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .info {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .upload {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .notes-tab {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .notes-list .x {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mbar-spk {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mbar-vol input {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mc-b {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel.mouse-move .board {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mode-icon {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .chat-sugg li {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .slide-more {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel details.more > summary {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .fr-x {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .linkbtn {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .notice-x {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .arm-back {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .arm-fold > summary {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .arm-row {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .arm-tile {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .vote-btn:disabled {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .pm-row {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .chat-log .fold {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .sp-tile.off .arm-tile,
+html.pixel .sp-tile.off .sp-prev {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .sp-keep {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .sp-keep:disabled {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .sp-key {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .sp-key[disabled] {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .sp-prev {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .topic-card {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .lobby-title.can-rename {
+  cursor: var(--cur-text), text;
+}
+html.pixel .law-cand {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .wq-card {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .wq-card.big {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .wq-card.dealing {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .pk-w,
+html.pixel .pk-b {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .hang-board.hang-pen {
+  cursor: var(--cur-cross), crosshair;
+}
+html.pixel .splash {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mgj-rv {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .mgj-rv:disabled {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .l4s {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .l4s:disabled {
+  cursor: var(--cur-arrow), default;
+}
+html.pixel .l4-cat-it > summary {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .tv-mark {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .tv-del {
+  cursor: var(--cur-hand), pointer;
+}
+html.pixel .vt button {
+  cursor: var(--cur-hand), pointer;
+}
