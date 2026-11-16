@@ -4393,6 +4393,8 @@ Map; move them under a line below the other three, into the blue box) and laser-
 > there should be a vote to go back to lobby in the vote screen for the game modes or maps AND a pause menu still available in the top right
 >
 > loading screens are used where ever there is loading 
+## Nov 16 2026, 15:12Z: lobby vote, loading screens, Justin out of zombies, Nous Within Kenoma maps, settings, aiming, Mad God Justin weapons
+
 >
 > Justin will be removed from the zombie game because I do not want to force him into it.
 >
@@ -4449,6 +4451,35 @@ Map; move them under a line below the other three, into the blue box) and laser-
 
 ## Request (owner, 2026-11-16 15:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVwna3n2QVHgxXuG7GPaYpX), word for word
 (screenshot: /mnt/project-files/refs/2026-11-16-1540/specials-not-pixelated.png)
+> the second screenshot shows how the laser sight and the bullets do not aim towards the cursor, which is a problem, because where the cursor points is where bullets and the laser sight should try to arrive to, even though i think some guns have their bullets arrive in a spread or random array of directions to the point they are aimed at, so fix that
+>
+> Remember that laser sights should be in realm of the mad justin
+>
+> ALSO NOW, i want the weapons that drop in mad god justin to only be the powerful ones and to make the medkit and all weapons the players choose there to behave like they do in the zombie game AND the bow is replaced with a pistol AND the pistol never has to reload AND they start out holding it while still have the knife in their hot bar
+> No flashlight for mad god justin
+
+(Screenshots: /mnt/project-files/refs/2026-11-16-1512/.) Split by Adam; Solomon the 2nd has Justin out, aiming, and Mad
+God Justin's weapons.
+- PR A (Solomon the 2nd): Justin is out of Dead Ducks Arcade: the General Settings switch no longer brings him (its
+  row says so), the fireplace never lands on him (HELPER.on false), the toilet zebra-cake egg is off, and no zombie
+  wears his look (Z_JUSTIN 0). Aiming: game.js axes() turned the mouse's direction into a board direction through
+  place(), which in Hangout used the floor's height at the cabin's middle, so the deck and steps tilted every aim
+  (about 10 degrees off); it now uses flat ground, and the laser and bullets go through the cursor (spread guns scatter
+  around that line as before). Mad God Justin: key 2 is a pistol in place of the bow (never reloads, 1 damage to
+  Justin, as fast as in every mode), every fight starts with it in hand and the knife on 1; the handgun drop is gone
+  (everyone has one); guns have laser sights out to the board's edge (no flashlight there). Also: multicolored names
+  now follow the flashlight-names rule too (they were always shown).
+- PR B (Solomon the 2nd, picks confirmed by Adam): Mad God Justin's drops are only the powerful guns (sniper 16, AK-47
+  18, LMG 16, shotgun 16, grenade launcher 10, chain gun 5) plus the medkit (10.5); sky, meteor and Good Justin keep
+  their odds; the hammer and dagger drops are gone. A gun picked up runs through rules.js' normal gun path with Quacky
+  Zombies' cooldowns and magazines (R reloads it, full auto on the mouse), stays on key 4 until its shots are gone
+  (s.mgj.ammo: 2 magazines, or a quarter of Quacky Zombies' ammo for the shotgun 18, grenade launcher 6, chain gun 60).
+  Damage to Justin: AK 2, sniper 2 or 3, LMG 1, pellets 1, chain gun 1 a bullet, grenade launcher blast 3; its grenade
+  goes off on him, never on a teammate. The medkit heals to full (kept if not hurt), and with it out in hand the Revive
+  gets a downed duck up at once at full HP and uses it up.
+
+## Nov 16 2026, 15:40Z: chain gun, grenade launcher, blasts (Solomon the 2nd, PR C)
+
 > some things werent pixelated
 >
 > When shooting the chain gun in would you rather, the lines get cut off in the screen randomly and wont shoot in every direction, this has to be fixed and it should work in any game mode as it was meant to
@@ -4476,5 +4507,15 @@ Map; move them under a line below the other three, into the blue box) and laser-
   in and three steady frames in a row), so a slow build (Duck Cabin, a big map, a slow phone) keeps it up until the
   game is drawn. Two screens asked at once share one veil. Windows (Game Settings, Customize, Settings) open in under
   125 ms even at 4x CPU slowdown, so they get none.
+
+
+- PR C (Solomon the 2nd; the "some things werent pixelated" line wasn't part of it). Causes: game.js place() pins a
+  spot off the board (x < 0 goes to where ducks start; on a phone held upright y is clamped), so the chain gun's
+  line to a point past the board's edge got a wrong direction and fell back to a short stub, and a launcher grenade
+  past the left edge was drawn back on the ducks' start. place() takes `free` for shots and blasts now, and the chain
+  gun's line aims by a short step still on the board and runs on to the screen's edge. Its screen shake was 0.13 a
+  shot, less than the shake fades between shots (2.4 a second at 15 a second), so it never built up: now 0.3.
+  Own blasts: in Mad God Justin (mgjHalf) and Dead Ducks Arcade (l4ddrules boom) the thrower in the radius loses half
+  its HP rounded down and is never downed by it; every other mode already hurt the thrower as anyone else.
 
 

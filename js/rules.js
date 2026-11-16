@@ -164,6 +164,12 @@ import {
   CHAIR_R,
   CAKE_SPEED,
   CAKE_EAT_MS,
+  MGJ_GUNS,
+  mgjHalf,
+  mgjMag,
+  ammoOf,
+  mgjSpend,
+  mgjLgren,
 } from "./mgjrules.js";
 import {
   isL4dd,
@@ -2180,8 +2186,10 @@ function reduceStep(state, a, now) {
         return state; // (Mad God Justin: not while down)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
-      if (isMgj(s) && sp !== "knife" && sp !== "bow")
-        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
+      const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
+      if (isMgj(s) && sp !== "knife" && sp !== "handgun" && !mgjGun)
+        return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
+      if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (
         (WEAPONS.includes(sp) ||
           sp === "chair" ||
@@ -2211,7 +2219,7 @@ function reduceStep(state, a, now) {
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
         return s;
       }
-      const mg = magSize(sp);
+      const mg = isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine)
       if (mg) {
         // one shot from the magazine; the last starts the reload
         const m = magOf(s, a.id, now, sp),
@@ -2222,6 +2230,7 @@ function reduceStep(state, a, now) {
         };
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
+      if (mgjGun) mgjSpend(s, a.id);
       const face = a.face < 0 ? -1 : 1,
         aim =
           WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
@@ -2343,9 +2352,20 @@ function reduceStep(state, a, now) {
     case "reload": {
       // R: the handgun reloads before its magazine is empty
       if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
+      if (me && isMgj(s)) {
+        // Mad God Justin: the gun picked up, if it has a magazine
+        const w = a.w,
+          mg = mgjMag(w),
+          m = mg && magOf(s, a.id, now, w);
+        if (!m || s.mgj.held[a.id] !== w || !m.n || m.r) return state;
+        s.mag = {
+          ...(s.mag || {}),
+          [magKey(a.id, w)]: { n: m.n, r: now + mg[1] },
+        };
+        return s;
+      }
       const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
-      if (!me || !onKeys(me.duck, w) || !s.options.fun || isMgj(s))
-        return state;
+      if (!me || !onKeys(me.duck, w) || !s.options.fun) return state;
       const m = magOf(s, a.id, now, w);
       if (!m.n || m.r) return state;
       s.mag = {
@@ -3513,7 +3533,8 @@ function blast(s, sh, x, y, now, o = {}) {
     const p = s.pos[id],
       P = s.players[id];
     if (!p || p.x < 0 || !P || isGhost(s, id)) continue;
-    if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+    const self = id === sh.by && (w === "grenade" || w === "glauncher"); // (my own grenade hurts me too: the owner's, Nov 16)
+    if (isMgj(s) && sh.by !== JUSTIN_ID && !self) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
     const n = near(
       p.x,
@@ -3522,7 +3543,11 @@ function blast(s, sh, x, y, now, o = {}) {
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
     );
     if (!n) continue;
-    if (!P.dead) logHit(s, sh.by, id, now);
+    if (self && isMgj(s)) {
+      if (mgjHalf(s, id, now)) hit.push(id);
+      continue;
+    } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
+    if (!P.dead && !self) logHit(s, sh.by, id, now);
     const killed =
       !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"));
     if (P.dead || killed) {
@@ -3555,7 +3580,7 @@ function blast(s, sh, x, y, now, o = {}) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
       const got = isMgj(s)
-        ? mgjStab(s, sh.by, now, logLine)
+        ? mgjStab(s, sh.by, now, logLine, w === "glauncher" ? DMG.lgren : 1)
         : justinHit(s, sh.by, now, logLine, w);
       if (got) {
         if (got === 2) justinKilled(s, sh.by, w);
@@ -3689,6 +3714,7 @@ function firstDuck(s, sh, at, now) {
     )
       continue;
     if (dodges(s, p, now) || vdSafe(s, id)) continue;
+    if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
     const px = (p.x - sh.lx) / rx,
       py = (p.y - sh.ly) / ry,
       k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
@@ -3704,6 +3730,7 @@ function firstDuck(s, sh, at, now) {
 }
 /* the grenade launcher's grenade got to a duck: it stops there (where it goes off) */
 function lgrenHits(s, sh, at, now) {
+  if (isMgj(s)) return mgjLgren(s, sh, sh.lx, sh.ly, at, now); // (Mad God Justin: it goes off on him)
   const d = firstDuck(s, sh, at, now);
   if (!d) return false;
   at.x = d.x;
