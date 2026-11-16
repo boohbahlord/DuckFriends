@@ -145,6 +145,35 @@ export const ARMS = {
     at: 66,
     r: 50,
   },
+  /* the owner's new melees (Nov 16): the fire axe 1 to 4, as wide as the hammer and 25% faster; the short sword 50%
+     faster than the knife, not as far out; the cast iron pan as far out as the sword and as slow as the axe, missing
+     half its swings, and half its hits a headshot (crit) */
+  axe: {
+    kind: "melee",
+    cool: ARM_COOL.axe,
+    dmg: [1, 4],
+    swing: ARM_SWING.axe,
+    at: 66,
+    r: 50,
+  },
+  sword: {
+    kind: "melee",
+    cool: ARM_COOL.sword,
+    dmg: 1,
+    swing: ARM_SWING.sword,
+    at: 54,
+    r: 40,
+  },
+  pan: {
+    kind: "melee",
+    cool: ARM_COOL.pan,
+    dmg: 1,
+    crit: 0.5,
+    miss: 0.5,
+    swing: ARM_SWING.pan,
+    at: 54,
+    r: 40,
+  },
   handgun: {
     kind: "ranged",
     cool: ARM_COOL.handgun,
@@ -310,6 +339,9 @@ export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
 export const WEAPONS = [
   "knife",
   "hammer",
+  "axe",
+  "sword",
+  "pan",
   "handgun",
   "bow",
   "dagger",
@@ -334,11 +366,20 @@ export const ITEMS = [
   "safekeep",
 ];
 export const WEAPON_ODDS = 0.85;
+/* the melees are one bag among the weapons, and it holds two bags, the blunt ones and the sharp ones (the owner's,
+   Nov 16): the fireplace picks the melee bag as likely as any one gun, then one of its two bags, then one inside it */
+export const MELEE_BAGS = [
+  ["hammer", "pan"],
+  ["knife", "axe", "sword"],
+];
 export const POOL = [...WEAPONS, ...ITEMS];
 /* their names, as players see them */
 const NAMES = {
   knife: "Knife",
   hammer: "Hammer",
+  axe: "Fire axe",
+  sword: "Short sword",
+  pan: "Cast iron pan",
   handgun: "Pistol",
   bow: "Bow",
   dagger: "Dagger",
@@ -1482,7 +1523,15 @@ function fireRoll(s, id, kit) {
   if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
     return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
   const fo = (s.hang.l4fo || {})[id] || [0, 0],
-    weapons = WEAPONS.filter((w) => !kit.sl.includes(w)),
+    bags = MELEE_BAGS.map((b) => b.filter((w) => !kit.sl.includes(w))).filter(
+      (b) => b.length,
+    ),
+    weapons = [
+      ...WEAPONS.filter(
+        (w) => !kit.sl.includes(w) && !MELEE_BAGS.some((b) => b.includes(w)),
+      ),
+      ...(bags.length ? ["melee"] : []),
+    ],
     items = ITEMS.filter((w) => !kit.sl.includes(w)),
     item = !weapons.length || (!!items.length && Math.random() < itemOdds(fo)),
     group = item ? items : weapons;
@@ -1490,8 +1539,10 @@ function fireRoll(s, id, kit) {
     ...s.hang.l4fo,
     [id]: item ? [0, fo[1] + 1] : [fo[0] + 1, 0],
   };
-  return group[Math.floor(Math.random() * group.length)];
+  const w = anyIn(group);
+  return w === "melee" ? anyIn(anyIn(bags)) : w; // (the melee bag: the blunt bag or the sharp bag, then one in it)
 }
+const anyIn = (xs) => xs[Math.floor(Math.random() * xs.length)];
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
    all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
@@ -1716,7 +1767,15 @@ export function l4Use(s, a, now) {
       ...(s.hang.l4k || []).filter(
         (k) => now - k.t < (ARMS[k.w] || A).swing && k.by !== id,
       ),
-      { by: id, w: what, dx, dy, t: now, hit: [] },
+      {
+        by: id,
+        w: what,
+        dx,
+        dy,
+        t: now,
+        hit: [],
+        ...(A.miss && Math.random() < A.miss ? { miss: 1 } : {}), // (the pan: it swings through nothing)
+      },
     ];
     meleeHits(s, now);
   } else if (what === "medkit") {
@@ -2162,7 +2221,7 @@ function meleeHits(s, now) {
   for (const k of ks) {
     const p = s.pos[k.by],
       A = ARMS[k.w] || ARMS.knife;
-    if (!p || !standing(s, k.by)) continue;
+    if (!p || k.miss || !standing(s, k.by)) continue;
     const [px, py] = at(p),
       bx = px + k.dx * A.at,
       by = py + k.dy * A.at;
@@ -2170,7 +2229,10 @@ function meleeHits(s, now) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
       if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
       k.hit.push(z.i);
-      if (strike(s, z, A.dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
+      const dmg = Array.isArray(A.dmg)
+        ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
+        : A.dmg; // (the fire axe: 1 to 4)
+      if (strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
         die(z, T);
       any = true;
     }

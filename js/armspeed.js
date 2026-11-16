@@ -18,8 +18,17 @@ export const ARM_COOL = {
   bow: 400,
   dagger: 600,
   shotgun: 900,
+  axe: 880, // (25% faster than the hammer: the owner's, Nov 16)
+  sword: 167, // (50% faster than the knife)
+  pan: 880, // (as slow as the fire axe)
 };
-export const ARM_SWING = { knife: 125, hammer: 250 }; // (how long a stab or a swing hurts)
+export const ARM_SWING = {
+  knife: 125,
+  hammer: 250,
+  axe: 200,
+  sword: 83,
+  pan: 200,
+}; // (how long a stab or a swing hurts)
 export const ARM_RELOAD = 1200; // (the handgun's magazine)
 /* a speed as board widths a second */
 export const boardSpeed = (w) => ARM_SPEED[w] / BOARD_PX;

@@ -6948,6 +6948,15 @@ html.still .spx-disco .disco-spot {
 .held[data-w="hammer"] i {
   width: calc(var(--s) * 0.8);
 }
+.held[data-w="axe"] i {
+  width: calc(var(--s) * 0.86);
+}
+.held[data-w="sword"] i {
+  width: calc(var(--s) * 0.62);
+}
+.held[data-w="pan"] i {
+  width: calc(var(--s) * 0.66);
+}
 .held[data-w="grenade"] i {
   width: calc(var(--s) * 0.3);
 }
@@ -7014,7 +7023,10 @@ html.still .spx-disco .disco-spot {
 .spe-wield[data-w="knife"] {
   animation: wstab 1.1s ease-out forwards;
 }
-.spe-wield[data-w="hammer"] {
+.spe-wield[data-w="hammer"],
+.spe-wield[data-w="axe"],
+.spe-wield[data-w="sword"],
+.spe-wield[data-w="pan"] {
   animation: wswing 1.3s linear forwards;
 }
 .spe-wield[data-w="shotgun"] {

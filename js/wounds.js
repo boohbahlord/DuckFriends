@@ -59,6 +59,9 @@ const WOUND_OF = {
   dagger: "blade",
   jaime: "blade",
   hammer: "blunt",
+  pan: "blunt",
+  axe: "blade",
+  sword: "blade",
   chair: "blunt",
   bow: "arrow",
   arrow: "arrow",
@@ -98,6 +101,7 @@ export const PCRIT = {
   ak: 0.03,
   revolver: 0.04,
   lmg: 0.0125,
+  pan: 0.5, // (half the pan's hits: the owner's, Nov 16)
 }; // (Quacky Zombies' guns: their headshot chances there, l4ddrules.js ARMS)
 export const CRIT_DOWN = 4000;
 export const DEATH = ["g0", "x0", "f0"];

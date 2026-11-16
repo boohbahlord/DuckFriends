@@ -435,6 +435,9 @@ export function openCustomize(page = lastPage) {
             if (
               id === "knife" ||
               id === "hammer" ||
+              id === "axe" ||
+              id === "sword" ||
+              id === "pan" ||
               id === "shotgun" ||
               id === "bow"
             )
@@ -494,6 +497,9 @@ export function openCustomize(page = lastPage) {
               dagger: sfx.swish,
               knife: sfx.swish,
               hammer: sfx.swish,
+              axe: sfx.swish,
+              sword: sfx.swish,
+              pan: sfx.swish,
               grenade: sfx.swish,
               bow: () => setTimeout(() => sfx.bow(), 380),
               chair: () => setTimeout(() => sfx.swish(), 600),

@@ -26,6 +26,9 @@ import { DROP_ICONS } from "./l4dddrops.js";
 const SAY = {
   knife: "Quick stabs up close.",
   hammer: "A slow, heavy swing that hits a wide spot.",
+  axe: "A big swing, a little faster than the hammer: 1 to 4 damage.",
+  sword: "Short, quick swings, faster than the knife.",
+  pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
   revolver: "Five big shots, then a reload.",
   bow: "Lots of arrows, one at a time.",

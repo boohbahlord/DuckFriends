@@ -51,6 +51,19 @@ const KNIFE = ([a, b, c]) =>
    top; a long wooden handle, a little wider at the grip. Colors: head, handle, the band under the head */
 const HAMMER = ([a, b, c]) =>
   `<svg viewBox="0 0 56 30"><path d="M3 11.8Q1.4 11.8 1.4 13.6V16.6Q1.4 18.4 3.2 18.3L37 17.6V12.6L3.2 11.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 13.4L32 13.9" stroke="#fff" stroke-width="1.1" opacity=".3"/><path d="M6 16.8L30 16.4" stroke="${INK}" stroke-width=".7" opacity=".22"/><rect x="33.4" y="11.6" width="4.2" height="7" rx="1" fill="${c}" stroke="${INK}" stroke-width="1.1"/><rect x="37" y="1.4" width="17.4" height="27.2" rx="5.6" fill="${a}" stroke="${INK}" stroke-width="1.4"/><path d="M39.6 7.4Q39.6 4 43 4H45.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M40.2 10.4V20" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".22"/><path d="M51.6 6V24.6" stroke="${INK}" stroke-width="1.2" stroke-linecap="round" opacity=".2"/></svg>`;
+/* the new melees (the owner's, Nov 16), placeholders until Noah's art: each points right, its handle at the left, as
+   the hammer. The fire axe: a long handle, a red head with a spike on top and the steel blade underneath (the side that
+   leads the swing). Colors: head, handle, blade */
+const AXE = ([a, b, c]) =>
+  `<svg viewBox="0 0 60 32"><path d="M2.8 13.6Q1.2 13.6 1.2 15.2V17.2Q1.2 18.8 2.9 18.7L47 17.8V14.4Z" fill="${b}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><path d="M5 15L41 15.3" stroke="#fff" stroke-width=".9" opacity=".3"/><path d="M42.4 9.6L45.4 1.6L48.4 9.6Z" fill="${a}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/><rect x="40.2" y="9" width="10.6" height="11.6" rx="1.6" fill="${a}" stroke="${INK}" stroke-width="1.2"/><path d="M42 11.2H48.6" stroke="#fff" stroke-width=".9" opacity=".35"/><path d="M39.6 20.2H51.4Q55.6 24.4 57.4 30.4Q46 32 34.6 30.4Q36.4 24.4 39.6 20.2Z" fill="${c}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><path d="M36.4 29.2Q46 30.4 55.8 29.2" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/></svg>`;
+/* the short sword: a straight blade to a point, a crossguard, a wrapped grip and a round pommel. Colors: blade, grip,
+   guard and pommel */
+const SWORD = ([a, b, c]) =>
+  `<svg viewBox="0 0 52 16"><circle cx="3.4" cy="8" r="2.4" fill="${c}" stroke="${INK}" stroke-width="1"/><rect x="5.4" y="5.6" width="8" height="4.8" rx="1.4" fill="${b}" stroke="${INK}" stroke-width="1"/><path d="M7.4 5.8V10.2M10 5.8V10.2" stroke="${INK}" stroke-width=".7" opacity=".4"/><rect x="13" y="1.6" width="3" height="12.8" rx="1.2" fill="${c}" stroke="${INK}" stroke-width="1"/><path d="M16 5.4H43L50.6 8L43 10.6H16Z" fill="${a}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/><path d="M17.4 8H44" stroke="${INK}" stroke-width=".6" opacity=".3"/><path d="M17.4 6.6H42.6" stroke="#fff" stroke-width=".8" opacity=".6"/></svg>`;
+/* the cast iron pan: a round black pan seen from above, a darker inside with a shine, and its long handle. Colors: iron,
+   handle, rim shine */
+const PAN = ([a, b, c]) =>
+  `<svg viewBox="0 0 58 32"><path d="M2.6 13.6Q1 13.6 1 15.2V16.8Q1 18.4 2.6 18.4L28 17.6V14.4Z" fill="${b}" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/><circle cx="5.4" cy="16" r="1.3" fill="#0008"/><circle cx="42" cy="16" r="14.6" fill="${a}" stroke="${INK}" stroke-width="1.3"/><circle cx="42" cy="16" r="11.6" fill="#0005" stroke="${c}" stroke-width="1"/><path d="M33.6 9.6Q38 5.6 44 5.6" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35" stroke-linecap="round"/></svg>`;
 /* the grenade: a round pineapple grenade, its body in a grid of rounded lumps with a shine at the top left; the metal cap
    with the lever curving down its right side, and the pin's ring at the left (thrown: no pin, it falls off as it leaves
    the hand, GRENADE_PIN). Colors: body, metal, ring */
@@ -302,6 +315,42 @@ export const SPECIALS = [
       ["a", P, "#d9dee8"],
       ["b", S2, "#3b2a22"],
       ["c", A, "#c9a24a"],
+    ],
+  },
+  {
+    id: "axe",
+    name: "Fire axe",
+    kind: "item",
+    icon: iconOf(AXE(["#c62f2f", "#7a4a2e", "#c9ced8"])),
+    tip: "A big swing in front of you, toward your mouse: 1 to 4 damage to every duck in it. A little faster than the hammer. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#c62f2f"],
+      ["b", S2, "#7a4a2e"],
+      ["c", A, "#c9ced8"],
+    ],
+  },
+  {
+    id: "sword",
+    name: "Short sword",
+    kind: "item",
+    icon: iconOf(SWORD(["#d9dee8", "#5a3a26", "#c9a24a"])),
+    tip: "A quick short swing in front of you, toward your mouse: 1 damage to every duck in it. Faster than the knife. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#d9dee8"],
+      ["b", S2, "#5a3a26"],
+      ["c", A, "#c9a24a"],
+    ],
+  },
+  {
+    id: "pan",
+    name: "Cast iron pan",
+    kind: "item",
+    icon: iconOf(PAN(["#2b2d33", "#1c1d22", "#6a6f7c"])),
+    tip: "A short heavy swing in front of you, toward your mouse: it misses half the time, but half its hits are critical. 1 damage. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#2b2d33"],
+      ["b", S2, "#1c1d22"],
+      ["c", A, "#6a6f7c"],
     ],
   },
   {
@@ -691,6 +740,9 @@ export function heldHTML(id, duck) {
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
   if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
+  if (id === "axe") return AXE(c);
+  if (id === "sword") return SWORD(c);
+  if (id === "pan") return PAN(c);
   return id === "grenade"
     ? GRENADE(c)
     : id === "dagger"

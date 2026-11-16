@@ -2026,16 +2026,18 @@ function drawDucks(now = clockNow()) {
     const jab = ARM_SWING.knife / 1000; // (the knife swings as fast in every mode as in Quacky Zombies)
     if (w === "knife")
       out = 0.44 + (st < jab ? 0.26 * Math.sin((Math.PI * st) / jab) : 0);
-    if (w === "hammer") {
-      out = 0.55;
+    if (SWUNG[w]) {
+      const [k, o] = SWUNG[w],
+        u = st / k; // (the hammer's swing, sooner for a faster one)
+      out = o;
       turn =
-        st < 0.04
-          ? -70 - (45 * st) / 0.04
-          : st < 0.11
-            ? -115 + 165 * ((st - 0.04) / 0.07) ** 1.6
-            : st < 0.5
+        u < 0.04
+          ? -70 - (45 * u) / 0.04
+          : u < 0.11
+            ? -115 + 165 * ((u - 0.04) / 0.07) ** 1.6
+            : u < 0.5
               ? 50
-              : 50 - 120 * Math.min(1, (st - 0.5) / 0.3);
+              : 50 - 120 * Math.min(1, (u - 0.5) / 0.3);
     }
     /* the owner's motion (fxmotion.js): it sways as its duck walks and jumps, kicks back with each shot, jitters on
        adrenaline */
@@ -2308,6 +2310,15 @@ function drawDucks(now = clockNow()) {
     o.classList.toggle("see-through", hit);
   }
 }
+/* the swung melees: [how long their swing takes against the hammer's, how far out they're held]: the fire axe 25%
+   faster than the hammer, the short sword 50% faster than the knife, the pan as slow as the axe; the sword and the pan
+   not as far out (the owner's, Nov 16) */
+const SWUNG = {
+  hammer: [1, 0.55],
+  axe: [ARM_SWING.axe / ARM_SWING.hammer, 0.55],
+  sword: [ARM_SWING.sword / ARM_SWING.hammer, 0.46],
+  pan: [ARM_SWING.pan / ARM_SWING.hammer, 0.46],
+};
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
   const pt = performance.now();
@@ -2974,6 +2985,7 @@ function playFx(f) {
       sfx.hit();
     }
     if (f.what === "hammer") setTimeout(() => sfx.bonk(), KB_LAND);
+    if (f.what === "pan") sfx.bonk(); // (the pan: a bonk as it lands)
   } else if (f.kind === "use") {
     // an item at its duck, moving with it (drawDucks places it each frame)
     if (f.what === "confetti") {
@@ -3070,8 +3082,15 @@ function playFx(f) {
         t: now,
         until:
           now +
-          ({ dagger: 900, grenade: 900, knife: 700, hammer: 1000 }[f.what] ||
-            (AUTO.includes(f.what) ? 500 : 1400)),
+          ({
+            dagger: 900,
+            grenade: 900,
+            knife: 700,
+            hammer: 1000,
+            axe: 1000,
+            sword: 600,
+            pan: 1000,
+          }[f.what] || (AUTO.includes(f.what) ? 500 : 1400)),
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
@@ -3095,7 +3114,8 @@ function playFx(f) {
         })[f.what] || sfx.swish
       )(); // (Quacky Zombies' guns sound as they do there)
       if (f.what === "hammer" && f.hit && f.hit.length)
-        setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
+        setTimeout(() => sfx.bonk(), KB_LAND);
+      if (f.what === "pan" && f.hit && f.hit.length) sfx.bonk(); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
     } // (it turns toward the aim; the bullet or the dagger flies from the room's state)
     const wrap = el('<div class="spe-follow"></div>');

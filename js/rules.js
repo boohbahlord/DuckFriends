@@ -870,6 +870,9 @@ const PRESS = [
   "dagger",
   "knife",
   "hammer",
+  "axe",
+  "sword",
+  "pan",
   "shotgun",
   "grenade",
   "bow",
@@ -895,6 +898,9 @@ const COOLDOWN = {
   dagger: ARM_COOL.dagger,
   knife: ARM_COOL.knife, // (four stabs a second, in every mode: the owner's, Nov 3)
   hammer: ARM_COOL.hammer,
+  axe: ARM_COOL.axe,
+  sword: ARM_COOL.sword,
+  pan: ARM_COOL.pan,
   shotgun: ARM_COOL.shotgun,
   grenade: 12000,
   confetti: 15000,
@@ -955,6 +961,9 @@ export const WEAPONS = [
   "dagger",
   "knife",
   "hammer",
+  "axe",
+  "sword",
+  "pan",
   "shotgun",
   "grenade",
   "bow",
@@ -2097,10 +2106,7 @@ export function reduce(state, a, now = Date.now()) {
       const face = a.face < 0 ? -1 : 1,
         aim =
           WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
-      const hit =
-        sp === "knife" || sp === "hammer"
-          ? strike(s, a.id, sp, aim, now)
-          : null; // (the knife and the hammer hit at once, up close, and while they swing: attacks)
+      const hit = MELEE.includes(sp) ? strike(s, a.id, sp, aim, now) : null; // (the melees hit at once, up close, and while they swing: attacks)
       s.fxN = (s.fxN || 0) + 1;
       s.fx = [
         ...(s.fx || []).slice(-19),
@@ -3104,6 +3110,7 @@ export const phpLost = (s, id, now) => {
 };
 export const HIT_DMG = {
   hammer: 3,
+  axe: [1, 4], // (the fire axe 1 to 4, the short sword and the pan 1: the owner's, Nov 16)
   chair: 3,
   grenade: 3,
   knife: 2,
@@ -3170,7 +3177,16 @@ export function shove(s, id, ux, uy, far, now, side, more = {}) {
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit (JUSTIN_ID for Justin); done: who this swing already hit, never hit
    twice (Duck Cabin's own, Justin and the cats, go in it as "h:" and their id). */
-const REACH = { knife: [2.3, 0.9], hammer: [3, 0.5] }; // how far (duck lengths), and how wide (the cosine of the half angle)
+const REACH = {
+  knife: [2.3, 0.9],
+  hammer: [3, 0.5],
+  axe: [3, 0.5],
+  sword: [2.3, 0.5],
+  pan: [2.3, 0.5],
+}; // how far (duck lengths), and how wide (the cosine of the half angle): the fire axe swings as far as the hammer, the short sword and the pan not as far out
+/* the melees, swung or stabbed up close (the fire axe, the short sword and the pan: the owner's, Nov 16) */
+export const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
+const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, wounds.js PCRIT)
 export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
@@ -3294,6 +3310,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
    s.atk = [{ by, sp, ax, ay, t, until, hit: [who it hit] }] */
 const ATK_MS = ARM_SWING;
 export function strike(s, by, sp, aim, now, from = s.pos[by]) {
+  if (sp === "pan" && Math.random() < PAN_MISS) return []; // (a miss: it swings through nothing)
   const hit = swing(s, by, sp, aim, now, from);
   s.atk = [
     ...(s.atk || []).filter((a) => a.until > now && a.by !== by),
