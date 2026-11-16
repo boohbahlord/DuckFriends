@@ -80,7 +80,7 @@ export const STAT_MODES = [
   ["mgj", "Mad God Justin"],
   ["vdd", "Valentine's Duck Date"],
   ["trivia", "Trivia"],
-  ["l4dd", "Quacky Zombies"],
+  ["l4dd", "Dead Ducks Arcade"],
   ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
 ];
 /* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies with that setting on */

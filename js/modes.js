@@ -93,7 +93,7 @@ export const MODES = [
   {
     id: "l4dd",
     cat: "special",
-    name: "Quacky Zombies",
+    name: "Dead Ducks Arcade",
     tip: "The power's out in Duck Cabin and zombie ducks are coming, round after round. Board up the doors and holes, revive each other, and see how long you last. It can only be played on the Duck Cabin map.",
   },
 ];

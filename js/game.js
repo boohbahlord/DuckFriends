@@ -101,6 +101,7 @@ import {
   counselBounds,
   ATT_PHASES,
   walkOf,
+  votesDue,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import {
@@ -4724,11 +4725,12 @@ function wheelPick(dir) {
     }
     return false;
   }
-  const ids = keysOf(playDuck())
-    .map((id, i) => [id, i])
-    .filter(([id]) => id);
+  const mgj = isMgj(s),
+    ids = keysOf(playDuck())
+      .map((id, i) => [id, i])
+      .filter(([id]) => id && (!mgj || mgjToggles(id))); // (Mad God Justin: only what goes out in hand, not a Jaime)
   if (!ids.length) return false;
-  const at = ids.findIndex(([, i]) => i === lastKey),
+  const at = ids.findIndex(([id, i]) => (mgj ? id === held : i === lastKey)),
     [id, i] =
       ids[
         (at < 0 ? (dir > 0 ? 0 : ids.length - 1) : at + dir + ids.length) %
@@ -4918,11 +4920,35 @@ function actHTML(s) {
       lv = s.vote && s.vote.kind === "lobby";
     return `<div class="act-row"><button type="button" class="btn${mine ? " yellow" : " green"}" data-a="end">${mine ? "Waiting ✓" : isBb(s) ? "Next tournament" : isMgj(s) ? "Try again" : "Next round"} <kbd>Enter</kbd></button>
       ${s.round >= 1 && !s.review && !isMgj(s) ? `<button type="button" class="btn purple" data-a="review"${s.reviewVotes[R.me] ? " disabled" : ""} data-tip="Adds every round's stats after this round's. One vote each round.">All-rounds review ${rv}/${need}</button>` : ""}
-      <button type="button" class="btn ${lv ? "red" : "ghost"}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ""}>${lv ? "Vote yes: back to the lobby" : "Vote: back to the lobby"}</button>${count}</div>`;
+      <button type="button" class="btn ${lv ? "red" : "ghost"}" data-a="lobbyvote"${s.round === 1 ? ' data-tip="You can also vote to go back to the lobby on the all-rounds stats screen."' : ""}>${lv ? "Vote yes: back to the lobby" : "Vote: back to the lobby"}</button>${newGameHTML(s)}${count}${voteBackNote(s)}</div>`;
   }
   if (s.phase === "over")
     return `<div class="act-row">${isSudo(s, R.me) ? '<button type="button" class="btn green" data-a="lobby">Back to the lobby</button>' : '<span class="dim">The host takes everyone back to the lobby.</span>'}<button type="button" class="btn ghost" data-a="leave">Leave</button></div>`;
   return "";
+}
+
+/* Vote Mode & Map on: the stats screen's "Vote: new game now" button (the votes come back at once once the room says
+   yes), and a line that says when the votes come back on their own (Vote return) */
+function newGameHTML(s) {
+  const due = votesDue(s);
+  if (!due.length || isMgj(s)) return "";
+  const nv = s.vote && s.vote.kind === "newgame",
+    what = due.includes("mode") ? "game" : "map";
+  return `<button type="button" class="btn ${nv ? "green" : "ghost"}" data-a="newvote">${nv ? `Vote yes: new ${what} now` : `Vote: new ${what} now`}</button>`;
+}
+function voteBackNote(s) {
+  const due = votesDue(s),
+    v = s.options.voteBack;
+  if (!due.length || !(+v > 0 || v === "r")) return "";
+  const what = due.includes("mode") ? "game" : "map",
+    every =
+      v === "r"
+        ? "Every 1 to 6 games (picked at random)"
+        : +v === 1
+          ? "After every game"
+          : `Every ${+v} games`,
+    left = Math.max(1, +s.gamesLeft || 1);
+  return `<div class="vote-back-note dim small">${every}, everyone votes on the next ${what}. Games until that vote: ${left}.</div>`;
 }
 
 /* Valentine's Duck Date: The Date's buttons (Next duck in a date, Turn down in the pick), and what everyone else sees */
@@ -5934,6 +5960,9 @@ function keydown(e) {
     return;
   } // hold Tab: the players (Tab never moves the browser's focus in a game)
   if (typing(e) || windowOpen()) return;
+  if (e.code.startsWith("Shift")) {
+    if (!e.repeat) shiftTap = { at: performance.now(), other: false };
+  } else if (shiftTap) shiftTap.other = true; // (Shift used with another key: no tap)
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
@@ -6004,7 +6033,29 @@ function keydown(e) {
     act("end");
   }
 }
+/* a quick tap of Shift (down and up within SHIFT_TAP ms, no other key between) keeps the selected item on or puts it
+   away, as Shift and its number; holding Shift still sprints */
+const SHIFT_TAP = 200;
+let shiftTap = null;
+function shiftTapped() {
+  if (!R || !onBoardPhase()) return;
+  const s = R.state;
+  if (isL4dd(s)) {
+    if (l4Slot === 3) l4Pick(3); // (the special: on and off)
+  } else if (!isMgj(s) && lastKey >= 0) useKey(lastKey, true);
+}
 const keyup = (e) => {
+  if (e.code.startsWith("Shift") && shiftTap) {
+    const t = shiftTap;
+    shiftTap = null;
+    if (
+      !t.other &&
+      performance.now() - t.at <= SHIFT_TAP &&
+      !typing(e) &&
+      !windowOpen()
+    )
+      shiftTapped();
+  }
   if (world) world.keyup(e);
   if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);
@@ -6142,6 +6193,9 @@ async function act(a) {
       break;
     case "lobbyvote":
       lobbyVote(R);
+      break;
+    case "newvote":
+      lobbyVote(R, "newgame");
       break;
     case "wqidea": {
       const f = $("form.wq-pick", S);

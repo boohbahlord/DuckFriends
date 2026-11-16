@@ -774,7 +774,7 @@ const VOTE_SETS = [
       ["r", "Random"],
       [0, "Off"],
     ],
-    d: "The games played before both votes come back. A round is a game; a whole Hangout or Quacky Zombies counts as one. Random: 1 to 6, picked again each time.",
+    d: "The games played before both votes come back. A round is a game; a whole Hangout or Dead Ducks Arcade counts as one. Random: 1 to 6, picked again each time.",
   },
 ];
 const voting = (s) =>
@@ -788,7 +788,7 @@ const showsZoom = (s) =>
 const PICK_TEXT = {
   vote: "After the start's countdown, every player votes in a window over the whole screen: first for the game mode (1:05), then for the map (0:20; not for Duck Cabin's games or Mad God Justin). Click once to vote; the dice is a random pick. Once the majority has voted (the room's vote share), the clock drops to 0:06. The most votes win; a tie is a random pick between the tied ones.",
   modeRandom:
-    "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Quacky Zombies and games that need more players than the room has are left out. Hangout plays on Duck Cabin with its own time limit (Game Options); every other game stays on the map picked.",
+    "A new game every round. Every game is played once before the order is reshuffled; True Random, under Game Options, lets any game come next. Dead Ducks Arcade and games that need more players than the room has are left out. Hangout plays on Duck Cabin with its own time limit (Game Options); every other game stays on the map picked.",
   mapRandom:
     "A random map each time the host starts. Duck Cabin comes only with its own games.",
 };

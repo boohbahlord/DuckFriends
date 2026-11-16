@@ -218,9 +218,8 @@ export function pxImgWatch(root) {
 }
 
 /* ---------- the mouse pointer as pixels (owner, Nov 16: "that would be cool if it was also 64 bit") ----------
-   Drawn here, a pixel at a time: one pixel is one css px, about a 64th of a duck on a computer (twice as fine as the
-   pictures, as the owner asked), sharp on any screen (image-set: 1x, 2x, 3x). k is the dark edge, w the fill, y the
-   duck-yellow shine. css/app.css puts them on (--cur-*) */
+   Drawn here, a pixel at a time: each pixel is CURSOR_ZOOM css px, sharp on any screen (image-set: 1x, 2x, 3x). k is
+   the dark edge, w the fill, y the duck-yellow shine. css/app.css puts them on (--cur-*) */
 const CURSORS = {
   arrow: [
     0,
@@ -321,15 +320,24 @@ function cursorURL(rows, s) {
   );
   return c.toDataURL();
 }
+/* how many css px each of a pointer's pixels takes (owner, Nov 16: one css px was far too small, "bigger, but not
+   large", and the crosshair so small the game was unplayable). Browsers drop a pointer picture over 128 px, so a
+   sharper copy (2x, 3x) is only offered while it fits */
+const CURSOR_ZOOM = { arrow: 2, hand: 2, text: 2, cross: 3 },
+  CURSOR_MAX = 128;
 function setCursors() {
   const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
     root = document.documentElement.style;
   for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
     const rows = art.split("\n"),
-      img = sets
-        ? `image-set(url(${cursorURL(rows, 1)}) 1x, url(${cursorURL(rows, 2)}) 2x, url(${cursorURL(rows, 3)}) 3x)`
-        : `url(${cursorURL(rows, 1)})`;
-    root.setProperty(`--cur-${name}`, `${img} ${hx} ${hy}`);
+      z = CURSOR_ZOOM[name] || 2,
+      big = Math.max(rows.length, ...rows.map((r) => r.length)) * z,
+      dens = [1, 2, 3].filter((d) => d === 1 || big * d <= CURSOR_MAX),
+      img =
+        sets && dens.length > 1
+          ? `image-set(${dens.map((d) => `url(${cursorURL(rows, z * d)}) ${d}x`).join(", ")})`
+          : `url(${cursorURL(rows, z)})`;
+    root.setProperty(`--cur-${name}`, `${img} ${hx * z} ${hy * z}`);
   }
 }
 setCursors();

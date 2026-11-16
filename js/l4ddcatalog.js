@@ -103,7 +103,7 @@ function stats(w) {
       "Where",
       WEAPONS.includes(w)
         ? `The fireplace, with the weapons (${Math.round(WEAPON_ODDS * 100)}% of spins)`
-        : `The fireplace, with the items (${100 - Math.round(WEAPON_ODDS * 100)}% of spins)`,
+        : `The fireplace, with the items (${100 - Math.round(WEAPON_ODDS * 100)}% of spins, more after weapons)`,
     ]);
   else if (w === "jaimebomb")
     out.push([

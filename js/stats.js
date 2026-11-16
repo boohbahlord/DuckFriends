@@ -117,7 +117,7 @@ function totalsHTML(p, t, mode = "aod") {
   }
   if (mode === "l4dd" || mode === "l4r16") {
     // Quacky Zombies (or its Round 16 Start): games, rounds cleared, the best round reached
-    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · ${mode === "l4r16" ? "Round 16 Start" : "Quacky Zombies"}</div></div></header>
+    return `<article class="statbox"><header>${duckSVG(seenDuck(p), { size: 46, shadow: false, title: p.name })}<div>${nameHTML(p.name, seenName(p))}<div class="small dim">all time · ${mode === "l4r16" ? "Round 16 Start" : "Dead Ducks Arcade"}</div></div></header>
       <dl><dt>Games</dt><dd>${fmtJumps(t.games)}</dd><dt>Rounds cleared</dt><dd>${fmtJumps(t.rounds)}</dd><dt>Best round</dt><dd>${t.titles ? fmtJumps(t.titles) : "—"}</dd><dt>Jumps</dt><dd>${fmtJumps(t.jumps)}</dd></dl></article>`;
   }
   if (mode === "vdd") {

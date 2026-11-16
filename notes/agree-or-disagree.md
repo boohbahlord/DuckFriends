@@ -4198,6 +4198,85 @@ Zombies only; Hangout's Duck Cabin unchanged).
   (`hangTime`, 5/10/15/20/30 min or No limit, 15 at first) only when Hangout came from Random or the vote; the room's
   map comes back after the cabin; under Random the cabin's End vote goes on to the next game.
 
+## Request (owner, 2026-11-16 10:20Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVo2RDQwWpMCUe6rnNKcoYq), word for word
+
+> Adam will ask me questions that are numbered ab this
+>
+> i turned justin on from general settings and i dont see him in the zombie game 
+>
+> rename zombie game to this: 'Dead Ducks Arcade'
+>
+> every gun with clips gets five extra clips or magazines of ammo, the LMG gets three extra clips, guns without clips get 50% more ammo (shotgun or bow for example)
+> This doesnt count for things like grenades or zebra cakes
+>
+> make a shuffle where for the fireplace where the more times you got a weapon, you get a 10% more likely to get a item rolled, and IF you get two items in a row, then there is %5 less of a chance you get an item again, but this two items in a row condition is broken if you get a weapon once, thus resetting it
+>
+> guns should have small amount of smoke leaving the barrel and a very small amount of flash when shot, very little for weaker or small guns, and most for the chain gun, large sniper, and second most so for LMG, AK-47, Shotgun, and guns like that
+>
+> Accuracy is now renamed Critical Chance
+>
+> Reloads are canceled IF you switch to another item or use another item on your hotbar before the reload is finish, thus resetting the reload
+>
+> Shooting heavier guns shakes your screen a little
+>
+> Justin shows up with a player screen with health and everything in the UI like every other player
+>
+> reloading now has a meter inside the box fill up with a darker color inside the hotbar until the reload is finished
+>
+> There is a second white bar that shows below the sprint meter on ducks now to indicate cooldown times like reload, melee cooldown, or item cooldowns (every item that is throwable or consumable and thus not something like a jetpack has a 0.75 second cooldown)
+>
+> player names are now much smaller and above a ducks head while being invisible and ONLY show up when the player is within the radius of a flashlight
+>
+> zombie ducks and players should become a matching brightness of the flashlight when they are in it if they are not already 
+>
+> guns cause a slight shake to the screen for a player firing them, only a slight shake for light guns like a pistol, and a more prominent thought not too distracting shake to screen that is maxxed out with the chain gun
+>
+> Chain gun now has four times more ammo
+>
+> jumping makes a duck slightly transparent when invulnerability frames are in effect mid jump in zombies
+>
+> a laser sight now comes out from guns to the end of a flashlight (not the bow) to show where bullets will land
+>
+> medkits can instant revive if they are held while reviving a player but this immediately uses it AND preserves the stats bought from the shop by a player. 
+>
+> There is a new item that is a halo called "Safe Keeping", which occupies the purple slot AND will keep a players stats (like critical chance) saved when they go down and need revived AND players can revive themselves, which doing so will make their duck glow a heavenly light blue light before they are back up, and when they are back up, they have six seconds of invulnerability frame which is shown by their duck's image softly breathing in transparency while glowing, and a timer on their screen counts down to the number 1 from six, and when the number goes to zero, it says "Vitals Stabilized"
+> in other words, safe keeping allows them to be revived automatically when going down in solo OR will allow them to instantly revive themselves and walk around to another position of the map for six seconds, and either will spend and empty this item from their hotbar till they get it again. This item cannot be used in the hot bar and is automatically used when the conditions are met AND clicking it will show a text in the bottom left that is highlighted to show only to that player that tells them briefly how it works, and how it works in either way will be based on if is online or not, and if online, it is determined if any players are standing and not in a downed state or otherwise, or else they cannot revive them and thus the player is autorevived instantly when they go down like single player
+>
+> guns also kinda bounce around at the ends and a little at the back in a way guns do from recoil when they are semi autos, shotguns, or full autos, and they bounce around per shot
+>
+> toggled weapons and items very very lightly sway a little to the movement of their ducks
+>
+> jumps make toggled weapons and items sway differently mid jump AND the movements still cause weapons and items to go in that direction mid jump as well, so both are true and interacting with each other at the same 
+>
+> the speed of a duck on mobile changes how their animations play out and same with sprinting, like maybe a very slight increase in speed of the animation with a quick half a second acceleration onto the movement of the object toggled on pc and mobile before sprint
+>
+> sprint has a slight blur to the board ever so slightly when they spring and the blur fades in AS they run around before becoming it's slight acutalization of effect, and it quickly fades out as they stop sprinting AND make sure going in and out of sprint doesnt stack the effect but has the same effect fade it's blur in and out so their isn't a stacking of blur
+>
+> adrenaline shot now makes ducks slightly vibrate and so does their gun a little WHILE their screen wobbles a short jitter kind of fast, and the same is for special drop that might do the same
+>
+> have the special drops be a shuffle instead now, where full ammo drop is never removed from the shuffle
+>
+> Full ammo now makes the hotbar boxes flash in their color that fades out quickly 
+>
+> Every special drop should say it is active in the top middle of screen
+>
+> now switching through boxes in hot bar has a very small uncolored version of the items below a duck's other UI without a box slide in and out for that player before quickly fading out
+>
+> instant kill, double points, and sale now only last 45 seconds
+> Instant kill makes the board softly glow a blood crimson red over everything that slowly pulse in and out
+> Double points makes the points that show up on your score for each action that earns points become a glowing yellow that is slightly larger in font AND a very small text of a similar look popups on your duck now during double points and a normal version of the text does the same without the double point effect for now on
+> Sale makes the  butler AND the fireplace glow gold that breathes in and out in the shiny effect around their objects while the screen says "Sale" in the top middle of the screen in the gold metal lettering before fading away. 
+>
+> holes in ducks should be literally holes through the skin of a duck that causes blood effects to spray out, squirt, slosh, or spill out in reference to the caliber of a weapon when they are shot AND dead ducks dont immediately become transparent upon dying but instead are only transparent for 1.25 seconds after having died and then they slowly fade into transparency before their duck disapears
+>
+> the blood effects are small pixel particles AND SO IS the smoke or anything dynamic like that to be easier on resources
+>
+> NOW, before we do this and before i answer these questions, i wanna redo the visuals of the game since i have max plan, to make the game pixelated and maybe 16, 32, or 64 bit to make it run better AND to make visuals more believable, like a makeup to stupid AI art. NOW, show me the examples of what some items, board, page backgrounds, and ducks would look like IF this became a thing. I want to discuss this with item before other goals
+>
+> I need to see every special drop type to figure out other special effects for those as well and think of what other items, weapons, or items need special effects
+
+- Order (owner): first the pixel-art samples (Noah, pictures only, nothing in the game) and the sheet of every drop
+  (Adam); the rest waits for the owner's answers to questions 48 to 65 (Adam's doc).
 ## Nov 16 2026: the pixel look (owner with Noah, 11:18Z-12:44Z)
 > 32 bit is the way BUT the text should be 128 bit so they are easier to read IF NOT MORE and the Ui, meters, and hotbar can all still be 32 bit, but any text inside should be better quality for reading while still looking somewhat pixelated
 
@@ -4216,3 +4295,72 @@ Zombies only; Hangout's Duck Cabin unchanged).
   meters. Adam relayed the owner's answer: it is the only look (no setting, no test switch). The mouse pointer is drawn
   in pixels at 64 to a duck (arrow, hand, crosshair, text bar); any weapon in hand makes it the crosshair over the
   board, in every mode.
+
+## Request (owner, 2026-11-16 13:17Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtP3Len5qSrAnspi4P6Hqn7V), word for word
+
+> glitch already found, when the timer to starting a game from lobby is clicked, the avatars or images for the ducks start flickering in and out real badly 
+>
+>
+> When you try and scroll with the mouse wheel to go through hot bar in mad god justin or other games, it does not work as it does in quacky zombies, bit mistake
+>
+> revive time should take half as long in mad god justin
+>
+> the game should have any item already selected in the hotbar become toggled by simply clicking shift
+>
+> the map in zombies should be even more transparent AND smaller (we can remove it for mobile as well)
+>
+> we are going to start working on the new physics features as well
+>
+> the game will inform player in the vote game mode somewhere at the end of all the turns for a game mode, where it asks players if they want to play another round or return to lobby, how the game will automatically cast a new vote for game modes after three games (so informing them of an already present mechanic) AND there is now a button alongside the play again and lobby to allow players to vote for another game now
+>
+> Miles Jr needs to be on a higher effort for opus AND im going to give them new instructions soon for our audio problems 
+>
+> all the ideas from before that was waited on will be worked on now, all the ones i informed you about 
+>
+> there was a glitch where justin butler is rly small, but i love it, so keep it, it&#39;s now a feature
+>
+> make sure Jusin isnt too small
+>
+> The new physics should have chunks of blood flying out from bigger caliber weapons or from attacks of the hammer now, and we are doing it by pixels now instead of making pictures that convert to pixels, since that is more simple and less things can go wrong
+>
+> new gun ideas are needed
+>
+> i still need to know of all the special drops to answer what the special effects will be like for those
+
+- Split (Adam): Noah = lobby countdown flicker + physics/effects drawn as pixels (blood chunks, smoke, flash,
+  recoil, sway, blur, holes, glows); Solomon the 2nd = the Nov 16 10:20Z zombie batch on Adam's picks (Q48-66) + MGJ
+  revive half + minimap smaller/see-through/off on phone + Butler stays small (not too small); Jackal = scroll wheel
+  hotbar in every mode like Quacky Zombies + a tap of Shift toggles the selected item (holding Shift still sprints);
+  Adam = end-of-game vote info + "Vote now" button; Miles Jr. to higher effort, waits for the owner's audio notes.
+"When you try and scroll with the mouse wheel to go through hot bar in mad god justin or other games, it does not work as it does in quacky zombies, bit mistake" and "the game should have any item already selected in the hotbar become toggled by simply clicking shift" (owner 2026-11-16 13:17Z, via Adam)
+- Jackal: the wheel (`wheelPick`, js/game.js) was stuck on the first slot in Mad God Justin because it looked up the
+  current slot by `lastKey`, which Mad God Justin doesn't set; there it now goes by the weapon in hand (`held`) and
+  cycles only what goes out in hand (knife, bow, the picked-up weapon, zebra cake), not Jaime. A tap of Shift (down and
+  up within 200 ms with no other key) keeps the selected item on or puts it away (`shiftTapped`: the same as Shift and
+  its number; Quacky Zombies: its special slot on and off; Mad God Justin: nothing, its weapons are always out).
+  Holding Shift still sprints.
+## Nov 16 2026: zombie batch, gameplay and UI (owner 10:20Z and 13:17Z; Adam's picks in questions 48-66)
+- PR 1 (Solomon the 2nd): Mad God Justin's revive takes 2.5 s (REVIVE.MS, was 5 s). The zombie minimap is 150 px wide
+  (120 on narrow screens; was 196), opacity 0.6 on a lighter backing, and hidden on phones (touchOnly). The Butler stays
+  small on purpose (BUTLER_K 0.7: the pixel look had shrunk him by mistake, the owner loved it); the toilet Justin is
+  drawn full size (his img fills its box). "Quacky Zombies" is "Dead Ducks Arcade" in every text players see (code
+  names and older Updates pages keep the old name). Ammo: guns with a magazine carry 5 more magazines (the LMG 3), the
+  bow, the shotgun and the grenade launcher 50% more, the chain gun 4x (daggers, grenades, items unchanged). Accuracy is
+  "Critical Chance" (+5% crits). The fireplace's item chance starts at 15% and moves per duck (l4fo): +10 points for
+  each weapon in a row, -5 for each item after two in a row; a weapon resets the items' count, an item the weapons'
+  (2% to 95%). Drops: one shuffle bag per game (l4bag): every drop comes once before any comes again, Max Ammo always
+  in it at its 1.2 weight. Instant Kill, Double Points and Sale last 45 s, Speed Boost 1 min; Sale is now timed
+  (l4on.sale) instead of lasting the round.
+- PR 2 (Solomon the 2nd): a reload is lost when I switch to another slot (l4Tick: pos.w no longer the reloading
+  weapon) or use anything else first (l4Use). A reload fills its hotbar box from the bottom with a darker color
+  (l4ddbar.js reloadMeter, on the phone's slider too). Under my sprint bar a white bar shows the cooldown running (a
+  reload, a melee swing, an item's), the longest when several run, not the guns' waits between shots (l4dd.js coolBar).
+  Every throwable or consumable waits 0.75 s (ITEM_COOL: grenades, medkit, zebra cake, fireball, adrenaline, chair; not
+  the jetpack, the Long jump or Jaime); other modes' items already wait longer. A slot switch slides a tiny grey row of
+  my slots in under my bars, the one in hand bright, then fades (peek). Points I get pop up small over my own duck,
+  only for me; during Double Points they and the score's pop-up glow yellow, a little bigger.
+- PR 3 (Solomon the 2nd): the drops on now sit in a row at the top middle, under the points (under the Ready / End
+  turn button between rounds), each with its name and seconds (they were a column at the top right). Instant Kill:
+  a soft blood-crimson glow breathes over the board while it's on (.l4-killglow). Sale: the Butler and the fireplace
+  breathe gold while it's on, and its announcement is the word "Sale" in gold metal letters (.l4-got-gold). Max Ammo:
+  every hotbar box (and the phone's slider) flashes in its own color, quickly fading (.l4-flash).
