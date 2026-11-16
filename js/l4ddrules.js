@@ -68,11 +68,22 @@ import {
   logIn,
   jaimeCount,
 } from "./jaimebomb.js";
+import {
+  powerSetUp,
+  powerRound,
+  powerTick,
+  powerFire,
+  powerTake,
+  powerBuy,
+  powerAct,
+  isPw,
+  pwName,
+} from "./l4ddpower.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
    keys are still drawn, but quiet: nothing to sit on, sing into or play at, and nothing else to write in or switch. */
-keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano"]);
+keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano", "tv"]); // (the TV only shows while the power is on: l4ddpower.js)
 
 /* ---------- the numbers ---------- */
 export const L4 = {
@@ -449,7 +460,7 @@ const NAMES = {
   jetpack: "Jetpack",
   chair: "Chair",
 };
-export const weaponName = (w) => NAMES[w] || w;
+export const weaponName = (w) => (isPw(w) ? pwName(w) : NAMES[w] || w);
 /* points (the owner's) */
 /* what flies a little faster, as in every mode (rules.js FASTER): the arrows, the bullets and the daggers */
 const BULLETS = new Set([
@@ -1051,6 +1062,7 @@ function newRound(s, r, now, wait) {
     due: [],
     wait: null,
   };
+  powerRound(s, r, now, PH);
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
 function bringBack(s, id, now, k, fresh) {
@@ -1326,7 +1338,7 @@ function setUp(s, now) {
   s.hang.l4bag = [...BAGGED];
   s.hang.l4b = {};
   s.hang.l4f = {};
-  s.hang.power = 0; // (the power is cut: the lamps are dark; the fires burn)
+  powerSetUp(s); // (the power is cut: the lamps are dark; the fires burn. Its box and its four parts: l4ddpower.js)
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
@@ -1483,10 +1495,15 @@ function l4Act(s, a, now) {
   if (a.do === "ammo")
     return buyGun(s, id, String(a.what || ""), "", true, now); // (B: anywhere, the gun in hand)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
+  if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
   return false;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
+  if (what === "part") {
+    if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
+    return powerBuy(s, id, now, PH);
+  }
   if (what === "safekeep") {
     if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
     const price = safePrice(s);
@@ -1567,6 +1584,11 @@ function fireplace(s, id, a, now, mx, my) {
     return true;
   }
   if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
+  if (isPw(b.w)) {
+    powerTake(s, b.w, id, now, PH); // (a part or a jerry can: into everyone's pool)
+    dropBox(s, id);
+    return true;
+  }
   if (!give(s, id, b.w, a.hand)) return false;
   if (b.w === "jaimebomb") jaimeCount(s, { got: id }); // (unlocks.js)
   dropBox(s, id);
@@ -1588,6 +1610,8 @@ export function itemOdds([wr, ir] = [0, 0]) {
 function fireRoll(s, id, kit) {
   if (HELPER.on && Math.random() < HELPER.chance && !s.players[HELPER.id])
     return HELPER.w; // 1 in 100: Justin (off: HELPER.on)
+  const pw = powerFire(s); // (the power box's part, or a jerry can, before the weapons: l4ddpower.js)
+  if (pw) return pw;
   if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
     return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
   const fo = (s.hang.l4fo || {})[id] || [0, 0],
@@ -1781,6 +1805,18 @@ export function l4Reload(s, a, now) {
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
   return true;
 }
+/* what the power box's rules (l4ddpower.js) use of these */
+const PH = {
+  players: (s) => players(s),
+  standing: (s, id) => standing(s, id),
+  ptsOf: (s, id) => ptsOf(s, id),
+  addPts: (s, id, n) => addPts(s, id, n),
+  addFx: (s, f) => addFx(s, f),
+  playable: (x, y) => playable(x, y),
+  dropSpot: (s) => dropSpot(s),
+  W,
+  H,
+};
 const addFx = (s, f) => {
   s.fxN = (s.fxN || 0) + 1;
   s.fx = [...(s.fx || []).slice(-19), { n: s.fxN, ...f }];
@@ -2833,6 +2869,7 @@ function l4Tick(s, now) {
     const Lw = { ...s.hang.l4 };
     dropTick(s, Lw, zs, now, T, ids);
     s.hang.l4 = Lw;
+    powerTick(s, zs, now, ids, PH);
     return true;
   }
   /* more zombies come */
@@ -2868,6 +2905,7 @@ function l4Tick(s, now) {
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
   dropTick(s, L2, zs, now, T, ids);
+  powerTick(s, zs, now, ids, PH);
   const ad = s.hang.l4ad;
   if (ad && Object.values(ad).some((u) => u <= now))
     s.hang.l4ad = Object.fromEntries(

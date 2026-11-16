@@ -78,6 +78,19 @@ import {
 import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
+import {
+  pwMount,
+  pwUnmount,
+  pwSee,
+  pwDraw,
+  pwTarget,
+  pwLabel,
+  pwTap,
+  pwOrbHTML,
+  isPw,
+  PART_ICONS,
+} from "./l4ddpowerui.js";
+import { powerOn, pwState, partName, PW } from "./l4ddpower.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
@@ -97,6 +110,7 @@ const RX = 56,
   RY = 25.6; // (a zombie's room on the floor, as the rules')
 const SPEED = 0.6 * 1.05; // my duck at 63% of Duck Cabin's walk: I wanted it 20% faster than the half it was, then 5% more (Nov 3; sprint goes from it)
 const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little lighter than 0.93
+const DARK_ON = 0.5; // … and with the power on: the lights are on, still night
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
@@ -255,6 +269,12 @@ function pxPic(o, img, w, h) {
 const LIT = {
   in: LIGHTS.filter((l) => l.only === "in" && !l.el),
   out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
+};
+/* … and with the power on (l4ddpower.js), the electric ones too: the lamps, the stage, the sink, the balcony's windows
+   and the porch's string lights */
+const LIT_ON = {
+  in: LIGHTS.filter((l) => l.only === "in"),
+  out: LIGHTS.filter((l) => l.only !== "in"),
 };
 
 function zombieEl(z) {
@@ -791,7 +811,8 @@ function paint(now, ctx) {
     cones = [],
     beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
-  for (const l of Wd.inside ? LIT.in : LIT.out) {
+  const lights = powerOn(s) ? LIT_ON : LIT;
+  for (const l of Wd.inside ? lights.in : lights.out) {
     const fl = sway(l, ln),
       p = Wd.toScreen(l.x, l.y, heightAt(l.x, l.y) + (l.z || 0)),
       x = p.left * q,
@@ -900,7 +921,7 @@ function paint(now, ctx) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
-  g.fillStyle = `rgba(3,4,10,${DARK})`;
+  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? DARK_ON : DARK})`;
   g.fillRect(0, 0, w, h);
   g.globalCompositeOperation = "destination-out";
   const st = stamp();
@@ -1035,7 +1056,9 @@ function drawBox(ctx) {
   if (sig !== boxSig) {
     const first = !boxSig;
     boxSig = sig;
-    boxEl.querySelector(".l4-box-orb").innerHTML = orbHTML(w);
+    boxEl.querySelector(".l4-box-orb").innerHTML = isPw(w)
+      ? pwOrbHTML(w)
+      : orbHTML(w); // (a part for the power box, or a jerry can: l4ddpowerui.js)
     const me = ctx.duck(),
       close =
         me && Math.hypot(me.x * W - BOX.x, me.y * H - BOX.y) < 900 && !first;
@@ -1249,6 +1272,7 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
+      (pwState(s) || {}).shop,
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
@@ -1279,6 +1303,9 @@ function shopFill(s, ctx) {
     const have = !!kit && kit.sl.includes("safekeep"),
       price = safePrice(s),
       was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
+    const part = (pwState(s) || {}).shop;
+    if (part)
+      shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb k-part"><i>${PART_ICONS[part]}</i></span></i><span class="l4-up-t"><b>${partName(part)}</b><small>A part for the power box</small></span><button type="button" class="btn small yellow l4-up-buy" data-buy="part"${pts < PW.SHOP ? " disabled" : ""}>${PW.SHOP}</button></li>`; // (the power box's part he always has: l4ddpower.js)
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
   }
 }
@@ -1382,6 +1409,8 @@ function holdTarget(pos, ctx) {
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
+  const pt = pwTarget(pos, s, NEAR); // (the power box, on the balcony: l4ddpowerui.js)
+  if (pt) return pt;
   const now = clockNow(),
     db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
   if (db < NEAR) {
@@ -1420,8 +1449,9 @@ function tap(t, ctx) {
   } else if (t.kind === "take") {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
+  else if (t.kind === "power") pwTap(ctx);
 }
-const TAPS = ["box", "take", "shop", "sk"];
+const TAPS = ["box", "take", "shop", "sk", "power"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -1448,6 +1478,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
+  if (t.kind === "power") return pwLabel(s);
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
@@ -1557,6 +1588,7 @@ activity({
     killEl.setAttribute("aria-hidden", "true");
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
+    pwMount(ctx, layer);
     shop = shopEl(ctx);
     butler = butlerEl();
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -1594,6 +1626,7 @@ activity({
     D.clear();
     cv?.remove();
     mapUnmount();
+    pwUnmount();
     hud?.remove();
     over?.remove();
     closeShop();
@@ -1625,6 +1658,8 @@ activity({
     seeZombies(s, ctx, now);
     seeBoards(s);
     seeDrops(s);
+    pwSee(s, ctx);
+    ctx.world.board.classList.toggle("blackout", !powerOn(s)); // (the balcony's bulbs and the stage's lights: off till the power's on)
     seeOn(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
@@ -1803,6 +1838,7 @@ activity({
     }
     drawEgg(ctx, now);
     drawBox(ctx);
+    pwDraw(ctx);
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");
@@ -1871,13 +1907,14 @@ activity({
     return false;
   },
   propClass(p, s) {
-    if (["lamp", "sink", "post", "tv"].includes(p.kind)) return "off";
+    if (["lamp", "sink", "post", "tv"].includes(p.kind))
+      return powerOn(s) ? "" : "off"; // (the power box: l4ddpower.js)
     if (p.id === "door-front")
       return ((s.hang && s.hang.brd) || {}).front > 0 ? "" : "open"; // (boarded shut; open once the zombies tear the last board down)
     if (p.kind === "door") return "open";
     return "";
   },
-  light: (p, s, l) => (l && l.el ? false : undefined), // (the power is cut: only the fires and the candles shine)
+  light: (p, s, l) => (l && l.el && !powerOn(s) ? false : undefined), // (the power is cut: only the fires and the candles shine, till the power box is mended)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
   /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
      and see what's coming) */
