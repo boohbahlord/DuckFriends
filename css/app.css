@@ -7831,48 +7831,6 @@ html.still .spe-bone .bone-slide {
     transition: none;
   }
 }
-.sp-keep {
-  flex: none;
-  width: var(--slot);
-  height: var(--slot);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border-radius: 0.45rem;
-  border: 0.14rem solid var(--line);
-  background: var(--purple);
-  box-shadow: 0 0.12rem 0 var(--line);
-  cursor: pointer;
-}
-.sp-keep i {
-  position: relative;
-  width: 1.15rem;
-  height: 0.66rem;
-  border-radius: 1rem;
-  background: #fff6;
-  pointer-events: none;
-}
-.sp-keep i::after {
-  content: "";
-  position: absolute;
-  left: 0.08rem;
-  top: 0.08rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: #fff;
-  transition: left 0.15s ease;
-} /* a little switch: on, its knob goes right and it turns green */
-.sp-keep.on i {
-  background: var(--green);
-}
-.sp-keep.on i::after {
-  left: 0.57rem;
-}
-.sp-keep:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
 /* on a phone: the jump button over the board's bottom right, a little in from the edge, just above the bottom bar;
    when the special in the slider's middle can attack, the attack stick takes its place and it moves up above it */
 .tpad {
@@ -17172,8 +17130,6 @@ html.pixel
     .seed-writing,
     .slide-def,
     .sp-jg,
-    .sp-keep,
-    .sp-keep i,
     .sp-key,
     .sp-on,
     .sp-pick,
@@ -17418,12 +17374,6 @@ html.pixel .chat-log .fold {
 }
 html.pixel .sp-tile.off .arm-tile,
 html.pixel .sp-tile.off .sp-prev {
-  cursor: var(--cur-arrow), default;
-}
-html.pixel .sp-keep {
-  cursor: var(--cur-hand), pointer;
-}
-html.pixel .sp-keep:disabled {
   cursor: var(--cur-arrow), default;
 }
 html.pixel .sp-key {

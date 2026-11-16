@@ -295,6 +295,26 @@ const HOST = [
     d: "During the game every duck is the plain yellow duck, with a plain name tag that always shows. Specials stay.",
   },
   {
+    k: "noGore",
+    n: "Gore",
+    c: [
+      [0, "On"],
+      [1, "Off"],
+    ],
+    cat: "more",
+    d: "Off: no blood or gore on the board.",
+  },
+  {
+    k: "noFx",
+    n: "Heavy effects",
+    c: [
+      [0, "On"],
+      [1, "Off"],
+    ],
+    cat: "more",
+    d: "Off: no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game.",
+  },
+  {
     k: "rainbowDucks",
     n: "Rainbow Ducks",
     c: ON_OFF,

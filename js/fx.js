@@ -213,11 +213,21 @@ export const BLEED_OF = {
   bow: "arrow",
   claw: "claw",
 };
+/* the room's two switches (Game Settings): gore off (no blood at all) and heavy effects off (no smoke, muzzle flashes or
+   screen shake). game.js sets them every frame from the options; every blood and smoke maker below checks them */
+let noGore = false,
+  noHeavy = false;
+export function fxLimits(gore, heavy) {
+  noGore = !!+gore;
+  noHeavy = !!+heavy;
+}
+export const heavyOff = () => noHeavy;
 const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
    hit went (most of the blood goes on that way, some back toward the shooter) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0) {
+  if (noGore) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
     l = Math.hypot(dx, dy),
@@ -298,6 +308,7 @@ export function fxHitAt(x, y, h, id, size, or = "small") {
 
 /* blood bursting out all around (a crit's head, a grenade): n drops, chunks too */
 export function fxBurst(x, y, h, n, chunks = 0) {
+  if (noGore) return;
   const u = unit;
   for (let k = 0; k < n + chunks; k++) {
     const a = rnd(0, Math.PI * 2),
@@ -333,7 +344,7 @@ export const MUZZLE = {
 };
 export function fxMuzzle(x, y, ang, gun) {
   const M = MUZZLE[gun];
-  if (!M) return;
+  if (!M || noHeavy) return;
   const u = unit,
     c = Math.cos(ang),
     s = Math.sin(ang),
@@ -470,6 +481,7 @@ export function fxFrame(now = performance.now()) {
 }
 /* blood spurting up out of (x, y) (a headless neck): n small spurts, one after another over ms */
 export function fxSpurt(x, y, h, n = 10, ms = 1400) {
+  if (noGore) return;
   const u = unit,
     o = [ox, oy];
   for (let k = 0; k < n; k++)
