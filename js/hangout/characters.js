@@ -28,6 +28,7 @@ import { play, loop, setListener } from "./sounds.js";
 import "./cats.js";
 import "./justin.js";
 import "./shadowduck.js";
+import { pxAt } from "../pxdom.js";
 
 const PETS = { annabelle: "Pet Annabelle", bubbles: "Pet Bubbles" }; // who E can pet (Oreo and Opal won't have it)
 const DUCK = 64,
@@ -465,7 +466,7 @@ activity({
         o.shownOp = o.op;
         o.el.style.opacity = o.op.toFixed(3);
       }
-      o.el.style.transform = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
+      o.el.style.transform = `translate(${pxAt(f.left)}px, ${pxAt(f.top)}px)`;
       o.body.style.transform = `${o.bob ? `translateY(${(-o.bob * sc).toFixed(1)}px) ` : ""}scale(${(o.f < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})`;
       if (o.sc !== sc) {
         // (the bubble sits over its head)

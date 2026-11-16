@@ -3,6 +3,7 @@
    shapes, no furniture; every duck's head where it stands (mine ringed in white); a red dot for every zombie some
    duck's camera sees right now. A dot fades in as its zombie comes into any camera and fades out quickly once none sees
    it. I want it dead simple and cheap: the map is drawn once, and the canvas only 12 times a second. */
+import { pixelOn, gridPx } from "./pixel.js";
 import {
   CABIN,
   DECK,
@@ -107,7 +108,7 @@ export function mapDraw(now, ctx, s, zs, alive) {
   const phone = Wd.vw < 600,
     w = phone ? 124 : 196,
     h = Math.round((w * (Y1 - Y0)) / (X1 - X0)),
-    dpr = Math.min(2, devicePixelRatio || 1),
+    dpr = pixelOn() ? 1 / gridPx() : Math.min(2, devicePixelRatio || 1), // (the pixel look: one of its pixels is one of the grid's)
     key = w + "x" + h + "@" + dpr;
   if (key !== size) {
     size = key;
@@ -115,6 +116,7 @@ export function mapDraw(now, ctx, s, zs, alive) {
     cv.height = Math.round(h * dpr);
     cv.style.width = w + "px";
     cv.style.height = h + "px";
+    cv.style.imageRendering = pixelOn() ? "pixelated" : "";
     bg = drawMap(w, h, dpr);
     drawnAt = 0;
   }

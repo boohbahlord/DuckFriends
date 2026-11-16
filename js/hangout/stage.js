@@ -11,6 +11,7 @@
 import { activity } from "./registry.js";
 import { PROPS, STAGE, sortY } from "./layout.js";
 import * as A from "./art.js";
+import { pxAt } from "../pxdom.js";
 
 const OWN = ["stage", "stagestairs", "mic"];
 for (const p of PROPS) if (OWN.includes(p.kind)) p.layer = "none"; // (drawn here, in strips)
@@ -120,7 +121,7 @@ activity({
           a.top + p.h * sc > -30;
       if (p.e.hidden !== !vis) p.e.hidden = !vis;
       if (!vis) continue;
-      const tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px) scale(${scs})`;
+      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${scs})`;
       if (p.e._tr !== tr) {
         p.e._tr = tr;
         p.e.style.transform = tr;

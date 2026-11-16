@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v28",
+    version: 28,
+    date: "Nov 16, 2026",
+    title: "The pixel look",
+    news: [
+      "New look: the whole game is pixel art. Ducks, maps, windows and pictures share one pixel size (a duck is 32 pixels tall), with one set of colors.",
+      "Every word and number uses a sharp pixel font, easy to read.",
+      "Pixel mouse pointer: an arrow, a hand over buttons, and a crosshair over the board whenever you hold a weapon.",
+    ],
+    fixed: ["Rabbit Hole runs lighter."],
+  },
+  {
     id: "v27",
     version: 27,
     date: "Nov 15, 2026",
