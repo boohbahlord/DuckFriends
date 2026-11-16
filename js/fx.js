@@ -11,7 +11,8 @@ import { applyPalette } from "./pixelpalette.js";
 import { sfx } from "./sound.js";
 
 const NONE = 255;
-const MAX = 2000, // (particles at most: the oldest give way)
+const MAX = 2000, // (particles at most: the oldest give way; on Low graphics half of them, LOW_MAX)
+  LOW_MAX = 1000,
   DROP = 1,
   CHUNK = 2,
   SPLAT = 3,
@@ -125,7 +126,7 @@ export function fxLasers(list) {
 /* ---------- making particles ---------- */
 function add(kind, x, y, z, vx, vy, vz, life, col, size = 1, fl = NONE) {
   const i = next;
-  next = (next + 1) % MAX;
+  next = (next + 1) % (low ? LOW_MAX : MAX);
   if (!LIFE[i]) alive++;
   X[i] = x - ox;
   Y[i] = y - oy;
@@ -248,14 +249,21 @@ export const BLEED_OF = {
   claw: "claw",
 };
 /* the room's two switches (Game Settings): gore off (no blood at all) and heavy effects off (no smoke, muzzle flashes or
-   screen shake). game.js sets them every frame from the options; every blood and smoke maker below checks them */
+   screen shake). game.js sets them every frame from the options; every blood and smoke maker below checks them.
+   And my own Low graphics (Settings → Performance: Graphics Low, Data saving or Poor connection; html.low), on my
+   screen only (the owner's, Nov 16 19:41Z: everyone's gun effects and animations still show): no smoke and no screen
+   shake, only a tiny muzzle flash, half the particles, pools that last half as long, the Angel machine's sparks one
+   every 120 ms, and this canvas drawn 30 times a second instead of every frame */
 let noGore = false,
-  noHeavy = false;
+  noHeavy = false,
+  low = false;
 export function fxLimits(gore, heavy) {
   noGore = !!+gore;
   noHeavy = !!+heavy;
+  low = document.documentElement.classList.contains("low");
 }
-export const heavyOff = () => noHeavy;
+export const heavyOff = () => noHeavy || low; // (no screen shake, a plain Nuke screen, a still crimson)
+export const lowFx = () => low;
 const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
@@ -529,7 +537,24 @@ export function fxMuzzle(x, y, ang, gun) {
   const u = unit,
     c = Math.cos(ang),
     s = Math.sin(ang),
-    reach = u * M.reach;
+    reach = u * M.reach * (low ? 0.3 : 1);
+  if (low) {
+    /* Low: a tiny flash, two or three pixels at the barrel's end, so every shot still shows (no smoke) */
+    for (let k = 0; k < 3; k++)
+      add(
+        FLASH,
+        x + c * rnd(0, reach),
+        y + s * rnd(0, reach),
+        0,
+        0,
+        0,
+        0,
+        rnd(60, 100),
+        k ? 9 : 8,
+        2,
+      );
+    return;
+  }
   /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames */
   for (let k = 0; k < M.n; k++) {
     const d = rnd(0, reach),
@@ -593,7 +618,7 @@ export function fxFlame(x, y, ang, far, n, cone, band) {
       Math.random() < 0.3 ? 2 : 1,
     );
   }
-  if (noHeavy) return;
+  if (noHeavy || low) return;
   for (let k = 0; k < Math.ceil(n / 8); k++) {
     const d = far * rnd(0.3, 1);
     add(
@@ -632,8 +657,15 @@ export function fxGroundFire(x, y, r, n = 2) {
 
 /* the Angel machine at work (the owner's, Nov 16): sparks thrown up out of its hatch at (x, y) on the screen, h px over
    the floor, falling back; now and then a puff of light smoke */
+let sparkAt = 0;
 export function fxSparks(x, y, h, n = 2) {
   const u = unit;
+  if (low) {
+    const t = performance.now();
+    if (t - sparkAt < 120) return;
+    sparkAt = t;
+    n = 1;
+  }
   for (let k = 0; k < n; k++)
     add(
       SPARK,
@@ -647,7 +679,7 @@ export function fxSparks(x, y, h, n = 2) {
       Math.random() < 0.5 ? 8 : 9,
       1,
     );
-  if (!noHeavy && Math.random() < 0.3)
+  if (!noHeavy && !low && Math.random() < 0.3)
     add(
       SMOKE,
       x + rnd(-0.2, 0.2) * u,
@@ -666,6 +698,7 @@ export function fxSparks(x, y, h, n = 2) {
 const G = 7.5; // (gravity, in ducks a second, each second)
 export function fxFrame(now = performance.now()) {
   if (!cv) return;
+  if (low && last && now - last < 30) return; // (Low: 30 times a second)
   const dt = Math.min(0.05, last ? (now - last) / 1000 : 0);
   last = now;
   if (dx1 > dx0) g.clearRect(dx0, dy0, dx1 - dx0, dy1 - dy0);
@@ -696,7 +729,7 @@ export function fxFrame(now = performance.now()) {
         Z[i] = 0;
         KIND[i] = SPLAT;
         BORN[i] = now;
-        LIFE[i] = k === CHUNK ? 4500 : 3200; // (pools that stay a while: the owner's Nov 16 "gorey")
+        LIFE[i] = (k === CHUNK ? 4500 : 3200) * (low ? 0.5 : 1); // (pools that stay a while: the owner's Nov 16 "gorey"; Low: half as long)
         if (COL[i] === 4) COL[i] = 1;
         if (FL[i] === NONE && Math.random() < 0.6) SIZE[i] = SIZE[i] + 1; // (blood spreads a little where it lands)
       }
