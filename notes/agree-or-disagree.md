@@ -4838,3 +4838,9 @@ The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files
 - Adam: the spec for the workers is /mnt/project-files/notes/power-and-angel-machine.md. Solomon = rules (PR 1 power, PR 2
   Angel machine), Noah = art, Miles Jr. = sounds. Questions sent to the owner: the grenade launcher's radius, and when
   jerry cans can appear.
+
+## Request (2026-11-16 17:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6b5n65ZVSbPw6RjPrwqVQR): 6 HP and respawn in the normal modes
+> in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over
+
+- Adam: given to Jackal. PHP 3 -> 6 (HIT_DMG unchanged), 3 s dead, wounds cleared on standing up, 2.5 s blinking fade-in
+  during which the duck can't be hurt AND its own weapons deal no damage (both readings).
