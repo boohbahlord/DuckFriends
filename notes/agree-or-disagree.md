@@ -4462,3 +4462,9 @@ Map; move them under a line below the other three, into the blue box) and laser-
 - Split (Adam): Solomon = PR C (chain gun lines/every direction in all modes, chain gun screen shake, grenade launcher
   off-screen bug, self-damage: half HP rounded down in Mad God Justin and Dead Ducks Arcade). Noah = Specials icons and
   tooltip not pixelated, plus a sweep for other missed icons.
+
+## Request (owner, 2026-11-16 15:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtPj5AXULCxmCbkESgXPc8HF), word for word
+> the smoke and light effects from firing guns are too small probably because Adam is a fucking retard
+
+- Done (Adam, js/fx.js fxMuzzle): muzzle flash about twice as long and wide, twice the pixels, bigger pixels in the
+  middle; smoke twice the puffs plus one, bigger (3 → 5 as it spreads), drifting farther and lasting a little longer.
