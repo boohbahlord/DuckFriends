@@ -89,6 +89,9 @@ import {
 import {
   holdDown,
   invuln,
+  shielded,
+  comeBack,
+  normalGame,
   hurtFx,
   downStill,
   standUps,
@@ -2074,7 +2077,10 @@ function reduceStep(state, a, now) {
           : {}),
       }; // q: squashed against l/r/u/d; sp: sprinting; lj: a long jump; tb: a trampoline bounce's height; jf: flying with the jetpack (jt: its jets on, fly: high enough that a hit misses, fz: its height on the boards)
       quackMoved(s, a.id); // (Who is the Quack?: first onto the Quack's tile)
-      if (me.dead && (x !== was.x || y !== was.y)) delete me.dead;
+      if (me.dead && (x !== was.x || y !== was.y)) {
+        delete me.dead;
+        comeBack(s, a.id, now);
+      }
       attacks(s, now); // (walked into a swing, or swung into a duck)
       return s;
     }
@@ -2867,7 +2873,7 @@ function reduceStep(state, a, now) {
           cakeGone(s, now) |
           jaimeRun(s, now) |
           (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
-          pwTick(s, now), // (the ducks' wounds going away: wounds.js)
+          pwTick(s, now, normalGame(s)), // (the ducks' wounds going away: wounds.js)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
         was = sig();
@@ -3284,7 +3290,7 @@ export function dodges(s, p, now) {
    after PHP_BACK ms without a hit. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
    What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
    the rest 1 */
-export const PHP = 3,
+export const PHP = 6,
   PHP_BACK = 6000;
 export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];
@@ -3309,8 +3315,10 @@ export const dmgOf = (s, k) => {
     ? d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1))
     : d;
 };
-export function soaks(s, id, now, dmg = 1) {
+export function soaks(s, id, now, dmg = 1, by) {
   if (isMgj(s)) return false;
+  if (normalGame(s) && (shielded(s, id, now) || (by && shielded(s, by, now))))
+    return true; // (spawn protection: nothing hurts a duck that just came back, and what it shoots hurts nobody)
   if (invuln(s)) return hurtFx(s, id, now); // (Invulnerability: the hit only flashes)
   const n = phpLost(s, id, now) + dmg,
     rest = { ...s.php };
@@ -3423,7 +3431,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (
       !(isMgj(s)
         ? mgjSoak(s, h.id, now)
-        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp)))
+        : soaks(s, h.id, now, crit ? PHP : dmgOf(s, sp), by))
     ) {
       s.players[h.id].dead = true;
       holdDown(s, h.id, now);
@@ -3598,7 +3606,7 @@ function blast(s, sh, x, y, now, o = {}) {
     } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
     if (!P.dead && !self) logHit(s, sh.by, id, now);
     const killed =
-      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"));
+      !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"), sh.by);
     if (P.dead || killed) {
       if (!P.dead) playerKilled(s, sh.by, id, w); // (o.max: the Jaime Bomb's, all of its HP)
       P.dead = true;
@@ -3933,7 +3941,7 @@ function scorch(s, by, id, now) {
   for (const [k, u] of Object.entries(s.flamed || {})) if (u > now) left[k] = u;
   s.flamed = { ...left, [id]: now + FLAME.BURN };
   if (by !== id) logHit(s, by, id, now);
-  if (!soaks(s, id, now, 1)) {
+  if (!soaks(s, id, now, 1, by)) {
     P.dead = true;
     holdDown(s, id, now);
     playerKilled(s, by, id, "flamer");
@@ -4026,7 +4034,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         if (
           isMgj(s)
             ? mgjSoak(s, id, now, sh.k === "chair" ? 2 : 1)
-            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k))
+            : soaks(s, id, now, crit ? PHP : dmgOf(s, sh.k), sh.by)
         )
           sh.got = [...(sh.got || []), id];
         else {
@@ -4389,7 +4397,7 @@ function jaimeRun(s, now) {
       if (hit) {
         jaimeCount(s, { id: J.t });
         logHit(s, J.by, J.t, now);
-        if (!soaks(s, J.t, now)) {
+        if (!soaks(s, J.t, now, 1, J.by)) {
           P.dead = true;
           holdDown(s, J.t, now);
           playerKilled(s, J.by, J.t, "jaime");
@@ -4422,6 +4430,7 @@ const critRoll = (s, w) => pwOn(s) && Math.random() < (PCRIT[w] || 0);
 function wounded(s, id, w, now, crit) {
   const P = s.players[id];
   if (!pwOn(s) || !P) return;
+  if (normalGame(s) && shielded(s, id, now)) return; // (spawn protection: no wounds either)
   if (crit && P.dead) {
     pwAdd(s, id, ["x0"], now, true);
     holdDown(s, id, now, CRIT_DOWN);

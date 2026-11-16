@@ -8,6 +8,7 @@ export const DEAD_STILL = 6000; // ms: the Duck Cabin's default
 export const DOWN_GAMES = 1000; // ms: the boards' default (owner 2026-11-03 17:15Z: half a second longer than 0.5 s)
 export const DOWN_OK = [0, 500, 1000, 2000, 3000, 5000, 6000]; // (6 s only in Duck Cabin)
 const cabin = (s) => s.options.mode === "hang";
+export const DOWN_NORMAL = 3000; // ms: the normal games' default (owner, Nov 16: their death lasts three seconds)
 export const downFor = (s) => {
   if (s.options.mode === "mgj") return 5000; // (Mad God Justin: always 5 s)
   const v = s.options.downMs;
@@ -15,8 +16,26 @@ export const downFor = (s) => {
     ? v
     : cabin(s)
       ? DEAD_STILL
-      : DOWN_GAMES;
+      : s.options.mode === "l4dd"
+        ? DOWN_GAMES
+        : DOWN_NORMAL;
 };
+/* I want the normal games (every mode but Quacky Zombies, Mad God Justin and Duck Cabin) to give a duck that comes
+   back from dying its body back at once (its wounds, holes and knocked-off things gone) and then SPAWN_MS of spawn
+   protection: nothing hurts it, and what it shoots, swings or blows up hurts nobody (s.prot[id] = until) */
+export const SPAWN_MS = 2500;
+export const normalGame = (s) =>
+  !["l4dd", "mgj", "hang"].includes(s.options.mode);
+export const shielded = (s, id, now) => !!(s.prot && s.prot[id] > now);
+export function comeBack(s, id, now) {
+  if (!normalGame(s)) return;
+  if (s.pw && s.pw[id]) {
+    const rest = { ...s.pw };
+    delete rest[id];
+    s.pw = Object.keys(rest).length ? rest : null;
+  }
+  s.prot = { ...live(s.prot, now), [id]: now + SPAWN_MS };
+}
 const live = (o, now) => {
   const st = {};
   for (const [k, v] of Object.entries(o || {})) if (v > now) st[k] = v;
@@ -72,6 +91,7 @@ export function standUps(s, now) {
     const P = s.players[id];
     if (P && P.dead && !hooks.some((fn) => fn(s, id, now))) {
       delete P.dead;
+      comeBack(s, id, now);
       ch = true;
     }
   }

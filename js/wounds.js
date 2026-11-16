@@ -206,7 +206,7 @@ export function pwHit(s, id, w, now, down) {
   if (c) pwAdd(s, id, [c], now, down);
 }
 /* the host's heartbeat: each duck's clock stops while it's down and starts once it's up; wounds that ran out go */
-export function pwTick(s, now) {
+export function pwTick(s, now, keep = false) {
   if (!s.pw) return false;
   let ch = false;
   const next = {};
@@ -217,6 +217,15 @@ export function pwTick(s, now) {
       continue;
     }
     let o = w;
+    if (keep) {
+      /* the normal games: a wound stays until the duck dies and comes back (rules.js), so a live duck's clock is stopped */
+      if (!P.dead && w.at) {
+        o = { m: settled(w, now), at: 0 };
+        ch = true;
+      }
+      next[id] = o;
+      continue;
+    }
     if (P.dead && w.at) o = { m: settled(w, now), at: 0 };
     else if (!P.dead && !w.at) o = { m: w.m, at: now };
     const m = settled(o, now);
@@ -236,11 +245,18 @@ export function pwExploded(s, id, seed, now) {
 }
 /* the wounds duck id shows now (for l4ddart.js hitsOf): a knocked-off hat or face item in its last BACK ms shows
    coming back on (spot 1) */
+/* the modes that aren't the normal games: there a knocked-off hat comes back by itself, as it did (in the normal games it
+   stays off until the duck comes back from dying: rules.js) */
+const NOT_NORMAL = ["l4dd", "mgj", "hang"];
 export function pwCodes(s, id, now) {
   const w = (s.pw || {})[id];
   if (!w) return "";
   return settled(w, now)
     .filter(([, l]) => l > 0)
-    .map(([c, l]) => ("hm".includes(c[0]) && l < BACK ? c[0] + "1" : c))
+    .map(([c, l]) =>
+      "hm".includes(c[0]) && l < BACK && NOT_NORMAL.includes(s.options.mode)
+        ? c[0] + "1"
+        : c,
+    )
     .join("");
 }
