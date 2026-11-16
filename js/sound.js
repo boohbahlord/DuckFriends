@@ -38,6 +38,10 @@ export const VOL = {
   jetStart: -19,
   jetLoop: -23,
   jetStop: -18,
+  // the flamethrower: lit, its roar while held, its last puff
+  flameStart: -11,
+  flameLoop: -14,
+  flameStop: -13,
   // guns: each its own shot
   handgun: -6,
   revolver: -7,
@@ -47,6 +51,8 @@ export const VOL = {
   chaingun: -9,
   sniper: -12,
   shotgun: -7,
+  dbarrel: -5, // (the double barrel: louder than the pump shotgun)
+  burst: -9, // (the burst rifle: one round of its three)
   pump: -15,
   glauncher: -10,
   bow: -4,
@@ -58,6 +64,9 @@ export const VOL = {
   reloadAk: -12,
   reloadLmg: -13,
   reloadChaingun: -11,
+  reloadBurst: -12,
+  reloadDbarrel: -13,
+  reloadFlamer: -13,
   reloadSniper: -12,
   reloadShotgun: -6,
   reloadGlauncher: -13,
@@ -145,7 +154,8 @@ const ALIAS = { gunshot: "handgun" };
 export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
   CAP = {
-    ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3 },
+    ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3, burst: 4 },
+    ...{ flameLoop: 3 },
     ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
     ...{ l4crack: 3, l4nail: 3, card: 3 },
   }, // … and of one kind (2 for the rest)
@@ -161,6 +171,7 @@ const GROUPS = {
   game: [
     ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
+    ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["boom", "meteor", "tileIn", "quack"],
@@ -428,9 +439,36 @@ function jet(id, on, o = {}) {
   }
 }
 
-/* leaving a game: every jet quiet */
+/* the flamethrower: the game tells me each puff (ten a second while it's held, o.id the duck's); the first one lights
+   it (its start, then its roar on a loop, following the duck), and once the puffs stop coming it goes out (its last
+   puff). Each duck's own */
+const flames = new Map(); // id → { l: its roar's loop, o, t: the timer that puts it out }
+const FLAME_OUT = 450; // ms without a puff and it's let go (puffs come every 100 ms; online ones can come late)
+function flamer(o = {}) {
+  const id = o.id ?? "";
+  let f = flames.get(id);
+  if (!f) {
+    play("flameStart", o);
+    f = { l: loop("flameLoop", o), o };
+    flames.set(id, f);
+  } else if (o.x != null) f.l.move(o.x, o.y);
+  f.o = o;
+  clearTimeout(f.t);
+  f.t = setTimeout(() => flameOut(id), FLAME_OUT);
+}
+function flameOut(id) {
+  const f = flames.get(id);
+  if (!f) return;
+  clearTimeout(f.t);
+  f.l.stop();
+  flames.delete(id);
+  play("flameStop", f.o);
+}
+
+/* leaving a game: every jet and every flamethrower quiet */
 export function jetsOff() {
   for (const id of [...jets.keys()]) jet(id, false);
+  for (const id of [...flames.keys()]) flameOut(id);
 }
 
 /* the weapons in hand, with a magazine: each its own reload, its file as long as the reload in the game (s: tools/sfx/
@@ -445,6 +483,9 @@ const RELOAD_S = {
   chaingun: 4,
   sniper: 2.2,
   glauncher: 4,
+  burst: 2,
+  dbarrel: 2, // (a second a shell: one shell plays it faster)
+  flamer: 4,
 };
 function reload(w, o = {}) {
   if (!RELOAD[w]) return null;
@@ -464,6 +505,9 @@ const RELOAD = {
   sniper: "reloadSniper",
   shotgun: "reloadShotgun",
   glauncher: "reloadGlauncher",
+  burst: "reloadBurst",
+  dbarrel: "reloadDbarrel",
+  flamer: "reloadFlamer",
 };
 
 /* a round in flesh, by what fx.js's blood says went in (BLEED_OF: small, big, heavy, shot, blade, blunt, arrow, claw) */
@@ -539,6 +583,7 @@ const SFX = {
   tat: named("smg"),
   reload,
   jet,
+  flamer,
   flesh,
   land,
   hit,
