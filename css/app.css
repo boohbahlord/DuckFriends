@@ -18012,10 +18012,19 @@ html.pixel .vt button {
 html.pixel.armed :is(.board, .hang-board) {
   cursor: var(--cur-cross), crosshair;
 }
-/* the stats screen's line about when the ducks vote on the next game (Vote return): a line of its own under the buttons */
+/* the stats screen's line about when the ducks vote on the next game (Vote return): a line of its own under the buttons.
+   It never sets the row's width (contain: inline-size): as one long line it made the bottom bar's middle as wide as the
+   screen, so the controls on the left were squeezed to one word a line and the bar grew over half the board (owner,
+   Nov 16) */
 .act-row .vote-back-note {
   flex-basis: 100%;
   text-align: center;
+  contain: inline-size;
+}
+/* with that line, the row's buttons wrap at about the width of two or three of them, so the controls on the left keep
+   their width and the bar stays low over the board */
+.act-row:has(> .vote-back-note) {
+  max-width: 40rem;
 }
 /* Game Settings: the "Low" chip by Gore and Heavy effects while my own Low graphics lighten them on my screen (fx.js);
    small, on the name's line, even on a phone */
