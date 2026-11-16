@@ -4216,3 +4216,11 @@ Zombies only; Hangout's Duck Cabin unchanged).
   meters. Adam relayed the owner's answer: it is the only look (no setting, no test switch). The mouse pointer is drawn
   in pixels at 64 to a duck (arrow, hand, crosshair, text bar); any weapon in hand makes it the crosshair over the
   board, in every mode.
+
+"When you try and scroll with the mouse wheel to go through hot bar in mad god justin or other games, it does not work as it does in quacky zombies, bit mistake" and "the game should have any item already selected in the hotbar become toggled by simply clicking shift" (owner 2026-11-16 13:17Z, via Adam)
+- Jackal: the wheel (`wheelPick`, js/game.js) was stuck on the first slot in Mad God Justin because it looked up the
+  current slot by `lastKey`, which Mad God Justin doesn't set; there it now goes by the weapon in hand (`held`) and
+  cycles only what goes out in hand (knife, bow, the picked-up weapon, zebra cake), not Jaime. A tap of Shift (down and
+  up within 200 ms with no other key) keeps the selected item on or puts it away (`shiftTapped`: the same as Shift and
+  its number; Quacky Zombies: its special slot on and off; Mad God Justin: nothing, its weapons are always out).
+  Holding Shift still sprints.
