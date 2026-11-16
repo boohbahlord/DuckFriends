@@ -81,6 +81,7 @@ export const FILES = {
   dropGot: { n: 1 },
   flashOn: { n: 1 },
   flashOff: { n: 1 },
+  tileIn: { n: 1 },
   lampOn: { n: 1 },
   lampOff: { n: 1 },
   lever: { n: 1 },

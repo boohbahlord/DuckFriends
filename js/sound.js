@@ -108,6 +108,7 @@ export const VOL = {
   ping: -17,
   pop: -16,
   boop: -15,
+  tileIn: -21, // (stepping onto another tile: faint)
   // Dead Ducks Arcade: boards, groans, the fireplace's spin, a sale, drops, the flashlight
   l4crack: -12,
   l4nail: -14,
@@ -156,7 +157,7 @@ const GROUPS = {
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
-    ...["boom", "meteor"],
+    ...["boom", "meteor", "tileIn"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
   l4dd: [

@@ -729,6 +729,14 @@ SOUNDS = {
         kbps=32,
         credit=("Kenney, Interface Sounds (switch)", KENNEY_IFACE),
     ),
+    # stepping onto another tile or answer (game.js tileKnock): a casino chip laid down, soft (sound.js pitches it
+    # by the tile)
+    "tileIn": dict(
+        layers=[(KC + "chipLay1.ogg", 0, 0.4, 0, 1)],
+        room=False,
+        kbps=32,
+        credit=("Kenney, Casino Audio (chipLay)", KENNEY_CASINO),
+    ),
     # ---- batch 3: Duck Cabin ----
     # a lamp's switch, on and off
     "lampOn": one(
