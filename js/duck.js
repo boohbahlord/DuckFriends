@@ -200,6 +200,10 @@ export function duckSVG(
 ) {
   const L = { ...DUCK_DEFAULT, ...plainLook(look || {}) },
     id = "dk" + ++uid;
+  /* a hat or a face item knocked off (gone), or coming back on (half see-through): on every kind of duck, Dat Boi and
+     the flat ones too (the owner saw a hat fly off and stay on at once) */
+  const worn = (svg, g) =>
+    !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   if (L.style === "jack") {
     // Jack (or Jill) in a Box: not a duck; only the eyes and the colors draw on him, the rest stays stored
     return `<svg class="duck jack" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="${esc(title || styleName(L))}">
@@ -213,7 +217,7 @@ ${shadow ? `<ellipse cx="64" cy="109" rx="38" ry="6.4" fill="#000" opacity=".22"
       k = 1 + 0.1 * clamp1(L.size);
     return `<svg class="duck datboi${L.rank === "rainbow" ? " rainbow" : ""}${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || styleName(L))}">
 ${k !== 1 ? `<g transform="translate(56 106) scale(${k.toFixed(3)}) translate(-56 -106)">` : ""}
-${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(hat.back)}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(face)}${onHead(hat.front)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${shadow ? `<ellipse cx="55" cy="106.4" rx="26" ry="4.8" fill="#000" opacity=".22"/>` : ""}${onHead(worn(hat.back, gone && gone.hat))}<g class="dbr">${datboiSVG(L, id, dead)}</g>${onHead(worn(face, gone && gone.face))}${onHead(worn(hat.front, gone && gone.hat))}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   if (L.image) {
     // an uploaded square picture, standing like a card, with the same little shadow
@@ -254,10 +258,10 @@ ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" 
     return `<svg class="duck flat${top ? " hatted" : ""}" viewBox="0 ${-top} 120 ${120 + top}" width="${size}" height="${((size * (120 + top)) / 120).toFixed(1)}" role="img" aria-label="${esc(title || "Duck")}">
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
-${hat.back}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
+${worn(hat.back, gone && gone.hat)}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
 ${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>` : ""}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${gone && gone.beak ? "" : beakSVG(L)}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}${zap && !(gone && gone.eyes) ? eyes : ""}${worn(hat.front, gone && gone.hat)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   const noHead = !!(gone && gone.head),
     holes =
@@ -289,9 +293,6 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
           )
           .join("")
       : "";
-  /* a hat or a face item knocked off (gone), or coming back on (half see-through) */
-  const worn = (svg, g) =>
-    !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal];
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */

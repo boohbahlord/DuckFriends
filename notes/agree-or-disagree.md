@@ -4861,3 +4861,4 @@ Owner: "make sure they lose their hats and other items blown off and they wont r
 Decided: PHP 6 (the slug and chain gun still take it all); the boards' default down time is 3 s (the host's Down time setting still overrides it); a duck that comes back gets its wounds and knocked-off items cleared and 2.5 s of spawn protection (blinks, fades in; nothing hurts it, and its own weapons and explosives hurt nobody); in the normal games wounds and knocked-off hats no longer fade while the duck is alive. Not Quacky Zombies, Mad God Justin or Hangout. HP regeneration (6 s) untouched.
 
 
+- Version 40: Noah's #322, knocked-off hats no longer also drawn on Blocks, 2D shape and Dat Boi ducks (owner 17:29Z).

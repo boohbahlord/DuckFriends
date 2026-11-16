@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v40",
+    version: 40,
+    date: "Nov 16, 2026",
+    title: "Hats knocked off for real",
+    news: [],
+    fixed: [
+      "Hats and face items knocked off Blocks, 2D shape and Dat Boi ducks no longer stay on their heads.",
+    ],
+  },
+  {
     id: "v39",
     version: 39,
     date: "Nov 16, 2026",
