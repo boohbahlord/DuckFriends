@@ -5,7 +5,7 @@ import { ARM_COOL } from "./armspeed.js";
    weapon used up goes back to the one out before. Together they must bring Justin's HP to 0 (no time limit: the owner's,
    Nov 3; every win counts toward the lightning eyes). His HP is 20 + 20 for each player when the fight starts, and one
    stab takes 1. Each duck has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it
-   flickers), and a duck out of HP stays down until another holds E by it for 5 s (REVIVE) or the fight's end. He never goes after a duck that's down. A jump dodges everything but
+   flickers), and a duck out of HP stays down until another holds E by it for 2.5 s (REVIVE) or the fight's end. He never goes after a duck that's down. A jump dodges everything but
    in its first and last fifth (rules.js dodges).
    - His guns (the owner's, Nov 3: no more pistol): the LMG and the SMG fire bursts at a duck (each bullet takes 1 HP),
      and the pump shotgun a cone of pellets at a duck close enough. After each burst he reloads; while he reloads he
@@ -250,8 +250,8 @@ export const mgjHolds = (s, id, w) =>
 const MGJ_COOL = { knife: ARM_COOL.knife, bow: ARM_COOL.bow }; // (the knife: four a second, as in every mode)
 export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
-   hold E (a phone: the Revive button) for REVIVE.MS */
-export const REVIVE = { MS: 5000, REACH: 2 };
+   hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16) */
+export const REVIVE = { MS: 2500, REACH: 2 };
 /* the Xbox (the owner's): once a game, once he has lost XB_LOST HP, a desk comes in with his Xbox and a monitor on it;
    he runs to it and turns the Xbox off (the light and the screen go dark), fades away, as for the meteor, and comes back
    with faster attacks and his HP up by 1, and 1 more for every player (never past full). XB: ms the desk takes to come

@@ -423,15 +423,14 @@ function seeDrops(s) {
     D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
   }
 }
-/* Instant Kill, Double Points and Speed Boost, with the seconds they have left; Sale, until the round ends */
+/* Instant Kill, Double Points, Speed Boost and Sale, with the seconds they have left */
 function seeOn(s) {
   if (!onEl) return;
   const now = clockNow(),
     on = s.hang.l4on || {},
-    rows = ["kill", "double", "speed"]
+    rows = ["kill", "double", "speed", "sale"]
       .filter((k) => on[k] > now)
       .map((k) => [k, Math.ceil((on[k] - now) / 1000)]);
-  if (saleOn(s)) rows.push(["sale", "Sale"]);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;
   onSig = sig;
@@ -669,6 +668,8 @@ function paint(now, ctx) {
 }
 
 /* ---------- Justin's Butler, standing by the card table ---------- */
+/* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
+const BUTLER_K = 0.7; // (about the size he showed at on a computer)
 function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
@@ -679,7 +680,7 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
     el = document.createElement("div");
   el.className = "hang-npc duck l4-butler";
   const url = svgDataURL(svg);
-  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
   const body = el.firstChild;
   body.style.width = "64px";
   body.style.height = h.toFixed(1) + "px";
@@ -1351,10 +1352,11 @@ activity({
           butler.el.style.zIndex =
             Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
         }
-        pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
+        const bk = sc * BUTLER_K;
+        pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
         if (butler.k !== sc) {
           butler.k = sc;
-          butler.body.style.transform = `scale(${sc.toFixed(4)})`;
+          butler.body.style.transform = `scale(${bk.toFixed(4)})`;
           butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
         }
       }

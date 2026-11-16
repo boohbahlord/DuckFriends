@@ -31,6 +31,7 @@
      l4pt { id: points }
      l4u  { id: { acc, as, hp, sp, rl } }: the upgrades bought (accuracy, attack speed, max HP, speed, faster reload)
      l4box { id: { by, t, w } }: the fireplace's weapons, one for each duck that paid (at t), landing on w after BOX.spin
+     l4fo { id: [weapons in a row, items in a row] }: the fireplace's odds for each duck (fireRoll)
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
@@ -139,7 +140,7 @@ export const ARMS = {
     crit: 0.05,
     speed: ARM_SPEED.handgun,
     mag: 8,
-    all: 72,
+    all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
     reload: ARM_RELOAD,
   },
   bow: {
@@ -148,7 +149,7 @@ export const ARMS = {
     dmg: 1,
     crit: 0.05,
     speed: ARM_SPEED.bow,
-    all: 150,
+    all: 225, // (150, and 50% more with no magazine: the owner's, Nov 16)
   },
   dagger: {
     kind: "ranged",
@@ -162,7 +163,7 @@ export const ARMS = {
     cool: ARM_COOL.shotgun,
     dmg: 1,
     speed: ARM_SPEED.shotgun,
-    all: 48, // (no magazine: the owner's, Nov 4)
+    all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
     pellets: 5,
     spread: 0.3,
     life: 420,
@@ -182,7 +183,7 @@ export const ARMS = {
     crit: 0.05,
     speed: 1900,
     mag: 5,
-    all: 24,
+    all: 24 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
     reload: 2200,
     pierce: 3, // (zombies a bullet goes through)
     k: "sniper",
@@ -195,7 +196,7 @@ export const ARMS = {
     crit: 0.0175,
     speed: 1100,
     mag: 20,
-    all: 160,
+    all: 160 + 5 * 20, // (5 more magazines: the owner's, Nov 16)
     reload: 1400,
     k: "smg",
   },
@@ -207,7 +208,7 @@ export const ARMS = {
     crit: 0.03,
     speed: 1200,
     mag: 30,
-    all: 180,
+    all: 180 + 5 * 30, // (5 more magazines: the owner's, Nov 16)
     reload: 1900,
     k: "ak",
   },
@@ -216,7 +217,7 @@ export const ARMS = {
     auto: true,
     cool: 67, // (15 a second)
     dmg: 99,
-    all: 60,
+    all: 4 * 60, // (four times as much: the owner's, Nov 16)
     far: 3000,
   },
   revolver: {
@@ -226,11 +227,11 @@ export const ARMS = {
     crit: 0.04,
     speed: 1150,
     mag: 5,
-    all: 75,
+    all: 75 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
     reload: 1700,
     k: "revolver",
   },
-  glauncher: { kind: "ranged", cool: 1200, all: 15, speed: 900, far: 760 },
+  glauncher: { kind: "ranged", cool: 1200, all: 23, speed: 900, far: 760 }, // (all: 15, and 50% more with no magazine: the owner's, Nov 16)
   lmg: {
     kind: "ranged",
     auto: true,
@@ -239,7 +240,7 @@ export const ARMS = {
     crit: 0.0125,
     speed: 1150,
     mag: 75,
-    all: 225,
+    all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
     reload: 2800,
     k: "lmg",
   },
@@ -363,7 +364,7 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  { id: "acc", name: "Accuracy", what: "+5% headshots", most: 5 },
+  { id: "acc", name: "Critical Chance", what: "+5% crits", most: 5 },
   { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 5 },
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
@@ -411,15 +412,9 @@ export const priceOf = (id, n) =>
   );
 const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
-   once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time */
-export const saleOn = (s) =>
-  !!(
-    s &&
-    s.hang &&
-    s.hang.l4sale &&
-    s.hang.l4 &&
-    s.hang.l4.r === s.hang.l4sale.r
-  );
+   once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
+   It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
+export const saleOn = (s) => !!(s && s.hang && s.hang.l4sale); // (for DROP.FOR: dropTick ends it)
 export const priceFor = (s, id, what, n) => {
   const full = what === "box" ? BOX.price : priceOf(what, n);
   if (!saleOn(s)) return full;
@@ -1009,8 +1004,9 @@ function jetBurn(s, now, ids) {
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
    own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
    fell (the owner's, Nov 3); it lies there a minute, into the next round too, and the first duck to walk over it takes
-   it for everyone. Instant Kill, Double Points and Speed Boost last 30 s (Speed Boost: the owner's;
-   the other two: Adam's plan's guess, question 5), Sale the rest of the round. */
+   it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
+   drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
+   the bag (the owner's, Nov 16). */
 export const DROPS = ["kill", "ammo", "nuke", "speed", "double", "sale"];
 export const DROP = {
   CHANCE: 0.25,
@@ -1020,7 +1016,8 @@ export const DROP = {
   AMMO: 0.05, // the Max Ammo of its own
   AMMO_IN: 60000, // in the round's first minute
   LIFE: 60000, // ms a drop lies there (it stays through a round's end)
-  FOR: 60000, // ms Instant Kill, Double Points and Speed Boost last (a minute each, into the next round: the owner's, Nov 4)
+  FOR: 45000, // ms Instant Kill, Double Points and Sale last, into the next round too (the owner's, Nov 16)
+  SPEED_FOR: 60000, // ms Speed Boost lasts (the owner's, Nov 4)
   AMMO_W: 1.2, // once a drop comes, Max Ammo is this likely against 1 for each of the others (the owner's, Nov 4)
   REACH: 70, // world px: how near a duck walks over one
 };
@@ -1033,12 +1030,23 @@ const DROP_NAMES = {
   sale: "Sale",
 };
 export const dropName = (k) => DROP_NAMES[k] || k;
-/* which drop: each as likely as the others, Max Ammo AMMO_W times as likely */
-function pickDrop() {
-  const w = (k) => (k === "ammo" ? DROP.AMMO_W : 1);
-  let r = Math.random() * DROPS.reduce((a, k) => a + w(k), 0);
-  for (const k of DROPS) if ((r -= w(k)) < 0) return k;
-  return DROPS[DROPS.length - 1];
+/* which drop: one from the game's bag (s.hang.l4bag: the ones not come yet), each as likely as the others, Max Ammo
+   AMMO_W times as likely and always in it; the bag fills again once it's empty */
+const BAGGED = DROPS.filter((k) => k !== "ammo");
+function pickDrop(s) {
+  const bag = s.hang.l4bag && s.hang.l4bag.length ? s.hang.l4bag : BAGGED,
+    can = [...bag, "ammo"],
+    w = (k) => (k === "ammo" ? DROP.AMMO_W : 1);
+  let r = Math.random() * can.reduce((a, k) => a + w(k), 0),
+    k = can[can.length - 1];
+  for (const c of can)
+    if ((r -= w(c)) < 0) {
+      k = c;
+      break;
+    }
+  const left = bag.filter((c) => c !== k);
+  s.hang.l4bag = left.length ? left : [...BAGGED];
+  return k;
 }
 /* when this round's drops come (ms after its start) and which: a random one, or the Max Ammo */
 function dropPlan() {
@@ -1069,7 +1077,7 @@ function dropTick(s, L, zs, now, T, ids) {
   if (L.dq && L.dq.length && T >= L.dq[0][0]) {
     const [, k0] = L.dq[0];
     L.dq = L.dq.slice(1); // (L: the round, as l4Tick keeps it)
-    L.due = [...(L.due || []), k0 || pickDrop()]; // (it waits for the next kill)
+    L.due = [...(L.due || []), k0 || pickDrop(s)]; // (it waits for the next kill)
   }
   const was = s.hang.l4dr || [];
   let dr = was.filter((d) => now < d.until);
@@ -1105,10 +1113,12 @@ function dropTick(s, L, zs, now, T, ids) {
     L.due = L.due.slice(1);
   }
   const on = s.hang.l4on || {};
-  if (Object.values(on).some((u) => u <= now))
+  if (Object.values(on).some((u) => u <= now)) {
     s.hang.l4on = Object.fromEntries(
       Object.entries(on).filter(([, u]) => u > now),
     ); // (what wore off)
+    if (s.hang.l4sale && !s.hang.l4on.sale) s.hang.l4sale = null;
+  }
 }
 /* the Nuke: each zombie it kills has a 5% chance of +250 more (the owner's, Nov 4) */
 const NUKE_CRIT = 0.05;
@@ -1118,12 +1128,14 @@ function takeDrop(s, k, by, zs, now, ids) {
   if (k === "kill" || k === "double")
     s.hang.l4on = { ...(s.hang.l4on || {}), [k]: now + DROP.FOR };
   else if (k === "speed") {
-    s.hang.l4on = { ...(s.hang.l4on || {}), speed: now + DROP.FOR };
+    s.hang.l4on = { ...(s.hang.l4on || {}), speed: now + DROP.SPEED_FOR };
     const ad = { ...(s.hang.l4ad || {}) };
-    for (const id of ids) ad[id] = Math.max(ad[id] || 0, now + DROP.FOR);
+    for (const id of ids) ad[id] = Math.max(ad[id] || 0, now + DROP.SPEED_FOR);
     s.hang.l4ad = ad; // (the adrenaline shot's speed, for everyone)
-  } else if (k === "sale") s.hang.l4sale = { r: s.hang.l4.r, used: {} };
-  else if (k === "ammo") maxAmmo(s);
+  } else if (k === "sale") {
+    s.hang.l4on = { ...(s.hang.l4on || {}), sale: now + DROP.FOR };
+    s.hang.l4sale = { used: {} }; // (a new Sale: every half price can be spent again)
+  } else if (k === "ammo") maxAmmo(s);
   else if (k === "nuke") {
     const T = now - s.hang.l4.t0;
     let hp = 0,
@@ -1169,9 +1181,11 @@ function setUp(s, now) {
   s.hang.l4pt = {};
   s.hang.l4u = {};
   s.hang.l4box = {};
+  s.hang.l4fo = {};
   s.hang.l4dr = [];
   s.hang.l4on = {};
   s.hang.l4sale = null;
+  s.hang.l4bag = [...BAGGED];
   s.hang.l4b = {};
   s.hang.l4f = {};
   s.hang.power = 0; // (the power is cut: the lamps are dark; the fires burn)
@@ -1377,7 +1391,7 @@ function fireplace(s, id, a, now, mx, my) {
       [id]: {
         by: id,
         t: now,
-        w: fireRoll(s, kit),
+        w: fireRoll(s, id, kit),
       },
     };
     return true;
@@ -1389,17 +1403,31 @@ function fireplace(s, id, a, now, mx, my) {
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
 }
-/* the fireplace's spin, in this order (the owner's, Nov 15) */
-function fireRoll(s, kit) {
+/* the fireplace's spin, in this order (the owner's, Nov 15). An item comes 15 spins in 100, and for each duck that moves
+   (the owner's, Nov 16): every weapon in a row makes an item 10 points likelier next spin; two items in a row make it 5
+   points less likely (and each more item after them 5 more); a weapon puts the items' count back to 0, an item the
+   weapons' */
+export const ITEM_ODDS = { start: 1 - WEAPON_ODDS, weapon: 0.1, twice: 0.05 };
+export function itemOdds([wr, ir] = [0, 0]) {
+  const v =
+    ITEM_ODDS.start +
+    ITEM_ODDS.weapon * wr -
+    ITEM_ODDS.twice * Math.max(0, ir - 1);
+  return Math.min(0.95, Math.max(0.02, v));
+}
+function fireRoll(s, id, kit) {
   if (Math.random() < HELPER.chance && !s.players[HELPER.id]) return HELPER.w; // 1 in 100: Justin
   if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
     return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
-  const weapons = WEAPONS.filter((w) => !kit.sl.includes(w)),
+  const fo = (s.hang.l4fo || {})[id] || [0, 0],
+    weapons = WEAPONS.filter((w) => !kit.sl.includes(w)),
     items = ITEMS.filter((w) => !kit.sl.includes(w)),
-    group =
-      weapons.length && (!items.length || Math.random() < WEAPON_ODDS)
-        ? weapons // 85%: a weapon
-        : items; // 15%: an item
+    item = !weapons.length || (!!items.length && Math.random() < itemOdds(fo)),
+    group = item ? items : weapons;
+  s.hang.l4fo = {
+    ...s.hang.l4fo,
+    [id]: item ? [0, fo[1] + 1] : [fo[0] + 1, 0],
+  };
   return group[Math.floor(Math.random() * group.length)];
 }
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
@@ -1456,7 +1484,16 @@ export function helperOut(s) {
   if (s.pos) delete s.pos[id];
   if (s.rainbow) delete s.rainbow[id];
   if (s.hang)
-    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
+    for (const k of [
+      "l4p",
+      "l4a",
+      "l4b",
+      "l4f",
+      "l4pt",
+      "l4u",
+      "l4box",
+      "l4fo",
+    ])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
         const o = { ...s.hang[k] };
         delete o[id];

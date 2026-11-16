@@ -4216,3 +4216,16 @@ Zombies only; Hangout's Duck Cabin unchanged).
   meters. Adam relayed the owner's answer: it is the only look (no setting, no test switch). The mouse pointer is drawn
   in pixels at 64 to a duck (arrow, hand, crosshair, text bar); any weapon in hand makes it the crosshair over the
   board, in every mode.
+
+## Nov 16 2026: zombie batch, gameplay and UI (owner 10:20Z and 13:17Z; Adam's picks in questions 48-66)
+- PR 1 (Solomon the 2nd): Mad God Justin's revive takes 2.5 s (REVIVE.MS, was 5 s). The zombie minimap is 150 px wide
+  (120 on narrow screens; was 196), opacity 0.6 on a lighter backing, and hidden on phones (touchOnly). The Butler stays
+  small on purpose (BUTLER_K 0.7: the pixel look had shrunk him by mistake, the owner loved it); the toilet Justin is
+  drawn full size (his img fills its box). "Quacky Zombies" is "Dead Ducks Arcade" in every text players see (code
+  names and older Updates pages keep the old name). Ammo: guns with a magazine carry 5 more magazines (the LMG 3), the
+  bow, the shotgun and the grenade launcher 50% more, the chain gun 4x (daggers, grenades, items unchanged). Accuracy is
+  "Critical Chance" (+5% crits). The fireplace's item chance starts at 15% and moves per duck (l4fo): +10 points for
+  each weapon in a row, -5 for each item after two in a row; a weapon resets the items' count, an item the weapons'
+  (2% to 95%). Drops: one shuffle bag per game (l4bag): every drop comes once before any comes again, Max Ammo always
+  in it at its 1.2 weight. Instant Kill, Double Points and Sale last 45 s, Speed Boost 1 min; Sale is now timed
+  (l4on.sale) instead of lasting the round.
