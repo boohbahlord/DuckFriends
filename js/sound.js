@@ -28,7 +28,7 @@ import { FILES } from "./sfxlist.js";
    about as loud as the old music, the biggest blasts the loudest */
 export const VOL = {
   // the lobby countdown and Dead Ducks Arcade's new round (far off and faint)
-  countTick: -10,
+  countTick: -13,
   countGo: -12,
   l4round: -14,
   // moving
@@ -89,11 +89,11 @@ export const VOL = {
   throw: -11,
   cakeThrow: -11,
   bonk: -13,
-  // explosions: the grenade, the Jaime Bomb, the meteor, the nuke
+  // explosions: one boom for every explosive (the Jaime Bomb plays it louder: SFX.boomBig); the meteor and the nuke
+  // are their own, longer and the loudest of all ("more catastrophic", the owner, Nov 16)
   boom: -7,
-  boomBig: -3,
-  meteor: -6,
-  nuke: -5,
+  meteor: -3,
+  nuke: -2,
   // the menus: faint
   uiPress: -13,
   uiOn: -23,
@@ -128,7 +128,7 @@ const GROUPS = {
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
-    ...["boom", "boomBig", "meteor"],
+    ...["boom", "meteor"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
   l4dd: ["l4round", "zstep", "nuke"],
@@ -324,6 +324,10 @@ function voice(name, o = {}, loops = false) {
   return v;
 }
 export const play = (name, o) => voice(name, o);
+/* a sound stopped before its end, faded (a reload given up when the duck switched weapons) */
+export function hush(v) {
+  if (v && !v.cut && ac) cut(v, soon());
+}
 
 /* a sound on a loop, faded in and out (the jetpack's roar) */
 export function loop(name, o = {}) {
@@ -376,7 +380,27 @@ export function jetsOff() {
   for (const id of [...jets.keys()]) jet(id, false);
 }
 
-/* the weapons in hand, with a magazine: each its own reload */
+/* the weapons in hand, with a magazine: each its own reload, its file as long as the reload in the game (s: tools/sfx/
+   build.py makes them so). Told how long this one takes (a Faster reload, or heard late), it plays faster or slower to
+   end with it, within reason */
+const RELOAD_S = {
+  handgun: 1.2,
+  revolver: 1.7,
+  smg: 1.4,
+  ak: 1.9,
+  lmg: 2.8,
+  chaingun: 4,
+  sniper: 2.2,
+  glauncher: 4,
+};
+function reload(w, o = {}) {
+  if (!RELOAD[w]) return null;
+  const rate =
+    o.secs > 0 && RELOAD_S[w]
+      ? Math.min(1.5, Math.max(0.85, RELOAD_S[w] / o.secs))
+      : 0;
+  return play(RELOAD[w], { ...o, ...(rate ? { rate } : {}) });
+}
 const RELOAD = {
   handgun: "reloadHandgun",
   revolver: "reloadRevolver",
@@ -460,12 +484,13 @@ const SFX = {
   count: (last) => play(last ? "countGo" : "countTick"),
   bang: named("handgun"),
   tat: named("smg"),
-  reload: (w, o) => RELOAD[w] && play(RELOAD[w], o),
+  reload,
   jet,
   flesh,
   land,
   hit,
   swish: named("throw"),
+  boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)
 };

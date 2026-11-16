@@ -237,7 +237,7 @@ import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
-import { sfx, loadSounds, jetsOff, OTHERS } from "./sound.js";
+import { sfx, loadSounds, jetsOff, hush, OTHERS } from "./sound.js";
 import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
@@ -4940,7 +4940,8 @@ function reload() {
 }
 /* each reload of mine (by R, or on its own once a magazine is empty) makes its gun's own reload sound: the room's
    state says when a reload ends (s.mag in every mode, my kit's rl in Dead Ducks Arcade); a new end is a new reload */
-let reloadsSeen = {};
+let reloadsSeen = {},
+  reloadVoices = {}; // (each weapon's reload sound playing, to stop it when the reload is given up)
 function heardReloads(s) {
   const now = clockNow(),
     seen = {};
@@ -4952,7 +4953,12 @@ function heardReloads(s) {
       if (m && m.r > now && (key === R.me || key.startsWith(R.me + " ")))
         seen[key === R.me ? "handgun" : key.slice(R.me.length + 1)] = m.r;
   for (const [w, r] of Object.entries(seen))
-    if (reloadsSeen[w] !== r) sfx.reload(w);
+    if (reloadsSeen[w] !== r) {
+      hush(reloadVoices[w]);
+      reloadVoices[w] = sfx.reload(w, { secs: (r - now) / 1000 }); // (to end as it ends)
+    }
+  for (const [w, r] of Object.entries(reloadsSeen))
+    if (!seen[w] && r > now + 100) hush(reloadVoices[w]); // (given up before its end: switched weapons)
   reloadsSeen = seen;
 }
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it

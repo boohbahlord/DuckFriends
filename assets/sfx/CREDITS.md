@@ -25,14 +25,14 @@ instruments (its license: LICENSES.md).
 | bow | Ben Jaszczak & Brian Nelson, Medieval Sound Effects — https://opengameart.org/content/medieval-sound-effects-weapon-textures | CC0 1.0 |
 | empty | rubberduck, 80 CC0 RPG SFX (lock_01) — https://opengameart.org/content/80-cc0-rpg-sfx | CC0 1.0 |
 | reloadHandgun | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
-| reloadAk | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
-| reloadRevolver | LFA, Equipment Clicks II — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
-| reloadSmg | LFA, Equipment Clicks II — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
-| reloadSniper | LFA, Equipment Clicks II — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
-| reloadLmg | LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
-| reloadChaingun | LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| reloadRevolver | LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_02) — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
+| reloadSmg | LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_01) — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
+| reloadAk | SpringySpringo, Gun Reload Sounds; Kenney, RPG Audio (metalClick) — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
+| reloadSniper | LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_02); Kenney, RPG Audio (metalLatch) — https://opengameart.org/content/equipment-clicks-ii | CC0 1.0 |
+| reloadLmg | LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalClick) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| reloadChaingun | LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalLatch) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
 | reloadShotgun | LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
-| reloadGlauncher | LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| reloadGlauncher | LFA, Equipment Clicks III; Kenney, RPG Audio (metalLatch) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
 | medkit | OwlishMedia, 202 More Sound Effects (Velcro_01, Cloth_03) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
 | adrenaline | OwlishMedia, 202 More Sound Effects (Nasal_Spray) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
 | hop | Vehicle, Fantasy Weapons and Apparel SFX Library — https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library | CC0 1.0 |
@@ -59,10 +59,9 @@ instruments (its license: LICENSES.md).
 | throw | artisticdude, Swishes Sound Pack — https://opengameart.org/content/swishes-sound-pack | CC0 1.0 |
 | cakeThrow | artisticdude, Swishes Sound Pack — https://opengameart.org/content/swishes-sound-pack | CC0 1.0 |
 | bonk | Kenney, Impact Sounds (impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
-| boom | EZduzziteh, Explosions (explosion1) — https://opengameart.org/content/explosions-4 | CC0 1.0 |
-| boomBig | EZduzziteh, Explosions (explosion3) — https://opengameart.org/content/explosions-4 | CC0 1.0 |
-| meteor | Kenney, Sci-fi Sounds (lowFrequency_explosion_000) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
-| nuke | NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/muffled-distant-explosion | CC0 1.0 |
+| boom | TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, explosionCrunch_000) — https://opengameart.org/content/explosion-0 | CC0 1.0 |
+| meteor | TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion3); Kenney, Sci-fi Sounds (lowFrequency_explosion_000); rubberduck, 25 CC0 bang / firework SFX (cannon_01); NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/explosion-0 | CC0 1.0 |
+| nuke | TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion1); Kenney, Sci-fi Sounds (lowFrequency_explosion_000); NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/explosion-0 | CC0 1.0 |
 | chomp | StarNinjas, 7 Eating Crunches — https://opengameart.org/content/7-eating-crunches | CC0 1.0 |
 | sip | qubodup, Liquid / bottle / drink set — https://opengameart.org/content/liquid-bottle-drink-set | CC0 1.0 |
 | uiPress | Kenney, UI Audio (click3) — https://kenney.nl/assets/ui-audio | CC0 1.0 |

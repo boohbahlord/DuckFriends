@@ -4639,3 +4639,20 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
 
 - Done (Adam, Version 32): js/fx.js MUZZLE gives each gun reach, cone, n, core, smoke, puff, drift. Picture:
   /mnt/project-files/refs/2026-11-16-1540/gun-flash-smoke-per-gun.png.
+## Request (2026-11-16 15:59-16:01Z, Miles Jr.): softer countdown ticks, one explosion, bigger meteor and nuke, timed reloads
+
+> lobby countdown for the first 5 ticks before the last now are also harsh, idk if i didnt notice that before
+>
+> Also the explosion sound for grenade sounds bad and should also be the same explosion sound for any explosive
+
+> metoer and nuke should be more catastrophic
+
+> reload times should have more going on because some reloads are really long or longer and some are shorter, you can ask adam for more info but then use your own discretion, but the sounds themselves apart from time are nice for reloads
+
+- Picked: the ticks are a low, soft knock (B4, vibraphone and marimba, eased in, darker); the last tone stays. One new
+  boom for every explosive (grenade, launcher shell, Jaime Bomb louder). The meteor (about 3 s of rumble) and the nuke
+  (about 6 s) are longer, deeper and the loudest sounds. Each reload sound is built from the same recordings, spread
+  over its gun's real reload time (handgun 1.2 s … chain gun and grenade launcher 4 s), playing faster with Faster
+  reload, and stops if the reload is given up.
+
+
