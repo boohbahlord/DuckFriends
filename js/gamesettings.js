@@ -629,11 +629,17 @@ const BY_MODE = {
   ],
   l4dd: [
     {
-      k: "l4r16",
-      n: "Round 16 Start",
-      c: ON_OFF,
+      k: "l4start",
+      n: "Start on round",
+      c: [
+        [1, "1"],
+        [5, "5"],
+        [9, "9"],
+        [13, "13"],
+        [21, "21"],
+      ],
       cat: "round",
-      d: "Once everyone is ready, the game skips to round 16, and every duck starts with 3,000 points. It counts toward its own stats, Round 16 Start, not the usual ones.",
+      d: "Every game starts in round 0. Once everyone is ready it goes on to this round, and every duck gets bonus points in round 0: 750 for round 5, 1,750 for round 9, 2,500 for round 13, 5,000 for round 21. From 13 on it counts toward its own stats, Round 16 Start. In round 0 the ducks can vote to change it.",
     },
   ],
   vdd: [

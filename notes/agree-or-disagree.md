@@ -4942,3 +4942,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 - Adam: spec /mnt/project-files/notes/crits-misses-start-round.md. Solomon = crits, misses, zombie HP, upgrade; Jackal = starting
   round setting and vote; Noah = Angelic crimson glow. New zombies-per-round system proposed to the owner first.
+- Decided (Jackal, from Adam's spec): "Start on round" 1/5/9/13/21 replaces Round 16 Start (l4r16); the bonus is given at once in round 0 (L.bonus, so a change gives or takes only the difference); the vote passes with the room's share of Yes, falls when it can't, lasts 30 s; one passed change per game; From round 13 on it counts toward the Round 16 Start stats.
