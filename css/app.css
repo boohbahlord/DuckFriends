@@ -5504,9 +5504,10 @@ html.moving .pix-sun {
   opacity: 0.45;
 } /* (it needs another setting on first) */
 .gs-ro,
-.gs-none {
+.gs-none,
+.gs-note {
   margin: 0.2rem 0 0.6rem;
-}
+} /* (.gs-note: the line under General Rules that says they apply to all game modes) */
 .gs-info,
 .gs-keep {
   display: none;
@@ -16649,9 +16650,26 @@ html.still .l4-crit {
   line-height: 1.05;
   white-space: nowrap;
 }
-.vt-time {
+.vt-left {
+  grid-column: 1;
+  justify-self: start;
+  min-width: 0;
+}
+.vt-lobby {
+  white-space: nowrap;
+}
+.vt-right {
   grid-column: 3;
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* a window opened from the vote (the pause menu and what it opens) comes up over the vote */
+body:has(> .vt) .win-back {
+  z-index: 7100;
+}
+.vt-time {
   min-width: 4.4rem;
   text-align: center;
   font-weight: 700;
@@ -16878,8 +16896,20 @@ html.still .l4-crit {
     font-size: 2.05rem;
   }
   .vt-head {
-    grid-template-columns: 0 auto 1fr;
+    grid-template-columns: auto 1fr;
+    row-gap: 0.4rem;
   }
+  .vt-head .vt-title {
+    grid-column: 1;
+  }
+  .vt-right {
+    grid-column: 2;
+  }
+  .vt-left {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+  } /* (on a phone the lobby vote gets a line of its own under the title) */
   .vt-time {
     font-size: 1.05rem;
     min-width: 3.4rem;

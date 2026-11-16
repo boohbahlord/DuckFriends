@@ -153,7 +153,7 @@ function paint() {
     .filter(Boolean)
     .join(" · ");
   const st = $(".lobby-status", S);
-  paintVotes(R); // (Vote Mode & Map: its window over the whole screen, after the countdown)
+  paintVotes(R, openPause); // (Vote Mode & Map: its window over the whole screen, after the countdown)
   if (s.phase === "countdown" && !s.vt) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
@@ -370,7 +370,7 @@ function onState(s) {
 /* Space: ready */
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
-  if (R && R.state.vt) return; // (Vote Mode & Map's window is up: only clicks vote)
+  if (R && R.state.vt && e.key !== "Escape") return; // (Vote Mode & Map's window is up: only clicks vote, and Esc pauses)
   if (e.code === "Space" && !e.repeat) {
     e.preventDefault();
     toggleReady();

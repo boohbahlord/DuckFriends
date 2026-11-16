@@ -176,7 +176,14 @@ import {
   ARMS,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
-import { MAPS, MAP_FORMS, mapForm, mapName } from "./maps.js";
+import {
+  MAPS,
+  MAP_FORMS,
+  mapForm,
+  mapName,
+  ZOOM_MAP,
+  GREY_MAP,
+} from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
 
@@ -282,10 +289,38 @@ const winner = (n, pool) => {
   return anyOf(top ? tied : pool);
 };
 /* the maps the map vote and Random choose from: every board map in each of its forms (Euclid's Squares still or
-   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games */
+   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Every map's
+   variations sit at the bottom of the list, after all the maps (owner, Nov 16) */
 const MAP_IDS = MAPS.map((m) => m[0]);
-const formOf = (id) => anyOf(MAP_FORMS[id] || [id]);
-export const VOTE_MAPS = MAP_IDS.flatMap((id) => MAP_FORMS[id] || [id]);
+export const VOTE_MAPS = [
+  ...MAP_IDS,
+  ...MAP_IDS.flatMap((id) => (MAP_FORMS[id] || []).filter((f) => f !== id)),
+];
+/* Random's map, and the map vote's dice (owner, Nov 16): a bag of maps, each holding a bag of its variations, so the
+   variations never crowd out the other maps. The map played least tonight comes first (never the one just played while
+   another is left), then the variation of it played least. s.mapPlays = { m: { map: n }, f: { variation: n } } */
+const baseOf = (id) =>
+  MAP_IDS.find((b) => (MAP_FORMS[b] || [b]).includes(id)) || id;
+export function pickMap(s) {
+  const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
+    least = (ids, n, last) => {
+      const pool = ids.length > 1 ? ids.filter((id) => id !== last) : ids,
+        lo = Math.min(...pool.map((id) => n[id] || 0));
+      return anyOf(pool.filter((id) => (n[id] || 0) === lo));
+    },
+    base = least(MAP_IDS, P.m, P.lastM),
+    forms = MAP_FORMS[base] || [base];
+  return forms.length > 1 ? least(forms, P.f, P.lastF) : base;
+}
+/* a map played: counted for the bags above */
+export function countMap(s, id) {
+  const P = (s.mapPlays = s.mapPlays || { m: {}, f: {} }),
+    base = baseOf(id);
+  P.m[base] = (P.m[base] || 0) + 1;
+  P.f[id] = (P.f[id] || 0) + 1;
+  P.lastM = base;
+  P.lastF = id;
+}
 /* A shuffle bag for every random pick of a player's role (the Quack, the date, an attorney, the first writer), so nobody
    is picked over and over: each eligible player goes in a bag, one is drawn without putting it back, and the bag is
    filled and shuffled again when nobody eligible is left in it (the one picked last never opens the new bag). One bag
@@ -326,6 +361,7 @@ export function bagPick(s, key, ids) {
 }
 /* the map the vote or Random lands on, in its form (s.mapZoomed, s.mapGreyed) */
 function setMap(s, won) {
+  countMap(s, won);
   const f = mapForm(won);
   s.options.map = f.map;
   s.mapZoomed = f.zoom ? 1 : 0;
@@ -410,10 +446,11 @@ function closeVote(s) {
     ids = voteIds(s, vt.k);
   delete s.vt;
   let won = winner(tally(s, vt.votes), [...ids, DICE]);
-  if (won === DICE) {
-    const pool = vt.k === "mode" ? randomPool(s) : ids;
-    won = anyOf(pool.length ? pool : ids);
-  }
+  if (won === DICE)
+    won =
+      vt.k === "mode"
+        ? anyOf(randomPool(s).length ? randomPool(s) : ids)
+        : pickMap(s); // (the map's dice: the bags, as Random)
   if (vt.k === "mode") return setMode(s, won || "aod");
   setMap(s, won);
   s.mapVoted = 1;
@@ -426,9 +463,10 @@ function placeMap(s) {
   delete s.mapVoted;
   cabinMap(s);
   if (isHang(s) || voted) return;
-  if (o.mapPick === "random") return setMap(s, formOf(anyOf(MAP_IDS)));
+  if (o.mapPick === "random") return setMap(s, pickMap(s));
   s.mapZoomed = o.map === "euclid" && o.mapZoom ? 1 : 0;
   s.mapGreyed = o.map === "collage" && o.mapGrey ? 1 : 0;
+  countMap(s, s.mapZoomed ? ZOOM_MAP[0] : s.mapGreyed ? GREY_MAP[0] : o.map); // (the host's own pick counts as played too)
 }
 /* Duck Cabin's games bring their own map: going in keeps the room's map (in its form) to come back to, and coming out
    puts it back (the board if there was none) */
@@ -2356,8 +2394,13 @@ export function reduce(state, a, now = Date.now()) {
     }
     case "voteStart": {
       // a vote to kick a player, or to go back to the lobby; the one who starts it votes yes
-      if (!me || me.bot || ["lobby", "countdown", "over"].includes(s.phase))
-        return state;
+      if (
+        !me ||
+        me.bot ||
+        (["lobby", "countdown", "over"].includes(s.phase) &&
+          !(s.phase === "countdown" && s.vt && a.kind === "lobby"))
+      )
+        return state; // (in the game and map votes, only a vote to go back to the lobby: owner, Nov 16)
       if (s.vote) return state;
       const used = (s.voteUsed || {})[a.id] || {},
         tk = voteKey(s, now);

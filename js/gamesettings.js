@@ -954,7 +954,8 @@ export function openGameSettings(R, start = null) {
   const row = (attrs, label, val = "", on = false, dis = false) =>
     `<li><button type="button" class="arm-row" ${attrs} aria-pressed="${on}"${dis ? ' aria-disabled="true"' : ""}><span>${esc(label)}</span><span class="val">${esc(val)}</span></button></li>`;
   const LINE = '<li class="arm-line" aria-hidden="true"></li>';
-  /* Vote Mode & Map: the first row of Game Settings, above Game mode (owner 2026-11-04); its page has the On/Off row
+  /* Vote Mode & Map: under the line, above Game mode (owner 2026-11-16: Game Options, Modes in Random & Vote and Save
+     slots on top, then a line, then Vote Mode & Map, Game mode and Map); its page has the On/Off row
      and, while it's on, each vote and Vote return */
   const voteVal = (s) =>
     s.options.modePick === "vote" && s.options.mapPick === "vote"
@@ -1027,7 +1028,7 @@ export function openGameSettings(R, start = null) {
             .join("") + (extra[cat] || "");
         const k = `${pre}:${cat}`;
         return body
-          ? `<details class="arm-fold gs-fold" data-fold="${esc(k)}"${openFolds.has(k) ? " open" : ""}><summary>${name}</summary>${body}</details>`
+          ? `<details class="arm-fold gs-fold" data-fold="${esc(k)}"${openFolds.has(k) ? " open" : ""}><summary>${name}</summary>${pre === "host" && cat === "rules" ? '<p class="small dim gs-note">These apply to all game modes.</p>' : ""}${body}</details>`
           : "";
       })
       .join("");
@@ -1039,7 +1040,7 @@ export function openGameSettings(R, start = null) {
     if (!page)
       return (
         head("Game Settings") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="pool"', "Modes in Random & Vote", poolVal(s))}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="pool"', "Modes in Random & Vote", poolVal(s))}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}${LINE}${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}</ul></div>`
       );
     if (page === "pool") {
       const off = o.modesOff || [],
