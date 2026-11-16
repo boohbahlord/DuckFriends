@@ -5032,3 +5032,36 @@ are all good to go we can put them in the game"
 
 - Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
   scratchpad, plan2.py). Nothing built.
+
+## Request (2026-11-16 23:15Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt5jgfAw1XCisXPag7V226bj): second Dead Ducks Arcade map, the gas station and chapel (Swamp Fever mood)
+Pictures: /mnt/project-files/refs/zombie-map-plans-2026-11-16/owner/forest-line.png (red line = where the forest
+reaches), owner/gas-station-holes.png (circles = holes in the gas station's walls).
+> this shows where the forest extends to, and the forest extends to there not as an invisible wall, but the rest of the map has a fence with holes in it that zombies get in through. There are also barricades inside of buildings of course. Make sure to add a wall. Make sure to add holes in the walls to the places i circled here AND the restroom has a door to go into it from the inside towards the aisles as well
+>
+> the map is night time and raining,  where the round kinda sinks down more then the grass ground in terms of elevation and thus if flooding with water (use water effect from pool maybe? idk how good of an idea that is). The water in that center will slow ducks down by 30%
+>
+> The flooding water rises up so high that ducks cant go towards it because the left side of road actually has even lower elevation near before the exit of the map
+>
+> the generator and power supply are still in the game and is to the right of the gas station, there, turning it on will brings lights to the gas station, the gas station pump area, and the church.
+>
+> the toolbox will be found on an empty shelf or on he top front or back of car and can be picked up by walking over it, the gas is found at the pump in a jerry can, the fuse is found in the storeroom or on a church pew, and the switch is found in the restroom, shelf, top or front of car, church pew, or at one of the pumps.
+>
+> the npc they go to for buying things now is the priest church at the church named "Priest" who serves the roll that Justin's butler did
+>
+> the restroom toilet nis the same toilet from the cabin so that way we dont mess it up.
+>
+> focus on the skeleton first, then the details, then the rain and water, and then the lighting last.
+>
+> im not too worried ab making this map super lightweight, i just want it to be cool and not take a crazy amount of time and resources to make whenever we now have everything as 32 bit or whatever, so yeah.
+>
+> On this map, there is a 1% chance that a random zombie will be struck with lightning while on a player's screen once. Every 1% chance rolls another 1% chance to see if it happens twice in the same round. THe lightning only hits the zombie.
+>
+> Quick question what is the tower?
+>
+> ALSO, there should be a car with a lifted up hood, and that car's hood lifted up to it's engine is the same function as the fireplace and it is near the gas station. It kinda glows until the first player uses it.
+>
+> give me an idea of how much harder or easier this will be then cabin
+>
+> I imagine the swamp fever map specifically from L4D2 as inspiration, not any other map from that game
+>
+> some zombie ducks will have mud all over them, and them hitting you gets mud on you screen, and these ones are a 4% chance of spawning, and mud hits the corners of your screen and fade away after ten seconds and they have one less healthpoint then usual, the muddy zombies that are rare
