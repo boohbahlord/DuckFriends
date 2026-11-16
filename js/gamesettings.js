@@ -7,7 +7,7 @@
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
-import { MAPS, mapName } from "./maps.js";
+import { MAPS, MAP_VARIANTS, mapName, mapForm } from "./maps.js";
 import { OPTIONS_DEFAULT, isSudo, randomPool, dodOn } from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
 import { profile, save } from "./store.js";
@@ -779,6 +779,14 @@ const VOTE_SETS = [
 ];
 const voting = (s) =>
   s.options.modePick === "vote" || s.options.mapPick === "vote";
+/* the row of the map the host picked: a variation in another form (Zoom, Black and white) is the map with its setting
+   on; every variation sits under the maps (owner, Nov 16) */
+const picked = (o) =>
+  o.map === "euclid" && o.mapZoom
+    ? "euclidzoom"
+    : o.map === "collage" && o.mapGrey
+      ? "collagebw"
+      : o.map;
 const showsZoom = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
   !s.options.mapPick &&
@@ -900,8 +908,9 @@ function boardSketch(mode) {
 function mapPic(s, id, mode) {
   if (id === "cabin")
     return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/maps/duck-cabin.jpg" alt="Duck Cabin" draggable="false">`;
-  const grey = id === "collage" && s.options.mapGrey ? " grey" : "";
-  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
+  const f = mapForm(id),
+    grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
+  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(f.grey ? f.map : id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
 }
 /* a game mode's picture: one screenshot of the mode (every name tag hidden, rainbow ducks), its board drawn over the
    picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
@@ -1132,7 +1141,21 @@ export function openGameSettings(R, start = null) {
         head("Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
           ([id, name]) =>
-            row(`data-map="${id}"`, name, "", !o.mapPick && o.map === id, dis),
+            row(
+              `data-map="${id}"`,
+              name,
+              "",
+              !o.mapPick && picked(o) === id,
+              dis,
+            ),
+        ).join("")}${LINE}${MAP_VARIANTS.map(([id, name]) =>
+          row(
+            `data-map="${id}"`,
+            name,
+            "",
+            !o.mapPick && picked(o) === id,
+            dis,
+          ),
         ).join(
           "",
         )}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
@@ -1238,7 +1261,8 @@ export function openGameSettings(R, start = null) {
         tip =
           p.id === "cabin"
             ? CABIN_TIP
-            : (MAPS.find((m) => m[0] === p.id) || [])[2] || "";
+            : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
+                [])[2] || "";
       return card(mapName(p.id), tip, mapPic(s, p.id, mode));
     }
     if (p.kind === "set") return card(p.title, p.text);
@@ -1434,7 +1458,16 @@ export function openGameSettings(R, start = null) {
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
-          if (r.dataset.map && boss) send({ map: r.dataset.map }); // (Vote Maps and Random go off: rules.js)
+          if (r.dataset.map && boss) {
+            const f = mapForm(r.dataset.map); // (Vote Maps and Random go off: rules.js)
+            send(
+              f.map === "euclid"
+                ? { map: f.map, mapZoom: f.zoom ? 1 : 0 }
+                : f.map === "collage"
+                  ? { map: f.map, mapGrey: f.grey ? 1 : 0 }
+                  : { map: f.map },
+            ); // (a variation in another form: its map, with its setting)
+          }
         });
         menu.addEventListener("change", (e) => {
           const k = e.target.dataset.k;

@@ -4384,3 +4384,27 @@ Zombies only; Hangout's Duck Cabin unchanged).
   pixel look, because pxdom.js renamed the gradients' ids but missed the url("#…") written into each part's style (its
   quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
   "Write a (", so under 480 px wide the meter hides and the timer's words stay.
+
+## Request (owner, 2026-11-16 15:12Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFn89Emm2JhzKZMzYm9xehD), the parts for Noah, word for word
+> The Ether's crossroads theme should now be renamed Nous Within Kenoma AND it's page background, UI, and look is now based on my book's ui in that map and has the background too, AND there are map variations based off of the different versions in the sight, one based off the last chapters so far on the site and their background, and it is called "Nous within Kenoma: Architectured", another called "Nous within Kenoma: Ten" based on the first four chapters, and another called "Nous within Kenoma: Chalice" and another caled "Nous within Kenoma: the Fool"
+> These only show up at the very bottom of the list of maps, the variations do.
+> Every variation of any map is at the bottom AND when it comes to random, they are selected LIKE a bag, where each map contains a bag of it's variations, as to make sure map variations do not pollute the randomizer AND the map variations are shuffled to make them more likely to play the ones least played AND the same goes for the maps when random or random option is voted
+>
+> the mouse cursor is too big
+
+## Request (owner, 2026-11-16 15:34Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1XbABuuE7KdwvouVKpFv4L), word for word
+> ether's crossroads can still be in the game BUT it is now a variation of Nous within Kenoma map AND it will have the effects and ui of Nous within Kenoma WHILE preserving it's background
+
+- Done (Noah): the map Nous Within Kenoma (id `nwk`, js/nwk.js) is the book site's page drawn as pixels: its near
+  black ground and burnt amber interface (the site's :root colors), a warm haze from the top left as on its front page,
+  the thin black strings and cracks, the rare black bar, faint static with scan lines and a flicker now and then. Its
+  variations take the looks the site gives its parts (build_all.py THEME): Ether's Crossroads (id `ec`, the old map: the
+  jester's dungeon kept, with the book's strings and static over it and the book's interface), Architectured
+  (`nwkarch`, the latest parts' page, No. 36 on: nearly black, the lone orange street lights down a road), Ten
+  (`nwkten`, parts 1-4: indigo, white letters, a blue haze along the top, no strings), Chalice (`nwkchalice`, Chalice of
+  Tears: the page and the letters breathe through its seven colors, 16 s each), the Fool (`nwkfool`, black and white).
+  Each variation's interface is the book's for that part (css/app.css html.map-is-nwk…). The Map page lists every map,
+  then a line, then every variation (Euclid's Squares (Zoom), Shelter Sky & Null (Black and white), the five above);
+  maps.js MAP_VARIANTS [id, name, about, base map] and MAP_FORMS[base] carry them for the vote and Random (Adam: the
+  bags). The arrow, hand and text pointers are drawn again at about 1.5 times their first size (one css px a pixel); the
+  crosshair is unchanged.
