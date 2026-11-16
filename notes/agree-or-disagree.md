@@ -4197,3 +4197,22 @@ Zombies only; Hangout's Duck Cabin unchanged).
 - Version 26 (Solomon #276): Hangout comes up in Random too (Quacky Zombies stays vote-only); "Time limit (Random & Vote)"
   (`hangTime`, 5/10/15/20/30 min or No limit, 15 at first) only when Hangout came from Random or the vote; the room's
   map comes back after the cabin; under Random the cabin's End vote goes on to the next game.
+
+## Nov 16 2026: the pixel look (owner with Noah, 11:18Z-12:44Z)
+> 32 bit is the way BUT the text should be 128 bit so they are easier to read IF NOT MORE and the Ui, meters, and hotbar can all still be 32 bit, but any text inside should be better quality for reading while still looking somewhat pixelated
+
+> same with numbers obv too or any letter or character rly
+
+> rq, and the frames are estimated to be how fast? yes i want this in the game now btw
+
+> can we make the mouse or cursor in the game also pixelated? that would be cool if it was also 64 bit
+
+> good on the cursors, and we will make any weapon have a crosshair for now on
+
+- Done (one PR, Adam merges; Noah + Solomon the 2nd for Quacky Zombies, Mad God Justin and Hangout): every picture on
+  one grid, 32 pixels to a duck (js/pixel.js), through one 128-color palette built with image-q (js/pixelpalette.js,
+  tools/pixel-palette.mjs); maps through a grid-sized filter (Rabbit Hole drawn at grid size); drawings on the page as
+  pixels (js/pxdom.js) with their words kept sharp; every word in Jersey 15 (OFL); square corners on boxes, buttons and
+  meters. Adam relayed the owner's answer: it is the only look (no setting, no test switch). The mouse pointer is drawn
+  in pixels at 64 to a duck (arrow, hand, crosshair, text bar); any weapon in hand makes it the crosshair over the
+  board, in every mode.
