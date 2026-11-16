@@ -9,6 +9,28 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v29",
+    version: 29,
+    date: "Nov 16, 2026",
+    title: "Dead Ducks Arcade, and a bigger crosshair",
+    news: [
+      "Quacky Zombies is now called Dead Ducks Arcade.",
+      "For Dead Ducks Arcade: guns carry 5 more magazines (the LMG 3 more), the bow, the shotgun and the grenade launcher 50% more ammo, and the chain gun four times as much.",
+      "For Dead Ducks Arcade: Accuracy is now Critical Chance.",
+      "For Dead Ducks Arcade: each weapon from the fireplace makes an item likelier on your next spin, and two items in a row make one a little less likely.",
+      "For Dead Ducks Arcade: special drops come in a shuffle, every one once before any comes again (Max Ammo can always come).",
+      "For Dead Ducks Arcade: Instant Kill, Double Points and Sale last 45 seconds.",
+      "For Dead Ducks Arcade: the minimap is smaller and more see-through, and it's gone on phones.",
+      "For Mad God Justin: reviving takes half as long.",
+      "The scroll wheel switches your hotbar item in every mode, Mad God Justin too.",
+      "A quick tap of Shift keeps the selected item on, or puts it away. Holding Shift still sprints.",
+      "With Vote Mode & Map on, the stats screen says how many games are left until the next vote, and a new button, Vote: new game now, lets the room vote for a new game right away.",
+    ],
+    fixed: [
+      "The mouse pointer and the hand are twice as big, and the crosshair three times as big.",
+    ],
+  },
+  {
     id: "v28",
     version: 28,
     date: "Nov 16, 2026",
