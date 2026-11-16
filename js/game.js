@@ -236,7 +236,7 @@ import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
-import { sfx } from "./sound.js";
+import { sfx, loadSounds, jetsOff } from "./sound.js";
 import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
@@ -1639,10 +1639,12 @@ function drawDucks(now = clockNow()) {
       d.querySelector(".gduck-done").hidden = dn0;
     } // (set only when it changes: set again every frame, the page restyled every duck every frame)
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
-    d.classList.toggle(
-      "jet-on",
-      !!(jet && (id === R.me ? me : s.pos[id] || {}).jt),
-    ); // (the jetpack's jets: their flames)
+    const jetOnNow = !!(jet && (id === R.me ? me : s.pos[id] || {}).jt);
+    d.classList.toggle("jet-on", jetOnNow); // (the jetpack's jets: their flames)
+    if (jetOnNow !== !!d._jetS) {
+      d._jetS = jetOnNow;
+      sfx.jet(id, jetOnNow, heard(id)); // (… and their roar: sound.js)
+    }
     /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one; the
        Invisible duck turns the duck and its shadow see-through, as the shadow duck (css: .gduck.see) */
     const auras = [];
@@ -2965,26 +2967,26 @@ function playFx(f) {
           ay: f.ay || 0,
         };
       ({
-        handgun: sfx.bang,
+        handgun: sfx.handgun,
         bow: sfx.bow,
         knife: sfx.swish,
         hammer: sfx.swish,
         dagger: sfx.swish,
         shotgun: sfx.shotgun,
-        medkit: sfx.done,
+        medkit: sfx.medkit,
         grenade: sfx.swish,
-        sniper: sfx.bang,
-        revolver: sfx.bang,
-        smg: sfx.tat,
-        ak: sfx.tat,
-        lmg: sfx.tat,
-        chaingun: sfx.tat,
-        glauncher: sfx.shotgun,
+        sniper: sfx.sniper,
+        revolver: sfx.revolver,
+        smg: sfx.smg,
+        ak: sfx.ak,
+        lmg: sfx.lmg,
+        chaingun: sfx.chaingun,
+        glauncher: sfx.glauncher,
         zebra: sfx.swish,
         fireball: sfx.fireball,
-        adrenaline: sfx.sip,
+        adrenaline: sfx.adrenaline,
         longjump: sfx.boing,
-      })[f.what]?.();
+      })[f.what]?.(heard(f.by));
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
     if (f.what === "fireball") {
@@ -3004,8 +3006,8 @@ function playFx(f) {
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
-      sfx.shotgun();
-      setTimeout(() => sfx.pump(), 520);
+      sfx.shotgun(heard(f.by));
+      setTimeout(() => sfx.pump(heard(f.by)), 520);
       return;
     }
     if (
@@ -3027,7 +3029,7 @@ function playFx(f) {
           ax: -shows[f.by].ax,
           ay: -shows[f.by].ay,
         }; // (his double does the same, mirrored)
-      sfx.tat();
+      (f.what === "lmg" ? sfx.lmg : sfx.smg)(heard(f.by));
       return;
     }
     if (WEAPONS.includes(f.what)) {
@@ -3053,17 +3055,18 @@ function playFx(f) {
         }; // (his double does the same, mirrored)
       (
         ({
-          handgun: sfx.bang,
+          handgun: sfx.handgun,
           bow: sfx.bow,
-          sniper: sfx.bang,
-          revolver: sfx.bang,
-          smg: sfx.tat,
-          ak: sfx.tat,
-          lmg: sfx.tat,
-          chaingun: sfx.tat,
-          glauncher: sfx.shotgun,
+          sniper: sfx.sniper,
+          revolver: sfx.revolver,
+          smg: sfx.smg,
+          ak: sfx.ak,
+          lmg: sfx.lmg,
+          chaingun: sfx.chaingun,
+          glauncher: sfx.glauncher,
+          shotgun: sfx.shotgun,
         })[f.what] || sfx.swish
-      )(); // (Quacky Zombies' guns sound as they do there)
+      )(heard(f.by)); // (every gun its own sound, as in Dead Ducks Arcade)
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
@@ -3079,10 +3082,10 @@ function playFx(f) {
       hotdog: sfx.chomp,
       watergun: sfx.splash,
       confgun: sfx.pop,
-      handgun: sfx.bang,
+      handgun: sfx.handgun,
       sound: sfx.quack,
       trombone: sfx.trombone,
-    })[f.what]?.();
+    })[f.what]?.(heard(f.by));
   } else if (f.kind === "fire") {
     // flames for a moment, then charred; the burns fade in a few seconds
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`);
@@ -4816,6 +4819,33 @@ function reload() {
   R.send({ t: "reload", w });
   return true;
 }
+/* each reload of mine (by R, or on its own once a magazine is empty) makes its gun's own reload sound: the room's
+   state says when a reload ends (s.mag in every mode, my kit's rl in Dead Ducks Arcade); a new end is a new reload */
+let reloadsSeen = {};
+function heardReloads(s) {
+  const now = clockNow(),
+    seen = {};
+  if (isL4dd(s)) {
+    const k = kitOf(s, R.me);
+    if (k && k.rl > now && k.rw) seen[k.rw] = k.rl;
+  } else
+    for (const [key, m] of Object.entries(s.mag || {}))
+      if (m && m.r > now && (key === R.me || key.startsWith(R.me + " ")))
+        seen[key === R.me ? "handgun" : key.slice(R.me.length + 1)] = m.r;
+  for (const [w, r] of Object.entries(seen))
+    if (reloadsSeen[w] !== r) sfx.reload(w);
+  reloadsSeen = seen;
+}
+/* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
+   stands (sound.js fades it with its distance from my duck) */
+function heard(id) {
+  const o = { k: id === R.me ? 1 : 0.6 };
+  if (world && R && isHang(R.state)) {
+    const p = (R.state.pos || {})[id];
+    if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });
+  }
+  return o;
+}
 let mouseAt = 0; // when the mouse last moved
 const MOUSE_IDLE = 2500; // ms without the mouse before the arrow keys aim
 const aimAt = (e) => {
@@ -5638,6 +5668,7 @@ function paintNow(force) {
       else bar.hide();
     } // the specials' row comes in with each stage on the board, then slides away
   }
+  heardReloads(s);
   if (world) world.state(s); // (a lamp switched off …)
   if (isMgj(s)) {
     mgjBackIfGone(s);
@@ -6528,6 +6559,8 @@ register("game", {
   leave() {
     if (off) off();
     off = null;
+    jetsOff();
+    reloadsSeen = {};
     if (docks) docks.destroy();
     docks = null;
     if (world) world.destroy();
@@ -6590,6 +6623,7 @@ register("game", {
   render(arg) {
     R = arg || activeRoom();
     if (!R) return null;
+    loadSounds("game"); // (the weapons' and the items' sounds: they work in every mode)
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>

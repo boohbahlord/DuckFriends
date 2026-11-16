@@ -4384,3 +4384,52 @@ Zombies only; Hangout's Duck Cabin unchanged).
   pixel look, because pxdom.js renamed the gradients' ids but missed the url("#…") written into each part's style (its
   quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
   "Write a (", so under 480 px wide the meter hides and the timer's words stay.
+
+## Request (2026-11-16, Miles Jr.): licensed music, Quacky Zombies first
+
+> i want you to get music that matches the theme of our game that doesnt violate copyright and is free to use indefinitely. tell me some places you will look and what kind of music you are looking for first
+
+> yeah i dont mind using music that credits a person and we will credit them in the ui ofc, and text that doesnt fit in the bar will scroll through like headlines on news broadcasts do
+
+> Terror drome will only play in between rounds in zombies on a loop whenever all zombies are dead and players can chose to wait until they start the next round (ask adam to explain) and the 1:05-1:15 will play at the beginnig of every round started and will fade in and fade out within that stretch of audio.
+
+> 'One question: should Terror Drome also loop during the Ready wait before round 1' No
+
+> no music during rounds in quacky zombies
+
+> NOW if miles jr tries to ship any music, just no it isnt being shipped yet EXCEPT for quacky zombies for now, and only that. The music should be as quiet as it was before as well.
+
+- Picked so far (not shipped unless noted): menus, lobby and boards share one shuffle (Little Ducklin by Maarten
+  Schellekens; Surreptitious by Tanner Helland "for now"); Duck Cabin: 1 (jazz), 2 (jazz) by HoliznaCC0, Sax and Piano by
+  Maarten Schellekens; Mad God Justin: Drive by Zane Little, looped until Justin is dead.
+- Shipping now (one PR, Adam merges): Quacky Zombies only. Terror Drome (Mark Wilson X, CC BY 4.0) loops between rounds
+  (not in round 0's Ready wait), its 1:05-1:15 fades in and out at each round's start, nothing during rounds; played
+  at the old music's loudness (-25.5 LUFS at 100%), following Music, Volume and mute (js/l4ddmusic.js). The Music bar
+  credits it and scrolls a name too long for it like a news ticker.
+
+## Request (2026-11-16, Miles Jr.): game sounds first, from real recordings
+
+> i want Medium for the feather bound and other songs
+>
+> I want take B but make it less ear piercing at the last pitch because the last one is either too high pitched or something else
+>
+> there is some weird measurment errors that dont sound right before 45 or 40 seconds that went on for like 10 or 25 seconds in feather bound that needs fixed or removed, since the sound is like odd and not in time, it is just wrong, idk if you know what i mean
+>
+> i approve of the footsteps
+> i approve of the guns and medkit but each gun should have it's own sound, so not just the ones you showed me but more
+>
+> maybe a jumping sound that is really small ? there should be a jetpack sound too
+>
+> we need sounds for almost anything, including very quiet and faint sounds for UI
+>
+> Music should be quiet and in the background by default if you remember
+>
+> Let's focus on give the game sound first before the rest of the music, and we dont have to add feather bound yet so we can focus on the sounds, but we can add the lobby countdown and the quacky zombies a new round starts sound
+>
+> we also need different sounds for how different projectiles land, like the zebra cake, the landing of different calibers of bullets, a sound for the bow and a sound for it's arrow landing, a sound for the grenade and other explosions, a sound for the knife, a sound for the hammer, a sound for the hammer landing (like a blunt sound against flesh), a sound for turning a candle on or off, a sound for turning a button in ui on or off, a sound for turning a flashlight on or off, and so on. Have adam or anyone adam suggest see this message to remind you of how to make this all work within a princples of making the game run smoother AND different places that also need sound we might be forgetting. We can even have a sound for stepping over different tiles in agree or disagree, duncelation, lawyering, and everything like that. Sound gives player feedback, and that matters a lot
+>
+> The goal of having you input sound from these places is to not only remove audio popping, but have them be actual already existent sounds. Sounds matter more then music rn, and then music later
+
+- Picked: the Medium look for every song; countdown take B with a softer last tone. Footsteps, guns and the medkit
+  approved; every gun gets its own sound. Sounds come first; songs (Feather Bound and the rest) later. The Quacky
+  Zombies music with Terror Drome is dropped (no music by others).
