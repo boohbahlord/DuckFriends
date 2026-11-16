@@ -4785,3 +4785,79 @@ Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a 
   break (mgjrules.js shotThrown). Shipped in Version 37 with Miles Jr.'s #311 (owner's go 16:47Z) and Noah's gun art #313.
 - Version 38: Solomon's #314 (double barrel, flamethrower, burst rifle) with #301 (fire axe, short sword, cast iron pan),
   Miles Jr.'s #316 (each new gun's and melee's own sounds), Noah's #317 (melee art; gun art was #313).
+
+## Request (2026-11-16 16:50Z + 16:52Z + 17:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtY1K55R8P5LZ8nWRvvUwzAK): power box and the Angel machine (Dead Ducks Arcade)
+> there should be a the power box on the balcony in the zombie game, and it can be turned on to bring all the lights back, including on the porch, and doing so means finding the lever to put back on it, wires, a tool box, and another item i cannot think of, have adam talk about this with me and tell him to hold on planning for this until i give him the final plan
+
+> the power box btw will be on the back left up against the wall of the cabin on the balcony, to the left where it is not in the way of any holes in the wall or anything like that
+
+The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files/refs/angel-machine-2026-11-16/owner-machine-reference.png):
+> it will be a fuse, a switch/lever or whatever it is called, a tool box, and gas can with gas in it
+>
+> the locations that 3 of 4 of these items can spawn in: the bathroom sink, the kitchen counter, a zombie that drops one of these in the first five rounds (it will always have one), on the couch, in the shop from Justin's butler (one of four will always spawn here, costs 250 points), or in the fireplace as a random chance (five percent chance and it rolls before the weapons or items in terms of chance, and it becomes another 10% chance for anyone for ever player that rolls for the fireplace unto it is got)
+>
+> Any of these items go in the middle left of the screen (rly small for mobile), and using 'e' button on the power will make it show a fraction below it (0/4 for example or 3/4 if three of four parts are found)
+>
+> The power supply when turned on will last for 6 rounds the first time and will turn off at the beginning of the seventh round. After it first turns off, there is a 5% chance that a jerry can drops from the fireplace, a 1% chance one drops from a zombie, and a 5% chance one spawns in one of the mentioned spawn locations on the map. Every jerry can has a chance of differing amounts of fuel. A full jerry can lasts twelve rounds (5% chance before the next rolls and so on), a 3/4 full jerry can last 9 rounds (25% chance before next roll), and a 1/2 full jerry can last 6 rounds (50% chance before next roll if failed like the others), a 1/4 chance the jerry can lasts 3 rounds (75% chance after the last one was rolled and failed like all the others), and a almost empty jerry can that lasts 1 round (100% chance if the others weren't gotten.) A jerry can can only be gotten again IF the power box hasn't run out of supply yet. There should be a place near the power supply that indicates it runs on fuel.
+>
+> The stage now has a machine that looks sort of like the screenshot i just sent but not colored that when you put your weapons into it, it takes five seconds to work on it while it glows and shoots sparks and smoke out until it comes back as an orb that only the player that put the weapon in there can use, and the weapon is "Angelic" version. The Angelic version of a gun has +1 damage, 20% faster attack speed, and two extra magazines (one for lmg) and a fraction or percentage boosts to other guns that are an ammo increase equivalent (like for bow, both shotguns, and stuff like that).
+>
+> The bow now has arrows pass through one enemy at a time in it's angelic form
+>
+> The sniper passes through two additional enemies now
+>
+> the grenade does not go in this device
+>
+> the flamethrower shoots further faster now and the flame stays  for 2.5 seconds longer
+>
+> the default pistol becomes dual wielded and every bullet instantly kills and every crit causes a default grenade explosion
+>
+> the grenade launcher has 1/3rd the explosion radius and sets fire to it's place it explodes on
+>
+> the reloads and thus their sounds are 20% faster now too, now just the attacks
+>
+> the chain gun now has bullets pass through two zombies
+>
+> and more ideas later, got to go to class soon
+>
+> items cannot be put into this machine, such as jetpack or med pack
+>
+> Melees can
+>
+> the angel machine only works when there is power, and weapons still come out and finish their process even if power is cut IF they were in the middle of their process in the machine the player paid for. It costs 1,000 points.
+>
+> to get a jerry can, remember, the full jerry can rolls first, and if it fails, the next full one rolls, and so on. Flashlight turn off automatically for the player when power come back on and the flashlights turn on when power goes out
+>
+> there is a sound for power goes out that makes it sound like the machine went off, and another sound for the machines and everything turning on
+>
+> the tv turns on when power is back and so do all the lights on the balcony and porch
+>
+> remember, when an item like gas or something else drops from a dead zombie, it stays there permenantly till a player walks over it. All players share the pool of these power supply components or gas when picked up.
+> The jerry cans say their amount of gas in percent, and so, one around is a percent for the almost empty jerry can by math done by understanding how much gas is in the full jerry can based on the amount of rounds it lasts for.
+
+- Adam: the spec for the workers is /mnt/project-files/notes/power-and-angel-machine.md. Solomon = rules (PR 1 power, PR 2
+  Angel machine), Noah = art, Miles Jr. = sounds. Questions sent to the owner: the grenade launcher's radius, and when
+  jerry cans can appear.
+
+## Request (2026-11-16 17:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6b5n65ZVSbPw6RjPrwqVQR): 6 HP and respawn in the normal modes
+> in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over
+
+- Adam: given to Jackal. PHP 3 -> 6 (HIT_DMG unchanged), 3 s dead, wounds cleared on standing up, 2.5 s blinking fade-in
+  during which the duck can't be hurt AND its own weapons deal no damage (both readings).
+
+> that means they keep their wounds until they die in those modes
+
+- Adam (17:28Z follow-up): wounds no longer fade while alive in the normal modes; they clear only on coming back.
+  HP regeneration (PHP_BACK 6 s) left as is; asked the owner.
+
+> make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed
+
+- Adam (17:29Z): knocked-off items stay off until the duck comes back (Jackal, same PR); the hat both off and on bug
+  (birthday hat) goes to Noah (his #309 gore).
+## Nov 16, 17:28Z: normal modes, 6 HP, 3 s death, spawn protection, wounds stay
+Owner: "in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over"
+Owner: "that means they keep their wounds until they die in those modes"
+Owner: "make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed" (the hat bug is Noah's)
+Decided: PHP 6 (the slug and chain gun still take it all); the boards' default down time is 3 s (the host's Down time setting still overrides it); a duck that comes back gets its wounds and knocked-off items cleared and 2.5 s of spawn protection (blinks, fades in; nothing hurts it, and its own weapons and explosives hurt nobody); in the normal games wounds and knocked-off hats no longer fade while the duck is alive. Not Quacky Zombies, Mad God Justin or Hangout. HP regeneration (6 s) untouched.
+
+

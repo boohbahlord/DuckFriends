@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v39",
+    version: 39,
+    date: "Nov 16, 2026",
+    title: "6 HP and coming back",
+    news: [
+      "In every mode but Dead Ducks Arcade, Mad God Justin and Hangout, ducks have 6 HP now.",
+      "A duck that dies stays down for 3 seconds, then comes back with its body back to normal.",
+      "A duck that just came back blinks and fades in for 2.5 seconds. Nothing hurts it, and its own weapons and explosives hurt nobody until then.",
+      "Wounds and knocked-off hats stay until the duck dies and comes back.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v38",
     version: 38,
     date: "Nov 16, 2026",
