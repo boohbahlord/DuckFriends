@@ -18,6 +18,7 @@ import "./keynav.js";
 import { acct, onAccount, accountStart, signIn } from "./account.js";
 import { openFriends } from "./friends.js";
 import { showSplash } from "./splash.js";
+import { loadingScreen, pageReady } from "./loading.js";
 
 applySettings();
 
@@ -77,6 +78,7 @@ addEventListener("duck-profile", () => {
 
 start("front");
 showSplash();
+loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 

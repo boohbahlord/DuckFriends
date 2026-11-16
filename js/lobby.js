@@ -32,7 +32,7 @@ import { profile, cleanName } from "./store.js";
 import { openCustomize, setName } from "./customize.js";
 import { openStats } from "./stats.js";
 import { sfx } from "./sound.js";
-import { darken, brighten, loadingScreen } from "./loading.js";
+import { darken, brighten, loadingScreen, pageReady } from "./loading.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { MAPS, mapName } from "./maps.js";
 import { acct, onAccount, requestFriend, canAdd } from "./account.js";
@@ -153,7 +153,7 @@ function paint() {
     .filter(Boolean)
     .join(" · ");
   const st = $(".lobby-status", S);
-  paintVotes(R); // (Vote Mode & Map: its window over the whole screen, after the countdown)
+  paintVotes(R, openPause); // (Vote Mode & Map: its window over the whole screen, after the countdown)
   if (s.phase === "countdown" && !s.vt) {
     const left = Math.max(0, Math.ceil((s.ends - now()) / 1000));
     setHTML(
@@ -331,22 +331,11 @@ function onState(s) {
     counting = false;
     const room = R;
     go("game", room);
-    if (started)
-      loadingScreen({
-        duck: profile.duck,
-        ping: () => (room.ping ? room.ping() : 0),
-        ready: () =>
-          new Promise((r) =>
-            requestAnimationFrame(() =>
-              requestAnimationFrame(() =>
-                (document.fonts
-                  ? document.fonts.ready
-                  : Promise.resolve()
-                ).then(r),
-              ),
-            ),
-          ),
-      });
+    loadingScreen({
+      duck: profile.duck,
+      ping: () => (room.ping ? room.ping() : 0),
+      ready: pageReady,
+    }); // (every way into a game: the countdown's end, a vote, a game already going on)
     return;
   } // the countdown's last tone, at zero
   if (s.phase === "countdown" && !s.vt) {
@@ -370,7 +359,7 @@ function onState(s) {
 /* Space: ready */
 function key(e) {
   if (!S || typing(e) || windowOpen()) return;
-  if (R && R.state.vt) return; // (Vote Mode & Map's window is up: only clicks vote)
+  if (R && R.state.vt && e.key !== "Escape") return; // (Vote Mode & Map's window is up: only clicks vote, and Esc pauses)
   if (e.code === "Space" && !e.repeat) {
     e.preventDefault();
     toggleReady();

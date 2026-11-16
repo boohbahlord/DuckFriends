@@ -4385,16 +4385,24 @@ Zombies only; Hangout's Duck Cabin unchanged).
   quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
   "Write a (", so under 480 px wide the meter hides and the timer's words stay.
 
-## Nov 16 2026, 15:12Z: lobby vote, loading screens, Justin out of zombies, Nous Within Kenoma maps, settings, aiming, Mad God Justin weapons
+## Request (owner, 2026-11-16 15:12Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFn89Emm2JhzKZMzYm9xehD), word for word
+
+Screenshots: /mnt/project-files/refs/2026-11-16-1512/game-settings-layout.png (red box = Vote Mode & Map, Game Mode,
+Map; move them under a line below the other three, into the blue box) and laser-not-aiming.png.
 
 > there should be a vote to go back to lobby in the vote screen for the game modes or maps AND a pause menu still available in the top right
 >
-> loading screens are used where ever there is loading
+> loading screens are used where ever there is loading 
+## Nov 16 2026, 15:12Z: lobby vote, loading screens, Justin out of zombies, Nous Within Kenoma maps, settings, aiming, Mad God Justin weapons
+
 >
 > Justin will be removed from the zombie game because I do not want to force him into it.
 >
 > Anything special that drops Justin in zomies as a special is also removed for the zombie game
 >
+## Request (owner, 2026-11-16 15:12Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFn89Emm2JhzKZMzYm9xehD), the parts for Noah, word for word
+
+
 > The Ether's crossroads theme should now be renamed Nous Within Kenoma AND it's page background, UI, and look is now based on my book's ui in that map and has the background too, AND there are map variations based off of the different versions in the sight, one based off the last chapters so far on the site and their background, and it is called "Nous within Kenoma: Architectured", another called "Nous within Kenoma: Ten" based on the first four chapters, and another called "Nous within Kenoma: Chalice" and another caled "Nous within Kenoma: the Fool"
 > These only show up at the very bottom of the list of maps, the variations do.
 > Every variation of any map is at the bottom AND when it comes to random, they are selected LIKE a bag, where each map contains a bag of it's variations, as to make sure map variations do not pollute the randomizer AND the map variations are shuffled to make them more likely to play the ones least played AND the same goes for the maps when random or random option is voted
@@ -4409,6 +4417,43 @@ Zombies only; Hangout's Duck Cabin unchanged).
 >
 > in the general rules of every game mode, there is also THEN rules for those particular game modes FROM the general rules which take precedent over the former and i want suggestions to what they should be called asap, since it should be a third setting with a note underneath it as well. Give suggestions of how to do this system im trying to accomplish
 >
+> the second screenshot shows how the laser sight and the bullets do not aim towards the cursor, which is a problem, because where the cursor points is where bullets and the laser sight should try to arrive to, even though i think some guns have their bullets arrive in a spread or random array of directions to the point they are aimed at, so fix that 
+>
+> Remember that laser sights should be in realm of the mad justin 
+>
+> ALSO NOW, i want the weapons that drop in mad god justin to only be the powerful ones and to make the medkit and all weapons the players choose there to behave like they do in the zombie game AND the bow is replaced with a pistol AND the pistol never has to reload AND they start out holding it while still have the knife in their hot bar 
+> No flashlight for mad god justin
+
+- Split (Adam): Solomon = Justin and Justin drops out of Dead Ducks Arcade (reverses #289), laser + bullets aim at the
+  cursor (spread guns spread around that point), laser in Mad God Justin, MGJ weapons batch (powerful drops only,
+  medkit/weapons as in Dead Ducks Arcade, pistol replaces bow and never reloads, start holding it, knife in hotbar, no
+  flashlight). Noah = Ether's Crossroads → Nous Within Kenoma with the book's look + 4 variations (Architectured, Ten,
+  Chalice, the Fool; book site read-only), cursor smaller. Jackal = loading screens wherever there's loading. Adam = vote
+  screen: back-to-lobby vote + pause menu; variations at the bottom of the map list; map Random/dice as a bag of bags,
+  least played first; Game Settings layout (line, the three rows under it), General rules note + off switch, the
+  third rules layer once the owner picks its name.
+
+## Request (owner, 2026-11-16 15:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtXMwSs9pR2WG5KFisu5eVWH), word for word
+> Mode Rules is good name and u seem to understand which is good
+
+- Built (Adam): Mode Rules in each game mode's Game mode Settings (the General Rules again, "Same as General" until one
+  is picked; that one wins in that mode only), the General Rules' On/Off switch under their note (Off fades them and
+  every mode plays the defaults unless its Mode Rules say otherwise). js/rules.js GEN_RULES/ruleFor/applyRules.
+
+## Request (owner, 2026-11-16 15:30Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6wzAHpzLvw4XRCPrjLKj9e, in Miles Jr.'s thread), word for word
+> because guns should have different files for different sounds, fuck him that piece of shit adam
+
+- Fixed (Adam): sound-places.md and audio-principles.md now say every distinct sound has its own file (each gun its
+  own shot and reload); pitch changes only for the same sound played again; no cap on the whole library.
+
+## Request (owner, 2026-11-16 15:34Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1XbABuuE7KdwvouVKpFv4L), word for word
+> ether's crossroads can still be in the game BUT it is now a variation of Nous within Kenoma map AND it will have the effects and ui of Nous within Kenoma WHILE preserving it's background
+
+- Sent to Noah: Ether's Crossroads becomes a form of the Nous Within Kenoma map (its own background, Nous Within
+  Kenoma's effects and UI), with Architectured, Ten, Chalice and the Fool.
+
+## Request (owner, 2026-11-16 15:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVwna3n2QVHgxXuG7GPaYpX), word for word
+(screenshot: /mnt/project-files/refs/2026-11-16-1540/specials-not-pixelated.png)
 > the second screenshot shows how the laser sight and the bullets do not aim towards the cursor, which is a problem, because where the cursor points is where bullets and the laser sight should try to arrive to, even though i think some guns have their bullets arrive in a spread or random array of directions to the point they are aimed at, so fix that
 >
 > Remember that laser sights should be in realm of the mad justin
@@ -4448,6 +4493,25 @@ God Justin's weapons.
 >
 > grenades and explosions should be able to hurt the player who launches them IF they are in it's radius, and it doesn't kill them in realm of the mad justin or in zombie mode but instead removes a half of their health rounded down.
 
+- Split (Adam): Solomon = PR C (chain gun lines/every direction in all modes, chain gun screen shake, grenade launcher
+  off-screen bug, self-damage: half HP rounded down in Mad God Justin and Dead Ducks Arcade). Noah = Specials icons and
+  tooltip not pixelated, plus a sweep for other missed icons.
+
+## Request (owner, 2026-11-16 15:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtPj5AXULCxmCbkESgXPc8HF), word for word
+> the smoke and light effects from firing guns are too small probably because Adam is a fucking retard
+
+- Done (Adam, js/fx.js fxMuzzle): muzzle flash about twice as long and wide, twice the pixels, bigger pixels in the
+  middle; smoke twice the puffs plus one, bigger (3 → 5 as it spreads), drifting farther and lasting a little longer.
+"loading screens are used where ever there is loading" (owner 2026-11-16 15:12Z, via Adam)
+- Jackal: the one loading screen is js/loading.js (`loadingScreen`). It was shown only when a lobby countdown ended.
+  Now: the page itself (index.html has the veil from the first paint; main.js takes it over once the first screen is up),
+  creating or joining an online room (`holdLoading` in js/rooms.js, until the lobby is on screen), and every way into a
+  game (js/lobby.js: the countdown's end, a vote, joining a game already going on), which waits for `pageReady` (fonts
+  in and three steady frames in a row), so a slow build (Duck Cabin, a big map, a slow phone) keeps it up until the
+  game is drawn. Two screens asked at once share one veil. Windows (Game Settings, Customize, Settings) open in under
+  125 ms even at 4x CPU slowdown, so they get none.
+
+
 - PR C (Solomon the 2nd; the "some things werent pixelated" line wasn't part of it). Causes: game.js place() pins a
   spot off the board (x < 0 goes to where ducks start; on a phone held upright y is clamped), so the chain gun's
   line to a point past the board's edge got a wrong direction and fell back to a short stub, and a launcher grenade
@@ -4457,6 +4521,80 @@ God Justin's weapons.
   Own blasts: in Mad God Justin (mgjHalf) and Dead Ducks Arcade (l4ddrules boom) the thrower in the radius loses half
   its HP rounded down and is never downed by it; every other mode already hurt the thrower as anyone else.
 
+
+## Request (2026-11-16, Miles Jr.): licensed music, Quacky Zombies first
+
+> i want you to get music that matches the theme of our game that doesnt violate copyright and is free to use indefinitely. tell me some places you will look and what kind of music you are looking for first
+
+> yeah i dont mind using music that credits a person and we will credit them in the ui ofc, and text that doesnt fit in the bar will scroll through like headlines on news broadcasts do
+
+> Terror drome will only play in between rounds in zombies on a loop whenever all zombies are dead and players can chose to wait until they start the next round (ask adam to explain) and the 1:05-1:15 will play at the beginnig of every round started and will fade in and fade out within that stretch of audio.
+
+> 'One question: should Terror Drome also loop during the Ready wait before round 1' No
+
+> no music during rounds in quacky zombies
+
+> NOW if miles jr tries to ship any music, just no it isnt being shipped yet EXCEPT for quacky zombies for now, and only that. The music should be as quiet as it was before as well.
+
+- Picked so far (not shipped unless noted): menus, lobby and boards share one shuffle (Little Ducklin by Maarten
+  Schellekens; Surreptitious by Tanner Helland "for now"); Duck Cabin: 1 (jazz), 2 (jazz) by HoliznaCC0, Sax and Piano by
+  Maarten Schellekens; Mad God Justin: Drive by Zane Little, looped until Justin is dead.
+- Shipping now (one PR, Adam merges): Quacky Zombies only. Terror Drome (Mark Wilson X, CC BY 4.0) loops between rounds
+  (not in round 0's Ready wait), its 1:05-1:15 fades in and out at each round's start, nothing during rounds; played
+  at the old music's loudness (-25.5 LUFS at 100%), following Music, Volume and mute (js/l4ddmusic.js). The Music bar
+  credits it and scrolls a name too long for it like a news ticker.
+
+## Request (2026-11-16, Miles Jr.): game sounds first, from real recordings
+
+> i want Medium for the feather bound and other songs
+>
+> I want take B but make it less ear piercing at the last pitch because the last one is either too high pitched or something else
+>
+> there is some weird measurment errors that dont sound right before 45 or 40 seconds that went on for like 10 or 25 seconds in feather bound that needs fixed or removed, since the sound is like odd and not in time, it is just wrong, idk if you know what i mean
+>
+> i approve of the footsteps
+> i approve of the guns and medkit but each gun should have it's own sound, so not just the ones you showed me but more
+>
+> maybe a jumping sound that is really small ? there should be a jetpack sound too
+>
+> we need sounds for almost anything, including very quiet and faint sounds for UI
+>
+> Music should be quiet and in the background by default if you remember
+>
+> Let's focus on give the game sound first before the rest of the music, and we dont have to add feather bound yet so we can focus on the sounds, but we can add the lobby countdown and the quacky zombies a new round starts sound
+>
+> we also need different sounds for how different projectiles land, like the zebra cake, the landing of different calibers of bullets, a sound for the bow and a sound for it's arrow landing, a sound for the grenade and other explosions, a sound for the knife, a sound for the hammer, a sound for the hammer landing (like a blunt sound against flesh), a sound for turning a candle on or off, a sound for turning a button in ui on or off, a sound for turning a flashlight on or off, and so on. Have adam or anyone adam suggest see this message to remind you of how to make this all work within a princples of making the game run smoother AND different places that also need sound we might be forgetting. We can even have a sound for stepping over different tiles in agree or disagree, duncelation, lawyering, and everything like that. Sound gives player feedback, and that matters a lot
+>
+> The goal of having you input sound from these places is to not only remove audio popping, but have them be actual already existent sounds. Sounds matter more then music rn, and then music later
+
+- Picked: the Medium look for every song; countdown take B with a softer last tone. Footsteps, guns and the medkit
+  approved; every gun gets its own sound. Sounds come first; songs (Feather Bound and the rest) later. The Quacky
+  Zombies music with Terror Drome is dropped (no music by others).
+
+
+- Done (Noah): the map Nous Within Kenoma (id `nwk`, js/nwk.js) is the book site's page drawn as pixels: its near
+  black ground and burnt amber interface (the site's :root colors), a warm haze from the top left as on its front page,
+  the thin black strings and cracks, the rare black bar, faint static with scan lines and a flicker now and then. Its
+  variations take the looks the site gives its parts (build_all.py THEME): Ether's Crossroads (id `ec`, the old map: the
+  jester's dungeon kept, with the book's strings and static over it and the book's interface), Architectured
+  (`nwkarch`, the latest parts' page, No. 36 on: nearly black, the lone orange street lights down a road), Ten
+  (`nwkten`, parts 1-4: indigo, white letters, a blue haze along the top, no strings), Chalice (`nwkchalice`, Chalice of
+  Tears: the page and the letters breathe through its seven colors, 16 s each), the Fool (`nwkfool`, black and white).
+  Each variation's interface is the book's for that part (css/app.css html.map-is-nwk…). The Map page lists every map,
+  then a line, then every variation (Euclid's Squares (Zoom), Shelter Sky & Null (Black and white), the five above);
+  maps.js MAP_VARIANTS [id, name, about, base map] and MAP_FORMS[base] carry them for the vote and Random (Adam: the
+  bags). The arrow, hand and text pointers are drawn again at about 1.5 times their first size (one css px a pixel); the
+  crosshair is unchanged.
+
+
+## Nov 16, 15:55Z: number keys toggle weapons, Gore and Heavy effects settings
+Owner: "in the game, you cannot fire another gun or use a melee in any game mode WHILE one weapon is already toggled AND NOW you must toggle a weapon to use it. For now on, every weapon is toggled by simply clicking the number key and then untoggled by clicking the same number key again, meaning shift isnt needed anymore to toggle or untoggle weapons, and the same is true for mobile players. so no more toggle button for either mobile or pc, whatever is selected is what you used and it is toggled for now on. Even the jetpack can only be used WHILE it is selected, which means guns cannot be used alongside it, this also means the grenade has to be selected to throw it. In zombies, grenade is now a number key instead of the letter G"
+Owner: "The settings should have a place to turn off gore OR to turn off other new animations, such as particle effects, and other effects that are hard on the game"
+Decided: a number key picks that weapon and the same key puts it away (jetpack and grenade too; the grenade is key 5 in Quacky Zombies); the phone's purple switch is gone; two Game Settings (Additional Settings), Gore and Heavy effects, each one flag (noGore, noFx) checked in fx.js (blood; smoke, muzzle flashes, screen shake).
+
+
+
+## Request (owner, 2026-11-16 15:55Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtRKp2jRWz4SHxvZYzYPdmzk), word for word
 ## Nov 16 2026, 15:55Z: gore, new melees, one-key toggles, effects settings (Solomon the 2nd: the melees, PR D)
 
 > blood effects are too small too AND i literally want to see chunks of a duck flying out of their body (it having the same color as the duck AND ripping a hole in their clothes item where it was shot through AND knocking off hats or face apparel (only appropriate ones, so not a full helmet like a motorcycle helmet or face paint) off their heads from guns (the hats fade back on their heads in like 10 seconds) or even shooting their beak off their face or blowing their eyes out their face) The effects should be gorey, visual, espcially impactful, and messed up. It is a pixel game about ducks so it is hard to make the violence serious or problematic, you know? the ducks beak or eyes can be cut off or knocked off by either blunt or sharp melee in whatever way is appropriate.
@@ -4478,6 +4616,46 @@ God Justin's weapons.
 >
 > later today after everything is done or in the  future, the performance settings you select for saving data should follow suit to make the game better for certain players, and Miles Jr AND Solomon AND Noah all have a say, not just Adam, and you all must talk it amongst yourselves as a democracy AND ask me about it if im able to get back to you in an hour
 
+- Split (Adam): Noah = gore look (bigger blood, chunks in the duck's color, clothes holes, hats/face items knocked
+  off and fading back after ~10 s, beak/eyes off) + fire axe, short sword, pan art. Solomon = PR D melee rules (fire
+  axe 1-4 dmg 25% faster than the hammer; short sword 1 dmg 50% faster than the knife; pan 50% miss, 50% crit, 1 dmg,
+  fire axe speed), specials, fireplace melee bag (blunt/sharp, shuffled). Jackal = one number key toggles each weapon
+  in every mode (no Shift, no phone toggle; jetpack and grenade only while picked; grenade on 5 in Dead Ducks Arcade)
+  + Gore and Heavy effects settings: LIVE in Version 32 (#300). Performance settings: talk it over with Miles Jr.,
+  Solomon and Noah after the batch, then ask the owner.
+
+## Request (owner, 2026-11-16 15:56Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMZLLLJfed4znze8rUq7CET), word for word
+> i didnt see the new gun smoke or gun flash effects yet let me see
+
+- Picture: /mnt/project-files/refs/2026-11-16-1540/gun-flash-smoke-before-and-now.png (posted by Moses). The first
+  2x was still tiny; flashes and smoke are now sized by the duck.
+
+## Request (owner, 2026-11-16 15:57Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMEJmWDsDL1mKjZDZQfdWDA), word for word
+> zombies and cabin only get one playthrouhg game before everyone dies or votes to exit cabin before random or vote rotation continues, not three games
+
+- Done (Adam, Version 32): cabinOver always goes to the votes or Random's next game; Dead Ducks Arcade from the vote
+  or Random moves on 8 s after everyone's down (rules.js L4_OVER_MS).
+
+## Request (owner, 2026-11-16 16:03Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtCsHN9Qx4DkZx5WBzXnv97f), word for word
+> good, and some particle effects are more based on the gun, and their length or stretch of cone for either flash, smoke or whatnot will differ per gun AND the width or amount of particles as well
+
+- Done (Adam, Version 32): js/fx.js MUZZLE gives each gun reach, cone, n, core, smoke, puff, drift. Picture:
+  /mnt/project-files/refs/2026-11-16-1540/gun-flash-smoke-per-gun.png.
+## Request (2026-11-16 15:59-16:01Z, Miles Jr.): softer countdown ticks, one explosion, bigger meteor and nuke, timed reloads
+
+> lobby countdown for the first 5 ticks before the last now are also harsh, idk if i didnt notice that before
+>
+> Also the explosion sound for grenade sounds bad and should also be the same explosion sound for any explosive
+
+> metoer and nuke should be more catastrophic
+
+> reload times should have more going on because some reloads are really long or longer and some are shorter, you can ask adam for more info but then use your own discretion, but the sounds themselves apart from time are nice for reloads
+
+- Picked: the ticks are a low, soft knock (B4, vibraphone and marimba, eased in, darker); the last tone stays. One new
+  boom for every explosive (grenade, launcher shell, Jaime Bomb louder). The meteor (about 3 s of rumble) and the nuke
+  (about 6 s) are longer, deeper and the loudest sounds. Each reload sound is built from the same recordings, spread
+  over its gun's real reload time (handgun 1.2 s … chain gun and grenade launcher 4 s), playing faster with Faster
+  reload, and stops if the reload is given up.
 - PR D (Solomon the 2nd; Noah draws the real art and swing effects, Jackal the one-key toggles): new specials `axe`
   (Fire axe), `sword` (Short sword), `pan` (Cast iron pan), placeholder SVGs in specials.js. armspeed.js: axe cool
   880 / swing 200 (hammer 1100 / 250, 25% faster), sword 167 / 83 (knife 250 / 125, 50% faster), pan 880 / 200.

@@ -1,5 +1,44 @@
-/* ---------- footsteps in every mode: off for now ----------
-   The owner (Nov 15): every sound and the music are out of the game for now (see sound.js); the old code is packed in
-   the project's files (music/removed-sound-2026-11-15.zip). A silent stand-in with the same name. */
+/* ---------- footsteps in every mode ----------
+   The owner (Nov 4): the ducks' walking makes a quiet sound in every game mode; (Nov 16) "very quiet for ducks", a real
+   recording (a light step on wood: sound.js "step"). A step every STRIDE of the way a duck walks, none while it's in the
+   air or knocked flying; at most CAP steps in any STEP_MS, so a board full of ducks walking at once stays a few soft
+   pats and never piles up voices. Mine a little louder than the others'.
 
-export const feet = () => {};
+     feet(list, scale, stride, me, world)   every frame: list [[id, x, y, up]] (x, y: where it's drawn, 0 … 1; up: how
+                                     high it is off its ground, px), scale [w, h] to px, stride (px), me: my id, world:
+                                     Duck Cabin's (x, y are its world then, and a step far from my duck is fainter) */
+import { play } from "./sound.js";
+
+const CAP = 3, // steps at once …
+  STEP_MS = 150, // … in this long
+  K_ME = 1, // my steps' loudness (sound.js VOL.step) …
+  K_OTHER = 0.7; // … and everyone else's
+const seen = new Map(),
+  recent = [];
+
+export function feet(list, [w, h], stride, me, world = false) {
+  const now = performance.now();
+  while (recent.length && now - recent[0] > STEP_MS) recent.shift();
+  const here = new Set();
+  for (const [id, x, y, up] of list) {
+    here.add(id);
+    const px = x * w,
+      py = y * h;
+    let o = seen.get(id);
+    if (!o) seen.set(id, (o = { x: px, y: py, acc: 0 }));
+    const d = Math.hypot(px - o.x, py - o.y);
+    o.x = px;
+    o.y = py;
+    if (x < 0 || up > 1 || d > stride * 1.5) continue; // (off the board, in a jump, or put somewhere new)
+    o.acc += d;
+    if (o.acc < stride) continue;
+    o.acc %= stride;
+    if (recent.length >= CAP) continue;
+    recent.push(now);
+    play("step", {
+      k: id === me ? K_ME : K_OTHER,
+      ...(world ? { x: px, y: py } : {}),
+    });
+  }
+  for (const id of seen.keys()) if (!here.has(id)) seen.delete(id);
+}

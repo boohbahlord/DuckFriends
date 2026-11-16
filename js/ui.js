@@ -1,6 +1,8 @@
 /* ---------- small helpers every screen uses ----------
    Elements, windows (each with an X at its top right; an X on a question means No), toasts at the bottom middle, and hover
    tips that wait about a second before they show and never cover what they explain. */
+import { sfx } from "./sound.js";
+
 export const $ = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 export const esc = (s) =>
@@ -54,6 +56,7 @@ export function openWindow(html, { cls = "", onOpen } = {}) {
     const win = back.firstElementChild,
       prev = document.activeElement;
     const close = (v) => {
+      if (back.isConnected) sfx.uiClose();
       back.remove();
       removeEventListener("keydown", key, true);
       if (prev && prev.focus) prev.focus();
@@ -76,6 +79,7 @@ export function openWindow(html, { cls = "", onOpen } = {}) {
     win.querySelector(".win-x").onclick = () => close(null);
     addEventListener("keydown", key, true);
     document.body.appendChild(back);
+    sfx.uiOpen();
     win.close = close;
     if (onOpen) onOpen(win, close);
     const f = win.querySelector("[autofocus], input, button:not(.win-x)");

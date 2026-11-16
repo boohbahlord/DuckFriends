@@ -1,7 +1,7 @@
 /* ---------- Quacky Zombies' weapons bar ----------
    Five slots, each in its own color (the owner's): the melee weapon (1, blue), two ranged weapons (2 and 3, red: the
    magazine and the rest, or how many are left), the special (4, purple; empty until the fireplace gives one) and the
-   grenades (G, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
+   grenades (5, white: how many). Then the flashlight (0). The one in hand glows. On a computer the bar sits in the
    bottom bar's right corner (where the specials' keys go), my HP under it as green blocks; a click on a slot picks it.
    On a phone the slots are the specials' slider in the bottom middle, as in every mode (hotbar.js, l4Slider below), the
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
@@ -66,7 +66,7 @@ export function mountL4Bar(S, api) {
     /* one slot: [key, the weapon (or "" when empty), its kind, what a press does] */
     const slots = [
       ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
-      ["G", "grenade", "grenade", "grenade"],
+      ["5", "grenade", "grenade", "grenade"],
       ["0", "fl", "light", "fl"],
     ];
     const slot = ([key, w, kind, does]) => {
@@ -165,12 +165,17 @@ export function l4Slider(api) {
       if (i === 5) api.flash();
       else if (i === 3 && keep) api.pick(3);
       else if (i === 3) api.fire(k.sl[3]);
-      else if (i === 4 && !keep) api.grenade();
+      else if (i === 4 && !keep) api.fire("grenade"); // (a tap on the grenades picked: one is thrown)
     },
     select(i) {
       const k = kit();
       if (i === 3 && k && ["longjump", "jetpack"].includes(k.sl[3])) return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
-      if (i < 3 || (i === 3 && api.slot() !== 3)) api.pick(i);
+      if (
+        i < 3 ||
+        (i === 3 && api.slot() !== 3) ||
+        (i === 4 && api.slot() !== 4)
+      )
+        api.pick(i); // (the one in the middle is the one picked, grenades too)
     },
     current: () => api.held() || null,
     cool: () => [],

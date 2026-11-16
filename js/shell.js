@@ -39,7 +39,12 @@ import {
   slowMs,
 } from "./rules.js";
 import { modeOf, MODES } from "./modes.js";
-import { MAPS, mapName } from "./maps.js";
+import { MAPS, MAP_VARIANTS, mapForm, mapName } from "./maps.js";
+/* the maps the command line knows: every map, and every variation that is a map of its own (Nous Within Kenoma's) */
+const SH_MAPS = [
+  ...MAPS,
+  ...MAP_VARIANTS.filter((v) => mapForm(v[0]).map === v[0]),
+];
 import { FONTS } from "./name.js";
 import { specialById, keysOf, KEYS } from "./specials.js";
 import { styleById, styleName } from "./styles.js";
@@ -1958,7 +1963,7 @@ const CMDS = {
     if (!args.length)
       return (
         table(
-          MAPS.map((m) => [
+          SH_MAPS.map((m) => [
             m[0],
             m[1] + (m[0] === s.options.map ? "  (now)" : ""),
           ]),
@@ -1966,7 +1971,7 @@ const CMDS = {
         `\nHangout brings its own: Duck Cabin${s.options.map === "cabin" ? "  (now)" : ""}`
       );
     const id = args.join(" ").toLowerCase(),
-      m = MAPS.find(
+      m = SH_MAPS.find(
         (v) =>
           v[0] === id ||
           v[1].toLowerCase() === id ||
@@ -2400,7 +2405,7 @@ const WORDS = {
     "text",
     "all",
   ],
-  map: MAPS.map((m) => m[0]),
+  map: SH_MAPS.map((m) => m[0]),
   mode: MODES.map((m) => m.id),
   song: ["list", "now", "on", "off", "all", ...music.tracks.map(qn)],
   chmod: ["g+r", "g-r", "o+r", "o-r", "a+r", "a-r", "640", "644", "600"],

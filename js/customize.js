@@ -24,7 +24,7 @@ import {
   heldHTML,
   GRENADE,
 } from "./specials.js";
-import { sfx } from "./sound.js";
+import { sfx, loadSounds } from "./sound.js";
 import {
   DUCK_PATTERNS,
   DUCK_METALS,
@@ -255,6 +255,7 @@ let lastPage = null,
 const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
+  loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
   return openWindow(
     `<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
@@ -486,24 +487,24 @@ export function openCustomize(page = lastPage) {
               hotdog: sfx.chomp,
               watergun: sfx.splash,
               confgun: sfx.pop,
-              handgun: sfx.bang,
-              sniper: sfx.bang,
-              revolver: sfx.bang,
-              smg: sfx.tat,
-              ak: sfx.tat,
-              lmg: sfx.tat,
-              chaingun: sfx.tat,
-              glauncher: sfx.shotgun,
-              dagger: sfx.swish,
-              knife: sfx.swish,
-              hammer: sfx.swish,
-              axe: sfx.swish,
-              sword: sfx.swish,
-              pan: sfx.swish,
-              grenade: sfx.swish,
+              handgun: sfx.handgun,
+              sniper: sfx.sniper,
+              revolver: sfx.revolver,
+              smg: sfx.smg,
+              ak: sfx.ak,
+              lmg: sfx.lmg,
+              chaingun: sfx.chaingun,
+              glauncher: sfx.glauncher,
+              dagger: sfx.throw,
+              knife: sfx.knife,
+              hammer: sfx.hammer,
+              axe: sfx.hammer,
+              sword: sfx.knife,
+              pan: sfx.hammer,
+              grenade: sfx.throw,
               bow: () => setTimeout(() => sfx.bow(), 380),
-              chair: () => setTimeout(() => sfx.swish(), 600),
-              zebra: sfx.swish,
+              chair: () => setTimeout(() => sfx.chair(), 600),
+              zebra: sfx.cakeThrow,
               jaime: () => {
                 sfx.puff();
                 setTimeout(() => sfx.jaime(), 250);
@@ -779,7 +780,7 @@ export function openCustomize(page = lastPage) {
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim sp-keep"><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on</p>'}${strip}</div>`;
+            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>

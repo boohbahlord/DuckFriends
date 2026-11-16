@@ -10,6 +10,7 @@
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
 import { activity } from "./hangout/registry.js";
+import { votesDue } from "./rules.js";
 import {
   CABIN,
   DECK,
@@ -506,7 +507,7 @@ export function l4Got(k) {
     fl.className = "l4-nukeflash";
     gotEl.before(fl);
     setTimeout(() => fl.remove(), 1300);
-    sfx.boom();
+    sfx.nuke();
   } else sfx.bell();
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
@@ -561,10 +562,14 @@ function seeHud(s, ctx) {
   }
   const host = s.hostId === ctx.me,
     hostName = (s.players[s.hostId] || {}).name || "the host";
+  /* from the vote or Random, the room moves on by itself after a moment (rules.js L4_OVER_MS) */
+  const moving = votesDue(s).length || s.options.modePick === "random";
   over.innerHTML = `<div class="l4-over-card"><h2>Everyone's down</h2><p>You made it to <b>Round ${L.over.r}</b>.</p>${
-    host
-      ? '<div class="l4-over-btns"><button type="button" class="btn yellow" data-l4="again">Play again</button><button type="button" class="btn" data-a="lobby">Back to the lobby</button></div>'
-      : `<p class="small dim">Waiting for ${nameHTML(hostName)} to play again or go back to the lobby.</p>`
+    moving
+      ? `<p class="small dim">${votesDue(s).length ? "On to the vote in a moment." : "On to the next game in a moment."}</p>`
+      : host
+        ? '<div class="l4-over-btns"><button type="button" class="btn yellow" data-l4="again">Play again</button><button type="button" class="btn" data-a="lobby">Back to the lobby</button></div>'
+        : `<p class="small dim">Waiting for ${nameHTML(hostName)} to play again or go back to the lobby.</p>`
   }</div>`;
   over.hidden = false;
 }

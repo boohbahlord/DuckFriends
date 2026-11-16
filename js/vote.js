@@ -12,11 +12,12 @@ import { modeOf, CATS, CABIN_MODES } from "./modes.js";
 import { mapName, mapForm, mountPreview } from "./maps.js";
 import { duckSVG } from "./duck.js";
 import { seenDuck } from "./looks.js";
-import { voteIds, voteLeft, DICE } from "./rules.js";
+import { voteIds, voteLeft, DICE, voteNeeds } from "./rules.js";
+import { lobbyVote } from "./players.js";
 import { now } from "./clock.js";
 import { sfx } from "./sound.js";
 
-let W = null; // the window while it's up: { el, R, key, sig, hov, live, raf, hold }
+let W = null; // the window while it's up: { el, R, key, sig, hov, live, raf, hold, pause }
 
 const phone = () => !document.documentElement.classList.contains("keyboard");
 const TITLE = { mode: "Vote for Game Mode", map: "Vote for Map" };
@@ -46,7 +47,17 @@ function bodyHTML(s, k) {
   }).join("")}</div>`;
 }
 
-function build(R) {
+/* the vote's own top corners (owner, Nov 16): a vote to go back to the lobby on the left, the pause menu (☰) on the
+   right next to the clock, so neither is lost under the window */
+const lobbyBtnHTML = (s, me) => {
+  const v = s.vote && s.vote.kind === "lobby" ? s.vote : null;
+  if (!v)
+    return '<button type="button" class="btn ghost vt-lobby" data-lv="1">Vote: back to the lobby</button>';
+  const { voters, need } = voteNeeds(s, v),
+    yes = voters.filter((id) => v.yes[id]).length;
+  return `<button type="button" class="btn red vt-lobby" data-lv="1"${v.yes[me] ? " disabled" : ""}>${v.yes[me] ? "Voted: back to the lobby" : "Vote yes: back to the lobby"} · ${yes}/${need}</button>`;
+};
+function build(R, pause) {
   const s = R.state,
     k = s.vt.k;
   closeVotes();
@@ -54,7 +65,7 @@ function build(R) {
   el.className = `vt vt-k-${k}`;
   el.setAttribute("role", "dialog");
   el.setAttribute("aria-label", TITLE[k]);
-  el.innerHTML = `<header class="vt-head"><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><span class="vt-time" aria-live="off"></span></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "map" ? "a map" : "a game"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
+  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "map" ? "a map" : "a game"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
   document.body.append(el);
   W = {
     el,
@@ -65,9 +76,13 @@ function build(R) {
     live: new Map(),
     raf: 0,
     hold: 0,
+    pause,
+    lv: "",
   };
   const pick = (e) => e.target.closest && e.target.closest("[data-v]");
   el.addEventListener("click", (e) => {
+    if (e.target.closest(".vt-pause")) return W.pause && W.pause();
+    if (e.target.closest("[data-lv]")) return lobbyVote(W.R);
     const b = pick(e);
     if (!b) return;
     W.R.send({ t: "vote", v: b.dataset.v });
@@ -148,11 +163,16 @@ function sync() {
 }
 
 /* the window as the state has it: built once for each vote, then only the clock, the numbers and the ducks change */
-export function paintVotes(R) {
+export function paintVotes(R, pause) {
   const s = R.state,
     vt = s.phase === "countdown" ? s.vt : null;
   if (!vt) return closeVotes();
-  if (!W || W.key !== vt.k + ":" + s.at || W.R !== R) build(R);
+  if (!W || W.key !== vt.k + ":" + s.at || W.R !== R) build(R, pause);
+  const lv = lobbyBtnHTML(s, R.me);
+  if (lv !== W.lv) {
+    W.lv = lv;
+    W.el.querySelector(".vt-left").innerHTML = lv;
+  }
   const left = Math.ceil(voteLeft(s, now()) / 1000),
     time = W.el.querySelector(".vt-time");
   time.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;

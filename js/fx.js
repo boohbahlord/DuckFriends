@@ -7,6 +7,7 @@
    Places are the board's css px. In Hangout and Dead Ducks Arcade the camera moves: game.js tells me where the
    world's corner is on the screen each frame (fxOrigin), and every particle keeps its place in the world. */
 import { gridPx } from "./pixel.js";
+import { sfx } from "./sound.js";
 
 const MAX = 1200, // (particles at most: the oldest give way)
   DROP = 1,
@@ -216,11 +217,22 @@ export const BLEED_OF = {
   bow: "arrow",
   claw: "claw",
 };
+/* the room's two switches (Game Settings): gore off (no blood at all) and heavy effects off (no smoke, muzzle flashes or
+   screen shake). game.js sets them every frame from the options; every blood and smoke maker below checks them */
+let noGore = false,
+  noHeavy = false;
+export function fxLimits(gore, heavy) {
+  noGore = !!+gore;
+  noHeavy = !!+heavy;
+}
+export const heavyOff = () => noHeavy;
 const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
    hit went (most of the blood goes on that way, some back toward the shooter) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0) {
+  sfx.flesh(BLEED_OF[w] || "small"); // (its sound: by what went in)
+  if (noGore) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
     l = Math.hypot(dx, dy),
@@ -267,8 +279,15 @@ const IMPACTS = [], // [x, y, kind, dx, dy, when]
   MELEE = new Map(); // a duck's id → [weapon, when, the attacker's [x, y]]
 /* a shot gone at (x, y) on the screen, kind k, flying (dx, dy) */
 export function fxImpact(x, y, k, dx, dy) {
-  IMPACTS.push([x, y, k, dx, dy, performance.now()]);
+  const e = [x, y, k, dx, dy, performance.now(), false];
+  IMPACTS.push(e);
   if (IMPACTS.length > 40) IMPACTS.shift();
+  /* its sound: in flesh (fxBlood, once something bleeds by it), or else landing on the floor or a wall a moment later,
+     by its round, if it went out on the board (not off its edge) */
+  const W = cv ? cv.width * gridPx() : 0,
+    H = cv ? cv.height * gridPx() : 0;
+  if (x >= 0 && y >= 0 && x <= W && y <= H)
+    setTimeout(() => e[6] || sfx.land(k), 120);
 }
 /* a knife, a hammer… that just touched duck id, swung from `from` ([x, y] on the screen) */
 export function fxMelee(id, w, from) {
@@ -286,21 +305,27 @@ export function fxHitAt(x, y, h, id, size, or = "small") {
   if (m && now - m[1] < 500) {
     w = m[0];
     if (m[2]) [dx, dy] = [x - m[2][0], y - m[2][1]];
-  } else
-    for (const [ix, iy, k, vx, vy, t] of IMPACTS) {
-      const d = Math.hypot(ix - x, iy - y);
+  } else {
+    let hit = null;
+    for (const e of IMPACTS) {
+      const [ix, iy, k, vx, vy, t] = e,
+        d = Math.hypot(ix - x, iy - y);
       if (now - t < 450 && d < best) {
         best = d;
         w = k;
         dx = vx;
         dy = vy;
+        hit = e;
       }
     }
+    if (hit) hit[6] = true; // (it went in: no landing sound)
+  }
   fxBlood(x, y, h, w || or, dx, dy);
 }
 
 /* blood bursting out all around (a crit's head, a grenade): n drops, chunks too */
 export function fxBurst(x, y, h, n, chunks = 0) {
+  if (noGore) return;
   const u = unit;
   for (let k = 0; k < n + chunks; k++) {
     const a = rnd(0, Math.PI * 2),
@@ -321,30 +346,123 @@ export function fxBurst(x, y, h, n, chunks = 0) {
   }
 }
 
-/* a gun going off at its barrel's end (x, y, on the screen, `ang` the way it points): how much flash and smoke, by
-   gun (owner: very little for weaker or small guns, most for the chain gun and the big sniper, then the LMG, the AK, the
-   shotgun and guns like them) */
+/* a gun going off at its barrel's end (x, y, on the screen, `ang` the way it points). Each gun has its own flash and
+   smoke (owner 2026-11-16): reach, the flash's length in ducks; cone, how wide it fans out (narrow and long for the
+   sniper, a wide spray for the shotgun); n, its pixels; core, the size of the hot pixels in the middle; smoke, its
+   puffs; puff, their size; drift, how far they travel; shake and kick, the screen's shake and the gun's recoil
+   (fxmotion.js). Weaker and smaller guns get the least; the chain gun, the sniper, the LMG and the shotgun the most */
 export const MUZZLE = {
-  handgun: { flash: 2, smoke: 1, shake: 0.1, kick: 0.45 },
-  smg: { flash: 2, smoke: 1, shake: 0.08, kick: 0.3 },
-  revolver: { flash: 4, smoke: 2, shake: 0.22, kick: 0.9 },
-  ak: { flash: 5, smoke: 2, shake: 0.16, kick: 0.55 },
-  shotgun: { flash: 6, smoke: 3, shake: 0.32, kick: 1 },
-  lmg: { flash: 5, smoke: 3, shake: 0.15, kick: 0.5 },
-  sniper: { flash: 8, smoke: 4, shake: 0.42, kick: 1.2 },
-  chaingun: { flash: 7, smoke: 2, shake: 0.3, kick: 0.45 }, // (15 shots a second outlast the shake fading, 2.4 a second: held down it builds up; at 0.13 it never did)
+  handgun: {
+    reach: 0.45,
+    cone: 0.35,
+    n: 12,
+    core: 3,
+    smoke: 2,
+    puff: 3,
+    drift: 0.5,
+    shake: 0.1,
+    kick: 0.45,
+  },
+  smg: {
+    reach: 0.5,
+    cone: 0.3,
+    n: 14,
+    core: 3,
+    smoke: 2,
+    puff: 3,
+    drift: 0.5,
+    shake: 0.08,
+    kick: 0.3,
+  },
+  revolver: {
+    reach: 0.7,
+    cone: 0.5,
+    n: 22,
+    core: 4,
+    smoke: 4,
+    puff: 4,
+    drift: 0.6,
+    shake: 0.22,
+    kick: 0.9,
+  },
+  ak: {
+    reach: 0.85,
+    cone: 0.4,
+    n: 30,
+    core: 4,
+    smoke: 5,
+    puff: 4,
+    drift: 0.7,
+    shake: 0.16,
+    kick: 0.55,
+  },
+  shotgun: {
+    reach: 0.7,
+    cone: 1.1,
+    n: 40,
+    core: 5,
+    smoke: 8,
+    puff: 5,
+    drift: 0.6,
+    shake: 0.32,
+    kick: 1,
+  },
+  lmg: {
+    reach: 0.95,
+    cone: 0.45,
+    n: 34,
+    core: 4,
+    smoke: 6,
+    puff: 5,
+    drift: 0.7,
+    shake: 0.15,
+    kick: 0.5,
+  },
+  sniper: {
+    reach: 1.4,
+    cone: 0.22,
+    n: 36,
+    core: 5,
+    smoke: 7,
+    puff: 5,
+    drift: 0.9,
+    shake: 0.42,
+    kick: 1.2,
+  },
+  chaingun: {
+    reach: 1.1,
+    cone: 0.7,
+    n: 44,
+    core: 5,
+    smoke: 4,
+    puff: 4,
+    drift: 0.8,
+    shake: 0.13,
+    kick: 0.45,
+  },
+  glauncher: {
+    reach: 0.5,
+    cone: 0.9,
+    n: 20,
+    core: 5,
+    smoke: 10,
+    puff: 6,
+    drift: 0.4,
+    shake: 0.35,
+    kick: 1.1,
+  },
 };
 export function fxMuzzle(x, y, ang, gun) {
   const M = MUZZLE[gun];
-  if (!M) return;
+  if (!M || noHeavy) return;
   const u = unit,
     c = Math.cos(ang),
     s = Math.sin(ang),
-    gp = gridPx();
-  /* the flash: a few pixels in a short cone out of the barrel, hot in the middle, gone in a frame or three */
-  for (let k = 0; k < M.flash * 2; k++) {
-    const d = rnd(0, M.flash * gp * 0.9),
-      side = rnd(-0.5, 0.5) * (d * 0.7 + gp);
+    reach = u * M.reach;
+  /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames */
+  for (let k = 0; k < M.n; k++) {
+    const d = rnd(0, reach),
+      side = rnd(-0.5, 0.5) * (d * M.cone + u * 0.08);
     add(
       FLASH,
       x + c * d - s * side,
@@ -353,25 +471,26 @@ export function fxMuzzle(x, y, ang, gun) {
       0,
       0,
       0,
-      rnd(45, 90),
-      d < M.flash * gp * 0.3 ? 8 : Math.random() < 0.6 ? 9 : 10,
-      d < M.flash * gp * 0.4 && M.flash > 3 ? 2 : 1, // (a big gun's: two by two in the middle)
+      rnd(70, 130),
+      d < reach * 0.3 ? 8 : Math.random() < 0.6 ? 9 : 10,
+      d < reach * 0.4 ? M.core : d < reach * 0.75 ? Math.max(2, M.core - 2) : 2, // (bigger pixels in the middle)
     );
   }
-  /* the smoke: a few slow puffs that drift on the way it fired, rise and thin out */
+  /* the smoke: puffs that drift on the way it fired, rise, spread and thin out */
   for (let k = 0; k < M.smoke; k++) {
-    const v = u * rnd(0.15, 0.45);
+    const v = u * M.drift * rnd(0.4, 1.1),
+      d = rnd(0, reach * 0.8);
     add(
       SMOKE,
-      x + c * gp * rnd(0, 2),
-      y + s * gp * rnd(0, 2),
+      x + c * d + rnd(-0.5, 0.5) * M.cone * u * 0.2,
+      y + s * d + rnd(-0.5, 0.5) * M.cone * u * 0.2,
       0,
-      c * v + rnd(-0.1, 0.1) * u,
+      c * v + rnd(-0.25, 0.25) * u * M.cone,
       s * v * 0.6,
-      u * rnd(0.2, 0.45),
-      rnd(450, 900) + M.smoke * 80,
+      u * rnd(0.3, 0.7),
+      rnd(800, 1400) + M.smoke * 60,
       5 + (k % 3),
-      2,
+      M.puff,
     );
   }
 }
@@ -420,12 +539,12 @@ export function fxFrame(now = performance.now()) {
       Z[i] += VZ[i] * dt;
       VX[i] *= 1 - 1.6 * dt;
       VY[i] *= 1 - 1.6 * dt;
-      if (age > LIFE[i] * 0.45) SIZE[i] = 3; // (it spreads out)
+      if (age > LIFE[i] * 0.45 && SIZE[i] < 7) SIZE[i] = SIZE[i] + 3; // (it spreads out, once)
     }
     /* see-through in steps, as the pixel look's pictures (none, half, all): fading things go half first */
     const u = age / LIFE[i];
     g.globalAlpha =
-      k === SMOKE ? (u < 0.4 ? 0.5 : 0.25) : k === SPLAT && u > 0.6 ? 0.5 : 1;
+      k === SMOKE ? (u < 0.4 ? 0.7 : 0.4) : k === SPLAT && u > 0.6 ? 0.5 : 1;
     g.fillStyle = INK[COL[i]];
     const px = Math.round((X[i] + ox) / gp),
       py = Math.round((Y[i] + oy - Z[i]) / gp),
@@ -473,6 +592,7 @@ export function fxFrame(now = performance.now()) {
 }
 /* blood spurting up out of (x, y) (a headless neck): n small spurts, one after another over ms */
 export function fxSpurt(x, y, h, n = 10, ms = 1400) {
+  if (noGore) return;
   const u = unit,
     o = [ox, oy];
   for (let k = 0; k < n; k++)
