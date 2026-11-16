@@ -5886,6 +5886,12 @@ html.low .hat-wobble {
 .tmeter[hidden] {
   display: none;
 }
+/* a narrow phone: the timer's words are enough, so the title beside them ("Write a question") isn't cut off */
+@media (max-width: 480px) {
+  .gbar .tmeter {
+    display: none;
+  }
+}
 .tmeter i {
   display: block;
   height: 100%;
