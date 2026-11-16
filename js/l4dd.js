@@ -507,7 +507,7 @@ export function l4Got(k) {
     fl.className = "l4-nukeflash";
     gotEl.before(fl);
     setTimeout(() => fl.remove(), 1300);
-    sfx.boom();
+    sfx.nuke();
   } else sfx.bell();
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };

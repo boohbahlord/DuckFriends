@@ -7,6 +7,7 @@
    Places are the board's css px. In Hangout and Dead Ducks Arcade the camera moves: game.js tells me where the
    world's corner is on the screen each frame (fxOrigin), and every particle keeps its place in the world. */
 import { gridPx } from "./pixel.js";
+import { sfx } from "./sound.js";
 
 const MAX = 1200, // (particles at most: the oldest give way)
   DROP = 1,
@@ -218,6 +219,7 @@ const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
    hit went (most of the blood goes on that way, some back toward the shooter) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0) {
+  sfx.flesh(BLEED_OF[w] || "small"); // (its sound: by what went in)
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
     l = Math.hypot(dx, dy),
@@ -264,8 +266,15 @@ const IMPACTS = [], // [x, y, kind, dx, dy, when]
   MELEE = new Map(); // a duck's id → [weapon, when, the attacker's [x, y]]
 /* a shot gone at (x, y) on the screen, kind k, flying (dx, dy) */
 export function fxImpact(x, y, k, dx, dy) {
-  IMPACTS.push([x, y, k, dx, dy, performance.now()]);
+  const e = [x, y, k, dx, dy, performance.now(), false];
+  IMPACTS.push(e);
   if (IMPACTS.length > 40) IMPACTS.shift();
+  /* its sound: in flesh (fxBlood, once something bleeds by it), or else landing on the floor or a wall a moment later,
+     by its round, if it went out on the board (not off its edge) */
+  const W = cv ? cv.width * gridPx() : 0,
+    H = cv ? cv.height * gridPx() : 0;
+  if (x >= 0 && y >= 0 && x <= W && y <= H)
+    setTimeout(() => e[6] || sfx.land(k), 120);
 }
 /* a knife, a hammer… that just touched duck id, swung from `from` ([x, y] on the screen) */
 export function fxMelee(id, w, from) {
@@ -283,16 +292,21 @@ export function fxHitAt(x, y, h, id, size, or = "small") {
   if (m && now - m[1] < 500) {
     w = m[0];
     if (m[2]) [dx, dy] = [x - m[2][0], y - m[2][1]];
-  } else
-    for (const [ix, iy, k, vx, vy, t] of IMPACTS) {
-      const d = Math.hypot(ix - x, iy - y);
+  } else {
+    let hit = null;
+    for (const e of IMPACTS) {
+      const [ix, iy, k, vx, vy, t] = e,
+        d = Math.hypot(ix - x, iy - y);
       if (now - t < 450 && d < best) {
         best = d;
         w = k;
         dx = vx;
         dy = vy;
+        hit = e;
       }
     }
+    if (hit) hit[6] = true; // (it went in: no landing sound)
+  }
   fxBlood(x, y, h, w || or, dx, dy);
 }
 

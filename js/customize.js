@@ -24,7 +24,7 @@ import {
   heldHTML,
   GRENADE,
 } from "./specials.js";
-import { sfx } from "./sound.js";
+import { sfx, loadSounds } from "./sound.js";
 import {
   DUCK_PATTERNS,
   DUCK_METALS,
@@ -255,6 +255,7 @@ let lastPage = null,
 const openFolds = new Set();
 
 export function openCustomize(page = lastPage) {
+  loadSounds("game"); // (the specials' previews: each gun's own sound)
   if (page === "duck") page = null; // (the old tab name)
   return openWindow(
     `<div class="armory"><div class="arm-menu"></div><div class="arm-stage" data-nonav><div class="arm-duck"></div><div class="arm-card"></div><p class="hints arm-keys">${NAV_HINTS}</p></div></div>`,
@@ -483,21 +484,21 @@ export function openCustomize(page = lastPage) {
               hotdog: sfx.chomp,
               watergun: sfx.splash,
               confgun: sfx.pop,
-              handgun: sfx.bang,
-              sniper: sfx.bang,
-              revolver: sfx.bang,
-              smg: sfx.tat,
-              ak: sfx.tat,
-              lmg: sfx.tat,
-              chaingun: sfx.tat,
-              glauncher: sfx.shotgun,
-              dagger: sfx.swish,
-              knife: sfx.swish,
-              hammer: sfx.swish,
-              grenade: sfx.swish,
+              handgun: sfx.handgun,
+              sniper: sfx.sniper,
+              revolver: sfx.revolver,
+              smg: sfx.smg,
+              ak: sfx.ak,
+              lmg: sfx.lmg,
+              chaingun: sfx.chaingun,
+              glauncher: sfx.glauncher,
+              dagger: sfx.throw,
+              knife: sfx.knife,
+              hammer: sfx.hammer,
+              grenade: sfx.throw,
               bow: () => setTimeout(() => sfx.bow(), 380),
-              chair: () => setTimeout(() => sfx.swish(), 600),
-              zebra: sfx.swish,
+              chair: () => setTimeout(() => sfx.chair(), 600),
+              zebra: sfx.cakeThrow,
               jaime: () => {
                 sfx.puff();
                 setTimeout(() => sfx.jaime(), 250);
