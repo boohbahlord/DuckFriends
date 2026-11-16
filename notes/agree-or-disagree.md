@@ -4943,3 +4943,29 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 - Adam: spec /mnt/project-files/notes/crits-misses-start-round.md. Solomon = crits, misses, zombie HP, upgrade; Jackal = starting
   round setting and vote; Noah = Angelic crimson glow. New zombies-per-round system proposed to the owner first.
 - Decided (Jackal, from Adam's spec): "Start on round" 1/5/9/13/21 replaces Round 16 Start (l4r16); the bonus is given at once in round 0 (L.bonus, so a change gives or takes only the difference); the vote passes with the room's share of Yes, falls when it can't, lasts 30 s; one passed change per game; From round 13 on it counts toward the Round 16 Start stats.
+
+- Version 47: #339 (Noah), #340 (Jackal), #341 (Solomon), merged as #342.
+
+## Request (2026-11-16 22:02Z to 22:16Z, owner, angry): zombies per round, still planning (Dead Ducks Arcade)
+> 'A duck that already bought more than 2 keeps them.'
+> THE STATS AND THINGS A DUCK HAS FROM THE LAST GAME DOESNT CARRY INTO THIS ONE [...] BECAUSE DUCKS START OUT RESET AT EVERY ZOMBIE GAME
+>
+> ROUND 1-4 IS 12 ZOMBIES
+> ROUND 4-8 IS 24 ZOMBIES
+> ROUND 9-12 IS 36 ZOMBIES
+> ROUND 13-20 IS 72 ZOMBIES
+> ROUND 21 AND UP IS 144 ZOMBIES (?)
+>
+> EVERY ROUND IS A FRACTIN MORE ZOMBIES PER PLAYER BASED ON IT'S place in a round [...] nominator is the round wihtin a phase [...] denom is the last count of the amount of rounds in a phase [...] 10 times 1/4 is equal to 12.5 which rounds down to 12. That means 12 zombies if two players. [...] 10(2(1/4))=15 zombies
+>
+> now, can you make a chart with no suggestions to me that demonstrates this concept, where different spreadsheets show different number of players. When more zombies per round, it is green, if less zombies then a previous round, then red.
+>
+> DO i have to double the amount of zombies by default for this as i have above? such as 72 into 144? i hope not, explain that to me.
+>
+> I am still planning and figuring out what i want for my game
+>
+> (22:16Z) the amount of zombies cannot become greater then 100 per player, and the total maximum amount of zombies that are allowed no matter the players per round is 400
+>
+> NOW IF there is a round that is detected as being less then a previous round, then the code will automatically have it become equal to the amount of zombies as the previous round for every subsequent round UNTIL there are more zombies
+
+- Adam: Adam's 6+4r proposal was rejected. Formula read as floor(base × (1 + (players − 1) × n/d)), with cap min(100 × players, 400), then held at the previous round's count when lower. Sheet: /mnt/project-files/charts/zombies-per-round.xlsx (1 to 6 players). Round 21+ can't be worked out for 2+ players (no last round). Nothing built yet; the owner is still planning. The wrong "keeps them" comments were removed in V47.
