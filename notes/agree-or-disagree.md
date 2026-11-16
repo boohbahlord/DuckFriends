@@ -4468,3 +4468,13 @@ Map; move them under a line below the other three, into the blue box) and laser-
 
 - Done (Adam, js/fx.js fxMuzzle): muzzle flash about twice as long and wide, twice the pixels, bigger pixels in the
   middle; smoke twice the puffs plus one, bigger (3 → 5 as it spreads), drifting farther and lasting a little longer.
+"loading screens are used where ever there is loading" (owner 2026-11-16 15:12Z, via Adam)
+- Jackal: the one loading screen is js/loading.js (`loadingScreen`). It was shown only when a lobby countdown ended.
+  Now: the page itself (index.html has the veil from the first paint; main.js takes it over once the first screen is up),
+  creating or joining an online room (`holdLoading` in js/rooms.js, until the lobby is on screen), and every way into a
+  game (js/lobby.js: the countdown's end, a vote, joining a game already going on), which waits for `pageReady` (fonts
+  in and three steady frames in a row), so a slow build (Duck Cabin, a big map, a slow phone) keeps it up until the
+  game is drawn. Two screens asked at once share one veil. Windows (Game Settings, Customize, Settings) open in under
+  125 ms even at 4x CPU slowdown, so they get none.
+
+
