@@ -240,10 +240,8 @@ function paint() {
   paintArt(s);
   $(".party-count", S).textContent = `In lobby ${s.seat.length}/${s.max}`;
   const list = $(".party-list", S);
-  if (!list.querySelector("input.rename"))
-    setHTML(
-      list,
-      s.seat
+  if (!list.querySelector("input.rename")) {
+    const html = s.seat
         .map((id) =>
           cardHTML(s.players[id], {
             me: id === R.me,
@@ -256,7 +254,12 @@ function paint() {
           }),
         )
         .join(""),
-    );
+      same = html.replace(/(\sid="|#)[\w-]+/g, "$1"); // (the ducks' ids are new each time they're drawn: the cards are only drawn again when they look different, or the ducks flicker)
+    if (list._same !== same) {
+      list._same = same;
+      setHTML(list, html);
+    }
+  }
   if (s.seat.length > lastSeat && lastSeat) sfx.pop();
   lastSeat = s.seat.length;
 }
