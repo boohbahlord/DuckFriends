@@ -332,18 +332,111 @@ export function fxBurst(x, y, h, n, chunks = 0) {
   }
 }
 
-/* a gun going off at its barrel's end (x, y, on the screen, `ang` the way it points): how much flash and smoke, by
-   gun (owner: very little for weaker or small guns, most for the chain gun and the big sniper, then the LMG, the AK, the
-   shotgun and guns like them) */
+/* a gun going off at its barrel's end (x, y, on the screen, `ang` the way it points). Each gun has its own flash and
+   smoke (owner 2026-11-16): reach, the flash's length in ducks; cone, how wide it fans out (narrow and long for the
+   sniper, a wide spray for the shotgun); n, its pixels; core, the size of the hot pixels in the middle; smoke, its
+   puffs; puff, their size; drift, how far they travel; shake and kick, the screen's shake and the gun's recoil
+   (fxmotion.js). Weaker and smaller guns get the least; the chain gun, the sniper, the LMG and the shotgun the most */
 export const MUZZLE = {
-  handgun: { flash: 2, smoke: 1, shake: 0.1, kick: 0.45 },
-  smg: { flash: 2, smoke: 1, shake: 0.08, kick: 0.3 },
-  revolver: { flash: 4, smoke: 2, shake: 0.22, kick: 0.9 },
-  ak: { flash: 5, smoke: 2, shake: 0.16, kick: 0.55 },
-  shotgun: { flash: 6, smoke: 3, shake: 0.32, kick: 1 },
-  lmg: { flash: 5, smoke: 3, shake: 0.15, kick: 0.5 },
-  sniper: { flash: 8, smoke: 4, shake: 0.42, kick: 1.2 },
-  chaingun: { flash: 7, smoke: 2, shake: 0.3, kick: 0.45 }, // (15 shots a second outlast the shake fading, 2.4 a second: held down it builds up; at 0.13 it never did)
+  handgun: {
+    reach: 0.45,
+    cone: 0.35,
+    n: 12,
+    core: 3,
+    smoke: 2,
+    puff: 3,
+    drift: 0.5,
+    shake: 0.1,
+    kick: 0.45,
+  },
+  smg: {
+    reach: 0.5,
+    cone: 0.3,
+    n: 14,
+    core: 3,
+    smoke: 2,
+    puff: 3,
+    drift: 0.5,
+    shake: 0.08,
+    kick: 0.3,
+  },
+  revolver: {
+    reach: 0.7,
+    cone: 0.5,
+    n: 22,
+    core: 4,
+    smoke: 4,
+    puff: 4,
+    drift: 0.6,
+    shake: 0.22,
+    kick: 0.9,
+  },
+  ak: {
+    reach: 0.85,
+    cone: 0.4,
+    n: 30,
+    core: 4,
+    smoke: 5,
+    puff: 4,
+    drift: 0.7,
+    shake: 0.16,
+    kick: 0.55,
+  },
+  shotgun: {
+    reach: 0.7,
+    cone: 1.1,
+    n: 40,
+    core: 5,
+    smoke: 8,
+    puff: 5,
+    drift: 0.6,
+    shake: 0.32,
+    kick: 1,
+  },
+  lmg: {
+    reach: 0.95,
+    cone: 0.45,
+    n: 34,
+    core: 4,
+    smoke: 6,
+    puff: 5,
+    drift: 0.7,
+    shake: 0.15,
+    kick: 0.5,
+  },
+  sniper: {
+    reach: 1.4,
+    cone: 0.22,
+    n: 36,
+    core: 5,
+    smoke: 7,
+    puff: 5,
+    drift: 0.9,
+    shake: 0.42,
+    kick: 1.2,
+  },
+  chaingun: {
+    reach: 1.1,
+    cone: 0.7,
+    n: 44,
+    core: 5,
+    smoke: 4,
+    puff: 4,
+    drift: 0.8,
+    shake: 0.13,
+    kick: 0.45,
+  },
+  glauncher: {
+    reach: 0.5,
+    cone: 0.9,
+    n: 20,
+    core: 5,
+    smoke: 10,
+    puff: 6,
+    drift: 0.4,
+    shake: 0.35,
+    kick: 1.1,
+  },
 };
 export function fxMuzzle(x, y, ang, gun) {
   const M = MUZZLE[gun];
@@ -351,15 +444,11 @@ export function fxMuzzle(x, y, ang, gun) {
   const u = unit,
     c = Math.cos(ang),
     s = Math.sin(ang),
-    gp = gridPx();
-  /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames. Sized by the duck, not by
-     the pixel grid (owner 2026-11-16: the flash and the smoke were far too small): the chain gun's reaches about a duck's
-     length, a handgun's about half */
-  const reach = u * (0.25 + M.flash * 0.12),
-    big = M.flash > 3;
-  for (let k = 0; k < M.flash * 8; k++) {
+    reach = u * M.reach;
+  /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames */
+  for (let k = 0; k < M.n; k++) {
     const d = rnd(0, reach),
-      side = rnd(-0.5, 0.5) * (d * 0.9 + u * 0.12);
+      side = rnd(-0.5, 0.5) * (d * M.cone + u * 0.08);
     add(
       FLASH,
       x + c * d - s * side,
@@ -370,24 +459,24 @@ export function fxMuzzle(x, y, ang, gun) {
       0,
       rnd(70, 130),
       d < reach * 0.3 ? 8 : Math.random() < 0.6 ? 9 : 10,
-      d < reach * 0.4 ? (big ? 5 : 3) : d < reach * 0.75 ? (big ? 3 : 2) : 2, // (bigger pixels in the middle)
+      d < reach * 0.4 ? M.core : d < reach * 0.75 ? Math.max(2, M.core - 2) : 2, // (bigger pixels in the middle)
     );
   }
   /* the smoke: puffs that drift on the way it fired, rise, spread and thin out */
-  for (let k = 0; k < M.smoke * 3 + 2; k++) {
-    const v = u * rnd(0.3, 0.9),
+  for (let k = 0; k < M.smoke; k++) {
+    const v = u * M.drift * rnd(0.4, 1.1),
       d = rnd(0, reach * 0.8);
     add(
       SMOKE,
-      x + c * d + rnd(-0.08, 0.08) * u,
-      y + s * d + rnd(-0.08, 0.08) * u,
+      x + c * d + rnd(-0.5, 0.5) * M.cone * u * 0.2,
+      y + s * d + rnd(-0.5, 0.5) * M.cone * u * 0.2,
       0,
-      c * v + rnd(-0.25, 0.25) * u,
+      c * v + rnd(-0.25, 0.25) * u * M.cone,
       s * v * 0.6,
       u * rnd(0.3, 0.7),
-      rnd(800, 1400) + M.smoke * 120,
+      rnd(800, 1400) + M.smoke * 60,
       5 + (k % 3),
-      big ? 5 : 4,
+      M.puff,
     );
   }
 }
