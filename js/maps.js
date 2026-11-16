@@ -4,9 +4,9 @@
    Sky: clouds everywhere; the sun sinks for a minute, then the moon comes down from the top and sinks for a minute, and
    the columns glow at night; one cloud carries a random player's duck. Pixel: columns built of wool blocks over a blocky
    world: floating islands (stone, two layers of dirt, grass, sometimes a tree) at different distances, a forest seen
-   from above toward the bottom, and a pixel sunset on the horizon that breathes. Ether's Crossroads: the jester's
-   dungeon from the game of that name; the torch and the candles flicker and glow, with that game's static and scan
-   lines over the picture, and the interface takes on its Ether & Kenoma look (Cascadia Code) while the map is played.
+   from above toward the bottom, and a pixel sunset on the horizon that breathes. Nous Within Kenoma: my book site's
+   page, its burnt amber look on the interface (Cascadia Code) while the map is played, and five variations: Ether's
+   Crossroads' jester's dungeon, and the looks the site gives some of its parts (nwk.js).
    Carnival Night: a Ferris wheel turning on the left, a striped big top on the right, string lights twinkling over
    them; the tiles wear marquee bulbs that chase around their edges, and fireworks go off when the votes are in.
    Rabbit Hole of Ducklings: a psychedelic fractal that keeps falling deeper into itself, morphing and shifting colors.
@@ -30,6 +30,7 @@ import {
 import { collageScene, collageMini } from "./collage.js";
 import { euclidScene, euclidMini } from "./euclid.js";
 import { vellumScene, vellumMini } from "./vellum.js";
+import { NWK_VARIANTS, isNwk, nwkScene, nwkSVG } from "./nwk.js";
 import { seenDuck, seenName } from "./looks.js";
 
 export const MAPS = [
@@ -69,9 +70,9 @@ export const MAPS = [
     "A black tree, a halftone duck looking up at it, swirls and a chain-link net, small squares that fade in and out, and static over it all. It can be black and white.",
   ],
   [
-    "ec",
-    "Ether's Crossroads",
-    "The jester's dungeon: a flickering torch and candles, static and scan lines, and the Ether & Kenoma look while it's played.",
+    "nwk",
+    "Nous Within Kenoma",
+    "The page of the book Nous Within Kenoma: burnt amber on near black, thin black strings and faint static, and the book's look while it's played.",
   ],
   [
     "euclid",
@@ -103,11 +104,24 @@ export const GREY_MAP = [
   "Shelter Sky & Null (Black and white)",
   "Shelter Sky & Null in black, white and greys.",
 ];
+/* every variation of a map (owner, Nov 16: "Every variation of any map is at the bottom" of the list): [its id, its
+   name, what it is, the map it's a variation of]. Euclid's Squares (Zoom) and Shelter Sky & Null (Black and white) play
+   their map in another form (mapForm); Nous Within Kenoma's are maps of their own (nwk.js) */
+export const MAP_VARIANTS = [
+  [...ZOOM_MAP, "euclid"],
+  [...GREY_MAP, "collage"],
+  ...NWK_VARIANTS,
+];
+/* the map a variation belongs to (a map that isn't one: itself) */
+export const variantBase = (id) =>
+  (MAP_VARIANTS.find((v) => v[0] === id) || [id, "", "", id])[3];
 /* a map's forms: the map vote shows each one as a map of its own, next to its map; Random picks one at random */
-export const MAP_FORMS = {
-  euclid: ["euclid", ZOOM_MAP[0]],
-  collage: ["collage", GREY_MAP[0]],
-};
+export const MAP_FORMS = Object.fromEntries(
+  MAPS.map(([id]) => [
+    id,
+    [id, ...MAP_VARIANTS.filter((v) => v[3] === id).map((v) => v[0])],
+  ]).filter(([, f]) => f.length > 1),
+);
 /* a form as the game plays it: the map, and whether it zooms or is grey */
 export const mapForm = (id) =>
   id === ZOOM_MAP[0]
@@ -118,14 +132,14 @@ export const mapForm = (id) =>
 export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
-    : ([...MAPS, ZOOM_MAP, GREY_MAP].find((m) => m[0] === id) || MAPS[0])[1];
+    : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
   if (id === "sky")
     return `<div class="mini-map mm-sky"><i class="mm-sun"></i><i class="mm-cloud" style="left:8%;top:18%"></i><i class="mm-cloud" style="left:58%;top:52%"></i></div>`;
-  if (id === "ec")
-    return `<div class="mini-map mm-ec">${EC_FLAMES.map(([x, y, k]) => `<i class="mm-glow" style="left:${(x / 3.2).toFixed(1)}%;top:${(y / 1.8).toFixed(1)}%;--k:${k}"></i>`).join("")}</div>`;
+  if (isNwk(id))
+    return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${nwkSVG(id)}</svg></div>`;
   if (id === "carnival")
     return `<div class="mini-map mm-carnival">${carnivalSVG()}</div>`;
   if (id === "rabbit") return '<div class="mini-map mm-rabbit"></div>';
@@ -380,151 +394,6 @@ function pixelScene(layer) {
     update() {},
     destroy() {
       ro.disconnect();
-      sc.remove();
-    },
-  };
-}
-
-/* ---------- Ether's Crossroads ----------
-   The picture is pixel art at 320 × 180 (shown four times bigger), kept at 16:9 and covering the page. Each flame gets
-   a pixel flame of its own over it that shifts between three shapes, and a warm glow that flickers; the static is
-   NWK's: random grey specks redrawn every 80 ms on a small canvas, faint, with scan lines and now and then a flash. */
-const EC_FLAMES = [
-  [179, 46.5, 1],
-  [205.5, 95.5, 0.45],
-  [210.5, 100, 0.45],
-  [261.5, 97.5, 0.45],
-]; // x, y in the art's pixels; size
-const TORCH = [
-  // three shapes, each a list of rows: [y, x from, x to, color]
-  [
-    [0, 3, 3, "o"],
-    [1, 3, 4, "o"],
-    [2, 2, 4, "o"],
-    [3, 2, 5, "m"],
-    [4, 1, 5, "m"],
-    [5, 1, 6, "m"],
-    [6, 1, 6, "c"],
-    [7, 1, 6, "c"],
-    [8, 1, 6, "m"],
-    [9, 2, 5, "m"],
-    [10, 2, 5, "o"],
-  ],
-  [
-    [1, 2, 2, "o"],
-    [2, 2, 3, "o"],
-    [3, 2, 4, "m"],
-    [4, 1, 5, "m"],
-    [5, 1, 5, "m"],
-    [6, 1, 6, "c"],
-    [7, 1, 6, "c"],
-    [8, 1, 6, "m"],
-    [9, 2, 5, "m"],
-    [10, 2, 5, "o"],
-  ],
-  [
-    [0, 4, 4, "o"],
-    [1, 4, 5, "o"],
-    [2, 3, 5, "m"],
-    [3, 2, 5, "m"],
-    [4, 2, 6, "m"],
-    [5, 1, 6, "c"],
-    [6, 1, 6, "c"],
-    [7, 1, 6, "c"],
-    [8, 1, 6, "m"],
-    [9, 2, 5, "m"],
-    [10, 2, 5, "o"],
-  ],
-];
-const CANDLE = [
-  [
-    [0, 1, 1, "o"],
-    [1, 0, 2, "m"],
-    [2, 1, 1, "c"],
-  ],
-  [
-    [0, 0, 0, "o"],
-    [1, 0, 2, "m"],
-    [2, 1, 1, "c"],
-  ],
-  [
-    [1, 0, 2, "m"],
-    [2, 1, 1, "c"],
-  ],
-];
-const FLAME_INK = { o: "#e39a3b", m: "#f2c464", c: "#fff1b8" };
-const flameSVG = (frames, w, h) =>
-  `<svg viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${frames.map((rows, i) => `<g class="ecf ecf${i}">${rows.map(([y, a, b, k]) => `<rect x="${a}" y="${y}" width="${b - a + 1}" height="1" fill="${FLAME_INK[k]}"/>`).join("")}</g>`).join("")}</svg>`;
-function ecScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene ec";
-  const flame = ([x, y, k], i) => {
-    const torch = k === 1,
-      w = torch ? 8 : 3,
-      h = torch ? 11 : 3,
-      left = torch ? x - 4 : x - 1.5,
-      top = torch ? y - 6.5 : y - 1.5;
-    return `<i class="ec-glow${torch ? " big" : ""}" style="left:${(x / 3.2).toFixed(2)}%;top:${(y / 1.8).toFixed(2)}%;animation-delay:-${(i * 0.37).toFixed(2)}s"></i>
-      <span class="ec-flame" style="left:${(left / 3.2).toFixed(2)}%;top:${(top / 1.8).toFixed(2)}%;width:${(w / 3.2).toFixed(2)}%;height:${(h / 1.8).toFixed(2)}%;--d:${(0.7 + i * 0.13).toFixed(2)}s">${flameSVG(torch ? TORCH : CANDLE, w, h)}</span>`;
-  };
-  sc.innerHTML = `<div class="ec-stage"><img src="assets/maps/ethers-crossroads.png" alt="" draggable="false">${EC_FLAMES.map(flame).join("")}</div>
-    <canvas class="ec-static" aria-hidden="true"></canvas><div class="ec-scan"></div><div class="ec-flash"></div>`;
-  layer.append(sc);
-  const cv = sc.querySelector(".ec-static"),
-    flash = sc.querySelector(".ec-flash"),
-    html = document.documentElement;
-  cv.width = 300;
-  cv.height = 170;
-  const ctx = cv.getContext("2d"),
-    img = ctx.createImageData(cv.width, cv.height),
-    d32 = new Uint32Array(img.data.buffer);
-  let seed = (Math.random() * 4294967295) >>> 0 || 1,
-    last = 0,
-    nextFlick = 0;
-  const noise = () => {
-    // grey specks, about half of them showing faintly
-    let s = seed;
-    const A = 0.065 * 255;
-    for (let i = 0; i < d32.length; i++) {
-      s ^= s << 13;
-      s ^= s >>> 17;
-      s ^= s << 5;
-      const v = s & 255;
-      d32[i] =
-        ((s >>> 8) & 255) < 140
-          ? (v |
-              (v << 8) |
-              (v << 16) |
-              ((((((s >>> 16) & 255) / 255) * A) & 255) << 24)) >>>
-            0
-          : 0;
-    }
-    seed = s >>> 0 || 1;
-    ctx.putImageData(img, 0, 0);
-  };
-  noise();
-  return {
-    update(now) {
-      if (html.classList.contains("low") || now - last < 80) return;
-      last = now;
-      noise();
-      if (now > nextFlick) {
-        // now and then the picture flickers dark or bright for a blink
-        if (nextFlick) {
-          const dark = Math.random() < 0.5;
-          flash.classList.toggle("dark", dark);
-          flash.style.opacity = (dark ? 0.07 : 0.04).toFixed(2);
-          setTimeout(
-            () => {
-              flash.style.opacity = 0;
-            },
-            60 + Math.random() * 90,
-          );
-        }
-        nextFlick = now + 5000 + Math.random() * 4000;
-      }
-    },
-    destroy() {
       sc.remove();
     },
   };
@@ -1167,17 +1036,17 @@ export const SCENES = {
   board: nightScene,
   rabbit: rabbitScene,
   stars: starsScene,
-  ec: ecScene,
+  nwk: (layer) => nwkScene(layer, "nwk"),
 };
 
-/* a map's scene in its layer */
-function sceneOf(map, layer, s, cur) {
-  return map === "sky"
-    ? skyScene(layer, s, cur)
-    : map === "pixel"
-      ? pixelScene(layer)
-      : map === "ec"
-        ? ecScene(layer)
+/* a map's scene in its layer (page: the game's own map, not a preview) */
+function sceneOf(map, layer, s, cur, page = false) {
+  return isNwk(map)
+    ? nwkScene(layer, map, page)
+    : map === "sky"
+      ? skyScene(layer, s, cur)
+      : map === "pixel"
+        ? pixelScene(layer)
         : map === "tiles"
           ? tilesScene(layer)
           : map === "carnival"
@@ -1201,7 +1070,7 @@ function sceneOf(map, layer, s, cur) {
 export function mountPreview(box, id) {
   const f = mapForm(id),
     layer = document.createElement("div");
-  layer.className = `map-layer map-peek map-${f.map}`;
+  layer.className = `map-layer map-peek map-${variantBase(f.map)} map-${f.map}`;
   layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
   box.append(layer);
   const s = {
@@ -1226,10 +1095,15 @@ export function mountPreview(box, id) {
 export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
-  layer.className = "map-layer map-" + map;
+  const base = variantBase(map); // (a variation wears its map's look too, then its own: map-is-nwk map-is-nwkten)
+  layer.className = `map-layer map-${base} map-${map}`;
   layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
-  document.documentElement.classList.add("map-on", "map-is-" + map); // (map-is-ec: the Ether & Kenoma look; map-is-vellum: the book's)
-  const scene = sceneOf(map, layer, s, cur);
+  document.documentElement.classList.add(
+    "map-on",
+    "map-is-" + base,
+    "map-is-" + map,
+  ); // (map-is-nwk: Nous Within Kenoma's book look; map-is-vellum: The King's Festival's)
+  const scene = sceneOf(map, layer, s, cur, true);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
   const ro =
     map === "carnival"
@@ -1242,7 +1116,7 @@ export function mountMap(layer, s) {
         cur.cols = null;
         return;
       }
-      board.classList.add("map-" + map);
+      board.classList.add("map-" + base, "map-" + map);
       cur.cols = board.querySelector(".cols");
       if (ro) {
         ro.disconnect();
@@ -1265,7 +1139,11 @@ export function mountMap(layer, s) {
       if (ro) ro.disconnect();
       scene.destroy();
       layer.className = "map-layer";
-      document.documentElement.classList.remove("map-on", "map-is-" + map);
+      document.documentElement.classList.remove(
+        "map-on",
+        "map-is-" + base,
+        "map-is-" + map,
+      );
     },
   };
 }
