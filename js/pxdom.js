@@ -39,13 +39,18 @@ function css() {
   document.head.append(s);
 }
 
-/* the box a drawing's viewBox fills on the screen, in css px (as the browser fits it: meet, unless it says none) */
+/* the box a drawing's viewBox fills on the screen, in css px (as the browser fits it: meet, slice or none). A sliced
+   drawing (cut to fill its box, as the front page's ball pit) is shown bigger than its box: made at the box's size, its
+   pixels came out stretched, bigger than everything else's (owner, Nov 16: one pixel size for every background) */
 function shownSize(svg, vb) {
   const r = svg.getBoundingClientRect();
   if (!r.width || !r.height) return null;
-  if ((svg.getAttribute("preserveAspectRatio") || "").startsWith("none"))
-    return [r.width, r.height];
-  const k = Math.min(r.width / vb.width, r.height / vb.height);
+  const par = svg.getAttribute("preserveAspectRatio") || "";
+  if (par.startsWith("none")) return [r.width, r.height];
+  const k = (par.includes("slice") ? Math.max : Math.min)(
+    r.width / vb.width,
+    r.height / vb.height,
+  );
   return [vb.width * k, vb.height * k];
 }
 
