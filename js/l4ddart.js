@@ -422,10 +422,13 @@ const HIT_AT = [
   [84, 52],
   [22, 60],
 ];
-const SMALL_HOLE = `<circle r="3.6" fill="${BLOOD}" opacity=".55"/><circle r="2.1" fill="${FLESH}" stroke="${BLOOD_D}" stroke-width=".7"/>${place(DRIP, 0.4, 1.4, 0, 0.7)}`;
-const BIG_HOLE = `<circle r="6.2" fill="${BLOOD}" opacity=".55"/><circle r="3.8" fill="${FLESH}" stroke="${BLOOD_D}" stroke-width=".9"/>
-<circle cx="6.6" cy="-4.4" r="1.3" fill="${BLOOD}"/><circle cx="-6" cy="-3.6" r="1" fill="${BLOOD}"/><circle cx="7.8" cy="1.6" r=".8" fill="${BLOOD}"/>
-<path d="M-1.4 -2.6L-.4 -1.6M1.8 -2.4L1 -1.4" stroke="${BLOOD_L}" stroke-width=".7" stroke-linecap="round"/>${place(DRIP, 0.6, 2.8, 0, 1.1)}`;
+/* a bullet hole goes right through the skin (owner, Nov 16: "holes in ducks should be literally holes through the skin
+   of a duck"): the hole is cut out of the duck (duck.js' gone.holes, as a chunk), and these are its torn rims */
+const SMALL_R = 2.6,
+  BIG_R = 4.2;
+const SMALL_HOLE = `<circle r="${SMALL_R + 2.2}" fill="${BLOOD}" opacity=".55"/><circle r="${SMALL_R + 0.6}" fill="none" stroke="${BLOOD_D}" stroke-width="1.4"/>${place(DRIP, 0.4, SMALL_R + 1.2, 0, 0.7)}`;
+const BIG_HOLE = `<circle r="${BIG_R + 3}" fill="${BLOOD}" opacity=".55"/><circle r="${BIG_R + 0.9}" fill="none" stroke="${BLOOD_D}" stroke-width="1.8"/><circle r="${BIG_R + 0.3}" fill="none" stroke="${FLESH}" stroke-width=".8"/>
+<circle cx="7.6" cy="-5" r="1.3" fill="${BLOOD}"/><circle cx="-7" cy="-4.2" r="1" fill="${BLOOD}"/><circle cx="8.8" cy="1.6" r=".8" fill="${BLOOD}"/>${place(DRIP, 0.6, BIG_R + 1.6, 0, 1.1)}`;
 const PELLETS = `<ellipse rx="9.4" ry="7.4" fill="${BLOOD}" opacity=".35"/>${[
   [-4.6, -3],
   [1.4, -4.4],
@@ -512,9 +515,10 @@ export function hitsOf(codes = "") {
     const kind = codes[i],
       at = +codes[i + 1] || 0,
       [x, y] = HIT_AT[at % HIT_AT.length];
-    if (kind === "b") inner.push(place(SMALL_HOLE, x, y));
-    else if (kind === "B") inner.push(place(BIG_HOLE, x, y));
-    else if (kind === "s") inner.push(place(PELLETS, x, y));
+    if (kind === "b" || kind === "B") {
+      inner.push(place(kind === "b" ? SMALL_HOLE : BIG_HOLE, x, y));
+      holes.push([x, y, kind === "b" ? SMALL_R : BIG_R]); // (seen through)
+    } else if (kind === "s") inner.push(place(PELLETS, x, y));
     else if (kind === "c") inner.push(bleeding(x, y, at * 37 - 60, 1.15));
     else if (kind === "r") inner.push(place(BRUISE, x, y, 0, 0.95));
     else if (kind === "a") {
