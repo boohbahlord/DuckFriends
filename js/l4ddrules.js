@@ -1033,12 +1033,13 @@ export const reloadOf = (s, id, w, c) =>
 /* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
    that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
    one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
-   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. Blasts
-   (grenades, the grenade launcher's) kill all they reach, the chain gun kills what it hits and the flamethrower sets
-   on fire, so none of those three crits; the flamethrower never misses either (it isn't a hit, it's fire) */
+   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. Every
+   weapon crits ("every weapon has a 2.5% crit chance unless it damages reasonably slower"): the chain gun and the
+   flamethrower the fast 2.5% (the flamethrower once, as a zombie catches its fire), the grenade launcher and the
+   grenade the slow 5%, each zombie in the blast (it dies anyway: a crit blows its head off). The flamethrower never
+   misses (the owner's misses are bullets and melee) */
 export const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
 export const MISS = { SLOW: 0.025, FAST: 0.05 };
-const NO_CRIT = ["glauncher", "chaingun", "flamer"];
 const fastArm = (w) => !!(ARMS[w] && (ARMS[w].auto || ARMS[w].burst));
 const canHit = (w) =>
   !!ARMS[w] && (ARMS[w].kind === "melee" || ARMS[w].kind === "ranged");
@@ -1046,11 +1047,13 @@ const canHit = (w) =>
 export const critOf = (w) =>
   w === "pan"
     ? ARMS.pan.crit
-    : !canHit(w) || NO_CRIT.includes(w)
-      ? 0
-      : fastArm(w)
-        ? CRIT.FAST
-        : CRIT.SLOW;
+    : w === "grenade"
+      ? CRIT.SLOW
+      : !canHit(w)
+        ? 0
+        : fastArm(w)
+          ? CRIT.FAST
+          : CRIT.SLOW;
 export const missOf = (w) =>
   !canHit(w) || w === "pan" || w === "flamer"
     ? 0
@@ -2103,7 +2106,14 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     if (hits.length >= most) break;
   }
   for (const hit of hits) {
-    strike(s, hit, A.dmg, false, id, "chaingun");
+    strike(
+      s,
+      hit,
+      A.dmg,
+      headshot(s, id, "chaingun", hit, now),
+      id,
+      "chaingun",
+    );
     die(hit, T);
   }
   if (hits.length) store(s, zs, true);
@@ -2299,7 +2309,7 @@ function light(s, z, by, now, fl = 0) {
 /* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit as a fireball
    lights one (1 HP as it's lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its
    fire spreads (the 4th: fl). True when it died */
-function catchFire(s, z, by, now, T) {
+function catchFire(s, z, by, now, T, w = "") {
   const F = s.hang.l4fire || {},
     f = (F.z || {})[z.i];
   if (f && now < f[0]) {
@@ -2310,7 +2320,8 @@ function catchFire(s, z, by, now, T) {
       }; // (a quarter second at a time: not a new object every puff)
     return false;
   }
-  if (strike(s, z, 1, false, by)) {
+  const head = !!w && headshot(s, by, w, z, now); // (the flamethrower's crit: once, as it catches fire)
+  if (strike(s, z, 1, head, by, head ? w : "")) {
     die(z, T);
     mark(s, z, "f0");
     return true;
@@ -2345,7 +2356,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       z.st !== 3 &&
       inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4)
     ) {
-      catchFire(s, z, id, now, T);
+      catchFire(s, z, id, now, T, "flamer");
       any = true;
     }
   if (any) store(s, zs, true);
@@ -2826,13 +2837,15 @@ function burnAt(s, by, x, y, now) {
    it, loses half its HP; true when it got any zombie */
 function boom(s, sh, bx, by, zs, T, now, wide = 1) {
   let any = false;
-  const gore = [];
+  const gore = [],
+    w = sh.k === "grenade" ? "grenade" : sh.k === "lgren" ? "glauncher" : ""; // (a crit for each zombie in it: the grenade's or the launcher's; not the Jaime Bomb's, nor the Angelic pistol's blast)
   for (const z of zs)
     if (
       z.st !== 3 &&
       Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide
     ) {
-      strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
+      const head = !!w && headshot(s, sh.by, w, z, now);
+      strike(s, z, z.hp, head, sh.by, head ? w : ""); // (all its HP: 5 points for each, or a headshot's)
       die(z, T);
       mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
       gore.push([Math.round(z.x), Math.round(z.y)]);
