@@ -115,4 +115,11 @@ export const FILES = {
   axeHit: { n: 1 },
   swordHit: { n: 1 },
   panHit: { n: 1 },
+  powerUp: { n: 1 },
+  powerDown: { n: 1 },
+  partGot: { n: 1 },
+  partIn: { n: 1 },
+  gasPour: { n: 1 },
+  angelWork: { n: 1 },
+  angelOrb: { n: 1 },
 };
