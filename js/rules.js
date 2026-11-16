@@ -270,8 +270,84 @@ export const OPTIONS_DEFAULT = {
   tvStop: 1, // … Stop timer: 1 = anyone can stop the clock on the reveal after each question
   tvGrade: 0, // … Grading timer: 1 = the writer has 1:00 a row, and a row still ungraded then counts as right
   dod: 1, // Democracy of Ducklings: 1 (the ducks vote on the room's rules) | 0; set only when the room is made
+  genOff: 0, // 1: the General Rules are off, and every game mode plays the default rules (unless its Mode Rules say otherwise)
+  modeRules: {}, // Mode Rules: { mode: { setting: value } }, a game mode's own General Rules, which win in that mode
 };
 export const MAX_DEFAULT = 8;
+
+/* ---------- Mode Rules (owner 2026-11-16) ----------
+   The General Rules (Game Settings → Host Settings) count in every game mode. Each game mode has its Mode Rules too: the
+   same settings, and one set there wins over the General Rules in that mode only. With the General Rules off, a game
+   mode plays the default rules, unless its Mode Rules say otherwise. s.options holds what the game reads (the rules of
+   the mode being played); s.options.gen holds the General Rules as the host set them, s.options.modeRules each mode's
+   own, and s.options.genOff the switch */
+export const GEN_RULES = [
+  "share",
+  "unvoteStops",
+  "endBtn",
+  "freeRoam",
+  "justin",
+  "mgjBoard",
+  "invuln",
+  "noChat",
+  "noTerm",
+  "lateJoin",
+  "textMax",
+];
+/* a General Rule as the host set it (a room from before Mode Rules keeps it in the options themselves) */
+export const genVal = (s, k) => {
+  const g = s.options.gen;
+  return g && k in g
+    ? g[k]
+    : k in s.options
+      ? s.options[k]
+      : OPTIONS_DEFAULT[k];
+};
+/* a General Rule in one game mode: its Mode Rule, else the General Rule (or the default, with the General Rules off) */
+export function ruleFor(s, mode, k) {
+  if (k === "justin" && dodOn(s, "justin")) return 1; // (Democracy's Invite Justin wins over both)
+  const mine = (s.options.modeRules || {})[mode] || {};
+  if (k in mine) return mine[k];
+  return +s.options.genOff ? OPTIONS_DEFAULT[k] : genVal(s, k);
+}
+/* after every change: the options hold the rules of the mode now picked */
+function applyRules(s) {
+  const o = s.options;
+  if (!o) return;
+  if (!o.gen) {
+    const g = {};
+    for (const k of GEN_RULES) g[k] = genVal(s, k);
+    o.gen = g;
+  }
+  for (const k of GEN_RULES) {
+    const v = ruleFor(s, o.mode, k);
+    if (o[k] !== v) o[k] = v;
+  }
+}
+/* Mode Rules as sent (from Game Settings or a save slot): only General Rules, each a plain value */
+function cleanModeRules(x) {
+  const out = {};
+  if (!x || typeof x !== "object" || Array.isArray(x)) return out;
+  for (const [m, r] of Object.entries(x)) {
+    if (!r || typeof r !== "object" || Array.isArray(r)) continue;
+    const one = {};
+    for (const [k, v] of Object.entries(r))
+      if (GEN_RULES.includes(k) && ["string", "number"].includes(typeof v))
+        one[k] = v;
+    if (Object.keys(one).length) out[m] = one;
+  }
+  return out;
+}
+/* the settings as the chat words a change: the General Rules as set, each Mode Rule as "mr:<mode>:<setting>" */
+function flatOptions(s) {
+  const o = { ...s.options, max: s.max };
+  delete o.gen;
+  delete o.modeRules;
+  for (const k of GEN_RULES) o[k] = genVal(s, k);
+  for (const [m, r] of Object.entries(s.options.modeRules || {}))
+    for (const [k, v] of Object.entries(r)) o[`mr:${m}:${k}`] = v;
+  return o;
+}
 
 /* a vote's count: the votes of the players in the game (Vote Mode & Map, below) */
 export const tally = (s, votes) => {
@@ -1477,6 +1553,11 @@ function seatNewcomer(s, id) {
 
 /* ---------- the actions ---------- */
 export function reduce(state, a, now = Date.now()) {
+  const s = reduceStep(state, a, now);
+  if (s && s !== state) applyRules(s); // (Mode Rules: the options follow the mode now picked)
+  return s;
+}
+function reduceStep(state, a, now) {
   useMode(state.options && state.options.mode); // (Duck Cabin as the room's mode has it: hangout/layout.js)
   const s = clone(state),
     P = s.players,
@@ -1613,7 +1694,21 @@ export function reduce(state, a, now = Date.now()) {
       ) {
         const was = s.options.discuss,
           wasMode = s.options.mode,
-          before = { ...s.options, max: s.max };
+          before = flatOptions(s),
+          reset = Object.keys(OPTIONS_DEFAULT)
+            .filter((k) => typeof OPTIONS_DEFAULT[k] !== "object") // (an empty list or {} doesn't make it through Firebase)
+            .every((k) => k in o);
+        /* the General Rules go to their own layer (a save slot brings its own; its plain values were one mode's) */
+        const G = (s.options.gen = Object.fromEntries(
+          GEN_RULES.map((k) => [k, genVal(s, k)]),
+        ));
+        if (o.gen && typeof o.gen === "object") {
+          for (const k of GEN_RULES) if (k in o.gen) G[k] = o.gen[k];
+        } else for (const k of GEN_RULES) if (k in o) G[k] = o[k];
+        for (const k of GEN_RULES) delete o[k];
+        delete o.gen;
+        if (reset && !("modeRules" in o)) o.modeRules = {}; // (Defaults: no Mode Rules either)
+        if ("modeRules" in o) o.modeRules = cleanModeRules(o.modeRules);
         Object.assign(s.options, o);
         if (a.max) s.max = Math.max(s.seat.length, a.max);
         /* I want half the votes to end a turn by default with the Discussion round on, 2 of 3 without it: turning it on or
@@ -1624,7 +1719,7 @@ export function reduce(state, a, now = Date.now()) {
           !!was !== !!s.options.discuss
         ) {
           const [from, to] = s.options.discuss ? [0.67, 0.5] : [0.5, 0.67];
-          if (s.options.share === from) s.options.share = to;
+          if (G.share === from) G.share = to;
         }
         if (o.mode && !("submitTime" in o)) writeTimerFor(s, wasMode);
         /* picking a game ends Vote Game Mode and Random; picking a map ends Vote Maps and Random. A new vote starts from
@@ -1655,18 +1750,22 @@ export function reduce(state, a, now = Date.now()) {
         if (!L.voteColor) L.tagColor = 0;
         /* every change goes in the chat, with who made it (from Game Settings or the command line alike): the chat
            words it from the keys (settingText in gamesettings.js) */
-        const after = { ...s.options, max: s.max },
+        applyRules(s);
+        const after = flatOptions(s),
           ch = {};
-        for (const k of Object.keys(after))
+        for (const k of new Set([
+          ...Object.keys(after),
+          ...Object.keys(before),
+        ]))
           if (JSON.stringify(after[k]) !== JSON.stringify(before[k]))
-            ch[k] = after[k];
+            ch[k] = k in after ? after[k] : "same"; // (a Mode Rule taken away: Same as General)
         if (Object.keys(ch).length)
           logLine(s, {
             sys: true,
             float: true,
             by: a.id,
             opts: ch,
-            reset: Object.keys(OPTIONS_DEFAULT).every((k) => k in o),
+            reset,
             text: `${me ? me.name : "The host"} changed the game settings.`,
           });
       }

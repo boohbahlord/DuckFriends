@@ -4427,3 +4427,22 @@ Map; move them under a line below the other three, into the blue box) and laser-
   screen: back-to-lobby vote + pause menu; variations at the bottom of the map list; map Random/dice as a bag of bags,
   least played first; Game Settings layout (line, the three rows under it), General rules note + off switch, the
   third rules layer once the owner picks its name.
+
+## Request (owner, 2026-11-16 15:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtXMwSs9pR2WG5KFisu5eVWH), word for word
+> Mode Rules is good name and u seem to understand which is good
+
+- Built (Adam): Mode Rules in each game mode's Game mode Settings (the General Rules again, "Same as General" until one
+  is picked; that one wins in that mode only), the General Rules' On/Off switch under their note (Off fades them and
+  every mode plays the defaults unless its Mode Rules say otherwise). js/rules.js GEN_RULES/ruleFor/applyRules.
+
+## Request (owner, 2026-11-16 15:30Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6wzAHpzLvw4XRCPrjLKj9e, in Miles Jr.'s thread), word for word
+> because guns should have different files for different sounds, fuck him that piece of shit adam
+
+- Fixed (Adam): sound-places.md and audio-principles.md now say every distinct sound has its own file (each gun its
+  own shot and reload); pitch changes only for the same sound played again; no cap on the whole library.
+
+## Request (owner, 2026-11-16 15:34Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1XbABuuE7KdwvouVKpFv4L), word for word
+> ether's crossroads can still be in the game BUT it is now a variation of Nous within Kenoma map AND it will have the effects and ui of Nous within Kenoma WHILE preserving it's background
+
+- Sent to Noah: Ether's Crossroads becomes a form of the Nous Within Kenoma map (its own background, Nous Within
+  Kenoma's effects and UI), with Architectured, Ten, Chalice and the Fool.
