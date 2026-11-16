@@ -17,56 +17,9 @@ import {
   isPw,
   pwOf,
 } from "./l4ddpower.js";
+import { powerBoxSVG, PART_ICONS, jerrySVG } from "./powerart.js"; // (Noah's drawings)
 
-/* ---------- the pictures: stand-ins until Noah's (js/powerart.js, the same names): only this import changes ---------- */
-const INK = "#1d1b26";
-const ICON = {
-  fuse: `<rect x="9" y="14" width="22" height="12" rx="3" fill="#d9d4c4" stroke="${INK}" stroke-width="1.6"/><rect x="4" y="16" width="5" height="8" rx="1" fill="#c9a24a" stroke="${INK}" stroke-width="1.4"/><rect x="31" y="16" width="5" height="8" rx="1" fill="#c9a24a" stroke="${INK}" stroke-width="1.4"/><path d="M12 20H28" stroke="#e8424d" stroke-width="1.6"/>`,
-  lever: `<rect x="10" y="24" width="20" height="10" rx="2" fill="#6c6f7a" stroke="${INK}" stroke-width="1.6"/><path d="M20 26L28 8" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M20 26L28 8" stroke="#b9bcc6" stroke-width="2" stroke-linecap="round"/><circle cx="28.5" cy="7.5" r="3.6" fill="#e8424d" stroke="${INK}" stroke-width="1.4"/>`,
-  tools: `<path d="M14 13V9H26V13" fill="none" stroke="${INK}" stroke-width="2.4"/><rect x="5" y="13" width="30" height="18" rx="2" fill="#e8424d" stroke="${INK}" stroke-width="1.6"/><path d="M5 19H35" stroke="${INK}" stroke-width="1.4"/><rect x="17" y="17" width="6" height="4" fill="#d9d4c4" stroke="${INK}" stroke-width="1.2"/>`,
-  gas: `<path d="M9 12L15 6H29V34H9Z" fill="#e8424d" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 6L11 2" stroke="${INK}" stroke-width="2.4" stroke-linecap="round"/><rect x="13" y="16" width="12" height="12" rx="1.5" fill="#ffd23f" stroke="${INK}" stroke-width="1.3"/>`,
-};
-const icon = (inner) =>
-  `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
-export const PART_ICONS = Object.fromEntries(
-  Object.entries(ICON).map(([k, v]) => [k, icon(v)]),
-);
-/* a jerry can, how full it is in its window, with its percent on a label */
-export function jerrySVG(pct) {
-  const h = Math.max(1.5, (16 * pct) / 100);
-  return icon(
-    `<path d="M7 9L12 4H33V36H7Z" fill="#4f7d3a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><rect x="11" y="10" width="5" height="18" rx="1" fill="#1d1b26"/><rect x="11" y="${(28 - h).toFixed(1)}" width="5" height="${h.toFixed(1)}" fill="#ffd23f"/><rect x="18" y="20" width="16" height="11" rx="2" fill="#f4f4f0" stroke="${INK}" stroke-width="1.2"/><text x="26" y="28.6" font-size="7.6" font-weight="800" font-family="system-ui, sans-serif" text-anchor="middle" fill="${INK}">${pct}%</text>`,
-  );
-}
-/* the box: four slots (a part shows in each one fitted), a lever, a light; the fuel sign beside it with its needle (fuel
-   0 to 1). Its foot is at h - 8 */
-export function powerBoxSVG({ w = 96, h = 150, parts = [], on = false, fuel = 0 } = {}) {
-  const slot = (k, i) => {
-    const x = 10 + (i % 2) * 26,
-      y = 34 + Math.floor(i / 2) * 30,
-      have = parts.includes(k);
-    return `<rect x="${x}" y="${y}" width="22" height="24" rx="2" fill="${have ? "#3a3d47" : "#121117"}" stroke="${INK}" stroke-width="1.4"/>${have ? `<svg x="${x + 1}" y="${y + 2}" width="20" height="20" viewBox="0 0 40 40">${ICON[k]}</svg>` : ""}`;
-  };
-  const a = (-60 + 120 * Math.max(0, Math.min(1, fuel))) * (Math.PI / 180),
-    nx = 82 + 9 * Math.sin(a),
-    ny = 60 - 9 * Math.cos(a);
-  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
-<ellipse cx="34" cy="${h - 8}" rx="34" ry="6" fill="#0006"/>
-<rect x="4" y="14" width="60" height="${h - 24}" rx="4" fill="#7b7f8a" stroke="${INK}" stroke-width="2"/>
-<rect x="4" y="14" width="60" height="12" rx="4" fill="#9a9ea8" stroke="${INK}" stroke-width="1.6"/>
-<circle cx="56" cy="20" r="3.4" fill="${on ? "#7dff9a" : "#3a1214"}" stroke="${INK}" stroke-width="1.2"/>
-${PARTS.map(slot).join("")}
-<rect x="22" y="${h - 46}" width="24" height="20" rx="2" fill="#5a5e68" stroke="${INK}" stroke-width="1.4"/>
-<path d="M34 ${h - 36}L${on ? 44 : 24} ${h - (on ? 54 : 20)}" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
-<circle cx="${on ? 44 : 24}" cy="${h - (on ? 54 : 20)}" r="3.6" fill="#e8424d" stroke="${INK}" stroke-width="1.4"/>
-<rect x="70" y="44" width="24" height="28" rx="3" fill="#f4f4f0" stroke="${INK}" stroke-width="1.6"/>
-<path d="M74 62A9 9 0 0 1 90 62" fill="none" stroke="${INK}" stroke-width="1.4"/>
-<path d="M82 60L${nx.toFixed(1)} ${ny.toFixed(1)}" stroke="#e8424d" stroke-width="1.8" stroke-linecap="round"/>
-<path d="M76 68H80M84 68H88" stroke="${INK}" stroke-width="1.2"/>
-<path d="M82 72V${h - 8}" stroke="${INK}" stroke-width="2.4"/>
-</svg>`;
-}
-/* ---------- */
+export { PART_ICONS };
 
 let box = null, // { el, img, n (the count), fuel (the sign's words), sig, tr, k }
   pool = null, // the pool at the middle left

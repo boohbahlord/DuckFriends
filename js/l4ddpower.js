@@ -171,9 +171,7 @@ export function powerSetUp(s) {
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
   s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0, ...(on ? {} : { ever: 1 }) };
-  s.hang.l4f = on
-    ? Object.fromEntries(h.players(s).map((id) => [id, 1]))
-    : {};
+  s.hang.l4f = on ? Object.fromEntries(h.players(s).map((id) => [id, 1])) : {};
   h.addFx(s, { kind: on ? "l4pwon" : "l4pwoff", by: "", who: [], t: now });
 }
 /* a round starts (newRound): the power counts it, maybe goes out; the zombie with the part is picked; a jerry can may
@@ -266,7 +264,8 @@ export function powerFire(s) {
     (b) => b && isPw(b.w) && pwOf(b.w).k === pw.fire,
   );
   if (pw.fire && !held) {
-    if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries) return "pw:" + pw.fire;
+    if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries)
+      return "pw:" + pw.fire;
     s.hang.pw = { ...pw, tries: pw.tries + 1 };
   }
   if (canCome(s) && Math.random() < PW.CAN_FIRE) return "pw:can:" + canRounds();

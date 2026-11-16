@@ -15542,7 +15542,9 @@ html.moving .eye-tears .tdrop.t2 {
 }
 .l4-pw img {
   position: absolute;
-  left: calc(-34px * var(--k, 1));
+  left: calc(
+    -61px * var(--k, 1)
+  ); /* (the cabinet's middle over its foot; the fuel sign on its left) */
   top: calc(-142px * var(--k, 1));
   width: calc(96px * var(--k, 1));
   height: calc(150px * var(--k, 1));
@@ -15558,10 +15560,14 @@ html.moving .eye-tears .tdrop.t2 {
   white-space: nowrap;
   font-weight: 800;
   color: #f4f4f0;
-  text-shadow: 0 1px 2px #000, 0 0 4px #000;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 4px #000;
 }
 .l4-pw-n {
-  left: calc(-24px * var(--k, 1)); /* (under the box's left half: a duck at it stands in front of its middle) */
+  left: calc(
+    -24px * var(--k, 1)
+  ); /* (under the box's left half: a duck at it stands in front of its middle) */
   top: calc(4px * var(--k, 1));
   font-size: calc(18px * var(--k, 1));
   padding: 0 0.4em;
@@ -15569,8 +15575,8 @@ html.moving .eye-tears .tdrop.t2 {
   background: rgba(10, 12, 24, 0.7);
 }
 .l4-pw-fuel {
-  left: calc(48px * var(--k, 1));
-  top: calc(-112px * var(--k, 1));
+  left: calc(-46px * var(--k, 1));
+  top: calc(-116px * var(--k, 1));
   font-size: calc(11px * var(--k, 1));
 }
 .l4-pk {
