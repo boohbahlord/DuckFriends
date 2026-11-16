@@ -16618,7 +16618,7 @@ html.pixel *::after {
 html.pixel img.px {
   image-rendering: pixelated;
 }
-html.pixel .map-layer,
+html.pixel .map-layer:not(.px-own),
 html.pixel #shapes {
   filter: url(#px-f);
 } /* (every map, moving as before, drawn on the grid: pixel.js' filter) */

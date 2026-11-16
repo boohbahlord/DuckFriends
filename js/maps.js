@@ -18,6 +18,7 @@
    The host picks the map in the lobby. Duck Cabin is Hangout's own world (hangout/world.js draws it); behind it, only a
    starry night sky, and it is not in the Map window. */
 import { duckSVG } from "./duck.js";
+import { pixelOn, gridPx } from "./pixel.js";
 import { esc } from "./ui.js";
 import {
   backdropSVG,
@@ -690,8 +691,12 @@ function rabbitScene(layer) {
         }
       }
       last = now;
-      const k =
-          (lite ? 0.3 : 0.5) * scale * Math.min(1.5, devicePixelRatio || 1),
+      const px = pixelOn(); // (the pixel look: one of its pixels is one of the grid's, shown sharp, instead of the filter)
+      layer.classList.toggle("px-own", px);
+      cv.style.imageRendering = px ? "pixelated" : "";
+      const k = px
+          ? 1 / gridPx()
+          : (lite ? 0.3 : 0.5) * scale * Math.min(1.5, devicePixelRatio || 1),
         w = Math.max(1, Math.round(layer.clientWidth * k)),
         h = Math.max(1, Math.round(layer.clientHeight * k));
       if (cv.width !== w || cv.height !== h) {
@@ -705,6 +710,7 @@ function rabbitScene(layer) {
       drawnStill = still;
     },
     destroy() {
+      layer.classList.remove("px-own");
       const x = gl.getExtension("WEBGL_lose_context");
       if (x) x.loseContext();
       sc.remove();
