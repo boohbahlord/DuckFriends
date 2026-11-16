@@ -223,7 +223,6 @@ import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
 import { pixelOn, pxSVG, snap, setDuckSize } from "./pixel.js";
-import { pxWatch } from "./pxdom.js";
 import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
@@ -2119,7 +2118,6 @@ function drawDucks(now = clockNow()) {
   placeTable(board);
   placeTiles(board);
   placePick(board, s);
-  if (isMgj(s) && !board._px) board._px = pxWatch(board, { skip: ".gduck" }); // (the pixel look: Mad God Justin's things as pixels, pxdom.js; nothing with it off)
   placeDesk(board, s, now);
   placeCake(board, s, now);
   placeRevive(board, s, now);

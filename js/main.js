@@ -8,7 +8,8 @@ import { start, current } from "./router.js";
 import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
 import "./front.js";
-import "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
+import { pixelOn, pxImgWatch } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
+import { pxWatch } from "./pxdom.js";
 import "./rooms.js";
 import "./lobby.js";
 import "./game.js";
@@ -78,3 +79,14 @@ start("front");
 showSplash();
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
+
+/* the pixel look (pixel.js): every drawing on the page shown as pixels, as it comes and as it changes (pxdom.js). The
+   maps and the menus' backdrop are left to the grid filter (their parts move too much for pictures: data-nopx) */
+let pxStop = null;
+const pxStart = () => {
+  if (!pixelOn() || pxStop) return;
+  pxStop = pxWatch(document.body);
+  pxImgWatch(document.body); // (and every <img>: pixel.js)
+};
+pxStart();
+addEventListener("pixelchange", pxStart);

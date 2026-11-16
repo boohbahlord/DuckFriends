@@ -34,6 +34,7 @@ export function setPixel(v) {
     localStorage.setItem(KEY, on ? "1" : "0");
   } catch {}
   document.documentElement.classList.toggle("pixel", on);
+  filterGrid();
   dispatchEvent(new Event("pixelchange"));
 }
 
@@ -44,7 +45,34 @@ let duckPx = 92 * FILL, // (a duck's drawn height on the board, in css px; the b
 function setGrid() {
   grid = Math.max(1, duckPx / DUCK);
   document.documentElement.style.setProperty("--px", grid.toFixed(3) + "px");
+  filterGrid();
 }
+
+/* ---------- whole layers made into pixels as they're drawn (the maps: every map, with all its movement) ----------
+   An SVG filter (css: filter: url(#px-f)): each grid square takes the color of one point inside it. The maps are made
+   of canvases, pictures and moving drawings, so I pixelate what they draw rather than each piece; the same grid as the
+   ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
+   then grown to fill its square.) */
+let filt = null;
+function filterGrid() {
+  if (!on || !document.body) return;
+  if (!filt) {
+    filt = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    filt.setAttribute("aria-hidden", "true");
+    filt.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    filt.innerHTML = `<filter id="px-f" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
+    document.body.append(filt);
+  }
+  const g = grid.toFixed(3),
+    [flood, comp, , , morph] = filt.querySelector("filter").children;
+  flood.setAttribute("x", (grid / 2).toFixed(3));
+  flood.setAttribute("y", (grid / 2).toFixed(3));
+  comp.setAttribute("width", g);
+  comp.setAttribute("height", g);
+  morph.setAttribute("radius", (grid / 2).toFixed(3));
+}
+if (document.readyState === "loading")
+  addEventListener("DOMContentLoaded", filterGrid);
 setGrid();
 document.documentElement.classList.toggle("pixel", on);
 
@@ -145,4 +173,79 @@ export function pxSVG(svg, w, cls = "") {
     W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W;
   return pxImg("s" + hash(svg), svg, w, (w * H) / W, cls);
+}
+
+/* ---------- pictures already on the page (<img>: the mode pictures, props, a player's own picture) ----------
+   Every <img> under root shows as pixels at the size it shows: its src becomes its pixel version (the first one kept
+   in data-pxsrc), made again when its size or its picture changes. Not the ones made by pxImg or by a mode's own code
+   (class "px": they do it themselves), nor what's under [data-nopx] (the maps, drawn on the grid by the filter) */
+const imgSeen = new WeakMap(); // img -> the key it was last made at
+function pxImgEl(img) {
+  if (!on || img.classList.contains("px") || img.closest("[data-nopx]")) return;
+  let src = img.getAttribute("src") || "";
+  if (!src || (src.startsWith("blob:") && !img.dataset.pxsrc)) return;
+  if (src.startsWith("blob:")) src = img.dataset.pxsrc;
+  else img.dataset.pxsrc = src;
+  let w = img.offsetWidth,
+    h = img.offsetHeight;
+  if (!w || !h || !img.naturalWidth) return; // (not shown or not loaded yet: made when it is)
+  const fit = getComputedStyle(img).objectFit;
+  if (fit === "cover" || fit === "contain") {
+    const nw = img.naturalWidth,
+      nh = img.naturalHeight,
+      k = (fit === "cover" ? Math.max : Math.min)(w / nw, h / nh);
+    w = nw * k;
+    h = nh * k;
+  } // (cropped or fitted: made at the size the picture itself shows, so it isn't stretched)
+  const [fk] = full(src, w, h);
+  if (imgSeen.get(img) === fk) return;
+  imgSeen.set(img, fk);
+  img.style.imageRendering = "pixelated";
+  rasterReady("i" + hash(src), src, w, h).then((u) => {
+    if (u && imgSeen.get(img) === fk) img.src = u;
+  });
+}
+export function pxImgWatch(root) {
+  const all = () => root.querySelectorAll("img").forEach(pxImgEl);
+  const mo = new MutationObserver((recs) => {
+    if (!on) return;
+    for (const r of recs) {
+      if (r.type === "attributes") {
+        const t = r.target;
+        if (t.tagName === "IMG") {
+          const s = t.getAttribute("src") || "";
+          if (!s.startsWith("blob:")) delete t.dataset.pxsrc; // (a new picture)
+          pxImgEl(t);
+        }
+      } else
+        r.addedNodes.forEach((n) => {
+          if (n.nodeType !== 1) return;
+          if (n.tagName === "IMG") pxImgEl(n);
+          else n.querySelectorAll("img").forEach(pxImgEl);
+        });
+    }
+  });
+  mo.observe(root, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["src"],
+  });
+  root.addEventListener(
+    "load",
+    (e) => e.target.tagName === "IMG" && pxImgEl(e.target),
+    true,
+  ); // (its size known once loaded)
+  addEventListener("resize", all);
+  addEventListener("pixelchange", () => {
+    if (on) all();
+    else
+      root.querySelectorAll("img[data-pxsrc]").forEach((i) => {
+        i.src = i.dataset.pxsrc;
+        i.style.imageRendering = "";
+        delete i.dataset.pxsrc;
+        imgSeen.delete(i);
+      });
+  });
+  all();
 }

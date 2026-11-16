@@ -8,7 +8,6 @@
    my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
 import { ARMS, slotsOf, kitOf, SLOT_KINDS, weaponName } from "./l4ddrules.js";
-import { pxWatch } from "./pxdom.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -33,7 +32,6 @@ const out = (s, me) => {
 export function mountL4Bar(S, api) {
   const row = document.createElement("div");
   row.className = "l4bar";
-  const pxStop = pxWatch(row); // (the pixel look: the weapons as pixels, pxdom.js)
   let sig = "";
   function draw() {
     const s = api.state();
@@ -82,7 +80,6 @@ export function mountL4Bar(S, api) {
     row,
     refresh: draw,
     destroy() {
-      pxStop();
       row.remove();
     },
   };

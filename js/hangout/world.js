@@ -30,7 +30,6 @@ import {
   rasterReady,
 } from "../pixel.js";
 import { applyPalette } from "../pixelpalette.js";
-import { pxWatch } from "../pxdom.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
@@ -52,7 +51,6 @@ export function mountWorld(board, api) {
     shade = board.querySelector(".hang-shade");
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
   /* the pixel look: the props and whatever the activities draw, as pixels (pxdom.js; nothing happens with it off) */
-  const pxStop = [pxWatch(propsBox), pxWatch(board.querySelector(".fxl"))];
   const els = new Map(); // prop id → its element (the front or only part; made the first time it comes into view)
   const all = new Map(); // prop id → all its parts' elements
   const cls = new Map(); // prop id → the class its activity gives it
@@ -1130,7 +1128,6 @@ export function mountWorld(board, api) {
       removeEventListener("pointerup", up);
       removeEventListener("pointercancel", up);
       dead = true;
-      pxStop.forEach((f) => f());
       els.clear();
       all.clear();
       sm.clear();
