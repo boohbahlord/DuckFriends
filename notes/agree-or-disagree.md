@@ -4912,3 +4912,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
   them). Adam answers the three questions.
 
 
+- Version 46: Solomon's #337 (spawn x2, fireplace part at the Butler for 750, Attack speed most 2).

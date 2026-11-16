@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v46",
+    version: 46,
+    date: "Nov 16, 2026",
+    title: "Faster zombies",
+    news: [
+      "For Dead Ducks Arcade: zombies come in twice as fast.",
+      "For Dead Ducks Arcade: Justin's Butler also sells the fireplace's power part, for 750 points.",
+      "For Dead Ducks Arcade: Attack speed can be upgraded twice.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v45",
     version: 45,
     date: "Nov 16, 2026",
