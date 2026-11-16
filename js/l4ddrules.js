@@ -113,24 +113,47 @@ export const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
-/* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
-   their speed as a share of the ducks' [slowest, fastest], how long one is at a duck before it swipes and how often
-   after (ms), and the most on the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10,
-   15 and 25 became 4, 8, 12 and 20) */
+/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest], how long one
+   is at a duck before it swipes and how often after (ms), and the most on the board at once. The steps come every 4
+   rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and 20). How many come: zombiesFor */
 const ROUNDS = [
-  [4, 14, [3, 5], [0.5, 0.67], 500, 1000, Infinity],
-  [8, 20, [3, 5], [0.5, 0.75], 300, 750, 35],
-  [12, 20, [3, 5], [0.75, 0.75], 300, 750, 35],
-  [20, 50, [5, 10], [0.95, 0.95], 250, 500, 45],
-  [Infinity, 50, [5, 10], [0.95, 0.95], 250, 500, 50],
+  [4, [0.5, 0.67], 500, 1000, Infinity],
+  [8, [0.5, 0.75], 300, 750, 35],
+  [12, [0.75, 0.75], 300, 750, 35],
+  [20, [0.95, 0.95], 250, 500, 45],
+  [Infinity, [0.95, 0.95], 250, 500, 50],
 ];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
-/* and more of them (the owner's, Nov 4): 25% more in rounds 1 to 4, 100% more in 5 to 8, 200% more in 9 to 12, 300%
-   more from 13 on, the ones for each player past the first too */
-export const moreOf = (r) => (r <= 4 ? 1.25 : r <= 8 ? 2 : r <= 12 ? 3 : 4);
+/* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
+   Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
+   that grows through the phase, the round's place in it over the phase's length (1/4, 2/4 …), rounded down. Never
+   more than 100 a player nor 400 in all, and never fewer than the round before (a round that would have fewer keeps
+   the round before's). From round 21 on: 144 (as far as the cap lets), and never fewer than round 20 */
+const PHASES = [
+  [1, 4, 12],
+  [5, 8, 24],
+  [9, 12, 36],
+  [13, 20, 72],
+];
+const Z_EACH = 100, // the most zombies a round for each player …
+  Z_MOST = 400, // … and in all
+  Z_LATE = 144; // from round 21 on
+export function zombiesFor(r, p) {
+  const cap = Math.min(Z_EACH * p, Z_MOST);
+  let n = 0;
+  for (let k = 1; k <= Math.min(r, 20); k++) {
+    const [a, b, base] = PHASES.find((f) => k <= f[1]),
+      d = b - a + 1,
+      raw = Math.floor((base * (d + (p - 1) * (k - a + 1))) / d);
+    n = Math.max(n, Math.min(raw, cap));
+  }
+  return r > 20 ? Math.max(n, Math.min(Z_LATE, cap)) : n;
+}
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
-   more for each player past the first); each second a 25% chance that none comes */
-const SKIP = 0.25;
+   more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
+   (Nov 16 22:21Z); each second a 25% chance that none comes */
+const SKIP = 0.25,
+  LATER = 10000; // ms into a round before they come twice as fast
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
@@ -502,14 +525,14 @@ export const buyPrice = (w) => {
   const full = fullAmmo(w);
   return full ? ammoCost(w, ammoLeft(full)) : KNIFE_PRICE;
 };
-/* what the Butler asks for gun w now: to buy it, or to fill it to the top (0: it's full; null: not his, or a knife I
-   have already) */
+/* what the Butler asks for gun w now: to buy it, or to fill it to the top (0: it's full; null: not his, a knife I
+   have already, or an Angelic gun of mine) */
 export function gunPrice(s, id, w) {
   if (!GUN_SHOP.includes(w)) return null;
   const kit = kitOf(s, id),
     full = fullAmmo(w);
   if (!kit || !kit.sl.includes(w)) return buyPrice(w);
-  if (!full) return null;
+  if (!full || angelOf(s, id, w)) return null; // (an Angelic gun never refills: the owner's, Nov 16 22:21Z)
   return ammoCost(
     w,
     Math.max(0, ammoLeft(fullFor(s, id, w)) - ammoLeft(kit.am[w])),
@@ -1033,13 +1056,12 @@ export const reloadOf = (s, id, w, c) =>
 /* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
    that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
    one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
-   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. Every
-   weapon crits ("every weapon has a 2.5% crit chance unless it damages reasonably slower"): the chain gun and the
-   flamethrower the fast 2.5% (the flamethrower once, as a zombie catches its fire), the grenade launcher and the
-   grenade the slow 5%, each zombie in the blast (it dies anyway: a crit blows its head off). The flamethrower never
-   misses (the owner's misses are bullets and melee) */
+   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. The chain
+   gun crits too (the fast 2.5%). The grenades, the grenade launcher and the flamethrower never crit, and the thrown
+   grenade and the flamethrower never miss (the owner's, Nov 16 22:21Z); the grenade launcher's shell can */
 export const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
 export const MISS = { SLOW: 0.025, FAST: 0.05 };
+const NO_CRIT = ["grenade", "glauncher", "flamer"];
 const fastArm = (w) => !!(ARMS[w] && (ARMS[w].auto || ARMS[w].burst));
 const canHit = (w) =>
   !!ARMS[w] && (ARMS[w].kind === "melee" || ARMS[w].kind === "ranged");
@@ -1047,13 +1069,11 @@ const canHit = (w) =>
 export const critOf = (w) =>
   w === "pan"
     ? ARMS.pan.crit
-    : w === "grenade"
-      ? CRIT.SLOW
-      : !canHit(w)
-        ? 0
-        : fastArm(w)
-          ? CRIT.FAST
-          : CRIT.SLOW;
+    : !canHit(w) || NO_CRIT.includes(w)
+      ? 0
+      : fastArm(w)
+        ? CRIT.FAST
+        : CRIT.SLOW;
 export const missOf = (w) =>
   !canHit(w) || w === "pan" || w === "flamer"
     ? 0
@@ -1072,13 +1092,7 @@ function addPts(s, id, n) {
 }
 
 /* ---------- a game, a round ---------- */
-function countFor(s, r) {
-  const R = roundOf(r),
-    extra = Math.max(0, players(s).length - 1);
-  let n = R[1];
-  for (let k = 0; k < extra; k++) n += rint(R[2][0], R[2][1]);
-  return Math.round(n * moreOf(r));
-}
+const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
 function newRound(s, r, now, wait) {
   const am = s.hang.l4a || {};
   for (const id of Object.keys(am))
@@ -1350,7 +1364,12 @@ function maxAmmo(s) {
   for (const id of Object.keys(am)) {
     const m = { ...am[id], am: { ...am[id].am }, g: ARMS.grenade.most };
     for (const w of m.sl || [])
-      if (fullAmmo(w) && w !== "medkit" && !ARMS[w].round)
+      if (
+        fullAmmo(w) &&
+        w !== "medkit" &&
+        !ARMS[w].round &&
+        !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
+      )
         m.am[w] = fullFor(s, id, w);
     m.rl = 0;
     m.rw = "";
@@ -2381,7 +2400,7 @@ function light(s, z, by, now, fl = 0) {
 /* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit as a fireball
    lights one (1 HP as it's lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its
    fire spreads (the 4th: fl). True when it died */
-function catchFire(s, z, by, now, T, w = "") {
+function catchFire(s, z, by, now, T) {
   const F = s.hang.l4fire || {},
     f = (F.z || {})[z.i];
   if (f && now < f[0]) {
@@ -2392,8 +2411,7 @@ function catchFire(s, z, by, now, T, w = "") {
       }; // (a quarter second at a time: not a new object every puff)
     return false;
   }
-  const head = !!w && headshot(s, by, w, z, now); // (the flamethrower's crit: once, as it catches fire)
-  if (strike(s, z, 1, head, by, head ? w : "")) {
+  if (strike(s, z, 1, false, by)) {
     die(z, T);
     mark(s, z, "f0");
     return true;
@@ -2428,7 +2446,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       z.st !== 3 &&
       inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4)
     ) {
-      catchFire(s, z, id, now, T, "flamer");
+      catchFire(s, z, id, now, T);
       any = true;
     }
   if (any) store(s, zs, true);
@@ -2909,15 +2927,13 @@ function burnAt(s, by, x, y, now) {
    it, loses half its HP; true when it got any zombie */
 function boom(s, sh, bx, by, zs, T, now, wide = 1) {
   let any = false;
-  const gore = [],
-    w = sh.k === "grenade" ? "grenade" : sh.k === "lgren" ? "glauncher" : ""; // (a crit for each zombie in it: the grenade's or the launcher's; not the Jaime Bomb's, nor the Angelic pistol's blast)
+  const gore = [];
   for (const z of zs)
     if (
       z.st !== 3 &&
       Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide
     ) {
-      const head = !!w && headshot(s, sh.by, w, z, now);
-      strike(s, z, z.hp, head, sh.by, head ? w : ""); // (all its HP: 5 points for each, or a headshot's)
+      strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
       die(z, T);
       mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
       gore.push([Math.round(z.x), Math.round(z.y)]);
@@ -3092,10 +3108,11 @@ function l4Tick(s, now) {
     if (sec > L2.sec) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
-        L2.acc += 2 * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
+        const fast = T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again)
+        L2.acc += 2 * fast * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
-          10 + 6 * extra,
+          (10 + 6 * extra) * fast,
           L2.n - L2.made - L2.owe,
         );
         L2.acc -= Math.floor(L2.acc);
@@ -3104,7 +3121,7 @@ function l4Tick(s, now) {
     }
   }
   if (L2.owe > 0) {
-    const room = Math.max(0, R[6] - live),
+    const room = Math.max(0, R[4] - live),
       k = Math.min(L2.owe, room);
     for (let q = 0; q < k; q++) zs.push(newZombie(s, L2, T));
     L2.owe -= k;
@@ -3163,7 +3180,7 @@ function newZombie(s, L, T) {
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
     max = hp0(),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
-    v = Math.round(WALK * Z_SLOW * rnd(R[3][0], R[3][1])),
+    v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
     [sx, sy] = o.from || o.out;
   return {
     i,
@@ -3268,7 +3285,7 @@ function moveZombies(s, zs, now, T, up) {
     const d = room(z.x, z.y, ...target.xy);
     if (d < CLAW) {
       if (!z.n) z.n = T || 1;
-      if (T - z.n >= R[4] && T - z.a >= R[5]) {
+      if (T - z.n >= R[2] && T - z.a >= R[3]) {
         z.a = T;
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
