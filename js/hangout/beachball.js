@@ -14,6 +14,7 @@ import { WATER, SOUTH, ripple, splash, wallGlow } from "./water.js";
 import { play } from "./sounds.js";
 import { beachBall } from "./art.js";
 import { sfx } from "../sound.js";
+import { pxAt } from "../pxdom.js";
 
 const R = 24,
   DR = 26; // the ball's radius; a duck's reach round its middle (world px)
@@ -344,7 +345,7 @@ activity({
       el.hidden = sh.hidden = hide;
     }
     if (hide) return;
-    el.style.transform = `translate(${(f.left - (BW / 2) * sc).toFixed(1)}px, ${(f.top - (BH - 3) * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
+    el.style.transform = `translate(${pxAt(f.left - (BW / 2) * sc)}px, ${pxAt(f.top - (BH - 3) * sc)}px) scale(${sc.toFixed(4)})`;
     el.style.zIndex = Math.round(shown.y) + 10;
     el.style.clipPath = floating
       ? `inset(0 0 ${(3 + bob).toFixed(1)}px 0)`
@@ -358,7 +359,7 @@ activity({
     const hgt = Math.max(0, shown.z - sfc),
       k = 1 / (1 + hgt / 140),
       g = Wd.toScreen(shown.x, shown.y, sfc);
-    sh.style.transform = `translate(${g.left.toFixed(1)}px, ${g.top.toFixed(1)}px) scale(${(sc * k).toFixed(4)})`;
+    sh.style.transform = `translate(${pxAt(g.left)}px, ${pxAt(g.top)}px) scale(${(sc * k).toFixed(4)})`;
     sh.style.opacity = floating ? 0 : (k * (wet ? 0.5 : 0.9)).toFixed(2);
   },
 });

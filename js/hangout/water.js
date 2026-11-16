@@ -19,6 +19,8 @@ import {
   inPool,
 } from "./layout.js";
 import { sfx } from "../sound.js";
+import { pxAt } from "../pxdom.js";
+import { pixelOn, gridPx } from "../pixel.js";
 
 export const WATER = POOL.h; // the water's surface: a duck floats with its feet there
 const SINK = 16; // how far into the water a floating duck sits (world px)
@@ -140,7 +142,7 @@ function drawSplash(p, toScreen, sc) {
     return false;
   }
   const at = toScreen(p.x, p.y, WATER);
-  p.el.style.transform = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px) scale(${sc.toFixed(4)})`;
+  p.el.style.transform = `translate(${pxAt(at.left)}px, ${pxAt(at.top)}px) scale(${sc.toFixed(4)})`;
   const s = age / 1000,
     G = 1300,
     f = (n) => n.toFixed(1);
@@ -325,7 +327,7 @@ activity({
     if (!water) return;
     const vw = W.vw,
       vh = W.vh,
-      dpr = Math.min(2, devicePixelRatio || 1);
+      dpr = pixelOn() ? 1 / gridPx() : Math.min(2, devicePixelRatio || 1); // (the pixel look: one canvas px to one pixel of the grid)
     for (let i = ripples.length - 1; i >= 0; i--)
       if (now - ripples[i].t > ripples[i].life || now < ripples[i].t - 1000)
         ripples.splice(i, 1);
@@ -352,6 +354,8 @@ activity({
       water.width = Math.round(vw * dpr);
       water.height = Math.round(vh * dpr);
     }
+    const look = pixelOn() ? "pixelated" : "";
+    if (water.style.imageRendering !== look) water.style.imageRendering = look;
     const g = wg;
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.clearRect(0, 0, water.width, water.height);

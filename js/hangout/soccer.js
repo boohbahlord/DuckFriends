@@ -17,6 +17,7 @@ import { isGhost } from "./death.js";
 import { PROPS, SOLIDS, FIELD, W, H, EDGE, heightAt } from "./layout.js";
 import * as A from "./art.js";
 import { fewer } from "../gfx.js";
+import { pxAt } from "../pxdom.js";
 
 const R = 16,
   DT = 20,
@@ -470,7 +471,7 @@ activity({
       a.top + BH * sc > -40;
     if (ball.hidden !== !vis) ball.hidden = !vis;
     if (vis) {
-      ball.style.transform = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px) scale(${sc.toFixed(4)})`;
+      ball.style.transform = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${sc.toFixed(4)})`;
       const zi = Math.round(shown.y) + 10;
       if (ball._zi !== zi) {
         ball._zi = zi;
@@ -501,7 +502,7 @@ activity({
         p.vy *= 0.985;
       }
       const q = Wd.toScreen(p.x, p.y, heightAt(p.x, p.y) + p.h);
-      p.e.style.transform = `translate(${q.left.toFixed(1)}px, ${q.top.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${p.r.toFixed(0)}deg)`;
+      p.e.style.transform = `translate(${pxAt(q.left)}px, ${pxAt(q.top)}px) scale(${sc.toFixed(3)}) rotate(${p.r.toFixed(0)}deg)`;
       p.e.style.opacity = Math.min(1, (p.until - now) / 500).toFixed(2);
       return true;
     });

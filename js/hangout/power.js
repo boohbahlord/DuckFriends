@@ -32,12 +32,14 @@ import { cabinSVG } from "./shapes.js";
 import { sway, stutterOf, lightNow } from "./flicker.js";
 import { play, loop } from "./sounds.js";
 import { music } from "../music.js";
+import { pxAt } from "../pxdom.js";
+import { pixelOn, gridPx } from "../pixel.js";
 
 const WAIT = 10000; // ms before the power can go back on
 const REACH = 110; // world px from the box (and from a flame's spot, past its bias)
 const DARK = 0.55,
   DARK_IN = 0.5,
-  Q = 0.3, // how dark outside, and inside in a blackout; the canvas' px per screen px (it's all soft light)
+  Q0 = 0.3, // how dark outside, and inside in a blackout; the canvas' px per screen px (it's all soft light)
   REACH_PAST = 60, // screen px the dark reaches past the view on every side, so it can slide with the camera
   EVERY = 50; // ms: drawn at most this often (flicker.js' clock is 20 times a second); in between it only slides
 const ME_GLOW = 120; // world px: the soft glow round my own duck
@@ -205,12 +207,15 @@ function paint(now, ctx) {
     s = ctx.state(),
     on = powered(s),
     E = REACH_PAST,
+    Q = pixelOn() ? 1 / gridPx() : Q0, // (the pixel look: one canvas px to one pixel of the grid)
     w = Math.round((Wd.vw + 2 * E) * Q),
     h = Math.round((Wd.vh + 2 * E) * Q),
     ln = lightNow(now),
     sc = Wd.sc * Q,
     o = Wd.toScreen(0, 0, 0);
   const empty = Wd.inside && on;
+  const look = pixelOn() ? "pixelated" : "";
+  if (cv.style.imageRendering !== look) cv.style.imageRendering = look;
   if (cv.hidden !== empty) cv.hidden = empty;
   if (empty) {
     drawn = "";
@@ -271,7 +276,7 @@ function paint(now, ctx) {
     drawn.startsWith(w + "," + h + ",") &&
     (key === drawn || now - drawnAt < EVERY)
   ) {
-    const tr = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+    const tr = `translate(${pxAt(dx)}px, ${pxAt(dy)}px)`;
     if (tr !== slid) cv.style.transform = slid = tr;
     return;
   }

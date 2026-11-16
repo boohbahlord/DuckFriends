@@ -222,6 +222,7 @@ import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
+import { pixelOn, pxSVG, snap, setDuckSize } from "./pixel.js";
 import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
@@ -1129,6 +1130,7 @@ function drawDucks(now = clockNow()) {
     layer = $(".ducks", board),
     size = geo.size,
     hang = !!geo.hang;
+  if (pixelOn()) setDuckSize(size); // (the pixel look: one pixel is a 32nd of a duck, on this board)
   /* each duck's element by its id, kept on the layer (a search of the layer for every duck, every frame, added up) */
   const duckEls = layer._els || (layer._els = new Map()),
     duckEl = (id) => {
@@ -1343,19 +1345,20 @@ function drawDucks(now = clockNow()) {
     }
     if (d._sig !== sig) {
       d._sig = sig;
+      const pic = duckSVG(look, {
+        size: 64,
+        shadow: false,
+        title: p.name,
+        dead,
+        ...(p.bomb ? { skin: BOMB_SKIN } : {}),
+        ...(wc ? woundLook(wc) : {}),
+      });
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
-        duckSVG(look, {
-          size: 64,
-          shadow: false,
-          title: p.name,
-          dead,
-          ...(p.bomb ? { skin: BOMB_SKIN } : {}),
-          ...(wc ? woundLook(wc) : {}),
-        }) +
+        (pixelOn() ? pxSVG(pic, size, "duck") : pic) + // (the pixel look: the same drawing, made into pixels once)
         '<span class="sp-fx gduck-aura"></span>';
-      d._pic = d._bodyEl.querySelector("svg");
-      if (look && look.eyes === "tears") {
+      d._pic = d._bodyEl.querySelector("svg.duck, img.px");
+      if (look && look.eyes === "tears" && !pixelOn()) {
         // his tears stay bright over the burnt duck: a copy on top shows only the tears (css: .mgj-cry)
         const cry = d.querySelector(".gduck-body svg").cloneNode(true);
         cry.classList.add("mgj-cry");
@@ -1513,7 +1516,9 @@ function drawDucks(now = clockNow()) {
     const fx = turned() ? 1 : d._face,
       mq = fx < 0 ? { l: "r", r: "l" }[q] || q : q,
       [org, sx, sy] = SQ[mq] || ["50% 100%", 1, 1];
-    const tr = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`,
+    const tr = pixelOn()
+        ? `translate(${snap(at.left).toFixed(2)}px, ${snap(at.top).toFixed(2)}px)` // (the pixel look: on the grid, so its pixels line up with the map's)
+        : `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px)`,
       lift = `translateY(${(-z).toFixed(1)}px)`;
     const deadPose =
       dead && !(p.duck && (p.duck.image || p.duck.style === "jack")); // (Jack in a Box flops over in his own drawing)
@@ -1567,7 +1572,7 @@ function drawDucks(now = clockNow()) {
     }
     let pic = d._pic;
     if (!pic || !d._bodyEl.contains(pic))
-      pic = d._pic = d._bodyEl.querySelector("svg"); // (found again only if its body was redrawn elsewhere)
+      pic = d._pic = d._bodyEl.querySelector("svg.duck, img.px"); // (found again only if its body was redrawn elsewhere)
     if (pic && pic._sq !== squish + org) {
       pic._sq = squish + org;
       pic.style.transformOrigin = org;
@@ -1980,6 +1985,10 @@ function drawDucks(now = clockNow()) {
   fxl.querySelectorAll(".held").forEach((h) => {
     if (!handed.has(h.dataset.pid)) h.remove();
   });
+  document.documentElement.classList.toggle(
+    "armed",
+    arms.some((a) => a[4]),
+  ); // (a weapon in my hand: the mouse is a crosshair over the board, owner Nov 16, css/app.css)
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
   for (const [id, pos, at, duck] of brood) {
