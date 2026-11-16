@@ -4756,3 +4756,10 @@ Solomon.)
 - Adam: each Justin fight now counts as a game for Vote return (rules.js advance: gameOver after Try again), and the
   stats screen shows "Vote: new game now" in Mad God Justin too (game.js newGameHTML no longer skips it). Version 36,
   with Noah's gore #309 and the Nuke's exploded looks (l4ddrules.js nukeTick uses wounds.js explodedLook).
+
+## Nov 16, 16:38Z: Mad God Justin, bullets hit thrown things, 3 s spawn
+Owner: "when justin throws a chair or controllers, they now take bullets"
+Owner: "When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in"
+Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a controller hits it and is gone, with a hitmarker; the chair breaks after 6 hits, a controller after 2 (a sniper's bullet counts 2). The fight (also Try again) starts with Justin not there for 3 s: his avatar fades in with a red glow (css drop-shadow), he can't attack or be hit until it ends, and his attack timers start after it.
+
+

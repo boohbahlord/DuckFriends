@@ -3688,7 +3688,7 @@ function moveShots(s, now) {
       now - sh.t < (sh.k === "dagger" ? DAGGER_LIFE : sh.life || 12000); // (a shotgun's pellet: its own short life)
     if (on && boardPhases(s).includes(s.phase)) keep.push(sh); // (on past the board to the screen's edge)
   }
-  s.shots = keep;
+  s.shots = keep.filter((x) => !x.dead); // (Mad God Justin: a thrown chair or controller broken this beat)
   return true;
 }
 /* how fast one of Quacky Zombies' guns' bullets flies here: its speed there, in board widths a second, a little faster

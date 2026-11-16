@@ -302,6 +302,8 @@ import {
   MGJ_POD,
   mgjFrozen,
   mgjGone,
+  mgjSpawning,
+  SPAWN_MS,
   mgjStats,
   GOOD_ID,
   PICK_FADE,
@@ -1737,7 +1739,14 @@ function drawDucks(now = clockNow()) {
       d._bw = bw;
       d.classList.toggle("dn-bw", bw);
     } // Duncelation: a dunce, in black and white (Valentine's Duck Date: Turned Down)
-    const gone = id === JUSTIN_ID && mgjGone(s, now);
+    const spawning = id === JUSTIN_ID && isMgj(s) && mgjSpawning(s, now);
+    if (d._spawn !== spawning) {
+      d._spawn = spawning;
+      d.classList.toggle("mgj-spawn", spawning);
+      if (spawning)
+        d.style.setProperty("--sp", `-${now - (s.mgj.spawn - SPAWN_MS)}ms`);
+    } // Mad God Justin: fading in with a red glow for his first 3 s
+    const gone = id === JUSTIN_ID && !spawning && mgjGone(s, now);
     if (d._gone !== gone) {
       d._gone = gone;
       d.classList.toggle("mgj-gone", gone);
