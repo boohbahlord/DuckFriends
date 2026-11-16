@@ -4593,3 +4593,49 @@ Owner: "The settings should have a place to turn off gore OR to turn off other n
 Decided: a number key picks that weapon and the same key puts it away (jetpack and grenade too; the grenade is key 5 in Quacky Zombies); the phone's purple switch is gone; two Game Settings (Additional Settings), Gore and Heavy effects, each one flag (noGore, noFx) checked in fx.js (blood; smoke, muzzle flashes, screen shake).
 
 
+
+## Request (owner, 2026-11-16 15:55Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtRKp2jRWz4SHxvZYzYPdmzk), word for word
+> blood effects are too small too AND i literally want to see chunks of a duck flying out of their body (it having the same color as the duck AND ripping a hole in their clothes item where it was shot through AND knocking off hats or face apparel (only appropriate ones, so not a full helmet like a motorcycle helmet or face paint) off their heads from guns (the hats fade back on their heads in like 10 seconds) or even shooting their beak off their face or blowing their eyes out their face) The effects should be gorey, visual, espcially impactful, and messed up. It is a pixel game about ducks so it is hard to make the violence serious or problematic, you know? the ducks beak or eyes can be cut off or knocked off by either blunt or sharp melee in whatever way is appropriate.
+>
+> New melees btw
+>
+> A fire axe (like one that looks like it is from L4D2) and it does 1-4 damage in zombies and on players while it swings 25% faster then the hammer.
+> A short sword that does 1 damage that swings faster then the knife in a swing like the fireaxe or hammer that isnt as long out. It is 50% faster then the knife.
+> A new blunt that is a cast iron pan that has a 50% chance of missing, but every hit is a 50% chance of a critical hit AND it does 1 damage. It has the length of the short sword in swing effect and swings as slow as the fire axe.
+>
+> crits and brutal effects carry over to the actual game AND these weapons become specials
+>
+> In zombies, these melee weapons are in a bag, where all melee weapons are in a bag of either blunt weapons OR sharp weapons, and they are in the bag for the weapons bag in the fireplace, and they are shuffled as well
+>
+> in the game, you cannot fire another gun or use a melee in any game mode WHILE one weapon is already toggled AND NOW you must toggle a weapon to use it. For now on, every weapon is toggled by simply clicking the number key and then untoggled by clicking the same number key again, meaning shift isnt needed anymore to toggle or untoggle weapons, and the same is true for mobile players. so no more toggle button for either mobile or pc, whatever is selected is what you used and it is toggled for now on. Even the jetpack can only be used WHILE it is selected, which means guns cannot be used alongside it, this also means the grenade has to be selected to throw it.
+> In zombies, grenade is now a number key instead of the letter G
+>
+> The settings should have a place to turn off gore OR to turn off other new animations, such as particle effects, and other effects that are hard on the game
+>
+> later today after everything is done or in the  future, the performance settings you select for saving data should follow suit to make the game better for certain players, and Miles Jr AND Solomon AND Noah all have a say, not just Adam, and you all must talk it amongst yourselves as a democracy AND ask me about it if im able to get back to you in an hour
+
+- Split (Adam): Noah = gore look (bigger blood, chunks in the duck's color, clothes holes, hats/face items knocked
+  off and fading back after ~10 s, beak/eyes off) + fire axe, short sword, pan art. Solomon = PR D melee rules (fire
+  axe 1-4 dmg 25% faster than the hammer; short sword 1 dmg 50% faster than the knife; pan 50% miss, 50% crit, 1 dmg,
+  fire axe speed), specials, fireplace melee bag (blunt/sharp, shuffled). Jackal = one number key toggles each weapon
+  in every mode (no Shift, no phone toggle; jetpack and grenade only while picked; grenade on 5 in Dead Ducks Arcade)
+  + Gore and Heavy effects settings: LIVE in Version 32 (#300). Performance settings: talk it over with Miles Jr.,
+  Solomon and Noah after the batch, then ask the owner.
+
+## Request (owner, 2026-11-16 15:56Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMZLLLJfed4znze8rUq7CET), word for word
+> i didnt see the new gun smoke or gun flash effects yet let me see
+
+- Picture: /mnt/project-files/refs/2026-11-16-1540/gun-flash-smoke-before-and-now.png (posted by Moses). The first
+  2x was still tiny; flashes and smoke are now sized by the duck.
+
+## Request (owner, 2026-11-16 15:57Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMEJmWDsDL1mKjZDZQfdWDA), word for word
+> zombies and cabin only get one playthrouhg game before everyone dies or votes to exit cabin before random or vote rotation continues, not three games
+
+- Done (Adam, Version 32): cabinOver always goes to the votes or Random's next game; Dead Ducks Arcade from the vote
+  or Random moves on 8 s after everyone's down (rules.js L4_OVER_MS).
+
+## Request (owner, 2026-11-16 16:03Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtCsHN9Qx4DkZx5WBzXnv97f), word for word
+> good, and some particle effects are more based on the gun, and their length or stretch of cone for either flash, smoke or whatnot will differ per gun AND the width or amount of particles as well
+
+- Done (Adam, Version 32): js/fx.js MUZZLE gives each gun reach, cone, n, core, smoke, puff, drift. Picture:
+  /mnt/project-files/refs/2026-11-16-1540/gun-flash-smoke-per-gun.png.
