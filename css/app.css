@@ -13505,6 +13505,30 @@ html.moving .mgj-field {
     opacity: 0.25;
   }
 }
+/* a duck that just came back from dying (the normal games): 2.5 s of spawn protection, it blinks see-through and fades in
+   (the start is set in --pd) */
+.gduck.prot {
+  animation: prot-in 2.5s linear var(--pd, 0s) both;
+}
+.gduck.prot .gduck-body {
+  animation: prot-blink 0.2s steps(2, jump-none) infinite;
+}
+@keyframes prot-in {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes prot-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.4;
+  }
+}
 /* his charge's tell (game.js' mgjcharge): a fast shake, flushed red, then he sprints */
 .gduck.mgj-charge .gduck-body {
   animation: mgj-charge 0.08s linear infinite alternate;

@@ -4854,3 +4854,10 @@ The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files
 
 - Adam (17:29Z): knocked-off items stay off until the duck comes back (Jackal, same PR); the hat both off and on bug
   (birthday hat) goes to Noah (his #309 gore).
+## Nov 16, 17:28Z: normal modes, 6 HP, 3 s death, spawn protection, wounds stay
+Owner: "in the normal game modes, like agree or disagree, lawyeringn, and all of those, the ducks will have six health now, and when they die, their body returns to normal when they come back. Now their death lasts three seconds before they come back to life and their duck blinks with trnasparency until they fade in for 2.5 seconds to indicate vulnerability frames, in which their weapons or explosives do not do damage until it is over"
+Owner: "that means they keep their wounds until they die in those modes"
+Owner: "make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed" (the hat bug is Noah's)
+Decided: PHP 6 (the slug and chain gun still take it all); the boards' default down time is 3 s (the host's Down time setting still overrides it); a duck that comes back gets its wounds and knocked-off items cleared and 2.5 s of spawn protection (blinks, fades in; nothing hurts it, and its own weapons and explosives hurt nobody); in the normal games wounds and knocked-off hats no longer fade while the duck is alive. Not Quacky Zombies, Mad God Justin or Hangout. HP regeneration (6 s) untouched.
+
+
