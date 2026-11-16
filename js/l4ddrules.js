@@ -57,6 +57,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
+import { FLAME, flameReach, inCone } from "./flamer.js";
 import { woundCode, pwHit } from "./wounds.js";
 import {
   BOMB,
@@ -292,6 +293,42 @@ export const ARMS = {
     reload: 2800,
     k: "lmg",
   },
+  /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
+     zombie it hits, blows chunks through it and throws its body back a long way (FLING); a crit's slug blows the head
+     off and goes on through every zombie in its way, killing each. Two shells, then a reload of a second for each
+     shell it loads (shell); 96 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
+     fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
+     owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
+  dbarrel: {
+    kind: "ranged",
+    cool: 280,
+    dmg: "all",
+    crit: 0.1,
+    speed: 1500,
+    mag: 2,
+    all: 96,
+    shell: 1000, // (ms a shell: one shell loads in 1 s, two in 2 s)
+    k: "slug",
+  },
+  flamer: {
+    kind: "ranged",
+    auto: true,
+    cool: FLAME.COOL,
+    all: FLAME.TANK,
+  },
+  burst: {
+    kind: "ranged",
+    cool: 420, // (from one burst to the next)
+    dmg: 2,
+    crit: 0.03,
+    speed: 1250,
+    mag: 21,
+    all: 21 * 10,
+    reload: 2000,
+    burst: 3,
+    gap: 70, // ms between a burst's rounds
+    k: "burst",
+  },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
      20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
@@ -353,6 +390,9 @@ export const WEAPONS = [
   "revolver",
   "glauncher",
   "lmg",
+  "dbarrel",
+  "flamer",
+  "burst",
 ];
 export const ITEMS = [
   "medkit",
@@ -372,6 +412,9 @@ export const MELEE_BAGS = [
   ["hammer", "pan"],
   ["knife", "axe", "sword"],
 ];
+/* and the flamethrower shares a bag with the chain gun (the owner's, Nov 16 16:25Z): the bag comes up as likely as any
+   one gun, then one of the two in it */
+export const HEAVY_BAG = ["chaingun", "flamer"];
 export const POOL = [...WEAPONS, ...ITEMS];
 /* their names, as players see them */
 const NAMES = {
@@ -394,6 +437,9 @@ const NAMES = {
   revolver: "Revolver",
   glauncher: "Grenade launcher",
   lmg: "LMG",
+  dbarrel: "Double barrel",
+  flamer: "Flamethrower",
+  burst: "Burst rifle",
   zebra: "Zebra cake",
   fireball: "Fireball",
   adrenaline: "Adrenaline shot",
@@ -415,6 +461,8 @@ const BULLETS = new Set([
   "ak",
   "revolver",
   "lmg",
+  "dbarrel",
+  "burst",
 ]);
 export const PTS = {
   START: 50,
@@ -954,8 +1002,14 @@ export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
    headshot chance (each Accuracy: 5% more, on every attack) */
 export const l4Cool = (s, id, w) =>
   ARMS[w] ? ARMS[w].cool * Math.pow(0.9, upOf(s, id).as || 0) : 400;
-export const reloadOf = (s, id, w) =>
-  (ARMS[w].reload || 1500) * (upOf(s, id).rl ? 0.7 : 1);
+export const reloadOf = (s, id, w, c) =>
+  (ARMS[w].shell
+    ? ARMS[w].shell *
+      Math.max(
+        1,
+        Math.min(ARMS[w].mag - (c ? c[0] : 0), c ? c[1] : ARMS[w].mag),
+      )
+    : ARMS[w].reload || 1500) * (upOf(s, id).rl ? 0.7 : 1); // (the double barrel: a second for each shell it loads)
 const headOf = (s, id, w) =>
   kindOf(w) === "grenade"
     ? 0
@@ -1541,11 +1595,16 @@ function fireRoll(s, id, kit) {
     bags = MELEE_BAGS.map((b) => b.filter((w) => !kit.sl.includes(w))).filter(
       (b) => b.length,
     ),
+    heavy = HEAVY_BAG.filter((w) => !kit.sl.includes(w)),
     weapons = [
       ...WEAPONS.filter(
-        (w) => !kit.sl.includes(w) && !MELEE_BAGS.some((b) => b.includes(w)),
+        (w) =>
+          !kit.sl.includes(w) &&
+          !MELEE_BAGS.some((b) => b.includes(w)) &&
+          !HEAVY_BAG.includes(w),
       ),
       ...(bags.length ? ["melee"] : []),
+      ...(heavy.length ? ["heavy"] : []),
     ],
     items = ITEMS.filter((w) => !kit.sl.includes(w)),
     item = !weapons.length || (!!items.length && Math.random() < itemOdds(fo)),
@@ -1555,7 +1614,7 @@ function fireRoll(s, id, kit) {
     [id]: item ? [0, fo[1] + 1] : [fo[0] + 1, 0],
   };
   const w = anyIn(group);
-  return w === "melee" ? anyIn(anyIn(bags)) : w; // (the melee bag: the blunt bag or the sharp bag, then one in it)
+  return w === "melee" ? anyIn(anyIn(bags)) : w === "heavy" ? anyIn(heavy) : w; // (the melee bag: the blunt bag or the sharp bag, then one in it; the heavy bag: the chain gun or the flamethrower)
 }
 const anyIn = (xs) => xs[Math.floor(Math.random() * xs.length)];
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
@@ -1708,7 +1767,8 @@ function startReload(s, id, m, w, now) {
   const c = m.am[w];
   if (!ARMS[w] || !ARMS[w].mag || !c || m.rl) return false;
   if (c[0] >= ARMS[w].mag || c[1] <= 0) return false;
-  m.rl = now + reloadOf(s, id, w);
+  m.rt = reloadOf(s, id, w, c);
+  m.rl = now + m.rt;
   m.rw = w;
   return true;
 }
@@ -1772,10 +1832,11 @@ export function l4Use(s, a, now) {
     ax: +(dx / W).toFixed(5),
     ay: +(dy / H).toFixed(5),
   });
+  const many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
   if (kind === "grenade") m.g--;
   else if (c) {
-    m.am[what] = [c[0] - 1, c[1]];
-    if (c[0] - 1 <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
+    m.am[what] = [c[0] - many, c[1]];
+    if (c[0] - many <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
   }
   if (kind === "melee") {
     s.hang.l4k = [
@@ -1805,6 +1866,7 @@ export function l4Use(s, a, now) {
     jaimeIn(s, id, p, now, bombRoll(what));
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
   else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
+  else if (what === "flamer") flame(s, id, m, px, py, dx, dy, hz, now);
   else {
     const shot = (k, ux, uy, v, more) => ({
       n,
@@ -1849,16 +1911,22 @@ export function l4Use(s, a, now) {
             : what === "glauncher"
               ? "lgren"
               : A.k || what; // (the new guns' bullets each look their own way)
-      s.shots = [
-        ...(s.shots || []),
-        shot(
-          k,
-          dx,
-          dy,
-          v,
-          what === "glauncher" ? { life: (A.far / A.speed) * 1000 } : {},
-        ),
-      ];
+      const out = [];
+      for (let i = 0; i < many; i++)
+        out.push(
+          shot(
+            k,
+            dx,
+            dy,
+            v,
+            what === "glauncher"
+              ? { life: (A.far / A.speed) * 1000 }
+              : i
+                ? { n: n * 10 + i, t: now + i * A.gap }
+                : {},
+          ),
+        ); // (a burst's rounds leave one after another: each waits until its time, t)
+      s.shots = [...(s.shots || []), ...out];
     }
   }
   s.hang.l4a = { ...s.hang.l4a, [id]: m };
@@ -2110,15 +2178,118 @@ function jaimesRun(s, zs, now, T) {
 }
 /* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
    a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by] }, p: { id: until } } */
-function light(s, z, by, now) {
+function light(s, z, by, now, fl = 0) {
   mark(s, z, "f0"); // (burnt for good, even once the fire is out)
   const F = s.hang.l4fire || {};
   s.hang.l4fire = {
     ...F,
-    z: { ...(F.z || {}), [z.i]: [now + BURN.Z, now + BURN.EVERY, by] },
+    z: {
+      ...(F.z || {}),
+      [z.i]: [now + BURN.Z, now + BURN.EVERY, by, ...(fl ? [1] : [])],
+    },
   };
 }
+/* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit as a fireball
+   lights one (1 HP as it's lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its
+   fire spreads (the 4th: fl). True when it died */
+function catchFire(s, z, by, now, T) {
+  const F = s.hang.l4fire || {},
+    f = (F.z || {})[z.i];
+  if (f && now < f[0]) {
+    if (f[0] - now < BURN.Z - 250 || !f[3])
+      s.hang.l4fire = {
+        ...F,
+        z: { ...F.z, [z.i]: [now + BURN.Z, f[1], f[2], 1] },
+      }; // (a quarter second at a time: not a new object every puff)
+    return false;
+  }
+  if (strike(s, z, 1, false, by)) {
+    die(z, T);
+    mark(s, z, "f0");
+    return true;
+  }
+  light(s, z, by, now, 1);
+  return false;
+}
+/* the flamethrower (flamer.js), one puff: it reaches farther the longer it's held, up to a wall; every zombie in its
+   cone catches fire, and the ground at its end burns for a while. s.hang.l4fl = { id: [the hold's start, this puff,
+   ax, ay, reach] } (every screen draws the stream from it: l4dd.js), s.hang.l4gf = [[x, y, until, by]] the burning
+   patches */
+function flame(s, id, m, px, py, dx, dy, hz, now) {
+  const fl = { ...(s.hang.l4fl || {}) },
+    was = fl[id],
+    t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
+    D = FLAME.DUCK,
+    far0 = flameReach(now - t0) * D;
+  let far = 24;
+  while (far < far0 && !walled(px + dx * (far + 12), py + dy * (far + 12), hz))
+    far += 12; // (a wall cuts the stream short)
+  fl[id] = [t0, now, +dx.toFixed(3), +dy.toFixed(3), Math.round(far)];
+  s.hang.l4fl = fl;
+  const zs = zombies(s),
+    T = now - s.hang.l4.t0;
+  let any = false;
+  for (const z of zs)
+    if (
+      z.st !== 3 &&
+      inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4)
+    ) {
+      catchFire(s, z, id, now, T);
+      any = true;
+    }
+  if (any) store(s, zs, true);
+  if (now - (m.gf || 0) >= FLAME.PATCH) {
+    m.gf = now;
+    s.hang.l4gf = [
+      ...(s.hang.l4gf || []).filter((g) => g[2] > now).slice(1 - FLAME.MOST),
+      [
+        Math.round(px + dx * far),
+        Math.round(py + dy * far),
+        now + FLAME.GROUND,
+        id,
+      ],
+    ];
+  }
+}
+/* every heartbeat: the flamethrower's fire spreads to the zombies that touch one it lit, and the burning ground lights
+   any zombie on it; old streams and patches go */
+const TOUCH_Z = 1.6; // (in a zombie's hit room, 26 by 22 world px)
+function flameTick(s, zs, now, T) {
+  const gf = s.hang.l4gf;
+  if (gf && gf.length) {
+    const left = gf.filter((g) => g[2] > now),
+      r = FLAME.PATCH_R * FLAME.DUCK;
+    if (left.length !== gf.length) s.hang.l4gf = left.length ? left : null;
+    for (const [x, y, , by] of left)
+      for (const z of zs)
+        if (z.st !== 3 && Math.hypot(z.x - x, (z.y - y) * 1.3) < r)
+          catchFire(s, z, by, now, T);
+  }
+  const fz = (s.hang.l4fire || {}).z;
+  if (fz) {
+    const hot = zs.filter(
+      (z) => z.st !== 3 && fz[z.i] && fz[z.i][3] && fz[z.i][0] > now,
+    );
+    for (const a of hot)
+      for (const b of zs)
+        if (
+          b !== a &&
+          b.st !== 3 &&
+          !(fz[b.i] && fz[b.i][0] > now) &&
+          Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z
+        )
+          catchFire(s, b, fz[a.i][2], now, T);
+  }
+  const fl = s.hang.l4fl;
+  if (fl && Object.values(fl).some((f) => now - f[1] > 1000)) {
+    const keep = {};
+    for (const [id, f] of Object.entries(fl))
+      if (now - f[1] <= 1000) keep[id] = f;
+    s.hang.l4fl = Object.keys(keep).length ? keep : null;
+  }
+}
 function fireTick(s, zs, now, T, p4) {
+  flameTick(s, zs, now, T);
   const F = s.hang.l4fire;
   if (!F) return;
   const fz = { ...(F.z || {}) },
@@ -2132,7 +2303,7 @@ function fireTick(s, zs, now, T, p4) {
     }
     if (now >= f[1]) {
       if (strike(s, z, 1, false, f[2])) die(z, T);
-      else fz[k] = [f[0], f[1] + BURN.EVERY, f[2]];
+      else fz[k] = [f[0], f[1] + BURN.EVERY, ...f.slice(2)];
     }
   }
   for (const id of Object.keys(fp))
@@ -2319,11 +2490,16 @@ export function l4Shots(s, now) {
     T = now - L.t0,
     zs = zombies(s),
     grid = hitGrid(zs),
-    keep = [];
+    keep = [],
+    slugs = []; // (the double barrel's kills this beat: [x, y, crit])
   let hitAny = false;
   for (const sh0 of list) {
     const sh = { ...sh0 },
       age = now - sh.t;
+    if (age < 0) {
+      keep.push(sh);
+      continue;
+    } // (a burst's round still waiting for its turn)
     if (sh.k === "grenade") {
       const u = Math.min(age, GRENADE_MS) / 1000,
         x = (sh.x0 + sh.vx * u) * W,
@@ -2402,6 +2578,29 @@ export function l4Shots(s, now) {
         A = ARMS[w],
         near = (z) =>
           z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1;
+      if (w === "dbarrel") {
+        /* the double barrel's slug: all the HP of the zombie it hits, its body thrown back; a crit's goes on through
+           every zombie in its way (each once), killing each, until the wall */
+        let stop = false;
+        for (const z of nearby(grid, zs, x, y))
+          if (near(z) && !(sh.hit || []).includes(z.i)) {
+            const head = sh.crit || headshot(s, sh.by, w, z, now);
+            sh.hit = [...(sh.hit || []), z.i];
+            strike(s, z, z.hp, head, sh.by, w);
+            die(z, T);
+            mark(s, z, "g0"); // (chunks blown through it: l4ddart.js)
+            slugs.push([Math.round(z.x), Math.round(z.y), head ? 1 : 0]);
+            fling(z, sh, sh.hz);
+            hitAny = true;
+            if (head) sh.crit = 1;
+            else {
+              stop = true;
+              break;
+            }
+          }
+        if (stop) gone = true;
+        continue;
+      }
       if (A.pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
         for (const z of nearby(grid, zs, x, y))
@@ -2428,6 +2627,17 @@ export function l4Shots(s, now) {
         gone = true;
       }
     }
+    if (slugs.length) {
+      addFx(s, {
+        kind: "slug",
+        by: sh.by,
+        who: [],
+        t: now,
+        ax: sh.vx,
+        ay: sh.vy,
+        gore: slugs.splice(0),
+      }); // (every screen: the chunks and the blood blown out of each, more from a crit's head: l4dd.js)
+    }
     if (gone) continue;
     sh.lx = endX / W;
     sh.ly = endY / H;
@@ -2436,6 +2646,20 @@ export function l4Shots(s, now) {
   s.shots = keep;
   if (hitAny) store(s, zs, true);
   return true;
+}
+/* a zombie the double barrel killed is thrown back the way the slug flew, FLING world px (less if a wall is nearer) */
+const FLING = 170;
+function fling(z, sh, hz) {
+  const l = Math.hypot(sh.vx * W, sh.vy * H) || 1,
+    ux = (sh.vx * W) / l,
+    uy = (sh.vy * H) / l;
+  for (let d = 0; d < FLING; d += 10) {
+    const nx = z.x + ux * 10,
+      ny = z.y + uy * 10;
+    if (walled(nx, ny, hz || 0)) break;
+    z.x = nx;
+    z.y = ny;
+  }
 }
 
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in

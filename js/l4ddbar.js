@@ -23,6 +23,8 @@ const count = (w, m) => {
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
+  if (w === "flamer" && c)
+    return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)
   if (!c || ARMS[w].all <= 1) return "";
   return ARMS[w].mag ? `${m.rw === w ? "…" : c[0]} | ${c[1]}` : String(c[0]);
 };
@@ -36,7 +38,7 @@ const spent = (w, m) => {
 const reloadMeter = (s, me, w, m) => {
   const now = clockNow();
   if (!m || m.rw !== w || !(m.rl > now)) return "";
-  const all = reloadOf(s, me, w),
+  const all = m.rt || reloadOf(s, me, w),
     gone = Math.max(0, all - (m.rl - now));
   return `<span class="l4s-rl" style="--rl:${Math.round(all)}ms;--rd:-${Math.round(gone)}ms" aria-hidden="true"></span>`;
 };

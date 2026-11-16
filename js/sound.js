@@ -438,6 +438,9 @@ const RELOAD_S = {
   chaingun: 4,
   sniper: 2.2,
   glauncher: 4,
+  burst: 2,
+  dbarrel: 2,
+  flamer: 4,
 };
 function reload(w, o = {}) {
   if (!RELOAD[w]) return null;
@@ -457,6 +460,9 @@ const RELOAD = {
   sniper: "reloadSniper",
   shotgun: "reloadShotgun",
   glauncher: "reloadGlauncher",
+  burst: "reloadAk", // (the owner's new guns, Nov 16: the AK-47's, the shotgun's and the chain gun's until their own come)
+  dbarrel: "reloadShotgun",
+  flamer: "reloadChaingun",
 };
 
 /* a round in flesh, by what fx.js's blood says went in (BLEED_OF: small, big, heavy, shot, blade, blunt, arrow, claw) */
@@ -484,6 +490,8 @@ const LAND = {
   chaingun: "landHeavy",
   chain: "landHeavy",
   ak: "landBig",
+  burst: "landBig",
+  slug: "landHeavy",
   revolver: "landBig",
 };
 const NO_LAND = ["grenade", "lgren", "fireball", "controller", "chair"]; // (they land with their own sounds, or none)

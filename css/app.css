@@ -13852,6 +13852,15 @@ html.moving .eye-zap {
 .held[data-w="lmg"] i {
   width: calc(var(--s) * 1.2);
 }
+.held[data-w="dbarrel"] i {
+  width: calc(var(--s) * 1.1);
+}
+.held[data-w="flamer"] i {
+  width: calc(var(--s) * 1.15);
+}
+.held[data-w="burst"] i {
+  width: calc(var(--s) * 0.95);
+}
 .held[data-w="adrenaline"] i {
   width: calc(var(--s) * 0.44);
 }
@@ -13864,7 +13873,7 @@ html.moving .eye-zap {
 .held[data-w="fireball"] i {
   width: calc(var(--s) * 0.5);
 }
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg) {
+.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst) {
   width: var(--w);
   margin: calc(var(--w) * -0.18) 0 0 calc(var(--w) * -0.5);
 }
@@ -13874,10 +13883,34 @@ html.moving .eye-zap {
 .bullet.k-lmg {
   filter: drop-shadow(0 0 3px #ff6a3d);
 }
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg) svg {
+.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst)
+  svg {
   display: block;
   width: 100%;
   height: auto;
+}
+/* the flamethrower's fire on my duck (game.js crimson): my screen blinks in and out of crimson; with the heavy effects
+   off, a steady faint red */
+html.crimson body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #dc143c22 30%, #a0001ccc 100%);
+  animation: crimson 0.36s steps(1, end) infinite;
+}
+html.crimson.crimson-still body::after {
+  animation: none;
+  opacity: 0.35;
+}
+@keyframes crimson {
+  0% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 .l4-line {
   position: absolute;

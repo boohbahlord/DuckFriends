@@ -410,8 +410,13 @@ import {
   fxSpurt,
   fxMuzzle,
   fxLasers,
+  fxFlame,
+  fxGroundFire,
+  fxBlood,
+  heavyOff,
   MUZZLE,
 } from "./fx.js";
+import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
 import {
   sway,
   kick,
@@ -1772,6 +1777,7 @@ function drawDucks(now = clockNow()) {
       d.classList.toggle("burnt", bn === 1);
       if (bn === 2) sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000));
       if (bn === 3) sfx.burn(BURN.P / 1000);
+      if (bn === 3 && id === R.me) crimson(BURN.P); // (my duck on fire: my screen blinks crimson while it shakes)
       if (!bn && was && was < 3) {
         d.classList.add("unburn");
         setTimeout(() => d.classList.remove("unburn"), 2600);
@@ -1895,7 +1901,7 @@ function drawDucks(now = clockNow()) {
   const shotNow = new Set(),
     fired = [];
   for (const sh of s.shots || []) {
-    if (!sh.k) continue;
+    if (!sh.k || now < sh.t) continue; // (a burst's round not out yet)
     shotNow.add(sh.n);
     if (!SHOT_SEEN.has(sh.n)) {
       SHOT_SEEN.set(sh.n, { k: sh.k, x: NaN, y: NaN, vx: sh.vx, vy: sh.vy });
@@ -1908,7 +1914,7 @@ function drawDucks(now = clockNow()) {
       if (o.x === o.x) fxImpact(o.x, o.y, o.k, o.vx, o.vy);
     }
   for (const sh of s.shots || []) {
-    if (!sh.k) continue;
+    if (!sh.k || now < sh.t) continue;
     const at = shotAt(sh, now - sh.t),
       a = hang
         ? world.place(at, sh.hz)
@@ -2159,6 +2165,7 @@ function drawDucks(now = clockNow()) {
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
   fxLasers(lz);
+  flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
   for (const [id, pos, at, duck] of brood) {
@@ -2865,6 +2872,68 @@ function against(hex) {
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   return `hsl(${Math.round(h * 60 + 180)} 85% ${lum > 0.45 ? 22 : 88}%)`;
 }
+/* the flamethrowers firing (flamer.js), each frame: a stream out of each one's nozzle the way its gun points, as far as
+   the room's state says it reaches, its pixels coming faster the longer it's held (an exponential growth); and every
+   patch of burning ground flickering until it burns out. s.flame (s.hang.l4fl in Dead Ducks Arcade): { id: [the hold's
+   start, its last puff, ux, uy, reach] }; s.gfire (s.hang.l4gf): [[x, y, until …]] */
+const FLAME_CARRY = new Map();
+let flamesAt = 0;
+function flames(s, now, hang, size, fxl, heldAll) {
+  const dt = Math.min(0.05, flamesAt ? (now - flamesAt) / 1000 : 0),
+    l4 = isL4dd(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+  flamesAt = now;
+  const spot = (x, y, z) =>
+    hang ? world.place({ x, y }, z) : place({ x, y }, 0, 1, true);
+  for (const [id, f] of Object.entries((l4 ? s.hang.l4fl : s.flame) || {})) {
+    const hd = heldAll.get(id),
+      e = hd && hd.parentNode === fxl && hd._end,
+      p = s.pos[id];
+    if (now - f[1] > 220 || !e || !p) {
+      FLAME_CARRY.delete(id);
+      continue;
+    }
+    const z = +p.z || 0,
+      a = spot(p.x, p.y, z),
+      b = l4
+        ? spot(p.x + (f[2] * f[4]) / HW, p.y + (f[3] * f[4]) / HH, z)
+        : spot(p.x + f[2] * f[4] * rx, p.y + f[3] * f[4] * ry, z),
+      far = Math.hypot(b.left - a.left, b.top - a.top),
+      want = flameRate(now - f[0]) * dt + (FLAME_CARRY.get(id) || 0),
+      n = Math.floor(want);
+    FLAME_CARRY.set(id, want - n);
+    fxFlame(e[0], e[1], e[2], far, n, FLAMER.CONE, band);
+  }
+  for (const g of (l4 ? s.hang.l4gf : s.gfire) || []) {
+    const left = g[2] - now;
+    if (left <= 0) continue;
+    const a = l4
+      ? spot(g[0] / HW, g[1] / HH, 0)
+      : spot(g[0], g[1], hang ? g[5] || 0 : 0);
+    fxGroundFire(a.left, a.top, size * 0.45, left < 1000 ? 1 : 3); // (dying down in its last second)
+  }
+}
+/* my screen blinks in and out of crimson while it shakes (the flamethrower's fire on my duck, the owner's, Nov 16): a
+   steady faint red instead with the heavy effects off (css/app.css html.crimson) */
+let crimsonT = 0;
+function crimson(ms) {
+  const root = document.documentElement;
+  root.classList.add("crimson");
+  root.classList.toggle("crimson-still", heavyOff());
+  shake(0.4);
+  clearTimeout(crimsonT);
+  crimsonT = setTimeout(() => root.classList.remove("crimson"), ms);
+}
+/* the owner's three new guns (Nov 16 16:25Z), heard: the double barrel the shotgun's blast, louder; the burst rifle the
+   AK-47's, once for each of its three rounds; the flamethrower its own (silent until its recording comes: sound.js) */
+const NEW_GUN_SFX = {
+  dbarrel: (o) => sfx.shotgun({ ...o, k: ((o && o.k) ?? 1) * 1.3 }),
+  burst: (o) => {
+    for (let i = 0; i < ARMS.burst.burst; i++)
+      setTimeout(() => sfx.ak(o), i * ARMS.burst.gap);
+  },
+  flamer: (o) => sfx.flamer(o),
+};
 /* charred, then the burns fade in a few seconds; with flames first for `fire` ms (the fire special, not a grenade) */
 function burn(dk, fire = 0) {
   if (!dk) return;
@@ -3040,6 +3109,7 @@ function playFx(f) {
         lmg: sfx.lmg,
         chaingun: sfx.chaingun,
         glauncher: sfx.glauncher,
+        ...NEW_GUN_SFX,
         zebra: sfx.cakeThrow,
         fireball: sfx.fireball,
         adrenaline: sfx.adrenaline,
@@ -3108,6 +3178,7 @@ function playFx(f) {
             axe: 1000,
             sword: 600,
             pan: 1000,
+            burst: 700,
           }[f.what] || (AUTO.includes(f.what) ? 500 : 1400)),
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
@@ -3129,6 +3200,7 @@ function playFx(f) {
           lmg: sfx.lmg,
           chaingun: sfx.chaingun,
           glauncher: sfx.glauncher,
+          ...NEW_GUN_SFX,
           shotgun: sfx.shotgun,
           knife: sfx.knife,
           hammer: sfx.hammer,
@@ -3327,6 +3399,52 @@ function playFx(f) {
         far * (0.25 + Math.random() * 0.5),
         Math.random() * 30,
       );
+  } else if (f.kind === "slug") {
+    /* the double barrel's slug got something: chunks and blood blown on through it the way the slug flew, and out of a
+       crit's head more blood and chunks than any other crit's (Dead Ducks Arcade: f.gore, [x, y, crit] in the world;
+       elsewhere the duck it killed, where it stood before it flew) */
+    const [dx, dy] = toScreen(f.ax, f.ay),
+      spots = f.gore
+        ? geo.hang
+          ? f.gore.map(([x, y, c]) => [
+              world.place({ x: x / HW, y: y / HH }, 0),
+              c,
+            ])
+          : []
+        : (f.who || [])
+            .map((id) => {
+              const p = s.pos[id],
+                o = p && p.kb ? { x: p.kb.x, y: p.kb.y } : p;
+              return o
+                ? [
+                    geo.hang ? world.place(o, +p.z || 0) : place(o, 0, 1),
+                    f.crit,
+                  ]
+                : null;
+            })
+            .filter(Boolean);
+    for (const [a, crit] of spots) {
+      fxBlood(a.left, a.top, size * 0.45, "slug", dx, dy);
+      fxBurst(a.left, a.top, size * 0.45, 8, 6); // (chunks blown out of it)
+      if (crit) {
+        bloodBurst(
+          a.left,
+          a.top - size * 0.78,
+          30,
+          2.6,
+          size * 0.3,
+          size * 0.6,
+        );
+        fxBurst(a.left, a.top - size * 0.28, size * 0.78, 10, 8);
+        neckSpray(a.left + size * 0.12, a.top - size * 0.5);
+        neckSpray(a.left + size * 0.12, a.top - size * 0.5);
+      } // (the head blown off: twice the spray)
+    }
+  } else if (f.kind === "scorch") {
+    // the flamethrower's fire on a duck: it flames a moment, then it's charred, and on my own screen a crimson blink
+    for (const id of f.who || [])
+      burn(S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`), 700);
+    if ((f.who || []).includes(R.me)) crimson(1100);
   } else if (f.kind === "l4crit") {
     /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
        it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
@@ -4942,9 +5060,10 @@ function cool() {
     } // (shared too)
     const mg = m ? mgjMag(id) : magSize(id);
     if (mg) {
-      const r = magOf(R.state, R.me, now, id).r;
+      const mm = magOf(R.state, R.me, now, id),
+        r = mm.r;
       return r > now
-        ? [r, mg[1], now]
+        ? [r, mm.d || mg[1], now] // (the double barrel's: a second for each shell it loads)
         : AUTO.includes(id)
           ? null
           : (() => {
@@ -4970,11 +5089,13 @@ const dots = (id) =>
       : id === "jaime"
         ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
         : ""
-    : magSize(id)
-      ? magSize(id)[0] > 8
-        ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
-        : ammoHTML(ammo(id), magSize(id)[0])
-      : "";
+    : id === "flamer"
+      ? `<span class="ammo ammo-n" aria-label="Tank">${Math.ceil((ammo(id) / magSize(id)[0]) * 100)}%</span>`
+      : magSize(id)
+        ? magSize(id)[0] > 8
+          ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
+          : ammoHTML(ammo(id), magSize(id)[0])
+        : "";
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {

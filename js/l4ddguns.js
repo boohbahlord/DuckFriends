@@ -121,6 +121,25 @@ ${box(13.2, 3.8, 18, 6.4, 1.8, "#f4f8ff", 1.1)}<rect x="17.6" y="5" width="13" h
 <path d="M25.4 3.8V5.4M28 3.8V5.4M30 3.8V5" stroke="${INK}" stroke-width=".6"/>${shine("M15 4.9H30", 0.6, 0.7)}
 ${box(31, 5.4, 3, 3.2, 0.6, "#c9a24a", 0.9)}<path d="M34 7H42.6" stroke="${INK}" stroke-width="1.8" stroke-linecap="round"/><path d="M34 7H42.6" stroke="${STEEL}" stroke-width=".8" stroke-linecap="round"/><circle cx="43.2" cy="8.4" r=".9" fill="#ff3d6e"/></svg>`;
 
+/* the owner's three new guns (Nov 16 16:25Z), placeholders until Noah draws them (the PR ships with his art). The
+   double barrel: a wooden stock and forend, the dark action, two steel barrels one over the other */
+const DBARREL = `<svg viewBox="0 0 70 20">${part("M2.4 6.6L18 8.4V13.2L5.4 16.6Q1.4 17.6 1.4 14.2V8Q1.4 6.5 2.4 6.6Z", WOOD, 1.15)}<path d="M1.6 8.2V14.6" stroke="#2b1a10" stroke-width="2.2"/>${shine("M4.4 8.3L16.6 9.6", 0.3)}
+${box(17.4, 6.4, 9, 7.4, 1.6, M1, 1.15)}<path d="M21 13.6Q20.8 16.8 23.4 16.8H24.6" fill="none" stroke="${INK}" stroke-width="1.1"/>
+${box(26, 5.2, 42, 3.4, 1.2, STEEL, 1)}${box(26, 8.6, 42, 3.4, 1.2, STEEL_D, 1)}${shine("M28 6.1H66", 0.45, 0.6)}
+${box(29, 11.4, 14, 3.6, 1.4, WOOD, 1)}<path d="M31 13.2H41" stroke="${GRAIN}" stroke-width=".6" opacity=".7"/><circle cx="66.6" cy="4.6" r=".9" fill="${BEAD}"/></svg>`;
+/* the flamethrower: a red fuel tank slung under a black wand, the grip and its trigger, the nozzle with a little blue
+   pilot flame at its end */
+const FLAMER = `<svg viewBox="0 0 72 30">${box(10, 15, 30, 10, 5, "#c43a2e", 1.2)}${shine("M14 17.2H36", 0.35, 0.8)}<path d="M18 15V25M32 15V25" stroke="${INK}" stroke-width=".8" opacity=".5"/>
+${box(4, 8.6, 58, 5.4, 2, POLY, 1.15)}${shine("M6 9.8H58", 0.25)}${part("M12 13.6H17L15.6 21.4Q15.3 22.4 14.2 22.4H12.4Q11.2 22.4 11.4 21.2Z", POLY, 1.05)}
+${part("M60 7.4H66L68 9.4V13.2L66 15.2H60Z", M2, 1.05)}<path d="M40 14V16.6Q40 18 38.6 18" fill="none" stroke="${INK}" stroke-width="1.2"/>
+<path d="M68.4 9.6Q71.8 11.3 68.4 13" fill="#4ab0ff" stroke="#1a5a9a" stroke-width=".6"/></svg>`;
+/* the burst rifle, an AUG: a bullpup in olive green, the magazine behind the grip, a scope's hump over it, a short
+   barrel past the front grip */
+const BURST = `<svg viewBox="0 0 66 26">${part("M2.4 9L30 7.4H44L46 15.4H6Q2 15.4 1.6 12.4Z", OLIVE, 1.15)}${shine("M5 9.8L42 8.6", 0.3)}
+${part("M10.6 15.2H16.4L17.8 23Q17.9 24.4 16.4 24.4H12.6Q11.2 24.4 11.2 23Z", M0, 1.05)}${part("M29 15.2H34.4L33 22.4Q32.7 23.6 31.4 23.6H29.4Q28 23.6 28.2 22.2Z", OLIVE_D, 1.05)}
+${part("M24 3.4H40Q41.4 3.4 41.4 4.8V7.6H22.6V4.8Q22.6 3.4 24 3.4Z", OLIVE_D, 1)}<ellipse cx="40.6" cy="5.5" rx=".7" ry="1.4" fill="#7fd0ff"/>
+${box(44, 9, 18, 2.8, 1, M2, 1)}${part("M40 15.4H44.6L43.6 21.6Q43.3 22.8 42 22.8H41Q39.8 22.8 40 21.6Z", OLIVE_D, 1)}${box(61.2, 8.4, 3.6, 4, 0.8, M1, 0.9)}</svg>`;
+
 /* Safe Keeping: a halo, a gold ring seen a little from above, glowing a heavenly light blue (the owner's, Nov 16) */
 const HALO = `<svg viewBox="0 0 30 30"><ellipse cx="15" cy="15" rx="12.5" ry="6.4" fill="none" stroke="#bfe9ff" stroke-width="5.4" opacity=".45"/>
 <ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="${INK}" stroke-width="4.4"/><ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="#ffd23f" stroke-width="2.6"/>
@@ -150,6 +169,9 @@ export const GUNS = {
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8), w: 1.2 },
+  dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.1 },
+  flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.15 },
+  burst: { held: BURST, icon: iconOf(BURST, 0.78), w: 0.95 },
   safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,
@@ -179,6 +201,14 @@ export const ROUNDS_ART = {
   revolver: {
     w: 30,
     svg: `<svg viewBox="0 0 26 12"><path d="M2 6h13" stroke="#ffd84a" stroke-width="2.4" opacity=".6"/><path d="M13 2.3h6.4a3.7 3.7 0 0 1 0 7.4H13Z" fill="#b87333" stroke="#4a2a10" stroke-width="1"/><path d="M15 3.4h3.6" stroke="#fff" stroke-width=".8" opacity=".45"/></svg>`,
+  },
+  slug: {
+    w: 30,
+    svg: `<svg viewBox="0 0 26 14"><path d="M1 7h14" stroke="#ffd84a" stroke-width="3" opacity=".6"/><path d="M12 2.4h7.6a4.6 4.6 0 0 1 0 9.2H12Z" fill="#8d929e" stroke="#33384a" stroke-width="1"/><path d="M14 4h4.6" stroke="#fff" stroke-width=".9" opacity=".5"/></svg>`,
+  },
+  burst: {
+    w: 28,
+    svg: `<svg viewBox="0 0 26 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M12 2.8h7q5 .4 6.4 2.2q-1.4 1.8-6.4 2.2h-7Z" fill="#d9a24a" stroke="#5a3510" stroke-width="1"/></svg>`,
   },
   lmg: {
     w: 32,

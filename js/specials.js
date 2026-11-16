@@ -445,7 +445,34 @@ export const SPECIALS = [
     get icon() {
       return GUNS.chaingun.icon;
     },
-    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 60 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 300 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "dbarrel",
+    name: "Double barrel",
+    kind: "item",
+    get icon() {
+      return GUNS.dbarrel.icon;
+    },
+    tip: "A slug toward your mouse that takes all the HP of every duck in its way and throws them back. Two shells, then a second to load each (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "flamer",
+    name: "Flamethrower",
+    kind: "item",
+    get icon() {
+      return GUNS.flamer.icon;
+    },
+    tip: "Fire toward your mouse as long as the button is down, reaching farther the longer you hold it. Every duck in it burns (1 HP a second), and the ground it hits burns for 5 seconds. Its tank lasts 50 seconds, then it fills again. Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "burst",
+    name: "Burst rifle",
+    kind: "item",
+    get icon() {
+      return GUNS.burst.icon;
+    },
+    tip: "Three bullets toward your mouse with each click, 2 HP a bullet. 21 in its clip, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
   },
   {
     id: "glauncher",

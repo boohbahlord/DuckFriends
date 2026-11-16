@@ -85,6 +85,8 @@ export function setName(raw) {
   return true;
 }
 
+/* the guns whose round has its own name (the double barrel shoots slugs) */
+const ROUND_OF = { dbarrel: "slug" };
 /* Jack in a Box and Dat Boi (styles.js lists the pages their styles take): on a duck page one doesn't take, its tiles
    show the duck he'd go back to, and picking one turns him back */
 const DUCK_PAGES = ["hat", "face", "eyes", "beak", "outfit", "body", "skin"];
@@ -472,13 +474,19 @@ export function openCustomize(page = lastPage) {
                     `<div class="spe spe-shot spe-lgren" style="left:${sx}px;top:${sy}px;--s:${w.width.toFixed(0)}px;--dx:${far}px">${GRENADE(colorsOf(profile.duck, "grenade"), false)}</div>`,
                   ),
                 );
-              else
-                for (let i = 0; i < (AUTO.includes(id) ? 3 : 1); i++)
+              else if (ROUNDS_ART[ROUND_OF[id] || id])
+                for (
+                  let i = 0;
+                  i < (AUTO.includes(id) || id === "burst" ? 3 : 1);
+                  i++
+                ) {
+                  const r = ROUNDS_ART[ROUND_OF[id] || id];
                   els.push(
                     el(
-                      `<div class="spe spe-shot spe-round" style="left:${sx}px;top:${sy}px;--dx:${far}px;--w:${ROUNDS_ART[id].w}px;animation-delay:${0.2 + i * 0.12}s">${ROUNDS_ART[id].svg}</div>`,
+                      `<div class="spe spe-shot spe-round" style="left:${sx}px;top:${sy}px;--dx:${far}px;--w:${r.w}px;animation-delay:${0.2 + i * (id === "burst" ? 0.07 : 0.12)}s">${r.svg}</div>`,
                     ),
                   );
+                } // (the flamethrower has none: its stream is in the game only)
             }
             pic.append(...els);
             setTimeout(() => els.forEach((e) => e.remove()), 2400);
@@ -495,6 +503,9 @@ export function openCustomize(page = lastPage) {
               lmg: sfx.lmg,
               chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
+              dbarrel: sfx.shotgun,
+              burst: () =>
+                [0, 70, 140].forEach((ms) => setTimeout(() => sfx.ak(), ms)),
               dagger: sfx.throw,
               knife: sfx.knife,
               hammer: sfx.hammer,
