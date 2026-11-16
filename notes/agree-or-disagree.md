@@ -5018,3 +5018,17 @@ are all good to go we can put them in the game"
   7 dB down. In the game: js/music.js plays assets/music/ (64 kbps; lo/ 32 kbps on Data saving or Poor connection); the
   menus play the happier songs; rooms share one song list (s.music); What the duck? is in the shuffle only when the map
   is Nous Within Kenoma or Shelter Sky & Null; no music in Quacky Zombies and Mad God Justin.
+
+- Version 50: Miles Jr.'s #346 (the 11 songs back, owner OK 22:45Z in Miles Jr.'s thread).
+
+## Request (2026-11-16 22:53Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVcsVSypdfT3gufhdSibp5N): second map floor plan
+> do the gas station floor plan again, but make a two lane road with cars blocking the road that are not moving and the other side of the road is the chapel but flipped upside down.
+>
+> the chapel can have a wide entrance for sure to make it easier for ducks to escape AND the pew are randomly missing and some broken in half to allow traffic or flow between them.
+>
+> redo the floor plan now and add a place for tree trunks on the outskirt of the map and on fallen tree over the right side of the road
+>
+> remember this is just the floor plan
+
+- Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
+  scratchpad, plan2.py). Nothing built.

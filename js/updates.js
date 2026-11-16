@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v50",
+    version: 50,
+    date: "Nov 16, 2026",
+    title: "Music is back",
+    news: [
+      "Music is back: our own 11 songs, now played on real instruments.",
+      "What the duck? now plays on the scarier maps (Nous Within Kenoma, Shelter Sky & Null).",
+      "Data saving and Poor connection play lighter copies of the songs.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v49",
     version: 49,
     date: "Nov 16, 2026",
