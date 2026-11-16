@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v30",
+    version: 30,
+    date: "Nov 16, 2026",
+    title: "Safe Keeping, and Justin in Dead Ducks Arcade",
+    news: [
+      "For Dead Ducks Arcade: holding a medkit while you revive someone brings them up at once, with full HP and the max HP they had bought. The medkit is used up.",
+      'For Dead Ducks Arcade: new item, Safe Keeping, a halo for the purple slot. The Butler sells it for 2,500 and the fireplace can roll it. If you go down with it, you lose nothing you bought. You get up by yourself (press E when others are still standing), glowing light blue. Then you take no damage for 6 seconds while a counter runs down to "Vitals Stabilized".',
+      "For Dead Ducks Arcade: with the Justin switch on (Game Settings), Justin plays on your side from the start as one more duck, with his own HP like everyone.",
+      "For Dead Ducks Arcade: other players' names are small over their heads and show only when a flashlight reaches them. On phones they always show.",
+    ],
+  },
+  {
     id: "v29",
     version: 29,
     date: "Nov 16, 2026",
