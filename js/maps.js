@@ -1196,6 +1196,7 @@ export function mountPreview(box, id) {
   const f = mapForm(id),
     layer = document.createElement("div");
   layer.className = `map-layer map-peek map-${f.map}`;
+  layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
   box.append(layer);
   const s = {
       options: { map: f.map },
@@ -1220,6 +1221,7 @@ export function mountMap(layer, s) {
   const map = s.options.map || "board",
     cur = { cols: null };
   layer.className = "map-layer map-" + map;
+  layer.dataset.nopx = ""; // (the pixel look: the grid filter does maps, pxdom.js leaves them)
   document.documentElement.classList.add("map-on", "map-is-" + map); // (map-is-ec: the Ether & Kenoma look; map-is-vellum: the book's)
   const scene = sceneOf(map, layer, s, cur);
   // Carnival Night: the tiles' marquee bulbs follow the tiles' size
