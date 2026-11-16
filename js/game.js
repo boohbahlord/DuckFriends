@@ -186,6 +186,7 @@ import {
   kitOf,
   inHand,
   BURN,
+  weaponName,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -304,12 +305,13 @@ import {
   GOOD_ID,
   PICK_FADE,
   XB,
-  PICK_USES,
   PICK_WEAPONS,
   MGJ_DOWN,
   MGJ_SCALE,
   MGJ_HAMMER,
-  usesOf,
+  ammoOf,
+  mgjMag,
+  MGJ_GUNS,
   downNear,
   REVIVE,
   mgjPHp,
@@ -2620,7 +2622,8 @@ function placeRevive(board, s, now) {
 /* holding a revive (E, or the Revive button) or letting go */
 function mgjRevive(on) {
   mgjRv = on;
-  if (R) R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1 });
+  if (R)
+    R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1, w: mgjHold }); // (w: the medkit out in my hand gets it up at once)
 }
 /* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
    until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
@@ -4113,12 +4116,9 @@ async function announce(phase) {
   );
 }
 
-const PICK_NAMES = {
-  hammer: "Hammer",
-  dagger: "Throwing dagger",
-  handgun: "Handgun",
-  shotgun: "Shotgun",
-};
+const PICK_NAMES = Object.fromEntries(
+  PICK_WEAPONS.map((k) => [k, weaponName(k)]),
+); // (as Quacky Zombies names them)
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated (and a LOSER), or time's up */
 async function announceMgj(s, phase) {
   const job = ++sayJob;
@@ -4793,7 +4793,7 @@ function cool() {
         ? [Math.max(end, now + 1), CAKE_EVERY, now]
         : null;
     } // (shared too)
-    const mg = magSize(id);
+    const mg = m ? mgjMag(id) : magSize(id);
     if (mg) {
       const r = magOf(R.state, R.me, now, id).r;
       return r > now
@@ -4811,7 +4811,6 @@ function cool() {
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
 function ammo(id = "handgun") {
-  if (R && isMgj(R.state)) return usesOf(R.state, R.me);
   const n = (magSize(id) || [MAG])[0];
   return R ? n - magOf(R.state, R.me, clockNow(), id).n : n;
 }
@@ -4819,8 +4818,8 @@ function ammo(id = "handgun") {
    of the weapon picked up */
 const dots = (id) =>
   R && isMgj(R.state)
-    ? PICK_USES[id] && id === myPick()
-      ? ammoHTML(usesOf(R.state, R.me), PICK_USES[id])
+    ? MGJ_GUNS.includes(id) && id === myPick()
+      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me)}</span>`
       : id === "jaime"
         ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
         : ""
@@ -4835,7 +4834,13 @@ function reload() {
     R.send({ t: "reload", w: heldNow() });
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
-  if (!R || !onBoardPhase() || isMgj(R.state)) return false;
+  if (R && isMgj(R.state)) {
+    if (!onBoardPhase() || !held || held !== myPick() || !mgjMag(held))
+      return false;
+    R.send({ t: "reload", w: held });
+    return true;
+  } // (Mad God Justin: the gun picked up, out in my hand)
+  if (!R || !onBoardPhase()) return false;
   const k = keysOf(playDuck()),
     w =
       held && magSize(held) && hasKey(playDuck(), held)
@@ -6495,7 +6500,7 @@ function heldClick(e) {
     aimHere(e)
   );
 }
-/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies and Mad God Justin): the left button
+/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
    down fires, and again as soon as it can while the button stays down */
 let autoFire = 0,
   autoDid = false;
@@ -6503,7 +6508,6 @@ function autoPress(e) {
   if (
     !R ||
     isL4dd(R.state) ||
-    isMgj(R.state) ||
     e.pointerType !== "mouse" ||
     !AUTO.includes(held) ||
     !heldClick(e)

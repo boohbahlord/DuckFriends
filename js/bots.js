@@ -56,7 +56,7 @@ import {
   DN_GRACE,
   DUNCE_TAKES,
 } from "./duncerules.js";
-import { isMgj, mgjGone } from "./mgjrules.js";
+import { isMgj, mgjGone, PICK_WEAPONS } from "./mgjrules.js";
 import { isL4dd } from "./l4ddrules.js";
 import { l4Bot } from "./l4ddbots.js";
 import {
@@ -408,13 +408,15 @@ function mgjBot(s, id, now, out) {
   const m = s.mgj || {},
     mine = (m.held || {})[id],
     pk = m.pick;
-  if (mine && (mine !== "hammer" || d < 2.4)) {
+  if (mine === "medkit" && (m.lost || {})[id] > 0)
+    out.push({ t: "use", id, what: mine, face: 1 }); // (hurt: the medkit)
+  else if (mine && mine !== "medkit") {
     out.push({ t: "use", id, what: mine, face: ax < 0 ? -1 : 1, ax, ay });
     return;
-  } // (a picked-up weapon: fire it at him; the hammer up close)
+  } // (a gun picked up: fire it at him)
   if (
     pk &&
-    ["hammer", "dagger", "handgun", "shotgun"].includes(pk.k) &&
+    PICK_WEAPONS.includes(pk.k) &&
     Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) < d
   ) {
     const q = Math.hypot((pk.x - p.x) / 0.03, (pk.y - p.y) / 0.08) || 1,
