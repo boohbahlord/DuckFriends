@@ -7,6 +7,13 @@
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
    my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
+import { angelic } from "./powerart.js";
+import { angelOf } from "./l4ddangel.js";
+/* an Angelic weapon's icon: Noah's look on a drawing; an emoji (the pistol's) gets the same glow and halo from css */
+const holy = (icon) => {
+  const a = angelic(icon);
+  return a !== icon ? a : `<span class="l4-holy">${icon}</span>`;
+};
 import {
   ARMS,
   slotsOf,
@@ -75,7 +82,14 @@ export function mountL4Bar(S, api) {
       const n = w ? count(w, m) : "",
         empty = !w || spent(w, m),
         name = w === "fl" ? "Flashlight" : w ? weaponName(w) : "Special",
-        icon = w === "fl" ? ICONS.flashlight(!off) : w ? weaponIcon(w) : "";
+        icon =
+          w === "fl"
+            ? ICONS.flashlight(!off)
+            : w && angelOf(s, me, w)
+              ? holy(weaponIcon(w)) // (Angelic: l4ddangel.js)
+              : w
+                ? weaponIcon(w)
+                : "";
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
       return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
@@ -137,7 +151,12 @@ export function l4Slider(api) {
     return {
       id,
       name: id === "fl" ? "Flashlight" : weaponName(id),
-      icon: id === "fl" ? ICONS.flashlight(!lightOff(k)) : weaponIcon(id),
+      icon:
+        id === "fl"
+          ? ICONS.flashlight(!lightOff(k))
+          : angelOf(k.s, k.me, id)
+            ? holy(weaponIcon(id))
+            : weaponIcon(id),
       off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
       keep: i === 3 || i === 5,
       cls: `k-${kindAt(i)}`,

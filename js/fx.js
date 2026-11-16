@@ -17,7 +17,8 @@ const MAX = 2000, // (particles at most: the oldest give way)
   SPLAT = 3,
   SMOKE = 4,
   FLASH = 5,
-  FIRE = 6; // (the flamethrower's: a flame pixel flying out, cooling from white to red as it goes)
+  FIRE = 6, // (the flamethrower's: a flame pixel flying out, cooling from white to red as it goes)
+  SPARK = 7; // (the Angel machine's: a spark thrown up, falling, gone where it lands)
 const X = new Float32Array(MAX),
   Y = new Float32Array(MAX),
   Z = new Float32Array(MAX),
@@ -629,6 +630,38 @@ export function fxGroundFire(x, y, r, n = 2) {
   }
 }
 
+/* the Angel machine at work (the owner's, Nov 16): sparks thrown up out of its hatch at (x, y) on the screen, h px over
+   the floor, falling back; now and then a puff of light smoke */
+export function fxSparks(x, y, h, n = 2) {
+  const u = unit;
+  for (let k = 0; k < n; k++)
+    add(
+      SPARK,
+      x + rnd(-0.15, 0.15) * u,
+      y,
+      h,
+      rnd(-1.2, 1.2) * u,
+      rnd(-0.3, 0.3) * u,
+      u * rnd(1.4, 2.6),
+      rnd(500, 900),
+      Math.random() < 0.5 ? 8 : 9,
+      1,
+    );
+  if (!noHeavy && Math.random() < 0.3)
+    add(
+      SMOKE,
+      x + rnd(-0.2, 0.2) * u,
+      y,
+      h,
+      rnd(-0.15, 0.15) * u,
+      0,
+      u * rnd(0.4, 0.8),
+      rnd(900, 1500),
+      7,
+      3,
+    );
+}
+
 /* ---------- each frame: move and draw ---------- */
 const G = 7.5; // (gravity, in ducks a second, each second)
 export function fxFrame(now = performance.now()) {
@@ -667,6 +700,17 @@ export function fxFrame(now = performance.now()) {
         if (COL[i] === 4) COL[i] = 1;
         if (FL[i] === NONE && Math.random() < 0.6) SIZE[i] = SIZE[i] + 1; // (blood spreads a little where it lands)
       }
+    } else if (k === SPARK) {
+      VZ[i] -= G * unit * dt;
+      X[i] += VX[i] * dt;
+      Y[i] += VY[i] * dt;
+      Z[i] += VZ[i] * dt;
+      if (Z[i] <= 0) {
+        LIFE[i] = 0;
+        alive--;
+        continue;
+      }
+      if (age > LIFE[i] * 0.5) COL[i] = 10; // (cooling: orange)
     } else if (k === FIRE) {
       const fdt = Math.min(dt, age / 1000); // (one born since the last frame moves only for its own age)
       X[i] += VX[i] * fdt;

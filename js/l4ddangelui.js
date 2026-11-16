@@ -1,0 +1,140 @@
+/* ---------- Dead Ducks Arcade's Angel machine on every screen (the rules: l4ddangel.js) ----------
+   The machine on the stage (Noah's drawing, powerart.js), glowing while it works, sparks and smoke out of its hatch
+   (fx.js); then the orb over it, with its duck's name, till that duck takes it. E by it: what it does now. Its sounds:
+   working (once, 5 s) and the orb coming out. l4dd.js calls these. */
+import { STAGE, sortY } from "./hangout/layout.js";
+import { svgDataURL } from "./hangout/art.js";
+import { play } from "./sound.js";
+import { fxSparks } from "./fx.js";
+import { nameHTML } from "./name.js";
+import { now as clockNow } from "./clock.js";
+import { angelMachineSVG, angelOrbHTML } from "./powerart.js"; // (Noah's drawings)
+import { ANGEL, angelNow, angelDone, angelOf, canAngel } from "./l4ddangel.js";
+import { powerOn } from "./l4ddpower.js";
+import { WEAPONS, weaponName, ptsOf, slotsOf } from "./l4ddrules.js";
+
+let mc = null, // { el, img, orb, who, sig, tr, k }
+  heard = { t: 0, out: 0 },
+  sparkAt = 0;
+
+export function angelMount(ctx, layer) {
+  mc = { el: document.createElement("div"), sig: "", tr: "", k: 0, orbSig: "" };
+  mc.el.className = "l4-am";
+  mc.el.innerHTML =
+    '<img alt="" draggable="false"><div class="l4-am-orb" hidden><div class="l4-am-ball"></div><span class="gduck-name l4-am-who"></span></div>';
+  mc.img = mc.el.querySelector("img");
+  mc.orb = mc.el.querySelector(".l4-am-orb");
+  layer.append(mc.el);
+  heard = { t: 0, out: 0 };
+}
+export function angelUnmount() {
+  mc?.el.remove();
+  mc = null;
+}
+/* a new state: the machine's sound as a weapon goes in (by anyone) */
+export function angelSee(s) {
+  const m = angelNow(s);
+  if (m && m.t !== heard.t) {
+    if (heard.t || clockNow() - m.t < 1000)
+      play("angelWork", { x: ANGEL.X, y: ANGEL.Y });
+    heard.t = m.t;
+  }
+}
+/* every frame: the machine, its glow, its sparks, the orb */
+export function angelDraw(ctx) {
+  if (!mc) return;
+  const Wd = ctx.world,
+    sc = Wd.sc,
+    s = ctx.state(),
+    m = angelNow(s),
+    now = clockNow(),
+    working = !!m && !angelDone(m, now),
+    p = Wd.toScreen(ANGEL.X, ANGEL.Y, STAGE.h),
+    hide =
+      !Wd.inside ||
+      !Wd.seen(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
+  if (mc.el.hidden !== hide) mc.el.hidden = hide;
+  /* the orb's sound, once, as it comes out (heard even off the screen) */
+  if (m && angelDone(m, now) && heard.out !== m.t) {
+    if (now - (m.t + ANGEL.WORK) < 2000)
+      play("angelOrb", { x: ANGEL.X, y: ANGEL.Y });
+    heard.out = m.t;
+  }
+  if (hide) return;
+  const sig = String(working);
+  if (sig !== mc.sig) {
+    mc.sig = sig;
+    mc.img.src = svgDataURL(angelMachineSVG({ working }));
+    mc.el.classList.toggle("working", working);
+  }
+  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  if (mc.tr !== tr) {
+    mc.tr = tr;
+    mc.el.style.transform = tr;
+    mc.el.style.zIndex = Math.round(sortY(ANGEL.X, ANGEL.Y, STAGE.h)) + 10;
+  }
+  if (mc.k !== sc) {
+    mc.k = sc;
+    mc.el.style.setProperty("--k", sc.toFixed(3));
+  }
+  /* while it works: sparks out of its hatch, a few a frame */
+  const t = performance.now();
+  if (working && t - sparkAt > 60) {
+    sparkAt = t;
+    fxSparks(p.left, p.top, 70 * sc, 2);
+  }
+  /* done: the orb over it, its duck's name under it */
+  const done = !!m && !working,
+    osig = done ? m.w + m.by : "";
+  if (osig !== mc.orbSig) {
+    mc.orbSig = osig;
+    mc.orb.hidden = !done;
+    if (done) {
+      const P = s.players[m.by] || {};
+      mc.orb.querySelector(".l4-am-ball").innerHTML = angelOrbHTML(m.w);
+      mc.orb.querySelector(".l4-am-who").innerHTML = nameHTML(
+        P.name || "",
+        P.nameStyle || {},
+      );
+    }
+  }
+}
+/* E by the machine */
+export function angelTarget(pos, s, near) {
+  const d = Math.hypot(ANGEL.E[0] - pos.x, ANGEL.E[1] - pos.y);
+  return d < near && pos.inside !== false ? { kind: "angel", d } : null;
+}
+export function angelLabel(s, me, held) {
+  const m = angelNow(s),
+    now = clockNow();
+  if (m) {
+    if (!angelDone(m, now))
+      return `Working… ${Math.max(1, Math.ceil((m.t + ANGEL.WORK - now) / 1000))}`;
+    return m.by === me
+      ? `Take the Angelic ${weaponName(m.w)}`
+      : `${(s.players[m.by] || {}).name || "Someone"}'s Angelic ${weaponName(m.w)}`;
+  }
+  if (!powerOn(s)) return "Angel machine · needs power";
+  if (!held || !slotsOf(s, me).includes(held) || !canAngel(held, WEAPONS))
+    return "Angel machine · guns and melee weapons";
+  if (angelOf(s, me, held)) return `The ${weaponName(held)} is Angelic`;
+  return `Make the ${weaponName(held)} Angelic · ${ANGEL.PRICE.toLocaleString("en-US")}`;
+}
+/* E: the weapon in hand goes in, or my orb comes out; a buzz and big words when it can't (say) */
+export function angelTap(ctx, held, say) {
+  const s = ctx.state(),
+    me = ctx.me,
+    m = angelNow(s),
+    now = clockNow();
+  if (m) {
+    if (m.by !== me) return say("That orb isn't yours");
+    if (!angelDone(m, now)) return;
+    return ctx.send({ t: "hang", k: "l4", do: "angel", hand: held });
+  }
+  if (!powerOn(s)) return say("It needs power");
+  if (!held || !canAngel(held, WEAPONS))
+    return say("Only guns and melee weapons");
+  if (angelOf(s, me, held)) return say("It's Angelic already");
+  if (ptsOf(s, me) < ANGEL.PRICE) return say("Not enough points");
+  ctx.send({ t: "hang", k: "l4", do: "angel", hand: held });
+}

@@ -15579,6 +15579,78 @@ html.moving .eye-tears .tdrop.t2 {
   top: calc(-116px * var(--k, 1));
   font-size: calc(11px * var(--k, 1));
 }
+/* the Angel machine on the stage (l4ddangelui.js: 130 x 150, its foot 8 up from the bottom, in the middle), and the
+   orb over it once it's done, with its duck's name */
+.l4-am {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.l4-am img {
+  position: absolute;
+  left: calc(-65px * var(--k, 1));
+  top: calc(-142px * var(--k, 1));
+  width: calc(130px * var(--k, 1));
+  height: calc(150px * var(--k, 1));
+}
+.l4-am.working img {
+  filter: drop-shadow(0 0 calc(10px * var(--k, 1)) #fff3c4aa);
+}
+.l4-am-orb {
+  position: absolute;
+  z-index: 1;
+  left: calc(-27px * var(--k, 1));
+  top: calc(-118px * var(--k, 1)); /* (out in front of its hatch) */
+  width: calc(54px * var(--k, 1));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.l4-am-ball {
+  width: calc(54px * var(--k, 1));
+  height: calc(54px * var(--k, 1));
+  animation: l4-bob 1.6s ease-in-out infinite;
+}
+.l4-am-ball .l4orb {
+  width: 100%;
+  height: 100%;
+  animation: l4-glow 0.8s ease-in-out infinite alternate;
+}
+.l4-am-ball .l4orb i {
+  font-size: calc(28px * var(--k, 1));
+}
+.l4-am-who {
+  position: static;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+/* an Angelic weapon's emoji icon in the weapons bar (l4ddbar.js): a white-gold glow and a small gold halo over it */
+.l4-holy {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 2px #ffd86a) drop-shadow(0 0 5px #fff3c4);
+}
+.l4-holy::before {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: -6%;
+  width: 40%;
+  height: 14%;
+  border-radius: 50%;
+  border: 2px solid #ffd86a;
+  box-shadow: 0 0 0 1px #c99a2e;
+}
+/* the Angelic pistol: two in the hand, half a duck wide (one is 0.34) */
+.held.dual i {
+  width: calc(var(--s) * 0.5);
+}
 .l4-pk {
   position: absolute;
   left: 0;

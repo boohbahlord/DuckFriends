@@ -177,6 +177,7 @@ import {
   ammoHTML,
   GRENADE,
   GRENADE_PIN,
+  dualPistolHTML,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import {
@@ -347,6 +348,8 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
+import { angelic } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
+import { angelOf } from "./l4ddangel.js";
 import { pwCodes, goreFree } from "./wounds.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { faceLayer } from "./faces.js";
@@ -2056,13 +2059,23 @@ function drawDucks(now = clockNow()) {
     const heldEls = fxl._held || (fxl._held = new Map());
     let h = heldEls.get(id);
     if (h && h.parentNode !== fxl) h = null;
-    const hk = w + (w === "hammer" && duck && duck.wrench ? "-w" : ""), // (the hammer, or the wrench in its place)
+    const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
+      hk =
+        w +
+        (w === "hammer" && duck && duck.wrench ? "-w" : "") +
+        (holy ? "-a" : ""), // (the hammer, or the wrench in its place)
       ds = size * bigOf(s, id), // (a bigger Justin holds it farther out)
       hs = ds * (w === "hammer" && isJustin(id) ? MGJ_HAMMER : 1); // (Justin's hammer is bigger)
     if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
+      const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
+        pic = dual
+          ? angelic(dualPistolHTML(duck))
+          : holy
+            ? angelic(heldHTML(w, duck))
+            : heldHTML(w, duck);
       h = el(
-        `<div class="held" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${heldHTML(w, duck)}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;

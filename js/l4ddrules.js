@@ -79,6 +79,7 @@ import {
   isPw,
   pwName,
 } from "./l4ddpower.js";
+import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
@@ -518,7 +519,10 @@ export function gunPrice(s, id, w) {
     full = fullAmmo(w);
   if (!kit || !kit.sl.includes(w)) return buyPrice(w);
   if (!full) return null;
-  return ammoCost(w, ammoLeft(full) - ammoLeft(kit.am[w]));
+  return ammoCost(
+    w,
+    Math.max(0, ammoLeft(fullFor(s, id, w)) - ammoLeft(kit.am[w])),
+  );
 }
 export const priceOf = (id, n) =>
   Math.round(
@@ -993,6 +997,9 @@ export const fullAmmo = (w) => {
   if (!a || a.all === undefined) return null;
   return a.mag ? [a.mag, a.all - a.mag] : [a.all, 0];
 };
+/* … and as full as duck id's own is: an Angelic weapon holds more (l4ddangel.js) */
+export const fullFor = (s, id, w) =>
+  angelOf(s, id, w) ? angelAmmo(ARMS[w]) : fullAmmo(w);
 function freshKit() {
   const am = {};
   for (const w of START) if (fullAmmo(w)) am[w] = fullAmmo(w);
@@ -1012,7 +1019,11 @@ export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
    headshot chance (each Accuracy: 5% more, on every attack) */
 export const l4Cool = (s, id, w) =>
-  ARMS[w] ? ARMS[w].cool * Math.pow(0.9, upOf(s, id).as || 0) : 400;
+  ARMS[w]
+    ? ARMS[w].cool *
+      Math.pow(0.9, upOf(s, id).as || 0) *
+      (angelOf(s, id, w) ? ANGEL.FAST : 1) // (Angelic: 20% faster, l4ddangel.js)
+    : 400;
 export const reloadOf = (s, id, w, c) =>
   (ARMS[w].shell
     ? ARMS[w].shell *
@@ -1020,7 +1031,9 @@ export const reloadOf = (s, id, w, c) =>
         1,
         Math.min(ARMS[w].mag - (c ? c[0] : 0), c ? c[1] : ARMS[w].mag),
       )
-    : ARMS[w].reload || 1500) * (upOf(s, id).rl ? 0.7 : 1); // (the double barrel: a second for each shell it loads)
+    : ARMS[w].reload || 1500) *
+  (upOf(s, id).rl ? 0.7 : 1) *
+  (angelOf(s, id, w) ? ANGEL.RELOAD : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster)
 const headOf = (s, id, w) =>
   kindOf(w) === "grenade"
     ? 0
@@ -1309,7 +1322,7 @@ function maxAmmo(s) {
     const m = { ...am[id], am: { ...am[id].am }, g: ARMS.grenade.most };
     for (const w of m.sl || [])
       if (fullAmmo(w) && w !== "medkit" && !ARMS[w].round)
-        m.am[w] = fullAmmo(w);
+        m.am[w] = fullFor(s, id, w);
     m.rl = 0;
     m.rw = "";
     am[id] = m;
@@ -1338,6 +1351,7 @@ function setUp(s, now) {
   s.hang.l4bag = [...BAGGED];
   s.hang.l4b = {};
   s.hang.l4f = {};
+  s.hang.l4am = null; // (the Angel machine, empty: l4ddangel.js)
   powerSetUp(s); // (the power is cut: the lamps are dark; the fires burn. Its box and its four parts: l4ddpower.js)
   s.hang.l4k = [];
   s.shots = [];
@@ -1394,6 +1408,7 @@ rule("l4", {
         s.hang[k] = o;
       }
     dropBox(s, id);
+    angelLeft(s, id);
     const p4 = s.hang.l4p || {};
     for (const [t, p] of Object.entries(p4))
       if (p.rv && p.rv.by === id)
@@ -1496,6 +1511,7 @@ function l4Act(s, a, now) {
     return buyGun(s, id, String(a.what || ""), "", true, now); // (B: anywhere, the gun in hand)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
+  if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
@@ -1726,8 +1742,10 @@ function give(s, id, w, hand0) {
   }
   if (k < 0 || kit.sl.includes(w)) return false;
   const old = kit.sl[k],
-    am = { ...kit.am };
+    am = { ...kit.am },
+    ang = { ...(kit.ang || {}) };
   delete am[old];
+  delete ang[old]; // (its Angelic power goes with it: l4ddangel.js)
   if (fullAmmo(w)) am[w] = fullAmmo(w);
   const sl = [...kit.sl];
   sl[k] = w;
@@ -1737,6 +1755,7 @@ function give(s, id, w, hand0) {
       ...kit,
       sl,
       am,
+      ang,
       ...(kit.rw === old ? { rl: 0, rw: "" } : {}),
     },
   };
@@ -1755,7 +1774,7 @@ function buyGun(s, id, w, hand, refillOnly, now) {
       ...s.hang.l4a,
       [id]: {
         ...kit,
-        am: { ...kit.am, [w]: fullAmmo(w) },
+        am: { ...kit.am, [w]: fullFor(s, id, w) },
         ...(kit.rw === w ? { rl: 0, rw: "" } : {}),
       },
     };
@@ -1814,6 +1833,11 @@ const PH = {
   addFx: (s, f) => addFx(s, f),
   playable: (x, y) => playable(x, y),
   dropSpot: (s) => dropSpot(s),
+  kitOf: (s, id) => kitOf(s, id),
+  give: (s, id, w, hand) => give(s, id, w, hand),
+  full: (w) => fullAmmo(w),
+  arm: (w) => ARMS[w],
+  weapons: WEAPONS,
   W,
   H,
 };
@@ -1867,7 +1891,8 @@ export function l4Use(s, a, now) {
     ax: +(dx / W).toFixed(5),
     ay: +(dy / H).toFixed(5),
   });
-  const many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistol: two of them, both fire)
+    many = A.burst ? Math.min(A.burst, c[0]) : dual ? Math.min(2, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
   if (kind === "grenade") m.g--;
   else if (c) {
     m.am[what] = [c[0] - many, c[1]];
@@ -1957,7 +1982,7 @@ export function l4Use(s, a, now) {
             what === "glauncher"
               ? { life: (A.far / A.speed) * 1000 }
               : i
-                ? { n: n * 10 + i, t: now + i * A.gap }
+                ? { n: n * 10 + i, t: now + i * (A.gap || 60) }
                 : {},
           ),
         ); // (a burst's rounds leave one after another: each waits until its time, t)
@@ -1972,6 +1997,7 @@ export function l4Use(s, a, now) {
 function strike(s, z, dmg, head, by, w = "") {
   if (z.st === 3) return false;
   if (w) wound(s, z, w, head);
+  if (w && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js)
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
@@ -2015,26 +2041,31 @@ function headshot(s, by, w, z, now) {
 function trace(s, id, px, py, dx, dy, hz, now) {
   const A = ARMS.chaingun,
     zs = zombies(s),
-    T = now - s.hang.l4.t0;
+    T = now - s.hang.l4.t0,
+    most = angelOf(s, id, "chaingun") ? ANGEL.CHAIN : 1, // (Angelic: through two zombies, l4ddangel.js)
+    hits = [];
   let x = px,
-    y = py,
-    hit = null;
+    y = py;
   for (let d = 0; d < A.far; d += 12) {
     const nx = x + dx * 12,
       ny = y + dy * 12;
     if (walled(nx, ny, hz)) break;
     x = nx;
     y = ny;
-    hit = zs.find(
-      (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
+    const hit = zs.find(
+      (z) =>
+        z.st !== 3 &&
+        !hits.includes(z) &&
+        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
     );
-    if (hit) break;
+    if (hit) hits.push(hit);
+    if (hits.length >= most) break;
   }
-  if (hit) {
+  for (const hit of hits) {
     strike(s, hit, A.dmg, false, id, "chaingun");
     die(hit, T);
-    store(s, zs, true);
   }
+  if (hits.length) store(s, zs, true);
   addFx(s, {
     kind: "l4line",
     by: id,
@@ -2255,7 +2286,11 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     was = fl[id],
     t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
     D = FLAME.DUCK,
-    far0 = flameReach(now - t0) * D;
+    ang = angelOf(s, id, "flamer"), // (Angelic: farther, sooner, and its ground burns longer: l4ddangel.js)
+    far0 =
+      flameReach((now - t0) * (ang ? ANGEL.FLAME_SOON : 1)) *
+      D *
+      (ang ? ANGEL.FLAME_FAR : 1);
   let far = 24;
   while (far < far0 && !walled(px + dx * (far + 12), py + dy * (far + 12), hz))
     far += 12; // (a wall cuts the stream short)
@@ -2280,7 +2315,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       [
         Math.round(px + dx * far),
         Math.round(py + dy * far),
-        now + FLAME.GROUND,
+        now + FLAME.GROUND + (ang ? ANGEL.FLAME_GROUND : 0),
         id,
       ],
     ];
@@ -2574,7 +2609,11 @@ export function l4Shots(s, now) {
       }
       if (!at && age >= sh.life) at = [x1, y1];
       if (at) {
-        hitAny = boom(s, sh, at[0], at[1], zs, T, now) || hitAny;
+        const ang = angelOf(s, sh.by, "glauncher");
+        hitAny =
+          boom(s, sh, at[0], at[1], zs, T, now, ang ? ANGEL.GL_RADIUS : 1) ||
+          hitAny;
+        if (ang) burnAt(s, sh.by, at[0], at[1], now); // (Angelic: a smaller blast, and the ground there on fire)
         continue;
       }
       sh.lx = x1 / W;
@@ -2636,7 +2675,14 @@ export function l4Shots(s, now) {
         if (stop) gone = true;
         continue;
       }
-      if (A.pierce) {
+      const pierce = !angelOf(s, sh.by, w)
+        ? A.pierce
+        : w === "bow"
+          ? ANGEL.BOW
+          : w === "sniper"
+            ? A.pierce + ANGEL.SNIPER
+            : A.pierce; // (Angelic: the bow through one zombie, the sniper through two more; l4ddangel.js)
+      if (pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i)) {
@@ -2644,9 +2690,9 @@ export function l4Shots(s, now) {
             if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w))
               die(z, T);
             hitAny = true;
-            if (sh.hit.length >= A.pierce) break;
+            if (sh.hit.length >= pierce) break;
           }
-        if ((sh.hit || []).length >= A.pierce) gone = true;
+        if ((sh.hit || []).length >= pierce) gone = true;
         continue;
       }
       const z = nearby(grid, zs, x, y).find(near);
@@ -2654,6 +2700,13 @@ export function l4Shots(s, now) {
         if (w === "fireball") {
           if (strike(s, z, 1, false, sh.by)) die(z, T);
           else light(s, z, sh.by, now); // (the first of its burn as it's lit)
+        } else if (w === "handgun" && angelOf(s, sh.by, w)) {
+          /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
+             isn't hurt by it: no sh.k) */
+          const head = headshot(s, sh.by, w, z, now);
+          strike(s, z, z.hp, head, sh.by, w);
+          die(z, T);
+          if (head) boom(s, { by: sh.by, hz: sh.hz }, z.x, z.y, zs, T, now);
         } else if (
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )
@@ -2697,6 +2750,25 @@ function fling(z, sh, hz) {
   }
 }
 
+/* the Angelic grenade launcher's fire: a few burning patches round where it went off, as the flamethrower's ground */
+function burnAt(s, by, x, y, now) {
+  const r = ARMS.grenade.r * ANGEL.GL_RADIUS,
+    out = [];
+  for (let k = 0; k < ANGEL.GL_FIRE; k++) {
+    const a = (k / ANGEL.GL_FIRE) * Math.PI * 2,
+      d = k ? r * 0.6 : 0;
+    const px = x + Math.cos(a) * d,
+      py = y + Math.sin(a) * d * 0.8;
+    if (playable(px, py))
+      out.push([Math.round(px), Math.round(py), now + FLAME.GROUND, by]);
+  }
+  s.hang.l4gf = [
+    ...(s.hang.l4gf || [])
+      .filter((g) => g[2] > now)
+      .slice(out.length - FLAME.MOST),
+    ...out,
+  ];
+}
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in
    it, loses half its HP; true when it got any zombie */
 function boom(s, sh, bx, by, zs, T, now, wide = 1) {
