@@ -14633,6 +14633,11 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 } /* (lying down solid for 1.25 s, then slowly fading, gone in 4 s: L4.DEAD_MS; owner, Nov 16) */
+html.low .l4z.dead,
+html.low .l4z.dead.nuked {
+  animation: none;
+} /* (Low graphics or Data saving: no fade (Low stops every animation, so the fade would end at once and the body never
+     show); it lies there solid and l4dd.js LOW_DEAD takes it off my screen at 2 s, the Nuke's too) */
 .l4-boards {
   transform-origin: 0 0;
   transition: opacity 0.25s;
@@ -17918,4 +17923,18 @@ html.pixel.armed :is(.board, .hang-board) {
 .act-row .vote-back-note {
   flex-basis: 100%;
   text-align: center;
+}
+/* Game Settings: the "Low" chip by Gore and Heavy effects while my own Low graphics lighten them on my screen (fx.js);
+   small, on the name's line, even on a phone */
+.gs-set h3 .gs-low {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0.05em 0.45em;
+  border-radius: 0.6em;
+  font-size: 0.7em;
+  line-height: 1.3;
+  vertical-align: 0.15em;
+  white-space: nowrap;
+  background: #f2b33d;
+  color: #1c1c28;
 }

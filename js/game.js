@@ -433,6 +433,7 @@ import {
   MUZZLE,
 } from "./fx.js";
 import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
+import { low } from "./gfx.js";
 import {
   sway,
   kick,
@@ -2930,7 +2931,8 @@ let flamesAt = 0;
 function flames(s, now, hang, size, fxl, heldAll) {
   const dt = Math.min(0.05, flamesAt ? (now - flamesAt) / 1000 : 0),
     l4 = isL4dd(s),
-    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    half = l4 && low() ? 0.5 : 1; // (Dead Ducks Arcade on Low graphics or Data saving: half the stream's pixels and half the burning ground's, on my screen only; the fire itself is the rules' and stays the same)
   flamesAt = now;
   const spot = (x, y, z) =>
     hang ? world.place({ x, y }, z) : place({ x, y }, 0, 1, true);
@@ -2948,11 +2950,12 @@ function flames(s, now, hang, size, fxl, heldAll) {
         ? spot(p.x + (f[2] * f[4]) / HW, p.y + (f[3] * f[4]) / HH, z)
         : spot(p.x + f[2] * f[4] * rx, p.y + f[3] * f[4] * ry, z),
       far = Math.hypot(b.left - a.left, b.top - a.top),
-      want = flameRate(now - f[0]) * dt + (FLAME_CARRY.get(id) || 0),
+      want = flameRate(now - f[0]) * dt * half + (FLAME_CARRY.get(id) || 0),
       n = Math.floor(want);
     FLAME_CARRY.set(id, want - n);
     fxFlame(e[0], e[1], e[2], far, n, FLAMER.CONE, band);
   }
+  if (half < 1 && frameNo % 2) return; // (half: the ground's flicker every other frame)
   for (const g of (l4 ? s.hang.l4gf : s.gfire) || []) {
     const left = g[2] - now;
     if (left <= 0) continue;
@@ -3786,6 +3789,7 @@ function myAim() {
     ]
   );
 }
+const STILL_MS = 600; // ms between my duck's updates on a Poor connection while it stands still (moving: 220)
 function sendMove(force) {
   if (!me) return;
   const now = performance.now(),
@@ -3814,12 +3818,18 @@ function sendMove(force) {
     flyHigh(),
     me.jf && me.fz !== undefined && !hz ? me.fz.toFixed(2) : "",
   ].join();
+  const net = R.online ? netLevel() : -1,
+    still =
+      net > 1 &&
+      !me.j &&
+      !me.jf &&
+      lastSent.startsWith(`${me.x.toFixed(4)},${me.y.toFixed(4)},`); // (Poor connection, my duck standing where it was last sent, on the ground: only its aim or what's in hand changed)
   if (
     !force &&
-    (now - lastSend < (R.online ? [90, 140, 220][netLevel()] : 60) ||
+    (now - lastSend < (still ? STILL_MS : [60, 90, 140, 220][net + 1]) ||
       msg === lastSent)
   )
-    return; // online: less often (Data saving, Poor connection: less still)
+    return; // online: less often (Data saving, Poor connection: less still; standing still on a poor connection: least)
   lastSend = now;
   lastSent = msg;
   R.send({
