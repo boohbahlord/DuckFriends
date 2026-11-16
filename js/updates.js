@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v44",
+    version: 44,
+    date: "Nov 16, 2026",
+    title: "Lighter on slow devices",
+    news: [
+      "Low graphics, Data saving and Poor connection now lighten effects on your own screen. You get no gun smoke or screen shake, a tiny muzzle flash, half the blood, and effects drawn 30 times a second. Every player's shots still show.",
+      'In Game Settings, a "Low" chip next to Gore and Heavy effects shows when your own Low graphics lighten them.',
+      "Data saving and Poor connection now play fewer sounds at once and skip far-off sounds you'd barely hear.",
+      "Poor connection sends your duck's spot less often while it stands still.",
+      "For Dead Ducks Arcade: with Low graphics or Data saving, dead zombies leave your screen after 2 seconds, and the flamethrower's fire and the flashlights cost less to draw.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v43",
     version: 43,
     date: "Nov 16, 2026",

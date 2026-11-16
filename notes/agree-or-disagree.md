@@ -4887,3 +4887,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
   220 ms while it stands still on the ground (moving stays at 220 ms). The rules are untouched.
 
 
+- Version 44: the performance vote built: Noah #332 (effects), Miles Jr. #331 (sound caps), Solomon #333 (Dead Ducks Arcade, position sends).
