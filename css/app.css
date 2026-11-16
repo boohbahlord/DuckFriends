@@ -15592,6 +15592,33 @@ html.still:not(.low) .l4z.dead.nuked {
   top: calc(-116px * var(--k, 1));
   font-size: calc(11px * var(--k, 1));
 }
+/* the gas meter under the power box (l4ddpowerui.js gasMeter): twelve boxes, yellow, a little see-through */
+.l4-pw-gas {
+  position: absolute;
+  left: calc(-61px * var(--k, 1));
+  top: calc(30px * var(--k, 1));
+  width: calc(96px * var(--k, 1));
+}
+.l4-gas {
+  display: flex;
+  gap: calc(1.5px * var(--k, 1));
+  padding: calc(2px * var(--k, 1));
+  box-sizing: border-box;
+  background: rgba(18, 12, 4, 0.55);
+  border: calc(1.5px * var(--k, 1)) solid rgba(60, 44, 8, 0.7);
+  border-radius: calc(3px * var(--k, 1));
+  opacity: 0.85;
+}
+.l4-gas i {
+  flex: 1;
+  height: calc(7px * var(--k, 1));
+  min-width: 0;
+  border-radius: calc(1px * var(--k, 1));
+  background: rgba(255, 255, 255, 0.08);
+}
+.l4-gas i.on {
+  background: linear-gradient(#fff1a0 0 25%, #ffd92e 25% 65%, #d9a800 65%);
+}
 /* the Angel machine on the stage (l4ddangelui.js: 130 x 150, its foot 8 up from the bottom, in the middle), and the
    orb over it once it's done, with its duck's name */
 .l4-am {

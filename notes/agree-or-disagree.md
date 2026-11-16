@@ -5032,3 +5032,7 @@ are all good to go we can put them in the game"
 
 - Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
   scratchpad, plan2.py). Nothing built.
+
+## Nov 16, 23:29Z: gas meter under the power box
+Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
+Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.
