@@ -4869,3 +4869,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 - Version 42: Miles Jr.'s #327. sfx.trombone (the Sad Trombone special), sfx.fire (the fire special) and sfx.burn
   (burning ducks) were already called but silent; now they have sounds. Asked the owner where else they should play.
+- Version 43: Solomon's #329 Angel machine + Angelic weapons (picks: no-mag guns and the double barrel +20% ammo, flamethrower 1/3 farther and 1.6x sooner, dual pistols 2 ammo a press, crit blast spares the shooter, ANGEL.GL_RADIUS 1/3 until the owner answers).
