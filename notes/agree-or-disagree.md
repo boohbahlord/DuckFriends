@@ -4742,3 +4742,17 @@ Solomon.)
   knocked-off hat or face item, and every flying bit.
 
 
+
+## Request (2026-11-16 16:38Z): Justin's thrown things take bullets, and his spawn
+> when justin throws a chair or controllers, they now take bullets
+>
+> When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in
+
+- Adam: given to Jackal (one PR).
+
+## Request (2026-11-16 16:40Z): Mad God Justin and the vote
+> in mad god justin it doesnt return to the vote screen after three games and i dont see a three game button for voting back to the vote selection after a game alongside the return to lobby or play again button
+
+- Adam: each Justin fight now counts as a game for Vote return (rules.js advance: gameOver after Try again), and the
+  stats screen shows "Vote: new game now" in Mad God Justin too (game.js newGameHTML no longer skips it). Version 36,
+  with Noah's gore #309 and the Nuke's exploded looks (l4ddrules.js nukeTick uses wounds.js explodedLook).

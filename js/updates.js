@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v36",
+    version: 36,
+    date: "Nov 16, 2026",
+    title: "Gore",
+    news: [
+      "Blood is bigger and messier: more of it, bigger pixels, and pools that stay a while.",
+      "Chunks of the duck itself fly out when it's hit, in its own color.",
+      "Shots tear holes in clothes where they go through.",
+      "Hits can knock off hats and face items. They fly off and come back on after 10 seconds. Helmets that cover the head, hair and face paint stay on.",
+      "Bullets can shoot a beak off or blow an eye out, and blades and blunt hits can too.",
+      "With Gore off, none of it shows except a knocked-off hat.",
+      "For Dead Ducks Arcade: zombies killed by the Nuke are torn apart in a few different ways, some headless, some missing a beak and an eye.",
+    ],
+    fixed: [
+      "For Mad God Justin: each fight counts as a game, so the vote for the next game comes back after your Vote return games (3 by default).",
+      "For Mad God Justin: the stats screen has the Vote: new game now button again, next to Try again and the lobby vote.",
+    ],
+  },
+  {
     id: "v35",
     version: 35,
     date: "Nov 16, 2026",
