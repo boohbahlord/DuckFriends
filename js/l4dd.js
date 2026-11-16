@@ -104,6 +104,8 @@ import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { confirmBox } from "./ui.js";
+import { angelOf } from "./l4ddangel.js";
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
@@ -1311,6 +1313,7 @@ function shopFill(s, ctx) {
   /* his guns: Buy (a price), Refill (a price) once I have it, Full when it's full (the knife: Owned) */
   shop.guns.innerHTML = GUN_SHOP.map((w) => {
     const have = !!kit && kit.sl.includes(w),
+      holy = have && angelOf(s, me, w), // (an Angelic gun never refills: the owner's, Nov 16 22:21Z)
       price = gunPrice(s, me, w),
       off = !price || pts < price,
       label = have
@@ -1318,9 +1321,11 @@ function shopFill(s, ctx) {
           ? `Refill ${price}`
           : price === 0
             ? "Full"
-            : "Owned"
+            : holy
+              ? "No refills"
+              : "Owned"
         : `Buy ${price}`;
-    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
+    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${holy ? "Angelic: no refills" : gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
   }).join("");
   /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
   {
@@ -1390,14 +1395,17 @@ function shopEl(ctx) {
       return;
     }
     const b = e.target.closest("[data-buy]");
-    if (b && !b.disabled)
-      ctx.send({
-        t: "hang",
-        k: "l4",
-        do: "buy",
-        what: b.dataset.buy,
-        hand: heldFn(),
-      }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+    if (!b || b.disabled) return;
+    const w = b.dataset.buy,
+      hand = heldFn(),
+      send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+    const kit = kitOf(ctx.state(), ctx.me);
+    if (!GUN_SHOP.includes(w) || (kit && kit.sl.includes(w))) return send();
+    /* a gun I haven't got: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
+    confirmBox(
+      `Are you sure you want to buy the ${weaponName(w)}?`,
+      `${gunPrice(ctx.state(), ctx.me, w)} points`,
+    ).then((yes) => yes && send());
   });
   ctx.world.board.append(el);
   return {
@@ -1463,6 +1471,7 @@ function buyAmmo(ctx) {
     price = gunPrice(s, me, w);
   if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
     return say("The Butler doesn't sell ammo for that");
+  if (angelOf(s, me, w)) return say("Angelic: no refills");
   if (!price) return say("It's full");
   if (ptsOf(s, me) < price) return say("Not enough points");
   ctx.send({ t: "hang", k: "l4", do: "ammo", what: w });
