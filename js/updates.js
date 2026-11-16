@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v37",
+    version: 37,
+    date: "Nov 16, 2026",
+    title: "Cats, static and real quacks",
+    news: [
+      "For Hangout: the Duck Cabin cats meow, purr and hiss, the TV hisses with static, and the power box hums.",
+      "The Sound special and the cloud duel quack with real ducks.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v36",
     version: 36,
     date: "Nov 16, 2026",
