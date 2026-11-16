@@ -4985,3 +4985,16 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
   round 21+ = max(round 20's count, min(144, cap)) (Adam's pick, told the owner); spawns x2 after the first 10 s of a
   round. No refills for Angelic guns anywhere (Butler Refill, B key, Max Ammo), shop says so. Butler gun buys ask "Are you
   sure" (Yes / No / X / Esc). No crits on grenade, grenade launcher, flamethrower; the thrown grenade never misses.
+
+## Request (2026-11-16 22:36Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYDJKZM1MJJZG9rx1s1gDpf): Game mode headings fold
+> for the game mode options, make these a drop down arrow that collpases the game modes BUT they are already expanded under their heading, i.e. 'Social' 'Social Competitive' or 'Special'
+
+- Adam: the Game mode page lists each category as an open fold (the existing arm-fold/gs-fold style) with its modes under it;
+  the arrow folds it, remembered while the page is open (openFolds). Version 49.
+
+## Request (2026-11-16 22:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUn9YxaNn9V78wK1wv1TYnR): second Dead Ducks Arcade map
+> new special map idea, the quacky zombie has two maps, the cabin AND another one.
+>
+> this other map is something an availible AI can suggest that is simple to make that we can use for a map
+
+- Adam: Noah suggests 3 or 4 simple map ideas; the owner picks before anything is built.

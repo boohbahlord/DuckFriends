@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v49",
+    version: 49,
+    date: "Nov 16, 2026",
+    title: "Game mode headings fold",
+    news: [
+      "Game Settings: on the Game mode page, Social, Social Competitive and Special list their modes right under them, and each heading's arrow folds them away.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v48",
     version: 48,
     date: "Nov 16, 2026",
