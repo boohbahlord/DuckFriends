@@ -2034,7 +2034,7 @@ const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])]
   .sort();
 
 /* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them
-   back. A name with a space (or ' or ?) goes in quotes, as in bash: song off "Jester's Stair" */
+   back. A name with a space (or ' or ?) goes in quotes, as in bash: song off "Bouncy Chicks" */
 const qn = (n) => (/[\s'"?*\[\]$`\\|&;<>()]/.test(n) ? `"${n}"` : n);
 function songs(x, args) {
   const s = needRoom(x.ctx),
@@ -2061,7 +2061,7 @@ function songs(x, args) {
   needMay(x, "cansettings", `song ${sub}`);
   if (!rest.length)
     fail(
-      `✗ song ${sub}: which song? song lists them. A name with spaces goes in quotes: song ${sub} "Jester's Stair"`,
+      `✗ song ${sub}: which song? song lists them. A name with spaces goes in quotes: song ${sub} "Bouncy Chicks"`,
     );
   if (rest.length === 1 && rest[0].toLowerCase() === "all") {
     x.ctx.room.send(
