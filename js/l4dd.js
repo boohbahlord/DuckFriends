@@ -33,11 +33,13 @@ import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
+import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
+import { inShallow, WADE } from "./hangout/stationmap.js";
 import {
   L4,
   OPENINGS,
@@ -1668,6 +1670,7 @@ activity({
     killEl.setAttribute("aria-hidden", "true");
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
+    rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
     pwMount(ctx, layer);
     angelMount(ctx, layer);
     shop = shopEl(ctx);
@@ -1707,6 +1710,7 @@ activity({
     D.clear();
     cv?.remove();
     mapUnmount();
+    rainUnmount();
     pwUnmount();
     angelUnmount();
     hud?.remove();
@@ -1808,7 +1812,7 @@ activity({
       const u = Math.min(1, (t - o.t0) / gap);
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const z = heightAt(o.x, o.y),
+      const z = heightAt(o.x, o.y) + (o.st === 5 ? fenceZ(o.x, o.y) : 0), // (Downpour: up a fence, or dropping off it)
         f = Wd.toScreen(o.x, o.y, z),
         door = atBoards(o, Wd.inside),
         hide =
@@ -1843,6 +1847,16 @@ activity({
       }
     }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
+    if (dp()) {
+      const who = [];
+      for (const id of ctx.state().seat) {
+        const a = Wd.at(id);
+        if (a) who.push([id, a.x, a.y]);
+      }
+      for (const o of Z.values())
+        if (o.st !== 3) who.push(["z" + o.i, o.x, o.y]);
+      rainDraw(t, ctx, who, true);
+    } else rainDraw(t, ctx, [], false);
     const beat = new Set();
     for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */
@@ -2027,9 +2041,10 @@ activity({
     return d;
   },
   speed: (pos, ctx) =>
-    ((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
+    (((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
       ? 1
-      : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1), // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
+      : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1)) * // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
+    (dp() && inShallow(pos.x, pos.y) ? WADE : 1), // (Downpour: the flood over the road, 30% slower: the owner's)
   sprint(on, dt) {
     if (on && !tired && stamina > 0) {
       stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);

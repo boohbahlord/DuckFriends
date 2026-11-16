@@ -18031,3 +18031,11 @@ html.pixel.armed :is(.board, .hang-board) {
   background: #f2b33d;
   color: #1c1c28;
 }
+/* Downpour's rain (l4ddrain.js): just over the dark, under the HUD and the minimap */
+.hang-board.l4-board .l4-rain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 24001;
+  pointer-events: none;
+}
