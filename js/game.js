@@ -111,7 +111,13 @@ import {
   DUCK as DUCK_PX,
 } from "./hangout/layout.js";
 import { hangStill } from "./hangout/rules.js";
-import { downStill, downFor, GET_UP_MIN } from "./hangout/death.js";
+import {
+  downStill,
+  downFor,
+  GET_UP_MIN,
+  SPAWN_MS as PROT_MS,
+  normalGame,
+} from "./hangout/death.js";
 import { FADE as GHOST_FADE } from "./hangout/ghosts.js";
 import { grenadeBoom } from "./grenade.js";
 import { unlocked } from "./unlocks.js";
@@ -1760,6 +1766,13 @@ function drawDucks(now = clockNow()) {
       d._gj = true;
       d.classList.add("mgj-good");
     } // (Good Justin God fades in)
+    const prot = !!(s.prot && s.prot[id] > now && normalGame(s));
+    if (d._prot !== prot) {
+      d._prot = prot;
+      d.classList.toggle("prot", prot);
+      if (prot)
+        d.style.setProperty("--pd", `-${now - (s.prot[id] - PROT_MS)}ms`);
+    } // the normal games: a duck that just came back blinks and fades in for its 2.5 s of spawn protection
     const zapT =
         id === JUSTIN_ID &&
         isMgj(s) &&
