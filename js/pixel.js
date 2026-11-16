@@ -31,23 +31,40 @@ function setGrid() {
    of canvases, pictures and moving drawings, so I pixelate what they draw rather than each piece; the same grid as the
    ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
    then grown to fill its square.) */
-let filt = null;
+let filt = null,
+  camK = 1; // (the zoom Duck Cabin's props are shown at: setCamScale)
+const FILTER = (id) =>
+  `<filter id="${id}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
+/* one filter's squares, g css px of the layer it's on */
+function sizeFilter(f, g) {
+  const [flood, comp, , , morph] = f.children;
+  flood.setAttribute("x", (g / 2).toFixed(3));
+  flood.setAttribute("y", (g / 2).toFixed(3));
+  comp.setAttribute("width", g.toFixed(3));
+  comp.setAttribute("height", g.toFixed(3));
+  morph.setAttribute("radius", (g / 2).toFixed(3));
+}
 function filterGrid() {
   if (!on || !document.body) return;
   if (!filt) {
     filt = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     filt.setAttribute("aria-hidden", "true");
     filt.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
-    filt.innerHTML = `<filter id="px-f" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
+    filt.innerHTML = FILTER("px-f") + FILTER("px-fc");
     document.body.append(filt);
   }
-  const g = grid.toFixed(3),
-    [flood, comp, , , morph] = filt.querySelector("filter").children;
-  flood.setAttribute("x", (grid / 2).toFixed(3));
-  flood.setAttribute("y", (grid / 2).toFixed(3));
-  comp.setAttribute("width", g);
-  comp.setAttribute("height", g);
-  morph.setAttribute("radius", (grid / 2).toFixed(3));
+  const [f, fc] = filt.children;
+  sizeFilter(f, grid);
+  /* px-fc: for a layer that is itself shown zoomed (a Duck Cabin prop, scaled by the camera): the filter works before
+     the zoom, so its squares are made 1/zoom as big, and come out one grid square on the screen like everything else
+     (owner, Nov 16: one pixel size for every background) */
+  sizeFilter(fc, grid / camK);
+}
+/* the zoom Duck Cabin shows its props at (world.js' camera) */
+export function setCamScale(k) {
+  if (!(k > 0) || Math.abs(k - camK) < 0.001) return;
+  camK = k;
+  filterGrid();
 }
 if (document.readyState === "loading")
   addEventListener("DOMContentLoaded", filterGrid);
