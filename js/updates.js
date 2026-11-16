@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v35",
+    version: 35,
+    date: "Nov 16, 2026",
+    title: "A much harder Justin",
+    news: [
+      "For Mad God Justin: Justin starts with 160 HP, plus 20 for every duck in the fight.",
+      "For Mad God Justin: every gun you pick up has to reload now, the shotgun, the grenade launcher and the chain gun too. The pistol still never reloads.",
+    ],
+    fixed: [
+      "You only see your own laser sight now, not other ducks' or Justin's.",
+    ],
+  },
+  {
     id: "v34",
     version: 34,
     date: "Nov 16, 2026",
