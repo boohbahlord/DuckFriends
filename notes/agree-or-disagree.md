@@ -4456,3 +4456,15 @@ God Justin's weapons.
   shot, less than the shake fades between shots (2.4 a second at 15 a second), so it never built up: now 0.3.
   Own blasts: in Mad God Justin (mgjHalf) and Dead Ducks Arcade (l4ddrules boom) the thrower in the radius loses half
   its HP rounded down and is never downed by it; every other mode already hurt the thrower as anyone else.
+
+## Nov 16 2026, 16:06Z: chain gun recoil and 300 rounds (Solomon the 2nd, PR E)
+
+> the chain gun should send your duck backwards slowly as they shoot, and a vector of movements from the keys may potentially counter this recoil that moves the duck when the chain gun is used, so basically actual physics and math. This helps tell the player how powerful it is
+>
+> the chain gun should also have 300 rounds instead now
+
+- PR E: game.js RECOIL (K 0.35 of walking speed, kept on 140 ms after each of my chain gun shots, set from the l4line
+  fx): board modes add it to the step as a walk the other way (sprint doesn't raise it); Hangout and Dead Ducks Arcade
+  add it to the world's walk vector (which never goes past full speed), facing still follows my keys. 300 rounds:
+  Dead Ducks Arcade ARMS.chaingun.all 300, other modes' magazine 300 (MAG_MORE), Mad God Justin's pickup the full 300
+  (Adam, 16:08Z: no exception there).

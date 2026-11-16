@@ -927,12 +927,12 @@ export const GUNS_NEW = [
 export const AUTO = ["smg", "ak", "lmg", "chaingun"]; // (they fire while the button is down)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
-   gun and the grenade launcher have none there, so here the chain gun reloads after its 60, and the launcher after 3
+   gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
    (my guesses). s.mag = { id: { n: shots fired, r: when its reload ends (0: not reloading) } } for the handgun, and
    { "id gun": … } for the others */
 export const MAG = 7,
   RELOAD = ARM_RELOAD;
-const MAG_MORE = { chaingun: [60, 4000], glauncher: [3, 4000] };
+const MAG_MORE = { chaingun: [300, 4000], glauncher: [3, 4000] }; // (the chain gun 300 rounds: the owner's, Nov 16)
 export const magSize = (w) =>
   w === "handgun"
     ? [MAG, RELOAD]

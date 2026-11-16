@@ -236,7 +236,7 @@ export const ARMS = {
     auto: true,
     cool: 67, // (15 a second)
     dmg: 99,
-    all: 4 * 60, // (four times as much: the owner's, Nov 16)
+    all: 300, // (300 rounds: the owner's, Nov 16, 16:06Z)
     far: 3000,
   },
   revolver: {
