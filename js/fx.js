@@ -7,9 +7,11 @@
    Places are the board's css px. In Hangout and Dead Ducks Arcade the camera moves: game.js tells me where the
    world's corner is on the screen each frame (fxOrigin), and every particle keeps its place in the world. */
 import { gridPx } from "./pixel.js";
+import { applyPalette } from "./pixelpalette.js";
 import { sfx } from "./sound.js";
 
-const MAX = 1200, // (particles at most: the oldest give way)
+const NONE = 255;
+const MAX = 2000, // (particles at most: the oldest give way)
   DROP = 1,
   CHUNK = 2,
   SPLAT = 3,
@@ -25,6 +27,7 @@ const X = new Float32Array(MAX),
   LIFE = new Float32Array(MAX), // (ms; 0: free)
   KIND = new Uint8Array(MAX),
   COL = new Uint8Array(MAX),
+  FL = new Uint8Array(MAX).fill(NONE), // (a chunk of a duck: the blood on it, a color of INK; NONE: plain)
   SIZE = new Uint8Array(MAX);
 let next = 0,
   alive = 0;
@@ -43,7 +46,16 @@ const INK = [
   "#fcdb4e", // 9 flash
   "#fe8508", // 10 flash, edge
   "#ee2e64", // 11 a laser
-];
+  "#ffffff", // 12 an eye's white
+  "#1d100e", // 13 an eye's middle
+]; // (and after these, the ducks' own colors, as their chunks fly: inkOf)
+/* a duck's color as one of INK (added the first time, at most 200 of them) */
+function inkOf(hex) {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return 0;
+  let i = INK.indexOf(hex);
+  if (i < 0 && INK.length < 214) i = INK.push(hex) - 1;
+  return i < 0 ? 0 : i;
+}
 
 /* ---------- the canvas ---------- */
 let cv = null,
@@ -107,7 +119,7 @@ export function fxLasers(list) {
 }
 
 /* ---------- making particles ---------- */
-function add(kind, x, y, z, vx, vy, vz, life, col, size = 1) {
+function add(kind, x, y, z, vx, vy, vz, life, col, size = 1, fl = NONE) {
   const i = next;
   next = (next + 1) % MAX;
   if (!LIFE[i]) alive++;
@@ -121,14 +133,18 @@ function add(kind, x, y, z, vx, vy, vz, life, col, size = 1) {
   LIFE[i] = life;
   KIND[i] = kind;
   COL[i] = col;
+  FL[i] = fl;
   SIZE[i] = size;
 }
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-/* how a hit bleeds, by what made it (wounds.js' kinds): drops, chunks, how fast, how wide, how long it squirts after */
+/* how a hit bleeds, by what made it (wounds.js' kinds): drops, chunks, bits of the duck itself (flesh: in its own color,
+   bloody; the owner's Nov 16 "chunks of a duck flying out of their body"), how fast, how wide, how long it squirts after.
+   Since Nov 16 ("blood effects are too small") the drops are two pixels across, some three, and there are more */
 const BLEED = {
   small: {
-    drops: [5, 8],
+    flesh: [0, 1],
+    drops: [8, 13],
     chunks: 0,
     speed: 1.6,
     wide: 0.9,
@@ -136,7 +152,8 @@ const BLEED = {
     big: 0.1,
   }, // (a pistol, an SMG, the LMG: a spill)
   big: {
-    drops: [10, 15],
+    flesh: [1, 3],
+    drops: [16, 24],
     chunks: [1, 2],
     speed: 2.4,
     wide: 0.8,
@@ -144,7 +161,8 @@ const BLEED = {
     big: 0.3,
   }, // (the AK, the revolver: a spray)
   heavy: {
-    drops: [16, 22],
+    flesh: [4, 7],
+    drops: [26, 35],
     chunks: [3, 5],
     speed: 3.2,
     wide: 0.9,
@@ -153,7 +171,8 @@ const BLEED = {
     chunk: 3,
   }, // (the sniper, the chain gun: chunks fly)
   shot: {
-    drops: [4, 6],
+    flesh: [0, 2],
+    drops: [6, 10],
     chunks: [0, 1],
     speed: 2,
     wide: 1.4,
@@ -161,7 +180,8 @@ const BLEED = {
     big: 0.15,
   }, // (each shotgun pellet)
   blade: {
-    drops: [5, 8],
+    flesh: [0, 1],
+    drops: [8, 13],
     chunks: 0,
     speed: 1.2,
     wide: 0.7,
@@ -169,7 +189,8 @@ const BLEED = {
     big: 0.2,
   }, // (a knife, a dagger: a slosh)
   blunt: {
-    drops: [10, 14],
+    flesh: [3, 5],
+    drops: [16, 22],
     chunks: [3, 5],
     speed: 2.6,
     wide: 1.6,
@@ -178,7 +199,8 @@ const BLEED = {
     chunk: 3,
   }, // (the hammer, a chair: chunks out)
   arrow: {
-    drops: [4, 6],
+    flesh: 0,
+    drops: [6, 10],
     chunks: 0,
     speed: 1.3,
     wide: 0.6,
@@ -186,7 +208,8 @@ const BLEED = {
     big: 0.1,
   },
   claw: {
-    drops: [4, 7],
+    flesh: [0, 1],
+    drops: [6, 11],
     chunks: 0,
     speed: 1.3,
     wide: 1.2,
@@ -226,46 +249,61 @@ export const heavyOff = () => noHeavy;
 const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
-   hit went (most of the blood goes on that way, some back toward the shooter) */
-export function fxBlood(x, y, h, w, dx = 0, dy = 0) {
+   hit went (most of the blood goes on that way, some back toward the shooter); body: the duck's color (its chunks) */
+export function fxBlood(x, y, h, w, dx = 0, dy = 0, body = "") {
   sfx.flesh(BLEED_OF[w] || "small"); // (its sound: by what went in)
   if (noGore) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
     l = Math.hypot(dx, dy),
-    ang = l > 0 ? Math.atan2(dy, dx) : -Math.PI / 2 + rnd(-1.4, 1.4);
-  const spray = (n, size, speed, wide, back) => {
+    ang = l > 0 ? Math.atan2(dy, dx) : -Math.PI / 2 + rnd(-1.4, 1.4),
+    own = body ? inkOf(body) : -1;
+  /* kind: 0 drops, 1 blood chunks, 2 the duck's own chunks */
+  const spray = (n, kind, speed, wide, back) => {
     for (let k = 0; k < n; k++) {
       const a =
           (Math.random() < back ? ang + Math.PI : ang) + rnd(-wide, wide) / 2,
         v = u * speed * rnd(0.45, 1);
       const sz =
-        size > 1
+        kind === 2
           ? Math.random() < 0.5
-            ? B.chunk || 2
-            : 2
-          : Math.random() < B.big
-            ? 2
-            : 1; // (drops one pixel, some two by two for bigger rounds; chunks two or three)
+            ? 3
+            : 4
+          : kind
+            ? Math.random() < 0.5
+              ? B.chunk || 3
+              : 3
+            : Math.random() < B.big
+              ? 3
+              : 2; // (drops two pixels across, some three; chunks three or four)
       add(
-        size > 1 ? CHUNK : DROP,
+        kind ? CHUNK : DROP,
         x + rnd(-0.08, 0.08) * u,
         y,
         h + rnd(-0.12, 0.12) * u,
         Math.cos(a) * v,
         Math.sin(a) * v * 0.55, // (the floor seen at a slant: less depth than width)
         u * rnd(0.6, 2.1),
-        2600,
-        size > 1 ? (Math.random() < 0.5 ? 2 : 3) : [0, 1, 2, 4][k % 4],
+        kind === 2 ? 3200 : 2600,
+        kind === 2
+          ? own
+          : kind
+            ? Math.random() < 0.5
+              ? 2
+              : 3
+            : [0, 1, 2, 4][k % 4],
         sz,
+        kind === 2 ? (Math.random() < 0.5 ? 0 : 3) : NONE,
       );
     }
   };
-  spray(many(B.drops), 1, B.speed, B.wide, 0.2);
-  if (B.chunks) spray(many(B.chunks), 2, B.speed * 0.8, B.wide * 1.3, 0.1);
+  spray(many(B.drops), 0, B.speed, B.wide, 0.2);
+  if (B.chunks) spray(many(B.chunks), 1, B.speed * 0.8, B.wide * 1.3, 0.1);
+  if (own >= 0 && B.flesh)
+    spray(many(B.flesh), 2, B.speed * 0.75, B.wide * 1.4, 0.1);
   for (let k = 0; k < B.squirt; k++)
     setTimeout(
-      () => spray(3 + k, 1, B.speed * 0.55, 0.5, 0),
+      () => spray(4 + k, 0, B.speed * 0.55, 0.5, 0),
       140 + k * 170 + rnd(0, 60),
     ); // (a hole keeps squirting a moment: more for bigger rounds)
 }
@@ -291,8 +329,8 @@ export function fxMelee(id, w, from) {
   MELEE.set(id, [w, performance.now(), from]);
 }
 /* something hit, its feet at (x, y) on the screen, bleeding h px over them; id if it's a duck; size: a duck's size;
-   or: what hit it when no shot or blade is known (a little, from a pistol, if nothing says) */
-export function fxHitAt(x, y, h, id, size, or = "small") {
+   or: what hit it when no shot or blade is known (a little, from a pistol, if nothing says); body: its color */
+export function fxHitAt(x, y, h, id, size, or = "small", body = "") {
   const now = performance.now(),
     m = id && MELEE.get(id);
   let w = "",
@@ -317,17 +355,20 @@ export function fxHitAt(x, y, h, id, size, or = "small") {
     }
     if (hit) hit[6] = true; // (it went in: no landing sound)
   }
-  fxBlood(x, y, h, w || or, dx, dy);
+  fxBlood(x, y, h, w || or, dx, dy, body);
 }
 
-/* blood bursting out all around (a crit's head, a grenade): n drops, chunks too */
-export function fxBurst(x, y, h, n, chunks = 0) {
+/* blood bursting out all around (a crit's head, a grenade): n drops, chunks too; body: the duck's color, for chunks of
+   it among them */
+export function fxBurst(x, y, h, n, chunks = 0, body = "") {
   if (noGore) return;
-  const u = unit;
+  const u = unit,
+    own = body ? inkOf(body) : -1;
   for (let k = 0; k < n + chunks; k++) {
     const a = rnd(0, Math.PI * 2),
       v = u * rnd(0.8, 2.6),
-      big = k >= n;
+      big = k >= n,
+      duck = big && own >= 0 && k % 2 === 0; // (half the chunks: bits of the duck)
     add(
       big ? CHUNK : DROP,
       x,
@@ -336,9 +377,10 @@ export function fxBurst(x, y, h, n, chunks = 0) {
       Math.cos(a) * v,
       Math.sin(a) * v * 0.55,
       u * rnd(1, 2.6),
-      2600,
-      big ? 3 : k % 3,
-      big ? 2 : 1,
+      duck ? 3200 : 2600,
+      duck ? own : big ? 3 : [0, 1, 4][k % 3],
+      big ? (duck ? 4 : 3) : 2,
+      duck ? 0 : NONE,
     );
   }
 }
@@ -501,7 +543,7 @@ export function fxFrame(now = performance.now()) {
   if (dx1 > dx0) g.clearRect(dx0, dy0, dx1 - dx0, dy1 - dy0);
   dx0 = dy0 = 1e5;
   dx1 = dy1 = -1e5;
-  if (!alive && !lasers.length) return;
+  if (!alive && !lasers.length && !SPR.length) return;
   const gp = gridPx(),
     W = cv.width,
     H = cv.height;
@@ -526,9 +568,9 @@ export function fxFrame(now = performance.now()) {
         Z[i] = 0;
         KIND[i] = SPLAT;
         BORN[i] = now;
-        LIFE[i] = k === CHUNK ? 2200 : 1500;
+        LIFE[i] = k === CHUNK ? 4500 : 3200; // (pools that stay a while: the owner's Nov 16 "gorey")
         if (COL[i] === 4) COL[i] = 1;
-        if (k === CHUNK && Math.random() < 0.5) SIZE[i] = 3; // (a chunk spreads a little)
+        if (FL[i] === NONE && Math.random() < 0.6) SIZE[i] = SIZE[i] + 1; // (blood spreads a little where it lands)
       }
     } else if (k === SMOKE) {
       X[i] += VX[i] * dt;
@@ -548,8 +590,14 @@ export function fxFrame(now = performance.now()) {
       sz = SIZE[i];
     if (px < -3 || py < -3 || px > W + 3 || py > H + 3) continue;
     g.fillRect(px - (sz >> 1), py - (sz >> 1), sz, sz);
+    if (FL[i] !== NONE) {
+      const fs = sz > 3 ? 2 : 1; // (a bit of a duck: blood on its torn side)
+      g.fillStyle = INK[FL[i]];
+      g.fillRect(px - (sz >> 1) + sz - fs, py - (sz >> 1) + sz - fs, fs, fs);
+    }
     mark(px - (sz >> 1), py - (sz >> 1), sz);
   }
+  if (SPR.length) sprites(now, dt, gp, W, H);
   /* the laser sights: one line of pixels each, see-through, a brighter dot where it ends */
   if (lasers.length) {
     g.fillStyle = INK[11];
@@ -587,6 +635,152 @@ export function fxFrame(now = performance.now()) {
   g.globalAlpha = 1;
   if (!n) alive = 0;
 }
+
+/* ---------- things knocked off a duck (the owner's, Nov 16: hats, face items, a beak, an eye) ----------
+   A small picture each, already in pixels at the grid's size, flying off the way the hit went, turning over a quarter at
+   a time (pixels never turn by less), landing, lying a moment and going. At most SPR_MAX at once */
+const SPR = [],
+  SPR_MAX = 24;
+function sprites(now, dt, gp, W, H) {
+  g.imageSmoothingEnabled = false;
+  for (let i = SPR.length - 1; i >= 0; i--) {
+    const o = SPR[i],
+      age = now - o.born;
+    if (age >= o.life || !o.pic) {
+      if (age >= o.life) SPR.splice(i, 1);
+      continue;
+    }
+    if (o.z > 0 || o.vz > 0) {
+      o.vz -= G * unit * dt;
+      o.x += o.vx * dt;
+      o.y += o.vy * dt;
+      o.z = Math.max(0, o.z + o.vz * dt);
+      if (o.z === 0) {
+        o.vz = 0;
+        o.turn = Math.round(o.turn); // (it lands flat on a side)
+      } else o.turn += o.spin * dt;
+    }
+    const c = o.pic,
+      q = ((Math.round(o.turn) % 4) + 4) % 4,
+      w = q % 2 ? c.height : c.width,
+      h = q % 2 ? c.width : c.height,
+      px = Math.round((o.x + ox) / gp),
+      py = Math.round((o.y + oy - o.z) / gp);
+    if (px < -w || py < -h || px > W + w || py > H + h) continue;
+    g.globalAlpha = age > o.life - 600 ? 0.5 : 1; // (going: half see-through first, as everything in the pixel look)
+    g.save();
+    g.translate(px, py);
+    g.rotate((q * Math.PI) / 2);
+    g.drawImage(c, -(c.width >> 1), -(c.height >> 1));
+    g.restore();
+    mark(px - (w >> 1) - 1, py - (h >> 1) - 1, Math.max(w, h) + 2);
+  }
+  g.globalAlpha = 1;
+}
+/* a drawing (SVG text, w css px wide) as a little canvas of the grid's pixels, through the palette, its empty edges cut
+   off; made once for each drawing and size */
+const PICS = new Map();
+function pixelPic(svg, w) {
+  const gp = gridPx(),
+    key = svg.length + ":" + w.toFixed(1) + ":" + gp.toFixed(3) + ":" + svg;
+  if (PICS.has(key)) return PICS.get(key);
+  if (PICS.size > 60) PICS.clear();
+  const vb = /viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/.exec(svg),
+    k = vb ? +vb[4] / +vb[3] : 1,
+    cw = Math.max(2, Math.round(w / gp)),
+    ch = Math.max(2, Math.round((w * k) / gp));
+  const p = new Promise((done) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = cw;
+      c.height = ch;
+      const x = c.getContext("2d", { willReadFrequently: true });
+      x.imageSmoothingQuality = "high";
+      x.drawImage(img, 0, 0, cw, ch);
+      const d = applyPalette(x.getImageData(0, 0, cw, ch));
+      let x0 = cw,
+        y0 = ch,
+        x1 = -1,
+        y1 = -1;
+      for (let yy = 0; yy < ch; yy++)
+        for (let xx = 0; xx < cw; xx++)
+          if (d.data[(yy * cw + xx) * 4 + 3] > 40) {
+            x0 = Math.min(x0, xx);
+            y0 = Math.min(y0, yy);
+            x1 = Math.max(x1, xx);
+            y1 = Math.max(y1, yy);
+          }
+      if (x1 < 0) return done(null);
+      const out = document.createElement("canvas");
+      out.width = x1 - x0 + 1;
+      out.height = y1 - y0 + 1;
+      x.putImageData(d, 0, 0);
+      out.getContext("2d").drawImage(c, -x0, -y0);
+      done(out);
+    };
+    img.onerror = () => done(null);
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+  PICS.set(key, p);
+  return p;
+}
+/* something knocked off a duck: drawing svg (w css px wide), from (x, y) h px over the feet, flying the way (dx: -1
+   left, 1 right) the hit pushed it; up: how hard it pops up (1 a hat; more for an eye). Not with gore off when it's
+   gore (a beak, an eye) */
+export function fxKnock(svg, w, x, y, h, dx = 1, up = 1, gore = false) {
+  if (gore && noGore) return;
+  if (SPR.length >= SPR_MAX) SPR.shift();
+  const u = unit,
+    o = {
+      pic: null,
+      x: x - ox,
+      y: y - oy,
+      z: h,
+      vx: dx * u * rnd(0.5, 1.3),
+      vy: rnd(-0.25, 0.25) * u,
+      vz: u * rnd(1.4, 2.2) * up,
+      turn: 0,
+      spin: dx * rnd(5, 9),
+      born: performance.now(),
+      life: 3800,
+    };
+  SPR.push(o);
+  pixelPic(svg, w).then((c) => (o.pic = c));
+  dirty();
+}
+/* an eye blown out: a white ball with its dark middle, and blood after it */
+export function fxEye(x, y, h, dx = 1) {
+  if (noGore) return;
+  const u = unit,
+    a = -Math.PI / 2 + dx * rnd(0.5, 1.1);
+  add(
+    CHUNK,
+    x,
+    y,
+    h,
+    Math.cos(a) * u * 1.2,
+    rnd(-0.2, 0.2) * u,
+    u * rnd(1.8, 2.6),
+    3400,
+    12,
+    3,
+    13,
+  );
+  for (let k = 0; k < 8; k++)
+    add(
+      DROP,
+      x,
+      y,
+      h,
+      Math.cos(a) * u * rnd(0.4, 1.3),
+      rnd(-0.3, 0.3) * u,
+      u * rnd(1, 2.4),
+      2600,
+      k % 3,
+      2,
+    );
+}
 /* blood spurting up out of (x, y) (a headless neck): n small spurts, one after another over ms */
 export function fxSpurt(x, y, h, n = 10, ms = 1400) {
   if (noGore) return;
@@ -610,6 +804,7 @@ export function fxSpurt(x, y, h, n = 10, ms = 1400) {
             u * rnd(1.2, 2.2),
             2600,
             j % 3,
+            2,
           );
         }
       },
