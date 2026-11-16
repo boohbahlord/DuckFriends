@@ -397,10 +397,16 @@ const shuffle = (xs) => {
 export const mgjFrozen = (s) =>
   !!(s.mgj && (s.mgj.met || (s.mgj.xb && s.mgj.xb.off && !s.mgj.xb.done)));
 /* is he faded out (the meteor, or his Xbox turned off)? */
+/* the fight starts with him not there: for SPAWN_MS his avatar fades in with a red glow, and only then can he attack or
+   be hit (owner, Nov 16: three seconds) */
+export const SPAWN_MS = 3000;
+export const mgjSpawning = (s, now) =>
+  !!(s.mgj && s.mgj.spawn && now < s.mgj.spawn);
 export const mgjGone = (s, now) => {
   const m = s.mgj && s.mgj.met,
     x = s.mgj && s.mgj.xb;
   return (
+    mgjSpawning(s, now) ||
     (!!m && now - m.at >= MET.FADE * 0.5 && now - m.at < MET.BACK) ||
     (!!x && !!x.off && !x.done && now - x.off >= XB.FADE)
   );
@@ -422,6 +428,7 @@ export function mgjStart(s, now) {
     won: null,
     met: null,
     metDone: false,
+    spawn: now + SPAWN_MS,
     left: 0,
     shotgun: true, // (the owner: he has the shotgun from the start now)
     over: 0,
@@ -473,16 +480,16 @@ export function mgjStart(s, now) {
     gods: (s.justin && s.justin.gods) || [],
     w: "lmg",
     mag: { n: 0, r: 0 },
-    fireAt: now + 2500 * PACE,
-    hamAt: now + 5000 * PACE,
-    ctlAt: now + rnd(9000, 13000) * PACE,
-    chairAt: now + rnd(18000, 26000) * PACE,
-    fbAt: now + rnd(5000, 8000) * PACE,
-    dashAt: now + rnd(6000, 9000) * PACE,
+    fireAt: now + SPAWN_MS + 2500 * PACE,
+    hamAt: now + SPAWN_MS + 5000 * PACE,
+    ctlAt: now + SPAWN_MS + rnd(9000, 13000) * PACE,
+    chairAt: now + SPAWN_MS + rnd(18000, 26000) * PACE,
+    fbAt: now + SPAWN_MS + rnd(5000, 8000) * PACE,
+    dashAt: now + SPAWN_MS + rnd(6000, 9000) * PACE,
     tpAt: 0,
     eatAt: now + rnd(25000, 40000),
     sgR: 0,
-    next: now + 1500,
+    next: now + SPAWN_MS + 1500,
     say: now + rnd(9000, 16000),
     ouch: 0,
   };
@@ -1441,7 +1448,31 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
         jaimeDies(s, id, now, log, fxOf(s, now), sh.k);
     return false;
   }
+  if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
+}
+/* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
+   they block bullets and never break (owner, Nov 16 16:47Z) */
+function shotThrown(s, sh, x0, y0, dx, dy, now) {
+  if (sh.k === "grenade" || sh.k === "lgren" || sh.fake) return false;
+  const ux = dx / RX,
+    uy = dy / RY,
+    len = ux * ux + uy * uy;
+  for (const th of s.shots || []) {
+    if (th.by !== JUSTIN_ID || th.dead || th.fake) continue;
+    if (th.k !== "chair" && th.k !== "controller") continue;
+    const q = {
+        x: th.x0 + (th.vx * (now - th.t)) / 1000,
+        y: th.y0 + (th.vy * (now - th.t)) / 1000,
+      },
+      px = (q.x - x0) / RX,
+      py = (q.y - y0) / RY,
+      k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    if (Math.hypot(px - k * ux, py - k * uy) >= (th.k === "chair" ? 1.6 : 1))
+      continue;
+    return true;
+  }
+  return false;
 }
 
 const shotDmg = (k) =>
