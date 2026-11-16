@@ -1054,6 +1054,13 @@ export function openGameSettings(R, start = null) {
         ? "Random"
         : mapName(s.options.map);
 
+  /* Gore and Heavy effects: a "Low" chip by their name while my own Low graphics (Settings → Performance: Graphics Low,
+     Data saving or Poor connection) lighten them on my screen, whatever the room picked (fx.js) */
+  const lowChip = (k) =>
+    (k === "noGore" || k === "noFx") &&
+    document.documentElement.classList.contains("low")
+      ? ` <span class="gs-low" data-tip="${esc(k === "noGore" ? "Your Low graphics: less blood on your screen, and it goes sooner." : "Your Low graphics: no smoke or screen shake on your screen, only a tiny muzzle flash.")}">Low</span>`
+      : "";
   /* a setting as the old Game options showed it: its name over its choices. mr: the game mode whose Mode Rule this is
      (with Same as General first) */
   const tiles = (s, o, mr = "") => {
@@ -1071,7 +1078,7 @@ export function openGameSettings(R, start = null) {
           ? o.c.filter((x) => x[0] !== 6000)
           : o.c),
       ];
-    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"${mr ? ` data-mr="${esc(mr)}"` : ""}><h3>${esc(o.n)}</h3><div class="row">${c
+    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"${mr ? ` data-mr="${esc(mr)}"` : ""}><h3>${esc(o.n)}${lowChip(o.k)}</h3><div class="row">${c
       .map(
         ([v, n]) =>
           `<button type="button" class="tile" data-k="${o.k}" data-v="${v}"${mr ? ` data-mr="${esc(mr)}"` : ""} aria-pressed="${cur === v}"${ro}>${esc(n)}</button>`,
