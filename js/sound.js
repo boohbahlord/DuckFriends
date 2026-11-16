@@ -136,7 +136,7 @@ export const VOL = {
   meow: -14,
   purr: -18,
   hiss: -14,
-  static: -22, // (the TV with no channel, on a loop)
+  static: -32, // (the TV with no channel, on a loop: a quiet, even hiss)
   hum: -24, // (the power box's transformer, on a loop)
   quack: -10, // (real ducks: the Sound special, a duel)
 };
