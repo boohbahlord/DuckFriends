@@ -1985,6 +1985,10 @@ function drawDucks(now = clockNow()) {
   fxl.querySelectorAll(".held").forEach((h) => {
     if (!handed.has(h.dataset.pid)) h.remove();
   });
+  document.documentElement.classList.toggle(
+    "armed",
+    arms.some((a) => a[4]),
+  ); // (a weapon in my hand: the mouse is a crosshair over the board, owner Nov 16, css/app.css)
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
   for (const [id, pos, at, duck] of brood) {

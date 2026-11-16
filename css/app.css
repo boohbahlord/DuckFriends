@@ -17094,3 +17094,7 @@ html.pixel .tv-del {
 html.pixel .vt button {
   cursor: var(--cur-hand), pointer;
 }
+/* any weapon in hand (game.js: html.armed), in every mode: the mouse is the crosshair over the board (owner, Nov 16) */
+html.pixel.armed :is(.board, .hang-board) {
+  cursor: var(--cur-cross), crosshair;
+}
