@@ -6,8 +6,8 @@
    - PART_ICONS (fuse, lever, tools, gas) and jerrySVG(pct): the parts and the jerry can as 40 × 40 icons, as the drops.
    - angelMachineSVG: the Angel machine on the stage, after the owner's picture, in greys (I wanted it not colored);
      working, its lamps and its hatch glow white-gold.
-   - angelic(svg): any weapon's picture in its Angelic look (a white-gold edge and glow, a small halo, two sparkles);
-     angelOrbHTML(w): the white-gold orb an Angelic weapon comes out of the machine as.
+   - angelic(svg): any weapon's picture in its Angelic look (a dark crimson edge and glow, a small gold halo, two sparkles);
+     angelOrbHTML(w): the dark crimson orb an Angelic weapon comes out of the machine as.
    Preview: tools/power-art.html */
 import { weaponIcon } from "./l4ddart.js";
 
@@ -20,10 +20,13 @@ const G0 = "#2f323b",
   G3 = "#7b818e",
   G4 = "#9ca3ae",
   G5 = "#c0c5cd";
-/* the Angelic white-gold */
+/* the Angel machine's white-gold, and the halo's gold */
 const HOLY = "#fff3c4",
   GOLD = "#ffd86a",
   GOLD_D = "#c99a2e";
+/* the glow round an Angelic weapon: dark crimson red (the owner's, Nov 16 21:47Z, instead of the white-gold) */
+const CRIMSON = "#b0102a",
+  CRIMSON_D = "#5e0412";
 let N = 0;
 const uid = () => "pw" + (++N).toString(36);
 const n1 = (v) => Math.round(v * 10) / 10;
@@ -306,7 +309,7 @@ export function angelMachineSVG({ w = 130, h = 150, working = false } = {}) {
 /* a four-pointed sparkle */
 const star = (x, y, r) =>
   `<path d="M${n1(x)} ${n1(y - r)}Q${n1(x + r * 0.2)} ${n1(y - r * 0.2)} ${n1(x + r)} ${n1(y)}Q${n1(x + r * 0.2)} ${n1(y + r * 0.2)} ${n1(x)} ${n1(y + r)}Q${n1(x - r * 0.2)} ${n1(y + r * 0.2)} ${n1(x - r)} ${n1(y)}Q${n1(x - r * 0.2)} ${n1(y - r * 0.2)} ${n1(x)} ${n1(y - r)}Z" fill="#fff" stroke="${GOLD_D}" stroke-width="${n1(r * 0.16)}"/>`;
-/* any weapon's picture (held or icon) made Angelic: a white-gold edge round it and a soft glow, a small gold halo over
+/* any weapon's picture (held or icon) made Angelic: a dark crimson edge round it and a crimson glow, a small gold halo over
    its middle and two sparkles. The picture keeps its width and its middle (the room for the halo is added above and
    below alike), so it sits in the hand and in its slot as before */
 export function angelic(svg) {
@@ -319,7 +322,7 @@ export function angelic(svg) {
     u = Math.min(w, h + 2 * e) / 40, // (the halo's and the sparkles' size, against a 40 square)
     hx = x + w * (sq ? 0.5 : 0.68),
     hy = sq ? y + h * 0.12 : y - e * 0.45;
-  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.6, u * 0.9))}" result="d"/><feFlood flood-color="${GOLD}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(1, u * 2.2))}" result="b"/><feFlood flood-color="${HOLY}" flood-opacity=".85"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.8, u * 1.2))}" result="d"/><feFlood flood-color="${CRIMSON_D}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(1.4, u * 2.8))}" result="b"/><feFlood flood-color="${CRIMSON}"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
   const halo =
     `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD_D}" stroke-width="${n1(u * 3)}"/>` +
     `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD}" stroke-width="${n1(u * 1.6)}"/>`;
@@ -337,7 +340,7 @@ export function angelic(svg) {
     )
     .replace(/<\/svg>$/, `</g>${sparks}</svg>`);
 }
-/* the orb an Angelic weapon comes out of the machine as: a white-gold orb (css .l4orb.k-angel) with its halo, the
+/* the orb an Angelic weapon comes out of the machine as: a dark crimson orb (css .l4orb.k-angel) with its gold halo, the
    weapon's icon inside in its Angelic look */
 export const angelOrbHTML = (w) =>
   `<span class="l4orb k-angel"><i>${angelic(weaponIcon(w))}</i></span>`;

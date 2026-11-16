@@ -14970,11 +14970,12 @@ html.still:not(.low) .l4z.dead.nuked {
   --cl: #ffffff;
   --cd: #8a8aa0;
 }
-/* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): white-gold, its halo over it */
+/* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): dark crimson (21:47Z, was white-gold), its
+   gold halo over it */
 .l4orb.k-angel {
-  --c: #ffd86a;
-  --cl: #fffbe8;
-  --cd: #a07a1e;
+  --c: #9e1028;
+  --cl: #ff6f84;
+  --cd: #3e020c;
 }
 .l4orb.k-angel::before {
   content: "";
@@ -14987,7 +14988,7 @@ html.still:not(.low) .l4z.dead.nuked {
   border: 0.18rem solid #ffd86a;
   box-shadow:
     0 0 0 0.08rem #1c1c28,
-    0 0 0.5rem #fff3c4;
+    0 0 0.5rem #ff6f84;
 }
 .l4orb {
   position: relative;
@@ -15639,14 +15640,15 @@ html.still:not(.low) .l4z.dead.nuked {
   margin-top: 4px;
   white-space: nowrap;
 }
-/* an Angelic weapon's emoji icon in the weapons bar (l4ddbar.js): a white-gold glow and a small gold halo over it */
+/* an Angelic weapon's emoji icon in the weapons bar (l4ddbar.js): a dark crimson glow (the owner's, Nov 16 21:47Z) and a
+   small gold halo over it */
 .l4-holy {
   position: relative;
   display: grid;
   place-items: center;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 2px #ffd86a) drop-shadow(0 0 5px #fff3c4);
+  filter: drop-shadow(0 0 2px #5e0412) drop-shadow(0 0 5px #b0102a);
 }
 .l4-holy::before {
   content: "";
