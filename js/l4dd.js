@@ -91,6 +91,15 @@ import {
   PART_ICONS,
 } from "./l4ddpowerui.js";
 import { powerOn, pwState, partName, PW } from "./l4ddpower.js";
+import {
+  angelMount,
+  angelUnmount,
+  angelSee,
+  angelDraw,
+  angelTarget,
+  angelLabel,
+  angelTap,
+} from "./l4ddangelui.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
@@ -1409,7 +1418,9 @@ function holdTarget(pos, ctx) {
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
-  const pt = pwTarget(pos, s, NEAR); // (the power box, on the balcony: l4ddpowerui.js)
+  const pt =
+    pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
+    angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
   const now = clockNow(),
     db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
@@ -1450,8 +1461,9 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
   else if (t.kind === "power") pwTap(ctx);
+  else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["box", "take", "shop", "sk", "power"];
+const TAPS = ["box", "take", "shop", "sk", "power", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -1479,6 +1491,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);
+  if (t.kind === "angel") return angelLabel(s, ctx.me, heldFn());
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
@@ -1589,6 +1602,7 @@ activity({
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     pwMount(ctx, layer);
+    angelMount(ctx, layer);
     shop = shopEl(ctx);
     butler = butlerEl();
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -1627,6 +1641,7 @@ activity({
     cv?.remove();
     mapUnmount();
     pwUnmount();
+    angelUnmount();
     hud?.remove();
     over?.remove();
     closeShop();
@@ -1659,6 +1674,7 @@ activity({
     seeBoards(s);
     seeDrops(s);
     pwSee(s, ctx);
+    angelSee(s);
     ctx.world.board.classList.toggle("blackout", !powerOn(s)); // (the balcony's bulbs and the stage's lights: off till the power's on)
     seeOn(s, ctx);
     seeHud(s, ctx);
@@ -1839,6 +1855,7 @@ activity({
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);
+    angelDraw(ctx);
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");

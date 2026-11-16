@@ -681,6 +681,13 @@ for (const [k, dx] of [
 /* Dead Ducks Arcade's power box, back left on the balcony against the cabin wall (l4ddpower.js PW; l4ddpowerui.js draws
    it): only its footprint here, so nobody walks through it */
 onlyIn(1, () => add("l4power", 2266, 2208, 68, 28, 120, { solid: true }));
+/* … and its Angel machine on the stage, toward the back (l4ddangel.js ANGEL; l4ddangelui.js draws it) */
+onlyIn(1, () =>
+  add("l4angel", STAGE.cx - 130, STAGE.cy - 64, 100, 26, 140, {
+    solid: true,
+    ...IN,
+  }),
+);
 const GLOWS = []; // lights with no prop of their own: the south windows on the deck, the deck's string lights
 for (const x of WIN)
   GLOWS.push({
