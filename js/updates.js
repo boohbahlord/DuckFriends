@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v51",
+    version: 51,
+    date: "Nov 16, 2026",
+    title: "One pixel size",
+    news: [
+      "Every background now uses one pixel size: the main menu's ball pit no longer has bigger pixels than the room behind it.",
+      "For Dead Ducks Arcade: a yellow gas meter under the power box shows how many rounds of fuel are left.",
+    ],
+    fixed: [
+      "With Vote Mode & Map on, the results screen's bottom bar no longer grows over half the board and squeezes the controls into a thin column.",
+    ],
+  },
+  {
     id: "v50",
     version: 50,
     date: "Nov 16, 2026",
