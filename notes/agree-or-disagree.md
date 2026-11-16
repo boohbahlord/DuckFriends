@@ -4446,3 +4446,19 @@ Map; move them under a line below the other three, into the blue box) and laser-
 
 - Sent to Noah: Ether's Crossroads becomes a form of the Nous Within Kenoma map (its own background, Nous Within
   Kenoma's effects and UI), with Architectured, Ten, Chalice and the Fool.
+
+## Request (owner, 2026-11-16 15:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVwna3n2QVHgxXuG7GPaYpX), word for word
+(screenshot: /mnt/project-files/refs/2026-11-16-1540/specials-not-pixelated.png)
+> some things werent pixelated
+>
+> When shooting the chain gun in would you rather, the lines get cut off in the screen randomly and wont shoot in every direction, this has to be fixed and it should work in any game mode as it was meant to
+>
+> Guns vibrate the screen and everything still and animations work the same in every game mode. CHain gun doesnt shake the screen though which is a huge problem
+>
+> The grenade launcher will sometimes have the grenade fly out the side of the screen and then reappear on top of the player, which is wrong
+>
+> grenades and explosions should be able to hurt the player who launches them IF they are in it's radius, and it doesn't kill them in realm of the mad justin or in zombie mode but instead removes a half of their health rounded down.
+
+- Split (Adam): Solomon = PR C (chain gun lines/every direction in all modes, chain gun screen shake, grenade launcher
+  off-screen bug, self-damage: half HP rounded down in Mad God Justin and Dead Ducks Arcade). Noah = Specials icons and
+  tooltip not pixelated, plus a sweep for other missed icons.
