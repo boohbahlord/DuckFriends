@@ -4870,3 +4870,12 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 - Version 42: Miles Jr.'s #327. sfx.trombone (the Sad Trombone special), sfx.fire (the fire special) and sfx.burn
   (burning ducks) were already called but silent; now they have sounds. Asked the owner where else they should play.
 - Version 43: Solomon's #329 Angel machine + Angelic weapons (picks: no-mag guns and the double barrel +20% ammo, flamethrower 1/3 farther and 1.6x sooner, dual pistols 2 ammo a press, crit blast spares the shooter, ANGEL.GL_RADIUS 1/3 until the owner answers).
+
+## Owner, Nov 16 19:41Z (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtSKQqhrdKgYJfR4wkUh6EzU): the performance vote, go
+> U can see other players gun effects and animations and all those things matter ljke the data saving
+
+- Adam split the vote (notes in /mnt/project-files/notes/performance-vote.md). Solomon: line 5 and line 8. With Low
+  graphics or Data saving, on my own screen only in Dead Ducks Arcade: a dead zombie lies there solid and is gone at 2 s
+  (the Nuke's too; Low stops every animation, so it doesn't fade), the flamethrower's stream and its burning ground at
+  half their pixels, the flashlight cones one plain shade. Poor connection: my duck's updates every 600 ms instead of
+  220 ms while it stands still on the ground (moving stays at 220 ms). The rules are untouched.
