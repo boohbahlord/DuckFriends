@@ -4913,3 +4913,33 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 
 - Version 46: Solomon's #337 (spawn x2, fireplace part at the Butler for 750, Attack speed most 2).
+
+## Request (2026-11-16 21:47Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGgjwpY4sECrEb7mjf9SqM8): crits, misses, zombie HP, starting round (Dead Ducks Arcade)
+> there should be a percent chance that a bullet or melee misses, and it has a text that says "missed" in small white text over it's enemy, but the bullet (if it is a projectile, arrows or grenade launcher included) will keep traveling until it hits the next enemy or not, like usual, and it still has the same chance to miss again
+>
+> all melee have a crit chance
+>
+> for now on, every weapon has a 2.5% crit chance unless it damages reasonably slower, so melee, shotgun, double barrel shotgun, pistol, sniper, bow, all of those and more have 5% crit chance.
+> Every crit upgrade costs 600 and increases crit chance by 2.5% for every weapon that has crit chance, and that can only be done up to two times.
+>
+> The Angelic weapons now glow a dark crimson red around them AND have doubled crit chance (does not double the crit from the upgrade from Justin's butler.
+>
+> the miss chance (or critical failure) is 5% for things that damage faster (chain gun, ak47, so on) and is 2.5% for things that hit slower
+>
+> The cast iron pan has it's own system for crit and misses
+>
+> the zombie spawns has to be done differently because this is confusing in terms of the math, also i want zombies to spawn in faster after ten seconds for every beginning of the round,  so after ten seconds. 
+>
+> I also want zombies to have 3 hp by default, and there is 50% roll for chance they spawn with 4 hp, and another 50% roll after that one if they fail where they have 5 hp, and they get only 3 hp if they fail both those rolls. Simple code.
+>
+> In the lobby settings for the zombie game mode, the start on round is a drop down menu where you choose to start at rounds 1(default, and starts in round 0 like all of them), round 5, 9,13,and21. The rounds spawn in with the bonus points in round zero when you  choose to start on these rounds.
+>
+> the game when ur in it at round 0, you can see a button below exit cabin that says "change starting round", and doing so will change the starting round for players. Doing so starts a vote of "start at round {input round number voted here}" at the top middle of the screen, and players can vote yes or no in buttons on their screen's bottom middle like the vote buttons, saying no will just make it to where that player cannot vote for a starting round again, someone else needs to start it. if it is passed in round zero, only in round zero it could even be, then it will give points for that round INSIDE OF round 0, not waiting for the next round. Below the change starting round is a text that says in white letters "Starting round set to 1", and that text disapears when the first actual round starts where zombies spawn in, just like the change starting round button will disapear (a starting round vote being passed makes the vote starting round disapear but not the starting round set to {round number here})
+>
+> each round range is a difficulty, so players get 750 points at round 5, 1,750 at round 9, 2,500 points at round 13, and 5,000 points at round 21. 
+>
+> Let's figure out a new system for the zombies per round thing and also double the spawn rate for zombies after the first ten seconds
+
+- Adam: spec /mnt/project-files/notes/crits-misses-start-round.md. Solomon = crits, misses, zombie HP, upgrade; Jackal = starting
+  round setting and vote; Noah = Angelic crimson glow. New zombies-per-round system proposed to the owner first.
+- Decided (Jackal, from Adam's spec): "Start on round" 1/5/9/13/21 replaces Round 16 Start (l4r16); the bonus is given at once in round 0 (L.bonus, so a change gives or takes only the difference); the vote passes with the room's share of Yes, falls when it can't, lasts 30 s; one passed change per game; From round 13 on it counts toward the Round 16 Start stats.

@@ -134,7 +134,7 @@ const SKIP = 0.25;
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
-   cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (crit, and +5% for each Accuracy) kills at
+   cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (a crit: critOf, headOf) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
@@ -191,7 +191,6 @@ export const ARMS = {
     kind: "ranged",
     cool: ARM_COOL.handgun,
     dmg: 1,
-    crit: 0.05,
     speed: ARM_SPEED.handgun,
     mag: 8,
     all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
@@ -201,7 +200,6 @@ export const ARMS = {
     kind: "ranged",
     cool: ARM_COOL.bow,
     dmg: 1,
-    crit: 0.05,
     speed: ARM_SPEED.bow,
     all: 225, // (150, and 50% more with no magazine: the owner's, Nov 16)
   },
@@ -241,7 +239,6 @@ export const ARMS = {
     kind: "ranged",
     cool: 750,
     dmg: [2, 3],
-    crit: 0.05,
     speed: 1900,
     mag: 5,
     all: 24 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -254,7 +251,6 @@ export const ARMS = {
     auto: true,
     cool: 80,
     dmg: 1,
-    crit: 0.0175,
     speed: 1100,
     mag: 20,
     all: 160 + 5 * 20, // (5 more magazines: the owner's, Nov 16)
@@ -266,7 +262,6 @@ export const ARMS = {
     auto: true,
     cool: 110,
     dmg: 2,
-    crit: 0.03,
     speed: 1200,
     mag: 30,
     all: 180 + 5 * 30, // (5 more magazines: the owner's, Nov 16)
@@ -285,7 +280,6 @@ export const ARMS = {
     kind: "ranged",
     cool: 380,
     dmg: 2,
-    crit: 0.04,
     speed: 1150,
     mag: 5,
     all: 75 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -298,7 +292,6 @@ export const ARMS = {
     auto: true,
     cool: 100,
     dmg: 1,
-    crit: 0.0125,
     speed: 1150,
     mag: 75,
     all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
@@ -315,7 +308,6 @@ export const ARMS = {
     kind: "ranged",
     cool: 280,
     dmg: "all",
-    crit: 0.1,
     speed: 1500,
     mag: 2,
     all: 96,
@@ -332,7 +324,6 @@ export const ARMS = {
     kind: "ranged",
     cool: 420, // (from one burst to the next)
     dmg: 2,
-    crit: 0.03,
     speed: 1250,
     mag: 21,
     all: 21 * 10,
@@ -487,8 +478,8 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  { id: "acc", name: "Critical Chance", what: "+5% crits", most: 5 },
-  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5: a duck that bought more before keeps them)
+  { id: "acc", name: "Critical Chance", what: "+2.5% crits", most: 2 }, // (600 each, +2.5%, twice: the owner's, Nov 16 21:47Z)
+  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5)
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
@@ -525,17 +516,20 @@ export function gunPrice(s, id, w) {
   );
 }
 export const priceOf = (id, n) =>
-  Math.round(
-    UP_TIMES *
-      SHOP_MORE *
-      {
-        acc: 300 + 50 * n,
-        as: 250 + 50 * n,
-        hp: n ? 125 : 100,
-        sp: 250,
-        rl: 300,
-      }[id],
-  );
+  id === "acc"
+    ? ACC_PRICE
+    : Math.round(
+        UP_TIMES *
+          SHOP_MORE *
+          {
+            acc: 300 + 50 * n,
+            as: 250 + 50 * n,
+            hp: n ? 125 : 100,
+            sp: 250,
+            rl: 300,
+          }[id],
+      );
+const ACC_PRICE = 600; // (every Critical Chance the same: the owner's, Nov 16 21:47Z)
 const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
@@ -560,10 +554,12 @@ const SHOT_LIFE = 2000;
 const RX = 56,
   RY = 25.6,
   CLAW = 1.35;
+/* a new zombie's HP (the owner's, Nov 16 21:47Z): 3, then a 50% roll for 4; if that fails, a 50% roll for 5 */
 const hp0 = () => {
-  const r = Math.random();
-  return r < 0.05 ? 4 : r < 0.25 ? 3 : 2;
-}; // (the owner's: 2 HP, 20% 3, 5% 4)
+  if (Math.random() < 0.5) return 4;
+  if (Math.random() < 0.5) return 5;
+  return 3;
+};
 const ZHATS = [
   "cap",
   "cowboy",
@@ -1017,7 +1013,7 @@ export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
-   headshot chance (each Accuracy: 5% more, on every attack) */
+   headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
     ? ARMS[w].cool *
@@ -1034,10 +1030,42 @@ export const reloadOf = (s, id, w, c) =>
     : ARMS[w].reload || 1500) *
   (upOf(s, id).rl ? 0.7 : 1) *
   (angelOf(s, id, w) ? ANGEL.RELOAD : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster)
-const headOf = (s, id, w) =>
-  kindOf(w) === "grenade"
+/* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
+   that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
+   one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
+   the time, a fast weapon's 5%. The cast iron pan keeps its own: half its swings miss, half its hits crit. Every
+   weapon crits ("every weapon has a 2.5% crit chance unless it damages reasonably slower"): the chain gun and the
+   flamethrower the fast 2.5% (the flamethrower once, as a zombie catches its fire), the grenade launcher and the
+   grenade the slow 5%, each zombie in the blast (it dies anyway: a crit blows its head off). The flamethrower never
+   misses (the owner's misses are bullets and melee) */
+export const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
+export const MISS = { SLOW: 0.025, FAST: 0.05 };
+const fastArm = (w) => !!(ARMS[w] && (ARMS[w].auto || ARMS[w].burst));
+const canHit = (w) =>
+  !!ARMS[w] && (ARMS[w].kind === "melee" || ARMS[w].kind === "ranged");
+/* a weapon's own crit chance, and its miss chance (0: never) */
+export const critOf = (w) =>
+  w === "pan"
+    ? ARMS.pan.crit
+    : w === "grenade"
+      ? CRIT.SLOW
+      : !canHit(w)
+        ? 0
+        : fastArm(w)
+          ? CRIT.FAST
+          : CRIT.SLOW;
+export const missOf = (w) =>
+  !canHit(w) || w === "pan" || w === "flamer"
     ? 0
-    : ((ARMS[w] && ARMS[w].crit) || 0) + 0.05 * (upOf(s, id).acc || 0);
+    : fastArm(w)
+      ? MISS.FAST
+      : MISS.SLOW;
+const headOf = (s, id, w) => {
+  const own = critOf(w);
+  if (!own) return 0;
+  const holy = w !== "pan" && angelOf(s, id, w) ? 2 : 1; // (the pan has its own: not doubled)
+  return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
+};
 function addPts(s, id, n) {
   if (!n || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
@@ -1074,6 +1102,7 @@ function newRound(s, r, now, wait) {
     dq: dropPlan(),
     due: [],
     wait: null,
+    sv: null,
   };
   powerRound(s, r, now, PH);
 }
@@ -1087,8 +1116,8 @@ function bringBack(s, id, now, k, fresh) {
     s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
     s.hang.l4pt = {
       ...(s.hang.l4pt || {}),
-      [id]: isR16(s) && s.hang.l4 && s.hang.l4.r >= R16 ? R16_PTS : PTS.START,
-    }; // (Round 16 Start: a duck joining later gets its points too)
+      [id]: PTS.START + ((s.hang.l4 && s.hang.l4.bonus) || 0),
+    }; // (a starting round's bonus points: a duck joining later gets them too)
     s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} };
   } // (a ghost back at the next round keeps its weapons, its points and what it bought; its max HP went when it went down)
   if (s.players[id]) delete s.players[id].dead;
@@ -1357,15 +1386,49 @@ function setUp(s, now) {
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
   newRound(s, 0, now, 0);
-  s.hang.l4 = { ...s.hang.l4, n: 0, dq: [], wait: { r: 1, v: {} } }; // (round 0: no zombies until enough ducks are ready)
+  s.hang.l4 = {
+    ...s.hang.l4,
+    n: 0,
+    dq: [],
+    wait: { r: 1, v: {} },
+    sr: START_ROUNDS.includes(+s.options.l4start) ? +s.options.l4start : 1,
+    bonus: 0,
+    sv: null,
+    srNo: {},
+    srDone: 0,
+  }; // (round 0: no zombies until enough ducks are ready)
+  giveBonus(s, s.hang.l4.sr);
 }
-/* between rounds (and round 0, before the first): the next round waits until enough ducks press End turn (Ready in
-   round 0), the room's share (2 of 3 by default); with Round 16 Start on, round 0 goes on to round 16, everyone with
-   R16_PTS points (the owner's, Nov 3) */
-export const R16 = 16,
-  R16_PTS = 3000,
-  GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
-export const isR16 = (s) => !!(s && s.options && +s.options.l4r16);
+/* the starting round (the owner's, Nov 16): every game begins in round 0 and goes on to round `sr` (the "Start on round"
+   setting: 1, 5, 9, 13 or 21) once everyone is ready; a starting round past 1 gives every duck bonus points, in round 0
+   at once (L.bonus: what they were given, so changing the starting round gives or takes back only the difference) */
+export const START_ROUNDS = [1, 5, 9, 13, 21];
+export const START_PTS = { 1: 0, 5: 750, 9: 1750, 13: 2500, 21: 5000 };
+export const startOf = (s) => (s && s.hang && s.hang.l4 && s.hang.l4.sr) || 1;
+function giveBonus(s, sr) {
+  const L = s.hang.l4,
+    want = START_PTS[sr] || 0,
+    d = want - (L.bonus || 0);
+  if (d) {
+    const pt = { ...(s.hang.l4pt || {}) };
+    for (const id of players(s)) pt[id] = Math.max(0, (pt[id] || 0) + d);
+    s.hang.l4pt = pt;
+  }
+  s.hang.l4 = { ...L, bonus: want };
+}
+export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
+export const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
+/* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
+export const srOpen = (s) => {
+  const L = s.hang && s.hang.l4;
+  return !!L && L.r === 0 && !L.over && !!L.wait;
+};
+export const srVote = (s) => {
+  const L = s.hang && s.hang.l4;
+  return (srOpen(s) && L.sv) || null;
+};
+export const srCan = (s, id) =>
+  srOpen(s) && !srVote(s) && !s.hang.l4.srDone && !(s.hang.l4.srNo || {})[id];
 /* who End turn waits on: the fireplace's Justin never counts toward a turn */
 const voters = (s) => players(s).filter((id) => !isHelper(s, id));
 export const waitNeed = (s) =>
@@ -1377,18 +1440,16 @@ export const waitVotes = (s) => {
 function waitTick(s, now) {
   const L = s.hang.l4,
     w = L.wait;
-  if (!w || waitVotes(s) < waitNeed(s)) return false;
-  let r = w.r;
-  if (r === 1 && L.r === 0 && isR16(s)) {
-    r = R16;
-    const pt = {};
-    for (const id of players(s)) pt[id] = R16_PTS;
-    s.hang.l4pt = { ...(s.hang.l4pt || {}), ...pt };
+  if (!w) return false;
+  const v = L.sv;
+  if (v && L.r === 0 && now >= v.until) {
+    s.hang.l4 = { ...L, sv: null }; // (a vote that ran out: nothing changes)
+    return true;
   }
-  newRound(s, r, now, GO_MS);
+  if (waitVotes(s) < waitNeed(s)) return false;
+  newRound(s, L.r === 0 ? L.sr || 1 : w.r, now, GO_MS);
   return true;
 }
-
 rule("l4", {
   only: "l4dd",
   ghosts: true,
@@ -1423,6 +1484,21 @@ rule("l4", {
 });
 
 /* ---------- what a duck does: E (revive, board up), key 0 (the flashlight), Play again ---------- */
+/* a starting-round vote passes with the room's share of Yes (like End turn), and falls when that can't happen any more */
+function srCheck(s) {
+  const L = s.hang.l4,
+    sv = L.sv;
+  if (!sv) return;
+  const ids = voters(s),
+    yes = ids.filter((id) => sv.v[id] === 1).length,
+    no = ids.filter((id) => sv.v[id] === 0).length,
+    need = waitNeed(s);
+  if (yes >= need) {
+    s.hang.l4 = { ...L, sv: null, sr: sv.n, srDone: 1 }; // (passed: the button goes, the text stays)
+    giveBonus(s, sv.n);
+    s.options.l4start = sv.n; // (its stats and the setting follow)
+  } else if (ids.length - no < need) s.hang.l4 = { ...L, sv: null };
+}
 function l4Act(s, a, now) {
   const id = a.id,
     L = s.hang.l4,
@@ -1449,6 +1525,30 @@ function l4Act(s, a, now) {
     waitTick(s, now);
     return true;
   } // (End turn, or Ready in round 0; ghosts and downed ducks may press it too)
+  if (a.do === "sr") {
+    // Change starting round: a vote "Start at round N", the asker's Yes in it
+    const n = +a.n;
+    if (!START_ROUNDS.includes(n) || !srCan(s, id)) return false;
+    s.hang.l4 = {
+      ...L,
+      sv: { n, by: id, v: { [id]: 1 }, until: now + SR_VOTE_MS },
+    };
+    srCheck(s);
+    return true;
+  }
+  if (a.do === "srv") {
+    const sv = srVote(s);
+    if (!sv || (sv.v || {})[id] !== undefined || !voters(s).includes(id))
+      return false;
+    const no = a.on === false;
+    s.hang.l4 = {
+      ...L,
+      sv: { ...sv, v: { ...sv.v, [id]: no ? 0 : 1 } },
+      ...(no ? { srNo: { ...(L.srNo || {}), [id]: 1 } } : {}), // (a No: this duck can't start another one)
+    };
+    srCheck(s);
+    return true;
+  }
   if (a.do === "sk") {
     const p4 = s.hang.l4p || {},
       p = p4[id];
@@ -2036,6 +2136,20 @@ function headshot(s, by, w, z, now) {
   });
   return true;
 }
+/* a miss, now and then (missOf): the hit doesn't land, and every screen shows "missed" over that zombie */
+function missed(s, by, w, z, now) {
+  if (Math.random() >= missOf(w)) return false;
+  addFx(s, {
+    kind: "l4miss",
+    by,
+    z: z.i,
+    who: [],
+    t: now,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+  });
+  return true;
+}
 /* the chain gun: it hits at once, along the aim to the first zombie or wall (it kills that zombie); every screen draws
    the thin yellow line (the l4line fx) */
 function trace(s, id, px, py, dx, dy, hz, now) {
@@ -2043,7 +2157,8 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     zs = zombies(s),
     T = now - s.hang.l4.t0,
     most = angelOf(s, id, "chaingun") ? ANGEL.CHAIN : 1, // (Angelic: through two zombies, l4ddangel.js)
-    hits = [];
+    hits = [],
+    past = []; // (the ones it missed: it goes on past them)
   let x = px,
     y = py;
   for (let d = 0; d < A.far; d += 12) {
@@ -2056,13 +2171,21 @@ function trace(s, id, px, py, dx, dy, hz, now) {
       (z) =>
         z.st !== 3 &&
         !hits.includes(z) &&
+        !past.includes(z) &&
         Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
     );
-    if (hit) hits.push(hit);
+    if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
     if (hits.length >= most) break;
   }
   for (const hit of hits) {
-    strike(s, hit, A.dmg, false, id, "chaingun");
+    strike(
+      s,
+      hit,
+      A.dmg,
+      headshot(s, id, "chaingun", hit, now),
+      id,
+      "chaingun",
+    );
     die(hit, T);
   }
   if (hits.length) store(s, zs, true);
@@ -2258,7 +2381,7 @@ function light(s, z, by, now, fl = 0) {
 /* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit as a fireball
    lights one (1 HP as it's lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its
    fire spreads (the 4th: fl). True when it died */
-function catchFire(s, z, by, now, T) {
+function catchFire(s, z, by, now, T, w = "") {
   const F = s.hang.l4fire || {},
     f = (F.z || {})[z.i];
   if (f && now < f[0]) {
@@ -2269,7 +2392,8 @@ function catchFire(s, z, by, now, T) {
       }; // (a quarter second at a time: not a new object every puff)
     return false;
   }
-  if (strike(s, z, 1, false, by)) {
+  const head = !!w && headshot(s, by, w, z, now); // (the flamethrower's crit: once, as it catches fire)
+  if (strike(s, z, 1, head, by, head ? w : "")) {
     die(z, T);
     mark(s, z, "f0");
     return true;
@@ -2304,7 +2428,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       z.st !== 3 &&
       inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4)
     ) {
-      catchFire(s, z, id, now, T);
+      catchFire(s, z, id, now, T, "flamer");
       any = true;
     }
   if (any) store(s, zs, true);
@@ -2485,6 +2609,7 @@ function meleeHits(s, now) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
       if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
       k.hit.push(z.i);
+      if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
         : A.dmg; // (the fire axe: 1 to 4)
@@ -2562,6 +2687,14 @@ export function l4Shots(s, now) {
     grid = hitGrid(zs),
     keep = [],
     slugs = []; // (the double barrel's kills this beat: [x, y, crit])
+  /* does shot sh fly on past zombie z? It missed it, now or before (sh.ms: the ones it missed, each rolled once); then
+     it goes on to the next one, which rolls again */
+  const past = (sh, w, z) => {
+    if ((sh.ms || []).includes(z.i)) return true;
+    if (!missed(s, sh.by, w, z, now)) return false;
+    sh.ms = [...(sh.ms || []), z.i];
+    return true;
+  };
   let hitAny = false;
   for (const sh0 of list) {
     const sh = { ...sh0 },
@@ -2602,7 +2735,10 @@ export function l4Shots(s, now) {
           at = [x0 + ((x1 - x0) * (k - 1)) / n, y0 + ((y1 - y0) * (k - 1)) / n];
         else if (
           nearby(grid, zs, x, y).some(
-            (z) => z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
+            (z) =>
+              z.st !== 3 &&
+              Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+              !past(sh, "glauncher", z),
           )
         )
           at = [x, y];
@@ -2657,7 +2793,7 @@ export function l4Shots(s, now) {
            every zombie in its way (each once), killing each, until the wall */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
-          if (near(z) && !(sh.hit || []).includes(z.i)) {
+          if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const head = sh.crit || headshot(s, sh.by, w, z, now);
             sh.hit = [...(sh.hit || []), z.i];
             strike(s, z, z.hp, head, sh.by, w);
@@ -2685,7 +2821,7 @@ export function l4Shots(s, now) {
       if (pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
         for (const z of nearby(grid, zs, x, y))
-          if (near(z) && !(sh.hit || []).includes(z.i)) {
+          if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w))
               die(z, T);
@@ -2695,7 +2831,7 @@ export function l4Shots(s, now) {
         if ((sh.hit || []).length >= pierce) gone = true;
         continue;
       }
-      const z = nearby(grid, zs, x, y).find(near);
+      const z = nearby(grid, zs, x, y).find((z) => near(z) && !past(sh, w, z));
       if (z) {
         if (w === "fireball") {
           if (strike(s, z, 1, false, sh.by)) die(z, T);
@@ -2773,13 +2909,15 @@ function burnAt(s, by, x, y, now) {
    it, loses half its HP; true when it got any zombie */
 function boom(s, sh, bx, by, zs, T, now, wide = 1) {
   let any = false;
-  const gore = [];
+  const gore = [],
+    w = sh.k === "grenade" ? "grenade" : sh.k === "lgren" ? "glauncher" : ""; // (a crit for each zombie in it: the grenade's or the launcher's; not the Jaime Bomb's, nor the Angelic pistol's blast)
   for (const z of zs)
     if (
       z.st !== 3 &&
       Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide
     ) {
-      strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
+      const head = !!w && headshot(s, sh.by, w, z, now);
+      strike(s, z, z.hp, head, sh.by, head ? w : ""); // (all its HP: 5 points for each, or a headshot's)
       die(z, T);
       mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
       gore.push([Math.round(z.x), Math.round(z.y)]);

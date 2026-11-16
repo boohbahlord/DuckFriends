@@ -3509,6 +3509,16 @@ function playFx(f) {
     );
     fxl.append(word);
     setTimeout(() => word.remove(), 1200);
+  } else if (f.kind === "l4miss") {
+    /* a miss in Dead Ducks Arcade (the owner's, Nov 16 21:47Z): "missed", small and white over that zombie, rising and
+       fading as the HP numbers do */
+    if (!geo.hang) return;
+    const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
+      word = el(
+        `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">missed</div>`,
+      );
+    fxl.append(word);
+    setTimeout(() => word.remove(), 1100);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
   } else if (f.kind === "l4bite") {

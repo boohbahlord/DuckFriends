@@ -83,10 +83,10 @@ export const STAT_MODES = [
   ["l4dd", "Dead Ducks Arcade"],
   ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
 ];
-/* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies with that setting on */
+/* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies starting on round 13 or later */
 export const statMode = (s) => {
   const m = (s && s.options && s.options.mode) || "aod";
-  return m === "l4dd" && +s.options.l4r16 ? "l4r16" : m;
+  return m === "l4dd" && +s.options.l4start >= 13 ? "l4r16" : m;
 };
 export function cleanStats(o) {
   const out = {},

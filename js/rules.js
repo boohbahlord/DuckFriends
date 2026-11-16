@@ -271,7 +271,7 @@ export const OPTIONS_DEFAULT = {
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
-  l4r16: 0, // Quacky Zombies' Round 16 Start: 1 = after round 0's Ready it skips to round 16, everyone with 3,000 points
+  l4start: 1, // Quacky Zombies' Start on round: 1, 5, 9, 13 or 21 (round 0 goes on to it, everyone with bonus points: l4ddrules.js START_PTS)
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   tvWrite: 210, // Trivia: seconds to write the questions: 120, 210, 300 or 0 (no limit)
   tvMulti: 1, // … Multiple answers: 1 = a question can have several right answers (never all); 0 = exactly one
