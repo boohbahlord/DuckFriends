@@ -997,7 +997,13 @@ function gamePic(s, mode) {
 }
 
 /* ---------- the screen ---------- */
-const openFolds = new Set(["host:rules", "mode:rules"]); // (the categories left open, from one visit to the next)
+const openFolds = new Set([
+  "host:rules",
+  "mode:rules",
+  "cat:social",
+  "cat:comp",
+  "cat:special",
+]); // (the categories left open, from one visit to the next)
 /* the Modes in Random & Vote row's value: All, or how many are on */
 const poolVal = (s) => {
   const all = MODES,
@@ -1181,18 +1187,28 @@ export function openGameSettings(R, start = null) {
         head("Vote Mode & Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="vote" data-v="vote"', "Vote Mode & Map", voting(s) ? "On" : "Off", voting(s), !host() || dodOn(s, "vote"))}</ul>${voting(s) ? VOTE_SETS.map((x) => tiles(s, x)).join("") : ""}</div>`
       );
+    /* Game mode: each category (Social, Social Competitive, Special) is a heading with an arrow that folds its modes
+       away; they start open, with their modes listed under them (owner, Nov 16 22:36Z) */
     if (page === "mode") {
-      const cur = modeOf(o.mode).cat;
+      const dis = !host() || dodOn(s, "vote");
       return (
         head("Game mode") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", !host() || dodOn(s, "vote"))}${LINE}${CATS.map(
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", dis)}${LINE}</ul>${CATS.map(
           ([id, name]) =>
-            row(
-              `data-cat="${id}"`,
-              name,
-              !o.modePick && cur === id ? modeOf(o.mode).name : "",
-            ),
-        ).join("")}</ul></div>`
+            `<details class="arm-fold gs-fold gs-cat" data-fold="cat:${id}"${openFolds.has("cat:" + id) ? " open" : ""}><summary>${esc(name)}</summary><ul class="arm-list">${MODES.filter(
+              (m) => m.cat === id,
+            )
+              .map((m) =>
+                row(
+                  `data-mode="${m.id}"`,
+                  m.name,
+                  "",
+                  !o.modePick && o.mode === m.id,
+                  dis,
+                ),
+              )
+              .join("")}</ul></details>`,
+        ).join("")}</div>`
       );
     }
     if (page.startsWith("cat:")) {
@@ -1403,7 +1419,8 @@ export function openGameSettings(R, start = null) {
       W,
       (peekSel && menu.querySelector(peekSel)) ||
         menu.querySelector('.arm-row[aria-pressed="true"]') ||
-        (page === "mode" && menu.querySelector(`[data-cat="${cat}"]`)) ||
+        (page === "mode" &&
+          menu.querySelector(`[data-fold="cat:${cat}"] > summary`)) ||
         (!page && menu.querySelector('[data-p="mode"]')),
     );
   };
