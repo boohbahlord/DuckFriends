@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v34",
+    version: 34,
+    date: "Nov 16, 2026",
+    title: "Pixel emoji and tips",
+    news: [
+      "Every emoji is now pixel art too, like the Specials icons (ducklings, coffee, the jumps).",
+      "Hover tips are sharp pixel letters now.",
+      "Card patterns and card pictures are pixelated.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v33",
     version: 33,
     date: "Nov 16, 2026",

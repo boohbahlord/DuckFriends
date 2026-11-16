@@ -4694,3 +4694,21 @@ Solomon.)
   drawn on whole screen pixels (each of the font's pixels one screen pixel, or more on sharp screens), still at reading
   size (the owner's "128" for words). A card's pattern or picture (player cards, the Card page's swatches) goes through
   the grid filter too. Swept Customize (every page), Updates, the lobby, Game Settings and a game: nothing else missed.
+
+## Request (owner, 2026-11-16 16:25Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt34gKjRCDHvNKZYXnC2PEaG), word for word
+> double barrel is something we will do, and it does max damage with a slug round every time, and a crit has it's slug round pass through zombies in a way the sniper does, killing every zombie it passes through, and it gets to shells per shot for the double barrell before a two second reload, with one second being one shell and two seconds being two shells. There are 96 shells of ammo for the double barrel and it sends zombies backwards a lot after killing them, like the grenade does, and it does a lot of gore by blowing chunks through the ducks. crit only blows the head off but it makes it more bloody and it sprays blood and chunks from the head more then other crits. The double barrel is obviously awesome.
+>
+> the flame thrower will be a weapon with a tank at 100%, and every second is 2%, and it shoots further the longer you hold it, and how fast is spews out the flame is based on a exponential growth. Each flame is a pixel, and it spews it out in a cone shope that has every pixel after it's center chunks of width of cone half as likely as the last before it to spawn in from around that cone, and any zombie in the fire catches on fire and gets usual fire damage effects. There is also smoke seen from this flamethrower that spews napalm and the ground it shoots out from is set on fire for five seconds. The flamethrower makes the screen of a player outside of zombies blink in and out of crimson red while the screen shakes. They get the burnt effect also. The flamethrower is in a bag with the chain gun and thus is shuffled with it in the fireplace. Zombies that touch another on fire also catch the flames of a flamethrower and it spreads amongst them.
+>
+> The burst rifle can be a gun yeah, and it is based on a aug gun, and it has 21 rounds per clip and does as much damage as an ak-47.
+>
+> creative ideas for more guns ?
+>
+> What items in the item bag should be removed?
+
+- Split (Adam): Solomon = PR F rules for the double barrel, flamethrower, burst rifle (AUG); Noah = their art after
+  gore + melee art. Answered: more gun ideas (Quack Zapper, Rubber Duck Launcher, Harpoon Gun, Bubble Blaster, Nail
+  Gun, Leaf Blower, Freeze Ray, Bread Lobber); items to remove suggested: Chair, Long jump, Fireball. Waiting on the
+  owner's picks.
+- Version 34: Noah's pixel sweep #306 (emoji, hover tips, card patterns), from the owner's 15:40Z "some things werent
+  pixelated".
