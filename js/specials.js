@@ -665,6 +665,13 @@ const WGUN = ([a, b]) =>
   `<svg viewBox="0 0 40 24"><path d="M4 8h24l4-3h5v8h-5l-2 2H18l-2 7h-6l2-7H4Z" fill="${a}" stroke="#1c1c28" stroke-width="1.5" stroke-linejoin="round"/><rect x="12" y="2" width="9" height="6" rx="2" fill="${b}" stroke="#1c1c28" stroke-width="1.3"/></svg>`;
 const PISTOL = ([a, b]) =>
   `<svg viewBox="0 0 40 24"><path d="M17 11l-2 10H8l2-10Z" fill="${b}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 5h30v6H4Z" fill="${a}" stroke="#0e0e14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11l4 4" stroke="#0e0e14" stroke-width="1.4"/></svg>`;
+/* the Angelic default pistol (the owner's, Nov 16): two pistols, one in each hand, the far one a little behind and
+   up, darker. As wide in the hand as 0.5 duck sizes (one pistol is 0.34) */
+export function dualPistolHTML(duck) {
+  const c = colorsOf(duck, "handgun"),
+    one = PISTOL(c).replace(/^<svg[^>]*>|<\/svg>$/g, "");
+  return `<svg viewBox="0 0 48 30"><defs><filter id="dual-far"><feComponentTransfer><feFuncR type="linear" slope=".62"/><feFuncG type="linear" slope=".62"/><feFuncB type="linear" slope=".62"/></feComponentTransfer></filter></defs><g transform="translate(8 0)" filter="url(#dual-far)">${one}</g><g transform="translate(0 6)">${one}</g></svg>`;
+}
 const DOG =
   '<svg viewBox="0 0 40 20"><rect x="2" y="5" width="36" height="10" rx="5" fill="#eab36a" stroke="#1c1c28" stroke-width="1.4"/><rect x="5" y="7" width="30" height="6" rx="3" fill="#c0502b"/><path d="M7 9l3 2 3-2 3 2 3-2 3 2 3-2 3 2 3-2" stroke="#ffd23f" stroke-width="1.4" fill="none"/></svg>';
 export function pressFX(id, x, y, size, face, duck) {

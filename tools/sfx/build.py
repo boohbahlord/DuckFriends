@@ -1061,6 +1061,89 @@ SOUNDS = {
             "https://freesound.org/people/alienistcog/sounds/124711/",
         ),
     ),
+    # ==== batch 6: Dead Ducks Arcade's power box and the Angel machine (the owner, Nov 16 17:22Z) ====
+    # the power on: the breaker thrown, a motor starting, the machines' hum coming up under it
+    "powerUp": dict(
+        layers=[
+            (KI + "impactMetal_heavy_002.ogg", 0, 0.5, 0, 0.8, 2000),
+            ("gh:power/motor_start_ping.ogg", 0, 1.7, 0.05, 1),
+            ("gh:power-hum/machinery.ogg~2.2", 0, 2.2, 0.35, 0.45, 1500),
+        ],
+        credit=(
+            "CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); "
+            "Kenney, Impact Sounds (both via CDDA-Soundpacks)",
+            "https://freesound.org/s/619835/",
+        ),
+    ),
+    # the power out: the breaker drops and the machine winds down to a stop (the owner: "sound like the machine went off")
+    "powerDown": dict(
+        layers=[
+            (KI + "impactMetal_heavy_003.ogg", 0, 0.5, 0, 0.7, 1800),
+            ("gh:power/engine_stop_combustion.ogg", 0.4, 1.6, 0.03, 1, 3000),
+        ],
+        credit=(
+            "GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds",
+            "https://freesound.org/people/GiocoSound/sounds/401553/",
+        ),
+    ),
+    # a part (or a jerry can) picked up: a grab and a little clink
+    "partGot": dict(
+        layers=[
+            (KR + "handleSmallLeather.ogg", 0, 0.4, 0, 1),
+            (KI + "impactMetal_light_002.ogg", 0, 0.3, 0.06, 0.5),
+        ],
+        credit=("Kenney, RPG Audio and Impact Sounds", KENNEY_RPG),
+    ),
+    # a part fitted into the box: set in, latched
+    "partIn": dict(
+        layers=[
+            (KI + "impactPlate_medium_000.ogg", 0, 0.3, 0, 0.8, 2500),
+            (KR + "metalLatch.ogg", 0.03, 0.2, 0.14, 1),
+            (C3, 19.78, 0.15, 0.3, 0.6),
+        ],
+        credit=(
+            "Kenney, Impact Sounds and RPG Audio; LFA, Equipment Clicks III",
+            OGA_URL["clicks3"],
+        ),
+    ),
+    # gas poured in: the cap off, the stream, the can glugging
+    "gasPour": dict(
+        layers=[
+            ("oga:drink/bottle-open-01.flac", 0.25, 0.4, 0, 0.7),
+            ("gh:pour/tap-water-2.opus", 2.5, 1.6, 0.3, 0.8, 2500),
+            ("oga:drink/Drink_01.wav", 0.05, 0.45, 0.6, 0.6, 2000),
+            ("oga:drink/Drink_02.wav", 0, 0.44, 1.15, 0.6, 2000),
+        ],
+        credit=(
+            "Owlish Media, tap water and drinks; qubodup, Liquid bottle drink set (bottle-open-01)",
+            "https://opengameart.org/content/202-more-sound-effects",
+        ),
+    ),
+    # the Angel machine at work, its whole 5 s: the machine's hum, its glow rising, sparks snapping
+    "angelWork": dict(
+        layers=[
+            ("gh:power-hum/machinery.ogg~5", 0, 5.0, 0, 0.6, 1500),
+            ("gh:angel/charge.opus", 0, 4.1, 0.2, 0.45),
+            ("gh:angel/snaploop.opus", 0.4, 4.4, 0.4, 0.7),
+        ],
+        lp=7000,
+        kbps=48,
+        credit=(
+            "joe_anderson22, machinery (freesound 392983); Electricity Game Sound Pack (charge, snaploop)",
+            "https://opengameart.org/content/electricity-game-sound-pack",
+        ),
+    ),
+    # the orb out: a magic shimmer and a zap
+    "angelOrb": dict(
+        layers=[
+            ("gh:angel/magical_1.opus", 0.05, 1.5, 0, 1),
+            ("gh:angel/teleport.opus", 0, 0.7, 0, 0.4),
+        ],
+        credit=(
+            "JaggedStone, Magic Spell SFX (magical_1); Electricity Game Sound Pack (teleport)",
+            "https://opengameart.org/content/magic-spell-sfx",
+        ),
+    ),
 }
 
 

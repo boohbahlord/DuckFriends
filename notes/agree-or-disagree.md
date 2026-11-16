@@ -4862,3 +4862,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 
 - Version 40: Noah's #322, knocked-off hats no longer also drawn on Blocks, 2D shape and Dat Boi ducks (owner 17:29Z).
+- Version 41: Solomon's #325 power box PR 1 (with Noah's #323 art and Miles Jr.'s #319 sounds). Angel machine = PR 2, next.

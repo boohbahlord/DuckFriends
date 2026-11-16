@@ -153,6 +153,14 @@ export const VOL = {
   hiss: -14,
   static: -32, // (the TV with no channel, on a loop: a quiet, even hiss)
   hum: -24, // (the power box's transformer, on a loop)
+  // the power coming on and going out (Duck Cabin's box and Dead Ducks Arcade's), its parts, the Angel machine
+  powerUp: -12,
+  powerDown: -12,
+  partGot: -14,
+  partIn: -12,
+  gasPour: -14,
+  angelWork: -13,
+  angelOrb: -11,
   quack: -10, // (real ducks: the Sound special, a duel)
 };
 /* names some callers use for a sound that is another's (Justin's gunshot is the handgun's) */
@@ -196,11 +204,13 @@ const GROUPS = {
       "l4slot",
     ],
     ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
+    ...["powerUp", "powerDown", "partGot", "partIn", "gasPour"],
+    ...["angelWork", "angelOrb"],
   ],
   cabin: [
     ...["lampOn", "lampOff", "lever", "fireOut", "candleOut", "relight"],
     ...["tvClick", "card", "chips", "bite", "gulp", "whoosh", "swipe"],
-    ...["meow", "purr", "hiss", "static", "hum"],
+    ...["meow", "purr", "hiss", "static", "hum", "powerUp", "powerDown"],
   ],
 };
 const LEAD = 0.03; // s: every sound is set this far ahead of the clock (set for "now", its fade-in is skipped: a pop)
@@ -498,7 +508,7 @@ function reload(w, o = {}) {
   if (!RELOAD[w]) return null;
   const rate =
     o.secs > 0 && RELOAD_S[w]
-      ? Math.min(1.5, Math.max(0.85, RELOAD_S[w] / o.secs))
+      ? Math.min(1.8, Math.max(0.85, RELOAD_S[w] / o.secs)) // (an Angelic gun's is 20% faster, with Faster reload more)
       : 0;
   return play(RELOAD[w], { ...o, ...(rate ? { rate } : {}) });
 }

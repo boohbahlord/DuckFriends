@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v41",
+    version: 41,
+    date: "Nov 16, 2026",
+    title: "The power box",
+    news: [
+      "For Dead Ducks Arcade: the power box on the balcony works. Find its four parts (a fuse, a lever, a tool box and a gas can) at the Butler's, on a zombie in the first five rounds, or around the cabin. Press E at the box to fit them and turn the power on: the lights and the TV come on for 6 rounds.",
+      "For Dead Ducks Arcade: once the power runs out, jerry cans turn up (from the fireplace, zombies, or around the cabin). Pour one in to bring the power back for as many rounds as it holds.",
+      "For Dead Ducks Arcade: the power box has its sounds: parts picked up and fitted, gas poured, the power coming on and going out.",
+      "Duck Cabin's power box now sounds as the power comes on and goes out.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v40",
     version: 40,
     date: "Nov 16, 2026",
