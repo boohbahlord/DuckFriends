@@ -899,7 +899,7 @@ function panRows(pos, now) {
 }
 const TAG_ROOM = 24; // px under a duck's feet: its name tag
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
-function place(p, i, n) {
+function place(p, i, n, free = false) {
   if (geo && geo.hang) return world.place(p); // Hangout: through the camera
   if (geo && geo.sc) {
     // Story Chain: y runs down the rows, each row the same share of it
@@ -920,7 +920,7 @@ function place(p, i, n) {
       top: geo.tl.t + tvFeet(p.y) - scY,
     }; // Trivia: down the rows, as tall as each one is
   const { W, H, top0, size, labelH, qp } = geo;
-  if (p.x < 0) p = { ...p, x: startX(R.state) }; // (ducks start on the board; this only covers an old state)
+  if (p.x < 0 && !free) p = { ...p, x: startX(R.state) }; // (ducks start on the board; this only covers an old state. free: a shot or a blast, which can be off the board)
   if (qp) {
     const w = W - qp.l - qp.r,
       h = H - qp.t - qp.b;
@@ -928,6 +928,11 @@ function place(p, i, n) {
       ? { left: qp.l + p.y * w, top: top0 + qp.t + (1 - p.x) * h }
       : { left: qp.l + p.x * w, top: top0 + qp.t + p.y * h };
   } // on Who is the Quack?'s tiles
+  if (turned() && free)
+    return {
+      left: W * (0.1 + p.y * 0.8),
+      top: top0 + H * (1 - p.x) + size * 0.45,
+    }; // (a shot or a blast: where it is, on the board or off it)
   if (turned())
     return {
       left: W * (0.1 + p.y * 0.8),
@@ -1893,7 +1898,9 @@ function drawDucks(now = clockNow()) {
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
     const at = shotAt(sh, now - sh.t),
-      a = hang ? world.place(at, sh.hz) : place({ x: at.x, y: at.y }, 0, 1),
+      a = hang
+        ? world.place(at, sh.hz)
+        : place({ x: at.x, y: at.y }, 0, 1, true), // (free: past the board's left edge it flies on, never back to where ducks start)
       top = a.top - at.z * size; // (Hangout: at the height it was fired from)
     if (hang && world.hidden("", at)) continue; // (on the other side of the cabin's walls)
     if (
@@ -2935,7 +2942,7 @@ function playFx(f) {
     if (!board) return;
     const at = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
-      : place({ x: f.x, y: f.y }, 0, 1);
+      : place({ x: f.x, y: f.y }, 0, 1, true);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
     sfx.boom();
     if (geo.hang)
@@ -3195,11 +3202,34 @@ function playFx(f) {
     /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
        hit, and one or two shorter ones pointing a little off to the sides */
     if (!geo.hang && !f.b) return;
+    /* a shot that went on past the board's edge: place() only knows the board (it pins a spot off it to the edge, or
+       to where ducks start), so I aim the line by a short step along it, still on the board, and it runs on that way
+       past the screen's edge */
+    const off = (v) => v < 0 || v > 1,
+      past = !!f.b && (off(f.x1) || off(f.y1)),
+      step = past
+        ? Math.min(
+            0.05 / (Math.hypot(f.x1 - f.x0, f.y1 - f.y0) || 1),
+            ...[
+              [f.x0, f.x1],
+              [f.y0, f.y1],
+            ].map(([v0, v1]) =>
+              v1 > v0 ? (1 - v0) / (v1 - v0) : v1 < v0 ? v0 / (v0 - v1) : 1,
+            ),
+          )
+        : 1;
     const a = f.b
         ? place({ x: f.x0, y: f.y0 }, 0, 1)
         : world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
       b = f.b
-        ? place({ x: f.x1, y: f.y1 }, 0, 1)
+        ? place(
+            {
+              x: f.x0 + (f.x1 - f.x0) * step,
+              y: f.y0 + (f.y1 - f.y0) * step,
+            },
+            0,
+            1,
+          )
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41,
       gun = fxl.querySelector(
@@ -3210,9 +3240,13 @@ function playFx(f) {
         a.top - up,
         Math.atan2(b.top - a.top, b.left - a.left),
       ];
-    let ang = Math.atan2(b.top - up - y0, b.left - x0),
-      far = Math.hypot(b.left - x0, b.top - up - y0);
-    if (Math.cos(ang - aim) < 0.5) {
+    let ang = past
+        ? Math.atan2(b.top - a.top, b.left - a.left)
+        : Math.atan2(b.top - up - y0, b.left - x0),
+      far = past
+        ? Math.hypot(geo.W, geo.H) * 1.5
+        : Math.hypot(b.left - x0, b.top - up - y0);
+    if (!past && Math.cos(ang - aim) < 0.5) {
       // (what it hit is beside the barrel or behind its end: the lines still only go forward)
       ang = aim;
       far = size * 0.8;
@@ -3228,13 +3262,14 @@ function playFx(f) {
     fxMuzzle(x0, y0, ang, "chaingun");
     kick(f.by, "chaingun", now);
     if (f.by === R.me) shake(MUZZLE.chaingun.shake);
-    fxImpact(
-      x0 + Math.cos(ang) * far,
-      y0 + up + Math.sin(ang) * far,
-      "chaingun",
-      Math.cos(ang),
-      Math.sin(ang),
-    ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
+    if (!past)
+      fxImpact(
+        x0 + Math.cos(ang) * far,
+        y0 + up + Math.sin(ang) * far,
+        "chaingun",
+        Math.cos(ang),
+        Math.sin(ang),
+      ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
     for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
       line(
         (Math.random() - 0.5) * TRACE.spread,

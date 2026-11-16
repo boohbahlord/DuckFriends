@@ -4435,3 +4435,24 @@ God Justin's weapons.
   Damage to Justin: AK 2, sniper 2 or 3, LMG 1, pellets 1, chain gun 1 a bullet, grenade launcher blast 3; its grenade
   goes off on him, never on a teammate. The medkit heals to full (kept if not hurt), and with it out in hand the Revive
   gets a downed duck up at once at full HP and uses it up.
+
+## Nov 16 2026, 15:40Z: chain gun, grenade launcher, blasts (Solomon the 2nd, PR C)
+
+> some things werent pixelated
+>
+> When shooting the chain gun in would you rather, the lines get cut off in the screen randomly and wont shoot in every direction, this has to be fixed and it should work in any game mode as it was meant to
+>
+> Guns vibrate the screen and everything still and animations work the same in every game mode. CHain gun doesnt shake the screen though which is a huge problem
+>
+> The grenade launcher will sometimes have the grenade fly out the side of the screen and then reappear on top of the player, which is wrong
+>
+> grenades and explosions should be able to hurt the player who launches them IF they are in it's radius, and it doesn't kill them in realm of the mad justin or in zombie mode but instead removes a half of their health rounded down.
+
+- PR C (Solomon the 2nd; the "some things werent pixelated" line wasn't part of it). Causes: game.js place() pins a
+  spot off the board (x < 0 goes to where ducks start; on a phone held upright y is clamped), so the chain gun's
+  line to a point past the board's edge got a wrong direction and fell back to a short stub, and a launcher grenade
+  past the left edge was drawn back on the ducks' start. place() takes `free` for shots and blasts now, and the chain
+  gun's line aims by a short step still on the board and runs on to the screen's edge. Its screen shake was 0.13 a
+  shot, less than the shake fades between shots (2.4 a second at 15 a second), so it never built up: now 0.3.
+  Own blasts: in Mad God Justin (mgjHalf) and Dead Ducks Arcade (l4ddrules boom) the thrower in the radius loses half
+  its HP rounded down and is never downed by it; every other mode already hurt the thrower as anyone else.

@@ -131,6 +131,20 @@ export function mgjSoak(s, id, now, dmg = 1) {
   m.lost = { ...m.lost, [id]: lost };
   return true;
 }
+/* my own grenade's blast on me: half my HP, rounded down, and never down by it (the owner's, Nov 16); true when it took
+   any */
+export function mgjHalf(s, id, now) {
+  const max = mgjPHp(s),
+    m = s.mgj,
+    P = s.players[id];
+  if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
+  const lost = (m.lost || {})[id] || 0,
+    cut = Math.floor((max - lost) / 2);
+  if (!cut) return false;
+  m.lost = { ...m.lost, [id]: lost + cut };
+  hurtFx(s, id, now);
+  return true;
+}
 /* however it went down (his meteor too), a duck stands up with the HP it had; one out of HP stays down (true: it stays) */
 export const mgjOut = (s, id) =>
   !!(isMgj(s) && s.mgj && s.mgj.out && s.mgj.out[id]);

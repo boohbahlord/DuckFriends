@@ -165,6 +165,7 @@ import {
   CAKE_SPEED,
   CAKE_EAT_MS,
   MGJ_GUNS,
+  mgjHalf,
   mgjMag,
   ammoOf,
   mgjSpend,
@@ -3380,7 +3381,8 @@ function blast(s, sh, x, y, now, o = {}) {
     const p = s.pos[id],
       P = s.players[id];
     if (!p || p.x < 0 || !P || isGhost(s, id)) continue;
-    if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
+    const self = id === sh.by && (w === "grenade" || w === "glauncher"); // (my own grenade hurts me too: the owner's, Nov 16)
+    if (isMgj(s) && sh.by !== JUSTIN_ID && !self) continue; // (Mad God Justin: the ducks are on one side)
     if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
     const n = near(
       p.x,
@@ -3389,7 +3391,11 @@ function blast(s, sh, x, y, now, o = {}) {
       hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
     );
     if (!n) continue;
-    if (!P.dead) logHit(s, sh.by, id, now);
+    if (self && isMgj(s)) {
+      if (mgjHalf(s, id, now)) hit.push(id);
+      continue;
+    } // (Mad God Justin: half my HP, rounded down, never down by it; no knock-back)
+    if (!P.dead && !self) logHit(s, sh.by, id, now);
     const killed =
       !P.dead && !soaks(s, id, now, o.max ? PHP : dmgOf(s, "grenade"));
     if (P.dead || killed) {
