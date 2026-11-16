@@ -62,6 +62,7 @@ instruments (its license: LICENSES.md).
 | boom | TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, explosionCrunch_000) — https://opengameart.org/content/explosion-0 | CC0 1.0 |
 | meteor | TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion3); Kenney, Sci-fi Sounds (lowFrequency_explosion_000); rubberduck, 25 CC0 bang / firework SFX (cannon_01); NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/explosion-0 | CC0 1.0 |
 | nuke | TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion1); Kenney, Sci-fi Sounds (lowFrequency_explosion_000); NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/explosion-0 | CC0 1.0 |
+| nukeRing | GeneralUser GS SoundFont (S. Christian Collins) | GeneralUser GS license |
 | chomp | StarNinjas, 7 Eating Crunches — https://opengameart.org/content/7-eating-crunches | CC0 1.0 |
 | sip | qubodup, Liquid / bottle / drink set — https://opengameart.org/content/liquid-bottle-drink-set | CC0 1.0 |
 | uiPress | Kenney, UI Audio (click3) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
@@ -76,3 +77,25 @@ instruments (its license: LICENSES.md).
 | ping | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | pop | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | boop | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| l4crack | rubberduck, 100 CC0 metal and wood SFX and 75 CC0 breaking / falling / hit SFX; Independent.nu, 35 wooden cracks, hits, destructions — https://opengameart.org/content/100-cc0-metal-and-wood-sfx | CC0 1.0 |
+| l4nail | bart, 68 Workshop Sounds (wood hammering); Kenney, Impact Sounds (impactPlank_medium) — https://opengameart.org/content/68-workshop-sounds | CC0 1.0 |
+| l4groan | artisticdude, Zombies Sound Pack — https://opengameart.org/content/zombies-sound-pack | CC0 1.0 |
+| l4slot | Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| l4till | Kenney, RPG Audio (handleCoins) and Interface Sounds (glass) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| dropIn | Kenney, Interface Sounds (glass) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| dropGot | Kenney, Music Jingles (steel) — https://kenney.nl/assets/music-jingles | CC0 1.0 |
+| flashOn | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| flashOff | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| lampOn | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
+| lampOff | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
+| lever | Kenney, Impact Sounds (impactMetal_heavy) and RPG Audio (metalLatch) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| fireOut | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
+| candleOut | artisticdude, Swishes Sound Pack — https://opengameart.org/content/swishes-sound-pack | CC0 1.0 |
+| relight | Kenney, Interface Sounds (scratch); qubodup, Swish: bamboo stick weapon swooshes (swosh-01) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| tvClick | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
+| card | Kenney, Casino Audio (cardPlace) — https://kenney.nl/assets/casino-audio | CC0 1.0 |
+| chips | Kenney, Casino Audio (chipsStack) — https://kenney.nl/assets/casino-audio | CC0 1.0 |
+| bite | StarNinjas, 7 Eating Crunches — https://opengameart.org/content/7-eating-crunches | CC0 1.0 |
+| gulp | qubodup, Liquid / bottle / drink set — https://opengameart.org/content/liquid-bottle-drink-set | CC0 1.0 |
+| whoosh | qubodup, Swish: bamboo stick weapon swooshes (swosh-01) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
+| swipe | qubodup, Swish: bamboo stick weapon swooshes (swosh-10) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
