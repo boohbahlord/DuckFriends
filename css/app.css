@@ -17098,3 +17098,8 @@ html.pixel .vt button {
 html.pixel.armed :is(.board, .hang-board) {
   cursor: var(--cur-cross), crosshair;
 }
+/* the stats screen's line about when the ducks vote on the next game (Vote return): a line of its own under the buttons */
+.act-row .vote-back-note {
+  flex-basis: 100%;
+  text-align: center;
+}

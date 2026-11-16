@@ -388,7 +388,7 @@ export const voteModes = (s) => {
 export const voteIds = (s, k) => (k === "mode" ? voteModes(s) : VOTE_MAPS);
 /* the time a vote shows */
 export const voteLeft = (s, now) => Math.max(0, s.ends - now);
-const votesDue = (s) =>
+export const votesDue = (s) =>
   [
     s.options.modePick === "vote" && "mode",
     s.options.mapPick === "vote" && "map",
@@ -2365,8 +2365,18 @@ export function reduce(state, a, now = Date.now()) {
         if (!P[a.target] || a.target === a.id) return state;
         if (humanIds(s).length <= 2) return state; // two people: no kick vote (it would pass on the starter's vote alone)
         if (used.kick !== undefined && s.round - used.kick < 2) return state; // one kick vote every two rounds
-      } else if (a.kind === "lobby" || a.kind === "skip" || a.kind === "turn") {
+      } else if (
+        a.kind === "lobby" ||
+        a.kind === "skip" ||
+        a.kind === "turn" ||
+        a.kind === "newgame"
+      ) {
         if (a.kind === "turn" && isBb(s)) return state; // (not in Bicker Brackets)
+        if (
+          a.kind === "newgame" &&
+          (!votesDue(s).length || s.phase !== "results")
+        )
+          return state; // (Vote for a new game now: only on the stats screen, while the ducks vote on games or maps)
         if (a.kind !== "lobby" && isHang(s)) return state; // (Hangout has no turns or rounds to skip)
         if (used[a.kind] === tk) return state; // one back-to-lobby (or skip) vote a turn
       } else return state;
@@ -2392,7 +2402,9 @@ export function reduce(state, a, now = Date.now()) {
             ? `${me.name} started a vote to skip this round.`
             : a.kind === "turn"
               ? `${me.name} started a vote to skip this turn.`
-              : `${me.name} started a vote to go back to the lobby.`,
+              : a.kind === "newgame"
+                ? `${me.name} started a vote for a new ${votesDue(s).includes("mode") ? "game" : "map"} now.`
+                : `${me.name} started a vote to go back to the lobby.`,
       );
       return settleVote(s, now);
     }
@@ -4371,6 +4383,15 @@ function settleVote(s, now) {
       return advance(s, now);
     }
     if (v.kind === "skip") return skipRound(s, now);
+    if (v.kind === "newgame") {
+      const due = votesDue(s);
+      if (!due.length || s.phase !== "results") return s;
+      say(
+        s,
+        `The room voted for a new ${due.includes("mode") ? "game" : "map"} now.`,
+      );
+      return voteAgain(s, now, due); // (the votes come back at once, as if Vote return had counted down)
+    }
     if (v.kind === "turn") {
       // the whole turn, as if everyone were done: a question's voting and its talk
       say(s, "The room voted to skip this turn.");

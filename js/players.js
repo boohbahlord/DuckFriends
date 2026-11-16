@@ -6,7 +6,7 @@
    minutes shows Zs over their duck. */
 import { esc, el, setHTML, confirmBox, contextMenu, toast } from "./ui.js";
 import { cardHTML } from "./card.js";
-import { voteNeeds, voteKey, isBb, isHang, may } from "./rules.js";
+import { voteNeeds, voteKey, isBb, isHang, may, votesDue } from "./rules.js";
 import { now as clockNow } from "./clock.js";
 import { openStats } from "./stats.js";
 import { canAdd, requestFriend } from "./account.js";
@@ -41,6 +41,8 @@ export function whyNotVote(s, me, kind) {
     return "You already started a skip vote this turn.";
   if (kind === "turn" && used.turn === tk)
     return "You already started a vote to skip this turn.";
+  if (kind === "newgame" && used.newgame === tk)
+    return "You already started a vote for a new game this turn.";
   return "";
 }
 export async function startKick(R, id) {
@@ -121,7 +123,9 @@ export function voteHTML(s, me) {
         ? "Skip this round?"
         : v.kind === "turn"
           ? "Skip this turn?"
-          : "Go back to the lobby?";
+          : v.kind === "newgame"
+            ? `Vote for a new ${votesDue(s).includes("mode") ? "game" : "map"} now?`
+            : "Go back to the lobby?";
   const can = voters.includes(me);
   return `<div class="vb-q"><b>${q}</b> <span class="dim small">${who ? `${esc(who.name)} asked · ` : ""}${yes}/${need} yes · <span class="vb-left">${left}</span> s</span></div>
     ${
