@@ -4870,3 +4870,10 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 - Version 42: Miles Jr.'s #327. sfx.trombone (the Sad Trombone special), sfx.fire (the fire special) and sfx.burn
   (burning ducks) were already called but silent; now they have sounds. Asked the owner where else they should play.
 - Version 43: Solomon's #329 Angel machine + Angelic weapons (picks: no-mag guns and the double barrel +20% ammo, flamethrower 1/3 farther and 1.6x sooner, dual pistols 2 ammo a press, crit blast spares the shooter, ANGEL.GL_RADIUS 1/3 until the owner answers).
+
+## Request (2026-11-16 19:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtSKQqhrdKgYJfR4wkUh6EzU): performance settings answer
+> U can see other players gun effects and animations and all those things matter ljke the data saving
+
+- Adam: the vote result (/mnt/project-files/notes/performance-vote.md) gets built, keeping every player's gun effects
+  and animations visible on Low (a tiny muzzle flash stays). Noah = effects, Miles Jr. = sound caps, Solomon = Dead
+  Ducks Arcade + position sends.
