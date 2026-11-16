@@ -5065,3 +5065,6 @@ reaches), owner/gas-station-holes.png (circles = holes in the gas station's wall
 > I imagine the swamp fever map specifically from L4D2 as inspiration, not any other map from that game
 >
 > some zombie ducks will have mud all over them, and them hitting you gets mud on you screen, and these ones are a 4% chance of spawning, and mud hits the corners of your screen and fade away after ten seconds and they have one less healthpoint then usual, the muddy zombies that are rare
+## Nov 16, 23:29Z: gas meter under the power box
+Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
+Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.
