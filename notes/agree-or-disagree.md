@@ -4849,3 +4849,8 @@ The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files
 
 - Adam (17:28Z follow-up): wounds no longer fade while alive in the normal modes; they clear only on coming back.
   HP regeneration (PHP_BACK 6 s) left as is; asked the owner.
+
+> make sure they lose their hats and other items blown off and they wont return until they revive, that is important detail. some hats like the birthday hat come off and stay on the head at the same time and that has to be fixed
+
+- Adam (17:29Z): knocked-off items stay off until the duck comes back (Jackal, same PR); the hat both off and on bug
+  (birthday hat) goes to Noah (his #309 gore).
