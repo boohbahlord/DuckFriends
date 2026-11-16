@@ -21,6 +21,16 @@ import { esc } from "../ui.js";
 import { low } from "../gfx.js";
 import { walkOf } from "../rules.js";
 import { JET } from "../jetpack.js";
+import {
+  pixelOn,
+  gridPx,
+  snap,
+  setDuckSize,
+  raster,
+  rasterReady,
+} from "../pixel.js";
+import { applyPalette } from "../pixelpalette.js";
+import { pxWatch } from "../pxdom.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
@@ -41,6 +51,8 @@ export function mountWorld(board, api) {
     propsBox = board.querySelector(".hang-props"),
     shade = board.querySelector(".hang-shade");
   const cam = { x: 0, y: 0, sc: 1, vw: 0, vh: 0, dpr: 1, set: false };
+  /* the pixel look: the props and whatever the activities draw, as pixels (pxdom.js; nothing happens with it off) */
+  const pxStop = [pxWatch(propsBox), pxWatch(board.querySelector(".fxl"))];
   const els = new Map(); // prop id → its element (the front or only part; made the first time it comes into view)
   const all = new Map(); // prop id → all its parts' elements
   const cls = new Map(); // prop id → the class its activity gives it
@@ -225,8 +237,8 @@ export function mountWorld(board, api) {
      nothing, so a weak laptop isn't painting the whole ground sixty times a second. The pools keep still (the dark over
      them, power.js, sways with the flames: that's the flicker you see). */
   const TILE = 256,
-    MAXT = 90,
-    EDGE = 96;
+    MAXT = 90;
+  let EDGE = 96; // (the pixel look: a whole number of pixels, so the ground's pixels fall on the grid)
   const tiles = new Map(),
     ready = [];
   let tk = 0,
@@ -283,7 +295,10 @@ export function mountWorld(board, api) {
   function copyTile([t, img, px]) {
     const c = document.createElement("canvas");
     c.width = c.height = px;
-    c.getContext("2d").drawImage(img, 0, 0, px, px);
+    const x = c.getContext("2d", { willReadFrequently: pixelOn() });
+    x.drawImage(img, 0, 0, px, px);
+    if (pixelOn())
+      x.putImageData(applyPalette(x.getImageData(0, 0, px, px)), 0, 0); // (the pixel look: each tile through the game's palette, once)
     t.c = c;
     t.old = null;
     /* drawn again at once if it's in view; on the canvas' edge only once the view slides onto it (a tile a frame coming
@@ -414,6 +429,7 @@ export function mountWorld(board, api) {
     }
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.globalCompositeOperation = "source-over";
+    g.imageSmoothingEnabled = !pixelOn(); // (the pixel look: the tiles' pixels stay hard)
     const DX = (x) => Math.round(((x - cam.x) * sc + vw / 2 + EDGE) * dpr),
       DY = (y) => Math.round(((y - cam.y) * sc + vh / 2 + EDGE) * dpr);
     for (
@@ -522,6 +538,7 @@ export function mountWorld(board, api) {
       im.alt = "";
       im.draggable = false;
       im.src = it.url ? svg : svgDataURL(svg);
+      e._src = svg; // (the pixel look makes its pixels from it: still())
       e.append(im);
     } else e.innerHTML = svg;
     if (p) {
@@ -533,6 +550,23 @@ export function mountWorld(board, api) {
     propsBox.append(e);
     it.el = e;
     return e;
+  }
+  /* the pixel look: a still picture (a wall, the forest bands) as pixels at the size it shows now (pixel.js makes it
+     once for each size; the drawing shows until it's ready) */
+  function still(e, it, sw, sh) {
+    const g = gridPx(),
+      k = Math.round(sw / g) + "x" + Math.round(sh / g),
+      im = e.firstChild;
+    if (e._pxk === k || !im || im.tagName !== "IMG") return;
+    e._pxk = k;
+    im.classList.add("px");
+    const key = "hp" + items.indexOf(it),
+      u = raster(key, e._src, sw, sh);
+    if (u) im.src = u;
+    else
+      rasterReady(key, e._src, sw, sh).then((v) => {
+        if (v && e._pxk === k) im.src = v;
+      });
   }
   /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
      while it hides one: a duck behind it with a good part of it covered) */
@@ -592,7 +626,10 @@ export function mountWorld(board, api) {
       }
       if (!e) e = make(it);
       if (e.hidden) e.hidden = false;
-      const tr = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${scs})`;
+      if (it.img && pixelOn()) still(e, it, sw, sh);
+      const tr = pixelOn()
+        ? `translate(${snap(sx).toFixed(2)}px, ${snap(sy).toFixed(2)}px) scale(${scs})` // (the pixel look: on the grid, as the ducks)
+        : `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) scale(${scs})`;
       if (e._tr !== tr) {
         e._tr = tr;
         e.style.transform = tr;
@@ -711,27 +748,40 @@ export function mountWorld(board, api) {
       cam.vh = vh;
       cam.low = low();
       cam.dpr = Math.min(2, devicePixelRatio || 1) * (cam.low ? 0.5 : 1); // (Low graphics: the ground at half its sharpness)
+      if (pixelOn()) {
+        /* the pixel look: one of the ground canvas' pixels is one pixel of the grid (a 32nd of a duck, as the board's ducks:
+           the grid is set here first, so the ground is right from its first frame) */
+        setDuckSize(L.DUCK * cam.sc);
+        const gp = gridPx();
+        cam.dpr = 1 / gp;
+        EDGE = Math.ceil(96 / gp) * gp;
+      } else EDGE = 96;
       const cw = Math.round((vw + 2 * EDGE) * cam.dpr),
         ch = Math.round((vh + 2 * EDGE) * cam.dpr);
       if (canvas.width !== cw || canvas.height !== ch) {
         canvas.width = cw;
         canvas.height = ch;
+      }
+      {
         Object.assign(canvas.style, {
           left: -EDGE + "px",
           top: -EDGE + "px",
           width: vw + 2 * EDGE + "px",
           height: vh + 2 * EDGE + "px",
+          imageRendering: pixelOn() ? "pixelated" : "",
         });
       }
       gv.need = true;
       /* the ground's tiles at a new size: only when it needs them sharper. Smaller (the Chat opened and the board got
          narrower), the sharper ones it has are kept, so nothing pops in; sharper, each one is shown stretched until it's
          painted again */
-      const k = Math.max(
-        0.25,
-        Math.min(vw <= 500 ? 1.5 : 2, Math.round(cam.sc * cam.dpr * 4) / 4),
-      );
-      if (k > tk) {
+      const k = pixelOn()
+        ? cam.sc * cam.dpr // (the pixel look: a tile's pixel is the grid's, exactly, smaller or bigger)
+        : Math.max(
+            0.25,
+            Math.min(vw <= 500 ? 1.5 : 2, Math.round(cam.sc * cam.dpr * 4) / 4),
+          );
+      if (pixelOn() ? Math.abs(k - tk) > 1e-6 : k > tk) {
         tk = k;
         ready.length = 0;
         for (const t of tiles.values())
@@ -1080,6 +1130,7 @@ export function mountWorld(board, api) {
       removeEventListener("pointerup", up);
       removeEventListener("pointercancel", up);
       dead = true;
+      pxStop.forEach((f) => f());
       els.clear();
       all.clear();
       sm.clear();

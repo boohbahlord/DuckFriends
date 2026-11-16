@@ -71,6 +71,8 @@ import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
+import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { hashText } from "./pxdom.js";
 import {
   zombieURL,
   zombieBox,
@@ -220,6 +222,25 @@ let butler = null,
   upSig = "",
   slotSig = "";
 
+/* the pixel look (pixel.js): a place on the screen on the grid, so things' pixels line up with the map's and the ducks' */
+const at = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
+/* the pixel look: a still picture (a zombie, the Butler) as pixels at the size it shows, w × h css px; its drawing until
+   they're made. o keeps what it shows: o.url (the drawing) and o.pxk */
+function pxPic(o, img, w, h) {
+  if (!pixelOn()) return;
+  const g = gridPx(),
+    k = o.url + "@" + Math.round(w / g) + "x" + Math.round(h / g);
+  if (o.pxk === k) return;
+  o.pxk = k;
+  img.classList.add("px");
+  const key = "z" + (o.uk || (o.uk = hashText(o.url))),
+    u = raster(key, o.url, w, h);
+  if (u) img.src = u;
+  else
+    rasterReady(key, o.url, w, h).then((v) => {
+      if (v && o.pxk === k) img.src = v;
+    });
+}
 const LIT = {
   in: LIGHTS.filter((l) => l.only === "in" && !l.el),
   out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
@@ -229,7 +250,8 @@ function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${zombieURL(z.l, z.i)}"></div><span class="l4z-hp"><i></i></span>`;
+  const url = zombieURL(z.l, z.i);
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -258,6 +280,9 @@ function zombieEl(z) {
     l: z.l,
     i: z.i,
     img: body.firstChild,
+    url,
+    bw: box.w,
+    bh: box.h,
   };
 }
 function claw(x, y, dir, ctx) {
@@ -290,7 +315,9 @@ const HIT = [
 function wounds(o, l, i) {
   if (o.hits === o.want) return;
   o.hits = o.want;
-  o.img.src = zombieURL(l, i, o.hits);
+  o.url = zombieURL(l, i, o.hits);
+  o.uk = "";
+  if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
 /* the zombies in a new state: where each glides to, its hits, its swipes, its death */
 function seeZombies(s, ctx, now) {
@@ -512,7 +539,7 @@ function stamp() {
 function paint(now, ctx) {
   const Wd = ctx.world,
     s = ctx.state(),
-    q = low() ? 0.22 : 0.3, // (the dark is all soft light: a small canvas stretched over the board looks the same, and every frame it's redrawn costs far less)
+    q = pixelOn() ? 1 / gridPx() : low() ? 0.22 : 0.3, // (the dark is all soft light: a small canvas stretched over the board looks the same, and every frame it's redrawn costs far less. The pixel look: one of its pixels is one of the grid's)
     w = Math.round(Wd.vw * q),
     h = Math.round(Wd.vh * q),
     sc = Wd.sc * q,
@@ -606,6 +633,7 @@ function paint(now, ctx) {
   if (cv.width !== w || cv.height !== h) {
     cv.width = w;
     cv.height = h;
+    cv.style.imageRendering = pixelOn() ? "pixelated" : "";
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
@@ -650,7 +678,8 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
     feet = (64 * (v[3] - 10)) / v[2],
     el = document.createElement("div");
   el.className = "hang-npc duck l4-butler";
-  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${svgDataURL(svg)}"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
+  const url = svgDataURL(svg);
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
   const body = el.firstChild;
   body.style.width = "64px";
   body.style.height = h.toFixed(1) + "px";
@@ -658,7 +687,7 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   body.style.top = (-feet).toFixed(1) + "px";
   body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
   layer.append(el);
-  return { el, body };
+  return { el, body, url, bh: h };
 }
 
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
@@ -691,7 +720,7 @@ function drawEgg(ctx, now) {
   const hide = !on || !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
   if (egg.el.hidden !== hide) egg.el.hidden = hide;
   if (hide) return;
-  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
   if (egg.tr !== tr) {
     egg.tr = tr;
     egg.el.style.transform = tr;
@@ -699,6 +728,7 @@ function drawEgg(ctx, now) {
   }
   const gd = Wd.board.querySelector(".gduck .gduck-body"),
     k = gd && gd.offsetWidth ? gd.offsetWidth / 64 : sc; // (as big as the ducks are drawn)
+  pxPic(egg, egg.body.firstChild, 64 * k, egg.bh * k);
   if (egg.k !== k) {
     egg.k = k;
     egg.body.style.transform = `scale(${(-k).toFixed(4)}, ${k.toFixed(4)})`; // (facing left, toward the bowl)
@@ -764,7 +794,7 @@ function drawBox(ctx) {
     hide = !Wd.seen(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
-  const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
   if (boxEl._tr !== tr) {
     boxEl._tr = tr;
     boxEl.style.transform = tr;
@@ -1231,7 +1261,8 @@ activity({
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
-      const tr = `translate(${f.left.toFixed(1)}px, ${f.top.toFixed(1)}px)`;
+      pxPic(o, o.img, o.bw * sc, o.bh * sc);
+      const tr = `translate(${at(f.left)}px, ${at(f.top)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;
@@ -1270,7 +1301,7 @@ activity({
           );
       if (b.el.hidden !== hide) b.el.hidden = hide;
       if (hide) continue;
-      const tr = `translate(${(p.left + b.box.l * sc).toFixed(1)}px, ${(p.top + b.box.t * sc).toFixed(1)}px) scale(${sc.toFixed(4)})`;
+      const tr = `translate(${at(p.left + b.box.l * sc)}px, ${at(p.top + b.box.t * sc)}px) scale(${sc.toFixed(4)})`;
       const on = beat.has(o.id);
       if (b.tr !== tr || b.on !== on) {
         b.tr = tr;
@@ -1289,7 +1320,7 @@ activity({
           !Wd.seen(p.left - 40, p.top - 80, 80, 100);
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
-      const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+      const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;
@@ -1313,13 +1344,14 @@ activity({
         hide = !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
       if (butler.el.hidden !== hide) butler.el.hidden = hide;
       if (!hide) {
-        const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+        const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
         if (butler.tr !== tr) {
           butler.tr = tr;
           butler.el.style.transform = tr;
           butler.el.style.zIndex =
             Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
         }
+        pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
         if (butler.k !== sc) {
           butler.k = sc;
           butler.body.style.transform = `scale(${sc.toFixed(4)})`;
