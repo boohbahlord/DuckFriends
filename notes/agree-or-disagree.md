@@ -4216,3 +4216,40 @@ Zombies only; Hangout's Duck Cabin unchanged).
   meters. Adam relayed the owner's answer: it is the only look (no setting, no test switch). The mouse pointer is drawn
   in pixels at 64 to a duck (arrow, hand, crosshair, text bar); any weapon in hand makes it the crosshair over the
   board, in every mode.
+
+## Request (owner, 2026-11-16 13:17Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtP3Len5qSrAnspi4P6Hqn7V), word for word
+
+> glitch already found, when the timer to starting a game from lobby is clicked, the avatars or images for the ducks start flickering in and out real badly 
+>
+>
+> When you try and scroll with the mouse wheel to go through hot bar in mad god justin or other games, it does not work as it does in quacky zombies, bit mistake
+>
+> revive time should take half as long in mad god justin
+>
+> the game should have any item already selected in the hotbar become toggled by simply clicking shift
+>
+> the map in zombies should be even more transparent AND smaller (we can remove it for mobile as well)
+>
+> we are going to start working on the new physics features as well
+>
+> the game will inform player in the vote game mode somewhere at the end of all the turns for a game mode, where it asks players if they want to play another round or return to lobby, how the game will automatically cast a new vote for game modes after three games (so informing them of an already present mechanic) AND there is now a button alongside the play again and lobby to allow players to vote for another game now
+>
+> Miles Jr needs to be on a higher effort for opus AND im going to give them new instructions soon for our audio problems 
+>
+> all the ideas from before that was waited on will be worked on now, all the ones i informed you about 
+>
+> there was a glitch where justin butler is rly small, but i love it, so keep it, it&#39;s now a feature
+>
+> make sure Jusin isnt too small
+>
+> The new physics should have chunks of blood flying out from bigger caliber weapons or from attacks of the hammer now, and we are doing it by pixels now instead of making pictures that convert to pixels, since that is more simple and less things can go wrong
+>
+> new gun ideas are needed
+>
+> i still need to know of all the special drops to answer what the special effects will be like for those
+
+- Split (Adam): Noah = lobby countdown flicker + physics/effects drawn as pixels (blood chunks, smoke, flash,
+  recoil, sway, blur, holes, glows); Solomon the 2nd = the Nov 16 10:20Z zombie batch on Adam's picks (Q48-66) + MGJ
+  revive half + minimap smaller/see-through/off on phone + Butler stays small (not too small); Jackal = scroll wheel
+  hotbar in every mode like Quacky Zombies + a tap of Shift toggles the selected item (holding Shift still sprints);
+  Adam = end-of-game vote info + "Vote now" button; Miles Jr. to higher effort, waits for the owner's audio notes.
