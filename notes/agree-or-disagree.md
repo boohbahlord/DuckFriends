@@ -4198,6 +4198,85 @@ Zombies only; Hangout's Duck Cabin unchanged).
   (`hangTime`, 5/10/15/20/30 min or No limit, 15 at first) only when Hangout came from Random or the vote; the room's
   map comes back after the cabin; under Random the cabin's End vote goes on to the next game.
 
+## Request (owner, 2026-11-16 10:20Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVo2RDQwWpMCUe6rnNKcoYq), word for word
+
+> Adam will ask me questions that are numbered ab this
+>
+> i turned justin on from general settings and i dont see him in the zombie game 
+>
+> rename zombie game to this: 'Dead Ducks Arcade'
+>
+> every gun with clips gets five extra clips or magazines of ammo, the LMG gets three extra clips, guns without clips get 50% more ammo (shotgun or bow for example)
+> This doesnt count for things like grenades or zebra cakes
+>
+> make a shuffle where for the fireplace where the more times you got a weapon, you get a 10% more likely to get a item rolled, and IF you get two items in a row, then there is %5 less of a chance you get an item again, but this two items in a row condition is broken if you get a weapon once, thus resetting it
+>
+> guns should have small amount of smoke leaving the barrel and a very small amount of flash when shot, very little for weaker or small guns, and most for the chain gun, large sniper, and second most so for LMG, AK-47, Shotgun, and guns like that
+>
+> Accuracy is now renamed Critical Chance
+>
+> Reloads are canceled IF you switch to another item or use another item on your hotbar before the reload is finish, thus resetting the reload
+>
+> Shooting heavier guns shakes your screen a little
+>
+> Justin shows up with a player screen with health and everything in the UI like every other player
+>
+> reloading now has a meter inside the box fill up with a darker color inside the hotbar until the reload is finished
+>
+> There is a second white bar that shows below the sprint meter on ducks now to indicate cooldown times like reload, melee cooldown, or item cooldowns (every item that is throwable or consumable and thus not something like a jetpack has a 0.75 second cooldown)
+>
+> player names are now much smaller and above a ducks head while being invisible and ONLY show up when the player is within the radius of a flashlight
+>
+> zombie ducks and players should become a matching brightness of the flashlight when they are in it if they are not already 
+>
+> guns cause a slight shake to the screen for a player firing them, only a slight shake for light guns like a pistol, and a more prominent thought not too distracting shake to screen that is maxxed out with the chain gun
+>
+> Chain gun now has four times more ammo
+>
+> jumping makes a duck slightly transparent when invulnerability frames are in effect mid jump in zombies
+>
+> a laser sight now comes out from guns to the end of a flashlight (not the bow) to show where bullets will land
+>
+> medkits can instant revive if they are held while reviving a player but this immediately uses it AND preserves the stats bought from the shop by a player. 
+>
+> There is a new item that is a halo called "Safe Keeping", which occupies the purple slot AND will keep a players stats (like critical chance) saved when they go down and need revived AND players can revive themselves, which doing so will make their duck glow a heavenly light blue light before they are back up, and when they are back up, they have six seconds of invulnerability frame which is shown by their duck's image softly breathing in transparency while glowing, and a timer on their screen counts down to the number 1 from six, and when the number goes to zero, it says "Vitals Stabilized"
+> in other words, safe keeping allows them to be revived automatically when going down in solo OR will allow them to instantly revive themselves and walk around to another position of the map for six seconds, and either will spend and empty this item from their hotbar till they get it again. This item cannot be used in the hot bar and is automatically used when the conditions are met AND clicking it will show a text in the bottom left that is highlighted to show only to that player that tells them briefly how it works, and how it works in either way will be based on if is online or not, and if online, it is determined if any players are standing and not in a downed state or otherwise, or else they cannot revive them and thus the player is autorevived instantly when they go down like single player
+>
+> guns also kinda bounce around at the ends and a little at the back in a way guns do from recoil when they are semi autos, shotguns, or full autos, and they bounce around per shot
+>
+> toggled weapons and items very very lightly sway a little to the movement of their ducks
+>
+> jumps make toggled weapons and items sway differently mid jump AND the movements still cause weapons and items to go in that direction mid jump as well, so both are true and interacting with each other at the same 
+>
+> the speed of a duck on mobile changes how their animations play out and same with sprinting, like maybe a very slight increase in speed of the animation with a quick half a second acceleration onto the movement of the object toggled on pc and mobile before sprint
+>
+> sprint has a slight blur to the board ever so slightly when they spring and the blur fades in AS they run around before becoming it's slight acutalization of effect, and it quickly fades out as they stop sprinting AND make sure going in and out of sprint doesnt stack the effect but has the same effect fade it's blur in and out so their isn't a stacking of blur
+>
+> adrenaline shot now makes ducks slightly vibrate and so does their gun a little WHILE their screen wobbles a short jitter kind of fast, and the same is for special drop that might do the same
+>
+> have the special drops be a shuffle instead now, where full ammo drop is never removed from the shuffle
+>
+> Full ammo now makes the hotbar boxes flash in their color that fades out quickly 
+>
+> Every special drop should say it is active in the top middle of screen
+>
+> now switching through boxes in hot bar has a very small uncolored version of the items below a duck's other UI without a box slide in and out for that player before quickly fading out
+>
+> instant kill, double points, and sale now only last 45 seconds
+> Instant kill makes the board softly glow a blood crimson red over everything that slowly pulse in and out
+> Double points makes the points that show up on your score for each action that earns points become a glowing yellow that is slightly larger in font AND a very small text of a similar look popups on your duck now during double points and a normal version of the text does the same without the double point effect for now on
+> Sale makes the  butler AND the fireplace glow gold that breathes in and out in the shiny effect around their objects while the screen says "Sale" in the top middle of the screen in the gold metal lettering before fading away. 
+>
+> holes in ducks should be literally holes through the skin of a duck that causes blood effects to spray out, squirt, slosh, or spill out in reference to the caliber of a weapon when they are shot AND dead ducks dont immediately become transparent upon dying but instead are only transparent for 1.25 seconds after having died and then they slowly fade into transparency before their duck disapears
+>
+> the blood effects are small pixel particles AND SO IS the smoke or anything dynamic like that to be easier on resources
+>
+> NOW, before we do this and before i answer these questions, i wanna redo the visuals of the game since i have max plan, to make the game pixelated and maybe 16, 32, or 64 bit to make it run better AND to make visuals more believable, like a makeup to stupid AI art. NOW, show me the examples of what some items, board, page backgrounds, and ducks would look like IF this became a thing. I want to discuss this with item before other goals
+>
+> I need to see every special drop type to figure out other special effects for those as well and think of what other items, weapons, or items need special effects
+
+- Order (owner): first the pixel-art samples (Noah, pictures only, nothing in the game) and the sheet of every drop
+  (Adam); the rest waits for the owner's answers to questions 48 to 65 (Adam's doc).
 ## Nov 16 2026: the pixel look (owner with Noah, 11:18Z-12:44Z)
 > 32 bit is the way BUT the text should be 128 bit so they are easier to read IF NOT MORE and the Ui, meters, and hotbar can all still be 32 bit, but any text inside should be better quality for reading while still looking somewhat pixelated
 
