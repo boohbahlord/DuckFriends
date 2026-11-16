@@ -249,3 +249,121 @@ export function pxImgWatch(root) {
   });
   all();
 }
+
+/* ---------- the mouse pointer as pixels (owner, Nov 16: "that would be cool if it was also 64 bit") ----------
+   Drawn here, a pixel at a time: one pixel is one css px, about a 64th of a duck on a computer (twice as fine as the
+   pictures, as the owner asked), sharp on any screen (image-set: 1x, 2x, 3x). k is the dark edge, w the fill, y the
+   duck-yellow shine. css/app.css puts them on (--cur-*) */
+const CURSORS = {
+  arrow: [
+    0,
+    0,
+    `k
+kk
+kwk
+kywk
+kywwk
+kywwwk
+kywwwwk
+kywwwwwk
+kywwwwwwk
+kywwwwwwwk
+kywwwwkkkkk
+kywkwwk
+kwk.kwwk
+kk..kwwk
+k....kwwk
+.....kwwk
+......kk`,
+  ],
+  hand: [
+    5,
+    0,
+    `....kk
+...kywk
+...kywk
+...kywk
+...kywk
+...kywkkk
+...kywkwwkkk
+...kywkwwkwwkk
+...kywkwwkwwkwk
+.kkkywwwwwwwkwk
+kywkwwwwwwwwwwk
+kywwkwwwwwwwwwk
+.kywwwwwwwwwwwk
+..kwwwwwwwwwwwk
+...kwwwwwwwwwk
+....kwwwwwwwwk
+....kwwwwwwwk
+....kkkkkkkkk`,
+  ],
+  cross: [
+    7,
+    7,
+    `......kkk
+......kwk
+......kwk
+......kwk
+......kkk
+
+kkkkk.....kkkkk
+kwwwk..y..kwwwk
+kkkkk.....kkkkk
+
+......kkk
+......kwk
+......kwk
+......kwk
+......kkk`,
+  ],
+  text: [
+    3,
+    8,
+    `kkk.kkk
+kwwkwwk
+kkkwkkk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+kkkwkkk
+kwwkwwk
+kkk.kkk`,
+  ],
+};
+const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
+function cursorURL(rows, s) {
+  const w = Math.max(...rows.map((r) => r.length)),
+    c = document.createElement("canvas");
+  c.width = w * s;
+  c.height = rows.length * s;
+  const x = c.getContext("2d");
+  rows.forEach((r, j) =>
+    [...r].forEach((ch, i) => {
+      if (!INK[ch]) return;
+      x.fillStyle = INK[ch];
+      x.fillRect(i * s, j * s, s, s);
+    }),
+  );
+  return c.toDataURL();
+}
+function setCursors() {
+  const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
+    root = document.documentElement.style;
+  for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
+    const rows = art.split("\n"),
+      img = sets
+        ? `image-set(url(${cursorURL(rows, 1)}) 1x, url(${cursorURL(rows, 2)}) 2x, url(${cursorURL(rows, 3)}) 3x)`
+        : `url(${cursorURL(rows, 1)})`;
+    root.setProperty(`--cur-${name}`, `${img} ${hx} ${hy}`);
+  }
+}
+if (on) setCursors();
+addEventListener("pixelchange", () => on && setCursors());

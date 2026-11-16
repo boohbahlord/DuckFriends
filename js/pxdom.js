@@ -35,7 +35,6 @@ function css() {
   s.id = "pxdom-css";
   s.textContent =
     "svg[data-px]>:not(image.pxi,g.pxt){opacity:0!important}" +
-    "svg[data-px]>:not(image.pxi,g.pxt),svg[data-px]>:not(image.pxi,g.pxt) *{animation-play-state:paused!important}" + // (a part that's hidden doesn't move: a twinkle still running under its picture was redrawn every frame)
     "image.pxi{image-rendering:pixelated;pointer-events:none}";
   document.head.append(s);
 }
