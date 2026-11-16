@@ -903,12 +903,190 @@ SOUNDS = {
             OGA_URL["bamboo"],
         ),
     ),
+    # ==== batch 5: the owner's three new guns (Nov 16 16:25Z), each its own shot and its own reload ====
+    # the double barrel: a 12-gauge's blast, a little deeper than the pump shotgun's (another gun's recording)
+    "dbarrel": dict(
+        layers=[("oga:guns-shotgun/H_21P.wav", 0.465, 1.1, 0, 1)],
+        rate=0.94,
+        drive=5,
+        credit=GUNS + ("Charles Daly 12 ga",),
+    ),
+    # the burst rifle: one round of its three (an SKS's crack; the AK-47 and the LMG have their own)
+    "burst": dict(
+        layers=[("gh:gun-burst/sks.wav", 0, 0.7, 0, 1)],
+        drive=4,
+        credit=(
+            "Tabasco, Gunshot Sounds (SKS)",
+            "https://opengameart.org/content/gunshot-sounds",
+        ),
+    ),
+    # the burst rifle's reload, 2 s: the magazine out, the new one in, the charging handle pulled and let go
+    "reloadBurst": dict(
+        layers=[
+            ("gh:reload-burst/mag_out.wav", 0, 0.16, 0.1, 1),
+            ("gh:reload-burst/mag_in.wav", 0, 0.24, 0.85, 1),
+            ("gh:reload-burst/bolt.wav", 0, 0.38, 1.5, 1),
+        ],
+        credit=(
+            "zer0_sol, Handgun Reload Sound Effect",
+            "https://opengameart.org/content/handgun-reload-sound-effect",
+        ),
+    ),
+    # the double barrel's reload, 2 s (a second a shell): broken open, two shells slid in, snapped shut
+    "reloadDbarrel": dict(
+        layers=[
+            (C3, 8.655, 0.25, 0, 1),
+            (KI + "impactMetal_light_000.ogg", 0, 0.3, 0, 0.5, 1500),
+            (C3, 13.15, 0.35, 0.3, 0.35),
+            ("gh:reload-dbarrel/shell-1.wav", 0.1, 0.3, 0.6, 0.9),
+            ("gh:reload-dbarrel/shell-2.wav", 0, 0.35, 1.15, 0.9),
+            (C3, 9.675, 0.2, 1.72, 1),
+            (KI + "impactMetal_medium_000.ogg", 0, 0.3, 1.72, 0.6, 1800),
+        ],
+        credit=(
+            "LFA, Equipment Clicks III; Shotgun Reload Sound Effects (Shell in Chamber); Kenney, Impact Sounds",
+            "https://opengameart.org/content/shotgun-reload-sound-effects",
+        ),
+    ),
+    # the flamethrower's tank swapped, 4 s: the empty one unlatched and set down, the full one on and screwed tight,
+    # its valve opened (a little gas), the igniter's click
+    "reloadFlamer": dict(
+        layers=[
+            (KR + "metalLatch.ogg", 0.03, 0.2, 0, 0.8),
+            (C3, 14.675, 0.3, 0.3, 0.6),
+            (KI + "impactMetal_heavy_000.ogg", 0, 0.45, 0.9, 0.7, 1200),
+            (KI + "impactMetal_medium_001.ogg", 0, 0.35, 1.9, 0.7, 1500),
+            (C3, 16.295, 0.25, 2.25, 0.7),
+            (C3, 18.12, 0.2, 2.6, 0.7),
+            ("gh:flamer/oxytorch_1.ogg", 0.05, 0.45, 3.0, 0.3, 3000),
+            (KR + "metalClick.ogg", 0.06, 0.3, 3.62, 0.5),
+        ],
+        credit=(
+            "Kenney, RPG Audio and Impact Sounds; LFA, Equipment Clicks III; rombart, oxytorch (freesound 197800)",
+            OGA_URL["clicks3"],
+        ),
+    ),
+    # the flamethrower: lit (the igniter's click, the fire's whoosh), its roar while held (a gas torch's roar spread
+    # out, over a fire's crackle, deepened), and the fire's last puff as it's let go
+    "flameStart": dict(
+        layers=[
+            (KR + "metalClick.ogg", 0.06, 0.2, 0, 0.35),
+            ("gh:flamer/attack-fire-1.flac", 0.05, 1.0, 0.05, 1),
+            ("gh:flamer/oxytorch_1.ogg", 0.05, 0.4, 0.15, 0.45),
+        ],
+        lp=7000,
+        credit=(
+            "Nic3_one, fire attack (freesound 166555, from Stendhal); rombart, oxytorch; Kenney, RPG Audio",
+            "https://freesound.org/people/Nic3_one/sounds/166555/",
+        ),
+    ),
+    "flameLoop": dict(
+        layers=[
+            ("gh:flamer/oxytorch_1.ogg~3.8", 0, 3.8, 0, 1),
+            ("gh:flamer/fire_loop.opus", 5.0, 3.8, 0, 0.5, 3000),
+        ],
+        rate=0.8,
+        lp=6000,
+        loop=2.0,
+        kbps=48,
+        credit=(
+            "rombart, oxytorch (freesound 197800, from CDDA-Soundpacks); PagDev, Fireplace Sound Loop",
+            "https://freesound.org/s/197800/",
+        ),
+    ),
+    "flameStop": dict(
+        layers=[("gh:flamer/attack-fire-2.flac", 0.1, 0.7, 0, 1)],
+        rate=0.8,
+        lp=2500,
+        credit=(
+            "Nic3_one, fire attack (freesound 166555, from Stendhal)",
+            "https://freesound.org/people/Nic3_one/sounds/166555/",
+        ),
+    ),
+    # the new melees (#301), each its own swing and its own hit: the axe heavy, the sword with steel's ring, the pan a
+    # broad flat swing and a frying pan's bonk
+    "axe": dict(
+        layers=[("gh:melee/attack-melee-04.ogg", 0, 0.6, 0, 1)],
+        rate=0.85,
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "sword": dict(
+        layers=[
+            ("gh:melee/attack-melee-07.ogg", 0, 0.45, 0, 1),
+            (KR + "drawKnife1.ogg", 0, 0.4, 0.02, 0.5),
+        ],
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal); Kenney, RPG Audio (drawKnife1)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "pan": dict(
+        layers=[("gh:melee/attack-melee-06.ogg", 0, 0.4, 0, 1)],
+        rate=0.75,
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "axeHit": dict(
+        layers=[
+            (KR + "chop.ogg", 0, 0.24, 0, 1),
+            (KI + "impactPunch_heavy_001.ogg", 0, 0.4, 0, 0.5, 2000),
+        ],
+        credit=(
+            "Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy)",
+            KENNEY_RPG,
+        ),
+    ),
+    "swordHit": dict(
+        layers=[
+            (KR + "knifeSlice2.ogg", 0.2, 0.35, 0, 1),
+            ("gh:melee/clang-metallic-1.flac", 0, 0.35, 0, 0.25),
+        ],
+        credit=(
+            "Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal)",
+            KENNEY_RPG,
+        ),
+    ),
+    "panHit": dict(
+        layers=[
+            ("gh:melee/clang-dull-1.flac", 0.15, 0.27, 0, 1),
+            (KR + "metalPot3.ogg", 0, 0.45, 0, 0.6),
+        ],
+        credit=(
+            "alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3)",
+            "https://freesound.org/people/alienistcog/sounds/124711/",
+        ),
+    ),
 }
 
 
+def spread(a, secs):
+    """a short, steady recording (a gas torch's roar) made secs long: short pieces of it, each from a random place in it,
+    overlapped and each faded in and out (sine fades at a quarter of a piece apart keep the loudness even), so it never
+    repeats the same way"""
+    rng = np.random.default_rng(7)
+    a = a[int(0.02 * SR) : len(a) - int(0.02 * SR)]
+    g = min(len(a), int(0.24 * SR))
+    hop = g // 4
+    w = np.sin(np.pi * (np.arange(g) + 0.5) / g)
+    out = np.zeros(int(secs * SR) + g)
+    for p in range(0, len(out) - g, hop):
+        s = rng.integers(0, len(a) - g + 1)
+        out[p : p + g] += a[s : s + g] * w
+    return out[: int(secs * SR)] / np.sqrt(2)
+
+
 def load(path, srcs, kenney):
-    """a file as mono float32 at SR; "file*N": a loop recording played N times over, end to end"""
-    times = 1
+    """a file as mono float32 at SR; "file*N": a loop recording played N times over, end to end; "file~S": a short,
+    steady recording spread S seconds long (spread)"""
+    times, secs = 1, 0
+    if "~" in path:
+        path, secs = path.rsplit("~", 1)
+        secs = float(secs)
     if "*" in path:
         path, times = path.rsplit("*", 1)
         times = int(times)
@@ -938,7 +1116,8 @@ def load(path, srcs, kenney):
         capture_output=True,
         check=True,
     ).stdout
-    return np.tile(np.frombuffer(raw, np.float32).astype(np.float64), times)
+    a = np.tile(np.frombuffer(raw, np.float32).astype(np.float64), times)
+    return spread(a, secs) if secs else a
 
 
 def fades(x, sr, fin=0.005, fout=0.02):

@@ -261,13 +261,16 @@ const lastAt = new Map(), // Justin → when he last walked
 /* how much a gun is worth to him (more is better): what kills fastest first; the chain gun on its own below */
 const GUN_RANK = [
   "lmg",
+  "dbarrel",
   "ak",
+  "burst",
   "smg",
   "sniper",
   "revolver",
   "shotgun",
   "handgun",
   "glauncher",
+  "flamer",
   "bow",
   "dagger",
 ];

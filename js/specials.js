@@ -51,6 +51,28 @@ const KNIFE = ([a, b, c]) =>
    top; a long wooden handle, a little wider at the grip. Colors: head, handle, the band under the head */
 const HAMMER = ([a, b, c]) =>
   `<svg viewBox="0 0 56 30"><path d="M3 11.8Q1.4 11.8 1.4 13.6V16.6Q1.4 18.4 3.2 18.3L37 17.6V12.6L3.2 11.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 13.4L32 13.9" stroke="#fff" stroke-width="1.1" opacity=".3"/><path d="M6 16.8L30 16.4" stroke="${INK}" stroke-width=".7" opacity=".22"/><rect x="33.4" y="11.6" width="4.2" height="7" rx="1" fill="${c}" stroke="${INK}" stroke-width="1.1"/><rect x="37" y="1.4" width="17.4" height="27.2" rx="5.6" fill="${a}" stroke="${INK}" stroke-width="1.4"/><path d="M39.6 7.4Q39.6 4 43 4H45.4" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".4"/><path d="M40.2 10.4V20" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".22"/><path d="M51.6 6V24.6" stroke="${INK}" stroke-width="1.2" stroke-linecap="round" opacity=".2"/></svg>`;
+/* the new melees (the owner's, Nov 16): each points right, its handle at the left, as the hammer. The fire axe, like
+   the one in Left 4 Dead 2: a long varnished handle with a dark rubber grip at its end, a red head with a pick at the
+   back (top) and a broad steel blade below (the side that leads the swing), its edge ground bright. Colors: head,
+   handle, blade */
+const AXE = ([a, b, c]) =>
+  `<svg viewBox="0 0 62 36"><path d="M2.8 15.6Q1 15.6 1 17.4V19.4Q1 21.2 2.9 21.1L49 20.2V16.6Z" fill="${b}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/><path d="M4 17.2L44 17.6" stroke="#fff" stroke-width="1.2" opacity=".35"/><path d="M4 19.8L44 19.4" stroke="${INK}" stroke-width=".9" opacity=".25"/><path d="M14 16.6V21M24 16.8V20.8" stroke="${INK}" stroke-width=".7" opacity=".2"/>
+<path d="M45 12.4L48.2 2.6Q49.6 .6 51 2.4L53.8 12.4L54.6 23.6L58.4 30.6Q46.6 37.4 33.8 34.6Q39.6 30.4 41.4 25.6Q42.8 23.6 45 23.2Z" fill="${a}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M36.6 33.2Q47.4 34.8 56.8 28.4L58.4 30.6Q46.6 37.4 33.8 34.6Z" fill="${c}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/><path d="M36.8 35Q47 36.4 57.2 30.6" fill="none" stroke="#fff" stroke-width="1" opacity=".9"/>
+<rect x="45.6" y="15.4" width="8.2" height="6.4" rx="1" fill="#000" opacity=".22"/><path d="M48.6 4.4L47.2 12M44.4 25.2Q42.6 28.4 39.8 31" fill="none" stroke="#fff" stroke-width="1.3" opacity=".4" stroke-linecap="round"/></svg>`;
+/* the short sword: a broad straight blade with a fuller down its middle to a sharp point, a wide brass guard, a leather
+   wrapped grip and a round pommel. Colors: blade, grip, guard and pommel */
+const SWORD = ([a, b, c]) =>
+  `<svg viewBox="0 0 50 18"><circle cx="3.6" cy="9" r="2.8" fill="${c}" stroke="${INK}" stroke-width="1.2"/><rect x="5.8" y="6.2" width="8.4" height="5.6" rx="1.6" fill="${b}" stroke="${INK}" stroke-width="1.2"/><path d="M8 6.4L10 11.6M10.8 6.4L12.8 11.6" stroke="${INK}" stroke-width=".9" opacity=".45"/>
+<rect x="13.6" y="1.4" width="3.8" height="15.2" rx="1.4" fill="${c}" stroke="${INK}" stroke-width="1.2"/><path d="M14.6 3V8" stroke="#fff" stroke-width=".9" opacity=".5"/>
+<path d="M17.4 4.6H39.2Q43.6 5.4 48.8 9Q43.6 12.6 39.2 13.4H17.4Z" fill="${a}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><path d="M19 9H41.4" stroke="${INK}" stroke-width="1.1" opacity=".35"/><path d="M19 6.9H41" stroke="#fff" stroke-width="1.1" opacity=".7"/></svg>`;
+/* the cast iron pan: seen from above, a heavy black round pan with a thick rim, its dark cooking surface with a dull
+   shine, a pour spout notch on each side, and its long iron handle with the hanging hole. Colors: iron, handle, rim
+   shine */
+const PAN = ([a, b, c]) =>
+  `<svg viewBox="0 0 60 34"><path d="M3 13.8Q1 13.8 1 15.8V18.2Q1 20.2 3 20.2L28.6 19.2V14.8Z" fill="${b}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="6" cy="17" rx="2" ry="1.3" fill="#0b0b0e"/><path d="M10 16H26" stroke="#fff" stroke-width=".9" opacity=".2"/>
+<circle cx="43" cy="17" r="15.6" fill="${a}" stroke="${INK}" stroke-width="1.5"/><circle cx="43" cy="17" r="12.4" fill="#14151a" stroke="${c}" stroke-width="1.2" opacity=".95"/><path d="M33.6 10.6Q37.8 6.2 44 6" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3" stroke-linecap="round"/><path d="M46.6 25.6Q51.4 24 53.4 19.6" fill="none" stroke="${c}" stroke-width="1.2" opacity=".5" stroke-linecap="round"/>
+<path d="M41 1.6Q43 .4 45 1.6" fill="none" stroke="${INK}" stroke-width="1.2"/><path d="M41 32.4Q43 33.6 45 32.4" fill="none" stroke="${INK}" stroke-width="1.2"/></svg>`;
 /* the grenade: a round pineapple grenade, its body in a grid of rounded lumps with a shine at the top left; the metal cap
    with the lever curving down its right side, and the pin's ring at the left (thrown: no pin, it falls off as it leaves
    the hand, GRENADE_PIN). Colors: body, metal, ring */
@@ -305,6 +327,42 @@ export const SPECIALS = [
     ],
   },
   {
+    id: "axe",
+    name: "Fire axe",
+    kind: "item",
+    icon: iconOf(AXE(["#c62f2f", "#b8864e", "#c9ced8"])),
+    tip: "A big swing in front of you, toward your mouse: 1 to 4 damage to every duck in it. A little faster than the hammer. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#c62f2f"],
+      ["b", S2, "#b8864e"],
+      ["c", A, "#c9ced8"],
+    ],
+  },
+  {
+    id: "sword",
+    name: "Short sword",
+    kind: "item",
+    icon: iconOf(SWORD(["#d9dee8", "#5a3a26", "#c9a24a"])),
+    tip: "A quick short swing in front of you, toward your mouse: 1 damage to every duck in it. Faster than the knife. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#d9dee8"],
+      ["b", S2, "#5a3a26"],
+      ["c", A, "#c9a24a"],
+    ],
+  },
+  {
+    id: "pan",
+    name: "Cast iron pan",
+    kind: "item",
+    icon: iconOf(PAN(["#2b2d33", "#1c1d22", "#6a6f7c"])),
+    tip: "A short heavy swing in front of you, toward your mouse: it misses half the time, but half its hits are critical. 1 damage. Shift and its key keeps it out: left click swings. (Off when the host turns off the silly commands.)",
+    colors: [
+      ["a", P, "#2b2d33"],
+      ["b", S2, "#1c1d22"],
+      ["c", A, "#6a6f7c"],
+    ],
+  },
+  {
     id: "hammer",
     name: "Hammer",
     kind: "item",
@@ -396,7 +454,34 @@ export const SPECIALS = [
     get icon() {
       return GUNS.chaingun.icon;
     },
-    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 60 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+    tip: "15 shots a second toward your mouse as long as the button is down. Each hits at once and takes all the HP of the first duck in its way. 300 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "dbarrel",
+    name: "Double barrel",
+    kind: "item",
+    get icon() {
+      return GUNS.dbarrel.icon;
+    },
+    tip: "A slug toward your mouse that takes all the HP of every duck in its way and throws them back. Two shells, then a second to load each (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "flamer",
+    name: "Flamethrower",
+    kind: "item",
+    get icon() {
+      return GUNS.flamer.icon;
+    },
+    tip: "Fire toward your mouse as long as the button is down, reaching farther the longer you hold it. Every duck in it burns (1 HP a second), and the ground it hits burns for 5 seconds. Its tank lasts 50 seconds, then it fills again. Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "burst",
+    name: "Burst rifle",
+    kind: "item",
+    get icon() {
+      return GUNS.burst.icon;
+    },
+    tip: "Three bullets toward your mouse with each click, 2 HP a bullet. 21 in its clip, then it reloads (R reloads sooner). Shift and its key keeps it out: left click shoots. (Off when the host turns off the silly commands.)",
   },
   {
     id: "glauncher",
@@ -691,6 +776,9 @@ export function heldHTML(id, duck) {
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
   if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
+  if (id === "axe") return AXE(c);
+  if (id === "sword") return SWORD(c);
+  if (id === "pan") return PAN(c);
   return id === "grenade"
     ? GRENADE(c)
     : id === "dagger"

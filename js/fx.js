@@ -16,7 +16,8 @@ const MAX = 2000, // (particles at most: the oldest give way)
   CHUNK = 2,
   SPLAT = 3,
   SMOKE = 4,
-  FLASH = 5;
+  FLASH = 5,
+  FIRE = 6; // (the flamethrower's: a flame pixel flying out, cooling from white to red as it goes)
 const X = new Float32Array(MAX),
   Y = new Float32Array(MAX),
   Z = new Float32Array(MAX),
@@ -48,12 +49,14 @@ const INK = [
   "#ee2e64", // 11 a laser
   "#ffffff", // 12 an eye's white
   "#1d100e", // 13 an eye's middle
+  "#c7282a", // 14 a flame, cooling
+  "#4c4a52", // 15 napalm smoke, dark
 ]; // (and after these, the ducks' own colors, as their chunks fly: inkOf)
 /* a duck's color as one of INK (added the first time, at most 200 of them) */
 function inkOf(hex) {
   if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return 0;
   let i = INK.indexOf(hex);
-  if (i < 0 && INK.length < 214) i = INK.push(hex) - 1;
+  if (i < 0 && INK.length < 216) i = INK.push(hex) - 1;
   return i < 0 ? 0 : i;
 }
 
@@ -222,8 +225,11 @@ export const BLEED_OF = {
   smg: "small",
   lmg: "small",
   ak: "big",
+  burst: "big",
   revolver: "big",
   sniper: "heavy",
+  slug: "heavy",
+  dbarrel: "heavy",
   chaingun: "heavy",
   chain: "heavy",
   pellet: "shot",
@@ -232,6 +238,9 @@ export const BLEED_OF = {
   dagger: "blade",
   jaime: "blade",
   hammer: "blunt",
+  pan: "blunt",
+  axe: "blade",
+  sword: "blade",
   chair: "blunt",
   arrow: "arrow",
   bow: "arrow",
@@ -251,7 +260,7 @@ const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
    hit went (most of the blood goes on that way, some back toward the shooter); body: the duck's color (its chunks) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0, body = "") {
-  sfx.flesh(BLEED_OF[w] || "small"); // (its sound: by what went in)
+  sfx.flesh(BLEED_OF[w] || "small", w); // (its sound: by what went in, or the weapon's own: sound.js OWN_HIT)
   if (noGore) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
@@ -435,6 +444,28 @@ export const MUZZLE = {
     shake: 0.16,
     kick: 0.55,
   },
+  burst: {
+    reach: 0.8,
+    cone: 0.36,
+    n: 26,
+    core: 4,
+    smoke: 4,
+    puff: 4,
+    drift: 0.7,
+    shake: 0.14,
+    kick: 0.5,
+  },
+  slug: {
+    reach: 1.1,
+    cone: 0.8,
+    n: 52,
+    core: 6,
+    smoke: 12,
+    puff: 6,
+    drift: 0.8,
+    shake: 0.5,
+    kick: 1.5,
+  }, // (the double barrel: the biggest flash and kick of all)
   shotgun: {
     reach: 0.7,
     cone: 1.1,
@@ -534,6 +565,70 @@ export function fxMuzzle(x, y, ang, gun) {
   }
 }
 
+/* the flamethrower's stream this frame, out of its nozzle at (x, y) on the screen toward `ang`, reaching `far` css px:
+   n new flame pixels (flamer.js: rate by how long it's held), each at its place across the cone (bands out from the
+   middle, each half as likely: flamer.js band), flying out to its end; some dark napalm smoke over it. `cone`: the
+   cone's half width (radians) */
+export function fxFlame(x, y, ang, far, n, cone, band) {
+  if (n <= 0) return;
+  const c = Math.cos(ang),
+    s = Math.sin(ang),
+    u = unit,
+    life = 260;
+  for (let k = 0; k < n; k++) {
+    const a = ang + band() * cone,
+      v = (far / life) * 1000 * rnd(0.85, 1.05),
+      ahead = Math.random() * 0.35; // (each starts a little way along its path: the stream stays whole between frames)
+    add(
+      FIRE,
+      x + Math.cos(a) * v * (life / 1000) * ahead,
+      y + Math.sin(a) * v * (life / 1000) * ahead,
+      0,
+      Math.cos(a) * v,
+      Math.sin(a) * v,
+      0,
+      life * (1 - ahead) * rnd(0.8, 1),
+      8,
+      Math.random() < 0.3 ? 2 : 1,
+    );
+  }
+  if (noHeavy) return;
+  for (let k = 0; k < Math.ceil(n / 8); k++) {
+    const d = far * rnd(0.3, 1);
+    add(
+      SMOKE,
+      x + c * d + rnd(-0.3, 0.3) * u,
+      y + s * d + rnd(-0.3, 0.3) * u,
+      u * 0.3,
+      c * u * 0.3 + rnd(-0.2, 0.2) * u,
+      s * u * 0.2,
+      u * rnd(0.5, 0.9),
+      rnd(900, 1500),
+      Math.random() < 0.6 ? 15 : 6,
+      3,
+    );
+  } // (napalm: dark smoke rising off it)
+}
+/* a patch of burning ground at (x, y) on the screen, r css px across: a few flickering flame pixels this frame */
+export function fxGroundFire(x, y, r, n = 2) {
+  for (let k = 0; k < n; k++) {
+    const a = rnd(0, Math.PI * 2),
+      d = r * Math.sqrt(Math.random());
+    add(
+      FIRE,
+      x + Math.cos(a) * d,
+      y + Math.sin(a) * d * 0.55,
+      0,
+      0,
+      0,
+      unit * rnd(0.4, 0.9),
+      rnd(180, 320),
+      Math.random() < 0.4 ? 9 : 10,
+      Math.random() < 0.25 ? 2 : 1,
+    );
+  }
+}
+
 /* ---------- each frame: move and draw ---------- */
 const G = 7.5; // (gravity, in ducks a second, each second)
 export function fxFrame(now = performance.now()) {
@@ -572,6 +667,13 @@ export function fxFrame(now = performance.now()) {
         if (COL[i] === 4) COL[i] = 1;
         if (FL[i] === NONE && Math.random() < 0.6) SIZE[i] = SIZE[i] + 1; // (blood spreads a little where it lands)
       }
+    } else if (k === FIRE) {
+      const fdt = Math.min(dt, age / 1000); // (one born since the last frame moves only for its own age)
+      X[i] += VX[i] * fdt;
+      Y[i] += VY[i] * fdt;
+      Z[i] += VZ[i] * fdt;
+      const f = age / LIFE[i];
+      COL[i] = f < 0.2 ? 8 : f < 0.45 ? 9 : f < 0.75 ? 10 : 14; // (white, yellow, orange, then red as it cools)
     } else if (k === SMOKE) {
       X[i] += VX[i] * dt;
       Y[i] += VY[i] * dt;

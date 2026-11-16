@@ -216,6 +216,14 @@ export const ROUNDS_ART = {
     w: 30,
     svg: `<svg viewBox="0 0 26 12"><path d="M2 6h13" stroke="#ffd84a" stroke-width="2.4" opacity=".6"/><path d="M13 2.3h6.4a3.7 3.7 0 0 1 0 7.4H13Z" fill="#b87333" stroke="#4a2a10" stroke-width="1"/><path d="M15 3.4h3.6" stroke="#fff" stroke-width=".8" opacity=".45"/></svg>`,
   },
+  slug: {
+    w: 30,
+    svg: `<svg viewBox="0 0 26 14"><path d="M1 7h14" stroke="#ffd84a" stroke-width="3" opacity=".6"/><path d="M12 2.4h7.6a4.6 4.6 0 0 1 0 9.2H12Z" fill="#8d929e" stroke="#33384a" stroke-width="1"/><path d="M14 4h4.6" stroke="#fff" stroke-width=".9" opacity=".5"/></svg>`,
+  },
+  burst: {
+    w: 28,
+    svg: `<svg viewBox="0 0 26 10"><path d="M2 5h14" stroke="#ffd84a" stroke-width="2" opacity=".6"/><path d="M12 2.8h7q5 .4 6.4 2.2q-1.4 1.8-6.4 2.2h-7Z" fill="#d9a24a" stroke="#5a3510" stroke-width="1"/></svg>`,
+  },
   lmg: {
     w: 32,
     svg: `<svg viewBox="0 0 30 10"><path d="M1 5h19" stroke="#ff6a3d" stroke-width="2.4" opacity=".75"/><path d="M16 2.7h6.6q5 .4 6.6 2.3q-1.6 1.9-6.6 2.3H16Z" fill="#c98a3a" stroke="#5a3510" stroke-width="1"/><path d="M25.4 3.3q2.6.6 3.6 1.7q-1 1.1-3.6 1.7Z" fill="#ff5a1a"/></svg>`,

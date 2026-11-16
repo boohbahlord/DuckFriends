@@ -9,6 +9,23 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v38",
+    version: 38,
+    date: "Nov 16, 2026",
+    title: "New guns and melee weapons",
+    news: [
+      "New: the Double barrel. Every shot is a slug that takes all the HP of whatever it hits and throws it back. Two shells, then a second to load each one.",
+      "New: the Flamethrower. It reaches farther the longer you hold it, sets everything in front of you on fire, and leaves the ground burning for 5 seconds. A duck on fire sees its screen flash crimson and shake.",
+      "New: the Burst rifle. Three rounds per click, 21 in a clip, as hard as the AK-47.",
+      "New: the Fire axe (1 to 4 damage), the Short sword (fast, 1 damage) and the Cast iron pan (misses half its swings, but half of what lands is a crit). All three are in Customize, under Specials.",
+      "The double barrel, the burst rifle and the flamethrower each have their own sounds and reloads, and the flamethrower roars while you hold it.",
+      "The axe, the sword and the frying pan each swing and hit with their own sounds.",
+      "For Dead Ducks Arcade: the Double barrel's crits blow the head off and go on through every zombie in their way. The Flamethrower's fire spreads from zombie to zombie, and it shares a fireplace bag with the chain gun. The Double barrel has 96 shells.",
+      "For Dead Ducks Arcade: the fireplace's melee weapons come as one bag: blunt (hammer, pan) or sharp (knife, axe, short sword).",
+    ],
+    fixed: [],
+  },
+  {
     id: "v37",
     version: 37,
     date: "Nov 16, 2026",
