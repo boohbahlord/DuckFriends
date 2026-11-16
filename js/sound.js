@@ -22,6 +22,7 @@
      loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
 import { profile } from "./store.js";
 import { FILES } from "./sfxlist.js";
+import { netLevel } from "./settings.js";
 
 /* how loud each sound is, in dB, the owner's to change: 0 plays the file as it is (each file peaks a little under full
    scale). Tiers: the menus' sounds faint, footsteps quiet (a duck's very quiet, a zombie's far quieter), the weapons
@@ -179,6 +180,10 @@ const VOICES = 12, // sounds at once, at most
     ...{ l4crack: 3, l4nail: 3, card: 3 },
   }, // … and of one kind (2 for the rest)
   CAP_ANY = 2;
+/* on Data saving or Poor connection (the owner's performance settings): fewer sounds at once, 2 of each kind, and a far
+   sound that would be nearly silent isn't played at all */
+const LITE = { voices: 8, cap: 2, far: 0.12 };
+const lite = () => netLevel() > 0;
 const NEAR = 300, // world px: full up to here …
   FAR = 1500; // … and nothing from here (as Duck Cabin's)
 const UI = ["uiPress", "uiOn", "uiOff", "uiOpen", "uiClose", "nope", "tick"];
@@ -385,13 +390,16 @@ function voice(name, o = {}, loops = false) {
     fetchOf(name);
     return null;
   }
-  const k = (o.k ?? 1) * near(o) * 10 ** ((VOL[name] || 0) / 20);
+  const far = near(o),
+    k = (o.k ?? 1) * far * 10 ** ((VOL[name] || 0) / 20),
+    low = lite();
   if (!list.length || k < 0.002 || !level()) return null;
+  if (low && far < LITE.far) return null;
   const t = soon();
   const same = live.filter((v) => v.name === name && !v.cut);
-  if (same.length >= (CAP[name] || CAP_ANY)) cut(same[0], t);
+  if (same.length >= (low ? LITE.cap : CAP[name] || CAP_ANY)) cut(same[0], t);
   const all = live.filter((v) => !v.cut);
-  if (all.length >= VOICES) cut(all[0], t);
+  if (all.length >= (low ? LITE.voices : VOICES)) cut(all[0], t);
   const src = ac.createBufferSource(),
     g = ac.createGain();
   src.buffer = list[(Math.random() * list.length) | 0];
