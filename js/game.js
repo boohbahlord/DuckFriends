@@ -188,7 +188,14 @@ import {
   BURN,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4TouchAim, l4Held, l4Got, sprintLeft, laserEnd } from "./l4dd.js";
+import {
+  l4TouchAim,
+  l4Held,
+  l4Got,
+  sprintLeft,
+  l4SafeHint,
+  laserEnd,
+} from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -4711,6 +4718,7 @@ function useKey(i, keep) {
 function l4Pick(i) {
   const sl = slotsOf(R.state, R.me);
   if (i > 3 || !sl[i]) return;
+  if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
     if (bar) bar.refresh();

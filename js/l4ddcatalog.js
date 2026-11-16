@@ -16,6 +16,7 @@ import {
   priceOf,
   buyPrice,
   BOX,
+  SAFE,
 } from "./l4ddrules.js";
 import { BOMB } from "./jaimebomb.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
@@ -37,7 +38,10 @@ const SAY = {
   chaingun: "Hold to fire. Kills whatever it hits, and never reloads.",
   glauncher:
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
-  medkit: "Puts your HP back to full.",
+  medkit:
+    "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
+  safekeep:
+    "A halo. When you go down you keep everything you bought, and it gets you up: E while down, or by itself when nobody else is standing. 6 seconds nothing hurts you after.",
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   fireball: "Sets the zombie it hits on fire.",
@@ -51,12 +55,12 @@ const SAY = {
   chair:
     "Justin's office chair, thrown the way you aim. A Max Ammo gives the throws back.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
-  kill: "Every hit kills, for a minute.",
+  kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit or Jaime).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
-  double: "Double points for a minute.",
-  sale: "Half price at the Butler and the fireplace for the rest of the round (each upgrade once).",
+  double: "Double points for 45 seconds.",
+  sale: "Half price at the Butler and the fireplace for 45 seconds (each upgrade once).",
 };
 
 /* a number without its trailing zeros (1.75, 5, 0.4) */
@@ -98,6 +102,7 @@ function stats(w) {
   }
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
   if (GUN_SHOP.includes(w)) out.push(["The Butler sells it", buyPrice(w)]);
+  if (w === "safekeep") out.push(["The Butler sells it", SAFE.PRICE]);
   else if (POOL.includes(w))
     out.push([
       "Where",
