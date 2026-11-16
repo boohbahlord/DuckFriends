@@ -478,8 +478,8 @@ export const PTS = {
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
 export const SHOP = [
-  { id: "acc", name: "Critical Chance", what: "+2.5% crits", most: 2 }, // (600 each, +2.5%, twice: the owner's, Nov 16 21:47Z; a duck that bought more before keeps them)
-  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5: a duck that bought more before keeps them)
+  { id: "acc", name: "Critical Chance", what: "+2.5% crits", most: 2 }, // (600 each, +2.5%, twice: the owner's, Nov 16 21:47Z)
+  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5)
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },

@@ -9,6 +9,22 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v47",
+    version: 47,
+    date: "Nov 16, 2026",
+    title: "Crits, misses and starting rounds",
+    news: [
+      "For Dead Ducks Arcade: every weapon now has a crit chance: 5%, or 2.5% for the fast guns. Grenades and the grenade launcher can crit each zombie they hit. Angelic weapons crit twice as often.",
+      "For Dead Ducks Arcade: hits can miss (2.5%, or 5% for the fast guns), and a bullet or arrow that misses flies on to the next zombie.",
+      "For Dead Ducks Arcade: Critical Chance costs 600 points, adds 2.5%, and can be bought twice.",
+      "For Dead Ducks Arcade: zombies have 3, 4 or 5 HP.",
+      "For Dead Ducks Arcade: Start on round is a setting now: 1, 5, 9, 13 or 21. It replaces Round 16 Start, and every duck gets bonus points in round 0: 750, 1,750, 2,500 or 5,000.",
+      "For Dead Ducks Arcade: in round 0, Change starting round (under Exit Cabin) starts a vote to start at another round. A passed vote gives the points at once.",
+      "For Dead Ducks Arcade: Angelic weapons now glow dark crimson red.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v46",
     version: 46,
     date: "Nov 16, 2026",
