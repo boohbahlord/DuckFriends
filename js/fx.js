@@ -329,7 +329,7 @@ export const MUZZLE = {
   shotgun: { flash: 6, smoke: 3, shake: 0.32, kick: 1 },
   lmg: { flash: 5, smoke: 3, shake: 0.15, kick: 0.5 },
   sniper: { flash: 8, smoke: 4, shake: 0.42, kick: 1.2 },
-  chaingun: { flash: 7, smoke: 2, shake: 0.13, kick: 0.45 },
+  chaingun: { flash: 7, smoke: 2, shake: 0.3, kick: 0.45 }, // (15 shots a second outlast the shake fading, 2.4 a second: held down it builds up; at 0.13 it never did)
 };
 export function fxMuzzle(x, y, ang, gun) {
   const M = MUZZLE[gun];

@@ -2361,7 +2361,8 @@ export function l4Shots(s, now) {
   return true;
 }
 
-/* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies; true when it got any */
+/* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in
+   it, loses half its HP; true when it got any zombie */
 function boom(s, sh, bx, by, zs, T, now, wide = 1) {
   let any = false;
   const gore = [];
@@ -2376,6 +2377,22 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1) {
       gore.push([Math.round(z.x), Math.round(z.y)]);
       any = true;
     }
+  /* the one who threw or launched it, in its blast: half its HP, rounded down, and never down by it (the owner's, Nov
+     16; the Jaime Bomb's has no sh.k: Jaime's, not mine) */
+  const mine = sh.k && s.pos[sh.by],
+    q = mine && (s.hang.l4p || {})[sh.by];
+  if (q && !q.dn && !q.gh && !invuln(s) && !invulnOf(s, sh.by, now)) {
+    const [mx, my] = at(mine),
+      cut = Math.floor(q.hp / 2);
+    if (
+      cut > 0 &&
+      Math.hypot(mx - bx, (my - by) * 1.25) < ARMS.grenade.r * wide
+    )
+      s.hang.l4p = {
+        ...s.hang.l4p,
+        [sh.by]: { ...q, hp: q.hp - cut, at: now },
+      };
+  }
   addFx(s, {
     kind: "boom",
     by: sh.by,
