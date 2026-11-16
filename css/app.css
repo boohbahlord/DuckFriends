@@ -11533,6 +11533,73 @@ html.moving .hp .flick {
 .hang-board .fxl {
   z-index: 30000;
 }
+/* ---------- the pixel effects (fx.js): blood, smoke, muzzle flashes, laser sights ---------- */
+.fx-px {
+  position: absolute;
+  left: 0;
+  top: 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.hang-board > .fx-px {
+  z-index: 22000;
+} /* (Hangout and Dead Ducks Arcade: over every duck, under the dark, so blood in the dark stays dark) */
+/* a duck on an adrenaline shot (or the Speed Boost drop) jitters, a pixel each way, fast (its weapon too: fxmotion.js) */
+.gduck.adren .gduck-body {
+  animation: adren-jit 0.12s steps(1) infinite;
+}
+@keyframes adren-jit {
+  0% {
+    translate: var(--px, 1px) 0;
+  }
+  25% {
+    translate: 0 calc(var(--px, 1px) * -1);
+  }
+  50% {
+    translate: calc(var(--px, 1px) * -1) 0;
+  }
+  75% {
+    translate: 0 var(--px, 1px);
+  }
+}
+/* Dead Ducks Arcade: a duck mid-jump, while the jump keeps it safe, is see-through */
+.gduck .gduck-body {
+  transition: opacity 0.1s;
+}
+.gduck.dodge:not(.ghost) .gduck-body {
+  opacity: 0.55;
+}
+/* sprinting blurs the map a little: it fades in and out, and it's one layer, so it never stacks (game.js toggles
+   html.sprint-blur); on a board the map is behind it, in Hangout and Dead Ducks Arcade the ground */
+.game::after,
+.hang-board::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  backdrop-filter: blur(1.2px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s,
+    visibility 0s 0.25s;
+}
+.hang-board::after {
+  position: absolute;
+  z-index: 1;
+}
+.game.hang::after {
+  display: none;
+} /* (the ground's own, above) */
+html.sprint-blur .game::after,
+html.sprint-blur .hang-board::after {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.6s,
+    visibility 0s;
+}
 .hang-shade {
   position: absolute;
   left: 0;
@@ -14401,22 +14468,17 @@ html.moving .eye-tears .tdrop.t2 {
   display: none;
 }
 .l4z.dead {
-  animation: l4z-die 4s ease-in forwards;
+  animation: l4z-die 4s linear forwards;
 }
 @keyframes l4z-die {
-  0% {
+  0%,
+  31.25% {
     opacity: 1;
-  }
-  6% {
-    opacity: 0.5;
-  }
-  75% {
-    opacity: 0.5;
   }
   100% {
     opacity: 0;
   }
-} /* (lying down, see-through at once, gone in 4 s: L4.DEAD_MS) */
+} /* (lying down solid for 1.25 s, then slowly fading, gone in 4 s: L4.DEAD_MS; owner, Nov 16) */
 .l4-boards {
   transform-origin: 0 0;
   transition: opacity 0.25s;

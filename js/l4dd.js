@@ -75,6 +75,7 @@ import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
+import { fxHitAt } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { hashText } from "./pxdom.js";
 import {
@@ -316,6 +317,19 @@ const HIT = [
   },
   { filter: "none" },
 ];
+/* the weapon a zombie's newest wound (wounds.js codes) tells of, for its blood when no shot hit it (a knife, a hammer) */
+const BY_WOUND = {
+  b: "handgun",
+  B: "ak",
+  s: "pellet",
+  c: "knife",
+  r: "hammer",
+  a: "arrow",
+  k: "sniper",
+  g: "chaingun",
+};
+const newWound = (had = "", now = "") =>
+  now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
 function wounds(o, l, i) {
   if (o.hits === o.want) return;
@@ -355,6 +369,15 @@ function seeZombies(s, ctx, now) {
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
     if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
+    if (z.hp < o.hp && o.st !== 3 && shown && o.sk)
+      fxHitAt(
+        o.sx,
+        o.sy,
+        o.bh * o.sk * 0.55,
+        null,
+        64 * o.sk,
+        BY_WOUND[newWound(o.want, (s.hang.zw || {})[z.i])],
+      ); // (its blood: by the shot that hit it, or the wound it got (a hammer's bruise), fx.js)
     if (z.st === 3 && o.st !== 3) {
       o.el.classList.add("dead");
       o.diedAt = now;
@@ -562,7 +585,51 @@ function stamp() {
   x.fillRect(0, 0, n, n);
   return (STAMP = c);
 }
+/* where duck id points its flashlight, on the floor: [dx, dy] (to the right when it doesn't say) */
+function aimOf(s, id, ctx) {
+  const pos = s.pos[id],
+    aim =
+      id === ctx.me ? ctx.duck() && ctx.duck().aim : pos && [pos.ax, pos.ay];
+  let dx = aim && aim[0] !== undefined ? aim[0] * W : 0,
+    dy = aim && aim[1] !== undefined ? aim[1] * H : 0;
+  if (Math.hypot(dx, dy) < 1e-6) [dx, dy] = [1, 0];
+  return [dx, dy];
+}
+let CTX = null, // (the screen's camera and state, as paint() last had them)
+  BEAMS = []; // (every flashlight on now: [x, y, its angle] on the floor)
+/* is (x, y) on the floor in a flashlight's beam (and no wall between)? */
+export function inBeam(x, y) {
+  for (const [bx, by, t] of BEAMS) {
+    const dx = x - bx,
+      dy = y - by,
+      d = Math.hypot(dx, dy);
+    if (d > CONE.far || d < 1) continue;
+    const off = Math.abs(
+      ((Math.atan2(dy, dx) - t + 3 * Math.PI) % (2 * Math.PI)) - Math.PI,
+    );
+    if (off < CONE.half && rayTo(bx, by, dx / d, dy / d, d) >= d - 8)
+      return true;
+  }
+  return false;
+}
+/* a gun's laser sight (owner, Nov 16): where it ends on the screen, [x, y] css px, at the end of duck id's flashlight
+   along its aim (a wall stops it, as it stops the light); null when that duck's light is off, it's down or a ghost */
+export function laserEnd(id) {
+  const ctx = CTX,
+    s = ctx && ctx.state();
+  if (!s || !s.hang || !s.pos[id] || !up(s, id) || (s.hang.l4f || {})[id])
+    return null;
+  const Wd = ctx.world,
+    a = Wd.at(id);
+  if (!a || !seenFrom(a.x, a.y, Wd.inside)) return null;
+  const [dx, dy] = aimOf(s, id, ctx),
+    l = Math.hypot(dx, dy),
+    d = rayTo(a.x, a.y, dx / l, dy / l, CONE.far),
+    e = Wd.toScreen(a.x + (dx / l) * d, a.y + (dy / l) * d, a.z + 26);
+  return [e.left, e.top];
+}
 function paint(now, ctx) {
+  CTX = ctx;
   const Wd = ctx.world,
     s = ctx.state(),
     q = pixelOn() ? 1 / (gridPx() * (low() ? 2 : 1)) : low() ? 0.22 : 0.3, // (the dark is all soft light: a small canvas stretched over the board looks the same, and every frame it's redrawn costs far less. The pixel look: one of its pixels is one of the grid's, or two by two on Low graphics)
@@ -618,6 +685,7 @@ function paint(now, ctx) {
   /* every duck: a faint glow round it, and its flashlight (not a ghost's, not a downed duck's, not one switched off) */
   const off = s.hang.l4f || {},
     rays = low() ? 12 : 22;
+  BEAMS = [];
   for (const id of s.seat) {
     const a = Wd.at(id),
       pos = s.pos[id];
@@ -628,11 +696,8 @@ function paint(now, ctx) {
     holes.push([c.left * q, c.top * q, GLOW * sc, 0.55]);
     if (!up(s, id) || off[id]) continue;
     if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
-    const aim = id === ctx.me ? ctx.duck() && ctx.duck().aim : [pos.ax, pos.ay];
-    let dx = aim && aim[0] !== undefined ? aim[0] * W : 0,
-      dy = aim && aim[1] !== undefined ? aim[1] * H : 0;
-    if (Math.hypot(dx, dy) < 1e-6) [dx, dy] = [1, 0];
-    const t = Math.atan2(dy, dx),
+    const [dx, dy] = aimOf(s, id, ctx),
+      t = Math.atan2(dy, dx),
       pts = [];
     for (let k = 0; k <= rays; k++) {
       const u = t - CONE.half + (2 * CONE.half * k) / rays,
@@ -644,6 +709,24 @@ function paint(now, ctx) {
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
     cones.push([o.left * q, o.top * q, pts, CONE.far * sc]);
+    BEAMS.push([a.x, a.y, t]);
+  }
+  /* a duck or a zombie in a beam is as bright as the beam's middle, all of it (owner, Nov 16: "zombie ducks and players
+     should become a matching brightness of the flashlight when they are in it") */
+  if (BEAMS.length) {
+    const lit = (x, y, z, k) => {
+      if (!inBeam(x, y)) return;
+      const p = Wd.toScreen(x, y, z + 30 * k);
+      if (on(p.left * q, p.top * q, 50 * sc))
+        holes.push([p.left * q, p.top * q, 50 * sc * k, 0.92]);
+    };
+    for (const id of s.seat) {
+      const a = Wd.at(id);
+      if (a && s.pos[id] && seenFrom(a.x, a.y, Wd.inside))
+        lit(a.x, a.y, a.z, 1);
+    }
+    for (const o of Z.values())
+      if (!o.el.hidden && o.st !== 3) lit(o.x, o.y, heightAt(o.x, o.y), 1.1);
   }
   const f = (v) => v.toFixed(1),
     key = [
@@ -1379,6 +1462,9 @@ activity({
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
+      o.sx = f.left;
+      o.sy = f.top;
+      o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
       const tr = `translate(${at(f.left)}px, ${at(f.top)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
