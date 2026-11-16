@@ -122,4 +122,7 @@ export const FILES = {
   gasPour: { n: 1 },
   angelWork: { n: 1 },
   angelOrb: { n: 1 },
+  trombone: { n: 1 },
+  fire: { n: 1, loop: [0.15, 2.15] },
+  fireLight: { n: 1 },
 };

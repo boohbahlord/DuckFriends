@@ -9,6 +9,40 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v42",
+    version: 42,
+    date: "Nov 16, 2026",
+    title: "Trombone and fire",
+    news: [
+      "The Sad Trombone special plays its 'wah, wah, wah, waaah'.",
+      "Fire crackles: ducks on fire, and the fire special, now have a sound.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v41",
+    version: 41,
+    date: "Nov 16, 2026",
+    title: "The power box",
+    news: [
+      "For Dead Ducks Arcade: the power box on the balcony works. Find its four parts (a fuse, a lever, a tool box and a gas can) at the Butler's, on a zombie in the first five rounds, or around the cabin. Press E at the box to fit them and turn the power on: the lights and the TV come on for 6 rounds.",
+      "For Dead Ducks Arcade: once the power runs out, jerry cans turn up (from the fireplace, zombies, or around the cabin). Pour one in to bring the power back for as many rounds as it holds.",
+      "For Dead Ducks Arcade: the power box has its sounds: parts picked up and fitted, gas poured, the power coming on and going out.",
+      "Duck Cabin's power box now sounds as the power comes on and goes out.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v40",
+    version: 40,
+    date: "Nov 16, 2026",
+    title: "Hats knocked off for real",
+    news: [],
+    fixed: [
+      "Hats and face items knocked off Blocks, 2D shape and Dat Boi ducks no longer stay on their heads.",
+    ],
+  },
+  {
     id: "v39",
     version: 39,
     date: "Nov 16, 2026",

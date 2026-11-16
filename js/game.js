@@ -1812,8 +1812,9 @@ function drawDucks(now = clockNow()) {
       d._bn = bn;
       d.classList.toggle("onfire", bn >= 2);
       d.classList.toggle("burnt", bn === 1);
-      if (bn === 2) sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000));
-      if (bn === 3) sfx.burn(BURN.P / 1000);
+      if (bn === 2)
+        sfx.burn(Math.max(0.3, (s.mgj.burn[id] - now) / 1000), heard(id));
+      if (bn === 3) sfx.burn(BURN.P / 1000, heard(id));
       if (bn === 3 && id === R.me) crimson(BURN.P); // (my duck on fire: my screen blinks crimson while it shakes)
       if (!bn && was && was < 3) {
         d.classList.add("unburn");
@@ -3281,7 +3282,7 @@ function playFx(f) {
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`);
     if (!dk) return;
     burn(dk, 1600);
-    sfx.fire();
+    sfx.fire(heard(f.who[0]));
   } else if (f.kind === "meteor") {
     // Mad God Justin's meteor, onto the middle of the board
     const board = $(".board", S);

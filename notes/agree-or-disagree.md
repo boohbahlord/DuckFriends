@@ -4861,3 +4861,11 @@ Owner: "make sure they lose their hats and other items blown off and they wont r
 Decided: PHP 6 (the slug and chain gun still take it all); the boards' default down time is 3 s (the host's Down time setting still overrides it); a duck that comes back gets its wounds and knocked-off items cleared and 2.5 s of spawn protection (blinks, fades in; nothing hurts it, and its own weapons and explosives hurt nobody); in the normal games wounds and knocked-off hats no longer fade while the duck is alive. Not Quacky Zombies, Mad God Justin or Hangout. HP regeneration (6 s) untouched.
 
 
+- Version 40: Noah's #322, knocked-off hats no longer also drawn on Blocks, 2D shape and Dat Boi ducks (owner 17:29Z).
+- Version 41: Solomon's #325 power box PR 1 (with Noah's #323 art and Miles Jr.'s #319 sounds). Angel machine = PR 2, next.
+
+## Request (2026-11-16 17:44Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt89HYSgtFNSGq7W5jYnnTY5): trombone and fire sounds
+> miles needs to do a trombone sound effect and a fire sound effect
+
+- Version 42: Miles Jr.'s #327. sfx.trombone (the Sad Trombone special), sfx.fire (the fire special) and sfx.burn
+  (burning ducks) were already called but silent; now they have sounds. Asked the owner where else they should play.
