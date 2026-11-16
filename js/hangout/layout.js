@@ -8,9 +8,13 @@
    the cabin in the middle (great room, a hall, the kitchen, the bathroom, two bedrooms; the front door in the north wall,
    the back door in the south wall onto the deck), the deck raised over the slope with its stairs down at the east end,
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
-export const W = 6000,
-  H = 4400,
-  DUCK = 64;
+import * as GS from "./stationmap.js";
+/* W, H: the world's size; Dead Ducks Arcade's second map has its own (useMode switches them) */
+export let W = 6000,
+  H = 4400;
+export const DUCK = 64;
+let variant = "", // "l4": Quacky Zombies' cabin, "l4gs": its second map (useMode below)
+  rev = 0;
 export const EDGE = 150; // the forest: nobody walks closer to the world's edge than this
 export const STEP = 12; // a duck walks up this much without jumping
 export const FOOT = 16; // a duck's feet: how close it gets to a wall or a trunk
@@ -76,8 +80,14 @@ export const onStage = (x, y) =>
   ((x - STAGE.cx) / STAGE.rx) ** 2 + ((y - STAGE.cy) / STAGE.ry) ** 2 <= 1;
 export const onStageStairs = (x, y) =>
   x >= STAGE.sx0 && x < STAGE.sx1 && y >= STAGE.sy0 && y < STAGE.sy1;
-export const inCabin = (x, y) =>
+const cabinIn = (x, y) =>
   x > CABIN.x0 && x < CABIN.x1 && y > CABIN.y0 && y < CABIN.y1; // (the walls' middle lines)
+/* inside (the cabin; on the second map, either building) */
+export const inCabin = (x, y) =>
+  variant === "l4gs" ? GS.buildingAt(x, y) > 0 : cabinIn(x, y);
+/* which building (x, y) is in: 0 outside; the cabin is 1; on the second map 1 the gas station, 2 the chapel */
+export const whereIn = (x, y) =>
+  variant === "l4gs" ? GS.buildingAt(x, y) : cabinIn(x, y) ? 1 : 0;
 export const inDeck = (x, y) => inR(x, y, [DECK.x0, DECK.y0, DECK.x1, DECK.y1]);
 export const inPool = (x, y) => inR(x, y, [POOL.x0, POOL.y0, POOL.x1, POOL.y1]);
 export const onTramp = (x, y) =>
@@ -91,6 +101,7 @@ const platAt = (x, y) =>
 export const onPlatform = (x, y) => !!platAt(x, y);
 /* the height of whatever a duck stands on at (x, y) */
 export function heightAt(x, y) {
+  if (variant === "l4gs") return GS.groundAt(x, y);
   if (onStage(x, y)) return STAGE.h;
   if (onStageStairs(x, y))
     return (
@@ -145,14 +156,14 @@ let only4; // (while it's set, every prop made is one cabin's only: 0 Hangout's,
 function add(kind, x, y, w, d, h, o = {}) {
   const p = { kind, x, y, w, d, h, z: heightAt(x + w / 2, y + d - 1), ...o };
   if (only4 !== undefined && p.l4 === undefined) p.l4 = only4;
-  const n = (p.l4 === 1 ? "l4-" : "") + kind; // (Quacky Zombies' own count apart: Hangout's ids stay as they were)
+  const n = (p.map ? p.map + "-" : p.l4 === 1 ? "l4-" : "") + kind; // (Quacky Zombies' own count apart: Hangout's ids stay as they were)
   p.id = o.id || n + (count[n] = (count[n] || 0) + 1);
   p.key = o.key ?? y + d;
   p.box = o.box || { l: x, t: y - p.z - h, w, h: d + h };
   if (p.solid && !p.block) p.block = [x, y, x + w, y + d];
   if (p.solid && p.top === undefined) p.top = p.plat ? p.z + h : Infinity;
-  if (p.l4 === 1) {
-    ALL.push(p); // (Quacky Zombies' only: in PROPS once useMode turns to it)
+  if (p.l4 === 1 || p.map) {
+    ALL.push(p); // (Quacky Zombies' only, or the second map's: in PROPS once useMode turns to it)
     return p;
   }
   if (p.plat)
@@ -828,12 +839,13 @@ for (
   tree(x, y, 0.8 + rng() * 0.45);
 }
 
+/* Dead Ducks Arcade's second map: the gas station, the road and the chapel (stationmap.js) */
+GS.build({ add, wallX, wallY, T });
+
 /* ---------- walking: solids (in a grid of 200 px cells, so a step looks at a few) ---------- */
 export const SOLIDS = [];
 const CELL = 200,
   grid = new Map();
-let variant = "", // "l4": Quacky Zombies' cabin (useMode below)
-  rev = 0;
 function makeSolids() {
   SOLIDS.length = 0;
   grid.clear();
@@ -846,6 +858,7 @@ function makeSolids() {
         x1: p.block[2],
         y1: p.block[3],
         top: p.plat && variant === "l4" ? Infinity : p.top, // (Quacky Zombies: nothing to jump up onto)
+        zx: !!p.zx, // (zombies climb over it: the fallen tree)
       });
   for (const b of SOLIDS)
     for (
@@ -885,15 +898,21 @@ const PEEK = { side: 60, deep: 260 };
 export const seenFrom = (x, y, inside) =>
   inCabin(x, y) === inside ||
   (PEEKS.length > 0 && PEEKS.some((k) => inR(x, y, inside ? k.out : k.in)));
-export function useMode(mode) {
-  const v = mode === "l4dd" ? "l4" : "";
+export function useMode(mode, map) {
+  const v = mode === "l4dd" ? (map === "gs" ? "l4gs" : "l4") : "";
   if (v === variant) return;
   variant = v;
   rev++;
+  deckSpots = null;
+  [W, H] = v === "l4gs" ? [GS.GS_W, GS.GS_H] : [6000, 4400];
   PROPS.length = 0;
-  for (const p of ALL) if (p.l4 !== (v === "l4" ? 0 : 1)) PROPS.push(p);
+  for (const p of ALL)
+    if (v === "l4gs" ? p.map === "gs" : !p.map && p.l4 !== (v === "l4" ? 0 : 1))
+      PROPS.push(p);
   OPENINGS.length = 0;
-  OPENINGS.push(...(v === "l4" ? L4_OPENINGS : HANG_OPENINGS));
+  OPENINGS.push(
+    ...(v === "l4" ? L4_OPENINGS : v === "l4gs" ? [] : HANG_OPENINGS),
+  );
   HOLES.length = PEEKS.length = 0;
   if (v === "l4") HOLES.push(...L4_HOLES);
   for (const o of HOLES)
@@ -903,7 +922,7 @@ export function useMode(mode) {
         out: [o.a - PEEK.side, C.y1, o.b + PEEK.side, C.y1 + PEEK.deep],
       });
   PLATS.length = 0;
-  if (v !== "l4")
+  if (!v)
     for (const p of PROPS)
       if (p.plat)
         PLATS.push({
@@ -915,6 +934,8 @@ export function useMode(mode) {
           key: p.key,
         });
   makeSolids();
+  LIGHTS.length = 0;
+  LIGHTS.push(...lightsOf());
 }
 const hits = (b, x, y) =>
   x > b.x0 - FOOT && x < b.x1 + FOOT && y > b.y0 - FOOT && y < b.y1 + FOOT;
@@ -926,11 +947,30 @@ export function solidsAt(x, y, z = -Infinity) {
 }
 /* can a duck's feet at height z go to (x, y)? up: how much higher the ground there may be (a step on the ground; a little
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
-export function standable(x, y, z, up = STEP, from = null) {
-  if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
+export function standable(x, y, z, up = STEP, from = null, zombie = false) {
+  if (variant === "l4gs") {
+    // (the second map: the trunks along the forest line stop a duck, and the fences; zombies come from past the fences)
+    if (x < 0 || x > W || y < 0 || y > H) return false;
+    if (
+      !zombie &&
+      (x < 70 || x > W - 70 || GS.inDeep(x, y) || !GS.inOpen(x, y))
+    )
+      return false;
+    if (!zombie && boardAt(x, y)) return false;
+  } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
   if (heightAt(x, y) > z + up + 1e-6) return false;
-  return !solidsAt(x, y, z).some((b) => !(from && hits(b, from[0], from[1])));
+  return !solidsAt(x, y, z).some(
+    (b) => !(from && hits(b, from[0], from[1])) && !(zombie && b.zx),
+  );
 }
+/* the second map's boarded holes: a duck never gets through one (zombies do, once the boards are down: l4ddrules.js) */
+const BOARD_DEEP = T + FOOT;
+const boardAt = (x, y) =>
+  GS.BOARDED.some((o) =>
+    o.axis === "x"
+      ? x > o.a - FOOT && x < o.b + FOOT && Math.abs(y - o.at) < BOARD_DEEP
+      : y > o.a - FOOT && y < o.b + FOOT && Math.abs(x - o.at) < BOARD_DEEP,
+  );
 /* where a duck's feet are drawn in depth: its foot y; on the stage (or the stairs' upper steps) in front of the whole
    stage (its strips sort by its front edge, at most cy + ry) and among themselves by depth, squeezed into the 40 steps
    after it (z-indexes are whole numbers); the stairs' lower steps from there on, at their own depth. On a bed or a
@@ -939,6 +979,7 @@ const BAND = 40,
   BACK = STAGE.cy - STAGE.ry,
   LOW = STAGE.cy + STAGE.ry + BAND;
 export function sortY(x, y, z) {
+  if (variant === "l4gs") return y;
   const pl = PLATS.length && platAt(x, y);
   if (pl && z >= pl.top - 1)
     return pl.key + 1 + ((y - pl.y0) / (pl.y1 - pl.y0)) * 7;
@@ -954,6 +995,7 @@ export function sortY(x, y, z) {
 }
 /* where someone arrives: outside the front door (k: the k-th of n, spread out; a free spot) */
 export function spawnAt(k = 0, n = 1) {
+  if (variant === "l4gs") return gsSpawn(k);
   for (let t = 0; t < 40; t++) {
     const i = k + t * 7,
       x =
@@ -970,6 +1012,7 @@ export function spawnAt(k = 0, n = 1) {
    the deck table and above the railing, nearest the middle first (k: the k-th arrival). Reset duck keeps spawnAt. */
 let deckSpots = null;
 export function deckSpawnAt(k = 0) {
+  if (variant === "l4gs") return gsSpawn(k);
   if (!deckSpots) {
     deckSpots = [];
     const door = DOORS.back.x,
@@ -999,12 +1042,24 @@ export function deckSpawnAt(k = 0) {
 /* the pools of light on the ground at night: { x, y, r, c (color), k (strength), flick, only, prop (its prop, for a
    lamp that switches), el (electric: out while the power is off) } */
 const ELECTRIC = ["lamp", "stage", "sink", "post"];
-export const LIGHTS = [
+const lightsOf = () => [
   ...PROPS.filter((p) => p.light).map((p) => ({
     only: p.only,
     ...p.light,
     prop: p,
     el: ELECTRIC.includes(p.kind),
   })),
-  ...GLOWS,
+  ...(variant === "l4gs" ? [] : GLOWS),
 ];
+export const LIGHTS = lightsOf();
+/* the second map: where someone arrives, in the gas station by the front door (k: the k-th, spread out; a free spot) */
+function gsSpawn(k) {
+  const { x: sx, y: sy } = GS.START;
+  for (let t = 0; t < 60; t++) {
+    const i = k + t * 7,
+      x = sx + ((i % 8) - 3.5) * 70,
+      y = sy - (Math.floor(i / 8) % 2) * 70;
+    if (standable(x, y, heightAt(x, y), 0)) return { x, y };
+  }
+  return { x: sx, y: sy };
+}
