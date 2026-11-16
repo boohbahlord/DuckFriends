@@ -26,6 +26,9 @@ import { DROP_ICONS } from "./l4dddrops.js";
 const SAY = {
   knife: "Quick stabs up close.",
   hammer: "A slow, heavy swing that hits a wide spot.",
+  axe: "A big swing, a little faster than the hammer: 1 to 4 damage.",
+  sword: "Short, quick swings, faster than the knife.",
+  pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
   revolver: "Five big shots, then a reload.",
   bow: "Lots of arrows, one at a time.",
@@ -35,6 +38,11 @@ const SAY = {
   smg: "Hold to fire. Fast, light bullets.",
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
+  dbarrel:
+    "Two slugs, each one a kill, the body thrown back. A crit goes through every zombie in its way.",
+  flamer:
+    "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
+  burst: "Three rounds a click, as hard as the AK-47.",
   chaingun: "Hold to fire. Kills whatever it hits, and never reloads.",
   glauncher:
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
@@ -74,7 +82,7 @@ function stats(w) {
   if (A.dmg !== undefined)
     out.push([
       "Damage",
-      A.dmg >= 99
+      A.dmg >= 99 || A.dmg === "all"
         ? "Kills"
         : Array.isArray(A.dmg)
           ? `${A.dmg[0]} to ${A.dmg[1]}`
@@ -82,11 +90,15 @@ function stats(w) {
     ]);
   if (w === "glauncher" || w === "grenade") out.push(["Damage", "Kills"]);
   if (A.pellets) out.push(["Pellets", A.pellets]);
-  if (A.cool && A.kind !== "special")
+  if (A.cool && A.kind !== "special" && w !== "flamer")
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
   if (A.mag) out.push(["Magazine", A.mag]);
-  if (A.kind === "ranged" && A.all) out.push(["Ammo", A.all]);
+  if (A.kind === "ranged" && A.all && w !== "flamer") out.push(["Ammo", A.all]);
   if (A.reload) out.push(["Reload", secs(A.reload)]);
+  if (A.shell) out.push(["Reload", `${secs(A.shell)} a shell`]);
+  if (A.burst) out.push(["Burst", `${A.burst} rounds`]);
+  if (w === "flamer")
+    out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
   if (A.crit) out.push(["Headshot", `${num(A.crit * 100)}%`]);
   if (A.pierce) out.push(["Goes through", `${A.pierce} zombies`]);
   if (w === "grenade") {

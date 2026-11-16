@@ -64,6 +64,9 @@ export const LOCKS = [
   { kind: "special", id: "revolver", later: true, name: "Revolver" },
   { kind: "special", id: "lmg", later: true, name: "LMG" },
   { kind: "special", id: "chaingun", later: true, name: "Chain gun" },
+  { kind: "special", id: "dbarrel", later: true, name: "Double barrel" },
+  { kind: "special", id: "flamer", later: true, name: "Flamethrower" },
+  { kind: "special", id: "burst", later: true, name: "Burst rifle" },
   { kind: "special", id: "glauncher", later: true, name: "Grenade launcher" }, // (Quacky Zombies' guns: the owner will say how they unlock)
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },

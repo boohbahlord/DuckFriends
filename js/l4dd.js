@@ -1176,7 +1176,7 @@ function coolBar(tag, s, me) {
   if (m) {
     if (m.rl > now && m.rw && ARMS[m.rw]) {
       left = m.rl - now;
-      all = reloadOf(s, me, m.rw);
+      all = m.rt || reloadOf(s, me, m.rw);
     }
     for (const [w, t] of Object.entries(m.u || {})) {
       const k = kindOf(w);

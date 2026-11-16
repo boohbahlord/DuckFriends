@@ -182,6 +182,7 @@ import {
   ARMS,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
+import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   MAPS,
   MAP_FORMS,
@@ -986,6 +987,9 @@ const PRESS = [
   "dagger",
   "knife",
   "hammer",
+  "axe",
+  "sword",
+  "pan",
   "shotgun",
   "grenade",
   "bow",
@@ -996,6 +1000,9 @@ const PRESS = [
   "lmg",
   "chaingun",
   "glauncher",
+  "dbarrel",
+  "flamer",
+  "burst",
   "chair",
   "zebra",
   "jaime",
@@ -1011,6 +1018,9 @@ const COOLDOWN = {
   dagger: ARM_COOL.dagger,
   knife: ARM_COOL.knife, // (four stabs a second, in every mode: the owner's, Nov 3)
   hammer: ARM_COOL.hammer,
+  axe: ARM_COOL.axe,
+  sword: ARM_COOL.sword,
+  pan: ARM_COOL.pan,
   shotgun: ARM_COOL.shotgun,
   grenade: 12000,
   confetti: 15000,
@@ -1039,8 +1049,11 @@ export const GUNS_NEW = [
   "lmg",
   "chaingun",
   "glauncher",
+  "dbarrel",
+  "flamer",
+  "burst",
 ];
-export const AUTO = ["smg", "ak", "lmg", "chaingun"]; // (they fire while the button is down)
+export const AUTO = ["smg", "ak", "lmg", "chaingun", "flamer"]; // (they fire while the button is down)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
@@ -1048,7 +1061,17 @@ export const AUTO = ["smg", "ak", "lmg", "chaingun"]; // (they fire while the bu
    { "id gun": … } for the others */
 export const MAG = 7,
   RELOAD = ARM_RELOAD;
-const MAG_MORE = { chaingun: [300, 4000], glauncher: [3, 4000] }; // (the chain gun 300 rounds: the owner's, Nov 16)
+const MAG_MORE = {
+  chaingun: [300, 4000],
+  glauncher: [3, 4000],
+  dbarrel: [2, 2 * ARMS.dbarrel.shell],
+  flamer: [FLAME.TANK, FLAME.RELOAD],
+}; // (the chain gun 300 rounds: the owner's, Nov 16; the double barrel's two shells and the flamethrower's tank, Nov 16 16:25Z)
+/* how long a reload takes with n shots gone: the double barrel a second for each shell it loads, the rest their own */
+export const reloadFor = (w, n) =>
+  w === "dbarrel"
+    ? ARMS.dbarrel.shell * Math.max(1, Math.min(2, n))
+    : (magSize(w) || [0, RELOAD])[1];
 export const magSize = (w) =>
   w === "handgun"
     ? [MAG, RELOAD]
@@ -1071,6 +1094,9 @@ export const WEAPONS = [
   "dagger",
   "knife",
   "hammer",
+  "axe",
+  "sword",
+  "pan",
   "shotgun",
   "grenade",
   "bow",
@@ -2223,13 +2249,18 @@ function reduceStep(state, a, now) {
         return s;
       }
       const mg = isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine)
+      const many =
+        sp === "burst" && !isMgj(s)
+          ? Math.min(ARMS.burst.burst, mg[0] - magOf(s, a.id, now, sp).n)
+          : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
       if (mg) {
         // one shot from the magazine; the last starts the reload
         const m = magOf(s, a.id, now, sp),
-          n = m.n + 1;
+          n = m.n + many,
+          d = isMgj(s) ? mg[1] : reloadFor(sp, n);
         s.mag = {
           ...(s.mag || {}),
-          [magKey(a.id, sp)]: { n, r: n >= mg[0] ? now + mg[1] : 0 },
+          [magKey(a.id, sp)]: n >= mg[0] ? { n, r: now + d, d } : { n, r: 0 },
         };
       }
       s.lastUse = { ...(s.lastUse || {}), [k]: now };
@@ -2237,10 +2268,7 @@ function reduceStep(state, a, now) {
       const face = a.face < 0 ? -1 : 1,
         aim =
           WEAPONS.includes(sp) || THROWS.includes(sp) ? aimOf(a, face) : null;
-      const hit =
-        sp === "knife" || sp === "hammer"
-          ? strike(s, a.id, sp, aim, now)
-          : null; // (the knife and the hammer hit at once, up close, and while they swing: attacks)
+      const hit = MELEE.includes(sp) ? strike(s, a.id, sp, aim, now) : null; // (the melees hit at once, up close, and while they swing: attacks)
       s.fxN = (s.fxN || 0) + 1;
       s.fx = [
         ...(s.fx || []).slice(-19),
@@ -2257,6 +2285,7 @@ function reduceStep(state, a, now) {
         },
       ];
       if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
+      else if (aim && !hit && sp === "flamer") duckFlame(s, a.id, p, aim, now);
       else if (aim && !hit) {
         const v =
             sp === "dagger"
@@ -2340,15 +2369,17 @@ function reduceStep(state, a, now) {
           ];
         // (straight, and it goes off on the first duck or at its range: moveShots)
         else
-          s.shots = [
-            ...(s.shots || []),
-            shot(
-              s.fxN,
-              sp === "bow" ? "arrow" : (ARMS[sp] && ARMS[sp].k) || sp,
-              aim[0] * v,
-              aim[1] * v,
-            ),
-          ];
+          for (let i = 0; i < many; i++)
+            s.shots = [
+              ...(s.shots || []),
+              shot(
+                i ? s.fxN * 10 + i : s.fxN,
+                sp === "bow" ? "arrow" : (ARMS[sp] && ARMS[sp].k) || sp,
+                aim[0] * v,
+                aim[1] * v,
+                i ? { t: now + i * ARMS.burst.gap } : {},
+              ),
+            ]; // (a burst's rounds leave one after another: each waits until its time, t)
       }
       return s;
     }
@@ -2369,11 +2400,12 @@ function reduceStep(state, a, now) {
       }
       const w = magSize(a.w) ? a.w : "handgun"; // (the gun named, or the handgun)
       if (!me || !onKeys(me.duck, w) || !s.options.fun) return state;
-      const m = magOf(s, a.id, now, w);
+      const m = magOf(s, a.id, now, w),
+        d = reloadFor(w, m.n);
       if (!m.n || m.r) return state;
       s.mag = {
         ...(s.mag || {}),
-        [magKey(a.id, w)]: { n: m.n, r: now + magSize(w)[1] },
+        [magKey(a.id, w)]: { n: m.n, r: now + d, d },
       };
       return s;
     }
@@ -2834,6 +2866,7 @@ function reduceStep(state, a, now) {
           attacks(s, now) | // (the knife and the hammer, still swinging)
           cakeGone(s, now) |
           jaimeRun(s, now) |
+          (isL4dd(s) ? 0 : groundFire(s, now)) | // (the flamethrower's burning ground)
           pwTick(s, now), // (the ducks' wounds going away: wounds.js)
         up = standUps(s, now); // (a knocked-down duck stands up by itself when its time is up)
       const sig = () => [s.phase, s.qi, s.catchEnds, s.round, s.at].join(),
@@ -3259,11 +3292,14 @@ export const phpLost = (s, id, now) => {
 };
 export const HIT_DMG = {
   hammer: 3,
+  axe: [1, 4], // (the fire axe 1 to 4, the short sword and the pan 1: the owner's, Nov 16)
   chair: 3,
   grenade: 3,
   knife: 2,
   sniper: [2, 3],
   ak: 2,
+  burst: 2, // (the burst rifle: the AK-47's, the owner's, Nov 16 16:25Z)
+  slug: PHP, // (the double barrel's slug: all of it)
   revolver: 2,
   chain: PHP,
 }; // (Quacky Zombies' guns take what they take there: the sniper 2 or 3, the AK-47 and the revolver 2, the chain gun all)
@@ -3325,7 +3361,16 @@ export function shove(s, id, ux, uy, far, now, side, more = {}) {
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit (JUSTIN_ID for Justin); done: who this swing already hit, never hit
    twice (Duck Cabin's own, Justin and the cats, go in it as "h:" and their id). */
-const REACH = { knife: [2.3, 0.9], hammer: [3, 0.5] }; // how far (duck lengths), and how wide (the cosine of the half angle)
+const REACH = {
+  knife: [2.3, 0.9],
+  hammer: [3, 0.5],
+  axe: [3, 0.5],
+  sword: [2.3, 0.5],
+  pan: [2.3, 0.5],
+}; // how far (duck lengths), and how wide (the cosine of the half angle): the fire axe swings as far as the hammer, the short sword and the pan not as far out
+/* the melees, swung or stabbed up close (the fire axe, the short sword and the pan: the owner's, Nov 16) */
+export const MELEE = ["knife", "hammer", "axe", "sword", "pan"];
+const PAN_MISS = 0.5; // (the pan misses half its swings; half its hits are critical, wounds.js PCRIT)
 export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   // (from: where the swing starts; Justin on the boards isn't in s.pos)
   const p0 = from,
@@ -3449,6 +3494,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
    s.atk = [{ by, sp, ax, ay, t, until, hit: [who it hit] }] */
 const ATK_MS = ARM_SWING;
 export function strike(s, by, sp, aim, now, from = s.pos[by]) {
+  if (sp === "pan" && Math.random() < PAN_MISS) return []; // (a miss: it swings through nothing)
   const hit = swing(s, by, sp, aim, now, from);
   s.atk = [
     ...(s.atk || []).filter((a) => a.until > now && a.by !== by),
@@ -3668,6 +3714,10 @@ function moveShots(s, now) {
       keep.push(sh);
       continue;
     }
+    if (now < sh.t) {
+      keep.push(sh);
+      continue;
+    } // (a burst's round still waiting for its turn)
     const at = shotAt(sh, now - sh.t),
       x0 = sh.lx,
       y0 = sh.ly,
@@ -3810,6 +3860,132 @@ function chainShot(s, by, p, aim, now) {
     },
   ]; // (b: board units; in Hangout, the world's pixels, as Quacky Zombies' own)
 }
+/* the flamethrower's puff (flamer.js), outside Dead Ducks Arcade: it reaches farther the longer it's held (Hangout: up to
+   the cabin's walls); every duck in its cone is scorched (scorch), and the ground at its end burns for a while.
+   s.flame = { id: [the hold's start, this puff, ux, uy (a unit, in duck lengths), reach (duck lengths), last patch] }:
+   every screen draws the stream from it (game.js); s.gfire = [[x, y, until, by, side, height]] the burning patches */
+function duckFlame(s, by, p, aim, now) {
+  const hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    al = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
+    ux = aim[0] / rx / al,
+    uy = aim[1] / ry / al,
+    was = (s.flame || {})[by],
+    t0 = was && now - was[1] < FLAME.GAP ? was[0] : now,
+    side = hang ? (inCabin(p.x * HW, p.y * HH) ? 1 : 0) : 0,
+    z0 = hang ? +p.z || 0 : 0;
+  let far = flameReach(now - t0);
+  if (hang)
+    for (let d = 0.25; d <= far; d += 0.25)
+      if (
+        (inCabin((p.x + ux * d * rx) * HW, (p.y + uy * d * ry) * HH)
+          ? 1
+          : 0) !== side
+      ) {
+        far = d - 0.25;
+        break;
+      } // (the cabin's walls stop it)
+  const patch = !was || now - (was[5] || 0) >= FLAME.PATCH;
+  s.flame = {
+    ...(s.flame || {}),
+    [by]: [
+      t0,
+      now,
+      +ux.toFixed(3),
+      +uy.toFixed(3),
+      +far.toFixed(2),
+      patch ? now : was[5],
+    ],
+  };
+  for (const id of s.seat) {
+    const q = s.pos[id],
+      P = s.players[id];
+    if (id === by || !q || q.x < 0 || !P || P.dead || isGhost(s, id)) continue;
+    if (isMgj(s) || vdSafe(s, id) || dodges(s, q, now)) continue;
+    if (
+      hang &&
+      ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) !== side ||
+        Math.abs((+q.z || 0) - z0) > 48)
+    )
+      continue;
+    if (inCone((q.x - p.x) / rx, (q.y - p.y) / ry, ux, uy, far + 0.3))
+      scorch(s, by, id, now);
+  }
+  if (patch)
+    s.gfire = [
+      ...(s.gfire || []).filter((g) => g[2] > now).slice(1 - FLAME.MOST),
+      [
+        +(p.x + ux * far * rx).toFixed(4),
+        +(p.y + uy * far * ry).toFixed(4),
+        now + FLAME.GROUND,
+        by,
+        side,
+        Math.round(z0),
+      ],
+    ];
+}
+/* a duck in the flamethrower's fire or on its burning ground: 1 HP, once a FLAME.BURN ms at most, set burning a moment
+   then burnt (and on its own screen, a crimson blink and a shake: game.js) */
+function scorch(s, by, id, now) {
+  const P = s.players[id];
+  if (!P || P.dead || ((s.flamed || {})[id] || 0) > now) return;
+  const left = {};
+  for (const [k, u] of Object.entries(s.flamed || {})) if (u > now) left[k] = u;
+  s.flamed = { ...left, [id]: now + FLAME.BURN };
+  if (by !== id) logHit(s, by, id, now);
+  if (!soaks(s, id, now, 1)) {
+    P.dead = true;
+    holdDown(s, id, now);
+    playerKilled(s, by, id, "flamer");
+  }
+  if (pwOn(s)) pwAdd(s, id, ["f0"], now, !!P.dead); // (burnt for a while)
+  s.fxN = (s.fxN || 0) + 1;
+  s.fx = [
+    ...(s.fx || []).slice(-19),
+    { n: s.fxN, kind: "scorch", by, who: [id], t: now },
+  ];
+}
+/* every heartbeat: a duck on burning ground is scorched (not the one who set it burning), the patches burn out, and
+   streams no longer fired go */
+function groundFire(s, now) {
+  let ch = false;
+  if (s.flame && Object.values(s.flame).some((f) => now - f[1] > 1000)) {
+    const keep = {};
+    for (const [id, f] of Object.entries(s.flame))
+      if (now - f[1] <= 1000) keep[id] = f;
+    s.flame = Object.keys(keep).length ? keep : null;
+    ch = true;
+  }
+  const gf = s.gfire;
+  if (!gf || !gf.length) return ch;
+  const left = gf.filter((g) => g[2] > now),
+    hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08];
+  if (left.length !== gf.length) {
+    s.gfire = left.length ? left : null;
+    ch = true;
+  }
+  if (!boardPhases(s).includes(s.phase)) return ch;
+  for (const id of s.seat) {
+    const q = s.pos[id],
+      P = s.players[id];
+    if (!q || q.x < 0 || !P || P.dead || isGhost(s, id) || isMgj(s)) continue;
+    if (vdSafe(s, id) || dodges(s, q, now)) continue;
+    const g = left.find(
+      ([x, y, , by, side, z]) =>
+        by !== id &&
+        Math.hypot((q.x - x) / rx, (q.y - y) / ry) < FLAME.PATCH_R &&
+        (!hang ||
+          ((inCabin(q.x * HW, q.y * HH) ? 1 : 0) === side &&
+            Math.abs((+q.z || 0) - z) < 48)),
+    );
+    if (g && ((s.flamed || {})[id] || 0) <= now) {
+      scorch(s, g[3], id, now);
+      ch = true;
+    }
+  }
+  return ch;
+}
 /* what a shot hit this beat, between (x0, y0) and at: the ducks, Mad God Justin, a Jaime Guard, Justin, Duck Cabin's
    Justin and cats; true when it's gone (Mad God Justin's own) */
 function shotHits(s, sh, at, x0, y0, dx, dy, now) {
@@ -3857,6 +4033,29 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
           P.dead = true;
           holdDown(s, id, now);
           playerKilled(s, sh.by, id, sh.k);
+          if (sh.k === "slug") {
+            const ul = Math.sqrt(len) || 1;
+            shove(s, id, ux / ul, uy / ul, KB_FAR * 2, now, sh.hin || 0, {
+              ms: 650,
+              h: 0.9,
+              l: 0,
+            });
+            if (pwOn(s)) pwAdd(s, id, ["g0"], now, true);
+            s.fxN = (s.fxN || 0) + 1;
+            s.fx = [
+              ...(s.fx || []).slice(-19),
+              {
+                n: s.fxN,
+                kind: "slug",
+                by: sh.by,
+                who: [id],
+                t: now,
+                ax: sh.vx,
+                ay: sh.vy,
+                crit: crit ? 1 : 0,
+              },
+            ];
+          } // (the double barrel's slug: thrown back as a grenade throws it, chunks blown through it: game.js)
         } // (the HP: a hit it can take keeps the duck up)
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
         if (sh.by === JUSTIN_ID) mgjHurt(s, id);

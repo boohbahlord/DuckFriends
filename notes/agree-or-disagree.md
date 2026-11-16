@@ -4595,6 +4595,8 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
 
 
 ## Request (owner, 2026-11-16 15:55Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtRKp2jRWz4SHxvZYzYPdmzk), word for word
+## Nov 16 2026, 15:55Z: gore, new melees, one-key toggles, effects settings (Solomon the 2nd: the melees, PR D)
+
 > blood effects are too small too AND i literally want to see chunks of a duck flying out of their body (it having the same color as the duck AND ripping a hole in their clothes item where it was shot through AND knocking off hats or face apparel (only appropriate ones, so not a full helmet like a motorcycle helmet or face paint) off their heads from guns (the hats fade back on their heads in like 10 seconds) or even shooting their beak off their face or blowing their eyes out their face) The effects should be gorey, visual, espcially impactful, and messed up. It is a pixel game about ducks so it is hard to make the violence serious or problematic, you know? the ducks beak or eyes can be cut off or knocked off by either blunt or sharp melee in whatever way is appropriate.
 >
 > New melees btw
@@ -4654,6 +4656,16 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
   (about 6 s) are longer, deeper and the loudest sounds. Each reload sound is built from the same recordings, spread
   over its gun's real reload time (handgun 1.2 s … chain gun and grenade launcher 4 s), playing faster with Faster
   reload, and stops if the reload is given up.
+- PR D (Solomon the 2nd; Noah draws the real art and swing effects, Jackal the one-key toggles): new specials `axe`
+  (Fire axe), `sword` (Short sword), `pan` (Cast iron pan), placeholder SVGs in specials.js. armspeed.js: axe cool
+  880 / swing 200 (hammer 1100 / 250, 25% faster), sword 167 / 83 (knife 250 / 125, 50% faster), pan 880 / 200.
+  rules.js: MELEE list, REACH axe as the hammer, sword and pan shorter; HIT_DMG axe [1, 4] (players have PHP 3, so a 3 or
+  4 downs), sword and pan 1; strike(): the pan misses half its swings (PAN_MISS); wounds.js PCRIT pan 0.5 (crits need the
+  gore setting on, as for every weapon). Dead Ducks Arcade: ARMS axe/sword/pan (axe dmg [1, 4], pan miss 0.5 and crit
+  0.5), and fireRoll picks the melee bag (MELEE_BAGS: blunt hammer + pan, sharp knife + axe + sword) as one entry among
+  the guns, then one of its two bags, then one inside. Swings in game.js SWUNG (the hammer's swing, sooner, and the
+  sword and pan held less far out).
+
 ## Nov 16 2026, 16:06Z: chain gun recoil and 300 rounds (Solomon the 2nd, PR E)
 
 > the chain gun should send your duck backwards slowly as they shoot, and a vector of movements from the keys may potentially counter this recoil that moves the duck when the chain gun is used, so basically actual physics and math. This helps tell the player how powerful it is
@@ -4706,6 +4718,8 @@ Solomon.)
 >
 > What items in the item bag should be removed?
 
+- Adam gave the three guns to Solomon the 2nd as PR F (placeholder art; Noah draws them, the PR ships with his art).
+  The last two questions are Adam's to answer.
 - Split (Adam): Solomon = PR F rules for the double barrel, flamethrower, burst rifle (AUG); Noah = their art after
   gore + melee art. Answered: more gun ideas (Quack Zapper, Rubber Duck Launcher, Harpoon Gun, Bubble Blaster, Nail
   Gun, Leaf Blower, Freeze Ray, Bread Lobber); items to remove suggested: Chair, Long jump, Fireball. Waiting on the
