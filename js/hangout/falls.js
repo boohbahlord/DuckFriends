@@ -5,6 +5,7 @@
 import { activity } from "./registry.js";
 import { heightAt } from "./layout.js";
 import { swimming } from "./water.js";
+import { pxAt } from "../pxdom.js";
 
 const FLAIL = 60,
   PUFF = 90; // flails with more than this under it; a puff when it fell more than this
@@ -96,7 +97,7 @@ activity({
       }
       const at = Wd.toScreen(p.x, p.y, p.z),
         e = 1 - (1 - u) ** 3;
-      p.el.style.transform = `translate(${at.left.toFixed(1)}px, ${at.top.toFixed(1)}px) scale(${(Wd.sc * (0.75 + 0.35 * p.k)).toFixed(4)})`;
+      p.el.style.transform = `translate(${pxAt(at.left)}px, ${pxAt(at.top)}px) scale(${(Wd.sc * (0.75 + 0.35 * p.k)).toFixed(4)})`;
       p.el.style.opacity = (1 - u * u).toFixed(2);
       p.bits.forEach((b, i) => {
         const c = p.cs[i],

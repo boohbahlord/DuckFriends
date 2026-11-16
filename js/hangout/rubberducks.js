@@ -9,6 +9,7 @@ import { POOL } from "./layout.js";
 import { WATER, SOUTH, swimming, ripple } from "./water.js";
 import { ballShown } from "./beachball.js";
 import { rubberDuck } from "./art.js";
+import { pxAt } from "../pxdom.js";
 
 const RW = 32,
   RH = 30; // a little duck's box (world px); its waterline at RH − 5
@@ -163,7 +164,7 @@ activity({
       const hide = Wd.inside || !Wd.seen(x, y, RW * sc, RH * sc); // (inside, or off the screen: hidden, and nothing more to do)
       if (e.hidden !== hide) e.hidden = hide;
       if (hide) return;
-      const tr = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(4)})`;
+      const tr = `translate(${pxAt(x)}px, ${pxAt(y)}px) scale(${sc.toFixed(4)})`;
       if (e._tr !== tr) {
         e._tr = tr;
         e.style.transform = tr;

@@ -72,7 +72,7 @@ import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
-import { hashText } from "./pxdom.js";
+import { hashText, pxWatch } from "./pxdom.js";
 import {
   zombieURL,
   zombieBox,
@@ -693,7 +693,8 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
    long as it lasts (the rules' s.zcake.toilet) */
 const EGG = { x: TOILET.x + 62, y: TOILET.y + 78 }; // (where he stands: in front of the sink, facing the bowl)
-let egg = null;
+let egg = null,
+  pxStops = [];
 function drawEgg(ctx, now) {
   const s = ctx.state(),
     c = s.zcake,
@@ -1135,6 +1136,7 @@ activity({
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl);
     mapMount(ctx.world.board);
     shop = shopEl(ctx);
+    pxStops = [hud, over, endEl, onEl, gotEl, shop.el].map((e) => pxWatch(e)); // (the pixel look: their pictures as pixels, pxdom.js)
     butler = butlerEl();
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
@@ -1153,6 +1155,8 @@ activity({
     holding = null;
   },
   unmount(ctx) {
+    pxStops.forEach((f) => f());
+    pxStops = [];
     for (const o of Z.values()) o.el.remove();
     for (const b of B.values()) b.el.remove();
     for (const o of D.values()) o.el.remove();

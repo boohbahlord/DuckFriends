@@ -6,6 +6,8 @@
 import { activity } from "./registry.js";
 import { low } from "../gfx.js";
 import { inCabin, inPool, W, H, EDGE } from "./layout.js";
+import { pxAt } from "../pxdom.js";
+import { pixelOn, gridPx } from "../pixel.js";
 
 const MOST = 40,
   USUAL = 24,
@@ -135,15 +137,17 @@ activity({
        with none to draw (inside, or on Low graphics) the canvas is hidden. Their slow drift and blink look the same at
        30 drawings a second, and each drawing the browser must take in costs a weak laptop a lot */
     const Wd = ctx.world,
-      dpr = 0.5,
+      dpr = pixelOn() ? Math.min(1, 1 / gridPx()) : 0.5, // (the pixel look: one canvas px to one pixel of the grid)
       w = Math.round(Wd.vw * dpr),
       h = Math.round(Wd.vh * dpr),
       none = Wd.inside || !flies.length || low(); // (none on Low graphics)
     if (cv.hidden !== none) cv.hidden = none;
     if (none) return;
+    const look = pixelOn() ? "pixelated" : "";
+    if (cv.style.imageRendering !== look) cv.style.imageRendering = look;
     const o = Wd.toScreen(0, 0, 0);
     if (from && now - drawnAt < EVERY && cv.width === w && cv.height === h) {
-      const tr = `translate(${(o.left - from[0]).toFixed(1)}px, ${(o.top - from[1]).toFixed(1)}px)`;
+      const tr = `translate(${pxAt(o.left - from[0])}px, ${pxAt(o.top - from[1])}px)`;
       if (tr !== slid) cv.style.transform = slid = tr;
       return;
     }

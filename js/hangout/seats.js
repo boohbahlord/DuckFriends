@@ -13,6 +13,7 @@
 import { rule, activity } from "./registry.js";
 import { PROPS, W, H, heightAt, standable, STEP, BJ } from "./layout.js";
 import * as A from "./art.js";
+import { pxAt } from "../pxdom.js";
 
 const KINDS = ["couch", "log"],
   SEAT_KINDS = [...KINDS, "table", "stool"],
@@ -326,7 +327,7 @@ activity({
           a.top + q.h * sc > -30;
       if (q.e.hidden !== !vis) q.e.hidden = !vis;
       if (!vis) continue;
-      const tr = `translate(${a.left.toFixed(1)}px, ${a.top.toFixed(1)}px) scale(${scs})`;
+      const tr = `translate(${pxAt(a.left)}px, ${pxAt(a.top)}px) scale(${scs})`;
       if (q.e._tr !== tr) {
         q.e._tr = tr;
         q.e.style.transform = tr;

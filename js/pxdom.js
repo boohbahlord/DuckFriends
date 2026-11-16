@@ -7,7 +7,7 @@
    made off), by pixel.js' raster(): small on the grid, through the game's palette, cached. When the drawing changes
    (its parts, its classes or the classes of what holds it), it's made again, at most every PACE ms per drawing.
    Only with the pixel look on (pixel.js' pixelOn()). */
-import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
+import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 
 const NS = "http://www.w3.org/2000/svg",
   PACE = 120, // (ms between two new pictures of one drawing that keeps changing)
@@ -24,6 +24,9 @@ const NS = "http://www.w3.org/2000/svg",
     "stop-color",
     "stop-opacity",
   ];
+
+/* a position for a translate(), in css px: on the grid with the look on, so nothing drawn moves by less than one pixel */
+export const pxAt = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
 
 /* the rules: a drawing shown as pixels hides its own parts (its picture is the only thing that shows) */
 function css() {
@@ -146,7 +149,9 @@ function unPx(svg) {
   state.delete(svg);
 }
 
-/* every drawing under root as pixels, now and whenever one is added or changes. Returns a function that stops it */
+/* every drawing under root as pixels, now and whenever one is added or changes. Returns a function that stops it (it
+   also stops by itself once root has been on the page and left it). skip: a selector for parts of root it leaves alone (the ducks,
+   which game.js makes into pixels itself) */
 const ATTRS = [
   "class",
   "d",
@@ -166,21 +171,29 @@ const ATTRS = [
   "viewBox",
   "hidden",
 ];
-export function pxWatch(root) {
+export function pxWatch(root, { skip = "" } = {}) {
   let queued = new Set(),
-    raf = 0;
+    raf = 0,
+    was = false; // (root has been on the page)
+  const gone = () => {
+    if (root.isConnected) was = true;
+    else if (was) stop();
+    return !root.isConnected;
+  };
   const flush = () => {
     raf = 0;
+    if (gone()) return;
     const list = queued;
     queued = new Set();
     for (const svg of list) if (svg.isConnected) pxSvgEl(svg, root);
   };
   const want = (svg) => {
+    if (!svg || (skip && svg.closest(skip))) return;
     queued.add(svg);
     if (!raf) raf = requestAnimationFrame(flush);
   };
   const scan = (n) => {
-    if (n.nodeType !== 1) return;
+    if (n.nodeType !== 1 || (skip && n.closest(skip))) return;
     if (n.tagName === "svg") want(n.ownerSVGElement || n);
     else if (n.ownerSVGElement) want(rootSvg(n));
     else n.querySelectorAll("svg").forEach((s) => s.ownerSVGElement || want(s));
@@ -212,18 +225,21 @@ export function pxWatch(root) {
     attributeFilter: ATTRS,
   });
   const all = () =>
+    gone() ||
     root.querySelectorAll("svg").forEach((s) => s.ownerSVGElement || want(s));
   const onSwitch = () =>
     pixelOn() ? all() : root.querySelectorAll("svg[data-px]").forEach(unPx);
   addEventListener("pixelchange", onSwitch);
   addEventListener("resize", all);
   if (pixelOn()) all();
-  return () => {
+  function stop() {
     mo.disconnect();
     removeEventListener("pixelchange", onSwitch);
     removeEventListener("resize", all);
     if (raf) cancelAnimationFrame(raf);
-  };
+    raf = 0;
+  }
+  return stop;
 }
 const rootSvg = (n) => {
   let s = n.tagName === "svg" ? n : n.ownerSVGElement;
