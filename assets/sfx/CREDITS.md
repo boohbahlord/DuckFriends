@@ -86,6 +86,7 @@ instruments (its license: LICENSES.md).
 | dropGot | Kenney, Music Jingles (steel) — https://kenney.nl/assets/music-jingles | CC0 1.0 |
 | flashOn | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | flashOff | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| tileIn | Kenney, Casino Audio (chipLay) — https://kenney.nl/assets/casino-audio | CC0 1.0 |
 | lampOn | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
 | lampOff | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
 | lever | Kenney, Impact Sounds (impactMetal_heavy) and RPG Audio (metalLatch) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
