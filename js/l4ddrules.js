@@ -488,7 +488,7 @@ export const PTS = {
    next one when n are bought already, how many at most */
 export const SHOP = [
   { id: "acc", name: "Critical Chance", what: "+5% crits", most: 5 },
-  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 5 },
+  { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5: a duck that bought more before keeps them)
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
@@ -1516,9 +1516,9 @@ function l4Act(s, a, now) {
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
-  if (what === "part") {
+  if (what === "part" || what === "partfire") {
     if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
-    return powerBuy(s, id, now, PH);
+    return powerBuy(s, id, now, PH, what === "partfire");
   }
   if (what === "safekeep") {
     if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
@@ -2954,10 +2954,10 @@ function l4Tick(s, now) {
     if (sec > L2.sec) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
-        L2.acc += Math.pow(1.5, extra);
+        L2.acc += 2 * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
-          5 + 3 * extra,
+          10 + 6 * extra,
           L2.n - L2.made - L2.owe,
         );
         L2.acc -= Math.floor(L2.acc);

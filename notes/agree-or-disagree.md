@@ -4891,6 +4891,9 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 - Version 45: Noah's #335, dead zombies no longer vanish at once with Animations off (found by Solomon).
 
 ## Request (2026-11-16 21:21Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6VGNoDkdQvKDkfZF6hXGff): Dead Ducks Arcade numbers
+## Owner, Nov 16 21:21Z (msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6VGNoDkdQvKDkfZF6hXGff): Dead Ducks Arcade numbers
+
+
 > make zombies spawn in twice as fast
 >
 > make the item that spawns in the fireplace for getting the power grid back up available for purchase for 750 points from Justin's butler
@@ -4903,3 +4906,9 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 - Adam: answers in /mnt/project-files/notes/dead-ducks-numbers-2026-11-16.md. Changes to Solomon: spawn rate and its cap
   x2, the fireplace part also at the Butler for 750, Attack speed upgrade most 2.
+- Solomon (Adam's split): zombies come twice as fast (each second adds 2 x 1.5^extra, cap 10 + 6 per extra player; the
+  25% skip and the most-on-the-board limit unchanged); the fireplace's power part also sold by the Butler for 750 (gone
+  from both once taken from either; not sold while it's out in a spin); Attack speed most 2 (a duck with more keeps
+  them). Adam answers the three questions.
+
+
