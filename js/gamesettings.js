@@ -7,8 +7,16 @@
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
 import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
-import { MAPS, mapName } from "./maps.js";
-import { OPTIONS_DEFAULT, isSudo, randomPool, dodOn } from "./rules.js";
+import { MAPS, MAP_VARIANTS, mapName, mapForm } from "./maps.js";
+import {
+  OPTIONS_DEFAULT,
+  isSudo,
+  randomPool,
+  dodOn,
+  GEN_RULES,
+  genVal,
+  ruleFor,
+} from "./rules.js";
 import { downFor, NO_INVULN } from "./hangout/death.js";
 import { profile, save } from "./store.js";
 
@@ -74,8 +82,8 @@ const HOST = [
     n: "Justin",
     c: ON_OFF,
     cat: "rules",
-    off: ["mgj", "hang", "vdd"], // (in Dead Ducks Arcade he plays on our side: the owner's, Nov 16)
-    d: "Justin from Duck Cabin walks the board, talks and shoots now and then. He never votes and never counts toward a turn. In Dead Ducks Arcade he plays on your side as one more duck.",
+    off: ["mgj", ...NO_TURNS],
+    d: "Justin from Duck Cabin walks the board, talks and shoots now and then. He never votes and never counts toward a turn. He isn't in Dead Ducks Arcade.",
   },
   {
     k: "mgjBoard",
@@ -295,6 +303,26 @@ const HOST = [
     d: "During the game every duck is the plain yellow duck, with a plain name tag that always shows. Specials stay.",
   },
   {
+    k: "noGore",
+    n: "Gore",
+    c: [
+      [0, "On"],
+      [1, "Off"],
+    ],
+    cat: "more",
+    d: "Off: no blood or gore on the board.",
+  },
+  {
+    k: "noFx",
+    n: "Heavy effects",
+    c: [
+      [0, "On"],
+      [1, "Off"],
+    ],
+    cat: "more",
+    d: "Off: no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game.",
+  },
+  {
     k: "rainbowDucks",
     n: "Rainbow Ducks",
     c: ON_OFF,
@@ -322,6 +350,17 @@ const HOST = [
     d: "Needs Vote colors on. The name tag takes the duck's vote color too.",
   },
 ];
+/* the General Rules' switch, under their note (owner 2026-11-16): off fades them, and every game mode plays the default
+   rules in their place (unless its Mode Rules say otherwise) */
+const GEN_SWITCH = {
+  k: "genOff",
+  n: "General Rules",
+  c: [
+    [0, "On"],
+    [1, "Off"],
+  ],
+  d: "Off: every game mode plays the default rules in place of the General Rules, unless its own Mode Rules say otherwise.",
+};
 /* each game's own settings */
 const NO_OWN = {
   k: "noOwn",
@@ -779,6 +818,14 @@ const VOTE_SETS = [
 ];
 const voting = (s) =>
   s.options.modePick === "vote" || s.options.mapPick === "vote";
+/* the row of the map the host picked: a variation in another form (Zoom, Black and white) is the map with its setting
+   on; every variation sits under the maps (owner, Nov 16) */
+const picked = (o) =>
+  o.map === "euclid" && o.mapZoom
+    ? "euclidzoom"
+    : o.map === "collage" && o.mapGrey
+      ? "collagebw"
+      : o.map;
 const showsZoom = (s) =>
   !CABIN_MODES.includes(s.options.mode) &&
   !s.options.mapPick &&
@@ -807,6 +854,17 @@ export function settingText(k, v) {
   if (k === "mapPick")
     return v ? ["Map", v === "vote" ? "Vote for map" : "Random"] : null;
   if (k === "max") return ["Players up to", String(v)];
+  if (k.startsWith("mr:")) {
+    // a Mode Rule: "mr:<mode>:<setting>"
+    const [, m, key] = k.split(":"),
+      x = settingText(key, v);
+    return x
+      ? [
+          `${modeOf(m).name}'s Mode Rules: ${x[0]}`,
+          v === "same" ? "Same as General" : x[1],
+        ]
+      : null;
+  }
   if (k === "modesOff")
     return [
       "Modes in Random & Vote",
@@ -816,6 +874,7 @@ export function settingText(k, v) {
     ];
   const o = [
       ...HOST,
+      GEN_SWITCH,
       GREY,
       ZOOM,
       ...VOTE_SETS,
@@ -852,7 +911,21 @@ const games = (s) =>
     : s.options.modePick === "random"
       ? randomPool(s)
       : [s.options.mode || "aod"];
-const valueOf = (s, k) => (k === "downMs" ? downFor(s) : s.options[k]);
+const valueOf = (s, k) =>
+  k === "downMs"
+    ? downFor(s)
+    : GEN_RULES.includes(k)
+      ? genVal(s, k) // (the General Rules as set; the options hold the picked mode's)
+      : s.options[k];
+/* the General Rules that count in one game mode, each as its Mode Rule */
+const genFor = (s, g) =>
+  HOST.filter(
+    (x) =>
+      GEN_RULES.includes(x.k) &&
+      (x.when ? x.when(s) : true) &&
+      !(x.off || []).includes(g) &&
+      (!x.only || x.only.includes(g)),
+  );
 
 /* ---------- the pictures in the preview box ---------- */
 /* a game's board over a map, drawn simply and see-through as in a game: Agree or Disagree's seven columns, the two tiles
@@ -900,8 +973,9 @@ function boardSketch(mode) {
 function mapPic(s, id, mode) {
   if (id === "cabin")
     return `<img class="gs-cabin${mode === "l4dd" ? " dark" : ""}" src="assets/maps/duck-cabin.jpg" alt="Duck Cabin" draggable="false">`;
-  const grey = id === "collage" && s.options.mapGrey ? " grey" : "";
-  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
+  const f = mapForm(id),
+    grey = f.grey || (id === "collage" && s.options.mapGrey) ? " grey" : "";
+  return `<svg class="gs-map${grey}" viewBox="0 0 480 270" role="img" aria-label="${esc(mapName(id))}"><g class="gs-back">${artBackdrop(f.grey ? f.map : id)}</g>${CABIN_MODES.includes(mode) ? "" : boardSketch(mode)}</svg>`;
 }
 /* a game mode's picture: one screenshot of the mode (every name tag hidden, rainbow ducks), its board drawn over the
    picked map. The screenshots were taken with the map left out, so any map shows through; Duck Cabin's games are
@@ -954,7 +1028,8 @@ export function openGameSettings(R, start = null) {
   const row = (attrs, label, val = "", on = false, dis = false) =>
     `<li><button type="button" class="arm-row" ${attrs} aria-pressed="${on}"${dis ? ' aria-disabled="true"' : ""}><span>${esc(label)}</span><span class="val">${esc(val)}</span></button></li>`;
   const LINE = '<li class="arm-line" aria-hidden="true"></li>';
-  /* Vote Mode & Map: the first row of Game Settings, above Game mode (owner 2026-11-04); its page has the On/Off row
+  /* Vote Mode & Map: under the line, above Game mode (owner 2026-11-16: Game Options, Modes in Random & Vote and Save
+     slots on top, then a line, then Vote Mode & Map, Game mode and Map); its page has the On/Off row
      and, while it's on, each vote and Vote return */
   const voteVal = (s) =>
     s.options.modePick === "vote" && s.options.mapPick === "vote"
@@ -979,21 +1054,39 @@ export function openGameSettings(R, start = null) {
         ? "Random"
         : mapName(s.options.map);
 
-  /* a setting as the old Game options showed it: its name over its choices */
-  const tiles = (s, o) => {
-    const faded = o.need && !+s.options[o.need], // (it needs another setting on first: shown faded)
+  /* a setting as the old Game options showed it: its name over its choices. mr: the game mode whose Mode Rule this is
+     (with Same as General first) */
+  const tiles = (s, o, mr = "") => {
+    const gen = GEN_RULES.includes(o.k),
+      need = (k) => (mr ? ruleFor(s, mr, k) : valueOf(s, k)),
+      faded =
+        (o.need && !+need(o.need)) || // (it needs another setting on first: shown faded)
+        (gen && !mr && +s.options.genOff), // (the General Rules are off)
       ro = host() && !faded ? "" : ' aria-disabled="true"',
-      cur = valueOf(s, o.k),
-      c =
-        o.k === "downMs" && s.options.mode !== "hang"
+      mine = mr && ((s.options.modeRules || {})[mr] || {}),
+      cur = !mr ? valueOf(s, o.k) : o.k in mine ? mine[o.k] : "same",
+      c = [
+        ...(mr ? [["same", "Same as General"]] : []),
+        ...(o.k === "downMs" && s.options.mode !== "hang"
           ? o.c.filter((x) => x[0] !== 6000)
-          : o.c;
-    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"><h3>${esc(o.n)}</h3><div class="row">${c
+          : o.c),
+      ];
+    return `<div class="sect gs-set${faded ? " faded" : ""}" data-d="${esc(o.k)}"${mr ? ` data-mr="${esc(mr)}"` : ""}><h3>${esc(o.n)}</h3><div class="row">${c
       .map(
         ([v, n]) =>
-          `<button type="button" class="tile" data-k="${o.k}" data-v="${v}" aria-pressed="${cur === v}"${ro}>${esc(n)}</button>`,
+          `<button type="button" class="tile" data-k="${o.k}" data-v="${v}"${mr ? ` data-mr="${esc(mr)}"` : ""} aria-pressed="${cur === v}"${ro}>${esc(n)}</button>`,
       )
       .join("")}</div></div>`;
+  };
+  /* a game mode's Mode Rules: the General Rules again, each Same as General until one is picked, and that one wins in
+     this mode only */
+  const modeRules = (s, g) => {
+    const list = genFor(s, g),
+      k = `mode:${g}:moderules`,
+      n = Object.keys((s.options.modeRules || {})[g] || {}).length;
+    return list.length
+      ? `<details class="arm-fold gs-fold" data-fold="${esc(k)}"${openFolds.has(k) ? " open" : ""}><summary>Mode Rules${n ? ` <span class="small dim">(${n} set)</span>` : ""}</summary><p class="small dim gs-note">${esc(`These replace the General Rules in ${modeOf(g).name} only.`)}</p>${list.map((o) => tiles(s, o, g)).join("")}</details>`
+      : "";
   };
   const room = (s) => {
     const dis = host() ? "" : " disabled";
@@ -1027,7 +1120,7 @@ export function openGameSettings(R, start = null) {
             .join("") + (extra[cat] || "");
         const k = `${pre}:${cat}`;
         return body
-          ? `<details class="arm-fold gs-fold" data-fold="${esc(k)}"${openFolds.has(k) ? " open" : ""}><summary>${name}</summary>${body}</details>`
+          ? `<details class="arm-fold gs-fold" data-fold="${esc(k)}"${openFolds.has(k) ? " open" : ""}><summary>${name}</summary>${pre === "host" && cat === "rules" ? `<p class="small dim gs-note">These apply to all game modes.</p>${tiles(s, GEN_SWITCH)}` : ""}${body}</details>`
           : "";
       })
       .join("");
@@ -1039,7 +1132,7 @@ export function openGameSettings(R, start = null) {
     if (!page)
       return (
         head("Game Settings") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="pool"', "Modes in Random & Vote", poolVal(s))}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${row('data-p="opts"', "Game Options", host() ? "Edit" : "View")}${row('data-p="pool"', "Modes in Random & Vote", poolVal(s))}${row('data-p="saves"', "Save slots", `${slots().filter(Boolean).length} of ${SLOTS}`)}${LINE}${row('data-p="vote"', "Vote Mode & Map", voteVal(s))}${row('data-p="mode"', "Game mode", modeVal(s))}${row('data-p="map"', "Map", mapVal(s))}</ul></div>`
       );
     if (page === "pool") {
       const off = o.modesOff || [],
@@ -1132,7 +1225,21 @@ export function openGameSettings(R, start = null) {
         head("Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
           ([id, name]) =>
-            row(`data-map="${id}"`, name, "", !o.mapPick && o.map === id, dis),
+            row(
+              `data-map="${id}"`,
+              name,
+              "",
+              !o.mapPick && picked(o) === id,
+              dis,
+            ),
+        ).join("")}${LINE}${MAP_VARIANTS.map(([id, name]) =>
+          row(
+            `data-map="${id}"`,
+            name,
+            "",
+            !o.mapPick && picked(o) === id,
+            dis,
+          ),
         ).join(
           "",
         )}</ul>${showsCollage(s) ? `<h3 class="gs-sub">${esc(mapName("collage"))}</h3>${tiles(s, GREY)}` : ""}${showsZoom(s) ? `<h3 class="gs-sub">${esc(mapName("euclid"))}</h3>${tiles(s, ZOOM)}` : ""}</div>`
@@ -1150,15 +1257,18 @@ export function openGameSettings(R, start = null) {
           ),
       );
     const own = gs
-      .filter((g) => BY_MODE[g])
-      .map(
-        (g) =>
-          `${gs.length > 1 ? `<h3 class="gs-sub">${esc(modeOf(g).name)}</h3>` : ""}${folds(
+      .map((g) => {
+        const body =
+          modeRules(s, g) +
+          folds(
             s,
-            BY_MODE[g].filter((x) => !x.when || x.when(s)),
+            (BY_MODE[g] || []).filter((x) => !x.when || x.when(s)),
             `mode:${g}`,
-          )}`,
-      )
+          );
+        return body
+          ? `${gs.length > 1 ? `<h3 class="gs-sub">${esc(modeOf(g).name)}</h3>` : ""}${body}`
+          : "";
+      })
       .join("");
     return (
       head("Game Options") +
@@ -1238,7 +1348,8 @@ export function openGameSettings(R, start = null) {
         tip =
           p.id === "cabin"
             ? CABIN_TIP
-            : (MAPS.find((m) => m[0] === p.id) || [])[2] || "";
+            : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === p.id) ||
+                [])[2] || "";
       return card(mapName(p.id), tip, mapPic(s, p.id, mode));
     }
     if (p.kind === "set") return card(p.title, p.text);
@@ -1246,8 +1357,8 @@ export function openGameSettings(R, start = null) {
     return card(
       "Game Options",
       gs.length > 1
-        ? "Host Settings apply to every game; under Game mode Settings, each game Vote Game Mode or Random can land on has its own."
-        : `Host Settings apply to every game; Game mode Settings are ${modeOf(gs[0]).name}'s own.`,
+        ? "Host Settings apply to every game; under Game mode Settings, each game Vote Game Mode or Random can land on has its own, and its Mode Rules win over the General Rules in that game."
+        : `Host Settings apply to every game; Game mode Settings are ${modeOf(gs[0]).name}'s own, and its Mode Rules win over the General Rules in it.`,
     );
   }
 
@@ -1266,7 +1377,7 @@ export function openGameSettings(R, start = null) {
   let peekSel = null;
   const keyOf = (el) =>
     el.classList.contains("gs-set")
-      ? `.gs-set[data-d="${el.dataset.d}"]`
+      ? `.gs-set[data-d="${el.dataset.d}"]${el.dataset.mr ? `[data-mr="${el.dataset.mr}"]` : ":not([data-mr])"}`
       : ".arm-row" +
         ["mode", "map", "pick", "v", "cat", "p"]
           .filter((k) => k in el.dataset)
@@ -1295,6 +1406,7 @@ export function openGameSettings(R, start = null) {
   const describe = (k) => {
     const all = [
         ...HOST,
+        GEN_SWITCH,
         GREY,
         ZOOM,
         ...VOTE_SETS,
@@ -1393,10 +1505,24 @@ export function openGameSettings(R, start = null) {
             return;
           }
           if (a && a.dataset.a === "reset" && boss) {
-            send({ ...OPTIONS_DEFAULT });
+            send({ ...OPTIONS_DEFAULT, modeRules: 0 }); // (0: no Mode Rules; an empty {} doesn't make it through Firebase)
             return;
           }
           const t = e.target.closest(".tile[data-k]");
+          if (t && t.dataset.mr) {
+            // a Mode Rule: set for that game mode, or Same as General again
+            if (!boss || t.getAttribute("aria-disabled") === "true") return;
+            const g = t.dataset.mr,
+              k = t.dataset.k,
+              v = t.dataset.v,
+              all = JSON.parse(JSON.stringify(o.modeRules || {})),
+              mine = (all[g] = all[g] || {});
+            if (v === "same") delete mine[k];
+            else mine[k] = v !== "" && !isNaN(v) ? +v : v;
+            if (!Object.keys(mine).length) delete all[g];
+            send({ modeRules: Object.keys(all).length ? all : 0 });
+            return;
+          }
           if (t && boss && t.getAttribute("aria-disabled") !== "true") {
             const v = t.dataset.v;
             send({ [t.dataset.k]: v !== "" && !isNaN(v) ? +v : v });
@@ -1434,7 +1560,16 @@ export function openGameSettings(R, start = null) {
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
-          if (r.dataset.map && boss) send({ map: r.dataset.map }); // (Vote Maps and Random go off: rules.js)
+          if (r.dataset.map && boss) {
+            const f = mapForm(r.dataset.map); // (Vote Maps and Random go off: rules.js)
+            send(
+              f.map === "euclid"
+                ? { map: f.map, mapZoom: f.zoom ? 1 : 0 }
+                : f.map === "collage"
+                  ? { map: f.map, mapGrey: f.grey ? 1 : 0 }
+                  : { map: f.map },
+            ); // (a variation in another form: its map, with its setting)
+          }
         });
         menu.addEventListener("change", (e) => {
           const k = e.target.dataset.k;

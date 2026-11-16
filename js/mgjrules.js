@@ -1,6 +1,7 @@
 import { ARM_COOL } from "./armspeed.js";
 /* ---------- the rules of Mad God Justin ----------
-   A boss fight: every duck has the knife (1), the bow (2), Jaime (3, from a pool everyone shares), the weapon it picked
+   A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
+   Nov 16), Jaime (3, from a pool everyone shares), the weapon it picked
    up (4) and the zebra cake (5, shared too); whatever it switches to stays out in its hand, but Jaime, and a picked-up
    weapon used up goes back to the one out before. Together they must bring Justin's HP to 0 (no time limit: the owner's,
    Nov 3; every win counts toward the lightning eyes). His HP is 20 + 20 for each player when the fight starts, and one
@@ -26,8 +27,8 @@ import { ARM_COOL } from "./armspeed.js";
    - HP 0: he stands on the LOSER podium and lightning strikes him, and he stays burnt while it shows. Every duck out of
      HP: he wins and says a winning line. Then the stats (Most Damage, Killing Blow, Hit the Most, the jumps) with Try again or Back to the
      lobby.
-   - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a weapon a duck picks up
-     by walking over it and uses once, the handgun and the dagger three times; lightning or fire, or a meteor, that hit him as
+   - Every 15 seconds something fades in somewhere on the board (PICKS, with the owner's odds): a gun a duck picks up
+     by walking over it and keeps until its shots are gone, or the medkit; lightning or fire, or a meteor, that hit him as
      soon as they show; or Good Justin God, a helper with a halo, 6 HP and a knife, who stabs him too. He has no lines of
      his own: he shouts Justin's god lines at him, and cheers with Justin's winning lines when he dies.
    He's the Justin option's board Justin (boardjustin.js: s.justin, justinAt, his look, lines and bullets); this file is
@@ -70,6 +71,7 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
+import { ARMS } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
@@ -127,6 +129,20 @@ export function mgjSoak(s, id, now, dmg = 1) {
     return false;
   }
   m.lost = { ...m.lost, [id]: lost };
+  return true;
+}
+/* my own grenade's blast on me: half my HP, rounded down, and never down by it (the owner's, Nov 16); true when it took
+   any */
+export function mgjHalf(s, id, now) {
+  const max = mgjPHp(s),
+    m = s.mgj,
+    P = s.players[id];
+  if (!max || !m || !P || P.dead || s.phase !== "boss") return false;
+  const lost = (m.lost || {})[id] || 0,
+    cut = Math.floor((max - lost) / 2);
+  if (!cut) return false;
+  m.lost = { ...m.lost, [id]: lost + cut };
+  hurtFx(s, id, now);
   return true;
 }
 /* however it went down (his meteor too), a duck stands up with the HP it had; one out of HP stays down (true: it stays) */
@@ -238,19 +254,21 @@ const JAIME_OUCH = [
     "DIE JAIME!!!!!!!",
     "I AM TRYING TO SOUND WHORE JAIME!!!!",
   ];
-/* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife a third shorter, an arrow
-   a second */
-export const MGJ_HOLD = ["knife", "bow"];
+/* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
+   as in every mode */
+export const MGJ_HOLD = ["knife", "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
 export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: ARM_COOL.knife, bow: ARM_COOL.bow }; // (the knife: four a second, as in every mode)
-export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
+const MGJ_COOL = { knife: ARM_COOL.knife, handgun: ARM_COOL.handgun }; // (as fast as in every mode: the knife four a second, the pistol five)
+export const mgjCool = (sp) =>
+  MGJ_COOL[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
-   hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16) */
+   hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16); with the medkit picked
+   up out in my hand it's at once (the owner's, Nov 16) */
 export const REVIVE = { MS: 2500, REACH: 2 };
 /* the Xbox (the owner's): once a game, once he has lost XB_LOST HP, a desk comes in with his Xbox and a monitor on it;
    he runs to it and turns the Xbox off (the light and the screen go dark), fades away, as for the meteor, and comes back
@@ -268,18 +286,58 @@ export const PICK_EVERY = 15000,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
   PICK_LAND = 1500, // the meteor's fall
   PICKS = [
-    ["hammer", 29],
-    ["dagger", 27.5],
-    ["handgun", 25],
-    ["shotgun", 10],
+    ["sniper", 16],
+    ["ak", 18],
+    ["lmg", 16],
+    ["shotgun", 16],
+    ["glauncher", 10],
+    ["chaingun", 5], // (rarer)
+    ["medkit", 10.5],
     ["sky", 5],
     ["meteor", 2.5],
     ["good", 1],
-  ];
-export const PICK_WEAPONS = ["hammer", "dagger", "handgun", "shotgun"];
-/* how many uses a picked-up weapon gives before it's back to the knife (the owner: the handgun and the dagger are easy
-   to miss with, so three each) */
-export const PICK_USES = { handgun: 3, dagger: 3 };
+  ]; // (only the powerful guns drop now, and the medkit is back: the owner's, Nov 16; the hammer, the dagger and the handgun are gone)
+/* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
+   sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
+   full, or gets a downed duck up at once when I hold it out over it */
+export const MGJ_GUNS = [
+  "sniper",
+  "ak",
+  "lmg",
+  "shotgun",
+  "glauncher",
+  "chaingun",
+];
+export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
+/* the shots a gun picked up comes with: two magazines, or a quarter of Quacky Zombies' ammo for a gun with no magazine
+   (the shotgun 18, the grenade launcher 6, the chain gun 60) */
+export const pickAmmo = (k) =>
+  ARMS[k].mag ? 2 * ARMS[k].mag : Math.round(ARMS[k].all / 4);
+/* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out */
+export const mgjMag = (k) =>
+  MGJ_GUNS.includes(k) && ARMS[k].mag ? [ARMS[k].mag, ARMS[k].reload] : null;
+/* the shots left in the gun duck id picked up (0: none, or it holds something else) */
+export const ammoOf = (s, id) =>
+  (s.mgj &&
+    MGJ_GUNS.includes((s.mgj.held || {})[id]) &&
+    (s.mgj.ammo || {})[id]) ||
+  0;
+/* one shot from the gun picked up; the last one and it's gone (back to the one out before) */
+export function mgjSpend(s, id) {
+  const m = s.mgj,
+    left = ammoOf(s, id) - 1;
+  if (left > 0) m.ammo = { ...m.ammo, [id]: left };
+  else dropHeld(m, id);
+}
+function dropHeld(m, id) {
+  for (const k of ["held", "uses", "ammo"]) {
+    const rest = { ...(m[k] || {}) };
+    delete rest[id];
+    m[k] = rest;
+  }
+}
+/* how many uses a picked-up weapon gives (none of the guns: they count shots instead) */
+export const PICK_USES = {};
 export const usesOf = (s, id) =>
   (s.mgj && (s.mgj.held || {})[id] && (s.mgj.uses || {})[id]) || 0;
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
@@ -287,9 +345,13 @@ export const DMG = {
   knife: 1,
   hammer: 2,
   dagger: 2,
-  handgun: 2,
+  handgun: 1, // (the pistol everyone has)
   pellet: 1,
   arrow: 1,
+  ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
+  lmg: 1,
+  chain: 1, // (the chain gun 1 a bullet here, not all his HP)
+  lgren: 3, // (the grenade launcher's blast)
   jaime: 1,
   jaimebomb: 3, // (the Jaime Bomb takes only 3 off him: the owner's, jaimebomb.js)
   lightning: 2,
@@ -1180,7 +1242,7 @@ function pickTick(s, now, at, log, fx) {
       ch = true;
     }
   }
-  /* a duck walks over a weapon: it's theirs for one use */
+  /* a duck walks over a weapon: a gun is theirs with its shots (pickAmmo), the medkit for one use */
   if (
     m.pick &&
     PICK_WEAPONS.includes(m.pick.k) &&
@@ -1192,8 +1254,15 @@ function pickTick(s, now, at, log, fx) {
       if (!p || p.x < 0 || !Pl || Pl.dead) continue;
       if (Math.hypot((p.x - m.pick.x) / RX, (p.y - m.pick.y) / RY) > 1.1)
         continue;
-      m.held = { ...m.held, [id]: m.pick.k };
-      m.uses = { ...m.uses, [id]: PICK_USES[m.pick.k] || 1 };
+      const k = m.pick.k;
+      dropHeld(m, id);
+      m.held = { ...m.held, [id]: k };
+      if (MGJ_GUNS.includes(k)) {
+        m.ammo = { ...m.ammo, [id]: pickAmmo(k) };
+        const mag = { ...(s.mag || {}) };
+        delete mag[`${id} ${k}`];
+        s.mag = mag; // (a full magazine)
+      } else m.uses = { ...m.uses, [id]: PICK_USES[k] || 1 };
       fx({ kind: "pickup", what: m.pick.k, who: [id], by: id });
       m.pick = null;
       ch = true;
@@ -1224,6 +1293,16 @@ export function mgjUse(s, a, now, log) {
     k = m && (m.held || {})[a.id],
     p = s.pos[a.id];
   if (!k || k !== a.what || !p) return false;
+  if (k === "medkit") {
+    // my HP back to full (nothing to heal: it's kept)
+    if (!((m.lost || {})[a.id] > 0)) return false;
+    const lost = { ...m.lost };
+    delete lost[a.id];
+    m.lost = lost;
+    dropHeld(m, a.id);
+    fxOf(s, now)({ kind: "use", what: "medkit", by: a.id, who: [a.id] });
+    return true;
+  }
   const ax0 = Math.max(-3, Math.min(3, +a.ax || 0)),
     ay0 = Math.max(-3, Math.min(3, +a.ay || 0)),
     face = a.face < 0 ? -1 : 1,
@@ -1342,7 +1421,26 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
         jaimeDies(s, id, now, log, fxOf(s, now), sh.k);
     return false;
   }
-  return mgjHitAt(s, sh.by, now, nearHim, log, DMG[sh.k] || 1);
+  return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
+}
+
+const shotDmg = (k) =>
+  k === "sniper" ? (Math.random() < 0.5 ? 2 : 3) : DMG[k] || 1;
+/* the grenade launcher's grenade, between (x0, y0) and at this beat: true when it got to him (it goes off there) */
+export function mgjLgren(s, sh, x0, y0, at, now) {
+  if (!s.justin || s.phase !== "boss" || sh.by === JUSTIN_ID) return false;
+  const j = justinAt(s.justin, now);
+  if (!j) return false;
+  const ux = (at.x - x0) / RX,
+    uy = (at.y - y0) / RY,
+    px = (j.x - x0) / RX,
+    py = (j.y - y0) / RY,
+    len = ux * ux + uy * uy,
+    k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+  if (Math.hypot(px - k * ux, py - k * uy) >= MGJ_SCALE) return false;
+  at.x = x0 + k * (at.x - x0);
+  at.y = y0 + k * (at.y - y0);
+  return true;
 }
 
 /* ---------- Good Justin God ---------- */
@@ -1915,24 +2013,34 @@ function reviveTick(s, now, log) {
     if (now - r.at < REVIVE.MS) continue;
     delete rv[by];
     ch = true;
-    const id = r.id,
-      max = mgjPHp(s);
-    delete T.dead;
-    for (const k of ["down", "up"]) {
-      const rest = { ...s[k] };
-      delete rest[id];
-      s[k] = rest;
-    }
-    const out = { ...m.out };
-    delete out[id];
-    m.out = out;
-    if (max) m.lost = { ...m.lost, [id]: max - Math.ceil(max / 2) }; // (it stands up at half its HP: 3 of 6)
-    m.safe = { ...m.safe, [id]: now + SOAK_MS };
-    fxOf(s, now)({ kind: "revive", by, who: [id] });
-    say(s, `${P.name} got ${T.name} up.`);
+    getUp(s, by, r.id, now, false);
   }
   m.rv = rv;
   return ch;
+}
+/* duck id up again, got up by duck by: at half its HP, or at full by a medkit */
+function getUp(s, by, id, now, full) {
+  const m = s.mgj,
+    P = s.players[by],
+    T = s.players[id],
+    max = mgjPHp(s);
+  delete T.dead;
+  for (const k of ["down", "up"]) {
+    const rest = { ...s[k] };
+    delete rest[id];
+    s[k] = rest;
+  }
+  const out = { ...m.out };
+  delete out[id];
+  m.out = out;
+  const lost = { ...m.lost };
+  if (max && !full)
+    lost[id] = max - Math.ceil(max / 2); // (it stands up at half its HP: 3 of 6)
+  else delete lost[id];
+  m.lost = lost;
+  m.safe = { ...m.safe, [id]: now + SOAK_MS };
+  fxOf(s, now)({ kind: "revive", by, who: [id] });
+  say(s, `${P.name} got ${T.name} up.`);
 }
 
 export function mgjTeamUse(s, a, now, log) {
@@ -1952,6 +2060,14 @@ export function mgjTeamUse(s, a, now, log) {
     } // (let go: the revive stops)
     const down = downNear(s, a.id);
     if (!down || (rv[a.id] && rv[a.id].id === down)) return false;
+    if (a.w === "medkit" && (m.held || {})[a.id] === "medkit") {
+      // the medkit held out over it: up at once, at full HP, and the medkit is used up
+      delete rv[a.id];
+      m.rv = rv;
+      dropHeld(m, a.id);
+      getUp(s, a.id, down, now, true);
+      return true;
+    }
     rv[a.id] = { id: down, at: now };
     m.rv = rv;
     return true;

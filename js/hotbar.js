@@ -7,7 +7,7 @@
    one keeps it on, and lifting the holding finger over one uses it too. Phones also get the specials as a slider in the
    bottom middle (as in my sketch): three slots, the middle one bigger, which is the one picked. Sliding left or right
    picks another (a longer slide goes past more of them), a tap on the middle one uses it, a tap on a side one picks it,
-   and the purple square to its right keeps the picked one on (Shift and its key on a computer). */
+   (there is no square to switch one on: the one picked is the one toggled, the owner's, Nov 16). */
 import { esc } from "./ui.js";
 import { KEYS, specialById, looksOf, ammoHTML } from "./specials.js";
 
@@ -170,14 +170,12 @@ export function mountHotbar(S, api) {
     wheelT = setTimeout(closeWheel, LIFE);
     return true;
   }
-  /* ---------- phones: the slider of specials, and the square that keeps one on ---------- */
+  /* ---------- phones: the slider of specials ---------- */
   const slide = document.createElement("div");
   slide.className = "sp-phone gone";
   slide.innerHTML =
-    '<div class="sp-slide" role="listbox" aria-label="Specials"><div class="sp-track"></div></div>' +
-    '<button type="button" class="sp-keep" aria-label="Toggle on" aria-pressed="false"><i></i></button>';
-  const track = slide.querySelector(".sp-track"),
-    keep = slide.querySelector(".sp-keep");
+    '<div class="sp-slide" role="listbox" aria-label="Specials"><div class="sp-track"></div></div>';
+  const track = slide.querySelector(".sp-track");
   let list = [], // [id, key index] of each special on my keys, in key order
     cur = null, // the id in the middle
     pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
@@ -212,16 +210,7 @@ export function mountHotbar(S, api) {
     pos = j;
     track.classList.remove("sliding");
     lay();
-    drawKeep();
     if (tell && cur !== was && api.select) api.select(list[j][1]);
-  };
-  const drawKeep = () => {
-    const sp = cur && look(cur),
-      on = !!cur && api.kept().has(cur);
-    keep.classList.toggle("on", on);
-    keep.disabled = !sp || !!sp.off || sp.keep === false;
-    keep.setAttribute("aria-pressed", String(on));
-    keep.setAttribute("aria-label", on ? "Toggle off" : "Toggle on");
   };
   function drawSlide(k, on, cd) {
     list = k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
@@ -255,7 +244,6 @@ export function mountHotbar(S, api) {
       pos = Math.max(0, curI());
       lay();
     }
-    drawKeep();
   }
   /* a finger on the slider: it follows the finger; let go, the nearest one is picked. A tap: the middle one is used,
      one beside it is picked */
@@ -304,12 +292,6 @@ export function mountHotbar(S, api) {
   slide.addEventListener("pointerup", let_go);
   slide.addEventListener("pointercancel", let_go);
   slide.addEventListener("contextmenu", (e) => e.preventDefault());
-  keep.addEventListener("click", () => {
-    const j = curI();
-    if (j < 0) return;
-    api.use(list[j][1], true);
-    setTimeout(drawKeep, 80); // (kept on, or off, by the room a moment later)
-  });
   const slideT = setInterval(() => {
     if (!away) draw();
   }, 300);

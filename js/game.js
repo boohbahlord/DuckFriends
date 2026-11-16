@@ -186,6 +186,7 @@ import {
   kitOf,
   inHand,
   BURN,
+  weaponName,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -236,7 +237,7 @@ import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
-import { sfx } from "./sound.js";
+import { sfx, loadSounds, jetsOff, hush, OTHERS } from "./sound.js";
 import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
@@ -304,12 +305,13 @@ import {
   GOOD_ID,
   PICK_FADE,
   XB,
-  PICK_USES,
   PICK_WEAPONS,
   MGJ_DOWN,
   MGJ_SCALE,
   MGJ_HAMMER,
-  usesOf,
+  ammoOf,
+  mgjMag,
+  MGJ_GUNS,
   downNear,
   REVIVE,
   mgjPHp,
@@ -397,6 +399,7 @@ import { frame, stamp, took } from "./perf.js";
 import { touchOnly } from "./pointer.js";
 import {
   fxMount,
+  fxLimits,
   fxOrigin,
   fxFrame,
   fxHitAt,
@@ -458,8 +461,9 @@ let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
   l4Last = 0,
-  mgjHold = "knife", // Mad God Justin: what's out in my hand (the knife, the bow, the weapon picked up, the zebra cake)
-  mgjBack = "knife", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
+  mgjHold = "handgun", // Mad God Justin: what's out in my hand (the knife, the pistol, the weapon picked up, the zebra cake)
+  mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
+  mgjFight = -1, // (the fight it was set for: each fight starts with the pistol out, the owner's, Nov 16)
   mgjRv = false, // (E held down for a revive, or the phone's Revive button)
   keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
   mouse = null,
@@ -896,7 +900,7 @@ function panRows(pos, now) {
 }
 const TAG_ROOM = 24; // px under a duck's feet: its name tag
 /* where a duck stands: x along the answers (0 strongly disagree … 1 strongly agree), y across */
-function place(p, i, n) {
+function place(p, i, n, free = false) {
   if (geo && geo.hang) return world.place(p); // Hangout: through the camera
   if (geo && geo.sc) {
     // Story Chain: y runs down the rows, each row the same share of it
@@ -917,7 +921,7 @@ function place(p, i, n) {
       top: geo.tl.t + tvFeet(p.y) - scY,
     }; // Trivia: down the rows, as tall as each one is
   const { W, H, top0, size, labelH, qp } = geo;
-  if (p.x < 0) p = { ...p, x: startX(R.state) }; // (ducks start on the board; this only covers an old state)
+  if (p.x < 0 && !free) p = { ...p, x: startX(R.state) }; // (ducks start on the board; this only covers an old state. free: a shot or a blast, which can be off the board)
   if (qp) {
     const w = W - qp.l - qp.r,
       h = H - qp.t - qp.b;
@@ -925,6 +929,11 @@ function place(p, i, n) {
       ? { left: qp.l + p.y * w, top: top0 + qp.t + (1 - p.x) * h }
       : { left: qp.l + p.x * w, top: top0 + qp.t + p.y * h };
   } // on Who is the Quack?'s tiles
+  if (turned() && free)
+    return {
+      left: W * (0.1 + p.y * 0.8),
+      top: top0 + H * (1 - p.x) + size * 0.45,
+    }; // (a shot or a blast: where it is, on the board or off it)
   if (turned())
     return {
       left: W * (0.1 + p.y * 0.8),
@@ -1639,10 +1648,12 @@ function drawDucks(now = clockNow()) {
       d.querySelector(".gduck-done").hidden = dn0;
     } // (set only when it changes: set again every frame, the page restyled every duck every frame)
     d.classList.toggle("idle", !!p.idle); // gone quiet: Zs float up
-    d.classList.toggle(
-      "jet-on",
-      !!(jet && (id === R.me ? me : s.pos[id] || {}).jt),
-    ); // (the jetpack's jets: their flames)
+    const jetOnNow = !!(jet && (id === R.me ? me : s.pos[id] || {}).jt);
+    d.classList.toggle("jet-on", jetOnNow); // (the jetpack's jets: their flames)
+    if (jetOnNow !== !!d._jetS) {
+      d._jetS = jetOnNow;
+      sfx.jet(id, jetOnNow, heard(id)); // (… and their roar: sound.js)
+    }
     /* effects from the number keys, around the head (5 seconds, or kept on); the Loser's X is the big one; the
        Invisible duck turns the duck and its shadow see-through, as the shadow duck (css: .gduck.see) */
     const auras = [];
@@ -1890,7 +1901,9 @@ function drawDucks(now = clockNow()) {
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
     const at = shotAt(sh, now - sh.t),
-      a = hang ? world.place(at, sh.hz) : place({ x: at.x, y: at.y }, 0, 1),
+      a = hang
+        ? world.place(at, sh.hz)
+        : place({ x: at.x, y: at.y }, 0, 1, true), // (free: past the board's left edge it flies on, never back to where ducks start)
       top = a.top - at.z * size; // (Hangout: at the height it was fired from)
     if (hang && world.hidden("", at)) continue; // (on the other side of the cabin's walls)
     if (
@@ -2055,6 +2068,7 @@ function drawDucks(now = clockNow()) {
       hy + Math.sin(rot) * (reach + gl * 0.5),
       rot,
     ];
+    h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: Mad God Justin's laser sight)
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
@@ -2114,6 +2128,24 @@ function drawDucks(now = clockNow()) {
         e = hd && hd.parentNode === fxl && hd._end,
         end = e && laserEnd(id);
       if (end) lz.push([e[0], e[1], end[0], end[1]]);
+    }
+  /* Mad God Justin: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
+     (my mouse) to the board's edge */
+  if (isMgj(s) && s.phase === "boss")
+    for (const [id, w] of arms) {
+      if (!MUZZLE[w]) continue;
+      const hd = heldAll.get(id),
+        e = hd && hd.parentNode === fxl && hd._end,
+        A = hd && hd._aim;
+      if (!e || !A) continue;
+      const ux = Math.cos(A[2]),
+        uy = Math.sin(A[2]),
+        t = Math.min(
+          ux > 0 ? (geo.W - A[0]) / ux : ux < 0 ? -A[0] / ux : Infinity,
+          uy > 0 ? (geo.H - A[1]) / uy : uy < 0 ? -A[1] / uy : Infinity,
+        );
+      if (t > 0 && t < Infinity)
+        lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
   fxLasers(lz);
   /* ducklings: three in a row behind their duck, along the way it walked */
@@ -2282,6 +2314,7 @@ function drawDucks(now = clockNow()) {
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
   const pt = performance.now();
+  fxLimits(s.options.noGore, s.options.noFx);
   fxMount(hang ? board : fxl, geo.W, geo.H, size); // (Hangout and Dead Ducks Arcade: under the dark, css/app.css)
   if (hang) {
     const o = world.place({ x: 0, y: 0 }, 0);
@@ -2600,7 +2633,8 @@ function placeRevive(board, s, now) {
 /* holding a revive (E, or the Revive button) or letting go */
 function mgjRevive(on) {
   mgjRv = on;
-  if (R) R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1 });
+  if (R)
+    R.send({ t: "use", what: "revive", hold: on ? 1 : 0, face: 1, w: mgjHold }); // (w: the medkit out in my hand gets it up at once)
 }
 /* Mad God Justin's zebra cake, or the Zebra cake special's (s.zcake): spinning on its way, then lying where it landed
    until Justin eats it (Hangout: hidden on the other side of the cabin's walls) */
@@ -2912,9 +2946,11 @@ function playFx(f) {
     if (!board) return;
     const at = geo.hang
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
-      : place({ x: f.x, y: f.y }, 0, 1);
+      : place({ x: f.x, y: f.y }, 0, 1, true);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
-    sfx.boom();
+    (f.wide > 1 ? sfx.boomBig : sfx.boom)(
+      geo.hang ? { x: f.x * HW, y: f.y * HH } : {},
+    ); // (the Jaime Bomb's: its own, bigger)
     if (geo.hang)
       for (const [x, y] of f.gore || []) {
         const z = world.place({ x: x / HW, y: y / HH }, 0);
@@ -2952,7 +2988,7 @@ function playFx(f) {
     } // confetti over everyone's screen
     if (!spot(f.by)) return;
     if (f.what === "controller" || f.what === "chair") {
-      sfx.swish();
+      (f.what === "chair" ? sfx.chair : sfx.throw)(heard(f.by));
       return;
     } // (Mad God Justin's throws: they fly from the room's state)
     if (isL4dd(s) && ARMS[f.what]) {
@@ -2965,26 +3001,26 @@ function playFx(f) {
           ay: f.ay || 0,
         };
       ({
-        handgun: sfx.bang,
+        handgun: sfx.handgun,
         bow: sfx.bow,
-        knife: sfx.swish,
-        hammer: sfx.swish,
-        dagger: sfx.swish,
+        knife: sfx.knife,
+        hammer: sfx.hammer,
+        dagger: sfx.throw,
         shotgun: sfx.shotgun,
-        medkit: sfx.done,
-        grenade: sfx.swish,
-        sniper: sfx.bang,
-        revolver: sfx.bang,
-        smg: sfx.tat,
-        ak: sfx.tat,
-        lmg: sfx.tat,
-        chaingun: sfx.tat,
-        glauncher: sfx.shotgun,
-        zebra: sfx.swish,
+        medkit: sfx.medkit,
+        grenade: sfx.throw,
+        sniper: sfx.sniper,
+        revolver: sfx.revolver,
+        smg: sfx.smg,
+        ak: sfx.ak,
+        lmg: sfx.lmg,
+        chaingun: sfx.chaingun,
+        glauncher: sfx.glauncher,
+        zebra: sfx.cakeThrow,
         fireball: sfx.fireball,
-        adrenaline: sfx.sip,
+        adrenaline: sfx.adrenaline,
         longjump: sfx.boing,
-      })[f.what]?.();
+      })[f.what]?.(heard(f.by));
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
     if (f.what === "fireball") {
@@ -2992,7 +3028,7 @@ function playFx(f) {
       return;
     }
     if (f.what === "zebra") {
-      sfx.swish();
+      sfx.cakeThrow(heard(f.by));
       return;
     } // (Mad God Justin's zebra cake: it flies from the room's state)
     if (f.what === "shotgun") {
@@ -3004,8 +3040,8 @@ function playFx(f) {
         ax: f.ax || f.face || 1,
         ay: f.ay || 0,
       };
-      sfx.shotgun();
-      setTimeout(() => sfx.pump(), 520);
+      sfx.shotgun(heard(f.by));
+      setTimeout(() => sfx.pump(heard(f.by)), 520);
       return;
     }
     if (
@@ -3027,7 +3063,7 @@ function playFx(f) {
           ax: -shows[f.by].ax,
           ay: -shows[f.by].ay,
         }; // (his double does the same, mirrored)
-      sfx.tat();
+      (f.what === "lmg" ? sfx.lmg : sfx.smg)(heard(f.by));
       return;
     }
     if (WEAPONS.includes(f.what)) {
@@ -3053,17 +3089,20 @@ function playFx(f) {
         }; // (his double does the same, mirrored)
       (
         ({
-          handgun: sfx.bang,
+          handgun: sfx.handgun,
           bow: sfx.bow,
-          sniper: sfx.bang,
-          revolver: sfx.bang,
-          smg: sfx.tat,
-          ak: sfx.tat,
-          lmg: sfx.tat,
-          chaingun: sfx.tat,
-          glauncher: sfx.shotgun,
-        })[f.what] || sfx.swish
-      )(); // (Quacky Zombies' guns sound as they do there)
+          sniper: sfx.sniper,
+          revolver: sfx.revolver,
+          smg: sfx.smg,
+          ak: sfx.ak,
+          lmg: sfx.lmg,
+          chaingun: sfx.chaingun,
+          glauncher: sfx.glauncher,
+          shotgun: sfx.shotgun,
+          knife: sfx.knife,
+          hammer: sfx.hammer,
+        })[f.what] || sfx.throw
+      )(heard(f.by)); // (the dagger and the grenade: thrown) // (every gun its own sound, as in Dead Ducks Arcade)
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
@@ -3079,10 +3118,10 @@ function playFx(f) {
       hotdog: sfx.chomp,
       watergun: sfx.splash,
       confgun: sfx.pop,
-      handgun: sfx.bang,
+      handgun: sfx.handgun,
       sound: sfx.quack,
       trombone: sfx.trombone,
-    })[f.what]?.();
+    })[f.what]?.(heard(f.by));
   } else if (f.kind === "fire") {
     // flames for a moment, then charred; the burns fade in a few seconds
     const dk = S.querySelector(`.gduck[data-pid="${f.who[0]}"]`);
@@ -3172,11 +3211,34 @@ function playFx(f) {
     /* the chain gun's shot: thin yellow lines popping in and out, all from the end of its barrel: one out to what it
        hit, and one or two shorter ones pointing a little off to the sides */
     if (!geo.hang && !f.b) return;
+    /* a shot that went on past the board's edge: place() only knows the board (it pins a spot off it to the edge, or
+       to where ducks start), so I aim the line by a short step along it, still on the board, and it runs on that way
+       past the screen's edge */
+    const off = (v) => v < 0 || v > 1,
+      past = !!f.b && (off(f.x1) || off(f.y1)),
+      step = past
+        ? Math.min(
+            0.05 / (Math.hypot(f.x1 - f.x0, f.y1 - f.y0) || 1),
+            ...[
+              [f.x0, f.x1],
+              [f.y0, f.y1],
+            ].map(([v0, v1]) =>
+              v1 > v0 ? (1 - v0) / (v1 - v0) : v1 < v0 ? v0 / (v0 - v1) : 1,
+            ),
+          )
+        : 1;
     const a = f.b
         ? place({ x: f.x0, y: f.y0 }, 0, 1)
         : world.place({ x: f.x0 / HW, y: f.y0 / HH }, f.hz || 0),
       b = f.b
-        ? place({ x: f.x1, y: f.y1 }, 0, 1)
+        ? place(
+            {
+              x: f.x0 + (f.x1 - f.x0) * step,
+              y: f.y0 + (f.y1 - f.y0) * step,
+            },
+            0,
+            1,
+          )
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41,
       gun = fxl.querySelector(
@@ -3187,9 +3249,13 @@ function playFx(f) {
         a.top - up,
         Math.atan2(b.top - a.top, b.left - a.left),
       ];
-    let ang = Math.atan2(b.top - up - y0, b.left - x0),
-      far = Math.hypot(b.left - x0, b.top - up - y0);
-    if (Math.cos(ang - aim) < 0.5) {
+    let ang = past
+        ? Math.atan2(b.top - a.top, b.left - a.left)
+        : Math.atan2(b.top - up - y0, b.left - x0),
+      far = past
+        ? Math.hypot(geo.W, geo.H) * 1.5
+        : Math.hypot(b.left - x0, b.top - up - y0);
+    if (!past && Math.cos(ang - aim) < 0.5) {
       // (what it hit is beside the barrel or behind its end: the lines still only go forward)
       ang = aim;
       far = size * 0.8;
@@ -3205,13 +3271,14 @@ function playFx(f) {
     fxMuzzle(x0, y0, ang, "chaingun");
     kick(f.by, "chaingun", now);
     if (f.by === R.me) shake(MUZZLE.chaingun.shake);
-    fxImpact(
-      x0 + Math.cos(ang) * far,
-      y0 + up + Math.sin(ang) * far,
-      "chaingun",
-      Math.cos(ang),
-      Math.sin(ang),
-    ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
+    if (!past)
+      fxImpact(
+        x0 + Math.cos(ang) * far,
+        y0 + up + Math.sin(ang) * far,
+        "chaingun",
+        Math.cos(ang),
+        Math.sin(ang),
+      ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
     for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
       line(
         (Math.random() - 0.5) * TRACE.spread,
@@ -3257,7 +3324,7 @@ function playFx(f) {
       { duration: 260, easing: "linear", fill: "forwards" },
     );
     setTimeout(() => n.remove(), 300);
-    sfx.swish();
+    sfx.throw();
   } else if (f.kind === "pcrit") {
     /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
        Zombies' rises over it */
@@ -3416,9 +3483,13 @@ function xBounds() {
 /* aiming: the board's directions on the screen. place() is straight lines on the board, so two steps from the middle
    give how far a step across (x) and a step down (y) the board moves on the screen */
 function axes() {
-  const o = place({ x: 0.5, y: 0.5 }, 0, 1),
-    a = place({ x: 0.6, y: 0.5 }, 0, 1),
-    b = place({ x: 0.5, y: 0.6 }, 0, 1);
+  const at = (x, y) =>
+      geo && geo.hang && world
+        ? world.place({ x, y }, 0) // (Hangout: on flat ground. Through the floor's own heights there, a step or the deck tilted every aim: the owner's, Nov 16)
+        : place({ x, y }, 0, 1),
+    o = at(0.5, 0.5),
+    a = at(0.6, 0.5),
+    b = at(0.5, 0.6);
   return [
     (a.left - o.left) * 10,
     (a.top - o.top) * 10,
@@ -4089,12 +4160,9 @@ async function announce(phase) {
   );
 }
 
-const PICK_NAMES = {
-  hammer: "Hammer",
-  dagger: "Throwing dagger",
-  handgun: "Handgun",
-  shotgun: "Shotgun",
-};
+const PICK_NAMES = Object.fromEntries(
+  PICK_WEAPONS.map((k) => [k, weaponName(k)]),
+); // (as Quacky Zombies names them)
 /* Mad God Justin: "Defeat Justin!" as the fight starts; then he's defeated (and a LOSER), or time's up */
 async function announceMgj(s, phase) {
   const job = ++sayJob;
@@ -4540,8 +4608,8 @@ function recordRound(s) {
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Quacky Zombies its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
-   Justin its own keys: 1 the knife, 2 the bow, 3 Jaime, 4 the weapon picked up, 5 the zebra cake (my own keys stay as
-   they are) */
+   Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16), 3 Jaime,
+   4 the weapon picked up, 5 the zebra cake (my own keys stay as they are) */
 const playDuck = () =>
   R && isL4dd(R.state)
     ? {
@@ -4556,7 +4624,7 @@ const playDuck = () =>
           ...myDuck(),
           keys: [
             "knife",
-            "bow",
+            "handgun",
             "jaime",
             specialById(myPick()) ? myPick() : null,
             "zebra",
@@ -4567,13 +4635,17 @@ const playDuck = () =>
 /* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
    and when the slider asks what's in hand, so it never picks the next one over by itself) */
 function mgjBackIfGone(s) {
+  if (s.mgj && s.mgj.n !== mgjFight) {
+    mgjFight = s.mgj.n;
+    mgjHold = mgjBack = "handgun"; // (a new fight: the pistol in hand, the knife on 1)
+  }
   const thrown =
     mgjHold === "zebra" &&
     s.mgj &&
     (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
   if (
     (mgjHold !== "knife" &&
-      mgjHold !== "bow" &&
+      mgjHold !== "handgun" &&
       mgjHold !== "zebra" &&
       mgjHold !== myPick()) ||
     thrown
@@ -4585,9 +4657,12 @@ function mgjBackIfGone(s) {
 }
 /* Mad God Justin: what a key puts out in my hand, kept there (all but Jaime: the owner's, Nov 3) */
 const mgjToggles = (id) =>
-  id === "knife" || id === "bow" || id === "zebra" || (!!id && id === myPick());
+  id === "knife" ||
+  id === "handgun" ||
+  id === "zebra" ||
+  (!!id && id === myPick());
 function mgjOut2(id) {
-  if (mgjHold !== id && (mgjHold === "knife" || mgjHold === "bow"))
+  if (mgjHold !== id && (mgjHold === "knife" || mgjHold === "handgun"))
     mgjBack = mgjHold; // (the one to go back to)
   mgjHold = held = id;
   sendMove(true);
@@ -4598,8 +4673,12 @@ function mgjOut2(id) {
 function heldNow() {
   if (R && isL4dd(R.state)) {
     const sl = slotsOf(R.state, R.me);
-    if (!sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
-    return l4Hp(R.state, R.me) > 0 ? sl[l4Slot] || "" : "";
+    const kit = kitOf(R.state, R.me);
+    if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
+    if (l4Slot !== 4 && !sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
+    if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
+    if (l4Hp(R.state, R.me) <= 0) return "";
+    return l4Slot === 4 ? "grenade" : sl[l4Slot] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -4618,7 +4697,10 @@ function keptNow() {
 /* phones: the slider picked key i (in Mad God Justin it goes out in hand, but Jaime) */
 function slidPick(i) {
   const id = keysOf(playDuck())[i];
-  if (R && isMgj(R.state) && mgjToggles(id)) useKey(i, false);
+  if (!R) return;
+  if (isMgj(R.state)) {
+    if (mgjToggles(id)) useKey(i, false);
+  } else if (onBoardPhase()) selectKey(i, false); // (the one in the middle is the one picked: a weapon goes in hand)
 }
 /* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces) */
 function slidTap(i) {
@@ -4626,7 +4708,9 @@ function slidTap(i) {
   if (R && isMgj(R.state) && mgjToggles(id)) {
     useKey(i, false);
     fire(id);
-  } else useKey(i, false);
+  } else if (R && !isMgj(R.state) && WEAPONS.includes(id) && id === held)
+    fire(id); // (a weapon picked: a tap on it uses it)
+  else useKey(i, false);
 }
 /* phones: the weapon in the slider's middle, which the attack button uses (or null) */
 function padWeapon() {
@@ -4641,12 +4725,12 @@ function padWeapon() {
   if (isMgj(R.state))
     return R.state.phase === "boss" && mgjToggles(id) ? id : null;
   const sp = specialById(id);
-  return (WEAPONS.includes(id) || THROWS.includes(id)) &&
+  return (WEAPONS.includes(id) ? id === held : THROWS.includes(id) && !held) &&
     sp &&
     !sp.off &&
     unlocked("special", id)
     ? id
-    : null;
+    : null; // (a weapon is used only while it is the one in hand)
 }
 /* phones: the attack button: the weapon in the slider's middle, where the button aims; says when it can again (ms) */
 function padAttack() {
@@ -4661,7 +4745,25 @@ function padAttack() {
   return coolFor(id, R.state);
 }
 /* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
-function useKey(i, keep) {
+/* a number key toggles a weapon (the owner's, Nov 16): the key picks it and puts it in hand, the same key again puts it
+   away, another key puts it away and takes the other. One weapon at a time, and a weapon has to be in hand to be used (a
+   click, V, a phone's attack button): nothing fires beside it. The jetpack works only while it is the one picked, so a
+   weapon in hand turns it off and it puts the weapon away. toggle: a keyboard's key (a tap on a phone only picks). */
+function selectKey(i, toggle) {
+  const id = keysOf(playDuck())[i],
+    jet = jetOn(R.state, R.me, clockNow());
+  lastKey = i;
+  if (WEAPONS.includes(id)) {
+    if (jet) R.send({ t: "aura", what: "jetpack", keep: true }); // (a weapon in hand: the jetpack goes off)
+    held = toggle && held === id ? null : id;
+  } else if (id === "jetpack") {
+    if (jet ? toggle : true) R.send({ t: "aura", what: "jetpack", keep: true }); // (on, or off with the key again)
+    held = null; // (the jetpack takes the place of the weapon in hand)
+  } else held = null;
+  if (bar) bar.show(i);
+  sendMove(true);
+}
+function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
     l4Pick(i);
@@ -4681,6 +4783,11 @@ function useKey(i, keep) {
     sp = specialById(id);
   if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
   lastKey = i;
+  if (WEAPONS.includes(id) || id === "jetpack") {
+    selectKey(i, toggle);
+    if (bar) setTimeout(() => bar && bar.refresh(), 60);
+    return;
+  } // (a weapon or the jetpack: the number key picks it and toggles it)
   if (sp.kind === "effect")
     R.send({
       t: "aura",
@@ -4702,13 +4809,9 @@ function useKey(i, keep) {
       jump(
         id === "longjump" ? "long" : id === "shortjump" ? "short" : "double",
       );
-  } else if (WEAPONS.includes(id) && keep && !isMgj(R.state)) {
-    held = held === id ? null : id;
-    sendMove(true);
-  } // the handgun or the dagger: kept out (a left click uses it) or put away
-  else if (WEAPONS.includes(id) || THROWS.includes(id))
-    fire(id); // (the Chair and the Zebra cake: thrown toward the mouse)
-  else if (me && me.x >= 0)
+  } else if (THROWS.includes(id)) {
+    if (!held) fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
+  } else if (me && me.x >= 0)
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
@@ -4716,8 +4819,22 @@ function useKey(i, keep) {
    switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
    and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i) {
-  const sl = slotsOf(R.state, R.me);
+  const sl = slotsOf(R.state, R.me),
+    kit = kitOf(R.state, R.me);
+  if (i === 4) {
+    /* the grenades are a number key now (5), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
+    if (l4Slot === 4) l4Slot = l4Last;
+    else if (kit && kit.g > 0) {
+      if (kit.jp && sl[3] === "jetpack") fire("jetpack"); // (the jetpack goes off)
+      if (l4Slot !== 3) l4Last = l4Slot;
+      l4Slot = 4;
+    } else return;
+    sendMove(true);
+    if (bar) bar.refresh();
+    return;
+  }
   if (i > 3 || !sl[i]) return;
+  if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
   if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
@@ -4727,7 +4844,7 @@ function l4Pick(i) {
   if (i === 3) {
     if (l4Slot === 3) l4Slot = l4Last;
     else {
-      l4Last = l4Slot;
+      if (l4Slot !== 4) l4Last = l4Slot;
       l4Slot = 3;
     }
   } else l4Slot = l4Last = i;
@@ -4762,7 +4879,7 @@ function cool() {
         ? [Math.max(end, now + 1), CAKE_EVERY, now]
         : null;
     } // (shared too)
-    const mg = magSize(id);
+    const mg = m ? mgjMag(id) : magSize(id);
     if (mg) {
       const r = magOf(R.state, R.me, now, id).r;
       return r > now
@@ -4780,7 +4897,6 @@ function cool() {
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
 function ammo(id = "handgun") {
-  if (R && isMgj(R.state)) return usesOf(R.state, R.me);
   const n = (magSize(id) || [MAG])[0];
   return R ? n - magOf(R.state, R.me, clockNow(), id).n : n;
 }
@@ -4788,8 +4904,8 @@ function ammo(id = "handgun") {
    of the weapon picked up */
 const dots = (id) =>
   R && isMgj(R.state)
-    ? PICK_USES[id] && id === myPick()
-      ? ammoHTML(usesOf(R.state, R.me), PICK_USES[id])
+    ? MGJ_GUNS.includes(id) && id === myPick()
+      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me)}</span>`
       : id === "jaime"
         ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
         : ""
@@ -4804,7 +4920,13 @@ function reload() {
     R.send({ t: "reload", w: heldNow() });
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
-  if (!R || !onBoardPhase() || isMgj(R.state)) return false;
+  if (R && isMgj(R.state)) {
+    if (!onBoardPhase() || !held || held !== myPick() || !mgjMag(held))
+      return false;
+    R.send({ t: "reload", w: held });
+    return true;
+  } // (Mad God Justin: the gun picked up, out in my hand)
+  if (!R || !onBoardPhase()) return false;
   const k = keysOf(playDuck()),
     w =
       held && magSize(held) && hasKey(playDuck(), held)
@@ -4815,6 +4937,39 @@ function reload() {
   if (!w) return false;
   R.send({ t: "reload", w });
   return true;
+}
+/* each reload of mine (by R, or on its own once a magazine is empty) makes its gun's own reload sound: the room's
+   state says when a reload ends (s.mag in every mode, my kit's rl in Dead Ducks Arcade); a new end is a new reload */
+let reloadsSeen = {},
+  reloadVoices = {}; // (each weapon's reload sound playing, to stop it when the reload is given up)
+function heardReloads(s) {
+  const now = clockNow(),
+    seen = {};
+  if (isL4dd(s)) {
+    const k = kitOf(s, R.me);
+    if (k && k.rl > now && k.rw) seen[k.rw] = k.rl;
+  } else
+    for (const [key, m] of Object.entries(s.mag || {}))
+      if (m && m.r > now && (key === R.me || key.startsWith(R.me + " ")))
+        seen[key === R.me ? "handgun" : key.slice(R.me.length + 1)] = m.r;
+  for (const [w, r] of Object.entries(seen))
+    if (reloadsSeen[w] !== r) {
+      hush(reloadVoices[w]);
+      reloadVoices[w] = sfx.reload(w, { secs: (r - now) / 1000 }); // (to end as it ends)
+    }
+  for (const [w, r] of Object.entries(reloadsSeen))
+    if (!seen[w] && r > now + 100) hush(reloadVoices[w]); // (given up before its end: switched weapons)
+  reloadsSeen = seen;
+}
+/* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
+   stands (sound.js fades it with its distance from my duck) */
+function heard(id) {
+  const o = { k: id === R.me ? 1 : OTHERS };
+  if (world && R && isHang(R.state)) {
+    const p = (R.state.pos || {})[id];
+    if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });
+  }
+  return o;
 }
 let mouseAt = 0; // when the mouse last moved
 const MOUSE_IDLE = 2500; // ms without the mouse before the arrow keys aim
@@ -4878,13 +5033,7 @@ function wheelPick(dir) {
           ids.length
       ];
   if (isMgj(s)) useKey(i, false);
-  else {
-    lastKey = i;
-    if (WEAPONS.includes(id)) held = id;
-    else held = null;
-    if (bar) bar.show(i);
-    sendMove(true);
-  }
+  else selectKey(i, false);
   return true;
 }
 const onWheel = (e) => {
@@ -5638,6 +5787,7 @@ function paintNow(force) {
       else bar.hide();
     } // the specials' row comes in with each stage on the board, then slides away
   }
+  heardReloads(s);
   if (world) world.state(s); // (a lamp switched off …)
   if (isMgj(s)) {
     mgjBackIfGone(s);
@@ -6101,9 +6251,6 @@ function keydown(e) {
     return;
   } // hold Tab: the players (Tab never moves the browser's focus in a game)
   if (typing(e) || windowOpen()) return;
-  if (e.code.startsWith("Shift")) {
-    if (!e.repeat) shiftTap = { at: performance.now(), other: false };
-  } else if (shiftTap) shiftTap.other = true; // (Shift used with another key: no tap)
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
@@ -6120,7 +6267,7 @@ function keydown(e) {
   }
   if (keyIndex(e) >= 0 && onBoardPhase()) {
     e.preventDefault();
-    if (!e.repeat) useKey(keyIndex(e), e.shiftKey);
+    if (!e.repeat) useKey(keyIndex(e), e.shiftKey, true);
     return;
   } // the specials' keys (Shift: keep it on)
   if (e.code === "KeyE" && isHang(R.state) && onBoardPhase()) {
@@ -6128,11 +6275,6 @@ function keydown(e) {
     if (!e.repeat && world) world.press();
     return;
   } // Duck Cabin: E uses what's near (sit, play, read …)
-  if (e.code === "KeyG" && isL4dd(R.state) && onBoardPhase()) {
-    e.preventDefault();
-    if (!e.repeat) fire("grenade");
-    return;
-  } // (Quacky Zombies: G throws a grenade toward the mouse)
   if (e.code === "KeyR" && !e.repeat && reload()) {
     e.preventDefault();
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
@@ -6174,29 +6316,7 @@ function keydown(e) {
     act("end");
   }
 }
-/* a quick tap of Shift (down and up within SHIFT_TAP ms, no other key between) keeps the selected item on or puts it
-   away, as Shift and its number; holding Shift still sprints */
-const SHIFT_TAP = 200;
-let shiftTap = null;
-function shiftTapped() {
-  if (!R || !onBoardPhase()) return;
-  const s = R.state;
-  if (isL4dd(s)) {
-    if (l4Slot === 3) l4Pick(3); // (the special: on and off)
-  } else if (!isMgj(s) && lastKey >= 0) useKey(lastKey, true);
-}
 const keyup = (e) => {
-  if (e.code.startsWith("Shift") && shiftTap) {
-    const t = shiftTap;
-    shiftTap = null;
-    if (
-      !t.other &&
-      performance.now() - t.at <= SHIFT_TAP &&
-      !typing(e) &&
-      !windowOpen()
-    )
-      shiftTapped();
-  }
   if (world) world.keyup(e);
   if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);
@@ -6437,13 +6557,13 @@ function watchInsets(S) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
-/* a second line, where Shift and a number key keep a special on (not in Mad God Justin or Quacky Zombies: their keys work
-   their own way) */
+/* a second line: a number key picks a weapon (the same key puts it away) and a click uses it; Shift and a number key keep
+   a jump on (not in Mad God Justin or Quacky Zombies: their keys work their own way) */
 const KEEP_HINT =
-  '<i class="hints-br"></i><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on';
+  '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, the owner's, Nov 4; E goes with them, so no key is split from its word)
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade <kbd>B</kbd> Ammo'; // (B only here, the owner's, Nov 4; E goes with it, so no key is split from its word; the grenades are the 5 key now, Nov 16)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
@@ -6464,7 +6584,7 @@ function heldClick(e) {
     aimHere(e)
   );
 }
-/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies and Mad God Justin): the left button
+/* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
    down fires, and again as soon as it can while the button stays down */
 let autoFire = 0,
   autoDid = false;
@@ -6472,7 +6592,6 @@ function autoPress(e) {
   if (
     !R ||
     isL4dd(R.state) ||
-    isMgj(R.state) ||
     e.pointerType !== "mouse" ||
     !AUTO.includes(held) ||
     !heldClick(e)
@@ -6528,6 +6647,8 @@ register("game", {
   leave() {
     if (off) off();
     off = null;
+    jetsOff();
+    reloadsSeen = {};
     if (docks) docks.destroy();
     docks = null;
     if (world) world.destroy();
@@ -6590,6 +6711,7 @@ register("game", {
   render(arg) {
     R = arg || activeRoom();
     if (!R) return null;
+    loadSounds("game"); // (the weapons' and the items' sounds: they work in every mode)
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
         <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
@@ -6624,7 +6746,7 @@ register("game", {
           slot: () => l4Slot,
           pick: l4Pick,
           fire,
-          grenade: () => fire("grenade"),
+          grenade: () => l4Pick(4),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
         },
         row = mountL4Bar(S, l4),

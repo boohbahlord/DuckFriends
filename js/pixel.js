@@ -226,43 +226,60 @@ const CURSORS = {
     0,
     `k
 kk
-kwk
+kyk
 kywk
 kywwk
 kywwwk
-kywwwwk
+kywwwwkk
 kywwwwwk
 kywwwwwwk
 kywwwwwwwk
-kywwwwkkkkk
-kywkwwk
-kwk.kwwk
-kk..kwwk
-k....kwwk
-.....kwwk
-......kk`,
+kywwwwwwwwk
+kywwwwwwwwwk
+kywwwwwwwwwwk
+kywwwwwwwwwwwk
+kywwwwwwwwwwwwk
+kywwwwwwwwwkkkkk
+kwwwwwwwwwk
+kwwwwwkwwwk
+kwwwwk.kwwwk
+kwwwk...kwwk
+kwwk....kwwwk
+kwk......kwwk
+kk.......kwwwk
+..........kwwk
+..........kwwkk
+...........kk`,
   ],
   hand: [
-    5,
+    6,
     0,
-    `....kk
-...kywk
-...kywk
-...kywk
-...kywk
-...kywkkk
-...kywkwwkkk
-...kywkwwkwwkk
-...kywkwwkwwkwk
-.kkkywwwwwwwkwk
-kywkwwwwwwwwwwk
-kywwkwwwwwwwwwk
-.kywwwwwwwwwwwk
-..kwwwwwwwwwwwk
-...kwwwwwwwwwk
-....kwwwwwwwwk
-....kwwwwwwwk
-....kkkkkkkkk`,
+    `.....kkkk
+.....kywk
+....kywwwk
+....kywwwk
+....kywwwk
+....kywwwk
+....kywwwk
+....kywwwk
+....kywwwwkkk
+....kywwwwwwk
+....kywwwkwwwkkkk
+....kywwwkwwwkwwwkkk
+....kywwwkwwwkwwwkwwk
+...kwwwwwkwwwkwwwkwwk
+.kkwwwwwwkwwwkwwwkwwk
+kwwwwwwwwkwwwkwwwkwwk
+kwwwwwwwwwwwwwwwwwwwk
+kwwwwwwwwwwwwwwwwwwwk
+kwwwwwwwwwwwwwwwwwwwk
+.kkwwwwwwwwwwwwwwwwwk
+...kwwwwwwwwwwwwwwwwk
+...kwwwwwwwwwwwwwwwwk
+...kwwwwwwwwwwwwwwwwk
+...kwwwwwwwwwwwwwwwwk
+....kwwwwwwwwwwwwwwk
+.....kkkkkkkkkkkkkk`,
   ],
   cross: [
     7,
@@ -284,24 +301,32 @@ kkkkk.....kkkkk
 ......kkk`,
   ],
   text: [
-    3,
-    8,
-    `kkk.kkk
-kwwkwwk
-kkkwkkk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-..kwk
-kkkwkkk
-kwwkwwk
-kkk.kkk`,
+    5,
+    12,
+    `kkkk..kkkk
+kwwwkkwwwk
+kkkkwwkkkk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+...kwwk
+kkkkwwkkkk
+kwwwkkwwwk
+kkkk..kkkk`,
   ],
 };
 const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
@@ -321,9 +346,10 @@ function cursorURL(rows, s) {
   return c.toDataURL();
 }
 /* how many css px each of a pointer's pixels takes (owner, Nov 16: one css px was far too small, "bigger, but not
-   large", and the crosshair so small the game was unplayable). Browsers drop a pointer picture over 128 px, so a
-   sharper copy (2x, 3x) is only offered while it fits */
-const CURSOR_ZOOM = { arrow: 2, hand: 2, text: 2, cross: 3 },
+   large", and the crosshair so small the game was unplayable; then twice as big was too big: the arrow, the hand and
+   the text pointer are drawn again half as big again as the first ones, one css px a pixel). Browsers drop a pointer
+   picture over 128 px, so a sharper copy (2x, 3x) is only offered while it fits */
+const CURSOR_ZOOM = { arrow: 1, hand: 1, text: 1, cross: 3 },
   CURSOR_MAX = 128;
 function setCursors() {
   const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
