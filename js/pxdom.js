@@ -52,6 +52,7 @@ function shownSize(svg, vb) {
 /* a copy of the drawing as it looks now, as SVG text: every part's CSS (from classes, and from the classes of what
    holds it) written into the part itself, so the picture is made as it's seen */
 function snapshot(svg, vb) {
+  const hid = svg.hasAttribute("data-px");
   svg.removeAttribute("data-px"); // (the hiding rule out of the way while I read how it looks)
   const copy = svg.cloneNode(true);
   copy.querySelectorAll("image.pxi, g.pxt").forEach((e) => e.remove());
@@ -72,13 +73,26 @@ function snapshot(svg, vb) {
   copy.querySelectorAll("text").forEach((t) => {
     if (!t.querySelector("textPath")) t.remove();
   }); // (its words stay words: words(), over the picture)
-  svg.setAttribute("data-px", "");
+  if (hid) svg.setAttribute("data-px", ""); // (a new drawing stays seen until its picture is there: show())
   copy.removeAttribute("data-px");
   copy.removeAttribute("class");
   copy.setAttribute("xmlns", NS);
   copy.setAttribute("width", vb.width);
   copy.setAttribute("height", vb.height);
-  return new XMLSerializer().serializeToString(copy);
+  return sameIds(new XMLSerializer().serializeToString(copy));
+}
+
+/* a drawing's ids are often new each time it's drawn (duck.js counts them), so the same look would be a new picture
+   every time (made again, and a gap while it's made). Its ids renamed in order, the same look is the same text */
+function sameIds(text) {
+  const ids = [...text.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]);
+  if (!ids.length) return text;
+  const to = new Map(ids.map((id, i) => [id, "q" + i])),
+    esc = (v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.replace(
+    new RegExp(`(["#])(${ids.map(esc).join("|")})(?=["')])`, "g"),
+    (m, a, id) => a + to.get(id),
+  );
 }
 
 /* the drawing's text without my picture in it, and the classes around it: when these change, it's made again */
