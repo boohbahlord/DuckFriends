@@ -1,7 +1,7 @@
 /* ---------- Quacky Zombies' minimap ----------
    Bottom left, in Quacky Zombies only: the whole map (the cabin's floor, its walls, the deck and its stairs) as plain
    shapes, no furniture; every duck's head where it stands (mine ringed in white); a red dot for every zombie some
-   duck's camera sees right now. A dot fades in as its zombie comes into any camera and fades out quickly once none sees
+   duck's camera sees right now. Small and see-through, and not on phones (the owner's, Nov 16). A dot fades in as its zombie comes into any camera and fades out quickly once none sees
    it. I want it dead simple and cheap: the map is drawn once, and the canvas only 12 times a second. */
 import { pixelOn, gridPx } from "./pixel.js";
 import {
@@ -13,6 +13,7 @@ import {
   seenFrom,
 } from "./hangout/layout.js";
 import { shownDuck } from "./looks.js";
+import { touchOnly } from "./pointer.js";
 
 const X0 = 1250,
   X1 = 4550,
@@ -105,8 +106,12 @@ export function mapDraw(now, ctx, s, zs, alive) {
   if (!cv) return;
   const Wd = ctx.world;
   if (!Wd.sc || !Wd.vw) return;
-  const phone = Wd.vw < 600,
-    w = phone ? 124 : 196,
+  if (touchOnly()) {
+    if (!cv.hidden) cv.hidden = true; // (none on a phone: the owner's, Nov 16)
+    return;
+  }
+  if (cv.hidden) cv.hidden = false;
+  const w = Wd.vw < 900 ? 120 : 150, // (smaller: the owner's, Nov 16; was 196)
     h = Math.round((w * (Y1 - Y0)) / (X1 - X0)),
     dpr = pixelOn() ? 1 / gridPx() : Math.min(2, devicePixelRatio || 1), // (the pixel look: one of its pixels is one of the grid's)
     key = w + "x" + h + "@" + dpr;
@@ -164,7 +169,7 @@ export function mapDraw(now, ctx, s, zs, alive) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
   g.drawImage(bg, 0, 0, w, h);
-  const r = phone ? 2.4 : 3;
+  const r = 2.4;
   g.fillStyle = "#ff3b3b";
   for (const [x, y, a] of dots.values()) {
     if (a <= 0) continue;
@@ -174,7 +179,7 @@ export function mapDraw(now, ctx, s, zs, alive) {
     g.fill();
   }
   g.globalAlpha = 1;
-  const hr = phone ? 4 : 5;
+  const hr = 4;
   for (const [id, x, y] of ducks) {
     let fc = faces.get(id);
     if (!fc) faces.set(id, (fc = [x, 1]));

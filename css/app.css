@@ -14439,14 +14439,9 @@ html.moving .eye-tears .tdrop.t2 {
   z-index: 31000;
   pointer-events: none;
   border-radius: 8px;
-  background: rgba(10, 12, 24, 0.55);
-  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.18);
-}
-@media (max-width: 600px) {
-  .l4-map {
-    left: 8px;
-    border-radius: 6px;
-  }
+  background: rgba(10, 12, 24, 0.3);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.12);
+  opacity: 0.6; /* (more see-through: the owner's, Nov 16) */
 }
 .l4-hud {
   position: absolute;

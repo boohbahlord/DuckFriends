@@ -128,10 +128,10 @@ export function lockHint(kind, id) {
   if (l.jaime && earned(l))
     return `Unlocked: Jaimes stabbed Mad God Justin ${l.jaime} times with you`;
   if (l.l4r && earned(l))
-    return `Unlocked: you reached round ${l.l4r} in Quacky Zombies`;
+    return `Unlocked: you reached round ${l.l4r} in Dead Ducks Arcade`;
   if (l.jbomb && earned(l))
     return profile.jaimeBomb
-      ? "Unlocked: you found it in the fireplace in Quacky Zombies"
+      ? "Unlocked: you found it in the fireplace in Dead Ducks Arcade"
       : `Unlocked: ${fmtJumps(l.jbomb)} Jaimes`;
   if (earned(l))
     return l.cabin
@@ -168,9 +168,9 @@ export function lockHint(kind, id) {
   if (l.shadow)
     return `${pre}Hit the shadow duck in Duck Cabin with a thrown chair`;
   if (l.l4r)
-    return `${pre}Reach round ${l.l4r} in Quacky Zombies (your best: ${profile.l4round || 0})`;
+    return `${pre}Reach round ${l.l4r} in Dead Ducks Arcade (your best: ${profile.l4round || 0})`;
   if (l.jbomb)
-    return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)}), or find it in the fireplace in Quacky Zombies`;
+    return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)}), or find it in the fireplace in Dead Ducks Arcade`;
   if (l.jaime)
     return `${pre}Be in Mad God Justin while Jaimes stab him ${l.jaime} times, anyone's Jaimes (${Math.min(l.jaime, profile.jaimeStabs || 0)}/${l.jaime})`;
   if (l.kills && !l.hidden)
