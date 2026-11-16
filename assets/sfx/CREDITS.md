@@ -120,3 +120,10 @@ instruments (its license: LICENSES.md).
 | axeHit | Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | swordHit | Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
 | panHit | alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3) — https://freesound.org/people/alienistcog/sounds/124711/ | CC0 1.0 |
+| powerUp | CogFireStudios, electric motor start (freesound 619835); joe_anderson22, machinery (freesound 392983); Kenney, Impact Sounds (both via CDDA-Soundpacks) — https://freesound.org/s/619835/ | CC0 1.0 |
+| powerDown | GiocoSound, engine stop (freesound 401553, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/people/GiocoSound/sounds/401553/ | CC0 1.0 |
+| partGot | Kenney, RPG Audio and Impact Sounds — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| partIn | Kenney, Impact Sounds and RPG Audio; LFA, Equipment Clicks III — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| gasPour | Owlish Media, tap water and drinks; qubodup, Liquid bottle drink set (bottle-open-01) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
+| angelWork | joe_anderson22, machinery (freesound 392983); Electricity Game Sound Pack (charge, snaploop) — https://opengameart.org/content/electricity-game-sound-pack | CC0 1.0 |
+| angelOrb | JaggedStone, Magic Spell SFX (magical_1); Electricity Game Sound Pack (teleport) — https://opengameart.org/content/magic-spell-sfx | CC0 1.0 |
