@@ -175,6 +175,7 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import {
   isL4dd,
+  dodging,
   L4,
   l4Hp,
   l4Down,
@@ -187,7 +188,14 @@ import {
   BURN,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4TouchAim, l4Held, l4Got, sprintLeft, l4SafeHint } from "./l4dd.js";
+import {
+  l4TouchAim,
+  l4Held,
+  l4Got,
+  sprintLeft,
+  l4SafeHint,
+  laserEnd,
+} from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -387,6 +395,28 @@ import {
 } from "./trivia.js";
 import { frame, stamp, took } from "./perf.js";
 import { touchOnly } from "./pointer.js";
+import {
+  fxMount,
+  fxOrigin,
+  fxFrame,
+  fxHitAt,
+  fxImpact,
+  fxMelee,
+  fxBurst,
+  fxSpurt,
+  fxMuzzle,
+  fxLasers,
+  MUZZLE,
+} from "./fx.js";
+import {
+  sway,
+  kick,
+  kickOf,
+  jitter,
+  shake,
+  shakeNow,
+  wobble,
+} from "./fxmotion.js";
 
 let R = null,
   S = null,
@@ -1493,12 +1523,23 @@ function drawDucks(now = clockNow()) {
        round starts the HP over) */
     const hv = !g && hpFull(s, id === JUSTIN2 ? JUSTIN_ID : id, now),
       hk = hv ? hv[1] + "/" + s.phase : "";
+    const bled =
+      hv && d._hk === hk && d._hv > hv[0] && id !== JUSTIN2 ? d._hv - hv[0] : 0;
     if (hv && d._hk === hk && d._hv !== hv[0] && id !== JUSTIN2)
       popHP(d.querySelector(".gduck-lift"), hv[0] - d._hv, touchOnly());
     d._hk = hk;
     d._hv = hv ? hv[0] : -1;
     const at = seatAt(s, id) || place(pos, lane.indexOf(id), lane.length),
       z = liftOf(id, pos);
+    d._at = [at.left, at.top];
+    if (bled)
+      fxHitAt(
+        at.left,
+        at.top,
+        z + size * (isJustin(id) ? 0.5 * MGJ_SCALE : 0.42),
+        id,
+        size,
+      ); // (blood, by what hit it: fx.js)
     const mine = id === R.me;
     const face =
       seatOf(s, id) >= 0
@@ -1588,6 +1629,8 @@ function drawDucks(now = clockNow()) {
       }
     } // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
+    d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
+    d.classList.toggle("dodge", isL4dd(s) && dodging(s, pos, now)); // (Dead Ducks Arcade: see-through while a jump makes it safe)
     d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
     const dn0 = !s.done[id];
@@ -1827,6 +1870,23 @@ function drawDucks(now = clockNow()) {
     fxl.append(pf);
     setTimeout(() => pf.remove(), 1000);
   }
+  /* the pixel effects (fx.js): a shot new this frame flashes and smokes at its barrel (after the weapons are placed,
+     below); one gone since last frame hit something there (its blood: fxHitAt) */
+  const shotNow = new Set(),
+    fired = [];
+  for (const sh of s.shots || []) {
+    if (!sh.k) continue;
+    shotNow.add(sh.n);
+    if (!SHOT_SEEN.has(sh.n)) {
+      SHOT_SEEN.set(sh.n, { k: sh.k, x: NaN, y: NaN, vx: sh.vx, vy: sh.vy });
+      if (now - sh.t < 400) fired.push(sh);
+    }
+  }
+  for (const [n, o] of SHOT_SEEN)
+    if (!shotNow.has(n)) {
+      SHOT_SEEN.delete(n);
+      if (o.x === o.x) fxImpact(o.x, o.y, o.k, o.vx, o.vy);
+    }
   for (const sh of s.shots || []) {
     if (!sh.k) continue;
     const at = shotAt(sh, now - sh.t),
@@ -1841,6 +1901,15 @@ function drawDucks(now = clockNow()) {
     )
       continue; // (off the screen)
     live.add(sh.n);
+    const seen = SHOT_SEEN.get(sh.n);
+    if (seen) {
+      if (seen.x === seen.x && (a.left !== seen.x || a.top !== seen.y)) {
+        seen.vx = a.left - seen.x;
+        seen.vy = a.top - seen.y;
+      } // (the way it flies on the screen)
+      seen.x = a.left;
+      seen.y = a.top;
+    } // (where it was last seen: where it hit, once it's gone)
     let b = SHOT_EL.get(sh.n);
     if (b && b.parentNode !== fxl) b = null; // (the board was built again)
     if (!b) {
@@ -1958,8 +2027,34 @@ function drawDucks(now = clockNow()) {
               ? 50
               : 50 - 120 * Math.min(1, (st - 0.5) / 0.3);
     }
-    const rot = ang + ((left ? -1 : 1) * turn * Math.PI) / 180;
-    const tr = `translate(${c.left.toFixed(1)}px, ${c.top.toFixed(1)}px) rotate(${rot.toFixed(3)}rad) translateX(${((w === "hammer" ? hs : ds) * out).toFixed(1)}px) scaleY(${left ? -1 : 1})`;
+    /* the owner's motion (fxmotion.js): it sways as its duck walks and jumps, kicks back with each shot, jitters on
+       adrenaline */
+    const zl = liftOf(id, pos),
+      [sw, sx, sy] = sway(
+        id,
+        c.left,
+        c.top + zl,
+        zl,
+        now,
+        mine ? sprinting && moving : !!pos.sp,
+        size,
+        ang,
+        left,
+      ),
+      [kr, kb] = kickOf(id, now, ds, left),
+      [jr, jx, jy] = jitter(adren(s, id, now), ds);
+    const rot = ang + ((left ? -1 : 1) * turn * Math.PI) / 180 + sw + kr + jr,
+      hx = c.left + sx + jx,
+      hy = c.top + sy + jy,
+      reach = (w === "hammer" ? hs : ds) * out - kb;
+    const tr = `translate(${hx.toFixed(1)}px, ${hy.toFixed(1)}px) rotate(${rot.toFixed(3)}rad) translateX(${reach.toFixed(1)}px) scaleY(${left ? -1 : 1})`;
+    /* where its end is on the board: a shot's flash and smoke come out of there (fx.js), and the laser sight */
+    const gl = ds * ((GUNS[w] && GUNS[w].w) || 0.5);
+    h._end = [
+      hx + Math.cos(rot) * (reach + gl * 0.5),
+      hy + Math.sin(rot) * (reach + gl * 0.5),
+      rot,
+    ];
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
@@ -1990,6 +2085,37 @@ function drawDucks(now = clockNow()) {
     "armed",
     arms.some((a) => a[4]),
   ); // (a weapon in my hand: the mouse is a crosshair over the board, owner Nov 16, css/app.css)
+  /* the shots fired since last frame: a flash and smoke at the barrel's end, its kick, my screen's shake (fx.js,
+     fxmotion.js); a shotgun's pellets are one shot */
+  const went = new Set(),
+    heldAll = fxl._held || new Map();
+  for (const sh of fired) {
+    const gun = sh.k === "pellet" ? "shotgun" : sh.k;
+    if (!MUZZLE[gun] || went.has(sh.by + "/" + sh.t)) continue;
+    went.add(sh.by + "/" + sh.t);
+    const hd = heldAll.get(sh.by),
+      e = hd && hd.parentNode === fxl && hd._end;
+    if (e) fxMuzzle(e[0], e[1], e[2], gun);
+    else {
+      const a0 = hang
+        ? world.place(shotAt(sh, 0), sh.hz)
+        : place(shotAt(sh, 0), 0, 1);
+      fxMuzzle(a0.left, a0.top - size * 0.45, Math.atan2(sh.vy, sh.vx), gun);
+    }
+    kick(sh.by, gun, now);
+    if (sh.by === R.me) shake(MUZZLE[gun].shake);
+  }
+  /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's */
+  const lz = [];
+  if (isL4dd(s))
+    for (const [id, w] of arms) {
+      if (!MUZZLE[w]) continue;
+      const hd = heldAll.get(id),
+        e = hd && hd.parentNode === fxl && hd._end,
+        end = e && laserEnd(id);
+      if (end) lz.push([e[0], e[1], end[0], end[1]]);
+    }
+  fxLasers(lz);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
   for (const [id, pos, at, duck] of brood) {
@@ -2088,6 +2214,7 @@ function drawDucks(now = clockNow()) {
       f.el.style.transform = tr;
     }
   }
+  drawFx(board, fxl, hang, size, s, now);
   if (geo.sc) {
     storyMarks(s, board);
     return;
@@ -2152,6 +2279,34 @@ function drawDucks(now = clockNow()) {
     o.classList.toggle("see-through", hit);
   }
 }
+/* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
+function drawFx(board, fxl, hang, size, s, now) {
+  const pt = performance.now();
+  fxMount(hang ? board : fxl, geo.W, geo.H, size); // (Hangout and Dead Ducks Arcade: under the dark, css/app.css)
+  if (hang) {
+    const o = world.place({ x: 0, y: 0 }, 0);
+    fxOrigin(o.left, o.top);
+  } else fxOrigin(0, 0);
+  fxFrame(pt);
+  /* my screen shakes as I fire (fxmotion.js); sprinting blurs the map a little (css/app.css: fades in and out, never
+     stacks); my adrenaline shot taken: a fast wobble */
+  const [kx, ky] = shakeNow(pt),
+    sk = kx || ky ? `${kx.toFixed(1)}px ${ky.toFixed(1)}px` : "";
+  if (board._sk !== sk) {
+    board._sk = sk;
+    board.style.translate = sk;
+  }
+  document.documentElement.classList.toggle(
+    "sprint-blur",
+    !!(me && sprinting && moving && onBoardPhase()),
+  );
+  const ad = adren(s, R.me, now);
+  if (ad && !board._ad) wobble(pt);
+  board._ad = ad;
+}
+/* Dead Ducks Arcade: duck id on an adrenaline shot (or the Speed Boost drop) now */
+const adren = (s, id, now) =>
+  isL4dd(s) && !!s.hang && ((s.hang.l4ad || {})[id] || 0) > now;
 /* ---------- Lawyering: the attorneys' circle ---------- */
 /* its half width and half height: a circle filling the strip between the sides; on a phone held upright the strip runs
    across the screen, so the circle stretches along it and both attorneys fit side by side */
@@ -2782,6 +2937,8 @@ function playFx(f) {
     }
   } else if (f.kind === "hit") {
     // the knife or the hammer touched someone after the press, while it swung
+    const by = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
+    for (const id of f.hit || []) fxMelee(id, f.what, by && by._at); // (its blood: fx.js fxHitAt)
     if (f.hit.includes(JUSTIN_ID) && isMgj(s)) {
       hurt(S.querySelector(`.gduck[data-pid="${JUSTIN_ID}"]`));
       sfx.hit();
@@ -3045,6 +3202,16 @@ function playFx(f) {
       setTimeout(() => n.remove(), TRACE.ms + wait + 40);
     };
     line(0, far, 0);
+    fxMuzzle(x0, y0, ang, "chaingun");
+    kick(f.by, "chaingun", now);
+    if (f.by === R.me) shake(MUZZLE.chaingun.shake);
+    fxImpact(
+      x0 + Math.cos(ang) * far,
+      y0 + up + Math.sin(ang) * far,
+      "chaingun",
+      Math.cos(ang),
+      Math.sin(ang),
+    ); // (its flash, smoke and kick; what it hit bleeds as a chain gun's: fx.js)
     for (let i = Math.random() < 0.5 ? 1 : 2; i > 0; i--)
       line(
         (Math.random() - 0.5) * TRACE.spread,
@@ -3134,6 +3301,7 @@ function playFx(f) {
    time: fewer small freezes while the browser cleans up. Put back in the page, an element's CSS animation starts over
    by itself. */
 const SHOT_EL = new Map(); // a shot's number → its element
+const SHOT_SEEN = new Map(); // a shot's number → { k, x, y (where last seen on the screen), vx, vy (its way) }: once it's gone, it hit there (fx.js fxImpact)
 const SHOTS_KEPT = new Map(); // class + look → elements ready to go again
 function shotPool(cls, inner) {
   const k = cls + "|" + inner,
@@ -3150,47 +3318,19 @@ function shotDone(b) {
   if (free.length < 24) free.push(b);
   if (SHOTS_KEPT.size > 60) SHOTS_KEPT.clear(); // (many looks: start over)
 }
-const BURSTS_KEPT = new Map(); // how many drops → bursts ready to go again
-/* blood bursting from (x, y): n drops over `wide` radians around up, from `near` to near + `far` px out */
+/* blood bursting from (x, y): n drops all around, as pixels (fx.js); `near` is how far over its floor it bursts */
 function bloodBurst(x, y, n, wide, near, far, delay = 0) {
-  const fxl = S && $(".fxl", S);
-  if (!fxl) return;
-  const free = BURSTS_KEPT.get(n) || [];
-  BURSTS_KEPT.set(n, free);
-  const burst =
-    free.pop() || el(`<div class="l4-burst">${"<i></i>".repeat(n)}</div>`);
-  burst.style.left = x.toFixed(1) + "px";
-  burst.style.top = y.toFixed(1) + "px";
-  for (const i of burst.children) {
-    const ang = -Math.PI / 2 + (Math.random() - 0.5) * wide,
-      d = near + Math.random() * far;
-    i.setAttribute(
-      "style",
-      `--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(3 + Math.random() * 5).toFixed(1)}px;animation-delay:${delay}ms`,
-    );
-  }
-  fxl.append(burst);
-  setTimeout(() => {
-    burst.remove();
-    if (free.length < 16) free.push(burst);
-  }, 800 + delay);
+  const size = (geo && geo.size) || 60,
+    go = () => fxBurst(x, y + size * 0.5, size * 0.5, n, Math.round(n / 4));
+  if (delay) setTimeout(go, delay);
+  else go();
 }
-/* a headless duck's neck spurting blood for a moment after (owner 2026-11-04 06:44Z): small spurts, one after another */
+/* a headless duck's neck spurting blood for a moment after (owner 2026-11-04 06:44Z): small spurts, one after another,
+   as pixels (fx.js) */
 function neckSpray(x, y) {
-  const fxl = S && $(".fxl", S),
-    size = geo && geo.size;
-  if (!fxl || !size) return;
-  let drops = "";
-  for (let i = 0; i < 18; i++) {
-    const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.1,
-      d = size * (0.18 + Math.random() * 0.32);
-    drops += `<i style="--x:${(Math.cos(ang) * d).toFixed(0)}px;--y:${(Math.sin(ang) * d).toFixed(0)}px;--r:${(2 + Math.random() * 3).toFixed(1)}px;animation-delay:${200 + i * 75}ms"></i>`;
-  }
-  const spray = el(
-    `<div class="l4-burst l4-spray" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px">${drops}</div>`,
-  );
-  fxl.append(spray);
-  setTimeout(() => spray.remove(), 2400);
+  const size = geo && geo.size;
+  if (!size) return;
+  fxSpurt(x, y + size * 0.5, size * 0.5, 14, 1500);
 }
 
 /* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */

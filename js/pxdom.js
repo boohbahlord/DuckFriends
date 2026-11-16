@@ -90,7 +90,7 @@ function sameIds(text) {
   const to = new Map(ids.map((id, i) => [id, "q" + i])),
     esc = (v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return text.replace(
-    new RegExp(`(["#])(${ids.map(esc).join("|")})(?=["')])`, "g"),
+    new RegExp(`(["#])(${ids.map(esc).join("|")})(?=["')&])`, "g"), // (&: a style's url("#…"), its quotes written &quot;)
     (m, a, id) => a + to.get(id),
   );
 }
