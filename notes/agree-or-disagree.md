@@ -4763,3 +4763,9 @@ Owner: "When players spawn in, there is three seconds until justin spawns in, an
 Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a controller hits it and is gone, with a hitmarker; the chair breaks after 6 hits, a controller after 2 (a sniper's bullet counts 2). The fight (also Try again) starts with Justin not there for 3 s: his avatar fades in with a red glow (css drop-shadow), he can't attack or be hit until it ends, and his attack timers start after it.
 
 
+
+## Request (2026-11-16 16:47Z): Justin's thrown things
+> yeah the projectiles block the bullets and cannot be broken
+
+- Adam: Jackal's #312 broke the chair after 6 hits and a controller after 2; changed so they block bullets and never
+  break (mgjrules.js shotThrown). Shipped in Version 37 with Miles Jr.'s #311 (owner's go 16:47Z) and Noah's gun art #313.

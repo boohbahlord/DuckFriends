@@ -12,10 +12,12 @@ export const UPDATES = [
     id: "v37",
     version: 37,
     date: "Nov 16, 2026",
-    title: "Cats, static and real quacks",
+    title: "Cats, real quacks, and Justin's entrance",
     news: [
       "For Hangout: the Duck Cabin cats meow, purr and hiss, the TV hisses with static, and the power box hums.",
       "The Sound special and the cloud duel quack with real ducks.",
+      "For Mad God Justin: Justin's thrown chair and controllers block bullets, and they can't be broken.",
+      "For Mad God Justin: Justin isn't there for the first 3 seconds of a fight: his avatar fades in with a red glow, and only then can he attack or be hit.",
     ],
     fixed: [],
   },
