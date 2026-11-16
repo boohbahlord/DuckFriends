@@ -1144,6 +1144,32 @@ SOUNDS = {
             "https://opengameart.org/content/magic-spell-sfx",
         ),
     ),
+    # ==== batch 7: the Sad Trombone special and fire (the owner, Nov 16 17:44Z) ====
+    "trombone": dict(
+        sf="sad_trombone",
+        lp=6000,
+        kbps=48,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins), trombone", None),
+    ),
+    # fire: a crackle on a loop while something burns (sound.js burn), and the whoosh as it catches (sound.js fire)
+    "fire": dict(
+        layers=[("gh:flamer/fire_loop.opus", 15.0, 3.8, 0, 1)],
+        lp=6000,
+        loop=2.0,
+        kbps=40,
+        credit=(
+            "PagDev, Fireplace Sound Loop",
+            "https://opengameart.org/content/fireplace-sound-loop",
+        ),
+    ),
+    "fireLight": dict(
+        layers=[("gh:flamer/attack-fire-3.flac", 0, 0.64, 0, 1)],
+        lp=6000,
+        credit=(
+            "Nic3_one, fire attack (freesound 166555, from Stendhal)",
+            "https://freesound.org/people/Nic3_one/sounds/166555/",
+        ),
+    ),
 }
 
 

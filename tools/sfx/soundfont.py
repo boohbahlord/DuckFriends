@@ -14,7 +14,8 @@ SR = 44100
 
 def play(sf2, notes, secs, bend=None):
     """notes: [(at s, channel, bank, preset, key, velocity, length s)]; bend: {channel: (cents from, cents to)} over the
-    whole sound. Mono (the two sides summed)."""
+    whole sound, or (cents from, cents to, vibrato cents, vibrato Hz, vibrato from s). Mono (the two sides summed).
+    """
     s = tsf.Synth(samplerate=SR, gain=-3)
     sf = s.sfload(sf2)
     for c in {n[1] for n in notes}:
@@ -32,8 +33,10 @@ def play(sf2, notes, secs, bend=None):
                 s.noteon(e[2], e[3], e[4])
             else:
                 s.noteoff(e[2], e[3])
-        for c, (a, b) in (bend or {}).items():
+        for c, (a, b, *vib) in (bend or {}).items():
             cents = a + (b - a) * min(1, t / secs)
+            if vib and t >= vib[2]:
+                cents += vib[0] * math.sin(2 * math.pi * vib[1] * (t - vib[2]))
             s.pitchbend(c, max(0, min(16383, round(8192 + cents / 200 * 8192))))
         buf = np.frombuffer(s.generate(int(step * SR)), dtype=np.float32)
         out.append(buf.reshape(-1, 2).mean(1))
@@ -99,7 +102,24 @@ def nuke_ring(sf2):
     return (a * env(len(a), 0.05, 0.4, 1.4)).astype(np.float32)
 
 
+def sad_trombone(sf2):
+    """the Sad Trombone special: the old "wah, wah, wah, waaah", four steps down a half step each on a trombone, the last
+    one held, sagging a little and wobbling as it goes"""
+    keys = [58, 57, 56, 55]
+    a = play(
+        sf2,
+        [
+            (i * 0.42, i, 0, 57, k, 100, 0.36 if i < 3 else 1.5)
+            for i, k in enumerate(keys)
+        ],
+        3.2,
+        bend={3: (0, -45, 28, 5.5, 1.55)},
+    )
+    return (a * env(len(a), 0.01, 2.0, 0.25)).astype(np.float32)
+
+
 MAKERS = {
+    "sad_trombone": sad_trombone,
     "count_tick": count_tick,
     "count_go": count_go,
     "round_start": round_start,

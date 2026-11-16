@@ -127,3 +127,6 @@ instruments (its license: LICENSES.md).
 | gasPour | Owlish Media, tap water and drinks; qubodup, Liquid bottle drink set (bottle-open-01) — https://opengameart.org/content/202-more-sound-effects | CC0 1.0 |
 | angelWork | joe_anderson22, machinery (freesound 392983); Electricity Game Sound Pack (charge, snaploop) — https://opengameart.org/content/electricity-game-sound-pack | CC0 1.0 |
 | angelOrb | JaggedStone, Magic Spell SFX (magical_1); Electricity Game Sound Pack (teleport) — https://opengameart.org/content/magic-spell-sfx | CC0 1.0 |
+| trombone | GeneralUser GS SoundFont (S. Christian Collins), trombone | GeneralUser GS license |
+| fire | PagDev, Fireplace Sound Loop — https://opengameart.org/content/fireplace-sound-loop | CC0 1.0 |
+| fireLight | Nic3_one, fire attack (freesound 166555, from Stendhal) — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |
