@@ -5,9 +5,11 @@
 import { rule, activity } from "./registry.js";
 import { PROPS, W, H } from "./layout.js";
 import { powered } from "./power.js";
+import { play } from "./sounds.js";
 
 const LAMPS = PROPS.filter((p) => p.kind === "lamp");
 const REACH = 120; // world px from the lamp's foot
+let seen = null; // the lamps switched off when I last looked
 const foot = (p) => [p.x + p.w / 2, p.y + p.d];
 const isOff = (s, id) => !!((s.hang || {}).lamps || {})[id];
 
@@ -49,6 +51,20 @@ activity({
       d: bd,
       act: () => ctx.send({ t: "hang", k: "lamp", lamp: best.id }),
     };
+  },
+  mount() {
+    seen = null; // (the cabin opened: what the lamps are now is no news)
+  },
+  /* a lamp switched on or off (by anyone): its click where it stands */
+  onState(s) {
+    const now = { ...((s.hang || {}).lamps || {}) };
+    if (seen)
+      for (const L of LAMPS)
+        if (!!now[L.id] !== !!seen[L.id]) {
+          const [x, y] = foot(L);
+          play(now[L.id] ? "lampOff" : "lampOn", { x, y });
+        }
+    seen = now;
   },
   propClass: (p, s) => (isOff(s, p.id) || !powered(s) ? "off" : ""), // (a blackout: power.js)
   light: (p, s) => (p && p.kind === "lamp" ? !isOff(s, p.id) : undefined),

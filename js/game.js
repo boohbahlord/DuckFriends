@@ -258,6 +258,7 @@ import {
   anyWord,
   CLUE_GRACE,
   gridOf,
+  tileAt,
 } from "./quackrules.js";
 import {
   quackBoardHTML,
@@ -431,6 +432,12 @@ let shown = ""; // which phase view is up (phase|round|question)
 const keys = new Set();
 let me = null; // my duck here: { x, y, j (jump start), lj (a long jump), dj (when a double jump began), face }
 let target = null; // where a click or a tap asked my duck to walk: { x, y, sprint, mark }
+/* the chain gun's recoil (the owner's, Nov 16): while I fire it, my duck is pushed slowly back, away from the aim, at
+   RECOIL.K of my walking speed; the keys add their own way to it, so walking into the aim holds against it (a vector
+   sum, as real physics). Each of my shots keeps it on for RECOIL.MS (it fires every 67 ms). recoil = { until, dx, dy:
+   the way it pushes, in board or world units } */
+const RECOIL = { K: 0.35, MS: 140 };
+let recoil = null;
 let touchOff = null,
   touchedAt = 0,
   touchTold = false;
@@ -1278,6 +1285,8 @@ function drawDucks(now = clockNow()) {
       R.me,
       hang,
     ); // (quiet footsteps in every mode; Quacky Zombies has its own: feet.js)
+  if (!hang && onBoardPhase() && s.pos[R.me])
+    tileKnock(s, posOf(R.me), performance.now());
   const boxes = [],
     puffs = [],
     wearsX = new Set(),
@@ -3270,7 +3279,14 @@ function playFx(f) {
     line(0, far, 0);
     fxMuzzle(x0, y0, ang, "chaingun");
     kick(f.by, "chaingun", now);
-    if (f.by === R.me) shake(MUZZLE.chaingun.shake);
+    if (f.by === R.me) {
+      shake(MUZZLE.chaingun.shake);
+      recoil = {
+        until: performance.now() + RECOIL.MS,
+        dx: f.x0 - f.x1,
+        dy: f.y0 - f.y1,
+      };
+    }
     if (!past)
       fxImpact(
         x0 + Math.cos(ang) * far,
@@ -3740,9 +3756,13 @@ function step(dt, now) {
     }
   }
   moving = !!(ax || ay) && canWalk();
+  const push =
+    recoil && performance.now() < recoil.until && canWalk() && !geo.hang
+      ? recoil
+      : null; // (the chain gun pushing me back)
   /* a jump can end inside another duck (in the air they pass over each other); on the ground they ease apart */
   const other = canWalk() && bumps(me.x, me.y, now);
-  if (other && !moving) {
+  if (other && !moving && !push) {
     const a = place(me, 0, 1),
       dx = a.left - other.left || Math.random() - 0.5,
       dy = a.top - other.top || Math.random() - 0.5,
@@ -3753,7 +3773,7 @@ function step(dt, now) {
     sendMove();
     return;
   }
-  if (!moving) {
+  if (!moving && !push) {
     sendMove();
     return;
   }
@@ -3799,6 +3819,15 @@ function step(dt, now) {
   let nx = me.x + ax * sx * dt,
     ny = me.y + ay * sy * dt,
     q = "";
+  if (push) {
+    // the push as a walk the other way, RECOIL.K as fast, added to mine (sprinting doesn't make it stronger)
+    const run = sprinting ? SPEED.sprint : 1,
+      ux = push.dx / sx,
+      uy = push.dy / sy,
+      l = Math.hypot(ux, uy) || 1;
+    nx += ((ux / l) * sx * RECOIL.K * dt) / run;
+    ny += ((uy / l) * sy * RECOIL.K * dt) / run;
+  }
   const scr = (dx, dy) =>
     turned()
       ? dx > 0
@@ -3909,6 +3938,12 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
+  const kx = ax; // (which way I face: my keys, not the push)
+  if (canWalk() && recoil && performance.now() < recoil.until) {
+    const l = Math.hypot(recoil.dx, recoil.dy) || 1;
+    ax += (recoil.dx / l) * RECOIL.K;
+    ay += (recoil.dy / l) * RECOIL.K;
+  } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
   const jk = jetKeys(),
     jt = !!me.jf && (jk.up || jk.hold);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
@@ -3916,7 +3951,7 @@ function hangStep(dt, now) {
   moving = ev.moved;
   for (let i = 0; i < ev.land; i++) countJump(); // (a double jump is two)
   if (ev.q) squash = { q: ev.q, t: now };
-  if (ax) me.face = Math.sign(ax);
+  if (kx) me.face = Math.sign(kx);
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
@@ -4961,6 +4996,27 @@ function heardReloads(s) {
     if (!seen[w] && r > now + 100) hush(reloadVoices[w]); // (given up before its end: switched weapons)
   reloadsSeen = seen;
 }
+/* stepping onto another tile or answer (the owner, Nov 16: "a sound for stepping over different tiles"): a faint
+   knock as my duck enters it, a little higher toward the right (Agree, B, Not a Dunce), nothing on the strip between
+   tiles; Story Chain and Trivia have rows, not tiles */
+let tileWas = null,
+  tileAtMs = 0;
+function tileKnock(s, p, now) {
+  if (!p || p.x < 0 || isSc(s) || isTv(s) || cam) return void (tileWas = null);
+  const c = isQuack(s) && s.phase !== "choice" ? tileAt(s, p) : colAt(s, p.x),
+    n =
+      isQuack(s) && s.phase !== "choice"
+        ? (s.wq.ids || []).length
+        : twoSided(s)
+          ? 2
+          : 7;
+  if (c === tileWas) return;
+  const was = tileWas;
+  tileWas = c;
+  if (was === null || c < 0 || now - tileAtMs < 120) return; // (the first look, the strip, or a duck wobbling on an edge)
+  tileAtMs = now;
+  sfx.tileIn({ rate: 0.88 + (0.24 * (c % n)) / Math.max(1, n - 1) });
+}
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
    stands (sound.js fades it with its distance from my duck) */
 function heard(id) {
@@ -5736,6 +5792,7 @@ function paintNow(force) {
     main.innerHTML = viewHTML(s);
     const vin = $(".vd-in", main);
     if (vin && !touchOnly()) vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
+    if (isHang(s) && s.phase === "hang") loadSounds("cabin"); // (Duck Cabin's own: its lamps, lever, cards …)
     if (isHang(s) && s.phase === "hang")
       world = mountWorld($(".hang-board", main), {
         room: () => R,

@@ -38,6 +38,8 @@ function fresh() {
     zAt: 0,
     groans: [],
     fx: -1,
+    drops: null,
+    flash: null,
   };
 }
 export function l4Reset() {
@@ -97,6 +99,24 @@ export function l4Hear(s, ctx) {
       play("l4till", { x: BUTLER.x, y: BUTLER.y });
     st.pts[id] = n;
   }
+  /* a drop falling from a zombie: a chime where it lies (not the first look at the game) */
+  const drops = h.l4dr || [];
+  if (st.drops)
+    for (const d of drops)
+      if (!st.drops.has(d.n)) play("dropIn", { x: d.x, y: d.y });
+  st.drops = new Set(drops.map((d) => d.n));
+  /* a flashlight switched on or off (key 0): mine, or another duck's near me */
+  const off = h.l4f || {};
+  if (st.flash)
+    for (const id of s.seat || [])
+      if (!!off[id] !== !!st.flash[id]) {
+        const a = ctx.world.at(id);
+        play(off[id] ? "flashOff" : "flashOn", {
+          k: id === ctx.me ? 1 : 0.6,
+          ...(a && id !== ctx.me ? { x: a.x, y: a.y } : {}),
+        });
+      }
+  st.flash = { ...off };
   /* a new round (not the first look at the game) */
   if (L && L.r !== st.r) {
     if (st.r >= 0 && L.r > st.r && L.r > 0) play("l4round"); // (everywhere alike: no x, y)
@@ -191,8 +211,7 @@ export function l4Steps(dt, ctx) {
     play("l4groan", {
       x: o.x,
       y: o.y,
-      v: Math.random() < 0.6 ? 0 : 1,
-      p: rnd(0.85, 1.15),
+      rate: rnd(0.88, 1.12), // (the same groans, never twice at quite the same pitch)
       k: 0.9,
     });
   }
