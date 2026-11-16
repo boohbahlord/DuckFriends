@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v48",
+    version: 48,
+    date: "Nov 16, 2026",
+    title: "New zombie counts",
+    news: [
+      "For Dead Ducks Arcade: each round's zombies follow a new table: 12 a round in rounds 1 to 4, 24 in 5 to 8, 36 in 9 to 12, 72 in 13 to 20, plus more for each extra player, up to 100 per player and 400 in all.",
+      "For Dead Ducks Arcade: zombies come twice as fast once a round is 10 seconds in.",
+      "For Dead Ducks Arcade: grenades, the grenade launcher and the flamethrower don't crit, and thrown grenades never miss.",
+      "For Dead Ducks Arcade: Angelic guns can't be refilled, not by Justin's Butler and not by Max Ammo.",
+      'For Dead Ducks Arcade: Justin\'s Butler asks "Are you sure?" before you buy a gun.',
+    ],
+    fixed: [],
+  },
+  {
     id: "v47",
     version: 47,
     date: "Nov 16, 2026",
