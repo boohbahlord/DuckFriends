@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v45",
+    version: 45,
+    date: "Nov 16, 2026",
+    title: "Bodies stay with Animations off",
+    news: [],
+    fixed: [
+      "For Dead Ducks Arcade: with Animations off, dead zombies lie there and fade away instead of vanishing the moment they die.",
+    ],
+  },
+  {
     id: "v44",
     version: 44,
     date: "Nov 16, 2026",

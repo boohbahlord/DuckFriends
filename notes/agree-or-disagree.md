@@ -4888,3 +4888,4 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 
 - Version 44: the performance vote built: Noah #332 (effects), Miles Jr. #331 (sound caps), Solomon #333 (Dead Ducks Arcade, position sends).
+- Version 45: Noah's #335, dead zombies no longer vanish at once with Animations off (found by Solomon).
