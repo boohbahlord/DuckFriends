@@ -1384,10 +1384,11 @@ function advance(s, now, force = false) {
   if (isMgj(s)) {
     const was = s.phase,
       next = mgjAdvance(s, now, force, logLine);
-    return was === "results" && next.phase !== "results" && rolling(next)
-      ? rotate(next, now)
-      : next;
-  } // (Mad God Justin: his HP, the timer, the podium, Try again; with Random, the next game instead)
+    return (
+      (was === "results" && next.phase !== "results" && gameOver(next, now)) ||
+      next
+    );
+  } // (Mad God Justin: his HP, the timer, the podium, Try again; each fight is a game: Vote return counts it, and with Random the next game comes instead)
   if (isVd(s) && VD_PHASES.includes(s.phase)) return vdAdvance(s, now, force); // (Valentine's Duck Date: its timers)
   if (isTv(s) && TV_BOARD.includes(s.phase)) return tvAdvance(s, now, force); // (Trivia: a question's votes, answers, grades)
   const on = playing(s),

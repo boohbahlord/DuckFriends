@@ -4728,3 +4728,31 @@ Solomon.)
 - Adam: the sniper, AK and LMG already reloaded there; the shotgun (6 shells, 2.6 s), the grenade launcher (3, 4 s)
   and the chain gun (a belt of 100, 4 s) now do too (mgjrules.js MGJ_MAG_MORE). The pistol still never reloads (the
   owner's 15:12Z rule today).
+- Done (Noah), the gore part of the owner's 15:55Z request and the explosion looks for the 16:13Z Nuke: blood is two
+  pixels across (some three) and there is more of it, pooling longer where it lands; chunks of the duck itself fly out
+  in its own color with blood on the torn side (fx.js flesh, from the hit duck's or zombie's color); a hit through
+  clothes tears them (duck.js gone.rips: the body shows through, a frayed dark edge); guns and blunt hits knock off a hat
+  or a face item that can come off (wounds.js knockable: not hair, horns, halos, antennas, the floating eye, full head
+  covers such as the motorcycle or armored helmet, the ski mask, the bag, the box, the pumpkin head, the gas mask, nor
+  clown paint), which flies off as pixels, turning over, and comes back on after 10 s (half see-through its last 1.5 s);
+  a bullet can shoot the beak off or blow the eye out (a bloody socket, the eye flies), and blades and blunt hits now
+  and then cut or knock the beak off or the eye out. Wound codes: e eye, h hat, m face item (spot 1: coming back). For
+  the Nuke: wounds.js explodedLook(seed) gives one of five torn-apart, burnt looks (headless, or beak and eye gone, or
+  more chunks), pwExploded(s, id, seed, now) puts one on a duck. Gore off (s.options.noGore) hides every wound but a
+  knocked-off hat or face item, and every flying bit.
+
+
+
+## Request (2026-11-16 16:38Z): Justin's thrown things take bullets, and his spawn
+> when justin throws a chair or controllers, they now take bullets
+>
+> When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in
+
+- Adam: given to Jackal (one PR).
+
+## Request (2026-11-16 16:40Z): Mad God Justin and the vote
+> in mad god justin it doesnt return to the vote screen after three games and i dont see a three game button for voting back to the vote selection after a game alongside the return to lobby or play again button
+
+- Adam: each Justin fight now counts as a game for Vote return (rules.js advance: gameOver after Try again), and the
+  stats screen shows "Vote: new game now" in Mad God Justin too (game.js newGameHTML no longer skips it). Version 36,
+  with Noah's gore #309 and the Nuke's exploded looks (l4ddrules.js nukeTick uses wounds.js explodedLook).

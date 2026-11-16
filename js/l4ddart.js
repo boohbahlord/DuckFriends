@@ -469,6 +469,10 @@ const BEAK_GONE = `<ellipse cx="98" cy="42" rx="4.6" ry="6.2" fill="${BLOOD}" st
 <path d="M101.6 36.6l3 -1.4l-1 2.8ZM101.4 47l3.2 1l-2.6 1.6Z" fill="#ff9a1f" stroke="#c45f00" stroke-width=".6"/>${place(DRIP, 97.6, 47, 0, 0.9)}`;
 const HEADLESS = `<ellipse cx="75" cy="60.6" rx="14.4" ry="4.8" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1.1"/><ellipse cx="75" cy="60.2" rx="9.4" ry="2.7" fill="${FLESH}"/><ellipse cx="72.4" cy="59.6" rx="2.2" ry="1" fill="#efe2d0"/>
 ${place(DRIP, 66, 63, 0, 1.1)}${place(DRIP, 83.6, 63.4, 0, 0.9)}<circle cx="69" cy="51" r="1.3" fill="${BLOOD}"/><circle cx="80" cy="47.6" r="1.1" fill="${BLOOD}"/><circle cx="76" cy="43" r=".9" fill="${BLOOD}"/><circle cx="86" cy="53" r=".8" fill="${BLOOD}"/>`;
+/* its eye blown out (the owner's, Nov 16): a bloody socket where the eye was, the eye's flesh torn round it, a drip
+   down the cheek */
+const EYE_GONE = `<ellipse cx="83" cy="34.4" rx="6.2" ry="7" fill="${BLOOD}" stroke="${BLOOD_D}" stroke-width="1"/><ellipse cx="83.2" cy="34.6" rx="3.6" ry="4.4" fill="${FLESH}"/><ellipse cx="82" cy="33" rx="1.1" ry=".8" fill="#5a0a14"/>
+<circle cx="90" cy="30" r="1.1" fill="${BLOOD}"/><circle cx="77" cy="28.4" r=".9" fill="${BLOOD}"/>${place(DRIP, 82.4, 40.6, 0, 0.9)}`;
 /* burnt: scorch over the body and the head (clipped to the duck), darker in the middle, and a few embers */
 const BURNT = `<g opacity=".92">${[
   [40, 80, 25, 15, -12],
@@ -504,12 +508,13 @@ const GORE = () => ({
   ],
   holes: CHUNK_AT,
 });
-const HIT_KINDS = "bBscrakpxgf";
+const HIT_KINDS = "bBscrakpxgfehm";
 /* the hits as duckSVG's skin and gone: codes is s.hang.zw's string for one zombie */
 export function hitsOf(codes = "") {
   const inner = [],
     out = [],
     holes = [],
+    rips = [],
     gone = {};
   for (let i = 0; i + 1 < codes.length; i += 2) {
     const kind = codes[i],
@@ -518,8 +523,18 @@ export function hitsOf(codes = "") {
     if (kind === "b" || kind === "B") {
       inner.push(place(kind === "b" ? SMALL_HOLE : BIG_HOLE, x, y));
       holes.push([x, y, kind === "b" ? SMALL_R : BIG_R]); // (seen through)
-    } else if (kind === "s") inner.push(place(PELLETS, x, y));
-    else if (kind === "c") inner.push(bleeding(x, y, at * 37 - 60, 1.15));
+      rips.push([x, y, (kind === "b" ? SMALL_R : BIG_R) * 1.6 + 5.5]); // (and its clothes torn round it)
+    } else if (kind === "s") {
+      inner.push(place(PELLETS, x, y));
+      rips.push([x, y, 11.5]);
+    } else if (kind === "c") {
+      inner.push(bleeding(x, y, at * 37 - 60, 1.15));
+      rips.push([x, y, 8.5]);
+    } else if (kind === "e") {
+      gone.eyes = true;
+      out.push(EYE_GONE);
+    } else if (kind === "h") gone.hat = at ? 0.5 : 0;
+    else if (kind === "m") gone.face = at ? 0.5 : 0;
     else if (kind === "r") inner.push(place(BRUISE, x, y, 0, 0.95));
     else if (kind === "a") {
       const [ax, ay, a] = ARROW_AT[at % ARROW_AT.length];
@@ -527,6 +542,7 @@ export function hitsOf(codes = "") {
     } else if (kind === "k") {
       const c = CHUNK_AT[at % CHUNK_AT.length];
       holes.push(c);
+      rips.push([c[0], c[1], c[2] + 6]);
       inner.push(chunkRim(c));
     } else if (kind === "p") {
       gone.beak = true;
@@ -535,11 +551,17 @@ export function hitsOf(codes = "") {
     else if (kind === "g") {
       const g = GORE();
       inner.push(...g.inner);
-      for (const c of g.holes) if (!holes.includes(c)) holes.push(c);
+      for (const c of g.holes)
+        if (!holes.includes(c)) {
+          holes.push(c);
+          rips.push([c[0], c[1], c[2] + 6]);
+        }
+      for (const i of [0, 3, 6]) rips.push([...HIT_AT[i], BIG_R * 1.6 + 5.5]);
     } else if (kind === "f") inner.unshift(BURNT); // (under the other wounds)
   }
   if (gone.head) out.push(HEADLESS);
   if (holes.length) gone.holes = holes;
+  if (rips.length) gone.rips = rips;
   return { inner: inner.join(""), out: out.join(""), gone };
 }
 export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
