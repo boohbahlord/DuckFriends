@@ -89,4 +89,3 @@ const pxStart = () => {
   pxImgWatch(document.body); // (and every <img>: pixel.js)
 };
 pxStart();
-addEventListener("pixelchange", pxStart);

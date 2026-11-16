@@ -4,39 +4,16 @@
    (Jersey 15) at the screen's own sharpness, the owner's "128". Pictures are made small once, put through the game's
    palette (pixelpalette.js) and cached; the screen shows them scaled up with image-rendering: pixelated, which is also
    much cheaper to draw than the drawings it replaces.
-   Hidden until every screen is done: ?pixel in the address (or the command line's `pixel on`) turns it on for this
-   device, ?pixel=0 (or `pixel off`) turns it off. With it on, <html> has the class "pixel"; css/app.css keys on it. */
+   It is the game's only look (owner, Nov 16: it replaces the old one, with no setting): <html> has the class "pixel"
+   (index.html), and css/app.css keys on it. */
 import { svgDataURL } from "./hangout/art.js";
 import { applyPalette } from "./pixelpalette.js";
 
-const KEY = "duckfriends-pixel",
-  DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
+const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
 
-function stored() {
-  try {
-    const q = new URLSearchParams(location.search).get("pixel");
-    if (q !== null)
-      localStorage.setItem(KEY, q === "0" || q === "off" ? "0" : "1");
-    return localStorage.getItem(KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-let on = stored();
-
+const on = true; // (pixelOn() stays, so each part says where it differs)
 export const pixelOn = () => on;
-
-/* the command line's `pixel on|off`: the class changes now; pictures already on the screen change as they redraw */
-export function setPixel(v) {
-  on = !!v;
-  try {
-    localStorage.setItem(KEY, on ? "1" : "0");
-  } catch {}
-  document.documentElement.classList.toggle("pixel", on);
-  filterGrid();
-  dispatchEvent(new Event("pixelchange"));
-}
 
 /* ---------- the grid ---------- */
 const FILL = 0.7; // (a duck's drawing fills about 70% of its box, hat room included)
@@ -74,7 +51,7 @@ function filterGrid() {
 if (document.readyState === "loading")
   addEventListener("DOMContentLoaded", filterGrid);
 setGrid();
-document.documentElement.classList.toggle("pixel", on);
+document.documentElement.classList.add("pixel");
 
 /* the board's duck size (its box, css px, as game.js' geo.size): every picture's pixel follows it */
 export function setDuckSize(box) {
@@ -237,16 +214,6 @@ export function pxImgWatch(root) {
     true,
   ); // (its size known once loaded)
   addEventListener("resize", all);
-  addEventListener("pixelchange", () => {
-    if (on) all();
-    else
-      root.querySelectorAll("img[data-pxsrc]").forEach((i) => {
-        i.src = i.dataset.pxsrc;
-        i.style.imageRendering = "";
-        delete i.dataset.pxsrc;
-        imgSeen.delete(i);
-      });
-  });
   all();
 }
 
@@ -365,5 +332,4 @@ function setCursors() {
     root.setProperty(`--cur-${name}`, `${img} ${hx} ${hy}`);
   }
 }
-if (on) setCursors();
-addEventListener("pixelchange", () => on && setCursors());
+setCursors();

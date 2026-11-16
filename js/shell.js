@@ -55,7 +55,6 @@ import { mgjStats } from "./mgjrules.js";
 import { vdStats, turnedDown } from "./vddrules.js";
 import { tvStats } from "./triviarules.js";
 import { setPerf, perfOn } from "./perf.js";
-import { setPixel, pixelOn } from "./pixel.js";
 import { secret } from "./unlocks.js";
 import { music } from "./music.js";
 import { npcsHere, npcTag, npcByTag, npcById } from "./npcs.js";
@@ -1203,12 +1202,6 @@ const CMDS = {
     const on = setPerf(want ? want === "on" : !perfOn());
     return on ? "Frame-rate readout on (top left)." : "Frame-rate readout off.";
   },
-  /* the pixel look while it's being built (pixel.js), kept out of help, /bin and Tab like fps: pixel on|off */
-  pixel: (args) => {
-    const want = (args[0] || "").toLowerCase();
-    setPixel(want ? want === "on" : !pixelOn());
-    return pixelOn() ? "Pixel look on, on this device." : "Pixel look off.";
-  },
   clear: () => null,
   exit: (a, i, x) => {
     x.ctx.close();
@@ -2032,7 +2025,7 @@ const CMDS = {
 CMDS.logout = CMDS.exit;
 /* the commands in /bin: everything with a manual page */
 const MINE = [...new Set([...Object.keys(CMDS), ...Object.keys(TEXT)])]
-  .filter((k) => k !== "sudo" && k !== "secret" && k !== "fps" && k !== "pixel")
+  .filter((k) => k !== "sudo" && k !== "secret" && k !== "fps")
   .sort();
 
 /* the room's songs: everyone hears the same one; the host, sudo or cansettings can take songs off the list and put them
