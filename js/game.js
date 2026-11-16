@@ -4725,11 +4725,12 @@ function wheelPick(dir) {
     }
     return false;
   }
-  const ids = keysOf(playDuck())
-    .map((id, i) => [id, i])
-    .filter(([id]) => id);
+  const mgj = isMgj(s),
+    ids = keysOf(playDuck())
+      .map((id, i) => [id, i])
+      .filter(([id]) => id && (!mgj || mgjToggles(id))); // (Mad God Justin: only what goes out in hand, not a Jaime)
   if (!ids.length) return false;
-  const at = ids.findIndex(([, i]) => i === lastKey),
+  const at = ids.findIndex(([id, i]) => (mgj ? id === held : i === lastKey)),
     [id, i] =
       ids[
         (at < 0 ? (dir > 0 ? 0 : ids.length - 1) : at + dir + ids.length) %
@@ -5959,6 +5960,9 @@ function keydown(e) {
     return;
   } // hold Tab: the players (Tab never moves the browser's focus in a game)
   if (typing(e) || windowOpen()) return;
+  if (e.code.startsWith("Shift")) {
+    if (!e.repeat) shiftTap = { at: performance.now(), other: false };
+  } else if (shiftTap) shiftTap.other = true; // (Shift used with another key: no tap)
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
@@ -6029,7 +6033,29 @@ function keydown(e) {
     act("end");
   }
 }
+/* a quick tap of Shift (down and up within SHIFT_TAP ms, no other key between) keeps the selected item on or puts it
+   away, as Shift and its number; holding Shift still sprints */
+const SHIFT_TAP = 200;
+let shiftTap = null;
+function shiftTapped() {
+  if (!R || !onBoardPhase()) return;
+  const s = R.state;
+  if (isL4dd(s)) {
+    if (l4Slot === 3) l4Pick(3); // (the special: on and off)
+  } else if (!isMgj(s) && lastKey >= 0) useKey(lastKey, true);
+}
 const keyup = (e) => {
+  if (e.code.startsWith("Shift") && shiftTap) {
+    const t = shiftTap;
+    shiftTap = null;
+    if (
+      !t.other &&
+      performance.now() - t.at <= SHIFT_TAP &&
+      !typing(e) &&
+      !windowOpen()
+    )
+      shiftTapped();
+  }
   if (world) world.keyup(e);
   if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);

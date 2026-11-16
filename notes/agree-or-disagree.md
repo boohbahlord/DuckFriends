@@ -4332,3 +4332,10 @@ Zombies only; Hangout's Duck Cabin unchanged).
   revive half + minimap smaller/see-through/off on phone + Butler stays small (not too small); Jackal = scroll wheel
   hotbar in every mode like Quacky Zombies + a tap of Shift toggles the selected item (holding Shift still sprints);
   Adam = end-of-game vote info + "Vote now" button; Miles Jr. to higher effort, waits for the owner's audio notes.
+"When you try and scroll with the mouse wheel to go through hot bar in mad god justin or other games, it does not work as it does in quacky zombies, bit mistake" and "the game should have any item already selected in the hotbar become toggled by simply clicking shift" (owner 2026-11-16 13:17Z, via Adam)
+- Jackal: the wheel (`wheelPick`, js/game.js) was stuck on the first slot in Mad God Justin because it looked up the
+  current slot by `lastKey`, which Mad God Justin doesn't set; there it now goes by the weapon in hand (`held`) and
+  cycles only what goes out in hand (knife, bow, the picked-up weapon, zebra cake), not Jaime. A tap of Shift (down and
+  up within 200 ms with no other key) keeps the selected item on or puts it away (`shiftTapped`: the same as Shift and
+  its number; Quacky Zombies: its special slot on and off; Mad God Justin: nothing, its weapons are always out).
+  Holding Shift still sprints.
