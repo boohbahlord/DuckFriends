@@ -4728,3 +4728,8 @@ Solomon.)
 - Adam: the sniper, AK and LMG already reloaded there; the shotgun (6 shells, 2.6 s), the grenade launcher (3, 4 s)
   and the chain gun (a belt of 100, 4 s) now do too (mgjrules.js MGJ_MAG_MORE). The pistol still never reloads (the
   owner's 15:12Z rule today).
+
+## Nov 16, 16:38Z: Mad God Justin, bullets hit thrown things, 3 s spawn
+Owner: "when justin throws a chair or controllers, they now take bullets"
+Owner: "When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in"
+Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a controller hits it and is gone, with a hitmarker; the chair breaks after 6 hits, a controller after 2 (a sniper's bullet counts 2). The fight (also Try again) starts with Justin not there for 3 s: his avatar fades in with a red glow (css drop-shadow), he can't attack or be hit until it ends, and his attack timers start after it.
