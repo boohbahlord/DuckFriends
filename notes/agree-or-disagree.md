@@ -4377,3 +4377,10 @@ Zombies only; Hangout's Duck Cabin unchanged).
   mid-game. The board's walking Justin stays out of this mode. Other ducks' names sit small over their heads, hidden
   until a flashlight (anyone's but their own) reaches them (l4dd.js litNames, .l4-lit); on a phone they always show,
   small. The tag under every other duck is now only its HP bar. My own name is unchanged.
+- Full tour after Version 30 (Solomon the 2nd; every map in Agree or Disagree, plus Would You Rather, Bicker Brackets,
+  Trivia, Mad God Justin, Hangout and Dead Ducks Arcade, in Chromium and Firefox on phone and computer, and online with 2
+  players in Agree or Disagree and Dead Ducks Arcade with Justin on): no console errors anywhere. Two display bugs fixed:
+  small duck pictures drawn as SVG (the players' chips under the question form, and others) lost their bodies in the
+  pixel look, because pxdom.js renamed the gradients' ids but missed the url("#…") written into each part's style (its
+  quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
+  "Write a (", so under 480 px wide the meter hides and the timer's words stay.
