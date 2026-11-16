@@ -4877,3 +4877,13 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 - Adam: the vote result (/mnt/project-files/notes/performance-vote.md) gets built, keeping every player's gun effects
   and animations visible on Low (a tiny muzzle flash stays). Noah = effects, Miles Jr. = sound caps, Solomon = Dead
   Ducks Arcade + position sends.
+## Owner, Nov 16 19:41Z (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtSKQqhrdKgYJfR4wkUh6EzU): the performance vote, go
+> U can see other players gun effects and animations and all those things matter ljke the data saving
+
+- Adam split the vote (notes in /mnt/project-files/notes/performance-vote.md). Solomon: line 5 and line 8. With Low
+  graphics or Data saving, on my own screen only in Dead Ducks Arcade: a dead zombie lies there solid and is gone at 2 s
+  (the Nuke's too; Low stops every animation, so it doesn't fade), the flamethrower's stream and its burning ground at
+  half their pixels, the flashlight cones one plain shade. Poor connection: my duck's updates every 600 ms instead of
+  220 ms while it stands still on the ground (moving stays at 220 ms). The rules are untouched.
+
+

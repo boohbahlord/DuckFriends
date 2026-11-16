@@ -122,6 +122,7 @@ const DARK = 0.84; // how dark the dark is: still dark, but I wanted it a little
 const DARK_ON = 0.5; // … and with the power on: the lights are on, still night
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
+const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
 const MOON = Object.fromEntries(
   OPENINGS.map((o) => {
@@ -939,7 +940,20 @@ function paint(now, ctx) {
     g.drawImage(st, x - r, y - r, 2 * r, 2 * r);
   }
   g.globalAlpha = 1;
-  /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft */
+  /* a cone: three passes, each a little narrower, so its middle is as bright as the lights on and its edges soft. On Low
+     graphics or Data saving: one pass, one plain shade, about as bright as the soft one on average */
+  if (low()) {
+    g.fillStyle = "rgba(0,0,0,.55)";
+    for (const [ox, oy, pts] of cones) {
+      g.beginPath();
+      g.moveTo(ox, oy);
+      for (const p of pts) g.lineTo(p[0], p[1]);
+      g.closePath();
+      g.fill();
+    }
+    g.globalCompositeOperation = "source-over";
+    return;
+  }
   for (const [ox, oy, pts, far] of cones) {
     const rg = g.createRadialGradient(ox, oy, 0, ox, oy, far);
     rg.addColorStop(0, "rgba(0,0,0,.62)");
@@ -1746,7 +1760,8 @@ activity({
         door = atBoards(o, Wd.inside),
         hide =
           !(door || seenFrom(o.x, o.y, Wd.inside)) ||
-          !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc);
+          !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc) ||
+          (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
