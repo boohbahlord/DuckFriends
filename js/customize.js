@@ -774,7 +774,7 @@ export function openCustomize(page = lastPage) {
             <h3>Effects</h3><div class="arm-grid sp-grid">${tiles("effect")}</div>
             <h3>Jumps</h3><div class="arm-grid sp-grid">${tiles("jump")}</div>
             <h3>Items</h3><div class="arm-grid sp-grid">${tiles("item")}</div>
-            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim sp-keep"><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on</p>'}${strip}</div>`;
+            <p class="small dim">Their colors are under Colors.</p>${phone ? "" : '<p class="small dim"><kbd>Number</kbd> Pick a weapon (again: put it away) · <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on</p>'}${strip}</div>`;
           } else if (k === "skin" && D.style === "datboi") {
             /* Dat Boi's Skin page is his ranks */
             const pic = (rank) =>

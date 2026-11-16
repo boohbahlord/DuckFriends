@@ -399,6 +399,7 @@ import { frame, stamp, took } from "./perf.js";
 import { touchOnly } from "./pointer.js";
 import {
   fxMount,
+  fxLimits,
   fxOrigin,
   fxFrame,
   fxHitAt,
@@ -2313,6 +2314,7 @@ function drawDucks(now = clockNow()) {
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
   const pt = performance.now();
+  fxLimits(s.options.noGore, s.options.noFx);
   fxMount(hang ? board : fxl, geo.W, geo.H, size); // (Hangout and Dead Ducks Arcade: under the dark, css/app.css)
   if (hang) {
     const o = world.place({ x: 0, y: 0 }, 0);
@@ -4671,8 +4673,12 @@ function mgjOut2(id) {
 function heldNow() {
   if (R && isL4dd(R.state)) {
     const sl = slotsOf(R.state, R.me);
-    if (!sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
-    return l4Hp(R.state, R.me) > 0 ? sl[l4Slot] || "" : "";
+    const kit = kitOf(R.state, R.me);
+    if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
+    if (l4Slot !== 4 && !sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
+    if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
+    if (l4Hp(R.state, R.me) <= 0) return "";
+    return l4Slot === 4 ? "grenade" : sl[l4Slot] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
@@ -4691,7 +4697,10 @@ function keptNow() {
 /* phones: the slider picked key i (in Mad God Justin it goes out in hand, but Jaime) */
 function slidPick(i) {
   const id = keysOf(playDuck())[i];
-  if (R && isMgj(R.state) && mgjToggles(id)) useKey(i, false);
+  if (!R) return;
+  if (isMgj(R.state)) {
+    if (mgjToggles(id)) useKey(i, false);
+  } else if (onBoardPhase()) selectKey(i, false); // (the one in the middle is the one picked: a weapon goes in hand)
 }
 /* phones: the special in the slider's middle tapped: used (a weapon attacks the way the duck faces) */
 function slidTap(i) {
@@ -4699,7 +4708,9 @@ function slidTap(i) {
   if (R && isMgj(R.state) && mgjToggles(id)) {
     useKey(i, false);
     fire(id);
-  } else useKey(i, false);
+  } else if (R && !isMgj(R.state) && WEAPONS.includes(id) && id === held)
+    fire(id); // (a weapon picked: a tap on it uses it)
+  else useKey(i, false);
 }
 /* phones: the weapon in the slider's middle, which the attack button uses (or null) */
 function padWeapon() {
@@ -4714,12 +4725,12 @@ function padWeapon() {
   if (isMgj(R.state))
     return R.state.phase === "boss" && mgjToggles(id) ? id : null;
   const sp = specialById(id);
-  return (WEAPONS.includes(id) || THROWS.includes(id)) &&
+  return (WEAPONS.includes(id) ? id === held : THROWS.includes(id) && !held) &&
     sp &&
     !sp.off &&
     unlocked("special", id)
     ? id
-    : null;
+    : null; // (a weapon is used only while it is the one in hand)
 }
 /* phones: the attack button: the weapon in the slider's middle, where the button aims; says when it can again (ms) */
 function padAttack() {
@@ -4734,7 +4745,25 @@ function padAttack() {
   return coolFor(id, R.state);
 }
 /* key i (0 is key 1 … 9 is key 0): an effect for 5 seconds (keep: on until kept off), a jump, or an item */
-function useKey(i, keep) {
+/* a number key toggles a weapon (the owner's, Nov 16): the key picks it and puts it in hand, the same key again puts it
+   away, another key puts it away and takes the other. One weapon at a time, and a weapon has to be in hand to be used (a
+   click, V, a phone's attack button): nothing fires beside it. The jetpack works only while it is the one picked, so a
+   weapon in hand turns it off and it puts the weapon away. toggle: a keyboard's key (a tap on a phone only picks). */
+function selectKey(i, toggle) {
+  const id = keysOf(playDuck())[i],
+    jet = jetOn(R.state, R.me, clockNow());
+  lastKey = i;
+  if (WEAPONS.includes(id)) {
+    if (jet) R.send({ t: "aura", what: "jetpack", keep: true }); // (a weapon in hand: the jetpack goes off)
+    held = toggle && held === id ? null : id;
+  } else if (id === "jetpack") {
+    if (jet ? toggle : true) R.send({ t: "aura", what: "jetpack", keep: true }); // (on, or off with the key again)
+    held = null; // (the jetpack takes the place of the weapon in hand)
+  } else held = null;
+  if (bar) bar.show(i);
+  sendMove(true);
+}
+function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
     l4Pick(i);
@@ -4754,6 +4783,11 @@ function useKey(i, keep) {
     sp = specialById(id);
   if (!sp || sp.off || !unlocked("special", id)) return; // (a special that's off for now, or still locked, does nothing)
   lastKey = i;
+  if (WEAPONS.includes(id) || id === "jetpack") {
+    selectKey(i, toggle);
+    if (bar) setTimeout(() => bar && bar.refresh(), 60);
+    return;
+  } // (a weapon or the jetpack: the number key picks it and toggles it)
   if (sp.kind === "effect")
     R.send({
       t: "aura",
@@ -4775,13 +4809,9 @@ function useKey(i, keep) {
       jump(
         id === "longjump" ? "long" : id === "shortjump" ? "short" : "double",
       );
-  } else if (WEAPONS.includes(id) && keep && !isMgj(R.state)) {
-    held = held === id ? null : id;
-    sendMove(true);
-  } // the handgun or the dagger: kept out (a left click uses it) or put away
-  else if (WEAPONS.includes(id) || THROWS.includes(id))
-    fire(id); // (the Chair and the Zebra cake: thrown toward the mouse)
-  else if (me && me.x >= 0)
+  } else if (THROWS.includes(id)) {
+    if (!held) fire(id); // (the Chair and the Zebra cake: thrown toward the mouse, but not with a weapon in hand)
+  } else if (me && me.x >= 0)
     R.send({ t: "use", what: id, face: turned() ? 1 : me.face || 1 }); // (an item: Shift and its key use it the same way)
   if (bar) setTimeout(() => bar && bar.refresh(), 60);
 }
@@ -4789,8 +4819,22 @@ function useKey(i, keep) {
    switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
    and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
 function l4Pick(i) {
-  const sl = slotsOf(R.state, R.me);
+  const sl = slotsOf(R.state, R.me),
+    kit = kitOf(R.state, R.me);
+  if (i === 4) {
+    /* the grenades are a number key now (5), and picked like a weapon: the key again puts them away (the owner's, Nov 16) */
+    if (l4Slot === 4) l4Slot = l4Last;
+    else if (kit && kit.g > 0) {
+      if (kit.jp && sl[3] === "jetpack") fire("jetpack"); // (the jetpack goes off)
+      if (l4Slot !== 3) l4Last = l4Slot;
+      l4Slot = 4;
+    } else return;
+    sendMove(true);
+    if (bar) bar.refresh();
+    return;
+  }
   if (i > 3 || !sl[i]) return;
+  if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
   if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
@@ -4800,7 +4844,7 @@ function l4Pick(i) {
   if (i === 3) {
     if (l4Slot === 3) l4Slot = l4Last;
     else {
-      l4Last = l4Slot;
+      if (l4Slot !== 4) l4Last = l4Slot;
       l4Slot = 3;
     }
   } else l4Slot = l4Last = i;
@@ -4983,13 +5027,7 @@ function wheelPick(dir) {
           ids.length
       ];
   if (isMgj(s)) useKey(i, false);
-  else {
-    lastKey = i;
-    if (WEAPONS.includes(id)) held = id;
-    else held = null;
-    if (bar) bar.show(i);
-    sendMove(true);
-  }
+  else selectKey(i, false);
   return true;
 }
 const onWheel = (e) => {
@@ -6207,9 +6245,6 @@ function keydown(e) {
     return;
   } // hold Tab: the players (Tab never moves the browser's focus in a game)
   if (typing(e) || windowOpen()) return;
-  if (e.code.startsWith("Shift")) {
-    if (!e.repeat) shiftTap = { at: performance.now(), other: false };
-  } else if (shiftTap) shiftTap.other = true; // (Shift used with another key: no tap)
   if (world && onBoardPhase() && world.keydown(e)) return; // Hangout: an activity's keys first (the piano)
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (MOVE_KEYS.includes(e.code) && onBoardPhase()) {
@@ -6226,7 +6261,7 @@ function keydown(e) {
   }
   if (keyIndex(e) >= 0 && onBoardPhase()) {
     e.preventDefault();
-    if (!e.repeat) useKey(keyIndex(e), e.shiftKey);
+    if (!e.repeat) useKey(keyIndex(e), e.shiftKey, true);
     return;
   } // the specials' keys (Shift: keep it on)
   if (e.code === "KeyE" && isHang(R.state) && onBoardPhase()) {
@@ -6234,11 +6269,6 @@ function keydown(e) {
     if (!e.repeat && world) world.press();
     return;
   } // Duck Cabin: E uses what's near (sit, play, read …)
-  if (e.code === "KeyG" && isL4dd(R.state) && onBoardPhase()) {
-    e.preventDefault();
-    if (!e.repeat) fire("grenade");
-    return;
-  } // (Quacky Zombies: G throws a grenade toward the mouse)
   if (e.code === "KeyR" && !e.repeat && reload()) {
     e.preventDefault();
     if (bar) setTimeout(() => bar && bar.refresh(), 60);
@@ -6280,29 +6310,7 @@ function keydown(e) {
     act("end");
   }
 }
-/* a quick tap of Shift (down and up within SHIFT_TAP ms, no other key between) keeps the selected item on or puts it
-   away, as Shift and its number; holding Shift still sprints */
-const SHIFT_TAP = 200;
-let shiftTap = null;
-function shiftTapped() {
-  if (!R || !onBoardPhase()) return;
-  const s = R.state;
-  if (isL4dd(s)) {
-    if (l4Slot === 3) l4Pick(3); // (the special: on and off)
-  } else if (!isMgj(s) && lastKey >= 0) useKey(lastKey, true);
-}
 const keyup = (e) => {
-  if (e.code.startsWith("Shift") && shiftTap) {
-    const t = shiftTap;
-    shiftTap = null;
-    if (
-      !t.other &&
-      performance.now() - t.at <= SHIFT_TAP &&
-      !typing(e) &&
-      !windowOpen()
-    )
-      shiftTapped();
-  }
   if (world) world.keyup(e);
   if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);
@@ -6543,13 +6551,13 @@ function watchInsets(S) {
 
 const HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Space</kbd> Jump <kbd>Enter</kbd> End turn";
-/* a second line, where Shift and a number key keep a special on (not in Mad God Justin or Quacky Zombies: their keys work
-   their own way) */
+/* a second line: a number key picks a weapon (the same key puts it away) and a click uses it; Shift and a number key keep
+   a jump on (not in Mad God Justin or Quacky Zombies: their keys work their own way) */
 const KEEP_HINT =
-  '<i class="hints-br"></i><kbd>Shift</kbd>+<kbd>Number</kbd> Keep a special on';
+  '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>G</kbd> Grenade <kbd>B</kbd> Ammo'; // (G and B only here, the owner's, Nov 4; E goes with them, so no key is split from its word)
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade <kbd>B</kbd> Ammo'; // (B only here, the owner's, Nov 4; E goes with it, so no key is split from its word; the grenades are the 5 key now, Nov 16)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
@@ -6732,7 +6740,7 @@ register("game", {
           slot: () => l4Slot,
           pick: l4Pick,
           fire,
-          grenade: () => fire("grenade"),
+          grenade: () => l4Pick(4),
           flash: () => R.send({ t: "hang", k: "l4", do: "fl" }),
         },
         row = mountL4Bar(S, l4),

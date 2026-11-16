@@ -261,6 +261,8 @@ export const OPTIONS_DEFAULT = {
   walk: "normal", // walking speed: slow | normal | fast
   textMax: 200, // the most characters a question, topic or take can have: 80, 140, 200 (the old limit) or 280
   hideLooks: 0, // Hide customization: 1 = every duck is the plain yellow duck during the game (looks.js)
+  noGore: 0, // Gore off: 1 = no blood or gore on the board (fx.js)
+  noFx: 0, // Heavy effects off: 1 = no gun smoke, muzzle flashes or screen shake, the effects that are hard on the game (fx.js)
   rainbowDucks: 0, // … Rainbow Ducks (with hideLooks only): the seven rainbow colors and a brown Justin-costume duck, dealt at random
   voteColor: 0, // Vote colors: 1 = a duck takes the color of the tile it stands on (never with Rainbow Ducks, never in Mad God Justin)
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too

@@ -4587,3 +4587,9 @@ God Justin's weapons.
   crosshair is unchanged.
 
 
+## Nov 16, 15:55Z: number keys toggle weapons, Gore and Heavy effects settings
+Owner: "in the game, you cannot fire another gun or use a melee in any game mode WHILE one weapon is already toggled AND NOW you must toggle a weapon to use it. For now on, every weapon is toggled by simply clicking the number key and then untoggled by clicking the same number key again, meaning shift isnt needed anymore to toggle or untoggle weapons, and the same is true for mobile players. so no more toggle button for either mobile or pc, whatever is selected is what you used and it is toggled for now on. Even the jetpack can only be used WHILE it is selected, which means guns cannot be used alongside it, this also means the grenade has to be selected to throw it. In zombies, grenade is now a number key instead of the letter G"
+Owner: "The settings should have a place to turn off gore OR to turn off other new animations, such as particle effects, and other effects that are hard on the game"
+Decided: a number key picks that weapon and the same key puts it away (jetpack and grenade too; the grenade is key 5 in Quacky Zombies); the phone's purple switch is gone; two Game Settings (Additional Settings), Gore and Heavy effects, each one flag (noGore, noFx) checked in fx.js (blood; smoke, muzzle flashes, screen shake).
+
+
