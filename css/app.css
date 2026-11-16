@@ -2956,6 +2956,30 @@ html.moving svg.duck.datboi.rainbow .dbr {
 .l4-board .gduck-name {
   border-radius: 0;
 }
+/* Dead Ducks Arcade: the other ducks' names sit small over their heads, hidden until a flashlight reaches them
+   (l4dd.js litNames), and always shown on a phone, which has no flashlight; the tag under them is only the HP bar
+   (owner, Nov 16) */
+.l4-board .gduck:not(.mine) .gduck-name {
+  width: calc(var(--sz) * 0.8);
+  height: 0.42rem;
+  padding: 0;
+}
+.l4-board .gduck:not(.mine) .gduck-name .pname {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--sz) * 1.32);
+  transform: translateX(-50%);
+  font-size: 0.78em;
+  line-height: 1.25;
+  padding: 0 0.25rem;
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.l4-board .gduck.l4-lit:not(.mine) .gduck-name .pname,
+html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name .pname {
+  opacity: 1;
+}
 /* Change player tag color (looks.js): the name tag takes the duck's vote color, its letters in a color that reads on it */
 .gduck.vtag .gduck-name {
   opacity: 0.95;

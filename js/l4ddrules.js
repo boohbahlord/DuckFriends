@@ -1220,6 +1220,7 @@ function setUp(s, now) {
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
+  if (s.options.justin) helperIn(s, null, now, true); // (the Justin switch: he plays from the start, on our side)
   newRound(s, 0, now, 0);
   s.hang.l4 = { ...s.hang.l4, n: 0, dq: [], wait: { r: 1, v: {} } }; // (round 0: no zombies until enough ducks are ready)
 }
@@ -1230,11 +1231,13 @@ export const R16 = 16,
   R16_PTS = 3000,
   GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
 export const isR16 = (s) => !!(s && s.options && +s.options.l4r16);
+/* who End turn waits on: Justin never counts toward a turn (the switch's own words) */
+const voters = (s) => players(s).filter((id) => !isHelper(s, id));
 export const waitNeed = (s) =>
-  Math.max(1, Math.ceil(players(s).length * shareOf(s) - 1e-9));
+  Math.max(1, Math.ceil(voters(s).length * shareOf(s) - 1e-9));
 export const waitVotes = (s) => {
   const w = s.hang && s.hang.l4 && s.hang.l4.wait;
-  return w ? players(s).filter((id) => w.v[id]).length : 0;
+  return w ? voters(s).filter((id) => w.v[id]).length : 0;
 };
 function waitTick(s, now) {
   const L = s.hang.l4,
@@ -1491,7 +1494,9 @@ function fireRoll(s, id, kit) {
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
    all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
-   plays him). He goes when the game does: Play again, or back to the lobby */
+   plays him). He goes when the game does: Play again, or back to the lobby. With the Justin switch on (General
+   Settings), he's here from the start instead, like every other duck: the same knife, guns and points (the owner's,
+   Nov 16); the fireplace then never lands on him */
 export const HELPER = {
   id: "b-justin",
   w: "justin",
@@ -1500,7 +1505,7 @@ export const HELPER = {
   out: 1200,
 };
 export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
-function helperIn(s, by, now) {
+function helperIn(s, by, now, sw = false) {
   const id = HELPER.id;
   if (s.players[id]) return;
   s.players[id] = {
@@ -1513,9 +1518,14 @@ function helperIn(s, by, now) {
     nameStyle: {},
     ready: true,
     joined: now,
+    ...(sw ? { sw: 1 } : {}), // (from the switch: he goes if it's turned off)
   };
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
+  if (sw) {
+    say(s, "Justin joined.");
+    return; // (a duck like the others: bringBack gave him their start)
+  }
   const kit = freshKit();
   kit.sl = ["knife", "chaingun", "handgun", ""];
   kit.am = { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
@@ -2390,6 +2400,10 @@ function l4Tick(s, now) {
     s.jm = null;
     return true;
   }
+  /* the Justin switch turned on or off mid-game (the pause menu's settings, a Democracy vote) */
+  const J = s.players[HELPER.id];
+  if (s.options.justin && !J) helperIn(s, null, now, true);
+  else if (!s.options.justin && J && J.sw) helperOut(s);
   meleeHits(s, now); // (first: the zombies below are read after it)
   const T = now - L.t0,
     zs = zombies(s);

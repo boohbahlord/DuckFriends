@@ -74,8 +74,8 @@ const HOST = [
     n: "Justin",
     c: ON_OFF,
     cat: "rules",
-    off: ["mgj", ...NO_TURNS],
-    d: "Justin from Duck Cabin walks the board, talks and shoots now and then. He never votes and never counts toward a turn.",
+    off: ["mgj", "hang", "vdd"], // (in Dead Ducks Arcade he plays on our side: the owner's, Nov 16)
+    d: "Justin from Duck Cabin walks the board, talks and shoots now and then. He never votes and never counts toward a turn. In Dead Ducks Arcade he plays on your side as one more duck.",
   },
   {
     k: "mgjBoard",

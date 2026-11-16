@@ -564,6 +564,39 @@ function stamp() {
   x.fillRect(0, 0, n, n);
   return (STAMP = c);
 }
+/* other ducks' names show only while a flashlight (anyone's but their own) reaches them (the owner's, Nov 16; the CSS
+   puts them small over the head, and always shows them on a phone, which has no flashlight). beams: [id, x, y, angle,
+   each ray's reach], from paint() */
+let litSig = "";
+function litNames(s, ctx, beams) {
+  const Wd = ctx.world,
+    rays = beams.length ? beams[0][4].length - 1 : 0,
+    lit = [];
+  for (const id of s.seat) {
+    if (id === ctx.me) continue;
+    const a = Wd.at(id);
+    if (!a) continue;
+    for (const [by, x, y, t, ds] of beams) {
+      if (by === id) continue;
+      const dx = a.x - x,
+        dy = a.y - y,
+        d = Math.hypot(dx, dy);
+      let u = Math.atan2(dy, dx) - t;
+      u = Math.atan2(Math.sin(u), Math.cos(u)); // (-pi to pi)
+      if (d > CONE.far || Math.abs(u) > CONE.half) continue;
+      const k = Math.round(((u + CONE.half) / (2 * CONE.half)) * rays);
+      if (d <= ds[k] + 20) {
+        lit.push(id);
+        break;
+      }
+    }
+  }
+  const sig = lit.join();
+  if (sig === litSig) return;
+  litSig = sig;
+  for (const el of Wd.board.querySelectorAll(".gduck[data-pid]"))
+    el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
+}
 function paint(now, ctx) {
   const Wd = ctx.world,
     s = ctx.state(),
@@ -573,7 +606,8 @@ function paint(now, ctx) {
     sc = Wd.sc * q,
     ln = lightNow(now),
     holes = [],
-    cones = [];
+    cones = [],
+    beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
   for (const l of Wd.inside ? LIT.in : LIT.out) {
     const fl = sway(l, ln),
@@ -646,7 +680,9 @@ function paint(now, ctx) {
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
     cones.push([o.left * q, o.top * q, pts, CONE.far * sc]);
+    beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
   }
+  litNames(s, ctx, beams);
   const f = (v) => v.toFixed(1),
     key = [
       w,
@@ -1332,7 +1368,16 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    zpSig = overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = "";
+    zpSig =
+      overShown =
+      endSig =
+      drawn =
+      boxSig =
+      upSig =
+      slotSig =
+      onSig =
+      litSig =
+        "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();

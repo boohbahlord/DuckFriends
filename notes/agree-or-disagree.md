@@ -4371,3 +4371,9 @@ Zombies only; Hangout's Duck Cabin unchanged).
   button, "Get up (Safe Keeping)") gets me up. 1.2 s of light-blue glow, then up with 2 HP, the halo is spent, and 6 s of
   no damage (my duck breathes in see-through while glowing; a counter 6 to 1, then "Vitals Stabilized"). Key 4 on it
   shows a small note on how it works instead of holding it.
+- PR 5 (Solomon the 2nd): the General Settings Justin switch now works in Dead Ducks Arcade (it was off there since
+  Nov 4): he joins at the start as one more duck on the players' side (the same knife, guns and points as everyone,
+  played by l4ddbots.js' Justin brain), never counts toward Ready / End turn, and comes or goes if the switch changes
+  mid-game. The board's walking Justin stays out of this mode. Other ducks' names sit small over their heads, hidden
+  until a flashlight (anyone's but their own) reaches them (l4dd.js litNames, .l4-lit); on a phone they always show,
+  small. The tag under every other duck is now only its HP bar. My own name is unchanged.
