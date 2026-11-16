@@ -4783,3 +4783,5 @@ Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a 
 
 - Adam: Jackal's #312 broke the chair after 6 hits and a controller after 2; changed so they block bullets and never
   break (mgjrules.js shotThrown). Shipped in Version 37 with Miles Jr.'s #311 (owner's go 16:47Z) and Noah's gun art #313.
+- Version 38: Solomon's #314 (double barrel, flamethrower, burst rifle) with #301 (fire axe, short sword, cast iron pan),
+  Miles Jr.'s #316 (each new gun's and melee's own sounds), Noah's #317 (melee art; gun art was #313).
