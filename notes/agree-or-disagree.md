@@ -4998,3 +4998,23 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 > this other map is something an availible AI can suggest that is simple to make that we can use for a map
 
 - Adam: Noah suggests 3 or 4 simple map ideas; the owner picks before anything is built.
+
+## Request (2026-11-16 22:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMeaHkBoPhSc2MkjTofkcJZ): no held synths; What the duck? on scary maps
+> what the duck now plays on scarier maps naturally as apart of the shuffle but any happy looking map it doesnt (so like nous within kenoma can play what the duck)
+>
+> the synths being held down during ponderful ruffles that become louder and are the same notes has to be revised into anything and changed of their instrument while not becoming louder because it is disgustingly bad and terrible, same with the synths in waddle before you paddle BECAUSSE IT LITERALLY IS THE SAME NOTE AND FUCKING SUCKS WHILE DROWNING OUT THE OTHERWISE GOOD MUSIC!
+>
+> NO SYNTHS CAN BE HELD DOWN FOR THE SAME NOTES INDEFINTELY BECAUSE I HEAR IT AGAIN IN OUTER SPACE SWIM COMMUTE AND IT'S SO LOUD AND UGLY WTF!!! HOW THE FUCK DID THIS SHIT PASS RETARD!!! INFINITE POND TOO!??!?! WHAT THE FUCK!?!?!?! DUCKLINGS IN A ROW?!?!?! IS THIS IN EVERY FUCKING SONG!!?!?!??! THE SYNTHS SOUND LIKE SHIT AND ARE SO BAD!!!
+>
+> THE FUCKING SYNTHS IN SPRING IN A BOX TOO?!?!?!? DONT ALLOW THIS BULLSHIT FOR ANY SONG!!!!! OMFG IT IS IN FEATHER BOUND TOO!?!?!? THIS IS BULLSHIT!!! FIX THE SYNTH AND HAVE IT COMPLEMENT THE MUSIC YOU DUMB FUCK
+
+Then (22:33Z): "the electric piano notes can sensibly be used for long if you know" and "keyword is can". (22:42Z): "make
+sure the violin isnt too loud in what the duck, it sounded too loud to me, but everything seems good." (22:45Z): "yeah these
+are all good to go we can put them in the game"
+
+- Miles Jr.: the Warm Pad (re-struck on itself, so it stacked and grew) became an electric piano at one level, each chord
+  rung out for a bar then moving a note a beat; a note struck again ends its last one; long notes end within a bar;
+  the Bowed Glass, Crystal and drone parts became flute, glockenspiel, violin and pizzicato; What the duck?'s violin about
+  7 dB down. In the game: js/music.js plays assets/music/ (64 kbps; lo/ 32 kbps on Data saving or Poor connection); the
+  menus play the happier songs; rooms share one song list (s.music); What the duck? is in the shuffle only when the map
+  is Nous Within Kenoma or Shelter Sky & Null; no music in Quacky Zombies and Mad God Justin.

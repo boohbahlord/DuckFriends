@@ -234,7 +234,7 @@ const GAME = [
       "Too slow? `sudo forgame turn-end 3/4` ends a turn when 3 of 4 players are done, or `sudo forgame timer on writing 45`.",
       "Too fast? `sudo forgame all-timer off` turns every timer off.",
       "Stuck? `sudo skip` moves on.",
-      'A song nobody likes? `sudo song off "Jester\'s Stair"` takes it off the list (quotes around a name with spaces); `song` lists them, `sudo song on all` brings them all back.',
+      'A song nobody likes? `sudo song off "Bouncy Chicks"` takes it off the list (quotes around a name with spaces); `song` lists them, `sudo song on all` brings them all back.',
       "Someone too loud? `sudo forgame \\mute on text @name` mutes them for everyone; `sudo forgame rounds2 \\mute on all @name` for two turns only.",
       "Someone ruining it? `sudo kick @name`; they stay out until the room goes back to the lobby.",
       "Afterwards: `gamestats | send @everyone` shows everyone how it went.",
@@ -340,7 +340,7 @@ const GAME = [
     dumb: "Hate a song? Turn it off. For everyone.",
     what: [
       "Everyone in a room hears the same song at the same time: the host's game picks them, and the name shows by the speaker at the top. The speaker mutes the music for you only; hover it (tap it on a phone) for the music's volume, with a line where the default is.",
-      '`song` lists every song and whether it is on (anyone). The host, sudo, or a group with cansettings can take songs off the list and put them back. A name with a space goes in quotes, as in bash: `sudo song off "Jester\'s Stair"`. One word needs none: `sudo song off Glow`.',
+      '`song` lists every song and whether it is on (anyone). The host, sudo, or a group with cansettings can take songs off the list and put them back. A name with a space goes in quotes, as in bash: `sudo song off "Bouncy Chicks"`.',
     ],
     flags: [
       ["song / song list", "every song: on or off, and the one playing"],
@@ -357,8 +357,11 @@ const GAME = [
     ],
     ex: [
       ["song", "the list"],
-      ['sudo song off "What the duck?" Glow', "two songs off at once"],
-      ['sudo song on "Jester\'s Stair"', "back on the list"],
+      [
+        'sudo song off "What the duck?" "Feather Bound"',
+        "two songs off at once",
+      ],
+      ['sudo song on "Bouncy Chicks"', "back on the list"],
       ["sudo song on all", "every song again"],
     ],
     see: ["HelpGame-Lobby", "HelpGame-Perms"],
