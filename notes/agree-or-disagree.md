@@ -4913,3 +4913,11 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 
 - Version 46: Solomon's #337 (spawn x2, fireplace part at the Butler for 750, Attack speed most 2).
+
+## Nov 16, 21:47Z: Dead Ducks Arcade starting round (part of the crits, misses, zombie HP, starting round request)
+Owner (starting round, word for word): "In the lobby settings for the zombie game mode, the start on round is a drop down menu where you choose to start at rounds 1(default, and starts in round 0 like all of them), round 5, 9,13,and21. The rounds spawn in with the bonus points in round zero when you  choose to start on these rounds.
+
+the game when ur in it at round 0, you can see a button below exit cabin that says "change starting round", and doing so will change the starting round for players. Doing so starts a vote of "start at round {input round number voted here}" at the top middle of the screen, and players can vote yes or no in buttons on their screen's bottom middle like the vote buttons, saying no will just make it to where that player cannot vote for a starting round again, someone else needs to start it. if it is passed in round zero, only in round zero it could even be, then it will give points for that round INSIDE OF round 0, not waiting for the next round. Below the change starting round is a text that says in white letters "Starting round set to 1", and that text disapears when the first actual round starts where zombies spawn in, just like the change starting round button will disapear (a starting round vote being passed makes the vote starting round disapear but not the starting round set to {round number here})
+
+each round range is a difficulty, so players get 750 points at round 5, 1,750 at round 9, 2,500 points at round 13, and 5,000 points at round 21."
+Decided (Jackal, from Adam's spec): "Start on round" 1/5/9/13/21 replaces Round 16 Start (l4r16); the bonus is given at once in round 0 (L.bonus, so a change gives or takes only the difference); the vote passes with the room's share of Yes, falls when it can't, lasts 30 s; one passed change per game; From round 13 on it counts toward the Round 16 Start stats.

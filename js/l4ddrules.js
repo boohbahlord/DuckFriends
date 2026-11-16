@@ -1074,6 +1074,7 @@ function newRound(s, r, now, wait) {
     dq: dropPlan(),
     due: [],
     wait: null,
+    sv: null,
   };
   powerRound(s, r, now, PH);
 }
@@ -1087,8 +1088,8 @@ function bringBack(s, id, now, k, fresh) {
     s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
     s.hang.l4pt = {
       ...(s.hang.l4pt || {}),
-      [id]: isR16(s) && s.hang.l4 && s.hang.l4.r >= R16 ? R16_PTS : PTS.START,
-    }; // (Round 16 Start: a duck joining later gets its points too)
+      [id]: PTS.START + ((s.hang.l4 && s.hang.l4.bonus) || 0),
+    }; // (a starting round's bonus points: a duck joining later gets them too)
     s.hang.l4u = { ...(s.hang.l4u || {}), [id]: {} };
   } // (a ghost back at the next round keeps its weapons, its points and what it bought; its max HP went when it went down)
   if (s.players[id]) delete s.players[id].dead;
@@ -1357,15 +1358,49 @@ function setUp(s, now) {
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
   newRound(s, 0, now, 0);
-  s.hang.l4 = { ...s.hang.l4, n: 0, dq: [], wait: { r: 1, v: {} } }; // (round 0: no zombies until enough ducks are ready)
+  s.hang.l4 = {
+    ...s.hang.l4,
+    n: 0,
+    dq: [],
+    wait: { r: 1, v: {} },
+    sr: START_ROUNDS.includes(+s.options.l4start) ? +s.options.l4start : 1,
+    bonus: 0,
+    sv: null,
+    srNo: {},
+    srDone: 0,
+  }; // (round 0: no zombies until enough ducks are ready)
+  giveBonus(s, s.hang.l4.sr);
 }
-/* between rounds (and round 0, before the first): the next round waits until enough ducks press End turn (Ready in
-   round 0), the room's share (2 of 3 by default); with Round 16 Start on, round 0 goes on to round 16, everyone with
-   R16_PTS points (the owner's, Nov 3) */
-export const R16 = 16,
-  R16_PTS = 3000,
-  GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
-export const isR16 = (s) => !!(s && s.options && +s.options.l4r16);
+/* the starting round (the owner's, Nov 16): every game begins in round 0 and goes on to round `sr` (the "Start on round"
+   setting: 1, 5, 9, 13 or 21) once everyone is ready; a starting round past 1 gives every duck bonus points, in round 0
+   at once (L.bonus: what they were given, so changing the starting round gives or takes back only the difference) */
+export const START_ROUNDS = [1, 5, 9, 13, 21];
+export const START_PTS = { 1: 0, 5: 750, 9: 1750, 13: 2500, 21: 5000 };
+export const startOf = (s) => (s && s.hang && s.hang.l4 && s.hang.l4.sr) || 1;
+function giveBonus(s, sr) {
+  const L = s.hang.l4,
+    want = START_PTS[sr] || 0,
+    d = want - (L.bonus || 0);
+  if (d) {
+    const pt = { ...(s.hang.l4pt || {}) };
+    for (const id of players(s)) pt[id] = Math.max(0, (pt[id] || 0) + d);
+    s.hang.l4pt = pt;
+  }
+  s.hang.l4 = { ...L, bonus: want };
+}
+export const GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
+export const SR_VOTE_MS = 30000; // ms a "Start at round N" vote stays up
+/* the starting-round vote: who may start one (not after a No, only in round 0, none up), and what it needs */
+export const srOpen = (s) => {
+  const L = s.hang && s.hang.l4;
+  return !!L && L.r === 0 && !L.over && !!L.wait;
+};
+export const srVote = (s) => {
+  const L = s.hang && s.hang.l4;
+  return (srOpen(s) && L.sv) || null;
+};
+export const srCan = (s, id) =>
+  srOpen(s) && !srVote(s) && !s.hang.l4.srDone && !(s.hang.l4.srNo || {})[id];
 /* who End turn waits on: the fireplace's Justin never counts toward a turn */
 const voters = (s) => players(s).filter((id) => !isHelper(s, id));
 export const waitNeed = (s) =>
@@ -1377,18 +1412,16 @@ export const waitVotes = (s) => {
 function waitTick(s, now) {
   const L = s.hang.l4,
     w = L.wait;
-  if (!w || waitVotes(s) < waitNeed(s)) return false;
-  let r = w.r;
-  if (r === 1 && L.r === 0 && isR16(s)) {
-    r = R16;
-    const pt = {};
-    for (const id of players(s)) pt[id] = R16_PTS;
-    s.hang.l4pt = { ...(s.hang.l4pt || {}), ...pt };
+  if (!w) return false;
+  const v = L.sv;
+  if (v && L.r === 0 && now >= v.until) {
+    s.hang.l4 = { ...L, sv: null }; // (a vote that ran out: nothing changes)
+    return true;
   }
-  newRound(s, r, now, GO_MS);
+  if (waitVotes(s) < waitNeed(s)) return false;
+  newRound(s, L.r === 0 ? L.sr || 1 : w.r, now, GO_MS);
   return true;
 }
-
 rule("l4", {
   only: "l4dd",
   ghosts: true,
@@ -1423,6 +1456,21 @@ rule("l4", {
 });
 
 /* ---------- what a duck does: E (revive, board up), key 0 (the flashlight), Play again ---------- */
+/* a starting-round vote passes with the room's share of Yes (like End turn), and falls when that can't happen any more */
+function srCheck(s) {
+  const L = s.hang.l4,
+    sv = L.sv;
+  if (!sv) return;
+  const ids = voters(s),
+    yes = ids.filter((id) => sv.v[id] === 1).length,
+    no = ids.filter((id) => sv.v[id] === 0).length,
+    need = waitNeed(s);
+  if (yes >= need) {
+    s.hang.l4 = { ...L, sv: null, sr: sv.n, srDone: 1 }; // (passed: the button goes, the text stays)
+    giveBonus(s, sv.n);
+    s.options.l4start = sv.n; // (its stats and the setting follow)
+  } else if (ids.length - no < need) s.hang.l4 = { ...L, sv: null };
+}
 function l4Act(s, a, now) {
   const id = a.id,
     L = s.hang.l4,
@@ -1449,6 +1497,30 @@ function l4Act(s, a, now) {
     waitTick(s, now);
     return true;
   } // (End turn, or Ready in round 0; ghosts and downed ducks may press it too)
+  if (a.do === "sr") {
+    // Change starting round: a vote "Start at round N", the asker's Yes in it
+    const n = +a.n;
+    if (!START_ROUNDS.includes(n) || !srCan(s, id)) return false;
+    s.hang.l4 = {
+      ...L,
+      sv: { n, by: id, v: { [id]: 1 }, until: now + SR_VOTE_MS },
+    };
+    srCheck(s);
+    return true;
+  }
+  if (a.do === "srv") {
+    const sv = srVote(s);
+    if (!sv || (sv.v || {})[id] !== undefined || !voters(s).includes(id))
+      return false;
+    const no = a.on === false;
+    s.hang.l4 = {
+      ...L,
+      sv: { ...sv, v: { ...sv.v, [id]: no ? 0 : 1 } },
+      ...(no ? { srNo: { ...(L.srNo || {}), [id]: 1 } } : {}), // (a No: this duck can't start another one)
+    };
+    srCheck(s);
+    return true;
+  }
   if (a.do === "sk") {
     const p4 = s.hang.l4p || {},
       p = p4[id];

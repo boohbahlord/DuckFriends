@@ -16965,6 +16965,70 @@ html.still .l4-crit {
     left: 10px;
   }
 }
+/* Quacky Zombies' Change starting round (js/hangout/cabinend.js): under Exit Cabin; the vote's words at the top middle,
+   Yes and No at the bottom middle */
+.game .l4-sr {
+  position: fixed;
+  top: 88px;
+  left: 18px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+.game .l4-sr[hidden],
+.game .l4-srv[hidden],
+.game .l4-srb[hidden] {
+  display: none;
+}
+.l4-sr .btn {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.l4-sr-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 16rem;
+}
+.l4-sr-say {
+  color: #fff;
+  font-size: 0.85rem;
+}
+.game .l4-srv {
+  position: fixed;
+  top: 206px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 31;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.game .l4-srb {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 31;
+  display: flex;
+  gap: 0.6rem;
+}
+@media (max-width: 700px) {
+  .game .l4-sr {
+    top: 110px;
+    left: 10px;
+  }
+  .game .l4-srv {
+    top: 190px;
+  }
+}
 /* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
    turning over until it lies on its side (--r), and fades a few seconds after it lands */
 .jb-body {

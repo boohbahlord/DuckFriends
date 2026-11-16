@@ -61,7 +61,7 @@ import {
   TOILET,
   waitNeed,
   waitVotes,
-  isR16,
+  startOf,
   GUN_SHOP,
   gunPrice,
   AMMO_PRICE,
@@ -682,14 +682,14 @@ function seeHud(s, ctx) {
   /* between rounds: End turn (Ready before round 1), with how many pressed it and how many it takes */
   const w = !L.over && L.wait,
     mine = !!(w && w.v[ctx.me]),
-    es = w ? [L.r, mine, waitVotes(s), waitNeed(s), isR16(s)].join() : "";
+    es = w ? [L.r, mine, waitVotes(s), waitNeed(s), startOf(s)].join() : "";
   if (es !== endSig) {
     endSig = es;
     endEl.hidden = !w;
     ctx.world.board.classList.toggle("l4-waiting", !!w);
     if (w) {
       const word = L.r === 0 ? "Ready" : "End turn",
-        next = L.r === 0 && isR16(s) ? 16 : w.r;
+        next = L.r === 0 ? startOf(s) : w.r;
       endEl.innerHTML = `<button type="button" class="btn ${mine ? "purple" : "yellow"}" aria-pressed="${mine}">${word}${mine ? " ✓" : ""} <span class="l4-end-n">${waitVotes(s)}/${waitNeed(s)}</span></button><span class="l4-end-say">${mine ? `Round ${next} starts when ${waitNeed(s)} ${waitNeed(s) === 1 ? "duck is" : "ducks are"} ${L.r === 0 ? "ready" : "done"}` : L.r === 0 ? `Ready for round ${next}?` : `Round ${L.r} cleared`}</span>`;
     }
   }
