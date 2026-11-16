@@ -90,7 +90,7 @@ import {
   isPw,
   PART_ICONS,
 } from "./l4ddpowerui.js";
-import { powerOn, pwState, partName, PW } from "./l4ddpower.js";
+import { powerOn, pwState, partName, PW, fireForSale } from "./l4ddpower.js";
 import {
   angelMount,
   angelUnmount,
@@ -1296,6 +1296,7 @@ function shopFill(s, ctx) {
       kit && kit.sl,
       kit && kit.am,
       (pwState(s) || {}).shop,
+      fireForSale(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
@@ -1326,9 +1327,12 @@ function shopFill(s, ctx) {
     const have = !!kit && kit.sl.includes("safekeep"),
       price = safePrice(s),
       was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
-    const part = (pwState(s) || {}).shop;
-    if (part)
-      shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb k-part"><i>${PART_ICONS[part]}</i></span></i><span class="l4-up-t"><b>${partName(part)}</b><small>A part for the power box</small></span><button type="button" class="btn small yellow l4-up-buy" data-buy="part"${pts < PW.SHOP ? " disabled" : ""}>${PW.SHOP}</button></li>`; // (the power box's part he always has: l4ddpower.js)
+    const partRow = (part, buy, price) =>
+      `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb k-part"><i>${PART_ICONS[part]}</i></span></i><span class="l4-up-t"><b>${partName(part)}</b><small>A part for the power box</small></span><button type="button" class="btn small yellow l4-up-buy" data-buy="${buy}"${pts < price ? " disabled" : ""}>${price}</button></li>`;
+    const part = (pwState(s) || {}).shop,
+      fire = fireForSale(s);
+    if (part) shop.guns.innerHTML += partRow(part, "part", PW.SHOP); // (the power box's part he always has: l4ddpower.js)
+    if (fire) shop.guns.innerHTML += partRow(fire, "partfire", PW.SHOP_FIRE); // (and the fireplace's, dearer, until it comes out of a spin)
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
   }
 }
