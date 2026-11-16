@@ -17522,10 +17522,12 @@ html.pixel img.px {
 }
 html.pixel .map-layer:not(.px-own),
 html.pixel #shapes,
-html.pixel .hg-porch,
 html.pixel .spx-flames {
   filter: url(#px-f);
 } /* (every map, moving as before, drawn on the grid: pixel.js' filter) */
+html.pixel .hg-porch {
+  filter: url(#px-fc);
+} /* (shown under Duck Cabin's zoom: the filter made for it, so its pixels are the grid's too) */
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
