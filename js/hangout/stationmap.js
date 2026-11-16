@@ -486,6 +486,7 @@ const CLEAR = [
   [CHAPEL.x0 - 110, CHAPEL.y0 - 220, TOWER.x1 + 110, CHAPEL.y1 + 110],
   [0, ROAD.y0 - 110, GS_W, ROAD.y1 + 110],
   [CANOPY.x0 - 110, CANOPY.y0 - 80, CANOPY.x1 + 110, CANOPY.y1 + 110],
+  [1150, STATION.y1, 3450, ROAD.y0], // (the concrete in front of the gas station: dpground.js)
   [GEN.x0 - 110, GEN.y0 - 110, GEN.x1 + 110, GEN.y1 + 110],
   [HOOD.x0 - 180, HOOD.y0 - 110, HOOD.x1 + 110, HOOD.y1 + 110],
 ];

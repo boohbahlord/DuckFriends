@@ -23,7 +23,7 @@
    them: .hp.off .lit) and the glow around a lamp "lit-glow" (it goes out). */
 import * as A from "./art.js";
 import * as L from "./layout.js";
-import * as GS from "./stationmap.js";
+import { downpourGround, dpGroundColor } from "./dpground.js";
 
 const C = L.CABIN,
   T = 12,
@@ -1198,83 +1198,16 @@ function groundPieces() {
       );
   return G;
 }
-/* Downpour's ground (Dead Ducks Arcade's second map, stationmap.js): the swamp's dark grass, the forest floor past the
-   line, the sunken road with its middle line, the flood over it (deep at the west end), and the floors of the gas
-   station and the chapel. The skeleton's plain shapes; the details come next (the owner's order: skeleton, details,
-   rain and water, lighting) */
-function downpourGround() {
-  const R = GS.ROAD,
-    W = GS.GS_W,
-    rect = (x, y, w, h, fill, extra = "") =>
-      piece(
-        `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${fill}"/>${extra}</svg>`,
-        x,
-        y,
-        w,
-        h,
-      ),
-    poly = (P) => P.map(([x, y]) => `${x},${y}`).join(" ");
-  const G = [
-    piece(
-      `<svg viewBox="0 0 ${W} ${GS.GS_H}" width="${W}" height="${GS.GS_H}"><rect width="${W}" height="${GS.GS_H}" fill="#112a1c"/><polygon points="${poly(GS.TOP)}" fill="#1e3d2a"/><polygon points="${poly(GS.BOT)}" fill="#1e3d2a"/></svg>`,
-      0,
-      0,
-      W,
-      GS.GS_H,
-    ),
-  ];
-  const lane = [];
-  for (let x = 0; x < W; x += 160)
-    lane.push(
-      `<rect x="${x}" y="${R.mid - R.y0 - 6}" width="90" height="12" fill="#c9b765" opacity=".7"/>`,
-    );
-  G.push(rect(0, R.y0, W, R.y1 - R.y0, "#2c2d31", lane.join("")));
-  G.push(
-    rect(
-      GS.SHALLOW[0],
-      GS.SHALLOW[1],
-      GS.SHALLOW[2] - GS.SHALLOW[0],
-      GS.SHALLOW[3] - GS.SHALLOW[1],
-      "#3e6a8c",
-    ),
-  );
-  G.push(
-    rect(
-      GS.DEEP[0],
-      GS.DEEP[1],
-      GS.DEEP[2] - GS.DEEP[0],
-      GS.DEEP[3] - GS.DEEP[1],
-      "#1d3f66",
-    ),
-  );
-  G[G.length - 2].svg = G[G.length - 2].svg.replace(
-    'fill="#3e6a8c"',
-    'fill="#3e6a8c" opacity=".7"',
-  );
-  for (const B of [GS.STATION, GS.CHAPEL])
-    G.push(
-      rect(
-        B.x0,
-        B.y0,
-        B.x1 - B.x0,
-        B.y1 - B.y0,
-        B === GS.STATION ? "#5b5a55" : "#4a3624",
-      ),
-    );
-  return G;
-}
 let ground = null,
   dpGround = null;
 export const GROUND = () =>
   L.layoutVariant() === "l4gs"
-    ? dpGround || (dpGround = downpourGround())
+    ? dpGround || (dpGround = downpourGround()) // (dpground.js)
     : ground || (ground = groundPieces());
 /* the ground's plain colors (before its tiles are painted): by screen-world y */
 export const groundColor = (y) =>
   L.layoutVariant() === "l4gs"
-    ? y >= GS.ROAD.y0 && y < GS.ROAD.y1
-      ? "#2c2d31"
-      : "#1e3d2a"
+    ? dpGroundColor(y)
     : y < L.SLOPE.y0
       ? "#24503d"
       : y < LOWY
