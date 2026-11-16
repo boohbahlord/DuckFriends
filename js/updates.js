@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v31",
+    version: 31,
+    date: "Nov 16, 2026",
+    title: "Pixel blood, smoke and sway",
+    news: [
+      "Blood is now pixels and flies by caliber: drops from small guns, sprays and squirts from big ones, chunks from the sniper, the chain gun and the hammer.",
+      "Bullet holes go right through a duck's skin.",
+      "Every gun flashes and smokes when it fires (the chain gun and the sniper most) and kicks back with a little bounce.",
+      "Held weapons sway as you walk and sway their own way mid-jump.",
+      "Firing shakes your screen a little (more for bigger guns), and an adrenaline shot makes you jitter and the screen wobble.",
+      "Sprinting blurs the map a little.",
+      "For Dead Ducks Arcade: guns have a laser sight to the end of your flashlight (not the bow), ducks and zombies in a beam are lit as bright as the beam, ducks are see-through while a jump keeps them safe, and dead zombies stay solid for 1.25 s before they fade.",
+    ],
+    fixed: [
+      "Small duck pictures (like the players' chips under the question form) show their whole body again.",
+      'On phones, the stage\'s title at the top (like "Write a question") is no longer cut off.',
+    ],
+  },
+  {
     id: "v30",
     version: 30,
     date: "Nov 16, 2026",
