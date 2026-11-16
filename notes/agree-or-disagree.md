@@ -4712,3 +4712,19 @@ Solomon.)
   owner's picks.
 - Version 34: Noah's pixel sweep #306 (emoji, hover tips, card patterns), from the owner's 15:40Z "some things werent
   pixelated".
+
+## Request (2026-11-16 16:34Z): Mad God Justin's HP, and only my own laser sight
+> qaudruple mad god justin's health and then give it 50% more of that orginal health for every player in the game for now on, and then test a 100% health per player, and tell me which is harder, because he is supposed to be really difficult
+>
+> ALSO, you do not see other player's laser sights or Justin's, only your own
+
+- Adam: "his original health" read as his old HP for one duck (40). Now 4 x 40 = 160, plus 20 (50% of 40) for every duck
+  in the fight (mgjrules.js MGJ_HP, hpOf). 100% per player would be 160 + 40 a duck. Laser sights: game.js draws only
+  R.me's, in Dead Ducks Arcade and Mad God Justin.
+
+## Request (2026-11-16 16:36Z): guns reload against Justin
+> guns should have to reload when fighting justin as well
+
+- Adam: the sniper, AK and LMG already reloaded there; the shotgun (6 shells, 2.6 s), the grenade launcher (3, 4 s)
+  and the chain gun (a belt of 100, 4 s) now do too (mgjrules.js MGJ_MAG_MORE). The pistol still never reloads (the
+  owner's 15:12Z rule today).

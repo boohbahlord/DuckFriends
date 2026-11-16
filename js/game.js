@@ -2128,11 +2128,12 @@ function drawDucks(now = clockNow()) {
     kick(sh.by, gun, now);
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
   }
-  /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's */
+  /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
+     see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
   const lz = [];
   if (isL4dd(s))
     for (const [id, w] of arms) {
-      if (!MUZZLE[w]) continue;
+      if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
         e = hd && hd.parentNode === fxl && hd._end,
         end = e && laserEnd(id);
@@ -2142,7 +2143,7 @@ function drawDucks(now = clockNow()) {
      (my mouse) to the board's edge */
   if (isMgj(s) && s.phase === "boss")
     for (const [id, w] of arms) {
-      if (!MUZZLE[w]) continue;
+      if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
         e = hd && hd.parentNode === fxl && hd._end,
         A = hd && hd._aim;
