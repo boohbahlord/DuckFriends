@@ -51,6 +51,7 @@ OGA_URL = {
     "crunch": "https://opengameart.org/content/7-eating-crunches",
     "drink": "https://opengameart.org/content/liquid-bottle-drink-set",
     "muffled": "https://opengameart.org/content/muffled-distant-explosion",
+    "tinyworlds": "https://opengameart.org/content/explosion-0",
 }
 KENNEY_IMPACT = "https://kenney.nl/assets/impact-sounds"
 KENNEY_UI = "https://kenney.nl/assets/ui-audio"
@@ -60,6 +61,10 @@ KI = "kn:kenney_impactsounds/Audio/"
 KF = "kn:kenney_interfacesounds/Audio/"
 KU = "kn:kenney_uiaudio/Audio/"
 KR = "kn:kenney_rpgaudio/Audio/"
+GR = "oga:guns-reload/"
+EC = GR + "equipmentclicks.wav"
+C3 = GR + "equipment_clicks3.wav"
+LK = "oga:guns-empty-click/"
 
 
 def one(path, length, credit, **o):
@@ -78,16 +83,20 @@ GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
   rate   played faster (> 1, higher) or slower, as a turntable would
   lp     a darker low-pass (Hz)
   drive  squashes a gun's crack a little so the shot keeps its body, as old games' guns did
+  squash a slow compressor: a long rumble stays loud after the blast instead of dying away
   room   the small room (default on)
   takes  [layers, …] in place of layers: one file each
   loop   (s) a seamless loop that long, in the middle of the file (js/sfxlist.js says where)
   sf     made on the SoundFont (soundfont.py) instead of from a file
   kbps   the MP3's bitrate (default 40)
+  fin    a longer fade-in (s; default 5 ms), to ease a sharp attack
 Files: "oga:<folder>/<file>" (SOURCES/opengameart.org), "kn:<path>" (KENNEY), "sf:<maker>"."""
 SOUNDS = {
     # ---- the lobby countdown (the owner's take B) and Dead Ducks Arcade's new round ----
     "countTick": dict(
         sf="count_tick",
+        lp=2600,
+        fin=0.014,  # (its mallet's knock eased in: no sharp edge)
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
     "countGo": dict(
@@ -201,42 +210,125 @@ SOUNDS = {
         layers=[("oga:guns-empty-click/lock_01.ogg", 0.02, 0.3, 0, 1)],
         credit=("rubberduck, 80 CC0 RPG SFX (lock_01)", OGA_URL["rpg80"]),
     ),
-    # ---- every gun its own reload ----
+    # ---- every gun its own reload, as long as its reload in the game (the owner, Nov 16: "some reloads are really long
+    # or longer and some are shorter"): the magazine out, in, and the gun made ready again just before the end. RELOAD_S
+    # in js/sound.js holds the same lengths (a Faster reload plays the file faster to fit) ----
+    # the handgun, 1.2 s: the magazine out, in, the slide let go
     "reloadHandgun": dict(
-        layers=[("oga:guns-reload/gunreload1.wav", 0.1, 1.45, 0, 1)],
+        layers=[
+            (GR + "gunreload1.wav", 0.05, 0.45, 0, 1),
+            (GR + "gunreload1.wav", 0.66, 0.45, 0.42, 0.8),
+            (GR + "gunreload1.wav", 1.25, 0.3, 0.88, 1),
+        ],
         credit=("SpringySpringo, Gun Reload Sounds", OGA_URL["reload"]),
     ),
-    "reloadAk": dict(
-        layers=[("oga:guns-reload/assaultriflereload1.wav", 0.0, 1.5, 0, 1)],
-        credit=("SpringySpringo, Gun Reload Sounds", OGA_URL["reload"]),
-    ),
+    # the revolver, 1.7 s: the cylinder out, five rounds in, the cylinder shut
     "reloadRevolver": dict(
-        layers=[("oga:guns-reload/equipmentclicks.wav", 0.05, 0.85, 0, 1)],
-        credit=("LFA, Equipment Clicks II", OGA_URL["clicks2"]),
+        layers=[(EC, 0.07, 0.3, 0, 1)]
+        + [
+            (src, at, 0.12, 0.38 + i * 0.19, 0.42)
+            for i, (src, at) in enumerate(
+                [
+                    (EC, 2.37),
+                    (LK + "lock_02.ogg", 0.03),
+                    (EC, 2.37),
+                    (EC, 1.06),
+                    (EC, 2.37),
+                ]
+            )
+        ]
+        + [(EC, 3.75, 0.32, 1.38, 1)],
+        credit=(
+            "LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_02)",
+            OGA_URL["clicks2"],
+        ),
     ),
+    # the SMG, 1.4 s: the magazine out, in, the bolt pulled back
     "reloadSmg": dict(
-        layers=[("oga:guns-reload/equipmentclicks.wav", 1.9, 1.1, 0, 1)],
-        credit=("LFA, Equipment Clicks II", OGA_URL["clicks2"]),
+        layers=[
+            (EC, 1.92, 0.3, 0, 1),
+            (EC, 2.37, 0.3, 0.5, 0.9),
+            (LK + "lock_01.ogg", 0.01, 0.33, 1.02, 0.8),
+        ],
+        credit=(
+            "LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_01)",
+            OGA_URL["clicks2"],
+        ),
     ),
+    # the AK-47, 1.9 s: the magazine out, the new one rocked in, the charging handle racked
+    "reloadAk": dict(
+        layers=[
+            (GR + "assaultriflereload1.wav", 0.0, 0.6, 0, 1),
+            (GR + "assaultriflereload1.wav", 0.95, 0.61, 0.6, 1),
+            (KR + "metalClick.ogg", 0.06, 0.36, 1.45, 0.75),
+        ],
+        credit=(
+            "SpringySpringo, Gun Reload Sounds; Kenney, RPG Audio (metalClick)",
+            OGA_URL["reload"],
+        ),
+    ),
+    # the sniper, 2.2 s: the bolt up and back, three rounds pressed in, the bolt forward and down
     "reloadSniper": dict(
-        layers=[("oga:guns-reload/equipmentclicks.wav", 3.7, 1.2, 0, 1)],
-        credit=("LFA, Equipment Clicks II", OGA_URL["clicks2"]),
+        layers=[(EC, 3.75, 0.32, 0, 1)]
+        + [
+            (src, at, 0.14, 0.55 + i * 0.3, 0.45)
+            for i, (src, at) in enumerate(
+                [(EC, 2.37), (LK + "lock_02.ogg", 0.03), (EC, 1.92)]
+            )
+        ]
+        + [(EC, 0.07, 0.3, 1.58, 1), (KR + "metalLatch.ogg", 0.03, 0.2, 1.95, 0.6)],
+        credit=(
+            "LFA, Equipment Clicks II; rubberduck, 80 CC0 RPG SFX (lock_02); Kenney, RPG Audio (metalLatch)",
+            OGA_URL["clicks2"],
+        ),
     ),
+    # the LMG, 2.8 s: the cover up, the old belt pulled, the box out and in, the new belt laid, the cover shut, racked
     "reloadLmg": dict(
-        layers=[("oga:guns-reload/equipment_clicks3.wav", 0.1, 1.45, 0, 1)],
-        credit=("LFA, Equipment Clicks III", OGA_URL["clicks3"]),
+        layers=[
+            (C3, 0.18, 0.35, 0, 1),
+            (KR + "beltHandle1.ogg", 0, 0.28, 0.5, 0.5),
+            (C3, 0.83, 0.3, 0.9, 0.9),
+            (C3, 1.43, 0.35, 1.45, 1),
+            (KR + "beltHandle2.ogg", 0, 0.28, 1.9, 0.5),
+            (C3, 2.66, 0.3, 2.22, 1),
+            (KR + "metalClick.ogg", 0.06, 0.36, 2.48, 0.7),
+        ],
+        credit=(
+            "LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalClick)",
+            OGA_URL["clicks3"],
+        ),
     ),
+    # the chain gun, 4 s (no reload in Dead Ducks Arcade): the empty box off, a new one on, its belt fed in, the
+    # barrels' cover shut
     "reloadChaingun": dict(
-        layers=[("oga:guns-reload/equipment_clicks3.wav", 3.2, 1.4, 0, 1)],
-        credit=("LFA, Equipment Clicks III", OGA_URL["clicks3"]),
+        layers=[
+            (C3, 3.24, 0.3, 0, 1),
+            (C3, 3.7, 0.3, 0.45, 0.8),
+            (KR + "beltHandle1.ogg", 0, 0.28, 1.2, 0.5),
+            (C3, 6.35, 0.3, 1.75, 1),
+            (C3, 7.2, 0.3, 2.3, 0.8),
+            (KR + "beltHandle2.ogg", 0, 0.28, 2.75, 0.5),
+            (C3, 11.38, 0.3, 3.3, 1),
+            (KR + "metalLatch.ogg", 0.03, 0.2, 3.7, 0.6),
+        ],
+        credit=(
+            "LFA, Equipment Clicks III; Kenney, RPG Audio (beltHandle, metalLatch)",
+            OGA_URL["clicks3"],
+        ),
     ),
     "reloadShotgun": dict(
-        layers=[("oga:guns-reload/equipment_clicks3.wav", 4.95, 1.6, 0, 1)],
+        layers=[(C3, 4.95, 1.6, 0, 1)],
         credit=("LFA, Equipment Clicks III", OGA_URL["clicks3"]),
     ),
+    # the grenade launcher, 4 s (no reload in Dead Ducks Arcade): broken open, three shells slid in, shut
     "reloadGlauncher": dict(
-        layers=[("oga:guns-reload/equipment_clicks3.wav", 6.4, 1.3, 0, 1)],
-        credit=("LFA, Equipment Clicks III", OGA_URL["clicks3"]),
+        layers=[(C3, 6.35, 0.3, 0, 1)]
+        + [(C3, 13.1, 0.36, 0.75 + i * 0.75, 0.85) for i in range(3)]
+        + [(C3, 16.23, 0.3, 3.15, 1), (KR + "metalLatch.ogg", 0.03, 0.2, 3.6, 0.6)],
+        credit=(
+            "LFA, Equipment Clicks III; Kenney, RPG Audio (metalLatch)",
+            OGA_URL["clicks3"],
+        ),
     ),
     # ---- items ----
     "medkit": dict(
@@ -422,36 +514,80 @@ SOUNDS = {
         0.5,
         ("Kenney, Impact Sounds (impactSoft_heavy)", KENNEY_IMPACT),
     ),
-    # ---- explosions: the grenade, the Jaime Bomb (bigger), the meteor ----
+    # ---- explosions. One boom for every explosive (the owner, Nov 16: the grenade's "sounds bad and should also be
+    # the same explosion sound for any explosive"): the grenade, the launcher's shell, the Jaime Bomb (played louder).
+    # A full crack, the deep body of a second recording under it, and a crunch.
     "boom": dict(
-        layers=[("oga:explosion-grenade/explosion1.ogg", 0, 1.6, 0, 1)],
-        drive=2,
-        credit=("EZduzziteh, Explosions (explosion1)", OGA_URL["explosions"]),
-    ),
-    "boomBig": dict(
-        layers=[("oga:explosion-big/explosion3.ogg", 0, 1.7, 0, 1)],
-        drive=2,
-        credit=("EZduzziteh, Explosions (explosion3)", OGA_URL["explosions"]),
-    ),
-    "meteor": dict(
-        layers=[("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 1.9, 0, 1)],
-        drive=2,
-        credit=("Kenney, Sci-fi Sounds (lowFrequency_explosion_000)", OGA_URL["scifi"]),
-    ),
-    # Dead Ducks Arcade's nuke: the biggest, a deep boom rolling away
-    "nuke": dict(
         layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.98, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 1.6, 0, 0.8),
+            ("oga:explosion-small/explosionCrunch_000.ogg", 0, 0.78, 0.01, 0.35),
+        ],
+        drive=2.5,
+        credit=(
+            "TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, "
+            "explosionCrunch_000)",
+            OGA_URL["tinyworlds"],
+        ),
+    ),
+    # the meteor and the nuke: catastrophic (the owner, Nov 16), each its own. The meteor: a deep, slowed impact that
+    # keeps rumbling for about four seconds
+    "meteor": dict(
+        layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.98, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 1.9, 0, 1),
+            ("oga:explosion-big/cannon_01.ogg", 0, 1.2, 0.02, 0.6, 1500),
+            ("oga:explosion-big/explosion3.ogg", 0, 1.7, 0.08, 0.45),
             (
                 "oga:explosion-big/NenadSimic_-_Muffled_Distant_Explosion.wav",
                 0,
-                3.0,
-                0,
-                1,
-            )
+                4.0,
+                0.25,
+                0.9,
+            ),
         ],
-        drive=2,
+        rate=0.8,
+        drive=3,
+        squash=True,
         kbps=48,
-        credit=("NenadSimic, Muffled Distant Explosion", OGA_URL["muffled"]),
+        credit=(
+            "TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion3); Kenney, Sci-fi Sounds "
+            "(lowFrequency_explosion_000); rubberduck, 25 CC0 bang / firework SFX (cannon_01); NenadSimic, Muffled "
+            "Distant Explosion",
+            OGA_URL["tinyworlds"],
+        ),
+    ),
+    # Dead Ducks Arcade's nuke: the biggest of all. A blast slowed far down, a roar that keeps coming (the long tail of
+    # a second explosion, darkened) and two deep rolls, about seven seconds
+    "nuke": dict(
+        layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.98, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 1.9, 0, 1),
+            ("oga:explosion-grenade/explosion1.ogg", 0.1, 3.9, 0.15, 0.7, 2500),
+            (
+                "oga:explosion-big/NenadSimic_-_Muffled_Distant_Explosion.wav",
+                0,
+                5.1,
+                0.1,
+                1,
+            ),
+            (
+                "oga:explosion-big/NenadSimic_-_Muffled_Distant_Explosion.wav",
+                0,
+                5.1,
+                1.4,
+                0.7,
+            ),
+        ],
+        rate=0.62,
+        drive=3,
+        squash=True,
+        kbps=48,
+        credit=(
+            "TinyWorlds, Explosion (explosion); EZduzziteh, Explosions (explosion1); Kenney, Sci-fi Sounds "
+            "(lowFrequency_explosion_000); NenadSimic, Muffled Distant Explosion",
+            OGA_URL["tinyworlds"],
+        ),
     ),
     # ---- eating and drinking ----
     "chomp": dict(
@@ -601,6 +737,11 @@ def make(name, d, srcs, kenney, sf2):
             else []
         )
         af += [f"lowpass=f={d['lp']}:poles=2"] if d.get("lp") else []
+        af += (
+            ["acompressor=threshold=0.05:ratio=8:attack=8:release=900:makeup=6"]
+            if d.get("squash")
+            else []
+        )
         af += [f"aresample={RATE}:resampler=soxr", LOOK] + (
             [ROOM] if d.get("room", True) else []
         )
@@ -609,7 +750,7 @@ def make(name, d, srcs, kenney, sf2):
             y, start = seamless(y, RATE, d["loop"])
             loop = [round(start, 4), round(start + d["loop"], 4)]
         else:
-            y = fades(y, RATE, fout=0.015)
+            y = fades(y, RATE, fin=d.get("fin", 0.005), fout=0.015)
             y = y[
                 : len(y) - np.argmax(np.abs(y[::-1]) > 1e-4)
             ]  # (trailing silence off)

@@ -49,8 +49,9 @@ def env(n, attack, hold, tau):
 
 
 def count_tick(sf2):
-    """the lobby countdown, each second: a soft, round blip on B5 (the bank's Sine Wave and a Vibraphone)"""
-    return play(sf2, [(0, 0, 8, 80, 83, 100, 0.07), (0, 1, 0, 11, 83, 60, 0.07)], 0.5)
+    """the lobby countdown, each second: a soft, low knock on B4, a Vibraphone over a Marimba, with no sine on top (the
+    owner, Nov 16: the blips before the last were harsh too, as B5 they were); build.py darkens it"""
+    return play(sf2, [(0, 0, 0, 11, 71, 72, 0.07), (0, 1, 0, 12, 71, 58, 0.07)], 0.6)
 
 
 def count_go(sf2):
