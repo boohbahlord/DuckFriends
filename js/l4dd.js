@@ -66,6 +66,10 @@ import {
   AMMO_PRICE,
   kitOf,
   openingById,
+  reloadOf,
+  l4Cool,
+  kindOf,
+  ARMS,
 } from "./l4ddrules.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
@@ -80,6 +84,7 @@ import {
   boardsBox,
   orbHTML,
   UP_ICONS,
+  weaponIcon,
 } from "./l4ddart.js";
 
 const RX = 56,
@@ -815,12 +820,95 @@ function seePts(s, ctx) {
   ptsShown = n;
   ptsEl.querySelector("b").textContent = n;
   if (got) {
+    const dbl = !!((s.hang.l4on || {}).double > clockNow()); // (Double Points: glowing yellow, a little bigger)
     const pop = document.createElement("span");
-    pop.className = "l4-pts-pop" + (got >= 25 ? " big" : "");
+    pop.className =
+      "l4-pts-pop" + (got >= 25 ? " big" : "") + (dbl ? " dbl" : "");
     pop.textContent = "+" + got;
     ptsEl.append(pop);
     setTimeout(() => pop.remove(), 900);
+    /* and a small one over my own duck, only for me (the owner's, Nov 16) */
+    const d = ctx.world.board.querySelector(".gduck.mine");
+    if (d) {
+      const q = document.createElement("span");
+      q.className = "l4-duck-pop" + (dbl ? " dbl" : "");
+      q.setAttribute("aria-hidden", "true");
+      q.textContent = "+" + got;
+      const b = d.querySelector(".gduck-body");
+      q.style.top =
+        (b
+          ? Math.round(
+              b.getBoundingClientRect().top - d.getBoundingClientRect().top,
+            )
+          : 0) + "px"; // (over its head)
+      d.append(q);
+      setTimeout(() => q.remove(), 900);
+    }
   }
+}
+
+/* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
+   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, or an
+   item's 0.75 s: the longest one when two run at once); hidden when none is. And under it, when I switch slots, a
+   tiny grey row of what's in my slots, the one in hand bright, that slides in and quickly fades */
+function coolBar(tag, s, me) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  let left = 0,
+    all = 1;
+  if (m) {
+    if (m.rl > now && m.rw && ARMS[m.rw]) {
+      left = m.rl - now;
+      all = reloadOf(s, me, m.rw);
+    }
+    for (const [w, t] of Object.entries(m.u || {})) {
+      const k = kindOf(w);
+      if (k === "ranged" || !ARMS[w]) continue; // (a gun's wait between shots isn't one: too quick to show)
+      const c = l4Cool(s, me, w),
+        l = t + c - now;
+      if (l > left) {
+        left = l;
+        all = c;
+      }
+    }
+  }
+  let el = tag.querySelector(".l4-cool");
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "l4-cool";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = "<i></i>";
+    tag.append(el);
+  }
+  const v = left > 0 ? Math.min(1, left / all).toFixed(3) : "0";
+  if (el._v !== v) {
+    el._v = v;
+    el.style.setProperty("--cl", v);
+    el.classList.toggle("off", v === "0");
+  }
+}
+let peekW = null;
+function peek(tag, s, me) {
+  const m = kitOf(s, me),
+    w = heldFn() || "";
+  if (!m || w === peekW) return;
+  const first = peekW === null;
+  peekW = w;
+  if (first) return; // (not when the game starts: only a switch)
+  let el = tag.querySelector(".l4-peek");
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "l4-peek";
+    el.setAttribute("aria-hidden", "true");
+    tag.append(el);
+  }
+  el.innerHTML = [...m.sl.filter(Boolean), m.g > 0 ? "grenade" : ""]
+    .filter(Boolean)
+    .map((x) => `<i${x === w ? ' class="on"' : ""}>${weaponIcon(x)}</i>`)
+    .join("");
+  el.classList.remove("go");
+  void el.offsetWidth;
+  el.classList.add("go");
 }
 function say(text) {
   if (!sayEl) return;
@@ -1151,6 +1239,7 @@ activity({
     boxSpun = false;
     stamina = 1;
     tired = false;
+    peekW = null;
     holding = null;
   },
   unmount(ctx) {
@@ -1382,6 +1471,9 @@ activity({
         sp.classList.toggle("full", stamina >= 1);
         sp.classList.toggle("tired", tired);
       }
+      const st = ctx.state();
+      coolBar(tag, st, ctx.me);
+      peek(tag, st, ctx.me);
     }
   },
   near(pos, ctx) {

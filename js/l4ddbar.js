@@ -7,7 +7,15 @@
    purple switch right of it, and the aim-and-attack stick with the jump button above it (phonepad.js); my HP shows on
    my duck's green bar. */
 import { ICONS, weaponIcon } from "./l4ddart.js";
-import { ARMS, slotsOf, kitOf, SLOT_KINDS, weaponName } from "./l4ddrules.js";
+import {
+  ARMS,
+  slotsOf,
+  kitOf,
+  SLOT_KINDS,
+  weaponName,
+  reloadOf,
+} from "./l4ddrules.js";
+import { now as clockNow } from "./clock.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
@@ -22,6 +30,15 @@ const count = (w, m) => {
 const spent = (w, m) => {
   const c = m && (m.am || {})[w];
   return w === "grenade" ? !m || m.g <= 0 : !!c && c[0] + c[1] <= 0;
+};
+/* a reload going on fills the weapon's box from the bottom with a darker color until it's done (the owner's, Nov 16):
+   a CSS animation as long as the reload, started where it is now */
+const reloadMeter = (s, me, w, m) => {
+  const now = clockNow();
+  if (!m || m.rw !== w || !(m.rl > now)) return "";
+  const all = reloadOf(s, me, w),
+    gone = Math.max(0, all - (m.rl - now));
+  return `<span class="l4s-rl" style="--rl:${Math.round(all)}ms;--rd:-${Math.round(gone)}ms" aria-hidden="true"></span>`;
 };
 const out = (s, me) => {
   const p = (s.hang.l4p || {})[me] || {};
@@ -59,7 +76,7 @@ export function mountL4Bar(S, api) {
         icon = w === "fl" ? ICONS.flashlight(!off) : w ? weaponIcon(w) : "";
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
-      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}><i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
     row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
@@ -160,7 +177,10 @@ export function l4Slider(api) {
     dots(id) {
       const k = id && kit(),
         n = k ? count(id === "fl" ? "" : id, k.m) : "";
-      return n ? `<small class="sp-n">${n}</small>` : "";
+      return (
+        (k ? reloadMeter(k.s, k.me, id, k.m) : "") +
+        (n ? `<small class="sp-n">${n}</small>` : "")
+      );
     },
     sig() {
       const k = kit();
