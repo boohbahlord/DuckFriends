@@ -90,6 +90,14 @@ export const L4 = {
   DEAD_MS: 4000, // ms a dead zombie lies there, fading (3 s longer than its first second: the owner's, Nov 4)
   FELL_MS: 1000, // ms a zombie counts as just killed (a drop due falls where it lies)
 };
+/* Safe Keeping (the owner's, Nov 16): a halo in the special slot, never used by hand. When its duck goes down it keeps
+   everything bought from the Butler, and it gets the duck up again: at once when nobody else is standing (or alone, or
+   a computer), else when its player presses the revive key (E) while down. First GLOW ms of a light blue glow, then up
+   with INV ms of nothing hurting it; spent. The Butler sells it (PRICE) and the fireplace has it with the items */
+export const SAFE = { PRICE: 2500, GLOW: 1200, INV: 6000 };
+const hasSafe = (s, id) => slotsOf(s, id).includes("safekeep");
+export const invulnOf = (s, id, now) =>
+  ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
 const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
 /* the owner's rounds: up to which round, zombies in it and how many more for each player past the first [fewest, most],
@@ -270,6 +278,7 @@ export const ARMS = {
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
   /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 HP to the zombie it hits; 3 throws, a Max Ammo
      gives them back */
+  safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
   chair: { kind: "special", cool: ITEM_COOL, all: 3, dmg: 3, speed: 600 },
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
@@ -322,6 +331,7 @@ export const ITEMS = [
   "jetpack",
   "fireball",
   "chair",
+  "safekeep",
 ];
 export const WEAPON_ODDS = 0.85;
 export const POOL = [...WEAPONS, ...ITEMS];
@@ -334,6 +344,7 @@ const NAMES = {
   dagger: "Dagger",
   shotgun: "Shotgun",
   medkit: "Medkit",
+  safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Sniper",
   smg: "SMG",
@@ -425,6 +436,8 @@ const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's,
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
+export const safePrice = (s) =>
+  saleOn(s) ? Math.ceil(SAFE.PRICE / 2) : SAFE.PRICE; // (a Sale halves it, every time)
 export const saleOn = (s) => !!(s && s.hang && s.hang.l4sale); // (for DROP.FOR: dropTick ends it)
 export const priceFor = (s, id, what, n) => {
   const full = what === "box" ? BOX.price : priceOf(what, n);
@@ -888,7 +901,10 @@ export const kitOf = (s, id) => ((s && s.hang && s.hang.l4a) || {})[id] || null;
 export const slotsOf = (s, id) => (kitOf(s, id) || {}).sl || START;
 /* is w one of this duck's weapons? (what it can hold out and use; the grenades are always there) */
 export const l4Holds = (s, id, w) =>
-  !!w && kindOf(w) !== "grenade" && slotsOf(s, id).includes(w);
+  !!w &&
+  kindOf(w) !== "grenade" &&
+  w !== "safekeep" &&
+  slotsOf(s, id).includes(w);
 export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
@@ -1193,6 +1209,7 @@ function setUp(s, now) {
   s.hang.l4u = {};
   s.hang.l4box = {};
   s.hang.l4fo = {};
+  s.hang.l4inv = {};
   s.hang.l4dr = [];
   s.hang.l4on = {};
   s.hang.l4sale = null;
@@ -1293,6 +1310,14 @@ function l4Act(s, a, now) {
     waitTick(s, now);
     return true;
   } // (End turn, or Ready in round 0; ghosts and downed ducks may press it too)
+  if (a.do === "sk") {
+    const p4 = s.hang.l4p || {},
+      p = p4[id];
+    if (L.over || !p || !p.dn || !p.sk || p.skAt || !hasSafe(s, id))
+      return false;
+    s.hang.l4p = { ...p4, [id]: { ...p, skAt: now + SAFE.GLOW, rv: null } };
+    return true;
+  } // (Safe Keeping: I get myself up, E while down)
   if (L.over || !standing(s, id)) return false;
   const [mx, my] = at(me);
   if (a.do === "rev") {
@@ -1309,6 +1334,19 @@ function l4Act(s, a, now) {
     const [tx, ty] = at(pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
+    if (me.w === "medkit" && slotsOf(s, id).includes("medkit")) {
+      /* a medkit in my hand: up at once, full, with what they bought; the medkit is used up (the owner's, Nov 16) */
+      getUp(s, t, now, true);
+      const kit = kitOf(s, id),
+        am = { ...kit.am };
+      delete am.medkit;
+      s.hang.l4a = {
+        ...s.hang.l4a,
+        [id]: { ...kit, am, sl: kit.sl.map((w) => (w === "medkit" ? "" : w)) },
+      };
+      addFx(s, { kind: "l4medrev", by: id, who: [t], t: now });
+      return true;
+    }
     s.hang.l4p = { ...p4, [t]: { ...tp, rv: { by: id, at: now } } };
     return true;
   }
@@ -1337,6 +1375,15 @@ function l4Act(s, a, now) {
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
+  if (what === "safekeep") {
+    if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
+    const price = safePrice(s);
+    if (hasSafe(s, id) || ptsOf(s, id) < price) return false;
+    if (!give(s, id, "safekeep", hand)) return false;
+    addPts(s, id, -price);
+    addFx(s, { kind: "l4buy", by: id, who: [], w: what, t: now });
+    return true;
+  }
   if (GUN_SHOP.includes(what)) {
     if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
     return buyGun(s, id, what, hand, false, now);
@@ -1617,6 +1664,7 @@ export function l4Use(s, a, now) {
     kind = kindOf(what);
   if (!L || L.over || !p || !m0 || !standing(s, id) || !A) return false;
   if (kind !== "grenade" && !m0.sl.includes(what)) return false;
+  if (what === "safekeep") return false; // (never by hand: it works by itself)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
   if (now - (m.u[what] || 0) < l4Cool(s, id, what) * (A.auto ? 0.8 : 1))
@@ -2027,21 +2075,67 @@ function fireTick(s, zs, now, T, p4) {
 function hurtDuck(s, p4, id, now, w = "") {
   const p = p4[id];
   if (!p || p.dn || p.gh) return false;
-  const hp = invuln(s) ? p.hp : p.hp - 1; // (Invulnerability: it only flashes)
-  if (w && !invuln(s)) pwHit(s, id, w, now, hp <= 0);
+  const safe = invuln(s) || invulnOf(s, id, now); // (Invulnerability, or just up from Safe Keeping: it only flashes)
+  const hp = safe ? p.hp : p.hp - 1;
+  if (w && !safe) pwHit(s, id, w, now, hp <= 0);
   if (hp > 0) {
     p4[id] = { ...p, hp, at: now };
     return false;
   }
   p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
   const u = upOf(s, id);
-  if (u.hp) s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
+  if (hasSafe(s, id)) {
+    /* Safe Keeping: nothing bought is lost; up at once when nobody else is standing (or a computer), else on E */
+    const alone = !players(s).some((o) => {
+      const q = p4[o] || P4(s, o);
+      return o !== id && !!q && !q.dn && !q.gh;
+    });
+    p4[id] =
+      s.players[id] && !s.players[id].bot && !alone
+        ? { ...p4[id], sk: 1 }
+        : { ...p4[id], sk: 1, skAt: now + SAFE.GLOW };
+  } else if (u.hp) {
+    p4[id] = { ...p4[id], uhp: u.hp }; // (kept for a medkit's revive)
+    s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
+  }
   if (s.players[id]) s.players[id].dead = true;
   s.hang.still = { ...(s.hang.still || {}), [id]: now + L4.BLEED + 60000 };
   const b = { ...(s.hang.l4b || {}) };
   delete b[id];
   s.hang.l4b = b;
   return true;
+}
+/* a downed duck up again at once: by a medkit (full HP, and the max HP it bought back) or by its own Safe Keeping (spent;
+   INV ms of nothing hurting it; it lost nothing) */
+function getUp(s, id, now, full, safe) {
+  const p4 = { ...(s.hang.l4p || {}) },
+    p = p4[id];
+  if (!p) return;
+  if (p.uhp)
+    s.hang.l4u = { ...s.hang.l4u, [id]: { ...upOf(s, id), hp: p.uhp } };
+  p4[id] = { hp: full ? maxHp(s, id) : L4.BACK_HP, at: now };
+  s.hang.l4p = p4;
+  if (s.players[id]) delete s.players[id].dead;
+  const still = { ...(s.hang.still || {}) };
+  delete still[id];
+  s.hang.still = still;
+  if (safe) {
+    const kit = kitOf(s, id);
+    if (kit) {
+      const am = { ...kit.am };
+      delete am.safekeep;
+      s.hang.l4a = {
+        ...s.hang.l4a,
+        [id]: {
+          ...kit,
+          am,
+          sl: kit.sl.map((w) => (w === "safekeep" ? "" : w)),
+        },
+      };
+    }
+    s.hang.l4inv = { ...(s.hang.l4inv || {}), [id]: now + SAFE.INV };
+    addFx(s, { kind: "l4safe", by: id, who: [id], t: now });
+  }
 }
 /* the melee weapons mid-swing hit every zombie in their bubble, each once */
 function meleeHits(s, now) {
@@ -2306,6 +2400,12 @@ function l4Tick(s, now) {
     let p = p4[id];
     if (!p) continue;
     if (p.dn) {
+      if (
+        p.sk &&
+        !p.skAt &&
+        !ids.some((o) => o !== id && p4[o] && !p4[o].dn && !p4[o].gh)
+      )
+        p = { ...p, skAt: now + SAFE.GLOW }; // (Safe Keeping, and nobody else standing now: up by itself)
       const rv = p.rv,
         by = rv && s.pos[rv.by];
       if (
@@ -2315,13 +2415,17 @@ function l4Tick(s, now) {
           Math.hypot(...minus(at(by), at(s.pos[id]))) > L4.REACH * 1.8)
       )
         p = { ...p, rv: null };
-      else if (rv && now - rv.at >= L4.REVIVE) {
+      else if (p.skAt && now >= p.skAt) {
+        s.hang.l4p = p4;
+        getUp(s, id, now, false, true);
+        p = s.hang.l4p[id];
+      } else if (rv && now - rv.at >= L4.REVIVE) {
         p = { hp: L4.BACK_HP, at: now };
         if (s.players[id]) delete s.players[id].dead;
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
-      } else if (!rv && now >= p.dn) {
+      } else if (!rv && !p.skAt && now >= p.dn) {
         p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
         const q = s.pos[id];
         if (s.players[id]) delete s.players[id].dead;
@@ -2389,8 +2493,8 @@ function l4Tick(s, now) {
   }
   s.hang.brd = brd;
   s.hang.l4b = bl;
-  /* nobody standing: the game is over */
-  const up = ids.filter((id) => standing(s, id));
+  /* nobody standing: the game is over (a duck Safe Keeping is getting up counts as standing) */
+  const up = ids.filter((id) => standing(s, id) || !!(P4(s, id) || {}).skAt);
   if (!up.length && ids.length) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};

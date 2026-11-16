@@ -121,6 +121,11 @@ ${box(13.2, 3.8, 18, 6.4, 1.8, "#f4f8ff", 1.1)}<rect x="17.6" y="5" width="13" h
 <path d="M25.4 3.8V5.4M28 3.8V5.4M30 3.8V5" stroke="${INK}" stroke-width=".6"/>${shine("M15 4.9H30", 0.6, 0.7)}
 ${box(31, 5.4, 3, 3.2, 0.6, "#c9a24a", 0.9)}<path d="M34 7H42.6" stroke="${INK}" stroke-width="1.8" stroke-linecap="round"/><path d="M34 7H42.6" stroke="${STEEL}" stroke-width=".8" stroke-linecap="round"/><circle cx="43.2" cy="8.4" r=".9" fill="#ff3d6e"/></svg>`;
 
+/* Safe Keeping: a halo, a gold ring seen a little from above, glowing a heavenly light blue (the owner's, Nov 16) */
+const HALO = `<svg viewBox="0 0 30 30"><ellipse cx="15" cy="15" rx="12.5" ry="6.4" fill="none" stroke="#bfe9ff" stroke-width="5.4" opacity=".45"/>
+<ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="${INK}" stroke-width="4.4"/><ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="#ffd23f" stroke-width="2.6"/>
+<path d="M6.6 13.2Q10 10.6 15 10.4" fill="none" stroke="#fff6c0" stroke-width="1.2" stroke-linecap="round"/><path d="M21 19.2Q23.4 18.4 24.6 17" fill="none" stroke="#c98a12" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+
 /* a tile's picture: the weapon turned 45°, its grip down at the left, filling a square (as specials.js' iconOf); k
    zooms in (under 1: its far corners go past the square) or out. A light edge (css: .l4-gun) keeps the dark metal
    showing on the dark slots */
@@ -145,6 +150,7 @@ export const GUNS = {
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8), w: 1.2 },
+  safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,
     icon: iconOf(ADRENALINE, 0.8),

@@ -4364,3 +4364,10 @@ Zombies only; Hangout's Duck Cabin unchanged).
   a soft blood-crimson glow breathes over the board while it's on (.l4-killglow). Sale: the Butler and the fireplace
   breathe gold while it's on, and its announcement is the word "Sale" in gold metal letters (.l4-got-gold). Max Ammo:
   every hotbar box (and the phone's slider) flashes in its own color, quickly fading (.l4-flash).
+- PR 4 (Solomon the 2nd): medkit revive: holding a medkit while reviving a downed duck brings it up at once with full HP
+  and the max HP it had bought; the medkit is used up (a downed duck's bought max HP is kept as `uhp` for this). Safe
+  Keeping (`safekeep`, a halo, the purple slot; the Butler sells it for 2,500, half in a Sale; the fireplace can roll it):
+  going down with it loses nothing bought. Alone (or a computer) it gets up by itself; with others standing, E (or the
+  button, "Get up (Safe Keeping)") gets me up. 1.2 s of light-blue glow, then up with 2 HP, the halo is spent, and 6 s of
+  no damage (my duck breathes in see-through while glowing; a counter 6 to 1, then "Vitals Stabilized"). Key 4 on it
+  shows a small note on how it works instead of holding it.
