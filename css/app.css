@@ -42,6 +42,12 @@
   font-display: swap;
 }
 @font-face {
+  font-family: "Jersey 15";
+  src: url(../assets/fonts/jersey-15-latin-400-normal.woff2) format("woff2");
+  font-weight: 400;
+  font-display: swap;
+} /* (the pixel look's words: SIL Open Font License, assets/fonts/jersey-15-OFL.txt) */
+@font-face {
   font-family: "Grenze Gotisch";
   src: url(../assets/fonts/grenze-gotisch-latin-500-normal.woff2)
     format("woff2");
@@ -16598,3 +16604,24 @@ html.still .l4-crit {
 .gs-slot-note {
   padding: 0 0.2rem 0.4rem;
 }
+
+/* ---------- the pixel look (owner, Nov 16; js/pixel.js) ----------
+   Hidden behind ?pixel until every screen is done. Every word in Jersey 15, as big as today's words (font-size-adjust
+   matches their x-height); pictures made into pixels show scaled up without smoothing. --px is one pixel's size. */
+html.pixel,
+html.pixel *,
+html.pixel *::before,
+html.pixel *::after {
+  font-family: "Jersey 15", monospace !important;
+  font-size-adjust: 0.52;
+}
+html.pixel img.px {
+  image-rendering: pixelated;
+}
+.gduck-body img.px {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: calc(var(--sz) * -0.08);
+  transition: transform 0.1s ease-out;
+} /* (a duck made into pixels stands where its drawing stood: .gduck-body svg) */

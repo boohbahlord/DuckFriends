@@ -8,6 +8,7 @@ import { start, current } from "./router.js";
 import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
 import "./front.js";
+import "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import "./rooms.js";
 import "./lobby.js";
 import "./game.js";

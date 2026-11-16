@@ -170,6 +170,8 @@ export const MAN = {
   start: "sudo start: starts the game from the lobby, like the Start button.",
   secret: "Some codes unlock things.",
   fps: "fps [on | off]: a small readout at the top left: frames a second, how long each part of a frame takes, long tasks and the page's elements. It stays on, on this device, until fps off (?fps in the address turns it on too).",
+  pixel:
+    "pixel [on | off]: the pixel look, while it's being built. It stays on, on this device, until pixel off (?pixel in the address turns it on too, ?pixel=0 off).",
   forgame:
     "forgame show: the game's settings (anyone). sudo forgame all-timer off|on · timer off|on catch-up|answer|writing [seconds] · turn-end everyone|half|2/3|3/4 · order random|rotate · freeroam on|off · discussion on|off (the Discussion round after each vote, off by default) · unvote-stops on|off (taking a vote back below the share stops the countdown) · gravity low|normal · silly on|off · justin on|off (Duck Cabin's Justin on the board; he never counts) · ghosts on|off (Duck Cabin: a knocked-down duck's ghost walks about until Space) · and mutes everyone sees: forgame [roundsN] [stage[N] voting lobby writing discussing stats] \\mute on|off bubble ping text all @names (roundsN: for N turns; stage2 voting: the next two voting stages; @names can be Justin and the other characters too).",
   roundstats:
