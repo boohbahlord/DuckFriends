@@ -5,7 +5,8 @@
      - one is always carried by a zombie in rounds 1 to 5, dropped where it dies;
      - the other two are at two of these, picked at random: the bathroom sink, the kitchen counter, the couch, or the
        fireplace. The fireplace's rolls before its weapons and items: 5% on the first spin, 10% more on every spin after
-       (anyone's), until someone gets it.
+       (anyone's), until someone gets it. The Butler sells that one too, for 750 (the owner's, Nov 16 21:21Z), except
+       while it's out in a spin; bought, it's gone from the fireplace.
    A part on the floor stays there, never fading, until a duck walks over it. Every part goes into one pool everyone
    shares (the middle left of the screen). E at the box fits every part the pool holds; once all four are in, the next E
    turns the power on: every light, the balcony's and the porch's too, and the TV; every flashlight turns off by itself.
@@ -43,6 +44,7 @@ export const PW = {
   E: [2300, 2300], // where E works from: the deck in front of it
   REACH: 130, // world px from there
   SHOP: 250, // the Butler's part
+  SHOP_FIRE: 750, // the fireplace's part, bought from the Butler instead (the owner's, Nov 16 21:21Z)
   FIRST: 6, // rounds the power lasts the first time
   ZOMBIE_BY: 5, // a zombie in rounds 1 to 5 carries a part
   FIRE: 0.05, // the fireplace's part: 5% on the first spin …
@@ -257,12 +259,15 @@ function take(s, k, r, by, now, h) {
   h.addFx(s, { kind: "l4pwgot", k, r, by, who: [], t: now });
 }
 /* the fireplace's turn, before its weapons: the part it holds, or a jerry can; "" for neither */
+/* is the fireplace's part out in its spin right now (to be taken there, not bought)? */
+const fireOut = (s, pw) =>
+  Object.values(s.hang.l4box || {}).some(
+    (b) => b && isPw(b.w) && pwOf(b.w).k === pw.fire,
+  );
 export function powerFire(s) {
   const pw = s.hang.pw;
   if (!pw) return "";
-  const held = Object.values(s.hang.l4box || {}).some(
-    (b) => b && isPw(b.w) && pwOf(b.w).k === pw.fire,
-  );
+  const held = fireOut(s, pw);
   if (pw.fire && !held) {
     if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries)
       return "pw:" + pw.fire;
@@ -277,13 +282,19 @@ export function powerTake(s, w, by, now, h) {
   if (k === s.hang.pw.fire) s.hang.pw = { ...s.hang.pw, fire: "" };
   take(s, k, r, by, now, h);
 }
-/* the Butler's part: 250 points, once (whoever buys it first) */
-export function powerBuy(s, id, now, h) {
-  const pw = s.hang.pw;
-  if (!pw || !pw.shop || h.ptsOf(s, id) < PW.SHOP) return false;
-  h.addPts(s, id, -PW.SHOP);
-  const k = pw.shop;
-  s.hang.pw = { ...pw, shop: "" };
+/* the Butler's part: 250 points, once (whoever buys it first). fire: the fireplace's part instead, for 750; once it's
+   bought it's gone from the fireplace too (and once the fireplace gives it, gone from the Butler) */
+export const fireForSale = (s) => {
+  const pw = s && s.hang && s.hang.pw;
+  return pw && pw.fire && !fireOut(s, pw) ? pw.fire : "";
+};
+export function powerBuy(s, id, now, h, fire = false) {
+  const pw = s.hang.pw,
+    k = fire ? fireForSale(s) : pw && pw.shop,
+    price = fire ? PW.SHOP_FIRE : PW.SHOP;
+  if (!k || h.ptsOf(s, id) < price) return false;
+  h.addPts(s, id, -price);
+  s.hang.pw = { ...pw, ...(fire ? { fire: "" } : { shop: "" }) };
   take(s, k, 0, id, now, h);
   h.addFx(s, { kind: "l4buy", by: id, who: [], w: "part", t: now });
   return true;
