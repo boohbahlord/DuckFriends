@@ -15486,6 +15486,120 @@ html.moving .eye-tears .tdrop.t2 {
     display: none;
   }
 }
+/* Dead Ducks Arcade's power box (l4ddpowerui.js): the box on the balcony (96 x 150, its foot 8 up from the bottom), the
+   count under it after E, its fuel sign's words; a part or a jerry can lying about, bobbing; everyone's pool of parts at
+   the middle left (small on a phone) */
+.l4-pw {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.l4-pw img {
+  position: absolute;
+  left: calc(-34px * var(--k, 1));
+  top: calc(-142px * var(--k, 1));
+  width: calc(96px * var(--k, 1));
+  height: calc(150px * var(--k, 1));
+  filter: drop-shadow(0 0 0 #0000);
+}
+.l4-pw.on img {
+  filter: drop-shadow(0 0 calc(6px * var(--k, 1)) #7dff9a66);
+}
+.l4-pw-n,
+.l4-pw-fuel {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 800;
+  color: #f4f4f0;
+  text-shadow: 0 1px 2px #000, 0 0 4px #000;
+}
+.l4-pw-n {
+  left: calc(-24px * var(--k, 1)); /* (under the box's left half: a duck at it stands in front of its middle) */
+  top: calc(4px * var(--k, 1));
+  font-size: calc(18px * var(--k, 1));
+  padding: 0 0.4em;
+  border-radius: 0.4em;
+  background: rgba(10, 12, 24, 0.7);
+}
+.l4-pw-fuel {
+  left: calc(48px * var(--k, 1));
+  top: calc(-112px * var(--k, 1));
+  font-size: calc(11px * var(--k, 1));
+}
+.l4-pk {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(40px * var(--k, 1));
+  height: calc(40px * var(--k, 1));
+  margin: calc(-46px * var(--k, 1)) 0 0 calc(-20px * var(--k, 1));
+  pointer-events: none;
+}
+.l4-pk.on-top {
+  margin-top: calc(-40px * var(--k, 1));
+}
+.l4-pk i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  filter: drop-shadow(0 0 3px #ffe9a0) drop-shadow(0 0 8px #ffd23f88);
+  animation: l4-drop-bob 1.6s ease-in-out infinite;
+}
+.l4-pk svg,
+.l4-parts svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.l4orb.k-part {
+  --c: #c9a24a;
+  --cl: #ffe7a6;
+  --cd: #6b5016;
+}
+.l4-parts {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 31000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(10, 12, 24, 0.45);
+  pointer-events: none;
+}
+.l4-part {
+  display: block;
+  width: 40px;
+  height: 40px;
+  animation: l4-part-in 0.5s ease-out;
+}
+@keyframes l4-part-in {
+  0% {
+    transform: scale(1.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (max-width: 760px), (max-height: 520px) {
+  .l4-parts {
+    left: 6px;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 7px;
+  }
+  .l4-part {
+    width: 22px;
+    height: 22px;
+  }
+}
 /* Quacky Zombies' drops: the symbol floats over the floor, bobbing, with a green glow and a ring of light under it; in
    its last 10 s it blinks (l4dddrops.js draws them) */
 .l4-drop {
