@@ -510,7 +510,7 @@ export function l4Got(k) {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
     sfx.nuke();
-  } else sfx.bell();
+  } else sfx.dropGot();
 }
 /* ---------- the Nuke on the screen (owner 2026-11-16) ----------
    Grey pixel static sweeps out from the middle in a circle and covers the screen in a second (NUKE.SWEEP: the zombies

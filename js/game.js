@@ -258,6 +258,7 @@ import {
   anyWord,
   CLUE_GRACE,
   gridOf,
+  tileAt,
 } from "./quackrules.js";
 import {
   quackBoardHTML,
@@ -1284,6 +1285,8 @@ function drawDucks(now = clockNow()) {
       R.me,
       hang,
     ); // (quiet footsteps in every mode; Quacky Zombies has its own: feet.js)
+  if (!hang && onBoardPhase() && s.pos[R.me])
+    tileKnock(s, posOf(R.me), performance.now());
   const boxes = [],
     puffs = [],
     wearsX = new Set(),
@@ -4993,6 +4996,27 @@ function heardReloads(s) {
     if (!seen[w] && r > now + 100) hush(reloadVoices[w]); // (given up before its end: switched weapons)
   reloadsSeen = seen;
 }
+/* stepping onto another tile or answer (the owner, Nov 16: "a sound for stepping over different tiles"): a faint
+   knock as my duck enters it, a little higher toward the right (Agree, B, Not a Dunce), nothing on the strip between
+   tiles; Story Chain and Trivia have rows, not tiles */
+let tileWas = null,
+  tileAtMs = 0;
+function tileKnock(s, p, now) {
+  if (!p || p.x < 0 || isSc(s) || isTv(s) || cam) return void (tileWas = null);
+  const c = isQuack(s) && s.phase !== "choice" ? tileAt(s, p) : colAt(s, p.x),
+    n =
+      isQuack(s) && s.phase !== "choice"
+        ? (s.wq.ids || []).length
+        : twoSided(s)
+          ? 2
+          : 7;
+  if (c === tileWas) return;
+  const was = tileWas;
+  tileWas = c;
+  if (was === null || c < 0 || now - tileAtMs < 120) return; // (the first look, the strip, or a duck wobbling on an edge)
+  tileAtMs = now;
+  sfx.tileIn({ rate: 0.88 + (0.24 * (c % n)) / Math.max(1, n - 1) });
+}
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
    stands (sound.js fades it with its distance from my duck) */
 function heard(id) {
@@ -5768,6 +5792,7 @@ function paintNow(force) {
     main.innerHTML = viewHTML(s);
     const vin = $(".vd-in", main);
     if (vin && !touchOnly()) vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
+    if (isHang(s) && s.phase === "hang") loadSounds("cabin"); // (Duck Cabin's own: its lamps, lever, cards …)
     if (isHang(s) && s.phase === "hang")
       world = mountWorld($(".hang-board", main), {
         room: () => R,

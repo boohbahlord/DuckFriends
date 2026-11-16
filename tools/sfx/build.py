@@ -52,15 +52,23 @@ OGA_URL = {
     "drink": "https://opengameart.org/content/liquid-bottle-drink-set",
     "muffled": "https://opengameart.org/content/muffled-distant-explosion",
     "tinyworlds": "https://opengameart.org/content/explosion-0",
+    "workshop": "https://opengameart.org/content/68-workshop-sounds",
+    "wood100": "https://opengameart.org/content/100-cc0-metal-and-wood-sfx",
+    "break75": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
+    "crack35": "https://opengameart.org/content/35-wooden-crackshitsdestructions",
+    "zombies": "https://opengameart.org/content/zombies-sound-pack",
 }
 KENNEY_IMPACT = "https://kenney.nl/assets/impact-sounds"
 KENNEY_UI = "https://kenney.nl/assets/ui-audio"
 KENNEY_IFACE = "https://kenney.nl/assets/interface-sounds"
 KENNEY_RPG = "https://kenney.nl/assets/rpg-audio"
+KENNEY_CASINO = "https://kenney.nl/assets/casino-audio"
+KENNEY_JINGLES = "https://kenney.nl/assets/music-jingles"
 KI = "kn:kenney_impactsounds/Audio/"
 KF = "kn:kenney_interfacesounds/Audio/"
 KU = "kn:kenney_uiaudio/Audio/"
 KR = "kn:kenney_rpgaudio/Audio/"
+KC = "kn:kenney_casinoaudio/Audio/"
 GR = "oga:guns-reload/"
 EC = GR + "equipmentclicks.wav"
 C3 = GR + "equipment_clicks3.wav"
@@ -76,6 +84,13 @@ def ui(path, credit=("Kenney, Interface Sounds", KENNEY_IFACE)):
     """a faint menu sound: short, no room"""
     return one(path, 0.6, credit, room=False, kbps=32)
 
+
+# the fireplace's spin: its clicker's ticks, close together at first and slowing to a stop (s)
+TICKS, _t, _gap = [], 0.0, 0.055
+while _t < 4.0:
+    TICKS.append(_t)
+    _t += _gap
+    _gap *= 1.085
 
 GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
 
@@ -589,6 +604,13 @@ SOUNDS = {
             OGA_URL["tinyworlds"],
         ),
     ),
+    # ... and the ringing in the ears it leaves, played with it (sound.js SFX.nuke)
+    "nukeRing": dict(
+        sf="nuke_ring",
+        lp=6000,
+        room=False,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     # ---- eating and drinking ----
     "chomp": dict(
         layers=[("oga:eat/crunch.1.ogg", 0, 0.5, 0, 1)],
@@ -611,6 +633,195 @@ SOUNDS = {
     "ping": ui(KF + "glass_001.ogg"),
     "pop": ui(KF + "drop_002.ogg"),
     "boop": ui(KF + "select_001.ogg"),
+    # ---- batch 3: Dead Ducks Arcade's boards, groans, fireplace spin, sales and drops ----
+    # a board torn off a window, three takes
+    "l4crack": dict(
+        takes=[
+            [("oga:board-broken/wood_breaking_01.ogg", 0, 0.56, 0, 1)],
+            [("oga:board-broken/bfh1_wood_breaking_01.ogg", 0, 0.3, 0, 1)],
+            [("oga:board-broken/crack05.flac", 0.08, 0.75, 0, 1)],
+        ],
+        credit=(
+            "rubberduck, 100 CC0 metal and wood SFX and 75 CC0 breaking / falling / hit SFX; Independent.nu, 35 "
+            "wooden cracks, hits, destructions",
+            OGA_URL["wood100"],
+        ),
+    ),
+    # a board nailed back up: a hammer on a nail through a plank, three takes
+    "l4nail": dict(
+        takes=[
+            [
+                ("oga:board-nailed/workshop_-_wood_hammering.wav", t, 0.3, 0, 1),
+                (KI + f"impactPlank_medium_00{i}.ogg", 0, 0.4, 0.005, 0.5),
+            ]
+            for i, t in ((0, 0.2), (1, 1.49), (2, 3.59))
+        ],
+        credit=(
+            "bart, 68 Workshop Sounds (wood hammering); Kenney, Impact Sounds (impactPlank_medium)",
+            OGA_URL["workshop"],
+        ),
+    ),
+    # a zombie groaning, four takes (sound.js plays them at a slightly different pitch each time)
+    "l4groan": dict(
+        takes=[
+            [(f"oga:zombie-groan/zombie-{n}.wav", 0, 0.9, 0, 1)] for n in (1, 5, 10, 15)
+        ],
+        lp=2600,
+        rate=0.92,
+        credit=("artisticdude, Zombies Sound Pack", OGA_URL["zombies"]),
+    ),
+    # the fireplace's spin, 4.2 s: a prize wheel's clicker slowing down, then a bell as it stops on a weapon
+    "l4slot": dict(
+        layers=[
+            (
+                KR + "metalClick.ogg",
+                0.065,
+                0.07,
+                round(t, 3),
+                round(0.55 - 0.2 * t / 4, 3),
+            )
+            for t in TICKS
+        ]
+        + [(KI + "impactBell_heavy_001.ogg", 0, 1.2, 4.12, 0.9, 4000)],
+        credit=(
+            "Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy)",
+            KENNEY_RPG,
+        ),
+    ),
+    # a sale: coins in the hand and a small ding
+    "l4till": dict(
+        layers=[
+            (KR + "handleCoins.ogg", 0, 0.6, 0, 1),
+            (KF + "glass_003.ogg", 0, 0.6, 0.12, 0.45),
+        ],
+        credit=(
+            "Kenney, RPG Audio (handleCoins) and Interface Sounds (glass)",
+            KENNEY_RPG,
+        ),
+    ),
+    # a drop: a soft chime as it falls from a zombie, a steel-drum jingle when it's taken
+    "dropIn": dict(
+        layers=[(KF + "glass_004.ogg", 0, 0.8, 0, 1)],
+        credit=("Kenney, Interface Sounds (glass)", KENNEY_IFACE),
+    ),
+    "dropGot": dict(
+        layers=[
+            (
+                "kn:kenney_musicjingles/Audio/Steel jingles/jingles_STEEL09.ogg",
+                0,
+                0.6,
+                0,
+                1,
+            )
+        ],
+        credit=("Kenney, Music Jingles (steel)", KENNEY_JINGLES),
+    ),
+    # the flashlight (key 0): its own two clicks
+    "flashOn": dict(
+        layers=[(KF + "switch_005.ogg", 0, 0.3, 0, 1)],
+        room=False,
+        kbps=32,
+        credit=("Kenney, Interface Sounds (switch)", KENNEY_IFACE),
+    ),
+    "flashOff": dict(
+        layers=[(KF + "switch_006.ogg", 0, 0.3, 0, 1)],
+        room=False,
+        kbps=32,
+        credit=("Kenney, Interface Sounds (switch)", KENNEY_IFACE),
+    ),
+    # stepping onto another tile or answer (game.js tileKnock): a casino chip laid down, soft (sound.js pitches it
+    # by the tile)
+    "tileIn": dict(
+        layers=[(KC + "chipLay1.ogg", 0, 0.4, 0, 1)],
+        room=False,
+        kbps=32,
+        credit=("Kenney, Casino Audio (chipLay)", KENNEY_CASINO),
+    ),
+    # ---- batch 3: Duck Cabin ----
+    # a lamp's switch, on and off
+    "lampOn": one(
+        KU + "switch7.ogg", 0.3, ("Kenney, UI Audio (switch)", KENNEY_UI), kbps=32
+    ),
+    "lampOff": one(
+        KU + "switch8.ogg", 0.3, ("Kenney, UI Audio (switch)", KENNEY_UI), kbps=32
+    ),
+    # the power box's big lever: a heavy metal clunk and its latch
+    "lever": dict(
+        layers=[
+            (KI + "impactMetal_heavy_001.ogg", 0, 0.6, 0, 1, 2500),
+            (KR + "metalLatch.ogg", 0.03, 0.2, 0.09, 0.6),
+        ],
+        credit=(
+            "Kenney, Impact Sounds (impactMetal_heavy) and RPG Audio (metalLatch)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    # the fire put out: water hissing on it; candles and lanterns blown out: a short, soft breath
+    "fireOut": dict(
+        layers=[("oga:adrenaline-injector/steam_hisses_-_Marker_1.wav", 0, 0.9, 0, 1)],
+        lp=4000,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
+    ),
+    "candleOut": dict(
+        layers=[("oga:knife-swish/swish-1.wav", 0, 0.35, 0, 1)],
+        lp=1400,
+        rate=0.7,
+        credit=("artisticdude, Swishes Sound Pack", OGA_URL["swishes"]),
+    ),
+    # lit again: a match struck (a scratch, then the flame catching)
+    "relight": dict(
+        layers=[
+            (KF + "scratch_002.ogg", 0, 0.25, 0, 0.8, 5000),
+            ("oga:knife-swish/swosh-01.flac", 0, 0.4, 0.12, 0.5, 1500),
+        ],
+        credit=(
+            "Kenney, Interface Sounds (scratch); qubodup, Swish: bamboo stick weapon swooshes (swosh-01)",
+            KENNEY_IFACE,
+        ),
+    ),
+    # the TV's power button
+    "tvClick": one(
+        KU + "switch33.ogg", 0.3, ("Kenney, UI Audio (switch)", KENNEY_UI), kbps=32
+    ),
+    # blackjack: a card dealt (four takes), chips stacked (three takes)
+    "card": dict(
+        takes=[[(KC + f"cardPlace{i}.ogg", 0, 0.5, 0, 1)] for i in (1, 2, 3, 4)],
+        kbps=32,
+        credit=("Kenney, Casino Audio (cardPlace)", KENNEY_CASINO),
+    ),
+    "chips": dict(
+        takes=[[(KC + f"chipsStack{i}.ogg", 0, 0.7, 0, 1)] for i in (1, 2, 3)],
+        kbps=32,
+        credit=("Kenney, Casino Audio (chipsStack)", KENNEY_CASINO),
+    ),
+    # the cats and Justin at the food: a bite and a gulp
+    "bite": dict(
+        layers=[("oga:eat/crunch.3.ogg", 0, 0.5, 0, 1)],
+        credit=("StarNinjas, 7 Eating Crunches", OGA_URL["crunch"]),
+    ),
+    "gulp": dict(
+        layers=[("oga:drink/swallow-02.flac", 0, 0.6, 0, 1)],
+        credit=("qubodup, Liquid / bottle / drink set", OGA_URL["drink"]),
+    ),
+    # the shadow duck fading in or out outside: a low, slow rush of air
+    "whoosh": dict(
+        layers=[("oga:knife-swish/swosh-01.flac", 0, 0.6, 0, 1)],
+        lp=1200,
+        rate=0.6,
+        credit=(
+            "qubodup, Swish: bamboo stick weapon swooshes (swosh-01)",
+            OGA_URL["bamboo"],
+        ),
+    ),
+    # a claw's swipe (a cat's, a zombie's): quick and light
+    "swipe": dict(
+        layers=[("oga:knife-swish/swosh-10.flac", 0, 0.4, 0, 1)],
+        rate=1.4,
+        credit=(
+            "qubodup, Swish: bamboo stick weapon swooshes (swosh-10)",
+            OGA_URL["bamboo"],
+        ),
+    ),
 }
 
 
