@@ -16618,7 +16618,27 @@ html.keyboard .hp-pop:not(.small) {
     opacity: 0;
   }
 }
-html.still .l4-crit {
+/* a miss: "missed" over the zombie, small and white, rising and fading as the HP numbers (game.js, the l4miss fx) */
+.l4-miss {
+  position: absolute;
+  z-index: 40;
+  translate: -50% -100%;
+  pointer-events: none;
+  font-size: 0.62rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow:
+    0 0 0.12rem #000,
+    0 0 0.12rem #000,
+    0 0.06rem 0.06rem #000;
+  animation: hp-pop 1.05s ease-out forwards;
+}
+html:not(.keyboard) .l4-miss {
+  font-size: 0.56rem;
+}
+html.still .l4-crit,
+html.still .l4-miss {
   animation: none !important;
 } /* (no movement: the word stays, still, until it goes) */
 

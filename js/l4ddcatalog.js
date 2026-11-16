@@ -17,6 +17,8 @@ import {
   buyPrice,
   BOX,
   SAFE,
+  critOf,
+  missOf,
 } from "./l4ddrules.js";
 import { BOMB } from "./jaimebomb.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
@@ -99,7 +101,9 @@ function stats(w) {
   if (A.burst) out.push(["Burst", `${A.burst} rounds`]);
   if (w === "flamer")
     out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
-  if (A.crit) out.push(["Headshot", `${num(A.crit * 100)}%`]);
+  if (critOf(w)) out.push(["Headshot", `${num(critOf(w) * 100, 1)}%`]);
+  if (missOf(w)) out.push(["Misses", `${num(missOf(w) * 100, 1)}%`]);
+  else if (w === "pan") out.push(["Misses", "50% of swings"]);
   if (A.pierce) out.push(["Goes through", `${A.pierce} zombies`]);
   if (w === "grenade") {
     out.push(["You start with", A.start]);
