@@ -44,7 +44,8 @@ const dirOf = (dx, dy) => (dx > 0 ? "r" : dx < 0 ? "l" : dy > 0 ? "d" : "u");
    cfg() → the jump's { T, H }; button() → the context button changed (redraw it); clickUse() → a click on a thing near
    my duck uses it (the Click to interact setting) */
 export function mountWorld(board, api) {
-  L.useMode(((api.room().state || {}).options || {}).mode); // (Quacky Zombies' cabin, or Hangout's: layout.js)
+  const opt = (api.room().state || {}).options || {};
+  L.useMode(opt.mode, opt.l4map); // (Quacky Zombies' cabin or its Downpour, or Hangout's: layout.js)
   const canvas = board.querySelector(".hang-ground"),
     g = canvas.getContext("2d"),
     propsBox = board.querySelector(".hang-props"),
@@ -58,6 +59,7 @@ export function mountWorld(board, api) {
   let dead = false,
     last = 0,
     inside = false,
+    bldg = 0, // (the building I'm in: Downpour has two; the cabin is 1)
     flip = -1e9,
     shut = false,
     button = null,
@@ -76,6 +78,18 @@ export function mountWorld(board, api) {
       b: L.CABIN.y1 + 14,
     },
     SHADE_IN = 350,
+    /* Downpour (the second map): the hole is the building I'm in */
+    holeOf = (b) => {
+      if (L.layoutVariant() !== "l4gs") return;
+      const B = b === 2 ? L.GS.CHAPEL : L.GS.STATION;
+      Object.assign(HOLE, {
+        l: B.x0,
+        t: B.y0 - 12 - B.wall,
+        r: B.x1,
+        b: B.y1 + 14,
+      });
+      shade._sz = null; // (its size again)
+    },
     SHADE_OUT = 700;
   /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
      out of it and its big shadow (in its own px, at the camera's scale) */
@@ -574,7 +588,7 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
-      if (L.inCabin(a.x, a.y) !== inside) continue; // (not one seen through a hole: nothing turns see-through over it)
+      if (L.whereIn(a.x, a.y) !== bldg) continue; // (not one seen through a hole: nothing turns see-through over it)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
@@ -679,14 +693,14 @@ export function mountWorld(board, api) {
       s = r.state;
     if (me.j || me.vz != null) return 0;
     const ka = duckRoom((s.players[r.me] || {}).duck),
-      here = L.inCabin(x, y);
+      here = L.whereIn(x, y);
     let d = 0;
     for (const id of s.seat) {
       const p = s.pos[id];
       if (id === r.me || !p || (p.j && now < api.landsAt(p))) continue;
       const ox = p.x * L.W,
         oy = p.y * L.H;
-      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.inCabin(ox, oy) !== here)
+      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy) !== here)
         continue;
       const kb = duckRoom((s.players[id] || {}).duck),
         dx = (x - ox) / (28 * (ka.x + kb.x)),
@@ -854,9 +868,14 @@ export function mountWorld(board, api) {
       if (!me || !cam.vw) return;
       if (cam.low !== low()) world.measure(); // (Graphics changed in Settings)
       ensure(me);
-      const was = inside;
-      inside = L.inCabin(me.x * L.W, me.y * L.H);
-      if (inside !== was) flip = now;
+      const was = bldg;
+      bldg = L.whereIn(me.x * L.W, me.y * L.H);
+      inside = bldg > 0;
+      L.setHere(bldg);
+      if (bldg !== was) {
+        flip = now;
+        if (bldg) holeOf(bldg);
+      }
       shut = inside && now - flip > SHADE_IN;
       for (const id of s.seat)
         if (id !== r.me && s.pos[id]) glide(id, s.pos[id], dt, now);

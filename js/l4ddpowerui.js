@@ -16,6 +16,7 @@ import {
   partName,
   isPw,
   pwOf,
+  pumpNear,
 } from "./l4ddpower.js";
 import { powerBoxSVG, PART_ICONS, jerrySVG } from "./powerart.js"; // (Noah's drawings)
 
@@ -194,7 +195,13 @@ export function pwDraw(ctx) {
 export function pwTarget(pos, s, near) {
   if (!pwState(s)) return null;
   const d = Math.hypot(PW.E[0] - pos.x, PW.E[1] - pos.y);
-  return d < near ? { kind: "power", d } : null;
+  if (d < near) return { kind: "power", d };
+  return pumpNear(pos.x, pos.y, near) ? { kind: "pump", d: 0 } : null; // (Downpour's gas pumps)
+}
+/* Downpour: a gas pump's button */
+export function pumpLabel(s) {
+  if (!powerOn(s)) return "Gas pump · no power";
+  return `Gas · ${PW.PUMP_ROUNDS} rounds · ${PW.PUMP * PW.PUMP_ROUNDS}`;
 }
 export function pwLabel(s) {
   const pw = pwState(s),

@@ -41,6 +41,9 @@ import { now as clockNow } from "./clock.js";
 import {
   L4,
   OPENINGS,
+  syncMap,
+  dp,
+  fenceZ,
   playable,
   zombiesOf,
   startSpot,
@@ -85,6 +88,7 @@ import {
   pwDraw,
   pwTarget,
   pwLabel,
+  pumpLabel,
   pwTap,
   pwOrbHTML,
   isPw,
@@ -126,17 +130,30 @@ const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how fa
 const GLOW = 80; // world px: the faint light round every duck
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
-const MOON = Object.fromEntries(
-  OPENINGS.map((o) => {
-    const k =
-      o.kind === "stairs"
-        ? 0
-        : Math.sign(o.axis === "y" ? o.in[0] - o.x : o.in[1] - o.y);
-    return [o.id, o.axis === "y" ? [o.x + k * 36, o.y] : [o.x, o.y + k * 36]];
-  }),
-);
+let moon = null,
+  moonRev = -1;
+const MOON = () => {
+  if (moonRev !== layoutRev()) {
+    syncMap();
+    moonRev = layoutRev();
+    moon = Object.fromEntries(
+      OPENINGS.map((o) => {
+        const k =
+          o.kind === "stairs"
+            ? 0
+            : Math.sign(o.axis === "y" ? o.in[0] - o.x : o.in[1] - o.y);
+        return [
+          o.id,
+          o.axis === "y" ? [o.x + k * 36, o.y] : [o.x, o.y + k * 36],
+        ];
+      }),
+    );
+  }
+  return moon;
+};
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
 const BUTLER_NAME = "Justin's Butler";
+const shopName = () => (dp() ? "Priest" : BUTLER_NAME); // (Downpour: the Priest in the chapel does his job, the owner's)
 const NEAR = 130; // world px: how near E works at the Butler and the fireplace
 const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
@@ -278,16 +295,23 @@ function pxPic(o, img, w, h) {
       if (v && o.pxk === k) img.src = v;
     });
 }
-const LIT = {
-  in: LIGHTS.filter((l) => l.only === "in" && !l.el),
-  out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
-};
 /* … and with the power on (l4ddpower.js), the electric ones too: the lamps, the stage, the sink, the balcony's windows
-   and the porch's string lights */
-const LIT_ON = {
-  in: LIGHTS.filter((l) => l.only === "in"),
-  out: LIGHTS.filter((l) => l.only !== "in"),
-};
+   and the porch's string lights (made again for the map: layout.js' LIGHTS are the room's map's) */
+let LIT = null,
+  LIT_ON = null,
+  litRev = -1;
+function lits() {
+  if (litRev === layoutRev()) return;
+  litRev = layoutRev();
+  LIT = {
+    in: LIGHTS.filter((l) => l.only === "in" && !l.el),
+    out: LIGHTS.filter((l) => l.only !== "in" && !l.el),
+  };
+  LIT_ON = {
+    in: LIGHTS.filter((l) => l.only === "in"),
+    out: LIGHTS.filter((l) => l.only !== "in"),
+  };
+}
 
 function zombieEl(z) {
   const el = document.createElement("div"),
@@ -823,6 +847,7 @@ function paint(now, ctx) {
     cones = [],
     beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
+  lits();
   const lights = powerOn(s) ? LIT_ON : LIT;
   for (const l of Wd.inside ? lights.in : lights.out) {
     const fl = sway(l, ln),
@@ -836,7 +861,7 @@ function paint(now, ctx) {
   /* each opening lets a little moonlight in, more as its boards come down: the way in shows in the dark */
   const brd = s.hang.brd || {};
   for (const o of OPENINGS) {
-    const [x0, y0] = MOON[o.id];
+    const [x0, y0] = MOON()[o.id];
     if (inCabin(x0, y0) !== Wd.inside) continue;
     const p = Wd.toScreen(x0, y0, heightAt(x0, y0)),
       r = 120 * sc;
@@ -849,12 +874,15 @@ function paint(now, ctx) {
       ]);
   }
   /* Justin's Butler stands in a little light, and the fireplace's weapon glows while it's out */
-  if (Wd.inside) {
+  if (dp() || Wd.inside) {
     const p = Wd.toScreen(BUTLER.x, BUTLER.y, 30);
-    if (on(p.left * q, p.top * q, 100 * sc))
+    if (
+      seenFrom(BUTLER.x, BUTLER.y, Wd.inside) &&
+      on(p.left * q, p.top * q, 100 * sc)
+    )
       holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
-    if (boxNow(s, clockNow())) {
-      const o = Wd.toScreen(BOX.x, 706, 58);
+    if (boxNow(s, clockNow()) && seenFrom(BOX.x, BOX.y, Wd.inside)) {
+      const o = Wd.toScreen(BOX.x, BOX.y - 36, 58);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
     }
   }
@@ -1102,15 +1130,17 @@ function drawBox(ctx) {
     landed && b.t + BOX.spin + BOX.keep - now < 3000,
   ); // (its last 3 seconds: it blinks)
   const sc = Wd.sc,
-    p = Wd.toScreen(BOX.x, 706, 58),
-    hide = !Wd.seen(p.left - 60, p.top - 80, 120, 140);
+    p = Wd.toScreen(BOX.x, BOX.y - 36, 58),
+    hide =
+      !seenFrom(BOX.x, BOX.y, Wd.inside) ||
+      !Wd.seen(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
   if (boxEl._tr !== tr) {
     boxEl._tr = tr;
     boxEl.style.transform = tr;
-    boxEl.style.zIndex = Math.round(sortY(BOX.x, 712, 0)) + 20;
+    boxEl.style.zIndex = Math.round(sortY(BOX.x, BOX.y - 30, 0)) + 20;
   }
   if (boxEl._k !== sc) {
     boxEl._k = sc;
@@ -1375,7 +1405,7 @@ function shopEl(ctx) {
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
-  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(BUTLER_NAME, { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
+  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(shopName(), { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
       <div class="tabs l4-shop-tabs" role="tablist"><button type="button" class="tab" role="tab" aria-selected="true" data-tab="buy">Shop</button><button type="button" class="tab" role="tab" aria-selected="false" data-tab="items">Items</button></div>
       <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
       <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
@@ -1470,7 +1500,7 @@ function buyAmmo(ctx) {
   const kit = kitOf(s, me),
     price = gunPrice(s, me, w);
   if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
-    return say("The Butler doesn't sell ammo for that");
+    return say(`The ${dp() ? "Priest" : "Butler"} doesn't sell ammo for that`);
   if (angelOf(s, me, w)) return say("Angelic: no refills");
   if (!price) return say("It's full");
   if (ptsOf(s, me) < price) return say("Not enough points");
@@ -1488,9 +1518,14 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
   else if (t.kind === "power") pwTap(ctx);
-  else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
+  else if (t.kind === "pump") {
+    if (!powerOn(s)) return say("The pumps need the power on");
+    if (ptsOf(s, me) < PW.PUMP * PW.PUMP_ROUNDS)
+      return say("Not enough points");
+    ctx.send({ t: "hang", k: "l4", do: "pump" });
+  } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["box", "take", "shop", "sk", "power", "angel"];
+const TAPS = ["box", "take", "shop", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -1518,6 +1553,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);
+  if (t.kind === "pump") return pumpLabel(s);
   if (t.kind === "angel") return angelLabel(s, ctx.me, heldFn());
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
@@ -1563,11 +1599,15 @@ activity({
   only: "l4dd",
   /* the only ground anyone sees: the cabin, the deck and its stairs (the zombies come up them). The forest, the pool and
      the yard can't be reached, so the world doesn't make them: the deck runs smoother */
-  area: [
-    [CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1],
-    [DECK.x0, DECK.y0, DECK.x1, DECK.y1],
-    [STAIRS.x0, STAIRS.y0, STAIRS.x1, STAIRS.y1],
-  ],
+  get area() {
+    return dp()
+      ? null // (Downpour: all of it is played on)
+      : [
+          [CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1],
+          [DECK.x0, DECK.y0, DECK.x1, DECK.y1],
+          [STAIRS.x0, STAIRS.y0, STAIRS.x1, STAIRS.y1],
+        ];
+  },
   mount(ctx) {
     setListener(() => ctx.world.at(ctx.me));
     layer = ctx.world.board.querySelector(".hang-props");
@@ -1631,7 +1671,7 @@ activity({
     pwMount(ctx, layer);
     angelMount(ctx, layer);
     shop = shopEl(ctx);
-    butler = butlerEl();
+    butler = butlerEl(undefined, shopName()); // (Downpour: the Priest, in the Butler's drawing till Noah draws him)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
@@ -1861,7 +1901,9 @@ activity({
     {
       const z = heightAt(BUTLER.x, BUTLER.y),
         p = Wd.toScreen(BUTLER.x, BUTLER.y, z),
-        hide = !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+        hide =
+          !seenFrom(BUTLER.x, BUTLER.y, Wd.inside) ||
+          !Wd.seen(p.left - 40, p.top - 90, 80, 110);
       if (butler.el.hidden !== hide) butler.el.hidden = hide;
       if (!hide) {
         const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1959,7 +2001,10 @@ activity({
     if (p.kind === "door") return "open";
     return "";
   },
-  light: (p, s, l) => (l && l.el && !powerOn(s) ? false : undefined), // (the power is cut: only the fires and the candles shine, till the power box is mended)
+  light: (p, s, l) =>
+    (l && l.el && !powerOn(s)) || (p && p.hood && s.hang && s.hang.l4hood)
+      ? false
+      : undefined, // (the power is cut: only the fires and the candles shine, till the power box is mended. Downpour's hood-up car glows till it's first used)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
   /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
      and see what's coming) */

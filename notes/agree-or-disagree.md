@@ -5032,3 +5032,9 @@ are all good to go we can put them in the game"
 
 - Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
   scratchpad, plan2.py). Nothing built.
+
+## Request (2026-11-16 23:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4oTNDzDY4LgnMrLrRa6QVz): Downpour's fences
+> instead of zombies coming through holes on fences, they rather climb the fence according to their speed like a ladder before falling down it's height from where they climbed it. THe fence should be sort of tall because cool
+
+- Solomon the 2nd: the fences across the road's ends are solid and 200 tall (no holes); a zombie walks to the fence,
+  climbs it at its own walking speed, then drops down the other side (l4ddrules.js st 5, fenceZ).

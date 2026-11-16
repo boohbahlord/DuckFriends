@@ -23,6 +23,7 @@
    them: .hp.off .lit) and the glow around a lamp "lit-glow" (it goes out). */
 import * as A from "./art.js";
 import * as L from "./layout.js";
+import * as GS from "./stationmap.js";
 
 const C = L.CABIN,
   T = 12,
@@ -94,13 +95,13 @@ const NORTH_WINDOWS = [
   [2820, 2960],
 ]; // the north wall's windows (world x), looking out at the grass: either side of the TV's place
 function wallParts(p) {
-  if (p.only === "out") return []; // (the south wall outside: part of the cabin's drawing)
+  if (p.only === "out" && !p.map) return []; // (the south wall outside: part of the cabin's drawing)
   const z = p.z || 0,
     t = p.y - z - p.h;
   if (p.w >= p.d) {
     // east-west: the cut top, then its face looking south
     const windows =
-      p.side === "n"
+      p.side === "n" && !p.map
         ? NORTH_WINDOWS.filter(([a, b]) => a > p.x && b < p.x + p.w).map(
             ([a, b]) => [a - p.x, b - p.x],
           )
@@ -113,7 +114,7 @@ function wallParts(p) {
         p.w,
         p.d + p.h,
         p.key,
-        { fade: p.fade, only: "in" },
+        { fade: p.fade, only: p.map ? p.only : "in" }, // (Downpour's walls show from outside too: its buildings have no drawing of their own yet)
       ),
     ];
   }
@@ -182,13 +183,16 @@ function wallParts(p) {
         p.w,
         d + p.h,
         p.key,
-        { fade: p.fade, only: "in" },
+        { fade: p.fade, only: p.map ? p.only : "in" },
       ),
     ];
   const top = () =>
     `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * 0.4} ${o < 0 ? o : 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}${cut ? `M0 0H${p.w}` : ""}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
   return [
-    part(top, p.x, t + head + cut, p.w, d, p.key, { fade: p.fade, only: "in" }),
+    part(top, p.x, t + head + cut, p.w, d, p.key, {
+      fade: p.fade,
+      only: p.map ? p.only : "in",
+    }),
   ];
 }
 
@@ -331,7 +335,62 @@ const one = (p, svg, w, h, foot = h, o = {}) => {
   return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)];
 };
 const COUCH = { couch1: "#a8382c", couch2: "#3d6e4f" };
+/* Downpour's skeleton (stationmap.js): every new thing as a plain box, its top and its front, till the details are drawn
+   (the owner's order: skeleton, details, rain and water, lighting) */
+const boxSVG = (w, d, h, top, front) =>
+  `<svg viewBox="0 0 ${w} ${d + h}" width="${w}" height="${d + h}"><rect x="1" y="1" width="${w - 2}" height="${d}" fill="${top}" stroke="#15161b" stroke-width="2"/><rect x="1" y="${d}" width="${w - 2}" height="${h - 1}" fill="${front}" stroke="#15161b" stroke-width="2"/></svg>`;
+const plainBox =
+  (top, front, o = {}) =>
+  (p) => [
+    part(
+      () => boxSVG(p.w, p.d, p.h, top, front),
+      p.x,
+      p.y - p.z - p.h,
+      p.w,
+      p.d + p.h,
+      p.key,
+      { fade: true, ...o },
+    ),
+  ];
+const GS_DRAW = {
+  pump: plainBox("#c8c8c8", "#b8332c"),
+  car: plainBox("#3b4f66", "#2a394b"),
+  generator: plainBox("#6b6f45", "#4d5132"),
+  fence: plainBox("#8a8f96", "#5e636a"),
+  pew: plainBox("#7a4f2c", "#5a3820"),
+  altar: plainBox("#e8e2d0", "#bdb6a2"),
+  tower: plainBox("#6a5a4a", "#4f4236"),
+  canopy: (p) => [
+    part(
+      () =>
+        `<svg viewBox="0 0 ${p.w} ${p.d}" width="${p.w}" height="${p.d}"><rect x="2" y="2" width="${p.w - 4}" height="${p.d - 4}" fill="#d9d9d9" fill-opacity=".85" stroke="#15161b" stroke-width="4"/><rect x="2" y="${p.d - 40}" width="${p.w - 4}" height="38" fill="#c0392b"/></svg>`,
+      p.x,
+      p.y - p.z,
+      p.w,
+      p.d,
+      p.key,
+      { fade: true },
+    ),
+  ],
+  fallen: (p) => {
+    const F = p.fallen,
+      b = { l: p.x, t: p.y - p.h + F.half, w: p.w, h: p.d };
+    return [
+      part(
+        () =>
+          `<svg viewBox="0 0 ${b.w} ${b.h}" width="${b.w}" height="${b.h}"><line x1="${F.x0 - b.l}" y1="${F.y0 - p.y - F.half}" x2="${F.x1 - b.l}" y2="${F.y1 - p.y - F.half}" stroke="#15161b" stroke-width="${2 * F.half + 6}" stroke-linecap="round"/><line x1="${F.x0 - b.l}" y1="${F.y0 - p.y - F.half}" x2="${F.x1 - b.l}" y2="${F.y1 - p.y - F.half}" stroke="#5a3d24" stroke-width="${2 * F.half}" stroke-linecap="round"/></svg>`,
+        b.l,
+        b.t - F.half,
+        b.w,
+        b.h,
+        p.key,
+        { fade: true },
+      ),
+    ];
+  },
+};
 export const DRAW = {
+  ...GS_DRAW,
   wall: wallParts,
   stub: (p) => [
     part(
@@ -543,6 +602,22 @@ export const DRAW = {
       ),
     ];
   },
+  /* Downpour's roofs (the skeleton's: a flat dark roof with a rim, from outside) */
+  gsroof(p) {
+    const b = p.box;
+    return [
+      part(
+        () =>
+          `<svg viewBox="0 0 ${b.w} ${b.h}" width="${b.w}" height="${b.h}"><rect x="0" y="0" width="${b.w}" height="${b.h - p.bldg.wall}" fill="#2b2e36" stroke="#15161b" stroke-width="10"/><rect x="0" y="${b.h - p.bldg.wall}" width="${b.w}" height="${p.bldg.wall}" fill="#3d3a36" stroke="#15161b" stroke-width="6"/></svg>`,
+        b.l,
+        b.t,
+        b.w,
+        b.h,
+        p.key,
+        { fade: true, only: "out" },
+      ),
+    ];
+  },
   roof() {
     // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
     const h = C.y1 - C.y0 + 290;
@@ -632,7 +707,10 @@ export const DRAW = {
   coffee: (p) =>
     one(p, () => A.coffeeTable({ w: p.w, d: p.d, z: p.h }), p.w, p.d + p.h),
   tv: tvParts,
-  shelf: (p) => one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
+  shelf: (p) =>
+    p.map
+      ? plainBox("#9aa3ad", "#6f7883")(p) // (Downpour's store shelves)
+      : one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
   picture: (p) =>
     one(p, () => A.picture({ w: p.w, h: p.h, kind: p.art }), p.w, p.h),
   clock: (p) => one(p, () => A.wallClock({ r: p.w / 2 }), p.w, p.w),
@@ -645,12 +723,15 @@ export const DRAW = {
   ],
   plant: (p) => one(p, () => A.pottedPlant(), 60, 100),
   counter: (p) =>
-    one(
-      p,
-      () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }),
-      p.w,
-      240,
-    ),
+    p.map
+      ? plainBox("#b9a27a", "#8a7552")(p) // (Downpour's shop counter)
+      : one(
+          p,
+          () =>
+            A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }),
+          p.w,
+          240,
+        ),
   stove: (p) => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: (p) => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
   table: (p) =>
@@ -1117,11 +1198,88 @@ function groundPieces() {
       );
   return G;
 }
-let ground = null;
-export const GROUND = () => ground || (ground = groundPieces());
+/* Downpour's ground (Dead Ducks Arcade's second map, stationmap.js): the swamp's dark grass, the forest floor past the
+   line, the sunken road with its middle line, the flood over it (deep at the west end), and the floors of the gas
+   station and the chapel. The skeleton's plain shapes; the details come next (the owner's order: skeleton, details,
+   rain and water, lighting) */
+function downpourGround() {
+  const R = GS.ROAD,
+    W = GS.GS_W,
+    rect = (x, y, w, h, fill, extra = "") =>
+      piece(
+        `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${fill}"/>${extra}</svg>`,
+        x,
+        y,
+        w,
+        h,
+      ),
+    poly = (P) => P.map(([x, y]) => `${x},${y}`).join(" ");
+  const G = [
+    piece(
+      `<svg viewBox="0 0 ${W} ${GS.GS_H}" width="${W}" height="${GS.GS_H}"><rect width="${W}" height="${GS.GS_H}" fill="#112a1c"/><polygon points="${poly(GS.TOP)}" fill="#1e3d2a"/><polygon points="${poly(GS.BOT)}" fill="#1e3d2a"/></svg>`,
+      0,
+      0,
+      W,
+      GS.GS_H,
+    ),
+  ];
+  const lane = [];
+  for (let x = 0; x < W; x += 160)
+    lane.push(
+      `<rect x="${x}" y="${R.mid - R.y0 - 6}" width="90" height="12" fill="#c9b765" opacity=".7"/>`,
+    );
+  G.push(rect(0, R.y0, W, R.y1 - R.y0, "#2c2d31", lane.join("")));
+  G.push(
+    rect(
+      GS.SHALLOW[0],
+      GS.SHALLOW[1],
+      GS.SHALLOW[2] - GS.SHALLOW[0],
+      GS.SHALLOW[3] - GS.SHALLOW[1],
+      "#3e6a8c",
+    ),
+  );
+  G.push(
+    rect(
+      GS.DEEP[0],
+      GS.DEEP[1],
+      GS.DEEP[2] - GS.DEEP[0],
+      GS.DEEP[3] - GS.DEEP[1],
+      "#1d3f66",
+    ),
+  );
+  G[G.length - 2].svg = G[G.length - 2].svg.replace(
+    'fill="#3e6a8c"',
+    'fill="#3e6a8c" opacity=".7"',
+  );
+  for (const B of [GS.STATION, GS.CHAPEL])
+    G.push(
+      rect(
+        B.x0,
+        B.y0,
+        B.x1 - B.x0,
+        B.y1 - B.y0,
+        B === GS.STATION ? "#5b5a55" : "#4a3624",
+      ),
+    );
+  return G;
+}
+let ground = null,
+  dpGround = null;
+export const GROUND = () =>
+  L.layoutVariant() === "l4gs"
+    ? dpGround || (dpGround = downpourGround())
+    : ground || (ground = groundPieces());
 /* the ground's plain colors (before its tiles are painted): by screen-world y */
 export const groundColor = (y) =>
-  y < L.SLOPE.y0 ? "#24503d" : y < LOWY ? "#1a3a2e" : "#1f4636";
+  L.layoutVariant() === "l4gs"
+    ? y >= GS.ROAD.y0 && y < GS.ROAD.y1
+      ? "#2c2d31"
+      : "#1e3d2a"
+    : y < L.SLOPE.y0
+      ? "#24503d"
+      : y < LOWY
+        ? "#1a3a2e"
+        : "#1f4636";
 
 /* ---------- decor: what no prop owns ---------- */
 function decor() {
@@ -1220,4 +1378,5 @@ function decor() {
   return out;
 }
 let deco = null;
-export const DECOR = () => deco || (deco = decor());
+export const DECOR = () =>
+  L.layoutVariant() === "l4gs" ? [] : deco || (deco = decor()); // (Downpour: none yet)

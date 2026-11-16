@@ -15,13 +15,28 @@
      - the grenade launcher: its blast is GL_RADIUS of a grenade's, and it sets the ground there on fire.
    s.hang.l4am { by, w, sl (the slot it came from), t (when it went in) }: the weapon in the machine (null: none), till
    its duck takes it. A duck's Angelic weapons: its kit's ang { weapon: 1 } (l4ddrules.js' l4a). */
-import { STAGE } from "./hangout/layout.js";
+import { STAGE, layoutVariant } from "./hangout/layout.js";
+import * as GS from "./hangout/stationmap.js";
+const dpOn = () => layoutVariant() === "l4gs"; // (Downpour: on the chapel's altar)
 import { powerOn } from "./l4ddpower.js";
 
 export const ANGEL = {
-  X: STAGE.cx - 80, // the machine on the stage: its foot's middle, toward the back, clear of the mic
-  Y: STAGE.cy - 40,
-  E: [STAGE.cx - 80, STAGE.cy + 40], // where E works from: the stage in front of it
+  // the machine on the stage: its foot's middle, toward the back, clear of the mic (Downpour: on the altar)
+  get X() {
+    return dpOn() ? GS.ANGEL.x : STAGE.cx - 80;
+  },
+  get Y() {
+    return dpOn() ? GS.ANGEL.y : STAGE.cy - 40;
+  },
+  get Z() {
+    return dpOn() ? 90 : STAGE.h; // (what it stands on: the stage, the altar)
+  },
+  // where E works from: the stage in front of it (Downpour: the floor before the altar, the aisle's end)
+  get E() {
+    return dpOn()
+      ? [GS.ANGEL.x, GS.ALTAR.y0 - 60]
+      : [STAGE.cx - 80, STAGE.cy + 40];
+  },
   REACH: 120,
   PRICE: 1000,
   WORK: 5000, // ms it works

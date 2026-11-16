@@ -9,6 +9,7 @@
    the back door in the south wall onto the deck), the deck raised over the slope with its stairs down at the east end,
    the downhill in the south (the pool, the campfire, the trampoline), and forest all round. */
 import * as GS from "./stationmap.js";
+export { GS };
 /* W, H: the world's size; Dead Ducks Arcade's second map has its own (useMode switches them) */
 export let W = 6000,
   H = 4400;
@@ -894,12 +895,18 @@ export const layoutVariant = () => variant;
 export const HOLES = [],
   PEEKS = [];
 const PEEK = { side: 60, deep: 260 };
+/* the building my duck is in (world.js sets it every frame): on Downpour, from inside one building the other is out of
+   sight too */
+let here = 0;
+export const setHere = (b) => (here = b);
 /* is (x, y) seen from my side of the cabin's walls (inside: am I in the cabin)? My side, or through a hole */
 export const seenFrom = (x, y, inside) =>
-  inCabin(x, y) === inside ||
+  (variant === "l4gs"
+    ? GS.buildingAt(x, y) === (inside ? here : 0)
+    : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 && PEEKS.some((k) => inR(x, y, inside ? k.out : k.in)));
 export function useMode(mode, map) {
-  const v = mode === "l4dd" ? (map === "gs" ? "l4gs" : "l4") : "";
+  const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
   variant = v;
   rev++;

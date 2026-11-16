@@ -210,6 +210,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
+  l4map: "cabin", // Dead Ducks Arcade's map: "cabin" | "downpour" (the second map: no row for it yet, it's not finished)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -1596,7 +1597,10 @@ export function reduce(state, a, now = Date.now()) {
   return s;
 }
 function reduceStep(state, a, now) {
-  useMode(state.options && state.options.mode); // (Duck Cabin as the room's mode has it: hangout/layout.js)
+  useMode(
+    state.options && state.options.mode,
+    state.options && state.options.l4map,
+  ); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour: hangout/layout.js)
   const s = clone(state),
     P = s.players,
     me = P[a.id],

@@ -10,7 +10,7 @@
 export const GS_W = 4600,
   GS_H = 6200;
 /* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side */
-export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 90 };
+export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
 /* the flood over the road: deep at the west end (no duck goes in; zombies wade it), shallow over the middle (ducks walk
    30% slower in it, the owner's) */
 export const DEEP = [0, ROAD.y0, 1000, ROAD.y1],
@@ -51,27 +51,14 @@ export const STATION = { x0: 1100, y0: 550, x1: 3500, y1: 1750, wall: 180 };
 export const CHAPEL = { x0: 1600, y0: 3650, x1: 3000, y1: 5750, wall: 240 };
 export const TOWER = { x0: 3000, y0: 3650, x1: 3300, y1: 3950, h: 520 };
 const INNER = 120;
-/* the fences across the road's two ends, with the holes the zombies come in by */
+/* the fences across the road's two ends: tall and solid. Zombies climb them like a ladder, at their own walking speed,
+   and drop down the other side from the top (the owner's, Nov 16 23:32Z). x: the fence's line; y0 … y1: how far it
+   runs (into the trees at both ends); climb: where along it a zombie comes over (the open ground); out: the side the
+   zombies come from (-1 west, 1 east) */
+export const FENCE_H = 200;
 export const FENCES = [
-  {
-    x: 60,
-    y0: 2560,
-    y1: 3500,
-    holes: [
-      [2620, 2700],
-      [2900, 3000],
-      [3200, 3290],
-    ],
-  },
-  {
-    x: 4540,
-    y0: 2700,
-    y1: 3420,
-    holes: [
-      [2800, 2890],
-      [3130, 3230],
-    ],
-  },
+  { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
+  { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
 ];
 /* holes anyone walks through (the owner's circles): the storeroom's back door, the north wall by the counter, the front
    door. axis "x": in an east-west wall at y = at, across a … b */
@@ -153,18 +140,24 @@ export const FALLEN = {
   h: 40,
 };
 /* where the power box's parts can turn up (the owner's): T toolbox (an empty shelf, the top, front or back of a car),
-   G gas (a jerry can at a pump), F fuse (the storeroom, a pew), S switch (the restroom, a shelf, a car, a pew, a pump) */
+   G gas (a jerry can at a pump), F fuse (the storeroom, a pew), S switch (the restroom, a shelf, a car, a pew, a pump).
+   x, y: where it lies; z: how high over the ground there (on a shelf, a car's roof, a pew) */
 export const PART_SPOTS = [
-  { x: 2550, y: 830, can: "TS" }, // (the empty top shelf)
-  { x: 1350, y: 1030, can: "F" }, // (the storeroom)
-  { x: 1350, y: 1430, can: "S" }, // (the restroom)
-  { x: 1850, y: 2160, can: "GS" }, // (the west pump)
-  { x: 2750, y: 2160, can: "GS" }, // (the east pump)
-  { x: 1260, y: 3070, can: "TS" }, // (a car's roof)
-  { x: 2560, y: 3060, can: "TS" }, // (a car's front)
-  { x: 3060, y: 2780, can: "TS" }, // (a car's back)
-  { x: 1950, y: 4030, can: "FS" }, // (a pew)
-  { x: 2650, y: 4910, can: "FS" }, // (a pew)
+  { x: 2550, y: 880, z: 150, can: "TS" }, // (the empty top shelf)
+  { x: 1350, y: 1030, z: 0, can: "F" }, // (the storeroom)
+  { x: 1350, y: 1430, z: 0, can: "S" }, // (the restroom)
+  { x: 1850, y: 2300, z: 0, can: "GS" }, // (the west pump)
+  { x: 2750, y: 2300, z: 0, can: "GS" }, // (the east pump)
+  { x: 1260, y: 3200, z: 110, can: "TS" }, // (a car's roof)
+  { x: 2560, y: 3050, z: 0, can: "TS" }, // (a car's front)
+  { x: 3060, y: 2770, z: 0, can: "TS" }, // (a car's back)
+  { x: 1950, y: 4100, z: 45, can: "FS" }, // (a pew)
+  { x: 2650, y: 4980, z: 45, can: "FS" }, // (a pew)
+];
+/* where E buys gas at a pump: in front of each (l4ddpower.js) */
+export const PUMP_E = [
+  [1850, 2300],
+  [2750, 2300],
 ];
 
 const inR = (x, y, r) => x >= r[0] && x < r[2] && y >= r[1] && y < r[3];
@@ -228,6 +221,26 @@ export function build(b) {
       cur = c;
     }
   }
+  /* a building's south wall: whole from outside; from inside only a low line, so the room shows (as the cabin's) */
+  function southWall(B, gaps, o = {}) {
+    line("x", B.y1, B.x0, B.x1, gaps, B.wall, {
+      side: "s",
+      only: "out",
+      key: B.y1 + T,
+      ...o,
+    });
+    let cur = B.x0;
+    for (const [a, c] of [...gaps, [B.x1 + T, 0]]) {
+      const x0 = cur === B.x0 ? B.x0 : cur + T,
+        x1 = a > B.x1 ? B.x1 : a - T;
+      if (x1 > x0)
+        put("stub", x0 - T, B.y1 - T, x1 - x0 + 2 * T, 2 * T, 14, {
+          only: "in",
+          z: 0,
+        });
+      cur = c;
+    }
+  }
   const gapsOn = (axis, at) =>
     [...WALK_HOLES, ...BOARDED]
       .filter((o) => o.axis === axis && o.at === at)
@@ -235,10 +248,7 @@ export function build(b) {
   /* the gas station: its four walls with their holes, and the storeroom and the restroom on its west side */
   const S = STATION;
   line("x", S.y0, S.x0, S.x1, gapsOn("x", S.y0), S.wall, { side: "n" });
-  line("x", S.y1, S.x0, S.x1, gapsOn("x", S.y1), S.wall, {
-    side: "s",
-    glass: GLASS,
-  });
+  southWall(S, gapsOn("x", S.y1), { glass: GLASS });
   line("y", S.x0, S.y0, S.y1, gapsOn("y", S.x0), S.wall);
   line("y", S.x1, S.y0, S.y1, [], S.wall);
   line(
@@ -340,21 +350,16 @@ export function build(b) {
       });
     }
   }
-  /* the fences across the road's ends, holes in them */
-  for (const f of FENCES) {
-    let cur = f.y0;
-    for (const [a, c] of [...f.holes, [f.y1, f.y1]]) {
-      for (let y = cur; y < a; y += 200) {
-        const e = Math.min(a, y + 200);
-        put("fence", f.x - 6, y, 12, e - y, 90, {
-          solid: true,
-          z: Math.min(groundAt(f.x, y), groundAt(f.x, e - 1)),
-          key: e,
-        });
-      }
-      cur = c;
+  /* the fences across the road's ends, in pieces of 200 at most, each on the ground under it */
+  for (const f of FENCES)
+    for (let y = f.y0; y < f.y1; y += 200) {
+      const e = Math.min(f.y1, y + 200);
+      put("fence", f.x - 6, y, 12, e - y, FENCE_H, {
+        solid: true,
+        z: Math.min(groundAt(f.x, y), groundAt(f.x, e - 1)),
+        key: e,
+      });
     }
-  }
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -362,7 +367,22 @@ export function build(b) {
   line("x", C.y0, C.x0, C.x1, [[CHAPEL_DOOR.a, CHAPEL_DOOR.b]], C.wall, {
     side: "n",
   });
-  line("x", C.y1, C.x0, C.x1, [], C.wall, { side: "s" });
+  southWall(C, []);
+  /* the roofs, seen from outside (inside, they go, and the outside goes dark: world.js) */
+  for (const B of [S, C])
+    put("gsroof", B.x0 - 30, B.y0 - 30, B.x1 - B.x0 + 60, B.y1 - B.y0 + 60, 0, {
+      z: B.wall,
+      only: "out",
+      fade: true,
+      key: B.y1 + 15,
+      box: {
+        l: B.x0 - 30,
+        t: B.y0 - 30 - B.wall,
+        w: B.x1 - B.x0 + 60,
+        h: B.y1 - B.y0 + 60 + B.wall,
+      },
+      bldg: B,
+    });
   line("y", C.x0, C.y0, C.y1, gapsOn("y", C.x0), C.wall);
   line("y", C.x1, C.y0, C.y1, gapsOn("y", C.x1), C.wall);
   solid("tower", TOWER, TOWER.h);
@@ -427,6 +447,24 @@ const EDGES = [
     [GS_W, ROAD.y1],
   ],
 ];
+/* spots just inside the line, every 100 along it, where zombies come out of the trees (l4ddrules.js: the owner's, Nov 16
+   23:23Z, half of them while nobody sees a zombie) */
+export const LINE_SPOTS = EDGES.flatMap(([[ax, ay], [bx, by]]) => {
+  const len = Math.hypot(bx - ax, by - ay),
+    out = [];
+  let nx = (by - ay) / len,
+    ny = -(bx - ax) / len;
+  if (!inOpen((ax + bx) / 2 + nx * 10, (ay + by) / 2 + ny * 10)) {
+    nx = -nx;
+    ny = -ny;
+  } // (inward: the open side)
+  for (let t = 50; t < len - 50; t += 100) {
+    const x = ax + ((bx - ax) * t) / len + nx * 130,
+      y = ay + ((by - ay) * t) / len + ny * 130;
+    if (inOpen(x, y) && !(y >= ROAD.y0 && y < ROAD.y1)) out.push([x, y]);
+  }
+  return out;
+});
 /* the distance from (x, y) to the nearest edge of the line */
 function toLine(x, y) {
   let best = Infinity;

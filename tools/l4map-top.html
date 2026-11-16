@@ -33,7 +33,7 @@
     <script type="module">
       import * as L from "../js/hangout/layout.js";
       import * as GS from "../js/hangout/stationmap.js";
-      L.useMode("l4dd", "gs");
+      L.useMode("l4dd", "downpour");
       const S = Number(new URLSearchParams(location.search).get("s") || 0.2);
       const c = document.getElementById("c"),
         g = c.getContext("2d");
@@ -194,10 +194,17 @@
           rect(r, "#c98a3a");
         } else if (p.layer !== "none" && p.solid) rect(r, COL.thing);
       }
-      // the fence holes, where zombies come in
+      // where zombies climb the fences
       for (const f of GS.FENCES)
-        for (const [a, b] of f.holes)
-          rect([f.x - 22, a, f.x + 22, b], "#ff9a3a");
+        rect(
+          [
+            f.x + f.out * 40 - 14,
+            f.climb[0],
+            f.x + f.out * 40 + 14,
+            f.climb[1],
+          ],
+          "#ff9a3a",
+        );
       // the power box parts' spots
       g.font = "bold 70px sans-serif";
       g.textAlign = "center";
@@ -227,7 +234,7 @@
         [COL.wall, "wall"],
         [COL.walk, "hole anyone walks through"],
         [COL.board, "boarded hole (zombies only)"],
-        ["#ff9a3a", "fence hole (zombies come in)"],
+        ["#ff9a3a", "zombies climb the fence here"],
         [COL.tree, "tree trunk"],
         [COL.shallow, "shallow flood"],
         [COL.deep, "deep flood (no ducks)"],

@@ -67,14 +67,25 @@ export const keepOnly = (mode, rules, acts, quiet = []) => {
   });
 };
 const runs = (mode, key, o, kind) => {
+  if (mode === "l4dd-dp")
+    return o.only
+      ? o.only === "l4dd"
+      : runs("l4dd", key, o, kind) && !CABIN_ONLY.includes(key);
   if (o.only) return o.only === mode;
   const k = KEEP.get(mode);
   return !k || k[kind].has(key);
 };
+const CABIN_ONLY = ["seats", "stage", "bj", "piano", "tv"];
 const QUIET = ["near", "hold", "push", "jump", "keydown", "keyup", "pointer"];
 const hush = (a) =>
   Object.fromEntries(Object.entries(a).filter(([k]) => !QUIET.includes(k)));
-const modeOf = (s) => (s && s.options && s.options.mode) || "hang";
+/* Dead Ducks Arcade on Downpour (its second map) has no cabin: it runs as its own "mode" here, with none of the cabin's
+   quiet parts (the couches, the stage, the card table, the piano, the TV) */
+const modeOf = (s) => {
+  const o = (s && s.options) || {},
+    m = o.mode || "hang";
+  return m === "l4dd" && o.l4map === "downpour" ? "l4dd-dp" : m;
+};
 export const rulesOf = (s) =>
   [...RULES].filter(([k, r]) => runs(modeOf(s), k, r, "rules"));
 const actsCache = new Map(); // mode → [its screen parts] (the activities all register as the page loads)
