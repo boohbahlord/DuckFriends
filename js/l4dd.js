@@ -78,7 +78,7 @@ import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
-import { fxHitAt } from "./fx.js";
+import { fxHitAt, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { hashText } from "./pxdom.js";
 import {
@@ -383,6 +383,8 @@ function seeZombies(s, ctx, now) {
       ); // (its blood: by the shot that hit it, or the wound it got (a hammer's bruise), fx.js)
     if (z.st === 3 && o.st !== 3) {
       o.el.classList.add("dead");
+      if (((s.hang.l4nk || {}).ids || []).includes(z.i))
+        o.el.classList.add("nuked"); // (the Nuke's: it lies there 15 s, css/app.css)
       o.diedAt = now;
     }
     if (z.a !== o.a && z.a > 0 && z.st === 2)
@@ -492,23 +494,120 @@ export function l4Got(k) {
   gotEl.innerHTML =
     k === "sale"
       ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-      : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+      : k === "nuke"
+        ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+        : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
       void b.offsetWidth;
       b.classList.add("l4-flash"); // (Max Ammo: every hotbar box flashes in its own color, quickly fading)
     }
-  gotEl.classList.remove("on");
+  gotEl.classList.remove("on", "nuke");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
   if (k === "nuke") {
-    const fl = document.createElement("div");
-    fl.className = "l4-nukeflash";
-    gotEl.before(fl);
-    setTimeout(() => fl.remove(), 1300);
+    gotEl.classList.add("nuke");
+    nukeScreen(gotEl);
     sfx.nuke();
   } else sfx.bell();
+}
+/* ---------- the Nuke on the screen (owner 2026-11-16) ----------
+   Grey pixel static sweeps out from the middle in a circle and covers the screen in a second (NUKE.SWEEP: the zombies
+   die then, under it, so only the aftermath is drawn), flashes, fades fast, then lingers as thin drifting smoke while
+   the map stays grey 7 s and slowly gets its colors back. One small canvas (a static pixel is 6 css px), drawn only
+   while it lasts. With Heavy effects off: a short grey fade, no static and no grey map */
+const NK = {
+  PX: 6,
+  SWEEP: 1000,
+  FLASH: 150,
+  FADE: 650,
+  SMOKE: 6200,
+  GREY: 7000,
+  BACK: 3000,
+};
+function nukeScreen(at) {
+  const board = at.closest(".hang-board") || at.parentElement;
+  if (!board) return;
+  const cv = document.createElement("canvas");
+  cv.className = "l4-nuke";
+  cv.setAttribute("aria-hidden", "true");
+  at.before(cv);
+  if (heavyOff()) {
+    cv.classList.add("plain");
+    setTimeout(() => cv.remove(), 1400);
+    return;
+  }
+  const r = board.getBoundingClientRect(),
+    W = Math.max(8, Math.ceil(r.width / NK.PX)),
+    H = Math.max(8, Math.ceil(r.height / NK.PX)),
+    g = cv.getContext("2d"),
+    img = g.createImageData(W, H),
+    d = img.data,
+    cx = W / 2,
+    cy = H / 2,
+    far = Math.hypot(cx, cy) + 2,
+    t0 = performance.now(),
+    end = NK.SWEEP + NK.FLASH + NK.FADE + NK.SMOKE;
+  cv.width = W;
+  cv.height = H;
+  /* the smoke's slow drift: a few big soft blobs that move and thin out */
+  const blobs = Array.from({ length: 7 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: (0.18 + Math.random() * 0.22) * W,
+    vx: (Math.random() - 0.5) * 0.004 * W,
+    vy: -(0.002 + Math.random() * 0.003) * H,
+  }));
+  setTimeout(() => board.classList.add("l4-greyed"), NK.SWEEP); // (the map goes grey under the flash)
+  setTimeout(() => board.classList.add("l4-greying"), NK.SWEEP + NK.GREY); // (then slowly gets its colors back)
+  setTimeout(
+    () => board.classList.remove("l4-greyed", "l4-greying"),
+    NK.SWEEP + NK.GREY + NK.BACK,
+  );
+  let frame = 0;
+  const step = () => {
+    if (!cv.isConnected) return;
+    const t = performance.now() - t0;
+    if (t >= end) return cv.remove();
+    frame++;
+    const smoke = t > NK.SWEEP + NK.FLASH + NK.FADE;
+    if (smoke && frame % 3) return requestAnimationFrame(step); // (the smoke drifts slowly: a third of the frames)
+    const rad = Math.min(1, t / NK.SWEEP) * far, // (the sweep's edge)
+      flash = t >= NK.SWEEP && t < NK.SWEEP + NK.FLASH,
+      fade =
+        t < NK.SWEEP + NK.FLASH
+          ? 1
+          : Math.max(0, 1 - (t - NK.SWEEP - NK.FLASH) / NK.FADE),
+      left = smoke ? 1 - (t - NK.SWEEP - NK.FLASH - NK.FADE) / NK.SMOKE : 0;
+    for (const b of blobs) {
+      b.x += b.vx;
+      b.y += b.vy;
+    }
+    for (let y = 0, i = 0; y < H; y++)
+      for (let x = 0; x < W; x++, i += 4) {
+        let a = 0;
+        const n = Math.random();
+        if (t < NK.SWEEP) {
+          const dd = Math.hypot(x - cx, y - cy);
+          if (dd < rad) a = dd > rad - 3 ? 1 : 0.92; // (a brighter rim at the edge)
+        } else if (!smoke) a = flash ? 1 : 0.35 + 0.65 * fade;
+        else {
+          let m = 0;
+          for (const b of blobs) {
+            const q = 1 - Math.hypot(x - b.x, y - b.y) / b.r;
+            if (q > m) m = q;
+          }
+          a = m > 0 && n < 0.35 + m ? 0.55 * m * left : 0; // (patchy: only some pixels in each blob)
+        }
+        const v = flash ? 200 + n * 55 : 70 + n * 120; // (grey static; nearly white for the flash itself)
+        d[i] = d[i + 1] = d[i + 2] = v;
+        d[i + 3] = a * 255;
+      }
+    g.putImageData(img, 0, 0);
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 

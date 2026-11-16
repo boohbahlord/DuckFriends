@@ -1164,23 +1164,37 @@ function takeDrop(s, k, by, zs, now, ids) {
     s.hang.l4on = { ...(s.hang.l4on || {}), sale: now + DROP.FOR };
     s.hang.l4sale = { used: {} }; // (a new Sale: every half price can be spent again)
   } else if (k === "ammo") maxAmmo(s);
-  else if (k === "nuke") {
-    const T = now - s.hang.l4.t0;
-    let hp = 0,
-      crits = 0;
-    for (const z of zs)
-      if (z.st !== 3) {
-        hp += z.hp;
-        z.hp = 0;
-        die(z, T);
-        if (Math.random() < NUKE_CRIT) crits++;
-      }
-    const each =
-      (hp * PTS.HIT + crits * PTS.NUKE_CRIT) *
-      ((s.hang.l4on || {}).double ? 2 : 1);
-    for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
-  }
+  else if (k === "nuke") s.hang.l4nk = { at: now + NUKE.SWEEP }; // (it goes off once the sweep covers the screen: nukeTick)
 }
+/* the Nuke on every screen (owner 2026-11-16, l4dd.js nukeScreen): grey static sweeps out over the screen in a second,
+   then every zombie dies at once, burnt and blown apart, while the static covers them, so only the aftermath is ever
+   drawn. Their bodies lie there 15 s (the others' 4 s) */
+export const NUKE = { SWEEP: 1000, DEAD: 15000 };
+function nukeTick(s, zs, now, ids) {
+  const N = s.hang.l4nk;
+  if (!N || N.ids || now < N.at) return;
+  const T = now - s.hang.l4.t0,
+    killed = [];
+  let hp = 0,
+    crits = 0;
+  for (const z of zs)
+    if (z.st !== 3) {
+      hp += z.hp;
+      z.hp = 0;
+      die(z, T);
+      mark(s, z, "f0"); // (every one burnt)
+      mark(s, z, "g0"); // (and blown apart: every chunk, cut and big hole, l4ddart.js)
+      killed.push(z.i);
+      if (Math.random() < NUKE_CRIT) crits++;
+    }
+  s.hang.l4nk = { at: N.at, ids: killed.length ? killed : [-1] };
+  const each =
+    (hp * PTS.HIT + crits * PTS.NUKE_CRIT) *
+    ((s.hang.l4on || {}).double ? 2 : 1);
+  for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
+}
+/* a body the Nuke left: it lies there longer */
+const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
 /* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
    way (the medkit never refills, Jaime comes back each round) */
 function maxAmmo(s) {
@@ -1212,6 +1226,7 @@ function setUp(s, now) {
   s.hang.l4fo = {};
   s.hang.l4inv = {};
   s.hang.l4dr = [];
+  s.hang.l4nk = null;
   s.hang.l4on = {};
   s.hang.l4sale = null;
   s.hang.l4bag = [...BAGGED];
@@ -2566,6 +2581,7 @@ function l4Tick(s, now) {
   /* the zombies walk, tear boards down, climb in, swipe */
   moveZombies(s, zs, now, T, up);
   jaimesRun(s, zs, now, T);
+  nukeTick(s, zs, now, ids);
   dropTick(s, L2, zs, now, T, ids);
   const ad = s.hang.l4ad;
   if (ad && Object.values(ad).some((u) => u <= now))
@@ -2573,11 +2589,15 @@ function l4Tick(s, now) {
       Object.entries(ad).filter(([, u]) => u > now),
     ); // (the adrenaline shots that wore off)
   /* the dead go */
-  const left = zs.filter((z) => !(z.st === 3 && T - z.d > L4.DEAD_MS));
+  const left = zs.filter(
+      (z) => !(z.st === 3 && T - z.d > (nuked(s, z) ? NUKE.DEAD : L4.DEAD_MS)),
+    ),
+    bodies = left.filter((z) => z.st === 3 && nuked(s, z)); // (the Nuke's: they don't hold up the next round)
+  if (s.hang.l4nk && s.hang.l4nk.ids && !bodies.length) s.hang.l4nk = null; // (the last of them gone)
   /* every zombie of the round came and died: the next round, and the ghosts come back */
-  if (L2.made >= L2.n && !left.length && T >= 0) {
+  if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
-    store(s, [], false);
+    store(s, bodies, false);
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
     });
