@@ -109,4 +109,10 @@ export const FILES = {
   flameStart: { n: 1 },
   flameLoop: { n: 1, loop: [0.15, 2.15] },
   flameStop: { n: 1 },
+  axe: { n: 1 },
+  sword: { n: 1 },
+  pan: { n: 1 },
+  axeHit: { n: 1 },
+  swordHit: { n: 1 },
+  panHit: { n: 1 },
 };

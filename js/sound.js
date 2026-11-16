@@ -82,6 +82,9 @@ export const VOL = {
   hitShot: -10,
   hitBlade: -11,
   hitBlunt: -10,
+  axeHit: -10, // (… and its own hit)
+  swordHit: -11,
+  panHit: -9,
   hitArrow: -8,
   hitClaw: -10,
   // a round that missed, landing on the floor or a wall
@@ -94,6 +97,9 @@ export const VOL = {
   // swings and throws
   knife: -11,
   hammer: -9,
+  axe: -9, // (the new melees: each its own swing …)
+  sword: -11,
+  pan: -9,
   chair: -11,
   throw: -11,
   cakeThrow: -11,
@@ -174,6 +180,7 @@ const GROUPS = {
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
+    ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit"],
     ...["boom", "meteor", "tileIn", "quack"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
@@ -522,9 +529,11 @@ const FLESH = {
   claw: "hitClaw",
 };
 let fleshAt = 0;
-function flesh(kind) {
+/* … but a melee with its own hit sounds its own (w: the weapon, when the game says) */
+const OWN_HIT = { axe: "axeHit", sword: "swordHit", pan: "panHit" };
+function flesh(kind, w) {
   fleshAt = performance.now();
-  play(FLESH[kind] || "hitSmall");
+  play(OWN_HIT[w] || FLESH[kind] || "hitSmall");
 }
 /* a round that missed, by its kind (game.js' shots: a round's own kind, a pellet, an arrow, a dagger) */
 const LAND = {

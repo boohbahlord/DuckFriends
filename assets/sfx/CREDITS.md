@@ -114,3 +114,9 @@ instruments (its license: LICENSES.md).
 | flameStart | Nic3_one, fire attack (freesound 166555, from Stendhal); rombart, oxytorch; Kenney, RPG Audio — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |
 | flameLoop | rombart, oxytorch (freesound 197800, from CDDA-Soundpacks); PagDev, Fireplace Sound Loop — https://freesound.org/s/197800/ | CC0 1.0 |
 | flameStop | Nic3_one, fire attack (freesound 166555, from Stendhal) — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |
+| axe | Jordan Irwin (AntumDeluge), melee swings (from Stendhal) — https://opengameart.org/node/100746 | CC0 1.0 |
+| sword | Jordan Irwin (AntumDeluge), melee swings (from Stendhal); Kenney, RPG Audio (drawKnife1) — https://opengameart.org/node/100746 | CC0 1.0 |
+| pan | Jordan Irwin (AntumDeluge), melee swings (from Stendhal) — https://opengameart.org/node/100746 | CC0 1.0 |
+| axeHit | Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| swordHit | Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| panHit | alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3) — https://freesound.org/people/alienistcog/sounds/124711/ | CC0 1.0 |

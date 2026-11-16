@@ -1003,6 +1003,64 @@ SOUNDS = {
             "https://freesound.org/people/Nic3_one/sounds/166555/",
         ),
     ),
+    # the new melees (#301), each its own swing and its own hit: the axe heavy, the sword with steel's ring, the pan a
+    # broad flat swing and a frying pan's bonk
+    "axe": dict(
+        layers=[("gh:melee/attack-melee-04.ogg", 0, 0.6, 0, 1)],
+        rate=0.85,
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "sword": dict(
+        layers=[
+            ("gh:melee/attack-melee-07.ogg", 0, 0.45, 0, 1),
+            (KR + "drawKnife1.ogg", 0, 0.4, 0.02, 0.5),
+        ],
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal); Kenney, RPG Audio (drawKnife1)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "pan": dict(
+        layers=[("gh:melee/attack-melee-06.ogg", 0, 0.4, 0, 1)],
+        rate=0.75,
+        credit=(
+            "Jordan Irwin (AntumDeluge), melee swings (from Stendhal)",
+            "https://opengameart.org/node/100746",
+        ),
+    ),
+    "axeHit": dict(
+        layers=[
+            (KR + "chop.ogg", 0, 0.24, 0, 1),
+            (KI + "impactPunch_heavy_001.ogg", 0, 0.4, 0, 0.5, 2000),
+        ],
+        credit=(
+            "Kenney, RPG Audio (chop) and Impact Sounds (impactPunch_heavy)",
+            KENNEY_RPG,
+        ),
+    ),
+    "swordHit": dict(
+        layers=[
+            (KR + "knifeSlice2.ogg", 0.2, 0.35, 0, 1),
+            ("gh:melee/clang-metallic-1.flac", 0, 0.35, 0, 0.25),
+        ],
+        credit=(
+            "Kenney, RPG Audio (knifeSlice2); lostchocolatelab, clang (freesound 1468, from Stendhal)",
+            KENNEY_RPG,
+        ),
+    ),
+    "panHit": dict(
+        layers=[
+            ("gh:melee/clang-dull-1.flac", 0.15, 0.27, 0, 1),
+            (KR + "metalPot3.ogg", 0, 0.45, 0, 0.6),
+        ],
+        credit=(
+            "alienistcog, clang (freesound 124711, from Stendhal); Kenney, RPG Audio (metalPot3)",
+            "https://freesound.org/people/alienistcog/sounds/124711/",
+        ),
+    ),
 }
 
 
