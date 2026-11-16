@@ -4728,3 +4728,17 @@ Solomon.)
 - Adam: the sniper, AK and LMG already reloaded there; the shotgun (6 shells, 2.6 s), the grenade launcher (3, 4 s)
   and the chain gun (a belt of 100, 4 s) now do too (mgjrules.js MGJ_MAG_MORE). The pistol still never reloads (the
   owner's 15:12Z rule today).
+- Done (Noah), the gore part of the owner's 15:55Z request and the explosion looks for the 16:13Z Nuke: blood is two
+  pixels across (some three) and there is more of it, pooling longer where it lands; chunks of the duck itself fly out
+  in its own color with blood on the torn side (fx.js flesh, from the hit duck's or zombie's color); a hit through
+  clothes tears them (duck.js gone.rips: the body shows through, a frayed dark edge); guns and blunt hits knock off a hat
+  or a face item that can come off (wounds.js knockable: not hair, horns, halos, antennas, the floating eye, full head
+  covers such as the motorcycle or armored helmet, the ski mask, the bag, the box, the pumpkin head, the gas mask, nor
+  clown paint), which flies off as pixels, turning over, and comes back on after 10 s (half see-through its last 1.5 s);
+  a bullet can shoot the beak off or blow the eye out (a bloody socket, the eye flies), and blades and blunt hits now
+  and then cut or knock the beak off or the eye out. Wound codes: e eye, h hat, m face item (spot 1: coming back). For
+  the Nuke: wounds.js explodedLook(seed) gives one of five torn-apart, burnt looks (headless, or beak and eye gone, or
+  more chunks), pwExploded(s, id, seed, now) puts one on a duck. Gore off (s.options.noGore) hides every wound but a
+  knocked-off hat or face item, and every flying bit.
+
+

@@ -184,7 +184,8 @@ const marks = (OF, size) => {
 /* skin: marks painted on a rubber duck, { body, head, out } (svg in the 120 box): the body's under its clothes and the
    wing, the head's over the head and under the beak and the eyes, both inside the duck's outline; out is over it all
    and may stick out of it (an arrow). gone: what a rubber duck has lost, { head, beak, holes: [[x, y, r]] } (a chunk
-   torn out is a hole through it). Quacky Zombies' scars and wounds: l4ddart.js */
+   torn out is a hole through it), and (the owner's, Nov 16) eyes (blown out), hat and face (knocked off: 0, or 0.5
+   coming back on, half see-through), rips: [[x, y, r]] (its clothes torn where it was hit, the body seen through). Quacky Zombies' scars and wounds: l4ddart.js */
 export function duckSVG(
   look = DUCK_DEFAULT,
   {
@@ -268,6 +269,29 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
             )
             .join("")
         : "";
+  /* its clothes torn where it was hit: a hole in them (the body under it shows), a dark frayed edge round it on the
+     cloth only */
+  const rips =
+      gone && gone.rips && gone.rips.length
+        ? gone.rips
+            .map(
+              ([x, y, r]) =>
+                `<circle cx="${x}" cy="${y}" r="${r}" fill="#000"/>`,
+            )
+            .join("")
+        : "",
+    ripped = (svg) => (rips && svg ? `<g mask="url(#${id}r)">${svg}</g>` : svg), // (only clothes: OF)
+    frays = rips
+      ? gone.rips
+          .map(
+            ([x, y, r]) =>
+              `<circle cx="${x}" cy="${y}" r="${r + 0.6}" fill="none" stroke="#1c1c28" stroke-opacity=".7" stroke-width="2.6" stroke-dasharray="2.2 1.4"/>`,
+          )
+          .join("")
+      : "";
+  /* a hat or a face item knocked off (gone), or coming back on (half see-through) */
+  const worn = (svg, g) =>
+    !gone || g === undefined ? svg : g ? `<g opacity="${g}">${svg}</g>` : "";
   const own = !st.fixed,
     M = own && L.metal !== "none" && METAL[L.metal];
   /* the body's and the head's colors (most styles: one color; a mallard or an eagle: a head of its own) */
@@ -315,7 +339,7 @@ ${beakSVG(L)}${zap ? "" : eyes}${face}${zap ? eyes : ""}${hat.front}${k !== 1 ? 
   const solid = SL.wing ? "" : `<path d="${WING}" fill="url(#${id}b)"${bt}/>`;
   const wing =
     OF && OF.sleeve !== null
-      ? (OF.bare ? solid + bare : "") + `<g${bt}>${OF.sleeve}</g>`
+      ? (OF.bare ? solid + bare : "") + ripped(`<g${bt}>${OF.sleeve}</g>`)
       : bare;
   /* cloth gets no white shine spots: the body's highlights stay only where it is bare (no cloth, or jeans alone), and a
      metal mirrors the room only off the cloth (a mask: everything but the cloth, the head and a bare arm) */
@@ -334,19 +358,20 @@ ${pat}${offCloth}
 <clipPath id="${id}c"><path d="${BODY}"${bt}/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}"/>`}</clipPath>
 <mask id="${id}nh"><rect width="120" height="120" fill="#fff"/>${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="#000"/>`}</mask>
 ${holes ? `<mask id="${id}g" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${holes}</mask>` : ""}
+${rips && OF ? `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><rect x="-20" y="-40" width="160" height="180" fill="#fff"/>${rips}</mask>` : ""}${rips && OF && OF.cloth ? `<filter id="${id}wh"><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/></filter><mask id="${id}cm" maskUnits="userSpaceOnUse" x="-20" y="-40" width="160" height="180"><g filter="url(#${id}wh)"><g${bt}>${OF.cloth}</g></g></mask>` : ""}
 ${M ? metalGlints(id) : ""}
 </defs>
 ${k !== 1 ? `<g transform="translate(60 108) scale(${k.toFixed(3)}) translate(-60 -108)">` : ""}
 ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}" ry="7" fill="#000" opacity=".22"/>` : ""}
 ${holes ? `<g mask="url(#${id}g)">` : ""}
-${noHead ? "" : hat.back}${SL.back || ""}${OF ? OF.back : ""}
+${noHead ? "" : worn(hat.back, gone && gone.hat)}${SL.back || ""}${OF ? OF.back : ""}
 <path d="${BODY}" fill="url(#${id}b)"${bt}/>
 ${noHead ? "" : `<circle cx="${HEAD.cx}" cy="${HEAD.cy}" r="${HEAD.r}" fill="url(#${id}h)"/>`}
 <g clip-path="url(#${id}c)">
   ${pat ? `<rect x="0" y="0" width="120" height="120" fill="url(#${id}p)" opacity=".92"/>` : ""}
   ${SL.under || ""}
   ${skin && skin.body ? `<g${bt}>${skin.body}</g>` : ""}
-  ${OF && OF.cloth ? `<g mask="url(#${id}nh)"><g${bt}>${OF.cloth}</g></g>` : ""}
+  ${OF && OF.cloth ? `<g mask="url(#${id}nh)">${rips ? `<g mask="url(#${id}r)">` : ""}<g${bt}>${OF.cloth}</g>${rips ? `</g><g mask="url(#${id}cm)">${frays}</g>` : ""}</g>` : ""}
   <path d="${BODY}" fill="url(#${id}ao)"${bt}/>
   <ellipse cx="74" cy="63" rx="21" ry="5.5" fill="#000" opacity=".2" mask="url(#${id}nh)"/>
   ${wing}
@@ -375,15 +400,15 @@ ${
     : ""
 }
 ${SL.over || ""}
-${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
+${OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : ""}
 ${
   noHead
     ? ""
     : `${gone && gone.beak ? "" : beakSVG(L)}
-${zap ? "" : eyes}
-${face}
-${zap ? eyes : ""}
-${hat.front}`
+${zap || (gone && gone.eyes) ? "" : eyes}
+${worn(face, gone && gone.face)}
+${zap && !(gone && gone.eyes) ? eyes : ""}
+${worn(hat.front, gone && gone.hat)}`
 }
 ${holes ? "</g>" : ""}
 ${skin && skin.out ? skin.out : ""}

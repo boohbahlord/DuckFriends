@@ -339,7 +339,10 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
-import { pwCodes } from "./wounds.js";
+import { pwCodes, goreFree } from "./wounds.js";
+import { hatLayers, HAT_TOP } from "./hats.js";
+import { faceLayer } from "./faces.js";
+import { beakSVG } from "./beaks.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
@@ -410,6 +413,8 @@ import {
   fxSpurt,
   fxMuzzle,
   fxLasers,
+  fxKnock,
+  fxEye,
   MUZZLE,
 } from "./fx.js";
 import {
@@ -1378,6 +1383,7 @@ function drawDucks(now = clockNow()) {
         jet,
         !!p.bomb,
         wc,
+        !!+s.options.noGore,
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1400,7 +1406,7 @@ function drawDucks(now = clockNow()) {
         title: p.name,
         dead,
         ...(p.bomb ? { skin: BOMB_SKIN } : {}),
-        ...(wc ? woundLook(wc) : {}),
+        ...(wc ? woundLook(s.options.noGore ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
       });
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
@@ -1557,7 +1563,13 @@ function drawDucks(now = clockNow()) {
         z + size * (isJustin(id) ? 0.5 * MGJ_SCALE : 0.42),
         id,
         size,
-      ); // (blood, by what hit it: fx.js)
+        "small",
+        look && look.color,
+      ); // (blood, by what hit it, with bits of the duck in its color: fx.js)
+    if (d._wc === undefined)
+      d._wc = wc; // (first seen: what it already lost doesn't fly off again)
+    else if (wc !== d._wc && !g)
+      knockedOff(d, wc, look, at, z, size, turned() ? 1 : d._face || 1); // (its hat, its beak or its eye flying off)
     const mine = id === R.me;
     const face =
       seatOf(s, id) >= 0
@@ -3417,6 +3429,38 @@ function neckSpray(x, y) {
   fxSpurt(x, y + size * 0.5, size * 0.5, 14, 1500);
 }
 
+/* what a hit just knocked off duck d (wounds.js codes it didn't have a moment ago: a hat h, a face item m, the beak p,
+   the eye e), flying off its head the way it looks away from, as pixels (fx.js). The owner's, Nov 16 */
+function knockedOff(d, wc, look, at, z, size, face) {
+  const was = d._wc || "";
+  d._wc = wc;
+  if (!look || !wc) return;
+  const fresh = (k) =>
+      wc.includes(k + "0") && !was.includes(k + "0") && !was.includes(k + "1"),
+    u = size / 120,
+    x = (v) => at.left + (v - 60) * u * face,
+    h = (v) => z + (108 - v) * u,
+    away = -face,
+    svg = (inner) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${face < 0 ? `<g transform="translate(120 0) scale(-1 1)">${inner}</g>` : inner}</svg>`;
+  if (fresh("h") && look.hat) {
+    const H = hatLayers(look.hat, look, false);
+    fxKnock(svg(H.back + H.front), size, x(72), at.top, h(20), away, 1);
+  }
+  if (fresh("m") && look.face)
+    fxKnock(
+      svg(faceLayer(look.face, look, false)),
+      size,
+      x(84),
+      at.top,
+      h(36),
+      away,
+      0.9,
+    );
+  if (fresh("p"))
+    fxKnock(svg(beakSVG(look)), size, x(100), at.top, h(42), face, 1.1, true);
+  if (fresh("e")) fxEye(x(83), at.top, h(34), face);
+}
 /* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
 const WLOOK = new Map();
 function woundLook(wc) {
