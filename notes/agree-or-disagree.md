@@ -4889,3 +4889,17 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 
 - Version 44: the performance vote built: Noah #332 (effects), Miles Jr. #331 (sound caps), Solomon #333 (Dead Ducks Arcade, position sends).
 - Version 45: Noah's #335, dead zombies no longer vanish at once with Animations off (found by Solomon).
+
+## Request (2026-11-16 21:21Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6VGNoDkdQvKDkfZF6hXGff): Dead Ducks Arcade numbers
+> make zombies spawn in twice as fast
+>
+> make the item that spawns in the fireplace for getting the power grid back up available for purchase for 750 points from Justin's butler
+>
+> make the faster attack speed upgrade only have two upgrades
+>
+> what are the crit chance table per weapon?
+> what are the spawn rates per round?
+> what is the health of the zombies?
+
+- Adam: answers in /mnt/project-files/notes/dead-ducks-numbers-2026-11-16.md. Changes to Solomon: spawn rate and its cap
+  x2, the fireplace part also at the Butler for 750, Attack speed upgrade most 2.
