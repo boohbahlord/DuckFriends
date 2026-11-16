@@ -15777,23 +15777,72 @@ html.moving .eye-tears .tdrop.t2 {
     opacity: 0;
   }
 }
-/* the Nuke: the whole board flashes white and fades */
-.l4-nukeflash {
+/* the Nuke (l4dd.js nukeScreen, owner 2026-11-16): grey pixel static over the whole board, the map grey for 7 s, then
+   its colors slowly coming back; "Nuke" in crimson blood letters that hold still through it; its bodies lie 15 s */
+.l4-nuke {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 31040;
   pointer-events: none;
-  background: #fff;
+  image-rendering: pixelated;
+}
+.l4-nuke.plain {
+  background: #8a8a8a;
   animation: l4-nuke 1.2s ease-out forwards;
 }
 @keyframes l4-nuke {
   0% {
-    opacity: 0.95;
+    opacity: 0.9;
   }
   100% {
     opacity: 0;
   }
 }
+.hang-board.l4-greyed :is(.hang-ground, .hang-props, .ducks) {
+  filter: grayscale(1);
+}
+.hang-board.l4-greying :is(.hang-ground, .hang-props, .ducks) {
+  filter: grayscale(0);
+  transition: filter 3s linear;
+}
+.l4-got-nuke {
+  font-size: 1.6em;
+  letter-spacing: 0.04em;
+  color: #9e0b16;
+  -webkit-text-stroke: 0.05em #2a0204;
+  text-shadow:
+    0 0.06em 0 #5a0309,
+    0.04em 0.16em 0 #6d050c,
+    -0.05em 0.24em 0 #4a0207; /* (blood running down from the letters) */
+}
+.l4-got.nuke.on {
+  animation: l4-got-nuke 5s linear forwards;
+}
+@keyframes l4-got-nuke {
+  0%,
+  86% {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%);
+  }
+}
+.l4z.dead.nuked {
+  animation: l4z-nuked 15s linear forwards;
+}
+@keyframes l4z-nuked {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+} /* (lying there 12 s, gone in 15 s: NUKE.DEAD in l4ddrules.js) */
 /* the jetpack (jetpack.js, Noah's pictures in jetart.js): on the duck's back, behind it (JET_AT in the duck's 120 box,
    from the duck's feet so a hat doesn't move it), and the flames under its nozzles while its jets are on */
 .gduck-jet {

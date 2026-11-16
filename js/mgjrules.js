@@ -310,9 +310,13 @@ export const MGJ_GUNS = [
 ];
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with: two magazines, or a quarter of Quacky Zombies' ammo for a gun with no magazine
-   (the shotgun 18, the grenade launcher 6, the chain gun 60) */
+   (the shotgun 18, the grenade launcher 6); the chain gun its 300 */
 export const pickAmmo = (k) =>
-  ARMS[k].mag ? 2 * ARMS[k].mag : Math.round(ARMS[k].all / 4);
+  k === "chaingun"
+    ? ARMS.chaingun.all
+    : ARMS[k].mag
+      ? 2 * ARMS[k].mag
+      : Math.round(ARMS[k].all / 4); // (the chain gun all 300 of its rounds, as everywhere: the owner's, Nov 16)
 /* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out */
 export const mgjMag = (k) =>
   MGJ_GUNS.includes(k) && ARMS[k].mag ? [ARMS[k].mag, ARMS[k].reload] : null;

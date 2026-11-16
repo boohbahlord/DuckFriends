@@ -19,7 +19,7 @@
      play(name, o)          o: { k: louder or quieter (1), x, y: where in the world (px; fades with distance), rate }
      loop(name, o)          a sound on a loop (the jetpack): { stop(), move(x, y) }
      setListener(fn)        fn() → where my duck is ({ x, y }), for the distance; null for none
-     loadSounds(group)      "game", "l4dd": fetch and decode that group's files ahead of time */
+     loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
 import { profile } from "./store.js";
 import { FILES } from "./sfxlist.js";
 
@@ -94,6 +94,7 @@ export const VOL = {
   boom: -7,
   meteor: -3,
   nuke: -2,
+  nukeRing: -22, // (the ears ringing, under the nuke's roar)
   // the menus: faint
   uiPress: -13,
   uiOn: -23,
@@ -107,12 +108,40 @@ export const VOL = {
   ping: -17,
   pop: -16,
   boop: -15,
+  tileIn: -21, // (stepping onto another tile: faint)
+  // Dead Ducks Arcade: boards, groans, the fireplace's spin, a sale, drops, the flashlight
+  l4crack: -12,
+  l4nail: -14,
+  l4groan: -20,
+  l4slot: -15,
+  l4till: -16,
+  dropIn: -16,
+  dropGot: -12,
+  flashOn: -20,
+  flashOff: -21,
+  // Duck Cabin: lamps, the power box, flames, the TV, blackjack, the cats and Justin, the shadow duck
+  lampOn: -18,
+  lampOff: -19,
+  lever: -12,
+  fireOut: -16,
+  candleOut: -18,
+  relight: -16,
+  tvClick: -18,
+  card: -16,
+  chips: -16,
+  bite: -12,
+  gulp: -12,
+  whoosh: -16,
+  swipe: -12,
 };
+/* names some callers use for a sound that is another's (Justin's gunshot is the handgun's) */
+const ALIAS = { gunshot: "handgun" };
 export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
   CAP = {
     ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3 },
     ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
+    ...{ l4crack: 3, l4nail: 3, card: 3 },
   }, // … and of one kind (2 for the rest)
   CAP_ANY = 2;
 const NEAR = 300, // world px: full up to here …
@@ -128,10 +157,26 @@ const GROUPS = {
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
-    ...["boom", "meteor"],
+    ...["boom", "meteor", "tileIn"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
-  l4dd: ["l4round", "zstep", "nuke"],
+  l4dd: [
+    ...[
+      "l4round",
+      "zstep",
+      "nuke",
+      "nukeRing",
+      "l4crack",
+      "l4nail",
+      "l4groan",
+      "l4slot",
+    ],
+    ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
+  ],
+  cabin: [
+    ...["lampOn", "lampOff", "lever", "fireOut", "candleOut", "relight"],
+    ...["tvClick", "card", "chips", "bite", "gulp", "whoosh", "swipe"],
+  ],
 };
 const LEAD = 0.03; // s: every sound is set this far ahead of the clock (set for "now", its fade-in is skipped: a pop)
 const VERSION = (import.meta.url.match(/[?&]v=(\w+)/) || [])[1] || "dev"; // (a new version fetches the files again)
@@ -292,6 +337,7 @@ function drop(v) {
 /* one sound: returns its voice, or null when there's nothing to play (no clock yet, muted, too far, not loaded yet: a
    sound not loaded yet starts loading, and the next one plays) */
 function voice(name, o = {}, loops = false) {
+  name = ALIAS[name] || name;
   if (!FILES[name] || !start() || document.hidden) return null;
   const list = bufs.get(name);
   if (!list) {
@@ -490,6 +536,10 @@ const SFX = {
   land,
   hit,
   swish: named("throw"),
+  nuke: (o = {}) => {
+    play("nukeRing", o); // (a flashbang's ring in the ears, as the roar starts: the owner, Nov 16)
+    return play("nuke", o);
+  },
   boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)

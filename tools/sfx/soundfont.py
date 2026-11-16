@@ -1,5 +1,5 @@
 """The few game sounds I play on SoundFont instruments (the GeneralUser GS SoundFont, through TinySoundFont): the lobby
-countdown and Dead Ducks Arcade's new round. Used by build.py; each returns mono float32 at SR.
+countdown, Dead Ducks Arcade's new round and the ring after its nuke. Used by build.py; each returns mono float32 at SR.
 
 Needs: pip install tinysoundfont --no-deps (MIT), numpy, and GeneralUser-GS.sf2 (its license: assets/sfx/LICENSES.md).
 """
@@ -50,7 +50,8 @@ def env(n, attack, hold, tau):
 
 def count_tick(sf2):
     """the lobby countdown, each second: a soft, low knock on B4, a Vibraphone over a Marimba, with no sine on top (the
-    owner, Nov 16: the blips before the last were harsh too, as B5 they were); build.py darkens it"""
+    owner, Nov 16: the blips before the last were harsh too, as B5 they were); build.py darkens it
+    """
     return play(sf2, [(0, 0, 0, 11, 71, 72, 0.07), (0, 1, 0, 12, 71, 58, 0.07)], 0.6)
 
 
@@ -85,4 +86,22 @@ def round_start(sf2):
     return (a * env(len(a), 2.2, 0.4, 1.6)).astype(np.float32)
 
 
-MAKERS = {"count_tick": count_tick, "count_go": count_go, "round_start": round_start}
+def nuke_ring(sf2):
+    """Dead Ducks Arcade's nuke: the ears ringing after it, as a flashbang leaves them (the owner, Nov 16): two sines
+    high up (E7), a few cents apart so the ring beats a little, swelling in fast and dying away over about four
+    seconds under the roar"""
+    a = play(
+        sf2,
+        [(0, 0, 8, 80, 100, 90, 5.0), (0, 1, 8, 80, 100, 70, 5.0)],
+        5.5,
+        bend={1: (14, 6)},
+    )
+    return (a * env(len(a), 0.05, 0.4, 1.4)).astype(np.float32)
+
+
+MAKERS = {
+    "count_tick": count_tick,
+    "count_go": count_go,
+    "round_start": round_start,
+    "nuke_ring": nuke_ring,
+}
