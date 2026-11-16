@@ -5736,6 +5736,7 @@ function paintNow(force) {
     main.innerHTML = viewHTML(s);
     const vin = $(".vd-in", main);
     if (vin && !touchOnly()) vin.focus(); // (The Date writes the topic at once; on a phone the keyboard waits for a tap)
+    if (isHang(s) && s.phase === "hang") loadSounds("cabin"); // (Duck Cabin's own: its lamps, lever, cards …)
     if (isHang(s) && s.phase === "hang")
       world = mountWorld($(".hang-board", main), {
         room: () => R,
