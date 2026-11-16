@@ -101,4 +101,12 @@ export const FILES = {
   gulp: { n: 1 },
   whoosh: { n: 1 },
   swipe: { n: 1 },
+  dbarrel: { n: 1 },
+  burst: { n: 1 },
+  reloadBurst: { n: 1 },
+  reloadDbarrel: { n: 1 },
+  reloadFlamer: { n: 1 },
+  flameStart: { n: 1 },
+  flameLoop: { n: 1, loop: [0.15, 2.15] },
+  flameStop: { n: 1 },
 };

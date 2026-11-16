@@ -2946,13 +2946,14 @@ function crimson(ms) {
   clearTimeout(crimsonT);
   crimsonT = setTimeout(() => root.classList.remove("crimson"), ms);
 }
-/* the owner's three new guns (Nov 16 16:25Z), heard: the double barrel the shotgun's blast, louder; the burst rifle the
-   AK-47's, once for each of its three rounds; the flamethrower its own (silent until its recording comes: sound.js) */
+/* the owner's three new guns (Nov 16 16:25Z), heard, each its own (sound.js): the double barrel's blast; the burst
+   rifle's crack once for each of its three rounds; the flamethrower's fire, lit by its first puff and roaring while
+   the puffs keep coming */
 const NEW_GUN_SFX = {
-  dbarrel: (o) => sfx.shotgun({ ...o, k: ((o && o.k) ?? 1) * 1.3 }),
+  dbarrel: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
-      setTimeout(() => sfx.ak(o), i * ARMS.burst.gap);
+      setTimeout(() => sfx.burst(o), i * ARMS.burst.gap);
   },
   flamer: (o) => sfx.flamer(o),
 };
@@ -5221,7 +5222,7 @@ function tileKnock(s, p, now) {
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
    stands (sound.js fades it with its distance from my duck) */
 function heard(id) {
-  const o = { k: id === R.me ? 1 : OTHERS };
+  const o = { id, k: id === R.me ? 1 : OTHERS }; // (id: whose it is, for a sound that's each duck's own: sound.js flamer)
   if (world && R && isHang(R.state)) {
     const p = (R.state.pos || {})[id];
     if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });

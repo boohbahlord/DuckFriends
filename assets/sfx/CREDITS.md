@@ -106,3 +106,11 @@ instruments (its license: LICENSES.md).
 | gulp | qubodup, Liquid / bottle / drink set — https://opengameart.org/content/liquid-bottle-drink-set | CC0 1.0 |
 | whoosh | qubodup, Swish: bamboo stick weapon swooshes (swosh-01) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
 | swipe | qubodup, Swish: bamboo stick weapon swooshes (swosh-10) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
+| dbarrel | Still North Media, The Free Firearm Sound Library (Charles Daly 12 ga) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
+| burst | Tabasco, Gunshot Sounds (SKS) — https://opengameart.org/content/gunshot-sounds | CC0 1.0 |
+| reloadBurst | zer0_sol, Handgun Reload Sound Effect — https://opengameart.org/content/handgun-reload-sound-effect | CC0 1.0 |
+| reloadDbarrel | LFA, Equipment Clicks III; Shotgun Reload Sound Effects (Shell in Chamber); Kenney, Impact Sounds — https://opengameart.org/content/shotgun-reload-sound-effects | CC0 1.0 |
+| reloadFlamer | Kenney, RPG Audio and Impact Sounds; LFA, Equipment Clicks III; rombart, oxytorch (freesound 197800) — https://opengameart.org/content/equipment-clicks-iii | CC0 1.0 |
+| flameStart | Nic3_one, fire attack (freesound 166555, from Stendhal); rombart, oxytorch; Kenney, RPG Audio — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |
+| flameLoop | rombart, oxytorch (freesound 197800, from CDDA-Soundpacks); PagDev, Fireplace Sound Loop — https://freesound.org/s/197800/ | CC0 1.0 |
+| flameStop | Nic3_one, fire attack (freesound 166555, from Stendhal) — https://freesound.org/people/Nic3_one/sounds/166555/ | CC0 1.0 |

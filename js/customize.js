@@ -504,9 +504,9 @@ export function openCustomize(page = lastPage) {
               lmg: sfx.lmg,
               chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
-              dbarrel: sfx.shotgun,
+              dbarrel: sfx.dbarrel,
               burst: () =>
-                [0, 70, 140].forEach((ms) => setTimeout(() => sfx.ak(), ms)),
+                [0, 70, 140].forEach((ms) => setTimeout(() => sfx.burst(), ms)),
               dagger: sfx.throw,
               knife: sfx.knife,
               hammer: sfx.hammer,
