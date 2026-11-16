@@ -9,6 +9,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v33",
+    version: 33,
+    date: "Nov 16, 2026",
+    title: "The Nuke, and the chain gun's push",
+    news: [
+      'For Dead Ducks Arcade: the Nuke sweeps grey static out over the screen in a second, flashes and leaves smoke drifting while the map stays grey for 7 s. "Nuke" shows in crimson blood letters, and every zombie is burnt and blown apart, their bodies lying there 15 s.',
+      "For Dead Ducks Arcade: the Nuke roars with a ringing in your ears; boards crack and get nailed, zombies groan, the fireplace spins to a bell, buying rings the till, drops chime and jingle, and the flashlight clicks.",
+      "In Duck Cabin, lamps, the power box, the fire and candles, the TV and blackjack's cards and chips all have their own sounds.",
+      "Stepping onto another answer or tile makes a faint knock, a little higher toward Agree.",
+      "The chain gun now pushes you slowly backwards while you fire it. Walk into your aim to hold your ground.",
+      "The chain gun now holds 300 rounds.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v32",
     version: 32,
     date: "Nov 16, 2026",

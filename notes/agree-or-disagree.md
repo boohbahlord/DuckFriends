@@ -4665,3 +4665,19 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
   add it to the world's walk vector (which never goes past full speed), facing still follows my keys. 300 rounds:
   Dead Ducks Arcade ARMS.chaingun.all 300, other modes' magazine 300 (MAG_MORE), Mad God Justin's pickup the full 300
   (Adam, 16:08Z: no exception there).
+
+## Request (owner, 2026-11-16 16:06Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtLnnieJcXAzQaGdR17Qmppf), word for word
+> the chain gun should send your duck backwards slowly as they shoot, and a vector of movements from the keys may potentially counter this recoil that moves the duck when the chain gun is used, so basically actual physics and math. This helps tell the player how powerful it is
+>
+> the chain gun should also have 300 rounds instead now
+
+- Solomon #303: LIVE in Version 33 (push back at 35% of walking speed; 300 rounds everywhere, Mad God Justin too).
+
+## Request (owner, 2026-11-16 16:13Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2ejD7cMhDycoBqhQ3vd3Gs), word for word
+> Nuke will make the map become flashed with a white on the board that quickly fades into smoke across the map while the sound of a flashbang that is high pitched rings while the loudness of the nuke rumbles and especially roars it's explosion. Every zombie duck gets the burned effect. The map is in a greyscale filter that fades away as smoke and blood lingers on the board before that fades away too. The white escapes in a circle in a second fast across the screen before the screen flashes white. The game says the word "Nuke" in red letters that are crimson blood during and after the flash that are static. White flash once it covers the screen is fast and then fades away before the grey scale and smoke lingers longer. THe grey scale lingers for seven seconds until it starts to slowly fade away and the blood from any dead duck and their corpses linger for fifteen seconds until they fade away, with some having their beaks blown off, some losing their eyes, and the zombies have a max brutal effect in chunks being blown out of them which happens instantly during the flash that covers the board to make it instant as to save resources, only showing the aftermath after. The code will have a few versions of this effect that can apply to anyone he is killed by an explosion AND the other code that cancels the animation of it happening before it happens is another thing of code that plays to make it all be resource efficient during this one second flash. Make the flash actually a grey flash of pixel static like smoke that covers the screen so it is easier on the eyes
+
+- Done (Adam, Version 33): l4ddrules.js NUKE {SWEEP 1000, DEAD 15000}, s.hang.l4nk {at, ids}; nukeTick kills under the
+  static with f0+g0 marks; bodies 15 s and don't hold up the next round. l4dd.js nukeScreen (one canvas, 6-px static,
+  sweep 1 s, flash 150 ms, fade 650 ms, smoke 6.2 s; board grey 7 s then 3 s back; plain grey fade with Heavy
+  effects off). Miles: nuke roar + flashbang ring (#297). Noah: prebuilt explosion-death looks (beak/eyes off, max
+  chunks) to call from nukeTick's screen side, behind the Gore setting.
