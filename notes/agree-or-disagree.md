@@ -4427,3 +4427,11 @@ God Justin's weapons.
   Justin, as fast as in every mode), every fight starts with it in hand and the knife on 1; the handgun drop is gone
   (everyone has one); guns have laser sights out to the board's edge (no flashlight there). Also: multicolored names
   now follow the flashlight-names rule too (they were always shown).
+- PR B (Solomon the 2nd, picks confirmed by Adam): Mad God Justin's drops are only the powerful guns (sniper 16, AK-47
+  18, LMG 16, shotgun 16, grenade launcher 10, chain gun 5) plus the medkit (10.5); sky, meteor and Good Justin keep
+  their odds; the hammer and dagger drops are gone. A gun picked up runs through rules.js' normal gun path with Quacky
+  Zombies' cooldowns and magazines (R reloads it, full auto on the mouse), stays on key 4 until its shots are gone
+  (s.mgj.ammo: 2 magazines, or a quarter of Quacky Zombies' ammo for the shotgun 18, grenade launcher 6, chain gun 60).
+  Damage to Justin: AK 2, sniper 2 or 3, LMG 1, pellets 1, chain gun 1 a bullet, grenade launcher blast 3; its grenade
+  goes off on him, never on a teammate. The medkit heals to full (kept if not hurt), and with it out in hand the Revive
+  gets a downed duck up at once at full HP and uses it up.
