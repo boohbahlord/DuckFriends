@@ -174,3 +174,78 @@ export function pxSVG(svg, w, cls = "") {
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W;
   return pxImg("s" + hash(svg), svg, w, (w * H) / W, cls);
 }
+
+/* ---------- pictures already on the page (<img>: the mode pictures, props, a player's own picture) ----------
+   Every <img> under root shows as pixels at the size it shows: its src becomes its pixel version (the first one kept
+   in data-pxsrc), made again when its size or its picture changes. Not the ones made by pxImg or by a mode's own code
+   (class "px": they do it themselves), nor what's under [data-nopx] (the maps, drawn on the grid by the filter) */
+const imgSeen = new WeakMap(); // img -> the key it was last made at
+function pxImgEl(img) {
+  if (!on || img.classList.contains("px") || img.closest("[data-nopx]")) return;
+  let src = img.getAttribute("src") || "";
+  if (!src || (src.startsWith("blob:") && !img.dataset.pxsrc)) return;
+  if (src.startsWith("blob:")) src = img.dataset.pxsrc;
+  else img.dataset.pxsrc = src;
+  let w = img.offsetWidth,
+    h = img.offsetHeight;
+  if (!w || !h || !img.naturalWidth) return; // (not shown or not loaded yet: made when it is)
+  const fit = getComputedStyle(img).objectFit;
+  if (fit === "cover" || fit === "contain") {
+    const nw = img.naturalWidth,
+      nh = img.naturalHeight,
+      k = (fit === "cover" ? Math.max : Math.min)(w / nw, h / nh);
+    w = nw * k;
+    h = nh * k;
+  } // (cropped or fitted: made at the size the picture itself shows, so it isn't stretched)
+  const [fk] = full(src, w, h);
+  if (imgSeen.get(img) === fk) return;
+  imgSeen.set(img, fk);
+  img.style.imageRendering = "pixelated";
+  rasterReady("i" + hash(src), src, w, h).then((u) => {
+    if (u && imgSeen.get(img) === fk) img.src = u;
+  });
+}
+export function pxImgWatch(root) {
+  const all = () => root.querySelectorAll("img").forEach(pxImgEl);
+  const mo = new MutationObserver((recs) => {
+    if (!on) return;
+    for (const r of recs) {
+      if (r.type === "attributes") {
+        const t = r.target;
+        if (t.tagName === "IMG") {
+          const s = t.getAttribute("src") || "";
+          if (!s.startsWith("blob:")) delete t.dataset.pxsrc; // (a new picture)
+          pxImgEl(t);
+        }
+      } else
+        r.addedNodes.forEach((n) => {
+          if (n.nodeType !== 1) return;
+          if (n.tagName === "IMG") pxImgEl(n);
+          else n.querySelectorAll("img").forEach(pxImgEl);
+        });
+    }
+  });
+  mo.observe(root, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["src"],
+  });
+  root.addEventListener(
+    "load",
+    (e) => e.target.tagName === "IMG" && pxImgEl(e.target),
+    true,
+  ); // (its size known once loaded)
+  addEventListener("resize", all);
+  addEventListener("pixelchange", () => {
+    if (on) all();
+    else
+      root.querySelectorAll("img[data-pxsrc]").forEach((i) => {
+        i.src = i.dataset.pxsrc;
+        i.style.imageRendering = "";
+        delete i.dataset.pxsrc;
+        imgSeen.delete(i);
+      });
+  });
+  all();
+}

@@ -31,7 +31,7 @@ function css() {
   const s = document.createElement("style");
   s.id = "pxdom-css";
   s.textContent =
-    "svg[data-px]>:not(image.pxi){opacity:0!important}" +
+    "svg[data-px]>:not(image.pxi,g.pxt){opacity:0!important}" +
     "image.pxi{image-rendering:pixelated;pointer-events:none}";
   document.head.append(s);
 }
@@ -51,9 +51,9 @@ function shownSize(svg, vb) {
 function snapshot(svg, vb) {
   svg.removeAttribute("data-px"); // (the hiding rule out of the way while I read how it looks)
   const copy = svg.cloneNode(true);
-  copy.querySelectorAll("image.pxi").forEach((e) => e.remove());
+  copy.querySelectorAll("image.pxi, g.pxt").forEach((e) => e.remove());
   const from = [svg, ...svg.querySelectorAll("*")].filter(
-      (e) => !(e.tagName === "image" && e.classList.contains("pxi")),
+      (e) => !e.closest("image.pxi, g.pxt"),
     ),
     to = [copy, ...copy.querySelectorAll("*")];
   for (let i = 0; i < from.length && i < to.length; i++) {
@@ -66,6 +66,9 @@ function snapshot(svg, vb) {
     if (i === 0) st += "opacity:1;"; // (the drawing's own see-through belongs to what shows it: the <svg> stays as it is)
     to[i].setAttribute("style", st + (to[i].getAttribute("style") || ""));
   }
+  copy.querySelectorAll("text").forEach((t) => {
+    if (!t.querySelector("textPath")) t.remove();
+  }); // (its words stay words: words(), over the picture)
   svg.setAttribute("data-px", "");
   copy.removeAttribute("data-px");
   copy.removeAttribute("class");
@@ -77,7 +80,61 @@ function snapshot(svg, vb) {
 
 /* the drawing's text without my picture in it, and the classes around it: when these change, it's made again */
 const ownText = (svg) =>
-  svg.outerHTML.replace(/<image class="pxi"[^>]*>(<\/image>)?/g, "");
+  svg.outerHTML
+    .replace(/<image class="pxi"[^>]*>(<\/image>)?/g, "")
+    .replace(/<g class="pxt">[\s\S]*?<\/g>/g, "");
+
+/* the owner's "128": a drawing's words aren't made into pixels with it. A copy of each, where it shows and as it looks,
+   goes over the picture in one <g class="pxt">, sharp, in the pixel font. (Not words along a curve: those are art) */
+function words(svg) {
+  const list = [...svg.querySelectorAll("text")].filter(
+    (t) => !t.closest("g.pxt") && !t.querySelector("textPath"),
+  );
+  if (!list.length) return null;
+  const hid = svg.hasAttribute("data-px");
+  svg.removeAttribute("data-px"); // (as in snapshot(): read them as they look)
+  const g = document.createElementNS(NS, "g"),
+    inv = svg.getScreenCTM()?.inverse();
+  if (!inv) {
+    if (hid) svg.setAttribute("data-px", "");
+    return null;
+  }
+  g.setAttribute("class", "pxt");
+  g.setAttribute("pointer-events", "none");
+  for (const t of list) {
+    const cs = getComputedStyle(t),
+      m = t.getScreenCTM();
+    if (!m || cs.display === "none" || cs.visibility === "hidden") continue;
+    let op = 1;
+    for (let e = t; e && e !== svg; e = e.parentElement)
+      op *= +getComputedStyle(e).opacity;
+    if (op < 0.05) continue;
+    const c = t.cloneNode(true),
+      k = inv.multiply(m);
+    c.removeAttribute("class");
+    c.setAttribute(
+      "transform",
+      `matrix(${k.a} ${k.b} ${k.c} ${k.d} ${k.e} ${k.f})`,
+    );
+    let st = "";
+    for (const p of [
+      "fill",
+      "stroke",
+      "stroke-width",
+      "paint-order",
+      "font-size",
+      "font-weight",
+      "text-anchor",
+      "dominant-baseline",
+      "letter-spacing",
+    ])
+      st += `${p}:${cs.getPropertyValue(p)};`;
+    c.setAttribute("style", st + `opacity:${op}`);
+    g.append(c);
+  }
+  if (hid) svg.setAttribute("data-px", "");
+  return g.childNodes.length ? g : null;
+}
 function around(svg, root) {
   let s = "";
   for (let e = svg; e && e !== root; e = e.parentElement)
@@ -133,16 +190,59 @@ export function pxSvgEl(svg, root = document.body) {
     if (!url || st.key !== key) return;
     img.setAttribute("href", url);
     if (img.parentNode !== svg) svg.append(img);
+    svg.querySelectorAll(":scope > g.pxt").forEach((e) => e.remove());
+    if (tx) svg.append(tx);
     svg.setAttribute("data-px", ""); // (hidden only once its picture is there: never a gap)
   };
-  const u = raster(k, text, w, h);
-  if (u) show(u);
-  else rasterReady(k, text, w, h).then(show);
+  const tx = words(svg),
+    ext = inlined(text);
+  if (ext) ext.then((t) => rasterReady(k, t, w, h)).then(show);
+  else {
+    const u = raster(k, text, w, h);
+    if (u) show(u);
+    else rasterReady(k, text, w, h).then(show);
+  }
+}
+
+/* a drawing made into a picture can't load its own pictures (an <image> of a file: a mode's screenshot, a map's photo),
+   so they go into its text first, as data. Null when it has none to load */
+const dataOf = new Map(); // url -> Promise<data url>
+function inlined(text) {
+  const urls = [
+    ...new Set(
+      [...text.matchAll(/<image\b[^>]*?\s(?:xlink:)?href="([^"]+)"/g)]
+        .map((m) => m[1])
+        .filter((u) => !u.startsWith("data:")),
+    ),
+  ];
+  if (!urls.length) return null;
+  return Promise.all(
+    urls.map((u) => {
+      if (!dataOf.has(u))
+        dataOf.set(
+          u,
+          fetch(u.replace(/&amp;/g, "&"))
+            .then((r) => r.blob())
+            .then(
+              (b) =>
+                new Promise((ok) => {
+                  const fr = new FileReader();
+                  fr.onload = () => ok(fr.result);
+                  fr.readAsDataURL(b);
+                }),
+            )
+            .catch(() => u),
+        );
+      return dataOf.get(u);
+    }),
+  ).then((ds) =>
+    urls.reduce((t, u, i) => t.split(`"${u}"`).join(`"${ds[i]}"`), text),
+  );
 }
 function unPx(svg) {
   if (!svg.hasAttribute("data-px")) return;
   svg.removeAttribute("data-px");
-  svg.querySelectorAll("image.pxi").forEach((e) => e.remove());
+  svg.querySelectorAll("image.pxi, :scope > g.pxt").forEach((e) => e.remove());
   state.delete(svg);
 }
 
@@ -193,7 +293,9 @@ export function pxWatch(root) {
         if (t.nodeType === 1 && (t.tagName === "svg" || t.ownerSVGElement)) {
           if (
             [...r.addedNodes, ...r.removedNodes].every(
-              (n) => n.nodeType === 1 && n.classList?.contains("pxi"),
+              (n) =>
+                n.nodeType === 1 &&
+                (n.classList?.contains("pxi") || n.classList?.contains("pxt")),
             )
           )
             continue; // (my own picture going in)
