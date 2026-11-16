@@ -4351,3 +4351,16 @@ Zombies only; Hangout's Duck Cabin unchanged).
   (2% to 95%). Drops: one shuffle bag per game (l4bag): every drop comes once before any comes again, Max Ammo always
   in it at its 1.2 weight. Instant Kill, Double Points and Sale last 45 s, Speed Boost 1 min; Sale is now timed
   (l4on.sale) instead of lasting the round.
+- PR 2 (Solomon the 2nd): a reload is lost when I switch to another slot (l4Tick: pos.w no longer the reloading
+  weapon) or use anything else first (l4Use). A reload fills its hotbar box from the bottom with a darker color
+  (l4ddbar.js reloadMeter, on the phone's slider too). Under my sprint bar a white bar shows the cooldown running (a
+  reload, a melee swing, an item's), the longest when several run, not the guns' waits between shots (l4dd.js coolBar).
+  Every throwable or consumable waits 0.75 s (ITEM_COOL: grenades, medkit, zebra cake, fireball, adrenaline, chair; not
+  the jetpack, the Long jump or Jaime); other modes' items already wait longer. A slot switch slides a tiny grey row of
+  my slots in under my bars, the one in hand bright, then fades (peek). Points I get pop up small over my own duck,
+  only for me; during Double Points they and the score's pop-up glow yellow, a little bigger.
+- PR 3 (Solomon the 2nd): the drops on now sit in a row at the top middle, under the points (under the Ready / End
+  turn button between rounds), each with its name and seconds (they were a column at the top right). Instant Kill:
+  a soft blood-crimson glow breathes over the board while it's on (.l4-killglow). Sale: the Butler and the fireplace
+  breathe gold while it's on, and its announcement is the word "Sale" in gold metal letters (.l4-got-gold). Max Ammo:
+  every hotbar box (and the phone's slider) flashes in its own color, quickly fading (.l4-flash).

@@ -116,6 +116,10 @@ const SKIP = 0.25;
    cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (crit, and +5% for each Accuracy) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
+/* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
+   fireball, the adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack or the Long jump (switched on
+   and off), nor Jaime (his own, longer) */
+export const ITEM_COOL = 750;
 export const ARMS = {
   knife: {
     kind: "melee",
@@ -168,8 +172,15 @@ export const ARMS = {
     spread: 0.3,
     life: 420,
   },
-  medkit: { kind: "special", cool: 600, all: 1 },
-  grenade: { kind: "grenade", cool: 900, far: 300, r: 210, start: 2, most: 3 }, // (r: 50% wider than its first 140, owner 2026-11-04)
+  medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
+  grenade: {
+    kind: "grenade",
+    cool: ITEM_COOL,
+    far: 300,
+    r: 210,
+    start: 2,
+    most: 3,
+  }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
      action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
      (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its
@@ -248,9 +259,9 @@ export const ARMS = {
      fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
      20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
      nearest zombie and stabs it, 1 a stab, until one gets him) */
-  zebra: { kind: "special", cool: 600, all: 1, speed: 650, far: 520 },
-  fireball: { kind: "special", cool: 600, all: 1, speed: 700 },
-  adrenaline: { kind: "special", cool: 600, all: 1, ms: 20000 },
+  zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
+  fireball: { kind: "special", cool: ITEM_COOL, all: 1, speed: 700 },
+  adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
   longjump: { kind: "special", cool: 300 },
   jaime: { kind: "special", cool: 1500, all: 3, round: true },
   jaimebomb: { kind: "special", cool: 1500, all: 3, round: true }, // (as Jaime: 1 spin in 50 at the fireplace, BOMB.fire)
@@ -259,7 +270,7 @@ export const ARMS = {
   jetpack: { kind: "special", cool: 300, all: JET.FUEL },
   /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 HP to the zombie it hits; 3 throws, a Max Ammo
      gives them back */
-  chair: { kind: "special", cool: 900, all: 3, dmg: 3, speed: 600 },
+  chair: { kind: "special", cool: ITEM_COOL, all: 3, dmg: 3, speed: 600 },
 };
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 const dmgOf = (A) =>
@@ -885,7 +896,7 @@ export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
    headshot chance (each Accuracy: 5% more, on every attack) */
 export const l4Cool = (s, id, w) =>
   ARMS[w] ? ARMS[w].cool * Math.pow(0.9, upOf(s, id).as || 0) : 400;
-const reloadOf = (s, id, w) =>
+export const reloadOf = (s, id, w) =>
   (ARMS[w].reload || 1500) * (upOf(s, id).rl ? 0.7 : 1);
 const headOf = (s, id, w) =>
   kindOf(w) === "grenade"
@@ -1622,6 +1633,10 @@ export function l4Use(s, a, now) {
   if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
   if (what === "zebra" && s.zcake) return false; // (one zebra cake in the room at a time)
   m.u[what] = now;
+  if (m.rw && m.rw !== what) {
+    m.rl = 0;
+    m.rw = ""; // (something else used before the reload was done: it's lost, the owner's, Nov 16)
+  }
   const [dx, dy] = aimDir(a),
     face = dx < 0 ? -1 : 1,
     [px, py] = at(p),
@@ -2335,7 +2350,8 @@ function l4Tick(s, now) {
       const m = { ...am[id] };
       finishReload(m, now);
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
-    }
+    } else if (am[id].rl && s.pos[id] && s.pos[id].w !== am[id].rw)
+      s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {

@@ -14572,6 +14572,128 @@ html.moving .eye-tears .tdrop.t2 {
 .l4-sprint.tired i {
   background: #24418c;
 }
+/* the cooldown running now, white, under the sprint bar (l4dd.js coolBar: the owner's, Nov 16) */
+.l4-cool {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: calc(100% + 0.48rem);
+  height: 0.16rem;
+  border-radius: 1rem;
+  background: #0008;
+  overflow: hidden;
+  transition: opacity 0.2s;
+}
+.l4-cool.off {
+  opacity: 0;
+}
+.l4-cool i {
+  position: absolute;
+  inset: 0;
+  background: #f4f4f4;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--cl, 0));
+}
+/* a slot switch: a tiny grey row of my slots under my bars, the one in hand bright (l4dd.js peek) */
+.l4-peek {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.8rem);
+  display: flex;
+  gap: 0.15rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.l4-peek i {
+  display: block;
+  width: 0.95rem;
+  height: 0.95rem;
+  filter: grayscale(1) brightness(0.8);
+  opacity: 0.55;
+}
+.l4-peek i.on {
+  filter: grayscale(1) brightness(1.5);
+  opacity: 1;
+}
+.l4-peek i svg {
+  width: 100%;
+  height: 100%;
+}
+.l4-peek.go {
+  animation: l4-peek 1.1s ease-out forwards;
+}
+@keyframes l4-peek {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -0.35rem);
+  }
+  15%,
+  55% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0.25rem);
+  }
+}
+/* the points I just got, small, over my own duck (l4dd.js seePts); Double Points: glowing yellow, bigger */
+.l4-duck-pop {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(0.62rem * var(--ts, 1));
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: l4-duck-pop 0.9s ease-out forwards;
+}
+.l4-duck-pop.dbl,
+.l4-pts-pop.dbl {
+  color: #ffe14a;
+  font-size: 1.2em;
+  text-shadow:
+    0 0 0.35rem #ffd23fcc,
+    0 1px 2px #000;
+}
+.l4-duck-pop.dbl {
+  font-size: calc(0.78rem * var(--ts, 1));
+}
+@keyframes l4-duck-pop {
+  0% {
+    transform: translate(-50%, calc(-100% + 0.3rem));
+    opacity: 0;
+  }
+  15% {
+    transform: translate(-50%, -100%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, calc(-100% - 1rem));
+    opacity: 0;
+  }
+}
+/* a reload: the weapon's box fills up from the bottom with a darker color (l4ddbar.js reloadMeter) */
+.l4s-rl {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #0009;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  animation: l4-rl var(--rl, 1s) linear var(--rd, 0s) forwards;
+}
+@keyframes l4-rl {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
 .gduck.l4-heal .gduck-body {
   animation: l4-heal 1.4s ease-out;
 }
@@ -15240,14 +15362,97 @@ html.moving .eye-tears .tdrop.t2 {
 /* what a drop turned on, top right: its symbol and the seconds left (Sale: until the round ends) */
 .l4-on {
   position: absolute;
-  top: 0.5rem;
-  right: 0.6rem;
+  top: calc(
+    1.3rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+  ); /* the top middle, under the points (the owner's, Nov 16) */
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 31000;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.3rem;
+  width: max-content;
+  max-width: calc(100% - 1rem);
+}
+.l4-on.low {
+  /* (under the Ready / End turn button between rounds) */
+  top: calc(
+    5.6rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+  );
+}
+.l4-on-k em {
+  font-style: normal;
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+/* Instant Kill: a soft blood-crimson glow breathing over everything on the board */
+.l4-killglow {
+  position: absolute;
+  inset: 0;
+  z-index: 30900;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #8a001400 40%, #8a001438 100%);
+  box-shadow: inset 0 0 6rem #a0001866;
+  animation: l4-killglow 2.6s ease-in-out infinite;
+}
+@keyframes l4-killglow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+/* Sale: the Butler and the fireplace breathe a shiny gold */
+.l4-sale {
+  animation: l4-sale 1.8s ease-in-out infinite;
+}
+@keyframes l4-sale {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.15rem #ffd23f88);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.55rem #ffd23f) drop-shadow(0 0 0.15rem #fff6c0)
+      brightness(1.12);
+  }
+}
+/* the Sale's word, in gold metal letters (l4dd.js l4Got) */
+.l4-got-gold {
+  font-size: 1.3em;
+  letter-spacing: 0.03em;
+  color: #ffd23f;
+  background: linear-gradient(
+    180deg,
+    #fff6c0 0%,
+    #ffd23f 38%,
+    #c98a12 52%,
+    #ffe58a 70%,
+    #b07408 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.04em #5a3a00;
+  filter: drop-shadow(0 0.05em 0 #3a2400) drop-shadow(0 0 0.35em #ffd23f88);
+}
+/* Max Ammo: every hotbar box flashes in its own color, quickly fading (l4dd.js l4Got) */
+.l4-flash {
+  animation: l4-flash 0.7s ease-out;
+}
+@keyframes l4-flash {
+  0% {
+    filter: brightness(1.8) saturate(1.4);
+    box-shadow:
+      0 0 0.9rem var(--c, #fff),
+      inset 0 0 1rem var(--cl, #fff);
+  }
+  100% {
+    filter: none;
+  }
 }
 .l4-on-k {
   display: flex;
@@ -16706,6 +16911,7 @@ html.pixel
     .l4-on-k,
     .l4-over-card,
     .l4-sprint,
+    .l4-cool,
     .l4-up,
     .l4hp i,
     .l4s,

@@ -66,6 +66,10 @@ import {
   AMMO_PRICE,
   kitOf,
   openingById,
+  reloadOf,
+  l4Cool,
+  kindOf,
+  ARMS,
 } from "./l4ddrules.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
@@ -80,6 +84,7 @@ import {
   boardsBox,
   orbHTML,
   UP_ICONS,
+  weaponIcon,
 } from "./l4ddart.js";
 
 const RX = 56,
@@ -423,21 +428,34 @@ function seeDrops(s) {
     D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
   }
 }
-/* Instant Kill, Double Points, Speed Boost and Sale, with the seconds they have left */
-function seeOn(s) {
+/* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
+   top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
+   on, a soft blood-crimson glow breathes over the board; while Sale is, the Butler and the fireplace breathe gold */
+let killEl = null;
+function seeOn(s, ctx) {
   if (!onEl) return;
   const now = clockNow(),
     on = s.hang.l4on || {},
     rows = ["kill", "double", "speed", "sale"]
       .filter((k) => on[k] > now)
       .map((k) => [k, Math.ceil((on[k] - now) / 1000)]);
+  const low = !!(endEl && !endEl.hidden);
+  if (onEl.classList.contains("low") !== low) onEl.classList.toggle("low", low);
+  const kill = on.kill > now;
+  if (killEl && killEl.hidden === kill) killEl.hidden = !kill;
+  const sale = saleOn(s);
+  if (butler && butler.el.classList.contains("l4-sale") !== sale)
+    butler.el.classList.toggle("l4-sale", sale);
+  const fire = ctx && ctx.world.propEl("fireplace1");
+  if (fire && fire.classList.contains("l4-sale") !== sale)
+    fire.classList.toggle("l4-sale", sale);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;
   onSig = sig;
   onEl.innerHTML = rows
     .map(
       ([k, t]) =>
-        `<span class="l4-on-k k-${k}" title="${dropName(k)}"><i>${DROP_ICONS[k]}</i><b>${t}</b></span>`,
+        `<span class="l4-on-k k-${k}"><i>${DROP_ICONS[k]}</i><em>${dropName(k)}</em><b>${t}</b></span>`,
     )
     .join("");
   onEl.hidden = !rows.length;
@@ -445,7 +463,16 @@ function seeOn(s) {
 /* a duck walked over a drop: its name in big letters for everyone, and a sound (the Nuke: a white flash too) */
 export function l4Got(k) {
   if (!gotEl) return;
-  gotEl.innerHTML = `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+  gotEl.innerHTML =
+    k === "sale"
+      ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+      : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+  if (k === "ammo")
+    for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
+      b.classList.remove("l4-flash");
+      void b.offsetWidth;
+      b.classList.add("l4-flash"); // (Max Ammo: every hotbar box flashes in its own color, quickly fading)
+    }
   gotEl.classList.remove("on");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
@@ -815,12 +842,95 @@ function seePts(s, ctx) {
   ptsShown = n;
   ptsEl.querySelector("b").textContent = n;
   if (got) {
+    const dbl = !!((s.hang.l4on || {}).double > clockNow()); // (Double Points: glowing yellow, a little bigger)
     const pop = document.createElement("span");
-    pop.className = "l4-pts-pop" + (got >= 25 ? " big" : "");
+    pop.className =
+      "l4-pts-pop" + (got >= 25 ? " big" : "") + (dbl ? " dbl" : "");
     pop.textContent = "+" + got;
     ptsEl.append(pop);
     setTimeout(() => pop.remove(), 900);
+    /* and a small one over my own duck, only for me (the owner's, Nov 16) */
+    const d = ctx.world.board.querySelector(".gduck.mine");
+    if (d) {
+      const q = document.createElement("span");
+      q.className = "l4-duck-pop" + (dbl ? " dbl" : "");
+      q.setAttribute("aria-hidden", "true");
+      q.textContent = "+" + got;
+      const b = d.querySelector(".gduck-body");
+      q.style.top =
+        (b
+          ? Math.round(
+              b.getBoundingClientRect().top - d.getBoundingClientRect().top,
+            )
+          : 0) + "px"; // (over its head)
+      d.append(q);
+      setTimeout(() => q.remove(), 900);
+    }
   }
+}
+
+/* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
+   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, or an
+   item's 0.75 s: the longest one when two run at once); hidden when none is. And under it, when I switch slots, a
+   tiny grey row of what's in my slots, the one in hand bright, that slides in and quickly fades */
+function coolBar(tag, s, me) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  let left = 0,
+    all = 1;
+  if (m) {
+    if (m.rl > now && m.rw && ARMS[m.rw]) {
+      left = m.rl - now;
+      all = reloadOf(s, me, m.rw);
+    }
+    for (const [w, t] of Object.entries(m.u || {})) {
+      const k = kindOf(w);
+      if (k === "ranged" || !ARMS[w]) continue; // (a gun's wait between shots isn't one: too quick to show)
+      const c = l4Cool(s, me, w),
+        l = t + c - now;
+      if (l > left) {
+        left = l;
+        all = c;
+      }
+    }
+  }
+  let el = tag.querySelector(".l4-cool");
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "l4-cool";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = "<i></i>";
+    tag.append(el);
+  }
+  const v = left > 0 ? Math.min(1, left / all).toFixed(3) : "0";
+  if (el._v !== v) {
+    el._v = v;
+    el.style.setProperty("--cl", v);
+    el.classList.toggle("off", v === "0");
+  }
+}
+let peekW = null;
+function peek(tag, s, me) {
+  const m = kitOf(s, me),
+    w = heldFn() || "";
+  if (!m || w === peekW) return;
+  const first = peekW === null;
+  peekW = w;
+  if (first) return; // (not when the game starts: only a switch)
+  let el = tag.querySelector(".l4-peek");
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "l4-peek";
+    el.setAttribute("aria-hidden", "true");
+    tag.append(el);
+  }
+  el.innerHTML = [...m.sl.filter(Boolean), m.g > 0 ? "grenade" : ""]
+    .filter(Boolean)
+    .map((x) => `<i${x === w ? ' class="on"' : ""}>${weaponIcon(x)}</i>`)
+    .join("");
+  el.classList.remove("go");
+  void el.offsetWidth;
+  el.classList.add("go");
 }
 function say(text) {
   if (!sayEl) return;
@@ -1133,7 +1243,11 @@ activity({
     boxEl.innerHTML =
       '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
     layer.append(boxEl);
-    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl);
+    killEl = document.createElement("div");
+    killEl.className = "l4-killglow";
+    killEl.hidden = true;
+    killEl.setAttribute("aria-hidden", "true");
+    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     shop = shopEl(ctx);
     butler = butlerEl();
@@ -1151,6 +1265,7 @@ activity({
     boxSpun = false;
     stamina = 1;
     tired = false;
+    peekW = null;
     holding = null;
   },
   unmount(ctx) {
@@ -1172,6 +1287,7 @@ activity({
       sayEl,
       onEl,
       gotEl,
+      killEl,
       boxEl,
       butler && butler.el,
       egg && egg.el,
@@ -1179,7 +1295,7 @@ activity({
     ])
       e?.remove();
     cv = g = hud = endEl = over = layer = fxl = null;
-    ptsEl = sayEl = onEl = gotEl = boxEl = butler = shop = null;
+    ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
@@ -1188,7 +1304,7 @@ activity({
     seeZombies(s, ctx, now);
     seeBoards(s);
     seeDrops(s);
-    seeOn(s);
+    seeOn(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
@@ -1337,7 +1453,7 @@ activity({
         o.el.classList.toggle("ending", end);
       }
     }
-    seeOn(ctx.state());
+    seeOn(ctx.state(), ctx);
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),
@@ -1382,6 +1498,9 @@ activity({
         sp.classList.toggle("full", stamina >= 1);
         sp.classList.toggle("tired", tired);
       }
+      const st = ctx.state();
+      coolBar(tag, st, ctx.me);
+      peek(tag, st, ctx.me);
     }
   },
   near(pos, ctx) {
