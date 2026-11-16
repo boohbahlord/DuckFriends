@@ -42,6 +42,11 @@ export const VOL = {
   flameStart: -11,
   flameLoop: -14,
   flameStop: -13,
+  // fire: something burning (a crackle on a loop) and catching (a whoosh)
+  fire: -16,
+  fireLight: -12,
+  // the Sad Trombone special
+  trombone: -8,
   // guns: each its own shot
   handgun: -6,
   revolver: -7,
@@ -169,7 +174,7 @@ export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
   CAP = {
     ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3, burst: 4 },
-    ...{ flameLoop: 3 },
+    ...{ flameLoop: 3, fire: 3 },
     ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
     ...{ l4crack: 3, l4nail: 3, card: 3 },
   }, // … and of one kind (2 for the rest)
@@ -186,6 +191,7 @@ const GROUPS = {
     ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
+    ...["fire", "fireLight", "trombone"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit"],
@@ -482,6 +488,17 @@ function flameOut(id) {
   play("flameStop", f.o);
 }
 
+/* something on fire for secs (a duck in Mad God Justin or Dead Ducks Arcade): the crackle on a loop, then out. The fire
+   special: the whoosh as it catches, then the crackle for its flames' 1.6 s (game.js burn) */
+function burn(secs = 1.6, o = {}) {
+  const l = loop("fire", o);
+  setTimeout(() => l.stop(), Math.max(0.3, +secs || 0) * 1000);
+}
+function fire(o = {}) {
+  play("fireLight", o);
+  burn(1.6, o);
+}
+
 /* leaving a game: every jet and every flamethrower quiet */
 export function jetsOff() {
   for (const id of [...jets.keys()]) jet(id, false);
@@ -605,6 +622,8 @@ const SFX = {
   reload,
   jet,
   flamer,
+  burn,
+  fire,
   flesh,
   land,
   hit,
