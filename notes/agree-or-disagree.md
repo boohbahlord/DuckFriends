@@ -4844,3 +4844,8 @@ The final plan (17:22Z, with a picture of a machine, saved as /mnt/project-files
 
 - Adam: given to Jackal. PHP 3 -> 6 (HIT_DMG unchanged), 3 s dead, wounds cleared on standing up, 2.5 s blinking fade-in
   during which the duck can't be hurt AND its own weapons deal no damage (both readings).
+
+> that means they keep their wounds until they die in those modes
+
+- Adam (17:28Z follow-up): wounds no longer fade while alive in the normal modes; they clear only on coming back.
+  HP regeneration (PHP_BACK 6 s) left as is; asked the owner.
