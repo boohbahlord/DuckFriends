@@ -5278,7 +5278,7 @@ function actHTML(s) {
    yes), and a line that says when the votes come back on their own (Vote return) */
 function newGameHTML(s) {
   const due = votesDue(s);
-  if (!due.length || isMgj(s)) return "";
+  if (!due.length) return "";
   const nv = s.vote && s.vote.kind === "newgame",
     what = due.includes("mode") ? "game" : "map";
   return `<button type="button" class="btn ${nv ? "green" : "ghost"}" data-a="newvote">${nv ? `Vote yes: new ${what} now` : `Vote: new ${what} now`}</button>`;
