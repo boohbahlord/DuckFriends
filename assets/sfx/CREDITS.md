@@ -21,7 +21,7 @@ instruments (its license: LICENSES.md).
 | sniper | Still North Media, The Free Firearm Sound Library (Tikka T3 .30-06) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | shotgun | Still North Media, The Free Firearm Sound Library (Winchester Model 12) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | pump | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
-| glauncher | Kenney, Impact Sounds (impactSoft_heavy); rubberduck, 25 CC0 bang / firework SFX (cannon_01); qubodup, Swish: bamboo stick weapon swooshes (swosh-01) | CC0 1.0 |
+| glauncher | Kenney, Impact Sounds (impactSoft_heavy); rubberduck, 25 CC0 bang / firework SFX (cannon_01); qubodup, Swish: bamboo stick weapon swooshes (swosh-01) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
 | bow | Ben Jaszczak & Brian Nelson, Medieval Sound Effects — https://opengameart.org/content/medieval-sound-effects-weapon-textures | CC0 1.0 |
 | empty | rubberduck, 80 CC0 RPG SFX (lock_01) — https://opengameart.org/content/80-cc0-rpg-sfx | CC0 1.0 |
 | reloadHandgun | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |
@@ -39,3 +39,41 @@ instruments (its license: LICENSES.md).
 | jetStart | Kenney, Sci-fi Sounds (thrusterFire_000) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
 | jetLoop | Kenney, Sci-fi Sounds (spaceEngine_001) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
 | jetStop | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
+| hitSmall | Kenney, Impact Sounds (impactPunch_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitBig | Kenney, Impact Sounds (impactPunch_heavy, impactSoft_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitHeavy | Kenney, Impact Sounds (impactPunch_heavy, impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitShot | Kenney, Impact Sounds (impactSoft_medium, impactPunch_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitBlade | Kenney, RPG Audio (knifeSlice) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| hitBlunt | Kenney, Impact Sounds (impactPunch_heavy, impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitArrow | Kenney, Impact Sounds (impactSoft_medium) and RPG Audio (knifeSlice2) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| hitClaw | Kenney, RPG Audio (cloth3, drawKnife2) — https://kenney.nl/assets/rpg-audio | CC0 1.0 |
+| landSmall | Kenney, Impact Sounds (impactWood_light) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| landBig | Kenney, Impact Sounds (impactWood_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| landHeavy | Kenney, Impact Sounds (impactWood_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| landShot | Kenney, Impact Sounds (impactGeneric_light) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| landArrow | Kenney, Impact Sounds (impactPlank_medium) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| landDagger | Kenney, Impact Sounds (impactMetal_light) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| knife | Ben Jaszczak & Brian Nelson, Medieval Sound Effects (Dagger Swing) — https://opengameart.org/content/medieval-sound-effects-weapon-textures | CC0 1.0 |
+| hammer | qubodup, Swish: bamboo stick weapon swooshes (swosh-10) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
+| chair | qubodup, Swish: bamboo stick weapon swooshes (swosh-01) — https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 |
+| throw | artisticdude, Swishes Sound Pack — https://opengameart.org/content/swishes-sound-pack | CC0 1.0 |
+| cakeThrow | artisticdude, Swishes Sound Pack — https://opengameart.org/content/swishes-sound-pack | CC0 1.0 |
+| bonk | Kenney, Impact Sounds (impactSoft_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| boom | EZduzziteh, Explosions (explosion1) — https://opengameart.org/content/explosions-4 | CC0 1.0 |
+| boomBig | EZduzziteh, Explosions (explosion3) — https://opengameart.org/content/explosions-4 | CC0 1.0 |
+| meteor | Kenney, Sci-fi Sounds (lowFrequency_explosion_000) — https://opengameart.org/content/sci-fi-sounds | CC0 1.0 |
+| nuke | NenadSimic, Muffled Distant Explosion — https://opengameart.org/content/muffled-distant-explosion | CC0 1.0 |
+| chomp | StarNinjas, 7 Eating Crunches — https://opengameart.org/content/7-eating-crunches | CC0 1.0 |
+| sip | qubodup, Liquid / bottle / drink set — https://opengameart.org/content/liquid-bottle-drink-set | CC0 1.0 |
+| uiPress | Kenney, UI Audio (click3) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
+| uiOn | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| uiOff | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| uiOpen | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| uiClose | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| nope | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| tick | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| done | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| bell | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| ping | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| pop | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| boop | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |

@@ -45,8 +45,33 @@ OGA_URL = {
     "scifi": "https://opengameart.org/content/sci-fi-sounds",
     "steam": "https://opengameart.org/content/steam-release-sounds",
     "bang": "https://opengameart.org/content/25-cc0-bang-firework-sfx",
+    "bamboo": "https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes",
+    "swishes": "https://opengameart.org/content/swishes-sound-pack",
+    "explosions": "https://opengameart.org/content/explosions-4",
+    "crunch": "https://opengameart.org/content/7-eating-crunches",
+    "drink": "https://opengameart.org/content/liquid-bottle-drink-set",
+    "muffled": "https://opengameart.org/content/muffled-distant-explosion",
 }
 KENNEY_IMPACT = "https://kenney.nl/assets/impact-sounds"
+KENNEY_UI = "https://kenney.nl/assets/ui-audio"
+KENNEY_IFACE = "https://kenney.nl/assets/interface-sounds"
+KENNEY_RPG = "https://kenney.nl/assets/rpg-audio"
+KI = "kn:kenney_impactsounds/Audio/"
+KF = "kn:kenney_interfacesounds/Audio/"
+KU = "kn:kenney_uiaudio/Audio/"
+KR = "kn:kenney_rpgaudio/Audio/"
+
+
+def one(path, length, credit, **o):
+    """a sound that is one whole short file"""
+    return dict(layers=[(path, 0, length, 0, 1)], credit=credit, **o)
+
+
+def ui(path, credit=("Kenney, Interface Sounds", KENNEY_IFACE)):
+    """a faint menu sound: short, no room"""
+    return one(path, 0.6, credit, room=False, kbps=32)
+
+
 GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
 
 """Each sound: layers [(file, from s, length s, at s in the sound, gain[, low-pass Hz])], and how it's treated:
@@ -162,7 +187,7 @@ SOUNDS = {
         credit=(
             "Kenney, Impact Sounds (impactSoft_heavy); rubberduck, 25 CC0 bang / firework SFX (cannon_01); qubodup, "
             "Swish: bamboo stick weapon swooshes (swosh-01)",
-            None,
+            OGA_URL["bamboo"],
         ),
     ),
     "bow": dict(
@@ -251,6 +276,205 @@ SOUNDS = {
         lp=4000,
         credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
     ),
+    # ==== batch 2 ====
+    # ---- a shot in flesh, by its round (fx.js BLEED_OF: small, big, heavy, shot) and the blades and blunt things ----
+    "hitSmall": one(
+        KI + "impactPunch_medium_000.ogg",
+        0.4,
+        ("Kenney, Impact Sounds (impactPunch_medium)", KENNEY_IMPACT),
+    ),
+    "hitBig": dict(
+        layers=[
+            (KI + "impactPunch_heavy_002.ogg", 0, 0.5, 0, 1),
+            (KI + "impactSoft_medium_001.ogg", 0, 0.4, 0, 0.4),
+        ],
+        credit=(
+            "Kenney, Impact Sounds (impactPunch_heavy, impactSoft_medium)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "hitHeavy": dict(
+        layers=[
+            (KI + "impactPunch_heavy_003.ogg", 0, 0.5, 0, 1),
+            (KI + "impactSoft_heavy_002.ogg", 0, 0.5, 0, 0.7),
+        ],
+        rate=0.9,
+        credit=(
+            "Kenney, Impact Sounds (impactPunch_heavy, impactSoft_heavy)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "hitShot": dict(
+        layers=[
+            (KI + "impactSoft_medium_002.ogg", 0, 0.4, 0, 1),
+            (KI + "impactPunch_medium_001.ogg", 0, 0.3, 0.02, 0.5),
+            (KI + "impactPunch_medium_002.ogg", 0, 0.3, 0.045, 0.4),
+        ],
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium, impactPunch_medium)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "hitBlade": one(
+        KR + "knifeSlice.ogg", 0.5, ("Kenney, RPG Audio (knifeSlice)", KENNEY_RPG)
+    ),
+    # the hammer and the chair landing on someone (the owner: "a blunt sound against flesh")
+    "hitBlunt": dict(
+        layers=[
+            (KI + "impactPunch_heavy_004.ogg", 0, 0.5, 0, 1),
+            (KI + "impactSoft_heavy_003.ogg", 0, 0.5, 0, 0.6),
+        ],
+        lp=2500,
+        rate=0.85,
+        credit=(
+            "Kenney, Impact Sounds (impactPunch_heavy, impactSoft_heavy)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "hitArrow": dict(
+        layers=[
+            (KI + "impactSoft_medium_003.ogg", 0, 0.4, 0, 1),
+            (KR + "knifeSlice2.ogg", 0, 0.4, 0, 0.45),
+        ],
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_medium) and RPG Audio (knifeSlice2)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "hitClaw": dict(
+        layers=[
+            (KR + "cloth3.ogg", 0, 0.4, 0, 0.8),
+            (KR + "drawKnife2.ogg", 0, 0.4, 0, 0.6),
+        ],
+        rate=0.8,
+        credit=("Kenney, RPG Audio (cloth3, drawKnife2)", KENNEY_RPG),
+    ),
+    # ---- a shot that missed, landing on the floor or a wall, by its round ----
+    "landSmall": one(
+        KI + "impactWood_light_000.ogg",
+        0.4,
+        ("Kenney, Impact Sounds (impactWood_light)", KENNEY_IMPACT),
+    ),
+    "landBig": one(
+        KI + "impactWood_medium_000.ogg",
+        0.5,
+        ("Kenney, Impact Sounds (impactWood_medium)", KENNEY_IMPACT),
+    ),
+    "landHeavy": one(
+        KI + "impactWood_heavy_000.ogg",
+        0.6,
+        ("Kenney, Impact Sounds (impactWood_heavy)", KENNEY_IMPACT),
+    ),
+    "landShot": dict(
+        layers=[
+            (KI + "impactGeneric_light_000.ogg", 0, 0.3, 0, 1),
+            (KI + "impactGeneric_light_001.ogg", 0, 0.3, 0.03, 0.7),
+            (KI + "impactGeneric_light_002.ogg", 0, 0.3, 0.06, 0.5),
+        ],
+        credit=("Kenney, Impact Sounds (impactGeneric_light)", KENNEY_IMPACT),
+    ),
+    "landArrow": one(
+        KI + "impactPlank_medium_002.ogg",
+        0.5,
+        ("Kenney, Impact Sounds (impactPlank_medium)", KENNEY_IMPACT),
+    ),
+    "landDagger": one(
+        KI + "impactMetal_light_000.ogg",
+        0.5,
+        ("Kenney, Impact Sounds (impactMetal_light)", KENNEY_IMPACT),
+    ),
+    # ---- swings and throws, each its own ----
+    "knife": dict(
+        layers=[("oga:knife-swish/Dagger_Swing.wav", 0, 0.5, 0, 1)],
+        credit=(
+            "Ben Jaszczak & Brian Nelson, Medieval Sound Effects (Dagger Swing)",
+            OGA_URL["medieval"],
+        ),
+    ),
+    "hammer": dict(
+        layers=[("oga:knife-swish/swosh-10.flac", 0, 0.6, 0, 1)],
+        rate=0.8,
+        credit=(
+            "qubodup, Swish: bamboo stick weapon swooshes (swosh-10)",
+            OGA_URL["bamboo"],
+        ),
+    ),
+    "chair": dict(
+        layers=[("oga:knife-swish/swosh-01.flac", 0, 0.6, 0, 1)],
+        rate=0.7,
+        lp=3000,
+        credit=(
+            "qubodup, Swish: bamboo stick weapon swooshes (swosh-01)",
+            OGA_URL["bamboo"],
+        ),
+    ),
+    "throw": dict(
+        layers=[("oga:knife-swish/swish-1.wav", 0, 0.5, 0, 1)],
+        credit=("artisticdude, Swishes Sound Pack", OGA_URL["swishes"]),
+    ),
+    "cakeThrow": dict(
+        layers=[("oga:knife-swish/swish-5.wav", 0, 0.5, 0, 1)],
+        rate=1.1,
+        credit=("artisticdude, Swishes Sound Pack", OGA_URL["swishes"]),
+    ),
+    "bonk": one(
+        KI + "impactSoft_heavy_004.ogg",
+        0.5,
+        ("Kenney, Impact Sounds (impactSoft_heavy)", KENNEY_IMPACT),
+    ),
+    # ---- explosions: the grenade, the Jaime Bomb (bigger), the meteor ----
+    "boom": dict(
+        layers=[("oga:explosion-grenade/explosion1.ogg", 0, 1.6, 0, 1)],
+        drive=2,
+        credit=("EZduzziteh, Explosions (explosion1)", OGA_URL["explosions"]),
+    ),
+    "boomBig": dict(
+        layers=[("oga:explosion-big/explosion3.ogg", 0, 1.7, 0, 1)],
+        drive=2,
+        credit=("EZduzziteh, Explosions (explosion3)", OGA_URL["explosions"]),
+    ),
+    "meteor": dict(
+        layers=[("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 1.9, 0, 1)],
+        drive=2,
+        credit=("Kenney, Sci-fi Sounds (lowFrequency_explosion_000)", OGA_URL["scifi"]),
+    ),
+    # Dead Ducks Arcade's nuke: the biggest, a deep boom rolling away
+    "nuke": dict(
+        layers=[
+            (
+                "oga:explosion-big/NenadSimic_-_Muffled_Distant_Explosion.wav",
+                0,
+                3.0,
+                0,
+                1,
+            )
+        ],
+        drive=2,
+        kbps=48,
+        credit=("NenadSimic, Muffled Distant Explosion", OGA_URL["muffled"]),
+    ),
+    # ---- eating and drinking ----
+    "chomp": dict(
+        layers=[("oga:eat/crunch.1.ogg", 0, 0.5, 0, 1)],
+        credit=("StarNinjas, 7 Eating Crunches", OGA_URL["crunch"]),
+    ),
+    "sip": dict(
+        layers=[("oga:drink/swallow-01.flac", 0, 0.6, 0, 1)],
+        credit=("qubodup, Liquid / bottle / drink set", OGA_URL["drink"]),
+    ),
+    # ---- the menus: faint ----
+    "uiPress": ui(KU + "click3.ogg", ("Kenney, UI Audio (click3)", KENNEY_UI)),
+    "uiOn": ui(KF + "toggle_001.ogg"),
+    "uiOff": ui(KF + "toggle_002.ogg"),
+    "uiOpen": ui(KF + "open_001.ogg"),
+    "uiClose": ui(KF + "close_001.ogg"),
+    "nope": ui(KF + "error_004.ogg"),
+    "tick": ui(KF + "tick_001.ogg"),
+    "done": ui(KF + "confirmation_001.ogg"),
+    "bell": ui(KF + "bong_001.ogg"),
+    "ping": ui(KF + "glass_001.ogg"),
+    "pop": ui(KF + "drop_002.ogg"),
+    "boop": ui(KF + "select_001.ogg"),
 }
 
 

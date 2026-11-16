@@ -64,22 +64,74 @@ export const VOL = {
   // items
   medkit: -19,
   adrenaline: -12,
+  chomp: -6,
+  sip: -8,
+  // a round in flesh, by its size; a blade, a blunt thing (the hammer, the chair), an arrow, a zombie's claw
+  hitSmall: -12,
+  hitBig: -11,
+  hitHeavy: -10,
+  hitShot: -10,
+  hitBlade: -11,
+  hitBlunt: -10,
+  hitArrow: -8,
+  hitClaw: -10,
+  // a round that missed, landing on the floor or a wall
+  landSmall: -10,
+  landBig: -13,
+  landHeavy: -13,
+  landShot: -15,
+  landArrow: -13,
+  landDagger: -13,
+  // swings and throws
+  knife: -11,
+  hammer: -9,
+  chair: -11,
+  throw: -11,
+  cakeThrow: -11,
+  bonk: -13,
+  // explosions: the grenade, the Jaime Bomb, the meteor, the nuke
+  boom: -7,
+  boomBig: -3,
+  meteor: -6,
+  nuke: -5,
+  // the menus: faint
+  uiPress: -13,
+  uiOn: -23,
+  uiOff: -24,
+  uiOpen: -24,
+  uiClose: -26,
+  nope: -16,
+  tick: -15,
+  done: -23,
+  bell: -14,
+  ping: -17,
+  pop: -16,
+  boop: -15,
 };
-const OTHERS = 0.6; // another duck's sounds, against mine
+export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
-  CAP = { step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3 }, // … and of one kind (2 for the rest)
+  CAP = {
+    ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3 },
+    ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
+  }, // … and of one kind (2 for the rest)
   CAP_ANY = 2;
 const NEAR = 300, // world px: full up to here …
   FAR = 1500; // … and nothing from here (as Duck Cabin's)
+const UI = ["uiPress", "uiOn", "uiOff", "uiOpen", "uiClose", "nope", "tick"];
 const GROUPS = {
-  first: ["countTick", "countGo", "step", "hop"],
+  first: [
+    ...["countTick", "countGo", "step", "hop", ...UI],
+    ...["done", "bell", "ping", "pop", "boop"],
+  ],
   game: [
     ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
-    ...["jetStart", "jetLoop", "jetStop"],
-    ...Object.keys(VOL).filter((n) => n.startsWith("reload")),
+    ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
+    ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
+    ...["boom", "boomBig", "meteor"],
+    ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
-  l4dd: ["l4round", "zstep"],
+  l4dd: ["l4round", "zstep", "nuke"],
 };
 const LEAD = 0.03; // s: every sound is set this far ahead of the clock (set for "now", its fade-in is skipped: a pop)
 const VERSION = (import.meta.url.match(/[?&]v=(\w+)/) || [])[1] || "dev"; // (a new version fetches the files again)
@@ -337,6 +389,69 @@ const RELOAD = {
   glauncher: "reloadGlauncher",
 };
 
+/* a round in flesh, by what fx.js's blood says went in (BLEED_OF: small, big, heavy, shot, blade, blunt, arrow, claw) */
+const FLESH = {
+  small: "hitSmall",
+  big: "hitBig",
+  heavy: "hitHeavy",
+  shot: "hitShot",
+  blade: "hitBlade",
+  blunt: "hitBlunt",
+  arrow: "hitArrow",
+  claw: "hitClaw",
+};
+let fleshAt = 0;
+function flesh(kind) {
+  fleshAt = performance.now();
+  play(FLESH[kind] || "hitSmall");
+}
+/* a round that missed, by its kind (game.js' shots: a round's own kind, a pellet, an arrow, a dagger) */
+const LAND = {
+  pellet: "landShot",
+  arrow: "landArrow",
+  dagger: "landDagger",
+  sniper: "landHeavy",
+  chaingun: "landHeavy",
+  chain: "landHeavy",
+  ak: "landBig",
+  revolver: "landBig",
+};
+const NO_LAND = ["grenade", "lgren", "fireball", "controller", "chair"]; // (they land with their own sounds, or none)
+const land = (k) => NO_LAND.includes(k) || play(LAND[k] || "landSmall");
+/* a duck hurt, when nothing bled to make the sound (a kill by command, Invulnerability's flash): looked at a moment
+   later, so a hit that bleeds isn't heard twice */
+const hit = () =>
+  setTimeout(
+    () => performance.now() - fleshAt > 150 && play("hitBig", { k: 0.7 }),
+    30,
+  );
+
+/* the menus: a faint press for every button, a toggle's own sounds for on and off (its aria-pressed or a checkbox) */
+addEventListener(
+  "click",
+  (e) => {
+    const b =
+      e.target.closest &&
+      e.target.closest(
+        'button, [role="button"], a.btn, input[type="checkbox"], select',
+      );
+    if (!b || b.disabled || b.classList.contains("win-x")) return; // (a window's X: its closing sound)
+    if (b.type === "checkbox") play(b.checked ? "uiOn" : "uiOff");
+    else if (b.getAttribute("aria-pressed") === "false") play("uiOn");
+    else if (b.hasAttribute("aria-pressed"))
+      setTimeout(() =>
+        play(
+          b.isConnected && b.getAttribute("aria-pressed") === "true"
+            ? "uiPress"
+            : "uiOff",
+        ),
+      );
+    // (switched off; or one of a row of choices that stays picked: a press)
+    else play("uiPress");
+  },
+  true,
+);
+
 const quiet = () => null;
 const named = (name) => (o) => play(name, o && typeof o === "object" ? o : {}); // (some callers pass a number)
 /* every sound the game asks for by name. The older names stay (bang was every pistol, tat every quick gun); a name
@@ -347,6 +462,12 @@ const SFX = {
   tat: named("smg"),
   reload: (w, o) => RELOAD[w] && play(RELOAD[w], o),
   jet,
+  flesh,
+  land,
+  hit,
+  swish: named("throw"),
+  meteor: (fall = 1.4) =>
+    setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)
 };
 for (const n of Object.keys(VOL)) if (!SFX[n]) SFX[n] = named(n);
 export const sfx = new Proxy(SFX, { get: (o, k) => o[k] || quiet });

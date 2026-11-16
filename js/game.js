@@ -236,7 +236,7 @@ import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
 import { countJump } from "./jumps.js";
-import { sfx, loadSounds, jetsOff } from "./sound.js";
+import { sfx, loadSounds, jetsOff, OTHERS } from "./sound.js";
 import { feet } from "./feet.js";
 import { mountMap } from "./maps.js";
 import { knockOff, bothOff } from "./duel.js";
@@ -2916,7 +2916,9 @@ function playFx(f) {
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
-    sfx.boom();
+    (f.wide > 1 ? sfx.boomBig : sfx.boom)(
+      geo.hang ? { x: f.x * HW, y: f.y * HH } : {},
+    ); // (the Jaime Bomb's: its own, bigger)
     if (geo.hang)
       for (const [x, y] of f.gore || []) {
         const z = world.place({ x: x / HW, y: y / HH }, 0);
@@ -2954,7 +2956,7 @@ function playFx(f) {
     } // confetti over everyone's screen
     if (!spot(f.by)) return;
     if (f.what === "controller" || f.what === "chair") {
-      sfx.swish();
+      (f.what === "chair" ? sfx.chair : sfx.throw)(heard(f.by));
       return;
     } // (Mad God Justin's throws: they fly from the room's state)
     if (isL4dd(s) && ARMS[f.what]) {
@@ -2969,12 +2971,12 @@ function playFx(f) {
       ({
         handgun: sfx.handgun,
         bow: sfx.bow,
-        knife: sfx.swish,
-        hammer: sfx.swish,
-        dagger: sfx.swish,
+        knife: sfx.knife,
+        hammer: sfx.hammer,
+        dagger: sfx.throw,
         shotgun: sfx.shotgun,
         medkit: sfx.medkit,
-        grenade: sfx.swish,
+        grenade: sfx.throw,
         sniper: sfx.sniper,
         revolver: sfx.revolver,
         smg: sfx.smg,
@@ -2982,7 +2984,7 @@ function playFx(f) {
         lmg: sfx.lmg,
         chaingun: sfx.chaingun,
         glauncher: sfx.glauncher,
-        zebra: sfx.swish,
+        zebra: sfx.cakeThrow,
         fireball: sfx.fireball,
         adrenaline: sfx.adrenaline,
         longjump: sfx.boing,
@@ -2994,7 +2996,7 @@ function playFx(f) {
       return;
     }
     if (f.what === "zebra") {
-      sfx.swish();
+      sfx.cakeThrow(heard(f.by));
       return;
     } // (Mad God Justin's zebra cake: it flies from the room's state)
     if (f.what === "shotgun") {
@@ -3065,8 +3067,10 @@ function playFx(f) {
           chaingun: sfx.chaingun,
           glauncher: sfx.glauncher,
           shotgun: sfx.shotgun,
-        })[f.what] || sfx.swish
-      )(heard(f.by)); // (every gun its own sound, as in Dead Ducks Arcade)
+          knife: sfx.knife,
+          hammer: sfx.hammer,
+        })[f.what] || sfx.throw
+      )(heard(f.by)); // (the dagger and the grenade: thrown) // (every gun its own sound, as in Dead Ducks Arcade)
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
       return;
@@ -3260,7 +3264,7 @@ function playFx(f) {
       { duration: 260, easing: "linear", fill: "forwards" },
     );
     setTimeout(() => n.remove(), 300);
-    sfx.swish();
+    sfx.throw();
   } else if (f.kind === "pcrit") {
     /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
        Zombies' rises over it */
@@ -4839,7 +4843,7 @@ function heardReloads(s) {
 /* how a duck's sound is heard: mine as it is, another's quieter; in Duck Cabin and Dead Ducks Arcade from where it
    stands (sound.js fades it with its distance from my duck) */
 function heard(id) {
-  const o = { k: id === R.me ? 1 : 0.6 };
+  const o = { k: id === R.me ? 1 : OTHERS };
   if (world && R && isHang(R.state)) {
     const p = (R.state.pos || {})[id];
     if (p && p.x >= 0) Object.assign(o, { x: p.x * HW, y: p.y * HH });

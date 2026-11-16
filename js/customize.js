@@ -492,13 +492,13 @@ export function openCustomize(page = lastPage) {
               lmg: sfx.lmg,
               chaingun: sfx.chaingun,
               glauncher: sfx.glauncher,
-              dagger: sfx.swish,
-              knife: sfx.swish,
-              hammer: sfx.swish,
-              grenade: sfx.swish,
+              dagger: sfx.throw,
+              knife: sfx.knife,
+              hammer: sfx.hammer,
+              grenade: sfx.throw,
               bow: () => setTimeout(() => sfx.bow(), 380),
-              chair: () => setTimeout(() => sfx.swish(), 600),
-              zebra: sfx.swish,
+              chair: () => setTimeout(() => sfx.chair(), 600),
+              zebra: sfx.cakeThrow,
               jaime: () => {
                 sfx.puff();
                 setTimeout(() => sfx.jaime(), 250);
