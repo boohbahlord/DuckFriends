@@ -4384,3 +4384,46 @@ Zombies only; Hangout's Duck Cabin unchanged).
   pixel look, because pxdom.js renamed the gradients' ids but missed the url("#…") written into each part's style (its
   quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
   "Write a (", so under 480 px wide the meter hides and the timer's words stay.
+
+## Nov 16 2026, 15:12Z: lobby vote, loading screens, Justin out of zombies, Nous Within Kenoma maps, settings, aiming, Mad God Justin weapons
+
+> there should be a vote to go back to lobby in the vote screen for the game modes or maps AND a pause menu still available in the top right
+>
+> loading screens are used where ever there is loading
+>
+> Justin will be removed from the zombie game because I do not want to force him into it.
+>
+> Anything special that drops Justin in zomies as a special is also removed for the zombie game
+>
+> The Ether's crossroads theme should now be renamed Nous Within Kenoma AND it's page background, UI, and look is now based on my book's ui in that map and has the background too, AND there are map variations based off of the different versions in the sight, one based off the last chapters so far on the site and their background, and it is called "Nous within Kenoma: Architectured", another called "Nous within Kenoma: Ten" based on the first four chapters, and another called "Nous within Kenoma: Chalice" and another caled "Nous within Kenoma: the Fool"
+> These only show up at the very bottom of the list of maps, the variations do.
+> Every variation of any map is at the bottom AND when it comes to random, they are selected LIKE a bag, where each map contains a bag of it's variations, as to make sure map variations do not pollute the randomizer AND the map variations are shuffled to make them more likely to play the ones least played AND the same goes for the maps when random or random option is voted
+>
+> Im still working on other things
+>
+> the mouse cursor is too big
+>
+> The first screenshot shows how the game setting options should be moved below a line under the other three, the contents of the red box moved under and into where the blue box shows
+>
+> The first top of general rules will have a small note below them says that these apply to all game modes, and another button below that turns it off and fades it's options under it's drop down.
+>
+> in the general rules of every game mode, there is also THEN rules for those particular game modes FROM the general rules which take precedent over the former and i want suggestions to what they should be called asap, since it should be a third setting with a note underneath it as well. Give suggestions of how to do this system im trying to accomplish
+>
+> the second screenshot shows how the laser sight and the bullets do not aim towards the cursor, which is a problem, because where the cursor points is where bullets and the laser sight should try to arrive to, even though i think some guns have their bullets arrive in a spread or random array of directions to the point they are aimed at, so fix that
+>
+> Remember that laser sights should be in realm of the mad justin
+>
+> ALSO NOW, i want the weapons that drop in mad god justin to only be the powerful ones and to make the medkit and all weapons the players choose there to behave like they do in the zombie game AND the bow is replaced with a pistol AND the pistol never has to reload AND they start out holding it while still have the knife in their hot bar
+> No flashlight for mad god justin
+
+(Screenshots: /mnt/project-files/refs/2026-11-16-1512/.) Split by Adam; Solomon the 2nd has Justin out, aiming, and Mad
+God Justin's weapons.
+- PR A (Solomon the 2nd): Justin is out of Dead Ducks Arcade: the General Settings switch no longer brings him (its
+  row says so), the fireplace never lands on him (HELPER.on false), the toilet zebra-cake egg is off, and no zombie
+  wears his look (Z_JUSTIN 0). Aiming: game.js axes() turned the mouse's direction into a board direction through
+  place(), which in Hangout used the floor's height at the cabin's middle, so the deck and steps tilted every aim
+  (about 10 degrees off); it now uses flat ground, and the laser and bullets go through the cursor (spread guns scatter
+  around that line as before). Mad God Justin: key 2 is a pistol in place of the bow (never reloads, 1 damage to
+  Justin, as fast as in every mode), every fight starts with it in hand and the knife on 1; the handgun drop is gone
+  (everyone has one); guns have laser sights out to the board's edge (no flashlight there). Also: multicolored names
+  now follow the flashlight-names rule too (they were always shown).

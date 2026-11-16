@@ -2043,7 +2043,7 @@ export function reduce(state, a, now = Date.now()) {
         return state; // (Mad God Justin: not while down)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
-      if (isMgj(s) && sp !== "knife" && sp !== "bow")
+      if (isMgj(s) && sp !== "knife" && sp !== "handgun")
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the weapon picked up, once)
       if (
         (WEAPONS.includes(sp) ||
@@ -2074,7 +2074,7 @@ export function reduce(state, a, now = Date.now()) {
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
         return s;
       }
-      const mg = magSize(sp);
+      const mg = isMgj(s) && sp === "handgun" ? null : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16)
       if (mg) {
         // one shot from the magazine; the last starts the reload
         const m = magOf(s, a.id, now, sp),

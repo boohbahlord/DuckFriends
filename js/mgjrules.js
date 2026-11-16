@@ -1,6 +1,7 @@
 import { ARM_COOL } from "./armspeed.js";
 /* ---------- the rules of Mad God Justin ----------
-   A boss fight: every duck has the knife (1), the bow (2), Jaime (3, from a pool everyone shares), the weapon it picked
+   A boss fight: every duck has the knife (1), the pistol (2: it never reloads, in place of the bow, the owner's,
+   Nov 16), Jaime (3, from a pool everyone shares), the weapon it picked
    up (4) and the zebra cake (5, shared too); whatever it switches to stays out in its hand, but Jaime, and a picked-up
    weapon used up goes back to the one out before. Together they must bring Justin's HP to 0 (no time limit: the owner's,
    Nov 3; every win counts toward the lightning eyes). His HP is 20 + 20 for each player when the fight starts, and one
@@ -238,16 +239,16 @@ const JAIME_OUCH = [
     "DIE JAIME!!!!!!!",
     "I AM TRYING TO SOUND WHORE JAIME!!!!",
   ];
-/* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife a third shorter, an arrow
-   a second */
-export const MGJ_HOLD = ["knife", "bow"];
+/* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
+   as in every mode */
+export const MGJ_HOLD = ["knife", "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
 export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: ARM_COOL.knife, bow: ARM_COOL.bow }; // (the knife: four a second, as in every mode)
+const MGJ_COOL = { knife: ARM_COOL.knife, handgun: ARM_COOL.handgun }; // (as fast as in every mode: the knife four a second, the pistol five)
 export const mgjCool = (sp) => MGJ_COOL[sp] || 0;
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
    hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16) */
@@ -270,16 +271,15 @@ export const PICK_EVERY = 15000,
   PICKS = [
     ["hammer", 29],
     ["dagger", 27.5],
-    ["handgun", 25],
-    ["shotgun", 10],
+    ["shotgun", 10], // (the handgun's gone: everyone has the pistol now, the owner's, Nov 16)
     ["sky", 5],
     ["meteor", 2.5],
     ["good", 1],
   ];
-export const PICK_WEAPONS = ["hammer", "dagger", "handgun", "shotgun"];
+export const PICK_WEAPONS = ["hammer", "dagger", "shotgun"];
 /* how many uses a picked-up weapon gives before it's back to the knife (the owner: the handgun and the dagger are easy
    to miss with, so three each) */
-export const PICK_USES = { handgun: 3, dagger: 3 };
+export const PICK_USES = { dagger: 3 };
 export const usesOf = (s, id) =>
   (s.mgj && (s.mgj.held || {})[id] && (s.mgj.uses || {})[id]) || 0;
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
@@ -287,7 +287,7 @@ export const DMG = {
   knife: 1,
   hammer: 2,
   dagger: 2,
-  handgun: 2,
+  handgun: 1, // (the pistol everyone has)
   pellet: 1,
   arrow: 1,
   jaime: 1,

@@ -458,8 +458,9 @@ let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
   l4Last = 0,
-  mgjHold = "knife", // Mad God Justin: what's out in my hand (the knife, the bow, the weapon picked up, the zebra cake)
-  mgjBack = "knife", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
+  mgjHold = "handgun", // Mad God Justin: what's out in my hand (the knife, the pistol, the weapon picked up, the zebra cake)
+  mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
+  mgjFight = -1, // (the fight it was set for: each fight starts with the pistol out, the owner's, Nov 16)
   mgjRv = false, // (E held down for a revive, or the phone's Revive button)
   keyAim = null, // … and where the arrow keys aim (on the screen), when they moved last: null when the mouse did
   mouse = null,
@@ -2055,6 +2056,7 @@ function drawDucks(now = clockNow()) {
       hy + Math.sin(rot) * (reach + gl * 0.5),
       rot,
     ];
+    h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: Mad God Justin's laser sight)
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
@@ -2114,6 +2116,24 @@ function drawDucks(now = clockNow()) {
         e = hd && hd.parentNode === fxl && hd._end,
         end = e && laserEnd(id);
       if (end) lz.push([e[0], e[1], end[0], end[1]]);
+    }
+  /* Mad God Justin: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
+     (my mouse) to the board's edge */
+  if (isMgj(s) && s.phase === "boss")
+    for (const [id, w] of arms) {
+      if (!MUZZLE[w]) continue;
+      const hd = heldAll.get(id),
+        e = hd && hd.parentNode === fxl && hd._end,
+        A = hd && hd._aim;
+      if (!e || !A) continue;
+      const ux = Math.cos(A[2]),
+        uy = Math.sin(A[2]),
+        t = Math.min(
+          ux > 0 ? (geo.W - A[0]) / ux : ux < 0 ? -A[0] / ux : Infinity,
+          uy > 0 ? (geo.H - A[1]) / uy : uy < 0 ? -A[1] / uy : Infinity,
+        );
+      if (t > 0 && t < Infinity)
+        lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
   fxLasers(lz);
   /* ducklings: three in a row behind their duck, along the way it walked */
@@ -3416,9 +3436,13 @@ function xBounds() {
 /* aiming: the board's directions on the screen. place() is straight lines on the board, so two steps from the middle
    give how far a step across (x) and a step down (y) the board moves on the screen */
 function axes() {
-  const o = place({ x: 0.5, y: 0.5 }, 0, 1),
-    a = place({ x: 0.6, y: 0.5 }, 0, 1),
-    b = place({ x: 0.5, y: 0.6 }, 0, 1);
+  const at = (x, y) =>
+      geo && geo.hang && world
+        ? world.place({ x, y }, 0) // (Hangout: on flat ground. Through the floor's own heights there, a step or the deck tilted every aim: the owner's, Nov 16)
+        : place({ x, y }, 0, 1),
+    o = at(0.5, 0.5),
+    a = at(0.6, 0.5),
+    b = at(0.5, 0.6);
   return [
     (a.left - o.left) * 10,
     (a.top - o.top) * 10,
@@ -4540,8 +4564,8 @@ function recordRound(s) {
 /* ---------- the specials on the number keys ---------- */
 const myDuck = () => ((R && R.state.players[R.me]) || {}).duck || profile.duck;
 /* the duck my keys play with: in Quacky Zombies its slots on 1 to 4 (melee, ranged, ranged, the special); in Mad God
-   Justin its own keys: 1 the knife, 2 the bow, 3 Jaime, 4 the weapon picked up, 5 the zebra cake (my own keys stay as
-   they are) */
+   Justin its own keys: 1 the knife, 2 the pistol (it never reloads: in place of the bow, the owner's, Nov 16), 3 Jaime,
+   4 the weapon picked up, 5 the zebra cake (my own keys stay as they are) */
 const playDuck = () =>
   R && isL4dd(R.state)
     ? {
@@ -4556,7 +4580,7 @@ const playDuck = () =>
           ...myDuck(),
           keys: [
             "knife",
-            "bow",
+            "handgun",
             "jaime",
             specialById(myPick()) ? myPick() : null,
             "zebra",
@@ -4567,13 +4591,17 @@ const playDuck = () =>
 /* Mad God Justin: a picked-up weapon used up, or the zebra cake thrown: back to the one out before (on each new state,
    and when the slider asks what's in hand, so it never picks the next one over by itself) */
 function mgjBackIfGone(s) {
+  if (s.mgj && s.mgj.n !== mgjFight) {
+    mgjFight = s.mgj.n;
+    mgjHold = mgjBack = "handgun"; // (a new fight: the pistol in hand, the knife on 1)
+  }
   const thrown =
     mgjHold === "zebra" &&
     s.mgj &&
     (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
   if (
     (mgjHold !== "knife" &&
-      mgjHold !== "bow" &&
+      mgjHold !== "handgun" &&
       mgjHold !== "zebra" &&
       mgjHold !== myPick()) ||
     thrown
@@ -4585,9 +4613,12 @@ function mgjBackIfGone(s) {
 }
 /* Mad God Justin: what a key puts out in my hand, kept there (all but Jaime: the owner's, Nov 3) */
 const mgjToggles = (id) =>
-  id === "knife" || id === "bow" || id === "zebra" || (!!id && id === myPick());
+  id === "knife" ||
+  id === "handgun" ||
+  id === "zebra" ||
+  (!!id && id === myPick());
 function mgjOut2(id) {
-  if (mgjHold !== id && (mgjHold === "knife" || mgjHold === "bow"))
+  if (mgjHold !== id && (mgjHold === "knife" || mgjHold === "handgun"))
     mgjBack = mgjHold; // (the one to go back to)
   mgjHold = held = id;
   sendMove(true);

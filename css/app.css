@@ -2964,7 +2964,8 @@ html.moving svg.duck.datboi.rainbow .dbr {
   height: 0.42rem;
   padding: 0;
 }
-.l4-board .gduck:not(.mine) .gduck-name .pname {
+.l4-board .gduck:not(.mine) .gduck-name > .pname,
+.l4-board .gduck:not(.mine) .gduck-name > .rainbow {
   position: absolute;
   left: 50%;
   bottom: calc(100% + var(--sz) * 1.32);
@@ -2976,8 +2977,10 @@ html.moving svg.duck.datboi.rainbow .dbr {
   opacity: 0;
   transition: opacity 0.2s;
 }
-.l4-board .gduck.l4-lit:not(.mine) .gduck-name .pname,
-html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name .pname {
+.l4-board .gduck.l4-lit:not(.mine) .gduck-name > .pname,
+.l4-board .gduck.l4-lit:not(.mine) .gduck-name > .rainbow,
+html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .pname,
+html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
   opacity: 1;
 }
 /* Change player tag color (looks.js): the name tag takes the duck's vote color, its letters in a color that reads on it */

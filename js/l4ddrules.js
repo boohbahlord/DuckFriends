@@ -490,8 +490,9 @@ const ZOUTFITS = [
   "firefighter",
   "military",
 ];
-/* 1 zombie in 400 is Justin (the owner's, Nov 4: 0.25%): his glasses and jeans, as a zombie */
-const Z_JUSTIN = 0.0025;
+/* 1 zombie in 400 was Justin (the owner's, Nov 4: 0.25%): his glasses and jeans, as a zombie. 0 since Nov 16, with
+   HELPER.on: Justin never shows up in this mode */
+const Z_JUSTIN = 0;
 export const zombieLook = (l) => ({
   color: "#3f7a34",
   pattern: "none",
@@ -1220,7 +1221,6 @@ function setUp(s, now) {
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
-  if (s.options.justin) helperIn(s, null, now, true); // (the Justin switch: he plays from the start, on our side)
   newRound(s, 0, now, 0);
   s.hang.l4 = { ...s.hang.l4, n: 0, dq: [], wait: { r: 1, v: {} } }; // (round 0: no zombies until enough ducks are ready)
 }
@@ -1231,7 +1231,7 @@ export const R16 = 16,
   R16_PTS = 3000,
   GO_MS = 3000; // ms of "Round N" after the vote, before its zombies come
 export const isR16 = (s) => !!(s && s.options && +s.options.l4r16);
-/* who End turn waits on: Justin never counts toward a turn (the switch's own words) */
+/* who End turn waits on: the fireplace's Justin never counts toward a turn */
 const voters = (s) => players(s).filter((id) => !isHelper(s, id));
 export const waitNeed = (s) =>
   Math.max(1, Math.ceil(voters(s).length * shareOf(s) - 1e-9));
@@ -1477,7 +1477,8 @@ export function itemOdds([wr, ir] = [0, 0]) {
   return Math.min(0.95, Math.max(0.02, v));
 }
 function fireRoll(s, id, kit) {
-  if (Math.random() < HELPER.chance && !s.players[HELPER.id]) return HELPER.w; // 1 in 100: Justin
+  if (HELPER.on && Math.random() < HELPER.chance && !s.players[HELPER.id])
+    return HELPER.w; // 1 in 100: Justin (off: HELPER.on)
   if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
     return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
   const fo = (s.hang.l4fo || {})[id] || [0, 0],
@@ -1494,10 +1495,11 @@ function fireRoll(s, id, kit) {
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
    all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
-   plays him). He goes when the game does: Play again, or back to the lobby. With the Justin switch on (General
-   Settings), he's here from the start instead, like every other duck: the same knife, guns and points (the owner's,
-   Nov 16); the fireplace then never lands on him */
+   plays him). He goes when the game does: Play again, or back to the lobby.
+   Off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do not want to force him into
+   it"): the fireplace never lands on him, and the General Settings Justin switch doesn't bring him in */
 export const HELPER = {
+  on: false,
   id: "b-justin",
   w: "justin",
   chance: 0.01,
@@ -1505,7 +1507,7 @@ export const HELPER = {
   out: 1200,
 };
 export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
-function helperIn(s, by, now, sw = false) {
+function helperIn(s, by, now) {
   const id = HELPER.id;
   if (s.players[id]) return;
   s.players[id] = {
@@ -1518,14 +1520,9 @@ function helperIn(s, by, now, sw = false) {
     nameStyle: {},
     ready: true,
     joined: now,
-    ...(sw ? { sw: 1 } : {}), // (from the switch: he goes if it's turned off)
   };
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
-  if (sw) {
-    say(s, "Justin joined.");
-    return; // (a duck like the others: bringBack gave him their start)
-  }
   const kit = freshKit();
   kit.sl = ["knife", "chaingun", "handgun", ""];
   kit.am = { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
@@ -1888,11 +1885,14 @@ function cakeOut(s, id, p, dx, dy, now) {
     t = n;
   }
   /* (a secret, kept out of Updates: a cake landing in the bathroom, near the toilet, goes in the bowl, and Justin
-     teleports in and eats it there for as long as it lasts; the zombies leave that one be) */
+     teleports in and eats it there for as long as it lasts; the zombies leave that one be. Off since Nov 16, with
+     HELPER.on: Justin is never dropped into this mode) */
   const lx = px + dx * A.speed * t,
     ly = py + dy * A.speed * t,
     bowl =
-      inBath(lx, ly) && Math.hypot(lx - TOILET.x, ly - TOILET.y) <= TOILET.near;
+      HELPER.on &&
+      inBath(lx, ly) &&
+      Math.hypot(lx - TOILET.x, ly - TOILET.y) <= TOILET.near;
   if (bowl) {
     const d = Math.hypot(TOILET.x - px, TOILET.y - py) || 1;
     dx = (TOILET.x - px) / d;
@@ -2400,10 +2400,6 @@ function l4Tick(s, now) {
     s.jm = null;
     return true;
   }
-  /* the Justin switch turned on or off mid-game (the pause menu's settings, a Democracy vote) */
-  const J = s.players[HELPER.id];
-  if (s.options.justin && !J) helperIn(s, null, now, true);
-  else if (!s.options.justin && J && J.sw) helperOut(s);
   meleeHits(s, now); // (first: the zombies below are read after it)
   const T = now - L.t0,
     zs = zombies(s);
