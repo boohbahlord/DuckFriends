@@ -34,6 +34,7 @@ export function setPixel(v) {
     localStorage.setItem(KEY, on ? "1" : "0");
   } catch {}
   document.documentElement.classList.toggle("pixel", on);
+  filterGrid();
   dispatchEvent(new Event("pixelchange"));
 }
 
@@ -44,7 +45,34 @@ let duckPx = 92 * FILL, // (a duck's drawn height on the board, in css px; the b
 function setGrid() {
   grid = Math.max(1, duckPx / DUCK);
   document.documentElement.style.setProperty("--px", grid.toFixed(3) + "px");
+  filterGrid();
 }
+
+/* ---------- whole layers made into pixels as they're drawn (the maps: every map, with all its movement) ----------
+   An SVG filter (css: filter: url(#px-f)): each grid square takes the color of one point inside it. The maps are made
+   of canvases, pictures and moving drawings, so I pixelate what they draw rather than each piece; the same grid as the
+   ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
+   then grown to fill its square.) */
+let filt = null;
+function filterGrid() {
+  if (!on || !document.body) return;
+  if (!filt) {
+    filt = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    filt.setAttribute("aria-hidden", "true");
+    filt.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    filt.innerHTML = `<filter id="px-f" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
+    document.body.append(filt);
+  }
+  const g = grid.toFixed(3),
+    [flood, comp, , , morph] = filt.querySelector("filter").children;
+  flood.setAttribute("x", (grid / 2).toFixed(3));
+  flood.setAttribute("y", (grid / 2).toFixed(3));
+  comp.setAttribute("width", g);
+  comp.setAttribute("height", g);
+  morph.setAttribute("radius", (grid / 2).toFixed(3));
+}
+if (document.readyState === "loading")
+  addEventListener("DOMContentLoaded", filterGrid);
 setGrid();
 document.documentElement.classList.toggle("pixel", on);
 

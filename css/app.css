@@ -16618,6 +16618,9 @@ html.pixel *::after {
 html.pixel img.px {
   image-rendering: pixelated;
 }
+html.pixel .map-layer {
+  filter: url(#px-f);
+} /* (every map, moving as before, drawn on the grid: pixel.js' filter) */
 .gduck-body img.px {
   display: block;
   width: 100%;
