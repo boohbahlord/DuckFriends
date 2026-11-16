@@ -70,6 +70,8 @@ import {
   l4Cool,
   kindOf,
   ARMS,
+  SAFE,
+  safePrice,
 } from "./l4ddrules.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
@@ -562,6 +564,39 @@ function stamp() {
   x.fillRect(0, 0, n, n);
   return (STAMP = c);
 }
+/* other ducks' names show only while a flashlight (anyone's but their own) reaches them (the owner's, Nov 16; the CSS
+   puts them small over the head, and always shows them on a phone, which has no flashlight). beams: [id, x, y, angle,
+   each ray's reach], from paint() */
+let litSig = "";
+function litNames(s, ctx, beams) {
+  const Wd = ctx.world,
+    rays = beams.length ? beams[0][4].length - 1 : 0,
+    lit = [];
+  for (const id of s.seat) {
+    if (id === ctx.me) continue;
+    const a = Wd.at(id);
+    if (!a) continue;
+    for (const [by, x, y, t, ds] of beams) {
+      if (by === id) continue;
+      const dx = a.x - x,
+        dy = a.y - y,
+        d = Math.hypot(dx, dy);
+      let u = Math.atan2(dy, dx) - t;
+      u = Math.atan2(Math.sin(u), Math.cos(u)); // (-pi to pi)
+      if (d > CONE.far || Math.abs(u) > CONE.half) continue;
+      const k = Math.round(((u + CONE.half) / (2 * CONE.half)) * rays);
+      if (d <= ds[k] + 20) {
+        lit.push(id);
+        break;
+      }
+    }
+  }
+  const sig = lit.join();
+  if (sig === litSig) return;
+  litSig = sig;
+  for (const el of Wd.board.querySelectorAll(".gduck[data-pid]"))
+    el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
+}
 function paint(now, ctx) {
   const Wd = ctx.world,
     s = ctx.state(),
@@ -571,7 +606,8 @@ function paint(now, ctx) {
     sc = Wd.sc * q,
     ln = lightNow(now),
     holes = [],
-    cones = [];
+    cones = [],
+    beams = []; // (the same flashlights in the world's px, for the names: litNames)
   const on = (x, y, r) => x + r > 0 && x - r < w && y + r > 0 && y - r < h;
   for (const l of Wd.inside ? LIT.in : LIT.out) {
     const fl = sway(l, ln),
@@ -644,7 +680,9 @@ function paint(now, ctx) {
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
     cones.push([o.left * q, o.top * q, pts, CONE.far * sc]);
+    beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
   }
+  litNames(s, ctx, beams);
   const f = (v) => v.toFixed(1),
     key = [
       w,
@@ -869,6 +907,65 @@ function seePts(s, ctx) {
   }
 }
 
+/* ---------- Safe Keeping (the owner's, Nov 16) ----------
+   A duck it's getting up glows a heavenly light blue; up, for SAFE.INV ms its picture softly breathes see-through in
+   that glow and nothing hurts it, while my own screen counts down from 6, then says "Vitals Stabilized" */
+let vitEl = null,
+  vitShown = "",
+  hintEl = null;
+function safeLook(ctx) {
+  const s = ctx.state(),
+    now = clockNow(),
+    p4 = s.hang.l4p || {},
+    inv = s.hang.l4inv || {};
+  for (const d of ctx.world.board.querySelectorAll(".ducks .gduck[data-pid]")) {
+    const id = d.dataset.pid,
+      sk = !!(p4[id] && p4[id].skAt),
+      on = inv[id] > now;
+    if (d.classList.contains("l4-skglow") !== sk)
+      d.classList.toggle("l4-skglow", sk);
+    if (d.classList.contains("l4-inv") !== on) d.classList.toggle("l4-inv", on);
+  }
+  if (!vitEl) {
+    vitEl = document.createElement("div");
+    vitEl.className = "l4-vitals";
+    vitEl.setAttribute("role", "status");
+    vitEl.hidden = true;
+    ctx.world.board.append(vitEl);
+  }
+  const until = inv[ctx.me] || 0,
+    left = Math.ceil((until - now) / 1000),
+    word =
+      left > 0
+        ? String(Math.min(6, left))
+        : until && now - until < 1800
+          ? "Vitals Stabilized"
+          : "";
+  if (word !== vitShown) {
+    vitShown = word;
+    vitEl.textContent = word;
+    vitEl.hidden = !word;
+    vitEl.classList.toggle("done", left <= 0);
+  }
+}
+/* a click or a key on Safe Keeping in the hotbar: it can't be used by hand, so a note says how it works, only to me,
+   at the bottom left (game.js' l4Pick) */
+export function l4SafeHint() {
+  const board = document.querySelector(".hang-board.l4-board");
+  if (!board) return;
+  if (!hintEl || !hintEl.isConnected) {
+    hintEl = document.createElement("div");
+    hintEl.className = "l4-hint";
+    hintEl.setAttribute("role", "status");
+    board.append(hintEl);
+  }
+  hintEl.innerHTML =
+    "<b>Safe Keeping</b> works by itself. When you go down you keep everything you bought, and it gets you up: press <kbd>E</kbd> (or tap the button) while down, or at once if nobody else is standing. Then 6 seconds nothing can hurt you. Used up after.";
+  hintEl.classList.remove("on");
+  void hintEl.offsetWidth;
+  hintEl.classList.add("on");
+}
+
 /* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
    A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, or an
    item's 0.75 s: the longest one when two run at once); hidden when none is. And under it, when I switch slots, a
@@ -979,6 +1076,13 @@ function shopFill(s, ctx) {
         : `Buy ${price}`;
     return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
   }).join("");
+  /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
+  {
+    const have = !!kit && kit.sl.includes("safekeep"),
+      price = safePrice(s),
+      was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
+    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
+  }
 }
 const gunWhat = (w) => {
   if (w === "knife") return "Melee";
@@ -1058,6 +1162,9 @@ function shopEl(ctx) {
 function holdTarget(pos, ctx) {
   const s = ctx.state(),
     me = ctx.me;
+  const mine = P4(s, me);
+  if (s.hang && s.hang.l4 && !s.hang.l4.over && mine && mine.sk && !mine.skAt)
+    return { kind: "sk", d: 0 }; // (down, with Safe Keeping: E gets me up)
   if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return null;
   let best = null;
   for (const id of s.seat) {
@@ -1114,9 +1221,9 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "box" });
   } else if (t.kind === "take") {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
-  }
+  } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
 }
-const TAPS = ["box", "take", "shop"];
+const TAPS = ["box", "take", "shop", "sk"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -1142,10 +1249,13 @@ function holdLabel(t, s, ctx, now) {
     return `Spin for a weapon · ${priceFor(s, ctx.me, "box")}${saleOn(s) ? " (Sale)" : ""}`;
   if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
+  if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
       return `Reviving… ${Math.max(0, Math.ceil((L4.REVIVE - (now - rv.at)) / 1000))}`;
+    if (heldFn() === "medkit")
+      return `Revive ${t.name || ""} with the medkit`.replace("  ", " "); // (at once: the owner's, Nov 16)
     return `Revive ${t.name || ""}`.trim();
   }
   const mine = ((s.hang.l4b || {})[ctx.me] || {}).o === t.o;
@@ -1258,7 +1368,16 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    zpSig = overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = "";
+    zpSig =
+      overShown =
+      endSig =
+      drawn =
+      boxSig =
+      upSig =
+      slotSig =
+      onSig =
+      litSig =
+        "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();
@@ -1288,6 +1407,8 @@ activity({
       onEl,
       gotEl,
       killEl,
+      vitEl,
+      hintEl,
       boxEl,
       butler && butler.el,
       egg && egg.el,
@@ -1296,6 +1417,8 @@ activity({
       e?.remove();
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
+    vitEl = hintEl = null;
+    vitShown = "";
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
@@ -1502,6 +1625,7 @@ activity({
       coolBar(tag, st, ctx.me);
       peek(tag, st, ctx.me);
     }
+    safeLook(ctx);
   },
   near(pos, ctx) {
     const t = holdTarget(pos, ctx);
