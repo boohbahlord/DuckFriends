@@ -260,7 +260,7 @@ const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
 /* blood out of something hit at (x, y) (css px on the screen), h px over its feet, by weapon w; (dx, dy): the way the
    hit went (most of the blood goes on that way, some back toward the shooter); body: the duck's color (its chunks) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0, body = "") {
-  sfx.flesh(BLEED_OF[w] || "small"); // (its sound: by what went in)
+  sfx.flesh(BLEED_OF[w] || "small", w); // (its sound: by what went in, or the weapon's own: sound.js OWN_HIT)
   if (noGore) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,

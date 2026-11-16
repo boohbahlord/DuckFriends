@@ -3092,7 +3092,6 @@ function playFx(f) {
       sfx.hit();
     }
     if (f.what === "hammer") setTimeout(() => sfx.bonk(), KB_LAND);
-    if (f.what === "pan") sfx.bonk(); // (the pan: a bonk as it lands)
   } else if (f.kind === "use") {
     // an item at its duck, moving with it (drawDucks places it each frame)
     if (f.what === "confetti") {
@@ -3118,9 +3117,9 @@ function playFx(f) {
         bow: sfx.bow,
         knife: sfx.knife,
         hammer: sfx.hammer,
-        axe: sfx.hammer,
-        sword: sfx.knife,
-        pan: sfx.hammer,
+        axe: sfx.axe,
+        sword: sfx.sword,
+        pan: sfx.pan,
         dagger: sfx.throw,
         shotgun: sfx.shotgun,
         medkit: sfx.medkit,
@@ -3227,14 +3226,13 @@ function playFx(f) {
           shotgun: sfx.shotgun,
           knife: sfx.knife,
           hammer: sfx.hammer,
-          axe: sfx.hammer,
-          sword: sfx.knife,
-          pan: sfx.hammer,
+          axe: sfx.axe,
+          sword: sfx.sword,
+          pan: sfx.pan,
         })[f.what] || sfx.throw
       )(heard(f.by)); // (the dagger and the grenade: thrown) // (every gun its own sound, as in Dead Ducks Arcade)
       if (f.what === "hammer" && f.hit && f.hit.length)
         setTimeout(() => sfx.bonk(), KB_LAND); // (the hammer's duck landed; a knife's hit is the hit sound as it goes down)
-      if (f.what === "pan" && f.hit && f.hit.length) sfx.bonk(); // (the pan: a bonk as it lands)
       return;
     } // (it turns toward the aim; the bullet or the dagger flies from the room's state)
     const wrap = el('<div class="spe-follow"></div>');
