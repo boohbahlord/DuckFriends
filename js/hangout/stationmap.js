@@ -417,6 +417,37 @@ export function build(b) {
       }
     }
   }
+  /* the electric lights, dark till the power comes on (l4ddpower.js): white tubes in the gas station and under the
+     canopy over the pumps, the shop's light spilling out through its glass front, warm lamps down the chapel and one
+     over its door. Each is only its pool of light (nothing drawn: layer none) */
+  const lamp = (x, y, z, only, r, c, k) =>
+    put("gslamp", x, y, 1, 1, 0, {
+      layer: "none",
+      only,
+      light: { x, y, z, r, c, k, el: true },
+    });
+  const TUBE = "#dfe8ff",
+    WARM = "#ffd9a0";
+  for (const x of [2000, 2600, 3200])
+    for (const y of [850, 1420]) lamp(x, y, 170, "in", 420, TUBE, 0.5);
+  lamp(1350, 850, 170, "in", 280, TUBE, 0.45); // (the storeroom)
+  lamp(1350, 1450, 170, "in", 260, TUBE, 0.45); // (the restroom)
+  for (const x of [2300, 3000]) lamp(x, S.y1 + 90, 0, "out", 380, TUBE, 0.35);
+  for (const x of [1750, 2300, 2850])
+    lamp(x, (CANOPY.y0 + CANOPY.y1) / 2, CANOPY.z - 10, "out", 480, TUBE, 0.6);
+  lamp(2300, 3950, 200, "in", 420, WARM, 0.5);
+  for (const y of [4500, 5100])
+    for (const x of [1950, 2650]) lamp(x, y, 200, "in", 420, WARM, 0.5);
+  lamp(2300, 5500, 200, "in", 400, WARM, 0.5);
+  lamp(
+    (CHAPEL_DOOR.a + CHAPEL_DOOR.b) / 2,
+    C.y0 - 60,
+    230,
+    "out",
+    320,
+    WARM,
+    0.45,
+  );
   /* the forest */
   forest(put);
 }

@@ -7,7 +7,7 @@
    Inside the gas station or the chapel there is no rain, only its sound later. Low graphics or Data saving: a third
    of the drops; Animations off (html.still): none. I want it cheap: a few hundred short lines a frame, no images. */
 import { low } from "./gfx.js";
-import { inShallow, inDeep } from "./hangout/stationmap.js";
+import { inShallow, inDeep, CANOPY } from "./hangout/stationmap.js";
 
 let cv = null,
   g = null,
@@ -133,6 +133,8 @@ function splash(sx, sy, Wd, now) {
     wx = (sx - o.left) / Wd.sc,
     wy = (sy - o.top) / Wd.sc,
     water = inShallow(wx, wy) || inDeep(wx, wy);
+  if (wx > CANOPY.x0 && wx < CANOPY.x1 && wy > CANOPY.y0 && wy < CANOPY.y1)
+    return; // (under the canopy over the pumps it's dry)
   rings.push({
     x: wx,
     y: wy,

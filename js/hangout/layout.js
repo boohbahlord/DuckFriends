@@ -1047,14 +1047,14 @@ export function deckSpawnAt(k = 0) {
   return lap ? { x: p.x + (lap % 2 ? 45 : 0), y: p.y + (lap % 2 ? 35 : 0) } : p; // (more ducks than spots: a little in between)
 }
 /* the pools of light on the ground at night: { x, y, r, c (color), k (strength), flick, only, prop (its prop, for a
-   lamp that switches), el (electric: out while the power is off) } */
+   lamp that switches), el (electric: out while the power is off; a light can say so itself) } */
 const ELECTRIC = ["lamp", "stage", "sink", "post"];
 const lightsOf = () => [
   ...PROPS.filter((p) => p.light).map((p) => ({
     only: p.only,
     ...p.light,
     prop: p,
-    el: ELECTRIC.includes(p.kind),
+    el: p.light.el ?? ELECTRIC.includes(p.kind),
   })),
   ...(variant === "l4gs" ? [] : GLOWS),
 ];
