@@ -4237,3 +4237,8 @@ Zombies only; Hangout's Duck Cabin unchanged).
   the jetpack, the Long jump or Jaime); other modes' items already wait longer. A slot switch slides a tiny grey row of
   my slots in under my bars, the one in hand bright, then fades (peek). Points I get pop up small over my own duck,
   only for me; during Double Points they and the score's pop-up glow yellow, a little bigger.
+- PR 3 (Solomon the 2nd): the drops on now sit in a row at the top middle, under the points (under the Ready / End
+  turn button between rounds), each with its name and seconds (they were a column at the top right). Instant Kill:
+  a soft blood-crimson glow breathes over the board while it's on (.l4-killglow). Sale: the Butler and the fireplace
+  breathe gold while it's on, and its announcement is the word "Sale" in gold metal letters (.l4-got-gold). Max Ammo:
+  every hotbar box (and the phone's slider) flashes in its own color, quickly fading (.l4-flash).

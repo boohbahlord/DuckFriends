@@ -428,21 +428,34 @@ function seeDrops(s) {
     D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
   }
 }
-/* Instant Kill, Double Points, Speed Boost and Sale, with the seconds they have left */
-function seeOn(s) {
+/* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
+   top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
+   on, a soft blood-crimson glow breathes over the board; while Sale is, the Butler and the fireplace breathe gold */
+let killEl = null;
+function seeOn(s, ctx) {
   if (!onEl) return;
   const now = clockNow(),
     on = s.hang.l4on || {},
     rows = ["kill", "double", "speed", "sale"]
       .filter((k) => on[k] > now)
       .map((k) => [k, Math.ceil((on[k] - now) / 1000)]);
+  const low = !!(endEl && !endEl.hidden);
+  if (onEl.classList.contains("low") !== low) onEl.classList.toggle("low", low);
+  const kill = on.kill > now;
+  if (killEl && killEl.hidden === kill) killEl.hidden = !kill;
+  const sale = saleOn(s);
+  if (butler && butler.el.classList.contains("l4-sale") !== sale)
+    butler.el.classList.toggle("l4-sale", sale);
+  const fire = ctx && ctx.world.propEl("fireplace1");
+  if (fire && fire.classList.contains("l4-sale") !== sale)
+    fire.classList.toggle("l4-sale", sale);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;
   onSig = sig;
   onEl.innerHTML = rows
     .map(
       ([k, t]) =>
-        `<span class="l4-on-k k-${k}" title="${dropName(k)}"><i>${DROP_ICONS[k]}</i><b>${t}</b></span>`,
+        `<span class="l4-on-k k-${k}"><i>${DROP_ICONS[k]}</i><em>${dropName(k)}</em><b>${t}</b></span>`,
     )
     .join("");
   onEl.hidden = !rows.length;
@@ -450,7 +463,16 @@ function seeOn(s) {
 /* a duck walked over a drop: its name in big letters for everyone, and a sound (the Nuke: a white flash too) */
 export function l4Got(k) {
   if (!gotEl) return;
-  gotEl.innerHTML = `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+  gotEl.innerHTML =
+    k === "sale"
+      ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+      : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+  if (k === "ammo")
+    for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
+      b.classList.remove("l4-flash");
+      void b.offsetWidth;
+      b.classList.add("l4-flash"); // (Max Ammo: every hotbar box flashes in its own color, quickly fading)
+    }
   gotEl.classList.remove("on");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
@@ -1221,7 +1243,11 @@ activity({
     boxEl.innerHTML =
       '<div class="l4-box-orb"></div><span class="gduck-name l4-box-who"></span>';
     layer.append(boxEl);
-    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl);
+    killEl = document.createElement("div");
+    killEl.className = "l4-killglow";
+    killEl.hidden = true;
+    killEl.setAttribute("aria-hidden", "true");
+    ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     shop = shopEl(ctx);
     butler = butlerEl();
@@ -1261,6 +1287,7 @@ activity({
       sayEl,
       onEl,
       gotEl,
+      killEl,
       boxEl,
       butler && butler.el,
       egg && egg.el,
@@ -1268,7 +1295,7 @@ activity({
     ])
       e?.remove();
     cv = g = hud = endEl = over = layer = fxl = null;
-    ptsEl = sayEl = onEl = gotEl = boxEl = butler = shop = null;
+    ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
@@ -1277,7 +1304,7 @@ activity({
     seeZombies(s, ctx, now);
     seeBoards(s);
     seeDrops(s);
-    seeOn(s);
+    seeOn(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
@@ -1426,7 +1453,7 @@ activity({
         o.el.classList.toggle("ending", end);
       }
     }
-    seeOn(ctx.state());
+    seeOn(ctx.state(), ctx);
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),

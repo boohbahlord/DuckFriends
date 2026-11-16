@@ -15362,14 +15362,97 @@ html.moving .eye-tears .tdrop.t2 {
 /* what a drop turned on, top right: its symbol and the seconds left (Sale: until the round ends) */
 .l4-on {
   position: absolute;
-  top: 0.5rem;
-  right: 0.6rem;
+  top: calc(
+    1.3rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+  ); /* the top middle, under the points (the owner's, Nov 16) */
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 31000;
   pointer-events: none;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.3rem;
+  width: max-content;
+  max-width: calc(100% - 1rem);
+}
+.l4-on.low {
+  /* (under the Ready / End turn button between rounds) */
+  top: calc(
+    5.6rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+  );
+}
+.l4-on-k em {
+  font-style: normal;
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+/* Instant Kill: a soft blood-crimson glow breathing over everything on the board */
+.l4-killglow {
+  position: absolute;
+  inset: 0;
+  z-index: 30900;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #8a001400 40%, #8a001438 100%);
+  box-shadow: inset 0 0 6rem #a0001866;
+  animation: l4-killglow 2.6s ease-in-out infinite;
+}
+@keyframes l4-killglow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+/* Sale: the Butler and the fireplace breathe a shiny gold */
+.l4-sale {
+  animation: l4-sale 1.8s ease-in-out infinite;
+}
+@keyframes l4-sale {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.15rem #ffd23f88);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.55rem #ffd23f) drop-shadow(0 0 0.15rem #fff6c0)
+      brightness(1.12);
+  }
+}
+/* the Sale's word, in gold metal letters (l4dd.js l4Got) */
+.l4-got-gold {
+  font-size: 1.3em;
+  letter-spacing: 0.03em;
+  color: #ffd23f;
+  background: linear-gradient(
+    180deg,
+    #fff6c0 0%,
+    #ffd23f 38%,
+    #c98a12 52%,
+    #ffe58a 70%,
+    #b07408 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.04em #5a3a00;
+  filter: drop-shadow(0 0.05em 0 #3a2400) drop-shadow(0 0 0.35em #ffd23f88);
+}
+/* Max Ammo: every hotbar box flashes in its own color, quickly fading (l4dd.js l4Got) */
+.l4-flash {
+  animation: l4-flash 0.7s ease-out;
+}
+@keyframes l4-flash {
+  0% {
+    filter: brightness(1.8) saturate(1.4);
+    box-shadow:
+      0 0 0.9rem var(--c, #fff),
+      inset 0 0 1rem var(--cl, #fff);
+  }
+  100% {
+    filter: none;
+  }
 }
 .l4-on-k {
   display: flex;
