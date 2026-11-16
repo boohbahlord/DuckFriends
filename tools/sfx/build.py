@@ -57,6 +57,7 @@ OGA_URL = {
     "break75": "https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx",
     "crack35": "https://opengameart.org/content/35-wooden-crackshitsdestructions",
     "zombies": "https://opengameart.org/content/zombies-sound-pack",
+    "electricity": "https://opengameart.org/content/electricity-game-sound-pack",
 }
 KENNEY_IMPACT = "https://kenney.nl/assets/impact-sounds"
 KENNEY_UI = "https://kenney.nl/assets/ui-audio"
@@ -104,8 +105,11 @@ GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
   loop   (s) a seamless loop that long, in the middle of the file (js/sfxlist.js says where)
   sf     made on the SoundFont (soundfont.py) instead of from a file
   kbps   the MP3's bitrate (default 40)
+  pre    an ffmpeg filter first (a field recording cleaned: its wind and water taken down)
   fin    a longer fade-in (s; default 5 ms), to ease a sharp attack
-Files: "oga:<folder>/<file>" (SOURCES/opengameart.org), "kn:<path>" (KENNEY), "sf:<maker>"."""
+Files: "oga:<folder>/<file>" (SOURCES/opengameart.org), "gh:" (SOURCES/github.com: CC0 files found in open-source games'
+repositories, their credits in its sources.csv), "wm:" (SOURCES/commons.wikimedia.org), "kn:<path>" (KENNEY),
+"sf:<maker>"."""
 SOUNDS = {
     # ---- the lobby countdown (the owner's take B) and Dead Ducks Arcade's new round ----
     "countTick": dict(
@@ -737,6 +741,83 @@ SOUNDS = {
         kbps=32,
         credit=("Kenney, Casino Audio (chipLay)", KENNEY_CASINO),
     ),
+    # ---- batch 4 (the owner: "look harder for those sounds or get creative"): the cats, the TV, the power box, quacks ----
+    # a cat's meow, five takes: three of one kitten, a small mew, a grown cat
+    "meow": dict(
+        takes=[
+            [("gh:cat-meow/kitten-meow-1.flac", 0.04, 0.6, 0, 1)],
+            [("gh:cat-meow/kitten-meow-2.flac", 0, 0.6, 0, 1)],
+            [("gh:cat-meow/kitten-meow-3.flac", 0, 0.6, 0, 1)],
+            [("gh:cat-meow/kitten-mew-1.flac", 0.03, 0.9, 0, 1)],
+            [("gh:cat-meow/mobs_mc_cat_idle.2.ogg", 0.17, 1.65, 0, 1)],
+        ],
+        credit=(
+            "videog (freesound 149191), Jordan Irwin (AntumDeluge), SelsRoyalNavy (freesound 427081): all CC0, "
+            "as credited in the Stendhal and VoxeLibre games",
+            "https://freesound.org/people/videog/sounds/149191/",
+        ),
+    ),
+    # a cat purring, a seamless loop (a cat in a lap: characters.js)
+    "purr": dict(
+        layers=[("gh:cat-purr/cat-purr-1.flac", 0, 4.29, 0, 1)],
+        loop=3.0,
+        kbps=32,
+        credit=(
+            "Belhene, cat purr (freesound 157837)",
+            "https://freesound.org/people/Belhene/sounds/157837/",
+        ),
+    ),
+    # a cat's hiss: a hiss pitched up, small and sharp
+    "hiss": dict(
+        layers=[("gh:cat-hiss/vampirette_hiss-01.flac", 0.07, 0.9, 0, 1)],
+        rate=1.3,
+        pre="highpass=f=900:poles=2",
+        credit=(
+            "Zabuhailo, hiss (freesound 146960)",
+            "https://freesound.org/s/146960/",
+        ),
+    ),
+    # the TV with no channel: a steady hiss, the same from start to end (the owner, Nov 16: "more constant and make
+    # sure it is quiet"): two of rubberduck's even machine-hiss loops played end to end, darkened, a seamless loop
+    "static": dict(
+        layers=[
+            ("gh:tv-static/machine_04.opus*6", 0, 3.7, 0, 1),
+            ("gh:tv-static/machine_01.opus*3", 0, 3.6, 0, 0.4),
+        ],
+        lp=5000,
+        loop=1.2,
+        room=False,
+        kbps=32,
+        credit=(
+            "rubberduck (OpenGameArt), machine loops",
+            "https://opengameart.org/users/rubberduck",
+        ),
+    ),
+    # the power box's transformer: a 100 Hz mains hum, a seamless loop
+    "hum": dict(
+        layers=[("gh:power-hum/machine_02.opus*6", 0, 3.7, 0, 1)],
+        lp=1500,
+        loop=1.2,
+        room=False,
+        kbps=32,
+        credit=(
+            "rubberduck (OpenGameArt), machine loop",
+            "https://opengameart.org/users/rubberduck",
+        ),
+    ),
+    # a duck's quack, four takes: real ducks (a U.S. Fish and Wildlife Service field recording, public domain), the
+    # splashing and wind under them taken down
+    "quack": dict(
+        takes=[
+            [("wm:duck-quacks/Ducks_landing_in_water.ogg", a, n, 0, 1)]
+            for a, n in ((1.78, 0.3), (3.12, 0.22), (6.07, 0.24), (9.39, 0.24))
+        ],
+        pre="highpass=f=280:poles=2,afftdn=nf=-35,lowpass=f=4500:poles=2",
+        credit=(
+            "U.S. Fish and Wildlife Service, Ducks landing in water (public domain)",
+            "https://commons.wikimedia.org/wiki/File:Ducks_landing_in_water.ogg",
+        ),
+    ),
     # ---- batch 3: Duck Cabin ----
     # a lamp's switch, on and off
     "lampOn": one(
@@ -826,9 +907,17 @@ SOUNDS = {
 
 
 def load(path, srcs, kenney):
-    """a file as mono float32 at SR"""
+    """a file as mono float32 at SR; "file*N": a loop recording played N times over, end to end"""
+    times = 1
+    if "*" in path:
+        path, times = path.rsplit("*", 1)
+        times = int(times)
     if path.startswith("oga:"):
         path = os.path.join(srcs, OGA, path[4:])
+    elif path.startswith("gh:"):
+        path = os.path.join(srcs, "github.com", path[3:])
+    elif path.startswith("wm:"):
+        path = os.path.join(srcs, "commons.wikimedia.org", path[3:])
     elif path.startswith("kn:"):
         path = os.path.join(kenney, path[3:])
     raw = subprocess.run(
@@ -849,7 +938,7 @@ def load(path, srcs, kenney):
         capture_output=True,
         check=True,
     ).stdout
-    return np.frombuffer(raw, np.float32).astype(np.float64)
+    return np.tile(np.frombuffer(raw, np.float32).astype(np.float64), times)
 
 
 def fades(x, sr, fin=0.005, fout=0.02):
@@ -948,6 +1037,7 @@ def make(name, d, srcs, kenney, sf2):
             else []
         )
         af += [f"lowpass=f={d['lp']}:poles=2"] if d.get("lp") else []
+        af += [d["pre"]] if d.get("pre") else []
         af += (
             ["acompressor=threshold=0.05:ratio=8:attack=8:release=900:makeup=6"]
             if d.get("squash")

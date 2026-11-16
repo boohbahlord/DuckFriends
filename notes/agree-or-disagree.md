@@ -4693,6 +4693,19 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
   sweep 1 s, flash 150 ms, fade 650 ms, smoke 6.2 s; board grey 7 s then 3 s back; plain grey fade with Heavy
   effects off). Miles: nuke roar + flashbang ring (#297). Noah: prebuilt explosion-death looks (beak/eyes off, max
   chunks) to call from nukeTick's screen side, behind the Gore setting.
+## Request (owner, 2026-11-16 15:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVwna3n2QVHgxXuG7GPaYpX), the pixel part, word for word
+> some things werent pixelated
+
+(With a screenshot of the Specials page and a hover tip. The rest of that message, the chain gun and grenades, went to
+Solomon.)
+
+- Done (Noah): the icons that stayed smooth were emoji (the ducklings, the coffee, the kangaroo, the cloud…), which are
+  words to the browser, so the pixel look never touched them. js/pxtext.js now shows every emoji on the page (Specials,
+  the hotbar, Updates, chat, names) as pixels on the one grid, through the palette; the emoji stays in the text unseen.
+  The hover tips were the pixel font drawn at a size between screen pixels, so it came out smooth: a tip's words are now
+  drawn on whole screen pixels (each of the font's pixels one screen pixel, or more on sharp screens), still at reading
+  size (the owner's "128" for words). A card's pattern or picture (player cards, the Card page's swatches) goes through
+  the grid filter too. Swept Customize (every page), Updates, the lobby, Game Settings and a game: nothing else missed.
 
 ## Request (owner, 2026-11-16 16:25Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt34gKjRCDHvNKZYXnC2PEaG), word for word
 > double barrel is something we will do, and it does max damage with a slug round every time, and a crit has it's slug round pass through zombies in a way the sniper does, killing every zombie it passes through, and it gets to shells per shot for the double barrell before a two second reload, with one second being one shell and two seconds being two shells. There are 96 shells of ammo for the double barrel and it sends zombies backwards a lot after killing them, like the grenade does, and it does a lot of gore by blowing chunks through the ducks. crit only blows the head off but it makes it more bloody and it sprays blood and chunks from the head more then other crits. The double barrel is obviously awesome.
@@ -4707,3 +4720,66 @@ Decided: a number key picks that weapon and the same key puts it away (jetpack a
 
 - Adam gave the three guns to Solomon the 2nd as PR F (placeholder art; Noah draws them, the PR ships with his art).
   The last two questions are Adam's to answer.
+- Split (Adam): Solomon = PR F rules for the double barrel, flamethrower, burst rifle (AUG); Noah = their art after
+  gore + melee art. Answered: more gun ideas (Quack Zapper, Rubber Duck Launcher, Harpoon Gun, Bubble Blaster, Nail
+  Gun, Leaf Blower, Freeze Ray, Bread Lobber); items to remove suggested: Chair, Long jump, Fireball. Waiting on the
+  owner's picks.
+- Version 34: Noah's pixel sweep #306 (emoji, hover tips, card patterns), from the owner's 15:40Z "some things werent
+  pixelated".
+
+## Request (2026-11-16 16:34Z): Mad God Justin's HP, and only my own laser sight
+> qaudruple mad god justin's health and then give it 50% more of that orginal health for every player in the game for now on, and then test a 100% health per player, and tell me which is harder, because he is supposed to be really difficult
+>
+> ALSO, you do not see other player's laser sights or Justin's, only your own
+
+- Adam: "his original health" read as his old HP for one duck (40). Now 4 x 40 = 160, plus 20 (50% of 40) for every duck
+  in the fight (mgjrules.js MGJ_HP, hpOf). 100% per player would be 160 + 40 a duck. Laser sights: game.js draws only
+  R.me's, in Dead Ducks Arcade and Mad God Justin.
+
+## Request (2026-11-16 16:36Z): guns reload against Justin
+> guns should have to reload when fighting justin as well
+
+- Adam: the sniper, AK and LMG already reloaded there; the shotgun (6 shells, 2.6 s), the grenade launcher (3, 4 s)
+  and the chain gun (a belt of 100, 4 s) now do too (mgjrules.js MGJ_MAG_MORE). The pistol still never reloads (the
+  owner's 15:12Z rule today).
+- Done (Noah), the gore part of the owner's 15:55Z request and the explosion looks for the 16:13Z Nuke: blood is two
+  pixels across (some three) and there is more of it, pooling longer where it lands; chunks of the duck itself fly out
+  in its own color with blood on the torn side (fx.js flesh, from the hit duck's or zombie's color); a hit through
+  clothes tears them (duck.js gone.rips: the body shows through, a frayed dark edge); guns and blunt hits knock off a hat
+  or a face item that can come off (wounds.js knockable: not hair, horns, halos, antennas, the floating eye, full head
+  covers such as the motorcycle or armored helmet, the ski mask, the bag, the box, the pumpkin head, the gas mask, nor
+  clown paint), which flies off as pixels, turning over, and comes back on after 10 s (half see-through its last 1.5 s);
+  a bullet can shoot the beak off or blow the eye out (a bloody socket, the eye flies), and blades and blunt hits now
+  and then cut or knock the beak off or the eye out. Wound codes: e eye, h hat, m face item (spot 1: coming back). For
+  the Nuke: wounds.js explodedLook(seed) gives one of five torn-apart, burnt looks (headless, or beak and eye gone, or
+  more chunks), pwExploded(s, id, seed, now) puts one on a duck. Gore off (s.options.noGore) hides every wound but a
+  knocked-off hat or face item, and every flying bit.
+
+
+
+## Request (2026-11-16 16:38Z): Justin's thrown things take bullets, and his spawn
+> when justin throws a chair or controllers, they now take bullets
+>
+> When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in
+
+- Adam: given to Jackal (one PR).
+
+## Request (2026-11-16 16:40Z): Mad God Justin and the vote
+> in mad god justin it doesnt return to the vote screen after three games and i dont see a three game button for voting back to the vote selection after a game alongside the return to lobby or play again button
+
+- Adam: each Justin fight now counts as a game for Vote return (rules.js advance: gameOver after Try again), and the
+  stats screen shows "Vote: new game now" in Mad God Justin too (game.js newGameHTML no longer skips it). Version 36,
+  with Noah's gore #309 and the Nuke's exploded looks (l4ddrules.js nukeTick uses wounds.js explodedLook).
+
+## Nov 16, 16:38Z: Mad God Justin, bullets hit thrown things, 3 s spawn
+Owner: "when justin throws a chair or controllers, they now take bullets"
+Owner: "When players spawn in, there is three seconds until justin spawns in, and they can see his avatar fading in while glowing a red glow before he is spawned in"
+Decided (picked by Jackal): any gun's bullet that crosses his thrown chair or a controller hits it and is gone, with a hitmarker; the chair breaks after 6 hits, a controller after 2 (a sniper's bullet counts 2). The fight (also Try again) starts with Justin not there for 3 s: his avatar fades in with a red glow (css drop-shadow), he can't attack or be hit until it ends, and his attack timers start after it.
+
+
+
+## Request (2026-11-16 16:47Z): Justin's thrown things
+> yeah the projectiles block the bullets and cannot be broken
+
+- Adam: Jackal's #312 broke the chair after 6 hits and a controller after 2; changed so they block bullets and never
+  break (mgjrules.js shotThrown). Shipped in Version 37 with Miles Jr.'s #311 (owner's go 16:47Z) and Noah's gun art #313.

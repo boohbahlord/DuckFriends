@@ -58,7 +58,7 @@ import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
-import { woundCode, pwHit } from "./wounds.js";
+import { woundCode, pwHit, explodedLook } from "./wounds.js";
 import {
   BOMB,
   bombRoll,
@@ -1277,8 +1277,7 @@ function nukeTick(s, zs, now, ids) {
       hp += z.hp;
       z.hp = 0;
       die(z, T);
-      mark(s, z, "f0"); // (every one burnt)
-      mark(s, z, "g0"); // (and blown apart: every chunk, cut and big hole, l4ddart.js)
+      s.hang.zw = { ...(s.hang.zw || {}), [z.i]: explodedLook(z.i + N.at) }; // (every one burnt and blown apart, in one of the few looks made beforehand: some headless, some with the beak and an eye gone; wounds.js)
       killed.push(z.i);
       if (Math.random() < NUKE_CRIT) crits++;
     }

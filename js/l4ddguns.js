@@ -121,29 +121,43 @@ ${box(13.2, 3.8, 18, 6.4, 1.8, "#f4f8ff", 1.1)}<rect x="17.6" y="5" width="13" h
 <path d="M25.4 3.8V5.4M28 3.8V5.4M30 3.8V5" stroke="${INK}" stroke-width=".6"/>${shine("M15 4.9H30", 0.6, 0.7)}
 ${box(31, 5.4, 3, 3.2, 0.6, "#c9a24a", 0.9)}<path d="M34 7H42.6" stroke="${INK}" stroke-width="1.8" stroke-linecap="round"/><path d="M34 7H42.6" stroke="${STEEL}" stroke-width=".8" stroke-linecap="round"/><circle cx="43.2" cy="8.4" r=".9" fill="#ff3d6e"/></svg>`;
 
-/* the owner's three new guns (Nov 16 16:25Z), placeholders until Noah draws them (the PR ships with his art). The
-   double barrel: a wooden stock and forend, the dark action, two steel barrels one over the other */
-const DBARREL = `<svg viewBox="0 0 70 20">${part("M2.4 6.6L18 8.4V13.2L5.4 16.6Q1.4 17.6 1.4 14.2V8Q1.4 6.5 2.4 6.6Z", WOOD, 1.15)}<path d="M1.6 8.2V14.6" stroke="#2b1a10" stroke-width="2.2"/>${shine("M4.4 8.3L16.6 9.6", 0.3)}
-${box(17.4, 6.4, 9, 7.4, 1.6, M1, 1.15)}<path d="M21 13.6Q20.8 16.8 23.4 16.8H24.6" fill="none" stroke="${INK}" stroke-width="1.1"/>
-${box(26, 5.2, 42, 3.4, 1.2, STEEL, 1)}${box(26, 8.6, 42, 3.4, 1.2, STEEL_D, 1)}${shine("M28 6.1H66", 0.45, 0.6)}
-${box(29, 11.4, 14, 3.6, 1.4, WOOD, 1)}<path d="M31 13.2H41" stroke="${GRAIN}" stroke-width=".6" opacity=".7"/><circle cx="66.6" cy="4.6" r=".9" fill="${BEAD}"/></svg>`;
-/* the flamethrower: a red fuel tank slung under a black wand, the grip and its trigger, the nozzle with a little blue
-   pilot flame at its end */
-const FLAMER = `<svg viewBox="0 0 72 30">${box(10, 15, 30, 10, 5, "#c43a2e", 1.2)}${shine("M14 17.2H36", 0.35, 0.8)}<path d="M18 15V25M32 15V25" stroke="${INK}" stroke-width=".8" opacity=".5"/>
-${box(4, 8.6, 58, 5.4, 2, POLY, 1.15)}${shine("M6 9.8H58", 0.25)}${part("M12 13.6H17L15.6 21.4Q15.3 22.4 14.2 22.4H12.4Q11.2 22.4 11.4 21.2Z", POLY, 1.05)}
-${part("M60 7.4H66L68 9.4V13.2L66 15.2H60Z", M2, 1.05)}<path d="M40 14V16.6Q40 18 38.6 18" fill="none" stroke="${INK}" stroke-width="1.2"/>
-<path d="M68.4 9.6Q71.8 11.3 68.4 13" fill="#4ab0ff" stroke="#1a5a9a" stroke-width=".6"/></svg>`;
-/* the burst rifle, an AUG: a bullpup in olive green, the magazine behind the grip, a scope's hump over it, a short
-   barrel past the front grip */
-const BURST = `<svg viewBox="0 0 66 26">${part("M2.4 9L30 7.4H44L46 15.4H6Q2 15.4 1.6 12.4Z", OLIVE, 1.15)}${shine("M5 9.8L42 8.6", 0.3)}
-${part("M10.6 15.2H16.4L17.8 23Q17.9 24.4 16.4 24.4H12.6Q11.2 24.4 11.2 23Z", M0, 1.05)}${part("M29 15.2H34.4L33 22.4Q32.7 23.6 31.4 23.6H29.4Q28 23.6 28.2 22.2Z", OLIVE_D, 1.05)}
-${part("M24 3.4H40Q41.4 3.4 41.4 4.8V7.6H22.6V4.8Q22.6 3.4 24 3.4Z", OLIVE_D, 1)}<ellipse cx="40.6" cy="5.5" rx=".7" ry="1.4" fill="#7fd0ff"/>
-${box(44, 9, 18, 2.8, 1, M2, 1)}${part("M40 15.4H44.6L43.6 21.6Q43.3 22.8 42 22.8H41Q39.8 22.8 40 21.6Z", OLIVE_D, 1)}${box(61.2, 8.4, 3.6, 4, 0.8, M1, 0.9)}</svg>`;
-
 /* Safe Keeping: a halo, a gold ring seen a little from above, glowing a heavenly light blue (the owner's, Nov 16) */
 const HALO = `<svg viewBox="0 0 30 30"><ellipse cx="15" cy="15" rx="12.5" ry="6.4" fill="none" stroke="#bfe9ff" stroke-width="5.4" opacity=".45"/>
 <ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="${INK}" stroke-width="4.4"/><ellipse cx="15" cy="15" rx="11" ry="5.2" fill="none" stroke="#ffd23f" stroke-width="2.6"/>
 <path d="M6.6 13.2Q10 10.6 15 10.4" fill="none" stroke="#fff6c0" stroke-width="1.2" stroke-linecap="round"/><path d="M21 19.2Q23.4 18.4 24.6 17" fill="none" stroke="#c98a12" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+
+/* the double barrel (the owner asked for it, Nov 16): a break-action shotgun. A wooden stock with a dip at the wrist, the silver action with its two
+   hammers, the two barrels side by side (one over the other, seen from the side), a wooden forend under them, a brass
+   bead at the muzzle */
+const DBARREL = `<svg viewBox="0 0 76 24">${part("M2.4 8L20.4 9.4V14L12.4 15Q8.6 15.4 6.8 18.4L4.4 19Q1.4 19.4 1.4 16V9.4Q1.4 7.9 2.4 8Z", WOOD, 1.15)}<path d="M1.6 9.6V16.6" stroke="#2b1a10" stroke-width="2.2"/><path d="M5.4 12.6L17.8 11.6" stroke="${GRAIN}" stroke-width=".7" opacity=".6"/>${shine("M4.8 9.8L18.6 10.8", 0.3)}
+<path d="M21.6 13.6Q21.2 17.4 24.2 17.4Q27 17.4 26.8 13.6" fill="none" stroke="${INK}" stroke-width="1.1"/><path d="M23.8 13.4L24.6 16.2" stroke="${INK}" stroke-width="1.1" stroke-linecap="round"/>
+${part("M19.4 8.2H31.6Q32.8 8.2 32.8 9.6V13.8H22Q19.4 13.8 19.4 11.4Z", STEEL, 1.15)}${shine("M21 9.4H31", 0.55, 0.7)}<path d="M23 11.6Q26 10.4 29.6 11.6" stroke="${INK}" stroke-width=".6" opacity=".4" fill="none"/>
+${part("M22.6 8.6L20.8 5.2Q20.4 4.2 21.4 4.2L23.6 5.6L24.6 8.4Z", STEEL_D, 0.9)}${part("M26.4 8.6L24.8 5.2Q24.4 4.2 25.4 4.2L27.6 5.6L28.4 8.4Z", STEEL_D, 0.9)}
+${box(32.4, 7, 41.4, 3.6, 1.4, M1, 1.05)}${box(32.4, 10.4, 41.4, 3.6, 1.4, M2, 1.05)}<path d="M33 10.6H73.4" stroke="#0e0e14" stroke-width=".9"/>${shine("M34.4 8.6H72", 0.35, 0.6)}<path d="M73.8 7.8V13.6" stroke="#0e0e14" stroke-width="1"/>
+${part("M33 13.4H49.4Q50.6 13.4 50.2 14.8L49.6 16.4Q49.2 17.2 48 17.2H35Q33.4 17.2 33.2 15.8Z", "#a0612f", 1.05)}<path d="M36 15.2H47" stroke="${GRAIN}" stroke-width=".7" opacity=".6"/>
+<circle cx="72.4" cy="6.8" r="1.1" fill="${BRASS}" stroke="${INK}" stroke-width=".6"/></svg>`;
+
+/* the flamethrower (Nov 16): a fat red fuel tank under the gun with its gauge, a hose from the tank back up into the body, the
+   grip and a front grip, a long nozzle with a cooling shroud of holes, and the pilot light burning blue at its tip */
+const FLAMER = `<svg viewBox="0 0 72 32">${part("M2.6 8.4L14.6 9.8V14L6 17.4Q1.6 18.6 1.6 15.2V9.8Q1.6 8.3 2.6 8.4Z", POLY, 1.15)}${shine("M4.6 10L12.6 10.8", 0.25)}
+${part("M15.6 14H20.2L18.8 22Q18.4 23.2 17 23L15 22.6Q13.8 22.2 14.2 21Z", POLY, 1.1)}<path d="M20 14.6Q19.8 17.8 22 17.8" fill="none" stroke="${INK}" stroke-width="1.1"/>
+<path d="M30 25.4Q22 27.8 22.6 19.6" fill="none" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/><path d="M30 25.4Q22 27.8 22.6 19.6" fill="none" stroke="#3a3d48" stroke-width="1.8" stroke-linecap="round"/>
+${box(27, 18.8, 22, 11.4, 5.4, "#c62f2f", 1.25)}${shine("M30.4 20.8H45.6", 0.4, 1.1)}<path d="M31 27.4H45" stroke="#7a1414" stroke-width="1.2" opacity=".6" stroke-linecap="round"/><circle cx="41.4" cy="24.6" r="2.4" fill="#f4f8ff" stroke="${INK}" stroke-width=".8"/><path d="M41.4 24.6L42.8 23.4" stroke="${INK}" stroke-width=".6"/>
+${box(13.6, 7.6, 26, 7.6, 1.6, M2, 1.15)}${shine("M15.4 9H38", 0.28)}<path d="M17 12.2H30" stroke="${INK}" stroke-width=".8" opacity=".4"/>
+${part("M44 14.4H48.4L47.4 21Q47.2 22 46.2 22H45Q44 22 44 21Z", POLY, 1)}
+${box(39, 8.6, 21, 5.6, 1.4, M1, 1.1)}${[42.6, 46.4, 50.2, 54, 57.8].map((x) => `<circle cx="${x}" cy="11.4" r="1" fill="#14161c"/>`).join("")}${box(59.4, 9.4, 9.6, 4, 1, STEEL_D, 1)}${box(68.6, 8.6, 2.6, 5.6, 0.8, M0, 0.9)}
+<path d="M70 7.6Q72.2 9.6 70.6 11.4Q69.4 9.8 70 7.6Z" fill="#6fb6ff" stroke="#2a5aa8" stroke-width=".5"/></svg>`;
+
+/* the burst rifle (Nov 16, I wanted it based on the AUG): a bullpup (its magazine behind the grip), one smooth olive body that rounds off at the butt, a
+   big round scope sitting on it, the one long trigger guard that wraps the whole hand, a folding front grip, the
+   clear magazine showing its brass rounds, a short barrel with a flash hider */
+const BURST = `<svg viewBox="0 0 66 30">${part("M3.6 11.2Q6 9.8 12 10H31.4Q35.4 10 37.4 12.8L40.4 18.6H6Q1.6 18.6 1.6 15V13.6Q1.6 12 3.6 11.2Z", OLIVE, 1.2)}${shine("M5 12H31", 0.3, 0.9)}<path d="M3.4 16.8H37.6" stroke="${OLIVE_D}" stroke-width="1.2" opacity=".8"/>
+${part("M9.8 18.4H16L15.4 26Q15.2 27.2 14 27.2H11.6Q10.4 27.2 10.4 26Z", "#cfd8e6", 1.05)}<path d="M11 20H15" stroke="${INK}" stroke-width=".5" opacity=".5"/>${[21.4, 23.2, 25].map((y) => `<rect x="11.4" y="${y - 0.6}" width="3.4" height="1.2" rx=".4" fill="${BRASS}"/>`).join("")}
+${part("M22.8 18.4H27.6L26.2 25.8Q25.8 27 24.6 26.8L22.8 26.4Q21.6 26 22 24.8Z", POLY, 1.1)}
+<path d="M19.6 18.4Q18.2 28.6 26 28.4H33.6Q37.8 28.4 38.4 18.6" fill="none" stroke="${INK}" stroke-width="3"/><path d="M19.6 18.4Q18.2 28.6 26 28.4H33.6Q37.8 28.4 38.4 18.6" fill="none" stroke="${OLIVE}" stroke-width="1.4"/>
+${part("M40.2 14.6H44L43.2 22.6Q43 23.6 42 23.6H41.4Q40.4 23.6 40.4 22.6Z", POLY, 1)}
+${box(37, 11.4, 21, 3.6, 1, M2, 1)}${box(57.4, 10.6, 6.8, 5.2, 1, M0, 1)}<path d="M59.4 11.4V15M61.8 11.4V15" stroke="#0e0e14" stroke-width=".8"/>
+${part("M17.4 10.2L19.4 7.6H30.6L32.6 10.2Z", OLIVE_D, 1)}${box(14.4, 2.2, 21, 6, 3, POLY, 1.15)}${part("M35 3.2L38.4 2.2V9.2L35 8.2Z", M0, 0.9)}<ellipse cx="38" cy="5.7" rx=".9" ry="2.8" fill="#7fd0ff" opacity=".9"/><path d="M14.8 5.2H13.2" stroke="${INK}" stroke-width="2.4"/>${shine("M17 3.6H33", 0.4, 0.8)}</svg>`;
 
 /* a tile's picture: the weapon turned 45°, its grip down at the left, filling a square (as specials.js' iconOf); k
    zooms in (under 1: its far corners go past the square) or out. A light edge (css: .l4-gun) keeps the dark metal
@@ -169,9 +183,9 @@ export const GUNS = {
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
   glauncher: { held: LAUNCHER, icon: iconOf(LAUNCHER, 0.8), w: 0.9 },
   lmg: { held: LMG, icon: iconOf(LMG, 0.8), w: 1.2 },
-  dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.1 },
-  flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.15 },
-  burst: { held: BURST, icon: iconOf(BURST, 0.78), w: 0.95 },
+  dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.15 },
+  flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.1 },
+  burst: { held: BURST, icon: iconOf(BURST, 0.8), w: 0.85 },
   safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,

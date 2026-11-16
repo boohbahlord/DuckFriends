@@ -87,6 +87,12 @@ instruments (its license: LICENSES.md).
 | flashOn | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | flashOff | Kenney, Interface Sounds (switch) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | tileIn | Kenney, Casino Audio (chipLay) — https://kenney.nl/assets/casino-audio | CC0 1.0 |
+| meow | videog (freesound 149191), Jordan Irwin (AntumDeluge), SelsRoyalNavy (freesound 427081): all CC0, as credited in the Stendhal and VoxeLibre games — https://freesound.org/people/videog/sounds/149191/ | CC0 1.0 |
+| purr | Belhene, cat purr (freesound 157837) — https://freesound.org/people/Belhene/sounds/157837/ | CC0 1.0 |
+| hiss | Zabuhailo, hiss (freesound 146960) — https://freesound.org/s/146960/ | CC0 1.0 |
+| static | rubberduck (OpenGameArt), machine loops — https://opengameart.org/users/rubberduck | CC0 1.0 |
+| hum | rubberduck (OpenGameArt), machine loop — https://opengameart.org/users/rubberduck | CC0 1.0 |
+| quack | U.S. Fish and Wildlife Service, Ducks landing in water (public domain) — https://commons.wikimedia.org/wiki/File:Ducks_landing_in_water.ogg | CC0 1.0 |
 | lampOn | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
 | lampOff | Kenney, UI Audio (switch) — https://kenney.nl/assets/ui-audio | CC0 1.0 |
 | lever | Kenney, Impact Sounds (impactMetal_heavy) and RPG Audio (metalLatch) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |

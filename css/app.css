@@ -13744,6 +13744,24 @@ html.moving .eye-zap {
     transform 0.12s linear,
     opacity 0.5s ease-in;
 } /* (he fades out; he's back at once) */
+/* he's not there for his first 3 s: his avatar fades in with a red glow, then he's there (the start is set in --sp) */
+.gduck.mgj-spawn {
+  animation: mgj-spawn 3s linear var(--sp, 0s) both;
+}
+@keyframes mgj-spawn {
+  0% {
+    opacity: 0;
+    filter: drop-shadow(0 0 0 #ff2a2a);
+  }
+  70% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 10px #ff2a2a) drop-shadow(0 0 22px #ff2a2a);
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 0 #ff2a2a);
+  }
+}
 /* his Xbox's desk: it comes in, and fades away a moment after he's back; turned off, the screen and the light go dark */
 .mgj-desk {
   position: absolute;
@@ -13853,13 +13871,13 @@ html.moving .eye-zap {
   width: calc(var(--s) * 1.2);
 }
 .held[data-w="dbarrel"] i {
-  width: calc(var(--s) * 1.1);
-}
-.held[data-w="flamer"] i {
   width: calc(var(--s) * 1.15);
 }
+.held[data-w="flamer"] i {
+  width: calc(var(--s) * 1.1);
+}
 .held[data-w="burst"] i {
-  width: calc(var(--s) * 0.95);
+  width: calc(var(--s) * 0.85);
 }
 .held[data-w="adrenaline"] i {
   width: calc(var(--s) * 0.44);
@@ -17178,6 +17196,24 @@ html.pixel .spx-flames {
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
+/* a card's pattern or picture (a player's card, the Card page's swatches) on the grid too: its background drawn again
+   under it, through the same filter, so the duck and the name over it stay as they are */
+html.pixel .pcard[style*="url("] {
+  isolation: isolate;
+}
+html.pixel .pcard[style*="url("]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: inherit;
+  filter: url(#px-f);
+  pointer-events: none;
+}
+html.pixel .pat-pic[style*="url("] {
+  filter: url(#px-f);
+}
 .gduck-body img.px {
   display: block;
   width: 100%;

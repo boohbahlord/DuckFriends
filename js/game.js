@@ -302,6 +302,8 @@ import {
   MGJ_POD,
   mgjFrozen,
   mgjGone,
+  mgjSpawning,
+  SPAWN_MS,
   mgjStats,
   GOOD_ID,
   PICK_FADE,
@@ -339,7 +341,10 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf } from "./l4ddart.js";
-import { pwCodes } from "./wounds.js";
+import { pwCodes, goreFree } from "./wounds.js";
+import { hatLayers, HAT_TOP } from "./hats.js";
+import { faceLayer } from "./faces.js";
+import { beakSVG } from "./beaks.js";
 import {
   mgjBoardHTML,
   mgjHPHTML,
@@ -414,6 +419,8 @@ import {
   fxGroundFire,
   fxBlood,
   heavyOff,
+  fxKnock,
+  fxEye,
   MUZZLE,
 } from "./fx.js";
 import { FLAME as FLAMER, flameRate, band } from "./flamer.js";
@@ -1383,6 +1390,7 @@ function drawDucks(now = clockNow()) {
         jet,
         !!p.bomb,
         wc,
+        !!+s.options.noGore,
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
@@ -1405,7 +1413,7 @@ function drawDucks(now = clockNow()) {
         title: p.name,
         dead,
         ...(p.bomb ? { skin: BOMB_SKIN } : {}),
-        ...(wc ? woundLook(wc) : {}),
+        ...(wc ? woundLook(s.options.noGore ? goreFree(wc) : wc) : {}), // (Gore off: only a hat knocked off shows)
       });
       d._bodyEl.innerHTML =
         (jet ? jetHTML(look) : "") +
@@ -1562,7 +1570,13 @@ function drawDucks(now = clockNow()) {
         z + size * (isJustin(id) ? 0.5 * MGJ_SCALE : 0.42),
         id,
         size,
-      ); // (blood, by what hit it: fx.js)
+        "small",
+        look && look.color,
+      ); // (blood, by what hit it, with bits of the duck in its color: fx.js)
+    if (d._wc === undefined)
+      d._wc = wc; // (first seen: what it already lost doesn't fly off again)
+    else if (wc !== d._wc && !g)
+      knockedOff(d, wc, look, at, z, size, turned() ? 1 : d._face || 1); // (its hat, its beak or its eye flying off)
     const mine = id === R.me;
     const face =
       seatOf(s, id) >= 0
@@ -1730,7 +1744,14 @@ function drawDucks(now = clockNow()) {
       d._bw = bw;
       d.classList.toggle("dn-bw", bw);
     } // Duncelation: a dunce, in black and white (Valentine's Duck Date: Turned Down)
-    const gone = id === JUSTIN_ID && mgjGone(s, now);
+    const spawning = id === JUSTIN_ID && isMgj(s) && mgjSpawning(s, now);
+    if (d._spawn !== spawning) {
+      d._spawn = spawning;
+      d.classList.toggle("mgj-spawn", spawning);
+      if (spawning)
+        d.style.setProperty("--sp", `-${now - (s.mgj.spawn - SPAWN_MS)}ms`);
+    } // Mad God Justin: fading in with a red glow for his first 3 s
+    const gone = id === JUSTIN_ID && !spawning && mgjGone(s, now);
     if (d._gone !== gone) {
       d._gone = gone;
       d.classList.toggle("mgj-gone", gone);
@@ -2136,11 +2157,12 @@ function drawDucks(now = clockNow()) {
     kick(sh.by, gun, now);
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
   }
-  /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's */
+  /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
+     see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
   const lz = [];
   if (isL4dd(s))
     for (const [id, w] of arms) {
-      if (!MUZZLE[w]) continue;
+      if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
         e = hd && hd.parentNode === fxl && hd._end,
         end = e && laserEnd(id);
@@ -2150,7 +2172,7 @@ function drawDucks(now = clockNow()) {
      (my mouse) to the board's edge */
   if (isMgj(s) && s.phase === "boss")
     for (const [id, w] of arms) {
-      if (!MUZZLE[w]) continue;
+      if (id !== R.me || !MUZZLE[w]) continue;
       const hd = heldAll.get(id),
         e = hd && hd.parentNode === fxl && hd._end,
         A = hd && hd._aim;
@@ -3560,6 +3582,38 @@ function neckSpray(x, y) {
   fxSpurt(x, y + size * 0.5, size * 0.5, 14, 1500);
 }
 
+/* what a hit just knocked off duck d (wounds.js codes it didn't have a moment ago: a hat h, a face item m, the beak p,
+   the eye e), flying off its head the way it looks away from, as pixels (fx.js). The owner's, Nov 16 */
+function knockedOff(d, wc, look, at, z, size, face) {
+  const was = d._wc || "";
+  d._wc = wc;
+  if (!look || !wc) return;
+  const fresh = (k) =>
+      wc.includes(k + "0") && !was.includes(k + "0") && !was.includes(k + "1"),
+    u = size / 120,
+    x = (v) => at.left + (v - 60) * u * face,
+    h = (v) => z + (108 - v) * u,
+    away = -face,
+    svg = (inner) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-HAT_TOP} 120 ${120 + HAT_TOP}" width="120" height="${120 + HAT_TOP}">${face < 0 ? `<g transform="translate(120 0) scale(-1 1)">${inner}</g>` : inner}</svg>`;
+  if (fresh("h") && look.hat) {
+    const H = hatLayers(look.hat, look, false);
+    fxKnock(svg(H.back + H.front), size, x(72), at.top, h(20), away, 1);
+  }
+  if (fresh("m") && look.face)
+    fxKnock(
+      svg(faceLayer(look.face, look, false)),
+      size,
+      x(84),
+      at.top,
+      h(36),
+      away,
+      0.9,
+    );
+  if (fresh("p"))
+    fxKnock(svg(beakSVG(look)), size, x(100), at.top, h(42), face, 1.1, true);
+  if (fresh("e")) fxEye(x(83), at.top, h(34), face);
+}
 /* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
 const WLOOK = new Map();
 function woundLook(wc) {
@@ -5424,7 +5478,7 @@ function actHTML(s) {
    yes), and a line that says when the votes come back on their own (Vote return) */
 function newGameHTML(s) {
   const due = votesDue(s);
-  if (!due.length || isMgj(s)) return "";
+  if (!due.length) return "";
   const nv = s.vote && s.vote.kind === "newgame",
     what = due.includes("mode") ? "game" : "map";
   return `<button type="button" class="btn ${nv ? "green" : "ghost"}" data-a="newvote">${nv ? `Vote yes: new ${what} now` : `Vote: new ${what} now`}</button>`;

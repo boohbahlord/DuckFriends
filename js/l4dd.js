@@ -73,12 +73,14 @@ import {
   ARMS,
   SAFE,
   safePrice,
+  zombieLook,
 } from "./l4ddrules.js";
+import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
-import { fxHitAt, heavyOff } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { hashText } from "./pxdom.js";
 import {
@@ -334,9 +336,10 @@ const BY_WOUND = {
 const newWound = (had = "", now = "") =>
   now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
-function wounds(o, l, i) {
-  if (o.hits === o.want) return;
-  o.hits = o.want;
+function wounds(o, l, i, noGore) {
+  const want = noGore ? goreFree(o.want) : o.want; // (Gore off: none of them shows)
+  if (o.hits === want) return;
+  o.hits = want;
   o.url = zombieURL(l, i, o.hits);
   o.uk = "";
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
@@ -380,7 +383,15 @@ function seeZombies(s, ctx, now) {
         null,
         64 * o.sk,
         BY_WOUND[newWound(o.want, (s.hang.zw || {})[z.i])],
-      ); // (its blood: by the shot that hit it, or the wound it got (a hammer's bruise), fx.js)
+        zombieLook(z.l).color,
+      ); // (its blood: by the shot that hit it, or the wound it got (a hammer's bruise), with bits of it in its color, fx.js)
+    if (
+      shown &&
+      o.sk &&
+      newWound(o.want, (s.hang.zw || {})[z.i]) === "e" &&
+      !(o.want || "").includes("e")
+    )
+      fxEye(o.sx, o.sy, o.bh * o.sk * 0.75, Math.random() < 0.5 ? -1 : 1); // (its eye blown out, flying)
     if (z.st === 3 && o.st !== 3) {
       o.el.classList.add("dead");
       if (((s.hang.l4nk || {}).ids || []).includes(z.i))
@@ -403,7 +414,7 @@ function seeZombies(s, ctx, now) {
     } // (set on fire by a fireball: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
     o.l = z.l;
-    if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
+    if (shown) wounds(o, z.l, z.i, s.options.noGore); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;

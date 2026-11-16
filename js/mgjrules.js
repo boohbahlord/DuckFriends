@@ -4,7 +4,7 @@ import { ARM_COOL } from "./armspeed.js";
    Nov 16), Jaime (3, from a pool everyone shares), the weapon it picked
    up (4) and the zebra cake (5, shared too); whatever it switches to stays out in its hand, but Jaime, and a picked-up
    weapon used up goes back to the one out before. Together they must bring Justin's HP to 0 (no time limit: the owner's,
-   Nov 3; every win counts toward the lightning eyes). His HP is 20 + 20 for each player when the fight starts, and one
+   Nov 3; every win counts toward the lightning eyes). His HP is hpOf (below) when the fight starts, and one
    stab takes 1. Each duck has 6 HP (the lobby's Player HP); after any hit nothing can hurt it for a second (it
    flickers), and a duck out of HP stays down until another holds E by it for 2.5 s (REVIVE) or the fight's end. He never goes after a duck that's down. A jump dodges everything but
    in its first and last fifth (rules.js dodges).
@@ -98,7 +98,12 @@ export const MGJ_POD = { x: 0.5, y: 0.72 }; // where his podium stands (low enou
 /* (owner 2026-11-03 22:21Z) he's slightly bigger than a duck here, and his hammer bigger, everywhere he swings it */
 export const MGJ_SCALE = 1.2; // Justin and his double against a duck, in Mad God Justin
 export const MGJ_HAMMER = 1.35; // Justin's hammer against a duck's, on top of his size
-export const hpOf = (n) => 20 + 20 * n; // (owner 2026-11-03 17:09Z: 12 more HP for every player, on top of the 8)
+/* his HP (the owner's, Nov 16: he must be really hard): four times his old HP for one duck (40), then half that old HP
+   again for every duck in the fight. BASE: his old HP for one duck; X: how many times it he starts with; PER: how much
+   of it each duck adds */
+export const MGJ_HP = { BASE: 40, X: 4, PER: 0.5 };
+export const hpOf = (n) =>
+  Math.round(MGJ_HP.BASE * MGJ_HP.X + MGJ_HP.BASE * MGJ_HP.PER * n);
 /* Player HP (in the lobby's Additional settings): on by default at 6; off, or 1, 5, 6, 10 or 15. A hit from Justin
    takes 1 HP and the duck stays up; the hit that takes its last HP knocks it down, and it stays down until a revive or
    the fight's end (won or lost); when every duck is out, Justin wins. After any hit nothing can hurt the duck for
@@ -317,9 +322,20 @@ export const pickAmmo = (k) =>
     : ARMS[k].mag
       ? 2 * ARMS[k].mag
       : Math.round(ARMS[k].all / 4); // (the chain gun all 300 of its rounds, as everywhere: the owner's, Nov 16)
-/* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out */
+/* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out. Every gun picked
+   up has to reload here (the owner's, Nov 16), so the ones with no magazine in Quacky Zombies get one: the shotgun 6
+   shells, the grenade launcher 3 (as in the other modes) and the chain gun a belt of 100 of its 300 (my guesses) */
+const MGJ_MAG_MORE = {
+  shotgun: [6, 2600],
+  glauncher: [3, 4000],
+  chaingun: [100, 4000],
+};
 export const mgjMag = (k) =>
-  MGJ_GUNS.includes(k) && ARMS[k].mag ? [ARMS[k].mag, ARMS[k].reload] : null;
+  !MGJ_GUNS.includes(k)
+    ? null
+    : ARMS[k].mag
+      ? [ARMS[k].mag, ARMS[k].reload]
+      : MGJ_MAG_MORE[k] || null;
 /* the shots left in the gun duck id picked up (0: none, or it holds something else) */
 export const ammoOf = (s, id) =>
   (s.mgj &&
@@ -381,10 +397,16 @@ const shuffle = (xs) => {
 export const mgjFrozen = (s) =>
   !!(s.mgj && (s.mgj.met || (s.mgj.xb && s.mgj.xb.off && !s.mgj.xb.done)));
 /* is he faded out (the meteor, or his Xbox turned off)? */
+/* the fight starts with him not there: for SPAWN_MS his avatar fades in with a red glow, and only then can he attack or
+   be hit (owner, Nov 16: three seconds) */
+export const SPAWN_MS = 3000;
+export const mgjSpawning = (s, now) =>
+  !!(s.mgj && s.mgj.spawn && now < s.mgj.spawn);
 export const mgjGone = (s, now) => {
   const m = s.mgj && s.mgj.met,
     x = s.mgj && s.mgj.xb;
   return (
+    mgjSpawning(s, now) ||
     (!!m && now - m.at >= MET.FADE * 0.5 && now - m.at < MET.BACK) ||
     (!!x && !!x.off && !x.done && now - x.off >= XB.FADE)
   );
@@ -406,6 +428,7 @@ export function mgjStart(s, now) {
     won: null,
     met: null,
     metDone: false,
+    spawn: now + SPAWN_MS,
     left: 0,
     shotgun: true, // (the owner: he has the shotgun from the start now)
     over: 0,
@@ -457,16 +480,16 @@ export function mgjStart(s, now) {
     gods: (s.justin && s.justin.gods) || [],
     w: "lmg",
     mag: { n: 0, r: 0 },
-    fireAt: now + 2500 * PACE,
-    hamAt: now + 5000 * PACE,
-    ctlAt: now + rnd(9000, 13000) * PACE,
-    chairAt: now + rnd(18000, 26000) * PACE,
-    fbAt: now + rnd(5000, 8000) * PACE,
-    dashAt: now + rnd(6000, 9000) * PACE,
+    fireAt: now + SPAWN_MS + 2500 * PACE,
+    hamAt: now + SPAWN_MS + 5000 * PACE,
+    ctlAt: now + SPAWN_MS + rnd(9000, 13000) * PACE,
+    chairAt: now + SPAWN_MS + rnd(18000, 26000) * PACE,
+    fbAt: now + SPAWN_MS + rnd(5000, 8000) * PACE,
+    dashAt: now + SPAWN_MS + rnd(6000, 9000) * PACE,
     tpAt: 0,
     eatAt: now + rnd(25000, 40000),
     sgR: 0,
-    next: now + 1500,
+    next: now + SPAWN_MS + 1500,
     say: now + rnd(9000, 16000),
     ouch: 0,
   };
@@ -1425,7 +1448,31 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
         jaimeDies(s, id, now, log, fxOf(s, now), sh.k);
     return false;
   }
+  if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
+}
+/* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
+   they block bullets and never break (owner, Nov 16 16:47Z) */
+function shotThrown(s, sh, x0, y0, dx, dy, now) {
+  if (sh.k === "grenade" || sh.k === "lgren" || sh.fake) return false;
+  const ux = dx / RX,
+    uy = dy / RY,
+    len = ux * ux + uy * uy;
+  for (const th of s.shots || []) {
+    if (th.by !== JUSTIN_ID || th.dead || th.fake) continue;
+    if (th.k !== "chair" && th.k !== "controller") continue;
+    const q = {
+        x: th.x0 + (th.vx * (now - th.t)) / 1000,
+        y: th.y0 + (th.vy * (now - th.t)) / 1000,
+      },
+      px = (q.x - x0) / RX,
+      py = (q.y - y0) / RY,
+      k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    if (Math.hypot(px - k * ux, py - k * uy) >= (th.k === "chair" ? 1.6 : 1))
+      continue;
+    return true;
+  }
+  return false;
 }
 
 const shotDmg = (k) =>

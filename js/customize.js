@@ -58,6 +58,7 @@ import { GUARD_W, guardWeapon } from "./jaimebomb.js";
 import { jetHTML } from "./jetpack.js";
 import { ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import { GUNS_NEW, AUTO } from "./rules.js";
+import { pxWords } from "./pxtext.js";
 
 /* sends your look to the room you are in */
 export function shareLook() {
@@ -1374,6 +1375,7 @@ export function openCustomize(page = lastPage) {
             `<div class="tipbox" role="tooltip">${esc(t.dataset.tip)}</div>`,
           );
           document.body.append(box);
+          pxWords(box); // (its words on whole screen pixels: pxtext.js)
           box.style.left =
             Math.max(
               8,

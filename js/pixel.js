@@ -23,6 +23,7 @@ function setGrid() {
   grid = Math.max(1, duckPx / DUCK);
   document.documentElement.style.setProperty("--px", grid.toFixed(3) + "px");
   filterGrid();
+  dispatchEvent(new Event("pxgrid")); // (pictures made at the grid's size are made again: pxtext.js' emoji)
 }
 
 /* ---------- whole layers made into pixels as they're drawn (the maps: every map, with all its movement) ----------

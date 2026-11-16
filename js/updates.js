@@ -9,6 +9,63 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v37",
+    version: 37,
+    date: "Nov 16, 2026",
+    title: "Cats, real quacks, and Justin's entrance",
+    news: [
+      "For Hangout: the Duck Cabin cats meow, purr and hiss, the TV hisses quietly with static, and the power box hums.",
+      "The Sound special and the cloud duel quack with real ducks.",
+      "For Mad God Justin: Justin's thrown chair and controllers block bullets, and they can't be broken.",
+      "For Mad God Justin: Justin isn't there for the first 3 seconds of a fight: his avatar fades in with a red glow, and only then can he attack or be hit.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v36",
+    version: 36,
+    date: "Nov 16, 2026",
+    title: "Gore",
+    news: [
+      "Blood is bigger and messier: more of it, bigger pixels, and pools that stay a while.",
+      "Chunks of the duck itself fly out when it's hit, in its own color.",
+      "Shots tear holes in clothes where they go through.",
+      "Hits can knock off hats and face items. They fly off and come back on after 10 seconds. Helmets that cover the head, hair and face paint stay on.",
+      "Bullets can shoot a beak off or blow an eye out, and blades and blunt hits can too.",
+      "With Gore off, none of it shows except a knocked-off hat.",
+      "For Dead Ducks Arcade: zombies killed by the Nuke are torn apart in a few different ways, some headless, some missing a beak and an eye.",
+    ],
+    fixed: [
+      "For Mad God Justin: each fight counts as a game, so the vote for the next game comes back after your Vote return games (3 by default).",
+      "For Mad God Justin: the stats screen has the Vote: new game now button again, next to Try again and the lobby vote.",
+    ],
+  },
+  {
+    id: "v35",
+    version: 35,
+    date: "Nov 16, 2026",
+    title: "A much harder Justin",
+    news: [
+      "For Mad God Justin: Justin starts with 160 HP, plus 20 for every duck in the fight.",
+      "For Mad God Justin: every gun you pick up has to reload now, the shotgun, the grenade launcher and the chain gun too. The pistol still never reloads.",
+    ],
+    fixed: [
+      "You only see your own laser sight now, not other ducks' or Justin's.",
+    ],
+  },
+  {
+    id: "v34",
+    version: 34,
+    date: "Nov 16, 2026",
+    title: "Pixel emoji and tips",
+    news: [
+      "Every emoji is now pixel art too, like the Specials icons (ducklings, coffee, the jumps).",
+      "Hover tips are sharp pixel letters now.",
+      "Card patterns and card pictures are pixelated.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v33",
     version: 33,
     date: "Nov 16, 2026",

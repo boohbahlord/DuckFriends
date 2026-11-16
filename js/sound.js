@@ -133,6 +133,12 @@ export const VOL = {
   gulp: -12,
   whoosh: -16,
   swipe: -12,
+  meow: -14,
+  purr: -18,
+  hiss: -14,
+  static: -32, // (the TV with no channel, on a loop: a quiet, even hiss)
+  hum: -24, // (the power box's transformer, on a loop)
+  quack: -10, // (real ducks: the Sound special, a duel)
 };
 /* names some callers use for a sound that is another's (Justin's gunshot is the handgun's) */
 const ALIAS = { gunshot: "handgun" };
@@ -157,7 +163,7 @@ const GROUPS = {
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
-    ...["boom", "meteor", "tileIn"],
+    ...["boom", "meteor", "tileIn", "quack"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
   l4dd: [
@@ -176,6 +182,7 @@ const GROUPS = {
   cabin: [
     ...["lampOn", "lampOff", "lever", "fireOut", "candleOut", "relight"],
     ...["tvClick", "card", "chips", "bite", "gulp", "whoosh", "swipe"],
+    ...["meow", "purr", "hiss", "static", "hum"],
   ],
 };
 const LEAD = 0.03; // s: every sound is set this far ahead of the clock (set for "now", its fade-in is skipped: a pop)
