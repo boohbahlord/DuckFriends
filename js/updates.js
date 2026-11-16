@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v42",
+    version: 42,
+    date: "Nov 16, 2026",
+    title: "Trombone and fire",
+    news: [
+      "The Sad Trombone special plays its 'wah, wah, wah, waaah'.",
+      "Fire crackles: ducks on fire, and the fire special, now have a sound.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v41",
     version: 41,
     date: "Nov 16, 2026",
