@@ -14638,6 +14638,13 @@ html.low .l4z.dead.nuked {
   animation: none;
 } /* (Low graphics or Data saving: no fade (Low stops every animation, so the fade would end at once and the body never
      show); it lies there solid and l4dd.js LOW_DEAD takes it off my screen at 2 s, the Nuke's too) */
+html.still:not(.low) .l4z.dead {
+  animation-duration: 4s !important;
+}
+html.still:not(.low) .l4z.dead.nuked {
+  animation-duration: 15s !important;
+} /* (Animations off: "no movement" (html.still) makes every animation end at once, so a body vanished the moment it
+     died; its fade is not movement, so it keeps its own time: solid, then fading, as with Animations on) */
 .l4-boards {
   transform-origin: 0 0;
   transition: opacity 0.25s;
