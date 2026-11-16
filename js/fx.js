@@ -338,12 +338,14 @@ export function fxMuzzle(x, y, ang, gun) {
     c = Math.cos(ang),
     s = Math.sin(ang),
     gp = gridPx();
-  /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames (owner 2026-11-16: the
-     flash and the smoke were too small, so both are about twice as big) */
-  const reach = M.flash * gp * 1.8;
-  for (let k = 0; k < M.flash * 4; k++) {
+  /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames. Sized by the duck, not by
+     the pixel grid (owner 2026-11-16: the flash and the smoke were far too small): the chain gun's reaches about a duck's
+     length, a handgun's about half */
+  const reach = u * (0.25 + M.flash * 0.12),
+    big = M.flash > 3;
+  for (let k = 0; k < M.flash * 8; k++) {
     const d = rnd(0, reach),
-      side = rnd(-0.5, 0.5) * (d * 0.8 + gp * 2);
+      side = rnd(-0.5, 0.5) * (d * 0.9 + u * 0.12);
     add(
       FLASH,
       x + c * d - s * side,
@@ -352,25 +354,26 @@ export function fxMuzzle(x, y, ang, gun) {
       0,
       0,
       0,
-      rnd(60, 110),
+      rnd(70, 130),
       d < reach * 0.3 ? 8 : Math.random() < 0.6 ? 9 : 10,
-      d < reach * 0.45 ? (M.flash > 3 ? 3 : 2) : M.flash > 3 ? 2 : 1, // (bigger pixels in the middle)
+      d < reach * 0.4 ? (big ? 5 : 3) : d < reach * 0.75 ? (big ? 3 : 2) : 2, // (bigger pixels in the middle)
     );
   }
-  /* the smoke: slow puffs that drift on the way it fired, rise, spread and thin out */
-  for (let k = 0; k < M.smoke * 2 + 1; k++) {
-    const v = u * rnd(0.2, 0.6);
+  /* the smoke: puffs that drift on the way it fired, rise, spread and thin out */
+  for (let k = 0; k < M.smoke * 3 + 2; k++) {
+    const v = u * rnd(0.3, 0.9),
+      d = rnd(0, reach * 0.8);
     add(
       SMOKE,
-      x + c * gp * rnd(0, 4),
-      y + s * gp * rnd(0, 4),
+      x + c * d + rnd(-0.08, 0.08) * u,
+      y + s * d + rnd(-0.08, 0.08) * u,
       0,
-      c * v + rnd(-0.15, 0.15) * u,
+      c * v + rnd(-0.25, 0.25) * u,
       s * v * 0.6,
-      u * rnd(0.25, 0.55),
-      rnd(600, 1100) + M.smoke * 100,
+      u * rnd(0.3, 0.7),
+      rnd(800, 1400) + M.smoke * 120,
       5 + (k % 3),
-      3,
+      big ? 5 : 4,
     );
   }
 }
@@ -419,12 +422,12 @@ export function fxFrame(now = performance.now()) {
       Z[i] += VZ[i] * dt;
       VX[i] *= 1 - 1.6 * dt;
       VY[i] *= 1 - 1.6 * dt;
-      if (age > LIFE[i] * 0.45) SIZE[i] = 5; // (it spreads out)
+      if (age > LIFE[i] * 0.45 && SIZE[i] < 7) SIZE[i] = SIZE[i] + 3; // (it spreads out, once)
     }
     /* see-through in steps, as the pixel look's pictures (none, half, all): fading things go half first */
     const u = age / LIFE[i];
     g.globalAlpha =
-      k === SMOKE ? (u < 0.4 ? 0.5 : 0.25) : k === SPLAT && u > 0.6 ? 0.5 : 1;
+      k === SMOKE ? (u < 0.4 ? 0.7 : 0.4) : k === SPLAT && u > 0.6 ? 0.5 : 1;
     g.fillStyle = INK[COL[i]];
     const px = Math.round((X[i] + ox) / gp),
       py = Math.round((Y[i] + oy - Z[i]) / gp),
