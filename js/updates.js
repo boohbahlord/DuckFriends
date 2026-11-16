@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v43",
+    version: 43,
+    date: "Nov 16, 2026",
+    title: "The Angel machine",
+    news: [
+      "For Dead Ducks Arcade: the Angel machine on the stage. With the power on, put a gun or melee weapon in for 1,000 points. In 5 seconds it comes back as an Angelic weapon: +1 damage, 20% faster attacks and reloads, and more ammo.",
+      "For Dead Ducks Arcade: Angelic weapons get extra powers. The bow and the chain gun shoot through zombies, the sniper goes through two more, and the flamethrower reaches farther and burns longer. The default pistol becomes two pistols that kill with every bullet and blow up on crits. The grenade launcher sets the ground on fire.",
+      "For Dead Ducks Arcade: the Angel machine hums and sparks while it works, and the orb comes out with a shimmer.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v42",
     version: 42,
     date: "Nov 16, 2026",
