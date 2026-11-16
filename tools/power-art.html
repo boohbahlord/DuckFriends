@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Power box and Angel machine art</title>
+    <link rel="stylesheet" href="../css/app.css" />
+    <style>
+      /* the preview page for js/powerart.js: every drawing smooth, then as the game's pixels */
+      body {
+        background: #18202a;
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        padding: 16px;
+      }
+      h2 {
+        font-size: 1rem;
+        margin: 1.4rem 0 0.6rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: flex-end;
+      }
+      figure {
+        margin: 0;
+        display: grid;
+        justify-items: center;
+        gap: 6px;
+        padding: 10px;
+        background: #22303a;
+        border-radius: 8px;
+      }
+      figcaption {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+      .ic svg {
+        width: 64px;
+        height: 64px;
+        display: block;
+      }
+      .px {
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>The power box (parts fitted, on, fuel)</h2>
+    <div class="row" id="box"></div>
+    <h2>The parts and the jerry cans</h2>
+    <div class="row" id="parts"></div>
+    <h2>The Angel machine</h2>
+    <div class="row" id="angel"></div>
+    <h2>The Angelic look: in hand, icons, orbs</h2>
+    <div class="row" id="look"></div>
+    <script type="module">
+      import { duckSVG } from "../js/duck.js";
+      import { GUNS } from "../js/l4ddguns.js";
+      import { heldHTML, dualPistolHTML } from "../js/specials.js";
+      import { weaponIcon, orbHTML } from "../js/l4ddart.js";
+      import { pxSVG } from "../js/pixel.js";
+      import { powerBox } from "../js/hangout/art.js";
+      import {
+        powerBoxSVG,
+        PART_ICONS,
+        jerrySVG,
+        angelMachineSVG,
+        angelic,
+        angelOrbHTML,
+      } from "../js/powerart.js";
+
+      const fig = (inner, cap) =>
+        `<figure>${inner}<figcaption>${cap}</figcaption></figure>`;
+      /* a world drawing at 2x, then as pixels (2.6 world px to a pixel, as the cabin) shown at 2x */
+      const both = (svg, w) =>
+        `<div style="display:flex;gap:10px;align-items:flex-end"><div style="width:${w * 2}px">${svg.replace(/width="[\d.]+" height="[\d.]+"/, 'style="width:100%;height:auto;display:block"')}</div><div class="px" style="width:${w * 2}px;zoom:${(2 * 2.6).toFixed(1)}">${pxSVG(svg, w / 2.6)}</div></div>`;
+      document.getElementById("box").innerHTML =
+        [
+          [{}, "no parts, off"],
+          [{ parts: ["fuse", "tools"] }, "2/4 fitted"],
+          [
+            { parts: ["fuse", "lever", "tools", "gas"], on: true, fuel: 0.5 },
+            "on, half the fuel",
+          ],
+        ]
+          .map(([o, c]) => fig(both(powerBoxSVG(o), 96), c))
+          .join("") +
+        fig(both(powerBox(), 80), "the Hangout's box, to compare");
+      document.getElementById("parts").innerHTML =
+        Object.entries(PART_ICONS)
+          .map(([k, v]) => fig(`<div class="ic">${v}</div>`, k))
+          .join("") +
+        [100, 75, 50, 25, 8]
+          .map((p) =>
+            fig(`<div class="ic">${jerrySVG(p)}</div>`, `jerry can ${p}%`),
+          )
+          .join("");
+      document.getElementById("angel").innerHTML =
+        fig(both(angelMachineSVG(), 130), "idle") +
+        fig(both(angelMachineSVG({ working: true }), 130), "working");
+      const duckWith = (svg, k) =>
+        `<div style="position:relative;width:${96 + k * 96}px;height:108px">${duckSVG({ color: "#ffd23f" }, { size: 96, shadow: true })}<div style="position:absolute;left:${48 + 96 * 0.42 - (k * 96) / 2}px;top:50px;width:${k * 96}px">${svg.replace("<svg", '<svg style="width:100%;height:auto;display:block;overflow:visible"')}</div></div>`;
+      document.getElementById("look").innerHTML =
+        ["ak", "sniper", "dbarrel"]
+          .map((w) =>
+            fig(duckWith(angelic(GUNS[w].held), GUNS[w].w), "Angelic " + w),
+          )
+          .join("") +
+        fig(duckWith(angelic(heldHTML("axe", {})), 0.86), "Angelic axe") +
+        fig(duckWith(dualPistolHTML({}), 0.5), "dual pistols") +
+        fig(
+          duckWith(angelic(dualPistolHTML({})), 0.5),
+          "Angelic dual pistols",
+        ) +
+        ["ak", "bow", "axe", "glauncher"]
+          .map((w) =>
+            fig(`<div class="ic">${angelic(weaponIcon(w))}</div>`, w + " icon"),
+          )
+          .join("") +
+        fig(
+          `<div style="display:flex;gap:14px">${orbHTML("ak")}${angelOrbHTML("ak")}${angelOrbHTML("axe")}${angelOrbHTML("sniper")}</div>`,
+          "orb, then Angelic orbs",
+        );
+    </script>
+  </body>
+</html>

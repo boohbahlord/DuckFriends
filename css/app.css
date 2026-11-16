@@ -14958,6 +14958,25 @@ html.moving .eye-tears .tdrop.t2 {
   --cl: #ffffff;
   --cd: #8a8aa0;
 }
+/* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): white-gold, its halo over it */
+.l4orb.k-angel {
+  --c: #ffd86a;
+  --cl: #fffbe8;
+  --cd: #a07a1e;
+}
+.l4orb.k-angel::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: -16%;
+  width: 56%;
+  height: 16%;
+  border-radius: 50%;
+  border: 0.18rem solid #ffd86a;
+  box-shadow:
+    0 0 0 0.08rem #1c1c28,
+    0 0 0.5rem #fff3c4;
+}
 .l4orb {
   position: relative;
   display: grid;
