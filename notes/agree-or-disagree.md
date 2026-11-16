@@ -4384,3 +4384,12 @@ Zombies only; Hangout's Duck Cabin unchanged).
   pixel look, because pxdom.js renamed the gradients' ids but missed the url("#…") written into each part's style (its
   quotes serialize as &quot;); and on a narrow phone the timer's meter pushed the stage's title ("Write a question") to
   "Write a (", so under 480 px wide the meter hides and the timer's words stay.
+
+"loading screens are used where ever there is loading" (owner 2026-11-16 15:12Z, via Adam)
+- Jackal: the one loading screen is js/loading.js (`loadingScreen`). It was shown only when a lobby countdown ended.
+  Now: the page itself (index.html has the veil from the first paint; main.js takes it over once the first screen is up),
+  creating or joining an online room (`holdLoading` in js/rooms.js, until the lobby is on screen), and every way into a
+  game (js/lobby.js: the countdown's end, a vote, joining a game already going on), which waits for `pageReady` (fonts
+  in and three steady frames in a row), so a slow build (Duck Cabin, a big map, a slow phone) keeps it up until the
+  game is drawn. Two screens asked at once share one veil. Windows (Game Settings, Customize, Settings) open in under
+  125 ms even at 4x CPU slowdown, so they get none.
