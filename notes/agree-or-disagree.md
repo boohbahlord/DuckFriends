@@ -4969,3 +4969,19 @@ Decided: PHP 6 (the slug and chain gun still take it all); the boards' default d
 > NOW IF there is a round that is detected as being less then a previous round, then the code will automatically have it become equal to the amount of zombies as the previous round for every subsequent round UNTIL there are more zombies
 
 - Adam: Adam's 6+4r proposal was rejected. Formula read as floor(base × (1 + (players − 1) × n/d)), with cap min(100 × players, 400), then held at the previous round's count when lower. Sheet: /mnt/project-files/charts/zombies-per-round.xlsx (1 to 6 players). Round 21+ can't be worked out for 2+ players (no last round). Nothing built yet; the owner is still planning. The wrong "keeps them" comments were removed in V47.
+
+## Request (2026-11-16 22:21Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1qXZN93YeAjhHRV725zj9o): Angelic ammo, buy pop-up, crit fixes; zombies per round final (Dead Ducks Arcade)
+> okay cool i like this
+>
+> now another thing, ammo cannot be refilled on the guns that become angelic, and it will say so in the shop AND it wont let you buy a gun from the shop unless you click a yes or no pop up window (with an X in the top corner that also means no) that asks if you are sure you want to buy it, this is for Justin's butler.
+>
+> also grenades and grenade launcher doesnt have critical strike chance AND the grenade by itself cannot miss. Flame thrower should also still not have critical chance
+>
+> this is final now
+>
+> we can start all the plans adam
+
+- Adam: all to Solomon in one PR (Version 48). Zombies per round = the sheet (/mnt/project-files/charts/zombies-per-round.xlsx);
+  round 21+ = max(round 20's count, min(144, cap)) (Adam's pick, told the owner); spawns x2 after the first 10 s of a
+  round. No refills for Angelic guns anywhere (Butler Refill, B key, Max Ammo), shop says so. Butler gun buys ask "Are you
+  sure" (Yes / No / X / Esc). No crits on grenade, grenade launcher, flamethrower; the thrown grenade never misses.
