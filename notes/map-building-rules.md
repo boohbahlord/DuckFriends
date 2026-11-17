@@ -11,8 +11,11 @@ the map done.
 - Characters keep the cabin's sizes. NPCs like the Priest are normal duck size unless the owner says otherwise.
 
 ## Seeing what matters (perspective)
-- Any surface that hides a zombie or another player turns see-through where that zombie or player is, for every
-  player. This covers walls, roofs, canopies (like the pumps' roof), tree leaves and anything else that covers.
+- (Owner 2026-11-17 17:41Z + 18:05Z, replaces the old "covers turn see-through" rule, every mode, forever.) Nothing turns
+  see-through because a zombie, duck or Justin is under or behind it. Someone hidden shows as an OUTLINE ONLY, with no
+  picture. You see their picture, and the cover turns see-through, only when YOUR duck is under that same roof, inside
+  that building, foliage or wall. On top of a roof, roofs never turn see-through. From outside a building you never see
+  its inside.
 - An important object is never hidden: if even a quarter of it is behind a wall, that wall goes see-through.
   The Angel machine is one; a fireplace, a shop or a power box is another.
 - A wall in a given position (south, north, east, west) behaves the same way as every other wall in that position,

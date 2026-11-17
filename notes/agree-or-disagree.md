@@ -5641,3 +5641,50 @@ weapon (ARMS dmg, crits, misses, reusing l4ddrules.js); check the other modes' H
 > why did you guys not do so many of my requests?
 
 Adam's numbered reading (1-34) and Q69-Q71: Adam's thread, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYH86KXCrpdYzHwgem9HXaf. Waiting for the owner to confirm before splitting. Rules: no pictures or audio, nothing deploys and no bug testing until the owner says so, Jackal off areas he has messed up more than 5 times.
+
+## Answers (2026-11-17 18:05Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtB6mYULsJQkhCko9yknzhf6) to Adam's 1-34 and Q69-Q71 (word for word)
+> you only have to be on the edge to shoot zombies AT the wall before the edge your own, such as when you are trying to shoot at them WHILE they are climbing
+>
+> 1. yes i sent a picture earlier today with a circled S for a fucking reason
+> 2. yeah let it go
+> 3. yes
+> 4. yes, it keeps to it until it has climbed the wall and then targets the player as usual OR it resorts to what you described IF they leave the floor into a location NEAR ENOUGH to them during the commit
+> 5. yes, all of his normal lines, including reacting to a player spawning a jaime in or even other things, just like his script is supposed to do roughly within the confines of this map and mode
+> 6. yes
+> 7. yes, and he keeps distance and puts survival above killing zombies if he is in imminent danger.
+> 8. yes, and the point box has a small text below it that says "Points from Justin to Everyone: {point pot amount here}", and the amount gets distributed. Please type a better phrase that communicates it to the player simply i failed i think idk, like the addition i just added here for the other thingy
+> 9. not the barrel glow from shooting the gun but the angelic red glow only in terms of not being too thick, and it should be like that for every angelic weapon or thingy
+> 10. yes
+> 11. yes, but the pumps effective range where u use them has changed, also make the button faded out for the generator if you have no gas to give or anything to do in the cabin mode to build it for all zombies or whatever u get it put it together what im trying to say
+> 12. actually no, zombies treat the barricades as a path of least resistance like anything else and will try and break the windows down on the way throuhg that path they choose, and they commit to breaking a window if the player isnt very close to them outside the church
+> 13. yes
+> 14. yyes
+> 15. yes
+> 16. yes
+> 17. yes
+> 18. yes
+> 19. yes
+> 20. yes but fast
+> 21. yes, since the pumps below act as objects on top of the roof which is a problem (also make it to where the zombies can jump onto the gas pump roof with only a 5% chance of failing once they are on the gas station roof, and their path of least resistance is the climbing of the most near by gas station wall before getting on the roof and doing a jump animation for this
+> 22. yes and (incredibly rare use case prob not even possible yet coming up) it targets lower targets the target closer when deciding between up or bottom, if not because one up and one down is same distance then it is random shuffled (this rare use case can be done last)
+> 23. yes
+> 24. yes becuz its fucking ui, also make it tiny bit bigger on pc and transparent (or more transparent if it is a little already) when a zombie or player is underneath it for player's visability
+> 25. yes
+> 26. yes
+> 27. yes
+> 28. good
+> 29. yes
+> 30. yes, and weapons without reload like bows and dagger doesnt have their cooldowns count as reloading, make sure that is true for melee as well and general attack cooldowns because their is a real distinction
+> 31. yes
+> 32. yes AND they can shake once as they die
+> 33. yes
+> 34. yes
+>
+>
+> q69 (for 30): running means sprinting with shift yes
+> q70: im not going thru that again, i did too much work already, look at all my messages again recently today where u think u missed things if need be
+> q71 (for 10): the one on the bottom right of the gas station can be OVER the diameter of a car in length in every direction and the small one for the bathroom can stay the same tbh it's fine
+>
+> okay i answered
+
+Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
