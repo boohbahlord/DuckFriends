@@ -30,6 +30,7 @@ import {
   isHelper,
   laserHeat,
   wildOpen,
+  isWild,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 
@@ -411,6 +412,17 @@ function justinBot(s, id, now, out) {
   }
   /* nothing to fear and nothing to shoot: shop like the others, else stay by the nearest duck */
   if (!seen && d0 > KEEP * 1.5) {
+    if (isWild(s, id)) {
+      /* Justin out in Downpour, with a gun: he doesn't follow anyone, he goes where he likes */
+      const w = wanderSpot(id, now, x, y);
+      if (w) {
+        const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y],
+          [nx, ny] = walk(x, y, to[0], to[1], run(false));
+        if (Math.hypot(nx - x, ny - y) < 3) wander.delete(id);
+        send(nx, ny, gun || sl[1], nx - x, ny - y);
+      } else run(false);
+      return;
+    }
     if (shopping(s, id, now, x, y, run(false), m, send, out)) return;
     const mate = s.seat
         .filter((t) => t !== id && s.pos[t] && l4Up(s, t))
@@ -462,6 +474,20 @@ function justinBot(s, id, now, out) {
    close (sprinting while his meter lasts), jumps when one is on him (a jump's i-frames), and otherwise goes exploring: any
    part of the map, a new spot every few seconds */
 const wander = new Map(); // Justin → { x, y, until }
+/* where Justin is wandering to: a spot anywhere on the map, a new one every few seconds or once he's there */
+function wanderSpot(id, now, x, y) {
+  let w = wander.get(id);
+  if (w && now <= w.until && Math.hypot(w.x - x, w.y - y) >= 90) return w;
+  w = null;
+  for (let i = 0; i < 24 && !w; i++) {
+    const tx = Math.random() * W,
+      ty = Math.random() * H;
+    if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
+      w = { x: tx, y: ty, until: now + 6000 + Math.random() * 6000 };
+  }
+  if (w) wander.set(id, w);
+  return w;
+}
 function wildMove(s, id, now, p, x, y, near, run, out) {
   const threats = [...near];
   for (const sh of s.shots || [])
@@ -474,17 +500,7 @@ function wildMove(s, id, now, p, x, y, near, run, out) {
   threats.sort((a, b) => a.d - b.d);
   const d0 = threats.length ? threats[0].d : Infinity,
     scared = d0 < KEEP * 1.4;
-  let w = wander.get(id);
-  if (!scared && (!w || now > w.until || Math.hypot(w.x - x, w.y - y) < 90)) {
-    w = null;
-    for (let i = 0; i < 24 && !w; i++) {
-      const tx = Math.random() * W,
-        ty = Math.random() * H;
-      if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
-        w = { x: tx, y: ty, until: now + 6000 + Math.random() * 6000 };
-    }
-    if (w) wander.set(id, w);
-  }
+  const w = scared ? null : wanderSpot(id, now, x, y);
   let [nx, ny] = [x, y];
   const far = run(scared);
   if (scared) [nx, ny] = away(x, y, far, threats);

@@ -16179,6 +16179,19 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
     filter: drop-shadow(0 0 0.1rem #9fe3ff);
   }
 }
+/* Justin out in Downpour in the rest phase (l4dd.js safeLook): a soft light blue glow, a duck can buy him a gun */
+.gduck.l4-buyj .gduck-body {
+  animation: l4-buyj 1.6s ease-in-out infinite;
+}
+@keyframes l4-buyj {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.35rem #9fe3ff);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.8rem #d8f4ff) brightness(1.15);
+  }
+}
 .gduck.l4-inv .gduck-body {
   animation: l4-inv 1.3s ease-in-out infinite;
 }
