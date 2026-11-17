@@ -127,5 +127,18 @@
   "boomSmall": { "n": 1 },
   "laser": { "n": 1 },
   "laserHiss": { "n": 1 },
-  "laserSteam": { "n": 1, "loop": [0.15, 1.65] }
+  "laserSteam": { "n": 1, "loop": [0.15, 1.65] },
+  "stepGrass": { "n": 5 },
+  "stepHard": { "n": 5 },
+  "stepMetal": { "n": 4 },
+  "stepWater": { "n": 5 },
+  "swim": { "n": 3 },
+  "climb": { "n": 3 },
+  "thud": { "n": 3 },
+  "gore": { "n": 1 },
+  "miss": { "n": 1 },
+  "rain": { "n": 1, "loop": [0.15, 8.15] },
+  "wind": { "n": 1, "loop": [0.15, 20.15] },
+  "churchBell": { "n": 1 },
+  "cleared": { "n": 1 }
 }

@@ -87,7 +87,11 @@ import {
   SAFE,
   safePrice,
   zombieLook,
+  magIn,
+  fullFor,
+  downArmed,
 } from "./l4ddrules.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
@@ -119,6 +123,7 @@ import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
@@ -365,6 +370,33 @@ function lits() {
   };
 }
 
+/* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it */
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
+  const w = o.bw * sc,
+    h = o.bh * sc,
+    y = f.top + (dip - o.feet) * sc;
+  olAdd({
+    id: "z" + o.i,
+    img: o.img,
+    x: f.left - w / 2,
+    y,
+    w,
+    h,
+    flip: o.face < 0,
+    kind: "zombie",
+    hidden:
+      hidden ??
+      Wd.coverAt(
+        f.left - w * 0.4,
+        f.left + w * 0.4,
+        y + h * 0.1,
+        f.top,
+        Math.round(sortY(o.x, o.y, z)),
+      ),
+    floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
+  });
+}
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
@@ -528,6 +560,7 @@ function seeZombies(s, ctx, now) {
     if (o.sh !== sh) {
       o.sh = sh;
       o.bar.style.setProperty("--hp", sh);
+      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17)
     }
     o.hp = z.hp;
     o.st = z.st;
@@ -1425,7 +1458,7 @@ export function l4SafeHint() {
     board.append(hintEl);
   }
   hintEl.innerHTML =
-    "<b>Safe Keeping</b> works by itself. When you go down you keep everything you bought, and it gets you up: press <kbd>E</kbd> (or tap the button) while down, or at once if nobody else is standing. Then 6 seconds nothing can hurt you. Used up after.";
+    "<b>Safe Keeping</b>: when you go down you keep what you bought, and <kbd>E</kbd> gets you up.";
   hintEl.classList.remove("on");
   void hintEl.offsetWidth;
   hintEl.classList.add("on");
@@ -1476,6 +1509,47 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
+   Rifle: its heat has its own meter, the jetpack) */
+export function l4Ammo(s, me, w) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  if (!m) return null;
+  if (downArmed(s, me)) w = "dg"; // (down: the down pistol)
+  const rl = !!w && m.rw === w && m.rl > now;
+  if (w === "dg")
+    return m.dg === undefined
+      ? null
+      : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
+  if (w === "grenade")
+    return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  const c = (m.am || {})[w];
+  if (!c) return null;
+  if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
+  const mag = magIn(m, w);
+  if (mag)
+    return {
+      f: rl ? 0 : c[0] / mag,
+      rl,
+      dry: !rl && c[0] <= 0 && c[1] <= 0,
+      nr: !rl && c[1] <= 0 && c[0] < mag, // (no ammo left to reload it with)
+    };
+  const all = (fullFor(s, me, w) || [0])[0];
+  return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
+}
+let dryW = "";
+/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
+   white bar flashes red */
+function ammoBars(tag, s, me) {
+  const w = heldFn() || "",
+    a = l4Ammo(s, me, w),
+    dry = a && a.dry ? w : "";
+  if (dry && dry !== dryW && w !== "grenade") noReload();
+  dryW = dry;
+  ammoBar(tag, a);
+  stackBars(tag);
+}
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
    scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
    owner, Nov 17: on a computer and a phone) */
@@ -1510,7 +1584,7 @@ function peek(tag, s, me) {
   track.innerHTML = list
     .map(
       ([x, cls]) =>
-        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x)) : weaponIcon(x)}</i></span>`,
+        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x, (s.players[me] || {}).duck)) : weaponIcon(x, (s.players[me] || {}).duck)}</i></span>`,
     )
     .join("");
   const lay = (at) =>
@@ -2027,7 +2101,9 @@ activity({
     syncMap(); // (the openings, the Butler's or the Priest's spot, for the map in play: on a player's screen too, which runs no rules)
     const Wd = ctx.world,
       sc = Wd.sc,
-      t = performance.now();
+      t = performance.now(),
+      meAt = Wd.at(ctx.me),
+      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / gap);
@@ -2041,11 +2117,15 @@ activity({
             : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
+        unseen = !(door || seenFrom(o.x, o.y, Wd.inside)),
+        onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
-          !(door || seenFrom(o.x, o.y, Wd.inside)) ||
-          !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc) ||
+          unseen ||
+          !onCam ||
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (onCam && unseen && o.st !== 3)
+        zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -2062,6 +2142,7 @@ activity({
             : inShallow(o.x, o.y) && o.st !== 5
               ? WADE_SINK * o.feet
               : 0;
+      if (o.st !== 3) zOutline(Wd, o, f, dip, sc, null, z, myFloor);
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
@@ -2229,6 +2310,7 @@ activity({
       }
       const st = ctx.state();
       coolBar(tag, st, ctx.me);
+      ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
       laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
       peek(tag, st, ctx.me);
     }

@@ -17,3 +17,4 @@ import "./power.js";
 import "./blackjack.js";
 import "./poker.js";
 import "./ghosts.js";
+import "./ambience.js";

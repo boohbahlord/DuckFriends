@@ -185,6 +185,8 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import { olAdd, olDraw, olFloor } from "./outlines.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
@@ -205,7 +207,14 @@ import {
   weaponName,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4Held, l4Got, sprintLeft, l4SafeHint, laserEnd } from "./l4dd.js";
+import {
+  l4Held,
+  l4Got,
+  sprintLeft,
+  l4SafeHint,
+  laserEnd,
+  l4Ammo,
+} from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -1216,6 +1225,9 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
+  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+    olAt = ol && hang ? world.at(R.me) : null,
+    olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
   drawMeters(s, board, layer, now);
   const jp =
@@ -1696,6 +1708,65 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
+    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+       never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
+       roof and a floor away */
+    const olP = !g && s.players[id],
+      olKind = !ol
+        ? ""
+        : isMgj(s)
+          ? id === GOOD_ID
+            ? "blue"
+            : olP && id !== JUSTIN_ID
+              ? "ally"
+              : ""
+          : olP
+            ? olP.helper || olP.wild
+              ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              : "ally"
+            : "";
+    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
+      const ph = pic.naturalWidth
+          ? (size * pic.naturalHeight) / pic.naturalWidth
+          : size,
+        x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
+        b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+        y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
+      let hidden = false,
+        floor = 0;
+      if (hang) {
+        hidden =
+          !!d._hid ||
+          world.coverAt(
+            at.left - size * 0.4,
+            at.left + size * 0.4,
+            b - size * 0.9,
+            b,
+            d._zi - 10,
+          );
+        if (olMe !== null) {
+          const a = world.at(id),
+            f =
+              a &&
+              olFloor(a.x, a.y, pos.j && pos.b !== undefined ? pos.b : a.z);
+          floor = a ? Math.sign(f - olMe) : 0;
+        }
+      }
+      olAdd({
+        id,
+        img: pic,
+        x,
+        y,
+        w: size,
+        h: ph,
+        flip: fx < 0,
+        kind: olKind,
+        hidden,
+        floor,
+        hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
+        down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
+      });
+    }
     if (d._j !== pos.j) {
       d._j = pos.j;
       if (pos.j && pic && pic.classList.contains("jack")) {
@@ -1955,6 +2026,10 @@ function drawDucks(now = clockNow()) {
     if (mine) myBox = boxes[boxes.length - 1];
   }
   layer.querySelectorAll(".gduck").forEach((d) => {
+    if (duckEls.has(d.dataset.pid) && duckEls.get(d.dataset.pid) !== d) {
+      d.remove(); // (a second one for the same duck, left behind: only the one it's drawn on stays)
+      return;
+    }
     if (
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
@@ -2124,6 +2199,14 @@ function drawDucks(now = clockNow()) {
       fxl.append(h);
       heldEls.set(id, h);
     }
+    /* a gun being reloaded dips and bobs in its duck's hands (Dead Ducks Arcade: its reload runs in its kit; Justin out
+       in Downpour too) */
+    const rk = isL4dd(s) && kitOf(s, id),
+      reloading = !!(rk && rk.rl > now && rk.rw === w);
+    if (h._rl !== reloading) {
+      h._rl = reloading;
+      h.classList.toggle("reload", reloading);
+    }
     /* the knife jabs out and back; the hammer rests over the shoulder, then swings from behind the head down through the
        aim. Turned toward the aim, its offsets mirror for a duck facing left, so the swing always goes over the top */
     const left = Math.cos(ang) < 0,
@@ -2280,10 +2363,12 @@ function drawDucks(now = clockNow()) {
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade, over the board in Mad God Justin)
   if (isMgj(s)) {
     const tag = S.querySelector(".gduck.mine .gduck-name");
     if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)
   }
+  if (!isL4dd(s)) handBars(s); // (the white and yellow bars under my duck: meters.js)
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
@@ -3703,6 +3788,7 @@ function playFx(f) {
     /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
        it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
     if (!geo.hang) return;
+    sfx.gore({ x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78;
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
@@ -3716,6 +3802,7 @@ function playFx(f) {
     /* a miss in Dead Ducks Arcade (the owner's, Nov 16 21:47Z): "missed", small and white over that zombie, rising and
        fading as the HP numbers do */
     if (!geo.hang) return;
+    sfx.miss({ x: f.x, y: f.y }); // (a wispy blip: the owner's, Nov 17 12:28Z)
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       word = el(
         `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">missed</div>`,
@@ -3752,6 +3839,7 @@ function playFx(f) {
   } else if (f.kind === "pcrit") {
     /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
        Zombies' rises over it */
+    sfx.gore(geo.hang ? { x: f.x * HW, y: f.y * HH } : {}); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = geo.hang
         ? world.place({ x: f.x, y: f.y }, f.hz || 0)
         : place({ x: f.x, y: f.y }, 0, 1),
@@ -5298,7 +5386,7 @@ function selectKey(i, toggle) {
 function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
-    l4Pick(i);
+    l4Pick(i, toggle || touchOnly()); // (Safe Keeping's note: only on its number key on a computer, on a tap on a phone)
     return;
   }
   if (bar) bar.show(i);
@@ -5350,7 +5438,7 @@ function useKey(i, keep, toggle = false) {
 /* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
    switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
    and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
-function l4Pick(i) {
+function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
   if (i === 4) {
@@ -5367,7 +5455,7 @@ function l4Pick(i) {
   }
   if (i > 3 || !sl[i]) return;
   if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
+  if (i === 3 && sl[3] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
     if (bar) bar.refresh();
@@ -5397,7 +5485,11 @@ function cool() {
   if (!R) return [];
   const now = clockNow();
   const m = isMgj(R.state) && R.state.mgj;
-  return keysOf(playDuck()).map((id) => {
+  return keysOf(playDuck()).map((id) => coolOne(id, now, m));
+}
+/* … one item's: [ends, how long it waits, now] or null (m: Mad God Justin's state, or false) */
+function coolOne(id, now, m) {
+  {
     const sp = specialById(id);
     if (!sp || sp.kind !== "item") return null;
     if (m && id === "jaime") {
@@ -5427,7 +5519,52 @@ function cool() {
     } // (between quick shots no bar: only the reload, and the sniper's bolt or the launcher's wait)
     const end = coolEnds(R.state, R.me, id);
     return end > now ? [end, coolFor(id, R.state), now] : null;
-  });
+  }
+}
+/* the white and the yellow bars under my duck in the modes besides Dead Ducks Arcade (which has its own, l4dd.js):
+   what's in my hand, its cooldown or reload, and its magazine (meters.js; no sprint bar: sprinting never runs out
+   here) */
+function handBars(s) {
+  const tag = S && S.querySelector(".gduck.mine .gduck-name");
+  if (!tag || !R) return;
+  const now = clockNow(),
+    m = isMgj(s) && s.mgj,
+    w = mgjDownGun() ? "handgun" : held,
+    c = w ? coolOne(w, now, m) : null;
+  let el = tag.querySelector(".l4-cool");
+  if (!el) {
+    if (!c) return;
+    el = document.createElement("span");
+    el.className = "l4-cool off";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = "<i></i>";
+    tag.append(el);
+  }
+  const v = c ? Math.min(1, (c[0] - now) / c[1]).toFixed(3) : "0";
+  if (el._v !== v) {
+    el._v = v;
+    el.style.setProperty("--cl", v);
+    el.classList.toggle("off", v === "0");
+  }
+  const mg = !w
+    ? null
+    : m
+      ? mgjDownGun()
+        ? magSize("handgun")
+        : mgjMag(w)
+      : magSize(w);
+  let a = null;
+  if (mg && !(m && !mgjDownGun() && w !== myPick())) {
+    const mm = magOf(s, R.me, now, w),
+      rl = mm.r > now,
+      left =
+        m && !mgjDownGun() && ammoOf(s, R.me) < INF_AMMO
+          ? Math.min(mg[0] - mm.n, ammoOf(s, R.me))
+          : mg[0] - mm.n; // (Mad God Justin: a gun picked up with fewer shots left than its magazine)
+    a = { f: rl ? 0 : left / mg[0], rl, dry: false };
+  }
+  ammoBar(tag, a);
+  stackBars(tag);
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
 function ammo(id = "handgun") {
@@ -5453,6 +5590,8 @@ const dots = (id) =>
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
+    const a = l4Ammo(R.state, R.me, heldNow());
+    if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
     R.send({ t: "reload", w: heldNow() });
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
@@ -6891,7 +7030,7 @@ const keyup = (e) => {
   if (e.code === "KeyQ") peek(false);
 };
 const blur = () => {
-  keys.clear();
+  keys.clear(); // (also when the tab is hidden: visibilitychange below)
   padHold = false;
   peek(false);
 };
@@ -6900,6 +7039,9 @@ function peek(on) {
   const c = S && $(".wq-card.mine", S);
   if (c) c.classList.toggle("peek", on && !c.classList.contains("dealing"));
 }
+const hidden = () => {
+  if (document.hidden) blur(); // (no key stays held down while the game can't see it come up)
+};
 const resized = () => {
   geo = null;
 };
@@ -7151,10 +7293,47 @@ function heldClick(e) {
     aimHere(e)
   );
 }
+/* a held trigger (autoPress, l4Press): it fires again and again until the left button is up. Every way a press can end
+   lets go of it: the button coming up anywhere, the press cancelled or its capture lost, the window or the tab losing
+   focus, the right-click menu, and any mouse event that says the left button isn't down any more (one missed button-up
+   kept it firing the whole magazine and on: the owner's, Nov 17 13:07Z). Leaving the screen lets go too */
+let trigger = null;
+const TRIGGER_END = [
+  "pointerup",
+  "pointercancel",
+  "lostpointercapture",
+  "blur",
+  "contextmenu",
+];
+function letGo() {
+  if (!trigger) return;
+  clearTimeout(trigger.t);
+  for (const t of TRIGGER_END) removeEventListener(t, letGo, true);
+  removeEventListener("pointermove", upYet, true);
+  document.removeEventListener("visibilitychange", letGo);
+  trigger = null;
+}
+const upYet = (e) => {
+  if (e.pointerType === "mouse" && !(e.buttons & 1)) letGo();
+};
+/* hold the trigger: shoot() now, then again after each wait it gives back, until let go */
+function holdTrigger(shoot) {
+  letGo();
+  trigger = { t: 0 };
+  for (const t of TRIGGER_END) addEventListener(t, letGo, true);
+  addEventListener("pointermove", upYet, true);
+  document.addEventListener("visibilitychange", letGo);
+  const go = () => {
+    if (!trigger) return;
+    const wait = shoot();
+    if (trigger && wait) trigger.t = setTimeout(go, wait);
+    else letGo();
+  };
+  go();
+}
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
    down fires, and again as soon as it can while the button stays down */
-let autoFire = 0,
-  autoDid = false;
+let autoDid = false;
 function autoPress(e) {
   if (
     !R ||
@@ -7164,43 +7343,25 @@ function autoPress(e) {
     !heldClick(e)
   )
     return;
-  const go = () => {
-    if (!AUTO.includes(held) || !onBoardPhase()) return;
-    fire(held);
-    autoFire = setTimeout(go, Math.max(60, coolFor(held, R.state)));
-  };
-  clearTimeout(autoFire);
   autoDid = true;
-  go();
-  const stop = () => {
-    clearTimeout(autoFire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+  holdTrigger(() => {
+    if (!R || !AUTO.includes(held) || !onBoardPhase()) return 0;
+    fire(held);
+    return Math.max(60, coolFor(held, R.state));
+  });
 }
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
-let l4Fire = 0;
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
   if (!onBoardPhase() || !aimHere(e)) return;
-  const go = () => {
+  holdTrigger(() => {
+    if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(60, l4Cool(R.state, R.me, w)));
-  };
-  clearTimeout(l4Fire);
-  go();
-  const stop = () => {
-    clearTimeout(l4Fire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+    return Math.max(60, l4Cool(R.state, R.me, w));
+  });
 }
 register("game", {
   guard: () => !!activeRoom(),
@@ -7212,6 +7373,7 @@ register("game", {
     }
   },
   leave() {
+    letGo(); // (a held trigger never fires on into the next screen)
     if (off) off();
     off = null;
     jetsOff();
@@ -7271,6 +7433,7 @@ register("game", {
     removeEventListener("keydown", keydown);
     removeEventListener("keyup", keyup);
     removeEventListener("blur", blur);
+    document.removeEventListener("visibilitychange", hidden);
     removeEventListener("resize", resized);
     for (const t of ["pointerup", "pointercancel"])
       removeEventListener(t, unpeek);
@@ -7667,6 +7830,7 @@ register("game", {
     addEventListener("keydown", keydown);
     addEventListener("keyup", keyup);
     addEventListener("blur", blur);
+    document.addEventListener("visibilitychange", hidden);
     addEventListener("resize", resized);
     raf = requestAnimationFrame(loop);
     tick = setInterval(showTimer, 250);

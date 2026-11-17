@@ -9,6 +9,8 @@
 import { ICONS, weaponIcon } from "./l4ddart.js";
 import { angelic } from "./powerart.js";
 import { angelOf } from "./l4ddangel.js";
+/* my duck's look (its pistol's colors) */
+const duckOf = (s, me) => (s.players[me] || {}).duck;
 /* an Angelic weapon's icon: Noah's look on a drawing; an emoji (the pistol's) gets the same glow and halo from css */
 const holy = (icon) => {
   const a = angelic(icon);
@@ -87,7 +89,7 @@ export function mountL4Bar(S, api) {
         ];
     if (down) {
       const n = count("dg", m);
-      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun")}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
       return;
     } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
@@ -98,9 +100,9 @@ export function mountL4Bar(S, api) {
           w === "fl"
             ? ICONS.flashlight(!off)
             : w && angelOf(s, me, w)
-              ? holy(weaponIcon(w)) // (Angelic: l4ddangel.js)
+              ? holy(weaponIcon(w, duckOf(s, me))) // (Angelic: l4ddangel.js)
               : w
-                ? weaponIcon(w)
+                ? weaponIcon(w, duckOf(s, me))
                 : "";
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
@@ -164,7 +166,7 @@ export function l4Slider(api) {
         ? {
             id,
             name: "Pistol",
-            icon: weaponIcon(id),
+            icon: weaponIcon(id, duckOf(k.s, k.me)),
             off: false,
             keep: false,
             cls: "k-ranged",
@@ -179,8 +181,8 @@ export function l4Slider(api) {
         id === "fl"
           ? ICONS.flashlight(!lightOff(k))
           : angelOf(k.s, k.me, id)
-            ? holy(weaponIcon(id))
-            : weaponIcon(id),
+            ? holy(weaponIcon(id, duckOf(k.s, k.me)))
+            : weaponIcon(id, duckOf(k.s, k.me)),
       off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
       keep: i === 3 || i === 5,
       cls: `k-${kindAt(i)}`,
