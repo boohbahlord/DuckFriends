@@ -1855,7 +1855,14 @@ activity({
       }
       for (const o of Z.values())
         if (o.st !== 3) who.push(["z" + o.i, o.x, o.y]);
-      rainDraw(t, ctx, who, true);
+      const hit = (ctx.state().hang.l4lt || {}).hit;
+      rainDraw(
+        t,
+        ctx,
+        who,
+        true,
+        hit && clockNow() - hit[2] < 600 ? hit : null,
+      ); // (and the lightning: l4ddrules.js boltTick)
     } else rainDraw(t, ctx, [], false);
     const beat = new Set();
     for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);

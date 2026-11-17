@@ -1231,6 +1231,10 @@ function newRound(s, r, now, wait) {
     wait: null,
     sv: null,
   };
+  s.hang.l4lt =
+    dp() && Math.random() < BOLT.P
+      ? { next: now + wait + rnd(BOLT.FROM, BOLT.TO) }
+      : null; // (Downpour: a strike of lightning this round, now and then: boltTick)
   powerRound(s, r, now, PH);
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
@@ -1467,6 +1471,45 @@ function nukeTick(s, zs, now, ids) {
     (hp * PTS.HIT + crits * PTS.NUKE_CRIT) *
     ((s.hang.l4on || {}).double ? 2 : 1);
   for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
+}
+/* Downpour's lightning (the owner's, Nov 16 23:15Z): each round has a 1% chance of a strike, some time in it, on a
+   zombie out in the open that a duck has on screen. It dies burnt (no points: nobody killed it), and each strike has a
+   1% chance of another one right after. Waits while there's no such zombie. s.hang.l4lt { next: when it strikes (0:
+   no more this round), hit: [x, y, when] the last strike, for every screen's bolt and flash (l4ddrain.js) } */
+export const BOLT = {
+  P: 0.01,
+  AGAIN: 0.01,
+  FROM: 5000,
+  TO: 40000,
+  RETRY: 2000,
+  NEXT: 450,
+};
+function boltTick(s, zs, now, ids) {
+  const B = s.hang.l4lt;
+  if (!B || !B.next || now < B.next) return;
+  const pts = ids.filter((id) => standing(s, id)).map((id) => at(s.pos[id])),
+    can = zs.filter(
+      (z) =>
+        z.st !== 3 &&
+        !GS.buildingAt(z.x, z.y) &&
+        pts.some(
+          ([a, b]) =>
+            Math.abs(z.x - a) < VIEW.x * 0.7 &&
+            Math.abs(z.y - b) < VIEW.y * 0.7, // (well inside the screen, so it's seen)
+        ),
+    );
+  if (!can.length) {
+    s.hang.l4lt = { ...B, next: now + BOLT.RETRY };
+    return;
+  }
+  const z = can[Math.floor(Math.random() * can.length)];
+  z.hp = 0;
+  die(z, now - s.hang.l4.t0);
+  s.hang.zw = { ...(s.hang.zw || {}), [z.i]: explodedLook(z.i + now) }; // (burnt, as the Nuke leaves them: wounds.js)
+  s.hang.l4lt = {
+    next: Math.random() < BOLT.AGAIN ? now + BOLT.NEXT : 0,
+    hit: [Math.round(z.x), Math.round(z.y), now],
+  };
 }
 /* a body the Nuke left: it lies there longer */
 const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
@@ -3249,6 +3292,7 @@ function l4Tick(s, now) {
   moveZombies(s, zs, now, T, up);
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
+  boltTick(s, zs, now, ids);
   dropTick(s, L2, zs, now, T, ids);
   powerTick(s, zs, now, ids, PH);
   const ad = s.hang.l4ad;

@@ -15,7 +15,8 @@ let cv = null,
   rings = [],
   wades = new Map(), // who → [x, y] where its last ripple was
   last = 0,
-  wasW = 0;
+  wasW = 0,
+  bolt = null; // (the lightning on screen: newBolt)
 const WIND = 0.22; // the slant: across for each px down
 const FALL = 1500; // css px a second (about; each drop a little faster or slower)
 
@@ -38,8 +39,9 @@ export function rainUnmount() {
   rings = [];
   wades.clear();
 }
-/* every frame from l4dd.js: who: [[id, x, y]] in world px (ducks and zombies on the ground), on: it's Downpour */
-export function rainDraw(now, ctx, who, on) {
+/* every frame from l4dd.js: who: [[id, x, y]] in world px (ducks and zombies on the ground), on: it's Downpour, hit:
+   the lightning's last strike [x, y, when] while it's fresh (l4ddrules.js boltTick) */
+export function rainDraw(now, ctx, who, on, hit) {
   if (!cv) return;
   const Wd = ctx.world,
     still = document.documentElement.classList.contains("still");
@@ -49,6 +51,7 @@ export function rainDraw(now, ctx, who, on) {
     return;
   }
   if (cv.hidden) cv.hidden = false;
+  if (hit && (!bolt || bolt.when !== hit[2])) bolt = newBolt(hit, now);
   const w = Wd.vw,
     h = Wd.vh,
     dpr = Math.min(1.5, devicePixelRatio || 1);
@@ -101,6 +104,7 @@ export function rainDraw(now, ctx, who, on) {
   if (wades.size > 400) wades.clear();
   /* the rings, in world px (they stay put as the camera moves) */
   const sc = Wd.sc;
+  if (bolt) drawBolt(now, Wd, w, h);
   g.lineWidth = 1.4;
   rings = rings.filter((o) => now - o.t < o.life);
   for (const o of rings) {
@@ -114,6 +118,62 @@ export function rainDraw(now, ctx, who, on) {
       : `rgba(170,190,205,${(0.3 * (1 - u)).toFixed(3)})`;
     g.beginPath();
     g.ellipse(p.left, p.top, r, r * 0.42, 0, 0, 2 * Math.PI);
+    g.stroke();
+  }
+}
+/* the lightning: a jagged line from the sky down to the zombie it hits, with a branch or two, that blinks twice, and the
+   whole screen flashing white and fading. Its kinks are kept in world px across (dx) and screen px up, so it stays on
+   the zombie as the camera moves */
+const BOLT_MS = 260,
+  FLASH_MS = 700;
+function newBolt(hit, now) {
+  const [x, y, when] = hit,
+    path = (from, n, up, spread) => {
+      const pts = [];
+      for (let k = 0; k <= n; k++)
+        pts.push([
+          from[0] + (k && k < n ? (Math.random() - 0.5) * spread : 0),
+          from[1] + (up * k) / n,
+        ]);
+      return pts;
+    },
+    main = path([0, 0], 16, 900, 90);
+  for (let k = 1; k < main.length; k++) main[k][0] += main[k - 1][0] * 0.35; // (it wanders a little as it comes down)
+  const forks = [];
+  for (let f = 0; f < 1 + Math.floor(Math.random() * 2); f++) {
+    const at = main[8 + Math.floor(Math.random() * 6)],
+      side = Math.random() < 0.5 ? -1 : 1;
+    forks.push(
+      path(at, 6, -90 - Math.random() * 90, 40).map(([a, b], k) => [
+        a + side * k * 30,
+        b,
+      ]),
+    );
+  }
+  return { x, y, when, t: now, lines: [main, ...forks] };
+}
+function drawBolt(now, Wd, w, h) {
+  const u = now - bolt.t;
+  if (u > FLASH_MS) {
+    bolt.t = -1e9;
+    return;
+  }
+  g.fillStyle = `rgba(225,235,255,${(0.5 * (1 - u / FLASH_MS) ** 2).toFixed(3)})`;
+  g.fillRect(0, 0, w, h);
+  if (u > BOLT_MS || (u > 90 && u < 140)) return; // (it blinks once)
+  const p = Wd.toScreen(bolt.x, bolt.y, Wd.heightAt(bolt.x, bolt.y)),
+    sc = Wd.sc;
+  for (const [lw, c] of [
+    [7, "rgba(150,180,255,0.35)"],
+    [2.4, "rgba(250,252,255,0.95)"],
+  ]) {
+    g.lineWidth = lw;
+    g.strokeStyle = c;
+    g.beginPath();
+    for (const line of bolt.lines)
+      line.forEach(([a, b], k) =>
+        g[k ? "lineTo" : "moveTo"](p.left + a * sc, p.top - b * sc * 1.2),
+      );
     g.stroke();
   }
 }
