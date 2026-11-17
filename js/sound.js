@@ -35,6 +35,15 @@ export const VOL = {
   // moving
   step: -19,
   zstep: -27,
+  // … by the ground (feet.js stepOf): the same light step on grass, concrete or the road, a metal roof, shallow water;
+  // a stroke swimming; a zombie rattling up the chain-link fence (quiet); a body landing from a fall
+  stepGrass: -19,
+  stepHard: -22,
+  stepMetal: -21,
+  stepWater: -20,
+  swim: -21,
+  climb: -26,
+  thud: -13,
   hop: -19,
   jetStart: -19,
   jetLoop: -23,
@@ -123,6 +132,15 @@ export const VOL = {
   laser: -10,
   laserHiss: -12,
   laserSteam: -24,
+  // a crit's gush of gore, a miss's wispy blip
+  gore: -12,
+  miss: -15,
+  // the weather (ambience.js): a light rain over Downpour, the wind round the cabin; Downpour's church bell as a round
+  // starts, and the chime once every zombie is down (the last note of What the duck?)
+  rain: -27,
+  wind: -25,
+  churchBell: -13,
+  cleared: -9,
   // the menus: faint
   uiPress: -13,
   uiOn: -23,
@@ -204,6 +222,11 @@ const lite = () => netLevel() > 0;
 const NEAR = 300, // world px: full up to here …
   FAR = 1500; // … and nothing from here (as Duck Cabin's)
 const UI = ["uiPress", "uiOn", "uiOff", "uiOpen", "uiClose", "nope", "tick"];
+/* Duck Cabin's and Downpour's own: the grounds' footsteps, a stroke, a fall's thud, the wind, the fireplace */
+const WORLD = [
+  ...["stepGrass", "stepHard", "stepMetal", "stepWater", "swim", "thud"],
+  ...["wind", "fire"],
+];
 const GROUPS = {
   first: [
     ...["countTick", "countGo", "step", "hop", ...UI],
@@ -219,7 +242,7 @@ const GROUPS = {
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit"],
     ...["boom", "boomSmall", "meteor", "tileIn", "quack"],
-    ...["laser", "laserHiss", "laserSteam"],
+    ...["laser", "laserHiss", "laserSteam", "gore", "miss"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
   l4dd: [
@@ -236,8 +259,10 @@ const GROUPS = {
     ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
     ...["powerUp", "powerDown", "partGot", "partIn", "gasPour"],
     ...["angelWork", "angelOrb"],
+    ...["climb", "rain", "churchBell", "cleared", ...WORLD],
   ],
   cabin: [
+    ...WORLD,
     ...["lampOn", "lampOff", "lever", "fireOut", "candleOut", "relight"],
     ...["tvClick", "card", "chips", "bite", "gulp", "whoosh", "swipe"],
     ...["meow", "purr", "hiss", "static", "hum", "powerUp", "powerDown"],
@@ -378,6 +403,26 @@ function near(o) {
   return d <= NEAR ? 1 : d >= FAR ? 0 : ((FAR - d) / (FAR - NEAR)) ** 2;
 }
 
+/* which side of my duck a sound is on, and whether a floor is between us (the owner, Nov 17 12:28Z: sounds "should also
+   sound they like are above or below you depending on the height"): pan -PAN_MAX (left) … PAN_MAX (right), and a floor
+   above or below muffles it (lp: its low-pass, Hz; 0 for none), the one below more. o.z is the sound's height (world
+   px), mine is my duck's */
+const PAN = 900, // world px to the side: as far left or right as it goes
+  PAN_MAX = 0.6, // (never all in one ear)
+  FLOOR = 70, // world px of height between us: another floor
+  BELOW = 900, // Hz: under me, through the floor
+  ABOVE = 1600; // … over me
+function sideOf(o) {
+  if (o.x == null || !listener) return null;
+  const me = listener();
+  if (!me) return null;
+  const dz = o.z != null && me.z != null ? o.z - me.z : 0;
+  return {
+    pan: Math.max(-PAN_MAX, Math.min(PAN_MAX, (o.x - me.x) / PAN)),
+    lp: dz < -FLOOR ? BELOW : dz > FLOOR ? ABOVE : 0,
+  };
+}
+
 /* a voice cut short: a quick fade, then stopped */
 function cut(v, t) {
   const g = v.g.gain;
@@ -397,6 +442,8 @@ function drop(v) {
   if (i >= 0) live.splice(i, 1);
   v.src.disconnect();
   v.g.disconnect();
+  if (v.f) v.f.disconnect();
+  if (v.p) v.p.disconnect();
 }
 
 /* one sound: returns its voice, or null when there's nothing to play (no clock yet, muted, too far, not loaded yet: a
@@ -410,7 +457,13 @@ function voice(name, o = {}, loops = false) {
     return null;
   }
   const far = near(o),
-    k = (o.k ?? 1) * far * 10 ** ((VOL[name] || 0) / 20),
+    side = sideOf(o),
+    lp = o.lp || (side && side.lp) || 0, // (a muffled sound: through a floor, or a loop asked for it: ambience.js)
+    k =
+      (o.k ?? 1) *
+      far *
+      (side && side.lp ? 0.8 : 1) *
+      10 ** ((VOL[name] || 0) / 20),
     low = lite();
   if (!list.length || k < 0.002 || !level()) return null;
   if (low && far < LITE.far) return null;
@@ -430,9 +483,25 @@ function voice(name, o = {}, loops = false) {
   g.gain.value = 0;
   g.gain.setValueAtTime(0, t);
   g.gain.linearRampToValueAtTime(k, t + 0.005);
-  src.connect(g).connect(out);
+  /* src → its gain → (its low-pass) → (its side) → everything's level; set before it sounds, so nothing jumps */
+  let tail = src.connect(g),
+    f = null,
+    p = null;
+  if (lp) {
+    f = ac.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = lp;
+    f.Q.value = 0.5;
+    tail = tail.connect(f);
+  }
+  if (side && ac.createStereoPanner) {
+    p = ac.createStereoPanner();
+    p.pan.value = side.pan;
+    tail = tail.connect(p);
+  }
+  tail.connect(out);
   src.start(t, loops ? FILES[name].loop[0] : 0);
-  const v = { name, src, g, t, k };
+  const v = { name, src, g, t, k, f, p };
   src.onended = () => drop(v);
   live.push(v);
   return v;
@@ -448,6 +517,10 @@ export function loop(name, o = {}) {
   const v = voice(name, o, true);
   let at = o; // where it is now (move)
   return {
+    /* is it sounding? (false: nothing loaded yet, muted, too far as it started, or cut for another) */
+    get on() {
+      return !!v && !v.cut;
+    },
     stop() {
       if (v && !v.cut && ac) {
         const t = soon(),
@@ -461,8 +534,8 @@ export function loop(name, o = {}) {
         v.cut = true;
       }
     },
-    /* louder or quieter (k, as play's), glided from wherever it is */
-    set(k) {
+    /* louder or quieter (k, as play's), glided from wherever it is (over secs) */
+    set(k, secs = 0.15) {
       if (!v || v.cut || !ac) return;
       const t = soon(),
         g = v.g.gain;
@@ -474,7 +547,7 @@ export function loop(name, o = {}) {
       v.k = k * near(o) * 10 ** ((VOL[name] || 0) / 20); // (as at its start, where move measures from)
       g.linearRampToValueAtTime(
         (v.k * near(at)) / Math.max(1e-6, near(o)),
-        t + 0.15,
+        t + secs,
       );
     },
     move(x, y) {
@@ -488,8 +561,26 @@ export function loop(name, o = {}) {
         (v.k * near({ x, y })) / Math.max(1e-6, near(o)),
         t + 0.1,
       );
+      const side = v.p && sideOf({ x, y });
+      if (side) glide(v.p.pan, side.pan, t, 0.1, false);
+    },
+    /* its low-pass glided to hz (a loop started with o.lp: the wind muffled indoors, clear outside) */
+    tone(hz) {
+      if (!v || v.cut || !ac || !v.f) return;
+      glide(v.f.frequency, hz, soon(), 0.6, true);
     },
   };
+}
+
+/* a level that may be moving, held where it is, then glided to its new value (never jumped) */
+function glide(param, to, t, secs, exp) {
+  if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(t);
+  else {
+    param.cancelScheduledValues(t);
+    param.setValueAtTime(param.value, t);
+  }
+  if (exp) param.exponentialRampToValueAtTime(Math.max(1e-4, to), t + secs);
+  else param.linearRampToValueAtTime(to, t + secs);
 }
 
 /* the jetpack: its start, its roar while the jets are on, and a hiss as they stop (each duck's own) */
@@ -659,7 +750,8 @@ const NO_LAND = [
   "chair",
   "laser",
 ]; // (they land with their own sounds, or none)
-const land = (k) => NO_LAND.includes(k) || play(LAND[k] || "landSmall");
+const land = (k) =>
+  NO_LAND.includes(k) || play(LAND[k] || "landSmall", { k: 0.55 }); // (quieter than a hit: the owner, Nov 17 12:28Z)
 /* a duck hurt, when nothing bled to make the sound (a kill by command, Invulnerability's flash): looked at a moment
    later, so a hit that bleeds isn't heard twice */
 const hit = () =>

@@ -185,6 +185,7 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import { olAdd, olDraw, olFloor } from "./outlines.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
@@ -1216,6 +1217,9 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
+  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+    olAt = ol && hang ? world.at(R.me) : null,
+    olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
   drawMeters(s, board, layer, now);
   const jp =
@@ -1696,6 +1700,65 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
+    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+       never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
+       roof and a floor away */
+    const olP = !g && s.players[id],
+      olKind = !ol
+        ? ""
+        : isMgj(s)
+          ? id === GOOD_ID
+            ? "blue"
+            : olP && id !== JUSTIN_ID
+              ? "ally"
+              : ""
+          : olP
+            ? olP.helper || olP.wild
+              ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              : "ally"
+            : "";
+    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
+      const ph = pic.naturalWidth
+          ? (size * pic.naturalHeight) / pic.naturalWidth
+          : size,
+        x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
+        b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+        y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
+      let hidden = false,
+        floor = 0;
+      if (hang) {
+        hidden =
+          !!d._hid ||
+          world.coverAt(
+            at.left - size * 0.4,
+            at.left + size * 0.4,
+            b - size * 0.9,
+            b,
+            d._zi - 10,
+          );
+        if (olMe !== null) {
+          const a = world.at(id),
+            f =
+              a &&
+              olFloor(a.x, a.y, pos.j && pos.b !== undefined ? pos.b : a.z);
+          floor = a ? Math.sign(f - olMe) : 0;
+        }
+      }
+      olAdd({
+        id,
+        img: pic,
+        x,
+        y,
+        w: size,
+        h: ph,
+        flip: fx < 0,
+        kind: olKind,
+        hidden,
+        floor,
+        hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
+        down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
+      });
+    }
     if (d._j !== pos.j) {
       d._j = pos.j;
       if (pos.j && pic && pic.classList.contains("jack")) {
@@ -2124,6 +2187,14 @@ function drawDucks(now = clockNow()) {
       fxl.append(h);
       heldEls.set(id, h);
     }
+    /* a gun being reloaded dips and bobs in its duck's hands (Dead Ducks Arcade: its reload runs in its kit; Justin out
+       in Downpour too) */
+    const rk = isL4dd(s) && kitOf(s, id),
+      reloading = !!(rk && rk.rl > now && rk.rw === w);
+    if (h._rl !== reloading) {
+      h._rl = reloading;
+      h.classList.toggle("reload", reloading);
+    }
     /* the knife jabs out and back; the hammer rests over the shoulder, then swings from behind the head down through the
        aim. Turned toward the aim, its offsets mirror for a duck facing left, so the swing always goes over the top */
     const left = Math.cos(ang) < 0,
@@ -2280,6 +2351,7 @@ function drawDucks(now = clockNow()) {
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade, over the board in Mad God Justin)
   if (isMgj(s)) {
     const tag = S.querySelector(".gduck.mine .gduck-name");
     if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)
@@ -3703,6 +3775,7 @@ function playFx(f) {
     /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
        it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
     if (!geo.hang) return;
+    sfx.gore({ x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       top = a.top - size * 0.78;
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
@@ -3716,6 +3789,7 @@ function playFx(f) {
     /* a miss in Dead Ducks Arcade (the owner's, Nov 16 21:47Z): "missed", small and white over that zombie, rising and
        fading as the HP numbers do */
     if (!geo.hang) return;
+    sfx.miss({ x: f.x, y: f.y }); // (a wispy blip: the owner's, Nov 17 12:28Z)
     const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
       word = el(
         `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">missed</div>`,
@@ -3752,6 +3826,7 @@ function playFx(f) {
   } else if (f.kind === "pcrit") {
     /* a crit on a duck (wounds.js): its head bursts in blood, its neck spurts a moment, and a CRIT smaller than Quacky
        Zombies' rises over it */
+    sfx.gore(geo.hang ? { x: f.x * HW, y: f.y * HH } : {}); // (a gush of gore: the owner's, Nov 17 12:28Z)
     const a = geo.hang
         ? world.place({ x: f.x, y: f.y }, f.hz || 0)
         : place({ x: f.x, y: f.y }, 0, 1),
@@ -5298,7 +5373,7 @@ function selectKey(i, toggle) {
 function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
-    l4Pick(i);
+    l4Pick(i, toggle || touchOnly()); // (Safe Keeping's note: only on its number key on a computer, on a tap on a phone)
     return;
   }
   if (bar) bar.show(i);
@@ -5350,7 +5425,7 @@ function useKey(i, keep, toggle = false) {
 /* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
    switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
    and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
-function l4Pick(i) {
+function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
   if (i === 4) {
@@ -5367,7 +5442,7 @@ function l4Pick(i) {
   }
   if (i > 3 || !sl[i]) return;
   if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
+  if (i === 3 && sl[3] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
     if (bar) bar.refresh();

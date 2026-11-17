@@ -5437,3 +5437,36 @@ flashes red when a reload can't be done. All modes, where relevant (no sprint ba
 Split: Jackal = Safe Keeping text (short; PC only on its number key, never on scroll; phone on its hotbar tap), the spin
 square staying put after a round starts, the orb over the car's S, zombie HP bar only once hurt and then kept. Noah = the
 yellow ammo bar and the white bar's red flash, after the outlines.
+
+## Request (2026-11-17 12:52Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtKpnBKTvCEaK1F7CbKddb52): Justin's lines in Downpour, no new ones (word for word)
+Jackal's 12 new lines (8 fighting, 4 at Jaime's body) were shown to the owner. Answer:
+> Next to Jaime’s body:
+>
+> He says awful lines to him that are already coded in the game and he only does it in a rest phase when he stops by it, which happens 1/2 the time about only twice per rest phase, and the quotes shuffle
+>
+> Fighting with his pistol:
+> He says the aggresive lines he already has that wouldnt be impossible to imagine for him to say to zombie 
+>
+> That "not impossible for justin to say" assumes he is crazy and appply to the Jaime lines too
+
+Decided: no new lines. Jackal picks existing lines only (fighting: aggressive ones a crazy Justin could shout at zombies;
+at Jaime's body: his awful existing lines toward Jaime, rest phase only, when he stops by it, 1/2 chance, about twice
+per rest phase, shuffled).
+- Miles Jr., the 12:28Z sounds (all real CC0 recordings, every take click-checked at game volume):
+  - Footsteps by the ground (js/ground.js `groundAt`, my own reading of each map until Solomon's floor function plugs in
+    through `setFloor`): wood ("step", as before), grass, hard (the gas station), metal (anything high up on Downpour: a
+    roof, a car), shallow water, and a swimming stroke in deep water (the cabin's pool, Downpour's flood). Kenney's
+    footsteps, one family, so they stay "the same step". Zombies: the same ground steps, lower and about 7 dB quieter;
+    their old shuffle stays on floors.
+  - Every positional sound now comes from its side (a stereo pan, never all in one ear) and, when the sound passes a
+    height (o.z), sounds through a floor: muffled (900 Hz below me, 1600 Hz above) and a little quieter.
+  - Zombies climbing Downpour's fence rattle it (at most 2 at once, the nearest). A fall (landing 50+ px below where the
+    duck last stood: the deck, the balcony, a roof) lands with a thud; a plain jump doesn't.
+  - Bullets landing on anything but flesh: 5 dB quieter. Crits (zombies and ducks): a gore gush. Misses: a wispy
+    falling blip.
+  - js/hangout/ambience.js: a light rain over Downpour, the wind round both cabins (swelling and dying away every 6 to 14
+    s), each muffled and quieter indoors; every lit fireplace and campfire crackles where it stands (through the walls
+    from another room).
+  - Downpour: the church bell rings every new round in (strikes 0.01, 2.12, 4.24, 6.35 s after it starts; l4ddsfx.js
+    `bellStrikes()` gives them as page times for Noah's swing). Every zombie of a round down: one chime, the last note
+    of What the duck? (2:44).

@@ -6,7 +6,7 @@
 import { duckSVG } from "./duck.js";
 import { svgDataURL } from "./hangout/art.js";
 import { zombieLook, kindOf } from "./l4ddrules.js";
-import { specialById } from "./specials.js";
+import { specialById, pistolIcon } from "./specials.js";
 import { GUNS } from "./l4ddguns.js";
 import { FIREBALL } from "./mgjart.js";
 import { justinSVG } from "./hangout/npcart.js";
@@ -724,7 +724,8 @@ export const ICONS = {
 
 /* a weapon's picture: the specials' bar's (the knife, the pistol, the bow …), the new guns' own (l4ddguns.js), and the
    fireball's (Mad God Justin's) */
-export const weaponIcon = (w) =>
+export const weaponIcon = (w, duck) =>
+  (w === "handgun" && pistolIcon(duck)) || // (the pistol: as the one in my duck's hand, in my colors; the owner's, Nov 17)
   (GUNS[w] && GUNS[w].icon) ||
   (w === "fireball" ? FIREBALL : (specialById(w) || {}).icon || "");
 /* a weapon as an orb, glowing in its slot's color (css: .l4orb, blue melee, red ranged, purple special, white grenades) */

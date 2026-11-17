@@ -70,7 +70,9 @@ import {
   snapLine,
   logIn,
   jaimeCount,
+  JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
+import { GOD_LINES, E_LINES } from "./hangout/justin.js";
 import {
   powerSetUp,
   powerRound,
@@ -86,9 +88,15 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
-/* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
-   keys are still drawn, but quiet: nothing to sit on, sing into or play at, and nothing else to write in or switch. */
-keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano", "tv"]); // (the TV only shows while the power is on: l4ddpower.js)
+/* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
+   The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
+   or play at, and nothing else to write in or switch. */
+keepOnly(
+  "l4dd",
+  [],
+  ["flicker", "ambience"],
+  ["seats", "stage", "bj", "piano", "tv"],
+); // (the TV only shows while the power is on: l4ddpower.js)
 
 /* ---------- the numbers ---------- */
 export const L4 = {
@@ -654,8 +662,7 @@ export const BOX = {
 /* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
    fireplace's (syncMap swaps them in) */
 /* box: where a duck spins and takes (x, y), and where the weapons spin in sight (sx, sy, up sz): over the cabin's
-   fireplace; on Downpour on the ground behind the hood-up car, not in it, so everyone sees them spin (the owner's, Nov 17
-   11:07Z) */
+   fireplace; on Downpour over the hood-up car, on its hood (the owner's, Nov 17 12:28Z; it was on the ground behind it, 11:07Z) */
 const CABIN_SPOTS = {
     butler: { ...BUTLER },
     box: { x: BOX.x, y: BOX.y, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
@@ -665,9 +672,9 @@ const CABIN_SPOTS = {
     box: {
       x: GS.HOOD.spot.x,
       y: GS.HOOD.spot.y,
-      sx: (GS.HOOD.x0 + GS.HOOD.x1) / 2,
-      sy: GS.HOOD.y0 - 90,
-      sz: 4,
+      sx: GS.HOOD.x0 + 90, // (the owner's, Nov 17: over the car, on its hood where he circled the S, not behind it)
+      sy: (GS.HOOD.y0 + GS.HOOD.y1) / 2,
+      sz: 125,
     },
   };
 const SHOP_REACH = 130;
@@ -1950,6 +1957,8 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
+  if (a.do === "jplan" || a.do === "jbody")
+    return justinBody(s, a.do, id, now, mx, my);
   if (a.do === "givej")
     return giveJustin(s, id, String(a.what || ""), mx, my, now);
   if (a.do === "buy")
@@ -1965,6 +1974,23 @@ function l4Act(s, a, now) {
 /* a duck buys Justin out in Downpour a gun (the owner's, Nov 17): standing by him, in the rest phase any gun of WILD_GUNS,
    outside it the first one; it comes out of my points. He keeps it (endless bullets that still reload), can't be hurt by
    players any more, and the points for his kills are mine */
+function justinBody(s, what, id, now, mx, my) {
+  const L = s.hang.l4,
+    B = jaimeBody();
+  if (!isWild(s, id) || id !== WILD.id || !B || !L || !L.wait || L.over)
+    return false;
+  let v = s.hang.l4jv;
+  if (!v || v.r !== L.wait.r) {
+    v = { r: L.wait.r, left: Math.random() < 0.5 ? 2 : 0, at: 0 }; // (this rest phase: half the time twice, else not at all)
+    s.hang.l4jv = v;
+  }
+  if (what === "jplan") return true;
+  if (v.left <= 0 || now - v.at < JBODY.gap) return false;
+  if (Math.hypot(mx - B.x, my - B.y) > JBODY.near) return false;
+  s.hang.l4jv = { ...v, left: v.left - 1, at: now };
+  justinSays(s, "jaime");
+  return true;
+}
 function giveJustin(s, id, what, mx, my, now) {
   const J = wildFor(s),
     pj = J && s.pos[J],
@@ -2150,6 +2176,39 @@ export const WILD = { hp: 6, regen: 60000, id: "b-justin", extra: 100 };
 /* the guns a duck can buy him in the rest phase (the owner's, Nov 17: for the Butler's price and WILD.extra points more);
    outside the rest phase the click buys the first one. Widen this list to let players buy more */
 export const WILD_GUNS = ["handgun"];
+/* what Justin says in Downpour (the owner's, Nov 17: only lines already in the game, ones a crazy Justin could shout): at the
+   zombies with his gun, some of his GOD lines and his insults; at Jaime's body, his lines against Jaime. Each list is a
+   shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line numbers left] }) */
+const FIGHT = [
+  ...[3, 5, 9, 10, 11, 14, 0, 4].map((i) => GOD_LINES[i]),
+  ...E_LINES.filter((l) =>
+    [
+      "Shut up, you stupid IDIOT!",
+      "You're such a stupid flipping IDIOT!",
+    ].includes(l),
+  ),
+];
+const LINES = { fight: FIGHT, jaime: JUSTIN_AT_JAIME };
+function justinSays(s, key) {
+  const list = LINES[key],
+    bags = { ...(s.hang.l4jl || {}) };
+  let bag = bags[key] && bags[key].length ? [...bags[key]] : null;
+  if (!bag) {
+    bag = list.map((_, i) => i);
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+  }
+  const n = bag.pop();
+  bags[key] = bag;
+  s.hang.l4jl = bags;
+  logIn(s, { from: HELPER.id, to: null, text: list[n] });
+}
+/* Jaime's body (Noah's, on the chapel floor: GS.JAIME_BODY { x, y }); in a rest phase Justin goes to it half the time, and
+   at most twice, and says a line each time. s.hang.l4jv = { r (the round), left (visits), at (the last one) } */
+export const jaimeBody = () => GS.JAIME_BODY || null;
+export const JBODY = { near: 110, gap: 8000 };
 /* Justin is out there for a buy: alive, up, with nothing in his hands */
 export const wildFor = (s) => {
   const q = P4(s, WILD.id);
@@ -3572,6 +3631,24 @@ function l4Tick(s, now) {
       s.pos[id].w !== am[id].rw
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
+  /* Justin, armed, now and then shouts at the zombies as he fires */
+  if (
+    isWild(s, WILD.id) &&
+    s.players[WILD.id].armed &&
+    s.hang.l4 &&
+    !s.hang.l4.wait
+  ) {
+    const jk = kitOf(s, WILD.id),
+      last = Math.max(0, ...Object.values((jk && jk.u) || {}));
+    if (
+      now - last < 300 &&
+      now - (s.hang.l4jt || 0) > 7000 &&
+      Math.random() < 0.3
+    ) {
+      s.hang.l4jt = now;
+      justinSays(s, "fight");
+    }
+  }
   /* Justin's gun never runs out: what he has left to load stays full */
   if (isWild(s, WILD.id) && s.players[WILD.id].armed) {
     const jk = kitOf(s, WILD.id),

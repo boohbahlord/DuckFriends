@@ -12,8 +12,9 @@
    Each fades with its distance from my duck (sound.js), and the voices are capped (here a few footsteps and groans at
    once at most). */
 import { play, loadSounds } from "./sound.js";
-import { heightAt } from "./hangout/layout.js";
+import { heightAt, layoutVariant } from "./hangout/layout.js";
 import { OPENINGS, BUTLER, BOX, zombiesOf, ptsOf } from "./l4ddrules.js";
+import { groundAt, stepOf } from "./ground.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 export const SOUNDS = {};
@@ -25,7 +26,18 @@ const STRIDE = 44, // world px a duck walks for each footstep
   GROUP = 160, // world px: zombies this close together are one group (one voice, one set of footsteps)
   GROAN = [6000, 12000], // ms between one zombie's groans
   GROANS = 2, // groans at once at most
-  HEAR = 1500; // world px: farther off, nothing (as Duck Cabin's FAR)
+  HEAR = 1500, // world px: farther off, nothing (as Duck Cabin's FAR)
+  STROKE = 1.6, // swimming: a stroke's splash every this many steps' way
+  Z_K = 0.45, // a zombie's step, of a duck's (the owner: "even far quieter for zombies"; in water too)
+  FALL = 50, // world px: landing this far below where it jumped from is a fall (a thud), not a jump
+  CLIMB = [450, 800], // ms between one zombie's rattles, climbing the fence (Downpour)
+  CLIMBS = 2; // rattles at once at most (the nearest climbers)
+/* Downpour's church bell (sound.js "churchBell"), rung as each round starts: its four strikes, s after it starts
+   (Noah's bell swings on these: bellStrikes()) */
+export const BELL = [0.01, 2.12, 4.24, 6.35];
+let bellAt = 0; // performance.now() when the bell last started
+export const bellStrikes = () =>
+  bellAt ? BELL.map((t) => bellAt + t * 1000) : null;
 let st = null;
 function fresh() {
   return {
@@ -40,6 +52,8 @@ function fresh() {
     fx: -1,
     drops: null,
     flash: null,
+    clr: -1,
+    first: true,
   };
 }
 export function l4Reset() {
@@ -119,9 +133,23 @@ export function l4Hear(s, ctx) {
   st.flash = { ...off };
   /* a new round (not the first look at the game) */
   if (L && L.r !== st.r) {
-    if (st.r >= 0 && L.r > st.r && L.r > 0) play("l4round"); // (everywhere alike: no x, y)
+    if (st.r >= 0 && L.r > st.r && L.r > 0) {
+      play("l4round"); // (everywhere alike: no x, y)
+      if (layoutVariant() === "l4gs" && play("churchBell"))
+        bellAt = performance.now(); // (Downpour: the church bell rings the round in, the owner's, Nov 17 12:28Z)
+    }
     st.r = L.r;
   }
+  /* every zombie of the round down (all of them came, none left standing): one chime, the last note of What the duck?
+     (the owner's, Nov 17 12:28Z) */
+  if (L && L.r > 0 && L.n > 0 && L.made >= L.n && st.clr !== L.r) {
+    const up = zombiesOf(s).some((z) => z.st !== 3);
+    if (!up) {
+      if (!st.first) play("cleared"); // (not for a round already done as I first look)
+      st.clr = L.r;
+    }
+  }
+  st.first = false;
   /* the zombies: how fast each is going, from its last two spots */
   const seen = new Set(),
     gap = Math.max(0.1, Math.min(0.5, (now - (st.zAt || now - 200)) / 1000));
@@ -160,16 +188,33 @@ export function l4Steps(dt, ctx) {
     const a = ctx.world.at(id);
     if (!a) continue;
     let o = st.ducks.get(id);
-    if (!o) st.ducks.set(id, (o = { x: a.x, y: a.y, acc: 0 }));
+    if (!o) st.ducks.set(id, (o = { x: a.x, y: a.y, acc: 0, air: false }));
     const dd = Math.hypot(a.x - o.x, a.y - o.y),
-      air = a.z - heightAt(a.x, a.y) > 4; // (in a jump: no footsteps)
+      under = heightAt(a.x, a.y),
+      air = a.z - under > 4, // (in a jump: no footsteps)
+      k = id === ctx.me ? 1 : 0.7;
+    /* a fall: off the deck, the balcony, a roof (the owner: "a falling sound for when you fall off the fence or the
+       balcony (like the sound of the impact)"); landing where it jumped from, or higher, is only a jump */
+    if (!air) {
+      if (o.air && o.from - a.z > FALL && dd <= 60)
+        play("thud", {
+          x: a.x,
+          y: a.y,
+          z: a.z,
+          k: k * Math.min(1, 0.5 + (o.from - a.z) / 400),
+        });
+      o.from = a.z; // (where it stands: what a jump or a fall starts from)
+    }
+    o.air = air;
     o.x = a.x;
     o.y = a.y;
     if (dd > 60 || air) continue; // (60: a jump back to a start spot)
+    const g = groundAt(a.x, a.y, a.z),
+      every = g === "deep" ? STRIDE * STROKE : STRIDE; // (swimming: a stroke, less often than steps)
     o.acc += dd;
-    if (o.acc >= STRIDE) {
-      o.acc %= STRIDE;
-      play("step", { x: a.x, y: a.y, k: id === ctx.me ? 1 : 0.7 });
+    if (o.acc >= every) {
+      o.acc %= every;
+      play(stepOf(g), { x: a.x, y: a.y, z: a.z, k });
     }
   }
   if (!me) return;
@@ -187,18 +232,38 @@ export function l4Steps(dt, ctx) {
     if (g) g.n++;
     else lead.push({ ...e, n: 1 });
   }
-  let steps = 0;
+  let steps = 0,
+    climbs = 0;
+  const fence = layoutVariant() === "l4gs";
   for (const l of lead) {
     const o = l.o;
+    /* climbing over the fence (Downpour; on the cabin, st 4 is in through a window): its rattle, now and then */
+    if (o.st === 4 && fence) {
+      if (now >= (o.rattle || 0) && climbs++ < CLIMBS) {
+        o.rattle = now + rnd(CLIMB[0], CLIMB[1]);
+        play("climb", { x: o.x, y: o.y, k: Math.min(1, 0.8 + 0.1 * l.n) });
+      }
+      continue;
+    }
     o.acc += o.v * dt;
-    if (o.acc >= Z_STRIDE) {
-      o.acc %= Z_STRIDE;
-      if (steps++ < Z_STEPS)
-        play("zstep", {
-          x: o.x,
-          y: o.y,
-          k: Math.min(1, 0.7 + 0.08 * l.n),
-        });
+    const z = heightAt(o.x, o.y),
+      g = groundAt(o.x, o.y, z),
+      every = g === "deep" ? Z_STRIDE * STROKE : Z_STRIDE;
+    if (o.acc >= every) {
+      o.acc %= every;
+      if (steps++ < Z_STEPS) {
+        const n = Math.min(1, 0.7 + 0.08 * l.n);
+        if (g === "wood") play("zstep", { x: o.x, y: o.y, z, k: n });
+        // (their shuffle on floors, as before; elsewhere the ground's step, lower and quieter)
+        else
+          play(stepOf(g), {
+            x: o.x,
+            y: o.y,
+            z,
+            k: n * Z_K,
+            rate: rnd(0.8, 0.88),
+          });
+      }
     }
   }
   st.groans = st.groans.filter((t) => now - t < 1200);

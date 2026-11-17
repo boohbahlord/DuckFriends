@@ -835,6 +835,9 @@ export const looksOf = (sp, duck) =>
   sp && sp.id === "hammer" && duck && duck.wrench
     ? { ...sp, name: "Wrench", icon: WRENCH_ICON }
     : sp;
+/* the pistol in a hotbar: drawn as the one in my duck's hand, in my colors (the owner, Nov 17 12:28Z: "the pistol in
+   the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green"), never the emoji */
+export const pistolIcon = (duck) => PISTOL(colorsOf(duck, "handgun"));
 /* the handgun's magazine under its key: a dot for each of its seven shots, full until fired */
 export const ammoHTML = (left, n = 7) =>
   `<span class="ammo" aria-label="${left} of ${n} shots">${Array.from({ length: n }, (_, i) => `<i${i < left ? ' class="full"' : ""}></i>`).join("")}</span>`;

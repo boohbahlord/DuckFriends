@@ -9,6 +9,31 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v71",
+    version: 71,
+    date: "Nov 17, 2026",
+    title: "Sounds and outlines",
+    news: [
+      "For Dead Ducks Arcade: Footsteps sound different on grass, wood, floors, roofs and in water, with a stroke when you swim. Every sound comes from its side and is muffled through a floor above or below you.",
+      "For Dead Ducks Arcade: Zombies rattle the fence as they climb it, and falls land with a thud.",
+      "For Dead Ducks Arcade: Crits gush, misses blip, and bullets hitting walls and floors are quieter.",
+      "For Dead Ducks Arcade: A light rain falls on Downpour, the church bell rings each round in, and a chime plays once every zombie is down.",
+      "In Hangout and Dead Ducks Arcade: The wind blows round the cabin, muffled indoors, and the fireplace and campfire crackle as you get close.",
+      "For Dead Ducks Arcade and Mad God Justin: Every player has a soft green outline that shows through walls, roofs and trees. It is very faint when nothing hides them, and it blinks when they get hurt.",
+      "For Dead Ducks Arcade and Mad God Justin: Someone a floor away shows an arrow inside their outline. Up means above you, down means below you.",
+      "For Dead Ducks Arcade and Mad God Justin: Justin's outline is blue.",
+      "For Dead Ducks Arcade: Zombies hiding behind walls or under roofs show a thin dark red outline.",
+      "For Dead Ducks Arcade: Safe Keeping's note is shorter and only shows on its number key (a tap on a phone).",
+      "For Dead Ducks Arcade: In Downpour the weapon orb floats over the car.",
+      "For Dead Ducks Arcade: A zombie's HP bar only shows once it has been hurt.",
+      "The pistol in the hotbar is now drawn like the one in your duck's hand, in your own colors, instead of the green emoji.",
+      "For Dead Ducks Arcade: Justin shouts at the zombies once he has a gun, and runs off when a shot flies close to him.",
+      "For Dead Ducks Arcade: A gun being reloaded dips and bobs in its duck's hands.",
+      "For Dead Ducks Arcade: Downpour's rain looks the same but takes less work from your computer.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v70",
     version: 70,
     date: "Nov 17, 2026",

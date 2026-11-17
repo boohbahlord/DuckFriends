@@ -1234,6 +1234,232 @@ SOUNDS = {
         kbps=32,
         credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
     ),
+    # ---- the owner's Nov 17 12:28Z batch: Downpour, the cabin, every zombie game ----
+    # footsteps by the ground: the same light step (Kenney's, as "step" on wood), on grass, on concrete or the road, on
+    # a metal roof, and through the road's shallow water (the step with a splash over it)
+    "stepGrass": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_grass_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4000,
+                )
+            ]
+            for i in range(5)
+        ],
+        rate=1.26,
+        lp=5000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=("Kenney, Impact Sounds (footstep_grass)", KENNEY_IMPACT),
+    ),
+    "stepHard": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_concrete_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4500,
+                )
+            ]
+            for i in range(5)
+        ],
+        rate=1.26,
+        lp=6000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=("Kenney, Impact Sounds (footstep_concrete)", KENNEY_IMPACT),
+    ),
+    "stepMetal": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_concrete_00{i}.ogg",
+                    0,
+                    0.4,
+                    0,
+                    1,
+                    4500,
+                ),
+                (
+                    f"kn:kenney_impactsounds/Audio/impactMetal_light_00{i}.ogg",
+                    0,
+                    0.3,
+                    0.003,
+                    0.16,
+                    3000,
+                ),
+            ]
+            for i in (0, 1, 2, 4)  # (Kenney's fourth rang too sharp)
+        ],
+        rate=1.26,
+        lp=6000,
+        fin=0.01,
+        room=False,
+        kbps=32,
+        credit=(
+            "Kenney, Impact Sounds (footstep_concrete, impactMetal_light)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    "stepWater": dict(
+        takes=[
+            [
+                (f"gh:water-wade/walk_water_{i + 1}.ogg", 0, 0.38, 0, 1),
+                (
+                    f"kn:kenney_impactsounds/Audio/footstep_wood_00{i % 5}.ogg",
+                    0,
+                    0.3,
+                    0,
+                    0.3,
+                ),
+            ]
+            for i in (1, 2, 4, 6, 8)
+        ],
+        lp=5000,
+        room=False,
+        kbps=32,
+        credit=(
+            "dawidwmika (walk_water, CC0, via CDDA-Soundpacks); Kenney, Impact Sounds",
+            "https://freesound.org/s/372518/",
+        ),
+    ),
+    # swimming the deep flood: a paddle's splash a stroke
+    "swim": dict(
+        takes=[
+            [("gh:swim/splash_01.opus", 0, 0.55, 0, 1)],
+            [("gh:swim/splash_02.opus", 0, 0.5, 0, 1)],
+            [("gh:swim/loop_water_01.opus", 0.2, 0.5, 0, 1)],
+        ],
+        lp=4000,
+        room=False,
+        kbps=32,
+        credit=(
+            "rubberduck (CC0, via EternityForest/Free-SFX)",
+            "https://opengameart.org/users/rubberduck",
+        ),
+    ),
+    # a zombie climbing the chain-link fence: its rattle (quiet, a few at once at most)
+    "climb": dict(
+        takes=[
+            [(f"gh:fence-climb/smash_fail_chain_link{n}.ogg", 0, 0.8, 0, 1)]
+            for n in ("", "_1", "_2")
+        ],
+        rate=0.9,
+        lp=5000,
+        room=False,
+        kbps=32,
+        credit=(
+            "Breviceps (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Breviceps/sounds/458963/",
+        ),
+    ),
+    # a duck landing from a fall (off the fence, the balcony, a roof): a body's thud
+    "thud": dict(
+        takes=[
+            [
+                (
+                    f"kn:kenney_impactsounds/Audio/impactSoft_heavy_00{i}.ogg",
+                    0,
+                    0.5,
+                    0,
+                    1,
+                ),
+                (
+                    f"kn:kenney_impactsounds/Audio/impactPunch_heavy_00{i}.ogg",
+                    0,
+                    0.3,
+                    0.004,
+                    0.35,
+                    2500,
+                ),
+            ]
+            for i in range(3)
+        ],
+        rate=0.85,
+        fin=0.016,
+        kbps=32,
+        credit=(
+            "Kenney, Impact Sounds (impactSoft_heavy, impactPunch_heavy)",
+            KENNEY_IMPACT,
+        ),
+    ),
+    # a crit: a gush of gore
+    "gore": dict(
+        layers=[("gh:gore/zombie_gibbed_1.ogg", 0, 1.2, 0, 1, 3000)],
+        lp=3500,
+        fin=0.01,
+        kbps=40,
+        credit=(
+            "PaulMorek (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/PaulMorek/sounds/196725/",
+        ),
+    ),
+    # a miss: a wispy falling swish with a soft falling blip in it
+    "miss": dict(
+        layers=[
+            ("kn:kenney_interfacesounds/Audio/minimize_005.ogg", 0, 0.53, 0, 1, 3000),
+            ("kn:kenney_digitalaudio/Audio/highDown.ogg", 0, 0.4, 0.01, 0.45, 2500),
+        ],
+        rate=0.85,
+        fin=0.02,
+        kbps=32,
+        credit=(
+            "Kenney, Interface Sounds (minimize_005) and Digital Audio (highDown)",
+            KENNEY_IFACE,
+        ),
+    ),
+    # weather: a light rain over Downpour, and the wind round the cabin, gusting (long loops)
+    "rain": dict(
+        layers=[("gh:rain/heavyrain.ogg", 6.0, 9.0, 0, 1, 3000)],
+        lp=3500,
+        loop=8.0,
+        room=False,
+        kbps=32,
+        credit=(
+            "Ali@k (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Ali@k/sounds/128907/",
+        ),
+    ),
+    "wind": dict(
+        layers=[("gh:wind/WEATHER_SNOWSTORM.ogg", 2.0, 22.0, 0, 1)],
+        lp=4000,
+        loop=20.0,
+        room=False,
+        kbps=32,
+        credit=(
+            "guyburns (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/guyburns/sounds/473815/",
+        ),
+    ),
+    # Downpour's church bell, at the start of every round: four strikes about 2.12 s apart (Noah's swing follows them)
+    "churchBell": dict(
+        layers=[("gh:church-bell/church_bells.ogg", 0.004, 9.9, 0, 1)],
+        lp=5000,
+        room=False,
+        kbps=48,
+        credit=(
+            "Nox_Sound (CC0, via CDDA-Soundpacks)",
+            "https://freesound.org/people/Nox_Sound/sounds/563885/",
+        ),
+    ),
+    # every zombie down: the last note of our own What the duck? (2:44), a single chime
+    "cleared": dict(
+        layers=[("assets/music/what-the-duck.mp3", 164.008, 3.6, 0, 1)],
+        fin=0.015,
+        room=False,
+        kbps=48,
+        credit=("Duck Friends' own song What the duck? (assets/music)", None),
+    ),
 }
 
 
