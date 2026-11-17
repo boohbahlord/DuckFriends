@@ -12173,9 +12173,13 @@ html.moving .hp.hang-shimmer {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-.gduck.hang-swim .hang-wl {
+.gduck.hang-swim .hang-wl,
+.gduck.hang-wade .hang-wl {
   display: block;
 }
+.gduck.hang-wade .gduck-shadow {
+  display: none;
+} /* (Downpour's shallow flood: wading, its bottom fifth under the water) */
 .hang-wl svg {
   display: block;
   width: 100%;

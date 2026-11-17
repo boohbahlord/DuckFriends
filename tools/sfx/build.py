@@ -65,11 +65,13 @@ KENNEY_IFACE = "https://kenney.nl/assets/interface-sounds"
 KENNEY_RPG = "https://kenney.nl/assets/rpg-audio"
 KENNEY_CASINO = "https://kenney.nl/assets/casino-audio"
 KENNEY_JINGLES = "https://kenney.nl/assets/music-jingles"
+KENNEY_DIGITAL = "https://kenney.nl/assets/digital-audio"
 KI = "kn:kenney_impactsounds/Audio/"
 KF = "kn:kenney_interfacesounds/Audio/"
 KU = "kn:kenney_uiaudio/Audio/"
 KR = "kn:kenney_rpgaudio/Audio/"
 KC = "kn:kenney_casinoaudio/Audio/"
+KD = "kn:kenney_digitalaudio/Audio/"
 GR = "oga:guns-reload/"
 EC = GR + "equipmentclicks.wav"
 C3 = GR + "equipment_clicks3.wav"
@@ -180,6 +182,28 @@ SOUNDS = {
         layers=[("oga:guns-smg/P_30P.wav", 0.96, 0.4, 0, 1)],
         drive=4,
         credit=GUNS + ("PPSh",),
+    ),
+    # the Tommy gun (.45, quick and chattering: a shot every 120 ms): one shot of an M45's burst, a PPSh's crack on top
+    # and a .45's low thump under it (each cut before its recording's next shot)
+    "tommy": dict(
+        layers=[
+            ("oga:guns-smg/G_33P.wav", 4.253, 0.095, 0, 1),
+            ("oga:guns-smg/P_32P.wav", 4.444, 0.04, 0.001, 0.4),
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.12, 0.002, 0.35, 1500),
+        ],
+        rate=0.92,
+        drive=4,
+        credit=GUNS + ("M45 SMG and PPSh bursts, 1911 .45",),
+    ),
+    # the UMP-45 (.45, slower and heavier: a shot every 0.30 s): the .45 pistol's crack with an AK's body under it
+    "ump": dict(
+        layers=[
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.14, 0, 1),
+            ("oga:guns-rifle-lmg/C_29P.wav", 1.069, 0.085, 0.003, 0.5, 2500),
+        ],
+        rate=0.88,
+        drive=4,
+        credit=GUNS + ("1911 .45, AK-47 burst",),
     ),
     "sniper": dict(
         layers=[("oga:guns-sniper/W_29P.wav", 0.56, 1.2, 0, 1)],
@@ -1169,6 +1193,46 @@ SOUNDS = {
             "Nic3_one, fire attack (freesound 166555, from Stendhal)",
             "https://freesound.org/people/Nic3_one/sounds/166555/",
         ),
+    ),
+    # ==== batch 8 (the owner, Nov 17) ====
+    # the Angelic pistol's blast: the grenade's boom made a little weaker (a touch higher, less low end, a shorter tail)
+    "boomSmall": dict(
+        layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.8, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 0.9, 0, 0.45),
+            ("oga:explosion-small/explosionCrunch_000.ogg", 0, 0.6, 0.01, 0.35),
+        ],
+        rate=1.12,
+        drive=1.8,
+        credit=(
+            "TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, "
+            "explosionCrunch_000)",
+            OGA_URL["scifi"],
+        ),
+    ),
+    # the laser gun: its beam (one a second), the hiss as it overheats, and the steam off its hot barrel (on a loop)
+    "laser": dict(
+        layers=[
+            (KD + "laser9.ogg", 0.112, 0.55, 0, 1, 5000),
+            (KD + "laser3.ogg", 0.107, 0.45, 0, 0.5, 5000),
+        ],
+        rate=0.92,
+        lp=6000,
+        fin=0.02,
+        credit=("Kenney, Digital Audio (laser9, laser3)", KENNEY_DIGITAL),
+    ),
+    "laserHiss": dict(
+        layers=[("oga:jetpack-stop/steam_hisses_-_Marker_4.wav", 0, 1.2, 0, 1)],
+        lp=6000,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
+    ),
+    "laserSteam": dict(
+        layers=[("oga:laser-steam/steam_hisses_-_Marker_3-start.wav~3", 0, 3.0, 0, 1)],
+        lp=3500,
+        loop=1.5,
+        room=False,
+        kbps=32,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
     ),
 }
 

@@ -1,8 +1,8 @@
 /* ---------- Downpour's ground (Dead Ducks Arcade's second map, stationmap.js) ----------
    Flat pieces under everything, as shapes.js' GROUND() gives them to world.js (each { svg, x, y, w, h }, painted into
    tiles once): the swamp's grass everywhere (past the map's edges too) with mud and puddles, the concrete in
-   front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (its muddy sides, the
-   asphalt, cracks, the faded lines), the flood over it (murky, deep at the west end), and the floors: the gas station's
+   front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (the
+   asphalt, cracks, the faded lines), its banks sloping down into the flood over the whole road (deep at the west end), and the floors: the gas station's
    worn tiles, the chapel's planks and its red runner up the aisle. Night colors; the rain, the ripples and the lights
    go over it later (the owner's order: details, then rain and water, then lighting). Seeded: every screen the same. */
 import * as GS from "./stationmap.js";
@@ -176,7 +176,7 @@ export function downpourGround() {
       ),
     );
   }
-  /* the road: muddy sides where it sinks, the asphalt, cracks, faded lines */
+  /* the road: the asphalt, cracks, faded lines, sunk into the ground between its two banks */
   {
     const h = R.y1 - R.y0,
       side = R.ramp;
@@ -197,32 +197,91 @@ export function downpourGround() {
     }
     G.push(
       piece(
-        `<rect width="${W}" height="${h}" fill="url(#dpa)"/><rect width="${W}" height="${side}" fill="#2f281d"/><rect y="${h - side}" width="${W}" height="${side}" fill="#2f281d"/><rect width="${W}" height="${side}" fill="url(#dpsh)"/><rect y="${h - side}" width="${W}" height="${side}" fill="url(#dpsh2)"/>` +
+        `<rect width="${W}" height="${h}" fill="url(#dpa)"/>` +
           `<rect y="${side + 10}" width="${W}" height="6" fill="#9a9a96" opacity=".35"/><rect y="${h - side - 16}" width="${W}" height="6" fill="#9a9a96" opacity=".35"/>${dash}${cracks}`,
         0,
         R.y0,
         W,
         h,
-        asphaltTile("dpa", rng(19)) +
-          `<linearGradient id="dpsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#24331f"/><stop offset="1" stop-color="#2a2b2f" stop-opacity=".3"/></linearGradient><linearGradient id="dpsh2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#24331f"/><stop offset="1" stop-color="#2a2b2f" stop-opacity=".3"/></linearGradient>`,
+        asphaltTile("dpa", rng(19)),
       ),
     );
   }
-  /* the flood: murky water over the road, the deep end at the west the same water (the owner's, Nov 17 05:46Z: it's
-     swum now, not a wall), soft where the shallow one thins out. One blue all along: the pixel look's nearest color to
-     the old teal was a grass green, so the deep end read as ground (Nov 17) */
+  /* the banks: the ground sloping down into the road, its lower half under the flood (the owner's, Nov 17 11:07Z: "the
+     perception of the ground descending into the road needs to be done with colors or shading"). Shaded as a hill is
+     on a map: darker the lower it goes (grass, then mud, then near black at the water); the light comes from the north,
+     so the north bank, facing away from it, is darker than the south one; contour lines across each slope at even
+     heights; a bright lip where the grass tips over; and a dark crease where the bank meets the water */
   {
-    const [, y0, x1, y1] = GS.SHALLOW,
-      [d0] = GS.DEEP,
+    const side = R.ramp,
+      wl = GS.SHORE, // (the waterline, in from each side)
+      q = rng(23);
+    const wavy = (y, k) => {
+      let d = `M0 ${n1(y)}`;
+      for (let x = 60; x <= W + 60; x += 60)
+        d += `L${x} ${n1(y + (q() - 0.5) * k)}`;
+      return d;
+    };
+    /* y down the bank from its top (0) to the water (wl); flip: the south bank, drawn the other way up */
+    const bank = (y0, flip, id, stops) => {
+      const at = (v) => (flip ? side - v : v),
+        lines = [0.2, 0.4]
+          .map(
+            (u) =>
+              `<path d="${wavy(at(u * side), 3)}" stroke="#15110c" stroke-width="2" fill="none" opacity=".55"/>`,
+          )
+          .join(""), // (contours: a few px of height each)
+        tufts = Array.from({ length: Math.round(W / 26) }, (_, i) => {
+          const x = i * 26 + q() * 18,
+            l = 4 + q() * 5;
+          return `M${n1(x)} ${n1(at(1))}l${n1(-1 - q() * 2)} ${n1(flip ? -l : l)}`;
+        }).join(""); // (grass hanging over the lip)
+      return piece(
+        `<rect width="${W}" height="${side}" fill="url(#${id})"/>${lines}` +
+          `<rect y="${n1(at(flip ? 3 : 0))}" width="${W}" height="3" fill="#3b5230" opacity=".9"/>` + // (the lip)
+          `<path d="${tufts}" stroke="#3b5230" stroke-width="2" stroke-linecap="round" fill="none"/>` +
+          `<rect y="${n1(flip ? side - wl : wl - 7)}" width="${W}" height="7" fill="#0c0a08" opacity=".55"/>`, // (the crease)
+        0,
+        y0,
+        W,
+        side,
+        `<linearGradient id="${id}" x1="0" y1="${flip ? 1 : 0}" x2="0" y2="${flip ? 0 : 1}">${stops
+          .map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`)
+          .join("")}</linearGradient>`,
+      );
+    };
+    G.push(
+      bank(R.y0, false, "dpbn", [
+        [0, "#24331f"],
+        [0.1, "#2c3a22"],
+        [0.25, "#33291d"],
+        [0.6, "#1e1912"],
+        [1, "#1e1912"],
+      ]), // (the north bank, in its own shade)
+      bank(R.y1 - side, true, "dpbs", [
+        [0, "#24331f"],
+        [0.1, "#3b5230"],
+        [0.22, "#453219"],
+        [0.42, "#33291d"],
+        [0.6, "#1e1912"],
+        [1, "#1e1912"],
+      ]), // (the south bank, in the light)
+    );
+  }
+  /* the flood over the whole road (the owner's, Nov 17 11:07Z), its west end deep (swum: Nov 17 05:46Z), the same water:
+     one blue (the pixel look's nearest color to the old teal was a grass green, so it read as ground). Darker along its
+     north edge, in the bank's shadow; a pale line where it meets each bank */
+  {
+    const [x0, y0, , y1] = GS.DEEP,
       h = y1 - y0;
     G.push(
       piece(
-        `<rect width="${x1 - d0}" height="${h}" fill="url(#dpw)"/>`,
-        d0,
+        `<rect width="${W - x0}" height="${h}" fill="url(#dpw)"/><rect width="${W - x0}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${W - x0}" height="2" fill="#9fb3c0" opacity=".35"/>`,
+        x0,
         y0,
-        x1 - d0,
+        W - x0,
         h,
-        `<linearGradient id="dpw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#264660" stop-opacity=".88"/><stop offset=".88" stop-color="#264660" stop-opacity=".85"/><stop offset="1" stop-color="#264660" stop-opacity="0"/></linearGradient>`,
+        `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".92"/><stop offset=".18" stop-color="#264660" stop-opacity=".86"/><stop offset="1" stop-color="#264660" stop-opacity=".86"/></linearGradient>`,
       ),
     );
   }
