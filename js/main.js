@@ -19,7 +19,7 @@ import "./keynav.js";
 import { acct, onAccount, accountStart, signIn } from "./account.js";
 import { openFriends } from "./friends.js";
 import { showSplash } from "./splash.js";
-import { fullOnFirstTap, fsBtnHTML } from "./fullscreen.js";
+import { fullOnFirstTap, fsBtnHTML } from "./corners.js";
 import { loadingScreen, pageReady } from "./loading.js";
 
 applySettings();

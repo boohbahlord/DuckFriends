@@ -1,4 +1,4 @@
-/* ---------- full screen on a phone ----------
+/* ---------- full screen on a phone (named corners.js after its four-corners button: some ad blockers block any file called "fullscreen.js", which stopped the whole game on the owner's laptop) ----------
    On a phone the browser's own bars eat the room, most of all on its side. So the first tap on the start screen
    (TAP TO START) puts the game in full screen, and a button left of the players button (or of the pause button where
    there's none) leaves full screen and comes back to it, with the usual four-corners sign. A press makes the button

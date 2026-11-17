@@ -5204,3 +5204,6 @@ i tried on my phone and it works
 could it possibly be the new mobile features loading on my laptop that has touchscreen ? (those are supposed to load as laptops by default btw)
 maybe it is another new mobile feature like the fullscreen automatically turning on in the game (that should only be for mobile, but the fullscreen button can stay on both"
   - Found (Adam): not reproducible with a touchscreen Windows Chrome setup (it loads, gets the PC UI; auto full screen is already phone-only via isPhone). 47 duck looks and 39 settings profiles all load. So it's something on that machine (an add-on blocking a file, or its saved data). V58: the stuck screen now names the file that didn't arrive or the error, to find it.
+
+- 2026-11-17 09:49Z (screenshot only, the laptop's V58 line): "Not arriving: js/fullscreen.js (blocked), js/euclid.js (503), js/gamesettings.js (503)"
+  - Fixed (Adam, V59): an extension on the owner's laptop blocks any file named fullscreen.js; renamed to js/corners.js (never name a game file after full screen, ads, popups, trackers, etc.). The 503s were GitHub Pages answering the guard's 167 fetches at once: the guard now fetches six at a time and asks a 5xx file once more after a second.
