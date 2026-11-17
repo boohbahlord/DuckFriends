@@ -1011,7 +1011,8 @@ function paint(now, ctx) {
 
 /* ---------- Justin's Butler, standing by the card table ---------- */
 /* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
-const BUTLER_K = 0.7; // (about the size he showed at on a computer)
+const BUTLER_K = 0.7, // (about the size he showed at on a computer)
+  PRIEST_K = 1; // (Downpour's Priest: as big as a player's duck, the owner's, Nov 17 05:46Z)
 function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
@@ -1941,7 +1942,7 @@ activity({
           butler.el.style.zIndex =
             Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
         }
-        const bk = sc * BUTLER_K;
+        const bk = sc * (dp() ? PRIEST_K : BUTLER_K);
         pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
         if (butler.k !== sc) {
           butler.k = sc;

@@ -108,7 +108,7 @@ const GLASS = [
 export const CHAPEL_DOOR = { a: 2000, b: 2600 };
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
    (it does the fireplace's job, and glows until it's first used); spot: its open hood, where E uses it. PRIEST (he
-   does Justin's Butler's job, by the altar). ANGEL: the Angel machine, on the altar. START: where everyone starts,
+   does Justin's Butler's job, at the chapel's south end). ANGEL: the Angel machine, against the south wall. START: where everyone starts,
    inside the gas station by the front door */
 export const GEN = { x0: 3650, y0: 1000, x1: 3850, y1: 1160 };
 export const POWER_SPOT = { x: 3834, y: 1074 };
@@ -120,9 +120,7 @@ export const HOOD = {
   spot: { x: 3270, y: 2090 },
 };
 export const PRIEST = { x: 2550, y: 5360 };
-export const ALTAR = { x0: 1850, y0: 5480, x1: 2750, y1: 5700 };
-export let ALTAR_H = 90; // (how high its top is: the Angel machine stands on it, l4ddangel.js)
-export const ANGEL = { x: 2250, y: 5520 };
+export const ANGEL = { x: 2250, y: 5717 }; // (against the chapel's south wall: its front on the wall's inside face)
 export const START = { x: 2600, y: 1600 };
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
@@ -418,8 +416,12 @@ function planBuild(b) {
   line("y", C.x0, C.y0, C.y1, gapsOn("y", C.x0), C.wall);
   line("y", C.x1, C.y0, C.y1, gapsOn("y", C.x1), C.wall);
   solid("tower", TOWER, TOWER.h);
-  solid("altar", ALTAR, ALTAR_H);
-  put("l4angel", ANGEL.x - 50, ANGEL.y - 13, 100, 26, 140, { z: ALTAR_H });
+  /* no altar (the owner's, Nov 17 05:46Z: the raised white platform read as a coffin); the Angel machine stands on the
+     floor against the south wall, and that wall turns see-through while it hides a quarter of it (keep: world.js) */
+  put("l4angel", ANGEL.x - 50, ANGEL.y - 13, 100, 26, 140, {
+    z: 0,
+    keep: true,
+  });
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
   const PEWS = {
     L: {
@@ -673,13 +675,11 @@ for (const o of [
   HOOD,
 ])
   scaled(o);
-for (const o of [PRIEST, ALTAR, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN])
-  scaled(o);
+for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
 for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
 GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
-ALTAR_H *= K;
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {

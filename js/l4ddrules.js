@@ -573,7 +573,7 @@ export const priceFor = (s, id, what, n) => {
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
 export const BOX = { x: 2300, y: 742, price: 500, spin: 4200, keep: 10000 }; // (500 a spin: the owner's, Nov 15)
-/* … and on Downpour (the second map): the Priest by the altar does the Butler's job, the car with its hood up the
+/* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
    fireplace's (syncMap swaps them in) */
 const CABIN_SPOTS = { butler: { ...BUTLER }, box: { x: BOX.x, y: BOX.y } },
   DP_SPOTS = {

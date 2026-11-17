@@ -625,6 +625,26 @@ export function mountWorld(board, api) {
           walker: true,
         });
       }
+    /* and what must never be hidden (Downpour's Angel machine: keep): a wall or a roof turns see-through while it
+       covers even a quarter of it (the owner's, Nov 17 05:46Z) */
+    for (const p of L.PROPS) {
+      if (!p.keep) continue;
+      if (
+        L.whereIn(p.x + p.w / 2, p.y + p.d) !== bldg &&
+        !(bldg === 0 && roofsShow())
+      )
+        continue;
+      const a = toScreen(p.box.l, p.box.t),
+        c = toScreen(p.box.l + p.box.w, p.box.t + p.box.h);
+      out.push({
+        key: p.key,
+        l: a.left,
+        r: c.left,
+        t: a.top,
+        b: c.top,
+        need: 0.25,
+      });
+    }
     return out;
   }
   const HIDDEN = 0.3; // this much of a duck's box covered: hidden
@@ -677,9 +697,11 @@ export function mountWorld(board, api) {
            hides a duck or a zombie (the owner's, Nov 17 05:46Z: whatever covers one shows it to every player) */
         const thru =
           it.layer === "crown"
-            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > HIDDEN)
+            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN))
             : ducks.some(
-                (d) => d.key < it.key && covered(d, hl, hr, ht, hb) > HIDDEN,
+                (d) =>
+                  d.key < it.key &&
+                  covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
               );
         if (e._thru !== thru) {
           e._thru = thru;

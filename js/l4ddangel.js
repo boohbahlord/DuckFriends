@@ -17,11 +17,11 @@
    its duck takes it. A duck's Angelic weapons: its kit's ang { weapon: 1 } (l4ddrules.js' l4a). */
 import { STAGE, layoutVariant } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
-const dpOn = () => layoutVariant() === "l4gs"; // (Downpour: on the chapel's altar)
+const dpOn = () => layoutVariant() === "l4gs"; // (Downpour: in the chapel, against its south wall)
 import { powerOn } from "./l4ddpower.js";
 
 export const ANGEL = {
-  // the machine on the stage: its foot's middle, toward the back, clear of the mic (Downpour: on the altar)
+  // the machine on the stage: its foot's middle, toward the back, clear of the mic (Downpour: on the chapel's floor)
   get X() {
     return dpOn() ? GS.ANGEL.x : STAGE.cx - 80;
   },
@@ -29,12 +29,12 @@ export const ANGEL = {
     return dpOn() ? GS.ANGEL.y : STAGE.cy - 40;
   },
   get Z() {
-    return dpOn() ? GS.ALTAR_H : STAGE.h; // (what it stands on: the stage, the altar)
+    return dpOn() ? 0 : STAGE.h; // (what it stands on: the stage, the chapel's floor)
   },
-  // where E works from: the stage in front of it (Downpour: the floor before the altar, the aisle's end)
+  // where E works from: the stage in front of it (Downpour: the floor before it, the aisle's end)
   get E() {
     return dpOn()
-      ? [GS.ANGEL.x, GS.ALTAR.y0 - 60]
+      ? [GS.ANGEL.x, GS.ANGEL.y - 60]
       : [STAGE.cx - 80, STAGE.cy + 40];
   },
   REACH: 120,
