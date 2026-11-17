@@ -205,6 +205,7 @@ const EM = 27,
 
 export function pxWords(box) {
   if (!pixelOn() || !document.fonts.check(`${EM}px "Jersey 15"`)) return; // (no font yet: the words stay as words)
+  if (document.documentElement.classList.contains("map-is-nwk")) return; // (Nous Within Kenoma's terminal: its own pixel letters, VT323, css/app.css)
   css();
   const text = box.textContent.trim();
   if (!text) return;
