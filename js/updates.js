@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v76",
+    version: 76,
+    date: "Nov 17, 2026",
+    title: "Up on Downpour's roofs",
+    news: [
+      "For Dead Ducks Arcade: Downpour's gas station has a ladder up its back wall. Climb onto the roof and walk it, but mind the two holes: you fall through them.",
+      "For Dead Ducks Arcade: The pumps' roof sits a little lower than the gas station's roof. Jump across onto it from the station's roof.",
+      "For Dead Ducks Arcade: Zombies climb the walls to get at a duck on a roof.",
+      "For Dead Ducks Arcade: Rain falls in through the holes in the gas station's roof.",
+      "Shots now have a height in every mode. The first duck or zombie a shot reaches sets how high it flies, and a shot that goes through only hits others at that height. Walls stop a shot only if they're taller than it, and no shot goes through a roof.",
+    ],
+  },
+  {
     id: "v75",
     version: 75,
     date: "Nov 17, 2026",
