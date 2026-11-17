@@ -5580,4 +5580,64 @@ Given to Solomon the 2nd: WAVE.N 6, WAVE.PER 3; Mad God Justin's wave zombies ta
 weapon (ARMS dmg, crits, misses, reusing l4ddrules.js); check the other modes' HIT_DMG matches.
 
 ## Request (2026-11-17 17:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8ZveGwoPfnrtdgLW2PNoe7, upset): why requests were missed, new rules, 34 items (word for word)
-The full text is the message above, by id; Adam's numbered reading (1-34) and Q69-Q71 are in Adam's thread, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYH86KXCrpdYzHwgem9HXaf. Rules: no pictures or audio, nothing deploys and no bug testing until the owner says so, Jackal off areas he has messed up more than 5 times.
+> why did you guys not do so many of my requests?
+> do not send me pictures or any audio, just do the code and talk to eachother if need be, and if adam needs to talk to me they can, but they use text only for me and they only write plans in formats that are memory efficient for everyone else to save my usage
+>
+> Adam, tell me ur understanding of things you want me to confirm your right ab when i tell u these things, but first tell me why u havent been doing everything i tell u guys to, where u guys blatantly ignore commands or say u did something when u didnt
+>
+> questions help make this work
+>
+> do not bug tesst every change, we are not deploying anything till i said and bug testing only comes when i say it can, since we are saving usage while still keeping effort high for those it should be for
+>
+> when jackal messes something up more then five times already in the same basic area, then we should consider taking not how he will make bugs or mistakes that are more costly to fix in that area then it is worth to give him said particular task, since we want the tasks that are done properly without a ton of corrections
+>
+> so there are some options i dont think were added.
+>
+> let's start out on what needs more work though or mentioning some things unfixed:
+>
+> * the fucking placement of the orb for the slots of the weapons/items on the car did NOT get fucking fixed
+> * cars should not jiggle or move at all in the map
+> * the zombies should NOT be able to have the surface they hide behind become transparent anymore AND when their red outline shows IT DOES NOT show their image or avatar, only the outline, same with any duck's outline for now on and forever in any game mode.
+> * when on a second floor or first, whatever it may be, zombies pick one way up that wall, fence, or ladder unto the target that is a player and they commit UNLESS the player is back on the floor or verticality close enough to them, because if not, a exploit will happen where the zombies go back and forth with the player's movements IF they are on the low ground and the player is on the top of the surface, which means they are NOT actually able to fight the enemy and the player is NOT immersed any longer
+> * i said justin was supposed to also deliver his normal lines intermediately, but this was not done, which means u disobeyed
+> * justin should be running from zombies not every player regardless of what the player is doing, and justin takes a second before running away when an enemy starts shooting in his direction without actually damaging him
+> * justin should actually be using his fucking weapon on the zombies like i told u to, and killing them as a goal
+> * justin's points earned for killing zombies is now earned in a pot, that at the end of the round will then equally distributed amongst every player, but the lowest unit of points is five, so if it distributes unevenly, then a random player gets those spare points in a shuffle
+> * the red glow around the lmg is thicker then the ak47, so why tf is it not having a consistent effect to what the ak47 has? i have talked about this till i am blue in the face
+> * i specifically said for the holes in the roof of the gas station to be large, but instead they are small, and that must be fixed while keeping it's same look because it looks nice
+> * the gas pumps now get a small sqaure around them in the rest phase as well to indicate that is a place where something can be bought from or an action can be carried out
+> * some 5% of zombies will break at the barricades of the church if the mob of zombies is more then 20, and then, that zombie commits to breaking the window it locked on to in that church until it is done or a player leaves the church, then it chases them, and they only attack the window if the near by player it targets within these conditions is in the church for 8 seconds
+> * Justin should be able to run from zombies when he doesnt have a gun and then calm down his mmovement pattern when he seems safe enough
+> * 5% of zombies who spawn in will have a pattern where they try to attack the player from a different path and direction from the other zombies if it is availible, as a way to add difficulty to players making a train of zombies to herd or shepard
+> * the angel machine now says angel machine in the font and lettering of the nous within kenoma site AND the machine has a transparent fuzzy grey and white static on the machine at all times. The angel machine costs 200 points more.
+> * the slot for a weapon roll costs 150 more
+> * when a player takes damage, the bar on their health should blink into white before the drain drains like a single bar per meter, and if another health is lost during this animation, the duration of the animation of the bar of health of a player is extended for 1/3rd the time with more blinking, and when the blinking approaches the white fully in half a second THEN it will drain empty where health was lost. When health is regenerating, a very very transparent red tries to fill up in the bar's space where the next health point would regen to, and when it comes back, at full, it goes white and starts to blink into red, before approaching an absolute red, which this moment it becomes white it immediately starts approaching red in a second, which means the health is already back. When a hit is taken, the natural regen resets the animation and it's progress to regenerating the 1 hp
+> * the safe keeping now cost 4000 points from the priest
+> * the chance of an item is now 20% for it's bag instead of 15%
+> * the meter on the bottom of a player's screen now has all the same cooldown meter, sprint meter, and ammo meter PLUS the health regen animation now
+> * zombies health becomes white and drains in a similiar but simpler and faster way now when they take damage and the meter drains to black real quick before it disappears with a fade when they die
+> * the top of the roof for the gas pump shouldn't block the movement patterns of players, that is outright stupid and i know why and you know why
+> * the verticality where a player on a second story can shoot down at another zombie of the first story ground SHOULD be implemented and it's vice versa like i said IF a cieling isnt blocking it from happening (so the hole means zombies can be shot down into below when they are under the hole where the ducks on the roof can see them without an outline for example, unless the natural target priority hits the duck on the same floor of a coordinate a little bit further back in the same direction of the bullet's path, since this mechanic based off of old classic doom games (which is what i meant) focuses on automatically everytime unless the same direction of enemy has no one which CAN be shot IN that direction ON the same floor.
+> * scroll wheel goes to the next availible item in the slot or hotbar list on mobile and pc whenever the box in between it and the other is empty, so for example, bow at key number 3, nothing at 4, but a grenade at five, then the scroll wheel will skip the empty one and go straight to the grenade and same if it were more empty slots in the hotbar. this should of already been in the game tbh
+> * wait cars arent jigglingn the map just kinda jiggle if u move, well.... it shouldnt be that big of a deal right? idk it prob doesnt matter and saves my usage plan to not care
+> * the bottom right health bar of justin and other players should always be availible OVER the board like any other ui, but it isnt, it gets engulfed by the black outside the building ur inside of OR the even gets under shelves in the gas station (seriously claude wtf!?!?!). I shouldnt have had to tell u that ui becomes inconsistent
+> * when you are outside of the church, it shouldnt show the inside for any reason, same with any wall or building, because the outline is the new universal system, and it only shows underneath it IF you are under that roof, in the buildinng, under that foliage, or in that wall, it doesnt care if it is an ally or justin or enemy, it will not make it tranparent unless ur player is in it. When on top of a building, such as the gas station roof or pump roof, it therefor should never become transparent
+> * the sound of the electric coming back on or it shutting off should be louder
+> * when Justin dies, a puddle of blood seaps from his corpse, and it is possible to do intense gore to him, such as burning him alive with flamethrower if he doesnt have a weapon, blowing his head off with crit chance, or all the gore form a bomb, it's all the same
+> * to get gas at the pump, you have to be closer to the pumps and only at the side facing down
+> * zombies can only be seen in their image AND outline while under a surface (as well as justin or players) IF you also under that surface
+> * i dont know if the weapons are actually random like i told u to because i got the lmg a lot, but it could be by chance, but i swear i always get the lmg a lot
+> * shooting guns causes a slight vibration in your duck that is non existent for a bow, pistol, or light things like that, but smg it is ever so faint, the ak47 or what not more so, and lmg or sniper it is more, with chain gun being most. the vibration in ur duck obv doesnt happen when throwing a dagger though OR using a melee. the vibration is similiar pattern to the fire rate of the gun and the strength of the vibration should be pretty faint generally but gets worse with bigger calibers and more power guns. THe grenades AND grenade launcher throwing grenades doesnt make you vibrate.
+> * no gun can be reloaded while running except for shotguns
+> * the corners should be more noticiable when you stake damage and it should sway or shake your screen a little and ur duck should quack
+> * ducks, if they dont die, will vibrate a single time or once according to the power of the bullet and how strongly it makes the player vibrate
+> * ducks vibrating from recoil or power of a gun dont messes with movement pattern unless it is the chain gun, then there are physics there obv
+> * laser gun doesnt make player vibrate nor has recoil, but it makes smoke and steam rise up from ducks or zombies it hits
+>
+>
+>
+> Any violence effect on a duck translates to pvp or players killling npcs in any game mode outside of zombies and the guns all work or function the same universally
+>
+> why did you guys not do so many of my requests?
+
+Adam's numbered reading (1-34) and Q69-Q71: Adam's thread, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYH86KXCrpdYzHwgem9HXaf. Waiting for the owner to confirm before splitting. Rules: no pictures or audio, nothing deploys and no bug testing until the owner says so, Jackal off areas he has messed up more than 5 times.
