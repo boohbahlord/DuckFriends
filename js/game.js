@@ -5298,7 +5298,7 @@ function selectKey(i, toggle) {
 function useKey(i, keep, toggle = false) {
   if (!R || !onBoardPhase()) return;
   if (isL4dd(R.state)) {
-    l4Pick(i);
+    l4Pick(i, toggle || touchOnly()); // (Safe Keeping's note: only on its number key on a computer, on a tap on a phone)
     return;
   }
   if (bar) bar.show(i);
@@ -5350,7 +5350,7 @@ function useKey(i, keep, toggle = false) {
 /* Quacky Zombies: keys 1 to 4 pick a slot. A melee or ranged weapon stays in hand once picked; the special (4)
    switches on and off: on, it's in hand instead of the weapon, and off (or used up) that weapon is back. The Long jump
    and the jetpack only switch themselves on and off, and the weapon stays in hand (the owner's, Nov 3) */
-function l4Pick(i) {
+function l4Pick(i, hint = false) {
   const sl = slotsOf(R.state, R.me),
     kit = kitOf(R.state, R.me);
   if (i === 4) {
@@ -5367,7 +5367,7 @@ function l4Pick(i) {
   }
   if (i > 3 || !sl[i]) return;
   if (i !== 3 && kit && kit.jp && sl[3] === "jetpack") fire("jetpack"); // (a weapon picked: the jetpack goes off)
-  if (i === 3 && sl[3] === "safekeep") return l4SafeHint(); // (it can't be used by hand: a note says how it works)
+  if (i === 3 && sl[3] === "safekeep") return hint ? l4SafeHint() : undefined; // (it can't be used by hand: a short note says how it works, never from the scroll wheel)
   if (i === 3 && L4_TOGGLES.includes(sl[3])) {
     fire(sl[3]);
     if (bar) bar.refresh();

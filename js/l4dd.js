@@ -528,6 +528,7 @@ function seeZombies(s, ctx, now) {
     if (o.sh !== sh) {
       o.sh = sh;
       o.bar.style.setProperty("--hp", sh);
+      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17)
     }
     o.hp = z.hp;
     o.st = z.st;
@@ -1425,7 +1426,7 @@ export function l4SafeHint() {
     board.append(hintEl);
   }
   hintEl.innerHTML =
-    "<b>Safe Keeping</b> works by itself. When you go down you keep everything you bought, and it gets you up: press <kbd>E</kbd> (or tap the button) while down, or at once if nobody else is standing. Then 6 seconds nothing can hurt you. Used up after.";
+    "<b>Safe Keeping</b>: when you go down you keep what you bought, and <kbd>E</kbd> gets you up.";
   hintEl.classList.remove("on");
   void hintEl.offsetWidth;
   hintEl.classList.add("on");
