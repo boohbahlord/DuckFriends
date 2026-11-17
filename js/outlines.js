@@ -12,6 +12,7 @@
    Phaser's postFX), which want their own renderer and don't fit our pages of plain elements, so this is the usual
    canvas trick: the picture drawn a pixel off each way in the color, its own shape cut back out. */
 import { gridPx } from "./pixel.js";
+import { floorAt, layoutVariant } from "./hangout/layout.js";
 
 const GREEN = "#5be35b",
   BLUE = "#59c8ff",
@@ -19,9 +20,17 @@ const GREEN = "#5be35b",
 const COLOR = { ally: GREEN, blue: BLUE, zombie: RED };
 const BLINK = 700; // ms an outline blinks after a hit
 
-/* which floor something is on, from where it stands (world px) and its ground's height: a stand-in until the maps say
-   (setFloorOf: Solomon's, from Downpour's roofs) */
-let floorOf = (x, y, z) => (z >= 90 ? 1 : 0);
+/* which floor something is on, from where it stands (world px) and its feet's height: on Downpour, 1 up on a roof or
+   the pumps' canopy and 0 on the ground or inside (layout.js floorAt: a duck climbing the ladder is still on the ground
+   till it steps off onto the roof); on Duck Cabin, 1 from 90 px up (the balcony) */
+let floorOf = (x, y, z) =>
+  layoutVariant() === "l4gs"
+    ? floorAt(x, y, z).deck
+      ? 1
+      : 0
+    : z >= 90
+      ? 1
+      : 0;
 export const setFloorOf = (f) => (floorOf = f);
 export const olFloor = (x, y, z) => floorOf(x, y, z);
 
