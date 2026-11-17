@@ -9,6 +9,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v62",
+    version: 62,
+    date: "Nov 17, 2026",
+    title: "Justin's fight, retuned",
+    news: [
+      "For Mad God Justin: ducks start with the short sword instead of the knife.",
+      "For Mad God Justin: a little plus sign shows up every 30 seconds and gives +1 HP to the duck that walks over it.",
+      "For Mad God Justin: the Xbox is shut off when Justin has 2/3 of his HP left, the meteor at 1/3.",
+      "For Mad God Justin: a gun you pick up comes with only its one magazine (the shotgun never runs out, the LMG has 30 rounds).",
+      "For Mad God Justin: the Angelic pistol's blast has its own boom, a little weaker than the grenade's.",
+      "The LMG holds 100 bullets and takes twice as long to reload in every mode.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v61",
     version: 61,
     date: "Nov 17, 2026",
