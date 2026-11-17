@@ -5207,3 +5207,6 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 
 - 2026-11-17 09:49Z (screenshot only, the laptop's V58 line): "Not arriving: js/fullscreen.js (blocked), js/euclid.js (503), js/gamesettings.js (503)"
   - Fixed (Adam, V59): an extension on the owner's laptop blocks any file named fullscreen.js; renamed to js/corners.js (never name a game file after full screen, ads, popups, trackers, etc.). The 503s were GitHub Pages answering the guard's 167 fetches at once: the guard now fetches six at a time and asks a 5xx file once more after a second.
+
+- 2026-11-17 10:05Z: "install duck friends should be an option on the main menu below updates button"
+  - Done (Adam, V60): js/homeapp.js keeps Chrome/Edge's beforeinstallprompt and shows it from an "Install / Duck Friends" button under Updates (site-btn style, like My Other Website, so it doesn't wrap); no offer = a toast with how-to (iOS Share > Add to Home Screen, Firefox can't); hidden inside the app. Phone on its side: the front column made shorter so all six buttons fit.

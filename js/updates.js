@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v60",
+    version: 60,
+    date: "Nov 17, 2026",
+    title: "Install from the menu",
+    news: [
+      "Install Duck Friends is on the main menu, under Updates. On Chrome and Edge it installs the game as an app in one press; elsewhere it says how. Inside the app it's hidden.",
+    ],
+    fixed: [
+      "On a phone on its side, the main menu's buttons all fit on the screen.",
+    ],
+  },
+  {
     id: "v59",
     version: 59,
     date: "Nov 17, 2026",

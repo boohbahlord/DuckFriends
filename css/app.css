@@ -18505,3 +18505,21 @@ html.lite.map-is-nwk body::before {
     display: none;
   }
 }
+
+/* a phone on its side: the front page's six buttons stay one column, shorter and closer, over a lower ball pit, so the
+   last ones aren't cut off by the short screen */
+html.phone-land .front {
+  --pit: 5.5rem;
+  padding-top: 1rem;
+  padding-bottom: calc(var(--pit) + 0.3rem);
+}
+html.phone-land .front-left {
+  gap: 0.5rem;
+}
+html.phone-land .front-btns {
+  gap: 0.4rem;
+}
+html.phone-land .front-btns .btn.big {
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
