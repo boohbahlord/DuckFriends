@@ -214,6 +214,7 @@ import {
   l4SafeHint,
   laserEnd,
   l4Ammo,
+  l4Warn,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -459,6 +460,9 @@ import {
   jitter,
   shake,
   shakeNow,
+  vibrate,
+  VIB,
+  hitPx,
   wobble,
 } from "./fxmotion.js";
 
@@ -1445,7 +1449,7 @@ function drawDucks(now = clockNow()) {
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
-      hurt(d);
+      hurt(d, 4, true);
     } // a duck knocked down (by a weapon, Justin, a kill): the hit sound and a short red flash, for everyone
     d._dead = dead;
     const hs = (s.hurt || {})[id];
@@ -1609,7 +1613,7 @@ function drawDucks(now = clockNow()) {
           red.style.animation = "";
           sfx.hit();
           if (id === R.me) sfx.ouch(); // (my duck quacks when it's hurt)
-          hurt(d);
+          hurt(d, hitPx(was - hp), hp <= 0); // (a duck hit shakes once by the HP it lost, and once more as it goes down: the owner's, Nov 17)
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
@@ -2357,6 +2361,7 @@ function drawDucks(now = clockNow()) {
     kick(sh.by, gun, now);
     heatUp(sh.by, gun); // (the LMG's barrel heats up as it keeps firing: barrelheat.js)
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
+    vibrate(shooterBody(sh.by), VIB[gun]); // (the firing duck's drawing, in rhythm with the fire rate)
   }
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
      see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
@@ -2863,6 +2868,9 @@ function placeZombies(board, s, now) {
     n._f = face;
     n.classList.toggle("dead", !!o.d);
     n.classList.toggle("claw", now - (o.a || 0) < 350);
+    if (n._hp !== undefined && o.hp < n._hp)
+      vibrate(n.querySelector("img"), hitPx(n._hp - o.hp), !!o.d); // (a wave zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
+    n._hp = o.hp;
     if (n._st === st) continue;
     n._st = st;
     Object.assign(n.style, {
@@ -3345,8 +3353,16 @@ const lawRole = (s, id) =>
         : ""
     : "";
 /* a short, see-through red flash on a duck: Justin hit, or a duck knocked down */
-function hurt(d) {
+const shooterBody = (id) => {
+  const d = S && S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
+  return d && d.querySelector(".gduck-body");
+};
+function hurt(d, px = 3, twice = false) {
   if (!d) return;
+  const t = performance.now();
+  if (!(t - (d._vibAt || 0) < 250))
+    vibrate(d.querySelector(".gduck-body"), px, twice); // (once per hit, not twice when two rules see the same one)
+  d._vibAt = t; // (a hit shakes it once, and once more as it goes down: the owner's, Nov 17, 32 and 34)
   d.classList.remove("hurt");
   void d.offsetWidth;
   d.classList.add("hurt");
@@ -3768,6 +3784,7 @@ function playFx(f) {
     fxMuzzle(x0, y0, ang, kind);
     kick(f.by, kind, now);
     if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
+    vibrate(shooterBody(f.by), VIB[kind]);
     if (f.by === R.me) {
       shake(MUZZLE[kind].shake);
       if (!lz)
@@ -4378,6 +4395,8 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
+  runNow = sprinting && !!(hx || vy);
+  runReloadCheck(s, now);
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4594,6 +4613,8 @@ function hangStep(dt, now) {
   } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
   const jk = jetKeys(),
     jt = !!me.jf && (jk.up || jk.hold);
+  runNow = sprinting && !!(ax || ay);
+  runReloadCheck(R.state, now);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   jetAfter(jt, dt); // (the jets' flames, my fuel)
   moving = ev.moved;
@@ -5667,8 +5688,51 @@ const dots = (id) =>
           ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
+/* No reloading while sprinting, except a shotgun (the owner's, Nov 17 17:41Z and 18:05Z: "running means sprinting with
+   shift yes"): R does nothing while I run, with a note and the error sound, and a reload under way is cancelled the
+   moment I sprint. A bow's, a dagger's or a melee weapon's cooldown is no reload and is never touched */
+const NO_RUN_OK = ["shotgun", "dbarrel"];
+let runNow = false, // sprinting with Shift or the stick, and moving
+  runWarnAt = 0,
+  runCancelAt = 0;
+function runWarn() {
+  const now = performance.now();
+  if (now - runWarnAt < 900) return;
+  runWarnAt = now;
+  if (isL4dd(R.state)) l4Warn("Can't reload while sprinting");
+  else {
+    say("Can't reload while sprinting", true);
+    sfx.nope();
+  }
+  noReload(); // (the white bar flashes red, meters.js)
+}
+/* a reload of mine under way (not a shotgun's): its weapon, or null */
+function myReloadW(s, now) {
+  if (isL4dd(s)) {
+    const kit = kitOf(s, R.me);
+    return kit && kit.rl > now ? kit.rw : null;
+  }
+  for (const [k, m] of Object.entries(s.mag || {}))
+    if (m && m.r > now && (k === R.me || k.startsWith(R.me + " ")))
+      return k === R.me ? "handgun" : k.slice(R.me.length + 1);
+  return null;
+}
+function runReloadCheck(s, tnow) {
+  if (!runNow || !R || !onBoardPhase()) return;
+  const t = performance.now();
+  if (t - runCancelAt < 250) return;
+  const w = myReloadW(s, clockNow());
+  if (!w || NO_RUN_OK.includes(w)) return;
+  runCancelAt = t;
+  R.send({ t: "unreload" });
+  runWarn();
+}
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
+  if (R && onBoardPhase() && runNow && !NO_RUN_OK.includes(heldNow())) {
+    runWarn();
+    return true;
+  }
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
     if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
@@ -5790,11 +5854,19 @@ function wheelPick(dir) {
   if (!R || !onBoardPhase()) return false;
   const s = R.state;
   if (isL4dd(s)) {
-    const sl = slotsOf(s, R.me);
+    /* the next slot that has something: an empty one between is skipped, and the grenades (key 5) are in the row when I
+       have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
+       wheel will skip the empty one and go straight to the grenade"); Safe Keeping is never picked by hand */
+    const sl = slotsOf(s, R.me),
+      kit = kitOf(s, R.me),
+      has = (i) =>
+        i === 4
+          ? !!(kit && kit.g > 0)
+          : !!sl[i] && !(i === 3 && sl[3] === "safekeep");
     let i = l4Slot;
-    for (let k = 0; k < 4; k++) {
-      i = (i + dir + 4) % 4;
-      if (sl[i]) {
+    for (let k = 0; k < 5; k++) {
+      i = (i + dir + 5) % 5;
+      if (i !== l4Slot && has(i)) {
         l4Pick(i);
         return true;
       }

@@ -117,7 +117,14 @@ import {
   isPw,
   PART_ICONS,
 } from "./l4ddpowerui.js";
-import { powerOn, pwState, partName, PW, fireForSale } from "./l4ddpower.js";
+import {
+  powerOn,
+  powerNext,
+  pwState,
+  partName,
+  PW,
+  fireForSale,
+} from "./l4ddpower.js";
 import {
   angelMount,
   angelUnmount,
@@ -130,6 +137,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
+import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -527,6 +535,8 @@ function seeZombies(s, ctx, now) {
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    if (z.hp < o.hp && shown && o.st !== 3)
+      vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
     if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
@@ -630,33 +640,42 @@ let sqEl = null,
 function spinSquare(s, ctx) {
   const L = s.hang.l4,
     Wd = ctx.world,
-    show = !!(
-      sqEl &&
-      L &&
-      !L.over &&
-      L.wait &&
-      seenFrom(BOX.zx, BOX.y, Wd.inside)
-    );
+    rest = !!(sqEl && L && !L.over && L.wait);
   if (!sqEl) return;
-  /* (an <svg> has no .hidden: setting it did nothing, so the square stayed drawn over the gas station's floor once I
-     went inside, the owner's, Nov 17 13:38Z. display does it) */
-  const shown = sqEl.style.display !== "none";
-  if (shown !== show) sqEl.style.display = show ? "" : "none";
-  if (!show) return;
-  const z = heightAt(BOX.zx, BOX.y),
-    pts = [
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-      [-1, 1],
-    ].map(([a, b]) => {
-      const p = Wd.toScreen(BOX.zx + a * NEAR, BOX.y + b * NEAR, z);
-      return p.left.toFixed(1) + "," + p.top.toFixed(1);
-    }),
-    sig = pts.join(" ") + Wd.sc.toFixed(3);
+  /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
+     done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
+  const spots = [[BOX.zx, BOX.y], ...(dp() ? PUMP_E : [])],
+    polys = sqEl.children;
+  /* (an <svg> has no .hidden: display does it) */
+  if ((sqEl.style.display !== "none") !== rest)
+    sqEl.style.display = rest ? "" : "none";
+  if (!rest) return;
+  let sig = Wd.sc.toFixed(3);
+  spots.forEach(([cx, cy], i) => {
+    const half = i ? PUMP_NEAR : NEAR; // (a pump's square is as big as where its button shows: l4ddpower.js PUMP_NEAR)
+    const poly = polys[i];
+    if (!poly) return;
+    const on = seenFrom(cx, cy, Wd.inside);
+    if ((poly.style.display !== "none") !== on)
+      poly.style.display = on ? "" : "none";
+    if (!on) return;
+    const z = heightAt(cx, cy),
+      pts = [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ]
+        .map(([a, b]) => {
+          const p = Wd.toScreen(cx + a * half, cy + b * half, z);
+          return p.left.toFixed(1) + "," + p.top.toFixed(1);
+        })
+        .join(" ");
+    sig += "|" + pts;
+    if (poly.getAttribute("points") !== pts) poly.setAttribute("points", pts);
+  });
   if (sig === sqSig) return;
   sqSig = sig;
-  sqEl.firstChild.setAttribute("points", pts.join(" "));
   sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
@@ -1732,6 +1751,7 @@ function peek(tag, s, me) {
   void el.offsetWidth;
   el.classList.add("go");
 }
+export const l4Warn = (text) => say(text); // (game.js: a note over the board with the error sound)
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;
@@ -2088,7 +2108,7 @@ activity({
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     sqEl.classList.add("l4-spinsq");
     sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
-    sqEl.innerHTML = "<polygon/>";
+    sqEl.innerHTML = "<polygon/><polygon/><polygon/>"; // (the car, then Downpour's two gas pumps)
     sqEl.style.display = "none";
     sqSig = "";
     layer.append(sqEl);
@@ -2464,6 +2484,7 @@ activity({
     const s = ctx.state();
     return {
       label: holdLabel(t, s, ctx, Date.now()),
+      faded: t.kind === "power" && powerNext(s) === "", // (nothing to fit, turn on or pour in: the button fades, the owner's, Nov 17 18:05Z)
       d: t.d,
       act: () =>
         TAPS.includes(t.kind)

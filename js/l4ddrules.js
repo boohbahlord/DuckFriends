@@ -123,7 +123,11 @@ export const L4 = {
    everything bought from the Butler, and it gets the duck up again: at once when nobody else is standing (or alone, or
    a computer), else when its player presses the revive key (E) while down. First GLOW ms of a light blue glow, then up
    with INV ms of nothing hurting it; spent. The Butler sells it (PRICE) and the fireplace has it with the items */
-export const SAFE = { PRICE: 2500, GLOW: 1200, INV: 6000 };
+export const SAFE = {
+  PRICE: 4000, // (the owner's, Nov 17 17:41Z: "the safe keeping now cost 4000 points from the priest")
+  GLOW: 1200,
+  INV: 6000,
+};
 const hasSafe = (s, id) => slotsOf(s, id).includes("safekeep");
 export const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
@@ -498,7 +502,7 @@ export const ITEMS = [
   "chair",
   "safekeep",
 ];
-export const WEAPON_ODDS = 0.85;
+export const WEAPON_ODDS = 0.8; // (the item's chance is 20%: the owner's, Nov 17 17:41Z, "the chance of an item is now 20% for it's bag instead of 15%")
 /* the melees are one bag among the weapons, and it holds two bags, the blunt ones and the sharp ones (the owner's,
    Nov 16): the fireplace picks the melee bag as likely as any one gun, then one of its two bags, then one inside it */
 export const MELEE_BAGS = [
@@ -659,7 +663,7 @@ export const BOX = {
   zx: 2300,
   sy: 706,
   sz: 58,
-  price: 500,
+  price: 650, // (the owner's, Nov 17 17:41Z: "the slot for a weapon roll costs 150 more")
   spin: 4200,
   keep: 10000,
 }; // (500 a spin: the owner's, Nov 15. sx, sy, sz: where it shows, CABIN_SPOTS below)
@@ -2423,6 +2427,13 @@ export function l4Reload(s, a, now) {
   finishReload(m, now);
   if (!startReload(s, a.id, m, w, now)) return false;
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
+  return true;
+}
+/* sprinting cancels a reload (the owner's, Nov 17 17:41Z; not a shotgun's, which has none): the magazine stays as it was */
+export function l4Unreload(s, a, now) {
+  const m0 = kitOf(s, a.id);
+  if (!m0 || !m0.rl || now >= m0.rl) return false;
+  s.hang.l4a = { ...s.hang.l4a, [a.id]: { ...m0, rl: 0, rw: "" } };
   return true;
 }
 /* what the power box's rules (l4ddpower.js) use of these */

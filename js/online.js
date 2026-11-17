@@ -279,6 +279,7 @@ const REMOTE = new Set([
   "idle",
   "use",
   "reload",
+  "unreload",
   "aura",
   "fx",
   "jumps",

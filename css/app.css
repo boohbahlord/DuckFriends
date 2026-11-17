@@ -11860,6 +11860,9 @@ html.sprint-blur .hang-board::after {
   background: transparent;
   border-color: currentColor;
 }
+.hang-btn.faded {
+  opacity: 0.45;
+}
 .hang-btn.idle {
   visibility: hidden;
 }
