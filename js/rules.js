@@ -280,7 +280,7 @@ export const OPTIONS_DEFAULT = {
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   l4start: 1, // Quacky Zombies' Start on round: 1, 5, 9, 13 or 21 (round 0 goes on to it, everyone with bonus points: l4ddrules.js START_PTS)
-  wildJustin: 0, // Quacky Zombies: 1 = Justin is out in Duck Cabin too, unarmed, as on Downpour (the owner's, Nov 17; Downpour always has him)
+  wildJustin: 1, // Quacky Zombies: 1 = Justin is out in Duck Cabin too, unarmed, as on Downpour (the owner's, Nov 17; Downpour always has him). On by default: the owner's, Nov 17 20:02Z, "he spawns in cabin now by default the same, without a weapon and cannot get a weapon"
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   tvWrite: 210, // Trivia: seconds to write the questions: 120, 210, 300 or 0 (no limit)
   tvMulti: 1, // … Multiple answers: 1 = a question can have several right answers (never all); 0 = exactly one
