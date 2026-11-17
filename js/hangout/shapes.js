@@ -444,6 +444,7 @@ const SK = Object.fromEntries(
     "counterSVG",
     "bellSVG",
     "corpseSVG",
+    "ladderSVG",
   ].map((n) => [n, atK(SA[n])]),
 );
 const GS_DRAW = {
@@ -515,6 +516,10 @@ const GS_DRAW = {
       }),
     ];
   },
+  ladder: (p) =>
+    gsPart(p, () => SK.ladderSVG({ w: p.w, h: p.d + p.h }), {
+      opt: { fade: false }, // (it stays while a duck climbs it, seen between its rungs)
+    }),
   corpse: (p) =>
     gsPart(p, () => SK.corpseSVG({ w: p.w, d: p.d + p.h, kind: p.who }), {
       opt: { fade: false },
@@ -814,6 +819,7 @@ export const DRAW = {
             d: b.h - p.bldg.wall,
             kind: p.bldg === GS.STATION ? "gs" : "ch",
             soldier: p.soldier && p.soldier.map((v) => v / GS.K), // (its own numbers are the plan's)
+            holes: p.holes && p.holes.map((h) => h.map((v) => v / GS.K)),
           }), // (its walls' faces show under it: stationart.js)
         b.l,
         b.t,

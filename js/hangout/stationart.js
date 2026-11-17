@@ -1457,7 +1457,77 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
    w × d: the roof's top, over the walls and 30 past them all round. The gas station's: flat, tar and gravel inside a
    parapet, two air-conditioning units and vents, the sign's red band along its front. The chapel's: pitched, its ridge
    running north-south, the west slope catching more light than the east, a cross on the ridge over the entrance */
-export function roofSVG({ w, d, kind = "gs", soldier = null }) {
+/* a hole broken through the gas station's flat roof, in its box x, y, w × d: a ragged dark mouth down into the building,
+   its edge of broken concrete, rusty rebar bent in over it and rubble round it (the owner's, Nov 17 12:28Z) */
+function roofHole(x, y, w, d, seed) {
+  const r = rnd(seed),
+    cx = x + w / 2,
+    cy = y + d / 2,
+    pts = (k, j) =>
+      Array.from({ length: 16 }, (_, i) => {
+        const a = (i / 16) * Math.PI * 2,
+          f = k * (1 - j * r());
+        return [cx + Math.cos(a) * (w / 2) * f, cy + Math.sin(a) * (d / 2) * f];
+      }),
+    path = (p) => "M" + p.map(([u, v]) => n1(u) + " " + n1(v)).join("L") + "Z";
+  let s =
+    F`<path d="${path(pts(1, 0.18))}" fill="#565d77" ${ln(2.4)}/>` + // (the cracked concrete round it)
+    F`<path d="${path(pts(0.86, 0.22))}" fill="#0b0c11" ${ln(3)}/>` + // (the dark below)
+    F`<path d="${path(pts(0.6, 0.3))}" fill="#05060a"/>`;
+  /* rebar: rusty rods sticking in over the hole from its edge, a few bent down */
+  for (let i = 0; i < 5; i++) {
+    const a = r() * Math.PI * 2,
+      x0 = cx + Math.cos(a) * w * 0.47,
+      y0 = cy + Math.sin(a) * d * 0.47,
+      k = 0.3 + r() * 0.25,
+      x1 = x0 + (cx - x0) * k,
+      y1 = y0 + (cy - y0) * k + 6 + r() * 10;
+    s += F`<path d="M${x0} ${y0}L${x1} ${y1}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${x0} ${y0}L${x1} ${y1}" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  /* cracks running out over the roof, and rubble */
+  for (let i = 0; i < 6; i++) {
+    const a = r() * Math.PI * 2,
+      x0 = cx + Math.cos(a) * w * 0.5,
+      y0 = cy + Math.sin(a) * d * 0.5,
+      l = 20 + r() * 40;
+    s += F`<path d="M${x0} ${y0}l${Math.cos(a) * l} ${Math.sin(a) * l + (r() - 0.5) * 14}l${Math.cos(a + 0.6) * l * 0.5} ${Math.sin(a + 0.6) * l * 0.5}" fill="none" stroke="#1d1e29" stroke-width="2.4" stroke-linecap="round"/>`;
+  }
+  for (let i = 0; i < 9; i++) {
+    const a = r() * Math.PI * 2,
+      f = 0.55 + r() * 0.35,
+      bx = cx + Math.cos(a) * w * f,
+      by = cy + Math.sin(a) * d * f,
+      z = 6 + r() * 10;
+    s += F`<path d="M${bx - z} ${by}L${bx - z * 0.3} ${by - z * 0.8}L${bx + z} ${by - z * 0.3}L${bx + z * 0.6} ${by + z * 0.5}Z" fill="${r() < 0.5 ? "#849097" : "#565d77"}" ${ln(1.6)}/>`;
+  }
+  return s;
+}
+/* the ladder up the gas station's back wall (stationmap.js LADDER), w wide and h tall from the ground, plus the rails'
+   hoops curling over the roof's edge at its top (TOP px over the roof) */
+export const LADDER_TOP = 46;
+export function ladderSVG({ w = 80, h = 340 }) {
+  const rail = 9,
+    l = 6,
+    r = w - 6 - rail,
+    top = 8;
+  let s = "";
+  /* the rungs, every 34 px, under the rails */
+  for (let y = h - 26; y > top + LADDER_TOP; y -= 34)
+    s += R(l + rail - 2, y, r - l - rail + 4, 7, "#849097", ln(2));
+  /* the two rails up the wall, and their hoops over the roof's edge (a grab at the top) */
+  for (const x of [l, r])
+    s +=
+      F`<path d="M${x + rail / 2} ${h - 2}V${top + 18}Q${x + rail / 2} ${top} ${x + rail / 2 + (x === l ? -14 : 14)} ${top + 6}" fill="none" stroke="${O}" stroke-width="${rail + 5}" stroke-linecap="round"/>` +
+      F`<path d="M${x + rail / 2} ${h - 2}V${top + 18}Q${x + rail / 2} ${top} ${x + rail / 2 + (x === l ? -14 : 14)} ${top + 6}" fill="none" stroke="#a9b3b8" stroke-width="${rail}" stroke-linecap="round"/>` +
+      R(x + 1, top + 18, 3, h - top - 24, "#d6dde0"); // (the light down its front edge)
+  /* rust, and its feet bolted to the ground */
+  s +=
+    R(l - 2, h - 8, rail + 4, 8, "#565d77", ln(2)) +
+    R(r - 2, h - 8, rail + 4, 8, "#565d77", ln(2)) +
+    F`<path d="M${l + 3} ${h * 0.55}v26M${r + 5} ${h * 0.3}v18" stroke="#9a5a2c" stroke-width="3" stroke-linecap="round" opacity="0.8"/>`;
+  return wrap(w, h, s);
+}
+export function roofSVG({ w, d, kind = "gs", soldier = null, holes = null }) {
   const id = uid();
   if (kind === "gs") {
     let s =
@@ -1497,6 +1567,9 @@ export function roofSVG({ w, d, kind = "gs", soldier = null }) {
     s +=
       R(cx - 90, by - 10, 180, 88, "#f7f8f3", ln(3)) +
       F`<path d="M${cx} ${by + 2}C${cx - 22} ${by + 30} ${cx - 20} ${by + 66} ${cx} ${by + 66}C${cx + 20} ${by + 66} ${cx + 22} ${by + 30} ${cx} ${by + 2}Z" fill="#c7282a" ${ln(2)}/>`;
+    /* the holes broken through it ([x, y, w, d] on the roof: stationmap.js ROOF_HOLES, a duck falls through them) */
+    for (const [i, h] of (holes || []).entries())
+      s += roofHole(...h, 7 + i * 13);
     /* the dead soldier up here, [x, y] on the roof, and his flare beside him (it burns at each round's start:
        l4dd.js flare) */
     if (soldier) {
