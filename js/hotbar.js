@@ -9,7 +9,13 @@
    picks another (a longer slide goes past more of them), a tap on the middle one uses it, a tap on a side one picks it,
    (there is no square to switch one on: the one picked is the one toggled, the owner's, Nov 16). */
 import { esc } from "./ui.js";
-import { KEYS, specialById, looksOf, ammoHTML } from "./specials.js";
+import {
+  KEYS,
+  specialById,
+  looksOf,
+  ammoHTML,
+  pistolIcon,
+} from "./specials.js";
 
 const LIFE = 5000; // how long a key just pressed glows (and the ring of specials stays on a phone)
 const HOLD = 450;
@@ -37,8 +43,14 @@ export function mountHotbar(S, api) {
     wheel = null,
     wheelT = 0,
     coolT = 0;
-  const look = (id) =>
-    api.look ? api.look(id) : looksOf(specialById(id), api.duck && api.duck());
+  const look = (id) => {
+    if (api.look) return api.look(id);
+    const duck = api.duck && api.duck(),
+      sp = looksOf(specialById(id), duck);
+    return sp && sp.id === "handgun"
+      ? { ...sp, icon: pistolIcon(duck) } // (as the one in my hand, not the emoji)
+      : sp;
+  };
   const dots = (id) =>
     api.dots
       ? api.dots(id)

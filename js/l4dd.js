@@ -1510,7 +1510,7 @@ function peek(tag, s, me) {
   track.innerHTML = list
     .map(
       ([x, cls]) =>
-        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x)) : weaponIcon(x)}</i></span>`,
+        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x, (s.players[me] || {}).duck)) : weaponIcon(x, (s.players[me] || {}).duck)}</i></span>`,
     )
     .join("");
   const lay = (at) =>
