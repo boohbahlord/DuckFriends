@@ -1,8 +1,8 @@
 /* ---------- Downpour's ground (Dead Ducks Arcade's second map, stationmap.js) ----------
    Flat pieces under everything, as shapes.js' GROUND() gives them to world.js (each { svg, x, y, w, h }, painted into
    tiles once): the swamp's grass everywhere (past the map's edges too) with mud and puddles, the concrete in
-   front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (its muddy sides, the
-   asphalt, cracks, the faded lines), the flood over it (murky, deep at the west end), and the floors: the gas station's
+   front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (the
+   asphalt, cracks, the faded lines), its banks sloping down into the flood over the whole road (deep at the west end), and the floors: the gas station's
    worn tiles, the chapel's planks and its red runner up the aisle. Night colors; the rain, the ripples and the lights
    go over it later (the owner's order: details, then rain and water, then lighting). Seeded: every screen the same. */
 import * as GS from "./stationmap.js";
