@@ -71,8 +71,7 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { ZCABIN } from "./maps.js";
-import { ARMS, ITEM_ODDS } from "./l4ddrules.js";
+import { ARMS, ITEM_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
@@ -1559,13 +1558,8 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return false;
   }
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
-  if (
-    mgjZombieHit(s, (x, y) => near({ x, y }), shotDmg(sh.k), now, {
-      x: x0,
-      y: y0,
-    })
-  )
-    return true; // (one of his zombies in the way: it stops there)
+  if (mgjZombieHit(s, (x, y) => near({ x, y }), armOf(sh.k), now, sh.by, sh))
+    return true; // (one of his zombies in the way: it stops there, but the shots that go through them)
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
 }
 /* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
@@ -1830,11 +1824,11 @@ function burnTick(s, now) {
    before: game.js reads edgeAt) */
 function edgeTick(s, now, fx) {
   const m = s.mgj;
-  if (waveOn(s) || s.options.map === ZCABIN) {
+  if (waveOn(s)) {
     if (m.edgeAt - now > EDGE_WARN + 1000) return false;
-    m.edgeAt = now + (s.options.map === ZCABIN ? 3600000 : EDGE_WARN + 5000);
+    m.edgeAt = now + EDGE_WARN + 5000;
     return true;
-  } // (no lightning from the edges while his zombies are out, nor ever on Quacky Zombies' Duck Cabin: the owner's, Nov 17 11:07Z)
+  } // (no lightning from the edges while his zombies are out: the owner's, Nov 17 11:07Z. The hold is a change, so it's kept)
   if (now < m.edgeAt) return false;
   m.edgeAt = now + EDGE_EVERY;
   m.edgeLast = now;
@@ -2306,18 +2300,19 @@ export function mgjStats(s, all = false) {
 }
 
 /* ---------- his zombie waves (the owner's, Nov 17 11:07Z, and 11:19Z: "each player after the first") ----------
-   Every 30 to 60 s, and 5 to 10 s later for each duck after the first, Justin calls a wave: 12 zombies, and 6 more for
-   each duck after the first, come in from the board's edges, 1 to 3 a second, twice as many a second for every 2
+   Every 30 to 60 s, and 5 to 10 s later for each duck after the first, Justin calls a wave: 6 zombies, and 3 more for
+   each duck after the first (half the owner's first numbers: "waves can be half the size", Nov 17 16:23Z), come in from the board's edges, 1 to 3 a second, twice as many a second for every 2
    ducks after the first. They walk at the nearest duck and claw it (1 HP, as his own hits). While any of them are out,
    or still to come, he's calmer (his attacks come WAVE.CALM times as late), he'd rather eat, and no lightning comes
-   from the edges. Ducks' guns, melee and grenades hurt them (each has WAVE.HP); a shot stops at the first it hits.
+   from the edges. Ducks' guns, melee and grenades hurt them as they hurt Dead Ducks Arcade's zombies (each has WAVE.HP;
+   mgjZombieHit).
    s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died) }], n (the
    next one's number), on (a wave is out), next (the next wave), left (still to come), sp (the next ones' second) } */
 export const WAVE = {
   EVERY: [30000, 60000],
   LATER: [5000, 10000], // (each duck after the first)
-  N: 12,
-  PER: 6, // (each duck after the first)
+  N: 6,
+  PER: 3, // (each duck after the first)
   RATE: [1, 3], // (a second, doubled for every 2 ducks after the first)
   HP: 3,
   SPEED: 3.2, // duck lengths a second
@@ -2449,26 +2444,48 @@ function wavesTick(s, now) {
   }
   return ch;
 }
-/* a duck's hit on the zombies: near(x, y) says which are in reach; each takes n. first: only the nearest one along it
-   (a shot), at: where the shot starts. True when it hit any */
-export function mgjZombieHit(s, near, n, now, first = null) {
+/* the weapon a shot's kind comes from (rules.js names some shots after what they are) */
+const SHOT_ARM = {
+  pellet: "shotgun",
+  arrow: "bow",
+  chain: "chaingun",
+  slug: "dbarrel",
+  lgren: "glauncher",
+};
+export const armOf = (k) => SHOT_ARM[k] || k;
+/* duck by's hit on the zombies with weapon w: near(x, y) says which are in reach. Each takes what a Dead Ducks Arcade
+   zombie takes from w (l4ddrules.js zombieTakes: its damage, its headshots and its misses; the owner's, Nov 17 16:23Z),
+   with "CRIT" or "missed" over it as there. sh: a shot, from (sh.x0, sh.y0); it hits the nearest first, each zombie once
+   (sh.zh), goes on past the ones it missed (sh.zp) and stops at the first it hits, or after pierceOf (the Laser Rifle's
+   beam through every one on it). True when the shot stops here, or a swing or blast hit any */
+export function mgjZombieHit(s, near, w, now, by, sh = null) {
   const z = s.mz;
   if (!z || !isMgj(s) || s.phase !== "boss") return false;
-  let got = z.zb.filter((o) => !o.d && near(o.x, o.y));
+  const seen = sh ? [...(sh.zh || []), ...(sh.zp || [])] : [];
+  let got = z.zb.filter((o) => !o.d && !seen.includes(o.i) && near(o.x, o.y));
   if (!got.length) return false;
-  if (first)
-    got = [
-      got.sort(
-        (a, b) =>
-          Math.hypot(a.x - first.x, a.y - first.y) -
-          Math.hypot(b.x - first.x, b.y - first.y),
-      )[0],
-    ];
-  const fx = fxOf(s, now);
+  if (sh)
+    got.sort(
+      (a, b) =>
+        Math.hypot(a.x - sh.x0, a.y - sh.y0) -
+        Math.hypot(b.x - sh.x0, b.y - sh.y0),
+    );
+  const fx = fxOf(s, now),
+    most = !sh || w === "laser" ? Infinity : Math.max(1, pierceOf(s, by, w));
+  let hit = false;
   for (const o of got) {
-    o.hp -= n;
+    if (sh && (sh.zh || []).length >= most) break;
+    const t = zombieTakes(s, by, w);
+    if (!t) {
+      if (sh) sh.zp = [...(sh.zp || []), o.i];
+      fx({ kind: "l4miss", b: 1, x: o.x, y: o.y });
+      continue;
+    }
+    if (sh) sh.zh = [...(sh.zh || []), o.i];
+    hit = true;
+    o.hp = t.dmg >= ALL_HP ? 0 : o.hp - t.dmg;
     if (o.hp <= 0) o.d = now;
-    fx({ kind: "hitmark", x: o.x, y: o.y });
+    fx({ kind: t.head ? "l4crit" : "hitmark", b: 1, x: o.x, y: o.y });
   }
-  return true;
+  return sh ? (sh.zh || []).length >= most : hit;
 }

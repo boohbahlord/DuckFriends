@@ -2606,6 +2606,33 @@ export function l4Use(s, a, now) {
   s.hang.l4a = { ...s.hang.l4a, [id]: m };
   return true;
 }
+/* the zombies one of duck by's shots from weapon w goes through (0: it stops at the first): the sniper's 3; Angelic,
+   the bow through one zombie and the sniper through two more (l4ddangel.js) */
+export const pierceOf = (s, by, w) =>
+  !angelOf(s, by, w)
+    ? (ARMS[w] && ARMS[w].pierce) || 0
+    : w === "bow"
+      ? ANGEL.BOW
+      : w === "sniper"
+        ? ARMS.sniper.pierce + ANGEL.SNIPER
+        : (ARMS[w] && ARMS[w].pierce) || 0;
+/* a hit from duck by's weapon w on a zombie anywhere else (Mad God Justin's waves: the owner's, Nov 17 16:23Z, "guns do
+   their normal damage from zombies"), as it lands on one here: null when it misses (missOf), else { dmg, head }. A
+   headshot (headOf) takes all its HP, as do the grenades' blasts, the double barrel and the chain gun; Angelic adds its
+   1. The Laser Rifle never misses or crits (laser, below) */
+export const ALL_HP = 999;
+export function zombieTakes(s, by, w) {
+  const A = ARMS[w];
+  if (!A) return { dmg: 1, head: false };
+  const beam = w === "laser";
+  if (!beam && Math.random() < missOf(w)) return null;
+  const head = !beam && Math.random() < headOf(s, by, w),
+    all = head || A.dmg === "all" || w === "grenade" || w === "glauncher";
+  return {
+    dmg: all ? ALL_HP : dmgOf(A) + (!beam && angelOf(s, by, w) ? ANGEL.DMG : 0),
+    head,
+  };
+}
 /* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot (which
    takes all of it); true when it died */
 function strike(s, z, dmg, head, by, w = "") {
@@ -3457,13 +3484,7 @@ export function l4Shots(s, now) {
         if (stop) gone = true;
         continue;
       }
-      const pierce = !angelOf(s, sh.by, w)
-        ? A.pierce
-        : w === "bow"
-          ? ANGEL.BOW
-          : w === "sniper"
-            ? A.pierce + ANGEL.SNIPER
-            : A.pierce; // (Angelic: the bow through one zombie, the sniper through two more; l4ddangel.js)
+      const pierce = pierceOf(s, sh.by, w);
       if (pierce) {
         /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
         for (const z of nearby(grid, zs, x, y))

@@ -4081,8 +4081,7 @@ details.more[open] > summary {
 .map-stars .col,
 .map-carnival .col,
 .map-nwk .col,
-.map-vellum .col,
-.map-zcabin .col {
+.map-vellum .col {
   background: color-mix(in srgb, var(--c) var(--board-a), transparent);
 }
 .map-sky .col {
@@ -4383,8 +4382,7 @@ html.moving .st-b {
     transform: translateX(var(--go)) scaleX(1);
   }
 }
-.map-stars .col,
-.map-zcabin .col {
+.map-stars .col {
   border-right-color: #ffffff30;
   box-shadow: inset 0 0 0 0.14rem #ffffff38;
 }
@@ -11870,16 +11868,6 @@ html.sprint-blur .hang-board::after {
 } /* (a Vote button, if one ever shows with it, stays under it) */
 .gmain[data-phase="hang"] {
   touch-action: none;
-}
-/* Mad God Justin on Quacky Zombies' Duck Cabin (maps.js ZCABIN): its picture from above, over the whole page */
-.scene.zcabin {
-  background: #0d1a12 center / cover no-repeat;
-}
-.mini-map .mm-zcabin {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 .scene.cabin {
   background:
