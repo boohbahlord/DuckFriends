@@ -31,6 +31,7 @@ export const VOL = {
   // the lobby countdown and Dead Ducks Arcade's new round (far off and faint)
   countTick: -13,
   countGo: -12,
+  voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
   // moving
   step: -19,
@@ -229,7 +230,7 @@ const WORLD = [
 ];
 const GROUPS = {
   first: [
-    ...["countTick", "countGo", "step", "hop", ...UI],
+    ...["countTick", "countGo", "voteTick", "step", "hop", ...UI],
     ...["done", "bell", "ping", "pop", "boop"],
   ],
   game: [
@@ -787,11 +788,18 @@ addEventListener(
 );
 
 const quiet = () => null;
+const VOTE_K = 0.45; // the lobby countdown's tones in the votes: this much as loud
 const named = (name) => (o) => play(name, o && typeof o === "object" ? o : {}); // (some callers pass a number)
 /* every sound the game asks for by name. The older names stay (bang was every pistol, tat every quick gun); a name
    with no recording yet is silent, to come in the next batches */
 const SFX = {
   count: (last) => play(last ? "countGo" : "countTick"),
+  /* Vote for game mode and Vote for map, as their clock shows each new second (owner, Nov 17): a soft beep of its own,
+     then the last five as the lobby countdown's, and its ding at 0, all quieter */
+  voteCount: (n) =>
+    n > 5
+      ? play("voteTick")
+      : play(n > 0 ? "countTick" : "countGo", { k: VOTE_K }),
   bang: named("handgun"),
   tat: named("smg"),
   reload,

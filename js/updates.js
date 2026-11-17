@@ -9,6 +9,35 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v75",
+    version: 75,
+    date: "Nov 17, 2026",
+    title: "Hold to vote, the phone's walking stick, Downpour's dead",
+    news: [
+      "Hold to vote: the Vote button and Enter need a hold of half a second; change it in Settings.",
+      "New: Settings → Controls → Mouse: Mouse size, Pointer size and Crosshair size.",
+      "The corners of your screen blink blood red when you take damage.",
+      "For Vote for game mode and Vote for map: each second of the countdown beeps softly, and the last five seconds and 0 sound like the lobby countdown, quieter.",
+      "On a phone, the jump and attack buttons have their own row and stay visible while typing.",
+      "For Dead Ducks Arcade: Downpour has smashed cars, the dead, and a soldier's flare that lights on the roof as each round starts.",
+      "For Dead Ducks Arcade: Downpour's church bell swings as it rings.",
+      "For Dead Ducks Arcade: knocking Justin down counts as a Justin kill.",
+      "For Dead Ducks Arcade: your all-time stats count Zombies killed.",
+      "For Dead Ducks Arcade: drops last 30 seconds and blink faster and faster before they go.",
+      "For Dead Ducks Arcade: jerry cans are rare now: 1 in 100 from every place they come from.",
+      "For Mad God Justin: the plus sign is uncommon now.",
+      "The mouse and the pointer over buttons are smaller.",
+    ],
+    fixed: [
+      "The backgrounds are in pixels again on every screen, including Windows set to 125% or 150% and phones. They had come out smooth.",
+      "On a phone, the walking stick starts anywhere that is not a button or a text box, including the results cards.",
+      "For Dead Ducks Arcade: Justin can't end the rest phase; only the players can.",
+      "For Dead Ducks Arcade: Justin's down meter goes away when he is dead, and he has no down pistol unless he was given a gun.",
+      "For Dead Ducks Arcade: Downpour's yellow square no longer shows inside the gas station.",
+      "For Dead Ducks Arcade: Downpour's storeroom has its doorway onto the aisles, in the middle of its wall.",
+    ],
+  },
+  {
     id: "v74",
     version: 74,
     date: "Nov 17, 2026",

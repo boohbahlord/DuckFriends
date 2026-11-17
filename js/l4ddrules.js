@@ -1502,7 +1502,7 @@ function jetBurn(s, now, ids) {
 /* ---------- the drops (Stage 4, the owner's) ----------
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
    own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
-   fell (the owner's, Nov 3); it lies there a minute, into the next round too, and the first duck to walk over it takes
+   fell (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk over it takes
    it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
    drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
    the bag (the owner's, Nov 16). */
@@ -1514,7 +1514,7 @@ export const DROP = {
   GAP: 30000, // 30 s after the first
   AMMO: 0.05, // the Max Ammo of its own
   AMMO_IN: 60000, // in the round's first minute
-  LIFE: 60000, // ms a drop lies there (it stays through a round's end)
+  LIFE: 30000, // ms a drop lies there (it stays through a round's end; 30 s: the owner's, Nov 17 13:43Z)
   FOR: 45000, // ms Instant Kill, Double Points and Sale last, into the next round too (the owner's, Nov 16)
   SPEED_FOR: 60000, // ms Speed Boost lasts (the owner's, Nov 4)
   AMMO_W: 1.2, // once a drop comes, Max Ammo is this likely against 1 for each of the others (the owner's, Nov 4)
@@ -1891,7 +1891,7 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "endturn") {
-    if (L.over || !L.wait) return false;
+    if (L.over || !L.wait || isHelper(s, id)) return false; // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
     const v = { ...L.wait.v };
     if (a.on === false) delete v[id];
     else v[id] = 1;
@@ -2614,6 +2614,16 @@ function strike(s, z, dmg, head, by, w = "") {
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : Math.max(0, z.hp - dmg);
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
+  if (z.hp <= 0) {
+    /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record); Justin's kills are
+       the duck's that bought him his gun, as the points are */
+    const id = isWild(s, by) ? s.players[by].by : by;
+    if (id && s.players[id])
+      s.hang.l4kz = {
+        ...(s.hang.l4kz || {}),
+        [id]: ((s.hang.l4kz || {})[id] || 0) + 1,
+      };
+  }
   return z.hp <= 0;
 }
 /* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by l4ddart.js' hitsOf: zw { i: "B3c1…" }, two letters for
@@ -3121,6 +3131,7 @@ function hurtDuck(s, p4, id, now, w = "") {
    reloads (8 to a magazine, as the pistol's), kept in its kit as dg (the bullets in the magazine); it goes when the duck
    is up again or bleeds out. Never Angelic, whatever pistol the duck has besides */
 function downGun(s, id, on) {
+  if (on && isWild(s, id) && !s.players[id].armed) return; // (Justin out there with no gun ever bought him: no down pistol either, the owner's, Nov 17 13:30Z)
   const kit = kitOf(s, id);
   if (!kit || (!on && kit.dg === undefined)) return;
   const m = { ...kit };
@@ -3185,7 +3196,12 @@ function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
   )
     return false;
   const p4 = { ...(s.hang.l4p || {}) };
-  hurtDuck(s, p4, id, now, w);
+  if (hurtDuck(s, p4, id, now, w) && s.players[by] && !s.players[by].bot) {
+    /* a player knocked Justin down: a Justin kill for that player (unlocks.js watchKills), the same numbers rules.js
+       justinKilled writes; the owner's, Nov 17 13:30Z */
+    s.jkN = (s.jkN || 0) + 1;
+    s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+  }
   s.hang.l4p = p4;
   return true;
 }
@@ -4248,5 +4264,5 @@ export const l4Dying = (s, id, now) => {
 };
 export const l4Down = (s, id) => {
   const p = P4(s, id);
-  return p && p.dn ? p.dn : 0;
+  return p && p.dn && !p.ex ? p.dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
 };

@@ -118,7 +118,9 @@ export const CHAPEL_DOOR = { a: 2000, b: 2600 };
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
    standing up over it: the owner's, Nov 17 12:28Z, they looked closed) */
 export const INNER_DOORS = [
-  { id: "gs-store", at: 1600, a: 950, b: 1110 },
+  // (the storeroom's, in the middle of its wall: at 950 to 1110 the restroom's wall stood up over it and hid it, the
+  // owner's, Nov 17 13:38Z "still a door missing")
+  { id: "gs-store", at: 1600, a: 770, b: 930 },
   { id: "gs-rest", at: 1600, a: 1400, b: 1560 },
 ];
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
@@ -137,6 +139,20 @@ export const HOOD = {
 export const PRIEST = { x: 2550, y: 5360 };
 export const ANGEL = { x: 2250, y: 5717 }; // (against the chapel's south wall: its front on the wall's inside face)
 export const START = { x: 2600, y: 1600 };
+/* the dead (the owner's, Nov 17 12:28Z; stationart.js corpse): Jaime cut up in the chapel's aisle (Justin stops by him:
+   l4ddrules.js), the soldier on the gas station's roof with his flare beside him (it burns at each round's start:
+   l4dd.js), and which cars have their windows smashed in and the dead yellow duck on a hood */
+export const JAIME_BODY = { x: 2300, y: 4800 };
+export const SOLDIER = { x: 1580, y: 780 };
+export const FLARE = { x: SOLDIER.x + 92, y: SOLDIER.y + 18 };
+const CAR_LOOKS = [
+  { smash: "front" },
+  {},
+  { smash: "side" },
+  { smash: "both", dead: "yellow" },
+  {},
+  { smash: "front" },
+];
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
   [250, 2790],
@@ -353,6 +369,7 @@ function planBuild(b) {
   });
   solid("car", HOOD, 110, {
     hood: true,
+    smash: "side",
     light: {
       x: HOOD.spot.x + 40,
       y: HOOD.spot.y,
@@ -362,7 +379,7 @@ function planBuild(b) {
       flick: 0.6,
     },
   });
-  for (const c of CARS) solid("car", c, 110);
+  CARS.forEach((c, i) => solid("car", c, 110, CAR_LOOKS[i]));
   /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
   {
     const F = FALLEN,
@@ -443,6 +460,8 @@ function planBuild(b) {
       z: B.wall,
       only: "out",
       fade: true,
+      soldier:
+        B === S ? [SOLDIER.x - (B.x0 - 30), SOLDIER.y - (B.y0 - 30)] : null, // (on the roof's own drawing: it goes see-through with it)
       key: B.y1 + 2 * T, // (in front of the south wall's top: the roof's edge (the sign's red band) covers it, no grey slab over the red: the owner's, Nov 17 05:46Z)
       box: {
         l: B.x0 - 30,
@@ -465,6 +484,10 @@ function planBuild(b) {
   }); // (solid, as big as its drawing's base: nobody walks through it or into it, the owner's, Nov 17 11:07Z; see-through
   // like the walls while it hides a duck or a zombie behind it, Nov 17 12:29Z)
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
+  put("corpse", JAIME_BODY.x - 70, JAIME_BODY.y - 35, 140, 70, 16, {
+    z: 0,
+    who: "jaime",
+  }); // (lying on the floor: nothing stops on him)
   const PEWS = {
     L: {
       a: 1700,
@@ -730,6 +753,7 @@ for (const o of [
 ])
   scaled(o);
 for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
+for (const o of [JAIME_BODY, SOLDIER, FLARE]) scaled(o);
 for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
 GS_W *= K;
 GS_H *= K;

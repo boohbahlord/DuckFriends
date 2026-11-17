@@ -12,8 +12,8 @@
    turns the power on: every light, the balcony's and the porch's too, and the TV; every flashlight turns off by itself.
    The first time it lasts 6 rounds: it goes out as round 7 starts (the round it came on in counts as one). Then the
    flashlights turn back on.
-   Once it has gone out, jerry cans come: 5% from the fireplace (rolled with the part, before the weapons), 1% from a
-   zombie that dies, and 5% at each round's start in a part's spot (the sink, the counter, the couch). Only one is ever
+   Once it has gone out, jerry cans come: 1% from the fireplace (rolled with the part, before the weapons), 1% from a
+   zombie that dies, and 1% at each round's start in a part's spot (the sink, the counter, the couch). Only one is ever
    out at a time (on the floor, in the pool or in the fireplace), so another comes only once it's been poured. How full
    it is is rolled in this order: full 5% (12 rounds), else 3/4 25% (9), else 1/2 50% (6), else 1/4 75% (3), else almost
    empty (1). Its label is its fuel in percent of a full can's 12 rounds. E at the box pours it in: the power runs that
@@ -67,9 +67,9 @@ export const PW = {
   ZOMBIE_BY: 5, // a zombie in rounds 1 to 5 carries a part
   FIRE: 0.05, // the fireplace's part: 5% on the first spin …
   FIRE_MORE: 0.1, // … and 10% more for each spin after
-  CAN_FIRE: 0.05, // jerry cans (once the power has gone out): from the fireplace,
+  CAN_FIRE: 0.01, // jerry cans (once the power has gone out): from the fireplace,
   CAN_ZOMBIE: 0.01, // from a zombie that dies,
-  CAN_ROUND: 0.05, // at a round's start in a part's spot
+  CAN_ROUND: 0.01, // at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z)
   FULL: 12, // rounds in a full jerry can
   TAKE: 75, // world px: how near a duck walks to take what lies on the floor
   TAKE_SPOT: 110, // … and what lies on the sink, the counter or the couch (from the floor in front)

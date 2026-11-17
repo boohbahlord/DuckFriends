@@ -214,7 +214,8 @@ export const justinIn = (s) =>
   !!s &&
   !!s.options &&
   (["mgj", "hang"].includes(s.options.mode) ||
-    (!!s.options.justin && !["vdd", "l4dd"].includes(s.options.mode)));
+    (!!s.options.justin && !["vdd", "l4dd"].includes(s.options.mode)) ||
+    (s.options.mode === "l4dd" && !!s.players && !!s.players["b-justin"])); // (Quacky Zombies: the Justin out there, Nov 17)
 /* another player (not a computer) or Justin knocked down by me with a weapon: toward the shotgun and the grenade */
 function countKill() {
   profile.kills = (profile.kills || 0) + 1;

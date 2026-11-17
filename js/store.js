@@ -11,6 +11,9 @@ export const SETTINGS_DEFAULT = {
   font: "fredoka",
   textSize: 100,
   uiSize: 100,
+  mouseSize: 100, // (Mouse size, Pointer size, Crosshair size: the pointers, pixel.js)
+  pointerSize: 100,
+  crossSize: 100,
   dyslexic: false,
   colorblind: false,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -18,6 +21,7 @@ export const SETTINGS_DEFAULT = {
   clickUse: false,
   multipleChoice: false,
   touch: "stick",
+  holdVote: "500", // ms a Vote button (and a phone's use button) is held before it acts; 0 = at once (the owner's, Nov 17)
   jumpsSci: false,
   jumpsHidden: false,
   chatSide: "left",
@@ -106,6 +110,7 @@ export function cleanStats(o) {
       titles: n(x.titles),
       argued: n(x.argued),
       gave: n(x.gave),
+      kills: n(x.kills), // (Dead Ducks Arcade: zombies killed)
     };
   }
   return out;

@@ -159,6 +159,7 @@ export function mountWorld(board, api) {
         t + h > -NEAR,
       propEl: (id) => els.get(id) || null,
       coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key),
+      frameOf: (e, i) => frameOf(e, i),
       propEls: (id) => all.get(id) || [],
       /* does something drawn over (l, t, r, b) on the screen, at depth key, hide a duck or a zombie behind it? (as a wall
          turns see-through: Downpour's Angel machine, l4ddangelui.js) */
@@ -573,6 +574,7 @@ export function mountWorld(board, api) {
       im.draggable = false;
       im.src = it.url ? svg : svgDataURL(svg);
       e._src = svg; // (the pixel look makes its pixels from it: still())
+      if (it.frames) e._frames = it.frames; // (a drawing that moves in steps, each its own picture: frameOf)
       e.append(im);
     } else e.innerHTML = svg;
     if (p) {
@@ -587,14 +589,22 @@ export function mountWorld(board, api) {
   }
   /* the pixel look: a still picture (a wall, the forest bands) as pixels at the size it shows now (pixel.js makes it
      once for each size; the drawing shows until it's ready) */
+  /* a drawing that moves in steps (shapes.js: frames, Downpour's bell): shows step i, its pixels made once each */
+  function frameOf(e, i) {
+    if (!e || !e._frames || e._fr === i) return;
+    e._fr = i;
+    e._src = e._frames(i);
+    if (!pixelOn() && e.firstChild) e.firstChild.src = svgDataURL(e._src); // (with the pixel look, still() makes it next frame)
+  }
   function still(e, it, sw, sh) {
     const g = gridPx(),
-      k = Math.round(sw / g) + "x" + Math.round(sh / g),
+      k = Math.round(sw / g) + "x" + Math.round(sh / g) + "/" + (e._fr ?? ""),
       im = e.firstChild;
     if (e._pxk === k || !im || im.tagName !== "IMG") return;
     e._pxk = k;
     im.classList.add("px");
-    const key = "hp" + items.indexOf(it),
+    const key =
+        "hp" + items.indexOf(it) + (e._fr !== undefined ? "f" + e._fr : ""),
       u = raster(key, e._src, sw, sh);
     if (u) im.src = u;
     else
@@ -920,6 +930,7 @@ export function mountWorld(board, api) {
       return !L.seenFrom(a.x, a.y, inside);
     },
     coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key), // (the outlines: outlines.js)
+    frameOf,
     /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
     at(id) {
       const p = R().state.pos[id];

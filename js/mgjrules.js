@@ -297,6 +297,7 @@ export const DUCK_LEN = { x: RX, y: RY }; // (a duck length, in board widths and
    Justin God. A weapon waits until a duck walks over it or the next one comes */
 export const PLUS_LIFE = 10000,
   PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign every 30 s, +1 HP to the duck that walks over it)
+  PLUS_CHANCE = 1 / 3, // (… but not common, the owner's, Nov 17 13:43Z: every 30 s only a 1 in 3 chance, so about one a minute and a half)
   PICK_EVERY = 15000,
   PICK_FADE = 700,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
@@ -1385,8 +1386,9 @@ function pickTick(s, now, at, log, fx) {
       ch = true;
       break;
     }
-  if (now >= m.plusAt) {
-    m.plusAt = now + PLUS_EVERY;
+  const plusNow = now >= m.plusAt;
+  if (plusNow) m.plusAt = now + PLUS_EVERY;
+  if (plusNow && Math.random() < PLUS_CHANCE) {
     let x = 0.5,
       y = 0.5;
     for (let i = 0; i < 12; i++) {

@@ -24,8 +24,15 @@ const FILL = 0.7; // (a duck's drawing fills about 70% of its box, hat room incl
 export const PAGE_DUCK = 92;
 let duckPx = PAGE_DUCK * FILL, // (a duck's drawn height on the board, in css px; the board tells me its ducks' box size)
   grid = 2;
+/* one pixel is a whole number of the screen's own pixels (owner, Nov 17: the playroom came out smooth in the app). On a
+   screen whose pixels aren't whole css px (Windows at 125% or 150%, most phones) a pixel of 2.012 css px fell between
+   them and the filter below blurred instead of making squares, so the grid is the nearest whole count of the screen's
+   pixels */
+const dpr = () => devicePixelRatio || 1;
+let dprAt = dpr();
 function setGrid() {
-  grid = Math.max(1, duckPx / DUCK);
+  dprAt = dpr();
+  grid = Math.max(1, Math.round(Math.max(1, duckPx / DUCK) * dprAt)) / dprAt;
   document.documentElement.style.setProperty("--px", grid.toFixed(3) + "px");
   filterGrid();
   dispatchEvent(new Event("pxgrid")); // (pictures made at the grid's size are made again: pxtext.js' emoji)
@@ -37,17 +44,21 @@ function setGrid() {
    ducks', so the pixels match. (The usual pixelate filter: a 1 × 1 dot tiled every square, kept where the picture is,
    then grown to fill its square.) */
 let filt = null,
+  filtMade = [], // (each filter's markup as last made)
   camK = 1; // (the zoom Duck Cabin's props are shown at: setCamScale)
-const FILTER = (id) =>
-  `<filter id="${id}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="0" y="0" width="1" height="1" flood-color="#000"/><feComposite width="2" height="2"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/><feMorphology operator="dilate" radius="1"/></filter>`;
-/* one filter's squares, g css px of the layer it's on */
-function sizeFilter(f, g) {
-  const [flood, comp, , , morph] = f.children;
-  flood.setAttribute("x", (g / 2).toFixed(3));
-  flood.setAttribute("y", (g / 2).toFixed(3));
-  comp.setAttribute("width", g.toFixed(3));
-  comp.setAttribute("height", g.toFixed(3));
-  morph.setAttribute("radius", (g / 2).toFixed(3));
+/* one filter, in the screen's pixels: n of them to a square, k to a css px of its layer. A 1 × 1 dot (one screen pixel,
+   so one color) is kept in each square, then grown to fill it: an odd square grows round its middle; an even one grows
+   to one less, then is laid over itself a pixel right and a pixel down (a grown dot can only be an odd size) */
+function filterHTML(id, n, k) {
+  const u = (v) => (v / k).toFixed(4),
+    odd = n % 2,
+    at = odd ? (n - 1) / 2 : n / 2 - 1, // (the dot, from the square's corner)
+    r = at; // (grown by this much each way)
+  const grow = r ? `<feMorphology operator="dilate" radius="${u(r)}"/>` : "";
+  const even = odd
+    ? ""
+    : `<feOffset dx="${u(1)}" result="a"/><feBlend in="a" in2="b" mode="lighten" result="c"/><feOffset dy="${u(1)}"/><feBlend in2="c" mode="lighten"/>`;
+  return `<filter id="${id}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood x="${u(at)}" y="${u(at)}" width="${u(1)}" height="${u(1)}" flood-color="#000"/><feComposite width="${u(n)}" height="${u(n)}"/><feTile result="dot"/><feComposite in="SourceGraphic" in2="dot" operator="in"/>${grow}${even ? '<feOffset result="b"/>' : ""}${even}</filter>`;
 }
 function filterGrid() {
   if (!on || !document.body) return;
@@ -55,15 +66,24 @@ function filterGrid() {
     filt = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     filt.setAttribute("aria-hidden", "true");
     filt.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
-    filt.innerHTML = FILTER("px-f") + FILTER("px-fc");
     document.body.append(filt);
   }
-  const [f, fc] = filt.children;
-  sizeFilter(f, grid);
+  const n = Math.round(grid * dprAt);
   /* px-fc: for a layer that is itself shown zoomed (a Duck Cabin prop, scaled by the camera): the filter works before
      the zoom, so its squares are made 1/zoom as big, and come out one grid square on the screen like everything else
      (owner, Nov 16: one pixel size for every background) */
-  sizeFilter(fc, grid / camK);
+  const want = [
+    filterHTML("px-f", n, dprAt),
+    filterHTML("px-fc", n, dprAt * camK),
+  ];
+  want.forEach((h, i) => {
+    if (filtMade[i] === h) return; // (made again only when it changed)
+    filtMade[i] = h;
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    t.innerHTML = h;
+    if (filt.children[i]) filt.children[i].replaceWith(t.firstChild);
+    else filt.append(t.firstChild);
+  });
 }
 /* the zoom Duck Cabin shows its props at (world.js' camera) */
 export function setCamScale(k) {
@@ -74,6 +94,12 @@ export function setCamScale(k) {
 if (document.readyState === "loading")
   addEventListener("DOMContentLoaded", filterGrid);
 setGrid();
+/* the browser zoomed, or the window moved to another screen: its pixels changed size */
+addEventListener("resize", () => {
+  if (dpr() === dprAt) return;
+  setGrid();
+  setCursors(); // (the pointers too: drawn in the screen's pixels)
+});
 document.documentElement.classList.add("pixel");
 
 /* the board's duck size (its box, css px, as game.js' geo.size): every picture's pixel follows it */
@@ -275,56 +301,38 @@ kyk
 kywk
 kywwk
 kywwwk
-kywwwwkk
+kywwwwk
 kywwwwwk
 kywwwwwwk
 kywwwwwwwk
-kywwwwwwwwk
-kywwwwwwwwwk
-kywwwwwwwwwwk
-kywwwwwwwwwwwk
-kywwwwwwwwwwwwk
-kywwwwwwwwwkkkkk
-kwwwwwwwwwk
-kwwwwwkwwwk
-kwwwwk.kwwwk
-kwwwk...kwwk
-kwwk....kwwwk
-kwk......kwwk
-kk.......kwwwk
-..........kwwk
-..........kwwkk
-...........kk`,
+kywwwwkkkkk
+kywkwwk
+kwk.kwwk
+kk..kwwk
+k....kwwk
+.....kwwk
+......kk`,
   ],
   hand: [
-    6,
+    4,
     0,
-    `.....kkkk
-.....kywk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwwkkk
-....kywwwwwwk
-....kywwwkwwwkkkk
-....kywwwkwwwkwwwkkk
-....kywwwkwwwkwwwkwwk
-...kwwwwwkwwwkwwwkwwk
-.kkwwwwwwkwwwkwwwkwwk
-kwwwwwwwwkwwwkwwwkwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-.kkwwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-....kwwwwwwwwwwwwwwk
-.....kkkkkkkkkkkkkk`,
+    `....kk
+...kywk
+...kywk
+...kywk
+...kywkkk
+...kywkwkkk
+...kywkwkwkkk
+kk.kywkwkwkwk
+kwkkywwwwwwwk
+kwwkywwwwwwwk
+.kwwwwwwwwwwk
+.kwwwwwwwwwwk
+..kwwwwwwwwwk
+..kwwwwwwwwk
+...kwwwwwwwk
+...kwwwwwwk
+...kkkkkkkk`,
   ],
   cross: [
     7,
@@ -346,32 +354,21 @@ kkkkk.....kkkkk
 ......kkk`,
   ],
   text: [
-    5,
-    12,
-    `kkkk..kkkk
-kwwwkkwwwk
-kkkkwwkkkk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-kkkkwwkkkk
-kwwwkkwwwk
-kkkk..kkkk`,
+    3,
+    6,
+    `kkk.kkk
+kwwkwwk
+kkkwkkk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+kkkwkkk
+kwwkwwk
+kkk.kkk`,
   ],
 };
 const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
@@ -391,24 +388,54 @@ function cursorURL(rows, s) {
   return c.toDataURL();
 }
 /* how many css px each of a pointer's pixels takes (owner, Nov 16: one css px was far too small, "bigger, but not
-   large", and the crosshair so small the game was unplayable; then twice as big was too big: the arrow, the hand and
-   the text pointer are drawn again half as big again as the first ones, one css px a pixel). Browsers drop a pointer
-   picture over 128 px, so a sharper copy (2x, 3x) is only offered while it fits */
+   large", and the crosshair so small the game was unplayable; then twice as big was too big; Nov 17: the mouse and the
+   pointer over a button still too large, the crosshair a good size, and all three sizes in Settings: the arrow, the hand
+   and the text pointer are drawn again about two thirds as big, the crosshair kept). The arrow and the text pointer
+   follow Mouse size, the hand Pointer size, the crosshair Crosshair size (100% each by default) */
 const CURSOR_ZOOM = { arrow: 1, hand: 1, text: 1, cross: 3 },
-  CURSOR_MAX = 128;
+  CURSOR_SIZE = {
+    arrow: "mouse",
+    text: "mouse",
+    hand: "pointer",
+    cross: "cross",
+  },
+  CURSOR_MAX = 128; // (browsers drop a pointer picture bigger than this)
+let cursorSizes = { mouse: 100, pointer: 100, cross: 100 },
+  cursorsAt = "";
+/* each pointer's picture is drawn in whole pixels of the screen (as many as its size needs, rounded up) and told how
+   many of them make a css px (image-set), so it shows at exactly its size: sharp wherever that is a whole number of the
+   screen's pixels (100% on most screens) */
 function setCursors() {
-  const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
+  const d = dpr(),
+    key = [d, cursorSizes.mouse, cursorSizes.pointer, cursorSizes.cross].join();
+  if (key === cursorsAt) return;
+  cursorsAt = key;
+  const sets = CSS.supports("cursor", "image-set(url(a.png) 1.5x) 0 0, auto"),
     root = document.documentElement.style;
   for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
     const rows = art.split("\n"),
-      z = CURSOR_ZOOM[name] || 2,
-      big = Math.max(rows.length, ...rows.map((r) => r.length)) * z,
-      dens = [1, 2, 3].filter((d) => d === 1 || big * d <= CURSOR_MAX),
-      img =
-        sets && dens.length > 1
-          ? `image-set(${dens.map((d) => `url(${cursorURL(rows, z * d)}) ${d}x`).join(", ")})`
-          : `url(${cursorURL(rows, z)})`;
-    root.setProperty(`--cur-${name}`, `${img} ${hx * z} ${hy * z}`);
+      big = Math.max(rows.length, ...rows.map((r) => r.length)),
+      z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
+      px = sets
+        ? Math.max(
+            1,
+            Math.min(Math.ceil(z * d - 0.01), Math.floor(CURSOR_MAX / big)),
+          )
+        : Math.max(1, Math.round(z)),
+      img = sets
+        ? `image-set(url(${cursorURL(rows, px)}) ${+(px / z).toFixed(4)}x)`
+        : `url(${cursorURL(rows, px)})`,
+      at = sets ? z : px;
+    root.setProperty(
+      `--cur-${name}`,
+      `${img} ${Math.round(hx * at)} ${Math.round(hy * at)}`,
+    );
   }
 }
 setCursors();
+/* Settings → Controls: Mouse size, Pointer size, Crosshair size (in %) */
+export function setCursorSizes(mouse, pointer, cross) {
+  const pc = (v) => Math.max(25, Math.min(400, +v || 100));
+  cursorSizes = { mouse: pc(mouse), pointer: pc(pointer), cross: pc(cross) };
+  setCursors();
+}
