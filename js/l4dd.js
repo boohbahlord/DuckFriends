@@ -73,9 +73,6 @@ import {
   POOL,
   boxNow,
   HELPER,
-  WILD_GUNS,
-  wildFor,
-  wildPrice,
   weaponName,
   priceFor,
   reviveMs,
@@ -100,7 +97,6 @@ import {
   magIn,
   fullFor,
   downArmed,
-  potOf,
   WILD,
   isWild,
 } from "./l4ddrules.js";
@@ -739,23 +735,6 @@ function seePool(s, ctx) {
   poolSig = sig;
   poolEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) scale(${(Wd.sc * grow).toFixed(3)})`;
   poolEl.style.zIndex = a.z < 1 ? 3 : Math.round(sortY(a.x, a.y - 30, a.z)); // (on the floor under the ducks; on a roof, just under him)
-}
-/* Justin's pot (the owner's, Nov 17 18:05Z: the points for his kills are everyone's): a smaller line under my points,
-   while he's out there with a gun or something is in it (it's split at the end of each round: l4ddrules.js potSplit) */
-let potShown = "";
-function seePot(s) {
-  const n = potOf(s),
-    q = P4(s, WILD.id),
-    on =
-      n > 0 ||
-      !!(isWild(s, WILD.id) && s.players[WILD.id].armed && !(q && q.ex)),
-    t = on ? `Justin's points for everyone: ${n}` : "";
-  if (t === potShown) return;
-  potShown = t;
-  const el = ptsEl.querySelector(".l4-jp");
-  el.textContent = t;
-  el.hidden = !on;
-  ptsEl.parentElement?.classList.toggle("l4-jp-on", on);
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
    top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
@@ -1646,9 +1625,6 @@ function safeLook(ctx) {
       on = inv[id] > now;
     if (d.classList.contains("l4-skglow") !== sk)
       d.classList.toggle("l4-skglow", sk);
-    const bj = id === wildFor(s) && !!(s.hang.l4 && s.hang.l4.wait); // (Justin out there, in the rest phase: a light blue glow, click to buy him a gun)
-    if (d.classList.contains("l4-buyj") !== bj)
-      d.classList.toggle("l4-buyj", bj);
     if (d.classList.contains("l4-inv") !== on) d.classList.toggle("l4-inv", on);
   }
   if (!vitEl) {
@@ -1992,10 +1968,6 @@ function holdTarget(pos, ctx) {
       best = { kind: "rev", on: id, d, name: (s.players[id] || {}).name };
   }
   if (best) return best;
-  const wj = wildFor(s), // (Justin out in Downpour with no weapon: E buys him a gun)
-    wa = wj && ctx.world.at(wj);
-  if (wa && Math.hypot(wa.x - pos.x, wa.y - pos.y) < L4.REACH)
-    return { kind: "givej", d: Math.hypot(wa.x - pos.x, wa.y - pos.y) };
   for (const o of OPENINGS) {
     if (o.nb) continue; // (Downpour's fence: nothing to board up)
     const d = Math.hypot(o.in[0] - pos.x, o.in[1] - pos.y),
@@ -2044,10 +2016,6 @@ function tap(t, ctx) {
   if (t.kind === "box") {
     if (ptsOf(s, me) < priceFor(s, me, "box")) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "box" });
-  } else if (t.kind === "givej") {
-    const w = WILD_GUNS[0];
-    if (ptsOf(s, me) < wildPrice(s, w)) return say("Not enough points");
-    ctx.send({ t: "hang", k: "l4", do: "givej", what: w }); // (more guns in WILD_GUNS: a pick comes here)
   } else if (t.kind === "take") {
     ctx.send({ t: "hang", k: "l4", do: "box", hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
@@ -2059,7 +2027,7 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["box", "take", "shop", "sk", "power", "pump", "angel", "givej"];
+const TAPS = ["box", "take", "shop", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -2084,8 +2052,6 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "box")
     return `Spin for a weapon · ${priceFor(s, ctx.me, "box")}${saleOn(s) ? " (Sale)" : ""}`;
   if (t.kind === "take") return `Take the ${weaponName(t.w)}`;
-  if (t.kind === "givej")
-    return `Buy Justin a ${weaponName(WILD_GUNS[0])} · ${wildPrice(s, WILD_GUNS[0])}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);
@@ -2157,9 +2123,7 @@ activity({
     ptsEl = document.createElement("div");
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
-    ptsEl.innerHTML =
-      '<span><b>0</b> points</span><i class="l4-jp" hidden></i>';
-    potShown = "";
+    ptsEl.innerHTML = "<span><b>0</b> points</span>";
     sayEl = document.createElement("div");
     sayEl.className = "l4-say";
     sayEl.setAttribute("role", "alert");
@@ -2268,7 +2232,7 @@ activity({
     vitEl = hintEl = null;
     bellEl = flareEl = null;
     vitShown = "";
-    ctx?.world?.board.classList.remove("blackout", "l4-board", "l4-jp-on");
+    ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
   onState(s, ctx) {
     if (!layer || !s.hang || !s.hang.l4) return;
@@ -2283,7 +2247,6 @@ activity({
     spinSquare(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
-    seePot(s);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
     if (shop.open) shopFill(s, ctx);
     /* a ding: a weapon from the fireplace taken (an upgrade bought rings the Butler's till: l4ddsfx.js) */

@@ -56,6 +56,7 @@ import {
   layoutRev,
   layoutVariant,
   deckAt,
+  deckOver,
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
@@ -63,15 +64,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import {
-  hOk,
-  hLock,
-  shotFeet,
-  MID,
-  SAME_FLOOR,
-  sameFloorAhead,
-  floorLock,
-} from "./heights.js";
+import { hOk, hLock, shotFeet, MID } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -92,7 +85,13 @@ import {
   jaimeCount,
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
-import { GOD_LINES, E_LINES, DEATH_LINES } from "./hangout/justin.js";
+import {
+  GOD_LINES,
+  E_LINES,
+  DEATH_LINES,
+  SAY_EVERY,
+  GOD_EVERY,
+} from "./hangout/justin.js";
 import {
   powerSetUp,
   powerRound,
@@ -1438,34 +1437,11 @@ const headOf = (s, id, w) => {
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
-  if (isWild(s, id)) {
-    if (n > 0) s.hang.l4jp = (s.hang.l4jp || 0) + n; // (Justin's points go in the pot for everyone: potSplit)
-    return;
-  }
+  if (isWild(s, id)) return; // (Justin out there earns nothing: he never has a gun, the owner's, Nov 17 20:02Z)
   n = fives(n); // (never anything but fives, whatever adds them: the owner's, Nov 17 19:11Z)
   if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
-
-/* Justin's points (the owner's, Nov 17 18:05Z: the points for his kills are everyone's): they go in a pot,
-   s.hang.l4jp, and at the end of each round it's split equally among the players in fives; the fives left over go to
-   players picked at random, one each, and what's under 5 waits for the next round */
-function potSplit(s) {
-  const pot = s.hang.l4jp || 0,
-    to = players(s).filter((id) => !isWild(s, id) && !isHelper(s, id));
-  if (pot < 5 || !to.length) return;
-  const fives = Math.floor(pot / 5),
-    each = Math.floor(fives / to.length),
-    lucky = [...to];
-  for (let i = lucky.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [lucky[i], lucky[j]] = [lucky[j], lucky[i]];
-  }
-  lucky.length = fives - each * to.length;
-  for (const id of to) addPts(s, id, (each + (lucky.includes(id) ? 1 : 0)) * 5);
-  s.hang.l4jp = pot - fives * 5;
-}
-export const potOf = (s) => (s && s.hang && s.hang.l4jp) || 0;
 
 /* ---------- a game, a round ---------- */
 const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
@@ -1812,7 +1788,6 @@ function setUp(s, now) {
   s.hang.l4p = {};
   s.hang.l4a = {};
   s.hang.l4pt = {};
-  s.hang.l4jp = 0; // (Justin's pot: potSplit)
   s.hang.l4u = {};
   s.hang.l4box = {};
   s.hang.l4fo = {};
@@ -2060,8 +2035,6 @@ function l4Act(s, a, now) {
   }
   if (a.do === "jplan" || a.do === "jbody")
     return justinBody(s, a.do, id, now, mx, my);
-  if (a.do === "givej")
-    return giveJustin(s, id, String(a.what || ""), mx, my, now);
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (a.do === "ammo")
@@ -2072,9 +2045,9 @@ function l4Act(s, a, now) {
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
 }
-/* a duck buys Justin out in Downpour a gun (the owner's, Nov 17): standing by him, in the rest phase any gun of WILD_GUNS,
-   outside it the first one; it comes out of my points. He keeps it (endless bullets that still reload), can't be hurt by
-   players any more, and the points for his kills go in the pot for everyone (potSplit) */
+/* Justin out there, in a rest phase, at Jaime's body: his plan for the phase (jplan) and a line each visit (jbody). (No duck
+   can give him a weapon any more: the owner's, Nov 17 20:02Z, "make it to where you cannot give justin a weapon
+   actually and when he goes down he doesnt have a pistol") */
 function justinBody(s, what, id, now, mx, my) {
   const L = s.hang.l4,
     B = jaimeBody();
@@ -2090,25 +2063,6 @@ function justinBody(s, what, id, now, mx, my) {
   if (Math.hypot(mx - B.x, my - B.y) > JBODY.near) return false;
   s.hang.l4jv = { ...v, left: v.left - 1, at: now };
   justinSays(s, "jaime");
-  return true;
-}
-function giveJustin(s, id, what, mx, my, now) {
-  const J = wildFor(s),
-    pj = J && s.pos[J],
-    rest = !!(s.hang.l4 && s.hang.l4.wait),
-    w = rest && WILD_GUNS.includes(what) ? what : WILD_GUNS[0],
-    price = wildPrice(s, w);
-  if (!J || !pj || !standing(s, id) || price === null) return false;
-  if (Math.hypot(pj.x * W - mx, pj.y * H - my) > L4.REACH * 1.2) return false;
-  if (ptsOf(s, id) < price) return false;
-  addPts(s, id, -price);
-  s.players[J] = { ...s.players[J], armed: 1, by: id };
-  const kit = freshKit();
-  kit.sl = ["", w, "", ""];
-  kit.am = { [w]: fullAmmo(w) };
-  s.hang.l4a = { ...s.hang.l4a, [J]: kit };
-  s.pos[J] = { ...s.pos[J], w };
-  addFx(s, { kind: "l4medrev", by: id, who: [J], t: now }); // (the revive's flash: a little thank-you)
   return true;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
@@ -2269,42 +2223,37 @@ export const HELPER = {
   out: 1200,
 };
 export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
-/* Justin in Downpour (the owner's, Nov 17): the map starts with him out there, unarmed and running from the zombies. He
-   has WILD.hp HP and gets 1 back every WILD.regen ms; zombies and, while he has no weapon, players can hurt and kill him
-   (ex: dead for good: his body stays, nobody can revive him, he never comes back, not at a new round either). He is the
-   fireplace's Justin (helperIn, the same player and brain) with no weapon and no points */
-export const WILD = { hp: 6, regen: 60000, id: "b-justin", extra: 100 };
-/* the guns a duck can buy him in the rest phase (the owner's, Nov 17: for the Butler's price and WILD.extra points more);
-   outside the rest phase the click buys the first one. Widen this list to let players buy more */
-export const WILD_GUNS = ["handgun"];
-/* what Justin says in Downpour (the owner's, Nov 17: only lines already in the game, ones a crazy Justin could shout): at the
-   zombies with his gun, some of his GOD lines and his insults; at Jaime's body, his lines against Jaime. Each list is a
-   shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line numbers left] }) */
-const FIGHT = [
-  ...[3, 5, 9, 10, 11, 14, 0, 4].map((i) => GOD_LINES[i]),
-  ...E_LINES.filter((l) =>
-    [
-      "Shut up, you stupid IDIOT!",
-      "You're such a stupid flipping IDIOT!",
-    ].includes(l),
-  ),
-];
-const LINES = { fight: FIGHT, jaime: JUSTIN_AT_JAIME, death: DEATH_LINES };
-/* his own lines (the owner's, Nov 17 18:05Z: "all of his normal lines ... just like his script is supposed to do"): as in
-   Duck Cabin (justin.js), on his own a random one of E_LINES every 45 to 90 seconds; a death line when he goes down; a
-   line against Jaime when a duck sends a Jaime in (a Jaime Bomb gets his snap: jaimeSnap) */
-const CHAT = [45000, 90000];
+/* Justin in Dead Ducks Arcade (the owner's, Nov 17; Duck Cabin too, by default, Nov 17 20:02Z: "he spawns in cabin now
+   by default the same, without a weapon and cannot get a weapon"): the map starts with him out there, unarmed and
+   running from the zombies, for good: nobody can give him a weapon, and he has no down pistol. He has WILD.hp HP and
+   gets 1 back every WILD.regen ms; zombies and players can hurt and kill him (ex: dead for good: his body stays, nobody
+   can revive him, he never comes back, not at a new round either). He is the fireplace's Justin (helperIn, the same
+   player and brain) with no weapon and no points */
+export const WILD = { hp: 6, regen: 60000, id: "b-justin" };
+/* what Justin says besides his everyday lines: at Jaime's body and at a Jaime sent in, his lines against Jaime; going
+   down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
+   numbers left] }) */
+const LINES = { jaime: JUSTIN_AT_JAIME, death: DEATH_LINES };
+/* his everyday lines, all of them, as often as in Duck Cabin (the owner's, Nov 17 20:02Z: "he sounds off all his annoying
+   lines unrestricted like he does in cabin with the same frequency"): justin.js' own timings, a random one of E_LINES
+   every SAY_EVERY seconds and one of his GOD_LINES every GOD_EVERY seconds, whatever is going on round him */
 function justinChat(s, now) {
   const q = P4(s, WILD.id);
   if (!isWild(s, WILD.id) || !q || q.dn || q.gh) return;
-  if (!s.hang.l4jc) s.hang.l4jc = now + rnd(...CHAT) * 0.5;
-  if (now < s.hang.l4jc) return;
-  s.hang.l4jc = now + rnd(...CHAT);
-  logIn(s, {
-    from: WILD.id,
-    to: null,
-    text: E_LINES[Math.floor(Math.random() * E_LINES.length)],
-  });
+  const at = { ...(s.hang.l4jc || {}) },
+    sec = ([a, b]) => rnd(a, b) * 1000;
+  if (!at.e) at.e = now + sec(SAY_EVERY) * 0.5;
+  if (!at.g) at.g = now + sec(GOD_EVERY);
+  let text = null;
+  if (now >= at.e) {
+    at.e = now + sec(SAY_EVERY);
+    text = E_LINES[Math.floor(Math.random() * E_LINES.length)];
+  } else if (now >= at.g) {
+    at.g = now + sec(GOD_EVERY);
+    text = GOD_LINES[Math.floor(Math.random() * GOD_LINES.length)];
+  }
+  if (JSON.stringify(at) !== JSON.stringify(s.hang.l4jc)) s.hang.l4jc = at;
+  if (text) logIn(s, { from: WILD.id, to: null, text });
 }
 /* is the Justin out there (or the fireplace's) here and up, to say something? */
 const justinUp = (s) => {
@@ -2331,22 +2280,11 @@ function justinSays(s, key) {
    at most twice, and says a line each time. s.hang.l4jv = { r (the round), left (visits), at (the last one) } */
 export const jaimeBody = () => GS.JAIME_BODY || null;
 export const JBODY = { near: 110, gap: 8000 };
-/* Justin is out there for a buy: alive, up, with nothing in his hands */
-export const wildFor = (s) => {
-  const q = P4(s, WILD.id);
-  return wildOpen(s, WILD.id) && !!q && !q.dn && !q.gh ? WILD.id : null;
-};
-/* what buying him gun w costs duck id now: the Butler's price, and in the rest phase WILD.extra more (null: not for sale) */
-export function wildPrice(s, w) {
-  if (!WILD_GUNS.includes(w) || !GUN_SHOP.includes(w)) return null;
-  const rest = !!(s.hang.l4 && s.hang.l4.wait);
-  return buyPrice(w) + (rest ? WILD.extra : 0);
-}
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
-/* he's out there with nothing in his hands (players can hurt him; a weapon of his own comes later) */
-export const wildOpen = (s, id) => isWild(s, id) && !s.players[id].armed;
+/* he's out there with nothing in his hands (always: players can hurt him) */
+export const wildOpen = (s, id) => isWild(s, id);
 function helperIn(s, by, now, wild = false) {
   const id = HELPER.id;
   if (s.players[id]) return;
@@ -2638,9 +2576,6 @@ export function l4Use(s, a, now) {
   else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);
   else if (what === "flamer") flame(s, id, m, px, py, dx, dy, hz, now);
   else {
-    const mine =
-      what !== "grenade" &&
-      myFloor(zombies(s), px, py, hz, dx, dy, (A.far || 1600) * 1.2); // (Doom's: heights.js holds it to my floor)
     const shot = (k, ux, uy, v, more) => ({
       n,
       by: id,
@@ -2655,7 +2590,6 @@ export function l4Use(s, a, now) {
       ly: p.y,
       hz,
       hin: inCabin(px, py) ? 1 : 0,
-      ...(mine ? { lh: floorLock(hz) } : {}),
       ...more,
     });
     if (what === "shotgun") {
@@ -2742,13 +2676,11 @@ function strike(s, z, dmg, head, by, w = "") {
   z.hp = all ? 0 : Math.max(0, z.hp - dmg);
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
-    /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record); Justin's kills are
-       the duck's that bought him his gun (his points go in the pot: potSplit) */
-    const id = isWild(s, by) ? s.players[by].by : by;
-    if (id && s.players[id])
+    /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record) */
+    if (by && s.players[by])
       s.hang.l4kz = {
         ...(s.hang.l4kz || {}),
-        [id]: ((s.hang.l4kz || {})[id] || 0) + 1,
+        [by]: ((s.hang.l4kz || {})[by] || 0) + 1,
       };
   }
   return z.hp <= 0;
@@ -2805,7 +2737,6 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     zs = zombies(s),
     T = now - s.hang.l4.t0,
     most = angelOf(s, id, "chaingun") ? ANGEL.CHAIN : 1, // (Angelic: through two zombies, l4ddangel.js)
-    mine = myFloor(zs, px, py, hz, dx, dy, A.far),
     hits = [],
     past = []; // (the ones it missed: it goes on past them)
   let x = px,
@@ -2822,7 +2753,7 @@ function trace(s, id, px, py, dx, dy, hz, now) {
         !hits.includes(z) &&
         !past.includes(z) &&
         Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-        canShoot(z, mine, px, py, hz),
+        canShoot(z, px, py, hz),
     );
     if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
     if (hits.length >= most) break;
@@ -2861,7 +2792,6 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     holy = angelOf(s, id, "laser"),
     zs = zombies(s),
     T = now - s.hang.l4.t0,
-    mine = myFloor(zs, px, py, hz, dx, dy, A.far),
     hits = [];
   let x = px,
     y = py;
@@ -2876,7 +2806,7 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
         z.st !== 3 &&
         !hits.includes(z) &&
         Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
-        canShoot(z, mine, px, py, hz)
+        canShoot(z, px, py, hz)
       )
         hits.push(z);
   }
@@ -3215,14 +3145,23 @@ function fireTick(s, zs, now, T, p4) {
     if (now >= fp[id] + BURN.AGAIN || !standing(s, id)) delete fp[id];
   const ids = players(s).filter((id) => standing(s, id)),
     hot = [
-      ...zs.filter((z) => z.st === 2 && fz[z.i]).map((z) => ["", z.x, z.y]),
-      ...ids.filter((id) => fp[id] > now).map((id) => [id, ...at(s.pos[id])]),
+      ...zs
+        .filter((z) => z.st === 2 && fz[z.i])
+        .map((z) => ["", z.x, z.y, zFloor(z)]),
+      ...ids
+        .filter((id) => fp[id] > now)
+        .map((id) => [id, ...at(s.pos[id]), duckFloor(s.pos[id])]),
     ];
   for (const id of ids) {
     if (fp[id] || dodging(s, s.pos[id], now)) continue; // (burning, just put out, or mid-jump)
-    const [x, y] = at(s.pos[id]);
-    if (!hot.some(([o, hx, hy]) => o !== id && room(hx, hy, x, y) < CLAW))
-      continue;
+    const [x, y] = at(s.pos[id]),
+      f = duckFloor(s.pos[id]);
+    if (
+      !hot.some(
+        ([o, hx, hy, hf]) => o !== id && hf === f && room(hx, hy, x, y) < CLAW,
+      )
+    )
+      continue; // (only one on its own floor: zFloor)
     fp[id] = now + BURN.P;
     if (hurtDuck(s, p4, id, now)) {
       delete fp[id];
@@ -3274,7 +3213,7 @@ function hurtDuck(s, p4, id, now, w = "") {
    reloads (8 to a magazine, as the pistol's), kept in its kit as dg (the bullets in the magazine); it goes when the duck
    is up again or bleeds out. Never Angelic, whatever pistol the duck has besides */
 function downGun(s, id, on) {
-  if (on && isWild(s, id) && !s.players[id].armed) return; // (Justin out there with no gun ever bought him: no down pistol either, the owner's, Nov 17 13:30Z)
+  if (on && isWild(s, id)) return; // (Justin out there: no down pistol, the owner's, Nov 17 20:02Z "when he goes down he doesnt have a pistol")
   const kit = kitOf(s, id);
   if (!kit || (!on && kit.dg === undefined)) return;
   const m = { ...kit };
@@ -3448,31 +3387,10 @@ const walled = (x, y, z) =>
       )
     : (!playable(x, y) && !inOpening(x, y)) ||
       (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
-/* Doom's shots (the owner's, Nov 17 17:41Z: "the natural target priority hits the duck on the same floor ... unless the
-   same direction of enemy has no one which CAN be shot IN that direction ON the same floor"): a shot from my duck
-   (feet at hz, at (px, py), along (dx, dy)) hits the first zombie in its line on my own floor; only when none is that
-   way, before a wall, does it go up or down to one on another floor, if no roof is between (holes let it through:
-   layout.js slabBetween). myFloor: is one on my floor in the line? canShoot: may this shot hit zombie z? */
-const onMine = (z, hz) => Math.abs(zombieZ(z) - hz) < SAME_FLOOR;
-const myFloor = (zs, px, py, hz, dx, dy, far) =>
-  dp() &&
-  sameFloorAhead(
-    zs
-      .filter((z) => z.st !== 3)
-      .map((z) => ({ x: z.x, y: z.y, z: zombieZ(z) })),
-    px,
-    py,
-    hz,
-    dx,
-    dy,
-    far,
-    [26, 22],
-    12,
-    (x, y) => walled(x, y, hz + MID - 20),
-  ); // (heights.js: one rule for every mode)
-const canShoot = (z, mine, px, py, hz) =>
-  !dp() ||
-  (mine ? onMine(z, hz) : !slabBetween(px, py, hz, z.x, z.y, zombieZ(z)));
+/* may a shot from my duck (feet at hz, at (px, py)) hit zombie z? Only with nothing solid between us: the one rule
+   (layout.js slabBetween, the owner's, Nov 17 20:02Z); the walls on the way are the shot's own walk */
+const canShoot = (z, px, py, hz) =>
+  !dp() || !slabBetween(px, py, hz, z.x, z.y, zombieZ(z));
 /* the zombies by 64-px square (a spatial grid), so a shot only looks at the few round it instead of every zombie on the
    map: the same hits, far fewer looks. A zombie's hit room (26 by 22 px) never reaches past the squares next to its own */
 const HIT_CELL = 64;
@@ -3891,34 +3809,6 @@ function l4Tick(s, now) {
       s.pos[id].w !== am[id].rw
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
-  /* Justin, armed, now and then shouts at the zombies as he fires */
-  if (
-    isWild(s, WILD.id) &&
-    s.players[WILD.id].armed &&
-    s.hang.l4 &&
-    !s.hang.l4.wait
-  ) {
-    const jk = kitOf(s, WILD.id),
-      last = Math.max(0, ...Object.values((jk && jk.u) || {}));
-    if (
-      now - last < 300 &&
-      now - (s.hang.l4jf || 0) > 7000 &&
-      Math.random() < 0.3
-    ) {
-      s.hang.l4jf = now; // (its own key: l4jt is the jetpacks' clock, jetBurn)
-      justinSays(s, "fight");
-    }
-  }
-  /* Justin's gun never runs out: what he has left to load stays full */
-  if (isWild(s, WILD.id) && s.players[WILD.id].armed) {
-    const jk = kitOf(s, WILD.id),
-      jw = jk && jk.sl[1];
-    if (jw && jk.am[jw] && jk.am[jw][1] < 50)
-      s.hang.l4a = {
-        ...s.hang.l4a,
-        [WILD.id]: { ...jk, am: { ...jk.am, [jw]: [jk.am[jw][0], 99] } },
-      };
-  }
   justinChat(s, now);
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
@@ -4003,8 +3893,12 @@ function l4Tick(s, now) {
     L2.owe -= k;
     L2.made += k;
   }
-  /* the zombies walk, tear boards down, climb in, swipe */
-  moveZombies(s, zs, now, T, up);
+  /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
+     Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
+  moveZombies(s, zs, now, T, [
+    ...up,
+    ...ids.filter((id) => isWild(s, id) && standing(s, id)),
+  ]);
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
   boltTick(s, zs, now, ids);
@@ -4024,7 +3918,6 @@ function l4Tick(s, now) {
   /* every zombie of the round came and died: the next round, and the ghosts come back */
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
-    potSplit(s);
     store(s, bodies, false);
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
@@ -4356,7 +4249,10 @@ function moveZombies(s, zs, now, T, up) {
         if (target.way)
           z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(target.way)]; // (its way up, from now on)
       }
-      if (z.cm && best < 0.9) {
+      /* at the foot of its wall, outside: up it goes. Never from inside, under the roof (the owner's, Nov 17 20:02Z: "WHEN
+         THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE
+         INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR"): from in there it walks out to the foot first */
+      if (z.cm && best < 0.9 && !deckOver(z.x, z.y, zombieZ(z))) {
         z.st = 6;
         z.k = z.cm[3];
         z.n = 0;
@@ -4384,10 +4280,14 @@ function moveZombies(s, zs, now, T, up) {
       }
       if (aim) stepZombie(z, aim, v * dt, pls);
     }
-    /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); never one a floor
-       above or below it (a duck up on a roof, or on the ladder) */
+    /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
+       floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
     const d = room(z.x, z.y, ...target.xy);
-    if (d < CLAW && Math.abs(target.zz - zombieZ(z)) < 50) {
+    if (
+      d < CLAW &&
+      zFloor(z) === target.dk &&
+      Math.abs(target.zz - zombieZ(z)) < 50
+    ) {
       if (!z.n) z.n = T || 1;
       if (T - z.n >= R[2] && T - z.a >= R[3]) {
         z.a = T;
@@ -4522,6 +4422,17 @@ const jumpZ = (z) => {
     );
   return h0 + (h1 - h0) * u + JUMP.arc * 4 * u * (1 - u);
 };
+/* the floor a zombie is on, as a duck's (deckAt: a roof, or null: the ground); undefined while it climbs a wall or
+   jumps, between two floors. A zombie only ever claws a duck on its own floor (the owner's, Nov 17 20:02Z: "ZOMBIES
+   CANNOT CANNOT CANNOT HIT SOMEONE ON A FLOOR ABOVE THEM AND VICE VERSA!! ... THOSE RULES I DESCRIBED ONLY APPLIED TO
+   PROJECTILES THAT PLAYERS USE"), and a duck on fire only sets one on its own floor alight */
+const zFloor = (z) =>
+  z.st === 6 || z.st === 8
+    ? undefined
+    : dp()
+      ? deckAt(z.x, z.y, zombieZ(z))
+      : null;
+const duckFloor = (p) => (dp() ? deckAt(...at(p), +p.z || 0) : null);
 /* a zombie's height: up a fence, up a wall, on a roof, jumping onto the canopy, or on the ground */
 export const zombieZ = (z) =>
   z.st === 5

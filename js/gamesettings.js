@@ -646,7 +646,7 @@ const BY_MODE = {
       n: "Justin in Duck Cabin",
       c: ON_OFF,
       cat: "rules",
-      d: "On: Justin is out in Duck Cabin too, with no weapon, as he is on Downpour. Zombies go for him, and a duck can buy him a gun in the rest phase. Downpour always has him.",
+      d: "On: Justin is out in Duck Cabin too, as he is on Downpour. He never has a weapon, and zombies go for him. Downpour always has him.",
     },
   ],
   vdd: [
