@@ -5269,3 +5269,10 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 Then (11:08Z): "tell me of what questions they have here and WHO"
 
 - Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
+
+### Laser gun look (owner, 2026-11-17 11:20Z and 11:22Z, in Noah's thread)
+"combine the heavy laser and the laser rifle, and make more of the barrel get hotter not just the tip"
+"yes to the gun laser gun u did
+
+call it "Laser Rifle""
+Decided: the combined look (js/laserart.js), named "Laser Rifle".
