@@ -18237,3 +18237,12 @@ html.phone-land .lobby-left > .lmenu {
 html.phone-land .lobby-left > .lmenu-info {
   grid-area: info;
 }
+/* a phone held upright: the full-screen button joins the top right, so the buttons sit a little closer and smaller,
+   leaving the stage's name about the room it had */
+html.phone:not(.phone-land) .gbar-r {
+  gap: 0.4rem;
+}
+html.phone:not(.phone-land) .gbar .iconbtn {
+  width: 2.1rem;
+  height: 2.1rem;
+}
