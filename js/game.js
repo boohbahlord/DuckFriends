@@ -316,6 +316,8 @@ import {
   MGJ_HAMMER,
   ammoOf,
   mgjMag,
+  MGJ_MELEE,
+  INF_AMMO,
   MGJ_GUNS,
   downNear,
   REVIVE,
@@ -485,7 +487,7 @@ let padHold = false, // a phone's jump button held down (the jetpack flies)
   held = null,
   l4Slot = 0, // Quacky Zombies: the slot in hand (0 melee, 1 and 2 ranged, 3 the special), and the weapon's before the special
   l4Last = 0,
-  mgjHold = "handgun", // Mad God Justin: what's out in my hand (the knife, the pistol, the weapon picked up, the zebra cake)
+  mgjHold = "handgun", // Mad God Justin: what's out in my hand (the short sword, the pistol, the weapon picked up, the zebra cake)
   mgjBack = "handgun", // (and what goes back in hand once a picked-up weapon is used up, or the zebra cake thrown)
   mgjFight = -1, // (the fight it was set for: each fight starts with the pistol out, the owner's, Nov 16)
   mgjRv = false, // (E held down for a revive, or the phone's Revive button)
@@ -1721,7 +1723,7 @@ function drawDucks(now = clockNow()) {
         ? !mgjGone(s, now) &&
           (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
-            ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || "knife"
+            ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || MGJ_MELEE
             : jm[id]
               ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
               : isL4dd(s)
@@ -2642,9 +2644,14 @@ function placeDesk(board, s, now) {
 
 /* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
 function placePick(board, s) {
-  const P = isMgj(s) && s.phase === "boss" && s.mgj && s.mgj.pick,
-    layer = $(".ducks", board);
-  let n = layer && layer.querySelector(".mgj-pick");
+  const m = isMgj(s) && s.phase === "boss" && s.mgj;
+  placeToken(board, m && m.pick, "");
+  placeToken(board, m && m.plus, "plus"); // (the little plus sign every 30 s: the owner's, Nov 17)
+}
+function placeToken(board, P, tag) {
+  const layer = $(".ducks", board),
+    sel = tag ? ".mgj-pick.k-" + tag : ".mgj-pick:not(.k-plus)";
+  let n = layer && layer.querySelector(sel);
   if (n && (!P || +n.dataset.n !== P.n)) {
     n.remove();
     n = null;
@@ -4924,7 +4931,7 @@ const playDuck = () =>
       ? {
           ...myDuck(),
           keys: [
-            "knife",
+            MGJ_MELEE,
             "handgun",
             "jaime",
             specialById(myPick()) ? myPick() : null,
@@ -4938,32 +4945,32 @@ const playDuck = () =>
 function mgjBackIfGone(s) {
   if (s.mgj && s.mgj.n !== mgjFight) {
     mgjFight = s.mgj.n;
-    mgjHold = mgjBack = "handgun"; // (a new fight: the pistol in hand, the knife on 1)
+    mgjHold = mgjBack = "handgun"; // (a new fight: the pistol in hand, the short sword on 1)
   }
   const thrown =
     mgjHold === "zebra" &&
     s.mgj &&
     (s.mgj.cake || clockNow() - (s.mgj.zebraAt || 0) < CAKE_EVERY);
   if (
-    (mgjHold !== "knife" &&
+    (mgjHold !== MGJ_MELEE &&
       mgjHold !== "handgun" &&
       mgjHold !== "zebra" &&
       mgjHold !== myPick()) ||
     thrown
   ) {
-    mgjHold = mgjBack || "knife";
+    mgjHold = mgjBack || MGJ_MELEE;
     if (me && s.phase === "boss") setTimeout(() => sendMove(true), 0);
   }
   held = s.phase === "boss" ? mgjHold : null;
 }
 /* Mad God Justin: what a key puts out in my hand, kept there (all but Jaime: the owner's, Nov 3) */
 const mgjToggles = (id) =>
-  id === "knife" ||
+  id === MGJ_MELEE ||
   id === "handgun" ||
   id === "zebra" ||
   (!!id && id === myPick());
 function mgjOut2(id) {
-  if (mgjHold !== id && (mgjHold === "knife" || mgjHold === "handgun"))
+  if (mgjHold !== id && (mgjHold === MGJ_MELEE || mgjHold === "handgun"))
     mgjBack = mgjHold; // (the one to go back to)
   mgjHold = held = id;
   sendMove(true);
@@ -5207,7 +5214,7 @@ function ammo(id = "handgun") {
 const dots = (id) =>
   R && isMgj(R.state)
     ? MGJ_GUNS.includes(id) && id === myPick()
-      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me)}</span>`
+      ? `<span class="ammo ammo-n" aria-label="${ammoOf(R.state, R.me) >= INF_AMMO ? "no limit on" : ammoOf(R.state, R.me)} shots left">${ammoOf(R.state, R.me) >= INF_AMMO ? "∞" : ammoOf(R.state, R.me)}</span>`
       : id === "jaime"
         ? ammoHTML(jaimePool(R.state.mgj, clockNow()).n, JAIME_MAX)
         : ""
@@ -6612,7 +6619,7 @@ function keydown(e) {
   } // the handgun reloads
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (isMgj(R.state)) fire(held || "knife");
+    if (isMgj(R.state)) fire(held || MGJ_MELEE);
     else if (heldNow()) fire(heldNow());
     else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();

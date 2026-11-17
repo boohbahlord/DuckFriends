@@ -171,6 +171,7 @@ import {
   MGJ_GUNS,
   mgjHalf,
   mgjMag,
+  MGJ_MELEE,
   ammoOf,
   mgjSpend,
   mgjLgren,
@@ -2247,7 +2248,7 @@ function reduceStep(state, a, now) {
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
       const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
-      if (isMgj(s) && sp !== "knife" && sp !== "handgun" && !mgjGun)
+      if (isMgj(s) && sp !== MGJ_MELEE && sp !== "handgun" && !mgjGun)
         return mgjUse(s, a, now, logLine) ? s : state; // (Mad God Justin: the medkit picked up)
       if (mgjGun && (s.mgj.held[a.id] !== sp || !ammoOf(s, a.id))) return state; // (Mad God Justin: a gun picked up, until its shots are gone)
       if (

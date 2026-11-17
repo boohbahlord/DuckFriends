@@ -1,6 +1,6 @@
 /* ---------- Downpour's ground (Dead Ducks Arcade's second map, stationmap.js) ----------
    Flat pieces under everything, as shapes.js' GROUND() gives them to world.js (each { svg, x, y, w, h }, painted into
-   tiles once): the forest floor past the owner's line, the swamp's grass inside it with mud and puddles, the concrete in
+   tiles once): the swamp's grass everywhere (past the map's edges too) with mud and puddles, the concrete in
    front of the gas station and under the canopy, the gravel path to the chapel, the sunken road (its muddy sides, the
    asphalt, cracks, the faded lines), the flood over it (murky, deep at the west end), and the floors: the gas station's
    worn tiles, the chapel's planks and its red runner up the aisle. Night colors; the rain, the ripples and the lights
@@ -48,14 +48,6 @@ function grassTile(id, r) {
   b += `<path d="${p}" stroke="#3b5230" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>`;
   return `<pattern id="${id}" width="${W}" height="${H}" patternUnits="userSpaceOnUse">${b}</pattern>`;
 }
-function forestTile(id, r) {
-  const W = 400,
-    H = 400;
-  let b = `<rect width="${W}" height="${H}" fill="#121c12"/>`;
-  for (let i = 0; i < 60; i++)
-    b += `<ellipse cx="${n1(r() * W)}" cy="${n1(r() * H)}" rx="${n1(4 + r() * 9)}" ry="${n1(2 + r() * 4)}" fill="${["#1d2a17", "#2a2416", "#17241a"][i % 3]}"/>`; // (dead leaves, moss)
-  return `<pattern id="${id}" width="${W}" height="${H}" patternUnits="userSpaceOnUse">${b}</pattern>`;
-}
 function asphaltTile(id, r) {
   const W = 240,
     H = 240;
@@ -89,19 +81,21 @@ export function downpourGround() {
     W = GS.GS_W,
     H = GS.GS_H,
     G = [];
-  /* the forest floor everywhere, the swamp's grass inside the line: in bands, so no tile draws the whole map */
-  const BAND = 800;
-  const bandDefs = forestTile("dpf", rng(7)) + grassTile("dpg", rng(11)); // (tiles of 400: the bands, 800 tall, meet seamlessly)
-  for (let y = 0; y < H; y += BAND) {
-    const h = Math.min(BAND, H - y);
+  /* the swamp's grass everywhere, past the map's edges too as far as the camera ever shows (the owner's, Nov 17 11:11Z:
+     the dark forest floor went, "replaced with the normal grass"; and past the edges the ground was see-through, so
+     the canvas kept old pictures there that changed as you walked): in bands, so no tile draws the whole map */
+  const BAND = 800,
+    OUT = 800; // (past each edge: more than the camera reaches, world.js clampCam, and the canvas' margin round it)
+  for (let y = -OUT; y < H + OUT; y += BAND) {
+    const h = Math.min(BAND, H + OUT - y);
     G.push(
       piece(
-        `<rect width="${W}" height="${h}" fill="url(#dpf)"/><polygon points="${poly(GS.TOP, 0, y)}" fill="url(#dpg)"/><polygon points="${poly(GS.BOT, 0, y)}" fill="url(#dpg)"/>`,
-        0,
+        `<rect width="${W + 2 * OUT}" height="${h}" fill="url(#dpg)"/>`,
+        -OUT,
         y,
-        W,
+        W + 2 * OUT,
         h,
-        bandDefs,
+        grassTile("dpg", rng(11)), // (a tile of 400: the bands, 800 tall, meet seamlessly)
       ),
     );
   }
@@ -263,4 +257,4 @@ export function downpourGround() {
 }
 /* the plain color under a tile till it's painted */
 export const dpGroundColor = (y) =>
-  y >= GS.ROAD.y0 && y < GS.ROAD.y1 ? "#2a2b2f" : "#1f2c1b";
+  y >= GS.ROAD.y0 && y < GS.ROAD.y1 ? "#2a2b2f" : "#24331f";

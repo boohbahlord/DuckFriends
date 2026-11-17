@@ -433,6 +433,7 @@ const SK = Object.fromEntries(
     "carSVG",
     "generatorSVG",
     "fenceSVG",
+    "fenceXSVG",
     "pewSVG",
     "altarSVG",
     "towerSVG",
@@ -486,6 +487,8 @@ const GS_DRAW = {
       { left: p.x - mid + (t > 0 ? 4 : lean + 4), w: lean + 8 },
     );
   },
+  fencex: (p) =>
+    gsPart(p, () => SK.fenceXSVG({ w: p.w, d: p.d, h: p.h, seed: seedOf(p) })), // (the map's north and south sides: stationart.js)
   pew: (p) =>
     gsPart(p, () => SK.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
   altar: (p) => gsPart(p, () => SK.altarSVG({ w: p.w, d: p.d, h: p.h })),
