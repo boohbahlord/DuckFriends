@@ -206,6 +206,7 @@ import {
   swims as l4Swims,
   BURN,
   weaponName,
+  wildCrying,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -1419,7 +1420,11 @@ function drawDucks(now = clockNow()) {
     const dead = deadNow(id, p),
       own = s.players[id] && !g ? shownDuck(s, p) : p.duck, // (Hide customization, Rainbow Ducks: looks.js)
       vc = s.players[id] && !g ? voteTint(s, board, pos) : "",
-      worn = dnHat(s, id, now) ? dunceDuck(own) : own,
+      cried =
+        isL4dd(s) && own && wildCrying(s, id, now)
+          ? { ...own, eyes: "tears" }
+          : own, // (Justin out there, hurt: the tears eyes for 10 s, Mad God Justin's crying, l4ddrules.js CRY)
+      worn = dnHat(s, id, now) ? dunceDuck(cried) : cried,
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
       jet = jetOn(s, id, now),

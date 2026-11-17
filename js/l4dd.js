@@ -1960,7 +1960,7 @@ function holdTarget(pos, ctx) {
   let best = null;
   for (const id of s.seat) {
     const p = P4(s, id);
-    if (id === me || !p || !p.dn) continue;
+    if (id === me || !p || !p.dn || p.ex) continue; // (dead for good: no revive, no button; the owner's, Nov 17 20:37Z, "JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY")
     const a = ctx.world.at(id);
     if (!a) continue;
     const d = Math.hypot(a.x - pos.x, a.y - pos.y);
@@ -2609,6 +2609,12 @@ activity({
       ? false
       : undefined, // (the power is cut: only the fires and the candles shine, till the power box is mended. Downpour's hood-up car glows till it's first used)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
+  /* the dead are walked over (the owner's, Nov 17 20:37Z: "YOU CAN WALK OVER DEAD BODIES ... I CANT WALK OVER JUSTIN'S DEAD
+     BODY"): Justin dead for good, a duck that bled out (a ghost) */
+  passable(id, ctx) {
+    const p = P4(ctx.state(), id);
+    return !!p && !!(p.ex || p.gh);
+  },
   crowd(x, y) {
     let d = 0;
     for (const o of Z.values()) {
