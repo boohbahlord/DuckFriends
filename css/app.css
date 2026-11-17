@@ -18285,6 +18285,11 @@ html.fs-on .fs-btn .fs-in {
   }
 }
 
+/* on its side the aim stick and the jump button sit a little in from the right edge, so a thumb can push the stick all
+   the way out; the walking stick's middle stays that far in from its edges too (js/touch.js) */
+html.phone-land .tpad {
+  right: calc(3.8rem + env(safe-area-inset-right));
+}
 /* ---------- a phone on its side (html.phone-land, js/pointer.js) ----------
    It is short (about 360 px), so every size made of rem shrinks with the page's base size, and the places that
    stack things move them side by side. Touchscreen laptops never get this (they are html.keyboard). */

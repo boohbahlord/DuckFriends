@@ -1700,15 +1700,6 @@ function holdLabel(t, s, ctx, now) {
     : `Board up ${t.n}/${L4.BOARDS}`;
 }
 
-/* ---------- phones: where my duck aims without a mouse ---------- */
-/* the way I last walked (it keeps it while I stand still): a direction in board units. I want the gun and its laser to
-   point the way the duck moves, so no aiming at zombies here (the owner, Nov 17: "movement direction") */
-export function l4TouchAim(me) {
-  if (!me) return null;
-  const [ax, ay] = walkDir;
-  return [ax / W, ay / H];
-}
-
 activity({
   id: "l4",
   only: "l4dd",
