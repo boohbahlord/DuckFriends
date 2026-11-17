@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v56",
+    version: 56,
+    date: "Nov 17, 2026",
+    title: "Install Duck Friends",
+    news: [
+      "Duck Friends can be installed as an app from the site: on a phone, Chrome's menu, then Add to Home screen or Install app; on a computer, the install button at the right of the address bar. It opens in full screen without the browser's \"To exit full screen\" pop-up, and every update reaches it the next time it opens.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v55",
     version: 55,
     date: "Nov 17, 2026",
