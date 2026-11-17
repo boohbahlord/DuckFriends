@@ -5578,3 +5578,6 @@ zombie cabin being a backdrop to his usual fight (B, the real 3D cabin, would be
 
 Given to Solomon the 2nd: WAVE.N 6, WAVE.PER 3; Mad God Justin's wave zombies take Dead Ducks Arcade's damage from every
 weapon (ARMS dmg, crits, misses, reusing l4ddrules.js); check the other modes' HIT_DMG matches.
+
+## Request (2026-11-17 17:41Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8ZveGwoPfnrtdgLW2PNoe7, upset): why requests were missed, new rules, 34 items (word for word)
+The full text is the message above, by id; Adam's numbered reading (1-34) and Q69-Q71 are in Adam's thread, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtYH86KXCrpdYzHwgem9HXaf. Rules: no pictures or audio, nothing deploys and no bug testing until the owner says so, Jackal off areas he has messed up more than 5 times.
