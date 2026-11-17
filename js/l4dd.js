@@ -621,19 +621,19 @@ function spinSquare(s, ctx) {
       L &&
       !L.over &&
       L.wait &&
-      seenFrom(BOX.x, BOX.y, Wd.inside)
+      seenFrom(BOX.zx, BOX.y, Wd.inside)
     );
   if (!sqEl) return;
   if (sqEl.hidden === show) sqEl.hidden = !show;
   if (!show) return;
-  const z = heightAt(BOX.x, BOX.y),
+  const z = heightAt(BOX.zx, BOX.y),
     pts = [
       [-1, -1],
       [1, -1],
       [1, 1],
       [-1, 1],
     ].map(([a, b]) => {
-      const p = Wd.toScreen(BOX.x + a * NEAR, BOX.y + b * NEAR, z);
+      const p = Wd.toScreen(BOX.zx + a * NEAR, BOX.y + b * NEAR, z);
       return p.left.toFixed(1) + "," + p.top.toFixed(1);
     }),
     sig = pts.join(" ") + Wd.sc.toFixed(3);
@@ -1782,7 +1782,7 @@ function holdTarget(pos, ctx) {
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
   const now = clockNow(),
-    db = Math.max(Math.abs(BOX.x - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
+    db = Math.max(Math.abs(BOX.zx - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
   if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
