@@ -185,7 +185,7 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
-import { olAdd, olDraw, olFloor } from "./outlines.js";
+import { olAdd, olDraw, olFloor, olRoofed } from "./outlines.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
@@ -1721,22 +1721,27 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
-    /* the outlines (outlines.js; every zombie game and Hangout's world): each player green, Justin blue (Good Justin God in Mad God Justin,
-       never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
-       roof and a floor away */
+    /* the outlines (outlines.js; every zombie game and Hangout's world), seen through a wall, under a roof and a floor
+       away: my own duck a darker blue that only I see, every other player green, Justin yellow (Good Justin God in Mad
+       God Justin, never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade): the owner's,
+       Nov 17 20:10Z */
     const olP = !g && s.players[id],
       olKind = !ol
         ? ""
         : isMgj(s)
           ? id === GOOD_ID
-            ? "blue"
+            ? "justin"
             : olP && id !== JUSTIN_ID
-              ? "ally"
+              ? mine
+                ? "me"
+                : "ally"
               : ""
           : olP
             ? olP.helper || olP.wild
-              ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-              : "ally"
+              ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              : mine
+                ? "me"
+                : "ally"
             : "";
     let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
     if (olKind && pic && pic.tagName === "IMG" && !d._off) {
@@ -1749,8 +1754,11 @@ function drawDucks(now = clockNow()) {
       let hidden = false,
         floor = 0;
       if (hang) {
+        const a = olMe !== null ? world.at(id) : null,
+          az = a && (pos.j && pos.b !== undefined ? pos.b : a.z);
         hidden =
           !!d._hid ||
+          (!mine && !!a && olRoofed(a.x, a.y, az, olAt)) || // (under a roof I'm not under: hidden by it, outlines.js)
           world.coverAt(
             at.left - size * 0.4,
             at.left + size * 0.4,
@@ -1758,13 +1766,7 @@ function drawDucks(now = clockNow()) {
             b,
             d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
           );
-        if (olMe !== null) {
-          const a = world.at(id),
-            f =
-              a &&
-              olFloor(a.x, a.y, pos.j && pos.b !== undefined ? pos.b : a.z);
-          floor = a ? Math.sign(f - olMe) : 0;
-        }
+        if (a) floor = Math.sign(olFloor(a.x, a.y, az) - olMe);
       }
       olAdd({
         id,
