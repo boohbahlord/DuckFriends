@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v71",
+    version: 71,
+    date: "Nov 17, 2026",
+    title: "Rain, wind, bells and footsteps",
+    news: [
+      "For Dead Ducks Arcade: Footsteps sound different on grass, wood, floors, roofs and in water, with a stroke when you swim. Every sound comes from its side and is muffled through a floor above or below you.",
+      "For Dead Ducks Arcade: Zombies rattle the fence as they climb it, and falls land with a thud.",
+      "For Dead Ducks Arcade: Crits gush, misses blip, and bullets hitting walls and floors are quieter.",
+      "For Dead Ducks Arcade: A light rain falls on Downpour, the church bell rings each round in, and a chime plays once every zombie is down.",
+      "In Hangout and Dead Ducks Arcade: The wind blows round the cabin, muffled indoors, and the fireplace and campfire crackle as you get close.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v70",
     version: 70,
     date: "Nov 17, 2026",
