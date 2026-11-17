@@ -5778,5 +5778,9 @@ Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default,
 > Justin isnt supposed to be hard for players to kill, and his character should use the cry effect already in the game for ten seconds after taking one damage before he sprints away.
 >
 > im going to bed fix it and fix it all im going to bed
+>
+> JUSTIN CRIES AND SPRINTS ! HE DOESNT STAND AROUND FOR FUCKIG TEN SECONDS! WHY WOULD YOU SAY THEN INSTEAD OF AND FOR THAT RETARD! TELL ME U SEE THIS FUCKING EDIT NOW
+
+(last paragraph added by the owner's edit at 20:39Z: Justin cries for 10 s WHILE sprinting away)
 
 Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint, zombies chase Justin only at half the range, give up fast, last 1/10th never; dead = no revive, button gone, walk over bodies. Noah = shots end where they hit. Miles Jr. = lobby countdown music fade, vote windows' music.
