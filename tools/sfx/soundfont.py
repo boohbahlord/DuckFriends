@@ -74,6 +74,14 @@ def count_go(sf2):
     )
 
 
+def vote_tick(sf2):
+    """Vote for game mode and Vote for map, each second before the last five: a very soft, short beep, a plain sine on
+    E5, so it is neither the lobby's knock (count_tick, used for the last five) nor its ding at zero (count_go)
+    """
+    a = play(sf2, [(0, 0, 8, 80, 76, 56, 0.06)], 0.35)
+    return (a * env(len(a), 0.008, 0.03, 0.035)).astype(np.float32)
+
+
 def round_start(sf2):
     """Dead Ducks Arcade, a new round: far off and hard to make out. A low drone (A, a fifth, a minor ninth and a tritone
     on slow strings, a choir an octave up, each sliding down a little), wind, and a thin glassy whine high above; it
@@ -122,6 +130,7 @@ MAKERS = {
     "sad_trombone": sad_trombone,
     "count_tick": count_tick,
     "count_go": count_go,
+    "vote_tick": vote_tick,
     "round_start": round_start,
     "nuke_ring": nuke_ring,
 }

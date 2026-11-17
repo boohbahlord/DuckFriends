@@ -4,6 +4,7 @@
 export const FILES = {
   countTick: { n: 1 },
   countGo: { n: 1 },
+  voteTick: { n: 1 },
   l4round: { n: 1 },
   step: { n: 5 },
   zstep: { n: 3 },
