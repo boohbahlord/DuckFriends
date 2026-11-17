@@ -5270,6 +5270,9 @@ Then (11:08Z): "tell me of what questions they have here and WHO"
 
 - Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
 
+- 2026-11-17 11:11Z (screenshot: /mnt/project-files/refs/nov17-1107-batch/downpour-fence-glitch.png): "so the ground on this dark side changes visually as you walk around and there is an invisible wall instead of a fence around the whole map, which means i was disobeyed again. There must be a fence around the whole map WHERE the invisible wall is AND this ugly dark ground will be replaced with the normal grass before topography work is done"
+  - Given to Solomon, FIRST in his list (before the road water/topography).
+
 - Owner's answers (11:19Z) to the 5 questions (1 Xbox at 2/3 HP left, meteor at 1/3; 2 Quick Revive; 3 waves per extra player; 4 Tommy/UMP stats; 5 where new guns come from): "1. yes
 2. it costs only 750 and yes and yes (revive is 3 seconds in mad god justin and brings players up to half health there
 3. yes each player after the first there in that case
