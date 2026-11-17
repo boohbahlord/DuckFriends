@@ -136,3 +136,16 @@ instruments (its license: LICENSES.md).
 | laser | Kenney, Digital Audio (laser9, laser3) — https://kenney.nl/assets/digital-audio | CC0 1.0 |
 | laserHiss | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
 | laserSteam | bart, Steam Release Sounds — https://opengameart.org/content/steam-release-sounds | CC0 1.0 |
+| stepGrass | Kenney, Impact Sounds (footstep_grass) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepHard | Kenney, Impact Sounds (footstep_concrete) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepMetal | Kenney, Impact Sounds (footstep_concrete, impactMetal_light) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| stepWater | dawidwmika (walk_water, CC0, via CDDA-Soundpacks); Kenney, Impact Sounds — https://freesound.org/s/372518/ | CC0 1.0 |
+| swim | rubberduck (CC0, via EternityForest/Free-SFX) — https://opengameart.org/users/rubberduck | CC0 1.0 |
+| climb | Breviceps (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Breviceps/sounds/458963/ | CC0 1.0 |
+| thud | Kenney, Impact Sounds (impactSoft_heavy, impactPunch_heavy) — https://kenney.nl/assets/impact-sounds | CC0 1.0 |
+| gore | PaulMorek (CC0, via CDDA-Soundpacks) — https://freesound.org/people/PaulMorek/sounds/196725/ | CC0 1.0 |
+| miss | Kenney, Interface Sounds (minimize_005) and Digital Audio (highDown) — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| rain | Ali@k (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Ali@k/sounds/128907/ | CC0 1.0 |
+| wind | guyburns (CC0, via CDDA-Soundpacks) — https://freesound.org/people/guyburns/sounds/473815/ | CC0 1.0 |
+| churchBell | Nox_Sound (CC0, via CDDA-Soundpacks) — https://freesound.org/people/Nox_Sound/sounds/563885/ | CC0 1.0 |
+| cleared | Duck Friends' own song What the duck? (assets/music) | CC0 1.0 |
