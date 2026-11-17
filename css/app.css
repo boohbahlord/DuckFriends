@@ -14802,6 +14802,9 @@ html.moving .eye-tears .tdrop.t2 {
   user-select: none;
   -webkit-user-drag: none;
 }
+.l4z:not(.hurt) .l4z-hp {
+  display: none; /* (an unhurt zombie has no HP bar yet: l4dd.js) */
+}
 .l4z-hp {
   position: absolute;
   left: calc(-17px * var(--k, 1));
@@ -16278,6 +16281,7 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 @media (max-width: 600px) {
   .l4-hint {
     bottom: 9.5rem;
+    font-size: 1rem;
   }
 }
 /* Instant Kill: a soft blood-crimson glow breathing over everything on the board */

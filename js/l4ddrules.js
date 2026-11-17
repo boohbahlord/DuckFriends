@@ -660,8 +660,7 @@ export const BOX = {
 /* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
    fireplace's (syncMap swaps them in) */
 /* box: where a duck spins and takes (x, y), and where the weapons spin in sight (sx, sy, up sz): over the cabin's
-   fireplace; on Downpour on the ground behind the hood-up car, not in it, so everyone sees them spin (the owner's, Nov 17
-   11:07Z) */
+   fireplace; on Downpour over the hood-up car, on its hood (the owner's, Nov 17 12:28Z; it was on the ground behind it, 11:07Z) */
 const CABIN_SPOTS = {
     butler: { ...BUTLER },
     box: { x: BOX.x, y: BOX.y, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
@@ -671,9 +670,9 @@ const CABIN_SPOTS = {
     box: {
       x: GS.HOOD.spot.x,
       y: GS.HOOD.spot.y,
-      sx: (GS.HOOD.x0 + GS.HOOD.x1) / 2,
-      sy: GS.HOOD.y0 - 90,
-      sz: 4,
+      sx: GS.HOOD.x0 + 90, // (the owner's, Nov 17: over the car, on its hood where he circled the S, not behind it)
+      sy: (GS.HOOD.y0 + GS.HOOD.y1) / 2,
+      sz: 125,
     },
   };
 const SHOP_REACH = 130;
