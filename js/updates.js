@@ -9,6 +9,19 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v69",
+    version: 69,
+    date: "Nov 17, 2026",
+    title: "Justin's attack hints, Tommy gun and UMP-45",
+    news: [
+      "For Mad God Justin: The edge lightning comes less often (every 18 s instead of 10 s) and its edges blink three times before it strikes.",
+      'For Mad God Justin: Every attack now has a hint. A red wedge shows where his hammer will sweep, a red sight line shows his gun bursts, and a red cone shows his shotgun, each with a red "!" over his head.',
+      "For Dead Ducks Arcade: The Tommy gun and the UMP-45 can come out of the weapon spin.",
+      "For Mad God Justin: The Tommy gun and the UMP-45 can drop as pickups.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v68",
     version: 68,
     date: "Nov 17, 2026",

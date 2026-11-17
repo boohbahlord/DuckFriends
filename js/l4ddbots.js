@@ -268,6 +268,8 @@ const GUN_RANK = [
   "ak",
   "burst",
   "laser",
+  "tommy",
+  "ump",
   "smg",
   "sniper",
   "revolver",
