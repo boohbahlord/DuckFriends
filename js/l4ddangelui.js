@@ -2,7 +2,7 @@
    The machine on the stage (Noah's drawing, powerart.js), glowing while it works, sparks and smoke out of its hatch
    (fx.js); then the orb over it, with its duck's name, till that duck takes it. E by it: what it does now. Its sounds:
    working (once, 5 s) and the orb coming out. l4dd.js calls these. */
-import { sortY } from "./hangout/layout.js";
+import { sortY, seenFrom } from "./hangout/layout.js";
 import { svgDataURL } from "./hangout/art.js";
 import { play } from "./sound.js";
 import { fxSparks } from "./fx.js";
@@ -51,7 +51,7 @@ export function angelDraw(ctx) {
     working = !!m && !angelDone(m, now),
     p = Wd.toScreen(ANGEL.X, ANGEL.Y, ANGEL.Z),
     hide =
-      !Wd.inside ||
+      !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (from outside too, under the cabin's or the chapel's roof, which turns see-through over it)
       !Wd.seen(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
   if (mc.el.hidden !== hide) mc.el.hidden = hide;
   /* the orb's sound, once, as it comes out (heard even off the screen) */

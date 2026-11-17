@@ -7,7 +7,7 @@
    voted a dunce in Duncelation 12 times (TEST rooms don't count). The lightning eyes open once you've beaten Mad God
    Justin 12 times at the default time, and the Tears eyes after losing to him 24 times or losing 144 rounds (TEST rooms
    don't count either). Dat Boi opens at 1,728 jumps and his ranks after him: bronze at 5,184, silver and chrome at 15,552,
-   gold and rose gold at 31,104, rainbow at 62,208. The Short jump opens at 1,728 jumps; the Chair at 1,123 Justin kills
+   gold and rose gold at 31,104, rainbow at 62,208; the Rainbow skin on any duck at 62,208 too. The Short jump opens at 1,728 jumps; the Chair at 1,123 Justin kills
    in Duck Cabin (Hangout); the Invisible duck once you've hit the cabin's shadow duck with a thrown chair; the Zebra cake
    once you've beaten Justin 72 times (any Justin, any weapon, Mad God Justin's wins too); Jaime once Jaimes have
    stabbed Mad God Justin 36 times in fights I was in (anyone's Jaimes: the owner's); the Jaime Bomb at 864 Jaimes I
@@ -47,6 +47,7 @@ export const LOCKS = [
   { kind: "rank", id: "gold", jumps: 31104, name: "Dat Boi, gold" },
   { kind: "rank", id: "rose", jumps: 31104, name: "Dat Boi, rose gold" },
   { kind: "rank", id: "rainbow", jumps: 62208, name: "Dat Boi, rainbow" },
+  { kind: "skin", id: "m:rainbow", jumps: 62208, name: "Rainbow skin" }, // (the same rainbow on any duck, at the same jumps: the owner, Nov 17)
   { kind: "special", id: "longjump", jumps: 144, name: "Long jump" },
   { kind: "special", id: "double", jumps: 144, name: "Double jump" },
   { kind: "special", id: "shortjump", jumps: 1728, name: "Short jump" },
@@ -364,6 +365,10 @@ export function takeOffLocked() {
   if (D.eyes && !unlocked("eyes", D.eyes)) {
     off.push(lockOf("eyes", D.eyes).name);
     D.eyes = "default";
+  }
+  if (D.metal === "rainbow" && !unlocked("skin", "m:rainbow")) {
+    off.push(lockOf("skin", "m:rainbow").name);
+    D.metal = "none";
   }
   if (D.face && !unlocked("face", D.face.id)) {
     off.push(lockOf("face", D.face.id).name);

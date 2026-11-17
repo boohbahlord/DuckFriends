@@ -193,18 +193,12 @@ import {
   l4Cool,
   kitOf,
   inHand,
+  swims as l4Swims,
   BURN,
   weaponName,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import {
-  l4TouchAim,
-  l4Held,
-  l4Got,
-  sprintLeft,
-  l4SafeHint,
-  laserEnd,
-} from "./l4dd.js";
+import { l4Held, l4Got, sprintLeft, l4SafeHint, laserEnd } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -1208,6 +1202,7 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
+  trackWalk();
   drawMeters(s, board, layer, now);
   const jp =
     !hang && justinShown(s)
@@ -1730,7 +1725,9 @@ function drawDucks(now = clockNow()) {
             : jm[id]
               ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
               : isL4dd(s)
-                ? l4Hp(s, id) > 0 && inHand(mine ? heldNow() : pos.w, s, id)
+                ? l4Hp(s, id) > 0 &&
+                  !l4Swims(s, id) && // (Downpour: swimming, it's put away)
+                  inHand(mine ? heldNow() : pos.w, s, id)
                 : mine
                   ? held && hasKey(p.duck, held) && held
                   : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
@@ -2046,8 +2043,8 @@ function drawDucks(now = clockNow()) {
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
     let dir = null;
     if (mine && keyAim) dir = keyAim;
-    else if (mine && R && isL4dd(R.state) && touching())
-      dir = toScreen(...myAim()); // (Quacky Zombies on a phone: the gun points where I aim, the same way as its laser and flashlight: the nearest zombie, else the way I walk)
+    else if (mine && phoneAim() && walkScr)
+      dir = walkScr; // (a phone: the gun points the way I walk, as its laser and flashlight do)
     else if (mine && mouse)
       dir = [mouse.x - geo.left - c.left, mouse.y - geo.top - c.top];
     // (the board's place from its last measuring: no layout read in the frame)
@@ -3783,15 +3780,34 @@ function bodyAt(id, pos, now = clockNow()) {
     top: at.top - lift - (up + 0.45 * bigOf(R.state, id)) * geo.size, // (his hand higher on a bigger Justin)
   };
 }
-/* on a phone: no mouse, or the mouse's last move came right after a touch (a phone makes mouse moves of its taps; they
-   say nothing about where I aim). A real mouse moves later than that, so a computer, even with a touch screen, keeps its
-   mouse aim */
-const touching = () => !mouse || (touchedAt > 0 && mouseAt - touchedAt < 900);
+/* a phone (html.phone, pointer.js: not a tablet, not a touchscreen laptop) aims with the way my duck walks, as if it were
+   the right stick, until the right stick is held (keyAim) and again once it's let go. walkScr is the way I last moved
+   on the screen: it stays when I stop, and a duck that never walked aims the way it faces. The owner, Nov 17: this is
+   so in every mode with weapons or items, and "like you would with aiming with a mouse" when the stick is used */
+const phoneAim = () => document.documentElement.classList.contains("phone");
+let walkScr = null, // [dx, dy] on the screen
+  walkLast = null; // my place the last frame: [x, y]
+function trackWalk() {
+  if (!me || me.x < 0) {
+    walkLast = null;
+    return;
+  }
+  if (walkLast) {
+    const dx = me.x - walkLast[0],
+      dy = me.y - walkLast[1];
+    if (dx || dy) {
+      const [sx, sy] = toScreen(dx, dy);
+      if (Math.hypot(sx, sy) > 0.15) walkScr = [sx, sy]; // (a step or more, not a shiver)
+    }
+  }
+  walkLast = [me.x, me.y];
+}
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
   if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
-  if (R && isL4dd(R.state) && touching()) return l4TouchAim(me) || [face, 0]; // (Quacky Zombies on a phone: at the nearest zombie in sight, or the way it walks)
+  if (phoneAim() && walkScr)
+    return toBoard(walkScr[0], walkScr[1]) || [face, 0]; // (a phone: the way I walk)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];

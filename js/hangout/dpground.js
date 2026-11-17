@@ -214,29 +214,21 @@ export function downpourGround() {
       ),
     );
   }
-  /* the flood: murky water over the road, the deep end at the west darker, soft where the shallow one thins out */
+  /* the flood: murky water over the road, the deep end at the west the same water (the owner's, Nov 17 05:46Z: it's
+     swum now, not a wall), soft where the shallow one thins out. One blue all along: the pixel look's nearest color to
+     the old teal was a grass green, so the deep end read as ground (Nov 17) */
   {
-    const [x0, y0, x1, y1] = GS.SHALLOW,
-      [d0, , d1] = GS.DEEP,
+    const [, y0, x1, y1] = GS.SHALLOW,
+      [d0] = GS.DEEP,
       h = y1 - y0;
     G.push(
       piece(
-        `<rect width="${x1 - x0}" height="${h}" fill="url(#dpw)"/>`,
-        x0,
-        y0,
-        x1 - x0,
-        h,
-        `<linearGradient id="dpw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22383a" stop-opacity=".88"/><stop offset=".85" stop-color="#2b4446" stop-opacity=".7"/><stop offset="1" stop-color="#2b4446" stop-opacity="0"/></linearGradient>`,
-      ),
-    );
-    G.push(
-      piece(
-        `<rect width="${d1 - d0}" height="${h}" fill="url(#dpd)"/>`,
+        `<rect width="${x1 - d0}" height="${h}" fill="url(#dpw)"/>`,
         d0,
         y0,
-        d1 - d0,
+        x1 - d0,
         h,
-        `<linearGradient id="dpd" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0d1a1d" stop-opacity=".97"/><stop offset=".8" stop-color="#16282b" stop-opacity=".93"/><stop offset="1" stop-color="#22383a" stop-opacity=".88"/></linearGradient>`,
+        `<linearGradient id="dpw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#264660" stop-opacity=".88"/><stop offset=".88" stop-color="#264660" stop-opacity=".85"/><stop offset="1" stop-color="#264660" stop-opacity="0"/></linearGradient>`,
       ),
     );
   }

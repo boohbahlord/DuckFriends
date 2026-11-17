@@ -31,11 +31,10 @@
 import { PROPS, layoutVariant } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 /* Downpour (Dead Ducks Arcade's second map, the owner's Nov 16 23:15Z): the generator's power box east of the gas
-   station; all four parts lie about the map, each at one of the spots it can be in (stationmap.js PART_SPOTS: no
-   Priest's part, no zombie's, no hood-up car's); the flashlights stay as they are when the power comes on (23:29Z);
+   station, running from the start with 8 rounds of gas and no parts to find (Nov 17 05:46Z: dpSetUp); jerry cans turn
+   up at the spots in stationmap.js PART_SPOTS; the flashlights stay as they are when the power comes on (23:29Z);
    and a pump sells gas while the power is on: 3 rounds for 250 a round (23:29Z) */
 const dpOn = () => layoutVariant() === "l4gs";
-const LETTER = { tools: "T", gas: "G", fuse: "F", lever: "S" };
 
 export const PARTS = ["fuse", "lever", "tools", "gas"];
 const NAMES = {
@@ -64,6 +63,7 @@ export const PW = {
   SHOP: 250, // the Butler's part
   SHOP_FIRE: 750, // the fireplace's part, bought from the Butler instead (the owner's, Nov 16 21:21Z)
   FIRST: 6, // rounds the power lasts the first time
+  DP_GAS: 8, // Downpour: the rounds of gas the generator holds as the game starts
   ZOMBIE_BY: 5, // a zombie in rounds 1 to 5 carries a part
   FIRE: 0.05, // the fireplace's part: 5% on the first spin …
   FIRE_MORE: 0.1, // … and 10% more for each spin after
@@ -203,38 +203,27 @@ export function powerSetUp(s) {
   s.hang.pk = pk;
   s.hang.power = 0;
 }
-/* Downpour: each part at one of its own spots, never two in one (the ones with fewest spots placed first) */
+/* Downpour: the generator is already running, with no parts to find (the owner's, Nov 17 05:46Z): every part is in,
+   and it holds DP_GAS rounds of gas (the round about to start counted too: it goes out as the round after them starts).
+   The players still feed it: the pumps sell gas while it runs, and jerry cans turn up from the start (ever) */
 function dpSetUp(s) {
-  const pw = {
-      fit: [],
-      pool: [],
-      cans: [],
-      on: 0,
-      left: 0,
-      ever: 0,
-      tries: 0,
-      fire: "",
-      shop: "",
-      zp: "",
-      zr: 0,
-      zi: 0,
-      n: 0,
-    },
-    pk = [],
-    used = new Set(),
-    can = (k) =>
-      GS.PART_SPOTS.map((q, i) => (q.can.includes(LETTER[k]) ? i : -1)).filter(
-        (i) => i >= 0,
-      );
-  for (const k of [...PARTS].sort((a, b) => can(a).length - can(b).length)) {
-    const free = can(k).filter((i) => !used.has(i)),
-      i = free[Math.floor(Math.random() * free.length)];
-    used.add(i);
-    pk.push({ n: ++pw.n, k, ...spotOf("dp" + i), at: "dp" + i });
-  }
-  s.hang.pw = pw;
-  s.hang.pk = pk;
-  s.hang.power = 0;
+  s.hang.pw = {
+    fit: [...PARTS],
+    pool: [],
+    cans: [],
+    on: 1,
+    left: PW.DP_GAS + 1,
+    ever: 1,
+    tries: 0,
+    fire: "",
+    shop: "",
+    zp: "",
+    zr: 0,
+    zi: 0,
+    n: 0,
+  };
+  s.hang.pk = [];
+  s.hang.power = 1;
 }
 /* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off) */
 function setPower(s, on, now, h) {
