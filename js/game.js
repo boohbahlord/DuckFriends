@@ -1955,6 +1955,10 @@ function drawDucks(now = clockNow()) {
     if (mine) myBox = boxes[boxes.length - 1];
   }
   layer.querySelectorAll(".gduck").forEach((d) => {
+    if (duckEls.has(d.dataset.pid) && duckEls.get(d.dataset.pid) !== d) {
+      d.remove(); // (a second one for the same duck, left behind: only the one it's drawn on stays)
+      return;
+    }
     if (
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
@@ -6891,7 +6895,7 @@ const keyup = (e) => {
   if (e.code === "KeyQ") peek(false);
 };
 const blur = () => {
-  keys.clear();
+  keys.clear(); // (also when the tab is hidden: visibilitychange below)
   padHold = false;
   peek(false);
 };
@@ -6900,6 +6904,9 @@ function peek(on) {
   const c = S && $(".wq-card.mine", S);
   if (c) c.classList.toggle("peek", on && !c.classList.contains("dealing"));
 }
+const hidden = () => {
+  if (document.hidden) blur(); // (no key stays held down while the game can't see it come up)
+};
 const resized = () => {
   geo = null;
 };
@@ -7151,10 +7158,47 @@ function heldClick(e) {
     aimHere(e)
   );
 }
+/* a held trigger (autoPress, l4Press): it fires again and again until the left button is up. Every way a press can end
+   lets go of it: the button coming up anywhere, the press cancelled or its capture lost, the window or the tab losing
+   focus, the right-click menu, and any mouse event that says the left button isn't down any more (one missed button-up
+   kept it firing the whole magazine and on: the owner's, Nov 17 13:07Z). Leaving the screen lets go too */
+let trigger = null;
+const TRIGGER_END = [
+  "pointerup",
+  "pointercancel",
+  "lostpointercapture",
+  "blur",
+  "contextmenu",
+];
+function letGo() {
+  if (!trigger) return;
+  clearTimeout(trigger.t);
+  for (const t of TRIGGER_END) removeEventListener(t, letGo, true);
+  removeEventListener("pointermove", upYet, true);
+  document.removeEventListener("visibilitychange", letGo);
+  trigger = null;
+}
+const upYet = (e) => {
+  if (e.pointerType === "mouse" && !(e.buttons & 1)) letGo();
+};
+/* hold the trigger: shoot() now, then again after each wait it gives back, until let go */
+function holdTrigger(shoot) {
+  letGo();
+  trigger = { t: 0 };
+  for (const t of TRIGGER_END) addEventListener(t, letGo, true);
+  addEventListener("pointermove", upYet, true);
+  document.addEventListener("visibilitychange", letGo);
+  const go = () => {
+    if (!trigger) return;
+    const wait = shoot();
+    if (trigger && wait) trigger.t = setTimeout(go, wait);
+    else letGo();
+  };
+  go();
+}
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
    down fires, and again as soon as it can while the button stays down */
-let autoFire = 0,
-  autoDid = false;
+let autoDid = false;
 function autoPress(e) {
   if (
     !R ||
@@ -7164,43 +7208,25 @@ function autoPress(e) {
     !heldClick(e)
   )
     return;
-  const go = () => {
-    if (!AUTO.includes(held) || !onBoardPhase()) return;
-    fire(held);
-    autoFire = setTimeout(go, Math.max(60, coolFor(held, R.state)));
-  };
-  clearTimeout(autoFire);
   autoDid = true;
-  go();
-  const stop = () => {
-    clearTimeout(autoFire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+  holdTrigger(() => {
+    if (!R || !AUTO.includes(held) || !onBoardPhase()) return 0;
+    fire(held);
+    return Math.max(60, coolFor(held, R.state));
+  });
 }
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
-let l4Fire = 0;
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
   if (!onBoardPhase() || !aimHere(e)) return;
-  const go = () => {
+  holdTrigger(() => {
+    if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(60, l4Cool(R.state, R.me, w)));
-  };
-  clearTimeout(l4Fire);
-  go();
-  const stop = () => {
-    clearTimeout(l4Fire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+    return Math.max(60, l4Cool(R.state, R.me, w));
+  });
 }
 register("game", {
   guard: () => !!activeRoom(),
@@ -7212,6 +7238,7 @@ register("game", {
     }
   },
   leave() {
+    letGo(); // (a held trigger never fires on into the next screen)
     if (off) off();
     off = null;
     jetsOff();
@@ -7271,6 +7298,7 @@ register("game", {
     removeEventListener("keydown", keydown);
     removeEventListener("keyup", keyup);
     removeEventListener("blur", blur);
+    document.removeEventListener("visibilitychange", hidden);
     removeEventListener("resize", resized);
     for (const t of ["pointerup", "pointercancel"])
       removeEventListener(t, unpeek);
@@ -7667,6 +7695,7 @@ register("game", {
     addEventListener("keydown", keydown);
     addEventListener("keyup", keyup);
     addEventListener("blur", blur);
+    document.addEventListener("visibilitychange", hidden);
     addEventListener("resize", resized);
     raf = requestAnimationFrame(loop);
     tick = setInterval(showTimer, 250);
