@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v63",
+    version: 63,
+    date: "Nov 17, 2026",
+    title: "The missing boom",
+    news: [],
+    fixed: [
+      "For Mad God Justin: the Angelic pistol's weaker boom and the laser gun's sounds, promised in Version 62, are really in the game now.",
+    ],
+  },
+  {
     id: "v62",
     version: 62,
     date: "Nov 17, 2026",
