@@ -5,6 +5,10 @@
    Inside one, a point (x, y) of its floor plan at height z is at (x, y − z + h) (`at` below). Preview:
    tools/downpour-art.html. */
 
+import { duckSVG, DUCK_DEFAULT } from "../duck.js";
+import { hitsOf } from "../l4ddart.js";
+import { JAIME } from "../mgjart.js";
+
 const O = "#1c1c28"; // the ducks' ink
 const n1 = (v) => Math.round(v * 10) / 10;
 const F = (s, ...v) =>
@@ -399,9 +403,79 @@ const CAR_COLORS = [
   ["#ae7838", "#805031"],
   ["#565d77", "#353636"],
 ];
+/* ---------- the dead (the owner's, Nov 17 12:28Z) ----------
+   A duck's body lying on its side: the game's own duck drawing (duck.js) with the game's own wounds (l4ddart.js
+   hitsOf: a bullet hole is a hole through it, a cut bleeds, a lost beak leaves a bloody stump), in its blood.
+     yellow: a plain yellow duck shot through the head, on a car's hood;
+     jaime: Jaime cut up on the chapel's floor, his head apart from the rest;
+     soldier: a soldier duck on the gas station's roof, his beak gone, scratched all over, rotting. */
+const BLOOD = "#7d1424",
+  BLOOD_D = "#3d0910",
+  CORPSES = {
+    yellow: { look: {}, hits: "B3B6c0c5", turn: -96 },
+    jaime: { look: JAIME.duck, hits: "c0c2c4c5c7k1", turn: -84, cut: true },
+    soldier: {
+      look: {
+        color: "#a7a26a", // (a yellow duck gone grey-green)
+        hat: { id: "helmet" },
+        outfit: { id: "military" },
+      },
+      hits: "p0c3c6c1c7r2r4k2",
+      turn: 94,
+    },
+  };
+/* its blood under it, w across, a little splashed (seeded) */
+const pool = (cx, cy, w, seed) => {
+  const r = rnd(seed);
+  let s = F`<ellipse cx="${cx}" cy="${cy}" rx="${w * 0.55}" ry="${w * 0.2}" fill="${BLOOD_D}" opacity=".85"/><ellipse cx="${cx - w * 0.04}" cy="${cy - w * 0.02}" rx="${w * 0.44}" ry="${w * 0.14}" fill="${BLOOD}"/>`;
+  for (let i = 0; i < 7; i++) {
+    const a = r() * Math.PI * 2,
+      d = w * (0.5 + r() * 0.25);
+    s += F`<ellipse cx="${cx + Math.cos(a) * d}" cy="${cy + Math.sin(a) * d * 0.36}" rx="${2 + r() * 4}" ry="${1.4 + r() * 2.4}" fill="${BLOOD}"/>`;
+  }
+  return s;
+};
+/* the body itself, kind's, w plan px wide, lying on its side with its middle at (cx, cy): svg markup */
+export function corpse(kind, cx, cy, w = 100, flip = false) {
+  const C = CORPSES[kind],
+    h = hitsOf(C.hits),
+    duck = duckSVG(
+      { ...DUCK_DEFAULT, ...C.look },
+      {
+        size: 120,
+        shadow: false,
+        dead: true,
+        skin: { head: h.inner, body: "", out: h.out },
+        gone: h.gone,
+      },
+    ),
+    vb = (duck.match(/viewBox="([^"]+)"/) || [, "0 0 120 120"])[1]
+      .split(" ")
+      .map(Number),
+    inner = duck.replace(/^<svg[^>]*>|<\/svg>$/g, ""),
+    k = w / 120,
+    put = (body, dx = 0, dy = 0) =>
+      F`<g transform="translate(${cx + dx} ${cy + dy})${flip ? " scale(-1 1)" : ""} rotate(${C.turn}) scale(${k}) translate(${-vb[0] - 60} ${-vb[1] - vb[3] * 0.62})">${body}</g>`;
+  let s = pool(cx, cy + w * 0.05, w * 1.1, w + cy);
+  if (!C.cut) return s + put(inner);
+  /* cut up: the head off, a hand's width from the rest, the cut's edges raw */
+  const id = uid();
+  s += F`<defs><clipPath id="${id}a"><rect x="-200" y="${vb[1] + vb[3] * 0.52}" width="600" height="400"/></clipPath><clipPath id="${id}b"><rect x="-200" y="-200" width="600" height="${200 + vb[1] + vb[3] * 0.52}"/></clipPath></defs>`;
+  s += put(`<g clip-path="url(#${id}a)">${inner}</g>`);
+  s += put(`<g clip-path="url(#${id}b)">${inner}</g>`, -w * 0.32, -w * 0.06);
+  s += F`<path d="M${cx - w * 0.2} ${cy - w * 0.16}c6 4 4 12 -2 18M${cx - w * 0.28} ${cy - w * 0.1}c5 5 3 10 -3 14" stroke="${BLOOD}" stroke-width="${w * 0.06}" stroke-linecap="round" fill="none"/>`;
+  return s;
+}
+/* one of them on its own, for the chapel's floor: w × d */
+export function corpseSVG({ w = 140, d = 70, kind = "jaime" } = {}) {
+  return wrap(w, d, corpse(kind, w / 2, d * 0.55, w * 0.72));
+}
+
 /* a car stopped on the road, w × d (east-west), h tall: from above its hood, windshield, roof, rear window and trunk;
    its south side with the doors, the windows and the wheels. east: which way it faces. seed: its colour, a broken
-   window. hood: its hood up, the engine showing (it stands taller than its box: up px over it) */
+   window. hood: its hood up, the engine showing (it stands taller than its box: up px over it). smash: its windows
+   broken in (the owner's, Nov 17 12:28Z): "front" the windshield, "side" a south window, "both". dead: a dead duck
+   lying on its hood (corpse above) */
 export function carSVG({
   w = 420,
   d = 200,
@@ -410,6 +484,8 @@ export function carSVG({
   east = true,
   hood = false,
   up = 0,
+  smash = "",
+  dead = "",
 } = {}) {
   const r = rnd(seed * 97 + 11),
     [c, cd] = hood
@@ -502,8 +578,7 @@ export function carSVG({
   ); // (the roof)
   s += `<path d="M${P(c0 + 6, y0 + inset + 6, zr)}L${P(c1 - 6, y0 + inset + 6, zr)}" stroke="#f7f8f3" stroke-width="3" opacity=".35"/>`;
   // the pillar between the south windows, a broken window maybe, a shine on the glass
-  const mid = (c0 + c1) / 2 + 10,
-    brk = r() < 0.4;
+  const mid = (c0 + c1) / 2 + 10;
   s += poly(
     [
       [mid - 6, y1 - inset, zr],
@@ -514,8 +589,63 @@ export function carSVG({
     cd,
     ln(1.6),
   );
-  if (brk)
-    s += `<path d="M${P(mid + 30, y1 - 8, zt + 30)}l14 -8l-4 10l12 2M${P(mid + 60, y1 - 6, zt + 16)}l8 -14" stroke="#7dd4f7" stroke-width="2" fill="none"/>`;
+  /* a window smashed in: a jagged hole into the dark car, cracks running out from it over what's left of the glass,
+     and bits of glass on the body under it */
+  const smashed = (pts, cx, cy, cz, bits) => {
+    let o = "";
+    const hole = [];
+    for (let i = 0; i < 11; i++) {
+      const a = (i / 11) * Math.PI * 2,
+        k = 0.45 + r() * 0.55;
+      hole.push(pts(a, k));
+    }
+    o += `<path d="M${hole.map(([x, y, z]) => P(x, y, z)).join("L")}Z" fill="#05060c" stroke="#9fd8f0" stroke-width="1.6" stroke-linejoin="round"/>`;
+    for (let i = 0; i < 6; i++) {
+      const a = r() * Math.PI * 2,
+        [x0, y0, z0] = pts(a, 1),
+        [x1, y1_, z1] = pts(a, 1.7 + r() * 0.5);
+      o += `<path d="M${P(x0, y0, z0)}L${P(x1, y1_, z1)}" stroke="#9fd8f0" stroke-width="1.4" opacity=".8"/>`;
+    }
+    for (const [x, y, z] of bits)
+      o += `<path d="M${P(x, y, z)}l5 -3l2 4z" fill="#bfe8f8" opacity=".85"/>`;
+    return o;
+  };
+  if (smash === "front" || smash === "both") {
+    const fx = (c1 + g1) / 2,
+      fy = (y0 + y1) / 2,
+      fz = (zr + zt) / 2;
+    s += smashed(
+      (a, k) => [
+        fx + Math.cos(a) * 22 * k,
+        fy + Math.sin(a) * 40 * k,
+        fz - Math.cos(a) * 10 * k,
+      ],
+      fx,
+      fy,
+      fz,
+      [
+        [g1 + 14, y0 + 40, zt],
+        [g1 + 26, y0 + 90, zt],
+        [g1 + 18, y1 - 50, zt],
+        [g1 + 40, y1 - 30, zt],
+      ],
+    );
+  }
+  if (smash === "side" || smash === "both") {
+    const sx = (mid + g1) / 2 - 4,
+      sz = (zr + zt) / 2 - 2;
+    s += smashed(
+      (a, k) => [sx + Math.cos(a) * 34 * k, y1 - 6, sz + Math.sin(a) * 16 * k],
+      sx,
+      y1 - 6,
+      sz,
+      [
+        [sx - 20, y1 + 6, 0],
+        [sx + 10, y1 + 10, 0],
+        [sx + 34, y1 + 4, 0],
+      ],
+    );
+  }
   s += `<path d="M${P(g0 + 20, y1 - 3, zt + 4)}L${P(c0 + 20, y1 - inset, zr - 6)}" stroke="#565d77" stroke-width="5"/>`;
   // the door lines and handles, the lights on its corners, the bumpers
   for (const x of [mid - 70, mid + 70])
@@ -546,6 +676,13 @@ export function carSVG({
   // the near wheels, in front of the body
   for (const x of [w * 0.2, w * 0.79])
     s += F`<ellipse cx="${X(x)}" cy="${y1 - 14 + H}" rx="30" ry="24" fill="#111417" ${ln(2.4)}/><ellipse cx="${X(x)}" cy="${y1 - 14 + H}" rx="13" ry="11" fill="#849097" ${ln(1.6)}/>`;
+  if (dead) {
+    // a dead duck on its hood, its blood running down the front
+    const hx = (g1 + w - 8) / 2 + 4,
+      hy = (y0 + y1) / 2 + 6;
+    s += F`<g transform="translate(0 ${H - zt})">${corpse(dead, Number(X(hx)), hy, 104, !east)}</g>`;
+    s += `<path d="M${P(w - 10, y1 - 30, zt)}C${P(w - 6, y1 - 26, zt - 20)} ${P(w - 8, y1 - 28, zt - 30)} ${P(w - 9, y1 - 30, zb + 8)}" stroke="${BLOOD}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  }
   if (hood) {
     // the hood up: hinged at the windshield's foot, swung up 60° over the engine
     const hx = g1 + 4,
@@ -656,9 +793,25 @@ export function altarSVG({ w = 900, d = 220, h = 90 } = {}) {
       R(x - 12, d * 0.4 + 32, 24, 6, "#c9a11e", ln(1.4));
   return wrap(w, d + h, s);
 }
+/* a road flare lying on its side, its middle at (x, y): a red tube, its cap and its striker end */
+export const FLARE_STICK = (x, y) =>
+  F`<g transform="translate(${x} ${y}) rotate(-18)"><rect x="-20" y="-5" width="40" height="10" rx="3" fill="#c7282a" ${ln(1.8)}/><rect x="14" y="-5.5" width="8" height="11" rx="2" fill="#1d1e29" ${ln(1.4)}/><path d="M-16 -2H10" stroke="#f7f8f3" stroke-width="2" opacity=".5"/></g>`;
+/* the bell in the belfry: its yoke at the top, the bell hanging from it, swung a degrees round its pivot (PIVOT in its
+   own box, BELL_BOX) */
+/* the bell's swing: its drawing at each of these angles (l4dd.js picks the nearest), BELL_REST hanging still */
+export const BELL_ANGLES = [-32, -24, -16, -8, 0, 8, 16, 24, 32],
+  BELL_REST = 4;
+export const BELL_BOX = [90, 120],
+  BELL_PIVOT = [45, 14];
+const bellBody = (ax, py, a = 0) =>
+  F`<g transform="rotate(${a} ${ax} ${py})"><rect x="${ax - 22}" y="${py - 8}" width="44" height="12" rx="3" fill="#5a3a22" ${ln(1.8)}/><path d="M${ax - 26} ${py + 82}C${ax - 24} ${py + 46} ${ax - 14} ${py + 30} ${ax} ${py + 30}C${ax + 14} ${py + 30} ${ax + 24} ${py + 46} ${ax + 26} ${py + 82}Z" fill="#c9a11e" ${ln(2)}/><path d="M${ax - 4} ${py + 4}V${py + 30}M${ax + 4} ${py + 4}V${py + 30}" stroke="${O}" stroke-width="3"/><path d="M${ax - 30} ${py + 82}H${ax + 30}" stroke="${O}" stroke-width="6" stroke-linecap="round"/><path d="M${ax - 28} ${py + 82}H${ax + 28}" stroke="#9d7915" stroke-width="3" stroke-linecap="round"/><circle cx="${ax}" cy="${py + 88}" r="6" fill="#9d7915" ${ln(1.4)}/><path d="M${ax - 14} ${py + 48}C${ax - 10} ${py + 40} ${ax - 4} ${py + 38} ${ax} ${py + 38}" stroke="#fcdb4e" stroke-width="3" fill="none"/></g>`;
+export function bellSVG({ a = 0 } = {}) {
+  const [w, h] = BELL_BOX;
+  return wrap(w, h, bellBody(BELL_PIVOT[0], BELL_PIVOT[1], a));
+}
 /* the bell tower, w × d, h tall: white clapboard, the belfry's arch with the bell in it near the top, its hip roof seen
-   from above */
-export function towerSVG({ w = 300, d = 300, h = 520 } = {}) {
+   from above. bell: false, the arch without its bell (Downpour draws it apart, swinging: bellSVG) */
+export function towerSVG({ w = 300, d = 300, h = 520, bell = true } = {}) {
   const id = uid(),
     H = h;
   const defs =
@@ -677,7 +830,10 @@ export function towerSVG({ w = 300, d = 300, h = 520 } = {}) {
     aw = w * 0.5,
     ah = h * 0.3;
   s += F`<path d="M${ax - aw / 2} ${ay + ah}V${ay + aw / 2}A${aw / 2} ${aw / 2} 0 0 1 ${ax + aw / 2} ${ay + aw / 2}V${ay + ah}Z" fill="url(#${id}b)" ${ln(2.6)}/>`;
-  s += F`<path d="M${ax - 26} ${ay + ah * 0.78}C${ax - 24} ${ay + ah * 0.42} ${ax - 14} ${ay + ah * 0.32} ${ax} ${ay + ah * 0.32}C${ax + 14} ${ay + ah * 0.32} ${ax + 24} ${ay + ah * 0.42} ${ax + 26} ${ay + ah * 0.78}Z" fill="#c9a11e" ${ln(2)}/><circle cx="${ax}" cy="${ay + ah * 0.84}" r="6" fill="#9d7915" ${ln(1.4)}/><path d="M${ax - 14} ${ay + ah * 0.5}C${ax - 10} ${ay + ah * 0.42} ${ax - 4} ${ay + ah * 0.4} ${ax} ${ay + ah * 0.4}" stroke="#fcdb4e" stroke-width="3" fill="none"/>`;
+  if (bell)
+    s += F`<path d="M${ax - 26} ${ay + ah * 0.78}C${ax - 24} ${ay + ah * 0.42} ${ax - 14} ${ay + ah * 0.32} ${ax} ${ay + ah * 0.32}C${ax + 14} ${ay + ah * 0.32} ${ax + 24} ${ay + ah * 0.42} ${ax + 26} ${ay + ah * 0.78}Z" fill="#c9a11e" ${ln(2)}/><circle cx="${ax}" cy="${ay + ah * 0.84}" r="6" fill="#9d7915" ${ln(1.4)}/><path d="M${ax - 14} ${ay + ah * 0.5}C${ax - 10} ${ay + ah * 0.42} ${ax - 4} ${ay + ah * 0.4} ${ax} ${ay + ah * 0.4}" stroke="#fcdb4e" stroke-width="3" fill="none"/>`;
+  else
+    s += F`<path d="M${ax - aw / 2 + 6} ${ay + ah * 0.18}H${ax + aw / 2 - 6}" stroke="#5a3a22" stroke-width="7"/>`; // (the beam the bell hangs from: the bell itself is its own drawing, bellSVG, so it can swing)
   s += R(ax - aw / 2 - 10, ay + ah, aw + 20, 10, "#f7f8f3", ln(2)); // (the sill)
   // a narrow window lower down, and the swamp's dirt up its foot
   s += F`<path d="M${ax - 18} ${d + h * 0.72}V${d + h * 0.58}A18 18 0 0 1 ${ax + 18} ${d + h * 0.58}V${d + h * 0.72}Z" fill="#171d3a" ${ln(2)}/>`;
@@ -1301,7 +1457,7 @@ export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
    w × d: the roof's top, over the walls and 30 past them all round. The gas station's: flat, tar and gravel inside a
    parapet, two air-conditioning units and vents, the sign's red band along its front. The chapel's: pitched, its ridge
    running north-south, the west slope catching more light than the east, a cross on the ridge over the entrance */
-export function roofSVG({ w, d, kind = "gs" }) {
+export function roofSVG({ w, d, kind = "gs", soldier = null }) {
   const id = uid();
   if (kind === "gs") {
     let s =
@@ -1341,6 +1497,13 @@ export function roofSVG({ w, d, kind = "gs" }) {
     s +=
       R(cx - 90, by - 10, 180, 88, "#f7f8f3", ln(3)) +
       F`<path d="M${cx} ${by + 2}C${cx - 22} ${by + 30} ${cx - 20} ${by + 66} ${cx} ${by + 66}C${cx + 20} ${by + 66} ${cx + 22} ${by + 30} ${cx} ${by + 2}Z" fill="#c7282a" ${ln(2)}/>`;
+    /* the dead soldier up here, [x, y] on the roof, and his flare beside him (it burns at each round's start:
+       l4dd.js flare) */
+    if (soldier) {
+      const [sx, sy] = soldier;
+      s += corpse("soldier", sx, sy, 108);
+      s += FLARE_STICK(sx + 92, sy + 18);
+    }
     return wrap(w, d, s);
   }
   const defs =

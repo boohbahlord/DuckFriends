@@ -16224,6 +16224,45 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 }
 /* Quacky Zombies' drops: the symbol floats over the floor, bobbing, with a green glow and a ring of light under it; in
    its last 10 s it blinks (l4dddrops.js draws them) */
+/* Downpour's roof flare while it burns (l4dd.js flareDraw): a red glow that flickers, fading at the end (--f) */
+.l4-flare {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.l4-flare::before {
+  content: "";
+  position: absolute;
+  left: calc(-80px * var(--k, 1));
+  top: calc(-80px * var(--k, 1));
+  width: calc(160px * var(--k, 1));
+  height: calc(160px * var(--k, 1));
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(255 236 220 / 0.95) 0 5%,
+    rgb(255 52 36 / 0.75) 13%,
+    rgb(210 10 10 / 0.28) 38%,
+    transparent 68%
+  );
+  opacity: var(--f, 1);
+  mix-blend-mode: screen;
+  animation: flareflick 0.12s steps(2) infinite alternate;
+}
+html.pixel .l4-flare::before {
+  filter: url(#px-f);
+}
+@keyframes flareflick {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
 .l4-drop {
   position: absolute;
   left: 0;

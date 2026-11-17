@@ -38,11 +38,17 @@ import { mudMount, mudUnmount, mudDraw } from "./l4ddmud.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
-import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
+import { l4Hear, l4Steps, l4Reset, bellStrikes } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
-import { inShallow, inDeep, WADE } from "./hangout/stationmap.js";
+import {
+  inShallow,
+  inDeep,
+  WADE,
+  FLARE,
+  STATION,
+} from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
-import { fenceLean } from "./hangout/stationart.js";
+import { fenceLean, BELL_ANGLES, BELL_REST } from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
@@ -121,7 +127,7 @@ import {
 } from "./l4ddangelui.js";
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
-import { fxHitAt, fxEye, heavyOff } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -982,6 +988,81 @@ function litNames(s, ctx, beams) {
   for (const el of Wd.board.querySelectorAll(".gduck[data-pid]"))
     el.classList.toggle("l4-lit", lit.includes(el.dataset.pid));
 }
+/* ---------- Downpour: the church bell and the roof's flare, as each round starts (the owner's, Nov 17 12:28Z) ----------
+   The bell swings to its own strikes (l4ddsfx.js bellStrikes: when each sounds): out to one side on a strike, through
+   the middle and out to the other on the next, settling after the last. Its drawing is one of BELL_ANGLES, the nearest */
+const SWING = 30, // degrees out at a strike
+  SWING_IN = 0.6, // strikes' gaps it takes to swing all the way out
+  SWING_OUT = 1.2; // how fast it settles after the last (larger: sooner)
+let bellEl = null,
+  bellLook = 0;
+function bellSwing(ctx, now) {
+  if (!bellEl || !bellEl.isConnected) {
+    if (now - bellLook < 500) return; // (only made while the tower is near the view: world.js)
+    bellLook = now;
+    bellEl = ctx.world.board.querySelector('.hp-tower[data-part="bell"]');
+    if (!bellEl) return;
+  }
+  const t = bellStrikes();
+  let a = 0;
+  if (t) {
+    const gap = (t[t.length - 1] - t[0]) / (t.length - 1),
+      u = (now - t[0]) / gap,
+      last = t.length - 1,
+      k =
+        u < 0
+          ? 0
+          : u < SWING_IN
+            ? u / SWING_IN
+            : u <= last
+              ? 1
+              : Math.exp(-(u - last) * SWING_OUT);
+    if (k > 0.03) a = SWING * k * Math.cos(Math.PI * u); // (a strike at every whole u: out at one side or the other)
+  }
+  let best = BELL_REST;
+  BELL_ANGLES.forEach((v, i) => {
+    if (Math.abs(v - a) < Math.abs(BELL_ANGLES[best] - a)) best = i;
+  });
+  ctx.world.frameOf(bellEl, best);
+}
+/* the dead soldier's flare on the gas station's roof lights as the bell starts and burns red a while: a glow, sparks
+   and smoke (the light it throws: paint) */
+const FLARE_MS = 14000;
+let flareEl = null,
+  fxAt = 0;
+const flareOn = (now) => {
+  const t = bellStrikes();
+  return !!t && now >= t[0] && now < t[0] + FLARE_MS;
+};
+function flareDraw(ctx, now) {
+  const Wd = ctx.world,
+    on = dp() && !Wd.inside && flareOn(now);
+  if (!on) {
+    if (flareEl && !flareEl.hidden) flareEl.hidden = true;
+    return;
+  }
+  if (!flareEl || !flareEl.isConnected) {
+    flareEl = document.createElement("div");
+    flareEl.className = "l4-flare";
+    flareEl.setAttribute("aria-hidden", "true");
+    layer.append(flareEl);
+  }
+  if (flareEl.hidden) flareEl.hidden = false;
+  const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
+    left = (now - bellStrikes()[0]) / FLARE_MS; // (0 lit … 1 out)
+  flareEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
+  flareEl.style.setProperty("--k", Wd.sc.toFixed(3));
+  flareEl.style.setProperty(
+    "--f",
+    (left > 0.85 ? (1 - left) / 0.15 : 1).toFixed(2),
+  ); // (dying down at the end)
+  flareEl.style.zIndex = Math.round(STATION.y1) + 60; // (over the roof it lies on: world.js gives the roof its south edge, and a little)
+  if (now - fxAt > 70 && left < 0.92) {
+    fxAt = now;
+    fxSparks(p.left, p.top, 2 * Wd.sc, 1);
+    if (Math.random() < 0.35) fxSteam(p.left, p.top - 6 * Wd.sc);
+  }
+}
 function paint(now, ctx) {
   CTX = ctx;
   const Wd = ctx.world,
@@ -1035,6 +1116,14 @@ function paint(now, ctx) {
       const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
     }
+  }
+  /* the roof's flare, while it burns */
+  const pt = performance.now();
+  if (dp() && !Wd.inside && flareOn(pt)) {
+    const p = Wd.toScreen(FLARE.x, FLARE.y, STATION.wall + 4),
+      r = 260 * sc * (0.92 + 0.08 * Math.sin(pt / 53));
+    if (on(p.left * q, p.top * q, r))
+      holes.push([p.left * q, p.top * q, r, 0.55]);
   }
   /* the Angel machine and the power box glow (css: crimson and electric yellow, the owner's Nov 17), so a soft light
      breathes round each of them in the dark too */
@@ -2057,6 +2146,7 @@ activity({
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
+    bellEl = flareEl = null;
     vitShown = "";
     ctx?.world?.board.classList.remove("blackout", "l4-board");
   },
@@ -2321,6 +2411,10 @@ activity({
     drawBox(ctx);
     pwDraw(ctx);
     angelDraw(ctx);
+    if (dp()) {
+      bellSwing(ctx, t); // (the bell's times are the page's clock: performance.now())
+      flareDraw(ctx, t);
+    }
     paint(now, ctx);
     /* my sprint: a thin blue bar under my name, while it isn't full (and under my HP meter: game.js asks sprintLeft()) */
     const tag = Wd.board.querySelector(".gduck.mine .gduck-name");

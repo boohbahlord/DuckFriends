@@ -442,6 +442,8 @@ const SK = Object.fromEntries(
     "roofSVG",
     "shelfSVG",
     "counterSVG",
+    "bellSVG",
+    "corpseSVG",
   ].map((n) => [n, atK(SA[n])]),
 );
 const GS_DRAW = {
@@ -460,6 +462,8 @@ const GS_DRAW = {
           east: p.hood ? false : k % 2 === 0, // (the hood-up car faces west: its hood where E uses it)
           hood: !!p.hood,
           up,
+          smash: p.smash || "",
+          dead: p.dead || "",
         }),
       { up },
     );
@@ -492,7 +496,29 @@ const GS_DRAW = {
   pew: (p) =>
     gsPart(p, () => SK.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
   altar: (p) => gsPart(p, () => SK.altarSVG({ w: p.w, d: p.d, h: p.h })),
-  tower: (p) => gsPart(p, () => SK.towerSVG({ w: p.w, d: p.d, h: p.h })),
+  /* the bell tower, and its bell apart from it so it can swing to the bell's sound (l4dd.js bellSwing: frames, one
+     drawing for each step of its swing) */
+  tower: (p) => {
+    const [bw, bh] = SA.BELL_BOX,
+      [px, py] = SA.BELL_PIVOT,
+      k = GS.K,
+      top = p.y - p.z - p.h, // (the tower's drawing's top: gsPart)
+      bx = p.x + p.w / 2 - px * k,
+      by = top + p.d + 80 * k - py * k, // (its pivot under the belfry's beam: stationart.js towerSVG)
+      frame = (i) => SK.bellSVG({ a: SA.BELL_ANGLES[i] });
+    return [
+      ...gsPart(p, () => SK.towerSVG({ w: p.w, d: p.d, h: p.h, bell: false })),
+      part(frame(SA.BELL_REST), bx, by, bw * k, bh * k, p.key + 1, {
+        img: true,
+        part: "bell",
+        frames: frame,
+      }),
+    ];
+  },
+  corpse: (p) =>
+    gsPart(p, () => SK.corpseSVG({ w: p.w, d: p.d + p.h, kind: p.who }), {
+      opt: { fade: false },
+    }),
   canopy: (p) => [
     part(
       () => SK.canopySVG({ w: p.w, d: p.d, edge: 40 * GS.K }),
@@ -787,6 +813,7 @@ export const DRAW = {
             w: b.w,
             d: b.h - p.bldg.wall,
             kind: p.bldg === GS.STATION ? "gs" : "ch",
+            soldier: p.soldier && p.soldier.map((v) => v / GS.K), // (its own numbers are the plan's)
           }), // (its walls' faces show under it: stationart.js)
         b.l,
         b.t,
