@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v85",
+    version: 85,
+    date: "Nov 17, 2026",
+    title: "Justin's words stay",
+    fixed: [
+      "For Mad God Justin: what Justin says stays readable while he fades out for his Xbox and the meteor.",
+    ],
+  },
+  {
     id: "v84",
     version: 84,
     date: "Nov 17, 2026",
