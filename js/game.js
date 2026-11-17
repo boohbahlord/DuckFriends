@@ -1776,7 +1776,7 @@ function drawDucks(now = clockNow()) {
             at.left + size * 0.4,
             b - size * 0.9,
             b,
-            d._zi - 10,
+            d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
           );
         if (olMe !== null) {
           const a = world.at(id),

@@ -1005,13 +1005,40 @@ const PEEK = { side: 60, deep: 260 };
    sight too */
 let here = 0;
 export const setHere = (b) => (here = b);
-/* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight) */
+/* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight):
+   from inside, out through my building's holes; from outside, in through any building's (the gas station's front door
+   too: the owner's, Nov 17 19:11Z, both ways, "I CAN LITERALLY KNOW BY LOOKING") */
 export const wallsSee = (x, y, inside, z) =>
   (variant === "l4gs" ? whereIn(x, y, z) === here : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 &&
     PEEKS.some(
-      (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
+      (k) =>
+        (!inside || !k.bldg || k.bldg === here) &&
+        inR(x, y, inside ? k.out : k.in),
     ));
+/* Downpour: someone on a building's floor (x, y, its feet z) seen from outside through a hole in that building's roof:
+   the roof's deck (layout.js floorAt's), or null. The hole is drawn the roof's height up, so through it shows the floor
+   that far north of it; seen means its whole body, feet to head (a duck's size), shows inside the hole's dark middle
+   (stationart.js roofHole: an ellipse in the hole's box, its dark 86% of it). The world draws it over the roof then
+   (world.js key, l4dd.js), as I'd see it (the owner's, Nov 17 18:05Z: "the ducks on the roof can see them without an
+   outline", and 19:11Z) */
+export function roofHoleOver(x, y, z = 0) {
+  if (variant !== "l4gs") return null;
+  for (const d of GS.DECKS) {
+    if (!d.holes.length || whereIn(x, y) !== d.bldg || z > d.h - 1) continue;
+    const up = d.h - (z || 0);
+    for (const o of d.holes) {
+      const rx = ((o.x1 - o.x0) / 2) * 0.82 - DUCK * 0.4,
+        ry = ((o.y1 - o.y0) / 2) * 0.82,
+        cx = (o.x0 + o.x1) / 2,
+        cy = (o.y0 + o.y1) / 2,
+        inHole = (v) =>
+          rx > 0 && ((x - cx) / rx) ** 2 + ((v - cy) / ry) ** 2 <= 1;
+      if (inHole(y + up) && inHole(y + up - DUCK)) return d;
+    }
+  }
+  return null;
+}
 /* is (x, y) seen from where I am? My side of the walls, or through their holes (wallsSee). Every mode: from outside, a
    building's inside never shows, its roof stays as it is; whoever is in there shows only as their outline (the owner's,
    Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
