@@ -144,6 +144,7 @@ import { pwAdd, pwHit, pwTick, PCRIT, CRIT_DOWN, DEATH } from "./wounds.js";
 import {
   isMgj,
   mgjStart,
+  mgjZombieHit,
   mgjAdvance,
   mgjCount,
   mgjStab,
@@ -714,6 +715,7 @@ function beginGame(s, now) {
   s.dn = null;
   if (isDn(s)) dnStart(s);
   s.mgj = null;
+  s.mz = null;
   s.mgjPast = [];
   if (isMgj(s)) return mgjStart(s, now);
   s.vd = null;
@@ -3589,6 +3591,13 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
     if (got === 2) justinKilled(s, by, sp);
     stab = got > 0;
   }
+  if (
+    !hang &&
+    by !== JUSTIN_ID &&
+    isMgj(s) &&
+    mgjZombieHit(s, (x, y) => !!near(x, y, 0, 0), DMG[sp] || 1, now)
+  )
+    stab = true; // (Mad God Justin's zombies in reach too)
   if (hang)
     for (const n of hangTargets(s, now, sp)) {
       if (done.includes("h:" + n.id)) continue;
@@ -3740,6 +3749,8 @@ function blast(s, sh, x, y, now, o = {}) {
     hit.push(id);
   }
   guardsHit(s, sh.by, near, now); // (a Jaime Guard in the blast: his 1 HP)
+  if (isMgj(s) && sh.by !== JUSTIN_ID)
+    mgjZombieHit(s, (zx, zy) => !!near(zx, zy, 0, 0), 3, now); // (Mad God Justin's zombies in it: 3, a grenade's)
   if (!hang && sh.by !== JUSTIN_ID && justinShown(s)) {
     const j = justinAt(s.justin, now);
     if (j && near(j.x, j.y, 0, 0)) {
@@ -5075,6 +5086,7 @@ export function backToLobby(s, why) {
   s.dn = null;
   s.vd = null;
   s.mgj = null;
+  s.mz = null;
   s.mgjPast = [];
   s.wq = null;
   delete s.hidden;

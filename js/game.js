@@ -365,7 +365,7 @@ import {
   HITMARK,
   edgeHTML,
 } from "./mgjart.js";
-import { hitsOf } from "./l4ddart.js";
+import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
 import { angelic } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 import { pwCodes, goreFree } from "./wounds.js";
@@ -2531,6 +2531,7 @@ function drawDucks(now = clockNow()) {
   placeTable(board);
   placeTiles(board);
   placePick(board, s);
+  placeZombies(board, s, now);
   placeDesk(board, s, now);
   placeCake(board, s, now);
   placeRevive(board, s, now);
@@ -2828,6 +2829,52 @@ function placeDesk(board, s, now) {
   });
 }
 
+/* Mad God Justin: his zombie waves (mgjrules.js wavesTick), each where the host says it is, gliding there (css), the
+   way it last clawed; a dead one falls over and fades */
+function placeZombies(board, s, now) {
+  const layer = $(".ducks", board),
+    zb = (isMgj(s) && s.phase === "boss" && s.mz && s.mz.zb) || [];
+  if (!layer || !geo) return;
+  const want = new Set(zb.map((o) => String(o.i)));
+  for (const n of layer.querySelectorAll(".mgj-z"))
+    if (!want.has(n.dataset.i)) n.remove();
+  for (const o of zb) {
+    let n = layer.querySelector(`.mgj-z[data-i="${o.i}"]`);
+    if (!n) {
+      n = document.createElement("div");
+      n.className = "mgj-z";
+      n.dataset.i = o.i;
+      n.innerHTML = `<img alt="" draggable="false" src="${zombieURL(o.l, o.i)}">`;
+      layer.append(n);
+    }
+    const c = place(o, 0, 1),
+      box = zombieBox(o.l),
+      w = geo.size,
+      k = w / box.w,
+      face =
+        n._x === undefined || Math.abs(c.left - n._x) < 0.5
+          ? n._f || 1
+          : c.left < n._x
+            ? -1
+            : 1, // (the way it walks)
+      st = `${c.left.toFixed(1)},${c.top.toFixed(1)},${w.toFixed(1)},${face}`;
+    n._x = c.left;
+    n._f = face;
+    n.classList.toggle("dead", !!o.d);
+    n.classList.toggle("claw", now - (o.a || 0) < 350);
+    if (n._st === st) continue;
+    n._st = st;
+    Object.assign(n.style, {
+      left: (c.left - w / 2).toFixed(1) + "px",
+      top: (c.top - box.feet * k).toFixed(1) + "px",
+      width: w.toFixed(1) + "px",
+      height: (box.h * k).toFixed(1) + "px",
+      zIndex: Math.round(c.top),
+    });
+    n.style.setProperty("--face", face);
+    n.style.setProperty("--feet", (box.feet * k).toFixed(1) + "px");
+  }
+}
 /* Mad God Justin: the pickup that faded in, where it lies (it goes once taken, or when the next one comes) */
 function placePick(board, s) {
   const m = isMgj(s) && s.phase === "boss" && s.mgj;
