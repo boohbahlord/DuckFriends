@@ -1575,27 +1575,11 @@ function holdLabel(t, s, ctx, now) {
 }
 
 /* ---------- phones: where my duck aims without a mouse ---------- */
-/* the nearest zombie I can see (in front of me first), else the way I last walked: a direction in board units */
+/* the way I last walked (it keeps it while I stand still): a direction in board units. I want the gun and its laser to
+   point the way the duck moves, so no aiming at zombies here (the owner, Nov 17: "movement direction") */
 export function l4TouchAim(me) {
   if (!me) return null;
-  const x = me.x * W,
-    y = me.y * H,
-    inside = inCabin(x, y);
-  let best = null,
-    bd = 520;
-  for (const o of Z.values()) {
-    if (o.st === 3 || !seenFrom(o.x, o.y, inside)) continue;
-    const dx = o.x - x,
-      dy = o.y - y,
-      d = Math.hypot(dx, dy),
-      ahead = (dx * walkDir[0] + dy * walkDir[1]) / (d || 1),
-      score = d * (ahead > 0.3 ? 1 : 1.6); // (one behind me counts as further)
-    if (score < bd && rayTo(x, y, dx / d, dy / d, d) >= d - 1) {
-      bd = score;
-      best = [dx, dy];
-    }
-  }
-  const [ax, ay] = best || walkDir;
+  const [ax, ay] = walkDir;
   return [ax / W, ay / H];
 }
 
