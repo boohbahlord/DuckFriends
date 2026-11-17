@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v77",
+    version: 77,
+    date: "Nov 17, 2026",
+    title: "Downpour's ladder and roof holes, drawn",
+    news: [
+      "For Dead Ducks Arcade: Downpour's gas station has a ladder drawn up its back wall and two holes broken through its roof, with rubble and rebar round them.",
+    ],
+  },
+  {
     id: "v76",
     version: 76,
     date: "Nov 17, 2026",
