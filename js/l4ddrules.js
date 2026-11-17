@@ -15,11 +15,11 @@
      l4   { r: round, t0: when its zombies start coming (the round's "Round N" shows BREAK before), n: zombies in it,
             made: how many came so far, owe: held back while the board is full, acc, sec: the spawning's clock, next:
             the next zombie's number, over: { at, r } once nobody is standing, bp: { "id opening": points for boards there this round } }
-     zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 8 + st (st 0 coming,
+     zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 16 + st (st 0 coming,
           1 tearing the boards, 4 climbing in, 2 in, 3 dead; Downpour: 5 over the fence, 6 up a wall onto a roof, 7 on a
-          roof), sent every heartbeat
+          roof, 8 jumping onto the canopy), sent every heartbeat
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
-     (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d] }, n since when it's at a
+     (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d, { cm, k, fl, wp, j }] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
      zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), l4ddart.js' hitsOf)
      zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
@@ -1230,7 +1230,12 @@ const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 const zOk = (x, y, z) =>
   playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
-/* the zombies as objects, from the state's three parts, and back */
+/* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
+   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy. These went missing at every
+   heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
+   ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
+const KEEP = ["cm", "k", "fl", "wp", "j"];
+/* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
     zs = s.hang.zs || {},
@@ -1247,13 +1252,14 @@ function zombies(s) {
       i,
       x: zp[k + 1],
       y: zp[k + 2],
-      hp: Math.floor(zp[k + 3] / 8),
-      st: zp[k + 3] % 8,
+      hp: Math.floor(zp[k + 3] / 16),
+      st: zp[k + 3] % 16,
       a: sw[0],
       dir: sw[1],
       n: h[0],
       d: h[1],
       l,
+      ...(h[2] || {}), // (its way up kept to, its roof, its flank, its jump: KEEP)
     });
   }
   return out;
@@ -1264,9 +1270,12 @@ function store(s, zs, keepStatic) {
     mine = {},
     zl = {};
   for (const z of zs) {
-    zp.push(z.i, Math.round(z.x), Math.round(z.y), z.hp * 8 + z.st);
+    zp.push(z.i, Math.round(z.x), Math.round(z.y), z.hp * 16 + z.st);
     if (z.a > -1e5) sw[z.i] = [Math.round(z.a), z.dir];
     mine[z.i] = [Math.round(z.n), Math.round(z.d)];
+    const x = {};
+    for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
+    if (Object.keys(x).length) mine[z.i].push(x);
     zl[z.i] = z.l;
   }
   const sig = (o) => JSON.stringify(o);

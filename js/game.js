@@ -1153,30 +1153,11 @@ let othersSig = "",
   myBox = null, // my duck's box in the last frame, in the board's px
   allBoxes = [], // every duck's box in the last frame, in the board's px (mine too)
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
-/* Mad God Justin's sprint (the owner's, Nov 17): a second of it, back as fast as it was lost. mgjStam is what's left (0 … 1);
-   run dry, I can't sprint again until Shift is let go */
-const MGJ_SPRINT_MS = 1000;
-let mgjStam = 1,
-  mgjTired = false;
-function mgjSprint(on, dt) {
-  if (on && !mgjTired && mgjStam > 0) {
-    mgjStam = Math.max(0, mgjStam - (dt * 1000) / MGJ_SPRINT_MS);
-    if (mgjStam <= 0) mgjTired = true;
-    return true;
-  }
-  if (!on) mgjTired = false;
-  mgjStam = Math.min(1, mgjStam + (dt * 1000) / MGJ_SPRINT_MS);
-  return false;
-}
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isL4dd(s)
-      ? sprintLeft()
-      : isMgj(s)
-        ? [mgjStam, mgjTired]
-        : [null, false];
+    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false]; // (Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -2461,7 +2442,7 @@ function drawDucks(now = clockNow()) {
       mark.style.transform = tr;
     }
     mark.classList.remove("gone");
-    mark.classList.toggle("sprint", !!target.sprint);
+    mark.classList.toggle("sprint", !!target.sprint && !isMgj(s)); // (Mad God Justin: no sprint, so no sprint mark)
   } else if (mark) mark.classList.add("gone");
   // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
   // (Hangout: sorted with their duck, so the stage or a couch covers them too)
@@ -4415,7 +4396,7 @@ function step(dt, now) {
     k("ShiftRight") ||
     stick.sprint ||
     !!(target && target.sprint);
-  if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
+  if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
   runNow = sprinting && !!(hx || vy);
   runReloadCheck(s, now);
   let ax, ay; // in board terms
@@ -7569,20 +7550,26 @@ function holdTrigger(shoot) {
   go();
 }
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
-   down fires, and again as soon as it can while the button stays down */
+   down fires, and again as soon as it can while the button stays down. In Mad God Justin every weapon does, as in Dead
+   Ducks Arcade (l4Press): the owner's, Nov 17 19:11Z, "WHY IS IT THAT WHEN I HOLD DOWN TO FIRE THAT THE GUN DOESNT FIRE
+   ... MAKE THE WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE eEVEN FOR THE MAD GOD JUSTIN GAME MODE". The Chair and the
+   Zebra cake, thrown things, still go once a click */
+const repeats = (w) =>
+  AUTO.includes(w) ||
+  (!!w && !!R && isMgj(R.state) && !["zebra", "chair"].includes(w));
 let autoDid = false;
 function autoPress(e) {
   if (
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !AUTO.includes(held) ||
+    !repeats(held) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
   holdTrigger(() => {
-    if (!R || !AUTO.includes(held) || !onBoardPhase()) return 0;
+    if (!R || !repeats(held) || !onBoardPhase()) return 0;
     fire(held);
     return Math.max(60, coolFor(held, R.state));
   });
@@ -7825,7 +7812,7 @@ register("game", {
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
       if (heldClick(e)) {
-        if (autoDid && AUTO.includes(held)) autoDid = false;
+        if (autoDid && repeats(held)) autoDid = false;
         else fire(held); // (a gun that fires while the mouse button is down already did: autoPress)
         return;
       } // a weapon kept out: a left click uses it
