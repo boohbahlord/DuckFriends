@@ -86,9 +86,15 @@ import {
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
-/* I want only the lights' stutter on of Hangout's activities. The couches, the stage, the card table and the piano's
-   keys are still drawn, but quiet: nothing to sit on, sing into or play at, and nothing else to write in or switch. */
-keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano", "tv"]); // (the TV only shows while the power is on: l4ddpower.js)
+/* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
+   The couches, the stage, the card table and the piano's keys are still drawn, but quiet: nothing to sit on, sing into
+   or play at, and nothing else to write in or switch. */
+keepOnly(
+  "l4dd",
+  [],
+  ["flicker", "ambience"],
+  ["seats", "stage", "bj", "piano", "tv"],
+); // (the TV only shows while the power is on: l4ddpower.js)
 
 /* ---------- the numbers ---------- */
 export const L4 = {
