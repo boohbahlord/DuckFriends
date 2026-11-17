@@ -6,6 +6,8 @@
    Mad God Justin the other players' meters are small ones in the board's bottom right corner (a computer only; off in
    Settings). A duck, Justin or a zombie that gains or loses HP shows it for a moment over its head, in small letters. */
 import { esc } from "./ui.js";
+import { mirrorBars } from "./meters.js";
+import { hurtSway } from "./fxmotion.js";
 
 /* a meter shows one block for each HP; with more HP than this, each block holds a few, so the blocks stay blocks */
 const MOST_BLOCKS = 40;
@@ -52,19 +54,34 @@ export function meterHTML(hp, max, cls = "", key = "") {
 }
 const low = (hp, max) => hp > 0 && hp <= max * 0.2;
 
-/* my meter: mounted once, then set every frame (it only changes what changed). set(hp, max, sprint, tired): sprint is
-   0 … 1, or null where sprinting never runs out (no blue bar then) */
+/* my meter's moves (the owner's, Nov 17 17:41Z):
+     - a hit: the blocks I lost blink, getting whiter, fully white in half a second, then drain away. Another hit while
+       that runs: a third longer, blinking faster, and the new ones lost join in;
+     - regen (Dead Ducks Arcade): the next block slowly fills with a very faint red; once that HP is back, it turns white
+       and blinks into full red in a second. A hit starts the regen over (the rules do: game.js gives me how far it is);
+     - and under the blocks, the same thin bars as under my name: the cooldown (white), the ammo (yellow), the sprint
+       (blue): meters.js mirrorBars */
+const WHITE_MS = 500, // a hit's blocks: fully white in this long
+  DRAIN_MS = 220, // then drained in this long
+  BACK_MS = 1000, // an HP back: from white to full red in this long
+  BLINK_MS = 120; // one blink (on and off) while a hit's blocks whiten; faster with each hit more
+
+/* my meter: mounted once, then set every frame (it only changes what changed). set(hp, max, sprint, tired, regen):
+   sprint is 0 … 1, or null where sprinting never runs out (no blue bar then); regen is how far the next HP is to coming
+   back, 0 … 1, or null (no regen) */
 export function mountMeter() {
   const el = document.createElement("div");
   el.className = "hpm hpm-me gone";
   el.setAttribute("role", "meter");
   el.setAttribute("aria-label", "Your HP");
   el.setAttribute("aria-valuemin", "0");
-  el.innerHTML = `<span class="hpm-row">${badgeSVG()}<span class="hpm-bar"><span class="hpm-blocks"></span></span></span><span class="hpm-stam" hidden><i></i></span>`;
+  el.innerHTML = `<span class="hpm-row">${badgeSVG()}<span class="hpm-bar"><span class="hpm-blocks"></span></span></span><span class="hpm-bars"></span><span class="hpm-stam" hidden><i></i></span>`;
   const blocks = el.querySelector(".hpm-blocks"),
+    bars = el.querySelector(".hpm-bars"),
     stam = el.querySelector(".hpm-stam");
   /* the screen's corners blink a see-through blood red each time I lose HP (owner, Nov 17: zombie hits and every other
-     hit): one layer over the whole screen, still while nothing hurts me */
+     hit; stronger, and the screen sways a little, 17:41Z): one layer over the whole screen, still while nothing hurts
+     me */
   const edge = document.createElement("div");
   edge.className = "hurt-edge";
   edge.setAttribute("aria-hidden", "true");
@@ -73,17 +90,90 @@ export function mountMeter() {
     edge.classList.remove("on");
     void edge.offsetWidth; // (a second hit starts it over)
     edge.classList.add("on");
+    hurtSway(performance.now()); // (and my screen sways a little: fxmotion.js)
   };
   edge.addEventListener("animationend", () => edge.classList.remove("on"));
   let max = -1,
     hp = -1,
     k = 1,
     sp = "",
-    shown = false;
+    shown = false,
+    hurt = null, // a hit's blocks: { t0, from, to, white (ms till fully white), n (hits) }
+    back = null, // an HP back: { t0, from, to }
+    moving = false; // (something drawn over the blocks last frame: cleared once it stops)
+  /* each block's overlay: [left, width, how white] of it, and its faint red regen [from, to] of it */
+  const paint = (now, regen) => {
+    const hurtEnd = hurt ? hurt.t0 + hurt.white + DRAIN_MS : 0,
+      backEnd = back ? back.t0 + BACK_MS : 0;
+    if (hurt && now >= hurtEnd) hurt = null;
+    if (back && now >= backEnd) back = null;
+    const ghost = regen != null && regen > 0 && hp < max ? regen : 0;
+    if (!hurt && !back && !ghost && !moving) return;
+    moving = !!(hurt || back || ghost);
+    [...blocks.children].forEach((b, i) => {
+      let ol = 0,
+        ow = 0,
+        oa = 0,
+        g0 = 0,
+        g1 = 0;
+      if (hurt) {
+        const a = fillOf(i, k, hurt.to, max),
+          z = fillOf(i, k, hurt.from, max);
+        if (z > a) {
+          const t = now - hurt.t0;
+          ol = a;
+          if (t < hurt.white) {
+            const u = t / hurt.white,
+              on = Math.floor(t / (BLINK_MS / (1 + hurt.n))) % 2 === 0;
+            ow = z - a;
+            oa = on ? 0.45 + 0.55 * u : 0.1 + 0.6 * u; // (blinking, whiter and whiter)
+          } else {
+            ow = (z - a) * Math.max(0, 1 - (t - hurt.white) / DRAIN_MS); // (white: draining away)
+            oa = 1;
+          }
+        }
+      }
+      if (!ow && back) {
+        const a = fillOf(i, k, back.from, max),
+          z = fillOf(i, k, back.to, max);
+        if (z > a) {
+          const t = now - back.t0,
+            u = t / BACK_MS,
+            on = Math.floor(t / BLINK_MS) % 2 === 0;
+          ol = a;
+          ow = z - a;
+          oa = (1 - u) * (on ? 1 : 0.55); // (white, blinking into red)
+        }
+      }
+      if (ghost && !ow) {
+        g0 = fillOf(i, k, hp, max);
+        g1 = fillOf(i, k, hp + ghost, max);
+        if (g1 <= g0) g0 = g1 = 0;
+      }
+      const v = ow
+        ? `${ol.toFixed(3)} ${ow.toFixed(3)} ${oa.toFixed(2)}`
+        : g1
+          ? `g${g0.toFixed(3)} ${g1.toFixed(3)}`
+          : "";
+      if (b._ov === v) return;
+      b._ov = v;
+      if (ow) {
+        b.style.setProperty("--ol", ol.toFixed(3));
+        b.style.setProperty("--ow", ow.toFixed(3));
+        b.style.setProperty("--oa", oa.toFixed(2));
+      } else
+        for (const n of ["--ol", "--ow", "--oa"]) b.style.removeProperty(n);
+      if (g1) {
+        b.style.setProperty("--g0", g0.toFixed(3));
+        b.style.setProperty("--g1", g1.toFixed(3));
+      } else for (const n of ["--g0", "--g1"]) b.style.removeProperty(n);
+    });
+  };
   return {
     el,
     remove: () => edge.remove(),
-    set(h, m, sprint = null, tired = false) {
+    set(h, m, sprint = null, tired = false, regen = null) {
+      const now = performance.now();
       if (!shown) {
         shown = true;
         el.classList.remove("gone");
@@ -91,6 +181,7 @@ export function mountMeter() {
       if (m !== max) {
         max = m;
         hp = -1;
+        hurt = back = null;
         const [n, kk] = blocking(m);
         k = kk;
         el.style.setProperty("--nb", n);
@@ -98,7 +189,19 @@ export function mountMeter() {
         el.setAttribute("aria-valuemax", m);
       }
       if (h !== hp) {
-        if (hp >= 0 && h < hp) blink(); // (not when the meter first shows, nor when the most HP changes)
+        if (hp >= 0 && h < hp) {
+          blink(); // (not when the meter first shows, nor when the most HP changes)
+          if (hurt && now < hurt.t0 + hurt.white + DRAIN_MS) {
+            hurt.to = Math.min(hurt.to, h);
+            hurt.white += WHITE_MS / 3; // (another hit while it runs: a third longer, blinking faster)
+            hurt.n++;
+          } else hurt = { t0: now, from: hp, to: h, white: WHITE_MS, n: 0 };
+          back = null;
+        } else if (hp >= 0 && h > hp) {
+          back = { t0: now, from: hp, to: h };
+          if (hurt && h >= hurt.from) hurt = null;
+          else if (hurt) hurt.to = Math.max(hurt.to, h);
+        }
         hp = h;
         [...blocks.children].forEach((b, i) => {
           const f = fillOf(i, k, h, max);
@@ -109,6 +212,7 @@ export function mountMeter() {
         el.setAttribute("aria-valuenow", h);
         el.classList.toggle("low", low(h, max));
       }
+      paint(now, regen);
       const v = sprint == null ? "" : sprint.toFixed(3) + (tired ? "t" : "");
       if (v !== sp) {
         sp = v;
@@ -118,6 +222,10 @@ export function mountMeter() {
           stam.classList.toggle("tired", !!tired);
         }
       }
+    },
+    /* the cooldown and the ammo bars under my name, the same under the blocks (tag: my name tag, or null) */
+    bars(tag) {
+      mirrorBars(tag, bars);
     },
     hide() {
       if (!shown) return;

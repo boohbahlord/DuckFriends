@@ -1,10 +1,12 @@
 /* ---------- the outlines in every zombie game (the owner, Nov 17 12:28Z) ----------
    Dead Ducks Arcade (both maps) and Mad God Justin:
-     - every player: a soft green glowing outline while a wall, a roof or anything else hides it, and a very faint one
-       when nothing does; it blinks when it takes damage;
+     - every player: a soft green glowing outline while a wall, a roof or anything else hides it, and then only the
+       outline, never its picture (the owner's, Nov 17 17:41Z: game.js, l4dd.js .ol-only); a very faint one when nothing
+       does; it blinks when it takes damage;
      - a floor away: the green glow with an arrow inside, the way to it (up: they're above me, fainter; down: below);
      - Justin (Good Justin in Mad God Justin, Downpour's Justin): the same, in blue;
-     - zombies: a plain thin dark red line, no glow, only while something hides them; a very faint arrow a floor away.
+     - zombies: a plain thin dark red line, no glow, only while something hides them (then the line only); a very faint
+       arrow inside it a floor away.
    One canvas over the board, on the pixel grid (pixel.js), so a line is one pixel of the pixel look. Each outline is made
    once from the picture already on the screen (the duck's or the zombie's pixel image) and kept until that picture
    changes; a frame only draws the kept ones where they stand, so a crowd of zombies costs a few image draws.
@@ -148,21 +150,21 @@ export function olDraw(host, W, H, now = performance.now()) {
     if (h) h[0] = o.hp;
     const hit = !!h && now - h[1] < BLINK,
       blink = hit && Math.floor((now - h[1]) / 90) % 2 === 0;
+    /* only what something hides shows its outline as it should (its picture is hidden then: the outline only, the
+       owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z), a zombie in plain sight none */
     const zombie = o.kind === "zombie",
       away = o.floor || 0,
-      shown = zombie ? o.hidden || away : true;
+      shown = zombie ? o.hidden : true;
     if (!shown && !hit) continue;
-    let a = zombie
-      ? away && !o.hidden
-        ? 0.3
-        : 0.85
-      : o.hidden || away
-        ? away > 0
+    let a = o.hidden
+      ? zombie
+        ? 0.85
+        : away > 0
           ? 0.55 // (above me: fainter)
           : 0.9
-        : 0.14; // (nothing hides it: very faint)
+      : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
-    const kind = o.kind + (!zombie && (o.hidden || away || hit) ? "-glow" : ""),
+    const kind = o.kind + (!zombie && (o.hidden || hit) ? "-glow" : ""),
       c = outline(o.img, kind);
     if (!c) continue;
     const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
@@ -189,7 +191,7 @@ export function olDraw(host, W, H, now = performance.now()) {
     } else g.drawImage(c, x - P * sw, y - P * sh, dw, dh);
     if (away) {
       /* the arrow inside it, the way to it (zombies': very faint) */
-      g.globalAlpha = zombie ? 0.3 : Math.min(1, a + 0.25); // (a little clearer than its line)
+      g.globalAlpha = zombie ? 0.3 : Math.min(1, a + 0.25); // (a little clearer than its line; in plain sight, faint too)
       g.fillStyle = COLOR[o.kind];
       arrow(
         Math.round(x + (o.img.naturalWidth * sw) / 2),

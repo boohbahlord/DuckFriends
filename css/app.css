@@ -11762,6 +11762,15 @@ html.moving .hp .flick {
 .gduck.hang-hid {
   visibility: hidden;
 }
+/* something hides it from me (a wall, a roof, a crown): only its outline shows, never its picture (the owner's, Nov 17
+   17:41Z; outlines.js draws the line). Its name tag stays */
+.gduck.ol-only .gduck-body,
+.gduck.ol-only .gduck-shadow,
+.gduck.ol-only .gduck-fire,
+.gduck.ol-only .gduck-ring,
+.l4z.ol-only .l4z-body {
+  visibility: hidden;
+}
 .gduck.off-cam {
   display: none;
 } /* (Hangout: a duck off the camera isn't drawn; game.js keeps it walking) */
@@ -14909,12 +14918,19 @@ html.moving .eye-tears .tdrop.t2 {
   background: #000a;
   overflow: hidden;
 }
-.l4z-hp i {
+.l4z-hp i,
+.l4z-hp b {
   position: absolute;
   inset: 0;
   background: #e8424d;
   transform-origin: 0 50%;
   transform: scaleX(var(--hp, 1));
+}
+/* a hit (the owner's, Nov 17 17:41Z, "simpler and faster" than mine): the red drops at once, what it lost stays white
+   behind it for a moment, then drains fast to where the red is */
+.l4z-hp b {
+  background: #fff;
+  transition: transform 0.18s ease-in 0.12s;
 }
 .l4z.onfire .gduck-fire {
   display: block;
@@ -14922,8 +14938,18 @@ html.moving .eye-tears .tdrop.t2 {
   width: 104%;
   animation: fl-up 0.22s ease-out;
 } /* (a zombie set on fire by a fireball: the burning duck's flame over it) */
+/* dead: the white drains to black real quick (above), then the bar fades away */
 .l4z.dead .l4z-hp {
-  display: none;
+  animation: l4z-hp-gone 0.75s linear forwards;
+}
+@keyframes l4z-hp-gone {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 .l4z.dead {
   animation: l4z-die 4s linear forwards;
@@ -16128,9 +16154,66 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-am.working img {
   filter: drop-shadow(0 0 calc(10px * var(--k, 1)) #fff3c4aa);
 }
-.l4-am.thru img {
+.l4-am.thru img,
+.l4-am.thru .l4-am-static,
+.l4-am.thru .l4-am-label {
   opacity: 0.38;
-} /* (Downpour: over a duck or a zombie behind it, as the walls: .hp.thru) */
+} /* (Downpour: over my duck behind it, as the walls: .hp.thru) */
+/* its static (the owner's, Nov 17 17:41Z): see-through grey and white specks over the whole machine, cut to its shape
+   (l4ddangelui.js sets the mask to its drawing), fizzing all the time */
+.l4-am-static {
+  position: absolute;
+  left: calc(-65px * var(--k, 1));
+  top: calc(-142px * var(--k, 1));
+  width: calc(130px * var(--k, 1));
+  height: calc(150px * var(--k, 1));
+  background-size: calc(48px * var(--k, 1));
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  opacity: 0.32;
+  animation: am-static 0.36s steps(1) infinite;
+}
+.l4-am.thru .l4-am-static {
+  opacity: 0.12;
+}
+@keyframes am-static {
+  0% {
+    background-position: 0 0;
+  }
+  25% {
+    background-position: calc(-31px * var(--k, 1)) calc(-17px * var(--k, 1));
+  }
+  50% {
+    background-position: calc(-13px * var(--k, 1)) calc(-41px * var(--k, 1));
+  }
+  75% {
+    background-position: calc(-43px * var(--k, 1)) calc(-7px * var(--k, 1));
+  }
+}
+/* its name on its base's front, in my book site's terminal letters and burnt amber, glowing */
+.l4-am-label {
+  position: absolute;
+  left: calc(-59px * var(--k, 1));
+  top: calc(-20px * var(--k, 1));
+  width: calc(118px * var(--k, 1));
+  height: calc(14px * var(--k, 1));
+  display: grid;
+  place-items: center;
+  font-family: "NWK VT", "NWK Plex", Consolas, monospace;
+  font-size: calc(13px * var(--k, 1));
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: #ffad4d;
+  text-shadow:
+    0 0 calc(2px * var(--k, 1)) #ff8a1f,
+    0 0 calc(5px * var(--k, 1)) #ff8a1f99;
+  background: #0e0904d9;
+  border: calc(1px * var(--k, 1)) solid #3d2410;
+  border-radius: calc(2px * var(--k, 1));
+}
 .l4-am-orb {
   position: absolute;
   z-index: 1;
@@ -16167,7 +16250,7 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   place-items: center;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 2px #5e0412) drop-shadow(0 0 5px #b0102a);
+  filter: drop-shadow(0 0 1px #5e0412) drop-shadow(0 0 2px #b0102a); /* (thin, as on the drawings: the owner's, Nov 17 17:41Z) */
 }
 .l4-holy::before {
   content: "";
@@ -16850,6 +16933,27 @@ html.pixel .l4-flare::before {
 .hpm-blocks i.on::before {
   width: 100%;
 }
+/* my meter's moves (hpmeter.js, the owner's Nov 17 17:41Z): the blocks a hit took blink to white and drain, an HP back
+   is white blinking into red (an overlay, --ol from the left, --ow wide, --oa how white), and the next HP regen fills
+   with a very faint red (--g0 to --g1) */
+.hpm-blocks i {
+  background: linear-gradient(
+    90deg,
+    transparent calc(var(--g0, 0) * 100%),
+    #ff2a5a3a calc(var(--g0, 0) * 100%) calc(var(--g1, 0) * 100%),
+    transparent calc(var(--g1, 0) * 100%)
+  );
+}
+.hpm-blocks i::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--ol, 0) * 100%);
+  width: calc(var(--ow, 0) * 100%);
+  background: #fff;
+  opacity: var(--oa, 0);
+}
 /* 20% or less: a slow red breath around the bar and the badge */
 .hpm.low .hpm-bar {
   animation: hp-breathe 1.8s ease-in-out infinite;
@@ -16899,6 +17003,62 @@ html.still .hpm.low .hpm-badge {
 }
 .hpm-stam[hidden] {
   display: none;
+}
+/* above the sprint bar, the same bars as under my name (meters.js mirrorBars): the cooldown, white, and the ammo,
+   yellow (empty: black, blinking dark grey; reloading: blinking white). Each takes its row only while it shows */
+.hpm-bars {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: calc(var(--h) * 0.16);
+  margin: 0 0 0 calc(var(--h) * 1.5);
+}
+.hpm-bars:not(:has(> :not(.off), > .no)) {
+  display: none;
+}
+.hpm-cool,
+.hpm-ammo {
+  position: relative;
+  display: block;
+  height: calc(var(--h) * 0.2);
+  margin-top: calc(var(--h) * 0.06);
+  background: #0c0c10;
+  border: 0.06rem solid #05080d;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.hpm-cool.off:not(.no),
+.hpm-ammo.off {
+  display: none;
+}
+.hpm-cool i,
+.hpm-ammo i {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+}
+.hpm-cool i {
+  background: #f4f4f4;
+  transform: scaleX(var(--cl, 0));
+}
+.hpm-cool.no i {
+  transform: none;
+  animation: l4-no 0.7s steps(1) forwards;
+}
+.hpm-ammo i {
+  background: linear-gradient(#ffe27a, #f2c230);
+  transform: scaleX(var(--am, 1));
+  transition: transform 0.12s;
+}
+.hpm-ammo.empty,
+.hpm-ammo.dry {
+  background: #000;
+}
+html.moving .hpm-ammo.empty {
+  animation: l4-am-empty 1.6s steps(1) infinite;
+}
+html.moving .hpm-ammo.rl {
+  animation: l4-am-rl 0.36s steps(1) infinite;
 }
 .hpm-stam i {
   display: block;
@@ -17013,12 +17173,14 @@ html.still .hpm.low .hpm-badge {
   }
 }
 /* the other players' meters, small, each name over it, in the board's bottom right corner (Quacky Zombies and Mad God
-   Justin on a computer); see-through on my screen while my duck walks into them */
+   Justin on a computer). They're UI: over everything on the board, the dark outside and the shelves too, as the other
+   bars of Dead Ducks Arcade (.l4-pts); a tiny bit bigger than they were, and see-through on my screen while any duck or
+   zombie is under them (the owner's, Nov 17 17:41Z) */
 .hpo {
   position: absolute;
   right: 0.6rem;
   bottom: 0.6rem;
-  z-index: 8;
+  z-index: 31000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -17027,7 +17189,7 @@ html.still .hpm.low .hpm-badge {
   transition: opacity 0.25s ease;
 }
 .hpo.see {
-  opacity: 0.22;
+  opacity: 0.18;
 }
 .hpo-one {
   display: flex;
@@ -17035,12 +17197,12 @@ html.still .hpm.low .hpm-badge {
   align-items: flex-start;
 }
 .hpo-name {
-  max-width: 7rem;
+  max-width: 8rem;
   margin: 0 0 0.05rem 0.3rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #fff;
   text-shadow:
@@ -17048,8 +17210,8 @@ html.still .hpm.low .hpm-badge {
     0 0.05rem 0.05rem #000;
 }
 .hpm.mini {
-  --h: 0.42rem;
-  --bw: 0.5rem;
+  --h: 0.48rem;
+  --bw: 0.57rem;
 }
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .hpo {
@@ -17080,8 +17242,10 @@ html.still .hpm.low .hpm-badge {
 }
 /* "+1 HP" / "−1 HP" over a duck, Justin or a zombie: small, rising and fading (a phone: smaller) */
 /* a hit: the screen's corners blink a see-through blood red (js/hpmeter.js), on the grid like the boards */
+/* stronger (the owner's, Nov 17 17:41Z: "the corners should be more noticeable"): a deeper red, reaching farther in */
 .hurt-edge {
-  --hc: rgb(150 0 12 / 0.5);
+  --hc: rgb(170 0 14 / 0.78);
+  --hr: 27vmax;
   position: fixed;
   inset: 0;
   z-index: 24002;
@@ -17089,23 +17253,24 @@ html.still .hpm.low .hpm-badge {
   opacity: 0;
   visibility: hidden;
   background:
-    radial-gradient(circle at 0 0, var(--hc), transparent 20vmax),
-    radial-gradient(circle at 100% 0, var(--hc), transparent 20vmax),
-    radial-gradient(circle at 0 100%, var(--hc), transparent 20vmax),
-    radial-gradient(circle at 100% 100%, var(--hc), transparent 20vmax);
+    radial-gradient(circle at 0 0, var(--hc), transparent var(--hr)),
+    radial-gradient(circle at 100% 0, var(--hc), transparent var(--hr)),
+    radial-gradient(circle at 0 100%, var(--hc), transparent var(--hr)),
+    radial-gradient(circle at 100% 100%, var(--hc), transparent var(--hr));
 }
 html.pixel .hurt-edge {
   filter: url(#px-f);
 }
 .hurt-edge.on {
   visibility: visible;
-  animation: hurtedge 0.55s ease-out;
+  animation: hurtedge 0.7s ease-out;
 }
 @keyframes hurtedge {
   0% {
     opacity: 0;
   }
-  15% {
+  12%,
+  35% {
     opacity: 1;
   }
   100% {
@@ -19054,7 +19219,8 @@ html.phone-land .front-btns .btn.big {
 }
 
 /* ---------- an Angelic weapon's glow breathes (the owner, Nov 17) ----------
-   Its picture keeps only a small crimson glow (powerart.js angelic); round it a soft crimson light comes and goes, slowly */
+   Its picture keeps only a thin crimson glow (powerart.js angelic, the same size on every weapon: angelGlow); round it
+   a soft crimson light comes and goes, slowly, and thin too (the owner's, Nov 17 17:41Z: not too thick) */
 html.moving svg.angelic {
   animation: ang-breathe 2.6s ease-in-out infinite;
 }
@@ -19064,7 +19230,7 @@ html.moving svg.angelic {
     filter: drop-shadow(0 0 0.04rem #b0102a00);
   }
   50% {
-    filter: drop-shadow(0 0 0.14rem #d0203acc);
+    filter: drop-shadow(0 0 0.07rem #d0203acc);
   }
 }
 

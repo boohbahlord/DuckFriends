@@ -37,9 +37,6 @@ export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
-/* Downpour: from outside, whoever is inside a building shows through its roof, which turns see-through over them (the
-   owner's, Nov 17 05:46Z) */
-const roofsShow = () => L.layoutVariant() !== ""; // (Quacky Zombies, either map: Hangout keeps the cabin shut)
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -612,18 +609,19 @@ export function mountWorld(board, api) {
         if (v && e._pxk === k) im.src = v;
       });
   }
-  /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
-     while it hides one: a duck behind it with a good part of it covered) */
+  /* my duck: its box on the screen and its depth. The one rule for every mode (the owner's, Nov 17 17:41Z): a wall, a
+     roof, a tree's crown or anything else turns see-through only while it covers MY duck (I'm under that roof, in that
+     building, under that foliage or behind that wall). Never for anyone else, friend, Justin or zombie: they show only
+     as their outline (outlines.js). Up on a roof, my duck is in front of it (layout.js sortY), so no roof turns
+     see-through under me */
   let boxes = []; // (this frame's: hides)
   function duckBoxes(s) {
     const size = L.DUCK * cam.sc,
-      out = [];
-    for (const id of s.seat) {
-      if (!s.pos[id] && !mine(id)) continue;
-      const a = at(id, s.pos[id]);
-      if (L.whereIn(a.x, a.y, a.z) !== bldg && !(bldg === 0 && roofsShow()))
-        continue; // (not one seen through a hole: nothing turns see-through over it. Quacky Zombies, from outside: one inside a building turns its roof see-through)
-      const g = L.heightAt(a.x, a.y),
+      out = [],
+      id = R().me;
+    if (s.pos[id] || mine(id)) {
+      const a = at(id, s.pos[id]),
+        g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
       out.push({
@@ -632,29 +630,14 @@ export function mountWorld(board, api) {
         r: f.left + size * 0.4,
         t: f.top - lift - size * 0.9,
         b: f.top - lift,
+        up: !!L.deckAt(a.x, a.y, a.z), // (up on a roof: no wall or roof turns see-through, only a tree's crown over me)
       });
     }
-    /* and whatever else an activity says walks about (Quacky Zombies' zombies): [x, y] on the ground, as big as a duck */
-    for (const a of acts())
-      for (const [x, y, z] of a.hiders?.(ctx) || []) {
-        const f = toScreen(x, y, Math.max(L.heightAt(x, y), z || 0)); // (z: up on a roof)
-        out.push({
-          key: L.sortY(x, y, z || 0),
-          l: f.left - size * 0.4,
-          r: f.left + size * 0.4,
-          t: f.top - size * 0.9,
-          b: f.top,
-          walker: true,
-        });
-      }
     /* and what must never be hidden (Downpour's Angel machine: keep): a wall or a roof turns see-through while it
-       covers even a quarter of it (the owner's, Nov 17 05:46Z) */
+       covers even a quarter of it (the owner's, Nov 17 05:46Z), only while I'm in the same building (outside the
+       chapel, its inside never shows: the owner's, Nov 17 17:41Z) */
     for (const p of L.PROPS) {
-      if (!p.keep) continue;
-      if (
-        L.whereIn(p.x + p.w / 2, p.y + p.d) !== bldg &&
-        !(bldg === 0 && roofsShow())
-      )
+      if (!p.keep || !bldg || L.whereIn(p.x + p.w / 2, p.y + p.d) !== bldg)
         continue;
       const a = toScreen(p.box.l, p.box.t),
         c = toScreen(p.box.l + p.box.w, p.box.t + p.box.h);
@@ -680,11 +663,16 @@ export function mountWorld(board, api) {
   /* the walls, roofs and crowns on the screen this frame, and where they cover (for the outlines: coverAt) */
   const covers = [];
   /* is a box on the screen (l, r, t, b) behind or under something drawn in front of it (its depth: key)? A good part of
-     it covered, as a wall turns see-through for (HIDDEN); a crown covers whatever is under it */
+     it covered (HIDDEN); a crown covers whatever is under it. One that is see-through now (my duck is under it or behind
+     it) hides nothing: under my own roof, whoever is under it with me shows as they are */
   const coverAt = (l, r, t, b, key) => {
     const d = { l, r, t, b };
     for (const c of covers)
-      if ((c.crown || key < c.key) && covered(d, c.l, c.r, c.t, c.b) > HIDDEN)
+      if (
+        !c.thru &&
+        (c.crown || key < c.key) &&
+        covered(d, c.l, c.r, c.t, c.b) > HIDDEN
+      )
         return true;
     return false;
   };
@@ -726,6 +714,17 @@ export function mountWorld(board, api) {
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
+        /* a wall, a roof or a trunk: while it hides my duck behind it or under it. A crown (Downpour's trees) is a roof
+           over whoever is under it, in front of its trunk or behind: it turns see-through while it hides my duck */
+        const thru =
+          it.layer === "crown"
+            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN))
+            : ducks.some(
+                (d) =>
+                  !d.up &&
+                  d.key < it.key &&
+                  covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
+              );
         covers.push({
           l: hl,
           r: hr,
@@ -733,18 +732,8 @@ export function mountWorld(board, api) {
           b: hb,
           key: it.key,
           crown: it.layer === "crown",
+          thru,
         });
-        /* a wall, a roof or a trunk: while it hides a duck or a zombie behind it or under it. A crown (Downpour's
-           trees) is a roof over whoever is under it, in front of its trunk or behind: it turns see-through while it
-           hides a duck or a zombie (the owner's, Nov 17 05:46Z: whatever covers one shows it to every player) */
-        const thru =
-          it.layer === "crown"
-            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN))
-            : ducks.some(
-                (d) =>
-                  d.key < it.key &&
-                  covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
-              );
         if (e._thru !== thru) {
           e._thru = thru;
           e.classList.toggle("thru", thru);
