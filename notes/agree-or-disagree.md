@@ -5500,3 +5500,33 @@ full-screen button back on PC (in the app too). Jackal = the Mad God Justin list
 recharging as fast, Laser Rifle check, drop odds from the spin's odds, his blocking projectiles blink see-through white
 when shot, shorter hints but the lightning's, +1 HP really once per 30 s), the yellow square following the player in
 Downpour (Q68 answered), Downpour Justin dodging badly half the time, and a lobby setting adding him to the cabin map.
+
+## Request (2026-11-17 13:30Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtAhVD2AeeTbb1vSMwdqhRm1, furious): phone joystick blocked, hold-to-vote, Justin in zombies, vote Next button and beeps, backdrop pixels, cursor sizes (word for word)
+Pictures: /mnt/project-files/refs/nov17-1330-batch/ (1 results cards circled over the board, the jump button over the cards; 2 typing: jump/attack gone; 3 the jump button over Send; 4 the front page backdrop not pixelated)
+> On mobile, the jump or shooting button should move with the ui, not lay on top of it, further mote, when typing in text, the jump and attack button disappears. Also furthermore, other UI elements circled in the first screen shot SHOULD NEVER block the movement circle NOR the options on the board itself BECAUSE the movement circle IS FUCKING NEEDED TO VOTE! ANOTHER GAME BREAKING BUG I ALREADY WAS TOLD WAS FIX WEEKS AGO! IF THE UI ISNT AN INTERACTIVE BUTTON OR THINGY, THEN YOUR MOVEMENT JOYSTICK CAN BE PLACED WHEREVER THE SCREEN IS TOUCHED APART FROM INTERACTIVES! INCLUDING EVERY SINGLE PART OF THE BOARD! Tex box u click to type into? Interactive. Unfaded button that works and does something like vote? Interactive. 
+>
+> New feature, the vote buttons or interact with board (the mobile equivalent of clicking 'e' button) will now have to be held down for half a second, but this can be changed in settings for the mobile player. Vote button for options you stand over on the board now also take the same amount of time to hold down their button on PC and can also be changed in settings.
+>
+> When Justin dies in a zombie game mode, his down meter disapears, and he can not have a pistol or use a pistol while down unless he already had been given a gun at one point for zombies. Killing justin in zombies counts for a killing justin meter.
+>
+> The overall stats for players should also track the amount of zombies killed if it doesnt.
+>
+> A duck that is hit by a zombie has a mostly transparent blood color of red blink on the corner of their playable screen AND when they take damage in general. 
+>
+> When the timer is shown in the vote phases for game mode or map it should show a next button in red that can be clicked AFTER they voted to speed up the count down by a fraction of the amount of player they are (so for three players, it goes 33% faster if they are the only one that clicks next).
+> There is a very small volume of a soft beep noise for each click of a second in the vote for game mode or map and it it synced to the speed of how the seconds go down, and the last five seconds sound like the lobby countdown where the number 0 gets a sound like the lobby does at number 0 or second 0 of the finished countdown (but a version quieter for this vote for map or game mode like all of the beeps are for this ).
+>
+>  The count of seconds is uhh  a dif beep from the last 5 (technically 6 becuz we count the zero's ding noise)
+>
+> Yeah fix this mobile things and remember the problem where the back page is not pixelated on main menu or whatever and it pisses me off, shown in the lat3sr screen shot where almost nothing is pixelat3d 
+>
+> Also the mouse is too large and so is the pointer when it hovers over a button AND the crosshair is a good size for weapons dont change that, but their sizes of these can be changed in settings (including the size of the crosshair)
+
+Split (Adam): Jackal (high) = the phone joystick anywhere but real interactives (every part of the board, the results
+cards included) with a test that guards it, the jump/attack buttons moving with the layout instead of over it and staying
+while typing; then hold-to-vote 0.5 s (phone E/Vote, PC Vote over a board option; a setting); then Justin in zombies (no
+down meter once dead, no down pistol unless he was given a gun, his kills count for Justin Kills) and zombies killed in
+the overall stats. Noah (high) = the backdrop pixels first (front page, lobby, everywhere), then the red corner blink on
+damage, then cursor and hover pointer smaller with Mouse / Pointer / Crosshair size settings (crosshair default
+unchanged). Miles Jr. = the vote countdown's quiet ticks (last 5 + the zero ding like the lobby's, quieter). Adam = the
+red Next button in the mode/map votes (after voting; each click speeds the countdown by 1/players).

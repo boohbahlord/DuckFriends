@@ -82,7 +82,7 @@ function build(R, pause) {
   el.className = `vt vt-k-${k}`;
   el.setAttribute("role", "dialog");
   el.setAttribute("aria-label", TITLE[k]);
-  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
+  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span><button type="button" class="btn red vt-next" hidden>Next</button></div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn red vt-next" hidden>Next</button>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
   document.body.append(el);
   W = {
     el,
@@ -100,6 +100,11 @@ function build(R, pause) {
   el.addEventListener("click", (e) => {
     if (e.target.closest(".vt-pause")) return W.pause && W.pause();
     if (e.target.closest("[data-lv]")) return lobbyVote(W.R);
+    if (e.target.closest(".vt-next")) {
+      W.R.send({ t: "vnext" }); // (Next: my press speeds the clock up by 1/players)
+      sfx.tick();
+      return;
+    }
     const b = pick(e);
     if (!b) return;
     W.R.send({ t: "vote", v: b.dataset.v });
@@ -188,12 +193,19 @@ export function paintVotes(R, pause) {
   const lv = lobbyBtnHTML(s, R.me);
   if (lv !== W.lv) {
     W.lv = lv;
-    W.el.querySelector(".vt-left").innerHTML = lv;
+    W.el.querySelector(".vt-lv").innerHTML = lv;
   }
   const left = Math.ceil(voteLeft(s, now()) / 1000),
     time = W.el.querySelector(".vt-time");
   time.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
   time.classList.toggle("fast", !!vt.fast);
+  /* Next shows once I've voted (the owner's, Nov 17 13:30Z), and stays pressed once I've pressed it */
+  const voted = !!(vt.votes || {})[R.me],
+    pressed = !!(vt.next || {})[R.me];
+  for (const nx of W.el.querySelectorAll(".vt-next")) {
+    nx.hidden = !voted;
+    nx.disabled = pressed;
+  } // (two of them: by the clock on a computer, beside the lobby vote on a phone, where the top row has no room)
   const votes = vt.votes || {},
     sig = JSON.stringify([votes, s.seat]);
   if (sig === W.sig) return;

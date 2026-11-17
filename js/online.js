@@ -285,6 +285,7 @@ const REMOTE = new Set([
   "chat",
   "options",
   "vote",
+  "vnext",
   "dod",
   "roomName",
   "kick",
