@@ -51,7 +51,7 @@ export function angelDraw(ctx) {
     working = !!m && !angelDone(m, now),
     p = Wd.toScreen(ANGEL.X, ANGEL.Y, ANGEL.Z),
     hide =
-      !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (the cabin's stage: from inside only. Downpour: from outside too, under the chapel's roof, which turns see-through over it)
+      !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (from outside too, under the cabin's or the chapel's roof, which turns see-through over it)
       !Wd.seen(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
   if (mc.el.hidden !== hide) mc.el.hidden = hide;
   /* the orb's sound, once, as it comes out (heard even off the screen) */

@@ -215,7 +215,8 @@ export function downpourGround() {
     );
   }
   /* the flood: murky water over the road, the deep end at the west the same water (the owner's, Nov 17 05:46Z: it's
-     swum now, not a wall), soft where the shallow one thins out */
+     swum now, not a wall), soft where the shallow one thins out. One blue all along: the pixel look's nearest color to
+     the old teal was a grass green, so the deep end read as ground (Nov 17) */
   {
     const [, y0, x1, y1] = GS.SHALLOW,
       [d0] = GS.DEEP,
@@ -227,7 +228,7 @@ export function downpourGround() {
         y0,
         x1 - d0,
         h,
-        `<linearGradient id="dpw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22383a" stop-opacity=".88"/><stop offset=".88" stop-color="#2b4446" stop-opacity=".7"/><stop offset="1" stop-color="#2b4446" stop-opacity="0"/></linearGradient>`,
+        `<linearGradient id="dpw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#264660" stop-opacity=".88"/><stop offset=".88" stop-color="#264660" stop-opacity=".85"/><stop offset="1" stop-color="#264660" stop-opacity="0"/></linearGradient>`,
       ),
     );
   }

@@ -39,7 +39,7 @@ export const BOARD_HTML =
 const CROWN_Z = 5000;
 /* Downpour: from outside, whoever is inside a building shows through its roof, which turns see-through over them (the
    owner's, Nov 17 05:46Z) */
-const roofsShow = () => L.layoutVariant() === "l4gs";
+const roofsShow = () => L.layoutVariant() !== ""; // (Quacky Zombies, either map: Hangout keeps the cabin shut)
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -601,7 +601,7 @@ export function mountWorld(board, api) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
       if (L.whereIn(a.x, a.y) !== bldg && !(bldg === 0 && roofsShow()))
-        continue; // (not one seen through a hole: nothing turns see-through over it. Downpour, from outside: one inside a building turns its roof see-through)
+        continue; // (not one seen through a hole: nothing turns see-through over it. Quacky Zombies, from outside: one inside a building turns its roof see-through)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;

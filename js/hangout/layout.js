@@ -899,15 +899,20 @@ const PEEK = { side: 60, deep: 260 };
    sight too */
 let here = 0;
 export const setHere = (b) => (here = b);
-/* is (x, y) seen from my side of the cabin's walls (inside: am I in the cabin)? My side, or through a hole */
-export const seenFrom = (x, y, inside) =>
+/* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight) */
+export const wallsSee = (x, y, inside) =>
   (variant === "l4gs"
-    ? !inside || GS.buildingAt(x, y) === here // (from outside, inside a building too: its roof turns see-through over it, world.js)
+    ? GS.buildingAt(x, y) === here
     : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 &&
     PEEKS.some(
       (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
     ));
+/* is (x, y) seen from where I am? Through the walls' holes as above; and in Quacky Zombies, from outside, inside a
+   building too: its roof turns see-through over whoever is under it (world.js), on Downpour and on the cabin alike (the
+   owner's, Nov 17: roofs "and everything else"). Hangout keeps the cabin's walls shut */
+export const seenFrom = (x, y, inside) =>
+  (!inside && variant !== "") || wallsSee(x, y, inside);
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;

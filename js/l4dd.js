@@ -2175,12 +2175,8 @@ activity({
     const out = [],
       ins = ctx.world.inside;
     for (const o of Z.values())
-      if (
-        o.st !== 3 &&
-        !o.el.hidden &&
-        (inCabin(o.x, o.y) === ins || (dp() && !ins))
-      )
-        // (Downpour, from outside: one inside a building too, under its roof)
+      if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
+        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike)
         out.push([o.x, o.y]);
     return out;
   },

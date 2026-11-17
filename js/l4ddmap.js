@@ -9,7 +9,7 @@ import {
   DECK,
   STAIRS,
   PROPS,
-  seenFrom,
+  wallsSee,
   whereIn,
   layoutVariant,
 } from "./hangout/layout.js";
@@ -173,7 +173,7 @@ export function mapDraw(now, ctx, s, zs, alive) {
       if (
         Math.abs(x - cx) < hw &&
         Math.abs(y - cy) < hh &&
-        (dpOn() ? whereIn(x, y) === ci : seenFrom(x, y, ci > 0))
+        (dpOn() ? whereIn(x, y) === ci : wallsSee(x, y, ci > 0))
       )
         return true;
     return false;
