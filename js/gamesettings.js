@@ -641,6 +641,13 @@ const BY_MODE = {
       cat: "round",
       d: "Every game starts in round 0. Once everyone is ready it goes on to this round, and every duck gets bonus points in round 0: 750 for round 5, 1,750 for round 9, 2,500 for round 13, 5,000 for round 21. From 13 on it counts toward its own stats, Round 16 Start. In round 0 the ducks can vote to change it.",
     },
+    {
+      k: "wildJustin",
+      n: "Justin in Duck Cabin",
+      c: ON_OFF,
+      cat: "rules",
+      d: "On: Justin is out in Duck Cabin too, with no weapon, as he is on Downpour. Zombies go for him, and a duck can buy him a gun in the rest phase. Downpour always has him.",
+    },
   ],
   vdd: [
     {

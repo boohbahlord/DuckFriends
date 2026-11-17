@@ -1752,7 +1752,7 @@ function setUp(s, now) {
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
-  if (dp()) helperIn(s, null, now, true); // (Downpour: Justin is out there, unarmed)
+  if (dp() || s.options.wildJustin) helperIn(s, null, now, true); // (Downpour: Justin is out there, unarmed; the Justin in Duck Cabin setting brings him to the cabin too)
   newRound(s, 0, now, 0);
   s.hang.l4 = {
     ...s.hang.l4,
@@ -3174,7 +3174,13 @@ function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
     q = P4(s, id);
   if (by === id || !wildOpen(s, id) || !p || !q || q.dn || q.gh) return false;
   const [px, py] = at(p);
-  if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1 || dodging(s, p, now))
+  /* Justin dodges too well: half of his jumps fail to dodge (the owner's, Nov 17 13:07Z); decided once per jump, from its
+     start time, so a swing that touches him over several ticks gets one answer */
+  const jumpFails = !!p.j && Math.floor((p.dj || p.j) / 7) % 2 === 0;
+  if (
+    Math.hypot((px - x) / rx, (py - y) / ry) >= 1 ||
+    (dodging(s, p, now) && !jumpFails)
+  )
     return false;
   const p4 = { ...(s.hang.l4p || {}) };
   hurtDuck(s, p4, id, now, w);
