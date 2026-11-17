@@ -36,6 +36,9 @@ export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
+/* Downpour: from outside, whoever is inside a building shows through its roof, which turns see-through over them (the
+   owner's, Nov 17 05:46Z) */
+const roofsShow = () => L.layoutVariant() === "l4gs";
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -594,7 +597,8 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
-      if (L.whereIn(a.x, a.y) !== bldg) continue; // (not one seen through a hole: nothing turns see-through over it)
+      if (L.whereIn(a.x, a.y) !== bldg && !(bldg === 0 && roofsShow()))
+        continue; // (not one seen through a hole: nothing turns see-through over it. Downpour, from outside: one inside a building turns its roof see-through)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
@@ -666,14 +670,12 @@ export function mountWorld(board, api) {
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
-        /* a wall or a trunk: while it hides a duck or a zombie behind it. A crown (Downpour's trees) is a roof over
-           whoever is under it, in front of its trunk or behind: it turns see-through while it hides a duck, as the
-           cabin's roof goes when I'm inside, and keeps the zombies under it hidden (the owner's, Nov 17 03:34Z) */
+        /* a wall, a roof or a trunk: while it hides a duck or a zombie behind it or under it. A crown (Downpour's
+           trees) is a roof over whoever is under it, in front of its trunk or behind: it turns see-through while it
+           hides a duck or a zombie (the owner's, Nov 17 05:46Z: whatever covers one shows it to every player) */
         const thru =
           it.layer === "crown"
-            ? ducks.some(
-                (d) => !d.walker && covered(d, hl, hr, ht, hb) > HIDDEN,
-              )
+            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > HIDDEN)
             : ducks.some(
                 (d) => d.key < it.key && covered(d, hl, hr, ht, hb) > HIDDEN,
               );

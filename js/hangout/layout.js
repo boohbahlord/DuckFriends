@@ -902,7 +902,7 @@ export const setHere = (b) => (here = b);
 /* is (x, y) seen from my side of the cabin's walls (inside: am I in the cabin)? My side, or through a hole */
 export const seenFrom = (x, y, inside) =>
   (variant === "l4gs"
-    ? GS.buildingAt(x, y) === (inside ? here : 0)
+    ? !inside || GS.buildingAt(x, y) === here // (from outside, inside a building too: its roof turns see-through over it, world.js)
     : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 && PEEKS.some((k) => inR(x, y, inside ? k.out : k.in)));
 export function useMode(mode, map) {

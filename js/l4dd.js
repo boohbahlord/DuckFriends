@@ -2040,7 +2040,12 @@ activity({
     const out = [],
       ins = ctx.world.inside;
     for (const o of Z.values())
-      if (o.st !== 3 && !o.el.hidden && inCabin(o.x, o.y) === ins)
+      if (
+        o.st !== 3 &&
+        !o.el.hidden &&
+        (inCabin(o.x, o.y) === ins || (dp() && !ins))
+      )
+        // (Downpour, from outside: one inside a building too, under its roof)
         out.push([o.x, o.y]);
     return out;
   },

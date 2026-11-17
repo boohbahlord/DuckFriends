@@ -533,9 +533,9 @@ const CLEAR = [
 /* real sizes (world px, as the ducks: 64 across), so the numbers here are them over K. A trunk's foot is about a duck
    across (the owner's sketch) and stops ducks and zombies as far as it reaches; a crown is 4 to 5 ducks across */
 const TRUNK = { x: 30 / K, y: 15 / K },
-  /* how far apart two trees stand at least: past the line (a duck walks between any two trunks, zombies too: their
-     path squares are 40 across), just inside it, and further in */
-  APART = { out: 175 / K, near: 260 / K, far: 330 / K },
+  /* how far apart two trees stand at least: past the line, just inside it, and further in. Half as many trees as the
+     first forest (the owner's, Nov 17 05:46Z: sparser), and a duck or a zombie walks between any two trunks */
+  APART = { out: 285 / K, near: 400 / K, far: 520 / K },
   /* how likely a spot grows a tree: past the line, inside it within NEAR of it, and further in */
   GROW = { out: 0.92, near: 0.55, far: 0.3 },
   NEAR = 260 / K;

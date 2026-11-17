@@ -1051,7 +1051,8 @@ export const DRAW = {
       /* Downpour's: a swamp tree standing where stationmap.js put it, in three pieces (the owner's, Nov 17 03:34Z): its
          shade on the ground, its trunk sorted with the ducks by its foot, and its crown over everyone under it like a
          roof (world.js: see-through while a duck is under it). Their sizes are the world's own (a duck is 64), not K's;
-         a bigger tree (big) a little bigger */
+         a bigger tree (big) a little bigger. Only from outside: from inside a building no leaf or trunk shows over its
+         rooms (the owner's, Nov 17 05:46Z) */
       const t = swampTree(hash(p.id + "k")),
         k = 0.9 + (p.big - 0.85) * 0.6,
         fx = p.x + p.w / 2,
@@ -1070,12 +1071,14 @@ export const DRAW = {
           url: true,
           layer: "floor",
           part: "shade",
+          only: "out",
         }),
         part(tr.url, tr.l, tr.t, tr.w, tr.h, p.key, {
           img: true,
           url: true,
           fade: true,
           part: "trunk",
+          only: "out",
           hit: {
             l: tr.l + tr.w * 0.25,
             t: tr.t,
@@ -1088,6 +1091,7 @@ export const DRAW = {
           url: true,
           layer: "crown",
           part: "crown",
+          only: "out",
           hit: {
             l: cr.l + cr.w * 0.12,
             t: cr.t + cr.h * 0.12,
