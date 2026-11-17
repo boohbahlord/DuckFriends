@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { fsBtnHTML } from "./fullscreen.js";
 import { register, go, leaveTo } from "./router.js";
 import {
   el,
@@ -240,7 +241,7 @@ import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
-import { pixelOn, pxSVG, snap, setDuckSize } from "./pixel.js";
+import { pixelOn, pxSVG, snap, setDuckSize, PAGE_DUCK } from "./pixel.js";
 import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
@@ -1200,7 +1201,7 @@ function drawDucks(now = clockNow()) {
     layer = $(".ducks", board),
     size = geo.size,
     hang = !!geo.hang;
-  if (pixelOn()) setDuckSize(size); // (the pixel look: one pixel is a 32nd of a duck, on this board)
+  if (pixelOn()) setDuckSize(hang ? PAGE_DUCK : size); // (the pixel look: one pixel is a 32nd of a duck, on this board; Duck Cabin's and Downpour's world, where ducks show smaller, on the pages' grid: pixel.js)
   /* each duck's element by its id, kept on the layer (a search of the layer for every duck, every frame, added up) */
   const duckEls = layer._els || (layer._els = new Map()),
     duckEl = (id) => {
@@ -2048,6 +2049,8 @@ function drawDucks(now = clockNow()) {
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
     let dir = null;
     if (mine && keyAim) dir = keyAim;
+    else if (mine && R && isL4dd(R.state) && touching())
+      dir = toScreen(...myAim()); // (Quacky Zombies on a phone: the gun points where I aim, the same way as its laser and flashlight: the nearest zombie, else the way I walk)
     else if (mine && mouse)
       dir = [mouse.x - geo.left - c.left, mouse.y - geo.top - c.top];
     // (the board's place from its last measuring: no layout read in the frame)
@@ -3783,12 +3786,15 @@ function bodyAt(id, pos, now = clockNow()) {
     top: at.top - lift - (up + 0.45 * bigOf(R.state, id)) * geo.size, // (his hand higher on a bigger Justin)
   };
 }
+/* on a phone: no mouse, or the mouse's last move came right after a touch (a phone makes mouse moves of its taps; they
+   say nothing about where I aim). A real mouse moves later than that, so a computer, even with a touch screen, keeps its
+   mouse aim */
+const touching = () => !mouse || (touchedAt > 0 && mouseAt - touchedAt < 900);
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
   if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
-  if (R && isL4dd(R.state) && (!mouse || performance.now() - touchedAt < 4000))
-    return l4TouchAim(me) || [face, 0]; // (Quacky Zombies on a phone: at the nearest zombie in sight, or the way it walks)
+  if (R && isL4dd(R.state) && touching()) return l4TouchAim(me) || [face, 0]; // (Quacky Zombies on a phone: at the nearest zombie in sight, or the way it walks)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];
@@ -7025,7 +7031,7 @@ register("game", {
     loadSounds("game"); // (the weapons' and the items' sounds: they work in every mode)
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
-        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
+        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(
       S,

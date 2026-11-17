@@ -7,6 +7,7 @@
    Inside the gas station or the chapel there is no rain, only its sound later. Low graphics or Data saving: a third
    of the drops; Animations off (html.still): none. I want it cheap: a few hundred short lines a frame, no images. */
 import { low } from "./gfx.js";
+import { gridPx } from "./pixel.js";
 import { inShallow, inDeep, CANOPY } from "./hangout/stationmap.js";
 
 let cv = null,
@@ -54,13 +55,14 @@ export function rainDraw(now, ctx, who, on, hit) {
   if (hit && (!bolt || bolt.when !== hit[2])) bolt = newBolt(hit, now);
   const w = Wd.vw,
     h = Wd.vh,
-    dpr = Math.min(1.5, devicePixelRatio || 1);
+    dpr = 1 / gridPx(); // (one of its pixels one of the grid's, as the map's: the owner's one pixel size, Nov 17)
   if (w !== wasW || cv.height !== Math.round(h * dpr)) {
     wasW = w;
     cv.width = Math.round(w * dpr);
     cv.height = Math.round(h * dpr);
     cv.style.width = w + "px";
     cv.style.height = h + "px";
+    cv.style.imageRendering = "pixelated";
   }
   const dt = Math.min(0.1, last ? (now - last) / 1000 : 0.016);
   last = now;
@@ -75,7 +77,7 @@ export function rainDraw(now, ctx, who, on, hit) {
   g.clearRect(0, 0, w, h);
   g.lineCap = "round";
   g.strokeStyle = "rgba(190,210,235,0.32)";
-  g.lineWidth = 1.2;
+  g.lineWidth = Math.max(1.2, gridPx()); // (a pixel wide at least)
   g.beginPath();
   for (const d of drops) {
     d.y += d.v * dt;
@@ -105,7 +107,7 @@ export function rainDraw(now, ctx, who, on, hit) {
   /* the rings, in world px (they stay put as the camera moves) */
   const sc = Wd.sc;
   if (bolt) drawBolt(now, Wd, w, h);
-  g.lineWidth = 1.4;
+  g.lineWidth = Math.max(1.4, gridPx());
   rings = rings.filter((o) => now - o.t < o.life);
   for (const o of rings) {
     const u = (now - o.t) / o.life,

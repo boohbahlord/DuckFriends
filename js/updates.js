@@ -9,6 +9,26 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v53",
+    version: 53,
+    date: "Nov 17, 2026",
+    title: "Phones on their side",
+    news: [
+      "On a phone turned on its side, everything is smaller and laid out to fit the short screen.",
+      "On a phone, the game goes full screen when you first tap to start. A button by the top-right buttons leaves full screen and comes back to it.",
+      "The Nous Within Kenoma maps (Ether's Crossroads and every variation) now look like the book site's old amber terminal: its letters, its glow, the scanlines and the glass.",
+      "Duck Cabin and Downpour now have the same pixel size as every other map.",
+      "For Dead Ducks Arcade: a flashlight now lights what it points at, not just the floor. Walls, cars, fences, shelves and furniture in its beam show their detail.",
+      "For Dead Ducks Arcade: Downpour's fences are chain-link and can be seen. Shine a light on them to see the links.",
+      "For Dead Ducks Arcade: on a phone, the gun and its laser sight point the way the duck walks, and keep that direction when it stops.",
+    ],
+    fixed: [
+      "The lobby countdown's last tone at 0 plays again.",
+      "For Dead Ducks Arcade: on a phone, Change starting round and its texts are small now, and hide while the shop, the Priest or another window is open.",
+      "For Dead Ducks Arcade: Duck Cabin's picture in the map vote is clearer.",
+    ],
+  },
+  {
     id: "v52",
     version: 52,
     date: "Nov 16, 2026",

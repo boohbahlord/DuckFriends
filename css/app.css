@@ -60,6 +60,65 @@
   font-weight: 200;
   font-display: swap;
 }
+/* my book site's terminal letters, for the Nous Within Kenoma maps (the book's own files): IBM Plex Mono Light for
+   the reading, VT323 for the titles, labels and buttons. SIL Open Font License: assets/fonts/ibm-plex-mono-OFL.txt,
+   assets/fonts/vt323-OFL.txt */
+@font-face {
+  font-family: "NWK Plex";
+  src: url(../assets/fonts/ibm-plex-mono-latin-300-normal.woff2) format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "NWK Plex";
+  src: url(../assets/fonts/ibm-plex-mono-latin-ext-300-normal.woff2)
+    format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "NWK Plex";
+  src: url(../assets/fonts/ibm-plex-mono-latin-300-italic.woff2) format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "NWK VT";
+  src: url(../assets/fonts/vt323-latin-400-normal.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "NWK VT";
+  src: url(../assets/fonts/vt323-latin-ext-400-normal.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 @font-face {
   font-family: "Bangers";
   src: url(../assets/fonts/bangers-latin-400-normal.woff2) format("woff2");
@@ -9653,27 +9712,33 @@ html.map-is-vellum {
   --shadow: 0 0 0.6rem #00000080;
   color-scheme: dark;
 }
-/* Nous Within Kenoma (owner, Nov 16): my book site's colors, burnt amber on near black (its site.css :root); each
-   variation takes the colors the site gives its parts (map-is-nwk stays on under them, nwk.js) */
+/* Nous Within Kenoma (owner, Nov 16): my book site's colors; since Nov 17 its terminal's (the amber of its site.css
+   html.crt, the owner: "it should also be the same for the Nous Within Kenoma maps"). Each variation takes the colors
+   the site gives its parts (map-is-nwk stays on under them, nwk.js) */
 html.map-is-nwk {
-  --bg: #0e0904;
-  --panel: #170e06;
-  --panel2: #090502;
-  --ink: #ffad4d;
-  --dim: #d9893a;
-  --nk-h1: #ff8a1f;
-  --nk-h1g: #be561b66;
-  --nk-h3: #9cc7b9;
-  --nk-plate: #170e06ea;
-  --nk-well: #0e0904cc;
-  --nk-bar: #090502c4;
-  --nk-field: #090502;
+  --bg: #1a0f04;
+  --panel: #1f1205;
+  --panel2: #0d0702;
+  --ink: #ffbb45;
+  --dim: #d58a2c;
+  --nk-h1: #ff9f24;
+  --nk-h1g: #ff9f2466;
+  --nk-h3: #ffd56f;
+  --nk-plate: #1f1205ea;
+  --nk-well: #1a0f04cc;
+  --nk-bar: #0d0702c4;
+  --nk-field: #0d0702;
+  /* the terminal (the end of this file): its glow's color, its brightest amber, its glass' middle */
+  --nk-glow: #ff9f24;
+  --nk-hi: #ffd56f;
+  --nk-tube: #3a2209;
 }
 /* Architectured: the latest parts' page, darker, nearly black */
 html.map-is-nwkarch {
   --bg: #050302;
   --panel: #0b0603;
   --panel2: #020100;
+  --nk-tube: #050302;
   --nk-plate: #0b0603ea;
   --nk-well: #050302cc;
   --nk-bar: #020100c4;
@@ -9703,6 +9768,9 @@ html.map-is-nwkten {
   --nk-well: #0b0a1acc;
   --nk-bar: #08071ac4;
   --nk-field: #08071a;
+  --nk-glow: #b9b9ff;
+  --nk-hi: #ffffff;
+  --nk-tube: #1b1a29;
 }
 /* the Fool: black and white */
 html.map-is-nwkfool {
@@ -9728,6 +9796,9 @@ html.map-is-nwkfool {
   --nk-well: #000c;
   --nk-bar: #000000c4;
   --nk-field: #000;
+  --nk-glow: #e8e8e8;
+  --nk-hi: #ffffff;
+  --nk-tube: #0d0d0d;
 }
 /* Chalice: the page's colors breathe in turns (nwk.js sets --ch-ground, --ch-text and --ch-accent on the page), the
    letters a light opposite of the page, the buttons and lines the letters' accent */
@@ -9770,12 +9841,15 @@ html.map-is-nwkchalice {
   --nk-well: color-mix(in srgb, var(--ch-ground, #29171a) 80%, transparent);
   --nk-bar: color-mix(in srgb, var(--ch-ground, #29171a) 77%, transparent);
   --nk-field: var(--panel2);
+  --nk-glow: var(--ch-accent, #88baff);
+  --nk-hi: color-mix(in srgb, var(--ch-accent, #88baff), #fff 45%);
+  --nk-tube: color-mix(in srgb, var(--ch-ground, #29171a), #fff 6%);
 }
 html.map-is-nwk body {
-  font-weight: 200;
-  --font: "Cascadia Code", Consolas, "Courier New", "Courier Prime", monospace;
-  --fun: "Cascadia Code", Consolas, "Courier New", "Courier Prime", monospace;
-} /* (on body: the font setting sits on html) */
+  font-weight: 400;
+  --font: "NWK VT", "NWK Plex", Consolas, monospace;
+  --fun: "NWK VT", "NWK Plex", Consolas, monospace;
+} /* (on body: the font setting sits on html. The book's terminal letters: the end of this file) */
 html.map-is-nwk .game h1,
 html.map-is-nwk .game h2,
 html.map-is-nwk .win h2,
@@ -15303,7 +15377,8 @@ html.still:not(.low) .l4z.dead.nuked {
     transform: rotate(-10deg) translateY(4%);
   }
 }
-.screen:has(.l4-shopping) :is(.tpad, .cabin-end) {
+.screen:has(.l4-shopping) :is(.tpad, .cabin-end),
+body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   visibility: hidden;
 } /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
      tabs) */
@@ -17084,6 +17159,22 @@ html.still .l4-miss {
 /* on a phone the Ready button sits in the middle under the round, so Change starting round goes below it (never under
    it, and down with it when the top bar grows: --ui-top, game.js watchInsets), and the vote's words below that */
 @media (max-width: 700px) {
+  /* on a phone they're small, near the PC's size on its screen (the owner, Nov 17) */
+  .l4-sr .btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  .l4-sr-say {
+    font-size: 0.7rem;
+  }
+  .game .l4-srv {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+  }
+  .game .l4-srb .btn {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.8rem;
+  }
   .game .l4-sr {
     top: calc(var(--ui-top, 38px) + 154px);
     left: 10px;
@@ -18141,5 +18232,258 @@ html.pixel.armed :is(.board, .hang-board) {
   .vt-k-zmap .vt-map.vt-dice {
     aspect-ratio: auto;
     height: 4.6rem;
+  }
+}
+
+/* ---------- full screen on a phone (js/fullscreen.js) ---------- */
+.fs-btn {
+  display: none;
+}
+html.fs-can .fs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fs-btn .fs-in,
+html.fs-on .fs-btn .fs-out {
+  display: none;
+}
+html.fs-on .fs-btn .fs-in {
+  display: inline-flex;
+}
+.fs-btn .fs-out {
+  display: inline-flex;
+}
+/* a press: a yellow glow for 4 s that fades at the end (a second press starts it over, it never doubles) */
+.fs-btn.glow {
+  animation: fs-glow 4s linear forwards;
+}
+@keyframes fs-glow {
+  0%,
+  70% {
+    box-shadow:
+      0 0 0 0.15rem var(--yellow),
+      0 0 1.1rem 0.35rem rgba(255, 210, 63, 0.75);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 210, 63, 0),
+      0 0 0 0 rgba(255, 210, 63, 0);
+  }
+}
+
+/* ---------- a phone on its side (html.phone-land, js/pointer.js) ----------
+   It is short (about 360 px), so every size made of rem shrinks with the page's base size, and the places that
+   stack things move them side by side. Touchscreen laptops never get this (they are html.keyboard). */
+html.phone-land {
+  font-size: calc(12px * var(--ui, 1));
+}
+/* the lobby: the room's picture beside its name and status, the menu under both, the party to the right */
+html.phone-land .lmain {
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 19rem);
+  gap: 0.6rem 1.2rem;
+  padding: 0 1rem 0.6rem;
+}
+html.phone-land .lobby-left {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "pop pop"
+    "art title"
+    "art sub"
+    "art status"
+    "menu menu"
+    "info info";
+  column-gap: 1rem;
+  align-content: start;
+}
+html.phone-land .lobby-left > .dod-pop {
+  grid-area: pop;
+}
+html.phone-land .lobby-left > .lobby-art {
+  grid-area: art;
+  width: 14rem;
+  align-self: start;
+}
+html.phone-land .lobby-art > svg {
+  max-width: 14rem;
+  border-radius: 0.6rem;
+}
+html.phone-land .lobby-left > .lobby-title {
+  grid-area: title;
+  margin-top: 0;
+}
+html.phone-land .lobby-left > .lobby-sub {
+  grid-area: sub;
+}
+html.phone-land .lobby-left > .lobby-status {
+  grid-area: status;
+  margin: 0.4rem 0 0;
+  min-height: 0;
+}
+html.phone-land .lobby-left > .lmenu {
+  grid-area: menu;
+  margin-top: 0.6rem;
+}
+html.phone-land .lobby-left > .lmenu-info {
+  grid-area: info;
+}
+/* a phone held upright: the full-screen button joins the top right, so the buttons sit a little closer and smaller,
+   leaving the stage's name about the room it had */
+html.phone:not(.phone-land) .gbar-r {
+  gap: 0.4rem;
+}
+html.phone:not(.phone-land) .gbar .iconbtn {
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+/* ---------- Nous Within Kenoma's terminal (owner, Nov 17) ----------
+   "there is the little lines like you see in a old vintage computer in a terminal screen that go through the screen ...
+   I don't understand why we decided to drop that for the maps that carry its UI and its page background ... that
+   includes like even the small little details". My book site's old amber terminal (its site.css html.crt), on every
+   Nous Within Kenoma map and its variations while it's up: VT323 for the titles, labels and buttons and IBM Plex Mono
+   Light for the reading (the question, what's typed), a soft glow on the letters, the glass dark at its edges in its rounded case,
+   the scanlines, a faint band rolling down it and the faintest flicker. Each variation keeps its own colors through the
+   same glass (--nk-glow, --nk-hi, --nk-tube). Last in this file, so it wins over the pixel look's Jersey 15 too. */
+html.map-is-nwk {
+  --nk-bez: 4px; /* (the site's case is 10px, its corners 34px: thinner here, so nothing at the screen's edge goes under it) */
+  --nk-sl-p: 3px;
+  --nk-sl-a: 0.34;
+  --nk-vig: 0.68;
+}
+html.map-is-nwk body {
+  text-shadow:
+    0 0 1px color-mix(in srgb, var(--ink) 70%, transparent),
+    0 0 5px color-mix(in srgb, var(--nk-glow, #ff9f24) 55%, transparent),
+    0 0 14px color-mix(in srgb, var(--nk-glow, #ff9f24) 28%, transparent);
+}
+/* the letters: the pixel letters of an old DEC terminal everywhere, a little smaller than the reading's (the site's
+   font-size-adjust), and the reading in Plex */
+html.map-is-nwk,
+html.map-is-nwk *,
+html.map-is-nwk *::before,
+html.map-is-nwk *::after,
+html.pixel.map-is-nwk,
+html.pixel.map-is-nwk *,
+html.pixel.map-is-nwk *::before,
+html.pixel.map-is-nwk *::after {
+  font-family: "NWK VT", "NWK Plex", Consolas, monospace !important;
+  font-size-adjust: 0.5;
+  font-synthesis: none; /* (no made-up bold: the site found these letters thick enough) */
+  letter-spacing: 0.03em;
+}
+/* the hover tips: one of the site's boxes, its well and an amber line */
+html.map-is-nwk .tip,
+html.map-is-nwk .tipbox {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--nk-glow, #ff9f24);
+  border-radius: 0;
+  backdrop-filter: none;
+}
+html.map-is-nwk :is(.question, .wyr-qs, .law-case, textarea, input),
+html.map-is-nwk :is(.question, .wyr-qs, .law-case) *,
+html.pixel.map-is-nwk :is(.question, .wyr-qs, .law-case, textarea, input),
+html.pixel.map-is-nwk :is(.question, .wyr-qs, .law-case) * {
+  font-family: "NWK Plex", Consolas, monospace !important;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+html.map-is-nwk :is(h1, h2, h3, .btn, .iconbtn, .gbar-l, #jumps) {
+  text-shadow:
+    0 0 5px color-mix(in srgb, var(--nk-glow, #ff9f24) 47%, transparent),
+    0 0 16px color-mix(in srgb, var(--nk-glow, #ff9f24) 24%, transparent);
+}
+/* the glass: dark at its edges, a rounded tube in its case */
+html.map-is-nwk::before {
+  content: "";
+  position: fixed;
+  inset: var(--nk-bez);
+  z-index: 2147483600;
+  pointer-events: none;
+  border-radius: 16px / 14px;
+  background: radial-gradient(
+    ellipse 120% 105% at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, var(--nk-vig)) 100%
+  );
+  box-shadow:
+    0 0 0 80px #17130e,
+    inset 0 0 0 2px #050301,
+    inset 0 0 40px rgba(0, 0, 0, 0.6);
+}
+/* the scanlines, with the faintest flicker */
+html.map-is-nwk::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483601;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--nk-sl-p) - 1.6px),
+    rgba(0, 0, 0, var(--nk-sl-a)) calc(var(--nk-sl-p) - 1.6px) var(--nk-sl-p)
+  );
+  animation: nk-flicker 0.11s steps(2) infinite;
+}
+/* the band rolling down the glass */
+html.map-is-nwk body::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: -30vh;
+  height: 30vh;
+  z-index: 2147483599;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--nk-hi, #ffd56f) 5%, transparent) 55%,
+    color-mix(in srgb, var(--nk-hi, #ffd56f) 8%, transparent) 60%,
+    transparent
+  );
+  animation: nk-roll 9s linear infinite;
+}
+@keyframes nk-roll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(160vh);
+  }
+}
+@keyframes nk-flicker {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.94;
+  }
+}
+@media (max-width: 520px) {
+  html.map-is-nwk {
+    --nk-bez: 2px;
+  }
+  html.map-is-nwk::before {
+    border-radius: 12px / 11px;
+  }
+}
+/* Animations off or Data saving: the glass and its lines stay, nothing moves */
+html.still.map-is-nwk::after,
+html.lite.map-is-nwk::after {
+  animation: none;
+}
+html.still.map-is-nwk body::before,
+html.lite.map-is-nwk body::before {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.map-is-nwk::after {
+    animation: none;
+  }
+  html.map-is-nwk body::before {
+    display: none;
   }
 }
