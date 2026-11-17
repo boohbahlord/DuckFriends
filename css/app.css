@@ -17245,8 +17245,8 @@ html.moving .hpm-ammo.rl {
 /* stronger (the owner's, Nov 17 17:41Z: "the corners should be more noticeable"): a deeper red, reaching farther in */
 .hurt-edge {
   --hc: rgb(170 0 14 / 0.78);
-  --hr: 27vmax;
-  position: fixed;
+  --hr: min(27vmax, 40%);
+  position: absolute; /* (the board's corners, "the corner of their playable screen": game.js puts it on the board) */
   inset: 0;
   z-index: 24002;
   pointer-events: none;
@@ -18886,9 +18886,9 @@ html.pixel.armed :is(.board, .hang-board) {
   pointer-events: none;
   image-rendering: pixelated;
 }
-.hang-board.l4-board .ol-px {
+.hang-board .ol-px {
   z-index: 24001;
-}
+} /* (over everything on the board: Dead Ducks Arcade's and Hangout's world alike) */
 /* Downpour: a mud zombie's mud over the corners of my screen (l4ddmud.js), over the board, under the HUD */
 .hang-board.l4-board .l4-mud {
   position: absolute;

@@ -79,9 +79,9 @@ export function mountMeter() {
   const blocks = el.querySelector(".hpm-blocks"),
     bars = el.querySelector(".hpm-bars"),
     stam = el.querySelector(".hpm-stam");
-  /* the screen's corners blink a see-through blood red each time I lose HP (owner, Nov 17: zombie hits and every other
-     hit; stronger, and the screen sways a little, 17:41Z): one layer over the whole screen, still while nothing hurts
-     me */
+  /* the corners of my playable screen (the board: game.js puts it there) blink a see-through blood red each time I lose
+     HP (owner, Nov 17: zombie hits and every other hit; stronger, and the screen sways a little, 17:41Z): one layer over
+     the board, never over the bars round it, still while nothing hurts me */
   const edge = document.createElement("div");
   edge.className = "hurt-edge";
   edge.setAttribute("aria-hidden", "true");
@@ -171,6 +171,7 @@ export function mountMeter() {
   };
   return {
     el,
+    edge,
     remove: () => edge.remove(),
     set(h, m, sprint = null, tired = false, regen = null) {
       const now = performance.now();

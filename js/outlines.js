@@ -1,5 +1,6 @@
-/* ---------- the outlines in every zombie game (the owner, Nov 17 12:28Z) ----------
-   Dead Ducks Arcade (both maps) and Mad God Justin:
+/* ---------- the outlines (the owner, Nov 17 12:28Z; everywhere a cover can hide a duck, 17:41Z: "the new universal
+   system", "any game mode") ----------
+   Dead Ducks Arcade (both maps), Mad God Justin, and Hangout's world (Duck Cabin):
      - every player: a soft green glowing outline while a wall, a roof or anything else hides it, and then only the
        outline, never its picture (the owner's, Nov 17 17:41Z: game.js, l4dd.js .ol-only); a very faint one when nothing
        does; it blinks when it takes damage;

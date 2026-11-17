@@ -1181,6 +1181,7 @@ function drawMeters(s, board, layer, now) {
       isL4dd(s) ? l4Regen(s, R.me, clockNow()) : null,
     );
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
+    if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
   const want =
     (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
@@ -1252,7 +1253,7 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
-  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+  const ol = isL4dd(s) || isMgj(s) || hang, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
@@ -1735,7 +1736,7 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
-    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+    /* the outlines (outlines.js; every zombie game and Hangout's world): each player green, Justin blue (Good Justin God in Mad God Justin,
        never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
        roof and a floor away */
     const olP = !g && s.players[id],
