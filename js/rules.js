@@ -3425,7 +3425,7 @@ export function shove(s, id, ux, uy, far, now, side, more = {}) {
    are in a duck's room, as for the bullets; in Hangout only on the same side of the cabin's walls and at about the same
    height. Justin can be hit too. Returns who was hit (JUSTIN_ID for Justin); done: who this swing already hit, never hit
    twice (Duck Cabin's own, Justin and the cats, go in it as "h:" and their id). */
-const REACH = {
+export const REACH = {
   knife: [2.3, 0.9],
   hammer: [3, 0.5],
   axe: [3, 0.5],
