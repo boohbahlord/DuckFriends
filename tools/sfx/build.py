@@ -65,11 +65,13 @@ KENNEY_IFACE = "https://kenney.nl/assets/interface-sounds"
 KENNEY_RPG = "https://kenney.nl/assets/rpg-audio"
 KENNEY_CASINO = "https://kenney.nl/assets/casino-audio"
 KENNEY_JINGLES = "https://kenney.nl/assets/music-jingles"
+KENNEY_DIGITAL = "https://kenney.nl/assets/digital-audio"
 KI = "kn:kenney_impactsounds/Audio/"
 KF = "kn:kenney_interfacesounds/Audio/"
 KU = "kn:kenney_uiaudio/Audio/"
 KR = "kn:kenney_rpgaudio/Audio/"
 KC = "kn:kenney_casinoaudio/Audio/"
+KD = "kn:kenney_digitalaudio/Audio/"
 GR = "oga:guns-reload/"
 EC = GR + "equipmentclicks.wav"
 C3 = GR + "equipment_clicks3.wav"
@@ -1169,6 +1171,46 @@ SOUNDS = {
             "Nic3_one, fire attack (freesound 166555, from Stendhal)",
             "https://freesound.org/people/Nic3_one/sounds/166555/",
         ),
+    ),
+    # ==== batch 8 (the owner, Nov 17) ====
+    # the Angelic pistol's blast: the grenade's boom made a little weaker (a touch higher, less low end, a shorter tail)
+    "boomSmall": dict(
+        layers=[
+            ("oga:explosion-big/explosion.wav", 0, 0.8, 0, 1),
+            ("oga:explosion-big/lowFrequency_explosion_000.ogg", 0.05, 0.9, 0, 0.45),
+            ("oga:explosion-small/explosionCrunch_000.ogg", 0, 0.6, 0.01, 0.35),
+        ],
+        rate=1.12,
+        drive=1.8,
+        credit=(
+            "TinyWorlds, Explosion (explosion); Kenney, Sci-fi Sounds (lowFrequency_explosion_000, "
+            "explosionCrunch_000)",
+            OGA_URL["scifi"],
+        ),
+    ),
+    # the laser gun: its beam (one a second), the hiss as it overheats, and the steam off its hot barrel (on a loop)
+    "laser": dict(
+        layers=[
+            (KD + "laser9.ogg", 0.112, 0.55, 0, 1, 5000),
+            (KD + "laser3.ogg", 0.107, 0.45, 0, 0.5, 5000),
+        ],
+        rate=0.92,
+        lp=6000,
+        fin=0.02,
+        credit=("Kenney, Digital Audio (laser9, laser3)", KENNEY_DIGITAL),
+    ),
+    "laserHiss": dict(
+        layers=[("oga:jetpack-stop/steam_hisses_-_Marker_4.wav", 0, 1.2, 0, 1)],
+        lp=6000,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
+    ),
+    "laserSteam": dict(
+        layers=[("oga:laser-steam/steam_hisses_-_Marker_3-start.wav~3", 0, 3.0, 0, 1)],
+        lp=3500,
+        loop=1.5,
+        room=False,
+        kbps=32,
+        credit=("bart, Steam Release Sounds", OGA_URL["steam"]),
     ),
 }
 

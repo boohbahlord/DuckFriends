@@ -5269,3 +5269,8 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 Then (11:08Z): "tell me of what questions they have here and WHO"
 
 - Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
+- Miles Jr., sounds: the Angelic pistol's blast gets its own boom (`boomSmall`: the grenade's recordings, a little higher
+  and thinner, 3 dB under the grenade), played for any blast with `wide` < 1 (Solomon passes `wide: 0.5` with the half
+  radius). The laser gun's sounds are ready for Noah's build: `sfx.laser(o)` each shot, `sfx.laserHiss(o)` on overheat,
+  `sfx.steam(id, heat, { x, y, rain })` every tick (heat 0 cold to 1 at the limit, more once overheated; rain doubles it;
+  0 lets it fade). Tommy gun and UMP45 shots wait for the owner's OK on their stats.

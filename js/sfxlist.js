@@ -125,4 +125,8 @@ export const FILES = {
   trombone: { n: 1 },
   fire: { n: 1, loop: [0.15, 2.15] },
   fireLight: { n: 1 },
+  boomSmall: { n: 1 },
+  laser: { n: 1 },
+  laserHiss: { n: 1 },
+  laserSteam: { n: 1, loop: [0.15, 1.65] },
 };

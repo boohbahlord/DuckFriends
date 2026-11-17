@@ -3090,9 +3090,9 @@ function playFx(f) {
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1, true);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
-    (f.wide > 1 ? sfx.boomBig : sfx.boom)(
+    (f.wide > 1 ? sfx.boomBig : f.wide < 1 ? sfx.boomSmall : sfx.boom)(
       geo.hang ? { x: f.x * HW, y: f.y * HH } : {},
-    ); // (the Jaime Bomb's: its own, bigger)
+    ); // (the Jaime Bomb's: its own, bigger; a smaller blast, as the Angelic pistol's, its own, weaker)
     if (geo.hang)
       for (const [x, y] of f.gore || []) {
         const z = world.place({ x: x / HW, y: y / HH }, 0);
