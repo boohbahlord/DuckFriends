@@ -94,7 +94,8 @@ keepOnly("l4dd", [], ["flicker"], ["seats", "stage", "bj", "piano", "tv"]); // (
 export const L4 = {
   HP: 3,
   REGEN: 15000, // ms: 1 HP back, 15 s after the last hit or heal
-  REVIVE: 10000, // ms of holding E by a downed duck
+  REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
+  QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
   BLEED: 30000, // ms a downed duck waits for a revive, then it's a ghost for the rest of the round
   SPRINT: 7000, // ms of sprint, and as long to fill up again
@@ -533,6 +534,12 @@ export const SHOP = [
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
   { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
+  {
+    id: "qr",
+    name: "Quick Revive",
+    what: "Revive others in 3 s until you go down",
+    most: 1,
+  }, // (750, kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
 ];
 /* and his guns (the owner's, Nov 4): both pistols, the knife, the shotgun and the bow. Bullets cost 5 points for 2,
    arrows 5 for 5; a gun I already have says Refill and costs what fills it to the top. What a gun costs to buy
@@ -568,18 +575,23 @@ export function gunPrice(s, id, w) {
 export const priceOf = (id, n) =>
   id === "acc"
     ? ACC_PRICE
-    : Math.round(
-        UP_TIMES *
-          SHOP_MORE *
-          {
-            acc: 300 + 50 * n,
-            as: 250 + 50 * n,
-            hp: n ? 125 : 100,
-            sp: 250,
-            rl: 300,
-          }[id],
-      );
+    : id === "qr"
+      ? QR_PRICE
+      : Math.round(
+          UP_TIMES *
+            SHOP_MORE *
+            {
+              acc: 300 + 50 * n,
+              as: 250 + 50 * n,
+              hp: n ? 125 : 100,
+              sp: 250,
+              rl: 300,
+            }[id],
+        );
 const ACC_PRICE = 600; // (every Critical Chance the same: the owner's, Nov 16 21:47Z)
+const QR_PRICE = 750; // (Quick Revive: "it costs only 750", the owner's, Nov 17 11:19Z)
+/* how long duck `by` holds E to get a downed duck up: Quick Revive makes it 3 s */
+export const reviveMs = (s, by) => (upOf(s, by).qr ? L4.QUICK : L4.REVIVE);
 const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
@@ -1185,7 +1197,19 @@ export const fullAmmo = (w) => {
 };
 /* … and as full as duck id's own is: an Angelic weapon holds more (l4ddangel.js) */
 export const fullFor = (s, id, w) =>
-  angelOf(s, id, w) ? angelAmmo(ARMS[w]) : fullAmmo(w);
+  angelOf(s, id, w) ? angelAmmo(ARMS[w], w) : fullAmmo(w);
+/* a magazine's size in kit m: the Angelic pistols' is twice the pistol's (l4ddangel.js) */
+const magIn = (m, w) =>
+  ARMS[w] && ARMS[w].mag
+    ? ARMS[w].mag *
+      (w === "handgun" &&
+      m.dg === undefined &&
+      m.ang &&
+      m.ang[w] &&
+      (m.sl || []).includes(w)
+        ? ANGEL.PISTOL.MAG
+        : 1)
+    : 0;
 function freshKit() {
   const am = {};
   for (const w of START) if (fullAmmo(w)) am[w] = fullAmmo(w);
@@ -1208,7 +1232,12 @@ export const l4Cool = (s, id, w) =>
   ARMS[w]
     ? (w === "laser" && angelOf(s, id, w)
         ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
-        : ARMS[w].cool * (angelOf(s, id, w) ? ANGEL.FAST : 1)) * // (Angelic: 20% faster, l4ddangel.js)
+        : ARMS[w].cool *
+          (angelOf(s, id, w)
+            ? w === "handgun"
+              ? ANGEL.PISTOL.FIRE
+              : ANGEL.FAST
+            : 1)) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js)
       Math.pow(0.9, upOf(s, id).as || 0)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
@@ -1252,7 +1281,11 @@ export const reloadOf = (s, id, w, c) =>
       )
     : ARMS[w].reload || 1500) *
   (upOf(s, id).rl ? 0.7 : 1) *
-  (angelOf(s, id, w) ? ANGEL.RELOAD : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster)
+  (angelOf(s, id, w)
+    ? w === "handgun"
+      ? ANGEL.PISTOL.RELOAD
+      : ANGEL.RELOAD
+    : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster, the dual pistols twice as long)
 /* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
    that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
    one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
@@ -1330,6 +1363,7 @@ function bringBack(s, id, now, k, fresh) {
     was = p4[id] || {};
   p4[id] = { hp: L4.HP, at: now };
   s.hang.l4p = p4;
+  downGun(s, id, false);
   if (fresh) {
     s.hang.l4a = { ...(s.hang.l4a || {}), [id]: freshKit() };
     s.hang.l4pt = {
@@ -1736,10 +1770,14 @@ rule("l4", {
       }
     dropBox(s, id);
     angelLeft(s, id);
-    const p4 = s.hang.l4p || {};
+    const p4 = s.hang.l4p || {},
+      now = Date.now();
     for (const [t, p] of Object.entries(p4))
       if (p.rv && p.rv.by === id)
-        s.hang.l4p = { ...p4, [t]: { ...p, rv: null } };
+        s.hang.l4p = {
+          ...p4,
+          [t]: { ...p, rv: null, dn: p.dn + (now - p.rv.at) },
+        }; // (the bleeding-out waited meanwhile)
   },
   act(s, a, now) {
     return l4Act(s, a, now);
@@ -1833,7 +1871,10 @@ function l4Act(s, a, now) {
     if (!tp || !tp.dn || !pos || t === id) return false;
     if (!a.hold) {
       if (!tp.rv || tp.rv.by !== id) return false;
-      s.hang.l4p = { ...p4, [t]: { ...tp, rv: null } };
+      s.hang.l4p = {
+        ...p4,
+        [t]: { ...tp, rv: null, dn: tp.dn + (now - tp.rv.at) },
+      }; // (a revive pauses the bleeding-out: it goes on from where it was, the owner's, Nov 17 11:07Z)
       return true;
     }
     const [tx, ty] = at(pos);
@@ -2164,8 +2205,10 @@ function finishReload(m, now) {
   if (!m.rl || now < m.rl) return false;
   const w = m.rw,
     c = m.am && m.am[w];
-  if (c && ARMS[w] && ARMS[w].mag) {
-    const k = Math.min(ARMS[w].mag - c[0], c[1]);
+  if (w === "dg" && m.dg !== undefined)
+    m.dg = ARMS.handgun.mag; // (the down pistol: its bullets never run out)
+  else if (c && magIn(m, w)) {
+    const k = Math.min(magIn(m, w) - c[0], c[1]);
     m.am = { ...m.am, [w]: [c[0] + k, c[1] - k] };
   }
   m.rl = 0;
@@ -2174,9 +2217,16 @@ function finishReload(m, now) {
 }
 /* R: the ranged weapon in hand reloads (one with a magazine, not full, with bullets left) */
 function startReload(s, id, m, w, now) {
+  if (w === "dg") {
+    if (m.rl || m.dg === undefined || m.dg >= ARMS.handgun.mag) return false;
+    m.rt = reloadOf(s, id, "handgun", [m.dg, ARMS.handgun.mag]);
+    m.rl = now + m.rt;
+    m.rw = "dg";
+    return true;
+  } // (the down pistol)
   const c = m.am[w];
-  if (!ARMS[w] || !ARMS[w].mag || !c || m.rl) return false;
-  if (c[0] >= ARMS[w].mag || c[1] <= 0) return false;
+  if (!magIn(m, w) || !c || m.rl) return false;
+  if (c[0] >= magIn(m, w) || c[1] <= 0) return false;
   m.rt = reloadOf(s, id, w, c);
   m.rl = now + m.rt;
   m.rw = w;
@@ -2184,8 +2234,10 @@ function startReload(s, id, m, w, now) {
 }
 export function l4Reload(s, a, now) {
   const m0 = kitOf(s, a.id),
-    w = l4Holds(s, a.id, a.w) ? a.w : (s.pos[a.id] || {}).w;
-  if (!m0 || !standing(s, a.id) || !l4Holds(s, a.id, w)) return false;
+    down = downArmed(s, a.id),
+    w = down ? "dg" : l4Holds(s, a.id, a.w) ? a.w : (s.pos[a.id] || {}).w;
+  if (!m0 || !(down || (standing(s, a.id) && l4Holds(s, a.id, w))))
+    return false;
   const m = { ...m0 };
   finishReload(m, now);
   if (!startReload(s, a.id, m, w, now)) return false;
@@ -2227,9 +2279,12 @@ export function l4Use(s, a, now) {
     L = s.hang && s.hang.l4,
     m0 = kitOf(s, id),
     A = ARMS[what],
-    kind = kindOf(what);
-  if (!L || L.over || !p || !m0 || !standing(s, id) || !A) return false;
-  if (kind !== "grenade" && !m0.sl.includes(what)) return false;
+    kind = kindOf(what),
+    down = what === "handgun" && downArmed(s, id), // (the down pistol: the only thing a downed duck uses)
+    rw = down ? "dg" : what;
+  if (!L || L.over || !p || !m0 || !(down || standing(s, id)) || !A)
+    return false;
+  if (!down && kind !== "grenade" && !m0.sl.includes(what)) return false;
   if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
@@ -2242,14 +2297,14 @@ export function l4Use(s, a, now) {
     s.hang.l4a = { ...s.hang.l4a, [id]: m };
     return true;
   } // (switched on or off, empty or not: its fuel burns only in flight, in l4Tick)
-  const c = m.am[what];
-  if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === what))
+  const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
+  if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
   if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
   if (what === "zebra" && s.zcake) return false; // (one zebra cake in the room at a time)
   if (what === "laser" && laserHeat(s, id, now).over) return false; // (overheated: it can't fire until it has cooled)
   m.u[what] = now;
-  if (m.rw && m.rw !== what) {
+  if (m.rw && m.rw !== rw) {
     m.rl = 0;
     m.rw = ""; // (something else used before the reload was done: it's lost, the owner's, Nov 16)
   }
@@ -2267,10 +2322,14 @@ export function l4Use(s, a, now) {
     ax: +(dx / W).toFixed(5),
     ay: +(dy / H).toFixed(5),
   });
-  const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistol: two of them, both fire)
-    many = A.burst ? Math.min(A.burst, c[0]) : dual ? Math.min(2, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistols: they take turns, one bullet each press)
+    many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  if (dual) m.alt = (m.alt || 0) ^ 1; // (which pistol fires: the left, then the right …)
   if (kind === "grenade") m.g--;
-  else if (c) {
+  else if (down) {
+    m.dg = c[0] - 1;
+    if (m.dg <= 0) startReload(s, id, m, "dg", now);
+  } else if (c) {
     m.am[what] = [c[0] - many, c[1]];
     if (c[0] - many <= 0) startReload(s, id, m, what, now); // (empty: it reloads by itself)
   }
@@ -2351,17 +2410,14 @@ export function l4Use(s, a, now) {
       const out = [];
       for (let i = 0; i < many; i++)
         out.push(
-          shot(
-            k,
-            dx,
-            dy,
-            v,
-            what === "glauncher"
+          shot(k, dx, dy, v, {
+            ...(what === "glauncher"
               ? { life: (A.far / A.speed) * 1000 }
               : i
                 ? { n: n * 10 + i, t: now + i * (A.gap || 60) }
-                : {},
-          ),
+                : {}),
+            ...(dual ? { al: m.alt } : {}), // (the Angelic pistols: which one fired it, game.js' muzzle flash)
+          }),
         ); // (a burst's rounds leave one after another: each waits until its time, t)
       s.shots = [...(s.shots || []), ...out];
     }
@@ -2860,6 +2916,7 @@ function hurtDuck(s, p4, id, now, w = "") {
     return false;
   }
   p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
+  downGun(s, id, true);
   const u = upOf(s, id);
   if (hasSafe(s, id)) {
     /* Safe Keeping: nothing bought is lost; up at once when nobody else is standing (or a computer), else on E */
@@ -2871,9 +2928,9 @@ function hurtDuck(s, p4, id, now, w = "") {
       s.players[id] && !s.players[id].bot && !alone
         ? { ...p4[id], sk: 1 }
         : { ...p4[id], sk: 1, skAt: now + SAFE.GLOW };
-  } else if (u.hp) {
-    p4[id] = { ...p4[id], uhp: u.hp }; // (kept for a medkit's revive)
-    s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0 } }; // (down: the max HP bought is gone)
+  } else if (u.hp || u.qr) {
+    if (u.hp) p4[id] = { ...p4[id], uhp: u.hp }; // (kept for a medkit's revive)
+    s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0, qr: 0 } }; // (down: the max HP and Quick Revive bought are gone)
   }
   if (s.players[id]) s.players[id].dead = true;
   s.hang.still = { ...(s.hang.still || {}), [id]: now + L4.BLEED + 60000 };
@@ -2882,6 +2939,23 @@ function hurtDuck(s, p4, id, now, w = "") {
   s.hang.l4b = b;
   return true;
 }
+/* the down pistol (the owner's, Nov 17 11:07Z): a downed duck holds a pistol of its own with endless bullets that still
+   reloads (8 to a magazine, as the pistol's), kept in its kit as dg (the bullets in the magazine); it goes when the duck
+   is up again or bleeds out. Never Angelic, whatever pistol the duck has besides */
+function downGun(s, id, on) {
+  const kit = kitOf(s, id);
+  if (!kit || (!on && kit.dg === undefined)) return;
+  const m = { ...kit };
+  if (m.rw === "dg" || on) {
+    m.rl = 0;
+    m.rw = "";
+  } // (a reload I was in the middle of: lost)
+  if (on) m.dg = ARMS.handgun.mag;
+  else delete m.dg;
+  s.hang.l4a = { ...s.hang.l4a, [id]: m };
+}
+export const downArmed = (s, id) =>
+  isDown(s, id) && !!kitOf(s, id) && kitOf(s, id).dg !== undefined;
 /* a downed duck up again at once: by a medkit (full HP, and the max HP it bought back) or by its own Safe Keeping (spent;
    INV ms of nothing hurting it; it lost nothing) */
 function getUp(s, id, now, full, safe) {
@@ -2892,6 +2966,7 @@ function getUp(s, id, now, full, safe) {
     s.hang.l4u = { ...s.hang.l4u, [id]: { ...upOf(s, id), hp: p.uhp } };
   p4[id] = { hp: full ? maxHp(s, id) : L4.BACK_HP, at: now };
   s.hang.l4p = p4;
+  downGun(s, id, false);
   if (s.players[id]) delete s.players[id].dead;
   const still = { ...(s.hang.still || {}) };
   delete still[id];
@@ -3170,7 +3245,17 @@ export function l4Shots(s, now) {
           const head = headshot(s, sh.by, w, z, now);
           strike(s, z, z.hp, head, sh.by, w);
           die(z, T);
-          if (head) boom(s, { by: sh.by, hz: sh.hz }, z.x, z.y, zs, T, now);
+          if (head)
+            boom(
+              s,
+              { by: sh.by, hz: sh.hz },
+              z.x,
+              z.y,
+              zs,
+              T,
+              now,
+              ANGEL.PISTOL.BOOM,
+            ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z)
         } else if (
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )
@@ -3313,19 +3398,21 @@ function l4Tick(s, now) {
           !standing(s, rv.by) ||
           Math.hypot(...minus(at(by), at(s.pos[id]))) > L4.REACH * 1.8)
       )
-        p = { ...p, rv: null };
+        p = { ...p, rv: null, dn: p.dn + (now - rv.at) }; // (the bleeding-out waited while they were at it)
       else if (p.skAt && now >= p.skAt) {
         s.hang.l4p = p4;
         getUp(s, id, now, false, true);
         p = s.hang.l4p[id];
-      } else if (rv && now - rv.at >= L4.REVIVE) {
+      } else if (rv && now - rv.at >= reviveMs(s, rv.by)) {
         p = { hp: L4.BACK_HP, at: now };
+        downGun(s, id, false);
         if (s.players[id]) delete s.players[id].dead;
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
       } else if (!rv && !p.skAt && now >= p.dn) {
         p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
+        downGun(s, id, false);
         const q = s.pos[id];
         if (s.players[id]) delete s.players[id].dead;
         const still = { ...(s.hang.still || {}) };
@@ -3353,7 +3440,12 @@ function l4Tick(s, now) {
       const m = { ...am[id] };
       finishReload(m, now);
       s.hang.l4a = { ...s.hang.l4a, [id]: m };
-    } else if (am[id].rl && s.pos[id] && s.pos[id].w !== am[id].rw)
+    } else if (
+      am[id].rl &&
+      am[id].rw !== "dg" &&
+      s.pos[id] &&
+      s.pos[id].w !== am[id].rw
+    )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
@@ -3877,6 +3969,13 @@ export { standing as l4Up };
 export const l4Hp = (s, id) => {
   const p = P4(s, id);
   return p ? p.hp : -1;
+};
+/* how far a downed duck is into its bleeding-out (k, 0 to 1), and whether someone is reviving it (wait: it's stopped) */
+export const l4Dying = (s, id, now) => {
+  const p = P4(s, id);
+  if (!p || !p.dn) return { k: -1, wait: false };
+  const left = p.dn - (p.rv ? p.rv.at : now);
+  return { k: Math.min(1, Math.max(0, 1 - left / L4.BLEED)), wait: !!p.rv };
 };
 export const l4Down = (s, id) => {
   const p = P4(s, id);

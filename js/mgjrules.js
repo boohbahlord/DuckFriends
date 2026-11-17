@@ -277,9 +277,9 @@ const MGJ_COOL = {
 export const mgjCool = (sp) =>
   MGJ_COOL[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
-   hold E (a phone: the Revive button) for REVIVE.MS (2.5 s: half as long, the owner's, Nov 16); with the medkit picked
-   up out in my hand it's at once (the owner's, Nov 16) */
-export const REVIVE = { MS: 2500, REACH: 2 };
+   hold E (a phone: the Revive button) for REVIVE.MS (3 s, always: the owner's, Nov 17 11:19Z; it was 2.5 s); with the
+   medkit picked up out in my hand it's at once (the owner's, Nov 16) */
+export const REVIVE = { MS: 3000, REACH: 2 };
 /* the Xbox (the owner's): once a game, once he has lost XB_LOST HP, a desk comes in with his Xbox and a monitor on it;
    he runs to it and turns the Xbox off (the light and the screen go dark), fades away, as for the meteor, and comes back
    with faster attacks and his HP up by 1, and 1 more for every player (never past full). XB: ms the desk takes to come
@@ -2143,6 +2143,11 @@ function getUp(s, by, id, now, full) {
   const out = { ...m.out };
   delete out[id];
   m.out = out;
+  if (s.mag && s.mag[id]) {
+    const mag = { ...s.mag };
+    delete mag[id];
+    s.mag = mag;
+  } // (the down pistol goes: its magazine with it)
   const lost = { ...m.lost };
   if (max && !full)
     lost[id] = max - Math.ceil(max / 2); // (it stands up at half its HP: 3 of 6)

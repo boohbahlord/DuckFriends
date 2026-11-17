@@ -10,8 +10,9 @@
      - the sniper: through two more zombies than before;
      - the chain gun: through two zombies, the third stops it;
      - the flamethrower: it reaches farther, sooner, and the ground it lights burns 2.5 s longer;
-     - the default pistol: two of them, one in each hand (both fire), every bullet kills at once, and every crit sets
-       off a grenade's blast where it hit;
+     - the default pistol: two of them, one in each hand, taking turns one bullet at a time (twice the pistol's fire
+       rate), a magazine twice as big, a reload twice as long; every bullet kills at once, and every crit sets off a
+       blast half a grenade's size where it hit, with a weaker boom (the owner's, Nov 17 11:07Z: PISTOL);
      - the grenade launcher: its blast is GL_RADIUS of a grenade's, and it sets the ground there on fire.
      - the Laser Rifle: its own (LASER), a faster beam, a longer limit and now and then 2 damage.
    s.hang.l4am { by, w, sl (the slot it came from), t (when it went in) }: the weapon in the machine (null: none), till
@@ -58,17 +59,26 @@ export const ANGEL = {
   /* the Laser Rifle (the owner's, Nov 17): a beam every 0.75 s and a sixth cooled every 0.75 s, a limit of 6 beams
      (the 7th overheats it), and a 1 in 3 chance of 2 damage to each zombie it goes through (not the +1 of the others) */
   LASER: { cool: 750, heat: 6, two: 1 / 3 },
+  /* the Angelic pistol, dual wielded (the owner's, Nov 17 11:07Z): "double the bullets per magazine", "the fire rate
+     for dual wield is obviously twice as fast but the reload twice as long", "the explosion radius should be half of
+     that of a grenade" */
+  PISTOL: { MAG: 2, FIRE: 0.5, RELOAD: 2, BOOM: 0.5 },
 };
 /* what goes in: guns and melee weapons (WEAPONS), never the grenade or an item */
 export const canAngel = (w, weapons) => weapons.includes(w);
 /* is duck id's weapon w Angelic? */
 export function angelOf(s, id, w) {
   const k = s && s.hang && s.hang.l4a && s.hang.l4a[id];
+  if (k && w === "handgun" && k.dg !== undefined) return false; // (down: the down pistol in hand is never Angelic)
   return !!(k && k.ang && k.ang[w] && (k.sl || []).includes(w));
 }
 /* an Angelic weapon's ammo, full: two more magazines (the LMG one), or MORE more without one */
-export function angelAmmo(A) {
+export function angelAmmo(A, w) {
   if (!A || A.all === undefined) return null;
+  if (w === "handgun") {
+    const mag = A.mag * ANGEL.PISTOL.MAG;
+    return [mag, A.all + A.mag * ANGEL.MAGS - mag];
+  } // (the dual pistols: one magazine twice as big, and the two more magazines every Angelic gun gets)
   if (A.mag && A.mag > 2) {
     const more = A.mag * (A.k === "lmg" ? ANGEL.LMG_MAGS : ANGEL.MAGS);
     return [A.mag, A.all - A.mag + more];
@@ -105,7 +115,7 @@ export function angelAct(s, id, a, now, mx, my, h) {
         ang: { ...(k.ang || {}), [m.w]: 1 },
         am: {
           ...k.am,
-          ...(h.full(m.w) ? { [m.w]: angelAmmo(h.arm(m.w)) } : {}),
+          ...(h.full(m.w) ? { [m.w]: angelAmmo(h.arm(m.w), m.w) } : {}),
         },
       },
     };

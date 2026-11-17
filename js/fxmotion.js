@@ -112,7 +112,7 @@ let trauma = 0,
 /* a shot of mine (how much: fx.js MUZZLE's shake) */
 export function shake(amount) {
   if (heavyOff()) return;
-  trauma = Math.min(0.65, trauma + amount);
+  trauma = Math.min(1, trauma + amount); // (at most about 6 px: the chain gun held down, a grenade close by)
 }
 /* an adrenaline shot taken: a short fast wobble */
 export function wobble(now, ms = 650) {
@@ -127,7 +127,7 @@ export function shakeNow(now) {
   let x = 0,
     y = 0;
   if (trauma > 0.005) {
-    const a = 6 * trauma; // (at most about 4 px: the chain gun held down)
+    const a = 6 * trauma;
     x += a * (Math.sin(now / 23) * 0.6 + Math.sin(now / 9.7) * 0.4);
     y += a * (Math.cos(now / 19) * 0.6 + Math.sin(now / 11.3) * 0.4);
   }
