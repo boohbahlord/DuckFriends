@@ -1252,7 +1252,7 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Map") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin", dis)}${LINE}${MAPS.map(
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", dis)}${row('data-map="cabin"', "Duck Cabin", "", o.map === "cabin" && o.l4map !== "downpour", dis)}${row('data-map="downpour"', "Downpour", "", o.mode === "l4dd" && o.l4map === "downpour", dis)}${LINE}${MAPS.map(
           ([id, name]) =>
             row(
               `data-map="${id}"`,
@@ -1590,6 +1590,10 @@ export function openGameSettings(R, start = null) {
             return;
           }
           if (r.dataset.map === "cabin") return go("cabin"); // (Duck Cabin's own games, on a page of their own)
+          if (r.dataset.map === "downpour") {
+            if (boss) send({ mode: "l4dd", l4map: "downpour" }); // (Downpour: Dead Ducks Arcade's own map; its map vote still comes first, the owner's, Nov 17)
+            return;
+          }
           if (r.dataset.map && boss) {
             const f = mapForm(r.dataset.map); // (Vote Maps and Random go off: rules.js)
             send(

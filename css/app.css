@@ -14279,6 +14279,14 @@ html.moving .board.quake {
     #7fd4ff00 70%
   );
 }
+.mgj-pick.k-plus .mgj-pick-glow {
+  background: radial-gradient(
+    circle,
+    #e6ffe0dd 0%,
+    #58d36b77 40%,
+    #58d36b00 70%
+  );
+}
 .mgj-pick.k-fire .mgj-pick-glow,
 .mgj-pick.k-meteor .mgj-pick-glow {
   background: radial-gradient(
