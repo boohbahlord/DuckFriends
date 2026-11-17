@@ -5038,3 +5038,11 @@ are all good to go we can put them in the game"
 
 - Solomon the 2nd: the fences across the road's ends are solid and 200 tall (no holes); a zombie walks to the fence,
   climbs it at its own walking speed, then drops down the other side (l4ddrules.js st 5, fenceZ).
+
+## Request (2026-11-17 00:17Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1m3BhxdBgZcLBBxgbp619T): picking Downpour
+> The quacky zombies takes players to a vote screen of the maps and it only shows those two maps for players to vote for.
+
+- Solomon the 2nd: before every Quacky Zombies game, everyone gets a "Vote for Map" window with only Random, Duck Cabin
+  and Downpour (rules.js ZMAPS, vote kind "zmap", 0:20 like the map vote; vote.js zmapTile, pictures
+  assets/maps/duck-cabin.jpg and assets/maps/downpour.jpg). Its result sets options.l4map. Also built for Downpour
+  (owner 23:15Z, 23:23Z, 23:29Z): rain and wading ripples, power lights, lightning, mud zombies; Noah drew the art.

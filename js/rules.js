@@ -210,7 +210,7 @@ export const SHORT = ["−−−", "−−", "−", "0", "+", "++", "+++"];
 export const OPTIONS_DEFAULT = {
   order: "random", // random | rotate: the order of the round's questions
   share: 0.67, // how many players must vote to start the countdown: .5, .67, .75, 1 (half by default with the Discussion round on)
-  l4map: "cabin", // Dead Ducks Arcade's map: "cabin" | "downpour" (the second map: no row for it yet, it's not finished)
+  l4map: "cabin", // Quacky Zombies' map: "cabin" | "downpour", picked by everyone in its own map vote before each game (ZMAPS)
   answerTime: 0, // the default answer time in seconds: 0 (off), 30, 60, 90. I want no answer timer by default; a question's writer can still pick one
   catchUp: 15, // 0 (off), 15, 30, 45: the countdown once enough players have voted (everyone voting ends it at once)
   writeCatch: 30, // 0 (off), 15, 30, 45, 60: the same countdown while writing (questions, topics, contenders, secret words): I want the last writers to get 30 s by default
@@ -500,7 +500,7 @@ function setMode(s, mode) {
    shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
    speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
-export const PICK_TIME = { mode: 65, map: 20 };
+export const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
 const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
@@ -510,7 +510,11 @@ export const voteModes = (s) => {
     on = all.filter((id) => !off.includes(id));
   return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
 };
-export const voteIds = (s, k) => (k === "mode" ? voteModes(s) : VOTE_MAPS);
+export const voteIds = (s, k) =>
+  k === "mode" ? voteModes(s) : k === "zmap" ? ZMAPS : VOTE_MAPS;
+/* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
+   (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
+export const ZMAPS = ["cabin", "downpour"];
 /* the time a vote shows */
 export const voteLeft = (s, now) => Math.max(0, s.ends - now);
 export const votesDue = (s) =>
@@ -541,6 +545,11 @@ function closeVote(s) {
         ? anyOf(randomPool(s).length ? randomPool(s) : ids)
         : pickMap(s); // (the map's dice: the bags, as Random)
   if (vt.k === "mode") return setMode(s, won || "aod");
+  if (vt.k === "zmap") {
+    s.options.l4map = ZMAPS.includes(won) ? won : anyOf(ZMAPS); // (the dice: either one)
+    useMode(s.options.mode, s.options.l4map);
+    return;
+  }
   setMap(s, won);
   s.mapVoted = 1;
 }
@@ -587,8 +596,16 @@ function nextVote(s, now) {
     return s;
   }
   delete s.voteQ;
+  if (zmapDue(s, now)) return s;
   placeMap(s);
   return beginGame(s, now);
+}
+/* Quacky Zombies: its map vote opens before each of its games (once: zmapAsked till the game begins) */
+function zmapDue(s, now) {
+  if (s.options.mode !== "l4dd" || s.zmapAsked) return false;
+  s.zmapAsked = 1;
+  openVote(s, "zmap", now);
+  return true;
 }
 /* the start: Democracy's locks, Random's first game, then the 5 s countdown (the votes come after it). Returns null
    when the room has too few players for the host's game (the lobby says how many it needs) */
@@ -643,6 +660,7 @@ function rotate(s, now) {
   s.options.mode = mode;
   writeTimerFor(s, was);
   cabinMap(s); // (into Duck Cabin, or out of it)
+  if (zmapDue(s, now)) return s; // (Quacky Zombies: its map vote first)
   return beginGame(s, now);
 }
 /* the countdown is over: the game begins (Random: again for every new game) */
@@ -659,6 +677,7 @@ function beginGame(s, now) {
   s.wqScore = { quack: 0, room: 0 };
   s.wqPickers = [];
   for (const id of s.seat) P[id].ready = false;
+  delete s.zmapAsked;
   if (isSc(s)) {
     s.sc = { stories: [] };
     return startStory(s, now, true);
@@ -4927,6 +4946,7 @@ function cabinTick(s, now) {
 export function backToLobby(s, why) {
   helperOut(s); // (the fireplace's Justin stays with his game)
   delete s.waiting;
+  delete s.zmapAsked; // (Quacky Zombies' map vote comes again next time)
   const was = STAGE[s.phase];
   s.phase = "lobby";
   countTurn(s, was);

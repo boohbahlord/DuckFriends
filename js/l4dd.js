@@ -862,9 +862,11 @@ function paint(now, ctx) {
       holes.push([x, y, r, Math.min(0.72, l.k * 1.45) * fl * stutterOf(l, ln)]); // (dimmer than Hangout's blackout: the owner wants it very dark)
   }
   /* each opening lets a little moonlight in, more as its boards come down: the way in shows in the dark */
-  const brd = s.hang.brd || {};
+  const brd = s.hang.brd || {},
+    mn = MOON(); // (first: it brings OPENINGS up to the map in play, before they're gone through)
   for (const o of OPENINGS) {
-    const [x0, y0] = MOON()[o.id];
+    if (!mn[o.id]) continue;
+    const [x0, y0] = mn[o.id];
     if (inCabin(x0, y0) !== Wd.inside) continue;
     const p = Wd.toScreen(x0, y0, heightAt(x0, y0)),
       r = 120 * sc;
@@ -1807,6 +1809,7 @@ activity({
   },
   draw(now, ctx) {
     if (!layer) return;
+    syncMap(); // (the openings, the Butler's or the Priest's spot, for the map in play: on a player's screen too, which runs no rules)
     const Wd = ctx.world,
       sc = Wd.sc,
       t = performance.now();
