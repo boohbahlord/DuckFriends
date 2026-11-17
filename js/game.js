@@ -217,6 +217,7 @@ import {
   laserEnd,
   l4Ammo,
   l4ZBoxes,
+  shotStop,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -354,6 +355,7 @@ import {
   JAIME_MAX,
   CAKE_EVERY,
   cakeAt,
+  mgjStop,
 } from "./mgjrules.js";
 import {
   FLAME,
@@ -2084,14 +2086,24 @@ function drawDucks(now = clockNow()) {
     if (!sh.k || now < sh.t) continue; // (a burst's round not out yet)
     shotNow.add(sh.n);
     if (!SHOT_SEEN.has(sh.n)) {
-      SHOT_SEEN.set(sh.n, { k: sh.k, x: NaN, y: NaN, vx: sh.vx, vy: sh.vy });
+      SHOT_SEEN.set(sh.n, {
+        k: sh.k,
+        x: NaN,
+        y: NaN,
+        vx: sh.vx,
+        vy: sh.vy,
+        skip: new Set(), // (where it stops on my screen: shotStop, mgjStop)
+        n: 0,
+        p: null,
+        stop: null,
+      });
       if (now - sh.t < 400) fired.push(sh);
     }
   }
   for (const [n, o] of SHOT_SEEN)
     if (!shotNow.has(n)) {
       SHOT_SEEN.delete(n);
-      if (o.x === o.x) fxImpact(o.x, o.y, o.k, o.vx, o.vy);
+      if (o.x === o.x && !o.fired) fxImpact(o.x, o.y, o.k, o.vx, o.vy);
     }
   for (const sh of s.shots || []) {
     if (!sh.k || now < sh.t) continue;
@@ -2100,6 +2112,7 @@ function drawDucks(now = clockNow()) {
         ? world.place(at, sh.hz)
         : place({ x: at.x, y: at.y }, 0, 1, true), // (free: past the board's left edge it flies on, never back to where ducks start)
       top = a.top - at.z * size; // (Hangout: at the height it was fired from)
+    if (stopped(s, sh, at, hang, now)) continue; // (it got to what stops it: gone from my screen there)
     if (hang && world.hidden("", at)) continue; // (on the other side of the cabin's walls)
     if (
       a.left < -geo.W * 0.4 ||
@@ -3984,6 +3997,57 @@ function playFx(f) {
    time: fewer small freezes while the browser cleans up. Put back in the page, an element's CSS animation starts over
    by itself. */
 const SHOT_EL = new Map(); // a shot's number → its element
+/* a shot that stops where it hits ends there on my screen, never drawn past it (the owner's, Nov 17 20:37Z: "BULLETS
+   THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS THRU ZOMBIES, BECAUSE IN GAME THEY ARE STILL PASSING THROUGH
+   ZOMBIES IN A GLITCHY WEIRD WAY. LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT"). The host
+   finds the hit at its next beat and my screen hears of it later, so the shot I draw at where it is now flew on past
+   what it hit until then. Now, each frame, from where I last drew it to where it is now, I look for what stops it as I
+   draw things (Dead Ducks Arcade: a wall or a zombie, l4dd.js shotStop; Mad God Justin: his chair or a controller, a
+   wave zombie, him, mgjrules.js mgjStop), every gun and thrown thing but the grenade (which lands) and the chain gun's
+   and Laser Rifle's lines; the sniper's goes through as many as it does there. It ends at that spot, its hit shown
+   there at once (fx.js fxImpact). If the host then says it went on (a miss, a crit's slug, the sniper's: sh.ms, sh.hit,
+   sh.zp, sh.zh), or still has it once it should long have heard (STOP_WAIT), it flies on from there. True: it's
+   stopped, don't draw it */
+const STOP_WAIT = 700;
+function stopped(s, sh, at, hang, now) {
+  const r = SHOT_SEEN.get(sh.n),
+    mgj = isMgj(s);
+  if (
+    !r ||
+    !((hang && isL4dd(s)) || mgj) ||
+    sh.k === "grenade" ||
+    sh.k === "chain" ||
+    sh.k === "laser"
+  )
+    return false;
+  const missed = [...(sh.ms || []), ...(sh.zp || [])],
+    past = [...missed, ...(sh.hit || []), ...(sh.zh || [])];
+  for (const i of past) r.skip.add(i);
+  if (
+    r.stop &&
+    ((r.stop.i >= 0 && past.includes(r.stop.i)) || now - r.stop.at > STOP_WAIT)
+  ) {
+    if (r.stop.i >= 0 && missed.includes(r.stop.i)) r.n--; // (a miss isn't a hit)
+    r.stop = null;
+    r.fired = false;
+  } // (it went on: from where it stopped)
+  if (r.stop) return true;
+  const [x0, y0] = r.p || [sh.x0, sh.y0],
+    end = mgj
+      ? mgjStop(s, sh, r, x0, y0, at.x, at.y, now)
+      : shotStop(s, sh, r, x0, y0, at.x, at.y);
+  r.p = [at.x, at.y];
+  if (!end) return false;
+  r.stop = { i: end.i, at: now };
+  r.p = [end.x, end.y];
+  const e = { x: end.x, y: end.y, z: at.z },
+    a = hang ? world.place(e, sh.hz) : place(e, 0, 1, true);
+  r.x = a.left;
+  r.y = a.top;
+  fxImpact(r.x, r.y, r.k, r.vx, r.vy);
+  r.fired = true;
+  return true;
+}
 const SHOT_SEEN = new Map(); // a shot's number → { k, x, y (where last seen on the screen), vx, vy (its way) }: once it's gone, it hit there (fx.js fxImpact)
 const SHOTS_KEPT = new Map(); // class + look → elements ready to go again
 function shotPool(cls, inner) {

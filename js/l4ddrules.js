@@ -3418,6 +3418,17 @@ const walled = (x, y, z) =>
       )
     : (!playable(x, y) && !inOpening(x, y)) ||
       (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
+/* a shot's weapon (ARMS), by what it is; and does a wall stop shot sh at (x, y) (world px)? Here and on every screen,
+   which draws a shot ending where it stops (l4dd.js shotStop) */
+export const shotArm = (sh) =>
+  ARMS[sh.w]
+    ? sh.w
+    : sh.k === "arrow"
+      ? "bow"
+      : sh.k === "pellet"
+        ? "shotgun"
+        : "handgun";
+export const shotWalled = (sh, x, y) => walled(x, y, shotFeet(sh));
 /* may a shot from my duck (feet at hz, at (px, py)) hit zombie z? Only with nothing solid between us: the one rule
    (layout.js slabBetween, the owner's, Nov 17 20:02Z); the walls on the way are the shot's own walk */
 const canShoot = (z, px, py, hz) =>
@@ -3553,13 +3564,7 @@ export function l4Shots(s, now) {
         endY = y;
         break;
       } // (a wall taller than the shot: heights.js)
-      const w = ARMS[sh.w]
-          ? sh.w
-          : sh.k === "arrow"
-            ? "bow"
-            : sh.k === "pellet"
-              ? "shotgun"
-              : "handgun",
+      const w = shotArm(sh),
         A = ARMS[w],
         near = (z) =>
           z.st !== 3 &&

@@ -9,6 +9,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v87",
+    version: 87,
+    date: "Nov 17, 2026",
+    title: "A fair Justin, clean bullets",
+    news: [
+      "For Dead Ducks Arcade: Justin no longer dodges every shot, and the chain gun and the Laser Rifle hit him too. When he's hurt he cries and sprints away.",
+      "For Dead Ducks Arcade: zombies chase Justin only when he's much closer than a player, give up on him quickly, and the last of each round never go for him.",
+      "For Dead Ducks Arcade: the dead can't be revived, and you can walk over their bodies.",
+      "The music fades out during the lobby countdown, and Vote for Game Mode and Vote for Map are quiet.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade and Mad God Justin: bullets end right where they hit a zombie or a wall, never flying past it.",
+    ],
+  },
+  {
     id: "v86",
     version: 86,
     date: "Nov 17, 2026",
