@@ -71,7 +71,15 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { ARMS, ITEM_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
+import {
+  ARMS,
+  ITEM_ODDS,
+  zombieTakes,
+  pierceOf,
+  ALL_HP,
+  HEAVY_BAG,
+  MELEE_BAGS,
+} from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
@@ -1286,18 +1294,28 @@ function brain(s, now, log) {
 }
 
 /* ---------- the pickups ---------- */
-/* what comes next (the owner's, Nov 17: as the fireplace's and the car's spin does it, not weights of its own): the sky, the
-   meteor and Good Justin come as they did (SKY, their own odds); otherwise the roll is the spin's: a medkit (the items'
-   side) ITEM_ODDS.start of the time, else one gun, each with the same chance (the chain gun as likely as any other) */
+/* what comes next (the owner's, Nov 17 13:07Z: "weapons drop chance should be based off the slot or roll mechanic at the
+   fireplace or car"): the sky, the meteor and Good Justin come as they did (SKY, their own odds); otherwise the roll is
+   the spin's: a medkit (the items' side) ITEM_ODDS.start of the time, else one gun with the spin's own odds (spinShare) */
 const SKY = PICKS.filter(([k]) => ["sky", "meteor", "good"].includes(k));
+/* a weapon's share on the fireplace's spin (l4ddrules.js fireRoll): a gun on its own is one share; a gun in a bag splits
+   that bag's one share with the rest of the bag (the chain gun: half, with the flamethrower); a melee splits the melee
+   bag's share between its two bags, then inside its own */
+const spinShare = (w) => {
+  if (HEAVY_BAG.includes(w)) return 1 / HEAVY_BAG.length;
+  const b = MELEE_BAGS.find((x) => x.includes(w));
+  return b ? 1 / MELEE_BAGS.length / b.length : 1;
+};
 const pickKind = (s) => {
   const list = SKY.filter(([k]) => k !== "good" || !s.mgj.gj),
     r = Math.random() * 100;
   let at = 0;
   for (const [k, w] of list) if (r < (at += w)) return k;
-  return Math.random() < ITEM_ODDS.start
-    ? "medkit"
-    : MGJ_GUNS[Math.floor(Math.random() * MGJ_GUNS.length)];
+  if (Math.random() < ITEM_ODDS.start) return "medkit";
+  const all = MGJ_GUNS.reduce((n, w) => n + spinShare(w), 0);
+  let u = Math.random() * all;
+  for (const w of MGJ_GUNS) if ((u -= spinShare(w)) < 0) return w;
+  return MGJ_GUNS[MGJ_GUNS.length - 1];
 };
 function pickTick(s, now, at, log, fx) {
   const m = s.mgj;
@@ -1592,15 +1610,27 @@ const shotDmg = (k) =>
 /* the grenade launcher's grenade, between (x0, y0) and at this beat: true when it got to him (it goes off there) */
 export function mgjLgren(s, sh, x0, y0, at, now) {
   if (!s.justin || s.phase !== "boss" || sh.by === JUSTIN_ID) return false;
-  const j = justinAt(s.justin, now);
-  if (!j) return false;
-  const ux = (at.x - x0) / RX,
+  const j = justinAt(s.justin, now),
+    ux = (at.x - x0) / RX,
     uy = (at.y - y0) / RY,
-    px = (j.x - x0) / RX,
-    py = (j.y - y0) / RY,
-    len = ux * ux + uy * uy,
-    k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-  if (Math.hypot(px - k * ux, py - k * uy) >= MGJ_SCALE) return false;
+    len = ux * ux + uy * uy;
+  /* how far along this beat's flight (0 … 1) it reaches q, with room r (duck lengths) round it; -1: it doesn't */
+  const along = (q, r) => {
+    const px = (q.x - x0) / RX,
+      py = (q.y - y0) / RY,
+      k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+    return Math.hypot(px - k * ux, py - k * uy) < r ? k : -1;
+  };
+  /* him, or one of his zombies: it goes off on the first it reaches, as it does on Dead Ducks Arcade's zombies (the
+     owner's, Nov 17 19:11Z: "WHY THE FUCKING IS THE GRENADE LAUNCHER PASSING THRU THE ZOMBIES"); its blast (rules.js
+     blast) then takes the zombies round it */
+  let k = j ? along(j, MGJ_SCALE) : -1;
+  for (const o of (s.mz && s.mz.zb) || []) {
+    if (o.d) continue;
+    const q = along(o, 1);
+    if (q >= 0 && (k < 0 || q < k)) k = q;
+  }
+  if (k < 0) return false;
   at.x = x0 + k * (at.x - x0);
   at.y = y0 + k * (at.y - y0);
   return true;
@@ -2318,6 +2348,7 @@ export const WAVE = {
   SPEED: 3.2, // duck lengths a second
   CLAW: 1.0, // duck lengths: in reach
   CLAW_MS: 1200,
+  CAKE: 0.7, // duck lengths: at a zebra cake, biting it
   CALM: 1.8,
   EAT: [9000, 14000],
   MAX: 40, // (on the board at once, at most: the rest wait their turn)
@@ -2390,7 +2421,22 @@ function wavesTick(s, now) {
   const ducks = playing(s).filter(
     (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
   );
+  /* a zebra cake lying there draws every one of them to it, to bite it until it's gone (eaten by him), as on Dead Ducks
+     Arcade (l4ddrules.js moveZombies): the owner's, Nov 17 19:11Z, "WTF IS THE ZEBRA CAKE NOT WORKING ON THE ZOMBIES" */
+  const c = s.mgj.cake,
+    cake = c && !c.eat && now >= c.stop ? cakeAt(c, now) : null;
   for (const o of live) {
+    if (cake) {
+      const d = Math.hypot((cake.x - o.x) / RX, (cake.y - o.y) / RY);
+      if (d > WAVE.CAKE) {
+        const go = Math.min(d - WAVE.CAKE, WAVE.SPEED * dt) / d;
+        o.x = r3(o.x + (cake.x - o.x) * go);
+        o.y = r3(o.y + (cake.y - o.y) * go);
+        o.f = cake.x < o.x ? -1 : 1;
+        ch = true;
+      }
+      continue; // (biting it: no duck clawed)
+    }
     let best = null,
       bd = Infinity;
     for (const id of ducks) {
