@@ -1258,7 +1258,8 @@ export const l4Holds = (s, id, w) =>
   slotsOf(s, id).includes(w);
 export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
-export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
+export const maxHp = (s, id) =>
+  isWild(s, id) ? WILD.hp : L4.HP + (upOf(s, id).hp || 0);
 /* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
@@ -1354,7 +1355,8 @@ const headOf = (s, id, w) => {
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
-  if (!n || !s.players[id]) return;
+  if (isWild(s, id)) id = s.players[id].by; // (Justin's kills are the points of the duck that bought him his gun)
+  if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
 
@@ -1395,7 +1397,7 @@ function newRound(s, r, now, wait) {
 function bringBack(s, id, now, k, fresh) {
   const p4 = { ...(s.hang.l4p || {}) },
     was = p4[id] || {};
-  p4[id] = { hp: L4.HP, at: now };
+  p4[id] = { hp: isWild(s, id) ? WILD.hp : L4.HP, at: now };
   s.hang.l4p = p4;
   downGun(s, id, false);
   if (fresh) {
@@ -1719,6 +1721,7 @@ function setUp(s, now) {
   s.hang.l4k = [];
   s.shots = [];
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
+  if (dp()) helperIn(s, null, now, true); // (Downpour: Justin is out there, unarmed)
   newRound(s, 0, now, 0);
   s.hang.l4 = {
     ...s.hang.l4,
@@ -1913,6 +1916,7 @@ function l4Act(s, a, now) {
     }
     const [tx, ty] = at(pos);
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
+    if (tp.ex) return false; // (Justin in Downpour, dead for good)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
     if (me.w === "medkit" && slotsOf(s, id).includes("medkit")) {
       /* a medkit in my hand: up at once, full, with what they bought; the medkit is used up (the owner's, Nov 16) */
@@ -1946,6 +1950,8 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
+  if (a.do === "givej")
+    return giveJustin(s, id, String(a.what || ""), mx, my, now);
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (a.do === "ammo")
@@ -1955,6 +1961,28 @@ function l4Act(s, a, now) {
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
+}
+/* a duck buys Justin out in Downpour a gun (the owner's, Nov 17): standing by him, in the rest phase any gun of WILD_GUNS,
+   outside it the first one; it comes out of my points. He keeps it (endless bullets that still reload), can't be hurt by
+   players any more, and the points for his kills are mine */
+function giveJustin(s, id, what, mx, my, now) {
+  const J = wildFor(s),
+    pj = J && s.pos[J],
+    rest = !!(s.hang.l4 && s.hang.l4.wait),
+    w = rest && WILD_GUNS.includes(what) ? what : WILD_GUNS[0],
+    price = wildPrice(s, w);
+  if (!J || !pj || !standing(s, id) || price === null) return false;
+  if (Math.hypot(pj.x * W - mx, pj.y * H - my) > L4.REACH * 1.2) return false;
+  if (ptsOf(s, id) < price) return false;
+  addPts(s, id, -price);
+  s.players[J] = { ...s.players[J], armed: 1, by: id };
+  const kit = freshKit();
+  kit.sl = ["", w, "", ""];
+  kit.am = { [w]: fullAmmo(w) };
+  s.hang.l4a = { ...s.hang.l4a, [J]: kit };
+  s.pos[J] = { ...s.pos[J], w };
+  addFx(s, { kind: "l4medrev", by: id, who: [J], t: now }); // (the revive's flash: a little thank-you)
+  return true;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
@@ -2114,7 +2142,31 @@ export const HELPER = {
   out: 1200,
 };
 export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
-function helperIn(s, by, now) {
+/* Justin in Downpour (the owner's, Nov 17): the map starts with him out there, unarmed and running from the zombies. He
+   has WILD.hp HP and gets 1 back every WILD.regen ms; zombies and, while he has no weapon, players can hurt and kill him
+   (ex: dead for good: his body stays, nobody can revive him, he never comes back, not at a new round either). He is the
+   fireplace's Justin (helperIn, the same player and brain) with no weapon and no points */
+export const WILD = { hp: 6, regen: 60000, id: "b-justin", extra: 100 };
+/* the guns a duck can buy him in the rest phase (the owner's, Nov 17: for the Butler's price and WILD.extra points more);
+   outside the rest phase the click buys the first one. Widen this list to let players buy more */
+export const WILD_GUNS = ["handgun"];
+/* Justin is out there for a buy: alive, up, with nothing in his hands */
+export const wildFor = (s) => {
+  const q = P4(s, WILD.id);
+  return wildOpen(s, WILD.id) && !!q && !q.dn && !q.gh ? WILD.id : null;
+};
+/* what buying him gun w costs duck id now: the Butler's price, and in the rest phase WILD.extra more (null: not for sale) */
+export function wildPrice(s, w) {
+  if (!WILD_GUNS.includes(w) || !GUN_SHOP.includes(w)) return null;
+  const rest = !!(s.hang.l4 && s.hang.l4.wait);
+  return buyPrice(w) + (rest ? WILD.extra : 0);
+}
+export function isWild(s, id) {
+  return !!(s && s.players && s.players[id] && s.players[id].wild);
+}
+/* he's out there with nothing in his hands (players can hurt him; a weapon of his own comes later) */
+export const wildOpen = (s, id) => isWild(s, id) && !s.players[id].armed;
+function helperIn(s, by, now, wild = false) {
   const id = HELPER.id;
   if (s.players[id]) return;
   s.players[id] = {
@@ -2122,6 +2174,7 @@ function helperIn(s, by, now) {
     name: "Justin",
     bot: true,
     helper: 1,
+    ...(wild ? { wild: 1 } : {}),
     duck: { ...JUSTIN },
     card: {},
     nameStyle: {},
@@ -2131,10 +2184,16 @@ function helperIn(s, by, now) {
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
   const kit = freshKit();
-  kit.sl = ["knife", "chaingun", "handgun", ""];
-  kit.am = { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
+  kit.sl = wild ? ["", "", "", ""] : ["knife", "chaingun", "handgun", ""];
+  kit.am = wild
+    ? {}
+    : { chaingun: fullAmmo("chaingun"), handgun: fullAmmo("handgun") };
   s.hang.l4a = { ...s.hang.l4a, [id]: kit };
-  s.hang.l4pt = { ...s.hang.l4pt, [id]: HELPER.pts };
+  s.hang.l4pt = { ...s.hang.l4pt, [id]: wild ? 0 : HELPER.pts };
+  if (wild) {
+    s.pos[id] = { ...s.pos[id], w: "" };
+    return;
+  }
   const out = [BOX.x, BOX.y + 70];
   if (playable(...out) && standable(...out, heightAt(...out), STEP))
     s.pos[id] = {
@@ -3024,6 +3083,21 @@ function getUp(s, id, now, full, safe) {
   }
 }
 /* the melee weapons mid-swing hit every zombie in their bubble, each once */
+/* a shot or swing at (x, y) by duck by, on Justin out in Downpour with no weapon: he takes 1 (the owner's: players can kill
+   him), unless he's jumping; true when it landed */
+function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
+  const id = WILD.id,
+    p = s.pos[id],
+    q = P4(s, id);
+  if (by === id || !wildOpen(s, id) || !p || !q || q.dn || q.gh) return false;
+  const [px, py] = at(p);
+  if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1 || dodging(s, p, now))
+    return false;
+  const p4 = { ...(s.hang.l4p || {}) };
+  hurtDuck(s, p4, id, now, w);
+  s.hang.l4p = p4;
+  return true;
+}
 function meleeHits(s, now) {
   const ks = (s.hang.l4k || []).filter(
     (k) => now - k.t <= (ARMS[k.w] || ARMS.knife).swing,
@@ -3054,6 +3128,11 @@ function meleeHits(s, now) {
         die(z, T);
       any = true;
     }
+    if (
+      !k.hit.includes("j") &&
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, (A.r + 22) / 1.4)
+    )
+      k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
   s.hang.l4k = ks;
   if (any) store(s, zs, true);
@@ -3225,6 +3304,12 @@ export function l4Shots(s, now) {
         A = ARMS[w],
         near = (z) =>
           z.st !== 3 && Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1;
+      if (w !== "fireball" && wildHurt(s, sh.by, x, y, now, w)) {
+        gone = true; // (Justin out in Downpour with no weapon: it hit him)
+        endX = x;
+        endY = y;
+        break;
+      }
       if (w === "dbarrel") {
         /* the double barrel's slug: all the HP of the zombie it hits, its body thrown back; a crit's goes on through
            every zombie in its way (each once), killing each, until the wall */
@@ -3444,6 +3529,9 @@ function l4Tick(s, now) {
         const still = { ...(s.hang.still || {}) };
         delete still[id];
         s.hang.still = still;
+      } else if (!rv && !p.skAt && now >= p.dn && isWild(s, id)) {
+        p = { hp: 0, at: now, dn: now + 1e13, ex: 1 }; // (Justin in Downpour bled out: dead for good, his body stays)
+        s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
       } else if (!rv && !p.skAt && now >= p.dn) {
         p = { hp: 0, at: now, gh: 1 }; // (bled out: a ghost until the next round)
         downGun(s, id, false);
@@ -3464,7 +3552,10 @@ function l4Tick(s, now) {
       continue;
     }
     if (p.gh) continue;
-    if (p.hp < maxHp(s, id) && now - p.at >= L4.REGEN)
+    if (
+      p.hp < maxHp(s, id) &&
+      now - p.at >= (isWild(s, id) ? WILD.regen : L4.REGEN)
+    )
       p4[id] = { ...p, hp: p.hp + 1, at: now };
   }
   s.hang.l4p = p4;
@@ -3481,6 +3572,16 @@ function l4Tick(s, now) {
       s.pos[id].w !== am[id].rw
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
+  /* Justin's gun never runs out: what he has left to load stays full */
+  if (isWild(s, WILD.id) && s.players[WILD.id].armed) {
+    const jk = kitOf(s, WILD.id),
+      jw = jk && jk.sl[1];
+    if (jw && jk.am[jw] && jk.am[jw][1] < 50)
+      s.hang.l4a = {
+        ...s.hang.l4a,
+        [WILD.id]: { ...jk, am: { ...jk.am, [jw]: [jk.am[jw][0], 99] } },
+      };
+  }
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
@@ -3519,8 +3620,9 @@ function l4Tick(s, now) {
   s.hang.brd = brd;
   s.hang.l4b = bl;
   /* nobody standing: the game is over (a duck Safe Keeping is getting up counts as standing) */
-  const up = ids.filter((id) => standing(s, id) || !!(P4(s, id) || {}).skAt);
-  if (!up.length && ids.length) {
+  const mine = ids.filter((id) => !isWild(s, id)), // (Justin out there doesn't keep the game going, nor end it)
+    up = mine.filter((id) => standing(s, id) || !!(P4(s, id) || {}).skAt);
+  if (!up.length && mine.length) {
     s.hang.l4 = { ...s.hang.l4, over: { at: now, r: L.r } };
     s.hang.l4b = {};
     return true;

@@ -9,6 +9,17 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v70",
+    version: 70,
+    date: "Nov 17, 2026",
+    title: "Justin in Downpour",
+    news: [
+      "For Dead Ducks Arcade: Justin is out in Downpour with no weapon, running from the zombies. He has 6 HP and gets 1 back every minute, he can be revived, and once he's gone he's gone for good.",
+      "For Dead Ducks Arcade: In Downpour you can buy Justin a pistol when he glows blue. Then nobody but the zombies can hurt him, and his kills give you the points.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v69",
     version: 69,
     date: "Nov 17, 2026",
