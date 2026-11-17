@@ -33,6 +33,7 @@ import {
   isWild,
   jaimeBody,
   JBODY,
+  l4Hp,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 
@@ -320,35 +321,33 @@ function justinBot(s, id, now, out) {
     }
     return go ? walkPx * 1.75 : walkPx; // (world.js SPRINT)
   };
-  const send = (nx, ny, w, ax, ay) =>
+  const send = (nx, ny, w, ax, ay, j = 0) =>
     out.push({
       t: "move",
       id,
       x: +(nx / W).toFixed(5),
       y: +(ny / H).toFixed(5),
-      j: 0,
+      j,
       z: Math.round(heightAt(nx, ny)),
       b: Math.round(heightAt(nx, ny)),
       w,
       ax: +((ax || 1) / W).toFixed(4),
       ay: +(ay / H).toFixed(4),
     });
-  const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4),
+  const wild = isWild(s, id),
+    zs = zombiesOf(s).filter(
+      (z) => z.st === 2 || z.st === 4 || (wild && z.st === 1),
+    ), // (Justin out in Downpour shoots the ones tearing at the chapel's windows too)
     near = zs
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
   if (isWild(s, id) && h.l4.wait && jaimeVisit(s, id, now, p, x, y, run, out))
     return; // (a rest phase: he may stop by Jaime's body)
-  /* an armed Justin runs off a moment when a duck shoots close to him (it scares him), then goes on */
-  if (isWild(s, id) && !wildOpen(s, id)) {
-    for (const sh of s.shots || [])
-      if (
-        sh.by !== id &&
-        sh.lx !== undefined &&
-        Math.hypot(sh.lx * W - x, sh.ly * H - y) < 140
-      )
-        scare.set(id, now + 2500);
+  /* an armed Justin runs off a moment when a duck keeps shooting close to him (it scares him, after a second: shotScare),
+     then goes on */
+  if (wild && !wildOpen(s, id)) {
+    if (shotScare(s, id, now, x, y, SCARE_ARMED)) scare.set(id, now + 1500);
     if ((scare.get(id) || 0) > now)
       return wildMove(s, id, now, p, x, y, near, run, out, true);
   }
@@ -418,10 +417,22 @@ function justinBot(s, id, now, out) {
     if (seen && gun) shoot(s, id, now, m, gun, seen.z.x - x, seen.z.y - y, out);
     return;
   }
+  /* Justin out in Downpour with a gun (the owner's, Nov 17 18:05Z: "he keeps distance and puts survival above killing
+     zombies if he is in imminent danger"): low on HP he keeps twice the room and doesn't go looking for them */
+  const low = wild && l4Hp(s, id) > 0 && l4Hp(s, id) <= 2,
+    keep = low ? KEEP * 1.5 : KEEP;
   /* nothing to fear and nothing to shoot: shop like the others, else stay by the nearest duck */
-  if (!seen && d0 > KEEP * 1.5) {
-    if (isWild(s, id)) {
-      /* Justin out in Downpour, with a gun: he doesn't follow anyone, he goes where he likes */
+  if (!seen && d0 > keep * 1.5) {
+    if (wild && near.length && !low) {
+      /* Justin hunts them (the owner's, Nov 17 18:05Z): he walks the way to the nearest until he can see it to shoot */
+      const z = near[0].z,
+        to = wayTo(x, y, z.x, z.y, now) || [z.x, z.y],
+        [nx, ny] = walk(x, y, to[0], to[1], run(false));
+      send(nx, ny, gun || sl[1], nx - x, ny - y);
+      return;
+    }
+    if (wild) {
+      /* Justin out in Downpour, with a gun and nothing to hunt: he doesn't follow anyone, he goes where he likes */
       const w = wanderSpot(id, now, x, y);
       if (w) {
         const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y],
@@ -446,21 +457,30 @@ function justinBot(s, id, now, out) {
     } else run(false);
     return;
   }
-  /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices */
-  const want = d0 < CLOSE,
+  /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices. Justin out in
+     Downpour sprints away low on HP too, and jumps (a jump's i-frames) when one is on him */
+  const want = d0 < CLOSE || (low && d0 < keep),
     far = run(want);
   let [nx, ny] = [x, y];
-  if (d0 < KEEP) [nx, ny] = away(x, y, far, near);
+  if (d0 < keep) [nx, ny] = away(x, y, far, near);
+  const air = wild && p.j && now - p.j < 700,
+    jump = !wild
+      ? 0
+      : air
+        ? p.j
+        : d0 < TOO_CLOSE * 1.6 && Math.random() < 0.5
+          ? now
+          : 0;
   /* the gun on the nearest he can see; with no gun at all, the knife on one at arm's length */
   const ax = seen ? seen.z.x - x : nx - x,
     ay = seen ? seen.z.y - y : ny - y;
   if (gun) {
-    send(nx, ny, gun, ax, ay);
+    send(nx, ny, gun, ax, ay, jump);
     if (seen) shoot(s, id, now, m, gun, ax, ay, out);
   } else if (seen && seen.d < 80) {
-    send(nx, ny, sl[0], ax, ay);
+    send(nx, ny, sl[0], ax, ay, jump);
     shoot(s, id, now, m, sl[0], ax, ay, out);
-  } else send(nx, ny, sl[0], ax, ay);
+  } else send(nx, ny, sl[0], ax, ay, jump);
   /* a grenade into a crowd that isn't on him */
   if (
     seen &&
@@ -497,6 +517,28 @@ function wanderSpot(id, now, x, y) {
   return w;
 }
 const scare = new Map(); // Justin → until when he's running off from a shot
+/* shots flying close to Justin (the owner's, Nov 17 18:05Z: "justin takes a second before running away when an enemy starts
+   shooting in his direction without actually damaging him"): he runs from them only once they've kept coming for
+   HEARD.wait ms, and then from where the last one passed, for HEARD.keep ms after it. A burst ends after HEARD.gap ms
+   with none. Returns that spot as a threat (as wildMove's zombies), or null */
+const HEARD = { wait: 1000, keep: 2500, gap: 1500 },
+  SCARE_ARMED = 140, // world px: how close a shot scares him with a gun
+  SCARE_BARE = 260; // (and with none)
+const heard = new Map(); // Justin → { from: the burst's first shot, last, x, y }
+function shotScare(s, id, now, x, y, far) {
+  let h = heard.get(id);
+  for (const sh of s.shots || []) {
+    if (sh.by === id || sh.lx === undefined) continue;
+    const sx = sh.lx * W,
+      sy = sh.ly * H;
+    if (Math.hypot(sx - x, sy - y) >= far) continue;
+    if (!h || now - h.last > HEARD.gap) h = { from: now };
+    h = { ...h, last: now, x: sx, y: sy };
+  }
+  if (h) heard.set(id, h);
+  if (!h || now - h.from < HEARD.wait || now - h.last > HEARD.keep) return null;
+  return { z: { x: h.x, y: h.y }, d: Math.hypot(h.x - x, h.y - y) };
+}
 /* in a rest phase Justin may go to Jaime's body: he asks the rules for this phase's plan once (half the time two visits),
    walks there, and the rules make him say a line each time he's there; true while it's walking him */
 function jaimeVisit(s, id, now, p, x, y, run, out) {
@@ -533,14 +575,11 @@ function jaimeVisit(s, id, now, p, x, y, run, out) {
   return true;
 }
 function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
-  const threats = [...near];
-  for (const sh of s.shots || [])
-    if (sh.by !== id && sh.lx !== undefined) {
-      const sx = sh.lx * W,
-        sy = sh.ly * H,
-        d = Math.hypot(sx - x, sy - y);
-      if (d < 260) threats.push({ z: { x: sx, y: sy }, d }); // (a shot flying close scares him)
-    }
+  /* only the zombies scare him, and a duck's shots that keep flying close (after a second: shotScare); never the ducks
+     themselves (the owner's, Nov 17 18:05Z: "justin should be running from zombies not every player") */
+  const threats = [...near],
+    shot = shotScare(s, id, now, x, y, forced ? SCARE_ARMED : SCARE_BARE);
+  if (shot) threats.push(shot);
   threats.sort((a, b) => a.d - b.d);
   const d0 = threats.length ? threats[0].d : Infinity,
     scared = forced || d0 < KEEP * 1.4;

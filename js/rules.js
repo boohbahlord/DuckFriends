@@ -192,7 +192,7 @@ import {
   laserNext,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock } from "./heights.js";
+import { hOk, hLock, sameFloorAhead, floorLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   MAPS,
@@ -2407,12 +2407,17 @@ function reduceStep(state, a, now) {
                 : GUNS_NEW.includes(sp)
                   ? gunSpeed(sp)
                   : SHOT_SPEED,
-          hang = isHang(s)
-            ? {
-                hz: Math.round(+p.z || 0),
-                hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
-              }
-            : {}; // (Hangout: the height it flies at, and which side of the cabin's walls)
+          hang = {
+            ...(isHang(s)
+              ? {
+                  hz: Math.round(+p.z || 0),
+                  hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
+                }
+              : {}), // (Hangout: the height it flies at, and which side of the cabin's walls)
+            ...(["grenade", "glauncher", "chair", "zebra"].includes(sp)
+              ? {}
+              : floorFirst(s, a.id, p, aim, now)), // (a duck on my floor in its line: it stays on my floor)
+          };
         const shot = (n, k, vx, vy, more) => ({
           n,
           by: a.id,
@@ -3898,6 +3903,39 @@ const gunSpeed = (w) =>
 const duckH = (s, p) =>
   isHang(s) ? +p.z || 0 : p.jf ? (+p.fz || 0) * DUCK_PX : 0;
 const DUCK_PX = 64;
+/* Doom's same floor first, as in Dead Ducks Arcade (heights.js sameFloorAhead, the one rule for every mode): a duck (or,
+   in Hangout, Justin or the shadow duck) on my floor in the line of my shot keeps the shot on my floor: { lh }, else {}
+   (it goes to the first target at any height). Measured in duck lengths; in Hangout the cabin's walls stop the look */
+function floorFirst(s, id, p, aim, now) {
+  const hang = isHang(s),
+    [rx, ry] = hang ? [0.006, 0.012] : [0.03, 0.08],
+    l = Math.hypot(aim[0] / rx, aim[1] / ry) || 1,
+    hz = duckH(s, p),
+    side = hang && !!inCabin(p.x * HW, p.y * HH),
+    t = s.seat
+      .filter((o) => o !== id && s.pos[o] && !(s.players[o] || {}).dead)
+      .map((o) => ({
+        x: s.pos[o].x / rx,
+        y: s.pos[o].y / ry,
+        z: duckH(s, s.pos[o]),
+      }));
+  if (hang)
+    for (const n of hangTargets(s, now, ""))
+      t.push({ x: n.x / HW / rx, y: n.y / HH / ry, z: n.z || 0 });
+  const mine = sameFloorAhead(
+    t,
+    p.x / rx,
+    p.y / ry,
+    hz,
+    aim[0] / rx / l,
+    aim[1] / ry / l,
+    hang ? 70 : 40,
+    [1, 1],
+    0.5,
+    hang ? (x, y) => !!inCabin(x * rx * HW, y * ry * HH) !== side : null,
+  );
+  return mine ? { lh: floorLock(hz) } : {};
+}
 /* can shot sh reach duck p at its height (and no roof between: Downpour)? */
 const shotReach = (s, sh, p) =>
   isHang(s)
@@ -3971,6 +4009,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
             hin: inCabin(p.x * HW, p.y * HH) ? 1 : 0,
           }
         : {}),
+      ...floorFirst(s, by, p, aim, now), // (a duck on my floor in its line: it stays on my floor)
     },
     far = hang ? CHAIN_FAR * 0.25 : CHAIN_FAR; // (Hangout's world is far bigger than a board)
   let at = {

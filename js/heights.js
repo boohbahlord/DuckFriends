@@ -22,5 +22,28 @@ export function hOk(sh, tz, tx, ty, sx, sy) {
 export function hLock(sh, tz) {
   if (sh.lh === undefined) sh.lh = Math.round(tz + MID);
 }
+/* Doom's same floor first (the owner's, Nov 17 17:41Z: "the natural target priority hits the duck on the same floor
+   ... unless the same direction of enemy has no one which CAN be shot IN that direction ON the same floor"; in every
+   mode, the owner's 12:28Z "the bullets verticality rule applies to all game modes now"): is a target on my floor (feet
+   within SAME_FLOOR of mine, hz) in my shot's line before anything stops it? Then the shot stays on my floor
+   (floorLock); if not, it goes to the first target at any height (hOk, hLock). targets: [{ x, y, z }] (z: feet, world
+   px); my shot from (px, py) along (dx, dy) (a unit), as far as far, looking every step, in the units of x and y; r: a
+   target's hit room [rx, ry] in those units; stop(x, y): something there stops it (a wall). Every mode calls this one:
+   l4ddrules.js (zombies), rules.js (ducks) */
+export const SAME_FLOOR = 20;
+export function sameFloorAhead(t, px, py, hz, dx, dy, far, r, step, stop) {
+  const mine = t.filter((o) => Math.abs(o.z - hz) < SAME_FLOOR);
+  if (!mine.length) return false;
+  for (let d = step; d < far; d += step) {
+    const x = px + dx * d,
+      y = py + dy * d;
+    if (stop && stop(x, y)) return false;
+    if (mine.some((o) => Math.hypot((o.x - x) / r[0], (o.y - y) / r[1]) < 1))
+      return true;
+  }
+  return false;
+}
+/* the height of a shot held to my floor (my feet at hz): sh.lh, as hLock would set it */
+export const floorLock = (hz) => Math.round(hz + MID);
 /* the height a wall must reach over a shot's feet to stop it, for walls that ask for feet (l4ddrules.js walled) */
 export const shotFeet = (sh) => shotH(sh) - 20;
