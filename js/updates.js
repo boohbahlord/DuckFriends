@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v65",
+    version: 65,
+    date: "Nov 17, 2026",
+    title: "Downpour's car and Angel machine",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, the weapon spin shows on the ground behind the car.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: nobody walks through Downpour's Angel machine anymore.",
+    ],
+  },
+  {
     id: "v64",
     version: 64,
     date: "Nov 17, 2026",

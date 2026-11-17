@@ -964,8 +964,8 @@ function paint(now, ctx) {
       on(p.left * q, p.top * q, 100 * sc)
     )
       holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
-    if (boxNow(s, clockNow()) && seenFrom(BOX.x, BOX.y, Wd.inside)) {
-      const o = Wd.toScreen(BOX.x, BOX.y - 36, 58);
+    if (boxNow(s, clockNow()) && seenFrom(BOX.sx, BOX.sy, Wd.inside)) {
+      const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
     }
   }
@@ -1276,7 +1276,8 @@ function drawBox(ctx) {
     now = clockNow(),
     b = boxNow(s, now, ctx.me) || boxNow(s, now), // (mine, else the newest anyone spun)
     Wd = ctx.world;
-  if (!b || !Wd.inside) {
+  if (!b || !(Wd.inside || dp())) {
+    // (the cabin's is by the fireplace, inside; Downpour's outside, behind the car: it never showed there till Nov 17)
     if (!boxEl.hidden) boxEl.hidden = true;
     if (!b) {
       boxSig = "";
@@ -1310,9 +1311,9 @@ function drawBox(ctx) {
     landed && b.t + BOX.spin + BOX.keep - now < 3000,
   ); // (its last 3 seconds: it blinks)
   const sc = Wd.sc,
-    p = Wd.toScreen(BOX.x, BOX.y - 36, 58),
+    p = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz),
     hide =
-      !seenFrom(BOX.x, BOX.y, Wd.inside) ||
+      !seenFrom(BOX.sx, BOX.sy, Wd.inside) ||
       !Wd.seen(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
@@ -1320,7 +1321,7 @@ function drawBox(ctx) {
   if (boxEl._tr !== tr) {
     boxEl._tr = tr;
     boxEl.style.transform = tr;
-    boxEl.style.zIndex = Math.round(sortY(BOX.x, BOX.y - 30, 0)) + 20;
+    boxEl.style.zIndex = Math.round(sortY(BOX.sx, BOX.sy + 6, 0)) + 20;
   }
   if (boxEl._k !== sc) {
     boxEl._k = sc;

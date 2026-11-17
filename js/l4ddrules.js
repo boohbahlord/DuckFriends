@@ -579,13 +579,34 @@ export const priceFor = (s, id, what, n) => {
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
-export const BOX = { x: 2300, y: 742, price: 500, spin: 4200, keep: 10000 }; // (500 a spin: the owner's, Nov 15)
+export const BOX = {
+  x: 2300,
+  y: 742,
+  sx: 2300,
+  sy: 706,
+  sz: 58,
+  price: 500,
+  spin: 4200,
+  keep: 10000,
+}; // (500 a spin: the owner's, Nov 15. sx, sy, sz: where it shows, CABIN_SPOTS below)
 /* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
    fireplace's (syncMap swaps them in) */
-const CABIN_SPOTS = { butler: { ...BUTLER }, box: { x: BOX.x, y: BOX.y } },
+/* box: where a duck spins and takes (x, y), and where the weapons spin in sight (sx, sy, up sz): over the cabin's
+   fireplace; on Downpour on the ground behind the hood-up car, not in it, so everyone sees them spin (the owner's, Nov 17
+   11:07Z) */
+const CABIN_SPOTS = {
+    butler: { ...BUTLER },
+    box: { x: BOX.x, y: BOX.y, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
+  },
   DP_SPOTS = {
     butler: { x: GS.PRIEST.x, y: GS.PRIEST.y },
-    box: { x: GS.HOOD.spot.x, y: GS.HOOD.spot.y },
+    box: {
+      x: GS.HOOD.spot.x,
+      y: GS.HOOD.spot.y,
+      sx: (GS.HOOD.x0 + GS.HOOD.x1) / 2,
+      sy: GS.HOOD.y0 - 90,
+      sz: 4,
+    },
   };
 const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
