@@ -34,6 +34,8 @@ import { applyPalette } from "../pixelpalette.js";
 
 export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
+/* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
+const CROWN_Z = 5000;
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -543,7 +545,10 @@ export function mountWorld(board, api) {
     }
     e.style.width = b.w + "px";
     e.style.height = b.h + "px";
-    e.style.zIndex = it.layer === "floor" ? 2 : Math.round(it.key) + 10;
+    e.style.zIndex =
+      it.layer === "floor"
+        ? 2
+        : Math.round(it.key) + 10 + (it.layer === "crown" ? CROWN_Z : 0);
     if (it.style) e.style.cssText += it.style;
     const svg = typeof it.svg === "function" ? it.svg() : it.svg;
     if (it.img) {
@@ -611,11 +616,19 @@ export function mountWorld(board, api) {
           r: f.left + size * 0.4,
           t: f.top - size * 0.9,
           b: f.top,
+          walker: true,
         });
       }
     return out;
   }
   const HIDDEN = 0.3; // this much of a duck's box covered: hidden
+  /* how much a duck's box (d) and a hit box on the screen (l, r, t, b) share, of the duck's box */
+  const covered = (d, l, r, t, b) =>
+    d.r > l && d.l < r && d.b > t && d.t < b
+      ? ((Math.min(d.r, r) - Math.max(d.l, l)) *
+          (Math.min(d.b, b) - Math.max(d.t, t))) /
+        ((d.r - d.l) * (d.b - d.t))
+      : 0;
   function drawProps(ducks) {
     const { sc, vw, vh } = cam,
       scs = sc.toFixed(4);
@@ -647,23 +660,23 @@ export function mountWorld(board, api) {
         e._tr = tr;
         e.style.transform = tr;
       }
-      if (it.fade) {
+      if (it.fade || it.layer === "crown") {
         const h = it.hit || { l: b.l, t: b.t, r: b.l + b.w, b: b.t + b.h },
           hl = (h.l - cam.x) * sc + vw / 2,
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
-        const thru = ducks.some(
-          (d) =>
-            d.key < it.key &&
-            (Math.min(d.r, hr) - Math.max(d.l, hl)) *
-              (Math.min(d.b, hb) - Math.max(d.t, ht)) >
-              HIDDEN * (d.r - d.l) * (d.b - d.t) &&
-            d.r > hl &&
-            d.l < hr &&
-            d.b > ht &&
-            d.t < hb,
-        );
+        /* a wall or a trunk: while it hides a duck or a zombie behind it. A crown (Downpour's trees) is a roof over
+           whoever is under it, in front of its trunk or behind: it turns see-through while it hides a duck, as the
+           cabin's roof goes when I'm inside, and keeps the zombies under it hidden (the owner's, Nov 17 03:34Z) */
+        const thru =
+          it.layer === "crown"
+            ? ducks.some(
+                (d) => !d.walker && covered(d, hl, hr, ht, hb) > HIDDEN,
+              )
+            : ducks.some(
+                (d) => d.key < it.key && covered(d, hl, hr, ht, hb) > HIDDEN,
+              );
         if (e._thru !== thru) {
           e._thru = thru;
           e.classList.toggle("thru", thru);

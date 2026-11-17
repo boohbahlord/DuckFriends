@@ -956,11 +956,13 @@ export function solidsAt(x, y, z = -Infinity) {
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
 export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   if (variant === "l4gs") {
-    // (the second map: the trunks along the forest line stop a duck, and the fences; zombies come from past the fences)
+    // (the second map: a duck walks anywhere but the deep flood, past the forest line too (only the trunks stop it, the
+    // owner's, Nov 17 03:34Z), short of the world's edge, which keeps it this side of the fences; zombies come from past
+    // the fences)
     if (x < 0 || x > W || y < 0 || y > H) return false;
     if (
       !zombie &&
-      (x < 70 || x > W - 70 || GS.inDeep(x, y) || !GS.inOpen(x, y))
+      (x < 70 || x > W - 70 || y < 70 || y > H - 70 || GS.inDeep(x, y))
     )
       return false;
     if (!zombie && boardAt(x, y)) return false;
