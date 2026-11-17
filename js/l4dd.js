@@ -146,7 +146,7 @@ const MOON = () => {
     syncMap();
     moonRev = layoutRev();
     moon = Object.fromEntries(
-      OPENINGS.map((o) => {
+      OPENINGS.filter((o) => !o.rim).map((o) => {
         const k =
           o.kind === "stairs"
             ? 0
@@ -1130,7 +1130,7 @@ function shineProps(Wd, cones, q) {
       let l = p.x,
         r = p.x + p.w;
       if (p.kind === "fence") {
-        const t = fenceLean(p, W); // (its top leans over toward the road: all of that lights)
+        const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
         if (t > 0) r += t;
         else l += t;
       }
@@ -1686,6 +1686,7 @@ function holdTarget(pos, ctx) {
   }
   if (best) return best;
   for (const o of OPENINGS) {
+    if (o.nb) continue; // (Downpour's fence: nothing to board up)
     const d = Math.hypot(o.in[0] - pos.x, o.in[1] - pos.y),
       n = (s.hang.brd || {})[o.id] || 0;
     if (d < L4.REACH && n < L4.BOARDS && (!best || d < best.d))
@@ -2016,8 +2017,13 @@ activity({
       const u = Math.min(1, (t - o.t0) / gap);
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const z = heightAt(o.x, o.y) + (o.st === 5 ? fenceZ(o.x, o.y) : 0), // (Downpour: up a fence, or dropping off it)
-        f = Wd.toScreen(o.x, o.y, z),
+      const up = o.st === 5 ? fenceZ(o.x, o.y, o.l[2]) : 0, // (Downpour: up a fence, or dropping off it)
+        z = heightAt(o.x, o.y) + up,
+        lean =
+          up && openingById(o.l[2])?.axis === "y"
+            ? fenceLean({ x: o.x, h: up }, W)
+            : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
+        f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
         hide =
           !(door || seenFrom(o.x, o.y, Wd.inside)) ||

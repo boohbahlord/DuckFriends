@@ -15872,6 +15872,9 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-am.working img {
   filter: drop-shadow(0 0 calc(10px * var(--k, 1)) #fff3c4aa);
 }
+.l4-am.thru img {
+  opacity: 0.38;
+} /* (Downpour: over a duck or a zombie behind it, as the walls: .hp.thru) */
 .l4-am-orb {
   position: absolute;
   z-index: 1;

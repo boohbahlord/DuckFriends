@@ -85,7 +85,8 @@ export function downpourGround() {
      the dark forest floor went, "replaced with the normal grass"; and past the edges the ground was see-through, so
      the canvas kept old pictures there that changed as you walked): in bands, so no tile draws the whole map */
   const BAND = 800,
-    OUT = 800; // (past each edge: more than the camera reaches, world.js clampCam, and the canvas' margin round it)
+    OUT = 800, // (past each edge: more than the camera reaches, world.js clampCam, and the canvas' margin round it)
+    RW = W + 2 * OUT; // (the road, its banks and its water: as far)
   for (let y = -OUT; y < H + OUT; y += BAND) {
     const h = Math.min(BAND, H + OUT - y);
     G.push(
@@ -176,16 +177,18 @@ export function downpourGround() {
       ),
     );
   }
-  /* the road: the asphalt, cracks, faded lines, sunk into the ground between its two banks */
+  /* the road: the asphalt, cracks, faded lines, sunk into the ground between its two banks; on past the map's edges as
+     far as the grass goes, out under the fences (the owner's, Nov 17 12:28Z: "the road and it's water should extend
+     across the left and to the right, not becoming invisible") */
   {
     const h = R.y1 - R.y0,
       side = R.ramp;
     let dash = "",
       cracks = "";
-    for (let x = 30; x < W; x += 180)
+    for (let x = 30; x < RW; x += 180)
       dash += `<rect x="${x}" y="${h / 2 - 6}" width="100" height="12" fill="#b8a656" opacity="${n1(0.35 + r() * 0.3)}"/>`;
     for (let k = 0; k < 40; k++) {
-      let x = r() * W,
+      let x = r() * RW,
         y = side + r() * (h - 2 * side),
         d = `M${n1(x)} ${n1(y)}`;
       for (let s = 0; s < 4; s++) {
@@ -197,11 +200,11 @@ export function downpourGround() {
     }
     G.push(
       piece(
-        `<rect width="${W}" height="${h}" fill="url(#dpa)"/>` +
-          `<rect y="${side + 10}" width="${W}" height="6" fill="#9a9a96" opacity=".35"/><rect y="${h - side - 16}" width="${W}" height="6" fill="#9a9a96" opacity=".35"/>${dash}${cracks}`,
-        0,
+        `<rect width="${RW}" height="${h}" fill="url(#dpa)"/>` +
+          `<rect y="${side + 10}" width="${RW}" height="6" fill="#9a9a96" opacity=".35"/><rect y="${h - side - 16}" width="${RW}" height="6" fill="#9a9a96" opacity=".35"/>${dash}${cracks}`,
+        -OUT,
         R.y0,
-        W,
+        RW,
         h,
         asphaltTile("dpa", rng(19)),
       ),
@@ -218,7 +221,7 @@ export function downpourGround() {
       q = rng(23);
     const wavy = (y, k) => {
       let d = `M0 ${n1(y)}`;
-      for (let x = 60; x <= W + 60; x += 60)
+      for (let x = 60; x <= RW + 60; x += 60)
         d += `L${x} ${n1(y + (q() - 0.5) * k)}`;
       return d;
     };
@@ -231,19 +234,19 @@ export function downpourGround() {
               `<path d="${wavy(at(u * side), 3)}" stroke="#15110c" stroke-width="2" fill="none" opacity=".55"/>`,
           )
           .join(""), // (contours: a few px of height each)
-        tufts = Array.from({ length: Math.round(W / 26) }, (_, i) => {
+        tufts = Array.from({ length: Math.round(RW / 26) }, (_, i) => {
           const x = i * 26 + q() * 18,
             l = 4 + q() * 5;
           return `M${n1(x)} ${n1(at(1))}l${n1(-1 - q() * 2)} ${n1(flip ? -l : l)}`;
         }).join(""); // (grass hanging over the lip)
       return piece(
-        `<rect width="${W}" height="${side}" fill="url(#${id})"/>${lines}` +
-          `<rect y="${n1(at(flip ? 3 : 0))}" width="${W}" height="3" fill="#3b5230" opacity=".9"/>` + // (the lip)
+        `<rect width="${RW}" height="${side}" fill="url(#${id})"/>${lines}` +
+          `<rect y="${n1(at(flip ? 3 : 0))}" width="${RW}" height="3" fill="#3b5230" opacity=".9"/>` + // (the lip)
           `<path d="${tufts}" stroke="#3b5230" stroke-width="2" stroke-linecap="round" fill="none"/>` +
-          `<rect y="${n1(flip ? side - wl : wl - 7)}" width="${W}" height="7" fill="#0c0a08" opacity=".55"/>`, // (the crease)
-        0,
+          `<rect y="${n1(flip ? side - wl : wl - 7)}" width="${RW}" height="7" fill="#0c0a08" opacity=".55"/>`, // (the crease)
+        -OUT,
         y0,
-        W,
+        RW,
         side,
         `<linearGradient id="${id}" x1="0" y1="${flip ? 1 : 0}" x2="0" y2="${flip ? 0 : 1}">${stops
           .map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`)
@@ -269,17 +272,17 @@ export function downpourGround() {
     );
   }
   /* the flood over the whole road (the owner's, Nov 17 11:07Z), its west end deep (swum: Nov 17 05:46Z), the same water:
-     one blue (the pixel look's nearest color to the old teal was a grass green, so it read as ground). Darker along its
+     past the map's edges with the road; one blue (the pixel look's nearest color to the old teal was a grass green, so it read as ground). Darker along its
      north edge, in the bank's shadow; a pale line where it meets each bank */
   {
-    const [x0, y0, , y1] = GS.DEEP,
+    const [, y0, , y1] = GS.DEEP,
       h = y1 - y0;
     G.push(
       piece(
-        `<rect width="${W - x0}" height="${h}" fill="url(#dpw)"/><rect width="${W - x0}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${W - x0}" height="2" fill="#9fb3c0" opacity=".35"/>`,
-        x0,
+        `<rect width="${RW}" height="${h}" fill="url(#dpw)"/><rect width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/><rect y="${h - 2}" width="${RW}" height="2" fill="#9fb3c0" opacity=".35"/>`,
+        -OUT,
         y0,
-        W - x0,
+        RW,
         h,
         `<linearGradient id="dpw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3248" stop-opacity=".92"/><stop offset=".18" stop-color="#264660" stop-opacity=".86"/><stop offset="1" stop-color="#264660" stop-opacity=".86"/></linearGradient>`,
       ),
