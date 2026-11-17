@@ -5082,3 +5082,8 @@ reaches), owner/gas-station-holes.png (circles = holes in the gas station's wall
 ## Nov 16, 23:29Z: gas meter under the power box
 Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
 Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.
+
+- Owner 2026-11-17 00:57Z (Downpour trees, after Noah's four kinds A cypress, B live oak, C dead snag, D willow): "Get rid kf the drapes and try A, B, and D, and maybe slight variations to those trees"
+  - Decided: trees A, B and D only, with slight variations of each, and no hanging moss or drapes. Noah draws them at the 60% scale and sends pictures before they go in.
+- Owner 2026-11-17 00:58Z (after the 60% pictures): "Good we'll try and go with this size version for now"
+  - Decided: Downpour stays at K = 0.6. It deploys after the new trees are in and the owner has seen them.
