@@ -653,6 +653,7 @@ export const BOX = {
   x: 2300,
   y: 742,
   sx: 2300,
+  zx: 2300,
   sy: 706,
   sz: 58,
   price: 500,
@@ -665,13 +666,14 @@ export const BOX = {
    fireplace; on Downpour over the hood-up car, on its hood (the owner's, Nov 17 12:28Z; it was on the ground behind it, 11:07Z) */
 const CABIN_SPOTS = {
     butler: { ...BUTLER },
-    box: { x: BOX.x, y: BOX.y, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
+    box: { x: BOX.x, y: BOX.y, zx: BOX.x, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
   },
   DP_SPOTS = {
     butler: { x: GS.PRIEST.x, y: GS.PRIEST.y },
     box: {
       x: GS.HOOD.spot.x,
       y: GS.HOOD.spot.y,
+      zx: GS.HOOD.spot.x + 90, // (the yellow square's middle: the owner's, Nov 17: over the car, not on the duck at the spot)
       sx: GS.HOOD.x0 + 90, // (the owner's, Nov 17: over the car, on its hood where he circled the S, not behind it)
       sy: (GS.HOOD.y0 + GS.HOOD.y1) / 2,
       sz: 125,
