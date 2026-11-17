@@ -200,6 +200,7 @@ import {
   mapName,
   ZOOM_MAP,
   GREY_MAP,
+  ZCABIN,
 } from "./maps.js";
 import { MODES, modeOf, CABIN_MODES } from "./modes.js";
 import { dealRainbow, rainbowJoin } from "./looksrules.js";
@@ -459,6 +460,7 @@ export function bagPick(s, key, ids) {
 /* the map the vote or Random lands on, in its form (s.mapZoomed, s.mapGreyed) */
 function setMap(s, won) {
   countMap(s, won);
+  if (won === ZCABIN) keepRoomMap(s); // (Mad God Justin's own: the room's map comes back for the other games, cabinMap)
   const f = mapForm(won);
   s.options.map = f.map;
   s.mapZoomed = f.zoom ? 1 : 0;
@@ -503,15 +505,15 @@ function setMode(s, mode) {
 
 /* ---------- Vote Mode & Map (owner 2026-11-04) ----------
    After the start's 5 s countdown, a window over the whole screen: Vote for Game Mode (1:05), then Vote for Map (0:20;
-   not for the games that bring their own place: Duck Cabin's and Mad God Justin's). Every player clicks one (the same
-   one again takes the vote back); the dice is a random pick. Once the majority has voted (the room's vote share,
+   not for the games that bring their own place, Duck Cabin's; Mad God Justin's has Quacky Zombies' Duck Cabin too).
+   Every player clicks one (the same one again takes the vote back); the dice is a random pick. Once the majority has voted (the room's vote share,
    shareOf), the clock drops to 6 s and runs at its normal speed (owner 2026-11-15: "only six seconds and NOT double
    speed"). The full times only run out when the majority never votes. The most votes win, and a tie is a random pick between the tied ones (no votes at all: any of them). Vote
    return brings both votes back after that many games (a round is a game; a whole Hangout or Quacky Zombies is one) */
 export const PICK_TIME = { mode: 65, map: 20, zmap: 20 };
 const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
-const NO_MAP_VOTE = [...CABIN_MODES, "mgj"];
+const NO_MAP_VOTE = CABIN_MODES; // (Mad God Justin has it since Nov 17, with Quacky Zombies' Duck Cabin first: ZCABIN)
 export const voteModes = (s) => {
   const all = MODES.map((m) => m.id).filter((id) => fits(s, id)),
     off = s.options.modesOff || [],
@@ -519,7 +521,13 @@ export const voteModes = (s) => {
   return on.length ? on : all; // (Modes in Random & Vote: the games turned off aren't on the vote either)
 };
 export const voteIds = (s, k) =>
-  k === "mode" ? voteModes(s) : k === "zmap" ? ZMAPS : VOTE_MAPS;
+  k === "mode"
+    ? voteModes(s)
+    : k === "zmap"
+      ? ZMAPS
+      : s.options.mode === "mgj"
+        ? [ZCABIN, ...VOTE_MAPS]
+        : VOTE_MAPS;
 /* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
    (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
 export const ZMAPS = ["cabin", "downpour"];
@@ -593,15 +601,20 @@ function placeMap(s) {
   countMap(s, s.mapZoomed ? ZOOM_MAP[0] : s.mapGreyed ? GREY_MAP[0] : o.map); // (the host's own pick counts as played too)
 }
 /* Duck Cabin's games bring their own map: going in keeps the room's map (in its form) to come back to, and coming out
-   puts it back (the board if there was none) */
+   puts it back (the board if there was none). Mad God Justin's Quacky Zombies cabin (ZCABIN, from his map vote) is put
+   back the same way once another game comes */
+function keepRoomMap(s) {
+  const o = s.options;
+  if (o.map !== "cabin" && o.map !== ZCABIN)
+    s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
+}
 function cabinMap(s) {
   const o = s.options;
   if (isHang(s)) {
-    if (o.map !== "cabin")
-      s.roomMap = [o.map, s.mapZoomed ? 1 : 0, s.mapGreyed ? 1 : 0];
+    keepRoomMap(s);
     o.map = "cabin";
     s.mapZoomed = s.mapGreyed = 0;
-  } else if (o.map === "cabin") {
+  } else if (o.map === "cabin" || (o.map === ZCABIN && o.mode !== "mgj")) {
     [o.map, s.mapZoomed, s.mapGreyed] = s.roomMap || ["board", 0, 0];
     delete s.roomMap;
     if (!o.mapPick) {

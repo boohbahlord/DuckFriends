@@ -213,6 +213,8 @@ export function artBackdrop(map) {
     return '<defs><pattern id="arttiles" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff"/><rect width="60" height="60" fill="#000"/><rect x="60" y="60" width="60" height="60" fill="#000"/></pattern></defs><rect width="480" height="270" fill="url(#arttiles)"/>'; // Tiles' checkerboard, 8 tiles across
   if (map === "rabbit")
     return '<image href="assets/maps/rabbit-hole.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
+  if (map === "zcabin")
+    return '<image href="assets/maps/duck-cabin-zombies.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>'; // Quacky Zombies' Duck Cabin, Mad God Justin's map (maps.js ZCABIN)
   if (map === "stars")
     return '<image href="assets/maps/starry-night.jpg" width="480" height="270" preserveAspectRatio="xMidYMid slice"/>';
   if (isNwk(map)) return nwkSVG(map); // Nous Within Kenoma: the book's page, and its variations

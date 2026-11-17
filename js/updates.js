@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v80",
+    version: 80,
+    date: "Nov 17, 2026",
+    title: "Mad God Justin in the zombie cabin",
+    news: [
+      "For Mad God Justin: he now has a map vote, and one of the choices is Dead Ducks Arcade's Duck Cabin. On it, no lightning comes from the walls.",
+    ],
+    fixed: [
+      "For Mad God Justin: the edge-warning glow no longer shows during a zombie wave.",
+    ],
+  },
+  {
     id: "v79",
     version: 79,
     date: "Nov 17, 2026",
