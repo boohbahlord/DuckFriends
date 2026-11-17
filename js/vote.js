@@ -6,6 +6,7 @@
    (or tapping) once, and the same one again takes the vote back; a phone swipes through them like any list. A map's
    picture stands still until the pointer is over it, or a finger holds it, and the map you voted for keeps moving.
    rules.js keeps the votes (s.vt) and the clock; the lobby paints this window while it's up. */
+import { fsBtnHTML } from "./fullscreen.js";
 import { esc } from "./ui.js";
 import { rainbowHTML, artBackdrop, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
@@ -81,7 +82,7 @@ function build(R, pause) {
   el.className = `vt vt-k-${k}`;
   el.setAttribute("role", "dialog");
   el.setAttribute("aria-label", TITLE[k]);
-  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
+  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
   document.body.append(el);
   W = {
     el,

@@ -17,6 +17,7 @@
    Hangout walks around Duck Cabin instead of a board: the world (hangout/world.js) draws it, follows my duck with its
    camera and works out how it stands and falls; this file only hands it the keys, the stick and the taps, and puts its
    one context button where the Vote button goes. */
+import { fsBtnHTML } from "./fullscreen.js";
 import { register, go, leaveTo } from "./router.js";
 import {
   el,
@@ -7022,7 +7023,7 @@ register("game", {
     loadSounds("game"); // (the weapons' and the items' sounds: they work in every mode)
     S = el(`<section class="screen game docked">
       <header class="gbar"><div class="gbar-l"><span class="round"></span><span class="phase"></span></div>${musicBarHTML()}
-        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span><button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
+        <div class="gbar-r"><span class="tmeter" hidden><i></i></span><span class="timer"></span>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="players" aria-label="Players" data-tip="Players (hold Tab)">👥</button>${lsetBtnHTML()}<button type="button" class="btn ghost iconbtn" data-a="pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header>
       <div class="map-layer"></div><div class="gmain"></div>${DOCK_HTML}${BAR_HTML('<div class="gact"></div>')}</section>`);
     docks = mountDocks(
       S,

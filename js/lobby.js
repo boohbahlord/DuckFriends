@@ -4,6 +4,7 @@
    them saying what the row under the pointer does. Right: the party, one player card per row; click your own to rename it; right-click any card for its
    options. Bottom left: the keys (the arrow keys move around the lobby, Enter picks, Shift+Enter right-clicks). The X at
    the top right leaves the room. */
+import { fsBtnHTML } from "./fullscreen.js";
 import { register, go, leaveTo } from "./router.js";
 import {
   el,
@@ -478,7 +479,7 @@ register("lobby", {
       setTimeout(() => go("game", R));
     }
     S = el(`<section class="screen lobby docked">
-      <header class="lbar">${musicBarHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
+      <header class="lbar">${musicBarHTML()}${fsBtnHTML()}<button type="button" class="btn ghost iconbtn lobby-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button><button type="button" class="win-x lobby-x" aria-label="Leave the room" data-tip="Leave the room">×</button></header>
       <div class="gmain lmain">
       <div class="lobby-left">
         <p class="dod-pop" role="status" hidden></p>

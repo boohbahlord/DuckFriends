@@ -19,6 +19,7 @@ import "./keynav.js";
 import { acct, onAccount, accountStart, signIn } from "./account.js";
 import { openFriends } from "./friends.js";
 import { showSplash } from "./splash.js";
+import { fullOnFirstTap, fsBtnHTML } from "./fullscreen.js";
 import { loadingScreen, pageReady } from "./loading.js";
 
 applySettings();
@@ -52,6 +53,7 @@ setTimeout(checkUnlocks, 2500);
 
 /* ---------- Sign in (top right); once signed in it opens Friends, with a count of invites and requests ---------- */
 const corner = $("#signin");
+corner.insertAdjacentHTML("beforebegin", fsBtnHTML()); // (a phone: full screen, left of Sign in / Friends)
 const paintCorner = () => {
   corner.classList.remove("off");
   if (acct.uid) {
@@ -79,6 +81,7 @@ addEventListener("duck-profile", () => {
 
 start("front");
 showSplash();
+fullOnFirstTap(); // (a phone: the first tap on the start screen goes full screen)
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
