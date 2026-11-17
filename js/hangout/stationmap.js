@@ -441,10 +441,11 @@ function planBuild(b) {
   solid("tower", TOWER, TOWER.h);
   /* no altar (the owner's, Nov 17 05:46Z: the raised white platform read as a coffin); the Angel machine stands on the
      floor against the south wall, and that wall turns see-through while it hides a quarter of it (keep: world.js) */
-  put("l4angel", ANGEL.x - 50, ANGEL.y - 13, 100, 26, 140, {
+  put("l4angel", ANGEL.x - 65, ANGEL.y - 40, 130, 53, 140, {
     z: 0,
     keep: true,
-  });
+    solid: true,
+  }); // (solid, as big as its drawing's base: nobody walks through it or into it, the owner's, Nov 17 11:07Z)
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
   const PEWS = {
     L: {
