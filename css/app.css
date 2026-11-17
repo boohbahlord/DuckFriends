@@ -2912,16 +2912,28 @@ svg.duck.jack.bob .jk,
     transform: none;
   }
 } /* (scaled from the spring's foot only, so he never lifts out of the box) */
-/* dat boi's rainbow rank: every part of him and his unicycle runs through the colors at a steady pace (datboi.js) */
-html.moving svg.duck.datboi.rainbow .dbr {
-  animation: db-hue 6s linear infinite;
+/* the rainbow skin in the pixel look (rainbowskin.js): its turn made into 24 steps in one tall picture, shown one step
+   at a time, a turn every 6 s (RB_MS, RB_N). On the page without the pixel look the drawing moves by itself */
+html.moving img.rbsp {
+  object-fit: cover;
+  object-position: 50% 0%;
+  animation: rb-step 6s steps(24, jump-none) infinite;
 }
-@keyframes db-hue {
-  from {
-    filter: hue-rotate(0deg);
-  }
+img.rbsp {
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+@keyframes rb-step {
   to {
-    filter: hue-rotate(360deg);
+    object-position: 50% 100%;
+  }
+}
+html.moving image.rbsp {
+  animation: rb-y 6s steps(24, jump-none) infinite;
+}
+@keyframes rb-y {
+  to {
+    transform: translateY(calc(var(--rbh) * -23));
   }
 }
 .gduck-body svg {

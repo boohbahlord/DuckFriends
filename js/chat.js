@@ -21,7 +21,13 @@ import { boardPhases, denied, canOpen, gameMuted, slowMs } from "./rules.js";
 import { shellRun, shellSuggest, shellHistory } from "./shell.js";
 import { paint, isHelpName } from "./helppages.js";
 import { nameHTML, fontHTML, FONTS, findFont } from "./name.js";
-import { DUCK_PATTERNS, DUCK_METALS, BUILDS, SIZES } from "./duck.js";
+import {
+  DUCK_PATTERNS,
+  DUCK_METALS,
+  RAINBOW_SKIN,
+  BUILDS,
+  SIZES,
+} from "./duck.js";
 import { HATS, hatById } from "./hats.js";
 import { FACES, faceById } from "./faces.js";
 import { EYES } from "./eyes.js";
@@ -160,14 +166,18 @@ const TREE = {
             },
           },
           metal: {
-            vals: keysOf(DUCK_METALS),
+            vals: keysOf([...DUCK_METALS, RAINBOW_SKIN]),
             run: (v) =>
-              pick(
-                keysOf(DUCK_METALS),
-                v,
-                (x) => Object.assign(profile.duck, { metal: x, image: null }),
-                "Duck metal",
-              ),
+              String(v).toLowerCase() === "rainbow" &&
+              lockedMsg("skin", "m:rainbow", "Rainbow skin")
+                ? lockedMsg("skin", "m:rainbow", "Rainbow skin")
+                : pick(
+                    keysOf([...DUCK_METALS, RAINBOW_SKIN]),
+                    v,
+                    (x) =>
+                      Object.assign(profile.duck, { metal: x, image: null }),
+                    "Duck metal",
+                  ),
           },
           hat: {
             vals: ["none", ...HATS.map((h) => h.id)],

@@ -28,6 +28,7 @@ import { sfx, loadSounds } from "./sound.js";
 import {
   DUCK_PATTERNS,
   DUCK_METALS,
+  RAINBOW_SKIN,
   BUILDS,
   SIZES,
   pictureToSquare,
@@ -177,7 +178,7 @@ const valueOf = (k) => {
         : D.image
           ? "Your picture"
           : D.metal !== "none"
-            ? nameOf(DUCK_METALS, D.metal)
+            ? nameOf([...DUCK_METALS, RAINBOW_SKIN], D.metal)
             : nameOf(DUCK_PATTERNS, D.pattern, "Plain"),
     name: profile.name,
     card: C.image ? "Your picture" : nameOf(CARD_PATTERNS, C.pattern, "Plain"),
@@ -202,6 +203,7 @@ const LOCK_KIND = {
   style: "style",
   eyes: "eyes",
   rank: "rank",
+  skin: "skin", // (the Rainbow skin: unlocks.js)
 };
 let peek = null; // { kind, id }: a locked item shown on the big duck, never worn
 /* a style's own look: its matching beak, eyes and colors on the duck (metals and pictures give way to its colors) */
@@ -292,16 +294,18 @@ export function openCustomize(page = lastPage) {
                     style: peek.id,
                     ...(!boxed(D.style) ? { prevStyle: D.style } : {}),
                   }
-                : {
-                    ...(offJack(peek.kind)
-                      ? { ...D, style: D.prevStyle || "rubber" }
-                      : D),
-                    image: null,
-                    [peek.kind]:
-                      peek.kind === "eyes" || peek.kind === "rank"
-                        ? peek.id
-                        : { id: peek.id },
-                  }; // (the eyes and Dat Boi's rank are kept as their id alone)
+                : peek.kind === "skin"
+                  ? { ...D, image: null, metal: peek.id.slice(2) } // (the Rainbow skin, "m:rainbow")
+                  : {
+                      ...(offJack(peek.kind)
+                        ? { ...D, style: D.prevStyle || "rubber" }
+                        : D),
+                      image: null,
+                      [peek.kind]:
+                        peek.kind === "eyes" || peek.kind === "rank"
+                          ? peek.id
+                          : { id: peek.id },
+                    }; // (the eyes and Dat Boi's rank are kept as their id alone)
           duckBox.innerHTML = `<span class="arm-pic">${duckSVG(look, { size: 220, title: profile.name })}${sp && sp.kind === "effect" ? `<span class="sp-fx">${momentHTML(sp.id, profile.duck)}</span>` : ""}</span>`; // (effects sit on the duck, not on the whole panel)
           cardBox.innerHTML = cardHTML(me(), { size: 52 });
         };
@@ -829,7 +833,7 @@ export function openCustomize(page = lastPage) {
                     pic({ pattern: v, metal: "none" }),
                     n,
                   ]),
-                  ...DUCK_METALS.slice(1).map(([v, n]) => [
+                  ...[...DUCK_METALS.slice(1), RAINBOW_SKIN].map(([v, n]) => [
                     "m:" + v,
                     pic({ metal: v }),
                     n,
