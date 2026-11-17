@@ -9,6 +9,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v68",
+    version: 68,
+    date: "Nov 17, 2026",
+    title: "Faster revives and Angelic pistols",
+    news: [
+      "For Dead Ducks Arcade: A revive now takes 5 s instead of 10.",
+      "For Dead Ducks Arcade: New Quick Revive upgrade in the shop for 750 points. Your revives take 3 s until you go down.",
+      "For Dead Ducks Arcade: While someone revives you, your bleed-out timer pauses.",
+      "For Dead Ducks Arcade: A downed duck turns greyer as its time runs out, and it gets a pistol with endless bullets that still reloads. The pistol goes away when the duck is revived.",
+      "For Dead Ducks Arcade: The Angelic pistols now take turns, one bullet at a time, and fire twice as fast as the plain pistol. They hold a 16-round magazine and take twice as long to reload, and a crit sets off a blast half a grenade's size with a weaker boom.",
+      "For Mad God Justin: A revive now takes 3 s and brings the duck back at half its HP. A duck out of HP turns grey and can still fire a pistol that reloads.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v67",
     version: 67,
     date: "Nov 17, 2026",
