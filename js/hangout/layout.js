@@ -1003,11 +1003,10 @@ export const wallsSee = (x, y, inside, z) =>
     PEEKS.some(
       (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
     ));
-/* is (x, y) seen from where I am? Through the walls' holes as above; and in Quacky Zombies, from outside, inside a
-   building too: its roof turns see-through over whoever is under it (world.js), on Downpour and on the cabin alike (the
-   owner's, Nov 17: roofs "and everything else"). Hangout keeps the cabin's walls shut */
-export const seenFrom = (x, y, inside, z) =>
-  (!inside && variant !== "") || wallsSee(x, y, inside, z);
+/* is (x, y) seen from where I am? My side of the walls, or through their holes (wallsSee). Every mode: from outside, a
+   building's inside never shows, its roof stays as it is; whoever is in there shows only as their outline (the owner's,
+   Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
+export const seenFrom = (x, y, inside, z) => wallsSee(x, y, inside, z);
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;

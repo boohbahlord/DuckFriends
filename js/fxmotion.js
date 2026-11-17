@@ -154,6 +154,14 @@ export function wobble(now, ms = 650) {
   if (heavyOff()) return;
   wobbleTill = now + ms;
 }
+/* I lost HP: my screen sways a little, side to side, dying away (the owner's, Nov 17 17:41Z: "it should sway or shake
+   your screen a little"); a hit during it starts it over */
+const SWAY_MS = 520;
+let swayAt = -1e9;
+export function hurtSway(now) {
+  if (heavyOff()) return;
+  swayAt = now;
+}
 /* where the board sits now, [x, y] css px (0, 0 when still) */
 export function shakeNow(now) {
   const dt = shook ? Math.min(0.1, (now - shook) / 1000) : 0;
@@ -165,6 +173,12 @@ export function shakeNow(now) {
     const a = 6 * trauma;
     x += a * (Math.sin(now / 23) * 0.6 + Math.sin(now / 9.7) * 0.4);
     y += a * (Math.cos(now / 19) * 0.6 + Math.sin(now / 11.3) * 0.4);
+  }
+  if (now - swayAt < SWAY_MS) {
+    const u = (now - swayAt) / SWAY_MS,
+      k = (1 - u) * (1 - u); // (dying away)
+    x += 5 * k * Math.sin(u * Math.PI * 4); // (two sways, side to side)
+    y += 2 * k * Math.sin(u * Math.PI * 6);
   }
   if (now < wobbleTill) {
     const k = (wobbleTill - now) / 650;

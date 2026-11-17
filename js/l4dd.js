@@ -341,6 +341,20 @@ let layer = null,
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
 /* my sprint left (0 … 1) and whether I'm too tired to sprint, for the HP meter's blue bar (game.js) */
 export const sprintLeft = () => [stamina, tired];
+/* every zombie on my screen: its box in the board's px, from its last drawing (game.js: the others' HP meters turn
+   see-through over one) */
+export function l4ZBoxes() {
+  const out = [];
+  for (const o of Z.values())
+    if (o.el && !o.el.hidden && o.sk)
+      out.push({
+        l: o.sx - (o.bw * o.sk) / 2,
+        r: o.sx + (o.bw * o.sk) / 2,
+        t: o.sy - o.bh * o.sk,
+        b: o.sy,
+      });
+  return out;
+}
 let butler = null,
   onEl = null,
   onSig = "",
@@ -393,11 +407,21 @@ function lits() {
 }
 
 /* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
-   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it */
+   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it. Returns whether
+   something hides it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
 function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
   const w = o.bw * sc,
     h = o.bh * sc,
-    y = f.top + (dip - o.feet) * sc;
+    y = f.top + (dip - o.feet) * sc,
+    hid =
+      hidden ??
+      Wd.coverAt(
+        f.left - w * 0.4,
+        f.left + w * 0.4,
+        y + h * 0.1,
+        f.top,
+        Math.round(sortY(o.x, o.y, z)),
+      );
   olAdd({
     id: "z" + o.i,
     img: o.img,
@@ -407,24 +431,17 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
     h,
     flip: o.face < 0,
     kind: "zombie",
-    hidden:
-      hidden ??
-      Wd.coverAt(
-        f.left - w * 0.4,
-        f.left + w * 0.4,
-        y + h * 0.1,
-        f.top,
-        Math.round(sortY(o.x, o.y, z)),
-      ),
+    hidden: hid,
     floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
   });
+  return hid;
 }
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
   const url = zombieURL(z.l, z.i);
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><i></i></span>`;
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><b></b><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -436,7 +453,7 @@ function zombieEl(z) {
     el,
     body,
     feet: box.feet, // (its feet in its body's own px: a swimmer's waterline is SINK over them)
-    bar: el.querySelector(".l4z-hp i"),
+    bar: el.querySelector(".l4z-hp"), // (--hp on it: the red and the white behind it, css/app.css)
     x: z.x,
     y: z.y,
     fx: z.x,
@@ -584,7 +601,7 @@ function seeZombies(s, ctx, now) {
     if (o.sh !== sh) {
       o.sh = sh;
       o.bar.style.setProperty("--hp", sh);
-      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17)
+      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17. A hit: what it lost turns white, then drains fast; dead, it drains to black, then fades: css/app.css, the owner's, Nov 17 17:41Z)
     }
     o.hp = z.hp;
     o.st = z.st;
@@ -2297,7 +2314,12 @@ activity({
             : inShallow(o.x, o.y) && o.st !== 5
               ? WADE_SINK * o.feet
               : 0;
-      if (o.st !== 3) zOutline(Wd, o, f, dip, sc, null, z, myFloor);
+      const olOnly =
+        o.st !== 3 && zOutline(Wd, o, f, dip, sc, null, z, myFloor); // (behind a wall, under a roof: its line only)
+      if (o.olOnly !== olOnly) {
+        o.olOnly = olOnly;
+        o.el.classList.toggle("ol-only", olOnly);
+      }
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
@@ -2534,17 +2556,6 @@ activity({
       ? false
       : undefined, // (the power is cut: only the fires and the candles shine, till the power box is mended. Downpour's hood-up car glows till it's first used)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
-  /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
-     and see what's coming) */
-  hiders: (ctx) => {
-    const out = [],
-      ins = ctx.world.inside;
-    for (const o of Z.values())
-      if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
-        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike. Its height: up on a roof, no roof turns see-through over it)
-        out.push([o.x, o.y, o.st === 6 || o.st === 7 ? zombieZ(o) : 0]);
-    return out;
-  },
   crowd(x, y) {
     let d = 0;
     for (const o of Z.values()) {

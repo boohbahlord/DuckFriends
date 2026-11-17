@@ -557,8 +557,8 @@ export const MUZZLE = {
     smoke: 0,
     puff: 3,
     drift: 0.4,
-    shake: 0.06,
-    kick: 0.25,
+    shake: 0, // (no shake and no recoil: the owner's, Nov 17 17:41Z, "laser gun doesnt make player vibrate nor has recoil")
+    kick: 0,
     ink: [17, 16, 16], // (red, not a gun's yellow: its middle, then out)
   }, // (the Laser Rifle: a small red flash at its lens, no smoke)
   glauncher: {
@@ -716,6 +716,30 @@ export function fxSteam(x, y, n = 1) {
       Math.random() < 0.75 ? 7 : 5,
       2,
     );
+}
+
+/* what the Laser Rifle's beam went through (a zombie, a duck) smokes and steams (the owner's, Nov 17 17:41Z: "it makes
+   smoke and steam rise up from ducks or zombies it hits"): at (x, y) on the screen, h px up its body, n puffs, dark
+   smoke and light steam rising off it; none with heavy effects off, half of them on Low */
+export function fxSmolder(x, y, h, n = 4) {
+  if (noHeavy) return;
+  const u = unit;
+  for (let k = 0; k < n; k++) {
+    if (low && Math.random() < 0.5) continue;
+    const steam = k % 2 === 0;
+    add(
+      SMOKE,
+      x + rnd(-0.12, 0.12) * u,
+      y,
+      h * rnd(0.6, 1.1),
+      rnd(-0.12, 0.12) * u,
+      rnd(-0.04, 0.04) * u,
+      u * (steam ? rnd(0.5, 0.9) : rnd(0.35, 0.6)),
+      steam ? rnd(700, 1100) : rnd(900, 1500),
+      steam ? 7 : 6,
+      steam ? 2 : 3,
+    );
+  }
 }
 
 /* the Angel machine at work (the owner's, Nov 16): sparks thrown up out of its hatch at (x, y) on the screen, h px over

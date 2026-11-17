@@ -193,6 +193,7 @@ import {
   dodging,
   L4,
   l4Hp,
+  l4Regen,
   downArmed,
   l4Dying,
   l4Down,
@@ -215,6 +216,7 @@ import {
   laserEnd,
   l4Ammo,
   l4Warn,
+  l4ZBoxes,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -367,7 +369,7 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
-import { angelic } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
+import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 import { pwCodes, goreFree } from "./wounds.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
@@ -438,6 +440,7 @@ import {
   fxFrame,
   fxHitAt,
   fxImpact,
+  fxSmolder,
   fxMelee,
   fxBurst,
   fxSpurt,
@@ -1148,6 +1151,7 @@ let othersSig = "",
   othersAt = 0,
   othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
   myBox = null, // my duck's box in the last frame, in the board's px
+  allBoxes = [], // every duck's box in the last frame, in the board's px (mine too)
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 /* Mad God Justin's sprint (the owner's, Nov 17): a second of it, back as fast as it was lost. mgjStam is what's left (0 … 1);
    run dry, I can't sprint again until Shift is let go */
@@ -1173,7 +1177,15 @@ function drawMeters(s, board, layer, now) {
       : isMgj(s)
         ? [mgjStam, mgjTired]
         : [null, false];
-    meter.set(hv[0], hv[1], sp, tired);
+    meter.set(
+      hv[0],
+      hv[1],
+      sp,
+      tired,
+      isL4dd(s) ? l4Regen(s, R.me, clockNow()) : null,
+    );
+    meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
+    if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
   const want =
     (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
@@ -1205,9 +1217,9 @@ function drawMeters(s, board, layer, now) {
     box.innerHTML = othersHpHTML(list);
     othersBox = null; // (measured again once, below: its size changed)
   }
-  /* my duck walking into them: see-through on my screen (checked a few times a second). The box is measured only when
-     its content or the board changes, and my duck's box comes from the last frame's drawing, so no frame waits on the
-     page's layout */
+  /* a duck or a zombie under them, mine or anyone's: see-through on my screen, so I see who's there (the owner's, Nov 17
+     17:41Z; checked a few times a second). The box is measured only when its content or the board changes, and the
+     ducks' boxes come from the last frame's drawing, so no frame waits on the page's layout */
   if (now - othersAt > 120) {
     othersAt = now;
     if (!othersBox || othersBox.g !== geo) {
@@ -1220,15 +1232,12 @@ function drawMeters(s, board, layer, now) {
         b: b.bottom - geo.top,
       };
     }
-    const a = myBox,
-      b = othersBox,
+    const b = othersBox,
+      under = (a) =>
+        a.r > b.l - 8 && a.l < b.r + 8 && a.b > b.t - 8 && a.t < b.b + 8,
       see =
-        !!a &&
         !!list.length &&
-        a.r > b.l - 8 &&
-        a.l < b.r + 8 &&
-        a.b > b.t - 8 &&
-        a.t < b.b + 8;
+        (allBoxes.some(under) || (isL4dd(s) && l4ZBoxes().some(under)));
     box.classList.toggle("see", see);
   }
 }
@@ -1248,7 +1257,7 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
-  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+  const ol = isL4dd(s) || isMgj(s) || hang, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
@@ -1732,7 +1741,7 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
-    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+    /* the outlines (outlines.js; every zombie game and Hangout's world): each player green, Justin blue (Good Justin God in Mad God Justin,
        never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
        roof and a floor away */
     const olP = !g && s.players[id],
@@ -1749,6 +1758,7 @@ function drawDucks(now = clockNow()) {
               ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
               : "ally"
             : "";
+    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
     if (olKind && pic && pic.tagName === "IMG" && !d._off) {
       const ph = pic.naturalWidth
           ? (size * pic.naturalHeight) / pic.naturalWidth
@@ -1790,6 +1800,11 @@ function drawDucks(now = clockNow()) {
         hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
         down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
       });
+      olOnly = hidden && !d._hid && id !== R.me;
+    }
+    if (d._olOnly !== olOnly) {
+      d._olOnly = olOnly;
+      d.classList.toggle("ol-only", olOnly);
     }
     if (d._j !== pos.j) {
       d._j = pos.j;
@@ -2049,6 +2064,7 @@ function drawDucks(now = clockNow()) {
     });
     if (mine) myBox = boxes[boxes.length - 1];
   }
+  allBoxes = boxes;
   layer.querySelectorAll(".gduck").forEach((d) => {
     if (duckEls.has(d.dataset.pid) && duckEls.get(d.dataset.pid) !== d) {
       d.remove(); // (a second one for the same duck, left behind: only the one it's drawn on stays)
@@ -2230,6 +2246,7 @@ function drawDucks(now = clockNow()) {
       h._hs = hs;
       fxl.append(h);
       heldEls.set(id, h);
+      if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
     }
     /* a gun being reloaded dips and bobs in its duck's hands (Dead Ducks Arcade: its reload runs in its kit; Justin out
        in Downpour too) */
@@ -3795,11 +3812,15 @@ function playFx(f) {
         };
     }
     if (lz) {
-      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt) */
+      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt), and smokes and
+         steams where it went through (fx.js fxSmolder; no recoil or shake from it: the owner's, Nov 17 17:41Z) */
       for (const [hx, hy] of f.hit || []) {
         const at = world.place({ x: hx / HW, y: hy / HH }, f.hz || 0);
         fxImpact(at.left, at.top, "laser", Math.cos(ang), Math.sin(ang));
+        fxSmolder(at.left, at.top, size * 0.5);
       }
+      /* the other modes: it stopped at a duck (hd), which smokes and steams the same */
+      if (f.hd && !past) fxSmolder(b.left, b.top, size * 0.5);
       return;
     }
     if (!past)

@@ -681,9 +681,14 @@ const CABIN_SPOTS = {
       x: GS.HOOD.spot.x,
       y: GS.HOOD.spot.y,
       zx: GS.HOOD.spot.x + 90, // (the yellow square's middle: the owner's, Nov 17: over the car, not on the duck at the spot)
-      sx: GS.HOOD.x0 + 90, // (the owner's, Nov 17: over the car, on its hood where he circled the S, not behind it)
-      sy: (GS.HOOD.y0 + GS.HOOD.y1) / 2,
-      sz: 125,
+      /* the orb's middle exactly where I circled the S on my screenshot (refs/nov17-1228-batch/orb-over-car-S.png, Nov 17
+         12:45Z and 17:41Z): the middle of the car's windshield, 58 by 243 into the car's drawing (stationart.js
+         carSVG, 380 by 420 there, the front to the west; its top is the car's height and its hood's over its north edge).
+         Its depth is the car's south edge, so it shows in front of the car; sz lifts it up to that spot (the orb hangs
+         54 over its point, its middle 27 over) */
+      sx: GS.HOOD.x0 + 58 * GS.K,
+      sy: GS.HOOD.y1,
+      sz: GS.HOOD.y1 - (GS.HOOD.y0 - 220 * GS.K + 243 * GS.K) - 27,
     },
   };
 const SHOP_REACH = 130;
@@ -4427,6 +4432,16 @@ export { standing as l4Up };
 export const l4Hp = (s, id) => {
   const p = P4(s, id);
   return p ? p.hp : -1;
+};
+/* how far my next HP is to coming back on its own, 0 … 1 (a hit or a heal starts it over: p.at), or null while it can't
+   (full, down, a ghost) (the HP meter's faint red fill, hpmeter.js) */
+export const l4Regen = (s, id, now) => {
+  const p = P4(s, id);
+  if (!p || p.gh || p.dn || p.hp <= 0 || p.hp >= maxHp(s, id)) return null;
+  return Math.max(
+    0,
+    Math.min(1, (now - p.at) / (isWild(s, id) ? WILD.regen : L4.REGEN)),
+  );
 };
 /* how far a downed duck is into its bleeding-out (k, 0 to 1), and whether someone is reviving it (wait: it's stopped) */
 export const l4Dying = (s, id, now) => {

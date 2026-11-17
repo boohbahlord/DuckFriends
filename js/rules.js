@@ -4009,7 +4009,7 @@ function chainShot(s, by, p, aim, now, w = "chaingun") {
       by,
       who: [],
       t: now,
-      ...(w === "laser" ? { w } : {}),
+      ...(w === "laser" ? { w, ...(d ? { hd: 1 } : {}) } : {}), // (hd: it stopped at a duck, which smokes: game.js)
       ...(hang ? {} : { b: 1 }),
       x0: +(p.x * k[0]).toFixed(4),
       y0: +(p.y * k[1]).toFixed(4),
