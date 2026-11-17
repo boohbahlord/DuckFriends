@@ -5162,3 +5162,6 @@ Furthermore, on horizontal mode, the joystick should be in the bottom right exac
 The last screenshot shows another ui error at the top of the screen for vertical mode."
   - Then: "What else is still being worked on"
   - Decided: Jackal does phone aim in every mode: weapons and items, and the gun drawing itself, turn to the walk direction like a mouse aim, and the right joystick overrides it while held. He also moves both joysticks in landscape a small, equal distance in from the bottom corners. Adam fixes the upright phone's top row on Rooms (music bar, full-screen button and Sign in overlapping).
+
+- 2026-11-17 06:58Z (in Noah's thread, with a screenshot): "The cabin's roof or the grass xhould be a different shade of green or whatever color the roof ACTUALLY is because it blends into the color of the grass, which is a problem"
+  - Decided: Noah made the Duck Cabin roof slate grey (ROOF in js/hangout/art.js) and rebuilt both cabin pictures (PR #363, waiting on the owner's OK of the color). Ships in Version 54 if OK'd.
