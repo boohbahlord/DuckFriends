@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v59",
+    version: 59,
+    date: "Nov 17, 2026",
+    title: "Loads with ad blockers",
+    news: [],
+    fixed: [
+      "The game loads again on computers with some ad blockers, which were blocking one of its files by its name.",
+    ],
+  },
+  {
     id: "v58",
     version: 58,
     date: "Nov 17, 2026",

@@ -6,7 +6,7 @@
    (or tapping) once, and the same one again takes the vote back; a phone swipes through them like any list. A map's
    picture stands still until the pointer is over it, or a finger holds it, and the map you voted for keeps moving.
    rules.js keeps the votes (s.vt) and the clock; the lobby paints this window while it's up. */
-import { fsBtnHTML } from "./fullscreen.js";
+import { fsBtnHTML } from "./corners.js";
 import { esc } from "./ui.js";
 import { rainbowHTML, artBackdrop, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
