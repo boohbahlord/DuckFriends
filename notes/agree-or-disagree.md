@@ -5185,3 +5185,10 @@ Decided (Jackal, from Adam): on a phone (html.phone, never a touchscreen laptop)
 
 I want the file to be able to still detect mobile versus computer vs all that and screen rotation still, so does it automatically do that?"
   - Decided (Adam): the bubble is Chrome's own; a page can't hide or shorten it. Duck Friends is now installable (manifest.webmanifest: display fullscreen, orientation any, icons in assets/app/; sw.js keeps no copies and fetches the page with no-cache, so every deploy reaches the app on its next open). Inside the installed app (html.app, fullscreen.js inApp) the full-screen button and the first tap's full screen are off, so the bubble never shows. Phone/PC detection, touchscreen laptops, rotation and phone-land are unchanged (same page).
+
+- 2026-11-17 09:02Z (screenshot: desktop Chrome, black page, the green loading bar at about a third): "sometimes the game doesnt finish loading
+
+like i keep refreshing and it wont load"
+- 09:03Z: "it has been a problem where sometimes the browser wont load, and i would have to refresh it to load, but that isnt working on my computer vers now is what is happenign"
+- 09:04Z: "is there a launch file as a layer that calls to the repo that is hung up and waiting for an answer that can only be answered in the application vers and not the website ? if so, we can just have it given a way out of that with simple logic"
+  - Found (Adam): the bar at a third with no duck is index.html's own loading screen, so main.js never started. Nothing at start waits on the app (the app check is an instant yes/no, the service worker registers on the side). The game is ~167 module files; if one fails to arrive or the browser keeps a broken copy, the whole game never starts, and a refresh reuses the same copies. Owner's "way out" built: index.html's guard (window.dfStarted from main.js) refetches every game file with cache "reload", drops the service worker and reloads, at most twice; then "Duck Friends didn't load. Tap to try again." sw.js no longer touches requests (no fetch handler; still installable). Version 57.
