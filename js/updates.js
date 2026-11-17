@@ -29,6 +29,7 @@ export const UPDATES = [
       "The pistol in the hotbar is now drawn like the one in your duck's hand, in your own colors, instead of the green emoji.",
       "For Dead Ducks Arcade: Justin shouts at the zombies once he has a gun, and runs off when a shot flies close to him.",
       "For Dead Ducks Arcade: A gun being reloaded dips and bobs in its duck's hands.",
+      "For Dead Ducks Arcade: Downpour's rain looks the same but takes less work from your computer.",
     ],
     fixed: [],
   },
