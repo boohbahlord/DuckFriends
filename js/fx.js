@@ -53,6 +53,8 @@ const INK = [
   "#1d100e", // 13 an eye's middle
   "#c7282a", // 14 a flame, cooling
   "#4c4a52", // 15 napalm smoke, dark
+  "#ff3b3b", // 16 the Laser Rifle's flash
+  "#ffd0d0", // 17 the Laser Rifle's flash, hot
 ]; // (and after these, the ducks' own colors, as their chunks fly: inkOf)
 /* a duck's color as one of INK (added the first time, at most 200 of them) */
 function inkOf(hex) {
@@ -247,6 +249,7 @@ export const BLEED_OF = {
   arrow: "arrow",
   bow: "arrow",
   claw: "claw",
+  laser: "small",
 };
 /* the room's two switches (Game Settings): gore off (no blood at all) and heavy effects off (no smoke, muzzle flashes or
    screen shake). game.js sets them every frame from the options; every blood and smoke maker below checks them.
@@ -519,6 +522,18 @@ export const MUZZLE = {
     shake: 0.13,
     kick: 0.45,
   },
+  laser: {
+    reach: 0.45,
+    cone: 0.25,
+    n: 14,
+    core: 3,
+    smoke: 0,
+    puff: 3,
+    drift: 0.4,
+    shake: 0.06,
+    kick: 0.25,
+    ink: [17, 16, 16], // (red, not a gun's yellow: its middle, then out)
+  }, // (the Laser Rifle: a small red flash at its lens, no smoke)
   glauncher: {
     reach: 0.5,
     cone: 0.9,
@@ -556,6 +571,7 @@ export function fxMuzzle(x, y, ang, gun) {
     return;
   }
   /* the flash: pixels in a cone out of the barrel, hot in the middle, gone in a few frames */
+  const [hot, mid, edge] = M.ink || [8, 9, 10];
   for (let k = 0; k < M.n; k++) {
     const d = rnd(0, reach),
       side = rnd(-0.5, 0.5) * (d * M.cone + u * 0.08);
@@ -568,7 +584,7 @@ export function fxMuzzle(x, y, ang, gun) {
       0,
       0,
       rnd(70, 130),
-      d < reach * 0.3 ? 8 : Math.random() < 0.6 ? 9 : 10,
+      d < reach * 0.3 ? hot : Math.random() < 0.6 ? mid : edge,
       d < reach * 0.4 ? M.core : d < reach * 0.75 ? Math.max(2, M.core - 2) : 2, // (bigger pixels in the middle)
     );
   }
@@ -653,6 +669,26 @@ export function fxGroundFire(x, y, r, n = 2) {
       Math.random() < 0.25 ? 2 : 1,
     );
   }
+}
+
+/* steam off something hot at (x, y) on the screen (the Laser Rifle's barrel, the owner's Nov 17): n light puffs that rise
+   slowly and spread; none with heavy effects off, half of them on Low */
+export function fxSteam(x, y, n = 1) {
+  if (noHeavy || (low && Math.random() < 0.5)) return;
+  const u = unit;
+  for (let k = 0; k < n; k++)
+    add(
+      SMOKE,
+      x + rnd(-0.08, 0.08) * u,
+      y,
+      0,
+      rnd(-0.15, 0.15) * u,
+      rnd(-0.05, 0.05) * u,
+      u * rnd(0.45, 0.85),
+      rnd(700, 1200),
+      Math.random() < 0.75 ? 7 : 5,
+      2,
+    );
 }
 
 /* the Angel machine at work (the owner's, Nov 16): sparks thrown up out of its hatch at (x, y) on the screen, h px over
