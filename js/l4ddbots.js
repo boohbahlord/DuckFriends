@@ -36,6 +36,7 @@ import {
   l4Hp,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
+import { WANDER } from "./hangout/justin.js";
 
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
@@ -434,7 +435,7 @@ function justinBot(s, id, now, out) {
     if (wild) {
       /* Justin out in Downpour, with a gun and nothing to hunt: he doesn't follow anyone, he goes where he likes */
       const w = wanderSpot(id, now, x, y);
-      if (w) {
+      if (w && !w.rest) {
         const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y],
           [nx, ny] = walk(x, y, to[0], to[1], run(false));
         if (Math.hypot(nx - x, ny - y) < 3) wander.delete(id);
@@ -499,19 +500,28 @@ function justinBot(s, id, now, out) {
     });
 }
 /* Justin out in Downpour with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
-   close (sprinting while his meter lasts), jumps when one is on him (a jump's i-frames), and otherwise goes exploring: any
-   part of the map, a new spot every few seconds */
+   close (sprinting only while one is close, with his meter: a duck's own), jumps when one is on him (a jump's i-frames),
+   and otherwise strolls about as he does in Duck Cabin */
 const wander = new Map(); // Justin → { x, y, until }
-/* where Justin is wandering to: a spot anywhere on the map, a new one every few seconds or once he's there */
+/* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
+   WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
+   a spot anywhere on the map, walked to; once he's there he stands about (rest: true) until WANDER seconds have gone by
+   since he set off, then the next spot */
 function wanderSpot(id, now, x, y) {
   let w = wander.get(id);
-  if (w && now <= w.until && Math.hypot(w.x - x, w.y - y) >= 90) return w;
+  if (w && now <= w.until)
+    return Math.hypot(w.x - x, w.y - y) < 90 ? { ...w, rest: true } : w;
   w = null;
   for (let i = 0; i < 24 && !w; i++) {
     const tx = Math.random() * W,
       ty = Math.random() * H;
     if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
-      w = { x: tx, y: ty, until: now + 6000 + Math.random() * 6000 };
+      w = {
+        x: tx,
+        y: ty,
+        until:
+          now + (WANDER[0] + Math.random() * (WANDER[1] - WANDER[0])) * 1000,
+      };
   }
   if (w) wander.set(id, w);
   return w;
@@ -585,9 +595,12 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
     scared = forced || d0 < KEEP * 1.4;
   const w = scared ? null : wanderSpot(id, now, x, y);
   let [nx, ny] = [x, y];
-  const far = run(scared);
+  /* he sprints only with a reason (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING"): a
+     zombie close (KEEP) or the shots that scared him; one farther off and he walks away from it. His meter is a duck's
+     own (run: L4.SPRINT to empty, as long to fill, and none until he stops wanting it once it ran out) */
+  const far = run(forced || (!!shot && shot.d === d0) || d0 < KEEP);
   if (scared) [nx, ny] = away(x, y, far, threats);
-  else if (w) {
+  else if (w && !w.rest) {
     const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
     [nx, ny] = walk(x, y, to[0], to[1], far);
     if (Math.hypot(nx - x, ny - y) < far * 0.2) wander.delete(id); // (stuck: another spot next time)

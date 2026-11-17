@@ -5688,3 +5688,45 @@ Adam's numbered reading (1-34) and Q69-Q71: Adam's thread, msg cmsg_01LTpp6fzv8s
 > okay i answered
 
 Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
+
+## Request (2026-11-17 19:11Z, owner, furious, after Version 83)
+
+> WHY THE FUCK DOES IT SAY IN THE LARGEST FONT ACROSS THE SCREEN "CANNOT RELOAD WHILE SPRINTING"  !?!?!?!?!??
+>
+> I DIDNT ASK FOR THAT! I PUT ALL OF THIS EFFORT INTO THIS VISUAL CUES AND NOW WE ARE JUST SPELLINNG IT OUT LOUDLY IN A WAY THAT BLOCKS THE SCREEN WITH SOMETHING LESS LIKE HANDHOLING AND MORE LIKE INSULTING ARE PLAYERS AS MINDLESS RETARDS WITH A POPUP LIKE A VIRUS!?!???!?!?!?! ARE WE FUCKING KIDDING !?!?!?!?!?!?!!
+>
+> REMOVE THAT AND ALSO REMOVING THE NO RELOADING LIKE SPRINGTING STUFF BECAUSE FUCK IT IT ISNT FUN
+>
+> in mad god justin, the game should have weapons behave as they do normally, SO WHY THE FUCKING IS THE GRENADE LAUNCHER PASSING THRU THE ZOMBIES!?!?!? WHY THE FUCK IS JUSTIN NOT DIALOGUING ANYMORE IN HIS OWN FUCKING GAME MODE!?!?!?!?!?!?!?! WTF!!!!!
+> WTF IS THE ZEBRA CAKE NOT WORKING ON THE ZOMBIES!?!?!?!?!
+> WHY IS IT THAT WHEN I HOLD DOWN TO FIRE THAT THE GUN DOESNT FIRE!!?!?!?! THIS ARENT BUGS! THIS IS YOU NOT EVEN LISTENIGN WHEN I SAY MAKE THE WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE eEVEN FOR THE MAD GOD JUSTIN GAME MODE AND THAT MEANS IT SHOULD HAVE THE CODE OBEY THAT COMMAND IN SMALL DETAILS LIKE THAT WHICH DONT BREAK THE GAME OR RUIN IT'S POINT OR PURPOSE!
+>
+> HAVE YOU BEEN MAKING SURE TO PUT NOTES IN OUR CODE!?!?!?
+>
+> ALSO ! WHY THE FUCK ARE ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!
+>
+> WHEN IM IN THE CHURCH AND I SEE THE FUCKING HOLE THE ZOMBIES COME IN FROM I SHOULD BE ABLE TO SEE THEIR AVATAR BECAUSE NOW WALL IS IN THE WAY ! I KNOW WHY IT IS LIKE THAT BUT CLEARLY I SAID SURFACES OR WALLS HIDING THEM, BUT IF THEY COME FROM THE OUTSIDE AND INTO THE INSIDE IN THOSE PLACES ON EITHER CABIN OR GAS STATION THEN THEY HAVE TO NOT BE OUTLINES WITHOUT IMAGE BECAUSE I CAN LITERALLY KNOW BY LOOKING AND SO CAN U THAT NOTHING HIDES THEM
+>
+> the sprint should be removed from mad god justin
+>
+> justin's npc is supposed to same have same reload, weapon cooldown, and sprint +sprint cooldown as everyone else in zombies or default game modes (dont count the boss battle in mad god justin tho), SO WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING !!?!?!? IF THERE ARE NO ZOMBIES ALSO, THEN WHY IS HE SPRINTING!?!?! WHERE IS HE EVEN GOING TO IF THERE ARE NO ZOMBIES IN THE REST PHASES!?!?! HE SHOULD BE CASUALLY WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!
+>
+> every point earned is supposed to be 5 at the lowest, that is the lowest common factor or whatever you call it for everything, that is the lowest unit of money, so why is it when i say justin distributes the money equally in fractions between other players (not counting himself) that I END UP WITH FUCKING 554 POINTS! I LITERALLY TOLD U IN THE LAST COMMAND! GO THROUGH MY COMMMANDS TODAY ADAM AND SEE WHAT YOU DIDNT IMPLEMENT AND FUCKING ASK ME!
+
+## Request (2026-11-17 19:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4so8imzuysMvMdsiLAxV7F): the map vote screen (word for word)
+
+> THE MAPS FOR NOUS WITHIN KENOMA OUGHT TO BE SET NEXT TO EACHOTHER FOR NOW ON AND SAME FOR OTHER MAPS IN THE VOTE MAP SCREEN IN THIS LAYOUT
+>
+> MAP FIRST, THEN FOR THAT MAP IN WHICH THERE ARE VARIATIONS, IT'S VARITIONS FOLLOW AFTER UNTIL ALL VARIATIONS ARE FOLLOWED, THEN AFTER THOSE COMES THE NEXT MAP, AND MAPS ARE IN ORDER WHERE THE last maps are the ones with the most variations and the first of the last of those are the ones with the least amount of variations.
+>
+> the maps need to be fixed to show what they actually look like for the ones that are rly dark and messed up on the vote maps menu without changing the pixel size, like idk what it is but the nous within kenoma maps dont represent the maps well at all
+>
+> remember that every variation of maps is only elected in a bag of that map it's based off of in random and that those shuffle if the map comes up again in random
+>
+> random comes first in the top left instead now instead of top middle
+>
+> the button for voting makes a sound as it fills up AND it glows as you click it or hold it down more and more until a click noise when it is full (yes i know the hold down enter button is fast for it)
+>
+> if it cannot be selected by enter on PC then you simply do not have to hold it down but it still gets a click noise
+
+(the last line added by the owner's edit at 19:23Z)

@@ -155,7 +155,7 @@ export function mountWorld(board, api) {
         t < cam.vh + NEAR &&
         t + h > -NEAR,
       propEl: (id) => els.get(id) || null,
-      coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key),
+      coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi),
       frameOf: (e, i) => frameOf(e, i),
       propEls: (id) => all.get(id) || [],
       /* does something drawn over (l, t, r, b) on the screen, at depth key, hide a duck or a zombie behind it? (as a wall
@@ -662,17 +662,16 @@ export function mountWorld(board, api) {
       : 0;
   /* the walls, roofs and crowns on the screen this frame, and where they cover (for the outlines: coverAt) */
   const covers = [];
-  /* is a box on the screen (l, r, t, b) behind or under something drawn in front of it (its depth: key)? A good part of
-     it covered (HIDDEN); a crown covers whatever is under it. One that is see-through now (my duck is under it or behind
-     it) hides nothing: under my own roof, whoever is under it with me shows as they are */
-  const coverAt = (l, r, t, b, key) => {
+  /* is a box on the screen (l, r, t, b), drawn at z-index zi, really covered by something drawn over it? A good part of
+     it (HIDDEN) under a wall, a roof or a crown whose own z-index is higher: what the screen shows, not inside against
+     outside (the owner's, Nov 17 19:11Z: "I CAN LITERALLY KNOW BY LOOKING AND SO CAN U THAT NOTHING HIDES THEM"). So a
+     zombie climbing in at a window, drawn over the walls and the dark (l4dd.js AT_BOARDS), is never hidden. One that is
+     see-through now (my duck is under it or behind it) hides nothing: under my own roof, whoever is under it with me
+     shows as they are. Holes and doors' see-through drawings never cover (drawProps leaves them out) */
+  const coverAt = (l, r, t, b, zi) => {
     const d = { l, r, t, b };
     for (const c of covers)
-      if (
-        !c.thru &&
-        (c.crown || key < c.key) &&
-        covered(d, c.l, c.r, c.t, c.b) > HIDDEN
-      )
+      if (!c.thru && zi < c.z && covered(d, c.l, c.r, c.t, c.b) > HIDDEN)
         return true;
     return false;
   };
@@ -725,15 +724,17 @@ export function mountWorld(board, api) {
                   d.key < it.key &&
                   covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
               );
-        covers.push({
-          l: hl,
-          r: hr,
-          t: ht,
-          b: hb,
-          key: it.key,
-          crown: it.layer === "crown",
-          thru,
-        });
+        /* what really covers: not a hole smashed through a wall (you see through it into the room, or out of it) nor a
+           door's see-through drawing from the other side of its wall (the owner's, Nov 17 19:11Z) */
+        if (!(it.p && it.p.kind === "hole") && !/door-ghost/.test(it.cls || ""))
+          covers.push({
+            l: hl,
+            r: hr,
+            t: ht,
+            b: hb,
+            z: +e.style.zIndex || 0, // (where it's really drawn: its own z-index, a door's 20001 too)
+            thru,
+          });
         if (e._thru !== thru) {
           e._thru = thru;
           e.classList.toggle("thru", thru);
@@ -952,14 +953,20 @@ export function mountWorld(board, api) {
       return Math.max(0, a.z - L.floorH(a.x, a.y, a.z)) * cam.sc;
     },
     key(id, pos) {
-      const a = at(id, pos);
-      return Math.round(L.sortY(a.x, a.y, a.z)) + 10;
+      const a = at(id, pos),
+        h = !inside && L.roofHoleOver(a.x, a.y, a.z);
+      return h
+        ? Math.round(h.key) + 11
+        : Math.round(L.sortY(a.x, a.y, a.z)) + 10; // (seen from outside through a hole in a roof: over that roof, layout.js)
     },
     hidden(id, pos) {
       const a = at(id, pos);
-      return !L.seenFrom(a.x, a.y, inside, a.z);
+      return (
+        !L.seenFrom(a.x, a.y, inside, a.z) &&
+        !(!inside && L.roofHoleOver(a.x, a.y, a.z))
+      );
     },
-    coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key), // (the outlines: outlines.js)
+    coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi), // (the outlines: outlines.js; zi, its z-index)
     frameOf,
     /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
     at(id) {

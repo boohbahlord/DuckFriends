@@ -150,6 +150,8 @@ export const VOL = {
   uiClose: -26,
   nope: -16,
   tick: -15,
+  holdFill: -22, // (the Vote button filling as it's held: soft)
+  holdClick: -14, // (… and full)
   done: -23,
   bell: -14,
   ping: -17,
@@ -222,7 +224,10 @@ const LITE = { voices: 8, cap: 2, far: 0.12 };
 const lite = () => netLevel() > 0;
 const NEAR = 300, // world px: full up to here …
   FAR = 1500; // … and nothing from here (as Duck Cabin's)
-const UI = ["uiPress", "uiOn", "uiOff", "uiOpen", "uiClose", "nope", "tick"];
+const UI = [
+  ...["uiPress", "uiOn", "uiOff", "uiOpen", "uiClose", "nope", "tick"],
+  ...["holdFill", "holdClick"],
+];
 /* Duck Cabin's and Downpour's own: the grounds' footsteps, a stroke, a fall's thud, the wind, the fireplace */
 const WORLD = [
   ...["stepGrass", "stepHard", "stepMetal", "stepWater", "swim", "thud"],
@@ -771,6 +776,35 @@ const ouch = () => {
   return play("quack", { k: 0.6, rate: 1.1 + Math.random() * 0.08 });
 };
 
+/* the Vote button held (the owner, Nov 17 19:22Z: "makes a sound as it fills up ... until a click noise when it is
+   full"): a soft sweep rising over the hold's ms (its recording is HOLD_S long, sped up or slowed to fit), faded out
+   over about 0.1 s when let go early or once full, and a click when full (game.js holdStart, holdEnd) */
+const HOLD_S = 0.52;
+let holdV = null;
+function holdStop() {
+  const v = holdV;
+  holdV = null;
+  if (!v || v.cut || !ac) return;
+  const t = soon(),
+    g = v.g.gain;
+  if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
+  else {
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+  }
+  g.setTargetAtTime(0, t, 0.02);
+  try {
+    v.src.stop(t + 0.15); // (past 6 time constants: silent by then)
+  } catch (e) {}
+  v.cut = true;
+}
+function holdFill(ms = 500) {
+  holdStop();
+  const rate = Math.max(0.5, Math.min(2, (HOLD_S * 1000) / Math.max(1, ms)));
+  holdV = play("holdFill", { rate });
+  return holdV;
+}
+
 /* the menus: a faint press for every button, a toggle's own sounds for on and off (its aria-pressed or a checkbox) */
 addEventListener(
   "click",
@@ -781,6 +815,7 @@ addEventListener(
         'button, [role="button"], a.btn, input[type="checkbox"], select',
       );
     if (!b || b.disabled || b.classList.contains("win-x")) return; // (a window's X: its closing sound)
+    if (b.classList.contains("vote-btn") || b.dataset.a === "hang") return; // (the Vote button and the use button click their own way: game.js, sfx.holdClick)
     if (b.type === "checkbox") play(b.checked ? "uiOn" : "uiOff");
     else if (b.getAttribute("aria-pressed") === "false") play("uiOn");
     else if (b.hasAttribute("aria-pressed"))
@@ -821,6 +856,9 @@ const SFX = {
   land,
   hit,
   ouch,
+  holdFill,
+  holdStop,
+  holdClick: () => play("holdClick"),
   swish: named("throw"),
   nuke: (o = {}) => {
     play("nukeRing", o); // (a flashbang's ring in the ears, as the roar starts: the owner, Nov 16)

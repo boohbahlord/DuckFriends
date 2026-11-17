@@ -75,6 +75,8 @@ instruments (its license: LICENSES.md).
 | uiClose | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | nope | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | tick | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| holdFill | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
+| holdClick | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | done | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | bell | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |
 | ping | Kenney, Interface Sounds — https://kenney.nl/assets/interface-sounds | CC0 1.0 |

@@ -182,7 +182,6 @@ import {
   isL4dd,
   l4Use,
   l4Reload,
-  l4Unreload,
   l4Shots,
   l4Holds,
   kitOf,
@@ -387,13 +386,15 @@ const winner = (n, pool) => {
   return anyOf(top ? tied : pool);
 };
 /* the maps the map vote and Random choose from: every board map in each of its forms (Euclid's Squares still or
-   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Every map's
-   variations sit at the bottom of the list, after all the maps (owner, Nov 16) */
+   zooming, Shelter Sky & Null in colors or black and white). Duck Cabin comes with its own games. Each map, then
+   right after it its variations, then the next map; the maps without variations first, and the more variations a map
+   has the later it comes (the owner's, Nov 17 19:22Z: "MAP FIRST, THEN ... IT'S VARITIONS FOLLOW AFTER ... the last
+   maps are the ones with the most variations") */
 const MAP_IDS = MAPS.map((m) => m[0]);
-export const VOTE_MAPS = [
-  ...MAP_IDS,
-  ...MAP_IDS.flatMap((id) => (MAP_FORMS[id] || []).filter((f) => f !== id)),
-];
+const formsOf = (id) => (MAP_FORMS[id] || []).filter((f) => f !== id);
+export const VOTE_MAPS = MAP_IDS.map((id, i) => [id, i])
+  .sort(([a, i], [b, j]) => formsOf(a).length - formsOf(b).length || i - j)
+  .flatMap(([id]) => [id, ...formsOf(id)]);
 /* Random's map, and the map vote's dice (owner, Nov 16): a bag of maps, each holding a bag of its variations, so the
    variations never crowd out the other maps. The map played least tonight comes first (never the one just played while
    another is left), then the variation of it played least. s.mapPlays = { m: { map: n }, f: { variation: n } } */
@@ -2498,21 +2499,6 @@ function reduceStep(state, a, now) {
               ),
             ]; // (a burst's rounds leave one after another: each waits until its time, t)
       }
-      return s;
-    }
-    case "unreload": {
-      // sprinting cancels a reload under way, except a shotgun's (the owner's, Nov 17): what was in the magazine stays
-      if (me && isL4dd(s)) return l4Unreload(s, a, now) ? s : state;
-      const mag = { ...(s.mag || {}) };
-      let any = false;
-      for (const [k, m] of Object.entries(mag))
-        if (m && m.r > now && (k === a.id || k.startsWith(a.id + " "))) {
-          const { r, d, ...rest } = m;
-          mag[k] = rest;
-          any = true;
-        }
-      if (!any) return state;
-      s.mag = mag;
       return s;
     }
     case "reload": {

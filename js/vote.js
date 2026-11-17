@@ -11,6 +11,7 @@ import { esc } from "./ui.js";
 import { rainbowHTML, artBackdrop, gameSymbol, diceSVG } from "./art.js";
 import { modeOf, CATS, CABIN_MODES } from "./modes.js";
 import { mapName, mapForm, mountPreview } from "./maps.js";
+import { isNwk } from "./nwk.js";
 import { duckSVG } from "./duck.js";
 import { seenDuck } from "./looks.js";
 import { voteIds, voteLeft, DICE, voteNeeds } from "./rules.js";
@@ -43,6 +44,8 @@ function mapTile(id) {
     return `<button type="button" class="vt-map vt-dice" data-v="${DICE}"><span class="vt-pic"><span class="vt-die">${diceSVG(96)}</span></span><span class="vt-name">Random</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
   const f = mapForm(id),
     [name, form] = mapName(id).split(/ \((.+)\)$/);
+  if (isNwk(f.map))
+    return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic" data-still="${id}"></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`; // (its picture: a still of the map itself, stills())
   return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><svg class="vt-still${f.grey ? " grey" : ""}" viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${artBackdrop(f.map)}</svg></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
 function zmapTile(id) {
@@ -98,7 +101,9 @@ function build(R, pause) {
     left: null, // the second the clock shows
     tick: setInterval(clock, 50),
     lv: "",
+    stills: [],
   };
+  stills();
   const pick = (e) => e.target.closest && e.target.closest("[data-v]");
   el.addEventListener("click", (e) => {
     if (e.target.closest(".vt-pause")) return W.pause && W.pause();
@@ -147,6 +152,25 @@ function build(R, pause) {
         hover(b.dataset.v);
     });
   }
+}
+
+/* Nous Within Kenoma's pictures (owner, Nov 17: "the nous within kenoma maps dont represent the maps well at all"): a
+   drawing of them can't be its static, its one-pixel strings, its scan lines and its lights at the grid's own size, so
+   each is the map itself, the same scene as the one that moves under the pointer, drawn once and then left still. A
+   new size (the window turned or resized) draws it again at that size */
+function stills() {
+  for (const pic of W.el.querySelectorAll("[data-still]")) {
+    const p = mountPreview(pic, pic.dataset.still);
+    pic.lastElementChild.classList.add("vt-still", "vt-nwk");
+    W.stills.push(p);
+  }
+  const draw = () => {
+    if (W) for (const p of W.stills) p.update(now());
+  };
+  draw();
+  requestAnimationFrame(draw); // (and once it's laid out, in case it wasn't yet)
+  W.redraw = draw;
+  addEventListener("resize", draw);
 }
 
 /* the maps that move: the one under the pointer or a finger, and the one you voted for (the dice has no map) */
@@ -259,6 +283,8 @@ export function closeVotes() {
   clearTimeout(W.hold);
   cancelAnimationFrame(W.raf);
   for (const p of W.live.values()) p.destroy();
+  for (const p of W.stills) p.destroy();
+  removeEventListener("resize", W.redraw);
   W.el.remove();
   W = null;
 }

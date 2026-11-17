@@ -15,11 +15,11 @@
      l4   { r: round, t0: when its zombies start coming (the round's "Round N" shows BREAK before), n: zombies in it,
             made: how many came so far, owe: held back while the board is full, acc, sec: the spawning's clock, next:
             the next zombie's number, over: { at, r } once nobody is standing, bp: { "id opening": points for boards there this round } }
-     zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 8 + st (st 0 coming,
+     zp   [i, x, y, k, i, x, y, k, …]: every zombie's spot in world px (whole numbers) and k = hp · 16 + st (st 0 coming,
           1 tearing the boards, 4 climbing in, 2 in, 3 dead; Downpour: 5 over the fence, 6 up a wall onto a roof, 7 on a
-          roof), sent every heartbeat
+          roof, 8 jumping onto the canopy), sent every heartbeat
      zs   { i: [a, dir] }: a zombie's last swipe (ms since t0) and its way (1/100 radians), only for one that swiped
-     (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d] }, n since when it's at a
+     (the host keeps the rest to itself, in s.hidden, which never goes online: l4z { i: [n, d, { cm, k, fl, wp, j }] }, n since when it's at a
      duck (0: not), d its tear clock (st 1) or when it died (st 3); l4tk its last heartbeat)
      zw   { i: "B3c1…" }: the wounds hits left on a zombie, two letters each (wound(), l4ddart.js' hitsOf)
      zl   { i: [max hp, speed (px a second at the Normal Walking speed), opening, size, build, hat, outfit] }: set once, when it comes
@@ -319,7 +319,7 @@ export const ARMS = {
   },
   /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
      the Tommy a round every 120 ms from a 50-round drum; the UMP-45 a round every 0.30 s, 2 damage a bullet, 20 rounds,
-     a 1.6 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+     a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
   tommy: {
     kind: "ranged",
     auto: true,
@@ -328,8 +328,8 @@ export const ARMS = {
     dmg: 1,
     speed: 1100,
     mag: 50,
-    all: 50 * 4,
-    reload: 2400,
+    all: 50 * 6, // (more ammo than the SMG's 260, and the SMG's reload: "the same stats as the SMG but slower fire rate but larger ammo capacity", the owner's, Nov 17 11:07Z)
+    reload: 1400,
     k: "tommy",
   },
   ump: {
@@ -341,7 +341,7 @@ export const ARMS = {
     speed: 1100,
     mag: 20,
     all: 20 * 6,
-    reload: 1600,
+    reload: 1400, // ("same reload", the owner's, Nov 17 11:21Z: the SMG's and the Tommy gun's)
     k: "ump",
   },
   ak: {
@@ -612,13 +612,25 @@ export const SHOP = [
    Everything he sells is 20% dearer, the ammo too (the owner's, Nov 4): bullets 6 for 2, arrows 6 for 5, the knife 120 */
 const SHOP_MORE = 1.2;
 export const GUN_SHOP = ["handgun", "revolver", "knife", "shotgun", "bow"];
-export const AMMO_PRICE = { bow: [6, 5], gun: [6, 2] }; // (points, for how many: arrows; every other gun's bullets)
+/* (points, for how many: arrows; every other gun's bullets. In fives, the smallest unit of money (the owner's, Nov 17
+   19:11Z): bullets 15 for 5 cost what 6 for 2 did, arrows 5 for 4 is the nearest to 6 for 5) */
+export const AMMO_PRICE = { bow: [5, 4], gun: [15, 5] };
 const KNIFE_PRICE = 120;
 const ammoLeft = (c) => (c ? c[0] + c[1] : 0);
+/* (5 points is the smallest unit of money, for everything: the owner's, Nov 17 19:11Z, "every point earned is supposed
+   to be 5 at the lowest". So what ammo costs, 6 for 2, rounds up to the next 5 for the whole buy) */
 const ammoCost = (w, n) => {
   const [p, k] = AMMO_PRICE[w] || AMMO_PRICE.gun;
-  return Math.ceil(n / k) * p;
+  return fives(Math.ceil(n / k) * p, 1);
 };
+/* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest */
+export const fives = (n, dir = 0) =>
+  5 *
+  (dir > 0
+    ? Math.ceil(n / 5)
+    : dir < 0
+      ? Math.floor(n / 5)
+      : Math.round(n / 5));
 /* what gun w costs to buy when I haven't got it */
 export const buyPrice = (w) => {
   const full = fullAmmo(w);
@@ -642,7 +654,7 @@ export const priceOf = (id, n) =>
     ? ACC_PRICE
     : id === "qr"
       ? QR_PRICE
-      : Math.round(
+      : fives(
           UP_TIMES *
             SHOP_MORE *
             {
@@ -662,13 +674,13 @@ const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's,
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
 export const safePrice = (s) =>
-  saleOn(s) ? Math.ceil(SAFE.PRICE / 2) : SAFE.PRICE; // (a Sale halves it, every time)
+  saleOn(s) ? fives(SAFE.PRICE / 2, 1) : SAFE.PRICE; // (a Sale halves it, every time; in fives)
 export const saleOn = (s) => !!(s && s.hang && s.hang.l4sale); // (for DROP.FOR: dropTick ends it)
 export const priceFor = (s, id, what, n) => {
   const full = what === "box" ? BOX.price : priceOf(what, n);
   if (!saleOn(s)) return full;
   const used = (s.hang.l4sale.used || {})[id] || {};
-  return what !== "box" && used[what] ? full : Math.ceil(full / 2);
+  return what !== "box" && used[what] ? full : fives(full / 2, 1); // (half, in fives)
 };
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
@@ -1230,7 +1242,12 @@ const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 const zOk = (x, y, z) =>
   playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
-/* the zombies as objects, from the state's three parts, and back */
+/* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
+   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy. These went missing at every
+   heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
+   ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
+const KEEP = ["cm", "k", "fl", "wp", "j"];
+/* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
     zs = s.hang.zs || {},
@@ -1247,13 +1264,14 @@ function zombies(s) {
       i,
       x: zp[k + 1],
       y: zp[k + 2],
-      hp: Math.floor(zp[k + 3] / 8),
-      st: zp[k + 3] % 8,
+      hp: Math.floor(zp[k + 3] / 16),
+      st: zp[k + 3] % 16,
       a: sw[0],
       dir: sw[1],
       n: h[0],
       d: h[1],
       l,
+      ...(h[2] || {}), // (its way up kept to, its roof, its flank, its jump: KEEP)
     });
   }
   return out;
@@ -1264,9 +1282,12 @@ function store(s, zs, keepStatic) {
     mine = {},
     zl = {};
   for (const z of zs) {
-    zp.push(z.i, Math.round(z.x), Math.round(z.y), z.hp * 8 + z.st);
+    zp.push(z.i, Math.round(z.x), Math.round(z.y), z.hp * 16 + z.st);
     if (z.a > -1e5) sw[z.i] = [Math.round(z.a), z.dir];
     mine[z.i] = [Math.round(z.n), Math.round(z.d)];
+    const x = {};
+    for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
+    if (Object.keys(x).length) mine[z.i].push(x);
     zl[z.i] = z.l;
   }
   const sig = (o) => JSON.stringify(o);
@@ -1421,6 +1442,7 @@ function addPts(s, id, n) {
     if (n > 0) s.hang.l4jp = (s.hang.l4jp || 0) + n; // (Justin's points go in the pot for everyone: potSplit)
     return;
   }
+  n = fives(n); // (never anything but fives, whatever adds them: the owner's, Nov 17 19:11Z)
   if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
@@ -2494,13 +2516,6 @@ export function l4Reload(s, a, now) {
   finishReload(m, now);
   if (!startReload(s, a.id, m, w, now)) return false;
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
-  return true;
-}
-/* sprinting cancels a reload (the owner's, Nov 17 17:41Z; not a shotgun's, which has none): the magazine stays as it was */
-export function l4Unreload(s, a, now) {
-  const m0 = kitOf(s, a.id);
-  if (!m0 || !m0.rl || now >= m0.rl) return false;
-  s.hang.l4a = { ...s.hang.l4a, [a.id]: { ...m0, rl: 0, rw: "" } };
   return true;
 }
 /* what the power box's rules (l4ddpower.js) use of these */

@@ -215,7 +215,6 @@ import {
   l4SafeHint,
   laserEnd,
   l4Ammo,
-  l4Warn,
   l4ZBoxes,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
@@ -1153,30 +1152,11 @@ let othersSig = "",
   myBox = null, // my duck's box in the last frame, in the board's px
   allBoxes = [], // every duck's box in the last frame, in the board's px (mine too)
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
-/* Mad God Justin's sprint (the owner's, Nov 17): a second of it, back as fast as it was lost. mgjStam is what's left (0 … 1);
-   run dry, I can't sprint again until Shift is let go */
-const MGJ_SPRINT_MS = 1000;
-let mgjStam = 1,
-  mgjTired = false;
-function mgjSprint(on, dt) {
-  if (on && !mgjTired && mgjStam > 0) {
-    mgjStam = Math.max(0, mgjStam - (dt * 1000) / MGJ_SPRINT_MS);
-    if (mgjStam <= 0) mgjTired = true;
-    return true;
-  }
-  if (!on) mgjTired = false;
-  mgjStam = Math.min(1, mgjStam + (dt * 1000) / MGJ_SPRINT_MS);
-  return false;
-}
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isL4dd(s)
-      ? sprintLeft()
-      : isMgj(s)
-        ? [mgjStam, mgjTired]
-        : [null, false];
+    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false]; // (Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -1776,7 +1756,7 @@ function drawDucks(now = clockNow()) {
             at.left + size * 0.4,
             b - size * 0.9,
             b,
-            d._zi - 10,
+            d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
           );
         if (olMe !== null) {
           const a = world.at(id),
@@ -2461,7 +2441,7 @@ function drawDucks(now = clockNow()) {
       mark.style.transform = tr;
     }
     mark.classList.remove("gone");
-    mark.classList.toggle("sprint", !!target.sprint);
+    mark.classList.toggle("sprint", !!target.sprint && !isMgj(s)); // (Mad God Justin: no sprint, so no sprint mark)
   } else if (mark) mark.classList.add("gone");
   // hotdogs hang around their duck, then fade; an item (mug, gun, spray, trombone) stays with its duck while it walks
   // (Hangout: sorted with their duck, so the stage or a couch covers them too)
@@ -4415,9 +4395,7 @@ function step(dt, now) {
     k("ShiftRight") ||
     stick.sprint ||
     !!(target && target.sprint);
-  if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
-  runNow = sprinting && !!(hx || vy);
-  runReloadCheck(s, now);
+  if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4634,8 +4612,6 @@ function hangStep(dt, now) {
   } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
   const jk = jetKeys(),
     jt = !!me.jf && (jk.up || jk.hold);
-  runNow = sprinting && !!(ax || ay);
-  runReloadCheck(R.state, now);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   jetAfter(jt, dt); // (the jets' flames, my fuel)
   moving = ev.moved;
@@ -5709,51 +5685,8 @@ const dots = (id) =>
           ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
-/* No reloading while sprinting, except a shotgun (the owner's, Nov 17 17:41Z and 18:05Z: "running means sprinting with
-   shift yes"): R does nothing while I run, with a note and the error sound, and a reload under way is cancelled the
-   moment I sprint. A bow's, a dagger's or a melee weapon's cooldown is no reload and is never touched */
-const NO_RUN_OK = ["shotgun", "dbarrel"];
-let runNow = false, // sprinting with Shift or the stick, and moving
-  runWarnAt = 0,
-  runCancelAt = 0;
-function runWarn() {
-  const now = performance.now();
-  if (now - runWarnAt < 900) return;
-  runWarnAt = now;
-  if (isL4dd(R.state)) l4Warn("Can't reload while sprinting");
-  else {
-    say("Can't reload while sprinting", true);
-    sfx.nope();
-  }
-  noReload(); // (the white bar flashes red, meters.js)
-}
-/* a reload of mine under way (not a shotgun's): its weapon, or null */
-function myReloadW(s, now) {
-  if (isL4dd(s)) {
-    const kit = kitOf(s, R.me);
-    return kit && kit.rl > now ? kit.rw : null;
-  }
-  for (const [k, m] of Object.entries(s.mag || {}))
-    if (m && m.r > now && (k === R.me || k.startsWith(R.me + " ")))
-      return k === R.me ? "handgun" : k.slice(R.me.length + 1);
-  return null;
-}
-function runReloadCheck(s, tnow) {
-  if (!runNow || !R || !onBoardPhase()) return;
-  const t = performance.now();
-  if (t - runCancelAt < 250) return;
-  const w = myReloadW(s, clockNow());
-  if (!w || NO_RUN_OK.includes(w)) return;
-  runCancelAt = t;
-  R.send({ t: "unreload" });
-  runWarn();
-}
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
-  if (R && onBoardPhase() && runNow && !NO_RUN_OK.includes(heldNow())) {
-    runWarn();
-    return true;
-  }
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
     if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
@@ -7111,9 +7044,10 @@ const holdMs = () => {
   const v = profile.settings.holdVote;
   return v === undefined ? 500 : +v || 0;
 };
-const holdBtn = (b) =>
-  !!holdMs() &&
-  (b.classList.contains("vote-btn") || (b.dataset.a === "hang" && touchOnly()));
+/* only what Enter does on a computer is held: the Vote button. Anything Enter can't press (the phone's use button)
+   acts at once with a click (the owner's, Nov 17 19:23Z: "if it cannot be selected by enter on PC then you simply do
+   not have to hold it down but it still gets a click noise") */
+const holdBtn = (b) => !!holdMs() && b.classList.contains("vote-btn");
 let held1 = null; // { a, key, t0, ms, raf, timer }: what is held now (its data-a), what holds it (a pointer's id or "Enter")
 /* the button's own element is drawn again whenever the screen refreshes, so the stripe is painted on whichever one
    stands there now, every frame */
@@ -7125,7 +7059,7 @@ function holdPaint() {
     u = Math.min(1, (performance.now() - held1.t0) / held1.ms);
   if (b) {
     b.classList.add("holding");
-    b.style.setProperty("--hold", u.toFixed(3));
+    b.style.setProperty("--hold", u.toFixed(3)); // (the stripe, and the glow growing with it: css .holding)
   }
   held1.raf = requestAnimationFrame(holdPaint);
 }
@@ -7140,9 +7074,13 @@ function holdStart(a, key) {
     timer: setTimeout(() => {
       const h = held1;
       holdEnd();
-      if (h && holdNow(h.a)) act(h.a);
+      if (h && holdNow(h.a)) {
+        sfx.holdClick(); // (full: a click, the owner's, Nov 17 19:22Z)
+        act(h.a);
+      }
     }, ms),
   };
+  sfx.holdFill(ms); // (a sound rising as the button fills, the owner's, Nov 17 19:22Z: "makes a sound as it fills up")
   holdPaint();
 }
 function holdEnd(e) {
@@ -7151,6 +7089,7 @@ function holdEnd(e) {
   if (e && e.code && held1.key !== "Enter") return;
   clearTimeout(held1.timer);
   cancelAnimationFrame(held1.raf);
+  sfx.holdStop(); // (let go early: the filling sound fades out)
   for (const b of S ? S.querySelectorAll(".holding") : [])
     b.classList.remove("holding");
   held1 = null;
@@ -7255,7 +7194,10 @@ function keydown(e) {
     const vb =
       S && [...S.querySelectorAll(".vote-btn")].find((b) => !b.disabled);
     if (vb && holdMs()) holdStart(vb.dataset.a, "Enter");
-    else act("end");
+    else {
+      if (vb) sfx.holdClick(); // (Hold to vote off: Enter votes at once, with the click)
+      act("end");
+    }
   }
 }
 const keyup = (e) => {
@@ -7569,20 +7511,26 @@ function holdTrigger(shoot) {
   go();
 }
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
-   down fires, and again as soon as it can while the button stays down */
+   down fires, and again as soon as it can while the button stays down. In Mad God Justin every weapon does, as in Dead
+   Ducks Arcade (l4Press): the owner's, Nov 17 19:11Z, "WHY IS IT THAT WHEN I HOLD DOWN TO FIRE THAT THE GUN DOESNT FIRE
+   ... MAKE THE WEAPONS BEHAVE AS THEY DO IN THE ZOMBIE GAME MODE eEVEN FOR THE MAD GOD JUSTIN GAME MODE". The Chair and the
+   Zebra cake, thrown things, still go once a click */
+const repeats = (w) =>
+  AUTO.includes(w) ||
+  (!!w && !!R && isMgj(R.state) && !["zebra", "chair"].includes(w));
 let autoDid = false;
 function autoPress(e) {
   if (
     !R ||
     isL4dd(R.state) ||
     e.pointerType !== "mouse" ||
-    !AUTO.includes(held) ||
+    !repeats(held) ||
     !heldClick(e)
   )
     return;
   autoDid = true;
   holdTrigger(() => {
-    if (!R || !AUTO.includes(held) || !onBoardPhase()) return 0;
+    if (!R || !repeats(held) || !onBoardPhase()) return 0;
     fire(held);
     return Math.max(60, coolFor(held, R.state));
   });
@@ -7816,7 +7764,11 @@ register("game", {
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
-        else act(b.dataset.a);
+        else {
+          if (b.dataset.a === "hang" || b.classList.contains("vote-btn"))
+            sfx.holdClick(); // (the use button, and the Vote button when Hold to vote is off: no hold, still the click)
+          act(b.dataset.a);
+        }
         return;
       }
       if (isL4dd(R.state) && e.target.closest(".board")) {
@@ -7825,7 +7777,7 @@ register("game", {
         return;
       } // (Quacky Zombies: the mouse button fires as it goes down, l4Down below; a tap walks)
       if (heldClick(e)) {
-        if (autoDid && AUTO.includes(held)) autoDid = false;
+        if (autoDid && repeats(held)) autoDid = false;
         else fire(held); // (a gun that fires while the mouse button is down already did: autoPress)
         return;
       } // a weapon kept out: a left click uses it

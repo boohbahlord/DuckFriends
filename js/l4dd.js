@@ -18,6 +18,7 @@ import {
   inCabin,
   seenFrom,
   sortY,
+  roofHoleOver,
   heightAt,
   W,
   H,
@@ -412,21 +413,16 @@ function lits() {
 }
 
 /* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
-   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it. Returns whether
-   something hides it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
-function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
+   when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
+   drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
+   it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi = 0) {
   const w = o.bw * sc,
     h = o.bh * sc,
     y = f.top + (dip - o.feet) * sc,
     hid =
       hidden ??
-      Wd.coverAt(
-        f.left - w * 0.4,
-        f.left + w * 0.4,
-        y + h * 0.1,
-        f.top,
-        Math.round(sortY(o.x, o.y, z)),
-      );
+      Wd.coverAt(f.left - w * 0.4, f.left + w * 0.4, y + h * 0.1, f.top, zi);
   olAdd({
     id: "z" + o.i,
     img: o.img,
@@ -1834,7 +1830,6 @@ function peek(tag, s, me) {
   void el.offsetWidth;
   el.classList.add("go");
 }
-export const l4Warn = (text) => say(text); // (game.js: a note over the board with the error sound)
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;
@@ -2367,7 +2362,13 @@ activity({
             : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
-        unseen = !(door || seenFrom(o.x, o.y, Wd.inside, z)),
+        hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
+        unseen = !(door || hole || seenFrom(o.x, o.y, Wd.inside, z)),
+        zi = door
+          ? AT_BOARDS
+          : hole
+            ? Math.round(hole.key) + 11 // (over the roof, in its hole)
+            : Math.round(sortY(o.x, o.y, z)) + 10,
         onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -2393,7 +2394,7 @@ activity({
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =
-        o.st !== 3 && zOutline(Wd, o, f, dip, sc, null, z, myFloor); // (behind a wall, under a roof: its line only)
+        o.st !== 3 && zOutline(Wd, o, f, dip, sc, null, z, myFloor, zi); // (really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);
@@ -2419,7 +2420,6 @@ activity({
         o.k = sc;
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
-      const zi = door ? AT_BOARDS : Math.round(sortY(o.x, o.y, z)) + 10;
       if (o.zi !== zi) {
         o.zi = zi;
         o.el.style.zIndex = zi;
