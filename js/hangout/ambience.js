@@ -5,7 +5,7 @@
    a fire place if your closer to it".
 
    Each is a long loop (sound.js): the wind on Duck Cabin (Hangout's and Quacky Zombies'), the rain on Downpour. Indoors
-   both are muffled (a low-pass glided down) and quieter; out on the deck or the grass, clear. The wind also swells and
+   both are muffled (a low-pass glided down) and a little quieter; out on the deck or the grass, clear. The wind also swells and
    dies away by itself, on top of its own gusts. Every fireplace and campfire crackles where it stands, louder the
    closer my duck is (and on the side it's on); one put out goes quiet. */
 import { activity } from "./registry.js";
@@ -13,8 +13,11 @@ import { loop } from "../sound.js";
 import { PROPS, whereIn, layoutVariant, layoutRev } from "./layout.js";
 
 const OPEN = 5000, // Hz: the low-pass outside (clear)
-  SHUT = 600, // … inside (through the walls)
-  IN_K = 0.55, // and that much as loud inside
+  SHUT = 600, // … a fire in another room (through its walls)
+  /* the wind and the rain from inside: muffled, but still plainly there (the owner, Nov 17 16:22Z: inside, the wind
+     had been turned down so far it couldn't be heard; muffle it rather than quieten it). The wind is mostly low
+     already, so its low-pass sits lower to be heard as muffled; each loses only a little level */
+  IN = { wind: { lp: 450, k: 0.9 }, rain: { lp: 700, k: 0.8 } },
   SWELL = [6000, 14000], // ms: the wind swells or dies away to a new level this often …
   SWELL_K = [0.35, 1], // … between these
   SWELL_S = 4, // s it takes to get there
@@ -71,14 +74,14 @@ activity({
       ins = here > 0;
     if (ins !== inside) {
       inside = ins;
-      air.l.tone(ins ? SHUT : OPEN);
-      air.l.set(air.k * (ins ? IN_K : 1), 0.6);
+      air.l.tone(ins ? IN[air.name].lp : OPEN);
+      air.l.set(air.k * (ins ? IN[air.name].k : 1), 0.6);
     }
     /* the wind comes and goes */
     if (air.name === "wind" && now >= air.swell) {
       air.swell = now + rnd(SWELL[0], SWELL[1]);
       air.k = rnd(SWELL_K[0], SWELL_K[1]);
-      air.l.set(air.k * (inside ? IN_K : 1), SWELL_S);
+      air.l.set(air.k * (inside ? IN.wind.k : 1), SWELL_S);
     }
     /* the fires: each fireplace or campfire that's lit crackles where it stands */
     const s = ctx.state();
