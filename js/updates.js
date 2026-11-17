@@ -19,6 +19,7 @@ export const UPDATES = [
       "For Dead Ducks Arcade: While someone revives you, your bleed-out timer pauses.",
       "For Dead Ducks Arcade: A downed duck turns greyer as its time runs out, and it gets a pistol with endless bullets that still reloads. The pistol goes away when the duck is revived.",
       "For Dead Ducks Arcade: The Angelic pistols now take turns, one bullet at a time, and fire twice as fast as the plain pistol. They hold a 16-round magazine and take twice as long to reload, and a crit sets off a blast half a grenade's size with a weaker boom.",
+      "The LMG, sniper, chain gun (most of all), shotguns and revolver shake the screen more, and explosions now shake it too (small ones less).",
       "For Mad God Justin: A revive now takes 3 s and brings the duck back at half its HP. A duck out of HP turns grey and can still fire a pistol that reloads.",
     ],
     fixed: [],
