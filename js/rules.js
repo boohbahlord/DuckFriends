@@ -190,6 +190,7 @@ import {
   laserNext,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
+import { hOk, hLock } from "./heights.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   MAPS,
@@ -3859,6 +3860,16 @@ function moveShots(s, now) {
    as every duck's bullets are (the grenade launcher's grenade keeps its own) */
 const gunSpeed = (w) =>
   (ARMS[w].speed / BOARD_PX) * (w === "glauncher" ? 1 : FASTER);
+/* a duck's height for a shot (heights.js): in Hangout and Quacky Zombies its feet's (world px); on the boards 0, or
+   flying, its jetpack's */
+const duckH = (s, p) =>
+  isHang(s) ? +p.z || 0 : p.jf ? (+p.fz || 0) * DUCK_PX : 0;
+const DUCK_PX = 64;
+/* can shot sh reach duck p at its height (and no roof between: Downpour)? */
+const shotReach = (s, sh, p) =>
+  isHang(s)
+    ? hOk(sh, duckH(s, p), p.x * HW, p.y * HH, sh.x0 * HW, sh.y0 * HH)
+    : hOk(sh, duckH(s, p));
 /* the first duck in the way of a shot from (sh.lx, sh.ly) to at, within a duck's room of the line: its id, how far
    along (0 … 1) and where, or null (not the shooter, a duck that's down or jumping over it, a ghost, the other side
    of the cabin's walls) */
@@ -3875,9 +3886,9 @@ function firstDuck(s, sh, at, now) {
     if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
       continue;
     if (
-      sh.hin !== undefined &&
-      ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
-        Math.abs((+p.z || 0) - sh.hz) > 48)
+      (sh.hin !== undefined &&
+        (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+      !shotReach(s, sh, p)
     )
       continue;
     if (dodges(s, p, now) || vdSafe(s, id)) continue;
@@ -4112,11 +4123,11 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       if (id === sh.by || !p || p.x < 0 || !P || P.dead || isGhost(s, id))
         continue;
       if (
-        sh.hin !== undefined &&
-        ((inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin ||
-          Math.abs((+p.z || 0) - sh.hz) > 48)
+        (sh.hin !== undefined &&
+          (inCabin(p.x * HW, p.y * HH) ? 1 : 0) !== sh.hin) ||
+        !shotReach(s, sh, p)
       )
-        continue; // (the other side of the walls, or above or below it)
+        continue; // (the other side of the walls, or above or below it: heights.js)
       if (dodges(s, p, now)) continue; // jumped over it
       if (isMgj(s) && sh.by !== JUSTIN_ID) continue; // (Mad God Justin: the ducks are on one side)
       if (vdSafe(s, id)) continue; // (Valentine's Duck Date: the two at the table)
@@ -4134,6 +4145,7 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         od = Math.hypot(ox, oy);
       if (od < (sh.r || 1)) {
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
+        hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
         const safe = isMgj(s) && mgjSafe(s, id, now);
         logHit(s, sh.by, id, now);
@@ -4196,13 +4208,16 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
       (x, y, z, side) => {
         if (
           sh.hin !== undefined &&
-          (side !== sh.hin || Math.abs(z - sh.hz) > 48)
+          (side !== sh.hin ||
+            !hOk(sh, z, x * HW, y * HH, sh.x0 * HW, sh.y0 * HH))
         )
           return null;
         const px = (x - x0) / rx,
           py = (y - y0) / ry,
           k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-        return Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) || null;
+        const on = Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1);
+        if (on && sh.hin !== undefined) hLock(sh, z);
+        return on || null;
       },
       now,
     );
@@ -4235,7 +4250,10 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
   if (sh.hin !== undefined && at.z > -0.15 && at.z < 1.05)
     for (const n of hangTargets(s, now, sh.k)) {
       // (Hangout: Justin can be knocked down too, and a chair whooshes the shadow duck away)
-      if ((inCabin(n.x, n.y) ? 1 : 0) !== sh.hin || Math.abs(n.z - sh.hz) > 48)
+      if (
+        (inCabin(n.x, n.y) ? 1 : 0) !== sh.hin ||
+        !hOk(sh, n.z, n.x, n.y, sh.x0 * HW, sh.y0 * HH)
+      )
         continue;
       const ux = dx / 0.006,
         uy = dy / 0.012,
@@ -4243,11 +4261,9 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         py = (n.y / HH - y0) / 0.012,
         len = ux * ux + uy * uy;
       const k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
-      if (
-        Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1) &&
-        hangHit(s, n.id, sh.by, now) &&
-        n.id === "justin"
-      )
+      if (Math.hypot(px - k * ux, py - k * uy) < (sh.r || 1)) hLock(sh, n.z);
+      else continue;
+      if (hangHit(s, n.id, sh.by, now) && n.id === "justin")
         justinKilled(s, sh.by, sh.k);
     }
   return false;

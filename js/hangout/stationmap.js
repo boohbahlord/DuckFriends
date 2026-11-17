@@ -114,6 +114,15 @@ const GLASS = [
 ];
 /* the chapel's wide entrance, open, in its north wall */
 export const CHAPEL_DOOR = { a: 2000, b: 2600 };
+/* Part B (the owner's, Nov 17 12:28Z), the spots only so far (Noah draws to them): the ladder up the gas station's back
+   (north) wall, at its west end, left of the storeroom's hole, climbed from outside (side "n"), x0 … x1 along the wall;
+   the roof is walked on at STATION.wall. The two holes in the roof, x0 y0 x1 y1: its bottom right corner, and over the
+   restroom */
+export const LADDER = { at: 550, x0: 1160, x1: 1240, side: "n" };
+export const ROOF_HOLES = [
+  { id: "hole-se", x0: 3150, y0: 1450, x1: 3350, y1: 1650 },
+  { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
+];
 /* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
    standing up over it: the owner's, Nov 17 12:28Z, they looked closed) */
@@ -166,7 +175,9 @@ export const PUMPS = [
   { x0: 1700, y0: 2180, x1: 2000, y1: 2260 },
   { x0: 2600, y0: 2180, x1: 2900, y1: 2260 },
 ];
-export const CANOPY = { x0: 1400, y0: 1950, x1: 3200, y1: 2500, z: 260 };
+/* the canopy over the pumps: its roof at z, a little under the gas station's roof (Part B, the owner's, Nov 17 12:28Z:
+   it "can be jumped onto from there", "slightly lower"; from the ground only by way of the station's roof) */
+export const CANOPY = { x0: 1400, y0: 1950, x1: 3200, y1: 2500, z: 150 };
 /* the fallen tree across the east end of the road: ducks jump it (TOP_TREE tall), zombies climb over */
 export const FALLEN = {
   x0: 3500,
@@ -747,6 +758,8 @@ for (const o of [
   GLASS,
   CHAPEL_DOOR,
   INNER_DOORS,
+  LADDER,
+  ROOF_HOLES,
   GEN,
   POWER_SPOT,
   HOOD,
@@ -759,6 +772,35 @@ GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
 SHORE *= K;
+/* Part B: what a duck stands on over the ground (layout.js floorAt), at K already. The two roofs at their walls' height,
+   as wide as their drawing (30 past the walls), the gas station's with its two holes (a duck falls through them), and
+   the canopy over the pumps. key: the depth its top is drawn at (a duck on it is drawn just in front of it); bldg: the
+   building it covers (a duck on it is outside, the building under it out of sight) */
+const OVER = 30 * K;
+export const DECKS = [
+  ...[STATION, CHAPEL].map((B, i) => ({
+    kind: "roof",
+    x0: B.x0 - OVER,
+    y0: B.y0 - OVER,
+    x1: B.x1 + OVER,
+    y1: B.y1 + OVER,
+    h: B.wall,
+    key: B.y1 + 24, // (the roof's own: planBuild's B.y1 + 2T)
+    holes: B === STATION ? ROOF_HOLES : [],
+    bldg: i + 1,
+  })),
+  {
+    kind: "canopy",
+    x0: CANOPY.x0,
+    y0: CANOPY.y0,
+    x1: CANOPY.x1,
+    y1: CANOPY.y1,
+    h: CANOPY.z,
+    key: CANOPY.y1,
+    holes: [],
+    bldg: 0,
+  },
+];
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {
