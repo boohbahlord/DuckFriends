@@ -185,6 +185,7 @@ import {
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
+import { olAdd, olDraw, olFloor } from "./outlines.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
@@ -1216,6 +1217,9 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
+  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+    olAt = ol && hang ? world.at(R.me) : null,
+    olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
   drawMeters(s, board, layer, now);
   const jp =
@@ -1695,6 +1699,65 @@ function drawDucks(now = clockNow()) {
       pic._sq = squish + org;
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
+    }
+    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+       never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
+       roof and a floor away */
+    const olP = !g && s.players[id],
+      olKind = !ol
+        ? ""
+        : isMgj(s)
+          ? id === GOOD_ID
+            ? "blue"
+            : olP && id !== JUSTIN_ID
+              ? "ally"
+              : ""
+          : olP
+            ? olP.helper || olP.wild
+              ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
+              : "ally"
+            : "";
+    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
+      const ph = pic.naturalWidth
+          ? (size * pic.naturalHeight) / pic.naturalWidth
+          : size,
+        x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
+        b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+        y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
+      let hidden = false,
+        floor = 0;
+      if (hang) {
+        hidden =
+          !!d._hid ||
+          world.coverAt(
+            at.left - size * 0.4,
+            at.left + size * 0.4,
+            b - size * 0.9,
+            b,
+            d._zi - 10,
+          );
+        if (olMe !== null) {
+          const a = world.at(id),
+            f =
+              a &&
+              olFloor(a.x, a.y, pos.j && pos.b !== undefined ? pos.b : a.z);
+          floor = a ? Math.sign(f - olMe) : 0;
+        }
+      }
+      olAdd({
+        id,
+        img: pic,
+        x,
+        y,
+        w: size,
+        h: ph,
+        flip: fx < 0,
+        kind: olKind,
+        hidden,
+        floor,
+        hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
+        down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
+      });
     }
     if (d._j !== pos.j) {
       d._j = pos.j;
@@ -2280,6 +2343,7 @@ function drawDucks(now = clockNow()) {
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  olDraw(ol ? (hang ? board : fxl) : null, geo.W, geo.H); // (the outlines: over the dark and the rain in Dead Ducks Arcade, over the board in Mad God Justin)
   if (isMgj(s)) {
     const tag = S.querySelector(".gduck.mine .gduck-name");
     if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)

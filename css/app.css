@@ -18426,6 +18426,18 @@ html.pixel.armed :is(.board, .hang-board) {
   z-index: 24001;
   pointer-events: none;
 }
+/* the outlines of every zombie game (outlines.js): on the pixel grid, over the board; in Dead Ducks Arcade over the dark
+   and the rain too, under the mud and the HUD */
+.ol-px {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.hang-board.l4-board .ol-px {
+  z-index: 24001;
+}
 /* Downpour: a mud zombie's mud over the corners of my screen (l4ddmud.js), over the board, under the HUD */
 .hang-board.l4-board .l4-mud {
   position: absolute;
