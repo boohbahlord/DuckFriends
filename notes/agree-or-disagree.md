@@ -5280,3 +5280,11 @@ Then (11:08Z): "tell me of what questions they have here and WHO"
 5. yes the spin and justin pick ups, not the butler's shop"
 - 11:21Z, the UMP-45 stats (Adam had proposed every 150 ms, 30 rounds, 1 damage with a 1 in 4 chance of 2): "once every every 0.30 with a 20 round mag with 2 damage per second and same crit and miss chance and same reload"
   - Read as: fires every 0.30 s, 20 rounds, 2 damage per bullet, 5% crit, 2.5% miss, 1.6 s reload (Solomon builds it).
+## Request (2026-11-17 11:11Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt7Dz9UQp5MzPxtXYbSUEMVM): Downpour's fence round the map, grass instead of the dark ground (word for word)
+Picture: /mnt/project-files/refs/nov17-1107-batch/downpour-fence-glitch.png
+> so the ground on this dark side changes visually as you walk around and there is an invisible wall instead of a fence around the whole map, which means i was disobeyed again. There must be a fence around the whole map WHERE the invisible wall is AND this ugly dark ground will be replaced with the normal grass before topography work is done
+
+Done (Solomon the 2nd): the chain-link fence now runs round the whole map on the line where a duck stops (stationmap.js
+RIM; the north and south sides face on, fencex); the road's two fences are its pieces across the road, the only ones
+zombies climb. The forest floor is gone: grass everywhere, past the edges too (dpground.js). The "changing" ground was
+the space past the map's edge: nothing was painted there, so the ground canvas kept old pictures as you walked.

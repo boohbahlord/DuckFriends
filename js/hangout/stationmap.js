@@ -67,6 +67,10 @@ export const FENCES = [
   { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
   { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
 ];
+/* the fence round the whole map, where a duck's walking stops (the owner's, Nov 17 11:11Z: "There must be a fence around
+   the whole map WHERE the invisible wall is"): on the road fences' lines west and east, as far in from the north and
+   south edges. The road's two fences are its pieces across the road; zombies only climb those */
+export const RIM = { x0: 60, x1: 4540, y0: 60, y1: 6140 };
 /* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
    05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
    which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
@@ -390,6 +394,25 @@ function planBuild(b) {
         key: e,
       });
     }
+  /* the rest of the fence round the map: west and east (but where the road's fences are), then the north and south
+     sides, seen face on (fencex) */
+  for (const [x, f] of [
+    [RIM.x0, FENCES[0]],
+    [RIM.x1, FENCES[1]],
+  ])
+    for (const [a, c] of [
+      [RIM.y0, f.y0],
+      [f.y1, RIM.y1],
+    ])
+      for (let y = a; y < c; y += 200) {
+        const e = Math.min(c, y + 200);
+        put("fence", x - 6, y, 12, e - y, FENCE_H, { solid: true, key: e });
+      }
+  for (const y of [RIM.y0, RIM.y1])
+    for (let x = RIM.x0; x < RIM.x1; x += 400) {
+      const e = Math.min(RIM.x1, x + 400);
+      put("fencex", x, y - 6, e - x, 12, FENCE_H, { solid: true, key: y + 6 });
+    }
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -663,7 +686,18 @@ planBuild({
   wallY: (...a) => CALLS.push(["wallY", ...a]),
   T: 12 / K,
 });
-for (const o of [ROAD, DEEP, SHALLOW, TOP, BOT, STATION, CHAPEL, TOWER, FENCES])
+for (const o of [
+  ROAD,
+  DEEP,
+  SHALLOW,
+  TOP,
+  BOT,
+  STATION,
+  CHAPEL,
+  TOWER,
+  FENCES,
+  RIM,
+])
   scaled(o);
 for (const o of [
   WALK_HOLES,

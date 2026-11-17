@@ -354,6 +354,36 @@ export function fenceSVG({
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(W, d + h, s, defs);
 }
+/* a piece of the same fence running east-west (the north and south sides of the map), seen face on: w long, h tall,
+   its foot along the bottom of a d deep band. Drawn into w × (h + d) */
+export function fenceXSVG({ w = 400, d = 12, h = 200, seed = 1 } = {}) {
+  const id = uid(),
+    r = rnd(seed),
+    C = 14,
+    foot = h + d / 2;
+  const defs = F`<pattern id="${id}" width="${C}" height="${C}" patternUnits="userSpaceOnUse"><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#1c1c28" stroke-width="3.6" opacity=".5"/><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#b9c3c8" stroke-width="1.8"/></pattern>`;
+  // a little shadow on the ground along its foot, then the links (see-through) from its foot up to its top
+  let s = F`<rect x="0" y="${foot - 3}" width="${w}" height="6" fill="#05060a" opacity=".35"/>`;
+  s += F`<rect x="0" y="${d / 2}" width="${w}" height="${h}" fill="url(#${id})"/>`;
+  // its posts, every 100 or so and one at each end
+  const posts = [3];
+  for (let u = 50 + r() * 30; u < w - 30; u += 100) posts.push(u);
+  posts.push(w - 3);
+  for (const u of posts)
+    s += F`<path d="M${n1(u)} ${d / 2}V${foot}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${n1(u)} ${d / 2}V${foot}" stroke="#9aa6ad" stroke-width="3.6" stroke-linecap="round"/>`;
+  // the top rail and the bottom wire
+  for (const [v, k] of [
+    [d / 2 + 4, 3.4],
+    [foot - 4, 2],
+  ])
+    s += F`<path d="M0 ${v}H${w}" stroke="${O}" stroke-width="${k + 3}"/><path d="M0 ${v}H${w}" stroke="#d6dde0" stroke-width="${k}"/>`;
+  // the barbed wire, curled along over the top
+  let z = `M0 ${d / 2}`;
+  for (let u = 7, k = 1; u <= w; u += 7, k = -k)
+    z += `L${n1(u)} ${n1(d / 2 + k * 4)}`;
+  s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
+  return wrap(w, d + h, s, defs);
+}
 /* how far a fence's top leans, and which way: toward the middle of the map (the road), mapW wide. Its drawing
    (shapes.js) and the flashlights (l4dd.js) both ask */
 export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? 1 : -1) * p.h * 0.6;
