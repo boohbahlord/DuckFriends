@@ -61,6 +61,8 @@ export const LOCKS = [
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
   { kind: "special", id: "sniper", later: true, name: "Sniper" },
   { kind: "special", id: "smg", later: true, name: "SMG" },
+  { kind: "special", id: "tommy", later: true, name: "Tommy gun" },
+  { kind: "special", id: "ump", later: true, name: "UMP-45" },
   { kind: "special", id: "ak", later: true, name: "AK-47" },
   { kind: "special", id: "revolver", later: true, name: "Revolver" },
   { kind: "special", id: "lmg", later: true, name: "LMG" },

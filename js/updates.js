@@ -9,6 +9,30 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v70",
+    version: 70,
+    date: "Nov 17, 2026",
+    title: "Justin in Downpour",
+    news: [
+      "For Dead Ducks Arcade: Justin is out in Downpour with no weapon, running from the zombies. He has 6 HP and gets 1 back every minute, he can be revived, and once he's gone he's gone for good.",
+      "For Dead Ducks Arcade: In Downpour you can buy Justin a pistol when he glows blue. Then nobody but the zombies can hurt him, and his kills give you the points.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v69",
+    version: 69,
+    date: "Nov 17, 2026",
+    title: "Justin's attack hints, Tommy gun and UMP-45",
+    news: [
+      "For Mad God Justin: The edge lightning comes less often (every 18 s instead of 10 s) and its edges blink three times before it strikes.",
+      'For Mad God Justin: Every attack now has a hint. A red wedge shows where his hammer will sweep, a red sight line shows his gun bursts, and a red cone shows his shotgun, each with a red "!" over his head.',
+      "For Dead Ducks Arcade: The Tommy gun and the UMP-45 can come out of the weapon spin.",
+      "For Mad God Justin: The Tommy gun and the UMP-45 can drop as pickups.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v68",
     version: 68,
     date: "Nov 17, 2026",

@@ -504,6 +504,8 @@ export function openCustomize(page = lastPage) {
               sniper: sfx.sniper,
               revolver: sfx.revolver,
               smg: sfx.smg,
+              tommy: sfx.tommy,
+              ump: sfx.ump,
               ak: sfx.ak,
               lmg: sfx.lmg,
               chaingun: sfx.chaingun,

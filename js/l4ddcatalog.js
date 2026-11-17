@@ -38,6 +38,8 @@ const SAY = {
   shotgun: "A cone of pellets that doesn't fly far. No magazine.",
   sniper: "Each bullet goes through 3 zombies. A bolt action between shots.",
   smg: "Hold to fire. Fast, light bullets.",
+  tommy: "Hold to fire. A 50-round drum.",
+  ump: "Hold to fire. 2 damage a bullet, a slower fire.",
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
   dbarrel:

@@ -103,6 +103,7 @@ import {
   ATT_PHASES,
   walkOf,
   votesDue,
+  REACH,
 } from "./rules.js";
 import { mountWorld, BOARD_HTML as HANG_HTML } from "./hangout/world.js";
 import {
@@ -331,6 +332,11 @@ import {
   mgjOut,
   mgjSafe,
   EDGE_WARN,
+  GUN_TELL,
+  HAMMER_TELL,
+  BURST,
+  SPREAD,
+  DUCK_LEN,
   jaimePool,
   JAIME_MS,
   JAIME_MAX,
@@ -2418,6 +2424,7 @@ function drawDucks(now = clockNow()) {
   placeRevive(board, s, now);
   placeSnack(board, s, now);
   placeEdge(board, s, now);
+  placeTells(board, s, now);
   /* the Round Lord and the question turn see-through over ducks; their boxes are measured a few times a second, not
      every frame (a measure after this frame's writes made the page lay itself out again, every frame) */
   if (!overBoxes || overBoxes.g !== geo || now - overBoxes.at > 400) {
@@ -2875,10 +2882,97 @@ function placeEdge(board, s, now) {
   n = el(edgeHTML("warn"));
   n.dataset.at = m.edgeAt;
   n.style.animationDelay = -(EDGE_WARN - (m.edgeAt - now)) + "ms";
+  n.style.setProperty("--ew", EDGE_WARN + "ms");
   board.append(n);
   sfx.warn(Math.max(0.05, (m.edgeAt - now) / 1000));
 }
 
+/* Mad God Justin's hints, one for every attack that had none (the owner's, Nov 17 11:07Z: "Every player should have an
+   animated hint or something PER attack IF there isnt one"): while he winds up his hammer, the red wedge it will
+   sweep; while he aims a burst, a red sight line to its duck; while he aims the shotgun, its red cone. Each fills in
+   as the moment comes, with a red "!" over his head (his throws, his charge and the lightning have their own) */
+function placeTells(board, s, now) {
+  const fxl = $(".fxl", board),
+    j = isMgj(s) && s.phase === "boss" && !mgjFrozen(s) && s.justin,
+    t = !j
+      ? null
+      : j.swing && s.pos[j.swing.id]
+        ? { k: "hammer", id: j.swing.id, at: j.swing.at, all: HAMMER_TELL }
+        : j.sg && s.pos[j.sg.id]
+          ? { k: "shotgun", id: j.sg.id, at: j.sg.at, all: GUN_TELL }
+          : j.burst &&
+              j.burst.left === BURST[j.burst.w].n &&
+              now < j.burst.at &&
+              s.pos[j.burst.id]
+            ? { k: "gun", id: j.burst.id, at: j.burst.at, all: GUN_TELL }
+            : null;
+  let n = fxl && fxl.querySelector(".mgj-tells"),
+    b = fxl && fxl.querySelector(".mgj-bang");
+  if (!t || !fxl || !geo) {
+    if (n) n.remove();
+    if (b) b.remove();
+    return;
+  }
+  if (!n) {
+    n = el(
+      `<svg class="mgj-tells" aria-hidden="true"><path class="w"/><line class="l"/><circle class="c" r="14"/></svg>`,
+    );
+    b = el(`<div class="mgj-bang" aria-hidden="true">!</div>`);
+    fxl.append(n, b);
+  }
+  const at = justinAt(j, now),
+    c = place(at, 0, 1, true),
+    q = t.id === R.me && me ? me : s.pos[t.id],
+    d = place(q, 0, 1, true),
+    /* a duck length along the board's x and along its y, on the screen (a phone held upright turns the board) */
+    px = place({ x: at.x + DUCK_LEN.x, y: at.y }, 0, 1, true),
+    py = place({ x: at.x, y: at.y + DUCK_LEN.y }, 0, 1, true),
+    ex = [px.left - c.left, px.top - c.top],
+    ey = [py.left - c.left, py.top - c.top],
+    det = ex[0] * ey[1] - ex[1] * ey[0] || 1,
+    ox = d.left - c.left,
+    oy = d.top - c.top,
+    a = Math.atan2(
+      (ex[0] * oy - ex[1] * ox) / det,
+      (ey[1] * ox - ey[0] * oy) / det,
+    ), // (the way to the duck, in duck lengths)
+    k = Math.max(0, Math.min(1, 1 - (t.at - now) / t.all)); // (how near it is: 0 to 1)
+  n.setAttribute("class", `mgj-tells k-${t.k}`);
+  n.style.setProperty("--k", k.toFixed(3));
+  const wedge = (far, half) => {
+    let p = `M${c.left.toFixed(1)} ${c.top.toFixed(1)}`;
+    for (let i = 0; i <= 12; i++) {
+      const u = a - half + (2 * half * i) / 12;
+      const fx = Math.cos(u) * far,
+        fy = Math.sin(u) * far;
+      p += `L${(c.left + fx * ex[0] + fy * ey[0]).toFixed(1)} ${(c.top + fx * ex[1] + fy * ey[1]).toFixed(1)}`;
+    }
+    return p + "Z";
+  };
+  const w = n.querySelector(".w"),
+    l = n.querySelector(".l"),
+    o = n.querySelector(".c");
+  if (t.k === "hammer")
+    w.setAttribute(
+      "d",
+      wedge(
+        REACH.hammer[0] * MGJ_SCALE * MGJ_HAMMER,
+        Math.acos(REACH.hammer[1]),
+      ),
+    );
+  // (where his swing hits: rules.js swing)
+  else if (t.k === "shotgun") w.setAttribute("d", wedge(9, SPREAD + 0.05));
+  else w.removeAttribute("d");
+  l.setAttribute("x1", c.left.toFixed(1));
+  l.setAttribute("y1", (c.top - geo.size * 0.5).toFixed(1));
+  l.setAttribute("x2", d.left.toFixed(1));
+  l.setAttribute("y2", (d.top - geo.size * 0.4).toFixed(1));
+  o.setAttribute("cx", d.left.toFixed(1));
+  o.setAttribute("cy", (d.top - geo.size * 0.4).toFixed(1));
+  /* the "!" over his head */
+  b.style.left = c.left.toFixed(1) + "px";
+  b.style.top = (c.top - geo.size * MGJ_SCALE * 1.3).toFixed(1) + "px";
+}
 /* Story Chain: the row under my duck lights up while voting, and the Vote button wears its color */
 function storyMarks(s, board) {
   const zones = scZones(s),
@@ -3233,6 +3327,8 @@ function playFx(f) {
         sniper: sfx.sniper,
         revolver: sfx.revolver,
         smg: sfx.smg,
+        tommy: sfx.tommy,
+        ump: sfx.ump,
         ak: sfx.ak,
         lmg: sfx.lmg,
         chaingun: sfx.chaingun,
@@ -3324,6 +3420,8 @@ function playFx(f) {
           sniper: sfx.sniper,
           revolver: sfx.revolver,
           smg: sfx.smg,
+          tommy: sfx.tommy,
+          ump: sfx.ump,
           ak: sfx.ak,
           lmg: sfx.lmg,
           chaingun: sfx.chaingun,

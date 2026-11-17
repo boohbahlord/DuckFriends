@@ -192,7 +192,9 @@ export const BURST = {
   },
   JUSTIN_SHOT = 0.22, // (his bullets' speed, board widths a second: the owner, his bullets never fly faster)
   SG_ODDS = 0.35, // (a duck close enough: how often he takes the shotgun instead of a burst)
-  PACE = 0.6;
+  PACE = 0.6,
+  HAMMER_TELL = 500, // ms he winds up his hammer up close (it was 350: a hint long enough to see, the owner's, Nov 17 11:07Z)
+  GUN_TELL = 450; // ms he aims before a burst or the shotgun (game.js draws his aim: the owner's, Nov 17 11:07Z, a hint for every attack)
 /* his throws (the owner's): now and then 8 Xbox One controllers every way at once, bullet hell, to dodge; less often a
    big black office chair at a duck, slow but wide, that knocks down and shoves back like the hammer. Each is held up
    first (the tell), so there's time to move */
@@ -215,9 +217,10 @@ export const FB_EVERY = 14000,
   BURNT_MS = 7000,
   TOUCH = 1.1;
 /* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
-   within EDGE of the board's edge (in board widths and heights) */
-export const EDGE_EVERY = 10000,
-  EDGE_WARN = 600,
+   within EDGE of the board's edge (in board widths and heights). Less often, with a longer warning (the owner's, Nov 17
+   11:07Z: "Make lightning less frequent", "more of a hint"; it was every 10 s, warned 0.6 s before) */
+export const EDGE_EVERY = 18000,
+  EDGE_WARN = 1200,
   EDGE = { x: 0.05, y: 0.1 };
 export const onEdge = (p) =>
   p.x < EDGE.x || p.x > 1 - EDGE.x || p.y < EDGE.y || p.y > 1 - EDGE.y;
@@ -288,6 +291,7 @@ export const XB = { IN: 900, FADE: 500, GONE: 3400, OUT: 1200 };
 const SPEED = 0.25, // (owner 2026-11-03 22:13Z: he moves faster; was 0.2)
   RX = 0.03,
   RY = 0.08;
+export const DUCK_LEN = { x: RX, y: RY }; // (a duck length, in board widths and heights: game.js' hints)
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
    fire (half and half) and hits him as it shows, as the meteor does (1 damage); "good" is Good
    Justin God. A weapon waits until a duck walks over it or the next one comes */
@@ -303,6 +307,8 @@ export const PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign eve
     ["shotgun", 16],
     ["glauncher", 10],
     ["chaingun", 5], // (rarer)
+    ["tommy", 12], // (the Tommy gun and the UMP-45: the owner's, Nov 17, from the spin and Justin's pickups)
+    ["ump", 12],
     ["laser", 8], // (the Laser Rifle: the owner's, Nov 17, from the spin and Justin's pickups)
     ["medkit", 10.5],
     ["sky", 5],
@@ -320,6 +326,8 @@ export const MGJ_GUNS = [
   "glauncher",
   "chaingun",
   "laser",
+  "tommy",
+  "ump",
 ];
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
@@ -379,6 +387,8 @@ export const DMG = {
   arrow: 1,
   ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
   lmg: 1,
+  tommy: 1,
+  ump: 2, // (the UMP-45: 2 a bullet)
   chain: 1, // (the chain gun 1 a bullet here, not all his HP)
   laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)
@@ -735,6 +745,7 @@ function brain(s, now, log) {
     delete j.tell;
     delete j.dash;
     delete j.eat;
+    delete j.sg;
     m.cake = null;
     m.dup = null;
     stop();
@@ -803,6 +814,7 @@ function brain(s, now, log) {
     delete j.tell;
     delete j.dash;
     delete j.eat;
+    delete j.sg;
     m.cake = null;
     m.dup = null;
     Object.assign(j, {
@@ -898,6 +910,50 @@ function brain(s, now, log) {
       dy = p.y - at.y,
       d = Math.hypot(dx, dy) || 1;
     return [dx / d, dy / d];
+  };
+  /* the shotgun's cone of pellets at q (a duck's spot) */
+  const shotgunAt = (q) => {
+    const ux = (q.x - at.x) / RX,
+      uy = (q.y - at.y) / RY,
+      a0 = Math.atan2(uy, ux);
+    fx({
+      kind: "use",
+      what: "shotgun",
+      who: [],
+      face: ux < 0 ? -1 : 1,
+      ax: +Math.cos(a0).toFixed(3),
+      ay: +Math.sin(a0).toFixed(3),
+    });
+    const n0 = s.fxN;
+    for (let i = 0; i < PELLETS; i++) {
+      const a = a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
+        bx = Math.cos(a) * RX,
+        by = Math.sin(a) * RY,
+        bl = Math.hypot(bx, by);
+      s.shots = [
+        ...(s.shots || []),
+        {
+          n: n0 * 10 + i,
+          by: JUSTIN_ID,
+          k: "pellet",
+          x0: at.x,
+          y0: at.y,
+          vx: +((bx / bl) * PELLET_SPEED).toFixed(4),
+          vy: +((by / bl) * PELLET_SPEED).toFixed(4),
+          t: now,
+          lx: at.x,
+          ly: at.y,
+          life: PELLET_LIFE,
+        },
+      ];
+    }
+    Object.assign(j, {
+      w: "shotgun",
+      ax: +(Math.cos(a0) * RX).toFixed(4),
+      ay: +(Math.sin(a0) * RY).toFixed(4),
+      sgR: now + PUMP,
+      fireAt: now + soon(rnd(700, 1000)),
+    });
   };
   const swingNow = (id) => {
     const p = s.pos[id],
@@ -1050,6 +1106,15 @@ function brain(s, now, log) {
     j.next = now + 600;
     return true;
   }
+  /* the shotgun aimed (the tell): the pellets go at the duck where it stands now */
+  if (j.sg) {
+    if (now < j.sg.at) return ch;
+    const q = s.pos[j.sg.id];
+    delete j.sg;
+    if (q && q.x >= 0) shotgunAt(q);
+    else j.fireAt = now + 300;
+    return true;
+  }
   /* a burst going on: the next bullet at its duck, until the burst is done; then the reload */
   if (j.burst) {
     const B = j.burst,
@@ -1128,7 +1193,7 @@ function brain(s, now, log) {
   /* a duck up close gets the hammer (a moment's wind-up, so it can step away) */
   if (now >= j.hamAt && nearest[1] < 1.8) {
     stop();
-    j.swing = { id: nearest[0], at: now + 350 };
+    j.swing = { id: nearest[0], at: now + HAMMER_TELL };
     j.hamAt = now + soon(3000);
     return true;
   }
@@ -1175,55 +1240,22 @@ function brain(s, now, log) {
       [ax, ay] = aimAt(p);
     const close = them.filter((t) => far(s.pos[t]) < 9);
     if (m.shotgun && now >= j.sgR && close.length && Math.random() < SG_ODDS) {
-      // the shotgun: a cone of pellets at a duck close enough
-      const q = s.pos[any(close)],
-        ux = (q.x - at.x) / RX,
-        uy = (q.y - at.y) / RY,
-        a0 = Math.atan2(uy, ux);
-      fx({
-        kind: "use",
-        what: "shotgun",
-        who: [],
-        face: ux < 0 ? -1 : 1,
-        ax: +Math.cos(a0).toFixed(3),
-        ay: +Math.sin(a0).toFixed(3),
-      });
-      const n0 = s.fxN;
-      for (let i = 0; i < PELLETS; i++) {
-        const a =
-            a0 + SPREAD * ((i / (PELLETS - 1)) * 2 - 1) + rnd(-0.04, 0.04),
-          bx = Math.cos(a) * RX,
-          by = Math.sin(a) * RY,
-          bl = Math.hypot(bx, by);
-        s.shots = [
-          ...(s.shots || []),
-          {
-            n: n0 * 10 + i,
-            by: JUSTIN_ID,
-            k: "pellet",
-            x0: at.x,
-            y0: at.y,
-            vx: +((bx / bl) * PELLET_SPEED).toFixed(4),
-            vy: +((by / bl) * PELLET_SPEED).toFixed(4),
-            t: now,
-            lx: at.x,
-            ly: at.y,
-            life: PELLET_LIFE,
-          },
-        ];
-      }
+      // the shotgun at a duck close enough: aimed first (the tell), then a cone of pellets (shotgunAt)
+      const id = any(close);
+      j.sg = { id, at: now + GUN_TELL };
+      j.sgR = now + GUN_TELL + PUMP;
+      j.fireAt = now + GUN_TELL + soon(rnd(700, 1000));
+      const [sx, sy] = aimAt(s.pos[id]);
       Object.assign(j, {
         w: "shotgun",
-        ax: +(Math.cos(a0) * RX).toFixed(4),
-        ay: +(Math.sin(a0) * RY).toFixed(4),
-        sgR: now + PUMP,
-        fireAt: now + soon(rnd(700, 1000)),
+        ax: +sx.toFixed(3),
+        ay: +sy.toFixed(3),
       });
       return true;
     }
     /* the LMG or the SMG: a burst at the duck (the bullets go out one by one, above) */
     const w = Math.random() < 0.5 ? "lmg" : "smg";
-    j.burst = { w, id, left: BURST[w].n, at: now };
+    j.burst = { w, id, left: BURST[w].n, at: now + GUN_TELL }; // (aimed first: the tell)
     Object.assign(j, { w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
     return true;
   }

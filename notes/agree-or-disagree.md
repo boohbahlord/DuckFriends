@@ -5306,3 +5306,134 @@ the space past the map's edge: nothing was painted there, so the ground canvas k
 
 call it "Laser Rifle""
 Decided: the combined look (js/laserart.js), named "Laser Rifle".
+
+## Request (2026-11-17 12:28Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtXgrWCnevvpmcvKUSrdqUK4): Downpour fence, roofs and heights, bullet heights, outlines, Justin in Downpour, sounds (word for word)
+Picture: /mnt/project-files/refs/nov17-1228-batch/fence-walkthrough.png (a duck on the road inside the fence line)
+> players can go through the fence, that makes the fence pointless. Nobody goes through the fence, and for now on, zombies spawn outside the fence and climb over it like i said, no longer spawning inside the map
+>
+> there are two doors to the other rooms in the gas station that are closed, so dont do that because players need to walk thru there
+>
+> the pistol in the hotbar should resemble the pistol in the hand of the player, so it shouldnt be green becuz the on in the player's hand isnt
+>
+> there is no longer a fence on either side of the rode or on the slope down into it AND the road and it's water should extend across the left and to the right, not becoming invisible
+>
+> invisible walls do not stop bullets if they did before and zombies climbing the fence can be shot from below the ground no matter how high up they are
+>
+> miles can probably make a sound for the fence climbing sound for the zombie that will be quiet enough and have a limit for the sound AND a falling sound for when you fall off the fence or the balcony (like the sound of the impact)
+> The water should have a sound when your walking thru it and another sound for swimming thru it (quieter for zombies
+>
+> add a ladder on the back left wall that leans onto the top of the roof of the gas station that can be walked on AND zombies can climb up on all the walls AND there is a huge hole on the top of the gas station roof on the bottom right that players or zombies can fall into to get inside (that means rain is seen falling into the part of the hole from the inside of the gas station, as if a roof wasnt there)
+>
+> The roof of the gas pumps can be jumped onto from there AND it will not become transparent FOR players who are on either roof and only for players on either roof BUT a duck's outline can be seen through walls in a green color that softly glows when they are a floor below them AND there is a different fall time (slightly shorter) from the pump roof as opposed to the higher up gas station roof. 
+>
+> In this game for now on, a game design will be borrowed. In doom, enemies lower then you or higher up then you will have bullets go up or down to them in their different Y axis coordinate EVEN IF your not on the same Y axis coordinate so to speak. If a zombie is on the same hieght as you, the bullet hits them first. Bullets are sent down to a layer BASED upon this AND IF the bullet passes on it's height level THEN it stays on that height level, for example, a laser gun is shot from a roof top of the gas station towards a zombie on the gas pump (roughly the same height level even tho the gas pump roof is a little lower), that means the laser will pass through it and into ONLY zombies on that same level, so which zombie the projectile passes thru first determines it's height, and the script only plays on maps where the zombie ISNT on the same height, and maybe parts also dont play in the script unless other conditions are met to. 
+>
+> The roof of the gas pump should be slightly lower WHERE a player has a slight fall (only slight) onto landing on top of this roof, and they can land on it i think, right? From the bottom floor, or below a vertical level, allies glow green with a up arrow inside their outline and it is more faint WHEREAS players below have an outline with a down arrow in relation to the player higher up. 
+>
+> Remember the fall times
+>
+> bullets hitting other surfaces and making sounds on things not zombies should be quieter
+>
+> critical hits now have a gushing gore sound miles can do AND missing sound effect sounds like a wispy blip error maybe
+>
+> there should be a slight rain sound in downpour that isnt too loud
+> there should be a slight wind sound in all versions of cabin that comes and goes that is more gentle but sounds muffled from inside the cabin and more clear on the balcony or while outside
+>
+> fires should have a sound effect AND the sound of fire can be heard at a fire place if your closer to it 
+>
+> a flare can be set on the roof of the gas station that goes off whenever a round starts and the church bells rings in the beginning of a round
+>
+> When all zombies are dead, a snippet from what the quack plays at for cabin or downpour at the last note i think after 2:40 something, like it is a single chime note or something
+>
+> some cars should have broken windows and another might have a dead yellow duck laying on the hood that is bloodied as a corpse with a hole in the head, and another corpse in the church floor for a jaime that is cut up, then a soldier duck without a beak and scratches and rot that is a corpse on the roof of the gas station
+>
+> another hole in the gas station roof can be added over the bathroom. 
+>
+> Fallinng doesnt deal damage to ducks when they jump 
+>
+> Also the bullets verticality rule applies to all game modes now and even players in jetpacks
+>
+> zombie ducks dont get invlunerability frames for anything
+>
+> zombies can only spawn behind fences or at the ends of the road if they arent spawning on a player's screen where they can be seen
+>
+> in downpour, Justin can be seen alive and running from zombies without weapons or a way to defend himself, and he still has all the usual lines AND can be killed by players (he has 6 hp that regens 1 hp every minute AND he can be revived AND if he dies then he is dead forever AND he doesnt spawn back or come back during new rounds when he is downed or any state)
+>
+> A player CAN click on Justin when he glows light blue outside of active zombie rounds (so the rest phase) and give him a weapon or click the vote button to give him a weapon where he can defend himself (it costs money to do this and it is a purchase of the pistol from the butler), and in that case players cannot kill him AND he defends himself without following players AND his points for kills goes to the player that gave him the gun. The only gun they can give him is the pistol where he has unlimited ammo AND Justin has more aggressive lines towards the zombies while fighting. In the resting phase, you can go up to Justin and click the vote button and choose what gun to buy for him (it costs +100 extra points on top of the gun you buy him), but if it is outside of the rest phases then it automatically buys him the default pistol. Justin can spring like other players and has invulnerability frames while jumping and can explore any part of the map to escape zombies.
+>
+> Justin might make comments about Jaime while next to his dead body.
+>
+> When Justin dies, his dead body doesn't disappear and stays there for the rest of the game. Justin doesnt follow players but wont run away from them when he has a weapon but he might if they shoot near him since it scares him and he sprints away when shot. 
+>
+> Justin has as much sprint as the other players, like the meter and everything, and he also has reload animations for guns. When Justin is through a wall above or below, he gets a blue outline.
+>
+> every player has their outline ALSO when they are behind walls or under roofs or anything like that. The outline for an ally also exists super omega faintly when nothing hides them AND their outline blinks when they take damage (same for Justin)
+>
+> There is a dead simple non glow and thin dark red outline for zombies behind cover of walls or under roofs and everything like that, and they also get the arrows (super faint version) when they are a floor above you or a floor below you
+>
+> The green outlines translate to mad god Justin now and then blue for the good justin if he spawns in that game mode 
+>
+> every zombie game has these outlines now
+>
+> make sure the red outlines are easy to run on computer
+>
+> Make sure the rain looks the same without eating up resources along with any other visual that can look the same without eating up resources
+>
+> the footstep sound should be the same but altered slightly to sound different for different grounds (such as water in the road when walking thru it, grass, concrete/hard surface, wood, and maybe another im not thinking of), the sounds should also sound they like are above or below you depening on the hieght of players or if they come from other directiojns towards you as well if they dont already (zombie steps change according to this too)
+
+Split (Adam, 12:40Z). Read as: the fence stops everyone (no gaps), the fence pieces missing on the road's banks and slopes at
+the map's edge come back, and the road and its water keep being drawn past the fence to the left and right edges.
+- Solomon the 2nd (A, urgent, then B): A = solid fence (no gaps on the road's slopes), zombies spawn only outside the fence or at the road's
+  ends, never on anyone's screen, and climb over; the two closed gas station doors open; road + water drawn past the fence
+  both ways; invisible walls never stop bullets; fence climbers shootable from the ground at any height; no fall damage
+  from a jump; zombies get no invulnerability frames. B (plan to Adam first) = floors: gas station roof (ladder on the back
+  left wall, zombies climb every wall), pump roof a little lower and reachable by jumping from it, shorter fall from the pump
+  roof, the two roof holes (bottom right, over the bathroom) you fall through with rain seen inside, roofs stay solid for
+  ducks on a roof; then bullet heights (Doom) in every mode, jetpacks too. His Mad God Justin waves (item 9) finish first
+  only if nearly done.
+- Jackal: Tommy gun + UMP-45 (moved from Solomon; numbers in the 11:19Z/11:21Z answers), then Justin in Downpour (6 HP, regen
+  1 a minute, revive, dead for good, body stays; gifting a gun in the rest phase by the blue glow / vote button, pistol
+  during a round; kills' points to the giver; sprint meter, i-frames on jumps, reload animations; runs from zombies and from
+  shots near him). New Justin lines go to the owner before they ship.
+- Noah: outlines in every zombie game (allies green glow behind cover, very faint when seen, blink on damage, up/down arrows
+  a floor away; Justin blue; zombies thin dark red, faint arrows; cheap on a computer; Mad God Justin too), the hotbar pistol
+  drawn like the one in the hand (not green), rain as cheap as possible with the same look; then the props: ladder, roof holes,
+  broken car windows, the corpses (bloodied yellow duck with a head wound on a car hood, cut-up Jaime on the chapel floor,
+  beakless scratched rotting soldier duck on the gas station roof), the flare on the roof at each round's start.
+- Miles Jr.: every sound in the message (fence climbing quiet and capped, fall impact, wading and swimming quieter for zombies,
+  quieter impacts on things that aren't zombies, crit gore gush, miss blip, light rain in Downpour, gentle wind in every
+  cabin muffled inside, fire and the fireplace by distance, church bells at a round's start, the round-cleared chime from the
+  song at about 2:40, footsteps by ground and by height/direction, zombies' too).
+
+## Request (2026-11-17 12:29Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMcDKJ85bVppJNztnj9Hrzd): the church bell's animation, the Angel machine see-through (word for word)
+> church bell should have an animation while it sounds and the sound is done first and the bell's animation matches the sound effect and synchronizes with it and the angel machine should become transparent like the walls when it covers your duck in downpour
+
+Split (Adam): Miles Jr. makes the bell's sound first and gives Noah its strike times; Noah animates the bell to those
+times. Solomon adds the Angel machine turning see-through over a duck in Downpour to his urgent part A.
+
+## Request (2026-11-17 12:45Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtPo3aj3qcC2mgyXPL1eskHe): Safe Keeping text, the spin square, the orb, zombie HP, the ammo bar (word for word)
+Picture: /mnt/project-files/refs/nov17-1228-batch/orb-over-car-S.png (the S circled on the hood-up car, the yellow square beside it)
+> safe keeping popup text cannot be triggered by scrolling on pc and it has to be clicked in ur hotbar on mobile to actually show the text (it is smaler text on mobile), it should be more biref text and it should only show text on pc when you click it's corresponding number on number key 
+>
+> the yellow ground near the car will teleport and move around after a round began when i bought something off of it prior so that should be fixed
+>
+> the orb for the weapon drop should be over top the car where the S is circled in my screenshot
+>
+> Zombies health should only appear after they have taken damage, then the HP bar for a zombie stays
+>
+> In the white bar for cooldowns, just below it is a yellow bar, and the yellow bar will be a bar like the white one but for ammo. So for double barrel, it fades in and empties to half whenever a round is shot, and then it emtpies to a empty black bar, and flashes white while reloading takes place, it only appears when it is empty (so black, and maybe it blinks a slow dark grey when magazine is empty), when it reloads it blinks white. If fully loaded and no bullets are shot, it fades away, otherwise the meter stays. A consumable like a grenade would have it's meter to indicate how many grenades you have IF it is less then the max, so it also displays ammo for a bow as well, and the meter gets closer to the bottom till it runs out. The meter stays black when it cannot be reloaded and it stays visible when that empty weapon is held. The spring meter goes below this, and the meters may pop in and out, so if the sprint meter was already below and then a bullet is shot, then the yellow bar appears below the white bar and above the blue sprint bar. 
+>
+> If a reload cannot be done, then the white bar already in the game flashes red. 
+>
+> The bars are also in the default game modes also IF they are relevent, so like there is infinite sprint in some game modes so they dont have a sprint bar
+>
+> the yellow bar only changes colors in blinks or becomes black under certain conditions listed but you can ask for clarification adam in the chat not a document
+
+Read as (Adam): the yellow bar is the magazine (or the count of a consumable: grenades, arrows), under the white cooldown
+bar and above the blue sprint bar. It shows whenever it isn't full, stays while the weapon has been fired, and fades away
+when full and unfired. It empties a step per shot. Empty, it is black, with a slow dark grey blink. While reloading it
+blinks white. With no ammo left to reload, it stays black and stays shown while that weapon is held. The white bar
+flashes red when a reload can't be done. All modes, where relevant (no sprint bar where sprint is endless).
+Split: Jackal = Safe Keeping text (short; PC only on its number key, never on scroll; phone on its hotbar tap), the spin
+square staying put after a round starts, the orb over the car's S, zombie HP bar only once hurt and then kept. Noah = the
+yellow ammo bar and the white bar's red flash, after the outlines.
