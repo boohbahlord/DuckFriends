@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v55",
+    version: 55,
+    date: "Nov 17, 2026",
+    title: "A grey roof",
+    news: [],
+    fixed: [
+      "The Duck Cabin's roof is now slate grey, so it stands out from the grass.",
+    ],
+  },
+  {
     id: "v54",
     version: 54,
     date: "Nov 17, 2026",
