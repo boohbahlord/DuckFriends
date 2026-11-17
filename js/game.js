@@ -2867,6 +2867,9 @@ function placeZombies(board, s, now) {
     n._f = face;
     n.classList.toggle("dead", !!o.d);
     n.classList.toggle("claw", now - (o.a || 0) < 350);
+    if (n._hp !== undefined && o.hp < n._hp)
+      vibrate(n.querySelector("img"), hitPx(n._hp - o.hp), !!o.d); // (a wave zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
+    n._hp = o.hp;
     if (n._st === st) continue;
     n._st = st;
     Object.assign(n.style, {
