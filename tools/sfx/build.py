@@ -661,6 +661,17 @@ SOUNDS = {
     "uiClose": ui(KF + "close_001.ogg"),
     "nope": ui(KF + "error_004.ogg"),
     "tick": ui(KF + "tick_001.ogg"),
+    # the Vote button held: a soft sweep rising as it fills, darkened at its top so it never shrills, then a crisp click
+    # when it is full (the owner, Nov 17 19:22Z)
+    "holdFill": one(
+        KF + "maximize_005.ogg",
+        0.6,
+        ("Kenney, Interface Sounds", KENNEY_IFACE),
+        room=False,
+        kbps=32,
+        lp=2600,
+    ),
+    "holdClick": ui(KF + "click_001.ogg"),
     "done": ui(KF + "confirmation_001.ogg"),
     "bell": ui(KF + "bong_001.ogg"),
     "ping": ui(KF + "glass_001.ogg"),

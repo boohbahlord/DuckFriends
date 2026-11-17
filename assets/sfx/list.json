@@ -67,6 +67,8 @@
   "uiClose": { "n": 1 },
   "nope": { "n": 1 },
   "tick": { "n": 1 },
+  "holdFill": { "n": 1 },
+  "holdClick": { "n": 1 },
   "done": { "n": 1 },
   "bell": { "n": 1 },
   "ping": { "n": 1 },
