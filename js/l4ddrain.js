@@ -75,7 +75,7 @@ export function rainDraw(now, ctx, who, on, hit) {
   if (drops.length > want) drops.length = want;
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
-  g.lineCap = "round";
+  g.lineCap = "butt"; // (a pixel wide: round ends look the same and cost more)
   g.strokeStyle = "rgba(190,210,235,0.32)";
   g.lineWidth = Math.max(1.2, gridPx()); // (a pixel wide at least)
   g.beginPath();
@@ -101,28 +101,62 @@ export function rainDraw(now, ctx, who, on, hit) {
     const p = wades.get(id);
     if (p && Math.hypot(x - p[0], y - p[1]) < 26) continue;
     wades.set(id, [x, y]);
-    rings.push({ x, y, t: now, life: 900, r: 34, water: true, world: true });
+    rings.push({
+      x,
+      y,
+      z: Wd.heightAt(x, y),
+      t: now,
+      life: 900,
+      r: 34,
+      water: true,
+    }); // (its ground's height once, not every frame)
   }
   if (wades.size > 400) wades.clear();
-  /* the rings, in world px (they stay put as the camera moves) */
+  /* the rings, in world px (they stay put as the camera moves). Drawn in a few strokes, not one each: the rings of a
+     kind and nearly the same fade go in one path (RING_STEPS steps of fading, as smooth to the eye) */
   const sc = Wd.sc;
   if (bolt) drawBolt(now, Wd, w, h);
   g.lineWidth = Math.max(1.4, gridPx());
-  rings = rings.filter((o) => now - o.t < o.life);
-  for (const o of rings) {
-    const u = (now - o.t) / o.life,
-      p = Wd.toScreen(o.x, o.y, o.world ? Wd.heightAt(o.x, o.y) : 0),
-      r = o.r * (0.25 + u) * sc;
-    if (p.left < -60 || p.left > w + 60 || p.top < -60 || p.top > h + 60)
-      continue;
-    g.strokeStyle = o.water
-      ? `rgba(170,200,215,${(0.42 * (1 - u)).toFixed(3)})`
-      : `rgba(170,190,205,${(0.3 * (1 - u)).toFixed(3)})`;
-    g.beginPath();
-    g.ellipse(p.left, p.top, r, r * 0.42, 0, 0, 2 * Math.PI);
-    g.stroke();
+  let n = 0;
+  for (const o of rings) if (now - o.t < o.life) rings[n++] = o;
+  rings.length = n;
+  for (const water of [false, true]) {
+    const paths = RING_STYLE[water ? 1 : 0];
+    let used = 0;
+    for (const o of rings) {
+      if (o.water !== water) continue;
+      const u = (now - o.t) / o.life,
+        p = Wd.toScreen(o.x, o.y, o.z),
+        r = o.r * (0.25 + u) * sc;
+      if (p.left < -60 || p.left > w + 60 || p.top < -60 || p.top > h + 60)
+        continue;
+      const k = Math.min(RING_STEPS - 1, Math.floor(u * RING_STEPS));
+      if (!(used & (1 << k))) {
+        used |= 1 << k;
+        paths[k].p = new Path2D();
+      }
+      paths[k].p.moveTo(p.left + r, p.top); // (each its own ring, no line from the last one)
+      paths[k].p.ellipse(p.left, p.top, r, r * 0.42, 0, 0, 2 * Math.PI);
+    }
+    for (let k = 0; k < RING_STEPS; k++)
+      if (used & (1 << k)) {
+        g.strokeStyle = paths[k].c;
+        g.stroke(paths[k].p);
+        paths[k].p = null;
+      }
   }
 }
+/* the rings' colors, by kind (ground, water) and by how far they have faded */
+const RING_STEPS = 8,
+  RING_STYLE = [
+    [170, 190, 205, 0.3],
+    [170, 200, 215, 0.42],
+  ].map(([r, gr, b, a]) =>
+    Array.from({ length: RING_STEPS }, (_, k) => ({
+      c: `rgba(${r},${gr},${b},${(a * (1 - (k + 0.5) / RING_STEPS)).toFixed(3)})`,
+      p: null,
+    })),
+  );
 /* the lightning: a jagged line from the sky down to the zombie it hits, with a branch or two, that blinks twice, and the
    whole screen flashing white and fading. Its kinks are kept in world px across (dx) and screen px up, so it stays on
    the zombie as the camera moves */
@@ -200,6 +234,7 @@ function splash(sx, sy, Wd, now) {
   rings.push({
     x: wx,
     y: wy,
+    z: 0,
     t: now,
     life: water ? 650 : 320,
     r: water ? 16 : 7,
