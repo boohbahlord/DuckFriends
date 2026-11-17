@@ -50,6 +50,24 @@ ${part("M22.4 12.2H27.6L28.8 25.4Q28.8 26.8 27.4 26.8H24.6Q23.2 26.8 23.2 25.4Z"
 ${box(32, 7.2, 9.4, 3.8, 0.9, M2, 1)}${box(40.6, 7.8, 4.2, 2.6, 0.7, M0, 0.9)}${part("M37.6 7.4V4.4H39V7.4", M1, 0.9)}
 ${box(11, 5.4, 22, 7, 1.6, M1, 1.15)}${shine("M12.8 6.9H31", 0.26)}<rect x="27" y="8.4" width="4.4" height="1.6" rx=".6" fill="#14161c" opacity=".6"/>${part("M13 5.6V3.6H15.4V5.6", M1, 0.9)}<circle cx="29.2" cy="4.6" r="1.1" fill="${M2}" stroke="${INK}" stroke-width=".8"/></svg>`;
 
+/* the Tommy gun (the owner's, Nov 17): a wooden stock and wooden grip, the dark receiver with a cooling-fin barrel, a vertical
+   foregrip under it and the round drum magazine under the receiver (placeholder art until Noah's) */
+const TOMMY = `<svg viewBox="0 0 60 30">${part("M2.4 8.6L16 9.8V13.4L6 17Q1.6 18.2 1.6 14.6V10Q1.6 8.5 2.4 8.6Z", WOOD, 1.15)}${shine("M4.6 10.4L14.4 11.2", 0.3)}
+${part("M17.4 13H21.8L20.8 19.4Q20.5 20.6 19.2 20.4L17.2 20Q16.2 19.7 16.5 18.6Z", WOOD, 1.1)}
+<circle cx="29.6" cy="21.4" r="6.4" fill="${M1}" stroke="${INK}" stroke-width="1.15"/><circle cx="29.6" cy="21.4" r="2.6" fill="${M2}" stroke="${INK}" stroke-width=".9"/><path d="M29.6 15.4V18.8M29.6 24V27.4M23.6 21.4H27M32.2 21.4H35.6" stroke="${INK}" stroke-width=".8"/>
+${part("M40 12.6H44.4V19.4Q44.4 20.6 43.2 20.6H41.2Q40 20.6 40 19.4Z", WOOD, 1.1)}
+${box(40, 8.2, 17, 3.2, 0.9, M2, 1)}<path d="M43 8.4V11.2M46 8.4V11.2M49 8.4V11.2M52 8.4V11.2" stroke="${INK}" stroke-width=".7"/>${box(55.4, 8.8, 3.6, 2.2, 0.7, M0, 0.9)}
+${box(13, 6.6, 28, 6.4, 1.6, M1, 1.15)}${shine("M14.8 8H39", 0.26)}<circle cx="36" cy="9.8" r="1.3" fill="${M2}" stroke="${INK}" stroke-width=".8"/></svg>`;
+
+/* the UMP-45 (the owner's, Nov 17): a compact one in dark polymer, a short stock, a long slightly curved magazine, a rail on
+   top and a short barrel (placeholder art until Noah's) */
+const UMP = `<svg viewBox="0 0 52 28">${part("M2.4 7.4L14 8.4V12.6L5 14.8Q1.6 15.6 1.6 12.4V8.8Q1.6 7.3 2.4 7.4Z", POLY, 1.15)}
+${part("M15.4 12H19.6L18.4 19.8Q18.1 21 16.8 20.8H15Q13.8 20.5 14.2 19.4Z", POLY, 1.1)}
+<path d="M19.4 12.2Q19.2 16 21.4 16H23" fill="none" stroke="${INK}" stroke-width="1.1"/>
+${part("M25 12H30.4L32.4 24.6Q32.6 26.4 31 26.4H28.4Q27 26.4 26.8 25Z", M0, 1.1)}${shine("M27.2 14L28.6 24", 0.22, 0.7)}
+${box(36, 7.2, 10, 3.6, 0.9, M2, 1)}${box(45.4, 7.8, 4.4, 2.4, 0.7, M0, 0.9)}
+${box(11, 5.6, 26, 7, 1.8, POLY, 1.15)}${shine("M13 7H35", 0.26)}${box(14, 3.8, 18, 1.8, 0.5, M2, 0.8)}</svg>`;
+
 /* the AK-47: its orange-brown wood (the stock sloping down, the grip, the handguard over and under the barrel), the dark
    receiver with its cover, the curved magazine sweeping forward, the gas tube, the tall front sight and the slanted
    muzzle */
@@ -179,6 +197,8 @@ const iconOf = (svg, k = 1) => {
 export const GUNS = {
   sniper: { held: SNIPER, icon: iconOf(SNIPER, 0.8), w: 1.25 },
   smg: { held: SMG, icon: iconOf(SMG, 0.72), w: 0.52 },
+  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8), w: 0.75 },
+  ump: { held: UMP, icon: iconOf(UMP, 0.78), w: 0.62 },
   ak: { held: AK, icon: iconOf(AK, 0.8), w: 1 },
   chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8), w: 1.05 },
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },
@@ -209,6 +229,14 @@ export const ROUNDS_ART = {
   smg: {
     w: 22,
     svg: `<svg viewBox="0 0 20 8"><path d="M0 4h11" stroke="#ffd84a" stroke-width="1.8" opacity=".55"/><path d="M8 1.9h6.2q4 .3 5.4 2.1q-1.4 1.8-5.4 2.1H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".8"/></svg>`,
+  },
+  tommy: {
+    w: 26,
+    svg: `<svg viewBox="0 0 24 9"><path d="M0 4.5h12" stroke="#ffd84a" stroke-width="2" opacity=".55"/><path d="M9 2.2h7q4.4.3 6.4 2.3q-2 2-6.4 2.3H9Z" fill="#d9a54a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
+  },
+  ump: {
+    w: 24,
+    svg: `<svg viewBox="0 0 22 9"><path d="M0 4.5h11" stroke="#ffd84a" stroke-width="1.9" opacity=".55"/><path d="M8 2.1h6.6q4 .3 5.8 2.4q-1.8 2-5.8 2.3H8Z" fill="#e0b04a" stroke="#6a4c12" stroke-width=".9"/></svg>`,
   },
   ak: {
     w: 30,

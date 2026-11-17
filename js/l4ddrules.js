@@ -285,6 +285,33 @@ export const ARMS = {
     reload: 1400,
     k: "smg",
   },
+  /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
+     the Tommy a round every 120 ms from a 50-round drum; the UMP-45 a round every 0.30 s, 2 damage a bullet, 20 rounds,
+     a 1.6 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+  tommy: {
+    kind: "ranged",
+    auto: true,
+    slow: true,
+    cool: 120,
+    dmg: 1,
+    speed: 1100,
+    mag: 50,
+    all: 50 * 4,
+    reload: 2400,
+    k: "tommy",
+  },
+  ump: {
+    kind: "ranged",
+    auto: true,
+    slow: true,
+    cool: 300,
+    dmg: 2,
+    speed: 1100,
+    mag: 20,
+    all: 20 * 6,
+    reload: 1600,
+    k: "ump",
+  },
   ak: {
     kind: "ranged",
     auto: true,
@@ -437,6 +464,8 @@ export const WEAPONS = [
   "shotgun",
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "chaingun",
   "revolver",
@@ -485,6 +514,8 @@ const NAMES = {
   grenade: "Grenade",
   sniper: "Sniper",
   smg: "SMG",
+  tommy: "Tommy gun",
+  ump: "UMP-45",
   ak: "AK-47",
   chaingun: "Chain gun",
   revolver: "Revolver",
@@ -512,6 +543,8 @@ const BULLETS = new Set([
   "dagger",
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "revolver",
   "lmg",
@@ -1295,7 +1328,8 @@ export const reloadOf = (s, id, w, c) =>
 export const CRIT = { SLOW: 0.05, FAST: 0.025, UP: 0.025 };
 export const MISS = { SLOW: 0.025, FAST: 0.05 };
 const NO_CRIT = ["grenade", "glauncher", "flamer"];
-const fastArm = (w) => !!(ARMS[w] && (ARMS[w].auto || ARMS[w].burst));
+const fastArm = (w) =>
+  !!(ARMS[w] && !ARMS[w].slow && (ARMS[w].auto || ARMS[w].burst)); // (the Tommy gun and the UMP-45 fire on and hit as the slow ones: 5% crits, 2.5% misses)
 const canHit = (w) =>
   !!ARMS[w] && (ARMS[w].kind === "melee" || ARMS[w].kind === "ranged");
 /* a weapon's own crit chance, and its miss chance (0: never) */

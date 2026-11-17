@@ -421,6 +421,24 @@ export const SPECIALS = [
     tip: "Fires toward your mouse as long as the button is down. 20 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
   },
   {
+    id: "tommy",
+    name: "Tommy gun",
+    kind: "item",
+    get icon() {
+      return GUNS.tommy.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down. A 50-round drum, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
+    id: "ump",
+    name: "UMP-45",
+    kind: "item",
+    get icon() {
+      return GUNS.ump.icon;
+    },
+    tip: "Fires toward your mouse as long as the button is down, 2 HP a bullet, a little slower than the Tommy gun. 20 shots, then it reloads (R reloads sooner). Shift and its key keeps it out: hold the left button. (Off when the host turns off the silly commands.)",
+  },
+  {
     id: "ak",
     name: "AK-47",
     kind: "item",

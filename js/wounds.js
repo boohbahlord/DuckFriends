@@ -64,6 +64,8 @@ const WOUND = {
 const WOUND_OF = {
   handgun: "small",
   smg: "small",
+  tommy: "small",
+  ump: "small",
   lmg: "small",
   sniper: "big",
   ak: "big",
@@ -183,6 +185,8 @@ export const PCRIT = {
   arrow: 0.05,
   sniper: 0.05,
   smg: 0.0175,
+  tommy: 0.05,
+  ump: 0.05,
   ak: 0.03,
   revolver: 0.04,
   lmg: 0.0125,
