@@ -388,6 +388,9 @@ export function powerAct(s, id, now, mx, my, h) {
   if (!pw.on) setPower(s, true, now, h);
   return true;
 }
+/* how near a pump the E button shows, and so how big its yellow square is (l4dd.js spinSquare): one number for both, so
+   they can't disagree (the owner's, Nov 17: "the pumps effective range where u use them has changed") */
+export const PUMP_NEAR = 130;
 /* Downpour: E at a pump, while the power is on, buys 3 rounds of gas (250 a round) */
 export const pumpNear = (mx, my, far) =>
   dpOn() && GS.PUMP_E.some(([x, y]) => Math.hypot(mx - x, my - y) < far);

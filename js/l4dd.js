@@ -137,6 +137,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
+import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -534,6 +535,8 @@ function seeZombies(s, ctx, now) {
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    if (z.hp < o.hp && shown && o.st !== 3)
+      vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
     if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
@@ -649,6 +652,7 @@ function spinSquare(s, ctx) {
   if (!rest) return;
   let sig = Wd.sc.toFixed(3);
   spots.forEach(([cx, cy], i) => {
+    const half = i ? PUMP_NEAR : NEAR; // (a pump's square is as big as where its button shows: l4ddpower.js PUMP_NEAR)
     const poly = polys[i];
     if (!poly) return;
     const on = seenFrom(cx, cy, Wd.inside);
@@ -663,7 +667,7 @@ function spinSquare(s, ctx) {
         [-1, 1],
       ]
         .map(([a, b]) => {
-          const p = Wd.toScreen(cx + a * NEAR, cy + b * NEAR, z);
+          const p = Wd.toScreen(cx + a * half, cy + b * half, z);
           return p.left.toFixed(1) + "," + p.top.toFixed(1);
         })
         .join(" ");

@@ -105,6 +105,41 @@ export function forget(id) {
   S.delete(id);
 }
 
+/* ---------- a drawing's own vibration ---------- */
+/* how far (px) a duck's drawing vibrates with each shot it fires (the owner's, Nov 17: "shooting guns causes a slight
+   vibration in your duck"): none for the bow, pistol, dagger, melee, grenades, grenade launcher and laser; the SMG very
+   faint, then the AK, then the LMG and the sniper, the chain gun most (the revolver, the burst rifle and the shotguns weren't
+   named: set between them). Every player sees it on every duck that fires */
+export const VIB = {
+  smg: 0.5,
+  tommy: 0.5,
+  ump: 0.5,
+  ak: 0.9,
+  burst: 0.9,
+  revolver: 1.3,
+  lmg: 1.5,
+  sniper: 1.5,
+  shotgun: 1.7,
+  slug: 1.7,
+  chaingun: 2.2,
+};
+/* shakes a drawing once sideways by px (the translate property: its own jumps and squash keep their transform); twice when
+   it also goes down (the owner's, "once more as it dies"). Works on a duck, Justin or a zombie */
+export function vibrate(el, px, twice = false) {
+  if (!el || !el.animate || !(px > 0) || heavyOff()) return;
+  const one = [
+    { translate: "0 0" },
+    { translate: `${-px}px 0`, offset: 0.2 },
+    { translate: `${px}px 0`, offset: 0.45 },
+    { translate: `${-px / 2}px 0`, offset: 0.7 },
+    { translate: "0 0" },
+  ];
+  el.animate(one, { duration: 260, easing: "linear" });
+  if (twice) el.animate(one, { duration: 260, delay: 340, easing: "linear" });
+}
+/* how hard a hit shakes what it hit: by the HP it took (a bullet 1, a claw or a hammer more) */
+export const hitPx = (lost) => 2 + Math.min(5, Math.max(1, lost) * 1.5);
+
 /* ---------- my screen's shake ---------- */
 let trauma = 0,
   shook = 0,

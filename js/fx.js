@@ -416,9 +416,6 @@ export function fxBurst(x, y, h, n, chunks = 0, body = "") {
    More for the big guns (the owner's, Nov 17 11:07Z: "LMG, Sniper, especially chain gun, shotguns somewhat, and high
    caliber weapons in general SHOULD shake the screen more"): the chain gun and the LMG fire fast enough that it builds
    up while held (the chain gun the most), the sniper the biggest single shake */
-/* the screen's shake as I fire (the owner's, Nov 17 17:41Z and 18:05Z): faint, none for the bow, the pistol, the dagger, melee,
-   grenades, the grenade launcher or the laser; the SMG very faint, then the AK, then the LMG and the sniper, the chain gun
-   most. (The revolver, the burst rifle and the shotguns weren't named: set between them.) */
 export const MUZZLE = {
   handgun: {
     reach: 0.45,
@@ -428,7 +425,7 @@ export const MUZZLE = {
     smoke: 2,
     puff: 3,
     drift: 0.5,
-    shake: 0,
+    shake: 0.1,
     kick: 0.45,
   },
   smg: {
@@ -439,7 +436,7 @@ export const MUZZLE = {
     smoke: 2,
     puff: 3,
     drift: 0.5,
-    shake: 0.03,
+    shake: 0.08,
     kick: 0.3,
   },
   tommy: {
@@ -450,7 +447,7 @@ export const MUZZLE = {
     smoke: 2,
     puff: 3,
     drift: 0.5,
-    shake: 0.03,
+    shake: 0.08,
     kick: 0.3,
   },
   ump: {
@@ -461,7 +458,7 @@ export const MUZZLE = {
     smoke: 2,
     puff: 3,
     drift: 0.5,
-    shake: 0.03,
+    shake: 0.08,
     kick: 0.3,
   },
   revolver: {
@@ -472,7 +469,7 @@ export const MUZZLE = {
     smoke: 4,
     puff: 4,
     drift: 0.6,
-    shake: 0.1,
+    shake: 0.4,
     kick: 0.9,
   },
   ak: {
@@ -483,7 +480,7 @@ export const MUZZLE = {
     smoke: 5,
     puff: 4,
     drift: 0.7,
-    shake: 0.06,
+    shake: 0.2,
     kick: 0.55,
   },
   burst: {
@@ -494,7 +491,7 @@ export const MUZZLE = {
     smoke: 4,
     puff: 4,
     drift: 0.7,
-    shake: 0.06,
+    shake: 0.14,
     kick: 0.5,
   },
   slug: {
@@ -505,7 +502,7 @@ export const MUZZLE = {
     smoke: 12,
     puff: 6,
     drift: 0.8,
-    shake: 0.12,
+    shake: 0.65,
     kick: 1.5,
   }, // (the double barrel: the biggest flash and kick of all)
   shotgun: {
@@ -516,7 +513,7 @@ export const MUZZLE = {
     smoke: 8,
     puff: 5,
     drift: 0.6,
-    shake: 0.12,
+    shake: 0.45,
     kick: 1,
   },
   lmg: {
@@ -527,7 +524,7 @@ export const MUZZLE = {
     smoke: 6,
     puff: 5,
     drift: 0.7,
-    shake: 0.1,
+    shake: 0.28,
     kick: 0.5,
   },
   sniper: {
@@ -538,7 +535,7 @@ export const MUZZLE = {
     smoke: 7,
     puff: 5,
     drift: 0.9,
-    shake: 0.1,
+    shake: 0.75,
     kick: 1.2,
   },
   chaingun: {
@@ -549,7 +546,7 @@ export const MUZZLE = {
     smoke: 4,
     puff: 4,
     drift: 0.8,
-    shake: 0.16,
+    shake: 0.24,
     kick: 0.45,
   },
   laser: {
@@ -560,7 +557,7 @@ export const MUZZLE = {
     smoke: 0,
     puff: 3,
     drift: 0.4,
-    shake: 0,
+    shake: 0.06,
     kick: 0.25,
     ink: [17, 16, 16], // (red, not a gun's yellow: its middle, then out)
   }, // (the Laser Rifle: a small red flash at its lens, no smoke)
@@ -572,7 +569,7 @@ export const MUZZLE = {
     smoke: 10,
     puff: 6,
     drift: 0.4,
-    shake: 0,
+    shake: 0.35,
     kick: 1.1,
   },
 };

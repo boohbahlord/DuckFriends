@@ -460,6 +460,9 @@ import {
   jitter,
   shake,
   shakeNow,
+  vibrate,
+  VIB,
+  hitPx,
   wobble,
 } from "./fxmotion.js";
 
@@ -1446,7 +1449,7 @@ function drawDucks(now = clockNow()) {
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
-      hurt(d);
+      hurt(d, 4, true);
     } // a duck knocked down (by a weapon, Justin, a kill): the hit sound and a short red flash, for everyone
     d._dead = dead;
     const hs = (s.hurt || {})[id];
@@ -1609,8 +1612,7 @@ function drawDucks(now = clockNow()) {
           void red.offsetWidth;
           red.style.animation = "";
           sfx.hit();
-          hurt(d);
-          shakeDuck(d, was - hp, hp <= 0);
+          hurt(d, hitPx(was - hp), hp <= 0); // (a duck hit shakes once by the HP it lost, and once more as it goes down: the owner's, Nov 17)
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
@@ -2358,6 +2360,7 @@ function drawDucks(now = clockNow()) {
     kick(sh.by, gun, now);
     heatUp(sh.by, gun); // (the LMG's barrel heats up as it keeps firing: barrelheat.js)
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
+    vibrate(shooterBody(sh.by), VIB[gun]); // (the firing duck's drawing, in rhythm with the fire rate)
   }
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
      see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
@@ -3346,19 +3349,16 @@ const lawRole = (s, id) =>
         : ""
     : "";
 /* a short, see-through red flash on a duck: Justin hit, or a duck knocked down */
-/* a duck hit shakes once, by how hard it was hit, and once more as it goes down (the owner's, Nov 17 17:41Z, 32 and 34).
-   The weapon isn't known here: how many HP it lost says how hard (a zombie's claw, a bullet 1 HP) */
-function shakeDuck(d, lost, dying) {
-  if (!d || heavyOff()) return;
-  d.style.setProperty("--shk", (2 + Math.min(5, lost * 1.5)).toFixed(1) + "px");
-  d.classList.remove("shk", "shk2");
-  void d.offsetWidth;
-  d.classList.add(dying ? "shk2" : "shk");
-  clearTimeout(d._shkT);
-  d._shkT = setTimeout(() => d.classList.remove("shk", "shk2"), 700);
-}
-function hurt(d) {
+const shooterBody = (id) => {
+  const d = S && S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
+  return d && d.querySelector(".gduck-body");
+};
+function hurt(d, px = 3, twice = false) {
   if (!d) return;
+  const t = performance.now();
+  if (!(t - (d._vibAt || 0) < 250))
+    vibrate(d.querySelector(".gduck-body"), px, twice); // (once per hit, not twice when two rules see the same one)
+  d._vibAt = t; // (a hit shakes it once, and once more as it goes down: the owner's, Nov 17, 32 and 34)
   d.classList.remove("hurt");
   void d.offsetWidth;
   d.classList.add("hurt");
@@ -3780,6 +3780,7 @@ function playFx(f) {
     fxMuzzle(x0, y0, ang, kind);
     kick(f.by, kind, now);
     if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
+    vibrate(shooterBody(f.by), VIB[kind]);
     if (f.by === R.me) {
       shake(MUZZLE[kind].shake);
       if (!lz)

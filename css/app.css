@@ -14072,42 +14072,6 @@ html.moving .eye-zap {
 .hang-npc.hurt .hang-npc-body {
   animation: hurt 0.4s step-end;
 }
-/* a duck hit shakes once (shk) by --shk, and once more as it goes down (shk2: two shakes); the translate property, so the
-   jumps and the squash keep their transform */
-.gduck.shk .gduck-body {
-  animation: duck-shk 0.26s linear;
-}
-.gduck.shk2 .gduck-body {
-  animation:
-    duck-shk 0.26s linear,
-    duck-shk 0.26s linear 0.34s;
-}
-.gduck.hurt.shk .gduck-body {
-  animation:
-    hurt 0.4s step-end,
-    duck-shk 0.26s linear;
-}
-.gduck.hurt.shk2 .gduck-body {
-  animation:
-    hurt 0.4s step-end,
-    duck-shk 0.26s linear,
-    duck-shk 0.26s linear 0.34s;
-}
-@keyframes duck-shk {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  20% {
-    translate: calc(var(--shk, 3px) * -1) 0;
-  }
-  45% {
-    translate: var(--shk, 3px) 0;
-  }
-  70% {
-    translate: calc(var(--shk, 3px) * -0.5) 0;
-  }
-}
 /* (the red filters are in index.html: the owner wanted it see-through, the duck showing under it) */
 @keyframes hurt {
   from {
