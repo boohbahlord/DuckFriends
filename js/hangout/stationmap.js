@@ -461,10 +461,11 @@ function planBuild(b) {
 }
 
 /* ---------- the forest ----------
-   Outside the owner's line: a close row of thick trunks just past it (they're what stops a duck: no gap a duck fits
-   through, never an invisible wall), and forest all the way to the world's edge. Inside it (the owner, 23:23Z): trees
-   still grow past the line, thinning out the further in, yet never too sparse. Seeded, so every device grows the same
-   trees. */
+   The owner's line is only an idea of how thick the trees grow (the owner, Nov 17 03:34Z): past it they stand close, a
+   crown over every step, and inside it they thin out but never stop. Nothing stands on the line itself, ducks and
+   zombies cross it either way, and only the trunks stop anyone (stationart.js draws each tree as its trunk, its crown
+   over the ducks and its shade on the ground; shapes.js puts them, world.js turns a crown see-through over a duck).
+   Seeded, so every device grows the same trees. */
 const rng = (
   (s) => () =>
     (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296
@@ -529,78 +530,74 @@ const CLEAR = [
   [GEN.x0 - 110, GEN.y0 - 110, GEN.x1 + 110, GEN.y1 + 110],
   [HOOD.x0 - 180, HOOD.y0 - 110, HOOD.x1 + 110, HOOD.y1 + 110],
 ];
+/* real sizes (world px, as the ducks: 64 across), so the numbers here are them over K. A trunk's foot is about a duck
+   across (the owner's sketch) and stops ducks and zombies as far as it reaches; a crown is 4 to 5 ducks across */
+const TRUNK = { x: 30 / K, y: 15 / K },
+  /* how far apart two trees stand at least: past the line (a duck walks between any two trunks, zombies too: their
+     path squares are 40 across), just inside it, and further in */
+  APART = { out: 175 / K, near: 260 / K, far: 330 / K },
+  /* how likely a spot grows a tree: past the line, inside it within NEAR of it, and further in */
+  GROW = { out: 0.92, near: 0.55, far: 0.3 },
+  NEAR = 260 / K;
+/* the fallen tree's line: no tree stands on it */
+const toFallen = (x, y) => {
+  const { x0, y0, x1, y1 } = FALLEN,
+    dx = x1 - x0,
+    dy = y1 - y0,
+    t = Math.max(
+      0,
+      Math.min(1, ((x - x0) * dx + (y - y0) * dy) / (dx * dx + dy * dy)),
+    );
+  return Math.hypot(x - x0 - t * dx, y - y0 - t * dy);
+};
 function forest(put) {
-  const tree = (cx, cy, s, block) => {
-    const w = 230 * s,
-      h = 320 * s,
-      z = groundAt(cx, cy);
-    put("tree", cx - 18, cy - 12, 36, 24, h, {
-      z,
+  const tree = (cx, cy, big) =>
+    put("tree", cx - 18, cy - 12, 36, 24, 320 * big, {
+      z: groundAt(cx, cy),
       solid: true,
-      fade: true,
-      size: s,
-      block,
-      box: { l: cx - w / 2, t: cy - z - h, w, h: h + 16 },
+      big,
+      block: [cx - TRUNK.x, cy - TRUNK.y, cx + TRUNK.x, cy + TRUNK.y],
     });
-  };
-  /* the row along the line: thick trunks (56 to 70 across) 80 apart, 35 outside it. Two trunks' blocks, grown by a duck's
-     feet (16 all round), always overlap, so nothing gets between */
-  for (const [[ax, ay], [bx, by]] of EDGES) {
-    const len = Math.hypot(bx - ax, by - ay),
-      n = Math.ceil(len / 80);
-    // (the outward normal: the side that isn't open)
-    let nx = (by - ay) / len,
-      ny = -(bx - ax) / len;
-    const mx = (ax + bx) / 2,
-      my = (ay + by) / 2;
-    if (inOpen(mx + nx * 10, my + ny * 10)) {
-      nx = -nx;
-      ny = -ny;
-    }
-    for (let k = 0; k < n; k++) {
-      const t = (k + rng() * 0.15) / n,
-        off = 35 + (rng() - 0.5) * 16,
-        x = ax + (bx - ax) * t + nx * off,
-        y = ay + (by - ay) * t + ny * off;
-      if (y >= ROAD.y0 - 20 && y < ROAD.y1 + 20 && x < 3500) continue; // (the road runs on through the trees)
-      const r = 28 + rng() * 7;
-      tree(x, y, 0.9 + rng() * 0.35, [x - r, y - r, x + r, y + r]);
-    }
-  }
-  /* the forest beyond it, to the world's edge */
-  for (let gx = 80; gx < GS_W; gx += 230)
-    for (let gy = 80; gy < GS_H; gy += 230) {
-      const x = gx + (rng() - 0.5) * 140,
-        y = gy + (rng() - 0.5) * 140,
-        s = 0.85 + rng() * 0.45;
-      if (inOpen(x, y) || toLine(x, y) < 110) continue;
-      if (y >= ROAD.y0 - 60 && y < ROAD.y1 + 60) continue;
-      tree(x, y, s);
-    }
-  /* inside the line: thinning out the further in (the chance a spot grows a tree falls from 0.8 by the line to 0.45 far
-     inside), every tree at least 210 from the next */
-  const inside = [];
-  for (let gx = 100; gx < GS_W; gx += 160)
-    for (let gy = 100; gy < GS_H; gy += 160) {
-      const x = gx + (rng() - 0.5) * 120,
-        y = gy + (rng() - 0.5) * 120,
+  /* every spot on a jittered grid, the forest's own way: past the line close together, inside it further apart the
+     further in; a spot grows a tree if the dice say so and no tree stands within APART of it (a grid of buckets keeps
+     that look quick) */
+  const B = APART.far,
+    bucket = new Map(),
+    keyOf = (x, y) => Math.floor(x / B) * 1000 + Math.floor(y / B),
+    near = (x, y, d) => {
+      const bx = Math.floor(x / B),
+        by = Math.floor(y / B);
+      for (let i = bx - 1; i <= bx + 1; i++)
+        for (let j = by - 1; j <= by + 1; j++)
+          for (const [a, b] of bucket.get(i * 1000 + j) || [])
+            if (Math.hypot(a - x, b - y) < d) return true;
+      return false;
+    };
+  const STEP = 90 / K;
+  for (let gy = STEP / 2; gy < GS_H; gy += STEP)
+    for (let gx = STEP / 2; gx < GS_W; gx += STEP) {
+      const x = gx + (rng() - 0.5) * STEP * 0.9,
+        y = gy + (rng() - 0.5) * STEP * 0.9,
         roll = rng(),
-        s = 0.8 + rng() * 0.4;
+        big = 0.85 + rng() * 0.3;
+      if (x < 0 || x > GS_W || y < 0 || y > GS_H) continue;
+      if (y >= ROAD.y0 - 60 && y < ROAD.y1 + 60) continue; // (the road runs on through the trees)
+      if (toFallen(x, y) < 160) continue;
+      const open = inOpen(x, y);
       if (
-        !inOpen(x, y) ||
-        CLEAR.some((r) => inR(x, y, r)) ||
-        [...CARS, ...PUMPS].some((r) =>
-          inR(x, y, [r.x0 - 120, r.y0 - 120, r.x1 + 120, r.y1 + 120]),
-        )
+        open &&
+        (CLEAR.some((r) => inR(x, y, r)) ||
+          [...CARS, ...PUMPS].some((r) =>
+            inR(x, y, [r.x0 - 120, r.y0 - 120, r.x1 + 120, r.y1 + 120]),
+          ))
       )
         continue;
-      const d = toLine(x, y);
-      if (d < 100) continue; // (not crowding the row of trunks)
-      const want = d < 350 ? 0.8 : d < 700 ? 0.6 : 0.45;
-      if (roll > want) continue;
-      if (inside.some(([a, c]) => Math.hypot(a - x, c - y) < 210)) continue;
-      inside.push([x, y]);
-      tree(x, y, s);
+      const zone = !open ? "out" : toLine(x, y) < NEAR ? "near" : "far";
+      if (roll > GROW[zone] || near(x, y, APART[zone])) continue;
+      const k = keyOf(x, y);
+      if (!bucket.has(k)) bucket.set(k, []);
+      bucket.get(k).push([x, y]);
+      tree(x, y, big);
     }
 }
 
@@ -609,7 +606,7 @@ function forest(put) {
    number here is turned to K of itself: the exported places and sizes in place (so whatever holds one of them, a prop's
    hole or building, sees the new one), and each prop's place, size, height and options as build() hands it on. The
    strength of a light (k) and its flicker stay. The cabin's own things keep their size, only their place moves */
-const KEEP = new Set(["k", "flick", "out"]),
+const KEEP = new Set(["k", "flick", "out", "big"]),
   OWN_SIZE = new Set(["priest", "l4angel", "l4power", "toilet"]),
   done = new Set();
 function scaled(o) {

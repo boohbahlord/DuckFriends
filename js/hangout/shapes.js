@@ -396,8 +396,17 @@ function swampTree(h) {
     seed = 1 + Math.floor(((h * 7919) % 1) * 2),
     key = kind + v + seed + flip;
   if (!SWAMP_URL[key]) {
-    const t = SA.swampTreeSVG(kind, v, seed, flip);
-    SWAMP_URL[key] = { t, url: A.svgDataURL(t.svg) };
+    const shade = SA.swampShadeSVG(kind, v, seed, flip),
+      trunk = SA.swampTrunkSVG(kind, v, seed, flip),
+      crown = SA.swampCrownSVG(kind, v, seed, flip);
+    SWAMP_URL[key] = {
+      shade,
+      trunk,
+      crown,
+      shadeURL: A.svgDataURL(shade.svg),
+      trunkURL: A.svgDataURL(trunk.svg),
+      crownURL: A.svgDataURL(crown.svg),
+    };
   }
   return SWAMP_URL[key];
 }
@@ -1039,31 +1048,51 @@ export const DRAW = {
   goalpart: () => [],
   tree(p) {
     if (p.map) {
-      /* Downpour's: a swamp tree standing where stationmap.js put it. Its box there is (320 × size + 16) × K tall, its
-         trunk's foot 16 × K over the bottom; the tree keeps its own shape, at K of its drawing's size (the size I OK'd in
-         the pictures), a little taller as its size grows (0.85 to 1.04). Its trunk blocks as stationmap.js says */
-      const o = p.box,
-        { t, url } = swampTree(hash(p.id + "k")),
-        size = (o.h / GS.K - 16) / 320,
-        k = (0.85 + (size - 0.8) * 0.35) * GS.K,
-        fx = o.l + o.w / 2,
-        fy = o.t + o.h - 16 * GS.K,
-        b = {
-          l: fx - (t.w * k) / 2,
-          t: fy - (t.h - t.foot) * k,
-          w: t.w * k,
-          h: t.h * k,
-        };
+      /* Downpour's: a swamp tree standing where stationmap.js put it, in three pieces (the owner's, Nov 17 03:34Z): its
+         shade on the ground, its trunk sorted with the ducks by its foot, and its crown over everyone under it like a
+         roof (world.js: see-through while a duck is under it). Their sizes are the world's own (a duck is 64), not K's;
+         a bigger tree (big) a little bigger */
+      const t = swampTree(hash(p.id + "k")),
+        k = 0.9 + (p.big - 0.85) * 0.6,
+        fx = p.x + p.w / 2,
+        fy = p.y + p.d / 2 - p.z,
+        put = (q, url) => {
+          const w = q.w * k,
+            h = q.h * k;
+          return { l: fx - q.ax * k, t: fy - q.ay * k, w, h, url };
+        },
+        sh = put(t.shade, t.shadeURL),
+        tr = put(t.trunk, t.trunkURL),
+        cr = put(t.crown, t.crownURL);
       return [
-        part(url, b.l, b.t, b.w, b.h, p.key, {
+        part(sh.url, sh.l, sh.t, sh.w, sh.h, p.key, {
           img: true,
-          fade: true,
           url: true,
+          layer: "floor",
+          part: "shade",
+        }),
+        part(tr.url, tr.l, tr.t, tr.w, tr.h, p.key, {
+          img: true,
+          url: true,
+          fade: true,
+          part: "trunk",
           hit: {
-            l: b.l + b.w * 0.2,
-            t: b.t,
-            r: b.l + b.w * 0.8,
-            b: fy - 10 * GS.K,
+            l: tr.l + tr.w * 0.25,
+            t: tr.t,
+            r: tr.l + tr.w * 0.75,
+            b: fy - 10,
+          },
+        }),
+        part(cr.url, cr.l, cr.t, cr.w, cr.h, p.key, {
+          img: true,
+          url: true,
+          layer: "crown",
+          part: "crown",
+          hit: {
+            l: cr.l + cr.w * 0.12,
+            t: cr.t + cr.h * 0.12,
+            r: cr.l + cr.w * 0.88,
+            b: cr.t + cr.h * 0.88,
           },
         }),
       ];

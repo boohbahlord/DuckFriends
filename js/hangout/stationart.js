@@ -907,6 +907,287 @@ function willow(seed = 1, v = 0, flip = false) {
 export const SWAMP_KINDS = { cypress, oak, willow };
 export const swampTreeSVG = (kind = "cypress", v = 0, seed = 1, flip = false) =>
   SWAMP_KINDS[kind](seed, v, flip);
+/* ---------- the swamp's big trees, seen from above (the owner's, Nov 17 03:34Z) ----------
+   Trees much bigger than ducks: the trunk's foot about one duck across, the leaves about 4 to 5 ducks across, a roof
+   over whoever walks under them (the owner's sketch). Cypress, oak and willow, three looks each, no drapes. Three pieces,
+   each { svg, w, h, ax, ay } in world px (a duck is 64), (ax, ay) the point on the trunk's foot:
+   - swampShadeSVG: the leaves' shade on the ground (the ground layer)
+   - swampTrunkSVG: the trunk, its roots and its limbs, sorted with the ducks by its foot; base: its foot's width
+   - swampCrownSVG: the leaves from above, over everything, faded while a duck is under them
+   flip mirrors all three the same way. */
+export const SWAMP_CROWN = {
+  cypress: [
+    { w: 230, h: 190 },
+    { w: 250, h: 176 },
+    { w: 200, h: 170 },
+  ],
+  oak: [
+    { w: 330, h: 250 },
+    { w: 350, h: 236 },
+    { w: 290, h: 230 },
+  ],
+  willow: [
+    { w: 280, h: 230 },
+    { w: 300, h: 214 },
+    { w: 250, h: 214 },
+  ],
+};
+/* each kind's shape: its clumps (a ring of them and some inside), its leaf points round the edge, its trunk */
+const BIG = {
+  /* a cypress: feathery, in rings that step up to its middle, fine needles all round */
+  cypress: {
+    look: "tiers",
+    ring: 12,
+    inner: 7,
+    clump: 0.14,
+    points: 34,
+    pointLen: 0.12,
+    pointW: 0.045,
+    trunk: 40,
+    flare: 1.9,
+    limbs: 6,
+    lit: TC.lit,
+  },
+  /* an oak: a few great lumps of leaves, a few broad points (the owner's sketch) */
+  oak: {
+    look: "cloud",
+    ring: 6,
+    inner: 3,
+    clump: 0.27,
+    points: 6,
+    pointLen: 0.2,
+    pointW: 0.2,
+    trunk: 54,
+    flare: 1.4,
+    limbs: 5,
+    lit: TC.lit,
+  },
+  /* a willow: round, its fronds running out from the middle to long thin tips all round */
+  willow: {
+    look: "fronds",
+    ring: 12,
+    inner: 3,
+    clump: 0.17,
+    points: 44,
+    pointLen: 0.2,
+    pointW: 0.04,
+    trunk: 44,
+    flare: 1.6,
+    limbs: 7,
+    lit: "#358226",
+  },
+};
+/* the crown's plan (the same for its shade): clumps and points round (0, 0), the crown's middle */
+function bigPlan(kind, v, seed) {
+  const r = rnd(seed * 37 + v * 11 + kind.length * 5),
+    K = BIG[kind],
+    { w, h } = SWAMP_CROWN[kind][v],
+    hx = w / 2,
+    hy = h / 2,
+    lean = v === 1 ? 0.12 : 0, // (the second look leans its leaves one way)
+    clumps = [],
+    points = [];
+  for (let i = 0; i < K.ring; i++) {
+    const a = ((i + r() * 0.5) / K.ring) * Math.PI * 2,
+      out = 0.62 + (r() - 0.5) * 0.12,
+      rx = hx * K.clump * 2 * (0.85 + r() * 0.3),
+      x =
+        Math.cos(a) * (hx - rx * 0.9) * (out / 0.62) * 0.98 +
+        lean * hx * (1 + Math.cos(a)) * 0.5,
+      y = Math.sin(a) * (hy - rx * 0.8 * (h / w)) * (out / 0.62) * 0.98;
+    clumps.push([x, y, rx, rx * (h / w) * 1.05]);
+  }
+  for (let i = 0; i < K.inner; i++) {
+    const a = ((i + r()) / K.inner) * Math.PI * 2,
+      rx = hx * K.clump * 2.2 * (0.85 + r() * 0.3);
+    clumps.push([
+      Math.cos(a) * hx * 0.26 + lean * hx * 0.5,
+      Math.sin(a) * hy * 0.26 - hy * 0.05,
+      rx,
+      rx * (h / w),
+    ]);
+  }
+  clumps.push([
+    lean * hx * 0.5 - hx * 0.06,
+    -hy * 0.12,
+    hx * K.clump * 2.1,
+    hy * K.clump * 2.1,
+  ]); // (the top, highest)
+  for (let i = 0; i < K.points; i++) {
+    const a = ((i + r() * 0.6) / K.points) * Math.PI * 2,
+      c = Math.cos(a),
+      s = Math.sin(a),
+      len = K.pointLen * (0.6 + r() * 0.8),
+      wid = K.pointW * (0.7 + r() * 0.6);
+    // (a point: its two corners just inside the edge, its tip out past it)
+    const at = (k, da) => [
+      Math.cos(a + da) * hx * k + lean * hx * (1 + Math.cos(a)) * 0.5,
+      Math.sin(a + da) * hy * k,
+    ];
+    points.push([
+      at(0.86, -wid),
+      at(1 + len, (r() - 0.5) * 0.05),
+      at(0.86, wid),
+    ]);
+  }
+  return { r, K, w, h, clumps, points };
+}
+const ptsPath = (P, dx, dy) =>
+  "M" + P.map(([x, y]) => `${n1(x + dx)} ${n1(y + dy)}`).join("L") + "Z";
+const BIG_PAD = 30; // (room round the crown for its points and its ink)
+const crownLift = (h) => Math.round(h * 0.3); // (how far above the trunk's foot the crown's middle shows)
+const pieceOut = (W, H, s, ax, ay, flip) => ({
+  svg: tWrap(W, H, s, flip),
+  w: W,
+  h: H,
+  ax: flip ? W - ax : ax,
+  ay,
+});
+
+/* the leaves from above: one ink outline round every clump and point, the deep leaves, each clump's body, the moon
+   on the top-left of each, a few wet glints */
+export function swampCrownSVG(kind = "cypress", v = 0, seed = 1, flip = false) {
+  const { r, K, w, h, clumps, points } = bigPlan(kind, v, seed),
+    W = w + BIG_PAD * 2,
+    H = h + BIG_PAD * 2,
+    cx = W / 2,
+    cy = H / 2;
+  let ink = "",
+    deep = "",
+    body = "",
+    lit = "",
+    glint = "";
+  for (const P of points) {
+    const d = ptsPath(P, cx, cy);
+    ink += `<path d="${d}" fill="${TINK}" stroke="${TINK}" stroke-width="6" stroke-linejoin="round"/>`;
+    deep += `<path d="${d}" fill="${TC.shade}"/>`;
+  }
+  clumps.forEach(([x, y, rx, ry], i) => {
+    const d = tBlob(cx + x, cy + y, rx, ry, r),
+      ring = i < K.ring ? 0 : i < clumps.length - 1 ? 1 : 2; // (the outer ring, the inner one, the top)
+    ink += `<path d="${d}" fill="${TINK}" stroke="${TINK}" stroke-width="6" stroke-linejoin="round"/>`;
+    deep += `<path d="${d}" fill="${TC.shade}"/>`;
+    body += `<path d="${tBlob(cx + x - rx * 0.06, cy + y - ry * 0.1, rx * 0.82, ry * 0.78, r, 0.24)}" fill="${TC.leaf}"/>`;
+    if (K.look === "fronds") return; // (a willow's light runs down its fronds instead)
+    if (K.look === "tiers" && ring === 0 && r() < 0.5) return; // (a cypress's outer ring mostly in the dark)
+    const k = K.look === "tiers" ? 0.34 + ring * 0.08 : 0.44;
+    lit += `<path d="${tBlob(cx + x - rx * 0.26, cy + y - ry * 0.3, rx * k, ry * k * 0.8, r, 0.3, 12)}" fill="${K.look === "tiers" && ring === 2 ? TC.rim : K.lit}"/>`;
+    if (r() < 0.5)
+      glint += `<rect x="${n1(cx + x - rx * 0.5 + r() * rx * 0.5)}" y="${n1(cy + y - ry * 0.55 + r() * ry * 0.3)}" width="4" height="3" fill="${TC.rim}"/>`;
+  });
+  if (K.look === "fronds")
+    /* a willow: its fronds from the middle out, lit on the moon's side, dark on the other */
+    for (let i = 0; i < 22; i++) {
+      const a = ((i + r() * 0.8) / 22) * Math.PI * 2,
+        c = Math.cos(a),
+        sn = Math.sin(a),
+        k0 = 0.12 + r() * 0.3,
+        k1 = 0.6 + r() * 0.3,
+        side = -(c + sn) / 1.4; // (1 facing the moon, up and left; −1 away)
+      if (side < -0.5 && r() < 0.6) continue; // (the far side mostly plain)
+      const bend = (r() - 0.5) * 0.5,
+        km = (k0 + k1) / 2,
+        P = (k, da = 0) =>
+          `${n1(cx + Math.cos(a + da) * (w / 2) * k)} ${n1(cy + Math.sin(a + da) * (h / 2) * k)}`;
+      lit += `<path d="M${P(k0)}Q${P(km, bend)} ${P(k1, bend * 0.6)}" fill="none" stroke="${side > -0.2 ? K.lit : TC.shade}" stroke-width="${side > 0.4 ? 6 : 4}" stroke-linecap="round"/>`;
+    }
+  return pieceOut(
+    W,
+    H,
+    ink + deep + body + lit + glint,
+    cx,
+    cy + crownLift(h),
+    flip,
+  );
+}
+
+/* the leaves' shade on the ground: the crown's shape, a little smaller, flat and dark, mostly under the leaves, peeking
+   out down and right of them (the moon is up and left) */
+export function swampShadeSVG(kind = "cypress", v = 0, seed = 1, flip = false) {
+  const { r, w, h, clumps, points } = bigPlan(kind, v, seed),
+    W = w + BIG_PAD * 2,
+    H = h + BIG_PAD * 2,
+    cx = W / 2,
+    cy = H / 2;
+  let s = "";
+  for (const P of points) s += `<path d="${ptsPath(P, cx, cy)}"/>`;
+  for (const [x, y, rx, ry] of clumps)
+    s += `<path d="${tBlob(cx + x, cy + y, rx, ry, r)}"/>`;
+  return pieceOut(
+    W,
+    H,
+    `<g fill="#05070a" opacity=".38" transform="translate(${n1(cx)} ${n1(cy)}) scale(.86) translate(${n1(-cx)} ${n1(-cy)})">${s}</g>`,
+    cx - 16,
+    cy + crownLift(h) * 0.45,
+    flip,
+  );
+}
+
+/* the trunk at the map's slant: its foot flared on the ground with roots running off it (a cypress's knees round it),
+   the trunk up to where the leaves start, its limbs spreading out under them. Hidden under the leaves till they fade */
+export function swampTrunkSVG(kind = "cypress", v = 0, seed = 1, flip = false) {
+  const { K, w, h } = bigPlan(kind, v, seed),
+    r = rnd(seed * 41 + v * 13 + kind.length),
+    lift = crownLift(h),
+    up = lift + 26, // (the trunk's height on screen, to the crown's middle and a little past)
+    W = w + BIG_PAD * 2,
+    H = up + h * 0.5 + 40,
+    cx = W / 2,
+    b = H - 24,
+    top = b - up,
+    tw = K.trunk / 2;
+  let s = `<ellipse cx="${cx}" cy="${b}" rx="${n1(tw * K.flare * 1.3)}" ry="${n1(tw * K.flare * 0.45)}" fill="#05070a" opacity=".5"/>`;
+  /* roots: tapered, along the ground away from the foot */
+  let roots = "";
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI * (-0.05 + (i / 5) * 1.1) + (r() - 0.5) * 0.3,
+      len = tw * (1.6 + r() * 1.2),
+      x0 = cx + Math.cos(a) * tw * 0.8,
+      y0 = b + Math.sin(a) * tw * 0.25,
+      x1 = cx + Math.cos(a) * len * 1.3,
+      y1 = b + Math.sin(a) * len * 0.45;
+    const hw = tw * 0.32,
+      nx = -Math.sin(a) * hw,
+      ny = Math.cos(a) * hw * 0.9;
+    roots += `<path d="M${n1(x0 + nx)} ${n1(y0 + ny)}Q${n1((x0 + x1) / 2 + nx * 0.5)} ${n1((y0 + y1) / 2 + ny * 0.5 - 3)} ${n1(x1)} ${n1(y1)}Q${n1((x0 + x1) / 2 - nx * 0.5)} ${n1((y0 + y1) / 2 - ny * 0.5)} ${n1(x0 - nx)} ${n1(y0 - ny)}Z"/>`;
+  }
+  s += `<g fill="${TC.bark}" stroke="${TINK}" stroke-width="3" stroke-linejoin="round">${roots}</g>`;
+  if (kind === "cypress")
+    for (const [dx, dy, k] of [
+      [-1.9, 0.5, 0.9],
+      [2.0, 0.3, 1.1],
+      [-1.2, 1.1, 0.7],
+      [1.4, 1.2, 0.8],
+      [0.2, 1.5, 0.6],
+    ])
+      s += tKnee(cx + dx * tw * 1.4, b + dy * tw * 0.5, k * 1.2);
+  /* the limbs: from the trunk's top out and up under the leaves (never down across the trunk), thinner as they go,
+     each with a twig off it */
+  s += tTrunk(cx, b, top, tw, tw * 0.78, K.flare);
+  for (let i = 0; i < K.limbs; i++) {
+    const a = -Math.PI * (0.06 + ((i + 0.2 + r() * 0.6) / K.limbs) * 0.88),
+      len = (w / 2) * (0.6 + r() * 0.25),
+      sy = (h / w) * 0.8,
+      at = (k, da = 0) => [
+        cx + Math.cos(a + da) * len * k,
+        top + 4 + Math.sin(a + da) * len * k * sy,
+      ],
+      [mx, my] = at(0.5, 0.12 * (r() - 0.5)),
+      [ex, ey] = at(1, 0.2 * (r() - 0.5)),
+      [tx, ty] = at(0.82, (r() < 0.5 ? -1 : 1) * 0.35);
+    s += tLimb(`M${cx} ${top + 6}L${n1(mx)} ${n1(my)}`, Math.max(6, tw * 0.5));
+    s += tLimb(
+      `M${n1(mx)} ${n1(my)}L${n1(ex)} ${n1(ey)}`,
+      Math.max(4, tw * 0.28),
+    );
+    s += tLimb(`M${n1(mx)} ${n1(my)}L${n1(tx)} ${n1(ty)}`, 3);
+  }
+  return {
+    ...pieceOut(W, H, s, cx, b, flip),
+    base: Math.round(K.trunk * 1.25),
+  }; // (about a duck: what blocks)
+}
+
 /* the fallen tree across the road's east end: a log from (x0, y0) to (x1, y1) in a box w × h, `half` thick each side
    and lying `z` high at its middle; its roots torn up at the south end, its broken crown at the north, moss along it */
 export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {

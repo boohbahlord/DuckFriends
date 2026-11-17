@@ -655,8 +655,11 @@ export const MUD = { P: 0.04, FOR: 10000, FADE: 1500 };
 /* about how far a player sees from its duck, either way (a computer's view, the wider one) */
 const VIEW = { x: 720, y: 460 };
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
+/* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
+   fences only the road is open, so zombies there still climb them */
+const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
 export const playable = (x, y) =>
-  (dp() && GS.inOpen(x, y)) ||
+  (dp() && (GS.inOpen(x, y) || inWoods(x, y))) ||
   (!dp() && inCabin(x, y)) ||
   inDeck(x, y) ||
   (!dp() && x >= LAND.x0 && x < LAND.x1 && y >= LAND.y0 && y < LAND.y1);
@@ -1282,6 +1285,7 @@ function bringBack(s, id, now, k, fresh) {
    the spots in out (the other drops) */
 const bare = (x, y, out, far) =>
   playable(x, y) &&
+  (!dp() || GS.inOpen(x, y)) && // (Downpour: drops come down inside the forest line, never out under the trees)
   Math.abs(heightAt(x, y)) < 1 &&
   !onPlatform(x, y) &&
   [

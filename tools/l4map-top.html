@@ -130,16 +130,34 @@
       }
       const sp = L.spawnAt(0),
         duck = fill([[sp.x, sp.y]], false);
+      /* the zombies' ground: from just inside each fence's climbing spot (the forest line stops nobody now: the owner's,
+         Nov 17 03:34Z, so a zombie walks the forest too) */
+      const zomb = fill(
+        GS.FENCES.map((f) => [f.x - f.out * 80, (f.climb[0] + f.climb[1]) / 2]),
+        true,
+      );
       g.fillStyle = COL.reach;
-      let leaks = 0;
+      let woods = 0,
+        lost = 0;
       for (let j = 0; j < NY; j++)
         for (let i = 0; i < NX; i++)
           if (duck[j * NX + i]) {
             const x = i * STEP + STEP / 2,
               y = j * STEP + STEP / 2;
             g.fillRect(i * STEP, j * STEP, STEP, STEP);
-            if (!GS.inOpen(x, y)) leaks++;
+            if (!GS.inOpen(x, y)) woods++;
+            if (!zomb[j * NX + i]) lost++; // (a duck's spot no zombie reaches)
           }
+      // the forest line: only an idea of how thick the trees grow
+      g.setLineDash([30, 24]);
+      g.strokeStyle = "rgba(255,255,255,.55)";
+      g.lineWidth = 4;
+      for (const P of [GS.TOP, GS.BOT]) {
+        g.beginPath();
+        P.forEach(([x, y], k) => (k ? g.lineTo(x, y) : g.moveTo(x, y)));
+        g.stroke();
+      }
+      g.setLineDash([]);
       // the props
       for (const p of L.PROPS) {
         const r = [p.x, p.y, p.x + p.w, p.y + p.d];
@@ -148,13 +166,13 @@
           const b = p.block || r,
             cx = (b[0] + b[2]) / 2,
             cy = (b[1] + b[3]) / 2;
-          g.fillStyle = "rgba(60,110,50,.35)";
+          g.fillStyle = "rgba(60,110,50,.3)";
           g.beginPath();
-          g.arc(cx, cy, 100 * p.size, 0, 7);
+          g.arc(cx, cy, 135 * (0.9 + (p.big - 0.85) * 0.6), 0, 7);
           g.fill();
           g.fillStyle = COL.tree;
           g.beginPath();
-          g.arc(cx, cy, Math.max(24, (b[2] - b[0]) / 2), 0, 7);
+          g.ellipse(cx, cy, (b[2] - b[0]) / 2, (b[3] - b[1]) / 2, 0, 0, 7);
           g.fill();
         } else if (p.kind === "wall") rect(r, COL.wall);
         else if (p.kind === "fence") rect(r, COL.fence);
@@ -235,7 +253,11 @@
         [COL.walk, "hole anyone walks through"],
         [COL.board, "boarded hole (zombies only)"],
         ["#ff9a3a", "zombies climb the fence here"],
-        [COL.tree, "tree trunk"],
+        [COL.tree, "tree trunk (its crown faintly round it)"],
+        [
+          "rgba(255,255,255,.55)",
+          "the forest line (dashed: trees thin out inside it)",
+        ],
         [COL.shallow, "shallow flood"],
         [COL.deep, "deep flood (no ducks)"],
         ["#ffd84d", "power box"],
@@ -247,9 +269,16 @@
         items
           .map(([c, t]) => `<span><i style="background:${c}"></i>${t}</span>`)
           .join("") +
-        `<span>${L.PROPS.filter((p) => p.kind === "tree").length} trees; ${leaks} walkable cells outside the line</span>`;
+        `<span>${L.PROPS.filter((p) => p.kind === "tree").length} trees; ${woods} walkable cells in the forest; ${lost} cells a duck reaches and a zombie doesn't</span>`;
       window.DONE = {
-        leaks,
+        woods,
+        lost,
+        spots: GS.LINE_SPOTS.filter(
+          ([x, y]) =>
+            zomb[Math.floor(y / STEP) * NX + Math.floor(x / STEP)] &&
+            L.standable(x, y, 0, L.STEP, null, true),
+        ).length,
+        lineSpots: GS.LINE_SPOTS.length,
         reach: duck.reduce((n, v) => n + v, 0),
         start: [sp.x, sp.y],
         at: Object.fromEntries(
