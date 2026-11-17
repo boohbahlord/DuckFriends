@@ -29,6 +29,7 @@ import {
   gunPrice,
   isHelper,
   laserHeat,
+  wildOpen,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 
@@ -340,6 +341,7 @@ function justinBot(s, id, now, out) {
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
+  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out);
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
     (n) => n.d < SEE * 1.3 && clearShot(x, y, n.z.x, n.z.y, heightAt(x, y)),
@@ -453,6 +455,56 @@ function justinBot(s, id, now, out) {
       ax: ax / W,
       ay: ay / H,
     });
+}
+/* Justin out in Downpour with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
+   close (sprinting while his meter lasts), jumps when one is on him (a jump's i-frames), and otherwise goes exploring: any
+   part of the map, a new spot every few seconds */
+const wander = new Map(); // Justin → { x, y, until }
+function wildMove(s, id, now, p, x, y, near, run, out) {
+  const threats = [...near];
+  for (const sh of s.shots || [])
+    if (sh.by !== id && sh.lx !== undefined) {
+      const sx = sh.lx * W,
+        sy = sh.ly * H,
+        d = Math.hypot(sx - x, sy - y);
+      if (d < 260) threats.push({ z: { x: sx, y: sy }, d }); // (a shot flying close scares him)
+    }
+  threats.sort((a, b) => a.d - b.d);
+  const d0 = threats.length ? threats[0].d : Infinity,
+    scared = d0 < KEEP * 1.4;
+  let w = wander.get(id);
+  if (!scared && (!w || now > w.until || Math.hypot(w.x - x, w.y - y) < 90)) {
+    w = null;
+    for (let i = 0; i < 24 && !w; i++) {
+      const tx = Math.random() * W,
+        ty = Math.random() * H;
+      if (playable(tx, ty) && standable(tx, ty, heightAt(tx, ty), STEP))
+        w = { x: tx, y: ty, until: now + 6000 + Math.random() * 6000 };
+    }
+    if (w) wander.set(id, w);
+  }
+  let [nx, ny] = [x, y];
+  const far = run(scared);
+  if (scared) [nx, ny] = away(x, y, far, threats);
+  else if (w) {
+    const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
+    [nx, ny] = walk(x, y, to[0], to[1], far);
+    if (Math.hypot(nx - x, ny - y) < far * 0.2) wander.delete(id); // (stuck: another spot next time)
+  }
+  const air = p.j && now - p.j < 700,
+    jump = air ? p.j : d0 < TOO_CLOSE * 1.6 && Math.random() < 0.5 ? now : 0;
+  out.push({
+    t: "move",
+    id,
+    x: +(nx / W).toFixed(5),
+    y: +(ny / H).toFixed(5),
+    j: jump,
+    z: Math.round(heightAt(nx, ny)),
+    b: Math.round(heightAt(nx, ny)),
+    w: "",
+    ax: +((nx - x || 1) / W).toFixed(4),
+    ay: +((ny - y) / H).toFixed(4),
+  });
 }
 function shoot(s, id, now, m, w, ax, ay, out) {
   if (now - ((m.u || {})[w] || 0) < l4Cool(s, id, w)) return;
