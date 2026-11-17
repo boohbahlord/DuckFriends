@@ -28,7 +28,7 @@ import {
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { butlerSVG, justinSVG } from "./hangout/npcart.js";
+import { butlerSVG, justinSVG, priestSVG } from "./hangout/npcart.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
@@ -1410,7 +1410,7 @@ function shopEl(ctx) {
       <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
       <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
       ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
-      <p class="l4-shop-say"><span class="l4-shop-me">${butlerSVG({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
+      <p class="l4-shop-say"><span class="l4-shop-me">${(dp() ? priestSVG : butlerSVG)({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
@@ -1671,7 +1671,7 @@ activity({
     pwMount(ctx, layer);
     angelMount(ctx, layer);
     shop = shopEl(ctx);
-    butler = butlerEl(undefined, shopName()); // (Downpour: the Priest, in the Butler's drawing till Noah draws him)
+    butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
