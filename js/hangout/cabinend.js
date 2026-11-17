@@ -1,5 +1,5 @@
 /* ---------- End Cabin / Exit Cabin ----------
-   A small vote button at the board's top left in Hangout ("End Cabin") and Quacky Zombies ("Exit Cabin"). A click votes, a
+   A small vote button at the board's top left in Hangout ("End Cabin") and Quacky Zombies ("Exit Cabin", or "Exit Downpour" on Downpour). A click votes, a
    click again takes the vote back (never Enter or E). Half of the people (not the computers) start a 10 second timer
    that shows on the button; fewer than half stops it. The rules are in js/rules.js (`cabinEnd`, `cabinOver`). */
 import { cabinVotes, cabinNeeded, isHang } from "../rules.js";
@@ -108,7 +108,7 @@ export function mountCabinEnd(S, getR) {
         isHang(s) && s.phase === "hang" && !(R.state.players[R.me] || {}).bot,
       c = s.cabinEnd || {},
       left = c.at ? Math.max(0, Math.ceil((c.at - Date.now()) / 1000)) : 0,
-      txt = `${isL4dd(s) ? "Exit Cabin" : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
+      txt = `${isL4dd(s) ? (s.options.l4map === "downpour" ? "Exit Downpour" : "Exit Cabin") : "End Cabin"} ${cabinVotes(s)}/${cabinNeeded(s)}${c.at ? ` · ${left}s` : ""}`;
     b.hidden = !on;
     b.classList.toggle("on", !!(c.by || {})[R.me]);
     b.classList.toggle("ticking", !!c.at);

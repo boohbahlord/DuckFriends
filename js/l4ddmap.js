@@ -9,16 +9,23 @@ import {
   DECK,
   STAIRS,
   PROPS,
-  inCabin,
   seenFrom,
+  whereIn,
+  layoutVariant,
 } from "./hangout/layout.js";
+import * as GS from "./hangout/stationmap.js";
 import { shownDuck } from "./looks.js";
 import { touchOnly } from "./pointer.js";
 
-const X0 = 1250,
+let X0 = 1250,
   X1 = 4550,
   Y0 = 560,
-  Y1 = 2640; // the world it shows: the cabin, the deck and the stairs' landing, a little round them
+  Y1 = 2640; // the world it shows: the cabin, the deck and the stairs' landing, a little round them (Downpour: all of it)
+const dpOn = () => layoutVariant() === "l4gs";
+const bounds = () =>
+  ([X0, X1, Y0, Y1] = dpOn()
+    ? [0, GS.GS_W, 0, GS.GS_H]
+    : [1250, 4550, 560, 2640]);
 const EVERY = 80; // ms between drawings
 const IN_MS = 250,
   OUT_MS = 400; // a dot's fade in, and its quicker fade out (it's gone in under half a second)
@@ -82,15 +89,36 @@ function drawMap(w, h, dpr) {
   m.scale(dpr, dpr);
   const box = (x0, y0, x1, y1) =>
     m.fillRect(f.x(x0), f.y(y0), (x1 - x0) * f.k, (y1 - y0) * f.k);
-  m.fillStyle = "rgba(196,150,96,.55)"; // the cabin's floor
-  box(CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1);
-  m.fillStyle = "rgba(150,104,62,.6)"; // the deck and the stairs' landing
-  box(DECK.x0, DECK.y0, DECK.x1, DECK.y1);
-  box(LAND.x0, LAND.y0, LAND.x1, LAND.y1);
+  if (dpOn()) {
+    // Downpour: the open ground inside the forest line, the road and its flood, the two buildings' floors
+    m.fillStyle = "rgba(70,110,70,.5)";
+    for (const P of [GS.TOP, GS.BOT]) {
+      m.beginPath();
+      P.forEach(([x, y], i) =>
+        i ? m.lineTo(f.x(x), f.y(y)) : m.moveTo(f.x(x), f.y(y)),
+      );
+      m.closePath();
+      m.fill();
+    }
+    m.fillStyle = "rgba(110,110,118,.6)";
+    box(0, GS.ROAD.y0, GS.GS_W, GS.ROAD.y1);
+    m.fillStyle = "rgba(70,120,190,.6)";
+    box(...GS.SHALLOW);
+    m.fillStyle = "rgba(40,80,170,.8)";
+    box(...GS.DEEP);
+    m.fillStyle = "rgba(196,150,96,.55)";
+    for (const B of [GS.STATION, GS.CHAPEL]) box(B.x0, B.y0, B.x1, B.y1);
+  } else {
+    m.fillStyle = "rgba(196,150,96,.55)"; // the cabin's floor
+    box(CABIN.x0, CABIN.y0, CABIN.x1, CABIN.y1);
+    m.fillStyle = "rgba(150,104,62,.6)"; // the deck and the stairs' landing
+    box(DECK.x0, DECK.y0, DECK.x1, DECK.y1);
+    box(LAND.x0, LAND.y0, LAND.x1, LAND.y1);
+  }
   m.fillStyle = "rgba(246,236,216,.9)"; // the walls (the doors are their gaps)
   const t = Math.max(1.5 / f.k, 0); // (at least 1.5 px thick)
   for (const p of PROPS) {
-    if (p.kind !== "wall" || !p.block) continue; // (the room's cabin's: Quacky Zombies' has its holes)
+    if ((p.kind !== "wall" && p.kind !== "fence") || !p.block) continue; // (the room's cabin's: Quacky Zombies' has its holes)
     const [x0, y0, x1, y1] = p.block;
     const cx = (x0 + x1) / 2,
       cy = (y0 + y1) / 2,
@@ -111,10 +139,11 @@ export function mapDraw(now, ctx, s, zs, alive) {
     return;
   }
   if (cv.hidden) cv.hidden = false;
-  const w = Wd.vw < 900 ? 120 : 150, // (smaller: the owner's, Nov 16; was 196)
+  bounds();
+  const w = (Wd.vw < 900 ? 120 : 150) * (dpOn() ? 0.8 : 1), // (smaller: the owner's, Nov 16; was 196. Downpour's is tall)
     h = Math.round((w * (Y1 - Y0)) / (X1 - X0)),
     dpr = pixelOn() ? 1 / gridPx() : Math.min(2, devicePixelRatio || 1), // (the pixel look: one of its pixels is one of the grid's)
-    key = w + "x" + h + "@" + dpr;
+    key = w + "x" + h + "@" + dpr + layoutVariant();
   if (key !== size) {
     size = key;
     cv.width = Math.round(w * dpr);
@@ -137,13 +166,16 @@ export function mapDraw(now, ctx, s, zs, alive) {
   for (const id of s.seat || []) {
     const a = Wd.at(id);
     if (!a) continue;
-    const ins = inCabin(a.x, a.y);
-    cams.push([a.x, a.y, ins]);
+    cams.push([a.x, a.y, whereIn(a.x, a.y)]);
     ducks.push([id, a.x, a.y]);
   }
   const sees = (x, y) => {
     for (const [cx, cy, ci] of cams)
-      if (Math.abs(x - cx) < hw && Math.abs(y - cy) < hh && seenFrom(x, y, ci))
+      if (
+        Math.abs(x - cx) < hw &&
+        Math.abs(y - cy) < hh &&
+        (dpOn() ? whereIn(x, y) === ci : seenFrom(x, y, ci > 0))
+      )
         return true;
     return false;
   };

@@ -20,7 +20,16 @@ import { sfx } from "./sound.js";
 let W = null; // the window while it's up: { el, R, key, sig, hov, live, raf, hold, pause }
 
 const phone = () => !document.documentElement.classList.contains("keyboard");
-const TITLE = { mode: "Vote for Game Mode", map: "Vote for Map" };
+const TITLE = {
+  mode: "Vote for Game Mode",
+  map: "Vote for Map",
+  zmap: "Vote for Map",
+};
+/* Quacky Zombies' own map vote (rules.js ZMAPS): each of its maps as one picture of it */
+const ZPIC = {
+  cabin: ["assets/maps/duck-cabin.jpg", "Duck Cabin"],
+  downpour: ["assets/maps/downpour.jpg", "Downpour"],
+};
 
 /* one choice: a game's row or a map's picture */
 function modeRow(id) {
@@ -35,8 +44,15 @@ function mapTile(id) {
     [name, form] = mapName(id).split(/ \((.+)\)$/);
   return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><svg class="vt-still${f.grey ? " grey" : ""}" viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${artBackdrop(f.map)}</svg></span><span class="vt-name">${esc(name)}${form ? ` <i>(${esc(form)})</i>` : ""}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
 }
+function zmapTile(id) {
+  if (id === DICE) return mapTile(DICE);
+  const [src, name] = ZPIC[id];
+  return `<button type="button" class="vt-map" data-v="${id}"><span class="vt-pic"><img class="vt-still" src="${src}" alt="" draggable="false"></span><span class="vt-name">${esc(name)}</span><span class="vt-n"></span><span class="vt-ducks"></span></button>`;
+}
 function bodyHTML(s, k) {
   const ids = voteIds(s, k);
+  if (k === "zmap")
+    return `<div class="vt-maps">${[DICE, ...ids].map(zmapTile).join("")}</div>`;
   if (k === "map")
     return `<div class="vt-maps">${[DICE, ...ids].map(mapTile).join("")}</div>`;
   return `<div class="vt-modes">${modeRow(DICE)}${CATS.map(([cat, name]) => {
@@ -65,7 +81,7 @@ function build(R, pause) {
   el.className = `vt vt-k-${k}`;
   el.setAttribute("role", "dialog");
   el.setAttribute("aria-label", TITLE[k]);
-  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "map" ? "a map" : "a game"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
+  el.innerHTML = `<header class="vt-head"><div class="vt-left">${lobbyBtnHTML(s, R.me)}</div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
   document.body.append(el);
   W = {
     el,
@@ -185,7 +201,7 @@ export function paintVotes(R, pause) {
   for (const id of s.seat)
     if (votes[id] && s.players[id])
       (by[votes[id]] = by[votes[id]] || []).push(id);
-  const size = W.el.classList.contains("vt-k-map") ? 44 : 36;
+  const size = W.el.classList.contains("vt-k-mode") ? 36 : 44;
   for (const b of W.el.querySelectorAll("[data-v]")) {
     const v = b.dataset.v,
       who = by[v] || [],

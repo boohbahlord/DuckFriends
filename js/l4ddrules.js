@@ -51,7 +51,9 @@ import {
   onPlatform,
   BJ,
   layoutRev,
+  layoutVariant,
 } from "./hangout/layout.js";
+import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
@@ -76,6 +78,7 @@ import {
   powerTake,
   powerBuy,
   powerAct,
+  powerPump,
   isPw,
   pwName,
 } from "./l4ddpower.js";
@@ -570,6 +573,13 @@ export const priceFor = (s, id, what, n) => {
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
 export const BOX = { x: 2300, y: 742, price: 500, spin: 4200, keep: 10000 }; // (500 a spin: the owner's, Nov 15)
+/* … and on Downpour (the second map): the Priest by the altar does the Butler's job, the car with its hood up the
+   fireplace's (syncMap swaps them in) */
+const CABIN_SPOTS = { butler: { ...BUTLER }, box: { x: BOX.x, y: BOX.y } },
+  DP_SPOTS = {
+    butler: { x: GS.PRIEST.x, y: GS.PRIEST.y },
+    box: { x: GS.HOOD.spot.x, y: GS.HOOD.spot.y },
+  };
 const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
 /* a zombie's room on the floor, as the ducks' (world.js crowd): an ellipse 56 across and 25.6 deep; every zombie the
@@ -629,19 +639,31 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
+  ...(l[8]
+    ? { color: "#6b5434", beakColor: "#7a5a2e", beakColor2: "#4a3418" }
+    : {}), // (a mud zombie: MUD)
 });
+/* Downpour's mud zombies (the owner's, Nov 16 23:15Z): 4% of them, 1 HP less, the color of the mud; a hit from one
+   puts mud over the corners of that duck's screen, which fades after 10 s (l4dd.js mudScreen). l[8] is 1 */
+export const MUD = { P: 0.04, FOR: 10000, FADE: 1500 };
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
    and where boards go up. Each has its line in the wall (x, y; axis 'x' for an east-west wall, half: half its width),
    the spot just outside where a zombie tears the boards down (out), the spot just inside where it's in (in), and for
    the stairs the foot of the stairs where they appear (from) */
+/* about how far a player sees from its duck, either way (a computer's view, the wider one) */
+const VIEW = { x: 720, y: 460 };
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
+/* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
+   fences only the road is open, so zombies there still climb them */
+const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
 export const playable = (x, y) =>
-  inCabin(x, y) ||
+  (dp() && (GS.inOpen(x, y) || inWoods(x, y))) ||
+  (!dp() && inCabin(x, y)) ||
   inDeck(x, y) ||
-  (x >= LAND.x0 && x < LAND.x1 && y >= LAND.y0 && y < LAND.y1);
-export const OPENINGS = [
+  (!dp() && x >= LAND.x0 && x < LAND.x1 && y >= LAND.y0 && y < LAND.y1);
+const CABIN_OPENINGS = [
   {
     id: "front",
     kind: "door",
@@ -724,10 +746,93 @@ export const OPENINGS = [
     in: [4238, 2110],
   },
 ];
-export const openingById = (id) => OPENINGS.find((o) => o.id === id) || null;
+/* Downpour (the second map, stationmap.js): the boarded holes in the gas station and the chapel, and the two fences across
+   the road's ends, which zombies climb over (nb: no boards on them; a zombie climbs anywhere along climb) */
+const DP_OPENINGS = [
+  ...GS.FENCES.map((f, k) => ({
+    id: "fence" + k,
+    kind: "fence",
+    nb: true,
+    x: f.x,
+    y: (f.climb[0] + f.climb[1]) / 2,
+    axis: "y",
+    half: (f.climb[1] - f.climb[0]) / 2,
+    out: [f.x + f.out * 22, 0], // (y: the zombie's own, along climb)
+    in: [f.x - f.out * 46, 0],
+    from: [f.x + f.out * 45, 0],
+    fence: f,
+  })),
+  ...GS.BOARDED.map((o) => {
+    const m = (o.a + o.b) / 2,
+      half = (o.b - o.a) / 2,
+      sg = o.out === "n" || o.out === "w" ? -1 : 1;
+    return o.axis === "x"
+      ? {
+          id: o.id,
+          kind: "hole",
+          x: m,
+          y: o.at,
+          axis: "x",
+          half,
+          a: o.a,
+          b: o.b,
+          out: [m, o.at + sg * 60],
+          in: [m, o.at - sg * 60],
+        }
+      : {
+          id: o.id,
+          kind: "hole",
+          x: o.at,
+          y: m,
+          axis: "y",
+          half,
+          a: o.a,
+          b: o.b,
+          out: [o.at + sg * 60, m],
+          in: [o.at - sg * 60, m],
+        };
+  }),
+];
+export const OPENINGS = [...CABIN_OPENINGS];
+/* is the room on Downpour? (layout.js' useMode has turned to it: the rules call it for every action) */
+export const dp = () => layoutVariant() === "l4gs";
+/* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
+   Called wherever they're read; it does something only when layout.js has turned to the other map */
+let mapRev = -1;
+export function syncMap() {
+  if (mapRev === layoutRev()) return;
+  mapRev = layoutRev();
+  const on = dp();
+  OPENINGS.length = 0;
+  OPENINGS.push(...(on ? DP_OPENINGS : CABIN_OPENINGS));
+  const sp = on ? DP_SPOTS : CABIN_SPOTS;
+  Object.assign(BUTLER, sp.butler);
+  Object.assign(BOX, sp.box);
+  spots = null;
+  [GX, GY, GW, GH] = on
+    ? [0, 0, Math.ceil(GS.GS_W / CELL), Math.ceil(GS.GS_H / CELL)]
+    : [1280, 580, 82, 52];
+}
+export const openingById = (id) => {
+  syncMap();
+  return OPENINGS.find((o) => o.id === id) || null;
+};
 /* where everyone starts, and comes back at the next round: free spots in the great room, nearest the middle first */
 let spots = null;
 export function startSpot(k = 0) {
+  syncMap();
+  if (!spots && dp()) {
+    // (Downpour: in the gas station, by the front door)
+    spots = [];
+    for (let y = 1520 * GS.K; y <= 1680 * GS.K; y += 65)
+      for (let x = 2250 * GS.K; x <= 3000 * GS.K; x += 65)
+        if (standable(x, y, heightAt(x, y), 0)) spots.push({ x, y });
+    spots.sort(
+      (a, b) =>
+        Math.hypot(a.x - GS.START.x, a.y - GS.START.y) -
+        Math.hypot(b.x - GS.START.x, b.y - GS.START.y),
+    );
+  }
   if (!spots) {
     spots = [];
     for (let y = 1300; y <= 1560; y += 65)
@@ -746,12 +851,14 @@ export function startSpot(k = 0) {
    A grid of 40-px cells over the cabin and the deck (built once). Every heartbeat, the walking distance from every cell
    to the nearest duck standing, all at once (Dijkstra from all of them); each zombie walks downhill on it, so it takes
    the way of least walking, never the duck nearest through a wall. */
-const CELL = 40,
-  GX = 1280,
+const CELL = 40;
+let GX = 1280,
   GY = 580,
   GW = 82,
-  GH = 52;
-let walk = null,
+  GH = 52; // (Downpour's grid covers its whole world: syncMap)
+const BOARD_COST = 6; // (cells' worth of walking)
+let extra = null,
+  walk = null,
   walkRev = -1, // (the cabin it was made for: layout.js' layoutRev)
   hts = null;
 const cellAt = (x, y) => {
@@ -764,6 +871,7 @@ const mid = (c) => [
   GY + Math.floor(c / GW) * CELL + CELL / 2,
 ];
 function cells() {
+  syncMap();
   if (walk && walkRev === layoutRev()) return walk;
   walkRev = layoutRev();
   FLOWS.clear(); // (their ways were for the cabin before)
@@ -774,8 +882,22 @@ function cells() {
       z = heightAt(x, y);
     hts[c] = z;
     walk[c] =
-      playable(x, y) && standable(x, y, z, 0) && !onPlatform(x, y) ? 1 : 0;
+      playable(x, y) && standable(x, y, z, 0, null, true) && !onPlatform(x, y)
+        ? 1
+        : 0;
   }
+  /* Downpour: a boarded hole's cells cost a few more (a zombie goes round by an open way if it isn't much further, or
+     stops at the boards and tears them down) */
+  extra = new Float32Array(GW * GH);
+  if (dp())
+    for (const o of OPENINGS)
+      if (o.kind === "hole")
+        for (let c = 0; c < GW * GH; c++) {
+          const [x, y] = mid(c),
+            [along, across] = o.axis === "x" ? [x, y - o.y] : [y, x - o.x];
+          if (along > o.a && along < o.b && Math.abs(across) < 40)
+            extra[c] = BOARD_COST;
+        }
   return walk;
 }
 /* can a zombie step from cell a to its neighbor b? (no climbing the stage's edge; no cutting a corner) */
@@ -849,7 +971,7 @@ function dijkstra(starts) {
   const n = GW * GH,
     dist = new Float64Array(n).fill(Infinity); // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
   /* the heap: distances and cells side by side in typed arrays, made once (every cell can be pushed once per neighbor) */
-  if (!heapD) {
+  if (!heapD || heapD.length < n * 8 + 8) {
     heapD = new Float64Array(n * 8 + 8);
     heapC = new Int32Array(n * 8 + 8);
   }
@@ -901,7 +1023,7 @@ function dijkstra(starts) {
     for (let k = 0; k < 8; k++) {
       const b = nextTo(c, k);
       if (b < 0) continue;
-      const nd = d + N8[k][2];
+      const nd = d + N8[k][2] + extra[b];
       if (nd < dist[b]) {
         dist[b] = nd;
         push(nd, b);
@@ -955,7 +1077,7 @@ const at = (p) => [p.x * W, p.y * H];
 const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 const zOk = (x, y, z) =>
-  playable(x, y) && standable(x, y, z, STEP) && !onPlatform(x, y);
+  playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
 /* the zombies as objects, from the state's three parts, and back */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -1118,6 +1240,10 @@ function newRound(s, r, now, wait) {
     wait: null,
     sv: null,
   };
+  s.hang.l4lt =
+    dp() && Math.random() < BOLT.P
+      ? { next: now + wait + rnd(BOLT.FROM, BOLT.TO) }
+      : null; // (Downpour: a strike of lightning this round, now and then: boltTick)
   powerRound(s, r, now, PH);
 }
 /* everyone up again, full: a new game, or a ghost back at the next round (where it stands now, or at a start spot) */
@@ -1159,6 +1285,7 @@ function bringBack(s, id, now, k, fresh) {
    the spots in out (the other drops) */
 const bare = (x, y, out, far) =>
   playable(x, y) &&
+  (!dp() || GS.inOpen(x, y)) && // (Downpour: drops come down inside the forest line, never out under the trees)
   Math.abs(heightAt(x, y)) < 1 &&
   !onPlatform(x, y) &&
   [
@@ -1355,6 +1482,45 @@ function nukeTick(s, zs, now, ids) {
     ((s.hang.l4on || {}).double ? 2 : 1);
   for (const id of ids) addPts(s, id, each); // (every duck gets the points for all of it: the owner's, Nov 4)
 }
+/* Downpour's lightning (the owner's, Nov 16 23:15Z): each round has a 1% chance of a strike, some time in it, on a
+   zombie out in the open that a duck has on screen. It dies burnt (no points: nobody killed it), and each strike has a
+   1% chance of another one right after. Waits while there's no such zombie. s.hang.l4lt { next: when it strikes (0:
+   no more this round), hit: [x, y, when] the last strike, for every screen's bolt and flash (l4ddrain.js) } */
+export const BOLT = {
+  P: 0.01,
+  AGAIN: 0.01,
+  FROM: 5000,
+  TO: 40000,
+  RETRY: 2000,
+  NEXT: 450,
+};
+function boltTick(s, zs, now, ids) {
+  const B = s.hang.l4lt;
+  if (!B || !B.next || now < B.next) return;
+  const pts = ids.filter((id) => standing(s, id)).map((id) => at(s.pos[id])),
+    can = zs.filter(
+      (z) =>
+        z.st !== 3 &&
+        !GS.buildingAt(z.x, z.y) &&
+        pts.some(
+          ([a, b]) =>
+            Math.abs(z.x - a) < VIEW.x * 0.7 &&
+            Math.abs(z.y - b) < VIEW.y * 0.7, // (well inside the screen, so it's seen)
+        ),
+    );
+  if (!can.length) {
+    s.hang.l4lt = { ...B, next: now + BOLT.RETRY };
+    return;
+  }
+  const z = can[Math.floor(Math.random() * can.length)];
+  z.hp = 0;
+  die(z, now - s.hang.l4.t0);
+  s.hang.zw = { ...(s.hang.zw || {}), [z.i]: explodedLook(z.i + now) }; // (burnt, as the Nuke leaves them: wounds.js)
+  s.hang.l4lt = {
+    next: Math.random() < BOLT.AGAIN ? now + BOLT.NEXT : 0,
+    hit: [Math.round(z.x), Math.round(z.y), now],
+  };
+}
 /* a body the Nuke left: it lies there longer */
 const nuked = (s, z) => !!s.hang.l4nk && (s.hang.l4nk.ids || []).includes(z.i);
 /* Max Ammo: every weapon that refills is full again, the grenades too (3); the medkit and Jaime don't come back this
@@ -1384,7 +1550,10 @@ function setUp(s, now) {
   s.hang.zs = {};
   s.hang.zl = {};
   s.hang.zw = {};
-  s.hang.brd = Object.fromEntries(OPENINGS.map((o) => [o.id, L4.BOARDS]));
+  syncMap();
+  s.hang.brd = Object.fromEntries(
+    OPENINGS.filter((o) => !o.nb).map((o) => [o.id, L4.BOARDS]),
+  ); // (Downpour's fences have no boards)
   s.hang.l4p = {};
   s.hang.l4a = {};
   s.hang.l4pt = {};
@@ -1617,7 +1786,7 @@ function l4Act(s, a, now) {
       s.hang.l4b = b;
       return true;
     }
-    if (!o || Math.hypot(o.in[0] - mx, o.in[1] - my) > L4.REACH * 1.6)
+    if (!o || o.nb || Math.hypot(o.in[0] - mx, o.in[1] - my) > L4.REACH * 1.6)
       return false;
     if ((s.hang.brd || {})[o.id] >= L4.BOARDS) return false;
     b[id] = { o: o.id, at: now };
@@ -1630,6 +1799,7 @@ function l4Act(s, a, now) {
     return buyGun(s, id, String(a.what || ""), "", true, now); // (B: anywhere, the gun in hand)
   if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
+  if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
 }
@@ -1708,6 +1878,7 @@ function fireplace(s, id, a, now, mx, my) {
     const price = priceFor(s, id, "box");
     if (!pool.length || ptsOf(s, id) < price) return false;
     addPts(s, id, -price);
+    s.hang.l4hood = 1; // (Downpour: the hood-up car stops glowing once it's first used)
     s.hang.l4box = {
       ...boxesOf(s),
       [id]: {
@@ -3108,7 +3279,7 @@ function l4Tick(s, now) {
     if (sec > L2.sec) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
-        const fast = T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again)
+        const fast = dp() ? 4 : T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again. Downpour: twice that, from the start, the map's so big: the owner's, Nov 16 23:23Z)
         L2.acc += 2 * fast * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
@@ -3123,7 +3294,7 @@ function l4Tick(s, now) {
   if (L2.owe > 0) {
     const room = Math.max(0, R[4] - live),
       k = Math.min(L2.owe, room);
-    for (let q = 0; q < k; q++) zs.push(newZombie(s, L2, T));
+    for (let q = 0; q < k; q++) zs.push(newZombie(s, L2, T, zs));
     L2.owe -= k;
     L2.made += k;
   }
@@ -3131,6 +3302,7 @@ function l4Tick(s, now) {
   moveZombies(s, zs, now, T, up);
   jaimesRun(s, zs, now, T);
   nukeTick(s, zs, now, ids);
+  boltTick(s, zs, now, ids);
   dropTick(s, L2, zs, now, T, ids);
   powerTick(s, zs, now, ids, PH);
   const ad = s.hang.l4ad;
@@ -3159,7 +3331,8 @@ function l4Tick(s, now) {
 }
 const minus = (a, b) => [a[0] - b[0], a[1] - b[1]];
 /* a new zombie, at one of the openings (the ones nearer the ducks twice as likely) */
-function newZombie(s, L, T) {
+function newZombie(s, L, T, zs = []) {
+  syncMap();
   const R = roundOf(L.r),
     ids = players(s).filter((id) => standing(s, id)),
     pts = ids.map((id) => at(s.pos[id])),
@@ -3168,9 +3341,46 @@ function newZombie(s, L, T) {
         ...pts.map(([x, y]) => Math.hypot(x - o.in[0], y - o.in[1])),
         1e9,
       ),
-    order = [...OPENINGS].sort((a, b) => near(a) - near(b)),
-    pool = [...order, ...order.slice(0, 4)],
+    order = [...OPENINGS]
+      .filter((o) => !dp() || o.kind === "fence") // (Downpour: they come over the fences)
+      .sort((a, b) => near(a) - near(b)),
+    pool = [...order, ...order.slice(0, dp() ? 1 : 4)],
     o = pool[Math.floor(Math.random() * pool.length)];
+  /* Downpour: along the fence, anywhere it can be climbed; or, while nobody sees a zombie, half come out of the trees
+     just inside the forest line, somewhere nobody sees (the owner's, Nov 16 23:23Z) */
+  let from = o.from,
+    deep = false;
+  if (dp()) {
+    const f = o.fence,
+      y = rnd(f.climb[0], f.climb[1]);
+    from = [o.from[0], y];
+    const seen = (x, y, pad) =>
+      pts.some(
+        ([a, b]) =>
+          Math.abs(x - a) < VIEW.x + pad && Math.abs(y - b) < VIEW.y + pad,
+      );
+    if (
+      Math.random() < 0.5 &&
+      !zs.some((z) => z.st !== 3 && seen(z.x, z.y, 0))
+    ) {
+      const dist = flowFrom(pts.map((q) => openNear(...q)));
+      for (let t = 0; t < 30; t++) {
+        const [x, y] =
+          GS.LINE_SPOTS[Math.floor(Math.random() * GS.LINE_SPOTS.length)];
+        const c = openNear(x, y);
+        if (
+          seen(x, y, 120) ||
+          !zOk(x, y, heightAt(x, y)) ||
+          c < 0 ||
+          !(dist[c] < Infinity)
+        )
+          continue;
+        from = [x, y];
+        deep = true;
+        break;
+      }
+    }
+  }
   const i = L.next++;
   const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
     hat = dress >= 0 && dress < 0.6 ? rint(0, ZHATS.length - 1) : -1,
@@ -3178,23 +3388,26 @@ function newZombie(s, L, T) {
     odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
-    max = hp0(),
+    mud = dp() && Math.random() < MUD.P ? 1 : 0,
+    max = Math.max(1, hp0() - mud),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
-    [sx, sy] = o.from || o.out;
+    [sx, sy] = from || o.out;
   return {
     i,
-    x: sx + rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3),
-    y: sy + rnd(-8, 8) * (o.axis === "y" ? 1 : 0.3),
+    x: sx + (dp() ? 0 : rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3)),
+    y: sy + (dp() ? 0 : rnd(-8, 8) * (o.axis === "y" ? 1 : 0.3)),
     hp: max,
-    st: 0,
+    st: deep ? 2 : 0, // (out of the trees: already in)
     a: -1e6,
     n: 0,
     d: 0,
     dir: 0,
     l: jus
       ? [max, v, o.id, 0, 0, -1, -1, 1]
-      : [max, v, o.id, size, build, hat, outfit],
+      : mud
+        ? [max, v, o.id, size, build, hat, outfit, 0, 1]
+        : [max, v, o.id, size, build, hat, outfit],
   };
 }
 function moveZombies(s, zs, now, T, up) {
@@ -3213,18 +3426,39 @@ function moveZombies(s, zs, now, T, up) {
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
-      v = z.l[1] * walkOf(s); // (as much faster or slower as the ducks, by the lobby's Walking speed)
+      v = z.l[1] * walkOf(s), // (as much faster or slower as the ducks, by the lobby's Walking speed)
+      sp = o && sidesOf(o, z);
     if (z.st === 0) {
-      // coming: to the spot outside its opening
-      const [tx, ty] = o.out;
+      // coming: to the spot outside its opening (Downpour: the foot of the fence)
+      const [tx, ty] = sp.out;
       if (walkTo(z, tx, ty, v * dt)) {
-        z.st = brd[o.id] > 0 ? 1 : 4;
+        z.st = o.fence ? 5 : brd[o.id] > 0 ? 1 : 4;
         z.d = T;
       }
       continue;
     }
+    if (z.st === 5) {
+      // over the fence: up it like a ladder at its walking speed, then a drop from the top (fenceZ)
+      const f = o.fence,
+        top = f.x + f.out * FENCE.mid,
+        far = Math.abs(z.x - top) > 1 && (z.x - top) * f.out > 0;
+      walkTo(
+        z,
+        far ? top : sp.in[0],
+        z.y,
+        far
+          ? (FENCE.mid * v * dt) / GS.FENCE_H
+          : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
+      );
+      if (z.x === sp.in[0]) {
+        z.st = 2;
+        z.n = 0;
+      }
+      continue;
+    }
     if (z.st === 1) {
-      // tearing the boards down, one at a time
+      // tearing the boards down, one at a time (Downpour: from whichever side it came to them)
+      if (dp() && walkTo(z, sp.out[0], sp.out[1], v * dt) === false) continue;
       if (!(brd[o.id] > 0)) {
         z.st = 4;
         continue;
@@ -3238,12 +3472,15 @@ function moveZombies(s, zs, now, T, up) {
     if (z.st === 4) {
       // climbing in through the opening (the boards are down)
       if (brd[o.id] > 0) {
-        if (Math.hypot(z.x - o.out[0], z.y - o.out[1]) < 30) {
+        if (Math.hypot(z.x - sp.out[0], z.y - sp.out[1]) < 30) {
           z.st = 1;
           z.d = T;
         }
       }
-      if (walkTo(z, o.in[0], o.in[1], v * dt)) z.st = 2;
+      if (walkTo(z, sp.in[0], sp.in[1], v * dt)) {
+        z.st = 2;
+        z.n = 0;
+      }
       continue;
     }
     /* every zombie in goes for the zebra cake while it lies there (the owner's, Nov 3: it draws them all away from the
@@ -3280,6 +3517,16 @@ function moveZombies(s, zs, now, T, up) {
     const c = openNear(z.x, z.y),
       close = best < 2.6 || (c >= 0 && dist[c] <= 1.5);
     const aim = close ? target.xy : heading(dist, z.x, z.y);
+    /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
+    const bh = aim && dp() && boardsAhead(z, aim, brd);
+    if (bh) {
+      z.l = [...z.l];
+      z.l[2] = bh.o.id;
+      z.n = bh.side;
+      z.st = 1;
+      z.d = T;
+      continue;
+    }
     if (aim) stepZombie(z, aim, v * dt, pls);
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile) */
     const d = room(z.x, z.y, ...target.xy);
@@ -3290,11 +3537,11 @@ function moveZombies(s, zs, now, T, up) {
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (
-          !dodging(s, target.p, now) &&
-          hurtDuck(s, p4, target.id, now, "claw")
-        )
+        const hit = !dodging(s, target.p, now);
+        if (hit && hurtDuck(s, p4, target.id, now, "claw"))
           pls.splice(pls.indexOf(target), 1);
+        if (hit && z.l[8] && p4[target.id] && p4[target.id].at === now)
+          p4[target.id] = { ...p4[target.id], mud: now }; // (a mud zombie's: mud over that duck's screen, l4dd.js mudScreen)
       }
     } else z.n = 0;
   }
@@ -3303,6 +3550,43 @@ function moveZombies(s, zs, now, T, up) {
   s.hang.brd = brd;
   s.hidden = { ...s.hidden, l4ze: eating };
   separate(zs);
+}
+/* Downpour's fences: how far out from the fence a zombie starts climbing (out), where it's at the top (mid, from out)
+   and where it lands (across, from out), and how long the drop takes (s) */
+const FENCE = { mid: 34, across: 68, FALL: 0.35 };
+/* how high a zombie climbing a fence is, at x (0 once down): up at its walking speed, then falling from the top */
+export function fenceZ(x, y) {
+  const f = GS.FENCES.find((q) => Math.abs(x - q.x) < 100);
+  if (!f) return 0;
+  const u = ((x - (f.x + f.out * 22)) * -f.out) / FENCE.across;
+  if (u <= 0 || u >= 1) return 0;
+  const m = FENCE.mid / FENCE.across;
+  return u <= m
+    ? GS.FENCE_H * (u / m)
+    : GS.FENCE_H * (1 - ((u - m) / (1 - m)) ** 2);
+}
+/* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the
+   zombie's own place along it; a boarded hole on Downpour from the side it came to it (z.n: 1 outside, -1 inside) */
+function sidesOf(o, z) {
+  if (o.fence) return { out: [o.out[0], z.y], in: [o.in[0], z.y] };
+  return z.n === -1 ? { out: o.in, in: o.out } : o;
+}
+/* Downpour: does a zombie's way (from it to aim) go through a boarded hole with boards up? Its opening and side */
+function boardsAhead(z, aim, brd) {
+  for (const o of OPENINGS) {
+    if (o.kind !== "hole" || !(brd[o.id] > 0)) continue;
+    const [al, ac, bc] =
+      o.axis === "x"
+        ? [z.x, z.y - o.y, aim[1] - o.y]
+        : [z.y, z.x - o.x, aim[0] - o.x];
+    if (al < o.a - 20 || al > o.b + 20 || Math.abs(ac) > 90) continue;
+    if (Math.sign(ac) === Math.sign(bc) && Math.abs(bc) > 24) continue;
+    const outward = Math.sign(
+      (o.axis === "x" ? o.out[1] - o.y : o.out[0] - o.x) || 1,
+    );
+    return { o, side: Math.sign(ac) === outward ? 1 : -1 };
+  }
+  return null;
 }
 /* straight toward (tx, ty), through anything (outside, or climbing in): true on arrival */
 function walkTo(z, tx, ty, far) {

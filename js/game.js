@@ -6077,6 +6077,10 @@ function paintNow(force) {
       );
     }
     $(".phase", S).textContent =
+      (s.phase === "hang" &&
+        s.options.mode === "l4dd" &&
+        s.options.l4map === "downpour" &&
+        "Downpour") || // (Dead Ducks Arcade's second map)
       (isLaw(s) && LAW_TITLES[s.phase]) ||
       (isDn(s) && DN_TITLES[s.phase]) ||
       (isMgj(s) && MGJ_TITLES[s.phase]) ||

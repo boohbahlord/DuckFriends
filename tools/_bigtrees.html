@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Downpour's big trees</title>
+    <style>
+      body {
+        background: #101016;
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 18px;
+        width: 1540px;
+      }
+      figure {
+        margin: 0 0 16px;
+        background: #1d1e29;
+        border-radius: 8px;
+        padding: 10px;
+        display: grid;
+        gap: 6px;
+        justify-items: center;
+      }
+      figcaption {
+        font-size: 16px;
+        text-align: center;
+      }
+      figcaption b {
+        font-size: 18px;
+      }
+      .px img {
+        image-rendering: pixelated;
+        display: block;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 12px;
+        font-size: 15px;
+        color: #b9bacb;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Downpour's trees, big: cypress, oak and willow, three looks each</h1>
+    <p>
+      Each with a duck at true size beside it, on the map's grass at night, in
+      the game's pixels. The leaves are a roof: they hide a duck under them
+      until they fade.
+    </p>
+    <div id="g"></div>
+    <script type="module">
+      import { pxSVG } from "../js/pixel.js";
+      import { duckSVG } from "../js/duck.js";
+      import * as S from "../js/hangout/stationart.js";
+      const PH = 430,
+        GROUND = 330;
+      const rng = (seed) => () =>
+        (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+      function ground(PW, seed) {
+        const rr = rng(seed);
+        let s = `<rect width="${PW}" height="${PH}" fill="#24331f"/>`;
+        for (let i = 0; i < PW / 28; i++) {
+          const rx = 20 + rr() * 50;
+          s += `<ellipse cx="${rr() * PW}" cy="${rr() * PH}" rx="${rx}" ry="${rx * 0.5}" fill="${rr() < 0.5 ? "#1b2817" : "#2c3d24"}" opacity=".7"/>`;
+        }
+        for (let i = 0; i < PW / 70; i++) {
+          const rx = 14 + rr() * 26;
+          s += `<ellipse cx="${rr() * PW}" cy="${rr() * PH}" rx="${rx}" ry="${rx * 0.45}" fill="#33291d" opacity=".55"/>`;
+        }
+        let p = "";
+        for (let i = 0; i < PW / 6; i++) {
+          const x = rr() * PW,
+            y = 12 + rr() * PH,
+            l = 5 + rr() * 7;
+          p += `M${x} ${y}l-3 ${-l}M${x} ${y}l0.5 ${-l - 2}M${x} ${y}l3 ${-l + 1}`;
+        }
+        return (
+          s +
+          `<path d="${p}" stroke="#3b5230" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>`
+        );
+      }
+      function rain(PW, seed) {
+        const rr = rng(seed + 9);
+        let s = "";
+        for (let i = 0; i < PW / 5; i++) {
+          const x = rr() * PW,
+            y = rr() * PH;
+          s += `<path d="M${x} ${y}l-5 16" stroke="#565d77" stroke-width="2"/>`;
+        }
+        return s;
+      }
+      const at = (piece, x, y, op = 1) =>
+        piece.svg.replace(
+          "<svg",
+          `<svg x="${x - piece.ax}" y="${y - piece.ay}" opacity="${op}"`,
+        );
+      const duck = (x, y, color = "#ffd23f") =>
+        `<g transform="translate(${x - 32} ${y - 58})">${duckSVG({ color }, { size: 64, shadow: true })}</g>`;
+      /* a tree on its foot (x, y): its shade, then whatever stands north of the foot, the trunk, whatever stands south, the leaves */
+      function tree(kind, v, x, y, seed, flip, ducks = [], fade = 1) {
+        const a = [kind, v, seed, flip];
+        return (
+          at(S.swampShadeSVG(...a), x, y) +
+          ducks
+            .filter((d) => d[1] < y)
+            .map((d) => duck(...d))
+            .join("") +
+          at(S.swampTrunkSVG(...a), x, y) +
+          ducks
+            .filter((d) => d[1] >= y)
+            .map((d) => duck(...d))
+            .join("") +
+          at(S.swampCrownSVG(...a), x, y, fade)
+        );
+      }
+      function panel(PW, body, seed) {
+        const svg = `<svg viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" xmlns="http://www.w3.org/2000/svg">${ground(PW, seed)}${body}<rect width="${PW}" height="${PH}" fill="#05070f" opacity=".28"/>${rain(PW, seed)}</svg>`;
+        return `<div class="px">${pxSVG(svg, PW / 1.4).replace("<img", `<img style="width:${PW}px;height:auto"`)}</div>`;
+      }
+      const PW = 1500,
+        rows = [];
+      const NAMES = {
+        cypress: "Bald cypress",
+        oak: "Live oak",
+        willow: "Willow",
+      };
+      for (const kind of ["cypress", "oak", "willow"]) {
+        let body = "";
+        [0, 1, 2].forEach((v) => {
+          const x = 300 + v * 470,
+            w = S.SWAMP_CROWN[kind][v].w;
+          body +=
+            tree(kind, v, x, GROUND, 1 + v, v === 2) +
+            duck(x - w / 2 - 70, GROUND + 20);
+        });
+        rows.push(
+          `<figure>${panel(PW, body, kind.length * 7)}<figcaption><b>${NAMES[kind]}</b>: looks 1, 2 and 3 (the third one mirrored), each with a duck beside it</figcaption></figure>`,
+        );
+      }
+      /* under the leaves: the same oak twice, a duck by its trunk. The right one's leaves faded as the game fades them (the
+         whole picture, after its pixels), so the panel is made twice, without those leaves and with them on top at 30% */
+      const left = tree("oak", 0, 360, GROUND, 1, false, [[300, 300]]),
+        rightBare = tree("oak", 0, 1100, GROUND, 1, false, [
+          [1040, 300],
+        ]).replace(/<svg[^]*$/, ""),
+        words = `<text x="360" y="${PH - 14}" fill="#f7f8f3" font-size="22" text-anchor="middle" font-family="system-ui">a duck under it: hidden by the leaves</text><text x="1100" y="${PH - 14}" fill="#f7f8f3" font-size="22" text-anchor="middle" font-family="system-ui">the leaves fade while it's under them</text>`;
+      const oakA = ["oak", 0, 1, false],
+        bare =
+          left +
+          at(S.swampShadeSVG(...oakA), 1100, GROUND) +
+          at(S.swampTrunkSVG(...oakA), 1100, GROUND) +
+          duck(1040, 300) +
+          words,
+        full = bare + at(S.swampCrownSVG(...oakA), 1100, GROUND);
+      rows.push(
+        `<figure><div style="position:relative">${panel(PW, bare, 99)}<div style="position:absolute;inset:0;opacity:.3">${panel(PW, full, 99)}</div></div><figcaption><b>Under the leaves</b>: the same oak twice, a duck standing by its trunk</figcaption></figure>`,
+      );
+      document.getElementById("g").innerHTML = rows.join("");
+    </script>
+  </body>
+</html>

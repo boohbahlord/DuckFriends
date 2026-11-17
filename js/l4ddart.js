@@ -571,7 +571,7 @@ export const HIT_CODES = { kinds: HIT_KINDS, spots: HIT_AT.length };
 const LOOKS = new Map();
 export function zombieURL(l, n = 0, hits = "") {
   const w = woundsOf(n, l[6] >= 0),
-    k = [l[3], l[4], l[5], l[6], l[7], w.join("+"), hits].join();
+    k = [l[3], l[4], l[5], l[6], l[7], l[8], w.join("+"), hits].join();
   if (!LOOKS.has(k)) {
     if (LOOKS.size > 600) LOOKS.clear(); // (wounds make many pictures: I keep only the newest few hundred)
     const sk = woundSkin(w),

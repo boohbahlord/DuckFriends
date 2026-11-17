@@ -14757,6 +14757,15 @@ html.still:not(.low) .l4z.dead.nuked {
 .l4-end[hidden] {
   display: none;
 }
+/* on a phone the exit vote button at the top left reaches into the middle, so the button starts 1rem lower (never
+   beside it; the board's --ui-top margin stays) */
+@media (max-width: 700px) {
+  .l4-end {
+    top: calc(
+      2.4rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
+    );
+  }
+}
 .l4-end .btn {
   font-size: 1rem;
   padding: 0.4rem 1rem;
@@ -17012,7 +17021,10 @@ html.still .l4-miss {
   .game .btn.cabin-end {
     top: 74px;
     left: 10px;
-  }
+    max-width: 7.2rem;
+    white-space: normal;
+    text-align: left;
+  } /* (on a narrow phone a long name like Exit Downpour takes two lines, so it never reaches the round in the middle) */
 }
 /* Quacky Zombies' Change starting round (js/hangout/cabinend.js): under Exit Cabin; the vote's words at the top middle,
    Yes and No at the bottom middle */
@@ -17069,13 +17081,15 @@ html.still .l4-miss {
   display: flex;
   gap: 0.6rem;
 }
+/* on a phone the Ready button sits in the middle under the round, so Change starting round goes below it (never under
+   it, and down with it when the top bar grows: --ui-top, game.js watchInsets), and the vote's words below that */
 @media (max-width: 700px) {
   .game .l4-sr {
-    top: 110px;
+    top: calc(var(--ui-top, 38px) + 154px);
     left: 10px;
   }
   .game .l4-srv {
-    top: 190px;
+    top: calc(var(--ui-top, 38px) + 188px);
   }
 }
 /* the Jaime Bomb's Jaime after it went off (game.js jaimeBody): his body flies over a little arc (--dx, --dy, --h),
@@ -18068,4 +18082,64 @@ html.pixel.armed :is(.board, .hang-board) {
   white-space: nowrap;
   background: #f2b33d;
   color: #1c1c28;
+}
+/* Downpour's rain (l4ddrain.js): just over the dark, under the HUD and the minimap */
+.hang-board.l4-board .l4-rain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 24001;
+  pointer-events: none;
+}
+/* Downpour: a mud zombie's mud over the corners of my screen (l4ddmud.js), over the board, under the HUD */
+.hang-board.l4-board .l4-mud {
+  position: absolute;
+  inset: 0;
+  z-index: 24002;
+  pointer-events: none;
+}
+.l4-mud i {
+  position: absolute;
+  width: min(34vw, 300px);
+  height: min(34vw, 300px);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+.l4-mud-tl {
+  left: 0;
+  top: 0;
+}
+.l4-mud-tr {
+  right: 0;
+  top: 0;
+  transform: scaleX(-1);
+}
+.l4-mud-bl {
+  left: 0;
+  bottom: 0;
+  transform: scaleY(-1);
+}
+.l4-mud-br {
+  right: 0;
+  bottom: 0;
+  transform: scale(-1, -1);
+}
+/* Quacky Zombies' own map vote (vote.js zmapTile): the dice and its two maps, three in a row, each a picture */
+.vt-k-zmap .vt-box {
+  flex: 0 1 auto; /* (only as tall as its maps, no empty box under them; it still scrolls on a short screen) */
+}
+.vt-k-zmap .vt-maps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.vt-k-zmap img.vt-still {
+  object-fit: cover;
+}
+/* a phone: one above another, bigger, the dice a short bar so both maps fit under it */
+@media (max-width: 760px) {
+  .vt-k-zmap .vt-maps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vt-k-zmap .vt-map.vt-dice {
+    aspect-ratio: auto;
+    height: 4.6rem;
+  }
 }

@@ -23,6 +23,9 @@
    them: .hp.off .lit) and the glow around a lamp "lit-glow" (it goes out). */
 import * as A from "./art.js";
 import * as L from "./layout.js";
+import { downpourGround, dpGroundColor } from "./dpground.js";
+import * as GS from "./stationmap.js";
+import * as SA from "./stationart.js";
 
 const C = L.CABIN,
   T = 12,
@@ -93,27 +96,42 @@ const NORTH_WINDOWS = [
   [2470, 2590],
   [2820, 2960],
 ]; // the north wall's windows (world x), looking out at the grass: either side of the TV's place
+/* Downpour's walls: which building's (the gas station's blocks or the chapel's clapboard), and its shop windows */
+const skinOf = (p) => (p.y < GS.ROAD.y0 ? "gs" : "ch");
+const glassOn = (p) =>
+  (p.glass || [])
+    .map(([a, b]) => [Math.max(a, p.x) - p.x, Math.min(b, p.x + p.w) - p.x])
+    .filter(([a, b]) => b - a > 30);
 function wallParts(p) {
-  if (p.only === "out") return []; // (the south wall outside: part of the cabin's drawing)
+  if (p.only === "out" && !p.map) return []; // (the south wall outside: part of the cabin's drawing)
   const z = p.z || 0,
     t = p.y - z - p.h;
   if (p.w >= p.d) {
     // east-west: the cut top, then its face looking south
     const windows =
-      p.side === "n"
+      p.side === "n" && !p.map
         ? NORTH_WINDOWS.filter(([a, b]) => a > p.x && b < p.x + p.w).map(
             ([a, b]) => [a - p.x, b - p.x],
           )
         : [];
     return [
       part(
-        () => A.logWall({ w: p.w, wallH: p.h, t: p.d, windows }),
+        () =>
+          p.map
+            ? SA.gsWallX({
+                w: p.w,
+                wallH: p.h,
+                t: p.d,
+                skin: skinOf(p),
+                glass: glassOn(p),
+              })
+            : A.logWall({ w: p.w, wallH: p.h, t: p.d, windows }),
         p.x,
         t,
         p.w,
         p.d + p.h,
         p.key,
-        { fade: p.fade, only: "in" },
+        { fade: p.fade, only: p.map ? p.only : "in" }, // (Downpour's walls show from outside too: its buildings have no drawing of their own yet)
       ),
     ];
   }
@@ -168,27 +186,41 @@ function wallParts(p) {
     return [
       part(
         () =>
-          A.logWall({
-            axis: "y",
-            w: p.w,
-            t: p.w,
-            h: d + p.h,
-            wallH: p.h,
-            plain: gap || low,
-            open: o < 0,
-          }),
+          p.map
+            ? SA.gsWallY({
+                w: p.w,
+                h: d + p.h,
+                wallH: p.h,
+                skin: skinOf(p),
+                plain: gap || low,
+                open: o < 0,
+              })
+            : A.logWall({
+                axis: "y",
+                w: p.w,
+                t: p.w,
+                h: d + p.h,
+                wallH: p.h,
+                plain: gap || low,
+                open: o < 0,
+              }),
         p.x,
         t + head + cut,
         p.w,
         d + p.h,
         p.key,
-        { fade: p.fade, only: "in" },
+        { fade: p.fade, only: p.map ? p.only : "in" },
       ),
     ];
   const top = () =>
-    `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * 0.4} ${o < 0 ? o : 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}${cut ? `M0 0H${p.w}` : ""}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
+    p.map
+      ? SA.gsWallTop(p.w, d, o, cut, skinOf(p))
+      : `<svg class="hg hg-wall" viewBox="0 0 ${p.w} ${d}" width="${p.w}" height="${d}" overflow="visible" aria-hidden="true"><rect x="0" y="${o}" width="${p.w}" height="${d - o}" fill="#c98a52"/><path d="M${p.w * 0.4} ${o < 0 ? o : 3}V${d}" stroke="#e8b27a" stroke-width="3" opacity=".7"/><path d="M0 ${o}V${d}M${p.w} ${o}V${d}${cut ? `M0 0H${p.w}` : ""}" stroke="#1c1c28" stroke-width="2.6"/></svg>`;
   return [
-    part(top, p.x, t + head + cut, p.w, d, p.key, { fade: p.fade, only: "in" }),
+    part(top, p.x, t + head + cut, p.w, d, p.key, {
+      fade: p.fade,
+      only: p.map ? p.only : "in",
+    }),
   ];
 }
 
@@ -331,7 +363,170 @@ const one = (p, svg, w, h, foot = h, o = {}) => {
   return [part(svg, b.l, b.t, w, h, o.key ?? p.key, o)];
 };
 const COUCH = { couch1: "#a8382c", couch2: "#3d6e4f" };
+/* Downpour's things (stationart.js): each drawn into its box, w × (d + h), from its top's back edge (as plainBox) */
+const gsPart = (p, svg, o = {}) => [
+  part(
+    svg,
+    p.x - (o.left || 0),
+    p.y - p.z - p.h - (o.up || 0),
+    o.w || p.w,
+    p.d + p.h + (o.up || 0),
+    p.key,
+    { fade: true, ...o.opt },
+  ),
+];
+const seedOf = (p) => Math.abs(Math.round(p.x / 7 + p.y / 13)) + 1;
+/* Downpour's trees: about 3 cypresses to 3 willows to 2 oaks, each in one of its three looks, two seeds, and mirrored
+   half the time, all picked from the tree's id so every device grows the same forest. Each drawing is made once */
+const SWAMP_MIX = [
+    "cypress",
+    "cypress",
+    "cypress",
+    "willow",
+    "willow",
+    "willow",
+    "oak",
+    "oak",
+  ],
+  SWAMP_URL = {};
+function swampTree(h) {
+  const kind = SWAMP_MIX[Math.floor(h * SWAMP_MIX.length)],
+    v = Math.floor(((h * 97) % 1) * 3),
+    flip = (h * 991) % 1 < 0.5,
+    seed = 1 + Math.floor(((h * 7919) % 1) * 2),
+    key = kind + v + seed + flip;
+  if (!SWAMP_URL[key]) {
+    const shade = SA.swampShadeSVG(kind, v, seed, flip),
+      trunk = SA.swampTrunkSVG(kind, v, seed, flip),
+      crown = SA.swampCrownSVG(kind, v, seed, flip);
+    SWAMP_URL[key] = {
+      shade,
+      trunk,
+      crown,
+      shadeURL: A.svgDataURL(shade.svg),
+      trunkURL: A.svgDataURL(trunk.svg),
+      crownURL: A.svgDataURL(crown.svg),
+    };
+  }
+  return SWAMP_URL[key];
+}
+/* Downpour's things are drawn as the floor plan has them, then shown at K of that size (stationmap.js K: the owner's,
+   Nov 17, the whole map at 60%), so each looks just as it did, only smaller. SK: stationart.js' drawings that way */
+const PLAN = new Set(["w", "d", "h", "edge", "cable", "up", "half", "z"]),
+  PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
+const atK =
+  (fn) =>
+  (o = {}) => {
+    const q = {};
+    for (const [a, v] of Object.entries(o))
+      q[a] =
+        typeof v === "number" && (PLAN.has(a) || PLAN_AT.has(a)) ? v / GS.K : v;
+    return fn(q).replace(
+      /^(<svg[^>]*?) width="([\d.]+)" height="([\d.]+)"/,
+      (m, a, w, h) =>
+        `${a} width="${+(w * GS.K).toFixed(2)}" height="${+(h * GS.K).toFixed(2)}"`,
+    );
+  };
+const SK = Object.fromEntries(
+  [
+    "pumpSVG",
+    "carSVG",
+    "generatorSVG",
+    "fenceSVG",
+    "pewSVG",
+    "altarSVG",
+    "towerSVG",
+    "canopySVG",
+    "fallenSVG",
+    "roofSVG",
+    "shelfSVG",
+    "counterSVG",
+  ].map((n) => [n, atK(SA[n])]),
+);
+const GS_DRAW = {
+  pump: (p) => gsPart(p, () => SK.pumpSVG({ w: p.w, d: p.d, h: p.h })),
+  car: (p) => {
+    const up = p.hood ? 110 * GS.K : 0,
+      k = seedOf(p);
+    return gsPart(
+      p,
+      () =>
+        SK.carSVG({
+          w: p.w,
+          d: p.d,
+          h: p.h,
+          seed: k,
+          east: p.hood ? false : k % 2 === 0, // (the hood-up car faces west: its hood where E uses it)
+          hood: !!p.hood,
+          up,
+        }),
+      { up },
+    );
+  },
+  generator: (p) => {
+    const cable = 20 * GS.K; // (to the power box, just east of it)
+    return gsPart(p, () => SK.generatorSVG({ w: p.w, d: p.d, h: p.h, cable }), {
+      w: p.w + cable,
+    });
+  },
+  fence: (p) =>
+    gsPart(
+      p,
+      () => SK.fenceSVG({ w: 30 * GS.K, d: p.d, h: p.h, seed: seedOf(p) }),
+      { left: 9 * GS.K, w: 30 * GS.K },
+    ),
+  pew: (p) =>
+    gsPart(p, () => SK.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
+  altar: (p) => gsPart(p, () => SK.altarSVG({ w: p.w, d: p.d, h: p.h })),
+  tower: (p) => gsPart(p, () => SK.towerSVG({ w: p.w, d: p.d, h: p.h })),
+  canopy: (p) => [
+    part(
+      () => SK.canopySVG({ w: p.w, d: p.d, edge: 40 * GS.K }),
+      p.x,
+      p.y - p.z,
+      p.w,
+      p.d + 40 * GS.K,
+      p.key,
+      {
+        fade: true,
+        hit: { l: p.x, t: p.y - p.z, r: p.x + p.w, b: p.y + p.d }, // (see-through while anyone is under it, so the pumps and the shop's front show)
+      },
+    ),
+  ],
+  fallen: (p) => {
+    const F = p.fallen,
+      pad = 90 * GS.K,
+      b = {
+        l: p.x - pad,
+        t: p.y - p.z - p.h - pad,
+        w: p.w + 2 * pad,
+        h: p.d + p.h + 2 * pad,
+      };
+    return [
+      part(
+        () =>
+          SK.fallenSVG({
+            w: b.w,
+            h: b.h,
+            x0: F.x0 - b.l,
+            y0: F.y0 - p.z - b.t,
+            x1: F.x1 - b.l,
+            y1: F.y1 - p.z - b.t,
+            half: F.half,
+            z: F.h / 2,
+          }),
+        b.l,
+        b.t,
+        b.w,
+        b.h,
+        p.key,
+        { fade: true },
+      ),
+    ];
+  },
+};
 export const DRAW = {
+  ...GS_DRAW,
   wall: wallParts,
   stub: (p) => [
     part(
@@ -352,7 +547,15 @@ export const DRAW = {
     if (o.axis === "x") {
       // an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends
       const h = p.d + p.h,
-        svg = A.logWall({ w: p.w, wallH: p.h, t: p.d, seamless: true }),
+        svg = p.map
+          ? SA.gsWallX({
+              w: p.w,
+              wallH: p.h,
+              t: p.d,
+              skin: skinOf(p),
+              seamless: true,
+            })
+          : A.logWall({ w: p.w, wallH: p.h, t: p.d, seamless: true }),
         cut = o.out
           ? A.holeCut(T + 2, p.w - T - 2, -30, h + 30, seed, 6)
           : A.holeCut(T + 2, p.w - T - 2, p.d + 30, h + 30, seed, 7);
@@ -376,8 +579,11 @@ export const DRAW = {
     const south = walls().find(
       (q) => q.x === p.x && Math.abs(q.y + T - o.b) < 1,
     );
+    const sp = p.map
+      ? SA.SPLINTER[skinOf(p)]
+      : ["#c98a52", "#b97a44", "#6e3a1a"];
     const jag = (up) =>
-      `<svg class="hg hg-wall" viewBox="0 0 24 20" width="24" height="20" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? "#c98a52" : "#b97a44"}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="#6e3a1a" stroke-width="2" stroke-linecap="round"/></svg>`;
+      `<svg class="hg hg-wall" viewBox="0 0 24 20" width="24" height="20" overflow="visible" aria-hidden="true"><path d="${up ? `M0 20V12L4 6L8 11L12 4L16 9L20 5L24 11V20Z` : `M0 0V9L4 15L8 10L12 17L16 11L20 16L24 9V0Z`}" fill="${up ? sp[0] : sp[1]}" stroke="#1c1c28" stroke-width="2.4" stroke-linejoin="round"/><path d="${up ? "M3 14L7 9M14 10L18 8" : "M4 6L8 10M15 5L19 11"}" stroke="${sp[2]}" stroke-width="2" stroke-linecap="round"/></svg>`;
     return [
       part(() => jag(false), p.x, o.a + T - 8, 24, 20, o.a + T + 1, {
         only: "in",
@@ -543,6 +749,26 @@ export const DRAW = {
       ),
     ];
   },
+  /* Downpour's roofs, from outside: their tops only, the walls' faces under them */
+  gsroof(p) {
+    const b = p.box;
+    return [
+      part(
+        () =>
+          SK.roofSVG({
+            w: b.w,
+            d: b.h - p.bldg.wall,
+            kind: p.bldg === GS.STATION ? "gs" : "ch",
+          }), // (its walls' faces show under it: stationart.js)
+        b.l,
+        b.t,
+        b.w,
+        b.h - p.bldg.wall,
+        p.key,
+        { fade: true, only: "out" },
+      ),
+    ];
+  },
   roof() {
     // the cabin from outside: roof, log walls, lit windows, the chimney, the gable's triangle window, the porch
     const h = C.y1 - C.y0 + 290;
@@ -632,7 +858,18 @@ export const DRAW = {
   coffee: (p) =>
     one(p, () => A.coffeeTable({ w: p.w, d: p.d, z: p.h }), p.w, p.d + p.h),
   tv: tvParts,
-  shelf: (p) => one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
+  shelf: (p) =>
+    p.map
+      ? gsPart(p, () =>
+          SK.shelfSVG({
+            w: p.w,
+            d: p.d,
+            h: p.h,
+            empty: p.empty,
+            seed: seedOf(p),
+          }),
+        ) // (Downpour's store shelves)
+      : one(p, () => A.bookshelf({ w: p.w, h: 140 }), p.w, 140),
   picture: (p) =>
     one(p, () => A.picture({ w: p.w, h: p.h, kind: p.art }), p.w, p.h),
   clock: (p) => one(p, () => A.wallClock({ r: p.w / 2 }), p.w, p.w),
@@ -645,12 +882,15 @@ export const DRAW = {
   ],
   plant: (p) => one(p, () => A.pottedPlant(), 60, 100),
   counter: (p) =>
-    one(
-      p,
-      () => A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }),
-      p.w,
-      240,
-    ),
+    p.map
+      ? gsPart(p, () => SK.counterSVG({ w: p.w, d: p.d, h: p.h })) // (Downpour's shop counter)
+      : one(
+          p,
+          () =>
+            A.counter({ w: p.w, sink: p.x > 3800 ? 130 : null, upper: true }),
+          p.w,
+          240,
+        ),
   stove: (p) => one(p, () => A.stove({ w: p.w, h: 150 }), p.w, 150),
   fridge: (p) => one(p, () => A.fridge({ w: 104, h: 196 }), 104, 196),
   table: (p) =>
@@ -807,6 +1047,56 @@ export const DRAW = {
   },
   goalpart: () => [],
   tree(p) {
+    if (p.map) {
+      /* Downpour's: a swamp tree standing where stationmap.js put it, in three pieces (the owner's, Nov 17 03:34Z): its
+         shade on the ground, its trunk sorted with the ducks by its foot, and its crown over everyone under it like a
+         roof (world.js: see-through while a duck is under it). Their sizes are the world's own (a duck is 64), not K's;
+         a bigger tree (big) a little bigger */
+      const t = swampTree(hash(p.id + "k")),
+        k = 0.9 + (p.big - 0.85) * 0.6,
+        fx = p.x + p.w / 2,
+        fy = p.y + p.d / 2 - p.z,
+        put = (q, url) => {
+          const w = q.w * k,
+            h = q.h * k;
+          return { l: fx - q.ax * k, t: fy - q.ay * k, w, h, url };
+        },
+        sh = put(t.shade, t.shadeURL),
+        tr = put(t.trunk, t.trunkURL),
+        cr = put(t.crown, t.crownURL);
+      return [
+        part(sh.url, sh.l, sh.t, sh.w, sh.h, p.key, {
+          img: true,
+          url: true,
+          layer: "floor",
+          part: "shade",
+        }),
+        part(tr.url, tr.l, tr.t, tr.w, tr.h, p.key, {
+          img: true,
+          url: true,
+          fade: true,
+          part: "trunk",
+          hit: {
+            l: tr.l + tr.w * 0.25,
+            t: tr.t,
+            r: tr.l + tr.w * 0.75,
+            b: fy - 10,
+          },
+        }),
+        part(cr.url, cr.l, cr.t, cr.w, cr.h, p.key, {
+          img: true,
+          url: true,
+          layer: "crown",
+          part: "crown",
+          hit: {
+            l: cr.l + cr.w * 0.12,
+            t: cr.t + cr.h * 0.12,
+            r: cr.l + cr.w * 0.88,
+            b: cr.t + cr.h * 0.88,
+          },
+        }),
+      ];
+    }
     const b = treeBox(p);
     return [
       part(treeURL(b.kind), b.l, b.t, b.w, b.h, p.key, {
@@ -1117,11 +1407,21 @@ function groundPieces() {
       );
   return G;
 }
-let ground = null;
-export const GROUND = () => ground || (ground = groundPieces());
+let ground = null,
+  dpGround = null;
+export const GROUND = () =>
+  L.layoutVariant() === "l4gs"
+    ? dpGround || (dpGround = downpourGround()) // (dpground.js)
+    : ground || (ground = groundPieces());
 /* the ground's plain colors (before its tiles are painted): by screen-world y */
 export const groundColor = (y) =>
-  y < L.SLOPE.y0 ? "#24503d" : y < LOWY ? "#1a3a2e" : "#1f4636";
+  L.layoutVariant() === "l4gs"
+    ? dpGroundColor(y)
+    : y < L.SLOPE.y0
+      ? "#24503d"
+      : y < LOWY
+        ? "#1a3a2e"
+        : "#1f4636";
 
 /* ---------- decor: what no prop owns ---------- */
 function decor() {
@@ -1220,4 +1520,5 @@ function decor() {
   return out;
 }
 let deco = null;
-export const DECOR = () => deco || (deco = decor());
+export const DECOR = () =>
+  L.layoutVariant() === "l4gs" ? [] : deco || (deco = decor()); // (Downpour: none yet)

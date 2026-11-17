@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Downpour art</title>
+    <style>
+      /* the preview page for js/hangout/stationart.js: each drawing smooth, then as the game's pixels */
+      body {
+        background: #1b2420;
+        color: #e8e8f0;
+        font-family: system-ui, sans-serif;
+        padding: 16px;
+      }
+      h2 {
+        font-size: 1rem;
+        margin: 1.4rem 0 0.6rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        align-items: flex-end;
+      }
+      figure {
+        margin: 0;
+        display: grid;
+        justify-items: center;
+        gap: 6px;
+        padding: 10px;
+        background: #26332c;
+        border-radius: 8px;
+      }
+      figcaption {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+      .px {
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>The gas station</h2>
+    <div class="row" id="gs"></div>
+    <h2>Outside</h2>
+    <div class="row" id="out"></div>
+    <h2>The cars</h2>
+    <div class="row" id="cars"></div>
+    <h2>The chapel</h2>
+    <div class="row" id="ch"></div>
+    <h2>The swamp</h2>
+    <div class="row" id="trees"></div>
+    <script type="module">
+      import { pxSVG } from "../js/pixel.js";
+      import * as S from "../js/hangout/stationart.js";
+      import { duckSVG } from "../js/duck.js";
+      import { priestSVG } from "../js/hangout/npcart.js";
+
+      const K = Number(new URLSearchParams(location.search).get("k") || 0.5); // (world px to the page's px)
+      const fig = (inner, cap) =>
+        `<figure>${inner}<figcaption>${cap}</figcaption></figure>`;
+      const size = (svg) =>
+        svg
+          .match(/viewBox="[\d.-]+ [\d.-]+ ([\d.]+) ([\d.]+)"/)
+          .slice(1)
+          .map(Number);
+      /* a drawing at K, then as pixels (1.4 world px to a pixel, the game's grid in the world) shown at K */
+      const both = (svg) => {
+        const [w] = size(svg);
+        return `<div style="display:flex;gap:10px;align-items:flex-end"><div style="width:${w * K}px">${svg.replace(/width="[\d.]+" height="[\d.]+"/, 'style="width:100%;height:auto;display:block;overflow:visible"')}</div><div class="px" style="width:${w * K}px">${pxSVG(svg, w / 1.4).replace("<img", '<img style="width:100%;height:auto"')}</div></div>`;
+      };
+      const put = (id, items) =>
+        (document.getElementById(id).innerHTML = items
+          .map(([svg, cap]) => fig(both(svg), cap))
+          .join(""));
+      put("gs", [
+        [
+          S.gsWallX({ w: 700, wallH: 180, glass: [[60, 640]] }),
+          "front wall, glass",
+        ],
+        [S.gsWallX({ w: 400, wallH: 180 }), "wall"],
+        [S.gsWallY({ w: 24, h: 380, wallH: 180 }), "wall's end"],
+        [S.shelfSVG({}), "shelf"],
+        [S.shelfSVG({ empty: true }), "empty shelf"],
+        [S.counterSVG({}), "counter"],
+        [S.counterSVG({ w: 100, d: 340 }), "counter's side"],
+      ]);
+      put("out", [
+        [S.canopySVG({ w: 900, d: 280 }), "canopy (half size)"],
+        [S.pumpSVG({}), "pumps"],
+        [S.generatorSVG({}), "generator"],
+        [S.fenceSVG({}), "fence"],
+      ]);
+      put(
+        "cars",
+        [1, 2, 3, 4, 5, 6]
+          .map((k) => [S.carSVG({ seed: k, east: k % 2 === 0 }), "car " + k])
+          .concat([
+            [
+              S.carSVG({ seed: 9, east: false, hood: true, up: 110 }),
+              "hood up",
+            ],
+          ]),
+      );
+      put("ch", [
+        [S.gsWallX({ w: 500, wallH: 240, skin: "ch" }), "chapel wall"],
+        [S.pewSVG({}), "pew"],
+        [S.pewSVG({ w: 200, broken: "e" }), "broken (east)"],
+        [S.pewSVG({ w: 190, broken: "w" }), "broken (west)"],
+        [S.altarSVG({}), "altar"],
+        [S.towerSVG({}), "bell tower"],
+      ]);
+      put("trees", [
+        ...["cypress", "oak", "willow"].flatMap((k) =>
+          [0, 1, 2].map((v) => [S.swampTreeSVG(k, v).svg, `${k} ${v + 1}`]),
+        ),
+        [
+          S.fallenSVG({ w: 860, h: 1210, x0: 55, y0: 55, x1: 805, y1: 1155 }),
+          "fallen tree",
+        ],
+      ]);
+      document
+        .getElementById("ch")
+        .insertAdjacentHTML(
+          "beforeend",
+          fig(
+            `<div style="width:96px">${priestSVG({ size: 96 })}</div>`,
+            "the Priest",
+          ),
+        );
+    </script>
+  </body>
+</html>

@@ -28,7 +28,14 @@
      pk  [{ n, k (a part, or "can"), x, y, z (where it's drawn: on the sink, the counter or the couch), px, py (where a
            duck takes it), r (a jerry can's rounds) }]: what lies about to be taken
    s.hidden.l4seen { zombie: 1 }: the dead ones already rolled for a jerry can. */
-import { PROPS } from "./hangout/layout.js";
+import { PROPS, layoutVariant } from "./hangout/layout.js";
+import * as GS from "./hangout/stationmap.js";
+/* Downpour (Dead Ducks Arcade's second map, the owner's Nov 16 23:15Z): the generator's power box east of the gas
+   station; all four parts lie about the map, each at one of the spots it can be in (stationmap.js PART_SPOTS: no
+   Priest's part, no zombie's, no hood-up car's); the flashlights stay as they are when the power comes on (23:29Z);
+   and a pump sells gas while the power is on: 3 rounds for 250 a round (23:29Z) */
+const dpOn = () => layoutVariant() === "l4gs";
+const LETTER = { tools: "T", gas: "G", fuse: "F", lever: "S" };
 
 export const PARTS = ["fuse", "lever", "tools", "gas"];
 const NAMES = {
@@ -39,9 +46,20 @@ const NAMES = {
   can: "Jerry can",
 };
 export const PW = {
-  X: 2300, // the box on the balcony: its foot's middle, back left, against the cabin's south wall (clear of the hole)
-  Y: 2236,
-  E: [2300, 2300], // where E works from: the deck in front of it
+  // the box on the balcony: its foot's middle, back left, against the cabin's south wall (clear of the hole); Downpour's
+  // by its generator
+  get X() {
+    return dpOn() ? GS.POWER_SPOT.x : 2300;
+  },
+  get Y() {
+    return dpOn() ? GS.POWER_SPOT.y + 14 : 2236;
+  },
+  // where E works from: the deck in front of it (Downpour: the grass in front of it)
+  get E() {
+    return dpOn() ? [GS.POWER_SPOT.x, GS.POWER_SPOT.y + 80] : [2300, 2300];
+  },
+  PUMP: 250, // Downpour: a round of gas at a pump …
+  PUMP_ROUNDS: 3, // … sold 3 rounds at a time
   REACH: 130, // world px from there
   SHOP: 250, // the Butler's part
   SHOP_FIRE: 750, // the fireplace's part, bought from the Butler instead (the owner's, Nov 16 21:21Z)
@@ -85,6 +103,17 @@ export const pwName = (w) => {
    in front of it, where a duck takes it */
 const prop = (k, f = () => true) => PROPS.find((p) => p.kind === k && f(p));
 export function spotOf(k) {
+  if (String(k).startsWith("dp")) {
+    const q = GS.PART_SPOTS[+k.slice(2)];
+    return {
+      x: q.x,
+      y: q.y,
+      z: q.z,
+      px: q.x,
+      py: q.y + (q.z ? 60 : 0),
+      key: q.y + 2,
+    };
+  }
   if (k === "sink") {
     const p = prop("sink");
     return {
@@ -117,7 +146,9 @@ export function spotOf(k) {
     key: p.key + 2,
   };
 }
-const SPOTS = ["sink", "counter", "couch"];
+const CABIN_SPOTS = ["sink", "counter", "couch"];
+const spots = () =>
+  dpOn() ? GS.PART_SPOTS.map((_, k) => "dp" + k) : CABIN_SPOTS;
 
 export const pwState = (s) => (s && s.hang && s.hang.pw) || null;
 export const powerOn = (s) => !!(s && s.hang && s.hang.power);
@@ -143,8 +174,11 @@ const canCome = (s) => !!s.hang.pw.ever && !canOut(s);
 /* ---------- the rules' side (l4ddrules.js calls these; h: its helpers) ---------- */
 /* a new game: the four parts shuffled into their places */
 export function powerSetUp(s) {
+  if (dpOn()) return dpSetUp(s);
   const p = [...PARTS].sort(() => Math.random() - 0.5),
-    where = [...SPOTS, "fire"].sort(() => Math.random() - 0.5).slice(0, 2);
+    where = [...CABIN_SPOTS, "fire"]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
   const pw = {
     fit: [],
     pool: [],
@@ -169,11 +203,47 @@ export function powerSetUp(s) {
   s.hang.pk = pk;
   s.hang.power = 0;
 }
+/* Downpour: each part at one of its own spots, never two in one (the ones with fewest spots placed first) */
+function dpSetUp(s) {
+  const pw = {
+      fit: [],
+      pool: [],
+      cans: [],
+      on: 0,
+      left: 0,
+      ever: 0,
+      tries: 0,
+      fire: "",
+      shop: "",
+      zp: "",
+      zr: 0,
+      zi: 0,
+      n: 0,
+    },
+    pk = [],
+    used = new Set(),
+    can = (k) =>
+      GS.PART_SPOTS.map((q, i) => (q.can.includes(LETTER[k]) ? i : -1)).filter(
+        (i) => i >= 0,
+      );
+  for (const k of [...PARTS].sort((a, b) => can(a).length - can(b).length)) {
+    const free = can(k).filter((i) => !used.has(i)),
+      i = free[Math.floor(Math.random() * free.length)];
+    used.add(i);
+    pk.push({ n: ++pw.n, k, ...spotOf("dp" + i), at: "dp" + i });
+  }
+  s.hang.pw = pw;
+  s.hang.pk = pk;
+  s.hang.power = 0;
+}
 /* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off) */
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
   s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0, ...(on ? {} : { ever: 1 }) };
-  s.hang.l4f = on ? Object.fromEntries(h.players(s).map((id) => [id, 1])) : {};
+  if (!dpOn())
+    s.hang.l4f = on
+      ? Object.fromEntries(h.players(s).map((id) => [id, 1]))
+      : {}; // (Downpour: the flashlights stay as they are)
   h.addFx(s, { kind: on ? "l4pwon" : "l4pwoff", by: "", who: [], t: now });
 }
 /* a round starts (newRound): the power counts it, maybe goes out; the zombie with the part is picked; a jerry can may
@@ -192,7 +262,7 @@ export function powerRound(s, r, now, h) {
     s.hang.pw = { ...w, zi: L.next + Math.floor(Math.random() * L.n) }; // (one of this round's zombies, by its number)
   if (canCome(s) && Math.random() < PW.CAN_ROUND) {
     const busy = (s.hang.pk || []).map((o) => o.at),
-      free = SPOTS.filter((k) => !busy.includes(k));
+      free = spots().filter((k) => !busy.includes(k));
     if (free.length) {
       const at = free[Math.floor(Math.random() * free.length)];
       lay(s, { k: "can", r: canRounds(), ...spotOf(at), at });
@@ -327,6 +397,19 @@ export function powerAct(s, id, now, mx, my, h) {
   };
   h.addFx(s, { kind: "l4pwgas", r, by: id, who: [], t: now });
   if (!pw.on) setPower(s, true, now, h);
+  return true;
+}
+/* Downpour: E at a pump, while the power is on, buys 3 rounds of gas (250 a round) */
+export const pumpNear = (mx, my, far) =>
+  dpOn() && GS.PUMP_E.some(([x, y]) => Math.hypot(mx - x, my - y) < far);
+export function powerPump(s, id, now, mx, my, h) {
+  const pw = s.hang.pw,
+    price = PW.PUMP * PW.PUMP_ROUNDS;
+  if (!pw || !pw.on || !pumpNear(mx, my, PW.REACH * 1.6)) return false;
+  if (h.ptsOf(s, id) < price) return false;
+  h.addPts(s, id, -price);
+  s.hang.pw = { ...pw, left: pw.left + PW.PUMP_ROUNDS };
+  h.addFx(s, { kind: "l4pwgas", r: PW.PUMP_ROUNDS, by: id, who: [], t: now });
   return true;
 }
 /* what E at the box would do now, for its button: "fit", "on", "pour" or "" (it only shows the count) */

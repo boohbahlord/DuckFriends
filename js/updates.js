@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v52",
+    version: 52,
+    date: "Nov 16, 2026",
+    title: "Downpour",
+    news: [
+      "For Dead Ducks Arcade: a new map, Downpour: a gas station, a flooded road and a chapel at night in the rain.",
+      "For Dead Ducks Arcade: each game starts with a vote between Duck Cabin and Downpour.",
+      "For Dead Ducks Arcade: on Downpour, lightning can strike zombies, and mud zombies splash mud on your screen.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: on a phone, the Change starting round button no longer runs under the Ready button.",
+    ],
+  },
+  {
     id: "v51",
     version: 51,
     date: "Nov 16, 2026",

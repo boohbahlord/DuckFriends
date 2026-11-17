@@ -5033,6 +5033,20 @@ are all good to go we can put them in the game"
 - Adam: floor plan only, /mnt/project-files/refs/zombie-map-plans-2026-11-16/gas-station-chapel.png (script in Adam's
   scratchpad, plan2.py). Nothing built.
 
+## Request (2026-11-16 23:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4oTNDzDY4LgnMrLrRa6QVz): Downpour's fences
+> instead of zombies coming through holes on fences, they rather climb the fence according to their speed like a ladder before falling down it's height from where they climbed it. THe fence should be sort of tall because cool
+
+- Solomon the 2nd: the fences across the road's ends are solid and 200 tall (no holes); a zombie walks to the fence,
+  climbs it at its own walking speed, then drops down the other side (l4ddrules.js st 5, fenceZ).
+
+## Request (2026-11-17 00:17Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt1m3BhxdBgZcLBBxgbp619T): picking Downpour
+> The quacky zombies takes players to a vote screen of the maps and it only shows those two maps for players to vote for.
+
+- Solomon the 2nd: before every Quacky Zombies game, everyone gets a "Vote for Map" window with only Random, Duck Cabin
+  and Downpour (rules.js ZMAPS, vote kind "zmap", 0:20 like the map vote; vote.js zmapTile, pictures
+  assets/maps/duck-cabin.jpg and assets/maps/downpour.jpg). Its result sets options.l4map. Also built for Downpour
+  (owner 23:15Z, 23:23Z, 23:29Z): rain and wading ripples, power lights, lightning, mud zombies; Noah drew the art.
+
 ## Request (2026-11-16 23:15Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt5jgfAw1XCisXPag7V226bj): second Dead Ducks Arcade map, the gas station and chapel (Swamp Fever mood)
 Pictures: /mnt/project-files/refs/zombie-map-plans-2026-11-16/owner/forest-line.png (red line = where the forest
 reaches), owner/gas-station-holes.png (circles = holes in the gas station's walls).
@@ -5068,3 +5082,10 @@ reaches), owner/gas-station-holes.png (circles = holes in the gas station's wall
 ## Nov 16, 23:29Z: gas meter under the power box
 Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
 Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.
+
+- Owner 2026-11-17 00:57Z (Downpour trees, after Noah's four kinds A cypress, B live oak, C dead snag, D willow): "Get rid kf the drapes and try A, B, and D, and maybe slight variations to those trees"
+  - Decided: trees A, B and D only, with slight variations of each, and no hanging moss or drapes. Noah draws them at the 60% scale and sends pictures before they go in.
+- Owner 2026-11-17 00:58Z (after the 60% pictures): "Good we'll try and go with this size version for now"
+  - Decided: Downpour stays at K = 0.6. It deploys after the new trees are in and the owner has seen them.
+- Owner 2026-11-17 03:34Z (with a sketch, /mnt/project-files/refs/downpour-trees-2026-11-17/owner/tree-scale-sketch.jpg: a duck under a big tree crown, the trunk about as wide as the duck, the crown about 4 to 5 ducks across): "Tree line isnt a literal line of trees, it is a imaginary line, where inside it, trees could possibly be found, but more sparsely. Trees are supposed to be bigger then ducks, and leaves, like rooves and walls, go over them, covering ducks like a wall and revealing whats under them accordingly. The screenshot i send is for size comparison and scale. The tree line is a imaginary conceptual line related to the density of the trees that both players and zombies can then obv cross either way"
+  - Decided: Downpour's deploy (Version 52) is held. The forest line is no longer a row of trees or a wall: it only marks where the trees get dense, and ducks and zombies cross it both ways (only trunks block). Trees are drawn at the sketch's size, and their leaves are a roof layer over ducks that reveals what's under it, like the cabin's roofs. Solomon does the map and the reveal; Noah does the bigger tree art.
