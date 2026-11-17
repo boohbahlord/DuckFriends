@@ -1137,11 +1137,30 @@ let othersSig = "",
   othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
   myBox = null, // my duck's box in the last frame, in the board's px
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
+/* Mad God Justin's sprint (the owner's, Nov 17): a second of it, back as fast as it was lost. mgjStam is what's left (0 … 1);
+   run dry, I can't sprint again until Shift is let go */
+const MGJ_SPRINT_MS = 1000;
+let mgjStam = 1,
+  mgjTired = false;
+function mgjSprint(on, dt) {
+  if (on && !mgjTired && mgjStam > 0) {
+    mgjStam = Math.max(0, mgjStam - (dt * 1000) / MGJ_SPRINT_MS);
+    if (mgjStam <= 0) mgjTired = true;
+    return true;
+  }
+  if (!on) mgjTired = false;
+  mgjStam = Math.min(1, mgjStam + (dt * 1000) / MGJ_SPRINT_MS);
+  return false;
+}
 function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false];
+    const [sp, tired] = isL4dd(s)
+      ? sprintLeft()
+      : isMgj(s)
+        ? [mgjStam, mgjTired]
+        : [null, false];
     meter.set(hv[0], hv[1], sp, tired);
   } else meter.hide();
   const want =
@@ -2123,6 +2142,8 @@ function drawDucks(now = clockNow()) {
       b = shotPool(cls, inner);
       b.setAttribute("style", style);
       b.dataset.n = sh.n;
+      b._blk = 0;
+      b.classList.remove("blk");
       SHOT_EL.set(sh.n, b);
       fxl.append(b);
       if (sh.k === "grenade" && now - sh.t < 400) {
@@ -2134,6 +2155,12 @@ function drawDucks(now = clockNow()) {
       } // (its pin stays behind: it drops from the hand and fades)
     }
     b.style.transform = `translate(${a.left.toFixed(1)}px, ${top.toFixed(1)}px)`;
+    if (sh.blk && b._blk !== sh.blk) {
+      b._blk = sh.blk;
+      b.classList.remove("blk");
+      void b.offsetWidth;
+      b.classList.add("blk");
+    } // (a bullet stopped on his chair or controller: it blinks a see-through white, the owner's, Nov 17 13:07Z)
   }
   for (const [n, b] of SHOT_EL)
     if (!live.has(n)) {
@@ -4285,6 +4312,7 @@ function step(dt, now) {
     k("ShiftRight") ||
     stick.sprint ||
     !!(target && target.sprint);
+  if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;

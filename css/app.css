@@ -14323,6 +14323,19 @@ html.moving .board.quake {
 .thrown.mgj-throw i {
   filter: drop-shadow(0 0 0.2rem #fff9) drop-shadow(0 0.15rem 0.15rem #0009);
 }
+/* a bullet that hits his chair or a controller makes it blink a see-through white (the owner's, Nov 17 13:07Z) */
+.thrown.mgj-throw.blk {
+  animation: mgj-blk 0.22s ease-out;
+}
+@keyframes mgj-blk {
+  0%,
+  100% {
+    filter: none;
+  }
+  35% {
+    filter: brightness(0) invert(1) opacity(0.6);
+  }
+}
 .thrown.k-controller i {
   width: calc(var(--s) * 0.62);
   animation-duration: 0.7s;
