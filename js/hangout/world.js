@@ -37,6 +37,9 @@ export const BOARD_HTML =
   '<div class="board hang-board"><canvas class="hang-ground" aria-hidden="true"></canvas><div class="hang-props"></div><div class="ducks"></div><div class="hang-shade" hidden></div><div class="fxl"></div></div>';
 /* a crown (Downpour's trees) is drawn over every duck and prop, under the dark and the rain: above the highest foot */
 const CROWN_Z = 5000;
+/* Downpour: from outside, whoever is inside a building shows through its roof, which turns see-through over them (the
+   owner's, Nov 17 05:46Z) */
+const roofsShow = () => L.layoutVariant() !== ""; // (Quacky Zombies, either map: Hangout keeps the cabin shut)
 const SPEED = 380,
   SPRINT = 1.75; // world px a second
 const AIR_UP = 6; // in the air, ground this much above the feet still catches them
@@ -97,27 +100,29 @@ export function mountWorld(board, api) {
     SHADE_OUT = 700;
   /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
      out of it and its big shadow (in its own px, at the camera's scale) */
+  const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
   const peekClip = () => {
-    if (!L.PEEKS.length) return "";
+    if (!peeks().length) return "";
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
       H0 = (HOLE.b - HOLE.t) * k,
       E = 4200,
       box = (x0, y0, x1, y1) =>
         `M${x0.toFixed(1)} ${y0.toFixed(1)}H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`;
-    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${L.PEEKS.map(
-      ({ out: [x0, y0, x1, y1] }) =>
+    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${peeks()
+      .map(({ out: [x0, y0, x1, y1] }) =>
         box(
           (x0 - HOLE.l) * k,
           (y0 - HOLE.t) * k,
           (x1 - HOLE.l) * k,
           (y1 - HOLE.t) * k,
         ),
-    ).join("")}")`;
+      )
+      .join("")}")`;
   };
   const outOfHole = (l, t, r, b) =>
     (r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b) &&
-    !L.PEEKS.some(
+    !peeks().some(
       ({ out: [x0, y0, x1, y1] }) => r > x0 && l < x1 && b > y0 && t < y1,
     ); // (Quacky Zombies: the deck through a hole in the south wall shows too)
   const toScreen = (x, y, h = 0) => ({
@@ -595,7 +600,8 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
-      if (L.whereIn(a.x, a.y) !== bldg) continue; // (not one seen through a hole: nothing turns see-through over it)
+      if (L.whereIn(a.x, a.y) !== bldg && !(bldg === 0 && roofsShow()))
+        continue; // (not one seen through a hole: nothing turns see-through over it. Quacky Zombies, from outside: one inside a building turns its roof see-through)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
         lift = Math.max(0, a.z - g) * cam.sc;
@@ -620,6 +626,26 @@ export function mountWorld(board, api) {
           walker: true,
         });
       }
+    /* and what must never be hidden (Downpour's Angel machine: keep): a wall or a roof turns see-through while it
+       covers even a quarter of it (the owner's, Nov 17 05:46Z) */
+    for (const p of L.PROPS) {
+      if (!p.keep) continue;
+      if (
+        L.whereIn(p.x + p.w / 2, p.y + p.d) !== bldg &&
+        !(bldg === 0 && roofsShow())
+      )
+        continue;
+      const a = toScreen(p.box.l, p.box.t),
+        c = toScreen(p.box.l + p.box.w, p.box.t + p.box.h);
+      out.push({
+        key: p.key,
+        l: a.left,
+        r: c.left,
+        t: a.top,
+        b: c.top,
+        need: 0.25,
+      });
+    }
     return out;
   }
   const HIDDEN = 0.3; // this much of a duck's box covered: hidden
@@ -667,16 +693,16 @@ export function mountWorld(board, api) {
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
-        /* a wall or a trunk: while it hides a duck or a zombie behind it. A crown (Downpour's trees) is a roof over
-           whoever is under it, in front of its trunk or behind: it turns see-through while it hides a duck, as the
-           cabin's roof goes when I'm inside, and keeps the zombies under it hidden (the owner's, Nov 17 03:34Z) */
+        /* a wall, a roof or a trunk: while it hides a duck or a zombie behind it or under it. A crown (Downpour's
+           trees) is a roof over whoever is under it, in front of its trunk or behind: it turns see-through while it
+           hides a duck or a zombie (the owner's, Nov 17 05:46Z: whatever covers one shows it to every player) */
         const thru =
           it.layer === "crown"
-            ? ducks.some(
-                (d) => !d.walker && covered(d, hl, hr, ht, hb) > HIDDEN,
-              )
+            ? ducks.some((d) => covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN))
             : ducks.some(
-                (d) => d.key < it.key && covered(d, hl, hr, ht, hb) > HIDDEN,
+                (d) =>
+                  d.key < it.key &&
+                  covered(d, hl, hr, ht, hb) > (d.need ?? HIDDEN),
               );
         if (e._thru !== thru) {
           e._thru = thru;

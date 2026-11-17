@@ -125,7 +125,16 @@ export function mountTouch(S, api) {
       fingers.set(f.id, f);
       return;
     }
-    hold = { ...f, ox: f.x, oy: f.y, out: false };
+    /* a phone on its side: the stick's middle stays a little in from the screen's left, right and bottom edges, so my thumb
+       can push it all the way out (REACH) even from a corner, as the right stick does (the owner, Nov 17) */
+    const side = document.documentElement.classList.contains("phone-land"),
+      room = REACH + 6;
+    hold = {
+      ...f,
+      ox: side ? Math.max(room, Math.min(innerWidth - room, f.x)) : f.x,
+      oy: side ? Math.min(innerHeight - room, f.y) : f.y,
+      out: false,
+    };
     setTimeout(() => {
       if (hold && hold.id === f.id) show();
     }, TAP.ms); // held still: the stick shows where it is

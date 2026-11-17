@@ -500,6 +500,7 @@ const GS_DRAW = {
       p.key,
       {
         fade: true,
+        only: "out", // (from inside the shop, through the front door's hole, the way out shows, not the canopy's top: the owner's, Nov 17 05:46Z)
         hit: { l: p.x, t: p.y - p.z, r: p.x + p.w, b: p.y + p.d }, // (see-through while anyone is under it, so the pumps and the shop's front show)
       },
     ),
@@ -541,7 +542,10 @@ export const DRAW = {
   wall: wallParts,
   stub: (p) => [
     part(
-      () => A.logWall({ w: p.w, wallH: p.h, t: p.d }),
+      () =>
+        p.map
+          ? SA.gsWallX({ w: p.w, wallH: p.h, t: p.d, skin: skinOf(p) })
+          : A.logWall({ w: p.w, wallH: p.h, t: p.d }),
       p.x,
       p.y - p.h,
       p.w,
@@ -556,20 +560,30 @@ export const DRAW = {
     const o = p.hole,
       seed = Math.round(o.a + o.at);
     if (o.axis === "x") {
-      // an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends
+      /* an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends.
+         Downpour: a south wall from outside broken up to under the sign's band, its glass either side smashed with it */
       const h = p.d + p.h,
+        low = p.low || (o.out && !p.map),
         svg = p.map
           ? SA.gsWallX({
               w: p.w,
               wallH: p.h,
               t: p.d,
               skin: skinOf(p),
+              glass: glassOn(p),
               seamless: true,
             })
           : A.logWall({ w: p.w, wallH: p.h, t: p.d, seamless: true }),
-        cut = o.out
+        cut = low
           ? A.holeCut(T + 2, p.w - T - 2, -30, h + 30, seed, 6)
-          : A.holeCut(T + 2, p.w - T - 2, p.d + 30, h + 30, seed, 7);
+          : A.holeCut(
+              T + 2,
+              p.w - T - 2,
+              p.d + (p.only === "out" ? p.h * 0.3 : 30),
+              h + 30,
+              seed,
+              7,
+            );
       return [
         part(
           () => A.holed(svg, p.w, h, [cut]),
@@ -580,7 +594,7 @@ export const DRAW = {
           p.key + 1,
           {
             fade: p.fade,
-            only: "in",
+            only: p.map ? p.only : "in", // (Downpour's north wall: from both sides, as the wall)
           },
         ),
       ];
@@ -1062,7 +1076,8 @@ export const DRAW = {
       /* Downpour's: a swamp tree standing where stationmap.js put it, in three pieces (the owner's, Nov 17 03:34Z): its
          shade on the ground, its trunk sorted with the ducks by its foot, and its crown over everyone under it like a
          roof (world.js: see-through while a duck is under it). Their sizes are the world's own (a duck is 64), not K's;
-         a bigger tree (big) a little bigger */
+         a bigger tree (big) a little bigger. Only from outside: from inside a building no leaf or trunk shows over its
+         rooms (the owner's, Nov 17 05:46Z) */
       const t = swampTree(hash(p.id + "k")),
         k = 0.9 + (p.big - 0.85) * 0.6,
         fx = p.x + p.w / 2,
@@ -1081,12 +1096,14 @@ export const DRAW = {
           url: true,
           layer: "floor",
           part: "shade",
+          only: "out",
         }),
         part(tr.url, tr.l, tr.t, tr.w, tr.h, p.key, {
           img: true,
           url: true,
           fade: true,
           part: "trunk",
+          only: "out",
           hit: {
             l: tr.l + tr.w * 0.25,
             t: tr.t,
@@ -1099,6 +1116,7 @@ export const DRAW = {
           url: true,
           layer: "crown",
           part: "crown",
+          only: "out",
           hit: {
             l: cr.l + cr.w * 0.12,
             t: cr.t + cr.h * 0.12,

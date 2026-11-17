@@ -9,6 +9,31 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v54",
+    version: 54,
+    date: "Nov 17, 2026",
+    title: "Rainbows, Downpour fixes and phone aim",
+    news: [
+      "Dat Boi's rainbow rank is now a real rainbow that blends from color to color and keeps cycling.",
+      "New skin: Rainbow, for any duck. It unlocks at 62,208 Jumps, the same as Dat Boi's rainbow rank.",
+      "On a phone, the gun, its laser sight and the flashlight point the way your duck walks, and the aim stick takes over while you hold it. This is the same in every mode.",
+      "For Dead Ducks Arcade: Downpour now has half as many trees, and tree leaves, roofs and the pumps' canopy turn see-through over a zombie or another player.",
+      "For Dead Ducks Arcade: on Duck Cabin, the roof turns see-through over a duck or zombie inside, as on Downpour.",
+      "For Dead Ducks Arcade: on Downpour, ducks and zombies swim in the deep water, slower, with guns put away.",
+      "For Dead Ducks Arcade: Downpour's generator runs from the start with 8 rounds of gas.",
+      "For Dead Ducks Arcade: Downpour's restroom has a toilet and a sink with a mirror, and the Angel machine stands in the chapel in place of the altar.",
+    ],
+    fixed: [
+      "On a phone held on its side, the aim stick and the walking stick sit a little in from the screen's edges so you can push them all the way.",
+      "On an upright phone in full screen, Rooms' top buttons no longer hang over the room panel.",
+      "For Dead Ducks Arcade: zombies steer around trees, cars and walls and no longer get stuck, on every map.",
+      "For Dead Ducks Arcade: on Downpour, things on the floor can be picked up again.",
+      "For Dead Ducks Arcade: Downpour's flood is clearly water all the way across.",
+      "For Dead Ducks Arcade: Downpour's walls meet at the corners, the front door is one smashed hole, and no wall lies on the ground.",
+      "For Dead Ducks Arcade: the Priest is as big as a duck.",
+    ],
+  },
+  {
     id: "v53",
     version: 53,
     date: "Nov 17, 2026",

@@ -899,12 +899,20 @@ const PEEK = { side: 60, deep: 260 };
    sight too */
 let here = 0;
 export const setHere = (b) => (here = b);
-/* is (x, y) seen from my side of the cabin's walls (inside: am I in the cabin)? My side, or through a hole */
-export const seenFrom = (x, y, inside) =>
+/* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight) */
+export const wallsSee = (x, y, inside) =>
   (variant === "l4gs"
-    ? GS.buildingAt(x, y) === (inside ? here : 0)
+    ? GS.buildingAt(x, y) === here
     : inCabin(x, y) === inside) ||
-  (PEEKS.length > 0 && PEEKS.some((k) => inR(x, y, inside ? k.out : k.in)));
+  (PEEKS.length > 0 &&
+    PEEKS.some(
+      (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
+    ));
+/* is (x, y) seen from where I am? Through the walls' holes as above; and in Quacky Zombies, from outside, inside a
+   building too: its roof turns see-through over whoever is under it (world.js), on Downpour and on the cabin alike (the
+   owner's, Nov 17: roofs "and everything else"). Hangout keeps the cabin's walls shut */
+export const seenFrom = (x, y, inside) =>
+  (!inside && variant !== "") || wallsSee(x, y, inside);
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
@@ -928,6 +936,16 @@ export function useMode(mode, map) {
         in: [o.a, C.y1 - C.wall, o.b, C.y1],
         out: [o.a - PEEK.side, C.y1, o.b + PEEK.side, C.y1 + PEEK.deep],
       });
+  /* Downpour: the gas station's front door is a hole too, and from inside the way out always shows through it (the
+     owner's, Nov 17 05:46Z: "exit?"), only from inside that building (bldg) */
+  if (v === "l4gs")
+    for (const o of GS.WALK_HOLES)
+      if (o.at === GS.STATION.y1)
+        PEEKS.push({
+          bldg: 1,
+          in: [o.a, o.at - GS.STATION.wall, o.b, o.at],
+          out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
+        });
   PLATS.length = 0;
   if (!v)
     for (const p of PROPS)
@@ -956,15 +974,11 @@ export function solidsAt(x, y, z = -Infinity) {
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
 export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   if (variant === "l4gs") {
-    // (the second map: a duck walks anywhere but the deep flood, past the forest line too (only the trunks stop it, the
-    // owner's, Nov 17 03:34Z), short of the world's edge, which keeps it this side of the fences; zombies come from past
-    // the fences)
+    // (the second map: a duck walks anywhere, past the forest line too (only the trunks stop it, the owner's, Nov 17
+    // 03:34Z), and swims the deep flood (Nov 17 05:46Z), short of the world's edge, which keeps it this side of the
+    // fences; zombies come from past the fences)
     if (x < 0 || x > W || y < 0 || y > H) return false;
-    if (
-      !zombie &&
-      (x < 70 || x > W - 70 || y < 70 || y > H - 70 || GS.inDeep(x, y))
-    )
-      return false;
+    if (!zombie && (x < 70 || x > W - 70 || y < 70 || y > H - 70)) return false;
     if (!zombie && boardAt(x, y)) return false;
   } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
   if (heightAt(x, y) > z + up + 1e-6) return false;

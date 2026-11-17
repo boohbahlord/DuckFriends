@@ -1290,7 +1290,8 @@ input.bad {
   align-items: center;
   gap: 1rem;
   padding: 0.9rem max(1rem, 3vw);
-}
+  padding-top: max(0.9rem, env(safe-area-inset-top));
+} /* full screen on a phone with a notch: the bar comes down with Sign in (.corner-tr), so they stay one row */
 .bar-title {
   display: flex;
   align-items: center;
@@ -2971,16 +2972,28 @@ svg.duck.jack.bob .jk,
     transform: none;
   }
 } /* (scaled from the spring's foot only, so he never lifts out of the box) */
-/* dat boi's rainbow rank: every part of him and his unicycle runs through the colors at a steady pace (datboi.js) */
-html.moving svg.duck.datboi.rainbow .dbr {
-  animation: db-hue 6s linear infinite;
+/* the rainbow skin in the pixel look (rainbowskin.js): its turn made into 24 steps in one tall picture, shown one step
+   at a time, a turn every 6 s (RB_MS, RB_N). On the page without the pixel look the drawing moves by itself */
+html.moving img.rbsp {
+  object-fit: cover;
+  object-position: 50% 0%;
+  animation: rb-step 6s steps(24, jump-none) infinite;
 }
-@keyframes db-hue {
-  from {
-    filter: hue-rotate(0deg);
-  }
+img.rbsp {
+  object-fit: cover;
+  object-position: 50% 0%;
+}
+@keyframes rb-step {
   to {
-    filter: hue-rotate(360deg);
+    object-position: 50% 100%;
+  }
+}
+html.moving image.rbsp {
+  animation: rb-y 6s steps(24, jump-none) infinite;
+}
+@keyframes rb-y {
+  to {
+    transform: translateY(calc(var(--rbh) * -23));
   }
 }
 .gduck-body svg {
@@ -18272,6 +18285,11 @@ html.fs-on .fs-btn .fs-in {
   }
 }
 
+/* on its side the aim stick and the jump button sit a little in from the right edge, so a thumb can push the stick all
+   the way out; the walking stick's middle stays that far in from its edges too (js/touch.js) */
+html.phone-land .tpad {
+  right: calc(3.8rem + env(safe-area-inset-right));
+}
 /* ---------- a phone on its side (html.phone-land, js/pointer.js) ----------
    It is short (about 360 px), so every size made of rem shrinks with the page's base size, and the places that
    stack things move them side by side. Touchscreen laptops never get this (they are html.keyboard). */
