@@ -1,21 +1,23 @@
-/* ---------- full screen on a phone (named corners.js after its four-corners button: some ad blockers block any file called "fullscreen.js", which stopped the whole game on the owner's laptop) ----------
-   On a phone the browser's own bars eat the room, most of all on its side. So the first tap on the start screen
-   (TAP TO START) puts the game in full screen, and a button left of the players button (or of the pause button where
+/* ---------- full screen (named corners.js after its four-corners button: some ad blockers block any file called "fullscreen.js", which stopped the whole game on the owner's laptop) ----------
+   On a phone the browser's own bars eat the room, most of all on its side. So there the first tap on the start screen
+   (TAP TO START) puts the game in full screen; on every device a button left of the players button (or of the pause button where
    there's none) leaves full screen and comes back to it, with the usual four-corners sign. A press makes the button
    glow for 4 s and then fade; pressing again starts the glow over instead of stacking a second one. */
 import { isPhone } from "./pointer.js";
 
 const html = document.documentElement;
-/* the installed app (sw.js, manifest.webmanifest) already opens in full screen, so there the button and the first tap's
-   full screen stay off: asking again would only bring back Chrome's "To exit full screen" pop-up */
+/* the installed app (sw.js, manifest.webmanifest) already opens in full screen, so there the first tap's full screen
+   stays off: asking by itself would only bring back Chrome's "To exit full screen" pop-up. The button stays everywhere
+   the browser can go full screen, phones, computers and the app alike (the owner's, Nov 17 13:07Z: "just because it
+   cant do it automatically in pc doesnt mean we remove the button") */
 const appMode = matchMedia(
   "(display-mode: fullscreen), (display-mode: standalone)",
 );
 export const inApp = () => appMode.matches || navigator.standalone === true;
 html.classList.toggle("app", inApp());
-const can = () =>
-  !inApp() &&
+const api = () =>
   !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const can = () => !inApp() && api(); // (going full screen by itself: the first tap)
 const isFull = () =>
   !!(document.fullscreenElement || document.webkitFullscreenElement);
 
@@ -47,7 +49,7 @@ export const fsBtnHTML = () =>
 
 function mark() {
   html.classList.toggle("fs-on", isFull());
-  html.classList.toggle("fs-can", can() && isPhone());
+  html.classList.toggle("fs-can", api()); // (the button: on every device)
   for (const b of document.querySelectorAll("[data-fs]"))
     b.setAttribute(
       "aria-label",

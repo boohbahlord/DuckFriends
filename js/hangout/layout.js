@@ -854,6 +854,7 @@ function makeSolids() {
     if (p.solid && p.block)
       SOLIDS.push({
         id: p.id,
+        kind: p.kind, // (what it is: Downpour's chain-link fence lets shots through, l4ddrules.js walled)
         x0: p.block[0],
         y0: p.block[1],
         x1: p.block[2],
@@ -926,7 +927,11 @@ export function useMode(mode, map) {
       PROPS.push(p);
   OPENINGS.length = 0;
   OPENINGS.push(
-    ...(v === "l4" ? L4_OPENINGS : v === "l4gs" ? [] : HANG_OPENINGS),
+    ...(v === "l4"
+      ? L4_OPENINGS
+      : v === "l4gs"
+        ? GS.INNER_DOORS.map((d) => ({ ...d, a: d.a - T, b: d.b + T })) // (Downpour's walls reach T past their pieces, not into the gap: the same doorway as the cabin's)
+        : HANG_OPENINGS),
   );
   HOLES.length = PEEKS.length = 0;
   if (v === "l4") HOLES.push(...L4_HOLES);

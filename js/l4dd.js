@@ -87,7 +87,11 @@ import {
   SAFE,
   safePrice,
   zombieLook,
+  magIn,
+  fullFor,
+  downArmed,
 } from "./l4ddrules.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
@@ -150,7 +154,7 @@ const MOON = () => {
     syncMap();
     moonRev = layoutRev();
     moon = Object.fromEntries(
-      OPENINGS.map((o) => {
+      OPENINGS.filter((o) => !o.rim).map((o) => {
         const k =
           o.kind === "stairs"
             ? 0
@@ -1162,7 +1166,7 @@ function shineProps(Wd, cones, q) {
       let l = p.x,
         r = p.x + p.w;
       if (p.kind === "fence") {
-        const t = fenceLean(p, W); // (its top leans over toward the road: all of that lights)
+        const t = fenceLean(p, W); // (its top leans out toward the map's edge: all of that lights)
         if (t > 0) r += t;
         else l += t;
       }
@@ -1505,6 +1509,47 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
+   Rifle: its heat has its own meter, the jetpack) */
+export function l4Ammo(s, me, w) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  if (!m) return null;
+  if (downArmed(s, me)) w = "dg"; // (down: the down pistol)
+  const rl = !!w && m.rw === w && m.rl > now;
+  if (w === "dg")
+    return m.dg === undefined
+      ? null
+      : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
+  if (w === "grenade")
+    return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  const c = (m.am || {})[w];
+  if (!c) return null;
+  if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
+  const mag = magIn(m, w);
+  if (mag)
+    return {
+      f: rl ? 0 : c[0] / mag,
+      rl,
+      dry: !rl && c[0] <= 0 && c[1] <= 0,
+      nr: !rl && c[1] <= 0 && c[0] < mag, // (no ammo left to reload it with)
+    };
+  const all = (fullFor(s, me, w) || [0])[0];
+  return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
+}
+let dryW = "";
+/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
+   white bar flashes red */
+function ammoBars(tag, s, me) {
+  const w = heldFn() || "",
+    a = l4Ammo(s, me, w),
+    dry = a && a.dry ? w : "";
+  if (dry && dry !== dryW && w !== "grenade") noReload();
+  dryW = dry;
+  ammoBar(tag, a);
+  stackBars(tag);
+}
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
    scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
    owner, Nov 17: on a computer and a phone) */
@@ -1725,6 +1770,7 @@ function holdTarget(pos, ctx) {
   if (wa && Math.hypot(wa.x - pos.x, wa.y - pos.y) < L4.REACH)
     return { kind: "givej", d: Math.hypot(wa.x - pos.x, wa.y - pos.y) };
   for (const o of OPENINGS) {
+    if (o.nb) continue; // (Downpour's fence: nothing to board up)
     const d = Math.hypot(o.in[0] - pos.x, o.in[1] - pos.y),
       n = (s.hang.brd || {})[o.id] || 0;
     if (d < L4.REACH && n < L4.BOARDS && (!best || d < best.d))
@@ -2063,8 +2109,13 @@ activity({
       const u = Math.min(1, (t - o.t0) / gap);
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const z = heightAt(o.x, o.y) + (o.st === 5 ? fenceZ(o.x, o.y) : 0), // (Downpour: up a fence, or dropping off it)
-        f = Wd.toScreen(o.x, o.y, z),
+      const up = o.st === 5 ? fenceZ(o.x, o.y, o.l[2]) : 0, // (Downpour: up a fence, or dropping off it)
+        z = heightAt(o.x, o.y) + up,
+        lean =
+          up && openingById(o.l[2])?.axis === "y"
+            ? fenceLean({ x: o.x, h: up }, W)
+            : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
+        f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
         unseen = !(door || seenFrom(o.x, o.y, Wd.inside)),
         onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
@@ -2259,6 +2310,7 @@ activity({
       }
       const st = ctx.state();
       coolBar(tag, st, ctx.me);
+      ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
       laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
       peek(tag, st, ctx.me);
     }

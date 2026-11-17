@@ -843,22 +843,46 @@ const CABIN_OPENINGS = [
     in: [4238, 2110],
   },
 ];
-/* Downpour (the second map, stationmap.js): the boarded holes in the gas station and the chapel, and the two fences across
-   the road's ends, which zombies climb over (nb: no boards on them; a zombie climbs anywhere along climb) */
+/* Downpour (the second map, stationmap.js): the boarded holes in the gas station and the chapel, and the fence round the
+   whole map, which zombies climb over anywhere along its four sides but its corners (the owner's, Nov 17 12:28Z:
+   "zombies spawn outside the fence and climb over it like i said, no longer spawning inside the map"). nb: no boards
+   on them. A side's fence: axis "y" the west and east sides (its line at x = at), "x" the north and south (at y = at);
+   out: the side the zombies come from (-1 west or north, 1 east or south); climb: from … to along it */
+const RIM_CORNER = 60;
+/* how far out from a fence's line a zombie comes (from), starts climbing (out), is at the top (out - mid) and lands
+   (out - across), and how long the drop takes (s) */
+const FENCE = { from: 45, out: 22, mid: 34, across: 68, FALL: 0.35 };
+/* how far out from fence f's line (x, y) is (inside: below 0) */
+const acrossFence = (f, x, y) => ((f.axis === "y" ? x : y) - f.at) * f.out;
+const RIM_SIDES = () => [
+  { axis: "y", at: GS.RIM.x0, out: -1, climb: [GS.RIM.y0, GS.RIM.y1] },
+  { axis: "y", at: GS.RIM.x1, out: 1, climb: [GS.RIM.y0, GS.RIM.y1] },
+  { axis: "x", at: GS.RIM.y0, out: -1, climb: [GS.RIM.x0, GS.RIM.x1] },
+  { axis: "x", at: GS.RIM.y1, out: 1, climb: [GS.RIM.x0, GS.RIM.x1] },
+];
+/* a spot by a fence: u across its line (outward), v along it */
+const byFence = (f, u, v) =>
+  f.axis === "y" ? [f.at + f.out * u, v] : [v, f.at + f.out * u];
 const DP_OPENINGS = [
-  ...GS.FENCES.map((f, k) => ({
-    id: "fence" + k,
-    kind: "fence",
-    nb: true,
-    x: f.x,
-    y: (f.climb[0] + f.climb[1]) / 2,
-    axis: "y",
-    half: (f.climb[1] - f.climb[0]) / 2,
-    out: [f.x + f.out * 22, 0], // (y: the zombie's own, along climb)
-    in: [f.x - f.out * 46, 0],
-    from: [f.x + f.out * 45, 0],
-    fence: f,
-  })),
+  ...RIM_SIDES().map((f, k) => {
+    const [a, b] = [f.climb[0] + RIM_CORNER, f.climb[1] - RIM_CORNER],
+      m = (a + b) / 2;
+    f.climb = [a, b];
+    return {
+      id: "fence" + k,
+      kind: "fence",
+      nb: true,
+      x: f.axis === "y" ? f.at : m,
+      y: f.axis === "y" ? m : f.at,
+      axis: f.axis,
+      half: (b - a) / 2,
+      out: byFence(f, FENCE.out, 0), // (along it: the zombie's own)
+      in: byFence(f, FENCE.out - FENCE.across, 0),
+      from: byFence(f, FENCE.from, 0),
+      fence: f,
+      ...(f.axis === "x" ? { rim: true } : {}), // (no moonlight pooled at its middle: l4dd.js)
+    };
+  }),
   ...GS.BOARDED.map((o) => {
     const m = (o.a + o.b) / 2,
       half = (o.b - o.a) / 2,
@@ -1239,7 +1263,7 @@ export const fullAmmo = (w) => {
 export const fullFor = (s, id, w) =>
   angelOf(s, id, w) ? angelAmmo(ARMS[w], w) : fullAmmo(w);
 /* a magazine's size in kit m: the Angelic pistols' is twice the pistol's (l4ddangel.js) */
-const magIn = (m, w) =>
+export const magIn = (m, w) =>
   ARMS[w] && ARMS[w].mag
     ? ARMS[w].mag *
       (w === "handgun" &&
@@ -3211,6 +3235,7 @@ const OPEN_IN = OPEN_PAD + 40, // (inside: as far in from the wall as before)
   OPEN_SIDE = 70; // (along the wall, either side of the opening)
 const inOpening = (x, y) =>
   OPENINGS.some((o) => {
+    if (o.kind === "fence") return false; // (Downpour's fence: shots go through it anywhere: walled)
     const [ax, ay, a, c] = o.axis === "x" ? [x, y, o.x, o.y] : [y, x, o.y, o.x],
       out = Math.sign((o.axis === "x" ? o.out[1] : o.out[0]) - c) || 1,
       across = (ay - c) * out;
@@ -3220,9 +3245,18 @@ const inOpening = (x, y) =>
       across < OPEN_OUT
     );
   });
+/* Downpour: no invisible walls stop a shot, only what's there, and its fence is chain-link (the owner's, Nov 17 12:28Z:
+   "invisible walls do not stop bullets ... and zombies climbing the fence can be shot from below the ground no matter
+   how high up they are") */
+const SEE_THRU = new Set(["fence", "fencex"]);
 const walled = (x, y, z) =>
-  (!playable(x, y) && !inOpening(x, y)) ||
-  (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
+  dp()
+    ? !inOpening(x, y) &&
+      solidsAt(x, y, z + 20).some(
+        (b) => b.top > z + 20 && !SEE_THRU.has(b.kind),
+      )
+    : (!playable(x, y) && !inOpening(x, y)) ||
+      (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
 /* the zombies by 64-px square (a spatial grid), so a shot only looks at the few round it instead of every zombie on the
    map: the same hits, far fewer looks. A zombie's hit room (26 by 22 px) never reaches past the squares next to its own */
 const HIT_CELL = 64;
@@ -3471,7 +3505,7 @@ function fling(z, sh, hz) {
   for (let d = 0; d < FLING; d += 10) {
     const nx = z.x + ux * 10,
       ny = z.y + uy * 10;
-    if (walled(nx, ny, hz || 0)) break;
+    if (walled(nx, ny, hz || 0) || !playable(nx, ny)) break; // (never thrown out past the fence)
     z.x = nx;
     z.y = ny;
   }
@@ -3788,42 +3822,50 @@ function newZombie(s, L, T, zs = []) {
     order = [...OPENINGS]
       .filter((o) => !dp() || o.kind === "fence") // (Downpour: they come over the fences)
       .sort((a, b) => near(a) - near(b)),
-    pool = [...order, ...order.slice(0, dp() ? 1 : 4)],
-    o = pool[Math.floor(Math.random() * pool.length)];
-  /* Downpour: along the fence, anywhere it can be climbed; or, while nobody sees a zombie, half come out of the trees
-     just inside the forest line, somewhere nobody sees (the owner's, Nov 16 23:23Z) */
-  let from = o.from,
-    deep = false;
+    pool = [...order, ...order.slice(0, dp() ? 1 : 4)];
+  let o = pool[Math.floor(Math.random() * pool.length)];
+  /* Downpour: only from outside the fence, behind it anywhere round the map or out on the road's ends, and never where
+     anyone sees it come (the owner's, Nov 17 12:28Z: "zombies can only spawn behind fences or at the ends of the road if
+     they arent spawning on a player's screen where they can be seen"); then it climbs over. Of the spots nobody sees,
+     one of the nearest to the ducks (so they don't walk round the map for a minute); if all are seen, the furthest */
+  let from = o.from;
   if (dp()) {
-    const f = o.fence,
-      y = rnd(f.climb[0], f.climb[1]);
-    from = [o.from[0], y];
-    const seen = (x, y, pad) =>
-      pts.some(
-        ([a, b]) =>
-          Math.abs(x - a) < VIEW.x + pad && Math.abs(y - b) < VIEW.y + pad,
-      );
-    if (
-      Math.random() < 0.5 &&
-      !zs.some((z) => z.st !== 3 && seen(z.x, z.y, 0))
-    ) {
-      const dist = flowFrom(pts.map((q) => openNear(...q)));
-      for (let t = 0; t < 30; t++) {
-        const [x, y] =
-          GS.LINE_SPOTS[Math.floor(Math.random() * GS.LINE_SPOTS.length)];
-        const c = openNear(x, y);
-        if (
-          seen(x, y, 120) ||
-          !zOk(x, y, heightAt(x, y)) ||
-          c < 0 ||
-          !(dist[c] < Infinity)
-        )
-          continue;
-        from = [x, y];
-        deep = true;
-        break;
-      }
+    const dist = flowFrom(pts.map((q) => openNear(...q))),
+      fences = OPENINGS.filter((q) => q.kind === "fence"),
+      long = fences.map((q) => q.fence.climb[1] - q.fence.climb[0]),
+      all = long.reduce((a, b) => a + b, 0),
+      seen = (x, y) =>
+        pts.some(
+          ([a, b]) =>
+            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 60,
+        ),
+      far = (x, y) =>
+        Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),
+      hidden = [],
+      shown = [];
+    for (let t = 0; t < 40; t++) {
+      let r = Math.random() * all,
+        k = 0;
+      while (k < fences.length - 1 && r > long[k]) r -= long[k++];
+      const q = fences[k],
+        f = q.fence,
+        v = f.climb[0] + r,
+        [ix, iy] = byFence(f, FENCE.out - FENCE.across, v),
+        c = openNear(ix, iy);
+      if (c < 0 || !(dist[c] < Infinity) || !zOk(ix, iy, heightAt(ix, iy)))
+        continue; // (it would land in a trunk, or where nobody can be reached)
+      const at = byFence(f, FENCE.from, v);
+      (seen(...at) ? shown : hidden).push({ q, at, d: far(...at) });
     }
+    hidden.sort((a, b) => a.d - b.d);
+    shown.sort((a, b) => b.d - a.d);
+    const pick = hidden.length
+      ? hidden[Math.floor(Math.random() * Math.min(4, hidden.length))]
+      : shown[0];
+    if (pick) {
+      o = pick.q;
+      from = pick.at;
+    } else from = byFence(o.fence, FENCE.from, rnd(...o.fence.climb)); // (nowhere to land that leads to anyone: anywhere along it)
   }
   const i = L.next++;
   const dress = Math.random() < 0.2 ? Math.random() : -1, // (20% wear something: a hat, an outfit or both)
@@ -3842,7 +3884,7 @@ function newZombie(s, L, T, zs = []) {
     x: sx + (dp() ? 0 : rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3)),
     y: sy + (dp() ? 0 : rnd(-8, 8) * (o.axis === "y" ? 1 : 0.3)),
     hp: max,
-    st: deep ? 2 : 0, // (out of the trees: already in)
+    st: 0,
     a: -1e6,
     n: 0,
     d: 0,
@@ -3885,19 +3927,23 @@ function moveZombies(s, zs, now, T, up) {
       continue;
     }
     if (z.st === 5) {
-      // over the fence: up it like a ladder at its walking speed, then a drop from the top (fenceZ)
+      /* over the fence: up it like a ladder at its walking speed (FENCE.mid across while it climbs FENCE_H), then a
+         drop from the top down the inside (fenceZ) */
       const f = o.fence,
-        top = f.x + f.out * FENCE.mid,
-        far = Math.abs(z.x - top) > 1 && (z.x - top) * f.out > 0;
-      walkTo(
-        z,
-        far ? top : sp.in[0],
-        z.y,
-        far
-          ? (FENCE.mid * v * dt) / GS.FENCE_H
-          : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
-      );
-      if (z.x === sp.in[0]) {
+        top = FENCE.out - FENCE.mid,
+        up = acrossFence(f, z.x, z.y) > top + 1,
+        [tx, ty] = up ? byFence(f, top, f.axis === "y" ? z.y : z.x) : sp.in;
+      if (
+        walkTo(
+          z,
+          tx,
+          ty,
+          up
+            ? (FENCE.mid * v * dt) / GS.FENCE_H
+            : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
+        ) &&
+        !up
+      ) {
         z.st = 2;
         z.n = 0;
       }
@@ -4000,14 +4046,13 @@ function moveZombies(s, zs, now, T, up) {
   s.hidden = { ...s.hidden, l4ze: eating };
   separate(zs);
 }
-/* Downpour's fences: how far out from the fence a zombie starts climbing (out), where it's at the top (mid, from out)
-   and where it lands (across, from out), and how long the drop takes (s) */
-const FENCE = { mid: 34, across: 68, FALL: 0.35 };
-/* how high a zombie climbing a fence is, at x (0 once down): up at its walking speed, then falling from the top */
-export function fenceZ(x, y) {
-  const f = GS.FENCES.find((q) => Math.abs(x - q.x) < 100);
+/* how high a zombie climbing a fence (its opening id) is, at (x, y) (0 once down): up at its walking speed, then falling
+   from the top */
+export function fenceZ(x, y, id) {
+  const o = openingById(id),
+    f = o && o.fence;
   if (!f) return 0;
-  const u = ((x - (f.x + f.out * 22)) * -f.out) / FENCE.across;
+  const u = (FENCE.out - acrossFence(f, x, y)) / FENCE.across;
   if (u <= 0 || u >= 1) return 0;
   const m = FENCE.mid / FENCE.across;
   return u <= m
@@ -4017,7 +4062,10 @@ export function fenceZ(x, y) {
 /* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the
    zombie's own place along it; a boarded hole on Downpour from the side it came to it (z.n: 1 outside, -1 inside) */
 function sidesOf(o, z) {
-  if (o.fence) return { out: [o.out[0], z.y], in: [o.in[0], z.y] };
+  if (o.fence)
+    return o.axis === "y"
+      ? { out: [o.out[0], z.y], in: [o.in[0], z.y] }
+      : { out: [z.x, o.out[1]], in: [z.x, o.in[1]] };
   return z.n === -1 ? { out: o.in, in: o.out } : o;
 }
 /* Downpour: does a zombie's way (from it to aim) go through a boarded hole with boards up? Its opening and side */

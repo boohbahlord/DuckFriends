@@ -9,6 +9,25 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v72",
+    version: 72,
+    date: "Nov 17, 2026",
+    title: "Runaway shooting fixed, ammo bar, Downpour fence",
+    news: [
+      "The full-screen button is back in the top right on computers and in the installed app.",
+      "For Dead Ducks Arcade: On Downpour the fence leans out, so a duck at it stands in front of it, and the road and its water go on past the fence on both sides.",
+      "For Dead Ducks Arcade: On Downpour, zombies only come from outside the fence, never where anyone can see them, and climb over it.",
+      "For Dead Ducks Arcade: On Downpour, shots go through the fence and nothing invisible stops them, so a zombie on the fence can be shot at any height.",
+      "For Dead Ducks Arcade: On Downpour, the storeroom's and the restroom's doorways are open, and the Angel machine turns see-through while it hides a duck.",
+      "For Dead Ducks Arcade and Mad God Justin: A thin yellow bar under your cooldown bar shows the ammo of what's in your hand. It's black when the gun is empty, blinks white while reloading, and fades away when full.",
+      "For Dead Ducks Arcade: The yellow bar also counts your grenades and arrows. The white bar flashes red when you can't reload.",
+      "The cooldown, ammo and sprint bars now stack in that order and slide into place as they appear.",
+    ],
+    fixed: [
+      "Shooting stops as soon as you let go of the button, even when the game misses the release (it could keep firing the whole magazine), and a stuck second copy of your duck no longer shows.",
+    ],
+  },
+  {
     id: "v71",
     version: 71,
     date: "Nov 17, 2026",

@@ -5470,3 +5470,33 @@ per rest phase, shuffled).
   - Downpour: the church bell rings every new round in (strikes 0.01, 2.12, 4.24, 6.35 s after it starts; l4ddsfx.js
     `bellStrikes()` gives them as page times for Noah's swing). Every zombie of a round down: one chime, the last note
     of What the duck? (2:44).
+
+## Request (2026-11-17 13:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUooHjVNtWdiV5ts9dc3aBc): app lobby, full-screen button, Mad God Justin list, the shooting glitch (word for word)
+Pictures: /mnt/project-files/refs/nov17-1228-batch/app-lobby-not-pixel.png (the installed app's lobby, the backdrop
+circled), /mnt/project-files/refs/nov17-1228-batch/duck-duplicate-angel.png (a second copy of the owner's duck above it by the Angel machine)
+> why is this background not pixelated and looks different? why is there not a button to fullscreen the game in the top right? like just because it cant do it automatically in pc doesnt mean we remove the button
+>
+> i said the chain gun gets 30 bullets in mad justin game mode but that does seem true
+>
+> mad justin game mode gets only a second long sprint that recharges as fast as it was lost 
+>
+> the laser rifle should be in the mad god justin game
+>
+> the weapons drop chance should be based off the slot or roll mechanic at the fireplace or car from the zombie game mode
+>
+> Justin's projectiles that block bullets blink a transparent white whenever they are shot
+>
+> the hints should not be as long (the lightning is fine tho)
+>
+> the +1 hp was only once every thirty seconds i thought, why does it feel constant ?
+>
+> Justin should have a 50% chance to not dodge correctly from attacks in the zombie game mode because he is too good at dodging attacks AND there is a setting in lobby to add this form of justin we made into the cabin zombie mode as well
+>
+>
+> New game breaking glitch, so my duck would start shooting all the magazine after pressing shoot once and wouldnt stop, would lose control of his movement while it happened, and his duck would duplicate as it happened. This is game breaking and is something that comes before other things when it becomes availible after the whatever stuff is finished. the yellow sqaure from the care does follow the player though in downpour. if it was my hardware or keys and not the game, then i would notice it in other applications using these buttons as such, but i dont. Idk if it is because my laptop has a touchscreen (it wasnt touched for a fact) or somethig else, but it is game breaking.
+
+Split (Adam): the glitch first = Solomon right after his part A (before B). Adam = the app's lobby backdrop and the
+full-screen button back on PC (in the app too). Jackal = the Mad God Justin list (chain gun 30 rounds, 1 s sprint
+recharging as fast, Laser Rifle check, drop odds from the spin's odds, his blocking projectiles blink see-through white
+when shot, shorter hints but the lightning's, +1 HP really once per 30 s), the yellow square following the player in
+Downpour (Q68 answered), Downpour Justin dodging badly half the time, and a lobby setting adding him to the cabin map.

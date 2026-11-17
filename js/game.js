@@ -186,6 +186,7 @@ import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
 import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
 import { olAdd, olDraw, olFloor } from "./outlines.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
@@ -206,7 +207,14 @@ import {
   weaponName,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
-import { l4Held, l4Got, sprintLeft, l4SafeHint, laserEnd } from "./l4dd.js";
+import {
+  l4Held,
+  l4Got,
+  sprintLeft,
+  l4SafeHint,
+  laserEnd,
+  l4Ammo,
+} from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
 import { mountL4Bar, l4Slider } from "./l4ddbar.js";
@@ -2018,6 +2026,10 @@ function drawDucks(now = clockNow()) {
     if (mine) myBox = boxes[boxes.length - 1];
   }
   layer.querySelectorAll(".gduck").forEach((d) => {
+    if (duckEls.has(d.dataset.pid) && duckEls.get(d.dataset.pid) !== d) {
+      d.remove(); // (a second one for the same duck, left behind: only the one it's drawn on stays)
+      return;
+    }
     if (
       !s.pos[d.dataset.pid] &&
       !(jp && d.dataset.pid === JUSTIN_ID) &&
@@ -2356,6 +2368,7 @@ function drawDucks(now = clockNow()) {
     const tag = S.querySelector(".gduck.mine .gduck-name");
     if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)
   }
+  if (!isL4dd(s)) handBars(s); // (the white and yellow bars under my duck: meters.js)
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
@@ -5472,7 +5485,11 @@ function cool() {
   if (!R) return [];
   const now = clockNow();
   const m = isMgj(R.state) && R.state.mgj;
-  return keysOf(playDuck()).map((id) => {
+  return keysOf(playDuck()).map((id) => coolOne(id, now, m));
+}
+/* … one item's: [ends, how long it waits, now] or null (m: Mad God Justin's state, or false) */
+function coolOne(id, now, m) {
+  {
     const sp = specialById(id);
     if (!sp || sp.kind !== "item") return null;
     if (m && id === "jaime") {
@@ -5502,7 +5519,52 @@ function cool() {
     } // (between quick shots no bar: only the reload, and the sniper's bolt or the launcher's wait)
     const end = coolEnds(R.state, R.me, id);
     return end > now ? [end, coolFor(id, R.state), now] : null;
-  });
+  }
+}
+/* the white and the yellow bars under my duck in the modes besides Dead Ducks Arcade (which has its own, l4dd.js):
+   what's in my hand, its cooldown or reload, and its magazine (meters.js; no sprint bar: sprinting never runs out
+   here) */
+function handBars(s) {
+  const tag = S && S.querySelector(".gduck.mine .gduck-name");
+  if (!tag || !R) return;
+  const now = clockNow(),
+    m = isMgj(s) && s.mgj,
+    w = mgjDownGun() ? "handgun" : held,
+    c = w ? coolOne(w, now, m) : null;
+  let el = tag.querySelector(".l4-cool");
+  if (!el) {
+    if (!c) return;
+    el = document.createElement("span");
+    el.className = "l4-cool off";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = "<i></i>";
+    tag.append(el);
+  }
+  const v = c ? Math.min(1, (c[0] - now) / c[1]).toFixed(3) : "0";
+  if (el._v !== v) {
+    el._v = v;
+    el.style.setProperty("--cl", v);
+    el.classList.toggle("off", v === "0");
+  }
+  const mg = !w
+    ? null
+    : m
+      ? mgjDownGun()
+        ? magSize("handgun")
+        : mgjMag(w)
+      : magSize(w);
+  let a = null;
+  if (mg && !(m && !mgjDownGun() && w !== myPick())) {
+    const mm = magOf(s, R.me, now, w),
+      rl = mm.r > now,
+      left =
+        m && !mgjDownGun() && ammoOf(s, R.me) < INF_AMMO
+          ? Math.min(mg[0] - mm.n, ammoOf(s, R.me))
+          : mg[0] - mm.n; // (Mad God Justin: a gun picked up with fewer shots left than its magazine)
+    a = { f: rl ? 0 : left / mg[0], rl, dry: false };
+  }
+  ammoBar(tag, a);
+  stackBars(tag);
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
 function ammo(id = "handgun") {
@@ -5528,6 +5590,8 @@ const dots = (id) =>
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
+    const a = l4Ammo(R.state, R.me, heldNow());
+    if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
     R.send({ t: "reload", w: heldNow() });
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
@@ -6966,7 +7030,7 @@ const keyup = (e) => {
   if (e.code === "KeyQ") peek(false);
 };
 const blur = () => {
-  keys.clear();
+  keys.clear(); // (also when the tab is hidden: visibilitychange below)
   padHold = false;
   peek(false);
 };
@@ -6975,6 +7039,9 @@ function peek(on) {
   const c = S && $(".wq-card.mine", S);
   if (c) c.classList.toggle("peek", on && !c.classList.contains("dealing"));
 }
+const hidden = () => {
+  if (document.hidden) blur(); // (no key stays held down while the game can't see it come up)
+};
 const resized = () => {
   geo = null;
 };
@@ -7226,10 +7293,47 @@ function heldClick(e) {
     aimHere(e)
   );
 }
+/* a held trigger (autoPress, l4Press): it fires again and again until the left button is up. Every way a press can end
+   lets go of it: the button coming up anywhere, the press cancelled or its capture lost, the window or the tab losing
+   focus, the right-click menu, and any mouse event that says the left button isn't down any more (one missed button-up
+   kept it firing the whole magazine and on: the owner's, Nov 17 13:07Z). Leaving the screen lets go too */
+let trigger = null;
+const TRIGGER_END = [
+  "pointerup",
+  "pointercancel",
+  "lostpointercapture",
+  "blur",
+  "contextmenu",
+];
+function letGo() {
+  if (!trigger) return;
+  clearTimeout(trigger.t);
+  for (const t of TRIGGER_END) removeEventListener(t, letGo, true);
+  removeEventListener("pointermove", upYet, true);
+  document.removeEventListener("visibilitychange", letGo);
+  trigger = null;
+}
+const upYet = (e) => {
+  if (e.pointerType === "mouse" && !(e.buttons & 1)) letGo();
+};
+/* hold the trigger: shoot() now, then again after each wait it gives back, until let go */
+function holdTrigger(shoot) {
+  letGo();
+  trigger = { t: 0 };
+  for (const t of TRIGGER_END) addEventListener(t, letGo, true);
+  addEventListener("pointermove", upYet, true);
+  document.addEventListener("visibilitychange", letGo);
+  const go = () => {
+    if (!trigger) return;
+    const wait = shoot();
+    if (trigger && wait) trigger.t = setTimeout(go, wait);
+    else letGo();
+  };
+  go();
+}
 /* the SMG, the AK-47, the LMG and the chain gun kept out (outside Quacky Zombies; in Mad God Justin, picked up): the left button
    down fires, and again as soon as it can while the button stays down */
-let autoFire = 0,
-  autoDid = false;
+let autoDid = false;
 function autoPress(e) {
   if (
     !R ||
@@ -7239,43 +7343,25 @@ function autoPress(e) {
     !heldClick(e)
   )
     return;
-  const go = () => {
-    if (!AUTO.includes(held) || !onBoardPhase()) return;
-    fire(held);
-    autoFire = setTimeout(go, Math.max(60, coolFor(held, R.state)));
-  };
-  clearTimeout(autoFire);
   autoDid = true;
-  go();
-  const stop = () => {
-    clearTimeout(autoFire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+  holdTrigger(() => {
+    if (!R || !AUTO.includes(held) || !onBoardPhase()) return 0;
+    fire(held);
+    return Math.max(60, coolFor(held, R.state));
+  });
 }
 /* Quacky Zombies: the left mouse button down on the board uses the weapon in hand, and again as soon as it can while
    the button stays down */
-let l4Fire = 0;
 function l4Press(e) {
   if (!R || !isL4dd(R.state) || e.pointerType !== "mouse" || e.button !== 0)
     return;
   if (!onBoardPhase() || !aimHere(e)) return;
-  const go = () => {
+  holdTrigger(() => {
+    if (!R || !isL4dd(R.state)) return 0;
     const w = heldNow();
     if (w) fire(w);
-    l4Fire = setTimeout(go, Math.max(60, l4Cool(R.state, R.me, w)));
-  };
-  clearTimeout(l4Fire);
-  go();
-  const stop = () => {
-    clearTimeout(l4Fire);
-    removeEventListener("pointerup", stop);
-    removeEventListener("blur", stop);
-  };
-  addEventListener("pointerup", stop);
-  addEventListener("blur", stop);
+    return Math.max(60, l4Cool(R.state, R.me, w));
+  });
 }
 register("game", {
   guard: () => !!activeRoom(),
@@ -7287,6 +7373,7 @@ register("game", {
     }
   },
   leave() {
+    letGo(); // (a held trigger never fires on into the next screen)
     if (off) off();
     off = null;
     jetsOff();
@@ -7346,6 +7433,7 @@ register("game", {
     removeEventListener("keydown", keydown);
     removeEventListener("keyup", keyup);
     removeEventListener("blur", blur);
+    document.removeEventListener("visibilitychange", hidden);
     removeEventListener("resize", resized);
     for (const t of ["pointerup", "pointercancel"])
       removeEventListener(t, unpeek);
@@ -7742,6 +7830,7 @@ register("game", {
     addEventListener("keydown", keydown);
     addEventListener("keyup", keyup);
     addEventListener("blur", blur);
+    document.addEventListener("visibilitychange", hidden);
     addEventListener("resize", resized);
     raf = requestAnimationFrame(loop);
     tick = setInterval(showTimer, 250);

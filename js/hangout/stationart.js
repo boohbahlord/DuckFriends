@@ -305,8 +305,10 @@ export function generatorSVG({ w = 140, d = 120, h = 100, cable = 44 } = {}) {
 }
 /* a piece of the tall chain-link fence across the road, running north-south, d long and h tall (the owner's, Nov 17:
    "the fences will be chain linked fence btw and holding ur light to it helps see that"). Seen straight on it would be
-   a line, so it's drawn leaning: its foot on its line, its top lean px over to one side (dir: 1 east, -1 west, toward
-   the road), the way you'd see its face from the road. The links are see-through wire, bright galvanized grey, so the
+   a line, so it's drawn leaning: its foot on its line, its top lean px over to one side (dir: 1 east, -1 west, out
+   toward the map's edge), the way a tall thing leans away from the middle of a view from above, so a duck standing at
+   its foot is in front of it, never under it (the owner's, Nov 17 12:28Z: leaning in over the ducks, they looked to be
+   through it). The links are see-through wire, bright galvanized grey, so the
    dark shows them faintly and a flashlight clearly; its posts, its top rail and the barbed wire along the top.
    Drawn into (lean + 8) × (d + h); its foot's line at x 4 (dir 1) or lean + 4 (dir -1). fenceLean below */
 export function fenceSVG({
@@ -384,9 +386,9 @@ export function fenceXSVG({ w = 400, d = 12, h = 200, seed = 1 } = {}) {
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(w, d + h, s, defs);
 }
-/* how far a fence's top leans, and which way: toward the middle of the map (the road), mapW wide. Its drawing
-   (shapes.js) and the flashlights (l4dd.js) both ask */
-export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? 1 : -1) * p.h * 0.6;
+/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js)
+   and the flashlights (l4dd.js) both ask */
+export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.6;
 
 /* ---------- the cars ---------- */
 const CAR_COLORS = [

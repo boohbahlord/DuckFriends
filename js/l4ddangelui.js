@@ -11,7 +11,7 @@ import { now as clockNow } from "./clock.js";
 import { angelMachineSVG, angelOrbHTML } from "./powerart.js"; // (Noah's drawings)
 import { ANGEL, angelNow, angelDone, angelOf, canAngel } from "./l4ddangel.js";
 import { powerOn } from "./l4ddpower.js";
-import { WEAPONS, weaponName, ptsOf, slotsOf } from "./l4ddrules.js";
+import { WEAPONS, weaponName, ptsOf, slotsOf, dp } from "./l4ddrules.js";
 
 let mc = null, // { el, img, orb, who, sig, tr, k }
   heard = { t: 0, out: 0 },
@@ -67,11 +67,26 @@ export function angelDraw(ctx) {
     mc.img.src = svgDataURL(angelMachineSVG({ working }));
     mc.el.classList.toggle("working", working);
   }
+  /* Downpour: see-through, as the walls are, while it hides a duck or a zombie behind it (the owner's, Nov 17 12:29Z) */
+  const key = Math.round(sortY(ANGEL.X, ANGEL.Y, ANGEL.Z)) + 10,
+    thru =
+      dp() &&
+      Wd.hides(
+        p.left - 60 * sc,
+        p.top - 140 * sc,
+        p.left + 60 * sc,
+        p.top,
+        key,
+      );
+  if (mc.thru !== thru) {
+    mc.thru = thru;
+    mc.el.classList.toggle("thru", thru);
+  }
   const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;
   if (mc.tr !== tr) {
     mc.tr = tr;
     mc.el.style.transform = tr;
-    mc.el.style.zIndex = Math.round(sortY(ANGEL.X, ANGEL.Y, ANGEL.Z)) + 10;
+    mc.el.style.zIndex = key;
   }
   if (mc.k !== sc) {
     mc.k = sc;

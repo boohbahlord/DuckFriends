@@ -74,6 +74,7 @@ export const FENCES = [
    the whole map WHERE the invisible wall is"): on the road fences' lines west and east, as far in from the north and
    south edges. The road's two fences are its pieces across the road; zombies only climb those */
 export const RIM = { x0: 60, x1: 4540, y0: 60, y1: 6140 };
+const OUT_ROAD = 300; // (how far past the map's west and east edges the road's own fences go: past what the camera shows)
 /* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
    05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
    which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
@@ -113,6 +114,13 @@ const GLASS = [
 ];
 /* the chapel's wide entrance, open, in its north wall */
 export const CHAPEL_DOOR = { a: 2000, b: 2600 };
+/* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a
+   to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
+   standing up over it: the owner's, Nov 17 12:28Z, they looked closed) */
+export const INNER_DOORS = [
+  { id: "gs-store", at: 1600, a: 950, b: 1110 },
+  { id: "gs-rest", at: 1600, a: 1400, b: 1560 },
+];
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
    (it does the fireplace's job, and glows until it's first used); spot: its open hood, where E uses it. PRIEST (he
    does Justin's Butler's job, at the chapel's south end). ANGEL: the Angel machine, against the south wall. START: where everyone starts,
@@ -266,13 +274,10 @@ function planBuild(b) {
   line("y", S.x1, S.y0, S.y1, [], S.wall);
   line(
     "y",
-    1600,
+    INNER_DOORS[0].at,
     S.y0,
     S.y1,
-    [
-      [950, 1110],
-      [1400, 1560],
-    ],
+    INNER_DOORS.map((d) => [d.a, d.b]),
     S.wall,
   ); // (the storeroom's door and the restroom's, onto the aisles. As tall as the outside walls, so its top meets the north
   // wall's at the corner instead of stopping short down its face: the owner's, Nov 17 05:46Z)
@@ -416,6 +421,14 @@ function planBuild(b) {
       const e = Math.min(RIM.x1, x + 400);
       put("fencex", x, y - 6, e - x, 12, FENCE_H, { solid: true, key: y + 6 });
     }
+  /* the road on out past the map's edges, a fence along its top on either side, as far as the camera ever shows (the
+     owner's, Nov 17 12:28Z: the fence on either side of the road; nobody gets out there, so they're only drawn) */
+  for (const y of [ROAD.y0, ROAD.y1])
+    for (const [a, c] of [
+      [-OUT_ROAD, RIM.x0],
+      [RIM.x1, GS_W + OUT_ROAD],
+    ])
+      put("fencex", a, y - 6, c - a, 12, FENCE_H, { key: y + 6 });
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -448,7 +461,9 @@ function planBuild(b) {
     z: 0,
     keep: true,
     solid: true,
-  }); // (solid, as big as its drawing's base: nobody walks through it or into it, the owner's, Nov 17 11:07Z)
+    fade: true,
+  }); // (solid, as big as its drawing's base: nobody walks through it or into it, the owner's, Nov 17 11:07Z; see-through
+  // like the walls while it hides a duck or a zombie behind it, Nov 17 12:29Z)
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
   const PEWS = {
     L: {
@@ -708,6 +723,7 @@ for (const o of [
   BOARDED,
   GLASS,
   CHAPEL_DOOR,
+  INNER_DOORS,
   GEN,
   POWER_SPOT,
   HOOD,

@@ -15015,12 +15015,16 @@ html.still:not(.low) .l4z.dead.nuked {
   position: absolute;
   left: 8%;
   right: 8%;
-  top: calc(100% + 0.34rem); /* (under the cooldown) */
+  top: calc(
+    100% + 0.34rem
+  ); /* (under the cooldown and the ammo: meters.js stacks them) */
   height: 0.2rem;
   border-radius: 1rem;
   background: #0008;
   overflow: hidden;
-  transition: opacity 0.3s;
+  transition:
+    opacity 0.3s,
+    top 0.15s;
 }
 .l4-sprint.full {
   opacity: 0;
@@ -15046,7 +15050,9 @@ html.still:not(.low) .l4z.dead.nuked {
   border-radius: 1rem;
   background: #0008;
   overflow: hidden;
-  transition: opacity 0.2s;
+  transition:
+    opacity 0.2s,
+    top 0.15s;
 }
 .l4-cool.off {
   opacity: 0;
@@ -15058,13 +15064,86 @@ html.still:not(.low) .l4z.dead.nuked {
   transform-origin: 0 50%;
   transform: scaleX(var(--cl, 0));
 }
+/* a reload that can't be done (no ammo left): the white bar flashes red (meters.js noReload) */
+.l4-cool.no {
+  opacity: 1;
+  transition: none;
+}
+.l4-cool.no i {
+  transform: none;
+  animation: l4-no 0.7s steps(1) forwards;
+}
+@keyframes l4-no {
+  0%,
+  28%,
+  56% {
+    background: #e8323c;
+  }
+  14%,
+  42%,
+  70% {
+    background: #5a0b10;
+  }
+}
+/* the ammo of what's in my hand, yellow, just under the white bar (meters.js ammoBar, the owner's Nov 17 12:45Z): it
+   empties a step a shot; empty, black with a slow dark grey blink; reloading, it blinks white; nothing left to reload,
+   black */
+.l4-ammo {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: calc(100% + 0.32rem);
+  height: 0.14rem;
+  border-radius: 1rem;
+  background: #0008;
+  overflow: hidden;
+  transition:
+    opacity 0.25s,
+    top 0.15s;
+}
+.l4-ammo.off {
+  opacity: 0;
+}
+.l4-ammo i {
+  position: absolute;
+  inset: 0;
+  background: #f2c230;
+  transform-origin: 0 50%;
+  transform: scaleX(var(--am, 1));
+  transition: transform 0.12s;
+}
+.l4-ammo.empty,
+.l4-ammo.dry {
+  background: #000;
+}
+html.moving .l4-ammo.empty {
+  animation: l4-am-empty 1.6s steps(1) infinite;
+}
+@keyframes l4-am-empty {
+  50% {
+    background: #3a3a40;
+  }
+}
+html.moving .l4-ammo.rl {
+  animation: l4-am-rl 0.36s steps(1) infinite;
+}
+@keyframes l4-am-rl {
+  0% {
+    background: #000;
+  }
+  50% {
+    background: #f4f4f4;
+  }
+}
 /* the Laser Rifle's heat under my duck (l4dd.js heatMeter, the owner's Nov 17): a thin row of blocks, one a beam before
    its limit, lit from red toward orange; overheated, they flash white and the meter shakes; light steam rises off it
    once it's hot */
 .l4-heat {
   position: absolute;
   left: 50%;
-  top: calc(100% + 0.62rem);
+  top: calc(
+    100% + max(0.62rem, var(--bt, 0rem))
+  ); /* (under the bars: meters.js) */
   translate: -50% 0;
   display: flex;
   gap: 0.06rem;
@@ -15145,7 +15224,7 @@ html.moving .l4-heat.hot::after {
   }
 }
 .gduck-name:has(.l4-heat:not(.off)) .l4-peek {
-  top: calc(100% + 1.1rem);
+  top: calc(100% + max(1.1rem, var(--bt, 0rem) + 0.48rem));
 } /* (the switch box below the heat meter while it shows) */
 /* a slot switch: a small box under my duck, the phone's slider in little (l4dd.js peek): it scrolls to the slot in
    hand, then fades out quickly */
@@ -15154,7 +15233,7 @@ html.moving .l4-heat.hot::after {
   --slot: 0.95rem;
   position: absolute;
   left: 50%;
-  top: calc(100% + 0.7rem);
+  top: calc(100% + max(0.7rem, var(--bt, 0rem)));
   padding: 0.1rem 0.15rem;
   border-radius: 0.4rem;
   background: color-mix(in srgb, var(--panel) 70%, transparent);
@@ -15971,6 +16050,9 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-am.working img {
   filter: drop-shadow(0 0 calc(10px * var(--k, 1)) #fff3c4aa);
 }
+.l4-am.thru img {
+  opacity: 0.38;
+} /* (Downpour: over a duck or a zombie behind it, as the walls: .hp.thru) */
 .l4-am-orb {
   position: absolute;
   z-index: 1;
@@ -18028,6 +18110,7 @@ html.pixel
     .l4-over-card,
     .l4-sprint,
     .l4-cool,
+    .l4-ammo,
     .l4-heat,
     .l4-heat i,
     .l4-hint,
