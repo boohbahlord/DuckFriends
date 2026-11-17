@@ -5404,3 +5404,9 @@ the map's edge come back, and the road and its water keep being drawn past the f
   quieter impacts on things that aren't zombies, crit gore gush, miss blip, light rain in Downpour, gentle wind in every
   cabin muffled inside, fire and the fireplace by distance, church bells at a round's start, the round-cleared chime from the
   song at about 2:40, footsteps by ground and by height/direction, zombies' too).
+
+## Request (2026-11-17 12:29Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtMcDKJ85bVppJNztnj9Hrzd): the church bell's animation, the Angel machine see-through (word for word)
+> church bell should have an animation while it sounds and the sound is done first and the bell's animation matches the sound effect and synchronizes with it and the angel machine should become transparent like the walls when it covers your duck in downpour
+
+Split (Adam): Miles Jr. makes the bell's sound first and gives Noah its strike times; Noah animates the bell to those
+times. Solomon adds the Angel machine turning see-through over a duck in Downpour to his urgent part A.
