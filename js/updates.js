@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v79",
+    version: 79,
+    date: "Nov 17, 2026",
+    title: "Justin calls the zombies",
+    news: [
+      "For Mad God Justin: every 30 to 60 seconds Justin calls a wave of zombies from the edges of the board. A wave is 12 zombies, plus 6 for each player after the first. While they're out he calms down, eats more, and no lightning comes from the walls. Guns, melee and grenades all hurt them.",
+    ],
+  },
+  {
     id: "v78",
     version: 78,
     date: "Nov 17, 2026",
