@@ -480,6 +480,7 @@ export function mgjStart(s, now) {
     cake: null,
     zebraAt: 0,
   };
+  s.mz = { zb: [], n: 0, on: 0, next: now + waveGap(n), left: 0, sp: 0 }; // (his zombie waves: wavesTick)
   s.pos = {};
   s.lock = {};
   s.shots = [];
@@ -595,6 +596,7 @@ function mgjEnd(s, now, won, log, allOut = false) {
     line = (text) => log(s, { npc: JUSTIN_ID, name: "Justin", text });
   m.won = won;
   m.over = now;
+  s.mz = null; // (his zombies go with the fight)
   /* every duck out of HP: they all lie dead until the next fight starts (the dead look, no new art); otherwise the
      ducks out of HP get up: the fight is over */
   m.allOut = !won && allOut;
@@ -681,8 +683,9 @@ export function mgjTick(s, now, log) {
   if (!m || !s.justin || !boardPhases(s).includes(s.phase)) return false;
   const n0 = (s.shots || []).length,
     up = s.phase === "boss" && reviveTick(s, now, log),
+    zw = s.phase === "boss" && wavesTick(s, now),
     ch = brain(s, now, log);
-  return twin(s, now, n0) || ch || up;
+  return twin(s, now, n0) || ch || up || zw;
 }
 const fxOf = (s, now) => (o) => {
   s.fxN = (s.fxN || 0) + 1;
@@ -725,7 +728,8 @@ function brain(s, now, log) {
     ...(goodUp(s, now) ? [GOOD_ID] : []),
   ];
   const far = (p, q = at) => Math.hypot((p.x - q.x) / RX, (p.y - q.y) / RY); // in duck lengths
-  const soon = (ms) => ms * PACE * FAST_SOON ** (+j.fast || 0); // (every attack sooner than it used to; after his Xbox and his meteor, sooner still)
+  const soon = (ms) =>
+    ms * PACE * FAST_SOON ** (+j.fast || 0) * (waveOn(s) ? WAVE.CALM : 1); // (every attack sooner than it used to; after his Xbox and his meteor, sooner still; while his zombies are out, later)
   const stop = () =>
     Object.assign(j, {
       k: null,
@@ -887,7 +891,7 @@ function brain(s, now, log) {
     return true;
   }
   if (now >= j.eatAt && !j.swing && !j.tell) {
-    j.eatAt = now + rnd(30000, 45000);
+    j.eatAt = now + (waveOn(s) ? rnd(...WAVE.EAT) : rnd(30000, 45000)); // (while his zombies are out he'd rather eat)
     stop();
     j.eat = { k: any(FOODS), at: now, until: now + EAT_MS };
     return true;
@@ -1554,6 +1558,13 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return false;
   }
   if (shotThrown(s, sh, x0, y0, dx, dy, now)) return true;
+  if (
+    mgjZombieHit(s, (x, y) => near({ x, y }), shotDmg(sh.k), now, {
+      x: x0,
+      y: y0,
+    })
+  )
+    return true; // (one of his zombies in the way: it stops there)
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
 }
 /* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
@@ -1818,6 +1829,10 @@ function burnTick(s, now) {
    before: game.js reads edgeAt) */
 function edgeTick(s, now, fx) {
   const m = s.mgj;
+  if (waveOn(s)) {
+    m.edgeAt = Math.max(m.edgeAt, now + EDGE_WARN + 1000);
+    return false;
+  } // (no lightning from the edges while his zombies are out: the owner's, Nov 17 11:07Z)
   if (now < m.edgeAt) return false;
   m.edgeAt = now + EDGE_EVERY;
   m.edgeLast = now;
@@ -2286,4 +2301,172 @@ export function mgjStats(s, all = false) {
     if (f.won && f.kill) P(f.kill).kills++;
   }
   return { per, fights: list };
+}
+
+/* ---------- his zombie waves (the owner's, Nov 17 11:07Z, and 11:19Z: "each player after the first") ----------
+   Every 30 to 60 s, and 5 to 10 s later for each duck after the first, Justin calls a wave: 12 zombies, and 6 more for
+   each duck after the first, come in from the board's edges, 1 to 3 a second, twice as many a second for every 2
+   ducks after the first. They walk at the nearest duck and claw it (1 HP, as his own hits). While any of them are out,
+   or still to come, he's calmer (his attacks come WAVE.CALM times as late), he'd rather eat, and no lightning comes
+   from the edges. Ducks' guns, melee and grenades hurt them (each has WAVE.HP); a shot stops at the first it hits.
+   s.mz = { zb: [{ i, x, y, hp, a (its last claw), l (its look: l4ddart.js zombieURL), d (when it died) }], n (the
+   next one's number), on (a wave is out), next (the next wave), left (still to come), sp (the next ones' second) } */
+export const WAVE = {
+  EVERY: [30000, 60000],
+  LATER: [5000, 10000], // (each duck after the first)
+  N: 12,
+  PER: 6, // (each duck after the first)
+  RATE: [1, 3], // (a second, doubled for every 2 ducks after the first)
+  HP: 3,
+  SPEED: 3.2, // duck lengths a second
+  CLAW: 1.0, // duck lengths: in reach
+  CLAW_MS: 1200,
+  CALM: 1.8,
+  EAT: [9000, 14000],
+  MAX: 40, // (on the board at once, at most: the rest wait their turn)
+  DEAD_MS: 1500,
+};
+const extra = (s) => Math.max(0, playing(s).length - 1);
+const waveGap = (n) =>
+  rnd(...WAVE.EVERY) +
+  Array.from({ length: Math.max(0, n - 1) }, () => rnd(...WAVE.LATER)).reduce(
+    (a, b) => a + b,
+    0,
+  );
+export const waveOn = (s) => !!(s.mz && s.mz.on);
+const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+/* a zombie's look, as Dead Ducks Arcade's (l4ddrules.js newZombie): 1 in 4 another size or build, 1 in 5 dressed */
+function zLook() {
+  const dress = Math.random() < 0.2 ? Math.random() : -1,
+    odd = Math.random() < 0.25,
+    size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0;
+  return [
+    WAVE.HP,
+    0,
+    "",
+    size,
+    odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
+    dress >= 0 && dress < 0.6 ? rint(0, 13) : -1, // (one of the 14 zombie hats)
+    dress >= 0.4 ? rint(0, 11) : -1, // (one of the 12 outfits)
+  ];
+}
+/* a spot on the board's edge, out of everyone's way */
+function edgeSpot() {
+  const t = Math.random();
+  return Math.random() < 0.5
+    ? { x: r3(0.02 + 0.96 * t), y: Math.random() < 0.5 ? 0.04 : 0.96 }
+    : { x: Math.random() < 0.5 ? 0.02 : 0.98, y: r3(0.06 + 0.88 * t) };
+}
+function wavesTick(s, now) {
+  const z = s.mz;
+  if (!z || !s.mgj || s.mgj.met || mgjGone(s, now)) return false;
+  let ch = false;
+  const dt = Math.min(0.4, Math.max(0, (now - (z.t || now)) / 1000));
+  z.t = now;
+  const live = z.zb.filter((o) => !o.d);
+  if (!z.on && now >= z.next) {
+    Object.assign(z, {
+      on: 1,
+      left: WAVE.N + WAVE.PER * extra(s),
+      sp: now,
+    });
+    say(s, "Justin calls his zombies!");
+    ch = true;
+  }
+  /* coming in: 1 to 3 a second (doubled for every 2 ducks after the first) */
+  if (z.on && z.left > 0 && now >= z.sp) {
+    z.sp = now + 1000;
+    let k = Math.min(
+      z.left,
+      rint(...WAVE.RATE) * 2 ** Math.floor(extra(s) / 2),
+      WAVE.MAX - live.length,
+    );
+    z.left -= Math.max(0, k);
+    for (; k > 0; k--) {
+      const o = { i: ++z.n, ...edgeSpot(), hp: WAVE.HP, a: 0, l: zLook() };
+      z.zb.push(o);
+      live.push(o);
+    }
+    ch = true;
+  }
+  /* each walks at the nearest duck still up, and claws it once in reach (never through a jump) */
+  const ducks = playing(s).filter(
+    (id) => s.pos[id] && s.pos[id].x >= 0 && !(s.players[id] || {}).dead,
+  );
+  for (const o of live) {
+    let best = null,
+      bd = Infinity;
+    for (const id of ducks) {
+      const p = s.pos[id],
+        d = Math.hypot((p.x - o.x) / RX, (p.y - o.y) / RY);
+      if (d < bd) {
+        bd = d;
+        best = id;
+      }
+    }
+    if (!best) continue;
+    const p = s.pos[best];
+    if (bd > WAVE.CLAW * 0.8) {
+      const go = Math.min(bd - WAVE.CLAW * 0.8, WAVE.SPEED * dt) / bd;
+      o.x = r3(o.x + (p.x - o.x) * go);
+      o.y = r3(o.y + (p.y - o.y) * go);
+      ch = true;
+    }
+    if (bd <= WAVE.CLAW && now - o.a >= WAVE.CLAW_MS) {
+      o.a = now;
+      o.f = p.x < o.x ? -1 : 1;
+      mgjKnock(s, best, now);
+      ch = true;
+    }
+  }
+  /* never in each other: two too close are pushed apart */
+  for (let a = 0; a < live.length; a++)
+    for (let b = a + 1; b < live.length; b++) {
+      const A = live[a],
+        B = live[b],
+        ex = (A.x - B.x) / RX,
+        ey = (A.y - B.y) / RY,
+        e = Math.hypot(ex, ey);
+      if (e >= 0.9) continue;
+      const k = e > 1e-3 ? (0.9 - e) / 2 / e : 0.2,
+        ux = e > 1e-3 ? ex * k : Math.random() - 0.5,
+        uy = e > 1e-3 ? ey * k : Math.random() - 0.5;
+      A.x = r3(Math.min(0.99, Math.max(0.01, A.x + ux * RX)));
+      A.y = r3(Math.min(0.97, Math.max(0.03, A.y + uy * RY)));
+      B.x = r3(Math.min(0.99, Math.max(0.01, B.x - ux * RX)));
+      B.y = r3(Math.min(0.97, Math.max(0.03, B.y - uy * RY)));
+    }
+  /* the bodies go after a moment; the wave is over once none is left, or to come */
+  const n0 = z.zb.length;
+  z.zb = z.zb.filter((o) => !o.d || now - o.d < WAVE.DEAD_MS);
+  if (z.zb.length !== n0) ch = true;
+  if (z.on && z.left <= 0 && !z.zb.some((o) => !o.d)) {
+    z.on = 0;
+    z.next = now + waveGap(playing(s).length);
+    ch = true;
+  }
+  return ch;
+}
+/* a duck's hit on the zombies: near(x, y) says which are in reach; each takes n. first: only the nearest one along it
+   (a shot), at: where the shot starts. True when it hit any */
+export function mgjZombieHit(s, near, n, now, first = null) {
+  const z = s.mz;
+  if (!z || !isMgj(s) || s.phase !== "boss") return false;
+  let got = z.zb.filter((o) => !o.d && near(o.x, o.y));
+  if (!got.length) return false;
+  if (first)
+    got = [
+      got.sort(
+        (a, b) =>
+          Math.hypot(a.x - first.x, a.y - first.y) -
+          Math.hypot(b.x - first.x, b.y - first.y),
+      )[0],
+    ];
+  const fx = fxOf(s, now);
+  for (const o of got) {
+    o.hp -= n;
+    if (o.hp <= 0) o.d = now;
+    fx({ kind: "hitmark", x: o.x, y: o.y });
+  }
+  return true;
 }
