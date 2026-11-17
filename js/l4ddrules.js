@@ -63,7 +63,15 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock, shotFeet, MID } from "./heights.js";
+import {
+  hOk,
+  hLock,
+  shotFeet,
+  MID,
+  SAME_FLOOR,
+  sameFloorAhead,
+  floorLock,
+} from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
@@ -2616,7 +2624,7 @@ export function l4Use(s, a, now) {
       ly: p.y,
       hz,
       hin: inCabin(px, py) ? 1 : 0,
-      ...(mine ? { lh: Math.round(hz + MID) } : {}),
+      ...(mine ? { lh: floorLock(hz) } : {}),
       ...more,
     });
     if (what === "shotgun") {
@@ -3414,21 +3422,23 @@ const walled = (x, y, z) =>
    (feet at hz, at (px, py), along (dx, dy)) hits the first zombie in its line on my own floor; only when none is that
    way, before a wall, does it go up or down to one on another floor, if no roof is between (holes let it through:
    layout.js slabBetween). myFloor: is one on my floor in the line? canShoot: may this shot hit zombie z? */
-const SAME_FLOOR = 20; // px: feet this close are on one floor
 const onMine = (z, hz) => Math.abs(zombieZ(z) - hz) < SAME_FLOOR;
-function myFloor(zs, px, py, hz, dx, dy, far) {
-  if (!dp()) return false;
-  const mine = zs.filter((z) => z.st !== 3 && onMine(z, hz));
-  if (!mine.length) return false;
-  for (let d = 12; d < far; d += 12) {
-    const x = px + dx * d,
-      y = py + dy * d;
-    if (walled(x, y, hz + MID - 20)) return false;
-    if (mine.some((z) => Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1))
-      return true;
-  }
-  return false;
-}
+const myFloor = (zs, px, py, hz, dx, dy, far) =>
+  dp() &&
+  sameFloorAhead(
+    zs
+      .filter((z) => z.st !== 3)
+      .map((z) => ({ x: z.x, y: z.y, z: zombieZ(z) })),
+    px,
+    py,
+    hz,
+    dx,
+    dy,
+    far,
+    [26, 22],
+    12,
+    (x, y) => walled(x, y, hz + MID - 20),
+  ); // (heights.js: one rule for every mode)
 const canShoot = (z, mine, px, py, hz) =>
   !dp() ||
   (mine ? onMine(z, hz) : !slabBetween(px, py, hz, z.x, z.y, zombieZ(z)));
