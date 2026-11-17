@@ -7213,7 +7213,10 @@ function keydown(e) {
     const vb =
       S && [...S.querySelectorAll(".vote-btn")].find((b) => !b.disabled);
     if (vb && holdMs()) holdStart(vb.dataset.a, "Enter");
-    else act("end");
+    else {
+      if (vb) sfx.holdClick(); // (Hold to vote off: Enter votes at once, with the click)
+      act("end");
+    }
   }
 }
 const keyup = (e) => {
@@ -7775,7 +7778,8 @@ register("game", {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
         else {
-          if (b.dataset.a === "hang" && touchOnly()) sfx.holdClick(); // (the phone's use button: no hold, still the click)
+          if (b.dataset.a === "hang" || b.classList.contains("vote-btn"))
+            sfx.holdClick(); // (the use button, and the Vote button when Hold to vote is off: no hold, still the click)
           act(b.dataset.a);
         }
         return;

@@ -815,6 +815,7 @@ addEventListener(
         'button, [role="button"], a.btn, input[type="checkbox"], select',
       );
     if (!b || b.disabled || b.classList.contains("win-x")) return; // (a window's X: its closing sound)
+    if (b.classList.contains("vote-btn") || b.dataset.a === "hang") return; // (the Vote button and the use button click their own way: game.js, sfx.holdClick)
     if (b.type === "checkbox") play(b.checked ? "uiOn" : "uiOff");
     else if (b.getAttribute("aria-pressed") === "false") play("uiOn");
     else if (b.hasAttribute("aria-pressed"))
