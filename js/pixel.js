@@ -8,6 +8,7 @@
    (index.html), and css/app.css keys on it. */
 import { svgDataURL } from "./hangout/art.js";
 import { applyPalette } from "./pixelpalette.js";
+import { hasRb, rbSprite, RB_N } from "./rainbowskin.js";
 
 const DUCK = 32, // (pixels to a duck's height: the owner's pick, on phones too)
   KEEP = 900; // (pictures kept made; the oldest go first)
@@ -171,7 +172,29 @@ export function pxSVG(svg, w, cls = "") {
   const head = svg.slice(0, svg.indexOf(">")),
     W = +(/\swidth="([\d.]+)"/.exec(head) || [])[1] || 1,
     H = +(/\sheight="([\d.]+)"/.exec(head) || [])[1] || W;
+  if (on && hasRb(svg)) return pxRainbow(svg, W, H, w, cls);
   return pxImg("s" + hash(svg), svg, w, (w * H) / W, cls);
+}
+/* a drawing wearing the rainbow skin (rainbowskin.js), w css px wide: every step of the rainbow's turn made into pixels
+   in one tall picture, one step shown at a time (css img.rbsp). Each step a whole number of pixels tall, so the steps
+   line up */
+function pxRainbow(svg, W, H, w, cls) {
+  const ch = Math.max(1, Math.round((w * H) / W / grid)),
+    fh = ch * grid,
+    sprite = rbSprite(svg, W, H),
+    [fk] = full("r" + hash(svg), w, fh * RB_N),
+    u = raster("r" + hash(svg), sprite, w, fh * RB_N);
+  return `<img class="px rbsp${cls ? " " + cls : ""}" data-pxk="${fk.replace(/"/g, "&quot;")}" src="${u || asURL(sprite)}" width="${Math.round(w)}" height="${fh.toFixed(2)}" style="aspect-ratio: ${W} / ${H}" alt="" draggable="false">`;
+}
+/* the same steps for a drawing already on the page (pxdom.js): its sprite's text, its key and its size */
+export function rainbowSteps(text, W, H, w, h) {
+  const ch = Math.max(1, Math.round(h / grid));
+  return {
+    sprite: rbSprite(text, W, H),
+    key: "r" + hash(text),
+    w,
+    h: ch * grid * RB_N,
+  };
 }
 
 /* ---------- pictures already on the page (<img>: the mode pictures, props, a player's own picture) ----------
