@@ -1580,6 +1580,59 @@ export function mgjShot(s, sh, x0, y0, dx, dy, now, log) {
     return true; // (one of his zombies in the way: it stops there, but the shots that go through them)
   return mgjHitAt(s, sh.by, now, nearHim, log, shotDmg(sh.k));
 }
+/* where a duck's shot I draw stops (the owner's, Nov 17 20:37Z: "BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO
+   LONGER PASS THRU ZOMBIES ... THE BULLET KIND IS SEEN GOING PAST THEM A BIT"): the host finds its hit at its next beat
+   and my screen hears of it later, while I draw it flying on; so on my screen it stops where it meets, as mgjShot sees
+   them, his thrown chair or a controller (shotThrown), one of his wave zombies it doesn't go through (mgjZombieHit),
+   or him or his double (mgjBodies). From where I last drew it (x0, y0) to where I draw it now (x1, y1), board shares,
+   in the order it gets to them. r: what I know of this shot: skip, the wave zombies it has gone past (sh.zp, sh.zh, or
+   by my own look), n, how many it has hit; the one that makes it pierceOf (or 1) stops it. { x, y, i } where it stops
+   (i: the zombie's number, or -1), or null */
+export function mgjStop(s, sh, r, x0, y0, x1, y1, now) {
+  const m = s.mgj;
+  if (!m || s.phase !== "boss" || sh.by === JUSTIN_ID || sh.fake) return null;
+  const ux = (x1 - x0) / RX,
+    uy = (y1 - y0) / RY,
+    len = ux * ux + uy * uy,
+    /* how far along (0 … 1) it comes nearest to q, if that's within room of it (in a duck's length); else -1 */
+    along = (q, room) => {
+      const px = (q.x - x0) / RX,
+        py = (q.y - y0) / RY,
+        k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
+      return Math.hypot(px - k * ux, py - k * uy) < room ? k : -1;
+    },
+    meets = []; // [k, the zombie's number or -1]
+  for (const th of s.shots || []) {
+    if (th.by !== JUSTIN_ID || th.dead || th.fake) continue;
+    if (th.k !== "chair" && th.k !== "controller") continue;
+    const k = along(
+      {
+        x: th.x0 + (th.vx * (now - th.t)) / 1000,
+        y: th.y0 + (th.vy * (now - th.t)) / 1000,
+      },
+      th.k === "chair" ? 1.6 : 1,
+    );
+    if (k >= 0) meets.push([k, -1]);
+  }
+  for (const o of (s.mz && s.mz.zb) || []) {
+    if (o.d || r.skip.has(o.i)) continue;
+    const k = along(o, sh.r || 1);
+    if (k >= 0) meets.push([k, o.i]);
+  }
+  for (const b of mgjBodies(s, now)) {
+    const k = along(b, (sh.r || 1) * MGJ_SCALE);
+    if (k >= 0) meets.push([k, -1]);
+  }
+  const most = Math.max(1, pierceOf(s, sh.by, armOf(sh.k)));
+  for (const [k, i] of meets.sort((a, b) => a[0] - b[0])) {
+    if (i >= 0) {
+      r.skip.add(i);
+      if (++r.n < most) continue; // (the sniper's: on through it)
+    }
+    return { x: x0 + (x1 - x0) * k, y: y0 + (y1 - y0) * k, i };
+  }
+  return null;
+}
 /* I want a duck's bullet (any gun) that crosses his thrown chair or one of his controllers to stop on it and be gone:
    they block bullets and never break (owner, Nov 16 16:47Z) */
 function shotThrown(s, sh, x0, y0, dx, dy, now) {

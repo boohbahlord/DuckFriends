@@ -99,7 +99,11 @@ import {
   downArmed,
   WILD,
   isWild,
+  pierceOf,
+  shotArm,
+  shotWalled,
 } from "./l4ddrules.js";
+import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
@@ -356,6 +360,45 @@ export function l4ZBoxes() {
         b: o.sy,
       });
   return out;
+}
+/* where a shot I draw stops (the owner's, Nov 17 20:37Z: "BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS
+   THRU ZOMBIES ... LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT AND IT LOOKS WRONG"). The
+   host finds a hit at its next beat and my screen hears of it later still, while I draw the shot flying on and the
+   zombies gliding a beat behind (gap); so on my screen it stops where it meets them as I draw them. From where I last
+   drew it (x0, y0) to where I draw it now (x1, y1), in shares of the world, it looks as l4ddrules.js l4Shots does: a
+   step every 12 px, the first wall taller than it, a zombie's 26 by 22 px at a height it can reach (heights.js; its
+   height set by the first one it meets, r.lh). r: what I know of this shot: skip, the zombies it has gone past (a miss,
+   or one the sniper went through), n, how many it has hit; the one that makes it most (its weapon's pierceOf, or 1)
+   stops it. { x, y } where it stops, in shares of the world, and i: that zombie's number (-1: a wall), or null */
+export function shotStop(s, sh, r, x0, y0, x1, y1) {
+  const most = Math.max(1, pierceOf(s, sh.by, shotArm(sh))),
+    ax = x0 * W,
+    ay = y0 * H,
+    bx = x1 * W,
+    by = y1 * H,
+    steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 12)),
+    q = { hz: sh.hz }; // (its height, kept here: the shot itself is the room's state)
+  for (let k = 1; k <= steps; k++) {
+    const x = ax + ((bx - ax) * k) / steps,
+      y = ay + ((by - ay) * k) / steps;
+    if (shotWalled(sh, x, y)) return { x: x / W, y: y / H, i: -1 };
+    for (const [i, o] of Z) {
+      if (
+        o.st === 3 ||
+        o.z === undefined ||
+        r.skip.has(i) ||
+        Math.hypot((o.x - x) / 26, (o.y - y) / 22) >= 1
+      )
+        continue;
+      q.lh = r.lh ?? sh.lh;
+      if (!hOk(q, o.z, o.x, o.y, sh.x0 * W, sh.y0 * H)) continue;
+      hLock(q, o.z);
+      r.lh = q.lh;
+      r.skip.add(i);
+      if (++r.n >= most) return { x: x / W, y: y / H, i };
+    }
+  }
+  return null;
 }
 let butler = null,
   onEl = null,
@@ -2338,6 +2381,7 @@ activity({
           !onCam ||
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      o.z = z; // (its height as I draw it: shotStop)
       if (onCam && unseen && o.st !== 3)
         zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
       if (hide) continue;
