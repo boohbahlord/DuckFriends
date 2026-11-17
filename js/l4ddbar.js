@@ -21,12 +21,14 @@ import {
   SLOT_KINDS,
   weaponName,
   reloadOf,
+  downArmed,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 
 /* what a slot says under it: the magazine and the rest, or how many are left */
 const count = (w, m) => {
   if (!m) return "";
+  if (w === "dg") return `${m.rw === "dg" ? "…" : m.dg} | ∞`; // (the down pistol: its bullets never run out)
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
@@ -69,15 +71,24 @@ export function mountL4Bar(S, api) {
       out = !!(p.dn || p.gh),
       held = api.held(),
       off = !!(s.hang.l4f || {})[me],
-      next = JSON.stringify([m, held, off, out]);
+      down = downArmed(s, me),
+      next = JSON.stringify([m, held, off, out, down]);
     if (next === sig) return;
     sig = next;
-    /* one slot: [key, the weapon (or "" when empty), its kind, what a press does] */
-    const slots = [
-      ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
-      ["5", "grenade", "grenade", "grenade"],
-      ["0", "fl", "light", "fl"],
-    ];
+    /* one slot: [key, the weapon (or "" when empty), its kind, what a press does]; down, only the down pistol (the
+       owner's, Nov 17 11:07Z) */
+    const slots = down
+      ? [["", "handgun", "ranged", "dg"]]
+      : [
+          ...sl.map((w, i) => [String(i + 1), w, SLOT_KINDS[i], String(i)]),
+          ["5", "grenade", "grenade", "grenade"],
+          ["0", "fl", "light", "fl"],
+        ];
+    if (down) {
+      const n = count("dg", m);
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun")}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      return;
+    } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
       const n = w ? count(w, m) : "",
         empty = !w || spent(w, m),
@@ -140,12 +151,24 @@ export function l4Slider(api) {
   const keys = () => {
     const k = kit();
     if (!k) return [];
+    if (downArmed(k.s, k.me)) return ["handgun"]; // (down: only the down pistol)
     return [...k.sl.map((w) => w || null), "grenade"];
   };
   const kindAt = (i) => SLOT_KINDS[i] || (i === 4 ? "grenade" : "light");
   const look = (id) => {
     const k = id && kit();
     if (!k) return null;
+    if (downArmed(k.s, k.me))
+      return id === "handgun"
+        ? {
+            id,
+            name: "Pistol",
+            icon: weaponIcon(id),
+            off: false,
+            keep: false,
+            cls: "k-ranged",
+          }
+        : null; // (down: the down pistol, never Angelic)
     const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
     if (i < 0) return null;
     return {
@@ -190,6 +213,7 @@ export function l4Slider(api) {
     },
     select(i) {
       const k = kit();
+      if (k && downArmed(k.s, k.me)) return; // (down: nothing else to pick)
       if (i === 3 && k && ["longjump", "jetpack"].includes(k.sl[3])) return; // (sliding to them changes nothing: a tap or the switch turns them on or off)
       if (
         i < 3 ||
@@ -202,9 +226,10 @@ export function l4Slider(api) {
     cool: () => [],
     dots(id) {
       const k = id && kit(),
-        n = k ? count(id === "fl" ? "" : id, k.m) : "";
+        w = k && downArmed(k.s, k.me) ? "dg" : id, // (down: the down pistol's bullets)
+        n = k ? count(w === "fl" ? "" : w, k.m) : "";
       return (
-        (k ? reloadMeter(k.s, k.me, id, k.m) : "") +
+        (k ? reloadMeter(k.s, k.me, w, k.m) : "") +
         (n ? `<small class="sp-n">${n}</small>` : "")
       );
     },

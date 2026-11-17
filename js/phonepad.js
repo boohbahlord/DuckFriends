@@ -36,6 +36,7 @@ export function mountPad(api) {
     box.classList.toggle("gone", !on);
     box.classList.toggle("armed", !!w);
     atk.hidden = !w;
+    jumpBtn.hidden = !!(api.noJump && api.noJump()); // (a duck that's down can't jump: only its down pistol)
     if (!w && push) letGo();
   };
   const tick = setInterval(sync, 150);

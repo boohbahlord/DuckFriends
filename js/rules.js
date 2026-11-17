@@ -171,6 +171,7 @@ import {
   MGJ_GUNS,
   mgjHalf,
   mgjMag,
+  mgjOut,
   MGJ_MELEE,
   ammoOf,
   mgjSpend,
@@ -2239,12 +2240,14 @@ function reduceStep(state, a, now) {
       if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase))
         return state;
       if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
+      const downGun =
+        isMgj(s) && sp === "handgun" && !!me.dead && mgjOut(s, a.id); // (Mad God Justin: out of HP, the down pistol still fires: the owner's, Nov 17 11:07Z)
       if (
         isMgj(s)
-          ? s.phase !== "boss" || me.dead
+          ? s.phase !== "boss" || (me.dead && !downGun)
           : !PRESS.includes(sp) || !onKeys(me.duck, sp)
       )
-        return state; // (Mad God Justin: not while down)
+        return state; // (Mad God Justin: not while down, but the down pistol)
       if (isMgj(s) && ["revive", "jaime", "zebra"].includes(sp))
         return mgjTeamUse(s, a, now, logLine) ? s : state; // (Mad God Justin: a revive held or let go, a Jaime, the zebra cake)
       const mgjGun = isMgj(s) && MGJ_GUNS.includes(sp);
@@ -2280,7 +2283,7 @@ function reduceStep(state, a, now) {
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
         return s;
       }
-      const mg = isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine)
+      const mg = downGun ? magSize(sp) : isMgj(s) ? mgjMag(sp) : magSize(sp); // (Mad God Justin's pistol never reloads: the owner's, Nov 16; a gun picked up has Quacky Zombies' magazine; the down pistol does, its bullets never run out)
       const many =
         sp === "burst" && !isMgj(s)
           ? Math.min(ARMS.burst.burst, mg[0] - magOf(s, a.id, now, sp).n)
@@ -2419,11 +2422,20 @@ function reduceStep(state, a, now) {
       // R: the handgun reloads before its magazine is empty
       if (me && isL4dd(s)) return l4Reload(s, a, now) ? s : state;
       if (me && isMgj(s)) {
-        // Mad God Justin: the gun picked up, if it has a magazine
+        // Mad God Justin: the gun picked up, if it has a magazine (or the down pistol)
         const w = a.w,
-          mg = mgjMag(w),
+          mg =
+            w === "handgun" && me.dead && mgjOut(s, a.id)
+              ? magSize(w)
+              : mgjMag(w),
           m = mg && magOf(s, a.id, now, w);
-        if (!m || s.mgj.held[a.id] !== w || !m.n || m.r) return state;
+        if (
+          !m ||
+          (s.mgj.held[a.id] !== w && !(w === "handgun" && me.dead)) ||
+          !m.n ||
+          m.r
+        )
+          return state;
         s.mag = {
           ...(s.mag || {}),
           [magKey(a.id, w)]: { n: m.n, r: now + mg[1] },

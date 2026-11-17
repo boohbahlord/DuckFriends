@@ -3083,6 +3083,9 @@ html:not(.keyboard) .l4-board .gduck:not(.mine) .gduck-name > .rainbow {
 .gduck.downed .gduck-down {
   display: block;
 }
+.gduck.dn-wait .gduck-down i {
+  animation-play-state: paused;
+} /* (Quacky Zombies: someone reviving it: its bleeding-out waits) */
 .gduck.downed .gduck-name {
   opacity: 0.92;
 }
@@ -10995,6 +10998,10 @@ html.moving .wq-tile.speaker {
   to {
     opacity: 1;
   }
+}
+/* down and dying (Quacky Zombies, Mad God Justin): greyer as its time runs out (--dg, 0.15 to 1: game.js) */
+.gduck.dying .gduck-body {
+  filter: grayscale(var(--dg)) brightness(calc(1 - 0.2 * var(--dg)));
 }
 .gduck.grey .gduck-body {
   filter: grayscale(1) brightness(0.8);

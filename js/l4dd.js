@@ -65,6 +65,7 @@ import {
   HELPER,
   weaponName,
   priceFor,
+  reviveMs,
   saleOn,
   dropName,
   TOILET,
@@ -1434,9 +1435,9 @@ function coolBar(tag, s, me) {
   let left = 0,
     all = 1;
   if (m) {
-    if (m.rl > now && m.rw && ARMS[m.rw]) {
+    if (m.rl > now && m.rw && (ARMS[m.rw] || m.rw === "dg")) {
       left = m.rl - now;
-      all = m.rt || reloadOf(s, me, m.rw);
+      all = m.rt || reloadOf(s, me, m.rw === "dg" ? "handgun" : m.rw); // (the down pistol's: the pistol's)
     }
     for (const [w, t] of Object.entries(m.u || {})) {
       const k = kindOf(w);
@@ -1774,7 +1775,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "rev") {
     const rv = (P4(s, t.on) || {}).rv;
     if (rv && rv.by === ctx.me)
-      return `Reviving… ${Math.max(0, Math.ceil((L4.REVIVE - (now - rv.at)) / 1000))}`;
+      return `Reviving… ${Math.max(0, Math.ceil((reviveMs(s, ctx.me) - (now - rv.at)) / 1000))}`;
     if (heldFn() === "medkit")
       return `Revive ${t.name || ""} with the medkit`.replace("  ", " "); // (at once: the owner's, Nov 16)
     return `Revive ${t.name || ""}`.trim();
