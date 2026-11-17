@@ -5730,3 +5730,35 @@ Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
 > if it cannot be selected by enter on PC then you simply do not have to hold it down but it still gets a click noise
 
 (the last line added by the owner's edit at 19:23Z)
+
+## Request (2026-11-17 20:02Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtHx9q6JoErRpquu3xqn9SUH, furious, with a screenshot of the small Laser Rifle in the duck's hand) (word for word)
+
+> REPEAT BACK TO ME IN UR OWN UNDERSTANDING WHAT IM SAYING BEFORE FIXING THIS SHIT, NUMBER IT!
+>
+> the laser gun is too small and is supposed to be as big as the ak47 or something around that size
+>
+> zombies will attack justin now, because they literally arent
+>
+> dont censor most of justin's lines his character is not supposed to make sense
+>
+> i cant believe i have to say this... ZOMBIES CANNOT CANNOT CANNOT HIT SOMEONE ON A FLOOR ABOVE THEM AND VICE VERSA!! THEY CANT! BECAUSE THOSE RULES I DESCRIBED ONLY APPLIED TO PROJECTILES THAT PLAYERS USE !!!! FURTHERMORE, ZOMBIES GET A RED OUTLINE WHEN UNDER THE ROOF! THEY JUST DO ! FURTHER MORE AGAIN, WHEN THEY TRY TO ATTACK A PLAYER ON THE ROOF, THEY TRY TO GET ON THE ROOF, THEY DONT TRY TO GO UNDER IT FROM THE INSIDE OF THE BUILDING AND ATTACK FROM THE FUCKING FLOOR ! AND ILL SAY
+>
+> THIS AGAIN, PROJECTILES WILL NEVER SHOOT AT ENEMIES INSIDE A BUILDING IF THEY ARE ON A ROOFTOP UNLESS THEY ARE EXPOSED BY A HOLE IN A CIELINNG THEY ARE DIRECTLY UNDERNEATH!!!!!!!!!! FUCKING RETARD! ZOMBIES CANNOT FUCKING HIT PLAYERS FROM THE INSIDE OF THE BUILDING WHILE THE PLAYERS ARE LITERALLY ON THE ROOF AND VICE VERSA AND SAME GOES FOR GUNS! NO SHIT! AND GUNS DO NOT GO THROUGH WALLS, NO SHIT! IT IS LITERALLY BASIC BUOILION LOGIC OR TRUE AND FALSE PROPOSITION TO FIGURE OUT THAT YOU DONT HAVE PLAYERS SHOOT THROUGHT CIELINNGS ! THE ONLY WAY A PLAYER CAN SHOOT DOWN INTO THE GROUUND LEVEL IS BY SHOOTING AT A ZOMBIE NOT COVERED BY A BUILDING !!!!!!! THAT MEANS IF THEY ARE UNDER THE GAS PUMP ROOF ON THE GROUND LEVEL THAT PLAYERS CANNOT HAVE THEIR SHOTS FROM THE ROOFTOP LAND ON THEM!! IT IS PHYISCALLY RETARDED! YOU WILL MAKE A SIMPLE AND BASIC PRINCPLE BASED OFF OF THIS THAT REDUCES COMPLEXITY AND MAKE THE LOGIC STRAIGHT FORWARD FOR THIS MECHANIC!
+> REPEAT BACK TO ME IN UR OWN UNDERSTANDING WHAT IM SAYING BEFORE FIXING THIS SHIT
+
+Adam repeated it back as 7 numbered points (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFJ3zpf3vHfocALjBc4h6pB); nothing built until the owner says it's right.
+
+## Answer (2026-11-17 20:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVUXWjejVHXbm2zLXu7oUrP) to Adam's 7-point repeat-back (word for word)
+
+> t=true
+> f=false
+>
+> 1. t
+> 2. make it to where you cannot give justin a weapon actually and when he goes down he doesnt have a pistol and he sounds off all his annoying lines unrestricted like he does in cabin with the same frequency, because im tired of dealing with him, he spawns in cabin now by default the same, without a weapon and cannot get a weapon
+> 3. t
+> 4. t
+> 5. t with the down arrow in the shape outline with the lines of the arrow made of the same outlinne and it's color and an up arrow equivalent for zombies on the roof, so that way a zombies elevation is know, and the same happens to Justin or players. For now on, Justin's outline color is yellow and the player you are playing as has a darker blue outline that only the player playing see for themselves on their screen, and every other player is green to them and zombies are red and justin's outline is yellow
+> 6. yes and it cannot attack from under that duck as proven
+> 7. yes
+
+Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default, zombies attack Justin, no cross-floor zombie hits, zombies climb to roof targets, one simple shot rule (#7). Noah = Laser Rifle AK-size, outlines (red under roofs, up/down arrows, Justin yellow, me dark blue only for me, others green).

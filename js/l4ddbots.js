@@ -33,7 +33,6 @@ import {
   isWild,
   jaimeBody,
   JBODY,
-  l4Hp,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
@@ -335,24 +334,14 @@ function justinBot(s, id, now, out) {
       ax: +((ax || 1) / W).toFixed(4),
       ay: +(ay / H).toFixed(4),
     });
-  const wild = isWild(s, id),
-    zs = zombiesOf(s).filter(
-      (z) => z.st === 2 || z.st === 4 || (wild && z.st === 1),
-    ), // (Justin out in Downpour shoots the ones tearing at the chapel's windows too)
+  const zs = zombiesOf(s).filter((z) => z.st === 2 || z.st === 4),
     near = zs
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
   if (isWild(s, id) && h.l4.wait && jaimeVisit(s, id, now, p, x, y, run, out))
     return; // (a rest phase: he may stop by Jaime's body)
-  /* an armed Justin runs off a moment when a duck keeps shooting close to him (it scares him, after a second: shotScare),
-     then goes on */
-  if (wild && !wildOpen(s, id)) {
-    if (shotScare(s, id, now, x, y, SCARE_ARMED)) scare.set(id, now + 1500);
-    if ((scare.get(id) || 0) > now)
-      return wildMove(s, id, now, p, x, y, near, run, out, true);
-  }
-  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out);
+  if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
   const seen = near.find(
     (n) => n.d < SEE * 1.3 && clearShot(x, y, n.z.x, n.z.y, heightAt(x, y)),
@@ -418,31 +407,8 @@ function justinBot(s, id, now, out) {
     if (seen && gun) shoot(s, id, now, m, gun, seen.z.x - x, seen.z.y - y, out);
     return;
   }
-  /* Justin out in Downpour with a gun (the owner's, Nov 17 18:05Z: "he keeps distance and puts survival above killing
-     zombies if he is in imminent danger"): low on HP he keeps twice the room and doesn't go looking for them */
-  const low = wild && l4Hp(s, id) > 0 && l4Hp(s, id) <= 2,
-    keep = low ? KEEP * 1.5 : KEEP;
   /* nothing to fear and nothing to shoot: shop like the others, else stay by the nearest duck */
-  if (!seen && d0 > keep * 1.5) {
-    if (wild && near.length && !low) {
-      /* Justin hunts them (the owner's, Nov 17 18:05Z): he walks the way to the nearest until he can see it to shoot */
-      const z = near[0].z,
-        to = wayTo(x, y, z.x, z.y, now) || [z.x, z.y],
-        [nx, ny] = walk(x, y, to[0], to[1], run(false));
-      send(nx, ny, gun || sl[1], nx - x, ny - y);
-      return;
-    }
-    if (wild) {
-      /* Justin out in Downpour, with a gun and nothing to hunt: he doesn't follow anyone, he goes where he likes */
-      const w = wanderSpot(id, now, x, y);
-      if (w && !w.rest) {
-        const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y],
-          [nx, ny] = walk(x, y, to[0], to[1], run(false));
-        if (Math.hypot(nx - x, ny - y) < 3) wander.delete(id);
-        send(nx, ny, gun || sl[1], nx - x, ny - y);
-      } else run(false);
-      return;
-    }
+  if (!seen && d0 > KEEP * 1.5) {
     if (shopping(s, id, now, x, y, run(false), m, send, out)) return;
     const mate = s.seat
         .filter((t) => t !== id && s.pos[t] && l4Up(s, t))
@@ -458,30 +424,20 @@ function justinBot(s, id, now, out) {
     } else run(false);
     return;
   }
-  /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices. Justin out in
-     Downpour sprints away low on HP too, and jumps (a jump's i-frames) when one is on him */
-  const want = d0 < CLOSE || (low && d0 < keep),
-    far = run(want);
+  /* step: where every zombie is farthest and the floor ahead is open; staying put is one of the choices */
+  const far = run(d0 < CLOSE);
   let [nx, ny] = [x, y];
-  if (d0 < keep) [nx, ny] = away(x, y, far, near);
-  const air = wild && p.j && now - p.j < 700,
-    jump = !wild
-      ? 0
-      : air
-        ? p.j
-        : d0 < TOO_CLOSE * 1.6 && Math.random() < 0.5
-          ? now
-          : 0;
+  if (d0 < KEEP) [nx, ny] = away(x, y, far, near);
   /* the gun on the nearest he can see; with no gun at all, the knife on one at arm's length */
   const ax = seen ? seen.z.x - x : nx - x,
     ay = seen ? seen.z.y - y : ny - y;
   if (gun) {
-    send(nx, ny, gun, ax, ay, jump);
+    send(nx, ny, gun, ax, ay);
     if (seen) shoot(s, id, now, m, gun, ax, ay, out);
   } else if (seen && seen.d < 80) {
-    send(nx, ny, sl[0], ax, ay, jump);
+    send(nx, ny, sl[0], ax, ay);
     shoot(s, id, now, m, sl[0], ax, ay, out);
-  } else send(nx, ny, sl[0], ax, ay, jump);
+  } else send(nx, ny, sl[0], ax, ay);
   /* a grenade into a crowd that isn't on him */
   if (
     seen &&

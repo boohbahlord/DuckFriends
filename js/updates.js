@@ -9,6 +9,21 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v86",
+    version: 86,
+    date: "Nov 17, 2026",
+    title: "Floors, outlines and an unarmed Justin",
+    news: [
+      "For Dead Ducks Arcade: shots and blasts never go through walls or roofs. From a roof you hit only what's under the open sky or right under a hole.",
+      "For Dead Ducks Arcade: zombies only hit ducks on their own floor, and climb up to a duck on a roof.",
+      "For Dead Ducks Arcade: zombies go after Justin too.",
+      "For Dead Ducks Arcade: Justin can't be given a weapon, has no pistol when down, says all his lines as often as in the cabin, and is in Duck Cabin by default too.",
+      "For Dead Ducks Arcade: anyone under a roof you're not under shows only as their outline, with an up or down arrow on everyone a floor away.",
+      "Your own outline is dark blue, other players green, zombies red, and Justin yellow.",
+      "For Dead Ducks Arcade: the Laser Rifle is as big as the AK-47 in your hands.",
+    ],
+  },
+  {
     id: "v85",
     version: 85,
     date: "Nov 17, 2026",

@@ -14163,6 +14163,12 @@ html.moving .eye-zap {
 .held[data-w="burst"] i {
   width: calc(var(--s) * 0.85);
 }
+/* the Laser Rifle: as long as its l4ddguns.js w, about the AK-47's size (the owner, Nov 17 20:02Z: "the laser gun is too
+   small and is supposed to be as big as the ak47 or something around that size"; it had no width of its own, so it
+   took a knife's) */
+.held[data-w="laser"] i {
+  width: calc(var(--s) * 1.1);
+}
 .held[data-w="adrenaline"] i {
   width: calc(var(--s) * 0.44);
 }
@@ -15674,21 +15680,6 @@ html.moving .l4-heat.hot::after {
   color: #ffd23f;
   font-weight: inherit;
 }
-/* Justin's pot, a smaller line under my points (l4dd.js seePot); what sits under my points steps down for it */
-.l4-jp {
-  display: block;
-  margin-top: 0.25rem;
-  font-style: normal;
-  font-size: clamp(0.65rem, 1.6vw, 0.9rem);
-  color: #f4e7b0;
-  text-align: center;
-}
-.l4-jp[hidden] {
-  display: none;
-}
-.l4-jp-on :is(.l4-on, .l4-end) {
-  margin-top: clamp(0.9rem, calc(1.6vw + 0.25rem), 1.15rem);
-}
 /* Justin's blood, spreading under him once he's down (l4dd.js seePool); placed at its middle */
 .l4-jpool {
   position: absolute;
@@ -16525,19 +16516,6 @@ html.pixel .l4-flare::before {
 @keyframes l4-skglow {
   from {
     filter: drop-shadow(0 0 0.1rem #9fe3ff);
-  }
-}
-/* Justin out in Downpour in the rest phase (l4dd.js safeLook): a soft light blue glow, a duck can buy him a gun */
-.gduck.l4-buyj .gduck-body {
-  animation: l4-buyj 1.6s ease-in-out infinite;
-}
-@keyframes l4-buyj {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0.35rem #9fe3ff);
-  }
-  50% {
-    filter: drop-shadow(0 0 0.8rem #d8f4ff) brightness(1.15);
   }
 }
 .gduck.l4-inv .gduck-body {

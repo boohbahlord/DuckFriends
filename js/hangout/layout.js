@@ -189,36 +189,19 @@ export function floorAt(x, y, z) {
     ? { h: d.h, kind: d.kind, deck: d }
     : { h: g, kind: "ground", deck: null };
 }
-/* a roof (or the canopy) between two spots, for a shot (heights.js), Doom's way (the owner's, Nov 17 17:41Z and 18:05Z):
-   one up on it and the other under it, nothing goes through (but a hole: a spot in one is open to the sky). One up on
-   it and the other off it, lower down: from anywhere on the roof, but for a target at the roof's own wall (climbing it,
-   or at its foot: within AT_WALL of it), "you only have to be on the edge to shoot zombies AT the wall before the edge
-   your own" (SLAB_EDGE: a duck's width from it) */
-const SLAB_EDGE = 60,
-  AT_WALL = 60;
+/* the one rule for a shot (heights.js) between two floors (the owner's, Nov 17 20:02Z: "PROJECTILES WILL NEVER SHOOT AT
+   ENEMIES INSIDE A BUILDING IF THEY ARE ON A ROOFTOP UNLESS THEY ARE EXPOSED BY A HOLE IN A CIELINNG THEY ARE DIRECTLY
+   UNDERNEATH ... THE ONLY WAY A PLAYER CAN SHOOT DOWN INTO THE GROUUND LEVEL IS BY SHOOTING AT A ZOMBIE NOT COVERED BY A
+   BUILDING ... YOU WILL MAKE A SIMPLE AND BASIC PRINCPLE"): a shot reaches a target only if nothing solid is between
+   them. On one floor (the ground, or the same roof) only walls can be between, and the shot's own walk checks those. On
+   two floors a roof is between, unless both are under the open sky: the one up on its roof, the other with no roof over
+   it (off every roof, or right under a hole). So from a roof nothing inside a building or under the pump roof is hit,
+   and nothing on a roof is hit from inside or under it. True: something is between */
 export function slabBetween(ax, ay, az, bx, by, bz) {
   if (variant !== "l4gs") return false;
-  for (const d of GS.DECKS) {
-    const sa = deckSide(d, ax, ay, az),
-      sb = deckSide(d, bx, by, bz);
-    if (sa * sb < 0) return true; // (on it and under it)
-    if (sa + sb === 1 && sa !== sb) {
-      const [x, y] = sa ? [ax, ay] : [bx, by], // (the one up on it)
-        [ox, oy, oz] = sa ? [bx, by, bz] : [ax, ay, az], // (the one off it)
-        out = Math.max(d.x0 - ox, ox - d.x1, d.y0 - oy, oy - d.y1, 0); // (0: in one of its holes, open to it from anywhere)
-      if (
-        oz < d.h - 1 &&
-        out > 0 &&
-        out < AT_WALL &&
-        Math.min(x - d.x0, d.x1 - x, y - d.y0, d.y1 - y) > SLAB_EDGE
-      )
-        return true; // (one at the wall below, the other too far from the edge over it)
-    }
-  }
-  return false;
+  if (deckAt(ax, ay, az) === deckAt(bx, by, bz)) return false; // (one floor)
+  return !!deckOver(ax, ay, az) || !!deckOver(bx, by, bz);
 }
-/* where (x, y) at height z is to deck d: 1 on it, -1 under it, 0 off it (or in one of its holes: open to the sky) */
-const deckSide = (d, x, y, z) => (!onDeck(d, x, y) ? 0 : z >= d.h - 1 ? 1 : -1);
 /* the ladder up the gas station's back wall (stationmap.js LADDER): is (x, y) at its foot, outside, where a duck climbs
    it? And where a duck steps off it onto the roof */
 const LADDER_REACH = 34; // (how far out from the wall's face a duck still holds it)
