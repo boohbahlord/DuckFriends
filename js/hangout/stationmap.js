@@ -465,6 +465,17 @@ function planBuild(b) {
     side: "n",
   });
   southWall(C, []);
+  /* the ladder up the gas station's back wall, outside it: drawn behind the wall (the roof's edge hides all but its
+     hoops, the roof goes see-through over a duck climbing it); up to the roof and its hoops over the edge */
+  put(
+    "ladder",
+    LADDER.x0 - 20,
+    LADDER.at - T - 10,
+    LADDER.x1 - LADDER.x0 + 40,
+    10,
+    S.wall + 46,
+    { only: "out" },
+  );
   /* the roofs, seen from outside (inside, they go, and the outside goes dark: world.js) */
   for (const B of [S, C])
     put("gsroof", B.x0 - 30, B.y0 - 30, B.x1 - B.x0 + 60, B.y1 - B.y0 + 60, 0, {
@@ -473,6 +484,15 @@ function planBuild(b) {
       fade: true,
       soldier:
         B === S ? [SOLDIER.x - (B.x0 - 30), SOLDIER.y - (B.y0 - 30)] : null, // (on the roof's own drawing: it goes see-through with it)
+      holes:
+        B === S
+          ? ROOF_HOLES.map((o) => [
+              o.x0 - (B.x0 - 30),
+              o.y0 - (B.y0 - 30),
+              o.x1 - o.x0,
+              o.y1 - o.y0,
+            ])
+          : null, // (the same, the holes broken through it)
       key: B.y1 + 2 * T, // (in front of the south wall's top: the roof's edge (the sign's red band) covers it, no grey slab over the red: the owner's, Nov 17 05:46Z)
       box: {
         l: B.x0 - 30,

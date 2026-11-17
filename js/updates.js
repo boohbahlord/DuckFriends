@@ -9,6 +9,24 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v78",
+    version: 78,
+    date: "Nov 17, 2026",
+    title: "Outlines know the roof",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, a player or zombie a floor above or below you (on a roof) shows its outline with an arrow pointing to it.",
+    ],
+  },
+  {
+    id: "v77",
+    version: 77,
+    date: "Nov 17, 2026",
+    title: "Downpour's ladder and roof holes, drawn",
+    news: [
+      "For Dead Ducks Arcade: Downpour's gas station has a ladder drawn up its back wall and two holes broken through its roof, with rubble and rebar round them.",
+    ],
+  },
+  {
     id: "v76",
     version: 76,
     date: "Nov 17, 2026",
