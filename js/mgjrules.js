@@ -303,6 +303,7 @@ export const PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign eve
     ["shotgun", 16],
     ["glauncher", 10],
     ["chaingun", 5], // (rarer)
+    ["laser", 8], // (the Laser Rifle: the owner's, Nov 17, from the spin and Justin's pickups)
     ["medkit", 10.5],
     ["sky", 5],
     ["meteor", 2.5],
@@ -318,13 +319,14 @@ export const MGJ_GUNS = [
   "shotgun",
   "glauncher",
   "chaingun",
+  "laser",
 ];
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
 export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
 export const pickAmmo = (k) =>
-  k === "shotgun"
-    ? INF_AMMO
+  k === "shotgun" || k === "laser"
+    ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
     : k === "lmg"
       ? 30 // (the LMG only 30 rounds here: the owner's, Nov 17)
       : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
@@ -378,6 +380,7 @@ export const DMG = {
   ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
   lmg: 1,
   chain: 1, // (the chain gun 1 a bullet here, not all his HP)
+  laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)
   jaime: 1,
   jaimebomb: 3, // (the Jaime Bomb takes only 3 off him: the owner's, jaimebomb.js)

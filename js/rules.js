@@ -185,6 +185,8 @@ import {
   kitOf,
   helperOut,
   ARMS,
+  laserHeat,
+  laserNext,
 } from "./l4ddrules.js";
 import { JET } from "./jetpack.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
@@ -1078,7 +1080,7 @@ export const GUNS_NEW = [
   "flamer",
   "burst",
 ];
-export const AUTO = ["smg", "ak", "lmg", "chaingun", "flamer"]; // (they fire while the button is down)
+export const AUTO = ["smg", "ak", "lmg", "chaingun", "flamer", "laser"]; // (they fire while the button is down; the Laser Rifle only as a Mad God Justin pickup)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
@@ -1126,6 +1128,7 @@ export const WEAPONS = [
   "grenade",
   "bow",
   ...GUNS_NEW,
+  "laser", // (not a special: only Mad God Justin's pickup, mgjrules.js)
 ]; // aimed (with the mouse), and kept out with Shift and their key
 /* the hammer's knock-back: a duck it hits is shoved KB_FAR duck lengths away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
@@ -2270,6 +2273,7 @@ function reduceStep(state, a, now) {
       )
         return state; // (full auto: the shots can come a little bunched over the network, as in Quacky Zombies)
       if (sp === "zebra" && s.zcake) return state; // (one zebra cake in the room at a time)
+      if (sp === "laser" && laserHeat(s, a.id, now).over) return state; // (Mad God Justin's Laser Rifle overheated: it can't fire until it has cooled)
       if (sp === "jaimeguard") {
         if (!guardOut(s, a.id, now)) return state; // (my Guard is still out: the key keeps its Jaime)
         s.lastUse = { ...(s.lastUse || {}), [k]: now };
@@ -2317,7 +2321,21 @@ function reduceStep(state, a, now) {
         },
       ];
       if (aim && !hit && sp === "chaingun") chainShot(s, a.id, p, aim, now);
-      else if (aim && !hit && sp === "flamer") duckFlame(s, a.id, p, aim, now);
+      else if (aim && !hit && sp === "laser" && isMgj(s)) {
+        /* Mad God Justin's Laser Rifle (picked up): the chain gun's line, red, through everything on it, 1 damage; it
+           heats up as in Dead Ducks Arcade (l4ddrules.js laserNext), its heat in s.mgj.lz */
+        chainShot(s, a.id, p, aim, now, "laser");
+        const next = laserNext(s, a.id, now);
+        s.mgj.lz = { ...(s.mgj.lz || {}), [a.id]: next.lz };
+        if (next.hot) {
+          s.fxN = (s.fxN || 0) + 1;
+          s.fx = [
+            ...(s.fx || []).slice(-19),
+            { n: s.fxN, kind: "l4hot", by: a.id, who: [], t: now },
+          ];
+        }
+      } else if (aim && !hit && sp === "flamer")
+        duckFlame(s, a.id, p, aim, now);
       else if (aim && !hit) {
         const v =
             sp === "dagger"
@@ -3827,13 +3845,13 @@ function lgrenHits(s, sh, at, now) {
 /* the chain gun's shot: at once, along the aim to the first duck (all its HP) or on past the board's edge; anything
    else on that line is hit as a bullet hits it. Every screen draws its thin yellow line (the l4line fx) */
 const CHAIN_FAR = 1.6; // (board widths: on past the board's edge)
-function chainShot(s, by, p, aim, now) {
+function chainShot(s, by, p, aim, now, w = "chaingun") {
   const hang = isHang(s),
     l = Math.hypot(aim[0], aim[1]) || 1,
     sh = {
       n: s.fxN,
       by,
-      k: "chain",
+      k: w === "laser" ? "laser" : "chain", // (the Laser Rifle's beam: 1 damage, mgjrules.js shotDmg)
       x0: p.x,
       y0: p.y,
       lx: p.x,
@@ -3885,6 +3903,7 @@ function chainShot(s, by, p, aim, now) {
       by,
       who: [],
       t: now,
+      ...(w === "laser" ? { w } : {}),
       ...(hang ? {} : { b: 1 }),
       x0: +(p.x * k[0]).toFixed(4),
       y0: +(p.y * k[1]).toFixed(4),

@@ -517,6 +517,16 @@ export const SPECIALS = [
     tip: "Gets your HP back.",
   },
   {
+    id: "laser",
+    name: "Laser Rifle",
+    kind: "item",
+    only: "mgj", // (never a duck's own special: Dead Ducks Arcade's weapon spin gives it, and Mad God Justin's pickups)
+    get icon() {
+      return GUNS.laser.icon;
+    },
+    tip: "A red beam once a second through everything in its line, as long as the button is down. Never runs out, but six in a row overheat it for 8 seconds.",
+  },
+  {
     id: "jaime",
     name: "Jaime",
     kind: "item",

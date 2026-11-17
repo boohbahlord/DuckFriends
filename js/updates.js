@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v67",
+    version: 67,
+    date: "Nov 17, 2026",
+    title: "Laser Rifle pickup",
+    news: [
+      "For Mad God Justin: The Laser Rifle can now show up as a pickup. It never runs out, but six beams in a row overheat it for 8 seconds.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v66",
     version: 66,
     date: "Nov 17, 2026",

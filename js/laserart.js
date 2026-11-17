@@ -100,7 +100,7 @@ export const LOOKS = { laser: laserGun };
    screen (ms: in and out) */
 export const BEAM = {
   color: "#ff2b2b",
-  core: "#ffd0d0",
+  core: "#ff9c9c",
   glow: "#ff3b3b",
   ms: 240,
 };

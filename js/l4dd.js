@@ -83,8 +83,8 @@ import {
   SAFE,
   safePrice,
   zombieLook,
-  laserHeat,
 } from "./l4ddrules.js";
+import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
@@ -1469,43 +1469,6 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
-/* the Laser Rifle's heat, under my duck (the owner's, Nov 17): a thin row of blocks, one for each beam before its limit
-   (5, the Angelic one's 6), lit one by one from red toward orange as it heats; overheated, the lit ones flash white,
-   the meter shakes and steams more (css/app.css .l4-heat). Shown while the Laser Rifle is in hand and warm */
-const HEAT_RED = [200, 34, 42],
-  HEAT_ORANGE = [255, 138, 31];
-function heatMeter(tag, s, me) {
-  const q = heldFn() === "laser" ? laserHeat(s, me, clockNow()) : null,
-    on = !!q && (q.h > 0.05 || q.over > 0);
-  let el = tag.querySelector(".l4-heat");
-  if (!el) {
-    if (!on) return;
-    el = document.createElement("span");
-    el.className = "l4-heat off";
-    el.setAttribute("aria-hidden", "true");
-    tag.append(el);
-  }
-  if (!on) {
-    if (!el.classList.contains("off")) el.className = "l4-heat off";
-    el._look = "";
-    return;
-  }
-  if (el._max !== q.max) {
-    el._max = q.max;
-    el.innerHTML = Array.from({ length: q.max }, (_, i) => {
-      const t = q.max > 1 ? i / (q.max - 1) : 1,
-        c = HEAT_RED.map((v, k) => Math.round(v + (HEAT_ORANGE[k] - v) * t));
-      return `<i style="--c:rgb(${c.join(",")})"></i>`;
-    }).join("");
-  }
-  const over = q.over > 0,
-    lit = Math.min(q.max, over ? Math.ceil(q.h) : Math.round(q.h)),
-    look = `${lit}${over ? " hot" : ""}${over || q.h / q.max >= 0.6 ? " steam" : ""}`;
-  if (el._look === look) return;
-  el._look = look;
-  el.className = `l4-heat${over ? " hot" : ""}${look.includes("steam") ? " steam" : ""}`;
-  el.querySelectorAll("i").forEach((b, i) => b.classList.toggle("on", i < lit));
-}
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
    scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
    owner, Nov 17: on a computer and a phone) */
@@ -2243,7 +2206,7 @@ activity({
       }
       const st = ctx.state();
       coolBar(tag, st, ctx.me);
-      heatMeter(tag, st, ctx.me);
+      laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
       peek(tag, st, ctx.me);
     }
     safeLook(ctx);
