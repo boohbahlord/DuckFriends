@@ -1180,7 +1180,19 @@ export const fullAmmo = (w) => {
 };
 /* … and as full as duck id's own is: an Angelic weapon holds more (l4ddangel.js) */
 export const fullFor = (s, id, w) =>
-  angelOf(s, id, w) ? angelAmmo(ARMS[w]) : fullAmmo(w);
+  angelOf(s, id, w) ? angelAmmo(ARMS[w], w) : fullAmmo(w);
+/* a magazine's size in kit m: the Angelic pistols' is twice the pistol's (l4ddangel.js) */
+const magIn = (m, w) =>
+  ARMS[w] && ARMS[w].mag
+    ? ARMS[w].mag *
+      (w === "handgun" &&
+      m.dg === undefined &&
+      m.ang &&
+      m.ang[w] &&
+      (m.sl || []).includes(w)
+        ? ANGEL.PISTOL.MAG
+        : 1)
+    : 0;
 function freshKit() {
   const am = {};
   for (const w of START) if (fullAmmo(w)) am[w] = fullAmmo(w);
@@ -1203,7 +1215,11 @@ export const l4Cool = (s, id, w) =>
   ARMS[w]
     ? ARMS[w].cool *
       Math.pow(0.9, upOf(s, id).as || 0) *
-      (angelOf(s, id, w) ? ANGEL.FAST : 1) // (Angelic: 20% faster, l4ddangel.js)
+      (angelOf(s, id, w)
+        ? w === "handgun"
+          ? ANGEL.PISTOL.FIRE
+          : ANGEL.FAST
+        : 1) // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js)
     : 400;
 export const reloadOf = (s, id, w, c) =>
   (ARMS[w].shell
@@ -1214,7 +1230,11 @@ export const reloadOf = (s, id, w, c) =>
       )
     : ARMS[w].reload || 1500) *
   (upOf(s, id).rl ? 0.7 : 1) *
-  (angelOf(s, id, w) ? ANGEL.RELOAD : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster)
+  (angelOf(s, id, w)
+    ? w === "handgun"
+      ? ANGEL.PISTOL.RELOAD
+      : ANGEL.RELOAD
+    : 1); // (the double barrel: a second for each shell it loads; Angelic: 20% faster, the dual pistols twice as long)
 /* crits and misses (the owner's, Nov 16 21:47Z): every gun and melee weapon crits 5% of its hits, the fast ones (those
    that fire as long as the button is down, and the burst rifle) 2.5%; each Critical Chance upgrade adds 2.5% to every
    one of them; an Angelic weapon's own chance is doubled (not the upgrades'). A hit misses ("critical failure") 2.5% of
@@ -2136,8 +2156,8 @@ function finishReload(m, now) {
     c = m.am && m.am[w];
   if (w === "dg" && m.dg !== undefined)
     m.dg = ARMS.handgun.mag; // (the down pistol: its bullets never run out)
-  else if (c && ARMS[w] && ARMS[w].mag) {
-    const k = Math.min(ARMS[w].mag - c[0], c[1]);
+  else if (c && magIn(m, w)) {
+    const k = Math.min(magIn(m, w) - c[0], c[1]);
     m.am = { ...m.am, [w]: [c[0] + k, c[1] - k] };
   }
   m.rl = 0;
@@ -2154,8 +2174,8 @@ function startReload(s, id, m, w, now) {
     return true;
   } // (the down pistol)
   const c = m.am[w];
-  if (!ARMS[w] || !ARMS[w].mag || !c || m.rl) return false;
-  if (c[0] >= ARMS[w].mag || c[1] <= 0) return false;
+  if (!magIn(m, w) || !c || m.rl) return false;
+  if (c[0] >= magIn(m, w) || c[1] <= 0) return false;
   m.rt = reloadOf(s, id, w, c);
   m.rl = now + m.rt;
   m.rw = w;
@@ -2250,8 +2270,9 @@ export function l4Use(s, a, now) {
     ax: +(dx / W).toFixed(5),
     ay: +(dy / H).toFixed(5),
   });
-  const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistol: two of them, both fire)
-    many = A.burst ? Math.min(A.burst, c[0]) : dual ? Math.min(2, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  const dual = what === "handgun" && angelOf(s, id, what), // (the Angelic pistols: they take turns, one bullet each press)
+    many = A.burst ? Math.min(A.burst, c[0]) : 1; // (the burst rifle: three rounds a press, or the rest of its clip)
+  if (dual) m.alt = (m.alt || 0) ^ 1; // (which pistol fires: the left, then the right …)
   if (kind === "grenade") m.g--;
   else if (down) {
     m.dg = c[0] - 1;
@@ -2336,17 +2357,14 @@ export function l4Use(s, a, now) {
       const out = [];
       for (let i = 0; i < many; i++)
         out.push(
-          shot(
-            k,
-            dx,
-            dy,
-            v,
-            what === "glauncher"
+          shot(k, dx, dy, v, {
+            ...(what === "glauncher"
               ? { life: (A.far / A.speed) * 1000 }
               : i
                 ? { n: n * 10 + i, t: now + i * (A.gap || 60) }
-                : {},
-          ),
+                : {}),
+            ...(dual ? { al: m.alt } : {}), // (the Angelic pistols: which one fired it, game.js' muzzle flash)
+          }),
         ); // (a burst's rounds leave one after another: each waits until its time, t)
       s.shots = [...(s.shots || []), ...out];
     }
@@ -3122,7 +3140,17 @@ export function l4Shots(s, now) {
           const head = headshot(s, sh.by, w, z, now);
           strike(s, z, z.hp, head, sh.by, w);
           die(z, T);
-          if (head) boom(s, { by: sh.by, hz: sh.hz }, z.x, z.y, zs, T, now);
+          if (head)
+            boom(
+              s,
+              { by: sh.by, hz: sh.hz },
+              z.x,
+              z.y,
+              zs,
+              T,
+              now,
+              ANGEL.PISTOL.BOOM,
+            ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z)
         } else if (
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )

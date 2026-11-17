@@ -2225,7 +2225,11 @@ function drawDucks(now = clockNow()) {
       e =
         hd &&
         hd.parentNode === fxl &&
-        (hd._ends ? hd._ends[(hd._alt = (hd._alt || 0) ^ 1)] : hd._end); // (the Angelic pistols take turns)
+        (hd._ends
+          ? hd._ends[
+              sh.al !== undefined ? +sh.al : (hd._alt = (hd._alt || 0) ^ 1)
+            ]
+          : hd._end); // (the Angelic pistols take turns: the rules say which one fired, sh.al)
     if (e) fxMuzzle(e[0], e[1], e[2], gun);
     else {
       const a0 = hang
