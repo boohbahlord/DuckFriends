@@ -2614,6 +2614,16 @@ function strike(s, z, dmg, head, by, w = "") {
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : Math.max(0, z.hp - dmg);
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
+  if (z.hp <= 0) {
+    /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record); Justin's kills are
+       the duck's that bought him his gun, as the points are */
+    const id = isWild(s, by) ? s.players[by].by : by;
+    if (id && s.players[id])
+      s.hang.l4kz = {
+        ...(s.hang.l4kz || {}),
+        [id]: ((s.hang.l4kz || {})[id] || 0) + 1,
+      };
+  }
   return z.hp <= 0;
 }
 /* the wounds a hit leaves (owner 2026-11-04 04:01Z), drawn by l4ddart.js' hitsOf: zw { i: "B3c1…" }, two letters for
@@ -3121,6 +3131,7 @@ function hurtDuck(s, p4, id, now, w = "") {
    reloads (8 to a magazine, as the pistol's), kept in its kit as dg (the bullets in the magazine); it goes when the duck
    is up again or bleeds out. Never Angelic, whatever pistol the duck has besides */
 function downGun(s, id, on) {
+  if (on && isWild(s, id) && !s.players[id].armed) return; // (Justin out there with no gun ever bought him: no down pistol either, the owner's, Nov 17 13:30Z)
   const kit = kitOf(s, id);
   if (!kit || (!on && kit.dg === undefined)) return;
   const m = { ...kit };
@@ -3185,7 +3196,12 @@ function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
   )
     return false;
   const p4 = { ...(s.hang.l4p || {}) };
-  hurtDuck(s, p4, id, now, w);
+  if (hurtDuck(s, p4, id, now, w) && s.players[by] && !s.players[by].bot) {
+    /* a player knocked Justin down: a Justin kill for that player (unlocks.js watchKills), the same numbers rules.js
+       justinKilled writes; the owner's, Nov 17 13:30Z */
+    s.jkN = (s.jkN || 0) + 1;
+    s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+  }
   s.hang.l4p = p4;
   return true;
 }
@@ -4248,5 +4264,5 @@ export const l4Dying = (s, id, now) => {
 };
 export const l4Down = (s, id) => {
   const p = P4(s, id);
-  return p && p.dn ? p.dn : 0;
+  return p && p.dn && !p.ex ? p.dn : 0; // (Justin dead for good: no down meter, the owner's, Nov 17 13:30Z)
 };

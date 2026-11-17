@@ -5786,6 +5786,21 @@ html.map-on .game .bbar {
 } /* room for the window's X */
 
 /* ---------- voting: the button wears the color of your column; End turn wears your theme; the board breathes ---------- */
+/* hold to vote: a stripe fills across the button while it is held (js/game.js holdStart) */
+.vote-btn,
+[data-a="hang"] {
+  position: relative;
+  overflow: hidden;
+}
+.holding::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #ffffff55;
+  transform-origin: left;
+  transform: scaleX(var(--hold, 0));
+  pointer-events: none;
+}
 .vote-btn {
   background: var(--panel2);
   color: var(--ink);

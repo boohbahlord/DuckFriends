@@ -18,6 +18,7 @@ export const SETTINGS_DEFAULT = {
   clickUse: false,
   multipleChoice: false,
   touch: "stick",
+  holdVote: "500", // ms a Vote button (and a phone's use button) is held before it acts; 0 = at once (the owner's, Nov 17)
   jumpsSci: false,
   jumpsHidden: false,
   chatSide: "left",
@@ -106,6 +107,7 @@ export function cleanStats(o) {
       titles: n(x.titles),
       argued: n(x.argued),
       gave: n(x.gave),
+      kills: n(x.kills), // (Dead Ducks Arcade: zombies killed)
     };
   }
   return out;
