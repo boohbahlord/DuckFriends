@@ -612,13 +612,25 @@ export const SHOP = [
    Everything he sells is 20% dearer, the ammo too (the owner's, Nov 4): bullets 6 for 2, arrows 6 for 5, the knife 120 */
 const SHOP_MORE = 1.2;
 export const GUN_SHOP = ["handgun", "revolver", "knife", "shotgun", "bow"];
-export const AMMO_PRICE = { bow: [6, 5], gun: [6, 2] }; // (points, for how many: arrows; every other gun's bullets)
+/* (points, for how many: arrows; every other gun's bullets. In fives, the smallest unit of money (the owner's, Nov 17
+   19:11Z): bullets 15 for 5 cost what 6 for 2 did, arrows 5 for 4 is the nearest to 6 for 5) */
+export const AMMO_PRICE = { bow: [5, 4], gun: [15, 5] };
 const KNIFE_PRICE = 120;
 const ammoLeft = (c) => (c ? c[0] + c[1] : 0);
+/* (5 points is the smallest unit of money, for everything: the owner's, Nov 17 19:11Z, "every point earned is supposed
+   to be 5 at the lowest". So what ammo costs, 6 for 2, rounds up to the next 5 for the whole buy) */
 const ammoCost = (w, n) => {
   const [p, k] = AMMO_PRICE[w] || AMMO_PRICE.gun;
-  return Math.ceil(n / k) * p;
+  return fives(Math.ceil(n / k) * p, 1);
 };
+/* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest */
+export const fives = (n, dir = 0) =>
+  5 *
+  (dir > 0
+    ? Math.ceil(n / 5)
+    : dir < 0
+      ? Math.floor(n / 5)
+      : Math.round(n / 5));
 /* what gun w costs to buy when I haven't got it */
 export const buyPrice = (w) => {
   const full = fullAmmo(w);
@@ -642,7 +654,7 @@ export const priceOf = (id, n) =>
     ? ACC_PRICE
     : id === "qr"
       ? QR_PRICE
-      : Math.round(
+      : fives(
           UP_TIMES *
             SHOP_MORE *
             {
@@ -662,13 +674,13 @@ const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's,
    once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
 export const safePrice = (s) =>
-  saleOn(s) ? Math.ceil(SAFE.PRICE / 2) : SAFE.PRICE; // (a Sale halves it, every time)
+  saleOn(s) ? fives(SAFE.PRICE / 2, 1) : SAFE.PRICE; // (a Sale halves it, every time; in fives)
 export const saleOn = (s) => !!(s && s.hang && s.hang.l4sale); // (for DROP.FOR: dropTick ends it)
 export const priceFor = (s, id, what, n) => {
   const full = what === "box" ? BOX.price : priceOf(what, n);
   if (!saleOn(s)) return full;
   const used = (s.hang.l4sale.used || {})[id] || {};
-  return what !== "box" && used[what] ? full : Math.ceil(full / 2);
+  return what !== "box" && used[what] ? full : fives(full / 2, 1); // (half, in fives)
 };
 /* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
    the fireplace's front, where E spins it */
@@ -1421,6 +1433,7 @@ function addPts(s, id, n) {
     if (n > 0) s.hang.l4jp = (s.hang.l4jp || 0) + n; // (Justin's points go in the pot for everyone: potSplit)
     return;
   }
+  n = fives(n); // (never anything but fives, whatever adds them: the owner's, Nov 17 19:11Z)
   if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
