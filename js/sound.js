@@ -52,6 +52,8 @@ export const VOL = {
   handgun: -6,
   revolver: -7,
   smg: -7,
+  tommy: -8, // (the Tommy gun)
+  ump: -7, // (the UMP-45: heavier)
   ak: -9,
   lmg: -8,
   chaingun: -9,
@@ -113,9 +115,14 @@ export const VOL = {
   // explosions: one boom for every explosive (the Jaime Bomb plays it louder: SFX.boomBig); the meteor and the nuke
   // are their own, longer and the loudest of all ("more catastrophic", the owner, Nov 16)
   boom: -7,
+  boomSmall: -10, // (the Angelic pistol's blast: the boom made a little weaker, the owner, Nov 17)
   meteor: -3,
   nuke: -2,
   nukeRing: -22, // (the ears ringing, under the nuke's roar)
+  // the laser gun: its beam (one a second), the hiss as it overheats, and a light steam off its hot barrel (SFX.steam)
+  laser: -10,
+  laserHiss: -12,
+  laserSteam: -24,
   // the menus: faint
   uiPress: -13,
   uiOn: -23,
@@ -174,7 +181,17 @@ const ALIAS = { gunshot: "handgun" };
 export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
   CAP = {
-    ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3, burst: 4 },
+    ...{
+      step: 3,
+      zstep: 3,
+      chaingun: 4,
+      smg: 4,
+      tommy: 4,
+      ump: 3,
+      lmg: 4,
+      ak: 3,
+      burst: 4,
+    },
     ...{ flameLoop: 3, fire: 3 },
     ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
     ...{ l4crack: 3, l4nail: 3, card: 3 },
@@ -194,13 +211,15 @@ const GROUPS = {
   ],
   game: [
     ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
+    ...["tommy", "ump"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
     ...["fire", "fireLight", "trombone"],
     ...["jetStart", "jetLoop", "jetStop", "chomp", "sip"],
     ...["knife", "hammer", "chair", "throw", "cakeThrow", "bonk"],
     ...["axe", "sword", "pan", "axeHit", "swordHit", "panHit"],
-    ...["boom", "meteor", "tileIn", "quack"],
+    ...["boom", "boomSmall", "meteor", "tileIn", "quack"],
+    ...["laser", "laserHiss", "laserSteam"],
     ...Object.keys(VOL).filter((n) => /^(reload|hit|land)[A-Z]/.test(n)),
   ],
   l4dd: [
@@ -427,6 +446,7 @@ export function hush(v) {
 /* a sound on a loop, faded in and out (the jetpack's roar) */
 export function loop(name, o = {}) {
   const v = voice(name, o, true);
+  let at = o; // where it is now (move)
   return {
     stop() {
       if (v && !v.cut && ac) {
@@ -441,8 +461,25 @@ export function loop(name, o = {}) {
         v.cut = true;
       }
     },
+    /* louder or quieter (k, as play's), glided from wherever it is */
+    set(k) {
+      if (!v || v.cut || !ac) return;
+      const t = soon(),
+        g = v.g.gain;
+      if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
+      else {
+        g.cancelScheduledValues(t);
+        g.setValueAtTime(g.value, t);
+      }
+      v.k = k * near(o) * 10 ** ((VOL[name] || 0) / 20); // (as at its start, where move measures from)
+      g.linearRampToValueAtTime(
+        (v.k * near(at)) / Math.max(1e-6, near(o)),
+        t + 0.15,
+      );
+    },
     move(x, y) {
       if (!v || v.cut || !ac) return;
+      at = { x, y };
       const t = soon(),
         g = v.g.gain;
       g.cancelScheduledValues(t);
@@ -511,6 +548,35 @@ function fire(o = {}) {
 export function jetsOff() {
   for (const id of [...jets.keys()]) jet(id, false);
   for (const id of [...flames.keys()]) flameOut(id);
+  for (const id of [...steams.keys()]) steam(id, 0);
+}
+
+/* the laser gun's steam, each duck's own: the game tells me how hot its barrel is (heat: 0 cold to 1 at its limit, more
+   once it has overheated) and whether it's raining (o.rain: the steam is louder, the owner: "steams up in sound and
+   visual effect MORE when it is in the rain"); cold, the steam fades away */
+const steams = new Map(); // id → its loop
+function steam(id, heat, o = {}) {
+  const l = steams.get(id),
+    k = Math.min(1.5, heat || 0) * (o.rain ? 2 : 1) * (o.k ?? 1);
+  if (k < 0.05) {
+    if (l) {
+      l.stop();
+      steams.delete(id);
+    }
+    return;
+  }
+  if (!l) steams.set(id, Object.assign(loop("laserSteam", { ...o, k }), { k }));
+  else {
+    // told every frame: I only glide to a new level once it has really changed, so the gain isn't re-ramped 60 times a second
+    if (Math.abs(k - l.k) > 0.08 * l.k) {
+      l.set(k);
+      l.k = k;
+    }
+    if (o.x != null && (o.x !== l.x || o.y !== l.y)) {
+      l.move(o.x, o.y);
+      [l.x, l.y] = [o.x, o.y];
+    }
+  }
 }
 
 /* the weapons in hand, with a magazine: each its own reload, its file as long as the reload in the game (s: tools/sfx/
@@ -541,6 +607,8 @@ const RELOAD = {
   handgun: "reloadHandgun",
   revolver: "reloadRevolver",
   smg: "reloadSmg",
+  tommy: "reloadSmg", // (the Tommy gun and the UMP-45: the SMG's reload, for now)
+  ump: "reloadSmg",
   ak: "reloadAk",
   lmg: "reloadLmg",
   chaingun: "reloadChaingun",
@@ -641,6 +709,7 @@ const SFX = {
     return play("nuke", o);
   },
   boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
+  steam,
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)
 };

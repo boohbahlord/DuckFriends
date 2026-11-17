@@ -179,8 +179,10 @@ import {
   GRENADE,
   GRENADE_PIN,
   dualPistolHTML,
+  DUAL,
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
+import { heatUp, heatDraw } from "./barrelheat.js";
 import {
   isL4dd,
   dodging,
@@ -2137,6 +2139,21 @@ function drawDucks(now = clockNow()) {
       rot,
     ];
     h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: Mad God Justin's laser sight)
+    if (h.classList.contains("dual")) {
+      /* the Angelic pistols: each one's muzzle on the board, for its own laser sight and its own flash (specials.js
+         DUAL; the picture's middle is the drawing's middle) */
+      const k = (ds * DUAL.w) / DUAL.box[0],
+        at = ([px, py]) => {
+          const a = reach + (px - DUAL.box[0] / 2) * k,
+            b = (py - DUAL.box[1] / 2) * k * (left ? -1 : 1);
+          return [
+            hx + Math.cos(rot) * a - Math.sin(rot) * b,
+            hy + Math.sin(rot) * a + Math.cos(rot) * b,
+            rot,
+          ];
+        };
+      h._ends = [at(DUAL.near), at(DUAL.far)];
+    } else h._ends = null;
     if (h._tr !== tr) {
       h._tr = tr;
       h.style.transform = tr;
@@ -2176,7 +2193,10 @@ function drawDucks(now = clockNow()) {
     if (!MUZZLE[gun] || went.has(sh.by + "/" + sh.t)) continue;
     went.add(sh.by + "/" + sh.t);
     const hd = heldAll.get(sh.by),
-      e = hd && hd.parentNode === fxl && hd._end;
+      e =
+        hd &&
+        hd.parentNode === fxl &&
+        (hd._ends ? hd._ends[(hd._alt = (hd._alt || 0) ^ 1)] : hd._end); // (the Angelic pistols take turns)
     if (e) fxMuzzle(e[0], e[1], e[2], gun);
     else {
       const a0 = hang
@@ -2185,6 +2205,7 @@ function drawDucks(now = clockNow()) {
       fxMuzzle(a0.left, a0.top - size * 0.45, Math.atan2(sh.vy, sh.vx), gun);
     }
     kick(sh.by, gun, now);
+    heatUp(sh.by, gun); // (the LMG's barrel heats up as it keeps firing: barrelheat.js)
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
   }
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
@@ -2196,7 +2217,8 @@ function drawDucks(now = clockNow()) {
       const hd = heldAll.get(id),
         e = hd && hd.parentNode === fxl && hd._end,
         end = e && laserEnd(id);
-      if (end) lz.push([e[0], e[1], end[0], end[1]]);
+      if (end)
+        for (const m of hd._ends || [e]) lz.push([m[0], m[1], end[0], end[1]]); // (the Angelic pistols: two sights, meeting where it aims, the owner's Nov 17)
     }
   /* Mad God Justin: the same laser sights (the owner's, Nov 16), with no flashlight to end in: on through where it aims
      (my mouse) to the board's edge */
@@ -2217,6 +2239,7 @@ function drawDucks(now = clockNow()) {
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
   fxLasers(lz);
+  heatDraw(heldAll, fxl, size);
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
@@ -3097,9 +3120,9 @@ function playFx(f) {
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1, true);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
-    (f.wide > 1 ? sfx.boomBig : sfx.boom)(
+    (f.wide > 1 ? sfx.boomBig : f.wide < 1 ? sfx.boomSmall : sfx.boom)(
       geo.hang ? { x: f.x * HW, y: f.y * HH } : {},
-    ); // (the Jaime Bomb's: its own, bigger)
+    ); // (the Jaime Bomb's: its own, bigger; a smaller blast, as the Angelic pistol's, its own, weaker)
     if (geo.hang)
       for (const [x, y] of f.gore || []) {
         const z = world.place({ x: x / HW, y: y / HH }, 0);
@@ -3435,6 +3458,7 @@ function playFx(f) {
     line(0, far, 0);
     fxMuzzle(x0, y0, ang, "chaingun");
     kick(f.by, "chaingun", now);
+    heatUp(f.by, "chaingun"); // (and the chain gun's)
     if (f.by === R.me) {
       shake(MUZZLE.chaingun.shake);
       recoil = {

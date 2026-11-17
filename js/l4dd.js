@@ -41,7 +41,7 @@ import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import { inShallow, inDeep, WADE } from "./hangout/stationmap.js";
-import { floatDuck, SINK, SLOW as SWIM } from "./hangout/water.js";
+import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
 import {
   L4,
@@ -58,6 +58,7 @@ import {
   ptsOf,
   slotsOf,
   BUTLER,
+  SLOT_KINDS,
   BOX,
   POOL,
   boxNow,
@@ -114,7 +115,8 @@ import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { confirmBox } from "./ui.js";
-import { angelOf } from "./l4ddangel.js";
+import { angelOf, ANGEL } from "./l4ddangel.js";
+import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
@@ -569,6 +571,39 @@ function seeDrops(s) {
     D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
   }
 }
+/* between rounds (every zombie dead, before the ducks are ready), a thin yellow square on the ground round the fireplace or
+   Downpour's car: stand inside it to spin for a weapon (the owner, Nov 17) */
+let sqEl = null,
+  sqSig = "";
+function spinSquare(s, ctx) {
+  const L = s.hang.l4,
+    Wd = ctx.world,
+    show = !!(
+      sqEl &&
+      L &&
+      !L.over &&
+      L.wait &&
+      seenFrom(BOX.x, BOX.y, Wd.inside)
+    );
+  if (!sqEl) return;
+  if (sqEl.hidden === show) sqEl.hidden = !show;
+  if (!show) return;
+  const z = heightAt(BOX.x, BOX.y),
+    pts = [
+      [-1, -1],
+      [1, -1],
+      [1, 1],
+      [-1, 1],
+    ].map(([a, b]) => {
+      const p = Wd.toScreen(BOX.x + a * NEAR, BOX.y + b * NEAR, z);
+      return p.left.toFixed(1) + "," + p.top.toFixed(1);
+    }),
+    sig = pts.join(" ") + Wd.sc.toFixed(3);
+  if (sig === sqSig) return;
+  sqSig = sig;
+  sqEl.firstChild.setAttribute("points", pts.join(" "));
+  sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
+}
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
    top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
    on, a soft blood-crimson glow breathes over the board; while Sale is, the Butler and the fireplace breathe gold */
@@ -932,6 +967,20 @@ function paint(now, ctx) {
     if (boxNow(s, clockNow()) && seenFrom(BOX.sx, BOX.sy, Wd.inside)) {
       const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
+    }
+  }
+  /* the Angel machine and the power box glow (css: crimson and electric yellow, the owner's Nov 17), so a soft light
+     breathes round each of them in the dark too */
+  {
+    const br = 0.5 + 0.5 * Math.sin((performance.now() / 2600) * 2 * Math.PI);
+    for (const [x, y, z, r] of [
+      [ANGEL.X, ANGEL.Y, ANGEL.Z + 70, 90],
+      [PW.X, PW.Y, heightAt(PW.X, PW.Y) + 70, 80],
+    ]) {
+      if (!seenFrom(x, y, Wd.inside)) continue;
+      const p = Wd.toScreen(x, y, z);
+      if (on(p.left * q, p.top * q, r * sc))
+        holes.push([p.left * q, p.top * q, r * sc, 0.32 + 0.16 * br]);
     }
   }
   /* the drops glow on the floor */
@@ -1375,8 +1424,9 @@ export function l4SafeHint() {
 }
 
 /* ---------- under my duck's sprint bar (the owner's, Nov 16) ----------
-   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, or an
-   item's 0.75 s: the longest one when two run at once); hidden when none is. And under it, when I switch slots, a
+   A second, white bar: the cooldown running now, shrinking as it runs out (a reload, the melee weapon's swing, a
+   shotgun's or a sniper's wait between shots (the owner's, Nov 17), or an item's 0.75 s: the longest one when two run
+   at once); hidden when none is. And under it, when I switch slots, a
    tiny grey row of what's in my slots, the one in hand bright, that slides in and quickly fades */
 function coolBar(tag, s, me) {
   const m = kitOf(s, me),
@@ -1390,7 +1440,11 @@ function coolBar(tag, s, me) {
     }
     for (const [w, t] of Object.entries(m.u || {})) {
       const k = kindOf(w);
-      if (k === "ranged" || !ARMS[w]) continue; // (a gun's wait between shots isn't one: too quick to show)
+      if (
+        !ARMS[w] ||
+        (k === "ranged" && (ARMS[w].auto || l4Cool(s, me, w) < 300))
+      )
+        continue; // (a fast gun's wait between shots is too quick to show; a shotgun's or a sniper's shows, the owner's Nov 17)
       const c = l4Cool(s, me, w),
         l = t + c - now;
       if (l > left) {
@@ -1414,12 +1468,16 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
+/* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
+   scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
+   owner, Nov 17: on a computer and a phone) */
 let peekW = null;
 function peek(tag, s, me) {
   const m = kitOf(s, me),
     w = heldFn() || "";
   if (!m || w === peekW) return;
-  const first = peekW === null;
+  const first = peekW === null,
+    was = peekW;
   peekW = w;
   if (first) return; // (not when the game starts: only a switch)
   let el = tag.querySelector(".l4-peek");
@@ -1427,12 +1485,38 @@ function peek(tag, s, me) {
     el = document.createElement("span");
     el.className = "l4-peek";
     el.setAttribute("aria-hidden", "true");
+    el.innerHTML =
+      '<span class="sp-slide"><span class="sp-track"></span></span>';
     tag.append(el);
   }
-  el.innerHTML = [...m.sl.filter(Boolean), m.g > 0 ? "grenade" : ""]
-    .filter(Boolean)
-    .map((x) => `<i${x === w ? ' class="on"' : ""}>${weaponIcon(x)}</i>`)
+  const list = [
+    ...m.sl.map((x, i) => (x ? [x, `k-${SLOT_KINDS[i]}`] : null)),
+    m.g > 0 ? ["grenade", "k-grenade"] : null,
+  ].filter(Boolean);
+  const to = Math.max(
+      0,
+      list.findIndex(([x]) => x === w),
+    ),
+    from = list.findIndex(([x]) => x === was),
+    track = el.querySelector(".sp-track");
+  track.innerHTML = list
+    .map(
+      ([x, cls]) =>
+        `<span class="sp-slot ${cls}"><i>${angelOf(s, me, x) ? angelic(weaponIcon(x)) : weaponIcon(x)}</i></span>`,
+    )
     .join("");
+  const lay = (at) =>
+    track.querySelectorAll(".sp-slot").forEach((b, j) => {
+      const a = Math.abs(j - at);
+      b.style.transform = `translateX(calc(var(--step) * ${j - at})) scale(${(1 + 0.32 * Math.max(0, 1 - a)).toFixed(3)})`;
+      b.style.opacity = a > 1.6 ? 0 : 1;
+      b.classList.toggle("mid", a < 0.5);
+    });
+  track.classList.add("sliding"); // (at the old slot at once, then it scrolls)
+  lay(from < 0 ? to : from);
+  void track.offsetWidth;
+  track.classList.remove("sliding");
+  lay(to);
   el.classList.remove("go");
   void el.offsetWidth;
   el.classList.add("go");
@@ -1611,7 +1695,7 @@ function holdTarget(pos, ctx) {
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
   const now = clockNow(),
-    db = Math.hypot(BOX.x - pos.x, BOX.y - pos.y);
+    db = Math.max(Math.abs(BOX.x - pos.x), Math.abs(BOX.y - pos.y)); // (a square, as its yellow line shows it: spinSquare)
   if (db < NEAR) {
     const b = boxNow(s, now, me); // (my own spin: anyone else's doesn't stop me)
     if (!b) return { kind: "box", d: db };
@@ -1779,6 +1863,13 @@ activity({
     mudMount(ctx.world.board); // (and a mud zombie's mud on my screen: l4ddmud.js)
     pwMount(ctx, layer);
     angelMount(ctx, layer);
+    sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    sqEl.classList.add("l4-spinsq");
+    sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
+    sqEl.innerHTML = "<polygon/>";
+    sqEl.hidden = true;
+    sqSig = "";
+    layer.append(sqEl);
     shop = shopEl(ctx);
     butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -1837,8 +1928,10 @@ activity({
       butler && butler.el,
       egg && egg.el,
       shop && shop.el,
+      sqEl,
     ])
       e?.remove();
+    sqEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
@@ -1855,6 +1948,7 @@ activity({
     angelSee(s);
     ctx.world.board.classList.toggle("blackout", !powerOn(s)); // (the balcony's bulbs and the stage's lights: off till the power's on)
     seeOn(s, ctx);
+    spinSquare(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
@@ -1934,11 +2028,16 @@ activity({
       o.sx = f.left;
       o.sy = f.top;
       o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
-      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js) */
+      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js);
+         one wading the shallow flood, its bottom fifth under it */
       const dip =
-        dp() && o.st !== 3 && inDeep(o.x, o.y)
-          ? SINK + Math.sin(t / 520 + o.i) * 2.2
-          : 0;
+        !dp() || o.st === 3
+          ? 0
+          : inDeep(o.x, o.y)
+            ? SINK + Math.sin(t / 520 + o.i) * 2.2
+            : inShallow(o.x, o.y) && o.st !== 5
+              ? WADE_SINK * o.feet
+              : 0;
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
@@ -1966,17 +2065,20 @@ activity({
         o.el.style.zIndex = zi;
       }
     }
-    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool (water.js) */
+    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool; one in the
+       shallow flood wades, its bottom fifth under it (water.js) */
     if (dp())
       for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
         const id = d.dataset.pid,
-          a = id && Wd.at(id);
+          a = id && Wd.at(id),
+          wet = !!a && a.z <= heightAt(a.x, a.y) + 4;
         floatDuck(
           d,
-          !!a && inDeep(a.x, a.y) && a.z <= heightAt(a.x, a.y) + 4,
+          wet && inDeep(a.x, a.y),
           id ? (id.charCodeAt(0) + id.length * 7.3) % 6.28 : 0,
           now,
           sc,
+          wet && inShallow(a.x, a.y),
         );
       }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
@@ -2052,6 +2154,7 @@ activity({
       }
     }
     seeOn(ctx.state(), ctx);
+    spinSquare(ctx.state(), ctx);
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),

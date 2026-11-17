@@ -9,6 +9,34 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v64",
+    version: 64,
+    date: "Nov 17, 2026",
+    title: "Glows and meters",
+    news: [
+      "For Dead Ducks Arcade: Angelic weapons glow softly and breathe, with a see-through halo.",
+      "For Dead Ducks Arcade: the Angelic pistols sit further apart, each with its own laser sight meeting where you aim.",
+      "For Dead Ducks Arcade: between rounds, a yellow square shows where you can spin for a weapon.",
+      "For Dead Ducks Arcade: the Angel machine glows red, the generator electric yellow, and the Butler and Priest gold.",
+      "For Dead Ducks Arcade: the LMG's and chain gun's barrels glow hotter the longer they fire.",
+      "For Dead Ducks Arcade: a thin cooldown bar under your HP shows reloads and the wait between shotgun and sniper shots.",
+      "For Dead Ducks Arcade: switching weapons shows a small slider under your duck.",
+    ],
+    fixed: [],
+  },
+  {
+    id: "v63",
+    version: 63,
+    date: "Nov 17, 2026",
+    title: "The missing boom, and Downpour's flood",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, the flood covers the whole road, the ground slopes down into it, and ducks wading it sink a little.",
+    ],
+    fixed: [
+      "For Mad God Justin: the Angelic pistol's weaker boom and the laser gun's sounds, promised in Version 62, are really in the game now.",
+    ],
+  },
+  {
     id: "v62",
     version: 62,
     date: "Nov 17, 2026",

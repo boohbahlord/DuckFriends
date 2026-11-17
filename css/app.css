@@ -12173,9 +12173,13 @@ html.moving .hp.hang-shimmer {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-.gduck.hang-swim .hang-wl {
+.gduck.hang-swim .hang-wl,
+.gduck.hang-wade .hang-wl {
   display: block;
 }
+.gduck.hang-wade .gduck-shadow {
+  display: none;
+} /* (Downpour's shallow flood: wading, its bottom fifth under the water) */
 .hang-wl svg {
   display: block;
   width: 100%;
@@ -14884,7 +14888,7 @@ html.still:not(.low) .l4z.dead.nuked {
   position: absolute;
   left: 8%;
   right: 8%;
-  top: calc(100% + 0.16rem);
+  top: calc(100% + 0.34rem); /* (under the cooldown) */
   height: 0.2rem;
   border-radius: 1rem;
   background: #0008;
@@ -14904,13 +14908,14 @@ html.still:not(.low) .l4z.dead.nuked {
 .l4-sprint.tired i {
   background: #24418c;
 }
-/* the cooldown running now, white, under the sprint bar (l4dd.js coolBar: the owner's, Nov 16) */
+/* the cooldown running now, white, very thin, right under the HP in my name tag (l4dd.js coolBar: the owner's, Nov 16;
+   moved up under the HP, the owner's Nov 17) */
 .l4-cool {
   position: absolute;
   left: 8%;
   right: 8%;
-  top: calc(100% + 0.48rem);
-  height: 0.16rem;
+  top: calc(100% + 0.1rem);
+  height: 0.12rem;
   border-radius: 1rem;
   background: #0008;
   overflow: hidden;
@@ -14926,48 +14931,54 @@ html.still:not(.low) .l4z.dead.nuked {
   transform-origin: 0 50%;
   transform: scaleX(var(--cl, 0));
 }
-/* a slot switch: a tiny grey row of my slots under my bars, the one in hand bright (l4dd.js peek) */
+/* a slot switch: a small box under my duck, the phone's slider in little (l4dd.js peek): it scrolls to the slot in
+   hand, then fades out quickly */
 .l4-peek {
+  --step: 1.2rem;
+  --slot: 0.95rem;
   position: absolute;
   left: 50%;
-  top: calc(100% + 0.8rem);
-  display: flex;
-  gap: 0.15rem;
+  top: calc(100% + 0.7rem);
+  padding: 0.1rem 0.15rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+  border: 0.08rem solid color-mix(in srgb, var(--line) 70%, transparent);
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%);
 }
-.l4-peek i {
+.l4-peek .sp-slide {
   display: block;
-  width: 0.95rem;
-  height: 0.95rem;
-  filter: grayscale(1) brightness(0.8);
-  opacity: 0.55;
+  touch-action: auto;
 }
-.l4-peek i.on {
-  filter: grayscale(1) brightness(1.5);
-  opacity: 1;
+.l4-peek .sp-track,
+.l4-peek .sp-slot {
+  display: grid;
 }
-.l4-peek i svg {
-  width: 100%;
-  height: 100%;
+.l4-peek .sp-slot {
+  border-width: 0.08rem;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  transition:
+    transform 0.16s ease-out,
+    opacity 0.16s ease-out;
+}
+.l4-peek .sp-slot i {
+  font-size: 0.6rem;
 }
 .l4-peek.go {
-  animation: l4-peek 1.1s ease-out forwards;
+  animation: l4-peek 0.8s ease-out forwards;
 }
 @keyframes l4-peek {
   0% {
     opacity: 0;
-    transform: translate(-50%, -0.35rem);
   }
-  15%,
+  10%,
   55% {
     opacity: 1;
-    transform: translate(-50%, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, 0.25rem);
   }
 }
 /* the points I just got, small, over my own duck (l4dd.js seePts); Double Points: glowing yellow, bigger */
@@ -15793,9 +15804,9 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   border: 2px solid #ffd86a;
   box-shadow: 0 0 0 1px #c99a2e;
 }
-/* the Angelic pistol: two in the hand, half a duck wide (one is 0.34) */
+/* the Angelic pistol: two in the hand, a little over half a duck wide (one is 0.34; specials.js DUAL.w) */
 .held.dual i {
-  width: calc(var(--s) * 0.5);
+  width: calc(var(--s) * 0.56);
 }
 .l4-pk {
   position: absolute;
@@ -18530,4 +18541,97 @@ html.phone-land .front-btns {
 html.phone-land .front-btns .btn.big {
   padding-top: 0.4rem;
   padding-bottom: 0.4rem;
+}
+
+/* ---------- an Angelic weapon's glow breathes (the owner, Nov 17) ----------
+   Its picture keeps only a small crimson glow (powerart.js angelic); round it a soft crimson light comes and goes, slowly */
+html.moving svg.angelic {
+  animation: ang-breathe 2.6s ease-in-out infinite;
+}
+@keyframes ang-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.04rem #b0102a00);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.14rem #d0203acc);
+  }
+}
+
+/* ---------- Dead Ducks Arcade's glows (the owner, Nov 17) ---------- */
+/* between rounds: the thin yellow square round the fireplace or Downpour's car, where E spins for a weapon (l4dd.js) */
+.l4-spinsq {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  z-index: 3; /* (on the floor, under the ducks) */
+  pointer-events: none;
+}
+.l4-spinsq polygon {
+  fill: #ffd23f14;
+  stroke: #ffd23f;
+  stroke-width: calc(2.4px * var(--k, 1));
+  stroke-linejoin: round;
+}
+/* the Angel machine breathes a soft crimson, as the Angelic weapons do; the generator (the power box, and Downpour's)
+   an electric yellow; the Butler and the Priest a soft golden metal */
+html.moving .l4-board .l4-am img {
+  animation: l4-glow-am 2.6s ease-in-out infinite;
+}
+@keyframes l4-glow-am {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 calc(4px * var(--k, 1)) #c0182e99);
+  }
+  50% {
+    filter: drop-shadow(0 0 calc(12px * var(--k, 1)) #e0283eee)
+      drop-shadow(0 0 calc(3px * var(--k, 1)) #ff6a7acc);
+  }
+}
+html.moving .l4-board .l4-pw img,
+html.moving .l4-board .hp-generator {
+  animation: l4-glow-gen 2.2s ease-in-out infinite;
+}
+@keyframes l4-glow-gen {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 calc(4px * var(--k, 1)) #ffe03a99);
+  }
+  50% {
+    filter: drop-shadow(0 0 calc(11px * var(--k, 1)) #fff27aee)
+      drop-shadow(0 0 calc(3px * var(--k, 1)) #fffbe0cc);
+  }
+}
+html.moving .l4-board .l4-butler:not(.l4-sale) {
+  animation: l4-glow-gold 3s ease-in-out infinite;
+}
+@keyframes l4-glow-gold {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0.15rem #e8c35a99);
+  }
+  50% {
+    filter: drop-shadow(0 0 0.45rem #f2d27aee) drop-shadow(0 0 0.1rem #fff3c2cc);
+  }
+}
+/* a hot barrel's end: a soft round glow, its color and size from how hot (barrelheat.js) */
+.barrel-heat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: radial-gradient(
+    circle,
+    #fff3d0 0%,
+    var(--c) 30%,
+    color-mix(in srgb, var(--c) 40%, transparent) 60%,
+    transparent 72%
+  );
+  z-index: 7;
+  pointer-events: none;
 }
