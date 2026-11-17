@@ -423,7 +423,10 @@ const GS_DRAW = {
       p.w,
       p.d + 40,
       p.key,
-      { fade: true },
+      {
+        fade: true,
+        hit: { l: p.x, t: p.y - p.z, r: p.x + p.w, b: p.y + p.d }, // (see-through while anyone is under it, so the pumps and the shop's front show)
+      },
     ),
   ],
   fallen: (p) => {
