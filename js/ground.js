@@ -8,7 +8,8 @@
                           height); on a board (no world) it's always wood
      stepOf(ground)     → the sound for one step there (feet.js, l4ddsfx.js)
 
-   This is my own reading of each map until the map's builder gives its floors (then floorAt here asks it first). */
+   Downpour's roofs and canopy come from the map's own floors (layout.js floorAt); the rest is my own reading of each
+   map. A map that gives all its floors can take over with setFloor. */
 import * as L from "./hangout/layout.js";
 
 const GS = L.GS;
@@ -22,15 +23,17 @@ export function groundAt(x, y, z = 0) {
   if (own) return own;
   const v = L.layoutVariant();
   if (v === "l4gs") {
-    // Downpour: the flood (deep at the road's west end, shallow over the rest), the buildings, roofs and cars' tops,
-    // and grass everywhere else
-    const up = z - GS.groundAt(x, y) > HIGH;
+    // Downpour: the roofs and the pumps' canopy (the map's own floors: layout.js floorAt), the flood (deep at the
+    // road's west end, shallow over the rest), the buildings, cars' tops, and grass everywhere else
+    if (L.floorAt(x, y, z).kind !== "ground") return "metal";
+    const up = z - GS.groundAt(x, y) > HIGH; // (up on a car)
     if (!up && GS.inDeep(x, y)) return "deep";
     if (!up && GS.inShallow(x, y)) return "water";
     if (up) return "metal";
     const b = GS.buildingAt(x, y);
     if (b === 1) return "hard"; // (the gas station's tiles)
     if (b === 2) return "wood"; // (the chapel's floor)
+    if ((L.deckOver(x, y, z) || {}).kind === "canopy") return "hard"; // (the pumps' concrete)
     return "grass"; // (the road's banks too: the flood covers the rest of it)
   }
   // Duck Cabin (Hangout's and Quacky Zombies'): the pool, the cabin, the deck and the stage, then the ground outside
