@@ -6966,6 +6966,22 @@ html.still .spx-disco .disco-spot {
    so the page doesn't paint it again every frame */
 .bullet,
 .thrown,
+/* a gun being reloaded (game.js): it dips and bobs as the magazine goes in */
+.held.reload svg {
+  animation: held-reload 0.5s ease-in-out infinite;
+}
+@keyframes held-reload {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  45% {
+    transform: rotate(32deg) translateY(12%);
+  }
+  70% {
+    transform: rotate(-8deg) translateY(-4%);
+  }
+}
 .held {
   will-change: transform;
 }

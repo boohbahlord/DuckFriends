@@ -2124,6 +2124,14 @@ function drawDucks(now = clockNow()) {
       fxl.append(h);
       heldEls.set(id, h);
     }
+    /* a gun being reloaded dips and bobs in its duck's hands (Dead Ducks Arcade: its reload runs in its kit; Justin out
+       in Downpour too) */
+    const rk = isL4dd(s) && kitOf(s, id),
+      reloading = !!(rk && rk.rl > now && rk.rw === w);
+    if (h._rl !== reloading) {
+      h._rl = reloading;
+      h.classList.toggle("reload", reloading);
+    }
     /* the knife jabs out and back; the hammer rests over the shoulder, then swings from behind the head down through the
        aim. Turned toward the aim, its offsets mirror for a duck facing left, so the swing always goes over the top */
     const left = Math.cos(ang) < 0,
