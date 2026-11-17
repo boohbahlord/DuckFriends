@@ -7428,6 +7428,7 @@ register("game", {
     bubbles = {};
     if (bar) bar.destroy();
     bar = null;
+    if (meter) meter.remove();
     meter = null;
     if (pad) pad.destroy();
     pad = null;

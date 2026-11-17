@@ -63,6 +63,18 @@ export function mountMeter() {
   el.innerHTML = `<span class="hpm-row">${badgeSVG()}<span class="hpm-bar"><span class="hpm-blocks"></span></span></span><span class="hpm-stam" hidden><i></i></span>`;
   const blocks = el.querySelector(".hpm-blocks"),
     stam = el.querySelector(".hpm-stam");
+  /* the screen's corners blink a see-through blood red each time I lose HP (owner, Nov 17: zombie hits and every other
+     hit): one layer over the whole screen, still while nothing hurts me */
+  const edge = document.createElement("div");
+  edge.className = "hurt-edge";
+  edge.setAttribute("aria-hidden", "true");
+  document.body.append(edge);
+  const blink = () => {
+    edge.classList.remove("on");
+    void edge.offsetWidth; // (a second hit starts it over)
+    edge.classList.add("on");
+  };
+  edge.addEventListener("animationend", () => edge.classList.remove("on"));
   let max = -1,
     hp = -1,
     k = 1,
@@ -70,6 +82,7 @@ export function mountMeter() {
     shown = false;
   return {
     el,
+    remove: () => edge.remove(),
     set(h, m, sprint = null, tired = false) {
       if (!shown) {
         shown = true;
@@ -85,6 +98,7 @@ export function mountMeter() {
         el.setAttribute("aria-valuemax", m);
       }
       if (h !== hp) {
+        if (hp >= 0 && h < hp) blink(); // (not when the meter first shows, nor when the most HP changes)
         hp = h;
         [...blocks.children].forEach((b, i) => {
           const f = fillOf(i, k, h, max);

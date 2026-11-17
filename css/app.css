@@ -16976,6 +16976,39 @@ html.still .hpm.low .hpm-badge {
   }
 }
 /* "+1 HP" / "−1 HP" over a duck, Justin or a zombie: small, rising and fading (a phone: smaller) */
+/* a hit: the screen's corners blink a see-through blood red (js/hpmeter.js), on the grid like the boards */
+.hurt-edge {
+  --hc: rgb(150 0 12 / 0.5);
+  position: fixed;
+  inset: 0;
+  z-index: 24002;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 0 0, var(--hc), transparent 20vmax),
+    radial-gradient(circle at 100% 0, var(--hc), transparent 20vmax),
+    radial-gradient(circle at 0 100%, var(--hc), transparent 20vmax),
+    radial-gradient(circle at 100% 100%, var(--hc), transparent 20vmax);
+}
+html.pixel .hurt-edge {
+  filter: url(#px-f);
+}
+.hurt-edge.on {
+  visibility: visible;
+  animation: hurtedge 0.55s ease-out;
+}
+@keyframes hurtedge {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .hp-pop {
   position: absolute;
   left: 50%;
