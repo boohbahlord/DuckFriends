@@ -469,12 +469,23 @@ const GS_DRAW = {
       w: p.w + cable,
     });
   },
-  fence: (p) =>
-    gsPart(
+  fence: (p) => {
+    const t = SA.fenceLean(p, L.W), // (its top leans toward the road: stationart.js)
+      lean = Math.abs(t),
+      mid = p.x + p.w / 2; // (its line)
+    return gsPart(
       p,
-      () => SK.fenceSVG({ w: 30 * GS.K, d: p.d, h: p.h, seed: seedOf(p) }),
-      { left: 9 * GS.K, w: 30 * GS.K },
-    ),
+      () =>
+        SK.fenceSVG({
+          d: p.d,
+          h: p.h,
+          lean,
+          dir: Math.sign(t),
+          seed: seedOf(p),
+        }),
+      { left: p.x - mid + (t > 0 ? 4 : lean + 4), w: lean + 8 },
+    );
+  },
   pew: (p) =>
     gsPart(p, () => SK.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
   altar: (p) => gsPart(p, () => SK.altarSVG({ w: p.w, d: p.d, h: p.h })),

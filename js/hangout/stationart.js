@@ -303,25 +303,60 @@ export function generatorSVG({ w = 140, d = 120, h = 100, cable = 44 } = {}) {
   s += F`<path d="M${w - 6} ${fy + h * 0.55}C${w + cable * 0.3} ${fy + h * 0.6} ${w + cable * 0.4} ${d + h - 6} ${W} ${d + h - 10}" fill="none" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${w - 6} ${fy + h * 0.55}C${w + cable * 0.3} ${fy + h * 0.6} ${w + cable * 0.4} ${d + h - 6} ${W} ${d + h - 10}" fill="none" stroke="#353636" stroke-width="4" stroke-linecap="round"/>`;
   return wrap(W, d + h, s);
 }
-/* a piece of the tall fence across the road, running north-south: seen edge-on it's a band (w wide, the fence's
-   thickness drawn wider so it reads) of chain link, its posts and its rail, the barbed wire curled along its top */
-export function fenceSVG({ w = 30, d = 200, h = 200, seed = 1 } = {}) {
+/* a piece of the tall chain-link fence across the road, running north-south, d long and h tall (the owner's, Nov 17:
+   "the fences will be chain linked fence btw and holding ur light to it helps see that"). Seen straight on it would be
+   a line, so it's drawn leaning: its foot on its line, its top lean px over to one side (dir: 1 east, -1 west, toward
+   the road), the way you'd see its face from the road. The links are see-through wire, bright galvanized grey, so the
+   dark shows them faintly and a flashlight clearly; its posts, its top rail and the barbed wire along the top.
+   Drawn into (lean + 8) × (d + h); its foot's line at x 4 (dir 1) or lean + 4 (dir -1). fenceLean below */
+export function fenceSVG({
+  d = 200,
+  h = 200,
+  lean = 54,
+  dir = 1,
+  seed = 1,
+} = {}) {
   const id = uid(),
-    H = d + h,
-    r = rnd(seed);
-  const defs = F`<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#353636"/><path d="M0 0L14 14M14 0L0 14" stroke="#849097" stroke-width="2.4"/></pattern>`;
-  let s = R(3, 0, w - 6, H, `url(#${id})`, ln(2.4));
-  // its posts, every 100 or so: the posts' grey run the band's length where they stand
-  for (let y = 20 + r() * 20; y < H - 30; y += 100)
-    s += R(w / 2 - 6, y, 12, 34, "#849097", ln(2));
-  // the top rail, and the barbed wire zigzagging along it
-  s += R(w / 2 - 3, 0, 6, H, "#d6ccd8", ln(1.4));
-  let z = `M${w / 2} 0`;
-  for (let y = 8, k = 1; y < H; y += 9, k = -k)
-    z += `L${n1(w / 2 + k * (w / 2 - 3))} ${y}`;
-  s += `<path d="${z}" fill="none" stroke="#d6ccd8" stroke-width="2"/>`;
-  return wrap(w, H, s, defs);
+    r = rnd(seed),
+    W = lean + 8,
+    bx = dir > 0 ? 4 : W - 4, // (its foot's line)
+    tx = bx + dir * lean, // (its top's)
+    C = 14; // (a link across)
+  /* a point on its face: u along it (0 … d, north to south), v up it (0 … h) */
+  const at = (u, v) => [n1(bx + (dir * lean * v) / h), n1(h + u - v)];
+  const line = (u0, v0, u1, v1) => {
+    const [x0, y0] = at(u0, v0),
+      [x1, y1] = at(u1, v1);
+    return `M${x0} ${y0}L${x1} ${y1}`;
+  };
+  const defs =
+    F`<pattern id="${id}" width="${C}" height="${C}" patternUnits="userSpaceOnUse"><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#1c1c28" stroke-width="3.6" opacity=".5"/><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#b9c3c8" stroke-width="1.8"/></pattern>` +
+    F`<clipPath id="${id}c"><path d="M${bx} ${h}L${bx} ${h + d}L${tx} ${d}L${tx} 0Z"/></clipPath>`;
+  // a little shadow on the ground along its foot, then the links (see-through) between its foot and its top
+  let s = F`<path d="M${bx} ${h}V${h + d}" stroke="#05060a" stroke-width="6" opacity=".35"/>`;
+  s += F`<rect x="0" y="0" width="${W}" height="${d + h}" fill="url(#${id})" clip-path="url(#${id}c)"/>`;
+  // its posts, every 100 or so and one at each end, from its foot up to its top
+  const posts = [3];
+  for (let u = 50 + r() * 30; u < d - 30; u += 100) posts.push(u);
+  posts.push(d - 3);
+  for (const u of posts)
+    s += `<path d="${line(u, 0, u, h)}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="${line(u, 0, u, h)}" stroke="#9aa6ad" stroke-width="3.6" stroke-linecap="round"/>`;
+  // the top rail and the bottom wire
+  for (const [v, k] of [
+    [h - 4, 3.4],
+    [4, 2],
+  ])
+    s += F`<path d="${line(0, v, d, v)}" stroke="${O}" stroke-width="${k + 3}"/><path d="${line(0, v, d, v)}" stroke="#d6dde0" stroke-width="${k}"/>`;
+  // the barbed wire, curled along over the top
+  let z = `M${tx} 0`;
+  for (let u = 6, k = 1; u <= d; u += 7, k = -k)
+    z += `L${n1(tx + k * 4)} ${n1(u)}`;
+  s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
+  return wrap(W, d + h, s, defs);
 }
+/* how far a fence's top leans, and which way: toward the middle of the map (the road), mapW wide. Its drawing
+   (shapes.js) and the flashlights (l4dd.js) both ask */
+export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? 1 : -1) * p.h * 0.6;
 
 /* ---------- the cars ---------- */
 const CAR_COLORS = [

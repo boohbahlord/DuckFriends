@@ -27,7 +27,7 @@ const TITLE = {
 };
 /* Quacky Zombies' own map vote (rules.js ZMAPS): each of its maps as one picture of it */
 const ZPIC = {
-  cabin: ["assets/maps/duck-cabin.jpg", "Duck Cabin"],
+  cabin: ["assets/maps/duck-cabin-zombies.jpg", "Duck Cabin"], // (closer in and a little lighter than the whole map's picture, so it reads as clearly as Downpour's: the owner, Nov 17)
   downpour: ["assets/maps/downpour.jpg", "Downpour"],
 };
 
