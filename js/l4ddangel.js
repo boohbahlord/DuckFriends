@@ -1,5 +1,5 @@
 /* ---------- Dead Ducks Arcade's Angel machine (the owner's, Nov 16 17:22Z) ----------
-   It stands on the stage. E with a gun or a melee weapon in hand puts it in, for 1,000 points (never the grenade, never
+   It stands on the stage. E with a gun or a melee weapon in hand puts it in, for 1,200 points (never the grenade, never
    an item: the jetpack, the medkit and so on). It works only while the power is on (l4ddpower.js); a weapon already in
    it when the power goes out still comes out. It works 5 seconds, glowing, throwing sparks and smoke, then the weapon
    comes back as an orb that only the duck who put it in can take (E), and it stays there till that duck does. The
@@ -40,7 +40,7 @@ export const ANGEL = {
       : [STAGE.cx - 80, STAGE.cy + 40];
   },
   REACH: 120,
-  PRICE: 1000,
+  PRICE: 1200, // (the owner's, Nov 17 17:41Z: the Angel machine costs 200 points more)
   WORK: 5000, // ms it works
   DMG: 1, // more damage a hit
   FAST: 0.8, // attacks 20% faster
