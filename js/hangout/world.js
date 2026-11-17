@@ -158,6 +158,7 @@ export function mountWorld(board, api) {
         t < cam.vh + NEAR &&
         t + h > -NEAR,
       propEl: (id) => els.get(id) || null,
+      coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key),
       propEls: (id) => all.get(id) || [],
       shines: (l) => shines(l, R().state),
       at: (id) => {
@@ -656,9 +657,21 @@ export function mountWorld(board, api) {
           (Math.min(d.b, b) - Math.max(d.t, t))) /
         ((d.r - d.l) * (d.b - d.t))
       : 0;
+  /* the walls, roofs and crowns on the screen this frame, and where they cover (for the outlines: coverAt) */
+  const covers = [];
+  /* is a box on the screen (l, r, t, b) behind or under something drawn in front of it (its depth: key)? A good part of
+     it covered, as a wall turns see-through for (HIDDEN); a crown covers whatever is under it */
+  const coverAt = (l, r, t, b, key) => {
+    const d = { l, r, t, b };
+    for (const c of covers)
+      if ((c.crown || key < c.key) && covered(d, c.l, c.r, c.t, c.b) > HIDDEN)
+        return true;
+    return false;
+  };
   function drawProps(ducks) {
     const { sc, vw, vh } = cam,
       scs = sc.toFixed(4);
+    covers.length = 0;
     for (const it of items) {
       const b = it.box,
         sx = (b.l - cam.x) * sc + vw / 2,
@@ -693,6 +706,14 @@ export function mountWorld(board, api) {
           hr = (h.r - cam.x) * sc + vw / 2,
           ht = (h.t - cam.y) * sc + vh / 2,
           hb = (h.b - cam.y) * sc + vh / 2;
+        covers.push({
+          l: hl,
+          r: hr,
+          t: ht,
+          b: hb,
+          key: it.key,
+          crown: it.layer === "crown",
+        });
         /* a wall, a roof or a trunk: while it hides a duck or a zombie behind it or under it. A crown (Downpour's
            trees) is a roof over whoever is under it, in front of its trunk or behind: it turns see-through while it
            hides a duck or a zombie (the owner's, Nov 17 05:46Z: whatever covers one shows it to every player) */
@@ -887,6 +908,12 @@ export function mountWorld(board, api) {
     hidden(id, pos) {
       const a = at(id, pos);
       return !L.seenFrom(a.x, a.y, inside);
+    },
+    coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key), // (the outlines: outlines.js)
+    /* where a duck is drawn: { x, y, z } in world px, or null (the outlines: its floor) */
+    at(id) {
+      const p = R().state.pos[id];
+      return p || mine(id) ? at(id, p || {}) : null;
     },
     /* the way an activity turns a duck (seated: toward what it sits at), or 0 */
     face(id) {

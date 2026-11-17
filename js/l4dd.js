@@ -119,6 +119,7 @@ import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff } from "./fx.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
+import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
@@ -365,6 +366,33 @@ function lits() {
   };
 }
 
+/* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it */
+function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
+  const w = o.bw * sc,
+    h = o.bh * sc,
+    y = f.top + (dip - o.feet) * sc;
+  olAdd({
+    id: "z" + o.i,
+    img: o.img,
+    x: f.left - w / 2,
+    y,
+    w,
+    h,
+    flip: o.face < 0,
+    kind: "zombie",
+    hidden:
+      hidden ??
+      Wd.coverAt(
+        f.left - w * 0.4,
+        f.left + w * 0.4,
+        y + h * 0.1,
+        f.top,
+        Math.round(sortY(o.x, o.y, z)),
+      ),
+    floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
+  });
+}
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
@@ -2026,7 +2054,9 @@ activity({
     syncMap(); // (the openings, the Butler's or the Priest's spot, for the map in play: on a player's screen too, which runs no rules)
     const Wd = ctx.world,
       sc = Wd.sc,
-      t = performance.now();
+      t = performance.now(),
+      meAt = Wd.at(ctx.me),
+      myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / gap);
@@ -2035,11 +2065,15 @@ activity({
       const z = heightAt(o.x, o.y) + (o.st === 5 ? fenceZ(o.x, o.y) : 0), // (Downpour: up a fence, or dropping off it)
         f = Wd.toScreen(o.x, o.y, z),
         door = atBoards(o, Wd.inside),
+        unseen = !(door || seenFrom(o.x, o.y, Wd.inside)),
+        onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
-          !(door || seenFrom(o.x, o.y, Wd.inside)) ||
-          !Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc) ||
+          unseen ||
+          !onCam ||
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (onCam && unseen && o.st !== 3)
+        zOutline(Wd, o, f, 0, sc, true, z, myFloor); // (on the other side of a wall: its red line)
       if (hide) continue;
       wounds(o, o.l, o.i); // (come into sight: the wounds it got out of it)
       pxPic(o, o.img, o.bw * sc, o.bh * sc);
@@ -2056,6 +2090,7 @@ activity({
             : inShallow(o.x, o.y) && o.st !== 5
               ? WADE_SINK * o.feet
               : 0;
+      if (o.st !== 3) zOutline(Wd, o, f, dip, sc, null, z, myFloor);
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
