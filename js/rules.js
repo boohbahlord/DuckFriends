@@ -182,7 +182,6 @@ import {
   isL4dd,
   l4Use,
   l4Reload,
-  l4Unreload,
   l4Shots,
   l4Holds,
   kitOf,
@@ -2498,21 +2497,6 @@ function reduceStep(state, a, now) {
               ),
             ]; // (a burst's rounds leave one after another: each waits until its time, t)
       }
-      return s;
-    }
-    case "unreload": {
-      // sprinting cancels a reload under way, except a shotgun's (the owner's, Nov 17): what was in the magazine stays
-      if (me && isL4dd(s)) return l4Unreload(s, a, now) ? s : state;
-      const mag = { ...(s.mag || {}) };
-      let any = false;
-      for (const [k, m] of Object.entries(mag))
-        if (m && m.r > now && (k === a.id || k.startsWith(a.id + " "))) {
-          const { r, d, ...rest } = m;
-          mag[k] = rest;
-          any = true;
-        }
-      if (!any) return state;
-      s.mag = mag;
       return s;
     }
     case "reload": {

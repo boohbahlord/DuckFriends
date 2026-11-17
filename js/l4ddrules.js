@@ -2496,13 +2496,6 @@ export function l4Reload(s, a, now) {
   s.hang.l4a = { ...s.hang.l4a, [a.id]: m };
   return true;
 }
-/* sprinting cancels a reload (the owner's, Nov 17 17:41Z; not a shotgun's, which has none): the magazine stays as it was */
-export function l4Unreload(s, a, now) {
-  const m0 = kitOf(s, a.id);
-  if (!m0 || !m0.rl || now >= m0.rl) return false;
-  s.hang.l4a = { ...s.hang.l4a, [a.id]: { ...m0, rl: 0, rw: "" } };
-  return true;
-}
 /* what the power box's rules (l4ddpower.js) use of these */
 const PH = {
   players: (s) => players(s),

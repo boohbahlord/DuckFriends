@@ -1834,7 +1834,6 @@ function peek(tag, s, me) {
   void el.offsetWidth;
   el.classList.add("go");
 }
-export const l4Warn = (text) => say(text); // (game.js: a note over the board with the error sound)
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;

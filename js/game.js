@@ -215,7 +215,6 @@ import {
   l4SafeHint,
   laserEnd,
   l4Ammo,
-  l4Warn,
   l4ZBoxes,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
@@ -4416,8 +4415,6 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
-  runNow = sprinting && !!(hx || vy);
-  runReloadCheck(s, now);
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4634,8 +4631,6 @@ function hangStep(dt, now) {
   } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
   const jk = jetKeys(),
     jt = !!me.jf && (jk.up || jk.hold);
-  runNow = sprinting && !!(ax || ay);
-  runReloadCheck(R.state, now);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   jetAfter(jt, dt); // (the jets' flames, my fuel)
   moving = ev.moved;
@@ -5709,51 +5704,8 @@ const dots = (id) =>
           ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
-/* No reloading while sprinting, except a shotgun (the owner's, Nov 17 17:41Z and 18:05Z: "running means sprinting with
-   shift yes"): R does nothing while I run, with a note and the error sound, and a reload under way is cancelled the
-   moment I sprint. A bow's, a dagger's or a melee weapon's cooldown is no reload and is never touched */
-const NO_RUN_OK = ["shotgun", "dbarrel"];
-let runNow = false, // sprinting with Shift or the stick, and moving
-  runWarnAt = 0,
-  runCancelAt = 0;
-function runWarn() {
-  const now = performance.now();
-  if (now - runWarnAt < 900) return;
-  runWarnAt = now;
-  if (isL4dd(R.state)) l4Warn("Can't reload while sprinting");
-  else {
-    say("Can't reload while sprinting", true);
-    sfx.nope();
-  }
-  noReload(); // (the white bar flashes red, meters.js)
-}
-/* a reload of mine under way (not a shotgun's): its weapon, or null */
-function myReloadW(s, now) {
-  if (isL4dd(s)) {
-    const kit = kitOf(s, R.me);
-    return kit && kit.rl > now ? kit.rw : null;
-  }
-  for (const [k, m] of Object.entries(s.mag || {}))
-    if (m && m.r > now && (k === R.me || k.startsWith(R.me + " ")))
-      return k === R.me ? "handgun" : k.slice(R.me.length + 1);
-  return null;
-}
-function runReloadCheck(s, tnow) {
-  if (!runNow || !R || !onBoardPhase()) return;
-  const t = performance.now();
-  if (t - runCancelAt < 250) return;
-  const w = myReloadW(s, clockNow());
-  if (!w || NO_RUN_OK.includes(w)) return;
-  runCancelAt = t;
-  R.send({ t: "unreload" });
-  runWarn();
-}
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
-  if (R && onBoardPhase() && runNow && !NO_RUN_OK.includes(heldNow())) {
-    runWarn();
-    return true;
-  }
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
     if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
