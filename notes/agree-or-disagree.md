@@ -5410,3 +5410,30 @@ the map's edge come back, and the road and its water keep being drawn past the f
 
 Split (Adam): Miles Jr. makes the bell's sound first and gives Noah its strike times; Noah animates the bell to those
 times. Solomon adds the Angel machine turning see-through over a duck in Downpour to his urgent part A.
+
+## Request (2026-11-17 12:45Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtPo3aj3qcC2mgyXPL1eskHe): Safe Keeping text, the spin square, the orb, zombie HP, the ammo bar (word for word)
+Picture: /mnt/project-files/refs/nov17-1228-batch/orb-over-car-S.png (the S circled on the hood-up car, the yellow square beside it)
+> safe keeping popup text cannot be triggered by scrolling on pc and it has to be clicked in ur hotbar on mobile to actually show the text (it is smaler text on mobile), it should be more biref text and it should only show text on pc when you click it's corresponding number on number key 
+>
+> the yellow ground near the car will teleport and move around after a round began when i bought something off of it prior so that should be fixed
+>
+> the orb for the weapon drop should be over top the car where the S is circled in my screenshot
+>
+> Zombies health should only appear after they have taken damage, then the HP bar for a zombie stays
+>
+> In the white bar for cooldowns, just below it is a yellow bar, and the yellow bar will be a bar like the white one but for ammo. So for double barrel, it fades in and empties to half whenever a round is shot, and then it emtpies to a empty black bar, and flashes white while reloading takes place, it only appears when it is empty (so black, and maybe it blinks a slow dark grey when magazine is empty), when it reloads it blinks white. If fully loaded and no bullets are shot, it fades away, otherwise the meter stays. A consumable like a grenade would have it's meter to indicate how many grenades you have IF it is less then the max, so it also displays ammo for a bow as well, and the meter gets closer to the bottom till it runs out. The meter stays black when it cannot be reloaded and it stays visible when that empty weapon is held. The spring meter goes below this, and the meters may pop in and out, so if the sprint meter was already below and then a bullet is shot, then the yellow bar appears below the white bar and above the blue sprint bar. 
+>
+> If a reload cannot be done, then the white bar already in the game flashes red. 
+>
+> The bars are also in the default game modes also IF they are relevent, so like there is infinite sprint in some game modes so they dont have a sprint bar
+>
+> the yellow bar only changes colors in blinks or becomes black under certain conditions listed but you can ask for clarification adam in the chat not a document
+
+Read as (Adam): the yellow bar is the magazine (or the count of a consumable: grenades, arrows), under the white cooldown
+bar and above the blue sprint bar. It shows whenever it isn't full, stays while the weapon has been fired, and fades away
+when full and unfired. It empties a step per shot. Empty, it is black, with a slow dark grey blink. While reloading it
+blinks white. With no ammo left to reload, it stays black and stays shown while that weapon is held. The white bar
+flashes red when a reload can't be done. All modes, where relevant (no sprint bar where sprint is endless).
+Split: Jackal = Safe Keeping text (short; PC only on its number key, never on scroll; phone on its hotbar tap), the spin
+square staying put after a round starts, the orb over the car's S, zombie HP bar only once hurt and then kept. Noah = the
+yellow ammo bar and the white bar's red flash, after the outlines.
