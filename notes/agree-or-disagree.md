@@ -5561,3 +5561,12 @@ moved to the middle of its wall (770 to 930; at 950 to 1110 the restroom's wall 
 turn and the rules refuse it from him (read as: only players end a rest phase); jerry cans 1% from every source
 (fireplace, zombie, round start); drops last 30 s and blink faster in their last 10, 5 and 2 s; Mad God Justin's plus sign
 is a 1 in 3 roll every 30 s.
+
+## Request (2026-11-17 16:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt6SohjrYYZJryEPMAseuPcy): the wind inside the cabin (word for word)
+> i liked miles audio, i am just worried about not being able to hear the wind from the inside of the cabin based off the clip becuz it made it so quiet rather then editing the audio
+>
+> now what r u askingn me and why r u sending sm stuf?
+
+Given to Miles Jr.: inside the cabin the wind stays about as loud and is muffled (lowpass, a little lower), not just
+turned down. Adam answered: the two open calls are the size of Mad God Justin's waves with 4 ducks (30 zombies) and the
+zombie cabin being a backdrop to his usual fight (B, the real 3D cabin, would be a big rebuild).
