@@ -133,7 +133,7 @@ export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
     : id === ZCABIN
-      ? "Duck Cabin (Quacky Zombies)"
+      ? "Duck Cabin (Dead Ducks Arcade)"
       : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
 /* Quacky Zombies' Duck Cabin, from above, as a map for Mad God Justin only: one of the choices of his map vote, and his
    lightning never comes from the edges on it (the owner's, Nov 17 11:07Z). It's the picture of the cabin in Quacky
