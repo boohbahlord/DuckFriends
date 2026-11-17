@@ -16,11 +16,12 @@ const TAP = { ms: 260, px: 12 }; // a tap: short and still
 const FLICK = { out: 450, gap: 380, ang: 0.9 }; // two flicks: each out for under .45 s, back for under .38 s, about the same way
 const SWIPE = { px: 40, ms: 350 }; // a swipe: this far, this fast
 const STILL = 520; // held still this long: the specials (on a duck: its menu)
-/* where a finger never starts the stick: on something it presses or types in, or reads and scrolls (the docked Notes and
-   chat, the specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button
-   (the owner's, Nov 4) */
+/* where a finger never starts the stick: on something it presses or types in, or scrolls (the docked Notes and chat, the
+   specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button, and on the
+   results' cards, the choice rows and the write area's own space, which only hold words (the owner's, Nov 4 and
+   Nov 17 13:30Z: "IF THE UI ISNT AN INTERACTIVE BUTTON OR THINGY, THEN YOUR MOVEMENT JOYSTICK CAN BE PLACED WHEREVER") */
 const NOT_HERE =
-  "button, a, input, select, textarea, label, [role=button], [role=slider], .statpanel, .mc, .dock-panel, .sp-phone, .mbar, .pmenu, .votebox, .sc-write";
+  "button, a, input, select, textarea, label, [role=button], [role=slider], .dock-panel, .sp-phone, .mbar, .pmenu";
 const BARS = ".gbar, .bbar, .dock-l, .dock-r, .dock-b"; // (Tap to move walks where I tap: never under a bar)
 const angDiff = (a, b) =>
   Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
@@ -86,10 +87,12 @@ export function mountTouch(S, api) {
   };
 
   function down(e) {
+    const panel = e.target.closest(".statpanel");
     if (
       e.pointerType === "mouse" ||
       !api.active() ||
       e.target.closest(NOT_HERE) ||
+      (panel && !panel.classList.contains("fit")) ||
       (profile.settings.touch === "tap" && e.target.closest(BARS))
     )
       return;
@@ -207,11 +210,22 @@ export function mountTouch(S, api) {
     }
   }
 
+  /* a panel that has nothing to scroll doesn't take the finger for the page (touch-action: none, css .fit): the stick can
+     start on it. One that does scroll keeps its scrolling, and no stick starts on it (the owner's, Nov 17 13:30Z) */
+  const fit = () => {
+    for (const p of S.querySelectorAll(".statpanel")) {
+      const ok = p.scrollHeight <= p.clientHeight + 2;
+      if (p.classList.contains("fit") !== ok) p.classList.toggle("fit", ok);
+    }
+  };
+  const fitTimer = setInterval(fit, 400);
+  fit();
   S.addEventListener("pointerdown", down);
   addEventListener("pointermove", move);
   addEventListener("pointerup", up);
   addEventListener("pointercancel", up);
   return () => {
+    clearInterval(fitTimer);
     S.removeEventListener("pointerdown", down);
     removeEventListener("pointermove", move);
     removeEventListener("pointerup", up);
