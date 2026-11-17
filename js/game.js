@@ -192,6 +192,7 @@ import {
   l4Cool,
   kitOf,
   inHand,
+  swims as l4Swims,
   BURN,
   weaponName,
 } from "./l4ddrules.js";
@@ -1729,7 +1730,9 @@ function drawDucks(now = clockNow()) {
             : jm[id]
               ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
               : isL4dd(s)
-                ? l4Hp(s, id) > 0 && inHand(mine ? heldNow() : pos.w, s, id)
+                ? l4Hp(s, id) > 0 &&
+                  !l4Swims(s, id) && // (Downpour: swimming, it's put away)
+                  inHand(mine ? heldNow() : pos.w, s, id)
                 : mine
                   ? held && hasKey(p.duck, held) && held
                   : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)

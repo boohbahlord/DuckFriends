@@ -102,9 +102,8 @@ function drawMap(w, h, dpr) {
     }
     m.fillStyle = "rgba(110,110,118,.6)";
     box(0, GS.ROAD.y0, GS.GS_W, GS.ROAD.y1);
-    m.fillStyle = "rgba(70,120,190,.6)";
+    m.fillStyle = "rgba(70,120,190,.6)"; // (the flood, its deep end the same water: swum, the owner's, Nov 17 05:46Z)
     box(...GS.SHALLOW);
-    m.fillStyle = "rgba(40,80,170,.8)";
     box(...GS.DEEP);
     m.fillStyle = "rgba(196,150,96,.55)";
     for (const B of [GS.STATION, GS.CHAPEL]) box(B.x0, B.y0, B.x1, B.y1);

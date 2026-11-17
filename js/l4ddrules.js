@@ -59,6 +59,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
+import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import { woundCode, pwHit, explodedLook } from "./wounds.js";
 import {
@@ -383,6 +384,12 @@ const dmgOf = (A) =>
    burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
 export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
+/* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
+   owner's, Nov 17 05:46Z); a jetpack high over the water isn't swimming */
+export function swims(s, id) {
+  const p = s && s.pos && s.pos[id];
+  return !!p && dp() && !p.fly && GS.inDeep(p.x * W, p.y * H);
+}
 /* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
 export const inHand = (w, s, id) => {
   if (
@@ -2152,6 +2159,7 @@ export function l4Use(s, a, now) {
     kind = kindOf(what);
   if (!L || L.over || !p || !m0 || !standing(s, id) || !A) return false;
   if (kind !== "grenade" && !m0.sl.includes(what)) return false;
+  if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
@@ -3432,7 +3440,10 @@ function moveZombies(s, zs, now, T, up) {
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
-      v = z.l[1] * walkOf(s), // (as much faster or slower as the ducks, by the lobby's Walking speed)
+      v =
+        z.l[1] *
+        walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
+        (dp() && GS.inDeep(z.x, z.y) ? SWIM : 1), // (Downpour: swimming the deep flood, as slow of its own walk as a duck is of its)
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)

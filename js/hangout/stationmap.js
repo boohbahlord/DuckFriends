@@ -18,8 +18,8 @@ export let GS_W = 4600,
   GS_H = 6200;
 /* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side */
 export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
-/* the flood over the road: deep at the west end (no duck goes in; zombies wade it), shallow over the middle (ducks walk
-   30% slower in it, the owner's) */
+/* the flood over the road: deep at the west end (ducks and zombies swim it, as in the Hangout pool: water.js), shallow
+   over the middle (ducks walk 30% slower in it, the owner's) */
 export const DEEP = [0, ROAD.y0, 1000, ROAD.y1],
   SHALLOW = [1000, ROAD.y0, 3500, ROAD.y1];
 export const WADE = 0.7;
