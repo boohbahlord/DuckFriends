@@ -5089,3 +5089,51 @@ Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (
   - Decided: Downpour stays at K = 0.6. It deploys after the new trees are in and the owner has seen them.
 - Owner 2026-11-17 03:34Z (with a sketch, /mnt/project-files/refs/downpour-trees-2026-11-17/owner/tree-scale-sketch.jpg: a duck under a big tree crown, the trunk about as wide as the duck, the crown about 4 to 5 ducks across): "Tree line isnt a literal line of trees, it is a imaginary line, where inside it, trees could possibly be found, but more sparsely. Trees are supposed to be bigger then ducks, and leaves, like rooves and walls, go over them, covering ducks like a wall and revealing whats under them accordingly. The screenshot i send is for size comparison and scale. The tree line is a imaginary conceptual line related to the density of the trees that both players and zombies can then obv cross either way"
   - Decided: Downpour's deploy (Version 52) is held. The forest line is no longer a row of trees or a wall: it only marks where the trees get dense, and ducks and zombies cross it both ways (only trunks block). Trees are drawn at the sketch's size, and their leaves are a roof layer over ducks that reveals what's under it, like the cabin's roofs. Solomon does the map and the reveal; Noah does the bigger tree art.
+- Owner 2026-11-17 04:16Z (on Solomon's forest and crown pictures): "Ok"
+  - Version 52 (PR #354) is live: Downpour, with the zombie map vote, the big trees, the open forest line and crowns as roofs.
+
+## Owner 2026-11-17 05:46Z: Downpour fix list (10 screenshots: /mnt/project-files/refs/downpour-fixes-2026-11-17/, numbered as the owner refers to them)
+"Lots of fixes to downpour will be happening:
+
+This first screenshot shows the cabin map visibility in the vote screen being messed up 
+
+This second and third screenshot shows a problem of the fun and laser sight not being set to follow the movement direction of a duck on mobile, and the gun just floats with it's laser in an awkward way that should of been easily caught during any of the bug testing.
+
+The fourth screenshot show the change starting round round is fucking huge and way way too large on mobile and the round set button is equally too large, so it takes up a shit ton of space obnoxiously on an already small screen for mobile users. Screenshot four also shows how the holes in the walls not only arent holes that are from destruction, like how they are in cabin map for zombies in many places, but the top of the wall is found on the ground as that thick grey rectangle... like seriously ?! How tf does this shit pass. Furthermore in this screenshot, the wall has a grey bar at the top of the right wall from the inside that doesnt fully connect to it's intersecting wall above it by their intersection, which is obviously retarded and can never be allowed in other places like it because this violates perception rules. There is also foliage from a tree no clipping through a wall, which has to not be pushed inside the building from the view of the duck ever.
+
+Note, the fence is not visbible and not seen anywhere, so fucking shame on you retard. Furthermore, too many trees, make half as many as before to make them more sparse. Another point, just like how zombies behind walls are revealed by making the wall transparent to all players WHERE a zombie or other player is behind in zombies, so it will be the same for being under a roof, being under the roof of the pumps, being under the foliage of a tree, and everything else. Zombies would get stuck on trees and other places and not know to move around them, so fix the ai so it knows to maneuver around objects that stop it's track to the player or else the zombies arent coming to the player, but rather, to the fault of you, the players have to search for the zombies, which will never be how this game mode works. Ai fix comes after trees are changed AND zombies are revealed with a transparency of the surface that hides them.
+
+Screenshot five further shows the obnoxiousness of the large button, the other hole in the wall not being my intention while being a fucking mess, and the foliage is no clipping inside the building again.
+
+Screenshot six shows how the change start round and starting round button and info ui is not hidden while other ui is opened on screen, which is absolutely fucking broken and not something i should even need to tell u not do. The priest wasn't said tk be small either, make them a normal size.
+
+Screenshot seven once again shows the many aforementioned problems, but further more, shows the white bullshit that is certainly too large to be a coffin, so remove the whole raised platform that was never even meant to be a coffin (its not a fucking funeral home) and push the angel machine against the wall and make the wall constantly transparent to show it IF EVEN a fourth of the angel machine's object is hidden from the players. The wall on the bottom WILL behave in the logic it ought to for it's role not only in what i say, but also for the consistency and coherency of hoe other walls would work in it's bottom or south position for perspective and rules otherwise, you fucking retard.
+
+Screenshot 8 pissed me the fuck off because you made a restroom that isnt even a fucking restroom. The restroom should have a similiar format or almosg exact format to the bathroom from cabin, but only missing a bathtub since this is a restroom at a gas station, so a sink, mirror above the sink, and a toilet, with the sink, mirror, and toilet up against the top wall in the same direction and size of the objects as they are in cabin. The pickup in the restroom isnt working on mobile and i havent checked on pc. Walls dont shine when u put a flashlight on them and most things dont either. 
+
+Make the game generator alreafy on without needing to find parts and have it set up to hold 8 rounds worth of gas, and players still have to feed it gas like usual but they dont need to repair it now.
+
+Flashlights should just stop at the floor, they should shine onto the objrcts they are aimed at as well.
+
+The map for cabin for zombies and hangout AND the gas station for zombies should become one pixel sixe unifornly like the page backgrounds for other maps btw
+
+The fences will be chain linked fence btw and holding ur light to it helps see that.
+
+Shining light on cars also help illuminate the parts of cars it goes over within the cone of the light
+
+Now for the last two screenshots
+
+The second last screenshot shows that the entrnace/exit door to the gas station is hidden, which is already against what we did for cabin completely! The door to the gas station is also meant to be deatroys like a large hole where the door is no longer there because a huge hole in the wall and parts of the glass (so one big hole) is what's left from the destruction, which zombies can pass through. I quite literally had a picture that had red circles on the gas station for parts where i want holes to be, but fuck me i guess and just ignore my shit. When i said hold, i didnt meanneat orderly doorframes or doors, i meant literal destruction of a wall like in cabin u retards.
+
+The last picture shoes some weird overlap of the textures where the front of the gas station doesnt knoe what it wants to show, since the overlap is having the thick grey rectangle cover the larger and wider red front... so remove the grey thick rectangles off the red one where it overlaps then
+
+Another thing, make the place where the water is deeper the same color and look, and instead make it to where ducks swim in it like they do the pool in hangout when they get in it, and so do zombies, at the speed they travel. Guns cannot be used while swimming nor bows, so they are temporarily untoggled ONLY WHILE swimming, same with melee. Zombies can still hit and attack while swimming, players can not.
+
+Write a not of these mistakes and take not for working on building or maps like these in the future, because multiple principles that a human would intuively expect you to know were violated in execution of the creation of this map. 
+
+I expect these problems to be fixed
+
+Also, one more thing, the last pitch sound that plays when the counter hits 0 on the lobby countdown isnt heard and needs to be put back, and miles jr does that
+
+I will send other screenshots about something else after i send this"
+  - Decided (Adam): Solomon fixes, in the owner's order: trees halved; reveal under every cover; then zombie steering around obstacles; then holes, walls, the door, the front, foliage, chapel, restroom, generator, swimming, and the Priest's size. Noah does one pixel size on the cabin (Zombies and Hangout) and Downpour, flashlights lighting objects, the chain-link fence, and the cabin's vote picture. Jackal does the phone starting-round UI (smaller, hidden under other UI) and the phone gun and laser following the movement direction. Miles Jr. does the countdown's last beep. Adam writes notes/map-building-rules.md. The generator change is read as Downpour only. Everything ships in one deploy (Version 53) after phone and PC tests.
