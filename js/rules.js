@@ -279,6 +279,7 @@ export const OPTIONS_DEFAULT = {
   tagColor: 0, // … Change player tag color: 1 = the name tag takes the vote color too
   mgjHp: 6, // … Player HP: 0 (off), 1, 5, 6, 10, 15
   l4start: 1, // Quacky Zombies' Start on round: 1, 5, 9, 13 or 21 (round 0 goes on to it, everyone with bonus points: l4ddrules.js START_PTS)
+  wildJustin: 0, // Quacky Zombies: 1 = Justin is out in Duck Cabin too, unarmed, as on Downpour (the owner's, Nov 17; Downpour always has him)
   vdTime: 60, // Valentine's Duck Date: seconds a date's timer runs once The Date starts it: 0 (off, no timer button), 60, 90, 120
   tvWrite: 210, // Trivia: seconds to write the questions: 120, 210, 300 or 0 (no limit)
   tvMulti: 1, // … Multiple answers: 1 = a question can have several right answers (never all); 0 = exactly one
@@ -521,8 +522,26 @@ export const voteIds = (s, k) =>
 /* Quacky Zombies' own maps: before each of its games everyone votes for one of them, the vote showing only these
    (the owner's, Nov 17 00:17Z). Its "zmap" vote works as the map vote does, its time as long */
 export const ZMAPS = ["cabin", "downpour"];
-/* the time a vote shows */
-export const voteLeft = (s, now) => Math.max(0, s.ends - now);
+/* the time a vote shows. Its clock can run faster than real time (Next, below): vt.c { at, left, rate } is the time it
+   showed at "at" and how fast it has run since; s.ends stays the real moment it reaches 0 */
+export const voteLeft = (s, now) => {
+  const c = s.vt && s.vt.c;
+  return c
+    ? Math.max(0, c.left - (now - c.at) * c.rate)
+    : Math.max(0, s.ends - now);
+};
+function voteClock(s, now, left, rate) {
+  s.vt.c = { at: now, left, rate };
+  s.ends = now + left / rate;
+}
+/* Next (the owner's, Nov 17 13:30Z): once a player has voted, a red Next button speeds the clock up by 1/players for
+   each player who presses it (three players: 33% faster for one press; everyone: twice as fast) */
+export const voteRate = (s) => {
+  const vt = s.vt || {},
+    voters = s.seat.filter((id) => s.players[id]),
+    n = voters.filter((id) => (vt.next || {})[id]).length;
+  return 1 + n / Math.max(1, voters.length);
+};
 export const votesDue = (s) =>
   [
     s.options.modePick === "vote" && "mode",
@@ -1914,10 +1933,27 @@ function reduceStep(state, a, now) {
         voters.filter((id) => votes[id]).length >=
           Math.max(1, Math.ceil(voters.length * shareOf(s) - 1e-9))
       ) {
-        // (the majority is in: 6 s left, at normal speed)
+        // (the majority is in: 6 s left, at normal speed, or as fast as Next has made it)
         vt.fast = 1;
-        s.ends = now + Math.min(Math.max(0, s.ends - now), ALL_IN);
+        voteClock(s, now, Math.min(voteLeft(s, now), ALL_IN), voteRate(s));
       }
+      return s;
+    }
+    case "vnext": {
+      // Vote Mode & Map's Next: a player who has voted speeds the clock up (once each)
+      const vt = s.vt;
+      if (
+        !me ||
+        s.phase !== "countdown" ||
+        !vt ||
+        !s.seat.includes(a.id) ||
+        !(vt.votes || {})[a.id] ||
+        (vt.next || {})[a.id]
+      )
+        return state;
+      const left = voteLeft(s, now);
+      vt.next = { ...(vt.next || {}), [a.id]: 1 };
+      voteClock(s, now, left, voteRate(s));
       return s;
     }
     case "dod": {

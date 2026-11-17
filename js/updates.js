@@ -9,6 +9,36 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v74",
+    version: 74,
+    date: "Nov 17, 2026",
+    title: "Bullets are back, Next in the votes",
+    news: [
+      "In Vote for game mode and Vote for map: once you've voted, a red Next button speeds the countdown up a little for each player who presses it.",
+    ],
+    fixed: [
+      "Bullets, fireballs, thrown chairs and every other projectile show where they are again. Since Version 71 they had all sat in the top left corner.",
+    ],
+  },
+  {
+    id: "v73",
+    version: 73,
+    date: "Nov 17, 2026",
+    title: "Mad God Justin tune-up",
+    news: [
+      "For Mad God Justin: The chain gun and the LMG now come with 30 rounds.",
+      "For Mad God Justin: Sprint lasts 1 second and refills as fast as it drains.",
+      "For Mad God Justin: Pickups are rolled like the weapon spin.",
+      "For Mad God Justin: His chair and controllers blink white when a bullet hits them.",
+      "For Mad God Justin: His attack hints are shorter.",
+      "For Mad God Justin: The plus sign disappears after 10 seconds if nobody takes it.",
+      "For Dead Ducks Arcade: Justin fails half of his dodges.",
+      'For Dead Ducks Arcade: New setting "Justin in Duck Cabin" (off by default).',
+      "For Dead Ducks Arcade: Downpour's yellow square sits over the car.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v72",
     version: 72,
     date: "Nov 17, 2026",
