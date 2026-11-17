@@ -307,6 +307,8 @@ export const PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign eve
     ["shotgun", 16],
     ["glauncher", 10],
     ["chaingun", 5], // (rarer)
+    ["tommy", 12], // (the Tommy gun and the UMP-45: the owner's, Nov 17, from the spin and Justin's pickups)
+    ["ump", 12],
     ["laser", 8], // (the Laser Rifle: the owner's, Nov 17, from the spin and Justin's pickups)
     ["medkit", 10.5],
     ["sky", 5],
@@ -324,6 +326,8 @@ export const MGJ_GUNS = [
   "glauncher",
   "chaingun",
   "laser",
+  "tommy",
+  "ump",
 ];
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
@@ -383,6 +387,8 @@ export const DMG = {
   arrow: 1,
   ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
   lmg: 1,
+  tommy: 1,
+  ump: 2, // (the UMP-45: 2 a bullet)
   chain: 1, // (the chain gun 1 a bullet here, not all his HP)
   laser: 1, // (the Laser Rifle's beam)
   lgren: 3, // (the grenade launcher's blast)

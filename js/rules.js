@@ -1023,6 +1023,8 @@ const PRESS = [
   "bow",
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "revolver",
   "lmg",
@@ -1072,6 +1074,8 @@ export const coolFor = (sp, s) =>
 export const GUNS_NEW = [
   "sniper",
   "smg",
+  "tommy",
+  "ump",
   "ak",
   "revolver",
   "lmg",
@@ -1081,7 +1085,16 @@ export const GUNS_NEW = [
   "flamer",
   "burst",
 ];
-export const AUTO = ["smg", "ak", "lmg", "chaingun", "flamer", "laser"]; // (they fire while the button is down; the Laser Rifle only as a Mad God Justin pickup)
+export const AUTO = [
+  "smg",
+  "tommy",
+  "ump",
+  "ak",
+  "lmg",
+  "chaingun",
+  "flamer",
+  "laser",
+]; // (they fire while the button is down; the Laser Rifle only as a Mad God Justin pickup)
 /* the handgun holds MAG shots, about five a second; after the last it reloads for RELOAD ms by itself (R reloads sooner).
    The other guns' magazines are Quacky Zombies' (no ammo to run out of here: only the magazine and its reload); the chain
    gun and the grenade launcher have none there, so here the chain gun reloads after its 300, and the launcher after 3
@@ -3360,6 +3373,7 @@ export const HIT_DMG = {
   knife: 2,
   sniper: [2, 3],
   ak: 2,
+  ump: 2,
   burst: 2, // (the burst rifle: the AK-47's, the owner's, Nov 16 16:25Z)
   slug: PHP, // (the double barrel's slug: all of it)
   revolver: 2,
