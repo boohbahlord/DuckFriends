@@ -1232,7 +1232,7 @@ export const fullAmmo = (w) => {
 export const fullFor = (s, id, w) =>
   angelOf(s, id, w) ? angelAmmo(ARMS[w], w) : fullAmmo(w);
 /* a magazine's size in kit m: the Angelic pistols' is twice the pistol's (l4ddangel.js) */
-const magIn = (m, w) =>
+export const magIn = (m, w) =>
   ARMS[w] && ARMS[w].mag
     ? ARMS[w].mag *
       (w === "handgun" &&

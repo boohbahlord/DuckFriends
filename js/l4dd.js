@@ -87,7 +87,11 @@ import {
   SAFE,
   safePrice,
   zombieLook,
+  magIn,
+  fullFor,
+  downArmed,
 } from "./l4ddrules.js";
+import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
 import { touchOnly } from "./pointer.js";
@@ -1476,6 +1480,47 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
+   Rifle: its heat has its own meter, the jetpack) */
+export function l4Ammo(s, me, w) {
+  const m = kitOf(s, me),
+    now = clockNow();
+  if (!m) return null;
+  if (downArmed(s, me)) w = "dg"; // (down: the down pistol)
+  const rl = !!w && m.rw === w && m.rl > now;
+  if (w === "dg")
+    return m.dg === undefined
+      ? null
+      : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
+  if (w === "grenade")
+    return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  const c = (m.am || {})[w];
+  if (!c) return null;
+  if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
+  const mag = magIn(m, w);
+  if (mag)
+    return {
+      f: rl ? 0 : c[0] / mag,
+      rl,
+      dry: !rl && c[0] <= 0 && c[1] <= 0,
+      nr: !rl && c[1] <= 0 && c[0] < mag, // (no ammo left to reload it with)
+    };
+  const all = (fullFor(s, me, w) || [0])[0];
+  return all > 1 ? { f: c[0] / all, rl: false, dry: c[0] <= 0 } : null; // (the bow: its arrows left)
+}
+let dryW = "";
+/* the yellow bar under my duck, and the bars stacked (meters.js); a gun just run dry, its reload can't be done: the
+   white bar flashes red */
+function ammoBars(tag, s, me) {
+  const w = heldFn() || "",
+    a = l4Ammo(s, me, w),
+    dry = a && a.dry ? w : "";
+  if (dry && dry !== dryW && w !== "grenade") noReload();
+  dryW = dry;
+  ammoBar(tag, a);
+  stackBars(tag);
+}
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
    scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
    owner, Nov 17: on a computer and a phone) */
@@ -2223,6 +2268,7 @@ activity({
       }
       const st = ctx.state();
       coolBar(tag, st, ctx.me);
+      ammoBars(tag, st, ctx.me); // (and the yellow ammo bar, the three stacked: meters.js)
       laserMeter(tag, st, ctx.me, heldFn()); // (the Laser Rifle's heat: laserfx.js)
       peek(tag, st, ctx.me);
     }
