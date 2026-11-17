@@ -2919,7 +2919,17 @@ function jaimeIn(s, by, p, now, bomb) {
    grenade's blast dies, torn apart as a grenade does it, and his body flies off the other way */
 function jaimeBlows(s, id, J, o, ux, uy, zs, T, now) {
   if (J.snapAt) jaimeSnap(s); // (Justin still answers his line)
-  boom(s, { by: J.by, hz: J.z || 0 }, o.x, o.y, zs, T, now, BOMB.wide);
+  boom(
+    s,
+    { by: J.by, hz: J.z || 0 },
+    o.x,
+    o.y,
+    zs,
+    T,
+    now,
+    BOMB.wide,
+    J.z || 0,
+  ); // (where he stands, on his own floor)
   const [x1, y1] = flyTo(o.x / W, o.y / H, ux / RX, uy / RY, RX / W, RY / H);
   addFx(s, {
     kind: "jbomb",
@@ -3599,7 +3609,8 @@ export function l4Shots(s, now) {
               T,
               now,
               ANGEL.PISTOL.BOOM,
-            ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z)
+              zombieZ(z),
+            ); // (half a grenade's blast, its boom weaker: the owner's, Nov 17 11:07Z; it goes off where that zombie is)
         } else if (
           strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w)
         )
@@ -3664,13 +3675,24 @@ function burnAt(s, by, x, y, now) {
 }
 /* a grenade (thrown or launched) goes off at (bx, by): every zombie in its blast dies, and the duck that threw it, in
    it, loses half its HP; true when it got any zombie */
-function boom(s, sh, bx, by, zs, T, now, wide = 1) {
+/* a blast (a grenade, the grenade launcher's, a Jaime Bomb, the Angelic pistol's crit) at (bx, by), its feet at bz (left
+   out: the floor there at its shooter's height, sh.hz). It reaches only what the shots' one rule lets it: nothing solid
+   between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
+   anything inside or under it, and one inside never gets anything up on it */
+const blastZ = (x, y, hz) => {
+  const d = dp() && deckAt(x, y, hz);
+  return d ? d.h : heightAt(x, y);
+};
+function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   let any = false;
-  const gore = [];
+  const gore = [],
+    z0 = bz ?? blastZ(bx, by, sh.hz || 0),
+    open = (x, y, z) => !slabBetween(bx, by, z0, x, y, z); // (nothing solid between)
   for (const z of zs)
     if (
       z.st !== 3 &&
-      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide
+      Math.hypot(z.x - bx, (z.y - by) * 1.25) < ARMS.grenade.r * wide &&
+      open(z.x, z.y, zombieZ(z))
     ) {
       strike(s, z, z.hp, false, sh.by); // (all its HP: 5 points for each)
       die(z, T);
@@ -3686,6 +3708,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1) {
     const [jx, jy] = at(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
+      open(jx, jy, +jp.z || 0) &&
       !dodging(s, jp, now)
     )
       wildDown(s, sh.by, now, "grenade", true, DEATH);
@@ -3699,7 +3722,8 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1) {
       cut = Math.floor(q.hp / 2);
     if (
       cut > 0 &&
-      Math.hypot(mx - bx, (my - by) * 1.25) < ARMS.grenade.r * wide
+      Math.hypot(mx - bx, (my - by) * 1.25) < ARMS.grenade.r * wide &&
+      open(mx, my, +mine.z || 0)
     )
       s.hang.l4p = {
         ...s.hang.l4p,
