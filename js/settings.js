@@ -108,6 +108,13 @@ const PAGES = {
     ])}<div class="keys" style="margin-top:.5rem">
       <span>Joystick</span><span>Hold a finger off the buttons and drag: a see-through stick appears. Flick the stick twice the same way: sprint, for as long as you hold it out.</span>
       <span>Tap to move</span><span>Tap: walk there. Fast swipe: sprint that way.</span></div></div>
+    <div class="sect"><h3>Hold to vote</h3>${tiles("holdVote", [
+      ["0", "Off"],
+      ["250", "0.25 s"],
+      ["500", "0.5 s"],
+      ["750", "0.75 s"],
+      ["1000", "1 s"],
+    ])}<p class="small dim" style="margin-top:.4rem">How long the Vote button, and on a phone the button that does what <kbd>E</kbd> does, is held before it works. On a computer <kbd>Enter</kbd> votes the same way.</p></div>
     <div class="sect"><h3>Keys</h3><div class="keys">
       <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</span><span>Move your duck</span>
       <span><kbd>Shift</kbd></span><span>Sprint (hold)</span>

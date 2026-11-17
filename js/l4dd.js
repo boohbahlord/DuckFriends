@@ -808,7 +808,9 @@ const DROPS_SEED = { kill: 3, ammo: 7, nuke: 2, speed: 9, double: 4, sale: 6 };
 
 /* my all-time stats (not in test rooms): a game once its first round starts, a round each time one is cleared, and the
    best round reached; with Round 16 Start on, its own stats (store.js statMode) */
-function record(s, L, cleared) {
+let kzGame = "",
+  kzDone = 0; // the zombies I killed this game that the all-time stats already hold
+function record(s, L, cleared, me) {
   if (s.test) return;
   const st = profile.stats[statMode(s)];
   if (!st) return;
@@ -818,7 +820,18 @@ function record(s, L, cleared) {
     st.games++;
   } else if (cleared) st.rounds++; // (round 0 to 1, or to 16, isn't one cleared)
   st.titles = Math.max(st.titles || 0, L.r);
+  recordKills(s, st, game, me);
   save();
+}
+/* Zombies killed, all time: what I killed since the last time it was written (the owner's, Nov 17 13:30Z) */
+function recordKills(s, st, game, me) {
+  if (kzGame !== game) {
+    kzGame = game;
+    kzDone = 0;
+  }
+  const k = ((s.hang && s.hang.l4kz) || {})[me] || 0;
+  if (k > kzDone) st.kills = (st.kills || 0) + k - kzDone;
+  kzDone = Math.max(kzDone, k);
 }
 /* ---------- the HUD: "Round N", and the end ---------- */
 function seeHud(s, ctx) {
@@ -826,7 +839,7 @@ function seeHud(s, ctx) {
   if (!hud || !L) return;
   if (roundShown !== L.r) {
     if (roundShown >= 0 && L.r > roundShown)
-      record(s, L, L.r - roundShown === 1);
+      record(s, L, L.r - roundShown === 1, ctx.me);
     hud.innerHTML = `<span class="l4-round-w">Round</span> <b>${L.r}</b>`;
     hud.classList.remove("new");
     void hud.offsetWidth;
@@ -850,6 +863,13 @@ function seeHud(s, ctx) {
   const end = L.over ? JSON.stringify(L.over) + (s.hostId === ctx.me) : "";
   if (end === overShown) return;
   overShown = end;
+  if (L.over && !s.test) {
+    const st = profile.stats[statMode(s)];
+    if (st) {
+      recordKills(s, st, `${s.id}:${s.startedAt}:${L.g || 0}`, ctx.me);
+      save();
+    }
+  } // (the game ends: the zombies of its last round count too)
   if (!L.over) {
     over.hidden = true;
     return;

@@ -6957,6 +6957,66 @@ function openPause() {
   );
 }
 
+/* ---------- hold to vote (the owner's, Nov 17 13:30Z) ----------
+   A Vote button, and on a phone the button that does what E does on the board, acts once it has been held for the
+   time set in Settings (Hold to vote, 0.5 s to start): a stripe fills across it meanwhile, and letting go early
+   changes nothing. On a computer the Enter key, which votes the same way, is held the same time. Off: it acts at
+   once, as before */
+const holdMs = () => {
+  const v = profile.settings.holdVote;
+  return v === undefined ? 500 : +v || 0;
+};
+const holdBtn = (b) =>
+  !!holdMs() &&
+  (b.classList.contains("vote-btn") || (b.dataset.a === "hang" && touchOnly()));
+let held1 = null; // { a, key, t0, ms, raf, timer }: what is held now (its data-a), what holds it (a pointer's id or "Enter")
+/* the button's own element is drawn again whenever the screen refreshes, so the stripe is painted on whichever one
+   stands there now, every frame */
+const holdNow = (a) =>
+  S && [...S.querySelectorAll(`[data-a="${a}"]`)].find((b) => !b.disabled);
+function holdPaint() {
+  if (!held1) return;
+  const b = holdNow(held1.a),
+    u = Math.min(1, (performance.now() - held1.t0) / held1.ms);
+  if (b) {
+    b.classList.add("holding");
+    b.style.setProperty("--hold", u.toFixed(3));
+  }
+  held1.raf = requestAnimationFrame(holdPaint);
+}
+function holdStart(a, key) {
+  holdEnd();
+  const ms = holdMs();
+  held1 = {
+    a,
+    key,
+    ms,
+    t0: performance.now(),
+    timer: setTimeout(() => {
+      const h = held1;
+      holdEnd();
+      if (h && holdNow(h.a)) act(h.a);
+    }, ms),
+  };
+  holdPaint();
+}
+function holdEnd(e) {
+  if (!held1) return;
+  if (e && e.pointerId !== undefined && e.pointerId !== held1.key) return;
+  if (e && e.code && held1.key !== "Enter") return;
+  clearTimeout(held1.timer);
+  cancelAnimationFrame(held1.raf);
+  for (const b of S ? S.querySelectorAll(".holding") : [])
+    b.classList.remove("holding");
+  held1 = null;
+}
+function holdDown(e) {
+  if (e.button > 0 || !R) return;
+  const b = e.target.closest && e.target.closest("[data-a]");
+  if (!b || b.disabled || !holdBtn(b)) return;
+  holdStart(b.dataset.a, e.pointerId);
+}
+
 /* ---------- keys ---------- */
 const MOVE_KEYS = [
   "KeyW",
@@ -7047,11 +7107,15 @@ function keydown(e) {
   }
   if ((e.code === "Enter" || e.code === "NumpadEnter") && !e.repeat) {
     e.preventDefault();
-    act("end");
+    const vb =
+      S && [...S.querySelectorAll(".vote-btn")].find((b) => !b.disabled);
+    if (vb && holdMs()) holdStart(vb.dataset.a, "Enter");
+    else act("end");
   }
 }
 const keyup = (e) => {
   if (world) world.keyup(e);
+  if (e.code === "Enter" || e.code === "NumpadEnter") holdEnd(e);
   if (e.code === "KeyE" && mgjRv) mgjRevive(false); // (Mad God Justin: let go of E, the revive stops)
   keys.delete(e.code);
   if (e.key === "Tab" && pm) pm.keyup(e);
@@ -7588,6 +7652,9 @@ register("game", {
       },
       true,
     );
+    S.addEventListener("pointerdown", holdDown);
+    for (const t of ["pointerup", "pointercancel"])
+      addEventListener(t, holdEnd);
     S.addEventListener("pointerdown", l4Press);
     S.addEventListener("pointerdown", autoPress);
     S.addEventListener("pointerdown", (e) => {
@@ -7600,6 +7667,7 @@ register("game", {
     S.addEventListener("click", (e) => {
       if (isTv(R.state) && tvFormClick(e, R.state, () => sendDraft())) return; // (Trivia's question window: a mark, +, ×, Written Answer)
       const b = e.target.closest("[data-a]");
+      if (b && !b.disabled && holdBtn(b)) return; // (a vote or a use button: it acts when held, holdStart below)
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
