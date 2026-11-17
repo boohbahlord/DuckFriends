@@ -1502,7 +1502,7 @@ function jetBurn(s, now, ids) {
 /* ---------- the drops (Stage 4, the owner's) ----------
    Each round: a 25% chance of one in its first 30 s, and then a 25% chance of a second 30 s after it; and on their
    own, a 5% chance of a Max Ammo in the first minute. When its time comes, the next zombie killed drops it where it
-   fell (the owner's, Nov 3); it lies there a minute, into the next round too, and the first duck to walk over it takes
+   fell (the owner's, Nov 3); it lies there 30 s (the owner's, Nov 17), into the next round too, and the first duck to walk over it takes
    it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
    drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
    the bag (the owner's, Nov 16). */
@@ -1514,7 +1514,7 @@ export const DROP = {
   GAP: 30000, // 30 s after the first
   AMMO: 0.05, // the Max Ammo of its own
   AMMO_IN: 60000, // in the round's first minute
-  LIFE: 60000, // ms a drop lies there (it stays through a round's end)
+  LIFE: 30000, // ms a drop lies there (it stays through a round's end; 30 s: the owner's, Nov 17 13:43Z)
   FOR: 45000, // ms Instant Kill, Double Points and Sale last, into the next round too (the owner's, Nov 16)
   SPEED_FOR: 60000, // ms Speed Boost lasts (the owner's, Nov 4)
   AMMO_W: 1.2, // once a drop comes, Max Ammo is this likely against 1 for each of the others (the owner's, Nov 4)
@@ -1891,7 +1891,7 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "endturn") {
-    if (L.over || !L.wait) return false;
+    if (L.over || !L.wait || isHelper(s, id)) return false; // (Justin can't end a rest phase: the owner's, Nov 17 13:38Z)
     const v = { ...L.wait.v };
     if (a.on === false) delete v[id];
     else v[id] = 1;

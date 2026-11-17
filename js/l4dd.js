@@ -296,7 +296,13 @@ const Z = new Map(); // zombie number → how it's drawn here
 const B = new Map(); // opening id → its boards' element
 const D = new Map(); // a drop's number → its element
 const DROP_LIGHT = { r: 120, k: 0.55 }; // the light round a drop on the floor
-const DROP_ENDING = 10000; // ms: a drop blinks in its last 10 s
+/* a drop blinks in its last 10 s, faster and faster as it's about to go (the owner's, Nov 17 13:43Z): each step is
+   [ms left, the blink's step] (css/app.css, .l4-drop[data-end]) */
+const DROP_BLINK = [
+  [10000, 1],
+  [5000, 2],
+  [2000, 3],
+];
 let layer = null,
   fxl = null,
   cv = null,
@@ -624,7 +630,10 @@ function spinSquare(s, ctx) {
       seenFrom(BOX.zx, BOX.y, Wd.inside)
     );
   if (!sqEl) return;
-  if (sqEl.hidden === show) sqEl.hidden = !show;
+  /* (an <svg> has no .hidden: setting it did nothing, so the square stayed drawn over the gas station's floor once I
+     went inside, the owner's, Nov 17 13:38Z. display does it) */
+  const shown = sqEl.style.display !== "none";
+  if (shown !== show) sqEl.style.display = show ? "" : "none";
   if (!show) return;
   const z = heightAt(BOX.zx, BOX.y),
     pts = [
@@ -1960,7 +1969,7 @@ activity({
     sqEl.classList.add("l4-spinsq");
     sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
     sqEl.innerHTML = "<polygon/>";
-    sqEl.hidden = true;
+    sqEl.style.display = "none";
     sqSig = "";
     layer.append(sqEl);
     shop = shopEl(ctx);
@@ -2252,10 +2261,13 @@ activity({
         o.k = sc;
         o.el.style.setProperty("--k", sc.toFixed(3));
       }
-      const end = o.until - tn < DROP_ENDING;
+      const left = o.until - tn;
+      let end = 0;
+      for (const [ms, k] of DROP_BLINK) if (left < ms) end = k;
       if (o.end !== end) {
         o.end = end;
-        o.el.classList.toggle("ending", end);
+        o.el.classList.toggle("ending", end > 0);
+        o.el.dataset.end = end;
       }
     }
     seeOn(ctx.state(), ctx);

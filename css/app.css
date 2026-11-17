@@ -16228,7 +16228,14 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-drop.ending::before {
   animation:
     l4-drop-bob 1.6s ease-in-out infinite,
-    l4-drop-blink 0.5s steps(1) infinite;
+    l4-drop-blink var(--blink, 0.5s) steps(1) infinite;
+}
+/* faster and faster as it's about to go (l4dd.js DROP_BLINK) */
+.l4-drop[data-end="2"] {
+  --blink: 0.25s;
+}
+.l4-drop[data-end="3"] {
+  --blink: 0.12s;
 }
 @keyframes l4-drop-bob {
   0%,

@@ -294,15 +294,7 @@ const leftIn = (m, w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
 function justinBot(s, id, now, out) {
   const p = s.pos[id],
     h = s.hang;
-  const wait = h.l4.wait;
-  if (wait && !wait.v[id]) {
-    const k = `${id} ${h.l4.r}`;
-    if (!readyAt.has(k)) readyAt.set(k, now + 1000 + Math.random() * 1500);
-    if (now >= readyAt.get(k)) {
-      readyAt.delete(k);
-      out.push({ t: "hang", k: "l4", do: "endturn", on: true, id });
-    }
-  }
+  // (Justin never presses End turn or Ready: only the players end a rest phase, the owner's, Nov 17 13:38Z)
   const x = p.x * W,
     y = p.y * H,
     dt = Math.min(400, Math.max(0, now - (lastAt.get(id) || now - STEP_MS)));

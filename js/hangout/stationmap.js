@@ -118,7 +118,9 @@ export const CHAPEL_DOOR = { a: 2000, b: 2600 };
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
    standing up over it: the owner's, Nov 17 12:28Z, they looked closed) */
 export const INNER_DOORS = [
-  { id: "gs-store", at: 1600, a: 950, b: 1110 },
+  // (the storeroom's, in the middle of its wall: at 950 to 1110 the restroom's wall stood up over it and hid it, the
+  // owner's, Nov 17 13:38Z "still a door missing")
+  { id: "gs-store", at: 1600, a: 770, b: 930 },
   { id: "gs-rest", at: 1600, a: 1400, b: 1560 },
 ];
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
