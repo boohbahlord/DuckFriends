@@ -3861,10 +3861,12 @@ function playFx(f) {
   } else if (f.kind === "l4crit") {
     /* a headshot in Quacky Zombies: its head bursts in blood (l4ddart.js draws it headless after) and a CRIT rises over
        it, so it's never missed (owner 2026-11-04 04:01Z), smaller since (the owner's, Nov 4) */
-    if (!geo.hang) return;
-    sfx.gore({ x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
-    const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
-      top = a.top - size * 0.78;
+    if (!geo.hang && !f.b) return;
+    sfx.gore(f.b ? {} : { x: f.x, y: f.y }); // (a gush of gore: the owner's, Nov 17 12:28Z)
+    const a = f.b
+        ? place({ x: f.x, y: f.y }, 0, 1)
+        : world.place({ x: f.x / HW, y: f.y / HH }, 0),
+      top = a.top - size * 0.78; // (f.b: on a board, Mad God Justin's zombies; mgjrules.js mgjZombieHit)
     bloodBurst(a.left, top, 12, 2.6, size * 0.3, size * 0.5); // (a smaller burst than it was, as a duck's crit: the owner's, Nov 4)
     neckSpray(a.left + size * 0.12, a.top - size * 0.5); // (then blood keeps spurting out of its neck for a moment)
     const word = el(
@@ -3875,9 +3877,11 @@ function playFx(f) {
   } else if (f.kind === "l4miss") {
     /* a miss in Dead Ducks Arcade (the owner's, Nov 16 21:47Z): "missed", small and white over that zombie, rising and
        fading as the HP numbers do */
-    if (!geo.hang) return;
-    sfx.miss({ x: f.x, y: f.y }); // (a wispy blip: the owner's, Nov 17 12:28Z)
-    const a = world.place({ x: f.x / HW, y: f.y / HH }, 0),
+    if (!geo.hang && !f.b) return;
+    sfx.miss(f.b ? {} : { x: f.x, y: f.y }); // (a wispy blip: the owner's, Nov 17 12:28Z)
+    const a = f.b
+        ? place({ x: f.x, y: f.y }, 0, 1)
+        : world.place({ x: f.x / HW, y: f.y / HH }, 0),
       word = el(
         `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">missed</div>`,
       );

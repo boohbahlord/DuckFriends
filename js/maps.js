@@ -132,14 +132,7 @@ export const mapForm = (id) =>
 export const mapName = (id) =>
   id === "cabin"
     ? "Duck Cabin"
-    : id === ZCABIN
-      ? "Duck Cabin (Dead Ducks Arcade)"
-      : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
-/* Quacky Zombies' Duck Cabin, from above, as a map for Mad God Justin only: one of the choices of his map vote, and his
-   lightning never comes from the edges on it (the owner's, Nov 17 11:07Z). It's the picture of the cabin in Quacky
-   Zombies' own map vote, behind the fight as any map is */
-export const ZCABIN = "zcabin";
-export const ZCABIN_PIC = "assets/maps/duck-cabin-zombies.jpg";
+    : ([...MAPS, ...MAP_VARIANTS].find((m) => m[0] === id) || MAPS[0])[1];
 
 /* a small picture of each map for the Map window (the world only, no columns) */
 export function mapMini(id) {
@@ -157,8 +150,6 @@ export function mapMini(id) {
   if (id === "vellum") return vellumMini();
   if (id === "tiles") return '<div class="mini-map mm-tiles"></div>';
   if (id === "stars") return '<div class="mini-map mm-stars"></div>';
-  if (id === ZCABIN)
-    return `<div class="mini-map"><img class="mm-zcabin" src="${ZCABIN_PIC}" alt="" draggable="false"></div>`;
   if (id === "cabin")
     return `<div class="mini-map"><svg viewBox="0 0 480 270" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true">${artBackdrop("cabin")}</svg></div>`;
   if (id === "pixel")
@@ -434,18 +425,6 @@ function nightScene(layer) {
 }
 
 /* ---------- Duck Cabin: the night sky around Hangout's world (the world itself fills the board) ---------- */
-function zcabinScene(layer) {
-  const sc = document.createElement("div");
-  sc.className = "scene zcabin";
-  sc.style.backgroundImage = `url("${ZCABIN_PIC}")`;
-  layer.append(sc);
-  return {
-    update() {},
-    destroy() {
-      sc.remove();
-    },
-  };
-}
 function cabinScene(layer) {
   const sc = document.createElement("div");
   sc.className = "scene cabin";
@@ -1084,9 +1063,7 @@ function sceneOf(map, layer, s, cur, page = false) {
                       ? vellumScene(layer)
                       : map === "cabin"
                         ? cabinScene(layer)
-                        : map === ZCABIN
-                          ? zcabinScene(layer)
-                          : nightScene(layer);
+                        : nightScene(layer);
 }
 /* a map moving in a small box of its own (the map vote's tiles, under the pointer or a finger, and the one you voted
    for): the same scene as in the game, without the page's own map look; a form plays as itself (zoom, black and white) */
