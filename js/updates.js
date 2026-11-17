@@ -9,6 +9,15 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v82",
+    version: 82,
+    date: "Nov 17, 2026",
+    title: "Metal underfoot",
+    news: [
+      "For Dead Ducks Arcade: on Downpour, steps on the roofs and the canopy sound like metal, and under the canopy like concrete.",
+    ],
+  },
+  {
     id: "v81",
     version: 81,
     date: "Nov 17, 2026",
