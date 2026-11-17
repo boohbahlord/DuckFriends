@@ -5269,3 +5269,12 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 Then (11:08Z): "tell me of what questions they have here and WHO"
 
 - Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
+
+## Request (2026-11-17 11:11Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt7Dz9UQp5MzPxtXYbSUEMVM): Downpour's fence round the map, grass instead of the dark ground (word for word)
+Picture: /mnt/project-files/refs/nov17-1107-batch/downpour-fence-glitch.png
+> so the ground on this dark side changes visually as you walk around and there is an invisible wall instead of a fence around the whole map, which means i was disobeyed again. There must be a fence around the whole map WHERE the invisible wall is AND this ugly dark ground will be replaced with the normal grass before topography work is done
+
+Done (Solomon the 2nd): the chain-link fence now runs round the whole map on the line where a duck stops (stationmap.js
+RIM; the north and south sides face on, fencex); the road's two fences are its pieces across the road, the only ones
+zombies climb. The forest floor is gone: grass everywhere, past the edges too (dpground.js). The "changing" ground was
+the space past the map's edge: nothing was painted there, so the ground canvas kept old pictures as you walked.
