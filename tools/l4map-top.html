@@ -189,7 +189,7 @@
         else if (p.kind === "car" && p.hood) {
           g.fillStyle = "rgba(255,178,74,.25)";
           g.beginPath();
-          g.ellipse(3470, 2090, 330, 230, 0, 0, 7);
+          g.ellipse(3470 * GS.K, 2090 * GS.K, 330 * GS.K, 230 * GS.K, 0, 0, 7);
           g.fill();
           rect(r, "#c98a3a");
         } else if (p.layer !== "none" && p.solid) rect(r, COL.thing);
@@ -206,7 +206,7 @@
           "#ff9a3a",
         );
       // the power box parts' spots
-      g.font = "bold 70px sans-serif";
+      g.font = `bold ${70 * GS.K}px sans-serif`;
       g.textAlign = "center";
       for (const s of GS.PART_SPOTS) {
         g.fillStyle = "#ff5a5a";
@@ -217,7 +217,7 @@
         g.fillText(s.can.split("").join(" "), s.x, s.y - 34);
       }
       // labels
-      g.font = "bold 90px sans-serif";
+      g.font = `bold ${90 * GS.K}px sans-serif`;
       g.fillStyle = "rgba(255,255,255,.85)";
       for (const [t, x, y] of [
         ["GAS STATION", 2300, 470],
@@ -229,7 +229,7 @@
         ["generator", 3750, 960],
         ["tower", 3150, 3820],
       ])
-        g.fillText(t, x, y);
+        g.fillText(t, x * GS.K, y * GS.K);
       const items = [
         [COL.wall, "wall"],
         [COL.walk, "hole anyone walks through"],
@@ -250,6 +250,26 @@
         `<span>${L.PROPS.filter((p) => p.kind === "tree").length} trees; ${leaks} walkable cells outside the line</span>`;
       window.DONE = {
         leaks,
+        reach: duck.reduce((n, v) => n + v, 0),
+        start: [sp.x, sp.y],
+        at: Object.fromEntries(
+          [
+            ["storeroom", 1350, 1030],
+            ["restroom", 1350, 1430],
+            ["aisles", 2300, 1000],
+            ["pumps", 2300, 2350],
+            ["road", 2300, 3050],
+            ["chapel", 2300, 4500],
+            ["altar", 2300, 5420],
+            ["powerE", 3834, 1207],
+            ["hood", 3270, 2090],
+          ].map(([n, x, y]) => [
+            n,
+            duck[
+              Math.floor((y * GS.K) / STEP) * NX + Math.floor((x * GS.K) / STEP)
+            ],
+          ]),
+        ),
         trees: L.PROPS.filter((p) => p.kind === "tree").length,
       };
     </script>

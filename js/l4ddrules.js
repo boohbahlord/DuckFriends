@@ -821,8 +821,8 @@ export function startSpot(k = 0) {
   if (!spots && dp()) {
     // (Downpour: in the gas station, by the front door)
     spots = [];
-    for (let y = 1520; y <= 1680; y += 65)
-      for (let x = 2250; x <= 3000; x += 65)
+    for (let y = 1520 * GS.K; y <= 1680 * GS.K; y += 65)
+      for (let x = 2250 * GS.K; x <= 3000 * GS.K; x += 65)
         if (standable(x, y, heightAt(x, y), 0)) spots.push({ x, y });
     spots.sort(
       (a, b) =>

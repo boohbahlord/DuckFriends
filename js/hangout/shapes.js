@@ -380,15 +380,48 @@ const SWAMP_URL = {};
 const swampURL = (k) =>
   SWAMP_URL[k] ||
   (SWAMP_URL[k] = A.svgDataURL(SA.swampTreeSVG(k % 3, 1 + Math.floor(k / 3))));
+/* Downpour's things are drawn as the floor plan has them, then shown at K of that size (stationmap.js K: the owner's,
+   Nov 17, the whole map at 60%), so each looks just as it did, only smaller. SK: stationart.js' drawings that way */
+const PLAN = new Set(["w", "d", "h", "edge", "cable", "up", "half", "z"]),
+  PLAN_AT = new Set(["x0", "y0", "x1", "y1"]);
+const atK =
+  (fn) =>
+  (o = {}) => {
+    const q = {};
+    for (const [a, v] of Object.entries(o))
+      q[a] =
+        typeof v === "number" && (PLAN.has(a) || PLAN_AT.has(a)) ? v / GS.K : v;
+    return fn(q).replace(
+      /^(<svg[^>]*?) width="([\d.]+)" height="([\d.]+)"/,
+      (m, a, w, h) =>
+        `${a} width="${+(w * GS.K).toFixed(2)}" height="${+(h * GS.K).toFixed(2)}"`,
+    );
+  };
+const SK = Object.fromEntries(
+  [
+    "pumpSVG",
+    "carSVG",
+    "generatorSVG",
+    "fenceSVG",
+    "pewSVG",
+    "altarSVG",
+    "towerSVG",
+    "canopySVG",
+    "fallenSVG",
+    "roofSVG",
+    "shelfSVG",
+    "counterSVG",
+  ].map((n) => [n, atK(SA[n])]),
+);
 const GS_DRAW = {
-  pump: (p) => gsPart(p, () => SA.pumpSVG({ w: p.w, d: p.d, h: p.h })),
+  pump: (p) => gsPart(p, () => SK.pumpSVG({ w: p.w, d: p.d, h: p.h })),
   car: (p) => {
-    const up = p.hood ? 110 : 0,
+    const up = p.hood ? 110 * GS.K : 0,
       k = seedOf(p);
     return gsPart(
       p,
       () =>
-        SA.carSVG({
+        SK.carSVG({
           w: p.w,
           d: p.d,
           h: p.h,
@@ -401,27 +434,28 @@ const GS_DRAW = {
     );
   },
   generator: (p) => {
-    const cable = 20; // (to the power box, just east of it)
-    return gsPart(p, () => SA.generatorSVG({ w: p.w, d: p.d, h: p.h, cable }), {
+    const cable = 20 * GS.K; // (to the power box, just east of it)
+    return gsPart(p, () => SK.generatorSVG({ w: p.w, d: p.d, h: p.h, cable }), {
       w: p.w + cable,
     });
   },
   fence: (p) =>
-    gsPart(p, () => SA.fenceSVG({ w: 30, d: p.d, h: p.h, seed: seedOf(p) }), {
-      left: 9,
-      w: 30,
-    }),
+    gsPart(
+      p,
+      () => SK.fenceSVG({ w: 30 * GS.K, d: p.d, h: p.h, seed: seedOf(p) }),
+      { left: 9 * GS.K, w: 30 * GS.K },
+    ),
   pew: (p) =>
-    gsPart(p, () => SA.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
-  altar: (p) => gsPart(p, () => SA.altarSVG({ w: p.w, d: p.d, h: p.h })),
-  tower: (p) => gsPart(p, () => SA.towerSVG({ w: p.w, d: p.d, h: p.h })),
+    gsPart(p, () => SK.pewSVG({ w: p.w, d: p.d, h: p.h, broken: p.broken })),
+  altar: (p) => gsPart(p, () => SK.altarSVG({ w: p.w, d: p.d, h: p.h })),
+  tower: (p) => gsPart(p, () => SK.towerSVG({ w: p.w, d: p.d, h: p.h })),
   canopy: (p) => [
     part(
-      () => SA.canopySVG({ w: p.w, d: p.d, edge: 40 }),
+      () => SK.canopySVG({ w: p.w, d: p.d, edge: 40 * GS.K }),
       p.x,
       p.y - p.z,
       p.w,
-      p.d + 40,
+      p.d + 40 * GS.K,
       p.key,
       {
         fade: true,
@@ -431,7 +465,7 @@ const GS_DRAW = {
   ],
   fallen: (p) => {
     const F = p.fallen,
-      pad = 90,
+      pad = 90 * GS.K,
       b = {
         l: p.x - pad,
         t: p.y - p.z - p.h - pad,
@@ -441,7 +475,7 @@ const GS_DRAW = {
     return [
       part(
         () =>
-          SA.fallenSVG({
+          SK.fallenSVG({
             w: b.w,
             h: b.h,
             x0: F.x0 - b.l,
@@ -691,7 +725,7 @@ export const DRAW = {
     return [
       part(
         () =>
-          SA.roofSVG({
+          SK.roofSVG({
             w: b.w,
             d: b.h - p.bldg.wall,
             kind: p.bldg === GS.STATION ? "gs" : "ch",
@@ -797,7 +831,7 @@ export const DRAW = {
   shelf: (p) =>
     p.map
       ? gsPart(p, () =>
-          SA.shelfSVG({
+          SK.shelfSVG({
             w: p.w,
             d: p.d,
             h: p.h,
@@ -819,7 +853,7 @@ export const DRAW = {
   plant: (p) => one(p, () => A.pottedPlant(), 60, 100),
   counter: (p) =>
     p.map
-      ? gsPart(p, () => SA.counterSVG({ w: p.w, d: p.d, h: p.h })) // (Downpour's shop counter)
+      ? gsPart(p, () => SK.counterSVG({ w: p.w, d: p.d, h: p.h })) // (Downpour's shop counter)
       : one(
           p,
           () =>

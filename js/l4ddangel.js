@@ -29,7 +29,7 @@ export const ANGEL = {
     return dpOn() ? GS.ANGEL.y : STAGE.cy - 40;
   },
   get Z() {
-    return dpOn() ? 90 : STAGE.h; // (what it stands on: the stage, the altar)
+    return dpOn() ? GS.ALTAR_H : STAGE.h; // (what it stands on: the stage, the altar)
   },
   // where E works from: the stage in front of it (Downpour: the floor before the altar, the aisle's end)
   get E() {

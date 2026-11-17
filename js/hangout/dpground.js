@@ -115,9 +115,9 @@ export function downpourGround() {
     ],
     [GS.CHAPEL.x0 - 40, GS.CHAPEL.y0 - 40, GS.TOWER.x1 + 40, GS.CHAPEL.y1 + 40],
     [0, R.y0 - 160, W, R.y1 + 160],
-    [1200, 1750, 3400, 2650],
+    [1200 * GS.K, 1750 * GS.K, 3400 * GS.K, 2650 * GS.K],
   ];
-  for (let k = 0; k < 90; k++) {
+  for (let k = 0; k < 90 * GS.K * GS.K; k++) {
     const x = 200 + r() * (W - 400),
       y = 200 + r() * (H - 400),
       rx = 40 + r() * 110,
@@ -147,9 +147,9 @@ export function downpourGround() {
   }
   /* concrete: the gas station's forecourt, under the canopy, down to the road */
   {
-    const x0 = 1200,
+    const x0 = 1200 * GS.K,
       y0 = GS.STATION.y1,
-      x1 = 3400,
+      x1 = 3400 * GS.K,
       y1 = R.y0 + 20;
     G.push(
       piece(
@@ -254,8 +254,8 @@ export function downpourGround() {
       ),
     );
     const C = GS.CHAPEL,
-      a0 = 2200 - C.x0,
-      a1 = 2400 - C.x0;
+      a0 = 2200 * GS.K - C.x0,
+      a1 = 2400 * GS.K - C.x0;
     G.push(
       piece(
         `<rect width="${C.x1 - C.x0}" height="${C.y1 - C.y0}" fill="url(#dpp)"/><rect x="${a0}" y="0" width="${a1 - a0}" height="${C.y1 - C.y0}" fill="#6b1c1f"/><path d="M${a0 + 10} 0V${C.y1 - C.y0}M${a1 - 10} 0V${C.y1 - C.y0}" stroke="#a8862f" stroke-width="5" opacity=".6"/>`,

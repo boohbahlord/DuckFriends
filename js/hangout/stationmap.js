@@ -5,9 +5,16 @@
    from build() below and switches to them in useMode (variant "l4gs"). Floor plan:
    /mnt/project-files/refs/zombie-map-plans-2026-11-16/plan3.py.
 
-   World px as in layout.js: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass
-   and every floor; the road lies ROAD.low under it. */
-export const GS_W = 4600,
+   The numbers below are the floor plan's. The map is built at K of them (the owner's, Nov 17 00:45Z: the plan came out
+   far too big next to the ducks, so the whole map is 60% of it): every place, size and height, walls, rooms, props,
+   cars, pews, pumps, the road, the forest line, the part spots, all from that one number (scaled() at the end of this
+   file). Ducks, zombies and weapons stay as they are, and so do the things that are the cabin's own (the Priest, the
+   Angel machine, the power box, the toilet).
+
+   Plan px: x across (0 west … 4600 east), y is depth (0 north … 6200 south). Heights: 0 is the grass and every floor;
+   the road lies ROAD.low under it. */
+export const K = 0.6;
+export let GS_W = 4600,
   GS_H = 6200;
 /* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side */
 export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
@@ -55,7 +62,7 @@ const INNER = 120;
    and drop down the other side from the top (the owner's, Nov 16 23:32Z). x: the fence's line; y0 … y1: how far it
    runs (into the trees at both ends); climb: where along it a zombie comes over (the open ground); out: the side the
    zombies come from (-1 west, 1 east) */
-export const FENCE_H = 200;
+export let FENCE_H = 200;
 export const FENCES = [
   { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
   { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
@@ -114,6 +121,7 @@ export const HOOD = {
 };
 export const PRIEST = { x: 2550, y: 5360 };
 export const ALTAR = { x0: 1850, y0: 5480, x1: 2750, y1: 5700 };
+export let ALTAR_H = 90; // (how high its top is: the Angel machine stands on it, l4ddangel.js)
 export const ANGEL = { x: 2250, y: 5520 };
 export const START = { x: 2600, y: 1600 };
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
@@ -196,8 +204,8 @@ export function buildingAt(x, y) {
 
 /* ---------- the props ----------
    b: layout.js' builders, { add, wallX, wallY, T }; every prop here carries map "gs" (layout.js keeps them apart from
-   the cabin's). z: the ground's height under each. */
-export function build(b) {
+   the cabin's). z: the ground's height under each. In the plan's numbers: build() below passes them on at K */
+function planBuild(b) {
   const { T } = b,
     M = { map: "gs" };
   const put = (kind, x, y, w, d, h, o = {}) =>
@@ -386,8 +394,8 @@ export function build(b) {
   line("y", C.x0, C.y0, C.y1, gapsOn("y", C.x0), C.wall);
   line("y", C.x1, C.y0, C.y1, gapsOn("y", C.x1), C.wall);
   solid("tower", TOWER, TOWER.h);
-  solid("altar", ALTAR, 90);
-  put("l4angel", ANGEL.x - 50, ANGEL.y - 13, 100, 26, 140, { z: 90 });
+  solid("altar", ALTAR, ALTAR_H);
+  put("l4angel", ANGEL.x - 50, ANGEL.y - 13, 100, 26, 140, { z: ALTAR_H });
   put("priest", PRIEST.x - 30, PRIEST.y - 20, 60, 40, 90, {});
   const PEWS = {
     L: {
@@ -594,4 +602,73 @@ function forest(put) {
       inside.push([x, y]);
       tree(x, y, s);
     }
+}
+
+/* ---------- the map at K of the plan ----------
+   The props are made once in the plan's numbers (planBuild, its wall thickness T / K so it comes out as T), then every
+   number here is turned to K of itself: the exported places and sizes in place (so whatever holds one of them, a prop's
+   hole or building, sees the new one), and each prop's place, size, height and options as build() hands it on. The
+   strength of a light (k) and its flicker stay. The cabin's own things keep their size, only their place moves */
+const KEEP = new Set(["k", "flick", "out"]),
+  OWN_SIZE = new Set(["priest", "l4angel", "l4power", "toilet"]),
+  done = new Set();
+function scaled(o) {
+  if (!o || typeof o !== "object" || done.has(o)) return o;
+  done.add(o);
+  for (const a of Object.keys(o)) {
+    const v = o[a];
+    if (typeof v === "number") {
+      if (!KEEP.has(a)) o[a] = v * K;
+    } else scaled(v);
+  }
+  return o;
+}
+const atK = (v, a) =>
+  typeof v === "number"
+    ? KEEP.has(a)
+      ? v
+      : v * K
+    : !v || typeof v !== "object" || done.has(v)
+      ? v
+      : Array.isArray(v)
+        ? v.map((x) => atK(x))
+        : Object.fromEntries(Object.entries(v).map(([q, x]) => [q, atK(x, q)]));
+const CALLS = [];
+planBuild({
+  add: (...a) => CALLS.push(["add", ...a]),
+  wallX: (...a) => CALLS.push(["wallX", ...a]),
+  wallY: (...a) => CALLS.push(["wallY", ...a]),
+  T: 12 / K,
+});
+for (const o of [ROAD, DEEP, SHALLOW, TOP, BOT, STATION, CHAPEL, TOWER, FENCES])
+  scaled(o);
+for (const o of [
+  WALK_HOLES,
+  BOARDED,
+  GLASS,
+  CHAPEL_DOOR,
+  GEN,
+  POWER_SPOT,
+  HOOD,
+])
+  scaled(o);
+for (const o of [PRIEST, ALTAR, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN])
+  scaled(o);
+for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
+GS_W *= K;
+GS_H *= K;
+FENCE_H *= K;
+ALTAR_H *= K;
+export function build(b) {
+  for (const [f, ...a] of CALLS) {
+    if (f !== "add") {
+      const [at, a0, a1, h, o] = a;
+      b[f](at * K, a0 * K, a1 * K, h * K, atK(o || {}));
+      continue;
+    }
+    const [kind, x, y, w, d, h, o] = a;
+    if (OWN_SIZE.has(kind))
+      b.add(kind, (x + w / 2) * K - w / 2, (y + d) * K - d, w, d, h, atK(o));
+    else b.add(kind, x * K, y * K, w * K, d * K, h * K, atK(o));
+  }
 }
