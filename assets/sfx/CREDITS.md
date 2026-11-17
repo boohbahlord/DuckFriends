@@ -18,6 +18,8 @@ instruments (its license: LICENSES.md).
 | ak | Still North Media, The Free Firearm Sound Library (AK-47 7.62) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | lmg | Still North Media, The Free Firearm Sound Library (AR-15 5.56) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | chaingun | Still North Media, The Free Firearm Sound Library (PPSh) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
+| tommy | Still North Media, The Free Firearm Sound Library (M45 SMG and PPSh bursts, 1911 .45) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
+| ump | Still North Media, The Free Firearm Sound Library (1911 .45, AK-47 burst) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | sniper | Still North Media, The Free Firearm Sound Library (Tikka T3 .30-06) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | shotgun | Still North Media, The Free Firearm Sound Library (Winchester Model 12) — https://opengameart.org/content/the-free-firearm-sound-library | CC0 1.0 |
 | pump | SpringySpringo, Gun Reload Sounds — https://opengameart.org/content/gun-reload-sounds | CC0 1.0 |

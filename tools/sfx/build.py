@@ -183,6 +183,28 @@ SOUNDS = {
         drive=4,
         credit=GUNS + ("PPSh",),
     ),
+    # the Tommy gun (.45, quick and chattering: a shot every 120 ms): one shot of an M45's burst, a PPSh's crack on top
+    # and a .45's low thump under it (each cut before its recording's next shot)
+    "tommy": dict(
+        layers=[
+            ("oga:guns-smg/G_33P.wav", 4.253, 0.095, 0, 1),
+            ("oga:guns-smg/P_32P.wav", 4.444, 0.04, 0.001, 0.4),
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.12, 0.002, 0.35, 1500),
+        ],
+        rate=0.92,
+        drive=4,
+        credit=GUNS + ("M45 SMG and PPSh bursts, 1911 .45",),
+    ),
+    # the UMP-45 (.45, slower and heavier: a shot every 0.30 s): the .45 pistol's crack with an AK's body under it
+    "ump": dict(
+        layers=[
+            ("oga:guns-pistol/A_42P.wav", 5.0, 0.14, 0, 1),
+            ("oga:guns-rifle-lmg/C_29P.wav", 1.069, 0.085, 0.003, 0.5, 2500),
+        ],
+        rate=0.88,
+        drive=4,
+        credit=GUNS + ("1911 .45, AK-47 burst",),
+    ),
     "sniper": dict(
         layers=[("oga:guns-sniper/W_29P.wav", 0.56, 1.2, 0, 1)],
         drive=4,

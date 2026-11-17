@@ -52,6 +52,8 @@ export const VOL = {
   handgun: -6,
   revolver: -7,
   smg: -7,
+  tommy: -8, // (the Tommy gun)
+  ump: -7, // (the UMP-45: heavier)
   ak: -9,
   lmg: -8,
   chaingun: -9,
@@ -179,7 +181,17 @@ const ALIAS = { gunshot: "handgun" };
 export const OTHERS = 0.6; // another duck's sounds, against mine
 const VOICES = 12, // sounds at once, at most
   CAP = {
-    ...{ step: 3, zstep: 3, chaingun: 4, smg: 4, lmg: 4, ak: 3, burst: 4 },
+    ...{
+      step: 3,
+      zstep: 3,
+      chaingun: 4,
+      smg: 4,
+      tommy: 4,
+      ump: 3,
+      lmg: 4,
+      ak: 3,
+      burst: 4,
+    },
     ...{ flameLoop: 3, fire: 3 },
     ...{ hitSmall: 4, hitShot: 3, hitClaw: 3, landSmall: 3, landShot: 3 },
     ...{ l4crack: 3, l4nail: 3, card: 3 },
@@ -199,6 +211,7 @@ const GROUPS = {
   ],
   game: [
     ...["handgun", "revolver", "smg", "ak", "lmg", "chaingun", "sniper"],
+    ...["tommy", "ump"],
     ...["shotgun", "pump", "glauncher", "bow", "empty", "medkit", "adrenaline"],
     ...["dbarrel", "burst", "flameStart", "flameLoop", "flameStop"],
     ...["fire", "fireLight", "trombone"],
@@ -594,6 +607,8 @@ const RELOAD = {
   handgun: "reloadHandgun",
   revolver: "reloadRevolver",
   smg: "reloadSmg",
+  tommy: "reloadSmg", // (the Tommy gun and the UMP-45: the SMG's reload, for now)
+  ump: "reloadSmg",
   ak: "reloadAk",
   lmg: "reloadLmg",
   chaingun: "reloadChaingun",

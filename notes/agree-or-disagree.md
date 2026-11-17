@@ -5274,3 +5274,8 @@ Then (11:08Z): "tell me of what questions they have here and WHO"
   radius). The laser gun's sounds are ready for Noah's build: `sfx.laser(o)` each shot, `sfx.laserHiss(o)` on overheat,
   `sfx.steam(id, heat, { x, y, rain })` every tick (heat 0 cold to 1 at the limit, more once overheated; rain doubles it;
   0 lets it fade). Tommy gun and UMP45 shots wait for the owner's OK on their stats.
+- Miles Jr., Tommy gun and UMP-45 shots (Adam 11:22Z: the Tommy gun fires every 120 ms from a 50-round drum; the
+  UMP-45 fires every 0.30 s, 20 rounds, 2 damage a bullet): `sfx.tommy(o)` is one M45 shot from a burst, with a PPSh's
+  crack on top and a .45's thump under it; `sfx.ump(o)` is the .45 pistol's shot with an AK's body under it, lower and
+  heavier. Each is cut before its recording's next shot or echo, so fast fire never doubles up. Both reload with the
+  SMG's reload for now (`sfx.reload("tommy" | "ump")`).

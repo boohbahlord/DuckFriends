@@ -13,6 +13,8 @@ export const FILES = {
   ak: { n: 1 },
   lmg: { n: 1 },
   chaingun: { n: 1 },
+  tommy: { n: 1 },
+  ump: { n: 1 },
   sniper: { n: 1 },
   shotgun: { n: 1 },
   pump: { n: 1 },
