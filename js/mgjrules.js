@@ -71,7 +71,7 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import { ARMS } from "./l4ddrules.js";
+import { ARMS, ITEM_ODDS } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
@@ -193,8 +193,8 @@ export const BURST = {
   JUSTIN_SHOT = 0.22, // (his bullets' speed, board widths a second: the owner, his bullets never fly faster)
   SG_ODDS = 0.35, // (a duck close enough: how often he takes the shotgun instead of a burst)
   PACE = 0.6,
-  HAMMER_TELL = 500, // ms he winds up his hammer up close (it was 350: a hint long enough to see, the owner's, Nov 17 11:07Z)
-  GUN_TELL = 450; // ms he aims before a burst or the shotgun (game.js draws his aim: the owner's, Nov 17 11:07Z, a hint for every attack)
+  HAMMER_TELL = 350, // ms he winds up his hammer up close (the owner's, Nov 17 13:07Z: the hints should not be as long)
+  GUN_TELL = 300; // ms he aims before a burst or the shotgun (game.js draws his aim; shorter, the owner's, Nov 17 13:07Z)
 /* his throws (the owner's): now and then 8 Xbox One controllers every way at once, bullet hell, to dodge; less often a
    big black office chair at a duck, slow but wide, that knocks down and shoves back like the hammer. Each is held up
    first (the tell), so there's time to move */
@@ -295,7 +295,8 @@ export const DUCK_LEN = { x: RX, y: RY }; // (a duck length, in board widths and
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
    fire (half and half) and hits him as it shows, as the meteor does (1 damage); "good" is Good
    Justin God. A weapon waits until a duck walks over it or the next one comes */
-export const PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign every 30 s, +1 HP to the duck that walks over it)
+export const PLUS_LIFE = 10000,
+  PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign every 30 s, +1 HP to the duck that walks over it)
   PICK_EVERY = 15000,
   PICK_FADE = 700,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
@@ -335,8 +336,8 @@ export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owne
 export const pickAmmo = (k) =>
   k === "shotgun" || k === "laser"
     ? INF_AMMO // (the Laser Rifle never runs out anywhere: it only overheats)
-    : k === "lmg"
-      ? 30 // (the LMG only 30 rounds here: the owner's, Nov 17)
+    : k === "lmg" || k === "chaingun"
+      ? 30 // (the LMG and the chain gun only 30 rounds here: the owner's, Nov 17)
       : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
 /* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out. Every gun picked
    up has to reload here (the owner's, Nov 16), so the ones with no magazine in Quacky Zombies get one: the shotgun 6
@@ -1280,12 +1281,18 @@ function brain(s, now, log) {
 }
 
 /* ---------- the pickups ---------- */
+/* what comes next (the owner's, Nov 17: as the fireplace's and the car's spin does it, not weights of its own): the sky, the
+   meteor and Good Justin come as they did (SKY, their own odds); otherwise the roll is the spin's: a medkit (the items'
+   side) ITEM_ODDS.start of the time, else one gun, each with the same chance (the chain gun as likely as any other) */
+const SKY = PICKS.filter(([k]) => ["sky", "meteor", "good"].includes(k));
 const pickKind = (s) => {
-  const list = PICKS.filter(([k]) => k !== "good" || !s.mgj.gj),
-    sum = list.reduce((a, [, w]) => a + w, 0);
-  let r = Math.random() * sum;
-  for (const [k, w] of list) if ((r -= w) < 0) return k;
-  return list[0][0];
+  const list = SKY.filter(([k]) => k !== "good" || !s.mgj.gj),
+    r = Math.random() * 100;
+  let at = 0;
+  for (const [k, w] of list) if (r < (at += w)) return k;
+  return Math.random() < ITEM_ODDS.start
+    ? "medkit"
+    : MGJ_GUNS[Math.floor(Math.random() * MGJ_GUNS.length)];
 };
 function pickTick(s, now, at, log, fx) {
   const m = s.mgj;
@@ -1354,6 +1361,11 @@ function pickTick(s, now, at, log, fx) {
       ch = true;
       break;
     }
+  /* the owner's, Nov 17: it felt constant because an untaken plus stayed until the next one; now it goes after PLUS_LIFE */
+  if (m.plus && now - m.plus.t >= PLUS_LIFE) {
+    m.plus = null;
+    ch = true;
+  }
   /* the plus sign: +1 HP to the first duck that walks over it (a duck at full HP leaves it be) */
   if (m.plus && now - m.plus.t >= PICK_FADE * 0.5)
     for (const id of playing(s)) {
@@ -1561,6 +1573,7 @@ function shotThrown(s, sh, x0, y0, dx, dy, now) {
       k = len ? Math.max(0, Math.min(1, (px * ux + py * uy) / len)) : 0;
     if (Math.hypot(px - k * ux, py - k * uy) >= (th.k === "chair" ? 1.6 : 1))
       continue;
+    th.blk = now; // (it blinks a see-through white: the owner's, Nov 17 13:07Z)
     return true;
   }
   return false;

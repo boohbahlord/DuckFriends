@@ -9,6 +9,24 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v73",
+    version: 73,
+    date: "Nov 17, 2026",
+    title: "Mad God Justin tune-up",
+    news: [
+      "For Mad God Justin: The chain gun and the LMG now come with 30 rounds.",
+      "For Mad God Justin: Sprint lasts 1 second and refills as fast as it drains.",
+      "For Mad God Justin: Pickups are rolled like the weapon spin.",
+      "For Mad God Justin: His chair and controllers blink white when a bullet hits them.",
+      "For Mad God Justin: His attack hints are shorter.",
+      "For Mad God Justin: The plus sign disappears after 10 seconds if nobody takes it.",
+      "For Dead Ducks Arcade: Justin fails half of his dodges.",
+      'For Dead Ducks Arcade: New setting "Justin in Duck Cabin" (off by default).',
+      "For Dead Ducks Arcade: Downpour's yellow square sits over the car.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v72",
     version: 72,
     date: "Nov 17, 2026",
