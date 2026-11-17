@@ -6,7 +6,15 @@
 import { isPhone } from "./pointer.js";
 
 const html = document.documentElement;
+/* the installed app (sw.js, manifest.webmanifest) already opens in full screen, so there the button and the first tap's
+   full screen stay off: asking again would only bring back Chrome's "To exit full screen" pop-up */
+const appMode = matchMedia(
+  "(display-mode: fullscreen), (display-mode: standalone)",
+);
+export const inApp = () => appMode.matches || navigator.standalone === true;
+html.classList.toggle("app", inApp());
 const can = () =>
+  !inApp() &&
   !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
 const isFull = () =>
   !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -50,6 +58,10 @@ mark();
 document.addEventListener("fullscreenchange", mark);
 document.addEventListener("webkitfullscreenchange", mark);
 addEventListener("resize", mark);
+appMode.addEventListener?.("change", () => {
+  html.classList.toggle("app", inApp());
+  mark();
+});
 
 let glowTimer = 0;
 document.addEventListener("click", (e) => {

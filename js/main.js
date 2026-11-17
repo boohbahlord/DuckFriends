@@ -82,6 +82,11 @@ addEventListener("duck-profile", () => {
 start("front");
 showSplash();
 fullOnFirstTap(); // (a phone: the first tap on the start screen goes full screen)
+/* the installed app: sw.js lets the browser offer "Install" (a phone's home screen, a computer's apps) */
+if ("serviceWorker" in navigator && isSecureContext)
+  navigator.serviceWorker
+    .register("sw.js", { updateViaCache: "none" })
+    .catch(() => {});
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
