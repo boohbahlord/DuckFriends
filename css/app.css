@@ -6966,7 +6966,11 @@ html.still .spx-disco .disco-spot {
    so the page doesn't paint it again every frame */
 .bullet,
 .thrown,
-/* a gun being reloaded (game.js): it dips and bobs as the magazine goes in */
+.held {
+  will-change: transform;
+}
+/* a gun being reloaded (game.js): it dips and bobs as the magazine goes in. (It had been put inside the list above, which
+   gave every bullet and thrown thing this animation instead of its own place: they all sat in the top left corner) */
 .held.reload svg {
   animation: held-reload 0.5s ease-in-out infinite;
 }
@@ -6981,9 +6985,6 @@ html.still .spx-disco .disco-spot {
   70% {
     transform: rotate(-8deg) translateY(-4%);
   }
-}
-.held {
-  will-change: transform;
 }
 .bullet svg {
   transform: rotate(var(--ang, 0rad));
@@ -17654,6 +17655,22 @@ body:has(> .vt) .win-back {
   color: #1c1c28;
   background: var(--yellow);
 }
+.vt-next {
+  padding: 0.25rem 0.9rem;
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+.vt-next:disabled {
+  opacity: 0.45;
+} /* (Next, once I've voted: red; pressed, it fades) */
+.vt-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vt-left .vt-next {
+  display: none;
+}
 .vt-sub {
   margin: -0.35rem 0 0;
   font-size: 1rem;
@@ -17885,6 +17902,16 @@ body:has(> .vt) .win-back {
     min-width: 3.4rem;
     padding: 0.15rem 0.5rem;
   }
+  .vt-next {
+    font-size: 0.95rem;
+    padding: 0.15rem 0.55rem;
+  }
+  .vt-right .vt-next {
+    display: none;
+  }
+  .vt-left .vt-next:not([hidden]) {
+    display: inline-block;
+  } /* (on a phone Next sits beside the lobby vote: the top row has no room) */
   .vt-sub {
     font-size: 0.85rem;
   }

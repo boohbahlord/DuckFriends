@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v74",
+    version: 74,
+    date: "Nov 17, 2026",
+    title: "Bullets are back, Next in the votes",
+    news: [
+      "In Vote for game mode and Vote for map: once you've voted, a red Next button speeds the countdown up a little for each player who presses it.",
+    ],
+    fixed: [
+      "Bullets, fireballs, thrown chairs and every other projectile show where they are again. Since Version 71 they had all sat in the top left corner.",
+    ],
+  },
+  {
     id: "v73",
     version: 73,
     date: "Nov 17, 2026",
