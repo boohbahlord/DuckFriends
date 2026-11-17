@@ -240,7 +240,7 @@ import { openCustomize, shareLook } from "./customize.js";
 import { ARM_SWING } from "./armspeed.js";
 import { pickNote } from "./notes.js";
 import { openFriends } from "./friends.js";
-import { pixelOn, pxSVG, snap, setDuckSize } from "./pixel.js";
+import { pixelOn, pxSVG, snap, setDuckSize, PAGE_DUCK } from "./pixel.js";
 import { lsetBtnHTML, lsetWatch, openLobbySettings } from "./lobbysettings.js";
 import { canAdd, requestFriend } from "./account.js";
 import { mountDocks, DOCK_HTML, BAR_HTML } from "./dock.js";
@@ -1200,7 +1200,7 @@ function drawDucks(now = clockNow()) {
     layer = $(".ducks", board),
     size = geo.size,
     hang = !!geo.hang;
-  if (pixelOn()) setDuckSize(size); // (the pixel look: one pixel is a 32nd of a duck, on this board)
+  if (pixelOn()) setDuckSize(hang ? PAGE_DUCK : size); // (the pixel look: one pixel is a 32nd of a duck, on this board; Duck Cabin's and Downpour's world, where ducks show smaller, on the pages' grid: pixel.js)
   /* each duck's element by its id, kept on the layer (a search of the layer for every duck, every frame, added up) */
   const duckEls = layer._els || (layer._els = new Map()),
     duckEl = (id) => {

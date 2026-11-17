@@ -41,6 +41,7 @@ import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import { inShallow, WADE } from "./hangout/stationmap.js";
+import { fenceLean } from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
@@ -179,6 +180,46 @@ const walls = () => {
   }
   return WALLS;
 };
+/* the props a flashlight lights where it points (the owner, Nov 17: "they should shine onto the objects they are aimed at
+   as well"): every one standing up off the floor, the walls, the cars and the fences too; not the trees (their crowns
+   hang over the ducks), the roofs, the holes */
+const UNLIT = new Set(["tree", "roof", "gsroof", "canopy", "hole", "gslamp"]);
+let LIT_PROPS = [],
+  litPropsRev = -1;
+const litProps = () => {
+  if (litPropsRev !== layoutRev()) {
+    litPropsRev = layoutRev();
+    LIT_PROPS = PROPS.filter(
+      (p) => p.h >= 12 && !p.layer && !UNLIT.has(p.kind),
+    );
+  }
+  return LIT_PROPS;
+};
+/* the part of the polygon pts ([[x, y] …]) inside the box x0 … x1, y0 … y1, or null (Sutherland–Hodgman) */
+function clipBox(pts, x0, y0, x1, y1) {
+  for (const [i, v, k] of [
+    [0, x0, 1],
+    [0, x1, -1],
+    [1, y0, 1],
+    [1, y1, -1],
+  ]) {
+    const out = [];
+    for (let n = 0; n < pts.length; n++) {
+      const a = pts[n],
+        b = pts[(n + 1) % pts.length],
+        ina = (a[i] - v) * k >= 0,
+        inb = (b[i] - v) * k >= 0;
+      if (ina) out.push(a);
+      if (ina !== inb) {
+        const t = (v - a[i]) / (b[i] - a[i]);
+        out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      }
+    }
+    pts = out;
+    if (pts.length < 3) return null;
+  }
+  return pts;
+}
 /* how far a ray from (x, y) along (dx, dy) goes before a wall, at most far */
 function rayTo(x, y, dx, dy, far) {
   let best = far;
@@ -915,17 +956,20 @@ function paint(now, ctx) {
     if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
     const [dx, dy] = aimOf(s, id, ctx),
       t = Math.atan2(dy, dx),
-      pts = [];
+      pts = [],
+      ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {
       const u = t - CONE.half + (2 * CONE.half * k) / rays,
         ux = Math.cos(u),
         uy = Math.sin(u),
         d = rayTo(a.x, a.y, ux, uy, CONE.far),
-        e = Wd.toScreen(a.x + ux * d, a.y + uy * d, a.z);
+        e = Wd.toScreen(a.x + ux * d, a.y + uy * d, a.z),
+        d2 = d < CONE.far - 1 ? d + 26 : d; // (a wall is 24 thick)
       pts.push([e.left * q, e.top * q, d]);
+      ends.push([a.x + ux * d2, a.y + uy * d2]);
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
-    cones.push([o.left * q, o.top * q, pts, CONE.far * sc]);
+    cones.push([o.left * q, o.top * q, pts, CONE.far * sc, [a.x, a.y, ends]]);
     BEAMS.push([a.x, a.y, t]);
     beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
   }
@@ -986,6 +1030,7 @@ function paint(now, ctx) {
       g.closePath();
       g.fill();
     }
+    shineProps(Wd, cones, q);
     g.globalCompositeOperation = "source-over";
     return;
   }
@@ -1006,7 +1051,85 @@ function paint(now, ctx) {
       g.fill();
     }
   }
+  shineProps(Wd, cones, q);
   g.globalCompositeOperation = "source-over";
+}
+/* a flashlight lights what it points at, not just the floor (the owner, Nov 17): the part of each prop's footprint inside
+   a cone (on into the wall a ray stops at), raised up the prop's height, so its front and its top show in the light as
+   bright as the floor there. paint() has the dark cutting (destination-out) */
+function shineProps(Wd, cones, q) {
+  const sc = Wd.sc * q,
+    plain = low();
+  for (const c of cones) {
+    const [ax, ay, ends] = c[4],
+      poly = [[ax, ay], ...ends];
+    let x0 = ax,
+      y0 = ay,
+      x1 = ax,
+      y1 = ay;
+    for (const [x, y] of ends) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    for (const p of litProps()) {
+      let l = p.x,
+        r = p.x + p.w;
+      if (p.kind === "fence") {
+        const t = fenceLean(p, W); // (its top leans over toward the road: all of that lights)
+        if (t > 0) r += t;
+        else l += t;
+      }
+      if (l > x1 || r < x0 || p.y > y1 || p.y + p.d < y0) continue;
+      const el = Wd.propEl(p.id); // (only what's drawn now: not what's left out of this map, or hidden from in here)
+      if (!el || el.hidden) continue;
+      const part = clipBox(poly, l, p.y, r, p.y + p.d);
+      if (!part) continue;
+      /* as bright as the cone's floor that far out (its three passes: about 0.9 near, fading out from 0.7 of the way) */
+      let mx = 0,
+        my = 0;
+      for (const [x, y] of part) {
+        mx += x / part.length;
+        my += y / part.length;
+      }
+      const u = Math.hypot(mx - ax, my - ay) / CONE.far,
+        k = plain ? 0.55 : u < 0.7 ? 0.9 : (0.9 * (1 - u)) / 0.3;
+      if (k < 0.03) continue;
+      const lo = part.map(([x, y]) => {
+          const e = Wd.toScreen(x, y, p.z);
+          return [e.left * q, e.top * q];
+        }),
+        H = p.h * sc,
+        hi = lo.map(([x, y]) => [x, y - H]);
+      /* the footprint, its copy at the top, and the band each edge sweeps between them, all wound the same way so they
+         add up (nonzero) */
+      g.globalAlpha = Math.min(1, k);
+      g.beginPath();
+      const shape = (s) => {
+        let a2 = 0;
+        for (let n = 0; n < s.length; n++) {
+          const [xa, ya] = s[n],
+            [xb, yb] = s[(n + 1) % s.length];
+          a2 += xa * yb - xb * ya;
+        }
+        if (Math.abs(a2) < 1e-3) return;
+        if (a2 < 0) s = s.slice().reverse();
+        g.moveTo(s[0][0], s[0][1]);
+        for (let n = 1; n < s.length; n++) g.lineTo(s[n][0], s[n][1]);
+        g.closePath();
+      };
+      shape(lo);
+      shape(hi);
+      for (let n = 0; n < lo.length; n++) {
+        const m = (n + 1) % lo.length;
+        shape([lo[n], lo[m], hi[m], hi[n]]);
+      }
+      g.fillStyle = "#000";
+      g.fill("nonzero");
+    }
+  }
+  g.globalAlpha = 1;
 }
 
 /* ---------- Justin's Butler, standing by the card table ---------- */
