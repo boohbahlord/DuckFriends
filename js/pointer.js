@@ -35,3 +35,20 @@ addEventListener("pointermove", real, true);
 
 /* true on a phone or a tablet: only a touch screen, and no key or mouse used yet */
 export const touchOnly = () => !html.classList.contains("keyboard");
+
+/* a phone (not a tablet, not a touchscreen laptop): html.phone, and html.phone-land while it's on its side. On its
+   side a phone is short (about 360 px), so the whole UI gets smaller and moves around (css: html.phone-land). */
+const sideways = matchMedia("(orientation: landscape)");
+export const isPhone = () =>
+  touchOnly() && Math.min(screen.width, screen.height) < 600;
+function phoneClass() {
+  const p = isPhone();
+  html.classList.toggle("phone", p);
+  html.classList.toggle("phone-land", p && sideways.matches);
+}
+phoneClass();
+sideways.addEventListener?.("change", phoneClass);
+addEventListener("resize", phoneClass);
+new MutationObserver(() => {
+  if (html.classList.contains("phone") !== isPhone()) phoneClass();
+}).observe(html, { attributes: true, attributeFilter: ["class"] });
