@@ -5712,3 +5712,17 @@ Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
 > justin's npc is supposed to same have same reload, weapon cooldown, and sprint +sprint cooldown as everyone else in zombies or default game modes (dont count the boss battle in mad god justin tho), SO WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING !!?!?!? IF THERE ARE NO ZOMBIES ALSO, THEN WHY IS HE SPRINTING!?!?! WHERE IS HE EVEN GOING TO IF THERE ARE NO ZOMBIES IN THE REST PHASES!?!?! HE SHOULD BE CASUALLY WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!
 >
 > every point earned is supposed to be 5 at the lowest, that is the lowest common factor or whatever you call it for everything, that is the lowest unit of money, so why is it when i say justin distributes the money equally in fractions between other players (not counting himself) that I END UP WITH FUCKING 554 POINTS! I LITERALLY TOLD U IN THE LAST COMMAND! GO THROUGH MY COMMMANDS TODAY ADAM AND SEE WHAT YOU DIDNT IMPLEMENT AND FUCKING ASK ME!
+
+## Request (2026-11-17 19:22Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt4so8imzuysMvMdsiLAxV7F): the map vote screen (word for word)
+
+> THE MAPS FOR NOUS WITHIN KENOMA OUGHT TO BE SET NEXT TO EACHOTHER FOR NOW ON AND SAME FOR OTHER MAPS IN THE VOTE MAP SCREEN IN THIS LAYOUT
+>
+> MAP FIRST, THEN FOR THAT MAP IN WHICH THERE ARE VARIATIONS, IT'S VARITIONS FOLLOW AFTER UNTIL ALL VARIATIONS ARE FOLLOWED, THEN AFTER THOSE COMES THE NEXT MAP, AND MAPS ARE IN ORDER WHERE THE last maps are the ones with the most variations and the first of the last of those are the ones with the least amount of variations.
+>
+> the maps need to be fixed to show what they actually look like for the ones that are rly dark and messed up on the vote maps menu without changing the pixel size, like idk what it is but the nous within kenoma maps dont represent the maps well at all
+>
+> remember that every variation of maps is only elected in a bag of that map it's based off of in random and that those shuffle if the map comes up again in random
+>
+> random comes first in the top left instead now instead of top middle
+>
+> the button for voting makes a sound as it fills up AND it glows as you click it or hold it down more and more until a click noise when it is full (yes i know the hold down enter button is fast for it)
