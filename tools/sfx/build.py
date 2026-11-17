@@ -125,6 +125,11 @@ SOUNDS = {
         lp=3800,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
     ),
+    "voteTick": dict(
+        sf="vote_tick",
+        lp=2400,
+        credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
+    ),
     "l4round": dict(
         sf="round_start",
         kbps=48,

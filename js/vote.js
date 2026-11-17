@@ -94,6 +94,9 @@ function build(R, pause) {
     raf: 0,
     hold: 0,
     pause,
+    time: el.querySelector(".vt-time"),
+    left: null, // the second the clock shows
+    tick: setInterval(clock, 50),
     lv: "",
   };
   const pick = (e) => e.target.closest && e.target.closest("[data-v]");
@@ -179,6 +182,21 @@ function sync() {
   }
 }
 
+/* the clock, every 50 ms while the window is up, so each new second shows (and beeps) on time, however fast it runs:
+   the owner (Nov 17) wants a very soft beep on each second the clock shows, the last five as the lobby countdown's
+   and its ding at 0, all quieter (sound.js voteCount). Not on the first number: the lobby's ding has just played */
+function clock() {
+  const s = W && W.R.state,
+    vt = s && s.phase === "countdown" ? s.vt : null;
+  if (!vt) return;
+  W.time.classList.toggle("fast", !!vt.fast);
+  const left = Math.ceil(voteLeft(s, now()) / 1000);
+  if (left === W.left) return;
+  if (W.left != null && left < W.left) sfx.voteCount(left);
+  W.left = left;
+  W.time.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+}
+
 /* the window as the state has it: built once for each vote, then only the clock, the numbers and the ducks change */
 export function paintVotes(R, pause) {
   const s = R.state,
@@ -190,10 +208,7 @@ export function paintVotes(R, pause) {
     W.lv = lv;
     W.el.querySelector(".vt-left").innerHTML = lv;
   }
-  const left = Math.ceil(voteLeft(s, now()) / 1000),
-    time = W.el.querySelector(".vt-time");
-  time.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
-  time.classList.toggle("fast", !!vt.fast);
+  clock();
   const votes = vt.votes || {},
     sig = JSON.stringify([votes, s.seat]);
   if (sig === W.sig) return;
@@ -227,6 +242,8 @@ export function paintVotes(R, pause) {
 
 export function closeVotes() {
   if (!W) return;
+  if (W.left === 1) sfx.voteCount(0); // (the vote closed before I saw its 0: its ding all the same)
+  clearInterval(W.tick);
   clearTimeout(W.hold);
   cancelAnimationFrame(W.raf);
   for (const p of W.live.values()) p.destroy();
