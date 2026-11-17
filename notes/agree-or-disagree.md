@@ -5299,6 +5299,7 @@ the space past the map's edge: nothing was painted there, so the ground canvas k
   crack on top and a .45's thump under it; `sfx.ump(o)` is the .45 pistol's shot with an AK's body under it, lower and
   heavier. Each is cut before its recording's next shot or echo, so fast fire never doubles up. Both reload with the
   SMG's reload for now (`sfx.reload("tommy" | "ump")`).
+
 ### Laser gun look (owner, 2026-11-17 11:20Z and 11:22Z, in Noah's thread)
 "combine the heavy laser and the laser rifle, and make more of the barrel get hotter not just the tip"
 "yes to the gun laser gun u did

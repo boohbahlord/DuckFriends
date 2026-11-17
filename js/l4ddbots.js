@@ -28,6 +28,7 @@ import {
   ARMS,
   gunPrice,
   isHelper,
+  laserHeat,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 
@@ -173,8 +174,10 @@ export function l4Bot(s, id, now, out) {
     });
     return;
   }
-  const loaded = [sl[1], sl[2]].filter(
-      (w) => w && m.am[w] && m.am[w][0] > 0 && m.rw !== w,
+  const loaded = [sl[1], sl[2]].filter((w) =>
+      w === "laser"
+        ? laserOk(s, id, now)
+        : w && m.am[w] && m.am[w][0] > 0 && m.rw !== w,
     ),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
@@ -264,6 +267,7 @@ const GUN_RANK = [
   "dbarrel",
   "ak",
   "burst",
+  "laser",
   "smg",
   "sniper",
   "revolver",
@@ -274,6 +278,11 @@ const GUN_RANK = [
   "bow",
   "dagger",
 ];
+/* the Laser Rifle has no ammo: a computer fires it only while it's cool enough not to overheat it (its meter not full) */
+const laserOk = (s, id, now) => {
+  const q = laserHeat(s, id, now);
+  return !q.over && Math.round(q.h) < q.max;
+};
 const leftIn = (m, w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
 
 function justinBot(s, id, now, out) {
@@ -336,7 +345,10 @@ function justinBot(s, id, now, out) {
     (n) => n.d < SEE * 1.3 && clearShot(x, y, n.z.x, n.z.y, heightAt(x, y)),
   );
   /* his gun: the best one with something in it (not reloading); the chain gun when a zombie is close or they crowd */
-  const loaded = (w) => w && m.am[w] && m.am[w][0] > 0 && m.rw !== w;
+  const loaded = (w) =>
+    w === "laser"
+      ? laserOk(s, id, now)
+      : w && m.am[w] && m.am[w][0] > 0 && m.rw !== w;
   const crowd = seen
     ? zs.filter((z) => Math.hypot(z.x - seen.z.x, z.y - seen.z.y) < 150).length
     : 0;

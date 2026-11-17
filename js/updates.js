@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v66",
+    version: 66,
+    date: "Nov 17, 2026",
+    title: "The Laser Rifle",
+    news: [
+      "For Dead Ducks Arcade: New gun from the weapon spin: the Laser Rifle. Hold to fire a red beam once a second that goes through every zombie in its line (1 damage each, never a crit or a miss) and never runs out of ammo.",
+      "For Dead Ducks Arcade: The Laser Rifle heats up with each beam (blocks under your duck go from red to orange). Fire one more beam once it's full and it overheats: it hisses, your duck gets scorched and shakes, and it can't fire for 8 seconds while it smokes. It steams more in the rain.",
+      "For Dead Ducks Arcade: The Angelic Laser Rifle fires every 0.75 s, holds 6 beams of heat, and now and then deals 2 damage. Zombies it kills are left burnt.",
+    ],
+    fixed: [],
+  },
+  {
     id: "v65",
     version: 65,
     date: "Nov 17, 2026",

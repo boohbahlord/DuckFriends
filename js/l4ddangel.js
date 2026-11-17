@@ -13,6 +13,7 @@
      - the default pistol: two of them, one in each hand (both fire), every bullet kills at once, and every crit sets
        off a grenade's blast where it hit;
      - the grenade launcher: its blast is GL_RADIUS of a grenade's, and it sets the ground there on fire.
+     - the Laser Rifle: its own (LASER), a faster beam, a longer limit and now and then 2 damage.
    s.hang.l4am { by, w, sl (the slot it came from), t (when it went in) }: the weapon in the machine (null: none), till
    its duck takes it. A duck's Angelic weapons: its kit's ang { weapon: 1 } (l4ddrules.js' l4a). */
 import { STAGE, layoutVariant } from "./hangout/layout.js";
@@ -54,6 +55,9 @@ export const ANGEL = {
   FLAME_GROUND: 2500, // ms longer its ground burns
   GL_RADIUS: 1 / 3, // the grenade launcher's blast against a grenade's (the owner's words: "1/3rd the explosion radius")
   GL_FIRE: 4, // burning patches it leaves round its blast
+  /* the Laser Rifle (the owner's, Nov 17): a beam every 0.75 s and a sixth cooled every 0.75 s, a limit of 6 beams
+     (the 7th overheats it), and a 1 in 3 chance of 2 damage to each zombie it goes through (not the +1 of the others) */
+  LASER: { cool: 750, heat: 6, two: 1 / 3 },
 };
 /* what goes in: guns and melee weapons (WEAPONS), never the grenade or an item */
 export const canAngel = (w, weapons) => weapons.includes(w);
