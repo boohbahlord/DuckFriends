@@ -15303,7 +15303,8 @@ html.still:not(.low) .l4z.dead.nuked {
     transform: rotate(-10deg) translateY(4%);
   }
 }
-.screen:has(.l4-shopping) :is(.tpad, .cabin-end) {
+.screen:has(.l4-shopping) :is(.tpad, .cabin-end),
+body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   visibility: hidden;
 } /* (on a phone the jump and aim buttons step aside for it: they sat over its last row; Exit Cabin too: it sat on its
      tabs) */
@@ -17084,6 +17085,22 @@ html.still .l4-miss {
 /* on a phone the Ready button sits in the middle under the round, so Change starting round goes below it (never under
    it, and down with it when the top bar grows: --ui-top, game.js watchInsets), and the vote's words below that */
 @media (max-width: 700px) {
+  /* on a phone they're small, near the PC's size on its screen (the owner, Nov 17) */
+  .l4-sr .btn {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  .l4-sr-say {
+    font-size: 0.7rem;
+  }
+  .game .l4-srv {
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+  }
+  .game .l4-srb .btn {
+    padding: 0.3rem 0.9rem;
+    font-size: 0.8rem;
+  }
   .game .l4-sr {
     top: calc(var(--ui-top, 38px) + 154px);
     left: 10px;

@@ -2046,6 +2046,8 @@ function drawDucks(now = clockNow()) {
       sh = shows[id] && now < shows[id].until ? shows[id] : null;
     let dir = null;
     if (mine && keyAim) dir = keyAim;
+    else if (mine && R && isL4dd(R.state) && touching())
+      dir = toScreen(...myAim()); // (Quacky Zombies on a phone: the gun points where I aim, the same way as its laser and flashlight: the nearest zombie, else the way I walk)
     else if (mine && mouse)
       dir = [mouse.x - geo.left - c.left, mouse.y - geo.top - c.top];
     // (the board's place from its last measuring: no layout read in the frame)
@@ -3781,12 +3783,15 @@ function bodyAt(id, pos, now = clockNow()) {
     top: at.top - lift - (up + 0.45 * bigOf(R.state, id)) * geo.size, // (his hand higher on a bigger Justin)
   };
 }
+/* on a phone: no mouse, or the mouse's last move came right after a touch (a phone makes mouse moves of its taps; they
+   say nothing about where I aim). A real mouse moves later than that, so a computer, even with a touch screen, keeps its
+   mouse aim */
+const touching = () => !mouse || (touchedAt > 0 && mouseAt - touchedAt < 900);
 function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
   if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
-  if (R && isL4dd(R.state) && (!mouse || performance.now() - touchedAt < 4000))
-    return l4TouchAim(me) || [face, 0]; // (Quacky Zombies on a phone: at the nearest zombie in sight, or the way it walks)
+  if (R && isL4dd(R.state) && touching()) return l4TouchAim(me) || [face, 0]; // (Quacky Zombies on a phone: at the nearest zombie in sight, or the way it walks)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];
