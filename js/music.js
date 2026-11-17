@@ -7,7 +7,9 @@
 
    Where it plays: on the front page and the rooms page each player hears their own happier songs, one straight after
    another; in a room (the lobby and the game) everyone hears the same song at the same moment, with 20 seconds between
-   two songs. No music in Quacky Zombies and Mad God Justin (the game itself, not its lobby). What the duck? only comes up
+   two songs. No music in Quacky Zombies and Mad God Justin (the game itself, not its lobby). The lobby's countdown to
+   the start fades the music out, gone by its last 2 seconds, and Vote for game mode and Vote for map have none (the
+   owner, Nov 17 20:37Z). What the duck? only comes up
    in a room whose map is a scary one (Nous Within Kenoma, Shelter Sky & Null), never on a happy map or on the menus.
 
    No pops (CLAUDE.md): every file starts and ends at silence; each song has its own level (a gain) that only ever glides,
@@ -156,6 +158,33 @@ const noMusic = () => {
     QUIET.includes(s.options.mode)
   );
 };
+/* the owner (Nov 17 20:37Z): "the music fades out when the lobby count starts and the is gone by the last two seconds IF
+   it is counting or delayed to couunt", and "in the vote game mode and vote map section there is no music now" */
+const COUNT_GONE = 2000; // ms before the countdown's end the music is gone by
+const counting = () => {
+  const s = roomState();
+  return !inMenu() && !!s && s.phase === "countdown" && !s.vt ? s : null;
+};
+const voting = () => {
+  const s = roomState();
+  return !inMenu() && !!s && s.phase === "countdown" && !!s.vt;
+};
+/* in the countdown: the music's level glides down in a straight line, to 0 by COUNT_GONE before its end (again each
+   second, on the same line; a countdown cancelled brings it back: sync) */
+function countFade() {
+  const s = counting();
+  if (!s || !ac || !playing) return;
+  const secs = Math.max(0.05, (s.ends - COUNT_GONE - clockNow()) / 1000),
+    p = master.gain,
+    t = ahead();
+  if (p.cancelAndHoldAtTime) p.cancelAndHoldAtTime(t);
+  else {
+    p.cancelScheduledValues(t);
+    p.setValueAtTime(p.value, t);
+  }
+  p.linearRampToValueAtTime(0, t + secs);
+}
+let wasQuiet = "";
 const scaryMap = (s) =>
   !!s && !!s.options && SCARY_MAPS.includes(s.options.map);
 function list() {
@@ -198,6 +227,13 @@ function conduct() {
       }
     }
   }
+  /* the countdown and the votes come and go: the music stops or comes back with them */
+  const q = voting() ? "vote" : counting() ? "count" : "";
+  if (q !== wasQuiet) {
+    wasQuiet = q;
+    sync();
+  }
+  countFade();
   follow();
 }
 setInterval(conduct, 1000);
@@ -395,6 +431,7 @@ const wanted = () =>
   !document.hidden &&
   !HUSH &&
   !noMusic() &&
+  !voting() &&
   ["front", "rooms", "lobby", "game"].includes(document.body.dataset.screen);
 /* hushed (Hangout: someone plays the piano): the music fades away and stops, and the music bar says why ("Piano");
    unhushed, it fades back in where the room's song is by now, so everyone stays on the same song */
@@ -410,7 +447,10 @@ function sync() {
   if (wanted()) {
     if (started) start();
   } else stop();
-  if (ac && playing) level(0.15);
+  if (ac && playing) {
+    if (counting()) countFade();
+    else level(0.15);
+  }
 }
 /* browsers hold all sound until the page is first used, and which event counts differs (a finger's tap only counts once
    it lifts): any of these, anywhere on the page, starts the music */
@@ -444,7 +484,7 @@ function nowPlaying() {
       hush: true,
     };
   if (!S) return null;
-  if (noMusic())
+  if (noMusic() || voting())
     return { name: "No music", next: false, in: 0, off: S.off || [] };
   const t = clockNow(),
     e = wantOf(S, t);

@@ -772,6 +772,7 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       const p = s.pos[id];
       if (id === r.me || !p || (p.j && now < api.landsAt(p))) continue;
+      if (acts().some((a) => a.passable && a.passable(id, ctx))) continue; // (an activity's dead: walked over, Quacky Zombies)
       const ox = p.x * L.W,
         oy = p.y * L.H;
       if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy, p.z) !== here)

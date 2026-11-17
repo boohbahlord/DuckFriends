@@ -1242,10 +1242,11 @@ const room = (ax, ay, bx, by) => Math.hypot((ax - bx) / RX, (ay - by) / RY);
 const zOk = (x, y, z) =>
   playable(x, y) && standable(x, y, z, STEP, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
-   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy. These went missing at every
+   cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy;
+   jc since when it chases Justin, jx till when it lets him be, nj never him (JCHASE). These went missing at every
    heartbeat before, so a zombie forgot its way up the moment it chose it (the owner's, Nov 17 19:11Z: "WHY THE FUCK ARE
    ZOMBIES NOT COMMITTING ON WALL CLIMBS EVEN WHEN IM STILL ON THE SAME FUCKING ROOF!!!") */
-const KEEP = ["cm", "k", "fl", "wp", "j"];
+const KEEP = ["cm", "k", "fl", "wp", "j", "jc", "jx", "nj"];
 /* the zombies as objects, from the state's three parts, and back (k in zp: hp · 16 + st, st up to 8, the jump) */
 function zombies(s) {
   const zp = s.hang.zp || [],
@@ -2230,6 +2231,19 @@ export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
    can revive him, he never comes back, not at a new round either). He is the fireplace's Justin (helperIn, the same
    player and brain) with no weapon and no points */
 export const WILD = { hp: 6, regen: 60000, id: "b-justin" };
+/* the zombies and Justin out there (the owner's, Nov 17 20:37Z: "zombies dont chase justin forever they give up very
+   quickly and the last 1/10th of zombies never chase justin. ZOmbies need to be twice as close to justin to want to
+   chase him compared to a player"): to a zombie he counts as far times as far as he is; one that has chased him give ms
+   lets him be for off ms; the last tenth (last) of a round's zombies never go for him */
+export const JCHASE = { far: 2, give: 5000, off: 20000, last: 0.1 };
+/* hurt, he cries (the tears eyes, as Mad God Justin's when he loses) for CRY.ms while he sprints away from where it came
+   from (the owner's, Nov 17 20:37Z: "his character should use the cry effect already in the game for ten seconds after
+   taking one damage", "JUSTIN CRIES AND SPRINTS ! HE DOESNT STAND AROUND"): s.hang.l4jcry { t, x, y } */
+export const CRY = { ms: 10000 };
+export const wildCrying = (s, id, now) => {
+  const c = isWild(s, id) && s.hang && s.hang.l4jcry;
+  return !!c && now < c.t + CRY.ms && !isDown(s, id);
+};
 /* what Justin says besides his everyday lines: at Jaime's body and at a Jaime sent in, his lines against Jaime; going
    down, a death line. Each list is a shuffled bag, every line once before any comes again (s.hang.l4jl { key: [line
    numbers left] }) */
@@ -2747,6 +2761,7 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     if (walled(nx, ny, hz)) break;
     x = nx;
     y = ny;
+    if (wildHurt(s, id, x, y, now, "chaingun", 26, 22, [px, py, hz])) break; // (Justin in its way: it hits him and stops there, the owner's, Nov 17 20:37Z: "YOU CAN USE A FUCKING CHAIN GUN AND HE WILL DODGE EVERY FUCKING BULLET")
     const hit = zs.find(
       (z) =>
         z.st !== 3 &&
@@ -2793,7 +2808,8 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     zs = zombies(s),
     T = now - s.hang.l4.t0,
     hits = [];
-  let x = px,
+  let burnt = false,
+    x = px,
     y = py;
   for (let d = 0; d < A.far; d += 12) {
     const nx = x + dx * 12,
@@ -2801,6 +2817,8 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     if (walled(nx, ny, hz)) break;
     x = nx;
     y = ny;
+    if (!burnt && wildHurt(s, id, x, y, now, "laser", 26, 22, [px, py, hz]))
+      burnt = true; // (Justin on its line: 1, once a beam; it goes on through him)
     for (const z of zs)
       if (
         z.st !== 3 &&
@@ -3271,22 +3289,19 @@ function getUp(s, id, now, full, safe) {
   }
 }
 /* the melee weapons mid-swing hit every zombie in their bubble, each once */
-/* a shot or swing at (x, y) by duck by, on Justin out in Downpour with no weapon: he takes 1 (the owner's: players can kill
-   him), unless he's jumping; true when it landed */
-function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
+/* a shot or swing at (x, y) by duck by, on Justin out there with no weapon: he takes 1 (the owner's: players can kill
+   him); true when it landed. Whatever reaches him hits him: no dodging by numbers, he only gets out of the way by
+   walking (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE, IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY
+   TRIES MOVING OUT THE WAY LIKE A PLAYER DOES! ... Justin isnt supposed to be hard for players to kill"). from: the
+   shooter's [x, y, feet], for the one rule (nothing solid between: layout.js slabBetween) */
+function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22, from = null) {
   const id = WILD.id,
     p = s.pos[id],
     q = P4(s, id);
   if (by === id || !wildOpen(s, id) || !p || !q || q.dn || q.gh) return false;
   const [px, py] = at(p);
-  /* Justin dodges too well: half of his jumps fail to dodge (the owner's, Nov 17 13:07Z); decided once per jump, from its
-     start time, so a swing that touches him over several ticks gets one answer */
-  const jumpFails = !!p.j && Math.floor((p.dj || p.j) / 7) % 2 === 0;
-  if (
-    Math.hypot((px - x) / rx, (py - y) / ry) >= 1 ||
-    (dodging(s, p, now) && !jumpFails)
-  )
-    return false;
+  if (Math.hypot((px - x) / rx, (py - y) / ry) >= 1) return false;
+  if (from && slabBetween(...from, px, py, +p.z || 0)) return false;
   /* a crit (wounds.js PCRIT, a weapon's chance as on any duck) takes all his HP and blows his head off */
   const crit = Math.random() < (PCRIT[w] || 0);
   wildDown(s, by, now, w, crit, crit ? ["x0"] : null);
@@ -3299,7 +3314,13 @@ function wildDown(s, by, now, w, all, codes) {
     p4 = { ...(s.hang.l4p || {}) };
   if (all && p4[id] && !invuln(s) && !invulnOf(s, id, now))
     p4[id] = { ...p4[id], hp: 1 };
-  if (hurtDuck(s, p4, id, now, w)) {
+  const was = p4[id] && p4[id].hp,
+    down = hurtDuck(s, p4, id, now, w);
+  if (!down && p4[id] && p4[id].hp < was) {
+    const [hx, hy] = s.pos[by] ? at(s.pos[by]) : at(s.pos[id]);
+    s.hang.l4jcry = { t: now, x: Math.round(hx), y: Math.round(hy) }; // (he cries, and runs from there: CRY)
+  }
+  if (down) {
     if (codes) pwAdd(s, id, codes, now, true);
     if (s.players[by] && !s.players[by].bot) {
       /* a player knocked Justin down: a Justin kill for that player (unlocks.js watchKills), the same numbers rules.js
@@ -3317,7 +3338,7 @@ function wildFire(s, by, now) {
     q = P4(s, id),
     F = s.hang.l4fire || {};
   if (by === id || !wildOpen(s, id) || !q || q.dn || q.gh) return;
-  if ((F.p || {})[id] || dodging(s, s.pos[id], now)) return; // (burning, just put out, or mid-jump)
+  if ((F.p || {})[id]) return; // (burning, or just put out)
   s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
   wildDown(s, by, now, "flamer", false, ["f0"]);
 }
@@ -3397,6 +3418,17 @@ const walled = (x, y, z) =>
       )
     : (!playable(x, y) && !inOpening(x, y)) ||
       (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
+/* a shot's weapon (ARMS), by what it is; and does a wall stop shot sh at (x, y) (world px)? Here and on every screen,
+   which draws a shot ending where it stops (l4dd.js shotStop) */
+export const shotArm = (sh) =>
+  ARMS[sh.w]
+    ? sh.w
+    : sh.k === "arrow"
+      ? "bow"
+      : sh.k === "pellet"
+        ? "shotgun"
+        : "handgun";
+export const shotWalled = (sh, x, y) => walled(x, y, shotFeet(sh));
 /* may a shot from my duck (feet at hz, at (px, py)) hit zombie z? Only with nothing solid between us: the one rule
    (layout.js slabBetween, the owner's, Nov 17 20:02Z); the walls on the way are the shot's own walk */
 const canShoot = (z, px, py, hz) =>
@@ -3532,20 +3564,21 @@ export function l4Shots(s, now) {
         endY = y;
         break;
       } // (a wall taller than the shot: heights.js)
-      const w = ARMS[sh.w]
-          ? sh.w
-          : sh.k === "arrow"
-            ? "bow"
-            : sh.k === "pellet"
-              ? "shotgun"
-              : "handgun",
+      const w = shotArm(sh),
         A = ARMS[w],
         near = (z) =>
           z.st !== 3 &&
           Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
           hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zombieZ(z)); // (at its height, the first one setting it: heights.js)
-      if (w !== "fireball" && wildHurt(s, sh.by, x, y, now, w)) {
+      if (
+        w !== "fireball" &&
+        wildHurt(s, sh.by, x, y, now, w, 26, 22, [
+          sh.x0 * W,
+          sh.y0 * H,
+          sh.hz || 0,
+        ])
+      ) {
         gone = true; // (Justin out in Downpour with no weapon: it hit him)
         endX = x;
         endY = y;
@@ -3701,15 +3734,14 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       any = true;
     }
   /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH), as the
-     Jaime Bomb leaves Jaime; a jump dodges it as it dodges a shot */
+     Jaime Bomb leaves Jaime; no jump dodges it (the owner's, Nov 17 20:37Z) */
   const jp = s.pos[WILD.id],
     jq = P4(s, WILD.id);
   if (jp && jq && !jq.dn && !jq.gh && wildOpen(s, WILD.id)) {
     const [jx, jy] = at(jp);
     if (
       Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
-      open(jx, jy, +jp.z || 0) &&
-      !dodging(s, jp, now)
+      open(jx, jy, +jp.z || 0)
     )
       wildDown(s, sh.by, now, "grenade", true, DEATH);
   }
@@ -3913,9 +3945,11 @@ function l4Tick(s, now) {
   if (L2.owe > 0) {
     const room = Math.max(0, R[4] - live),
       k = Math.min(L2.owe, room);
-    for (let q = 0; q < k; q++) zs.push(newZombie(s, L2, T, zs));
+    for (let q = 0; q < k; q++) {
+      zs.push(newZombie(s, L2, T, zs));
+      L2.made++; // (one by one: newZombie reads it for the round's last tenth)
+    }
     L2.owe -= k;
-    L2.made += k;
   }
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
@@ -3955,6 +3989,7 @@ function l4Tick(s, now) {
 const minus = (a, b) => [a[0] - b[0], a[1] - b[1]];
 /* a new zombie, at one of the openings (the ones nearer the ducks twice as likely) */
 function newZombie(s, L, T, zs = []) {
+  const nj = L.made >= L.n * (1 - JCHASE.last); // (the round's last tenth: never after Justin)
   syncMap();
   const R = roundOf(L.r),
     ids = players(s).filter((id) => standing(s, id)),
@@ -4026,6 +4061,7 @@ function newZombie(s, L, T, zs = []) {
     [sx, sy] = from || o.out;
   return {
     ...(Math.random() < FLANK.p ? { fl: Math.random() < 0.5 ? 1 : -1 } : {}), // (a flanker: flank)
+    ...(nj ? { nj: 1 } : {}), // (never after Justin: JCHASE.last)
     i,
     x: sx + (dp() ? 0 : rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3)),
     y: sy + (dp() ? 0 : rnd(-8, 8) * (o.axis === "y" ? 1 : 0.3)),
@@ -4061,10 +4097,14 @@ function moveZombies(s, zs, now, T, up) {
         dk,
         way,
         goal: (way && climbSpot(way, xy)) || xy,
+        j: isWild(s, id), // (Justin out there: JCHASE)
       };
     });
   s.hidden = { ...(s.hidden || {}), l4tk: now };
-  const dist = flowFrom(pls.map((q) => openNear(...q.goal))); // (to a duck up on a roof: to the foot of its wall)
+  const field = pls.filter((q) => !q.j),
+    dist = flowFrom(
+      (field.length ? field : pls).map((q) => openNear(...q.goal)),
+    ); // (to a duck up on a roof: to the foot of its wall. The players only: a zombie after Justin finds its own way, wayTo)
   const p4 = { ...s.hang.l4p },
     eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
   let cake = cakeDown(s, now);
@@ -4181,6 +4221,9 @@ function moveZombies(s, zs, now, T, up) {
     }
     let target = null,
       best = Infinity;
+    /* how far a duck counts as, to this zombie: Justin twice his distance, or out of mind (JCHASE) */
+    const far = (q) =>
+      !q.j ? 1 : z.nj || (z.jx || 0) > now ? Infinity : JCHASE.far;
     if (z.st === 7) {
       /* on a roof: straight at the nearest duck up there; a hole underfoot and it falls in; nobody left up there (or
          the cake down), it walks off the nearest edge and drops */
@@ -4192,10 +4235,11 @@ function moveZombies(s, zs, now, T, up) {
         continue;
       }
       for (const q of pls)
-        if (q.dk === e.d && room(z.x, z.y, ...q.xy) < best) {
-          best = room(z.x, z.y, ...q.xy);
+        if (q.dk === e.d && room(z.x, z.y, ...q.xy) * far(q) < best) {
+          best = room(z.x, z.y, ...q.xy) * far(q);
           target = q;
         }
+      if (target) best = room(z.x, z.y, ...target.xy); // (how far it really is)
       if (!target && !cake && e.d === stationDeck() && jumpOn(z, pls, v * dt))
         continue; // (nobody up here, a duck on the canopy: to the roof's edge over it, then the jump)
       if (!target || cake) {
@@ -4262,7 +4306,7 @@ function moveZombies(s, zs, now, T, up) {
       } else {
         delete z.cm;
         for (const q of pls) {
-          const d = room(z.x, z.y, ...q.goal);
+          const d = room(z.x, z.y, ...q.goal) * far(q);
           if (d < best) {
             best = d;
             target = q;
@@ -4270,6 +4314,7 @@ function moveZombies(s, zs, now, T, up) {
         }
         if (!target) continue;
         goal = target.goal;
+        if (target.j) best = room(z.x, z.y, ...goal); // (how far it really is, for what follows)
         if (target.way)
           z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(target.way)]; // (its way up, from now on)
       }
@@ -4288,8 +4333,8 @@ function moveZombies(s, zs, now, T, up) {
           walkable(z.x, z.y, ...goal); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
       let aim = close
         ? goal
-        : z.cm
-          ? wayTo(z.x, z.y, goal[0], goal[1], now) // (its own way up's foot, wherever the duck goes meanwhile)
+        : z.cm || target.j
+          ? wayTo(z.x, z.y, goal[0], goal[1], now) // (its own way up's foot, wherever the duck goes meanwhile; Justin: the field is the players')
           : heading(dist, z.x, z.y);
       if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
       /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
@@ -4304,6 +4349,15 @@ function moveZombies(s, zs, now, T, up) {
       }
       if (aim) stepZombie(z, aim, v * dt, pls);
     }
+    /* after Justin: only so long, then it lets him be a while (JCHASE) */
+    if (target.j) {
+      if (!z.jc) z.jc = now;
+      else if (now - z.jc > JCHASE.give) {
+        z.jx = now + JCHASE.off;
+        delete z.jc;
+        if (z.cm && z.cm[0] === target.id) delete z.cm;
+      }
+    } else delete z.jc;
     /* the claw: at a duck long enough, then again every so often (it keeps walking meanwhile); only one on its own
        floor (zFloor), never one up on a roof over it or down below it, nor one up the ladder */
     const d = room(z.x, z.y, ...target.xy);
