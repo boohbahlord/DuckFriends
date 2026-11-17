@@ -5192,3 +5192,15 @@ like i keep refreshing and it wont load"
 - 09:03Z: "it has been a problem where sometimes the browser wont load, and i would have to refresh it to load, but that isnt working on my computer vers now is what is happenign"
 - 09:04Z: "is there a launch file as a layer that calls to the repo that is hung up and waiting for an answer that can only be answered in the application vers and not the website ? if so, we can just have it given a way out of that with simple logic"
   - Found (Adam): the bar at a third with no duck is index.html's own loading screen, so main.js never started. Nothing at start waits on the app (the app check is an instant yes/no, the service worker registers on the side). The game is ~167 module files; if one fails to arrive or the browser keeps a broken copy, the whole game never starts, and a refresh reuses the same copies. Owner's "way out" built: index.html's guard (window.dfStarted from main.js) refetches every game file with cache "reload", drops the service worker and reloads, at most twice; then "Duck Friends didn't load. Tap to try again." sw.js no longer touches requests (no fetch handler; still installable). Version 57.
+
+- 2026-11-17 09:38Z (screenshot: V57's "Duck Friends didn't load. Tap to try again." on the touchscreen laptop, desktop Chrome): "it is still doing it on browser, but maybe it is me
+
+what i did was close it and open a tab and click the site again and it said this. if i click it then it says failed to load over and over
+
+when i try and open it from recent deployment on my chrome from my repo then it still does the same thing even when refreshed or clicked
+
+i tried on my phone and it works
+
+could it possibly be the new mobile features loading on my laptop that has touchscreen ? (those are supposed to load as laptops by default btw)
+maybe it is another new mobile feature like the fullscreen automatically turning on in the game (that should only be for mobile, but the fullscreen button can stay on both"
+  - Found (Adam): not reproducible with a touchscreen Windows Chrome setup (it loads, gets the PC UI; auto full screen is already phone-only via isPhone). 47 duck looks and 39 settings profiles all load. So it's something on that machine (an add-on blocking a file, or its saved data). V58: the stuck screen now names the file that didn't arrive or the error, to find it.

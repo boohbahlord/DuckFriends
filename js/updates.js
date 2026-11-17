@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v58",
+    version: 58,
+    date: "Nov 17, 2026",
+    title: "Why it didn't load",
+    news: [],
+    fixed: [
+      "If the game still can't load, the loading screen now says why under \"Tap to try again\": which file didn't arrive, or the error that stopped it.",
+    ],
+  },
+  {
     id: "v57",
     version: 57,
     date: "Nov 17, 2026",
