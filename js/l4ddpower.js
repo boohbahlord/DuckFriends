@@ -388,13 +388,29 @@ export function powerAct(s, id, now, mx, my, h) {
   if (!pw.on) setPower(s, true, now, h);
   return true;
 }
-/* Downpour: E at a pump, while the power is on, buys 3 rounds of gas (250 a round) */
-export const pumpNear = (mx, my, far) =>
-  dpOn() && GS.PUMP_E.some(([x, y]) => Math.hypot(mx - x, my - y) < far);
+/* Downpour: E at a pump, while the power is on, buys 3 rounds of gas (250 a round). Only close by it, on its bottom
+   (south) side (the owner's, Nov 17 18:05Z: "the pumps effective range where u use them has changed"): over its width
+   and PUMP_SIDE either side, from its front face out to PUMP_OUT (world px) */
+const PUMP_SIDE = 30,
+  PUMP_OUT = 100;
+/* the spot by one pump where E works, as [x0, y0, x1, y1]: l4dd.js draws its yellow square from it too, so the two
+   can't disagree */
+export const pumpZone = (p) => [
+  p.x0 - PUMP_SIDE,
+  p.y1 - 4,
+  p.x1 + PUMP_SIDE,
+  p.y1 + PUMP_OUT,
+];
+export const pumpNear = (mx, my) =>
+  dpOn() &&
+  GS.PUMPS.some((p) => {
+    const [x0, y0, x1, y1] = pumpZone(p);
+    return mx > x0 && mx < x1 && my >= y0 && my < y1;
+  });
 export function powerPump(s, id, now, mx, my, h) {
   const pw = s.hang.pw,
     price = PW.PUMP * PW.PUMP_ROUNDS;
-  if (!pw || !pw.on || !pumpNear(mx, my, PW.REACH * 1.6)) return false;
+  if (!pw || !pw.on || !pumpNear(mx, my)) return false;
   if (h.ptsOf(s, id) < price) return false;
   h.addPts(s, id, -price);
   s.hang.pw = { ...pw, left: pw.left + PW.PUMP_ROUNDS };

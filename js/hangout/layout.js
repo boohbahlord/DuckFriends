@@ -189,9 +189,13 @@ export function floorAt(x, y, z) {
     ? { h: d.h, kind: d.kind, deck: d }
     : { h: g, kind: "ground", deck: null };
 }
-/* a roof (or the canopy) between two spots, for a shot (heights.js): one up on it and the other under it, nothing goes
-   through; one up on it and the other off it, lower down, only near its edge (SLAB_EDGE: a duck's width from it) */
-const SLAB_EDGE = 60;
+/* a roof (or the canopy) between two spots, for a shot (heights.js), Doom's way (the owner's, Nov 17 17:41Z and 18:05Z):
+   one up on it and the other under it, nothing goes through (but a hole: a spot in one is open to the sky). One up on
+   it and the other off it, lower down: from anywhere on the roof, but for a target at the roof's own wall (climbing it,
+   or at its foot: within AT_WALL of it), "you only have to be on the edge to shoot zombies AT the wall before the edge
+   your own" (SLAB_EDGE: a duck's width from it) */
+const SLAB_EDGE = 60,
+  AT_WALL = 60;
 export function slabBetween(ax, ay, az, bx, by, bz) {
   if (variant !== "l4gs") return false;
   for (const d of GS.DECKS) {
@@ -199,12 +203,16 @@ export function slabBetween(ax, ay, az, bx, by, bz) {
       sb = deckSide(d, bx, by, bz);
     if (sa * sb < 0) return true; // (on it and under it)
     if (sa + sb === 1 && sa !== sb) {
-      const [x, y, oz] = sa ? [ax, ay, bz] : [bx, by, az];
+      const [x, y] = sa ? [ax, ay] : [bx, by], // (the one up on it)
+        [ox, oy, oz] = sa ? [bx, by, bz] : [ax, ay, az], // (the one off it)
+        out = Math.max(d.x0 - ox, ox - d.x1, d.y0 - oy, oy - d.y1, 0); // (0: in one of its holes, open to it from anywhere)
       if (
         oz < d.h - 1 &&
+        out > 0 &&
+        out < AT_WALL &&
         Math.min(x - d.x0, d.x1 - x, y - d.y0, d.y1 - y) > SLAB_EDGE
       )
-        return true; // (up on it, too far from its edge for one down off it)
+        return true; // (one at the wall below, the other too far from the edge over it)
     }
   }
   return false;
@@ -241,10 +249,11 @@ export const PROPS = [];
 const ALL = []; // (every prop; PROPS: the ones the room's mode has)
 const count = {};
 let only4; // (while it's set, every prop made is one cabin's only: 0 Hangout's, 1 Quacky Zombies')
+/* the roof (or the canopy) over (x, y): what stands under it stops a duck only up to it, so one up on it walks over (the
+   pumps under the canopy never block a duck walking on it: the owner's, Nov 17 17:41Z, "the top of the roof for the gas
+   pump shouldn't block the movement patterns of players") */
 const underRoof = (x, y) =>
-  GS.DECKS.find(
-    (d) => d.kind === "roof" && x >= d.x0 && x < d.x1 && y >= d.y0 && y < d.y1,
-  );
+  GS.DECKS.find((d) => x >= d.x0 && x < d.x1 && y >= d.y0 && y < d.y1);
 function add(kind, x, y, w, d, h, o = {}) {
   const p = { kind, x, y, w, d, h, z: heightAt(x + w / 2, y + d - 1), ...o };
   if (only4 !== undefined && p.l4 === undefined) p.l4 = only4;
@@ -1003,11 +1012,10 @@ export const wallsSee = (x, y, inside, z) =>
     PEEKS.some(
       (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
     ));
-/* is (x, y) seen from where I am? Through the walls' holes as above; and in Quacky Zombies, from outside, inside a
-   building too: its roof turns see-through over whoever is under it (world.js), on Downpour and on the cabin alike (the
-   owner's, Nov 17: roofs "and everything else"). Hangout keeps the cabin's walls shut */
-export const seenFrom = (x, y, inside, z) =>
-  (!inside && variant !== "") || wallsSee(x, y, inside, z);
+/* is (x, y) seen from where I am? My side of the walls, or through their holes (wallsSee). Every mode: from outside, a
+   building's inside never shows, its roof stays as it is; whoever is in there shows only as their outline (the owner's,
+   Nov 17 17:41Z: "it will not make it transparent unless ur player is in it") */
+export const seenFrom = (x, y, inside, z) => wallsSee(x, y, inside, z);
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;

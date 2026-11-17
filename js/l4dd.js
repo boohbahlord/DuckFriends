@@ -47,6 +47,7 @@ import {
   WADE,
   FLARE,
   STATION,
+  PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
 import { fenceLean, BELL_ANGLES, BELL_REST } from "./hangout/stationart.js";
@@ -98,6 +99,9 @@ import {
   magIn,
   fullFor,
   downArmed,
+  potOf,
+  WILD,
+  isWild,
 } from "./l4ddrules.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
@@ -117,7 +121,15 @@ import {
   isPw,
   PART_ICONS,
 } from "./l4ddpowerui.js";
-import { powerOn, pwState, partName, PW, fireForSale } from "./l4ddpower.js";
+import {
+  powerOn,
+  powerNext,
+  pwState,
+  partName,
+  PW,
+  fireForSale,
+  pumpZone,
+} from "./l4ddpower.js";
 import {
   angelMount,
   angelUnmount,
@@ -130,6 +142,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
+import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor } from "./outlines.js";
 import { confirmBox } from "./ui.js";
@@ -333,6 +346,20 @@ let layer = null,
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
 /* my sprint left (0 … 1) and whether I'm too tired to sprint, for the HP meter's blue bar (game.js) */
 export const sprintLeft = () => [stamina, tired];
+/* every zombie on my screen: its box in the board's px, from its last drawing (game.js: the others' HP meters turn
+   see-through over one) */
+export function l4ZBoxes() {
+  const out = [];
+  for (const o of Z.values())
+    if (o.el && !o.el.hidden && o.sk)
+      out.push({
+        l: o.sx - (o.bw * o.sk) / 2,
+        r: o.sx + (o.bw * o.sk) / 2,
+        t: o.sy - o.bh * o.sk,
+        b: o.sy,
+      });
+  return out;
+}
 let butler = null,
   onEl = null,
   onSig = "",
@@ -385,11 +412,21 @@ function lits() {
 }
 
 /* a zombie's outline (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
-   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it */
+   when a wall hides it, or null to ask whether a wall, a roof or a crown in front of it covers it. Returns whether
+   something hides it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
 function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
   const w = o.bw * sc,
     h = o.bh * sc,
-    y = f.top + (dip - o.feet) * sc;
+    y = f.top + (dip - o.feet) * sc,
+    hid =
+      hidden ??
+      Wd.coverAt(
+        f.left - w * 0.4,
+        f.left + w * 0.4,
+        y + h * 0.1,
+        f.top,
+        Math.round(sortY(o.x, o.y, z)),
+      );
   olAdd({
     id: "z" + o.i,
     img: o.img,
@@ -399,24 +436,17 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor) {
     h,
     flip: o.face < 0,
     kind: "zombie",
-    hidden:
-      hidden ??
-      Wd.coverAt(
-        f.left - w * 0.4,
-        f.left + w * 0.4,
-        y + h * 0.1,
-        f.top,
-        Math.round(sortY(o.x, o.y, z)),
-      ),
+    hidden: hid,
     floor: Math.sign(olFloor(o.x, o.y, z) - myFloor),
   });
+  return hid;
 }
 function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
   const url = zombieURL(z.l, z.i);
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><i></i></span>`;
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><b></b><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -428,7 +458,7 @@ function zombieEl(z) {
     el,
     body,
     feet: box.feet, // (its feet in its body's own px: a swimmer's waterline is SINK over them)
-    bar: el.querySelector(".l4z-hp i"),
+    bar: el.querySelector(".l4z-hp"), // (--hp on it: the red and the white behind it, css/app.css)
     x: z.x,
     y: z.y,
     fx: z.x,
@@ -439,6 +469,8 @@ function zombieEl(z) {
     face: 1,
     hp: z.hp,
     st: z.st,
+    k: z.k,
+    j: z.j,
     a: z.a,
     sh: "",
     hits: "",
@@ -527,6 +559,8 @@ function seeZombies(s, ctx, now) {
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
+    if (z.hp < o.hp && shown && o.st !== 3)
+      vibrate(o.img, hitPx(o.hp - z.hp), z.st === 3); // (a zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
     if (z.hp < o.hp && z.st !== 3 && shown) o.img.animate(HIT, 320); // (hit: a red blink, started over without the page measuring itself)
     if (o.hp !== undefined && z.hp !== o.hp && o.st !== 3 && shown)
       popHP(o.el, z.hp - o.hp, true); // (the HP it lost or got back, small over its head: hpmeter.js)
@@ -574,10 +608,12 @@ function seeZombies(s, ctx, now) {
     if (o.sh !== sh) {
       o.sh = sh;
       o.bar.style.setProperty("--hp", sh);
-      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17)
+      if (+sh < 1) o.el.classList.add("hurt"); // (its HP bar shows once it has taken damage, then stays: the owner's, Nov 17. A hit: what it lost turns white, then drains fast; dead, it drains to black, then fades: css/app.css, the owner's, Nov 17 17:41Z)
     }
     o.hp = z.hp;
     o.st = z.st;
+    o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: l4ddrules.js zombieZ)
+    o.j = z.j;
     o.a = z.a;
   }
   for (const [i, o] of Z)
@@ -630,34 +666,100 @@ let sqEl = null,
 function spinSquare(s, ctx) {
   const L = s.hang.l4,
     Wd = ctx.world,
-    show = !!(
-      sqEl &&
-      L &&
-      !L.over &&
-      L.wait &&
-      seenFrom(BOX.zx, BOX.y, Wd.inside)
-    );
+    rest = !!(sqEl && L && !L.over && L.wait);
   if (!sqEl) return;
-  /* (an <svg> has no .hidden: setting it did nothing, so the square stayed drawn over the gas station's floor once I
-     went inside, the owner's, Nov 17 13:38Z. display does it) */
-  const shown = sqEl.style.display !== "none";
-  if (shown !== show) sqEl.style.display = show ? "" : "none";
-  if (!show) return;
-  const z = heightAt(BOX.zx, BOX.y),
-    pts = [
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-      [-1, 1],
-    ].map(([a, b]) => {
-      const p = Wd.toScreen(BOX.zx + a * NEAR, BOX.y + b * NEAR, z);
-      return p.left.toFixed(1) + "," + p.top.toFixed(1);
-    }),
-    sig = pts.join(" ") + Wd.sc.toFixed(3);
+  /* the car (or the fireplace), and on Downpour a square round each gas pump too: where something can be bought or
+     done (the owner's, Nov 17 18:05Z: "the gas pumps now get a small sqaure around them in the rest phase as well") */
+  const spots = [
+      [BOX.zx - NEAR, BOX.y - NEAR, BOX.zx + NEAR, BOX.y + NEAR],
+      ...(dp() ? PUMPS.map(pumpZone) : []),
+    ],
+    polys = sqEl.children;
+  /* (an <svg> has no .hidden: display does it) */
+  if ((sqEl.style.display !== "none") !== rest)
+    sqEl.style.display = rest ? "" : "none";
+  if (!rest) return;
+  let sig = Wd.sc.toFixed(3);
+  // (a pump's square is just where its button shows: by its south side, l4ddpower.js pumpZone)
+  spots.forEach(([x0, y0, x1, y1], i) => {
+    const cx = (x0 + x1) / 2,
+      cy = (y0 + y1) / 2;
+    const poly = polys[i];
+    if (!poly) return;
+    const on = seenFrom(cx, cy, Wd.inside);
+    if ((poly.style.display !== "none") !== on)
+      poly.style.display = on ? "" : "none";
+    if (!on) return;
+    const z = heightAt(cx, cy),
+      pts = [
+        [-1, -1],
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+      ]
+        .map(([a, b]) => {
+          const p = Wd.toScreen(a < 0 ? x0 : x1, b < 0 ? y0 : y1, z);
+          return p.left.toFixed(1) + "," + p.top.toFixed(1);
+        })
+        .join(" ");
+    sig += "|" + pts;
+    if (poly.getAttribute("points") !== pts) poly.setAttribute("points", pts);
+  });
   if (sig === sqSig) return;
   sqSig = sig;
-  sqEl.firstChild.setAttribute("points", pts.join(" "));
   sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
+}
+/* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
+   JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
+   as flat as the floor */
+const JPOOL = { ms: 6000 };
+const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">
+  <ellipse cx="0" cy="0" rx="40" ry="15" fill="#5e0711"/>
+  <ellipse cx="-24" cy="5" rx="22" ry="9" fill="#5e0711"/>
+  <ellipse cx="26" cy="-4" rx="20" ry="9" fill="#5e0711"/>
+  <ellipse cx="8" cy="10" rx="18" ry="7" fill="#5e0711"/>
+  <ellipse cx="-6" cy="-3" rx="24" ry="8" fill="#7a0b17"/>
+  <ellipse cx="-12" cy="-6" rx="7" ry="2" fill="#a3242c" opacity="0.6"/>
+</svg>`;
+let poolEl = null,
+  poolAt = 0,
+  poolSig = "";
+function seePool(s, ctx) {
+  if (!poolEl) return;
+  const Wd = ctx.world,
+    q = P4(s, WILD.id),
+    down = !!(q && q.ex && isWild(s, WILD.id)),
+    a = down && !+s.options.noGore ? Wd.at(WILD.id) : null,
+    show = !!a && seenFrom(a.x, a.y, Wd.inside, a.z);
+  if (!down) poolAt = 0;
+  else if (!poolAt) poolAt = clockNow();
+  if (poolEl.hidden !== !show) poolEl.hidden = !show;
+  if (!show) return;
+  const k = Math.min(1, (clockNow() - poolAt) / JPOOL.ms),
+    grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
+    p = Wd.toScreen(a.x, a.y + 4, a.z),
+    sig = `${p.left.toFixed(1)} ${p.top.toFixed(1)} ${(Wd.sc * grow).toFixed(3)}`;
+  if (sig === poolSig) return;
+  poolSig = sig;
+  poolEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) scale(${(Wd.sc * grow).toFixed(3)})`;
+  poolEl.style.zIndex = a.z < 1 ? 3 : Math.round(sortY(a.x, a.y - 30, a.z)); // (on the floor under the ducks; on a roof, just under him)
+}
+/* Justin's pot (the owner's, Nov 17 18:05Z: the points for his kills are everyone's): a smaller line under my points,
+   while he's out there with a gun or something is in it (it's split at the end of each round: l4ddrules.js potSplit) */
+let potShown = "";
+function seePot(s) {
+  const n = potOf(s),
+    q = P4(s, WILD.id),
+    on =
+      n > 0 ||
+      !!(isWild(s, WILD.id) && s.players[WILD.id].armed && !(q && q.ex)),
+    t = on ? `Justin's points for everyone: ${n}` : "";
+  if (t === potShown) return;
+  potShown = t;
+  const el = ptsEl.querySelector(".l4-jp");
+  el.textContent = t;
+  el.hidden = !on;
+  ptsEl.parentElement?.classList.toggle("l4-jp-on", on);
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
    top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
@@ -1732,6 +1834,7 @@ function peek(tag, s, me) {
   void el.offsetWidth;
   el.classList.add("go");
 }
+export const l4Warn = (text) => say(text); // (game.js: a note over the board with the error sound)
 function say(text) {
   if (!sayEl) return;
   sayEl.textContent = text;
@@ -2059,7 +2162,9 @@ activity({
     ptsEl = document.createElement("div");
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
-    ptsEl.innerHTML = "<span><b>0</b> points</span>";
+    ptsEl.innerHTML =
+      '<span><b>0</b> points</span><i class="l4-jp" hidden></i>';
+    potShown = "";
     sayEl = document.createElement("div");
     sayEl.className = "l4-say";
     sayEl.setAttribute("role", "alert");
@@ -2088,10 +2193,18 @@ activity({
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     sqEl.classList.add("l4-spinsq");
     sqEl.setAttribute("data-nopx", ""); // (a thin line: no pixel picture of it)
-    sqEl.innerHTML = "<polygon/>";
+    sqEl.innerHTML = "<polygon/><polygon/><polygon/>"; // (the car, then Downpour's two gas pumps)
     sqEl.style.display = "none";
     sqSig = "";
     layer.append(sqEl);
+    poolEl = document.createElement("div");
+    poolEl.className = "l4-jpool";
+    poolEl.setAttribute("aria-hidden", "true");
+    poolEl.innerHTML = POOL_SVG;
+    poolEl.hidden = true;
+    poolAt = 0;
+    poolSig = "";
+    layer.append(poolEl);
     shop = shopEl(ctx);
     butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -2151,15 +2264,16 @@ activity({
       egg && egg.el,
       shop && shop.el,
       sqEl,
+      poolEl,
     ])
       e?.remove();
-    sqEl = null;
+    sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
     bellEl = flareEl = null;
     vitShown = "";
-    ctx?.world?.board.classList.remove("blackout", "l4-board");
+    ctx?.world?.board.classList.remove("blackout", "l4-board", "l4-jp-on");
   },
   onState(s, ctx) {
     if (!layer || !s.hang || !s.hang.l4) return;
@@ -2174,6 +2288,7 @@ activity({
     spinSquare(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
+    seePot(s);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
     if (shop.open) shopFill(s, ctx);
     /* a ding: a weapon from the fireplace taken (an upgrade bought rings the Butler's till: l4ddsfx.js) */
@@ -2242,7 +2357,7 @@ activity({
       const up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
-            : o.st === 6 || o.st === 7
+            : o.st === 6 || o.st === 7 || o.st === 8
               ? zombieZ(o) - heightAt(o.x, o.y)
               : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
         z = heightAt(o.x, o.y) + up,
@@ -2277,7 +2392,12 @@ activity({
             : inShallow(o.x, o.y) && o.st !== 5
               ? WADE_SINK * o.feet
               : 0;
-      if (o.st !== 3) zOutline(Wd, o, f, dip, sc, null, z, myFloor);
+      const olOnly =
+        o.st !== 3 && zOutline(Wd, o, f, dip, sc, null, z, myFloor); // (behind a wall, under a roof: its line only)
+      if (o.olOnly !== olOnly) {
+        o.olOnly = olOnly;
+        o.el.classList.toggle("ol-only", olOnly);
+      }
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
@@ -2398,6 +2518,7 @@ activity({
     }
     seeOn(ctx.state(), ctx);
     spinSquare(ctx.state(), ctx);
+    seePool(ctx.state(), ctx);
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),
@@ -2464,6 +2585,7 @@ activity({
     const s = ctx.state();
     return {
       label: holdLabel(t, s, ctx, Date.now()),
+      faded: t.kind === "power" && powerNext(s) === "", // (nothing to fit, turn on or pour in: the button fades, the owner's, Nov 17 18:05Z)
       d: t.d,
       act: () =>
         TAPS.includes(t.kind)
@@ -2513,17 +2635,6 @@ activity({
       ? false
       : undefined, // (the power is cut: only the fires and the candles shine, till the power box is mended. Downpour's hood-up car glows till it's first used)
   blocked: (x, y) => !playable(x, y), // (only the cabin and the deck; the deck's edge is the map's)
-  /* a wall turns see-through over a zombie behind it too, as over a duck (the owner's, Nov 15: you find your friends
-     and see what's coming) */
-  hiders: (ctx) => {
-    const out = [],
-      ins = ctx.world.inside;
-    for (const o of Z.values())
-      if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
-        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike. Its height: up on a roof, no roof turns see-through over it)
-        out.push([o.x, o.y, o.st === 6 || o.st === 7 ? zombieZ(o) : 0]);
-    return out;
-  },
   crowd(x, y) {
     let d = 0;
     for (const o of Z.values()) {

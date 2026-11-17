@@ -117,10 +117,12 @@ export const CHAPEL_DOOR = { a: 2000, b: 2600 };
 /* Part B (the owner's, Nov 17 12:28Z), the spots only so far (Noah draws to them): the ladder up the gas station's back
    (north) wall, at its west end, left of the storeroom's hole, climbed from outside (side "n"), x0 … x1 along the wall;
    the roof is walked on at STATION.wall. The two holes in the roof, x0 y0 x1 y1: its bottom right corner, and over the
-   restroom */
+   restroom. The bottom right one is big (the owner's, Nov 17 18:05Z: it "can be OVER the diameter of a car in length in
+   every direction": a car is 420 long, and its dark mouth, drawn in its box, is at least two thirds of the box across);
+   the restroom's stays as it was */
 export const LADDER = { at: 550, x0: 1160, x1: 1240, side: "n" };
 export const ROOF_HOLES = [
-  { id: "hole-se", x0: 3150, y0: 1450, x1: 3350, y1: 1650 },
+  { id: "hole-se", x0: 2900, y0: 1165, x1: 3460, y1: 1720 },
   { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
 ];
 /* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a

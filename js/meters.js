@@ -78,3 +78,37 @@ export function stackBars(tag) {
     tag.style.setProperty("--bt", bt + "rem");
   } // (where the heat meter and the slot switch box go: under them)
 }
+
+/* the same white and yellow bars under my HP meter at the bottom of the screen (the owner's, Nov 17 17:41Z: the meter
+   there gets the cooldown, the sprint and the ammo too; the sprint is its own blue bar, hpmeter.js): host is the
+   meter's row for them; each copies its bar under my name, its look and how full it is (tag: my name tag, or null) */
+const MIRROR = [
+  [".l4-cool", "hpm-cool", "--cl"],
+  [".l4-ammo", "hpm-ammo", "--am"],
+];
+export function mirrorBars(tag, host) {
+  if (!host) return;
+  for (const [sel, cls, v] of MIRROR) {
+    const src = tag && tag.querySelector(sel);
+    let el = host.querySelector("." + cls);
+    if (!el) {
+      if (!src) continue;
+      el = document.createElement("span");
+      el.innerHTML = "<i></i>";
+      host.append(el);
+    }
+    const look = src
+      ? cls + src.className.replace(/^\S+/, "") // (its looks: off, no, empty, dry, rl)
+      : cls + " off";
+    if (el._look !== look) {
+      el._look = look;
+      el.className = look;
+    }
+    const n = src ? src.style.getPropertyValue(v) : "";
+    if (el._v !== n) {
+      el._v = n;
+      if (n) el.style.setProperty(v, n);
+      else el.style.removeProperty(v);
+    }
+  }
+}

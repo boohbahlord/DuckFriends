@@ -186,8 +186,8 @@ export const VOL = {
   static: -32, // (the TV with no channel, on a loop: a quiet, even hiss)
   hum: -24, // (the power box's transformer, on a loop)
   // the power coming on and going out (Duck Cabin's box and Dead Ducks Arcade's), its parts, the Angel machine
-  powerUp: -12,
-  powerDown: -12,
+  powerUp: -4, // (louder: the owner, Nov 17 18:05Z)
+  powerDown: -6,
   partGot: -14,
   partIn: -12,
   gasPour: -14,
@@ -761,6 +761,16 @@ const hit = () =>
     30,
   );
 
+/* my duck hurt: it quacks, a little higher, at most once in OUCH ms (the owner, Nov 17 18:05Z) */
+const OUCH = 400;
+let ouchAt = -1e9;
+const ouch = () => {
+  const t = performance.now();
+  if (t - ouchAt < OUCH) return null;
+  ouchAt = t;
+  return play("quack", { k: 0.6, rate: 1.1 + Math.random() * 0.08 });
+};
+
 /* the menus: a faint press for every button, a toggle's own sounds for on and off (its aria-pressed or a checkbox) */
 addEventListener(
   "click",
@@ -810,6 +820,7 @@ const SFX = {
   flesh,
   land,
   hit,
+  ouch,
   swish: named("throw"),
   nuke: (o = {}) => {
     play("nukeRing", o); // (a flashbang's ring in the ears, as the roar starts: the owner, Nov 16)

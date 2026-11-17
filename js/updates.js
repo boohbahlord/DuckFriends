@@ -9,6 +9,37 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v83",
+    version: 83,
+    date: "Nov 17, 2026",
+    title: "Outlines, shots through floors and Justin's pot",
+    news: [
+      "Walls, roofs and trees only turn see-through when you're under or inside them, in every mode; anyone else hidden shows only as their outline, and nothing turns see-through while you stand on a roof.",
+      "Shots in every mode hit a duck on your own floor first, before one higher up or lower down (a jetpack flyer, a balcony).",
+      "For Dead Ducks Arcade: shots go up and down through roof holes and past roof edges, but a zombie on your own floor is hit first.",
+      "For Dead Ducks Arcade: Justin talks like himself, only runs from zombies (and from shots after a second), hunts zombies with a gun, and his points go into a pot shared by everyone at the end of each round.",
+      "For Dead Ducks Arcade: zombies stick to the way up they picked, break church windows on their way, and some come at you from the side.",
+      "For Dead Ducks Arcade: on Downpour, the gas pump roof no longer blocks walking, and zombies climb the gas station and jump onto it.",
+      "For Dead Ducks Arcade: on Downpour, the big hole in the gas station roof is now wider than a car.",
+      "For Dead Ducks Arcade: on Downpour, the pumps are used from their front, and they get a thin yellow square there in the rest phase, like the car.",
+      "For Dead Ducks Arcade: the Angel Machine costs 200 more (1,200), has its name and fizzing static, and Angelic weapons all have the same thin glow.",
+      "For Dead Ducks Arcade: the weapon roll slot costs 150 more (650), Safe Keeping costs 4,000, and an item's chance in a bag is 20%.",
+      "For Dead Ducks Arcade: zombie HP bars flash white and drain fast, and go black and fade when they die.",
+      "For Dead Ducks Arcade and Mad God Justin: your HP bar blinks white and drains when you're hit, shows your next HP filling back in, and has your cooldown and ammo bars under it.",
+      "For Dead Ducks Arcade and Mad God Justin: the other players' HP bars stay over everything, are a little bigger, and turn see-through when anyone stands under them.",
+      "Ducks vibrate faintly as they fire bigger guns (only the chain gun pushes you), and a hit duck shakes once, and again as it goes down.",
+      "Taking damage shows stronger red corners, sways your screen a little, and your duck quacks.",
+      "The Laser Rifle has no recoil, and what it hits smokes and steams.",
+      "The scroll wheel skips empty hotbar slots on PC and phone.",
+      "Running with Shift no longer lets you reload (shotguns still can). Bow, dagger and melee cooldowns aren't reloads, so they still work.",
+      "The generator's use button is faded when you have nothing to give or do.",
+      "The power going off and coming back on is louder.",
+    ],
+    fixed: [
+      "For Dead Ducks Arcade: the car's weapon orb now sits right over its windshield.",
+    ],
+  },
+  {
     id: "v82",
     version: 82,
     date: "Nov 17, 2026",

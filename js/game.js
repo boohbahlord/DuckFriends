@@ -193,6 +193,7 @@ import {
   dodging,
   L4,
   l4Hp,
+  l4Regen,
   downArmed,
   l4Dying,
   l4Down,
@@ -214,6 +215,8 @@ import {
   l4SafeHint,
   laserEnd,
   l4Ammo,
+  l4Warn,
+  l4ZBoxes,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -366,7 +369,7 @@ import {
   edgeHTML,
 } from "./mgjart.js";
 import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
-import { angelic } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
+import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
 import { angelOf } from "./l4ddangel.js";
 import { pwCodes, goreFree } from "./wounds.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
@@ -437,6 +440,7 @@ import {
   fxFrame,
   fxHitAt,
   fxImpact,
+  fxSmolder,
   fxMelee,
   fxBurst,
   fxSpurt,
@@ -459,6 +463,9 @@ import {
   jitter,
   shake,
   shakeNow,
+  vibrate,
+  VIB,
+  hitPx,
   wobble,
 } from "./fxmotion.js";
 
@@ -1144,6 +1151,7 @@ let othersSig = "",
   othersAt = 0,
   othersBox = null, // the others' meters' box, in the board's px (measured when it changes)
   myBox = null, // my duck's box in the last frame, in the board's px
+  allBoxes = [], // every duck's box in the last frame, in the board's px (mine too)
   overBoxes = null; // the cloud's and the question's boxes over the board, in the board's px (measured a few times a second)
 /* Mad God Justin's sprint (the owner's, Nov 17): a second of it, back as fast as it was lost. mgjStam is what's left (0 … 1);
    run dry, I can't sprint again until Shift is let go */
@@ -1169,7 +1177,15 @@ function drawMeters(s, board, layer, now) {
       : isMgj(s)
         ? [mgjStam, mgjTired]
         : [null, false];
-    meter.set(hv[0], hv[1], sp, tired);
+    meter.set(
+      hv[0],
+      hv[1],
+      sp,
+      tired,
+      isL4dd(s) ? l4Regen(s, R.me, clockNow()) : null,
+    );
+    meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
+    if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
   const want =
     (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
@@ -1201,9 +1217,9 @@ function drawMeters(s, board, layer, now) {
     box.innerHTML = othersHpHTML(list);
     othersBox = null; // (measured again once, below: its size changed)
   }
-  /* my duck walking into them: see-through on my screen (checked a few times a second). The box is measured only when
-     its content or the board changes, and my duck's box comes from the last frame's drawing, so no frame waits on the
-     page's layout */
+  /* a duck or a zombie under them, mine or anyone's: see-through on my screen, so I see who's there (the owner's, Nov 17
+     17:41Z; checked a few times a second). The box is measured only when its content or the board changes, and the
+     ducks' boxes come from the last frame's drawing, so no frame waits on the page's layout */
   if (now - othersAt > 120) {
     othersAt = now;
     if (!othersBox || othersBox.g !== geo) {
@@ -1216,15 +1232,12 @@ function drawMeters(s, board, layer, now) {
         b: b.bottom - geo.top,
       };
     }
-    const a = myBox,
-      b = othersBox,
+    const b = othersBox,
+      under = (a) =>
+        a.r > b.l - 8 && a.l < b.r + 8 && a.b > b.t - 8 && a.t < b.b + 8,
       see =
-        !!a &&
         !!list.length &&
-        a.r > b.l - 8 &&
-        a.l < b.r + 8 &&
-        a.b > b.t - 8 &&
-        a.t < b.b + 8;
+        (allBoxes.some(under) || (isL4dd(s) && l4ZBoxes().some(under)));
     box.classList.toggle("see", see);
   }
 }
@@ -1244,7 +1257,7 @@ function drawDucks(now = clockNow()) {
       return d && d.parentNode === layer ? d : null;
     };
   if (hang) world.frame(now); // (the camera first: ducks stand in the world)
-  const ol = isL4dd(s) || isMgj(s), // (a zombie game: the outlines, outlines.js)
+  const ol = isL4dd(s) || isMgj(s) || hang, // (the outlines, outlines.js: every zombie game, and Hangout's world too, the universal way to see who's hidden: the owner's, Nov 17 17:41Z)
     olAt = ol && hang ? world.at(R.me) : null,
     olMe = olAt ? olFloor(olAt.x, olAt.y, olAt.z) : null; // (my floor)
   trackWalk();
@@ -1445,7 +1458,7 @@ function drawDucks(now = clockNow()) {
       ]); // a new look shows at once, mid-game too (Duncelation: a dunce's hat; the jetpack on its back)
     if (dead && d._dead === false && !g && !wq) {
       sfx.hit();
-      hurt(d);
+      hurt(d, 4, true);
     } // a duck knocked down (by a weapon, Justin, a kill): the hit sound and a short red flash, for everyone
     d._dead = dead;
     const hs = (s.hurt || {})[id];
@@ -1608,7 +1621,8 @@ function drawDucks(now = clockNow()) {
           void red.offsetWidth;
           red.style.animation = "";
           sfx.hit();
-          hurt(d);
+          if (id === R.me) sfx.ouch(); // (my duck quacks when it's hurt)
+          hurt(d, hitPx(was - hp), hp <= 0); // (a duck hit shakes once by the HP it lost, and once more as it goes down: the owner's, Nov 17)
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
           red.style.animation = "none";
@@ -1727,7 +1741,7 @@ function drawDucks(now = clockNow()) {
       pic.style.transformOrigin = org;
       pic.style.transform = squish;
     }
-    /* the outlines of every zombie game (outlines.js): each player green, Justin blue (Good Justin God in Mad God Justin,
+    /* the outlines (outlines.js; every zombie game and Hangout's world): each player green, Justin blue (Good Justin God in Mad God Justin,
        never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade), seen through a wall, under a
        roof and a floor away */
     const olP = !g && s.players[id],
@@ -1744,6 +1758,7 @@ function drawDucks(now = clockNow()) {
               ? "blue" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
               : "ally"
             : "";
+    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
     if (olKind && pic && pic.tagName === "IMG" && !d._off) {
       const ph = pic.naturalWidth
           ? (size * pic.naturalHeight) / pic.naturalWidth
@@ -1785,6 +1800,11 @@ function drawDucks(now = clockNow()) {
         hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
         down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
       });
+      olOnly = hidden && !d._hid && id !== R.me;
+    }
+    if (d._olOnly !== olOnly) {
+      d._olOnly = olOnly;
+      d.classList.toggle("ol-only", olOnly);
     }
     if (d._j !== pos.j) {
       d._j = pos.j;
@@ -2044,6 +2064,7 @@ function drawDucks(now = clockNow()) {
     });
     if (mine) myBox = boxes[boxes.length - 1];
   }
+  allBoxes = boxes;
   layer.querySelectorAll(".gduck").forEach((d) => {
     if (duckEls.has(d.dataset.pid) && duckEls.get(d.dataset.pid) !== d) {
       d.remove(); // (a second one for the same duck, left behind: only the one it's drawn on stays)
@@ -2225,6 +2246,7 @@ function drawDucks(now = clockNow()) {
       h._hs = hs;
       fxl.append(h);
       heldEls.set(id, h);
+      if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
     }
     /* a gun being reloaded dips and bobs in its duck's hands (Dead Ducks Arcade: its reload runs in its kit; Justin out
        in Downpour too) */
@@ -2356,6 +2378,7 @@ function drawDucks(now = clockNow()) {
     kick(sh.by, gun, now);
     heatUp(sh.by, gun); // (the LMG's barrel heats up as it keeps firing: barrelheat.js)
     if (sh.by === R.me) shake(MUZZLE[gun].shake);
+    vibrate(shooterBody(sh.by), VIB[gun]); // (the firing duck's drawing, in rhythm with the fire rate)
   }
   /* Dead Ducks Arcade: the laser sights, out of each gun to the end of its flashlight (l4dd.js), never the bow's. I only
      see my own laser sight, never another duck's or Justin's (the owner's, Nov 16) */
@@ -2862,6 +2885,9 @@ function placeZombies(board, s, now) {
     n._f = face;
     n.classList.toggle("dead", !!o.d);
     n.classList.toggle("claw", now - (o.a || 0) < 350);
+    if (n._hp !== undefined && o.hp < n._hp)
+      vibrate(n.querySelector("img"), hitPx(n._hp - o.hp), !!o.d); // (a wave zombie hit shakes once by the HP it lost, and once more as it dies: the owner's, Nov 17, 32)
+    n._hp = o.hp;
     if (n._st === st) continue;
     n._st = st;
     Object.assign(n.style, {
@@ -3344,8 +3370,16 @@ const lawRole = (s, id) =>
         : ""
     : "";
 /* a short, see-through red flash on a duck: Justin hit, or a duck knocked down */
-function hurt(d) {
+const shooterBody = (id) => {
+  const d = S && S.querySelector(`.gduck[data-pid="${CSS.escape(id)}"]`);
+  return d && d.querySelector(".gduck-body");
+};
+function hurt(d, px = 3, twice = false) {
   if (!d) return;
+  const t = performance.now();
+  if (!(t - (d._vibAt || 0) < 250))
+    vibrate(d.querySelector(".gduck-body"), px, twice); // (once per hit, not twice when two rules see the same one)
+  d._vibAt = t; // (a hit shakes it once, and once more as it goes down: the owner's, Nov 17, 32 and 34)
   d.classList.remove("hurt");
   void d.offsetWidth;
   d.classList.add("hurt");
@@ -3767,6 +3801,7 @@ function playFx(f) {
     fxMuzzle(x0, y0, ang, kind);
     kick(f.by, kind, now);
     if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
+    vibrate(shooterBody(f.by), VIB[kind]);
     if (f.by === R.me) {
       shake(MUZZLE[kind].shake);
       if (!lz)
@@ -3777,11 +3812,15 @@ function playFx(f) {
         };
     }
     if (lz) {
-      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt) */
+      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt), and smokes and
+         steams where it went through (fx.js fxSmolder; no recoil or shake from it: the owner's, Nov 17 17:41Z) */
       for (const [hx, hy] of f.hit || []) {
         const at = world.place({ x: hx / HW, y: hy / HH }, f.hz || 0);
         fxImpact(at.left, at.top, "laser", Math.cos(ang), Math.sin(ang));
+        fxSmolder(at.left, at.top, size * 0.5);
       }
+      /* the other modes: it stopped at a duck (hd), which smokes and steams the same */
+      if (f.hd && !past) fxSmolder(b.left, b.top, size * 0.5);
       return;
     }
     if (!past)
@@ -4377,6 +4416,8 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = mgjSprint(sprinting, dt); // (Mad God Justin: a second of sprint, back as fast as it went)
+  runNow = sprinting && !!(hx || vy);
+  runReloadCheck(s, now);
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4593,6 +4634,8 @@ function hangStep(dt, now) {
   } // (the chain gun pushing me back: the world sums it with my walk, never past my full speed)
   const jk = jetKeys(),
     jt = !!me.jf && (jk.up || jk.hold);
+  runNow = sprinting && !!(ax || ay);
+  runReloadCheck(R.state, now);
   const ev = world.step(me, ax, ay, sprinting, dt, now);
   jetAfter(jt, dt); // (the jets' flames, my fuel)
   moving = ev.moved;
@@ -5666,8 +5709,51 @@ const dots = (id) =>
           ? `<span class="ammo ammo-n" aria-label="${ammo(id)} shots left">${ammo(id)}</span>`
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
+/* No reloading while sprinting, except a shotgun (the owner's, Nov 17 17:41Z and 18:05Z: "running means sprinting with
+   shift yes"): R does nothing while I run, with a note and the error sound, and a reload under way is cancelled the
+   moment I sprint. A bow's, a dagger's or a melee weapon's cooldown is no reload and is never touched */
+const NO_RUN_OK = ["shotgun", "dbarrel"];
+let runNow = false, // sprinting with Shift or the stick, and moving
+  runWarnAt = 0,
+  runCancelAt = 0;
+function runWarn() {
+  const now = performance.now();
+  if (now - runWarnAt < 900) return;
+  runWarnAt = now;
+  if (isL4dd(R.state)) l4Warn("Can't reload while sprinting");
+  else {
+    say("Can't reload while sprinting", true);
+    sfx.nope();
+  }
+  noReload(); // (the white bar flashes red, meters.js)
+}
+/* a reload of mine under way (not a shotgun's): its weapon, or null */
+function myReloadW(s, now) {
+  if (isL4dd(s)) {
+    const kit = kitOf(s, R.me);
+    return kit && kit.rl > now ? kit.rw : null;
+  }
+  for (const [k, m] of Object.entries(s.mag || {}))
+    if (m && m.r > now && (k === R.me || k.startsWith(R.me + " ")))
+      return k === R.me ? "handgun" : k.slice(R.me.length + 1);
+  return null;
+}
+function runReloadCheck(s, tnow) {
+  if (!runNow || !R || !onBoardPhase()) return;
+  const t = performance.now();
+  if (t - runCancelAt < 250) return;
+  const w = myReloadW(s, clockNow());
+  if (!w || NO_RUN_OK.includes(w)) return;
+  runCancelAt = t;
+  R.send({ t: "unreload" });
+  runWarn();
+}
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
 function reload() {
+  if (R && onBoardPhase() && runNow && !NO_RUN_OK.includes(heldNow())) {
+    runWarn();
+    return true;
+  }
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
     if (a && (a.dry || a.nr)) noReload(); // (no ammo left to reload it with: the white bar flashes red, meters.js)
@@ -5789,11 +5875,19 @@ function wheelPick(dir) {
   if (!R || !onBoardPhase()) return false;
   const s = R.state;
   if (isL4dd(s)) {
-    const sl = slotsOf(s, R.me);
+    /* the next slot that has something: an empty one between is skipped, and the grenades (key 5) are in the row when I
+       have some (the owner's, Nov 17 17:41Z: "bow at key number 3, nothing at 4, but a grenade at five, then the scroll
+       wheel will skip the empty one and go straight to the grenade"); Safe Keeping is never picked by hand */
+    const sl = slotsOf(s, R.me),
+      kit = kitOf(s, R.me),
+      has = (i) =>
+        i === 4
+          ? !!(kit && kit.g > 0)
+          : !!sl[i] && !(i === 3 && sl[3] === "safekeep");
     let i = l4Slot;
-    for (let k = 0; k < 4; k++) {
-      i = (i + dir + 4) % 4;
-      if (sl[i]) {
+    for (let k = 0; k < 5; k++) {
+      i = (i + dir + 5) % 5;
+      if (i !== l4Slot && has(i)) {
         l4Pick(i);
         return true;
       }

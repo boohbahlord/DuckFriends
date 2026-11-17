@@ -17,12 +17,37 @@ let mc = null, // { el, img, orb, who, sig, tr, k }
   heard = { t: 0, out: 0 },
   sparkAt = 0;
 
+/* its static (the owner's, Nov 17 17:41Z): "a transparent fuzzy grey and white static on the machine at all times". A
+   small square of grey and white specks, made once, tiled over the machine and cut to its shape (css: mask), jumping
+   about so it fizzes */
+let staticURL = "";
+function staticTile() {
+  if (staticURL) return staticURL;
+  const n = 96,
+    c = document.createElement("canvas");
+  c.width = c.height = n;
+  const g = c.getContext("2d"),
+    im = g.createImageData(n, n);
+  for (let i = 0; i < n * n; i++) {
+    const v = 120 + Math.floor(Math.random() * 136), // (grey to white)
+      a = Math.random() < 0.55 ? Math.floor(Math.random() * 200) : 0; // (specks, gaps between them)
+    im.data.set([v, v, v, a], i * 4);
+  }
+  g.putImageData(im, 0, 0);
+  return (staticURL = c.toDataURL());
+}
+
 export function angelMount(ctx, layer) {
   mc = { el: document.createElement("div"), sig: "", tr: "", k: 0, orbSig: "" };
   mc.el.className = "l4-am";
+  /* its name on the front of its base, in my book site's lettering (the owner's, Nov 17 17:41Z: "the angel machine now
+     says angel machine in the font and lettering of the nous within kenoma site"): the site's terminal letters (VT323,
+     css/app.css "NWK VT") in its burnt amber, glowing */
   mc.el.innerHTML =
-    '<img alt="" draggable="false"><div class="l4-am-orb" hidden><div class="l4-am-ball"></div><span class="gduck-name l4-am-who"></span></div>';
+    '<img alt="" draggable="false"><span class="l4-am-static" aria-hidden="true"></span><span class="l4-am-label">Angel Machine</span><div class="l4-am-orb" hidden><div class="l4-am-ball"></div><span class="gduck-name l4-am-who"></span></div>';
   mc.img = mc.el.querySelector("img");
+  mc.fizz = mc.el.querySelector(".l4-am-static");
+  mc.fizz.style.backgroundImage = `url(${staticTile()})`;
   mc.orb = mc.el.querySelector(".l4-am-orb");
   layer.append(mc.el);
   heard = { t: 0, out: 0 };
@@ -51,7 +76,7 @@ export function angelDraw(ctx) {
     working = !!m && !angelDone(m, now),
     p = Wd.toScreen(ANGEL.X, ANGEL.Y, ANGEL.Z),
     hide =
-      !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (from outside too, under the cabin's or the chapel's roof, which turns see-through over it)
+      !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (only from inside its building: from outside, its roof stays)
       !Wd.seen(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
   if (mc.el.hidden !== hide) mc.el.hidden = hide;
   /* the orb's sound, once, as it comes out (heard even off the screen) */
@@ -65,9 +90,12 @@ export function angelDraw(ctx) {
   if (sig !== mc.sig) {
     mc.sig = sig;
     mc.img.src = svgDataURL(angelMachineSVG({ working }));
+    const m = `url("${mc.img.src}")`;
+    mc.fizz.style.maskImage = mc.fizz.style.webkitMaskImage = m; // (the static only on the machine itself)
     mc.el.classList.toggle("working", working);
   }
-  /* Downpour: see-through, as the walls are, while it hides a duck or a zombie behind it (the owner's, Nov 17 12:29Z) */
+  /* Downpour: see-through, as the walls are, while it hides my duck behind it (the owner's, Nov 17 12:29Z: "when it
+     covers your duck"; 17:41Z: never for anyone else) */
   const key = Math.round(sortY(ANGEL.X, ANGEL.Y, ANGEL.Z)) + 10,
     thru =
       dp() &&

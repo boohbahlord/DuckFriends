@@ -408,7 +408,7 @@ activity({
     if (was) {
       if (now.on !== was.on) {
         play("lever", POWER);
-        play(now.on ? "powerUp" : "powerDown", POWER);
+        play(now.on ? "powerUp" : "powerDown"); // (heard all over the cabin, not only at the box)
       }
       for (const f of FLAMES) {
         const at = { x: f.pts[0][0], y: f.pts[0][1] };

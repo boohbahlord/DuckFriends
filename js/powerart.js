@@ -309,8 +309,9 @@ export function angelMachineSVG({ w = 130, h = 150, working = false } = {}) {
 /* a four-pointed sparkle */
 const star = (x, y, r) =>
   `<path d="M${n1(x)} ${n1(y - r)}Q${n1(x + r * 0.2)} ${n1(y - r * 0.2)} ${n1(x + r)} ${n1(y)}Q${n1(x + r * 0.2)} ${n1(y + r * 0.2)} ${n1(x)} ${n1(y + r)}Q${n1(x - r * 0.2)} ${n1(y + r * 0.2)} ${n1(x - r)} ${n1(y)}Q${n1(x - r * 0.2)} ${n1(y - r * 0.2)} ${n1(x)} ${n1(y - r)}Z" fill="#fff" stroke="${GOLD_D}" stroke-width="${n1(r * 0.16)}"/>`;
-/* any weapon's picture (held or icon) made Angelic: a dark crimson edge round it and a small crimson glow (much smaller,
-   fewer pixels: the owner, Nov 17; css .angelic breathes it softly), a see-through gold halo over its middle and two
+/* any weapon's picture (held or icon) made Angelic: a dark crimson edge round it and a thin crimson glow (much smaller,
+   fewer pixels: the owner, Nov 17; thinner again, 17:41Z; in a hand, the same size for every weapon: angelGlow; css
+   .angelic breathes it softly), a see-through gold halo over its middle and two
    sparkles. The picture keeps its width and its middle (the room for the halo is added above and
    below alike), so it sits in the hand and in its slot as before */
 export function angelic(svg) {
@@ -323,7 +324,7 @@ export function angelic(svg) {
     u = Math.min(w, h + 2 * e) / 40, // (the halo's and the sparkles' size, against a 40 square)
     hx = x + w * (sq ? 0.5 : 0.68),
     hy = sq ? y + h * 0.12 : y - e * 0.45;
-  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.6, u * 0.8))}" result="d"/><feFlood flood-color="${CRIMSON_D}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(0.6, u * 1))}" result="b"/><feFlood flood-color="${CRIMSON}" flood-opacity=".7"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.4, u * 0.5))}" result="d"/><feFlood flood-color="${CRIMSON_D}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(0.4, u * 0.6))}" result="b"/><feFlood flood-color="${CRIMSON}" flood-opacity=".7"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
   const halo =
     `<g opacity=".55"><ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD_D}" stroke-width="${n1(u * 3)}"/>` +
     `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD}" stroke-width="${n1(u * 1.6)}"/></g>`;
@@ -340,6 +341,27 @@ export function angelic(svg) {
         `<svg${a.includes("class=") ? a.replace(/class="/, 'class="angelic ') : a + ' class="angelic"'}><defs>${defs}</defs>${halo}<g filter="url(#${id})">`,
     )
     .replace(/<\/svg>$/, `</g>${sparks}</svg>`);
+}
+/* the crimson edge and glow the same thin size on the screen for every Angelic weapon in a hand (the owner's, Nov 17
+   17:41Z: the LMG's glow was thicker than the AK's; "not too thick, and it should be like that for every angelic
+   weapon"). Each picture has its own size in its own units, so the glow made in those units grew with the drawing;
+   here it's set again in screen px: edge and glow, css px. el: the picture, or what holds it, once it's on the page
+   (one size read when a weapon is taken in hand) */
+export function angelGlow(el, edge = 0.6, glow = 0.9) {
+  const svg = !el
+    ? null
+    : el.matches && el.matches("svg.angelic")
+      ? el
+      : el.querySelector && el.querySelector("svg.angelic");
+  if (!svg) return;
+  const vb = svg.viewBox && svg.viewBox.baseVal,
+    px = svg.clientWidth || svg.getBoundingClientRect().width;
+  if (!vb || !vb.width || !px) return;
+  const k = vb.width / px; // (the picture's units in a css px)
+  for (const m of svg.querySelectorAll("feMorphology"))
+    m.setAttribute("radius", (edge * k).toFixed(2));
+  for (const b of svg.querySelectorAll("feGaussianBlur"))
+    b.setAttribute("stdDeviation", (glow * k).toFixed(2));
 }
 /* the orb an Angelic weapon comes out of the machine as: a dark crimson orb (css .l4orb.k-angel) with its gold halo, the
    weapon's icon inside in its Angelic look */
