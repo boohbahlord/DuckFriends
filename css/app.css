@@ -1290,7 +1290,8 @@ input.bad {
   align-items: center;
   gap: 1rem;
   padding: 0.9rem max(1rem, 3vw);
-}
+  padding-top: max(0.9rem, env(safe-area-inset-top));
+} /* full screen on a phone with a notch: the bar comes down with Sign in (.corner-tr), so they stay one row */
 .bar-title {
   display: flex;
   align-items: center;
