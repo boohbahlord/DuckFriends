@@ -11,6 +11,9 @@ export const SETTINGS_DEFAULT = {
   font: "fredoka",
   textSize: 100,
   uiSize: 100,
+  mouseSize: 100, // (Mouse size, Pointer size, Crosshair size: the pointers, pixel.js)
+  pointerSize: 100,
+  crossSize: 100,
   dyslexic: false,
   colorblind: false,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,

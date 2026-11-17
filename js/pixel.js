@@ -96,7 +96,9 @@ if (document.readyState === "loading")
 setGrid();
 /* the browser zoomed, or the window moved to another screen: its pixels changed size */
 addEventListener("resize", () => {
-  if (dpr() !== dprAt) setGrid();
+  if (dpr() === dprAt) return;
+  setGrid();
+  setCursors(); // (the pointers too: drawn in the screen's pixels)
 });
 document.documentElement.classList.add("pixel");
 
@@ -299,56 +301,38 @@ kyk
 kywk
 kywwk
 kywwwk
-kywwwwkk
+kywwwwk
 kywwwwwk
 kywwwwwwk
 kywwwwwwwk
-kywwwwwwwwk
-kywwwwwwwwwk
-kywwwwwwwwwwk
-kywwwwwwwwwwwk
-kywwwwwwwwwwwwk
-kywwwwwwwwwkkkkk
-kwwwwwwwwwk
-kwwwwwkwwwk
-kwwwwk.kwwwk
-kwwwk...kwwk
-kwwk....kwwwk
-kwk......kwwk
-kk.......kwwwk
-..........kwwk
-..........kwwkk
-...........kk`,
+kywwwwkkkkk
+kywkwwk
+kwk.kwwk
+kk..kwwk
+k....kwwk
+.....kwwk
+......kk`,
   ],
   hand: [
-    6,
+    4,
     0,
-    `.....kkkk
-.....kywk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwk
-....kywwwwkkk
-....kywwwwwwk
-....kywwwkwwwkkkk
-....kywwwkwwwkwwwkkk
-....kywwwkwwwkwwwkwwk
-...kwwwwwkwwwkwwwkwwk
-.kkwwwwwwkwwwkwwwkwwk
-kwwwwwwwwkwwwkwwwkwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-kwwwwwwwwwwwwwwwwwwwk
-.kkwwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-...kwwwwwwwwwwwwwwwwk
-....kwwwwwwwwwwwwwwk
-.....kkkkkkkkkkkkkk`,
+    `....kk
+...kywk
+...kywk
+...kywk
+...kywkkk
+...kywkwkkk
+...kywkwkwkkk
+kk.kywkwkwkwk
+kwkkywwwwwwwk
+kwwkywwwwwwwk
+.kwwwwwwwwwwk
+.kwwwwwwwwwwk
+..kwwwwwwwwwk
+..kwwwwwwwwk
+...kwwwwwwwk
+...kwwwwwwk
+...kkkkkkkk`,
   ],
   cross: [
     7,
@@ -370,32 +354,21 @@ kkkkk.....kkkkk
 ......kkk`,
   ],
   text: [
-    5,
-    12,
-    `kkkk..kkkk
-kwwwkkwwwk
-kkkkwwkkkk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-...kwwk
-kkkkwwkkkk
-kwwwkkwwwk
-kkkk..kkkk`,
+    3,
+    6,
+    `kkk.kkk
+kwwkwwk
+kkkwkkk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+..kwk
+kkkwkkk
+kwwkwwk
+kkk.kkk`,
   ],
 };
 const INK = { k: "#101016", w: "#f7f8f3", y: "#fcdb4e" };
@@ -415,24 +388,54 @@ function cursorURL(rows, s) {
   return c.toDataURL();
 }
 /* how many css px each of a pointer's pixels takes (owner, Nov 16: one css px was far too small, "bigger, but not
-   large", and the crosshair so small the game was unplayable; then twice as big was too big: the arrow, the hand and
-   the text pointer are drawn again half as big again as the first ones, one css px a pixel). Browsers drop a pointer
-   picture over 128 px, so a sharper copy (2x, 3x) is only offered while it fits */
+   large", and the crosshair so small the game was unplayable; then twice as big was too big; Nov 17: the mouse and the
+   pointer over a button still too large, the crosshair a good size, and all three sizes in Settings: the arrow, the hand
+   and the text pointer are drawn again about two thirds as big, the crosshair kept). The arrow and the text pointer
+   follow Mouse size, the hand Pointer size, the crosshair Crosshair size (100% each by default) */
 const CURSOR_ZOOM = { arrow: 1, hand: 1, text: 1, cross: 3 },
-  CURSOR_MAX = 128;
+  CURSOR_SIZE = {
+    arrow: "mouse",
+    text: "mouse",
+    hand: "pointer",
+    cross: "cross",
+  },
+  CURSOR_MAX = 128; // (browsers drop a pointer picture bigger than this)
+let cursorSizes = { mouse: 100, pointer: 100, cross: 100 },
+  cursorsAt = "";
+/* each pointer's picture is drawn in whole pixels of the screen (as many as its size needs, rounded up) and told how
+   many of them make a css px (image-set), so it shows at exactly its size: sharp wherever that is a whole number of the
+   screen's pixels (100% on most screens) */
 function setCursors() {
-  const sets = CSS.supports("cursor", "image-set(url(a.png) 1x) 0 0, auto"),
+  const d = dpr(),
+    key = [d, cursorSizes.mouse, cursorSizes.pointer, cursorSizes.cross].join();
+  if (key === cursorsAt) return;
+  cursorsAt = key;
+  const sets = CSS.supports("cursor", "image-set(url(a.png) 1.5x) 0 0, auto"),
     root = document.documentElement.style;
   for (const [name, [hx, hy, art]] of Object.entries(CURSORS)) {
     const rows = art.split("\n"),
-      z = CURSOR_ZOOM[name] || 2,
-      big = Math.max(rows.length, ...rows.map((r) => r.length)) * z,
-      dens = [1, 2, 3].filter((d) => d === 1 || big * d <= CURSOR_MAX),
-      img =
-        sets && dens.length > 1
-          ? `image-set(${dens.map((d) => `url(${cursorURL(rows, z * d)}) ${d}x`).join(", ")})`
-          : `url(${cursorURL(rows, z)})`;
-    root.setProperty(`--cur-${name}`, `${img} ${hx * z} ${hy * z}`);
+      big = Math.max(rows.length, ...rows.map((r) => r.length)),
+      z = (CURSOR_ZOOM[name] * cursorSizes[CURSOR_SIZE[name]]) / 100, // (one pointer pixel, in css px)
+      px = sets
+        ? Math.max(
+            1,
+            Math.min(Math.ceil(z * d - 0.01), Math.floor(CURSOR_MAX / big)),
+          )
+        : Math.max(1, Math.round(z)),
+      img = sets
+        ? `image-set(url(${cursorURL(rows, px)}) ${+(px / z).toFixed(4)}x)`
+        : `url(${cursorURL(rows, px)})`,
+      at = sets ? z : px;
+    root.setProperty(
+      `--cur-${name}`,
+      `${img} ${Math.round(hx * at)} ${Math.round(hy * at)}`,
+    );
   }
 }
 setCursors();
+/* Settings → Controls: Mouse size, Pointer size, Crosshair size (in %) */
+export function setCursorSizes(mouse, pointer, cross) {
+  const pc = (v) => Math.max(25, Math.min(400, +v || 100));
+  cursorSizes = { mouse: pc(mouse), pointer: pc(pointer), cross: pc(cross) };
+  setCursors();
+}

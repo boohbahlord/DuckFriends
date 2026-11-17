@@ -7,6 +7,7 @@ import { profile, save } from "./store.js";
 import { openWindow, esc, $$ } from "./ui.js";
 import { FONTS, fontCSS } from "./name.js";
 import { openReport, reportLinkHTML } from "./report.js";
+import { setCursorSizes } from "./pixel.js";
 
 const S = () => profile.settings;
 const TABS = [
@@ -55,6 +56,7 @@ export function applySettings() {
   h.style.setProperty("--font", fontCSS(s.font));
   h.style.setProperty("--ts", s.textSize / 100);
   h.style.setProperty("--ui", s.uiSize / 100);
+  setCursorSizes(s.mouseSize, s.pointerSize, s.crossSize);
   document.dispatchEvent(new CustomEvent("settings"));
 }
 
@@ -99,6 +101,7 @@ const PAGES = {
     <div class="sect"><h3>HP</h3><div class="row">${check("otherHp", "Other players' HP", "Dead Ducks Arcade and Mad God Justin, on a computer: everyone else's HP, small, in the board's bottom right corner.")}</div></div>`,
   controls: () => `
     <div class="sect"><h3>Your duck</h3><div class="row">${check("mouseMove", "Mouse moves your duck", "Click a column to walk your duck there.")}${check("multipleChoice", "Show multiple choice", "Buttons for the seven answers; choosing one jumps your duck there.")}${check("clickUse", "Click to interact", "On Duck Cabin, a click or a tap on a thing near your duck uses it: sit, play, read …")}</div></div>
+    <div class="sect"><h3>Mouse</h3>${slider("mouseSize", "Mouse size", 50, 200, 10, "%", 100)}${slider("pointerSize", "Pointer size", 50, 200, 10, "%", 100)}${slider("crossSize", "Crosshair size", 50, 200, 10, "%", 100)}</div>
     <div class="sect"><h3>Touch screen</h3>${tiles("touch", [
       ["stick", "Joystick"],
       ["tap", "Tap to move"],
