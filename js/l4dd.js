@@ -40,7 +40,8 @@ import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
-import { inShallow, WADE } from "./hangout/stationmap.js";
+import { inShallow, inDeep, WADE } from "./hangout/stationmap.js";
+import { floatDuck, SINK, SLOW as SWIM } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
 import {
   L4,
@@ -373,6 +374,7 @@ function zombieEl(z) {
   return {
     el,
     body,
+    feet: box.feet, // (its feet in its body's own px: a swimmer's waterline is SINK over them)
     bar: el.querySelector(".l4z-hp i"),
     x: z.x,
     y: z.y,
@@ -1134,7 +1136,8 @@ function shineProps(Wd, cones, q) {
 
 /* ---------- Justin's Butler, standing by the card table ---------- */
 /* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
-const BUTLER_K = 0.7; // (about the size he showed at on a computer)
+const BUTLER_K = 0.7, // (about the size he showed at on a computer)
+  PRIEST_K = 1; // (Downpour's Priest: as big as a player's duck, the owner's, Nov 17 05:46Z)
 function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
@@ -1939,10 +1942,22 @@ activity({
       o.sx = f.left;
       o.sy = f.top;
       o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
-      const tr = `translate(${at(f.left)}px, ${at(f.top)}px)`;
+      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js) */
+      const dip =
+        dp() && o.st !== 3 && inDeep(o.x, o.y)
+          ? SINK + Math.sin(t / 520 + o.i) * 2.2
+          : 0;
+      const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
         o.el.style.transform = tr;
+      }
+      const clip = dip
+        ? `polygon(-300% -300%, 400% -300%, 400% ${(o.feet - dip).toFixed(1)}px, -300% ${(o.feet - dip).toFixed(1)}px)`
+        : "";
+      if (o.clip !== clip) {
+        o.clip = clip;
+        o.body.style.clipPath = clip;
       }
       const body = `scale(${(o.face < 0 ? -sc : sc).toFixed(4)}, ${sc.toFixed(4)})${o.st === 3 ? " rotate(-100deg)" : ""}`;
       if (o.bt !== body) {
@@ -1959,6 +1974,19 @@ activity({
         o.el.style.zIndex = zi;
       }
     }
+    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool (water.js) */
+    if (dp())
+      for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
+        const id = d.dataset.pid,
+          a = id && Wd.at(id);
+        floatDuck(
+          d,
+          !!a && inDeep(a.x, a.y) && a.z <= heightAt(a.x, a.y) + 4,
+          id ? (id.charCodeAt(0) + id.length * 7.3) % 6.28 : 0,
+          now,
+          sc,
+        );
+      }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)
     if (dp()) {
       const who = [];
@@ -2048,7 +2076,7 @@ activity({
           butler.el.style.zIndex =
             Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
         }
-        const bk = sc * BUTLER_K;
+        const bk = sc * (dp() ? PRIEST_K : BUTLER_K);
         pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
         if (butler.k !== sc) {
           butler.k = sc;
@@ -2147,7 +2175,8 @@ activity({
     const out = [],
       ins = ctx.world.inside;
     for (const o of Z.values())
-      if (o.st !== 3 && !o.el.hidden && inCabin(o.x, o.y) === ins)
+      if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
+        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike)
         out.push([o.x, o.y]);
     return out;
   },
@@ -2165,7 +2194,10 @@ activity({
     (((ctx.state().hang.l4ad || {})[ctx.me] || 0) > clockNow()
       ? 1
       : SPEED * (upOf(ctx.state(), ctx.me).sp ? 1.1 : 1)) * // (Speed, from the Butler: 10% faster; an adrenaline shot: Duck Cabin's own walk, for 20 s)
-    (dp() && inShallow(pos.x, pos.y) ? WADE : 1), // (Downpour: the flood over the road, 30% slower: the owner's)
+    (dp() && inShallow(pos.x, pos.y) ? WADE : 1) * // (Downpour: the flood over the road, 30% slower: the owner's)
+    (dp() && inDeep(pos.x, pos.y) && pos.z <= heightAt(pos.x, pos.y) + 4
+      ? SWIM
+      : 1), // (… and its deep end swum, as slow as in the Hangout pool)
   sprint(on, dt) {
     if (on && !tired && stamina > 0) {
       stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);

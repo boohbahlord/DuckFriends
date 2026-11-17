@@ -5165,3 +5165,11 @@ The last screenshot shows another ui error at the top of the screen for vertical
 
 - 2026-11-17 06:58Z (in Noah's thread, with a screenshot): "The cabin's roof or the grass xhould be a different shade of green or whatever color the roof ACTUALLY is because it blends into the color of the grass, which is a problem"
   - Decided: Noah made the Duck Cabin roof slate grey (ROOF in js/hangout/art.js) and rebuilt both cabin pictures (PR #363, waiting on the owner's OK of the color). Ships in Version 54 if OK'd.
+
+## Request (2026-11-17 06:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUY58qmwSkfBRwpisTkN6ik): zombie pathing, one known way on every map
+> Yeah, zombie pathing, or how it walks, maneuvers, should be universal even onto the cabin map. And how they navigate should be a simple principle in the code, which is probably already on other people's GitHubs or other places online where someone already figured out the solution to that problem, and we don't have to reinvent the real wheel to the simple problem that tells the AI how to navigate around objects and things in order to get to its destination, which for the zombies is the players that it's trying to kill. And we're doing it like that. So, like, none of this drawing paths or anything, some complicated set algorithm that the zombies take. No. It should be something else that's actually a universal that is from within the zombies file simply themselves in a way in which the solution was already solved.
+
+- Solomon the 2nd: kept the zombies' flow field (a Dijkstra map, the standard way games move many enemies to the
+  players; built from each map's own solids, the same code on Downpour and the cabin, no paths drawn by hand) and added
+  the other standard half, obstacle avoidance from Reynolds' steering behaviors (l4ddrules.js stepZombie: turn 30, 60,
+  90 degrees until a step is free; straight at a duck only with nothing in between). No zombie stuck on either map.

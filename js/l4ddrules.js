@@ -59,6 +59,7 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
+import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import { woundCode, pwHit, explodedLook } from "./wounds.js";
 import {
@@ -383,6 +384,12 @@ const dmgOf = (A) =>
    burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
 export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
+/* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
+   owner's, Nov 17 05:46Z); a jetpack high over the water isn't swimming */
+export function swims(s, id) {
+  const p = s && s.pos && s.pos[id];
+  return !!p && dp() && !p.fly && GS.inDeep(p.x * W, p.y * H);
+}
 /* what a duck holds out (the long jump and Jaime are nothing in the hand, and a special used up isn't there) */
 export const inHand = (w, s, id) => {
   if (
@@ -573,7 +580,7 @@ export const priceFor = (s, id, what, n) => {
    the fireplace's front, where E spins it */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
 export const BOX = { x: 2300, y: 742, price: 500, spin: 4200, keep: 10000 }; // (500 a spin: the owner's, Nov 15)
-/* … and on Downpour (the second map): the Priest by the altar does the Butler's job, the car with its hood up the
+/* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
    fireplace's (syncMap swaps them in) */
 const CABIN_SPOTS = { butler: { ...BUTLER }, box: { x: BOX.x, y: BOX.y } },
   DP_SPOTS = {
@@ -2128,8 +2135,14 @@ const PH = {
   full: (w) => fullAmmo(w),
   arm: (w) => ARMS[w],
   weapons: WEAPONS,
-  W,
-  H,
+  /* the world's size now (layout.js changes it for Downpour): read when used, never kept from when this was made, or
+     on Downpour a duck stood on a part and never took it (the owner's, Nov 17 05:46Z: the restroom's pickup) */
+  get W() {
+    return W;
+  },
+  get H() {
+    return H;
+  },
 };
 const addFx = (s, f) => {
   s.fxN = (s.fxN || 0) + 1;
@@ -2146,6 +2159,7 @@ export function l4Use(s, a, now) {
     kind = kindOf(what);
   if (!L || L.over || !p || !m0 || !standing(s, id) || !A) return false;
   if (kind !== "grenade" && !m0.sl.includes(what)) return false;
+  if ((kind === "melee" || kind === "ranged") && swims(s, id)) return false; // (swimming: put away)
   if (what === "safekeep") return false; // (never by hand: it works by itself)
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now);
@@ -3426,7 +3440,10 @@ function moveZombies(s, zs, now, T, up) {
   for (const z of zs) {
     if (z.st === 3) continue;
     const o = openingById(z.l[2]),
-      v = z.l[1] * walkOf(s), // (as much faster or slower as the ducks, by the lobby's Walking speed)
+      v =
+        z.l[1] *
+        walkOf(s) * // (as much faster or slower as the ducks, by the lobby's Walking speed)
+        (dp() && GS.inDeep(z.x, z.y) ? SWIM : 1), // (Downpour: swimming the deep flood, as slow of its own walk as a duck is of its)
       sp = o && sidesOf(o, z);
     if (z.st === 0) {
       // coming: to the spot outside its opening (Downpour: the foot of the fence)
@@ -3515,7 +3532,9 @@ function moveZombies(s, zs, now, T, up) {
     }
     if (!target) continue;
     const c = openNear(z.x, z.y),
-      close = best < 2.6 || (c >= 0 && dist[c] <= 1.5);
+      close =
+        (best < 2.6 || (c >= 0 && dist[c] <= 1.5)) &&
+        walkable(z.x, z.y, ...target.xy); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
     const aim = close ? target.xy : heading(dist, z.x, z.y);
     /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
     const bh = aim && dp() && boardsAhead(z, aim, brd);
@@ -3602,7 +3621,11 @@ function walkTo(z, tx, ty, far) {
   z.y += (dy / d) * far;
   return false;
 }
-/* inside: a few small steps toward aim, sliding along walls, stopping at ducks */
+/* inside: a few small steps toward aim. Something in the way (a trunk, a car, a pew, a wall's end): it slides along it,
+   or turns a little more each try (30, 60, then 90 degrees, either way) until a step is free, so it walks round instead
+   of standing pressed against it (the owner's, Nov 17 05:46Z: zombies got stuck on trees and didn't know to go round).
+   Stopping only at ducks. Stood inside something (pushed or climbed in there), it walks out toward aim */
+const TURNS = [0, 0.52, -0.52, 1.05, -1.05, 1.57, -1.57];
 function stepZombie(z, aim, far, pls) {
   const n = Math.max(1, Math.ceil(far / 8));
   for (let k = 0; k < n; k++) {
@@ -3610,11 +3633,13 @@ function stepZombie(z, aim, far, pls) {
       dy = aim[1] - z.y,
       d = Math.hypot(dx, dy);
     if (d < 1) return;
-    const sx = (dx / d) * (far / n),
-      sy = (dy / d) * (far / n),
-      zz = heightAt(z.x, z.y);
+    const len = Math.min(d, far / n),
+      ux = dx / d,
+      uy = dy / d,
+      zz = heightAt(z.x, z.y),
+      stuckIn = !zOk(z.x, z.y, zz);
     const ok = (x, y) => {
-      if (!zOk(x, y, zz)) return false;
+      if (stuckIn ? !playable(x, y) : !zOk(x, y, zz)) return false;
       for (const q of pls) {
         const now = room(z.x, z.y, ...q.xy),
           then = room(x, y, ...q.xy);
@@ -3622,13 +3647,43 @@ function stepZombie(z, aim, far, pls) {
       }
       return true;
     };
-    if (ok(z.x + sx, z.y + sy)) {
-      z.x += sx;
-      z.y += sy;
-    } else if (ok(z.x + sx, z.y)) z.x += sx;
-    else if (ok(z.x, z.y + sy)) z.y += sy;
-    else return;
+    let moved = false;
+    for (const t of TURNS) {
+      const c = Math.cos(t),
+        s = Math.sin(t),
+        sx = (ux * c - uy * s) * len,
+        sy = (ux * s + uy * c) * len;
+      if (ok(z.x + sx, z.y + sy)) {
+        z.x += sx;
+        z.y += sy;
+        moved = true;
+        break;
+      }
+      if (t) continue;
+      // (straight on is blocked: first a slide along the wall, the old way, keeping what part of the step is free)
+      if (Math.abs(sx) > 0.5 && ok(z.x + sx, z.y)) {
+        z.x += sx;
+        moved = true;
+        break;
+      }
+      if (Math.abs(sy) > 0.5 && ok(z.x, z.y + sy)) {
+        z.y += sy;
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) return;
   }
+}
+/* can a zombie walk straight from (x0, y0) up to a duck at (x1, y1)? (nothing it can't step on in between, every 8 px;
+   the last 30 px don't count: a duck up on a car or by a pew is still clawed from the foot of it) */
+function walkable(x0, y0, x1, y1) {
+  const z = heightAt(x0, y0),
+    d = Math.hypot(x1 - x0, y1 - y0);
+  for (let t = 8; t < d - 30; t += 8)
+    if (!zOk(x0 + ((x1 - x0) * t) / d, y0 + ((y1 - y0) * t) / d, z))
+      return false;
+  return true;
 }
 /* zombies never stand in each other: two too close are pushed apart (each half), where it's open */
 function separate(zs) {
