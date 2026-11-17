@@ -20,8 +20,11 @@ export const UPDATES = [
       "For Mad God Justin: a gun you pick up comes with only its one magazine (the shotgun never runs out, the LMG has 30 rounds).",
       "For Mad God Justin: the Angelic pistol's blast has its own boom, a little weaker than the grenade's.",
       "The LMG holds 100 bullets and takes twice as long to reload in every mode.",
+      "For Dead Ducks Arcade: the Map page now has a Downpour row next to Duck Cabin.",
     ],
-    fixed: [],
+    fixed: [
+      "For Dead Ducks Arcade: Downpour has a fence round the whole map, and grass instead of the dark forest floor.",
+    ],
   },
   {
     id: "v61",
