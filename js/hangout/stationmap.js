@@ -114,6 +114,15 @@ const GLASS = [
 ];
 /* the chapel's wide entrance, open, in its north wall */
 export const CHAPEL_DOOR = { a: 2000, b: 2600 };
+/* Part B (the owner's, Nov 17 12:28Z), the spots only so far (Noah draws to them): the ladder up the gas station's back
+   (north) wall, at its west end, left of the storeroom's hole, climbed from outside (side "n"), x0 … x1 along the wall;
+   the roof is walked on at STATION.wall. The two holes in the roof, x0 y0 x1 y1: its bottom right corner, and over the
+   restroom */
+export const LADDER = { at: 550, x0: 1160, x1: 1240, side: "n" };
+export const ROOF_HOLES = [
+  { id: "hole-se", x0: 3150, y0: 1450, x1: 3350, y1: 1650 },
+  { id: "hole-rest", x0: 1250, y0: 1350, x1: 1450, y1: 1550 },
+];
 /* the gas station's two doorways onto the aisles, in the storeroom's and the restroom's east wall (x = at), from y = a
    to b: open gaps, drawn open (layout.js puts them in OPENINGS, so the wall south of each starts at its foot instead of
    standing up over it: the owner's, Nov 17 12:28Z, they looked closed) */
@@ -724,6 +733,8 @@ for (const o of [
   GLASS,
   CHAPEL_DOOR,
   INNER_DOORS,
+  LADDER,
+  ROOF_HOLES,
   GEN,
   POWER_SPOT,
   HOOD,
