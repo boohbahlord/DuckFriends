@@ -1321,7 +1321,8 @@ const headOf = (s, id, w) => {
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
-  if (!n || !s.players[id]) return;
+  if (isWild(s, id)) id = s.players[id].by; // (Justin's kills are the points of the duck that bought him his gun)
+  if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
 
@@ -1915,6 +1916,8 @@ function l4Act(s, a, now) {
     s.hang.l4b = b;
     return true;
   }
+  if (a.do === "givej")
+    return giveJustin(s, id, String(a.what || ""), mx, my, now);
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (a.do === "ammo")
@@ -1924,6 +1927,28 @@ function l4Act(s, a, now) {
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
   return false;
+}
+/* a duck buys Justin out in Downpour a gun (the owner's, Nov 17): standing by him, in the rest phase any gun of WILD_GUNS,
+   outside it the first one; it comes out of my points. He keeps it (endless bullets that still reload), can't be hurt by
+   players any more, and the points for his kills are mine */
+function giveJustin(s, id, what, mx, my, now) {
+  const J = wildFor(s),
+    pj = J && s.pos[J],
+    rest = !!(s.hang.l4 && s.hang.l4.wait),
+    w = rest && WILD_GUNS.includes(what) ? what : WILD_GUNS[0],
+    price = wildPrice(s, w);
+  if (!J || !pj || !standing(s, id) || price === null) return false;
+  if (Math.hypot(pj.x * W - mx, pj.y * H - my) > L4.REACH * 1.2) return false;
+  if (ptsOf(s, id) < price) return false;
+  addPts(s, id, -price);
+  s.players[J] = { ...s.players[J], armed: 1, by: id };
+  const kit = freshKit();
+  kit.sl = ["", w, "", ""];
+  kit.am = { [w]: fullAmmo(w) };
+  s.hang.l4a = { ...s.hang.l4a, [J]: kit };
+  s.pos[J] = { ...s.pos[J], w };
+  addFx(s, { kind: "l4medrev", by: id, who: [J], t: now }); // (the revive's flash: a little thank-you)
+  return true;
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
@@ -2087,7 +2112,21 @@ export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
    has WILD.hp HP and gets 1 back every WILD.regen ms; zombies and, while he has no weapon, players can hurt and kill him
    (ex: dead for good: his body stays, nobody can revive him, he never comes back, not at a new round either). He is the
    fireplace's Justin (helperIn, the same player and brain) with no weapon and no points */
-export const WILD = { hp: 6, regen: 60000, id: "b-justin" };
+export const WILD = { hp: 6, regen: 60000, id: "b-justin", extra: 100 };
+/* the guns a duck can buy him in the rest phase (the owner's, Nov 17: for the Butler's price and WILD.extra points more);
+   outside the rest phase the click buys the first one. Widen this list to let players buy more */
+export const WILD_GUNS = ["handgun"];
+/* Justin is out there for a buy: alive, up, with nothing in his hands */
+export const wildFor = (s) => {
+  const q = P4(s, WILD.id);
+  return wildOpen(s, WILD.id) && !!q && !q.dn && !q.gh ? WILD.id : null;
+};
+/* what buying him gun w costs duck id now: the Butler's price, and in the rest phase WILD.extra more (null: not for sale) */
+export function wildPrice(s, w) {
+  if (!WILD_GUNS.includes(w) || !GUN_SHOP.includes(w)) return null;
+  const rest = !!(s.hang.l4 && s.hang.l4.wait);
+  return buyPrice(w) + (rest ? WILD.extra : 0);
+}
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
@@ -3499,6 +3538,16 @@ function l4Tick(s, now) {
       s.pos[id].w !== am[id].rw
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
+  /* Justin's gun never runs out: what he has left to load stays full */
+  if (isWild(s, WILD.id) && s.players[WILD.id].armed) {
+    const jk = kitOf(s, WILD.id),
+      jw = jk && jk.sl[1];
+    if (jw && jk.am[jw] && jk.am[jw][1] < 50)
+      s.hang.l4a = {
+        ...s.hang.l4a,
+        [WILD.id]: { ...jk, am: { ...jk.am, [jw]: [jk.am[jw][0], 99] } },
+      };
+  }
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
