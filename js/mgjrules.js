@@ -422,6 +422,7 @@ export function mgjStart(s, now) {
     n: ((s.mgj && s.mgj.n) || 0) + 1,
     hp: max,
     max,
+    cnt: n, // (the ducks his HP was counted for: one who joins mid-fight adds its share, mgjAdvance)
     dmg: {},
     hits: {},
     kill: null,
@@ -526,6 +527,19 @@ export function mgjHurt(s, id) {
     m.hits = { ...m.hits, [id]: (m.hits[id] || 0) + 1 };
 }
 
+/* the owner (Nov 17): his HP must grow with the players. A duck who joins mid-fight adds its share (to his full HP and
+   to what he has left); one who leaves takes nothing away. Called when a duck joins (rules.js) and as the fight goes */
+export function mgjCount(s) {
+  const m = s.mgj,
+    n = playing(s).length;
+  if (!m || s.phase !== "boss" || n <= (m.cnt || 1)) return false;
+  const more = hpOf(n) - hpOf(m.cnt || 1);
+  m.max += more;
+  m.hp += more;
+  m.cnt = n;
+  return true;
+}
+
 /* what ends a stage: HP 0 (a win) or the timer (a loss); the podium's time; Try again on the stats */
 export function mgjAdvance(s, now, force, log) {
   const m = s.mgj;
@@ -533,6 +547,7 @@ export function mgjAdvance(s, now, force, log) {
   if (s.phase === "boss") {
     if (m.hp <= 0) return mgjEnd(s, now, true, log);
     const on = playing(s);
+    mgjCount(s);
     if (mgjPHp(s) && on.length && on.every((id) => mgjOut(s, id)))
       return mgjEnd(s, now, false, log, true); // (every duck is out of HP: Justin wins)
     if (force) return mgjEnd(s, now, false, log);

@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v61",
+    version: 61,
+    date: "Nov 17, 2026",
+    title: "Justin's HP and late ducks",
+    news: [],
+    fixed: [
+      "For Mad God Justin: a duck who joins in the middle of the fight now adds its share to Justin's HP, the same as a duck there from the start.",
+    ],
+  },
+  {
     id: "v60",
     version: 60,
     date: "Nov 17, 2026",

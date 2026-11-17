@@ -5210,3 +5210,62 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 
 - 2026-11-17 10:05Z: "install duck friends should be an option on the main menu below updates button"
   - Done (Adam, V60): js/homeapp.js keeps Chrome/Edge's beforeinstallprompt and shows it from an "Install / Duck Friends" button under Updates (site-btn style, like My Other Website, so it doesn't wrap); no offer = a toast with how-to (iOS Share > Add to Home Screen, Firefox can't); hidden inside the app. Phone on its side: the front column made shorter so all six buttons fit.
+
+## Request (2026-11-17 11:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtEbDjGth79w7nbJDzBPrjB6): Mad God Justin, Dead Ducks Arcade, new guns (word for word)
+> in mad god justin, shotguns gets infinite amount of ammo when held and picked up and every gun with a magazine gets only that magazine worth. 
+> LMG only gets 30 rounds worth in mad god justin
+> 
+> have the meteor and justin turning off his xbox be based on a fraction of Justin's health in mad god justin before the condition is met
+> 
+> Mad god Justin can now be played on the zombie version of the cabin map WITHOUT the lightnign on it now as a possible vote
+> 
+> the special maps should also include the downpour map in the lobby selection becuz it is not there
+> 
+> The glow around the anegelic guns should be much smaller and less pixels while glowing softly in a breathing pattern AND the halo is transparent (other players can see ur angelic effect on ur weapon)
+> 
+> angelic pistol SHOULD have double the bullets per magazine (because dual wield), the guns should be further apart, there should be two laser sights from them that converge to a point, and the explosion radius should be half of that of a grenade and the explosion be a modified version of the same sound to make the boom sound a little weaker then a grenade or grenade launcher. The alternating shot for the angelic gun wasnt added, where it is supposed to alternate between one gun is shot, then another, one bullet at a time for each of one pistol that are dual wield. the fire rate for dual wield is obviously twice as fast but the reload twice as long
+> 
+> the water should be seen over the entire road AND the perception of the ground descending into the road needs to be done with colors or shading and other principles that can be looked up to make sure topography of the ground and high it lowers there is conveyed, and water should submerge the bottom fifth of ducks while they walk through it
+> 
+> jerry cans only have a 1% chance of being dropped from zombies now
+> 
+> the revive should be five seconds by default 
+> the quick revive makes it three seconds
+> the revive animation pauses the timer of a player dying, and their duck becomes more and more greyscale while they are down and dying AND they get a free pistol with infinite ammo they can shoot while down but still needing to reload WHILE they are down and waiting to die or be revived, and that particular pistol goes away when they are revived.
+> 
+> the weapons spinned for at the car in down pour SHOULD be on the ground behind the car not inside the car, so player's can see the weapons spinning
+> 
+> a thin yellow sqaure line for the radius you have to  be in to spin for a weapon at the car OR in the cabin mode will be shown WHEN all zombies are dead before players ready up AND the angel machine softy glows a new red like the angelic guns AND the generator glows a electric yellow similiar to the angelic glow AND the priest or Justin's butler glows a soft golden metal glow like those two former
+> 
+> the melee weapon for mad god justin players start out with now is the short sword, not the knife 
+> 
+> new weapon idea: laser gun
+> The laser gun shoots red lasers that goes across the screen like the lines for the chain gun and pass through every enemy for one damage, the laser has a glow to it and is a red straight line (little bigger then the chain gun) that does 1 damage per second (meaning that a laser one shoots one line per second), and it passes through every enemy and has no crit or miss chance. The laser gun gets 1/5th hotter for every second it is used and takes 1 second for it to cool down 1/5th of the time, but if it is held down for more then 5/5 (so it climbs to 6/5) then it hisses and the duck jitters with a burn effect (does no damage) while it takes eight seconds to cool off back to zero before it can be used again, and in that time the laser gun has little fire pixels and the metal starts to glow orange from it. it has infinite ammo. The angelic version of the gun has a 1/3rd chance to do two damage to any singular enemy it passes through AND the fire rate is now one shot per 0.75 seconds with a 0.75 cooldown and a 6/6 cooldown maximum now before cooling down (7/6 is when it overheats). The gore effect is holes, cuts, or losing eyes or beaks, and ducks get the  burnt when they die from they die from it (burn or burnt effect in this large paragraph is not the fire effect but the toasted charred look already existent). There is a meter below a duck that is a little thin in height but not too thin, and not too long, and the meter fills up in blocks that go from red and closer to orange before heating up, and when it overheats, the oranage flashes with white while the meter ui shakes. the meter has light steam coming from it AND the laser gun has more whenever it overheats as well. The gun steams up in sound and visual effect MORE when it is in the rain. the end of the barrel is what overheats in appearance and glows while changing color btw, not the whole gun. I want different gun looks sent to me so i can see what they look like. 
+> 
+> I want a tommy gun with the same stats as the SMG but slower fire rate but larger ammo capacity and 5% critical chance and only 2.5% chance of missing (like a 50 round capacity). Suggest a different SMG idea for a slow fire rate SMG maybe, what about a UMP45? I think that sounds like a good idea.
+> 
+> LMG now has 100 bullets and twice the reload time
+> 
+> a cooldown meter appears on the bottom of the health bar of a duck that is white or maybe some other color available that starts full and runs down and empty WHENEVER reloads are happening OR shots are being taken between semi autos (like the shotguns or snipers), the meter is rly thin and just right below the health meter ON the duck, not the one in the bottom corner.
+> 
+> Below a duck, switching weapons will show a small box below the duck on PC and mobile now that scrolls in a visual design LIKE the one on the bottom middle screen of mobile, and it fades out super quickly between switching
+> 
+> Guns that are fired for a long time that have large ammo capacities and calibers with high fire rates (lmg or chain gun) will now start to glow hotter and hotter at the tip of the barrel now as they heat up
+> 
+> Ask more important questions for clarity
+> 
+> players cannot walk through or inside the angel machine so fix that. 
+> 
+> LMG, Sniper, especially chain gun, shotguns somewhat, and high caliber weapons in general SHOULD shake the screen more, alongside explosions (small explosions less so)
+> 
+> One the mad god justin gme, little plus signs spawn in once every thirty seconds that grant +1 HP to a player when they are collected
+> 
+> Make sure that Justin's health multiplies correctly when more players are in the game REAL QUICKLY please
+> 
+> Justin can spawn in a wave of 12 zombies from the walls of a screen every 30-60 seconds AND the zombies spawn one-three every second and that amount is doubled once for every +2 players (the spawnrate does, and the amount of zombies increases by 6 per player but delays the spawn of each wave for 5-10 seconds per player). The zombies will have justin become less aggressive during that time and will have him prefer to run and eat WHILE lightning stops coming from the walls
+> 
+> Make lightning less frequent in mad god Justin AND give more of a hint to players of the faster attacks or moves and lightning. Every player should have an animated hint or something PER attack IF there isnt one.
+
+Then (11:08Z): "tell me of what questions they have here and WHO"
+
+- Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
