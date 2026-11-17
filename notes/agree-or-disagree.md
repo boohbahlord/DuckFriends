@@ -5137,3 +5137,11 @@ Also, one more thing, the last pitch sound that plays when the counter hits 0 on
 
 I will send other screenshots about something else after i send this"
   - Decided (Adam): Solomon fixes, in the owner's order: trees halved; reveal under every cover; then zombie steering around obstacles; then holes, walls, the door, the front, foliage, chapel, restroom, generator, swimming, and the Priest's size. Noah does one pixel size on the cabin (Zombies and Hangout) and Downpour, flashlights lighting objects, the chain-link fence, and the cabin's vote picture. Jackal does the phone starting-round UI (smaller, hidden under other UI) and the phone gun and laser following the movement direction. Miles Jr. does the countdown's last beep. Adam writes notes/map-building-rules.md. The generator change is read as Downpour only. Everything ships in one deploy (Version 53) after phone and PC tests.
+
+## Request (2026-11-17 06:07Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtUY58qmwSkfBRwpisTkN6ik): zombie pathing, one known way on every map
+> Yeah, zombie pathing, or how it walks, maneuvers, should be universal even onto the cabin map. And how they navigate should be a simple principle in the code, which is probably already on other people's GitHubs or other places online where someone already figured out the solution to that problem, and we don't have to reinvent the real wheel to the simple problem that tells the AI how to navigate around objects and things in order to get to its destination, which for the zombies is the players that it's trying to kill. And we're doing it like that. So, like, none of this drawing paths or anything, some complicated set algorithm that the zombies take. No. It should be something else that's actually a universal that is from within the zombies file simply themselves in a way in which the solution was already solved.
+
+- Solomon the 2nd: kept the zombies' flow field (a Dijkstra map, the standard way games move many enemies to the
+  players; built from each map's own solids, the same code on Downpour and the cabin, no paths drawn by hand) and added
+  the other standard half, obstacle avoidance from Reynolds' steering behaviors (l4ddrules.js stepZombie: turn 30, 60,
+  90 degrees until a step is free; straight at a duck only with nothing in between). No zombie stuck on either map.
