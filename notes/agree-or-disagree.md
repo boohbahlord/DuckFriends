@@ -5762,3 +5762,21 @@ Adam repeated it back as 7 numbered points (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFJ3
 > 7. yes
 
 Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default, zombies attack Justin, no cross-floor zombie hits, zombies climb to roof targets, one simple shot rule (#7). Noah = Laser Rifle AK-size, outlines (red under roofs, up/down arrows, Justin yellow, me dark blue only for me, others green).
+
+## Request (2026-11-17 20:37Z, edited 20:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtWaWNc4HwE7j7Lu6R7ZBxsg, furious, then to bed) (word for word)
+
+> JUSTIN IS LITERALLY BROKEN! YOU CAN USE A FUCKING CHAIN GUN AND HE WILL DODGE EVERY FUCKING BULLET! STOP MAKING HIM LITERALLY JUST IMPOSSIBLE! WHEN HE TRIES TO DODGE, IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES! also zombies dont chase justin forever they give up very quickly and the last 1/10th of zombies never chase justin. ZOmbies need to be twice as close to justin to want to chase him compared to a player
+>
+> the music fades out when the lobby count starts and the is gone by the last two seconds IF it is counting or delayed to couunt
+>
+> in the vote game mode and vote map section there is no music now
+>
+> JUSTIN CANNOT BE REVIVED WHEN DEAD NOR CAN ANY PLAYER WHEN DEAD SO THE FUCKING REVIVE BUTTON GOES AWAY AND YOU CAN WALK OVER DEAD BODIES RETARD! BECAUSE I CANT WALK OVER JUSTIN'S DEAD BODY WHICH IS RETARDED!
+>
+> BULLETS THAT DO NOT PASS THROUGH ZOMBIES WILL NO LONGER PASS THRU ZOMBIES, BECAUSE IN GAME THEY ARE STILL PASSING THROUGH ZOMBIES IN A GLITCHY WEIRD WAY. LIKE IF U SHOOT A PISTOL THE BULLET KIND IS SEEN GOING PAST THEM A BIT AND IT LOOKS WRONG AND IS A GLITCH! WHY ARE GUNS AND PROJECTILES DOING THAT !?!?!? FIX IT!!!!
+>
+> Justin isnt supposed to be hard for players to kill, and his character should use the cry effect already in the game for ten seconds after taking one damage before he sprints away.
+>
+> im going to bed fix it and fix it all im going to bed
+
+Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint, zombies chase Justin only at half the range, give up fast, last 1/10th never; dead = no revive, button gone, walk over bodies. Noah = shots end where they hit. Miles Jr. = lobby countdown music fade, vote windows' music.
