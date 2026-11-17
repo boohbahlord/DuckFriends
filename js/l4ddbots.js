@@ -30,6 +30,7 @@ import {
   isHelper,
   laserHeat,
   wildOpen,
+  wildCrying,
   isWild,
   jaimeBody,
   JBODY,
@@ -97,7 +98,13 @@ export function l4Bot(s, id, now, out) {
       });
   /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done) */
   const down = s.seat
-    .filter((t) => t !== id && ((h.l4p || {})[t] || {}).dn && s.pos[t])
+    .filter(
+      (t) =>
+        t !== id &&
+        ((h.l4p || {})[t] || {}).dn &&
+        !((h.l4p || {})[t] || {}).ex &&
+        s.pos[t],
+    ) // (down, not dead: the dead are never revived)
     .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .sort(
       (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
@@ -339,7 +346,12 @@ function justinBot(s, id, now, out) {
       .map((z) => ({ z, d: Math.hypot(z.x - x, z.y - y) }))
       .sort((a, b) => a.d - b.d),
     d0 = near.length ? near[0].d : Infinity;
-  if (isWild(s, id) && h.l4.wait && jaimeVisit(s, id, now, p, x, y, run, out))
+  if (
+    isWild(s, id) &&
+    h.l4.wait &&
+    !wildCrying(s, id, now) &&
+    jaimeVisit(s, id, now, p, x, y, run, out)
+  )
     return; // (a rest phase: he may stop by Jaime's body)
   if (wildOpen(s, id)) return wildMove(s, id, now, p, x, y, near, run, out); // (Justin out there: never armed, the owner's, Nov 17 20:02Z)
   /* what he'd shoot: the nearest zombie he can see */
@@ -385,7 +397,13 @@ function justinBot(s, id, now, out) {
   } // (an empty gun of the Butler's: B fills it, with his points)
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
   const down = s.seat
-    .filter((t) => t !== id && ((h.l4p || {})[t] || {}).dn && s.pos[t])
+    .filter(
+      (t) =>
+        t !== id &&
+        ((h.l4p || {})[t] || {}).dn &&
+        !((h.l4p || {})[t] || {}).ex &&
+        s.pos[t],
+    ) // (down, not dead: the dead are never revived)
     .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .filter((t) => zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP))
     .sort(
@@ -455,9 +473,9 @@ function justinBot(s, id, now, out) {
       ay: ay / H,
     });
 }
-/* Justin out in Downpour with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
-   close (sprinting only while one is close, with his meter: a duck's own), jumps when one is on him (a jump's i-frames),
-   and otherwise strolls about as he does in Duck Cabin */
+/* Justin out there with no weapon (the owner's, Nov 17): he runs from the nearest zombies and from a shot that flies
+   close (sprinting only while one is close, with his meter: a duck's own), cries and sprints off when he's hurt, never
+   jumps to dodge, and otherwise strolls about as he does in Duck Cabin */
 const wander = new Map(); // Justin → { x, y, until }
 /* where Justin strolls to, his Duck Cabin way (hangout/justin.js WANDER, the owner's, Nov 17 19:11Z: "HE SHOULD BE CASUALLY
    WALKING AROUND WHICH IS ALREADY IN HIS CHARACTER SHEET! STOP REWRITING CODE TERRIBLY FOR THINGS ALREADY FIGURED OUT!"):
@@ -544,31 +562,37 @@ function wildMove(s, id, now, p, x, y, near, run, out, forced = false) {
   /* only the zombies scare him, and a duck's shots that keep flying close (after a second: shotScare); never the ducks
      themselves (the owner's, Nov 17 18:05Z: "justin should be running from zombies not every player") */
   const threats = [...near],
-    shot = shotScare(s, id, now, x, y, forced ? SCARE_ARMED : SCARE_BARE);
+    shot = shotScare(s, id, now, x, y, forced ? SCARE_ARMED : SCARE_BARE),
+    cry = wildCrying(s, id, now) && s.hang.l4jcry; // (hurt: crying, he sprints off from where it came from, l4ddrules.js CRY)
   if (shot) threats.push(shot);
+  if (cry)
+    threats.push({
+      z: { x: cry.x, y: cry.y },
+      d: Math.hypot(cry.x - x, cry.y - y),
+    });
   threats.sort((a, b) => a.d - b.d);
   const d0 = threats.length ? threats[0].d : Infinity,
-    scared = forced || d0 < KEEP * 1.4;
+    scared = forced || !!cry || d0 < KEEP * 1.4;
   const w = scared ? null : wanderSpot(id, now, x, y);
   let [nx, ny] = [x, y];
   /* he sprints only with a reason (the owner's, Nov 17 19:11Z: "WHY IS JUSTIN ALWAYS SPRINTING WITHOUT EVER STOPPING"): a
      zombie close (KEEP) or the shots that scared him; one farther off and he walks away from it. His meter is a duck's
      own (run: L4.SPRINT to empty, as long to fill, and none until he stops wanting it once it ran out) */
-  const far = run(forced || (!!shot && shot.d === d0) || d0 < KEEP);
+  const far = run(forced || !!cry || (!!shot && shot.d === d0) || d0 < KEEP);
   if (scared) [nx, ny] = away(x, y, far, threats);
   else if (w && !w.rest) {
     const to = wayTo(x, y, w.x, w.y, now) || [w.x, w.y];
     [nx, ny] = walk(x, y, to[0], to[1], far);
     if (Math.hypot(nx - x, ny - y) < far * 0.2) wander.delete(id); // (stuck: another spot next time)
   }
-  const air = p.j && now - p.j < 700,
-    jump = air ? p.j : d0 < TOO_CLOSE * 1.6 && Math.random() < 0.5 ? now : 0;
+  /* no jumps: he gets out of the way only by moving, as a player does (the owner's, Nov 17 20:37Z: "WHEN HE TRIES TO DODGE,
+     IT ISNT SOME ANIMATION THAT IS DONE BY MATH, HE SIMPLLY TRIES MOVING OUT THE WAY LIKE A PLAYER DOES") */
   out.push({
     t: "move",
     id,
     x: +(nx / W).toFixed(5),
     y: +(ny / H).toFixed(5),
-    j: jump,
+    j: 0,
     z: Math.round(heightAt(nx, ny)),
     b: Math.round(heightAt(nx, ny)),
     w: "",
