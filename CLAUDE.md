@@ -10,6 +10,8 @@ serves `main`, so merging to `main` is deploying).
   for word, before working on it.
 - `notes/plan-request-5.md`: the older plan and the owner's answers (words like Stage, Turn, Round; specials; joining).
   Read it only when working on those parts.
+- `notes/map-building-rules.md`: rules for building any walkable map (size, see-through covers, walls, holes, rooms,
+  light, water, zombie paths, phone UI). Read it before building or changing a map.
 - `notes/ref/`: the owner's reference pictures (board colors, the Halo Reach lobby idea).
 
 ## How it fits together
