@@ -359,6 +359,21 @@ export const ARMS = {
     gap: 70, // ms between a burst's rounds
     k: "burst",
   },
+  /* the Laser Rifle (the owner's, Nov 17 11:07Z): a red beam once a second, at once, through every zombie on its line
+     to the first wall, 1 damage to each, never a crit or a miss; no ammo to run out of. It heats up a fifth for each
+     beam (heat: 5 in a row is its limit) and cools a fifth a second once it stops; a beam past its limit overheats it:
+     it hisses, burns its duck's look (no damage) and can't fire for 8 s while it cools back to nothing (over).
+     Angelic (ANGEL.LASER): a beam every 0.75 s, cooling a sixth every 0.75 s, a limit of 6, and each zombie it goes
+     through has a 1 in 3 chance of taking 2 */
+  laser: {
+    kind: "ranged",
+    auto: true,
+    cool: 1000,
+    dmg: 1,
+    far: 3000,
+    heat: 5,
+    over: 8000,
+  },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
      20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
@@ -429,6 +444,7 @@ export const WEAPONS = [
   "dbarrel",
   "flamer",
   "burst",
+  "laser",
 ];
 export const ITEMS = [
   "medkit",
@@ -476,6 +492,7 @@ const NAMES = {
   dbarrel: "Double barrel",
   flamer: "Flamethrower",
   burst: "Burst rifle",
+  laser: "Laser Rifle",
   zebra: "Zebra cake",
   fireball: "Fireball",
   adrenaline: "Adrenaline shot",
@@ -1168,10 +1185,32 @@ export const maxHp = (s, id) => L4.HP + (upOf(s, id).hp || 0);
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? ARMS[w].cool *
-      Math.pow(0.9, upOf(s, id).as || 0) *
-      (angelOf(s, id, w) ? ANGEL.FAST : 1) // (Angelic: 20% faster, l4ddangel.js)
+    ? (w === "laser" && angelOf(s, id, w)
+        ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
+        : ARMS[w].cool * (angelOf(s, id, w) ? ANGEL.FAST : 1)) * // (Angelic: 20% faster, l4ddangel.js)
+      Math.pow(0.9, upOf(s, id).as || 0)
     : 400;
+/* ---------- the Laser Rifle's heat ----------
+   Kept in the kit as lz { h: its heat in beams at t, t: the last beam, o: overheated until (0: not) }. After a beam
+   it holds its heat for one wait between beams, then loses one beam's worth each wait; overheated, it cools from past
+   its limit back to nothing in ARMS.laser.over. laserHeat → { h (0 … max + 1), max, over (ms left overheated, 0: not) },
+   which every screen reads for the gun's glow, the meter under my duck and the steam */
+export const laserMax = (s, id) =>
+  angelOf(s, id, "laser") ? ANGEL.LASER.heat : ARMS.laser.heat;
+export function laserHeat(s, id, now) {
+  const m = kitOf(s, id),
+    z = m && m.lz,
+    max = laserMax(s, id);
+  if (!z) return { h: 0, max, over: 0 };
+  if (z.o > now)
+    return {
+      h: ((max + 1) * (z.o - now)) / ARMS.laser.over,
+      max,
+      over: z.o - now,
+    };
+  const c = l4Cool(s, id, "laser");
+  return { h: Math.max(0, z.h - Math.max(0, now - z.t - c) / c), max, over: 0 };
+}
 export const reloadOf = (s, id, w, c) =>
   (ARMS[w].shell
     ? ARMS[w].shell *
@@ -2176,6 +2215,7 @@ export function l4Use(s, a, now) {
     return false; // (empty, or reloading)
   if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
   if (what === "zebra" && s.zcake) return false; // (one zebra cake in the room at a time)
+  if (what === "laser" && laserHeat(s, id, now).over) return false; // (overheated: it can't fire until it has cooled)
   m.u[what] = now;
   if (m.rw && m.rw !== what) {
     m.rl = 0;
@@ -2230,6 +2270,7 @@ export function l4Use(s, a, now) {
     jaimeIn(s, id, p, now, bombRoll(what));
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
   else if (what === "chaingun") trace(s, id, px, py, dx, dy, hz, now);
+  else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);
   else if (what === "flamer") flame(s, id, m, px, py, dx, dy, hz, now);
   else {
     const shot = (k, ux, uy, v, more) => ({
@@ -2301,7 +2342,7 @@ export function l4Use(s, a, now) {
 function strike(s, z, dmg, head, by, w = "") {
   if (z.st === 3) return false;
   if (w) wound(s, z, w, head);
-  if (w && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js)
+  if (w && w !== "laser" && angelOf(s, by, w)) dmg += ANGEL.DMG; // (Angelic: +1, l4ddangel.js; the Laser Rifle has its own, laser)
   const on = s.hang.l4on || {},
     all = head || !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
@@ -2403,6 +2444,61 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     x1: Math.round(x),
     y1: Math.round(y),
     hz,
+  });
+}
+/* the Laser Rifle's beam: at once, along the aim to the first wall, through every zombie on its line, 1 to each and
+   never a crit or a miss (Angelic: each has a 1 in 3 chance of taking 2); one it kills is left burnt (the charred look,
+   not on fire). Then its heat goes up a beam (laserHeat); a beam with the meter already full overheats it: every
+   screen hears the hiss and sees its duck burnt and shaking (the l4hot fx). Every screen draws the red beam (the l4line
+   fx, w: "laser"), with where it went through each zombie (hit) for their blood */
+function laser(s, id, m, px, py, dx, dy, hz, now) {
+  const A = ARMS.laser,
+    holy = angelOf(s, id, "laser"),
+    zs = zombies(s),
+    T = now - s.hang.l4.t0,
+    hits = [];
+  let x = px,
+    y = py;
+  for (let d = 0; d < A.far; d += 12) {
+    const nx = x + dx * 12,
+      ny = y + dy * 12;
+    if (walled(nx, ny, hz)) break;
+    x = nx;
+    y = ny;
+    for (const z of zs)
+      if (
+        z.st !== 3 &&
+        !hits.includes(z) &&
+        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1
+      )
+        hits.push(z);
+  }
+  for (const z of hits) {
+    const dmg = holy && Math.random() < ANGEL.LASER.two ? 2 : A.dmg;
+    if (strike(s, z, dmg, false, id, "laser")) {
+      mark(s, z, "f0");
+      die(z, T);
+    }
+  }
+  if (hits.length) store(s, zs, true);
+  const { h, max } = laserHeat(s, id, now),
+    hot = Math.round(h) >= max; // (the meter full: this beam takes it past its limit)
+  m.lz = hot
+    ? { h: max + 1, t: now, o: now + A.over }
+    : { h: Math.min(max, h + 1), t: now, o: 0 };
+  if (hot) addFx(s, { kind: "l4hot", by: id, who: [], t: now });
+  addFx(s, {
+    kind: "l4line",
+    w: "laser",
+    by: id,
+    who: [],
+    t: now,
+    x0: Math.round(px + dx * 40),
+    y0: Math.round(py + dy * 40),
+    x1: Math.round(x),
+    y1: Math.round(y),
+    hz,
+    hit: hits.map((z) => [Math.round(z.x), Math.round(z.y)]),
   });
 }
 /* the zebra cake: thrown the way I aim, it lands at its range or where a wall stops it (rules.js' s.zcake, so every

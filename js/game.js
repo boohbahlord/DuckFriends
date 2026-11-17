@@ -183,6 +183,8 @@ import {
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
+import { laserLook, laserArt, laserFrame } from "./laserfx.js";
+import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
   dodging,
@@ -2066,20 +2068,19 @@ function drawDucks(now = clockNow()) {
     let h = heldEls.get(id);
     if (h && h.parentNode !== fxl) h = null;
     const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
+      lz = w === "laser" && isL4dd(s) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
       hk =
         w +
         (w === "hammer" && duck && duck.wrench ? "-w" : "") +
-        (holy ? "-a" : ""), // (the hammer, or the wrench in its place)
+        (holy ? "-a" : "") +
+        (lz ? lz.key : ""), // (the hammer, or the wrench in its place)
       ds = size * bigOf(s, id), // (a bigger Justin holds it farther out)
       hs = ds * (w === "hammer" && isJustin(id) ? MGJ_HAMMER : 1); // (Justin's hammer is bigger)
     if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
       const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
-        pic = dual
-          ? angelic(dualPistolHTML(duck))
-          : holy
-            ? angelic(heldHTML(w, duck))
-            : heldHTML(w, duck);
+        art = lz ? laserArt(lz) : heldHTML(w, duck),
+        pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       h = el(
         `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${pic}</i></div>`,
       );
@@ -2158,14 +2159,13 @@ function drawDucks(now = clockNow()) {
       h._tr = tr;
       h.style.transform = tr;
     }
-    if (w === "chaingun") {
+    if (TIPS[w]) {
       // where its barrel ends on the board, so its lines come out of there and nowhere else (the l4line fx)
-      const wd = ds * GUNS.chaingun.w,
-        along = ds * out + wd * (TRACE.tip[0] / TRACE.box[0] - 0.5),
+      const [tip, box] = TIPS[w],
+        wd = ds * GUNS[w].w,
+        along = ds * out + wd * (tip[0] / box[0] - 0.5),
         down =
-          ((wd * TRACE.box[1]) / TRACE.box[0]) *
-          (TRACE.tip[1] / TRACE.box[1] - 0.5) *
-          (left ? -1 : 1);
+          ((wd * box[1]) / box[0]) * (tip[1] / box[1] - 0.5) * (left ? -1 : 1);
       h._tip = [
         c.left + Math.cos(rot) * along - Math.sin(rot) * down,
         c.top + Math.sin(rot) * along + Math.cos(rot) * down,
@@ -2240,6 +2240,7 @@ function drawDucks(now = clockNow()) {
     }
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
+  if (isL4dd(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
@@ -2412,6 +2413,12 @@ const SWUNG = {
   axe: [ARM_SWING.axe / ARM_SWING.hammer, 0.55],
   sword: [ARM_SWING.sword / ARM_SWING.hammer, 0.46],
   pan: [ARM_SWING.pan / ARM_SWING.hammer, 0.46],
+};
+/* the guns whose shots are lines out of their barrel's end (the l4line fx): where that end is in their drawing, and the
+   drawing's size (viewBox): the chain gun's and the Laser Rifle's */
+const TIPS = {
+  chaingun: [TRACE.tip, TRACE.box],
+  laser: [LASER.tip, [80, 28]],
 };
 /* the pixel effects: their canvas over the board, where the world is (the camera), this frame (fx.js) */
 function drawFx(board, fxl, hang, size, s, now) {
@@ -3010,6 +3017,7 @@ function crimson(ms) {
    rifle's crack once for each of its three rounds; the flamethrower's fire, lit by its first puff and roaring while
    the puffs keep coming */
 const NEW_GUN_SFX = {
+  laser: (o) => sfx.laser(o),
   dbarrel: (o) => sfx.dbarrel(o),
   burst: (o) => {
     for (let i = 0; i < ARMS.burst.burst; i++)
@@ -3429,8 +3437,9 @@ function playFx(f) {
           )
         : world.place({ x: f.x1 / HW, y: f.y1 / HH }, f.hz || 0),
       up = size * 0.41,
+      kind = f.w === "laser" ? "laser" : "chaingun", // (the Laser Rifle's beam: one red line, laserart.js BEAM)
       gun = fxl.querySelector(
-        `.held[data-pid="${CSS.escape(f.by)}"][data-w="chaingun"]`,
+        `.held[data-pid="${CSS.escape(f.by)}"][data-w="${kind}"]`,
       ),
       [x0, y0, aim] = (gun && gun._tip) || [
         a.left,
@@ -3448,24 +3457,37 @@ function playFx(f) {
       ang = aim;
       far = size * 0.8;
     }
+    const lz = kind === "laser",
+      [c, g, ms] = lz
+        ? [BEAM.color, BEAM.glow, BEAM.ms]
+        : [TRACE.color, TRACE.glow, TRACE.ms];
     const line = (turn, long, wait) => {
       const n = el(
-        `<div class="l4-line" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${TRACE.color};--g:${TRACE.glow};--ms:${TRACE.ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
+        `<div class="l4-line${lz ? " l4-beam" : ""}" style="left:${x0.toFixed(1)}px;top:${y0.toFixed(1)}px;width:${long.toFixed(1)}px;transform:rotate(${(ang + turn).toFixed(3)}rad);--c:${c};--g:${g};--core:${BEAM.core};--ms:${ms}ms;animation-delay:${wait.toFixed(0)}ms"></div>`,
       );
       fxl.append(n);
-      setTimeout(() => n.remove(), TRACE.ms + wait + 40);
+      setTimeout(() => n.remove(), ms + wait + 40);
     };
     line(0, far, 0);
-    fxMuzzle(x0, y0, ang, "chaingun");
-    kick(f.by, "chaingun", now);
-    heatUp(f.by, "chaingun"); // (and the chain gun's)
+    fxMuzzle(x0, y0, ang, kind);
+    kick(f.by, kind, now);
+    if (!lz) heatUp(f.by, "chaingun"); // (and the chain gun's; the Laser Rifle's heat is the room's: laserfx.js)
     if (f.by === R.me) {
-      shake(MUZZLE.chaingun.shake);
-      recoil = {
-        until: performance.now() + RECOIL.MS,
-        dx: f.x0 - f.x1,
-        dy: f.y0 - f.y1,
-      };
+      shake(MUZZLE[kind].shake);
+      if (!lz)
+        recoil = {
+          until: performance.now() + RECOIL.MS,
+          dx: f.x0 - f.x1,
+          dy: f.y0 - f.y1,
+        };
+    }
+    if (lz) {
+      /* the beam went through every zombie on its line: each bleeds as it loses its HP (fx.js fxHitAt) */
+      for (const [hx, hy] of f.hit || []) {
+        const at = world.place({ x: hx / HW, y: hy / HH }, f.hz || 0);
+        fxImpact(at.left, at.top, "laser", Math.cos(ang), Math.sin(ang));
+      }
+      return;
     }
     if (!past)
       fxImpact(
@@ -3481,6 +3503,20 @@ function playFx(f) {
         far * (0.25 + Math.random() * 0.5),
         Math.random() * 30,
       );
+  } else if (f.kind === "l4hot") {
+    /* a Laser Rifle overheated: its hiss, and its duck burnt and shaking a moment (no damage; the owner's, Nov 17:
+       "the toasted charred look already existent"); laserfx.js shows the fire pixels and the steam off the gun */
+    sfx.laserHiss(heard(f.by));
+    const dk = S.querySelector(`.gduck[data-pid="${CSS.escape(f.by)}"]`);
+    if (dk) {
+      burn(dk);
+      clearTimeout(dk._joltT);
+      dk.classList.remove("l4-jolt");
+      void dk.offsetWidth;
+      dk.classList.add("l4-jolt");
+      dk._joltT = setTimeout(() => dk.classList.remove("l4-jolt"), 1400);
+    }
+    if (f.by === R.me) shake(0.25);
   } else if (f.kind === "slug") {
     /* the double barrel's slug got something: chunks and blood blown on through it the way the slug flew, and out of a
        crit's head more blood and chunks than any other crit's (Dead Ducks Arcade: f.gore, [x, y, crit] in the world;

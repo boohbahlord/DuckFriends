@@ -43,6 +43,16 @@ const WOUND = {
     ],
   }, // (a zombie's claw on a duck in Quacky Zombies: cuts and bruises)
   blunt: { p: 0.55, kinds: [["r", 1]], beak: 0.08, eye: 0.07, hat: 0.3 }, // (a blow knocks the beak off, an eye out, the hat off)
+  laser: {
+    p: 0.6,
+    kinds: [
+      ["b", 0.4],
+      ["B", 0.2],
+      ["c", 0.4],
+    ],
+    beak: 0.1,
+    eye: 0.1,
+  }, // (the Laser Rifle's beam: holes, cuts, an eye or the beak burnt off; the owner's, Nov 17)
   arrow: {
     p: 0.5,
     kinds: [
@@ -76,6 +86,7 @@ const WOUND_OF = {
   bow: "arrow",
   arrow: "arrow",
   claw: "claw",
+  laser: "laser",
 };
 /* what can be knocked off: every hat and face item but hair, horns, what floats or grows on the head, a full helmet or
    head cover, and paint (the owner's "only appropriate ones, so not a full helmet like a motorcycle helmet or face

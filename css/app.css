@@ -6384,6 +6384,19 @@ html.moving .gduck-fire .fl-in {
   filter: brightness(0.3) saturate(0.3) sepia(0.5);
   transition: filter 0.3s;
 }
+/* a Laser Rifle overheated in its hands: the duck shakes a moment, burnt (game.js l4hot); its picture shakes, not the
+   body, so the body's own animations (a heal's glow) aren't cut off or started again */
+html.moving .gduck.l4-jolt .gduck-body > * {
+  animation: l4-jolt 0.09s steps(2) infinite;
+}
+@keyframes l4-jolt {
+  0% {
+    translate: calc(var(--px, 1px) * -1.5) var(--px, 1px);
+  }
+  100% {
+    translate: calc(var(--px, 1px) * 1.5) calc(var(--px, 1px) * -1);
+  }
+}
 .chat-log .sys.small {
   font-size: calc(0.7rem * var(--ts));
   opacity: 0.8;
@@ -14057,6 +14070,14 @@ html.crimson.crimson-still body::after {
   z-index: 7;
   animation: l4-flash var(--ms) ease-out both;
 }
+/* the Laser Rifle's beam: a thicker red line, white-hot down its middle, with a red glow (laserart.js BEAM) */
+.l4-line.l4-beam {
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 2px;
+  background: linear-gradient(var(--c), var(--core) 40% 60%, var(--c));
+  box-shadow: 0 0 6px 2px var(--g);
+}
 @keyframes l4-flash {
   0% {
     opacity: 0;
@@ -14931,6 +14952,95 @@ html.still:not(.low) .l4z.dead.nuked {
   transform-origin: 0 50%;
   transform: scaleX(var(--cl, 0));
 }
+/* the Laser Rifle's heat under my duck (l4dd.js heatMeter, the owner's Nov 17): a thin row of blocks, one a beam before
+   its limit, lit from red toward orange; overheated, they flash white and the meter shakes; light steam rises off it
+   once it's hot */
+.l4-heat {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.62rem);
+  translate: -50% 0;
+  display: flex;
+  gap: 0.06rem;
+  padding: 0.06rem;
+  background: #14151b;
+  border: 0.06rem solid #000;
+  border-radius: 0.18rem;
+  transition: opacity 0.25s;
+}
+.l4-heat.off {
+  opacity: 0;
+}
+.l4-heat i {
+  width: 0.4rem;
+  height: 0.24rem;
+  border-radius: 0.06rem;
+  background: #3a3c46;
+}
+.l4-heat i.on {
+  background: var(--c);
+}
+html.moving .l4-heat.hot {
+  animation: l4-heat-shake 0.14s steps(2) infinite;
+}
+.l4-heat.hot i.on {
+  animation: l4-heat-flash 0.36s steps(1) infinite;
+}
+@keyframes l4-heat-shake {
+  0% {
+    transform: translate(-0.06rem, 0.04rem);
+  }
+  100% {
+    transform: translate(0.06rem, -0.04rem);
+  }
+}
+@keyframes l4-heat-flash {
+  50% {
+    background: #fff3d6;
+  }
+}
+.l4-heat::before,
+.l4-heat::after {
+  content: "";
+  position: absolute;
+  bottom: 70%;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: #f2f4f8;
+  opacity: 0;
+  pointer-events: none;
+}
+.l4-heat::before {
+  left: 22%;
+}
+.l4-heat::after {
+  left: 62%;
+}
+html.moving .l4-heat.steam::before,
+html.moving .l4-heat.steam::after {
+  animation: l4-heat-steam 1.2s ease-out infinite;
+}
+html.moving .l4-heat.steam::after {
+  animation-delay: -0.6s;
+}
+html.moving .l4-heat.hot::before,
+html.moving .l4-heat.hot::after {
+  animation-duration: 0.7s;
+}
+@keyframes l4-heat-steam {
+  0% {
+    opacity: 0.55;
+    transform: translateY(0) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-0.8rem) scale(1.7);
+  }
+}
+.gduck-name:has(.l4-heat:not(.off)) .l4-peek {
+  top: calc(100% + 1.1rem);
+} /* (the switch box below the heat meter while it shows) */
 /* a slot switch: a small box under my duck, the phone's slider in little (l4dd.js peek): it scrolls to the slot in
    hand, then fades out quickly */
 .l4-peek {
@@ -17798,6 +17908,8 @@ html.pixel
     .l4-over-card,
     .l4-sprint,
     .l4-cool,
+    .l4-heat,
+    .l4-heat i,
     .l4-hint,
     .l4-up,
     .l4hp i,

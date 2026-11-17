@@ -29,6 +29,7 @@ const count = (w, m) => {
   if (!m) return "";
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
+  if (w === "laser") return "∞"; // (the Laser Rifle never runs out: it only overheats)
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)

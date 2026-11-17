@@ -4,6 +4,7 @@
    held: in a duck's hand; icon: the weapons bar's picture (turned 45°, its grip down at the left, filling a square);
    w: how wide it is in the hand, in duck sizes. Their bullets are here too (the screens turn them the way they fly).
    Preview: tools/l4dd-art.html */
+import { LASER } from "./laserart.js";
 const INK = "#2a2d38";
 /* the colors they share: the guns' dark metal, lighter metal, the underside, polymer, two woods and their grain */
 const M1 = "#33384a",
@@ -186,6 +187,7 @@ export const GUNS = {
   dbarrel: { held: DBARREL, icon: iconOf(DBARREL, 0.8), w: 1.15 },
   flamer: { held: FLAMER, icon: iconOf(FLAMER, 0.8), w: 1.1 },
   burst: { held: BURST, icon: iconOf(BURST, 0.8), w: 0.85 },
+  laser: { held: LASER(0), icon: iconOf(LASER(0), 0.8), w: 1.1 }, // (its barrel's heat: game.js draws LASER(heat))
   safekeep: { icon: HALO, w: 0.5 }, // (never in hand: only its picture)
   adrenaline: {
     held: ADRENALINE,
