@@ -1608,6 +1608,7 @@ function drawDucks(now = clockNow()) {
           void red.offsetWidth;
           red.style.animation = "";
           sfx.hit();
+          if (id === R.me) sfx.ouch(); // (my duck quacks when it's hurt)
           hurt(d);
         } else {
           bar.style.setProperty("--was", (hp / hpMax).toFixed(3));
