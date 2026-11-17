@@ -86,9 +86,16 @@ const cabinIn = (x, y) =>
 /* inside (the cabin; on the second map, either building) */
 export const inCabin = (x, y) =>
   variant === "l4gs" ? GS.buildingAt(x, y) > 0 : cabinIn(x, y);
-/* which building (x, y) is in: 0 outside; the cabin is 1; on the second map 1 the gas station, 2 the chapel */
-export const whereIn = (x, y) =>
-  variant === "l4gs" ? GS.buildingAt(x, y) : cabinIn(x, y) ? 1 : 0;
+/* which building (x, y) is in: 0 outside; the cabin is 1; on the second map 1 the gas station, 2 the chapel. z: the
+   feet's height, when known (Downpour: up on a roof is outside) */
+export const whereIn = (x, y, z) =>
+  variant === "l4gs"
+    ? z !== undefined && deckAt(x, y, z)
+      ? 0
+      : GS.buildingAt(x, y)
+    : cabinIn(x, y)
+      ? 1
+      : 0;
 export const inDeck = (x, y) => inR(x, y, [DECK.x0, DECK.y0, DECK.x1, DECK.y1]);
 export const inPool = (x, y) => inR(x, y, [POOL.x0, POOL.y0, POOL.x1, POOL.y1]);
 export const onTramp = (x, y) =>
@@ -140,6 +147,86 @@ export function heightAt(x, y) {
       : POOL.h; // (the pool's steps, at its west end)
   return terrainAt(y);
 }
+/* ---------- floors over the ground (Part B, the owner's, Nov 17 12:28Z: Downpour's roofs) ----------
+   A deck (stationmap.js DECKS: the two roofs, the canopy over the pumps) is a floor at its height h over its rectangle,
+   but for its holes. The ground (heightAt) is the floor under everything; a deck holds a duck whose feet are at or over
+   it (it walks on it, it lands on it), never one under it (it walks under it, inside) */
+const onDeck = (d, x, y) =>
+  x >= d.x0 &&
+  x < d.x1 &&
+  y >= d.y0 &&
+  y < d.y1 &&
+  !d.holes.some((o) => x >= o.x0 && x < o.x1 && y >= o.y0 && y < o.y1);
+/* the deck a duck's feet at height z are on or over (the highest at or under z), or null */
+export function deckAt(x, y, z) {
+  if (variant !== "l4gs" || z === undefined || z === null) return null;
+  let best = null;
+  for (const d of GS.DECKS)
+    if (d.h <= z + 0.5 && (!best || d.h > best.h) && onDeck(d, x, y)) best = d;
+  return best;
+}
+/* the deck over a duck's head at height z (the lowest over it), or null: a roof it is under */
+export function deckOver(x, y, z) {
+  if (variant !== "l4gs") return null;
+  let best = null;
+  for (const d of GS.DECKS)
+    if (d.h > z + 0.5 && (!best || d.h < best.h) && onDeck(d, x, y)) best = d;
+  return best;
+}
+/* the height of the floor under a duck's feet at height z: a deck it is on or over, or the ground (z left out: the
+   ground) */
+export function floorH(x, y, z) {
+  const g = heightAt(x, y),
+    d = z > g ? deckAt(x, y, z) : null;
+  return d && d.h > g ? d.h : g;
+}
+/* the same, with what it is: { h, kind: "ground" | "roof" | "canopy", deck } (the outlines' and the footsteps' floor:
+   outlines.js, ground.js) */
+export function floorAt(x, y, z) {
+  const g = heightAt(x, y),
+    d = z > g ? deckAt(x, y, z) : null;
+  return d && d.h > g
+    ? { h: d.h, kind: d.kind, deck: d }
+    : { h: g, kind: "ground", deck: null };
+}
+/* a roof (or the canopy) between two spots, for a shot (heights.js): one up on it and the other under it, nothing goes
+   through; one up on it and the other off it, lower down, only near its edge (SLAB_EDGE: a duck's width from it) */
+const SLAB_EDGE = 60;
+export function slabBetween(ax, ay, az, bx, by, bz) {
+  if (variant !== "l4gs") return false;
+  for (const d of GS.DECKS) {
+    const sa = deckSide(d, ax, ay, az),
+      sb = deckSide(d, bx, by, bz);
+    if (sa * sb < 0) return true; // (on it and under it)
+    if (sa + sb === 1 && sa !== sb) {
+      const [x, y, oz] = sa ? [ax, ay, bz] : [bx, by, az];
+      if (
+        oz < d.h - 1 &&
+        Math.min(x - d.x0, d.x1 - x, y - d.y0, d.y1 - y) > SLAB_EDGE
+      )
+        return true; // (up on it, too far from its edge for one down off it)
+    }
+  }
+  return false;
+}
+/* where (x, y) at height z is to deck d: 1 on it, -1 under it, 0 off it (or in one of its holes: open to the sky) */
+const deckSide = (d, x, y, z) => (!onDeck(d, x, y) ? 0 : z >= d.h - 1 ? 1 : -1);
+/* the ladder up the gas station's back wall (stationmap.js LADDER): is (x, y) at its foot, outside, where a duck climbs
+   it? And where a duck steps off it onto the roof */
+const LADDER_REACH = 34; // (how far out from the wall's face a duck still holds it)
+export function atLadder(x, y) {
+  if (variant !== "l4gs") return false;
+  const A = GS.LADDER,
+    face = A.at - T;
+  return (
+    x > A.x0 - 10 && x < A.x1 + 10 && y < face && y > face - FOOT - LADDER_REACH
+  );
+}
+export const ladderTop = () => ({
+  x: (GS.LADDER.x0 + GS.LADDER.x1) / 2,
+  y: GS.LADDER.at + T + FOOT + 4,
+  h: GS.STATION.wall,
+});
 
 /* ---------- the props: everything that stands in the world ----------
    { id, kind, x, y, w, d, h, z } is a box: its footprint (x, y the north-west corner, w across, d deep) on ground at
@@ -154,6 +241,10 @@ export const PROPS = [];
 const ALL = []; // (every prop; PROPS: the ones the room's mode has)
 const count = {};
 let only4; // (while it's set, every prop made is one cabin's only: 0 Hangout's, 1 Quacky Zombies')
+const underRoof = (x, y) =>
+  GS.DECKS.find(
+    (d) => d.kind === "roof" && x >= d.x0 && x < d.x1 && y >= d.y0 && y < d.y1,
+  );
 function add(kind, x, y, w, d, h, o = {}) {
   const p = { kind, x, y, w, d, h, z: heightAt(x + w / 2, y + d - 1), ...o };
   if (only4 !== undefined && p.l4 === undefined) p.l4 = only4;
@@ -162,7 +253,11 @@ function add(kind, x, y, w, d, h, o = {}) {
   p.key = o.key ?? y + d;
   p.box = o.box || { l: x, t: y - p.z - h, w, h: d + h };
   if (p.solid && !p.block) p.block = [x, y, x + w, y + d];
-  if (p.solid && p.top === undefined) p.top = p.plat ? p.z + h : Infinity;
+  if (p.solid && p.top === undefined) {
+    const r = p.map === "gs" && underRoof(x + w / 2, y + d / 2);
+    p.top = p.plat || r ? p.z + h : Infinity;
+    if (r) p.roof = r.h;
+  } // (Downpour: whatever stands under a roof, its walls too, stops a duck up to the roof (a duck up on the roof walks over it), and a shot only up to its own top)
   if (p.l4 === 1 || p.map) {
     ALL.push(p); // (Quacky Zombies' only, or the second map's: in PROPS once useMode turns to it)
     return p;
@@ -860,6 +955,7 @@ function makeSolids() {
         x1: p.block[2],
         y1: p.block[3],
         top: p.plat && variant === "l4" ? Infinity : p.top, // (Quacky Zombies: nothing to jump up onto)
+        roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
         zx: !!p.zx, // (zombies climb over it: the fallen tree)
       });
   for (const b of SOLIDS)
@@ -901,10 +997,8 @@ const PEEK = { side: 60, deep: 260 };
 let here = 0;
 export const setHere = (b) => (here = b);
 /* is (x, y) on my side of the walls (inside: am I in a building)? My side, or through a hole (the minimap's sight) */
-export const wallsSee = (x, y, inside) =>
-  (variant === "l4gs"
-    ? GS.buildingAt(x, y) === here
-    : inCabin(x, y) === inside) ||
+export const wallsSee = (x, y, inside, z) =>
+  (variant === "l4gs" ? whereIn(x, y, z) === here : inCabin(x, y) === inside) ||
   (PEEKS.length > 0 &&
     PEEKS.some(
       (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
@@ -912,8 +1006,8 @@ export const wallsSee = (x, y, inside) =>
 /* is (x, y) seen from where I am? Through the walls' holes as above; and in Quacky Zombies, from outside, inside a
    building too: its roof turns see-through over whoever is under it (world.js), on Downpour and on the cabin alike (the
    owner's, Nov 17: roofs "and everything else"). Hangout keeps the cabin's walls shut */
-export const seenFrom = (x, y, inside) =>
-  (!inside && variant !== "") || wallsSee(x, y, inside);
+export const seenFrom = (x, y, inside, z) =>
+  (!inside && variant !== "") || wallsSee(x, y, inside, z);
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
@@ -973,7 +1067,7 @@ const hits = (b, x, y) =>
 export function solidsAt(x, y, z = -Infinity) {
   return (
     grid.get(Math.floor(x / CELL) * 1000 + Math.floor(y / CELL)) || []
-  ).filter((b) => hits(b, x, y) && z < b.top);
+  ).filter((b) => hits(b, x, y) && z < Math.max(b.top, b.roof));
 }
 /* can a duck's feet at height z go to (x, y)? up: how much higher the ground there may be (a step on the ground; a little
    in the air, so a jump has to clear an edge). from: where it comes from (a solid it is already in doesn't hold it) */
@@ -984,9 +1078,9 @@ export function standable(x, y, z, up = STEP, from = null, zombie = false) {
     // fences; zombies come from past the fences)
     if (x < 0 || x > W || y < 0 || y > H) return false;
     if (!zombie && (x < 70 || x > W - 70 || y < 70 || y > H - 70)) return false;
-    if (!zombie && boardAt(x, y)) return false;
+    if (!zombie && z < GS.STATION.wall - 1 && boardAt(x, y)) return false; // (up on a roof, over the boards: no)
   } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
-  if (heightAt(x, y) > z + up + 1e-6) return false;
+  if (heightAt(x, y) > z + up + 1e-6) return false; // (a deck never stops a duck: it walks under it, or onto it from one as high)
   return !solidsAt(x, y, z).some(
     (b) => !(from && hits(b, from[0], from[1])) && !(zombie && b.zx),
   );
@@ -1007,7 +1101,10 @@ const BAND = 40,
   BACK = STAGE.cy - STAGE.ry,
   LOW = STAGE.cy + STAGE.ry + BAND;
 export function sortY(x, y, z) {
-  if (variant === "l4gs") return y;
+  if (variant === "l4gs") {
+    const d = deckAt(x, y, z);
+    return d ? d.key + 1 + ((y - d.y0) / (d.y1 - d.y0)) * 7 : y; // (on a roof: in front of it, the same way as on a bed)
+  }
   const pl = PLATS.length && platAt(x, y);
   if (pl && z >= pl.top - 1)
     return pl.key + 1 + ((y - pl.y0) / (pl.y1 - pl.y0)) * 7;

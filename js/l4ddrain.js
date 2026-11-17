@@ -4,11 +4,18 @@
      - streaks falling, slanted with the wind, as many as the screen is wide;
      - drops landing: a short ring on the ground, wider and slower on the water (the flood over the road, puddles);
      - ripples round everyone wading in the flood (my duck, the others, the zombies), as they move.
-   Inside the gas station or the chapel there is no rain, only its sound later. Low graphics or Data saving: a third
+   Inside the gas station or the chapel there is no rain, only its sound later, but under the gas station's two holes in
+   its roof (Part B, the owner's, Nov 17 12:28Z): there it falls in, onto the floor. Low graphics or Data saving: a third
    of the drops; Animations off (html.still): none. I want it cheap: a few hundred short lines a frame, no images. */
 import { low } from "./gfx.js";
 import { gridPx } from "./pixel.js";
-import { inShallow, inDeep, CANOPY } from "./hangout/stationmap.js";
+import {
+  inShallow,
+  inDeep,
+  CANOPY,
+  ROOF_HOLES,
+  STATION,
+} from "./hangout/stationmap.js";
 
 let cv = null,
   g = null,
@@ -17,7 +24,8 @@ let cv = null,
   wades = new Map(), // who → [x, y] where its last ripple was
   last = 0,
   wasW = 0,
-  bolt = null; // (the lightning on screen: newBolt)
+  bolt = null, // (the lightning on screen: newBolt)
+  inDrops = []; // (inside: the drops falling in through the roof's holes, in world px)
 const WIND = 0.22; // the slant: across for each px down
 const FALL = 1500; // css px a second (about; each drop a little faster or slower)
 
@@ -46,7 +54,7 @@ export function rainDraw(now, ctx, who, on, hit) {
   if (!cv) return;
   const Wd = ctx.world,
     still = document.documentElement.classList.contains("still");
-  if (!on || still || Wd.inside || !Wd.vw) {
+  if (!on || still || !Wd.vw) {
     if (!cv.hidden) cv.hidden = true;
     last = now;
     return;
@@ -66,6 +74,11 @@ export function rainDraw(now, ctx, who, on, hit) {
   }
   const dt = Math.min(0.1, last ? (now - last) / 1000 : 0.016);
   last = now;
+  if (Wd.inside) {
+    holesRain(now, dt, Wd, w, h);
+    return;
+  }
+  inDrops = [];
   /* the streaks: as many as the screen is wide, a third with Low graphics */
   const want = Math.round((w / 6) * (low() ? 0.35 : 1));
   while (drops.length < want)
@@ -146,6 +159,70 @@ export function rainDraw(now, ctx, who, on, hit) {
       }
   }
 }
+/* inside: the rain falling in through the roof's holes, from the roof's height to the floor, a ring where each lands */
+const IN_FALL = 700; // world px a second
+function holesRain(now, dt, Wd, w, h) {
+  const each = low() ? 5 : 14,
+    top = STATION.wall;
+  if (inDrops.length !== each * ROOF_HOLES.length) {
+    inDrops = [];
+    for (const o of ROOF_HOLES)
+      for (let i = 0; i < each; i++) inDrops.push(inDrop(o, Math.random()));
+  }
+  g.setTransform(1 / gridPx(), 0, 0, 1 / gridPx(), 0, 0);
+  g.clearRect(0, 0, w, h);
+  g.lineCap = "butt";
+  g.strokeStyle = "rgba(190,210,235,0.32)";
+  g.lineWidth = Math.max(1.2, gridPx());
+  g.beginPath();
+  for (const d of inDrops) {
+    d.z -= d.v * dt;
+    if (d.z <= 0) {
+      if (Math.random() < 0.5)
+        rings.push({
+          x: d.x,
+          y: d.y,
+          z: 0,
+          t: now,
+          life: 320,
+          r: 7,
+          water: false,
+        });
+      Object.assign(d, inDrop(d.o, 1));
+      continue;
+    }
+    const p = Wd.toScreen(d.x, d.y, d.z),
+      l = Math.min(d.l, (top - d.z) * Wd.sc); // (from the hole down: none over the roof)
+    if (p.left < -40 || p.left > w + 40 || p.top < -40 || p.top > h + 40)
+      continue;
+    g.moveTo(p.left, p.top);
+    g.lineTo(p.left - l * WIND, p.top - l);
+  }
+  g.stroke();
+  let n = 0;
+  for (const o of rings) if (now - o.t < o.life) rings[n++] = o;
+  rings.length = n;
+  g.lineWidth = Math.max(1.4, gridPx());
+  for (const o of rings) {
+    const u = (now - o.t) / o.life,
+      p = Wd.toScreen(o.x, o.y, o.z),
+      r = o.r * (0.25 + u) * Wd.sc;
+    g.strokeStyle =
+      RING_STYLE[0][Math.min(RING_STEPS - 1, Math.floor(u * RING_STEPS))].c;
+    g.beginPath();
+    g.ellipse(p.left, p.top, r, r * 0.42, 0, 0, 2 * Math.PI);
+    g.stroke();
+  }
+}
+/* a drop falling in through hole o, from u of the way down the roof's height (1: at the hole) */
+const inDrop = (o, u) => ({
+  o,
+  x: o.x0 + Math.random() * (o.x1 - o.x0),
+  y: o.y0 + Math.random() * (o.y1 - o.y0),
+  z: STATION.wall * u,
+  v: IN_FALL * (0.8 + Math.random() * 0.4),
+  l: 14 + Math.random() * 14,
+});
 /* the rings' colors, by kind (ground, water) and by how far they have faded */
 const RING_STEPS = 8,
   RING_STYLE = [
