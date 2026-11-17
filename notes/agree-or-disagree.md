@@ -5269,3 +5269,9 @@ maybe it is another new mobile feature like the fullscreen automatically turning
 Then (11:08Z): "tell me of what questions they have here and WHO"
 
 - Adam, Justin's HP first (V61): at the start it was already counted right (1 duck 180, 2: 200, 4: 240, 6: 280 = 160 + 20 a duck), but a duck joining mid-fight added nothing. Now each joiner adds its 20 (mgjCount, called on join).
+
+- Owner's answers (11:19Z) to the 5 questions (1 Xbox at 2/3 HP left, meteor at 1/3; 2 Quick Revive; 3 waves per extra player; 4 Tommy/UMP stats; 5 where new guns come from): "1. yes
+2. it costs only 750 and yes and yes (revive is 3 seconds in mad god justin and brings players up to half health there
+3. yes each player after the first there in that case
+4. we can do the tommy gun and the UMP-45, and the UMP-45 does slightly more damage for slower fire rate then the tommy gun (ask me ab the stats)
+5. yes the spin and justin pick ups, not the butler's shop"
