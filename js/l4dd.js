@@ -24,6 +24,7 @@ import {
   LIGHTS,
   PROPS,
   layoutRev,
+  deckAt,
 } from "./hangout/layout.js";
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
@@ -55,6 +56,7 @@ import {
   syncMap,
   dp,
   fenceZ,
+  zombieZ,
   playable,
   zombiesOf,
   startSpot,
@@ -948,7 +950,7 @@ export function laserEnd(id) {
     return null;
   const Wd = ctx.world,
     a = Wd.at(id);
-  if (!a || !seenFrom(a.x, a.y, Wd.inside)) return null;
+  if (!a || !seenFrom(a.x, a.y, Wd.inside, a.z)) return null;
   const [dx, dy] = aimOf(s, id, ctx),
     l = Math.hypot(dx, dy),
     d = rayTo(a.x, a.y, dx / l, dy / l, CONE.far),
@@ -1154,7 +1156,7 @@ function paint(now, ctx) {
   for (const id of s.seat) {
     const a = Wd.at(id),
       pos = s.pos[id];
-    if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside)) continue;
+    if (!a || !pos || !seenFrom(a.x, a.y, Wd.inside, a.z)) continue;
     const p4 = P4(s, id);
     if (p4 && p4.gh) continue;
     const c = Wd.toScreen(a.x, a.y, a.z + 26);
@@ -1163,20 +1165,28 @@ function paint(now, ctx) {
     if (!on(c.left * q, c.top * q, CONE.far * sc)) continue; // (its light can't reach the screen: no rays)
     const [dx, dy] = aimOf(s, id, ctx),
       t = Math.atan2(dy, dx),
+      roof = !!deckAt(a.x, a.y, a.z), // (up on a roof: over the walls, nothing stops it)
       pts = [],
       ends = []; // (the same rays on the floor in world px, on into the wall each one stops at: shineProps)
     for (let k = 0; k <= rays; k++) {
       const u = t - CONE.half + (2 * CONE.half * k) / rays,
         ux = Math.cos(u),
         uy = Math.sin(u),
-        d = rayTo(a.x, a.y, ux, uy, CONE.far),
+        d = roof ? CONE.far : rayTo(a.x, a.y, ux, uy, CONE.far),
         e = Wd.toScreen(a.x + ux * d, a.y + uy * d, a.z),
         d2 = d < CONE.far - 1 ? d + 26 : d; // (a wall is 24 thick)
       pts.push([e.left * q, e.top * q, d]);
       ends.push([a.x + ux * d2, a.y + uy * d2]);
     }
     const o = Wd.toScreen(a.x, a.y, a.z);
-    cones.push([o.left * q, o.top * q, pts, CONE.far * sc, [a.x, a.y, ends]]);
+    cones.push([
+      o.left * q,
+      o.top * q,
+      pts,
+      CONE.far * sc,
+      [a.x, a.y, ends],
+      roof,
+    ]);
     BEAMS.push([a.x, a.y, t]);
     beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
   }
@@ -1191,7 +1201,7 @@ function paint(now, ctx) {
     };
     for (const id of s.seat) {
       const a = Wd.at(id);
-      if (a && s.pos[id] && seenFrom(a.x, a.y, Wd.inside))
+      if (a && s.pos[id] && seenFrom(a.x, a.y, Wd.inside, a.z))
         lit(a.x, a.y, a.z, 1);
     }
     for (const o of Z.values())
@@ -1268,6 +1278,7 @@ function shineProps(Wd, cones, q) {
   const sc = Wd.sc * q,
     plain = low();
   for (const c of cones) {
+    if (c[5]) continue; // (from up on a roof: the roof's top is all it lights)
     const [ax, ay, ends] = c[4],
       poly = [[ax, ay], ...ends];
     let x0 = ax,
@@ -2228,15 +2239,20 @@ activity({
       const u = Math.min(1, (t - o.t0) / gap);
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const up = o.st === 5 ? fenceZ(o.x, o.y, o.l[2]) : 0, // (Downpour: up a fence, or dropping off it)
+      const up =
+          o.st === 5
+            ? fenceZ(o.x, o.y, o.l[2])
+            : o.st === 6 || o.st === 7
+              ? zombieZ(o) - heightAt(o.x, o.y)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
         z = heightAt(o.x, o.y) + up,
         lean =
-          up && openingById(o.l[2])?.axis === "y"
+          o.st === 5 && up && openingById(o.l[2])?.axis === "y"
             ? fenceLean({ x: o.x, h: up }, W)
             : 0, // (on the west or east fence: on its face, which leans out as it goes up, stationart.js)
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
-        unseen = !(door || seenFrom(o.x, o.y, Wd.inside)),
+        unseen = !(door || seenFrom(o.x, o.y, Wd.inside, z)),
         onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
@@ -2504,8 +2520,8 @@ activity({
       ins = ctx.world.inside;
     for (const o of Z.values())
       if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
-        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike)
-        out.push([o.x, o.y]);
+        // (from outside: one inside a building too, under its roof; Downpour and the cabin alike. Its height: up on a roof, no roof turns see-through over it)
+        out.push([o.x, o.y, o.st === 6 || o.st === 7 ? zombieZ(o) : 0]);
     return out;
   },
   crowd(x, y) {

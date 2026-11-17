@@ -225,10 +225,10 @@ export function mountWorld(board, api) {
       o.x += (tx - o.x) * k;
       o.y += (ty - o.y) * k;
     }
-    const gnd = L.heightAt(o.x, o.y);
+    const gnd = L.floorH(o.x, o.y, Math.max(p.z ?? 0, o.z)); // (on a roof: the roof; never one it jumps up under)
     if (p.j && now < api.landsAt(p))
       o.z = Math.max(gnd, (p.b ?? gnd) + api.jumpZ(p, now) * L.DUCK); // a jump: the arc itself
-    else if ((p.z ?? gnd) > L.heightAt(tx, ty) + 2)
+    else if ((p.z ?? gnd) > L.floorH(tx, ty, p.z) + 2)
       o.z = Math.max(
         gnd,
         o.z + ((p.z ?? gnd) - o.z) * (1 - Math.exp(-dt / 0.07)),
@@ -621,7 +621,7 @@ export function mountWorld(board, api) {
     for (const id of s.seat) {
       if (!s.pos[id] && !mine(id)) continue;
       const a = at(id, s.pos[id]);
-      if (L.whereIn(a.x, a.y) !== bldg && !(bldg === 0 && roofsShow()))
+      if (L.whereIn(a.x, a.y, a.z) !== bldg && !(bldg === 0 && roofsShow()))
         continue; // (not one seen through a hole: nothing turns see-through over it. Quacky Zombies, from outside: one inside a building turns its roof see-through)
       const g = L.heightAt(a.x, a.y),
         f = toScreen(a.x, a.y, g),
@@ -636,10 +636,10 @@ export function mountWorld(board, api) {
     }
     /* and whatever else an activity says walks about (Quacky Zombies' zombies): [x, y] on the ground, as big as a duck */
     for (const a of acts())
-      for (const [x, y] of a.hiders?.(ctx) || []) {
-        const f = toScreen(x, y, L.heightAt(x, y));
+      for (const [x, y, z] of a.hiders?.(ctx) || []) {
+        const f = toScreen(x, y, Math.max(L.heightAt(x, y), z || 0)); // (z: up on a roof)
         out.push({
-          key: L.sortY(x, y, 0),
+          key: L.sortY(x, y, z || 0),
           l: f.left - size * 0.4,
           r: f.left + size * 0.4,
           t: f.top - size * 0.9,
@@ -775,14 +775,14 @@ export function mountWorld(board, api) {
       s = r.state;
     if (me.j || me.vz != null) return 0;
     const ka = duckRoom((s.players[r.me] || {}).duck),
-      here = L.whereIn(x, y);
+      here = L.whereIn(x, y, me.z);
     let d = 0;
     for (const id of s.seat) {
       const p = s.pos[id];
       if (id === r.me || !p || (p.j && now < api.landsAt(p))) continue;
       const ox = p.x * L.W,
         oy = p.y * L.H;
-      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy) !== here)
+      if (Math.abs((p.z ?? 0) - me.z) > 40 || L.whereIn(ox, oy, p.z) !== here)
         continue;
       const kb = duckRoom((s.players[id] || {}).duck),
         dx = (x - ox) / (28 * (ka.x + kb.x)),
@@ -793,6 +793,10 @@ export function mountWorld(board, api) {
       if (a.crowd) d = Math.max(d, a.crowd(x, y, me, ctx)); // (an activity's own walkers: Quacky Zombies' zombies)
     return d;
   }
+  /* the floor under my duck at (x, y): the ground, or a roof it is on or over (Downpour: layout.js floorH). zTop: the
+     highest its feet were this step, so a fall onto a roof lands on it, even past it in one frame */
+  let zTop = 0;
+  const floor = (me, x, y) => L.floorH(x, y, Math.max(me.z, zTop)); // (a roof holds feet already at or over it: a jump under the canopy never lands on it)
   const endJump = (me) => {
     me.j = 0;
     me.lj = false;
@@ -801,7 +805,7 @@ export function mountWorld(board, api) {
   };
   /* after a step: up or down a step, landing on what it walked onto, or off an edge (it falls) */
   function ground(me, x, y, ev) {
-    const gnd = L.heightAt(x, y);
+    const gnd = floor(me, x, y);
     if (me.jf) {
       if (me.z < gnd) me.z = gnd; // (flying: onto anything higher, still flying)
       return;
@@ -828,6 +832,41 @@ export function mountWorld(board, api) {
       me.top = me.z;
       if (me.z - gnd > 100) ev.whee = true;
     }
+  }
+
+  /* the ladder up the gas station's back wall (Downpour, Part B: the owner's, Nov 17 12:28Z). At its foot, pushing into
+     the wall climbs it, at about a walk; at the top, my duck steps onto the roof. Let go of the stick and it holds on;
+     push away (or sideways off it) and it lets go and falls. True while my duck is on it (nothing else moves it) */
+  const CLIMB = 150; // px a second
+  function climb(me, x, y, ax, ay, dt, ev) {
+    if (me.j || me.jf || !L.atLadder(x, y)) return (me.lad = false);
+    const top = L.ladderTop();
+    if (!me.lad) {
+      if (!(ay > 0.5 && Math.abs(ax) < 0.7 && me.vz == null)) return false;
+      me.lad = true;
+    }
+    if (ay < -0.3 || Math.abs(ax) > 0.7) {
+      me.lad = false;
+      if (me.z > floor(me, x, y) + L.STEP) {
+        me.vz = 0;
+        me.top = me.z;
+      }
+      return false;
+    } // (let go: it falls, or walks off the bottom)
+    me.vz = null;
+    if (ay > 0.3) {
+      me.z = Math.min(top.h, me.z + CLIMB * dt);
+      ev.moved = true;
+      ev.climb = true;
+    }
+    if (me.z >= top.h - 0.5) {
+      me.lad = false;
+      me.z = me.b = top.h;
+      me.x = top.x / L.W;
+      me.y = top.y / L.H;
+      ev.force = true; // (onto the roof: the others see it at once)
+    }
+    return true;
   }
 
   const world = {
@@ -902,7 +941,7 @@ export function mountWorld(board, api) {
     place(p, h) {
       const x = p.x * L.W,
         y = p.y * L.H;
-      return toScreen(x, y, h ?? L.heightAt(x, y));
+      return toScreen(x, y, h ?? L.floorH(x, y, p.z)); // (on a roof: on it)
     },
     /* a point on the board (px) → the spot on the ground seen there (the front-most one, where heights overlap) */
     unplace(px, py) {
@@ -919,7 +958,7 @@ export function mountWorld(board, api) {
     /* how far over its ground a duck is drawn (px), its z-index, whether it is on the other side of the walls, where it is drawn */
     lift(id, pos) {
       const a = at(id, pos);
-      return Math.max(0, a.z - L.heightAt(a.x, a.y)) * cam.sc;
+      return Math.max(0, a.z - L.floorH(a.x, a.y, a.z)) * cam.sc;
     },
     key(id, pos) {
       const a = at(id, pos);
@@ -927,7 +966,7 @@ export function mountWorld(board, api) {
     },
     hidden(id, pos) {
       const a = at(id, pos);
-      return !L.seenFrom(a.x, a.y, inside);
+      return !L.seenFrom(a.x, a.y, inside, a.z);
     },
     coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key), // (the outlines: outlines.js)
     frameOf,
@@ -959,7 +998,7 @@ export function mountWorld(board, api) {
       if (cam.low !== low()) world.measure(); // (Graphics changed in Settings)
       ensure(me);
       const was = bldg;
-      bldg = L.whereIn(me.x * L.W, me.y * L.H);
+      bldg = L.whereIn(me.x * L.W, me.y * L.H, me.z); // (up on a roof: outside)
       inside = bldg > 0;
       L.setHere(bldg);
       if (bldg !== was) {
@@ -1072,6 +1111,8 @@ export function mountWorld(board, api) {
           return ev;
         } // (seated: at the seat's height, no falling)
       } else pushed = "";
+      zTop = me.z;
+      if (climb(me, x, y, ax, ay, dt, ev)) return ev; // (on the ladder: up it, or holding on)
       if (me.j !== me._j) {
         me._j = me.j;
         me._za = undefined;
@@ -1083,8 +1124,12 @@ export function mountWorld(board, api) {
       if (me.jf) {
         // the jetpack: up while its jets are on, the height kept, or falling; never higher than JET.TOP over the ground
         const jet = api.jet?.() || {},
-          gnd = L.heightAt(x, y),
-          top = gnd + JET.TOP * L.DUCK;
+          gnd = floor(me, x, y),
+          over = L.deckOver(x, y, me.z),
+          top = Math.min(
+            gnd + JET.TOP * L.DUCK,
+            over ? over.h - L.DUCK * 0.9 : Infinity,
+          ); // (never up through a roof: through its holes only)
         if (jet.up)
           me.vz = Math.min(JET.RISE * L.DUCK, me.vz + JET.PUSH * L.DUCK * dt);
         else if (jet.hold) me.vz = 0;
@@ -1103,7 +1148,7 @@ export function mountWorld(board, api) {
       } else if (me.j) {
         // a jump's arc, from where it began; it lands early on anything high enough, or falls on past its end
         const za = me.b + api.jumpZ(me, now) * L.DUCK,
-          gnd = L.heightAt(x, y);
+          gnd = floor(me, x, y);
         if (now >= api.landsAt(me)) {
           ev.land = me.dj ? 2 : 1;
           endJump(me);
@@ -1126,7 +1171,7 @@ export function mountWorld(board, api) {
         // falling
         me.vz -= G * dt;
         me.z += me.vz * dt;
-        const gnd = L.heightAt(x, y);
+        const gnd = floor(me, x, y);
         if (me.z <= gnd) {
           ev.thud = me.top - gnd;
           me.z = gnd;

@@ -5530,3 +5530,34 @@ the overall stats. Noah (high) = the backdrop pixels first (front page, lobby, e
 damage, then cursor and hover pointer smaller with Mouse / Pointer / Crosshair size settings (crosshair default
 unchanged). Miles Jr. = the vote countdown's quiet ticks (last 5 + the zero ding like the lobby's, quieter). Adam = the
 red Next button in the mode/map votes (after voting; each click speeds the countdown by 1/players).
+
+## Request (2026-11-17 13:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtTvWDC11xrV25bGqYxcVeif, furious): projectiles gone, yellow square, missing door, Justin ending rounds (word for word)
+Picture: /mnt/project-files/refs/nov17-1338-batch/gas-station-missing-door.png (the storeroom's east wall, "NO DOOR")
+> chairs were just floating in the top left corner of the screen and the projectiles were showing at all in the mad justinn game mode, completely game breaking, no bullets seen, and no any other projectile (not even controlers i think)
+>
+> it is also happening in the downpour game mode
+>
+> when i go inside the gas station the yellow square follows me into there (who tf seriosuly fucked up something so simple!? its just a yellow sqaure!! for downpour from the car with the slots btw
+>
+>
+> still a door missing from one of the rooms in gas station
+>
+> JUSTIN CANNOT END ROUNDS IN THE REST PHASE OF THE GAME! THAT IS GAME BREAKING
+>
+> Im going to class soon.
+
+## Request (2026-11-17 13:38Z, edited 13:43Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtEvK6ax1WZ9QyJfYZrMVyjY) (word for word)
+> there is a lot not released yet, make sure to not forget any goals i laid out
+>
+> one more thing if you see this, the jerrry cans are a 1% chance of dropping only
+>
+> make the special drops last 30 seconds and that blink out more and more as they are about to despawn
+>
+> make sure the +1 HP in mad justin is not common it was far too many in one of my early tests on an early vers
+
+Done (Adam), live in V74/V75: projectiles fixed in V74 (#401's gun-reload CSS had been put inside the `.bullet, .thrown,`
+list). V75: the yellow square never hid (an `<svg>` has no `.hidden`), now display none inside; the storeroom's doorway
+moved to the middle of its wall (770 to 930; at 950 to 1110 the restroom's wall face hid it); Justin never presses End
+turn and the rules refuse it from him (read as: only players end a rest phase); jerry cans 1% from every source
+(fireplace, zombie, round start); drops last 30 s and blink faster in their last 10, 5 and 2 s; Mad God Justin's plus sign
+is a 1 in 3 roll every 30 s.
