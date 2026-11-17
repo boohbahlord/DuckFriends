@@ -112,9 +112,9 @@
         [S.towerSVG({}), "bell tower"],
       ]);
       put("trees", [
-        [S.swampTreeSVG(0, 1), "cypress"],
-        [S.swampTreeSVG(1, 2), "oak"],
-        [S.swampTreeSVG(2, 3), "dead"],
+        ...["cypress", "oak", "willow"].flatMap((k) =>
+          [0, 1, 2].map((v) => [S.swampTreeSVG(k, v).svg, `${k} ${v + 1}`]),
+        ),
         [
           S.fallenSVG({ w: 860, h: 1210, x0: 55, y0: 55, x1: 805, y1: 1155 }),
           "fallen tree",

@@ -376,10 +376,31 @@ const gsPart = (p, svg, o = {}) => [
   ),
 ];
 const seedOf = (p) => Math.abs(Math.round(p.x / 7 + p.y / 13)) + 1;
-const SWAMP_URL = {};
-const swampURL = (k) =>
-  SWAMP_URL[k] ||
-  (SWAMP_URL[k] = A.svgDataURL(SA.swampTreeSVG(k % 3, 1 + Math.floor(k / 3))));
+/* Downpour's trees: about 3 cypresses to 3 willows to 2 oaks, each in one of its three looks, two seeds, and mirrored
+   half the time, all picked from the tree's id so every device grows the same forest. Each drawing is made once */
+const SWAMP_MIX = [
+    "cypress",
+    "cypress",
+    "cypress",
+    "willow",
+    "willow",
+    "willow",
+    "oak",
+    "oak",
+  ],
+  SWAMP_URL = {};
+function swampTree(h) {
+  const kind = SWAMP_MIX[Math.floor(h * SWAMP_MIX.length)],
+    v = Math.floor(((h * 97) % 1) * 3),
+    flip = (h * 991) % 1 < 0.5,
+    seed = 1 + Math.floor(((h * 7919) % 1) * 2),
+    key = kind + v + seed + flip;
+  if (!SWAMP_URL[key]) {
+    const t = SA.swampTreeSVG(kind, v, seed, flip);
+    SWAMP_URL[key] = { t, url: A.svgDataURL(t.svg) };
+  }
+  return SWAMP_URL[key];
+}
 /* Downpour's things are drawn as the floor plan has them, then shown at K of that size (stationmap.js K: the owner's,
    Nov 17, the whole map at 60%), so each looks just as it did, only smaller. SK: stationart.js' drawings that way */
 const PLAN = new Set(["w", "d", "h", "edge", "cable", "up", "half", "z"]),
@@ -1018,11 +1039,23 @@ export const DRAW = {
   goalpart: () => [],
   tree(p) {
     if (p.map) {
-      // Downpour's: a swamp tree with moss, in the box stationmap.js gave it (its foot SA.SWAMP_TREE.foot over its bottom)
-      const b = p.box,
-        k = Math.floor(hash(p.id + "k") * 6);
+      /* Downpour's: a swamp tree standing where stationmap.js put it. Its box there is (320 × size + 16) × K tall, its
+         trunk's foot 16 × K over the bottom; the tree keeps its own shape, at K of its drawing's size (the size I OK'd in
+         the pictures), a little taller as its size grows (0.85 to 1.04). Its trunk blocks as stationmap.js says */
+      const o = p.box,
+        { t, url } = swampTree(hash(p.id + "k")),
+        size = (o.h / GS.K - 16) / 320,
+        k = (0.85 + (size - 0.8) * 0.35) * GS.K,
+        fx = o.l + o.w / 2,
+        fy = o.t + o.h - 16 * GS.K,
+        b = {
+          l: fx - (t.w * k) / 2,
+          t: fy - (t.h - t.foot) * k,
+          w: t.w * k,
+          h: t.h * k,
+        };
       return [
-        part(swampURL(k), b.l, b.t, b.w, b.h, p.key, {
+        part(url, b.l, b.t, b.w, b.h, p.key, {
           img: true,
           fade: true,
           url: true,
@@ -1030,7 +1063,7 @@ export const DRAW = {
             l: b.l + b.w * 0.2,
             t: b.t,
             r: b.l + b.w * 0.8,
-            b: b.t + b.h - 26,
+            b: fy - 10 * GS.K,
           },
         }),
       ];

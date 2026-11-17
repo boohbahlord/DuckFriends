@@ -1,5 +1,5 @@
 /* ---------- Downpour's things: the drawings (Dead Ducks Arcade's second map, stationmap.js) ----------
-   The owner's swamp at night in the rain: the gas station, the cars stopped on the road, the chapel, the trees with moss.
+   The owner's swamp at night in the rain: the gas station, the cars stopped on the road, the chapel, the trees.
    Drawn as Duck Cabin's props are (art.js): ink outlines, lighter tops, darker fronts, seen from above and in front.
    A box-like thing w wide, d deep and h tall is drawn into w × (d + h): its top in the first d, its south face under it.
    Inside one, a point (x, y) of its floor plan at height z is at (x, y − z + h) (`at` below). Preview:
@@ -618,78 +618,295 @@ export function towerSVG({ w = 300, d = 300, h = 520 } = {}) {
 }
 
 /* ---------- the swamp's trees and the fallen tree ---------- */
-/* a swamp tree in a box w × h (230 × 336 at size 1), its foot at (w/2, h − 16): a flared trunk, dark crowns, grey moss
-   hanging off the branches. kind: 0 a cypress (tall, narrow), 1 an oak (wide, low), 2 a dead one (bare, all moss) */
-export const SWAMP_TREE = { w: 230, h: 336, foot: 16 };
-export function swampTreeSVG(kind = 0, seed = 1) {
-  const { w, h, foot } = SWAMP_TREE,
-    r = rnd(seed * 31 + kind * 7 + 5),
+/* The swamp's trees (the owner's pick, Nov 17: A, B and D, three of each, no drapes): a bald cypress, a live oak and a
+   willow, about 3 ducks tall, each with one ink outline round it and three flat bands of leaves, colours from the pixel
+   palette. swampTreeSVG(kind, v, seed, flip) gives { svg, w, h, foot }: the tree in w × h, its trunk's foot at
+   (w/2, h − foot) */
+const TINK = "#0f0f17"; // (the trees' ink: a little darker than the ducks', so they stand out of the dark grass)
+const tWrap = (w, h, s, flip) =>
+  `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" overflow="visible" aria-hidden="true">${flip ? `<g transform="translate(${w} 0) scale(-1 1)">${s}</g>` : s}</svg>`;
+/* the night swamp's colours */
+const TC = {
+  shade: "#162c1f", // (a crown's underside)
+  leaf: "#1b4c24", // (its body)
+  lit: "#1d7d30", // (the clumps the moon hits)
+  rim: "#559075", // (wet leaves catching light: a few)
+  bark: "#453219",
+  barkD: "#381e10",
+  barkHi: "#5e3215",
+};
+
+/* a rough blob round (cx, cy): n points, each its own distance out, joined by a smooth closed curve */
+function tBlob(cx, cy, rx, ry, r, rough = 0.2, n = 18) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2,
+      k = 1 + (r() - 0.5) * 2 * rough;
+    pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]);
+  }
+  let d = `M${n1(pts[0][0])} ${n1(pts[0][1])}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n],
+      p1 = pts[i],
+      p2 = pts[(i + 1) % n],
+      p3 = pts[(i + 2) % n];
+    d += `C${n1(p1[0] + (p2[0] - p0[0]) / 6)} ${n1(p1[1] + (p2[1] - p0[1]) / 6)} ${n1(p2[0] - (p3[0] - p1[0]) / 6)} ${n1(p2[1] - (p3[1] - p1[1]) / 6)} ${n1(p2[0])} ${n1(p2[1])}`;
+  }
+  return d + "Z";
+}
+
+/* a crown from a few clumps [cx, cy, rx, ry]: one outlined silhouette for all of them, then each clump's body, then
+   the moonlight on its top-left, then a few wet glints. Three flat bands, no circles stacked on circles. */
+function tCrown(clumps, r, lit0 = TC.lit) {
+  let ink = "",
+    shade = "",
+    body = "",
+    lit = "",
+    glint = "";
+  for (const [cx, cy, rx, ry] of clumps) {
+    const d = tBlob(cx, cy, rx, ry, r);
+    ink += `<path d="${d}" fill="${TINK}" stroke="${TINK}" stroke-width="6" stroke-linejoin="round"/>`;
+    shade += `<path d="${d}" fill="${TC.shade}"/>`;
+    body += `<path d="${tBlob(cx - rx * 0.04, cy - ry * 0.14, rx * 0.86, ry * 0.72, r, 0.24)}" fill="${TC.leaf}"/>`;
+    if (rx < 14) continue; // (a small leaf tip: its body only)
+    lit += `<path d="${tBlob(cx - rx * 0.24, cy - ry * 0.4, rx * 0.46, ry * 0.3, r, 0.3, 12)}" fill="${lit0}"/>`;
+    for (let i = 0; i < 2; i++)
+      glint += `<rect x="${n1(cx - rx * 0.55 + r() * rx * 0.6)}" y="${n1(cy - ry * 0.62 + r() * ry * 0.3)}" width="4" height="3" fill="${TC.rim}"/>`;
+  }
+  return ink + shade + body + lit + glint;
+}
+
+/* a limb: an ink line under a bark line */
+const tLimb = (d, w, col = TC.bark) =>
+  `<path d="${d}" fill="none" stroke="${TINK}" stroke-width="${w + 5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const tShadow = (cx, b, rx) =>
+  `<ellipse cx="${n1(cx)}" cy="${n1(b)}" rx="${n1(rx)}" ry="${n1(rx * 0.3)}" fill="#05070a" opacity=".55"/>`;
+
+/* a trunk from its foot (cx, b) up to y top: flared at the foot (flare × its width), a dark side and a lit side */
+function tTrunk(
+  cx,
+  b,
+  top,
+  w0,
+  w1,
+  flare,
+  col = [TC.bark, TC.barkD, TC.barkHi],
+) {
+  const [c, cd, ch] = col,
+    m = b - (b - top) * 0.3;
+  const d = `M${n1(cx - w0 * flare)} ${b}C${n1(cx - w0)} ${b - 3} ${n1(cx - w0 * 0.8)} ${n1(m + 10)} ${n1(cx - w1)} ${n1(m)}L${n1(cx - w1 * 0.8)} ${top}H${n1(cx + w1 * 0.8)}L${n1(cx + w1)} ${n1(m)}C${n1(cx + w0 * 0.8)} ${n1(m + 10)} ${n1(cx + w0)} ${b - 3} ${n1(cx + w0 * flare)} ${b}Z`;
+  const dr = `M${n1(cx + w0 * 0.15)} ${b}C${n1(cx + w0 * 0.4)} ${n1(m + 10)} ${n1(cx + w1 * 0.2)} ${n1(m)} ${n1(cx + w1 * 0.15)} ${top}H${n1(cx + w1 * 0.8)}L${n1(cx + w1)} ${n1(m)}C${n1(cx + w0 * 0.8)} ${n1(m + 10)} ${n1(cx + w0)} ${b - 3} ${n1(cx + w0 * flare)} ${b}Z`;
+  const lt = `M${n1(cx - w0 * 0.75)} ${b - 4}C${n1(cx - w0 * 0.6)} ${n1(m + 8)} ${n1(cx - w1 * 0.6)} ${n1(m)} ${n1(cx - w1 * 0.55)} ${top + 4}`;
+  return `<path d="${d}" fill="${TINK}" stroke="${TINK}" stroke-width="6" stroke-linejoin="round"/><path d="${d}" fill="${c}"/><path d="${dr}" fill="${cd}"/><path d="${lt}" fill="none" stroke="${ch}" stroke-width="4" stroke-linecap="round"/>`;
+}
+const tKnee = (x, b, k) =>
+  `<path d="M${n1(x - 7 * k)} ${b + 1}Q${n1(x - 3 * k)} ${n1(b - 15 * k)} ${n1(x)} ${n1(b - 16 * k)}Q${n1(x + 3 * k)} ${n1(b - 15 * k)} ${n1(x + 7 * k)} ${b + 1}Z" fill="${TC.bark}" stroke="${TINK}" stroke-width="3" stroke-linejoin="round"/><path d="M${n1(x - 3 * k)} ${n1(b - 8 * k)}L${n1(x - 1)} ${n1(b - 13 * k)}" stroke="${TC.barkHi}" stroke-width="3"/>`;
+
+/* A: a bald cypress. Tall and thin, its foot flared wide with knees round it; flat pads of leaves stepping up the
+   trunk, gaps between them. About 3.5 ducks tall. v: 0 three pads, 1 two pads high on a long bare trunk, 2 young and
+   narrow with four small pads */
+const CYPRESS = [
+  {
+    w: 150,
+    top: 26,
+    pads: [
+      [6, 34, 44, 15],
+      [-14, 80, 60, 18],
+      [14, 126, 54, 17],
+    ],
+  },
+  {
+    w: 150,
+    top: 22,
+    pads: [
+      [-10, 40, 56, 17],
+      [16, 90, 50, 16],
+    ],
+  },
+  {
+    w: 120,
+    top: 20,
+    pads: [
+      [4, 32, 30, 11],
+      [-8, 62, 38, 13],
+      [8, 96, 42, 13],
+      [-4, 130, 44, 14],
+    ],
+  },
+];
+function cypress(seed = 1, v = 0, flip = false) {
+  const r = rnd(seed * 13 + 1),
+    { w, top, pads } = CYPRESS[v],
+    h = 230,
+    foot = 14,
     cx = w / 2,
     b = h - foot,
-    bark = ["#453219", "#381e10", "#513530"][kind],
-    barkHi = ["#805031", "#5e3215", "#805031"][kind];
-  let s = F`<ellipse cx="${cx}" cy="${b}" rx="${w * 0.36}" ry="${w * 0.12}" fill="#000" opacity=".35"/>`;
-  // the trunk, flared at its foot (the knees of a cypress round it)
-  const tw = [22, 28, 20][kind],
-    top = [b - 250, b - 170, b - 230][kind];
-  s += F`<path d="M${cx - tw * 2.2} ${b}C${cx - tw * 1.1} ${b - 6} ${cx - tw} ${b - 40} ${cx - tw * 0.7} ${b - 90}L${cx - tw * 0.45} ${top}H${cx + tw * 0.45}L${cx + tw * 0.7} ${b - 90}C${cx + tw} ${b - 40} ${cx + tw * 1.1} ${b - 6} ${cx + tw * 2.2} ${b}Z" fill="${bark}" ${ln(2.6)}/>`;
-  s += F`<path d="M${cx - tw * 0.2} ${b - 8}C${cx - tw * 0.3} ${b - 60} ${cx - tw * 0.1} ${b - 140} ${cx - tw * 0.15} ${top + 10}" stroke="${barkHi}" stroke-width="5" fill="none"/>`;
-  if (kind === 0)
-    for (const k of [-1, 1])
-      s += F`<path d="M${cx + k * tw * 2.6} ${b + 2}l${k * 4} -16l${k * 6} 16Z" fill="${bark}" ${ln(1.8)}/>`;
-  // the branches
-  const br = [];
-  const nb = [4, 5, 5][kind];
-  for (let i = 0; i < nb; i++) {
-    const k = i % 2 ? 1 : -1,
-      y0 = top + 10 + i * ((b - 120 - top) / nb),
-      len = [40, 80, 60][kind] * (0.7 + r() * 0.5),
-      x1 = cx + k * len,
-      y1 = y0 - 20 - r() * 30;
-    br.push([x1, y1]);
-    s += F`<path d="M${cx + k * tw * 0.3} ${y0 + 12}Q${cx + k * len * 0.5} ${y0} ${x1} ${y1}" stroke="${O}" stroke-width="${kind === 2 ? 9 : 11}" fill="none" stroke-linecap="round"/><path d="M${cx + k * tw * 0.3} ${y0 + 12}Q${cx + k * len * 0.5} ${y0} ${x1} ${y1}" stroke="${bark}" stroke-width="${kind === 2 ? 5 : 7}" fill="none" stroke-linecap="round"/>`;
+    k = w / 150;
+  let s = tShadow(cx, b, 50 * k);
+  s +=
+    tKnee(cx - 44 * k, b, 0.9) +
+    tKnee(cx + 40 * k, b, 1.1) +
+    tKnee(cx - 28 * k, b + 6, 0.6) +
+    tKnee(cx + 22 * k, b + 7, 0.7);
+  s += tTrunk(cx, b, top, 15 * k, 6, 2.3);
+  for (const [dx, y] of pads)
+    s += tLimb(
+      `M${cx} ${y + 10}Q${n1(cx + dx / 2)} ${y + 6} ${n1(cx + dx)} ${y + 2}`,
+      4,
+    );
+  for (const [dx, y, rx, ry] of pads) {
+    const x = cx + dx;
+    s += tCrown(
+      [
+        [x - rx * 0.45, y + 2, rx * 0.58, ry],
+        [x + rx * 0.4, y + 1, rx * 0.6, ry * 0.95],
+        [x, y - ry * 0.25, rx * 0.62, ry * 1.05],
+      ],
+      r,
+    );
   }
-  // the crowns: dark clumps (none on the dead one)
-  const blobs = [];
-  if (kind !== 2) {
-    const n = kind === 0 ? 7 : 9;
-    for (let i = 0; i < n; i++) {
-      const t = i / (n - 1),
-        x =
-          kind === 0
-            ? cx + (r() - 0.5) * 70
-            : cx + (t - 0.5) * 170 + (r() - 0.5) * 20,
-        y =
-          kind === 0
-            ? top - 20 + t * 150
-            : top - 10 + Math.abs(t - 0.5) * 50 + r() * 30,
-        rr = kind === 0 ? 34 + r() * 14 : 40 + r() * 16;
-      blobs.push([x, y, rr]);
-    }
-    for (const [x, y, rr] of blobs)
-      s += F`<circle cx="${x}" cy="${y}" r="${rr + 2.4}" fill="${O}"/>`;
-    for (const [x, y, rr] of blobs)
-      s += F`<circle cx="${x}" cy="${y}" r="${rr}" fill="${kind === 0 ? "#1c3d22" : "#1b4c24"}"/><circle cx="${x - rr * 0.25}" cy="${y - rr * 0.3}" r="${rr * 0.55}" fill="${kind === 0 ? "#4d7e59" : "#3d813f"}"/>`;
-  }
-  // the moss: grey-green beards hanging off the crowns and the branches, a few strands each, uneven
-  const hangs = [
-    ...br,
-    ...blobs.map(([x, y, rr]) => [x + (r() - 0.5) * rr, y + rr * 0.55]),
-  ];
-  for (const [x, y] of hangs) {
-    const L = 34 + r() * 50,
-      n = 3 + Math.floor(r() * 3);
-    let d = "";
-    for (let i = 0; i < n; i++) {
-      const sx = x + (i - (n - 1) / 2) * 6,
-        l = L * (0.55 + r() * 0.45),
-        sw = (r() - 0.5) * 10;
-      d += `M${n1(sx)} ${n1(y)}C${n1(sx + sw)} ${n1(y + l * 0.35)} ${n1(sx - sw)} ${n1(y + l * 0.7)} ${n1(sx + sw * 0.5)} ${n1(y + l)}`;
-    }
-    s += `<path d="${d}" fill="none" stroke="${O}" stroke-width="7.4" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#788b59" stroke-width="4.4" stroke-linecap="round"/>`;
-  }
-  return wrap(w, h, s);
+  s += tCrown([[cx + 2, top - 8, 20 * k, 11]], r); // (the top tuft)
+  return { svg: tWrap(w, h, s, flip), w, h, foot };
 }
+
+/* B: a live oak. Short and thick, its great limbs reaching out low under one broad lumpy crown. About 2.8 ducks tall:
+   the big one, used sparingly. v: 0 even, 1 leaning one way (its long limb that way), 2 smaller, a taller dome */
+const OAK = [
+  {
+    w: 244,
+    clumps: [
+      [-82, 78, 38, 24],
+      [-44, 54, 50, 34],
+      [4, 40, 58, 36],
+      [50, 52, 50, 32],
+      [86, 76, 36, 24],
+      [0, 74, 76, 26],
+    ],
+    limbs: [
+      [-6, 118, -50, 104, -92, 98, 10],
+      [6, 112, 52, 98, 90, 96, 9],
+    ],
+  },
+  {
+    w: 244,
+    clumps: [
+      [-62, 82, 34, 22],
+      [-30, 58, 44, 30],
+      [16, 42, 56, 36],
+      [62, 54, 50, 32],
+      [96, 80, 30, 22],
+      [20, 76, 74, 26],
+    ],
+    limbs: [
+      [-6, 118, -36, 108, -66, 100, 9],
+      [6, 110, 60, 96, 100, 98, 11],
+    ],
+  },
+  {
+    w: 200,
+    clumps: [
+      [-56, 82, 34, 24],
+      [-26, 56, 44, 34],
+      [8, 38, 50, 38],
+      [44, 62, 42, 30],
+      [0, 82, 58, 24],
+    ],
+    limbs: [
+      [-6, 120, -36, 112, -64, 102, 8],
+      [6, 116, 32, 104, 56, 100, 8],
+    ],
+  },
+];
+function oak(seed = 1, v = 0, flip = false) {
+  const r = rnd(seed * 17 + 3),
+    { w, clumps, limbs } = OAK[v],
+    h = 184,
+    foot = 14,
+    cx = w / 2,
+    b = h - foot;
+  let s = tShadow(cx, b, w / 3);
+  s += tCrown(
+    clumps.map(([dx, y, rx, ry]) => [cx + dx, y, rx, ry]),
+    r,
+  );
+  for (const [x0, y0, qx, qy, x1, y1, lw] of limbs)
+    s += tLimb(`M${cx + x0} ${y0}Q${cx + qx} ${qy} ${cx + x1} ${y1}`, lw);
+  s += tTrunk(cx, b, 92, w > 220 ? 22 : 19, w > 220 ? 15 : 13, 1.55);
+  return { svg: tWrap(w, h, s, flip), w, h, foot };
+}
+
+/* D: a willow with no drapes: a round head on a short trunk, its sides drooping low, the trunk showing under it.
+   About 3 ducks tall. v: 0 wide and drooping, 1 taller and narrower, 2 two trunks from one foot */
+const WILLOW = [
+  {
+    w: 200,
+    clumps: [
+      [-62, 98, 32, 28],
+      [-32, 64, 46, 36],
+      [0, 44, 52, 38],
+      [32, 62, 46, 36],
+      [62, 96, 32, 28],
+      [0, 86, 56, 28],
+    ],
+    trunks: [[4, 13]],
+  },
+  {
+    w: 170,
+    clumps: [
+      [-48, 96, 28, 28],
+      [-24, 58, 40, 36],
+      [2, 34, 44, 34],
+      [26, 56, 40, 36],
+      [50, 92, 28, 28],
+      [0, 80, 48, 30],
+    ],
+    trunks: [[2, 12]],
+  },
+  {
+    w: 210,
+    clumps: [
+      [-68, 92, 30, 26],
+      [-40, 62, 42, 34],
+      [-6, 46, 46, 36],
+      [30, 52, 46, 36],
+      [64, 86, 32, 28],
+      [0, 84, 62, 28],
+    ],
+    trunks: [
+      [-14, 10],
+      [18, 9],
+    ],
+  },
+];
+function willow(seed = 1, v = 0, flip = false) {
+  const r = rnd(seed * 23 + 7),
+    { w, clumps, trunks } = WILLOW[v],
+    h = 200,
+    foot = 14,
+    cx = w / 2,
+    b = h - foot;
+  let s = tShadow(cx, b, w / 3);
+  for (const [dx, tw] of trunks)
+    s += tTrunk(cx + dx, b, 80, tw, tw * 0.62, 1.7);
+  /* the droop: small round leaf tips all along the bottom of its sides, so it weeps without a single strand */
+  const C2 = clumps.map(([dx, y, rx, ry]) => [cx + dx, y, rx, ry]),
+    tips = [];
+  for (const [x, y, rx, ry] of C2.slice(0, -1))
+    if (y > 80)
+      for (let i = -1; i <= 1; i++)
+        tips.push([
+          x + i * rx * (0.5 + r() * 0.15),
+          y + ry * (0.8 - Math.abs(i) * 0.25) + r() * 6,
+          8 + r() * 4,
+          10 + r() * 6,
+        ]);
+  s += tCrown([...C2, ...tips], r, "#358226"); // (a willow's leaves a little yellower than the rest)
+  return { svg: tWrap(w, h, s, flip), w, h, foot };
+}
+
+export const SWAMP_KINDS = { cypress, oak, willow };
+export const swampTreeSVG = (kind = "cypress", v = 0, seed = 1, flip = false) =>
+  SWAMP_KINDS[kind](seed, v, flip);
 /* the fallen tree across the road's east end: a log from (x0, y0) to (x1, y1) in a box w × h, `half` thick each side
    and lying `z` high at its middle; its roots torn up at the south end, its broken crown at the north, moss along it */
 export function fallenSVG({ w, h, x0, y0, x1, y1, half = 55, z = 30 }) {
