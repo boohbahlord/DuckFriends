@@ -320,9 +320,9 @@ export const ARMS = {
     cool: 100,
     dmg: 1,
     speed: 1150,
-    mag: 75,
+    mag: 100, // (the owner's, Nov 17: 100 bullets and twice the reload time)
     all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
-    reload: 2800,
+    reload: 5600,
     k: "lmg",
   },
   /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
