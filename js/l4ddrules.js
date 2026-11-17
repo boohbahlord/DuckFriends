@@ -639,7 +639,13 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
+  ...(l[8]
+    ? { color: "#6b5434", beakColor: "#7a5a2e", beakColor2: "#4a3418" }
+    : {}), // (a mud zombie: MUD)
 });
+/* Downpour's mud zombies (the owner's, Nov 16 23:15Z): 4% of them, 1 HP less, the color of the mud; a hit from one
+   puts mud over the corners of that duck's screen, which fades after 10 s (l4dd.js mudScreen). l[8] is 1 */
+export const MUD = { P: 0.04, FOR: 10000, FADE: 1500 };
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
@@ -3378,7 +3384,8 @@ function newZombie(s, L, T, zs = []) {
     odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
-    max = hp0(),
+    mud = dp() && Math.random() < MUD.P ? 1 : 0,
+    max = Math.max(1, hp0() - mud),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
     [sx, sy] = from || o.out;
@@ -3394,7 +3401,9 @@ function newZombie(s, L, T, zs = []) {
     dir: 0,
     l: jus
       ? [max, v, o.id, 0, 0, -1, -1, 1]
-      : [max, v, o.id, size, build, hat, outfit],
+      : mud
+        ? [max, v, o.id, size, build, hat, outfit, 0, 1]
+        : [max, v, o.id, size, build, hat, outfit],
   };
 }
 function moveZombies(s, zs, now, T, up) {
@@ -3524,11 +3533,11 @@ function moveZombies(s, zs, now, T, up) {
         z.dir = Math.round(
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
-        if (
-          !dodging(s, target.p, now) &&
-          hurtDuck(s, p4, target.id, now, "claw")
-        )
+        const hit = !dodging(s, target.p, now);
+        if (hit && hurtDuck(s, p4, target.id, now, "claw"))
           pls.splice(pls.indexOf(target), 1);
+        if (hit && z.l[8] && p4[target.id] && p4[target.id].at === now)
+          p4[target.id] = { ...p4[target.id], mud: now }; // (a mud zombie's: mud over that duck's screen, l4dd.js mudScreen)
       }
     } else z.n = 0;
   }
