@@ -18,7 +18,11 @@ export const pixelOn = () => on;
 
 /* ---------- the grid ---------- */
 const FILL = 0.7; // (a duck's drawing fills about 70% of its box, hat room included)
-let duckPx = 92 * FILL, // (a duck's drawn height on the board, in css px; the board tells me its ducks' box size)
+/* the board's duck box the pages and every other map are drawn for (css px): Duck Cabin and Downpour use its grid too,
+   though their ducks show smaller, so their pixels are the same size as every other map's (the owner's, Nov 17: "one
+   pixel size uniformly like the page backgrounds for other maps") */
+export const PAGE_DUCK = 92;
+let duckPx = PAGE_DUCK * FILL, // (a duck's drawn height on the board, in css px; the board tells me its ducks' box size)
   grid = 2;
 function setGrid() {
   grid = Math.max(1, duckPx / DUCK);
