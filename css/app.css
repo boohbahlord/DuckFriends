@@ -18336,6 +18336,8 @@ html.phone:not(.phone-land) .gbar-r {
 html.phone:not(.phone-land) .gbar .iconbtn {
   width: 2.1rem;
   height: 2.1rem;
+}
+
 /* ---------- Nous Within Kenoma's terminal (owner, Nov 17) ----------
    "there is the little lines like you see in a old vintage computer in a terminal screen that go through the screen ...
    I don't understand why we decided to drop that for the maps that carry its UI and its page background ... that
@@ -18349,11 +18351,13 @@ html.map-is-nwk {
   --nk-sl-p: 3px;
   --nk-sl-a: 0.34;
   --nk-vig: 0.68;
+}
 html.map-is-nwk body {
   text-shadow:
     0 0 1px color-mix(in srgb, var(--ink) 70%, transparent),
     0 0 5px color-mix(in srgb, var(--nk-glow, #ff9f24) 55%, transparent),
     0 0 14px color-mix(in srgb, var(--nk-glow, #ff9f24) 28%, transparent);
+}
 /* the letters: the pixel letters of an old DEC terminal everywhere, a little smaller than the reading's (the site's
    font-size-adjust), and the reading in Plex */
 html.map-is-nwk,
@@ -18368,6 +18372,7 @@ html.pixel.map-is-nwk *::after {
   font-size-adjust: 0.5;
   font-synthesis: none; /* (no made-up bold: the site found these letters thick enough) */
   letter-spacing: 0.03em;
+}
 /* the hover tips: one of the site's boxes, its well and an amber line */
 html.map-is-nwk .tip,
 html.map-is-nwk .tipbox {
@@ -18376,6 +18381,7 @@ html.map-is-nwk .tipbox {
   border: 1px solid var(--nk-glow, #ff9f24);
   border-radius: 0;
   backdrop-filter: none;
+}
 html.map-is-nwk :is(.question, .wyr-qs, .law-case, textarea, input),
 html.map-is-nwk :is(.question, .wyr-qs, .law-case) *,
 html.pixel.map-is-nwk :is(.question, .wyr-qs, .law-case, textarea, input),
@@ -18383,10 +18389,12 @@ html.pixel.map-is-nwk :is(.question, .wyr-qs, .law-case) * {
   font-family: "NWK Plex", Consolas, monospace !important;
   font-weight: 300;
   letter-spacing: 0;
+}
 html.map-is-nwk :is(h1, h2, h3, .btn, .iconbtn, .gbar-l, #jumps) {
   text-shadow:
     0 0 5px color-mix(in srgb, var(--nk-glow, #ff9f24) 47%, transparent),
     0 0 16px color-mix(in srgb, var(--nk-glow, #ff9f24) 24%, transparent);
+}
 /* the glass: dark at its edges, a rounded tube in its case */
 html.map-is-nwk::before {
   content: "";
@@ -18404,6 +18412,7 @@ html.map-is-nwk::before {
     0 0 0 80px #17130e,
     inset 0 0 0 2px #050301,
     inset 0 0 40px rgba(0, 0, 0, 0.6);
+}
 /* the scanlines, with the faintest flicker */
 html.map-is-nwk::after {
   content: "";
@@ -18417,6 +18426,7 @@ html.map-is-nwk::after {
     rgba(0, 0, 0, var(--nk-sl-a)) calc(var(--nk-sl-p) - 1.6px) var(--nk-sl-p)
   );
   animation: nk-flicker 0.11s steps(2) infinite;
+}
 /* the band rolling down the glass */
 html.map-is-nwk body::before {
   content: "";
@@ -18435,29 +18445,45 @@ html.map-is-nwk body::before {
     transparent
   );
   animation: nk-roll 9s linear infinite;
+}
 @keyframes nk-roll {
   from {
     transform: translateY(0);
+  }
   to {
     transform: translateY(160vh);
+  }
+}
 @keyframes nk-flicker {
   0% {
     opacity: 1;
+  }
+  100% {
     opacity: 0.94;
+  }
+}
 @media (max-width: 520px) {
   html.map-is-nwk {
     --nk-bez: 2px;
+  }
   html.map-is-nwk::before {
     border-radius: 12px / 11px;
+  }
+}
 /* Animations off or Data saving: the glass and its lines stay, nothing moves */
 html.still.map-is-nwk::after,
 html.lite.map-is-nwk::after {
   animation: none;
+}
 html.still.map-is-nwk body::before,
 html.lite.map-is-nwk body::before {
+  display: none;
+}
 @media (prefers-reduced-motion: reduce) {
   html.map-is-nwk::after {
     animation: none;
+  }
   html.map-is-nwk body::before {
     display: none;
+  }
 }
