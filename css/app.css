@@ -3452,6 +3452,9 @@ html.mouse-move .board {
   overflow: auto;
   padding: 0.2rem 0.4rem 1rem 0.2rem;
 }
+.statpanel.fit {
+  touch-action: none;
+} /* (nothing to scroll: the walking stick can start on it, js/touch.js) */
 .statpanel h2 {
   margin: 0.2rem 0 0.5rem;
 }
@@ -7965,6 +7968,20 @@ html.still .spe-bone .bone-slide {
 @media not all and (any-pointer: fine) {
   html:not(.keyboard) .tpad {
     display: block;
+  }
+  /* a phone upright: the buttons get a row of their own at the top of the bottom bar, so the screen's cards, the Send
+     button and the board end above them instead of under them; the attack stick and the jump button sit side by side
+     (the owner's, Nov 17 13:30Z) */
+  html:not(.keyboard):not(.phone-land) .bbar:has(.tpad:not(.gone)) {
+    padding-top: 4.3rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad {
+    bottom: auto;
+    top: 0.2rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad.armed .tpad-jump {
+    right: 4.5rem;
+    bottom: 0.75rem;
   }
   html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
     left: calc(50vw - 3.15rem);
