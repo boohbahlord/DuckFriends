@@ -9,6 +9,26 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v84",
+    version: 84,
+    date: "Nov 17, 2026",
+    title: "Fixes, and the map vote in order",
+    news: [
+      "In Vote for Map, each map comes with its variations right after it, the maps with the most variations last, and Random is first, top left. The Nous Within Kenoma maps' pictures now look like the maps themselves.",
+      "The Vote button glows and makes a rising sound as you hold it, and clicks when it's full; the phone's use button just clicks, no hold.",
+      "For Mad God Justin: every weapon fires while held, the grenade launcher explodes on zombies, the zebra cake draws them in, and guns drop with the fireplace's odds.",
+      "For Mad God Justin: no more sprint.",
+      "For Dead Ducks Arcade: points only ever come in fives (bullets now 15 for 5, arrows 5 for 4), Justin's pot included.",
+      "For Dead Ducks Arcade: the Tommy gun reloads as fast as the SMG and carries more ammo; the UMP-45 reloads as fast too.",
+      "For Dead Ducks Arcade: Justin only sprints when he has to, and strolls around when it's calm.",
+    ],
+    fixed: [
+      "You can reload while sprinting again, and the note about it is gone.",
+      "For Dead Ducks Arcade: zombies stick to the wall they chose to climb.",
+      "For Dead Ducks Arcade: zombies coming in at a window, a hole or a door, and anyone you can see through a hole in a roof, show as themselves again, not just an outline.",
+    ],
+  },
+  {
     id: "v83",
     version: 83,
     date: "Nov 17, 2026",
