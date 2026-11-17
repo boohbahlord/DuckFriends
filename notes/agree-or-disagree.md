@@ -5046,3 +5046,39 @@ are all good to go we can put them in the game"
   and Downpour (rules.js ZMAPS, vote kind "zmap", 0:20 like the map vote; vote.js zmapTile, pictures
   assets/maps/duck-cabin.jpg and assets/maps/downpour.jpg). Its result sets options.l4map. Also built for Downpour
   (owner 23:15Z, 23:23Z, 23:29Z): rain and wading ripples, power lights, lightning, mud zombies; Noah drew the art.
+
+## Request (2026-11-16 23:15Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt5jgfAw1XCisXPag7V226bj): second Dead Ducks Arcade map, the gas station and chapel (Swamp Fever mood)
+Pictures: /mnt/project-files/refs/zombie-map-plans-2026-11-16/owner/forest-line.png (red line = where the forest
+reaches), owner/gas-station-holes.png (circles = holes in the gas station's walls).
+> this shows where the forest extends to, and the forest extends to there not as an invisible wall, but the rest of the map has a fence with holes in it that zombies get in through. There are also barricades inside of buildings of course. Make sure to add a wall. Make sure to add holes in the walls to the places i circled here AND the restroom has a door to go into it from the inside towards the aisles as well
+>
+> the map is night time and raining,  where the round kinda sinks down more then the grass ground in terms of elevation and thus if flooding with water (use water effect from pool maybe? idk how good of an idea that is). The water in that center will slow ducks down by 30%
+>
+> The flooding water rises up so high that ducks cant go towards it because the left side of road actually has even lower elevation near before the exit of the map
+>
+> the generator and power supply are still in the game and is to the right of the gas station, there, turning it on will brings lights to the gas station, the gas station pump area, and the church.
+>
+> the toolbox will be found on an empty shelf or on he top front or back of car and can be picked up by walking over it, the gas is found at the pump in a jerry can, the fuse is found in the storeroom or on a church pew, and the switch is found in the restroom, shelf, top or front of car, church pew, or at one of the pumps.
+>
+> the npc they go to for buying things now is the priest church at the church named "Priest" who serves the roll that Justin's butler did
+>
+> the restroom toilet nis the same toilet from the cabin so that way we dont mess it up.
+>
+> focus on the skeleton first, then the details, then the rain and water, and then the lighting last.
+>
+> im not too worried ab making this map super lightweight, i just want it to be cool and not take a crazy amount of time and resources to make whenever we now have everything as 32 bit or whatever, so yeah.
+>
+> On this map, there is a 1% chance that a random zombie will be struck with lightning while on a player's screen once. Every 1% chance rolls another 1% chance to see if it happens twice in the same round. THe lightning only hits the zombie.
+>
+> Quick question what is the tower?
+>
+> ALSO, there should be a car with a lifted up hood, and that car's hood lifted up to it's engine is the same function as the fireplace and it is near the gas station. It kinda glows until the first player uses it.
+>
+> give me an idea of how much harder or easier this will be then cabin
+>
+> I imagine the swamp fever map specifically from L4D2 as inspiration, not any other map from that game
+>
+> some zombie ducks will have mud all over them, and them hitting you gets mud on you screen, and these ones are a 4% chance of spawning, and mud hits the corners of your screen and fade away after ten seconds and they have one less healthpoint then usual, the muddy zombies that are rare
+## Nov 16, 23:29Z: gas meter under the power box
+Owner (part of a longer message about gas, relayed by Adam): "In this game mode and the other, there is a meter below the power box that tells how much gas is in it in boxes of twelths similiar to a HP bar, but it is yellow because electric, and it is slightly transparent. The meter is on the power box in both game modes."
+Decided (Jackal): gasMeter(rounds) in js/l4ddpowerui.js gives the meter's HTML (12 boxes, one per round of a full can; more than 12 shows full); the cabin's power box draws it under itself, and Downpour calls the same function.

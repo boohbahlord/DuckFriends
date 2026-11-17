@@ -22,6 +22,15 @@ import { powerBoxSVG, PART_ICONS, jerrySVG } from "./powerart.js"; // (Noah's dr
 
 export { PART_ICONS };
 
+/* the gas meter (the owner, Nov 16 23:29Z): twelve boxes like the HP bar's, one for each round of a full can's fuel, in
+   the yellow of electricity and a little see-through. One function for every place that has a power box (the cabin's
+   now, Downpour's too): gasMeter(rounds) gives the meter's HTML for that many rounds left (0 to 12, more is a full one) */
+export const GAS_BOXES = PW.FULL;
+export function gasMeter(rounds) {
+  const n = Math.max(0, Math.min(GAS_BOXES, Math.round(+rounds || 0)));
+  return `<span class="l4-gas" role="img" aria-label="Gas: ${n} of ${GAS_BOXES} rounds">${Array.from({ length: GAS_BOXES }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span>`;
+}
+
 let box = null, // { el, img, n (the count), fuel (the sign's words), sig, tr, k }
   pool = null, // the pool at the middle left
   items = new Map(), // what lies about: its n → { el, o, tr, k }
@@ -34,10 +43,11 @@ export function pwMount(ctx, layer) {
   box = { el: document.createElement("div"), sig: "", tr: "", k: 0 };
   box.el.className = "l4-pw";
   box.el.innerHTML =
-    '<img alt="" draggable="false"><span class="l4-pw-n" hidden></span><span class="l4-pw-fuel"></span>';
+    '<img alt="" draggable="false"><span class="l4-pw-n" hidden></span><span class="l4-pw-fuel"></span><span class="l4-pw-gas"></span>';
   box.img = box.el.querySelector("img");
   box.n = box.el.querySelector(".l4-pw-n");
   box.fuel = box.el.querySelector(".l4-pw-fuel");
+  box.gas = box.el.querySelector(".l4-pw-gas");
   layer.append(box.el);
   pool = document.createElement("div");
   pool.className = "l4-parts";
@@ -153,6 +163,7 @@ export function pwDraw(ctx) {
       box.fuel.textContent = on
         ? `${left} ${left === 1 ? "round" : "rounds"}`
         : "Fuel";
+      box.gas.innerHTML = gasMeter(left); // (the meter under the box: a block for each round left)
       box.el.classList.toggle("on", on);
     }
     const tr = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px)`;

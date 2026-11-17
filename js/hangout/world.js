@@ -26,6 +26,7 @@ import {
   gridPx,
   snap,
   setDuckSize,
+  setCamScale,
   raster,
   rasterReady,
 } from "../pixel.js";
@@ -764,6 +765,7 @@ export function mountWorld(board, api) {
         /* the pixel look: one of the ground canvas' pixels is one pixel of the grid (a 32nd of a duck, as the board's ducks:
            the grid is set here first, so the ground is right from its first frame) */
         setDuckSize(L.DUCK * cam.sc);
+        setCamScale(cam.sc); // (the porch's string lights, made into pixels by a filter under this zoom: px-fc)
         const gp = gridPx();
         cam.dpr = 1 / gp;
         EDGE = Math.ceil(96 / gp) * gp;

@@ -15592,6 +15592,33 @@ html.still:not(.low) .l4z.dead.nuked {
   top: calc(-116px * var(--k, 1));
   font-size: calc(11px * var(--k, 1));
 }
+/* the gas meter under the power box (l4ddpowerui.js gasMeter): twelve boxes, yellow, a little see-through */
+.l4-pw-gas {
+  position: absolute;
+  left: calc(-61px * var(--k, 1));
+  top: calc(30px * var(--k, 1));
+  width: calc(96px * var(--k, 1));
+}
+.l4-gas {
+  display: flex;
+  gap: calc(1.5px * var(--k, 1));
+  padding: calc(2px * var(--k, 1));
+  box-sizing: border-box;
+  background: rgba(18, 12, 4, 0.55);
+  border: calc(1.5px * var(--k, 1)) solid rgba(60, 44, 8, 0.7);
+  border-radius: calc(3px * var(--k, 1));
+  opacity: 0.85;
+}
+.l4-gas i {
+  flex: 1;
+  height: calc(7px * var(--k, 1));
+  min-width: 0;
+  border-radius: calc(1px * var(--k, 1));
+  background: rgba(255, 255, 255, 0.08);
+}
+.l4-gas i.on {
+  background: linear-gradient(#fff1a0 0 25%, #ffd92e 25% 65%, #d9a800 65%);
+}
 /* the Angel machine on the stage (l4ddangelui.js: 130 x 150, its foot 8 up from the bottom, in the middle), and the
    orb over it once it's done, with its duck's name */
 .l4-am {
@@ -17522,10 +17549,12 @@ html.pixel img.px {
 }
 html.pixel .map-layer:not(.px-own),
 html.pixel #shapes,
-html.pixel .hg-porch,
 html.pixel .spx-flames {
   filter: url(#px-f);
 } /* (every map, moving as before, drawn on the grid: pixel.js' filter) */
+html.pixel .hg-porch {
+  filter: url(#px-fc);
+} /* (shown under Duck Cabin's zoom: the filter made for it, so its pixels are the grid's too) */
 html.pixel .spx-flames {
   mix-blend-mode: screen;
 } /* (the filter makes the flames one picture: it's that picture that lights the duck now) */
@@ -18012,10 +18041,19 @@ html.pixel .vt button {
 html.pixel.armed :is(.board, .hang-board) {
   cursor: var(--cur-cross), crosshair;
 }
-/* the stats screen's line about when the ducks vote on the next game (Vote return): a line of its own under the buttons */
+/* the stats screen's line about when the ducks vote on the next game (Vote return): a line of its own under the buttons.
+   It never sets the row's width (contain: inline-size): as one long line it made the bottom bar's middle as wide as the
+   screen, so the controls on the left were squeezed to one word a line and the bar grew over half the board (owner,
+   Nov 16) */
 .act-row .vote-back-note {
   flex-basis: 100%;
   text-align: center;
+  contain: inline-size;
+}
+/* with that line, the row's buttons wrap at about the width of two or three of them, so the controls on the left keep
+   their width and the bar stays low over the board */
+.act-row:has(> .vote-back-note) {
+  max-width: 40rem;
 }
 /* Game Settings: the "Low" chip by Gore and Heavy effects while my own Low graphics lighten them on my screen (fx.js);
    small, on the name's line, even on a phone */
