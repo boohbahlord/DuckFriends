@@ -207,7 +207,7 @@ export function pwTarget(pos, s, near) {
   if (!pwState(s)) return null;
   const d = Math.hypot(PW.E[0] - pos.x, PW.E[1] - pos.y);
   if (d < near) return { kind: "power", d };
-  return pumpNear(pos.x, pos.y, near) ? { kind: "pump", d: 0 } : null; // (Downpour's gas pumps)
+  return pumpNear(pos.x, pos.y) ? { kind: "pump", d: 0 } : null; // (Downpour's gas pumps: by their south side only)
 }
 /* Downpour: a gas pump's button */
 export function pumpLabel(s) {

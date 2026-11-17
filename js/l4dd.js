@@ -98,6 +98,9 @@ import {
   magIn,
   fullFor,
   downArmed,
+  potOf,
+  WILD,
+  isWild,
 } from "./l4ddrules.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
@@ -439,6 +442,8 @@ function zombieEl(z) {
     face: 1,
     hp: z.hp,
     st: z.st,
+    k: z.k,
+    j: z.j,
     a: z.a,
     sh: "",
     hits: "",
@@ -578,6 +583,8 @@ function seeZombies(s, ctx, now) {
     }
     o.hp = z.hp;
     o.st = z.st;
+    o.k = z.k; // (the roof it climbs or walks, and its jump onto the canopy: l4ddrules.js zombieZ)
+    o.j = z.j;
     o.a = z.a;
   }
   for (const [i, o] of Z)
@@ -658,6 +665,58 @@ function spinSquare(s, ctx) {
   sqSig = sig;
   sqEl.firstChild.setAttribute("points", pts.join(" "));
   sqEl.style.setProperty("--k", Wd.sc.toFixed(3));
+}
+/* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
+   JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
+   as flat as the floor */
+const JPOOL = { ms: 6000 };
+const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">
+  <ellipse cx="0" cy="0" rx="40" ry="15" fill="#5e0711"/>
+  <ellipse cx="-24" cy="5" rx="22" ry="9" fill="#5e0711"/>
+  <ellipse cx="26" cy="-4" rx="20" ry="9" fill="#5e0711"/>
+  <ellipse cx="8" cy="10" rx="18" ry="7" fill="#5e0711"/>
+  <ellipse cx="-6" cy="-3" rx="24" ry="8" fill="#7a0b17"/>
+  <ellipse cx="-12" cy="-6" rx="7" ry="2" fill="#a3242c" opacity="0.6"/>
+</svg>`;
+let poolEl = null,
+  poolAt = 0,
+  poolSig = "";
+function seePool(s, ctx) {
+  if (!poolEl) return;
+  const Wd = ctx.world,
+    q = P4(s, WILD.id),
+    down = !!(q && q.ex && isWild(s, WILD.id)),
+    a = down && !+s.options.noGore ? Wd.at(WILD.id) : null,
+    show = !!a && seenFrom(a.x, a.y, Wd.inside, a.z);
+  if (!down) poolAt = 0;
+  else if (!poolAt) poolAt = clockNow();
+  if (poolEl.hidden !== !show) poolEl.hidden = !show;
+  if (!show) return;
+  const k = Math.min(1, (clockNow() - poolAt) / JPOOL.ms),
+    grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
+    p = Wd.toScreen(a.x, a.y + 4, a.z),
+    sig = `${p.left.toFixed(1)} ${p.top.toFixed(1)} ${(Wd.sc * grow).toFixed(3)}`;
+  if (sig === poolSig) return;
+  poolSig = sig;
+  poolEl.style.transform = `translate(${p.left.toFixed(1)}px, ${p.top.toFixed(1)}px) scale(${(Wd.sc * grow).toFixed(3)})`;
+  poolEl.style.zIndex = a.z < 1 ? 3 : Math.round(sortY(a.x, a.y - 30, a.z)); // (on the floor under the ducks; on a roof, just under him)
+}
+/* Justin's pot (the owner's, Nov 17 18:05Z: the points for his kills are everyone's): a smaller line under my points,
+   while he's out there with a gun or something is in it (it's split at the end of each round: l4ddrules.js potSplit) */
+let potShown = "";
+function seePot(s) {
+  const n = potOf(s),
+    q = P4(s, WILD.id),
+    on =
+      n > 0 ||
+      !!(isWild(s, WILD.id) && s.players[WILD.id].armed && !(q && q.ex)),
+    t = on ? `Justin's points for everyone: ${n}` : "";
+  if (t === potShown) return;
+  potShown = t;
+  const el = ptsEl.querySelector(".l4-jp");
+  el.textContent = t;
+  el.hidden = !on;
+  ptsEl.parentElement?.classList.toggle("l4-jp-on", on);
 }
 /* Instant Kill, Double Points, Speed Boost and Sale: each one on, by name with the seconds it has left, in a row at the
    top middle (the owner's, Nov 16), under the points (and under the Ready button between rounds). While Instant Kill is
@@ -2059,7 +2118,9 @@ activity({
     ptsEl = document.createElement("div");
     ptsEl.className = "l4-pts";
     ptsEl.setAttribute("role", "status");
-    ptsEl.innerHTML = "<span><b>0</b> points</span>";
+    ptsEl.innerHTML =
+      '<span><b>0</b> points</span><i class="l4-jp" hidden></i>';
+    potShown = "";
     sayEl = document.createElement("div");
     sayEl.className = "l4-say";
     sayEl.setAttribute("role", "alert");
@@ -2092,6 +2153,14 @@ activity({
     sqEl.style.display = "none";
     sqSig = "";
     layer.append(sqEl);
+    poolEl = document.createElement("div");
+    poolEl.className = "l4-jpool";
+    poolEl.setAttribute("aria-hidden", "true");
+    poolEl.innerHTML = POOL_SVG;
+    poolEl.hidden = true;
+    poolAt = 0;
+    poolSig = "";
+    layer.append(poolEl);
     shop = shopEl(ctx);
     butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
@@ -2151,15 +2220,16 @@ activity({
       egg && egg.el,
       shop && shop.el,
       sqEl,
+      poolEl,
     ])
       e?.remove();
-    sqEl = null;
+    sqEl = poolEl = null;
     cv = g = hud = endEl = over = layer = fxl = null;
     ptsEl = sayEl = onEl = gotEl = killEl = boxEl = butler = shop = null;
     vitEl = hintEl = null;
     bellEl = flareEl = null;
     vitShown = "";
-    ctx?.world?.board.classList.remove("blackout", "l4-board");
+    ctx?.world?.board.classList.remove("blackout", "l4-board", "l4-jp-on");
   },
   onState(s, ctx) {
     if (!layer || !s.hang || !s.hang.l4) return;
@@ -2174,6 +2244,7 @@ activity({
     spinSquare(s, ctx);
     seeHud(s, ctx);
     seePts(s, ctx);
+    seePot(s);
     l4Hear(s, ctx); // (its sounds: l4ddsfx.js)
     if (shop.open) shopFill(s, ctx);
     /* a ding: a weapon from the fireplace taken (an upgrade bought rings the Butler's till: l4ddsfx.js) */
@@ -2242,7 +2313,7 @@ activity({
       const up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
-            : o.st === 6 || o.st === 7
+            : o.st === 6 || o.st === 7 || o.st === 8
               ? zombieZ(o) - heightAt(o.x, o.y)
               : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof)
         z = heightAt(o.x, o.y) + up,
@@ -2398,6 +2469,7 @@ activity({
     }
     seeOn(ctx.state(), ctx);
     spinSquare(ctx.state(), ctx);
+    seePool(ctx.state(), ctx);
     /* Justin's Butler */
     {
       const z = heightAt(BUTLER.x, BUTLER.y),
@@ -2521,7 +2593,7 @@ activity({
     for (const o of Z.values())
       if (o.st !== 3 && !o.el.hidden && (inCabin(o.x, o.y) === ins || !ins))
         // (from outside: one inside a building too, under its roof; Downpour and the cabin alike. Its height: up on a roof, no roof turns see-through over it)
-        out.push([o.x, o.y, o.st === 6 || o.st === 7 ? zombieZ(o) : 0]);
+        out.push([o.x, o.y, o.st >= 6 && o.st <= 8 ? zombieZ(o) : 0]);
     return out;
   },
   crowd(x, y) {

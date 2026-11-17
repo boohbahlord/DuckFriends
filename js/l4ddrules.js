@@ -47,6 +47,8 @@ import {
   inCabin,
   inDeck,
   heightAt,
+  slabBetween,
+  whereIn,
   standable,
   solidsAt,
   onPlatform,
@@ -61,10 +63,17 @@ import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
-import { hOk, hLock, shotFeet } from "./heights.js";
+import { hOk, hLock, shotFeet, MID } from "./heights.js";
 import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
-import { woundCode, pwHit, explodedLook } from "./wounds.js";
+import {
+  woundCode,
+  pwHit,
+  pwAdd,
+  explodedLook,
+  PCRIT,
+  DEATH,
+} from "./wounds.js";
 import {
   BOMB,
   bombRoll,
@@ -75,7 +84,7 @@ import {
   jaimeCount,
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
-import { GOD_LINES, E_LINES } from "./hangout/justin.js";
+import { GOD_LINES, E_LINES, DEATH_LINES } from "./hangout/justin.js";
 import {
   powerSetUp,
   powerRound,
@@ -1391,10 +1400,33 @@ const headOf = (s, id, w) => {
   return own * holy + CRIT.UP * (upOf(s, id).acc || 0);
 };
 function addPts(s, id, n) {
-  if (isWild(s, id)) id = s.players[id].by; // (Justin's kills are the points of the duck that bought him his gun)
+  if (isWild(s, id)) {
+    if (n > 0) s.hang.l4jp = (s.hang.l4jp || 0) + n; // (Justin's points go in the pot for everyone: potSplit)
+    return;
+  }
   if (!n || !id || !s.players[id]) return;
   s.hang.l4pt = { ...(s.hang.l4pt || {}), [id]: ptsOf(s, id) + n };
 }
+
+/* Justin's points (the owner's, Nov 17 18:05Z: the points for his kills are everyone's): they go in a pot,
+   s.hang.l4jp, and at the end of each round it's split equally among the players in fives; the fives left over go to
+   players picked at random, one each, and what's under 5 waits for the next round */
+function potSplit(s) {
+  const pot = s.hang.l4jp || 0,
+    to = players(s).filter((id) => !isWild(s, id) && !isHelper(s, id));
+  if (pot < 5 || !to.length) return;
+  const fives = Math.floor(pot / 5),
+    each = Math.floor(fives / to.length),
+    lucky = [...to];
+  for (let i = lucky.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [lucky[i], lucky[j]] = [lucky[j], lucky[i]];
+  }
+  lucky.length = fives - each * to.length;
+  for (const id of to) addPts(s, id, (each + (lucky.includes(id) ? 1 : 0)) * 5);
+  s.hang.l4jp = pot - fives * 5;
+}
+export const potOf = (s) => (s && s.hang && s.hang.l4jp) || 0;
 
 /* ---------- a game, a round ---------- */
 const countFor = (s, r) => zombiesFor(r, Math.max(1, players(s).length));
@@ -1741,6 +1773,7 @@ function setUp(s, now) {
   s.hang.l4p = {};
   s.hang.l4a = {};
   s.hang.l4pt = {};
+  s.hang.l4jp = 0; // (Justin's pot: potSplit)
   s.hang.l4u = {};
   s.hang.l4box = {};
   s.hang.l4fo = {};
@@ -2002,7 +2035,7 @@ function l4Act(s, a, now) {
 }
 /* a duck buys Justin out in Downpour a gun (the owner's, Nov 17): standing by him, in the rest phase any gun of WILD_GUNS,
    outside it the first one; it comes out of my points. He keeps it (endless bullets that still reload), can't be hurt by
-   players any more, and the points for his kills are mine */
+   players any more, and the points for his kills go in the pot for everyone (potSplit) */
 function justinBody(s, what, id, now, mx, my) {
   const L = s.hang.l4,
     B = jaimeBody();
@@ -2217,7 +2250,28 @@ const FIGHT = [
     ].includes(l),
   ),
 ];
-const LINES = { fight: FIGHT, jaime: JUSTIN_AT_JAIME };
+const LINES = { fight: FIGHT, jaime: JUSTIN_AT_JAIME, death: DEATH_LINES };
+/* his own lines (the owner's, Nov 17 18:05Z: "all of his normal lines ... just like his script is supposed to do"): as in
+   Duck Cabin (justin.js), on his own a random one of E_LINES every 45 to 90 seconds; a death line when he goes down; a
+   line against Jaime when a duck sends a Jaime in (a Jaime Bomb gets his snap: jaimeSnap) */
+const CHAT = [45000, 90000];
+function justinChat(s, now) {
+  const q = P4(s, WILD.id);
+  if (!isWild(s, WILD.id) || !q || q.dn || q.gh) return;
+  if (!s.hang.l4jc) s.hang.l4jc = now + rnd(...CHAT) * 0.5;
+  if (now < s.hang.l4jc) return;
+  s.hang.l4jc = now + rnd(...CHAT);
+  logIn(s, {
+    from: WILD.id,
+    to: null,
+    text: E_LINES[Math.floor(Math.random() * E_LINES.length)],
+  });
+}
+/* is the Justin out there (or the fireplace's) here and up, to say something? */
+const justinUp = (s) => {
+  const q = P4(s, HELPER.id);
+  return !!s.players[HELPER.id] && !!q && !q.dn && !q.gh;
+};
 function justinSays(s, key) {
   const list = LINES[key],
     bags = { ...(s.hang.l4jl || {}) };
@@ -2545,6 +2599,9 @@ export function l4Use(s, a, now) {
   else if (what === "laser") laser(s, id, m, px, py, dx, dy, hz, now);
   else if (what === "flamer") flame(s, id, m, px, py, dx, dy, hz, now);
   else {
+    const mine =
+      what !== "grenade" &&
+      myFloor(zombies(s), px, py, hz, dx, dy, (A.far || 1600) * 1.2); // (Doom's: heights.js holds it to my floor)
     const shot = (k, ux, uy, v, more) => ({
       n,
       by: id,
@@ -2559,6 +2616,7 @@ export function l4Use(s, a, now) {
       ly: p.y,
       hz,
       hin: inCabin(px, py) ? 1 : 0,
+      ...(mine ? { lh: Math.round(hz + MID) } : {}),
       ...more,
     });
     if (what === "shotgun") {
@@ -2646,7 +2704,7 @@ function strike(s, z, dmg, head, by, w = "") {
   addPts(s, by, (head ? PTS.HEAD : PTS.HIT * took) * (on.double ? 2 : 1));
   if (z.hp <= 0) {
     /* the zombies each duck killed this game (the overall stats' Zombies killed: l4dd.js record); Justin's kills are
-       the duck's that bought him his gun, as the points are */
+       the duck's that bought him his gun (his points go in the pot: potSplit) */
     const id = isWild(s, by) ? s.players[by].by : by;
     if (id && s.players[id])
       s.hang.l4kz = {
@@ -2708,6 +2766,7 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     zs = zombies(s),
     T = now - s.hang.l4.t0,
     most = angelOf(s, id, "chaingun") ? ANGEL.CHAIN : 1, // (Angelic: through two zombies, l4ddangel.js)
+    mine = myFloor(zs, px, py, hz, dx, dy, A.far),
     hits = [],
     past = []; // (the ones it missed: it goes on past them)
   let x = px,
@@ -2723,7 +2782,8 @@ function trace(s, id, px, py, dx, dy, hz, now) {
         z.st !== 3 &&
         !hits.includes(z) &&
         !past.includes(z) &&
-        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1,
+        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+        canShoot(z, mine, px, py, hz),
     );
     if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
     if (hits.length >= most) break;
@@ -2762,6 +2822,7 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     holy = angelOf(s, id, "laser"),
     zs = zombies(s),
     T = now - s.hang.l4.t0,
+    mine = myFloor(zs, px, py, hz, dx, dy, A.far),
     hits = [];
   let x = px,
     y = py;
@@ -2775,7 +2836,8 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
       if (
         z.st !== 3 &&
         !hits.includes(z) &&
-        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1
+        Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
+        canShoot(z, mine, px, py, hz)
       )
         hits.push(z);
   }
@@ -2877,7 +2939,9 @@ function jaimeIn(s, by, p, now, bomb) {
       stabAt: now + 600,
       mt: now,
     };
-  if (bomb) bombIn(s, id, J, now); // (the Jaime Bomb: jaimebomb.js)
+  if (bomb)
+    bombIn(s, id, J, now); // (the Jaime Bomb: jaimebomb.js)
+  else if (justinUp(s)) justinSays(s, "jaime"); // (Justin sees a Jaime come in: one of his lines against Jaime)
   s.jm = { ...(s.jm || {}), [id]: J };
   addFx(s, { kind: "jaime", by, who: [id], t: now });
   jaimeCount(s, { by });
@@ -3034,6 +3098,12 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
       any = true;
     }
   if (any) store(s, zs, true);
+  const jp = s.pos[WILD.id];
+  if (jp && wildOpen(s, WILD.id)) {
+    const [jx, jy] = at(jp);
+    if (inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4))
+      wildFire(s, id, now); // (Justin with no weapon burns too)
+  }
   if (now - (m.gf || 0) >= FLAME.PATCH) {
     m.gf = now;
     s.hang.l4gf = [
@@ -3115,7 +3185,10 @@ function fireTick(s, zs, now, T, p4) {
     if (!hot.some(([o, hx, hy]) => o !== id && room(hx, hy, x, y) < CLAW))
       continue;
     fp[id] = now + BURN.P;
-    if (hurtDuck(s, p4, id, now)) delete fp[id];
+    if (hurtDuck(s, p4, id, now)) {
+      delete fp[id];
+      if (isWild(s, id)) pwAdd(s, id, ["f0"], now, true); // (Justin out there, burnt to death: left burnt)
+    }
   }
   const out =
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
@@ -3151,6 +3224,7 @@ function hurtDuck(s, p4, id, now, w = "") {
     s.hang.l4u = { ...s.hang.l4u, [id]: { ...u, hp: 0, qr: 0 } }; // (down: the max HP and Quick Revive bought are gone)
   }
   if (s.players[id]) s.players[id].dead = true;
+  if (isWild(s, id)) justinSays(s, "death"); // (a death line, as he says one in Duck Cabin)
   s.hang.still = { ...(s.hang.still || {}), [id]: now + L4.BLEED + 60000 };
   const b = { ...(s.hang.l4b || {}) };
   delete b[id];
@@ -3225,15 +3299,39 @@ function wildHurt(s, by, x, y, now, w, rx = 26, ry = 22) {
     (dodging(s, p, now) && !jumpFails)
   )
     return false;
-  const p4 = { ...(s.hang.l4p || {}) };
-  if (hurtDuck(s, p4, id, now, w) && s.players[by] && !s.players[by].bot) {
-    /* a player knocked Justin down: a Justin kill for that player (unlocks.js watchKills), the same numbers rules.js
-       justinKilled writes; the owner's, Nov 17 13:30Z */
-    s.jkN = (s.jkN || 0) + 1;
-    s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+  /* a crit (wounds.js PCRIT, a weapon's chance as on any duck) takes all his HP and blows his head off */
+  const crit = Math.random() < (PCRIT[w] || 0);
+  wildDown(s, by, now, w, crit, crit ? ["x0"] : null);
+  return true;
+}
+/* Justin out there takes a hit from duck by with weapon w (all: every HP he has, a crit or a blast); codes: the gore he's
+   left with if it puts him down (the owner's, Nov 17 18:05Z: "all gore works on him"). wildHurt, boom, wildFire */
+function wildDown(s, by, now, w, all, codes) {
+  const id = WILD.id,
+    p4 = { ...(s.hang.l4p || {}) };
+  if (all && p4[id] && !invuln(s) && !invulnOf(s, id, now))
+    p4[id] = { ...p4[id], hp: 1 };
+  if (hurtDuck(s, p4, id, now, w)) {
+    if (codes) pwAdd(s, id, codes, now, true);
+    if (s.players[by] && !s.players[by].bot) {
+      /* a player knocked Justin down: a Justin kill for that player (unlocks.js watchKills), the same numbers rules.js
+         justinKilled writes; the owner's, Nov 17 13:30Z */
+      s.jkN = (s.jkN || 0) + 1;
+      s.jk = [...(s.jk || []).slice(-9), { n: s.jkN, by, w }];
+    }
   }
   s.hang.l4p = p4;
-  return true;
+}
+/* the flamethrower's fire on Justin out there with no weapon: lit as a duck is (1 HP as it's lit, burning BURN.P ms, and
+   fireTick spreads it from him), left burnt if it puts him down */
+function wildFire(s, by, now) {
+  const id = WILD.id,
+    q = P4(s, id),
+    F = s.hang.l4fire || {};
+  if (by === id || !wildOpen(s, id) || !q || q.dn || q.gh) return;
+  if ((F.p || {})[id] || dodging(s, s.pos[id], now)) return; // (burning, just put out, or mid-jump)
+  s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
+  wildDown(s, by, now, "flamer", false, ["f0"]);
 }
 function meleeHits(s, now) {
   const ks = (s.hang.l4k || []).filter(
@@ -3311,6 +3409,29 @@ const walled = (x, y, z) =>
       )
     : (!playable(x, y) && !inOpening(x, y)) ||
       (!inOpening(x, y) && solidsAt(x, y, z + 20).some((b) => b.top > z + 20));
+/* Doom's shots (the owner's, Nov 17 17:41Z: "the natural target priority hits the duck on the same floor ... unless the
+   same direction of enemy has no one which CAN be shot IN that direction ON the same floor"): a shot from my duck
+   (feet at hz, at (px, py), along (dx, dy)) hits the first zombie in its line on my own floor; only when none is that
+   way, before a wall, does it go up or down to one on another floor, if no roof is between (holes let it through:
+   layout.js slabBetween). myFloor: is one on my floor in the line? canShoot: may this shot hit zombie z? */
+const SAME_FLOOR = 20; // px: feet this close are on one floor
+const onMine = (z, hz) => Math.abs(zombieZ(z) - hz) < SAME_FLOOR;
+function myFloor(zs, px, py, hz, dx, dy, far) {
+  if (!dp()) return false;
+  const mine = zs.filter((z) => z.st !== 3 && onMine(z, hz));
+  if (!mine.length) return false;
+  for (let d = 12; d < far; d += 12) {
+    const x = px + dx * d,
+      y = py + dy * d;
+    if (walled(x, y, hz + MID - 20)) return false;
+    if (mine.some((z) => Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1))
+      return true;
+  }
+  return false;
+}
+const canShoot = (z, mine, px, py, hz) =>
+  !dp() ||
+  (mine ? onMine(z, hz) : !slabBetween(px, py, hz, z.x, z.y, zombieZ(z)));
 /* the zombies by 64-px square (a spatial grid), so a shot only looks at the few round it instead of every zombie on the
    map: the same hits, far fewer looks. A zombie's hit room (26 by 22 px) never reaches past the squares next to its own */
 const HIT_CELL = 64;
@@ -3598,6 +3719,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1) {
       gore.push([Math.round(z.x), Math.round(z.y)]);
       any = true;
     }
+  /* Justin out there with no weapon, in its blast: all his HP, torn apart, headless and burnt (wounds.js DEATH), as the
+     Jaime Bomb leaves Jaime; a jump dodges it as it dodges a shot */
+  const jp = s.pos[WILD.id],
+    jq = P4(s, WILD.id);
+  if (jp && jq && !jq.dn && !jq.gh && wildOpen(s, WILD.id)) {
+    const [jx, jy] = at(jp);
+    if (
+      Math.hypot(jx - bx, (jy - by) * 1.25) < ARMS.grenade.r * wide &&
+      !dodging(s, jp, now)
+    )
+      wildDown(s, sh.by, now, "grenade", true, DEATH);
+  }
   /* the one who threw or launched it, in its blast: half its HP, rounded down, and never down by it (the owner's, Nov
      16; the Jaime Bomb's has no sh.k: Jaime's, not mine) */
   const mine = sh.k && s.pos[sh.by],
@@ -3728,10 +3861,10 @@ function l4Tick(s, now) {
       last = Math.max(0, ...Object.values((jk && jk.u) || {}));
     if (
       now - last < 300 &&
-      now - (s.hang.l4jt || 0) > 7000 &&
+      now - (s.hang.l4jf || 0) > 7000 &&
       Math.random() < 0.3
     ) {
-      s.hang.l4jt = now;
+      s.hang.l4jf = now; // (its own key: l4jt is the jetpacks' clock, jetBurn)
       justinSays(s, "fight");
     }
   }
@@ -3745,6 +3878,7 @@ function l4Tick(s, now) {
         [WILD.id]: { ...jk, am: { ...jk.am, [jw]: [jk.am[jw][0], 99] } },
       };
   }
+  justinChat(s, now);
   jetBurn(s, now, ids);
   for (const b of Object.values(boxesOf(s)))
     if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
@@ -3849,6 +3983,7 @@ function l4Tick(s, now) {
   /* every zombie of the round came and died: the next round, and the ghosts come back */
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
+    potSplit(s);
     store(s, bodies, false);
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
@@ -3932,6 +4067,7 @@ function newZombie(s, L, T, zs = []) {
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
     [sx, sy] = from || o.out;
   return {
+    ...(Math.random() < FLANK.p ? { fl: Math.random() < 0.5 ? 1 : -1 } : {}), // (a flanker: flank)
     i,
     x: sx + (dp() ? 0 : rnd(-12, 12) * (o.axis === "x" ? 1 : 0.3)),
     y: sy + (dp() ? 0 : rnd(-8, 8) * (o.axis === "y" ? 1 : 0.3)),
@@ -3957,8 +4093,17 @@ function moveZombies(s, zs, now, T, up) {
       const p = s.pos[id],
         xy = at(p),
         zz = +p.z || 0,
-        dk = dp() ? deckAt(xy[0], xy[1], zz) : null; // (Downpour: up on a roof, or the canopy)
-      return { id, p, xy, zz, dk, goal: (dk && climbSpot(dk, xy)) || xy };
+        dk = dp() ? deckAt(xy[0], xy[1], zz) : null, // (Downpour: up on a roof, or the canopy)
+        way = dk && dk.kind === "canopy" ? stationDeck() : dk; // (the canopy: by way of the gas station's roof, then a jump)
+      return {
+        id,
+        p,
+        xy,
+        zz,
+        dk,
+        way,
+        goal: (way && climbSpot(way, xy)) || xy,
+      };
     });
   s.hidden = { ...(s.hidden || {}), l4tk: now };
   const dist = flowFrom(pls.map((q) => openNear(...q.goal))); // (to a duck up on a roof: to the foot of its wall)
@@ -4010,6 +4155,22 @@ function moveZombies(s, zs, now, T, up) {
     if (z.st === 1) {
       // tearing the boards down, one at a time (Downpour: from whichever side it came to them)
       if (dp() && walkTo(z, sp.out[0], sp.out[1], v * dt) === false) continue;
+      /* Downpour: it keeps at the window it chose on its way, but for a duck very close to it outside the church: it
+         goes for that one (the owner's, Nov 17 18:05Z: "they commit to breaking a window if the player isnt very close
+         to them outside the church") */
+      if (
+        dp() &&
+        pls.some(
+          (q) =>
+            !q.dk &&
+            whereIn(q.xy[0], q.xy[1], q.zz) !== CHURCH &&
+            room(z.x, z.y, ...q.xy) < TEAR_NEAR,
+        )
+      ) {
+        z.st = 2;
+        z.n = 0;
+        continue;
+      }
       if (!(brd[o.id] > 0)) {
         z.st = 4;
         continue;
@@ -4035,14 +4196,28 @@ function moveZombies(s, zs, now, T, up) {
       continue;
     }
     if (z.st === 6) {
-      // up a wall onto a roof, straight in from its edge, slowly (its height: climbZ)
-      const e = edgeOf(z.x, z.y),
+      // up a wall onto a roof (its own: z.k), straight in from its edge, slowly (its height: climbZ)
+      const e = edgeOf(z.x, z.y, deckOf(z)),
         far = v * dt * CL.speed;
       z.x -= e.nx * far;
       z.y -= e.ny * far;
       if (e.o - far <= -CL.in) {
         z.st = 7;
         z.n = 0;
+        delete z.cm; // (up: the way it kept to is done)
+      }
+      continue;
+    }
+    if (z.st === 8) {
+      // jumping from the gas station's roof onto the canopy (or, 1 time in 20, short of it, down to the ground)
+      const [, , x1, y1, , h1] = z.j;
+      if (walkTo(z, x1, y1, JUMP.speed * dt)) {
+        const fell = h1 < canopyDeck().h - 1;
+        z.st = fell ? 2 : 7;
+        z.n = 0;
+        if (fell) delete z.k;
+        else z.k = GS.DECKS.indexOf(canopyDeck());
+        delete z.j;
       }
       continue;
     }
@@ -4051,10 +4226,11 @@ function moveZombies(s, zs, now, T, up) {
     if (z.st === 7) {
       /* on a roof: straight at the nearest duck up there; a hole underfoot and it falls in; nobody left up there (or
          the cake down), it walks off the nearest edge and drops */
-      const e = edgeOf(z.x, z.y);
+      const e = edgeOf(z.x, z.y, deckOf(z));
       if (!deckAt(z.x, z.y, e.d.h)) {
         z.st = 2;
         z.n = 0;
+        delete z.k;
         continue;
       }
       for (const q of pls)
@@ -4062,9 +4238,12 @@ function moveZombies(s, zs, now, T, up) {
           best = room(z.x, z.y, ...q.xy);
           target = q;
         }
+      if (!target && !cake && e.d === stationDeck() && jumpOn(z, pls, v * dt))
+        continue; // (nobody up here, a duck on the canopy: to the roof's edge over it, then the jump)
       if (!target || cake) {
         walkTo(z, z.x + e.nx * 200, z.y + e.ny * 200, v * dt);
-        if (edgeOf(z.x, z.y).o >= CL.out) {
+        if (edgeOf(z.x, z.y, e.d).o >= CL.out) {
+          delete z.k;
           z.st = 2;
           z.n = 0;
         }
@@ -4078,8 +4257,8 @@ function moveZombies(s, zs, now, T, up) {
           z.y + (target.xy[1] - z.y) * k,
           v * dt,
         );
-        const o2 = edgeOf(z.x, z.y);
-        if (o2.d === e.d && o2.o > -6) {
+        const o2 = edgeOf(z.x, z.y, e.d);
+        if (o2.o > -6) {
           z.x += o2.nx * (o2.o + 6) * -1;
           z.y += o2.ny * (o2.o + 6) * -1;
         } // (never off its edge while it goes for a duck)
@@ -4108,24 +4287,50 @@ function moveZombies(s, zs, now, T, up) {
     if (z.st !== 7) {
       /* in: along the flow field, or straight at a duck close by; never into a duck. A duck up on a roof: to the foot
          of its wall nearest it, then up the wall */
-      for (const q of pls) {
-        const d = room(z.x, z.y, ...q.goal);
-        if (d < best) {
-          best = d;
-          target = q;
+      /* a way up kept to (z.cm: [the duck, the foot of the wall, the deck]): the owner's, Nov 17 18:05Z, "it keeps to it
+         until it has climbed the wall and then targets the player as usual OR it resorts to what you described IF they
+         leave the floor into a location NEAR ENOUGH to them during the commit" */
+      let goal = null;
+      const cm = z.cm && pls.find((q) => q.id === z.cm[0]);
+      if (
+        cm &&
+        !(
+          cm.way !== GS.DECKS[z.cm[3]] && room(z.x, z.y, ...cm.xy) < COMMIT_NEAR
+        )
+      ) {
+        target = cm;
+        goal = [z.cm[1], z.cm[2]];
+        best = room(z.x, z.y, ...goal);
+      } else {
+        delete z.cm;
+        for (const q of pls) {
+          const d = room(z.x, z.y, ...q.goal);
+          if (d < best) {
+            best = d;
+            target = q;
+          }
         }
+        if (!target) continue;
+        goal = target.goal;
+        if (target.way)
+          z.cm = [target.id, goal[0], goal[1], GS.DECKS.indexOf(target.way)]; // (its way up, from now on)
       }
-      if (!target) continue;
-      if (target.dk && best < 0.9) {
+      if (z.cm && best < 0.9) {
         z.st = 6;
+        z.k = z.cm[3];
         z.n = 0;
         continue;
       }
       const c = openNear(z.x, z.y),
         close =
           (best < 2.6 || (c >= 0 && dist[c] <= 1.5)) &&
-          walkable(z.x, z.y, ...target.goal); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
-      const aim = close ? target.goal : heading(dist, z.x, z.y);
+          walkable(z.x, z.y, ...goal); // (straight at it only with nothing in between: a trunk, a car or a pew in the way and it goes round by the field)
+      let aim = close
+        ? goal
+        : z.cm
+          ? wayTo(z.x, z.y, goal[0], goal[1], now) // (its own way up's foot, wherever the duck goes meanwhile)
+          : heading(dist, z.x, z.y);
+      if (z.fl && !z.cm && !close) aim = flank(z, target, now) || aim; // (a flanker: round the side first)
       /* Downpour: its way goes through a boarded hole with its boards up: it stops there and tears them down */
       const bh = aim && dp() && boardsAhead(z, aim, brd);
       if (bh) {
@@ -4180,11 +4385,14 @@ export function fenceZ(x, y, id) {
    nearest the duck (CL.out outside it), climbs straight up the wall onto it (st 6, slower than it walks: CL.speed of its
    walk), and walks the roof at it (st 7). Its height comes from where it is, as on a fence */
 const CL = { out: 26, in: 14, step: 40, speed: 0.25 };
+const COMMIT_NEAR = 4;
+const CHURCH = 2, // (layout.js whereIn: the chapel)
+  TEAR_NEAR = 2.2; // duck lengths (room): a duck this close outside the church takes a zombie off the window it tears at // duck lengths (room): a duck that left the floor this close to a zombie keeping to its way up
 /* the edge of a roof nearest (x, y): d its deck (stationmap.js DECKS), o how far outside its edge (< 0: inside), nx ny
-   the way out */
-function edgeOf(x, y) {
+   the way out. only: that deck's (a zombie up a wall or on a roof keeps to its own, z.k) */
+function edgeOf(x, y, only = null) {
   let best = null;
-  for (const d of GS.DECKS) {
+  for (const d of only ? [only] : GS.DECKS) {
     let o = d.x0 - x,
       nx = -1,
       ny = 0;
@@ -4195,20 +4403,95 @@ function edgeOf(x, y) {
   }
   return best;
 }
+/* the deck a zombie up a wall or on a roof keeps to (z.k, its place in DECKS), or none (the nearest edge's) */
+const deckOf = (z) => (z.k === undefined ? null : GS.DECKS[z.k] || null);
+const stationDeck = () =>
+  GS.DECKS.find((d) => d.kind === "roof" && d.bldg === 1);
+const canopyDeck = () => GS.DECKS.find((d) => d.kind === "canopy");
 /* how high a zombie climbing a wall (st 6) is at (x, y): up from the foot (CL.out out) to the top at the edge */
-export const climbZ = (x, y) => {
-  const e = edgeOf(x, y);
+export const climbZ = (x, y, only = null) => {
+  const e = edgeOf(x, y, only);
   return e.d.h * Math.min(1, Math.max(0, (CL.out - e.o) / CL.out));
 };
-/* a zombie's height: up a fence, up a wall, on a roof, or on the ground */
+/* ---------- flankers (the owner's, Nov 17 17:41Z: "5% of zombies who spawn in will have a pattern where they try to
+   attack the player from a different path and direction from the other zombies if it is availible, as a way to add
+   difficulty to players making a train of zombies to herd or shepard") ----------
+   A flanker (z.fl: 1 or -1, its side) going for a duck on the ground first makes for a spot FLANK.far from the duck,
+   FLANK.turn round from the way it comes (z.wp [x, y, the duck, done]), then comes at the duck from there as the others
+   do. No room on either side (a wall, the trees, the flood's edge) and it comes as the others */
+const FLANK = { p: 0.05, far: 420, turn: 1.75, done: 1.5 };
+function flank(z, q, now) {
+  if (!q || q.dk) return null;
+  if (!z.wp || z.wp[2] !== q.id) z.wp = flankSpot(z, q);
+  if (z.wp[3]) return null;
+  if (
+    room(z.x, z.y, z.wp[0], z.wp[1]) < FLANK.done ||
+    room(z.x, z.y, ...q.xy) < (FLANK.far / RX) * 0.6
+  ) {
+    z.wp = [...z.wp.slice(0, 3), 1]; // (round the side: now straight at it)
+    return null;
+  }
+  return wayTo(z.x, z.y, z.wp[0], z.wp[1], now);
+}
+function flankSpot(z, q) {
+  const [tx, ty] = q.xy,
+    a0 = Math.atan2((z.y - ty) / RY, (z.x - tx) / RX);
+  for (const sgn of [z.fl, -z.fl]) {
+    const a = a0 + sgn * FLANK.turn,
+      x = tx + Math.cos(a) * FLANK.far,
+      y = ty + Math.sin(a) * FLANK.far * (RY / RX);
+    if (zOk(x, y, heightAt(x, y)) && openNear(x, y) >= 0)
+      return [Math.round(x), Math.round(y), q.id, 0];
+  }
+  return [0, 0, q.id, 1];
+}
+/* ---------- onto the canopy (the owner's, Nov 17 18:05Z: "zombies can jump onto the gas pump roof with only a 5%
+   chance of failing once they are on the gas station roof, and their path of least resistance is the climbing of the
+   most near by gas station wall before getting on the roof and doing a jump animation for this") ----------
+   A duck on the canopy: a zombie climbs the gas station's wall nearest it, walks the roof to its south edge over the
+   canopy, and jumps across (st 8: z.j [x0, y0, x1, y1, h0, h1], an arc JUMP.arc high), 1 time in 20 short of it, down
+   to the ground (JUMP.fail) */
+const JUMP = { speed: 300, arc: 40, fail: 0.05, in: 30 };
+function jumpOn(z, pls, far) {
+  const C = canopyDeck(),
+    S = stationDeck();
+  let q = null;
+  for (const p of pls)
+    if (p.dk === C && (!q || room(z.x, z.y, ...p.xy) < room(z.x, z.y, ...q.xy)))
+      q = p;
+  if (!q) return false;
+  const x = Math.min(
+      Math.max(q.xy[0], Math.max(C.x0, S.x0) + JUMP.in),
+      Math.min(C.x1, S.x1) - JUMP.in,
+    ),
+    y = S.y1 - 10;
+  if (!walkTo(z, x, y, far)) return true;
+  const fell = Math.random() < JUMP.fail,
+    y1 = fell ? (S.y1 + C.y0) / 2 : C.y0 + JUMP.in;
+  z.st = 8;
+  z.n = 0;
+  z.j = [x, y, x, y1, S.h, fell ? heightAt(x, y1) : C.h];
+  return true;
+}
+const jumpZ = (z) => {
+  const [x0, y0, x1, y1, h0, h1] = z.j,
+    u = Math.min(
+      1,
+      Math.hypot(z.x - x0, z.y - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1),
+    );
+  return h0 + (h1 - h0) * u + JUMP.arc * 4 * u * (1 - u);
+};
+/* a zombie's height: up a fence, up a wall, on a roof, jumping onto the canopy, or on the ground */
 export const zombieZ = (z) =>
   z.st === 5
     ? fenceZ(z.x, z.y, z.l[2])
     : z.st === 6
-      ? climbZ(z.x, z.y)
+      ? climbZ(z.x, z.y, deckOf(z))
       : z.st === 7
-        ? edgeOf(z.x, z.y).d.h
-        : heightAt(z.x, z.y);
+        ? edgeOf(z.x, z.y, deckOf(z)).d.h
+        : z.st === 8 && z.j
+          ? jumpZ(z)
+          : heightAt(z.x, z.y);
 /* the feet of each roof's walls where a zombie can start up (every CL.step along its edges, on open ground), made once */
 let footOf = null;
 function climbSpot(dk, [x, y]) {
@@ -4382,10 +4665,11 @@ function separate(zs) {
 function nudge(z, dx, dy) {
   const x = z.x + dx,
     y = z.y + dy;
-  if (z.st === 6) return; // (up a wall: it keeps to it)
+  if (z.st === 6 || z.st === 8) return; // (up a wall, or jumping: it keeps to it)
+  const e = z.st === 7 && edgeOf(x, y, deckOf(z));
   if (
     z.st === 7
-      ? edgeOf(x, y).o < -6 && !!deckAt(x, y, edgeOf(x, y).d.h)
+      ? e.o < -6 && !!deckAt(x, y, e.d.h)
       : z.st === 2
         ? zOk(x, y, heightAt(z.x, z.y))
         : !playable(x, y) || z.st === 4
