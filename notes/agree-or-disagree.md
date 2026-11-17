@@ -5570,3 +5570,11 @@ is a 1 in 3 roll every 30 s.
 Given to Miles Jr.: inside the cabin the wind stays about as loud and is muffled (lowpass, a little lower), not just
 turned down. Adam answered: the two open calls are the size of Mad God Justin's waves with 4 ducks (30 zombies) and the
 zombie cabin being a backdrop to his usual fight (B, the real 3D cabin, would be a big rebuild).
+
+## Request (2026-11-17 16:23Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGDiaogQBH8FjRvGR3rgsxy): Mad God Justin's waves, gun damage (word for word)
+> waves can be half the size ig is the solution
+>
+> guns do their normal damage from zombies in mad god justin and other game modes as well btw
+
+Given to Solomon the 2nd: WAVE.N 6, WAVE.PER 3; Mad God Justin's wave zombies take Dead Ducks Arcade's damage from every
+weapon (ARMS dmg, crits, misses, reusing l4ddrules.js); check the other modes' HIT_DMG matches.
