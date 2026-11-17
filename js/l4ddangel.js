@@ -64,6 +64,7 @@ export const canAngel = (w, weapons) => weapons.includes(w);
 /* is duck id's weapon w Angelic? */
 export function angelOf(s, id, w) {
   const k = s && s.hang && s.hang.l4a && s.hang.l4a[id];
+  if (k && w === "handgun" && k.dg !== undefined) return false; // (down: the down pistol in hand is never Angelic)
   return !!(k && k.ang && k.ang[w] && (k.sl || []).includes(w));
 }
 /* an Angelic weapon's ammo, full: two more magazines (the LMG one), or MORE more without one */

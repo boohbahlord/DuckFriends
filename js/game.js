@@ -190,6 +190,8 @@ import {
   dodging,
   L4,
   l4Hp,
+  downArmed,
+  l4Dying,
   l4Down,
   ARMS,
   slotsOf,
@@ -1477,6 +1479,25 @@ function drawDucks(now = clockNow()) {
           : (s.up || {})[id]),
       l4dn = isL4dd(s) && !g ? l4Down(s, id) : 0,
       dn = l4dn ? l4dn : upAt > now && !mgjOut(s, id) ? upAt : 0; // (Good Justin God keeps his own time down; a duck out of HP has no meter: it's down until the fight ends; Quacky Zombies: the time it has to be revived)
+    const wait = !!l4dn && l4Dying(s, id, now).wait; // (Quacky Zombies: someone reviving it: the bleeding-out waits)
+    if (d._dwait !== wait) {
+      d._dwait = wait;
+      d.classList.toggle("dn-wait", wait);
+    }
+    /* down and dying: greyer and greyer (the owner's, Nov 17 11:07Z): Quacky Zombies as its bleeding-out runs, Mad God
+       Justin over DYING_MS out of HP (there's no bleeding-out there) */
+    const out = isMgj(s) && dead && mgjOut(s, id) && s.mgj.out[id],
+      dg = l4dn
+        ? l4Dying(s, id, now).k
+        : out
+          ? Math.min(1, (now - out) / DYING_MS)
+          : -1,
+      dgk = dg < 0 ? -1 : Math.round((0.15 + 0.85 * dg) * 50) / 50;
+    if (d._dg !== dgk) {
+      d._dg = dgk;
+      d.classList.toggle("dying", dgk >= 0);
+      if (dgk >= 0) d.style.setProperty("--dg", dgk);
+    }
     if (d._dn !== dn) {
       d._dn = dn;
       d.classList.toggle("downed", !!dn);
@@ -1727,13 +1748,21 @@ function drawDucks(now = clockNow()) {
         ? !mgjGone(s, now) &&
           (shows[id] && now < shows[id].until ? shows[id].what : pos.w)
         : (isMgj(s) && s.phase === "boss"
-            ? (mine ? held : jaimes.includes(id) ? "knife" : pos.w) || MGJ_MELEE
+            ? (mgjOut(s, id) && (s.players[id] || {}).dead
+                ? "handgun" // (out of HP: the down pistol, the owner's, Nov 17 11:07Z)
+                : mine
+                  ? held
+                  : jaimes.includes(id)
+                    ? "knife"
+                    : pos.w) || MGJ_MELEE
             : jm[id]
               ? jm[id].w || "knife" // (the Jaime special's, and Quacky Zombies' Jaime: his knife always out; a Jaime Guard's, his weapon)
               : isL4dd(s)
-                ? l4Hp(s, id) > 0 &&
-                  !l4Swims(s, id) && // (Downpour: swimming, it's put away)
-                  inHand(mine ? heldNow() : pos.w, s, id)
+                ? downArmed(s, id)
+                  ? "handgun" // (down: the down pistol, the owner's, Nov 17 11:07Z)
+                  : l4Hp(s, id) > 0 &&
+                    !l4Swims(s, id) && // (Downpour: swimming, it's put away)
+                    inHand(mine ? heldNow() : pos.w, s, id)
                 : mine
                   ? held && hasKey(p.duck, held) && held
                   : pos.w) || shown; // (Quacky Zombies: in hand while it's up) // (Mad God Justin: every duck's knife always out; his hammer swing over his gun)   // (Mad God Justin: every duck's knife always out)   // (a dagger thrown without keeping it out: only the one in the air)
@@ -5049,11 +5078,23 @@ function heldNow() {
     if (l4Slot === 4 && !(kit && kit.g > 0)) l4Slot = sl[l4Last] ? l4Last : 0; // (the last grenade thrown: the weapon before it comes back)
     if (l4Slot !== 4 && !sl[l4Slot]) l4Slot = sl[l4Last] ? l4Last : 0;
     if (kit && kit.jp && sl[3] === "jetpack") return ""; // (the jetpack on: nothing else is used beside it)
+    if (downArmed(R.state, R.me)) return "handgun"; // (down: the down pistol)
     if (l4Hp(R.state, R.me) <= 0) return "";
     return l4Slot === 4 ? "grenade" : sl[l4Slot] || "";
   }
   return held && hasKey(playDuck(), held) ? held : "";
 }
+const DYING_MS = 20000; // (Mad God Justin: how long a duck out of HP takes to go all grey)
+/* Mad God Justin: I'm out of HP and down, the down pistol in my hand (the owner's, Nov 17 11:07Z) */
+const mgjDownGun = () =>
+  !!R &&
+  isMgj(R.state) &&
+  R.state.phase === "boss" &&
+  !!(R.state.players[R.me] || {}).dead &&
+  mgjOut(R.state, R.me);
+/* down with the down pistol, in either mode */
+const downGunNow = () =>
+  !!R && (mgjDownGun() || (isL4dd(R.state) && downArmed(R.state, R.me)));
 /* Mad God Justin: the weapon I picked up (one use), or none */
 const myPick = () =>
   (R && R.state.mgj && (R.state.mgj.held || {})[R.me]) || null;
@@ -5086,6 +5127,7 @@ function slidTap(i) {
 }
 /* phones: the weapon in the slider's middle, which the attack button uses (or null) */
 function padWeapon() {
+  if (downGunNow()) return "handgun"; // (down: the down pistol, whatever the slider shows)
   const id = bar && bar.current && bar.current();
   if (id && R && isL4dd(R.state)) {
     if (id === "grenade") return id;
@@ -5112,6 +5154,10 @@ function padAttack() {
     fire(id);
     return l4Cool(R.state, R.me, id);
   }
+  if (mgjDownGun()) {
+    fire(id);
+    return coolFor(id, R.state);
+  } // (out of HP: the down pistol, without taking it out for after)
   if (isMgj(R.state) && mgjToggles(id) && mgjHold !== id) mgjOut2(id);
   fire(id);
   return coolFor(id, R.state);
@@ -5227,6 +5273,7 @@ const L4_TOGGLES = ["longjump", "jetpack"];
 /* the handgun or the dagger, toward the mouse */
 function fire(id) {
   if (!me || me.x < 0 || !R || !onBoardPhase()) return;
+  if (mgjDownGun()) id = "handgun"; // (Mad God Justin, out of HP: only the down pistol fires)
   const [ax, ay] = myAim();
   R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
@@ -5296,6 +5343,10 @@ function reload() {
     return true;
   } // (Quacky Zombies: the ranged weapon in hand)
   if (R && isMgj(R.state)) {
+    if (mgjDownGun() && onBoardPhase()) {
+      R.send({ t: "reload", w: "handgun" });
+      return true;
+    } // (out of HP: the down pistol)
     if (!onBoardPhase() || !held || held !== myPick() || !mgjMag(held))
       return false;
     R.send({ t: "reload", w: held });
@@ -5322,7 +5373,7 @@ function heardReloads(s) {
     seen = {};
   if (isL4dd(s)) {
     const k = kitOf(s, R.me);
-    if (k && k.rl > now && k.rw) seen[k.rw] = k.rl;
+    if (k && k.rl > now && k.rw) seen[k.rw === "dg" ? "handgun" : k.rw] = k.rl; // (the down pistol's: the pistol's sound)
   } else
     for (const [key, m] of Object.entries(s.mag || {}))
       if (m && m.r > now && (key === R.me || key.startsWith(R.me + " ")))
@@ -5487,12 +5538,12 @@ function mgjTip(s) {
   const phone = touchOnly();
   if ((s.players[R.me] || {}).dead)
     return mgjOut(s, R.me)
-      ? "Out of HP! A duck that holds E by you for 5 s, or the fight's end, gets you up."
+      ? `Out of HP! Your pistol still fires. A duck that holds E by you for ${REVIVE.MS / 1000} s, or the fight's end, gets you up.`
       : "Knocked down! Up again in a moment.";
   if (downNear(s, R.me))
     return mgjRv
       ? "Reviving… keep holding"
-      : `A duck is down: ${phone ? "hold Revive" : "hold <kbd>E</kbd>"} for 5 s to get it up`;
+      : `A duck is down: ${phone ? "hold Revive" : "hold <kbd>E</kbd>"} for ${REVIVE.MS / 1000} s to get it up`;
   if (myPick() && held !== myPick())
     return `${PICK_NAMES[myPick()] || "A weapon"} picked up: ${phone ? "slide to it" : "<kbd>4</kbd>"} to take it out`;
   return phone
@@ -6683,7 +6734,8 @@ function keydown(e) {
   } // the handgun reloads
   if (e.code === "KeyV" && !e.repeat && onBoardPhase()) {
     e.preventDefault();
-    if (isMgj(R.state)) fire(held || MGJ_MELEE);
+    if (isMgj(R.state))
+      fire(held || MGJ_MELEE); // (out of HP: fire() makes it the down pistol)
     else if (heldNow()) fire(heldNow());
     else if (lastKey >= 0) useKey(lastKey, false);
     else if (bar) bar.show();
@@ -7194,8 +7246,10 @@ register("game", {
         onBoardPhase() &&
         !windowOpen() &&
         !!me &&
-        !(R.state.players[R.me] || {}).dead &&
-        !(isL4dd(R.state) && !(l4Hp(R.state, R.me) > 0)),
+        (downGunNow() ||
+          (!(R.state.players[R.me] || {}).dead &&
+            !(isL4dd(R.state) && !(l4Hp(R.state, R.me) > 0)))),
+      noJump: downGunNow, // (down: only the attack stick, for the down pistol)
       weapon: padWeapon,
       aim: (dx, dy) => {
         keyAim = dx == null ? null : [dx, dy];
