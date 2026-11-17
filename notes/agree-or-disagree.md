@@ -5747,3 +5747,18 @@ Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
 > REPEAT BACK TO ME IN UR OWN UNDERSTANDING WHAT IM SAYING BEFORE FIXING THIS SHIT
 
 Adam repeated it back as 7 numbered points (msg cmsg_01LTpp6fzv8sfYUR5KoHADKtFJ3zpf3vHfocALjBc4h6pB); nothing built until the owner says it's right.
+
+## Answer (2026-11-17 20:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVUXWjejVHXbm2zLXu7oUrP) to Adam's 7-point repeat-back (word for word)
+
+> t=true
+> f=false
+>
+> 1. t
+> 2. make it to where you cannot give justin a weapon actually and when he goes down he doesnt have a pistol and he sounds off all his annoying lines unrestricted like he does in cabin with the same frequency, because im tired of dealing with him, he spawns in cabin now by default the same, without a weapon and cannot get a weapon
+> 3. t
+> 4. t
+> 5. t with the down arrow in the shape outline with the lines of the arrow made of the same outlinne and it's color and an up arrow equivalent for zombies on the roof, so that way a zombies elevation is know, and the same happens to Justin or players. For now on, Justin's outline color is yellow and the player you are playing as has a darker blue outline that only the player playing see for themselves on their screen, and every other player is green to them and zombies are red and justin's outline is yellow
+> 6. yes and it cannot attack from under that duck as proven
+> 7. yes
+
+Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default, zombies attack Justin, no cross-floor zombie hits, zombies climb to roof targets, one simple shot rule (#7). Noah = Laser Rifle AK-size, outlines (red under roofs, up/down arrows, Justin yellow, me dark blue only for me, others green).
