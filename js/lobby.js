@@ -350,6 +350,9 @@ function onState(s) {
       lastCount = left;
     }
   } else {
+    // the countdown ran out into the votes (Vote Mode & Map): its last tone, if the vote came before I saw the zero
+    if (counting && lastCount > 0 && s.phase === "countdown" && s.vt)
+      sfx.count(true);
     if (counting) brighten(); // (cancelled: the screen comes back)
     counting = false;
     lastCount = -1;
