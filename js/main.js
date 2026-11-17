@@ -54,7 +54,7 @@ setTimeout(checkUnlocks, 2500);
 
 /* ---------- Sign in (top right); once signed in it opens Friends, with a count of invites and requests ---------- */
 const corner = $("#signin");
-corner.insertAdjacentHTML("beforebegin", fsBtnHTML()); // (a phone: full screen, left of Sign in / Friends)
+corner.insertAdjacentHTML("beforebegin", fsBtnHTML()); // (full screen, left of Sign in / Friends)
 const paintCorner = () => {
   corner.classList.remove("off");
   if (acct.uid) {
