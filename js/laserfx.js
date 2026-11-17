@@ -6,7 +6,8 @@
        the rain (Downpour, outside) twice the steam, in sound too (the owner: "steams up in sound and visual effect MORE
        when it is in the rain");
      - the steam's sound, each duck's own (sound.js steam).
-   game.js calls laserLook for the gun's picture and laserFrame every frame. */
+   game.js calls laserLook for the gun's picture and laserFrame every frame, in Dead Ducks Arcade and in Mad God Justin
+   (a pickup there). */
 import { laserHeat, dp } from "./l4ddrules.js";
 import { LASER } from "./laserart.js";
 import { fxSteam, fxGroundFire } from "./fx.js";
@@ -77,4 +78,43 @@ export function laserFrame(s, held, fxl, size, heard) {
       STEAM.delete(id);
       sfx.steam(id, 0);
     } // (put away, or gone: its steam fades)
+}
+
+/* the Laser Rifle's heat, under my duck (the owner's, Nov 17): a thin row of blocks, one for each beam before its limit
+   (5, the Angelic one's 6), lit one by one from red toward orange as it heats; overheated, the lit ones flash white,
+   the meter shakes and steams more (css/app.css .l4-heat). Shown while the Laser Rifle is in hand and warm, in Dead
+   Ducks Arcade (l4dd.js) and Mad God Justin (game.js) */
+const HEAT_RED = [200, 34, 42],
+  HEAT_ORANGE = [255, 138, 31];
+export function laserMeter(tag, s, me, w) {
+  const q = w === "laser" ? laserHeat(s, me, clockNow()) : null,
+    on = !!q && (q.h > 0.05 || q.over > 0);
+  let el = tag.querySelector(".l4-heat");
+  if (!el) {
+    if (!on) return;
+    el = document.createElement("span");
+    el.className = "l4-heat off";
+    el.setAttribute("aria-hidden", "true");
+    tag.append(el);
+  }
+  if (!on) {
+    if (!el.classList.contains("off")) el.className = "l4-heat off";
+    el._look = "";
+    return;
+  }
+  if (el._max !== q.max) {
+    el._max = q.max;
+    el.innerHTML = Array.from({ length: q.max }, (_, i) => {
+      const t = q.max > 1 ? i / (q.max - 1) : 1,
+        c = HEAT_RED.map((v, k) => Math.round(v + (HEAT_ORANGE[k] - v) * t));
+      return `<i style="--c:rgb(${c.join(",")})"></i>`;
+    }).join("");
+  }
+  const over = q.over > 0,
+    lit = Math.min(q.max, over ? Math.ceil(q.h) : Math.round(q.h)),
+    look = `${lit}${over ? " hot" : ""}${over || q.h / q.max >= 0.6 ? " steam" : ""}`;
+  if (el._look === look) return;
+  el._look = look;
+  el.className = `l4-heat${over ? " hot" : ""}${look.includes("steam") ? " steam" : ""}`;
+  el.querySelectorAll("i").forEach((b, i) => b.classList.toggle("on", i < lit));
 }

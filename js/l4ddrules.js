@@ -1220,7 +1220,7 @@ export const laserMax = (s, id) =>
   angelOf(s, id, "laser") ? ANGEL.LASER.heat : ARMS.laser.heat;
 export function laserHeat(s, id, now) {
   const m = kitOf(s, id),
-    z = m && m.lz,
+    z = m ? m.lz : ((s && s.mgj && s.mgj.lz) || {})[id], // (Mad God Justin, picked up: s.mgj.lz, rules.js)
     max = laserMax(s, id);
   if (!z) return { h: 0, max, over: 0 };
   if (z.o > now)
@@ -1231,6 +1231,17 @@ export function laserHeat(s, id, now) {
     };
   const c = l4Cool(s, id, "laser");
   return { h: Math.max(0, z.h - Math.max(0, now - z.t - c) / c), max, over: 0 };
+}
+/* its heat after one more beam now: { lz (to keep), hot: this beam overheated it (the meter was full) } */
+export function laserNext(s, id, now) {
+  const { h, max } = laserHeat(s, id, now),
+    hot = Math.round(h) >= max;
+  return {
+    lz: hot
+      ? { h: max + 1, t: now, o: now + ARMS.laser.over }
+      : { h: Math.min(max, h + 1), t: now, o: 0 },
+    hot,
+  };
 }
 export const reloadOf = (s, id, w, c) =>
   (ARMS[w].shell
@@ -2502,12 +2513,9 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     }
   }
   if (hits.length) store(s, zs, true);
-  const { h, max } = laserHeat(s, id, now),
-    hot = Math.round(h) >= max; // (the meter full: this beam takes it past its limit)
-  m.lz = hot
-    ? { h: max + 1, t: now, o: now + A.over }
-    : { h: Math.min(max, h + 1), t: now, o: 0 };
-  if (hot) addFx(s, { kind: "l4hot", by: id, who: [], t: now });
+  const next = laserNext(s, id, now);
+  m.lz = next.lz;
+  if (next.hot) addFx(s, { kind: "l4hot", by: id, who: [], t: now });
   addFx(s, {
     kind: "l4line",
     w: "laser",

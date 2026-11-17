@@ -183,7 +183,7 @@ import {
 } from "./specials.js";
 import { mountHotbar } from "./hotbar.js";
 import { heatUp, heatDraw } from "./barrelheat.js";
-import { laserLook, laserArt, laserFrame } from "./laserfx.js";
+import { laserLook, laserArt, laserFrame, laserMeter } from "./laserfx.js";
 import { LASER, BEAM } from "./laserart.js";
 import {
   isL4dd,
@@ -2068,7 +2068,7 @@ function drawDucks(now = clockNow()) {
     let h = heldEls.get(id);
     if (h && h.parentNode !== fxl) h = null;
     const holy = isL4dd(s) && angelOf(s, id, w), // (Dead Ducks Arcade's Angelic weapons: l4ddangel.js)
-      lz = w === "laser" && isL4dd(s) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
+      lz = w === "laser" && (isL4dd(s) || isMgj(s)) ? laserLook(s, id) : null, // (the Laser Rifle: its barrel as hot as it is now, laserfx.js)
       hk =
         w +
         (w === "hammer" && duck && duck.wrench ? "-w" : "") +
@@ -2240,7 +2240,11 @@ function drawDucks(now = clockNow()) {
     }
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
-  if (isL4dd(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  if (isL4dd(s) || isMgj(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
+  if (isMgj(s)) {
+    const tag = S.querySelector(".gduck.mine .gduck-name");
+    if (tag) laserMeter(tag, s, R.me, held); // (and its heat under my duck, as in Dead Ducks Arcade)
+  }
   flames(s, now, hang, size, fxl, heldAll);
   /* ducklings: three in a row behind their duck, along the way it walked */
   const kids = new Set();
