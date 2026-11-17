@@ -88,6 +88,10 @@ if ("serviceWorker" in navigator && isSecureContext)
     .register("sw.js", { updateViaCache: "none" })
     .catch(() => {});
 loadingScreen({ duck: profile.duck, ready: pageReady }); // (the page's own loading screen, in index.html, goes when the first screen is drawn)
+window.dfStarted = 1; // (the page's way out of a stuck start, in index.html, stands down)
+try {
+  sessionStorage.removeItem("df-retry");
+} catch {}
 setTimeout(accountStart, 300);
 setTimeout(askConnection, 600); // once, on the first visit   // a device that signed in before connects after the first screen is up
 

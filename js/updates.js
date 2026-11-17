@@ -9,6 +9,16 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v57",
+    version: 57,
+    date: "Nov 17, 2026",
+    title: "No more stuck loading",
+    news: [],
+    fixed: [
+      "The game no longer gets stuck on the loading bar. If a file doesn't arrive, it fetches the game fresh and starts again by itself, and if that still fails, a tap tries again.",
+    ],
+  },
+  {
     id: "v56",
     version: 56,
     date: "Nov 17, 2026",
