@@ -3120,6 +3120,7 @@ function playFx(f) {
       ? world.place({ x: f.x, y: f.y }, f.hz || 0)
       : place({ x: f.x, y: f.y }, 0, 1, true);
     grenadeBoom(fxl, board, at, size * (f.wide || 1)); // (the Jaime Bomb's: wider)
+    boomShake(at, f.wide || 1);
     (f.wide > 1 ? sfx.boomBig : f.wide < 1 ? sfx.boomSmall : sfx.boom)(
       geo.hang ? { x: f.x * HW, y: f.y * HH } : {},
     ); // (the Jaime Bomb's: its own, bigger; a smaller blast, as the Angelic pistol's, its own, weaker)
@@ -3798,6 +3799,17 @@ function toBoard(dx, dy) {
 }
 /* the middle of my duck on the screen (where a weapon turns around), and where it aims: at the mouse on a computer,
    else the way it faces */
+/* an explosion shakes my screen too (the owner's, Nov 17 11:07Z: "alongside explosions (small explosions less so)"):
+   a grenade's 0.6 close by, a smaller one (the Angelic pistol's) less, a bigger one (the Jaime Bomb's) more; less the
+   farther from my duck, none past about 14 ducks */
+function boomShake(at, wide) {
+  const p = R && me && R.state.pos[R.me];
+  if (!p) return;
+  const c = bodyAt(R.me, p),
+    far = Math.hypot(at.left - c.left, at.top - c.top) / geo.size,
+    near = Math.max(0, Math.min(1, (14 - far) / 10));
+  if (near > 0) shake(0.6 * Math.min(1.4, wide) * wide * near);
+}
 function bodyAt(id, pos, now = clockNow()) {
   const lane = R.state.seat.filter(
     (i) => R.state.pos[i] && (i === R.me && me ? me : R.state.pos[i]).x < 0,
