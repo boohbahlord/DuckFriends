@@ -2128,8 +2128,14 @@ const PH = {
   full: (w) => fullAmmo(w),
   arm: (w) => ARMS[w],
   weapons: WEAPONS,
-  W,
-  H,
+  /* the world's size now (layout.js changes it for Downpour): read when used, never kept from when this was made, or
+     on Downpour a duck stood on a part and never took it (the owner's, Nov 17 05:46Z: the restroom's pickup) */
+  get W() {
+    return W;
+  },
+  get H() {
+    return H;
+  },
 };
 const addFx = (s, f) => {
   s.fxN = (s.fxN || 0) + 1;

@@ -99,27 +99,29 @@ export function mountWorld(board, api) {
     SHADE_OUT = 700;
   /* Quacky Zombies: the shade has a notch where the deck shows through a hole in the south wall (layout.js' PEEKS), cut
      out of it and its big shadow (in its own px, at the camera's scale) */
+  const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
   const peekClip = () => {
-    if (!L.PEEKS.length) return "";
+    if (!peeks().length) return "";
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
       H0 = (HOLE.b - HOLE.t) * k,
       E = 4200,
       box = (x0, y0, x1, y1) =>
         `M${x0.toFixed(1)} ${y0.toFixed(1)}H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`;
-    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${L.PEEKS.map(
-      ({ out: [x0, y0, x1, y1] }) =>
+    return `path(evenodd, "${box(-E, -E, W0 + E, H0 + E)}${peeks()
+      .map(({ out: [x0, y0, x1, y1] }) =>
         box(
           (x0 - HOLE.l) * k,
           (y0 - HOLE.t) * k,
           (x1 - HOLE.l) * k,
           (y1 - HOLE.t) * k,
         ),
-    ).join("")}")`;
+      )
+      .join("")}")`;
   };
   const outOfHole = (l, t, r, b) =>
     (r < HOLE.l || l > HOLE.r || b < HOLE.t || t > HOLE.b) &&
-    !L.PEEKS.some(
+    !peeks().some(
       ({ out: [x0, y0, x1, y1] }) => r > x0 && l < x1 && b > y0 && t < y1,
     ); // (Quacky Zombies: the deck through a hole in the south wall shows too)
   const toScreen = (x, y, h = 0) => ({

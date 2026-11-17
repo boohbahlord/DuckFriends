@@ -904,7 +904,10 @@ export const seenFrom = (x, y, inside) =>
   (variant === "l4gs"
     ? !inside || GS.buildingAt(x, y) === here // (from outside, inside a building too: its roof turns see-through over it, world.js)
     : inCabin(x, y) === inside) ||
-  (PEEKS.length > 0 && PEEKS.some((k) => inR(x, y, inside ? k.out : k.in)));
+  (PEEKS.length > 0 &&
+    PEEKS.some(
+      (k) => (!k.bldg || k.bldg === here) && inR(x, y, inside ? k.out : k.in),
+    ));
 export function useMode(mode, map) {
   const v = mode === "l4dd" ? (map === "downpour" ? "l4gs" : "l4") : "";
   if (v === variant) return;
@@ -928,6 +931,16 @@ export function useMode(mode, map) {
         in: [o.a, C.y1 - C.wall, o.b, C.y1],
         out: [o.a - PEEK.side, C.y1, o.b + PEEK.side, C.y1 + PEEK.deep],
       });
+  /* Downpour: the gas station's front door is a hole too, and from inside the way out always shows through it (the
+     owner's, Nov 17 05:46Z: "exit?"), only from inside that building (bldg) */
+  if (v === "l4gs")
+    for (const o of GS.WALK_HOLES)
+      if (o.at === GS.STATION.y1)
+        PEEKS.push({
+          bldg: 1,
+          in: [o.a, o.at - GS.STATION.wall, o.b, o.at],
+          out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
+        });
   PLATS.length = 0;
   if (!v)
     for (const p of PROPS)

@@ -489,6 +489,7 @@ const GS_DRAW = {
       p.key,
       {
         fade: true,
+        only: "out", // (from inside the shop, through the front door's hole, the way out shows, not the canopy's top: the owner's, Nov 17 05:46Z)
         hit: { l: p.x, t: p.y - p.z, r: p.x + p.w, b: p.y + p.d }, // (see-through while anyone is under it, so the pumps and the shop's front show)
       },
     ),
@@ -530,7 +531,10 @@ export const DRAW = {
   wall: wallParts,
   stub: (p) => [
     part(
-      () => A.logWall({ w: p.w, wallH: p.h, t: p.d }),
+      () =>
+        p.map
+          ? SA.gsWallX({ w: p.w, wallH: p.h, t: p.d, skin: skinOf(p) })
+          : A.logWall({ w: p.w, wallH: p.h, t: p.d }),
       p.x,
       p.y - p.h,
       p.w,
@@ -545,20 +549,30 @@ export const DRAW = {
     const o = p.hole,
       seed = Math.round(o.a + o.at);
     if (o.axis === "x") {
-      // an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends
+      /* an east-west wall's face, the logs over the hole left whole; the low line by the deck, only its broken ends.
+         Downpour: a south wall from outside broken up to under the sign's band, its glass either side smashed with it */
       const h = p.d + p.h,
+        low = p.low || (o.out && !p.map),
         svg = p.map
           ? SA.gsWallX({
               w: p.w,
               wallH: p.h,
               t: p.d,
               skin: skinOf(p),
+              glass: glassOn(p),
               seamless: true,
             })
           : A.logWall({ w: p.w, wallH: p.h, t: p.d, seamless: true }),
-        cut = o.out
+        cut = low
           ? A.holeCut(T + 2, p.w - T - 2, -30, h + 30, seed, 6)
-          : A.holeCut(T + 2, p.w - T - 2, p.d + 30, h + 30, seed, 7);
+          : A.holeCut(
+              T + 2,
+              p.w - T - 2,
+              p.d + (p.only === "out" ? p.h * 0.3 : 30),
+              h + 30,
+              seed,
+              7,
+            );
       return [
         part(
           () => A.holed(svg, p.w, h, [cut]),
@@ -569,7 +583,7 @@ export const DRAW = {
           p.key + 1,
           {
             fade: p.fade,
-            only: "in",
+            only: p.map ? p.only : "in", // (Downpour's north wall: from both sides, as the wall)
           },
         ),
       ];

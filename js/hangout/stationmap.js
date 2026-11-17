@@ -67,19 +67,19 @@ export const FENCES = [
   { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
   { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
 ];
-/* holes anyone walks through (the owner's circles): the storeroom's back door, the north wall by the counter, the front
-   door. axis "x": in an east-west wall at y = at, across a … b */
+/* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
+   05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
+   which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
+   them too. axis "x": in an east-west wall at y = at, across a … b */
 export const WALK_HOLES = [
   { id: "gs-back", axis: "x", at: STATION.y0, a: 1300, b: 1460 },
   { id: "gs-north", axis: "x", at: STATION.y0, a: 2950, b: 3150 },
-  { id: "gs-front", axis: "x", at: STATION.y1, a: 2510, b: 2690 },
+  { id: "gs-front", axis: "x", at: STATION.y1, a: 2400, b: 2800 },
 ];
 /* the boarded holes: where zombies tear the boards down and climb in (ducks never get through one). out: the side the
    outside is on (n, s, e, w) */
 export const BOARDED = [
-  { id: "gs-win1", axis: "x", at: STATION.y1, a: 2020, b: 2180, out: "s" }, // (the big front windows: glass round each)
-  { id: "gs-win2", axis: "x", at: STATION.y1, a: 2995, b: 3155, out: "s" },
-  { id: "gs-rest", axis: "y", at: STATION.x0, a: 1370, b: 1530, out: "w" }, // (the restroom window)
+  // (none in the gas station: the owner circled only the three holes above)
   ...[4000, 4400, 4800, 5200].flatMap((y, k) => [
     {
       id: "ch-w" + (k + 1),
@@ -268,9 +268,10 @@ function planBuild(b) {
       [950, 1110],
       [1400, 1560],
     ],
-    INNER,
-  ); // (the storeroom's door and the restroom's, onto the aisles)
-  line("x", 1150, S.x0, 1600, [], INNER); // (the storeroom | the restroom)
+    S.wall,
+  ); // (the storeroom's door and the restroom's, onto the aisles. As tall as the outside walls, so its top meets the north
+  // wall's at the corner instead of stopping short down its face: the owner's, Nov 17 05:46Z)
+  line("x", 1150, S.x0, 1600, [], S.wall); // (the storeroom | the restroom)
   for (const y of [850, 1130, 1410])
     put("shelf", 1750, y, 1000, 60, 150, {
       solid: true,
@@ -278,14 +279,37 @@ function planBuild(b) {
     }); // (the top one is empty)
   put("counter", 2950, 700, 400, 110, 75, { solid: true });
   put("counter", 3250, 810, 100, 340, 75, { solid: true });
-  put("toilet", 1195, 1550, 80, 70, 44, { solid: true }); // (the cabin's toilet)
-  /* boarded holes and walk-through holes: their broken edges (drawn only; nothing solid) */
+  /* the restroom: the cabin's bathroom without its tub (the owner's, Nov 17 05:46Z): the toilet, then the sink with its
+     mirror over it, both against its top wall (the storeroom's, y = 1150), at the cabin's sizes, facing the same way and
+     as far apart */
+  const onWall = (kind, cx, wy, w, d, h, o = {}) =>
+    put(kind, cx - w / 2, wy + (T * K + d) / K - d, w, d, h, o); // (own size: its back on the wall's face)
+  onWall("toilet", 1250, 1150, 80, 70, 44, { solid: true });
+  onWall("sink", 1405, 1150, 80, 60, 75, { solid: true });
+  /* boarded holes and walk-through holes: the wall's drawing over the gap with the hole smashed through it (drawn only;
+     nothing solid). In a south wall the same two ways as the wall itself: from outside all of it, the hole up to under
+     the sign's band; from inside its low line, broken (the cabin's south wall's holes). In the north wall all of it,
+     from both sides, see-through over a duck in the hole */
   for (const o of [...WALK_HOLES, ...BOARDED])
-    if (o.axis === "x")
+    if (o.axis === "x" && o.at === S.y1) {
       put("hole", o.a - T, o.at - T, o.b - o.a + 2 * T, 2 * T, 14, {
         z: 0,
         hole: o,
-        boarded: !!o.out,
+        low: true,
+        only: "in",
+      });
+      put("hole", o.a - T, o.at - T, o.b - o.a + 2 * T, 2 * T, S.wall, {
+        z: 0,
+        hole: o,
+        only: "out",
+        glass: GLASS,
+        key: S.y1 + T,
+      });
+    } else if (o.axis === "x")
+      put("hole", o.a - T, o.at - T, o.b - o.a + 2 * T, 2 * T, S.wall, {
+        z: 0,
+        hole: o,
+        fade: true,
       });
     else
       put("hole", o.at - T, o.a - T, 2 * T, o.b - o.a + 2 * T, INNER, {
@@ -382,7 +406,7 @@ function planBuild(b) {
       z: B.wall,
       only: "out",
       fade: true,
-      key: B.y1 + 15,
+      key: B.y1 + 2 * T, // (in front of the south wall's top: the roof's edge (the sign's red band) covers it, no grey slab over the red: the owner's, Nov 17 05:46Z)
       box: {
         l: B.x0 - 30,
         t: B.y0 - 30 - B.wall,
@@ -607,7 +631,7 @@ function forest(put) {
    hole or building, sees the new one), and each prop's place, size, height and options as build() hands it on. The
    strength of a light (k) and its flicker stay. The cabin's own things keep their size, only their place moves */
 const KEEP = new Set(["k", "flick", "out", "big"]),
-  OWN_SIZE = new Set(["priest", "l4angel", "l4power", "toilet"]),
+  OWN_SIZE = new Set(["priest", "l4angel", "l4power", "toilet", "sink"]),
   done = new Set();
 function scaled(o) {
   if (!o || typeof o !== "object" || done.has(o)) return o;
