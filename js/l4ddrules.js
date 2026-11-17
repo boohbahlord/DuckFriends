@@ -319,7 +319,7 @@ export const ARMS = {
   },
   /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
      the Tommy a round every 120 ms from a 50-round drum; the UMP-45 a round every 0.30 s, 2 damage a bullet, 20 rounds,
-     a 1.6 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+     a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
   tommy: {
     kind: "ranged",
     auto: true,
@@ -328,8 +328,8 @@ export const ARMS = {
     dmg: 1,
     speed: 1100,
     mag: 50,
-    all: 50 * 4,
-    reload: 2400,
+    all: 50 * 6, // (more ammo than the SMG's 260, and the SMG's reload: "the same stats as the SMG but slower fire rate but larger ammo capacity", the owner's, Nov 17 11:07Z)
+    reload: 1400,
     k: "tommy",
   },
   ump: {
@@ -341,7 +341,7 @@ export const ARMS = {
     speed: 1100,
     mag: 20,
     all: 20 * 6,
-    reload: 1600,
+    reload: 1400, // ("same reload", the owner's, Nov 17 11:21Z: the SMG's and the Tommy gun's)
     k: "ump",
   },
   ak: {
