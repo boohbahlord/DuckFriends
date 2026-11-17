@@ -14021,12 +14021,13 @@ html.moving .eye-zap {
 .mgj .gduck[data-pid="justin"] {
   transition: opacity 0.9s ease;
 }
-.gduck.mgj-gone {
+/* (he fades out; he's back at once. Everything of him fades but what he's saying: his Xbox line comes as he goes, and
+   it stays readable, the owner's, Nov 17 19:11Z: "WHY THE FUCK IS JUSTIN NOT DIALOGUING ANYMORE") */
+.gduck.mgj-gone > :not(.gduck-lift),
+.gduck.mgj-gone .gduck-lift > :not(.gduck-say) {
   opacity: 0;
-  transition:
-    transform 0.12s linear,
-    opacity 0.5s ease-in;
-} /* (he fades out; he's back at once) */
+  transition: opacity 0.5s ease-in;
+}
 /* he's not there for his first 3 s: his avatar fades in with a red glow, then he's there (the start is set in --sp) */
 .gduck.mgj-spawn {
   animation: mgj-spawn 3s linear var(--sp, 0s) both;
