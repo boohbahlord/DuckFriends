@@ -7063,9 +7063,10 @@ const holdMs = () => {
   const v = profile.settings.holdVote;
   return v === undefined ? 500 : +v || 0;
 };
-const holdBtn = (b) =>
-  !!holdMs() &&
-  (b.classList.contains("vote-btn") || (b.dataset.a === "hang" && touchOnly()));
+/* only what Enter does on a computer is held: the Vote button. Anything Enter can't press (the phone's use button)
+   acts at once with a click (the owner's, Nov 17 19:23Z: "if it cannot be selected by enter on PC then you simply do
+   not have to hold it down but it still gets a click noise") */
+const holdBtn = (b) => !!holdMs() && b.classList.contains("vote-btn");
 let held1 = null; // { a, key, t0, ms, raf, timer }: what is held now (its data-a), what holds it (a pointer's id or "Enter")
 /* the button's own element is drawn again whenever the screen refreshes, so the stripe is painted on whichever one
    stands there now, every frame */
@@ -7077,7 +7078,7 @@ function holdPaint() {
     u = Math.min(1, (performance.now() - held1.t0) / held1.ms);
   if (b) {
     b.classList.add("holding");
-    b.style.setProperty("--hold", u.toFixed(3));
+    b.style.setProperty("--hold", u.toFixed(3)); // (the stripe, and the glow growing with it: css .holding)
   }
   held1.raf = requestAnimationFrame(holdPaint);
 }
@@ -7092,9 +7093,13 @@ function holdStart(a, key) {
     timer: setTimeout(() => {
       const h = held1;
       holdEnd();
-      if (h && holdNow(h.a)) act(h.a);
+      if (h && holdNow(h.a)) {
+        sfx.holdClick(); // (full: a click, the owner's, Nov 17 19:22Z)
+        act(h.a);
+      }
     }, ms),
   };
+  sfx.holdFill(ms); // (a sound rising as the button fills, the owner's, Nov 17 19:22Z: "makes a sound as it fills up")
   holdPaint();
 }
 function holdEnd(e) {
@@ -7103,6 +7108,7 @@ function holdEnd(e) {
   if (e && e.code && held1.key !== "Enter") return;
   clearTimeout(held1.timer);
   cancelAnimationFrame(held1.raf);
+  sfx.holdStop(); // (let go early: the filling sound fades out)
   for (const b of S ? S.querySelectorAll(".holding") : [])
     b.classList.remove("holding");
   held1 = null;
@@ -7768,7 +7774,10 @@ register("game", {
       if (b && !b.disabled) {
         if (b.dataset.a === "pause") openPause();
         else if (b.dataset.a === "lset") openLobbySettings(R);
-        else act(b.dataset.a);
+        else {
+          if (b.dataset.a === "hang" && touchOnly()) sfx.holdClick(); // (the phone's use button: no hold, still the click)
+          act(b.dataset.a);
+        }
         return;
       }
       if (isL4dd(R.state) && e.target.closest(".board")) {

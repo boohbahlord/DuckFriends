@@ -5795,6 +5795,13 @@ html.map-on .game .bbar {
   position: relative;
   overflow: hidden;
 }
+/* and it glows more and more as it fills (the owner's, Nov 17 19:22Z: "it glows as you click it or hold it down more
+   and more") */
+.holding {
+  box-shadow: 0 0 calc(var(--hold, 0) * 1.1rem) calc(var(--hold, 0) * 0.25rem)
+    color-mix(in srgb, #fff calc(var(--hold, 0) * 70%), transparent);
+  filter: brightness(calc(1 + var(--hold, 0) * 0.35));
+}
 .holding::after {
   content: "";
   position: absolute;
@@ -18168,8 +18175,9 @@ body:has(> .vt) .win-back {
   background: color-mix(in srgb, var(--panel) 85%, transparent);
   touch-action: pan-y;
 }
+/* Random first, top left (the owner's, Nov 17 19:22Z; it was top middle) */
 .vt-mode.vt-dice {
-  grid-column: 2;
+  grid-column: 1;
 }
 .vt-mode:hover,
 .vt-mode:focus-visible {

@@ -5726,3 +5726,7 @@ Plan and split: /mnt/project-files/notes/nov17-1741-plan.md.
 > random comes first in the top left instead now instead of top middle
 >
 > the button for voting makes a sound as it fills up AND it glows as you click it or hold it down more and more until a click noise when it is full (yes i know the hold down enter button is fast for it)
+>
+> if it cannot be selected by enter on PC then you simply do not have to hold it down but it still gets a click noise
+
+(the last line added by the owner's edit at 19:23Z)
