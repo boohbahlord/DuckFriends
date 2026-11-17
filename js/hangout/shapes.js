@@ -471,7 +471,7 @@ const GS_DRAW = {
     });
   },
   fence: (p) => {
-    const t = SA.fenceLean(p, L.W), // (its top leans toward the road: stationart.js)
+    const t = SA.fenceLean(p, L.W), // (its top leans out, toward the map's edge: stationart.js)
       lean = Math.abs(t),
       mid = p.x + p.w / 2; // (its line)
     return gsPart(

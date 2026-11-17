@@ -160,6 +160,15 @@ export function mountWorld(board, api) {
       propEl: (id) => els.get(id) || null,
       coverAt: (l, r, t, b, key) => coverAt(l, r, t, b, key),
       propEls: (id) => all.get(id) || [],
+      /* does something drawn over (l, t, r, b) on the screen, at depth key, hide a duck or a zombie behind it? (as a wall
+         turns see-through: Downpour's Angel machine, l4ddangelui.js) */
+      hides: (l, t, r, b, key) =>
+        boxes.some(
+          (d) =>
+            d.need === undefined &&
+            d.key < key &&
+            covered(d, l, r, t, b) > HIDDEN,
+        ),
       shines: (l) => shines(l, R().state),
       at: (id) => {
         const p = R().state.pos[id];
@@ -595,6 +604,7 @@ export function mountWorld(board, api) {
   }
   /* every duck on my side of the walls: its box on the screen and its depth (a wall or a tree turns see-through only
      while it hides one: a duck behind it with a good part of it covered) */
+  let boxes = []; // (this frame's: hides)
   function duckBoxes(s) {
     const size = L.DUCK * cam.sc,
       out = [];
@@ -969,7 +979,8 @@ export function mountWorld(board, api) {
       clampCam();
       for (const a of acts()) a.step?.(dt, now, ctx);
       drawGround(now, s, tx, ty);
-      drawProps(duckBoxes(s));
+      boxes = duckBoxes(s);
+      drawProps(boxes);
       const show = inside || now - flip < SHADE_OUT;
       if (shade.hidden === show) {
         shade.hidden = !show;
