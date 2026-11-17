@@ -71,6 +71,7 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
+import { ZCABIN } from "./maps.js";
 import { ARMS, ITEM_ODDS } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
@@ -1829,10 +1830,11 @@ function burnTick(s, now) {
    before: game.js reads edgeAt) */
 function edgeTick(s, now, fx) {
   const m = s.mgj;
-  if (waveOn(s)) {
-    m.edgeAt = Math.max(m.edgeAt, now + EDGE_WARN + 1000);
-    return false;
-  } // (no lightning from the edges while his zombies are out: the owner's, Nov 17 11:07Z)
+  if (waveOn(s) || s.options.map === ZCABIN) {
+    if (m.edgeAt - now > EDGE_WARN + 1000) return false;
+    m.edgeAt = now + (s.options.map === ZCABIN ? 3600000 : EDGE_WARN + 5000);
+    return true;
+  } // (no lightning from the edges while his zombies are out, nor ever on Quacky Zombies' Duck Cabin: the owner's, Nov 17 11:07Z)
   if (now < m.edgeAt) return false;
   m.edgeAt = now + EDGE_EVERY;
   m.edgeLast = now;
