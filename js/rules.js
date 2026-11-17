@@ -145,6 +145,7 @@ import {
   isMgj,
   mgjStart,
   mgjAdvance,
+  mgjCount,
   mgjStab,
   mgjHurt,
   mgjSoak,
@@ -1659,6 +1660,7 @@ function reduceStep(state, a, now) {
       else if (!["lobby", "over", "countdown"].includes(s.phase))
         seatNewcomer(s, a.p.id);
       if (s.phase !== "lobby") rainbowJoin(s, a.p.id); // (Rainbow Ducks: a look for someone who joins mid-game)
+      if (isMgj(s)) mgjCount(s); // (Mad God Justin: a duck joining mid-fight adds its share of his HP)
       say(s, `${a.p.name} ${back ? "is back" : "joined"}.`);
       if (s.waiting && s.waiting.for === a.p.id) {
         delete s.waiting.for;
