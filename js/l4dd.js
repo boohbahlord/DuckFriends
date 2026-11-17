@@ -145,7 +145,7 @@ import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
-import { olAdd, olFloor } from "./outlines.js";
+import { olAdd, olFloor, olRoofed } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
@@ -2394,7 +2394,18 @@ activity({
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =
-        o.st !== 3 && zOutline(Wd, o, f, dip, sc, null, z, myFloor, zi); // (really behind a wall, under a roof: its line only)
+        o.st !== 3 &&
+        zOutline(
+          Wd,
+          o,
+          f,
+          dip,
+          sc,
+          (!door && olRoofed(o.x, o.y, z, meAt)) || null, // (under a roof I'm not under: always its line, outlines.js)
+          z,
+          myFloor,
+          zi,
+        ); // (really behind a wall, under a roof: its line only)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);
