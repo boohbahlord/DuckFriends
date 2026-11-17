@@ -5437,3 +5437,18 @@ flashes red when a reload can't be done. All modes, where relevant (no sprint ba
 Split: Jackal = Safe Keeping text (short; PC only on its number key, never on scroll; phone on its hotbar tap), the spin
 square staying put after a round starts, the orb over the car's S, zombie HP bar only once hurt and then kept. Noah = the
 yellow ammo bar and the white bar's red flash, after the outlines.
+
+## Request (2026-11-17 12:52Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtKpnBKTvCEaK1F7CbKddb52): Justin's lines in Downpour, no new ones (word for word)
+Jackal's 12 new lines (8 fighting, 4 at Jaime's body) were shown to the owner. Answer:
+> Next to Jaime’s body:
+>
+> He says awful lines to him that are already coded in the game and he only does it in a rest phase when he stops by it, which happens 1/2 the time about only twice per rest phase, and the quotes shuffle
+>
+> Fighting with his pistol:
+> He says the aggresive lines he already has that wouldnt be impossible to imagine for him to say to zombie 
+>
+> That "not impossible for justin to say" assumes he is crazy and appply to the Jaime lines too
+
+Decided: no new lines. Jackal picks existing lines only (fighting: aggressive ones a crazy Justin could shout at zombies;
+at Jaime's body: his awful existing lines toward Jaime, rest phase only, when he stops by it, 1/2 chance, about twice
+per rest phase, shuffled).
