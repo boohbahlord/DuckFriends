@@ -9,6 +9,18 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v81",
+    version: 81,
+    date: "Nov 17, 2026",
+    title: "Smaller waves, louder wind indoors",
+    news: [
+      "For Mad God Justin: zombie waves are half the size (6 zombies, plus 3 for each player after the first).",
+      "For Mad God Justin: weapons hurt his zombies as much as they hurt zombies in Dead Ducks Arcade, headshots and misses included.",
+      "For Mad God Justin: the zombie cabin is no longer one of his maps.",
+      "For Hangout and Dead Ducks Arcade: the wind and rain from inside a building are muffled but still easy to hear.",
+    ],
+  },
+  {
     id: "v80",
     version: 80,
     date: "Nov 17, 2026",
