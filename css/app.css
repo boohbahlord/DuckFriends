@@ -12173,9 +12173,13 @@ html.moving .hp.hang-shimmer {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
-.gduck.hang-swim .hang-wl {
+.gduck.hang-swim .hang-wl,
+.gduck.hang-wade .hang-wl {
   display: block;
 }
+.gduck.hang-wade .gduck-shadow {
+  display: none;
+} /* (Downpour's shallow flood: wading, its bottom fifth under the water) */
 .hang-wl svg {
   display: block;
   width: 100%;
@@ -14273,6 +14277,14 @@ html.moving .board.quake {
     #e8f8ffdd 0%,
     #7fd4ff77 40%,
     #7fd4ff00 70%
+  );
+}
+.mgj-pick.k-plus .mgj-pick-glow {
+  background: radial-gradient(
+    circle,
+    #e6ffe0dd 0%,
+    #58d36b77 40%,
+    #58d36b00 70%
   );
 }
 .mgj-pick.k-fire .mgj-pick-glow,

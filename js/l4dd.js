@@ -41,7 +41,7 @@ import { sfx } from "./sound.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import { inShallow, inDeep, WADE } from "./hangout/stationmap.js";
-import { floatDuck, SINK, SLOW as SWIM } from "./hangout/water.js";
+import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
 import {
   L4,
@@ -2027,11 +2027,16 @@ activity({
       o.sx = f.left;
       o.sy = f.top;
       o.sk = sc; // (where it stands on the screen: its blood comes out of it there, seeZombies)
-      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js) */
+      /* Downpour: one swimming the deep flood sits in the water to its waterline, bobbing, as a duck does (water.js);
+         one wading the shallow flood, its bottom fifth under it */
       const dip =
-        dp() && o.st !== 3 && inDeep(o.x, o.y)
-          ? SINK + Math.sin(t / 520 + o.i) * 2.2
-          : 0;
+        !dp() || o.st === 3
+          ? 0
+          : inDeep(o.x, o.y)
+            ? SINK + Math.sin(t / 520 + o.i) * 2.2
+            : inShallow(o.x, o.y) && o.st !== 5
+              ? WADE_SINK * o.feet
+              : 0;
       const tr = `translate(${at(f.left)}px, ${at(f.top + dip * sc)}px)`;
       if (o.tr !== tr) {
         o.tr = tr;
@@ -2059,17 +2064,20 @@ activity({
         o.el.style.zIndex = zi;
       }
     }
-    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool (water.js) */
+    /* Downpour: a duck in the deep flood swims, sunk to its waterline and bobbing, as in the Hangout pool; one in the
+       shallow flood wades, its bottom fifth under it (water.js) */
     if (dp())
       for (const d of Wd.board.querySelectorAll(".ducks .gduck")) {
         const id = d.dataset.pid,
-          a = id && Wd.at(id);
+          a = id && Wd.at(id),
+          wet = !!a && a.z <= heightAt(a.x, a.y) + 4;
         floatDuck(
           d,
-          !!a && inDeep(a.x, a.y) && a.z <= heightAt(a.x, a.y) + 4,
+          wet && inDeep(a.x, a.y),
           id ? (id.charCodeAt(0) + id.length * 7.3) % 6.28 : 0,
           now,
           sc,
+          wet && inShallow(a.x, a.y),
         );
       }
     mapDraw(t, ctx, ctx.state(), Z.values(), (id) => up(ctx.state(), id)); // (the minimap: l4ddmap.js)

@@ -19,9 +19,12 @@ export let GS_W = 4600,
 /* the road: y0 … y1, its middle line at mid; its bed `low` under the grass, sloping down over `ramp` at each side */
 export const ROAD = { y0: 2750, y1: 3350, mid: 3050, low: -40, ramp: 120 }; // (a ramp of 120: never more than 20 up between two zombie path cells 40 apart)
 /* the flood over the road: deep at the west end (ducks and zombies swim it, as in the Hangout pool: water.js), shallow
-   over the middle (ducks walk 30% slower in it, the owner's) */
-export const DEEP = [0, ROAD.y0, 1000, ROAD.y1],
-  SHALLOW = [1000, ROAD.y0, 3500, ROAD.y1];
+   over the rest, the whole road to the east edge (ducks walk 30% slower in it, sunk by a fifth: the owner's, Nov 17
+   11:07Z "the water should be seen over the entire road"). It fills the road's bed up to SHORE in from each side, a
+   little over half way down its banks; their upper parts show, sloping down into it (dpground.js) */
+export let SHORE = ROAD.ramp * 0.6;
+export const DEEP = [0, ROAD.y0 + SHORE, 1000, ROAD.y1 - SHORE],
+  SHALLOW = [1000, ROAD.y0 + SHORE, GS_W, ROAD.y1 - SHORE];
 export const WADE = 0.7;
 /* the owner's forest line: inside TOP (north of the road) and BOT (south of it) is open ground; outside them, forest */
 export const TOP = [
@@ -67,6 +70,10 @@ export const FENCES = [
   { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
   { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
 ];
+/* the fence round the whole map, where a duck's walking stops (the owner's, Nov 17 11:11Z: "There must be a fence around
+   the whole map WHERE the invisible wall is"): on the road fences' lines west and east, as far in from the north and
+   south edges. The road's two fences are its pieces across the road; zombies only climb those */
+export const RIM = { x0: 60, x1: 4540, y0: 60, y1: 6140 };
 /* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
    05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
    which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
@@ -390,6 +397,25 @@ function planBuild(b) {
         key: e,
       });
     }
+  /* the rest of the fence round the map: west and east (but where the road's fences are), then the north and south
+     sides, seen face on (fencex) */
+  for (const [x, f] of [
+    [RIM.x0, FENCES[0]],
+    [RIM.x1, FENCES[1]],
+  ])
+    for (const [a, c] of [
+      [RIM.y0, f.y0],
+      [f.y1, RIM.y1],
+    ])
+      for (let y = a; y < c; y += 200) {
+        const e = Math.min(c, y + 200);
+        put("fence", x - 6, y, 12, e - y, FENCE_H, { solid: true, key: e });
+      }
+  for (const y of [RIM.y0, RIM.y1])
+    for (let x = RIM.x0; x < RIM.x1; x += 400) {
+      const e = Math.min(RIM.x1, x + 400);
+      put("fencex", x, y - 6, e - x, 12, FENCE_H, { solid: true, key: y + 6 });
+    }
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -663,7 +689,18 @@ planBuild({
   wallY: (...a) => CALLS.push(["wallY", ...a]),
   T: 12 / K,
 });
-for (const o of [ROAD, DEEP, SHALLOW, TOP, BOT, STATION, CHAPEL, TOWER, FENCES])
+for (const o of [
+  ROAD,
+  DEEP,
+  SHALLOW,
+  TOP,
+  BOT,
+  STATION,
+  CHAPEL,
+  TOWER,
+  FENCES,
+  RIM,
+])
   scaled(o);
 for (const o of [
   WALK_HOLES,
@@ -680,6 +717,7 @@ for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
 GS_W *= K;
 GS_H *= K;
 FENCE_H *= K;
+SHORE *= K;
 export function build(b) {
   for (const [f, ...a] of CALLS) {
     if (f !== "add") {

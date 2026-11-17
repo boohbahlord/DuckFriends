@@ -13,6 +13,8 @@ export const FILES = {
   ak: { n: 1 },
   lmg: { n: 1 },
   chaingun: { n: 1 },
+  tommy: { n: 1 },
+  ump: { n: 1 },
   sniper: { n: 1 },
   shotgun: { n: 1 },
   pump: { n: 1 },
@@ -125,4 +127,8 @@ export const FILES = {
   trombone: { n: 1 },
   fire: { n: 1, loop: [0.15, 2.15] },
   fireLight: { n: 1 },
+  boomSmall: { n: 1 },
+  laser: { n: 1 },
+  laserHiss: { n: 1 },
+  laserSteam: { n: 1, loop: [0.15, 1.65] },
 };

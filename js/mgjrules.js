@@ -83,9 +83,9 @@ import {
 
 export const isMgj = (s) => s.options.mode === "mgj";
 /* no time limit (the owner, Nov 3): the fight goes on until he's at 0 HP or every duck is out of HP. What his HP sets off:
-   the Xbox once he has lost XB_LOST HP, the meteor once he's down to MET_AT HP (it gives MET_HEAL back) */
-export const XB_LOST = 20,
-  MET_AT = 10,
+   the Xbox once he's down to XB_AT of his HP, the meteor once he's down to MET_AT of it (it gives MET_HEAL back) */
+export const XB_AT = 2 / 3, // (the Xbox once he's at or under this fraction of his HP: the owner's, Nov 17)
+  MET_AT = 1 / 3, // (the meteor once he's at or under this fraction)
   MET_HEAL = 20;
 /* each time his attacks get faster (the Xbox, then the meteor: j.fast counts them), they come FAST_SOON times as soon
    and the controllers and the chair fly FAST_FLY times as fast; his bullets keep their speed */
@@ -261,14 +261,19 @@ const JAIME_OUCH = [
   ];
 /* what the ducks hold here (rules.js' move: w), and the cooldowns of their own here: the knife and the pistol, as fast
    as in every mode */
-export const MGJ_HOLD = ["knife", "handgun"];
+export const MGJ_MELEE = "sword"; // (the owner's, Nov 17: the ducks start with the short sword, not the knife)
+export const MGJ_HOLD = [MGJ_MELEE, "handgun"];
 /* what a duck can have out in its hand here (rules.js' move: w): the knife, the bow, the zebra cake, or the weapon it
    picked up (the owner's, Nov 3: whatever it switches to stays out, but Jaime) */
 export const mgjHolds = (s, id, w) =>
   MGJ_HOLD.includes(w) ||
   w === "zebra" ||
   (!!w && !!s.mgj && (s.mgj.held || {})[id] === w);
-const MGJ_COOL = { knife: ARM_COOL.knife, handgun: ARM_COOL.handgun }; // (as fast as in every mode: the knife four a second, the pistol five)
+const MGJ_COOL = {
+  sword: ARM_COOL.sword,
+  knife: ARM_COOL.knife,
+  handgun: ARM_COOL.handgun,
+}; // (as fast as in every mode: the knife four a second, the pistol five)
 export const mgjCool = (sp) =>
   MGJ_COOL[sp] || (MGJ_GUNS.includes(sp) ? ARMS[sp].cool : 0); // (a gun picked up: Quacky Zombies' own)
 /* getting a downed duck up (the owner's, Nov 3, in place of the medkit): stand within REVIVE.REACH duck lengths of it and
@@ -286,7 +291,8 @@ const SPEED = 0.25, // (owner 2026-11-03 22:13Z: he moves faster; was 0.2)
 /* the pickups: every PICK_EVERY ms one fades in, picked by these odds (the owner's, in percent): "sky" is lightning or
    fire (half and half) and hits him as it shows, as the meteor does (1 damage); "good" is Good
    Justin God. A weapon waits until a duck walks over it or the next one comes */
-export const PICK_EVERY = 15000,
+export const PLUS_EVERY = 30000, // (the owner's, Nov 17: a little plus sign every 30 s, +1 HP to the duck that walks over it)
+  PICK_EVERY = 15000,
   PICK_FADE = 700,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
   PICK_LAND = 1500, // the meteor's fall
@@ -314,14 +320,14 @@ export const MGJ_GUNS = [
   "chaingun",
 ];
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
-/* the shots a gun picked up comes with: two magazines, or a quarter of Quacky Zombies' ammo for a gun with no magazine
-   (the shotgun 18, the grenade launcher 6); the chain gun its 300 */
+/* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
+export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
 export const pickAmmo = (k) =>
-  k === "chaingun"
-    ? ARMS.chaingun.all
-    : ARMS[k].mag
-      ? 2 * ARMS[k].mag
-      : Math.round(ARMS[k].all / 4); // (the chain gun all 300 of its rounds, as everywhere: the owner's, Nov 16)
+  k === "shotgun"
+    ? INF_AMMO
+    : k === "lmg"
+      ? 30 // (the LMG only 30 rounds here: the owner's, Nov 17)
+      : (mgjMag(k) || [ARMS[k].all])[0]; // (every other gun only its one magazine)
 /* a gun's magazine here ([shots, reload ms], or null): Quacky Zombies' own; the pistol's never runs out. Every gun picked
    up has to reload here (the owner's, Nov 16), so the ones with no magazine in Quacky Zombies get one: the shotgun 6
    shells, the grenade launcher 3 (as in the other modes) and the chain gun a belt of 100 of its 300 (my guesses) */
@@ -345,7 +351,7 @@ export const ammoOf = (s, id) =>
 /* one shot from the gun picked up; the last one and it's gone (back to the one out before) */
 export function mgjSpend(s, id) {
   const m = s.mgj,
-    left = ammoOf(s, id) - 1;
+    left = ammoOf(s, id) >= INF_AMMO ? INF_AMMO : ammoOf(s, id) - 1;
   if (left > 0) m.ammo = { ...m.ammo, [id]: left };
   else dropHeld(m, id);
 }
@@ -363,6 +369,7 @@ export const usesOf = (s, id) =>
 /* how much each hit takes off him (we decided: a picked-up weapon hits harder than the knife; each pellet 1) */
 export const DMG = {
   knife: 1,
+  sword: 1,
   hammer: 2,
   dagger: 2,
   handgun: 1, // (the pistol everyone has)
@@ -434,6 +441,8 @@ export function mgjStart(s, now) {
     shotgun: true, // (the owner: he has the shotgun from the start now)
     over: 0,
     pickAt: now + PICK_EVERY,
+    plusAt: now + PLUS_EVERY,
+    plus: null,
     // I want his Xbox turned off only once a game, and only after the first 45 seconds: a new fight ("Try again")
     // keeps it off
     xbUsed: !!(s.mgj && s.mgj.xbUsed),
@@ -717,7 +726,7 @@ function brain(s, now, log) {
   };
 
   /* the meteor */
-  if (!m.met && !m.metDone && !(m.xb && !m.xb.done) && m.hp <= MET_AT) {
+  if (!m.met && !m.metDone && !(m.xb && !m.xb.done) && m.hp <= m.max * MET_AT) {
     m.met = { at: now };
     delete j.swing;
     delete j.tell;
@@ -779,7 +788,7 @@ function brain(s, now, log) {
     ch = true; // (he goes after the real one, when the double is out)
 
   /* the Xbox: the desk comes in, he runs over, turns it off, fades away, comes back faster */
-  if (!m.xb && !m.xbUsed && !m.met && m.max - m.hp >= XB_LOST) {
+  if (!m.xb && !m.xbUsed && !m.met && m.hp <= m.max * XB_AT) {
     const spot = deskSpot(s, at);
     const side = at.x < spot.x ? -1 : 1,
       to = {
@@ -1310,6 +1319,38 @@ function pickTick(s, now, at, log, fx) {
       ch = true;
       break;
     }
+  /* the plus sign: +1 HP to the first duck that walks over it (a duck at full HP leaves it be) */
+  if (m.plus && now - m.plus.t >= PICK_FADE * 0.5)
+    for (const id of playing(s)) {
+      const p = s.pos[id],
+        Pl = s.players[id];
+      if (!p || p.x < 0 || !Pl || Pl.dead || !((m.lost || {})[id] > 0))
+        continue;
+      if (Math.hypot((p.x - m.plus.x) / RX, (p.y - m.plus.y) / RY) > 1.1)
+        continue;
+      const lost = { ...m.lost },
+        left = lost[id] - 1;
+      if (left > 0) lost[id] = left;
+      else delete lost[id];
+      m.lost = lost;
+      fx({ kind: "pickup", what: "plus", who: [id], by: id });
+      m.plus = null;
+      ch = true;
+      break;
+    }
+  if (now >= m.plusAt) {
+    m.plusAt = now + PLUS_EVERY;
+    let x = 0.5,
+      y = 0.5;
+    for (let i = 0; i < 12; i++) {
+      x = rnd(0.1, 0.9);
+      y = rnd(0.14, 0.86);
+      if (Math.hypot((x - at.x) / RX, (y - at.y) / RY) > 4) break;
+    }
+    m.plusN = (m.plusN || 0) + 1;
+    m.plus = { n: m.plusN, k: "plus", x: r3(x), y: r3(y), t: now };
+    ch = true;
+  }
   /* the next one fades in (a weapon nobody took goes away) */
   if (now >= m.pickAt) {
     m.pickAt = now + PICK_EVERY;
