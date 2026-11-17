@@ -309,8 +309,9 @@ export function angelMachineSVG({ w = 130, h = 150, working = false } = {}) {
 /* a four-pointed sparkle */
 const star = (x, y, r) =>
   `<path d="M${n1(x)} ${n1(y - r)}Q${n1(x + r * 0.2)} ${n1(y - r * 0.2)} ${n1(x + r)} ${n1(y)}Q${n1(x + r * 0.2)} ${n1(y + r * 0.2)} ${n1(x)} ${n1(y + r)}Q${n1(x - r * 0.2)} ${n1(y + r * 0.2)} ${n1(x - r)} ${n1(y)}Q${n1(x - r * 0.2)} ${n1(y - r * 0.2)} ${n1(x)} ${n1(y - r)}Z" fill="#fff" stroke="${GOLD_D}" stroke-width="${n1(r * 0.16)}"/>`;
-/* any weapon's picture (held or icon) made Angelic: a dark crimson edge round it and a crimson glow, a small gold halo over
-   its middle and two sparkles. The picture keeps its width and its middle (the room for the halo is added above and
+/* any weapon's picture (held or icon) made Angelic: a dark crimson edge round it and a small crimson glow (much smaller,
+   fewer pixels: the owner, Nov 17; css .angelic breathes it softly), a see-through gold halo over its middle and two
+   sparkles. The picture keeps its width and its middle (the room for the halo is added above and
    below alike), so it sits in the hand and in its slot as before */
 export function angelic(svg) {
   const m = svg.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/);
@@ -322,10 +323,10 @@ export function angelic(svg) {
     u = Math.min(w, h + 2 * e) / 40, // (the halo's and the sparkles' size, against a 40 square)
     hx = x + w * (sq ? 0.5 : 0.68),
     hy = sq ? y + h * 0.12 : y - e * 0.45;
-  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.8, u * 1.2))}" result="d"/><feFlood flood-color="${CRIMSON_D}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(1.4, u * 2.8))}" result="b"/><feFlood flood-color="${CRIMSON}"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  const defs = `<filter id="${id}" x="-20%" y="-30%" width="140%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="${n1(Math.max(0.6, u * 0.8))}" result="d"/><feFlood flood-color="${CRIMSON_D}"/><feComposite in2="d" operator="in" result="edge"/><feGaussianBlur in="d" stdDeviation="${n1(Math.max(0.6, u * 1))}" result="b"/><feFlood flood-color="${CRIMSON}" flood-opacity=".7"/><feComposite in2="b" operator="in" result="glow"/><feMerge><feMergeNode in="glow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
   const halo =
-    `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD_D}" stroke-width="${n1(u * 3)}"/>` +
-    `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD}" stroke-width="${n1(u * 1.6)}"/>`;
+    `<g opacity=".55"><ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD_D}" stroke-width="${n1(u * 3)}"/>` +
+    `<ellipse cx="${n1(hx)}" cy="${n1(hy)}" rx="${n1(u * 7)}" ry="${n1(u * 2.4)}" fill="none" stroke="${GOLD}" stroke-width="${n1(u * 1.6)}"/></g>`;
   const sparks = sq
     ? star(x + w * 0.82, y + h * 0.2, u * 3.4) +
       star(x + w * 0.18, y + h * 0.62, u * 2.4)

@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Laser gun looks</title>
+    <style>
+      body {
+        background: #1a1b22;
+        color: #e8e8ee;
+        font:
+          600 15px system-ui,
+          sans-serif;
+        margin: 16px;
+      }
+      h2 {
+        margin: 18px 0 6px;
+        font-size: 18px;
+      }
+      .row {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+      }
+      .cell {
+        background: #23252e;
+        border-radius: 8px;
+        padding: 8px 10px;
+        width: 270px;
+        height: 130px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .cell b {
+        font-size: 12px;
+        color: #aab;
+        font-weight: 600;
+      }
+      .cell .pic {
+        flex: 1;
+        position: relative;
+      }
+      .cell svg {
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 236px;
+        height: auto;
+        overflow: visible;
+      }
+      .cell.px {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding-top: 22px;
+      }
+      .px canvas {
+        image-rendering: pixelated;
+      }
+      .meter {
+        display: flex;
+        gap: 2px;
+        padding: 2px;
+        background: #14151b;
+        border: 1px solid #000;
+        border-radius: 3px;
+        width: max-content;
+      }
+      .meter i {
+        width: 12px;
+        height: 6px;
+        background: #3a3c46;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="out"></div>
+    <script type="module">
+      import "../js/specials.js";
+      import "../js/l4ddart.js";
+      import { LOOKS, BEAM } from "../js/laserart.js";
+      import { angelic } from "../js/powerart.js";
+      const NAMES = { laser: "The laser gun" };
+      /* the beam, the fire pixels and the steam, drawn over a picture of the gun at its tip */
+      const extra = (svg, tip, kind) => {
+        let more = "";
+        const [x, y] = tip;
+        if (kind === "fire")
+          more = `<path d="M${x} ${y}H${x + 90}" stroke="${BEAM.glow}" stroke-width="4.6" opacity=".35" stroke-linecap="round"/><path d="M${x} ${y}H${x + 90}" stroke="${BEAM.color}" stroke-width="2.2" stroke-linecap="round"/><path d="M${x} ${y}H${x + 90}" stroke="${BEAM.core}" stroke-width=".7" stroke-linecap="round"/>`;
+        if (kind === "over") {
+          const fire = [
+            [-3, -5, "#ffcf3a"],
+            [-1, -8, "#ff8a1a"],
+            [1.5, -6, "#ffcf3a"],
+            [-4.5, -9.5, "#ff5a1a"],
+            [2, -10.5, "#ff8a1a"],
+            [0, -13, "#ff5a1a"],
+          ]
+            .map(
+              ([dx, dy, c]) =>
+                `<rect x="${(x + dx - 1).toFixed(1)}" y="${(y + dy - 1).toFixed(1)}" width="2" height="2" fill="${c}"/>`,
+            )
+            .join("");
+          const steam = [
+            [-2, -6, 2.2, 0.4],
+            [-5, -10, 3, 0.32],
+            [-3, -15, 3.8, 0.24],
+            [-7, -19, 4.4, 0.16],
+          ]
+            .map(
+              ([dx, dy, r, o]) =>
+                `<circle cx="${x + dx}" cy="${y + dy}" r="${r}" fill="#f2f4f8" opacity="${o}"/>`,
+            )
+            .join("");
+          more = steam + fire;
+        }
+        return svg.replace(/<\/svg>$/, more + "</svg>");
+      };
+      /* a picture at the game's size, in pixels (one pixel per game pixel, shown 4 times as big) */
+      const pixel = (svg, wpx) =>
+        new Promise((done) => {
+          const img = new Image();
+          img.onload = () => {
+            const [, , , w, h] = svg
+              .match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/)
+              .map(Number);
+            const cw = wpx,
+              ch = Math.round((wpx * h) / w),
+              c = document.createElement("canvas");
+            c.width = cw;
+            c.height = ch;
+            c.getContext("2d").drawImage(img, 0, 0, cw, ch);
+            c.style.width = cw * 3 + "px";
+            done(c);
+          };
+          img.src =
+            "data:image/svg+xml;charset=utf-8," +
+            encodeURIComponent(
+              svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '),
+            );
+        });
+      const out = document.getElementById("out");
+      for (const [k, look] of Object.entries(LOOKS)) {
+        const sec = document.createElement("div");
+        sec.innerHTML = `<h2>${NAMES[k]}</h2><div class="row"></div>`;
+        const row = sec.querySelector(".row");
+        const cells = [
+          ["Cool", look(0)],
+          ["Firing, warming up", extra(look(0.35), look.tip, "fire")],
+          ["Firing, hot", extra(look(0.7), look.tip, "fire")],
+          ["Overheated", extra(look(1, true), look.tip, "over")],
+          ["Angelic", angelic(look(0))],
+        ];
+        for (const [t, svg] of cells) {
+          const d = document.createElement("div");
+          d.className = "cell";
+          d.innerHTML = `<b>${t}</b><div class="pic">${svg}</div>`;
+          row.append(d);
+        }
+        const px = document.createElement("div");
+        px.className = "cell px";
+        px.innerHTML =
+          "<b style='position:absolute;top:8px;left:10px'>In the game's pixels</b>";
+        px.append(
+          await pixel(look(0), 34),
+          await pixel(look(0.7), 34),
+          await pixel(look(1, true), 34),
+        );
+        row.append(px);
+        out.append(sec);
+      }
+      /* the heat meter under a duck: blocks from red toward orange, the last one flashing white when overheated */
+      const m = document.createElement("div");
+      const blocks = (n, over) =>
+        `<div class="meter">${Array.from({ length: 5 }, (_, i) => `<i style="background:${i < n ? (over && i === 4 ? "#fff3d6" : ["#c8222a", "#d93a26", "#e85424", "#f26e22", "#ff8a1f"][i]) : "#3a3c46"}"></i>`).join("")}</div>`;
+      m.innerHTML = `<h2>Heat meter under the duck</h2><div class="row" style="gap:28px">${blocks(1)}${blocks(3)}${blocks(5)}${blocks(5, true)}</div>`;
+      out.append(m);
+      document.body.dataset.ready = 1;
+    </script>
+  </body>
+</html>
