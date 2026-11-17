@@ -7,6 +7,7 @@ import { $, toast } from "./ui.js";
 import { start, current } from "./router.js";
 import { showJumps } from "./jumps.js";
 import { checkUnlocks, takeOffLocked } from "./unlocks.js";
+import "./homeapp.js"; // (early: it keeps the browser's install offer for the front page's button)
 import "./front.js";
 import { pixelOn, pxImgWatch } from "./pixel.js"; // (first: the pixel look's class goes on before anything draws)
 import { pxWatch } from "./pxdom.js";
