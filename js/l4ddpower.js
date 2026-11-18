@@ -320,6 +320,17 @@ export function powerPump(s, id, now, mx, my, h) {
   h.addFx(s, { kind: "l4pwfill", by: id, who: [], t: now });
   return true;
 }
+/* Duck Cabin: a merchant's gas, the pump's 25% at the pump's price, and he never runs out (the owner's, Nov 18 14:20Z:
+   "Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND
+   the gas never runs out from the merchant"). The rules check he's there */
+export function powerGas(s, id, now, h) {
+  const pw = s.hang.pw;
+  if (!pw || gasFull(s) || h.ptsOf(s, id) < PW.PUMP) return false;
+  h.addPts(s, id, -PW.PUMP);
+  s.hang.pw = { ...pw, gas: (pw.gas || 0) + 1 };
+  h.addFx(s, { kind: "l4pwfill", by: id, who: [], t: now });
+  return true;
+}
 /* what E at the box would do now, for its button: "pour" or "" */
 export function powerNext(s) {
   return pwState(s) && canRow(s)[0] ? "pour" : "";

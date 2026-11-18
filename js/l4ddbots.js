@@ -23,6 +23,7 @@ import {
   maxHp,
   SHOP,
   merchantOf,
+  upOffer,
   selling,
   BOX,
   boxNow,
@@ -41,7 +42,6 @@ import { WANDER } from "./hangout/justin.js";
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
 const STEP_MS = 200; // (the TEST room's heartbeat: how far it walks each time)
-const WISH = ["hp", "sp", "rl", "acc", "as"]; // what a computer buys first
 const AT = 90; // world px: near enough to the Butler or the fireplace
 const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
 const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
@@ -232,10 +232,12 @@ function shopping(s, id, now, x, y, far, m, send, out) {
     act = { t: "hang", k: "l4", do: "box", hand, id };
   } else {
     const up = upOf(s, id),
-      want = WISH.map((k) => SHOP.find((it) => it.id === k)).find(
+      want = SHOP.find(
         (it) =>
-          (up[it.id] || 0) < it.most && pts >= priceOf(it.id, up[it.id] || 0),
-      );
+          it.id === upOffer(s, id) &&
+          (up[it.id] || 0) < it.most &&
+          pts >= priceOf(it.id, up[it.id] || 0),
+      ); // (only the one the merchant offers it this visit)
     if (want && selling(s)) {
       to = merchantOf(s); // (only while a merchant is here and selling)
       act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
