@@ -400,13 +400,8 @@ export const ARMS = {
   },
   /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
      zombie it hits, blows chunks through it and throws its body back a long way (FLING); a crit's slug blows the head
-<<<<<<< HEAD
-     off and goes on through every zombie in its way, killing each. Two shells, then a reload of a second for each
-     shell it loads (shell); 150 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
-=======
      off and goes on to the next zombie, past it only on that one's own crit (Nov 18 13:46Z). Two shells, then a reload of a second for each
-     shell it loads (shell); 96 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
->>>>>>> pr461
+     shell it loads (shell); 150 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
   dbarrel: {
