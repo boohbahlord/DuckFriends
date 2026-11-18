@@ -36,7 +36,6 @@ import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
 import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
-import { mudMount, mudUnmount, mudDraw } from "./l4ddmud.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
@@ -2195,7 +2194,6 @@ activity({
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
-    mudMount(ctx.world.board); // (and a mud zombie's mud on my screen: l4ddmud.js)
     pwMount(ctx, layer);
     angelMount(ctx, layer);
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -2242,7 +2240,6 @@ activity({
     cv?.remove();
     mapUnmount();
     rainUnmount();
-    mudUnmount();
     pwUnmount();
     angelUnmount();
     hud?.remove();
@@ -2474,7 +2471,6 @@ activity({
         hit && clockNow() - hit[2] < 600 ? hit : null,
       ); // (and the lightning: l4ddrules.js boltTick)
     } else rainDraw(t, ctx, [], false);
-    mudDraw(((ctx.state().hang.l4p || {})[ctx.me] || {}).mud || 0, clockNow());
     const beat = new Set();
     for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */

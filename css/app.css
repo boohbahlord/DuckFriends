@@ -19006,38 +19006,6 @@ html.pixel.armed :is(.board, .hang-board) {
 .hang-board .ol-px {
   z-index: 24001;
 } /* (over everything on the board: Dead Ducks Arcade's and Hangout's world alike) */
-/* Downpour: a mud zombie's mud over the corners of my screen (l4ddmud.js), over the board, under the HUD */
-.hang-board.l4-board .l4-mud {
-  position: absolute;
-  inset: 0;
-  z-index: 24002;
-  pointer-events: none;
-}
-.l4-mud i {
-  position: absolute;
-  width: min(34vw, 300px);
-  height: min(34vw, 300px);
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
-}
-.l4-mud-tl {
-  left: 0;
-  top: 0;
-}
-.l4-mud-tr {
-  right: 0;
-  top: 0;
-  transform: scaleX(-1);
-}
-.l4-mud-bl {
-  left: 0;
-  bottom: 0;
-  transform: scaleY(-1);
-}
-.l4-mud-br {
-  right: 0;
-  bottom: 0;
-  transform: scale(-1, -1);
-}
 /* Quacky Zombies' own map vote (vote.js zmapTile): the dice and its two maps, three in a row, each a picture */
 .vt-k-zmap .vt-box {
   flex: 0 1 auto; /* (only as tall as its maps, no empty box under them; it still scrolls on a short screen) */

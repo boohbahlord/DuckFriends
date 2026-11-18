@@ -399,7 +399,7 @@ export const ARMS = {
   /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
      zombie it hits, blows chunks through it and throws its body back a long way (FLING); a crit's slug blows the head
      off and goes on through every zombie in its way, killing each. Two shells, then a reload of a second for each
-     shell it loads (shell); 96 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
+     shell it loads (shell); 150 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
   dbarrel: {
@@ -408,7 +408,7 @@ export const ARMS = {
     dmg: "all",
     speed: 1500,
     mag: 2,
-    all: 96,
+    all: 150, // (the owner's, Nov 18 13:46Z: "there should be 150 rounds in the double barrel shotgun")
     shell: 1000, // (ms a shell: one shell loads in 1 s, two in 2 s)
     k: "slug",
   },
@@ -838,13 +838,7 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
-  ...(l[8]
-    ? { color: "#6b5434", beakColor: "#7a5a2e", beakColor2: "#4a3418" }
-    : {}), // (a mud zombie: MUD)
 });
-/* Downpour's mud zombies (the owner's, Nov 16 23:15Z): 4% of them, 1 HP less, the color of the mud; a hit from one
-   puts mud over the corners of that duck's screen, which fades after 10 s (l4dd.js mudScreen). l[8] is 1 */
-export const MUD = { P: 0.04, FOR: 10000, FADE: 1500 };
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
@@ -4126,8 +4120,7 @@ function newZombie(s, L, T, zs = []) {
     odd = Math.random() < 0.25, // (25% are another size or build; every one has the same room on the floor)
     size = odd && Math.random() < 0.5 ? +rnd(-1, 1).toFixed(2) : 0,
     build = odd && !size ? +rnd(-1, 1).toFixed(2) : 0,
-    mud = dp() && Math.random() < MUD.P ? 1 : 0,
-    max = Math.max(1, hp0() - mud),
+    max = Math.max(1, hp0()),
     jus = Math.random() < Z_JUSTIN ? 1 : 0,
     v = Math.round(WALK * Z_SLOW * rnd(R[1][0], R[1][1])),
     [sx, sy] = from || o.out;
@@ -4145,9 +4138,7 @@ function newZombie(s, L, T, zs = []) {
     dir: 0,
     l: jus
       ? [max, v, o.id, 0, 0, -1, -1, 1]
-      : mud
-        ? [max, v, o.id, size, build, hat, outfit, 0, 1]
-        : [max, v, o.id, size, build, hat, outfit],
+      : [max, v, o.id, size, build, hat, outfit],
   };
 }
 function moveZombies(s, zs, now, T, up) {
@@ -4447,8 +4438,6 @@ function moveZombies(s, zs, now, T, up) {
         const hit = !dodging(s, target.p, now);
         if (hit && hurtDuck(s, p4, target.id, now, "claw"))
           pls.splice(pls.indexOf(target), 1);
-        if (hit && z.l[8] && p4[target.id] && p4[target.id].at === now)
-          p4[target.id] = { ...p4[target.id], mud: now }; // (a mud zombie's: mud over that duck's screen, l4dd.js mudScreen)
       }
     } else z.n = 0;
   }

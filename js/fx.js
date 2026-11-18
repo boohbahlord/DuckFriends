@@ -502,7 +502,7 @@ export const MUZZLE = {
     smoke: 12,
     puff: 6,
     drift: 0.8,
-    shake: 0.65,
+    shake: 0.75, // (as the sniper's: the owner's, Nov 18 13:46Z)
     kick: 1.5,
   }, // (the double barrel: the biggest flash and kick of all)
   shotgun: {
