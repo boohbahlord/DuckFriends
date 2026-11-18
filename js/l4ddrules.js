@@ -167,15 +167,23 @@ export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
    that grows through the phase, the round's place in it over the phase's length (1/4, 2/4 …), rounded down. Never
    more than 100 a player nor 400 in all, and never fewer than the round before (a round that would have fewer keeps
    the round before's). From round 21 on: 144 (as far as the cap lets), and never fewer than round 20 */
-const PHASES = [
-  [1, 4, 12],
-  [5, 8, 24],
-  [9, 12, 36],
-  [13, 20, 72],
-];
+/* Nov 18 12:39Z + 12:40Z: every player earns about what one player alone earns, each round. So each round is its own
+   phase (its share is then always the whole base: every extra player adds as many zombies as one player gets), rounds
+   1-4 have as many as rounds 5-8 (24; it was 12), and the caps in all are 800 (8 players x 100). Spawn rates stay. The
+   chart: sheets/zombie-spawns-per-player.xlsx */
+const PHASE_BASE = [
+  [8, 24],
+  [12, 36],
+  [20, 72],
+]; // (up to which round, the zombies a round for one player)
+const PHASES = Array.from({ length: 20 }, (_, i) => [
+  i + 1,
+  i + 1,
+  PHASE_BASE.find(([last]) => i + 1 <= last)[1],
+]);
 const Z_EACH = 100, // the most zombies a round for each player …
-  Z_MOST = 400, // … and in all
-  Z_LATE = 144; // from round 21 on
+  Z_MOST = 800, // … and in all (was 400)
+  Z_LATE = 800; // from round 21 on (was 144)
 export function zombiesFor(r, p) {
   const cap = Math.min(Z_EACH * p, Z_MOST);
   let n = 0;

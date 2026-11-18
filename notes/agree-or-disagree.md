@@ -5982,3 +5982,8 @@ Done (Adam): the button stays greyed until every file is on the device, and once
 > furthermore, the slot now costs 950 points
 
 Done (Adam): slot BOX.price 950. Chart /mnt/project-files/sheets/zombie-spawns-per-player.xlsx; parameter changes wait for the owner's yes.
+
+## Request (2026-11-18 12:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2TfgXR7VWtNc84t4yAGMFs) (word for word)
+> the parameter for max zombies per round (not the spawned at a time but the roof of how many can spawn per game) for more players can be changed accordingly for this point mechanic to work
+
+Done (Adam): l4ddrules PHASES one per round (bases 24 to round 8, 36 to 12, 72 to 20), Z_MOST 800, Z_LATE 800; every player earns what 1 player earns. Spawn rates unchanged.
