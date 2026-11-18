@@ -60,7 +60,15 @@ import {
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
-import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
+import {
+  GRENADE_MS,
+  daggerZ,
+  walkOf,
+  FASTER,
+  shareOf,
+  say,
+  shove,
+} from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
@@ -247,7 +255,7 @@ export const ARMS = {
   sword: {
     kind: "melee",
     cool: ARM_COOL.sword,
-    dmg: 1,
+    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 15:25Z)
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
@@ -255,7 +263,7 @@ export const ARMS = {
   pan: {
     kind: "melee",
     cool: ARM_COOL.pan,
-    dmg: 1,
+    dmg: [2, 6], // (2 to 6: the owner's, Nov 18 15:25Z)
     crit: 0.5,
     miss: 0.5,
     swing: ARM_SWING.pan,
@@ -3810,7 +3818,33 @@ function meleeHits(s, now) {
         : A.dmg; // (the fire axe: 1 to 4)
       if (strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
         die(z, T);
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
       any = true;
+    }
+    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    for (const id of s.seat) {
+      const q = s.pos[id];
+      if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
+        continue;
+      const [qx, qy] = at(q);
+      if (
+        Math.hypot(qx - bx, qy - by) > A.r + 22 ||
+        Math.abs((+q.z || 0) - (+p.z || 0)) > 48
+      )
+        continue;
+      k.hit.push("p" + id);
+      const far = (KNOCK[k.w] || KNOCK.knife) * KNOCK.DUCK,
+        dX = 0.006 * W,
+        dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
+      shove(
+        s,
+        id,
+        k.dx,
+        (k.dy * dX) / dY,
+        far / dX,
+        now,
+        inCabin(qx, qy) ? 1 : 0,
+      ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
     if (
       !k.hit.includes("j") &&
@@ -3826,6 +3860,24 @@ const die = (z, T) => {
   z.st = 3;
   z.d = T;
 };
+/* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
+   pushes a living zombie back, in world px (a duck is 64), and DUCK: how much of that another duck in the swing is
+   shoved */
+const KNOCK = { knife: 16, sword: 16, pan: 16, axe: 28, hammer: 40, DUCK: 0.5 };
+/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
+   stand (a wall, furniture, a step too high) */
+function knockZ(z, ux, uy, far) {
+  const n = Math.max(1, Math.ceil(far / 8)),
+    h = heightAt(z.x, z.y);
+  for (let i = 0; i < n; i++) {
+    const x = z.x + (ux * far) / n,
+      y = z.y + (uy * far) / n;
+    if (!zOk(x, y, h)) break;
+    z.x = Math.round(x);
+    z.y = Math.round(y);
+  }
+}
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
    or an arrow (a headshot now and then kills it at once), a grenade goes off where it lands or where a wall stops it */
 const OPEN_PAD = 30;
