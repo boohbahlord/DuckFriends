@@ -4,8 +4,8 @@
    when they die; the boards over the openings; the dark over everything (the power is cut) with the
    fires and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
-   by an opening to board it up; key 0 switches my flashlight. Justin's Butler stands by the card table: E by him opens
-   his shop. E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
+   by an opening to board it up; key 0 switches my flashlight. A merchant comes now and then and stands by the card
+   table (on Downpour in the chapel): E by him opens his shop (drawMerchant). E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
@@ -30,7 +30,8 @@ import {
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { butlerSVG, justinSVG, priestSVG } from "./hangout/npcart.js";
+import { justinSVG } from "./hangout/npcart.js";
+import { merchantById, merchantSVG } from "./merchants.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
@@ -71,7 +72,6 @@ import {
   upOf,
   ptsOf,
   slotsOf,
-  BUTLER,
   SLOT_KINDS,
   BOX,
   POOL,
@@ -87,17 +87,12 @@ import {
   waitNeed,
   waitVotes,
   startOf,
-  GUN_SHOP,
-  gunPrice,
-  AMMO_PRICE,
   kitOf,
   openingById,
   reloadOf,
   l4Cool,
   kindOf,
   ARMS,
-  SAFE,
-  safePrice,
   zombieLook,
   magIn,
   fullFor,
@@ -108,12 +103,15 @@ import {
   shotArm,
   shotWalled,
   hasLeft,
+  merchantOf,
+  selling,
+  stockPrice,
+  MERCH,
 } from "./l4ddrules.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
-import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import {
   pwMount,
@@ -188,9 +186,16 @@ const MOON = () => {
   return moon;
 };
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
-const BUTLER_NAME = "Justin's Butler";
-const shopName = () => (dp() ? "Priest" : BUTLER_NAME); // (Downpour: the Priest in the chapel does his job, the owner's)
-const NEAR = 130; // world px: how near E works at the Butler and the fireplace
+/* the merchant here now (the rules' s.hang.l4m) and who he is (merchants.js) */
+const merchantNow = (s) => {
+  const m = merchantOf(s);
+  return m ? { ...m, who: merchantById(m.id) } : null;
+};
+const shopName = (s) => {
+  const m = merchantNow(s);
+  return (m && m.who && m.who.name) || "The Merchant";
+};
+const NEAR = 130; // world px: how near E works at the merchant and the fireplace
 const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
 let heldFn = () => "";
@@ -825,11 +830,13 @@ function seeOn(s, ctx) {
 export function l4Got(k) {
   if (!gotEl) return;
   gotEl.innerHTML =
-    k === "sale"
-      ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-      : k === "nuke"
-        ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-        : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+    k === "merchant"
+      ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
+      : k === "sale"
+        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+        : k === "nuke"
+          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -1236,14 +1243,17 @@ function paint(now, ctx) {
         0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
       ]);
   }
-  /* Justin's Butler stands in a little light, and the fireplace's weapon glows while it's out */
+  /* the merchant stands in a little light while he sells, and the fireplace's weapon glows while it's out */
   if (dp() || Wd.inside) {
-    const p = Wd.toScreen(BUTLER.x, BUTLER.y, 30);
-    if (
-      seenFrom(BUTLER.x, BUTLER.y, Wd.inside) &&
-      on(p.left * q, p.top * q, 100 * sc)
-    )
-      holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    const mm = merchantOf(s);
+    if (mm && mm.st === "here") {
+      const p = Wd.toScreen(mm.x, mm.y, 30);
+      if (
+        seenFrom(mm.x, mm.y, Wd.inside) &&
+        on(p.left * q, p.top * q, 100 * sc)
+      )
+        holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    }
     if (boxNow(s, clockNow()) && seenFrom(BOX.sx, BOX.sy, Wd.inside)) {
       const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
@@ -1480,11 +1490,8 @@ function shineProps(Wd, cones, q) {
   g.globalAlpha = 1;
 }
 
-/* ---------- Justin's Butler, standing by the card table ---------- */
-/* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
-const BUTLER_K = 0.7, // (about the size he showed at on a computer)
-  PRIEST_K = 1; // (Downpour's Priest: as big as a player's duck, the owner's, Nov 17 05:46Z)
-function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
+/* ---------- a character standing on the board: the merchant, or Justin in the toilet ---------- */
+function butlerEl(svg, name) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
       .split(" ")
@@ -1502,7 +1509,79 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   body.style.top = (-feet).toFixed(1) + "px";
   body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
   layer.append(el);
-  return { el, body, url, bh: h };
+  return { el, body, url, bh: h, feet };
+}
+/* ---------- the merchant (the rules' s.hang.l4m) ----------
+   He's a duck's size now (the owner's, Nov 18 13:46Z: "Justin's butler is no longer small"), in his look for this visit
+   (merchants.js, rolled by the rules so everyone sees the same one). He glides to where the rules have him (walking
+   in, at his spot, running off), faces the way he goes, fades as he jumps off the balcony or drops over the fence, and
+   lies dead where he fell. His lines show in a bubble over him for MERCH.SAY ms */
+let mSig = "",
+  mAt = null;
+function drawMerchant(ctx, t) {
+  const s = ctx.state(),
+    m = merchantNow(s),
+    Wd = ctx.world,
+    sc = Wd.sc,
+    dead = !!m && m.st === "dead",
+    sig = m && m.who ? [m.v, m.id, m.roll, dead ? 1 : 0].join() : "";
+  if (sig !== mSig) {
+    mSig = sig;
+    butler?.el.remove();
+    butler = null;
+    if (!sig) return;
+    butler = butlerEl(
+      merchantSVG(m.who, m.roll, { size: 64, dead }),
+      m.who.name,
+    );
+    butler.el.classList.add("l4-merchant");
+    butler.el.classList.toggle("dead", dead);
+    butler.say = document.createElement("div");
+    butler.say.className = "hang-npc-say";
+    butler.el.prepend(butler.say);
+    butler.sayN = 0;
+    if (!mAt || mAt.v !== m.v) mAt = { v: m.v, x: m.x, y: m.y, t };
+  }
+  if (!butler) return;
+  /* glide (a big jump: there at once) */
+  const dt = Math.min(0.1, Math.max(0, (t - mAt.t) / 1000)),
+    gap = Math.hypot(m.x - mAt.x, m.y - mAt.y),
+    k = gap > 300 ? 1 : Math.min(1, dt * 10);
+  mAt.x += (m.x - mAt.x) * k;
+  mAt.y += (m.y - mAt.y) * k;
+  mAt.t = t;
+  const z = heightAt(mAt.x, mAt.y),
+    p = Wd.toScreen(mAt.x, mAt.y, z),
+    hide =
+      !seenFrom(mAt.x, mAt.y, Wd.inside) ||
+      !Wd.seen(p.left - 60, p.top - 140, 120, 160);
+  if (butler.el.hidden !== hide) butler.el.hidden = hide;
+  if (hide) return;
+  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  if (butler.tr !== tr) {
+    butler.tr = tr;
+    butler.el.style.transform = tr;
+    butler.el.style.zIndex = Math.round(sortY(mAt.x, mAt.y, z)) + 10;
+  }
+  pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
+  if (butler.k !== sc) {
+    butler.k = sc;
+    butler.body.style.transform = `scale(${sc.toFixed(4)})`;
+    butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
+    butler.el.style.setProperty("--h", (butler.feet * sc).toFixed(1) + "px");
+  }
+  butler.el.classList.toggle("flip", !dead && m.f < 0);
+  butler.el.classList.toggle("gone", m.st === "jump");
+  /* his words */
+  const now = clockNow(),
+    say = m.say;
+  if (say && say.n !== butler.sayN) {
+    butler.sayN = say.n;
+    butler.say.textContent = say.text;
+  }
+  const on = !!say && !dead && now < say.t + MERCH.SAY;
+  if (butler.el.classList.contains("saying") !== on)
+    butler.el.classList.toggle("saying", on);
 }
 
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
@@ -1872,12 +1951,14 @@ function say(text) {
   sfx.nope();
 }
 
-/* ---------- Justin's Butler's shop: a page over the board, as the guestbook's ---------- */
+/* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
     kit = kitOf(s, me),
+    m = merchantNow(s),
+    stock = (m && m.stock) || [],
     sig = JSON.stringify([
       up,
       pts,
@@ -1885,10 +1966,20 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
+      m && [m.v, m.id, m.roll],
+      stock,
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.pts.textContent = pts;
+  /* who's selling: his name over the page, his picture by his words */
+  const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
+  if (shop.who !== who) {
+    shop.who = who;
+    shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
+    shop.me.innerHTML =
+      m && m.who ? merchantSVG(m.who, m.roll, { size: 40 }) : "";
+  }
   shop.list.innerHTML = SHOP.map((it) => {
     const n = up[it.id] || 0,
       max = n >= it.most,
@@ -1896,36 +1987,24 @@ function shopFill(s, ctx) {
       was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
     return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
   }).join("");
-  /* his guns: Buy (a price), Refill (a price) once I have it, Full when it's full (the knife: Owned) */
-  shop.guns.innerHTML = GUN_SHOP.map((w) => {
-    const have = !!kit && kit.sl.includes(w),
-      holy = have && angelOf(s, me, w), // (an Angelic gun never refills: the owner's, Nov 16 22:21Z)
-      price = gunPrice(s, me, w),
-      off = !price || pts < price,
-      label = have
-        ? price
-          ? `Refill ${price}`
-          : price === 0
-            ? "Full"
-            : holy
-              ? "No refills"
-              : "Owned"
-        : `Buy ${price}`;
-    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${holy ? "Angelic: no refills" : gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
-  }).join("");
-  /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
-  {
-    const have = hasLeft(s, me, "safekeep"), // (one used up stays in its slot, empty: it can be bought again)
-      price = safePrice(s),
-      was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
-    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
-  }
+  /* what he has this visit (the rules' merchantStock): Buy (its price), Owned when I have it (an item of mine that's used
+     up can be bought full again); a Sale strikes the old price through */
+  shop.guns.innerHTML = stock.length
+    ? stock
+        .map(([w, p]) => {
+          const have = !!kit && kit.sl.includes(w),
+            again = have && kindOf(w) === "special" && !hasLeft(s, me, w),
+            price = stockPrice(s, p),
+            was = price < p ? `<s>${p}</s> ` : "",
+            off = (have && !again) || pts < price;
+          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">Sold out</li>';
 }
-const gunWhat = (w) => {
-  if (w === "knife") return "Melee";
-  const [p, n] = AMMO_PRICE[w] || AMMO_PRICE.gun;
-  return `${p} points for ${n} ${w === "bow" ? "arrows" : "bullets"}`;
-};
+/* what kind of thing it is, under its name */
+const kindWord = (w) =>
+  ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
 function openShop(ctx) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -1955,12 +2034,11 @@ function shopEl(ctx) {
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
-  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(shopName(), { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
+  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title"></h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
       <div class="tabs l4-shop-tabs" role="tablist"><button type="button" class="tab" role="tab" aria-selected="true" data-tab="buy">Shop</button><button type="button" class="tab" role="tab" aria-selected="false" data-tab="items">Items</button></div>
       <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
       <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
-      ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
-      <p class="l4-shop-say"><span class="l4-shop-me">${(dp() ? priestSVG : butlerSVG)({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
+      <p class="l4-shop-say"><span class="l4-shop-me"></span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
@@ -1979,12 +2057,13 @@ function shopEl(ctx) {
     const w = b.dataset.buy,
       hand = heldFn(),
       send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
-    const kit = kitOf(ctx.state(), ctx.me);
-    if (!GUN_SHOP.includes(w) || (kit && kit.sl.includes(w))) return send();
-    /* a gun I haven't got: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
+    const st = ctx.state(),
+      it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
+    if (!it) return send(); // (an upgrade)
+    /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
     confirmBox(
       `Are you sure you want to buy the ${weaponName(w)}?`,
-      `${gunPrice(ctx.state(), ctx.me, w)} points`,
+      `${stockPrice(st, it[1])} points`,
     ).then((yes) => yes && send());
   });
   ctx.world.board.append(el);
@@ -1995,6 +2074,9 @@ function shopEl(ctx) {
     pts: el.querySelector(".l4-shop-pts b"),
     list: el.querySelector(".l4-shop-ups"),
     guns: el.querySelector(".l4-shop-guns"),
+    title: el.querySelector(".hang-book-title"),
+    me: el.querySelector(".l4-shop-me"),
+    who: "",
   };
 }
 
@@ -2037,27 +2119,14 @@ function holdTarget(pos, ctx) {
     if (now >= b.t + BOX.spin && b.w !== HELPER.w)
       return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
-  const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
+  const m = merchantOf(s);
+  if (!selling(s)) return null;
+  const ds = Math.hypot(m.x - pos.x, m.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
 }
-/* B: ammo for the gun in hand, at the Butler's price, from anywhere (only one of his guns, not full, with the points) */
-function buyAmmo(ctx) {
-  const s = ctx.state(),
-    me = ctx.me,
-    w = heldFn();
-  if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return;
-  const kit = kitOf(s, me),
-    price = gunPrice(s, me, w);
-  if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
-    return say(`The ${dp() ? "Priest" : "Butler"} doesn't sell ammo for that`);
-  if (angelOf(s, me, w)) return say("Angelic: no refills");
-  if (!price) return say("It's full");
-  if (ptsOf(s, me) < price) return say("Not enough points");
-  ctx.send({ t: "hang", k: "l4", do: "ammo", what: w });
-}
-/* E (a tap) at the Butler or the fireplace */
+/* E (a tap) at the merchant or the fireplace */
 function tap(t, ctx) {
   if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
   const s = ctx.state(),
@@ -2212,7 +2281,9 @@ activity({
     poolSig = "";
     layer.append(poolEl);
     shop = shopEl(ctx);
-    butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
+    butler = null; // (the merchant: drawMerchant makes him when he comes)
+    mSig = "";
+    mAt = null;
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
@@ -2295,11 +2366,14 @@ activity({
       sl.some((w) => w && !had.includes(w)) &&
       !(
         ctx.duck() &&
-        Math.hypot(ctx.duck().x * W - BUTLER.x, ctx.duck().y * H - BUTLER.y) <
-          320
+        merchantOf(s) &&
+        Math.hypot(
+          ctx.duck().x * W - merchantOf(s).x,
+          ctx.duck().y * H - merchantOf(s).y,
+        ) < 320
       )
     )
-      sfx.done();
+      sfx.done(); // (not for what I bought from the merchant: his till rings)
     upSig = u;
     slotSig = sl.join();
     if (holding && !up(s, ctx.me)) holding = null;
@@ -2322,9 +2396,13 @@ activity({
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
           !ctx.world.inside ||
-          Math.hypot(BUTLER.x - x, BUTLER.y - y) > AWAY)
+          !selling(ctx.state()) ||
+          Math.hypot(
+            merchantOf(ctx.state()).x - x,
+            merchantOf(ctx.state()).y - y,
+          ) > AWAY)
       )
-        closeShop(); // (walked off, or down: it closes)
+        closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
         const t = holdTarget({ x, y }, ctx);
         if (
@@ -2530,31 +2608,7 @@ activity({
     seeOn(ctx.state(), ctx);
     spinSquare(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
-    /* Justin's Butler */
-    {
-      const z = heightAt(BUTLER.x, BUTLER.y),
-        p = Wd.toScreen(BUTLER.x, BUTLER.y, z),
-        hide =
-          !seenFrom(BUTLER.x, BUTLER.y, Wd.inside) ||
-          !Wd.seen(p.left - 40, p.top - 90, 80, 110);
-      if (butler.el.hidden !== hide) butler.el.hidden = hide;
-      if (!hide) {
-        const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
-        if (butler.tr !== tr) {
-          butler.tr = tr;
-          butler.el.style.transform = tr;
-          butler.el.style.zIndex =
-            Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
-        }
-        const bk = sc * (dp() ? PRIEST_K : BUTLER_K);
-        pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
-        if (butler.k !== sc) {
-          butler.k = sc;
-          butler.body.style.transform = `scale(${bk.toFixed(4)})`;
-          butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
-        }
-      }
-    }
+    drawMerchant(ctx, t);
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);
@@ -2607,10 +2661,6 @@ activity({
     };
   },
   keydown(e, ctx) {
-    if (e.code === "KeyB") {
-      if (!e.repeat) buyAmmo(ctx);
-      return true;
-    }
     if (e.code === "Digit0" || e.code === "Numpad0") {
       if (!e.repeat) ctx.send({ t: "hang", k: "l4", do: "fl" });
       return true;

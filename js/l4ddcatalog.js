@@ -9,15 +9,14 @@ import {
   SLOT_ODDS,
   SLOT_BAGS,
   SHOP,
-  GUN_SHOP,
   DROPS,
   weaponName,
   dropName,
   kindOf,
   priceOf,
-  buyPrice,
   BOX,
-  SAFE,
+  WEAPON_BAGS,
+  merchantPrice,
   critOf,
   missOf,
 } from "./l4ddrules.js";
@@ -74,7 +73,7 @@ const SAY = {
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
   double: "Double points for 45 seconds.",
-  sale: "Half price at the Butler and the fireplace for 45 seconds (each upgrade once).",
+  sale: "Half price at the merchant and the fireplace for 45 seconds (each upgrade once).",
 };
 
 /* a number without its trailing zeros (1.75, 5, 0.4) */
@@ -121,8 +120,14 @@ function stats(w) {
     if (A.dmg) out.push(["Damage", A.dmg]);
   }
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
-  if (GUN_SHOP.includes(w)) out.push(["The Butler sells it", buyPrice(w)]);
-  if (w === "safekeep") out.push(["The Butler sells it", SAFE.PRICE]);
+  /* a merchant: the bow always, anything in the bags maybe (the owner's, Nov 18 13:46Z) */
+  if (w === "bow") out.push(["Every merchant sells it", merchantPrice(w)]);
+  else if (
+    [...Object.values(SLOT_BAGS), ...Object.values(WEAPON_BAGS)].some((b) =>
+      b.includes(w),
+    )
+  )
+    out.push(["A merchant may sell it", merchantPrice(w)]);
   /* where the fireplace has it: its bag, and that bag's chance on a spin (l4ddrules.js fireRoll) */
   const bag = Object.keys(SLOT_BAGS).find((k) => SLOT_BAGS[k].includes(w));
   if (bag)

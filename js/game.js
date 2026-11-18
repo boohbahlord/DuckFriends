@@ -7618,7 +7618,7 @@ const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade <kbd>B</kbd> Ammo'; // (B only here, the owner's, Nov 4; E goes with it, so no key is split from its word; the grenades are the 5 key now, Nov 16)
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 5 key now, Nov 16; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =
