@@ -98,6 +98,11 @@ export const MODES = [
   },
 ];
 export const modeOf = (id) => MODES.find((m) => m.id === id) || MODES[0];
+/* Single Player (the owner's, Nov 18): the room on the device with no internet plays only these, and everything that
+   lists the games (the votes, Random, Game Settings) lists only these there */
+export const SOLO_MODES = ["hang", "l4dd", "mgj"];
+export const modesFor = (s) =>
+  s && s.solo ? MODES.filter((m) => SOLO_MODES.includes(m.id)) : MODES;
 export const CABIN_MODES = ["hang", "l4dd"]; // (Duck Cabin's own games: picking one picks the map)
 /* the three kinds of game on the Game Settings screen's Game mode page. Duck Cabin's own games sit with the others
    (Hangout with the social games, Quacky Zombies by Mad God Justin with the special ones); the Map page's Duck Cabin

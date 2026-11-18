@@ -27,6 +27,13 @@ const TITLE = {
   map: "Vote for Map",
   zmap: "Vote for Map",
 };
+/* Single Player (the owner's, Nov 18): "Select" in place of "Vote", no clock and no Next; a click picks at once */
+const SOLO_TITLE = {
+  mode: "Select Game Mode",
+  map: "Select Map",
+  zmap: "Select Map",
+};
+const titleOf = (s, k) => (s.solo ? SOLO_TITLE : TITLE)[k];
 /* Quacky Zombies' own map vote (rules.js ZMAPS): each of its maps as one picture of it */
 const ZPIC = {
   cabin: ["assets/maps/duck-cabin-zombies.jpg", "Duck Cabin"], // (closer in and a little lighter than the whole map's picture, so it reads as clearly as Downpour's: the owner, Nov 17)
@@ -72,7 +79,7 @@ function bodyHTML(s, k) {
 const lobbyBtnHTML = (s, me) => {
   const v = s.vote && s.vote.kind === "lobby" ? s.vote : null;
   if (!v)
-    return '<button type="button" class="btn ghost vt-lobby" data-lv="1">Vote: back to the lobby</button>';
+    return `<button type="button" class="btn ghost vt-lobby" data-lv="1">${s.solo ? "Back to the lobby" : "Vote: back to the lobby"}</button>`;
   const { voters, need } = voteNeeds(s, v),
     yes = voters.filter((id) => v.yes[id]).length;
   return `<button type="button" class="btn red vt-lobby" data-lv="1"${v.yes[me] ? " disabled" : ""}>${v.yes[me] ? "Voted: back to the lobby" : "Vote yes: back to the lobby"} · ${yes}/${need}</button>`;
@@ -82,10 +89,10 @@ function build(R, pause) {
     k = s.vt.k;
   closeVotes();
   const el = document.createElement("div");
-  el.className = `vt vt-k-${k}`;
   el.setAttribute("role", "dialog");
-  el.setAttribute("aria-label", TITLE[k]);
-  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span><button type="button" class="btn red vt-next" hidden>Next</button></div><h2 class="vt-title">${rainbowHTML(TITLE[k], { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn red vt-next" hidden>Next</button>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to vote</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
+  el.className = `vt vt-k-${k}${s.solo ? " vt-solo" : ""}`;
+  el.setAttribute("aria-label", titleOf(s, k));
+  el.innerHTML = `<header class="vt-head"><div class="vt-left"><span class="vt-lv">${lobbyBtnHTML(s, R.me)}</span><button type="button" class="btn red vt-next" hidden>Next</button></div><h2 class="vt-title">${rainbowHTML(titleOf(s, k), { seed: k === "map" ? 11 : 5 })}</h2><div class="vt-right"><span class="vt-time" aria-live="off"></span><button type="button" class="btn red vt-next" hidden>Next</button>${fsBtnHTML()}<button type="button" class="btn ghost iconbtn vt-pause" aria-label="Pause menu" data-tip="Pause menu (Esc)">☰</button></div></header><p class="vt-sub">${phone() ? "Tap" : "Click"} ${k === "mode" ? "a game" : "a map"} to ${s.solo ? "select" : "vote"}</p><div class="vt-box">${bodyHTML(s, k)}</div>`;
   document.body.append(el);
   W = {
     el,
@@ -217,7 +224,7 @@ function sync() {
 function clock() {
   const s = W && W.R.state,
     vt = s && s.phase === "countdown" ? s.vt : null;
-  if (!vt) return;
+  if (!vt || s.solo) return; // (Single Player: no clock)
   W.time.classList.toggle("fast", !!vt.fast);
   const left = Math.ceil(voteLeft(s, now()) / 1000);
   if (left === W.left) return;
@@ -242,7 +249,7 @@ export function paintVotes(R, pause) {
   const voted = !!(vt.votes || {})[R.me],
     pressed = !!(vt.next || {})[R.me];
   for (const nx of W.el.querySelectorAll(".vt-next")) {
-    nx.hidden = !voted;
+    nx.hidden = !voted || !!s.solo;
     nx.disabled = pressed;
   } // (two of them: by the clock on a computer, beside the lobby vote on a phone, where the top row has no room)
   const votes = vt.votes || {},
