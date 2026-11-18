@@ -32,7 +32,7 @@
      l4pt { id: points }
      l4u  { id: { acc, as, hp, sp, rl } }: the upgrades bought (accuracy, attack speed, max HP, speed, faster reload)
      l4box { id: { by, t, w } }: the fireplace's weapons, one for each duck that paid (at t), landing on w after BOX.spin
-     l4fo { id: [weapons in a row, items in a row] }: the fireplace's odds for each duck (fireRoll)
+     (each duck's fireplace bags are the host's only: s.hidden.l4sb, fireRoll)
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
@@ -141,7 +141,12 @@ export const SAFE = {
   GLOW: 1200,
   INV: 6000,
 };
-const hasSafe = (s, id) => slotsOf(s, id).includes("safekeep");
+/* an item that can run out, still with a use left in duck id's slot (one used up stays in the slot, empty: the owner's,
+   Nov 18 12:19Z, "Items that can run out now simply stay in their slot without being removed") */
+export const hasLeft = (s, id, w) =>
+  slotsOf(s, id).includes(w) &&
+  (((kitOf(s, id) || {}).am || {})[w] || [0])[0] > 0;
+const hasSafe = (s, id) => hasLeft(s, id, "safekeep");
 export const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
@@ -491,44 +496,53 @@ export const inHand = (w, s, id) => {
 /* the slots, in order (keys 1 to 4; the grenades are G): blue, red, red, purple, and the grenades white */
 export const START = ["knife", "handgun", "bow", ""];
 export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
-/* what the fireplace can give, in two groups (the owner's, Nov 15): after Justin (1 in 100) and the Jaime Bomb (1 in
-   50), 85 spins in 100 pick from the weapons, anything that deals damage, and the rest from the items; each with an
-   equal chance inside its group, never one already in my slots */
+/* every weapon there is (the Items page lists them all: l4ddcatalog.js) */
 export const WEAPONS = [
   "knife",
   "axe",
   "sword",
   "hammer",
   "pan",
-  "chaingun",
-  "flamer",
-  "handgun",
-  "bow",
   "dagger",
+  "bow",
+  "handgun",
+  "revolver",
   "shotgun",
-  "sniper",
+  "dbarrel",
   "smg",
   "tommy",
   "ump",
   "ak",
-  "revolver",
+  "burst",
+  "sniper",
   "glauncher",
   "lmg",
-  "dbarrel",
-  "burst",
+  "chaingun",
+  "flamer",
   "laser",
-]; // (the rarest first, the owner's, Nov 18 10:38Z: the sharp melees 1/6 of a gun's chance each, the blunt ones 1/4, the chain gun and the flamethrower 1/2, then every gun on its own)
-export const ITEMS = ["medkit", "zebra", "adrenaline", "chair", "safekeep"]; // (no Long jump, Jaime or Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
-export const WEAPON_ODDS = 0.8; // (the item's chance is 20%: the owner's, Nov 17 17:41Z, "the chance of an item is now 20% for it's bag instead of 15%")
-/* the melees are one bag among the weapons, and it holds two bags, the blunt ones and the sharp ones (the owner's,
-   Nov 16): the fireplace picks the melee bag as likely as any one gun, then one of its two bags, then one inside it */
-export const MELEE_BAGS = [
-  ["knife", "axe", "sword"],
-  ["hammer", "pan"],
-]; // (the sharp bag first: each in it is rarer, 1 in 3 of its bag against 1 in 2)
-/* and the flamethrower shares a bag with the chain gun (the owner's, Nov 16 16:25Z): the bag comes up as likely as any
-   one gun, then one of the two in it */
-export const HEAVY_BAG = ["chaingun", "flamer"];
+];
+export const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Long jump, Jaime or Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+/* the fireplace's bags (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z). Rolled the rarest
+   first, each only if the one before it failed: the Chair bag 1% (the golden chair), the Special bag 5%, the Item bag
+   20%, else the Weapon bag. The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
+   own. "Shuffle": a bag gives each of its things once, in a shuffled order, before any comes again (the owner's:
+   "an item is removed from it's bag and does not reappear within it's bag until every other item has had a chance").
+   Every duck has its own bags, new each game (fireBags). The bow is in the weak bag; the grenade is in none */
+export const SLOT_ODDS = { chair: 0.01, special: 0.05, item: 0.2 };
+export const SLOT_BAGS = {
+  chair: ["chair"],
+  special: ["chaingun", "flamer", "laser"],
+  item: ["medkit", "zebra", "adrenaline", "safekeep"],
+};
+export const WEAPON_BAGS = {
+  melee: ["axe", "sword", "hammer"],
+  weak: ["dagger", "knife", "pan", "bow"],
+  shotgun: ["shotgun", "dbarrel"],
+  pistol: ["revolver", "handgun"],
+  smg: ["tommy", "ump", "smg"],
+  rifle: ["ak", "burst"],
+  heavy: ["sniper", "glauncher", "lmg"],
+};
 export const POOL = [...WEAPONS, ...ITEMS];
 /* their names, as players see them */
 const NAMES = {
@@ -1822,7 +1836,7 @@ function setUp(s, now) {
   s.hang.l4pt = {};
   s.hang.l4u = {};
   s.hang.l4box = {};
-  s.hang.l4fo = {};
+  s.hidden = { ...(s.hidden || {}), l4sb: {} }; // (every duck's fireplace bags, new: fireRoll)
   s.hang.l4inv = {};
   s.hang.l4dr = [];
   s.hang.l4nk = null;
@@ -2033,15 +2047,14 @@ function l4Act(s, a, now) {
     if (Math.hypot(tx - mx, ty - my) > L4.REACH * 1.6) return false;
     if (tp.ex) return false; // (Justin in Downpour, dead for good)
     if (tp.rv && tp.rv.by !== id && s.pos[tp.rv.by]) return false; // (someone else is at it)
-    if (me.w === "medkit" && slotsOf(s, id).includes("medkit")) {
-      /* a medkit in my hand: up at once, full, with what they bought; the medkit is used up (the owner's, Nov 16) */
+    if (me.w === "medkit" && hasLeft(s, id, "medkit")) {
+      /* a medkit in my hand: up at once, full, with what they bought; the medkit is used up (the owner's, Nov 16), and
+         stays in its slot, empty (Nov 18 12:19Z) */
       getUp(s, t, now, true);
-      const kit = kitOf(s, id),
-        am = { ...kit.am };
-      delete am.medkit;
+      const kit = kitOf(s, id);
       s.hang.l4a = {
         ...s.hang.l4a,
-        [id]: { ...kit, am, sl: kit.sl.map((w) => (w === "medkit" ? "" : w)) },
+        [id]: { ...kit, am: { ...kit.am, medkit: [0, 0] } },
       };
       addFx(s, { kind: "l4medrev", by: id, who: [t], t: now });
       return true;
@@ -2165,9 +2178,10 @@ function fireplace(s, id, a, now, mx, my) {
     kit = kitOf(s, id);
   if (!kit) return false;
   if (!b) {
-    const pool = POOL.filter((w) => !kit.sl.includes(w));
     const price = priceFor(s, id, "box");
-    if (!pool.length || ptsOf(s, id) < price) return false;
+    if (ptsOf(s, id) < price) return false;
+    const w = fireRoll(s, id, kit);
+    if (!w) return false; // (nothing left it could give this duck)
     addPts(s, id, -price);
     s.hang.l4hood = 1; // (Downpour: the hood-up car stops glowing once it's first used)
     s.hang.l4box = {
@@ -2175,7 +2189,7 @@ function fireplace(s, id, a, now, mx, my) {
       [id]: {
         by: id,
         t: now,
-        w: fireRoll(s, id, kit),
+        w,
       },
     };
     return true;
@@ -2187,49 +2201,66 @@ function fireplace(s, id, a, now, mx, my) {
   addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
 }
-/* the fireplace's spin, in this order (the owner's, Nov 15). An item comes 15 spins in 100, and for each duck that moves
-   (the owner's, Nov 16): every weapon in a row makes an item 10 points likelier next spin; two items in a row make it 5
-   points less likely (and each more item after them 5 more); a weapon puts the items' count back to 0, an item the
-   weapons' */
-export const ITEM_ODDS = { start: 1 - WEAPON_ODDS, weapon: 0.1, twice: 0.05 };
-export function itemOdds([wr, ir] = [0, 0]) {
-  const v =
-    ITEM_ODDS.start +
-    ITEM_ODDS.weapon * wr -
-    ITEM_ODDS.twice * Math.max(0, ir - 1);
-  return Math.min(0.95, Math.max(0.02, v));
+/* the next one a bag gives duck by duck (bag: its things left, in their shuffled order; all: everything in it): the
+   first one left the duck doesn't have. What it has is skipped and keeps its place (the owner's, 12:32Z: owned things
+   are skipped and keep their place; a used-up item or an empty gun is still in its slot, so it never comes again). A
+   bag with nothing left it can give is filled again, shuffled. Null: the duck has all of it (that bag is skipped).
+   Returns [the one, what's left] */
+function fromBag(left, all, has) {
+  const one = (list) => list.find((w) => !has(w));
+  let rest = left && left.length ? left : shuffled(all),
+    w = one(rest);
+  if (w === undefined && rest.length < all.length) {
+    rest = shuffled(all);
+    w = one(rest);
+  }
+  if (w === undefined) return [null, rest];
+  return [w, rest.filter((x) => x !== w)];
 }
+function shuffled(xs) {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+/* duck id's bags (s.hidden.l4sb, the host's only, new each game): { chair, special, item: [left], w: [the weapon
+   bags' turns left], b: { bag: [left] } } */
+const fireBags = (s, id) =>
+  ((s.hidden && s.hidden.l4sb) || {})[id] || { b: {} };
 function fireRoll(s, id, kit) {
-  /* the rarer first, the more likely after (the owner's, Nov 18 10:38Z): an item (20% and so on: itemOdds), else a
-     weapon. No Justin, no Jaime Bomb, no jerry can and no power box part any more (the owner's, Nov 18 12:19Z:
-     "justin is removed from every slot", "Jaime bomb is removed from all zombie modes", "jerry can no longer in
-     slots") */
-  const fo = (s.hang.l4fo || {})[id] || [0, 0],
-    bags = MELEE_BAGS.map((b) => b.filter((w) => !kit.sl.includes(w))).filter(
-      (b) => b.length,
-    ),
-    heavy = HEAVY_BAG.filter((w) => !kit.sl.includes(w)),
-    weapons = [
-      ...WEAPONS.filter(
-        (w) =>
-          !kit.sl.includes(w) &&
-          !MELEE_BAGS.some((b) => b.includes(w)) &&
-          !HEAVY_BAG.includes(w),
-      ),
-      ...(bags.length ? ["melee"] : []),
-      ...(heavy.length ? ["heavy"] : []),
-    ],
-    items = ITEMS.filter((w) => !kit.sl.includes(w)),
-    item = !weapons.length || (!!items.length && Math.random() < itemOdds(fo)),
-    group = item ? items : weapons;
-  s.hang.l4fo = {
-    ...s.hang.l4fo,
-    [id]: item ? [0, fo[1] + 1] : [fo[0] + 1, 0],
+  const has = (w) => kit.sl.includes(w),
+    bags = { ...fireBags(s, id), b: { ...fireBags(s, id).b } };
+  let got = null;
+  for (const k of ["chair", "special", "item"]) {
+    if (Math.random() >= SLOT_ODDS[k]) continue;
+    const [w, rest] = fromBag(bags[k], SLOT_BAGS[k], has);
+    bags[k] = rest;
+    if (w) {
+      got = w;
+      break;
+    } // (the duck has all of that bag: on to the next)
+  }
+  if (!got) {
+    /* the weapon bags, in turns: the next one that still has something for this duck (one it has all of is skipped and
+       keeps its turn) */
+    const names = Object.keys(WEAPON_BAGS),
+      can = (n) => WEAPON_BAGS[n].some((w) => !has(w));
+    const [n, turns] = fromBag(bags.w, names, (x) => !can(x));
+    bags.w = turns;
+    if (n) {
+      const [w, rest] = fromBag(bags.b[n], WEAPON_BAGS[n], has);
+      bags.b[n] = rest;
+      got = w;
+    }
+  }
+  s.hidden = {
+    ...(s.hidden || {}),
+    l4sb: { ...((s.hidden && s.hidden.l4sb) || {}), [id]: bags },
   };
-  const w = anyIn(group);
-  return w === "melee" ? anyIn(anyIn(bags)) : w === "heavy" ? anyIn(heavy) : w; // (the melee bag: the blunt bag or the sharp bag, then one in it; the heavy bag: the chain gun or the flamethrower)
+  return got;
 }
-const anyIn = (xs) => xs[Math.floor(Math.random() * xs.length)];
 /* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
    moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
    all his HP, the knife, the chain gun and the pistol; every rule is the same for him as for any duck (l4ddbots.js
@@ -2369,16 +2400,7 @@ export function helperOut(s) {
   if (s.pos) delete s.pos[id];
   if (s.rainbow) delete s.rainbow[id];
   if (s.hang)
-    for (const k of [
-      "l4p",
-      "l4a",
-      "l4b",
-      "l4f",
-      "l4pt",
-      "l4u",
-      "l4box",
-      "l4fo",
-    ])
+    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
         const o = { ...s.hang[k] };
         delete o[id];
@@ -2599,8 +2621,7 @@ export function l4Use(s, a, now) {
   } else if (what === "medkit") {
     const p4 = s.hang.l4p || {};
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
-    delete m.am.medkit;
-    m.sl = m.sl.map((w) => (w === "medkit" ? "" : w)); // (used up: the special slot is empty again)
+    m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "longjump") m.lj = !m.lj;
@@ -3309,18 +3330,11 @@ function getUp(s, id, now, full, safe) {
   s.hang.still = still;
   if (safe) {
     const kit = kitOf(s, id);
-    if (kit) {
-      const am = { ...kit.am };
-      delete am.safekeep;
+    if (kit)
       s.hang.l4a = {
         ...s.hang.l4a,
-        [id]: {
-          ...kit,
-          am,
-          sl: kit.sl.map((w) => (w === "safekeep" ? "" : w)),
-        },
-      };
-    }
+        [id]: { ...kit, am: { ...kit.am, safekeep: [0, 0] } },
+      }; // (used up: it stays in its slot, empty)
     s.hang.l4inv = { ...(s.hang.l4inv || {}), [id]: now + SAFE.INV };
     addFx(s, { kind: "l4safe", by: id, who: [id], t: now });
   }

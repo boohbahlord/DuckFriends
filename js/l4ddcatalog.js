@@ -6,7 +6,8 @@ import {
   ARMS,
   POOL,
   WEAPONS,
-  WEAPON_ODDS,
+  SLOT_ODDS,
+  SLOT_BAGS,
   SHOP,
   GUN_SHOP,
   DROPS,
@@ -122,18 +123,15 @@ function stats(w) {
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
   if (GUN_SHOP.includes(w)) out.push(["The Butler sells it", buyPrice(w)]);
   if (w === "safekeep") out.push(["The Butler sells it", SAFE.PRICE]);
-  else if (POOL.includes(w))
+  /* where the fireplace has it: its bag, and that bag's chance on a spin (l4ddrules.js fireRoll) */
+  const bag = Object.keys(SLOT_BAGS).find((k) => SLOT_BAGS[k].includes(w));
+  if (bag)
     out.push([
       "Where",
-      WEAPONS.includes(w)
-        ? `The fireplace, with the weapons (${Math.round(WEAPON_ODDS * 100)}% of spins)`
-        : `The fireplace, with the items (${100 - Math.round(WEAPON_ODDS * 100)}% of spins, more after weapons)`,
+      `The fireplace, the ${bag === "chair" ? "golden chair" : bag} bag (${Math.round(SLOT_ODDS[bag] * 100)}% of spins)`,
     ]);
-  else if (w === "jaimebomb")
-    out.push([
-      "Where",
-      `The fireplace, 1 spin in ${Math.round(1 / BOMB.fire)}`,
-    ]);
+  else if (WEAPONS.includes(w) && POOL.includes(w))
+    out.push(["Where", "The fireplace, the weapon bags (the rest of spins)"]);
   return out;
 }
 
