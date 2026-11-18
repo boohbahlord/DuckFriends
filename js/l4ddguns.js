@@ -197,8 +197,8 @@ const iconOf = (svg, k = 1) => {
 export const GUNS = {
   sniper: { held: SNIPER, icon: iconOf(SNIPER, 0.8), w: 1.25 },
   smg: { held: SMG, icon: iconOf(SMG, 0.72), w: 0.52 },
-  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8), w: 0.75 },
-  ump: { held: UMP, icon: iconOf(UMP, 0.78), w: 0.62 },
+  tommy: { held: TOMMY, icon: iconOf(TOMMY, 0.8), w: 0.92 }, // (almost the AK-47's size: the owner's, Nov 18 10:38Z)
+  ump: { held: UMP, icon: iconOf(UMP, 0.78), w: 0.78 }, // (a little shorter than the Tommy gun, as the real ones are)
   ak: { held: AK, icon: iconOf(AK, 0.8), w: 1 },
   chaingun: { held: CHAINGUN, icon: iconOf(CHAINGUN, 0.8), w: 1.05 },
   revolver: { held: REVOLVER, icon: iconOf(REVOLVER, 0.72), w: 0.44 },

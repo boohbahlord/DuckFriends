@@ -207,6 +207,7 @@ import {
   BURN,
   weaponName,
   wildCrying,
+  isWild,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -218,6 +219,8 @@ import {
   l4Ammo,
   l4ZBoxes,
   shotStop,
+  POOL_SVG,
+  JPOOL,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -500,6 +503,7 @@ let bar = null,
   pad = null, // phones: the jump button and the attack button
   lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
+const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this far: css .gduck-body, rotate(-100deg))
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
 const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
@@ -1731,31 +1735,46 @@ function drawDucks(now = clockNow()) {
        away: my own duck a darker blue that only I see, every other player green, Justin yellow (Good Justin God in Mad
        God Justin, never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade): the owner's,
        Nov 17 20:10Z */
-    const olP = !g && s.players[id],
+    const olId = g ? id.slice(0, -BODY.length) : id, // (a Duck Cabin ghost's body is its player's, outlined as that player)
+      olP = s.players[olId],
+      olMine = olId === R.me,
       olKind = !ol
         ? ""
         : isMgj(s)
           ? id === GOOD_ID
             ? "justin"
             : olP && id !== JUSTIN_ID
-              ? mine
+              ? olMine
                 ? "me"
                 : "ally"
               : ""
           : olP
             ? olP.helper || olP.wild
               ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-              : mine
+              : olMine
                 ? "me"
                 : "ally"
             : "";
-    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
-    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
-      const ph = pic.naturalWidth
+    /* a duck lying dead: where the middle of its body is on the board, as css lays it down (.gduck-body: rotate(-100deg)
+       translateY(-12%) round the bottom middle of its body; DOWN_TURN). Its outline's arrow goes in it, what hides it is
+       looked for there, and its pool of blood spreads under it (a duck lies a little to the side of where it stood: the
+       owner's, Nov 18 10:38Z, "outlines do not show for dead ducks, such as justin", where his arrow sat outside him and
+       what hides a standing duck hid him) */
+    const ph =
+        pic && pic.naturalWidth
           ? (size * pic.naturalHeight) / pic.naturalWidth
           : size,
-        x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
-        b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+      b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+      lie = ph / 2 - 1.12 * (ph - size * 0.08), // (its picture's middle over its feet, before it's turned)
+      mid = deadPose
+        ? [
+            at.left - fx * Math.sin(DOWN_TURN) * lie,
+            b + Math.cos(DOWN_TURN) * lie,
+          ]
+        : [at.left, b - ph / 2];
+    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
+    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
+      const x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
         y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
       let hidden = false,
         floor = 0;
@@ -1765,13 +1784,21 @@ function drawDucks(now = clockNow()) {
         hidden =
           !!d._hid ||
           (!mine && !!a && olRoofed(a.x, a.y, az, olAt)) || // (under a roof I'm not under: hidden by it, outlines.js)
-          world.coverAt(
-            at.left - size * 0.4,
-            at.left + size * 0.4,
-            b - size * 0.9,
-            b,
-            d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
-          );
+          (deadPose
+            ? world.coverAt(
+                mid[0] - size * 0.45,
+                mid[0] + size * 0.45,
+                mid[1] - size * 0.35,
+                mid[1] + size * 0.35,
+                d._zi,
+              ) // (lying down: where it lies)
+            : world.coverAt(
+                at.left - size * 0.4,
+                at.left + size * 0.4,
+                b - size * 0.9,
+                b,
+                d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
+              ));
         if (a) floor = Math.sign(olFloor(a.x, a.y, az) - olMe);
       }
       olAdd({
@@ -1787,12 +1814,41 @@ function drawDucks(now = clockNow()) {
         floor,
         hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
         down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
+        mid: deadPose ? mid : null, // (lying down: the arrow inside its body)
       });
       olOnly = hidden && !d._hid && id !== R.me;
     }
     if (d._olOnly !== olOnly) {
       d._olOnly = olOnly;
       d.classList.toggle("ol-only", olOnly);
+    }
+    /* every duck that dies, in every mode: a pool of blood spreads out under it, as under Justin out in Downpour (the
+       owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
+       beneath their duck like justin's"). The same pool (l4dd.js POOL_SVG), growing over JPOOL.ms from when it fell,
+       gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
+    const pooled =
+      dead && !+s.options.noGore && !(isL4dd(s) && isWild(s, olId));
+    if (!pooled) {
+      if (d._pool) {
+        d._pool.remove();
+        d._pool = null;
+      }
+    } else {
+      if (!d._pool) {
+        d._pool = el(
+          `<span class="gduck-pool" aria-hidden="true">${POOL_SVG}</span>`,
+        );
+        d.prepend(d._pool);
+        d._poolAt = now;
+        d._poolK = "";
+      }
+      const k = Math.min(1, (now - d._poolAt) / JPOOL.ms),
+        grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
+        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06).toFixed(1)}px) scale(${grow.toFixed(3)})`;
+      if (d._poolK !== pk) {
+        d._poolK = pk;
+        d._pool.style.transform = pk;
+      }
     }
     if (d._j !== pos.j) {
       d._j = pos.j;
@@ -2112,7 +2168,9 @@ function drawDucks(now = clockNow()) {
         : place({ x: at.x, y: at.y }, 0, 1, true), // (free: past the board's left edge it flies on, never back to where ducks start)
       top = a.top - at.z * size; // (Hangout: at the height it was fired from)
     if (stopped(s, sh, at, hang, now)) continue; // (it got to what stops it: gone from my screen there)
-    if (hang && world.hidden("", at)) continue; // (on the other side of the cabin's walls)
+    /* on the other side of the walls: looked for at its shooter's feet (at.z is its arc in duck sizes; taken for a
+       height, every shot over a roof was hidden from a duck up on that roof) */
+    if (hang && world.hidden("", { x: at.x, y: at.y, z: sh.hz })) continue;
     if (
       a.left < -geo.W * 0.4 ||
       a.left > geo.W * 1.4 ||
@@ -2158,7 +2216,7 @@ function drawDucks(now = clockNow()) {
                 ] // (the grenade launcher's fly as the thrown ones, straight)
               : ROUNDS_ART[sh.k]
                 ? [
-                    `bullet k-${sh.k}`,
+                    `bullet round k-${sh.k}`,
                     ROUNDS_ART[sh.k].svg,
                     `${ang};--w:${ROUNDS_ART[sh.k].w}px`,
                   ] // (Quacky Zombies' new guns: each its own bullet)
@@ -2234,8 +2292,10 @@ function drawDucks(now = clockNow()) {
       const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
         art = lz ? laserArt(lz) : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
+      /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
+         left at a knife's size */
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${pic}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;

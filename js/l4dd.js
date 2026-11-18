@@ -51,7 +51,12 @@ import {
   PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
-import { fenceLean, BELL_ANGLES, BELL_REST } from "./hangout/stationart.js";
+import {
+  fenceLean,
+  BELL_ANGLES,
+  BELL_REST,
+  JUSTIN_POOL,
+} from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
@@ -765,16 +770,10 @@ function spinSquare(s, ctx) {
 }
 /* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
    JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
-   as flat as the floor */
-const JPOOL = { ms: 6000 };
-const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">
-  <ellipse cx="0" cy="0" rx="40" ry="15" fill="#5e0711"/>
-  <ellipse cx="-24" cy="5" rx="22" ry="9" fill="#5e0711"/>
-  <ellipse cx="26" cy="-4" rx="20" ry="9" fill="#5e0711"/>
-  <ellipse cx="8" cy="10" rx="18" ry="7" fill="#5e0711"/>
-  <ellipse cx="-6" cy="-3" rx="24" ry="8" fill="#7a0b17"/>
-  <ellipse cx="-12" cy="-6" rx="7" ry="2" fill="#a3242c" opacity="0.6"/>
-</svg>`;
+   as flat as the floor. Every other duck that dies has the same one (game.js .gduck-pool) */
+export const JPOOL = { ms: 6000 };
+// (its shapes: stationart.js JUSTIN_POOL, the trooper in the gas station lies in the same)
+export const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
 let poolEl = null,
   poolAt = 0,
   poolSig = "";
