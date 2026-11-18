@@ -1,8 +1,8 @@
 /* ---------- Dead Ducks Arcade: the power box and the Angel machine, drawn (the owner's plan, Nov 16) ----------
    Drawn as the Duck Cabin's props are (hangout/art.js): simple shapes in the ducks' ink, a little 3D (a lighter top, a
    darker front, a small shadow), no words on the world's things. The game turns everything into pixels.
-   - powerBoxSVG: the box on the balcony with a bay for each of the four parts (an empty bay shows the part's dark
-     shape, so you can tell what's missing), the light on top, and beside it the fuel sign (a pump and a gauge).
+   - powerBoxSVG: the box on the balcony, its door shut (its bays for the parts are gone: it comes put together), the
+     light on top, and beside it the fuel sign (a pump and a gauge).
    - PART_ICONS (fuse, lever, tools, gas) and jerrySVG(pct): the parts and the jerry can as 40 × 40 icons, as the drops.
    - angelMachineSVG: the Angel machine on the stage, after the owner's picture, in greys (I wanted it not colored);
      working, its lamps and its hatch glow white-gold.
@@ -68,7 +68,6 @@ export const PART_ICONS = Object.fromEntries(
     ([k, v]) => [k, `<svg viewBox="0 0 40 40">${v}</svg>`],
   ),
 );
-const PART_ART = { fuse: FUSE, lever: LEVER, tools: TOOLS, gas: GAS };
 
 /* the jerry can: a steel army can, its three handles, the X pressed into its side; its fuel shows on the gauge strip
    at its side and in percent on the tag across its foot (the owner wanted the percent on it) */
@@ -84,13 +83,10 @@ export function jerrySVG(pct = 100) {
 }
 
 /* ---------- the power box ---------- */
-/* a part's dark shape, for its bay while it's still missing */
-const ghostDef = (id) =>
-  `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%"><feFlood flood-color="#0b0c10" flood-opacity=".75"/><feComposite in2="SourceAlpha" operator="in"/></filter>`;
 /* the box on the balcony, flat against the cabin wall: a grey metal cabinet on a plinth, its top a little lighter; on
-   its front four bays (fuse, lever, tool box, gas), the light over them (red off, green on) and a vent; on its left
-   the fuel sign on a post: a gas pump and a gauge whose needle shows the fuel left. parts: the fitted ones; on: the
-   power's on; fuel: 0 (empty) to 1 (a full can, 12 rounds). Foot: y = h − 8 */
+   its front its shut door, the light over it (red off, green on) and a vent; on its left the fuel sign on a post: a gas
+   pump and a gauge whose needle shows the fuel left. on: the power's on; fuel: 0 (empty) to 1 (a full can). parts: no
+   longer drawn (kept so old callers still work). Foot: y = h − 8 */
 export function powerBoxSVG({
   w = 96,
   h = 150,
@@ -98,14 +94,12 @@ export function powerBoxSVG({
   on = false,
   fuel = 0,
 } = {}) {
-  const gh = uid(),
-    gl = uid(),
+  const gl = uid(),
     b = h - 8,
     x0 = 30,
     x1 = w - 4,
     top = b - 102,
     face = top + 12;
-  const has = new Set(parts);
   let s = shade((x0 + x1) / 2 - 6, b, (x1 - x0) / 2 + 14, 6);
   /* the plinth, the cabinet's top and its front */
   s +=
@@ -129,18 +123,33 @@ export function powerBoxSVG({
       ? `<circle cx="${lx}" cy="${ly}" r="9" fill="url(#${gl})"/><circle cx="${lx}" cy="${ly}" r="4.6" fill="#3fd46b" ${ln(1.6)}/>`
       : `<circle cx="${lx}" cy="${ly}" r="4.6" fill="#ef3b3b" ${ln(1.6)}/>`) +
     `<path d="M${x0 + 26} ${ly - 4}H${x1 - 10}M${x0 + 26} ${ly}H${x1 - 10}M${x0 + 26} ${ly + 4}H${x1 - 10}" stroke="${G1}" stroke-width="2" stroke-linecap="round"/>`;
-  /* the bays, two by two: each a dark recess with the part (or its dark shape) in it */
-  const bw = (x1 - x0 - 14) / 2,
-    bh = (b - 8 - face - 30) / 2;
-  ["fuse", "lever", "tools", "gas"].forEach((k, i) => {
-    const bx = x0 + 5 + (i % 2) * (bw + 4),
-      by = face + 23 + Math.floor(i / 2) * (bh + 4),
-      sz = Math.min(bw, bh) - 3;
-    s +=
-      R(bx, by, bw, bh, has.has(k) ? G1 : G0, `rx="2" ${ln(1.8)}`) +
-      `<path d="M${bx + 2} ${by + 2.4}H${bx + bw - 2}" stroke="#000" stroke-width="2" opacity=".35"/>` +
-      `<g transform="translate(${n1(bx + (bw - sz) / 2)} ${n1(by + (bh - sz) / 2)}) scale(${n1(sz / 40)})"${has.has(k) ? "" : ` filter="url(#${gh})" opacity=".9"`}>${PART_ART[k]}</g>`;
-  });
+  /* its door, shut, where its four bays were: the box comes put together now, and with the bays gone that spot looks
+     like any power box (the owner's, Nov 18 12:19Z + 12:32Z: "the slots are ALL gone on the power box AND it should be
+     made to look normal for look purposes in the place where those slots are removed"). The door's frame and its
+     hinges, its handle, and a yellow high voltage sign */
+  const dx = x0 + 5,
+    dy = face + 23,
+    dw = x1 - x0 - 10,
+    dh = b - 8 - face - 26,
+    vx = dx + dw / 2 - 2,
+    vy = dy + dh * 0.42;
+  s +=
+    R(dx, dy, dw, dh, G2, `rx="2" ${ln(1.8)}`) +
+    R(
+      dx + 3,
+      dy + 3,
+      dw - 6,
+      dh - 6,
+      "none",
+      `rx="1.5" stroke="${G3}" stroke-width="1.6"`,
+    ) +
+    shine(`M${dx + 4} ${dy + 4.4}H${dx + dw - 6}`, 0.22, 1.2) +
+    [dy + 8, dy + dh - 14]
+      .map((y) => R(dx - 2, y, 4, 7, G1, `rx="1" ${ln(1.2)}`))
+      .join("") +
+    R(dx + dw - 9, dy + dh / 2 - 9, 4.6, 18, G0, `rx="2" ${ln(1.4)}`) +
+    `<path d="M${n1(vx)} ${n1(vy - 11)}L${n1(vx + 12.5)} ${n1(vy + 10)}H${n1(vx - 12.5)}Z" fill="#ffd23f" ${ln(1.8)} stroke-linejoin="round"/>` +
+    `<path d="M${n1(vx + 1.6)} ${n1(vy - 4.6)}L${n1(vx - 3)} ${n1(vy + 2.4)}H${n1(vx + 0.8)}L${n1(vx - 1.6)} ${n1(vy + 8)}L${n1(vx + 3.6)} ${n1(vy + 0.6)}H${n1(vx - 0.2)}Z" fill="#1c1c28"/>`;
   /* the fuel sign on its post: a yellow plate, a gas pump, and the gauge (empty at the left, full at the right) */
   const sx = 3,
     sy = top + 2,
@@ -162,8 +171,7 @@ export function powerBoxSVG({
     h,
     s,
     "pw-box" + (on ? " pw-on" : ""),
-    ghostDef(gh) +
-      `<radialGradient id="${gl}"><stop offset="0" stop-color="#3fd46b" stop-opacity=".7"/><stop offset="1" stop-color="#3fd46b" stop-opacity="0"/></radialGradient>`,
+    `<radialGradient id="${gl}"><stop offset="0" stop-color="#3fd46b" stop-opacity=".7"/><stop offset="1" stop-color="#3fd46b" stop-opacity="0"/></radialGradient>`,
   );
 }
 

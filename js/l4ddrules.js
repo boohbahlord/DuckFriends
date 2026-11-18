@@ -568,9 +568,16 @@ const NAMES = {
 export const weaponName = (w) => (isPw(w) ? pwName(w) : NAMES[w] || w);
 /* each one's own color, in its slot and as its orb (the owner's, Nov 18 12:19Z: "every weapon, melee, or item has a
    corresponding color to it's slot now ... The purples all glow. Any weapon made angelic now has a red slot color and
-   orb"): green, blue, purple (glowing) or the chair's gold. One not here keeps its slot's color (the dagger, the knife,
-   the pistol, the pan, the adrenaline shot, the bow, the grenades) */
+   orb"): green, blue, purple (glowing) or the chair's gold. The dagger, the knife, the pistol, the pan, the adrenaline
+   shot and the bow have no color: a plain slot, as in the other games (the owner's, 12:32Z: "they are a normal looking
+   slot like it is in the default game, so no color"). One not here keeps its slot's color (the grenades) */
 const TINTS = {
+  dagger: "plain",
+  knife: "plain",
+  handgun: "plain",
+  pan: "plain",
+  adrenaline: "plain",
+  bow: "plain",
   medkit: "green",
   axe: "green",
   sword: "green",
@@ -593,7 +600,7 @@ const TINTS = {
   laser: "purple",
   chair: "gold",
 };
-/* its color's class (css .l4s, .l4orb, .sp-slot: c-green, c-blue, c-purple, c-gold, c-red), "" for its slot's own;
+/* its color's class (css .l4s, .l4orb, .sp-slot: c-plain, c-green, c-blue, c-purple, c-gold, c-red), "" for its slot's own;
    holy: an Angelic one, red */
 export const tintOf = (w, holy = false) =>
   holy ? "c-red" : TINTS[w] ? "c-" + TINTS[w] : "";
