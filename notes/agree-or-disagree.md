@@ -6114,3 +6114,29 @@ Done (Adam): l4ddrules PHASES one per round (bases 24 to round 8, 36 to 12, 72 t
 > more instructions coming on optimizing frame where i answer to the spreasheet
 
 Split (Adam): Solomon = the merchant (rules, spawning, selling, fleeing, dying, lines) + zombie stats after round 12 + double barrel crit slug + fire spread. Jackal = Angel machine 2500, double barrel 150 rounds + sniper shake, flamethrower ammo as %, mud zombie removed. Noah = the merchants' looks (pictures to the owner, as asked) + suggestions. Adam = the Yoruba lines and their translations.
+
+## Request (2026-11-18 13:58Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8Zmhy1a7zZQi5hEJG9tRJV, answering the sheet's Frame rate ideas) (word for word)
+> EXPLAIN ALL OF THESE FOR ME AND THEN TELL ME WAT THEY MEAN, WHAT THEY DO, HOW IT LOOKS, AND ETC! I NEED TO UNDEERSTAND, DO NOT ACT THESE INTO BEING YET !
+>
+> also, we should have special drops like instant kill, full ammo, and all of those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground AND those outline and arrow effects for that special drop in pparticular ends when they are picked up. and this is for when they drop under the foliage of a tree or elsewhere, so it is not missed, and gas gets an orange outline
+>
+> for drawing the zombies with one shared picture like you suggested, i would say yes, but the zombies r supposed to have different looks AND take damage that does gore effects to their body that should translate to their individual duck, and so before acting on what might be a good idea, how do we problem solve for that? or even how they shake, their heads explode, variations in appearance, etc
+> How much work even to do that and what is the realistic payoff?
+>
+> only update a zombie's outline, hp bar, and shadow when it changes sounds good
+>
+> skip drawing aything off screen ? yeah sure but remember to draw a little bit off the screen on the outside of players for things like screen shakes or sprinting to account for things that might be seen just outside the frame in ways we might not anticipate, so we can do that be let's say one or two duck lengths maybe
+>
+> yes to not drawing anything not on the screen IF it updates BECAUSE offline mode for example SHOULD have it stay loaded after once and same for online, am i wrong ? i dont understand why now.
+>
+> your screen doesnt have to draw whats on another player's screen, only yours
+>
+> send zombies positions less often yeah but only for when they are not on the given player's screen for their machine maybe, yk?
+>
+> miles jr determines that with caution and what he suggets is what me and him will talk about
+>
+> sure to the pause rain and lightning idea when (so and so), shouldnt the variations of rain be redrawn and be the same image being used btw or is it already so  ? idk
+>
+> sure to move path for zombies thingy i think for off the main thread
+
+Adam: explained every idea in chat, built none (owner: "DO NOT ACT THESE INTO BEING YET"); recommended 2, 3, 4, 6, 7 first and measuring fps before 1. Drop outlines (separate ask) given to Noah.
