@@ -162,7 +162,7 @@ export function pwDraw(ctx) {
     hide =
       !pw ||
       !seenFrom(PW.X, PW.Y, Wd.inside) ||
-      !Wd.seen(p.left - 60 * sc, p.top - 160 * sc, 120 * sc, 180 * sc);
+      !Wd.onView(p.left - 60 * sc, p.top - 160 * sc, 120 * sc, 180 * sc);
   if (box.el.hidden !== hide) box.el.hidden = hide;
   if (!hide) {
     const on = powerOn(s),
@@ -199,7 +199,7 @@ export function pwDraw(ctx) {
     const z = (o.o.z || 0) + heightAt(o.o.x, o.o.y),
       q = Wd.toScreen(o.o.x, o.o.y, z),
       unseen = !seenFrom(o.o.x, o.o.y, Wd.inside),
-      onCam = Wd.seen(q.left - 40, q.top - 80, 80, 100),
+      onCam = Wd.onView(q.left - 40, q.top - 80, 80, 100),
       off = unseen || !onCam;
     if (o.el.hidden !== off) o.el.hidden = off;
     if (onCam && o.o.k === "can") canOutline(Wd, o, q, z, sc, unseen, myFloor);

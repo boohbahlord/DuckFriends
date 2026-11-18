@@ -77,7 +77,7 @@ export function angelDraw(ctx) {
     p = Wd.toScreen(ANGEL.X, ANGEL.Y, ANGEL.Z),
     hide =
       !seenFrom(ANGEL.X, ANGEL.Y, Wd.inside) || // (only from inside its building: from outside, its roof stays)
-      !Wd.seen(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
+      !Wd.onView(p.left - 80 * sc, p.top - 170 * sc, 160 * sc, 190 * sc);
   if (mc.el.hidden !== hide) mc.el.hidden = hide;
   /* the orb's sound, once, as it comes out (heard even off the screen) */
   if (m && angelDone(m, now) && heard.out !== m.t) {

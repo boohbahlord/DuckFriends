@@ -1585,7 +1585,7 @@ function drawMerchant(ctx, t) {
     p = Wd.toScreen(mAt.x, mAt.y, z),
     hide =
       !seenFrom(mAt.x, mAt.y, Wd.inside) ||
-      !Wd.seen(p.left - 60, p.top - 140, 120, 160);
+      !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1642,7 +1642,8 @@ function drawEgg(ctx, now) {
     } // (a blue flash as he comes and goes)
     egg.chomp = now + 400;
   }
-  const hide = !on || !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+  const hide =
+    !on || !Wd.inside || !Wd.onView(p.left - 40, p.top - 90, 80, 110);
   if (egg.el.hidden !== hide) egg.el.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1721,7 +1722,7 @@ function drawBox(ctx) {
     p = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz),
     hide =
       !seenFrom(BOX.sx, BOX.sy, Wd.inside) ||
-      !Wd.seen(p.left - 60, p.top - 80, 120, 140);
+      !Wd.onView(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -2480,7 +2481,7 @@ activity({
           : hole
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
             : Math.round(sortY(o.x, o.y, z)) + 10,
-        onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
+        onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
           !onCam ||
@@ -2592,7 +2593,7 @@ activity({
         p = Wd.toScreen(o.x, o.y, 0),
         hide =
           out === Wd.inside ||
-          !Wd.seen(
+          !Wd.onView(
             p.left + b.box.l * sc,
             p.top + b.box.t * sc,
             b.box.w * sc,
@@ -2615,7 +2616,7 @@ activity({
     for (const o of D.values()) {
       const p = Wd.toScreen(o.x, o.y, 0),
         unseen = !seenFrom(o.x, o.y, Wd.inside),
-        onCam = Wd.seen(p.left - 40, p.top - 80, 80, 100),
+        onCam = Wd.onView(p.left - 40, p.top - 80, 80, 100),
         hide = unseen || !onCam;
       if (o.el.hidden !== hide) o.el.hidden = hide;
       if (onCam) dropOutline(Wd, o, p, sc, unseen, myFloor); // (out of sight too: then its line only)

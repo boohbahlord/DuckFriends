@@ -2178,12 +2178,20 @@ function drawDucks(now = clockNow()) {
        height, every shot over a roof was hidden from a duck up on that roof) */
     if (hang && world.hidden("", { x: at.x, y: at.y, z: sh.hz })) continue;
     if (
-      a.left < -geo.W * 0.4 ||
-      a.left > geo.W * 1.4 ||
-      top > geo.top0 + geo.H + size * 6 ||
-      top < -geo.H
-    )
-      continue; // (off the screen)
+      hang
+        ? a.left < -size * 2 ||
+          a.left > geo.W + size * 2 ||
+          top < -size * 2 ||
+          top > geo.H + size * 2
+        : a.left < -geo.W * 0.4 ||
+          a.left > geo.W * 1.4 ||
+          top > geo.top0 + geo.H + size * 6 ||
+          top < -geo.H
+    ) {
+      const o = SHOT_SEEN.get(sh.n);
+      if (o) o.x = NaN; // (no puff where it went out of sight: it hits something I can't see)
+      continue;
+    } // (off the screen: in Hangout and Dead Ducks Arcade, two ducks past my screen's edge, the owner's Nov 18 14:20Z "one or two duck lengths")
     live.add(sh.n);
     const seen = SHOT_SEEN.get(sh.n);
     if (seen) {

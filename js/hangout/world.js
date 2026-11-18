@@ -154,6 +154,13 @@ export function mountWorld(board, api) {
         l + w > -NEAR &&
         t < cam.vh + NEAR &&
         t + h > -NEAR,
+      /* on my screen, or less than two ducks past its edge (the owner's, Nov 18 14:20Z: "draw a little bit off the
+         screen on the outside of players for things like screen shakes or sprinting ... one or two duck lengths
+         maybe"): what Dead Ducks Arcade draws; anything further out isn't drawn at all (l4dd.js) */
+      onView: (l, t, w, h) => {
+        const m = 2 * L.DUCK * cam.sc;
+        return l < cam.vw + m && l + w > -m && t < cam.vh + m && t + h > -m;
+      },
       propEl: (id) => els.get(id) || null,
       coverAt: (l, r, t, b, zi) => coverAt(l, r, t, b, zi),
       frameOf: (e, i) => frameOf(e, i),
