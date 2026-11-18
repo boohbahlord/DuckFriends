@@ -100,6 +100,7 @@ import {
   powerTick,
   powerAct,
   powerPump,
+  powerGas,
   isPw,
   pwName,
 } from "./l4ddpower.js";
@@ -658,7 +659,6 @@ export const SHOP = [
   { id: "acc", name: "Critical Chance", what: "+2.5% crits", most: 2 }, // (600 each, +2.5%, twice: the owner's, Nov 16 21:47Z)
   { id: "as", name: "Attack speed", what: "Cooldowns 10% faster", most: 2 }, // (2, the owner's, Nov 16 21:21Z; was 5)
   { id: "hp", name: "Max HP", what: "+1 HP until you go down", most: 2 },
-  { id: "sp", name: "Speed", what: "Walk 10% faster", most: 1 },
   { id: "rl", name: "Faster reload", what: "Reloads 30% faster", most: 1 },
   {
     id: "qr",
@@ -2090,15 +2090,18 @@ function justinBody(s, what, id, now, mx, my) {
   justinSays(s, "jaime");
   return true;
 }
-/* the merchant: an upgrade (the Butler's, SHOP), from beside him while he's selling, while I have the points (and
-   haven't bought it as often as it goes), or something from his stock (merchantBuy) */
+/* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
+   selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
 function buy(s, id, what, mx, my, hand, now) {
+  if (what === "gas")
+    return !dp() && atMerchant(s, mx, my) && powerGas(s, id, now, PH);
   if (!SHOP.some((x) => x.id === what))
     return merchantBuy(s, id, what, mx, my, hand, now);
   const it = SHOP.find((x) => x.id === what),
     up = upOf(s, id),
     n = up[what] || 0;
   if (!it || n >= it.most || !atMerchant(s, mx, my)) return false;
+  if (upOffer(s, id) !== what) return false; // (only the one he offers me, once a visit)
   const price = priceFor(s, id, what, n);
   if (ptsOf(s, id) < price) return false;
   addPts(s, id, -price);
@@ -2111,6 +2114,8 @@ function buy(s, id, what, mx, my, hand, now) {
     };
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
+  const mm = merchantOf(s);
+  s.hang.l4m = { ...mm, ups: { ...(mm.ups || {}), [id]: "" } }; // (bought: none more this visit)
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
     if (p4[id]) s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: p4[id].hp + 1 } };
@@ -2416,13 +2421,15 @@ function give(s, id, w, hand0) {
    the weapon bags in turns), and a 50% chance of another, each one after it 10% less likely, and 2.5% more likely for
    each player past the first; never ammo, never the grenade. Its price is its color's: plain 300, green 500, blue 750,
    purple 1,500, the golden chair 3,000. What's bought is gone for this visit, for everyone, unless a 25% chance says he
-   has another. His upgrades are the Butler's (SHOP). The Sale halves his prices too.
+   has another. He offers each duck one of the Butler's upgrades (SHOP) a visit, one it can still get (upOffers), and
+   in the cabin he always has gas (the pump's 25% for the pump's price, never running out). The Sale halves his prices
+   too.
    Walking up to him he greets you; a player who hurts him and doesn't kill him gets one line, and he runs: off the
    balcony in the cabin, over the fence on Downpour. When the next round's zombies come he says a leaving line and runs
    the same way, and the zombies chase him as they do a duck (as they do Justin out there: JCHASE) until he's over the
    fence or off the balcony. He can be killed (by anyone's weapons, or the zombies' claws), and stays dead for the rest
    of the game, his body left where he fell (the zombies leave it be); no revive. Each visit is a different merchant
-   (a bag of the ones alive). HP and running speed are my guesses.
+   (a bag of the ones alive). He has 6 HP and walks as a duck does, with a duck's sprint to get away (merchantSprints).
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
    (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
    gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
@@ -2438,9 +2445,12 @@ export const MERCH = {
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
   AGAIN: 0.25, // (a buy: the chance he has another)
-  HP: 5,
-  WALK: 1, // (his walk, as a share of a duck's)
-  RUN: 1.3, // (running away: faster than the zombies)
+  HP: 6, // (the owner's, Nov 18 14:22Z: "a merchent has 6 hp")
+  WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
+  //  sprint to get away if he has to (limited amount of sprint)")
+  SPRINT: 1.75, // (his sprint: a duck's (game.js SPEED.sprint), as long as a duck's (L4.SPRINT), and as long to fill …
+  CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
+  HURT_MS: 3000,
   STAB: 70, // (world px: Phil's knife reaches a duck this near …
   STAB_MS: 600, // … and stabs this often (my guesses) …
   FOE_FAR: 900, // … and lets a duck this far off be, and runs)
@@ -2498,6 +2508,20 @@ function merchantStock(s) {
   setMh(s, { bags });
   return stock;
 }
+/* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z: "they only
+   sell one per visit"); { id: upgrade id, or "" (none left, or bought) } */
+function upOffers(s) {
+  const ups = {};
+  for (const id of players(s)) {
+    if (isWild(s, id)) continue;
+    const up = upOf(s, id),
+      can = SHOP.filter((it) => (up[it.id] || 0) < it.most);
+    ups[id] = can.length ? can[rint(0, can.length - 1)].id : "";
+  }
+  return ups;
+}
+/* the upgrade he offers duck id this visit ("" none) */
+export const upOffer = (s, id) => ((merchantOf(s) || {}).ups || {})[id] || "";
 /* the fences round Downpour (its openings', their ends trimmed) */
 const fences = () =>
   OPENINGS.filter((o) => o.kind === "fence").map((o) => o.fence);
@@ -2539,8 +2563,8 @@ function wayOut(x, y) {
     const gx = Math.max(DECK.x0 + 160, Math.min(DECK.x1 - 160, x)),
       edge = [gx, DECK.y1 - 70];
     return [
-      { to: edge, how: "flow", k: MERCH.RUN },
-      { to: [gx, DECK.y1 + 260], how: "line", k: MERCH.RUN, c: 1, jump: 1 },
+      { to: edge, how: "flow" },
+      { to: [gx, DECK.y1 + 260], how: "line", c: 1, jump: 1 },
     ];
   }
   const f = fences().reduce((a, b) =>
@@ -2551,13 +2575,11 @@ function wayOut(x, y) {
     {
       to: byFence(f, FENCE.out - FENCE.across - 20, v),
       how: "flow",
-      k: MERCH.RUN,
     },
     { to: byFence(f, FENCE.out, v), how: "line", k: 0.6, c: 1 },
     {
       to: byFence(f, FENCE.from + 80, v),
       how: "line",
-      k: MERCH.RUN,
       c: 1,
       jump: 1,
     },
@@ -2583,6 +2605,8 @@ function merchantCome(s, now, sure) {
     left: left.slice(1),
     lines: {},
     hurt: 0,
+    sp: 1,
+    tired: false,
     near: {},
     route,
     p: 0,
@@ -2599,6 +2623,7 @@ function merchantCome(s, now, sure) {
     f: 1,
     hp: MERCH.HP,
     stock: merchantStock(s),
+    ups: upOffers(s),
     say: null,
   };
   addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived": l4dd.js l4Got)
@@ -2627,6 +2652,7 @@ function merchantHurt(s, by, n, now) {
     return true;
   }
   const hits = (m.hits || 0) + (by ? 1 : 0);
+  if (by) setMh(s, { hurtAt: now });
   s.hang.l4m = { ...m, hp, hits };
   if (by && !mh(s).hurt) {
     setMh(s, { hurt: 1 });
@@ -2658,7 +2684,7 @@ function merchantFight(s, m0, now, dt) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
-    stepZombie(m, aim, WALK * walkOf(s) * MERCH.RUN * dt, []);
+    stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * dt, []);
   } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
     setMh(s, { stab: now });
     addFx(s, {
@@ -2732,7 +2758,12 @@ function merchantTick(s, now) {
     return;
   }
   const m = { x: m0.x, y: m0.y },
-    far = WALK * walkOf(s) * (leg.k || MERCH.WALK) * dt;
+    far =
+      WALK *
+      walkOf(s) *
+      (leg.k || MERCH.WALK) *
+      dt *
+      (merchantSprints(s, m0, now, dt) ? MERCH.SPRINT : 1);
   let done = false;
   if (leg.how === "line") done = walkTo(m, leg.to[0], leg.to[1], far);
   else {
@@ -2760,6 +2791,31 @@ function merchantTick(s, now) {
     ...(leg.jump ? { st: "jump" } : {}),
   };
   if (done) setMh(s, { p: (h.p || 0) + 1 });
+}
+/* running away, does he sprint this step? Only if he has to (a zombie near, or just hurt by a player) and has breath
+   left; it drains in L4.SPRINT ms and fills again as slowly, and once empty he walks until it's full (h.sp: what's
+   left, 0 to 1; h.tired) */
+function merchantSprints(s, m, now, dt) {
+  const h = mh(s);
+  let sp = h.sp ?? 1,
+    tired = !!h.tired,
+    run = false;
+  const must =
+    m.st === "out" &&
+    (now - (h.hurtAt || 0) < MERCH.HURT_MS ||
+      zombies(s).some(
+        (z) => z.st !== 3 && Math.hypot(z.x - m.x, z.y - m.y) < MERCH.CHASED,
+      ));
+  if (must && !tired && sp > 0) {
+    sp = Math.max(0, sp - (dt * 1000) / L4.SPRINT);
+    if (sp <= 0) tired = true;
+    run = true;
+  } else {
+    sp = Math.min(1, sp + (dt * 1000) / L4.SPRINT);
+    if (sp >= 1) tired = false;
+  }
+  setMh(s, { sp, tired });
+  return run;
 }
 /* the boards of opening `o` torn down at once (the merchant on his way in: "breaks the barricade (the wooden
    barricade) IF it is in the way") */

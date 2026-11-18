@@ -104,6 +104,7 @@ import {
   shotWalled,
   hasLeft,
   merchantOf,
+  upOffer,
   selling,
   stockPrice,
   MERCH,
@@ -143,7 +144,7 @@ import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
 import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
-import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
+import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
@@ -1999,6 +2000,8 @@ function shopFill(s, ctx) {
       kit && kit.am,
       m && [m.v, m.id, m.roll],
       stock,
+      upOffer(s, me),
+      gasFull(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
@@ -2013,13 +2016,20 @@ function shopFill(s, ctx) {
         ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
         : "";
   }
-  shop.list.innerHTML = SHOP.map((it) => {
-    const n = up[it.id] || 0,
-      max = n >= it.most,
-      price = priceFor(s, me, it.id, n),
-      was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
-    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
-  }).join("");
+  /* the one upgrade he offers me this visit (the owner's, Nov 18 14:20Z: "they only sell one per visit") */
+  const offer = SHOP.filter((it) => it.id === upOffer(s, me));
+  shop.list.innerHTML = offer.length
+    ? offer
+        .map((it) => {
+          const n = up[it.id] || 0,
+            max = n >= it.most,
+            price = priceFor(s, me, it.id, n),
+            was =
+              price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
+          return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">No upgrade for you this visit</li>';
   /* what he has this visit (the rules' merchantStock): Buy (its price), Owned when I have it (an item of mine that's used
      up can be bought full again); a Sale strikes the old price through */
   shop.guns.innerHTML = stock.length
@@ -2034,6 +2044,11 @@ function shopFill(s, ctx) {
         })
         .join("")
     : '<li class="l4-up l4-sold">Sold out</li>';
+  /* Duck Cabin: his gas, always (the pump's 25% at the pump's price) */
+  if (!dp()) {
+    const full = gasFull(s);
+    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
+  }
 }
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
@@ -2092,7 +2107,7 @@ function shopEl(ctx) {
       send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
     const st = ctx.state(),
       it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
-    if (!it) return send(); // (an upgrade)
+    if (!it) return send(); // (an upgrade, or gas)
     /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
     confirmBox(
       `Are you sure you want to buy the ${weaponName(w)}?`,
