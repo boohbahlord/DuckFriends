@@ -126,7 +126,17 @@ export function fxLasers(list) {
 }
 
 /* ---------- making particles ---------- */
+/* far off my screen: more than two ducks past its edge (the owner's, Nov 18 14:20Z: "draw a little bit off the screen
+   on the outside of players for things like screen shakes or sprinting ... one or two duck lengths maybe"). Nothing is
+   made there: each screen draws only its own view, and what the room does goes on all the same */
+export function fxOff(x, y) {
+  if (!cv) return true;
+  const m = unit * 2,
+    gp = gridPx();
+  return x < -m || y < -m || x > cv.width * gp + m || y > cv.height * gp + m;
+}
 function add(kind, x, y, z, vx, vy, vz, life, col, size = 1, fl = NONE) {
+  if (fxOff(x, y - z)) return; // (made far off my screen: never seen)
   const i = next;
   next = (next + 1) % (low ? LOW_MAX : MAX);
   if (!LIFE[i]) alive++;
@@ -275,7 +285,7 @@ const many = (r) => (Array.isArray(r) ? Math.round(rnd(r[0], r[1])) : r);
    hit went (most of the blood goes on that way, some back toward the shooter); body: the duck's color (its chunks) */
 export function fxBlood(x, y, h, w, dx = 0, dy = 0, body = "") {
   sfx.flesh(BLEED_OF[w] || "small", w); // (its sound: by what went in, or the weapon's own: sound.js OWN_HIT)
-  if (noGore) return;
+  if (noGore || fxOff(x, y - h)) return;
   const B = BLEED[BLEED_OF[w] || "small"],
     u = unit,
     l = Math.hypot(dx, dy),
@@ -384,7 +394,7 @@ export function fxHitAt(x, y, h, id, size, or = "small", body = "") {
 /* blood bursting out all around (a crit's head, a grenade): n drops, chunks too; body: the duck's color, for chunks of
    it among them */
 export function fxBurst(x, y, h, n, chunks = 0, body = "") {
-  if (noGore) return;
+  if (noGore || fxOff(x, y - h)) return;
   const u = unit,
     own = body ? inkOf(body) : -1;
   for (let k = 0; k < n + chunks; k++) {
@@ -680,6 +690,7 @@ export function fxFlame(x, y, ang, far, n, cone, band) {
 }
 /* a patch of burning ground at (x, y) on the screen, r css px across: a few flickering flame pixels this frame */
 export function fxGroundFire(x, y, r, n = 2) {
+  if (fxOff(x, y)) return; // (a patch of fire far off my screen: nothing to make, every frame)
   for (let k = 0; k < n; k++) {
     const a = rnd(0, Math.PI * 2),
       d = r * Math.sqrt(Math.random());
@@ -995,7 +1006,7 @@ function pixelPic(svg, w) {
    left, 1 right) the hit pushed it; up: how hard it pops up (1 a hat; more for an eye). Not with gore off when it's
    gore (a beak, an eye) */
 export function fxKnock(svg, w, x, y, h, dx = 1, up = 1, gore = false) {
-  if (gore && noGore) return;
+  if ((gore && noGore) || fxOff(x, y - h)) return;
   if (SPR.length >= SPR_MAX) SPR.shift();
   const u = unit,
     o = {
@@ -1049,7 +1060,7 @@ export function fxEye(x, y, h, dx = 1) {
 }
 /* blood spurting up out of (x, y) (a headless neck): n small spurts, one after another over ms */
 export function fxSpurt(x, y, h, n = 10, ms = 1400) {
-  if (noGore) return;
+  if (noGore || fxOff(x, y - h)) return;
   const u = unit,
     o = [ox, oy];
   for (let k = 0; k < n; k++)
