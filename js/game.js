@@ -5867,6 +5867,45 @@ const dots = (id) =>
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
+/* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
+   magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
+   IF something CAN be reloaded") */
+function canReloadNow() {
+  if (!R || !onBoardPhase()) return false;
+  const s = R.state,
+    now = clockNow();
+  if (isL4dd(s)) {
+    const w = heldNow(),
+      a = w ? l4Ammo(s, R.me, w) : null;
+    return (
+      !!a &&
+      !a.rl &&
+      !a.dry &&
+      !a.nr &&
+      a.f < 0.999 &&
+      (a.nr !== undefined || downArmed(s, R.me))
+    ); // (a gun with a magazine, or the down pistol; the bow's and the flamethrower's have none)
+  }
+  let w;
+  if (isMgj(s)) {
+    w = mgjDownGun()
+      ? "handgun"
+      : held && held === myPick() && mgjMag(held)
+        ? held
+        : "";
+  } else {
+    const k = keysOf(playDuck());
+    w =
+      held && magSize(held) && hasKey(playDuck(), held)
+        ? held
+        : k.includes("handgun")
+          ? "handgun"
+          : k.find((id) => id && magSize(id)) || "";
+  }
+  if (!w) return false;
+  const mm = magOf(s, R.me, now, w);
+  return mm.n > 0 && !(mm.r > now);
+}
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
@@ -7903,7 +7942,7 @@ register("game", {
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
       jump: () => jump(),
-      reloadOn: () => !!R && (isL4dd(R.state) || isMgj(R.state)),
+      reloadOn: canReloadNow,
       reload: () => reload(),
     });
     meter = mountMeter();

@@ -20,7 +20,7 @@ const CROSS =
 
 /* api: active() → the board is on (buttons show), weapon() → the weapon in the slider's middle (or null), aim(dx, dy)
    → aim that way on the screen (null: stop aiming), attack() → attacks, and says in ms when it can again, jump(),
-   hold(on) → the jump button held down or let go */
+   hold(on) → the jump button held down or let go, reloadOn() → what is in hand can be reloaded (the small R shows), reload() */
 export function mountPad(api) {
   const box = el(
     `<div class="tpad gone"><div class="tpad-atk" role="button" aria-label="Aim and attack" hidden><div class="tpad-ring" aria-hidden="true"></div><i aria-hidden="true">${CROSS}</i></div><div class="tpad-col"><button type="button" class="tpad-jump" aria-label="Jump">${ARROW}</button><button type="button" class="tpad-reload" aria-label="Reload" hidden>R</button></div></div>`,
