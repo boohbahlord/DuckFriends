@@ -44,7 +44,7 @@ const SAY = {
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
   dbarrel:
-    "Two slugs, each one a kill, the body thrown back. A crit goes through every zombie in its way.",
+    "Two slugs, each one a kill, the body thrown back. A crit kills the next zombie too, and goes past it only on another crit.",
   flamer:
     "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
   burst: "Three rounds a click, as hard as the AK-47.",
