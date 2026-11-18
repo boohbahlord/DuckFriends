@@ -1053,16 +1053,37 @@ export function useMode(mode, map) {
         in: [o.a, C.y1 - C.wall, o.b, C.y1],
         out: [o.a - PEEK.side, C.y1, o.b + PEEK.side, C.y1 + PEEK.deep],
       });
-  /* Downpour: the gas station's front door is a hole too, and from inside the way out always shows through it (the
-     owner's, Nov 17 05:46Z: "exit?"), only from inside that building (bldg) */
+  /* Downpour: every way through a wall (the gas station's front door and its two holes in the north wall, and the
+     chapel's wide entrance) is a hole too, and from inside the way out always shows through it (the owner's, Nov 17
+     05:46Z: "exit?"), only from inside that building (bldg). The owner, Nov 18 15:18Z: "the zombies cannot be seen
+     while inside the church om downpour but their outline can, even tho nothing is hiding them, this should not be the
+     case for similiar times": the chapel's entrance and the gas station's north holes had none, so from inside, a
+     zombie just out past them showed as its red line only. In a north wall the way out is north, past the wall's own
+     height (its top hides that much of the ground already), and from outside nothing shows in through it (the roof
+     covers that side) */
   if (v === "l4gs")
-    for (const o of GS.WALK_HOLES)
-      if (o.at === GS.STATION.y1)
-        PEEKS.push({
-          bldg: 1,
-          in: [o.a, o.at - GS.STATION.wall, o.b, o.at],
-          out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
-        });
+    for (const [B, bldg, o] of [
+      ...GS.WALK_HOLES.map((o) => [GS.STATION, 1, o]),
+      [GS.CHAPEL, 2, { at: GS.CHAPEL.y0, ...GS.CHAPEL_DOOR }],
+    ])
+      PEEKS.push(
+        o.at === B.y1
+          ? {
+              bldg,
+              in: [o.a, o.at - B.wall, o.b, o.at],
+              out: [o.a - PEEK.side, o.at, o.b + PEEK.side, o.at + PEEK.deep],
+            }
+          : {
+              bldg,
+              in: [o.a, o.at, o.a, o.at], // (nothing)
+              out: [
+                o.a - PEEK.side,
+                o.at - B.wall - PEEK.deep,
+                o.b + PEEK.side,
+                o.at,
+              ],
+            },
+      );
   PLATS.length = 0;
   if (!v)
     for (const p of PROPS)

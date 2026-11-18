@@ -9,6 +9,38 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v89",
+    version: 89,
+    date: "Nov 18, 2026",
+    title: "Health, stamina and sharper weapons everywhere",
+    news: [
+      "Every mode: every duck has 4 HP (Mad God Justin keeps its own Player HP setting), sprinting runs on a 7-second stamina bar, and your health, sprint and cooldown bars show as in Dead Ducks Arcade.",
+      "Everyone's health shows in their name tag in every mode, and on a computer the other players' health shows small in the board's corner.",
+      "A duck turns see-through while its jump keeps it safe, in every mode.",
+      "On phones, the hotbar is on your duck in every mode: swipe on your duck to switch, tap it to use what's picked.",
+      "On phones, a second finger dragged on the board aims, and a small R button above the jump button reloads, shown only while the gun in your hand can be reloaded.",
+      "For Dead Ducks Arcade: melee reaches as far up and down as to the sides, and every melee hit knocks zombies back and gives other ducks a small shove. The fire axe pushes harder, the hammer hardest.",
+      "For Dead Ducks Arcade: the hammer does 3 to 5 damage, the frying pan 5 (still missing half its swings, half its hits a headshot), the sword 1 to 2.",
+      "For Dead Ducks Arcade: the pistol, the bow and each shotgun pellet do 1 to 3 damage, and the bow's arrows never run out. The bow's shot is quieter.",
+      "For Dead Ducks Arcade: the revolver fires 3 a second for 2 to 4; the MP5 hits for 1 to 2 and carries 25% more magazines; the Tommy gun hits for 1 to 3 and the M249 SAW for 2; the UMP-45 fires 7 a second for 2, with 25 a magazine.",
+      "For Dead Ducks Arcade: the Barrett .50 Cal hits for 4 to 5, 1 less for each zombie it has already gone through; the chain gun hits for 4 to 5; fire burns a zombie for 1 every 2 seconds for 8 seconds, and lighting it again starts the 8 seconds over.",
+      "For Dead Ducks Arcade: the M249 SAW shakes the screen no more than the AK-47.",
+      "For Dead Ducks Arcade: merchants have 3 to 6 HP and come in half of the rests between rounds, round 0's too. Hit one and his health bar shows; he shows his sprint while he runs, and Phil the Murderous his knife's cooldown.",
+      "For Dead Ducks Arcade: merchants bleed and get wounds like everyone else, a crit can blow a merchant's head off, and a dead merchant's body stays in a pool of blood for the rest of the game. Justin's health bar shows once he's hit.",
+      "For Dead Ducks Arcade: on phones you see more of the map.",
+      "On a phone on its side, Jumps sits in the middle of the screen and the Ready button at the bottom middle.",
+      "The Play page has no logo at the top any more, and on phones the music bar hides when there isn't room for it.",
+    ],
+    fixed: [
+      "Every gun is its own size in your hand again (they had all shrunk to a knife's size, the M249 SAW too).",
+      'Single Player no longer sits on "Getting ready" the first time the app opens after an update.',
+      'For Dead Ducks Arcade: "The Merchant has Arrived" now shows, when he gets to his spot.',
+      "For Dead Ducks Arcade: on Downpour, zombies just outside the chapel's entrance or the gas station's back holes show from inside, not just their outline.",
+      "For Dead Ducks Arcade: on phones, the slot row at the bottom stays still while you fire or reload.",
+      "For Dead Ducks Arcade: Downpour's flood water slows merchants and Justin as it slows players.",
+    ],
+  },
+  {
     id: "v88",
     version: 88,
     date: "Nov 18, 2026",

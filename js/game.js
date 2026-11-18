@@ -34,6 +34,7 @@ import {
   toast,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
+import { sprintStep } from "./stamina.js";
 import {
   COLS,
   SHORT,
@@ -87,6 +88,7 @@ import {
   coolEnds,
   phpLost,
   PHP,
+  dodges,
   isHang,
   MAG,
   magOf,
@@ -212,6 +214,7 @@ import {
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
+  peekAgain as l4PeekAgain,
   l4Got,
   sprintLeft,
   l4SafeHint,
@@ -1163,7 +1166,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false]; // (Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 7 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -1174,8 +1177,7 @@ function drawMeters(s, board, layer, now) {
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
-  const want =
-    (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
+  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpFull)
   let box =
     board &&
     (board._hpo && board._hpo.parentNode === board
@@ -1565,9 +1567,15 @@ function drawDucks(now = clockNow()) {
     /* Mad God Justin's Player HP: see-through red blocks behind the letters (one for each HP, the real meter is under the
        hotbar); the part a hit took flashes light at once, then fades.
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
-    /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
-       Quacky Zombies: its own 3 HP, always shown (down or a ghost, none) */
-    const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+    /* the normal game's HP (rules.js PHP): the same bar, always shown while the duck is up on the board, as Dead Ducks
+       Arcade's (it was shown only while a hit was still counted); Quacky Zombies: its own HP, always shown (down or a
+       ghost, none) */
+    const l4 =
+        isL4dd(s) &&
+        !g &&
+        s.phase === "hang" &&
+        (s.seat.includes(id) ||
+          (isWild(s, id) && l4Hp(s, id) >= 0 && l4Hp(s, id) < maxHp(s, id))), // (Justin out there: his HP once he's hit, as anyone's; the owner's, Nov 18 15:35Z: "When Justin gets hit, his health bar shows in the zombie game")
       bj = id === JUSTIN_ID && !g && boardMgj(s), // (the board's Mad God Justin: his 10 HP, always shown while he's up)
       lost =
         !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
@@ -1581,9 +1589,9 @@ function drawDucks(now = clockNow()) {
             ? !g && s.seat.includes(id) && s.phase === "boss"
               ? mgjPHp(s)
               : 0
-            : lost
+            : !g && s.seat.includes(id) && !dead && !isL4dd(s) && onBoardPhase()
               ? PHP
-              : 0,
+              : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
       hp = !hpMax
         ? -1
         : bj
@@ -1866,7 +1874,10 @@ function drawDucks(now = clockNow()) {
     } // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
     d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
-    d.classList.toggle("dodge", isL4dd(s) && dodging(s, pos, now)); // (Dead Ducks Arcade: see-through while a jump makes it safe)
+    d.classList.toggle(
+      "dodge",
+      isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now),
+    ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
     d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
     const dn0 = !s.done[id];
@@ -4571,6 +4582,7 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
+  sprinting = sprintStep(sprinting && !!(hx || vy || target), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4779,6 +4791,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -5794,9 +5807,9 @@ function coolOne(id, now, m) {
     return end > now ? [end, coolFor(id, R.state), now] : null;
   }
 }
-/* the white and the yellow bars under my duck in the modes besides Dead Ducks Arcade (which has its own, l4dd.js):
-   what's in my hand, its cooldown or reload, and its magazine (meters.js; no sprint bar: sprinting never runs out
-   here) */
+/* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
+   l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
+   7 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
 function handBars(s) {
   const tag = S && S.querySelector(".gduck.mine .gduck-name");
   if (!tag || !R) return;
@@ -5805,8 +5818,7 @@ function handBars(s) {
     w = mgjDownGun() ? "handgun" : held,
     c = w ? coolOne(w, now, m) : null;
   let el = tag.querySelector(".l4-cool");
-  if (!el) {
-    if (!c) return;
+  if (!el && c) {
     el = document.createElement("span");
     el.className = "l4-cool off";
     el.setAttribute("aria-hidden", "true");
@@ -5814,7 +5826,7 @@ function handBars(s) {
     tag.append(el);
   }
   const v = c ? Math.min(1, (c[0] - now) / c[1]).toFixed(3) : "0";
-  if (el._v !== v) {
+  if (el && el._v !== v) {
     el._v = v;
     el.style.setProperty("--cl", v);
     el.classList.toggle("off", v === "0");
@@ -5837,6 +5849,24 @@ function handBars(s) {
     a = { f: rl ? 0 : left / mg[0], rl, dry: false };
   }
   ammoBar(tag, a);
+  let sp = tag.querySelector(".l4-sprint");
+  if (!sp && !isMgj(s)) {
+    sp = document.createElement("span");
+    sp.className = "l4-sprint full";
+    sp.setAttribute("aria-hidden", "true");
+    sp.innerHTML = "<i></i>";
+    tag.append(sp);
+  }
+  if (sp) {
+    const [left, tired] = isMgj(s) ? [1, false] : sprintLeft(),
+      sv = left.toFixed(3);
+    if (sp._v !== sv) {
+      sp._v = sv;
+      sp.style.setProperty("--sp", sv);
+      sp.classList.toggle("full", left >= 1);
+    }
+    sp.classList.toggle("tired", tired);
+  }
   stackBars(tag);
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
@@ -5861,6 +5891,45 @@ const dots = (id) =>
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
+/* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
+   magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
+   IF something CAN be reloaded") */
+function canReloadNow() {
+  if (!R || !onBoardPhase()) return false;
+  const s = R.state,
+    now = clockNow();
+  if (isL4dd(s)) {
+    const w = heldNow(),
+      a = w ? l4Ammo(s, R.me, w) : null;
+    return (
+      !!a &&
+      !a.rl &&
+      !a.dry &&
+      !a.nr &&
+      a.f < 0.999 &&
+      (a.nr !== undefined || downArmed(s, R.me))
+    ); // (a gun with a magazine, or the down pistol; the bow's and the flamethrower's have none)
+  }
+  let w;
+  if (isMgj(s)) {
+    w = mgjDownGun()
+      ? "handgun"
+      : held && held === myPick() && mgjMag(held)
+        ? held
+        : "";
+  } else {
+    const k = keysOf(playDuck());
+    w =
+      held && magSize(held) && hasKey(playDuck(), held)
+        ? held
+        : k.includes("handgun")
+          ? "handgun"
+          : k.find((id) => id && magSize(id)) || "";
+  }
+  if (!w) return false;
+  const mm = magOf(s, R.me, now, w);
+  return mm.n > 0 && !(mm.r > now);
+}
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
@@ -7842,6 +7911,7 @@ register("game", {
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));
+      slide.slider.classList.add("on-duck"); // (on a phone it's on my duck, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 15:18Z)
       bar = {
         row: row.row,
         slider: slide.slider,
@@ -7849,6 +7919,8 @@ register("game", {
         hide: slide.hide,
         wheel: () => false,
         current: slide.current,
+        nudge: slide.nudge,
+        tapMid: slide.tapMid,
         refresh() {
           row.refresh();
           slide.refresh();
@@ -7874,7 +7946,9 @@ register("game", {
           mgjBackIfGone(R.state);
           return held;
         },
+        tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
+      bar.slider.classList.add("on-duck"); // (on a phone it's on my duck in every mode, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 20:58Z, "every")
     }
     pad = mountPad({
       hold: (on) => {
@@ -7894,6 +7968,8 @@ register("game", {
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
       jump: () => jump(),
+      reloadOn: canReloadNow,
+      reload: () => reload(),
     });
     meter = mountMeter();
     const stack = document.createElement("div");
@@ -7912,6 +7988,20 @@ register("game", {
         target = t;
       },
       hold: (x, y) => !!bar && bar.wheel(x, y),
+      aim: (dx, dy) => {
+        keyAim = dx == null ? null : [dx, dy];
+      }, // (a second finger dragging on the board aims, like the aim stick's: the owner's, Nov 18 15:18Z)
+      swipe:
+        bar && bar.nudge
+          ? {
+              on: () => getComputedStyle(bar.slider).display !== "none", // (a phone: the slider is there, on my duck; never with the computer's row)
+              nudge: (d) => {
+                bar.nudge(d);
+                if (R && isL4dd(R.state)) l4PeekAgain(); // (Dead Ducks Arcade's own box under my duck shows, even at the end of the row; the other modes' is the hotbar's)
+              },
+              tap: bar.tapMid,
+            }
+          : null, // (every mode's hotbar: the owner's, Nov 18 20:58Z)
     });
     S.addEventListener(
       "pointerdown",

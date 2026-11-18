@@ -60,9 +60,17 @@ import {
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
-import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
+import {
+  GRENADE_MS,
+  daggerZ,
+  walkOf,
+  FASTER,
+  shareOf,
+  say,
+  shove,
+} from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { MERCHANTS, merchantById } from "./merchants.js";
+import { MERCHANTS, merchantById, merchantLook } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
@@ -71,6 +79,7 @@ import { SLOW as SWIM } from "./hangout/water.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   woundCode,
+  knockable,
   pwHit,
   pwAdd,
   explodedLook,
@@ -208,7 +217,7 @@ const SKIP = 0.25,
   EARLY = 4000; // ms into a round they come half as fast
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
-   all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
+   all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
    cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (a crit: critOf, headOf) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
@@ -228,7 +237,7 @@ export const ARMS = {
   hammer: {
     kind: "melee",
     cool: ARM_COOL.hammer,
-    dmg: 2,
+    dmg: [3, 5], // (3 to 5: the owner's, Nov 18 15:28Z)
     swing: ARM_SWING.hammer,
     at: 66,
     r: 50,
@@ -247,7 +256,7 @@ export const ARMS = {
   sword: {
     kind: "melee",
     cool: ARM_COOL.sword,
-    dmg: 1,
+    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 15:25Z)
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
@@ -255,7 +264,7 @@ export const ARMS = {
   pan: {
     kind: "melee",
     cool: ARM_COOL.pan,
-    dmg: 1,
+    dmg: 5, // (5: the owner's, Nov 18 15:28Z, "The pan has 5 damage"; 2 to 6 at 15:25Z)
     crit: 0.5,
     miss: 0.5,
     swing: ARM_SWING.pan,
@@ -265,7 +274,7 @@ export const ARMS = {
   handgun: {
     kind: "ranged",
     cool: ARM_COOL.handgun,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
     mag: 8,
     all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
@@ -274,10 +283,9 @@ export const ARMS = {
   bow: {
     kind: "ranged",
     cool: ARM_COOL.bow,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.bow,
-    all: 225, // (150, and 50% more with no magazine: the owner's, Nov 16)
-  },
+  }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
@@ -288,7 +296,7 @@ export const ARMS = {
   shotgun: {
     kind: "ranged",
     cool: ARM_COOL.shotgun,
-    dmg: 1,
+    dmg: [1, 3], // (each pellet: the owner's, Nov 18 15:23Z "It should be 1-3 damage per pellet")
     speed: ARM_SPEED.shotgun,
     all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
     pellets: 5,
@@ -306,14 +314,15 @@ export const ARMS = {
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
      action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
-     (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its
+     (a thin yellow line out to what it hit), never reloads and takes 4 to 5 (it killed what it hit until the owner's
+     Nov 18 16:43Z numbers); the revolver has five in its
      cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
      kill every zombie in their blast. Where the owner gave no number (the speeds, the reloads, the sniper's headshot)
      they are guesses: k is how the bullet looks */
   sniper: {
     kind: "ranged",
     cool: 750,
-    dmg: [2, 3],
+    dmg: [4, 5], // (4 to 5, and 1 less to each zombie it goes through after the first: the owner's, Nov 18 16:43Z)
     speed: 1900,
     mag: 5,
     all: 24 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -325,22 +334,22 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 80,
-    dmg: 1,
+    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 16:43Z)
     speed: 1100,
     mag: 20,
-    all: 160 + 5 * 20, // (5 more magazines: the owner's, Nov 16)
+    all: 20 * 17, // (13 magazines, 160 and 5 more: the owner's, Nov 16; then 25% more, rounded up: the owner's, Nov 18 16:43Z)
     reload: 1400,
     k: "smg",
   },
   /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
-     the Tommy a round every 120 ms from a 50-round drum; the UMP-45 a round every 0.30 s, 2 damage a bullet, 20 rounds,
-     a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+     the Tommy a round every 120 ms from a 50-round drum; the UMP-45 seven rounds a second, 2 damage a bullet, 25 rounds
+     (the owner's, Nov 18 16:43Z), a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
   tommy: {
     kind: "ranged",
     auto: true,
     slow: true,
     cool: 120,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 16:43Z)
     speed: 1100,
     mag: 50,
     all: 50 * 6, // (more ammo than the SMG's 260, and the SMG's reload: "the same stats as the SMG but slower fire rate but larger ammo capacity", the owner's, Nov 17 11:07Z)
@@ -351,11 +360,11 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     slow: true,
-    cool: 300,
+    cool: 143, // (7 a second: the owner's, Nov 18 16:43Z)
     dmg: 2,
     speed: 1100,
-    mag: 20,
-    all: 20 * 6,
+    mag: 25, // (the owner's, Nov 18 16:43Z)
+    all: 25 * 6,
     reload: 1400, // ("same reload", the owner's, Nov 17 11:21Z: the SMG's and the Tommy gun's)
     k: "ump",
   },
@@ -374,14 +383,14 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 67, // (15 a second)
-    dmg: 99,
+    dmg: [4, 5], // (4 to 5, no longer a kill: the owner's, Nov 18 16:43Z)
     all: 300, // (300 rounds: the owner's, Nov 16, 16:06Z)
     far: 3000,
   },
   revolver: {
     kind: "ranged",
-    cool: 380,
-    dmg: 2,
+    cool: 333, // (3 a second: the owner's, Nov 18 16:43Z)
+    dmg: [2, 4], // (2 to 4: the owner's, Nov 18 16:43Z)
     speed: 1150,
     mag: 5,
     all: 75 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -393,7 +402,7 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 100,
-    dmg: 1,
+    dmg: 2, // (the owner's, Nov 18 16:43Z)
     speed: 1150,
     mag: 100, // (the owner's, Nov 17: 100 bullets and twice the reload time)
     all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
@@ -469,9 +478,11 @@ export const ARMS = {
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 const dmgOf = (A) =>
   Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
-/* fire (the owner's): a zombie burns 6 s and takes 1 every 3 s (the first as it's lit); a duck takes 1 as it's lit and
-   burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
-export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000, SPREAD: 500 }; // (SPREAD: ms a zombie burns before its fire goes on to the ones it touches, the owner's, Nov 18 13:46Z)
+/* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
+   already burning starts its 8 s again (the owner's, Nov 18 16:43Z, "1 damage for every 2 seconds for 8 seconds per
+   enemy"; it was 6 s and 3 s); a duck takes 1 as it's lit and burns 3 s, and anyone on fire who touches a duck lights
+   it (not again for a second after its fire goes out) */
+export const BURN = { Z: 8000, EVERY: 2000, P: 3000, AGAIN: 1000, SPREAD: 500 }; // (SPREAD: ms a zombie burns before its fire goes on to the ones it touches, the owner's, Nov 18 13:46Z)
 /* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
    on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
    enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
@@ -983,6 +994,12 @@ const DP_OPENINGS = [
 export const OPENINGS = [...CABIN_OPENINGS];
 /* is the room on Downpour? (layout.js' useMode has turned to it: the rules call it for every action) */
 export const dp = () => layoutVariant() === "l4gs";
+/* Downpour's flood slows anyone on foot just as it slows a player's duck (l4dd.js speed): wading the shallow road 30%
+   slower, swimming the deep end as slowly as in the pool. The merchants and Justin out there too, so nobody walks
+   faster than a player can (the owner's, Nov 18 15:35Z: "all of their sprinting and their movement speed is the same
+   as the players") */
+export const wetSlow = (x, y) =>
+  !dp() ? 1 : (GS.inShallow(x, y) ? GS.WADE : 1) * (GS.inDeep(x, y) ? SWIM : 1);
 /* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
    Called wherever they're read; it does something only when layout.js has turned to the other map */
 let mapRev = -1;
@@ -1298,6 +1315,9 @@ export const zombiesOf = zombies;
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
+/* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
+export const endless = (w) =>
+  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
 export const fullAmmo = (w) => {
   const a = ARMS[w];
   if (!a || a.all === undefined) return null;
@@ -1812,7 +1832,7 @@ function setUp(s, now) {
   }; // (round 0: no zombies until enough ducks are ready)
   giveBonus(s, s.hang.l4.sr);
   merchantSetUp(s);
-  merchantCome(s, now, true); // (round zero: always one)
+  merchantCome(s, now); // (round zero's rest: half the time, as every rest)
 }
 /* the starting round (the owner's, Nov 16): every game begins in round 0 and goes on to round `sr` (the "Start on round"
    setting: 1, 5, 9, 13 or 21) once everyone is ready; a starting round past 1 gives every duck bonus points, in round 0
@@ -2407,14 +2427,14 @@ function give(s, id, w, hand0) {
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
-  COME: 0.25, // (a round's chance)
+  COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
   PRICES: { plain: 300, green: 500, blue: 750, purple: 1500, gold: 3000 },
   MORE: 0.5, // (the second thing's chance …
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
   AGAIN: 0.25, // (a buy: the chance he has another)
-  HP: 6, // (the owner's, Nov 18 14:22Z: "a merchent has 6 hp")
+  HP: [3, 6], // (each visit's merchant rolls his HP: the owner's, Nov 18 15:35Z "give the merchants 3 to 6 HP, where it could vary")
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
   //  sprint to get away if he has to (limited amount of sprint)")
   SPRINT: 1.75, // (his sprint: a duck's (game.js SPEED.sprint), as long as a duck's (L4.SPRINT), and as long to fill …
@@ -2441,6 +2461,7 @@ export const stockPrice = (s, p) => (saleOn(s) ? fives(p / 2, 1) : p);
 /* a new game: every merchant alive again, his bags new */
 function merchantSetUp(s) {
   s.hang.l4m = null;
+  s.hang.l4mc = []; // (the bodies of the ones killed: a new game, none)
   setMh(s, { left: [], dead: [], bags: { b: {} }, route: null });
 }
 /* a line of one kind ("greet", "hurt", "leave"), from his bag of them */
@@ -2554,9 +2575,9 @@ function wayOut(x, y) {
     },
   ];
 }
-/* a merchant comes (sure: round zero) */
-function merchantCome(s, now, sure) {
-  if (!sure && Math.random() >= MERCH.COME) return;
+/* a merchant comes, in a rest (round zero's, or between two rounds), half the time */
+function merchantCome(s, now) {
+  if (Math.random() >= MERCH.COME) return;
   const m0 = merchantOf(s);
   if (m0 && m0.st !== "dead") return; // (one at a time)
   const h = mh(s),
@@ -2570,7 +2591,10 @@ function merchantCome(s, now, sure) {
   }
   const id = left[0],
     [from, route] = wayIn();
+  const hp = rint(MERCH.HP[0], MERCH.HP[1]),
+    vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
+    vn,
     left: left.slice(1),
     lines: {},
     hurt: 0,
@@ -2583,19 +2607,21 @@ function merchantCome(s, now, sure) {
     tk: now,
   });
   s.hang.l4m = {
-    v: ((m0 && m0.v) || 0) + 1,
+    v: vn,
     id,
     roll: rint(0, 999),
     st: "in",
     x: Math.round(from[0]),
     y: Math.round(from[1]),
     f: 1,
-    hp: MERCH.HP,
+    hp,
+    max: hp,
+    w: "",
+    sp: 1,
     stock: merchantStock(s),
     ups: upOffers(s),
     say: null,
   };
-  addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived": l4dd.js l4Got)
 }
 /* the zombies are coming: a leaving line, and he runs */
 function merchantGo(s, now) {
@@ -2610,19 +2636,58 @@ function merchantRun(s, now) {
   s.hang.l4m = { ...merchantOf(s), st: "out", stock: [] };
 }
 /* he's hurt: by player `by` (a line, once a visit, then he runs) or by a zombie (null); n HP. True when it killed him */
-function merchantHurt(s, by, n, now) {
+function merchantHurt(s, by, n, now, w = "", how = "") {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump") return false;
-  const hp = Math.max(0, m.hp - n);
+  const hp = Math.max(0, m.hp - n),
+    had = m.w || "";
+  /* his wounds, a duck's (wounds.js codes, drawn as a player's: the owner's, Nov 18 15:35Z "any merchant that gets damage
+     gets gore effects ... all the gore effects that everyone else gets"): a crit that kills him blows his head off
+     ("there's a chance you might get a crit on them, so their head explodes just like a zombie will"), a blast tears
+     him apart (as it does a duck), any other hit leaves its weapon's wound */
+  const wd =
+    !hp && how === "crit"
+      ? had.includes("x")
+        ? had
+        : had + "x0"
+      : !hp && how === "blast"
+        ? had + DEATH.filter((c) => !had.includes(c)).join("")
+        : had +
+          woundCode(
+            had,
+            w,
+            knockable(merchantLook(merchantById(m.id), m.roll)),
+          );
   if (!hp) {
-    s.hang.l4m = { ...m, st: "dead", hp: 0, stock: [], say: null, c: 1 };
+    s.hang.l4m = {
+      ...m,
+      st: "dead",
+      hp: 0,
+      w: wd,
+      stock: [],
+      say: null,
+      c: 1,
+    };
     setMh(s, { dead: [...(mh(s).dead || []), m.id], route: null });
+    s.hang.l4mc = [
+      ...(s.hang.l4mc || []),
+      {
+        v: m.v,
+        id: m.id,
+        roll: m.roll,
+        x: m.x,
+        y: m.y,
+        f: m.f,
+        w: wd,
+        t: now,
+      },
+    ]; // (his body, for good: "their corpse stays there permanently", even after the next merchant comes)
     addFx(s, { kind: "l4mdie", by, who: [], t: now, x: m.x, y: m.y });
     return true;
   }
   const hits = (m.hits || 0) + (by ? 1 : 0);
   if (by) setMh(s, { hurtAt: now });
-  s.hang.l4m = { ...m, hp, hits };
+  s.hang.l4m = { ...m, hp, hits, w: wd };
   if (by && !mh(s).hurt) {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
@@ -2653,7 +2718,12 @@ function merchantFight(s, m0, now, dt) {
     const aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
-    stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * dt, []);
+    stepZombie(
+      m,
+      aim,
+      WALK * walkOf(s) * MERCH.WALK * wetSlow(m.x, m.y) * dt,
+      [],
+    );
   } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
     setMh(s, { stab: now });
     addFx(s, {
@@ -2684,7 +2754,17 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from) {
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  merchantHurt(s, by, Math.random() < (PCRIT[w] || 0) ? m.hp : 1, now);
+  const crit = Math.random() < (PCRIT[w] || 0);
+  if (crit)
+    addFx(s, {
+      kind: "l4crit",
+      by,
+      who: [],
+      t: now,
+      x: Math.round(m.x),
+      y: Math.round(m.y),
+    }); // (his head bursts as a zombie's does: game.js draws it)
+  merchantHurt(s, by, crit ? m.hp : 1, now, w, crit ? "crit" : "");
   return true;
 }
 /* every heartbeat: he walks his way (in, or out), breaks the boards in it, and greets the ducks that walk up to him */
@@ -2716,14 +2796,15 @@ function merchantTick(s, now) {
   if (m0.st === "fight") return merchantFight(s, m0, now, dt);
   if (!leg || now - (h.t || now) > MERCH.LATE) {
     /* his way done (or taking too long): at his spot, or gone */
-    if (m0.st === "in")
+    if (m0.st === "in") {
       s.hang.l4m = {
         ...m0,
         st: "here",
         x: Math.round(BUTLER.x),
         y: Math.round(BUTLER.y),
       };
-    else s.hang.l4m = null;
+      addFx(s, { kind: "l4drop", k: "merchant", who: [], t: now }); // ("The Merchant has Arrived", l4dd.js l4Got: as he gets to his spot. When he set off it was often at the game's very start, round zero, before anyone's screen was up to show it, and the owner never saw it)
+    } else s.hang.l4m = null;
     return;
   }
   const m = { x: m0.x, y: m0.y },
@@ -2731,6 +2812,7 @@ function merchantTick(s, now) {
       WALK *
       walkOf(s) *
       (leg.k || MERCH.WALK) *
+      wetSlow(m0.x, m0.y) *
       dt *
       (merchantSprints(s, m0, now, dt) ? MERCH.SPRINT : 1);
   let done = false;
@@ -2756,6 +2838,7 @@ function merchantTick(s, now) {
     x: Math.round(m.x),
     y: Math.round(m.y),
     f: Math.abs(dx) > 0.5 ? Math.sign(dx) : m0.f,
+    sp: Math.round((mh(s).sp ?? 1) * 100) / 100, // (his sprint left, online for his meter: a player's thin blue bar, l4dd.js)
     ...(leg.c ? { c: 1 } : {}),
     ...(leg.jump ? { st: "jump" } : {}),
   };
@@ -3068,7 +3151,7 @@ export const pierceOf = (s, by, w) =>
         : (ARMS[w] && ARMS[w].pierce) || 0;
 /* a hit from duck by's weapon w on a zombie anywhere else (Mad God Justin's waves: the owner's, Nov 17 16:23Z, "guns do
    their normal damage from zombies"), as it lands on one here: null when it misses (missOf), else { dmg, head }. A
-   headshot (headOf) takes all its HP, as do the grenades' blasts, the double barrel and the chain gun; Angelic adds its
+   headshot (headOf) takes all its HP, as do the grenades' blasts and the double barrel; Angelic adds its
    1. The Laser Rifle never misses or crits (laser, below) */
 export const ALL_HP = 999;
 export function zombieTakes(s, by, w) {
@@ -3149,7 +3232,7 @@ function missed(s, by, w, z, now) {
   });
   return true;
 }
-/* the chain gun: it hits at once, along the aim to the first zombie or wall (it kills that zombie); every screen draws
+/* the chain gun: it hits at once, along the aim to the first zombie or wall (4 to 5 to that zombie); every screen draws
    the thin yellow line (the l4line fx) */
 function trace(s, id, px, py, dx, dy, hz, now) {
   const A = ARMS.chaingun,
@@ -3178,17 +3261,18 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
     if (hits.length >= most) break;
   }
-  for (const hit of hits) {
-    strike(
-      s,
-      hit,
-      A.dmg,
-      headshot(s, id, "chaingun", hit, now),
-      id,
-      "chaingun",
-    );
-    die(hit, T);
-  }
+  for (const hit of hits)
+    if (
+      strike(
+        s,
+        hit,
+        dmgOf(A),
+        headshot(s, id, "chaingun", hit, now),
+        id,
+        "chaingun",
+      )
+    )
+      die(hit, T);
   if (hits.length) store(s, zs, true);
   addFx(s, {
     kind: "l4line",
@@ -3520,7 +3604,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     inCone((mm.x - px) / D, (mm.y - py) / D, dx, dy, far / D + 0.4)
   ) {
     s.hang.l4m = { ...mm, burnt: now };
-    merchantHurt(s, id, 1, now); // (the merchant in the flame: 1 HP, once every 3 s while he's in it)
+    merchantHurt(s, id, 1, now, "flamer"); // (the merchant in the flame: 1 HP, once every 3 s while he's in it)
   }
   const gx = px + dx * far,
     gy = py + dy * far;
@@ -3800,7 +3884,7 @@ function meleeHits(s, now) {
       by = py + k.dy * A.at;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
-      if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
+      if (Math.hypot(z.x - bx, z.y - by) > A.r + 22) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
@@ -3808,11 +3892,37 @@ function meleeHits(s, now) {
         : A.dmg; // (the fire axe: 1 to 4)
       if (strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
         die(z, T);
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
       any = true;
+    }
+    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    for (const id of s.seat) {
+      const q = s.pos[id];
+      if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
+        continue;
+      const [qx, qy] = at(q);
+      if (
+        Math.hypot(qx - bx, qy - by) > A.r + 22 ||
+        Math.abs((+q.z || 0) - (+p.z || 0)) > 48
+      )
+        continue;
+      k.hit.push("p" + id);
+      const far = (KNOCK[k.w] || KNOCK.knife) * KNOCK.DUCK,
+        dX = 0.006 * W,
+        dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
+      shove(
+        s,
+        id,
+        k.dx,
+        (k.dy * dX) / dY,
+        far / dX,
+        now,
+        inCabin(qx, qy) ? 1 : 0,
+      ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, (A.r + 22) / 1.4)
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
@@ -3824,6 +3934,24 @@ const die = (z, T) => {
   z.st = 3;
   z.d = T;
 };
+/* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
+   pushes a living zombie back, in world px (a duck is 64), and DUCK: how much of that another duck in the swing is
+   shoved */
+const KNOCK = { knife: 16, sword: 16, pan: 16, axe: 28, hammer: 40, DUCK: 0.5 };
+/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
+   stand (a wall, furniture, a step too high) */
+function knockZ(z, ux, uy, far) {
+  const n = Math.max(1, Math.ceil(far / 8)),
+    h = heightAt(z.x, z.y);
+  for (let i = 0; i < n; i++) {
+    const x = z.x + (ux * far) / n,
+      y = z.y + (uy * far) / n;
+    if (!zOk(x, y, h)) break;
+    z.x = Math.round(x);
+    z.y = Math.round(y);
+  }
+}
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
    or an arrow (a headshot now and then kills it at once), a grenade goes off where it lands or where a wall stops it */
 const OPEN_PAD = 30;
@@ -4047,18 +4175,17 @@ export function l4Shots(s, now) {
       }
       const pierce = pierceOf(s, sh.by, w);
       if (pierce) {
-        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Its
-           first one takes its most damage, and once it crits, it crits every one after it, still only up to its limit
-           (the owner's, Nov 18 12:19Z: "it now will do max damage to the first zombie it passes through AND will do
-           max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it
-           passes through") */
+        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Once
+           it crits, it crits every one after it, still only up to its limit (the owner's, Nov 18 12:19Z). Each one
+           takes its roll less 1 for each zombie it went through before it (the owner's, Nov 18 16:43Z: "it does 1
+           damage less per zombie it passes"; this replaced the first one taking its most): 4 to 5, 3 to 4, 2 to 3 */
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
-              first = !(sh.hit || []).length,
               head = (sniper && !!sh.crit) || headshot(s, sh.by, w, z, now),
-              dmg =
-                sniper && first && Array.isArray(A.dmg) ? A.dmg[1] : dmgOf(A);
+              dmg = sniper
+                ? Math.max(1, dmgOf(A) - (sh.hit || []).length)
+                : dmgOf(A);
             if (sniper && head) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, head, sh.by, w)) die(z, T);
@@ -4198,7 +4325,14 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     Math.hypot(mm.x - bx, (mm.y - by) * 1.25) < ARMS.grenade.r * wide &&
     open(mm.x, mm.y, heightAt(mm.x, mm.y))
   )
-    merchantHurt(s, s.players[sh.by] ? sh.by : null, mm.hp, now);
+    merchantHurt(
+      s,
+      s.players[sh.by] ? sh.by : null,
+      mm.hp,
+      now,
+      "grenade",
+      "blast",
+    );
   /* the one who threw or launched it, in its blast: half its HP, rounded down, and never down by it (the owner's, Nov
      16; the Jaime Bomb's has no sh.k: Jaime's, not mine) */
   const mine = sh.k && s.pos[sh.by],
@@ -4433,7 +4567,7 @@ function l4Tick(s, now) {
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, bodies, false);
-    merchantCome(s, now, false); // (1 time in 4)
+    merchantCome(s, now); // (the rest before the next round: half the time)
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
     });
@@ -4474,7 +4608,7 @@ function newZombie(s, L, T, zs = []) {
       seen = (x, y) =>
         pts.some(
           ([a, b]) =>
-            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 60,
+            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
         ),
       far = (x, y) =>
         Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),
@@ -4844,7 +4978,8 @@ function moveZombies(s, zs, now, T, up) {
           Math.atan2(target.xy[1] - z.y, target.xy[0] - z.x) * 100,
         );
         if (target.m) {
-          if (merchantHurt(s, null, 1, now)) pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
+          if (merchantHurt(s, null, 1, now, "claw"))
+            pls.splice(pls.indexOf(target), 1); // (the merchant: a swipe takes 1, and no line)
         } else if (
           !dodging(s, target.p, now) &&
           hurtDuck(s, p4, target.id, now, "claw")

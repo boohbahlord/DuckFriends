@@ -1594,6 +1594,14 @@ p.bad {
     grid-template-areas: "l c r";
     align-items: center;
   } /* (the middle takes what's left, so a wide row of buttons never runs under Notes) */
+  /* in a game the sides share what's left equally (each at least as wide as what's in it), so Jumps in the middle sits
+     in the middle of the screen, not of what Notes and the hotbar leave (the owner's, Nov 18 15:18Z) */
+  .game .bbar {
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(
+        max-content,
+        1fr
+      );
+  }
   .bbar-c {
     flex-direction: row;
     justify-content: center;
@@ -2321,13 +2329,17 @@ textarea.note-glow {
 .corner-tr > .mbar {
   max-width: min(16rem, 46vw);
 } /* the front page and Rooms: left of Sign in */
+.corner-tr > .mbar.no-room {
+  display: none;
+} /* no room for it beside Full screen and Sign in: hidden, never squeezed under them (musicbar.js mountCornerMusicBar) */
 @media (max-width: 520px) {
-  /* a phone's Rooms: the duck sign stands for the word, so the bar fits between it and Sign in */
+  /* a phone's Rooms: no word, so the music bar fits between Back and Sign in (no sign over Play either: the owner's,
+     Nov 18 15:18Z, "The agree or disagree logo should not be above the play game menu") */
   .rooms .bar-word {
     display: none;
   }
   body[data-screen="rooms"] .corner-tr {
-    left: 10.6rem;
+    left: 7rem;
     justify-content: flex-end;
     pointer-events: none;
   } /* starts past the sign; the bar shrinks */
@@ -7077,11 +7089,13 @@ html.still .spx-disco .disco-spot {
   z-index: 6;
   animation: fadein 0.2s ease-out;
 }
+/* (a gun of Quacky Zombies: as long as its l4ddguns.js w, --gw from game.js; this was missing from Nov 18 10:38Z on, so
+   every gun was held at a knife's size: the owner, Nov 18 15:18Z, "WHY DID THE LMG BECOME SMALL?!") */
 .held i {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(var(--s) * 0.34);
+  width: calc(var(--s) * var(--gw, 0.34));
   display: block;
   transform: translate(-50%, -50%);
   transition: opacity 0.15s;
@@ -7911,12 +7925,21 @@ html.still .spe-bone .bone-slide {
     --step: 2.2rem;
     --slot: 1.85rem;
   }
-  .bbar .tpad.armed .tpad-jump {
+  .bbar .tpad.armed .tpad-col {
     right: 4.5rem;
     bottom: 0.75rem;
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
      the attack stick instead of above it) */
+/* on a phone, in every mode: the hotbar is on my duck, no more in the bottom middle (the owner's, Nov 18 15:18Z, and
+   20:58Z: "every"): a swipe on my duck picks (touch.js), and the box under it shows the switch and fades, as on a
+   computer in Dead Ducks Arcade (l4dd.js peek; hotbar.js peekSwitch in the other modes).
+   The slider stays, out of sight and out of the row */
+.sp-phone.on-duck {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
 .bbar {
   position: relative;
 }
@@ -8019,9 +8042,16 @@ html.still .spe-bone .bone-slide {
     bottom: auto;
     top: 0.2rem;
   }
-  html:not(.keyboard):not(.phone-land) .tpad.armed .tpad-jump {
+  html:not(.keyboard):not(.phone-land) .tpad.armed .tpad-col {
     right: 4.5rem;
     bottom: 0.75rem;
+  }
+  /* with the small R above the jump button the row grows a little */
+  html:not(.keyboard):not(.phone-land) .bbar:has(.tpad.rl:not(.gone)) {
+    padding-top: 6rem;
+  }
+  html:not(.keyboard):not(.phone-land) .tpad.rl {
+    top: 1.9rem;
   }
   html:not(.keyboard) body:has(.tpad:not(.gone)) #toasts {
     left: calc(50vw - 3.15rem);
@@ -8032,9 +8062,6 @@ html.still .spe-bone .bone-slide {
   visibility: hidden;
 }
 .tpad-jump {
-  position: absolute;
-  right: 0.75rem;
-  bottom: 0.75rem;
   width: 2.3rem;
   height: 2.3rem;
   display: grid;
@@ -8049,9 +8076,47 @@ html.still .spe-bone .bone-slide {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+/* the jump button and the small R above it sit in a column that moves as the jump button did */
+.tpad-col {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 2.3rem;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0.4rem;
   transition:
     bottom 0.15s ease-out,
     right 0.15s ease-out;
+}
+.tpad-reload {
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 0.14rem solid var(--line);
+  box-shadow: 0 0.12rem 0 var(--line);
+  background: #fff;
+  color: #1c1c28;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tpad-reload[hidden] {
+  display: none;
+}
+.tpad-reload:active {
+  transform: translateY(0.1rem);
+  box-shadow: 0 0.04rem 0 var(--line);
 }
 .tpad-jump svg {
   width: 1.15rem;
@@ -8061,7 +8126,7 @@ html.still .spe-bone .bone-slide {
   transform: translateY(0.1rem);
   box-shadow: 0 0.05rem 0 var(--line);
 }
-.tpad.armed .tpad-jump {
+.tpad.armed .tpad-col {
   bottom: 4.5rem;
 }
 /* the attack stick: see-through like the walking stick (touch.js), its knob the crosshair */
@@ -14147,6 +14212,9 @@ html.moving .eye-zap {
    gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
    gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
    ak47"). Their bullets (the SMG's with no glow: many fly at once); the chain gun's line, flashing in and out */
+.held[data-w="adrenaline"] i {
+  width: calc(var(--s) * 0.44);
+}
 .held[data-w="chair"] i {
   width: calc(var(--s) * 0.62);
 }
@@ -15085,6 +15153,29 @@ html.still:not(.low) .l4z.dead.nuked {
       2.4rem + clamp(1.7rem, 4.6vw, 2.8rem) + clamp(1rem, 2.6vw, 1.45rem)
     );
   }
+}
+/* a phone on its side, in a game: Jumps in the very middle of the screen, the context button (Sit, Use, ... kept in
+   its place unseen when nothing is near: hangout/world.js buttonHTML) to its left, and as much room left empty on its
+   right, so the button's place never pushes Jumps over (the owner's, Nov 18 15:18Z: "the jump cpunt not being in the
+   middle alignment of the screen") */
+html.phone-land .game .bbar .bbar-c {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.25rem;
+}
+html.phone-land .game .bbar .bbar-c > .gact {
+  grid-column: 1;
+  justify-self: end;
+}
+html.phone-land .game .bbar .bbar-c > .jumps-slot {
+  grid-column: 2;
+}
+/* a phone on its side: the Ready / End turn button in the bottom middle of the board, just above Jumps (the owner's,
+   Nov 18 15:18Z: "the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal") */
+html.phone-land .l4-end {
+  top: auto;
+  bottom: 4.2rem; /* (the board runs under the bottom row: the button sits just over Jumps, never on it) */
 }
 .l4-end .btn {
   font-size: 1rem;
@@ -16095,6 +16186,35 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 }
 .l4-merchant.dead .hang-npc-name {
   opacity: 0.6;
+}
+/* hurt, he is anyone else (the owner's, Nov 18 15:35Z; l4dd.js drawMerchant): his HP as a player's red blocks behind
+   the letters of his tag once he's lost one, and the thin white (Phil's knife) and blue (his sprint) bars under it as
+   mine; the soldier, whose name is hidden, has a tag that is his HP bar only (as the other ducks' here), nothing until
+   he's hurt */
+.l4-merchant.php:not(.dead) .gduck-hp {
+  display: block;
+}
+.l4-merchant.php:not(.dead) .hang-npc-name {
+  opacity: 0.92;
+  text-shadow:
+    0 0 0.1rem #000,
+    0 0 0.1rem #000,
+    0 0.05rem 0.05rem #000;
+}
+.l4-merchant .hang-npc-name.bar-only {
+  width: 2.6rem;
+  height: 0.42rem;
+  padding: 0;
+}
+.l4-merchant:not(.php) .hang-npc-name.bar-only,
+.l4-merchant.dead .hang-npc-name.bar-only {
+  background: none;
+  outline: none;
+  box-shadow: none;
+}
+.l4-merchant.dead .l4-sprint,
+.l4-merchant.dead .l4-cool {
+  display: none;
 }
 .l4-up.l4-sold {
   display: block;

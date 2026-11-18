@@ -373,7 +373,7 @@ export const DMG = {
   handgun: 1, // (the pistol everyone has)
   pellet: 1,
   arrow: 1,
-  ak: 2, // (the guns picked up hit him as they hit a zombie; the sniper 2 or 3, shotDmg)
+  ak: 2, // (a bullet from a picked-up gun hits him as it hits a zombie: shotDmg reads l4ddrules.js ARMS first)
   lmg: 1,
   tommy: 1,
   ump: 2, // (the UMP-45: 2 a bullet)
@@ -1645,8 +1645,15 @@ function shotThrown(s, sh, x0, y0, dx, dy, now) {
   return false;
 }
 
-const shotDmg = (k) =>
-  k === "sniper" ? (Math.random() < 0.5 ? 2 : 3) : DMG[k] || 1;
+/* a bullet's damage on him: a picked-up gun's as it hits a zombie (l4ddrules.js ARMS, by the bullet's look k), so the
+   owner's numbers there follow here (Nov 18 16:43Z); anything else DMG's */
+const shotDmg = (k) => {
+  const w = Object.keys(ARMS).find((g) => ARMS[g].k === k),
+    d = w && ARMS[w].dmg;
+  if (Array.isArray(d))
+    return d[0] + Math.floor(Math.random() * (d[1] - d[0] + 1));
+  return typeof d === "number" ? d : DMG[k] || 1;
+};
 /* the grenade launcher's grenade, between (x0, y0) and at this beat: true when it got to him (it goes off there) */
 export function mgjLgren(s, sh, x0, y0, at, now) {
   if (!s.justin || s.phase !== "boss" || sh.by === JUSTIN_ID) return false;

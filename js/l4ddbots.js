@@ -35,6 +35,8 @@ import {
   isWild,
   jaimeBody,
   JBODY,
+  endless,
+  wetSlow,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
@@ -189,7 +191,7 @@ export function l4Bot(s, id, now, out) {
   const loaded = [sl[1], sl[2]].filter((w) =>
       w === "laser"
         ? laserOk(s, id, now)
-        : w && m.am[w] && m.am[w][0] > 0 && m.rw !== w,
+        : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w),
     ),
     hp = ((h.l4p || {})[id] || {}).hp,
     w =
@@ -225,7 +227,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
   if (mine) {
     if (now < b.t + BOX.spin) return true; // (it waits by the fire while it spins)
     if (kindOf(b.w) === "ranged") {
-      const left = (w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
+      const left = (w) =>
+        endless(w) ? Infinity : m.am[w] ? m.am[w][0] + m.am[w][1] : 0;
       hand = left(m.sl[1]) <= left(m.sl[2]) ? m.sl[1] : m.sl[2];
     } // (it gives up the emptier one)
     to = BOX;
@@ -312,6 +315,7 @@ function justinBot(s, id, now, out) {
     walkPx =
       (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
       walkOf(s) *
+      wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
@@ -363,7 +367,7 @@ function justinBot(s, id, now, out) {
   const loaded = (w) =>
     w === "laser"
       ? laserOk(s, id, now)
-      : w && m.am[w] && m.am[w][0] > 0 && m.rw !== w;
+      : endless(w) || (w && m.am[w] && m.am[w][0] > 0 && m.rw !== w);
   const crowd = seen
     ? zs.filter((z) => Math.hypot(z.x - seen.z.x, z.y - seen.z.y) < 150).length
     : 0;

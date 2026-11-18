@@ -192,6 +192,7 @@ export function mountHotbar(S, api) {
     cur = null, // the id in the middle
     pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
     slideSig = "",
+    listSig = "",
     lastWant = null;
   const STEP = () =>
     parseFloat(getComputedStyle(slide).getPropertyValue("--step")) *
@@ -223,7 +224,58 @@ export function mountHotbar(S, api) {
     track.classList.remove("sliding");
     lay();
     if (tell && cur !== was && api.select) api.select(list[j][1]);
+    if (cur !== was) peekSwitch(false);
   };
+  /* phones, with the slider on my duck (every mode but Dead Ducks Arcade, which has its own: l4dd.js peek; the owner's,
+     Nov 18 20:58Z, "every"): the switch in a small box under my duck, the slider in little, scrolling from the one I
+     had to the one picked, the one in the middle bigger, then fading out quickly, as on a computer in Dead Ducks Arcade
+     (css .l4-peek). again: shown even with nothing switched (a swipe on my duck at the end of the row). api.tag() → my
+     name tag (only a game that wants the box gives it) */
+  let peekWas = null;
+  function peekSwitch(again) {
+    if (!api.tag || getComputedStyle(slide).display === "none") return;
+    const to = curI(),
+      tag = api.tag();
+    if (to < 0 || !tag) return;
+    if (peekWas === null && !again) {
+      peekWas = cur;
+      return;
+    } // (not when the game starts: only a switch)
+    if (cur === peekWas && !again) return;
+    const from = list.findIndex(([id]) => id === peekWas);
+    peekWas = cur;
+    let el = tag.querySelector(".l4-peek");
+    if (!el) {
+      el = document.createElement("span");
+      el.className = "l4-peek";
+      el.setAttribute("aria-hidden", "true");
+      el.innerHTML =
+        '<span class="sp-slide"><span class="sp-track"></span></span>';
+      tag.append(el);
+    }
+    const tr = el.querySelector(".sp-track");
+    tr.innerHTML = list
+      .map(([id]) => {
+        const sp = look(id);
+        return `<span class="sp-slot${sp.cls ? " " + sp.cls : ""}"><i>${sp.icon}</i></span>`;
+      })
+      .join("");
+    const at = (k) =>
+      tr.querySelectorAll(".sp-slot").forEach((b, j) => {
+        const a = Math.abs(j - k);
+        b.style.transform = `translateX(calc(var(--step) * ${j - k})) scale(${(1 + 0.32 * Math.max(0, 1 - a)).toFixed(3)})`;
+        b.style.opacity = a > 1.6 ? 0 : 1;
+        b.classList.toggle("mid", a < 0.5);
+      });
+    tr.classList.add("sliding"); // (at the old slot at once, then it scrolls)
+    at(from < 0 ? to : from);
+    void tr.offsetWidth;
+    tr.classList.remove("sliding");
+    at(to);
+    el.classList.remove("go");
+    void el.offsetWidth;
+    el.classList.add("go");
+  }
   function drawSlide(k, on, cd) {
     list = k.map((id, i) => [id, i]).filter(([id]) => id && look(id));
     slide.classList.toggle("none", !list.length);
@@ -237,18 +289,39 @@ export function mountHotbar(S, api) {
     ]);
     if (sig !== slideSig) {
       slideSig = sig;
-      track.innerHTML = list
-        .map(([id, i]) => {
+      const html = list.map(([id, i]) => {
           const sp = look(id);
           return `<button type="button" class="sp-slot${sp.cls ? " " + sp.cls : ""}${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
-        })
-        .join("");
+        }),
+        ids = JSON.stringify(list);
+      /* the same slots with other numbers (a shot fired, a reload going, a cooldown): each slot that changed is
+         patched where it stands, never rebuilt, so the row sits still while I fire or reload (the owner's, Nov 18) */
+      if (ids === listSig && track.children.length === html.length)
+        html.forEach((h, j) => {
+          const b = track.children[j];
+          if (b._h === h) return;
+          const n = document.createElement("template");
+          n.innerHTML = h;
+          const t = n.content.firstChild,
+            mid = b.classList.contains("mid");
+          b.className = t.className + (mid ? " mid" : "");
+          b.innerHTML = t.innerHTML;
+          b._h = h;
+        });
+      else {
+        listSig = ids;
+        track.innerHTML = html.join("");
+        [...track.children].forEach((b, j) => (b._h = html[j]));
+      }
     }
     /* the one in the middle stays (gone from my keys, like a medkit used: the nearest one) */
     const want = api.current && api.current();
     if (want !== lastWant) {
       lastWant = want;
-      if (want && list.some(([id]) => id === want)) cur = want;
+      if (want && list.some(([id]) => id === want) && cur !== want) {
+        cur = want;
+        peekSwitch(false);
+      }
     } // (the game put another in hand: Mad God Justin's keys 1 to 3)
     if (curI() < 0 && list.length)
       pick(Math.min(Math.round(pos), list.length - 1), !!cur);
@@ -330,6 +403,23 @@ export function mountHotbar(S, api) {
     slider: slide,
     row: bar,
     current: () => cur,
+    /* phones: the slider is on my duck, out of sight (the owner's, Nov 18 15:18Z: "The hotbar should
+       be on the player's [duck] for now on in mobile and swiping on their duck shows the selection AND it fades away
+       like it does on PC"): a swipe on my duck picks the one beside the picked one (d: 1 the next, -1 the one before),
+       as sliding the slider one slot would, and the switch shows under my duck (peekSwitch, or l4dd.js peek); a tap on my
+       duck uses the picked one, as a tap on the slider's middle one did */
+    nudge(d) {
+      if (!list.length) return;
+      const was = cur;
+      pick(Math.max(0, curI()) + d);
+      if (cur === was) peekSwitch(true); // (the end of the row: the box shows all the same)
+    },
+    tapMid() {
+      const j = curI();
+      if (j < 0) return;
+      (api.tap || api.use)(list[j][1], false);
+      show(list[j][1]);
+    },
     refresh() {
       draw();
       settle();

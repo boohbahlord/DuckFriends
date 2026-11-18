@@ -534,7 +534,7 @@ export const MUZZLE = {
     smoke: 6,
     puff: 5,
     drift: 0.7,
-    shake: 0.28,
+    shake: 0.18, // (as much as the AK-47 held down, never more: it fires every 100 ms to the AK-47's 110; the owner's, Nov 18 15:18Z)
     kick: 0.5,
   },
   sniper: {

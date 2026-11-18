@@ -11,7 +11,7 @@ import {
   watchRooms,
   whyNot,
 } from "./online.js";
-import { gameArtSVG, symbolSVG } from "./art.js";
+import { gameArtSVG } from "./art.js";
 import { MAX_DEFAULT } from "./rules.js";
 import { mountCornerMusicBar } from "./musicbar.js";
 import { holdLoading } from "./loading.js";
@@ -36,7 +36,7 @@ register("rooms", {
   render() {
     const s = el(`<section class="screen rooms">
       <header class="bar"><button type="button" class="btn ghost" data-a="back">‹ Back</button>
-        <h1 class="bar-title">${symbolSVG(30)} <span class="bar-word">Rooms</span></h1></header>
+        <h1 class="bar-title"><span class="bar-word">Rooms</span></h1></header>
       <div class="rooms-grid">
         <form class="panel create" autocomplete="off">
           <div class="art-wrap">${gameArtSVG({ width: 480, duck: profile.duck })}</div>

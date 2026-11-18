@@ -6184,3 +6184,91 @@ Noah: the beak hides while one of those six face items is worn (the beak pick st
 > Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND the gas never runs out from the merchant
 
 Split (Adam): Solomon = merchant fixes, then speed ideas 1 (one shared picture per zombie look, outlines and gore working) + 2 (outline/HP bar/shadow only on change), then 7 (path-finding in a worker). Noah = 3 (skip drawing off screen, 1-2 duck lengths margin) + 4 (zombie positions sent less often only when off that player's screen). Jackal = 6 (pause rain and lightning when hidden or under a full-screen menu). Miles Jr. = 5 (sound cap: proposal to the owner first).
+
+## Owner, Nov 18 15:18Z (3 screenshots: Duck Cabin round 0 on a phone sideways, the Ready button and the Jumps box marked; the Create a room page on a phone, the top bar's Agree or Disagree logo and music bar circled; Downpour's church on a phone, zombies inside shown only as outlines circled)
+"Make sure melee weapons have the same range in any direction
+
+Make the bow have unlimited ammo and it does 2-3 damage now (with quieter audio )
+
+The third image shows how the zombies cannot be seen while inside the church om downpour but their outline can, even tho nothing is hiding them, this should not be the case for similiar times
+
+Make the ammo switch thingy on the bottom of screen for mobile not flicker in and out like it does when firing or reloading, since it should sit still from those things, not moving with it
+
+WHY DID THE LMG BECOME SMALL?! MAKE SURE NO WEAPON IS NEVER MADE SMALL AGAIN! ASK ME THE SIZE IF U FUCKING HAVE TO! THE SIZE OF THE LMG SHOULD NOT HAVE CHANGED!
+Make the lmg shake the screen as much as the AK-47, not more than
+
+There is a small "r" button on mobile above the jump button that allows players to reload now and clicking it does a reload animation
+
+A player can click the screen and move around their right finger to aim
+
+The screenshot shows the jump cpunt not being in the middle alignment of the screen AND the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal on mobile
+
+The agree or disagree logo should not be above the play game menu AND the music display button should be hidden when there isnt room for it on mobile 
+
+The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile players in vertical OR horizontal becuz it feels cramped.
+The hotbar should be on the player's fuck for now on in mobile and swiping on their duck shows the selection AND it fades away like it does on PC (it is still in the bottom middle of the screen)
+
+The pistol should do 2-3 damage
+
+Is there any weapon that still does 1 damage besides the laser gun?"
+
+Owner, Nov 18 15:19Z: "The pistol should be 1-3 damage actually and so does the bow"
+
+Decided: the LMG (every gun) was small because the Nov 18 10:38Z change moved each gun's length to l4ddguns.js w (--gw) but no css rule ever read --gw, so every gun in the hand fell back to a knife's size (the adrenaline shot lost its own size too). Adam restored them all to their sizes from before (the LMG 1.2 again). LMG shake 0.18 a shot (it fires every 100 ms, the AK-47 every 110 ms at 0.2), so held down it shakes as much as the AK-47. Pistol and bow: 1 to 3 damage (15:19Z replaces 2-3). "player's fuck" read as "player's duck".
+Split (Adam): Solomon = melee same range every direction, bow unlimited ammo, pistol + bow 1-3 damage, Dead Ducks Arcade camera a little zoomed out on phones (both ways). Miles Jr. = quieter bow. Noah = church zombies shown as outlines with nothing hiding them, hotbar over the player's duck on phones (swipe on the duck to pick, fades like PC), the Agree or Disagree logo off the Play menu's top bar + music bar hidden when there's no room on phones. Jackal = phone ammo/switch box not flickering when firing or reloading, small "R" reload button above the jump button, aim by dragging a finger on the screen, Jumps box centered, Ready button bottom middle on phones held sideways.
+
+Owner, Nov 18 15:23Z (after Adam's list of 1-damage weapons, the shotgun "1 per pellet, 5 pellets a shot"): "It should be 1-3 damage per pellet"
+Decided: the shotgun does 1 to 3 per pellet (Solomon, with the pistol and the bow).
+
+Owner, Nov 18 15:25Z: "The frying pan should do 2-6 damage
+The sword does 1-2 damage
+
+Every melee has slight knockback EVEN to players AND especially to zombies EVEN WHILE THEY ARE ALIVE
+
+Fireaxe has more knockback and the hammer has most knockback
+
+What are the other melee stats?"
+Decided: Solomon, in #476 (Dead Ducks Arcade): pan 2-6 (miss and crit kept), sword 1-2, every melee hit pushes living zombies back, and a slight no-damage shove on players; axe more, hammer most. Adam answered the melee stats.
+
+Owner, Nov 18 15:28Z: "The hammer is 3-5 damage
+
+The pan has 5 damage"
+Decided (Adam): Dead Ducks Arcade's hammer 3 to 5, the frying pan 5 every hit (replaces 15:25Z's 2-6; its 50% miss and 50% crit kept).
+
+Owner, Nov 18 15:32Z: "How ab this, the pan is 50% miss and 50% crit, so max damage WHEN it does hit 
+
+Pan shouldnt be in mad god justin"
+Decided: the pan stays as built at 15:28Z (50% miss, half its hits a headshot, otherwise 5, its most). Solomon takes the pan out of Mad God Justin.
+
+## Owner, Nov 18 15:35Z (voice to text; the owner: "I don't know what amount of this information is wrong")
+"The merchants should have a health bar like anyone else. It should show their sprint meter when they're moving like anyone else. And if it's the Phil, the murderous, when he uses his knife, it has a cooldown meter just like anyone else. And when Phil or any of the merchants, just any merchant, forget Phil, any merchant that gets damage gets gore effects. That's normal. They get all the gore effects that everyone else gets. And on top of that, they have a health bar that shows up when you hit them. And it looks like Justin's or any other player's health bar. But the health bar that shows up fades away eventually or whatever when they're not getting hit enough times, like a zombies. Oh, I don't know if zombies do that, so maybe it doesn't go away. Okay, forget that. When a merchant gets hit, their health bar shows. When Justin gets hit, his health bar shows in the zombie game. And even outside of the zombie game, really. And when a merchant dies, there's a chance you might get a crit on them, so their head explodes just like a zombie will. You know, if the merchant falls over and dies, they have a puddle of blood leaving their corpse, and their corpse stays there permanently. It doesn't go away. The sprint on the ducks, like all of the ducks that are NPCs, like Justin or the merchants, all of their sprinting and their movement speed is the same as the players for zombies. So if the zombie can only go so fast, not zombie, sorry. If a player can only go so fast and they can only sprint so fast within the zombie mode, then it is the same for the merchant. Okay? Because if not, it's kind of ridiculous. We can give the merchants 4 HP instead of 6. I like that. And, you know, or actually give the merchants 3 to 6 HP, where it could vary, right? So some of them might have more or less HP. Right? So yeah. It should say when the merchant arrives. I don't know if I've seen that yet or if the merchant hasn't spawned in for me yet. But let's make it to where the merchant comes in about... they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed. You know, I'm using voice to text, so I don't know what amount of this information is wrong or whatnot."
+Read as: merchants show an HP bar (players' look) once hit, staying up (not fading); sprint meter while moving; Phil's knife cooldown meter; all the gore players/zombies get, crit head explosion, a blood pool, the corpse stays for good. Justin's HP bar shows once hit, in Dead Ducks Arcade and other modes. Every NPC duck (Justin, merchants) walks and sprints at the players' Dead Ducks Arcade speeds. Merchants 3 to 6 HP (rolled each). "The Merchant has Arrived" shows; merchants come in the rest phase, 50% chance (replaces 25% each round, always round 0).
+Split (Adam): Solomon = HP 3-6, NPC speeds = players', rest phase 50%, arrival announcement check, crit head flag/corpse stays (rules). Noah = HP bar on hit (merchants + Justin, every mode), sprint meter, Phil cooldown meter, gore, head explosion, blood pool, corpse look.
+
+## Owner, Nov 18 16:43Z
+"* the revolver is 3 shots per second for 2-4 damage each shot
+* the mp5 does 1-2 damage AND has 25% more clips by default (round up)
+* tommy gun is 1-3 damage
+* UMP-45 is 2 damage for 7 shots per second and has 25 bullets per magazine 
+* the M249 should be 2 damage
+* barret 50 cal is 4-5 damage and it does 1 damage less per zombie it passes (how many bullets per mag and how many mags)
+* chain gun does 4-5 damage
+* the flame thrower does 1 damage for every 2 seconds for 8 seconds per enemy ONCE they are set on fire AND they can set on fire again as they could of before being set on fire
+
+
+all movement in every game mode, the sprint, the jump, the cooldown meter, the health meter, and everything movement related or UI related from zombies is in every game mode now (ask me ab it)"
+Decided: guns to Solomon (MP5 13 mags -> 17 = 340; UMP keeps 6 mags = 150; flamer re-light restarts the 8 s, spreading kept). Barrett answered: 5 a magazine, 49 in all. Every-mode movement/UI: questions to the owner first.
+
+Adam's 5 questions (16:46Z) on "zombie movement/UI in every mode": 1 HP instead of knock-down with the block meter, 2 sprint/stamina bar and walk speed, 3 Dead Ducks Arcade's jump and the phone R/jump buttons, 4 the white cooldown bar, 5 which modes.
+Owner, Nov 18 16:50Z: "1. yes, and every player in other game modes has 4 hp by default
+2. no to faster speed BUT they do get a 7 second stamina bar for when they do spring to limit it
+3. yes (r only shows up on mobile for anything IF something CAN be reloaded
+4. yes in the same way
+5. all of them"
+Split (Adam): Solomon = rules: 4 HP in every other mode, hits take HP by each weapon's damage, down at 0 HP; a 7 s sprint stamina in every mode at today's speeds; Dead Ducks Arcade's jump everywhere. Noah = the block HP meter, the thin blue stamina bar and the white cooldown bar in every mode. Jackal = the phone R button in every mode, only while something can be reloaded.
+
+Adam (16:59Z): 1 Mad God Justin's Player HP setting (default 6) to 4 too? 2 on-duck phone hotbar in every mode? 3 test and deploy as Version 89?
+Owner, Nov 18 20:58Z: "1. keep it as 6
+2. every 
+3. what is he testing?"
+Decided: Mad God Justin stays 6. Noah puts the on-duck phone hotbar in every mode with a hotbar. Test plan explained to the owner; waiting for the go.

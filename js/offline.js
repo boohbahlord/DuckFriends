@@ -26,7 +26,14 @@ if (sw && inApp()) {
   });
   const ask = (t) =>
     sw.ready.then((reg) => reg.active && reg.active.postMessage({ t }));
-  ask("kept?");
-  if (navigator.onLine !== false) ask("keep");
+  const start = () => {
+    ask("kept?");
+    if (navigator.onLine !== false) ask("keep");
+  };
+  start();
   addEventListener("online", () => ask("keep"));
+  /* the first start after a new version: the asking above reached the old worker, which doesn't know these messages,
+     so the button sat on "Getting ready" until the app was opened again (the owner's, Nov 18). The new worker takes
+     the page over a moment later; ask it again then */
+  sw.addEventListener("controllerchange", start);
 }

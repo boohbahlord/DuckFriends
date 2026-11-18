@@ -4,6 +4,7 @@
    numbers come from the rules (l4ddrules.js), so they stay right when the rules change. */
 import {
   ARMS,
+  BURN,
   POOL,
   WEAPONS,
   SLOT_ODDS,
@@ -19,6 +20,7 @@ import {
   merchantPrice,
   critOf,
   missOf,
+  endless,
 } from "./l4ddrules.js";
 import { BOMB } from "./jaimebomb.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
@@ -32,14 +34,15 @@ const SAY = {
   sword: "Short, quick swings, faster than the knife.",
   pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
-  revolver: "Five big shots, then a reload.",
-  bow: "Lots of arrows, one at a time.",
+  revolver: "Five big shots, three a second, then a reload.",
+  bow: "Arrows that never run out, one at a time.",
   dagger: "Thrown. It falls to the floor after.",
   shotgun: "A cone of pellets that doesn't fly far. No magazine.",
-  sniper: "Each bullet goes through 3 zombies. A bolt action between shots.",
+  sniper:
+    "Each bullet goes through 3 zombies, 1 less damage to each after the first. A bolt action between shots.",
   smg: "Hold to fire. Fast, light bullets.",
   tommy: "Hold to fire. A 50-round drum.",
-  ump: "Hold to fire. 2 damage a bullet, a slower fire.",
+  ump: "Hold to fire. 2 damage a bullet, 7 a second.",
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
   dbarrel:
@@ -49,7 +52,7 @@ const SAY = {
   burst: "Three rounds a click, as hard as the AK-47.",
   laser:
     "Hold to fire. A red beam once a second through every zombie in its line. Never runs out, but six in a row overheat it for 8 seconds.",
-  chaingun: "Hold to fire. Kills whatever it hits, and never reloads.",
+  chaingun: "Hold to fire. Hits at once, and never reloads.",
   glauncher:
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
   medkit:
@@ -99,11 +102,14 @@ function stats(w) {
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
   if (A.mag) out.push(["Magazine", A.mag]);
   if (A.kind === "ranged" && A.all && w !== "flamer") out.push(["Ammo", A.all]);
+  else if (endless(w)) out.push(["Ammo", "Unlimited"]);
   if (A.reload) out.push(["Reload", secs(A.reload)]);
   if (A.shell) out.push(["Reload", `${secs(A.shell)} a shell`]);
   if (A.burst) out.push(["Burst", `${A.burst} rounds`]);
-  if (w === "flamer")
+  if (w === "flamer") {
     out.push(["Tank", `${num((1000 / A.cool / A.all) * 100)}% a second`]);
+    out.push(["Burns", `1 every ${secs(BURN.EVERY)} for ${secs(BURN.Z)}`]);
+  }
   if (critOf(w)) out.push(["Headshot", `${num(critOf(w) * 100, 1)}%`]);
   if (missOf(w)) out.push(["Misses", `${num(missOf(w) * 100, 1)}%`]);
   else if (w === "pan") out.push(["Misses", "50% of swings"]);
