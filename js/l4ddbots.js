@@ -22,11 +22,11 @@ import {
   priceOf,
   maxHp,
   SHOP,
-  BUTLER,
+  merchantOf,
+  selling,
   BOX,
   boxNow,
   ARMS,
-  gunPrice,
   isHelper,
   laserHeat,
   wildOpen,
@@ -236,8 +236,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
         (it) =>
           (up[it.id] || 0) < it.most && pts >= priceOf(it.id, up[it.id] || 0),
       );
-    if (want) {
-      to = BUTLER;
+    if (want && selling(s)) {
+      to = merchantOf(s); // (only while a merchant is here and selling)
       act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
     } else if (!b && pts >= BOX.price && now - (spinAt.get(id) || 0) > 45000) {
       to = BOX;
@@ -264,8 +264,8 @@ function shopping(s, id, now, x, y, far, m, send, out) {
    knife only once every gun is empty and nothing can be bought. He keeps his distance: each heartbeat he tries 16 ways
    to step and takes the one that leaves him farthest from every zombie with the most open floor ahead (so never into a
    corner), sprinting (with a duck's own 7 seconds of breath) when one gets too close. He revives a downed duck when no
-   zombie is on it, ends the turn between rounds, buys ammo with his points (B), and shops like the others when the
-   room is clear. He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
+   zombie is on it, ends the turn between rounds, and shops like the others when the room is clear (no ammo to buy:
+   the merchants never sell it, the owner's, Nov 18 13:46Z). He walks exactly as fast as a duck would: by the time since his last step, at the Walking speed, the
    Butler's Speed and an adrenaline shot (a Speed Boost) */
 const KEEP = 240, // world px: the room he keeps from every zombie
   CLOSE = 150, // nearer than this he sprints away
@@ -297,7 +297,6 @@ const laserOk = (s, id, now) => {
   const q = laserHeat(s, id, now);
   return !q.over && Math.round(q.h) < q.max;
 };
-const leftIn = (m, w) => (m.am[w] ? m.am[w][0] + m.am[w][1] : 0);
 
 function justinBot(s, id, now, out) {
   const p = s.pos[id],
@@ -379,22 +378,6 @@ function justinBot(s, id, now, out) {
     guns.includes("chaingun") && (d0 < 300 || crowd >= 3 || !others.length)
       ? "chaingun"
       : others[0] || (guns.includes("shotgun") ? "shotgun" : "");
-  {
-    const buyable = [sl[1], sl[2]].find(
-      (w) =>
-        w &&
-        !leftIn(m, w) &&
-        gunPrice(s, id, w) &&
-        ptsOf(s, id) >= gunPrice(s, id, w),
-    );
-    if (buyable) {
-      out.push({ t: "hang", k: "l4", do: "ammo", what: buyable, id });
-      if (!gun) {
-        send(x, y, buyable, 1, 0);
-        return;
-      }
-    }
-  } // (an empty gun of the Butler's: B fills it, with his points)
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
   const down = s.seat
     .filter(
