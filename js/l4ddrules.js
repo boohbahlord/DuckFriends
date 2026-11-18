@@ -236,7 +236,7 @@ export const ARMS = {
   hammer: {
     kind: "melee",
     cool: ARM_COOL.hammer,
-    dmg: 2,
+    dmg: [3, 5], // (3 to 5: the owner's, Nov 18 15:28Z)
     swing: ARM_SWING.hammer,
     at: 66,
     r: 50,
@@ -263,7 +263,7 @@ export const ARMS = {
   pan: {
     kind: "melee",
     cool: ARM_COOL.pan,
-    dmg: [2, 6], // (2 to 6: the owner's, Nov 18 15:25Z)
+    dmg: 5, // (5: the owner's, Nov 18 15:28Z, "The pan has 5 damage"; 2 to 6 at 15:25Z)
     crit: 0.5,
     miss: 0.5,
     swing: ARM_SWING.pan,

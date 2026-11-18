@@ -6229,3 +6229,8 @@ Fireaxe has more knockback and the hammer has most knockback
 
 What are the other melee stats?"
 Decided: Solomon, in #476 (Dead Ducks Arcade): pan 2-6 (miss and crit kept), sword 1-2, every melee hit pushes living zombies back, and a slight no-damage shove on players; axe more, hammer most. Adam answered the melee stats.
+
+Owner, Nov 18 15:28Z: "The hammer is 3-5 damage
+
+The pan has 5 damage"
+Decided (Adam): Dead Ducks Arcade's hammer 3 to 5, the frying pan 5 every hit (replaces 15:25Z's 2-6; its 50% miss and 50% crit kept).
