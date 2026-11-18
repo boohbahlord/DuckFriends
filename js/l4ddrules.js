@@ -62,7 +62,7 @@ import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
-import { MERCHANTS } from "./merchants.js";
+import { MERCHANTS, merchantById } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { JET } from "./jetpack.js";
@@ -2424,7 +2424,8 @@ function give(s, id, w, hand0) {
    of the game, his body left where he fell (the zombies leave it be); no revive. Each visit is a different merchant
    (a bag of the ones alive). HP and running speed are my guesses.
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
-   (running away), "jump" (off the balcony or over the fence: gone in a moment) or "dead", x, y (world px), f: his facing,
+   (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
+   gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
    hp, stock: [[weapon, price]], say: { n, t, text } his last line, c: 1 while he's past the zombies' reach }
    s.hidden.l4mh (the host's): { left: the merchants' bag, dead: [ids], bags: his weapon bags (bagRoll), lines: the
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
@@ -2440,6 +2441,9 @@ export const MERCH = {
   HP: 5,
   WALK: 1, // (his walk, as a share of a duck's)
   RUN: 1.3, // (running away: faster than the zombies)
+  STAB: 70, // (world px: Phil's knife reaches a duck this near …
+  STAB_MS: 600, // … and stabs this often (my guesses) …
+  FOE_FAR: 900, // … and lets a duck this far off be, and runs)
   GREET: 220, // (world px: a duck this near gets a greeting)
   SAY: 3500, // (ms a line shows: l4dd.js)
   LATE: 25000, // (ms: stuck on his way in, he's at his spot; running away this long, he's gone)
@@ -2578,6 +2582,7 @@ function merchantCome(s, now, sure) {
   setMh(s, {
     left: left.slice(1),
     lines: {},
+    hurt: 0,
     near: {},
     route,
     p: 0,
@@ -2601,7 +2606,7 @@ function merchantCome(s, now, sure) {
 /* the zombies are coming: a leaving line, and he runs */
 function merchantGo(s, now) {
   const m = merchantOf(s);
-  if (!m || (m.st !== "in" && m.st !== "here")) return;
+  if (!m || !["in", "here", "fight"].includes(m.st)) return;
   merchantSays(s, "leave", now);
   merchantRun(s, now);
 }
@@ -2621,13 +2626,62 @@ function merchantHurt(s, by, n, now) {
     addFx(s, { kind: "l4mdie", by, who: [], t: now, x: m.x, y: m.y });
     return true;
   }
-  s.hang.l4m = { ...m, hp };
+  const hits = (m.hits || 0) + (by ? 1 : 0);
+  s.hang.l4m = { ...m, hp, hits };
   if (by && !mh(s).hurt) {
     setMh(s, { hurt: 1 });
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
-  if (by && m.st !== "out") merchantRun(s, now);
+  /* Phil the Murderous (merchants.js fights) hits back: from his second hit on he goes after whoever hurt him with
+     his knife (the owner's, Nov 18 14:10Z: "he will hit back at players when he takes second damage with a knife (has
+     a 50% chance of missing when he uses it and it does 1 damage only)") */
+  const F = (merchantById(m.id) || {}).fights;
+  if (by && F && hits >= F.after && s.players[by]) {
+    s.hang.l4m = { ...merchantOf(s), st: "fight", foe: by };
+    setMh(s, { route: null, t: now });
+    return false;
+  }
+  if (by && m.st !== "out" && m.st !== "fight") merchantRun(s, now);
   return false;
+}
+/* Phil, fighting: after his foe (by the zombies' field when there's something in the way), a stab whenever it's near
+   enough; he runs once his foe is down, gone or far off */
+function merchantFight(s, m0, now, dt) {
+  const F = (merchantById(m0.id) || {}).fights || {},
+    p = s.pos[m0.foe];
+  if (!p || !standing(s, m0.foe)) return merchantRun(s, now);
+  const [fx, fy] = at(p),
+    d = Math.hypot(fx - m0.x, fy - m0.y);
+  if (d > MERCH.FOE_FAR) return merchantRun(s, now);
+  const m = { x: m0.x, y: m0.y };
+  if (d > MERCH.STAB) {
+    const aim = walkable(m.x, m.y, fx, fy)
+      ? [fx, fy]
+      : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
+    stepZombie(m, aim, WALK * walkOf(s) * MERCH.RUN * dt, []);
+  } else if (now - (mh(s).stab || 0) >= MERCH.STAB_MS) {
+    setMh(s, { stab: now });
+    addFx(s, {
+      kind: "l4mstab",
+      by: m0.foe,
+      who: [],
+      t: now,
+      x: m0.x,
+      y: m0.y,
+    });
+    if (Math.random() >= (F.miss || 0)) {
+      const p4 = { ...(s.hang.l4p || {}) };
+      for (let k = 0; k < (F.dmg || 1); k++)
+        hurtDuck(s, p4, m0.foe, now, F.weapon || "knife");
+      s.hang.l4p = p4;
+    }
+  }
+  s.hang.l4m = {
+    ...merchantOf(s),
+    x: Math.round(m.x),
+    y: Math.round(m.y),
+    f: fx < m.x ? -1 : 1,
+  };
 }
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit all of them) */
 function merchantShot(s, by, x, y, now, w, rx, ry, from) {
@@ -2664,6 +2718,7 @@ function merchantTick(s, now) {
     leg = route[h.p || 0],
     dt = Math.min(0.35, Math.max(0.05, (now - (h.tk || now - 200)) / 1000));
   setMh(s, { tk: now });
+  if (m0.st === "fight") return merchantFight(s, m0, now, dt);
   if (!leg || now - (h.t || now) > MERCH.LATE) {
     /* his way done (or taking too long): at his spot, or gone */
     if (m0.st === "in")
@@ -4478,7 +4533,7 @@ function moveZombies(s, zs, now, T, up) {
      13:46Z: "zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the
      balcony, then they give up"); never his body */
   const mm = merchantOf(s);
-  if (mm && mm.st === "out" && !mm.c)
+  if (mm && (mm.st === "out" || mm.st === "fight") && !mm.c)
     pls.push({
       id: "@m",
       p: null,

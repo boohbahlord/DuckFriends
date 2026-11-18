@@ -193,7 +193,7 @@ const merchantNow = (s) => {
 };
 const shopName = (s) => {
   const m = merchantNow(s);
-  return (m && m.who && m.who.name) || "The Merchant";
+  return (m && m.who && !m.who.hideName && m.who.name) || "The Merchant"; // (the soldier's name is never shown: "his name is classified info", the owner's, Nov 18 14:10Z)
 };
 const NEAR = 130; // world px: how near E works at the merchant and the fireplace
 const AWAY = 260; // walked this far off: his shop closes
@@ -1555,10 +1555,16 @@ function drawMerchant(ctx, t) {
     butler?.el.remove();
     butler = null;
     if (!sig) return;
+    const hid = !!m.who.hideName;
     butler = butlerEl(
-      merchantSVG(m.who, m.roll, { size: 64, dead }),
+      merchantSVG(m.who, m.roll, {
+        size: 64,
+        dead,
+        ...(hid ? { title: "The Merchant" } : {}),
+      }),
       m.who.name,
     );
+    if (hid) butler.el.querySelector(".hang-npc-name")?.remove(); // (no name over the soldier)
     butler.el.classList.add("l4-merchant");
     butler.el.classList.toggle("dead", dead);
     butler.say = document.createElement("div");
@@ -2003,7 +2009,9 @@ function shopFill(s, ctx) {
     shop.who = who;
     shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
     shop.me.innerHTML =
-      m && m.who ? merchantSVG(m.who, m.roll, { size: 40 }) : "";
+      m && m.who
+        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
+        : "";
   }
   shop.list.innerHTML = SHOP.map((it) => {
     const n = up[it.id] || 0,
