@@ -18,7 +18,7 @@
    I looked for a small library first: outlines like these come from big engines (PixiJS' pixi-filters OutlineFilter,
    Phaser's postFX), which want their own renderer and don't fit our pages of plain elements, so this is the usual
    canvas trick: the picture drawn a pixel off each way in the color, its own shape cut back out. */
-import { gridPx } from "./pixel.js";
+import { gridPx, raster } from "./pixel.js";
 import {
   floorAt,
   layoutVariant,
@@ -31,6 +31,20 @@ const GREEN = "#5be35b",
   YELLOW = "#ffd23f",
   RED = "#8a1018";
 const COLOR = { ally: GREEN, me: DARK_BLUE, justin: YELLOW, zombie: RED };
+/* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
+   those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not
+   missed, and gas gets an orange outline"): each its own color, none of the ducks' green, blue or yellow or the
+   zombies' red, and the jerry cans orange. Kind "drop_<its kind>" (l4dd.js, l4ddpowerui.js) */
+export const DROP_OL = {
+  kill: "#ff3df5", // (Instant Kill: magenta)
+  ammo: "#3fdcff", // (Max Ammo: cyan)
+  nuke: "#a46bff", // (Nuke: violet)
+  speed: "#ffffff", // (Speed Boost: white)
+  double: "#c8ff3a", // (Double Points: lime, the dollar's)
+  sale: "#ff7aa8", // (Sale: pink)
+  can: "#ff8a1a", // (a jerry can, gas: orange)
+};
+for (const [k, c] of Object.entries(DROP_OL)) COLOR["drop_" + k] = c;
 const BLINK = 700; // ms an outline blinks after a hit
 
 /* which floor something is on, from where it stands (world px) and its feet's height: on Downpour, 1 up on a roof or
@@ -124,9 +138,29 @@ function outline(img, kind, key = img.currentSrc || img.src) {
 let list = new Map(); // id → what to outline (one each: the last one asked for this frame)
 const HP = new Map(); // id → [its HP last seen, when it last went down]
 /* something to outline this frame: { id, img (its picture on the screen), x, y, w, h (where the picture is, css px on
-   the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie"), hidden (something hides it), floor (its floor
-   against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
+   the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie", or a drop's: "drop_" + its kind,
+   DROP_OL), hidden (something hides it), floor (its floor against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
    bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) } */
+/* a picture of my own to outline, for what shows as a drawing and not as a pixel image (the drops: their symbols, a
+   jerry can's orb): the drawing (an SVG string) made into pixels at w × h css px (pixel.js raster), as an image; null
+   while it's made */
+const PICS = new Map(); // its pixel version's url → the image
+export function olPic(key, svg, w, h) {
+  const u = raster(
+    key,
+    svg.replace(/<svg (?![^>]*\swidth=)/, '<svg width="64" height="64" '),
+    w,
+    h,
+  ); // (a size of its own: Firefox won't draw an SVG with none)
+  if (!u) return null;
+  let im = PICS.get(u);
+  if (!im) {
+    if (PICS.size > 80) PICS.clear();
+    PICS.set(u, (im = new Image()));
+    im.src = u;
+  }
+  return im;
+}
 export function olAdd(o) {
   if (o.img && o.img.complete && o.img.naturalWidth) list.set(o.id, o);
 }
@@ -176,20 +210,26 @@ export function olDraw(host, W, H, now = performance.now()) {
        owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z); a zombie in plain sight none,
        but a floor away it has its line and its arrow all the same, so its floor shows (20:10Z) */
     const zombie = o.kind === "zombie",
+      drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
       away = o.floor || 0,
       shown = zombie ? o.hidden || !!away : true;
     if (!shown && !hit) continue;
-    let a = o.hidden
-      ? zombie
-        ? 0.85
-        : away > 0
-          ? 0.55 // (above me: fainter)
-          : 0.9
-      : zombie
-        ? 0.85
-        : 0.14; // (nothing hides it: very faint)
+    let a = drop
+      ? o.hidden
+        ? 0.95
+        : 0.6
+      : o.hidden
+        ? zombie
+          ? 0.85
+          : away > 0
+            ? 0.55 // (above me: fainter)
+            : 0.9
+        : zombie
+          ? 0.85
+          : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
-    const kind = o.kind + (!zombie && (o.hidden || hit) ? "-glow" : ""),
+    const kind =
+        o.kind + (drop || (!zombie && (o.hidden || hit)) ? "-glow" : ""),
       c = outline(o.img, kind);
     if (!c) continue;
     const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
