@@ -6258,3 +6258,11 @@ Split (Adam): Solomon = HP 3-6, NPC speeds = players', rest phase 50%, arrival a
 
 all movement in every game mode, the sprint, the jump, the cooldown meter, the health meter, and everything movement related or UI related from zombies is in every game mode now (ask me ab it)"
 Decided: guns to Solomon (MP5 13 mags -> 17 = 340; UMP keeps 6 mags = 150; flamer re-light restarts the 8 s, spreading kept). Barrett answered: 5 a magazine, 49 in all. Every-mode movement/UI: questions to the owner first.
+
+Adam's 5 questions (16:46Z) on "zombie movement/UI in every mode": 1 HP instead of knock-down with the block meter, 2 sprint/stamina bar and walk speed, 3 Dead Ducks Arcade's jump and the phone R/jump buttons, 4 the white cooldown bar, 5 which modes.
+Owner, Nov 18 16:50Z: "1. yes, and every player in other game modes has 4 hp by default
+2. no to faster speed BUT they do get a 7 second stamina bar for when they do spring to limit it
+3. yes (r only shows up on mobile for anything IF something CAN be reloaded
+4. yes in the same way
+5. all of them"
+Split (Adam): Solomon = rules: 4 HP in every other mode, hits take HP by each weapon's damage, down at 0 HP; a 7 s sprint stamina in every mode at today's speeds; Dead Ducks Arcade's jump everywhere. Noah = the block HP meter, the thin blue stamina bar and the white cooldown bar in every mode. Jackal = the phone R button in every mode, only while something can be reloaded.
