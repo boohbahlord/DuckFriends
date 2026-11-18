@@ -8,6 +8,7 @@
    its roof (Part B, the owner's, Nov 17 12:28Z): there it falls in, onto the floor. Low graphics or Data saving: a third
    of the drops; Animations off (html.still): none. I want it cheap: a few hundred short lines a frame, no images. */
 import { low } from "./gfx.js";
+import { windowOpen } from "./ui.js";
 import { gridPx } from "./pixel.js";
 import {
   inShallow,
@@ -54,7 +55,9 @@ export function rainDraw(now, ctx, who, on, hit) {
   if (!cv) return;
   const Wd = ctx.world,
     still = document.documentElement.classList.contains("still");
-  if (!on || still || !Wd.vw) {
+  /* nothing to draw while the game can't be seen (the owner's, Nov 18 14:20Z): the tab or app hidden, or a menu window
+     (Pause, Customize, Settings, Game Settings) over it; it picks up on the next frame after */
+  if (!on || still || !Wd.vw || document.hidden || windowOpen()) {
     if (!cv.hidden) cv.hidden = true;
     last = now;
     return;
