@@ -208,7 +208,7 @@ const SKIP = 0.25,
   EARLY = 4000; // ms into a round they come half as fast
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
-   all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
+   all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
    cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (a crit: critOf, headOf) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
@@ -265,7 +265,7 @@ export const ARMS = {
   handgun: {
     kind: "ranged",
     cool: ARM_COOL.handgun,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
     mag: 8,
     all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
@@ -274,10 +274,9 @@ export const ARMS = {
   bow: {
     kind: "ranged",
     cool: ARM_COOL.bow,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.bow,
-    all: 225, // (150, and 50% more with no magazine: the owner's, Nov 16)
-  },
+  }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
@@ -288,7 +287,7 @@ export const ARMS = {
   shotgun: {
     kind: "ranged",
     cool: ARM_COOL.shotgun,
-    dmg: 1,
+    dmg: [1, 3], // (each pellet: the owner's, Nov 18 15:23Z "It should be 1-3 damage per pellet")
     speed: ARM_SPEED.shotgun,
     all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
     pellets: 5,
@@ -1298,6 +1297,9 @@ export const zombiesOf = zombies;
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
+/* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
+export const endless = (w) =>
+  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
 export const fullAmmo = (w) => {
   const a = ARMS[w];
   if (!a || a.all === undefined) return null;
@@ -3800,7 +3802,7 @@ function meleeHits(s, now) {
       by = py + k.dy * A.at;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
-      if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
+      if (Math.hypot(z.x - bx, z.y - by) > A.r + 22) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
@@ -3812,7 +3814,7 @@ function meleeHits(s, now) {
     }
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, (A.r + 22) / 1.4)
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
@@ -4474,7 +4476,7 @@ function newZombie(s, L, T, zs = []) {
       seen = (x, y) =>
         pts.some(
           ([a, b]) =>
-            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 60,
+            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
         ),
       far = (x, y) =>
         Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),

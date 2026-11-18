@@ -25,6 +25,7 @@ import {
   reloadOf,
   downArmed,
   tintOf,
+  endless,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 
@@ -34,7 +35,7 @@ const count = (w, m) => {
   if (w === "dg") return `${m.rw === "dg" ? "…" : m.dg} | ∞`; // (the down pistol: its bullets never run out)
   if (w === "grenade") return String(m.g);
   const c = (m.am || {})[w];
-  if (w === "laser") return "∞"; // (the Laser Rifle never runs out: it only overheats)
+  if (endless(w)) return "∞"; // (the Laser Rifle never runs out, it only overheats; nor do the bow's arrows)
   if (w === "jetpack" && c) return Math.ceil(c[0] / 1000) + "s"; // (its flight left, in seconds)
   if (w === "flamer" && c)
     return Math.ceil((c[0] / ARMS.flamer.all) * 100) + "%"; // (its tank left)

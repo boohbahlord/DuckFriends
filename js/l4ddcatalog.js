@@ -19,6 +19,7 @@ import {
   merchantPrice,
   critOf,
   missOf,
+  endless,
 } from "./l4ddrules.js";
 import { BOMB } from "./jaimebomb.js";
 import { orbHTML, UP_ICONS } from "./l4ddart.js";
@@ -33,7 +34,7 @@ const SAY = {
   pan: "Misses half the time, but half its hits are headshots.",
   handgun: "The gun you start with.",
   revolver: "Five big shots, then a reload.",
-  bow: "Lots of arrows, one at a time.",
+  bow: "Arrows that never run out, one at a time.",
   dagger: "Thrown. It falls to the floor after.",
   shotgun: "A cone of pellets that doesn't fly far. No magazine.",
   sniper: "Each bullet goes through 3 zombies. A bolt action between shots.",
@@ -99,6 +100,7 @@ function stats(w) {
     out.push(["Rate", `${num(1000 / A.cool, 1)} a second`]);
   if (A.mag) out.push(["Magazine", A.mag]);
   if (A.kind === "ranged" && A.all && w !== "flamer") out.push(["Ammo", A.all]);
+  else if (endless(w)) out.push(["Ammo", "Unlimited"]);
   if (A.reload) out.push(["Reload", secs(A.reload)]);
   if (A.shell) out.push(["Reload", `${secs(A.shell)} a shell`]);
   if (A.burst) out.push(["Burst", `${A.burst} rounds`]);
