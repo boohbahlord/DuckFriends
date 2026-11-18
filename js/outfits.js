@@ -390,10 +390,25 @@ export const OUTFITS = [
     id: "shirt",
     name: "Shirt",
     colors: [["c1", "Shirt", "#2f7fe0"]],
+    /* (Veronica, a merchant, wears it with jeans: "a shirt and jeans, nothing else"; the jeans are the Blue jeans
+       outfit's, under the shirt's hem) */
+    opts: [
+      [
+        "pants",
+        [
+          ["none", "No pants"],
+          ["jeans", "Jeans"],
+        ],
+      ],
+    ],
     cloth: (o) =>
       TOP(o.c1, 88) +
       collarBand(dk(o.c1, 0.2), 2.6) +
-      `<path d="M0 87H120" stroke="${dk(o.c1, 0.25)}" stroke-width="1.6"/>`,
+      `<path d="M0 87H120" stroke="${dk(o.c1, 0.25)}" stroke-width="1.6"/>` +
+      (o.pants === "jeans"
+        ? LOW("#3f63a8", 88) +
+          `<g fill="none" stroke="#d9a441" stroke-width=".8" stroke-dasharray="1.6 1"><path d="M60 89V108"/><path d="M76 91C80 97 86 99 92 97"/></g>`
+        : ""),
     sleeve: (o) =>
       `<path d="M40 77C50 70 68 71 76 79L72 83C64 78 50 77 42 82C40 81 39 79 40 77Z" fill="${dk(o.c1, 0.1)}" stroke="${dk(o.c1, 0.45)}" stroke-width="1.1"/>`,
     bare: true,

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dead Ducks Arcade merchants</title>
+    <!-- Every merchant (js/merchants.js) with his name under him, each of his looks when he has more than one, and the
+     ideas for more merchants under them. Serve the folder (python3 -m http.server) and open /tools/merchant-art.html. -->
+    <style>
+      body {
+        margin: 0;
+        padding: 18px 22px 26px;
+        background: #12172b;
+        color: #e8ecf6;
+        font-family: system-ui, sans-serif;
+        width: 1500px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 22px 0 10px;
+        color: #ffd23f;
+      }
+      p.sub {
+        margin: 0;
+        color: #9aa4c0;
+        font-size: 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 12px;
+      }
+      figure {
+        margin: 0;
+        padding: 8px 6px 10px;
+        background: #1d2440;
+        border-radius: 12px;
+        text-align: center;
+      }
+      .ducks {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 2px;
+        height: 132px;
+      }
+      .ducks.many svg {
+        flex: 0 1 auto;
+      }
+      figcaption b {
+        display: block;
+        font-size: 16px;
+      }
+      figcaption small {
+        display: block;
+        font-size: 12px;
+        color: #9aa4c0;
+        margin-top: 2px;
+        line-height: 1.25;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>The merchants</h1>
+    <p class="sub">
+      Dead Ducks Arcade. A merchant with more than one look shows each of them.
+    </p>
+    <div class="grid" id="cast"></div>
+    <h2>Ideas for more merchants</h2>
+    <div class="grid" id="ideas"></div>
+    <script type="module">
+      import { MERCHANTS, merchantSVG } from "../js/merchants.js";
+      import { duckSVG } from "../js/duck.js";
+      /* my ideas for more merchants (not in the game until the owner picks them) */
+      const IDEAS = [
+        [
+          "Walt",
+          "Nightcap and pajamas, half asleep",
+          {
+            color: "#f4f4f0",
+            hat: { id: "nightcap" },
+            eyes: "sleepy",
+            outfit: { id: "pajamas" },
+          },
+        ],
+        [
+          "Dale",
+          "Cowboy hat and leather jacket",
+          {
+            color: "#ff8c2b",
+            hat: { id: "cowboy" },
+            outfit: { id: "leather", pants: "jeans" },
+          },
+        ],
+        [
+          "Grace",
+          "A bride in her veil and gown",
+          {
+            color: "#ff7eb6",
+            hat: { id: "veil" },
+            outfit: { id: "gown" },
+          },
+        ],
+        [
+          "Zeke",
+          "The armored space soldier",
+          {
+            color: "#8ee03c",
+            face: { id: "scifi" },
+            outfit: { id: "armor" },
+          },
+        ],
+        [
+          "Hal",
+          "VR headset and a suit",
+          {
+            color: "#14c6b4",
+            face: { id: "vr" },
+            outfit: { id: "suit" },
+          },
+        ],
+        [
+          "Ozzy",
+          "Ski mask and a dark hoodie",
+          {
+            color: "#ffd23f",
+            face: { id: "ski" },
+            outfit: { id: "hoodie", c1: "#2b2f3a" },
+          },
+        ],
+      ];
+      const fig = (ducks, name, tip) =>
+        `<figure><div class="ducks${ducks.length > 1 ? " many" : ""}">${ducks.join("")}</div><figcaption><b>${name}</b><small>${tip}</small></figcaption></figure>`;
+      const big = (n) => (n > 2 ? 62 : n > 1 ? 84 : 112);
+      document.getElementById("cast").innerHTML = MERCHANTS.map((m) =>
+        fig(
+          m.looks.map((_, i) =>
+            merchantSVG(m, i, { size: big(m.looks.length) }),
+          ),
+          m.name,
+          m.tip,
+        ),
+      ).join("");
+      document.getElementById("ideas").innerHTML = IDEAS.map(([name, tip, L]) =>
+        fig([duckSVG(L, { size: 112 })], name, tip),
+      ).join("");
+      document.body.dataset.ready = "1";
+    </script>
+  </body>
+</html>
