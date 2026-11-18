@@ -5968,3 +5968,8 @@ Split (Adam): Solomon = the slot bags + shuffle, jerry can rework, no gas at the
 > 20. true
 
 The questions (Adam, 12:21Z): 1 order Chair 1% > Special 5% > Item 20% > Weapon; 2 own bags per player, fresh each game; 3 Weapon bag = 7 bags taking turns, then the next gun in that bag's shuffle; 4 melee bag as often as the shotgun bag; 5 melee = fire axe, short sword, hammer; weak = dagger, knife, pan; 6 bow and grenade in no bag; 7 owned things skipped, keep their place; 8 used-up items/empty guns keep the slot and can't be spun again; 9 golden chair owned = Chair bag skipped; 10 uncolored ones keep today's colors; 11 found cans are 100%; 12 pump filling doesn't stop the round's can; 13 one can spawns at a time, unfound ones stay, zombies 1%; 14 gas pours into the fullest not-full can, limit counts the empty; 15 3 full = can stays on the ground; 16 pumps only Downpour; 17 cabin generator takes a whole can, 1 round per 25%; 18 power box built, 3 parts slots freed; 19 MGJ bags heavy (GL, LMG), rifles (Tommy, UMP, MP5, AK, AUG), shotgun (shotgun, double barrel), special (chain gun, flamethrower); 20 Sniper normal: first zombie max, crit: every zombie max up to the limit.
+
+## Request (2026-11-18 12:33Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtTvpMfei2HjndPJo13XK1Qx) (word for word)
+> single player can only be played if it isnt connecting to the data to do it, like for the in game files i mean, since it shouldnt require internet i mean
+
+Done (Adam): the button stays greyed until every file is on the device, and once the copy is whole, sw.js serves every game file from the device (only the page asks the network first, to see a new version).

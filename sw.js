@@ -5,9 +5,11 @@
    every file offline.json lists (tools/stamp.py writes it), each one downloaded again only when its fingerprint
    changed. The page moves to a new version only once every file of that version is kept, so the copy on the device
    always works as a whole.
-   Answering: with nothing kept (the website), every request goes to the network as before. With the copy kept, a file
-   whose name carries its version (?v=) comes from the device; anything else comes from the network, or from the device
-   when the network fails or takes more than 4 s, so a bad connection never stalls the game. */
+   Answering: with nothing kept (the website), every request goes to the network as before. With the copy kept, every
+   game file comes from the device, so Single Player never spends data on them (the owner's, Nov 18 12:33Z: "it
+   shouldnt require internet"); keep() brings changed files in when there is a connection. Only the page itself asks
+   the network first (that's how a new version is seen), falling back to the device when the network fails or takes
+   more than 4 s, so a bad connection never stalls the game. */
 const CACHE = "df-files";
 const SLOW = 4000;
 const here = (p) => new URL(p, self.registration.scope).href;
@@ -28,8 +30,10 @@ async function answer(r) {
   const c = await caches.open(CACHE),
     page = r.mode === "navigate",
     key = page ? PAGE() : r.url;
-  if (!page && new URL(r.url).searchParams.has("v")) {
-    const hit = await c.match(key);
+  if (!page) {
+    // (a script or the stylesheet only in its own version; any other file whatever its ?v=, kept up to date by keep())
+    const code = /\/(js|css)\//.test(new URL(r.url).pathname),
+      hit = await c.match(key, { ignoreSearch: !code });
     if (hit) return hit;
   }
   const net = fetch(r);
