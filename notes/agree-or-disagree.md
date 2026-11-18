@@ -6266,3 +6266,9 @@ Owner, Nov 18 16:50Z: "1. yes, and every player in other game modes has 4 hp by 
 4. yes in the same way
 5. all of them"
 Split (Adam): Solomon = rules: 4 HP in every other mode, hits take HP by each weapon's damage, down at 0 HP; a 7 s sprint stamina in every mode at today's speeds; Dead Ducks Arcade's jump everywhere. Noah = the block HP meter, the thin blue stamina bar and the white cooldown bar in every mode. Jackal = the phone R button in every mode, only while something can be reloaded.
+
+Adam (16:59Z): 1 Mad God Justin's Player HP setting (default 6) to 4 too? 2 on-duck phone hotbar in every mode? 3 test and deploy as Version 89?
+Owner, Nov 18 20:58Z: "1. keep it as 6
+2. every 
+3. what is he testing?"
+Decided: Mad God Justin stays 6. Noah puts the on-duck phone hotbar in every mode with a hotbar. Test plan explained to the owner; waiting for the go.
