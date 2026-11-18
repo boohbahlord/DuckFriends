@@ -60,7 +60,15 @@ import {
 } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
-import { GRENADE_MS, daggerZ, walkOf, FASTER, shareOf, say } from "./rules.js";
+import {
+  GRENADE_MS,
+  daggerZ,
+  walkOf,
+  FASTER,
+  shareOf,
+  say,
+  shove,
+} from "./rules.js";
 import { JUSTIN } from "./hangout/npcart.js";
 import { MERCHANTS, merchantById } from "./merchants.js";
 import { linesOf } from "./merchantlines.js";
@@ -208,7 +216,7 @@ const SKIP = 0.25,
   EARLY = 4000; // ms into a round they come half as fast
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
-   all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
+   all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
    cone of pellets, 48 shots and no magazine; the medkit puts my HP back to full, once. A headshot (a crit: critOf, headOf) kills at
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
@@ -247,7 +255,7 @@ export const ARMS = {
   sword: {
     kind: "melee",
     cool: ARM_COOL.sword,
-    dmg: 1,
+    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 15:25Z)
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
@@ -255,7 +263,7 @@ export const ARMS = {
   pan: {
     kind: "melee",
     cool: ARM_COOL.pan,
-    dmg: 1,
+    dmg: [2, 6], // (2 to 6: the owner's, Nov 18 15:25Z)
     crit: 0.5,
     miss: 0.5,
     swing: ARM_SWING.pan,
@@ -265,7 +273,7 @@ export const ARMS = {
   handgun: {
     kind: "ranged",
     cool: ARM_COOL.handgun,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.handgun,
     mag: 8,
     all: 72 + 5 * 8, // (5 more magazines: the owner's, Nov 16)
@@ -274,10 +282,9 @@ export const ARMS = {
   bow: {
     kind: "ranged",
     cool: ARM_COOL.bow,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 15:19Z)
     speed: ARM_SPEED.bow,
-    all: 225, // (150, and 50% more with no magazine: the owner's, Nov 16)
-  },
+  }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
@@ -288,7 +295,7 @@ export const ARMS = {
   shotgun: {
     kind: "ranged",
     cool: ARM_COOL.shotgun,
-    dmg: 1,
+    dmg: [1, 3], // (each pellet: the owner's, Nov 18 15:23Z "It should be 1-3 damage per pellet")
     speed: ARM_SPEED.shotgun,
     all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
     pellets: 5,
@@ -1298,6 +1305,9 @@ export const zombiesOf = zombies;
 
 /* ---------- a duck's slots, points and upgrades ---------- */
 /* a weapon's ammo, full: [in the magazine, the rest], or [all of it, 0] without a magazine; none for melee */
+/* a ranged weapon whose ammo never runs out (no `all`: the Laser Rifle, the bow) */
+export const endless = (w) =>
+  !!ARMS[w] && ARMS[w].kind === "ranged" && ARMS[w].all === undefined;
 export const fullAmmo = (w) => {
   const a = ARMS[w];
   if (!a || a.all === undefined) return null;
@@ -3800,7 +3810,7 @@ function meleeHits(s, now) {
       by = py + k.dy * A.at;
     for (const z of zs) {
       if (z.st === 3 || k.hit.includes(z.i)) continue;
-      if (Math.hypot(z.x - bx, (z.y - by) * 1.4) > A.r + 22) continue;
+      if (Math.hypot(z.x - bx, z.y - by) > A.r + 22) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
@@ -3808,11 +3818,37 @@ function meleeHits(s, now) {
         : A.dmg; // (the fire axe: 1 to 4)
       if (strike(s, z, dmg, headshot(s, k.by, k.w, z, now), k.by, k.w))
         die(z, T);
+      else if (z.st === 2) knockZ(z, k.dx, k.dy, KNOCK[k.w] || KNOCK.knife); // (alive: pushed back, KNOCK)
       any = true;
+    }
+    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    for (const id of s.seat) {
+      const q = s.pos[id];
+      if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
+        continue;
+      const [qx, qy] = at(q);
+      if (
+        Math.hypot(qx - bx, qy - by) > A.r + 22 ||
+        Math.abs((+q.z || 0) - (+p.z || 0)) > 48
+      )
+        continue;
+      k.hit.push("p" + id);
+      const far = (KNOCK[k.w] || KNOCK.knife) * KNOCK.DUCK,
+        dX = 0.006 * W,
+        dY = 0.012 * H; // (rules.js' duck lengths in Hangout's world, across and up and down, for its shove)
+      shove(
+        s,
+        id,
+        k.dx,
+        (k.dy * dX) / dY,
+        far / dX,
+        now,
+        inCabin(qx, qy) ? 1 : 0,
+      ); // (shove counts in those duck lengths: this way it goes `far` world px whichever way)
     }
     if (
       !k.hit.includes("j") &&
-      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, (A.r + 22) / 1.4)
+      wildHurt(s, k.by, bx, by, now, k.w, A.r + 22, A.r + 22)
     )
       k.hit.push("j"); // (Justin out in Downpour, once for each swing)
   }
@@ -3824,6 +3860,24 @@ const die = (z, T) => {
   z.st = 3;
   z.d = T;
 };
+/* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): how far a hit
+   pushes a living zombie back, in world px (a duck is 64), and DUCK: how much of that another duck in the swing is
+   shoved */
+const KNOCK = { knife: 16, sword: 16, pan: 16, axe: 28, hammer: 40, DUCK: 0.5 };
+/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
+   stand (a wall, furniture, a step too high) */
+function knockZ(z, ux, uy, far) {
+  const n = Math.max(1, Math.ceil(far / 8)),
+    h = heightAt(z.x, z.y);
+  for (let i = 0; i < n; i++) {
+    const x = z.x + (ux * far) / n,
+      y = z.y + (uy * far) / n;
+    if (!zOk(x, y, h)) break;
+    z.x = Math.round(x);
+    z.y = Math.round(y);
+  }
+}
 /* the shots in the air (instead of rules.js' moveShots here): walls and furniture stop them, a zombie stops a bullet
    or an arrow (a headshot now and then kills it at once), a grenade goes off where it lands or where a wall stops it */
 const OPEN_PAD = 30;
@@ -4474,7 +4528,7 @@ function newZombie(s, L, T, zs = []) {
       seen = (x, y) =>
         pts.some(
           ([a, b]) =>
-            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 60,
+            Math.abs(x - a) < VIEW.x + 60 && Math.abs(y - b) < VIEW.y + 140, // (up and down a little more: a tall phone held upright sees farther that way, 15% more since the owner's Nov 18 15:18Z, world.js PHONE_OUT)
         ),
       far = (x, y) =>
         Math.min(...pts.map(([a, b]) => Math.hypot(x - a, y - b)), 1e9),

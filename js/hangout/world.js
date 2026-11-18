@@ -869,6 +869,7 @@ export function mountWorld(board, api) {
     return true;
   }
 
+  const PHONE_OUT = 1.15;
   const world = {
     measure() {
       const r = board.getBoundingClientRect(),
@@ -877,6 +878,14 @@ export function mountWorld(board, api) {
       const across =
         vw >= 1100 ? 1300 : vw <= 500 ? 520 : 520 + ((vw - 500) / 600) * 780;
       cam.sc = Math.min(vw / across, vh / 380) || 1;
+      /* Dead Ducks Arcade on a phone, upright or on its side: 15% more of the map each way (the owner's, Nov 18 15:18Z:
+         "The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile
+         players in vertical OR horizontal becuz it feels cramped") */
+      if (
+        R().state.options.mode === "l4dd" &&
+        document.documentElement.classList.contains("phone")
+      )
+        cam.sc /= PHONE_OUT;
       cam.vw = vw;
       cam.vh = vh;
       cam.low = low();

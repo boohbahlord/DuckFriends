@@ -3505,7 +3505,7 @@ export function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
   const p0 = from,
     hang = isHang(s),
     rx = hang ? 0.006 : 0.03,
-    ry = hang ? 0.012 : 0.08,
+    ry = hang ? (0.006 * HW) / HH : 0.08, // (in Hangout's world, a duck length the same in world px up and down as across, so a swing reaches as far every way: the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was 0.012, half as far again up and down)
     [far0, wide] = REACH[sp],
     far =
       far0 *
