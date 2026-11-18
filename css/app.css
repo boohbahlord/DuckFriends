@@ -7077,11 +7077,13 @@ html.still .spx-disco .disco-spot {
   z-index: 6;
   animation: fadein 0.2s ease-out;
 }
+/* (a gun of Quacky Zombies: as long as its l4ddguns.js w, --gw from game.js; this was missing from Nov 18 10:38Z on, so
+   every gun was held at a knife's size: the owner, Nov 18 15:18Z, "WHY DID THE LMG BECOME SMALL?!") */
 .held i {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(var(--s) * 0.34);
+  width: calc(var(--s) * var(--gw, 0.34));
   display: block;
   transform: translate(-50%, -50%);
   transition: opacity 0.15s;
@@ -14147,6 +14149,9 @@ html.moving .eye-zap {
    gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
    gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
    ak47"). Their bullets (the SMG's with no glow: many fly at once); the chain gun's line, flashing in and out */
+.held[data-w="adrenaline"] i {
+  width: calc(var(--s) * 0.44);
+}
 .held[data-w="chair"] i {
   width: calc(var(--s) * 0.62);
 }

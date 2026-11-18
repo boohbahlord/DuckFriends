@@ -6184,3 +6184,35 @@ Noah: the beak hides while one of those six face items is worn (the beak pick st
 > Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND the gas never runs out from the merchant
 
 Split (Adam): Solomon = merchant fixes, then speed ideas 1 (one shared picture per zombie look, outlines and gore working) + 2 (outline/HP bar/shadow only on change), then 7 (path-finding in a worker). Noah = 3 (skip drawing off screen, 1-2 duck lengths margin) + 4 (zombie positions sent less often only when off that player's screen). Jackal = 6 (pause rain and lightning when hidden or under a full-screen menu). Miles Jr. = 5 (sound cap: proposal to the owner first).
+
+## Owner, Nov 18 15:18Z (3 screenshots: Duck Cabin round 0 on a phone sideways, the Ready button and the Jumps box marked; the Create a room page on a phone, the top bar's Agree or Disagree logo and music bar circled; Downpour's church on a phone, zombies inside shown only as outlines circled)
+"Make sure melee weapons have the same range in any direction
+
+Make the bow have unlimited ammo and it does 2-3 damage now (with quieter audio )
+
+The third image shows how the zombies cannot be seen while inside the church om downpour but their outline can, even tho nothing is hiding them, this should not be the case for similiar times
+
+Make the ammo switch thingy on the bottom of screen for mobile not flicker in and out like it does when firing or reloading, since it should sit still from those things, not moving with it
+
+WHY DID THE LMG BECOME SMALL?! MAKE SURE NO WEAPON IS NEVER MADE SMALL AGAIN! ASK ME THE SIZE IF U FUCKING HAVE TO! THE SIZE OF THE LMG SHOULD NOT HAVE CHANGED!
+Make the lmg shake the screen as much as the AK-47, not more than
+
+There is a small "r" button on mobile above the jump button that allows players to reload now and clicking it does a reload animation
+
+A player can click the screen and move around their right finger to aim
+
+The screenshot shows the jump cpunt not being in the middle alignment of the screen AND the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal on mobile
+
+The agree or disagree logo should not be above the play game menu AND the music display button should be hidden when there isnt room for it on mobile 
+
+The board or map for the zombie game should be a little more zoomed out in perspective or camera for mobile players in vertical OR horizontal becuz it feels cramped.
+The hotbar should be on the player's fuck for now on in mobile and swiping on their duck shows the selection AND it fades away like it does on PC (it is still in the bottom middle of the screen)
+
+The pistol should do 2-3 damage
+
+Is there any weapon that still does 1 damage besides the laser gun?"
+
+Owner, Nov 18 15:19Z: "The pistol should be 1-3 damage actually and so does the bow"
+
+Decided: the LMG (every gun) was small because the Nov 18 10:38Z change moved each gun's length to l4ddguns.js w (--gw) but no css rule ever read --gw, so every gun in the hand fell back to a knife's size (the adrenaline shot lost its own size too). Adam restored them all to their sizes from before (the LMG 1.2 again). LMG shake 0.18 a shot (it fires every 100 ms, the AK-47 every 110 ms at 0.2), so held down it shakes as much as the AK-47. Pistol and bow: 1 to 3 damage (15:19Z replaces 2-3). "player's fuck" read as "player's duck".
+Split (Adam): Solomon = melee same range every direction, bow unlimited ammo, pistol + bow 1-3 damage, Dead Ducks Arcade camera a little zoomed out on phones (both ways). Miles Jr. = quieter bow. Noah = church zombies shown as outlines with nothing hiding them, hotbar over the player's duck on phones (swipe on the duck to pick, fades like PC), the Agree or Disagree logo off the Play menu's top bar + music bar hidden when there's no room on phones. Jackal = phone ammo/switch box not flickering when firing or reloading, small "R" reload button above the jump button, aim by dragging a finger on the screen, Jumps box centered, Ready button bottom middle on phones held sideways.
