@@ -14153,16 +14153,9 @@ html.moving .eye-zap {
 .held[data-w="zebra"] i {
   width: calc(var(--s) * 0.5);
 }
-<<<<<<< HEAD
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst) {
-=======
-.held[data-w="fireball"] i {
-  width: calc(var(--s) * 0.5);
-}
 /* (every gun's own bullet, game.js .round: the Tommy gun's and the UMP-45's had been left out of a list here, so they flew
    at the handgun's size, off their line) */
 .bullet.round {
->>>>>>> pr454
   width: var(--w);
   margin: calc(var(--w) * -0.18) 0 0 calc(var(--w) * -0.5);
 }
