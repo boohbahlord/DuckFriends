@@ -3406,11 +3406,12 @@ export function dodges(s, p, now) {
     end = (p.dj > p.j ? p.dj : p.j) + T;
   return now - p.j > T * 0.2 && end - now > T * 0.2;
 }
-/* the normal game's HP (every mode but Mad God Justin): a duck has PHP HP before it plays dead, and has them all back
-   after PHP_BACK ms without a hit. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
+/* the normal game's HP (every mode but Mad God Justin and Dead Ducks Arcade): a duck has PHP HP before it plays dead
+   (4: the owner's, Nov 18 16:50Z, "every player in other game modes has 4 hp by default"; it was 6), has them all back
+   after PHP_BACK ms without a hit, and gets up with them all. s.php = { id: { n: HP lost, t: the last hit } }. True when the hit only took HP.
    What a hit takes (owner 2026-11-03 17:15Z, not in Quacky Zombies): the hammer, the chair and a grenade 3, the knife 2,
    the rest 1 */
-export const PHP = 6,
+export const PHP = 4,
   PHP_BACK = 6000;
 export const phpLost = (s, id, now) => {
   const h = (s.php || {})[id];

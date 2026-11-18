@@ -9,6 +9,7 @@
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
+import { sprintLeft, sprintReset } from "./stamina.js";
 import { activity } from "./hangout/registry.js";
 import { votesDue } from "./rules.js";
 import {
@@ -341,15 +342,13 @@ let layer = null,
   gap = 200,
   roundShown = -1, // (none yet)
   overShown = "",
-  stamina = 1,
-  tired = false,
   holding = null,
   walkDir = [1, 0],
   lastXY = null,
   drawn = "";
 /* the Butler, the fireplace's weapon, my points, the big words, his shop */
-/* my sprint left (0 … 1) and whether I'm too tired to sprint, for the HP meter's blue bar (game.js) */
-export const sprintLeft = () => [stamina, tired];
+/* my sprint left (0 … 1) and whether I'm too tired to sprint: now in every mode (stamina.js) */
+export { sprintLeft };
 /* every zombie on my screen: its box in the board's px, from its last drawing (game.js: the others' HP meters turn
    see-through over one) */
 export function l4ZBoxes() {
@@ -2637,8 +2636,7 @@ activity({
     ptsShown = -1;
     l4Reset();
     boxSpun = false;
-    stamina = 1;
-    tired = false;
+    sprintReset();
     peekW = null;
     holding = null;
   },
@@ -2972,7 +2970,8 @@ activity({
         sp.innerHTML = "<i></i>";
         tag.append(sp);
       }
-      const v = stamina.toFixed(3);
+      const [stamina, tired] = sprintLeft(),
+        v = stamina.toFixed(3);
       if (sp._v !== v) {
         sp._v = v;
         sp.style.setProperty("--sp", v);
@@ -3063,16 +3062,6 @@ activity({
     (dp() && inDeep(pos.x, pos.y) && pos.z <= heightAt(pos.x, pos.y) + 4
       ? SWIM
       : 1), // (… and its deep end swum, as slow as in the Hangout pool)
-  sprint(on, dt) {
-    if (on && !tired && stamina > 0) {
-      stamina = Math.max(0, stamina - (dt * 1000) / L4.SPRINT);
-      if (stamina <= 0) tired = true;
-      return true;
-    }
-    if (!on) tired = false; // (it can sprint again as soon as Shift is let go)
-    stamina = Math.min(1, stamina + (dt * 1000) / L4.SPRINT);
-    return false;
-  },
   spawn(ctx) {
     const s = ctx.state(),
       k = Math.max(0, s.seat.indexOf(ctx.me));

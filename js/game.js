@@ -34,6 +34,7 @@ import {
   toast,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
+import { sprintStep } from "./stamina.js";
 import {
   COLS,
   SHORT,
@@ -87,6 +88,7 @@ import {
   coolEnds,
   phpLost,
   PHP,
+  dodges,
   isHang,
   MAG,
   magOf,
@@ -1872,7 +1874,10 @@ function drawDucks(now = clockNow()) {
     } // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
     d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
-    d.classList.toggle("dodge", isL4dd(s) && dodging(s, pos, now)); // (Dead Ducks Arcade: see-through while a jump makes it safe)
+    d.classList.toggle(
+      "dodge",
+      isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now),
+    ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
     d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
     const dn0 = !s.done[id];
@@ -4577,6 +4582,7 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
+  sprinting = sprintStep(sprinting && !!(hx || vy || target), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4785,6 +4791,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
@@ -5867,6 +5874,45 @@ const dots = (id) =>
           : ammoHTML(ammo(id), magSize(id)[0])
         : "";
 /* R: the gun in hand reloads (or the handgun, or the first gun with a magazine on my keys) */
+/* the small R on a phone (phonepad.js) shows in every mode, but only while what's in my hand can be reloaded: it has a
+   magazine, it isn't full, and no reload is going on (the owner's, Nov 18 16:50Z: "r only shows up on mobile for anything
+   IF something CAN be reloaded") */
+function canReloadNow() {
+  if (!R || !onBoardPhase()) return false;
+  const s = R.state,
+    now = clockNow();
+  if (isL4dd(s)) {
+    const w = heldNow(),
+      a = w ? l4Ammo(s, R.me, w) : null;
+    return (
+      !!a &&
+      !a.rl &&
+      !a.dry &&
+      !a.nr &&
+      a.f < 0.999 &&
+      (a.nr !== undefined || downArmed(s, R.me))
+    ); // (a gun with a magazine, or the down pistol; the bow's and the flamethrower's have none)
+  }
+  let w;
+  if (isMgj(s)) {
+    w = mgjDownGun()
+      ? "handgun"
+      : held && held === myPick() && mgjMag(held)
+        ? held
+        : "";
+  } else {
+    const k = keysOf(playDuck());
+    w =
+      held && magSize(held) && hasKey(playDuck(), held)
+        ? held
+        : k.includes("handgun")
+          ? "handgun"
+          : k.find((id) => id && magSize(id)) || "";
+  }
+  if (!w) return false;
+  const mm = magOf(s, R.me, now, w);
+  return mm.n > 0 && !(mm.r > now);
+}
 function reload() {
   if (R && isL4dd(R.state) && onBoardPhase()) {
     const a = l4Ammo(R.state, R.me, heldNow());
@@ -7903,7 +7949,7 @@ register("game", {
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
       jump: () => jump(),
-      reloadOn: () => !!R && (isL4dd(R.state) || isMgj(R.state)),
+      reloadOn: canReloadNow,
       reload: () => reload(),
     });
     meter = mountMeter();
