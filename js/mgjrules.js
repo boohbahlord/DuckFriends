@@ -86,7 +86,6 @@ import {
   DEATH_LINES,
   GOD_LINES,
   WIN_LINES,
-  LOSE_LINES,
 } from "./hangout/justin.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
@@ -636,8 +635,8 @@ function mgjEnd(s, now, won, log, allOut = false) {
       w: "",
     });
     if (m.gj) m.gj.down = 0; // (Good Justin God gets up to cheer)
-    m.rage1 = any(LOSE_LINES);
-    line(m.rage1);
+    /* at 0 HP he dies there (game.js: lying, bleeding, no more crying), and the dead say nothing (the owner's, Nov 18
+       12:19Z: "justin cannot make dialog when outright dead in zombies or mad god justin"): no losing lines */
     s.mgjWinN = (s.mgjWinN || 0) + 1;
     s.mgjWins = [
       ...(s.mgjWins || []).slice(-9),
@@ -714,12 +713,7 @@ function brain(s, now, log) {
       log(s, { npc: GOOD_ID, name: GOOD_NAME, text: any(WIN_LINES) });
       return true;
     }
-    if (m.won && !m.rage && now - s.at >= MGJ_ZAP + 2800) {
-      m.rage = true; // (his rage goes on while he cries)
-      line(any(LOSE_LINES.filter((x) => x !== m.rage1)) || any(LOSE_LINES));
-      return true;
-    }
-    return false;
+    return false; // (dead, he has no more lines: mgjEnd)
   }
   let ch = false;
   const at = justinAt(j, now);

@@ -544,18 +544,18 @@ const NAMES = {
   medkit: "Medkit",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
-  sniper: "Sniper",
-  smg: "SMG",
+  sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
+  smg: "MP5",
   tommy: "Tommy gun",
   ump: "UMP-45",
   ak: "AK-47",
   chaingun: "Chain gun",
   revolver: "Revolver",
   glauncher: "Grenade launcher",
-  lmg: "LMG",
+  lmg: "M249 SAW",
   dbarrel: "Double barrel",
   flamer: "Flamethrower",
-  burst: "Burst rifle",
+  burst: "Steyr AUG",
   laser: "Laser Rifle",
   zebra: "Zebra cake",
   adrenaline: "Adrenaline shot",
@@ -566,6 +566,37 @@ const NAMES = {
   chair: "Chair",
 };
 export const weaponName = (w) => (isPw(w) ? pwName(w) : NAMES[w] || w);
+/* each one's own color, in its slot and as its orb (the owner's, Nov 18 12:19Z: "every weapon, melee, or item has a
+   corresponding color to it's slot now ... The purples all glow. Any weapon made angelic now has a red slot color and
+   orb"): green, blue, purple (glowing) or the chair's gold. One not here keeps its slot's color (the dagger, the knife,
+   the pistol, the pan, the adrenaline shot, the bow, the grenades) */
+const TINTS = {
+  medkit: "green",
+  axe: "green",
+  sword: "green",
+  hammer: "green",
+  shotgun: "green",
+  revolver: "green",
+  zebra: "blue",
+  dbarrel: "blue",
+  tommy: "blue",
+  ump: "blue",
+  smg: "blue",
+  ak: "blue",
+  burst: "blue",
+  glauncher: "blue",
+  lmg: "blue",
+  safekeep: "purple",
+  sniper: "purple",
+  chaingun: "purple",
+  flamer: "purple",
+  laser: "purple",
+  chair: "gold",
+};
+/* its color's class (css .l4s, .l4orb, .sp-slot: c-green, c-blue, c-purple, c-gold, c-red), "" for its slot's own;
+   holy: an Angelic one, red */
+export const tintOf = (w, holy = false) =>
+  holy ? "c-red" : TINTS[w] ? "c-" + TINTS[w] : "";
 /* points (the owner's) */
 /* what flies a little faster, as in every mode (rules.js FASTER): the arrows, the bullets and the daggers */
 const BULLETS = new Set([

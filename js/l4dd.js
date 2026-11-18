@@ -79,6 +79,7 @@ import {
   boxNow,
   HELPER,
   weaponName,
+  tintOf,
   priceFor,
   reviveMs,
   saleOn,
@@ -1827,7 +1828,11 @@ function peek(tag, s, me) {
     tag.append(el);
   }
   const list = [
-    ...m.sl.map((x, i) => (x ? [x, `k-${SLOT_KINDS[i]}`] : null)),
+    ...m.sl.map((x, i) =>
+      x
+        ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()]
+        : null,
+    ), // (each in its own color: l4ddrules.js tintOf)
     m.g > 0 ? ["grenade", "k-grenade"] : null,
   ].filter(Boolean);
   const to = Math.max(

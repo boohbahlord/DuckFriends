@@ -371,6 +371,7 @@ import {
   TELEPORT,
   HITMARK,
   edgeHTML,
+  GOLD_CHAIR,
 } from "./mgjart.js";
 import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
@@ -1383,11 +1384,11 @@ function drawDucks(now = clockNow()) {
         : s.players[id] ||
           (id === JUSTIN_ID && {
             ...(isMgj(s)
-              ? s.phase === "mgjend" && s.mgj && s.mgj.won
+              ? !mgjDead(s) && s.mgj && s.mgj.hp <= MGJ_CRY
                 ? SAD_JUSTIN
                 : MAD_JUSTIN
               : JUSTIN_PLAYER),
-            dead: !!s.justin.down,
+            dead: !!s.justin.down || mgjDead(s),
           }) ||
           (id === GOOD_ID && {
             ...GOOD_JUSTIN,
@@ -1433,7 +1434,12 @@ function drawDucks(now = clockNow()) {
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
       jet = jetOn(s, id, now),
-      wc = s.players[id] && !g && s.pw ? pwCodes(s, id, now) : "", // (its wounds: wounds.js)
+      wc =
+        id === JUSTIN_ID && isMgj(s)
+          ? mgjGore(s)
+          : s.players[id] && !g && s.pw
+            ? pwCodes(s, id, now)
+            : "", // (its wounds: wounds.js; Mad God Justin's by his HP, mgjGore)
       sig = JSON.stringify([
         look,
         p.name,
@@ -1844,7 +1850,7 @@ function drawDucks(now = clockNow()) {
       }
       const k = Math.min(1, (now - d._poolAt) / JPOOL.ms),
         grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
-        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06).toFixed(1)}px) scale(${grow.toFixed(3)})`;
+        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06 - z).toFixed(1)}px) scale(${grow.toFixed(3)})`; // (where its body lies: on the podium, on it)
       if (d._poolK !== pk) {
         d._poolK = pk;
         d._pool.style.transform = pk;
@@ -2205,7 +2211,7 @@ function drawDucks(now = clockNow()) {
           : sh.k === "controller" || sh.k === "chair"
             ? [
                 `thrown mgj-throw k-${sh.k}`,
-                `<i class="${spin}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i>`,
+                `<i class="${spin}">${sh.k === "chair" ? (isL4dd(s) ? GOLD_CHAIR : CHAIR) : CONTROLLER}</i>`, // (Quacky Zombies' chair is golden)
                 sz,
               ]
             : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
@@ -2290,7 +2296,11 @@ function drawDucks(now = clockNow()) {
     if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
       const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
-        art = lz ? laserArt(lz) : heldHTML(w, duck),
+        art = lz
+          ? laserArt(lz)
+          : w === "chair" && isL4dd(s)
+            ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
+            : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
       /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
          left at a knife's size */
@@ -4161,6 +4171,42 @@ function knockedOff(d, wc, look, at, z, size, face) {
   if (fresh("p"))
     fxKnock(svg(beakSVG(look)), size, x(100), at.top, h(42), face, 1.1, true);
   if (fresh("e")) fxEye(x(83), at.top, h(34), face);
+}
+/* Mad God Justin, beaten: he dies, lying on the LOSER podium in his blood, crying no more (the owner's, Nov 18 12:19Z:
+   "when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for
+   any dead player)", "mad god justin bleeds a puddle of blood when dead") */
+const MGJ_CRY = 25;
+const mgjDead = (s) => isMgj(s) && !!s.mgj && !!s.mgj.won && s.mgj.hp <= 0;
+/* his gore by his HP (the owner's, Nov 18 12:19Z: "justin gets more gored every 10 health points when he has 100 HP,
+   and once he hits 10 HP, every bit of damage does even more gore"): from 100 HP down, one more wound for every 10 HP
+   he has lost, and under 10 HP one more for every HP; each step adds the next of MGJ_GORE (wounds.js codes: bruises
+   and cuts first, then holes, an eye, chunks, his beak, the last the worst). Gore off: game.js shows only what
+   goreFree keeps */
+const MGJ_GORE = [
+  "r1",
+  "c0",
+  "b4",
+  "c6",
+  "B2",
+  "r5",
+  "s1",
+  "c3",
+  "b7",
+  "e0",
+  "B0",
+  "k1",
+  "c7",
+  "b5",
+  "p0",
+  "k2",
+  "B6",
+  "s4",
+  "g0",
+];
+function mgjGore(s) {
+  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? 999) : 999,
+    n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
+  return MGJ_GORE.slice(0, n).join("");
 }
 /* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
 const WLOOK = new Map();

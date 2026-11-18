@@ -386,7 +386,7 @@ export const SPECIALS = [
      (unlocks.js) */
   {
     id: "sniper",
-    name: "Sniper",
+    name: "Barrett .50 Cal",
     kind: "item",
     get icon() {
       return GUNS.sniper.icon;
@@ -395,7 +395,7 @@ export const SPECIALS = [
   },
   {
     id: "smg",
-    name: "SMG",
+    name: "MP5",
     kind: "item",
     get icon() {
       return GUNS.smg.icon;
@@ -440,7 +440,7 @@ export const SPECIALS = [
   },
   {
     id: "lmg",
-    name: "LMG",
+    name: "M249 SAW",
     kind: "item",
     get icon() {
       return GUNS.lmg.icon;
@@ -476,7 +476,7 @@ export const SPECIALS = [
   },
   {
     id: "burst",
-    name: "Burst rifle",
+    name: "Steyr AUG",
     kind: "item",
     get icon() {
       return GUNS.burst.icon;

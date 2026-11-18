@@ -135,13 +135,15 @@ function paint() {
   }
   const bots = s.seat.filter((id) => s.players[id].bot).length;
   $(".lobby-sub", S).textContent = [
-    s.test
-      ? "TEST room"
-      : s.open
-        ? "Open room"
-        : R.passkey
-          ? `Private room · passkey: ${R.passkey}`
-          : "Private room",
+    s.solo
+      ? "Single Player · on this device"
+      : s.test
+        ? "TEST room"
+        : s.open
+          ? "Open room"
+          : R.passkey
+            ? `Private room · passkey: ${R.passkey}`
+            : "Private room",
     bots
       ? `${bots} computer${bots === 1 ? "" : "s"}, acting after ${s.options.botWait} s`
       : "",
