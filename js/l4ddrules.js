@@ -158,9 +158,9 @@ const ROUNDS = [
   [4, [0.5, 0.67], 500, 1000, Infinity],
   [8, [0.5, 0.75], 300, 750, 35],
   [12, [0.75, 0.75], 300, 750, 35],
-  [20, [0.95, 0.95], 250, 500, 45],
-  [Infinity, [0.95, 0.95], 250, 500, 50],
-];
+  [20, [0.75, 0.75], 300, 750, 45],
+  [Infinity, [0.75, 0.75], 300, 750, 50],
+]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
    Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
@@ -398,7 +398,7 @@ export const ARMS = {
   },
   /* the owner's three new guns (Nov 16 16:25Z). The double barrel: every shot one slug that takes all the HP of the
      zombie it hits, blows chunks through it and throws its body back a long way (FLING); a crit's slug blows the head
-     off and goes on through every zombie in its way, killing each. Two shells, then a reload of a second for each
+     off and goes on to the next zombie, past it only on that one's own crit (Nov 18 13:46Z). Two shells, then a reload of a second for each
      shell it loads (shell); 96 shells in all. The flamethrower: its tank (flamer.js), everything in its cone catches
      fire. The burst rifle (an AUG): three rounds a press (burst, gap ms apart), 21 a clip, the AK-47's damage. Where the
      owner gave no number (the crits, the speeds, the burst rifle's ammo and reload) they are guesses */
@@ -467,7 +467,7 @@ const dmgOf = (A) =>
   Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
 /* fire (the owner's): a zombie burns 6 s and takes 1 every 3 s (the first as it's lit); a duck takes 1 as it's lit and
    burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
-export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
+export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000, SPREAD: 500 }; // (SPREAD: ms a zombie burns before its fire goes on to the ones it touches, the owner's, Nov 18 13:46Z)
 /* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
    on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
    enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
@@ -3087,21 +3087,22 @@ function jaimesRun(s, zs, now, T) {
   s.jm = Object.keys(next).length ? next : null;
 }
 /* fire, every heartbeat (BURN): burning zombies take 1 every 3 s, the ducks' fires go out, and anyone burning lights
-   a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by] }, p: { id: until } } */
-function light(s, z, by, now, fl = 0) {
+   a duck it touches. s.hang.l4fire = { z: { zombie: [until, next hurt, by, from when its fire spreads] }, p: { id:
+   until } } */
+function light(s, z, by, now) {
   mark(s, z, "f0"); // (burnt for good, even once the fire is out)
   const F = s.hang.l4fire || {};
   s.hang.l4fire = {
     ...F,
     z: {
       ...(F.z || {}),
-      [z.i]: [now + BURN.Z, now + BURN.EVERY, by, ...(fl ? [1] : [])],
+      [z.i]: [now + BURN.Z, now + BURN.EVERY, by, now + BURN.SPREAD],
     },
   };
 }
 /* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit (1 HP as it's
-   lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its fire spreads (the 4th:
-   fl). True when it died */
+   lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its fire spreads from
+   BURN.SPREAD ms after it was lit (the 4th). True when it died */
 function catchFire(s, z, by, now, T) {
   if (wetZ(z)) return false; // (in the water: never lit)
   const F = s.hang.l4fire || {},
@@ -3110,7 +3111,10 @@ function catchFire(s, z, by, now, T) {
     if (f[0] - now < BURN.Z - 250 || !f[3])
       s.hang.l4fire = {
         ...F,
-        z: { ...F.z, [z.i]: [now + BURN.Z, f[1], f[2], 1] },
+        z: {
+          ...F.z,
+          [z.i]: [now + BURN.Z, f[1], f[2], f[3] || now + BURN.SPREAD],
+        },
       }; // (a quarter second at a time: not a new object every puff)
     return false;
   }
@@ -3119,7 +3123,7 @@ function catchFire(s, z, by, now, T) {
     mark(s, z, "f0");
     return true;
   }
-  light(s, z, by, now, 1);
+  light(s, z, by, now);
   return false;
 }
 /* the flamethrower (flamer.js), one puff: it reaches farther the longer it's held, up to a wall; every zombie in its
@@ -3177,9 +3181,12 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     ];
   }
 }
-/* every heartbeat: the flamethrower's fire spreads to the zombies that touch one it lit, and the burning ground lights
-   any zombie on it; old streams and patches go */
-const TOUCH_Z = 1.6; // (in a zombie's hit room, 26 by 22 world px)
+/* every heartbeat: the flamethrower's fire spreads to the zombies that touch one burning, once that one has burnt
+   BURN.SPREAD ms (half a second), and so on from each one it lights; the burning ground lights any zombie on it; old
+   streams and patches go (the owner's, Nov 18 13:46Z: "make sure the zombies burn other zombies it touches relatively
+   easier AND it takes 0.5 seconds AFTER a zombie is on fire for it's flame to spread to other zombies, and this repeats
+   for every zombie on fire") */
+const TOUCH_Z = 2.2; // (in a zombie's hit room, 26 by 22 world px: was 1.6, now a little farther, so it catches easier)
 function flameTick(s, zs, now, T) {
   const gf = s.hang.l4gf;
   if (gf && gf.length) {
@@ -3194,7 +3201,12 @@ function flameTick(s, zs, now, T) {
   const fz = (s.hang.l4fire || {}).z;
   if (fz) {
     const hot = zs.filter(
-      (z) => z.st !== 3 && fz[z.i] && fz[z.i][3] && fz[z.i][0] > now,
+      (z) =>
+        z.st !== 3 &&
+        fz[z.i] &&
+        fz[z.i][3] &&
+        now >= fz[z.i][3] &&
+        fz[z.i][0] > now,
     );
     for (const a of hot)
       for (const b of zs)
@@ -3650,12 +3662,14 @@ export function l4Shots(s, now) {
         break;
       }
       if (w === "dbarrel") {
-        /* the double barrel's slug: all the HP of the zombie it hits, its body thrown back; a crit's goes on through
-           every zombie in its way (each once), killing each, until the wall */
+        /* the double barrel's slug: all the HP of the zombie it hits, its body thrown back. A crit's goes on to the next
+           zombie in its way, kills it too, and goes on past it only if that one is a crit of its own, a new roll each
+           time (the owner's, Nov 18 13:46Z: "the slug round in crit mode cannot pass through the next zombie after the
+           first it kills UNLESS that is a crit too for another rolled chance"), until a zombie that isn't or the wall */
         let stop = false;
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
-            const head = sh.crit || headshot(s, sh.by, w, z, now);
+            const head = headshot(s, sh.by, w, z, now);
             sh.hit = [...(sh.hit || []), z.i];
             strike(s, z, z.hp, head, sh.by, w);
             die(z, T);
@@ -3663,8 +3677,7 @@ export function l4Shots(s, now) {
             slugs.push([Math.round(z.x), Math.round(z.y), head ? 1 : 0]);
             fling(z, sh, sh.hz);
             hitAny = true;
-            if (head) sh.crit = 1;
-            else {
+            if (!head) {
               stop = true;
               break;
             }
