@@ -1940,14 +1940,21 @@ function ammoBars(tag, s, me) {
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
    scrolls from the slot I had to the one now in hand, the one in the middle bigger, then fades out quickly (the
    owner, Nov 17: on a computer and a phone) */
-let peekW = null;
+let peekW = null,
+  peekNow = false;
+/* the box again, even with nothing switched: a swipe on my duck on a phone (touch.js), which always shows the selection
+   (the owner's, Nov 18 15:18Z) */
+export const peekAgain = () => {
+  peekNow = true;
+};
 function peek(tag, s, me) {
   const m = kitOf(s, me),
     w = heldFn() || "";
-  if (!m || w === peekW) return;
+  if (!m || (w === peekW && !peekNow)) return;
   const first = peekW === null,
     was = peekW;
   peekW = w;
+  peekNow = false;
   if (first) return; // (not when the game starts: only a switch)
   let el = tag.querySelector(".l4-peek");
   if (!el) {

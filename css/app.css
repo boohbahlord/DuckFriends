@@ -2321,13 +2321,17 @@ textarea.note-glow {
 .corner-tr > .mbar {
   max-width: min(16rem, 46vw);
 } /* the front page and Rooms: left of Sign in */
+.corner-tr > .mbar.no-room {
+  display: none;
+} /* no room for it beside Full screen and Sign in: hidden, never squeezed under them (musicbar.js mountCornerMusicBar) */
 @media (max-width: 520px) {
-  /* a phone's Rooms: the duck sign stands for the word, so the bar fits between it and Sign in */
+  /* a phone's Rooms: no word, so the music bar fits between Back and Sign in (no sign over Play either: the owner's,
+     Nov 18 15:18Z, "The agree or disagree logo should not be above the play game menu") */
   .rooms .bar-word {
     display: none;
   }
   body[data-screen="rooms"] .corner-tr {
-    left: 10.6rem;
+    left: 7rem;
     justify-content: flex-end;
     pointer-events: none;
   } /* starts past the sign; the bar shrinks */
@@ -7919,6 +7923,14 @@ html.still .spe-bone .bone-slide {
   }
 } /* (a phone on its side: one short row, so the slider sits in it, a little smaller, and the jump button sits beside
      the attack stick instead of above it) */
+/* Dead Ducks Arcade on a phone: the hotbar is on my duck, no more in the bottom middle (the owner's, Nov 18 15:18Z): a
+   swipe on my duck picks (touch.js), and the box under it shows the switch and fades, as on a computer (l4dd.js peek).
+   The slider stays, out of sight and out of the row */
+.sp-phone.on-duck {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
 .bbar {
   position: relative;
 }

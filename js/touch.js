@@ -6,7 +6,10 @@
    leads it along; a fast swipe sprints that way.
    Jumping is the up-arrow button's (phonepad.js): I want it to replace tapping the board to jump.
    Either way, a finger held still for half a second brings up the specials around it (hotbar.js); held still on a duck,
-   it opens that duck's menu instead. */
+   it opens that duck's menu instead.
+   Dead Ducks Arcade on a phone: the hotbar is on my duck (the owner's, Nov 18 15:18Z: "swiping on their duck shows the
+   selection"): a finger that goes down on my own duck never starts the stick; sliding it left or right picks the next
+   slot or the one before, one for every SWIPE.step it goes, and a tap on my duck uses the one picked. */
 import { profile } from "./store.js";
 import { el } from "./ui.js";
 
@@ -14,7 +17,7 @@ export const stick = { x: 0, y: 0, sprint: false, shown: false }; // the joystic
 const REACH = 60; // the stick's reach in pixels
 const TAP = { ms: 260, px: 12 }; // a tap: short and still
 const FLICK = { out: 450, gap: 380, ang: 0.9 }; // two flicks: each out for under .45 s, back for under .38 s, about the same way
-const SWIPE = { px: 40, ms: 350 }; // a swipe: this far, this fast
+const SWIPE = { px: 40, ms: 350, step: 36 }; // a swipe: this far, this fast (on my duck: a slot for every step px)
 const STILL = 520; // held still this long: the specials (on a duck: its menu)
 /* where a finger never starts the stick: on something it presses or types in, or scrolls (the docked Notes and chat, the
    specials' slider, the music bar). Anywhere else it does, the bars' empty spots too, right beside a button, and on the
@@ -27,13 +30,15 @@ const angDiff = (a, b) =>
   Math.abs(((a - b + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
 
 /* api: active(), walkTo(clientX, clientY, sprint), duckAt() → {x, y} on screen, getTarget(), setTarget(t),
-   hold(clientX, clientY) → true when the specials came up */
+   hold(clientX, clientY) → true when the specials came up, swipe (or null): { on() → my duck takes swipes now,
+   nudge(d) → picks the next slot (1) or the one before (-1), tap() → uses the one picked } */
 export function mountTouch(S, api) {
   let hold = null; // the finger on the stick
   let push = null; // the last flick out: { ang, at, back } (back: when it came back to the middle)
   const fingers = new Map(); // every other finger: id → where it went down and how far it moved
   let pad = null,
-    knob = null;
+    knob = null,
+    swiping = null; // the finger on my own duck (Dead Ducks Arcade on a phone): { id, x (where its last slot was picked), t, moved }
 
   const reset = () => {
     stick.x = stick.y = 0;
@@ -107,6 +112,15 @@ export function mountTouch(S, api) {
         moved: 0,
       },
       onDuck = !!e.target.closest(".gduck");
+    if (
+      !swiping &&
+      api.swipe &&
+      e.target.closest(".gduck.mine") &&
+      api.swipe.on()
+    ) {
+      swiping = { id: f.id, sx: f.sx, sy: f.sy, x: f.x, t: now, moved: 0 };
+      return;
+    } // (my duck: its hotbar, never the stick)
     if (profile.settings.touch === "tap") {
       f.prev = api.getTarget();
       api.walkTo(f.x, f.y, false);
@@ -152,6 +166,18 @@ export function mountTouch(S, api) {
   }
   function move(e) {
     const now = performance.now();
+    if (swiping && e.pointerId === swiping.id) {
+      swiping.moved = Math.max(
+        swiping.moved,
+        Math.hypot(e.clientX - swiping.sx, e.clientY - swiping.sy),
+      );
+      const dx = e.clientX - swiping.x;
+      if (Math.abs(dx) >= SWIPE.step) {
+        swiping.x += Math.sign(dx) * SWIPE.step;
+        api.swipe.nudge(dx < 0 ? 1 : -1); // (left: the next one, as the slider went)
+      }
+      return;
+    }
     if (hold && e.pointerId === hold.id) {
       hold.moved = Math.max(
         hold.moved,
@@ -187,6 +213,17 @@ export function mountTouch(S, api) {
   }
   function up(e) {
     const now = performance.now();
+    if (swiping && e.pointerId === swiping.id) {
+      const sw = swiping;
+      swiping = null;
+      if (
+        e.type === "pointerup" &&
+        sw.moved < TAP.px &&
+        now - sw.t < TAP.ms * 1.5
+      )
+        api.swipe.tap(); // (a tap on my duck: the one picked is used)
+      return;
+    }
     if (hold && e.pointerId === hold.id) {
       if (hold.out && push) push.back = now; // a flick that lets go counts as coming back
       hold = null;
@@ -231,6 +268,7 @@ export function mountTouch(S, api) {
     removeEventListener("pointerup", up);
     removeEventListener("pointercancel", up);
     hold = null;
+    swiping = null;
     reset();
     if (pad) pad.remove();
     pad = null;
