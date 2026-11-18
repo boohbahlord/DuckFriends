@@ -125,17 +125,8 @@ import {
   pwTap,
   pwOrbHTML,
   isPw,
-  PART_ICONS,
 } from "./l4ddpowerui.js";
-import {
-  powerOn,
-  powerNext,
-  pwState,
-  partName,
-  PW,
-  fireForSale,
-  pumpZone,
-} from "./l4ddpower.js";
+import { powerOn, powerNext, PW, gasFull, pumpZone } from "./l4ddpower.js";
 import {
   angelMount,
   angelUnmount,
@@ -1889,8 +1880,6 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
-      (pwState(s) || {}).shop,
-      fireForSale(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
@@ -1924,12 +1913,6 @@ function shopFill(s, ctx) {
     const have = !!kit && kit.sl.includes("safekeep"),
       price = safePrice(s),
       was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
-    const partRow = (part, buy, price) =>
-      `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb k-part"><i>${PART_ICONS[part]}</i></span></i><span class="l4-up-t"><b>${partName(part)}</b><small>A part for the power box</small></span><button type="button" class="btn small yellow l4-up-buy" data-buy="${buy}"${pts < price ? " disabled" : ""}>${price}</button></li>`;
-    const part = (pwState(s) || {}).shop,
-      fire = fireForSale(s);
-    if (part) shop.guns.innerHTML += partRow(part, "part", PW.SHOP); // (the power box's part he always has: l4ddpower.js)
-    if (fire) shop.guns.innerHTML += partRow(fire, "partfire", PW.SHOP_FIRE); // (and the fireplace's, dearer, until it comes out of a spin)
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
   }
 }
@@ -2082,9 +2065,8 @@ function tap(t, ctx) {
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
   else if (t.kind === "power") pwTap(ctx);
   else if (t.kind === "pump") {
-    if (!powerOn(s)) return say("The pumps need the power on");
-    if (ptsOf(s, me) < PW.PUMP * PW.PUMP_ROUNDS)
-      return say("Not enough points");
+    if (gasFull(s)) return say("The jerry cans are full");
+    if (ptsOf(s, me) < PW.PUMP) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }

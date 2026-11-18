@@ -153,7 +153,6 @@ import {
   mgjGone,
   mgjUse,
   mgjShot,
-  mgjSafe,
   mgjHitAt,
   MGJ_SCALE,
   MGJ_HAMMER,
@@ -183,7 +182,6 @@ import {
   l4Reload,
   l4Shots,
   l4Holds,
-  kitOf,
   helperOut,
   ARMS,
   laserHeat,
@@ -1179,15 +1177,10 @@ export const KB_MS = 380,
   KB_FAR = 2.4,
   KB_HOP = 0.3,
   KB_LAND = 110; // (KB_LAND: ms until the swing gets there; the duck falls then)
-/* may this duck fly? (the jetpack on its back, with fuel left in Quacky Zombies; never in Mad God Justin) */
-function canFly(s, id, now) {
-  if (isMgj(s)) return false;
-  if (isL4dd(s)) {
-    const m = kitOf(s, id);
-    return !!(m && m.jp && ((m.am || {}).jetpack || [0])[0] > 0);
-  }
-  const u = ((s.aura || {})[id] || {}).jetpack;
-  return u !== undefined && (!u || u > now);
+/* may this duck fly? Never: the Jetpack is gone from the whole game (the owner's, Nov 18 12:19Z: "remove jet pack from
+   the whole game"), the special, its unlock and Dead Ducks Arcade's item alike */
+function canFly() {
+  return false;
 }
 const EFFECTS = [
   "zap",
@@ -1199,8 +1192,7 @@ const EFFECTS = [
   "ducklings",
   "disco",
   "invisible",
-  "jetpack",
-]; // the effects, shown around a duck (the Invisible duck and the Jetpack: only on or off, never for 5 seconds)
+]; // the effects, shown around a duck (the Invisible duck: only on or off, never for 5 seconds)
 /* thrown the way the mouse aims, but never kept out: the Chair special (the silly commands' switch covers it, as the
    weapons) and the Zebra cake */
 export const THROWS = ["chair", "zebra"];
@@ -4204,7 +4196,6 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         if (sh.got && sh.got.includes(id)) continue; // (it already took HP from this duck)
         hLock(sh, duckH(s, p)); // (the first it passes over sets its height)
         if (sh.fake) continue; // (Mad God Justin: his double's, or his own while the double is the real one: no harm)
-        const safe = isMgj(s) && mgjSafe(s, id, now);
         logHit(s, sh.by, id, now);
         const crit = critRoll(s, sh.k);
         if (

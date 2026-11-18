@@ -1,18 +1,19 @@
 /* ---------- Dead Ducks Arcade's power box on every screen (the rules: l4ddpower.js) ----------
-   The box on the balcony with its four slots and its fuel sign, the count under it after E ("2/4"), what lies about to
-   be taken (a part, a jerry can with its percent), everyone's pool of parts at the middle left of the screen (small on
-   a phone), and the sounds: the power going out, coming on, a part found, fitted, gas poured. l4dd.js calls these. */
-import { heightAt, seenFrom, sortY } from "./hangout/layout.js";
+   The box on the balcony with its fuel sign, what lies about to be taken (a jerry can with its percent), everyone's row
+   of jerry cans at the middle left of the screen (canRow; with a very small line under it once it's full, gasFull),
+   and the sounds: the power going out, coming on, a jerry can found, gas pumped, gas poured. l4dd.js calls these. */
+import { heightAt, seenFrom, sortY, layoutVariant } from "./hangout/layout.js";
 import { svgDataURL } from "./hangout/art.js";
 import { play } from "./sound.js";
 import {
   PW,
-  PARTS,
   pwState,
   powerOn,
   powerNext,
   roundsLeft,
   canPct,
+  canRow,
+  gasFull,
   partName,
   isPw,
   pwOf,
@@ -25,16 +26,15 @@ export { PART_ICONS };
 /* the gas meter (the owner, Nov 16 23:29Z): twelve boxes like the HP bar's, one for each round of a full can's fuel, in
    the yellow of electricity and a little see-through. One function for every place that has a power box (the cabin's
    now, Downpour's too): gasMeter(rounds) gives the meter's HTML for that many rounds left (0 to 12, more is a full one) */
-export const GAS_BOXES = PW.FULL;
+export const GAS_BOXES = 12;
 export function gasMeter(rounds) {
   const n = Math.max(0, Math.min(GAS_BOXES, Math.round(+rounds || 0)));
   return `<span class="l4-gas" role="img" aria-label="Gas: ${n} of ${GAS_BOXES} rounds">${Array.from({ length: GAS_BOXES }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span>`;
 }
 
-let box = null, // { el, img, n (the count), fuel (the sign's words), sig, tr, k }
-  pool = null, // the pool at the middle left
+let box = null, // { el, img, fuel (the sign's words), sig, tr, k }
+  pool = null, // the row of jerry cans at the middle left
   items = new Map(), // what lies about: its n → { el, o, tr, k }
-  shownUntil = 0, // the count under the box shows till then (after my E)
   fxSeen = -1,
   wasOn = null,
   poolSig = "";
@@ -43,19 +43,17 @@ export function pwMount(ctx, layer) {
   box = { el: document.createElement("div"), sig: "", tr: "", k: 0 };
   box.el.className = "l4-pw";
   box.el.innerHTML =
-    '<img alt="" draggable="false"><span class="l4-pw-n" hidden></span><span class="l4-pw-fuel"></span><span class="l4-pw-gas"></span>';
+    '<img alt="" draggable="false"><span class="l4-pw-fuel"></span><span class="l4-pw-gas"></span>';
   box.img = box.el.querySelector("img");
-  box.n = box.el.querySelector(".l4-pw-n");
   box.fuel = box.el.querySelector(".l4-pw-fuel");
   box.gas = box.el.querySelector(".l4-pw-gas");
   layer.append(box.el);
   pool = document.createElement("div");
-  pool.className = "l4-parts";
+  pool.className = "l4-parts l4-cans";
   pool.setAttribute("role", "status");
   pool.hidden = true;
   ctx.world.board.append(pool);
   items = new Map();
-  shownUntil = 0;
   fxSeen = -1;
   wasOn = null;
   poolSig = "";
@@ -95,24 +93,22 @@ export function pwSee(s, ctx) {
     box.el.before(el);
     items.set(o.n, { el, o, tr: "", k: 0 });
   }
-  /* the pool: every part found and not fitted yet, and the jerry cans */
-  const sig = pw ? JSON.stringify([pw.pool, pw.cans]) : "";
+  /* the row of jerry cans: the fullest first, always one at least (an empty one), and the line under it once it's
+     full (Noah draws the row: canRow gives each can's gas in quarter cans, gasFull says it's full) */
+  const row = pw ? canRow(s) : [],
+    full = gasFull(s),
+    sig = JSON.stringify([row, full]);
   if (sig !== poolSig) {
     poolSig = sig;
-    const icons = pw
-      ? [
-          ...pw.pool.map(
-            (k) =>
-              `<i class="l4-part" title="${partName(k)}">${PART_ICONS[k]}</i>`,
-          ),
-          ...pw.cans.map(
-            (r) =>
-              `<i class="l4-part k-can" title="${partName("can")} ${canPct(r)}%">${jerrySVG(canPct(r))}</i>`,
-          ),
-        ]
-      : [];
-    pool.innerHTML = icons.join("");
-    pool.hidden = !icons.length;
+    pool.innerHTML =
+      row
+        .map(
+          (r) =>
+            `<i class="l4-part k-can" title="${partName("can")} ${canPct(r)}%">${jerrySVG(canPct(r))}</i>`,
+        )
+        .join("") +
+      (full ? '<small class="l4-cans-max">Max jerry cans</small>' : "");
+    pool.hidden = !row.length;
   }
   /* the sounds: the power (everywhere alike), a part found (where it was taken), fitted and poured (at the box) */
   const on = powerOn(s);
@@ -125,9 +121,9 @@ export function pwSee(s, ctx) {
       if (f.kind === "l4pwgot") {
         const a = ctx.world.at(f.by);
         play("partGot", a ? { x: a.x, y: a.y } : {});
-      } else if (f.kind === "l4pwfit") {
-        play("partIn", { x: PW.X, y: PW.Y });
-        if (f.by === ctx.me) shownUntil = performance.now() + 4000;
+      } else if (f.kind === "l4pwfill") {
+        const a = ctx.world.at(f.by);
+        play("gasPour", a ? { x: a.x, y: a.y } : {}); // (a pump filling the row)
       } else if (f.kind === "l4pwgas") play("gasPour", { x: PW.X, y: PW.Y });
     }
     fxSeen = s.fxN || 0;
@@ -157,7 +153,7 @@ export function pwDraw(ctx) {
         powerBoxSVG({
           parts: pw.fit,
           on,
-          fuel: Math.min(1, left / PW.FULL),
+          fuel: Math.min(1, left / GAS_BOXES),
         }),
       );
       box.fuel.textContent = on
@@ -176,10 +172,6 @@ export function pwDraw(ctx) {
       box.k = sc;
       box.el.style.setProperty("--k", sc.toFixed(3));
     }
-    const show = performance.now() < shownUntil,
-      n = `${pw.fit.length}/${PARTS.length}`;
-    if (box.n.hidden === show) box.n.hidden = !show;
-    if (box.n.textContent !== n) box.n.textContent = n;
   }
   for (const o of items.values()) {
     const q = Wd.toScreen(o.o.x, o.o.y, (o.o.z || 0) + heightAt(o.o.x, o.o.y)),
@@ -211,25 +203,21 @@ export function pwTarget(pos, s, near) {
 }
 /* Downpour: a gas pump's button */
 export function pumpLabel(s) {
-  if (!powerOn(s)) return "Gas pump · no power";
-  return `Gas · ${PW.PUMP_ROUNDS} rounds · ${PW.PUMP * PW.PUMP_ROUNDS}`;
+  if (gasFull(s)) return "Gas · jerry cans full";
+  return `Gas · 25% · ${PW.PUMP}`;
 }
 export function pwLabel(s) {
-  const pw = pwState(s),
-    next = powerNext(s);
-  if (next === "fit")
-    return `Fit ${pw.pool.length === 1 ? "the part" : `${pw.pool.length} parts`} · ${pw.fit.length}/${PARTS.length}`;
-  if (next === "on") return "Turn the power on";
-  if (next === "pour") return `Pour in the jerry can · ${canPct(pw.cans[0])}%`;
-  if (pw.fit.length < PARTS.length)
-    return `Power box · ${pw.fit.length}/${PARTS.length}`;
-  if (pw.on) {
+  const next = powerNext(s);
+  if (next === "pour")
+    return `Pour in the jerry can · ${canPct(canRow(s)[0])}%`;
+  if (powerOn(s)) {
     const n = roundsLeft(s);
     return `Power on · ${n} ${n === 1 ? "round" : "rounds"} of fuel`;
   }
-  return "Out of fuel · find a jerry can";
+  return layoutVariant() === "l4gs"
+    ? "Out of fuel · fill a jerry can"
+    : "No power · find a jerry can";
 }
 export function pwTap(ctx) {
-  shownUntil = performance.now() + 4000; // (E shows the count under the box)
   ctx.send({ t: "hang", k: "l4", do: "power" });
 }

@@ -148,7 +148,7 @@ const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {
-  const all = [...POOL, "jaimebomb", "grenade"],
+  const all = [...POOL, "grenade"], // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
     of = (k) => all.filter((w) => kindOf(w) === k);
   const cats = [
     ["Melee", of("melee").map(weaponRow)],

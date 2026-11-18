@@ -96,10 +96,6 @@ import {
   powerSetUp,
   powerRound,
   powerTick,
-  canFire,
-  partFire,
-  powerTake,
-  powerBuy,
   powerAct,
   powerPump,
   isPw,
@@ -522,16 +518,7 @@ export const WEAPONS = [
   "burst",
   "laser",
 ]; // (the rarest first, the owner's, Nov 18 10:38Z: the sharp melees 1/6 of a gun's chance each, the blunt ones 1/4, the chain gun and the flamethrower 1/2, then every gun on its own)
-export const ITEMS = [
-  "medkit",
-  "zebra",
-  "adrenaline",
-  "longjump",
-  "jaime",
-  "jetpack",
-  "chair",
-  "safekeep",
-];
+export const ITEMS = ["medkit", "zebra", "adrenaline", "chair", "safekeep"]; // (no Long jump, Jaime or Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 export const WEAPON_ODDS = 0.8; // (the item's chance is 20%: the owner's, Nov 17 17:41Z, "the chance of an item is now 20% for it's bag instead of 15%")
 /* the melees are one bag among the weapons, and it holds two bags, the blunt ones and the sharp ones (the owner's,
    Nov 16): the fireplace picks the melee bag as likely as any one gun, then one of its two bags, then one inside it */
@@ -2067,6 +2054,7 @@ function justinBody(s, what, id, now, mx, my) {
     B = jaimeBody();
   if (!isWild(s, id) || id !== WILD.id || !B || !L || !L.wait || L.over)
     return false;
+  if ((P4(s, id) || {}).dn) return false; // (dead: no lines, the owner's, Nov 18 12:19Z)
   let v = s.hang.l4jv;
   if (!v || v.r !== L.wait.r) {
     v = { r: L.wait.r, left: Math.random() < 0.5 ? 2 : 0, at: 0 }; // (this rest phase: half the time twice, else not at all)
@@ -2081,10 +2069,6 @@ function justinBody(s, what, id, now, mx, my) {
 }
 /* Justin's Butler: an upgrade, from beside him, while I have the points (and haven't bought it as often as it goes) */
 function buy(s, id, what, mx, my, hand, now) {
-  if (what === "part" || what === "partfire") {
-    if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
-    return powerBuy(s, id, now, PH, what === "partfire");
-  }
   if (what === "safekeep") {
     if (Math.hypot(BUTLER.x - mx, BUTLER.y - my) > SHOP_REACH * 2) return false;
     const price = safePrice(s);
@@ -2166,11 +2150,6 @@ function fireplace(s, id, a, now, mx, my) {
     return true;
   }
   if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
-  if (isPw(b.w)) {
-    powerTake(s, b.w, id, now, PH); // (a part or a jerry can: into everyone's pool)
-    dropBox(s, id);
-    return true;
-  }
   if (!give(s, id, b.w, a.hand)) return false;
   if (b.w === "jaimebomb") jaimeCount(s, { got: id }); // (unlocks.js)
   dropBox(s, id);
@@ -2190,16 +2169,10 @@ export function itemOdds([wr, ir] = [0, 0]) {
   return Math.min(0.95, Math.max(0.02, v));
 }
 function fireRoll(s, id, kit) {
-  if (HELPER.on && Math.random() < HELPER.chance && !s.players[HELPER.id])
-    return HELPER.w; // 1 in 100: Justin (off: HELPER.on)
-  /* the rarer first, the more likely after (the owner's, Nov 18 10:38Z): a jerry can (1 in 100), the Jaime Bomb (1 in
-     50), the power box's part (5% and up: l4ddpower.js), then an item (20% and so on: itemOdds), else a weapon */
-  const can = canFire(s);
-  if (can) return can;
-  if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
-    return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
-  const pw = partFire(s);
-  if (pw) return pw;
+  /* the rarer first, the more likely after (the owner's, Nov 18 10:38Z): an item (20% and so on: itemOdds), else a
+     weapon. No Justin, no Jaime Bomb, no jerry can and no power box part any more (the owner's, Nov 18 12:19Z:
+     "justin is removed from every slot", "Jaime bomb is removed from all zombie modes", "jerry can no longer in
+     slots") */
   const fo = (s.hang.l4fo || {})[id] || [0, 0],
     bags = MELEE_BAGS.map((b) => b.filter((w) => !kit.sl.includes(w))).filter(
       (b) => b.length,
@@ -3236,6 +3209,15 @@ function hurtDuck(s, p4, id, now, w = "") {
     p4[id] = { ...p, hp, at: now };
     return false;
   }
+  if (isWild(s, id)) {
+    /* Justin out there dies outright: no bleeding out, nobody can get him up, his body stays (the owner's, Nov 18
+       12:19Z: "he dies outright, justin does, and only in the zombie mode") */
+    p4[id] = { hp: 0, at: now, dn: now + 1e13, ex: 1 };
+    if (s.players[id]) s.players[id].dead = true;
+    justinSays(s, "death"); // (his death line as he falls; nothing after it: justinChat)
+    s.hang.still = { ...(s.hang.still || {}), [id]: now + 1e13 };
+    return true;
+  }
   p4[id] = { hp: 0, at: now, dn: now + L4.BLEED };
   downGun(s, id, true);
   const u = upOf(s, id);
@@ -3632,12 +3614,21 @@ export function l4Shots(s, now) {
       }
       const pierce = pierceOf(s, sh.by, w);
       if (pierce) {
-        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall */
+        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Its
+           first one takes its most damage, and once it crits, it crits every one after it, still only up to its limit
+           (the owner's, Nov 18 12:19Z: "it now will do max damage to the first zombie it passes through AND will do
+           max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it
+           passes through") */
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
+            const sniper = w === "sniper",
+              first = !(sh.hit || []).length,
+              head = (sniper && !!sh.crit) || headshot(s, sh.by, w, z, now),
+              dmg =
+                sniper && first && Array.isArray(A.dmg) ? A.dmg[1] : dmgOf(A);
+            if (sniper && head) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
-            if (strike(s, z, dmgOf(A), headshot(s, sh.by, w, z, now), sh.by, w))
-              die(z, T);
+            if (strike(s, z, dmg, head, sh.by, w)) die(z, T);
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
