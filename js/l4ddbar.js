@@ -24,6 +24,7 @@ import {
   weaponName,
   reloadOf,
   downArmed,
+  tintOf,
 } from "./l4ddrules.js";
 import { now as clockNow } from "./clock.js";
 
@@ -89,7 +90,7 @@ export function mountL4Bar(S, api) {
         ];
     if (down) {
       const n = count("dg", m);
-      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
       return;
     } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
@@ -106,7 +107,8 @@ export function mountL4Bar(S, api) {
                 : "";
       const on =
         (w === "jetpack" && m && m.jp) || (w === "longjump" && m && m.lj); // (switched on: a green ring)
-      return `<button type="button" class="l4s k-${kind}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
+      const tint = w && w !== "fl" ? tintOf(w, angelOf(s, me, w)) : ""; // (its own color: l4ddrules.js tintOf)
+      return `<button type="button" class="l4s k-${kind}${tint ? " " + tint : ""}${w && w === held ? " sel" : ""}${empty ? " empty" : ""}${on ? " on" : ""}" data-l4w="${does}" aria-label="${name}${n ? ", " + n : ""}"${out || (!w && does !== "fl") ? " disabled" : ""}>${w ? reloadMeter(s, me, w, m) : ""}<i>${icon}</i><kbd>${key}</kbd>${n ? `<small>${n}</small>` : ""}</button>`;
     };
     /* (my HP isn't here any more: it's the red meter under the hotbar, hpmeter.js; owner 2026-11-04 03:16Z) */
     row.innerHTML = `<div class="l4slots">${slots.map(slot).join("")}</div>`;
@@ -169,9 +171,9 @@ export function l4Slider(api) {
             icon: weaponIcon(id, duckOf(k.s, k.me)),
             off: false,
             keep: false,
-            cls: "k-ranged",
+            cls: "k-ranged c-plain",
           }
-        : null; // (down: the down pistol, never Angelic)
+        : null; // (down: the down pistol, never Angelic; a plain slot, as the pistol's always is)
     const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
     if (i < 0) return null;
     return {
@@ -185,7 +187,7 @@ export function l4Slider(api) {
             : weaponIcon(id, duckOf(k.s, k.me)),
       off: out(k.s, k.me) || (i < 5 && spent(id, k.m)),
       keep: i === 3 || i === 5,
-      cls: `k-${kindAt(i)}`,
+      cls: `k-${kindAt(i)}${id === "fl" ? "" : " " + tintOf(id, angelOf(k.s, k.me, id))}`.trim(), // (its own color)
     };
   };
   return {

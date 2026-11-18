@@ -18,7 +18,7 @@
    I looked for a small library first: outlines like these come from big engines (PixiJS' pixi-filters OutlineFilter,
    Phaser's postFX), which want their own renderer and don't fit our pages of plain elements, so this is the usual
    canvas trick: the picture drawn a pixel off each way in the color, its own shape cut back out. */
-import { gridPx } from "./pixel.js";
+import { gridPx, raster } from "./pixel.js";
 import {
   floorAt,
   layoutVariant,
@@ -31,6 +31,20 @@ const GREEN = "#5be35b",
   YELLOW = "#ffd23f",
   RED = "#8a1018";
 const COLOR = { ally: GREEN, me: DARK_BLUE, justin: YELLOW, zombie: RED };
+/* the drops lying on the ground (the owner's, Nov 18 13:58Z: "special drops like instant kill, full ammo, and all of
+   those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground ... so it is not
+   missed, and gas gets an orange outline"): each its own color, none of the ducks' green, blue or yellow or the
+   zombies' red, and the jerry cans orange. Kind "drop_<its kind>" (l4dd.js, l4ddpowerui.js) */
+export const DROP_OL = {
+  kill: "#ff3df5", // (Instant Kill: magenta)
+  ammo: "#3fdcff", // (Max Ammo: cyan)
+  nuke: "#a46bff", // (Nuke: violet)
+  speed: "#ffffff", // (Speed Boost: white)
+  double: "#c8ff3a", // (Double Points: lime, the dollar's)
+  sale: "#ff7aa8", // (Sale: pink)
+  can: "#ff8a1a", // (a jerry can, gas: orange)
+};
+for (const [k, c] of Object.entries(DROP_OL)) COLOR["drop_" + k] = c;
 const BLINK = 700; // ms an outline blinks after a hit
 
 /* which floor something is on, from where it stands (world px) and its feet's height: on Downpour, 1 up on a roof or
@@ -124,23 +138,53 @@ function outline(img, kind, key = img.currentSrc || img.src) {
 let list = new Map(); // id → what to outline (one each: the last one asked for this frame)
 const HP = new Map(); // id → [its HP last seen, when it last went down]
 /* something to outline this frame: { id, img (its picture on the screen), x, y, w, h (where the picture is, css px on
-   the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie"), hidden (something hides it), floor (its floor
-   against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
-   bottom, its body's height], css px) } */
+   the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie", or a drop's: "drop_" + its kind,
+   DROP_OL), hidden (something hides it), floor (its floor against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
+   bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) } */
+/* a picture of my own to outline, for what shows as a drawing and not as a pixel image (the drops: their symbols, a
+   jerry can's orb): the drawing (an SVG string) made into pixels at w × h css px (pixel.js raster), as an image; null
+   while it's made */
+const PICS = new Map(); // its pixel version's url → the image
+export function olPic(key, svg, w, h) {
+  const u = raster(
+    key,
+    svg.replace(/<svg (?![^>]*\swidth=)/, '<svg width="64" height="64" '),
+    w,
+    h,
+  ); // (a size of its own: Firefox won't draw an SVG with none)
+  if (!u) return null;
+  let im = PICS.get(u);
+  if (!im) {
+    if (PICS.size > 80) PICS.clear();
+    PICS.set(u, (im = new Image()));
+    im.src = u;
+  }
+  return im;
+}
 export function olAdd(o) {
   if (o.img && o.img.complete && o.img.naturalWidth) list.set(o.id, o);
 }
 
 let cv = null,
   g = null,
-  drawn = false;
-/* draws this frame's outlines into `host` (W × H css px), then starts the next frame's list; no host: none */
+  drawn = false,
+  last = ""; // (what the canvas shows now, as text: the same next frame, nothing is drawn again)
+/* each outline's own number, for that text */
+const CID = new WeakMap();
+let cids = 0;
+const cid = (c) => CID.get(c) || (CID.set(c, ++cids), cids);
+/* draws this frame's outlines into `host` (W × H css px), then starts the next frame's list; no host: none.
+   Only when what it draws changes (the owner's, Nov 18 13:58Z: "only update a zombie's outline, hp bar, and shadow
+   when it changes"): each frame first works out every line it would draw (which outline, where, how faint), and if
+   that is what the canvas already shows, it's left alone. A canvas drawn again costs the browser a whole new picture
+   to take in; one left alone costs nothing */
 export function olDraw(host, W, H, now = performance.now()) {
   const want = list.values();
   list = new Map();
   if (!host) {
     if (cv && drawn) g.clearRect(0, 0, cv.width, cv.height);
     drawn = false;
+    last = "";
     return;
   } // (no zombie game now: none left over on the screen)
   if (!cv || cv.parentNode !== host) {
@@ -151,6 +195,7 @@ export function olDraw(host, W, H, now = performance.now()) {
     host.append(cv);
     g = cv.getContext("2d");
     drawn = true;
+    last = "";
   }
   const gp = gridPx(),
     cw = Math.max(1, Math.ceil(W / gp)),
@@ -160,10 +205,10 @@ export function olDraw(host, W, H, now = performance.now()) {
     cv.height = ch;
     cv.style.width = (cw * gp).toFixed(2) + "px";
     cv.style.height = (ch * gp).toFixed(2) + "px";
+    last = ""; // (a resize empties it)
   }
-  g.imageSmoothingEnabled = false; // (sharp pixels: a resize resets it)
-  if (drawn) g.clearRect(0, 0, cw, ch);
-  drawn = false;
+  const ops = [],
+    sig = [];
   for (const o of want) {
     /* a hit: it blinks */
     let h = o.hp === undefined ? null : HP.get(o.id); // (zombies don't blink: only players and Justin have HP here)
@@ -176,20 +221,26 @@ export function olDraw(host, W, H, now = performance.now()) {
        owner's, Nov 17 17:41Z); a player in plain sight keeps the very faint one (12:28Z); a zombie in plain sight none,
        but a floor away it has its line and its arrow all the same, so its floor shows (20:10Z) */
     const zombie = o.kind === "zombie",
+      drop = o.kind.startsWith("drop_"), // (a drop on the ground: always its line and its glow, till it's picked up)
       away = o.floor || 0,
       shown = zombie ? o.hidden || !!away : true;
     if (!shown && !hit) continue;
-    let a = o.hidden
-      ? zombie
-        ? 0.85
-        : away > 0
-          ? 0.55 // (above me: fainter)
-          : 0.9
-      : zombie
-        ? 0.85
-        : 0.14; // (nothing hides it: very faint)
+    let a = drop
+      ? o.hidden
+        ? 0.95
+        : 0.6
+      : o.hidden
+        ? zombie
+          ? 0.85
+          : away > 0
+            ? 0.55 // (above me: fainter)
+            : 0.9
+        : zombie
+          ? 0.85
+          : 0.14; // (nothing hides it: very faint)
     if (hit) a = blink ? 1 : 0.15;
-    const kind = o.kind + (!zombie && (o.hidden || hit) ? "-glow" : ""),
+    const kind =
+        o.kind + (drop || (!zombie && (o.hidden || hit)) ? "-glow" : ""),
       c = outline(o.img, kind);
     if (!c) continue;
     const sw = o.w / gp / o.img.naturalWidth, // (the picture's pixels against the grid's: about 1)
@@ -198,6 +249,40 @@ export function olDraw(host, W, H, now = performance.now()) {
       y = Math.round(o.y / gp),
       dw = c.width * sw,
       dh = c.height * sh;
+    let ax = 0,
+      ay = 0,
+      aa = 0,
+      ac = null;
+    if (away) {
+      /* the arrow inside it, the way to it: an outline of the same line and color as its own (with its glow when it
+         has one), clear even when its own line is faint, so its floor always shows; it blinks with it */
+      ac = outline(ARROW[away > 0 ? 0 : 1], kind, away > 0 ? "up" : "down");
+      aa = hit ? a : Math.max(a, 0.75);
+      ax =
+        (o.mid
+          ? Math.round(o.mid[0] / gp)
+          : Math.round(x + (o.img.naturalWidth * sw) / 2)) -
+        P -
+        (AW >> 1);
+      ay =
+        (o.mid
+          ? Math.round(o.mid[1] / gp)
+          : Math.round(y + o.img.naturalHeight * sh * 0.55)) -
+        P -
+        (AH >> 1); // (lying down: in the middle of its body, where it lies, mid)
+    }
+    ops.push({ o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay });
+    sig.push(
+      `${cid(c)}|${a}|${x},${y}|${dw.toFixed(2)},${dh.toFixed(2)}|${o.flip ? 1 : 0}|${o.down ? o.down.map((v) => v.toFixed(1)) : ""}|${ac ? `${cid(ac)},${ax},${ay},${aa}` : ""}`,
+    );
+  }
+  const drawing = sig.join(";");
+  if (drawing === last) return; // (just as it is on the screen: nothing to draw)
+  last = drawing;
+  g.imageSmoothingEnabled = false; // (sharp pixels: a resize resets it)
+  if (drawn) g.clearRect(0, 0, cw, ch);
+  drawn = false;
+  for (const { o, c, a, x, y, sw, sh, dw, dh, ac, aa, ax, ay } of ops) {
     g.globalAlpha = a;
     if (o.flip || o.down) {
       /* turned left (mirrored round its middle), or lying down as a duck out of HP lies (css: rotate(-100deg)
@@ -214,20 +299,9 @@ export function olDraw(host, W, H, now = performance.now()) {
       g.drawImage(c, x - P * sw, y - P * sh, dw, dh);
       g.restore();
     } else g.drawImage(c, x - P * sw, y - P * sh, dw, dh);
-    if (away) {
-      /* the arrow inside it, the way to it: an outline of the same line and color as its own (with its glow when it
-         has one), clear even when its own line is faint, so its floor always shows; it blinks with it */
-      const ac = outline(
-        ARROW[away > 0 ? 0 : 1],
-        kind,
-        away > 0 ? "up" : "down",
-      );
-      g.globalAlpha = hit ? a : Math.max(a, 0.75);
-      g.drawImage(
-        ac,
-        Math.round(x + (o.img.naturalWidth * sw) / 2) - P - (AW >> 1),
-        Math.round(y + o.img.naturalHeight * sh * 0.55) - P - (AH >> 1),
-      );
+    if (ac) {
+      g.globalAlpha = aa;
+      g.drawImage(ac, ax, ay);
     }
     drawn = true;
   }

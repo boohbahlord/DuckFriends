@@ -390,10 +390,25 @@ export const OUTFITS = [
     id: "shirt",
     name: "Shirt",
     colors: [["c1", "Shirt", "#2f7fe0"]],
+    /* (Veronica, a merchant, wears it with jeans: "a shirt and jeans, nothing else"; the jeans are the Blue jeans
+       outfit's, under the shirt's hem) */
+    opts: [
+      [
+        "pants",
+        [
+          ["none", "No pants"],
+          ["jeans", "Jeans"],
+        ],
+      ],
+    ],
     cloth: (o) =>
       TOP(o.c1, 88) +
       collarBand(dk(o.c1, 0.2), 2.6) +
-      `<path d="M0 87H120" stroke="${dk(o.c1, 0.25)}" stroke-width="1.6"/>`,
+      `<path d="M0 87H120" stroke="${dk(o.c1, 0.25)}" stroke-width="1.6"/>` +
+      (o.pants === "jeans"
+        ? LOW("#3f63a8", 88) +
+          `<g fill="none" stroke="#d9a441" stroke-width=".8" stroke-dasharray="1.6 1"><path d="M60 89V108"/><path d="M76 91C80 97 86 99 92 97"/></g>`
+        : ""),
     sleeve: (o) =>
       `<path d="M40 77C50 70 68 71 76 79L72 83C64 78 50 77 42 82C40 81 39 79 40 77Z" fill="${dk(o.c1, 0.1)}" stroke="${dk(o.c1, 0.45)}" stroke-width="1.1"/>`,
     bare: true,
@@ -584,6 +599,45 @@ export const OUTFITS = [
       flower(58, 76, 3.4, "#ffd0e0"),
     bare: true,
   },
+  /* a plaid flannel shirt over the whole upper body, buttoned (the merchant Carl's: "his shirt should be a plad shirt
+     that covers his upper body"); jeans under it or no pants, as the Shirt. The plaid: wide dark bands both ways,
+     darker where they cross, and a thin light line through each */
+  {
+    id: "plaid",
+    name: "Plaid shirt",
+    tip: "A flannel shirt in plaid. Pick jeans or no pants.",
+    colors: [
+      ["c1", "Shirt", "#b8282e"],
+      ["c2", "Plaid", "#1f1f26"],
+    ],
+    opts: [
+      [
+        "pants",
+        [
+          ["jeans", "Jeans"],
+          ["none", "No pants"],
+        ],
+      ],
+    ],
+    cloth: (o) =>
+      TOP(o.c1, 90) +
+      `<g fill="${o.c2}" opacity=".42">${[4, 20, 36, 52, 68, 84, 100, 116].map((x) => `<rect x="${x}" y="0" width="7" height="90"/>`).join("")}${[56, 72, 88].map((y) => `<rect x="0" y="${y}" width="120" height="7"/>`).join("")}</g>` +
+      `<g stroke="${lt(o.c1, 0.55)}" stroke-width=".6" opacity=".55">${[12, 28, 44, 60, 76, 92, 108].map((x) => `<path d="M${x} 52V90"/>`).join("")}${[66, 82].map((y) => `<path d="M0 ${y}H120"/>`).join("")}</g>` +
+      `<path d="M84 59L91 69L95 59Z" fill="${dk(o.c1, 0.3)}"/><path d="M95 59L99 68L102 59Z" fill="${dk(o.c1, 0.3)}"/>` +
+      `<path d="M95 60V90" stroke="${dk(o.c1, 0.45)}" stroke-width="1.1"/>` +
+      buttons("#e8e2d2", [
+        [96.4, 72],
+        [97, 80],
+        [97, 87],
+      ]) +
+      (o.pants === "none"
+        ? `<path d="M0 90H120" stroke="${dk(o.c1, 0.4)}" stroke-width="1.4"/>`
+        : LOW("#3f63a8", 90) +
+          `<path d="M0 90H120" stroke="${dk(o.c1, 0.4)}" stroke-width="1.4"/><g fill="none" stroke="#d9a441" stroke-width=".8" stroke-dasharray="1.6 1"><path d="M60 91V108"/><path d="M76 93C80 99 86 101 92 99"/></g>`),
+    sleeve: (o) =>
+      sleeve(o.c1, dk(o.c1, 0.3)) +
+      `<g stroke="${o.c2}" stroke-width="3.4" opacity=".4" stroke-linecap="butt"><path d="M50 74.6V89.6M62 73.6V90.4"/><path d="M42.6 81.6H73"/></g>`,
+  },
   {
     id: "disco",
     name: "Disco suit",
@@ -654,7 +708,16 @@ export const outfitById = (id) => OUTFITS.find((o) => o.id === id) || null;
 export const OUTFIT_GROUPS = [
   [
     "Everyday",
-    ["shirt", "hoodie", "jeans", "leather", "hawaiian", "muscle", "pajamas"],
+    [
+      "shirt",
+      "plaid",
+      "hoodie",
+      "jeans",
+      "leather",
+      "hawaiian",
+      "muscle",
+      "pajamas",
+    ],
   ],
   ["Dressed up", ["suit", "tux", "agbada", "dress", "iro", "gown", "disco"]],
   ["Church", ["priest", "pope", "bishop"]],

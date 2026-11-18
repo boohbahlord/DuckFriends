@@ -12,8 +12,8 @@ import { ARM_COOL } from "./armspeed.js";
      and the pump shotgun a cone of pellets at a duck close enough. After each burst he reloads; while he reloads he
      sprints at a duck to hammer it, and a duck that comes up close gets the hammer too. He walks faster than before and
      every attack comes sooner (PACE).
-   - His throws, each held up first (the tell): the controllers every way at once, the office chair, and every 14 s a
-     fireball (1 damage, and the duck burns for 3.5 s: a burning duck lights every duck it touches).
+   - His throws, each held up first (the tell): the controllers every way at once and the office chair. (No fireball any
+     more: the owner's, Nov 18 10:38Z, "we are removing the fireball from everything in the game".)
    - The edge lightning, every 10 s by itself: the board's edges glow for 0.6 s, then a flash runs along them and hits
      every duck and Jaime there (not him).
    - When he touches the board's edge he flashes blue and jumps to a spot far from it, once every 15 s at most.
@@ -71,22 +71,13 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import {
-  ARMS,
-  ITEM_ODDS,
-  zombieTakes,
-  pierceOf,
-  ALL_HP,
-  HEAVY_BAG,
-  MELEE_BAGS,
-} from "./l4ddrules.js";
+import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
   DEATH_LINES,
   GOD_LINES,
   WIN_LINES,
-  LOSE_LINES,
 } from "./hangout/justin.js";
 
 export const isMgj = (s) => s.options.mode === "mgj";
@@ -214,14 +205,10 @@ export const THROW_TELL = 800, // ms the controllers are held up before they fly
   CHAIR_SPEED = 0.11, // (was 0.085)
   CHAIR_R = 2.4, // how near it hits, in duck lengths (a bullet's is 1)
   CHAIR_LIFE = 16000;
-/* the rework (the owner's, Nov 3): his fireball, every FB_EVERY ms with its tell; the duck it hits burns for BURN_MS
-   and looks burnt for BURNT_MS, and while it burns it lights every duck it touches (TOUCH duck lengths) */
-export const FB_EVERY = 14000,
-  FB_TELL = 800,
-  FB_SPEED = 0.25, // (was 0.2)
-  FB_R = 1.2,
-  FB_LIFE = 9000,
-  BURN_MS = 3500,
+/* a burning duck (the rework, the owner's, Nov 3) burns for BURN_MS and looks burnt for BURNT_MS, and while it burns it
+   lights every duck it touches (TOUCH duck lengths). His fireball, that set it burning, is gone (the owner's, Nov 18
+   10:38Z: "we are removing the fireball from everything in the game") */
+export const BURN_MS = 3500,
   BURNT_MS = 7000,
   TOUCH = 1.1;
 /* the edge lightning: every EDGE_EVERY ms the edges glow for EDGE_WARN ms, then the flash hits every duck and Jaime
@@ -311,34 +298,25 @@ export const PLUS_LIFE = 10000,
   PICK_HIT = 1100, // ms after it shows: lightning or fire strikes him, the meteor starts to fall, Good Justin comes
   PICK_LAND = 1500, // the meteor's fall
   PICKS = [
-    ["sniper", 16],
-    ["ak", 18],
-    ["lmg", 16],
-    ["shotgun", 16],
-    ["glauncher", 10],
-    ["chaingun", 5], // (rarer)
-    ["tommy", 12], // (the Tommy gun and the UMP-45: the owner's, Nov 17, from the spin and Justin's pickups)
-    ["ump", 12],
-    ["laser", 8], // (the Laser Rifle: the owner's, Nov 17, from the spin and Justin's pickups)
-    ["medkit", 10.5],
-    ["sky", 5],
-    ["meteor", 2.5],
     ["good", 1],
-  ]; // (only the powerful guns drop now, and the medkit is back: the owner's, Nov 16; the hammer, the dagger and the handgun are gone)
+    ["meteor", 2.5],
+    ["sky", 5],
+  ]; // (the rarest first: the owner's, Nov 18 10:38Z; the guns and the medkit come from their bags: pickKind)
 /* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
    sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
    full, or gets a downed duck up at once when I hold it out over it */
 export const MGJ_GUNS = [
-  "sniper",
-  "ak",
-  "lmg",
-  "shotgun",
-  "glauncher",
   "chaingun",
-  "laser",
+  "glauncher",
+  "lmg",
   "tommy",
   "ump",
-];
+  "smg",
+  "ak",
+  "burst",
+  "shotgun",
+  "dbarrel",
+]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
 export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
@@ -518,7 +496,6 @@ export function mgjStart(s, now) {
     hamAt: now + SPAWN_MS + 5000 * PACE,
     ctlAt: now + SPAWN_MS + rnd(9000, 13000) * PACE,
     chairAt: now + SPAWN_MS + rnd(18000, 26000) * PACE,
-    fbAt: now + SPAWN_MS + rnd(5000, 8000) * PACE,
     dashAt: now + SPAWN_MS + rnd(6000, 9000) * PACE,
     tpAt: 0,
     eatAt: now + rnd(25000, 40000),
@@ -641,8 +618,8 @@ function mgjEnd(s, now, won, log, allOut = false) {
       w: "",
     });
     if (m.gj) m.gj.down = 0; // (Good Justin God gets up to cheer)
-    m.rage1 = any(LOSE_LINES);
-    line(m.rage1);
+    /* at 0 HP he dies there (game.js: lying, bleeding, no more crying), and the dead say nothing (the owner's, Nov 18
+       12:19Z: "justin cannot make dialog when outright dead in zombies or mad god justin"): no losing lines */
     s.mgjWinN = (s.mgjWinN || 0) + 1;
     s.mgjWins = [
       ...(s.mgjWins || []).slice(-9),
@@ -719,12 +696,7 @@ function brain(s, now, log) {
       log(s, { npc: GOOD_ID, name: GOOD_NAME, text: any(WIN_LINES) });
       return true;
     }
-    if (m.won && !m.rage && now - s.at >= MGJ_ZAP + 2800) {
-      m.rage = true; // (his rage goes on while he cries)
-      line(any(LOSE_LINES.filter((x) => x !== m.rage1)) || any(LOSE_LINES));
-      return true;
-    }
-    return false;
+    return false; // (dead, he has no more lines: mgjEnd)
   }
   let ch = false;
   const at = justinAt(j, now);
@@ -1177,22 +1149,15 @@ function brain(s, now, log) {
     Object.assign(j, { w: B.w, ax: +ax.toFixed(3), ay: +ay.toFixed(3) });
     return true;
   }
-  if (now >= j.chairAt || now >= j.ctlAt || now >= j.fbAt) {
-    const k =
-      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
+  if (now >= j.chairAt || now >= j.ctlAt) {
+    const k = now >= j.chairAt ? "chair" : "controller";
     stop();
     j.tell = {
       k,
       id: any(them),
-      at:
-        now +
-        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
+      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
     };
-    if (k === "fireball") {
-      j.fbAt = now + soon(FB_EVERY);
-      j.ctlAt = Math.max(j.ctlAt, now + 2500);
-      j.chairAt = Math.max(j.chairAt, now + 2500);
-    } else if (k === "chair") {
+    if (k === "chair") {
       j.chairAt = now + soon(rnd(15000, 22000));
       j.ctlAt = Math.max(j.ctlAt, now + 4500);
     } else j.ctlAt = now + soon(rnd(8000, 12000));
@@ -1294,28 +1259,50 @@ function brain(s, now, log) {
 }
 
 /* ---------- the pickups ---------- */
-/* what comes next (the owner's, Nov 17 13:07Z: "weapons drop chance should be based off the slot or roll mechanic at the
-   fireplace or car"): the sky, the meteor and Good Justin come as they did (SKY, their own odds); otherwise the roll is
-   the spin's: a medkit (the items' side) ITEM_ODDS.start of the time, else one gun with the spin's own odds (spinShare) */
-const SKY = PICKS.filter(([k]) => ["sky", "meteor", "good"].includes(k));
-/* a weapon's share on the fireplace's spin (l4ddrules.js fireRoll): a gun on its own is one share; a gun in a bag splits
-   that bag's one share with the rest of the bag (the chain gun: half, with the flamethrower); a melee splits the melee
-   bag's share between its two bags, then inside its own */
-const spinShare = (w) => {
-  if (HEAVY_BAG.includes(w)) return 1 / HEAVY_BAG.length;
-  const b = MELEE_BAGS.find((x) => x.includes(w));
-  return b ? 1 / MELEE_BAGS.length / b.length : 1;
+/* what comes next: the sky, the meteor and Good Justin as they did (SKY, their own odds); else a medkit (the Item bag's
+   chance, as the fireplace's); else a gun from the bags (the owner's, Nov 18 12:19Z and 12:32Z: "the chain gun only has
+   a 5% chance of spawning for it's bag that is rolled first"): the chain gun 5% first, else the next of three bags
+   that take turns, heavy (the grenade launcher, the M249), rifles (the Tommy gun, the UMP-45, the MP5, the AK-47, the
+   AUG) and shotguns (the shotgun, the double barrel), each giving the next one of its own. Every bag shuffles: each of
+   its things once before any comes again (s.hidden.mgjb, the host's only) */
+const SKY = PICKS;
+export const MGJ_CHAIN = 0.05;
+export const MGJ_BAGS = {
+  heavy: ["glauncher", "lmg"],
+  rifle: ["tommy", "ump", "smg", "ak", "burst"],
+  shotgun: ["shotgun", "dbarrel"],
 };
+const mix = (xs) => {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+/* the next one of a bag (left: its things left, in their shuffled order; all of them when it's empty) */
+const nextOf = (left, all) => {
+  const rest = left && left.length ? left : mix(all);
+  return [rest[0], rest.slice(1)];
+};
+function bagGun(s) {
+  const b = (s.hidden && s.hidden.mgjb) || { b: {} },
+    [k, turns] = nextOf(b.w, Object.keys(MGJ_BAGS)),
+    [w, rest] = nextOf(b.b[k], MGJ_BAGS[k]);
+  s.hidden = {
+    ...(s.hidden || {}),
+    mgjb: { w: turns, b: { ...b.b, [k]: rest } },
+  };
+  return w;
+}
 const pickKind = (s) => {
   const list = SKY.filter(([k]) => k !== "good" || !s.mgj.gj),
     r = Math.random() * 100;
   let at = 0;
   for (const [k, w] of list) if (r < (at += w)) return k;
-  if (Math.random() < ITEM_ODDS.start) return "medkit";
-  const all = MGJ_GUNS.reduce((n, w) => n + spinShare(w), 0);
-  let u = Math.random() * all;
-  for (const w of MGJ_GUNS) if ((u -= spinShare(w)) < 0) return w;
-  return MGJ_GUNS[MGJ_GUNS.length - 1];
+  if (Math.random() < SLOT_ODDS.item) return "medkit";
+  if (Math.random() < MGJ_CHAIN) return "chaingun";
+  return bagGun(s);
 };
 function pickTick(s, now, at, log, fx) {
   const m = s.mgj;
@@ -1792,8 +1779,8 @@ function deskSpot(s, at) {
   }
   return { x: best.x, y: best.y };
 }
-/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair or
-   the fireball at q (the board's Mad God Justin throws them too, boardjustin.js) */
+/* the throw itself: CTL_N controllers spread evenly every way (turned a little at random each time), or the chair at q
+   (the board's Mad God Justin throws them too, boardjustin.js) */
 export function throwIt(s, k, at, q, now, fx) {
   const dir = (a, v) => {
     const bx = Math.cos(a) * RX,
@@ -1801,7 +1788,7 @@ export function throwIt(s, k, at, q, now, fx) {
       bl = Math.hypot(bx, by);
     return [+((bx / bl) * v).toFixed(4), +((by / bl) * v).toFixed(4)];
   };
-  const one = k === "chair" || k === "fireball",
+  const one = k === "chair",
     a0 =
       one && q
         ? Math.atan2((q.y - at.y) / RY, (q.x - at.x) / RX)
@@ -1819,8 +1806,8 @@ export function throwIt(s, k, at, q, now, fx) {
   for (let i = 0; i < n; i++) {
     const [vx, vy] = dir(
       a0 + (i * Math.PI * 2) / n,
-      (k === "chair" ? CHAIR_SPEED : k === "fireball" ? FB_SPEED : CTL_SPEED) *
-        (k === "fireball" ? 1 : FAST_FLY ** (+(s.justin || {}).fast || 0)), // (faster attacks: the controllers and the chair fly faster)
+      (k === "chair" ? CHAIR_SPEED : CTL_SPEED) *
+        FAST_FLY ** (+(s.justin || {}).fast || 0), // (faster attacks: the controllers and the chair fly faster)
     );
     s.shots = [
       ...(s.shots || []),
@@ -1835,20 +1822,15 @@ export function throwIt(s, k, at, q, now, fx) {
         t: now,
         lx: at.x,
         ly: at.y,
-        life:
-          k === "chair" ? CHAIR_LIFE : k === "fireball" ? FB_LIFE : CTL_LIFE,
-        ...(k === "chair"
-          ? { r: CHAIR_R }
-          : k === "fireball"
-            ? { r: FB_R }
-            : {}),
+        life: k === "chair" ? CHAIR_LIFE : CTL_LIFE,
+        ...(k === "chair" ? { r: CHAIR_R } : {}),
       },
     ];
   }
 }
 
 /* ---------- the rework (the owner's, Nov 3) ---------- */
-/* a hit on a duck from anything of his (the fireball, a burning duck, the edge lightning): its HP, or down. True when
+/* a hit on a duck from anything of his (a burning duck, the edge lightning): its HP, or down. True when
    it hurt (not while nothing can hurt it, nor in the air) */
 export function mgjKnock(s, id, now) {
   if (id === GOOD_ID) {
@@ -1877,7 +1859,7 @@ export const mgjBurning = (s, id, now) =>
   ((s.mgj && s.mgj.burn) || {})[id] > now;
 const alive = (o, now) =>
   Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v > now));
-/* the burns run out; a burning duck lights every duck it touches (that takes 1 HP, as the fireball does) */
+/* the burns run out; a burning duck lights every duck it touches (that takes 1 HP) */
 function burnTick(s, now) {
   const m = s.mgj,
     burn = alive(m.burn, now),
@@ -1933,7 +1915,6 @@ function later(s, now, ms) {
   const m = s.mgj,
     j = s.justin;
   m.edgeAt = Math.max(m.edgeAt || 0, now + ms + EDGE_WARN);
-  j.fbAt = Math.max(j.fbAt || 0, now + ms);
   j.dashAt = Math.max(j.dashAt || 0, now + ms);
 }
 

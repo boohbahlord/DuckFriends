@@ -1,39 +1,31 @@
-/* ---------- Dead Ducks Arcade's power box (the owner's, Nov 16 17:22Z) ----------
-   The game starts with the power cut. The box on the balcony, back left against the cabin wall, needs four parts: a
-   fuse, a lever, a tool box and a gas can with gas in it. Every game they are somewhere else:
-     - one is always in Justin's Butler's shop, for 250 points;
-     - one is always carried by a zombie in rounds 1 to 5, dropped where it dies;
-     - the other two are at two of these, picked at random: the bathroom sink, the kitchen counter, the couch, or the
-       fireplace. The fireplace's rolls before its weapons and items: 5% on the first spin, 10% more on every spin after
-       (anyone's), until someone gets it. The Butler sells that one too, for 750 (the owner's, Nov 16 21:21Z), except
-       while it's out in a spin; bought, it's gone from the fireplace.
-   A part on the floor stays there, never fading, until a duck walks over it. Every part goes into one pool everyone
-   shares (the middle left of the screen). E at the box fits every part the pool holds; once all four are in, the next E
-   turns the power on: every light, the balcony's and the porch's too, and the TV; every flashlight turns off by itself.
-   The first time it lasts 6 rounds: it goes out as round 7 starts (the round it came on in counts as one). Then the
-   flashlights turn back on.
-   Once it has gone out, jerry cans come: 1% from the fireplace (rolled with the part, before the weapons), 1% from a
-   zombie that dies, and 1% at each round's start in a part's spot (the sink, the counter, the couch). Only one is ever
-   out at a time (on the floor, in the pool or in the fireplace), so another comes only once it's been poured. How full
-   it is is rolled in this order: full 5% (12 rounds), else 3/4 25% (9), else 1/2 50% (6), else 1/4 75% (3), else almost
-   empty (1). Its label is its fuel in percent of a full can's 12 rounds. E at the box pours it in: the power runs that
-   many rounds, on top of what's left while it's still on.
+/* ---------- Dead Ducks Arcade's power box (the owner's, Nov 16 17:22Z; reworked Nov 18 12:19Z) ----------
+   The box on the balcony, back left against the cabin wall, is built from the start now (the owner's, Nov 18 12:19Z:
+   "the power box is already put together by default in cabin now ... the cabin starts without power still until
+   gasoline is added"): no parts to find, buy or spin for. The power stays off until gas is poured in.
+   The gas (the owner's, Nov 18 12:19Z): everyone shares one row of jerry cans at the left of the screen, three at most.
+   It is one amount of gas, in quarter cans (pw.gas, 0 to 12; a quarter is one round of power), shown as cans filled one
+   after the other, the fullest first: 0 shows one empty can; 150% a full one and a half one; 200% two full ones and an
+   empty one; 300% three full ones (canRow). A jerry can found adds its gas into the row (what doesn't fit stays where it
+   lay, smaller). A found can is always full, 100% (4 rounds: the owner's, Nov 18 12:32Z). They come from a zombie that
+   dies (1%) and at each round's start in a part's spot (1%), never from the fireplace, the Butler or the Priest; one a
+   round at most, and one nobody took stays there into the next rounds.
+   On Downpour a pump puts a quarter can (25%) into the row for 150 points. E at the box pours the fullest can in: the
+   power runs that many rounds, on top of what's left while it's still on.
 
    s.hang (online):
-     pw  { fit: [parts in the box], pool: [parts found, not fitted yet], cans: [each jerry can's rounds], on: 1 while the
-           power is on, left: the rounds it still lasts, this one included (between rounds: the next one counted too),
-           ever: 1 once it has gone out the first time, tries: the fireplace's spins without its part, fire: the part in
-           the fireplace (""), shop: the part the Butler sells (""), zp: the part a zombie will carry, zr: from which
-           round, zi: the zombie that carries it (its number, 0 till its round), n: the last floor item's number }
-     pk  [{ n, k (a part, or "can"), x, y, z (where it's drawn: on the sink, the counter or the couch), px, py (where a
-           duck takes it), r (a jerry can's rounds) }]: what lies about to be taken
+     pw  { fit: [the box's parts, all of them], on: 1 while the power is on, left: the rounds it still lasts, this one
+           included (between rounds: the next one counted too), gas: the row's gas in quarter cans, cr: the round the
+           last jerry can came in, n: the last floor item's number }
+     pk  [{ n, k ("can"), x, y, z (where it's drawn: on the sink, the counter or the couch), px, py (where a duck takes
+           it), r (its gas, in quarter cans) }]: what lies about to be taken
    s.hidden.l4seen { zombie: 1 }: the dead ones already rolled for a jerry can. */
 import { PROPS, layoutVariant } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 /* Downpour (Dead Ducks Arcade's second map, the owner's Nov 16 23:15Z): the generator's power box east of the gas
-   station, running from the start with 8 rounds of gas and no parts to find (Nov 17 05:46Z: dpSetUp); jerry cans turn
-   up at the spots in stationmap.js PART_SPOTS; the flashlights stay as they are when the power comes on (23:29Z);
-   and a pump sells gas while the power is on: 3 rounds for 250 a round (23:29Z) */
+   station, running from the start with 8 rounds of gas (Nov 17 05:46Z: dpSetUp); jerry cans turn up at the spots in
+   stationmap.js PART_SPOTS; the flashlights stay as they are when the power comes on (23:29Z); and the pumps fill the
+   row's jerry cans (Nov 18 12:19Z: "the gas station now fills up an empty jerry can every player shares on the left
+   screen ONLY in downpour") */
 const dpOn = () => layoutVariant() === "l4gs";
 
 export const PARTS = ["fuse", "lever", "tools", "gas"];
@@ -57,38 +49,25 @@ export const PW = {
   get E() {
     return dpOn() ? [GS.POWER_SPOT.x, GS.POWER_SPOT.y + 80] : [2300, 2300];
   },
-  PUMP: 250, // Downpour: a round of gas at a pump …
-  PUMP_ROUNDS: 3, // … sold 3 rounds at a time
+  PUMP: 150, // Downpour: a quarter can (25%) of gas at a pump (the owner's, Nov 18 12:19Z: "the gas pump now give 25% gas to a jerry can for 150 points each")
   REACH: 130, // world px from there
-  SHOP: 250, // the Butler's part
-  SHOP_FIRE: 750, // the fireplace's part, bought from the Butler instead (the owner's, Nov 16 21:21Z)
-  FIRST: 6, // rounds the power lasts the first time
   DP_GAS: 8, // Downpour: the rounds of gas the generator holds as the game starts
-  ZOMBIE_BY: 5, // a zombie in rounds 1 to 5 carries a part
-  FIRE: 0.05, // the fireplace's part: 5% on the first spin …
-  FIRE_MORE: 0.1, // … and 10% more for each spin after
-  CAN_FIRE: 0.01, // jerry cans (once the power has gone out): from the fireplace,
-  CAN_ZOMBIE: 0.01, // from a zombie that dies,
-  CAN_ROUND: 0.01, // at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z)
-  FULL: 12, // rounds in a full jerry can
+  CAN_ZOMBIE: 0.01, // jerry cans: from a zombie that dies (the owner's, Nov 18 12:19Z: "Gasoline is still a 1% chance of dropping in zombies"),
+  CAN_ROUND: 0.01, // and at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z)
+  FULL: 4, // quarter cans (rounds) in a full jerry can (the owner's, Nov 18 12:19Z: "4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%")
+  CANS: 3, // jerry cans the row holds at most (the owner's, Nov 18 12:19Z: "only three Jerry cans can be held on the left screen by all players")
   TAKE: 75, // world px: how near a duck walks to take what lies on the floor
   TAKE_SPOT: 110, // … and what lies on the sink, the counter or the couch (from the floor in front)
 };
-/* a jerry can's rounds, rolled in the owner's order: each fill only if the one before it failed */
-const CANS = [
-  [12, 0.05],
-  [9, 0.25],
-  [6, 0.5],
-  [3, 0.75],
-];
-export function canRounds() {
-  for (const [n, p] of CANS) if (Math.random() < p) return n;
-  return 1;
-}
-/* its fuel in percent of a full can: 100, 75, 50, 25, 8 */
+export const GAS_MAX = PW.FULL * PW.CANS;
+/* a found jerry can's gas, in quarter cans: always a full one (the owner's, Nov 18 12:32Z, through Adam: a found can is
+   always 100%) */
+export const canRounds = () => PW.FULL;
+/* a can's gas in percent: 100, 75, 50, 25, 0 */
 export const canPct = (r) => Math.round((r / PW.FULL) * 100);
 export const partName = (k) => NAMES[k] || k;
-/* the fireplace's weapon string for a part or a jerry can: "pw:fuse", "pw:can:9" */
+/* the fireplace's weapon string for a part or a jerry can ("pw:fuse", "pw:can:3"): none come from it any more, but a
+   spin already turning keeps working */
 export const isPw = (w) => typeof w === "string" && w.startsWith("pw:");
 export const pwOf = (w) => {
   const [, k, r] = w.split(":");
@@ -158,68 +137,49 @@ export function roundsLeft(s) {
   if (!pw || !pw.on) return 0;
   return Math.max(0, pw.left - (s.hang.l4 && s.hang.l4.wait ? 1 : 0));
 }
-/* is a jerry can out: on the floor, in the pool, or in someone's fireplace spin? */
-function canOut(s) {
-  const pw = s.hang.pw;
-  return (
-    pw.cans.length > 0 ||
-    (s.hang.pk || []).some((o) => o.k === "can") ||
-    Object.values(s.hang.l4box || {}).some(
-      (b) => b && isPw(b.w) && pwOf(b.w).k === "can",
-    )
-  );
+/* the row of jerry cans at the left of the screen, each its gas in quarter cans, the fullest first: the full ones, then
+   the one being filled; an empty one after the full ones while there is room for it (the owner's, Nov 18 12:19Z: "when
+   there is no jerry cans, the players have a 0% jerry can on the left, and when they have three full jerry cans, then
+   empty is tranformed like the other ones, and the empty only follows the full one if the previous is full") */
+export function canRow(s) {
+  const pw = pwState(s),
+    q = Math.max(0, Math.min(GAS_MAX, (pw && pw.gas) || 0)),
+    full = Math.floor(q / PW.FULL),
+    rest = q % PW.FULL,
+    row = Array(full).fill(PW.FULL);
+  if (rest) row.push(rest);
+  else if (full < PW.CANS) row.push(0);
+  return row;
 }
-const canCome = (s) => !!s.hang.pw.ever && !canOut(s);
+/* the row is full: three full cans (the owner's: "a very small text below the items ... says they have the max amount
+   of jerry cans") */
+export const gasFull = (s) => ((pwState(s) || {}).gas || 0) >= GAS_MAX;
+/* can a jerry can come now? Once a round at most (pw.cr: the round the last one came in); one nobody took stays where
+   it is, and others still come in later rounds (the owner's, Nov 18 12:19Z: "If the jerry can isn't found within that
+   round on the ground ... then it can still lay on the ground while other gasoline can be dropped by zombies in later
+   rounds") */
+const canCome = (s) => {
+  const L = s.hang.l4;
+  return !!L && L.r >= 1 && s.hang.pw.cr !== L.r;
+};
 
 /* ---------- the rules' side (l4ddrules.js calls these; h: its helpers) ---------- */
-/* a new game: the four parts shuffled into their places */
+/* a new game: the box built, the power off and no gas (Downpour: dpSetUp) */
 export function powerSetUp(s) {
   if (dpOn()) return dpSetUp(s);
-  const p = [...PARTS].sort(() => Math.random() - 0.5),
-    where = [...CABIN_SPOTS, "fire"]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 2);
-  const pw = {
-    fit: [],
-    pool: [],
-    cans: [],
-    on: 0,
-    left: 0,
-    ever: 0,
-    tries: 0,
-    fire: "",
-    shop: p[0],
-    zp: p[1],
-    zr: 1 + Math.floor(Math.random() * PW.ZOMBIE_BY),
-    zi: 0,
-    n: 0,
-  };
-  const pk = [];
-  where.forEach((w, k) => {
-    if (w === "fire") pw.fire = p[2 + k];
-    else pk.push({ n: ++pw.n, k: p[2 + k], ...spotOf(w), at: w });
-  });
-  s.hang.pw = pw;
-  s.hang.pk = pk;
+  s.hang.pw = { fit: [...PARTS], on: 0, left: 0, gas: 0, cr: 0, n: 0 };
+  s.hang.pk = [];
   s.hang.power = 0;
 }
-/* Downpour: the generator is already running, with no parts to find (the owner's, Nov 17 05:46Z): every part is in,
-   and it holds DP_GAS rounds of gas (the round about to start counted too: it goes out as the round after them starts).
-   The players still feed it: the pumps sell gas while it runs, and jerry cans turn up from the start (ever) */
+/* Downpour: the generator is already running, holding DP_GAS rounds of gas (the round about to start counted too: it
+   goes out as the round after them starts) */
 function dpSetUp(s) {
   s.hang.pw = {
     fit: [...PARTS],
-    pool: [],
-    cans: [],
     on: 1,
     left: PW.DP_GAS + 1,
-    ever: 1,
-    tries: 0,
-    fire: "",
-    shop: "",
-    zp: "",
-    zr: 0,
-    zi: 0,
+    gas: 0,
+    cr: 0,
     n: 0,
   };
   s.hang.pk = [];
@@ -228,15 +188,14 @@ function dpSetUp(s) {
 /* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off) */
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
-  s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0, ...(on ? {} : { ever: 1 }) };
+  s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0 };
   if (!dpOn())
     s.hang.l4f = on
       ? Object.fromEntries(h.players(s).map((id) => [id, 1]))
       : {}; // (Downpour: the flashlights stay as they are)
   h.addFx(s, { kind: on ? "l4pwon" : "l4pwoff", by: "", who: [], t: now });
 }
-/* a round starts (newRound): the power counts it, maybe goes out; the zombie with the part is picked; a jerry can may
-   turn up in a part's spot */
+/* a round starts (newRound): the power counts it, maybe goes out; a jerry can may turn up in a part's spot */
 export function powerRound(s, r, now, h) {
   const pw = s.hang.pw,
     L = s.hang.l4;
@@ -246,9 +205,6 @@ export function powerRound(s, r, now, h) {
     s.hang.pw = { ...pw, left };
     if (left <= 0) setPower(s, false, now, h);
   }
-  const w = s.hang.pw;
-  if (w.zp && !w.zi && r >= w.zr && L.n > 0)
-    s.hang.pw = { ...w, zi: L.next + Math.floor(Math.random() * L.n) }; // (one of this round's zombies, by its number)
   if (canCome(s) && Math.random() < PW.CAN_ROUND) {
     const busy = (s.hang.pk || []).map((o) => o.at),
       free = spots().filter((k) => !busy.includes(k));
@@ -258,13 +214,14 @@ export function powerRound(s, r, now, h) {
     }
   }
 }
+/* a jerry can laid down to be found (it counts as this round's) */
 function lay(s, o) {
   const n = s.hang.pw.n + 1;
-  s.hang.pw = { ...s.hang.pw, n };
+  s.hang.pw = { ...s.hang.pw, n, cr: s.hang.l4.r };
   s.hang.pk = [...(s.hang.pk || []), { n, ...o }];
 }
-/* every heartbeat: a zombie dying drops the part it carries (or, 1 in 100, a jerry can); a duck walking over something
-   takes it into the pool */
+/* every heartbeat: a zombie dying drops a jerry can 1 time in 100; a duck walking over one pours what fits of it into
+   the row */
 export function powerTick(s, zs, now, ids, h) {
   const pw = s.hang.pw;
   if (!pw) return;
@@ -276,16 +233,19 @@ export function powerTick(s, zs, now, ids, h) {
     next[z.i] = 1;
     if (seen[z.i]) continue;
     changed = true;
+    if (!canCome(s) || Math.random() >= PW.CAN_ZOMBIE) continue;
     const [x, y] = h.playable(z.x, z.y)
       ? [z.x, z.y]
       : h.dropSpot(s) || [z.x, z.y];
-    const spot = { x: Math.round(x), y: Math.round(y), z: 0, px: x, py: y };
-    if (s.hang.pw.zi && z.i === s.hang.pw.zi) {
-      const k = s.hang.pw.zp;
-      s.hang.pw = { ...s.hang.pw, zp: "", zi: 0 };
-      lay(s, { k, ...spot });
-    } else if (canCome(s) && Math.random() < PW.CAN_ZOMBIE)
-      lay(s, { k: "can", r: canRounds(), ...spot });
+    lay(s, {
+      k: "can",
+      r: canRounds(),
+      x: Math.round(x),
+      y: Math.round(y),
+      z: 0,
+      px: x,
+      py: y,
+    });
   }
   if (changed || Object.keys(seen).length !== Object.keys(next).length)
     s.hidden = { ...(s.hidden || {}), l4seen: next };
@@ -293,6 +253,8 @@ export function powerTick(s, zs, now, ids, h) {
   if (!pk.length) return;
   let left = pk;
   for (const o of pk) {
+    const room = GAS_MAX - (s.hang.pw.gas || 0);
+    if (room <= 0) break; // (the row is full: it stays where it lies)
     const far = o.z ? PW.TAKE_SPOT : PW.TAKE,
       by = ids.find((id) => {
         const p = s.pos[id];
@@ -303,93 +265,35 @@ export function powerTick(s, zs, now, ids, h) {
         );
       });
     if (!by) continue;
-    left = left.filter((x) => x !== o);
-    take(s, o.k, o.r, by, now, h);
+    const got = Math.min(room, o.r);
+    left = left
+      .map((x) => (x === o ? { ...o, r: o.r - got } : x))
+      .filter((x) => x.r > 0); // (what didn't fit stays, smaller)
+    s.hang.pw = { ...s.hang.pw, gas: (s.hang.pw.gas || 0) + got };
+    h.addFx(s, { kind: "l4pwgot", k: "can", r: got, by, who: [], t: now });
   }
   if (left !== pk) s.hang.pk = left;
 }
-/* something found goes into everyone's pool */
-function take(s, k, r, by, now, h) {
-  const pw = s.hang.pw;
-  s.hang.pw =
-    k === "can"
-      ? { ...pw, cans: [...pw.cans, r] }
-      : { ...pw, pool: [...pw.pool, k] };
-  h.addFx(s, { kind: "l4pwgot", k, r, by, who: [], t: now });
-}
-/* the fireplace's turn, before its weapons: the part it holds, or a jerry can; "" for neither */
-/* is the fireplace's part out in its spin right now (to be taken there, not bought)? */
-const fireOut = (s, pw) =>
-  Object.values(s.hang.l4box || {}).some(
-    (b) => b && isPw(b.w) && pwOf(b.w).k === pw.fire,
-  );
-export function powerFire(s) {
-  const pw = s.hang.pw;
-  if (!pw) return "";
-  const held = fireOut(s, pw);
-  if (pw.fire && !held) {
-    if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries)
-      return "pw:" + pw.fire;
-    s.hang.pw = { ...pw, tries: pw.tries + 1 };
-  }
-  if (canCome(s) && Math.random() < PW.CAN_FIRE) return "pw:can:" + canRounds();
-  return "";
-}
-/* the fireplace's part or jerry can, taken (E, by whoever paid) */
-export function powerTake(s, w, by, now, h) {
-  const { k, r } = pwOf(w);
-  if (k === s.hang.pw.fire) s.hang.pw = { ...s.hang.pw, fire: "" };
-  take(s, k, r, by, now, h);
-}
-/* the Butler's part: 250 points, once (whoever buys it first). fire: the fireplace's part instead, for 750; once it's
-   bought it's gone from the fireplace too (and once the fireplace gives it, gone from the Butler) */
-export const fireForSale = (s) => {
-  const pw = s && s.hang && s.hang.pw;
-  return pw && pw.fire && !fireOut(s, pw) ? pw.fire : "";
-};
-export function powerBuy(s, id, now, h, fire = false) {
-  const pw = s.hang.pw,
-    k = fire ? fireForSale(s) : pw && pw.shop,
-    price = fire ? PW.SHOP_FIRE : PW.SHOP;
-  if (!k || h.ptsOf(s, id) < price) return false;
-  h.addPts(s, id, -price);
-  s.hang.pw = { ...pw, ...(fire ? { fire: "" } : { shop: "" }) };
-  take(s, k, 0, id, now, h);
-  h.addFx(s, { kind: "l4buy", by: id, who: [], w: "part", t: now });
-  return true;
-}
-/* E at the box: every part the pool holds goes in; with all four in, the power comes on; with a jerry can, it's poured
-   in (on top of what's left while the power is on) */
+/* E at the box: the row's fullest can is poured in, and the power comes on (or runs that many rounds longer) */
 export function powerAct(s, id, now, mx, my, h) {
   const pw = s.hang.pw,
     L = s.hang.l4;
   if (!pw || Math.hypot(mx - PW.E[0], my - PW.E[1]) > PW.REACH * 1.6)
     return false;
+  const r = canRow(s)[0];
+  if (!r) return false;
   const between = !!(L && L.wait); // (between rounds the next one is counted too)
-  if (pw.pool.length) {
-    s.hang.pw = { ...pw, fit: [...pw.fit, ...pw.pool], pool: [] };
-    h.addFx(s, { kind: "l4pwfit", n: pw.pool.length, by: id, who: [], t: now });
-    return true;
-  }
-  if (pw.fit.length < PARTS.length) return false;
-  if (!pw.on && !pw.ever) {
-    s.hang.pw = { ...pw, left: PW.FIRST + (between ? 1 : 0) };
-    setPower(s, true, now, h);
-    return true;
-  }
-  if (!pw.cans.length) return false;
-  const [r, ...rest] = pw.cans;
   s.hang.pw = {
     ...pw,
-    cans: rest,
+    gas: pw.gas - r,
     left: pw.on ? pw.left + r : r + (between ? 1 : 0),
   };
   h.addFx(s, { kind: "l4pwgas", r, by: id, who: [], t: now });
   if (!pw.on) setPower(s, true, now, h);
   return true;
 }
-/* Downpour: E at a pump, while the power is on, buys 3 rounds of gas (250 a round). Only close by it, on its bottom
-   (south) side (the owner's, Nov 17 18:05Z: "the pumps effective range where u use them has changed"): over its width
+/* Downpour: E at a pump puts a quarter can of gas into the row (PW.PUMP points), power or not. Only close by it, on
+   its bottom (south) side (the owner's, Nov 17 18:05Z: "the pumps effective range where u use them has changed"): over its width
    and PUMP_SIDE either side, from its front face out to PUMP_OUT (world px) */
 const PUMP_SIDE = 30,
   PUMP_OUT = 100;
@@ -408,21 +312,26 @@ export const pumpNear = (mx, my) =>
     return mx > x0 && mx < x1 && my >= y0 && my < y1;
   });
 export function powerPump(s, id, now, mx, my, h) {
-  const pw = s.hang.pw,
-    price = PW.PUMP * PW.PUMP_ROUNDS;
-  if (!pw || !pw.on || !pumpNear(mx, my)) return false;
-  if (h.ptsOf(s, id) < price) return false;
-  h.addPts(s, id, -price);
-  s.hang.pw = { ...pw, left: pw.left + PW.PUMP_ROUNDS };
-  h.addFx(s, { kind: "l4pwgas", r: PW.PUMP_ROUNDS, by: id, who: [], t: now });
+  const pw = s.hang.pw;
+  if (!pw || !pumpNear(mx, my) || gasFull(s)) return false;
+  if (h.ptsOf(s, id) < PW.PUMP) return false;
+  h.addPts(s, id, -PW.PUMP);
+  s.hang.pw = { ...pw, gas: (pw.gas || 0) + 1 };
+  h.addFx(s, { kind: "l4pwfill", by: id, who: [], t: now });
   return true;
 }
-/* what E at the box would do now, for its button: "fit", "on", "pour" or "" (it only shows the count) */
+/* Duck Cabin: a merchant's gas, the pump's 25% at the pump's price, and he never runs out (the owner's, Nov 18 14:20Z:
+   "Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND
+   the gas never runs out from the merchant"). The rules check he's there */
+export function powerGas(s, id, now, h) {
+  const pw = s.hang.pw;
+  if (!pw || gasFull(s) || h.ptsOf(s, id) < PW.PUMP) return false;
+  h.addPts(s, id, -PW.PUMP);
+  s.hang.pw = { ...pw, gas: (pw.gas || 0) + 1 };
+  h.addFx(s, { kind: "l4pwfill", by: id, who: [], t: now });
+  return true;
+}
+/* what E at the box would do now, for its button: "pour" or "" */
 export function powerNext(s) {
-  const pw = pwState(s);
-  if (!pw) return "";
-  if (pw.pool.length) return "fit";
-  if (pw.fit.length < PARTS.length) return "";
-  if (!pw.on && !pw.ever) return "on";
-  return pw.cans.length ? "pour" : "";
+  return pwState(s) && canRow(s)[0] ? "pour" : "";
 }

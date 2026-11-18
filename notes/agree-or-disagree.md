@@ -5784,3 +5784,403 @@ Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default,
 (last paragraph added by the owner's edit at 20:39Z: Justin cries for 10 s WHILE sprinting away)
 
 Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint, zombies chase Justin only at half the range, give up fast, last 1/10th never; dead = no revive, button gone, walk over bodies. Noah = shots end where they hit. Miles Jr. = lobby countdown music fade, vote windows' music.
+
+## Request (2026-11-18 10:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt9UAySh1WkTz4SkjEjXcAdn, with 2 screenshots in /mnt/project-files/refs/nov18-1038/) (word for word; the message is cut off at its end)
+
+> i want spreadsheets and information for questions i asked first and other workers besides adam can work while i discuss and look at stats and adam can write them a plan after they answer me
+>
+> give me a spreadsheet of all the weapons roll percentage per tier or "bag" and a description of how it works, so it can be judged by me if it needs changed
+>
+> give me a table of how much points a player earns per round in 1 player, versus each player in 2, each in 3 player, and so on.
+>
+> give me a spreadsheet for prices of the things in the shop from the priest AND i have a new idea i propose where he only sells some items and even has a life of his own and can come back (we will work on this)
+>
+> give me a table of the zombies hit speed and hit damage per difficulty range within it's given range of rounds (and suggestions)
+>
+> give a spreadhsheet of frames on different computers for frames per second and i want suggestions of how to improve frames without changing anything as it appears to the players (such as audio, animations, and so on)
+>
+> we need to make sure zombies dont jitter or feel slow on the computer (like kinda laggy feeling) when mobs get large
+>
+> i want to know how the double barrel shotgun works because i might change it's stats
+>
+> make sure when weapons are picked up from the slots that they are appropriately sized in their pixel size, because when i first picked up the laser gun (this might happen to other things too) it was rendered as being almost barely any pixels yet the appropiate scale of object size to the duck, but whenever i switched off and back on then it was fine
+>
+> flamethrower's fire doesnt stay in the water in crit mode, enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in water has the same effect (flamethrower still works in the rain though)
+> I want stats for flamethrower too for me to judge
+>
+> where are the places that gasoline can come from ? like in the downpour game mode
+>
+> i believe tiers or bags of stuff that are rolled per chance are supposed to have the least likely in order come first prior to the more likely
+>
+> we are removing the fireball from everything in the game, including the zombie game
+>
+> new tommy gun is too small and needs fixed
+>
+> prob same for any new gun, it is too small, since the laser was too. the tommy gun is obviously supposed to be almost the size of the ak47
+>
+> let's make zombies spawn rate half as much for the first four seconds
+>
+> grenades and bow projectiles unseen, this needs to be fixed
+>
+> outlines do not show for dead ducks, such as justin
+>
+> justin's character doesnt have a revive phase anymore in dead duck arcade
+>
+> another dead duck with's it's head blown off and in a puddle of blood (like what spills out of Justin ) that is also yellow but wearing a military uniform with holes in his body can be found here
+>
+> every player duck that dies in any game mode has a puddle of blood start to spill out beneath their duck like justin's
+>
+> check if other projectiles are working for other guns since the bow and grenade was not
+>
+> give me a spreadsheet of
+
+Split: Adam = the spreadsheets/info first. Noah = invisible grenades/arrows + all projectiles, pickup pixel size, Tommy/new gun sizes, dead-duck outlines, blood under every dead duck, dead soldier duck prop. Solomon = flamethrower + water, no fireball anywhere, half spawn rate first 4 s, smooth big mobs, rarest-first bags. Asked the owner: Justin's revive phase (bug or rule?) and the cut-off last line.
+
+## Request (2026-11-18 12:19Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVCFg6WPpdeGhRYs41BQqdp) (word for word; the owner's finished version of the 11:42Z draft, which they said to ignore)
+> im going to keep working but just implement these changes adam and work while i look at these spreadsheets, but ask me how the slots works with propositions that i say true or false (or yes and no) for, in order to see u have the right idea. the order of these paragraphs were made out of order if you couuld tell.
+>
+> the melee bag is actually apart of the rest of the guns in the game now and shares the same bag, with each melee having a equal chance as any other gun in the bag as getting chosen, so no (half and half) rule and no separate bag any longer.
+>
+> jerry can no longer in slots
+>
+> New slot system:
+> Bag for zombie game:
+>
+> defining terms: shuffle means that an item is removed from it's bag and does not reappear within it's bag until every other item has had a chance. For slots, every bag of a lower percent comes first in roll, if the percent chance doesnt happen, then it moves onto the next bag, so on and so forth
+>
+> every bag is shuffled within it's bag, based on the shuffle rule
+> every item or weapon within it's bag is also shuffled based on the shuffled rule
+>
+> every weapon, melee, or item has a corresponding color to it's slot now (kinda like it did before but it's different now), and the orb for the weapon or item drop has it's own look too (like it did before but dif now). The purples all glow. Any weapon made angelic now has a red slot color and orb.
+>
+> jerry cans should have an orange orb that glows when seen on the ground.
+>
+> every bag has the shuffle mechanism.
+>
+> justin is removed from every slot
+>
+> the weapons in mad god justin now uses the bag and shuffle system for the weapons it spawns, with these bags, (heavy (sniper removed for mad god justin's bags), assault rifle and submachine combined into one bag for mad god justin, shotgun, and special (laser is remoeved from special bag for mad god justin)
+>
+> the slot does not assume starting kit or the weapon u have, and you cannot get a slot for something you already have
+>
+> Items that can run out now simply stay in their slot without being removed
+>
+> the power box is already put together by default in cabin now AND the right slots that show what is in the power box can be removed and changed into something else. the cabin starts without power still until gasoline is added.
+>
+> the chair bag: is a 1% chance and the chair is golden
+>
+> There is a bag for special weapons (these have a glowing purple orb in their drop AND glowing purple in their slot they occupy. The special is a 5% chance it is had, and here are the special slots in the special bag that shuffle:
+>
+> * Chain Gun
+> * Flamethrower
+> * Laser Rifle
+>
+>
+> Here is the shuffled item bag (20% chance and shuffles):
+>
+> * medkit (green slot and orb)
+> * zebra cake (blue slot and orb)
+> * adrenaline shot
+> * safekeeping (purple slot and orb that glows)
+>
+>
+> Weapon bag shuffle (100% chance):
+> Every bag in this shuffle has it's own bag:
+>
+> * Melee bag shuffle: contains all melee already in the slots and every melee has green orb and slot color (besides the cast iron)
+> * weak bag shuffle: 
+>    * contains dagger
+>    * contains default knife (if you don't have it)
+>    * contains cast iron pan
+> * shotgun bag: contains,
+>    * shotgun (green)
+>    * double barrel shotgun (blue)
+> * pistol bag
+>    * revolver (green)
+>    * default pistol (if you dont have it)
+> * sub machine gun bag
+>    * tommy gun (blue)
+>    * UMP-45 (blue)
+>    * SMG (rename it to MP5 and give it the look of an MP5) (blue)
+> * assault rifle bag
+>    * AK-47 (blue)
+>    * Burst Rifle (rename it to the gun it's look is based off of) (blue)
+> * heavy bag
+>    * Sniper (give it the look of a Barret 50 caliber if it doesn't already and rename it after it in words better in choice or capitilization then my own) (it now will do max damage to the first zombie it passes through AND will do max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it passes through) (purple)
+>    * Grenade Launcher (blue)
+>    * LMG (rename it to the gun it's look is based off of) (blue)
+>
+>
+> remove jet pack from the whole game
+>
+> long jump is removed from zombies bag and slots
+>
+> Jaime bomb is removed from all zombie modes
+> normal jaime is removed from all zombie modes
+> "only one (jerry can) can be out at a time"
+> If the jerry can isn't found within that round on the ground from where it spawns on the map or the zombie it kills, then it can still lay on the ground while other gasoline can be dropped by zombies in later rounds. The spinning for a jerry can is always 100% when it is found AND only three Jerry cans can be held on the left screen by all players per game, and a very small text below the items (not over them) in the left screen says they have the max amount of jerry cans. Buying gas from slot dosnt stop it from spawning that round. Gasoline is still a 1% chance of dropping in zombies.
+>
+>
+> the butler or priest (or the npc shop in general ) no longer sells gasoline
+> the gas station now fills up an empty jerry can every player shares on the left screen ONLY in downpour, and the jerry can becomes filled up by the gas pump. the empty jerry can is apart of the gas limit, and any jerry can that is grabbed now is a percent into the last jerry can. so we are doing addition of fractions / percentage, where 0% jerry can plus a 50% jerry can picked up isnt one empty one and one half full one, but now the empty one stores 50% of it's gas.
+> Now there are only 4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%
+> when there is no jerry cans, the players have a 0% jerry can on the left, and when they have three full jerry cans, then empty is tranformed like the other ones, and the empty only follows the full one if the previous is full, and the jerry cans are ordered in a row of which has the most gasoline
+> the jerry cans have their own row apart from the items you pick up in cabin (fuse and etc)
+> the two rows are both on the left side of screen
+> the gas pump now give 25% gas to a jerry can for 150 points each
+> The jerry can needed to turn on the generator in cabin is the same as the others, just a given percentage of how many rounds it gives and any gasoline can be used in place of it to turn on the generator in cabin
+>
+> 1. idk
+> 2. he dies outright, justin does, and only in the zombie mode
+>
+> in mad god justin, justin gets more gored every 10 health points when he has 100 HP, and once he hits 10 HP, every bit of damage does even more gore, and when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for any dead player)
+> mad god justin bleeds a puddle of blood when dead
+> justin cannot make dialog when outright dead in zombies or mad god justin
+> in normal game modes now, Justin cannot be revived and he dies outright and spawns back with gore effects lost on the next turn (like agree or disagree, lawyering, story game ,etc)
+> there should be a thing where, below the play game option, is an offline play option, and that option is for app users only, and there, the button is greyed out until the conditions are met to where it can be played. In offline mode, there is no test option AND hangout, zombies, or mad god Justin can be played locally as the only game modes allowed, and any other game modes cannot be played.
+> for offline play, the player only has those game modes to chose from and their corresponding maps, AND there is no timer on the vote screen AND the vote screen is still there AND it is instantons. Only settings appropriate for allowed game modes should be visible. For hangout, the map vote is gone. Now it says "select" instead of "vote" for offline play. We can rename offline to "Single Player"
+> single player is meant to be hosted locally and NOT on the firebase servers AND not require internet to play BECAUSE the files are downloaded locally onto the system FROM the installed app.
+> the single player still has all the same rules for zombies and mad god justin and their game modes are not duplicated versions but the same version hosted on a local offline machine of the player. the game still updates the offline or singleplayer features automatically in a connection to the github for everything on the application and website when connection is made to it like usual.
+> single player is for players that have machines that can run the game but they dont want to spend data or internet connection to play, ESPECIALLY if it is the only barrier for them playing (such as my gf who is in a college with an area of extremely poor data connection)
+
+Split (Adam): Solomon = the slot bags + shuffle, jerry can rework, no gas at the Priest/Butler, pumps 25% for 150, power box built by default, no Jetpack/Long jump/Jaime/Jaime Bomb/Justin in zombie slots, sniper pierce, Justin dies outright in Dead Ducks Arcade, MGJ weapon bags. Noah = slot and orb colors, golden chair, gun looks and names (MP5, Barrett, burst rifle, LMG), the jerry can row, MGJ Justin's gore/cry/blood. Jackal = Justin dies outright in normal modes. Adam = Single Player. Adam asked the owner true/false questions on the slots first.
+
+## Answer (2026-11-18 12:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2eYRekvrUy5FnpoT9VJ7u6) to Adam's 20 true/false slot questions (word for word)
+> 1. t
+> 2. t
+> 3. t
+> 4. t
+> 5. t
+> 6. the bow can be in the weak bag and the grenade is in none
+> 7. t
+> 8. t
+> 9. t
+> 10. they are a normal looking slot like it is in the default game, so no color, and these colors only apply to mad god justin or zombie game
+> 11. true
+> 12. true and it costs money to fill at the pump and shouldnt be called a "slot" or else it gets confusing
+> 13. true
+> 14. true, and the empty jerry can that is the third of the three if the other two are filled can become full too
+> 15. true
+> 16. true
+> 17. true
+> 18. "the 3 parts slots are freed for weapons and items," no, the slots are ALL gone on the power box AND it should be made to look normal for look purposes in the place where those slots are removed
+> 19. yes but remove the flame thrower from mad god justin as well, and the chain gun only has a 5% chance of spawning for it's bag that is rolled first
+> 20. true
+
+The questions (Adam, 12:21Z): 1 order Chair 1% > Special 5% > Item 20% > Weapon; 2 own bags per player, fresh each game; 3 Weapon bag = 7 bags taking turns, then the next gun in that bag's shuffle; 4 melee bag as often as the shotgun bag; 5 melee = fire axe, short sword, hammer; weak = dagger, knife, pan; 6 bow and grenade in no bag; 7 owned things skipped, keep their place; 8 used-up items/empty guns keep the slot and can't be spun again; 9 golden chair owned = Chair bag skipped; 10 uncolored ones keep today's colors; 11 found cans are 100%; 12 pump filling doesn't stop the round's can; 13 one can spawns at a time, unfound ones stay, zombies 1%; 14 gas pours into the fullest not-full can, limit counts the empty; 15 3 full = can stays on the ground; 16 pumps only Downpour; 17 cabin generator takes a whole can, 1 round per 25%; 18 power box built, 3 parts slots freed; 19 MGJ bags heavy (GL, LMG), rifles (Tommy, UMP, MP5, AK, AUG), shotgun (shotgun, double barrel), special (chain gun, flamethrower); 20 Sniper normal: first zombie max, crit: every zombie max up to the limit.
+
+## Request (2026-11-18 12:33Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtTvpMfei2HjndPJo13XK1Qx) (word for word)
+> single player can only be played if it isnt connecting to the data to do it, like for the in game files i mean, since it shouldnt require internet i mean
+
+Done (Adam): the button stays greyed until every file is on the device, and once the copy is whole, sw.js serves every game file from the device (only the page asks the network first, to see a new version).
+
+## Request (2026-11-18 12:39Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtCDGDPEfZ88HTZbry7W8j3C) (word for word)
+> rq, give me a chart of the zombies spawns and zombie spawns per player needed for online to try and make it to where players have an almost equal distribution of points per player each per round, and the amount of point per round SHOULD be based on the 1 player each, AND the way the zombies spawn per player and per round can be changed to be more then single player and not less WHILE not inventing new systems for zombie spawns and just changing inputs for the parameters i already set up for the zombie game myself. so changing amount of zombies per round to be more then what they already are for single player into every other game mode is good, changing parameters without asking me if you can bad, and spawn rates do not change. The goal is to make something more fair and balanced, since the points per player is saying something. 
+>
+> the amount of zombies for rounds 1-4 that spawn should be as much as rounds 5-8 if possible with the parameters set still the same. 
+>
+> furthermore, the slot now costs 950 points
+
+Done (Adam): slot BOX.price 950. Chart /mnt/project-files/sheets/zombie-spawns-per-player.xlsx; parameter changes wait for the owner's yes.
+
+## Request (2026-11-18 12:40Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2TfgXR7VWtNc84t4yAGMFs) (word for word)
+> the parameter for max zombies per round (not the spawned at a time but the roof of how many can spawn per game) for more players can be changed accordingly for this point mechanic to work
+
+Done (Adam): l4ddrules PHASES one per round (bases 24 to round 8, 36 to 12, 72 to 20), Z_MOST 800, Z_LATE 800; every player earns what 1 player earns. Spawn rates unchanged.
+
+## Request (2026-11-18 13:46Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2uGukypDipg2oYJSHfgCHm, 3 pictures in /mnt/project-files/refs/nov18-1346/: the alien with the Lakers jersey (25291791441265), the eagle (Charles), and the "9-12" row of Adam's Zombie hits sheet) (word for word)
+> priest or butler ALWAYS sells bow now, and for 250 points
+> He sells one given item/weapon from this given bags i will show, and never any ammo only in such way. for anytime he spawns in, he will have a guarantee(!) to be selling any one of these weapons AND a 50% chance to sell another gun/item that decreases in chance of selling another gun by 10% (+2.5 per additional player) chance each for each extra gun available (this is not shuffled but the bags themselves are):
+>
+> * Any of the bags from the slots and each having a given chance that cascades based on the slots, and what is sold is gone for that appearance from every player and cannot be bought again (limited supply), BUT there is a 25% chance that rolls a yes or no to ask IF he has another one of those given options being sold. 
+>    * every item that is white costs 300 points
+>    * every green item costs 500 points
+>    * every blue item costs 750 points
+>    * every purple item costs 1,500 points
+>    * every chair from Justin (still 1% chance of being sold) costs 3,000 points
+>
+>
+> the butler or priest can be killed AND his arrival is announced in a text where the "instant kill" or "full ammo" would display, and the butler runs up from the stairs of the balcony and breaks the barricade (the wooden barricade) IF it is in the way and runs to the place he usually stands, and he will sell those items that round BEFORE running away when the round ends. In downpour, he climbs over a fence and runs into the church as a priest to sell things.
+>
+> it is possible for the priest OR Justin's butler to spawn in EITHER map AND Justin's butler is no longer small. 
+>
+> The dialog of the seller is the same universally, saying one of these automatically when you walk up to them:
+>
+> * What can I get for you?
+> * Anything you would like?
+> * You are looking good today.
+> * Interested in buying anything?
+> * You like what I'm selling?
+> * You need anything?
+> * These are some good prices aren't they?
+> * Easy sell.
+> * You got a zombie problem?
+>
+>
+> the dialog is shuffled
+>
+> when they take damage from a player, they will say one of these first IF they aren't dead, if they take damage, they will run away and climb the fence in downpour to get away OR they will jump off the balcony to get away in cabin. these are the lines they will say once when they take damage from a player IF they arent dead:
+>
+> * Stop that!
+> * You want anything or not!?
+> * You aren't going to get anything if you keep this up.
+> * Stop!
+> * Try that again!
+> * Don't shoot!
+> * I am trying to help!
+> * What the hell!?
+>
+> * Please don't shoot!
+>
+>
+>
+>
+> the NPC will run away when the rest phase ends and zombies start to spawn in, and zombies might try and chase them like they are a player UNLESS they climb a fence OR jump off the balcony, then they give up. The zombies will not chase the corpse of one of these Merchants. The merchant cannot be revived. The merchant tries to run away the same as they do when running away from a player WHEN the zombies come back BUT they dont dialog the same as when a player damages them when doing so. 
+>
+> The merchant says this when the zombies spawn in at the beginning of the next round:
+>
+> * Gotta go!
+> * Nice doing business with you.
+> * I need to get out of here.
+> * It's not safe here anymore.
+> * I am packing my bags.
+> * I wish you luck!
+> * I am hitting the road.
+> * Have a fun time! 
+> * I am not staying. 
+> * I cannot deal with zombies.
+> * I hate zombies.
+> * The zombies are here!
+> * Run!
+> * No! Not them again!
+> * Get out while you still can!
+>
+>
+>
+> There are different NPCs with all the same voice lines, and they have a given name and look, and i want you to design them and show me pictures. Each NPC merchant dies forever during a game when they are shot and cannot come back, but another can fill their place, and different merchants arrive each time they come and go. 
+>
+> Here are some merchant ideas:
+>
+> * Brah: (the Motorcyclist)
+> * Hunter: (based on Hunter S Thompson from fear and loathing, has the same outfit and attire)
+> * Babatunde: (based on the male nigerian outfit, has the nigerian male outfit attire, will have yoruba lines that you will translate for me that are based in yoruba history and culture)
+> * Omowunmi: (based on the female nigerian outfit and has it's attire on, will have yoruba lines that translated for me in this chat that are based in yoruba history or culture)
+> * Dyson: (has the muscle shirt and the cheese on the head, sometimes is the rainbow dat boi, and it is a shuffle)
+> * 25291791441265: (is the alien with the laker's jersey in the screenshot)
+> * Charles: (is the second screenshot)
+> * Thomas: (is a wizard)
+> * Barry: (is wearing cardboard)
+> * Queen Elizabeth: (is wearing something royal and a crown)
+> * The Fool: (is wearing the Jester)
+> * Lucifer: (is wearing the full clown outfit and no devil horns pls, treat him like a normal character)
+> * Jack (is Jack in the box)
+> * Jill (is Jill in the box)
+> * Rick (is wearing police uniform
+> * Bob (is wearing the disco uniform with an afro and maybe some kind of face wear to match
+> * Veronica (is wearing a shirt and jeans, nothing else)
+> * Johnny (is wearing the doctor uniform, sometimes the police uniform, sometimes the firefighter uniform, it is random and will be different everytime they show up in a shuffle, they obv cannot have hair)
+> * Blocky Blockus (Is the block syle duck
+> * Pp (his name is Pp and he is the 2d style duck)
+> * Kyle ( is the pelican style)
+> * Gibby (is the raptor style)
+> * Jerome (is the white call duck with the birthday hat and sometimes the ribbon bow)
+> * Andy (is the mallard duck with a military helmet on
+>
+> You can give me other suggestions for merchants
+>
+> THe text for the merchant arriving is:
+> "The Merchant has Arrived"
+>
+> There is a 25% chance the merchant arrives every round AND one merchant is always there on round zero
+>
+> the angel machine costs 2500 now
+>
+> 9-12	75%	0.30 s	0.75 s	1 HP	35	1.8 s	Same as 5-8 but faster: fine; or swipe every 0.70 s for a small step up
+>
+> the screenshot of the row i pasted from the excel is the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)
+>
+> i never notice the mud on my screen from a mud zombie AND they arent covered in mud (the mud zombies) 
+> (mud zombie can be removed)
+>
+> the slug round in crit mode cannot pass through the next zombie after the first it kills UNLESS that is a crit too for another rolled chance
+>
+> there should be 150 rounds in the double barrel shotgun
+>
+> the ammo of the flame thrower is shown as a percetnage (100% is full and 0% is empty). make sure the zombies burn other zombies it touches relatively easier AND it takes 0.5 seconds AFTER a zombie is on fire for it's flame to spread to other zombies, and this repeats for every zombie on fire.
+>
+> make the screen shake like it does for the sniper for the double barrel shotgun
+>
+>
+> more instructions coming on optimizing frame where i answer to the spreasheet
+
+Split (Adam): Solomon = the merchant (rules, spawning, selling, fleeing, dying, lines) + zombie stats after round 12 + double barrel crit slug + fire spread. Jackal = Angel machine 2500, double barrel 150 rounds + sniper shake, flamethrower ammo as %, mud zombie removed. Noah = the merchants' looks (pictures to the owner, as asked) + suggestions. Adam = the Yoruba lines and their translations.
+
+## Request (2026-11-18 13:58Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt8Zmhy1a7zZQi5hEJG9tRJV, answering the sheet's Frame rate ideas) (word for word)
+> EXPLAIN ALL OF THESE FOR ME AND THEN TELL ME WAT THEY MEAN, WHAT THEY DO, HOW IT LOOKS, AND ETC! I NEED TO UNDEERSTAND, DO NOT ACT THESE INTO BEING YET !
+>
+> also, we should have special drops like instant kill, full ammo, and all of those an outline of their own color AND an arrow if a floor above or below WHEN it is on the ground AND those outline and arrow effects for that special drop in pparticular ends when they are picked up. and this is for when they drop under the foliage of a tree or elsewhere, so it is not missed, and gas gets an orange outline
+>
+> for drawing the zombies with one shared picture like you suggested, i would say yes, but the zombies r supposed to have different looks AND take damage that does gore effects to their body that should translate to their individual duck, and so before acting on what might be a good idea, how do we problem solve for that? or even how they shake, their heads explode, variations in appearance, etc
+> How much work even to do that and what is the realistic payoff?
+>
+> only update a zombie's outline, hp bar, and shadow when it changes sounds good
+>
+> skip drawing aything off screen ? yeah sure but remember to draw a little bit off the screen on the outside of players for things like screen shakes or sprinting to account for things that might be seen just outside the frame in ways we might not anticipate, so we can do that be let's say one or two duck lengths maybe
+>
+> yes to not drawing anything not on the screen IF it updates BECAUSE offline mode for example SHOULD have it stay loaded after once and same for online, am i wrong ? i dont understand why now.
+>
+> your screen doesnt have to draw whats on another player's screen, only yours
+>
+> send zombies positions less often yeah but only for when they are not on the given player's screen for their machine maybe, yk?
+>
+> miles jr determines that with caution and what he suggets is what me and him will talk about
+>
+> sure to the pause rain and lightning idea when (so and so), shouldnt the variations of rain be redrawn and be the same image being used btw or is it already so  ? idk
+>
+> sure to move path for zombies thingy i think for off the main thread
+
+Adam: explained every idea in chat, built none (owner: "DO NOT ACT THESE INTO BEING YET"); recommended 2, 3, 4, 6, 7 first and measuring fps before 1. Drop outlines (separate ask) given to Noah.
+
+## Request (2026-11-18 14:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGn2228CrX45wK8nwBghwVb, in Noah's thread, about the merchants sheet; 1 picture: a grey armored soldier with a gold visor, /mnt/project-files/refs/nov18-1410/armored-soldier.png) (word for word)
+
+> make it to where wearing the cardboad box, the pumpkin head, the paper bag, the motorcyle helmet, the gas mask, and the armored helmet will HIDE the beak (like it makes it no beak not under the selection but makes the beak invisible WHEN those helemts are off)
+>
+> Johnny should be a yellow duck
+>
+> gibby is supposed to have the default color for the raport and so is kyle for the pelican, come tf on.
+>
+> Jerome has only the pink ribbon now and that is his only look
+>
+> You can add Walt
+>
+> Dale should be ranamed Carl and his shirt should be a plad shirt that covers his upper body
+>
+> do not add grace
+>
+> The armored space soldier can be given different colors to his green armor and made into the look of the screenshot i sent (his name will not be shown since his name is classified info)
+>
+> Hal will not be in the game
+>
+> Ozzy will be renamed to "Phil the Murderous", and he will hit back at players when he takes second damage with a knife (has a 50% chance of missing when he uses it and it does 1 damage only)
+
+Noah: the beak hides while one of those six face items is worn (the beak pick stays; knocked off, the beak shows again); the merchant changes in js/merchants.js; Phil's knife hit-back is for the rules (Solomon).
+
+## Request (2026-11-18 14:20Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtE17WbWJXP3qkTSWQHVbYca) (word for word)
+> 'First, drawing is not loading. Every file loads once and stays loaded. In Single Player, the files are also saved on the device. "Drawing" means painting the screen's pixels about 60 times a second, and that painting is the work these ideas cut. Skipping the drawing of a zombie off screen doesn't unload it or download anything again. The game still moves it, and it's painted the moment it comes into view.'
+> Oh, that is a big deal, ty
+>
+> 1. do that then but make the outline and all of it's features work, i want more frames (my laptop is strong but more performance matters for everyone not just me)
+> 2. yes
+> 3. yes
+> 4. yes
+> 5. yes
+> 6. okay to keeping the lines as is and yes 
+> 7. yes
+>
+>
+> 'The merchant still sells the upgrades (crit chance, speed, Quick Revive and the rest).'
+> No they do not, they only sell one per visit AND there is no long faster speed upgrade, max hp can only be upgraded twice, safe keeping is now only sold in the items bag amongst the weapons and items feature for the merchant, and no parts are sold by merchant anymore (fuse, etc)
+>
+> Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND the gas never runs out from the merchant
+
+Split (Adam): Solomon = merchant fixes, then speed ideas 1 (one shared picture per zombie look, outlines and gore working) + 2 (outline/HP bar/shadow only on change), then 7 (path-finding in a worker). Noah = 3 (skip drawing off screen, 1-2 duck lengths margin) + 4 (zombie positions sent less often only when off that player's screen). Jackal = 6 (pause rain and lightning when hidden or under a full-screen menu). Miles Jr. = 5 (sound cap: proposal to the owner first).

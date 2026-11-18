@@ -408,7 +408,11 @@ const CAR_COLORS = [
    hitsOf: a bullet hole is a hole through it, a cut bleeds, a lost beak leaves a bloody stump), in its blood.
      yellow: a plain yellow duck shot through the head, on a car's hood;
      jaime: Jaime cut up on the chapel's floor, his head apart from the rest;
-     soldier: a soldier duck on the gas station's roof, his beak gone, scratched all over, rotting. */
+     soldier: a soldier duck on the gas station's roof, his beak gone, scratched all over, rotting;
+     trooper: a yellow duck in his army uniform inside the gas station, his head blown off, shot through the body, in a
+       pool of blood like the one that spills out of Justin (the owner's, Nov 18 10:38Z: "another dead duck with's it's
+       head blown off and in a puddle of blood (like what spills out of Justin ) that is also yellow but wearing a
+       military uniform with holes in his body"). */
 const BLOOD = "#7d1424",
   BLOOD_D = "#3d0910",
   CORPSES = {
@@ -423,7 +427,21 @@ const BLOOD = "#7d1424",
       hits: "p0c3c6c1c7r2r4k2",
       turn: 94,
     },
+    trooper: {
+      look: { outfit: { id: "military" } },
+      hits: "x0B0b1B2b4b5",
+      turn: -96,
+      jpool: true,
+    },
   };
+/* Justin's pool of blood (l4dd.js POOL_SVG: the owner's, Nov 17 18:05Z, "on death a blood pool spreads"), 120 × 52
+   round (0, 0): the one under every duck that dies (game.js) and under the trooper */
+export const JUSTIN_POOL = `<ellipse cx="0" cy="0" rx="40" ry="15" fill="#5e0711"/>
+  <ellipse cx="-24" cy="5" rx="22" ry="9" fill="#5e0711"/>
+  <ellipse cx="26" cy="-4" rx="20" ry="9" fill="#5e0711"/>
+  <ellipse cx="8" cy="10" rx="18" ry="7" fill="#5e0711"/>
+  <ellipse cx="-6" cy="-3" rx="24" ry="8" fill="#7a0b17"/>
+  <ellipse cx="-12" cy="-6" rx="7" ry="2" fill="#a3242c" opacity="0.6"/>`;
 /* its blood under it, w across, a little splashed (seeded) */
 const pool = (cx, cy, w, seed) => {
   const r = rnd(seed);
@@ -456,7 +474,9 @@ export function corpse(kind, cx, cy, w = 100, flip = false) {
     k = w / 120,
     put = (body, dx = 0, dy = 0) =>
       F`<g transform="translate(${cx + dx} ${cy + dy})${flip ? " scale(-1 1)" : ""} rotate(${C.turn}) scale(${k}) translate(${-vb[0] - 60} ${-vb[1] - vb[3] * 0.62})">${body}</g>`;
-  let s = pool(cx, cy + w * 0.05, w * 1.1, w + cy);
+  let s = C.jpool
+    ? F`<g transform="translate(${cx} ${cy + w * 0.05}) scale(${(w * 1.5) / 120})" opacity=".92">${JUSTIN_POOL}</g>`
+    : pool(cx, cy + w * 0.05, w * 1.1, w + cy);
   if (!C.cut) return s + put(inner);
   /* cut up: the head off, a hand's width from the rest, the cut's edges raw */
   const id = uid();

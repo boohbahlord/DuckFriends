@@ -155,6 +155,9 @@ export const START = { x: 2600, y: 1600 };
    l4dd.js), and which cars have their windows smashed in and the dead yellow duck on a hood */
 export const JAIME_BODY = { x: 2300, y: 4800 };
 export const SOLDIER = { x: 1580, y: 780 };
+/* the trooper's middle (stationart.js CORPSES.trooper): inside the gas station, south of the counter's long arm and west
+   of the east wall, where the owner circled it (Nov 18 10:38Z) */
+export const TROOPER = { x: 3190, y: 1410 };
 export const FLARE = { x: SOLDIER.x + 92, y: SOLDIER.y + 18 };
 const CAR_LOOKS = [
   { smash: "front" },
@@ -521,6 +524,10 @@ function planBuild(b) {
     z: 0,
     who: "jaime",
   }); // (lying on the floor: nothing stops on him)
+  put("corpse", TROOPER.x - 70, TROOPER.y - 35, 140, 70, 16, {
+    z: 0,
+    who: "trooper",
+  }); // (the trooper, inside the gas station by the counter: the same)
   const PEWS = {
     L: {
       a: 1700,
@@ -788,7 +795,7 @@ for (const o of [
 ])
   scaled(o);
 for (const o of [PRIEST, ANGEL, START, CARS, PUMPS, CANOPY, FALLEN]) scaled(o);
-for (const o of [JAIME_BODY, SOLDIER, FLARE]) scaled(o);
+for (const o of [JAIME_BODY, SOLDIER, FLARE, TROOPER]) scaled(o);
 for (const o of [PART_SPOTS, PUMP_E, LINE_SPOTS]) scaled(o);
 GS_W *= K;
 GS_H *= K;

@@ -1,6 +1,6 @@
 /* ---------- things you unlock ----------
    Some items start locked, every count in twelves (I want them all in factors of 12). The jester hat and outfit open at
-   1,728 jumps, Jack in a Box (and Jill) and the Jetpack at 20,736; the secret code (secret 1357911 on) opens every unlockable at once, and the counts toward each one go on as before. The Long jump and the Double
+   1,728 jumps, Jack in a Box (and Jill) at 20,736 (the Jetpack is gone from the game: the owner's, Nov 18 12:19Z); the secret code (secret 1357911 on) opens every unlockable at once, and the counts toward each one go on as before. The Long jump and the Double
    jump open at 144 jumps. The clown wig, costume and paint open when you've killed Justin with a weapon special 12
    times, and until then nobody is told how. The shotgun opens at 144 kills and the grenade at 360: a kill is another
    player knocked down with a weapon (a computer doesn't count), or any Justin. The dunce hat opens once you've been
@@ -51,7 +51,6 @@ export const LOCKS = [
   { kind: "special", id: "longjump", jumps: 144, name: "Long jump" },
   { kind: "special", id: "double", jumps: 144, name: "Double jump" },
   { kind: "special", id: "shortjump", jumps: 1728, name: "Short jump" },
-  { kind: "special", id: "jetpack", jumps: 20736, name: "Jetpack" },
   { kind: "special", id: "chair", cabin: 1123, name: "Chair" },
   { kind: "special", id: "invisible", shadow: 1, name: "Invisible duck" },
   { kind: "special", id: "zebra", kills: 72, name: "Zebra cake" },
@@ -59,17 +58,17 @@ export const LOCKS = [
   { kind: "special", id: "jaimebomb", jbomb: 864, name: "Jaime Bomb" },
   { kind: "special", id: "jaimeguard", l4r: 30, name: "Jaime Guard" },
   { kind: "special", id: "shotgun", frags: 144, name: "Shotgun" },
-  { kind: "special", id: "sniper", later: true, name: "Sniper" },
-  { kind: "special", id: "smg", later: true, name: "SMG" },
+  { kind: "special", id: "sniper", later: true, name: "Barrett .50 Cal" },
+  { kind: "special", id: "smg", later: true, name: "MP5" },
   { kind: "special", id: "tommy", later: true, name: "Tommy gun" },
   { kind: "special", id: "ump", later: true, name: "UMP-45" },
   { kind: "special", id: "ak", later: true, name: "AK-47" },
   { kind: "special", id: "revolver", later: true, name: "Revolver" },
-  { kind: "special", id: "lmg", later: true, name: "LMG" },
+  { kind: "special", id: "lmg", later: true, name: "M249 SAW" },
   { kind: "special", id: "chaingun", later: true, name: "Chain gun" },
   { kind: "special", id: "dbarrel", later: true, name: "Double barrel" },
   { kind: "special", id: "flamer", later: true, name: "Flamethrower" },
-  { kind: "special", id: "burst", later: true, name: "Burst rifle" },
+  { kind: "special", id: "burst", later: true, name: "Steyr AUG" },
   { kind: "special", id: "glauncher", later: true, name: "Grenade launcher" }, // (Quacky Zombies' guns: the owner will say how they unlock)
   { kind: "special", id: "grenade", frags: 360, name: "Grenade" },
   { kind: "hat", id: "clownwig", kills: 12, hidden: true, name: "Clown wig" },
@@ -176,7 +175,7 @@ export function lockHint(kind, id) {
   if (l.l4r)
     return `${pre}Reach round ${l.l4r} in Dead Ducks Arcade (your best: ${profile.l4round || 0})`;
   if (l.jbomb)
-    return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)}), or find it in the fireplace in Dead Ducks Arcade`;
+    return `${pre}Send Jaime or get hit by Jaime ${fmtJumps(l.jbomb)} times, both count (${fmtJumps(Math.min(l.jbomb, profile.jaimes || 0))}/${fmtJumps(l.jbomb)})`;
   if (l.jaime)
     return `${pre}Be in Mad God Justin while Jaimes stab him ${l.jaime} times, anyone's Jaimes (${Math.min(l.jaime, profile.jaimeStabs || 0)}/${l.jaime})`;
   if (l.kills && !l.hidden)

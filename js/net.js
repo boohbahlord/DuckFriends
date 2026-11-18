@@ -50,6 +50,7 @@ export function createLocalRoom({
   options,
   open = true,
   passkey = "",
+  solo = false, // (Single Player: the installed app's room with no internet, front.js)
 }) {
   if (active) active.close();
   const me = "p-" + uid();
@@ -62,6 +63,7 @@ export function createLocalRoom({
     passkey,
     max,
     options,
+    solo,
   });
   const fns = new Set();
   const room = {

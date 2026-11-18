@@ -4,8 +4,8 @@
    when they die; the boards over the openings; the dark over everything (the power is cut) with the
    fires and every duck's flashlight cut out of it (a cone the way it aims, stopped by the walls); "Round N"
    at the top, my points under it (a +N pops up for each one earned); the end. Hold E by a downed duck to revive it, or
-   by an opening to board it up; key 0 switches my flashlight. Justin's Butler stands by the card table: E by him opens
-   his shop. E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
+   by an opening to board it up; key 0 switches my flashlight. A merchant comes now and then and stands by the card
+   table (on Downpour in the chapel): E by him opens his shop (drawMerchant). E at the fireplace spins it for a weapon: it flickers through them over the fire, lands on one, and E takes
    it (a ranged one only with a ranged weapon in hand to swap: else big words and a buzz say so). My duck walks at half
    speed (Speed: 10% faster) and has 7 seconds of sprint (a thin blue bar under my name). The rules are the host's
    (l4ddrules.js); the weapons bar is l4ddbar.js. */
@@ -30,13 +30,13 @@ import {
 import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
-import { butlerSVG, justinSVG, priestSVG } from "./hangout/npcart.js";
+import { justinSVG } from "./hangout/npcart.js";
+import { merchantById, merchantSVG } from "./merchants.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
 import { mapMount, mapUnmount, mapDraw } from "./l4ddmap.js";
 import { rainMount, rainUnmount, rainDraw } from "./l4ddrain.js";
-import { mudMount, mudUnmount, mudDraw } from "./l4ddmud.js";
 import { nameHTML } from "./name.js";
 import { profile, save, statMode } from "./store.js";
 import { sfx } from "./sound.js";
@@ -51,7 +51,12 @@ import {
   PUMPS,
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK, SLOW as SWIM } from "./hangout/water.js";
-import { fenceLean, BELL_ANGLES, BELL_REST } from "./hangout/stationart.js";
+import {
+  fenceLean,
+  BELL_ANGLES,
+  BELL_REST,
+  JUSTIN_POOL,
+} from "./hangout/stationart.js";
 import {
   L4,
   OPENINGS,
@@ -67,13 +72,13 @@ import {
   upOf,
   ptsOf,
   slotsOf,
-  BUTLER,
   SLOT_KINDS,
   BOX,
   POOL,
   boxNow,
   HELPER,
   weaponName,
+  tintOf,
   priceFor,
   reviveMs,
   saleOn,
@@ -82,17 +87,12 @@ import {
   waitNeed,
   waitVotes,
   startOf,
-  GUN_SHOP,
-  gunPrice,
-  AMMO_PRICE,
   kitOf,
   openingById,
   reloadOf,
   l4Cool,
   kindOf,
   ARMS,
-  SAFE,
-  safePrice,
   zombieLook,
   magIn,
   fullFor,
@@ -102,12 +102,17 @@ import {
   pierceOf,
   shotArm,
   shotWalled,
+  hasLeft,
+  merchantOf,
+  upOffer,
+  selling,
+  stockPrice,
+  MERCH,
 } from "./l4ddrules.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
 import { laserMeter } from "./laserfx.js";
 import { goreFree } from "./wounds.js";
-import { touchOnly } from "./pointer.js";
 import { catalogHTML } from "./l4ddcatalog.js";
 import {
   pwMount,
@@ -120,17 +125,8 @@ import {
   pwTap,
   pwOrbHTML,
   isPw,
-  PART_ICONS,
 } from "./l4ddpowerui.js";
-import {
-  powerOn,
-  powerNext,
-  pwState,
-  partName,
-  PW,
-  fireForSale,
-  pumpZone,
-} from "./l4ddpower.js";
+import { powerOn, powerNext, PW, gasFull, pumpZone } from "./l4ddpower.js";
 import {
   angelMount,
   angelUnmount,
@@ -145,10 +141,10 @@ import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
-import { olAdd, olFloor, olRoofed } from "./outlines.js";
+import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
-import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
+import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
 import {
   zombieURL,
@@ -191,9 +187,16 @@ const MOON = () => {
   return moon;
 };
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
-const BUTLER_NAME = "Justin's Butler";
-const shopName = () => (dp() ? "Priest" : BUTLER_NAME); // (Downpour: the Priest in the chapel does his job, the owner's)
-const NEAR = 130; // world px: how near E works at the Butler and the fireplace
+/* the merchant here now (the rules' s.hang.l4m) and who he is (merchants.js) */
+const merchantNow = (s) => {
+  const m = merchantOf(s);
+  return m ? { ...m, who: merchantById(m.id) } : null;
+};
+const shopName = (s) => {
+  const m = merchantNow(s);
+  return (m && m.who && !m.who.hideName && m.who.name) || "The Merchant"; // (the soldier's name is never shown: "his name is classified info", the owner's, Nov 18 14:10Z)
+};
+const NEAR = 130; // world px: how near E works at the merchant and the fireplace
 const AWAY = 260; // walked this far off: his shop closes
 /* the weapon in my hand (game.js tells me how to ask) */
 let heldFn = () => "";
@@ -333,7 +336,6 @@ let layer = null,
   endEl = null, // the End turn button between rounds (Ready in round 0)
   endSig = "",
   over = null,
-  zpSig = "",
   snapAt = 0,
   gap = 200,
   roundShown = -1, // (none yet)
@@ -416,16 +418,31 @@ let butler = null,
 
 /* the pixel look (pixel.js): a place on the screen on the grid, so things' pixels line up with the map's and the ducks' */
 const at = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
+/* a picture's short name (its text's hash), made once for each picture: the same text (every zombie that looks the
+   same) is hashed once, not once for each of them */
+const UK = new Map();
+function ukOf(url) {
+  let k = UK.get(url);
+  if (!k) {
+    if (UK.size > 600) UK.clear(); // (as l4ddart.js keeps its pictures: the newest few hundred)
+    UK.set(url, (k = hashText(url)));
+  }
+  return k;
+}
 /* the pixel look: a still picture (a zombie, the Butler) as pixels at the size it shows, w × h css px; its drawing until
-   they're made. o keeps what it shows: o.url (the drawing) and o.pxk */
+   they're made (a zombie: nothing until they're made, zombieEl). o keeps what it shows: o.url (the drawing), o.uk (its
+   short name) and o.pxk. Asked every frame for every zombie on the screen, so it checks by the short name: before, it
+   glued the whole drawing (7 to 11 KB of text) into the check each time, a megabyte of throwaway text a frame in a big
+   crowd (the owner's, Nov 18 14:20Z: "i want more frames") */
 function pxPic(o, img, w, h) {
   if (!pixelOn()) return;
   const g = gridPx(),
-    k = o.url + "@" + Math.round(w / g) + "x" + Math.round(h / g);
+    uk = o.uk || (o.uk = ukOf(o.url)),
+    k = uk + "@" + Math.round(w / g) + "x" + Math.round(h / g);
   if (o.pxk === k) return;
   o.pxk = k;
   img.classList.add("px");
-  const key = "z" + (o.uk || (o.uk = hashText(o.url))),
+  const key = "z" + uk,
     u = raster(key, o.url, w, h);
   if (u) img.src = u;
   else
@@ -481,7 +498,10 @@ function zombieEl(z) {
     box = zombieBox(z.l);
   el.className = "l4z";
   const url = zombieURL(z.l, z.i);
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><b></b><i></i></span>`;
+  /* the pixel look: no src yet, its pixels come in draw() (pxPic) at once when a zombie that looks the same has them
+     already; until then it shows nothing rather than its live drawing (a whole wave of them would be drawn as drawings
+     for a moment, each its own) */
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"${pixelOn() ? "" : ` src="${url}"`}></div><span class="l4z-hp"><b></b><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -558,23 +578,39 @@ const BY_WOUND = {
 const newWound = (had = "", now = "") =>
   now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
-function wounds(o, l, i, noGore) {
-  const want = noGore ? goreFree(o.want) : o.want; // (Gore off: none of them shows)
+function wounds(o, l, i) {
+  const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
   if (o.hits === want) return;
   o.hits = want;
   o.url = zombieURL(l, i, o.hits);
   o.uk = "";
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
-/* the zombies in a new state: where each glides to, its hits, its swipes, its death */
+/* the zombies in a new state: where each glides to, its hits, its swipes, its death.
+   A new beat is one where a zombie moved. Before, any change counted (a hit's HP between two beats too), and every
+   change cut the glide's time for all of them at once: the bigger the crowd and the more shots, the more often they
+   jumped ahead, then stood till the next beat (the owner's, Nov 18 10:38Z: "we need to make sure zombies dont jitter or
+   feel slow on the computer (like kinda laggy feeling) when mobs get large"). Now the time between beats is evened out
+   (a change right after a beat is part of it), and each zombie keeps the glide time it started with (o.g), a little
+   over a beat, so it is still on its way when the next one comes instead of stopping and starting */
+const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
 function seeZombies(s, ctx, now) {
-  const zs = zombiesOf(s),
-    sig = (s.hang.zp || []).join();
-  const fresh = sig !== zpSig;
-  if (fresh) {
-    gap = Math.max(120, Math.min(400, snapAt ? now - snapAt : 200));
+  const zs = zombiesOf(s);
+  let fresh = false;
+  for (const z of zs) {
+    const o = Z.get(z.i);
+    if (!o || z.x !== o.tx || z.y !== o.ty) {
+      fresh = true;
+      break;
+    }
+  }
+  if (fresh && (!snapAt || now - snapAt >= GLIDE.same)) {
+    const beat = Math.max(
+      GLIDE.min,
+      Math.min(GLIDE.max, snapAt ? now - snapAt : 200),
+    );
+    gap += (beat - gap) * GLIDE.even;
     snapAt = now;
-    zpSig = sig;
   }
   const seen = new Set();
   for (const z of zs) {
@@ -590,7 +626,11 @@ function seeZombies(s, ctx, now) {
       o.tx = z.x;
       o.ty = z.y;
       o.t0 = now;
-      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) o.fx = o.x = z.x; // (far: there at once)
+      o.g = gap * GLIDE.over;
+      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) {
+        o.fx = o.x = z.x;
+        o.fy = o.y = z.y;
+      } // (far: there at once, both ways; before, only across, and it slid the rest down or up)
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
@@ -635,10 +675,11 @@ function seeZombies(s, ctx, now) {
           `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
         );
       o.el.classList.toggle("onfire", lit);
-    } // (set on fire by a fireball: one big flame over it, as a duck's)
+    } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
     o.l = z.l;
-    if (shown) wounds(o, z.l, z.i, s.options.noGore); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
+    o.ng = !!s.options.noGore;
+    if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
@@ -691,8 +732,33 @@ function seeDrops(s) {
     el.className = "l4-drop k-" + d.k;
     el.innerHTML = `<i>${DROP_ICONS[d.k] || ""}</i>`;
     layer.append(el);
-    D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
+    D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
+}
+/* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
+   owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
+   the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone with the
+   drop once it's picked up (seeDrops) */
+function dropOutline(Wd, o, p, sc, unseen, myFloor) {
+  const w = 46 * sc,
+    x = p.left - 23 * sc,
+    y = p.top - 62 * sc,
+    img =
+      DROP_ICONS[o.kind] && olPic("drop-" + o.kind, DROP_ICONS[o.kind], w, w);
+  if (!img) return;
+  olAdd({
+    id: "dr" + o.n,
+    img,
+    x,
+    y,
+    w,
+    h: w,
+    kind: "drop_" + (DROP_OL[o.kind] ? o.kind : "ammo"),
+    hidden:
+      unseen ||
+      Wd.coverAt(x, x + w, y, y + w, Math.round(sortY(o.x, o.y, 0)) + 10),
+    floor: Math.sign(olFloor(o.x, o.y, 0) - myFloor),
+  });
 }
 /* between rounds (every zombie dead, before the ducks are ready), a thin yellow square on the ground round the fireplace or
    Downpour's car: stand inside it to spin for a weapon (the owner, Nov 17) */
@@ -746,16 +812,10 @@ function spinSquare(s, ctx) {
 }
 /* Justin out there, once he's dead (bled out, dead for good: nobody can revive him now): a pool of blood spreads out under him over
    JPOOL.ms (the owner's, Nov 17 18:05Z: "on death a blood pool spreads"); none with Gore off. Its own few dark ellipses,
-   as flat as the floor */
-const JPOOL = { ms: 6000 };
-const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">
-  <ellipse cx="0" cy="0" rx="40" ry="15" fill="#5e0711"/>
-  <ellipse cx="-24" cy="5" rx="22" ry="9" fill="#5e0711"/>
-  <ellipse cx="26" cy="-4" rx="20" ry="9" fill="#5e0711"/>
-  <ellipse cx="8" cy="10" rx="18" ry="7" fill="#5e0711"/>
-  <ellipse cx="-6" cy="-3" rx="24" ry="8" fill="#7a0b17"/>
-  <ellipse cx="-12" cy="-6" rx="7" ry="2" fill="#a3242c" opacity="0.6"/>
-</svg>`;
+   as flat as the floor. Every other duck that dies has the same one (game.js .gduck-pool) */
+export const JPOOL = { ms: 6000 };
+// (its shapes: stationart.js JUSTIN_POOL, the trooper in the gas station lies in the same)
+export const POOL_SVG = `<svg viewBox="-60 -26 120 52" width="120" height="52">${JUSTIN_POOL}</svg>`;
 let poolEl = null,
   poolAt = 0,
   poolSig = "";
@@ -815,11 +875,13 @@ function seeOn(s, ctx) {
 export function l4Got(k) {
   if (!gotEl) return;
   gotEl.innerHTML =
-    k === "sale"
-      ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-      : k === "nuke"
-        ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-        : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+    k === "merchant"
+      ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
+      : k === "sale"
+        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+        : k === "nuke"
+          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -1226,14 +1288,17 @@ function paint(now, ctx) {
         0.2 + 0.05 * (5 - (brd[o.id] ?? 5)),
       ]);
   }
-  /* Justin's Butler stands in a little light, and the fireplace's weapon glows while it's out */
+  /* the merchant stands in a little light while he sells, and the fireplace's weapon glows while it's out */
   if (dp() || Wd.inside) {
-    const p = Wd.toScreen(BUTLER.x, BUTLER.y, 30);
-    if (
-      seenFrom(BUTLER.x, BUTLER.y, Wd.inside) &&
-      on(p.left * q, p.top * q, 100 * sc)
-    )
-      holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    const mm = merchantOf(s);
+    if (mm && mm.st === "here") {
+      const p = Wd.toScreen(mm.x, mm.y, 30);
+      if (
+        seenFrom(mm.x, mm.y, Wd.inside) &&
+        on(p.left * q, p.top * q, 100 * sc)
+      )
+        holes.push([p.left * q, p.top * q, 100 * sc, 0.5]);
+    }
     if (boxNow(s, clockNow()) && seenFrom(BOX.sx, BOX.sy, Wd.inside)) {
       const o = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz);
       holes.push([o.left * q, o.top * q, 130 * sc, 0.6]);
@@ -1470,11 +1535,8 @@ function shineProps(Wd, cones, q) {
   g.globalAlpha = 1;
 }
 
-/* ---------- Justin's Butler, standing by the card table ---------- */
-/* the Butler is small (the pixel look shrank him by mistake and the owner loved it, Nov 16: kept); Justin isn't */
-const BUTLER_K = 0.7, // (about the size he showed at on a computer)
-  PRIEST_K = 1; // (Downpour's Priest: as big as a player's duck, the owner's, Nov 17 05:46Z)
-function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
+/* ---------- a character standing on the board: the merchant, or Justin in the toilet ---------- */
+function butlerEl(svg, name) {
   const v = svg
       .match(/viewBox="([^"]+)"/)[1]
       .split(" ")
@@ -1492,7 +1554,85 @@ function butlerEl(svg = butlerSVG({ size: 64 }), name = BUTLER_NAME) {
   body.style.top = (-feet).toFixed(1) + "px";
   body.style.transformOrigin = `32px ${feet.toFixed(1)}px`;
   layer.append(el);
-  return { el, body, url, bh: h };
+  return { el, body, url, bh: h, feet };
+}
+/* ---------- the merchant (the rules' s.hang.l4m) ----------
+   He's a duck's size now (the owner's, Nov 18 13:46Z: "Justin's butler is no longer small"), in his look for this visit
+   (merchants.js, rolled by the rules so everyone sees the same one). He glides to where the rules have him (walking
+   in, at his spot, running off), faces the way he goes, fades as he jumps off the balcony or drops over the fence, and
+   lies dead where he fell. His lines show in a bubble over him for MERCH.SAY ms */
+let mSig = "",
+  mAt = null;
+function drawMerchant(ctx, t) {
+  const s = ctx.state(),
+    m = merchantNow(s),
+    Wd = ctx.world,
+    sc = Wd.sc,
+    dead = !!m && m.st === "dead",
+    sig = m && m.who ? [m.v, m.id, m.roll, dead ? 1 : 0].join() : "";
+  if (sig !== mSig) {
+    mSig = sig;
+    butler?.el.remove();
+    butler = null;
+    if (!sig) return;
+    const hid = !!m.who.hideName;
+    butler = butlerEl(
+      merchantSVG(m.who, m.roll, {
+        size: 64,
+        dead,
+        ...(hid ? { title: "The Merchant" } : {}),
+      }),
+      m.who.name,
+    );
+    if (hid) butler.el.querySelector(".hang-npc-name")?.remove(); // (no name over the soldier)
+    butler.el.classList.add("l4-merchant");
+    butler.el.classList.toggle("dead", dead);
+    butler.say = document.createElement("div");
+    butler.say.className = "hang-npc-say";
+    butler.el.prepend(butler.say);
+    butler.sayN = 0;
+    if (!mAt || mAt.v !== m.v) mAt = { v: m.v, x: m.x, y: m.y, t };
+  }
+  if (!butler) return;
+  /* glide (a big jump: there at once) */
+  const dt = Math.min(0.1, Math.max(0, (t - mAt.t) / 1000)),
+    gap = Math.hypot(m.x - mAt.x, m.y - mAt.y),
+    k = gap > 300 ? 1 : Math.min(1, dt * 10);
+  mAt.x += (m.x - mAt.x) * k;
+  mAt.y += (m.y - mAt.y) * k;
+  mAt.t = t;
+  const z = heightAt(mAt.x, mAt.y),
+    p = Wd.toScreen(mAt.x, mAt.y, z),
+    hide =
+      !seenFrom(mAt.x, mAt.y, Wd.inside) ||
+      !Wd.onView(p.left - 60, p.top - 140, 120, 160);
+  if (butler.el.hidden !== hide) butler.el.hidden = hide;
+  if (hide) return;
+  const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+  if (butler.tr !== tr) {
+    butler.tr = tr;
+    butler.el.style.transform = tr;
+    butler.el.style.zIndex = Math.round(sortY(mAt.x, mAt.y, z)) + 10;
+  }
+  pxPic(butler, butler.body.firstChild, 64 * sc, butler.bh * sc);
+  if (butler.k !== sc) {
+    butler.k = sc;
+    butler.body.style.transform = `scale(${sc.toFixed(4)})`;
+    butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
+    butler.el.style.setProperty("--h", (butler.feet * sc).toFixed(1) + "px");
+  }
+  butler.el.classList.toggle("flip", !dead && m.f < 0);
+  butler.el.classList.toggle("gone", m.st === "jump");
+  /* his words */
+  const now = clockNow(),
+    say = m.say;
+  if (say && say.n !== butler.sayN) {
+    butler.sayN = say.n;
+    butler.say.textContent = say.text;
+  }
+  const on = !!say && !dead && now < say.t + MERCH.SAY;
+  if (butler.el.classList.contains("saying") !== on)
+    butler.el.classList.toggle("saying", on);
 }
 
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
@@ -1522,7 +1662,8 @@ function drawEgg(ctx, now) {
     } // (a blue flash as he comes and goes)
     egg.chomp = now + 400;
   }
-  const hide = !on || !Wd.inside || !Wd.seen(p.left - 40, p.top - 90, 80, 110);
+  const hide =
+    !on || !Wd.inside || !Wd.onView(p.left - 40, p.top - 90, 80, 110);
   if (egg.el.hidden !== hide) egg.el.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1601,7 +1742,7 @@ function drawBox(ctx) {
     p = Wd.toScreen(BOX.sx, BOX.sy, BOX.sz),
     hide =
       !seenFrom(BOX.sx, BOX.sy, Wd.inside) ||
-      !Wd.seen(p.left - 60, p.top - 80, 120, 140);
+      !Wd.onView(p.left - 60, p.top - 80, 120, 140);
   if (boxEl.hidden !== hide) boxEl.hidden = hide;
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
@@ -1818,7 +1959,11 @@ function peek(tag, s, me) {
     tag.append(el);
   }
   const list = [
-    ...m.sl.map((x, i) => (x ? [x, `k-${SLOT_KINDS[i]}`] : null)),
+    ...m.sl.map((x, i) =>
+      x
+        ? [x, `k-${SLOT_KINDS[i]} ${tintOf(x, angelOf(s, me, x))}`.trim()]
+        : null,
+    ), // (each in its own color: l4ddrules.js tintOf)
     m.g > 0 ? ["grenade", "k-grenade"] : null,
   ].filter(Boolean);
   const to = Math.max(
@@ -1858,12 +2003,14 @@ function say(text) {
   sfx.nope();
 }
 
-/* ---------- Justin's Butler's shop: a page over the board, as the guestbook's ---------- */
+/* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
     kit = kitOf(s, me),
+    m = merchantNow(s),
+    stock = (m && m.stock) || [],
     sig = JSON.stringify([
       up,
       pts,
@@ -1871,55 +2018,61 @@ function shopFill(s, ctx) {
       saleOn(s),
       kit && kit.sl,
       kit && kit.am,
-      (pwState(s) || {}).shop,
-      fireForSale(s),
+      m && [m.v, m.id, m.roll],
+      stock,
+      upOffer(s, me),
+      gasFull(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.pts.textContent = pts;
-  shop.list.innerHTML = SHOP.map((it) => {
-    const n = up[it.id] || 0,
-      max = n >= it.most,
-      price = priceFor(s, me, it.id, n),
-      was = price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
-    return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
-  }).join("");
-  /* his guns: Buy (a price), Refill (a price) once I have it, Full when it's full (the knife: Owned) */
-  shop.guns.innerHTML = GUN_SHOP.map((w) => {
-    const have = !!kit && kit.sl.includes(w),
-      holy = have && angelOf(s, me, w), // (an Angelic gun never refills: the owner's, Nov 16 22:21Z)
-      price = gunPrice(s, me, w),
-      off = !price || pts < price,
-      label = have
-        ? price
-          ? `Refill ${price}`
-          : price === 0
-            ? "Full"
-            : holy
-              ? "No refills"
-              : "Owned"
-        : `Buy ${price}`;
-    return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${holy ? "Angelic: no refills" : gunWhat(w)}</small></span><button type="button" class="btn small ${price ? "yellow" : ""} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${label}</button></li>`;
-  }).join("");
-  /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
-  {
-    const have = !!kit && kit.sl.includes("safekeep"),
-      price = safePrice(s),
-      was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
-    const partRow = (part, buy, price) =>
-      `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb k-part"><i>${PART_ICONS[part]}</i></span></i><span class="l4-up-t"><b>${partName(part)}</b><small>A part for the power box</small></span><button type="button" class="btn small yellow l4-up-buy" data-buy="${buy}"${pts < price ? " disabled" : ""}>${price}</button></li>`;
-    const part = (pwState(s) || {}).shop,
-      fire = fireForSale(s);
-    if (part) shop.guns.innerHTML += partRow(part, "part", PW.SHOP); // (the power box's part he always has: l4ddpower.js)
-    if (fire) shop.guns.innerHTML += partRow(fire, "partfire", PW.SHOP_FIRE); // (and the fireplace's, dearer, until it comes out of a spin)
-    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
+  /* who's selling: his name over the page, his picture by his words */
+  const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
+  if (shop.who !== who) {
+    shop.who = who;
+    shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
+    shop.me.innerHTML =
+      m && m.who
+        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
+        : "";
+  }
+  /* the one upgrade he offers me this visit (the owner's, Nov 18 14:20Z: "they only sell one per visit") */
+  const offer = SHOP.filter((it) => it.id === upOffer(s, me));
+  shop.list.innerHTML = offer.length
+    ? offer
+        .map((it) => {
+          const n = up[it.id] || 0,
+            max = n >= it.most,
+            price = priceFor(s, me, it.id, n),
+            was =
+              price < priceOf(it.id, n) ? `<s>${priceOf(it.id, n)}</s> ` : ""; // (a Sale: the old price struck through)
+          return `<li class="l4-up"><i class="l4-up-ic">${UP_ICONS[it.id]}</i><span class="l4-up-t"><b>${it.name}</b><small>${it.what}</small></span><span class="l4-up-lv" aria-label="${n} of ${it.most}">${Array.from({ length: it.most }, (_, i) => `<i${i < n ? ' class="on"' : ""}></i>`).join("")}</span><button type="button" class="btn small ${max ? "" : "yellow"} l4-up-buy" data-buy="${it.id}"${max || pts < price ? " disabled" : ""}>${max ? "Max" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">No upgrade for you this visit</li>';
+  /* what he has this visit (the rules' merchantStock): Buy (its price), Owned when I have it (an item of mine that's used
+     up can be bought full again); a Sale strikes the old price through */
+  shop.guns.innerHTML = stock.length
+    ? stock
+        .map(([w, p]) => {
+          const have = !!kit && kit.sl.includes(w),
+            again = have && kindOf(w) === "special" && !hasLeft(s, me, w),
+            price = stockPrice(s, p),
+            was = price < p ? `<s>${p}</s> ` : "",
+            off = (have && !again) || pts < price;
+          return `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML(w)}</i><span class="l4-up-t"><b>${weaponName(w)}</b><small>${kindWord(w)}</small></span><button type="button" class="btn small ${have && !again ? "" : "yellow"} l4-up-buy" data-buy="${w}"${off ? " disabled" : ""}>${have && !again ? "Owned" : was + price}</button></li>`;
+        })
+        .join("")
+    : '<li class="l4-up l4-sold">Sold out</li>';
+  /* Duck Cabin: his gas, always (the pump's 25% at the pump's price) */
+  if (!dp()) {
+    const full = gasFull(s);
+    shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
-const gunWhat = (w) => {
-  if (w === "knife") return "Melee";
-  const [p, n] = AMMO_PRICE[w] || AMMO_PRICE.gun;
-  return `${p} points for ${n} ${w === "bow" ? "arrows" : "bullets"}`;
-};
+/* what kind of thing it is, under its name */
+const kindWord = (w) =>
+  ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
 function openShop(ctx) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -1949,12 +2102,11 @@ function shopEl(ctx) {
   const el = document.createElement("div");
   el.className = "hang-book l4-shop";
   el.hidden = true;
-  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title">${rainbowHTML(shopName(), { seed: 5 })}</h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
+  el.innerHTML = `<div class="hang-book-head"><h3 class="hang-book-title"></h3><span class="l4-shop-pts"><b>0</b> points</span><button type="button" class="win-x hang-book-x" aria-label="Close">×</button></div>
       <div class="tabs l4-shop-tabs" role="tablist"><button type="button" class="tab" role="tab" aria-selected="true" data-tab="buy">Shop</button><button type="button" class="tab" role="tab" aria-selected="false" data-tab="items">Items</button></div>
       <div class="l4-shop-list" data-pane="buy"><ul class="l4-shop-ups"></ul><h4 class="l4-shop-h">Weapons</h4><ul class="l4-shop-guns"></ul></div>
       <div class="l4-shop-list l4-shop-items" data-pane="items" hidden>${catalogHTML()}</div>
-      ${touchOnly() ? "" : '<p class="l4-shop-key"><kbd>B</kbd> buys ammo for the gun in your hand, at his price</p>'}
-      <p class="l4-shop-say"><span class="l4-shop-me">${(dp() ? priestSVG : butlerSVG)({ size: 40 })}</span><q>The fireplace is where you see what weapon you get.</q></p>`;
+      <p class="l4-shop-say"><span class="l4-shop-me"></span><q>The fireplace is where you see what weapon you get.</q></p>`;
   for (const t of ["pointerdown", "click", "wheel", "touchstart"])
     el.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on the page never walks the duck)
   el.querySelector(".hang-book-x").onclick = closeShop;
@@ -1973,12 +2125,13 @@ function shopEl(ctx) {
     const w = b.dataset.buy,
       hand = heldFn(),
       send = () => ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
-    const kit = kitOf(ctx.state(), ctx.me);
-    if (!GUN_SHOP.includes(w) || (kit && kit.sl.includes(w))) return send();
-    /* a gun I haven't got: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
+    const st = ctx.state(),
+      it = ((merchantOf(st) || {}).stock || []).find(([x]) => x === w);
+    if (!it) return send(); // (an upgrade, or gas)
+    /* from his stock: only once I say Yes (the owner's, Nov 16 22:21Z); No, the X and Esc keep my points */
     confirmBox(
       `Are you sure you want to buy the ${weaponName(w)}?`,
-      `${gunPrice(ctx.state(), ctx.me, w)} points`,
+      `${stockPrice(st, it[1])} points`,
     ).then((yes) => yes && send());
   });
   ctx.world.board.append(el);
@@ -1989,6 +2142,9 @@ function shopEl(ctx) {
     pts: el.querySelector(".l4-shop-pts b"),
     list: el.querySelector(".l4-shop-ups"),
     guns: el.querySelector(".l4-shop-guns"),
+    title: el.querySelector(".hang-book-title"),
+    me: el.querySelector(".l4-shop-me"),
+    who: "",
   };
 }
 
@@ -2031,27 +2187,14 @@ function holdTarget(pos, ctx) {
     if (now >= b.t + BOX.spin && b.w !== HELPER.w)
       return { kind: "take", d: db, w: b.w }; // (Justin climbs out by himself)
   }
-  const ds = Math.hypot(BUTLER.x - pos.x, BUTLER.y - pos.y);
+  const m = merchantOf(s);
+  if (!selling(s)) return null;
+  const ds = Math.hypot(m.x - pos.x, m.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
 }
-/* B: ammo for the gun in hand, at the Butler's price, from anywhere (only one of his guns, not full, with the points) */
-function buyAmmo(ctx) {
-  const s = ctx.state(),
-    me = ctx.me,
-    w = heldFn();
-  if (!s.hang || !s.hang.l4 || s.hang.l4.over || !up(s, me)) return;
-  const kit = kitOf(s, me),
-    price = gunPrice(s, me, w);
-  if (!kit || !kit.sl.includes(w) || !GUN_SHOP.includes(w) || w === "knife")
-    return say(`The ${dp() ? "Priest" : "Butler"} doesn't sell ammo for that`);
-  if (angelOf(s, me, w)) return say("Angelic: no refills");
-  if (!price) return say("It's full");
-  if (ptsOf(s, me) < price) return say("Not enough points");
-  ctx.send({ t: "hang", k: "l4", do: "ammo", what: w });
-}
-/* E (a tap) at the Butler or the fireplace */
+/* E (a tap) at the merchant or the fireplace */
 function tap(t, ctx) {
   if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
   const s = ctx.state(),
@@ -2064,9 +2207,8 @@ function tap(t, ctx) {
   } else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
   else if (t.kind === "power") pwTap(ctx);
   else if (t.kind === "pump") {
-    if (!powerOn(s)) return say("The pumps need the power on");
-    if (ptsOf(s, me) < PW.PUMP * PW.PUMP_ROUNDS)
-      return say("Not enough points");
+    if (gasFull(s)) return say("The jerry cans are full");
+    if (ptsOf(s, me) < PW.PUMP) return say("Not enough points");
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
@@ -2189,7 +2331,6 @@ activity({
     ctx.world.board.append(hud, over, ptsEl, endEl, sayEl, onEl, gotEl, killEl);
     mapMount(ctx.world.board);
     rainMount(ctx.world.board); // (Downpour's rain: l4ddrain.js)
-    mudMount(ctx.world.board); // (and a mud zombie's mud on my screen: l4ddmud.js)
     pwMount(ctx, layer);
     angelMount(ctx, layer);
     sqEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -2208,7 +2349,9 @@ activity({
     poolSig = "";
     layer.append(poolEl);
     shop = shopEl(ctx);
-    butler = butlerEl(dp() ? priestSVG({ size: 64 }) : undefined, shopName()); // (Downpour: the Priest does his job, in his own drawing)
+    butler = null; // (the merchant: drawMerchant makes him when he comes)
+    mSig = "";
+    mAt = null;
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
@@ -2216,16 +2359,7 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    zpSig =
-      overShown =
-      endSig =
-      drawn =
-      boxSig =
-      upSig =
-      slotSig =
-      onSig =
-      litSig =
-        "";
+    overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = litSig = "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();
@@ -2245,7 +2379,6 @@ activity({
     cv?.remove();
     mapUnmount();
     rainUnmount();
-    mudUnmount();
     pwUnmount();
     angelUnmount();
     hud?.remove();
@@ -2301,11 +2434,14 @@ activity({
       sl.some((w) => w && !had.includes(w)) &&
       !(
         ctx.duck() &&
-        Math.hypot(ctx.duck().x * W - BUTLER.x, ctx.duck().y * H - BUTLER.y) <
-          320
+        merchantOf(s) &&
+        Math.hypot(
+          ctx.duck().x * W - merchantOf(s).x,
+          ctx.duck().y * H - merchantOf(s).y,
+        ) < 320
       )
     )
-      sfx.done();
+      sfx.done(); // (not for what I bought from the merchant: his till rings)
     upSig = u;
     slotSig = sl.join();
     if (holding && !up(s, ctx.me)) holding = null;
@@ -2328,9 +2464,13 @@ activity({
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
           !ctx.world.inside ||
-          Math.hypot(BUTLER.x - x, BUTLER.y - y) > AWAY)
+          !selling(ctx.state()) ||
+          Math.hypot(
+            merchantOf(ctx.state()).x - x,
+            merchantOf(ctx.state()).y - y,
+          ) > AWAY)
       )
-        closeShop(); // (walked off, or down: it closes)
+        closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
         const t = holdTarget({ x, y }, ctx);
         if (
@@ -2352,7 +2492,7 @@ activity({
       myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
-      const u = Math.min(1, (t - o.t0) / gap);
+      const u = Math.min(1, (t - o.t0) / (o.g || gap));
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
       const up =
@@ -2375,7 +2515,7 @@ activity({
           : hole
             ? Math.round(hole.key) + 11 // (over the roof, in its hole)
             : Math.round(sortY(o.x, o.y, z)) + 10,
-        onCam = Wd.seen(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
+        onCam = Wd.onView(f.left - 40 * sc, f.top - 90 * sc, 80 * sc, 100 * sc),
         hide =
           unseen ||
           !onCam ||
@@ -2477,7 +2617,6 @@ activity({
         hit && clockNow() - hit[2] < 600 ? hit : null,
       ); // (and the lightning: l4ddrules.js boltTick)
     } else rainDraw(t, ctx, [], false);
-    mudDraw(((ctx.state().hang.l4p || {})[ctx.me] || {}).mud || 0, clockNow());
     const beat = new Set();
     for (const o of Z.values()) if (atBoards(o, Wd.inside)) beat.add(o.l[2]);
     /* the boards: inside, the door's and the holes'; outside (on the deck), the stairs' */
@@ -2488,7 +2627,7 @@ activity({
         p = Wd.toScreen(o.x, o.y, 0),
         hide =
           out === Wd.inside ||
-          !Wd.seen(
+          !Wd.onView(
             p.left + b.box.l * sc,
             p.top + b.box.t * sc,
             b.box.w * sc,
@@ -2510,10 +2649,11 @@ activity({
     const tn = clockNow();
     for (const o of D.values()) {
       const p = Wd.toScreen(o.x, o.y, 0),
-        hide =
-          !seenFrom(o.x, o.y, Wd.inside) ||
-          !Wd.seen(p.left - 40, p.top - 80, 80, 100);
+        unseen = !seenFrom(o.x, o.y, Wd.inside),
+        onCam = Wd.onView(p.left - 40, p.top - 80, 80, 100),
+        hide = unseen || !onCam;
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (onCam) dropOutline(Wd, o, p, sc, unseen, myFloor); // (out of sight too: then its line only)
       if (hide) continue;
       const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
       if (o.tr !== tr) {
@@ -2537,31 +2677,7 @@ activity({
     seeOn(ctx.state(), ctx);
     spinSquare(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
-    /* Justin's Butler */
-    {
-      const z = heightAt(BUTLER.x, BUTLER.y),
-        p = Wd.toScreen(BUTLER.x, BUTLER.y, z),
-        hide =
-          !seenFrom(BUTLER.x, BUTLER.y, Wd.inside) ||
-          !Wd.seen(p.left - 40, p.top - 90, 80, 110);
-      if (butler.el.hidden !== hide) butler.el.hidden = hide;
-      if (!hide) {
-        const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
-        if (butler.tr !== tr) {
-          butler.tr = tr;
-          butler.el.style.transform = tr;
-          butler.el.style.zIndex =
-            Math.round(sortY(BUTLER.x, BUTLER.y, z)) + 10;
-        }
-        const bk = sc * (dp() ? PRIEST_K : BUTLER_K);
-        pxPic(butler, butler.body.firstChild, 64 * bk, butler.bh * bk);
-        if (butler.k !== sc) {
-          butler.k = sc;
-          butler.body.style.transform = `scale(${bk.toFixed(4)})`;
-          butler.el.style.setProperty("--nt", (2 * sc).toFixed(1) + "px");
-        }
-      }
-    }
+    drawMerchant(ctx, t);
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);
@@ -2614,10 +2730,6 @@ activity({
     };
   },
   keydown(e, ctx) {
-    if (e.code === "KeyB") {
-      if (!e.repeat) buyAmmo(ctx);
-      return true;
-    }
     if (e.code === "Digit0" || e.code === "Numpad0") {
       if (!e.repeat) ctx.send({ t: "hang", k: "l4", do: "fl" });
       return true;

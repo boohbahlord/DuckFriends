@@ -20,6 +20,7 @@ import { go } from "./router.js";
 import { toast } from "./ui.js";
 import { ready, keyOk, seal, unseal, handouts } from "./secret.js";
 import { cardOf } from "./quackrules.js";
+import { wireOut, wireIn } from "./l4ddwire.js";
 
 export const CONFIG = {
   apiKey: "AIzaSyDh4Jx2TnY1PBlPiYnMczqzGhg-4dBFajY",
@@ -246,7 +247,7 @@ function decode(v) {
   s.players = s.players || {};
   s.pos = s.pos || {};
   s.log = s.log || [];
-  return s;
+  return wireIn(s); // (Dead Ducks Arcade's zombies, near and far, together again: l4ddwire.js)
 }
 const keyOf = (s) => (s ? [s.phase, s.round, s.qi].join("|") : "");
 
@@ -480,7 +481,7 @@ function startRoom({ g, rid, name, open, state: first, host, passkey }) {
     if (mode !== "host" || !state) return;
     const cards = await cardsFor(state).catch(() => ({}));
     if (mode !== "host" || !state) return;
-    const enc = encode(state),
+    const enc = encode(wireOut(state, now())), // (Dead Ducks Arcade: the zombies far from every duck go less often, l4ddwire.js)
       up = extra;
     extra = {};
     for (const [id, box] of Object.entries(cards))

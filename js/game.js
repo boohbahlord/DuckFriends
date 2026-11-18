@@ -207,6 +207,7 @@ import {
   BURN,
   weaponName,
   wildCrying,
+  isWild,
 } from "./l4ddrules.js";
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
@@ -218,6 +219,8 @@ import {
   l4Ammo,
   l4ZBoxes,
   shotStop,
+  POOL_SVG,
+  JPOOL,
 } from "./l4dd.js";
 import { mountMeter, othersHpHTML, popHP } from "./hpmeter.js";
 import { JET, jetHTML, myFuel, burnFuel } from "./jetpack.js";
@@ -360,7 +363,6 @@ import {
 import {
   FLAME,
   ARROW,
-  FIREBALL,
   JAIME,
   BOMB_SKIN,
   POOF,
@@ -369,6 +371,7 @@ import {
   TELEPORT,
   HITMARK,
   edgeHTML,
+  GOLD_CHAIR,
 } from "./mgjart.js";
 import { hitsOf, zombieURL, zombieBox } from "./l4ddart.js";
 import { angelic, angelGlow } from "./powerart.js"; // (after l4ddart.js: Noah's note on an old import cycle)
@@ -501,6 +504,7 @@ let bar = null,
   pad = null, // phones: the jump button and the attack button
   lastKey = -1; // the specials' number keys: the row, the key last pressed (V presses it again)
 const kept = new Set(); // the jumps kept on here (Shift and the key); kept effects are in the room's state
+const DOWN_TURN = (-100 * Math.PI) / 180; // (a duck lying dead is turned this far: css .gduck-body, rotate(-100deg))
 const BODY = "~body"; // a Duck Cabin ghost's body is drawn as a duck of its own: its player's id and this
 const JUSTIN2 = "justin2"; // Mad God Justin's double, drawn as a duck of its own
 const isJustin = (id) => id === JUSTIN_ID || id === JUSTIN2;
@@ -1380,11 +1384,11 @@ function drawDucks(now = clockNow()) {
         : s.players[id] ||
           (id === JUSTIN_ID && {
             ...(isMgj(s)
-              ? s.phase === "mgjend" && s.mgj && s.mgj.won
+              ? !mgjDead(s) && s.mgj && s.mgj.hp <= MGJ_CRY
                 ? SAD_JUSTIN
                 : MAD_JUSTIN
               : JUSTIN_PLAYER),
-            dead: !!s.justin.down,
+            dead: !!s.justin.down || mgjDead(s),
           }) ||
           (id === GOOD_ID && {
             ...GOOD_JUSTIN,
@@ -1430,7 +1434,12 @@ function drawDucks(now = clockNow()) {
       look = vc ? tinted(worn, vc) : worn, // (Vote colors: the tile's color under the duck)
       role = lawRole(s, id),
       jet = jetOn(s, id, now),
-      wc = s.players[id] && !g && s.pw ? pwCodes(s, id, now) : "", // (its wounds: wounds.js)
+      wc =
+        id === JUSTIN_ID && isMgj(s)
+          ? mgjGore(s)
+          : s.players[id] && !g && s.pw
+            ? pwCodes(s, id, now)
+            : "", // (its wounds: wounds.js; Mad God Justin's by his HP, mgjGore)
       sig = JSON.stringify([
         look,
         p.name,
@@ -1732,31 +1741,46 @@ function drawDucks(now = clockNow()) {
        away: my own duck a darker blue that only I see, every other player green, Justin yellow (Good Justin God in Mad
        God Justin, never Mad God Justin himself; the helper and Downpour's Justin in Dead Ducks Arcade): the owner's,
        Nov 17 20:10Z */
-    const olP = !g && s.players[id],
+    const olId = g ? id.slice(0, -BODY.length) : id, // (a Duck Cabin ghost's body is its player's, outlined as that player)
+      olP = s.players[olId],
+      olMine = olId === R.me,
       olKind = !ol
         ? ""
         : isMgj(s)
           ? id === GOOD_ID
             ? "justin"
             : olP && id !== JUSTIN_ID
-              ? mine
+              ? olMine
                 ? "me"
                 : "ally"
               : ""
           : olP
             ? olP.helper || olP.wild
               ? "justin" // (Dead Ducks Arcade's Justins: the helper from the fireplace, and Downpour's, out there)
-              : mine
+              : olMine
                 ? "me"
                 : "ally"
             : "";
-    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
-    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
-      const ph = pic.naturalWidth
+    /* a duck lying dead: where the middle of its body is on the board, as css lays it down (.gduck-body: rotate(-100deg)
+       translateY(-12%) round the bottom middle of its body; DOWN_TURN). Its outline's arrow goes in it, what hides it is
+       looked for there, and its pool of blood spreads under it (a duck lies a little to the side of where it stood: the
+       owner's, Nov 18 10:38Z, "outlines do not show for dead ducks, such as justin", where his arrow sat outside him and
+       what hides a standing duck hid him) */
+    const ph =
+        pic && pic.naturalWidth
           ? (size * pic.naturalHeight) / pic.naturalWidth
           : size,
-        x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
-        b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+      b = at.top - z, // (its feet: the body sits on the bottom of its lift)
+      lie = ph / 2 - 1.12 * (ph - size * 0.08), // (its picture's middle over its feet, before it's turned)
+      mid = deadPose
+        ? [
+            at.left - fx * Math.sin(DOWN_TURN) * lie,
+            b + Math.cos(DOWN_TURN) * lie,
+          ]
+        : [at.left, b - ph / 2];
+    let olOnly = false; // (something hides it from me: its outline only, never its picture; the owner's, Nov 17 17:41Z)
+    if (olKind && pic && pic.tagName === "IMG" && !d._off) {
+      const x = (pixelOn() ? snap(at.left) : at.left) - size / 2,
         y = b - ph + size * 0.08; // (the picture hangs 8% under the body, css/app.css .gduck-body img.px)
       let hidden = false,
         floor = 0;
@@ -1766,13 +1790,21 @@ function drawDucks(now = clockNow()) {
         hidden =
           !!d._hid ||
           (!mine && !!a && olRoofed(a.x, a.y, az, olAt)) || // (under a roof I'm not under: hidden by it, outlines.js)
-          world.coverAt(
-            at.left - size * 0.4,
-            at.left + size * 0.4,
-            b - size * 0.9,
-            b,
-            d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
-          );
+          (deadPose
+            ? world.coverAt(
+                mid[0] - size * 0.45,
+                mid[0] + size * 0.45,
+                mid[1] - size * 0.35,
+                mid[1] + size * 0.35,
+                d._zi,
+              ) // (lying down: where it lies)
+            : world.coverAt(
+                at.left - size * 0.4,
+                at.left + size * 0.4,
+                b - size * 0.9,
+                b,
+                d._zi, // (its z-index: only what is really drawn over it hides it, world.js)
+              ));
         if (a) floor = Math.sign(olFloor(a.x, a.y, az) - olMe);
       }
       olAdd({
@@ -1788,12 +1820,41 @@ function drawDucks(now = clockNow()) {
         floor,
         hp: hv ? hv[0] : d._hp >= 0 ? d._hp : undefined,
         down: deadPose ? [b, ph - size * 0.08] : null, // (out of HP, lying down: its outline lies down too)
+        mid: deadPose ? mid : null, // (lying down: the arrow inside its body)
       });
       olOnly = hidden && !d._hid && id !== R.me;
     }
     if (d._olOnly !== olOnly) {
       d._olOnly = olOnly;
       d.classList.toggle("ol-only", olOnly);
+    }
+    /* every duck that dies, in every mode: a pool of blood spreads out under it, as under Justin out in Downpour (the
+       owner's, Nov 18 10:38Z: "every player duck that dies in any game mode has a puddle of blood start to spill out
+       beneath their duck like justin's"). The same pool (l4dd.js POOL_SVG), growing over JPOOL.ms from when it fell,
+       gone when it's up again; none with Gore off. Downpour's Justin keeps his own (l4dd.js seePool) */
+    const pooled =
+      dead && !+s.options.noGore && !(isL4dd(s) && isWild(s, olId));
+    if (!pooled) {
+      if (d._pool) {
+        d._pool.remove();
+        d._pool = null;
+      }
+    } else {
+      if (!d._pool) {
+        d._pool = el(
+          `<span class="gduck-pool" aria-hidden="true">${POOL_SVG}</span>`,
+        );
+        d.prepend(d._pool);
+        d._poolAt = now;
+        d._poolK = "";
+      }
+      const k = Math.min(1, (now - d._poolAt) / JPOOL.ms),
+        grow = 0.15 + 0.85 * (1 - (1 - k) * (1 - k)),
+        pk = `translate(${(mid[0] - at.left + size / 2).toFixed(1)}px, ${(size * 0.06 - z).toFixed(1)}px) scale(${grow.toFixed(3)})`; // (where its body lies: on the podium, on it)
+      if (d._poolK !== pk) {
+        d._poolK = pk;
+        d._pool.style.transform = pk;
+      }
     }
     if (d._j !== pos.j) {
       d._j = pos.j;
@@ -1929,8 +1990,8 @@ function drawDucks(now = clockNow()) {
       d.classList.toggle("mgj-burnt", scorched === 1);
       d.classList.toggle("mgj-unburn", scorched === 2);
     } // (burnt by the lightning on the podium, then the burn fades like a fire's: 4 s, then 2.5 s)
-    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a fireball's burn: one
-       big flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
+    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a burn: one big
+       flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
     const blink = isMgj(s) && s.phase === "boss" && mgjSafe(s, id, now);
     if (d._blink !== blink) {
       d._blink = blink;
@@ -2113,14 +2174,24 @@ function drawDucks(now = clockNow()) {
         : place({ x: at.x, y: at.y }, 0, 1, true), // (free: past the board's left edge it flies on, never back to where ducks start)
       top = a.top - at.z * size; // (Hangout: at the height it was fired from)
     if (stopped(s, sh, at, hang, now)) continue; // (it got to what stops it: gone from my screen there)
-    if (hang && world.hidden("", at)) continue; // (on the other side of the cabin's walls)
+    /* on the other side of the walls: looked for at its shooter's feet (at.z is its arc in duck sizes; taken for a
+       height, every shot over a roof was hidden from a duck up on that roof) */
+    if (hang && world.hidden("", { x: at.x, y: at.y, z: sh.hz })) continue;
     if (
-      a.left < -geo.W * 0.4 ||
-      a.left > geo.W * 1.4 ||
-      top > geo.top0 + geo.H + size * 6 ||
-      top < -geo.H
-    )
-      continue; // (off the screen)
+      hang
+        ? a.left < -size * 2 ||
+          a.left > geo.W + size * 2 ||
+          top < -size * 2 ||
+          top > geo.H + size * 2
+        : a.left < -geo.W * 0.4 ||
+          a.left > geo.W * 1.4 ||
+          top > geo.top0 + geo.H + size * 6 ||
+          top < -geo.H
+    ) {
+      const o = SHOT_SEEN.get(sh.n);
+      if (o) o.x = NaN; // (no puff where it went out of sight: it hits something I can't see)
+      continue;
+    } // (off the screen: in Hangout and Dead Ducks Arcade, two ducks past my screen's edge, the owner's Nov 18 14:20Z "one or two duck lengths")
     live.add(sh.n);
     const seen = SHOT_SEEN.get(sh.n);
     if (seen) {
@@ -2143,16 +2214,12 @@ function drawDucks(now = clockNow()) {
         spin = vx < 0 ? "ccw" : "";
       /* [its class, its look, its style]: elements with the same class and look are handed out again (shotPool) */
       const [cls, inner, style] =
-        sh.k === "arrow" || sh.k === "fireball"
-          ? [
-              `bullet k-${sh.k}`,
-              sh.k === "arrow" ? ARROW : FIREBALL,
-              `${sz};${ang}`,
-            ] // (the bow's arrow, Mad God Justin's fireball: pointing the way they fly)
+        sh.k === "arrow"
+          ? [`bullet k-${sh.k}`, ARROW, `${sz};${ang}`] // (the bow's arrow: pointing the way it flies)
           : sh.k === "controller" || sh.k === "chair"
             ? [
                 `thrown mgj-throw k-${sh.k}`,
-                `<i class="${spin}">${sh.k === "chair" ? CHAIR : CONTROLLER}</i>`,
+                `<i class="${spin}">${sh.k === "chair" ? (isL4dd(s) ? GOLD_CHAIR : CHAIR) : CONTROLLER}</i>`, // (Quacky Zombies' chair is golden)
                 sz,
               ]
             : sh.k === "dagger" || sh.k === "grenade" || sh.k === "lgren"
@@ -2163,7 +2230,7 @@ function drawDucks(now = clockNow()) {
                 ] // (the grenade launcher's fly as the thrown ones, straight)
               : ROUNDS_ART[sh.k]
                 ? [
-                    `bullet k-${sh.k}`,
+                    `bullet round k-${sh.k}`,
                     ROUNDS_ART[sh.k].svg,
                     `${ang};--w:${ROUNDS_ART[sh.k].w}px`,
                   ] // (Quacky Zombies' new guns: each its own bullet)
@@ -2237,10 +2304,16 @@ function drawDucks(now = clockNow()) {
     if (!h || h._k !== hk || h._hs !== hs) {
       if (h) h.remove();
       const dual = holy && w === "handgun", // (the Angelic pistol: two of them)
-        art = lz ? laserArt(lz) : heldHTML(w, duck),
+        art = lz
+          ? laserArt(lz)
+          : w === "chair" && isL4dd(s)
+            ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
+            : heldHTML(w, duck),
         pic = dual ? angelic(dualPistolHTML(duck)) : holy ? angelic(art) : art;
+      /* every gun as long in the hand as its l4ddguns.js w (--gw, css .held i): one number for each, so no new gun is
+         left at a knife's size */
       h = el(
-        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px"><i>${pic}</i></div>`,
+        `<div class="held${holy ? " angelic" : ""}${dual ? " dual" : ""}" data-pid="${esc(id)}" data-w="${w}" style="--s:${hs.toFixed(0)}px${GUNS[w] ? `;--gw:${GUNS[w].w}` : ""}"><i>${pic}</i></div>`,
       );
       h._k = hk;
       h._hs = hs;
@@ -3528,16 +3601,11 @@ function playFx(f) {
         glauncher: sfx.glauncher,
         ...NEW_GUN_SFX,
         zebra: sfx.cakeThrow,
-        fireball: sfx.fireball,
         adrenaline: sfx.adrenaline,
         longjump: sfx.boing,
       })[f.what]?.(heard(f.by));
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
-    if (f.what === "fireball") {
-      sfx.fireball();
-      return;
-    }
     if (f.what === "zebra") {
       sfx.cakeThrow(heard(f.by));
       return;
@@ -4111,6 +4179,42 @@ function knockedOff(d, wc, look, at, z, size, face) {
   if (fresh("p"))
     fxKnock(svg(beakSVG(look)), size, x(100), at.top, h(42), face, 1.1, true);
   if (fresh("e")) fxEye(x(83), at.top, h(34), face);
+}
+/* Mad God Justin, beaten: he dies, lying on the LOSER podium in his blood, crying no more (the owner's, Nov 18 12:19Z:
+   "when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for
+   any dead player)", "mad god justin bleeds a puddle of blood when dead") */
+const MGJ_CRY = 25;
+const mgjDead = (s) => isMgj(s) && !!s.mgj && !!s.mgj.won && s.mgj.hp <= 0;
+/* his gore by his HP (the owner's, Nov 18 12:19Z: "justin gets more gored every 10 health points when he has 100 HP,
+   and once he hits 10 HP, every bit of damage does even more gore"): from 100 HP down, one more wound for every 10 HP
+   he has lost, and under 10 HP one more for every HP; each step adds the next of MGJ_GORE (wounds.js codes: bruises
+   and cuts first, then holes, an eye, chunks, his beak, the last the worst). Gore off: game.js shows only what
+   goreFree keeps */
+const MGJ_GORE = [
+  "r1",
+  "c0",
+  "b4",
+  "c6",
+  "B2",
+  "r5",
+  "s1",
+  "c3",
+  "b7",
+  "e0",
+  "B0",
+  "k1",
+  "c7",
+  "b5",
+  "p0",
+  "k2",
+  "B6",
+  "s4",
+  "g0",
+];
+function mgjGore(s) {
+  const hp = s.mgj ? Math.max(0, s.mgj.hp ?? 999) : 999,
+    n = hp > 100 ? 0 : hp >= 10 ? Math.floor((100 - hp) / 10) : 9 + (10 - hp);
+  return MGJ_GORE.slice(0, n).join("");
 }
 /* a duck's wounds (wounds.js codes) as duck.js' skin and what it has lost */
 const WLOOK = new Map();
@@ -7522,7 +7626,7 @@ const KEEP_HINT =
   '<i class="hints-br"></i><kbd>Number</kbd> Pick a weapon <kbd>Click</kbd> Use it <kbd>Shift</kbd>+<kbd>Number</kbd> Keep a jump on';
 const L4_HINTS =
   "<kbd>WASD</kbd> Move <kbd>Shift</kbd> Sprint <kbd>Click</kbd> Attack <kbd>R</kbd> Reload" +
-  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade <kbd>B</kbd> Ammo'; // (B only here, the owner's, Nov 4; E goes with it, so no key is split from its word; the grenades are the 5 key now, Nov 16)
+  '<i class="hints-br"></i><kbd>E</kbd> Use <kbd>5</kbd> Grenade'; // (E with it, so no key is split from its word; the grenades are the 5 key now, Nov 16; no B any more: the merchants never sell ammo, the owner's, Nov 18 13:46Z)
 /* where a click attacks: on a computer anywhere on the game's screen but a button, a field, a card, a panel or a window
    (the board is the whole screen now, the owner's, Nov 4 07:43Z); on a touch screen only on the board */
 const NOT_AIM =

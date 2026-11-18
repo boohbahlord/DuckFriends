@@ -2923,6 +2923,23 @@ html.still .lord-say.out .w > span {
   transform-origin: 50% 50%;
   transform: translateX(-50%);
 }
+/* a duck that died: its blood spreading out under it, as Justin's (game.js; l4dd.js POOL_SVG), its middle where game.js
+   puts it, as wide as Justin's is to him */
+.gduck-pool {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--sz) * 1.875);
+  height: calc(var(--sz) * 0.8125);
+  margin: calc(var(--sz) * -0.40625) 0 0 calc(var(--sz) * -0.9375);
+  pointer-events: none;
+  opacity: 0.92;
+}
+.gduck-pool svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .gduck-lift {
   position: absolute;
   left: 0;
@@ -11772,6 +11789,7 @@ html.moving .hp .flick {
 /* something hides it from me (a wall, a roof, a crown): only its outline shows, never its picture (the owner's, Nov 17
    17:41Z; outlines.js draws the line). Its name tag stays */
 .gduck.ol-only .gduck-body,
+.gduck.ol-only .gduck-pool,
 .gduck.ol-only .gduck-shadow,
 .gduck.ol-only .gduck-fire,
 .gduck.ol-only .gduck-ring,
@@ -13801,19 +13819,13 @@ html.moving .mgj-field {
     transform: translateX(4%) rotate(3deg);
   }
 }
-/* the bow's arrow and his fireball, pointing the way they fly */
+/* the bow's arrow, pointing the way it flies */
 .bullet.k-arrow {
   width: calc(var(--s) * 0.8);
   margin: calc(var(--s) * -0.075) 0 0 calc(var(--s) * -0.4);
   filter: drop-shadow(0 0.1rem 0.12rem #0006);
 }
-.bullet.k-fireball {
-  width: var(--s);
-  margin: calc(var(--s) * -0.3) 0 0 calc(var(--s) * -0.5);
-  filter: drop-shadow(0 0 0.4rem #ff8c2b);
-}
-.bullet.k-arrow svg,
-.bullet.k-fireball svg {
+.bullet.k-arrow svg {
   display: block;
   width: 100%;
   height: auto;
@@ -14131,57 +14143,19 @@ html.moving .eye-zap {
   margin: -4px 0 0 -8px;
   filter: drop-shadow(0 0 2px #ffb347);
 }
-/* Quacky Zombies' new guns: in the hand, each as long as it is (l4ddguns.js' w), and their bullets (the SMG's with no
-   glow: many fly at once); the chain gun's line, flashing in and out */
-.held[data-w="sniper"] i {
-  width: calc(var(--s) * 1.25);
-}
-.held[data-w="smg"] i {
-  width: calc(var(--s) * 0.52);
-}
-.held[data-w="ak"] i {
-  width: calc(var(--s) * 1);
-}
-.held[data-w="chaingun"] i {
-  width: calc(var(--s) * 1.05);
-}
-.held[data-w="revolver"] i {
-  width: calc(var(--s) * 0.44);
-}
-.held[data-w="glauncher"] i {
-  width: calc(var(--s) * 0.9);
-}
-.held[data-w="lmg"] i {
-  width: calc(var(--s) * 1.2);
-}
-.held[data-w="dbarrel"] i {
-  width: calc(var(--s) * 1.15);
-}
-.held[data-w="flamer"] i {
-  width: calc(var(--s) * 1.1);
-}
-.held[data-w="burst"] i {
-  width: calc(var(--s) * 0.85);
-}
-/* the Laser Rifle: as long as its l4ddguns.js w, about the AK-47's size (the owner, Nov 17 20:02Z: "the laser gun is too
-   small and is supposed to be as big as the ak47 or something around that size"; it had no width of its own, so it
-   took a knife's) */
-.held[data-w="laser"] i {
-  width: calc(var(--s) * 1.1);
-}
-.held[data-w="adrenaline"] i {
-  width: calc(var(--s) * 0.44);
-}
+/* Quacky Zombies' guns in the hand: each as long as its l4ddguns.js w, set by game.js as --gw (.held i), one number per
+   gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
+   gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
+   ak47"). Their bullets (the SMG's with no glow: many fly at once); the chain gun's line, flashing in and out */
 .held[data-w="chair"] i {
   width: calc(var(--s) * 0.62);
 }
 .held[data-w="zebra"] i {
   width: calc(var(--s) * 0.5);
 }
-.held[data-w="fireball"] i {
-  width: calc(var(--s) * 0.5);
-}
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst) {
+/* (every gun's own bullet, game.js .round: the Tommy gun's and the UMP-45's had been left out of a list here, so they flew
+   at the handgun's size, off their line) */
+.bullet.round {
   width: var(--w);
   margin: calc(var(--w) * -0.18) 0 0 calc(var(--w) * -0.5);
 }
@@ -14191,8 +14165,7 @@ html.moving .eye-zap {
 .bullet.k-lmg {
   filter: drop-shadow(0 0 3px #ff6a3d);
 }
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst)
-  svg {
+.bullet.round svg {
   display: block;
   width: 100%;
   height: auto;
@@ -14954,7 +14927,7 @@ html.moving .eye-tears .tdrop.t2 {
   bottom: 6%;
   width: 104%;
   animation: fl-up 0.22s ease-out;
-} /* (a zombie set on fire by a fireball: the burning duck's flame over it) */
+} /* (a zombie set on fire: the burning duck's flame over it) */
 /* dead: the white drains to black real quick (above), then the bar fades away */
 .l4z.dead .l4z-hp {
   animation: l4z-hp-gone 0.75s linear forwards;
@@ -15500,6 +15473,61 @@ html.moving .l4-heat.hot::after {
   --c: #e9e9f2;
   --cl: #ffffff;
   --cd: #8a8aa0;
+}
+/* each one's own color (l4ddrules.js tintOf; the owner's, Nov 18 12:19Z): green, blue, purple (it glows), the chair's
+   gold, an Angelic weapon's red; a jerry can's orb orange, glowing (l4ddpowerui.js) */
+:is(.l4s, .l4orb, .sp-slot).c-green {
+  --c: #2fae4a;
+  --cl: #a6f0b4;
+  --cd: #135a22;
+}
+:is(.l4s, .l4orb, .sp-slot).c-blue {
+  --c: #3d7be0;
+  --cl: #a9c9ff;
+  --cd: #173a80;
+}
+:is(.l4s, .l4orb, .sp-slot).c-purple {
+  --c: #9a4de0;
+  --cl: #dcbcff;
+  --cd: #461a80;
+}
+:is(.l4s, .l4orb, .sp-slot).c-gold {
+  --c: #e2b12a;
+  --cl: #fff0a8;
+  --cd: #7a5608;
+}
+:is(.l4s, .l4orb, .sp-slot).c-red {
+  --c: #e0463d;
+  --cl: #ffb0a6;
+  --cd: #7e1a15;
+}
+:is(.l4s, .l4orb, .sp-slot).c-orange {
+  --c: #f07a1a;
+  --cl: #ffd2a0;
+  --cd: #7a3404;
+}
+:is(.l4s, .sp-slot).c-purple,
+.l4orb:is(.c-purple, .c-orange) {
+  animation: l4-tint-glow 1.6s ease-in-out infinite;
+} /* (a glow round it that breathes: a filter, so its own shadows and the picked slot's ring stay) */
+@keyframes l4-tint-glow {
+  0%,
+  100% {
+    filter: drop-shadow(
+      0 0 0.2rem color-mix(in srgb, var(--c) 70%, transparent)
+    );
+  }
+  50% {
+    filter: drop-shadow(0 0 0.55rem var(--cl));
+  }
+}
+/* no color (the dagger, the knife, the pistol, the pan, the adrenaline shot, the bow: the owner's, Nov 18 12:32Z, "a
+   normal looking slot like it is in the default game, so no color"): the orb a plain grey; the slot as the other
+   games' slots look (below, after the slots' own colors) */
+:is(.l4s, .l4orb, .sp-slot).c-plain {
+  --c: #8a8f9c;
+  --cl: #e4e6ec;
+  --cd: #3c404c;
 }
 /* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): dark crimson (21:47Z, was white-gold), its
    gold halo over it */
@@ -16049,6 +16077,31 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-shop-say q {
   font-style: italic;
 }
+/* the merchant on the board (l4dd.js drawMerchant): facing the way he walks, fading as he jumps off the balcony or
+   drops over the fence, lying on his side once dead; "Sold out" when his stock is gone */
+.l4-merchant .hang-npc-body img {
+  transition: opacity 0.5s;
+}
+.l4-merchant.flip .hang-npc-body img {
+  transform: scaleX(-1);
+}
+.l4-merchant.gone .hang-npc-body img,
+.l4-merchant.gone .hang-npc-name {
+  opacity: 0;
+}
+.l4-merchant.dead .hang-npc-body img {
+  transform: rotate(-90deg) translate(-12%, 18%);
+  transform-origin: 50% 85%;
+}
+.l4-merchant.dead .hang-npc-name {
+  opacity: 0.6;
+}
+.l4-up.l4-sold {
+  display: block;
+  text-align: center;
+  color: var(--ink);
+  opacity: 0.75;
+}
 /* on a phone: the slots are in the specials' slider (hotbar.js), each in its color, the count under it */
 .sp-slot[class*="k-"] {
   background: color-mix(in srgb, var(--c) 34%, rgb(10 12 20 / 0.7));
@@ -16057,6 +16110,21 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .sp-slot[class*="k-"].mid {
   background: color-mix(in srgb, var(--c) 60%, rgb(10 12 20 / 0.6));
   border-color: color-mix(in srgb, var(--c) 55%, #fff);
+}
+/* (a plain one, with no color: as the other games' slots, on a computer and in the phone's slider) */
+.l4slots .l4s.c-plain {
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+.l4slots .l4s.c-plain:not(.sel) {
+  border-color: color-mix(in srgb, var(--ink) 34%, transparent);
+}
+.sp-slot.c-plain {
+  background: color-mix(in srgb, var(--blue) 30%, var(--panel));
+  border-color: var(--line);
+}
+.sp-slot.c-plain.mid {
+  background: color-mix(in srgb, var(--blue) 62%, var(--panel));
+  border-color: color-mix(in srgb, var(--blue) 55%, #fff);
 }
 .sp-slot.k-light {
   background: color-mix(in srgb, var(--yellow) 22%, var(--panel));
@@ -16336,17 +16404,57 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   z-index: 31000;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   padding: 6px;
   border-radius: 10px;
   background: rgba(10, 12, 24, 0.45);
   pointer-events: none;
 }
+/* its two rows: the parts found, then the jerry cans (l4ddpowerui.js), each can with its gas in percent under it */
+.l4-row {
+  display: flex;
+  gap: 6px;
+}
 .l4-part {
+  position: relative;
   display: block;
   width: 40px;
   height: 40px;
   animation: l4-part-in 0.5s ease-out;
+}
+.l4-cans .l4-part {
+  margin-bottom: 0.7rem;
+}
+.l4-part small {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #ffd2a0;
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+}
+.l4-cans-max {
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--dim, #b8b8c8);
+  white-space: nowrap;
+}
+/* a jerry can on the ground, in its orange orb (it glows: .l4orb.c-orange) */
+.l4-pk.k-can i {
+  filter: none;
+}
+.l4-pk.k-can .l4orb {
+  width: 100%;
+  height: 100%;
+}
+.l4-pk.k-can .l4orb svg {
+  width: 72%;
+  height: 72%;
 }
 @keyframes l4-part-in {
   0% {
@@ -16366,6 +16474,15 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   .l4-part {
     width: 22px;
     height: 22px;
+  }
+  .l4-row {
+    gap: 3px;
+  }
+  .l4-part small {
+    font-size: 0.5rem;
+  }
+  .l4-cans .l4-part {
+    margin-bottom: 0.55rem;
   }
 }
 /* Quacky Zombies' drops: the symbol floats over the floor, bobbing, with a green glow and a ring of light under it; in
@@ -18914,38 +19031,6 @@ html.pixel.armed :is(.board, .hang-board) {
 .hang-board .ol-px {
   z-index: 24001;
 } /* (over everything on the board: Dead Ducks Arcade's and Hangout's world alike) */
-/* Downpour: a mud zombie's mud over the corners of my screen (l4ddmud.js), over the board, under the HUD */
-.hang-board.l4-board .l4-mud {
-  position: absolute;
-  inset: 0;
-  z-index: 24002;
-  pointer-events: none;
-}
-.l4-mud i {
-  position: absolute;
-  width: min(34vw, 300px);
-  height: min(34vw, 300px);
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
-}
-.l4-mud-tl {
-  left: 0;
-  top: 0;
-}
-.l4-mud-tr {
-  right: 0;
-  top: 0;
-  transform: scaleX(-1);
-}
-.l4-mud-bl {
-  left: 0;
-  bottom: 0;
-  transform: scaleY(-1);
-}
-.l4-mud-br {
-  right: 0;
-  bottom: 0;
-  transform: scale(-1, -1);
-}
 /* Quacky Zombies' own map vote (vote.js zmapTile): the dice and its two maps, three in a row, each a picture */
 .vt-k-zmap .vt-box {
   flex: 0 1 auto; /* (only as tall as its maps, no empty box under them; it still scrolls on a short screen) */
@@ -19306,7 +19391,7 @@ html.moving .l4-board .hp-generator {
       drop-shadow(0 0 calc(3px * var(--k, 1)) #fffbe0cc);
   }
 }
-html.moving .l4-board .l4-butler:not(.l4-sale) {
+html.moving .l4-board .l4-butler:not(.l4-sale, .dead) {
   animation: l4-glow-gold 3s ease-in-out infinite;
 }
 @keyframes l4-glow-gold {

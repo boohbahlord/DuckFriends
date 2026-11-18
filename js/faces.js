@@ -59,6 +59,19 @@ export const FACES = [
   },
 ];
 export const faceById = (id) => FACES.find((f) => f.id === id) || null;
+/* the face items the beak can't show through (the owner's, Nov 18 14:10Z: "wearing the cardboad box, the pumpkin head,
+   the paper bag, the motorcyle helmet, the gas mask, and the armored helmet will HIDE the beak (like it makes it no
+   beak not under the selection but makes the beak invisible"): the duck keeps its beak pick, it just doesn't show
+   while one is on (duck.js) */
+const OVER_BEAK = new Set([
+  "box",
+  "pumpkin",
+  "bag",
+  "moto",
+  "gasmask",
+  "scifi",
+]);
+export const hidesBeak = (face) => !!(face && OVER_BEAK.has(face.id));
 /* how Customize shows the face items: in themed groups, each under a small heading */
 export const FACE_GROUPS = [
   ["Glasses", ["glasses", "round", "aviators", "shades", "monocle"]],

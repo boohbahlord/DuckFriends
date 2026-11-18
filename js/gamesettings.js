@@ -6,7 +6,7 @@
    starts (vote.js). */
 import { esc, openWindow, setHTML } from "./ui.js";
 import { artBackdrop } from "./art.js";
-import { MODES, modeOf, CABIN_MODES, CATS } from "./modes.js";
+import { modesFor, modeOf, CABIN_MODES, CATS } from "./modes.js";
 import { MAPS, MAP_VARIANTS, mapName, mapForm } from "./maps.js";
 import {
   OPTIONS_DEFAULT,
@@ -920,7 +920,7 @@ export function infoUnder(W, at) {
 /* which games a setting is shown for: the picked one, or every game Vote Game Mode or Random can land on */
 const games = (s) =>
   s.options.modePick === "vote"
-    ? MODES.map((m) => m.id)
+    ? modesFor(s).map((m) => m.id)
     : s.options.modePick === "random"
       ? randomPool(s)
       : [s.options.mode || "aod"];
@@ -1013,7 +1013,7 @@ const openFolds = new Set([
 ]); // (the categories left open, from one visit to the next)
 /* the Modes in Random & Vote row's value: All, or how many are on */
 const poolVal = (s) => {
-  const all = MODES,
+  const all = modesFor(s),
     off = (s.options.modesOff || []).filter((id) =>
       all.some((m) => m.id === id),
     );
@@ -1165,15 +1165,17 @@ export function openGameSettings(R, start = null) {
         mid = !["lobby", "over", "countdown"].includes(s.phase);
       return (
         head("Modes in Random & Vote") +
-        `<div class="arm-body"><ul class="arm-list">${MODES.map((m) =>
-          row(
-            `data-pool="${esc(m.id)}"`,
-            m.name,
-            off.includes(m.id) ? "Off" : "On",
-            !off.includes(m.id),
-            !host() || (mid && m.id === o.mode),
-          ),
-        ).join("")}</ul></div>`
+        `<div class="arm-body"><ul class="arm-list">${modesFor(s)
+          .map((m) =>
+            row(
+              `data-pool="${esc(m.id)}"`,
+              m.name,
+              off.includes(m.id) ? "Off" : "On",
+              !off.includes(m.id),
+              !host() || (mid && m.id === o.mode),
+            ),
+          )
+          .join("")}</ul></div>`
       );
     }
     if (page === "saves") {
@@ -1200,22 +1202,27 @@ export function openGameSettings(R, start = null) {
       const dis = !host() || dodOn(s, "vote");
       return (
         head("Game mode") +
-        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", dis)}${LINE}</ul>${CATS.map(
-          ([id, name]) =>
-            `<details class="arm-fold gs-fold gs-cat" data-fold="cat:${id}"${openFolds.has("cat:" + id) ? " open" : ""}><summary>${esc(name)}</summary><ul class="arm-list">${MODES.filter(
-              (m) => m.cat === id,
-            )
-              .map((m) =>
-                row(
-                  `data-mode="${m.id}"`,
-                  m.name,
-                  "",
-                  !o.modePick && o.mode === m.id,
-                  dis,
-                ),
+        `<div class="arm-body"><ul class="arm-list">${row('data-pick="mode" data-v="random"', "Random", "", o.modePick === "random", dis)}${LINE}</ul>${CATS.filter(
+          ([id]) => modesFor(s).some((m) => m.cat === id),
+        )
+          .map(
+            ([id, name]) =>
+              `<details class="arm-fold gs-fold gs-cat" data-fold="cat:${id}"${openFolds.has("cat:" + id) ? " open" : ""}><summary>${esc(name)}</summary><ul class="arm-list">${modesFor(
+                s,
               )
-              .join("")}</ul></details>`,
-        ).join("")}</div>`
+                .filter((m) => m.cat === id)
+                .map((m) =>
+                  row(
+                    `data-mode="${m.id}"`,
+                    m.name,
+                    "",
+                    !o.modePick && o.mode === m.id,
+                    dis,
+                  ),
+                )
+                .join("")}</ul></details>`,
+          )
+          .join("")}</div>`
       );
     }
     if (page.startsWith("cat:")) {
@@ -1223,9 +1230,8 @@ export function openGameSettings(R, start = null) {
         dis = !host() || dodOn(s, "vote");
       return (
         head(CATS.find((c) => c[0] === cat)[1]) +
-        `<div class="arm-body"><ul class="arm-list">${MODES.filter(
-          (m) => m.cat === cat,
-        )
+        `<div class="arm-body"><ul class="arm-list">${modesFor(s)
+          .filter((m) => m.cat === cat)
           .map((m) =>
             row(
               `data-mode="${m.id}"`,
@@ -1308,7 +1314,7 @@ export function openGameSettings(R, start = null) {
       .join("");
     return (
       head("Game Options") +
-      `<div class="arm-body gs-opts">${host() ? "" : '<p class="small dim gs-ro">Only the host (or sudo) changes these.</p>'}<h3 class="gs-h">Host Settings</h3>${folds(s, hostList, "host", { more: room(s) })}<h3 class="gs-h gs-big">Game mode Settings</h3>${own || `<p class="small dim gs-none">${esc(gs.length > 1 ? "These games have no settings of their own." : `${modeOf(gs[0]).name} has no settings of its own.`)}</p>`}${host() ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ""}</div>`
+      `<div class="arm-body gs-opts">${host() ? "" : '<p class="small dim gs-ro">Only the host (or sudo) changes these.</p>'}<h3 class="gs-h">Host Settings</h3>${folds(s, hostList, "host", { more: s.solo ? "" : room(s) })}<h3 class="gs-h gs-big">Game mode Settings</h3>${own || `<p class="small dim gs-none">${esc(gs.length > 1 ? "These games have no settings of their own." : `${modeOf(gs[0]).name} has no settings of its own.`)}</p>`}${host() ? '<p class="acts"><button type="button" class="btn ghost" data-a="reset">Defaults</button></p>' : ""}</div>`
     );
   }
 
@@ -1364,7 +1370,8 @@ export function openGameSettings(R, start = null) {
     if (p.kind === "cat")
       return card(
         CATS.find((c) => c[0] === p.id)[1],
-        MODES.filter((m) => m.cat === p.id)
+        modesFor(s)
+          .filter((m) => m.cat === p.id)
           .map((m) => m.name)
           .join(", "),
       );

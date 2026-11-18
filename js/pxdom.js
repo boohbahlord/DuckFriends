@@ -53,13 +53,33 @@ function css() {
 function shownSize(svg, vb) {
   const r = svg.getBoundingClientRect();
   if (!r.width || !r.height) return null;
+  const [w, h] = unturned(svg) || [r.width, r.height];
   const par = svg.getAttribute("preserveAspectRatio") || "";
-  if (par.startsWith("none")) return [r.width, r.height];
+  if (par.startsWith("none")) return [w, h];
   const k = (par.includes("slice") ? Math.max : Math.min)(
-    r.width / vb.width,
-    r.height / vb.height,
+    w / vb.width,
+    h / vb.height,
   );
   return [vb.width * k, vb.height * k];
+}
+/* what turns as it flies or is held (a weapon in hand, a bullet, an arrow, a thrown dagger or grenade, the grenade's
+   pin, the zebra cake, the Jaime Bomb's Jaime flying off): its box on the screen is the box round it turned, so a long
+   thin one pointing up or down measured as a sliver and was made with barely any pixels, and kept that way (the
+   owner's, Nov 18 10:38Z: "when i first picked up the laser gun ... it was rendered as being almost barely any pixels",
+   and "grenades and bow projectiles unseen"). Its size unturned instead: its own width and height, times how much the
+   board is scaled. A dead duck's pool of blood too, which grows from small (game.js .gduck-pool): made at its full
+   size, not at the size it starts from. Null for everything else */
+const TURNS =
+  ".held, .bullet, .thrown, .gpin, .mgj-cake, .jb-body, .gduck-pool";
+function unturned(svg) {
+  const host = svg.closest(TURNS);
+  if (!host || !svg.clientWidth || !svg.clientHeight) return null;
+  const up = host.parentElement,
+    k =
+      up && up.offsetWidth
+        ? up.getBoundingClientRect().width / up.offsetWidth
+        : 1;
+  return [svg.clientWidth * k, svg.clientHeight * k];
 }
 
 /* a copy of the drawing as it looks now, as SVG text: every part's CSS (from classes, and from the classes of what

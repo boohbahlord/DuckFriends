@@ -15,18 +15,9 @@
    up to three colors (Primary, Secondary, Accent) under Customize → Colors. */
 import { el } from "./ui.js";
 import { fewer } from "./gfx.js";
-import {
-  BOW,
-  MEDKIT,
-  ZEBRA,
-  JAIME,
-  BOMB_SKIN,
-  CHAIR,
-  FIREBALL,
-} from "./mgjart.js";
+import { BOW, MEDKIT, ZEBRA, JAIME, BOMB_SKIN, CHAIR } from "./mgjart.js";
 import { GUNS } from "./l4ddguns.js";
 import { duckSVG, DUCK_DEFAULT } from "./duck.js";
-import { jetpackSVG } from "./jetart.js";
 export { SHOT_SPEED } from "./rules.js";
 
 /* the trombone, side on: the mouthpiece at the left end (at the beak), the slide reaching forward, the bell above it */
@@ -220,15 +211,6 @@ export const SPECIALS = [
     tip: "Its key turns your duck see-through, like the shadow duck; press it again to turn it back.",
   },
   {
-    id: "jetpack",
-    name: "Jetpack",
-    kind: "effect",
-    get icon() {
-      return `<span class="sp-jet">${jetpackSVG()}</span>`;
-    },
-    tip: "Its key puts a jetpack on your duck's back (again: off). Hold Space to fly up, Shift keeps the height, let go to come down. 10 seconds of flight; it fills up again on the ground. Not in Mad God Justin.",
-  },
-  {
     id: "longjump",
     name: "Long jump",
     kind: "jump",
@@ -404,7 +386,7 @@ export const SPECIALS = [
      (unlocks.js) */
   {
     id: "sniper",
-    name: "Sniper",
+    name: "Barrett .50 Cal",
     kind: "item",
     get icon() {
       return GUNS.sniper.icon;
@@ -413,7 +395,7 @@ export const SPECIALS = [
   },
   {
     id: "smg",
-    name: "SMG",
+    name: "MP5",
     kind: "item",
     get icon() {
       return GUNS.smg.icon;
@@ -458,7 +440,7 @@ export const SPECIALS = [
   },
   {
     id: "lmg",
-    name: "LMG",
+    name: "M249 SAW",
     kind: "item",
     get icon() {
       return GUNS.lmg.icon;
@@ -494,7 +476,7 @@ export const SPECIALS = [
   },
   {
     id: "burst",
-    name: "Burst rifle",
+    name: "Steyr AUG",
     kind: "item",
     get icon() {
       return GUNS.burst.icon;
@@ -812,7 +794,6 @@ export function heldHTML(id, duck) {
   if (GUNS[id]) return GUNS[id].held; // (Quacky Zombies' new guns)
   if (id === "zebra") return ZEBRA;
   if (id === "chair") return CHAIR; // (Quacky Zombies: the chair from the fireplace, held out before it's thrown)
-  if (id === "fireball") return FIREBALL;
   const c = colorsOf(duck, id);
   if (id === "axe") return AXE(c);
   if (id === "sword") return SWORD(c);

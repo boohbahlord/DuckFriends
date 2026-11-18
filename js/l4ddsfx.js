@@ -22,7 +22,8 @@ export const SOUNDS = {};
 /* ---------- when ---------- */
 const STRIDE = 44, // world px a duck walks for each footstep
   Z_STRIDE = 40, // … and a zombie (they shuffle)
-  Z_STEPS = 4, // zombie footsteps heard at once at most (the nearest ones, a close group as one)
+  Z_STEPS = 4, // zombie footsteps heard at once at most (the nearest ones, a close group as one) …
+  Z_PER_S = 6, // … and in a second (the owner OK'd it, Nov 18 14:50Z: a big mob's shuffle thinner, my own steps kept)
   GROUP = 160, // world px: zombies this close together are one group (one voice, one set of footsteps)
   GROAN = [6000, 12000], // ms between one zombie's groans
   GROANS = 2, // groans at once at most
@@ -251,9 +252,12 @@ export function l4Steps(dt, ctx) {
       every = g === "deep" ? Z_STRIDE * STROKE : Z_STRIDE;
     if (o.acc >= every) {
       o.acc %= every;
-      if (steps++ < Z_STEPS) {
+      st.zsteps = (st.zsteps || []).filter((t) => now - t < 1000);
+      if (steps++ < Z_STEPS && st.zsteps.length < Z_PER_S) {
+        st.zsteps.push(now);
         const n = Math.min(1, 0.7 + 0.08 * l.n);
-        if (g === "wood") play("zstep", { x: o.x, y: o.y, z, k: n });
+        if (g === "wood")
+          play("zstep", { x: o.x, y: o.y, z, k: n, yield: true });
         // (their shuffle on floors, as before; elsewhere the ground's step, lower and quieter)
         else
           play(stepOf(g), {
@@ -262,6 +266,7 @@ export function l4Steps(dt, ctx) {
             z,
             k: n * Z_K,
             rate: rnd(0.8, 0.88),
+            yield: true, // (a duck's step is never cut for a zombie's)
           });
       }
     }

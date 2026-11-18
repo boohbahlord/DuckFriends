@@ -6,17 +6,17 @@ import {
   ARMS,
   POOL,
   WEAPONS,
-  WEAPON_ODDS,
+  SLOT_ODDS,
+  SLOT_BAGS,
   SHOP,
-  GUN_SHOP,
   DROPS,
   weaponName,
   dropName,
   kindOf,
   priceOf,
-  buyPrice,
   BOX,
-  SAFE,
+  WEAPON_BAGS,
+  merchantPrice,
   critOf,
   missOf,
 } from "./l4ddrules.js";
@@ -43,7 +43,7 @@ const SAY = {
   ak: "Hold to fire. Harder hits.",
   lmg: "Hold to fire. A huge magazine.",
   dbarrel:
-    "Two slugs, each one a kill, the body thrown back. A crit goes through every zombie in its way.",
+    "Two slugs, each one a kill, the body thrown back. A crit kills the next zombie too, and goes past it only on another crit.",
   flamer:
     "Hold to burn everything in front of you; the longer you hold, the farther it reaches. The ground burns and the fire spreads.",
   burst: "Three rounds a click, as hard as the AK-47.",
@@ -58,7 +58,6 @@ const SAY = {
     "A halo. When you go down you keep everything you bought, and it gets you up: E while down, or by itself when nobody else is standing. 6 seconds nothing hurts you after.",
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
-  fireball: "Sets the zombie it hits on fire.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
   longjump: "Each use turns long jumps on or off.",
   jaime:
@@ -74,7 +73,7 @@ const SAY = {
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
   double: "Double points for 45 seconds.",
-  sale: "Half price at the Butler and the fireplace for 45 seconds (each upgrade once).",
+  sale: "Half price at the merchant and the fireplace for 45 seconds (each upgrade once).",
 };
 
 /* a number without its trailing zeros (1.75, 5, 0.4) */
@@ -121,20 +120,23 @@ function stats(w) {
     if (A.dmg) out.push(["Damage", A.dmg]);
   }
   if (w === "jaimebomb") out.push(["Blast", `${num(BOMB.wide)}x a grenade's`]);
-  if (GUN_SHOP.includes(w)) out.push(["The Butler sells it", buyPrice(w)]);
-  if (w === "safekeep") out.push(["The Butler sells it", SAFE.PRICE]);
-  else if (POOL.includes(w))
+  /* a merchant: the bow always, anything in the bags maybe (the owner's, Nov 18 13:46Z) */
+  if (w === "bow") out.push(["Every merchant sells it", merchantPrice(w)]);
+  else if (
+    [...Object.values(SLOT_BAGS), ...Object.values(WEAPON_BAGS)].some((b) =>
+      b.includes(w),
+    )
+  )
+    out.push(["A merchant may sell it", merchantPrice(w)]);
+  /* where the fireplace has it: its bag, and that bag's chance on a spin (l4ddrules.js fireRoll) */
+  const bag = Object.keys(SLOT_BAGS).find((k) => SLOT_BAGS[k].includes(w));
+  if (bag)
     out.push([
       "Where",
-      WEAPONS.includes(w)
-        ? `The fireplace, with the weapons (${Math.round(WEAPON_ODDS * 100)}% of spins)`
-        : `The fireplace, with the items (${100 - Math.round(WEAPON_ODDS * 100)}% of spins, more after weapons)`,
+      `The fireplace, the ${bag === "chair" ? "golden chair" : bag} bag (${Math.round(SLOT_ODDS[bag] * 100)}% of spins)`,
     ]);
-  else if (w === "jaimebomb")
-    out.push([
-      "Where",
-      `The fireplace, 1 spin in ${Math.round(1 / BOMB.fire)}`,
-    ]);
+  else if (WEAPONS.includes(w) && POOL.includes(w))
+    out.push(["Where", "The fireplace, the weapon bags (the rest of spins)"]);
   return out;
 }
 
@@ -149,7 +151,7 @@ const weaponRow = (w) => row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w));
 
 /* the whole tab: a heading and a list for each category */
 export function catalogHTML() {
-  const all = [...POOL, "jaimebomb", "grenade"],
+  const all = [...POOL, "grenade"], // (no Jaime Bomb in the zombie modes any more: the owner's, Nov 18 12:19Z)
     of = (k) => all.filter((w) => kindOf(w) === k);
   const cats = [
     ["Melee", of("melee").map(weaponRow)],

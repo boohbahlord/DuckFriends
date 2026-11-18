@@ -8,7 +8,8 @@
    - each file fetched and decoded once, when it's first needed: the countdown, the steps and the jump at the first tap,
      the weapons and the items when a game starts (they work in every mode), Dead Ducks Arcade's own when it starts;
    - a voice is one buffer and one gain: no effects while playing, nothing made on the spot;
-   - at most VOICES sounds at once, and a few of each kind (CAP): when full, the oldest of that kind fades out quickly;
+   - at most VOICES sounds at once, and a few of each kind (CAP): when full, the oldest of that kind fades out quickly
+     (or a faint far one, or a zombie's step, is left out instead); loops (the wind, the fires) have their own LOOPS;
    - other ducks' sounds are quieter, and in Duck Cabin and Dead Ducks Arcade they fade with their distance from mine;
    - every sound goes through one soft ceiling, so many at once never go over full scale; nothing plays while the tab is
      hidden.
@@ -200,7 +201,8 @@ export const VOL = {
 /* names some callers use for a sound that is another's (Justin's gunshot is the handgun's) */
 const ALIAS = { gunshot: "handgun" };
 export const OTHERS = 0.6; // another duck's sounds, against mine
-const VOICES = 12, // sounds at once, at most
+const LOOPS = 6, // loops at once, at most, on their own (Duck Cabin's wind, fireplace, campfire, hum, TV and a cat's purr fit)
+  VOICES = 12, // one-off sounds at once, at most
   CAP = {
     ...{
       step: 3,
@@ -220,7 +222,7 @@ const VOICES = 12, // sounds at once, at most
   CAP_ANY = 2;
 /* on Data saving or Poor connection (the owner's performance settings): fewer sounds at once, 2 of each kind, and a far
    sound that would be nearly silent isn't played at all */
-const LITE = { voices: 8, cap: 2, far: 0.12 };
+const LITE = { voices: 8, loops: 3, cap: 2, far: 0.12 };
 const lite = () => netLevel() > 0;
 const NEAR = 300, // world px: full up to here …
   FAR = 1500; // … and nothing from here (as Duck Cabin's)
@@ -474,10 +476,31 @@ function voice(name, o = {}, loops = false) {
   if (!list.length || k < 0.002 || !level()) return null;
   if (low && far < LITE.far) return null;
   const t = soon();
-  const same = live.filter((v) => v.name === name && !v.cut);
-  if (same.length >= (low ? LITE.cap : CAP[name] || CAP_ANY)) cut(same[0], t);
-  const all = live.filter((v) => !v.cut);
-  if (all.length >= (low ? LITE.voices : VOICES)) cut(all[0], t);
+  if (loops) {
+    /* a loop (the wind, the rain, a fire, the hum, a jetpack): its own budget, LOOPS at once. Full: the quietest gives
+       way to a louder one; a quieter one waits (its owner tries again: ambience.js every 250 ms) */
+    const ls = live.filter((v) => v.loop && !v.cut);
+    if (ls.length >= (low ? LITE.loops : LOOPS)) {
+      const q = ls.reduce((a, b) => (b.k < a.k ? b : a));
+      if (k <= q.k) return null;
+      cut(q, t);
+    }
+  } else {
+    /* a one-off: a few of each kind, VOICES in all; the loops never count here, so a busy fight never cuts the wind or
+       a fire (the owner OK'd it, Nov 18 14:50Z). A sound that gives way (o.yield: a zombie's step) is left out when
+       its kind is full instead of cutting one (my own step under a mob), and when every voice is busy, one quieter
+       than all of them (a far step or hit) is left out instead of cutting the oldest */
+    const same = live.filter((v) => v.name === name && !v.cut && !v.loop);
+    if (same.length >= (low ? LITE.cap : CAP[name] || CAP_ANY)) {
+      if (o.yield) return null;
+      cut(same[0], t);
+    }
+    const all = live.filter((v) => !v.cut && !v.loop);
+    if (all.length >= (low ? LITE.voices : VOICES)) {
+      if (all.every((v) => k < v.k)) return null;
+      cut(all[0], t);
+    }
+  }
   const src = ac.createBufferSource(),
     g = ac.createGain();
   src.buffer = list[(Math.random() * list.length) | 0];
@@ -507,7 +530,7 @@ function voice(name, o = {}, loops = false) {
   }
   tail.connect(out);
   src.start(t, loops ? FILES[name].loop[0] : 0);
-  const v = { name, src, g, t, k, f, p };
+  const v = { name, src, g, t, k, f, p, loop: loops };
   src.onended = () => drop(v);
   live.push(v);
   return v;
@@ -748,14 +771,7 @@ const LAND = {
   slug: "landHeavy",
   revolver: "landBig",
 };
-const NO_LAND = [
-  "grenade",
-  "lgren",
-  "fireball",
-  "controller",
-  "chair",
-  "laser",
-]; // (they land with their own sounds, or none)
+const NO_LAND = ["grenade", "lgren", "controller", "chair", "laser"]; // (they land with their own sounds, or none)
 const land = (k) =>
   NO_LAND.includes(k) || play(LAND[k] || "landSmall", { k: 0.55 }); // (quieter than a hit: the owner, Nov 17 12:28Z)
 /* a duck hurt, when nothing bled to make the sound (a kill by command, Invulnerability's flash): looked at a moment
