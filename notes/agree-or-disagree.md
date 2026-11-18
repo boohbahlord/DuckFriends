@@ -5784,3 +5784,54 @@ Split: Solomon = Justin unarmed for good + all lines + in Duck Cabin by default,
 (last paragraph added by the owner's edit at 20:39Z: Justin cries for 10 s WHILE sprinting away)
 
 Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint, zombies chase Justin only at half the range, give up fast, last 1/10th never; dead = no revive, button gone, walk over bodies. Noah = shots end where they hit. Miles Jr. = lobby countdown music fade, vote windows' music.
+
+## Request (2026-11-18 10:38Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt9UAySh1WkTz4SkjEjXcAdn, with 2 screenshots in /mnt/project-files/refs/nov18-1038/) (word for word; the message is cut off at its end)
+
+> i want spreadsheets and information for questions i asked first and other workers besides adam can work while i discuss and look at stats and adam can write them a plan after they answer me
+>
+> give me a spreadsheet of all the weapons roll percentage per tier or "bag" and a description of how it works, so it can be judged by me if it needs changed
+>
+> give me a table of how much points a player earns per round in 1 player, versus each player in 2, each in 3 player, and so on.
+>
+> give me a spreadsheet for prices of the things in the shop from the priest AND i have a new idea i propose where he only sells some items and even has a life of his own and can come back (we will work on this)
+>
+> give me a table of the zombies hit speed and hit damage per difficulty range within it's given range of rounds (and suggestions)
+>
+> give a spreadhsheet of frames on different computers for frames per second and i want suggestions of how to improve frames without changing anything as it appears to the players (such as audio, animations, and so on)
+>
+> we need to make sure zombies dont jitter or feel slow on the computer (like kinda laggy feeling) when mobs get large
+>
+> i want to know how the double barrel shotgun works because i might change it's stats
+>
+> make sure when weapons are picked up from the slots that they are appropriately sized in their pixel size, because when i first picked up the laser gun (this might happen to other things too) it was rendered as being almost barely any pixels yet the appropiate scale of object size to the duck, but whenever i switched off and back on then it was fine
+>
+> flamethrower's fire doesnt stay in the water in crit mode, enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in water has the same effect (flamethrower still works in the rain though)
+> I want stats for flamethrower too for me to judge
+>
+> where are the places that gasoline can come from ? like in the downpour game mode
+>
+> i believe tiers or bags of stuff that are rolled per chance are supposed to have the least likely in order come first prior to the more likely
+>
+> we are removing the fireball from everything in the game, including the zombie game
+>
+> new tommy gun is too small and needs fixed
+>
+> prob same for any new gun, it is too small, since the laser was too. the tommy gun is obviously supposed to be almost the size of the ak47
+>
+> let's make zombies spawn rate half as much for the first four seconds
+>
+> grenades and bow projectiles unseen, this needs to be fixed
+>
+> outlines do not show for dead ducks, such as justin
+>
+> justin's character doesnt have a revive phase anymore in dead duck arcade
+>
+> another dead duck with's it's head blown off and in a puddle of blood (like what spills out of Justin ) that is also yellow but wearing a military uniform with holes in his body can be found here
+>
+> every player duck that dies in any game mode has a puddle of blood start to spill out beneath their duck like justin's
+>
+> check if other projectiles are working for other guns since the bow and grenade was not
+>
+> give me a spreadsheet of
+
+Split: Adam = the spreadsheets/info first. Noah = invisible grenades/arrows + all projectiles, pickup pixel size, Tommy/new gun sizes, dead-duck outlines, blood under every dead duck, dead soldier duck prop. Solomon = flamethrower + water, no fireball anywhere, half spawn rate first 4 s, smooth big mobs, rarest-first bags. Asked the owner: Justin's revive phase (bug or rule?) and the cut-off last line.
