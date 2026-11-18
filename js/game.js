@@ -34,6 +34,7 @@ import {
   toast,
 } from "./ui.js";
 import { activeRoom } from "./net.js";
+import { sprintStep } from "./stamina.js";
 import {
   COLS,
   SHORT,
@@ -87,6 +88,7 @@ import {
   coolEnds,
   phpLost,
   PHP,
+  dodges,
   isHang,
   MAG,
   magOf,
@@ -1872,7 +1874,10 @@ function drawDucks(now = clockNow()) {
     } // Jack in a Box bobs on his spring as he jumps
     d.classList.toggle("sprint", mine ? sprinting && moving : !!pos.sp);
     d.classList.toggle("adren", adren(s, id, now)); // (an adrenaline shot: it jitters, css/app.css)
-    d.classList.toggle("dodge", isL4dd(s) && dodging(s, pos, now)); // (Dead Ducks Arcade: see-through while a jump makes it safe)
+    d.classList.toggle(
+      "dodge",
+      isL4dd(s) ? dodging(s, pos, now) : dodges(s, pos, now),
+    ); // (see-through while a jump makes it safe: Dead Ducks Arcade's, in every mode now, the owner's, Nov 18 16:50Z)
     d.classList.toggle("air", z > 1 && !seated(s, id)); // (sitting on a chair isn't flying)
     d.classList.toggle("left", d._face < 0);
     const dn0 = !s.done[id];
@@ -4577,6 +4582,7 @@ function step(dt, now) {
     stick.sprint ||
     !!(target && target.sprint);
   if (isMgj(s)) sprinting = false; // (no sprint in Mad God Justin: Shift, the stick's edge and a double tap all walk. The owner's, Nov 17 19:11Z: "the sprint should be removed from mad god justin")
+  sprinting = sprintStep(sprinting && !!(hx || vy || target), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode)
   let ax, ay; // in board terms
   if (turned()) {
     ax = -vy;
@@ -4785,6 +4791,7 @@ function hangStep(dt, now) {
     }
   }
   if (!canWalk()) ax = ay = 0;
+  sprinting = sprintStep(sprinting && !!(ax || ay), dt); // (7 s of sprint, then a walk till it's let go: stamina.js, every mode, Dead Ducks Arcade's too)
   const kx = ax; // (which way I face: my keys, not the push)
   if (canWalk() && recoil && performance.now() < recoil.until) {
     const l = Math.hypot(recoil.dx, recoil.dy) || 1;
