@@ -3,6 +3,7 @@
    of jerry cans at the middle left of the screen (canRow; with a very small line under it once it's full, gasFull),
    and the sounds: the power going out, coming on, a jerry can found, gas pumped, gas poured. l4dd.js calls these. */
 import { heightAt, seenFrom, sortY, layoutVariant } from "./hangout/layout.js";
+import { olAdd, olFloor, olPic } from "./outlines.js";
 import { svgDataURL } from "./hangout/art.js";
 import { play } from "./sound.js";
 import {
@@ -192,12 +193,16 @@ export function pwDraw(ctx) {
       box.el.style.setProperty("--k", sc.toFixed(3));
     }
   }
+  const me = Wd.at(ctx.me),
+    myFloor = me ? olFloor(me.x, me.y, me.z) : 0;
   for (const o of items.values()) {
-    const q = Wd.toScreen(o.o.x, o.o.y, (o.o.z || 0) + heightAt(o.o.x, o.o.y)),
-      off =
-        !seenFrom(o.o.x, o.o.y, Wd.inside) ||
-        !Wd.seen(q.left - 40, q.top - 80, 80, 100);
+    const z = (o.o.z || 0) + heightAt(o.o.x, o.o.y),
+      q = Wd.toScreen(o.o.x, o.o.y, z),
+      unseen = !seenFrom(o.o.x, o.o.y, Wd.inside),
+      onCam = Wd.seen(q.left - 40, q.top - 80, 80, 100),
+      off = unseen || !onCam;
     if (o.el.hidden !== off) o.el.hidden = off;
+    if (onCam && o.o.k === "can") canOutline(Wd, o, q, z, sc, unseen, myFloor);
     if (off) continue;
     const tr = `translate(${q.left.toFixed(1)}px, ${q.top.toFixed(1)}px)`;
     if (o.tr !== tr) {
@@ -212,6 +217,37 @@ export function pwDraw(ctx) {
       o.el.style.setProperty("--k", sc.toFixed(3));
     }
   }
+}
+/* a jerry can on the ground: an orange outline round its orb, and the arrow when it's a floor away, like the drops
+   (outlines.js DROP_OL, the owner's, Nov 18 13:58Z: "gas gets an orange outline"); gone once it's picked up (pwSee) */
+const ORB = `<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#000"/></svg>`;
+function canOutline(Wd, o, q, z, sc, unseen, myFloor) {
+  const w = 40 * sc,
+    x = q.left - 20 * sc,
+    y = q.top - (o.o.z ? 40 : 46) * sc, // (css .l4-pk, .l4-pk.on-top)
+    img = olPic("can-orb", ORB, w, w);
+  if (!img) return;
+  olAdd({
+    id: "pk" + o.o.n,
+    img,
+    x,
+    y,
+    w,
+    h: w,
+    kind: "drop_can",
+    hidden:
+      unseen ||
+      Wd.coverAt(
+        x,
+        x + w,
+        y,
+        y + w,
+        o.o.z
+          ? Math.round(o.o.key || o.o.py) + 12
+          : Math.round(sortY(o.o.x, o.o.y, 0)) + 10,
+      ),
+    floor: Math.sign(olFloor(o.o.x, o.o.y, z) - myFloor),
+  });
 }
 /* E by the box: what it does now */
 export function pwTarget(pos, s, near) {

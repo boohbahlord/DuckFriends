@@ -142,7 +142,7 @@ import { popHP } from "./hpmeter.js";
 import { fxHitAt, fxEye, heavyOff, fxSparks, fxSteam } from "./fx.js";
 import { vibrate, hitPx } from "./fxmotion.js";
 import { pixelOn, gridPx, snap, raster, rasterReady } from "./pixel.js";
-import { olAdd, olFloor, olRoofed } from "./outlines.js";
+import { olAdd, olFloor, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { confirmBox } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
@@ -707,8 +707,33 @@ function seeDrops(s) {
     el.className = "l4-drop k-" + d.k;
     el.innerHTML = `<i>${DROP_ICONS[d.k] || ""}</i>`;
     layer.append(el);
-    D.set(d.n, { el, x: d.x, y: d.y, until: d.until });
+    D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
+}
+/* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
+   owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
+   the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone with the
+   drop once it's picked up (seeDrops) */
+function dropOutline(Wd, o, p, sc, unseen, myFloor) {
+  const w = 46 * sc,
+    x = p.left - 23 * sc,
+    y = p.top - 62 * sc,
+    img =
+      DROP_ICONS[o.kind] && olPic("drop-" + o.kind, DROP_ICONS[o.kind], w, w);
+  if (!img) return;
+  olAdd({
+    id: "dr" + o.n,
+    img,
+    x,
+    y,
+    w,
+    h: w,
+    kind: "drop_" + (DROP_OL[o.kind] ? o.kind : "ammo"),
+    hidden:
+      unseen ||
+      Wd.coverAt(x, x + w, y, y + w, Math.round(sortY(o.x, o.y, 0)) + 10),
+    floor: Math.sign(olFloor(o.x, o.y, 0) - myFloor),
+  });
 }
 /* between rounds (every zombie dead, before the ducks are ready), a thin yellow square on the ground round the fireplace or
    Downpour's car: stand inside it to spin for a weapon (the owner, Nov 17) */
@@ -2503,10 +2528,11 @@ activity({
     const tn = clockNow();
     for (const o of D.values()) {
       const p = Wd.toScreen(o.x, o.y, 0),
-        hide =
-          !seenFrom(o.x, o.y, Wd.inside) ||
-          !Wd.seen(p.left - 40, p.top - 80, 80, 100);
+        unseen = !seenFrom(o.x, o.y, Wd.inside),
+        onCam = Wd.seen(p.left - 40, p.top - 80, 80, 100),
+        hide = unseen || !onCam;
       if (o.el.hidden !== hide) o.el.hidden = hide;
+      if (onCam) dropOutline(Wd, o, p, sc, unseen, myFloor); // (out of sight too: then its line only)
       if (hide) continue;
       const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
       if (o.tr !== tr) {
