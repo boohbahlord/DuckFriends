@@ -7,8 +7,8 @@
    Jumping is the up-arrow button's (phonepad.js): I want it to replace tapping the board to jump.
    Either way, a finger held still for half a second brings up the specials around it (hotbar.js); held still on a duck,
    it opens that duck's menu instead.
-   Dead Ducks Arcade on a phone: the hotbar is on my duck (the owner's, Nov 18 15:18Z: "swiping on their duck shows the
-   selection"): a finger that goes down on my own duck never starts the stick; sliding it left or right picks the next
+   On a phone the hotbar is on my duck, in every mode (the owner's, Nov 18 15:18Z: "swiping on their duck shows the
+   selection", and 20:58Z: "every"): a finger that goes down on my own duck never starts the stick; sliding it left or right picks the next
    slot or the one before, one for every SWIPE.step it goes, and a tap on my duck uses the one picked. */
 import { profile } from "./store.js";
 import { el } from "./ui.js";
@@ -39,7 +39,7 @@ export function mountTouch(S, api) {
   const fingers = new Map(); // every other finger: id → where it went down and how far it moved
   let pad = null,
     knob = null,
-    swiping = null; // the finger on my own duck (Dead Ducks Arcade on a phone): { id, x (where its last slot was picked), t, moved }
+    swiping = null; // the finger on my own duck (on a phone): { id, x (where its last slot was picked), t, moved }
 
   const reset = () => {
     stick.x = stick.y = 0;

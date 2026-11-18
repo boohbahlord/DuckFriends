@@ -7946,7 +7946,9 @@ register("game", {
           mgjBackIfGone(R.state);
           return held;
         },
+        tag: () => S && S.querySelector(".gduck.mine .gduck-name"), // (the switch's box under my duck, on a phone: hotbar.js peekSwitch)
       });
+      bar.slider.classList.add("on-duck"); // (on a phone it's on my duck in every mode, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 20:58Z, "every")
     }
     pad = mountPad({
       hold: (on) => {
@@ -7995,11 +7997,11 @@ register("game", {
               on: () => getComputedStyle(bar.slider).display !== "none", // (a phone: the slider is there, on my duck; never with the computer's row)
               nudge: (d) => {
                 bar.nudge(d);
-                l4PeekAgain(); // (the box under my duck shows, even at the end of the row)
+                if (R && isL4dd(R.state)) l4PeekAgain(); // (Dead Ducks Arcade's own box under my duck shows, even at the end of the row; the other modes' is the hotbar's)
               },
               tap: bar.tapMid,
             }
-          : null, // (Dead Ducks Arcade)
+          : null, // (every mode's hotbar: the owner's, Nov 18 20:58Z)
     });
     S.addEventListener(
       "pointerdown",
