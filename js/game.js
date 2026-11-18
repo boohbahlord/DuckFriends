@@ -1175,8 +1175,7 @@ function drawMeters(s, board, layer, now) {
     meter.bars(board && board.querySelector(".gduck.mine .gduck-name")); // (the cooldown and the ammo under it too)
     if (board && meter.edge.parentNode !== board) board.append(meter.edge); // (the red corners: the board's, not the window's)
   } else meter.hide();
-  const want =
-    (isL4dd(s) || isMgj(s)) && profile.settings.otherHp !== false && !!board;
+  const want = profile.settings.otherHp !== false && !!board; // (every mode now, as in Dead Ducks Arcade: the owner's, Nov 18 16:43Z; only the ducks that have HP there show, hpFull)
   let box =
     board &&
     (board._hpo && board._hpo.parentNode === board
@@ -1566,8 +1565,9 @@ function drawDucks(now = clockNow()) {
     /* Mad God Justin's Player HP: see-through red blocks behind the letters (one for each HP, the real meter is under the
        hotbar); the part a hit took flashes light at once, then fades.
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
-    /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
-       Quacky Zombies: its own 3 HP, always shown (down or a ghost, none) */
+    /* the normal game's HP (rules.js PHP): the same bar, always shown while the duck is up on the board, as Dead Ducks
+       Arcade's (it was shown only while a hit was still counted); Quacky Zombies: its own HP, always shown (down or a
+       ghost, none) */
     const l4 =
         isL4dd(s) &&
         !g &&
@@ -1587,9 +1587,9 @@ function drawDucks(now = clockNow()) {
             ? !g && s.seat.includes(id) && s.phase === "boss"
               ? mgjPHp(s)
               : 0
-            : lost
+            : !g && s.seat.includes(id) && !dead && !isL4dd(s) && onBoardPhase()
               ? PHP
-              : 0,
+              : 0, // (every other mode: always shown, as in Dead Ducks Arcade; the owner's, Nov 18 16:43Z: "the health meter ... from zombies is in every game mode now")
       hp = !hpMax
         ? -1
         : bj

@@ -26,7 +26,7 @@ export const SETTINGS_DEFAULT = {
   jumpsHidden: false,
   chatSide: "left",
   chatFloat: true,
-  otherHp: true, // the other players' HP meters in Quacky Zombies and Mad God Justin (a computer)
+  otherHp: true, // the other players' HP meters, in every mode (a computer)
   shapes: "moving",
   sound: 100,
   sfx: 100,
