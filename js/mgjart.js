@@ -99,6 +99,20 @@ export const CHAIR = `<svg viewBox="0 0 100 120" aria-hidden="true">
 <path d="M14.6 73.4C26 79 72 79.4 87 72.6" fill="none" stroke="#2a2c33" stroke-width="2.2" stroke-linecap="round"/>
 <path d="M22 66.6C34 63.6 62 63.6 76 66" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".18"/>
 </svg>`;
+/* the golden chair, Quacky Zombies' 1 in 100 from the fireplace (the owner's, Nov 18 12:19Z: "the chair is golden"): the
+   same chair, its black turned to gold, darker where it was darker; its outline and shine as they are */
+const GOLDS = {
+  "#3b3d46": "#e0aa24",
+  "#45474f": "#f2c443",
+  "#2b2d34": "#b98612",
+  "#2c2e36": "#c4911a",
+  "#2a2c33": "#a8780c",
+  "#24262d": "#9a6c08",
+};
+export const GOLD_CHAIR = CHAIR.replace(
+  /#(3b3d46|45474f|2b2d34|2c2e36|2a2c33|24262d)\b/g,
+  (c) => GOLDS[c],
+);
 /* the zebra cake (the owner's picture): a square snack cake in white icing with thin chocolate stripes across the top and
    down the sides, its cut front showing the golden sponge and the cream between */
 export const ZEBRA = `<svg viewBox="0 0 56 36" aria-hidden="true">

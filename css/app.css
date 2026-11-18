@@ -15474,6 +15474,53 @@ html.moving .l4-heat.hot::after {
   --cl: #ffffff;
   --cd: #8a8aa0;
 }
+/* each one's own color (l4ddrules.js tintOf; the owner's, Nov 18 12:19Z): green, blue, purple (it glows), the chair's
+   gold, an Angelic weapon's red; a jerry can's orb orange, glowing (l4ddpowerui.js) */
+:is(.l4s, .l4orb, .sp-slot).c-green {
+  --c: #2fae4a;
+  --cl: #a6f0b4;
+  --cd: #135a22;
+}
+:is(.l4s, .l4orb, .sp-slot).c-blue {
+  --c: #3d7be0;
+  --cl: #a9c9ff;
+  --cd: #173a80;
+}
+:is(.l4s, .l4orb, .sp-slot).c-purple {
+  --c: #9a4de0;
+  --cl: #dcbcff;
+  --cd: #461a80;
+}
+:is(.l4s, .l4orb, .sp-slot).c-gold {
+  --c: #e2b12a;
+  --cl: #fff0a8;
+  --cd: #7a5608;
+}
+:is(.l4s, .l4orb, .sp-slot).c-red {
+  --c: #e0463d;
+  --cl: #ffb0a6;
+  --cd: #7e1a15;
+}
+:is(.l4s, .l4orb, .sp-slot).c-orange {
+  --c: #f07a1a;
+  --cl: #ffd2a0;
+  --cd: #7a3404;
+}
+:is(.l4s, .sp-slot).c-purple,
+.l4orb:is(.c-purple, .c-orange) {
+  animation: l4-tint-glow 1.6s ease-in-out infinite;
+} /* (a glow round it that breathes: a filter, so its own shadows and the picked slot's ring stay) */
+@keyframes l4-tint-glow {
+  0%,
+  100% {
+    filter: drop-shadow(
+      0 0 0.2rem color-mix(in srgb, var(--c) 70%, transparent)
+    );
+  }
+  50% {
+    filter: drop-shadow(0 0 0.55rem var(--cl));
+  }
+}
 /* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): dark crimson (21:47Z, was white-gold), its
    gold halo over it */
 .l4orb.k-angel {
@@ -16309,17 +16356,57 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   z-index: 31000;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   padding: 6px;
   border-radius: 10px;
   background: rgba(10, 12, 24, 0.45);
   pointer-events: none;
 }
+/* its two rows: the parts found, then the jerry cans (l4ddpowerui.js), each can with its gas in percent under it */
+.l4-row {
+  display: flex;
+  gap: 6px;
+}
 .l4-part {
+  position: relative;
   display: block;
   width: 40px;
   height: 40px;
   animation: l4-part-in 0.5s ease-out;
+}
+.l4-cans .l4-part {
+  margin-bottom: 0.7rem;
+}
+.l4-part small {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #ffd2a0;
+  text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+}
+.l4-cans-max {
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--dim, #b8b8c8);
+  white-space: nowrap;
+}
+/* a jerry can on the ground, in its orange orb (it glows: .l4orb.c-orange) */
+.l4-pk.k-can i {
+  filter: none;
+}
+.l4-pk.k-can .l4orb {
+  width: 100%;
+  height: 100%;
+}
+.l4-pk.k-can .l4orb svg {
+  width: 72%;
+  height: 72%;
 }
 @keyframes l4-part-in {
   0% {
@@ -16339,6 +16426,15 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
   .l4-part {
     width: 22px;
     height: 22px;
+  }
+  .l4-row {
+    gap: 3px;
+  }
+  .l4-part small {
+    font-size: 0.5rem;
+  }
+  .l4-cans .l4-part {
+    margin-bottom: 0.55rem;
   }
 }
 /* Quacky Zombies' drops: the symbol floats over the floor, bobbing, with a green glow and a ring of light under it; in
