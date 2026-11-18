@@ -126,7 +126,7 @@ const HP = new Map(); // id → [its HP last seen, when it last went down]
 /* something to outline this frame: { id, img (its picture on the screen), x, y, w, h (where the picture is, css px on
    the board), flip (turned left), kind ("ally" | "me" | "justin" | "zombie"), hidden (something hides it), floor (its floor
    against mine: 1 above, -1 below, 0 the same), hp (to blink when it drops), down (lying down, out of HP: [its body's
-   bottom, its body's height], css px) } */
+   bottom, its body's height], css px), mid (lying down: its body's middle, css px, where its arrow goes) } */
 export function olAdd(o) {
   if (o.img && o.img.complete && o.img.naturalWidth) list.set(o.id, o);
 }
@@ -225,9 +225,17 @@ export function olDraw(host, W, H, now = performance.now()) {
       g.globalAlpha = hit ? a : Math.max(a, 0.75);
       g.drawImage(
         ac,
-        Math.round(x + (o.img.naturalWidth * sw) / 2) - P - (AW >> 1),
-        Math.round(y + o.img.naturalHeight * sh * 0.55) - P - (AH >> 1),
-      );
+        (o.mid
+          ? Math.round(o.mid[0] / gp)
+          : Math.round(x + (o.img.naturalWidth * sw) / 2)) -
+          P -
+          (AW >> 1),
+        (o.mid
+          ? Math.round(o.mid[1] / gp)
+          : Math.round(y + o.img.naturalHeight * sh * 0.55)) -
+          P -
+          (AH >> 1),
+      ); // (lying down: in the middle of its body, where it lies, mid)
     }
     drawn = true;
   }

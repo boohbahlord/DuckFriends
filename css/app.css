@@ -2923,6 +2923,23 @@ html.still .lord-say.out .w > span {
   transform-origin: 50% 50%;
   transform: translateX(-50%);
 }
+/* a duck that died: its blood spreading out under it, as Justin's (game.js; l4dd.js POOL_SVG), its middle where game.js
+   puts it, as wide as Justin's is to him */
+.gduck-pool {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--sz) * 1.875);
+  height: calc(var(--sz) * 0.8125);
+  margin: calc(var(--sz) * -0.40625) 0 0 calc(var(--sz) * -0.9375);
+  pointer-events: none;
+  opacity: 0.92;
+}
+.gduck-pool svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .gduck-lift {
   position: absolute;
   left: 0;
@@ -11772,6 +11789,7 @@ html.moving .hp .flick {
 /* something hides it from me (a wall, a roof, a crown): only its outline shows, never its picture (the owner's, Nov 17
    17:41Z; outlines.js draws the line). Its name tag stays */
 .gduck.ol-only .gduck-body,
+.gduck.ol-only .gduck-pool,
 .gduck.ol-only .gduck-shadow,
 .gduck.ol-only .gduck-fire,
 .gduck.ol-only .gduck-ring,
@@ -14131,47 +14149,10 @@ html.moving .eye-zap {
   margin: -4px 0 0 -8px;
   filter: drop-shadow(0 0 2px #ffb347);
 }
-/* Quacky Zombies' new guns: in the hand, each as long as it is (l4ddguns.js' w), and their bullets (the SMG's with no
-   glow: many fly at once); the chain gun's line, flashing in and out */
-.held[data-w="sniper"] i {
-  width: calc(var(--s) * 1.25);
-}
-.held[data-w="smg"] i {
-  width: calc(var(--s) * 0.52);
-}
-.held[data-w="ak"] i {
-  width: calc(var(--s) * 1);
-}
-.held[data-w="chaingun"] i {
-  width: calc(var(--s) * 1.05);
-}
-.held[data-w="revolver"] i {
-  width: calc(var(--s) * 0.44);
-}
-.held[data-w="glauncher"] i {
-  width: calc(var(--s) * 0.9);
-}
-.held[data-w="lmg"] i {
-  width: calc(var(--s) * 1.2);
-}
-.held[data-w="dbarrel"] i {
-  width: calc(var(--s) * 1.15);
-}
-.held[data-w="flamer"] i {
-  width: calc(var(--s) * 1.1);
-}
-.held[data-w="burst"] i {
-  width: calc(var(--s) * 0.85);
-}
-/* the Laser Rifle: as long as its l4ddguns.js w, about the AK-47's size (the owner, Nov 17 20:02Z: "the laser gun is too
-   small and is supposed to be as big as the ak47 or something around that size"; it had no width of its own, so it
-   took a knife's) */
-.held[data-w="laser"] i {
-  width: calc(var(--s) * 1.1);
-}
-.held[data-w="adrenaline"] i {
-  width: calc(var(--s) * 0.44);
-}
+/* Quacky Zombies' guns in the hand: each as long as its l4ddguns.js w, set by game.js as --gw (.held i), one number per
+   gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
+   gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
+   ak47"). Their bullets (the SMG's with no glow: many fly at once); the chain gun's line, flashing in and out */
 .held[data-w="chair"] i {
   width: calc(var(--s) * 0.62);
 }
@@ -14181,7 +14162,9 @@ html.moving .eye-zap {
 .held[data-w="fireball"] i {
   width: calc(var(--s) * 0.5);
 }
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst) {
+/* (every gun's own bullet, game.js .round: the Tommy gun's and the UMP-45's had been left out of a list here, so they flew
+   at the handgun's size, off their line) */
+.bullet.round {
   width: var(--w);
   margin: calc(var(--w) * -0.18) 0 0 calc(var(--w) * -0.5);
 }
@@ -14191,8 +14174,7 @@ html.moving .eye-zap {
 .bullet.k-lmg {
   filter: drop-shadow(0 0 3px #ff6a3d);
 }
-.bullet:is(.k-sniper, .k-smg, .k-ak, .k-revolver, .k-lmg, .k-slug, .k-burst)
-  svg {
+.bullet.round svg {
   display: block;
   width: 100%;
   height: auto;
