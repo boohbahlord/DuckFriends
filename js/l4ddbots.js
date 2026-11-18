@@ -36,6 +36,7 @@ import {
   jaimeBody,
   JBODY,
   endless,
+  wetSlow,
 } from "./l4ddrules.js";
 import { walkOf } from "./rules.js";
 import { WANDER } from "./hangout/justin.js";
@@ -314,6 +315,7 @@ function justinBot(s, id, now, out) {
     walkPx =
       (fast ? WALK / (0.6 * 1.05) : WALK * (upOf(s, id).sp ? 1.1 : 1)) *
       walkOf(s) *
+      wetSlow(x, y) * // (Downpour's flood: as a player's duck is slowed)
       (dt / 1000),
     m = kitOf(s, id) || { sl: [], am: {}, u: {} },
     sl = m.sl,
