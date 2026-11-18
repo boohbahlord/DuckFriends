@@ -5835,3 +5835,112 @@ Split: Solomon = Justin's dodge (just moves like a player), cry 10 s then sprint
 > give me a spreadsheet of
 
 Split: Adam = the spreadsheets/info first. Noah = invisible grenades/arrows + all projectiles, pickup pixel size, Tommy/new gun sizes, dead-duck outlines, blood under every dead duck, dead soldier duck prop. Solomon = flamethrower + water, no fireball anywhere, half spawn rate first 4 s, smooth big mobs, rarest-first bags. Asked the owner: Justin's revive phase (bug or rule?) and the cut-off last line.
+
+## Request (2026-11-18 12:19Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtVCFg6WPpdeGhRYs41BQqdp) (word for word; the owner's finished version of the 11:42Z draft, which they said to ignore)
+> im going to keep working but just implement these changes adam and work while i look at these spreadsheets, but ask me how the slots works with propositions that i say true or false (or yes and no) for, in order to see u have the right idea. the order of these paragraphs were made out of order if you couuld tell.
+>
+> the melee bag is actually apart of the rest of the guns in the game now and shares the same bag, with each melee having a equal chance as any other gun in the bag as getting chosen, so no (half and half) rule and no separate bag any longer.
+>
+> jerry can no longer in slots
+>
+> New slot system:
+> Bag for zombie game:
+>
+> defining terms: shuffle means that an item is removed from it's bag and does not reappear within it's bag until every other item has had a chance. For slots, every bag of a lower percent comes first in roll, if the percent chance doesnt happen, then it moves onto the next bag, so on and so forth
+>
+> every bag is shuffled within it's bag, based on the shuffle rule
+> every item or weapon within it's bag is also shuffled based on the shuffled rule
+>
+> every weapon, melee, or item has a corresponding color to it's slot now (kinda like it did before but it's different now), and the orb for the weapon or item drop has it's own look too (like it did before but dif now). The purples all glow. Any weapon made angelic now has a red slot color and orb.
+>
+> jerry cans should have an orange orb that glows when seen on the ground.
+>
+> every bag has the shuffle mechanism.
+>
+> justin is removed from every slot
+>
+> the weapons in mad god justin now uses the bag and shuffle system for the weapons it spawns, with these bags, (heavy (sniper removed for mad god justin's bags), assault rifle and submachine combined into one bag for mad god justin, shotgun, and special (laser is remoeved from special bag for mad god justin)
+>
+> the slot does not assume starting kit or the weapon u have, and you cannot get a slot for something you already have
+>
+> Items that can run out now simply stay in their slot without being removed
+>
+> the power box is already put together by default in cabin now AND the right slots that show what is in the power box can be removed and changed into something else. the cabin starts without power still until gasoline is added.
+>
+> the chair bag: is a 1% chance and the chair is golden
+>
+> There is a bag for special weapons (these have a glowing purple orb in their drop AND glowing purple in their slot they occupy. The special is a 5% chance it is had, and here are the special slots in the special bag that shuffle:
+>
+> * Chain Gun
+> * Flamethrower
+> * Laser Rifle
+>
+>
+> Here is the shuffled item bag (20% chance and shuffles):
+>
+> * medkit (green slot and orb)
+> * zebra cake (blue slot and orb)
+> * adrenaline shot
+> * safekeeping (purple slot and orb that glows)
+>
+>
+> Weapon bag shuffle (100% chance):
+> Every bag in this shuffle has it's own bag:
+>
+> * Melee bag shuffle: contains all melee already in the slots and every melee has green orb and slot color (besides the cast iron)
+> * weak bag shuffle: 
+>    * contains dagger
+>    * contains default knife (if you don't have it)
+>    * contains cast iron pan
+> * shotgun bag: contains,
+>    * shotgun (green)
+>    * double barrel shotgun (blue)
+> * pistol bag
+>    * revolver (green)
+>    * default pistol (if you dont have it)
+> * sub machine gun bag
+>    * tommy gun (blue)
+>    * UMP-45 (blue)
+>    * SMG (rename it to MP5 and give it the look of an MP5) (blue)
+> * assault rifle bag
+>    * AK-47 (blue)
+>    * Burst Rifle (rename it to the gun it's look is based off of) (blue)
+> * heavy bag
+>    * Sniper (give it the look of a Barret 50 caliber if it doesn't already and rename it after it in words better in choice or capitilization then my own) (it now will do max damage to the first zombie it passes through AND will do max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it passes through) (purple)
+>    * Grenade Launcher (blue)
+>    * LMG (rename it to the gun it's look is based off of) (blue)
+>
+>
+> remove jet pack from the whole game
+>
+> long jump is removed from zombies bag and slots
+>
+> Jaime bomb is removed from all zombie modes
+> normal jaime is removed from all zombie modes
+> "only one (jerry can) can be out at a time"
+> If the jerry can isn't found within that round on the ground from where it spawns on the map or the zombie it kills, then it can still lay on the ground while other gasoline can be dropped by zombies in later rounds. The spinning for a jerry can is always 100% when it is found AND only three Jerry cans can be held on the left screen by all players per game, and a very small text below the items (not over them) in the left screen says they have the max amount of jerry cans. Buying gas from slot dosnt stop it from spawning that round. Gasoline is still a 1% chance of dropping in zombies.
+>
+>
+> the butler or priest (or the npc shop in general ) no longer sells gasoline
+> the gas station now fills up an empty jerry can every player shares on the left screen ONLY in downpour, and the jerry can becomes filled up by the gas pump. the empty jerry can is apart of the gas limit, and any jerry can that is grabbed now is a percent into the last jerry can. so we are doing addition of fractions / percentage, where 0% jerry can plus a 50% jerry can picked up isnt one empty one and one half full one, but now the empty one stores 50% of it's gas.
+> Now there are only 4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%
+> when there is no jerry cans, the players have a 0% jerry can on the left, and when they have three full jerry cans, then empty is tranformed like the other ones, and the empty only follows the full one if the previous is full, and the jerry cans are ordered in a row of which has the most gasoline
+> the jerry cans have their own row apart from the items you pick up in cabin (fuse and etc)
+> the two rows are both on the left side of screen
+> the gas pump now give 25% gas to a jerry can for 150 points each
+> The jerry can needed to turn on the generator in cabin is the same as the others, just a given percentage of how many rounds it gives and any gasoline can be used in place of it to turn on the generator in cabin
+>
+> 1. idk
+> 2. he dies outright, justin does, and only in the zombie mode
+>
+> in mad god justin, justin gets more gored every 10 health points when he has 100 HP, and once he hits 10 HP, every bit of damage does even more gore, and when he has 0 HP in mad god justin, he dies (he starts crying when at 25 hp or lower but cry effect goes away for any dead player)
+> mad god justin bleeds a puddle of blood when dead
+> justin cannot make dialog when outright dead in zombies or mad god justin
+> in normal game modes now, Justin cannot be revived and he dies outright and spawns back with gore effects lost on the next turn (like agree or disagree, lawyering, story game ,etc)
+> there should be a thing where, below the play game option, is an offline play option, and that option is for app users only, and there, the button is greyed out until the conditions are met to where it can be played. In offline mode, there is no test option AND hangout, zombies, or mad god Justin can be played locally as the only game modes allowed, and any other game modes cannot be played.
+> for offline play, the player only has those game modes to chose from and their corresponding maps, AND there is no timer on the vote screen AND the vote screen is still there AND it is instantons. Only settings appropriate for allowed game modes should be visible. For hangout, the map vote is gone. Now it says "select" instead of "vote" for offline play. We can rename offline to "Single Player"
+> single player is meant to be hosted locally and NOT on the firebase servers AND not require internet to play BECAUSE the files are downloaded locally onto the system FROM the installed app.
+> the single player still has all the same rules for zombies and mad god justin and their game modes are not duplicated versions but the same version hosted on a local offline machine of the player. the game still updates the offline or singleplayer features automatically in a connection to the github for everything on the application and website when connection is made to it like usual.
+> single player is for players that have machines that can run the game but they dont want to spend data or internet connection to play, ESPECIALLY if it is the only barrier for them playing (such as my gf who is in a college with an area of extremely poor data connection)
+
+Split (Adam): Solomon = the slot bags + shuffle, jerry can rework, no gas at the Priest/Butler, pumps 25% for 150, power box built by default, no Jetpack/Long jump/Jaime/Jaime Bomb/Justin in zombie slots, sniper pierce, Justin dies outright in Dead Ducks Arcade, MGJ weapon bags. Noah = slot and orb colors, golden chair, gun looks and names (MP5, Barrett, burst rifle, LMG), the jerry can row, MGJ Justin's gore/cry/blood. Jackal = Justin dies outright in normal modes. Adam = Single Player. Adam asked the owner true/false questions on the slots first.
