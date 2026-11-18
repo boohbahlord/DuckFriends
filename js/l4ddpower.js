@@ -6,9 +6,9 @@
    It is one amount of gas, in quarter cans (pw.gas, 0 to 12; a quarter is one round of power), shown as cans filled one
    after the other, the fullest first: 0 shows one empty can; 150% a full one and a half one; 200% two full ones and an
    empty one; 300% three full ones (canRow). A jerry can found adds its gas into the row (what doesn't fit stays where it
-   lay, smaller). A found can holds 100% (4 rounds) 5% of the time, else 75% (3) 25% of the time, else 50% (2) half the
-   time, else 25% (1). They come from a zombie that dies (1%) and at each round's start in a part's spot (1%), never from
-   the fireplace, the Butler or the Priest; one a round at most, and one nobody took stays there into the next rounds.
+   lay, smaller). A found can is always full, 100% (4 rounds: the owner's, Nov 18 12:32Z). They come from a zombie that
+   dies (1%) and at each round's start in a part's spot (1%), never from the fireplace, the Butler or the Priest; one a
+   round at most, and one nobody took stays there into the next rounds.
    On Downpour a pump puts a quarter can (25%) into the row for 150 points. E at the box pours the fullest can in: the
    power runs that many rounds, on top of what's left while it's still on.
 
@@ -60,16 +60,9 @@ export const PW = {
   TAKE_SPOT: 110, // … and what lies on the sink, the counter or the couch (from the floor in front)
 };
 export const GAS_MAX = PW.FULL * PW.CANS;
-/* a found jerry can's gas, in quarter cans, rolled in the owner's order: each fill only if the one before it failed */
-const FILLS = [
-  [4, 0.05],
-  [3, 0.25],
-  [2, 0.5],
-];
-export function canRounds() {
-  for (const [n, p] of FILLS) if (Math.random() < p) return n;
-  return 1;
-}
+/* a found jerry can's gas, in quarter cans: always a full one (the owner's, Nov 18 12:32Z, through Adam: a found can is
+   always 100%) */
+export const canRounds = () => PW.FULL;
 /* a can's gas in percent: 100, 75, 50, 25, 0 */
 export const canPct = (r) => Math.round((r / PW.FULL) * 100);
 export const partName = (k) => NAMES[k] || k;

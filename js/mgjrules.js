@@ -71,15 +71,7 @@ import {
   JUSTIN_AT_JAIME,
 } from "./jaimebomb.js";
 import { justinAt, JUSTIN_ID } from "./boardjustin.js";
-import {
-  ARMS,
-  ITEM_ODDS,
-  zombieTakes,
-  pierceOf,
-  ALL_HP,
-  HEAVY_BAG,
-  MELEE_BAGS,
-} from "./l4ddrules.js";
+import { ARMS, SLOT_ODDS, zombieTakes, pierceOf, ALL_HP } from "./l4ddrules.js";
 import { holdDown, onGetUp, invuln, hurtFx } from "./hangout/death.js";
 import {
   E_LINES,
@@ -309,31 +301,22 @@ export const PLUS_LIFE = 10000,
     ["good", 1],
     ["meteor", 2.5],
     ["sky", 5],
-    ["chaingun", 5], // (rarer)
-    ["laser", 8], // (the Laser Rifle: the owner's, Nov 17, from the spin and Justin's pickups)
-    ["glauncher", 10],
-    ["medkit", 10.5],
-    ["tommy", 12], // (the Tommy gun and the UMP-45: the owner's, Nov 17, from the spin and Justin's pickups)
-    ["ump", 12],
-    ["sniper", 16],
-    ["lmg", 16],
-    ["shotgun", 16],
-    ["ak", 18],
-  ]; // (only the powerful guns drop now, and the medkit is back: the owner's, Nov 16; the hammer, the dagger and the handgun are gone. The rarest first: the owner's, Nov 18 10:38Z)
+  ]; // (the rarest first: the owner's, Nov 18 10:38Z; the guns and the medkit come from their bags: pickKind)
 /* a gun picked up works as it does in Quacky Zombies (its magazine, R to reload, full auto, the shotgun's spread, the
    sniper's bullet going through) and stays on key 4 until its shots are gone (MGJ_GUNS); the medkit puts my HP back to
    full, or gets a downed duck up at once when I hold it out over it */
 export const MGJ_GUNS = [
-  "sniper",
-  "ak",
-  "lmg",
-  "shotgun",
-  "glauncher",
   "chaingun",
-  "laser",
+  "glauncher",
+  "lmg",
   "tommy",
   "ump",
-];
+  "smg",
+  "ak",
+  "burst",
+  "shotgun",
+  "dbarrel",
+]; // (no sniper, Laser Rifle or flamethrower here: the owner's, Nov 18 12:19Z and 12:32Z)
 export const PICK_WEAPONS = [...MGJ_GUNS, "medkit"];
 /* the shots a gun picked up comes with (the owner's, Nov 17): only its one magazine, the shotgun never runs out, the LMG 30 */
 export const INF_AMMO = 9999; // (the shotgun picked up never runs out: the owner's, Nov 17; a number, as the state is JSON)
@@ -1276,30 +1259,50 @@ function brain(s, now, log) {
 }
 
 /* ---------- the pickups ---------- */
-/* what comes next (the owner's, Nov 17 13:07Z: "weapons drop chance should be based off the slot or roll mechanic at the
-   fireplace or car"): the sky, the meteor and Good Justin come as they did (SKY, their own odds); otherwise the roll is
-   the spin's: a medkit (the items' side) ITEM_ODDS.start of the time, else one gun with the spin's own odds (spinShare) */
-const SKY = PICKS.filter(([k]) => ["sky", "meteor", "good"].includes(k));
-/* a weapon's share on the fireplace's spin (l4ddrules.js fireRoll): a gun on its own is one share; a gun in a bag splits
-   that bag's one share with the rest of the bag (the chain gun: half, with the flamethrower); a melee splits the melee
-   bag's share between its two bags, then inside its own */
-const spinShare = (w) => {
-  if (HEAVY_BAG.includes(w)) return 1 / HEAVY_BAG.length;
-  const b = MELEE_BAGS.find((x) => x.includes(w));
-  return b ? 1 / MELEE_BAGS.length / b.length : 1;
+/* what comes next: the sky, the meteor and Good Justin as they did (SKY, their own odds); else a medkit (the Item bag's
+   chance, as the fireplace's); else a gun from the bags (the owner's, Nov 18 12:19Z and 12:32Z: "the chain gun only has
+   a 5% chance of spawning for it's bag that is rolled first"): the chain gun 5% first, else the next of three bags
+   that take turns, heavy (the grenade launcher, the M249), rifles (the Tommy gun, the UMP-45, the MP5, the AK-47, the
+   AUG) and shotguns (the shotgun, the double barrel), each giving the next one of its own. Every bag shuffles: each of
+   its things once before any comes again (s.hidden.mgjb, the host's only) */
+const SKY = PICKS;
+export const MGJ_CHAIN = 0.05;
+export const MGJ_BAGS = {
+  heavy: ["glauncher", "lmg"],
+  rifle: ["tommy", "ump", "smg", "ak", "burst"],
+  shotgun: ["shotgun", "dbarrel"],
 };
-let byShare = null; // (the guns, the rarest first: the owner's, Nov 18 10:38Z; made at the first pick, as l4ddrules.js loads after this file)
+const mix = (xs) => {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+/* the next one of a bag (left: its things left, in their shuffled order; all of them when it's empty) */
+const nextOf = (left, all) => {
+  const rest = left && left.length ? left : mix(all);
+  return [rest[0], rest.slice(1)];
+};
+function bagGun(s) {
+  const b = (s.hidden && s.hidden.mgjb) || { b: {} },
+    [k, turns] = nextOf(b.w, Object.keys(MGJ_BAGS)),
+    [w, rest] = nextOf(b.b[k], MGJ_BAGS[k]);
+  s.hidden = {
+    ...(s.hidden || {}),
+    mgjb: { w: turns, b: { ...b.b, [k]: rest } },
+  };
+  return w;
+}
 const pickKind = (s) => {
   const list = SKY.filter(([k]) => k !== "good" || !s.mgj.gj),
     r = Math.random() * 100;
   let at = 0;
   for (const [k, w] of list) if (r < (at += w)) return k;
-  if (Math.random() < ITEM_ODDS.start) return "medkit";
-  byShare ||= [...MGJ_GUNS].sort((a, b) => spinShare(a) - spinShare(b));
-  const all = byShare.reduce((n, w) => n + spinShare(w), 0);
-  let u = Math.random() * all;
-  for (const w of byShare) if ((u -= spinShare(w)) < 0) return w;
-  return byShare[byShare.length - 1];
+  if (Math.random() < SLOT_ODDS.item) return "medkit";
+  if (Math.random() < MGJ_CHAIN) return "chaingun";
+  return bagGun(s);
 };
 function pickTick(s, now, at, log, fx) {
   const m = s.mgj;

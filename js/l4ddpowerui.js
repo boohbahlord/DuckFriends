@@ -171,7 +171,6 @@ export function pwDraw(ctx) {
       box.sig = sig;
       box.img.src = svgDataURL(
         powerBoxSVG({
-          parts: pw.fit,
           on,
           fuel: Math.min(1, left / GAS_BOXES),
         }),

@@ -108,6 +108,7 @@ import {
   pierceOf,
   shotArm,
   shotWalled,
+  hasLeft,
 } from "./l4ddrules.js";
 import { hOk, hLock } from "./heights.js";
 import { ammoBar, stackBars, noReload } from "./meters.js";
@@ -1915,7 +1916,7 @@ function shopFill(s, ctx) {
   }).join("");
   /* Safe Keeping (the owner's, Nov 16): into the special slot, one at a time */
   {
-    const have = !!kit && kit.sl.includes("safekeep"),
+    const have = hasLeft(s, me, "safekeep"), // (one used up stays in its slot, empty: it can be bought again)
       price = safePrice(s),
       was = price < SAFE.PRICE ? `<s>${SAFE.PRICE}</s> ` : "";
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic">${orbHTML("safekeep")}</i><span class="l4-up-t"><b>Safe Keeping</b><small>Keeps what you bought and gets you up</small></span><button type="button" class="btn small ${have ? "" : "yellow"} l4-up-buy" data-buy="safekeep"${have || pts < price ? " disabled" : ""}>${have ? "Owned" : was + price}</button></li>`;
