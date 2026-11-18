@@ -418,16 +418,31 @@ let butler = null,
 
 /* the pixel look (pixel.js): a place on the screen on the grid, so things' pixels line up with the map's and the ducks' */
 const at = (v) => (pixelOn() ? snap(v).toFixed(2) : v.toFixed(1));
+/* a picture's short name (its text's hash), made once for each picture: the same text (every zombie that looks the
+   same) is hashed once, not once for each of them */
+const UK = new Map();
+function ukOf(url) {
+  let k = UK.get(url);
+  if (!k) {
+    if (UK.size > 600) UK.clear(); // (as l4ddart.js keeps its pictures: the newest few hundred)
+    UK.set(url, (k = hashText(url)));
+  }
+  return k;
+}
 /* the pixel look: a still picture (a zombie, the Butler) as pixels at the size it shows, w × h css px; its drawing until
-   they're made. o keeps what it shows: o.url (the drawing) and o.pxk */
+   they're made (a zombie: nothing until they're made, zombieEl). o keeps what it shows: o.url (the drawing), o.uk (its
+   short name) and o.pxk. Asked every frame for every zombie on the screen, so it checks by the short name: before, it
+   glued the whole drawing (7 to 11 KB of text) into the check each time, a megabyte of throwaway text a frame in a big
+   crowd (the owner's, Nov 18 14:20Z: "i want more frames") */
 function pxPic(o, img, w, h) {
   if (!pixelOn()) return;
   const g = gridPx(),
-    k = o.url + "@" + Math.round(w / g) + "x" + Math.round(h / g);
+    uk = o.uk || (o.uk = ukOf(o.url)),
+    k = uk + "@" + Math.round(w / g) + "x" + Math.round(h / g);
   if (o.pxk === k) return;
   o.pxk = k;
   img.classList.add("px");
-  const key = "z" + (o.uk || (o.uk = hashText(o.url))),
+  const key = "z" + uk,
     u = raster(key, o.url, w, h);
   if (u) img.src = u;
   else
@@ -483,7 +498,10 @@ function zombieEl(z) {
     box = zombieBox(z.l);
   el.className = "l4z";
   const url = zombieURL(z.l, z.i);
-  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false" src="${url}"></div><span class="l4z-hp"><b></b><i></i></span>`;
+  /* the pixel look: no src yet, its pixels come in draw() (pxPic) at once when a zombie that looks the same has them
+     already; until then it shows nothing rather than its live drawing (a whole wave of them would be drawn as drawings
+     for a moment, each its own) */
+  el.innerHTML = `<div class="l4z-body"><img alt="" draggable="false"${pixelOn() ? "" : ` src="${url}"`}></div><span class="l4z-hp"><b></b><i></i></span>`;
   const body = el.firstChild;
   body.style.width = box.w + "px";
   body.style.height = box.h.toFixed(1) + "px";
@@ -560,8 +578,8 @@ const BY_WOUND = {
 const newWound = (had = "", now = "") =>
   now.length > had.length ? now[had.length] : "";
 /* its picture with the wounds it has now, made only when they changed and it's on a screen */
-function wounds(o, l, i, noGore) {
-  const want = noGore ? goreFree(o.want) : o.want; // (Gore off: none of them shows)
+function wounds(o, l, i) {
+  const want = o.ng ? goreFree(o.want) : o.want; // (Gore off: none of them shows. o.ng, the setting as seeZombies last saw it: draw() asks too, and before, it left the setting out, so with Gore off a zombie on the screen got its gore back every frame and lost it again every update, a new picture each time)
   if (o.hits === want) return;
   o.hits = want;
   o.url = zombieURL(l, i, o.hits);
@@ -660,7 +678,8 @@ function seeZombies(s, ctx, now) {
     } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
     o.l = z.l;
-    if (shown) wounds(o, z.l, z.i, s.options.noGore); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
+    o.ng = !!s.options.noGore;
+    if (shown) wounds(o, z.l, z.i); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
     const sh = (Math.max(0, z.hp) / (z.l[0] || 1)).toFixed(3);
     if (o.sh !== sh) {
       o.sh = sh;
