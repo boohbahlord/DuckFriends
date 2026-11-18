@@ -192,6 +192,7 @@ export function mountHotbar(S, api) {
     cur = null, // the id in the middle
     pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
     slideSig = "",
+    listSig = "",
     lastWant = null;
   const STEP = () =>
     parseFloat(getComputedStyle(slide).getPropertyValue("--step")) *
@@ -237,12 +238,30 @@ export function mountHotbar(S, api) {
     ]);
     if (sig !== slideSig) {
       slideSig = sig;
-      track.innerHTML = list
-        .map(([id, i]) => {
+      const html = list.map(([id, i]) => {
           const sp = look(id);
           return `<button type="button" class="sp-slot${sp.cls ? " " + sp.cls : ""}${on.has(id) ? " on" : ""}${cd[i] && !cd[i][3] ? " cool" : ""}${sp.off ? " off" : ""}" role="option" aria-label="${esc(sp.name)}"><i>${sp.icon}</i>${drain(cd[i])}${dots(id)}</button>`;
-        })
-        .join("");
+        }),
+        ids = JSON.stringify(list);
+      /* the same slots with other numbers (a shot fired, a reload going, a cooldown): each slot that changed is
+         patched where it stands, never rebuilt, so the row sits still while I fire or reload (the owner's, Nov 18) */
+      if (ids === listSig && track.children.length === html.length)
+        html.forEach((h, j) => {
+          const b = track.children[j];
+          if (b._h === h) return;
+          const n = document.createElement("template");
+          n.innerHTML = h;
+          const t = n.content.firstChild,
+            mid = b.classList.contains("mid");
+          b.className = t.className + (mid ? " mid" : "");
+          b.innerHTML = t.innerHTML;
+          b._h = h;
+        });
+      else {
+        listSig = ids;
+        track.innerHTML = html.join("");
+        [...track.children].forEach((b, j) => (b._h = html[j]));
+      }
     }
     /* the one in the middle stays (gone from my keys, like a medkit used: the nearest one) */
     const want = api.current && api.current();

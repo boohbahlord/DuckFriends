@@ -7894,6 +7894,8 @@ register("game", {
       }, // (let go: the weapon goes back to the way the duck faces; in Quacky Zombies the flashlight to the nearest zombie)
       attack: padAttack,
       jump: () => jump(),
+      reloadOn: () => !!R && (isL4dd(R.state) || isMgj(R.state)),
+      reload: () => reload(),
     });
     meter = mountMeter();
     const stack = document.createElement("div");
@@ -7912,6 +7914,9 @@ register("game", {
         target = t;
       },
       hold: (x, y) => !!bar && bar.wheel(x, y),
+      aim: (dx, dy) => {
+        keyAim = dx == null ? null : [dx, dy];
+      }, // (a second finger dragging on the board aims, like the aim stick's: the owner's, Nov 18 15:18Z)
     });
     S.addEventListener(
       "pointerdown",
