@@ -31,7 +31,7 @@ import { sway, stutterOf, lightNow } from "./hangout/flicker.js";
 import { play, setListener } from "./hangout/sounds.js";
 import { svgDataURL } from "./hangout/art.js";
 import { justinSVG } from "./hangout/npcart.js";
-import { merchantById, merchantSVG } from "./merchants.js";
+import { merchantById, merchantSVG, merchantLook } from "./merchants.js";
 import { FLAME, TELEPORT } from "./mgjart.js";
 import { rainbowHTML } from "./art.js";
 import { low } from "./gfx.js";
@@ -154,6 +154,7 @@ import {
   orbHTML,
   UP_ICONS,
   weaponIcon,
+  hitsOf,
 } from "./l4ddart.js";
 
 const RX = 56,
@@ -1546,7 +1547,7 @@ function butlerEl(svg, name) {
     el = document.createElement("div");
   el.className = "hang-npc duck l4-butler";
   const url = svgDataURL(svg);
-  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}</span>`;
+  el.innerHTML = `<div class="hang-npc-body"><img alt="" draggable="false" src="${url}" style="width:100%;height:100%"></div><span class="gduck-name hang-npc-name">${nameHTML(name)}<span class="gduck-hp" aria-hidden="true"><b></b><i></i></span></span>`; // (the HP in his tag, as a player's: shown once he's hurt, the merchant's)
   const body = el.firstChild;
   body.style.width = "64px";
   body.style.height = h.toFixed(1) + "px";
@@ -1560,15 +1561,46 @@ function butlerEl(svg, name) {
    He's a duck's size now (the owner's, Nov 18 13:46Z: "Justin's butler is no longer small"), in his look for this visit
    (merchants.js, rolled by the rules so everyone sees the same one). He glides to where the rules have him (walking
    in, at his spot, running off), faces the way he goes, fades as he jumps off the balcony or drops over the fence, and
-   lies dead where he fell. His lines show in a bubble over him for MERCH.SAY ms */
+   lies dead where he fell. His lines show in a bubble over him for MERCH.SAY ms.
+   Hurt, he is anyone else (the owner's, Nov 18 15:35Z: "The merchants should have a health bar like anyone else. It
+   should show their sprint meter when they're moving like anyone else. And if it's the Phil, the murderous, when he
+   uses his knife, it has a cooldown meter just like anyone else ... any merchant that gets damage gets gore effects ...
+   When a merchant gets hit, their health bar shows ... if the merchant falls over and dies, they have a puddle of blood
+   leaving their corpse, and their corpse stays there permanently"):
+     - his HP (m.hp of m.max, the rules') in his tag, a player's red blocks, once he's lost one, and it stays up;
+     - a hit: the red blink, the shake, "−1 HP" over him, and his blood with bits of him in his color, as a zombie's;
+     - his wounds (m.w, wounds.js codes, as a player's) on his picture, his head gone after a crit (the rules' l4crit
+       fx bursts it, as a zombie's: game.js); none with Gore off;
+     - his sprint (m.sp, 0 to 1) as my thin blue bar under his tag while it isn't full; Phil's knife (the rules'
+       l4mstab fx) as my white cooldown bar, MERCH.STAB_MS long;
+     - dead: a pool of blood spreads under him (as every duck's: game.js .gduck-pool), and he and it stay for good */
 let mSig = "",
-  mAt = null;
+  mAt = null,
+  mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 },
+  mPoolAt = 0;
+/* his wound codes as I draw them (Gore off: only a hat knocked off), and the look they give duckSVG (game.js woundLook) */
+const mWounds = (s, m) => {
+  const w = typeof m.w === "string" ? m.w : "";
+  return +s.options.noGore ? goreFree(w) : w;
+};
+const MLOOK = new Map();
+function mWoundLook(wc) {
+  if (!wc) return {};
+  if (!MLOOK.has(wc)) {
+    if (MLOOK.size > 60) MLOOK.clear();
+    const h = hitsOf(wc);
+    MLOOK.set(wc, { skin: { head: h.inner, out: h.out }, gone: h.gone });
+  }
+  return MLOOK.get(wc);
+}
+const mMax = (m) => Math.max(1, +m.max || MERCH.HP);
 function drawMerchant(ctx, t) {
   const s = ctx.state(),
     m = merchantNow(s),
     Wd = ctx.world,
     sc = Wd.sc,
     dead = !!m && m.st === "dead",
+    wc = m ? mWounds(s, m) : "",
     sig = m && m.who ? [m.v, m.id, m.roll, dead ? 1 : 0].join() : "";
   if (sig !== mSig) {
     mSig = sig;
@@ -1581,10 +1613,19 @@ function drawMerchant(ctx, t) {
         size: 64,
         dead,
         ...(hid ? { title: "The Merchant" } : {}),
+        ...mWoundLook(wc),
       }),
       m.who.name,
     );
-    if (hid) butler.el.querySelector(".hang-npc-name")?.remove(); // (no name over the soldier)
+    butler.wc = wc;
+    const tag = butler.el.querySelector(".hang-npc-name");
+    if (hid) {
+      for (const n of [...tag.childNodes])
+        if (!n.classList || !n.classList.contains("gduck-hp")) n.remove();
+      tag.classList.add("bar-only");
+    } // (no name over the soldier: his tag is his HP bar only, as the other ducks' in Dead Ducks Arcade)
+    butler.tag = tag;
+    butler.hpEl = tag.querySelector(".gduck-hp");
     butler.el.classList.add("l4-merchant");
     butler.el.classList.toggle("dead", dead);
     butler.say = document.createElement("div");
@@ -1592,8 +1633,35 @@ function drawMerchant(ctx, t) {
     butler.el.prepend(butler.say);
     butler.sayN = 0;
     if (!mAt || mAt.v !== m.v) mAt = { v: m.v, x: m.x, y: m.y, t };
+    if (mSeen.v !== m.v) {
+      mSeen = { v: m.v, hp: null, alive: !dead, fx: fxTop(s), stab: 0 };
+      mPoolAt = 0;
+    }
+    if (dead) {
+      if (!mPoolAt) mPoolAt = mSeen.alive ? clockNow() : -1; // (seen falling: the pool spreads; dead when I came: there already)
+      butler.pool = document.createElement("span");
+      butler.pool.className = "l4-jpool l4-mpool";
+      butler.pool.setAttribute("aria-hidden", "true");
+      butler.pool.innerHTML = POOL_SVG;
+      butler.el.prepend(butler.pool);
+    }
   }
   if (!butler) return;
+  /* his wounds now (a new picture only when they change) */
+  if (butler.wc !== wc) {
+    butler.wc = wc;
+    butler.url = svgDataURL(
+      merchantSVG(m.who, m.roll, {
+        size: 64,
+        dead,
+        ...(m.who.hideName ? { title: "The Merchant" } : {}),
+        ...mWoundLook(wc),
+      }),
+    );
+    butler.uk = "";
+    butler.pxk = "";
+    if (!pixelOn()) butler.body.firstChild.src = butler.url;
+  }
   /* glide (a big jump: there at once) */
   const dt = Math.min(0.1, Math.max(0, (t - mAt.t) / 1000)),
     gap = Math.hypot(m.x - mAt.x, m.y - mAt.y),
@@ -1607,6 +1675,7 @@ function drawMerchant(ctx, t) {
       !seenFrom(mAt.x, mAt.y, Wd.inside) ||
       !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
+  mHurt(s, m, dead, p, sc, hide);
   if (hide) return;
   const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
   if (butler.tr !== tr) {
@@ -1623,6 +1692,20 @@ function drawMerchant(ctx, t) {
   }
   butler.el.classList.toggle("flip", !dead && m.f < 0);
   butler.el.classList.toggle("gone", m.st === "jump");
+  /* his blood, under him for good once he's dead (none with Gore off) */
+  if (butler.pool) {
+    const off = !!+s.options.noGore;
+    if (butler.pool.hidden !== off) butler.pool.hidden = off;
+    const kp = mPoolAt < 0 ? 1 : Math.min(1, (clockNow() - mPoolAt) / JPOOL.ms),
+      grow = 0.15 + 0.85 * (1 - (1 - kp) * (1 - kp)),
+      pk = `translate(${(-butler.feet * 0.42 * sc).toFixed(1)}px, ${(4 * sc).toFixed(1)}px) scale(${(sc * grow).toFixed(3)})`; // (where he lies: on his side, his head the way he fell)
+    if (butler.poolK !== pk) {
+      butler.poolK = pk;
+      butler.pool.style.transform = pk;
+    }
+  }
+  /* his sprint, and Phil's knife: my own two thin bars, under his tag */
+  mBars(s, m, dead);
   /* his words */
   const now = clockNow(),
     say = m.say;
@@ -1633,6 +1716,111 @@ function drawMerchant(ctx, t) {
   const on = !!say && !dead && now < say.t + MERCH.SAY;
   if (butler.el.classList.contains("saying") !== on)
     butler.el.classList.toggle("saying", on);
+}
+/* the newest fx number (only the ones after it are new to me) */
+const fxTop = (s) =>
+  (s.fx || []).reduce((n, f) => Math.max(n, f && f.n ? f.n : 0), 0);
+/* his HP in his tag, and a hit on him as on anyone: the blink, the shake, the HP lost over him, his blood */
+function mHurt(s, m, dead, p, sc, hide) {
+  const max = mMax(m),
+    hp = dead ? 0 : m.hp == null ? max : Math.max(0, +m.hp || 0),
+    was = mSeen.hp;
+  mSeen.hp = hp;
+  if (!dead) mSeen.alive = true;
+  const bar = butler.hpEl,
+    show = !dead && hp < max; // (once he's lost one: then it stays up, the owner's "When a merchant gets hit, their health bar shows")
+  butler.el.classList.toggle("php", show);
+  if (bar && show) {
+    bar.style.setProperty("--hp", (hp / max).toFixed(3));
+    bar.style.setProperty("--n", max);
+  }
+  if (was === null || hp >= was) {
+    if (bar && was !== hp)
+      bar.style.setProperty("--was", (hp / max).toFixed(3));
+    return;
+  }
+  /* he lost some */
+  if (bar) {
+    bar.style.setProperty("--was", (was / max).toFixed(3));
+    const red = bar.querySelector("b");
+    red.style.animation = "none";
+    void red.offsetWidth;
+    red.style.animation = "";
+  }
+  if (hide) return;
+  const img = butler.body.firstChild;
+  vibrate(img, hitPx(was - hp), dead);
+  if (!dead) img.animate(HIT, 320);
+  popHP(butler.el, hp - was, true);
+  fxHitAt(
+    p.left,
+    p.top,
+    butler.feet * sc * 0.55,
+    null,
+    64 * sc,
+    BY_WOUND[newWound(butler.hitW || "", butler.wc || "")],
+    (merchantLook(m.who, m.roll) || {}).color,
+  ); // (his blood, by the wound he got, with bits of him in his color, fx.js)
+  butler.hitW = butler.wc;
+}
+/* his sprint (m.sp, the rules': 0 to 1) and Phil's knife waiting to stab again (the rules' l4mstab fx, MERCH.STAB_MS) */
+function mBars(s, m, dead) {
+  const tag = butler.tag;
+  if (!tag) return;
+  let sp = tag.querySelector(".l4-sprint");
+  if (!sp) {
+    sp = document.createElement("span");
+    sp.className = "l4-sprint full";
+    sp.setAttribute("aria-hidden", "true");
+    sp.innerHTML = "<i></i>";
+    tag.append(sp);
+  }
+  const left = dead || !(m.sp >= 0) ? 1 : Math.min(1, +m.sp),
+    v = left.toFixed(3);
+  if (sp._v !== v) {
+    sp._v = v;
+    sp.style.setProperty("--sp", v);
+    sp.classList.toggle("full", left >= 1);
+    sp.classList.toggle("tired", left <= 0.05);
+  }
+  const top = fxTop(s);
+  if (top > mSeen.fx) {
+    for (const f of s.fx || [])
+      if (f && f.n > mSeen.fx && f.kind === "l4mstab")
+        mSeen.stab = Math.max(mSeen.stab, f.t || 0);
+    mSeen.fx = top;
+  }
+  let cl = tag.querySelector(".l4-cool");
+  if (!cl) {
+    cl = document.createElement("span");
+    cl.className = "l4-cool off";
+    cl.setAttribute("aria-hidden", "true");
+    cl.innerHTML = "<i></i>";
+    tag.append(cl);
+  }
+  const wait = mSeen.stab ? mSeen.stab + MERCH.STAB_MS - clockNow() : 0,
+    cv = !dead && wait > 0 ? Math.min(1, wait / MERCH.STAB_MS).toFixed(3) : "0";
+  if (cl._v !== cv) {
+    cl._v = cv;
+    cl.style.setProperty("--cl", cv);
+    cl.classList.toggle("off", cv === "0");
+  }
+  /* stacked as mine are (meters.js stackBars: white, then blue, each a row only while it shows), without my own
+     reload's red flash */
+  const rows = [
+    [cl, 0.12, cv !== "0"],
+    [sp, 0.2, left < 1],
+  ];
+  let y = 0.1;
+  for (const [e, h, shown] of rows) {
+    if (!shown) continue;
+    const tp = `calc(100% + ${y.toFixed(2)}rem)`;
+    if (e._top !== tp) {
+      e._top = tp;
+      e.style.top = tp;
+    }
+    y += h + 0.1;
+  }
 }
 
 /* a secret (not in Updates): a zebra cake in the toilet's bowl, and Justin teleported in beside it, eating it for as
@@ -2359,6 +2547,8 @@ activity({
     butler = null; // (the merchant: drawMerchant makes him when he comes)
     mSig = "";
     mAt = null;
+    mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 };
+    mPoolAt = 0;
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;

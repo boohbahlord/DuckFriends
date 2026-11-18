@@ -1568,7 +1568,12 @@ function drawDucks(now = clockNow()) {
        Never with the down meter: a duck that's down shows only the down meter, and stands up full */
     /* the normal game's HP (3, back after 6 s without a hit): the same bar, shown only while a hit is still counted;
        Quacky Zombies: its own 3 HP, always shown (down or a ghost, none) */
-    const l4 = isL4dd(s) && !g && s.seat.includes(id) && s.phase === "hang",
+    const l4 =
+        isL4dd(s) &&
+        !g &&
+        s.phase === "hang" &&
+        (s.seat.includes(id) ||
+          (isWild(s, id) && l4Hp(s, id) >= 0 && l4Hp(s, id) < maxHp(s, id))), // (Justin out there: his HP once he's hit, as anyone's; the owner's, Nov 18 15:35Z: "When Justin gets hit, his health bar shows in the zombie game")
       bj = id === JUSTIN_ID && !g && boardMgj(s), // (the board's Mad God Justin: his 10 HP, always shown while he's up)
       lost =
         !l4 && !isMgj(s) && !g && s.seat.includes(id) && !dead
