@@ -1593,7 +1593,11 @@ function mWoundLook(wc) {
   }
   return MLOOK.get(wc);
 }
-const mMax = (m) => Math.max(1, +m.max || MERCH.HP);
+const mMax = (m) =>
+  Math.max(
+    1,
+    +m.max || (Array.isArray(MERCH.HP) ? MERCH.HP[1] : +MERCH.HP) || 6,
+  ); // (m.max: the HP he rolled, 3 to 6, the rules')
 function drawMerchant(ctx, t) {
   const s = ctx.state(),
     m = merchantNow(s),
@@ -1716,6 +1720,77 @@ function drawMerchant(ctx, t) {
   const on = !!say && !dead && now < say.t + MERCH.SAY;
   if (butler.el.classList.contains("saying") !== on)
     butler.el.classList.toggle("saying", on);
+}
+/* the merchants killed before this one: their bodies stay where they fell for the rest of the game, each in its pool
+   of blood (the rules' s.hang.l4mc: { v, id, roll, x, y, f, w, t }; the owner's "their corpse stays there
+   permanently"). The one still lying in s.hang.l4m is drawMerchant's */
+const CORPSES = new Map(); // visit → { el, body, url, bh, feet, pool, … }
+function drawCorpses(ctx) {
+  const s = ctx.state(),
+    Wd = ctx.world,
+    sc = Wd.sc,
+    list = Array.isArray(s.hang.l4mc) ? s.hang.l4mc : [],
+    cur = merchantOf(s),
+    gore = !+s.options.noGore,
+    seen = new Set();
+  for (const c of list) {
+    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue;
+    const who = merchantById(c.id);
+    if (!who) continue;
+    const wc = gore ? c.w || "" : goreFree(c.w || ""),
+      key = c.v + "|" + wc;
+    seen.add(c.v);
+    let o = CORPSES.get(c.v);
+    if (o && o.key !== key) {
+      o.el.remove();
+      o = null;
+    }
+    if (!o) {
+      o = butlerEl(
+        merchantSVG(who, c.roll, {
+          size: 64,
+          dead: true,
+          ...(who.hideName ? { title: "The Merchant" } : {}),
+          ...mWoundLook(wc),
+        }),
+        who.name,
+      );
+      o.key = key;
+      o.el.classList.add("l4-merchant", "dead");
+      o.el.querySelector(".hang-npc-name")?.remove(); // (his name went with him)
+      o.pool = document.createElement("span");
+      o.pool.className = "l4-jpool";
+      o.pool.setAttribute("aria-hidden", "true");
+      o.pool.innerHTML = POOL_SVG;
+      o.el.prepend(o.pool);
+      CORPSES.set(c.v, o);
+    }
+    const z = heightAt(c.x, c.y),
+      p = Wd.toScreen(c.x, c.y, z),
+      hide =
+        !seenFrom(c.x, c.y, Wd.inside) ||
+        !Wd.onView(p.left - 60, p.top - 140, 120, 160);
+    if (o.el.hidden !== hide) o.el.hidden = hide;
+    if (hide) continue;
+    const tr = `translate(${at(p.left)}px, ${at(p.top)}px)`;
+    if (o.tr !== tr) {
+      o.tr = tr;
+      o.el.style.transform = tr;
+      o.el.style.zIndex = Math.round(sortY(c.x, c.y, z)) + 9; // (just behind anyone standing where he lies)
+    }
+    pxPic(o, o.body.firstChild, 64 * sc, o.bh * sc);
+    if (o.k !== sc) {
+      o.k = sc;
+      o.body.style.transform = `scale(${sc.toFixed(4)})`;
+      o.pool.style.transform = `translate(${(-o.feet * 0.42 * sc).toFixed(1)}px, ${(4 * sc).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+    }
+    if (o.pool.hidden !== !gore) o.pool.hidden = !gore;
+  }
+  for (const [v, o] of CORPSES)
+    if (!seen.has(v)) {
+      o.el.remove();
+      CORPSES.delete(v);
+    }
 }
 /* the newest fx number (only the ones after it are new to me) */
 const fxTop = (s) =>
@@ -2549,6 +2624,7 @@ activity({
     mAt = null;
     mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 };
     mPoolAt = 0;
+    CORPSES.clear(); // (the old screen's are gone with its layer)
     egg = butlerEl(justinSVG({ size: 64 }), "Justin");
     egg.el.classList.replace("l4-butler", "l4-egg");
     egg.el.hidden = true;
@@ -2875,6 +2951,7 @@ activity({
     spinSquare(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
     drawMerchant(ctx, t);
+    drawCorpses(ctx);
     drawEgg(ctx, now);
     drawBox(ctx);
     pwDraw(ctx);
