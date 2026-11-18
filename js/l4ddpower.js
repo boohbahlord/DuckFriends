@@ -317,22 +317,23 @@ function take(s, k, r, by, now, h) {
       : { ...pw, pool: [...pw.pool, k] };
   h.addFx(s, { kind: "l4pwgot", k, r, by, who: [], t: now });
 }
-/* the fireplace's turn, before its weapons: the part it holds, or a jerry can; "" for neither */
 /* is the fireplace's part out in its spin right now (to be taken there, not bought)? */
 const fireOut = (s, pw) =>
   Object.values(s.hang.l4box || {}).some(
     (b) => b && isPw(b.w) && pwOf(b.w).k === pw.fire,
   );
-export function powerFire(s) {
+/* the fireplace's turns, before its weapons, the rarer first (the owner's, Nov 18 10:38Z: "tiers or bags of stuff that
+   are rolled per chance are supposed to have the least likely in order come first prior to the more likely"): a jerry
+   can (1%: canFire), then later the part it holds (5%, and 10% more each spin: partFire); "" for neither */
+export function canFire(s) {
+  if (!s.hang.pw || !canCome(s) || Math.random() >= PW.CAN_FIRE) return "";
+  return "pw:can:" + canRounds();
+}
+export function partFire(s) {
   const pw = s.hang.pw;
-  if (!pw) return "";
-  const held = fireOut(s, pw);
-  if (pw.fire && !held) {
-    if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries)
-      return "pw:" + pw.fire;
-    s.hang.pw = { ...pw, tries: pw.tries + 1 };
-  }
-  if (canCome(s) && Math.random() < PW.CAN_FIRE) return "pw:can:" + canRounds();
+  if (!pw || !pw.fire || fireOut(s, pw)) return "";
+  if (Math.random() < PW.FIRE + PW.FIRE_MORE * pw.tries) return "pw:" + pw.fire;
+  s.hang.pw = { ...pw, tries: pw.tries + 1 };
   return "";
 }
 /* the fireplace's part or jerry can, taken (E, by whoever paid) */

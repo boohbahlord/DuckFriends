@@ -96,7 +96,8 @@ import {
   powerSetUp,
   powerRound,
   powerTick,
-  powerFire,
+  canFire,
+  partFire,
   powerTake,
   powerBuy,
   powerAct,
@@ -187,9 +188,11 @@ export function zombiesFor(r, p) {
 }
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
-   (Nov 16 22:21Z); each second a 25% chance that none comes */
+   (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first 4 s, half as many (Nov 18 10:38Z: "let's
+   make zombies spawn rate half as much for the first four seconds") */
 const SKIP = 0.25,
-  LATER = 10000; // ms into a round before they come twice as fast
+  LATER = 10000, // ms into a round before they come twice as fast
+  EARLY = 4000; // ms into a round they come half as fast
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: 150 arrows, one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
@@ -197,7 +200,7 @@ const SKIP = 0.25,
    once; grenades kill every zombie in their blast. Nothing hurts another duck. The ones I haven't given numbers for
    are guesses (Adam's plan, question 2) */
 /* what anything thrown or used up waits before it can be used again (the grenades, the medkit, the zebra cake, the
-   fireball, the adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack or the Long jump (switched on
+   adrenaline shot, the chair): 0.75 s (the owner's, Nov 16). Not the jetpack or the Long jump (switched on
    and off), nor Jaime (his own, longer) */
 export const ITEM_COOL = 750;
 export const ARMS = {
@@ -434,11 +437,10 @@ export const ARMS = {
     over: 8000,
   },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
-     fireball (sets the zombie it hits on fire, BURN), the adrenaline shot (my duck walks at the game's usual speed for
+     adrenaline shot (my duck walks at the game's usual speed for
      20 s), the long jump (each use turns it on or off: on, every jump is long), Jaime (3 a round: he goes for the
      nearest zombie and stabs it, 1 a stab, until one gets him) */
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
-  fireball: { kind: "special", cool: ITEM_COOL, all: 1, speed: 700 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
   longjump: { kind: "special", cool: 300 },
   jaime: { kind: "special", cool: 1500, all: 3, round: true },
@@ -457,6 +459,19 @@ const dmgOf = (A) =>
 /* fire (the owner's): a zombie burns 6 s and takes 1 every 3 s (the first as it's lit); a duck takes 1 as it's lit and
    burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
 export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000 };
+/* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
+   on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
+   enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
+   water has the same effect"). Up on a car over it, or a jetpack over it, isn't in it. The rain changes nothing */
+const flood = (x, y) => dp() && (GS.inDeep(x, y) || GS.inShallow(x, y));
+const wetZ = (z) => flood(z.x, z.y) && zFloor(z) === null;
+function wetDuck(p) {
+  if (!p || p.fly) return false;
+  const [x, y] = at(p);
+  return (
+    flood(x, y) && duckFloor(p) === null && (+p.z || 0) <= heightAt(x, y) + 4
+  );
+}
 export const kindOf = (w) => (ARMS[w] && ARMS[w].kind) || "";
 /* Downpour: is duck id swimming in the deep flood? Its guns, its bow and its melee are put away until it's out (the
    owner's, Nov 17 05:46Z); a jetpack high over the water isn't swimming */
@@ -485,10 +500,12 @@ export const SLOT_KINDS = ["melee", "ranged", "ranged", "special"];
    equal chance inside its group, never one already in my slots */
 export const WEAPONS = [
   "knife",
-  "hammer",
   "axe",
   "sword",
+  "hammer",
   "pan",
+  "chaingun",
+  "flamer",
   "handgun",
   "bow",
   "dagger",
@@ -498,15 +515,13 @@ export const WEAPONS = [
   "tommy",
   "ump",
   "ak",
-  "chaingun",
   "revolver",
   "glauncher",
   "lmg",
   "dbarrel",
-  "flamer",
   "burst",
   "laser",
-];
+]; // (the rarest first, the owner's, Nov 18 10:38Z: the sharp melees 1/6 of a gun's chance each, the blunt ones 1/4, the chain gun and the flamethrower 1/2, then every gun on its own)
 export const ITEMS = [
   "medkit",
   "zebra",
@@ -514,7 +529,6 @@ export const ITEMS = [
   "longjump",
   "jaime",
   "jetpack",
-  "fireball",
   "chair",
   "safekeep",
 ];
@@ -522,9 +536,9 @@ export const WEAPON_ODDS = 0.8; // (the item's chance is 20%: the owner's, Nov 1
 /* the melees are one bag among the weapons, and it holds two bags, the blunt ones and the sharp ones (the owner's,
    Nov 16): the fireplace picks the melee bag as likely as any one gun, then one of its two bags, then one inside it */
 export const MELEE_BAGS = [
-  ["hammer", "pan"],
   ["knife", "axe", "sword"],
-];
+  ["hammer", "pan"],
+]; // (the sharp bag first: each in it is rarer, 1 in 3 of its bag against 1 in 2)
 /* and the flamethrower shares a bag with the chain gun (the owner's, Nov 16 16:25Z): the bag comes up as likely as any
    one gun, then one of the two in it */
 export const HEAVY_BAG = ["chaingun", "flamer"];
@@ -557,7 +571,6 @@ const NAMES = {
   burst: "Burst rifle",
   laser: "Laser Rifle",
   zebra: "Zebra cake",
-  fireball: "Fireball",
   adrenaline: "Adrenaline shot",
   longjump: "Long jump",
   jaime: "Jaime",
@@ -726,11 +739,11 @@ const SHOT_LIFE = 2000;
 const RX = 56,
   RY = 25.6,
   CLAW = 1.35;
-/* a new zombie's HP (the owner's, Nov 16 21:47Z): 3, then a 50% roll for 4; if that fails, a 50% roll for 5 */
+/* a new zombie's HP (the owner's, Nov 16 21:47Z: 3, then a 50% roll for 4; if that fails, a 50% roll for 5): 5 a
+   quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
 const hp0 = () => {
-  if (Math.random() < 0.5) return 4;
-  if (Math.random() < 0.5) return 5;
-  return 3;
+  const r = Math.random();
+  return r < 0.25 ? 5 : r < 0.5 ? 3 : 4;
 };
 const ZHATS = [
   "cap",
@@ -1557,7 +1570,7 @@ function jetBurn(s, now, ids) {
    it for everyone. Instant Kill, Double Points and Sale last 45 s, Speed Boost a minute (the owner's, Nov 16). Which
    drop comes is a shuffle, one bag for the game: each comes once before any comes again, and Max Ammo never leaves
    the bag (the owner's, Nov 16). */
-export const DROPS = ["kill", "ammo", "nuke", "speed", "double", "sale"];
+export const DROPS = ["kill", "nuke", "speed", "double", "sale", "ammo"]; // (Max Ammo, the likeliest, last: the owner's, Nov 18 10:38Z)
 export const DROP = {
   CHANCE: 0.25,
   IN: 30000, // ms: the first drop, somewhere in the round's first 30 s
@@ -1601,14 +1614,14 @@ function pickDrop(s) {
 /* when this round's drops come (ms after its start) and which: a random one, or the Max Ammo */
 function dropPlan() {
   const q = [];
+  if (Math.random() < DROP.AMMO)
+    q.push([Math.round(rnd(0, DROP.AMMO_IN)), "ammo"]); // (the rarer, 5%, first: the owner's, Nov 18 10:38Z)
   if (Math.random() < DROP.CHANCE) {
     const t = rnd(0, DROP.IN);
     q.push([Math.round(t), ""]);
     if (Math.random() < DROP.AGAIN) q.push([Math.round(t + DROP.GAP), ""]);
   }
-  if (Math.random() < DROP.AMMO)
-    q.push([Math.round(rnd(0, DROP.AMMO_IN)), "ammo"]);
-  return q;
+  return q.sort((a, b) => a[0] - b[0]);
 }
 /* a bare spot for a drop, inside or on the deck, away from the other drops */
 function dropSpot(s) {
@@ -2179,10 +2192,14 @@ export function itemOdds([wr, ir] = [0, 0]) {
 function fireRoll(s, id, kit) {
   if (HELPER.on && Math.random() < HELPER.chance && !s.players[HELPER.id])
     return HELPER.w; // 1 in 100: Justin (off: HELPER.on)
-  const pw = powerFire(s); // (the power box's part, or a jerry can, before the weapons: l4ddpower.js)
-  if (pw) return pw;
+  /* the rarer first, the more likely after (the owner's, Nov 18 10:38Z): a jerry can (1 in 100), the Jaime Bomb (1 in
+     50), the power box's part (5% and up: l4ddpower.js), then an item (20% and so on: itemOdds), else a weapon */
+  const can = canFire(s);
+  if (can) return can;
   if (Math.random() < BOMB.fire && !kit.sl.includes("jaimebomb"))
     return "jaimebomb"; // 1 in 50: the Jaime Bomb (unlocked for good once taken)
+  const pw = partFire(s);
+  if (pw) return pw;
   const fo = (s.hang.l4fo || {})[id] || [0, 0],
     bags = MELEE_BAGS.map((b) => b.filter((w) => !kit.sl.includes(w))).filter(
       (b) => b.length,
@@ -3042,10 +3059,11 @@ function light(s, z, by, now, fl = 0) {
     },
   };
 }
-/* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit as a fireball
-   lights one (1 HP as it's lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its
-   fire spreads (the 4th: fl). True when it died */
+/* a zombie in the flamethrower's fire (or touching one it lit, or on a patch of its burning ground): lit (1 HP as it's
+   lit), or, burning already, its fire goes on BURN.Z ms more from now (its next hurt stays). Its fire spreads (the 4th:
+   fl). True when it died */
 function catchFire(s, z, by, now, T) {
+  if (wetZ(z)) return false; // (in the water: never lit)
   const F = s.hang.l4fire || {},
     f = (F.z || {})[z.i];
   if (f && now < f[0]) {
@@ -3101,13 +3119,18 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
     if (inCone((jx - px) / D, (jy - py) / D, dx, dy, far / D + 0.4))
       wildFire(s, id, now); // (Justin with no weapon burns too)
   }
-  if (now - (m.gf || 0) >= FLAME.PATCH) {
+  const gx = px + dx * far,
+    gy = py + dy * far;
+  if (
+    now - (m.gf || 0) >= FLAME.PATCH &&
+    !(flood(gx, gy) && !deckAt(gx, gy, hz))
+  ) {
     m.gf = now;
     s.hang.l4gf = [
       ...(s.hang.l4gf || []).filter((g) => g[2] > now).slice(1 - FLAME.MOST),
       [
-        Math.round(px + dx * far),
-        Math.round(py + dy * far),
+        Math.round(gx),
+        Math.round(gy),
         now + FLAME.GROUND + (ang ? ANGEL.FLAME_GROUND : 0),
         id,
       ],
@@ -3160,10 +3183,10 @@ function fireTick(s, zs, now, T, p4) {
   for (const k of Object.keys(fz)) {
     const z = zs.find((q) => q.i === +k),
       f = fz[k];
-    if (!z || z.st === 3 || now >= f[0]) {
+    if (!z || z.st === 3 || now >= f[0] || wetZ(z)) {
       delete fz[k];
       continue;
-    }
+    } // (gone, out, or in the water: put out)
     if (now >= f[1]) {
       if (strike(s, z, 1, false, f[2])) die(z, T);
       else fz[k] = [f[0], f[1] + BURN.EVERY, ...f.slice(2)];
@@ -3171,6 +3194,7 @@ function fireTick(s, zs, now, T, p4) {
   }
   for (const id of Object.keys(fp))
     if (now >= fp[id] + BURN.AGAIN || !standing(s, id)) delete fp[id];
+    else if (fp[id] > now && wetDuck(s.pos[id])) fp[id] = now; // (in the water: put out, as its own fire going out)
   const ids = players(s).filter((id) => standing(s, id)),
     hot = [
       ...zs
@@ -3181,7 +3205,7 @@ function fireTick(s, zs, now, T, p4) {
         .map((id) => [id, ...at(s.pos[id]), duckFloor(s.pos[id])]),
     ];
   for (const id of ids) {
-    if (fp[id] || dodging(s, s.pos[id], now)) continue; // (burning, just put out, or mid-jump)
+    if (fp[id] || dodging(s, s.pos[id], now) || wetDuck(s.pos[id])) continue; // (burning, just put out, mid-jump, or in the water)
     const [x, y] = at(s.pos[id]),
       f = duckFloor(s.pos[id]);
     if (
@@ -3338,7 +3362,7 @@ function wildFire(s, by, now) {
     q = P4(s, id),
     F = s.hang.l4fire || {};
   if (by === id || !wildOpen(s, id) || !q || q.dn || q.gh) return;
-  if ((F.p || {})[id]) return; // (burning, or just put out)
+  if ((F.p || {})[id] || wetDuck(s.pos[id])) return; // (burning, just put out, or in the water)
   s.hang.l4fire = { z: F.z || {}, p: { ...(F.p || {}), [id]: now + BURN.P } };
   wildDown(s, by, now, "flamer", false, ["f0"]);
 }
@@ -3572,7 +3596,6 @@ export function l4Shots(s, now) {
           hOk(sh, zombieZ(z), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zombieZ(z)); // (at its height, the first one setting it: heights.js)
       if (
-        w !== "fireball" &&
         wildHurt(s, sh.by, x, y, now, w, 26, 22, [
           sh.x0 * W,
           sh.y0 * H,
@@ -3623,10 +3646,7 @@ export function l4Shots(s, now) {
       }
       const z = nearby(grid, zs, x, y).find((z) => near(z) && !past(sh, w, z));
       if (z) {
-        if (w === "fireball") {
-          if (strike(s, z, 1, false, sh.by)) die(z, T);
-          else light(s, z, sh.by, now); // (the first of its burn as it's lit)
-        } else if (w === "handgun" && angelOf(s, sh.by, w)) {
+        if (w === "handgun" && angelOf(s, sh.by, w)) {
           /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
              isn't hurt by it: no sh.k) */
           const head = headshot(s, sh.by, w, z, now);
@@ -3696,8 +3716,8 @@ function burnAt(s, by, x, y, now) {
       d = k ? r * 0.6 : 0;
     const px = x + Math.cos(a) * d,
       py = y + Math.sin(a) * d * 0.8;
-    if (playable(px, py))
-      out.push([Math.round(px), Math.round(py), now + FLAME.GROUND, by]);
+    if (playable(px, py) && !flood(px, py))
+      out.push([Math.round(px), Math.round(py), now + FLAME.GROUND, by]); // (none on the water)
   }
   s.hang.l4gf = [
     ...(s.hang.l4gf || [])
@@ -3931,10 +3951,11 @@ function l4Tick(s, now) {
       L2.sec = sec;
       if (Math.random() >= SKIP) {
         const fast = dp() ? 4 : T >= LATER ? 2 : 1; // (after a round's first 10 s: twice as fast again. Downpour: twice that, from the start, the map's so big: the owner's, Nov 16 23:23Z)
-        L2.acc += 2 * fast * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
+        const half = T < EARLY ? 0.5 : 1; // (a round's first 4 s: half as many)
+        L2.acc += 2 * fast * half * Math.pow(1.5, extra); // (twice as fast: the owner's, Nov 16 21:21Z)
         const k = Math.min(
           Math.floor(L2.acc),
-          (10 + 6 * extra) * fast,
+          (10 + 6 * extra) * fast * half,
           L2.n - L2.made - L2.owe,
         );
         L2.acc -= Math.floor(L2.acc);

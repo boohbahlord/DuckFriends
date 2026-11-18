@@ -748,14 +748,7 @@ const LAND = {
   slug: "landHeavy",
   revolver: "landBig",
 };
-const NO_LAND = [
-  "grenade",
-  "lgren",
-  "fireball",
-  "controller",
-  "chair",
-  "laser",
-]; // (they land with their own sounds, or none)
+const NO_LAND = ["grenade", "lgren", "controller", "chair", "laser"]; // (they land with their own sounds, or none)
 const land = (k) =>
   NO_LAND.includes(k) || play(LAND[k] || "landSmall", { k: 0.55 }); // (quieter than a hit: the owner, Nov 17 12:28Z)
 /* a duck hurt, when nothing bled to make the sound (a kill by command, Invulnerability's flash): looked at a moment

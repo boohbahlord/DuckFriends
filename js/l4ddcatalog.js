@@ -58,7 +58,6 @@ const SAY = {
     "A halo. When you go down you keep everything you bought, and it gets you up: E while down, or by itself when nobody else is standing. 6 seconds nothing hurts you after.",
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
-  fireball: "Sets the zombie it hits on fire.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
   longjump: "Each use turns long jumps on or off.",
   jaime:

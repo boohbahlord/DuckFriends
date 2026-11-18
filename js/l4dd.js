@@ -333,7 +333,6 @@ let layer = null,
   endEl = null, // the End turn button between rounds (Ready in round 0)
   endSig = "",
   over = null,
-  zpSig = "",
   snapAt = 0,
   gap = 200,
   roundShown = -1, // (none yet)
@@ -566,15 +565,31 @@ function wounds(o, l, i, noGore) {
   o.uk = "";
   if (!pixelOn()) o.img.src = o.url; // (the pixel look: draw() shows it, as pixels)
 }
-/* the zombies in a new state: where each glides to, its hits, its swipes, its death */
+/* the zombies in a new state: where each glides to, its hits, its swipes, its death.
+   A new beat is one where a zombie moved. Before, any change counted (a hit's HP between two beats too), and every
+   change cut the glide's time for all of them at once: the bigger the crowd and the more shots, the more often they
+   jumped ahead, then stood till the next beat (the owner's, Nov 18 10:38Z: "we need to make sure zombies dont jitter or
+   feel slow on the computer (like kinda laggy feeling) when mobs get large"). Now the time between beats is evened out
+   (a change right after a beat is part of it), and each zombie keeps the glide time it started with (o.g), a little
+   over a beat, so it is still on its way when the next one comes instead of stopping and starting */
+const GLIDE = { min: 120, max: 400, even: 0.35, over: 1.1, same: 90 };
 function seeZombies(s, ctx, now) {
-  const zs = zombiesOf(s),
-    sig = (s.hang.zp || []).join();
-  const fresh = sig !== zpSig;
-  if (fresh) {
-    gap = Math.max(120, Math.min(400, snapAt ? now - snapAt : 200));
+  const zs = zombiesOf(s);
+  let fresh = false;
+  for (const z of zs) {
+    const o = Z.get(z.i);
+    if (!o || z.x !== o.tx || z.y !== o.ty) {
+      fresh = true;
+      break;
+    }
+  }
+  if (fresh && (!snapAt || now - snapAt >= GLIDE.same)) {
+    const beat = Math.max(
+      GLIDE.min,
+      Math.min(GLIDE.max, snapAt ? now - snapAt : 200),
+    );
+    gap += (beat - gap) * GLIDE.even;
     snapAt = now;
-    zpSig = sig;
   }
   const seen = new Set();
   for (const z of zs) {
@@ -590,7 +605,11 @@ function seeZombies(s, ctx, now) {
       o.tx = z.x;
       o.ty = z.y;
       o.t0 = now;
-      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) o.fx = o.x = z.x; // (far: there at once)
+      o.g = gap * GLIDE.over;
+      if (Math.hypot(z.x - o.x, z.y - o.y) > 300) {
+        o.fx = o.x = z.x;
+        o.fy = o.y = z.y;
+      } // (far: there at once, both ways; before, only across, and it slid the rest down or up)
       if (Math.abs(z.x - o.x) > 2) o.face = z.x > o.x ? 1 : -1;
     }
     const shown = !o.el.hidden; // (one no camera here sees: only its numbers change, its look waits until it's seen)
@@ -635,7 +654,7 @@ function seeZombies(s, ctx, now) {
           `<span class="gduck-fire" aria-hidden="true">${FLAME}</span>`,
         );
       o.el.classList.toggle("onfire", lit);
-    } // (set on fire by a fireball: one big flame over it, as a duck's)
+    } // (set on fire: one big flame over it, as a duck's)
     o.want = (s.hang.zw || {})[z.i] || "";
     o.l = z.l;
     if (shown) wounds(o, z.l, z.i, s.options.noGore); // (the wounds its hits left: holes, cuts, bruises, an arrow, a chunk gone, its head blown off; l4ddart.js)
@@ -2216,16 +2235,7 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
-    zpSig =
-      overShown =
-      endSig =
-      drawn =
-      boxSig =
-      upSig =
-      slotSig =
-      onSig =
-      litSig =
-        "";
+    overShown = endSig = drawn = boxSig = upSig = slotSig = onSig = litSig = "";
     roundShown = -1;
     ptsShown = -1;
     l4Reset();
@@ -2352,7 +2362,7 @@ activity({
       myFloor = meAt ? olFloor(meAt.x, meAt.y, meAt.z) : 0; // (for the outlines: a zombie a floor away)
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
-      const u = Math.min(1, (t - o.t0) / gap);
+      const u = Math.min(1, (t - o.t0) / (o.g || gap));
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
       const up =

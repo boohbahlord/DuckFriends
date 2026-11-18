@@ -154,7 +154,6 @@ import {
   mgjUse,
   mgjShot,
   mgjSafe,
-  mgjBurn,
   mgjHitAt,
   MGJ_SCALE,
   MGJ_HAMMER,
@@ -4244,7 +4243,6 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         } // (the HP: a hit it can take keeps the duck up)
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
         if (sh.by === JUSTIN_ID) mgjHurt(s, id);
-        if (sh.k === "fireball" && !safe) mgjBurn(s, id, now); // (it sets the duck burning)
         if (sh.k === "chair") {
           const ul = Math.sqrt(len) || 1;
           if (od > 0.2)

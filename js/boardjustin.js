@@ -23,7 +23,7 @@
    landed (j.eat), as Mad God Justin does; nothing else of his happens meanwhile.
    The board's Mad God Justin (the mgjBoard option, only with Justin on): he has BJ_HP HP (j.hp of j.max), and a duck
    that hurts him is his target for RAGE_MS (j.rage): he goes after it with Mad God Justin's attacks (the hammer, his
-   pistol, the controllers, the chair and the fireball; never the edge lightning). A duck he hits by accident doesn't
+   pistol, the controllers and the chair; never the edge lightning; no fireball, the owner's, Nov 18 10:38Z). A duck he hits by accident doesn't
    become his target for it, nor does a duck a mode keeps safe (The Date and the Suitor at the table). At 0 HP he goes
    down for the room's knocked-down time, then gets up with his HP full. */
 import { E_LINES, DEATH_LINES, GOD_LINES } from "./hangout/justin.js";
@@ -37,8 +37,6 @@ import {
   DMG,
   THROW_TELL,
   CHAIR_TELL,
-  FB_TELL,
-  FB_EVERY,
   cakeAt,
   CAKE_EAT_MS,
 } from "./mgjrules.js";
@@ -153,7 +151,6 @@ export function justinHit(s, by, now, log, w) {
     Object.assign(j.rage, { id: by, until: now + RAGE_MS });
     j.ctlAt ??= now + 2500;
     j.chairAt ??= now + 6000;
-    j.fbAt ??= now + 4000;
   } // (the latest duck to hurt him is the one he goes after, for 10 s from its last hit)
   return 1;
 }
@@ -184,7 +181,7 @@ function rageTick(s, now, at, fx, calm) {
     dx = p.x - at.x,
     dy = p.y - at.y,
     d = Math.hypot(dx, dy) || 1;
-  /* a throw held up (the tell), then the controllers every way, or the chair or the fireball at the duck */
+  /* a throw held up (the tell), then the controllers every way, or the chair at the duck */
   if (j.tell) {
     if (now < j.tell.at) return false;
     const k = j.tell.k;
@@ -241,18 +238,14 @@ function rageTick(s, now, at, fx, calm) {
     };
     return true;
   } // (further off: he sprints at it, then swings)
-  if (now >= j.fbAt || now >= j.chairAt || now >= j.ctlAt) {
-    const k =
-      now >= j.fbAt ? "fireball" : now >= j.chairAt ? "chair" : "controller";
+  if (now >= j.chairAt || now >= j.ctlAt) {
+    const k = now >= j.chairAt ? "chair" : "controller";
     stop();
     j.tell = {
       k,
-      at:
-        now +
-        (k === "chair" ? CHAIR_TELL : k === "fireball" ? FB_TELL : THROW_TELL),
+      at: now + (k === "chair" ? CHAIR_TELL : THROW_TELL),
     };
-    if (k === "fireball") j.fbAt = now + FB_EVERY;
-    else if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
+    if (k === "chair") j.chairAt = now + rnd([15000, 22000]);
     else j.ctlAt = now + rnd([8000, 12000]);
     j.ctlAt = Math.max(j.ctlAt, now + 2500);
     j.chairAt = Math.max(j.chairAt, now + 2500);

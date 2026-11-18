@@ -360,7 +360,6 @@ import {
 import {
   FLAME,
   ARROW,
-  FIREBALL,
   JAIME,
   BOMB_SKIN,
   POOF,
@@ -1929,8 +1928,8 @@ function drawDucks(now = clockNow()) {
       d.classList.toggle("mgj-burnt", scorched === 1);
       d.classList.toggle("mgj-unburn", scorched === 2);
     } // (burnt by the lightning on the podium, then the burn fades like a fire's: 4 s, then 2.5 s)
-    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a fireball's burn: one
-       big flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
+    /* Mad God Justin: nothing can hurt it for a second after a hit, and it flickers meanwhile; a burn: one big
+       flame over the duck, then charred, then the burn fades (the rules keep s.mgj.burn and burnt) */
     const blink = isMgj(s) && s.phase === "boss" && mgjSafe(s, id, now);
     if (d._blink !== blink) {
       d._blink = blink;
@@ -2143,12 +2142,8 @@ function drawDucks(now = clockNow()) {
         spin = vx < 0 ? "ccw" : "";
       /* [its class, its look, its style]: elements with the same class and look are handed out again (shotPool) */
       const [cls, inner, style] =
-        sh.k === "arrow" || sh.k === "fireball"
-          ? [
-              `bullet k-${sh.k}`,
-              sh.k === "arrow" ? ARROW : FIREBALL,
-              `${sz};${ang}`,
-            ] // (the bow's arrow, Mad God Justin's fireball: pointing the way they fly)
+        sh.k === "arrow"
+          ? [`bullet k-${sh.k}`, ARROW, `${sz};${ang}`] // (the bow's arrow: pointing the way it flies)
           : sh.k === "controller" || sh.k === "chair"
             ? [
                 `thrown mgj-throw k-${sh.k}`,
@@ -3528,16 +3523,11 @@ function playFx(f) {
         glauncher: sfx.glauncher,
         ...NEW_GUN_SFX,
         zebra: sfx.cakeThrow,
-        fireball: sfx.fireball,
         adrenaline: sfx.adrenaline,
         longjump: sfx.boing,
       })[f.what]?.(heard(f.by));
       return;
     } // (Quacky Zombies: the weapon turns toward the aim; the shot flies from the room's state)
-    if (f.what === "fireball") {
-      sfx.fireball();
-      return;
-    }
     if (f.what === "zebra") {
       sfx.cakeThrow(heard(f.by));
       return;
