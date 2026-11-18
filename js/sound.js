@@ -74,7 +74,7 @@ export const VOL = {
   burst: -9, // (the burst rifle: one round of its three)
   pump: -15,
   glauncher: -10,
-  bow: -4,
+  bow: -12, // (quieter: the owner, Nov 18 15:18Z "with quieter audio")
   empty: -8,
   // … and its own reload
   reloadHandgun: -17,
