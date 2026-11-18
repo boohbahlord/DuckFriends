@@ -6164,3 +6164,23 @@ Adam: explained every idea in chat, built none (owner: "DO NOT ACT THESE INTO BE
 > Ozzy will be renamed to "Phil the Murderous", and he will hit back at players when he takes second damage with a knife (has a 50% chance of missing when he uses it and it does 1 damage only)
 
 Noah: the beak hides while one of those six face items is worn (the beak pick stays; knocked off, the beak shows again); the merchant changes in js/merchants.js; Phil's knife hit-back is for the rules (Solomon).
+
+## Request (2026-11-18 14:20Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtE17WbWJXP3qkTSWQHVbYca) (word for word)
+> 'First, drawing is not loading. Every file loads once and stays loaded. In Single Player, the files are also saved on the device. "Drawing" means painting the screen's pixels about 60 times a second, and that painting is the work these ideas cut. Skipping the drawing of a zombie off screen doesn't unload it or download anything again. The game still moves it, and it's painted the moment it comes into view.'
+> Oh, that is a big deal, ty
+>
+> 1. do that then but make the outline and all of it's features work, i want more frames (my laptop is strong but more performance matters for everyone not just me)
+> 2. yes
+> 3. yes
+> 4. yes
+> 5. yes
+> 6. okay to keeping the lines as is and yes 
+> 7. yes
+>
+>
+> 'The merchant still sells the upgrades (crit chance, speed, Quick Revive and the rest).'
+> No they do not, they only sell one per visit AND there is no long faster speed upgrade, max hp can only be upgraded twice, safe keeping is now only sold in the items bag amongst the weapons and items feature for the merchant, and no parts are sold by merchant anymore (fuse, etc)
+>
+> Merchant always has gas to sell now in cabin AND the gas costs as much as it does from the pump in gas station AND the gas never runs out from the merchant
+
+Split (Adam): Solomon = merchant fixes, then speed ideas 1 (one shared picture per zombie look, outlines and gore working) + 2 (outline/HP bar/shadow only on change), then 7 (path-finding in a worker). Noah = 3 (skip drawing off screen, 1-2 duck lengths margin) + 4 (zombie positions sent less often only when off that player's screen). Jackal = 6 (pause rain and lightning when hidden or under a full-screen menu). Miles Jr. = 5 (sound cap: proposal to the owner first).
