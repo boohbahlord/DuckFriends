@@ -314,14 +314,15 @@ export const ARMS = {
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
      action between shots; the SMG, the AK-47 and the LMG fire as long as the button is down; the chain gun (15 a second) hits at once
-     (a thin yellow line out to what it hit), never reloads and kills what it hits; the revolver has five in its
+     (a thin yellow line out to what it hit), never reloads and takes 4 to 5 (it killed what it hit until the owner's
+     Nov 18 16:43Z numbers); the revolver has five in its
      cylinder; the grenade launcher's grenades fly straight and go off on the first zombie, a wall or their range, and
      kill every zombie in their blast. Where the owner gave no number (the speeds, the reloads, the sniper's headshot)
      they are guesses: k is how the bullet looks */
   sniper: {
     kind: "ranged",
     cool: 750,
-    dmg: [2, 3],
+    dmg: [4, 5], // (4 to 5, and 1 less to each zombie it goes through after the first: the owner's, Nov 18 16:43Z)
     speed: 1900,
     mag: 5,
     all: 24 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -333,22 +334,22 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 80,
-    dmg: 1,
+    dmg: [1, 2], // (1 to 2: the owner's, Nov 18 16:43Z)
     speed: 1100,
     mag: 20,
-    all: 160 + 5 * 20, // (5 more magazines: the owner's, Nov 16)
+    all: 20 * 17, // (13 magazines, 160 and 5 more: the owner's, Nov 16; then 25% more, rounded up: the owner's, Nov 18 16:43Z)
     reload: 1400,
     k: "smg",
   },
   /* the Tommy gun and the UMP-45 (the owner's, Nov 17; from the weapon spin and Mad God Justin's pickups, not the Butler):
-     the Tommy a round every 120 ms from a 50-round drum; the UMP-45 a round every 0.30 s, 2 damage a bullet, 20 rounds,
-     a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
+     the Tommy a round every 120 ms from a 50-round drum; the UMP-45 seven rounds a second, 2 damage a bullet, 25 rounds
+     (the owner's, Nov 18 16:43Z), a 1.4 s reload. Both crit 5% and miss 2.5% (slow: they hit as the single-shot guns do) */
   tommy: {
     kind: "ranged",
     auto: true,
     slow: true,
     cool: 120,
-    dmg: 1,
+    dmg: [1, 3], // (1 to 3: the owner's, Nov 18 16:43Z)
     speed: 1100,
     mag: 50,
     all: 50 * 6, // (more ammo than the SMG's 260, and the SMG's reload: "the same stats as the SMG but slower fire rate but larger ammo capacity", the owner's, Nov 17 11:07Z)
@@ -359,11 +360,11 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     slow: true,
-    cool: 300,
+    cool: 143, // (7 a second: the owner's, Nov 18 16:43Z)
     dmg: 2,
     speed: 1100,
-    mag: 20,
-    all: 20 * 6,
+    mag: 25, // (the owner's, Nov 18 16:43Z)
+    all: 25 * 6,
     reload: 1400, // ("same reload", the owner's, Nov 17 11:21Z: the SMG's and the Tommy gun's)
     k: "ump",
   },
@@ -382,14 +383,14 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 67, // (15 a second)
-    dmg: 99,
+    dmg: [4, 5], // (4 to 5, no longer a kill: the owner's, Nov 18 16:43Z)
     all: 300, // (300 rounds: the owner's, Nov 16, 16:06Z)
     far: 3000,
   },
   revolver: {
     kind: "ranged",
-    cool: 380,
-    dmg: 2,
+    cool: 333, // (3 a second: the owner's, Nov 18 16:43Z)
+    dmg: [2, 4], // (2 to 4: the owner's, Nov 18 16:43Z)
     speed: 1150,
     mag: 5,
     all: 75 + 5 * 5, // (5 more magazines: the owner's, Nov 16)
@@ -401,7 +402,7 @@ export const ARMS = {
     kind: "ranged",
     auto: true,
     cool: 100,
-    dmg: 1,
+    dmg: 2, // (the owner's, Nov 18 16:43Z)
     speed: 1150,
     mag: 100, // (the owner's, Nov 17: 100 bullets and twice the reload time)
     all: 225 + 3 * 75, // (3 more magazines: the owner's, Nov 16)
@@ -477,9 +478,11 @@ export const ARMS = {
 /* a hit's damage: the weapon's, or a roll between its two (the sniper's 2 to 3) */
 const dmgOf = (A) =>
   Array.isArray(A.dmg) ? rint(A.dmg[0], A.dmg[1]) : A.dmg || 1;
-/* fire (the owner's): a zombie burns 6 s and takes 1 every 3 s (the first as it's lit); a duck takes 1 as it's lit and
-   burns 3 s, and anyone on fire who touches a duck lights it (not again for a second after its fire goes out) */
-export const BURN = { Z: 6000, EVERY: 3000, P: 3000, AGAIN: 1000, SPREAD: 500 }; // (SPREAD: ms a zombie burns before its fire goes on to the ones it touches, the owner's, Nov 18 13:46Z)
+/* fire (the owner's): a zombie burns 8 s and takes 1 every 2 s (the first as it's lit: 4 in all), and fire on a zombie
+   already burning starts its 8 s again (the owner's, Nov 18 16:43Z, "1 damage for every 2 seconds for 8 seconds per
+   enemy"; it was 6 s and 3 s); a duck takes 1 as it's lit and burns 3 s, and anyone on fire who touches a duck lights
+   it (not again for a second after its fire goes out) */
+export const BURN = { Z: 8000, EVERY: 2000, P: 3000, AGAIN: 1000, SPREAD: 500 }; // (SPREAD: ms a zombie burns before its fire goes on to the ones it touches, the owner's, Nov 18 13:46Z)
 /* Downpour's water over the road, shallow or deep: fire never stays on it, and nothing in it burns; a zombie or a duck
    on fire that goes in is put out (the owner's, Nov 18 10:38Z: "flamethrower's fire doesnt stay in the water ...
    enemies in the water of the road do not catch on fire and if were on fire are no longer on fire, and swimming in
@@ -3148,7 +3151,7 @@ export const pierceOf = (s, by, w) =>
         : (ARMS[w] && ARMS[w].pierce) || 0;
 /* a hit from duck by's weapon w on a zombie anywhere else (Mad God Justin's waves: the owner's, Nov 17 16:23Z, "guns do
    their normal damage from zombies"), as it lands on one here: null when it misses (missOf), else { dmg, head }. A
-   headshot (headOf) takes all its HP, as do the grenades' blasts, the double barrel and the chain gun; Angelic adds its
+   headshot (headOf) takes all its HP, as do the grenades' blasts and the double barrel; Angelic adds its
    1. The Laser Rifle never misses or crits (laser, below) */
 export const ALL_HP = 999;
 export function zombieTakes(s, by, w) {
@@ -3229,7 +3232,7 @@ function missed(s, by, w, z, now) {
   });
   return true;
 }
-/* the chain gun: it hits at once, along the aim to the first zombie or wall (it kills that zombie); every screen draws
+/* the chain gun: it hits at once, along the aim to the first zombie or wall (4 to 5 to that zombie); every screen draws
    the thin yellow line (the l4line fx) */
 function trace(s, id, px, py, dx, dy, hz, now) {
   const A = ARMS.chaingun,
@@ -3258,17 +3261,18 @@ function trace(s, id, px, py, dx, dy, hz, now) {
     if (hit) (missed(s, id, "chaingun", hit, now) ? past : hits).push(hit);
     if (hits.length >= most) break;
   }
-  for (const hit of hits) {
-    strike(
-      s,
-      hit,
-      A.dmg,
-      headshot(s, id, "chaingun", hit, now),
-      id,
-      "chaingun",
-    );
-    die(hit, T);
-  }
+  for (const hit of hits)
+    if (
+      strike(
+        s,
+        hit,
+        dmgOf(A),
+        headshot(s, id, "chaingun", hit, now),
+        id,
+        "chaingun",
+      )
+    )
+      die(hit, T);
   if (hits.length) store(s, zs, true);
   addFx(s, {
     kind: "l4line",
@@ -4171,18 +4175,17 @@ export function l4Shots(s, now) {
       }
       const pierce = pierceOf(s, sh.by, w);
       if (pierce) {
-        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Its
-           first one takes its most damage, and once it crits, it crits every one after it, still only up to its limit
-           (the owner's, Nov 18 12:19Z: "it now will do max damage to the first zombie it passes through AND will do
-           max damage to every zombie it passes through for a crit, still has a limit for crits on how many zombies it
-           passes through") */
+        /* the sniper's: through the zombies it meets, each once, until the third (the owner's, Nov 3), or the wall. Once
+           it crits, it crits every one after it, still only up to its limit (the owner's, Nov 18 12:19Z). Each one
+           takes its roll less 1 for each zombie it went through before it (the owner's, Nov 18 16:43Z: "it does 1
+           damage less per zombie it passes"; this replaced the first one taking its most): 4 to 5, 3 to 4, 2 to 3 */
         for (const z of nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
-              first = !(sh.hit || []).length,
               head = (sniper && !!sh.crit) || headshot(s, sh.by, w, z, now),
-              dmg =
-                sniper && first && Array.isArray(A.dmg) ? A.dmg[1] : dmgOf(A);
+              dmg = sniper
+                ? Math.max(1, dmgOf(A) - (sh.hit || []).length)
+                : dmgOf(A);
             if (sniper && head) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, head, sh.by, w)) die(z, T);
