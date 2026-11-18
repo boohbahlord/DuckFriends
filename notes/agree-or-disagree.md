@@ -6219,3 +6219,13 @@ Split (Adam): Solomon = melee same range every direction, bow unlimited ammo, pi
 
 Owner, Nov 18 15:23Z (after Adam's list of 1-damage weapons, the shotgun "1 per pellet, 5 pellets a shot"): "It should be 1-3 damage per pellet"
 Decided: the shotgun does 1 to 3 per pellet (Solomon, with the pistol and the bow).
+
+Owner, Nov 18 15:25Z: "The frying pan should do 2-6 damage
+The sword does 1-2 damage
+
+Every melee has slight knockback EVEN to players AND especially to zombies EVEN WHILE THEY ARE ALIVE
+
+Fireaxe has more knockback and the hammer has most knockback
+
+What are the other melee stats?"
+Decided: Solomon, in #476 (Dead Ducks Arcade): pan 2-6 (miss and crit kept), sword 1-2, every melee hit pushes living zombies back, and a slight no-damage shove on players; axe more, hammer most. Adam answered the melee stats.
