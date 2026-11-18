@@ -349,6 +349,21 @@ export function mountHotbar(S, api) {
     slider: slide,
     row: bar,
     current: () => cur,
+    /* phones, Dead Ducks Arcade: the slider is on my duck, out of sight (the owner's, Nov 18 15:18Z: "The hotbar should
+       be on the player's [duck] for now on in mobile and swiping on their duck shows the selection AND it fades away
+       like it does on PC"): a swipe on my duck picks the one beside the picked one (d: 1 the next, -1 the one before),
+       as sliding the slider one slot would, and the game shows the switch under my duck (l4dd.js peek); a tap on my
+       duck uses the picked one, as a tap on the slider's middle one did */
+    nudge(d) {
+      if (!list.length) return;
+      pick(Math.max(0, curI()) + d);
+    },
+    tapMid() {
+      const j = curI();
+      if (j < 0) return;
+      (api.tap || api.use)(list[j][1], false);
+      show(list[j][1]);
+    },
     refresh() {
       draw();
       settle();

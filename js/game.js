@@ -212,6 +212,7 @@ import {
 import { GUNS, ROUNDS_ART, TRACE } from "./l4ddguns.js";
 import {
   l4Held,
+  peekAgain as l4PeekAgain,
   l4Got,
   sprintLeft,
   l4SafeHint,
@@ -7842,6 +7843,7 @@ register("game", {
         },
         row = mountL4Bar(S, l4),
         slide = mountHotbar(S, l4Slider(l4));
+      slide.slider.classList.add("on-duck"); // (on a phone it's on my duck, out of sight: a swipe on my duck picks, touch.js swipe; the owner's, Nov 18 15:18Z)
       bar = {
         row: row.row,
         slider: slide.slider,
@@ -7849,6 +7851,8 @@ register("game", {
         hide: slide.hide,
         wheel: () => false,
         current: slide.current,
+        nudge: slide.nudge,
+        tapMid: slide.tapMid,
         refresh() {
           row.refresh();
           slide.refresh();
@@ -7917,6 +7921,17 @@ register("game", {
       aim: (dx, dy) => {
         keyAim = dx == null ? null : [dx, dy];
       }, // (a second finger dragging on the board aims, like the aim stick's: the owner's, Nov 18 15:18Z)
+      swipe:
+        bar && bar.nudge
+          ? {
+              on: () => getComputedStyle(bar.slider).display !== "none", // (a phone: the slider is there, on my duck; never with the computer's row)
+              nudge: (d) => {
+                bar.nudge(d);
+                l4PeekAgain(); // (the box under my duck shows, even at the end of the row)
+              },
+              tap: bar.tapMid,
+            }
+          : null, // (Dead Ducks Arcade)
     });
     S.addEventListener(
       "pointerdown",
