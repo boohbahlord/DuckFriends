@@ -105,6 +105,7 @@ import {
   pwName,
 } from "./l4ddpower.js";
 import { ANGEL, angelOf, angelAmmo, angelAct, angelLeft } from "./l4ddangel.js";
+import { fieldOf, askField } from "./flowfield.js";
 
 export const isL4dd = (s) => !!s && s.options.mode === "l4dd";
 /* I want only the lights' stutter and the air (the wind, the rain, the fires: ambience.js) on of Hangout's activities.
@@ -1130,14 +1131,23 @@ function openNear(x, y) {
     }
   return best;
 }
-/* the walking distance from every cell to the nearest of `starts` (Dijkstra from all of them at once). The grid never
-   changes, so a field is the same every time its starts are: I keep the last ones made and hand them out again instead
-   of working them out on every heartbeat (the ducks only change cells now and then). A field handed out is only read. */
+/* the walking distance from every cell to the nearest of `starts` (Dijkstra from all of them at once: flowfield.js).
+   The grid never changes, so a field is the same every time its starts are: I keep the last ones made and hand them out
+   again instead of working them out on every heartbeat (the ducks only change cells now and then). A field handed out
+   is only read.
+   late (the zombies' chase, every heartbeat): a field not made yet is asked of the worker (flowfield.js), and until it
+   answers, the zombies keep to the last field they had, the ducks' spots one heartbeat or so ago; so a big crowd's new
+   field never holds up a frame (the owner's, Nov 18 14:20Z). Only the very first one, or with no worker, is worked out
+   here at once */
 const FLOWS = new Map(),
   FLOWS_KEPT = 48;
-let heapD = null,
-  heapC = null;
-function flowFrom(starts) {
+let lastLate = null, // (the last field the chase had, and the grid it was made on)
+  lastLateRev = -1;
+const keep = (key, dist) => {
+  FLOWS.set(key, dist);
+  if (FLOWS.size > FLOWS_KEPT) FLOWS.delete(FLOWS.keys().next().value);
+};
+function flowFrom(starts, late = false) {
   const key = [...new Set(starts.filter((c) => c >= 0))]
     .sort((a, b) => a - b)
     .join();
@@ -1145,78 +1155,37 @@ function flowFrom(starts) {
   if (dist) {
     FLOWS.delete(key);
     FLOWS.set(key, dist); // (the newest used is the last one dropped)
-    return dist;
+  } else {
+    const cs = key ? key.split(",").map(Number) : [];
+    if (
+      late &&
+      lastLate &&
+      lastLateRev === walkRev &&
+      askField(key, cs, grid(), walkRev, (k, rev, d) => {
+        if (rev === walkRev) keep(k, d); // (a field for a grid made again since is dropped)
+      })
+    )
+      return lastLate;
+    dist = fieldOf(grid(), cs);
+    keep(key, dist);
   }
-  dist = dijkstra(key ? key.split(",").map(Number) : []);
-  FLOWS.set(key, dist);
-  if (FLOWS.size > FLOWS_KEPT) FLOWS.delete(FLOWS.keys().next().value);
+  if (late) {
+    lastLate = dist;
+    lastLateRev = walkRev;
+  }
   return dist;
 }
-function dijkstra(starts) {
+/* the grid as flowfield.js takes it */
+function grid() {
   cells();
-  const n = GW * GH,
-    dist = new Float64Array(n).fill(Infinity); // (64-bit: a 32-bit copy can be a hair under the heap's number, and its cell was never looked past)
-  /* the heap: distances and cells side by side in typed arrays, made once (every cell can be pushed once per neighbor) */
-  if (!heapD || heapD.length < n * 8 + 8) {
-    heapD = new Float64Array(n * 8 + 8);
-    heapC = new Int32Array(n * 8 + 8);
-  }
-  let size = 0;
-  const push = (d, c) => {
-    let k = size++;
-    while (k) {
-      const p = (k - 1) >> 1;
-      if (heapD[p] <= d) break;
-      heapD[k] = heapD[p];
-      heapC[k] = heapC[p];
-      k = p;
-    }
-    heapD[k] = d;
-    heapC[k] = c;
+  return {
+    walk,
+    hts,
+    extra,
+    gw: GW,
+    gh: GH,
+    climb: 2 * STEP + 2,
   };
-  const popTo = () => {
-    // takes the smallest off the top; the caller has read heapD[0] and heapC[0] first
-    const d = heapD[--size],
-      c = heapC[size];
-    let k = 0;
-    for (;;) {
-      const l = 2 * k + 1,
-        r = l + 1;
-      let m = -1,
-        md = d;
-      if (l < size && heapD[l] < md) {
-        m = l;
-        md = heapD[l];
-      }
-      if (r < size && heapD[r] < md) m = r;
-      if (m < 0) break;
-      heapD[k] = heapD[m];
-      heapC[k] = heapC[m];
-      k = m;
-    }
-    heapD[k] = d;
-    heapC[k] = c;
-  };
-  for (const c of starts) {
-    dist[c] = 0;
-    push(0, c);
-  }
-  while (size) {
-    const d = heapD[0],
-      c = heapC[0];
-    popTo();
-    if (d > dist[c]) continue;
-    for (let k = 0; k < 8; k++) {
-      const b = nextTo(c, k);
-      if (b < 0) continue;
-      const nd = d + N8[k][2] + extra[b];
-      if (nd < dist[b]) {
-        dist[b] = nd;
-        push(nd, b);
-      }
-    }
-  }
-  return dist;
 }
 /* where a zombie inside heads next: a point two cells on along the field (the way smooths out), or null */
 function heading(dist, x, y) {
@@ -4605,6 +4574,7 @@ function moveZombies(s, zs, now, T, up) {
   const field = pls.filter((q) => !q.j),
     dist = flowFrom(
       (field.length ? field : pls).map((q) => openNear(...q.goal)),
+      true,
     ); // (to a duck up on a roof: to the foot of its wall. The players only: a zombie after Justin finds its own way, wayTo)
   const p4 = { ...s.hang.l4p },
     eating = { ...((s.hidden && s.hidden.l4ze) || {}) };
