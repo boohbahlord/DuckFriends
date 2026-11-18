@@ -16169,6 +16169,35 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .l4-merchant.dead .hang-npc-name {
   opacity: 0.6;
 }
+/* hurt, he is anyone else (the owner's, Nov 18 15:35Z; l4dd.js drawMerchant): his HP as a player's red blocks behind
+   the letters of his tag once he's lost one, and the thin white (Phil's knife) and blue (his sprint) bars under it as
+   mine; the soldier, whose name is hidden, has a tag that is his HP bar only (as the other ducks' here), nothing until
+   he's hurt */
+.l4-merchant.php:not(.dead) .gduck-hp {
+  display: block;
+}
+.l4-merchant.php:not(.dead) .hang-npc-name {
+  opacity: 0.92;
+  text-shadow:
+    0 0 0.1rem #000,
+    0 0 0.1rem #000,
+    0 0.05rem 0.05rem #000;
+}
+.l4-merchant .hang-npc-name.bar-only {
+  width: 2.6rem;
+  height: 0.42rem;
+  padding: 0;
+}
+.l4-merchant:not(.php) .hang-npc-name.bar-only,
+.l4-merchant.dead .hang-npc-name.bar-only {
+  background: none;
+  outline: none;
+  box-shadow: none;
+}
+.l4-merchant.dead .l4-sprint,
+.l4-merchant.dead .l4-cool {
+  display: none;
+}
 .l4-up.l4-sold {
   display: block;
   text-align: center;
