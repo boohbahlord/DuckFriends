@@ -15154,6 +15154,23 @@ html.still:not(.low) .l4z.dead.nuked {
     );
   }
 }
+/* a phone on its side, in a game: Jumps in the very middle of the screen, the context button (Sit, Use, ... kept in
+   its place unseen when nothing is near: hangout/world.js buttonHTML) to its left, and as much room left empty on its
+   right, so the button's place never pushes Jumps over (the owner's, Nov 18 15:18Z: "the jump cpunt not being in the
+   middle alignment of the screen") */
+html.phone-land .game .bbar .bbar-c {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.25rem;
+}
+html.phone-land .game .bbar .bbar-c > .gact {
+  grid-column: 1;
+  justify-self: end;
+}
+html.phone-land .game .bbar .bbar-c > .jumps-slot {
+  grid-column: 2;
+}
 /* a phone on its side: the Ready / End turn button in the bottom middle of the board, just above Jumps (the owner's,
    Nov 18 15:18Z: "the ready button on mobile should be in the bottom middle of the screen WHEN it's in horizontal") */
 html.phone-land .l4-end {
