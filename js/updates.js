@@ -34,6 +34,7 @@ export const UPDATES = [
       "For Mad God Justin: guns come from bags, the chain gun 5% first, then heavy guns, rifles and shotguns in turns. Justin gets more gored as his HP drops, cries from 25 HP, and dies in a pool of blood at 0.",
       "Every duck that dies leaves a pool of blood, and dead ducks keep their outline.",
       "New outfit: Plaid shirt. The Shirt outfit can be worn with jeans, and the cardboard box, pumpkin head, paper bag, motorcycle helmet, gas mask and armored helmet hide the beak.",
+      "For Dead Ducks Arcade: in big fights the wind, rain and fires no longer drop out, your footsteps stay audible over the mob, and far faint sounds give way to near ones.",
       "Faster frames: nothing is drawn more than two ducks off your screen, zombies are lighter to draw, their paths are worked out off to the side, and Downpour's rain stops while the game is hidden or a menu is open. Online, far zombies are sent twice a second.",
     ],
     fixed: [
