@@ -1166,7 +1166,7 @@ function drawMeters(s, board, layer, now) {
   if (!meter) return;
   const hv = R.me && hpFull(s, R.me, now);
   if (hv) {
-    const [sp, tired] = isL4dd(s) ? sprintLeft() : [null, false]; // (Mad God Justin has no sprint, so no sprint bar)
+    const [sp, tired] = isMgj(s) ? [null, false] : sprintLeft(); // (every mode's 7 s sprint now, stamina.js; Mad God Justin has no sprint, so no sprint bar)
     meter.set(
       hv[0],
       hv[1],
@@ -5807,9 +5807,9 @@ function coolOne(id, now, m) {
     return end > now ? [end, coolFor(id, R.state), now] : null;
   }
 }
-/* the white and the yellow bars under my duck in the modes besides Dead Ducks Arcade (which has its own, l4dd.js):
-   what's in my hand, its cooldown or reload, and its magazine (meters.js; no sprint bar: sprinting never runs out
-   here) */
+/* the white, the yellow and the blue bars under my duck in the modes besides Dead Ducks Arcade (which has its own,
+   l4dd.js): what's in my hand, its cooldown or reload, its magazine, and my sprint while it isn't full (meters.js; the
+   7 s sprint every mode has now, stamina.js; the owner's, Nov 18 16:50Z. Mad God Justin has no sprint) */
 function handBars(s) {
   const tag = S && S.querySelector(".gduck.mine .gduck-name");
   if (!tag || !R) return;
@@ -5818,8 +5818,7 @@ function handBars(s) {
     w = mgjDownGun() ? "handgun" : held,
     c = w ? coolOne(w, now, m) : null;
   let el = tag.querySelector(".l4-cool");
-  if (!el) {
-    if (!c) return;
+  if (!el && c) {
     el = document.createElement("span");
     el.className = "l4-cool off";
     el.setAttribute("aria-hidden", "true");
@@ -5827,7 +5826,7 @@ function handBars(s) {
     tag.append(el);
   }
   const v = c ? Math.min(1, (c[0] - now) / c[1]).toFixed(3) : "0";
-  if (el._v !== v) {
+  if (el && el._v !== v) {
     el._v = v;
     el.style.setProperty("--cl", v);
     el.classList.toggle("off", v === "0");
@@ -5850,6 +5849,24 @@ function handBars(s) {
     a = { f: rl ? 0 : left / mg[0], rl, dry: false };
   }
   ammoBar(tag, a);
+  let sp = tag.querySelector(".l4-sprint");
+  if (!sp && !isMgj(s)) {
+    sp = document.createElement("span");
+    sp.className = "l4-sprint full";
+    sp.setAttribute("aria-hidden", "true");
+    sp.innerHTML = "<i></i>";
+    tag.append(sp);
+  }
+  if (sp) {
+    const [left, tired] = isMgj(s) ? [1, false] : sprintLeft(),
+      sv = left.toFixed(3);
+    if (sp._v !== sv) {
+      sp._v = sv;
+      sp.style.setProperty("--sp", sv);
+      sp.classList.toggle("full", left >= 1);
+    }
+    sp.classList.toggle("tired", tired);
+  }
   stackBars(tag);
 }
 /* the handgun's shots left (for the dots under its key), or another gun's */
