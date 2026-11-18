@@ -6234,3 +6234,8 @@ Owner, Nov 18 15:28Z: "The hammer is 3-5 damage
 
 The pan has 5 damage"
 Decided (Adam): Dead Ducks Arcade's hammer 3 to 5, the frying pan 5 every hit (replaces 15:25Z's 2-6; its 50% miss and 50% crit kept).
+
+Owner, Nov 18 15:32Z: "How ab this, the pan is 50% miss and 50% crit, so max damage WHEN it does hit 
+
+Pan shouldnt be in mad god justin"
+Decided: the pan stays as built at 15:28Z (50% miss, half its hits a headshot, otherwise 5, its most). Solomon takes the pan out of Mad God Justin.
