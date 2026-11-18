@@ -5944,3 +5944,27 @@ Split: Adam = the spreadsheets/info first. Noah = invisible grenades/arrows + al
 > single player is for players that have machines that can run the game but they dont want to spend data or internet connection to play, ESPECIALLY if it is the only barrier for them playing (such as my gf who is in a college with an area of extremely poor data connection)
 
 Split (Adam): Solomon = the slot bags + shuffle, jerry can rework, no gas at the Priest/Butler, pumps 25% for 150, power box built by default, no Jetpack/Long jump/Jaime/Jaime Bomb/Justin in zombie slots, sniper pierce, Justin dies outright in Dead Ducks Arcade, MGJ weapon bags. Noah = slot and orb colors, golden chair, gun looks and names (MP5, Barrett, burst rifle, LMG), the jerry can row, MGJ Justin's gore/cry/blood. Jackal = Justin dies outright in normal modes. Adam = Single Player. Adam asked the owner true/false questions on the slots first.
+
+## Answer (2026-11-18 12:32Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKt2eYRekvrUy5FnpoT9VJ7u6) to Adam's 20 true/false slot questions (word for word)
+> 1. t
+> 2. t
+> 3. t
+> 4. t
+> 5. t
+> 6. the bow can be in the weak bag and the grenade is in none
+> 7. t
+> 8. t
+> 9. t
+> 10. they are a normal looking slot like it is in the default game, so no color, and these colors only apply to mad god justin or zombie game
+> 11. true
+> 12. true and it costs money to fill at the pump and shouldnt be called a "slot" or else it gets confusing
+> 13. true
+> 14. true, and the empty jerry can that is the third of the three if the other two are filled can become full too
+> 15. true
+> 16. true
+> 17. true
+> 18. "the 3 parts slots are freed for weapons and items," no, the slots are ALL gone on the power box AND it should be made to look normal for look purposes in the place where those slots are removed
+> 19. yes but remove the flame thrower from mad god justin as well, and the chain gun only has a 5% chance of spawning for it's bag that is rolled first
+> 20. true
+
+The questions (Adam, 12:21Z): 1 order Chair 1% > Special 5% > Item 20% > Weapon; 2 own bags per player, fresh each game; 3 Weapon bag = 7 bags taking turns, then the next gun in that bag's shuffle; 4 melee bag as often as the shotgun bag; 5 melee = fire axe, short sword, hammer; weak = dagger, knife, pan; 6 bow and grenade in no bag; 7 owned things skipped, keep their place; 8 used-up items/empty guns keep the slot and can't be spun again; 9 golden chair owned = Chair bag skipped; 10 uncolored ones keep today's colors; 11 found cans are 100%; 12 pump filling doesn't stop the round's can; 13 one can spawns at a time, unfound ones stay, zombies 1%; 14 gas pours into the fullest not-full can, limit counts the empty; 15 3 full = can stays on the ground; 16 pumps only Downpour; 17 cabin generator takes a whole can, 1 round per 25%; 18 power box built, 3 parts slots freed; 19 MGJ bags heavy (GL, LMG), rifles (Tommy, UMP, MP5, AK, AUG), shotgun (shotgun, double barrel), special (chain gun, flamethrower); 20 Sniper normal: first zombie max, crit: every zombie max up to the limit.
