@@ -4,8 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dead Ducks Arcade merchants</title>
-    <!-- Every merchant (js/merchants.js) with his name under him, each of his looks when he has more than one, and the
-     ideas for more merchants under them. Serve the folder (python3 -m http.server) and open /tools/merchant-art.html. -->
+    <!-- Every merchant (js/merchants.js) with his name under him, each of his looks when he has more than one. Serve the folder (python3 -m http.server) and open /tools/merchant-art.html. -->
     <style>
       body {
         margin: 0;
@@ -70,69 +69,8 @@
       Dead Ducks Arcade. A merchant with more than one look shows each of them.
     </p>
     <div class="grid" id="cast"></div>
-    <h2>Ideas for more merchants</h2>
-    <div class="grid" id="ideas"></div>
     <script type="module">
       import { MERCHANTS, merchantSVG } from "../js/merchants.js";
-      import { duckSVG } from "../js/duck.js";
-      /* my ideas for more merchants (not in the game until the owner picks them) */
-      const IDEAS = [
-        [
-          "Walt",
-          "Nightcap and pajamas, half asleep",
-          {
-            color: "#f4f4f0",
-            hat: { id: "nightcap" },
-            eyes: "sleepy",
-            outfit: { id: "pajamas" },
-          },
-        ],
-        [
-          "Dale",
-          "Cowboy hat and leather jacket",
-          {
-            color: "#ff8c2b",
-            hat: { id: "cowboy" },
-            outfit: { id: "leather", pants: "jeans" },
-          },
-        ],
-        [
-          "Grace",
-          "A bride in her veil and gown",
-          {
-            color: "#ff7eb6",
-            hat: { id: "veil" },
-            outfit: { id: "gown" },
-          },
-        ],
-        [
-          "Zeke",
-          "The armored space soldier",
-          {
-            color: "#8ee03c",
-            face: { id: "scifi" },
-            outfit: { id: "armor" },
-          },
-        ],
-        [
-          "Hal",
-          "VR headset and a suit",
-          {
-            color: "#14c6b4",
-            face: { id: "vr" },
-            outfit: { id: "suit" },
-          },
-        ],
-        [
-          "Ozzy",
-          "Ski mask and a dark hoodie",
-          {
-            color: "#ffd23f",
-            face: { id: "ski" },
-            outfit: { id: "hoodie", c1: "#2b2f3a" },
-          },
-        ],
-      ];
       const fig = (ducks, name, tip) =>
         `<figure><div class="ducks${ducks.length > 1 ? " many" : ""}">${ducks.join("")}</div><figcaption><b>${name}</b><small>${tip}</small></figcaption></figure>`;
       const big = (n) => (n > 2 ? 62 : n > 1 ? 84 : 112);
@@ -141,12 +79,9 @@
           m.looks.map((_, i) =>
             merchantSVG(m, i, { size: big(m.looks.length) }),
           ),
-          m.name,
+          m.hideName ? "(name hidden)" : m.name,
           m.tip,
         ),
-      ).join("");
-      document.getElementById("ideas").innerHTML = IDEAS.map(([name, tip, L]) =>
-        fig([duckSVG(L, { size: 112 })], name, tip),
       ).join("");
       document.body.dataset.ready = "1";
     </script>

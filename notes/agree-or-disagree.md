@@ -6140,3 +6140,27 @@ Split (Adam): Solomon = the merchant (rules, spawning, selling, fleeing, dying, 
 > sure to move path for zombies thingy i think for off the main thread
 
 Adam: explained every idea in chat, built none (owner: "DO NOT ACT THESE INTO BEING YET"); recommended 2, 3, 4, 6, 7 first and measuring fps before 1. Drop outlines (separate ask) given to Noah.
+
+## Request (2026-11-18 14:10Z, msg cmsg_01LTpp6fzv8sfYUR5KoHADKtGn2228CrX45wK8nwBghwVb, in Noah's thread, about the merchants sheet; 1 picture: a grey armored soldier with a gold visor, /mnt/project-files/refs/nov18-1410/armored-soldier.png) (word for word)
+
+> make it to where wearing the cardboad box, the pumpkin head, the paper bag, the motorcyle helmet, the gas mask, and the armored helmet will HIDE the beak (like it makes it no beak not under the selection but makes the beak invisible WHEN those helemts are off)
+>
+> Johnny should be a yellow duck
+>
+> gibby is supposed to have the default color for the raport and so is kyle for the pelican, come tf on.
+>
+> Jerome has only the pink ribbon now and that is his only look
+>
+> You can add Walt
+>
+> Dale should be ranamed Carl and his shirt should be a plad shirt that covers his upper body
+>
+> do not add grace
+>
+> The armored space soldier can be given different colors to his green armor and made into the look of the screenshot i sent (his name will not be shown since his name is classified info)
+>
+> Hal will not be in the game
+>
+> Ozzy will be renamed to "Phil the Murderous", and he will hit back at players when he takes second damage with a knife (has a 50% chance of missing when he uses it and it does 1 damage only)
+
+Noah: the beak hides while one of those six face items is worn (the beak pick stays; knocked off, the beak shows again); the merchant changes in js/merchants.js; Phil's knife hit-back is for the rules (Solomon).

@@ -8,7 +8,7 @@
 import { rbGrad, rbShade } from "./rainbowskin.js";
 import { hatLayers, HAT_TOP } from "./hats.js";
 import { datboiSVG, onHead } from "./datboi.js";
-import { faceLayer } from "./faces.js";
+import { faceLayer, hidesBeak } from "./faces.js";
 import { beakSVG } from "./beaks.js";
 import { eyesSVG } from "./eyes.js";
 import {
@@ -234,6 +234,13 @@ ${shadow ? `<ellipse cx="60" cy="110" rx="40" ry="7" fill="#000" opacity=".22"/>
 <rect x="14" y="10" width="92" height="92" rx="16" fill="none" stroke="#00000055" stroke-width="2.4"/>
 ${dead ? '<path d="M24 20L96 92M96 20L24 92" stroke="#e01b1b" stroke-width="10" stroke-linecap="round" opacity=".9"/>' : ""}${extra}</svg>`;
   }
+  /* the beak, unless it's been shot off, or a helmet or a mask over the whole face hides it (on fully: knocked off or
+     coming back on, the beak shows) */
+  const beak =
+    (gone && gone.beak) ||
+    (hidesBeak(L.face) && !(gone && gone.face !== undefined))
+      ? ""
+      : beakSVG(L);
   const st = styleById(L.style),
     hat = hatLayers(L.hat, L, dead),
     face = faceLayer(L.face, L, dead),
@@ -265,7 +272,7 @@ ${shadow ? `<ellipse cx="58" cy="109" rx="${(44 * (1 + 0.16 * fat)).toFixed(1)}"
 ${worn(hat.back, gone && gone.hat)}${OF ? OF.back : ""}<g${bt}>${blocks ? blocksBody(L.color) : geoBody(L.color)}</g>${cloth}
 ${OF && OF.bare ? `<g${bt}>${blocks ? blocksBody(L.color, "w") : geoWing(L.color)}</g>` : ""}
 ${OF && OF.sleeve ? `<g${bt}>${OF.sleeve}</g>` : ""}${OF && OF.over ? `<g${bt}>${OF.over}</g>` : ""}
-${gone && gone.beak ? "" : beakSVG(L)}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}${zap && !(gone && gone.eyes) ? eyes : ""}${worn(hat.front, gone && gone.hat)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
+${beak}${zap || (gone && gone.eyes) ? "" : eyes}${worn(face, gone && gone.face)}${zap && !(gone && gone.eyes) ? eyes : ""}${worn(hat.front, gone && gone.hat)}${k !== 1 ? "</g>" : ""}${extra}</svg>`;
   }
   const noHead = !!(gone && gone.head),
     holes =
@@ -419,7 +426,7 @@ ${OF && OF.over ? ripped(`<g${bt}>${OF.over}</g>`) : ""}
 ${
   noHead
     ? ""
-    : `${gone && gone.beak ? "" : beakSVG(L)}
+    : `${beak}
 ${zap || (gone && gone.eyes) ? "" : eyes}
 ${worn(face, gone && gone.face)}
 ${zap && !(gone && gone.eyes) ? eyes : ""}

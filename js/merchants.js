@@ -6,9 +6,10 @@
    (who comes, what he sells, his lines) are l4ddrules.js'.
    looks: a merchant with more than one look shuffles them ("it is random and will be different everytime they show
    up"): the rules roll a number when he arrives, so every player sees the same one (merchantLook). extra: a piece drawn
-   over the duck that no item has (Hunter's cigarette holder). The Butler and the Priest stay in the cast. */
+   over the duck that no item has (Hunter's cigarette holder). hideName: no name shown over him (the soldier's: "his name
+   will not be shown since his name is classified info"). fights: he hits back (Phil's, the rules': after his second hit
+   from a player, a knife, half its swings miss, 1 damage). The Butler and the Priest stay in the cast. */
 import { duckSVG } from "./duck.js";
-import { hatLayers } from "./hats.js";
 import { BUTLER, PRIEST } from "./hangout/npcart.js";
 
 /* Hunter's cigarette holder, in the duck's 120 box: a long black holder held in the beak, tilted up, a white cigarette
@@ -21,9 +22,6 @@ const HOLDER = `<g class="m-holder">
   <circle cx="117" cy="28.7" r="1.4" fill="#ff6a1f"/><circle cx="117.2" cy="28.4" r=".6" fill="#ffd27a"/>
   <path d="M117.4 26.6C115.4 23.6 118.6 21.4 116.8 18.2C115.6 16 117.4 13.6 116.6 11.6" stroke="#d8d8de" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".55"/>
 </g>`;
-/* Jerome's ribbon bow, when he has it: small, on the back of his head, under his birthday hat */
-const RIBBON = () =>
-  `<g transform="translate(57 25) scale(.55) translate(-70 -15)">${hatLayers({ id: "bow" }).front}</g>`;
 
 export const MERCHANTS = [
   {
@@ -229,17 +227,17 @@ export const MERCHANTS = [
     tip: "Doctor, police or firefighter, a new one each time; no hair",
     looks: [
       {
-        color: "#f4f4f0",
+        color: "#ffd23f",
         hat: { id: "doctor" },
         outfit: { id: "doctor" },
       },
       {
-        color: "#f4f4f0",
+        color: "#ffd23f",
         hat: { id: "police" },
         outfit: { id: "police" },
       },
       {
-        color: "#f4f4f0",
+        color: "#ffd23f",
         hat: { id: "fire" },
         outfit: { id: "firefighter" },
       },
@@ -259,32 +257,99 @@ export const MERCHANTS = [
     tip: "The 2D duck",
     looks: [{ style: "geo", color: "#2fa4ff", eyes: "flat", beak: "geo" }],
   },
+  /* the pelican and the raptor in their styles' own colors (styles.js) */
   {
     id: "kyle",
     name: "Kyle",
     tip: "The pelican",
-    looks: [{ style: "pelican", eyes: "pelican", beak: "pelican" }],
+    looks: [
+      {
+        style: "pelican",
+        color: "#f2efe8",
+        color2: "#9aa3b0",
+        eyes: "pelican",
+        beak: "pelican",
+      },
+    ],
   },
   {
     id: "gibby",
     name: "Gibby",
     tip: "The raptor",
-    looks: [{ style: "raptor", eyes: "raptor", beak: "teeth" }],
+    looks: [
+      {
+        style: "raptor",
+        color: "#6aa84f",
+        color2: "#2f5e2a",
+        color3: "#e0662f",
+        eyes: "raptor",
+        beak: "teeth",
+      },
+    ],
   },
   {
     id: "jerome",
     name: "Jerome",
-    tip: "The white call duck in a birthday hat, sometimes a ribbon bow too",
-    looks: [
-      { style: "call", hat: { id: "birthday" } },
-      { style: "call", hat: { id: "birthday" }, ribbon: true },
-    ],
+    tip: "The white call duck with the pink ribbon bow",
+    looks: [{ style: "call", hat: { id: "bow" } }],
   },
   {
     id: "andy",
     name: "Andy",
     tip: "The mallard in a military helmet",
     looks: [{ style: "mallard", hat: { id: "helmet" } }],
+  },
+  {
+    id: "walt",
+    name: "Walt",
+    tip: "Nightcap and pajamas, half asleep",
+    looks: [
+      {
+        color: "#f4f4f0",
+        hat: { id: "nightcap" },
+        eyes: "sleepy",
+        outfit: { id: "pajamas" },
+      },
+    ],
+  },
+  {
+    id: "carl",
+    name: "Carl",
+    tip: "Cowboy hat and a plaid shirt",
+    looks: [
+      {
+        color: "#ff8c2b",
+        hat: { id: "cowboy" },
+        outfit: { id: "plaid", pants: "jeans" },
+      },
+    ],
+  },
+  /* the armored soldier, in gunmetal grey like the owner's picture (the armor and its helmet were green) */
+  {
+    id: "soldier",
+    name: "Classified",
+    hideName: true,
+    tip: "The armored soldier; his name is classified",
+    looks: [
+      {
+        color: "#3b3f4a",
+        face: { id: "scifi", c1: "#6e7279" },
+        outfit: { id: "armor", c1: "#6e7279" },
+      },
+    ],
+  },
+  {
+    id: "phil",
+    name: "Phil the Murderous",
+    tip: "Ski mask and a dark hoodie; he knifes back",
+    fights: { after: 2, weapon: "knife", miss: 0.5, dmg: 1 },
+    looks: [
+      {
+        color: "#ffd23f",
+        face: { id: "ski" },
+        outfit: { id: "hoodie", c1: "#2b2f3a" },
+      },
+    ],
   },
   {
     id: "butler",
@@ -306,9 +371,6 @@ export const merchantLook = (m, roll = 0) =>
 /* the merchant as a duck SVG (duckSVG's options: size, shadow, dead, gone …) */
 export function merchantSVG(m, roll = 0, o = {}) {
   const L = merchantLook(m, roll),
-    extra =
-      (m.extra && !o.dead ? m.extra : "") +
-      (L.ribbon && !(o.gone && o.gone.hat) ? RIBBON() : "") +
-      (o.extra || "");
+    extra = (m.extra && !o.dead ? m.extra : "") + (o.extra || "");
   return duckSVG(L, { title: m.name, ...o, extra });
 }
