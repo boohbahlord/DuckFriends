@@ -15521,6 +15521,14 @@ html.moving .l4-heat.hot::after {
     filter: drop-shadow(0 0 0.55rem var(--cl));
   }
 }
+/* no color (the dagger, the knife, the pistol, the pan, the adrenaline shot, the bow: the owner's, Nov 18 12:32Z, "a
+   normal looking slot like it is in the default game, so no color"): the orb a plain grey; the slot as the other
+   games' slots look (below, after the slots' own colors) */
+:is(.l4s, .l4orb, .sp-slot).c-plain {
+  --c: #8a8f9c;
+  --cl: #e4e6ec;
+  --cd: #3c404c;
+}
 /* an Angelic weapon's orb, out of the Angel machine (the owner's, Nov 16): dark crimson (21:47Z, was white-gold), its
    gold halo over it */
 .l4orb.k-angel {
@@ -16077,6 +16085,21 @@ body:has(.l4-shopping, .win-back) :is(.l4-sr, .l4-srv, .l4-srb) {
 .sp-slot[class*="k-"].mid {
   background: color-mix(in srgb, var(--c) 60%, rgb(10 12 20 / 0.6));
   border-color: color-mix(in srgb, var(--c) 55%, #fff);
+}
+/* (a plain one, with no color: as the other games' slots, on a computer and in the phone's slider) */
+.l4slots .l4s.c-plain {
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+.l4slots .l4s.c-plain:not(.sel) {
+  border-color: color-mix(in srgb, var(--ink) 34%, transparent);
+}
+.sp-slot.c-plain {
+  background: color-mix(in srgb, var(--blue) 30%, var(--panel));
+  border-color: var(--line);
+}
+.sp-slot.c-plain.mid {
+  background: color-mix(in srgb, var(--blue) 62%, var(--panel));
+  border-color: color-mix(in srgb, var(--blue) 55%, #fff);
 }
 .sp-slot.k-light {
   background: color-mix(in srgb, var(--yellow) 22%, var(--panel));

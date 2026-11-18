@@ -90,7 +90,7 @@ export function mountL4Bar(S, api) {
         ];
     if (down) {
       const n = count("dg", m);
-      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
+      row.innerHTML = `<div class="l4slots"><button type="button" class="l4s k-ranged c-plain sel l4s-down" aria-label="Pistol, ${n}" disabled>${reloadMeter(s, me, "dg", m)}<i>${weaponIcon("handgun", duckOf(s, me))}</i><kbd>R</kbd><small>${n}</small></button></div>`;
       return;
     } // (R reloads it; it fires as the pistol always does)
     const slot = ([key, w, kind, does]) => {
@@ -171,9 +171,9 @@ export function l4Slider(api) {
             icon: weaponIcon(id, duckOf(k.s, k.me)),
             off: false,
             keep: false,
-            cls: "k-ranged",
+            cls: "k-ranged c-plain",
           }
-        : null; // (down: the down pistol, never Angelic)
+        : null; // (down: the down pistol, never Angelic; a plain slot, as the pistol's always is)
     const i = id === "grenade" ? 4 : id === "fl" ? 5 : k.sl.indexOf(id);
     if (i < 0) return null;
     return {
