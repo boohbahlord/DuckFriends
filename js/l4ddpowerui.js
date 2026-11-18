@@ -67,12 +67,13 @@ export function pwUnmount() {
   items.clear();
   box = pool = null;
 }
+const CANS_MOST = PW.CANS_MOST || 3; // (the most jerry cans the players hold in a game: the owner's, Nov 18 12:19Z)
 const ITEM_ICON = (o) =>
   o.k === "can" ? jerrySVG(canPct(o.r)) : PART_ICONS[o.k] || "";
 /* a part or a jerry can in the fireplace's spin, as an orb */
 export const pwOrbHTML = (w) => {
   const { k, r } = pwOf(w);
-  return `<span class="l4orb k-part"><i>${k === "can" ? jerrySVG(canPct(r)) : PART_ICONS[k]}</i></span>`;
+  return `<span class="l4orb k-part${k === "can" ? " c-orange" : ""}"><i>${k === "can" ? jerrySVG(canPct(r)) : PART_ICONS[k]}</i></span>`; // (a jerry can's orb orange, glowing)
 };
 export { isPw };
 
@@ -90,29 +91,46 @@ export function pwSee(s, ctx) {
   for (const o of list) {
     if (items.has(o.n)) continue;
     const el = document.createElement("div");
-    el.className = "l4-pk" + (o.z ? " on-top" : "");
-    el.innerHTML = `<i>${ITEM_ICON(o)}</i>`;
+    el.className =
+      "l4-pk" + (o.z ? " on-top" : "") + (o.k === "can" ? " k-can" : "");
+    el.innerHTML =
+      o.k === "can"
+        ? `<i><span class="l4orb c-orange">${ITEM_ICON(o)}</span></i>`
+        : `<i>${ITEM_ICON(o)}</i>`; // (a jerry can on the ground: in its orange orb that glows, the owner's, Nov 18 12:19Z)
     box.el.before(el);
     items.set(o.n, { el, o, tr: "", k: 0 });
   }
-  /* the pool: every part found and not fitted yet, and the jerry cans */
+  /* the pool at the left, in two rows (the owner's, Nov 18 12:19Z: "the jerry cans have their own row apart from the
+     items you pick up in cabin (fuse and etc) / the two rows are both on the left side of screen"): every part found
+     and not fitted yet; then the jerry cans, the fullest first, each with its gas in percent under it, an empty one
+     when there are none ("when there is no jerry cans, the players have a 0% jerry can on the left"), and under the
+     row, not over it, a very small line once the most are held */
   const sig = pw ? JSON.stringify([pw.pool, pw.cans]) : "";
   if (sig !== poolSig) {
     poolSig = sig;
-    const icons = pw
-      ? [
-          ...pw.pool.map(
+    if (!pw) pool.innerHTML = "";
+    else {
+      const cans = pw.cans.length ? [...pw.cans].sort((a, b) => b - a) : [0],
+        parts = pw.pool
+          .map(
             (k) =>
               `<i class="l4-part" title="${partName(k)}">${PART_ICONS[k]}</i>`,
-          ),
-          ...pw.cans.map(
+          )
+          .join(""),
+        row = cans
+          .map(
             (r) =>
-              `<i class="l4-part k-can" title="${partName("can")} ${canPct(r)}%">${jerrySVG(canPct(r))}</i>`,
-          ),
-        ]
-      : [];
-    pool.innerHTML = icons.join("");
-    pool.hidden = !icons.length;
+              `<i class="l4-part k-can" title="${partName("can")} ${canPct(r)}%">${jerrySVG(canPct(r))}<small>${canPct(r)}%</small></i>`,
+          )
+          .join("");
+      pool.innerHTML =
+        (parts ? `<div class="l4-row">${parts}</div>` : "") +
+        `<div class="l4-row l4-cans">${row}</div>` +
+        (pw.cans.length >= CANS_MOST
+          ? '<small class="l4-cans-max">Max jerry cans</small>'
+          : "");
+    }
+    pool.hidden = !pw;
   }
   /* the sounds: the power (everywhere alike), a part found (where it was taken), fitted and poured (at the box) */
   const on = powerOn(s);
